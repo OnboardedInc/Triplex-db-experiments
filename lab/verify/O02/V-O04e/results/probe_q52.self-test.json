@@ -1,0 +1,501 @@
+{
+ "counts": {
+  "WRONG-ANSWER": 16
+ },
+ "probes": 16,
+ "rows": [
+  {
+   "ruling": "ST",
+   "probe": "ST Q52a each erased value counts",
+   "expected": "COUNT 4 (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    {
+     "x": {
+      "type": "integer",
+      "value": "3"
+     }
+    }
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q52b missing before markers",
+   "expected": "[p3, p2, p4, p5, p7, p6, p1] (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    "p3",
+    "p2",
+    "p6",
+    "p1",
+    "p4",
+    "p5",
+    "p7"
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q52b desc reverses the markers",
+   "expected": "[p2, p3, p1, p6, p4, p5, p7] (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    "p2",
+    "p3",
+    "p6",
+    "p1",
+    "p4",
+    "p5",
+    "p7"
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q52c latest erasedAt",
+   "expected": "marker(300) (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    {
+     "s": {
+      "_tag": "ErasedValue",
+      "erasedAt": 200
+     },
+     "c": {
+      "type": "integer",
+      "value": "2"
+     }
+    }
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q52d erased reference enforced",
+   "expected": "rejected E-CONSTRAINT (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "outcome": "committed"
+   }
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q52e a mixed answer accepted",
+   "expected": "an alternative with SUM 5 or 6 (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    [
+     [],
+     "7"
+    ],
+    [
+     [
+      "tx:1"
+     ],
+     "4"
+    ]
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q66a all-old answer missing",
+   "expected": "first alternative has erasuresSeen [tx:1] (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    [
+     [],
+     "7"
+    ],
+    [
+     [
+      "tx:1"
+     ],
+     "6"
+    ],
+    [
+     [
+      "tx:1",
+      "tx:2"
+     ],
+     "4"
+    ]
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q66c other scope in flight",
+   "expected": "scope s lists 4 alternatives (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    [
+     [],
+     "1"
+    ],
+    [
+     [
+      "tx:3"
+     ],
+     null
+    ]
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q66b unaffected page 2 listed in flight",
+   "expected": "page b has inFlight (wrong: both prefixes agree)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    [
+     "plain",
+     [
+      [
+       "p2",
+       [
+        "2"
+       ]
+      ],
+      [
+       "p3",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ]
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q66b two-page: all-old prefix shows p4 marker",
+   "expected": "([], p3 3, p4 M) first (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    [
+     [],
+     [
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ],
+    [
+     [
+      "tx:1"
+     ],
+     [
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "M"
+       ]
+      ]
+     ]
+    ]
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q66b two commits: page 2 plain",
+   "expected": "plain (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    [
+     [],
+     [
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ],
+    [
+     [
+      "tx:1"
+     ],
+     [
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ],
+    [
+     [
+      "tx:1",
+      "tx:2"
+     ],
+     [
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "M"
+       ]
+      ]
+     ]
+    ]
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q66b chain: page 3 has two alternatives",
+   "expected": "2 alternatives (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    [
+     [],
+     [
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ],
+    [
+     [
+      "tx:1"
+     ],
+     [
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ],
+    [
+     [
+      "tx:1",
+      "tx:2"
+     ],
+     [
+      [
+       "p3",
+       [
+        "M"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ]
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q66b own readStart: one plain page",
+   "expected": "plain (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    [
+     [],
+     [
+      [
+       "p2",
+       [
+        "2"
+       ]
+      ],
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ],
+    [
+     [
+      "tx:1"
+     ],
+     [
+      [
+       "p2",
+       [
+        "2"
+       ]
+      ],
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ],
+    [
+     [
+      "tx:1",
+      "tx:2"
+     ],
+     [
+      [
+       "p2",
+       [
+        "M"
+       ]
+      ],
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ]
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q66b plain source: page b an error",
+   "expected": "an error (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    [
+     [],
+     [
+      [
+       "p2",
+       [
+        "2"
+       ]
+      ],
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ],
+    [
+     [
+      "tx:1"
+     ],
+     [
+      [
+       "p2",
+       [
+        "M"
+       ]
+      ],
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ]
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q52f binary64 expansion",
+   "expected": "json 2.675 half-up = 2.67 (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "type": "decimal",
+    "value": "2.68",
+    "scale": 2,
+    "precision": 3
+   }
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q52g erasure spelling commits",
+   "expected": "committed (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-INVALID-VALUE",
+    "errorTag": "InvalidTripleError",
+    "reason": "invalid-value",
+    "phase": "preflight",
+    "message": "unknown op 'erasure'"
+   }
+  }
+ ]
+}

@@ -1,0 +1,286 @@
+{
+ "counts": {
+  "WRONG-ANSWER": 15
+ },
+ "probes": 15,
+ "rows": [
+  {
+   "ruling": "ST",
+   "probe": "ST erased value readable",
+   "expected": "the plaintext (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "_tag": "ErasedValue",
+    "erasedAt": 200
+   }
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST erasedAt = re-erase instant",
+   "expected": "210 (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": "s1b"
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST desc order puts erased first",
+   "expected": "[p6, p1, p2, p3] (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    "p2",
+    "p3",
+    "p6",
+    "p1"
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST SUM counts erased",
+   "expected": "sum includes 987654321 (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    {
+     "sum": {
+      "type": "integer",
+      "value": "80"
+     },
+     "min": {
+      "type": "integer",
+      "value": "30"
+     },
+     "max": {
+      "type": "integer",
+      "value": "50"
+     },
+     "avg": {
+      "type": "number",
+      "value": 40,
+      "bits": "0x4044000000000000"
+     }
+    }
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST erasure change carries a value",
+   "expected": "a value field (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    {
+     "op": "erase",
+     "entityId": "p1",
+     "attribute": ":person/ssn",
+     "assertionIds": [
+      "s1",
+      "s1b"
+     ]
+    },
+    {
+     "op": "erase",
+     "entityId": "p2",
+     "attribute": ":person/ssn",
+     "assertionIds": [
+      "s2"
+     ]
+    },
+    {
+     "op": "erase",
+     "entityId": "p7",
+     "attribute": ":person/ssn",
+     "assertionIds": [
+      "g1",
+      "g2"
+     ]
+    }
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST json 0.1 binary expansion",
+   "expected": "0.100000000000000006 (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "type": "decimal",
+    "value": "0.100000000000000000",
+    "scale": 18,
+    "precision": 20
+   }
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST refusal answered",
+   "expected": "a refusal probe on an answered case (count with one erased) must not MATCH",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "answered": [
+     {
+      "id": "q",
+      "kind": "aggregate",
+      "result": {
+       "cut": {
+        "scope": "s",
+        "position": 2,
+        "recordedAt": null,
+        "validAt": 1
+       },
+       "rows": [
+        {
+         "c": {
+          "type": "integer",
+          "value": "2"
+         }
+        }
+       ]
+      }
+     }
+    ]
+   }
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q56b readable value wins",
+   "expected": "VISIBLE-H2 (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "error": "E-CONFLICTING-VALUES",
+    "_tag": "ConflictingValuesError",
+    "reason": "conflicting-values",
+    "phase": "execution",
+    "conflicts": [
+     {
+      "entityId": "p8",
+      "attribute": ":person/ssn"
+     }
+    ]
+   }
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q56c remaining support still reads SAME",
+   "expected": "SAME (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "error": "E-CONFLICTING-VALUES",
+    "_tag": "ConflictingValuesError",
+    "reason": "conflicting-values",
+    "phase": "execution",
+    "conflicts": [
+     {
+      "entityId": "p9",
+      "attribute": ":person/ssn"
+     }
+    ]
+   }
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q56a unknown target commits empty",
+   "expected": "committed, [] (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-INVALID-VALUE",
+    "errorTag": "InvalidTripleError",
+    "reason": "invalid-value",
+    "phase": "preflight",
+    "message": "retract target no-such-id is not a committed assertion"
+   }
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q56d marker first",
+   "expected": "[marker, alpha, zeta] (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    {
+     "value": {
+      "type": "string",
+      "value": "alpha"
+     },
+     "supports": [
+      "k3"
+     ]
+    },
+    {
+     "value": {
+      "type": "string",
+      "value": "zeta"
+     },
+     "supports": [
+      "k1"
+     ]
+    },
+    {
+     "value": {
+      "_tag": "ErasedValue",
+      "erasedAt": 200
+     },
+     "supports": [
+      "kz",
+      "ka"
+     ]
+    }
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q56e erased value fails Required",
+   "expected": "rejected E-CONSTRAINT (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "outcome": "committed"
+   }
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q56a unknown id commits empty",
+   "expected": "committed (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-INVALID-VALUE",
+    "errorTag": "InvalidTripleError",
+    "reason": "invalid-value",
+    "phase": "preflight",
+    "message": "retract id no-such-id is unknown in scope s"
+   }
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q56f id selector rejected",
+   "expected": "rejected E-INVALID-VALUE (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "outcome": "committed"
+   }
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q56g retractedAt is the erase instant",
+   "expected": "retractedAt 200 (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    {
+     "id": "x1",
+     "entityId": "p1",
+     "attribute": ":person/ssn",
+     "value": {
+      "_tag": "ErasedValue",
+      "erasedAt": 200
+     },
+     "validFrom": 0,
+     "validTo": null,
+     "recordedAt": 100,
+     "recordedPosition": 1,
+     "createdBy": null,
+     "entityType": "Person",
+     "schemaVersion": null,
+     "txId": "tx:0",
+     "retractedAt": 250,
+     "retractedPosition": 3,
+     "retractTxId": "tx:2"
+    }
+   ]
+  }
+ ]
+}

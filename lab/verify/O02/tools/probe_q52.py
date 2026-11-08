@@ -3,7 +3,8 @@
 (AG-COUNT, Q22/Q43d rounding, Q33f, Q49), not from the oracle's tests or RULES.md.
 
 Verdicts: MATCH, WRONG-ANSWER, REFUSES (exit 2 where the ruling decides), OBSERVED (recorded behaviour the brief asks
-about, not scored: Q66b cursorFrom on an in-flight entry).
+about, not scored). V-O04e: Q66b is a checked section (two-page, three-page and chained continuations, the author's two
+choices: a continuation's own readStart, and a literal cursor token).
 
   python3 -I lab/verify/O02/tools/probe_q52.py WORKDIR [--self-test] [--results=DIR]
       -> DIR/probe_q52[.self-test].json (default lab/verify/O02/V-O04d/results)
@@ -271,12 +272,82 @@ single("Q66c", "scope s read: only scope s's erasure is in flight", "[([], 1), (
 single("Q66c", "scope t read: only scope t's erasure is in flight", "[([], 2), ([tx:2], None)]", SC,
        lambda r: (alternatives(r, "t", "x") == [([], "2"), (["tx:2"], None)], alternatives(r, "t", "x")))
 
-# ------------------------------------------------------------------ Q66b: cursorFrom on an in-flight entry (observed)
-observe("Q66b", "cursorFrom on an in-flight entityPage entry", "Q66b: answer per prefix; what does 0.4.2 do?",
-        case(E_BASE + [cmd([erase("p1", SAL)], 200)],
-             [{"id": "a", "kind": "entityPage", "entityType": "Person", "limit": 1, "cut": V, "readStart": {"afterCommand": 0}},
-              {"id": "b", "kind": "entityPage", "entityType": "Person", "limit": 1, "cursorFrom": {"query": "a"}}]),
-        lambda r: [q(r, "a"), q(r, "b")])
+# ------------------------------------------------------------------ Q66b: continuations of an in-flight read
+# Q66b: "a continuation cursor carries the erasure prefix its page was computed with, and every later page answers with
+# that same prefix". entityPage returns every page of the traversal; cursorFrom {query, page 0} continues after page 0.
+# A page is summarised as [(entityId, salary text or "M" for the marker)] over all its remaining pages; an entry as
+# [(erasuresSeen, summary)] for inFlight, or [("plain", summary)].
+def ep(qid, limit=1, **kw):
+    return {"id": qid, "kind": "entityPage", "entityType": "Person", "limit": limit, "cut": V, **kw}
+
+
+def summary(result):
+    return [(e["entityId"], [t["value"]["value"] if "value" in t["value"] else "M" for t in e["triples"] if t["attribute"] == SAL])
+            for p in result["pages"] for e in p["entities"]]
+
+
+def entry(rep, qid):
+    node = q(rep, qid)
+    if "inFlight" in node:
+        return [(a["erasuresSeen"], summary(a["result"]) if "result" in a else a.get("error", {}).get("error"))
+                for a in node["inFlight"]["acceptable"]]
+    return [("plain", summary(node["result"]) if "result" in node else node.get("error"))]
+
+
+P4 = [cmd([asrt(f"s{k}", f"p{k}", SAL, I(k)) for k in (1, 2, 3, 4)], 100)]
+row = lambda e, v: (e, [v])  # noqa: E731
+Q66B_ONE = case(E_BASE + [cmd([erase("p1", SAL)], 200)], [ep("a", readStart={"afterCommand": 0}), ep("b", cursorFrom={"query": "a"})])
+single("Q66b", "continuation of an in-flight read (page 2 not affected)", "plain: [p2 2, p3 4] (both prefixes agree)", Q66B_ONE,
+       lambda r: (entry(r, "b") == [("plain", [row("p2", "2"), row("p3", "4")])], entry(r, "b")))
+Q66B_TWO = case(P4 + [cmd([erase("p2", SAL), erase("p4", SAL)], 200)],
+                [ep("a", 2, readStart={"afterCommand": 0}), ep("b", 2, cursorFrom={"query": "a"})])
+single("Q66b", "two-page continuation, one commit erasing p2 and p4", "[([], p3 3, p4 4), ([tx:1], p3 3, p4 M)]", Q66B_TWO,
+       lambda r: (entry(r, "b") == [([], [row("p3", "3"), row("p4", "4")]), (["tx:1"], [row("p3", "3"), row("p4", "M")])], entry(r, "b")))
+Q66B_TWO2 = case(P4 + [cmd([erase("p2", SAL)], 200), cmd([erase("p4", SAL)], 210)],
+                 [ep("a", 2, readStart={"afterCommand": 0}), ep("b", 2, cursorFrom={"query": "a"})])
+single("Q66b", "two-page continuation, tx:1 erases p2 (page 1), tx:2 erases p4 (page 2)",
+       "page 2 per prefix: [([], p4 4), ([tx:1], p4 4), ([tx:1, tx:2], p4 M)]", Q66B_TWO2,
+       lambda r: (entry(r, "b") == [([], [row("p3", "3"), row("p4", "4")]), (["tx:1"], [row("p3", "3"), row("p4", "4")]),
+                                    (["tx:1", "tx:2"], [row("p3", "3"), row("p4", "M")])], entry(r, "b")))
+Q66B_CHAIN = case(P4 + [cmd([erase("p1", SAL)], 200), cmd([erase("p3", SAL)], 210)],
+                  [ep("a", readStart={"afterCommand": 0}), ep("b", cursorFrom={"query": "a"}), ep("c", cursorFrom={"query": "b"}),
+                   ep("d", cursorFrom={"query": "c"})])
+single("Q66b", "chained continuation: page 3 (c continues b continues a)", "[([], p3 3, p4 4), ([tx:1], p3 3, p4 4), ([tx:1, tx:2], p3 M, p4 4)]",
+       Q66B_CHAIN, lambda r: (entry(r, "c") == [([], [row("p3", "3"), row("p4", "4")]), (["tx:1"], [row("p3", "3"), row("p4", "4")]),
+                                                (["tx:1", "tx:2"], [row("p3", "M"), row("p4", "4")])], entry(r, "c")))
+single("Q66b", "chained continuation: page 4 (d continues c), unaffected", "plain: [p4 4]", Q66B_CHAIN,
+       lambda r: (entry(r, "d") == [("plain", [row("p4", "4")])], entry(r, "d")))
+single("Q66b", "chained continuation: page 2 (b), every prefix lists p3 as of that prefix", "[([], p2 2, p3 3, p4 4), ([tx:1], same), ([tx:1, tx:2], p3 M)]",
+       Q66B_CHAIN, lambda r: (entry(r, "b") == [([], [row("p2", "2"), row("p3", "3"), row("p4", "4")]),
+                                                (["tx:1"], [row("p2", "2"), row("p3", "3"), row("p4", "4")]),
+                                                (["tx:1", "tx:2"], [row("p2", "2"), row("p3", "M"), row("p4", "4")])], entry(r, "b")))
+# author's choice 1: the continuation's own readStart is not consulted (the cursor's prefix wins)
+Q66B_OWN = case(P4 + [cmd([erase("p1", SAL)], 200), cmd([erase("p2", SAL)], 210)],
+                [ep("a", readStart={"afterCommand": 0}), ep("b", cursorFrom={"query": "a"}, readStart={"afterCommand": 2})])
+single("Q66b", "continuation with its own later readStart, source in flight", "per the source's prefixes: [([], p2 2), ([tx:1], p2 2), ([tx:1, tx:2], p2 M)]",
+       Q66B_OWN, lambda r: ([(s, x[0]) for s, x in entry(r, "b")] == [([], row("p2", "2")), (["tx:1"], row("p2", "2")), (["tx:1", "tx:2"], row("p2", "M"))],
+                            entry(r, "b")))
+# the same choice when the source read had nothing in flight: page 1 was computed with every erasure seen, so page 2 must
+# be too (Q66b); a continuation whose own readStart precedes the erasure must not reopen the old value
+Q66B_PLAIN_SRC = case(P4 + [cmd([erase("p2", SAL)], 200)], [ep("a"), ep("b", cursorFrom={"query": "a"}, readStart={"afterCommand": 0})])
+single("Q66b", "continuation of a read with nothing in flight, own readStart before the erasure", "plain: [p2 M, p3 3, p4 4] (page 1's view)",
+       Q66B_PLAIN_SRC, lambda r: (entry(r, "b") == [("plain", [row("p2", "M"), row("p3", "3"), row("p4", "4")])], entry(r, "b")))
+# author's choice 2: a literal `cursor` token. The token is taken from the in-flight page a (it is the same in every
+# alternative), then continued without and with its own readStart.
+LIT_CMDS = P4 + [cmd([erase("p1", SAL), erase("p2", SAL)], 200)]
+LIT_SRC = case(LIT_CMDS, [ep("a", readStart={"afterCommand": 0})])
+_src = run("lit_source", LIT_SRC).get("report")
+LIT_TOKENS = sorted({alt["result"]["pages"][0]["nextCursor"] for alt in q(_src, "a")["inFlight"]["acceptable"]}) if _src else []
+score("Q66b", "literal token: page a's nextCursor is the same in every alternative", "recorded (a token cannot tell the prefixes apart)",
+      "OBSERVED", {"distinctTokens": len(LIT_TOKENS)})
+if len(LIT_TOKENS) == 1:
+    Q66B_LIT = case(LIT_CMDS, [ep("a", readStart={"afterCommand": 0}), ep("b", cursor=LIT_TOKENS[0])])
+    single("Q66b", "literal token from an in-flight page, no readStart", "per page a's prefixes: [([], p2 2, ...), ([tx:1], p2 M, ...)]",
+           Q66B_LIT, lambda r: (entry(r, "b") == [([], [row("p2", "2"), row("p3", "3"), row("p4", "4")]),
+                                                  (["tx:1"], [row("p2", "M"), row("p3", "3"), row("p4", "4")])], entry(r, "b")))
+    observe("Q66b", "literal token from an in-flight page, own readStart before the erasure", "recorded: alternatives from its own read",
+            case(LIT_CMDS, [ep("a", readStart={"afterCommand": 0}), ep("b", cursor=LIT_TOKENS[0], readStart={"afterCommand": 0})]),
+            lambda r: entry(r, "b"))
 
 # ------------------------------------------------------------------ Q52f: toDecimal(json, p, s, rounding)
 DEC = [  # (json, p, s, mode, expected decimal text or error id): the as-written reading rounded once (Q52f, Q22, Q43d)
@@ -337,6 +408,16 @@ if SELF_TEST:
            lambda r: (alternatives(r, "sum", "x")[0][0] == ["tx:1"], alternatives(r, "sum", "x")))
     single("ST", "ST Q66c other scope in flight", "scope s lists 4 alternatives (wrong)", SC,
            lambda r: (len(alternatives(r, "s", "x")) == 4, alternatives(r, "s", "x")))
+    single("ST", "ST Q66b unaffected page 2 listed in flight", "page b has inFlight (wrong: both prefixes agree)", Q66B_ONE,
+           lambda r: ("inFlight" in q(r, "b"), entry(r, "b")))
+    single("ST", "ST Q66b two-page: all-old prefix shows p4 marker", "([], p3 3, p4 M) first (wrong)", Q66B_TWO,
+           lambda r: (entry(r, "b")[0] == ([], [row("p3", "3"), row("p4", "M")]), entry(r, "b")))
+    single("ST", "ST Q66b two commits: page 2 plain", "plain (wrong)", Q66B_TWO2, lambda r: (entry(r, "b")[0][0] == "plain", entry(r, "b")))
+    single("ST", "ST Q66b chain: page 3 has two alternatives", "2 alternatives (wrong)", Q66B_CHAIN,
+           lambda r: (len(entry(r, "c")) == 2, entry(r, "c")))
+    single("ST", "ST Q66b own readStart: one plain page", "plain (wrong)", Q66B_OWN, lambda r: (entry(r, "b")[0][0] == "plain", entry(r, "b")))
+    single("ST", "ST Q66b plain source: page b an error", "an error (wrong)", Q66B_PLAIN_SRC,
+           lambda r: ("error" in q(r, "b"), entry(r, "b")))
     single("ST", "ST Q52f binary64 expansion", "json 2.675 half-up = 2.67 (wrong)",
            case(queries=[{"id": "q", "kind": "expr", "expr": ["toDecimal", J(2.675), 3, 2, "half-up"]}]),
            lambda r: ((res(r, "q") or {}).get("value") == "2.67", res(r, "q")))

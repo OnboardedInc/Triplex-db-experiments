@@ -1,0 +1,217 @@
+{
+ "commit": "45bfa59",
+ "oracleVersion": "0.4.3",
+ "files": [
+  {
+   "path": "lab/oracles/replay/RULES.md",
+   "sha256": "72419e3485bf59c146cc2f4e6193da01f9714cb74754bf3e5dd297c258d7d94f",
+   "sameOnVerifyO02": false,
+   "oracleSelfReport": null,
+   "author": true
+  },
+  {
+   "path": "lab/oracles/replay/SCHEMA.md",
+   "sha256": "17a91b573409931162fe6ae7e0c4ce19431f412232321351e920a5d2c2cd6112",
+   "sameOnVerifyO02": false,
+   "oracleSelfReport": null,
+   "author": true
+  },
+  {
+   "path": "lab/oracles/replay/__init__.py",
+   "sha256": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": true,
+   "author": true
+  },
+  {
+   "path": "lab/oracles/replay/__main__.py",
+   "sha256": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": true,
+   "author": true
+  },
+  {
+   "path": "lab/oracles/replay/cli.py",
+   "sha256": "1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": true,
+   "author": true
+  },
+  {
+   "path": "lab/oracles/replay/constraints.py",
+   "sha256": "9e1e9d7b1ca8046ca67520bbc4905b03ad3bd663c260a4ed0d2b6ca024a91a1d",
+   "sameOnVerifyO02": false,
+   "oracleSelfReport": true,
+   "author": true
+  },
+  {
+   "path": "lab/oracles/replay/entities.py",
+   "sha256": "e92308b6df7a0996a26fe129b9df07e058d8b0c84cff54f2690cd7c76fc871b3",
+   "sameOnVerifyO02": false,
+   "oracleSelfReport": true,
+   "author": true
+  },
+  {
+   "path": "lab/oracles/replay/errors.py",
+   "sha256": "c2260e1e06af38b2ce97246d5f9ff5626484dd0dfaf4afe409ddfcd6eee634df",
+   "sameOnVerifyO02": false,
+   "oracleSelfReport": true,
+   "author": true
+  },
+  {
+   "path": "lab/oracles/replay/exact.py",
+   "sha256": "4cfcf2c9af4b4ddf36f2218308685aff99d91416ac7f0d1dec053fb7a6e74d2a",
+   "sameOnVerifyO02": false,
+   "oracleSelfReport": true,
+   "author": true
+  },
+  {
+   "path": "lab/oracles/replay/examples/entity-mini.case.json",
+   "sha256": "7549f07299668500a311e9a5fc3eb80904731d0b5a7d626090a7657f53a8d667",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": null,
+   "author": true
+  },
+  {
+   "path": "lab/oracles/replay/examples/entity-mini.expected.json",
+   "sha256": "0b84669924777f64f1838fcc6382df3f2a625625f7a8d51130800cf21c95c71f",
+   "sameOnVerifyO02": false,
+   "oracleSelfReport": null,
+   "author": true
+  },
+  {
+   "path": "lab/oracles/replay/replay.py",
+   "sha256": "3dd06dd0c30930e00ce1665ae7e9f40afcf7e06fa8a37759a8c5e65345fe9016",
+   "sameOnVerifyO02": false,
+   "oracleSelfReport": true,
+   "author": true
+  },
+  {
+   "path": "lab/oracles/replay/run.py",
+   "sha256": "644a0b8379eaddb4b403ed0392e278ec32ca08db83b192624480ad5b864e4893",
+   "sameOnVerifyO02": false,
+   "oracleSelfReport": true,
+   "author": true
+  },
+  {
+   "path": "lab/oracles/replay/scale.py",
+   "sha256": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": true,
+   "author": true
+  },
+  {
+   "path": "lab/oracles/replay/selfcheck.py",
+   "sha256": "c1e0ae41cfe9bac7f2ed7f249715b5ae71e98f4d66e4ae152938b6d333c9418c",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": true,
+   "author": true
+  },
+  {
+   "path": "lab/oracles/replay/selfcheck_fixtures/freeze-ham-reference.mjs",
+   "sha256": "c533122597c940d69c8a101a1a175ba5e9d6ab62f1efdb2d5526c9f65a86a206",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": null,
+   "author": true
+  },
+  {
+   "path": "lab/oracles/replay/selfcheck_fixtures/ham-v2-reference.json",
+   "sha256": "d69c14f1abb236c3e1532ff95f1aba81b088fc5937ba82f9647e2e6a4e0407f2",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": null,
+   "author": true
+  },
+  {
+   "path": "lab/oracles/replay/tests/__init__.py",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": null,
+   "author": true
+  },
+  {
+   "path": "lab/oracles/replay/tests/helpers.py",
+   "sha256": "c9189d8518aec45d42b4be09d0f5bbce538000a8c66870e051d330bb54ec8524",
+   "sameOnVerifyO02": false,
+   "oracleSelfReport": null,
+   "author": true
+  },
+  {
+   "path": "lab/oracles/replay/tests/test_contract_section4.py",
+   "sha256": "733728579b94a20c766f5ccac2b73b3c71b15356c2dbb06f1cc323ab2e504aed",
+   "sameOnVerifyO02": false,
+   "oracleSelfReport": null,
+   "author": true
+  },
+  {
+   "path": "lab/oracles/replay/tests/test_entities.py",
+   "sha256": "562feac4b58c11e8fabb8e30fff85c41cd9562cbd05a94df3d8c3d8f19caffe6",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": null,
+   "author": true
+  },
+  {
+   "path": "lab/oracles/replay/tests/test_exact.py",
+   "sha256": "35aaf8384af0178e1fc929b94fe0e11a43aa64dbbe567bf50067658821b619b1",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": null,
+   "author": true
+  },
+  {
+   "path": "lab/oracles/replay/tests/test_replay.py",
+   "sha256": "6900d4fc9710e3248c476c036aba84565c53b4265b231867778d776668feb7b9",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": null,
+   "author": true
+  },
+  {
+   "path": "lab/oracles/replay/tests/test_rulings.py",
+   "sha256": "3997f66b01be8f697977911ec1fdf5209223d5310206657f7ed65c7ea106aea4",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": null,
+   "author": true
+  },
+  {
+   "path": "lab/oracles/replay/tests/test_scale_and_selfcheck.py",
+   "sha256": "6afcddbfa91b8ea593f524f885390b01f425c907aa103415f026ba5d1f5a432e",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": null,
+   "author": true
+  },
+  {
+   "path": "lab/oracles/replay/tests/test_values.py",
+   "sha256": "1070395875907bca8a46ab9b88fee0758a1b73aafe94b5b610b2117e2740d375",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": null,
+   "author": true
+  },
+  {
+   "path": "lab/oracles/replay/tests/test_views.py",
+   "sha256": "614658e9e679391ba901d20a6ba84f5609d1fd0d4d3c81a6cf30efbb3ee81d7e",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": null,
+   "author": true
+  },
+  {
+   "path": "lab/oracles/replay/values.py",
+   "sha256": "67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982",
+   "sameOnVerifyO02": true,
+   "oracleSelfReport": true,
+   "author": true
+  },
+  {
+   "path": "lab/oracles/replay/views.py",
+   "sha256": "2885d61864227c573a5a0eefcbcdcca2155469a018dbece628622e33d8dd1d32",
+   "sameOnVerifyO02": false,
+   "oracleSelfReport": true,
+   "author": true
+  }
+ ],
+ "count": 29,
+ "onlyInWorkingTree": [],
+ "onlyAtCommit": [],
+ "authorPathsMissingHere": [],
+ "allSameOnVerifyO02": false,
+ "selfReportedAllMatch": true,
+ "selfReported": 13,
+ "authorAllMatch": true
+}

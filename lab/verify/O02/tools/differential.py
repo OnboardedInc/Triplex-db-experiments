@@ -43,6 +43,12 @@ def features(case_path):
     text = json.dumps(c.get("queries") or [])
     if '"readStart"' in text and "erase" in found:
         found.add("Q52e in flight")
+        erase_commits = sum(1 for command in c.get("commands") or []
+                            if any(isinstance(o, dict) and o.get("op") == "erase" for o in command.get("operations") or []))
+        if erase_commits >= 2:
+            found.add("Q66a in flight, 2+ erasure commits")   # V-O04e
+    if '"cursorFrom"' in text or '"cursor"' in text:
+        found.add("Q66b cursor")                               # V-O04e
     if re.search(r'\["toDecimal", \{"type": "json", "value": [^}]*\}, -?\d+, -?\d+, "', text):
         found.add("Q52f toDecimal(json) rounding")
     return sorted(found)

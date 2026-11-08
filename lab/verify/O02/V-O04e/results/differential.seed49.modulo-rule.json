@@ -1,0 +1,297 @@
+{
+ "source": "lab/verify/O02/V-O04e/results/differential.seed49.json",
+ "rows": [
+  {
+   "case": "010_SUM_in_flight_across_one_commit_erasing_two_values.case.json",
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "ruleTextOnly": true,
+   "oldRefused": false,
+   "newRefused": false,
+   "queriesChangedBeyondRuleText": [],
+   "otherSectionsEqual": true
+  },
+  {
+   "case": "011_match_in_flight_across_that_commit.case.json",
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "ruleTextOnly": true,
+   "oldRefused": false,
+   "newRefused": false,
+   "queriesChangedBeyondRuleText": [],
+   "otherSectionsEqual": true
+  },
+  {
+   "case": "012_a_read_that_does_not_depend_on_the_in_flight_commit.case.json",
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "ruleTextOnly": true,
+   "oldRefused": false,
+   "newRefused": false,
+   "queriesChangedBeyondRuleText": [],
+   "otherSectionsEqual": true
+  },
+  {
+   "case": "013_1_in_flight_erasure_commit_acceptable_answers.case.json",
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "ruleTextOnly": true,
+   "oldRefused": false,
+   "newRefused": false,
+   "queriesChangedBeyondRuleText": [],
+   "otherSectionsEqual": true
+  },
+  {
+   "case": "014_2_in_flight_erasure_commits_acceptable_answers.case.json",
+   "features": [
+    "Q52e in flight",
+    "Q66a in flight, 2+ erasure commits",
+    "erase"
+   ],
+   "ruleTextOnly": false,
+   "oldRefused": false,
+   "newRefused": false,
+   "queriesChangedBeyondRuleText": [
+    "sum"
+   ],
+   "otherSectionsEqual": true
+  },
+  {
+   "case": "015_3_in_flight_erasure_commits_acceptable_answers.case.json",
+   "features": [
+    "Q52e in flight",
+    "Q66a in flight, 2+ erasure commits",
+    "erase"
+   ],
+   "ruleTextOnly": false,
+   "oldRefused": false,
+   "newRefused": false,
+   "queriesChangedBeyondRuleText": [
+    "sum"
+   ],
+   "otherSectionsEqual": true
+  },
+  {
+   "case": "016_3_commits_read_started_after_the_first.case.json",
+   "features": [
+    "Q52e in flight",
+    "Q66a in flight, 2+ erasure commits",
+    "erase"
+   ],
+   "ruleTextOnly": false,
+   "oldRefused": false,
+   "newRefused": false,
+   "queriesChangedBeyondRuleText": [
+    "sum"
+   ],
+   "otherSectionsEqual": true
+  },
+  {
+   "case": "017_scope_s_read_only_scope_s_s_erasure_is_in_flight.case.json",
+   "features": [
+    "Q52e in flight",
+    "Q66a in flight, 2+ erasure commits",
+    "erase"
+   ],
+   "ruleTextOnly": true,
+   "oldRefused": false,
+   "newRefused": false,
+   "queriesChangedBeyondRuleText": [],
+   "otherSectionsEqual": true
+  },
+  {
+   "case": "018_scope_t_read_only_scope_t_s_erasure_is_in_flight.case.json",
+   "features": [
+    "Q52e in flight",
+    "Q66a in flight, 2+ erasure commits",
+    "erase"
+   ],
+   "ruleTextOnly": true,
+   "oldRefused": false,
+   "newRefused": false,
+   "queriesChangedBeyondRuleText": [],
+   "otherSectionsEqual": true
+  },
+  {
+   "case": "019_continuation_of_an_in_flight_read_page_2_not_affected_.case.json",
+   "features": [
+    "Q52e in flight",
+    "Q66b cursor",
+    "erase"
+   ],
+   "ruleTextOnly": false,
+   "oldRefused": true,
+   "newRefused": false,
+   "queriesChangedBeyondRuleText": null,
+   "otherSectionsEqual": null
+  },
+  {
+   "case": "020_two_page_continuation_one_commit_erasing_p2_and_p4.case.json",
+   "features": [
+    "Q52e in flight",
+    "Q66b cursor",
+    "erase"
+   ],
+   "ruleTextOnly": false,
+   "oldRefused": true,
+   "newRefused": false,
+   "queriesChangedBeyondRuleText": null,
+   "otherSectionsEqual": null
+  },
+  {
+   "case": "021_two_page_continuation_tx_1_erases_p2_page_1_tx_2_erases_p4_page_2_.case.json",
+   "features": [
+    "Q52e in flight",
+    "Q66a in flight, 2+ erasure commits",
+    "Q66b cursor",
+    "erase"
+   ],
+   "ruleTextOnly": false,
+   "oldRefused": true,
+   "newRefused": false,
+   "queriesChangedBeyondRuleText": null,
+   "otherSectionsEqual": null
+  },
+  {
+   "case": "022_chained_continuation_page_3_c_continues_b_continues_a_.case.json",
+   "features": [
+    "Q52e in flight",
+    "Q66a in flight, 2+ erasure commits",
+    "Q66b cursor",
+    "erase"
+   ],
+   "ruleTextOnly": false,
+   "oldRefused": true,
+   "newRefused": false,
+   "queriesChangedBeyondRuleText": null,
+   "otherSectionsEqual": null
+  },
+  {
+   "case": "023_chained_continuation_page_4_d_continues_c_unaffected.case.json",
+   "features": [
+    "Q52e in flight",
+    "Q66a in flight, 2+ erasure commits",
+    "Q66b cursor",
+    "erase"
+   ],
+   "ruleTextOnly": false,
+   "oldRefused": true,
+   "newRefused": false,
+   "queriesChangedBeyondRuleText": null,
+   "otherSectionsEqual": null
+  },
+  {
+   "case": "024_chained_continuation_page_2_b_every_prefix_lists_p3_as_of_that_prefix.case.json",
+   "features": [
+    "Q52e in flight",
+    "Q66a in flight, 2+ erasure commits",
+    "Q66b cursor",
+    "erase"
+   ],
+   "ruleTextOnly": false,
+   "oldRefused": true,
+   "newRefused": false,
+   "queriesChangedBeyondRuleText": null,
+   "otherSectionsEqual": null
+  },
+  {
+   "case": "025_continuation_with_its_own_later_readStart_source_in_flight.case.json",
+   "features": [
+    "Q52e in flight",
+    "Q66a in flight, 2+ erasure commits",
+    "Q66b cursor",
+    "erase"
+   ],
+   "ruleTextOnly": false,
+   "oldRefused": true,
+   "newRefused": false,
+   "queriesChangedBeyondRuleText": null,
+   "otherSectionsEqual": null
+  },
+  {
+   "case": "026_continuation_of_a_read_with_nothing_in_flight_own_readStart_before_the_erasure.case.json",
+   "features": [
+    "Q52e in flight",
+    "Q66b cursor",
+    "erase"
+   ],
+   "ruleTextOnly": true,
+   "oldRefused": false,
+   "newRefused": false,
+   "queriesChangedBeyondRuleText": [],
+   "otherSectionsEqual": true
+  },
+  {
+   "case": "028_literal_token_from_an_in_flight_page_no_readStart.case.json",
+   "features": [
+    "Q52e in flight",
+    "Q66b cursor",
+    "erase"
+   ],
+   "ruleTextOnly": true,
+   "oldRefused": false,
+   "newRefused": false,
+   "queriesChangedBeyondRuleText": [],
+   "otherSectionsEqual": true
+  },
+  {
+   "case": "029_literal_token_from_an_in_flight_page_own_readStart_before_the_erasure.case.json",
+   "features": [
+    "Q52e in flight",
+    "Q66b cursor",
+    "erase"
+   ],
+   "ruleTextOnly": true,
+   "oldRefused": false,
+   "newRefused": false,
+   "queriesChangedBeyondRuleText": [],
+   "otherSectionsEqual": true
+  },
+  {
+   "case": "lit_source.case.json",
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "ruleTextOnly": true,
+   "oldRefused": false,
+   "newRefused": false,
+   "queriesChangedBeyondRuleText": [],
+   "otherSectionsEqual": true
+  },
+  {
+   "case": "computed_answer_over_an_in_flight_value.case.json",
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "ruleTextOnly": true,
+   "oldRefused": false,
+   "newRefused": false,
+   "queriesChangedBeyondRuleText": [],
+   "otherSectionsEqual": true
+  },
+  {
+   "case": "in_flight_read_accepts_the_old_value_or_the_marker.case.json",
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "ruleTextOnly": true,
+   "oldRefused": false,
+   "newRefused": false,
+   "queriesChangedBeyondRuleText": [],
+   "otherSectionsEqual": true
+  }
+ ],
+ "ruleTextOnly": 12,
+ "total": 22
+}

@@ -1,0 +1,302 @@
+{
+ "old": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/at3e38a61",
+ "new": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/at45bfa59",
+ "cases": 780,
+ "random": 400,
+ "seed": 49,
+ "identical": 753,
+ "bothRefused": 5,
+ "different": 22,
+ "differentByFeature": {
+  "Q52e in flight": 7,
+  "Q52e in flight + Q66a in flight, 2+ erasure commits": 5,
+  "Q52e in flight + Q66b cursor": 5,
+  "Q52e in flight + Q66a in flight, 2+ erasure commits + Q66b cursor": 5
+ },
+ "rows": [
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52e43/010_SUM_in_flight_across_one_commit_erasing_two_values.case.json",
+   "path": "$.queries[0].inFlight.rule",
+   "old": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers (RULINGS Q52e)",
+   "new": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers, and the commits in position order, so a prefix of them (RULINGS Q52e, Q66a)",
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52e43/011_match_in_flight_across_that_commit.case.json",
+   "path": "$.queries[0].inFlight.rule",
+   "old": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers (RULINGS Q52e)",
+   "new": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers, and the commits in position order, so a prefix of them (RULINGS Q52e, Q66a)",
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52e43/012_a_read_that_does_not_depend_on_the_in_flight_commit.case.json",
+   "path": "$.queries[0].inFlight.rule",
+   "old": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers (RULINGS Q52e)",
+   "new": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers, and the commits in position order, so a prefix of them (RULINGS Q52e, Q66a)",
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52e43/013_1_in_flight_erasure_commit_acceptable_answers.case.json",
+   "path": "$.queries[0].inFlight.rule",
+   "old": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers (RULINGS Q52e)",
+   "new": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers, and the commits in position order, so a prefix of them (RULINGS Q52e, Q66a)",
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52e43/014_2_in_flight_erasure_commits_acceptable_answers.case.json",
+   "path": "$.queries[0].inFlight.acceptable.len",
+   "old": 4,
+   "new": 3,
+   "features": [
+    "Q52e in flight",
+    "Q66a in flight, 2+ erasure commits",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52e43/015_3_in_flight_erasure_commits_acceptable_answers.case.json",
+   "path": "$.queries[0].inFlight.acceptable.len",
+   "old": 8,
+   "new": 4,
+   "features": [
+    "Q52e in flight",
+    "Q66a in flight, 2+ erasure commits",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52e43/016_3_commits_read_started_after_the_first.case.json",
+   "path": "$.queries[0].inFlight.acceptable.len",
+   "old": 4,
+   "new": 3,
+   "features": [
+    "Q52e in flight",
+    "Q66a in flight, 2+ erasure commits",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52e43/017_scope_s_read_only_scope_s_s_erasure_is_in_flight.case.json",
+   "path": "$.queries[0].inFlight.rule",
+   "old": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers (RULINGS Q52e)",
+   "new": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers, and the commits in position order, so a prefix of them (RULINGS Q52e, Q66a)",
+   "features": [
+    "Q52e in flight",
+    "Q66a in flight, 2+ erasure commits",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52e43/018_scope_t_read_only_scope_t_s_erasure_is_in_flight.case.json",
+   "path": "$.queries[0].inFlight.rule",
+   "old": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers (RULINGS Q52e)",
+   "new": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers, and the commits in position order, so a prefix of them (RULINGS Q52e, Q66a)",
+   "features": [
+    "Q52e in flight",
+    "Q66a in flight, 2+ erasure commits",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52e43/019_continuation_of_an_in_flight_read_page_2_not_affected_.case.json",
+   "path": "$.caseId",
+   "old": "<absent>",
+   "new": "v-o04d/q52",
+   "features": [
+    "Q52e in flight",
+    "Q66b cursor",
+    "erase"
+   ],
+   "oldRefused": true,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52e43/020_two_page_continuation_one_commit_erasing_p2_and_p4.case.json",
+   "path": "$.caseId",
+   "old": "<absent>",
+   "new": "v-o04d/q52",
+   "features": [
+    "Q52e in flight",
+    "Q66b cursor",
+    "erase"
+   ],
+   "oldRefused": true,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52e43/021_two_page_continuation_tx_1_erases_p2_page_1_tx_2_erases_p4_page_2_.case.json",
+   "path": "$.caseId",
+   "old": "<absent>",
+   "new": "v-o04d/q52",
+   "features": [
+    "Q52e in flight",
+    "Q66a in flight, 2+ erasure commits",
+    "Q66b cursor",
+    "erase"
+   ],
+   "oldRefused": true,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52e43/022_chained_continuation_page_3_c_continues_b_continues_a_.case.json",
+   "path": "$.caseId",
+   "old": "<absent>",
+   "new": "v-o04d/q52",
+   "features": [
+    "Q52e in flight",
+    "Q66a in flight, 2+ erasure commits",
+    "Q66b cursor",
+    "erase"
+   ],
+   "oldRefused": true,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52e43/023_chained_continuation_page_4_d_continues_c_unaffected.case.json",
+   "path": "$.caseId",
+   "old": "<absent>",
+   "new": "v-o04d/q52",
+   "features": [
+    "Q52e in flight",
+    "Q66a in flight, 2+ erasure commits",
+    "Q66b cursor",
+    "erase"
+   ],
+   "oldRefused": true,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52e43/024_chained_continuation_page_2_b_every_prefix_lists_p3_as_of_that_prefix.case.json",
+   "path": "$.caseId",
+   "old": "<absent>",
+   "new": "v-o04d/q52",
+   "features": [
+    "Q52e in flight",
+    "Q66a in flight, 2+ erasure commits",
+    "Q66b cursor",
+    "erase"
+   ],
+   "oldRefused": true,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52e43/025_continuation_with_its_own_later_readStart_source_in_flight.case.json",
+   "path": "$.caseId",
+   "old": "<absent>",
+   "new": "v-o04d/q52",
+   "features": [
+    "Q52e in flight",
+    "Q66a in flight, 2+ erasure commits",
+    "Q66b cursor",
+    "erase"
+   ],
+   "oldRefused": true,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52e43/026_continuation_of_a_read_with_nothing_in_flight_own_readStart_before_the_erasure.case.json",
+   "path": "$.queries[1].inFlight.rule",
+   "old": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers (RULINGS Q52e)",
+   "new": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers, and the commits in position order, so a prefix of them (RULINGS Q52e, Q66a)",
+   "features": [
+    "Q52e in flight",
+    "Q66b cursor",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52e43/028_literal_token_from_an_in_flight_page_no_readStart.case.json",
+   "path": "$.queries[0].inFlight.rule",
+   "old": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers (RULINGS Q52e)",
+   "new": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers, and the commits in position order, so a prefix of them (RULINGS Q52e, Q66a)",
+   "features": [
+    "Q52e in flight",
+    "Q66b cursor",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52e43/029_literal_token_from_an_in_flight_page_own_readStart_before_the_erasure.case.json",
+   "path": "$.queries[0].inFlight.rule",
+   "old": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers (RULINGS Q52e)",
+   "new": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers, and the commits in position order, so a prefix of them (RULINGS Q52e, Q66a)",
+   "features": [
+    "Q52e in flight",
+    "Q66b cursor",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52e43/lit_source.case.json",
+   "path": "$.queries[0].inFlight.rule",
+   "old": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers (RULINGS Q52e)",
+   "new": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers, and the commits in position order, so a prefix of them (RULINGS Q52e, Q66a)",
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q49e43/computed_answer_over_an_in_flight_value.case.json",
+   "path": "$.queries[0].inFlight.rule",
+   "old": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers (RULINGS Q52e)",
+   "new": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers, and the commits in position order, so a prefix of them (RULINGS Q52e, Q66a)",
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q49e43/in_flight_read_accepts_the_old_value_or_the_marker.case.json",
+   "path": "$.queries[0].inFlight.rule",
+   "old": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers (RULINGS Q52e)",
+   "new": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers, and the commits in position order, so a prefix of them (RULINGS Q52e, Q66a)",
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  }
+ ]
+}
