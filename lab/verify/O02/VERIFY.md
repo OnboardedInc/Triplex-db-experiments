@@ -163,3 +163,18 @@ here). Merged to main as 4591715.
   markers), so both gaps matter for future cases. Ruled Q70f, Q70g; fixed in 0.4.6 before any pin.
 - Evidence: verify/O02 4fc48af, lab/verify/O02/V-O04f/results/ (at-0.4.3/ for the new rows); scratch tree atacf9fce kept until 0.4.6 is
   checked.
+
+## V-O04g: O-REPLAY 0.4.7 at 91ba352: every Q70a-k row passes; two journal continuations still mix (F11, F12); one crash (F13) (saved by the orchestrator, 2026-11-08 02:20Z)
+- probe_q52 with V-O04g rows: 66 probes, 61 MATCH, 0 WRONG, 5 OBSERVED; self-test 28/28; 11 new rows fail against 0.4.5. Differential seed
+  49: 801 cases, 783 identical, 5 refused by both, 13 different (3 Q70f, 3 Q70g/i, 6 Q70j/k, 1 F13 crash in both versions; the cut-scoped
+  control byte-identical query by query); seed 4949 800/800. probe_q49 85/85, probe_035 119/119, probe_delta_033 20/20, unit 378/378,
+  self-check 61/61, converters 0 differences, exactly four refusal sites (entities.py:61, run.py:53, run.py:657, views.py:129). 29/29
+  hashes match hashes.0.4.7.txt; 13/13 self-report.
+- F11: `transactionsForEntity` pages are not linked: page 1 (limit 1, snapshotPosition 2, readStart before tx:2) gives two prefixes and
+  nextBeforePosition 2; page 2 with `beforePosition 2` and no readStart gives the post-erasure value only, so tx:2 is half-seen.
+- F12: `continued_read` matches only a numeric `after` lexeme while `q_transactions` accepts anything `int()` parses, so `after: "1"`
+  skips Q70g and forces a mix.
+- F13 (pre-existing): `after: 1.0` raises ValueError at views.py:280; traceback, exit 1 (the FAIL code), no output.
+- Enumeration of every continuation and scope route is in the verifier's report (find pages: no continuation; cursorFrom on other kinds
+  takes the named read's view; history with a cut silently ignores a `scope` field). Evidence: verify/O02 9984cdc,
+  lab/verify/O02/V-O04g/results/; scratch tree at91ba352 kept. Ruled Q70l, Q70m.
