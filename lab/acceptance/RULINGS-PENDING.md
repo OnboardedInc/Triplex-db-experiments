@@ -33,3 +33,57 @@ These move into RULINGS.md when the contract version that compiles them is built
 | Q64d Q63 | Compile Q63b (P1 through broker-fed replicas) into COMPOSITION.experimentDirections and Q63d (parameterised SQL for seeders and appliers) as a rule in 0.3.10. | Q63 |
 | Q64e slots.json | Keep it read but not hashed; an image change still fails generation until the pin moves in a contract version. | Q61i |
 | Q64f pending sub-ids | The orchestrator moves sub-id rows together with their compiled section; 0.3.10 adds a check that a pending sub-id never also appears as a RULINGS.md row, while still allowing a pending sub-id (Q51b) under a compiled base. | Q47d |
+
+## Q65: EXP-E01 on contract 0.3.9
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q65a O-CONTRACT runner | O-CONTRACT gets an `oracleRunners` entry run from the authority's files (Q59e): a reference-model entry point in build_contract.py that answers one composition-identity case as canonical JSON. Without it G10.composition.identity-bound, a prerequisite of every claim, can never run. | Q61c |
+| Q65b buildSpecSha256 | sha256 of the canonical JSON of {format, argv, outputs, run}. | Q61f |
+| Q65c case-result/2 selection | A case reached by several select entries records the first select entry in contract order. | Q61e |
+| Q65d build-manifest/2 packages | "Each built package" is the parent directory of each `dist/` output. | Q61f |
+| Q65e build spec | E01's proposal (lab/config/build.json on exp/E01-claim-evaluator: `pnpm install --offline --frozen-lockfile --store-dir <repo>/.pnpm-store` then the five package builds in dependency order; outputs the five dist/ directories; run `node packages/qualification/workloads/obl-case.ts --case {case} --mode {mode}`) is pinned in 0.3.10 once `obl-case.ts` exists. | Q64a |
+| Q65f executing OBL gate | The missing piece for any QUALIFIED claim is an executing `gate.mjs OBL` with `obl-case.ts`, a fault injector that writes fault-witness/1 records, and the PAIR-0 paired-rounds runner from EXP-M01. One experiment (EXP-G03) builds it after EXP-M01 lands. | Q55a |
+
+## Q66: EXP-O04b O-REPLAY 0.4.2 limits
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q66a several erasures in flight | Erasure commits become visible in position order, so a read that started before n in-flight erasure commits in its scope sees a prefix of them: the acceptable answers are the n + 1 prefixes (none, the first, the first two, ...), not all 2^n subsets. | Q52e; Q31 positions and the resolved prefix |
+| Q66b cursor over an in-flight read | A continuation cursor carries the erasure prefix its page was computed with, and every later page answers with that same prefix; the oracle answers `cursorFrom` on an in-flight entry per prefix instead of refusing. | Q52e; G10.cursor.stable |
+| Q66c scope | Only erasures in the read's own scope are in flight; erasures in other scopes always apply. Confirmed. | scopes are independent sources |
+| Q66d explicit text conversion | The explicitly converted half of DR-JSON-STRING-TEXT is a lane obligation; the oracle does not model text-to-decimal conversion. Confirmed. | Q49e |
+
+## Q67: Codex round 8 on contract 0.3.9 and claim.mjs
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q67a blockers stay | Every blocker stays until EXP-G03's executing gate exists; manifests, runners, build spec, frozen trace and A0 controls are pinned only through contract versions. | round 8 finding 1 |
+| Q67b execution identity | An execution's identity is its source tree, build spec, lockfile, toolchain versions, runner and config hashes per instance; executions are keyed by instance, never by output hash. | finding 2 |
+| Q67c reset during a query | Single-request read surfaces read the replica marker in the same request as the answer. Multi-request surfaces (Datalog, executor) use replica incarnation fencing: every replay begins by writing a new incarnation id, and an answer is accepted only if (incarnation, marker) is equal before and after. The reset-during-query interleaving is an independently authored case. | finding 4 |
+| Q67d P3 timing | Both arms enumerate the final published source prefix from the source's own record and timestamp actual publication (broker: watermark publication; engine as source: commit resolution); ACK records are reconciled afterwards; a late or lost ACK is never a feed defect. | finding 5; Q55d |
+| Q67e isolation | Builds and both arms run isolated from evaluator, oracle, evidence and control storage; oracle bytes run from an evaluator-owned read-only copy re-hashed before every invocation; offline verdicts stay DIAGNOSTIC. | finding 6 |
+| Q67f PAIR-0 admission | Admission recomputes every paired decision, noise grade, offered-command accounting and bar from retained per-round histograms, signals and events; the number of rounds must equal a registered look (8, 12, 18 or 24); the RED-window and committed-only counterexamples execute against admission. | finding 7; Q60 |
+| Q67g placement | Shared workload identity is separate from each arm's placement; a duet needs equal capacity, equal regime and disjoint cpusets; slots are per arm; under cpusets the per-core denominator is the cpuset size. | finding 8; R22 |
+| Q67h error representation | One representation: `_tag` "BasisNotAvailable" or "ReplicaUnavailable" with {required, observed, replica}; `cause` is optional; core gains these error classes and adapters return them. | finding 9; Q58a |
+| Q67i comparators | case-result/2 is recomputed with its declared comparator on retained raw objects; byte equality applies only to CMP-EXACT. | finding 10; Q61e |
+| Q67j promotion | Claim kind is preserved and promotion prerequisites (GATE-BROKER-HARDENING and others) are enforced mechanically; until supported, promotion qualification is rejected explicitly. | finding 11; Q62b |
+
+## Q68: R24 current-value path and release sweep (lab/research/R24-current-path-and-sweep.md; provisional)
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q68a P4 design | P4's fast path is one current structure holding live facts plus facts retired after a retention horizon H, served at basis B only when H <= B <= W (W its applied watermark), else the history path. The first copy lives in the broker, written with the frame (H1); engines get a smaller copy in the same transaction or guarded update (XTDB `tx_current`, QLever `cur` graph) for list and native queries. EXP-P4 measures arms A0, X1, X2, Q1, H1 per R24 section 6, exactness gate first. | R24 sections 0, 6 |
+| Q68b horizon | Default H trails head by one hour of positions (the 15% basis bucket); a pinned sweep or reconcile holds H at or below its pin; the broker refuses a new pin that would make H trail head by more than 24 hours. | R24 open question 1 |
+| Q68c sweep publication | A sweep page may publish up to 64 results in one frame: one atomic outbox commit per frame, each result its own work item with its own delivery identity (Q38f). | R24 open question 6; TARGETS 1.1 P5 item 3 |
+| Q68d host-served reads | Reads served from the broker count for P1 and P4 bars when the receipt records route = host and the per-core denominator includes broker and kernel CPU. | R24 open question 7; TARGETS 4.1 item 5 |
+| Q68e expired facts | Facts whose valid_to has passed retire from the current structure through a valid-time horizon; EXP-P4 measures the 20% expired path. | R24 open question 5 |
+| Q68f erasure of current copies | Every current copy (broker store, `tx_current`, `cur` graph) is covered by Q58e's per-subject keys; a QLever `cur` graph holds no personal-data literals (keys and references only, values from the encrypted host store) unless EXP-P4 shows a reindex-free erasure path. | TARGETS 7 item 3; R24 open question 4 |
+| Q68g read-path change first | `FOR ALL VALID_TIME` on XTDB current reads forfeits the engine's current/historical split (R24 section 1); EXP-P4 measures X1 (default temporal bounds) in both a fresh and an aged regime before any write-path change. | R24 section 1 |
+
+## Q69: EXP-M01 PAIR-0 decisions and the measurement window
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q69a measurement window | The pool cannot hold two 3.5 GiB slots beside both dev residents, so a measurement window stops one dev resident for its duration (qlever-dev by default, recreated fresh after; xtdb-dev when the window is QLever's) once no running agent depends on it. The orchestrator announces the window in STATE; no agent starts engine work during it; the lease (Q60h) enforces it. | EXP-M01 section 1 |
+| Q69b INVALID verdict | Accepted: INVALID for protocol departures (development overrides, wrong regime, no lease, an unregistered round count), separate from INVALID_NOISE. | EXP-M01 |
+| Q69c A/A in A/B mode | Accepted provisionally: A/B windows grade from the all-round s_d (conservative); acceptance-level claims add a second pair of container lifetimes with roles swapped (R22 open question 12). | R22 1.3 |
+| Q69d continuous trace | Accepted for duets (both arms see the same content at the same time); ABBA fallback runs keep per-round window randomization. | R22 1.3 |
+| Q69e live composition | The live A/A uses `public-queued`, matching EXP-N01's A0. | EXP-N01 |
+| Q69f fallback series | `screening-r4` (4x the steady rate, no bursts) is pre-registered now as the fallback screening series, used only if the burst series makes commitAll p50 NOT_ESTIMABLE in the A/A run. | Q60g |
+| Q69g calibration thresholds | Thresholds stay as pre-registered; a passive recorder (signals every 10 s, calibration every 10 minutes) runs for 7 days to set them (R22 4.1), started after EXP-M01 merges. | R22 4.1 |

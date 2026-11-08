@@ -58,3 +58,22 @@ faultPoint?}]; build spec `lab/config/build.json` {argv, outputs, run} with `{ca
 Contract source for `qualify`; verifierRegistry entries; oracle runners; case-manifest field pins; case-result/1 extension (mode, rep,
 comparator, inputSha256); build spec into the contract; workload identity only for CR-NS and CR-GS; frozen trace pin; image pins into the
 contract; retained fault witnesses; A0 side verified through the registry's measuredBy.
+
+## On contract 0.3.9 (head e2a082e on merge 0042746 of main 639264e; 0.3.8 pass 46bcb62; saved 2026-11-08 00:44Z)
+- 107/107 tests (`node --test lab/bin/test/*.test.mjs`); --verify exits 0; nothing under lab/acceptance edited; gate.mjs keeps the 10-line
+  --dry-run block (adds the GS gate to its allowed list).
+- Agreement: claim_ref.py records every admit_claim call with inputs, executor slots and every executor call in order; the JS admitCore must
+  make the same calls in the same order and reach the same verdict. 0.3.8: 40/40 calls (5 QUALIFIED, 35 DIAGNOSTIC), 4,728 executor calls.
+  0.3.9: 59/59 (7 QUALIFIED, 52 DIAGNOSTIC; includes CX-R7-INVENTED-EVIDENCE, -SELECTION-OVERREACH, -RELABELLED-CONTROL), 10,712 executor calls.
+  Documents: DIAGNOSTIC on all 63. No disagreement; where the lab differs it is stricter or fails closed (A0's own position and identity
+  runs failing: PREREQ-FAILED; `.gitattributes`-altered archive: CHECKOUT-MISMATCH; build edited by an earlier process: BUILD-TAMPERED; a
+  comparator passing on different bytes: CASE-RECORD-INEXPRESSIBLE; a null frozenTrace override or an A0 entry without binarySha256: DIAGNOSTIC
+  where Python raises).
+- 0.3.9 ported: admit_claim with overrides, qualification_run, case_entry_ok, fault_witness_ok, paired_ok, registered_acceptance (null
+  buildSpec fails first; image digests against imagePins; A0 measuredBy accepted with kind a0; workload and PAIR_0 measure_pair for CR-NS and
+  CR-GS only; a fault-witness/1 per faultPoint injection; an unpinned oracle accepted only if COMPILED). Executor reads buildSpec,
+  oracleRunners, oracleAnswerRule, caseManifest, imagePins, writerTrace.generator.frozen, measurementProtocol; writes build-manifest/2 and
+  case-result/2. Honest nulls: no fault injector (every faultPoint case fails closed), no PAIR_0 runner (every CR-NS/CR-GS claim PAIRED-NOT-RUN).
+  Offline positive G10.scope.shared-collision: core QUALIFIED with 64 case-result/2 comparisons and the A0 rebuild reproducing binarySha256;
+  verdict DIAGNOSTIC (GATE-NOT-RUN). No path to QUALIFIED without a gate run.
+- Build spec proposal (Q64a, ruled Q65e) in lab/config/build.json on the branch; questions ruled Q65a-d; the executing OBL gate is Q65f.

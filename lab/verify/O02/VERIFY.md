@@ -109,3 +109,23 @@ here). Merged to main as 4591715.
   different erasure instants refuse (Q52c). Q56h holds: all probe values synthetic.
 - Merge note: merging the oracle alone breaks `--verify` (Q45a pinned O-REPLAY files differ from the tree: RULES.md, SCHEMA.md,
   constraints.py), so the merge and the pin move land together in contract 0.3.8 on branch contract/0.3.8.
+
+## V-O04d: O-REPLAY 0.4.2 at 3e38a61: FIX-FIRST on the in-flight answer set (saved by the orchestrator, 2026-11-08 01:11Z)
+- F5: with two or more erasure commits in flight 0.4.2 lists every subset (2^n), not the n + 1 prefixes in position order (Q66a). Case p1 = 1,
+  p2 = 2, p3 = 4 erased one per commit (tx:1, tx:2, tx:3): one commit PASS ([] 7, [tx:1] 6); two commits list 4 alternatives including [tx:2] 5;
+  three commits list 8 including [tx:2] 5, [tx:3] 3, [tx:1, tx:3] 2, [tx:2, tx:3] 1; a read started after tx:1 lists [tx:3] 2. Cause: run.py
+  run_queries loops `for mask in range(1 << len(pending))`; RULES.md R-ERA-6 says every combination is listed. Fix: iterate `seen =
+  pending[:k]` for k = 0..n (in_flight_erasures already returns publication order) and update R-ERA-6.
+- F6: `cursorFrom` on an in-flight entry exits 2 ("malformed case: cursorFrom names unknown or failed query"); 0.4.1 answered the same case. Q66b
+  requires per-prefix answers; at minimum a typed X-NOT-MODELED refusal. Same code path as F5.
+- Passes: Q52a (COUNT distinct with two erased = 3; assertion count 5; valueSupports marker group count 2); Q52b (asc [p3, p2, p6, p1, p4, p5, p7],
+  desc [p2, p3, p6, p1, p4, p5, p7]); Q52c (marker(200) for 200 and 300; card-many [pub, marker(500)]); Q52d (erased dangling reference skipped;
+  readable control rejected E-CONSTRAINT); Q52e single commit ([([], 7), ([tx:1], 4)]); Q66c own scope only; Q52f 11/11 (2.675 half-up 2.68; 2.665
+  half-even 2.66; 0.15 half-even 0.2; 9.995 half-up E-DECIMAL-OVERFLOW; no mode E-DECIMAL-FRACTION; string E-INVALID-VALUE); Q52g (`erasure`,
+  mixed, preconditions each E-INVALID-VALUE, nothing applied). Only three X-NOT-MODELED raise sites (entities.py:61, run.py:53, views.py:129).
+- Counts: probe_q52 35 probes, 31 MATCH, 3 WRONG-ANSWER (Q66a), 1 OBSERVED (Q66b), self-test 10/10; probe_q49 85/85 (15/15); probe_035 119/119
+  (13/13); probe_delta_033 20/20; unit 370/370; self-check 61/61; converters 0 item differences from V-O04b. Differential 0.4.1 against 0.4.2:
+  seed 49 767 cases (722 identical, 5 refused by both, 40 different), probe_q52 35 (3, 0, 32), seed 4949 800/800 identical; all 72 differences on
+  Q52 shapes (13 Q52a-d, 12 Q52e including the F6 cursor case, 8 Q52f, 7 Q52g in seed 49), none from Q56f.
+- Hash table of 29 files at 3e38a61 matches the author's (12 changed against 0.4.1, equal to git diff --stat). Verifier commit 403afe1 on
+  verify/O02; tools lab/verify/O02/tools/probe_q52.py (new), probe_q49.py, probe_035.py, differential.py; results lab/verify/O02/V-O04d/results/.
