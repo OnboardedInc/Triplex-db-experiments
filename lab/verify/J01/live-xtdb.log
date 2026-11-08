@@ -1,0 +1,71 @@
+xtdb/a0: 20 exact boundary/decimal-string/long-text values at commit
+xtdb/a0: read-your-own-write at exact valid/recorded cut
+xtdb/a0: retract/replacement, old cut stability, half-open valid interval, history
+xtdb/a0: typed stale precondition and duplicate command preserves original receipt
+xtdb/a0: journal exact changes, resumable feed, dependency and Datalog at old cut
+xtdb/a0: lost ACK after durable write resolves through operation receipt
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'WriteError'
+- 'TransactionOutcomeUnknown'
+
+    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-j01/lab/verify/J01/live.mjs:84:10 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 'WriteError',
+  expected: 'TransactionOutcomeUnknown',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+xtdb/compact: 20 exact boundary/decimal-string/long-text values at commit
+xtdb/compact: read-your-own-write at exact valid/recorded cut
+xtdb/compact: retract/replacement, old cut stability, half-open valid interval, history
+xtdb/compact: typed stale precondition and duplicate command preserves original receipt
+xtdb/compact: journal exact changes, resumable feed, dependency and Datalog at old cut
+xtdb/compact: lost ACK after durable write resolves through operation receipt
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'WriteError'
+- 'TransactionOutcomeUnknown'
+
+    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-j01/lab/verify/J01/live.mjs:84:10 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 'WriteError',
+  expected: 'TransactionOutcomeUnknown',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+{
+  "lane": "xtdb",
+  "checks": [
+    [
+      "20 exact boundary/decimal-string/long-text values at commit",
+      "read-your-own-write at exact valid/recorded cut",
+      "retract/replacement, old cut stability, half-open valid interval, history",
+      "typed stale precondition and duplicate command preserves original receipt",
+      "journal exact changes, resumable feed, dependency and Datalog at old cut",
+      "lost ACK after durable write resolves through operation receipt"
+    ],
+    [
+      "20 exact boundary/decimal-string/long-text values at commit",
+      "read-your-own-write at exact valid/recorded cut",
+      "retract/replacement, old cut stability, half-open valid interval, history",
+      "typed stale precondition and duplicate command preserves original receipt",
+      "journal exact changes, resumable feed, dependency and Datalog at old cut",
+      "lost ACK after durable write resolves through operation receipt"
+    ]
+  ],
+  "failures": [
+    {
+      "encoding": "a0",
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'WriteError'\n- 'TransactionOutcomeUnknown'\n"
+    },
+    {
+      "encoding": "compact",
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'WriteError'\n- 'TransactionOutcomeUnknown'\n"
+    }
+  ]
+}

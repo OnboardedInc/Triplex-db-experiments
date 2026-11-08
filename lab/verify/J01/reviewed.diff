@@ -1,0 +1,403 @@
+diff --git a/packages/qlever/src/QleverStorageAdapter.ts b/packages/qlever/src/QleverStorageAdapter.ts
+index 9c3989a..2ad954d 100644
+--- a/packages/qlever/src/QleverStorageAdapter.ts
++++ b/packages/qlever/src/QleverStorageAdapter.ts
+@@ -21,7 +21,8 @@ import {
+   literal as lit,
+   packValue,
+   decodeRow,
+-  rowFields,
++  encodedRowFields,
++  type QleverCommitEncoding,
+   numericOrderKey as order,
+   numericFromOrderKey,
+ } from "./rdf.js";
+@@ -79,8 +80,13 @@ export const makeQleverStorageAdapter = (
+     readonly maxRetries?: number;
+     readonly resolutionTimeoutMs?: number;
+     readonly admissionQueue?: boolean;
++    /** EXP-J01: default `a0`; `compact` omits never-read channels (rdf.ts UNREAD_CHANNELS). */
++    readonly commitEncoding?: QleverCommitEncoding;
+   } = {},
+ ): QleverStorageAdapterService => {
++  const commitEncoding = options.commitEncoding ?? "a0";
++  if (commitEncoding !== "a0" && commitEncoding !== "compact")
++    throw new TypeError("Unknown QLever commit encoding; choose a0 or compact");
+   const graph = graphIri(scopeKey),
+     key = Symbol(scopeKey),
+     admission = Semaphore.makeUnsafe(1);
+@@ -193,7 +199,7 @@ export const makeQleverStorageAdapter = (
+       try: async () => {
+         const values: [string, string, string][] = [];
+         for (const row of state.rows.values())
+-          for (const [column, value] of rowFields(row))
++          for (const [column, value] of encodedRowFields(row, commitEncoding))
+             values.push([assertionIri(row.id), f(column), value]);
+         values.push(
+           [metaIri, f("position"), lit(String(state.position))],
+diff --git a/packages/qlever/src/index.ts b/packages/qlever/src/index.ts
+index 2bf29c8..b1870c8 100644
+--- a/packages/qlever/src/index.ts
++++ b/packages/qlever/src/index.ts
+@@ -9,6 +9,7 @@ import {
+ } from "@triplex-build/triplex/runtime";
+ import { makeQleverClient, type QleverClient } from "./QleverClient.js";
+ import { makeQleverStorageAdapter } from "./QleverStorageAdapter.js";
++import type { QleverCommitEncoding } from "./rdf.js";
+ import { makeQleverQueryExecutor, type QleverQueryOptions } from "./QleverQueryExecutor.js";
+ 
+ export interface QleverRuntimeOptions {
+@@ -17,8 +18,25 @@ export interface QleverRuntimeOptions {
+   readonly maxRetries?: number;
+   readonly resolutionTimeoutMs?: number;
+   readonly admissionQueue?: boolean;
++  /**
++   * Experimental (EXP-J01). Default `a0`. When omitted, `TRIPLEX_COMMIT_ENCODING` may select
++   * `compact`, so the unchanged lab gates (which build the runtime from this public factory) can run
++   * the candidate; the gate note must record it.
++   */
++  readonly commitEncoding?: QleverCommitEncoding;
+   readonly queryLimits?: Omit<QleverQueryOptions, "sourceView">;
+ }
++
++/** The commit encoding an option or `TRIPLEX_COMMIT_ENCODING` selects; unknown values fail loudly. */
++export const commitEncodingOf = (
++  requested: string | undefined,
++): QleverCommitEncoding | undefined => {
++  const value = requested ?? process.env["TRIPLEX_COMMIT_ENCODING"];
++  if (value === undefined || value === "") return undefined;
++  if (value !== "a0" && value !== "compact")
++    throw new TypeError("Unknown TRIPLEX_COMMIT_ENCODING; choose a0 or compact");
++  return value;
++};
+ class Connection extends Context.Service<Connection, QleverClient>()("triplex/qlever/Connection") {}
+ class Backend extends Context.Service<Backend, ReturnType<typeof makeQleverStorageAdapter>>()(
+   "triplex/qlever/Backend",
+@@ -26,6 +44,7 @@ class Backend extends Context.Service<Backend, ReturnType<typeof makeQleverStora
+ export const makeQleverRuntime = (
+   options: QleverRuntimeOptions,
+ ): RuntimeDefinition<MigrationError, never, StorageAdapter | QueryExecutor> => {
++  const commitEncoding = commitEncodingOf(options.commitEncoding);
+   const connection = Layer.effect(
+     Connection,
+     Effect.acquireRelease(
+@@ -43,7 +62,10 @@ export const makeQleverRuntime = (
+     Effect.gen(function* () {
+       const client = yield* Connection;
+       const runtime = yield* TripleStoreRuntime;
+-      return makeQleverStorageAdapter(client, runtime.scope, options);
++      return makeQleverStorageAdapter(client, runtime.scope, {
++        ...options,
++        ...(commitEncoding === undefined ? {} : { commitEncoding }),
++      });
+     }),
+   ).pipe(Layer.provide(connection));
+   const storage = Layer.effect(
+@@ -76,6 +98,7 @@ export {
+   type QleverRequestOptions,
+   QleverHttpError,
+ } from "./QleverClient.js";
++export { encodedRowFields, UNREAD_CHANNELS, type QleverCommitEncoding } from "./rdf.js";
+ export {
+   makeQleverStorageAdapter,
+   type QleverSourceView,
+diff --git a/packages/qlever/src/rdf.ts b/packages/qlever/src/rdf.ts
+index 56954a3..b3d3a11 100644
+--- a/packages/qlever/src/rdf.ts
++++ b/packages/qlever/src/rdf.ts
+@@ -198,6 +198,59 @@ export const decodeRow = (json: string): TripleRow => {
+   if (parsed["value_type"] === "integer") integer(String(parsed["value_string"]));
+   return parsed as unknown as TripleRow;
+ };
++/**
++ * How assertion subjects are written (EXP-J01). `a0` is the unchanged default; `compact` omits the
++ * channels in `UNREAD_CHANNELS`.
++ */
++export type QleverCommitEncoding = "a0" | "compact";
++
++/**
++ * [EXP-J01] Channels `compact` does not write. Why: every assertion subject is 27 to 30 triples, so a
++ * 10-fact command is 663 inserted triples (10 data facts and 14 journal facts at 27 or 30 each, plus
++ * 9 for claim, operation and position; EXP-J01 qlever-attribution). Nine channels per fact are
++ * written but never read by any query in this repository (the adapter, the Datalog compiler, the
++ * native and temporal sources, the qualification workloads): the lexical, exactness and native
++ * shadows of `recorded_at` and the lexical and exactness shadows of `recorded_position`, the four
++ * `schema_version` channels, and on a retraction the same shadows of `retracted_at` and
++ * `retracted_position`. Every one of them stays recoverable from `_row`, which `decodeRow` reads, so
++ * no read loses information. The `_order` channels, `recorded_position_native` and
++ * `retracted_position_native` (dependencyState), `valid_from` and `valid_to` with all their shadows
++ * (native interval sources and qualification recursion read them) and the scalar channels (the
++ * persisted source profile) are kept. Rows written by either encoding read the same, and a row
++ * written by one and retracted by the other is still correct, because a retraction rewrites only
++ * channels it lists and the omitted ones never change after the assertion.
++ * Per fact: 18 triples for a string, ref or json value and 21 for a number or datetime, against 27
++ * and 30; a 10-fact command: 663 -> 447 inserted triples.
++ * Rejected: dropping the journal's own facts (they are logical facts: match and Datalog read them),
++ * dropping `_row` (every adapter read decodes it) and pruning `valid_from` shadows on journal facts
++ * only (a native mapping may name a `:_tx/` attribute).
++ */
++export const UNREAD_CHANNELS: ReadonlySet<string> = new Set([
++  "recorded_at",
++  "recorded_at_exact",
++  "recorded_at_native",
++  "recorded_position",
++  "recorded_position_exact",
++  "schema_version",
++  "schema_version_order",
++  "schema_version_exact",
++  "schema_version_native",
++  "retracted_at",
++  "retracted_at_exact",
++  "retracted_at_native",
++  "retracted_position",
++  "retracted_position_exact",
++]);
++
++/** The channels one assertion subject is written with under `encoding`. */
++export const encodedRowFields = (
++  row: TripleRow,
++  encoding: QleverCommitEncoding = "a0",
++): readonly [string, string][] =>
++  encoding === "compact"
++    ? rowFields(row).filter(([column]) => !UNREAD_CHANNELS.has(column))
++    : rowFields(row);
++
+ /** Each canonical channel is lexical. Native shadows are explicitly admitted. */
+ export const rowFields = (row: TripleRow): readonly [string, string][] => {
+   const fields: [string, string][] = [["_row", literal(encodeRow(row))]];
+diff --git a/packages/xtdb/src/XtdbClient.ts b/packages/xtdb/src/XtdbClient.ts
+index 6b50bdd..16a0523 100644
+--- a/packages/xtdb/src/XtdbClient.ts
++++ b/packages/xtdb/src/XtdbClient.ts
+@@ -138,6 +138,21 @@ export const makeXtdbClient = (
+         throw new TypeError(
+           "XTDB text requires well-formed Unicode; isolated UTF-16 surrogates are not representable",
+         );
++      // [EXP-J01] A non-empty list of strings is a text[] parameter (oid 1009), for `= ANY($n)`
++      // commit guards. Why not the JSON default (114) every other object gets: XTDB 2.2 reads a JSON
++      // parameter as one JSON value, and `id = ANY(<json>)` matched nothing (EXP-J01 probe p5), so
++      // a guard bound that way would silently pass. No A0 statement passes an array.
++      if (
++        Array.isArray(value) &&
++        value.length > 0 &&
++        value.every((item) => typeof item === "string")
++      ) {
++        if (!value.every((item: string) => item.isWellFormed()))
++          throw new TypeError(
++            "XTDB text requires well-formed Unicode; isolated UTF-16 surrogates are not representable",
++          );
++        return pool.typed(value as never, 1009);
++      }
+       // The native-f64-parameters-v1 public probe observed -0 returning as the
+       // integer text "0" in SQL and XTQL, while native double literals retained
+       // their sign. Number.isSafeInteger(-0) is true, and ordinary numeric text
+diff --git a/packages/xtdb/src/XtdbStorageAdapter.ts b/packages/xtdb/src/XtdbStorageAdapter.ts
+index 9ac21e1..f20f930 100644
+--- a/packages/xtdb/src/XtdbStorageAdapter.ts
++++ b/packages/xtdb/src/XtdbStorageAdapter.ts
+@@ -69,6 +69,65 @@ const cutConditions = (
+   return conditions;
+ };
+ 
++/**
++ * How a commit is written (EXP-J01). `a0` is the unchanged default. `compact` writes the same rows
++ * and the same logical journal; only the commit guards change (see `compactGuards`).
++ */
++export type XtdbCommitEncoding = "a0" | "compact";
++
++/**
++ * [EXP-J01] Compact commit guards: the A0 conditions in two ASSERT statements instead of four.
++ *
++ * Why: XTDB logs every parameter of a `:sql` operation (ASSERT included) as its own Arrow column in
++ * the operation's argument batch, about 130 to 155 bytes per parameter before its value, while an
++ * `INSERT ... VALUES` of literals or parameters becomes a `put-docs` operation whose rows cost only
++ * their values. A0's four guards carry 31 parameters for a 10-fact command (the scope key four
++ * times, one parameter per new assertion id), 7,624 of its 30,061 source-log bytes (EXP-J01
++ * xtdb-attribution, probe p3). Here:
++ *   1. The failure classes stay A0's: `triplex-cas-conflict` (scope CAS or a claimed command:
++ *      `XtdbSerializationConflict`, which the core may replay) and `triplex-identity-conflict`
++ *      (operation already recorded or an assertion id already used: a definite `WriteError`).
++ *      A0 spells the latter `triplex-operation-duplicate` and `triplex-assertion-identity-conflict`;
++ *      both map to the same error, so only the message text differs.
++ *   2. The scope key is bound once per statement (`$1`, reused), not once per subquery.
++ *   3. Each id list is one `text[]` parameter compared with `= ANY($n)`: one list column instead of
++ *      one column per id, and SQL text that is constant across commits.
++ * Measured (probe p7, same command): 26,397 bytes against 30,061.
++ * Rejected: SQL string literals (XTDB 2.2's lexer refuses a raw newline inside a literal, probe p4,
++ * so caller-supplied command ids cannot be inlined, and per-commit SQL text defeats plan reuse); a
++ * JSON-typed list parameter (probe p5: `= ANY` over a JSON value matched nothing, so the guard
++ * passed with an id that exists: a silent false pass); one merged ASSERT (it would erase the
++ * retryable/definite distinction for 144 more bytes).
++ */
++export const compactGuards = (
++  scopeKey: string,
++  sourceK: number,
++  operationId: string,
++  commandIds: readonly string[],
++  newIds: readonly string[],
++): XtdbStatement[] => [
++  {
++    sql:
++      "ASSERT (SELECT COALESCE(MAX(position), 0) FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1) = $2" +
++      (commandIds.length > 0
++        ? " AND NOT EXISTS (SELECT 1 FROM tx_claims FOR ALL VALID_TIME WHERE scope_key = $1 AND command_id = ANY($3))"
++        : "") +
++      ", 'triplex-cas-conflict'",
++    params: [scopeKey, sourceK, ...(commandIds.length > 0 ? [[...commandIds]] : [])],
++    parameterSyntax: "postgresql",
++  },
++  {
++    sql:
++      "ASSERT NOT EXISTS (SELECT 1 FROM tx_attempts FOR ALL VALID_TIME WHERE scope_key = $1 AND operation_id = $2)" +
++      (newIds.length > 0
++        ? " AND NOT EXISTS (SELECT 1 FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = $1 AND id = ANY($3))"
++        : "") +
++      ", 'triplex-identity-conflict'",
++    params: [scopeKey, operationId, ...(newIds.length > 0 ? [[...newIds]] : [])],
++    parameterSyntax: "postgresql",
++  },
++];
++
+ export const makeXtdbStorageAdapter = (
+   client: XtdbClient,
+   scopeKey: string,
+@@ -77,8 +136,13 @@ export const makeXtdbStorageAdapter = (
+     readonly resolutionTimeoutMs?: number;
+     readonly admissionQueue?: boolean;
+     readonly constraintStrategy?: "portable" | "inline" | "projection";
++    /** EXP-J01: default `a0`. */
++    readonly commitEncoding?: XtdbCommitEncoding;
+   } = {},
+ ): StorageAdapterService => {
++  const commitEncoding = options.commitEncoding ?? "a0";
++  if (commitEncoding !== "a0" && commitEncoding !== "compact")
++    throw new TypeError("Unknown XTDB commit encoding; choose a0 or compact");
+   const key = Symbol(scopeKey);
+   const maxRetries = options.maxRetries ?? 12;
+   const resolutionTimeoutMs = options.resolutionTimeoutMs ?? 30_000;
+@@ -190,27 +254,38 @@ export const makeXtdbStorageAdapter = (
+     operationId: string,
+     attemptId: string,
+   ): Effect.Effect<void, WriteError> => {
+-    const statements: XtdbStatement[] = [
+-      {
+-        sql: "ASSERT (SELECT COALESCE(MAX(position), 0) FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = ?) = ?, 'triplex-cas-conflict'",
+-        params: [scopeKey, state.sourceK],
+-      },
+-      {
+-        sql: "ASSERT NOT EXISTS (SELECT 1 FROM tx_attempts FOR ALL VALID_TIME WHERE scope_key = ? AND operation_id = ?), 'triplex-operation-duplicate'",
+-        params: [scopeKey, operationId],
+-      },
+-    ];
+-    for (const claim of state.claims.values()) {
+-      statements.push({
+-        sql: "ASSERT NOT EXISTS (SELECT 1 FROM tx_claims FOR ALL VALID_TIME WHERE scope_key = ? AND command_id = ?), 'triplex-command-conflict'",
+-        params: [scopeKey, claim.commandId],
+-      });
++    const statements: XtdbStatement[] =
++      commitEncoding === "compact"
++        ? compactGuards(
++            scopeKey,
++            state.sourceK,
++            operationId,
++            [...state.claims.values()].map((claim) => claim.commandId),
++            [...state.newIds],
++          )
++        : [
++            {
++              sql: "ASSERT (SELECT COALESCE(MAX(position), 0) FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = ?) = ?, 'triplex-cas-conflict'",
++              params: [scopeKey, state.sourceK],
++            },
++            {
++              sql: "ASSERT NOT EXISTS (SELECT 1 FROM tx_attempts FOR ALL VALID_TIME WHERE scope_key = ? AND operation_id = ?), 'triplex-operation-duplicate'",
++              params: [scopeKey, operationId],
++            },
++          ];
++    if (commitEncoding === "a0") {
++      for (const claim of state.claims.values()) {
++        statements.push({
++          sql: "ASSERT NOT EXISTS (SELECT 1 FROM tx_claims FOR ALL VALID_TIME WHERE scope_key = ? AND command_id = ?), 'triplex-command-conflict'",
++          params: [scopeKey, claim.commandId],
++        });
++      }
++      if (state.newIds.size > 0)
++        statements.push({
++          sql: `ASSERT NOT EXISTS (SELECT 1 FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = ? AND id IN (${[...state.newIds].map(() => "?").join(", ")})), 'triplex-assertion-identity-conflict'`,
++          params: [scopeKey, ...state.newIds],
++        });
+     }
+-    if (state.newIds.size > 0)
+-      statements.push({
+-        sql: `ASSERT NOT EXISTS (SELECT 1 FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = ? AND id IN (${[...state.newIds].map(() => "?").join(", ")})), 'triplex-assertion-identity-conflict'`,
+-        params: [scopeKey, ...state.newIds],
+-      });
+     const rows = [...state.rows.values()];
+     for (let i = 0; i < rows.length; i += 200) {
+       statements.push(
+diff --git a/packages/xtdb/src/index.ts b/packages/xtdb/src/index.ts
+index 710d3c3..6163e6e 100644
+--- a/packages/xtdb/src/index.ts
++++ b/packages/xtdb/src/index.ts
+@@ -8,7 +8,7 @@ import {
+   type MigrationError,
+ } from "@triplex-build/triplex/runtime";
+ import { makeXtdbClient, type XtdbClient } from "./XtdbClient.js";
+-import { makeXtdbStorageAdapter } from "./XtdbStorageAdapter.js";
++import { makeXtdbStorageAdapter, type XtdbCommitEncoding } from "./XtdbStorageAdapter.js";
+ import { makeXtdbQueryExecutor, type XtdbQueryLimits } from "./XtdbQueryExecutor.js";
+ 
+ export interface XtdbRuntimeOptions {
+@@ -18,9 +18,24 @@ export interface XtdbRuntimeOptions {
+   readonly admissionQueue?: boolean;
+   /** Experimental SQL constraint strategies; portable remains the default. */
+   readonly constraintStrategy?: "portable" | "inline" | "projection";
++  /**
++   * Experimental (EXP-J01). Default `a0`. When omitted, `TRIPLEX_COMMIT_ENCODING` may select
++   * `compact`, so the unchanged lab gates (which build the runtime from this public factory) can run
++   * the candidate; the gate note must record it.
++   */
++  readonly commitEncoding?: XtdbCommitEncoding;
+   readonly queryLimits?: XtdbQueryLimits;
+ }
+ 
++/** The commit encoding an option or `TRIPLEX_COMMIT_ENCODING` selects; unknown values fail loudly. */
++export const commitEncodingOf = (requested: string | undefined): XtdbCommitEncoding | undefined => {
++  const value = requested ?? process.env["TRIPLEX_COMMIT_ENCODING"];
++  if (value === undefined || value === "") return undefined;
++  if (value !== "a0" && value !== "compact")
++    throw new TypeError("Unknown TRIPLEX_COMMIT_ENCODING; choose a0 or compact");
++  return value;
++};
++
+ class Connection extends Context.Service<Connection, XtdbClient>()("triplex/xtdb/Connection") {}
+ 
+ /**
+@@ -31,6 +46,7 @@ class Connection extends Context.Service<Connection, XtdbClient>()("triplex/xtdb
+ export const makeXtdbRuntime = (
+   options: XtdbRuntimeOptions,
+ ): RuntimeDefinition<MigrationError, never, StorageAdapter | QueryExecutor> => {
++  const commitEncoding = commitEncodingOf(options.commitEncoding);
+   const connection = Layer.effect(
+     Connection,
+     Effect.acquireRelease(
+@@ -52,6 +68,7 @@ export const makeXtdbRuntime = (
+         ...(options.constraintStrategy === undefined
+           ? {}
+           : { constraintStrategy: options.constraintStrategy }),
++        ...(commitEncoding === undefined ? {} : { commitEncoding }),
+       });
+     }),
+   ).pipe(Layer.provide(connection));
+@@ -73,7 +90,11 @@ export const makeXtdbRuntime = (
+ };
+ 
+ export { makeXtdbClient, type XtdbClient, type XtdbBasis } from "./XtdbClient.js";
+-export { makeXtdbStorageAdapter } from "./XtdbStorageAdapter.js";
++export {
++  makeXtdbStorageAdapter,
++  compactGuards,
++  type XtdbCommitEncoding,
++} from "./XtdbStorageAdapter.js";
+ export { makeXtdbQueryExecutor, type XtdbQueryLimits } from "./XtdbQueryExecutor.js";
+ export {
+   makeXtdbTemporalQueries,

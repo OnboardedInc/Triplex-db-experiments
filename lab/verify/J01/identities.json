@@ -1,0 +1,38 @@
+{
+  "diskFreeBytes": 33983729664,
+  "at": "2026-11-08T21:37:54.710Z",
+  "arms": [
+    {
+      "lane": "xtdb",
+      "encoding": "a0",
+      "scope": "cx-vj01-identity-825bcabe-b080-4c04-8490-e9ed87150f69",
+      "passed": true,
+      "rejected": "WriteError",
+      "position": 1
+    },
+    {
+      "lane": "xtdb",
+      "encoding": "compact",
+      "scope": "cx-vj01-identity-a5f046c2-203b-4e88-bd21-042d66eac821",
+      "passed": true,
+      "rejected": "WriteError",
+      "position": 1
+    },
+    {
+      "lane": "qlever",
+      "encoding": "a0",
+      "scope": "cx-vj01-identity-d4058350-f92e-44a9-a62b-4a3795ba4e02",
+      "passed": true,
+      "rejected": "WriteError",
+      "position": 1
+    },
+    {
+      "lane": "qlever",
+      "encoding": "compact",
+      "scope": "cx-vj01-identity-593097aa-a75a-4643-8ddf-19f64c7c0cca",
+      "passed": true,
+      "rejected": "WriteError",
+      "position": 1
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+5cc42fb lab: finish J01 attribution report and isolate non-deadline G1 failure
+f04b819 WIP J01: paused at the Claude weekly limit 2026-11-08 (in-flight work kept; continue from lab/agents/handoffs/J01.md on main)
+f4a674e lab: EXP-J01 service-time receipts (XTDB and QLever dev, interleaved a0/compact)
+41517f9 lab: EXP-J01 journal equivalence (both lanes identical, a0/compact/a0/compact), design probes p7 and p10, P2X reconstruction p6, mode-proof probe p9, service bench
+aeace41 lab: EXP-J01 phase 1 audit (per-source tables, exact closure), probes p0-p7, attribution receipts A0 and compact
+05319e6 xtdb, qlever: compact commit encoding behind an option, default a0 (EXP-J01)

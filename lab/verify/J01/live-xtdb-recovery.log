@@ -1,0 +1,27 @@
+xtdb/a0: durable ACK+resolution loss then client reopen resolves duplicate
+xtdb/a0: before-send loss leaves no claim and explicit retry publishes
+xtdb/a0: racing duplicate command has one publication and original receipt
+xtdb/a0: racing source cuts/entity CAS cannot both publish
+xtdb/compact: durable ACK+resolution loss then client reopen resolves duplicate
+xtdb/compact: before-send loss leaves no claim and explicit retry publishes
+xtdb/compact: racing duplicate command has one publication and original receipt
+xtdb/compact: racing source cuts/entity CAS cannot both publish
+{
+  "lane": "xtdb",
+  "checks": [
+    [
+      "durable ACK+resolution loss then client reopen resolves duplicate",
+      "before-send loss leaves no claim and explicit retry publishes",
+      "racing duplicate command has one publication and original receipt",
+      "racing source cuts/entity CAS cannot both publish"
+    ],
+    [
+      "durable ACK+resolution loss then client reopen resolves duplicate",
+      "before-send loss leaves no claim and explicit retry publishes",
+      "racing duplicate command has one publication and original receipt",
+      "racing source cuts/entity CAS cannot both publish"
+    ]
+  ],
+  "failures": [],
+  "equivalent": true
+}

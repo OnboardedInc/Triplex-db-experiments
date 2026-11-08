@@ -1,0 +1,72 @@
+{
+  "lane": "xtdb",
+  "harness": "live.mjs:v3",
+  "recoveryOnly": true,
+  "startedAt": "2026-11-08T21:43:46.714Z",
+  "arms": [
+    {
+      "encoding": "a0",
+      "checks": [
+        "durable ACK+resolution loss then client reopen resolves duplicate",
+        "before-send loss leaves no claim and explicit retry publishes",
+        "racing duplicate command has one publication and original receipt",
+        "racing source cuts/entity CAS cannot both publish"
+      ],
+      "reads": {
+        "unresolved": "TransactionOutcomeUnknown",
+        "beforeRetry": {
+          "position": 2
+        },
+        "racedClaim": [
+          "CommandAlreadyCommittedError",
+          "committed"
+        ],
+        "racedCas": [
+          "TransactionConflictError",
+          "committed"
+        ]
+      },
+      "events": [
+        "durable-write-then-ACK-loss",
+        "failed-before-send"
+      ],
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vj01-b034badf-97c8-4e38-9a48-2e3f1b3d0356\",0]"
+    },
+    {
+      "encoding": "compact",
+      "checks": [
+        "durable ACK+resolution loss then client reopen resolves duplicate",
+        "before-send loss leaves no claim and explicit retry publishes",
+        "racing duplicate command has one publication and original receipt",
+        "racing source cuts/entity CAS cannot both publish"
+      ],
+      "reads": {
+        "unresolved": "TransactionOutcomeUnknown",
+        "beforeRetry": {
+          "position": 2
+        },
+        "racedClaim": [
+          "CommandAlreadyCommittedError",
+          "committed"
+        ],
+        "racedCas": [
+          "TransactionConflictError",
+          "committed"
+        ]
+      },
+      "events": [
+        "durable-write-then-ACK-loss",
+        "failed-before-send"
+      ],
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vj01-7d62481e-dcdc-44d9-b6bc-8d7013b2d319\",0]"
+    }
+  ],
+  "failures": [],
+  "limits": [
+    "No engine lifecycle/crash injection: transport failure injection only.",
+    "No decimal or erasure API in reviewed core; no semantic qualification of those features.",
+    "Not full G1 or a concurrency/performance qualification."
+  ],
+  "equivalent": true,
+  "endedAt": "2026-11-08T21:46:04.011Z"
+}

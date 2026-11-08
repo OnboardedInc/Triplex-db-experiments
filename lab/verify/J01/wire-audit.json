@@ -1,0 +1,136 @@
+{
+  "environmentEncoding": null,
+  "outputs": [
+    {
+      "file": "lab/verify/J01/baseline/xtdb/XtdbClient.ts",
+      "cases": [
+        {
+          "input": [
+            "a",
+            "b"
+          ],
+          "lastCall": {
+            "sql": "SELECT $1 AS value",
+            "params": [
+              {
+                "value": [
+                  "a",
+                  "b"
+                ],
+                "oid": 114
+              }
+            ]
+          }
+        },
+        {
+          "input": [],
+          "lastCall": {
+            "sql": "SELECT $1 AS value",
+            "params": [
+              {
+                "value": [],
+                "oid": 114
+              }
+            ]
+          }
+        },
+        {
+          "input": [
+            1,
+            2
+          ],
+          "lastCall": {
+            "sql": "SELECT $1 AS value",
+            "params": [
+              {
+                "value": [
+                  1,
+                  2
+                ],
+                "oid": 114
+              }
+            ]
+          }
+        },
+        {
+          "input": [
+            "ok",
+            "\ud800"
+          ],
+          "lastCall": {
+            "sql": "SELECT $1 AS value",
+            "params": [
+              {
+                "value": [
+                  "ok",
+                  "\ud800"
+                ],
+                "oid": 114
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "file": "packages/xtdb/src/XtdbClient.ts",
+      "cases": [
+        {
+          "input": [
+            "a",
+            "b"
+          ],
+          "lastCall": {
+            "sql": "SELECT $1 AS value",
+            "params": [
+              {
+                "value": [
+                  "a",
+                  "b"
+                ],
+                "oid": 1009
+              }
+            ]
+          }
+        },
+        {
+          "input": [],
+          "lastCall": {
+            "sql": "SELECT $1 AS value",
+            "params": [
+              {
+                "value": [],
+                "oid": 114
+              }
+            ]
+          }
+        },
+        {
+          "input": [
+            1,
+            2
+          ],
+          "lastCall": {
+            "sql": "SELECT $1 AS value",
+            "params": [
+              {
+                "value": [
+                  1,
+                  2
+                ],
+                "oid": 114
+              }
+            ]
+          }
+        },
+        {
+          "input": [
+            "ok",
+            "\ud800"
+          ],
+          "error": "XTDB text requires well-formed Unicode; isolated UTF-16 surrogates are not representable"
+        }
+      ]
+    }
+  ]
+}

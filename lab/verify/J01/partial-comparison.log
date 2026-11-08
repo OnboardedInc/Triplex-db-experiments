@@ -1,0 +1,89 @@
+{
+  "input": "lab/verify/J01/live-xtdb.json",
+  "sha256": "8097f1f88b982289541d1597046e144c043033e1e17733a5a89aebf633d93916",
+  "retainedFailures": [
+    {
+      "encoding": "a0",
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'WriteError'\n- 'TransactionOutcomeUnknown'\n"
+    },
+    {
+      "encoding": "compact",
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'WriteError'\n- 'TransactionOutcomeUnknown'\n"
+    }
+  ],
+  "comparison": "Saved JSON snapshots; first harness emitted -0 as JSON 0. In-memory exact sign assertions passed separately. This is not a raw-bit proof.",
+  "surfaces": [
+    {
+      "surface": "first",
+      "equal": true
+    },
+    {
+      "surface": "initialCut",
+      "equal": true
+    },
+    {
+      "surface": "second",
+      "equal": true
+    },
+    {
+      "surface": "oldCut",
+      "equal": true
+    },
+    {
+      "surface": "beforeRecorded",
+      "equal": true
+    },
+    {
+      "surface": "current",
+      "equal": true
+    },
+    {
+      "surface": "validTo",
+      "equal": true
+    },
+    {
+      "surface": "beforeValid",
+      "equal": true
+    },
+    {
+      "surface": "history",
+      "equal": true
+    },
+    {
+      "surface": "casConflict",
+      "equal": true
+    },
+    {
+      "surface": "duplicate",
+      "equal": true
+    },
+    {
+      "surface": "original",
+      "equal": true
+    },
+    {
+      "surface": "journal",
+      "equal": true
+    },
+    {
+      "surface": "feedResume",
+      "equal": true
+    },
+    {
+      "surface": "journalFacts",
+      "equal": true
+    },
+    {
+      "surface": "dependency",
+      "equal": true
+    },
+    {
+      "surface": "query",
+      "equal": true
+    },
+    {
+      "surface": "lostAck",
+      "equal": true
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+qlever/a0: 20 exact boundary/decimal-string/long-text values at commit
+qlever/a0: read-your-own-write at exact valid/recorded cut
+qlever/a0: retract/replacement, old cut stability, half-open valid interval, history
+qlever/a0: typed stale precondition and duplicate command preserves original receipt
+qlever/a0: journal exact changes, resumable feed, dependency and Datalog at old cut
+qlever/a0: lost ACK after durable write resolves through operation receipt
+qlever/a0: durable ACK+resolution loss then client reopen resolves duplicate
+qlever/a0: before-send loss leaves no claim and explicit retry publishes
+qlever/a0: racing duplicate command has one publication and original receipt
+qlever/a0: racing source cuts/entity CAS cannot both publish
+qlever/compact: 20 exact boundary/decimal-string/long-text values at commit
+qlever/compact: read-your-own-write at exact valid/recorded cut
+qlever/compact: retract/replacement, old cut stability, half-open valid interval, history
+qlever/compact: typed stale precondition and duplicate command preserves original receipt
+qlever/compact: journal exact changes, resumable feed, dependency and Datalog at old cut
+qlever/compact: lost ACK after durable write resolves through operation receipt
+qlever/compact: durable ACK+resolution loss then client reopen resolves duplicate
+qlever/compact: before-send loss leaves no claim and explicit retry publishes
+qlever/compact: racing duplicate command has one publication and original receipt
+qlever/compact: racing source cuts/entity CAS cannot both publish
+{
+  "lane": "qlever",
+  "checks": [
+    [
+      "20 exact boundary/decimal-string/long-text values at commit",
+      "read-your-own-write at exact valid/recorded cut",
+      "retract/replacement, old cut stability, half-open valid interval, history",
+      "typed stale precondition and duplicate command preserves original receipt",
+      "journal exact changes, resumable feed, dependency and Datalog at old cut",
+      "lost ACK after durable write resolves through operation receipt",
+      "durable ACK+resolution loss then client reopen resolves duplicate",
+      "before-send loss leaves no claim and explicit retry publishes",
+      "racing duplicate command has one publication and original receipt",
+      "racing source cuts/entity CAS cannot both publish"
+    ],
+    [
+      "20 exact boundary/decimal-string/long-text values at commit",
+      "read-your-own-write at exact valid/recorded cut",
+      "retract/replacement, old cut stability, half-open valid interval, history",
+      "typed stale precondition and duplicate command preserves original receipt",
+      "journal exact changes, resumable feed, dependency and Datalog at old cut",
+      "lost ACK after durable write resolves through operation receipt",
+      "durable ACK+resolution loss then client reopen resolves duplicate",
+      "before-send loss leaves no claim and explicit retry publishes",
+      "racing duplicate command has one publication and original receipt",
+      "racing source cuts/entity CAS cannot both publish"
+    ]
+  ],
+  "failures": [],
+  "equivalent": true
+}

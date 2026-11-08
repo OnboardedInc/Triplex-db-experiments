@@ -1,0 +1,39 @@
+{
+  "cases": [
+    {
+      "name": "xtdb: main/default-off/explicit-a0 statement equality",
+      "passed": true,
+      "normalizedSha256": "bb2f7a2920b7e5ceca5c7ac99449b956033fd21800f21be9a9cb5cd446bc102b",
+      "bytes": 142052,
+      "valueCases": 24
+    },
+    {
+      "name": "xtdb: staged compact/a0 rows exact",
+      "passed": true,
+      "rows": 24
+    },
+    {
+      "name": "qlever: main/default-off/explicit-a0 statement equality",
+      "passed": true,
+      "normalizedSha256": "3586b3ad9fb43dbb87c8e01ec17de83a3324dbf20c9a633547ec88f05e237f29",
+      "bytes": 346651,
+      "valueCases": 24
+    },
+    {
+      "name": "qlever: staged compact/a0 rows exact",
+      "passed": true,
+      "rows": 24
+    },
+    {
+      "name": "QLever persisted channels and _row roundtrip versus main across asserted/retracted shapes",
+      "passed": true,
+      "rows": 48
+    }
+  ],
+  "observations": [
+    {
+      "decimal": "No decimal TripleValue kind; decimal strings and scaled integers tested. No native decimal semantic claim.",
+      "erasure": "TransactOp only assert/retract/retract-pattern; no erase operation or ErasedValue kind in this candidate. Markers and physical erasure cannot be verified."
+    }
+  ]
+}

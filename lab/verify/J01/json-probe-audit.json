@@ -1,0 +1,26 @@
+{
+  "kind": "static audit of actual postgres JSON serializer and probe argument",
+  "driver": {
+    "path": "packages/xtdb/node_modules/postgres/src/types.js",
+    "sha256": "1883bd4536eab1c94b9e708d325b13708b0f18ec80020e3a825f34a72f603b81",
+    "serializer": "  json: {\n    to: 114,\n    from: [114, 3802],\n    serialize: x => JSON.stringify(x),\n    parse: x => JSON.parse(x)\n  },"
+  },
+  "probe": {
+    "path": "lab/experiments/EXP-J01-bytes-per-commit/probes/p5-array-param.mjs",
+    "sha256": "9bab0a7f90191403dc969ff3e9b306fe5a6f73e1ca927b26907530c47e699ff5",
+    "line40": "  'json parameter, IN UNNEST': (ids) => [`ASSERT NOT EXISTS (SELECT 1 FROM j01_ids WHERE scope_key = $1 AND id IN (SELECT x FROM UNNEST($2) AS t (x))), 'j01-found'`, [sql.typed(scope, 25), sql.typed(JSON.stringify(ids), 114)]],"
+  },
+  "correctArgument": {
+    "value": [
+      "present"
+    ],
+    "wireText": "[\"present\"]",
+    "decodedType": "array"
+  },
+  "probeArgument": {
+    "value": "[\"present\"]",
+    "wireText": "\"[\\\"present\\\"]\"",
+    "decodedType": "string"
+  },
+  "liveEvidence": "parameter-regression.json: unstringified array through main JSON mapper makes SELECT a=ANY($1) true; not a new existing-row guard qualification"
+}

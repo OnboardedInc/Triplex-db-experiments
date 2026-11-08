@@ -1,0 +1,419 @@
+{
+  "rawHashesChecked": 9,
+  "qleverArms": 2,
+  "xtdbArms": 3,
+  "g1": [
+    {
+      "receipt": "G1-qlever-20261108T021919Z-c834f9.json",
+      "note": "EXP-J01 option OFF (TRIPLEX_COMMIT_ENCODING empty = a0) at f4a674e; f1 profile, server planner budget already 1",
+      "counts": {
+        "executed": 78,
+        "expected": 88,
+        "pass": 69,
+        "fail": 9,
+        "skip": 10,
+        "suite": "FAIL",
+        "byPhase": {
+          "current": {
+            "pass": 40,
+            "total": 44
+          },
+          "reopen": {
+            "pass": 29,
+            "total": 34
+          }
+        }
+      },
+      "verdict": "FAIL",
+      "rawReports": [
+        {
+          "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a673708af43c1e677/runs/G1/G1-qlever-20261108T021919Z-c834f9/g1-report.json",
+          "sha256": "87fc1cc1a120b3351eed4a8897904a01c0e1afebd34941c7d7c4f448599c4bc2",
+          "recomputedCounts": {
+            "PASS": 69,
+            "FAIL": 9
+          },
+          "failures": [
+            {
+              "name": "recursive relations support cursor pagination and optional total counts",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-6b3da4a8-7cf8-4f9d-b5aa-47573e8ec33a\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: QLever Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+              "elapsedMs": 34002.73641700001
+            },
+            {
+              "name": "datalog recursive rules compute the same transitive closure",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-ec809a9d-9a06-420f-85a9-53055a3da7db\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: QLever Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+              "elapsedMs": 35706.16229200002
+            },
+            {
+              "name": "wrapped filters preserve scalar types and SQL null semantics",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-7fcb759c-1903-420f-bf56-d2720f563744\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: QLever Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+              "elapsedMs": 66797.44208300009
+            },
+            {
+              "name": "derivation materialization uses indexed dependency freshness",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-48c0674f-47c7-43b7-8ad8-22a3ccef02c6\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(TimeoutError: Operation timed out after '1m 50s')])",
+              "elapsedMs": 110005.56383300002
+            },
+            {
+              "name": "actor due-work ranges preserve numeric aliases, visibility, ordering, and limits",
+              "phase": "reopen",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-69d527cc-324c-4473-aeb1-bf0454d95210\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(TimeoutError: Operation timed out after '1m 50s')])",
+              "elapsedMs": 110006.91058299993
+            },
+            {
+              "name": "recursive relations support cursor pagination and optional total counts",
+              "phase": "reopen",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-797b8c14-6027-4327-9dab-f475faae6bd6\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: QLever Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+              "elapsedMs": 38530.000457999995
+            },
+            {
+              "name": "datalog recursive rules compute the same transitive closure",
+              "phase": "reopen",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-98a4d710-6669-44c6-b7b9-a34048d16895\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: QLever Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+              "elapsedMs": 38146.53366700001
+            },
+            {
+              "name": "datalog aggregations group, filter, and order consistently",
+              "phase": "reopen",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-4b06a0f3-6e07-4e4b-a4a5-eff1bc00a42d\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: QLever Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+              "elapsedMs": 37628.17566599976
+            },
+            {
+              "name": "datalog aggregates preserve duplicate rows and define empty and distinct results",
+              "phase": "reopen",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-1f0f360f-1666-4f65-b4e1-5cba3023bdec\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: QLever Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+              "elapsedMs": 40160.34695800021
+            }
+          ]
+        }
+      ],
+      "encodingBoundInEnvironment": false
+    },
+    {
+      "receipt": "G1-qlever-20261108T030804Z-e1de94.json",
+      "note": "EXP-J01 option ON (TRIPLEX_COMMIT_ENCODING=compact) at f4a674e; f1 profile, server planner budget already 1; encoding proven by probe p9",
+      "counts": {
+        "executed": 88,
+        "expected": 88,
+        "pass": 84,
+        "fail": 4,
+        "skip": 0,
+        "suite": "FAIL",
+        "byPhase": {
+          "current": {
+            "pass": 42,
+            "total": 44
+          },
+          "reopen": {
+            "pass": 42,
+            "total": 44
+          }
+        }
+      },
+      "verdict": "FAIL",
+      "rawReports": [
+        {
+          "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a673708af43c1e677/runs/G1/G1-qlever-20261108T030804Z-e1de94/g1-report.json",
+          "sha256": "f1b0e06e8a3092aac6429bad4d3350a58004cb074e978923cc9cb09145ebb27f",
+          "recomputedCounts": {
+            "PASS": 84,
+            "FAIL": 4
+          },
+          "failures": [
+            {
+              "name": "recursive relations support cursor pagination and optional total counts",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-9fffde7f-2bac-46b7-a8b8-4d36805a5f8d\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: QLever Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+              "elapsedMs": 37076.178041999985
+            },
+            {
+              "name": "datalog recursive rules compute the same transitive closure",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-b9e22edf-20c4-4041-b0d8-268597184518\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: QLever Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+              "elapsedMs": 36774.989124999964
+            },
+            {
+              "name": "recursive relations support cursor pagination and optional total counts",
+              "phase": "reopen",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-a69b0c71-4d96-4abd-bcb9-e211f23a06ce\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: QLever Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+              "elapsedMs": 35480.7316670001
+            },
+            {
+              "name": "datalog recursive rules compute the same transitive closure",
+              "phase": "reopen",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-e14ef91d-6846-434d-a554-c8abfb11cdce\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: QLever Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+              "elapsedMs": 34399.48170800018
+            }
+          ]
+        }
+      ],
+      "encodingBoundInEnvironment": false
+    },
+    {
+      "receipt": "G1-xtdb-20261108T013218Z-7e7e23.json",
+      "note": "EXP-J01 option OFF (TRIPLEX_COMMIT_ENCODING empty = a0) at 41517f9",
+      "counts": {
+        "executed": 50,
+        "expected": 88,
+        "pass": 25,
+        "fail": 25,
+        "skip": 38,
+        "suite": "FAIL",
+        "byPhase": {
+          "current": {
+            "pass": 23,
+            "total": 44
+          },
+          "reopen": {
+            "pass": 2,
+            "total": 6
+          }
+        }
+      },
+      "verdict": "FAIL",
+      "rawReports": [
+        {
+          "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a673708af43c1e677/runs/G1/G1-xtdb-20261108T013218Z-7e7e23/g1-report.json",
+          "sha256": "cf03f0a61a3dd035af10f8bb6c9a3a938e1bddd940e8687d8f2d1f1147c422c4",
+          "recomputedCounts": {
+            "FAIL": 25,
+            "PASS": 25
+          },
+          "failures": [
+            {
+              "name": "actor due-work ranges preserve numeric aliases, visibility, ordering, and limits",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-1627c148-7363-48b2-a229-f063ec48e79e\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(TimeoutError: Operation timed out after '1m 50s')])",
+              "elapsedMs": 115024.409291
+            },
+            {
+              "name": "Datalog reads are bounded by default and cursors traverse the complete snapshot",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-c889d8b5-f873-402e-8731-a370ecf33837\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(TimeoutError: Operation timed out after '1m 50s')])",
+              "elapsedMs": 115023.14300000001
+            },
+            {
+              "name": "recursive relations support cursor pagination and optional total counts",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-68573c43-161a-4eeb-bb5d-78d616e61d4e\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: XTDB Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+              "elapsedMs": 35731.40441700001
+            },
+            {
+              "name": "datalog supports multi-hop joins over ref edges",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-f1245531-741b-4281-8411-e945b2b12577\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: XTDB Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+              "elapsedMs": 43494.319791999995
+            },
+            {
+              "name": "datalog recursive rules compute the same transitive closure",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-5563596a-8d31-47ee-bcfa-7c78ea06f438\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: XTDB Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+              "elapsedMs": 39358.87387499993
+            },
+            {
+              "name": "datalog aggregations group, filter, and order consistently",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-2f580ee9-1f06-4ced-b010-8bc664fcdf18\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: XTDB Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+              "elapsedMs": 44995.910999999964
+            },
+            {
+              "name": "wrapped filters preserve scalar types and SQL null semantics",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-e3af2c70-5d24-459a-ad53-50e446c6188c\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: XTDB Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+              "elapsedMs": 38706.93699999992
+            },
+            {
+              "name": "Datalog ordering and pagination preserve mixed scalar order",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-71c32566-4676-4439-904e-a0849e5df7b5\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: XTDB Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+              "elapsedMs": 76227.48125000019
+            },
+            {
+              "name": "datalog untyped strings match string and ref values while typed refs stay exact",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-c5cc9251-446e-4e7b-ae78-0579acf675b6\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: XTDB Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+              "elapsedMs": 56038.344875000184
+            },
+            {
+              "name": "transact records provenance datoms",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-da722732-80ea-4e23-9284-e1db0c441f03\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: XTDB read failed (cause: Error: XTDB operation deadline exceeded))])",
+              "elapsedMs": 67862.36762499996
+            },
+            {
+              "name": "conditional transactions are atomic and journal their changes",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-1c074173-1055-4343-b74f-737cc6758edb\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(WriteError: Cannot read retraction target (cause: ReadError: XTDB read failed (cause: Error: XTDB operation deadline exceeded)))])",
+              "elapsedMs": 77088.90941700013
+            },
+            {
+              "name": "entity transaction history is indexed, complete, and snapshot-stable",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-740f866b-2d0b-4ac4-9397-003680b1742e\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(WriteError: Transaction outcome is unknown; resolve operation 33a5889f-06fa-44d8-90f1-ca8b100bbf57 before retrying (cause: Error: XTDB operation deadline exceeded))])",
+              "elapsedMs": 44771.10058399988
+            },
+            {
+              "name": "graph constraints reject invalid post-states across valid time",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-62b8c296-f5a4-4806-9cb9-77c1db176b07\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ConformanceError: a missing required fact should produce ConstraintViolationError)])",
+              "elapsedMs": 41194.042625
+            },
+            {
+              "name": "dependency state is attribute-scoped and schedules temporal edges",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-a5b5bf72-200d-4805-8517-fa666aef4143\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(xtdb-baseline: Cannot initialize XTDB tables (cause: Error: XTDB operation deadline exceeded))])",
+              "elapsedMs": 35025.97666599997
+            },
+            {
+              "name": "derivation materialization uses indexed dependency freshness",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-7469a2ee-6980-4ed1-92dc-f2c6c74d8f94\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(xtdb-baseline: Cannot initialize XTDB tables (cause: Error: XTDB operation deadline exceeded))])",
+              "elapsedMs": 35031.062957999995
+            },
+            {
+              "name": "graph constraints agree across storage backends",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-20b14a22-cd1b-49ca-ad50-e8f912074b7e\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(xtdb-baseline: Cannot initialize XTDB tables (cause: Error: XTDB operation deadline exceeded))])",
+              "elapsedMs": 35016.31879199995
+            },
+            {
+              "name": "consumer checkpoints advance atomically and remain queryable",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-d1ee8d79-331e-4c39-af45-6796378c178d\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: XTDB read failed (cause: Error: XTDB operation deadline exceeded))])",
+              "elapsedMs": 54741.69458299992
+            },
+            {
+              "name": "retractByPattern respects entityType",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-10034d41-ef2f-4866-bf8d-30c80ca79903\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: XTDB read failed (cause: Error: XTDB operation deadline exceeded))])",
+              "elapsedMs": 89209.33224999998
+            },
+            {
+              "name": "reserved Triplex namespaces reject ordinary writes atomically",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-508ffd4d-4b52-4a5b-84ce-fc8dbaaf4269\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: XTDB read failed (cause: Error: XTDB operation deadline exceeded))])",
+              "elapsedMs": 42785.91866600001
+            },
+            {
+              "name": "retract is coherent across write and datalog paths",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-dda036e9-cc1d-4b8d-81e6-675e2ae78efe\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(TimeoutError: Operation timed out after '1m 50s')])",
+              "elapsedMs": 112292.84712499985
+            },
+            {
+              "name": "paged queries use deterministic snapshot-stable cursors",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-7b5773fe-1756-4831-ba90-cb12babe91e2\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: XTDB Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+              "elapsedMs": 61325.60287500033
+            },
+            {
+              "name": "actor due-work ranges preserve numeric aliases, visibility, ordering, and limits",
+              "phase": "reopen",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-reopen-292038be-54a5-4e85-b0fb-3c0b4361563a\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(WriteError: Transaction outcome is unknown; resolve operation 4592f9f6-8040-4fcf-bd66-511763e0024e before retrying (cause: Error: XTDB operation deadline exceeded))])",
+              "elapsedMs": 42962.12279199995
+            },
+            {
+              "name": "Datalog reads are bounded by default and cursors traverse the complete snapshot",
+              "phase": "reopen",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-reopen-451ef468-45dd-48c5-9742-5756c9adacf0\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(WriteError: Transaction outcome is unknown; resolve operation a5af77bd-acf0-4630-a258-8a04ce5ff1e6 before retrying (cause: Error: XTDB operation deadline exceeded))])",
+              "elapsedMs": 38322.20762500027
+            },
+            {
+              "name": "historical cursor pages intersect recorded time and the commit snapshot",
+              "phase": "reopen",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-reopen-609f3740-4509-41d4-94cb-2baabda872d9\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(TimeoutError: Operation timed out after '1m 50s')])",
+              "elapsedMs": 115020.61329199979
+            },
+            {
+              "name": "recursive relations support cursor pagination and optional total counts",
+              "phase": "reopen",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-reopen-5d9bbcf7-e45f-4422-a007-53cbca380662\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: XTDB Datalog execution failed: Error: XTDB operation deadline exceeded (cause: Error: XTDB operation deadline exceeded))])",
+              "elapsedMs": 68253.51733299997
+            }
+          ]
+        }
+      ],
+      "encodingBoundInEnvironment": false
+    }
+  ]
+}

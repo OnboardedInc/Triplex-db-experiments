@@ -1,0 +1,189 @@
+{
+  "environmentEncoding": null,
+  "cases": [
+    {
+      "params": [
+        [
+          "a",
+          "b"
+        ]
+      ],
+      "main": {
+        "echo": [
+          {
+            "value": [
+              "a",
+              "b"
+            ]
+          }
+        ],
+        "any": [
+          {
+            "hit": true
+          }
+        ]
+      },
+      "candidateDefaultOff": {
+        "echo": [
+          {
+            "value": [
+              "a",
+              "b"
+            ]
+          }
+        ],
+        "any": [
+          {
+            "hit": true
+          }
+        ]
+      },
+      "equal": true
+    },
+    {
+      "params": [
+        []
+      ],
+      "main": {
+        "echo": [
+          {
+            "value": []
+          }
+        ],
+        "any": [
+          {
+            "hit": false
+          }
+        ]
+      },
+      "candidateDefaultOff": {
+        "echo": [
+          {
+            "value": []
+          }
+        ],
+        "any": [
+          {
+            "hit": false
+          }
+        ]
+      },
+      "equal": true
+    },
+    {
+      "params": [
+        [
+          1,
+          2
+        ]
+      ],
+      "main": {
+        "echo": [
+          {
+            "value": [
+              1,
+              2
+            ]
+          }
+        ],
+        "any": [
+          {
+            "hit": false
+          }
+        ]
+      },
+      "candidateDefaultOff": {
+        "echo": [
+          {
+            "value": [
+              1,
+              2
+            ]
+          }
+        ],
+        "any": [
+          {
+            "hit": false
+          }
+        ]
+      },
+      "equal": true
+    },
+    {
+      "params": [
+        [
+          "𝄞",
+          "NULL",
+          "a,b",
+          "x\\y",
+          "line\nend"
+        ]
+      ],
+      "main": {
+        "echo": [
+          {
+            "value": [
+              "𝄞",
+              "NULL",
+              "a,b",
+              "x\\y",
+              "line\nend"
+            ]
+          }
+        ],
+        "any": [
+          {
+            "hit": false
+          }
+        ]
+      },
+      "candidateDefaultOff": {
+        "echo": [
+          {
+            "value": [
+              "𝄞",
+              "NULL",
+              "a,b",
+              "x\\y",
+              "line\nend"
+            ]
+          }
+        ],
+        "any": [
+          {
+            "hit": false
+          }
+        ]
+      },
+      "equal": true
+    },
+    {
+      "params": [
+        [
+          "ok",
+          "\ud800"
+        ]
+      ],
+      "main": {
+        "echo": [
+          {
+            "value": [
+              "ok",
+              "?"
+            ]
+          }
+        ],
+        "any": [
+          {
+            "hit": false
+          }
+        ]
+      },
+      "candidateDefaultOff": {
+        "error": "XTDB text requires well-formed Unicode; isolated UTF-16 surrogates are not representable",
+        "code": null
+      },
+      "equal": false
+    }
+  ]
+}

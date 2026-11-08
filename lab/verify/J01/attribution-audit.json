@@ -1,0 +1,1194 @@
+{
+  "checkedHead": "5cc42fb",
+  "receipts": [
+    {
+      "path": "lab/experiments/EXP-J01-bytes-per-commit/receipts/journal-equivalence-qlever-20261108T011518Z-015a94.json",
+      "receiptSha256": "8b0ecc0a2e97ef16be415ec7efccfcbb1166be57c1c74272256d222c6d1c5b95",
+      "raw": "/Users/sam/Claude/Projects/triplex-db-2/EXP-J01/journal-equivalence-qlever-20261108T011518Z-015a94.raw.json",
+      "rawBytes": 936311,
+      "rawSha256": "a924a5442249b7ac80a4bac675e516938fcbdf99caf15d85e142f9747de74b84"
+    },
+    {
+      "path": "lab/experiments/EXP-J01-bytes-per-commit/receipts/journal-equivalence-xtdb-20261108T011253Z-73717d.json",
+      "receiptSha256": "c2f4a8a58c84cbaf458bfb1355048f02779e4402473dff558a02fefd12ea2fcc",
+      "raw": "/Users/sam/Claude/Projects/triplex-db-2/EXP-J01/journal-equivalence-xtdb-20261108T011253Z-73717d.raw.json",
+      "rawBytes": 963839,
+      "rawSha256": "551f941fa86facf3cf93dbebcaf7aa5995c0181b10906c5df628c464e528b597"
+    },
+    {
+      "path": "lab/experiments/EXP-J01-bytes-per-commit/receipts/qlever-attribution-A0-20261108T001038Z-5ab295.json",
+      "receiptSha256": "904c5b3d5ec003a58dddd556deb50e73bb3687cac60ffffe87b26fa5e4c7174c",
+      "raw": "/Users/sam/Claude/Projects/triplex-db-2/EXP-J01/qlever-attribution-A0-20261108T001038Z-5ab295.raw.json",
+      "rawBytes": 838120,
+      "rawSha256": "858ff07a07f7eca79dfaf9d269465b198d3432a20e4fe87bf8c85d1367a81abf"
+    },
+    {
+      "path": "lab/experiments/EXP-J01-bytes-per-commit/receipts/qlever-attribution-compact-20261108T003457Z-d4d93b.json",
+      "receiptSha256": "25fdf7a9b82c530172617679e4222a0f802c08facd18f9da0812e938217c01c1",
+      "raw": "/Users/sam/Claude/Projects/triplex-db-2/EXP-J01/qlever-attribution-compact-20261108T003457Z-d4d93b.raw.json",
+      "rawBytes": 654118,
+      "rawSha256": "799427d8a969d2b382e6e4f0db86c9f30c99aa9d152f4b9c971d789fca793651"
+    },
+    {
+      "path": "lab/experiments/EXP-J01-bytes-per-commit/receipts/service-qlever-fresh-scope-20261108T013148Z-6ca7a2.json",
+      "receiptSha256": "671617c75ca0b663d02cf7d6c0b5d6348379cc2cbdcd500f39029f9923b4497f",
+      "raw": "/Users/sam/Claude/Projects/triplex-db-2/EXP-J01/service-qlever-fresh-scope-20261108T013148Z-6ca7a2.raw.json",
+      "rawBytes": 4218,
+      "rawSha256": "c9bdd9f71b2c537252338b405ca0f005c1dff27d00c65953470ec98b02f66daa"
+    },
+    {
+      "path": "lab/experiments/EXP-J01-bytes-per-commit/receipts/service-xtdb-fresh-scope-20261108T013134Z-49520f.json",
+      "receiptSha256": "63aac573f9c9fee8e9b6bba678853ea7c9e90904a2c35fbea597114a1f0cd96f",
+      "raw": "/Users/sam/Claude/Projects/triplex-db-2/EXP-J01/service-xtdb-fresh-scope-20261108T013134Z-49520f.raw.json",
+      "rawBytes": 6790,
+      "rawSha256": "9111a3e1df1958ae8bf34f4800bc392de2371117173e817a942178906a23c595"
+    },
+    {
+      "path": "lab/experiments/EXP-J01-bytes-per-commit/receipts/xtdb-attribution-A0-20261108T000845Z-6da838.json",
+      "receiptSha256": "e8d69b056891457ae8705a0df69d5927fefeeb69bd1fa142211e15ddbc648a8e",
+      "raw": "/Users/sam/Claude/Projects/triplex-db-2/EXP-J01/xtdb-attribution-A0-20261108T000845Z-6da838.raw.json",
+      "rawBytes": 24194,
+      "rawSha256": "af1b4beab185a587fb0edfe5a00aa5a951b66f5a14e059ddbc5dcf1ddeced998"
+    },
+    {
+      "path": "lab/experiments/EXP-J01-bytes-per-commit/receipts/xtdb-attribution-A0-20261108T003105Z-3e2a1d.json",
+      "receiptSha256": "8accdb8709d687f2b40a4886e98d72b0ff11953f170f9cdf726002c89f712709",
+      "raw": "/Users/sam/Claude/Projects/triplex-db-2/EXP-J01/xtdb-attribution-A0-20261108T003105Z-3e2a1d.raw.json",
+      "rawBytes": 24194,
+      "rawSha256": "9d6f5d6b700bb85f6566a9910ee072a486a72be8a0e2021929a0342d35d816d1"
+    },
+    {
+      "path": "lab/experiments/EXP-J01-bytes-per-commit/receipts/xtdb-attribution-compact-20261108T003136Z-cc319d.json",
+      "receiptSha256": "24c259e239501f40f5bfa3d3b3e9437ec2fa4e8541b458a4c58223296407a948",
+      "raw": "/Users/sam/Claude/Projects/triplex-db-2/EXP-J01/xtdb-attribution-compact-20261108T003136Z-cc319d.raw.json",
+      "rawBytes": 23841,
+      "rawSha256": "2a4cf1ae6548bf064dfc1a8667423e222b9210aaa817d2d4bc4de33153e73472"
+    }
+  ],
+  "qlever": [
+    {
+      "receipt": "qlever-attribution-A0-20261108T001038Z-5ab295.json",
+      "commands": [
+        {
+          "facts": 1,
+          "inserted": 177,
+          "deleted": 2,
+          "triplesBySource": {
+            "data": 27,
+            "journal-envelope :_tx/position": 30,
+            "journal-envelope :_tx/instant": 30,
+            "journal-envelope :_tx/command-id": 27,
+            "journal-envelope :_tx/changed-entity": 27,
+            "journal-change": 27,
+            "meta": 2,
+            "claim": 4,
+            "operation": 3
+          },
+          "objectBytesBySource": {
+            "data": 825,
+            "journal-envelope :_tx/position": 915,
+            "journal-envelope :_tx/instant": 965,
+            "journal-envelope :_tx/command-id": 1035,
+            "journal-envelope :_tx/changed-entity": 901,
+            "journal-change": 2159,
+            "meta": 4,
+            "claim": 92,
+            "operation": 79
+          },
+          "objectBytes": 6975,
+          "updateTextBytes": 26333
+        },
+        {
+          "facts": 10,
+          "inserted": 663,
+          "deleted": 2,
+          "triplesBySource": {
+            "data": 270,
+            "journal-envelope :_tx/position": 30,
+            "journal-envelope :_tx/instant": 30,
+            "journal-envelope :_tx/command-id": 27,
+            "journal-envelope :_tx/changed-entity": 27,
+            "journal-change": 270,
+            "meta": 2,
+            "claim": 4,
+            "operation": 3
+          },
+          "objectBytesBySource": {
+            "data": 8250,
+            "journal-envelope :_tx/position": 915,
+            "journal-envelope :_tx/instant": 965,
+            "journal-envelope :_tx/command-id": 1035,
+            "journal-envelope :_tx/changed-entity": 901,
+            "journal-change": 21590,
+            "meta": 4,
+            "claim": 92,
+            "operation": 79
+          },
+          "objectBytes": 33831,
+          "updateTextBytes": 102005
+        },
+        {
+          "facts": 10,
+          "inserted": 663,
+          "deleted": 2,
+          "triplesBySource": {
+            "data": 270,
+            "journal-envelope :_tx/position": 30,
+            "journal-envelope :_tx/instant": 30,
+            "journal-envelope :_tx/command-id": 27,
+            "journal-envelope :_tx/changed-entity": 27,
+            "journal-change": 270,
+            "meta": 2,
+            "claim": 4,
+            "operation": 3
+          },
+          "objectBytesBySource": {
+            "data": 8250,
+            "journal-envelope :_tx/position": 915,
+            "journal-envelope :_tx/instant": 965,
+            "journal-envelope :_tx/command-id": 1035,
+            "journal-envelope :_tx/changed-entity": 901,
+            "journal-change": 21590,
+            "meta": 4,
+            "claim": 92,
+            "operation": 79
+          },
+          "objectBytes": 33831,
+          "updateTextBytes": 102005
+        },
+        {
+          "facts": 10,
+          "inserted": 663,
+          "deleted": 2,
+          "triplesBySource": {
+            "data": 270,
+            "journal-envelope :_tx/position": 30,
+            "journal-envelope :_tx/instant": 30,
+            "journal-envelope :_tx/command-id": 27,
+            "journal-envelope :_tx/changed-entity": 27,
+            "journal-change": 270,
+            "meta": 2,
+            "claim": 4,
+            "operation": 3
+          },
+          "objectBytesBySource": {
+            "data": 8250,
+            "journal-envelope :_tx/position": 915,
+            "journal-envelope :_tx/instant": 965,
+            "journal-envelope :_tx/command-id": 1035,
+            "journal-envelope :_tx/changed-entity": 901,
+            "journal-change": 21590,
+            "meta": 4,
+            "claim": 92,
+            "operation": 79
+          },
+          "objectBytes": 33831,
+          "updateTextBytes": 102005
+        },
+        {
+          "facts": 50,
+          "inserted": 2823,
+          "deleted": 2,
+          "triplesBySource": {
+            "data": 1350,
+            "journal-envelope :_tx/position": 30,
+            "journal-envelope :_tx/instant": 30,
+            "journal-envelope :_tx/command-id": 27,
+            "journal-envelope :_tx/changed-entity": 27,
+            "journal-change": 1350,
+            "meta": 2,
+            "claim": 4,
+            "operation": 3
+          },
+          "objectBytesBySource": {
+            "data": 41490,
+            "journal-envelope :_tx/position": 915,
+            "journal-envelope :_tx/instant": 965,
+            "journal-envelope :_tx/command-id": 1035,
+            "journal-envelope :_tx/changed-entity": 901,
+            "journal-change": 108270,
+            "meta": 4,
+            "claim": 92,
+            "operation": 79
+          },
+          "objectBytes": 153751,
+          "updateTextBytes": 438885
+        }
+      ],
+      "limitation": "Raw updates prove VALUES and literal sizes; server insertion/deletion counts are receipt observations, not independently replayed here."
+    },
+    {
+      "receipt": "qlever-attribution-compact-20261108T003457Z-d4d93b.json",
+      "commands": [
+        {
+          "facts": 1,
+          "inserted": 123,
+          "deleted": 2,
+          "triplesBySource": {
+            "data": 18,
+            "journal-envelope :_tx/position": 21,
+            "journal-envelope :_tx/instant": 21,
+            "journal-envelope :_tx/command-id": 18,
+            "journal-envelope :_tx/changed-entity": 18,
+            "journal-change": 18,
+            "meta": 2,
+            "claim": 4,
+            "operation": 3
+          },
+          "objectBytesBySource": {
+            "data": 754,
+            "journal-envelope :_tx/position": 844,
+            "journal-envelope :_tx/instant": 894,
+            "journal-envelope :_tx/command-id": 964,
+            "journal-envelope :_tx/changed-entity": 830,
+            "journal-change": 2088,
+            "meta": 4,
+            "claim": 92,
+            "operation": 79
+          },
+          "objectBytes": 6549,
+          "updateTextBytes": 20405
+        },
+        {
+          "facts": 10,
+          "inserted": 447,
+          "deleted": 2,
+          "triplesBySource": {
+            "data": 180,
+            "journal-envelope :_tx/position": 21,
+            "journal-envelope :_tx/instant": 21,
+            "journal-envelope :_tx/command-id": 18,
+            "journal-envelope :_tx/changed-entity": 18,
+            "journal-change": 180,
+            "meta": 2,
+            "claim": 4,
+            "operation": 3
+          },
+          "objectBytesBySource": {
+            "data": 7540,
+            "journal-envelope :_tx/position": 844,
+            "journal-envelope :_tx/instant": 894,
+            "journal-envelope :_tx/command-id": 964,
+            "journal-envelope :_tx/changed-entity": 830,
+            "journal-change": 20880,
+            "meta": 4,
+            "claim": 92,
+            "operation": 79
+          },
+          "objectBytes": 32127,
+          "updateTextBytes": 78293
+        },
+        {
+          "facts": 10,
+          "inserted": 447,
+          "deleted": 2,
+          "triplesBySource": {
+            "data": 180,
+            "journal-envelope :_tx/position": 21,
+            "journal-envelope :_tx/instant": 21,
+            "journal-envelope :_tx/command-id": 18,
+            "journal-envelope :_tx/changed-entity": 18,
+            "journal-change": 180,
+            "meta": 2,
+            "claim": 4,
+            "operation": 3
+          },
+          "objectBytesBySource": {
+            "data": 7540,
+            "journal-envelope :_tx/position": 844,
+            "journal-envelope :_tx/instant": 894,
+            "journal-envelope :_tx/command-id": 964,
+            "journal-envelope :_tx/changed-entity": 830,
+            "journal-change": 20880,
+            "meta": 4,
+            "claim": 92,
+            "operation": 79
+          },
+          "objectBytes": 32127,
+          "updateTextBytes": 78293
+        },
+        {
+          "facts": 10,
+          "inserted": 447,
+          "deleted": 2,
+          "triplesBySource": {
+            "data": 180,
+            "journal-envelope :_tx/position": 21,
+            "journal-envelope :_tx/instant": 21,
+            "journal-envelope :_tx/command-id": 18,
+            "journal-envelope :_tx/changed-entity": 18,
+            "journal-change": 180,
+            "meta": 2,
+            "claim": 4,
+            "operation": 3
+          },
+          "objectBytesBySource": {
+            "data": 7540,
+            "journal-envelope :_tx/position": 844,
+            "journal-envelope :_tx/instant": 894,
+            "journal-envelope :_tx/command-id": 964,
+            "journal-envelope :_tx/changed-entity": 830,
+            "journal-change": 20880,
+            "meta": 4,
+            "claim": 92,
+            "operation": 79
+          },
+          "objectBytes": 32127,
+          "updateTextBytes": 78293
+        },
+        {
+          "facts": 50,
+          "inserted": 1887,
+          "deleted": 2,
+          "triplesBySource": {
+            "data": 900,
+            "journal-envelope :_tx/position": 21,
+            "journal-envelope :_tx/instant": 21,
+            "journal-envelope :_tx/command-id": 18,
+            "journal-envelope :_tx/changed-entity": 18,
+            "journal-change": 900,
+            "meta": 2,
+            "claim": 4,
+            "operation": 3
+          },
+          "objectBytesBySource": {
+            "data": 37940,
+            "journal-envelope :_tx/position": 844,
+            "journal-envelope :_tx/instant": 894,
+            "journal-envelope :_tx/command-id": 964,
+            "journal-envelope :_tx/changed-entity": 830,
+            "journal-change": 104720,
+            "meta": 4,
+            "claim": 92,
+            "operation": 79
+          },
+          "objectBytes": 146367,
+          "updateTextBytes": 336133
+        }
+      ],
+      "limitation": "Raw updates prove VALUES and literal sizes; server insertion/deletion counts are receipt observations, not independently replayed here."
+    }
+  ],
+  "xtdb": [
+    {
+      "receipt": "xtdb-attribution-A0-20261108T000845Z-6da838.json",
+      "increments": [
+        {
+          "source": "base: record + tx_meta (position counter)",
+          "bytes": 1851
+        },
+        {
+          "source": "tx_attempts (operation receipt)",
+          "bytes": 1176
+        },
+        {
+          "source": "tx_claims (command claim)",
+          "bytes": 1296
+        },
+        {
+          "source": "ASSERT scope CAS",
+          "bytes": 984
+        },
+        {
+          "source": "ASSERT operation not duplicate",
+          "bytes": 720
+        },
+        {
+          "source": "ASSERT command not claimed",
+          "bytes": 704
+        },
+        {
+          "source": "data rows (10 tx_assertions)",
+          "bytes": 6824
+        },
+        {
+          "source": "ASSERT new ids: data ids",
+          "bytes": 2112
+        },
+        {
+          "source": "journal envelope rows (position, instant, command-id, changed-entity)",
+          "bytes": 2842
+        },
+        {
+          "source": "journal change rows (10 :_tx/change)",
+          "bytes": 11552
+        }
+      ],
+      "sum": 30061,
+      "rows": {
+        "data": 10,
+        "envelope": 4,
+        "changes": 10
+      },
+      "changePayloadBytes": [
+        {
+          "jsonBytes": 267,
+          "identityBytes": 291
+        },
+        {
+          "jsonBytes": 267,
+          "identityBytes": 291
+        },
+        {
+          "jsonBytes": 267,
+          "identityBytes": 291
+        },
+        {
+          "jsonBytes": 267,
+          "identityBytes": 291
+        },
+        {
+          "jsonBytes": 267,
+          "identityBytes": 291
+        },
+        {
+          "jsonBytes": 267,
+          "identityBytes": 291
+        },
+        {
+          "jsonBytes": 267,
+          "identityBytes": 291
+        },
+        {
+          "jsonBytes": 267,
+          "identityBytes": 291
+        },
+        {
+          "jsonBytes": 267,
+          "identityBytes": 291
+        },
+        {
+          "jsonBytes": 267,
+          "identityBytes": 291
+        }
+      ],
+      "bands": [
+        {
+          "facts": 1,
+          "recordBytes": 14443
+        },
+        {
+          "facts": 10,
+          "recordBytes": 30061
+        },
+        {
+          "facts": 10,
+          "recordBytes": 30061
+        },
+        {
+          "facts": 10,
+          "recordBytes": 30061
+        },
+        {
+          "facts": 50,
+          "recordBytes": 100013
+        }
+      ],
+      "limitation": "Retained raw contains only ten-fact statements; no per-replay message offsets/Arrow log bytes. Byte closure is recomputed receipt arithmetic, not independent validation of engine byte observations."
+    },
+    {
+      "receipt": "xtdb-attribution-A0-20261108T003105Z-3e2a1d.json",
+      "increments": [
+        {
+          "source": "base: record + tx_meta (position counter)",
+          "bytes": 1851
+        },
+        {
+          "source": "tx_attempts (operation receipt)",
+          "bytes": 1176
+        },
+        {
+          "source": "tx_claims (command claim)",
+          "bytes": 1296
+        },
+        {
+          "source": "ASSERT scope CAS",
+          "bytes": 984
+        },
+        {
+          "source": "ASSERT operation not duplicate",
+          "bytes": 720
+        },
+        {
+          "source": "ASSERT command not claimed",
+          "bytes": 704
+        },
+        {
+          "source": "data rows (10 tx_assertions)",
+          "bytes": 6824
+        },
+        {
+          "source": "guard: data assertion ids",
+          "bytes": 2112
+        },
+        {
+          "source": "journal envelope rows (position, instant, command-id, changed-entity) + their ids",
+          "bytes": 2842
+        },
+        {
+          "source": "journal change rows (10 :_tx/change) + their ids",
+          "bytes": 11552
+        }
+      ],
+      "sum": 30061,
+      "rows": {
+        "data": 10,
+        "envelope": 4,
+        "changes": 10
+      },
+      "changePayloadBytes": [
+        {
+          "jsonBytes": 267,
+          "identityBytes": 291
+        },
+        {
+          "jsonBytes": 267,
+          "identityBytes": 291
+        },
+        {
+          "jsonBytes": 267,
+          "identityBytes": 291
+        },
+        {
+          "jsonBytes": 267,
+          "identityBytes": 291
+        },
+        {
+          "jsonBytes": 267,
+          "identityBytes": 291
+        },
+        {
+          "jsonBytes": 267,
+          "identityBytes": 291
+        },
+        {
+          "jsonBytes": 267,
+          "identityBytes": 291
+        },
+        {
+          "jsonBytes": 267,
+          "identityBytes": 291
+        },
+        {
+          "jsonBytes": 267,
+          "identityBytes": 291
+        },
+        {
+          "jsonBytes": 267,
+          "identityBytes": 291
+        }
+      ],
+      "bands": [
+        {
+          "facts": 1,
+          "recordBytes": 14443
+        },
+        {
+          "facts": 10,
+          "recordBytes": 30061
+        },
+        {
+          "facts": 10,
+          "recordBytes": 30061
+        },
+        {
+          "facts": 10,
+          "recordBytes": 30061
+        },
+        {
+          "facts": 50,
+          "recordBytes": 100013
+        }
+      ],
+      "limitation": "Retained raw contains only ten-fact statements; no per-replay message offsets/Arrow log bytes. Byte closure is recomputed receipt arithmetic, not independent validation of engine byte observations."
+    },
+    {
+      "receipt": "xtdb-attribution-compact-20261108T003136Z-cc319d.json",
+      "increments": [
+        {
+          "source": "base: record + tx_meta (position counter)",
+          "bytes": 1851
+        },
+        {
+          "source": "tx_attempts (operation receipt)",
+          "bytes": 1176
+        },
+        {
+          "source": "tx_claims (command claim)",
+          "bytes": 1296
+        },
+        {
+          "source": "ASSERT serialization: scope CAS + command not claimed",
+          "bytes": 1352
+        },
+        {
+          "source": "ASSERT identity: operation not recorded",
+          "bytes": 720
+        },
+        {
+          "source": "data rows (10 tx_assertions)",
+          "bytes": 6816
+        },
+        {
+          "source": "guard: data assertion ids",
+          "bytes": 632
+        },
+        {
+          "source": "journal envelope rows (position, instant, command-id, changed-entity) + their ids",
+          "bytes": 2320
+        },
+        {
+          "source": "journal change rows (10 :_tx/change) + their ids",
+          "bytes": 10234
+        }
+      ],
+      "sum": 26397,
+      "rows": {
+        "data": 10,
+        "envelope": 4,
+        "changes": 10
+      },
+      "changePayloadBytes": [
+        {
+          "jsonBytes": 267,
+          "identityBytes": 291
+        },
+        {
+          "jsonBytes": 267,
+          "identityBytes": 291
+        },
+        {
+          "jsonBytes": 267,
+          "identityBytes": 291
+        },
+        {
+          "jsonBytes": 267,
+          "identityBytes": 291
+        },
+        {
+          "jsonBytes": 267,
+          "identityBytes": 291
+        },
+        {
+          "jsonBytes": 267,
+          "identityBytes": 291
+        },
+        {
+          "jsonBytes": 267,
+          "identityBytes": 291
+        },
+        {
+          "jsonBytes": 267,
+          "identityBytes": 291
+        },
+        {
+          "jsonBytes": 267,
+          "identityBytes": 291
+        },
+        {
+          "jsonBytes": 267,
+          "identityBytes": 291
+        }
+      ],
+      "bands": [
+        {
+          "facts": 1,
+          "recordBytes": 13123
+        },
+        {
+          "facts": 10,
+          "recordBytes": 26397
+        },
+        {
+          "facts": 10,
+          "recordBytes": 26397
+        },
+        {
+          "facts": 10,
+          "recordBytes": 26397
+        },
+        {
+          "facts": 50,
+          "recordBytes": 85869
+        }
+      ],
+      "limitation": "Retained raw contains only ten-fact statements; no per-replay message offsets/Arrow log bytes. Byte closure is recomputed receipt arithmetic, not independent validation of engine byte observations."
+    }
+  ],
+  "service": [
+    {
+      "receipt": "service-qlever-fresh-scope-20261108T013148Z-6ca7a2.json",
+      "stats": {
+        "a0": {
+          "n": 60,
+          "p50": 7430.271958000027,
+          "p99": 14412.587834000005
+        },
+        "compact": {
+          "n": 60,
+          "p50": 6972.732625000062,
+          "p99": 12788.934417000011
+        }
+      }
+    },
+    {
+      "receipt": "service-xtdb-fresh-scope-20261108T013134Z-49520f.json",
+      "stats": {
+        "a0": {
+          "n": 96,
+          "p50": 2887.7017919999926,
+          "p99": 4900.732332999993
+        },
+        "compact": {
+          "n": 96,
+          "p50": 2982.2218330000032,
+          "p99": 6126.711165999994
+        }
+      }
+    }
+  ],
+  "g1": [
+    {
+      "receipt": "G1-qlever-20261108T021919Z-c834f9.json",
+      "note": "EXP-J01 option OFF (TRIPLEX_COMMIT_ENCODING empty = a0) at f4a674e; f1 profile, server planner budget already 1",
+      "counts": {
+        "executed": 78,
+        "expected": 88,
+        "pass": 69,
+        "fail": 9,
+        "skip": 10,
+        "suite": "FAIL",
+        "byPhase": {
+          "current": {
+            "pass": 40,
+            "total": 44
+          },
+          "reopen": {
+            "pass": 29,
+            "total": 34
+          }
+        }
+      },
+      "verdict": "FAIL",
+      "rawReports": [
+        {
+          "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a673708af43c1e677/runs/G1/G1-qlever-20261108T021919Z-c834f9/g1-report.json",
+          "sha256": "87fc1cc1a120b3351eed4a8897904a01c0e1afebd34941c7d7c4f448599c4bc2",
+          "recomputedCounts": {
+            "PASS": 69,
+            "FAIL": 9
+          },
+          "failures": [
+            {
+              "name": "recursive relations support cursor pagination and optional total counts",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-6b3da4a8-7cf8-4f9d-b5aa-47573e8ec33a\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: QLever Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+              "elapsedMs": 34002.73641700001
+            },
+            {
+              "name": "datalog recursive rules compute the same transitive closure",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-ec809a9d-9a06-420f-85a9-53055a3da7db\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: QLever Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+              "elapsedMs": 35706.16229200002
+            },
+            {
+              "name": "wrapped filters preserve scalar types and SQL null semantics",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-7fcb759c-1903-420f-bf56-d2720f563744\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: QLever Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+              "elapsedMs": 66797.44208300009
+            },
+            {
+              "name": "derivation materialization uses indexed dependency freshness",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-48c0674f-47c7-43b7-8ad8-22a3ccef02c6\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(TimeoutError: Operation timed out after '1m 50s')])",
+              "elapsedMs": 110005.56383300002
+            },
+            {
+              "name": "actor due-work ranges preserve numeric aliases, visibility, ordering, and limits",
+              "phase": "reopen",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-69d527cc-324c-4473-aeb1-bf0454d95210\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(TimeoutError: Operation timed out after '1m 50s')])",
+              "elapsedMs": 110006.91058299993
+            },
+            {
+              "name": "recursive relations support cursor pagination and optional total counts",
+              "phase": "reopen",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-797b8c14-6027-4327-9dab-f475faae6bd6\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: QLever Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+              "elapsedMs": 38530.000457999995
+            },
+            {
+              "name": "datalog recursive rules compute the same transitive closure",
+              "phase": "reopen",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-98a4d710-6669-44c6-b7b9-a34048d16895\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: QLever Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+              "elapsedMs": 38146.53366700001
+            },
+            {
+              "name": "datalog aggregations group, filter, and order consistently",
+              "phase": "reopen",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-4b06a0f3-6e07-4e4b-a4a5-eff1bc00a42d\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: QLever Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+              "elapsedMs": 37628.17566599976
+            },
+            {
+              "name": "datalog aggregates preserve duplicate rows and define empty and distinct results",
+              "phase": "reopen",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-1f0f360f-1666-4f65-b4e1-5cba3023bdec\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: QLever Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+              "elapsedMs": 40160.34695800021
+            }
+          ]
+        }
+      ],
+      "encodingBoundInEnvironment": false
+    },
+    {
+      "receipt": "G1-qlever-20261108T030804Z-e1de94.json",
+      "note": "EXP-J01 option ON (TRIPLEX_COMMIT_ENCODING=compact) at f4a674e; f1 profile, server planner budget already 1; encoding proven by probe p9",
+      "counts": {
+        "executed": 88,
+        "expected": 88,
+        "pass": 84,
+        "fail": 4,
+        "skip": 0,
+        "suite": "FAIL",
+        "byPhase": {
+          "current": {
+            "pass": 42,
+            "total": 44
+          },
+          "reopen": {
+            "pass": 42,
+            "total": 44
+          }
+        }
+      },
+      "verdict": "FAIL",
+      "rawReports": [
+        {
+          "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a673708af43c1e677/runs/G1/G1-qlever-20261108T030804Z-e1de94/g1-report.json",
+          "sha256": "f1b0e06e8a3092aac6429bad4d3350a58004cb074e978923cc9cb09145ebb27f",
+          "recomputedCounts": {
+            "PASS": 84,
+            "FAIL": 4
+          },
+          "failures": [
+            {
+              "name": "recursive relations support cursor pagination and optional total counts",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-9fffde7f-2bac-46b7-a8b8-4d36805a5f8d\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: QLever Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+              "elapsedMs": 37076.178041999985
+            },
+            {
+              "name": "datalog recursive rules compute the same transitive closure",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-current-b9e22edf-20c4-4041-b0d8-268597184518\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: QLever Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+              "elapsedMs": 36774.989124999964
+            },
+            {
+              "name": "recursive relations support cursor pagination and optional total counts",
+              "phase": "reopen",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-a69b0c71-4d96-4abd-bcb9-e211f23a06ce\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: QLever Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+              "elapsedMs": 35480.7316670001
+            },
+            {
+              "name": "datalog recursive rules compute the same transitive closure",
+              "phase": "reopen",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-qlever-reopen-e14ef91d-6846-434d-a554-c8abfb11cdce\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: QLever Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+              "elapsedMs": 34399.48170800018
+            }
+          ]
+        }
+      ],
+      "encodingBoundInEnvironment": false
+    },
+    {
+      "receipt": "G1-xtdb-20261108T013218Z-7e7e23.json",
+      "note": "EXP-J01 option OFF (TRIPLEX_COMMIT_ENCODING empty = a0) at 41517f9",
+      "counts": {
+        "executed": 50,
+        "expected": 88,
+        "pass": 25,
+        "fail": 25,
+        "skip": 38,
+        "suite": "FAIL",
+        "byPhase": {
+          "current": {
+            "pass": 23,
+            "total": 44
+          },
+          "reopen": {
+            "pass": 2,
+            "total": 6
+          }
+        }
+      },
+      "verdict": "FAIL",
+      "rawReports": [
+        {
+          "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a673708af43c1e677/runs/G1/G1-xtdb-20261108T013218Z-7e7e23/g1-report.json",
+          "sha256": "cf03f0a61a3dd035af10f8bb6c9a3a938e1bddd940e8687d8f2d1f1147c422c4",
+          "recomputedCounts": {
+            "FAIL": 25,
+            "PASS": 25
+          },
+          "failures": [
+            {
+              "name": "actor due-work ranges preserve numeric aliases, visibility, ordering, and limits",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-1627c148-7363-48b2-a229-f063ec48e79e\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(TimeoutError: Operation timed out after '1m 50s')])",
+              "elapsedMs": 115024.409291
+            },
+            {
+              "name": "Datalog reads are bounded by default and cursors traverse the complete snapshot",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-c889d8b5-f873-402e-8731-a370ecf33837\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(TimeoutError: Operation timed out after '1m 50s')])",
+              "elapsedMs": 115023.14300000001
+            },
+            {
+              "name": "recursive relations support cursor pagination and optional total counts",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-68573c43-161a-4eeb-bb5d-78d616e61d4e\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: XTDB Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+              "elapsedMs": 35731.40441700001
+            },
+            {
+              "name": "datalog supports multi-hop joins over ref edges",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-f1245531-741b-4281-8411-e945b2b12577\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: XTDB Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+              "elapsedMs": 43494.319791999995
+            },
+            {
+              "name": "datalog recursive rules compute the same transitive closure",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-5563596a-8d31-47ee-bcfa-7c78ea06f438\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: XTDB Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+              "elapsedMs": 39358.87387499993
+            },
+            {
+              "name": "datalog aggregations group, filter, and order consistently",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-2f580ee9-1f06-4ced-b010-8bc664fcdf18\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: XTDB Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+              "elapsedMs": 44995.910999999964
+            },
+            {
+              "name": "wrapped filters preserve scalar types and SQL null semantics",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-e3af2c70-5d24-459a-ad53-50e446c6188c\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: XTDB Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+              "elapsedMs": 38706.93699999992
+            },
+            {
+              "name": "Datalog ordering and pagination preserve mixed scalar order",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-71c32566-4676-4439-904e-a0849e5df7b5\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: XTDB Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+              "elapsedMs": 76227.48125000019
+            },
+            {
+              "name": "datalog untyped strings match string and ref values while typed refs stay exact",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-c5cc9251-446e-4e7b-ae78-0579acf675b6\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: XTDB Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+              "elapsedMs": 56038.344875000184
+            },
+            {
+              "name": "transact records provenance datoms",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-da722732-80ea-4e23-9284-e1db0c441f03\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: XTDB read failed (cause: Error: XTDB operation deadline exceeded))])",
+              "elapsedMs": 67862.36762499996
+            },
+            {
+              "name": "conditional transactions are atomic and journal their changes",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-1c074173-1055-4343-b74f-737cc6758edb\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(WriteError: Cannot read retraction target (cause: ReadError: XTDB read failed (cause: Error: XTDB operation deadline exceeded)))])",
+              "elapsedMs": 77088.90941700013
+            },
+            {
+              "name": "entity transaction history is indexed, complete, and snapshot-stable",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-740f866b-2d0b-4ac4-9397-003680b1742e\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(WriteError: Transaction outcome is unknown; resolve operation 33a5889f-06fa-44d8-90f1-ca8b100bbf57 before retrying (cause: Error: XTDB operation deadline exceeded))])",
+              "elapsedMs": 44771.10058399988
+            },
+            {
+              "name": "graph constraints reject invalid post-states across valid time",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-62b8c296-f5a4-4806-9cb9-77c1db176b07\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ConformanceError: a missing required fact should produce ConstraintViolationError)])",
+              "elapsedMs": 41194.042625
+            },
+            {
+              "name": "dependency state is attribute-scoped and schedules temporal edges",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-a5b5bf72-200d-4805-8517-fa666aef4143\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(xtdb-baseline: Cannot initialize XTDB tables (cause: Error: XTDB operation deadline exceeded))])",
+              "elapsedMs": 35025.97666599997
+            },
+            {
+              "name": "derivation materialization uses indexed dependency freshness",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-7469a2ee-6980-4ed1-92dc-f2c6c74d8f94\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(xtdb-baseline: Cannot initialize XTDB tables (cause: Error: XTDB operation deadline exceeded))])",
+              "elapsedMs": 35031.062957999995
+            },
+            {
+              "name": "graph constraints agree across storage backends",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-20b14a22-cd1b-49ca-ad50-e8f912074b7e\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(xtdb-baseline: Cannot initialize XTDB tables (cause: Error: XTDB operation deadline exceeded))])",
+              "elapsedMs": 35016.31879199995
+            },
+            {
+              "name": "consumer checkpoints advance atomically and remain queryable",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-d1ee8d79-331e-4c39-af45-6796378c178d\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: XTDB read failed (cause: Error: XTDB operation deadline exceeded))])",
+              "elapsedMs": 54741.69458299992
+            },
+            {
+              "name": "retractByPattern respects entityType",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-10034d41-ef2f-4866-bf8d-30c80ca79903\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: XTDB read failed (cause: Error: XTDB operation deadline exceeded))])",
+              "elapsedMs": 89209.33224999998
+            },
+            {
+              "name": "reserved Triplex namespaces reject ordinary writes atomically",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-508ffd4d-4b52-4a5b-84ce-fc8dbaaf4269\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: XTDB read failed (cause: Error: XTDB operation deadline exceeded))])",
+              "elapsedMs": 42785.91866600001
+            },
+            {
+              "name": "retract is coherent across write and datalog paths",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-dda036e9-cc1d-4b8d-81e6-675e2ae78efe\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(TimeoutError: Operation timed out after '1m 50s')])",
+              "elapsedMs": 112292.84712499985
+            },
+            {
+              "name": "paged queries use deterministic snapshot-stable cursors",
+              "phase": "current",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-7b5773fe-1756-4831-ba90-cb12babe91e2\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: XTDB Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+              "elapsedMs": 61325.60287500033
+            },
+            {
+              "name": "actor due-work ranges preserve numeric aliases, visibility, ordering, and limits",
+              "phase": "reopen",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-reopen-292038be-54a5-4e85-b0fb-3c0b4361563a\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(WriteError: Transaction outcome is unknown; resolve operation 4592f9f6-8040-4fcf-bd66-511763e0024e before retrying (cause: Error: XTDB operation deadline exceeded))])",
+              "elapsedMs": 42962.12279199995
+            },
+            {
+              "name": "Datalog reads are bounded by default and cursors traverse the complete snapshot",
+              "phase": "reopen",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-reopen-451ef468-45dd-48c5-9742-5756c9adacf0\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(WriteError: Transaction outcome is unknown; resolve operation a5af77bd-acf0-4630-a258-8a04ce5ff1e6 before retrying (cause: Error: XTDB operation deadline exceeded))])",
+              "elapsedMs": 38322.20762500027
+            },
+            {
+              "name": "historical cursor pages intersect recorded time and the commit snapshot",
+              "phase": "reopen",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-reopen-609f3740-4509-41d4-94cb-2baabda872d9\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(TimeoutError: Operation timed out after '1m 50s')])",
+              "elapsedMs": 115020.61329199979
+            },
+            {
+              "name": "recursive relations support cursor pagination and optional total counts",
+              "phase": "reopen",
+              "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-reopen-5d9bbcf7-e45f-4422-a007-53cbca380662\",0]",
+              "status": "FAIL",
+              "error": "Cause([Fail(ReadError: XTDB Datalog execution failed: Error: XTDB operation deadline exceeded (cause: Error: XTDB operation deadline exceeded))])",
+              "elapsedMs": 68253.51733299997
+            }
+          ]
+        }
+      ],
+      "encodingBoundInEnvironment": false
+    }
+  ],
+  "p2x": {
+    "increments": [
+      {
+        "source": "candidate rows and bookkeeping as plain INSERT ... VALUES (put-docs), no ASSERTs, no heads/feed/METADATA",
+        "bytes": 21069
+      },
+      {
+        "source": "+ the two merged ASSERTs (_id point lookups)",
+        "bytes": 6824
+      },
+      {
+        "source": "+ tx_heads and tx_feed rows (plain)",
+        "bytes": 2984
+      },
+      {
+        "source": "+ METADATA on BEGIN",
+        "bytes": 1863
+      },
+      {
+        "source": "+ stamped bookkeeping inserts (INSERT ... SELECT)",
+        "bytes": 2432
+      },
+      {
+        "source": "+ stamped tx_assertions insert (INSERT ... SELECT) = the candidate",
+        "bytes": 60192
+      }
+    ],
+    "sum": 95364,
+    "rawAbsent": true
+  }
+}
