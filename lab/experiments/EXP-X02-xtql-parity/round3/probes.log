@@ -1,0 +1,8 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 66631 "CX-P2Q-R3-process-access-retry", pid 71356 "CX-VA01-0311-negtest", pid 76980 "CX-X02-R3-G0", pid 77484 "G0-xtdb-20261108T221443Z-a58b01 typecheck"
+subquery-regression 0 null
+delta-live 0 null
+offline-source 0 null
+probe-source 0 null
+probe-sums 0 null
+delta-offline 0 null
+delta-sums 0 null

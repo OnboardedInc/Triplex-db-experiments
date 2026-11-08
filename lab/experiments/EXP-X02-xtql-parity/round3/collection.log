@@ -1,0 +1,51 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 66631 "CX-P2Q-R3-process-access-retry", pid 71356 "CX-VA01-0311-negtest", pid 38325 "G0-datomic-20261108T221648Z-1093dd typecheck", pid 37594 "CX-VDA00-G0"
+{
+  "counts": {
+    "subquery-regression": {
+      "pass": 6,
+      "total": 6
+    },
+    "delta-live": {
+      "pass": 22,
+      "total": 22
+    },
+    "source-sums": {
+      "pass": 20,
+      "total": 20
+    },
+    "delta-sums": {
+      "pass": 30,
+      "total": 30
+    },
+    "overflow": {
+      "pass": 10,
+      "total": 10
+    },
+    "exact": {
+      "pass": 120,
+      "total": 120
+    },
+    "defaults": {
+      "pass": 213,
+      "total": 213
+    },
+    "source-hazards": {
+      "expected-records": 13,
+      "total": 13
+    }
+  },
+  "G0": {
+    "executed": 960,
+    "pass": 960,
+    "fail": 0,
+    "skip": 130,
+    "expectedSkip": 130,
+    "unexpectedSkip": 0
+  },
+  "sourceMaps": 13,
+  "reviewerBaseline": "7873fea",
+  "syntaxExpectationAdaptation": [
+    "parenthesized-any-operand",
+    "parenthesized-some-operand"
+  ]
+}

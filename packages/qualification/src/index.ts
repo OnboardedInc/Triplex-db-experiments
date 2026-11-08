@@ -202,7 +202,15 @@ export const loadQualificationBackend = async (name = qualificationBackendName()
   // Select one authored task library. Foundation/translated jobs never load
   // unused native libraries, so their exact source closures stay independent.
   let nativeWorkload: NativeTaskLibrary | undefined;
+  // [EXP-X02-R2] Why: Q79d keeps the historical library when unset.
+  // Rejected: a default language change without independent qualification.
+  let nativeLanguage: "xtql" | "xtdb-sql" | undefined;
   if (queryPath === "xtdb-native") {
+    const requested = process.env["TRIPLEX_XTDB_NATIVE_LANGUAGE"];
+    if (requested !== undefined && requested !== "xtql" && requested !== "xtdb-sql")
+      throw new TypeError("TRIPLEX_XTDB_NATIVE_LANGUAGE must be xtql or xtdb-sql");
+    const language = requested;
+    nativeLanguage = language;
     const tasks = await import("./native/xtdb-workloads.js");
     nativeWorkload = {
       supports: tasks.supportsXtdbNativeWorkload,
@@ -213,6 +221,7 @@ export const loadQualificationBackend = async (name = qualificationBackendName()
           entry,
           positions,
           trace,
+          language,
         ),
     };
   } else if (queryPath === "qlever-native") {
@@ -259,6 +268,7 @@ export const loadQualificationBackend = async (name = qualificationBackendName()
     name,
     queryPath,
     nativeWorkload,
+    nativeLanguage,
     url,
     artifact: path.resolve(directory, target),
     makeRuntime: () => runtime,

@@ -1,0 +1,15 @@
+[lab] G0-xtdb-20261108T214352Z-4be4d9: raw output runs/G0/G0-xtdb-20261108T214352Z-4be4d9
+error: could not write index
+[lab] heavy: waiting for one of 4 slots; held by pid 16329 "CX-P2Q-R2-final-round", pid 44149 "CX-VO04I-review", pid 50657 "CX-VJ01-recovery-frontier", pid 12504 "CX-VJ01-checks-r3"
+FAIL G0 xtdb scope=full executed=110 pass=110 fail=0 skip=0
+  reason: build failed (exit 1)
+  reason: typecheck failed (exit 1)
+  reason: core: no vitest JSON report
+  reason: vitest core exited 1 without a failed test
+  reason: testkit: no vitest JSON report
+  reason: vitest testkit exited 1 without a failed test
+  reason: xtdb: no vitest JSON report
+  reason: vitest xtdb exited 1 without a failed test
+  reason: qualification: no vitest JSON report
+  reason: vitest qualification exited 1 without a failed test
+receipt: lab/runs/G0/G0-xtdb-20261108T214352Z-4be4d9.json
