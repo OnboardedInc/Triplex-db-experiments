@@ -19,13 +19,23 @@
 (defn assert-scope [db scope]
   (when-let [existing (stored-scope db)]
     (when-not (= existing scope) (throw (ex-info "Database name collision" {:status 409 :code "ScopeCollision"})))))
+(defn initialize-scope! [uri scope]
+  ;; [EXP-DA01] Why: a stale first opener must never reset a writer's position. Rejected: check-then-upsert of the scope header (concurrent initialization race).
+  (try
+    @(d/transact (connection uri)
+       [{:db/id (d/tempid :db.part/user) :triplex.scope/bootstrap "singleton"}
+        {:triplex.scope/key scope :triplex.scope/position 0 :triplex.scope/schema-hash schema/schema-hash}])
+    (catch Exception e
+      (let [current (sync-db uri)]
+        (assert-scope current scope)
+        (when-not (stored-scope current) (throw e))))))
 (defn create-scope! [base scope]
   (let [name (scope-name scope) uri (str base name) created (d/create-database uri) conn (connection uri)]
     (assert-scope (sync-db uri) scope)
     (when-not (stored-scope (sync-db uri))
       @(d/transact conn schema/schema)
       (assert-scope (sync-db uri) scope)
-      @(d/transact conn [{:triplex.scope/key scope :triplex.scope/position 0 :triplex.scope/schema-hash schema/schema-hash}]))
+      (initialize-scope! uri scope))
     (when-not (= schema/schema-hash (:triplex.scope/schema-hash (d/entity (sync-db uri) [:triplex.scope/key scope])))
       @(d/transact conn schema/schema)
       @(d/transact conn [{:triplex.scope/key scope :triplex.scope/schema-hash schema/schema-hash}]))

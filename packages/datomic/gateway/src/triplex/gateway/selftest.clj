@@ -24,6 +24,10 @@
     @(d/transact (gateway/connection (str base name)) [{:triplex.scope/key scope :triplex.scope/position 7}])
     (is (false? (:created (gateway/create-scope! base scope))))
     (is (= {"t" "long" "v" "7"} (:position (gateway/basis base name))))
+    ;; [EXP-DA01] Why: replay the actual late initializer transaction after a writer advances. Rejected: sequential create alone (never enters its stale initialization branch).
+    (gateway/initialize-scope! (str base name) scope)
+    (is (= {"t" "long" "v" "7"} (:position (gateway/basis base name))))
+    (is (thrown? Exception (gateway/initialize-scope! (str base name) "different-scope")))
     (is (thrown? Exception (gateway/assert-scope db "other")))
     (is (:deleted (gateway/delete-scope! base scope)))
     (is (thrown? Exception (gateway/scope-name "[\"triplex-scope-v1\",\"prod\",\"t\",\"d\",1]")))))
