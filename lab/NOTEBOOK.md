@@ -1187,3 +1187,20 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **O-REPLAY 0.4.4 (00703e6)** fixed F7 and F8; its author found the F7 hole still reachable through a literal token from a plain read.
   Ruled Q70c-e (any issuing read; latest of equal tokens; prefixes without the token left out); 0.4.5 is in progress, then one re-check.
 - **Contract 0.3.10** also compiles Q71b, Q71c and Q72f (one error id for a basis beyond the latest published position).
+
+## 2026-11-08 01:44Z: XTDB A0 at 10k with zero readers: the write path saturates and single reads take seconds; 10k ladder stopped
+- **Receipt NS-xtdb-20261108T001701Z-6f67e0 (MEASURED, exclusive s1, smoke profile, `public-queued`):** seed 384,785 assertions in 38 min
+  (about 400 falling to 170 facts/s as the scope grew). P2: 112 of 15,617 trace commands published in about 40 min; the rest missed the
+  30 s deadline; the 5-10 fact band p50 22 s, p99 45 s; the queue held about 6,700 at steady state and never drained after a burst. P3: 0
+  order violations, 0 duplicate effects, all three crash points resumed exactly; lag p99 41.6 s; 11 gaps not yet classified. 0 correctness
+  violations; read-your-own-write pulls p50 44 s, p99 122 s.
+- **Probes on the idle seeded scope:** one entities round trip 1.3-2.3 s; a 4-hop pull 5.4 s, a 7-hop pull 15-16 s; `transactions(after
+  0, limit 1)` 13.5 s; a 1-fact transact 3 s. These grow with scope size, which fits R24's finding that A0 reads scan all valid time through
+  non-`_id` predicates, and P2X's finding that A0's receipt and scope reads grow with history while its candidate stays near 5 ms.
+- **Decision:** the 10k reader ladder was stopped before it ran. P1 is measured as writer latency with readers against the zero-reader run,
+  and with the writer already saturated that comparison shows nothing about readers. s1 goes to V-X02. N01 proposes the largest rung where
+  the zero-reader writer keeps up, and the A0 ladder runs there after V-X02 (using R26's clone procedure if it holds).
+- **Learning for the north star:** on this node the A0 XTDB lane misses P2 and P3 by two orders of magnitude before any reader is added,
+  so every P1, P2 and P4 gain for XTDB has to come from the read-path change (EXP-P4 X1), the keyed scope candidate (P2X) and the broker
+  (P2B), not from tuning the engine.
+- **O-REPLAY 0.4.5 (acf9fce)** closes Q70a-e (375/375 unit tests, probe_q52 43 MATCH, 2 OBSERVED); V-O04f is re-checking it.
