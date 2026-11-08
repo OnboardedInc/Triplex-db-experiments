@@ -1,0 +1,14 @@
+{
+  "id": "C91",
+  "slug": "err-bytes-bom",
+  "title": "A01: the input bytes start with a UTF-8 byte order mark: W0.E_SHAPE",
+  "op": "evaluate",
+  "checks": [],
+  "notes": [
+    "From V-D01c P04 (A01, RULINGS Q53a). inputBase64 holds EF BB BF followed by the canonical bytes of C01's input.",
+    "An input is one JSON text in UTF-8 with no byte order mark (4.4 step 1), so the bytes are W0.E_SHAPE even though RFC 8259",
+    "section 8.1 lets a general parser ignore a BOM."
+  ],
+  "inputBase64": "77u/eyJiYXNpcyI6eyJ0eCI6MTAsInZhbGlkVGltZSI6IjIwMjYtMTEtMDRUMTI6MDA6MDAuMDAwMDAwWiJ9LCJyZWxlYXNlIjoiUjEiLCJ3b3JsZCI6eyJmYWN0cyI6W3siYSI6Imp1cmlzZGljdGlvbiIsImUiOiJsb2M6bnljIiwidHgiOjEsInYiOiJqdXI6bnkifSx7ImEiOiJzdGF0ZU1pbldhZ2VDZW50cyIsImUiOiJqdXI6bnkiLCJ0eCI6MSwidiI6MTY1MH0seyJhIjoic3RhcnREYXRlIiwiZSI6InBsOmEiLCJ0eCI6MiwidiI6IjIwMjYtMTEtMDIifSx7ImEiOiJwYXlSYXRlQ2VudHMiLCJlIjoicGw6YSIsInR4IjoyLCJ2IjoxNjUwfSx7ImEiOiJsb2NhdGlvbiIsImUiOiJwbDphIiwidHgiOjIsInYiOiJsb2M6bnljIn0seyJhIjoic2VjdGlvbjFBdHRlc3RlZEF0IiwiZSI6InBsOmEiLCJ0eCI6MywidiI6IjIwMjYtMTAtMzBUMTU6MDA6MDAuMDAwMDAwWiJ9LHsiYSI6InNzbiIsImUiOiJwbDphIiwidHgiOjMsInYiOiIxMjM0NTY3ODkifSx7ImEiOiJiZ2NTdGF0dXMiLCJlIjoicGw6YSIsInR4Ijo0LCJ2IjoiY2xlYXIifSx7ImEiOiJldmVyaWZ5U3RhdHVzIiwiZSI6InBsOmEiLCJ0eCI6NSwidiI6InBlbmRpbmcifSx7ImEiOiJldmVyaWZ5U3RhdHVzQXQiLCJlIjoicGw6YSIsInR4Ijo1LCJ2IjoiMjAyNi0xMS0wM1QxMDowMDowMC4wMDAwMDBaIn0seyJhIjoiZGVjaXNpb25zIiwiZSI6InBsOmEiLCJ0eCI6NiwidiI6InBsOmEvZGVjOjEifSx7ImEiOiJ0YXJnZXQiLCJlIjoicGw6YS9kZWM6MSIsInR4Ijo2LCJ2IjoiaTkuc2VjdGlvbjIifSx7ImEiOiJ2ZXJkaWN0IiwiZSI6InBsOmEvZGVjOjEiLCJ0eCI6NiwidiI6ImFwcHJvdmUifSx7ImEiOiJhdXRob3IiLCJlIjoicGw6YS9kZWM6MSIsInR4Ijo2LCJ2IjoicGVyc29uIn0seyJhIjoid2Vla2x5TWludXRlcyIsImUiOiJwbDphIiwidHgiOjcsInYiOjI0MDB9XSwic3ViamVjdCI6InBsOmEifX0=",
+  "expected": {"error": "W0.E_SHAPE"}
+}
