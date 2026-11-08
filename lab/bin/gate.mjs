@@ -32,6 +32,7 @@ const PACKAGES = {
   testkit: { filter: '@triplex-build/triplex-testkit', dir: 'packages/testkit' },
   xtdb: { filter: '@triplex-build/triplex-xtdb', dir: 'packages/xtdb' },
   qlever: { filter: '@triplex-build/triplex-qlever', dir: 'packages/qlever' },
+  datomic: { filter: '@triplex-build/triplex-datomic', dir: 'packages/datomic' },
   qualification: { filter: '@triplex-build/triplex-qualification', dir: 'packages/qualification' },
 };
 const lanePackages = lane => ['core', 'testkit', lane, 'qualification'];
@@ -666,7 +667,7 @@ async function gateG4(run, config) {
 main(async () => {
   const { positional, options } = parseArgs(process.argv.slice(2));
   const gate = positional[0];
-  if (!['G0', 'G1', 'G2', 'G4', 'NS', 'GS'].includes(gate) || !['xtdb', 'qlever'].includes(options.lane))
+  if (!['G0', 'G1', 'G2', 'G4', 'NS', 'GS'].includes(gate) || !['xtdb', 'qlever', ...(gate === 'G0' ? ['datomic'] : [])].includes(options.lane))
     fail('USAGE', 'usage: gate.mjs G0|G1|G2|G4|NS|GS --lane xtdb|qlever [--slot dev] [--exp EXP-NNN] [--note TEXT] [--previous RUN-ID] [--cases N] [--workloads 01,02]\n  NS: --rung 10k|100k|1m|10m [--slot s1] [--ns-profile smoke|screening|acceptance] [--zero-readers [--match-duration-s S]] [--baseline RUN-ID] [--composition public]\n  GS: [--scenario 2,3] [--rung 10k] [--readers 16]');
   const config = loadSlots();
   // [EXP-000] runKind defaults to diagnostic so an unlabelled run can never close anything (V12, B7).
