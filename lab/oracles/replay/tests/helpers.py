@@ -68,3 +68,8 @@ def committed_receipts(c, start=1, instants=None):
                     "instant": (instants[k] if instants else cmd.get("clock", 1000 + k)),
                     "assertionIds": [f"id-{op['ref']}" if op["op"] == "assert" else None for op in ops]})
     return out
+
+
+def planted_page_output():
+    """Cross-module paged-output negative control for Q70n."""
+    return V.OrderedOut([("rows", []), ("nextPage", 1)])

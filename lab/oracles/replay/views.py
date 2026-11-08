@@ -404,6 +404,21 @@ class NoContinuation(V.OracleInputError):
     prefix left the case is malformed (exit 2)."""
 
 
+def cursor_reference(query):
+    # [O-REPLAY-049] Why: validate before issuer lookup or page indexing. Rejected:
+    # int() coercion and Python indexing (accepts booleans/negative indices and can crash).
+    ref = query["cursorFrom"]
+    if not isinstance(ref, V.Obj) or not isinstance(ref.get("query"), str) or isinstance(ref.get("query"), V.Lex):
+        raise V.OracleInputError("cursorFrom must be an object naming a query (RULINGS Q70o)")
+    if "page" in ref and ref["page"] is None:
+        raise V.OracleInputError("cursorFrom.page must be a JSON integer (RULINGS Q70o)")
+    try:
+        continuation_int(ref, "page", 0)
+    except ValueError as error:
+        raise V.OracleInputError("cursorFrom.page exceeds the JSON integer range (RULINGS Q70o)") from error
+    return ref
+
+
 def q_entity_page(run, query):
     """entityPage: ids with a visible assertion carrying entityType, ordered by entity id
     in codepoint order (R-PAGE-2, AMB-15); bodies are all visible triples of the entity in
@@ -420,13 +435,17 @@ def q_entity_page(run, query):
     limit = _page_limit(query.get("limit"))
     token = query.get("cursor")
     if query.get("cursorFrom") is not None:
-        ref = query["cursorFrom"]
+        ref = cursor_reference(query)
         # Q66b / Q70a: the earlier page is the one computed with the erasure prefix being
         # answered (run.result_of); an unknown query falls back to the plain results (none)
         prior = run.result_of(ref["query"])
         if prior is None:
             raise NoContinuation(f"cursorFrom names unknown or failed query {ref['query']!r}")
-        token = prior.get("pages")[int(ref.get("page", 0))].get("nextCursor")
+        pages = prior.get("pages")
+        page = continuation_int(ref, "page", 0)
+        if not isinstance(pages, list) or page >= len(pages):
+            raise V.OracleInputError("cursorFrom.page is outside the source page range (RULINGS Q70o)")
+        token = pages[page].get("nextCursor")
         if token is None:
             raise NoContinuation(f"query {ref['query']!r} page {ref.get('page', 0)} has no nextCursor")
     after = None

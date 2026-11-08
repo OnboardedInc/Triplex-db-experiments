@@ -16,7 +16,7 @@ from . import views as W
 
 CASE_FORMAT = "triplex-db-2/o-replay-case/1"
 OUTPUT_FORMAT = "triplex-db-2/o-replay-expected/1"
-ORACLE_VERSION = "0.4.8"   # EXP-O04b: Q52a-g, Q56f; Q66a-b; Q70a-m (V-O04e-g F7-F13); ACCEPTANCE 0.3.9
+ORACLE_VERSION = "0.4.9"   # EXP-O04b: Q52a-g, Q56f; Q66a-b; Q70a-o (V-O04e-h F7-F15); ACCEPTANCE 0.3.9
 SOURCE_FILES = ["__init__.py", "__main__.py", "cli.py", "errors.py", "values.py", "exact.py", "replay.py",
                 "constraints.py", "views.py", "entities.py", "scale.py", "run.py", "selfcheck.py"]
 
@@ -649,6 +649,8 @@ class Run:
         spec = CONTINUATIONS.get(kind)
         if spec is None:
             return None, None
+        if spec.get("reference") and spec["reference"] in query:
+            W.cursor_reference(query)
         ref = query.get(spec["reference"]) if spec.get("reference") else None
         if ref is not None:
             return (self.reads.get(ref.get("query")) if isinstance(ref, dict) else None), None

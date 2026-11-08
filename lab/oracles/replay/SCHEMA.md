@@ -1,4 +1,4 @@
-# O-REPLAY case and output schema (v1; oracle 0.4.8)
+# O-REPLAY case and output schema (v1; oracle 0.4.9)
 
 O-REPLAY reads one case file and writes one expected-answer document. Python 3 standard library
 only; it imports nothing from Triplex. Semantic rules are in [RULES.md](RULES.md).
@@ -237,7 +237,7 @@ earlier reads whose views disagree, R-ERA-6 / Q70f, Q70l) are typed `X-NOT-MODEL
 ```jsonc
 {
   "format": "triplex-db-2/o-replay-expected/1",
-  "oracle": {"id": "O-REPLAY", "version": "0.4.8", "sourceSha256": {"values.py": "..."}},
+  "oracle": {"id": "O-REPLAY", "version": "0.4.9", "sourceSha256": {"values.py": "..."}},
   "caseId": "...", "caseSha256": "<sha256 of the case bytes>",
   "lane": {"name": "qlever", "integerRange": ["-576460752303423488", "576460752303423487"]},
   "verdict": "PASS | FAIL | EXPECTED-ONLY",
@@ -269,3 +269,12 @@ earlier reads whose views disagree, R-ERA-6 / Q70f, Q70l) are typed `X-NOT-MODEL
   write and `execution` on a query result (R-DEC-16).
 - **Verdicts per command**: `PASS`, `PASS-OUTCOME-ONLY` (rejected as expected, tag not checkable),
   `FAIL`, `EXPECTED-ONLY`.
+
+
+Q70n: `--self-check` executes every registered query handler on generated cases and
+recursively checks actual output keys, including pages and nested objects, against
+`CONTINUATIONS`. Unexercisable handlers fail conservatively. Computed-key,
+cross-module-helper and nested-object plants are retained as failing controls.
+Q70o: `cursorFrom` must be an object naming a query. `page` defaults to 0 when
+omitted and otherwise must be a JSON integer from 0 through the last source page
+index. Malformed reference shapes, types and ranges are input errors (exit 2).

@@ -3,18 +3,16 @@ cut semantics where the domains overlap. Each check re-expresses the other
 oracle's fixture as an O-REPLAY case (command stream + receipts) and compares the
 replayed answers with the other oracle's frozen expectations.
 
-RULINGS Q70l adds one structural check: every query kind whose output carries a next*
+RULINGS Q70n adds an execution check: every query kind whose output carries a next*
 field is in run.CONTINUATIONS with that field as its issued value, so a new paged kind
 cannot be left outside the one continuation rule.
 """
 
 from __future__ import annotations
 
-import ast
 import hashlib
 import importlib.util
 import json
-import sys
 from pathlib import Path
 
 from . import run as RUN
@@ -348,30 +346,6 @@ def check_evt():
 # --------------------------------------------------------------------------- Q70l
 
 
-def next_fields_by_kind(queries=None):
-    """Static scan: for every query kind, the output field names starting `next` that its
-    function, or a function of the same module it calls, puts in an output pair."""
-    queries = RUN.QUERIES if queries is None else queries
-    funcs = {}
-    for module in {fn.__module__ for fn in queries.values()}:
-        tree = ast.parse(Path(sys.modules[module].__file__).read_text())
-        funcs.update({(module, node.name): node for node in tree.body if isinstance(node, ast.FunctionDef)})
-
-    def fields(module, name, seen):
-        if (module, name) in seen or (module, name) not in funcs:
-            return set()
-        seen.add((module, name))
-        out = set()
-        for node in ast.walk(funcs[(module, name)]):
-            if isinstance(node, ast.Tuple) and len(node.elts) == 2 and isinstance(node.elts[0], ast.Constant) \
-                    and isinstance(node.elts[0].value, str) and node.elts[0].value.startswith("next"):
-                out.add(node.elts[0].value)
-            if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
-                out |= fields(module, node.func.id, seen)
-        return out
-    return {kind: fields(fn.__module__, fn.__name__, set()) for kind, fn in queries.items()}
-
-
 def _paged_case():
     ops = [{"op": "assert", "ref": f"a{k}", "entityId": f"e{k}", "attribute": ":x/v", "entityType": "T",
             "value": {"type": "integer", "value": str(k)}, "validFrom": 0} for k in range(3)]
@@ -396,24 +370,58 @@ def _next_keys(node, out):
     return out
 
 
+def _continuation_cases(kind):
+    """Generated empty/populated reads, including single and multi-page output."""
+    for populated in (False, True):
+        for limit in (1, 2):
+            case = _paged_case()
+            if not populated:
+                case["commands"] = []
+            case["queries"] = []
+            case["schemas"] = [{"version": 1, "entityTypes": {"T": {"attributes": {
+                "v": {"attribute": ":x/v", "type": "integer", "cardinality": "many"}}}}}]
+            value = {"type": "integer", "value": "1"}
+            query = {"id": kind, "kind": kind, "entityType": "T", "entityId": "e0", "entityIds": ["e0", "e1"],
+                     "limit": limit, "pageSize": limit, "cut": {"validAt": 1}, "attribute": ":x/v",
+                     "prop": "v", "from": "e0", "txId": "tx:0", "commandId": "c0", "match": {"attributes": {"v": ":x/v"}},
+                     "aggregates": [{"op": "count", "var": "v", "as": "n"}], "expr": value, "left": value, "right": value,
+                     "values": [value], "n": 3, "width": 1}
+            yield V.loads(json.dumps(case)), V.loads(json.dumps(query))
+
+
 def check_continuations(table=None, queries=None):
-    """Q70l: the continuation table covers every paged kind. Static: each kind whose function
-    builds a next* output field is in the table with that field as its issued value, and each
-    table kind builds its issued field. Runtime: the paged kinds' actual outputs carry only
-    their table field."""
+    """Q70n: execute every registered handler and inspect its serialized output recursively.
+    A new handler requiring another fixture fails closed until it can be exercised."""
     table = RUN.CONTINUATIONS if table is None else table
-    produced = next_fields_by_kind(queries)
+    queries = RUN.QUERIES if queries is None else queries
     rows = []
-    for kind in sorted(k for k, f in produced.items() if f or k in table):
+    for kind, handler in sorted(queries.items()):
+        fields, errors, exercised = set(), [], 0
+        for case, query in _continuation_cases(kind):
+            try:
+                run = RUN.Run(case)
+                run.process()
+                try:
+                    output = handler(run, query)
+                except V.OracleInputError as error:
+                    # [O-REPLAY-049] Why: the three explicitly unsupported key handlers execute
+                    # their only behavior, a refusal. Rejected: accepting arbitrary input errors
+                    # (a future handler missing required fixture inputs must fail closed).
+                    if handler is not RUN._order_keys_not_modeled:
+                        raise
+                    output = {"inputError": str(error)}
+                fields |= _next_keys(plain(output), set())
+                exercised += 1
+            except Exception as error:
+                errors.append(f"{type(error).__name__}: {error}")
         spec = table.get(kind)
-        rows.append({"check": f"continuation-table:{kind}", "pass": spec is not None and produced[kind] == {spec["issued"]},
-                     "nextFields": sorted(produced[kind]), "issued": spec and spec["issued"]})
-    report = plain(evaluate(_paged_case()))
-    for q in report["queries"]:
-        got = _next_keys(q.get("result"), set())
-        spec = table.get(q["kind"])
-        rows.append({"check": f"continuation-runtime:{q['kind']}", "pass": spec is not None and got == {spec["issued"]},
-                     "nextFields": sorted(got)})
+        allowed = {spec["issued"]} if spec else set()
+        rows.append({"check": f"continuation-runtime:{kind}",
+                     "pass": exercised == 4 and not errors and fields == allowed,
+                     "exercised": exercised, "nextFields": sorted(fields), "issued": spec and spec["issued"],
+                     "errors": errors})
+    for kind in sorted(set(table) - set(queries)):
+        rows.append({"check": f"continuation-runtime:{kind}", "pass": False, "errors": ["unregistered table kind"]})
     return rows
 
 
