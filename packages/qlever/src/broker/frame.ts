@@ -5,7 +5,8 @@
  * which classified all 72,204 truncation points and every single-bit flip in two test frames correctly.
  *
  *   Segment       := SegmentHeader(32) Frame*  [zero padding allowed]
- *   SegmentHeader := "TRPLXLG1"(8) | formatVersion u32 | flags u32 | epoch u64 | firstLsn u64   (LE)
+ *   SegmentHeader := "TRPLXLG1"(8) | formatVersion u32 | headerCrc u32 | epoch u64 | firstLsn u64   (LE)
+ *                    (format 2; format 1 had flags = 0 there and is accepted only with firstLsn = 1)
  *   Frame         := FrameHeader(32) Payload(payloadLen) PayloadCrc(4)
  *   FrameHeader   := magic u32 'TXLF' | payloadLen u32 | lsn u64 | epoch u32 | prevCrc u32 | kind u16 |
  *                    flags u16 | headerCrc u32
@@ -32,7 +33,7 @@ export const FRAME_MAGIC = 0x464c5854; // 'TXLF' little endian
 export const FRAME_HEADER_LEN = 32;
 export const FRAME_TRAILER_LEN = 4;
 export const MAX_PAYLOAD = 256 * 1024 * 1024;
-export const FORMAT_VERSION = 1;
+export const FORMAT_VERSION = 2;
 
 /** R13 6.2 frame kinds (SEAL, CHECKPOINT_MARK and BULK_FILE_REF are not used by this experiment). */
 export const FrameKind = {
@@ -70,6 +71,18 @@ export interface ScanResult {
   readonly nextLsn: number;
 }
 
+/**
+ * V-P2Q M1: in format 1 one flipped bit in firstLsn made the first frame look torn (its expected LSN became
+ * huge, so no later header looked plausible) and a full open cut every ACKed frame. Format 2 stores
+ * crc32c(header with bytes 12..16 zeroed) in the former flags word, so any header damage is a bad header and
+ * the broker refuses to start. Format 1 segments are still read, but only with firstLsn = 1 (segment 1 is the
+ * only segment this experiment writes).
+ */
+const headerCrc = (buf: Buffer): number => {
+  const copy = Buffer.from(buf.subarray(0, SEGMENT_HEADER_LEN));
+  copy.writeUInt32LE(0, 12);
+  return crc32c(copy);
+};
 export const encodeSegmentHeader = (header: { epoch: number; firstLsn: number }): Buffer => {
   const out = Buffer.alloc(SEGMENT_HEADER_LEN);
   SEGMENT_MAGIC.copy(out, 0);
@@ -77,15 +90,19 @@ export const encodeSegmentHeader = (header: { epoch: number; firstLsn: number })
   out.writeUInt32LE(0, 12);
   out.writeBigUInt64LE(BigInt(header.epoch), 16);
   out.writeBigUInt64LE(BigInt(header.firstLsn), 24);
+  out.writeUInt32LE(headerCrc(out), 12);
   return out;
 };
 export const decodeSegmentHeader = (buf: Buffer): SegmentHeader | undefined => {
   if (buf.length < SEGMENT_HEADER_LEN || !buf.subarray(0, 8).equals(SEGMENT_MAGIC)) return undefined;
-  return {
+  const header = {
     formatVersion: buf.readUInt32LE(8),
     epoch: Number(buf.readBigUInt64LE(16)),
     firstLsn: Number(buf.readBigUInt64LE(24)),
   };
+  if (header.formatVersion === 2) return buf.readUInt32LE(12) === headerCrc(buf) ? header : undefined;
+  if (header.formatVersion === 1) return header.firstLsn === 1 && buf.readUInt32LE(12) === 0 ? header : undefined;
+  return undefined;
 };
 /** The first frame's chain seed, so a recycled or renamed segment cannot be spliced in (R13 2.4). */
 export const segmentSeed = (header: Buffer): number =>

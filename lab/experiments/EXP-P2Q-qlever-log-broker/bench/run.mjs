@@ -130,7 +130,9 @@ const service = async () => {
 /** Feed consumer polling the host log (candidate) or the Triplex journal (A0); one durable record per page. */
 const startConsumer = (rt, arm, consumerDir, acks) => {
   const store = new qlever.FeedConsumerStore(consumerDir, `consumer-${arm}`, 'atomic', true);
-  const lags = [], processed = [], stats = { polls: 0, writes: 0, aborted: 0, missingAck: 0 };
+  // V-P2Q m6: per-position consumer instants (the durable record), so lag is computed from the source instant
+  // afterwards and nothing is dropped silently; missing ACKs are listed, not only counted.
+  const lags = [], processed = [], consumerAt = new Map(), missingAckPositions = [], stats = { polls: 0, writes: 0, aborted: 0, missingAck: 0 };
   let stopping = false;
   const loop = (async () => {
     if (arm === 'C') {
@@ -147,7 +149,7 @@ const startConsumer = (rt, arm, consumerDir, acks) => {
           }
           store.recordEffects(effects, page.cursor); stats.writes++;
           const t = wall();
-          for (const r of page.resolutions) if (r.kind === 'commit') for (const tr of r.transacts) { const a = acks.get(tr.position); if (a === undefined) stats.missingAck++; else lags.push(t - a); }
+          for (const r of page.resolutions) if (r.kind === 'commit') for (const tr of r.transacts) { if (!consumerAt.has(tr.position)) consumerAt.set(tr.position, t); const a = acks.get(tr.position); if (a === undefined) { stats.missingAck++; missingAckPositions.push(tr.position); } else lags.push(t - a); }
           cursor = page.cursor;
         } else if (stopping) break;
         else await sleep(5);
@@ -163,14 +165,14 @@ const startConsumer = (rt, arm, consumerDir, acks) => {
           const cursor = { lsn: records.at(-1).position, offset: 0, seed: 0, nextLsn: records.at(-1).position + 1 };
           store.recordEffects(effects, cursor); stats.writes++;
           const t = wall();
-          for (const r of records) { const a = acks.get(r.position); if (a === undefined) stats.missingAck++; else lags.push(t - a); }
+          for (const r of records) { if (!consumerAt.has(r.position)) consumerAt.set(r.position, t); const a = acks.get(r.position); if (a === undefined) { stats.missingAck++; missingAckPositions.push(r.position); } else lags.push(t - a); }
           after = records.at(-1).position;
         } else if (stopping) break;
         else await sleep(5);
       }
     }
   })();
-  return { stop: async () => { stopping = true; await loop; store.close(); return { lags, processed, stats }; } };
+  return { stop: async () => { stopping = true; await loop; store.close(); return { lags, processed, stats, consumerAt, missingAckPositions }; } };
 };
 
 const auditEffects = (consumerDir, consumer, committed, processed) => {
@@ -251,6 +253,22 @@ const trace = async () => {
   const consumed = await consumer.stop();
   const committed = records.filter((r) => r.outcome === 'committed').map((r) => [r.position, `subj:${r.subject}`]);
   const audit = auditEffects(consumerDir, `consumer-${arm}`, committed, consumed.processed);
+  // V-P2Q m6 / Q55d: P3 lag runs from the source's publication instant (TARGETS 1.1 P3 item 1). For the
+  // candidate that is the frame's fsync return (the broker's frame event); A0 publishes before it ACKs, so its
+  // ACK is its source instant. Every ACKed position must have all three instants, and the run fails otherwise.
+  const sourceByLsn = new Map(recorder.events.filter((e) => e.type === 'frame').map((e) => [e.lsn, performance.timeOrigin + e.at]));
+  const perPosition = [...new Set(committed.map(([p]) => p))].sort((a, b) => a - b).map((position) => ({
+    position,
+    sourceAt: arm === 'C' ? (sourceByLsn.get(qlever.lsnOf(position)) ?? null) : (acks.get(position) ?? null),
+    ackAt: acks.get(position) ?? null,
+    consumerAt: consumed.consumerAt.get(position) ?? null,
+  }));
+  const incomplete = perPosition.filter((p) => p.sourceAt === null || p.ackAt === null || p.consumerAt === null);
+  const lagFromSource = perPosition.filter((p) => p.sourceAt !== null && p.consumerAt !== null).map((p) => p.consumerAt - p.sourceAt);
+  const harnessFailures = [
+    ...(consumed.missingAckPositions.length ? [`${consumed.missingAckPositions.length} delivered positions have no ACK record`] : []),
+    ...(incomplete.length ? [`${incomplete.length} ACKed positions lack a source, ACK or consumer instant`] : []),
+  ];
   const originalsOnly = records.filter((r) => !r.resend);
   const committedOriginals = originalsOnly.filter((r) => r.outcome === 'committed');
   const latency = (rs) => rs.map((r) => r.acked - r.offered);
@@ -275,11 +293,15 @@ const trace = async () => {
     burst: { offerToAckMs: summary(latency(committedOriginals.filter((r) => r.burst))) },
     throughput: { committedPerS: round(committedOriginals.length / windowS, 2), drainAfterWindowS: round((drainedAt - startAt) / 1000 - windowS, 1) },
     ryow: { trials: ryowRecords.length, hits: ryowRecords.filter((r) => r.ryow).length, routes: tally(ryowRecords.map((r) => r.route)), readMs: summary(ryowRecords.map((r) => r.ryowMs)) },
-    feed: { lagMs: summary(consumed.lags), ...audit, ...consumed.stats },
+    feed: {
+      lagFromSourceMs: summary(lagFromSource), sourceInstant: arm === 'C' ? 'frame fsync return' : 'ACK (A0 publishes before its ACK)',
+      lagFromAckMs: summary(consumed.lags), ...audit, ...consumed.stats, missingAckPositions: consumed.missingAckPositions.slice(0, 20), incompletePositions: incomplete.length,
+    },
+    failed: harnessFailures.length > 0, harnessFailures,
     publication: arm === 'C'
       ? { updates: published.length, updateMs: summary(published.map((e) => e.ms)), membersPerUpdate: summary(published.map((e) => e.members)), lastDelta: published.at(-1)?.deltaTotal ?? null, rebuilds: recorder.events.filter((e) => e.type.startsWith('rebuild')), applyErrors: recorder.events.filter((e) => e.type === 'apply-error').length, drain }
       : { updates: rt.counts.updates, updateMs: summary(rt.counts.updateMs), lastDelta: rt.lastDelta() ?? null, updateErrors: rt.counts.updateErrors },
-    raw: { records, lags: consumed.lags, events: recorder.events },
+    raw: { records, perPosition, lags: consumed.lags, events: recorder.events },
   };
   await rt.close();
   return result;
@@ -552,4 +574,5 @@ const { id, file } = writeReceipt(`${mode}-${result.arm ?? result.variant}`, {
 });
 const { raw, ...printable } = result;
 console.log(JSON.stringify({ receipt: id, file: path.relative(process.cwd(), file), ...printable }, (k, v) => (k === 'gapSample' ? undefined : v)));
-process.exit(0);
+// A run whose harness lost samples (V-P2Q m6) still writes its receipt, but exits non-zero.
+process.exit(result.failed ? 1 : 0);

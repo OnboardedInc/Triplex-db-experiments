@@ -12,6 +12,7 @@
  * O_SYNC are 0.02 ms on macOS (not durable) and are never used. Any write or fsync error marks the log
  * failed and every later append throws: never retry an fsync on the same descriptor (R13 1.3, fsyncgate).
  */
+import { spawn, type ChildProcess } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import {
@@ -79,36 +80,69 @@ const fsyncDir = (dir: string) => {
 };
 
 /**
- * Take the stream's LOCK file. Why a pid file rather than a kernel lock: Node has no flock/lockf without a
- * native addon (R13 8 item 7 leaves the helper open). Safety does not rest on it: the marker guard
- * `(broker_position, broker_epoch)` in every QLever update fences a second writer at the resource, which is
- * what makes Datomic's and Kafka's designs safe (R13 1.1 item 3, 5.1). A lock held by this same process is
- * taken over, because the tests simulate a crash by abandoning a broker object and reopening its directory.
+ * One writer per stream (V-P2Q C3; RULINGS Q62a, Q50d item 3). Two layers:
+ * 1. A process-wide registry keyed by the directory's realpath. A second open in the same process is refused,
+ *    because two HostLog objects appending to one file each believe they own the chain: V-P2Q showed ACKed
+ *    frames truncated as a torn tail and one LSN naming two frames. `takeover: true` (crash-simulation tests
+ *    only) abandons the earlier holder first, so its later appends fail instead of interleaving.
+ * 2. A kernel flock(LOCK_EX) on LOCK, held by a perl child until its stdin closes (R23: Node 22 has no flock;
+ *    the contender exits 3 while the holder lives and gets the lock once the holder is SIGKILLed). The kernel
+ *    releases it when this process dies, so a real crash never leaves a stale lock, and another process is
+ *    refused while this one lives. The previous pid file treated a lock held by its own pid as stale.
+ * The marker guard `(broker_position, broker_epoch)` in every QLever update still fences a second writer at the
+ * resource (R13 1.1 item 3, 5.1); the lock keeps the log itself single-writer.
  */
-const acquireLock = (dir: string) => {
-  const file = path.join(dir, "LOCK");
-  for (let attempt = 0; attempt < 2; attempt++) {
-    try {
-      fs.writeFileSync(file, `${process.pid}\n`, { flag: "wx" });
-      fsyncDir(dir);
-      return;
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
-      const holder = Number(fs.readFileSync(file, "utf8").trim());
-      let alive = false;
-      if (Number.isSafeInteger(holder) && holder > 0 && holder !== process.pid)
-        try {
-          process.kill(holder, 0);
-          alive = true;
-        } catch {
-          alive = false;
-        }
-      if (alive) throw new BrokerLogError(`Broker log ${dir} is locked by live pid ${holder}`);
-      fs.rmSync(file, { force: true });
-    }
+const OPENING = "opening" as const;
+const openStreams = new Map<string, HostLog | typeof OPENING>();
+const FLOCK_HELPER =
+  'use Fcntl qw(:flock); $|=1; open(F,">>",$ARGV[0]) or exit 2; flock(F,LOCK_EX|LOCK_NB) or exit 3; print "locked\\n"; my $x=<STDIN>; exit 0;';
+
+export class KernelLock {
+  private constructor(private readonly child: ChildProcess) {}
+  static acquire(file: string): Promise<KernelLock> {
+    return new Promise((resolve, reject) => {
+      const child = spawn("perl", ["-e", FLOCK_HELPER, file], { stdio: ["pipe", "pipe", "ignore"] });
+      let settled = false;
+      child.stdout!.once("data", (chunk: Buffer) => {
+        if (settled) return;
+        settled = true;
+        if (!chunk.toString().startsWith("locked")) return reject(new BrokerLogError(`flock helper said ${chunk}`));
+        // Do not keep the event loop alive for the lock; the pipe stays open until release() or process exit.
+        child.unref();
+        (child.stdin as unknown as { unref?: () => void }).unref?.();
+        (child.stdout as unknown as { unref?: () => void }).unref?.();
+        resolve(new KernelLock(child));
+      });
+      child.once("exit", (code) => {
+        if (settled) return;
+        settled = true;
+        reject(
+          new BrokerLogError(
+            code === 3
+              ? `Broker log lock ${file} is held by another process`
+              : `flock helper exited with code ${code} for ${file}`,
+          ),
+        );
+      });
+      child.once("error", (error) => {
+        if (settled) return;
+        settled = true;
+        reject(new BrokerLogError(`Cannot start the flock helper (perl): ${String(error)}`));
+      });
+    });
   }
-  throw new BrokerLogError(`Cannot take broker log lock in ${dir}`);
-};
+  /** Close the helper's stdin; it exits and the kernel drops the lock. Resolves once it has exited. */
+  release(): Promise<void> {
+    if (this.child.exitCode !== null || this.child.signalCode !== null) return Promise.resolve();
+    return new Promise((resolve) => {
+      // The helper was unref'd while held; ref it again so the wait for its exit keeps the event loop alive.
+      this.child.ref();
+      (this.child.stdout as unknown as { ref?: () => void })?.ref?.();
+      this.child.once("exit", () => resolve());
+      this.child.stdin?.end();
+    });
+  }
+}
 
 /**
  * Startup check (R13 6.3 item 6): a median fsync under about 1 ms on macOS means F_FULLFSYNC is not in
@@ -139,6 +173,8 @@ export class HostLog {
   private failed: Error | undefined;
   private writing = false;
   private closed = false;
+  private real: string | undefined;
+  private lock: KernelLock | undefined;
   private constructor(
     readonly dir: string,
     private readonly handle: fs.promises.FileHandle,
@@ -156,10 +192,45 @@ export class HostLog {
    */
   static async open(
     dir: string,
-    options: { readonly minFreeBytes?: number; readonly requireFullFsync?: boolean } = {},
+    options: {
+      readonly minFreeBytes?: number;
+      readonly requireFullFsync?: boolean;
+      /** Crash-simulation tests only: abandon an earlier in-process holder of this stream first. */
+      readonly takeover?: boolean;
+    } = {},
   ): Promise<OpenedLog> {
     fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
-    acquireLock(dir);
+    const real = fs.realpathSync(dir);
+    const prior = openStreams.get(real);
+    if (prior !== undefined) {
+      if (!options.takeover || prior === OPENING)
+        throw new BrokerLogError(
+          `Broker log ${real} is already open in this process; a second writer would lose ACKed frames (V-P2Q C3)`,
+        );
+      await prior.abandon();
+    }
+    // Reserve synchronously so two concurrent opens in this process cannot both pass the check.
+    openStreams.set(real, OPENING);
+    let lock: KernelLock | undefined;
+    try {
+      lock = await KernelLock.acquire(path.join(dir, "LOCK"));
+      fs.writeFileSync(path.join(dir, "LOCK"), `${process.pid}\n`);
+      const opened = await HostLog.recover(dir, options);
+      opened.log.real = real;
+      opened.log.lock = lock;
+      openStreams.set(real, opened.log);
+      return opened;
+    } catch (error) {
+      if (openStreams.get(real) === OPENING) openStreams.delete(real);
+      await lock?.release();
+      throw error;
+    }
+  }
+
+  private static async recover(
+    dir: string,
+    options: { readonly minFreeBytes?: number; readonly requireFullFsync?: boolean },
+  ): Promise<OpenedLog> {
     // R13 2.6: ENOSPC mid-frame is the one torn write the broker causes itself, so refuse below a floor.
     const stats = fs.statfsSync(dir);
     const free = stats.bavail * stats.bsize;
@@ -184,6 +255,14 @@ export class HostLog {
     const scan = scanSegment(bytes);
     if (scan.status === "bad-header" || scan.status === "corruption")
       throw new BrokerLogError(`Broker log ${file}: ${scan.status} (${scan.detail ?? ""}); refusing to start`);
+    // V-P2Q M1 / m2: the WATERMARK is written only after the fsync of the frame it names, so a valid end below it
+    // means an acknowledged frame was damaged or cut (R13 2.4's known limit for the last frame). Refuse before
+    // truncating anything; recovery is an operator decision (R13 6.5 T3).
+    const mark = readWatermark(dir);
+    if (mark && mark.lsn > scan.nextLsn - 1)
+      throw new BrokerLogError(
+        `Broker log ${file}: WATERMARK names LSN ${mark.lsn} but the log's valid end is LSN ${scan.nextLsn - 1} (${scan.status}${scan.detail ? `: ${scan.detail}` : ""}); an acknowledged frame is lost; refusing to start`,
+      );
     if (scan.frames.length > 0 || bytes.length > SEGMENT_HEADER_LEN) status = "clean-end";
     if (scan.status === "torn-tail" && scan.validEnd < bytes.length) {
       status = "torn-tail";
@@ -293,8 +372,12 @@ export class HostLog {
     fs.writeSync(this.watermarkFd, out, 0, 32, 0);
   }
 
-  /** Abandon without releasing the lock or writing anything: a simulated crash for tests. */
+  /**
+   * A simulated crash for tests: stop writing without any further frame. The kernel would drop a dead
+   * process's flock, so the lock and the registry entry are released too, and a reopen in this process works.
+   */
   async abandon(): Promise<void> {
+    if (this.closed) return;
     this.closed = true;
     await this.handle.close().catch(() => {});
     try {
@@ -302,11 +385,11 @@ export class HostLog {
     } catch {
       /* already closed */
     }
+    if (this.real && openStreams.get(this.real) === this) openStreams.delete(this.real);
+    await this.lock?.release();
   }
   async close(): Promise<void> {
-    if (this.closed) return;
     await this.abandon();
-    fs.rmSync(path.join(this.dir, "LOCK"), { force: true });
   }
 }
 

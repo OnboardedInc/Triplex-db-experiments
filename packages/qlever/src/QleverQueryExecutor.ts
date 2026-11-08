@@ -25,6 +25,7 @@ import type { QleverDomainPlan } from "./FamilyDomains.js";
 import type { QleverSourcePlan } from "./ScalarSource.js";
 import { materializeQleverRules } from "./recursion.js";
 import { prepareAggregateAnswers } from "./AggregateAnswers.js";
+import { BasisNotAvailable, ReplicaUnavailable } from "./broker/errors.js";
 
 export interface QleverQueryOptions {
   readonly sourceView?: Effect.Effect<QleverSourceView | undefined>;
@@ -33,7 +34,10 @@ export interface QleverQueryOptions {
    * reads only the replica, so the broker adapter waits (deadline-aware, RULINGS Q31d) until the replica
    * has reached the requested basis, or the broker head when none is named, and fails otherwise.
    */
-  readonly resolveBasis?: (requested: number | undefined) => Promise<number>;
+  readonly resolveBasis?: ((requested: number | undefined) => Promise<number>) & {
+    readonly inTransaction?: (sourceK: number) => Promise<number>;
+    readonly after?: (position: number) => Promise<void>;
+  };
   readonly sourcePlan?: QleverSourcePlan;
   readonly domainPlan?: QleverDomainPlan;
   readonly timeoutMs?: number;
@@ -52,8 +56,13 @@ export interface QleverQueryOptions {
   /** Explicit persisted-leaf order liveness experiment; defaults stay unchanged. */
   readonly scalarOrderPlan?: "live";
 }
+// The broker gate's typed BasisNotAvailable and ReplicaUnavailable pass through (EXP-P2Q, V-P2Q M3); only the
+// gate raises them, so every A0 failure is wrapped exactly as before.
 const fail = (cause: unknown) =>
-  cause instanceof DatalogValidationError || cause instanceof UnboundVariableError
+  cause instanceof DatalogValidationError ||
+  cause instanceof UnboundVariableError ||
+  cause instanceof BasisNotAvailable ||
+  cause instanceof ReplicaUnavailable
     ? cause
     : new ReadError({ message: `QLever Datalog execution failed: ${String(cause)}`, cause });
 const safeCount = (value: string | undefined): number => {
@@ -215,11 +224,17 @@ export const makeQleverQueryExecutor = (
               message:
                 "QLever historical Datalog inside a pending transaction is not yet qualified",
             });
+          // EXP-P2Q broker mode (V-P2Q C1, C2): the compiled SPARQL reads only the replica, so inside a
+          // transaction the replica's real marker must reach sourceK, and outside it the requested basis, before
+          // the query runs; `after` re-checks the marker once the answer exists. A0 has no gate (unchanged).
+          const gate = options.resolveBasis;
           const position =
-            sourceView?.sourcePosition ??
-            (options.resolveBasis && !sourceView
-              ? await options.resolveBasis(basis?.recordedPosition)
+            (sourceView
+              ? gate?.inTransaction
+                ? await gate.inTransaction(sourceView.sourcePosition)
+                : sourceView.sourcePosition
               : undefined) ??
+            (gate && !sourceView ? await gate(basis?.recordedPosition) : undefined) ??
             basis?.recordedPosition ??
             safeCount(
               (
@@ -369,6 +384,7 @@ export const makeQleverQueryExecutor = (
                 })
               )[0]?.["total"]?.value,
             );
+          if (gate?.after) await gate.after(position);
           const executionTimeMs = Math.max(
             0,
             performance.now() - executionStarted - compilationTimeMs,

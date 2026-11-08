@@ -23,6 +23,7 @@ import {
   type QleverNativeEntity,
 } from "./NativeContext.js";
 import { materializeQleverNativeRelations, type QleverNativeRelation } from "./BasisRelations.js";
+import { BasisNotAvailable, ReplicaUnavailable, isUnreachable } from "../broker/errors.js";
 
 const scalar = (type: TypeExpr.TypeExpr, term: SparqlTerm): unknown => {
   if (type._tag === "Constrained") return scalar(type.base, term);
@@ -70,6 +71,14 @@ export interface QleverNativeQueryOptions {
   readonly maxResponseBytes?: number;
   readonly defaultTimeoutMs?: number;
   readonly defaultMaxRows?: number;
+  /**
+   * EXP-P2Q broker mode (default absent: A0 behaviour unchanged). A basis token above the replica's published
+   * position is waited for up to this many milliseconds (RULINGS Q58a `after`), then fails with a typed
+   * BasisNotAvailable instead of an immediate RangeError; an unreachable replica fails with ReplicaUnavailable;
+   * and the position is read again after the answer, which is refused if the replica went backwards below the
+   * basis meanwhile (V-P2Q M3, C2).
+   */
+  readonly awaitBasisMs?: number;
 }
 export interface QleverNativeRelationContext extends QleverNativeContext {
   readonly relation: (
@@ -121,8 +130,38 @@ export const makeQleverNativeQueries = (
           const request = { signal, timeoutMs, maxResponseBytes };
           const steps: NativeQueryStep[] = [];
           const sourceQuery = `SELECT ?position WHERE { GRAPH ${graphIri(scope)} { ${metaIri} ${fieldIri("position")} ?position } }`;
+          const gated = defaults.awaitBasisMs !== undefined;
+          const readSource = async () => {
+            let positions;
+            try {
+              positions = await client.query(sourceQuery, request);
+            } catch (cause) {
+              if (gated && isUnreachable(cause))
+                throw new ReplicaUnavailable({ replica: "the QLever replica", surface: "native", cause });
+              throw cause;
+            }
+            const text = positions[0]?.["position"]?.value ?? "0";
+            if (positions.length > 1 || !/^(0|[1-9][0-9]*)$/.test(text))
+              throw new TypeError("Invalid native source-position metadata");
+            return Number(text);
+          };
           const sourceStarted = performance.now();
-          const positions = await client.query(sourceQuery, request);
+          let current = await readSource();
+          const requested = options.basis?.recordedPosition;
+          if (gated && requested !== undefined && Number.isSafeInteger(requested))
+            while (current < requested) {
+              const waited = performance.now() - sourceStarted;
+              if (waited >= defaults.awaitBasisMs!)
+                throw new BasisNotAvailable({
+                  required: requested,
+                  observed: current,
+                  replica: "the QLever replica",
+                  surface: "native",
+                  waitedMs: waited,
+                });
+              await new Promise((resolve) => setTimeout(resolve, Math.min(25, defaults.awaitBasisMs! - waited)));
+              current = await readSource();
+            }
           steps.push({
             phase: "source-cut",
             language: "sparql-1.1",
@@ -130,13 +169,10 @@ export const makeQleverNativeQueries = (
             parameters: [],
             elapsedMs: performance.now() - sourceStarted,
           });
-          const text = positions[0]?.["position"]?.value ?? "0";
-          if (positions.length > 1 || !/^(0|[1-9][0-9]*)$/.test(text))
-            throw new TypeError("Invalid native source-position metadata");
           const basis = resolveNativeReadBasis({
             scope,
             options,
-            currentPosition: Number(text),
+            currentPosition: current,
             now: Date.now(),
           });
           const working = relations
@@ -168,13 +204,27 @@ export const makeQleverNativeQueries = (
             });
             if (rawRows.length > maxRows)
               throw new RangeError(`Native SELECT exceeds maxRows=${maxRows}; no partial result`);
+            if (gated) {
+              const after = await readSource();
+              if (after < basis.recordedPosition)
+                throw new BasisNotAvailable({
+                  required: basis.recordedPosition,
+                  observed: after,
+                  replica: "the QLever replica (went backwards during the read)",
+                  surface: "native",
+                  waitedMs: performance.now() - sourceStarted,
+                });
+            }
             return { basis, query, rawRows, steps };
           } finally {
             if (working) await working.cleanup();
           }
         },
         catch: (cause) =>
-          new ReadError({ message: `QLever native SELECT failed: ${String(cause)}`, cause }),
+          // Only the broker-mode typed errors pass through; every A0 failure is wrapped exactly as before.
+          cause instanceof BasisNotAvailable || cause instanceof ReplicaUnavailable
+            ? cause
+            : new ReadError({ message: `QLever native SELECT failed: ${String(cause)}`, cause }),
       });
       const preparedRows = yield* Effect.try(() =>
         executed.rawRows.map((row) => declaredRow(contract.row, row)),

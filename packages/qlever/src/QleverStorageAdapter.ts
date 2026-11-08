@@ -12,6 +12,7 @@ import {
 } from "@triplex-build/triplex/runtime";
 import type { QleverClient } from "./QleverClient.js";
 import type { HostBroker } from "./broker/broker.js";
+import { BasisNotAvailable } from "./broker/errors.js";
 import {
   makeQleverBrokerStorageAdapter,
   type BrokerAdapterOptions,
@@ -106,6 +107,10 @@ export const makeQleverStorageAdapter = (
       try: thunk,
       catch: (cause) => new ReadError({ message: "QLever read failed", cause }),
     });
+  // V-P2Q M2 on A0, a pure guard: the highest source position this adapter has read. A read at an explicit
+  // position at or below it is unchanged (no extra request); above it, the position is read once more and a
+  // basis A0 has not published yet fails typed instead of answering now and differently after a later commit.
+  let observedPosition = 0;
   const position = () =>
     read(async (signal) => {
       const rows = await client.query(
@@ -114,6 +119,7 @@ export const makeQleverStorageAdapter = (
       );
       const value = Number(rows[0]?.["position"]?.value ?? 0);
       if (!Number.isSafeInteger(value) || value < 0) throw new TypeError("Unsafe source position");
+      if (value > observedPosition) observedPosition = value;
       return value;
     });
   const required = Effect.flatMap(current, (state) =>
@@ -130,6 +136,19 @@ export const makeQleverStorageAdapter = (
   ): Effect.Effect<readonly TripleRow[], ReadError> =>
     Effect.gen(function* () {
       const state = yield* current;
+      if (state === undefined && basis?.recordedPosition !== undefined && basis.recordedPosition > observedPosition) {
+        const published = yield* position();
+        if (basis.recordedPosition > published)
+          return yield* Effect.fail(
+            new BasisNotAvailable({
+              required: basis.recordedPosition,
+              observed: published,
+              replica: "QLever (A0)",
+              surface: "a0-repository",
+              waitedMs: 0,
+            }),
+          );
+      }
       const k =
         state === undefined
           ? basis?.recordedPosition
@@ -359,7 +378,11 @@ export const makeQleverStorageAdapter = (
           const exit = yield* Effect.exit(
             Effect.uninterruptible(persist(state, operationId, randomUUID())),
           );
-          if (Exit.isSuccess(exit)) return result;
+          if (Exit.isSuccess(exit)) {
+            // A0 ACKs after publication, so its own commit position is published (keeps the M2 guard free).
+            if (state.position > observedPosition) observedPosition = state.position;
+            return result;
+          }
           return yield* Effect.failCause(exit.cause).pipe(
             Effect.catch((error) =>
               error instanceof QleverSerializationConflict &&

@@ -32,6 +32,7 @@ import {
 import { HostLog, readFramesFrom, segmentStart, type EpochBeginPayload, type LogFrame } from "./log.js";
 import { ORDINALS, lastPositionOf, lsnOf, packPosition } from "./position.js";
 import { buildFence, buildPublication, markerQuery, type ReplicaMarker } from "./sparql.js";
+import { BasisNotAvailable, ReplicaUnavailable, type BasisSurface } from "./errors.js";
 
 /** A staged Triplex transaction handed to the broker by the adapter's persist step. */
 export interface BrokerTransaction {
@@ -107,6 +108,12 @@ export interface HostBrokerOptions {
   readonly requireFullFsync?: boolean;
   /** Start the applier on open (default true when a replica is given). */
   readonly autoApply?: boolean;
+  /** A name for the replica in typed errors (BasisNotAvailable, ReplicaUnavailable). */
+  readonly replicaName?: string;
+  /** How often an idle applier reads the replica's real marker to notice a regression (V-P2Q C2). */
+  readonly idleProbeMs?: number;
+  /** Crash-simulation tests only: abandon an earlier in-process holder of this stream (V-P2Q C3). */
+  readonly takeover?: boolean;
   readonly onEvent?: (event: BrokerEvent) => void;
 }
 
@@ -184,6 +191,8 @@ export class HostBroker {
   private replicaMarker: ReplicaMarker = { position: 0, epoch: 0 };
   private publishedLsn = 0;
   private readonly publishWaiters: { position: number; resolve: (ok: boolean) => void }[] = [];
+  private readonly durableWaiters: { position: number; resolve: () => void }[] = [];
+  private suspectRegression = false;
   private wakeApplier: (() => void) | undefined;
   private applying: Promise<void> | undefined;
   private stopping = false;
@@ -205,7 +214,21 @@ export class HostBroker {
     const opened = await HostLog.open(options.dir, {
       ...(options.minFreeBytes === undefined ? {} : { minFreeBytes: options.minFreeBytes }),
       ...(options.requireFullFsync === undefined ? {} : { requireFullFsync: options.requireFullFsync }),
+      ...(options.takeover === undefined ? {} : { takeover: options.takeover }),
     });
+    try {
+      return await HostBroker.start(options, opened);
+    } catch (error) {
+      // A failed start must not keep the stream's lock or registry entry (V-P2Q C3).
+      await opened.log.close();
+      throw error;
+    }
+  }
+
+  private static async start(
+    options: HostBrokerOptions,
+    opened: Awaited<ReturnType<typeof HostLog.open>>,
+  ): Promise<HostBroker> {
     const broker = new HostBroker(options, opened.log, {
       status: opened.recovery.status,
       fsyncCalibrationMs: opened.recovery.fsyncCalibrationMs,
@@ -308,6 +331,9 @@ export class HostBroker {
     this.deciding = true;
     try {
       while (this.queue.length > 0 && !this.failed) await this.commitGroup();
+    } catch (cause) {
+      // pump() is called without await, so nothing may escape it as an unhandled rejection (V-P2Q m1).
+      this.fail(new BrokerFailed(`Broker decision loop failed; outcome of pending commands unknown: ${String(cause)}`));
     } finally {
       this.deciding = false;
     }
@@ -399,18 +425,32 @@ export class HostBroker {
     const ackAt = performance.now();
     // The fsync returned: the decision is irrevocable. Record it, publish the watermark, expose the frame
     // to readers through the overlay, and only then ACK (Q31e: ACK after the source's own publication).
-    this.index.push({ lsn: frame.lsn, offset: frame.offset, crc: frame.crc, kind: frame.kind });
-    this.record(frame.lsn, epoch, members);
-    this.durableLsn = frame.lsn;
-    this.counters.frames++;
-    this.counters.commits += members.length;
-    this.addOverlay({ lsn: frame.lsn, members });
-    this.log.publishWatermark({ epoch, lsn: frame.lsn, position: this.headPosition });
-    this.options.onEvent?.({ type: "frame", lsn: frame.lsn, members: members.length, bytes: payload.length, appendMs: ackAt - t0, at: ackAt });
+    try {
+      this.index.push({ lsn: frame.lsn, offset: frame.offset, crc: frame.crc, kind: frame.kind });
+      this.record(frame.lsn, epoch, members);
+      this.durableLsn = frame.lsn;
+      this.counters.frames++;
+      this.counters.commits += members.length;
+      this.addOverlay({ lsn: frame.lsn, members });
+      this.log.publishWatermark({ epoch, lsn: frame.lsn, position: this.headPosition });
+    } catch (cause) {
+      // V-P2Q m1: the frame is durable but the publication step failed, so no ACK may be sent. Fail the broker
+      // and answer outcome-unknown; a restart replays the frame and a resend returns the original receipt.
+      this.fail(new BrokerFailed(`Broker failed after the fsync of LSN ${frame.lsn}; outcome of ${accepted.length} commands unknown: ${String(cause)}`));
+      for (const entry of accepted) entry.pending.reject(this.failed);
+      for (const entry of conflicts) entry.pending.reject(this.failed);
+      return;
+    }
     for (const entry of accepted)
       entry.pending.resolve({ kind: "committed", lsn: frame.lsn, epoch, positions: entry.positions, ackAt, replayed: false });
     answerConflicts();
+    this.notifyDurable();
     this.wakeApplier?.();
+    try {
+      this.options.onEvent?.({ type: "frame", lsn: frame.lsn, members: members.length, bytes: payload.length, appendMs: ackAt - t0, at: ackAt });
+    } catch {
+      /* instrumentation never fails a commit */
+    }
   }
 
   /** Claims and per-subject compare-and-set from the broker's record plus the group's staged prefix. */
@@ -608,7 +648,82 @@ export class HostBroker {
     });
   }
 
-  /** Resolve true once the replica marker reaches `position` (false on timeout). */
+  private get replicaName(): string {
+    return this.options.replicaName ?? "the QLever replica";
+  }
+
+  /**
+   * The replica's real marker, read now in its own request (V-P2Q C2: never the cached `replicaMarker`).
+   * A lower marker than the cached one wakes the applier to fence and replay. Unreachable: ReplicaUnavailable.
+   */
+  async probeReplica(surface: BasisSurface): Promise<ReplicaMarker> {
+    if (!this.options.replica) return { position: 0, epoch: 0 };
+    let marker: ReplicaMarker;
+    try {
+      marker = await this.readReplicaMarker();
+    } catch (cause) {
+      throw new ReplicaUnavailable({ replica: this.replicaName, surface, cause });
+    }
+    if (marker.position < this.replicaMarker.position || marker.epoch !== this.replicaMarker.epoch) {
+      this.suspectRegression = true;
+      this.wakeApplier?.();
+    }
+    return marker;
+  }
+
+  /**
+   * Wait (deadline-aware, RULINGS Q31d and Q58a) until the replica's real marker reaches `b`; returns the
+   * observed marker. The cached marker only paces the wait; every decision uses a fresh probe.
+   */
+  async awaitReplica(b: number, deadlineMs: number, surface: BasisSurface): Promise<ReplicaMarker> {
+    const started = performance.now();
+    for (;;) {
+      const real = await this.probeReplica(surface);
+      if (real.position >= b) return real;
+      const remaining = deadlineMs - (performance.now() - started);
+      if (remaining <= 0)
+        throw new BasisNotAvailable({ required: b, observed: real.position, replica: this.replicaName, surface, waitedMs: performance.now() - started });
+      // Wake on the next publication, but never spin when the cached marker is already (wrongly) ahead.
+      if (this.replicaMarker.position >= b) await sleep(Math.min(remaining, 10));
+      else await this.waitPublished(b, Math.min(remaining, 100));
+    }
+  }
+
+  /**
+   * V-P2Q M2: a basis is answerable only inside the resolved prefix, that is at or below the last ordinal slot of
+   * the last durable frame. Wait within the deadline for a later frame to cover `b`, then BasisNotAvailable.
+   */
+  async awaitResolved(b: number, deadlineMs: number, surface: BasisSurface): Promise<void> {
+    const started = performance.now();
+    while (lastPositionOf(this.durableLsn) < b) {
+      const remaining = deadlineMs - (performance.now() - started);
+      if (remaining <= 0 || this.failed)
+        throw new BasisNotAvailable({
+          required: b,
+          observed: lastPositionOf(this.durableLsn),
+          replica: "the broker's resolved prefix",
+          surface,
+          waitedMs: performance.now() - started,
+        });
+      await new Promise<void>((resolve) => {
+        const waiter = { position: b, resolve };
+        this.durableWaiters.push(waiter);
+        setTimeout(() => {
+          const i = this.durableWaiters.indexOf(waiter);
+          if (i !== -1) this.durableWaiters.splice(i, 1);
+          resolve();
+        }, Math.min(remaining, 100));
+      });
+    }
+  }
+
+  private notifyDurable() {
+    const covered = lastPositionOf(this.durableLsn);
+    for (let i = this.durableWaiters.length - 1; i >= 0; i--)
+      if (this.durableWaiters[i]!.position <= covered) this.durableWaiters.splice(i, 1)[0]!.resolve();
+  }
+
+  /** Resolve true once the cached replica marker reaches `position` (false on timeout); pacing only. */
   waitPublished(position: number, timeoutMs: number): Promise<boolean> {
     if (this.replicaMarker.position >= position) return Promise.resolve(true);
     return new Promise((resolve) => {
@@ -670,18 +785,63 @@ export class HostBroker {
     }
   }
 
+  /**
+   * The replica's marker differs from what this applier last published. Higher epoch or ahead of the log:
+   * another writer owns the replica, fail-stop (R13 5.1, 6.5 step 5). Otherwise the replica went backwards: it
+   * restarted without its persisted delta (`--persist-updates` off, R21 1.3) or lost its last writeback. The host
+   * log is the truth, so take the epoch again and replay from the replica's own marker; frames are pure quad
+   * deltas, so replay is idempotent (R13 6.2). Readers meanwhile see the lower marker in their own request and
+   * route to the overlay or the log. Returns false when the broker failed.
+   */
+  private async onMarkerMismatch(marker: ReplicaMarker, expected: ReplicaMarker): Promise<boolean> {
+    if (marker.epoch > this.log.epoch || lsnOf(marker.position) > this.durableLsn) {
+      this.options.onEvent?.({ type: "fenced", detail: `marker ${JSON.stringify(marker)} expected ${JSON.stringify(expected)}`, at: performance.now() });
+      this.fail(new BrokerFailed(`Replica guard failed at ${JSON.stringify(expected)}; another writer owns the replica`));
+      return false;
+    }
+    try {
+      await this.options.replica!.update(buildFence(this.options.scopeKey, marker, this.log.epoch), {
+        timeoutMs: this.options.applyTimeoutMs ?? 120_000,
+      });
+    } catch {
+      return true; // unreachable again; the next pass re-reads the marker
+    }
+    const fenced = await this.replicaMarkerWithRetry();
+    if (fenced.epoch !== this.log.epoch) return true; // lost a race; the next pass re-reads the marker
+    this.counters.replicaRegressions++;
+    this.options.onEvent?.({ type: "replica-regressed", from: this.replicaMarker.position, to: fenced.position, at: performance.now() });
+    this.replicaMarker = fenced;
+    this.publishedLsn = lsnOf(fenced.position);
+    return true;
+  }
+
   private async applyLoop(): Promise<void> {
     const replica = this.options.replica!;
     const maxApply = this.options.maxApplyCommands ?? 64;
+    const idleProbeMs = this.options.idleProbeMs ?? 500;
+    let lastProbe = performance.now();
     while (!this.stopping) {
       const batch = this.nextBatch(this.publishedLsn, maxApply);
       if (batch.length === 0) {
         await new Promise<void>((resolve) => {
           this.wakeApplier = resolve;
-          setTimeout(resolve, 250);
+          setTimeout(resolve, Math.min(250, idleProbeMs));
         });
         this.wakeApplier = undefined;
         this.evict();
+        // V-P2Q C2: an idle applier must notice a replica that went backwards without a new commit.
+        if (performance.now() - lastProbe >= idleProbeMs || this.suspectRegression) {
+          lastProbe = performance.now();
+          this.suspectRegression = false;
+          let marker: ReplicaMarker | undefined;
+          try {
+            marker = await this.readReplicaMarker();
+          } catch {
+            marker = undefined; // unreachable: retry on the next probe
+          }
+          if (marker && !(marker.position === this.replicaMarker.position && marker.epoch === this.replicaMarker.epoch))
+            if (!(await this.onMarkerMismatch(marker, this.replicaMarker))) return;
+        }
         continue;
       }
       const from = this.replicaMarker;
@@ -711,30 +871,7 @@ export class HostBroker {
         // guard failed because another epoch owns the replica. The marker decides (R13 6.5 step 8).
         const marker = await this.replicaMarkerWithRetry();
         if (!(marker.position === to.position && marker.epoch === to.epoch)) {
-          if (marker.epoch > this.log.epoch || lsnOf(marker.position) > this.durableLsn) {
-            // Another broker epoch owns the replica, or the replica is ahead of this log: fail-stop
-            // (R13 5.1, 6.5 step 5).
-            this.options.onEvent?.({ type: "fenced", detail: `marker ${JSON.stringify(marker)} expected ${JSON.stringify(to)}`, at: performance.now() });
-            this.fail(new BrokerFailed(`Replica guard failed at ${JSON.stringify(from)}; another writer owns the replica`));
-            return;
-          }
-          // The replica went backwards: it restarted without its persisted delta (`--persist-updates` off,
-          // R21 1.3) or lost its last writeback. The host log is the truth, so take the epoch again and
-          // replay from the replica's own marker; frames are pure quad deltas, so replay is idempotent
-          // (R13 6.2). Readers meanwhile see the lower marker and route to the overlay or the log.
-          try {
-            await replica.update(buildFence(this.options.scopeKey, marker, this.log.epoch), {
-              timeoutMs: this.options.applyTimeoutMs ?? 120_000,
-            });
-          } catch {
-            continue;
-          }
-          const fenced = await this.replicaMarkerWithRetry();
-          if (fenced.epoch !== this.log.epoch) continue; // lost a race; the next pass re-reads the marker
-          this.counters.replicaRegressions++;
-          this.options.onEvent?.({ type: "replica-regressed", from: this.replicaMarker.position, to: fenced.position, at: performance.now() });
-          this.replicaMarker = fenced;
-          this.publishedLsn = lsnOf(fenced.position);
+          if (!(await this.onMarkerMismatch(marker, from))) return;
           continue;
         }
       }
@@ -788,10 +925,16 @@ export class HostBroker {
       });
   }
 
-  /** Wait until the replica has every durable frame (or the timeout passes). */
+  /** Wait until the replica's real marker covers every durable commit (or the timeout passes). */
   async drain(timeoutMs = 60_000): Promise<boolean> {
     if (!this.options.replica) return true;
-    return this.waitPublished(this.headPosition === 0 ? 0 : lastPositionOf(lsnOf(this.headPosition)), timeoutMs);
+    const target = this.headPosition === 0 ? 0 : lastPositionOf(lsnOf(this.headPosition));
+    try {
+      await this.awaitReplica(target, timeoutMs, "repository");
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   stats(): BrokerStats {

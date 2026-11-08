@@ -45,6 +45,8 @@ import {
 } from "../rdf.js";
 import { BrokerFailed, type HostBroker } from "./broker.js";
 import { markerFields } from "./sparql.js";
+import { lastPositionOf } from "./position.js";
+import { BasisNotAvailable, ReplicaUnavailable, isUnreachable } from "./errors.js";
 
 export type BrokerReadRoute = "replica" | "overlay" | "log";
 export interface BrokerReadEvent {
@@ -57,10 +59,27 @@ export interface BrokerReadEvent {
 }
 export interface BrokerAdapterOptions {
   readonly maxRetries?: number;
-  /** Deadline for reads that need the replica itself (dependencyState, Datalog queries). */
+  /**
+   * Deadline for any read that must wait for its basis: the replica for Datalog, dependencyState and native
+   * reads, the resolved prefix for repository pulls beyond it (default 2 s, RULINGS Q58a). `publicationWaitMs`
+   * is the earlier name.
+   */
+  readonly basisWaitMs?: number;
   readonly publicationWaitMs?: number;
   readonly onRead?: (event: BrokerReadEvent) => void;
 }
+
+/**
+ * The basis gate the broker adapter hands the Datalog executor (V-P2Q C1, C2). Called as a function outside a
+ * transaction (requested basis, or the broker head) it waits until the resolved prefix covers the basis and
+ * the replica's real marker reaches it. `inTransaction` does the same for sourceK. `after` re-reads the real
+ * marker once the answer is computed and refuses it if the replica went backwards below the basis meanwhile.
+ * Datalog never merges the overlay (RULINGS Q58d): it waits or fails typed.
+ */
+export type BasisGate = ((requested: number | undefined) => Promise<number>) & {
+  readonly inTransaction?: (sourceK: number) => Promise<number>;
+  readonly after?: (position: number) => Promise<void>;
+};
 
 interface State {
   readonly sourceK: number;
@@ -158,7 +177,7 @@ export interface QleverBrokerStorageAdapterService extends StorageAdapterService
   >;
   readonly broker: HostBroker;
   /** Basis for queries outside a transaction: waits for the replica (Datalog has no overlay merge). */
-  readonly resolveQueryBasis: (requested: number | undefined) => Promise<number>;
+  readonly resolveQueryBasis: BasisGate;
   readonly routes: Record<BrokerReadRoute, number>;
 }
 
@@ -170,6 +189,8 @@ export const makeQleverBrokerStorageAdapter = (
 ): QleverBrokerStorageAdapterService => {
   const graph = graphIri(scopeKey);
   const key = Symbol(scopeKey);
+  // Q58a default deadline: 2 s for any read that must wait for a basis.
+  const basisWaitMs = options.basisWaitMs ?? options.publicationWaitMs ?? 2_000;
   const routes: Record<BrokerReadRoute, number> = { replica: 0, overlay: 0, log: 0 };
   const current = Effect.map(Transactions, (states) => states.get(key));
   const required = Effect.flatMap(current, (state) =>
@@ -177,8 +198,6 @@ export const makeQleverBrokerStorageAdapter = (
       ? Effect.fail(new WriteError({ message: "QLever mutation requires withTransaction" }))
       : Effect.succeed(state),
   );
-  const read = <A>(thunk: (signal: AbortSignal) => Promise<A>) =>
-    Effect.tryPromise({ try: thunk, catch: (cause) => new ReadError({ message: "QLever read failed", cause }) });
 
   const queryRows = (
     pattern: QueryPattern,
@@ -215,39 +234,66 @@ export const makeQleverBrokerStorageAdapter = (
                 ? order(value)
                 : String(value),
             );
+      // V-P2Q M2: a basis beyond the resolved prefix would be answered now and differently later. Wait within the
+      // deadline for a durable frame to cover it, then fail typed. In a transaction b <= sourceK <= head.
+      if (state === undefined && b > lastPositionOf(broker.durable().lsn))
+        yield* Effect.tryPromise({
+          try: () => broker.awaitResolved(b, basisWaitMs, "repository"),
+          catch: (cause) => (cause instanceof ReadError ? cause : new ReadError({ message: "QLever read failed", cause })),
+        });
+      const selection = { ...(entities ? { entities } : {}), ...(id !== undefined ? { id } : {}) };
+      const scoped =
+        pattern.entityId !== undefined && !isPatternVariable(pattern.entityId)
+          ? { ...selection, entities: [pattern.entityId] }
+          : selection;
+      const select = (row: TripleRow) =>
+        (id === undefined || row.id === id) &&
+        (entities === undefined || entities.includes(row.entity_id)) &&
+        matches(row, pattern);
       const t0 = performance.now();
-      const { rows, marker } = yield* read(async (signal) => {
-        const bindings = await client.query(
-          `SELECT ?row ?brokerPosition WHERE { { GRAPH ${graph} { ${metaIri} ${markerFields.position} ?brokerPosition } } UNION { GRAPH ${graph} { ${clauses.join("\n")} } } }`,
-          { signal },
-        );
-        let marker = 0;
-        const rows: TripleRow[] = [];
-        for (const binding of bindings) {
-          if (binding["brokerPosition"]) marker = Number(binding["brokerPosition"].value);
-          if (binding["row"]) rows.push(decodeRow(binding["row"].value));
-        }
-        return { rows, marker };
-      });
-      const byId = new Map(rows.map((row) => [row.id, row]));
+      const replica = yield* Effect.tryPromise({
+        try: async (signal) => {
+          const bindings = await client.query(
+            `SELECT ?row ?brokerPosition WHERE { { GRAPH ${graph} { ${metaIri} ${markerFields.position} ?brokerPosition } } UNION { GRAPH ${graph} { ${clauses.join("\n")} } } }`,
+            { signal },
+          );
+          let marker = 0;
+          const rows: TripleRow[] = [];
+          for (const binding of bindings) {
+            if (binding["brokerPosition"]) marker = Number(binding["brokerPosition"].value);
+            if (binding["row"]) rows.push(decodeRow(binding["row"].value));
+          }
+          return { rows, marker };
+        },
+        catch: (cause) => cause,
+      }).pipe(
+        // V-P2Q M3: an unreachable replica is not a reason to fail a repository pull or a retraction-target
+        // read; the broker's own record answers exactly (every row version is in the log), so commits with
+        // retractions continue during an outage (Q31e). Other failures stay ReadError.
+        Effect.catch((cause) =>
+          isUnreachable(cause)
+            ? Effect.succeed(undefined)
+            : Effect.fail(new ReadError({ message: "QLever read failed", cause })),
+        ),
+      );
       let route: BrokerReadRoute = "replica";
-      if (marker < b) {
-        const selection = { ...(entities ? { entities } : {}), ...(id !== undefined ? { id } : {}) };
-        const scoped =
-          pattern.entityId !== undefined && !isPatternVariable(pattern.entityId)
-            ? { ...selection, entities: [pattern.entityId] }
-            : selection;
-        const select = (row: TripleRow) =>
-          (id === undefined || row.id === id) &&
-          (entities === undefined || entities.includes(row.entity_id)) &&
-          matches(row, pattern);
-        let overlay = broker.overlay(marker, scoped, select);
-        route = "overlay";
-        if (overlay === undefined) {
-          overlay = broker.fromLog(marker, scoped, select);
-          route = "log";
+      let marker = 0;
+      const byId = new Map<string, TripleRow>();
+      if (replica === undefined) {
+        route = "log";
+        for (const row of broker.fromLog(0, scoped, select)) byId.set(row.id, row);
+      } else {
+        marker = replica.marker;
+        for (const row of replica.rows) byId.set(row.id, row);
+        if (marker < b) {
+          let overlay = broker.overlay(marker, scoped, select);
+          route = "overlay";
+          if (overlay === undefined) {
+            overlay = broker.fromLog(marker, scoped, select);
+            route = "log";
+          }
+          for (const row of overlay) byId.set(row.id, row);
         }
-        for (const row of overlay) byId.set(row.id, row);
       }
       routes[route]++;
       options.onRead?.({ route, basis: b, replicaPosition: marker, rows: byId.size, ms: performance.now() - t0, staged: state !== undefined });
@@ -405,23 +451,46 @@ export const makeQleverBrokerStorageAdapter = (
       }),
     );
 
+  /** Typed failure for surfaces without a log fallback (V-P2Q M3). */
+  const typed = (surface: "datalog" | "dependency-state") => (cause: unknown) =>
+    cause instanceof ReadError
+      ? cause
+      : isUnreachable(cause)
+        ? new ReplicaUnavailable({ replica: "the QLever replica", surface, cause })
+        : new ReadError({ message: "QLever read failed", cause });
+  /** V-P2Q C2: after the answer, the replica's real marker must still be at or above what the answer relied on. */
+  const verifyAfter = async (surface: "datalog" | "dependency-state", required: number, floor: number, started: number) => {
+    const after = await broker.probeReplica(surface);
+    if (after.position < floor)
+      throw new BasisNotAvailable({
+        required,
+        observed: after.position,
+        replica: "the QLever replica (went backwards during the read)",
+        surface,
+        waitedMs: performance.now() - started,
+      });
+  };
+
   /**
-   * A0's dependency aggregate, run on the replica once it is eligible for B. If no overlay row after the
-   * replica's marker touches the attributes, the replica's answer is already exact for B; otherwise wait for
-   * publication (deadline-aware, Q31d), because the aggregate has no exact overlay merge.
+   * A0's dependency aggregate on the replica, eligible for B only on the replica's real marker read just before
+   * and just after the answer (V-P2Q C2; the cached marker is never trusted). If the overlay proves that no
+   * frame after the replica's marker touches the attributes, the replica's answer is already exact for B
+   * (nothing is merged, RULINGS Q58d); otherwise wait for the replica within the deadline, then typed failure.
    */
   const dependencyState: StorageAdapterService["dependencyState"] = (attributes, basis) =>
     attributes.length === 0
       ? Effect.succeed({ sourcePosition: 0 })
-      : read(async (signal) => {
+      : Effect.tryPromise({ catch: typed("dependency-state"), try: async (signal) => {
+          const started = performance.now();
           const b = basis.recordedPosition ?? broker.head();
+          if (b > lastPositionOf(broker.durable().lsn)) await broker.awaitResolved(b, basisWaitMs, "dependency-state");
           const wanted = new Set(attributes);
-          const marker = broker.replicaPosition();
-          if (marker < b) {
-            const touched = broker.overlay(marker, {}, (row) => wanted.has(row.attribute));
-            if (touched === undefined || touched.length > 0)
-              if (!(await broker.waitPublished(b, options.publicationWaitMs ?? 2_000)))
-                throw new Error(`QLever replica has not reached position ${b}; dependencyState has no eligible surface`);
+          let floor = b;
+          const before = await broker.probeReplica("dependency-state");
+          if (before.position < b) {
+            const touched = broker.overlay(before.position, {}, (row) => wanted.has(row.attribute));
+            if (touched === undefined || touched.length > 0) await broker.awaitReplica(b, basisWaitMs, "dependency-state");
+            else floor = before.position;
           }
           const noBoundary = "ffffffffffffffff";
           const time = basis.recordedAt;
@@ -431,26 +500,41 @@ export const makeQleverBrokerStorageAdapter = (
             `SELECT (MAX(?source) AS ?sourcePosition) (MIN(?next) AS ?nextBoundary) WHERE { GRAPH ${graph} { VALUES ?attribute { ${[...wanted].map(lit).join(" ")} } ?s ${f("attribute")} ?attribute ; ${f("recorded_position_order")} ?recorded ; ${f("recorded_position_native")} ?position ; ${f("recorded_at_order")} ?recordedTime ; ${f("valid_from_order")} ?validFrom . OPTIONAL { ?s ${f("retracted_position_order")} ?retracted ; ${f("retracted_position_native")} ?retractedPosition ; ${f("retracted_at_order")} ?retractedTime } OPTIONAL { ?s ${f("valid_to_order")} ?validTo } ${filter} BIND(IF(${visibleRetraction},?retractedPosition,?position) AS ?source) BIND(IF(${visibleRetraction},${lit(noBoundary)},IF(?validFrom > ${lit(order(basis.validAt))},?validFrom,IF(BOUND(?validTo) && ?validTo > ${lit(order(basis.validAt))},?validTo,${lit(noBoundary)}))) AS ?next) } }`,
             { signal },
           );
+          await verifyAfter("dependency-state", b, floor, started);
           return {
             sourcePosition: Number(rows[0]?.["sourcePosition"]?.value ?? 0),
             ...(rows[0]?.["nextBoundary"] && rows[0]["nextBoundary"].value !== noBoundary
               ? { nextTemporalBoundary: numericFromOrderKey(rows[0]["nextBoundary"].value) }
               : {}),
           };
-        });
+        } });
+
+  const resolveQueryBasis: BasisGate = Object.assign(
+    async (requested: number | undefined) => {
+      const b = requested ?? broker.head();
+      if (b > lastPositionOf(broker.durable().lsn)) await broker.awaitResolved(b, basisWaitMs, "datalog");
+      await broker.awaitReplica(b, basisWaitMs, "datalog");
+      return b;
+    },
+    {
+      inTransaction: async (sourceK: number) => {
+        await broker.awaitReplica(sourceK, basisWaitMs, "datalog");
+        return sourceK;
+      },
+      after: (position: number) => verifyAfter("datalog", position, position, performance.now()),
+    },
+  );
 
   return {
     supportedValueTypes: ["string", "number", "integer", "boolean", "datetime", "ref", "json", "blob"],
     broker,
     routes,
-    resolveQueryBasis: async (requested) => {
-      const b = requested ?? broker.head();
-      if (!(await broker.waitPublished(b, options.publicationWaitMs ?? 2_000)))
-        throw new Error(`QLever replica has not reached position ${b}; no eligible surface for a Datalog query`);
-      return b;
-    },
+    resolveQueryBasis,
     sourceView: Effect.map(current, (state) => {
       if (!state) return undefined;
+      // V-P2Q C1: only the Datalog executor reads this view, and its query is not confined to known entities,
+      // so a transaction that used it is guarded scope-wide (any commit after sourceK conflicts).
+      state.reads.scopeWide = true;
       // The executor inlines staged rows; give them A0's K+1.. positions so its basis tests behave as on A0.
       const local = new Map(state.placeholders.map((placeholder, i) => [placeholder, state.sourceK + 1 + i]));
       const pending = state.sourceK + Math.max(1, state.placeholders.length);

@@ -134,6 +134,8 @@ export const identity = (url) => {
   return {
     gitHead: head, dirty: status.length > 0, diffSha256: createHash('sha256').update(diff).digest('hex'),
     engineConfig: { dir: configDir, arm: process.env.TX2_CONFIG_DIR ? 'np (no --persist-updates, keep-previous none)' : 'default (repo qlever-start.sh)', startScriptSha256: createHash('sha256').update(startScript).digest('hex'), persistUpdates: /--persist-updates/.test(String(startScript)) },
+    // V-P2Q m5: QLEVER_COMMIT_PATH flips makeQleverRuntime process-wide, so every receipt records it.
+    env: Object.fromEntries(['QLEVER_COMMIT_PATH', 'QLEVER_BROKER_DIR', 'TX2_CONFIG_DIR'].map((k) => [k, process.env[k] ?? null])),
     distSha256: dist.digest('hex'), engineImage: slots.lanes.qlever.image, endpoint: url ?? null, node: process.version,
     host: { cpus: os.cpus().length, loadavg: os.loadavg().map((x) => round(x, 2)), freeBytes: (() => { const s = fs.statfsSync(REPO); return s.bavail * s.bsize; })() },
   };
