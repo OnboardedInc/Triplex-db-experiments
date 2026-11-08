@@ -51,8 +51,8 @@ isolation; is Datomic dev storage acceptable for the final acceptance run, or mu
 | CX-C8-R2 (exp/C8-read-only-frontier) | builder, Codex medium | P1 | Q77a-c (budgets, iterative counting, counter fail-closed), Q76b, Q76d |
 | CX-VJ01 (verify/J01) | reviewer, Codex high | P2 | verdict on J01 5cc42fb (compact encoding, default off) |
 | CX-VE01-3 (verify/E01; CX-VE01-2 stopped by the Codex content filter) | reviewer, Codex high | floor for claims | delta check of E01 422c8d3 (126/126 tests, replay 70/70) |
-| CX-OREPLAY-049 (exp/O04b-oracle-0.4.2) | builder, Codex medium | correctness floor | Q70n completeness by execution, Q70o page selector; then a reviewer |
-| CX-VX02 (verify/X02) | reviewer, Codex high | XTQL lane | verdict on X02 bf1ad4d, minus the exclusive-slot rerun |
+| CX-VO04I (verify/O02) | reviewer, Codex high | correctness floor | verdict on O-REPLAY 0.4.9 f195f30 (385 unit, 90/90 self-check) |
+| CX-X02-R2 (exp/X02-xtql-parity) | builder, Codex medium | XTQL lane, numeric rule | Q79a-d (token guards, typed overflow, no silent rounding, unset unchanged) |
 | R27 evidence sources per O-OBS protocol, three engines (planner, Opus high) | planner, Opus 5.5, high | floor: O-OBS CA01 | /Users/sam/Claude/Projects/triplex-db-2/R27/ |
 | CX-VO05 (verify/O05) | reviewer, Codex high | floor: O-OBS blocks 62 obligations | verdict on O-OBS 6852fc1 |
 | CX-K01 (exp/K01-seed-clone) | builder, Codex medium | measurement speed | clone tooling, 500-subject live check, E1 plan |

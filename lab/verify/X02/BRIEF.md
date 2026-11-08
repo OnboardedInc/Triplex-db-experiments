@@ -37,3 +37,12 @@ with DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock through lab/bin/
 
 ## Report (return as text; the orchestrator saves it as lab/verify/X02/VERIFY.md)
 Verdict and reason; checks 1-7 with evidence; findings ranked with reproducing commands and fixes; the equivalence sample table; final commit.
+
+## Verdict (CX-VX02, Codex reviewer at high), saved by the orchestrator 2026-11-08 21:39Z
+FIX-FIRST at bf1ad4d; evidence verify/X02 7392c0a (lab/verify/X02/VERIFY.md there). Parity is substantial: all 71 logical answers
+recomputed independently, 142/142 current and reopen expectations equal. F1 the quantified-comparison guard
+(packages/xtdb/src/native/ReadOnlySql.ts:83-85) checks raw characters, so `ANY/**/(ARRAY[1,2])` and `ANY ARRAY[1,2]` pass and return
+empty answers; F2 an int64 overflow in inventory availability throws inside Effect.gen and escapes as a defect
+(packages/qualification/src/native/xtdb-workloads.ts:456); F3 pre-existing (Q39a): Datalog exact arithmetic compiles DECIMAL to BIGINT and
+rounds 1000000000000000004 to 1000000000000000000 with no error (packages/core/src/datalog/compiler.ts:572); F4 the native switch is
+default-on (packages/qualification/src/index.ts:212), so unset behaviour changed. The exclusive-slot rerun is still outstanding. Ruled Q79.
