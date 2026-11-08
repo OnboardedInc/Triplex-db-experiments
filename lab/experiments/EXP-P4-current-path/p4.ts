@@ -329,7 +329,8 @@ function worldEntities(i: number): string[] {
   return [...set];
 }
 
-async function commit(operations: any[], meta: { commandId: string; actor: string; preconditions?: any[] }, label: string) {
+/** Commit through the H1 writer. `record`: the command touches the gate worlds, so the O-REPLAY case carries its intent (others are internal positions). */
+async function commit(operations: any[], meta: { commandId: string; actor: string; preconditions?: any[] }, label: string, record = true) {
   for (let attempt = 1; ; attempt++) {
     let out = await writer.transact(operations, meta);
     if (!out.ok && out.tag === "CommandAlreadyCommittedError") {
@@ -339,7 +340,7 @@ async function commit(operations: any[], meta: { commandId: string; actor: strin
     if (out.ok) {
       const r = out.value;
       noteReceipt(r, label);
-      recorded.push({ commandId: meta.commandId, operations, preconditions: meta.preconditions ?? [], actor: meta.actor, receipt: { txId: r.txId, position: r.position, instant: r.instant, assertionIds: alignIds(operations, r) } });
+      if (record) recorded.push({ commandId: meta.commandId, operations, preconditions: meta.preconditions ?? [], actor: meta.actor, receipt: { txId: r.txId, position: r.position, instant: r.instant, assertionIds: alignIds(operations, r) } });
       return r;
     }
     log(`commit ${meta.commandId} failed (${attempt}): ${out.tag} ${String(out.error?.message ?? "").slice(0, 200)}`);
@@ -591,7 +592,7 @@ async function grow(depth: number) {
   for (let v = version + 1; v < depth; v++) {
     for (const [k, group] of growthGroups(perCommand).entries()) {
       const cmd = buildHistoryGrowth({ runTag, label: `${v}.${k}`, subjects: group, version: v, ids: versionIds });
-      const r = await commit(cmd.operations, { commandId: cmd.commandId, actor: "p4-history", preconditions: cmd.preconditions }, `grow:${depth}`);
+      const r = await commit(cmd.operations, { commandId: cmd.commandId, actor: "p4-history", preconditions: cmd.preconditions }, `grow:${depth}`, gateSetAll.has(group[0]!));
       for (const s of cmd.perSubject) versionIds.set(s.subject, s.added.map((f) => r.triples.find((t) => t.entityId === f.e && t.attribute === f.a)!.id));
       commands++;
     }
@@ -613,7 +614,7 @@ async function addExpired() {
       for (let j = 0; j < n; j++) ops.push({ op: "assert", entityId: ids.placement(i), attribute: `:placement/expired-k${j}`, value: { type: "string", value: `expired ${i}.${j}` }, validFrom: vt - 60 * DAY, validTo: vt - DAY });
       facts += n;
     }
-    await commit(ops, { commandId: `${runTag}:expired:${k}`, actor: "p4-expired" }, "expired");
+    await commit(ops, { commandId: `${runTag}:expired:${k}`, actor: "p4-expired" }, "expired", gateSetAll.has(group[0]!));
     commands++;
   }
   return { commands, facts, wallS: (now() - t0) / 1000 };
@@ -836,6 +837,21 @@ async function runOracle() {
 async function main() {
   report.matchedSample = { size: matched.length, sha256: createHash("sha256").update(matched.join(",")).digest("hex") };
   report.gateSample = { size: gateSample.length, sha256: createHash("sha256").update(gateSample.join(",")).digest("hex") };
+  if (lane === "xtdb" && source === "engine" && (flag("probe-system-time") || agedClock !== null)) {
+    // R23 section 8 open probe: does `SET TRANSACTION ... SYSTEM_TIME` inside BEGIN READ WRITE set the system time?
+    // Only meaningful as the first write on a fresh database (2.2.0 rejects a time at or below the latest tx).
+    const at = new Date(agedClock !== null ? (agedClock += 1_000) : Date.now() - 40 * DAY).toISOString();
+    const probe: any = { requested: at };
+    try {
+      await rawXtdb.submit([{ sql: `SET TRANSACTION READ WRITE, SYSTEM_TIME = TIMESTAMP '${at}'` }, { sql: "INSERT INTO p4_tick (_id, at_ms) VALUES (?, ?)", params: ["probe", Date.now()] }]);
+      const rows = await rawXtdb.query("SELECT _system_from FROM p4_tick FOR ALL SYSTEM_TIME WHERE _id = ?", ["probe"]);
+      probe.systemFrom = rows[0]?.["_system_from"] instanceof Date ? rows[0]["_system_from"].toISOString() : String(rows[0]?.["_system_from"]);
+      probe.honoured = Math.abs(new Date(probe.systemFrom).getTime() - new Date(at).getTime()) < 1_000;
+    } catch (e: any) { probe.error = String(e?.message ?? e).slice(0, 400); probe.honoured = false; }
+    report.systemTimeProbe = probe;
+    log(`system-time probe: ${JSON.stringify(probe)}`);
+    if (agedClock !== null && !probe.honoured) throw new Error("aged regime needs SET TRANSACTION SYSTEM_TIME; the probe was not honoured");
+  }
   if (lane === "xtdb" && source === "engine") {
     await rawXtdb.submit([...(agedClock !== null ? [{ sql: `SET TRANSACTION READ WRITE, SYSTEM_TIME = TIMESTAMP '${new Date((agedClock += 1_000)).toISOString()}'` }] : []), { sql: "INSERT INTO p4_tick (_id, at_ms) VALUES (?, ?)", params: ["init", Date.now()] }]);
   }
@@ -843,8 +859,24 @@ async function main() {
   const gateSet = new Set(gateSample);
   const seedT0 = now();
   if (cfg.leanSeed || agedClock !== null) submitTransform = (s) => agedStatements(cfg.leanSeed ? dropIdentityAssert(s) : s);
+  // QLever keeps every update in its delta (0.75-1.3 GB per million triples, outside -m; R8 verdict 6), so a seed
+  // larger than about a million triples merges the delta into the index every K seed commands (`cmd=rebuild-index`).
+  const rebuilds: any[] = [];
+  const rebuild = async () => {
+    const qlever: any = await import(pathToFileURL(path.join(REPO, "packages/qlever/dist/index.js")).href);
+    const client = qlever.makeQleverClient(process.env["QLEVER_URL"] ?? "http://127.0.0.1:7071", { accessToken: "p4" });
+    const t0 = now();
+    try { rebuilds.push({ atCommand: receipts.length, response: await client.command("rebuild-index", { timeoutMs: 1_800_000 }), wallS: (now() - t0) / 1000 }); }
+    catch (e: any) { rebuilds.push({ atCommand: receipts.length, error: String(e?.message ?? e).slice(0, 500) }); }
+    log(`qlever rebuild: ${JSON.stringify(rebuilds.at(-1)).slice(0, 400)}`);
+  };
+  const rebuildEvery = Number(opt("qlever-rebuild-every", "0"));
   const seed = await seedRung({
-    comp: { ...writer, transact: async (ops: any, meta: any) => { const out = await writer.transact(ops, meta); if (out.ok) noteReceipt(out.value, "seed"); return out; } } as any,
+    comp: { ...writer, transact: async (ops: any, meta: any) => {
+      const out = await writer.transact(ops, meta);
+      if (out.ok) { noteReceipt(out.value, "seed"); if (lane === "qlever" && rebuildEvery > 0 && source === "engine" && receipts.length % rebuildEvery === 0) await rebuild(); }
+      return out;
+    } } as any,
     subjects: N, runTag, batchFacts: 400, budgetMs: Infinity, recordSubjects: gateSet,
     recordAccounts: new Set([...gateSet].map((i) => accountOfSubject(i, accounts))), historySubjects: new Set([...matched, ...gateSample]), log,
   });
@@ -859,14 +891,8 @@ async function main() {
   report.seed = { subjects: seed.seededSubjects, commands: seed.commands, assertions: seed.assertions, wallS: (now() - seedT0) / 1000, factsPerS: seed.factsPerS, commitMs: seed.commitMs, failures: seed.failures.length, lean: cfg.leanSeed, regime: cfg.regime, lastPosition: seed.lastPosition, table: writer.table.stats() };
   log(`seed: ${JSON.stringify(report.seed)}`);
   save();
-  if (lane === "qlever" && cfg.qleverRebuild && source === "engine") {
-    const qlever: any = await import(pathToFileURL(path.join(REPO, "packages/qlever/dist/index.js")).href);
-    const client = qlever.makeQleverClient(process.env["QLEVER_URL"] ?? "http://127.0.0.1:7071", { accessToken: "p4" });
-    const t0 = now();
-    try { report.qleverRebuild = { response: await client.command("rebuild-index", { timeoutMs: 1_800_000 }), wallS: (now() - t0) / 1000 }; }
-    catch (e: any) { report.qleverRebuild = { error: String(e?.message ?? e).slice(0, 500) }; }
-    log(`qlever rebuild: ${JSON.stringify(report.qleverRebuild).slice(0, 400)}`);
-  }
+  if (lane === "qlever" && cfg.qleverRebuild && source === "engine") await rebuild();
+  report.qleverRebuilds = rebuilds;
   // Cross-check: this harness's A0 equals the registered `public` composition (and X1 equals `x1`).
   if (source === "engine") {
     const latest = receipts.at(-1)!;

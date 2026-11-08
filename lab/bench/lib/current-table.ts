@@ -72,7 +72,7 @@ export class CurrentTable {
   private strictInstants = true;
   private poisonReason: string | null = null;
   /** Counters for receipts (apply cost is measured by the caller around `apply`). */
-  readonly counters = { applied: 0, buffered: 0, duplicates: 0, purgedRows: 0, instantOrderViolations: 0 };
+  readonly counters = { applied: 0, buffered: 0, duplicates: 0, purgedRows: 0, instantOrderViolations: 0, applyMs: 0, applyMaxMs: 0, appliedRows: 0 };
 
   get watermark() { return this.w; }
   get horizon() { return this.h; }
@@ -94,6 +94,15 @@ export class CurrentTable {
   }
 
   private applyOne(tx: AppliedTx) {
+    const t0 = performance.now();
+    this.applyRows(tx);
+    const ms = performance.now() - t0;
+    this.counters.applyMs += ms;
+    this.counters.applyMaxMs = Math.max(this.counters.applyMaxMs, ms);
+    this.counters.appliedRows += tx.asserts.length + tx.retracts.length;
+  }
+
+  private applyRows(tx: AppliedTx) {
     const previous = this.instants[this.w]!;
     if (!(tx.instant > previous)) { this.strictInstants = false; this.counters.instantOrderViolations++; }
     for (const id of tx.retracts) {
