@@ -1,0 +1,23 @@
+# [EXP-X05] Read-only XTDB follower on a writer slot's named volume (R19 sections 0.1 item 1, 1.1, 1.7).
+# The writer's xtdb-config.yaml plus four changes; engine.mjs refuses to start it unless the log and
+# storage blocks below equal the writer's (checkFollowerConfig) and readOnlyDatabases is true (volumeGuard).
+# readOnlyDatabases: opens both logs as ReadOnlyLocalLog (inotify tail of the writer's files), uses the
+#   no-op compactor and never claims leadership (R19 1.1, 1.2). Without it a second process on the
+#   Local log is a second writer with no file lock: silent corruption (R19 1.1).
+# server.numThreads 300: one virtual thread per connection; the default 42 serves 42, queues 42 and
+#   refuses the rest, so the 256-reader level needs about 300 (R19 2.1, 2.2).
+# memoryCache 384 MiB: the smallest sane read node, -Xmx768m and 768m direct memory (R19 1.6, E9).
+readOnlyDatabases: true
+server:
+  host: 0.0.0.0
+  port: 5432
+  numThreads: 300
+log: !Local
+  path: /var/lib/xtdb/log
+storage: !Local
+  path: /var/lib/xtdb/buffers
+memoryCache:
+  maxSizeBytes: 402653184
+healthz:
+  host: 0.0.0.0
+  port: 8080

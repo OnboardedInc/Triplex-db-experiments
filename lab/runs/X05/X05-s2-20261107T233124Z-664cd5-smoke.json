@@ -1,0 +1,1707 @@
+{
+  "format": "tx2-x05-receipt/1",
+  "experiment": "EXP-X05",
+  "runId": "X05-s2-20261107T233124Z-664cd5-smoke",
+  "runKind": "smoke",
+  "startedAt": "2026-11-07T23:31:24.123Z",
+  "params": {
+    "slot": "s2",
+    "smoke": true,
+    "subjects": 2000,
+    "active": 200,
+    "rate": 40,
+    "levelS": 8,
+    "levels": [
+      4
+    ],
+    "cap": 16,
+    "threads": 4,
+    "writerConns": 4,
+    "singleMaxConns": 32,
+    "splitShare": 0.1,
+    "lagEveryMs": 500,
+    "e5S": 8,
+    "burstS": 8,
+    "burstX": 5,
+    "burstConns": 8,
+    "recoverS": 6,
+    "warmS": 3,
+    "connRss": 256,
+    "phases": [
+      "ladder"
+    ],
+    "seed": "x05-v1",
+    "drainMaxMs": 180000
+  },
+  "tables": {
+    "ent": "x57f8c05_ent",
+    "claim": "x57f8c05_claim",
+    "ledger": "x57f8c05_ledger",
+    "feed": "x57f8c05_feed"
+  },
+  "northStar": "P1 (TARGETS 1.1 P1): writer commit latency with readers on a read-only follower versus the zero-reader run on the same trace segment; zero stale reads.",
+  "semantics": "TARGETS 1.1 P1 items 1, 2, 4, 5 (item 3 by a forced block cut at +1 s in every window); R19 E1, E4, E5, E9.",
+  "git": {
+    "head": "3785c8655e716b7c19f05a4ca5417abf5674feab",
+    "headTree": "706952dc3779d1d322657a6120e8b451eff439b1",
+    "branch": "exp/X05-xtdb-read-follower",
+    "dirty": true,
+    "stashCommit": "f17e7334a2707b930c3caa15465eb66ad8decb43",
+    "stashTree": "0afad5afd77d80894fa4b0a7f69566e6fa33fed5",
+    "diffScope": [
+      "packages",
+      "qualification",
+      "lab/bin",
+      "lab/config",
+      "vitest.workspace-aliases.ts",
+      "tsconfig.base.json",
+      "tsconfig.node.json",
+      "package.json",
+      "pnpm-workspace.yaml",
+      "pnpm-lock.yaml",
+      "turbo.json"
+    ],
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diffBytes": 0,
+    "modifiedFiles": [],
+    "untrackedFiles": [],
+    "otherDirtyPaths": [
+      "lab/experiments/EXP-X05-xtdb-read-follower/driver.mjs",
+      "lab/experiments/EXP-X05-xtdb-read-follower/reader-worker.mjs",
+      "lab/experiments/EXP-X05-xtdb-read-follower/run.sh"
+    ],
+    "sourceTreeId": "135dd7eed3245765c7358b3f2bb5f4f0b98fe9ee60779a83b4694eb0ca195d3e"
+  },
+  "driver": {
+    "lab/experiments/EXP-X05-xtdb-read-follower/driver.mjs": "4b852e1ec9ad64c36b0b09829cb9ab9fc8bba21bda3bf0fcc57775efbe1f58e7",
+    "lab/experiments/EXP-X05-xtdb-read-follower/reader-worker.mjs": "1d357fe327b866fe8e75ef1ed6a7355873040f49e5c4051aadfa209f7b45702d",
+    "lab/experiments/EXP-X05-xtdb-read-follower/common.mjs": "a409b8fcfec202e14f23e2dfdcb266d4ab4244158bc8c8faa278ef51649c4e70"
+  },
+  "harness": {
+    "lab/bin/engine.mjs": "b2bb06172efd2791ec323285998e560ace543a38e022dff489c601d3c879c608",
+    "lab/bin/lib.mjs": "355519608a64bc5ed5738bbae089482e11b4187b1baf0e1e941e599575127c6f"
+  },
+  "slotsJsonSha256": "9c9e1562a747ab93fcba91ffef5899cbe80f9cf14d6e65955c5c0e9479022d9b",
+  "client": {
+    "postgresJs": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/cjs/src/index.js",
+    "postgresJsIndexSha256": "d8fea1a5311c47e65004646bc81f57305ac64d48f99004a5b3ca27bcfc6babf8",
+    "node": "v22.23.2",
+    "host": {
+      "cpus": 12,
+      "load": [
+        10.9375,
+        10.8154296875,
+        10.900390625
+      ]
+    }
+  },
+  "reasons": [],
+  "enginesAtStart": {
+    "writer": {
+      "container": "tx2-xtdb-s2",
+      "containerId": "8a1f80bee143470ddc2b508c45f1cde4ad303c921c8566e03ec3520b2b35d86a",
+      "startedAt": "2026-11-07T22:56:51.718470534Z",
+      "running": true,
+      "health": "healthy",
+      "oomKilled": false,
+      "exitCode": 0,
+      "imageId": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+      "pinnedImageId": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+      "configSha256Label": "a95a454df5bbf091f88993e4cc842c78b42225b83b59e6f2aea40288fc57f1d6",
+      "effectiveConfigSha256": "a95a454df5bbf091f88993e4cc842c78b42225b83b59e6f2aea40288fc57f1d6",
+      "effectiveConfig": {
+        "lane": "xtdb",
+        "slot": "s2",
+        "image": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+        "configYamlSha256": "f6e1248ebb09af8a6959d67d15e0355a0be4c3783d8c3fc97ba97b00c7b3e379",
+        "env": {
+          "JDK_JAVA_OPTIONS": "-Xmx2g -XX:MaxDirectMemorySize=1g"
+        },
+        "memBytes": 3758096384,
+        "cpus": 2,
+        "cpusetCpus": "0,1",
+        "publish": "127.0.0.1:5472:5432",
+        "volume": "tx2-xtdb-s2-data:/var/lib/xtdb",
+        "cmd": [
+          "-f",
+          "/etc/xtdb/config.yaml"
+        ],
+        "health": "wget -q -O /dev/null http://127.0.0.1:8080/healthz/alive"
+      },
+      "configFileSha256": "f6e1248ebb09af8a6959d67d15e0355a0be4c3783d8c3fc97ba97b00c7b3e379",
+      "memCapBytes": 3758096384,
+      "nanoCpus": 2000000000,
+      "cpusetCpus": "0,1",
+      "mounts": [
+        {
+          "source": "tx2-xtdb-s2-data",
+          "destination": "/var/lib/xtdb",
+          "rw": true
+        },
+        {
+          "source": "/Users/sam/projects/triplex-db-2/runs/engines/xtdb-s2/config.yaml",
+          "destination": "/etc/xtdb/config.yaml",
+          "rw": false
+        }
+      ],
+      "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5472/xtdb",
+      "holder": "EXP-X05-xtdb-read-follower"
+    },
+    "follower": {
+      "container": "tx2-xtdb-s2-ro",
+      "containerId": "acf1dcc3d67c70e77acdf6d8b4e33bcf93b3b4f900246f9317223282f51874fe",
+      "startedAt": "2026-11-07T22:57:02.441327053Z",
+      "running": true,
+      "health": "healthy",
+      "oomKilled": false,
+      "exitCode": 0,
+      "imageId": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+      "pinnedImageId": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+      "configSha256Label": "b39175ed0d1c54e2bd5d08a884e730e1e8bf53fac903a15a374a64aae67dd4d6",
+      "effectiveConfigSha256": "b39175ed0d1c54e2bd5d08a884e730e1e8bf53fac903a15a374a64aae67dd4d6",
+      "effectiveConfig": {
+        "lane": "xtdb",
+        "slot": "s2",
+        "role": "follower",
+        "follows": "tx2-xtdb-s2",
+        "profile": "small",
+        "image": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+        "configSource": "lab/config/xtdb-follower-small-config.yaml",
+        "configYamlSha256": "8e10ceb3be347bcc6160ad3c1409d4a16e848670682c2e903418e35048ab5994",
+        "env": {
+          "JDK_JAVA_OPTIONS": "-Xmx512m -XX:MaxDirectMemorySize=256m"
+        },
+        "memBytes": 1073741824,
+        "cpus": 2,
+        "cpusetCpus": "2,3",
+        "publish": "127.0.0.1:5482:5432",
+        "volume": "tx2-xtdb-s2-data:/var/lib/xtdb:ro",
+        "cmd": [
+          "-f",
+          "/etc/xtdb/config.yaml"
+        ],
+        "health": "wget -q -O /dev/null http://127.0.0.1:8080/healthz/alive"
+      },
+      "configFileSha256": "8e10ceb3be347bcc6160ad3c1409d4a16e848670682c2e903418e35048ab5994",
+      "memCapBytes": 1073741824,
+      "nanoCpus": 2000000000,
+      "cpusetCpus": "2,3",
+      "mounts": [
+        {
+          "source": "tx2-xtdb-s2-data",
+          "destination": "/var/lib/xtdb",
+          "rw": false
+        },
+        {
+          "source": "/Users/sam/projects/triplex-db-2/runs/engines/xtdb-s2-ro/config.yaml",
+          "destination": "/etc/xtdb/config.yaml",
+          "rw": false
+        }
+      ],
+      "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5482/xtdb",
+      "holder": "EXP-X05-xtdb-read-follower"
+    },
+    "volume": "tx2-xtdb-s2-data",
+    "slotOwner": {
+      "format": "tx2-slot-owner/1",
+      "lane": "xtdb",
+      "slot": "s2",
+      "mode": "exclusive",
+      "container": "tx2-xtdb-s2",
+      "volume": "tx2-xtdb-s2-data",
+      "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5472/xtdb",
+      "port": 5472,
+      "holder": "EXP-X05-xtdb-read-follower",
+      "experiment": "EXP-X05",
+      "pid": 37199,
+      "worktree": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a5b9cf52579902ee0",
+      "createdAt": "2026-11-07T22:56:51.306Z"
+    }
+  },
+  "tokenCheck": {
+    "systemTimeText": "2026-11-07 23:31:24.61866+00:00",
+    "awaitToken": "Cg4KBHh0ZGISBgoE4MfMAQ==",
+    "minted": "ChYKBHh0ZGISDgoMCMzpvtcGEKCBgKcC",
+    "mintedDecoded": {
+      "xtdb": [
+        "1794094284618660"
+      ]
+    },
+    "built": "ChYKBHh0ZGISDgoMCMzpvtcGEKCBgKcC",
+    "equal": true
+  },
+  "seed": {
+    "rid": -1,
+    "t": "1794094285538018",
+    "snapshotToken": "ChYKBHh0ZGISDgoMCM3pvtcGENCBxoAC",
+    "awaitToken": "Cg4KBHh0ZGISBgoE+NrpAQ==",
+    "clock": "2026-11-07T23:31:25.538018Z",
+    "ms": 816,
+    "subjects": 2000
+  },
+  "followerCatchUp": {
+    "ms": 140,
+    "rows": 2000
+  },
+  "trace": {
+    "digest": "cab2446467d153fae1d16d227993855f80d316717daaf5b6cd51d7962f21789f",
+    "commands": 310,
+    "rate": 40,
+    "seconds": 8
+  },
+  "watermarksAfterLadder": {
+    "writer": [
+      {
+        "db": "xtdb",
+        "part": 0,
+        "txId": 20783864,
+        "systemTime": "2026-11-07 23:33:13.428672+00:00"
+      }
+    ],
+    "follower": [
+      {
+        "db": "xtdb",
+        "part": 0,
+        "txId": 20783864,
+        "systemTime": "2026-11-07 23:33:13.428672+00:00"
+      }
+    ]
+  },
+  "watermarksAtEnd": {
+    "writer": [
+      {
+        "db": "xtdb",
+        "part": 0,
+        "txId": 20783864,
+        "systemTime": "2026-11-07 23:33:13.428672+00:00"
+      }
+    ],
+    "follower": [
+      {
+        "db": "xtdb",
+        "part": 0,
+        "txId": 20783864,
+        "systemTime": "2026-11-07 23:33:13.428672+00:00"
+      }
+    ]
+  },
+  "metrics": {
+    "start": {
+      "writer": [
+        "block_upload_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.75\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.85\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.95\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.98\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.99\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.999\"} 0.0",
+        "block_upload_timer_seconds_count{node_id=\"2c02dfbf\"} 3",
+        "block_upload_timer_seconds_sum{node_id=\"2c02dfbf\"} 0.428668597",
+        "block_upload_timer_seconds_max{node_id=\"2c02dfbf\"} 0.209574972",
+        "compactor_job_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.75\"} 0.0",
+        "compactor_job_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.85\"} 0.0",
+        "compactor_job_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.95\"} 0.0",
+        "compactor_job_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.98\"} 0.0",
+        "compactor_job_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.99\"} 0.0",
+        "compactor_job_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.999\"} 0.0",
+        "compactor_job_timer_seconds_count{node_id=\"2c02dfbf\"} 15",
+        "compactor_job_timer_seconds_sum{node_id=\"2c02dfbf\"} 1.869190724",
+        "compactor_job_timer_seconds_max{node_id=\"2c02dfbf\"} 0.982935357",
+        "compactor_jobs_available{node_id=\"2c02dfbf\"} 0.0",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"G1 Eden Space\",node_id=\"2c02dfbf\"} 4.9283072E7",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"G1 Old Gen\",node_id=\"2c02dfbf\"} 2.55328256E8",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"G1 Survivor Space\",node_id=\"2c02dfbf\"} 1572864.0",
+        "node_tx_await_seconds{node_id=\"2c02dfbf\",quantile=\"0.75\"} 0.035127296",
+        "node_tx_await_seconds{node_id=\"2c02dfbf\",quantile=\"0.85\"} 0.035127296",
+        "node_tx_await_seconds{node_id=\"2c02dfbf\",quantile=\"0.95\"} 0.035127296",
+        "node_tx_await_seconds{node_id=\"2c02dfbf\",quantile=\"0.98\"} 0.035127296",
+        "node_tx_await_seconds{node_id=\"2c02dfbf\",quantile=\"0.99\"} 0.035127296",
+        "node_tx_await_seconds{node_id=\"2c02dfbf\",quantile=\"0.999\"} 0.035127296",
+        "node_tx_await_seconds_count{node_id=\"2c02dfbf\"} 261",
+        "node_tx_await_seconds_sum{node_id=\"2c02dfbf\"} 40.428128736",
+        "node_tx_await_seconds_max{node_id=\"2c02dfbf\"} 0.898994289",
+        "node_tx_execute_seconds{node_id=\"2c02dfbf\",quantile=\"0.75\"} 0.051380224",
+        "node_tx_execute_seconds{node_id=\"2c02dfbf\",quantile=\"0.85\"} 0.051380224",
+        "node_tx_execute_seconds{node_id=\"2c02dfbf\",quantile=\"0.95\"} 0.051380224",
+        "node_tx_execute_seconds{node_id=\"2c02dfbf\",quantile=\"0.98\"} 0.051380224",
+        "node_tx_execute_seconds{node_id=\"2c02dfbf\",quantile=\"0.99\"} 0.051380224",
+        "node_tx_execute_seconds{node_id=\"2c02dfbf\",quantile=\"0.999\"} 0.051380224",
+        "node_tx_execute_seconds_count{node_id=\"2c02dfbf\"} 261",
+        "node_tx_execute_seconds_sum{node_id=\"2c02dfbf\"} 44.396650347",
+        "node_tx_execute_seconds_max{node_id=\"2c02dfbf\"} 0.943989152",
+        "node_tx_lag_MsgId{db=\"xtdb\",node_id=\"2c02dfbf\"} 0.0",
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2c02dfbf\"} 3829112.0",
+        "node_tx_latestProcessedMsgId{db=\"xtdb\",node_id=\"2c02dfbf\"} 3829112.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2c02dfbf\"} 3829112.0",
+        "node_tx_submit_seconds{node_id=\"2c02dfbf\",quantile=\"0.75\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"2c02dfbf\",quantile=\"0.85\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"2c02dfbf\",quantile=\"0.95\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"2c02dfbf\",quantile=\"0.98\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"2c02dfbf\",quantile=\"0.99\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"2c02dfbf\",quantile=\"0.999\"} 0.0",
+        "node_tx_submit_seconds_count{node_id=\"2c02dfbf\"} 0",
+        "node_tx_submit_seconds_sum{node_id=\"2c02dfbf\"} 0.0",
+        "node_tx_submit_seconds_max{node_id=\"2c02dfbf\"} 0.0",
+        "tx_op_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.75\"} 0.006545408",
+        "tx_op_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.85\"} 0.013623296",
+        "tx_op_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.95\"} 0.013623296",
+        "tx_op_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.98\"} 0.013623296",
+        "tx_op_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.99\"} 0.013623296",
+        "tx_op_timer_seconds{node_id=\"2c02dfbf\",quantile=\"0.999\"} 0.013623296",
+        "tx_op_timer_seconds_count{node_id=\"2c02dfbf\"} 1527"
+      ],
+      "follower": [
+        "jvm_memory_used_bytes{area=\"heap\",id=\"Eden Space\",node_id=\"e9490b27\"} 1.6782944E7",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"Survivor Space\",node_id=\"e9490b27\"} 1042016.0",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"Tenured Gen\",node_id=\"e9490b27\"} 5.2176648E7",
+        "node_tx_await_seconds{node_id=\"e9490b27\",quantile=\"0.75\"} 0.0",
+        "node_tx_await_seconds{node_id=\"e9490b27\",quantile=\"0.85\"} 0.0",
+        "node_tx_await_seconds{node_id=\"e9490b27\",quantile=\"0.95\"} 0.0",
+        "node_tx_await_seconds{node_id=\"e9490b27\",quantile=\"0.98\"} 0.0",
+        "node_tx_await_seconds{node_id=\"e9490b27\",quantile=\"0.99\"} 0.0",
+        "node_tx_await_seconds{node_id=\"e9490b27\",quantile=\"0.999\"} 0.0",
+        "node_tx_await_seconds_count{node_id=\"e9490b27\"} 0",
+        "node_tx_await_seconds_sum{node_id=\"e9490b27\"} 0.0",
+        "node_tx_await_seconds_max{node_id=\"e9490b27\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"e9490b27\",quantile=\"0.75\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"e9490b27\",quantile=\"0.85\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"e9490b27\",quantile=\"0.95\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"e9490b27\",quantile=\"0.98\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"e9490b27\",quantile=\"0.99\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"e9490b27\",quantile=\"0.999\"} 0.0",
+        "node_tx_execute_seconds_count{node_id=\"e9490b27\"} 0",
+        "node_tx_execute_seconds_sum{node_id=\"e9490b27\"} 0.0",
+        "node_tx_execute_seconds_max{node_id=\"e9490b27\"} 0.0",
+        "node_tx_lag_MsgId{db=\"xtdb\",node_id=\"e9490b27\"} 0.0",
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"e9490b27\"} 3829112.0",
+        "node_tx_latestProcessedMsgId{db=\"xtdb\",node_id=\"e9490b27\"} 3829112.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"e9490b27\"} 3829112.0",
+        "node_tx_submit_seconds{node_id=\"e9490b27\",quantile=\"0.75\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"e9490b27\",quantile=\"0.85\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"e9490b27\",quantile=\"0.95\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"e9490b27\",quantile=\"0.98\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"e9490b27\",quantile=\"0.99\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"e9490b27\",quantile=\"0.999\"} 0.0",
+        "node_tx_submit_seconds_count{node_id=\"e9490b27\"} 0",
+        "node_tx_submit_seconds_sum{node_id=\"e9490b27\"} 0.0",
+        "node_tx_submit_seconds_max{node_id=\"e9490b27\"} 0.0",
+        "xtdb_block_last_upload_time_seconds{db=\"xtdb\",node_id=\"e9490b27\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"e9490b27\",quantile=\"0.75\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"e9490b27\",quantile=\"0.85\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"e9490b27\",quantile=\"0.95\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"e9490b27\",quantile=\"0.98\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"e9490b27\",quantile=\"0.99\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"e9490b27\",quantile=\"0.999\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds_count{db=\"xtdb\",node_id=\"e9490b27\"} 3",
+        "xtdb_replica_block_buffer_timer_seconds_sum{db=\"xtdb\",node_id=\"e9490b27\"} 0.630645961",
+        "xtdb_replica_block_buffer_timer_seconds_max{db=\"xtdb\",node_id=\"e9490b27\"} 0.250321043",
+        "xtdb_replica_block_buffered_records_count{db=\"xtdb\",node_id=\"e9490b27\"} 3",
+        "xtdb_replica_block_buffered_records_sum{db=\"xtdb\",node_id=\"e9490b27\"} 3.0",
+        "xtdb_replica_block_buffered_records_max{db=\"xtdb\",node_id=\"e9490b27\"} 2.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e9490b27\",quantile=\"0.75\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e9490b27\",quantile=\"0.85\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e9490b27\",quantile=\"0.95\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e9490b27\",quantile=\"0.98\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e9490b27\",quantile=\"0.99\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e9490b27\",quantile=\"0.999\"} 0.0",
+        "xtdb_replica_process_timer_seconds_count{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e9490b27\"} 3",
+        "xtdb_replica_process_timer_seconds_sum{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e9490b27\"} 0.008095237",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"e9490b27\",quantile=\"0.75\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"e9490b27\",quantile=\"0.85\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"e9490b27\",quantile=\"0.95\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"e9490b27\",quantile=\"0.98\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"e9490b27\",quantile=\"0.99\"} 0.0"
+      ]
+    }
+  },
+  "logs": {
+    "writer": {
+      "lines": 1,
+      "badLines": 0,
+      "sample": [],
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "follower": {
+      "lines": 1,
+      "badLines": 0,
+      "sample": [],
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "enginesAtEnd": {
+    "writer": {
+      "containerId": "8a1f80bee143470ddc2b508c45f1cde4ad303c921c8566e03ec3520b2b35d86a",
+      "startedAt": "2026-11-07T22:56:51.718470534Z",
+      "running": true,
+      "health": "healthy"
+    },
+    "follower": {
+      "containerId": "acf1dcc3d67c70e77acdf6d8b4e33bcf93b3b4f900246f9317223282f51874fe",
+      "startedAt": "2026-11-07T22:57:02.441327053Z",
+      "running": true,
+      "health": "healthy",
+      "oomKilled": false,
+      "exitCode": 0
+    }
+  },
+  "windows": [
+    {
+      "name": "warmF",
+      "mode": "follower",
+      "readers": 8,
+      "kind": "warm",
+      "seconds": 3,
+      "traceDigest": "5d77615466e5c5a21358cb5d1bf63e6c0e417b875853bd5d6dc26ff3dbb39793",
+      "start": 1794094286983.4268,
+      "end": 1794094289983.4268,
+      "offerOverrunMs": 2,
+      "blockCut": {
+        "at": 1794094287982.702,
+        "ms": 127,
+        "ok": true,
+        "out": "Block flush message sent to 1 database(s)."
+      },
+      "reads": {
+        "logicalReaders": 8,
+        "plan": [
+          {
+            "w": 0,
+            "readers": 2,
+            "conns": 2,
+            "cap": 4
+          },
+          {
+            "w": 1,
+            "readers": 2,
+            "conns": 2,
+            "cap": 4
+          },
+          {
+            "w": 2,
+            "readers": 2,
+            "conns": 2,
+            "cap": 4
+          },
+          {
+            "w": 3,
+            "readers": 2,
+            "conns": 2,
+            "cap": 4
+          }
+        ],
+        "connectMs": 48,
+        "pulls": 49,
+        "pullsPerS": 16.33,
+        "goodputPullsPerS": 16.33,
+        "queriesPerS": 80.33,
+        "pull": {
+          "n": 49,
+          "p50": 129.27,
+          "p90": 525.2,
+          "p99": 543.98,
+          "max": 543.98,
+          "mean": 196.18
+        },
+        "capWait": {
+          "n": 49,
+          "p50": 0.02,
+          "p90": 0.19,
+          "p99": 0.47,
+          "max": 0.47,
+          "mean": 0.06
+        },
+        "errors": {},
+        "checkedRows": 2329,
+        "uncertainRows": 0,
+        "violations": 0,
+        "violationSamples": [],
+        "faults": {
+          "missing": 0,
+          "duplicate": 0,
+          "torn": 0
+        },
+        "splits": {
+          "n": 9,
+          "acked": 9,
+          "straddled": 9,
+          "repeatable": 9,
+          "showedStraddledCommand": 0
+        },
+        "elu": [
+          0.03,
+          0.02,
+          0.03,
+          0.03
+        ]
+      },
+      "lag": {
+        "follower": {
+          "n": 15,
+          "p50": 55.02,
+          "p90": 342.86,
+          "p99": 427.4,
+          "max": 427.4,
+          "mean": 118.11
+        },
+        "writer": {
+          "n": 15,
+          "p50": 70.14,
+          "p90": 314.72,
+          "p99": 366.14,
+          "max": 366.14,
+          "mean": 103.99
+        },
+        "excess": {
+          "n": 15,
+          "p50": 0.53,
+          "p90": 197.45,
+          "p99": 237.6,
+          "max": 237.6,
+          "mean": 14.12
+        },
+        "wrongPos": 0,
+        "errors": []
+      },
+      "stats": {
+        "writer": {
+          "samples": 3,
+          "cpuMean": 160,
+          "cpuMax": 184,
+          "memPeakMiB": 933
+        },
+        "follower": {
+          "samples": 3,
+          "cpuMean": 41,
+          "cpuMax": 52,
+          "memPeakMiB": 346
+        }
+      },
+      "mainLoopDelayMs": {
+        "p50": 5.64,
+        "p99": 8.8,
+        "max": 37.88
+      },
+      "writer": {
+        "offered": 126,
+        "scheduled": 126,
+        "committed": 126,
+        "errors": {},
+        "maxQueue": 82,
+        "drain": {
+          "ms": 1053,
+          "leftQueued": 0,
+          "leftInflight": 0
+        },
+        "lat": {
+          "n": 126,
+          "p50": 4812.7,
+          "p90": 6746.37,
+          "p99": 6999.12,
+          "max": 7051.16,
+          "mean": 4104.37
+        },
+        "svc": {
+          "n": 126,
+          "p50": 226.85,
+          "p90": 595.57,
+          "p99": 1095.08,
+          "max": 1107.37,
+          "mean": 304.2
+        },
+        "byBand": {
+          "5-10": {
+            "n": 76,
+            "lat": 6973.6,
+            "svcP50": 232.94
+          },
+          "11-25": {
+            "n": 34,
+            "lat": 7051.16,
+            "svcP50": 220.57
+          },
+          "26-50": {
+            "n": 16,
+            "lat": 6999.12,
+            "svcP50": 235.81
+          }
+        },
+        "waitsOver2s": 86
+      }
+    },
+    {
+      "name": "warmS",
+      "mode": "single",
+      "readers": 8,
+      "kind": "warm",
+      "seconds": 3,
+      "traceDigest": "5d77615466e5c5a21358cb5d1bf63e6c0e417b875853bd5d6dc26ff3dbb39793",
+      "start": 1794094301284.0322,
+      "end": 1794094304284.0322,
+      "offerOverrunMs": -1,
+      "blockCut": {
+        "at": 1794094302283.6316,
+        "ms": 185,
+        "ok": true,
+        "out": "Block flush message sent to 1 database(s)."
+      },
+      "reads": {
+        "logicalReaders": 8,
+        "plan": [
+          {
+            "w": 0,
+            "readers": 2,
+            "conns": 2,
+            "cap": 4
+          },
+          {
+            "w": 1,
+            "readers": 2,
+            "conns": 2,
+            "cap": 4
+          },
+          {
+            "w": 2,
+            "readers": 2,
+            "conns": 2,
+            "cap": 4
+          },
+          {
+            "w": 3,
+            "readers": 2,
+            "conns": 2,
+            "cap": 4
+          }
+        ],
+        "connectMs": 300,
+        "pulls": 24,
+        "pullsPerS": 8,
+        "goodputPullsPerS": 8,
+        "queriesPerS": 35.33,
+        "pull": {
+          "n": 24,
+          "p50": 795.55,
+          "p90": 2010.95,
+          "p99": 2114.47,
+          "max": 2114.47,
+          "mean": 939.79
+        },
+        "capWait": {
+          "n": 24,
+          "p50": 0.02,
+          "p90": 0.1,
+          "p99": 0.17,
+          "max": 0.17,
+          "mean": 0.04
+        },
+        "errors": {},
+        "checkedRows": 1042,
+        "uncertainRows": 0,
+        "violations": 0,
+        "violationSamples": [],
+        "faults": {
+          "missing": 0,
+          "duplicate": 0,
+          "torn": 0
+        },
+        "splits": {
+          "n": 2,
+          "acked": 2,
+          "straddled": 2,
+          "repeatable": 2,
+          "showedStraddledCommand": 0
+        },
+        "elu": [
+          0.01,
+          0.01,
+          0.02,
+          0.01
+        ]
+      },
+      "lag": {
+        "follower": {
+          "n": 12,
+          "p50": 57.19,
+          "p90": 121.91,
+          "p99": 152.98,
+          "max": 152.98,
+          "mean": 64.54
+        },
+        "writer": {
+          "n": 12,
+          "p50": 50.5,
+          "p90": 303.65,
+          "p99": 541.71,
+          "max": 541.71,
+          "mean": 114.39
+        },
+        "excess": {
+          "n": 12,
+          "p50": 1.27,
+          "p90": 21.48,
+          "p99": 22.11,
+          "max": 22.11,
+          "mean": -49.85
+        },
+        "wrongPos": 0,
+        "errors": []
+      },
+      "stats": {
+        "writer": {
+          "samples": 2,
+          "cpuMean": 139,
+          "cpuMax": 164,
+          "memPeakMiB": 915
+        },
+        "follower": {
+          "samples": 2,
+          "cpuMean": 13,
+          "cpuMax": 13,
+          "memPeakMiB": 346
+        }
+      },
+      "mainLoopDelayMs": {
+        "p50": 5.64,
+        "p99": 8.23,
+        "max": 13.39
+      },
+      "writer": {
+        "offered": 126,
+        "scheduled": 126,
+        "committed": 126,
+        "errors": {},
+        "maxQueue": 111,
+        "drain": {
+          "ms": 586,
+          "leftQueued": 0,
+          "leftInflight": 0
+        },
+        "lat": {
+          "n": 126,
+          "p50": 4182.74,
+          "p90": 5592.29,
+          "p99": 5903.38,
+          "max": 5919.96,
+          "mean": 4187.74
+        },
+        "svc": {
+          "n": 126,
+          "p50": 202.3,
+          "p90": 414.22,
+          "p99": 1416.67,
+          "max": 1436,
+          "mean": 269.04
+        },
+        "byBand": {
+          "5-10": {
+            "n": 76,
+            "lat": 5864.9,
+            "svcP50": 202.3
+          },
+          "11-25": {
+            "n": 34,
+            "lat": 5903.38,
+            "svcP50": 205.32
+          },
+          "26-50": {
+            "n": 16,
+            "lat": 5919.96,
+            "svcP50": 210.76
+          }
+        },
+        "waitsOver2s": 122
+      }
+    },
+    {
+      "name": "Z0",
+      "mode": "zero",
+      "readers": 0,
+      "kind": "ladder",
+      "seconds": 8,
+      "traceDigest": "cab2446467d153fae1d16d227993855f80d316717daaf5b6cd51d7962f21789f",
+      "start": 1794094314175.4368,
+      "end": 1794094322175.4368,
+      "offerOverrunMs": 1,
+      "blockCut": {
+        "at": 1794094315175.9673,
+        "ms": 136,
+        "ok": true,
+        "out": "Block flush message sent to 1 database(s)."
+      },
+      "reads": null,
+      "lag": {
+        "follower": {
+          "n": 23,
+          "p50": 37.55,
+          "p90": 73.79,
+          "p99": 232.53,
+          "max": 232.53,
+          "mean": 55.64
+        },
+        "writer": {
+          "n": 23,
+          "p50": 39.04,
+          "p90": 85.18,
+          "p99": 241.37,
+          "max": 241.37,
+          "mean": 55.25
+        },
+        "excess": {
+          "n": 23,
+          "p50": -3.19,
+          "p90": 25.79,
+          "p99": 111.95,
+          "max": 111.95,
+          "mean": 0.39
+        },
+        "wrongPos": 0,
+        "errors": []
+      },
+      "stats": {
+        "writer": {
+          "samples": 4,
+          "cpuMean": 141,
+          "cpuMax": 168,
+          "memPeakMiB": 923
+        },
+        "follower": {
+          "samples": 4,
+          "cpuMean": 15,
+          "cpuMax": 22,
+          "memPeakMiB": 347
+        }
+      },
+      "mainLoopDelayMs": {
+        "p50": 5.5,
+        "p99": 9.12,
+        "max": 35.23
+      },
+      "writer": {
+        "offered": 310,
+        "scheduled": 310,
+        "committed": 310,
+        "errors": {},
+        "maxQueue": 157,
+        "drain": {
+          "ms": 5801,
+          "leftQueued": 0,
+          "leftInflight": 0
+        },
+        "lat": {
+          "n": 310,
+          "p50": 4223.65,
+          "p90": 4804.69,
+          "p99": 6060.64,
+          "max": 6164.15,
+          "mean": 3609.18
+        },
+        "svc": {
+          "n": 310,
+          "p50": 155.56,
+          "p90": 258.71,
+          "p99": 684.55,
+          "max": 711.41,
+          "mean": 167.49
+        },
+        "byBand": {
+          "5-10": {
+            "n": 187,
+            "lat": 6069.86,
+            "svcP50": 157.27
+          },
+          "11-25": {
+            "n": 87,
+            "lat": 6164.15,
+            "svcP50": 148.5
+          },
+          "26-50": {
+            "n": 36,
+            "lat": 5437.33,
+            "svcP50": 156.41
+          }
+        },
+        "waitsOver2s": 272
+      }
+    },
+    {
+      "name": "F4",
+      "mode": "follower",
+      "readers": 4,
+      "kind": "ladder",
+      "seconds": 8,
+      "traceDigest": "cab2446467d153fae1d16d227993855f80d316717daaf5b6cd51d7962f21789f",
+      "start": 1794094332048.0598,
+      "end": 1794094340048.0598,
+      "offerOverrunMs": 1,
+      "blockCut": {
+        "at": 1794094333047.5327,
+        "ms": 190,
+        "ok": true,
+        "out": "Block flush message sent to 1 database(s)."
+      },
+      "reads": {
+        "logicalReaders": 4,
+        "plan": [
+          {
+            "w": 0,
+            "readers": 1,
+            "conns": 1,
+            "cap": 4
+          },
+          {
+            "w": 1,
+            "readers": 1,
+            "conns": 1,
+            "cap": 4
+          },
+          {
+            "w": 2,
+            "readers": 1,
+            "conns": 1,
+            "cap": 4
+          },
+          {
+            "w": 3,
+            "readers": 1,
+            "conns": 1,
+            "cap": 4
+          }
+        ],
+        "connectMs": 54,
+        "pulls": 105,
+        "pullsPerS": 13.13,
+        "goodputPullsPerS": 13.13,
+        "queriesPerS": 58.13,
+        "pull": {
+          "n": 105,
+          "p50": 95.85,
+          "p90": 245.73,
+          "p99": 499.69,
+          "max": 664.38,
+          "mean": 137.71
+        },
+        "capWait": {
+          "n": 105,
+          "p50": 0.01,
+          "p90": 0.02,
+          "p99": 0.09,
+          "max": 0.25,
+          "mean": 0.02
+        },
+        "errors": {},
+        "checkedRows": 4569,
+        "uncertainRows": 0,
+        "violations": 0,
+        "violationSamples": [],
+        "faults": {
+          "missing": 0,
+          "duplicate": 0,
+          "torn": 0
+        },
+        "splits": {
+          "n": 9,
+          "acked": 9,
+          "straddled": 9,
+          "repeatable": 9,
+          "showedStraddledCommand": 0
+        },
+        "elu": [
+          0.02,
+          0.02,
+          0.02,
+          0.03
+        ]
+      },
+      "lag": {
+        "follower": {
+          "n": 20,
+          "p50": 33.65,
+          "p90": 116.46,
+          "p99": 193.29,
+          "max": 193.29,
+          "mean": 50.03
+        },
+        "writer": {
+          "n": 20,
+          "p50": 32.53,
+          "p90": 119.84,
+          "p99": 207.2,
+          "max": 207.2,
+          "mean": 51.46
+        },
+        "excess": {
+          "n": 20,
+          "p50": 1.83,
+          "p90": 35.51,
+          "p99": 52.52,
+          "max": 52.52,
+          "mean": -1.43
+        },
+        "wrongPos": 0,
+        "errors": []
+      },
+      "stats": {
+        "writer": {
+          "samples": 3,
+          "cpuMean": 117,
+          "cpuMax": 134,
+          "memPeakMiB": 917
+        },
+        "follower": {
+          "samples": 3,
+          "cpuMean": 58,
+          "cpuMax": 105,
+          "memPeakMiB": 355
+        }
+      },
+      "mainLoopDelayMs": {
+        "p50": 5.51,
+        "p99": 8.44,
+        "max": 16.02
+      },
+      "writer": {
+        "offered": 310,
+        "scheduled": 310,
+        "committed": 310,
+        "errors": {},
+        "maxQueue": 109,
+        "drain": {
+          "ms": 0,
+          "leftQueued": 0,
+          "leftInflight": 0
+        },
+        "lat": {
+          "n": 310,
+          "p50": 2602.1,
+          "p90": 3085.9,
+          "p99": 3759.48,
+          "max": 4057.74,
+          "mean": 2528.36
+        },
+        "svc": {
+          "n": 310,
+          "p50": 109.4,
+          "p90": 239.77,
+          "p99": 447.3,
+          "max": 568.1,
+          "mean": 139.54
+        },
+        "byBand": {
+          "5-10": {
+            "n": 187,
+            "lat": 3821.55,
+            "svcP50": 106.99
+          },
+          "11-25": {
+            "n": 87,
+            "lat": 4057.74,
+            "svcP50": 109.83
+          },
+          "26-50": {
+            "n": 36,
+            "lat": 3177.66,
+            "svcP50": 114.46
+          }
+        },
+        "waitsOver2s": 279
+      }
+    },
+    {
+      "name": "S4",
+      "mode": "single",
+      "readers": 4,
+      "kind": "ladder",
+      "seconds": 8,
+      "traceDigest": "cab2446467d153fae1d16d227993855f80d316717daaf5b6cd51d7962f21789f",
+      "start": 1794094348009.4683,
+      "end": 1794094356009.4683,
+      "offerOverrunMs": 1,
+      "blockCut": {
+        "at": 1794094349009.5947,
+        "ms": 130,
+        "ok": true,
+        "out": "Block flush message sent to 1 database(s)."
+      },
+      "reads": {
+        "logicalReaders": 4,
+        "plan": [
+          {
+            "w": 0,
+            "readers": 1,
+            "conns": 1,
+            "cap": 4
+          },
+          {
+            "w": 1,
+            "readers": 1,
+            "conns": 1,
+            "cap": 4
+          },
+          {
+            "w": 2,
+            "readers": 1,
+            "conns": 1,
+            "cap": 4
+          },
+          {
+            "w": 3,
+            "readers": 1,
+            "conns": 1,
+            "cap": 4
+          }
+        ],
+        "connectMs": 44,
+        "pulls": 40,
+        "pullsPerS": 5,
+        "goodputPullsPerS": 5,
+        "queriesPerS": 27.5,
+        "pull": {
+          "n": 40,
+          "p50": 142.41,
+          "p90": 355.44,
+          "p99": 523.47,
+          "max": 523.47,
+          "mean": 181.36
+        },
+        "capWait": {
+          "n": 40,
+          "p50": 0.02,
+          "p90": 0.06,
+          "p99": 0.4,
+          "max": 0.4,
+          "mean": 0.03
+        },
+        "errors": {},
+        "checkedRows": 2092,
+        "uncertainRows": 0,
+        "violations": 0,
+        "violationSamples": [],
+        "faults": {
+          "missing": 0,
+          "duplicate": 0,
+          "torn": 0
+        },
+        "splits": {
+          "n": 12,
+          "acked": 12,
+          "straddled": 12,
+          "repeatable": 12,
+          "showedStraddledCommand": 0
+        },
+        "elu": [
+          0.01,
+          0.02,
+          0.01,
+          0.01
+        ]
+      },
+      "lag": {
+        "follower": {
+          "n": 25,
+          "p50": 49.84,
+          "p90": 146.41,
+          "p99": 247.44,
+          "max": 247.44,
+          "mean": 63.09
+        },
+        "writer": {
+          "n": 25,
+          "p50": 39.5,
+          "p90": 153.98,
+          "p99": 372.78,
+          "max": 372.78,
+          "mean": 70.25
+        },
+        "excess": {
+          "n": 25,
+          "p50": -0.1,
+          "p90": 22.95,
+          "p99": 68.11,
+          "max": 68.11,
+          "mean": -7.16
+        },
+        "wrongPos": 0,
+        "errors": []
+      },
+      "stats": {
+        "writer": {
+          "samples": 4,
+          "cpuMean": 133,
+          "cpuMax": 160,
+          "memPeakMiB": 919
+        },
+        "follower": {
+          "samples": 4,
+          "cpuMean": 18,
+          "cpuMax": 21,
+          "memPeakMiB": 355
+        }
+      },
+      "mainLoopDelayMs": {
+        "p50": 5.54,
+        "p99": 8.6,
+        "max": 40.3
+      },
+      "writer": {
+        "offered": 310,
+        "scheduled": 310,
+        "committed": 310,
+        "errors": {},
+        "maxQueue": 158,
+        "drain": {
+          "ms": 341,
+          "leftQueued": 0,
+          "leftInflight": 0
+        },
+        "lat": {
+          "n": 310,
+          "p50": 4256.04,
+          "p90": 6601.45,
+          "p99": 7128.2,
+          "max": 7185.77,
+          "mean": 4324.3
+        },
+        "svc": {
+          "n": 310,
+          "p50": 143.03,
+          "p90": 334.47,
+          "p99": 733.08,
+          "max": 803.61,
+          "mean": 181.58
+        },
+        "byBand": {
+          "5-10": {
+            "n": 187,
+            "lat": 7150.96,
+            "svcP50": 140.35
+          },
+          "11-25": {
+            "n": 87,
+            "lat": 7185.77,
+            "svcP50": 145
+          },
+          "26-50": {
+            "n": 36,
+            "lat": 6793.88,
+            "svcP50": 162.28
+          }
+        },
+        "waitsOver2s": 286
+      }
+    },
+    {
+      "name": "Z1",
+      "mode": "zero",
+      "readers": 0,
+      "kind": "ladder",
+      "seconds": 8,
+      "traceDigest": "cab2446467d153fae1d16d227993855f80d316717daaf5b6cd51d7962f21789f",
+      "start": 1794094366831.581,
+      "end": 1794094374831.581,
+      "offerOverrunMs": 0,
+      "blockCut": {
+        "at": 1794094367830.696,
+        "ms": 266,
+        "ok": true,
+        "out": "Block flush message sent to 1 database(s)."
+      },
+      "reads": null,
+      "lag": {
+        "follower": {
+          "n": 20,
+          "p50": 37.59,
+          "p90": 122.53,
+          "p99": 134.9,
+          "max": 134.9,
+          "mean": 45.41
+        },
+        "writer": {
+          "n": 20,
+          "p50": 31.81,
+          "p90": 92.66,
+          "p99": 144.42,
+          "max": 144.42,
+          "mean": 40.12
+        },
+        "excess": {
+          "n": 20,
+          "p50": 1.69,
+          "p90": 29.87,
+          "p99": 34.25,
+          "max": 34.25,
+          "mean": 5.29
+        },
+        "wrongPos": 0,
+        "errors": []
+      },
+      "stats": {
+        "writer": {
+          "samples": 3,
+          "cpuMean": 95,
+          "cpuMax": 103,
+          "memPeakMiB": 922
+        },
+        "follower": {
+          "samples": 3,
+          "cpuMean": 14,
+          "cpuMax": 15,
+          "memPeakMiB": 356
+        }
+      },
+      "mainLoopDelayMs": {
+        "p50": 5.44,
+        "p99": 7.66,
+        "max": 11.81
+      },
+      "writer": {
+        "offered": 310,
+        "scheduled": 310,
+        "committed": 310,
+        "errors": {},
+        "maxQueue": 97,
+        "drain": {
+          "ms": 3353,
+          "leftQueued": 0,
+          "leftInflight": 0
+        },
+        "lat": {
+          "n": 310,
+          "p50": 1612.12,
+          "p90": 3306.24,
+          "p99": 3678.36,
+          "max": 3719.59,
+          "mean": 1926.22
+        },
+        "svc": {
+          "n": 310,
+          "p50": 121.76,
+          "p90": 216.23,
+          "p99": 326.27,
+          "max": 521.68,
+          "mean": 138.61
+        },
+        "byBand": {
+          "5-10": {
+            "n": 187,
+            "lat": 3693.44,
+            "svcP50": 117.61
+          },
+          "11-25": {
+            "n": 87,
+            "lat": 3719.59,
+            "svcP50": 121.15
+          },
+          "26-50": {
+            "n": 36,
+            "lat": 3452.64,
+            "svcP50": 147.85
+          }
+        },
+        "waitsOver2s": 113
+      }
+    },
+    {
+      "name": "Z2",
+      "mode": "zero",
+      "readers": 0,
+      "kind": "ladder",
+      "seconds": 8,
+      "traceDigest": "cab2446467d153fae1d16d227993855f80d316717daaf5b6cd51d7962f21789f",
+      "start": 1794094382187.798,
+      "end": 1794094390187.798,
+      "offerOverrunMs": 2,
+      "blockCut": {
+        "at": 1794094383186.978,
+        "ms": 122,
+        "ok": true,
+        "out": "Block flush message sent to 1 database(s)."
+      },
+      "reads": null,
+      "lag": {
+        "follower": {
+          "n": 20,
+          "p50": 38.3,
+          "p90": 83.14,
+          "p99": 84.83,
+          "max": 84.83,
+          "mean": 43.54
+        },
+        "writer": {
+          "n": 20,
+          "p50": 41.74,
+          "p90": 64.17,
+          "p99": 95.58,
+          "max": 95.58,
+          "mean": 43.91
+        },
+        "excess": {
+          "n": 20,
+          "p50": -0.03,
+          "p90": 26.76,
+          "p99": 34.52,
+          "max": 34.52,
+          "mean": -0.37
+        },
+        "wrongPos": 0,
+        "errors": []
+      },
+      "stats": {
+        "writer": {
+          "samples": 3,
+          "cpuMean": 119,
+          "cpuMax": 149,
+          "memPeakMiB": 932
+        },
+        "follower": {
+          "samples": 3,
+          "cpuMean": 17,
+          "cpuMax": 20,
+          "memPeakMiB": 356
+        }
+      },
+      "mainLoopDelayMs": {
+        "p50": 5.46,
+        "p99": 7.38,
+        "max": 11.9
+      },
+      "writer": {
+        "offered": 310,
+        "scheduled": 310,
+        "committed": 310,
+        "errors": {},
+        "maxQueue": 110,
+        "drain": {
+          "ms": 3207,
+          "leftQueued": 0,
+          "leftInflight": 0
+        },
+        "lat": {
+          "n": 310,
+          "p50": 2272.12,
+          "p90": 3290.95,
+          "p99": 3532.2,
+          "max": 3571.5,
+          "mean": 2058.22
+        },
+        "svc": {
+          "n": 310,
+          "p50": 130.88,
+          "p90": 193.33,
+          "p99": 381.12,
+          "max": 396.67,
+          "mean": 135.18
+        },
+        "byBand": {
+          "5-10": {
+            "n": 187,
+            "lat": 3503.39,
+            "svcP50": 128.13
+          },
+          "11-25": {
+            "n": 87,
+            "lat": 3571.5,
+            "svcP50": 131.58
+          },
+          "26-50": {
+            "n": 36,
+            "lat": 3537.87,
+            "svcP50": 138.86
+          }
+        },
+        "waitsOver2s": 181
+      }
+    }
+  ],
+  "summaryTables": {
+    "baseline": {
+      "lat": {
+        "n": 930,
+        "p50": 2553.05,
+        "p90": 4573.55,
+        "p99": 5611.38,
+        "max": 6164.15,
+        "mean": 2531.2
+      },
+      "svc": {
+        "n": 930,
+        "p50": 133.83,
+        "p90": 221.79,
+        "p99": 473.29,
+        "max": 711.41,
+        "mean": 147.09
+      }
+    },
+    "rows": [
+      {
+        "window": "Z0",
+        "mode": "zero",
+        "readers": 0,
+        "commits": 310,
+        "offered": 310,
+        "errors": 0,
+        "latP50": 4223.65,
+        "latP99": 6060.64,
+        "svcP50": 155.56,
+        "svcP99": 684.55,
+        "latP50x": 1.65,
+        "latP99x": 1.08,
+        "svcP50x": 1.16,
+        "svcP99x": 1.45,
+        "waitsOver2s": 272,
+        "maxQueue": 157,
+        "writerCpu": 141,
+        "followerCpu": 15,
+        "pullsPerS": null,
+        "goodput": null,
+        "queriesPerS": null,
+        "pullP50": null,
+        "pullP99": null,
+        "violations": null,
+        "faults": null,
+        "readErrors": null,
+        "splits": null,
+        "lagFp50": 37.55,
+        "lagFp99": 232.53,
+        "lagWp50": 39.04,
+        "lagExcessP99": 111.95,
+        "loopP99": 9.12
+      },
+      {
+        "window": "F4",
+        "mode": "follower",
+        "readers": 4,
+        "commits": 310,
+        "offered": 310,
+        "errors": 0,
+        "latP50": 2602.1,
+        "latP99": 3759.48,
+        "svcP50": 109.4,
+        "svcP99": 447.3,
+        "latP50x": 1.02,
+        "latP99x": 0.67,
+        "svcP50x": 0.82,
+        "svcP99x": 0.95,
+        "waitsOver2s": 279,
+        "maxQueue": 109,
+        "writerCpu": 117,
+        "followerCpu": 58,
+        "pullsPerS": 13.13,
+        "goodput": 13.13,
+        "queriesPerS": 58.13,
+        "pullP50": 95.85,
+        "pullP99": 499.69,
+        "violations": 0,
+        "faults": 0,
+        "readErrors": 0,
+        "splits": "9/9",
+        "lagFp50": 33.65,
+        "lagFp99": 193.29,
+        "lagWp50": 32.53,
+        "lagExcessP99": 52.52,
+        "loopP99": 8.44
+      },
+      {
+        "window": "S4",
+        "mode": "single",
+        "readers": 4,
+        "commits": 310,
+        "offered": 310,
+        "errors": 0,
+        "latP50": 4256.04,
+        "latP99": 7128.2,
+        "svcP50": 143.03,
+        "svcP99": 733.08,
+        "latP50x": 1.67,
+        "latP99x": 1.27,
+        "svcP50x": 1.07,
+        "svcP99x": 1.55,
+        "waitsOver2s": 286,
+        "maxQueue": 158,
+        "writerCpu": 133,
+        "followerCpu": 18,
+        "pullsPerS": 5,
+        "goodput": 5,
+        "queriesPerS": 27.5,
+        "pullP50": 142.41,
+        "pullP99": 523.47,
+        "violations": 0,
+        "faults": 0,
+        "readErrors": 0,
+        "splits": "12/12",
+        "lagFp50": 49.84,
+        "lagFp99": 247.44,
+        "lagWp50": 39.5,
+        "lagExcessP99": 68.11,
+        "loopP99": 8.6
+      },
+      {
+        "window": "Z1",
+        "mode": "zero",
+        "readers": 0,
+        "commits": 310,
+        "offered": 310,
+        "errors": 0,
+        "latP50": 1612.12,
+        "latP99": 3678.36,
+        "svcP50": 121.76,
+        "svcP99": 326.27,
+        "latP50x": 0.63,
+        "latP99x": 0.66,
+        "svcP50x": 0.91,
+        "svcP99x": 0.69,
+        "waitsOver2s": 113,
+        "maxQueue": 97,
+        "writerCpu": 95,
+        "followerCpu": 14,
+        "pullsPerS": null,
+        "goodput": null,
+        "queriesPerS": null,
+        "pullP50": null,
+        "pullP99": null,
+        "violations": null,
+        "faults": null,
+        "readErrors": null,
+        "splits": null,
+        "lagFp50": 37.59,
+        "lagFp99": 134.9,
+        "lagWp50": 31.81,
+        "lagExcessP99": 34.25,
+        "loopP99": 7.66
+      },
+      {
+        "window": "Z2",
+        "mode": "zero",
+        "readers": 0,
+        "commits": 310,
+        "offered": 310,
+        "errors": 0,
+        "latP50": 2272.12,
+        "latP99": 3532.2,
+        "svcP50": 130.88,
+        "svcP99": 381.12,
+        "latP50x": 0.89,
+        "latP99x": 0.63,
+        "svcP50x": 0.98,
+        "svcP99x": 0.81,
+        "waitsOver2s": 181,
+        "maxQueue": 110,
+        "writerCpu": 119,
+        "followerCpu": 17,
+        "pullsPerS": null,
+        "goodput": null,
+        "queriesPerS": null,
+        "pullP50": null,
+        "pullP99": null,
+        "violations": null,
+        "faults": null,
+        "readErrors": null,
+        "splits": null,
+        "lagFp50": 38.3,
+        "lagFp99": 84.83,
+        "lagWp50": 41.74,
+        "lagExcessP99": 34.52,
+        "loopP99": 7.38
+      }
+    ],
+    "markdown": "Baseline (pooled Z0, Z1, Z2): commit from schedule p50 2553.05 p99 5611.38; service p50 133.83 p99 473.29 ms\n\n| window | mode | readers | commits | offered | errors | latP50 | latP99 | svcP50 | svcP99 | latP50x | latP99x | svcP50x | svcP99x | waitsOver2s | maxQueue | writerCpu | followerCpu | pullsPerS | goodput | queriesPerS | pullP50 | pullP99 | violations | faults | readErrors | splits | lagFp50 | lagFp99 | lagWp50 | lagExcessP99 | loopP99 |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| Z0 | zero | 0 | 310 | 310 | 0 | 4223.65 | 6060.64 | 155.56 | 684.55 | 1.65 | 1.08 | 1.16 | 1.45 | 272 | 157 | 141 | 15 | - | - | - | - | - | - | - | - | - | 37.55 | 232.53 | 39.04 | 111.95 | 9.12 |\n| F4 | follower | 4 | 310 | 310 | 0 | 2602.1 | 3759.48 | 109.4 | 447.3 | 1.02 | 0.67 | 0.82 | 0.95 | 279 | 109 | 117 | 58 | 13.13 | 13.13 | 58.13 | 95.85 | 499.69 | 0 | 0 | 0 | 9/9 | 33.65 | 193.29 | 32.53 | 52.52 | 8.44 |\n| S4 | single | 4 | 310 | 310 | 0 | 4256.04 | 7128.2 | 143.03 | 733.08 | 1.67 | 1.27 | 1.07 | 1.55 | 286 | 158 | 133 | 18 | 5 | 5 | 27.5 | 142.41 | 523.47 | 0 | 0 | 0 | 12/12 | 49.84 | 247.44 | 39.5 | 68.11 | 8.6 |\n| Z1 | zero | 0 | 310 | 310 | 0 | 1612.12 | 3678.36 | 121.76 | 326.27 | 0.63 | 0.66 | 0.91 | 0.69 | 113 | 97 | 95 | 14 | - | - | - | - | - | - | - | - | - | 37.59 | 134.9 | 31.81 | 34.25 | 7.66 |\n| Z2 | zero | 0 | 310 | 310 | 0 | 2272.12 | 3532.2 | 130.88 | 381.12 | 0.89 | 0.63 | 0.98 | 0.81 | 181 | 110 | 119 | 17 | - | - | - | - | - | - | - | - | - | 38.3 | 84.83 | 41.74 | 34.52 | 7.38 |\n\n- warmF: commits 126/126, errors {}, lat p50/p99 4812.7/6999.12, svc p50/p99 226.85/1095.08; lag follower p50/p99 55.02/427.4 (n 15, errors 0); reads 16.33/s p99 543.98 viol 0 errors {}; block cut true 127 ms\n- warmS: commits 126/126, errors {}, lat p50/p99 4182.74/5903.38, svc p50/p99 202.3/1416.67; lag follower p50/p99 57.19/152.98 (n 12, errors 0); reads 8/s p99 2114.47 viol 0 errors {}; block cut true 185 ms\n"
+  },
+  "finishedAt": "2026-11-07T23:33:16.623Z"
+}

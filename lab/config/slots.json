@@ -18,7 +18,13 @@
       "urlTemplate": "postgres://xtdb:xtdb@127.0.0.1:{port}/xtdb",
       "envVar": "XTDB_URL",
       "integrationEnv": { "XTDB_INTEGRATION": "1" },
-      "diskForecastNote": "Start conservative: XTDB pre-GC growth about 5.5x was seen on the homebase (PLAN section 7). dev holds many small test scopes; s* hold scale runs. Scale experiments refine these."
+      "diskForecastNote": "Start conservative: XTDB pre-GC growth about 5.5x was seen on the homebase (PLAN section 7). dev holds many small test scopes; s* hold scale runs. Scale experiments refine these.",
+      "follower": {
+        "configFile": "lab/config/xtdb-follower-config.yaml",
+        "memBytes": 1879048192, "cpus": 2, "javaOpts": "-Xmx768m -XX:MaxDirectMemorySize=768m", "portOffset": 10, "volumeMode": "ro",
+        "profiles": { "small": { "configFile": "lab/config/xtdb-follower-small-config.yaml", "memBytes": 1073741824, "javaOpts": "-Xmx512m -XX:MaxDirectMemorySize=256m", "note": "EXP-X05 follower sized to the 4.5 GiB the pool leaves beside both dev residents (orchestrator slot plan 2026-11-07): writer 3.5 + follower 1.0 GiB. Below R19 E9's 1.5-1.75 GiB, so results on it are provisional." } },
+        "note": "EXP-X05 read-only follower tx2-xtdb-<slot>-ro on the slot's volume, admitted against the pool like any reservation, held under the slot's lock. 1.75 GiB is R19 1.6/E9's smallest sane read node. volumeMode ro mounts the volume read-only at the kernel as a second barrier behind readOnlyDatabases. Port is the slot port + portOffset."
+      }
     },
     "qlever": {
       "image": "adfreiburg/qlever:0.6.0@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec",
