@@ -52,3 +52,10 @@ These move into RULINGS.md when the contract version that compiles them is built
 | Q74e maintenance in every window | Runs that measure P1 force one `finish-block` at a fixed trace time in every window, on every arm, so a settled clone still has a maintenance event. | R26 note |
 | Q74f disk | A golden or clone is made only when host free disk after the copy stays at or above 5 GiB; clone volumes are removed after each run. At the 10k rung (3.41 GiB per XTDB volume) that allows one clone at a time today. | R26 risk 4; host 8.7 GiB free |
 | Q74g broker compositions | A broker composition clones the engine volume and the broker directory together, from one stopped moment. | R26 open question 3 |
+
+## Q70 additions: O-REPLAY 0.4.6 author's choices and one journal gap (0.4.7)
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q70h issuer views | Issuers are compared by view: start, scope, and the prefixes whose pages issued the token. Issuers with identical views and different page bodies (for example different limits reaching the same token) continue rather than refuse, because the continuation depends only on the view. | 0.4.6 author choice 1 |
+| Q70i journal fail-closed | Q70f's fail-closed rule applies to a journal `after` issued by disagreeing pages too ("ambiguous journal after"); Q70g matching requires the same journal scope. | 0.4.6 author choices 2, 3 |
+| Q70j journal in-flight scope | A `transactions` read decides which erasures are in flight from its own `scope` field, not from `cut.scope` or the default scope. | 0.4.6 author item 4 |

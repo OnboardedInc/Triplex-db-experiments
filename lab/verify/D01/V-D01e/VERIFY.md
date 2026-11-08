@@ -1,7 +1,7 @@
 # V-D01e delta review of W0-1.1.2 (242bb40): FIX-FIRST for one line of SPEC text (saved by the orchestrator, 2026-11-08 01:18Z)
 
 **Verdict:** C01-C87, R1-R3 and the 100k fingerprint are byte-identical to W0-1.1.1 (fingerprint recomputed independently through heavy.mjs in
-2 min 23 s: basis.tx 4,338,757; 44,537,987 facts; worlds fec1d7ce...c760; R1 c1b2d410...3a79; R2 551bbbc4...b562; R3 a5950922...ee2f; R3 reach 9,497,
+2 min 23 s: basis.tx 4,338,757; 44,537,987 facts; worlds fec1d7ce...c760; R1 c1b2d410...1a79 [corrected by the orchestrator 2026-11-08: the verdict line had a typo, 3a79; the pin, the O-DOMAIN receipt, V-D01 and V-D01c all have ...1a79]; R2 551bbbc4...b562; R3 a5950922...ee2f; R3 reach 9,497,
 changed 418, 0 changed unreached; floors unchanged). All 49 new cases (C88-C136) re-derived by hand from inputs only and matched expected and
 frozen bytes; the reviewer's independent evaluator, updated for A01-A15, matches all 136 against both. Both extra exact rules are stated
 precisely (escaping: `"` and `\`, `\b \t \n \f \r`, every other character outside U+0020-U+007E including U+007F as `\u` plus four lowercase hex
