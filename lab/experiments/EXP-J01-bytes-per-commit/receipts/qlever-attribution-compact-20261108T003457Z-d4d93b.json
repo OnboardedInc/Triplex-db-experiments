@@ -1,0 +1,326 @@
+{
+  "format": "j01-receipt/1",
+  "id": "qlever-attribution-compact-20261108T003457Z-d4d93b",
+  "kind": "qlever-attribution-compact",
+  "writtenAt": "2026-11-08T00:34:57.375Z",
+  "identity": {
+    "gitHead": "83b384334610043bd29ccc7f2b5f0ba0384361bc",
+    "dirty": true,
+    "diffSha256": "519e67e0fb3378b8988cb3ae0635b2c1f7bdfc8011703ef27083209f48ba874a",
+    "distSha256": "5315e5ffbb95b0d32f7d4788685412a1e6daab53a8b4a34919ecd80f932620b9",
+    "engines": {
+      "xtdb": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+      "qlever": "adfreiburg/qlever:0.6.0@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec"
+    },
+    "endpoints": {
+      "xtdb": "postgres://xtdb:xtdb@127.0.0.1:5470/xtdb",
+      "qlever": "http://127.0.0.1:7070"
+    },
+    "node": "v22.23.2",
+    "host": {
+      "cpus": 12,
+      "loadavg": [
+        9.75,
+        9.65,
+        10.02
+      ]
+    }
+  },
+  "lane": "qlever",
+  "label": "compact",
+  "commitEncoding": "compact",
+  "perCommand": [
+    {
+      "facts": 1,
+      "valuesRows": 123,
+      "qleverOperation": {
+        "deleted": 2,
+        "inserted": 123,
+        "total": 125
+      },
+      "updateTextBytes": 20405,
+      "deltaAfter": {
+        "deleted": 6452,
+        "inserted": 1189177,
+        "total": 1195629
+      },
+      "bySource": {
+        "data": 18,
+        "journal-envelope :_tx/position": 21,
+        "journal-envelope :_tx/instant": 21,
+        "journal-envelope :_tx/command-id": 18,
+        "journal-envelope :_tx/changed-entity": 18,
+        "journal-change": 18,
+        "meta": 2,
+        "claim": 4,
+        "operation": 3
+      },
+      "objectBytesBySource": {
+        "data": 754,
+        "journal-envelope :_tx/position": 844,
+        "journal-envelope :_tx/instant": 894,
+        "journal-envelope :_tx/command-id": 964,
+        "journal-envelope :_tx/changed-entity": 830,
+        "journal-change": 2088,
+        "meta": 4,
+        "claim": 92,
+        "operation": 79
+      }
+    },
+    {
+      "facts": 10,
+      "valuesRows": 447,
+      "qleverOperation": {
+        "deleted": 2,
+        "inserted": 447,
+        "total": 449
+      },
+      "updateTextBytes": 78293,
+      "deltaAfter": {
+        "deleted": 6456,
+        "inserted": 1189853,
+        "total": 1196309
+      },
+      "bySource": {
+        "data": 180,
+        "journal-envelope :_tx/position": 21,
+        "journal-envelope :_tx/instant": 21,
+        "journal-envelope :_tx/command-id": 18,
+        "journal-envelope :_tx/changed-entity": 18,
+        "journal-change": 180,
+        "meta": 2,
+        "claim": 4,
+        "operation": 3
+      },
+      "objectBytesBySource": {
+        "data": 7540,
+        "journal-envelope :_tx/position": 844,
+        "journal-envelope :_tx/instant": 894,
+        "journal-envelope :_tx/command-id": 964,
+        "journal-envelope :_tx/changed-entity": 830,
+        "journal-change": 20880,
+        "meta": 4,
+        "claim": 92,
+        "operation": 79
+      }
+    },
+    {
+      "facts": 10,
+      "valuesRows": 447,
+      "qleverOperation": {
+        "deleted": 2,
+        "inserted": 447,
+        "total": 449
+      },
+      "updateTextBytes": 78293,
+      "deltaAfter": {
+        "deleted": 6460,
+        "inserted": 1190699,
+        "total": 1197159
+      },
+      "bySource": {
+        "data": 180,
+        "journal-envelope :_tx/position": 21,
+        "journal-envelope :_tx/instant": 21,
+        "journal-envelope :_tx/command-id": 18,
+        "journal-envelope :_tx/changed-entity": 18,
+        "journal-change": 180,
+        "meta": 2,
+        "claim": 4,
+        "operation": 3
+      },
+      "objectBytesBySource": {
+        "data": 7540,
+        "journal-envelope :_tx/position": 844,
+        "journal-envelope :_tx/instant": 894,
+        "journal-envelope :_tx/command-id": 964,
+        "journal-envelope :_tx/changed-entity": 830,
+        "journal-change": 20880,
+        "meta": 4,
+        "claim": 92,
+        "operation": 79
+      }
+    },
+    {
+      "facts": 10,
+      "valuesRows": 447,
+      "qleverOperation": {
+        "deleted": 2,
+        "inserted": 447,
+        "total": 449
+      },
+      "updateTextBytes": 78293,
+      "deltaAfter": {
+        "deleted": 6467,
+        "inserted": 1191498,
+        "total": 1197965
+      },
+      "bySource": {
+        "data": 180,
+        "journal-envelope :_tx/position": 21,
+        "journal-envelope :_tx/instant": 21,
+        "journal-envelope :_tx/command-id": 18,
+        "journal-envelope :_tx/changed-entity": 18,
+        "journal-change": 180,
+        "meta": 2,
+        "claim": 4,
+        "operation": 3
+      },
+      "objectBytesBySource": {
+        "data": 7540,
+        "journal-envelope :_tx/position": 844,
+        "journal-envelope :_tx/instant": 894,
+        "journal-envelope :_tx/command-id": 964,
+        "journal-envelope :_tx/changed-entity": 830,
+        "journal-change": 20880,
+        "meta": 4,
+        "claim": 92,
+        "operation": 79
+      }
+    },
+    {
+      "facts": 50,
+      "valuesRows": 1887,
+      "qleverOperation": {
+        "deleted": 2,
+        "inserted": 1887,
+        "total": 1889
+      },
+      "updateTextBytes": 336133,
+      "deltaAfter": {
+        "deleted": 6471,
+        "inserted": 1193706,
+        "total": 1200177
+      },
+      "bySource": {
+        "data": 900,
+        "journal-envelope :_tx/position": 21,
+        "journal-envelope :_tx/instant": 21,
+        "journal-envelope :_tx/command-id": 18,
+        "journal-envelope :_tx/changed-entity": 18,
+        "journal-change": 900,
+        "meta": 2,
+        "claim": 4,
+        "operation": 3
+      },
+      "objectBytesBySource": {
+        "data": 37940,
+        "journal-envelope :_tx/position": 844,
+        "journal-envelope :_tx/instant": 894,
+        "journal-envelope :_tx/command-id": 964,
+        "journal-envelope :_tx/changed-entity": 830,
+        "journal-change": 104720,
+        "meta": 4,
+        "claim": 92,
+        "operation": 79
+      }
+    }
+  ],
+  "tenFactChannels": {
+    "data _row": 10,
+    "data scalar_family": 10,
+    "data scalar_lexical": 10,
+    "data scalar_order": 10,
+    "data id": 10,
+    "data entity_id": 10,
+    "data attribute": 10,
+    "data value_type": 10,
+    "data value_string": 10,
+    "data recorded_at_order": 10,
+    "data recorded_position_order": 10,
+    "data recorded_position_native": 10,
+    "data valid_from": 10,
+    "data valid_from_order": 10,
+    "data valid_from_exact": 10,
+    "data valid_from_native": 10,
+    "data entity_type": 10,
+    "data tx_id": 10,
+    "journal-envelope _row": 4,
+    "journal-envelope scalar_family": 4,
+    "journal-envelope scalar_lexical": 4,
+    "journal-envelope scalar_order": 4,
+    "journal-envelope id": 4,
+    "journal-envelope entity_id": 4,
+    "journal-envelope attribute": 4,
+    "journal-envelope value_type": 4,
+    "journal-envelope value_number": 1,
+    "journal-envelope value_number_order": 1,
+    "journal-envelope value_number_exact": 1,
+    "journal-envelope value_number_native": 1,
+    "journal-envelope recorded_at_order": 4,
+    "journal-envelope recorded_position_order": 4,
+    "journal-envelope recorded_position_native": 4,
+    "journal-envelope valid_from": 4,
+    "journal-envelope valid_from_order": 4,
+    "journal-envelope valid_from_exact": 4,
+    "journal-envelope valid_from_native": 4,
+    "journal-envelope entity_type": 4,
+    "journal-envelope tx_id": 4,
+    "journal-envelope value_datetime": 1,
+    "journal-envelope value_datetime_order": 1,
+    "journal-envelope value_datetime_exact": 1,
+    "journal-envelope value_datetime_native": 1,
+    "journal-envelope value_string": 2,
+    "journal-change _row": 10,
+    "journal-change scalar_family": 10,
+    "journal-change scalar_lexical": 10,
+    "journal-change scalar_order": 10,
+    "journal-change id": 10,
+    "journal-change entity_id": 10,
+    "journal-change attribute": 10,
+    "journal-change value_type": 10,
+    "journal-change value_json": 10,
+    "journal-change recorded_at_order": 10,
+    "journal-change recorded_position_order": 10,
+    "journal-change recorded_position_native": 10,
+    "journal-change valid_from": 10,
+    "journal-change valid_from_order": 10,
+    "journal-change valid_from_exact": 10,
+    "journal-change valid_from_native": 10,
+    "journal-change entity_type": 10,
+    "journal-change tx_id": 10,
+    "meta position": 1,
+    "meta position_native": 1,
+    "claim command_id": 1,
+    "claim tx_id": 1,
+    "claim recorded_at": 1,
+    "claim position": 1,
+    "operation operation_id": 1,
+    "operation attempt_id": 1,
+    "operation position": 1
+  },
+  "closure": [
+    {
+      "facts": 1,
+      "classified": 123,
+      "qleverInserted": 123,
+      "qleverDeleted": 2
+    },
+    {
+      "facts": 10,
+      "classified": 447,
+      "qleverInserted": 447,
+      "qleverDeleted": 2
+    },
+    {
+      "facts": 10,
+      "classified": 447,
+      "qleverInserted": 447,
+      "qleverDeleted": 2
+    },
+    {
+      "facts": 10,
+      "classified": 447,
+      "qleverInserted": 447,
+      "qleverDeleted": 2
+    },
+    {
+      "facts": 50,
+      "classified": 1887,
+      "qleverInserted": 1887,
+      "qleverDeleted": 2
+    }
+  ],
+  "rawPath": "/Users/sam/Claude/Projects/triplex-db-2/EXP-J01/qlever-attribution-compact-20261108T003457Z-d4d93b.raw.json",
+  "rawSha256": "799427d8a969d2b382e6e4f0db86c9f30c99aa9d152f4b9c971d789fca793651"
+}
