@@ -1,0 +1,14 @@
+{
+  "core/src/main/kotlin/xtdb/api/log/SourceMessage.kt": {
+    "sha256": "e4747a78fced0b99bf3fa631a5f07571c122507e8e1ee8cb0b31162283691f97"
+  },
+  "core/src/main/kotlin/xtdb/api/log/LocalLog.kt": {
+    "sha256": "39f86a5215d46e8c294386b0c508ca21c5dfd808cd7a8b285dac6450b94d2763"
+  },
+  "core/src/main/proto/xtdb/log/proto/log.proto": {
+    "sha256": "d11f43c05efafaa17ac59d9d0d174d1621628c7295c2158595a8628c80ee94a5"
+  },
+  "core/src/main/kotlin/xtdb/util/MsgIdUtil.kt": {
+    "sha256": "53460a2f7cce06208472e1f1e672cad96df3d37f3de8aa67fed1f7af36856671"
+  }
+}
