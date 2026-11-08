@@ -44,7 +44,7 @@ const print = (value: unknown) => process.stdout.write(JSON.stringify(value, (_k
 /** GNU wget in the XTDB image: -S puts the status line on stderr, --content-on-error keeps a 503 body. */
 function healthz(route: string, post = false) {
   const r = spawnSync("docker", ["-H", DOCKER_HOST, "exec", container!, "wget", "-q", "-S", "--content-on-error", "-O", "-", ...(post ? ["--post-data="] : []), `http://127.0.0.1:8080${route}`], { encoding: "utf8", timeout: 30_000 });
-  const status = Number((/HTTP\/[\d.]+ (\d{3})/.exec(r.stderr ?? "") ?? [])[1]) || null;
+  const status = r.status === 0 && !r.signal && !r.error ? Number((/HTTP\/[\d.]+ (\d{3})/.exec(r.stderr ?? "") ?? [])[1]) || null : null;
   return { status, body: (r.stdout ?? "").trim().slice(0, 500) };
 }
 
@@ -69,7 +69,7 @@ async function liveRows() {
 // Enumerate only published block files through a read-only exec, then ask SQL for exactly those rows.
 function blockListing(): string[] {
   const r = spawnSync("docker", ["-H", DOCKER_HOST, "exec", container!, "sh", "-c", "if [ -d /var/lib/xtdb/buffers/v06/blocks ]; then find /var/lib/xtdb/buffers/v06/blocks -maxdepth 1 -type f -name 'b*.binpb'; fi"], { encoding: "utf8", timeout: 30_000 });
-  if (r.status !== 0) throw new Error(`block file discovery failed: ${r.stderr}`);
+  if (r.status !== 0 || r.signal || r.error) throw new Error(`block file discovery failed: ${r.stderr}`);
   return publishedBlockIndices(r.stdout ?? "");
 }
 async function blockFileRows(): Promise<any[]> {
@@ -109,7 +109,7 @@ async function settle() {
     phases.push(evidence);
     persist();
     if (finishBlock.status !== 200) return { settled: false, reason: `finish-block #${phase} failed`, before, phases };
-    let streak = 0, stable = "", supersededStreak = 0;
+    let streak = 0, stable = "";
     const requiredTables = ["tx_assertions", "tx_attempts", "tx_claims", "tx_meta", "txs"];
     const deadline = Date.now() + (phase === 1 ? Number(opt("timeout-s", "900")) : 180) * 1000;
     while (Date.now() < deadline) {
@@ -117,49 +117,54 @@ async function settle() {
       const reading = await snapshot(), g = reading.gauges;
       const block = reading.blocks.find(r => blockNumber(r.block_idx) === target);
       const coverage = blockTrieCoverage(reading.trie.rows, block?.block_idx ?? "", requiredTables);
-      const signature = digest([reading.listing, reading.trie.sha256]);
+      const signature = digest([reading.listing, reading.trie.sha256, g.latestCompletedTxId, g.latestProcessedMsgId, g.latestSubmittedMsgId]);
       const ok = !!block && Number.isSafeInteger(g.latestCompletedTxId) && num(block.tx_id) === g.latestCompletedTxId &&
         g.latestCompletedTxId === before.gauges.latestCompletedTxId &&
-        num(block.latest_processed_msg_id) === g.latestProcessedMsgId && g.latestProcessedMsgId === g.latestSubmittedMsgId &&
+        Number.isSafeInteger(num(block.latest_processed_msg_id)) && Number.isSafeInteger(g.latestProcessedMsgId) && num(block.latest_processed_msg_id)! <= g.latestProcessedMsgId! && g.latestProcessedMsgId === g.latestSubmittedMsgId &&
         g.lagMsgId === 0 && g.jobsAvailable === 0 && g.lastUploadTime !== null && baseline.gauges.lastUploadTime !== null &&
         g.lastUploadTime > baseline.gauges.lastUploadTime &&
         (phase === 1 ? coverage.covered : reading.trie.sha256 === baseline.trie.sha256);
       streak = ok ? (signature === stable ? streak + 1 : 1) : 0;
-      // [EXP-K01-R2] Why: an immutable block cannot catch a monotone source watermark (Q83d still requires equality). Rejected: waiting out 15 minutes after three stable, irreversibly unequal readings (wastes the exclusive slot).
-      supersededStreak = block && g.jobsAvailable === 0 && g.latestProcessedMsgId !== null &&
-        g.latestProcessedMsgId > Number(block.latest_processed_msg_id) && signature === stable ? supersededStreak + 1 : 0;
       stable = signature;
-      evidence.polls.push({ elapsedS: (Date.now() - started) / 1000, ...reading, requiredTables, coverage, ok, streak, supersededStreak });
+      evidence.polls.push({ elapsedS: (Date.now() - started) / 1000, ...reading, requiredTables, coverage, ok, streak });
       persist();
       log(`finish-block #${phase}: jobs ${g.jobsAvailable}, block ${block?.block_idx ?? "pending"}, stable ${streak}/3`);
       // [EXP-K01-R3] Why: a current transaction change invalidates the frozen seed even if its old block still matches. Rejected: treating the initial gauge as fresh evidence for later polls.
       if (!Number.isSafeInteger(g.latestCompletedTxId) || g.latestCompletedTxId !== before.gauges.latestCompletedTxId)
         return { settled: false, reason: `current completed transaction ${g.latestCompletedTxId} differs from frozen seed ${before.gauges.latestCompletedTxId} or is invalid`, before, phases };
-      if (supersededStreak >= 3) return { settled: false, reason: `block ${block.block_idx} source watermark ${block.latest_processed_msg_id} is permanently behind node ${g.latestProcessedMsgId}; Q83d equality cannot pass`, before, phases };
-      if (streak >= 3) { previous = reading; evidence.after = reading; break; }
+      if (streak >= 3) { previous = reading; evidence.after = reading; (reading as any).frontiers = { F: num(block.latest_processed_msg_id), M: g.latestProcessedMsgId, T: g.latestCompletedTxId }; persist(); break; }
     }
     if (!evidence.after) return { settled: false, reason: `finish-block #${phase} evidence did not settle`, before, phases };
   }
   // [EXP-K01-R2] Why: #6174 leaves live_tables stale; only a fresh JVM proves zero live rows. Rejected: restarting before settling (asymmetric plans).
-  return { settled: true, waitedS: (Date.now() - started) / 1000, before, phases, after: previous };
+  return { settled: true, qualified: false, proofStage: "AWAITING_STOPPED_TAIL", frontiers: (previous as any).frontiers, waitedS: (Date.now() - started) / 1000, before, phases, after: previous };
 }
 async function startCheck(expected: any) {
+  const proofReads: any = {};
+  const read = (name: string, args: string[]) => {
+    const r = spawnSync("docker", ["-H", DOCKER_HOST, ...args], { encoding: "utf8", maxBuffer: 16 << 20 });
+    return proofReads[name] = { status: r.status, signal: r.signal ?? null, error: r.error?.message ?? null, stdout: r.stdout ?? "", stderr: r.stderr ?? "" };
+  };
+  const success = (r: any) => r.status === 0 && !r.signal && !r.error;
+  const initial = read("inspect", ["inspect", "--format", "{{.State.StartedAt}}", container!]);
+  const identity = initial.stdout.trim();
+  if (!success(initial) || !identity || !Number.isFinite(Date.parse(identity))) return { ok: false, reason: "current startup inspect failed or returned invalid identity", proofReads, polls: [] };
   const polls: any[] = [];
   for (let n = 0; n < 3; n++) {
     if (n) await sleep(5000);
     polls.push({ gauges: await gauges(), live: await liveRows(), trie: await tries(), listing: blockListing() });
   }
-  const logs = spawnSync("docker", ["-H", DOCKER_HOST, "inspect", "--format", "{{.State.StartedAt}}", container!], { encoding: "utf8" });
-  const out = spawnSync("docker", ["-H", DOCKER_HOST, "logs", "--since", logs.stdout.trim(), container!], { encoding: "utf8" });
+  const out = read("logs", ["logs", "--since", identity, container!]);
+  const final = read("finalInspect", ["inspect", "--format", "{{.State.StartedAt}}", container!]);
   const text = `${out.stdout}\n${out.stderr}`;
   const resume = [...text.matchAll(/resuming after (\d+)/g)].at(-1)?.[1] ?? null;
-  const expectedMsgId = expected.gauges.latestProcessedMsgId;
+  const expectedMsgId = expected.frontiers?.M ?? expected.gauges.latestProcessedMsgId;
   const started = healthz("/healthz/started");
-  return { ok: started.status === 200 && resume !== null && Number(resume) === expectedMsgId && polls.every(p =>
+  return { ok: success(out) && success(final) && final.stdout.trim() === identity && started.status === 200 && resume !== null && Number(resume) === expectedMsgId && polls.every(p =>
     p.live.total === 0 && p.gauges.jobsAvailable === 0 && p.gauges.lagMsgId === 0 &&
     p.gauges.latestCompletedTxId === expected.gauges.latestCompletedTxId &&
     p.gauges.latestProcessedMsgId === expectedMsgId && p.gauges.latestSubmittedMsgId === expectedMsgId && p.trie.sha256 === expected.trie.sha256 &&
-    canonical(p.listing) === canonical(expected.listing)), started, resume, expectedMsgId, polls,
+    canonical(p.listing) === canonical(expected.listing)), started, resume, expectedMsgId, polls, proofReads,
     startLines: text.split("\n").filter(l => /starting follower:|resuming after/.test(l)) };
 }
 
