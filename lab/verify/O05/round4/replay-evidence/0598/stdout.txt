@@ -1,0 +1,1 @@
+{"protocol":"OBS-WORK","qualification":"screening-only","reasons":["CONTEXT-CONTRADICTION: obligation does not select one OBS-WORK witness"],"sourceStrength":null,"thresholds":{},"verdict":"REFUSED"}

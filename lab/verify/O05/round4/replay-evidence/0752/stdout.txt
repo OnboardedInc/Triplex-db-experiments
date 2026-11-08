@@ -1,0 +1,1 @@
+{"protocol":"OBS-MAINTENANCE","qualification":"screening-only","reasons":["uncertain sample coverage gap"],"sourceStrength":"direct","thresholds":{},"verdict":"FAIL"}

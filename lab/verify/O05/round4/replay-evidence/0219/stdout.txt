@@ -1,0 +1,1 @@
+{"protocol":"OBS-WORK","qualification":"screening-only","reasons":["UNTRUSTED-BUNDLE: missing required field: format"],"sourceStrength":null,"thresholds":{},"verdict":"REFUSED"}

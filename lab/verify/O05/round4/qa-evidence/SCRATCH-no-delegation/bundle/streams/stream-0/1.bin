@@ -1,0 +1,3 @@
+{"field":"countAfter","value":4}
+{"field":"unknownOutcomes","value":["cmd-a"]}
+{"field":"resolutionReceipts","value":[{"outcome":"committed","receiptId":"receipt-a","workingId":"cmd-a"}]}

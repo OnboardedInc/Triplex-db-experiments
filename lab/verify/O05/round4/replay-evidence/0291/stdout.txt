@@ -1,0 +1,1 @@
+{"protocol":"OBS-WORK","qualification":"screening-only","reasons":["invalid source kind/engine"],"sourceStrength":null,"thresholds":{},"verdict":"FAIL"}

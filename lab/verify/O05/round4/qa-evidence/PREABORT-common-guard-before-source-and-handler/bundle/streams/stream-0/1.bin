@@ -1,0 +1,2 @@
+{"field":"engineStatementLog","value":[{"t":15,"tag":"other"}]}
+{"field":"coverage","value":{"from":10,"maxGapMs":0,"segments":[{"from":10,"to":20},{"from":20,"to":30}],"to":30}}

@@ -1,0 +1,22 @@
+{
+  "start": 1794180314.800479,
+  "end": 1794180331.8425589,
+  "freeBytes": 19781148672,
+  "sourceSha256": "668136f3c99e09b5332363bb6beaac7f177d07ef7718eb59b2b801faeedcb2cb",
+  "sourceStable": true,
+  "cliTotal": 133,
+  "cliMatched": 133,
+  "discrepancies": [],
+  "static": {
+    "commonGuardLine": 788,
+    "dispatchLine": 803,
+    "passLine": 804,
+    "singleGuard": true,
+    "singleDispatch": true,
+    "singlePassAssignment": true,
+    "noEarlySuccessReturn": true
+  },
+  "traceTotal": 28,
+  "traceMatched": 28,
+  "unchangedCallerDrainReuse": true
+}

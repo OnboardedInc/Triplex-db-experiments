@@ -1,0 +1,1 @@
+{"protocol":"OBS-MAINTENANCE","qualification":"screening-only","reasons":["threshold not allowed for this protocol"],"sourceStrength":"direct","thresholds":{},"verdict":"FAIL"}

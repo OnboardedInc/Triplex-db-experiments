@@ -1,0 +1,1 @@
+{"protocol":"OBS-FAULT-TRANSITIONS","qualification":"screening-only","reasons":["transition time order"],"sourceStrength":"direct","thresholds":{},"verdict":"FAIL"}

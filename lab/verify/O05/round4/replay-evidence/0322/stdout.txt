@@ -1,0 +1,1 @@
+{"protocol":"OBS-FAULT-TRANSITIONS","qualification":"screening-only","reasons":["missing required field: facts"],"sourceStrength":"direct","thresholds":{},"verdict":"FAIL"}

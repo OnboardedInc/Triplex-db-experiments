@@ -1,0 +1,23 @@
+{
+  "reviewedCommit": "23e2273fc6b15b92821b318acd387f5484155d8a",
+  "mergeCommit": "bed85a408ed961f41932ccfd876c43f009355dd5",
+  "verdict": "ACCEPT for screening",
+  "replayTotal": 786,
+  "qaTotal": 133,
+  "matched": 919,
+  "legacyRefusals": 177,
+  "primaryProtocolPositives": 14,
+  "counts": {
+    "REFUSED": 669,
+    "PASS": 74,
+    "FAIL": 176
+  },
+  "oracleSha256": "668136f3c99e09b5332363bb6beaac7f177d07ef7718eb59b2b801faeedcb2cb",
+  "reportSha256": "aa275c634384c42977b6ed294be9cb527423a9ad824b9101556017b065bb12dc",
+  "summaryHashes": {
+    "replay": "e0997dcf6b8cd330633afa5dd2dc6ade44001050b6f150e5bc66b845368efa03",
+    "qa": "1825e5f6703300c0781f2f1b6724ca19d254e75db7e3552b6efb54075c82aa44",
+    "matrix": "3b413824f562ff17140a2a2b09d40b197afbe30658ee5d9a1f5ba4071b56ba36",
+    "gate": "889189c80d787db49112ceb6c06f8cc75df2c622416025e1e8c6c7140acd63da"
+  }
+}

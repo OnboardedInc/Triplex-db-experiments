@@ -1,0 +1,2 @@
+{"field":"poolDeclarations","value":[{"label":"reads","max":3},{"label":"writes","max":2}]}
+{"field":"baseline","value":{"reads":1,"writes":0}}

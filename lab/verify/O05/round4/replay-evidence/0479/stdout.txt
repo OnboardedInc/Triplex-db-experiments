@@ -1,0 +1,1 @@
+{"protocol":"OBS-WORK","qualification":"screening-only","reasons":[],"sourceStrength":"direct","thresholds":{"T-REUSE-AVOIDED":{"bound":"max","kind":"witness","source":"derived (positive reuse witness)","unit":"engine work units of a reused read divided by the first read at the same key","value":0.5}},"verdict":"PASS"}

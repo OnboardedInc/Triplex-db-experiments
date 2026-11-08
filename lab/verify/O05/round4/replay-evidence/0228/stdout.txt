@@ -1,0 +1,1 @@
+{"protocol":"OBS-WORK","qualification":"screening-only","reasons":["CONTEXT-CONTRADICTION: work threshold differs from bound obligation"],"sourceStrength":null,"thresholds":{},"verdict":"REFUSED"}

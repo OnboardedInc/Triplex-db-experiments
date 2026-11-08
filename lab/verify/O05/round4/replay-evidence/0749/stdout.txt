@@ -1,0 +1,1 @@
+{"protocol":"OBS-MAINTENANCE","qualification":"screening-only","reasons":["empty maintenance interval"],"sourceStrength":"direct","thresholds":{},"verdict":"FAIL"}

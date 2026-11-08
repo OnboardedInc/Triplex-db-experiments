@@ -1,0 +1,1 @@
+{"protocol":"OBS-ACK-ORDER","qualification":"screening-only","reasons":["ACK preceded source publication"],"sourceStrength":"direct","thresholds":{},"verdict":"FAIL"}

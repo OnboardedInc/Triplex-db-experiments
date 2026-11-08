@@ -1,0 +1,1 @@
+{"protocol":"OBS-FAULT-TRANSITIONS","qualification":"screening-only","reasons":["durability not read back after crash"],"sourceStrength":"direct","thresholds":{},"verdict":"FAIL"}

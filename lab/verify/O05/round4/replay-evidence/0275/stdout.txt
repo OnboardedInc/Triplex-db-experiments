@@ -1,0 +1,1 @@
+{"protocol":"OBS-ERASURE-SCAN","qualification":"screening-only","reasons":["scanner blind: positive canary control missing"],"sourceStrength":"indirect","thresholds":{},"verdict":"REFUSED"}

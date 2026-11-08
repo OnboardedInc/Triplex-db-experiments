@@ -1,0 +1,8 @@
+{
+  "step": "Final count audit, not an oracle execution",
+  "result": "REVIEW-AUDIT-ERROR",
+  "reason": "Case IDs repeat between legacy and authenticated cohorts; an ID-only filter overcounts legacy inputs.",
+  "expectedLegacy": 177,
+  "idOnlyCount": 191,
+  "correction": "Identify the retained legacy cases by their original evidence path."
+}
