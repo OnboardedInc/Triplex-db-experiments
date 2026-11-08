@@ -1115,3 +1115,57 @@ Where each priority stands, from evidence so far (research probes and baselines;
   broker composition (P2B) and the per-subject queue, not on the engine's own write path.
 - **M01 parked cleanly** (poller, coordinator and its colima ssh agent stopped; nothing left in the VM). It resumes in the Q69a window.
 - N01, C8 and J01 ended their turns while their own runs continue; orchestrator waiters resume each agent when its process exits.
+
+## 2026-11-08 01:32Z: hourly learnings pass (NORTH-STAR reread first); catch-up on seven reports
+- **Gap found and closed:** seven results landed as reports between 00:40Z and 01:20Z without a notebook entry. Their learnings:
+  - **P2Q fix round (f711193, P2 and P3):** all three criticals fixed. In-transaction Datalog now waits for the replica's real marker and
+    fails typed instead of answering 0 rows (C1); no answer uses a cached marker, and the applier fences and replays after a replica rewind
+    (C2); a second broker on the same log is refused in-process and across processes by flock (C3). 300 random outage reads equal an
+    independent log replay. Open (Codex R7-6): a replica reset that completes inside one query still passes the before/after marker check,
+    and the errors use `ReadError` tags rather than the contract's `BasisNotAvailable`/`ReplicaUnavailable` (Codex R8-9). R8 already measured
+    that one QLever SPARQL request is one snapshot (4,076 reads, 0 torn), so the marker must travel inside the answering request, as R23
+    designed; incarnation fencing (Q67c) covers multi-request Datalog.
+  - **O-REPLAY 0.4.2 FIX-FIRST, then 0.4.3:** 0.4.2 listed every subset of in-flight erasures (2^n) instead of the n + 1 prefixes in
+    publication order, and a cursor continuation of an in-flight read exited 2 (V-O04d F5, F6). 0.4.3 (45bfa59) answers per prefix with
+    per-prefix cursors; V-O04e is re-checking it. Learning: "all-or-none per commit" has to be stated as an order, or an oracle quietly
+    widens the acceptable set.
+  - **EXP-M01 PAIR-0 built offline (1e3c2b5):** a known 2x effect is found at the 8-round look; A/A false positives are 7-9%, matching
+    R22. The live A/A duet cannot run because two 3.5 GiB XTDB slots never fit beside both dev residents (Q69a measurement window). Two risks
+    for the live run: XTDB seeds at about 120 facts/s while screening bursts offer 750, and the calibration-drift rule excluded 3 of 8 rounds
+    at host load 17-21.
+  - **E01 on contract 0.3.9:** the JS evaluator and the Python reference agree on 59/59 admissions and 10,712 executor calls; the lab is
+    stricter where they differ. Honest nulls remain (no fault injector, no PAIR-0 runner), so every fault and NS/GS claim fails closed.
+  - **W0-1.1.2:** no meaning changed (C01-C87 and R1-R3 byte-identical, fingerprint unchanged), 32 of 32 targeted mutants killed. V-D01e's
+    two small fixes were accepted at fedfcda.
+- **Host:** load 19.5 / 18.5 / 18.1 (the highest yet; eight active agents plus N01's, C8's and J01's runs). Pool: xtdb-dev 2.5 of 3.0 GiB,
+  qlever-dev 0.97 of 3.5, xtdb-s1 1.9 of 3.5. **Disk fell to 9.2 GiB free**; removing 3.4 GiB of old scratch archives brought it to 10 GiB.
+  The rest of /private/tmp (6 GiB of m4c-* and m9-* folders) belongs to other projects and is left alone. Rule: below 5 GiB free, no new
+  heavy run starts.
+- **Where evidence points, by priority:**
+  - **P1:** read scaling goes through broker-fed replicas (Q63b). C8 is measuring the reads-never-write floor on both lanes.
+  - **P2:** XTDB's own write path cannot keep up with the writer trace even at zero readers (N01, matching P2X's 0.35 commits/s), so the
+    XTDB P2 bar rests on the broker (P2B) plus a queue per subject. The broker's host store is SQLite (Q58c), and nobody has yet settled
+    how SQLite serves many pinned readers beside one durable writer in Node (R24 open question 2). **R25 dispatched** for that.
+  - **P3:** broker feed lag from source publication p99 13.7-24.9 ms; XTDB's native feed p99 2.9 s. The broker stays the feed source.
+  - **P4:** EXP-P4 is running the read-path arms (X1 current-only reads, X2 `tx_current`, H1 broker store, Q1 QLever `cur` graph).
+  - **P5:** designed (R24 section 7); waits for the O-DOMAIN pin, P2B and the SQLite store, so R25 is on its path too.
+  - **Loop speed:** every A0 or PAIR-0 run on XTDB re-seeds at about 120 facts/s (38 minutes for N01's seed), and PAIR-0 needs 8 to 24
+    rounds. Seeding once and cloning the stopped engine's storage would cut that to minutes if a clone is faithful. **R26 dispatched** for that.
+
+## 2026-11-08 01:36Z: O-DOMAIN accepted and passes all 136 W0-1.1.2 cases; O-REPLAY 0.4.3 needs one more narrow fix; 0.3.10 dispatched
+- **V-D01c ACCEPT O-DOMAIN 5d1fd1a:** 6,833 of 7,127 differential entries identical, and all 294 differences are inputs where 276a280
+  crashed; fingerprint, 400 block digests and every floor unchanged; 71 of 71 kill-matrix rows identical. Orchestrator cross-check against
+  W0-1.1.2: 133/136 through O-DOMAIN's own case runner, and the other three are `inputBase64` cases its loader cannot read, which match when
+  fed as decoded bytes. Learning: a new case form in the golden set needs every implementation's harness to read it, or a correct
+  implementation reports a failure; the contract's O-DOMAIN runner entry has to say how byte cases are fed.
+- **V-O04e FIX-FIRST on O-REPLAY 0.4.3, narrow:** the 2^n and cursor-exit bugs are fixed, but two cursor-continuation edge cases still
+  let a page sequence mix prefixes (F7: a continuation of a plain read consults its own readStart; F8: a literal token carries no prefix).
+  Both existed in 0.4.2. Ruled as pending Q70a, Q70b; the author is on 0.4.4. Learning, the same as Codex's pattern: the rule "one prefix
+  across pages" was implemented for the path the case used, and the two other ways to continue a page were left on the old rule.
+- **Contract 0.3.10 dispatched (A01):** W0-1.1.2 and O-DOMAIN pins, Q57 and Q63-Q69 compiled, Q70 and the unbuilt parts of Q67c/d/h stay
+  pending. The O-REPLAY pin stays at 0.4.1; 0.4.4 goes into 0.3.11 after its re-check.
+- **Research dispatched (Sonnet xhigh):** R25 (many pinned readers beside one durable writer in the broker's SQLite file: settles R23's
+  exclusive lock against R24's reader workers, with host measurements) and R26 (seed once, clone faithfully, from source and docs).
+- **Process errors caught:** (1) the scratch cleanup removed a tree V-O04e was still using for a re-check; scratch archives under review now
+  stay until their verifier reports. (2) A STATE table rewrite cut through to the next blank line and dropped the queue; restored from
+  3f1b214 as a numbered list with a blank line before it.
