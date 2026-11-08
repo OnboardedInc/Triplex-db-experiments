@@ -23,7 +23,7 @@ import { effectiveConfig, probe } from './engine.mjs';
 import { acquireHeavy } from './heavy-lock.mjs';
 import { RUN_KINDS, caseLanguages, contractClaims, tallyLanguages, verdictOf } from './receipt.mjs';
 import {
-  REPO, defaultHolder, vmDisk, docker, dockerStats, fail, inspect, listTx2Containers, loadSlots, main, now, parseArgs,
+  REPO, MAIN, defaultHolder, vmDisk, docker, dockerStats, fail, inspect, listTx2Containers, loadSlots, main, now, parseArgs,
   readJson, readOwner, runLogged, withDirLock, sha256, sha256File, slotInfo, sourceIdentity, storeFile, storeObject, treeFiles, volumeBytes,
 } from './lib.mjs';
 
@@ -91,7 +91,7 @@ class Run {
 
 async function build(run) {
   const filters = lanePackages(run.lane).flatMap(name => ['--filter', PACKAGES[name].filter]);
-  const step = await run.step('build', 'pnpm', [...filters, 'build'], { heavy: true, env: cleanEnv() });
+  const step = await run.step('build', 'pnpm', [`--config.store-dir=${path.join(MAIN, '.pnpm-store')}`, ...filters, 'build'], { heavy: true, env: cleanEnv() });
   if (step.code !== 0) { run.reason(`build failed (exit ${step.code})`); run.failure({ step: 'build', tail: step.tail }); }
   return hashDist(run, 'build-manifest.json');
 }
@@ -121,7 +121,7 @@ function identity(run) {
 }
 
 async function toolchain(run) {
-  const pnpm = await run.step('pnpm-version', 'pnpm', ['--version']);
+  const pnpm = await run.step('pnpm-version', 'pnpm', [`--config.store-dir=${path.join(MAIN, '.pnpm-store')}`, '--version']);
   const version = fs.readFileSync(run.raw('pnpm-version.stdout.txt'), 'utf8').trim();
   return { node: process.version, pnpm: pnpm.code === 0 ? version : null, platform: `${process.platform}-${process.arch}` };
 }
@@ -347,6 +347,9 @@ async function plannerAfter(run, result, bound, restoreTo) {
 async function engineGate(run, config, entry) {
   const result = {};
   result.build = await build(run);
+  // [EXP-W01b] Why: a failed build must not run stale dist against a shared engine. Rejected:
+  // continuing for diagnostics (those results cannot qualify the source this receipt names).
+  if (run.steps.find(s => s.name === 'build')?.code !== 0) return { result, step: null, bound: null };
   const bound = engineBinding(run, config);
   result.engine = bound.engine ?? null;
   if (!bound.engine) return { result, step: null, bound: null };
@@ -612,7 +615,7 @@ async function gateGS(run, config) {
   result.gs = { rung, readers: report.readers, profile: report.profile, world: report.world, scope: report.scope, composition: report.composition, runTag: report.runTag,
     scenarios: report.scenarios.map(s => ({ scenario: s.scenario, slug: s.slug, verdict: s.verdict, verdicts: s.verdicts, expectedFile: s.expectedFile, wallMs: s.wallMs,
       correctness: s.correctness ? { pass: s.correctness.pass, fail: s.correctness.fail } : null, bars: s.bars?.map(b => ({ id: b.id, observed: b.observed, want: `${b.op} ${b.value}`, ok: b.ok })),
-      accounting: s.metrics?.accounting, subSchedules: s.subSchedules, firstFailures: s.firstFailures })) };
+      accounting: s.metrics?.accounting, subSchedules: s.subSchedules, diagnostics: s.diagnostics, firstFailures: s.firstFailures })) };
   result.cases = ran.map(s => ({ caseId: `GS.${String(s.scenario).padStart(2, '0')}`, mode: rung, status: s.verdict, oracleId: 'O-REPLAY+O-DOMAIN', rawResultSha256: sha256(JSON.stringify(s)), languages: ['triplex-public'] }));
   result.scopes = { worldScope: report.scope, fresh: !!run.options['fresh-world'] };
   return result;

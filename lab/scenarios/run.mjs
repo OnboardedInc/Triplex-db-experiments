@@ -13,6 +13,7 @@ import { openComposition } from './lib/composition.mjs';
 import { ensureWorld, runScenario, worldScopeName } from './lib/runner.mjs';
 import { REPO } from './lib/triplex.mjs';
 import { WORLD, loadScenario, scenarioDirs } from './expect.mjs';
+import { diagnostics } from './lib/diagnostics.mjs';
 
 const args = process.argv.slice(2);
 const opt = (name, fallback) => (args.includes(name) ? args[args.indexOf(name) + 1] : fallback);
@@ -62,7 +63,9 @@ try {
       result = await runScenario({ spec: s.spec, expected, hooks: s.hooks, comp, world, log,
         opts: { lane, rung, runTag, readers, rawDir, sweepCap: Number(opt('--sweep-cap', 'Infinity')), sweepConcurrency: Number(opt('--sweep-concurrency', '8')), drainTimeoutMs: Number(opt('--drain-timeout-ms', String(15 * 60_000))), faults: (opt('--faults', '') || '').split(',').filter(Boolean) } });
     } catch (error) {
-      result = { scenario: s.spec.id, slug: s.spec.slug, verdict: 'FAIL', firstFailures: [{ harnessError: String(error.stack ?? error).slice(0, 3000) }] };
+      const failure = { harnessError: String(error.stack ?? error).slice(0, 3000) };
+      result = { scenario: s.spec.id, slug: s.spec.slug, verdict: 'FAIL', firstFailures: [failure],
+        diagnostics: diagnostics({ failedChecks: [{ id: 'runner-exception', detail: failure }] }) };
     }
     result.expectedFile = path.relative(REPO, expectedFile);
     result.wallMs = Math.round(performance.now() - t);

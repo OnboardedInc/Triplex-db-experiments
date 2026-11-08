@@ -130,8 +130,8 @@ diff -ruN a/packages/core/src/store/TriplesLive.ts b/packages/core/src/store/Tri
    PaginationCursorError,
  } from "../errors/index.js";
 +
-+// A value the TripleValue schema rejects (an int64 outside [-2^63, 2^63-1] or non-canonical, a non-finite
-+// number, ...) is the caller's typed error, decided before any adapter packs it (GS.12, O-REPLAY InvalidTripleError).
++// [EXP-W01b] Why: reject non-canonical or overflowing int64 wire payloads before adapter packing.
++// Rejected: adapter-only validation (XTDB wraps a packing RangeError as WriteError; O-REPLAY requires InvalidTripleError).
 +const isTripleValue = Schema.is(TripleValue);
  import { unsafe } from "../Branded.js";
  import * as Constraint from "../Constraint.js";
