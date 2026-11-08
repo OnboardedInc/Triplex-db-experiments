@@ -56,6 +56,23 @@ describe("structured transport identity", () => {
       }
     },
   );
+  it("does not accept an early transport code when a protected suffix exceeds the bound", () => {
+    for (const leaf of [
+      new SyntaxError("opaque"),
+      new QleverHttpError(400, "opaque"),
+      new BasisNotAvailable({
+        required: 4,
+        observed: 2,
+        replica: "test",
+        surface: "native",
+        waitedMs: 1,
+      }),
+    ]) {
+      let error: unknown = leaf;
+      for (let i = 0; i < 32; i++) error = wrap(error);
+      expect(isUnreachable(coded(error))).toBe(false);
+    }
+  });
   it("requires exact codes or real exception identities", () => {
     expect(isUnreachable({ code: "prefix_ECONNRESET_suffix" })).toBe(false);
     expect(isUnreachable({ name: "AbortError", message: "aborted" })).toBe(false);

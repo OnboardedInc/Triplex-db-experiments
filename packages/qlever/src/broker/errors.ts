@@ -102,5 +102,7 @@ export const isUnreachable = (error: unknown): boolean => {
       transport = true;
     current = (current as { cause?: unknown }).cause;
   }
-  return transport;
+  // [EXP-P2Q] Why: an unvisited suffix may contain a protected decode/HTTP/basis failure.
+  // Rejected: accepting an early code when the traversal limit hides the remaining cause chain.
+  return transport && (current == null || seen.has(current));
 };
