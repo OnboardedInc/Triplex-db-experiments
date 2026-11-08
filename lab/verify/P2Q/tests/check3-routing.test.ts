@@ -222,7 +222,7 @@ describe("targeted schedules (brief check 3)", () => {
       const record = { future, first: first.ok ? `answered ${first.value.length}` : reasonOf(first.error), waitedMs: Math.round(waited), covered, second: second.ok ? second.value.length : reasonOf(second.error), oracle: want.length };
       writeJson("check3-S7-future-basis.json", record);
       expect(first.ok).toBe(false);
-      expect(first.error?.reason).toBe("basis-not-available");
+      expect(first.error?.reason).toBe("basis-not-reached");
       if (covered) {
         expect(second.ok).toBe(true);
         expect(key(second.value)).toBe(key(want));
@@ -256,7 +256,7 @@ describe("surfaces that read the replica without the overlay (Q55c, Q58d, Q62a)"
       const arrivalsAfter = replica.unsupported.map((u) => u.markerAtArrival);
       writeJson("check3-datalog-in-transaction.json", { sourceK, whileBehind: reasonOf(exit.error), arrivalsWhileBehind, afterPublication: after.ok ? "answered" : reasonOf(after.error), arrivalsAfter });
       expect(exit.ok).toBe(false);
-      expect(exit.error?.reason).toBe("basis-not-available");
+      expect(exit.error?.reason).toBe("basis-not-reached");
       expect(arrivalsWhileBehind).toEqual([]);
       // After publication the query reaches the replica at or above sourceK (the model cannot evaluate Datalog).
       expect(arrivalsAfter.length).toBeGreaterThan(0);
@@ -286,7 +286,7 @@ describe("surfaces that read the replica without the overlay (Q55c, Q58d, Q62a)"
       const pull = await entityRead(rt, "s:rc", a.position);
       const record = { position: a.position, gate, waitedMs: Math.round(waitedMs), dependencyState: dep.ok ? dep.value : reasonOf(dep.error), dependencyStateArrivedAt: depArrival, regressionsDetected: rt.broker.stats().replicaRegressions, pullRoute: pull.route, pullEqual: key(pull.got) === key(pull.want) };
       writeJson("check3-regression-cached-marker.json", record);
-      expect(gate.ok ? (gate as any).markerAtReturn >= a.position : (gate as any).error === "ReadError:basis-not-available").toBe(true);
+      expect(gate.ok ? (gate as any).markerAtReturn >= a.position : (gate as any).error === "ReadError:basis-not-reached").toBe(true);
       expect(depArrival.every((m) => m >= a.position)).toBe(true);
       expect(record.pullEqual).toBe(true);
     } finally {
@@ -310,8 +310,8 @@ describe("surfaces that read the replica without the overlay (Q55c, Q58d, Q62a)"
       const after = await rt.adapter.resolveQueryBasis.after!(b).then(() => "accepted", (e) => reasonOf(e));
       const record = { basis: b, answerSnapshotMarker: answerMarker, markerAtAfterCheck: replica.marker().position, after, regressionsDetected: rt.broker.stats().replicaRegressions };
       writeJson("check3-residual-gap.json", record);
-      // Recorded as evidence for the residual-gap finding (the after-check cannot see this).
       expect(record.answerSnapshotMarker).toBeLessThan(a.position);
+      expect(record.after).toBe("ReadError:basis-not-reached");
     } finally {
       await rt.dispose();
       await rt.broker.close();
@@ -411,7 +411,7 @@ describe("seeded adversarial fuzz of repository pulls and the Datalog gate again
             counts.gateAccepted++;
             if (answerMarker !== -1 && answerMarker < b) counts.gateStaleAccepted++;
           } catch (error: any) {
-            if (error?.reason === "basis-not-available" || error?.reason === "replica-unavailable") counts.gateTyped++;
+            if (error?.reason === "basis-not-reached" || error?.reason === "replica-unreachable") counts.gateTyped++;
             else mismatches.push({ seed, tag: "gate", b, failed: reasonOf(error), message: String(error?.message).slice(0, 120) });
           }
         })().finally(() => inflight.delete(p));
@@ -434,7 +434,7 @@ describe("seeded adversarial fuzz of repository pulls and the Datalog gate again
           const b = (rt.broker.durable().lsn + 1 + Math.floor(r() * 2)) * 1024 + Math.floor(r() * 50);
           counts.futureReads++;
           const res = await attempt(rt, rt.adapter.getByEntity(pick(subjects), at(b)));
-          if (!res.ok && res.error?.reason === "basis-not-available") counts.futureTyped++;
+          if (!res.ok && res.error?.reason === "basis-not-reached") counts.futureTyped++;
           else if (res.ok && rt.broker.durable().lsn * 1024 + 1023 >= b) counts.futureAnswered++;
           else mismatches.push({ seed, tag: "future", b, outcome: res.ok ? "answered-beyond-prefix" : reasonOf(res.error) });
         } else if (x < 0.8) {
@@ -503,5 +503,6 @@ describe("seeded adversarial fuzz of repository pulls and the Datalog gate again
     expect(mismatches).toEqual([]);
     expect(summary.every((s) => s.converged)).toBe(true);
     expect(total("failedCommits")).toBe(0);
+    expect(total("gateStaleAccepted")).toBe(0);
   });
 });

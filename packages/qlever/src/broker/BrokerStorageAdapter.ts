@@ -43,7 +43,7 @@ import {
   numericOrderKey as order,
   packValue,
 } from "../rdf.js";
-import { BrokerFailed, type HostBroker } from "./broker.js";
+import { BrokerFailed, type HostBroker, type ReplicaSnapshot } from "./broker.js";
 import { markerFields } from "./sparql.js";
 import { lastPositionOf } from "./position.js";
 import { BasisNotAvailable, ReplicaUnavailable, isUnreachable } from "./errors.js";
@@ -70,15 +70,18 @@ export interface BrokerAdapterOptions {
 }
 
 /**
- * The basis gate the broker adapter hands the Datalog executor (V-P2Q C1, C2). Called as a function outside a
- * transaction (requested basis, or the broker head) it waits until the resolved prefix covers the basis and
- * the replica's real marker reaches it. `inTransaction` does the same for sourceK. `after` re-reads the real
- * marker once the answer is computed and refuses it if the replica went backwards below the basis meanwhile.
+ * The basis gate the broker adapter hands the Datalog executor (V-P2Q C1, C2, N2; RULINGS Q67c, Q72b). The
+ * executor answers in several requests, so the gate brackets them with a replica snapshot. Called as a function
+ * outside a transaction (requested basis, or the broker head) it waits until the resolved prefix covers the
+ * basis and the replica's real marker reaches it, and returns the snapshot (`basis` is the position to query
+ * at). `inTransaction` does the same for sourceK. `after(snapshot)`, once the last answer request has returned,
+ * probes again and refuses the answer if the replica was reset in between (another incarnation, a fence by the
+ * broker, or a marker below the basis), even when the marker is back at or above the basis by then.
  * Datalog never merges the overlay (RULINGS Q58d): it waits or fails typed.
  */
-export type BasisGate = ((requested: number | undefined) => Promise<number>) & {
-  readonly inTransaction?: (sourceK: number) => Promise<number>;
-  readonly after?: (position: number) => Promise<void>;
+export type BasisGate = ((requested: number | undefined) => Promise<ReplicaSnapshot>) & {
+  readonly inTransaction: (sourceK: number) => Promise<ReplicaSnapshot>;
+  readonly after: (snapshot: ReplicaSnapshot) => Promise<void>;
 };
 
 interface State {
@@ -458,24 +461,13 @@ export const makeQleverBrokerStorageAdapter = (
       : isUnreachable(cause)
         ? new ReplicaUnavailable({ replica: "the QLever replica", surface, cause })
         : new ReadError({ message: "QLever read failed", cause });
-  /** V-P2Q C2: after the answer, the replica's real marker must still be at or above what the answer relied on. */
-  const verifyAfter = async (surface: "datalog" | "dependency-state", required: number, floor: number, started: number) => {
-    const after = await broker.probeReplica(surface);
-    if (after.position < floor)
-      throw new BasisNotAvailable({
-        required,
-        observed: after.position,
-        replica: "the QLever replica (went backwards during the read)",
-        surface,
-        waitedMs: performance.now() - started,
-      });
-  };
-
   /**
-   * A0's dependency aggregate on the replica, eligible for B only on the replica's real marker read just before
-   * and just after the answer (V-P2Q C2; the cached marker is never trusted). If the overlay proves that no
-   * frame after the replica's marker touches the attributes, the replica's answer is already exact for B
-   * (nothing is merged, RULINGS Q58d); otherwise wait for the replica within the deadline, then typed failure.
+   * A0's dependency aggregate on the replica. It answers in one request, so the replica marker is read in that
+   * same request (a UNION with the marker triple, as pulls do; RULINGS Q67c, Q72b): the answer and the marker
+   * come from one snapshot, and no reset between separate probes can hide (V-P2Q N2). Eligible for B when that
+   * marker is at or above B, or when the overlay proves that no frame after it touches the attributes (the
+   * answer is then already exact for B; nothing is merged, RULINGS Q58d). Otherwise wait for the replica within
+   * the deadline and ask again, then typed failure.
    */
   const dependencyState: StorageAdapterService["dependencyState"] = (attributes, basis) =>
     attributes.length === 0
@@ -485,43 +477,54 @@ export const makeQleverBrokerStorageAdapter = (
           const b = basis.recordedPosition ?? broker.head();
           if (b > lastPositionOf(broker.durable().lsn)) await broker.awaitResolved(b, basisWaitMs, "dependency-state");
           const wanted = new Set(attributes);
-          let floor = b;
-          const before = await broker.probeReplica("dependency-state");
-          if (before.position < b) {
-            const touched = broker.overlay(before.position, {}, (row) => wanted.has(row.attribute));
-            if (touched === undefined || touched.length > 0) await broker.awaitReplica(b, basisWaitMs, "dependency-state");
-            else floor = before.position;
-          }
           const noBoundary = "ffffffffffffffff";
           const time = basis.recordedAt;
           const filter = `FILTER(?recorded <= ${lit(order(b))}${time === undefined ? "" : ` && ?recordedTime <= ${lit(order(time))}`})`;
           const visibleRetraction = `BOUND(?retracted) && ?retracted <= ${lit(order(b))}${time === undefined ? "" : ` && ?retractedTime <= ${lit(order(time))}`}`;
-          const rows = await client.query(
-            `SELECT (MAX(?source) AS ?sourcePosition) (MIN(?next) AS ?nextBoundary) WHERE { GRAPH ${graph} { VALUES ?attribute { ${[...wanted].map(lit).join(" ")} } ?s ${f("attribute")} ?attribute ; ${f("recorded_position_order")} ?recorded ; ${f("recorded_position_native")} ?position ; ${f("recorded_at_order")} ?recordedTime ; ${f("valid_from_order")} ?validFrom . OPTIONAL { ?s ${f("retracted_position_order")} ?retracted ; ${f("retracted_position_native")} ?retractedPosition ; ${f("retracted_at_order")} ?retractedTime } OPTIONAL { ?s ${f("valid_to_order")} ?validTo } ${filter} BIND(IF(${visibleRetraction},?retractedPosition,?position) AS ?source) BIND(IF(${visibleRetraction},${lit(noBoundary)},IF(?validFrom > ${lit(order(basis.validAt))},?validFrom,IF(BOUND(?validTo) && ?validTo > ${lit(order(basis.validAt))},?validTo,${lit(noBoundary)}))) AS ?next) } }`,
-            { signal },
-          );
-          await verifyAfter("dependency-state", b, floor, started);
-          return {
-            sourcePosition: Number(rows[0]?.["sourcePosition"]?.value ?? 0),
-            ...(rows[0]?.["nextBoundary"] && rows[0]["nextBoundary"].value !== noBoundary
-              ? { nextTemporalBoundary: numericFromOrderKey(rows[0]["nextBoundary"].value) }
-              : {}),
-          };
+          const aggregate = `SELECT (MAX(?source) AS ?sourcePosition) (MIN(?next) AS ?nextBoundary) WHERE { GRAPH ${graph} { VALUES ?attribute { ${[...wanted].map(lit).join(" ")} } ?s ${f("attribute")} ?attribute ; ${f("recorded_position_order")} ?recorded ; ${f("recorded_position_native")} ?position ; ${f("recorded_at_order")} ?recordedTime ; ${f("valid_from_order")} ?validFrom . OPTIONAL { ?s ${f("retracted_position_order")} ?retracted ; ${f("retracted_position_native")} ?retractedPosition ; ${f("retracted_at_order")} ?retractedTime } OPTIONAL { ?s ${f("valid_to_order")} ?validTo } ${filter} BIND(IF(${visibleRetraction},?retractedPosition,?position) AS ?source) BIND(IF(${visibleRetraction},${lit(noBoundary)},IF(?validFrom > ${lit(order(basis.validAt))},?validFrom,IF(BOUND(?validTo) && ?validTo > ${lit(order(basis.validAt))},?validTo,${lit(noBoundary)}))) AS ?next) } }`;
+          const sparql = `SELECT ?sourcePosition ?nextBoundary ?brokerPosition WHERE { { GRAPH ${graph} { ${metaIri} ${markerFields.position} ?brokerPosition } } UNION { ${aggregate} } }`;
+          // Pacing only (the in-request marker below decides): when the broker already knows the replica is
+          // behind B and a frame after it touches the attributes, wait first instead of computing an answer
+          // that would be discarded.
+          const cached = broker.replicaPosition();
+          if (cached < b) {
+            const touched = broker.overlay(cached, {}, (row) => wanted.has(row.attribute));
+            if (touched === undefined || touched.length > 0) await broker.awaitReplica(b, basisWaitMs, "dependency-state");
+          }
+          for (;;) {
+            const rows = await client.query(sparql, { signal });
+            const markerRow = rows.find((row) => row["brokerPosition"] !== undefined);
+            const observed = Number(markerRow?.["brokerPosition"]?.value ?? 0);
+            const answer = rows.find((row) => row !== markerRow);
+            const exact =
+              observed >= b ||
+              (() => {
+                const touched = broker.overlay(observed, {}, (row) => wanted.has(row.attribute));
+                return touched !== undefined && touched.length === 0;
+              })();
+            if (exact)
+              return {
+                sourcePosition: Number(answer?.["sourcePosition"]?.value ?? 0),
+                ...(answer?.["nextBoundary"] && answer["nextBoundary"].value !== noBoundary
+                  ? { nextTemporalBoundary: numericFromOrderKey(answer["nextBoundary"].value) }
+                  : {}),
+              };
+            const remaining = basisWaitMs - (performance.now() - started);
+            if (remaining <= 0)
+              throw new BasisNotAvailable({ required: b, observed, replica: "the QLever replica", surface: "dependency-state", waitedMs: performance.now() - started });
+            await broker.awaitReplica(b, remaining, "dependency-state");
+          }
         } });
 
   const resolveQueryBasis: BasisGate = Object.assign(
     async (requested: number | undefined) => {
       const b = requested ?? broker.head();
       if (b > lastPositionOf(broker.durable().lsn)) await broker.awaitResolved(b, basisWaitMs, "datalog");
-      await broker.awaitReplica(b, basisWaitMs, "datalog");
-      return b;
+      return broker.openSnapshot(b, basisWaitMs, "datalog");
     },
     {
-      inTransaction: async (sourceK: number) => {
-        await broker.awaitReplica(sourceK, basisWaitMs, "datalog");
-        return sourceK;
-      },
-      after: (position: number) => verifyAfter("datalog", position, position, performance.now()),
+      inTransaction: (sourceK: number) => broker.openSnapshot(sourceK, basisWaitMs, "datalog"),
+      after: (snapshot: ReplicaSnapshot) => broker.verifySnapshot(snapshot),
     },
   );
 

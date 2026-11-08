@@ -139,6 +139,7 @@ export {
 export { resolveQleverOperation, type QleverOperationResolution } from "./Operations.js";
 export {
   makeQleverNativeQueries,
+  BROKER_NATIVE_AWAIT_BASIS_MS,
   type QleverNativeQueries,
   type QleverNativeQueryOptions,
   type QleverNativeRelationContext,
@@ -164,6 +165,7 @@ export {
   type BrokerStats,
   type BrokerTransaction,
   type HostBrokerOptions,
+  type ReplicaSnapshot,
 } from "./broker/broker.js";
 export {
   makeQleverBrokerStorageAdapter,
@@ -172,6 +174,7 @@ export {
   type BrokerReadEvent,
   type BrokerReadRoute,
   type QleverBrokerStorageAdapterService,
+  type BasisGate,
 } from "./broker/BrokerStorageAdapter.js";
 export { makeFreshConnectionClient } from "./broker/http.js";
 export { HostLog, BrokerLogError, readWatermark, readFramesFrom, segmentStart, type LogFrame, type Watermark } from "./broker/log.js";

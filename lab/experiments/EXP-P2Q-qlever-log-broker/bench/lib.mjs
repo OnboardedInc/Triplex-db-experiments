@@ -40,9 +40,15 @@ export const now = () => performance.now();
 /** Wall-clock-aligned high-resolution stamp, for comparing instants across processes on this host. */
 export const wall = () => performance.timeOrigin + performance.now();
 
-/** Wraps a QLever client to record every update's duration and QLever's reported delta (`operations[0]`). */
+/**
+ * Wraps a QLever client to record every update's duration and QLever's reported delta (`operations[0]`).
+ * RULINGS Q67d: with the engine as the source (A0), a commit resolves when its guarded update applies; each
+ * applied A0 update (its VALUES row `(<urn:triplex:meta> <urn:triplex:field:position> "P")`, inserted > 0) is
+ * recorded as `resolutions: [P, wall instant]`, the source publication instant for feed lag.
+ */
+const A0_POSITION = /\(<urn:triplex:meta> <urn:triplex:field:position> "(\d+)"\)/;
 export const countingClient = (inner) => {
-  const counts = { queries: 0, updates: 0, updateErrors: 0, queryMs: [], updateMs: [], deltaTotals: [] };
+  const counts = { queries: 0, updates: 0, updateErrors: 0, queryMs: [], updateMs: [], deltaTotals: [], resolutions: [] };
   let lastDelta;
   const client = {
     query: async (...args) => { counts.queries++; const t = now(); try { return await inner.query(...args); } finally { counts.queryMs.push(now() - t); } },
@@ -51,8 +57,12 @@ export const countingClient = (inner) => {
       const t = now();
       try {
         const response = await inner.update(...args);
+        const at = wall();
         const total = response?.operations?.[0]?.['delta-triples']?.after?.total;
         if (typeof total === 'number') { lastDelta = total; counts.deltaTotals.push(total); }
+        const inserted = response?.operations?.[0]?.['delta-triples']?.operation?.inserted;
+        const position = A0_POSITION.exec(String(args[0]))?.[1];
+        if (position !== undefined && typeof inserted === 'number' && inserted > 0) counts.resolutions.push([Number(position), at]);
         return response;
       } catch (error) { counts.updateErrors++; throw error; } finally { counts.updateMs.push(now() - t); }
     },

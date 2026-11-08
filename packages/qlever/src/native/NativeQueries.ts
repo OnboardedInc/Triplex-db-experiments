@@ -74,9 +74,11 @@ export interface QleverNativeQueryOptions {
   /**
    * EXP-P2Q broker mode (default absent: A0 behaviour unchanged). A basis token above the replica's published
    * position is waited for up to this many milliseconds (RULINGS Q58a `after`), then fails with a typed
-   * BasisNotAvailable instead of an immediate RangeError; an unreachable replica fails with ReplicaUnavailable;
-   * and the position is read again after the answer, which is refused if the replica went backwards below the
-   * basis meanwhile (V-P2Q M3, C2).
+   * BasisNotAvailable instead of an immediate RangeError; an unreachable replica fails with ReplicaUnavailable.
+   * A native read takes several requests, so the source read records the replica's (position, incarnation) and
+   * is repeated after the answer: another incarnation (the broker fenced and replayed in between) or a position
+   * below the basis refuses the answer (V-P2Q M3, C2, N2; RULINGS Q67c, Q72b). Every broker-mode wiring passes
+   * `BROKER_NATIVE_AWAIT_BASIS_MS` (RULINGS Q72g) until the core native facade exists.
    */
   readonly awaitBasisMs?: number;
 }
@@ -91,12 +93,23 @@ export interface QleverNativeRelationOptions extends NativeReadOptions {
   readonly maxRelationRows?: number;
 }
 
+/** RULINGS Q72g: the native deadline every broker-mode wiring passes (the Q58a default). */
+export const BROKER_NATIVE_AWAIT_BASIS_MS = 2_000;
+
 /** Public schema-aware native SPARQL. No Datalog AST or compiler is invoked. */
 export const makeQleverNativeQueries = (
   client: QleverClient,
   scope: DatabaseScope,
   defaults: QleverNativeQueryOptions = {},
 ) => {
+  // [EXP-P2Q] Why: environment-selected broker runtimes also construct native facades separately.
+  // Rejected: fixing individual experiment callers (new callers could silently omit the 2s gate).
+  defaults = {
+    ...(process.env["QLEVER_COMMIT_PATH"] === "broker"
+      ? { awaitBasisMs: BROKER_NATIVE_AWAIT_BASIS_MS }
+      : {}),
+    ...defaults,
+  };
   // The shared resolver validates the structured scope before any native I/O.
   resolveNativeReadBasis({ scope, currentPosition: 0, now: 0 });
   const run = (
@@ -129,24 +142,33 @@ export const makeQleverNativeQueries = (
           signal.throwIfAborted();
           const request = { signal, timeoutMs, maxResponseBytes };
           const steps: NativeQueryStep[] = [];
-          const sourceQuery = `SELECT ?position WHERE { GRAPH ${graphIri(scope)} { ${metaIri} ${fieldIri("position")} ?position } }`;
           const gated = defaults.awaitBasisMs !== undefined;
+          const sourceQuery = gated
+            ? `SELECT ?position ?incarnation WHERE { GRAPH ${graphIri(scope)} { ${metaIri} ${fieldIri("position")} ?position OPTIONAL { ${metaIri} ${fieldIri("broker_incarnation")} ?incarnation } } }`
+            : `SELECT ?position WHERE { GRAPH ${graphIri(scope)} { ${metaIri} ${fieldIri("position")} ?position } }`;
+          let incarnation = "";
           const readSource = async () => {
             let positions;
             try {
               positions = await client.query(sourceQuery, request);
             } catch (cause) {
               if (gated && isUnreachable(cause))
-                throw new ReplicaUnavailable({ replica: "the QLever replica", surface: "native", cause });
+                throw new ReplicaUnavailable({
+                  replica: "the QLever replica",
+                  surface: "native",
+                  cause,
+                });
               throw cause;
             }
             const text = positions[0]?.["position"]?.value ?? "0";
             if (positions.length > 1 || !/^(0|[1-9][0-9]*)$/.test(text))
               throw new TypeError("Invalid native source-position metadata");
+            incarnation = positions[0]?.["incarnation"]?.value ?? "";
             return Number(text);
           };
           const sourceStarted = performance.now();
           let current = await readSource();
+          let before = incarnation;
           const requested = options.basis?.recordedPosition;
           if (gated && requested !== undefined && Number.isSafeInteger(requested))
             while (current < requested) {
@@ -159,8 +181,11 @@ export const makeQleverNativeQueries = (
                   surface: "native",
                   waitedMs: waited,
                 });
-              await new Promise((resolve) => setTimeout(resolve, Math.min(25, defaults.awaitBasisMs! - waited)));
+              await new Promise((resolve) =>
+                setTimeout(resolve, Math.min(25, defaults.awaitBasisMs! - waited)),
+              );
               current = await readSource();
+              before = incarnation;
             }
           steps.push({
             phase: "source-cut",
@@ -206,11 +231,14 @@ export const makeQleverNativeQueries = (
               throw new RangeError(`Native SELECT exceeds maxRows=${maxRows}; no partial result`);
             if (gated) {
               const after = await readSource();
-              if (after < basis.recordedPosition)
+              if (incarnation !== before || after !== current || after < basis.recordedPosition)
                 throw new BasisNotAvailable({
                   required: basis.recordedPosition,
                   observed: after,
-                  replica: "the QLever replica (went backwards during the read)",
+                  replica:
+                    incarnation !== before
+                      ? `the QLever replica (reset during the read: incarnation ${before || "none"} became ${incarnation || "none"})`
+                      : "the QLever replica (went backwards during the read)",
                   surface: "native",
                   waitedMs: performance.now() - sourceStarted,
                 });

@@ -56,6 +56,6 @@ describe("A0 guard with the option off", () => {
     expect(steps[3]!.requests).toEqual(["rows"]);
     expect(steps[4]!.requests).toEqual(["position", "rows"]); // behaviour change: an extra request
     expect(steps[5]!.ok).toBe(false); // behaviour change: main answers from what it holds
-    expect(steps[5]!.error).toBe("ReadError:basis-not-available");
+    expect(steps[5]!.error).toBe("ReadError:basis-not-reached");
   });
 });
