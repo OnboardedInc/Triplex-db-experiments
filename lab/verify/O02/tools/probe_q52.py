@@ -4,7 +4,8 @@
 
 Verdicts: MATCH, WRONG-ANSWER, REFUSES (exit 2 where the ruling decides), OBSERVED (recorded behaviour the brief asks
 about, not scored). V-O04e: Q66b is a checked section (two-page, three-page and chained continuations, the author's two
-choices: a continuation's own readStart, and a literal cursor token).
+choices: a continuation's own readStart, and a literal cursor token). V-O04f: Q70a-e rows (literal tokens from plain and
+in-flight reads, equal tokens issued last by either), plus two recorded page sequences the rulings do not name directly.
 
   python3 -I lab/verify/O02/tools/probe_q52.py WORKDIR [--self-test] [--results=DIR]
       -> DIR/probe_q52[.self-test].json (default lab/verify/O02/V-O04d/results)
@@ -345,9 +346,66 @@ if len(LIT_TOKENS) == 1:
     single("Q66b", "literal token from an in-flight page, no readStart", "per page a's prefixes: [([], p2 2, ...), ([tx:1], p2 M, ...)]",
            Q66B_LIT, lambda r: (entry(r, "b") == [([], [row("p2", "2"), row("p3", "3"), row("p4", "4")]),
                                                   (["tx:1"], [row("p2", "M"), row("p3", "3"), row("p4", "4")])], entry(r, "b")))
-    observe("Q66b", "literal token from an in-flight page, own readStart before the erasure", "recorded: alternatives from its own read",
-            case(LIT_CMDS, [ep("a", readStart={"afterCommand": 0}), ep("b", cursor=LIT_TOKENS[0], readStart={"afterCommand": 0})]),
-            lambda r: entry(r, "b"))
+    # V-O04f: Q70b decides this row (the token continues the in-flight read that issued it), so it is checked now
+    LIT_ALTS = [([], [row("p2", "2"), row("p3", "3"), row("p4", "4")]), (["tx:1"], [row("p2", "M"), row("p3", "3"), row("p4", "4")])]
+    single("Q70b", "literal token from an in-flight page, own readStart before the erasure", "per page a's prefixes (own readStart not consulted)",
+           case(LIT_CMDS, [ep("a", readStart={"afterCommand": 0}), ep("b", cursor=LIT_TOKENS[0], readStart={"afterCommand": 0})]),
+           lambda r: (entry(r, "b") == LIT_ALTS, entry(r, "b")))
+    Q70B_LATER = case(LIT_CMDS, [ep("a", readStart={"afterCommand": 0}), ep("b", cursor=LIT_TOKENS[0], readStart={"afterCommand": 1})])
+    single("Q70b", "literal token from an in-flight page, own readStart after the erasure", "per page a's prefixes, not plain markers",
+           Q70B_LATER, lambda r: (entry(r, "b") == LIT_ALTS, entry(r, "b")))
+
+# ------------------------------------------------------------------ V-O04f: Q70a-e (main lab/acceptance/RULINGS-PENDING.md)
+# A = in-flight read (readStart before the one commit erasing p1 and p2), B = plain read (no readStart: after every
+# erasure). Both read the same cut, so their page-0 nextCursor tokens are byte-identical (checked in each row).
+PLAIN_TAIL = [row("p2", "M"), row("p3", "3"), row("p4", "4")]
+
+
+def tokens_equal(r, *qids):
+    toks = set()
+    for qid in qids:
+        node = q(r, qid)
+        alts = [a["result"] for a in node["inFlight"]["acceptable"]] if "inFlight" in node else [node["result"]]
+        toks |= {res["pages"][0]["nextCursor"] for res in alts}
+    return len(toks) == 1
+
+
+if LIT_TOKENS:
+    T = LIT_TOKENS[0]
+    Q70C = case(LIT_CMDS, [ep("B"), ep("x", cursor=T, readStart={"afterCommand": 0})])
+    single("Q70c", "literal token from a plain read, used with an earlier readStart", "continues B: plain [p2 M, p3 3, p4 4]", Q70C,
+           lambda r: (entry(r, "x") == [("plain", PLAIN_TAIL)], entry(r, "x")))
+    Q70D_A_LAST = case(LIT_CMDS, [ep("B"), ep("A", readStart={"afterCommand": 0}), ep("x", cursor=T)])
+    single("Q70d", "equal tokens, plain B then in-flight A (A issued last)", "follows A: per A's prefixes", Q70D_A_LAST,
+           lambda r: (tokens_equal(r, "A", "B") and entry(r, "x") == LIT_ALTS, entry(r, "x")))
+    Q70D_B_LAST = case(LIT_CMDS, [ep("A", readStart={"afterCommand": 0}), ep("B"), ep("x", cursor=T)])
+    single("Q70d", "equal tokens, in-flight A then plain B (B issued last)", "follows B: plain [p2 M, p3 3, p4 4]", Q70D_B_LAST,
+           lambda r: (tokens_equal(r, "A", "B") and entry(r, "x") == [("plain", PLAIN_TAIL)], entry(r, "x")))
+    # the same Q70d case seen as a page sequence: A's all-old page 1 (p1 1) continued by x, whose only answer has p2 erased
+    # by the same commit tx:1 that page 1 did not see (one commit half seen across the sequence; Q52e, commander's intent)
+    observe("Q70d", "page sequence A (all-old prefix) -> literal token also issued later by plain B",
+            "recorded: A[] page 1 and x's acceptable answers", Q70D_B_LAST,
+            lambda r: {"A_allOld_page1": entry(r, "A")[0][1][:1], "x": entry(r, "x")})
+# Q70a: cursorFrom from a later page of the source, per prefix
+CM2 = P4 + [cmd([erase("p1", SAL)], 200), cmd([erase("p2", SAL)], 210)]
+Q70A_PAGE1 = case(CM2, [ep("A", readStart={"afterCommand": 0}), ep("x", cursorFrom={"query": "A", "page": 1})])
+single("Q70a", "cursorFrom page 1 of an in-flight read (pages 3-4 unaffected)", "plain [p3 3, p4 4] (every prefix agrees)", Q70A_PAGE1,
+       lambda r: (entry(r, "x") == [("plain", [row("p3", "3"), row("p4", "4")])], entry(r, "x")))
+# one more way to continue a page that Q70a-e does not name: journal pagination with transactions(after = next)
+TXP = [cmd([asrt("s1", "p1", SAL, I(1))], 100), cmd([asrt("s2", "p2", SAL, I(2))], 110), cmd([erase("p1", SAL), erase("p2", SAL)], 200)]
+
+
+def tx_entry(r, qid):
+    node = q(r, qid)
+    alts = [(a["erasuresSeen"], a["result"]) for a in node["inFlight"]["acceptable"]] if "inFlight" in node else [("plain", node["result"])]
+    return [(s, [(t["txId"], [c.get("value") for c in t["changes"]]) for t in res["transactions"]], res.get("next")) for s, res in alts]
+
+
+observe("beyond Q70", "transactions page 2 by after = page 1's next (no readStart), page 1 in flight",
+        "recorded: page 1 alternatives and page 2's answer",
+        case(TXP, [{"id": "t1", "kind": "transactions", "after": 0, "limit": 1, "readStart": {"afterCommand": 1}},
+                   {"id": "t2", "kind": "transactions", "after": 1, "limit": 1}]),
+        lambda r: {"page1": tx_entry(r, "t1"), "page2": tx_entry(r, "t2")})
 
 # ------------------------------------------------------------------ Q52f: toDecimal(json, p, s, rounding)
 DEC = [  # (json, p, s, mode, expected decimal text or error id): the as-written reading rounded once (Q52f, Q22, Q43d)
@@ -418,6 +476,17 @@ if SELF_TEST:
     single("ST", "ST Q66b own readStart: one plain page", "plain (wrong)", Q66B_OWN, lambda r: (entry(r, "b")[0][0] == "plain", entry(r, "b")))
     single("ST", "ST Q66b plain source: page b an error", "an error (wrong)", Q66B_PLAIN_SRC,
            lambda r: ("error" in q(r, "b"), entry(r, "b")))
+    if LIT_TOKENS:
+        single("ST", "ST Q70b own later readStart wins", "plain markers (wrong)", Q70B_LATER,
+               lambda r: (entry(r, "b") == [("plain", PLAIN_TAIL)], entry(r, "b")))
+        single("ST", "ST Q70c own readStart reopens the old value", "x lists ([], p2 2) (wrong)", Q70C,
+               lambda r: (any(s == [] for s, _ in entry(r, "x")), entry(r, "x")))
+        single("ST", "ST Q70d earliest issuer wins (A last)", "plain markers (wrong: A issued last)", Q70D_A_LAST,
+               lambda r: (entry(r, "x") == [("plain", PLAIN_TAIL)], entry(r, "x")))
+        single("ST", "ST Q70d earliest issuer wins (B last)", "per A's prefixes (wrong: B issued last)", Q70D_B_LAST,
+               lambda r: (entry(r, "x") == LIT_ALTS, entry(r, "x")))
+    single("ST", "ST Q70a page 1 continuation in flight", "x has inFlight (wrong)", Q70A_PAGE1,
+           lambda r: ("inFlight" in q(r, "x"), entry(r, "x")))
     single("ST", "ST Q52f binary64 expansion", "json 2.675 half-up = 2.67 (wrong)",
            case(queries=[{"id": "q", "kind": "expr", "expr": ["toDecimal", J(2.675), 3, 2, "half-up"]}]),
            lambda r: ((res(r, "q") or {}).get("value") == "2.67", res(r, "q")))
