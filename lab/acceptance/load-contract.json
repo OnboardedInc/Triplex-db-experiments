@@ -1,6 +1,6 @@
 {
   "format": "triplex-db-2/load-contract/3",
-  "version": "0.3.7",
+  "version": "0.3.8",
   "generatedBy": "lab/acceptance/build_contract.py",
   "status": "provisional bars from lab/TARGETS.md section 1; calibration may tighten, loosening needs Sam",
   "obligations": [
@@ -224,6 +224,9 @@
         }
       ],
       "commands": "the trace's own commands; the 10-fact probe is a diagnostic only",
+      "readGuarantees": "each serving surface the composition claims is measured against COMPOSITION readGuarantees (RULINGS Q55c, provisional)",
+      "hotSubjects": "COMPOSITION hotSubjects; E-OVERLOADED counts as an unjustified outcome (RULINGS Q51a)",
+      "storagePerCommit": "reported, never a bar: bytes and triples per 10-fact command on both lanes (EXP-J01; XTDB A0 27,581 bytes against the candidate's 95,364; QLever A0 about 750 triples against R17's 94), plus xt.txs and METADATA cost at 1M+ transactions (RULINGS Q50c, Q51d, Q51f)",
       "accounting": "every offered command is committed with a receipt, rejected with a typed error, or a typed conflict; zero unaccounted (NS-P2-UNACCOUNTED-MAX)",
       "progress": {
         "rule": "every oracle-valid trace command publishes; typed rejections count only for commands the frozen trace marks deliberately invalid, typed conflicts only where the oracle independently finds a compare-and-set race (NS-P2-UNJUSTIFIED-OUTCOMES-MAX)",
@@ -246,8 +249,13 @@
         "NS-P2-DUP-RECEIPT-FRACTION"
       ]
     },
+    "runQueue": {
+      "qleverExclusiveFirst": "A0 and candidate at delta 0, 100k and 500k; persist-updates off; kill -9 replay; rebuild trigger cost; the full trace with burst against QLever; a keep-alive recheck on an idle slot (RULINGS Q50e)",
+      "xtdb100kRung": "deferred until EXP-J01 lands; the disk need is re-estimated from the new bytes per commit before a large slot is requested (RULINGS Q51e)"
+    },
     "P3": {
-      "commitTime": "the source of truth's publication instant for the transaction, stamped by the source on the host monotonic clock the driver also reads",
+      "commitTime": "the source's own publication timestamp for each position (the broker's durable watermark update, or the engine's commit resolution when the engine is the source), stamped by the source on the host monotonic clock the driver also reads, recorded independently of ACK delivery (RULINGS Q55d)",
+      "accounting": "every committed position is accounted; no lag sample is dropped for a missing ACK; a position with no consumer record is counted and fails the run (RULINGS Q55d)",
       "cursor": "(epoch, position), a total order over transactions; per-subject order follows from it",
       "expectedAffected": "subjects written directly (O-REPLAY) plus the subjects whose WORLD_W0 static read set contains a changed fact (O-DOMAIN; RULINGS Q36e)",
       "milestone": "the consumer durably records the affected-subject set and its checkpoint in one durable write; lag runs from commit time to that record",

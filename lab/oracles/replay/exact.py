@@ -301,8 +301,11 @@ def to_decimal(a, precision=None, scale=None, rounding=None):
         Q33b) rounded once at scale s with the named mode; more than p - s integer digits
         is E-DECIMAL-OVERFLOW (R-DEC-13, RULINGS Q43a).
       a decimal with (p, s) is re-declared exactly: excess fraction digits E-DECIMAL-FRACTION,
-        excess integer digits E-DECIMAL-OVERFLOW (Q43a, DR-JSON-CONVERT).
+        excess integer digits E-DECIMAL-OVERFLOW (Q43a).
+      DR-JSON-CONVERT: toDecimal(json, p, s) validates the JSON value (`_json_to_decimal`).
     """
+    if a.family == "json":
+        return _json_to_decimal(a, precision, scale, rounding)
     if a.family == "number":
         if precision is None or scale is None or rounding is None:
             raise V.OracleInputError("DC-N2D: a number converts to decimal only through toDecimal(x, p, s, rounding)")
@@ -322,6 +325,28 @@ def to_decimal(a, precision=None, scale=None, rounding=None):
     if precision is None or scale is None:
         raise V.OracleInputError("toDecimal takes (x) or (x, p, s)")
     return _declared(value, _param_int(precision, "toDecimal precision", 1), _param_int(scale, "toDecimal scale"))
+
+
+def _json_to_decimal(a, precision, scale, rounding):
+    """DR-JSON-CONVERT (ACC decimalRouting, Q38d; R-DEC-18, ruled by Q49e): an explicit
+    toDecimal(json, p, s) with a declared precision and scale validates the JSON value,
+    never rounding it. A JSON number converts from its as-written reading (Q33a's
+    read-back-as-written text, its shortest rendering), never its binary64 expansion:
+    toDecimal(json 0.1, 2, 1) = 0.1; excess fraction digits are E-DECIMAL-FRACTION, more than
+    p - s integer digits (or 38) E-DECIMAL-OVERFLOW. Any other JSON value, a string holding
+    decimal text included, is E-INVALID-VALUE. A rounding argument stays refused: neither
+    DR-JSON-CONVERT nor Q49e names one."""
+    if rounding is not None:
+        raise TypedError("X-NOT-MODELED", "toDecimal(json, p, s, rounding)",
+                         ruling="R-DEC-18: DR-JSON-CONVERT and Q49e name no rounding (ORCHESTRATOR-RULING-NEEDED)")
+    if precision is None or scale is None:
+        raise V.OracleInputError("DR-JSON-CONVERT: toDecimal of a json value needs a declared precision and scale")
+    p, s = _param_int(precision, "toDecimal precision", 1), _param_int(scale, "toDecimal scale")
+    node = a.extra.node
+    if isinstance(node, bool) or not isinstance(node, float):
+        raise TypedError("E-INVALID-VALUE", "toDecimal of a json value that is not a number (Q49e)", json=a.payload)
+    as_written = V.Value("decimal", Fraction(V.es_number_to_string(node)), (0, 1, False))
+    return _declared(as_written, p, s)
 
 
 def _declared(value, p, s):

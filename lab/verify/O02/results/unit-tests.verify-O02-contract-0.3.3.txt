@@ -1,0 +1,80 @@
+.........................FF..............EEEE..E.......E......................................................................................................................................................................
+======================================================================
+ERROR: test_E_DECIMAL_BARE_DIVIDE (lab.oracles.replay.tests.test_contract_section4.Errors.test_E_DECIMAL_BARE_DIVIDE)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/oracles/replay/tests/test_contract_section4.py", line 677, in test
+    tag, reasons, phase = ERR.ERROR_TABLE[row["id"]]
+                          ~~~~~~~~~~~~~~~^^^^^^^^^^^
+KeyError: 'E-DECIMAL-BARE-DIVIDE'
+
+======================================================================
+ERROR: test_E_DECIMAL_FRACTION (lab.oracles.replay.tests.test_contract_section4.Errors.test_E_DECIMAL_FRACTION)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/oracles/replay/tests/test_contract_section4.py", line 677, in test
+    tag, reasons, phase = ERR.ERROR_TABLE[row["id"]]
+                          ~~~~~~~~~~~~~~~^^^^^^^^^^^
+KeyError: 'E-DECIMAL-FRACTION'
+
+======================================================================
+ERROR: test_E_DECIMAL_NARROWING (lab.oracles.replay.tests.test_contract_section4.Errors.test_E_DECIMAL_NARROWING)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/oracles/replay/tests/test_contract_section4.py", line 677, in test
+    tag, reasons, phase = ERR.ERROR_TABLE[row["id"]]
+                          ~~~~~~~~~~~~~~~^^^^^^^^^^^
+KeyError: 'E-DECIMAL-NARROWING'
+
+======================================================================
+ERROR: test_E_DECIMAL_OVERFLOW (lab.oracles.replay.tests.test_contract_section4.Errors.test_E_DECIMAL_OVERFLOW)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/oracles/replay/tests/test_contract_section4.py", line 677, in test
+    tag, reasons, phase = ERR.ERROR_TABLE[row["id"]]
+                          ~~~~~~~~~~~~~~~^^^^^^^^^^^
+KeyError: 'E-DECIMAL-OVERFLOW'
+
+======================================================================
+ERROR: test_E_INEXACT_JSON_NUMBER (lab.oracles.replay.tests.test_contract_section4.Errors.test_E_INEXACT_JSON_NUMBER)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/oracles/replay/tests/test_contract_section4.py", line 677, in test
+    tag, reasons, phase = ERR.ERROR_TABLE[row["id"]]
+                          ~~~~~~~~~~~~~~~^^^^^^^^^^^
+KeyError: 'E-INEXACT-JSON-NUMBER'
+
+======================================================================
+ERROR: test_E_NEGATIVE_ZERO_INSTANT (lab.oracles.replay.tests.test_contract_section4.Errors.test_E_NEGATIVE_ZERO_INSTANT)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/oracles/replay/tests/test_contract_section4.py", line 677, in test
+    tag, reasons, phase = ERR.ERROR_TABLE[row["id"]]
+                          ~~~~~~~~~~~~~~~^^^^^^^^^^^
+KeyError: 'E-NEGATIVE-ZERO-INSTANT'
+
+======================================================================
+FAIL: test_every_contract_example_is_evaluated (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_contract_example_is_evaluated)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/oracles/replay/tests/test_contract_section4.py", line 194, in test_every_contract_example_is_evaluated
+    self.assertEqual(texts, set(EXAMPLES.get(row["id"], {})), row["id"])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Items in the first set but not the second:
+'SUM(:conf/amount) with 10 asserted twice on entity agg:c'
+'SUM with 10 on agg:a and 10 on agg:b'
+'COUNT with the same fixture' : AG-SUM-ONE-ENTITY
+
+======================================================================
+FAIL: test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/oracles/replay/tests/test_contract_section4.py", line 181, in test_every_section4_row_has_a_named_test
+    self.assertTrue(hasattr(classes[cls], name), f"{table} {row['id']} has no {cls}.{name}")
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : aggregateRules AG-SUM-ONE-ENTITY has no Aggregates.test_AG_SUM_ONE_ENTITY
+
+----------------------------------------------------------------------
+Ran 222 tests in 23.552s
+
+FAILED (failures=2, errors=6)

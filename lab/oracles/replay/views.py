@@ -11,7 +11,7 @@ import json
 from . import exact as X
 from . import replay as RP
 from . import values as V
-from .replay import _num, assertion_output, record_output
+from .replay import ErasedValue, _num, assertion_output, is_erased, read_value, record_output, value_matches
 
 
 # --------------------------------------------------------------------------- cuts
@@ -146,7 +146,7 @@ def _pattern_match(a, pattern):
         "entityId" not in pattern or a.entityId == pattern["entityId"],
         "attribute" not in pattern or a.attribute == pattern["attribute"],
         "entityType" not in pattern or a.entityType == pattern["entityType"],
-        "value" not in pattern or a.value == pattern["value"],
+        "value" not in pattern or value_matches(a, pattern["value"]),   # Q49c: an erased value matches none
     ))
 
 
@@ -231,7 +231,7 @@ def q_assertion_snapshot(run, query):
         if mode == "live-at-valid" and retirement is not None:
             continue
         out.append(V.OrderedOut([
-            ("id", a.id), ("entityId", a.entityId), ("attribute", a.attribute), ("value", a.value.to_output()),
+            ("id", a.id), ("entityId", a.entityId), ("attribute", a.attribute), ("value", read_value(a).to_output()),
             ("entityType", a.entityType), ("validFrom", _num(a.validFrom)), ("validTo", _num(a.validTo)),
             ("createdBy", a.createdBy), ("schemaVersion", a.schemaVersion), ("recordedAt", _num(a.recordedAt)),
             ("txId", a.txId), ("knownRetirement", retirement)]))
@@ -310,6 +310,7 @@ def q_transactions_for_entity(run, query):
     snapshot = int(query["snapshotPosition"]) if query.get("snapshotPosition") is not None \
         else run.engine.scope(scope).last_position
     before = int(query["beforePosition"]) if query.get("beforePosition") is not None else None
+    # Q49a: an erasure commit's identity changes name the entity, so it is listed like any change
     rows = [r for r in _journal(run, scope) if not r.internal and r.position <= snapshot
             and (before is None or r.position < before)
             and any(a.entityId == entity for _, a in r.changes)]
@@ -331,6 +332,8 @@ def q_cut_catalog(run, query):
         # beside it so a harness can map its own coordinates onto the oracle's cuts
         if isinstance(getattr(r, "coordinate", None), V.OrderedOut):
             fields.append(("coordinate", r.coordinate))
+        if getattr(r, "erasure", False):
+            fields.append(("erasure", True))      # R-ERA-2: an erasure commit takes a position like any commit
         return V.OrderedOut(fields)
     return [row(r) for r in run.engine.scope(scope).records]
 
@@ -458,14 +461,22 @@ def q_value_supports(run, query):
     representation of the support with the lowest (recordedPosition, op index)."""
     cut = resolve_cut(run, query.get("cut"))
     pattern = _decode_pattern(query.get("pattern") or V.Obj([]))
-    groups = {}
+    groups, erased = {}, {}
     for a in ordered(fact_source(run, cut, pattern)):
         if visible(a, cut) and _pattern_match(a, pattern):
-            groups.setdefault((a.entityId, a.attribute, a.value), []).append(a.id)
-    keys = sorted(groups, key=lambda k: (k[0], k[1], k[2].order_key()))
+            if a.about is None and is_erased(a, "valueSupports"):
+                # Q49c: all erased values of an attribute form one group keyed by the marker
+                erased.setdefault((a.entityId, a.attribute), []).append(a)
+            else:
+                groups.setdefault((a.entityId, a.attribute, read_value(a)), []).append(a.id)
+    keys = sorted(groups, key=lambda k: (k[0], k[1], 0, k[2].order_key()))
+    rows = [(k[0], k[1], k[2].to_output(), groups[k]) for k in keys]
+    rows += [(e, attr, ErasedValue(*members).to_output(), [m.id for m in members])
+             for (e, attr), members in erased.items()]
+    rows.sort(key=lambda r: (r[0], r[1]))        # stable: readable values first, the marker group last
     return V.OrderedOut([("cut", cut.to_output()), ("supports", [
-        V.OrderedOut([("entityId", k[0]), ("attribute", k[1]), ("value", k[2].to_output()),
-                      ("count", len(groups[k])), ("assertionIds", groups[k])]) for k in keys])])
+        V.OrderedOut([("entityId", e), ("attribute", attr), ("value", value), ("count", len(ids)),
+                      ("assertionIds", ids)]) for e, attr, value, ids in rows])])
 
 
 def q_reachability(run, query):
@@ -478,7 +489,9 @@ def q_reachability(run, query):
     attribute = query["attribute"]
     edges = {}
     for a in ordered(scope_assertions(run, cut)):
-        if a.attribute == attribute and visible(a, cut) and a.value.family in ("ref", "string"):
+        # Q49c: an erased reference cannot be followed
+        if a.attribute == attribute and visible(a, cut) and not is_erased(a, "reachability") \
+                and a.value.family in ("ref", "string"):
             edges.setdefault(a.entityId, {}).setdefault(a.value.payload, []).append(a.id)
     origin = query["from"]
     seen, pending = set(), list(edges.get(origin, {}))
@@ -535,11 +548,15 @@ def _rows(run, cut, match):
         choices = []
         for name in names:
             attr = match["attributes"][name]
-            distinct = {}
+            distinct, erased = {}, []
             for a in facts:
                 if a.attribute == attr:
-                    distinct.setdefault(a.value, a.value)   # first (lowest creation order) representative
-            choices.append(sorted(distinct, key=lambda v: v.order_key()))
+                    if is_erased(a, "aggregate"):
+                        erased.append(a)
+                    else:
+                        distinct.setdefault(a.value, a.value)   # first (lowest creation order) representative
+            # Q49c: the entity's erased values of the attribute bind once, as the marker group, last
+            choices.append(sorted(distinct, key=lambda v: v.order_key()) + ([ErasedValue(*erased)] if erased else []))
         if any(not c for c in choices):
             continue
         combos = [[]]
@@ -598,7 +615,8 @@ def q_aggregate(run, query):
     for agg in aggs:
         if agg["op"] != "avg" or (agg.get("convert") or legacy_convert) is not None:
             continue
-        families = {var_types.get(agg["var"])} | {r[agg["var"]].family for r in rows}
+        families = {var_types.get(agg["var"])} | {r[agg["var"]].family for r in rows
+                                                   if not isinstance(r[agg["var"]], ErasedValue)}
         if "integer" in families:
             raise X.TypedError("E-INTEGER-AVG", "AVG over integers requires an explicit conversion (toNumber)")
         if "decimal" in families:
@@ -609,30 +627,58 @@ def q_aggregate(run, query):
             if cond["op"] in ("exists", "missing"):
                 raise V.OracleInputError("aggregate where supports value predicates only")
             expected = _where_constant(cond)
-            rows = [r for r in rows if V.predicate(cond["op"], r[cond["var"]], expected, query.get("compare", "typed"))]
+            # Q49c: an erased value matches no value predicate
+            rows = [r for r in rows if not isinstance(r[cond["var"]], ErasedValue)
+                    and V.predicate(cond["op"], r[cond["var"]], expected, query.get("compare", "typed"))]
     except V.MixedFamily as error:
         raise X.mixed(error)
     group_by = list(query.get("groupBy") or [])
-    groups = {}
+    groups, marker_groups = {}, {}
     for r in rows:
-        groups.setdefault(tuple(r[g] for g in group_by), []).append(r)
+        # Q49c: grouping puts all erased values of an attribute in one group keyed by the marker
+        key = tuple(_ERASED_KEY if isinstance(r[g], ErasedValue) else r[g] for g in group_by)
+        groups.setdefault(key, []).append(r)
+        for g in group_by:
+            if isinstance(r[g], ErasedValue):
+                marker_groups.setdefault((key, g), []).extend(r[g].assertions)
     if not group_by and not groups:
         groups[()] = []     # AG-EMPTY-UNGROUPED: one row; AG-EMPTY-GROUPED: no rows
     out_rows = []
-    for key in sorted(groups, key=lambda k: [v.order_key() for v in k]):
+    for key in sorted(groups, key=lambda k: [(1, ()) if v is _ERASED_KEY else (0, v.order_key()) for v in k]):
         members = groups[key]
-        row = [(g, v.to_output()) for g, v in zip(group_by, key)]
+        row = [(g, ErasedValue(*marker_groups[(key, g)]).to_output() if v is _ERASED_KEY else v.to_output())
+               for g, v in zip(group_by, key)]
         for agg in aggs:
             convert = agg.get("convert") or legacy_convert
-            items = [r[agg["var"]] for r in members]
+            values = [r[agg["var"]] for r in members]
+            items = [v for v in values if not isinstance(v, ErasedValue)]   # Q49c: value aggregates skip it
+            if agg["op"] == "count":
+                _check_count(values)
             if convert is not None and agg["op"] != "avg":
                 raise V.OracleInputError("convert is defined for avg only (AMB-11)")
             result = X.aggregate(agg["op"], items, convert=convert if agg["op"] == "avg" else None)
+            if agg["op"] == "count":
+                result = V.integer(result.payload + (1 if len(items) < len(values) else 0))
             if result is None and query.get("emptyAs") is not None:
                 result = V.decode_value(query["emptyAs"])   # AG-PACKET-COALESCE (task-specific)
             row.append((agg.get("as", agg["op"]), None if result is None else result.to_output()))
         out_rows.append(V.OrderedOut(row))
     return V.OrderedOut([("cut", cut.to_output()), ("rows", out_rows)])
+
+
+_ERASED_KEY = object()      # the marker group key of Q49c
+
+
+def _check_count(values):
+    """AG-COUNT counts distinct values of the variable; Q49c says COUNT of assertions counts
+    an erased value. The marker group counts once as a distinct value; where that differs from
+    counting each erased assertion (two or more erased assertions bound), the two readings
+    disagree and the oracle refuses (R-ERA-4)."""
+    erased = [a for v in values if isinstance(v, ErasedValue) for a in v.assertions]
+    if len(erased) > 1:
+        raise X.TypedError("X-NOT-MODELED", "COUNT over a variable bound to several erased values",
+                           ruling="R-ERA-4: Q49c counts erased assertions while AG-COUNT counts distinct values "
+                           "(ORCHESTRATOR-RULING-NEEDED)")
 
 
 def _decode_expr(node):

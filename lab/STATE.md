@@ -23,7 +23,7 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | exp/R01-entity-core | MERGED db249d8 (verified PROMOTE) | follow-ups go to EXP-R02 / EXP-F02 |
 | O-REPLAY 0.3.1 (8cc2c26) | ACCEPTED (V-O03), MERGED 4591715; pinned in contract 0.3.6 (2c3bac6): 106 of 119 closable | EXP-O04 (F2 + erasure) running |
 | W0-1.1.1 (ada2e90) | ACCEPTED (V-D01 delta check), MERGED e7c1346; 95 hashes verified | pin after O-DOMAIN reproduces the fingerprint |
-| exp/P2Q-qlever-log-broker (d7c6086) | PROGRESSED: candidate ACK 4-8 ms p50 vs A0 0.96-7.4 s on the same resident; feed and falsifiers pass | V-P2Q, controlled runs (Q50e), hardening (Q50d) |
+| exp/P2Q-qlever-log-broker (d7c6086) | V-P2Q REJECT: C1 in-transaction Datalog stale, C2 cached marker after an unnoticed replica regression, C3 two brokers in one process lose ACKed frames; pulls exact on 3,190 adversarial reads; feed lag from source publication p99 13.7 / 24.9 ms | fix round Q62a (P2Q author), re-verify, then P2B (Q58b), then SQLite hardening (Q58c) |
 | exp/P2X-xtdb-commit-feed (fb6681a) | PROGRESSED: 0 cross-subject conflicts (A0 thousands), service 6-8x lower at ~20k history; feed exact but lag p99 2.9 s (bar 250 ms); G1 PASS on and off | V-P2X later; EXP-P2B (XTDB behind the broker, Q51b) is the next XTDB P2/P3 move |
 | exp/O04-oracle-erasure (a9c1327) | O-REPLAY 0.4.1 ACCEPTED (V-O04c, 85/85 probes, 15/15 plants) | merged with the pin move in contract 0.3.8 (merging alone breaks --verify); Q52 + SCHEMA note as 0.4.2 later |
 | exp/D01c-o-domain (276a280) | O-DOMAIN reproduced W0-1.1.1 exactly: 87/87 cases, 6/6 fingerprint values, floors equal to V-D01 to the last digit | V-D01c, then pin W0 and O-DOMAIN; W0-1.1.2 folds Q53 readings |
@@ -33,6 +33,7 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | exp/X02-xtql-parity (bf1ad4d) | PROGRESSED: G0/G1 PASS, G2 SQL 142/142, XTQL diagnostic 142/142, XTQL candidate timeouts under load | V-X02, then promote; EXP-C8 builds on it |
 | exp/001-xtdb-baseline (049639d) | PASS all; task-languages.mjs cherry-picked to main | done |
 | G01 golden vectors (main) | 49 vectors; AMB-01..17 ruled (RULINGS Q21) | compile Q21 into contract 0.3.2 with Codex v2 findings |
+| contract 0.3.8 (main 445bc45) | O-REPLAY 0.4.1 pinned at a9c1327 with the oracle merged; 156 obligations; 117 closable, 6 blocked; qualification is a run; pending rows Q51b, Q57-Q62 | 0.3.9 compiles Q58-Q62 (Q57 after W0-1.1.2) |
 | contract 0.3.7 (main ca42e06) | Q46-Q49 compiled; 153 obligations; W0-1.1.1 pinned ACCEPTED; O-DOMAIN fingerprint null; Q50-Q54 pending rows (no authority) | Codex round 7 DONE: NOT READY, 5 open (2 partial, 3 new), all accepted as Q55; 0.3.8 compiles Q50-Q55 |
 | contract 0.3.3 (main 89376e1) | Q29-Q32 compiled; 142 obligations, 50 thresholds; W0 pin null until V-D01 | Codex round 3 |
 
@@ -41,16 +42,15 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | --- | --- | --- |
 | EXP-N01 driver MERGED; waiting for an exclusive XTDB slot for A0 (opus) | P1-P5 measurement (NS gate) | A0 receipts |
 | EXP-W01 20 golden scenarios (opus, exp/W01-golden-scenarios) | all five under real load (GS gate) | lab/scenarios/ |
-| EXP-A01 contract 0.3.8 (opus, resumed, branch contract/0.3.8) | Q50-Q56 compiled; O-REPLAY pin to a9c1327 with the oracle merge | branch to merge after --verify |
-| EXP-E01 claim evaluator (opus, exp/E01-claim-evaluator) | floor for every claim | lab/bin/claim.mjs |
 | EXP-J01 bytes per commit, both lanes (opus, exp/J01-bytes-per-commit) | P2 (and delta growth for P3/P5) | per-source tables, candidate encoding |
-| R22 noise-robust benchmarking (sonnet xhigh, research) | measurement validity for every A/B verdict | lab/research/R22 |
-| R23 log-of-record compositions (sonnet xhigh, research) | P2, P3; Q55c for Sam; EXP-P2B design | lab/research/R23 |
 | EXP-X05 XTDB read-only follower (opus, exp/X05-xtdb-read-follower; waits for pool) | P1 | harness follower support, receipts |
 | EXP-C8 reads never write (opus, exp/C8-read-only-frontier) | P1, C8 floor | both lanes |
-| V-P2Q verification (opus, verify/P2Q) | P2, P3 | verdict on merging the broker composition |
+| EXP-P2Q fix round Q62a (opus, P2Q author resumed, exp/P2Q-qlever-log-broker) | P2, P3 | C1-C3, M1-M3, m1, m6 fixed; then V-P2Q re-verify; then EXP-P2B |
+| EXP-E01 align with 0.3.8 (opus, resumed) | floor for every claim | claim.mjs on 0.3.8 fields; then 0.3.9 fields |
+| EXP-M01 PAIR-0 paired measurement (opus, exp/M01-paired-measurement) | measurement validity P1-P5 | PAIR gate, noise recorder, A/A duet s_d |
+| EXP-A01 contract 0.3.9 (opus, resumed, branch contract/0.3.9) | Q58-Q62 compiled | branch to merge after --verify |
 | V-D01c review of O-DOMAIN (opus, verify/D01c) | P5, P3 deps, GS domain expectations | verdict -> W0 and O-DOMAIN pins |
-Codex plan-v2 review DONE: NOT READY, 14 findings all accepted (lab/reviews/plan-v2-review.responses.md, 675db6b). Codex round 2 DONE: 7 closed, 7 partial, 6 new, NOT READY; all accepted as Q31a-k (743cb1f). Contract 0.3.3 committed 89376e1 (142 obligations). Codex round 3 DONE: 11 closed, 2 partial, 5 new, NOT READY; accepted as Q34a-e (9a4fbb4). Contract 0.3.4 committed 60e4c57 (147 obligations, byte-identical regeneration). Codex round 4 DONE: NOT READY; accepted as Q38a-f (baeb9fd). Contract 0.3.5 committed 15a07b6 (149 obligations; 124 fail closed on null oracle pins; Q40 recorded-not-compiled; Q41 in RULINGS-PENDING.md). Codex round 5 DONE: 6 closed, 2 partial, 3 new; Q42a-c pending (59047ac). Contract 0.3.6 compiles Q40-Q42 once W0-1.1.0 lands; then Codex round 6. NEXT FREE SLOTS, in order: (000a) EXP-O04b Q52 as O-REPLAY 0.4.2 (O04 author ac43e34, resume); (000a2) EXP-P2B XTDB behind the host log and broker (Q51b, Q51c; after V-P2Q's verdict); (000a4) W0-1.1.2 (Q53b: readings A01-A10 as SPEC clarifications plus golden cases; W0 author); then (Q46 + Q47 from lab/reviews/plan-v2-round6.responses.md); (00) V-F02b independent verification of exp/F02b-wire-exactness-fixes (after its f1 G1 run); (1) V-X02 (verify exp/X02-xtql-parity bf1ad4d; XTQL candidate rerun on an exclusive slot); (2) EXP-Q07 QLever version side-by-side (R21 E1) when an exclusive QLever slot frees; (3) XTDB 2.2.1 re-qualification when tagged.
+Codex plan-v2 review DONE: NOT READY, 14 findings all accepted (lab/reviews/plan-v2-review.responses.md, 675db6b). Codex round 2 DONE: 7 closed, 7 partial, 6 new, NOT READY; all accepted as Q31a-k (743cb1f). Contract 0.3.3 committed 89376e1 (142 obligations). Codex round 3 DONE: 11 closed, 2 partial, 5 new, NOT READY; accepted as Q34a-e (9a4fbb4). Contract 0.3.4 committed 60e4c57 (147 obligations, byte-identical regeneration). Codex round 4 DONE: NOT READY; accepted as Q38a-f (baeb9fd). Contract 0.3.5 committed 15a07b6 (149 obligations; 124 fail closed on null oracle pins; Q40 recorded-not-compiled; Q41 in RULINGS-PENDING.md). Codex round 5 DONE: 6 closed, 2 partial, 3 new; Q42a-c pending (59047ac). Contract 0.3.6 compiles Q40-Q42 once W0-1.1.0 lands; then Codex round 6. NEXT FREE SLOTS, in order: (000a) V-P2Q re-verification of the fix round (resume aea2afc01cf3f010f); (000a1) EXP-O04b Q52 as O-REPLAY 0.4.2 (O04 author ac43e34, resume); (000a2) EXP-P2B XTDB behind the broker (Q58b; P2Q author, after re-verification); (000a2b) red-team of claim.mjs after E01 aligns; (000a4) W0-1.1.2 (Q53b: readings A01-A10 as SPEC clarifications plus golden cases; W0 author); then (Q46 + Q47 from lab/reviews/plan-v2-round6.responses.md); (00) V-F02b independent verification of exp/F02b-wire-exactness-fixes (after its f1 G1 run); (1) V-X02 (verify exp/X02-xtql-parity bf1ad4d; XTQL candidate rerun on an exclusive slot); (2) EXP-Q07 QLever version side-by-side (R21 E1) when an exclusive QLever slot frees; (3) XTDB 2.2.1 re-qualification when tagged.
 Next when a slot frees (PLAN 8 v2.1 order): tiny P2X/P2Q + CF01 + fault control on both sources (P2, P3); EXP-N02 A0 once N01
 lands; EXP-D01 W0 kernel + O-DOMAIN; then X04/Q05 layer swaps; broad W01 and S5 last.
 
@@ -69,9 +69,13 @@ engine-heavy dispatches; heavy commands via lab/bin/heavy.mjs; gate reruns one a
 residents at every check-in; recreate qlever-dev fresh when its delta grows.
 
 ## Pending decisions for Sam (flagged, provisional rulings in force)
-- Q55c native queries in a host-log composition: repository pulls always read your own write; a native query (SPARQL, XTQL, SQL, Datalog)
-  reports the basis it answered at, waits for your basis token if you pass one, and otherwise answers at the replica's position (it may lag
-  by milliseconds) instead of every native query paying the overlay cost.
+- Q58a (replaces Q55c) native queries after a commit: when a Triplex client commits and then runs a raw native query (SPARQL, XTQL or SQL)
+  on the same client without naming a basis, should the query (a) wait for its own commit to reach the replica, up to a 2 s deadline,
+  then fail typed, or (b) answer at once at the replica's position and report it? Provisional: (a) for the same client session, (b) for
+  tokenless external callers (what the XTDB client, Mongo drivers, Cosmos SDK and LiteFS proxy do). Cost of (a): native latency includes
+  replica lag, seconds on XTDB when its indexer is busy.
+- Q60 measurement margins and host: "hold" margins 1.10 (p50) and 1.15 (p99), superiority 1.25 (provisional). May acceptance measurement
+  windows pause Sam's default colima VM (4 vCPU) and other heavy host jobs? Not done without Sam.
 - R15 presence/deletion/cascade: Option C staged; delete = end valid time; default restrict; cascade any-parent card-one.
 - Q21 AMB-09: two equal-valued assertions on one entity are one value, so a duplicated pay fact never doubles a total (SUM 10, not 20).
 - Q21 AMB-17: `find` fails with ConflictingValuesError when a returned document has a conflicted attribute (a projection omitting it succeeds).
