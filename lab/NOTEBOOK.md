@@ -1506,3 +1506,20 @@ Where each priority stands, from evidence so far (research probes and baselines;
   every transition needs a content check against the evaluator's expectation.
 - **X02 round 3 (Q79e grammar) done:** 1,818 generated queries match XTDB, 1,818 unsafe mutations are rejected, G0 is 967/967. Reviewer
   round 4 is checking variations outside the generated set.
+
+## 2026-11-08 23:01Z: contract 0.3.11 merge undone (evaluator suite broke); seven rounds dispatched
+- **Contract 0.3.11 passed its review (V-A01 round 2 ACCEPT: 344/344 mutations, 63 tests), but merging it broke 8 of 108 evaluator
+  tests on main.** The contract's review never ran claim.mjs's suite, which reads the contract. I undid the unpushed merge (main back at
+  5d34fdc; only main contained it). **Q87:** every contract merge now needs the evaluator suite to pass on the branch merged with main.
+  **Learning:** a reviewer's ACCEPT covers what it tested; the merge gate has to cover everything that reads the merged file.
+- **V-X02 round 4 FIX-FIRST:** dollar-bearing identifiers let unsafe operands and second statements past the guard; 36 supported queries
+  are falsely refused; nested block comments are refused although the pinned lexer allows them. **Q79f:** the guard follows the pinned
+  lexer, and refuses wherever it and the lexer disagree.
+- **V-P2Q round 5 FIX-FIRST:** the cause walk fixed truncation (42/42 HTTP cases) but now matches the word "connection" in decode errors.
+  Classification goes by error codes and typed errors only, never message text.
+- **V-K01 FIX-FIRST (offline):** a failed re-verify kept an old PASS; T1 ignored a failed stop proof; settle read the initial gauge. All
+  three are a stale earlier value standing in for a fresh reading; the builder is told to look for that pattern everywhere.
+- **O-OBS round 3 is back with all nine counterexamples rejected,** so it goes to review. OBS01 and G03 delivered partial work: both need
+  slot time. OBS01 releases s1 to K01 after copying its evidence out; G03 does all its no-slot work and scripts the slot run.
+- **The scale window opens after CX-DA01 finishes with tx2-datomic-dev.** It covers K01 live, G03's slot run, W01b's GS rerun, J01's
+  compact-on G1, and the X02 and C8 exclusive reruns.
