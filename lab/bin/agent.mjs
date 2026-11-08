@@ -69,9 +69,11 @@ function run(role, id, promptFile, cwd, addDirs, resumeSession) { // promptFile 
   const last = join(dir, `last-${stamp}.md`);
   const logPath = join(dir, `codex-${stamp}.log`);
   const writable = [...new Set([...ALWAYS_WRITABLE, ...addDirs])];
-  const base = ['-m', MODEL, '-c', `model_reasoning_effort="${effort}"`, '-s', 'workspace-write',
-    '-c', 'sandbox_workspace_write.network_access=true', '-o', last];
-  for (const d of writable) base.push('--add-dir', d);
+  // `codex exec resume` accepts neither -s nor --add-dir (codex-cli 0.160.0), so the sandbox, network and writable roots are passed as
+  // config keys on both paths; the same policy then holds for a launch and for every resume of it.
+  const base = ['-m', MODEL, '-c', `model_reasoning_effort="${effort}"`, '-c', 'sandbox_mode="workspace-write"',
+    '-c', 'sandbox_workspace_write.network_access=true',
+    '-c', `sandbox_workspace_write.writable_roots=${JSON.stringify(writable)}`, '-o', last];
   const args = resumeSession
     ? ['exec', 'resume', resumeSession, ...base, '-']
     : ['exec', '-C', cwd, ...base, '-'];

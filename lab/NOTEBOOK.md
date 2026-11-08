@@ -1394,3 +1394,72 @@ Where each priority stands, from evidence so far (research probes and baselines;
   provable freeze protocol. Also: probing a nonexistent block id hangs; enumerate published files instead.
 - **R25 finish** (Opus high) completes the SQLite pinned-readers design from the retained measurements and now must also serve H1's
   current_rows.
+
+## 2026-11-08 21:50Z: review round results (Codex reviewers): O-REPLAY 0.4.9 ACCEPTED; X02 stops silent rounding; three narrow FIX-FIRSTs
+- **O-REPLAY 0.4.9 ACCEPTED** (V-O04i): the completeness check now runs every registered kind, so every planted paged kind fails it;
+  1,793 seeded cases unchanged. Contract 0.3.11 (Codex builder) pins it, compiles Q70, Q74-Q77, Q79, Q81 and registers lane D's surface,
+  blocked until EXP-DA00 lands a pinned image.
+- **X02 fix round (6cd68dc):** exact Datalog arithmetic on XTDB now refuses typed instead of rounding 1000000000000000004 to
+  1000000000000000000 (Sam's "no silent precision loss" rule), SQL guards are token-aware, overflow is a typed failure, and an unset switch
+  restores historical routing; G0 949 passed. Reviewer delta check running; C8 round 3 merges it, since C8 carries X02.
+- **Narrow FIX-FIRSTs:** E01 (a case input deleted or rewritten after its last use is not detected; Q81a), C8 (an unclassified GET and pgwire
+  traffic after a parser exception still tally zero; Q81b), J01 (the default-off option changes the XTDB client's array-parameter contract;
+  compact-on G1 missing; Q81c). Each has a Codex builder on it.
+- **Learning:** each delta re-check finds a smaller residue on the same theme (the write counter: multipart, then GET; evaluator inputs:
+  before use, then after last use). The rounds converge; the fix that ends them is a positive allowlist with "everything else counts" rather
+  than a growing list of recognised bad cases.
+
+## 2026-11-08 21:56Z: R27 landed (Opus high): every O-OBS protocol has a real source; O-OBS round 2 dispatched
+- Saved as lab/research/R27-obs-evidence-sources.md; ruled Q82a-e. Engine-internal or read-back sources cover 10 of 14 protocols on XTDB,
+  9 on QLever, 7 on Datomic; 4 gaps have named instruments. Six source kinds with Triplex-reported evidence rejected; the four P1/P2
+  safety protocols need two agreeing kinds; evidence arrives as obs-bundle/1 from an observer sidecar engine.mjs starts.
+- **Corrections to earlier research:** QLever 0.6.0 has a Prometheus /metrics endpoint (query and update counters, delta_triples,
+  rebuild_in_progress) and a per-query metrics-log.jsonl with client-settable query ids (R24 said no counters beyond CPU); XTDB's EXPLAIN
+  ANALYZE works and returns scan_rows_read / pages / files as JSON (R16's probe printed [object Object], and p4.mjs:29 repeats that bug);
+  XTDB's source-log offset moves on flushes and compaction, so only node.tx.latestCompletedTxId counts mutations.
+- **Learning:** "no counter exists" twice turned out to be a decoding bug or a disabled flag in our own harness; engine-capability
+  claims get a probe before they shape a design.
+
+## 2026-11-08 21:59Z: R30 (Opus high): both K01 blockers explained from source; freeze protocol ruled Q83; K01 round 2 dispatched
+- The missing `Node stopped.` is a logging race: Log4j's own shutdown hook stops logging while XTDB's hook is still closing, so every
+  line after `Stopping node...` is lost; both stops were clean (exit 143 in 1.5 s and 5.8 s; an unclean close would halt(1) after 10 s).
+- The "rows in the live index" were in LiveIndex.sharedSnap, a cached snapshot that finish-block does not refresh and queries reuse until
+  the basis moves (upstream #6174, fixed after 2.2.0). It also means K01's pre-stop fingerprint could never match a clone, and a clone would
+  plan over uncompacted L0 files; a second finish-block records the post-compaction catalog.
+- Decisions taken by the orchestrator (lab configuration, not product calls): the log4j flag on slots only (Q83a) and the canonical
+  freeze state (Q83b). Learning: two "engine misbehaves" observations were a logging-library default and a known upstream bug; the K01
+  gate's refusal to make an unproven golden was right both times.
+
+## 2026-11-08 22:04Z: MILESTONE: lane D (Datomic) is up: tx2-datomic-dev READY, G0 green on all three lanes
+- EXP-DA00 (Codex builder) at exp/DA00-datomic-bringup 702643f: verified Datomic Pro 1.0.7745 download, a locally built image with the
+  transactor and the Clojure gateway on pinned CPUs, engine.mjs lane D lifecycle (dev parkable), the tagged value codec; 22 lab tests and 34
+  gateway assertions pass; data survived park and restart. Review pending; EXP-DA01 (adapter, G1) builds on it now.
+- Pool consequence (Q78b): with the 2.75 GiB lane D resident up, no 3.5 GiB exclusive slot fits, so K01's live check, the W01b GS rerun,
+  J01's compact-on G1 and the X02/C8 exclusive reruns wait for a scale window in which the orchestrator parks tx2-datomic-dev.
+
+## 2026-11-08 22:13Z: C8 ACCEPTED; contract 0.3.11 built; X02 guard over-refuses; DA01 unblocked; agent.mjs resume fixed
+- **C8 round 3 ACCEPTED** (CX-VC8-3: 34 probes, 1,024 offline): reads never write, budgets enforced, the counter fails closed on every
+  unclassified request. It merges right after X02 is accepted, since it carries X02.
+- **X02 delta (CX-VX02-2):** F2-F4 hold, but the token-aware guard now refuses six supported parenthesized subquery forms that XTDB answers
+  correctly (F1-R2). Learning: a fix that closes a bypass by refusing more needs a list of supported shapes that must still pass, next to
+  the shapes that must fail; X02 round 3 keeps both.
+- **Contract 0.3.11 built** (36d7434: O-REPLAY 0.4.9 pinned; 50 newly compiled rulings, 338/338 regressions caught; lane D's 153
+  obligations registered and blocked on its image pin). Under independent Codex review before merge.
+- **J01 delta:** default-off is now byte-identical to main (F1, F3 pass); the compact-on qualification recipe still lacks an executable
+  launch envelope (F2), which only matters before compact-on is used. J01 merges default-off after C8 and X02.
+- **DA01** was correctly blocked (its gateway routes need the resident recreated, which my prompt forbade); authorized and resumed. That
+  exposed a tool bug: `codex exec resume` takes no -s or --add-dir, so agent.mjs now passes sandbox and writable roots as config keys.
+- R28 (Opus high) designs build and run isolation for EXP-G03.
+
+## 2026-11-08 22:21Z: E01 merged; R25 landed (SQLite design, Q84); broker SQLite store and observer sidecar dispatched
+- **E01 merged into main (f060f7e)** after four review rounds; 128/128 on main. First run after the merge failed 32 tests because my test
+  run during the uncommitted merge correctly saw claim.mjs differ from git and poisoned the checkout; the marker sits in the shared .git, so
+  it blocked every later run until `claim.mjs restore-evaluator`. The guard works; its scope (all worktrees) is a follow-up.
+- **R25 (Opus high) finished from the retained measurements:** drop EXCLUSIVE locking; one writer thread plus a separate checkpointer
+  thread plus four readonly reader threads; a broker.lock file replaces the perl flock helper; marker-first read transactions with one unit of
+  work each; long work pins H instead of holding a read transaction; H1's rows in the same file. Numbers: 0 acked commits lost in 80 writer
+  SIGKILLs; 0 SQLITE_BUSY in about 300,000 commits; readers add 0.2-0.8 ms to a 3.0-3.3 ms commit; four reader threads ~20k reads/s; H1
+  3-hop pulls 0.10 ms p50 with rows examined flat across history depth; a 20,000-subject pinned sweep in 2.09 s with 0 mismatches.
+  Learning: checkpoint placement decides WAL growth (on the writer thread PASSIVE never finished under readers; WAL reached 714 MB).
+- Dispatched: EXP-SQL01 (broker SQLite file per Q84, on the broker branch), EXP-OBS01 (observer sidecar per R27), and three reviewers
+  (O-OBS round 2, broker round 3, X02 round 3).

@@ -1,0 +1,13 @@
+{
+  "commit": "0fa40d14fc5806fe263ed098b37e0eb9ceb72da6",
+  "files": {
+    "lab/bin/claim.mjs": "fe7b4b5acc84ea4d336db697606b0de90b3170aeca8d44623ecfab3ef1d32661",
+    "lab/bin/lib.mjs": "d3031840141fb5e13597e69e75511c809d5814610fe9d39b838ab52e0561b13e",
+    "lab/bin/gate.mjs": "76d81ed123df0845cedb6b4f8d22371e3eab41c2950a4e0efa8fb7ae5dd3f5de",
+    "lab/bin/engine.mjs": "b2bb06172efd2791ec323285998e560ace543a38e022dff489c601d3c879c608",
+    "lab/bin/heavy-lock.mjs": "88dd2071c8d8c1e3212c9a65dc719b79af46fbe6cc2e6ede8fbe0b61112803fa",
+    "lab/bin/receipt.mjs": "ebdcfb60284d6efe378923c0f42eb4eb7ad9a260141ceb46958e86752d0d2d2c",
+    "lab/acceptance/build_contract.py": "685b48066f7094d8e9c3cfc9c27840a9f3d2fb29fd4ae315da707e8346860a11"
+  },
+  "problems": []
+}
