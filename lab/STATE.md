@@ -55,11 +55,11 @@ isolation; is Datomic dev storage acceptable for the final acceptance run, or mu
 | CX-VX02-2 (verify/X02) | reviewer, Codex high | XTQL lane, numeric rule | delta re-check of X02 6cd68dc |
 | CX-O05-R2 (exp/O05-observation-oracle) | builder, Codex medium | floor: O-OBS blocks 62 obligations | Q80, Q82: obs-bundle/1, evaluator-owned context, source kinds, exact ratios, canaries |
 | R25 finish: SQLite pinned readers for the broker file and H1 (continuation) | planner, Opus 5.5, high | P1, P2, P4, P5 | /Users/sam/Claude/Projects/triplex-db-2/R25/ |
-| R30 provable XTDB freeze state (unblocks K01) | planner, Opus 5.5, high | measurement speed | /Users/sam/Claude/Projects/triplex-db-2/R30/ |
+| CX-K01-R2 (exp/K01-seed-clone) | builder, Codex medium | measurement speed | R30 freeze protocol (Q83), 500-subject golden and clone with C1-C8 |
 
 Paused at the 2026-11-08 Claude weekly limit and not resumed (effort may exceed high): the ten agents in lab/agents/handoffs/;
 their work is in WIP commits on their branches. Still waiting for a slot: W01b live GS rerun on an exclusive XTDB slot (W01b offline work done at 1d19199: harness and restart fixes, 23 tests, 20/20 golden regeneration, GS.12 patch checks; the shared-engine rerun stopped incomplete), R25
-R28 (planner); EXP-OBS01 observer sidecar per engine under engine.mjs (R27 section 6, Q82c) after O-OBS round 2; K01 round 2 after R30 (live golden refused safely: no clean-stop proof, live index not empty after finish-block), M01 (parked for the Q69a window).
+R28 (planner); EXP-OBS01 observer sidecar per engine under engine.mjs (R27 section 6, Q82c) after O-OBS round 2, M01 (parked for the Q69a window).
 
 ## Codex review history
 Codex plan-v2 review DONE: NOT READY, 14 findings all accepted (lab/reviews/plan-v2-review.responses.md, 675db6b). Codex round 2 DONE: 7 closed, 7 partial, 6 new, NOT READY; all accepted as Q31a-k (743cb1f). Contract 0.3.3 committed 89376e1 (142 obligations). Codex round 3 DONE: 11 closed, 2 partial, 5 new, NOT READY; accepted as Q34a-e (9a4fbb4). Contract 0.3.4 committed 60e4c57 (147 obligations, byte-identical regeneration). Codex round 4 DONE: NOT READY; accepted as Q38a-f (baeb9fd). Contract 0.3.5 committed 15a07b6 (149 obligations; 124 fail closed on null oracle pins; Q40 recorded-not-compiled; Q41 in RULINGS-PENDING.md). Codex round 5 DONE: 6 closed, 2 partial, 3 new; Q42a-c pending (59047ac). Contract 0.3.6 compiles Q40-Q42 once W0-1.1.0 lands; then Codex round 6. Rounds 6-8 since: open findings 4, 5, 10; round 8 accepted as Q67 (lab/reviews/plan-v2-round8.responses.md).

@@ -1419,3 +1419,13 @@ Where each priority stands, from evidence so far (research probes and baselines;
   XTDB's source-log offset moves on flushes and compaction, so only node.tx.latestCompletedTxId counts mutations.
 - **Learning:** "no counter exists" twice turned out to be a decoding bug or a disabled flag in our own harness; engine-capability
   claims get a probe before they shape a design.
+
+## 2026-11-08 21:59Z: R30 (Opus high): both K01 blockers explained from source; freeze protocol ruled Q83; K01 round 2 dispatched
+- The missing `Node stopped.` is a logging race: Log4j's own shutdown hook stops logging while XTDB's hook is still closing, so every
+  line after `Stopping node...` is lost; both stops were clean (exit 143 in 1.5 s and 5.8 s; an unclean close would halt(1) after 10 s).
+- The "rows in the live index" were in LiveIndex.sharedSnap, a cached snapshot that finish-block does not refresh and queries reuse until
+  the basis moves (upstream #6174, fixed after 2.2.0). It also means K01's pre-stop fingerprint could never match a clone, and a clone would
+  plan over uncompacted L0 files; a second finish-block records the post-compaction catalog.
+- Decisions taken by the orchestrator (lab configuration, not product calls): the log4j flag on slots only (Q83a) and the canonical
+  freeze state (Q83b). Learning: two "engine misbehaves" observations were a logging-library default and a known upstream bug; the K01
+  gate's refusal to make an unproven golden was right both times.
