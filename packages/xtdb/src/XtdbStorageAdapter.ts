@@ -634,9 +634,6 @@ export const makeXtdbStorageAdapter = (
               sql: "CREATE TABLE tx_attempts (_id, scope_key, operation_id, attempt_id, position)",
             },
             {
-              sql: "CREATE TABLE tx_query_relations (_id, scope_key, run_id, rule_name, arg1, arg2, depth)",
-            },
-            {
               sql: "CREATE TABLE tx_constraint_graphs (_id, scope_key, run_id, phase, id, entity_id, attribute, entity_type, valid_from, valid_to, value_type, value_string, value_number, value_boolean, value_datetime, value_json, value_identity)",
             },
             { sql: "CREATE TABLE tx_constraint_generations (_id, scope_key, run_id, source_k)" },

@@ -16,9 +16,9 @@ export interface EngineWriteCounts {
   readonly lane: "xtdb" | "qlever";
   /** TCP connections (xtdb) or HTTP requests (qlever) proxied. */
   readonly connections: number;
-  /** xtdb: SQL statements in Query ('Q') and Parse ('P') texts; qlever: SPARQL query and update requests. */
+  /** xtdb: SQL statements in Query ('Q') texts and Execute ('E') operations; qlever: SPARQL query and update requests. */
   readonly statements: number;
-  /** Statements/requests classified as writes; xtdb COMMITs count here too. */
+  /** Write executions/requests plus conservatively flagged prepared write texts; COMMITs count too. */
   readonly writes: number;
   /** xtdb: COMMIT statements; qlever: write requests (each QLever write is its own commit). */
   readonly commits: number;
@@ -211,6 +211,7 @@ const MAX_MESSAGE = 1 << 30;
 
 export interface PgwireFrontendHandlers {
   readonly text: (sql: string) => void;
+  readonly prepared: (sql: string) => void;
   readonly functionCall: () => void;
   readonly opaque: (reason: string) => void;
 }
@@ -221,9 +222,13 @@ export const createPgwireFrontendParser = (handlers: PgwireFrontendHandlers) => 
   let need = 4;
   let startup = true;
   let stopped = false;
+  // [EXP-C8-R2] Why: protocol state outlives tally windows. Rejected: counting Parse alone (Execute after reset disappears).
+  const statements = new Map<string, string>();
+  const portals = new Map<string, string>();
   const cstring = (buf: Buffer, from: number): [string, number] => {
     const end = buf.indexOf(0, from);
-    const stop = end < 0 ? buf.length : end;
+    if (end < 0) throw new Error("Unterminated pgwire string");
+    const stop = end;
     return [buf.toString("utf8", from, stop), stop + 1];
   };
   const stop = (reason?: string) => {
@@ -231,7 +236,11 @@ export const createPgwireFrontendParser = (handlers: PgwireFrontendHandlers) => 
     if (reason !== undefined) handlers.opaque(reason);
   };
   return (chunk: Buffer): void => {
-    if (stopped) return;
+    if (stopped) {
+      // [EXP-C8-R2] Why: resets cannot make subsequent opaque traffic look clean. Rejected: silently forwarding after parser failure.
+      handlers.opaque("traffic after parser stopped");
+      return;
+    }
     pending.push(chunk);
     size += chunk.length;
     if (size < need) return;
@@ -271,9 +280,33 @@ export const createPgwireFrontendParser = (handlers: PgwireFrontendHandlers) => 
         else if (code >>> 16 !== 3) stop(`unknown startup code ${code}`);
         else startup = false;
       } else if (message[0] === 0x51 /* Q */) handlers.text(cstring(message, 5)[0]);
-      else if (message[0] === 0x50 /* P: name, query, param oids */)
-        handlers.text(cstring(message, cstring(message, 5)[1])[0]);
-      else if (message[0] === 0x46 /* F */) handlers.functionCall();
+      else if (message[0] === 0x50 /* P: name, query, param oids */) {
+        const [name, next] = cstring(message, 5);
+        const [sql] = cstring(message, next);
+        statements.set(name, sql);
+        handlers.prepared(sql);
+      } else if (message[0] === 0x42 /* B: portal, statement, parameters */) {
+        const [portal, next] = cstring(message, 5);
+        const [statement] = cstring(message, next);
+        const sql = statements.get(statement);
+        if (sql === undefined) {
+          portals.delete(portal);
+          handlers.opaque("Bind references unknown prepared statement");
+        } else portals.set(portal, sql);
+      } else if (message[0] === 0x45 /* E: portal, max rows */) {
+        const [portal] = cstring(message, 5);
+        const sql = portals.get(portal);
+        if (sql === undefined) handlers.opaque("Execute references unknown portal");
+        else handlers.text(sql);
+      } else if (message[0] === 0x43 /* C: close statement or portal */) {
+        const [name] = cstring(message, 6);
+        if (message[5] === 0x53) statements.delete(name);
+        else if (message[5] === 0x50) portals.delete(name);
+        else handlers.opaque("Close references unknown object type");
+      } else if (message[0] === 0x46 /* F */) handlers.functionCall();
+      else if (![0x44, 0x48, 0x53, 0x58, 0x70].includes(message[0]!))
+        handlers.opaque(`unclassified frontend operation ${message[0]}`);
+      // Describe, Flush, Sync, Terminate and authentication cannot execute SQL.
     }
     pending = stopped || at === buf.length ? [] : [buf.subarray(at)];
     size = stopped ? 0 : buf.length - at;
@@ -307,6 +340,12 @@ export const startXtdbWriteCounter = async (targetUrl: string): Promise<EngineWr
     const upstream = track(net.connect({ host, port, allowHalfOpen: true }));
     const parse = createPgwireFrontendParser({
       text: countSql,
+      // [EXP-C8-R2] Why: conservatively flag preparation of a possible write as well as every
+      // execution; preparation is not a commit. Rejected: declaring unexecuted write text clean.
+      prepared: (sql) => {
+        if (["write", "commit"].includes(classifyXtdbStatement(sql)))
+          tally.write(`<prepared potential write> ${sql}`, false);
+      },
       functionCall: () => tally.write("<pgwire FunctionCall>", false),
       opaque,
     });
@@ -393,7 +432,6 @@ const SPARQL_BODIES = new Set([
   "application/sparql-query",
   "application/sparql-update",
   "application/x-www-form-urlencoded",
-  "multipart/form-data",
 ]);
 
 interface QleverRequestClass {
@@ -432,7 +470,30 @@ const classifyQleverRequest = (
         (body.length > 0 && !SPARQL_BODIES.has(contentType))))
       ? [`<${method} ${url.pathname} ${contentType || "no content type"}>`]
       : [];
-  const write = [...updates, ...writeCommands, ...graphWrite][0];
+  // [EXP-C8-R2] Why: multipart is opaque without complete parsing. Rejected: field regexes
+  // and unknown-body exemptions (a cmd field could silently evade accounting).
+  const unknown =
+    contentType === "multipart/form-data" ||
+    (body.length > 0 && !SPARQL_BODIES.has(contentType)) ||
+    (!params.has("query") &&
+      !params.has("update") &&
+      !params.has("cmd") &&
+      params.size === 0 &&
+      contentType !== "application/sparql-query" &&
+      !(
+        ["GET", "HEAD", "OPTIONS"].includes(method) && ["/ping", "/health"].includes(url.pathname)
+      )) ||
+    (method === "POST" &&
+      updates.length === 0 &&
+      !params.has("query") &&
+      !params.has("cmd") &&
+      contentType !== "application/sparql-query");
+  const write = [
+    ...updates,
+    ...writeCommands,
+    ...graphWrite,
+    ...(unknown ? ["<unclassified HTTP operation>"] : []),
+  ][0];
   return {
     ...(write === undefined ? {} : { write }),
     update: updates.length > 0,
@@ -514,7 +575,11 @@ export const startQleverWriteCounter = async (targetUrl: string): Promise<Engine
   // QleverClient.cancel opens a WebSocket to /watch/<query-id>; tunnel it unchanged.
   server.on("upgrade", (req: http.IncomingMessage, socket: net.Socket, head: Buffer) => {
     tally.state.counts.connections++;
-    tally.state.counts.commands++;
+    // [EXP-C8-R2] Why: only the known query-cancellation watch endpoint is a session tunnel.
+    // Rejected: treating every upgraded protocol as harmless commands.
+    if (req.method === "GET" && /^\/watch\/[^/?]+$/.test(req.url ?? ""))
+      tally.state.counts.commands++;
+    else tally.write("<unclassified HTTP upgrade>", false);
     const upstream = track(net.connect({ host, port }));
     const raw = forwardHeaders(req.rawHeaders, ["host"]);
     const lines = [`${req.method} ${req.url} HTTP/1.1`, `Host: ${target.host}`];

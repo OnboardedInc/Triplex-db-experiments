@@ -123,9 +123,15 @@ const parse = (sql: string, name = "") =>
     "P",
     Buffer.concat([Buffer.from(`${name}\0${sql}\0`, "utf8"), Buffer.from([0, 1, 0, 0, 0, 25])]),
   );
-const bindExecuteSync = () =>
+const bindExecuteSync = (statement = "") =>
   Buffer.concat([
-    typed("B", Buffer.from([0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0x31, 0, 0])),
+    typed(
+      "B",
+      Buffer.concat([
+        Buffer.from(`\0${statement}\0`),
+        Buffer.from([0, 0, 0, 1, 0, 0, 0, 1, 0x31, 0, 0]),
+      ]),
+    ),
     typed("E", Buffer.from([0, 0, 0, 0, 0])),
     typed("S", Buffer.alloc(0)),
   ]);
@@ -147,7 +153,7 @@ const frontendStream = () =>
     bindExecuteSync(),
     query(SESSION_TEXTS[2]!),
     parse(SESSION_TEXTS[3]!, "named_stmt"),
-    bindExecuteSync(),
+    bindExecuteSync("named_stmt"),
     query(SESSION_TEXTS[4]!),
     query(SESSION_TEXTS[5]!),
     typed("X", Buffer.alloc(0)),
@@ -159,13 +165,14 @@ describe("pgwire frontend parser", () => {
     const opaque: string[] = [];
     const push = createPgwireFrontendParser({
       text: (sql) => texts.push(sql),
+      prepared: () => {},
       functionCall: () => texts.push("<F>"),
       opaque: (reason) => opaque.push(reason),
     });
     for (const chunk of chunks) push(chunk);
     return { texts, opaque };
   };
-  it("extracts Q and P texts whole, byte by byte, and at random chunk boundaries", () => {
+  it("extracts Q and Execute texts whole, byte by byte, and at random chunk boundaries", () => {
     const stream = frontendStream();
     const whole = run([stream]);
     expect(whole).toEqual({ texts: SESSION_TEXTS, opaque: [] });
@@ -182,6 +189,34 @@ describe("pgwire frontend parser", () => {
       }
       expect(run(chunks)).toEqual(whole);
     }
+  });
+  it("classifies reused portals, closed names and unknown operations", () => {
+    const executed: string[] = [],
+      prepared: string[] = [],
+      opaque: string[] = [];
+    const push = createPgwireFrontendParser({
+      text: (sql) => executed.push(sql),
+      prepared: (sql) => prepared.push(sql),
+      functionCall: () => {},
+      opaque: (reason) => opaque.push(reason),
+    });
+    push(
+      Buffer.concat([
+        startupMessage(),
+        parse("COMMIT", "commit_stmt"),
+        bindExecuteSync("commit_stmt"),
+      ]),
+    );
+    expect(prepared).toEqual(["COMMIT"]);
+    expect(executed).toEqual(["COMMIT"]);
+    executed.length = 0; // simulate a tally reset; parser state remains intact
+    push(typed("E", Buffer.alloc(5)));
+    expect(executed).toEqual(["COMMIT"]);
+    push(typed("C", Buffer.from("P\0")));
+    push(typed("E", Buffer.alloc(5)));
+    push(bindExecuteSync("missing"));
+    push(typed("d", Buffer.from("opaque copy bytes")));
+    expect(opaque).toHaveLength(4);
   });
   it("reports a TLS stream or a bad message type as opaque instead of skipping it", () => {
     const clientHello = Buffer.from([0x16, 0x03, 0x01, 0x02, 0x00, 0x01, 0x00, 0x01, 0xfc]);
@@ -257,11 +292,16 @@ describe("XTDB write counter proxy", () => {
       lane: "xtdb",
       connections: 1,
       statements: 6,
-      writes: 3, // BEGIN READ WRITE, INSERT, COMMIT SYNC
+      writes: 4, // BEGIN, conservatively flagged Parse, INSERT execution, COMMIT
       commits: 1,
       commands: 1, // SET AWAIT_TOKEN
       unparsed: 0,
-      samples: ["BEGIN READ WRITE", "INSERT INTO c8_t (_id, v) VALUES ($1, $2)", "COMMIT SYNC"],
+      samples: [
+        "BEGIN READ WRITE",
+        "<prepared potential write> INSERT INTO c8_t (_id, v) VALUES ($1, $2)",
+        "INSERT INTO c8_t (_id, v) VALUES ($1, $2)",
+        "COMMIT SYNC",
+      ],
     });
     counter.reset();
     expect(counter.counts()).toMatchObject({

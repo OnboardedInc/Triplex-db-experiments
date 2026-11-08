@@ -143,7 +143,9 @@ const identity = (value: unknown, role: string): string => {
   return value;
 };
 
-export const resolveFrontierBudgets = (budgets: FrontierBudgets = {}): Required<FrontierBudgets> => ({
+export const resolveFrontierBudgets = (
+  budgets: FrontierBudgets = {},
+): Required<FrontierBudgets> => ({
   maxRounds: positive("maxRounds", budgets.maxRounds ?? FRONTIER_DEFAULTS.maxRounds),
   maxVisited: positive("maxVisited", budgets.maxVisited ?? FRONTIER_DEFAULTS.maxVisited),
   maxEdges: positive("maxEdges", budgets.maxEdges ?? FRONTIER_DEFAULTS.maxEdges),
@@ -204,6 +206,9 @@ export const frontierClosure = async (input: FrontierClosureInput): Promise<Fron
         }
       }
     }
+    // [EXP-C8-R2] Why: a terminal cycle can add a seed on the confirmation read. Rejected: next-loop guard (cycle may terminate here).
+    if (newNodes > 0 && rounds.length >= budgets.maxRounds)
+      throw new RecursionBudgetExceeded("rounds", budgets.maxRounds, rounds.length + 1);
     rounds.push({
       round: rounds.length + 1,
       frontier: frontier.length,
@@ -271,7 +276,8 @@ export const closurePairs = (
   for (const source of sources)
     for (const target of reachFrom(closure, source)) {
       pairs.push([source, target]);
-      if (pairs.length > maxPairs) throw new RecursionBudgetExceeded("pairs", maxPairs, pairs.length);
+      if (pairs.length > maxPairs)
+        throw new RecursionBudgetExceeded("pairs", maxPairs, pairs.length);
     }
   return pairs;
 };
@@ -316,9 +322,15 @@ export const ruleClosure = async (input: {
   const maxDepth = positive("maxDepth", input.maxDepth);
   const relation = new Map<string, Set<string>>();
   let size = 0;
+  const visited = new Set<string>();
   const add = (head: string, tail: string): boolean => {
     const tails = relation.get(head) ?? new Set<string>();
     if (tails.has(tail)) return false;
+    // [EXP-C8-R2] Why: rule budgets bound distinct relation endpoints, including base rows. Rejected: maxPairs alone (does not enforce maxVisited).
+    visited.add(head);
+    visited.add(tail);
+    if (visited.size > budgets.maxVisited)
+      throw new RecursionBudgetExceeded("visited", budgets.maxVisited, visited.size);
     tails.add(tail);
     relation.set(head, tails);
     if (++size > maxPairs) throw new RecursionBudgetExceeded("pairs", maxPairs, size);
@@ -343,14 +355,20 @@ export const ruleClosure = async (input: {
     let frontierSize = 0;
     for (const [index, step] of steps.entries()) {
       const cache = caches[index]!;
-      const frontier = sorted(new Set(delta.map(([next]) => next).filter((node) => !cache.has(node))));
+      const frontier = sorted(
+        new Set(delta.map(([next]) => next).filter((node) => !cache.has(node))),
+      );
       frontierSize += frontier.length;
       for (const node of frontier) cache.set(node, new Set());
       for (let offset = 0; offset < frontier.length; offset += budgets.maxBatch) {
         input.signal?.throwIfAborted();
         const batch = frontier.slice(offset, offset + budgets.maxBatch);
         const members = new Set(batch);
-        const result = await step.predecessors(batch, budgets.maxRoundRows - rows + 1, input.signal);
+        const result = await step.predecessors(
+          batch,
+          budgets.maxRoundRows - rows + 1,
+          input.signal,
+        );
         calls++;
         for (const edge of result) {
           if (++rows > budgets.maxRoundRows)
@@ -376,6 +394,9 @@ export const ruleClosure = async (input: {
           if (add(head, tail)) fresh.push([head, tail]);
         }
     }
+    // [EXP-C8-R2] Why: maxDepth is semantic; resource rounds independently refuse new derivations. Rejected: silently ignoring maxRounds.
+    if (fresh.length > 0 && depth > budgets.maxRounds)
+      throw new RecursionBudgetExceeded("rounds", budgets.maxRounds, depth);
     rounds.push({
       round: depth,
       frontier: frontierSize,
@@ -428,8 +449,8 @@ export const memoryEdges = (
  * Exact number of simple paths `from -> to` over a complete fetched subgraph, with the oracle's
  * definition (qualification/workloads/event_oracles.py support_rows.count_paths): node sequences
  * without a repeated node, ending the first time `to` is reached. Acyclic subgraphs use a
- * memoized count in O(V+E) with BigInt; cyclic ones use the oracle's DFS under `maxPathSteps`
- * (R10 3.7).
+ * postorder count in O(V+E) with BigInt; cyclic ones use an explicit DFS stack.
+ * Both counting passes enforce `maxPathSteps` (R10 3.7).
  */
 export const countSimplePaths = (
   closure: FrontierClosure,
@@ -450,6 +471,7 @@ export const countSimplePaths = (
   // Cycle check on the reachable subgraph (iterative three-colour DFS).
   const colour = new Map<string, 1 | 2>();
   let cyclic = false;
+  const postorder: string[] = [];
   for (const start of nodes) {
     if (colour.has(start) || cyclic) continue;
     const stack: [string, Iterator<string>][] = [[start, out(start).values()]];
@@ -459,6 +481,7 @@ export const countSimplePaths = (
       const step = iterator.next();
       if (step.done) {
         colour.set(node, 2);
+        postorder.push(node);
         stack.pop();
       } else if (colour.get(step.value) === 1) cyclic = true;
       else if (!colour.has(step.value)) {
@@ -467,34 +490,42 @@ export const countSimplePaths = (
       }
     }
   }
+  // [EXP-C8-R2] Why: admitted graphs can exceed the JS call stack. Rejected: recursive memoization/DFS (12k-node reproducer).
+  let steps = 0;
+  const charge = () => {
+    if (++steps > maxPathSteps) throw new RecursionBudgetExceeded("pathSteps", maxPathSteps, steps);
+  };
   if (!cyclic) {
     const memo = new Map<string, bigint>();
-    const paths = (node: string): bigint => {
-      const known = memo.get(node);
-      if (known !== undefined) return known;
+    for (const node of postorder) {
       let total = 0n;
-      for (const next of out(node)) total += next === to ? 1n : paths(next);
-      memo.set(node, total);
-      return total;
-    };
-    // The origin is visited from the start, so a path back to it is never counted.
-    return from === to ? 0n : paths(from);
-  }
-  let steps = 0;
-  const dfs = (node: string, visited: Set<string>): bigint => {
-    let total = 0n;
-    for (const next of out(node)) {
-      if (++steps > maxPathSteps)
-        throw new RecursionBudgetExceeded("pathSteps", maxPathSteps, steps);
-      if (visited.has(next)) continue;
-      if (next === to) total += 1n;
-      else {
-        visited.add(next);
-        total += dfs(next, visited);
-        visited.delete(next);
+      for (const next of out(node)) {
+        charge();
+        total += next === to ? 1n : memo.get(next)!;
       }
+      memo.set(node, total);
     }
-    return total;
-  };
-  return dfs(from, new Set([from]));
+    return from === to ? 0n : memo.get(from)!;
+  }
+  let total = 0n;
+  const visited = new Set([from]);
+  const stack: [string, Iterator<string>][] = [[from, out(from).values()]];
+  while (stack.length > 0) {
+    const [node, iterator] = stack.at(-1)!;
+    const step = iterator.next();
+    if (step.done) {
+      stack.pop();
+      visited.delete(node);
+      continue;
+    }
+    charge();
+    const next = step.value;
+    if (visited.has(next)) continue;
+    if (next === to) total++;
+    else {
+      visited.add(next);
+      stack.push([next, out(next).values()]);
+    }
+  }
+  return total;
 };

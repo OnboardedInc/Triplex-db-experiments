@@ -35,6 +35,7 @@
 import { Effect } from "effect";
 import { integer } from "@triplex-build/triplex";
 import { TypeExpr } from "@triplex-build/triplex/config";
+import { countSupportPaths, SUPPORT_EDGE_LIMIT } from "./support-paths.js";
 import type {
   NativeQueryContract,
   NativeReadBasis,
@@ -42,13 +43,7 @@ import type {
   NativeReadResult,
 } from "@triplex-build/triplex/runtime";
 import { NativeEngineHazardError, checkedInt64, typedSumOverflow } from "./xtdb-native-errors.js";
-import {
-  sqlExactTotal,
-  sqlHigh,
-  sqlLow,
-  xtqlExactTotal,
-  xtqlSplit,
-} from "./xtdb-exact-sum.js";
+import { sqlExactTotal, sqlHigh, sqlLow, xtqlExactTotal, xtqlSplit } from "./xtdb-exact-sum.js";
 /** Mark-join build-side limit of XTDB 2.2.0 (upstream #6345, R14 H03). */
 export const MARK_JOIN_BUILD_LIMIT = 100_000;
 
@@ -255,13 +250,14 @@ export const evaluateXtdbNativeWorkload = (
       resultType: TypeExpr.TypeExpr,
       builders: Builders,
       at = entry,
+      maxRows = 1000,
     ) =>
       (language === "xtql" ? native.select : native.selectSql)(
         contractOf(name, values, resultType),
         values,
         (ctx, input) =>
           (language === "xtql" ? builders.xtql : builders.sql)(ctx, input as RecordValue),
-        { basis: pinned(at), maxRows: 1000 },
+        { basis: pinned(at), maxRows },
       ).pipe(Effect.map(record));
     // [EXP-C8] Why: one read-only closure call per task in the run's language. The relations are
     // computed by the native API's frontier loop (packages/core FrontierClosure.ts via
@@ -274,7 +270,10 @@ export const evaluateXtdbNativeWorkload = (
     interface ClosureRelation {
       readonly name: string;
       readonly field: string;
-      readonly seeds: (ctx: Context, input: RecordValue) => readonly string[] | { readonly query: string };
+      readonly seeds: (
+        ctx: Context,
+        input: RecordValue,
+      ) => readonly string[] | { readonly query: string };
     }
     const closureTask = (
       name: string,
@@ -297,7 +296,8 @@ export const evaluateXtdbNativeWorkload = (
               : `SELECT DISTINCT entity_id AS source, value_string AS target FROM ${ctx.facts()} f WHERE attribute = ${ctx.attribute(a(field))} AND value_type = 'ref' AND entity_id IS NOT NULL AND value_string IS NOT NULL`,
           seeds: (ctx: Context, input: unknown) => seeds(ctx, input as RecordValue),
         })),
-        (ctx, input) => (language === "xtql" ? builders.xtql : builders.sql)(ctx, input as RecordValue),
+        (ctx, input) =>
+          (language === "xtql" ? builders.xtql : builders.sql)(ctx, input as RecordValue),
         { basis: pinned(entry), maxRows: 1000, maxRecursiveRows: 100_000, maxRounds: 100 },
       ).pipe(Effect.map(record));
     // [EXP-X02] Why (kept by EXP-C8): an XTQL `exists?` in `where` is planned as a mark join, and a
@@ -417,28 +417,28 @@ export const evaluateXtdbNativeWorkload = (
       const object = p.subject?.value ?? p.entity.value;
       if (entry["operation"] === "accepted_event_count") {
         // R12 4.4
-        const rows = yield* execute(
-          "accepted-events",
-          { object },
-          row({ count: TypeExpr.int64 }),
-          {
-            xtql: (c, i) =>
-              `(-> ${c.facts()} (where (= attribute ${c.attribute(a("webhook_object"))}) (= value_string ${c.bind(i["object"])})) (aggregate {:count (count-distinct entity_id)}))`,
-            sql: (ctx, input) =>
-              `SELECT COUNT(DISTINCT entity_id) AS count FROM ${ctx.facts()} f WHERE attribute = ${ctx.attribute(a("webhook_object"))} AND value_string = ${ctx.bind(input["object"])}`,
-          },
-        );
+        const rows = yield* execute("accepted-events", { object }, row({ count: TypeExpr.int64 }), {
+          xtql: (c, i) =>
+            `(-> ${c.facts()} (where (= attribute ${c.attribute(a("webhook_object"))}) (= value_string ${c.bind(i["object"])})) (aggregate {:count (count-distinct entity_id)}))`,
+          sql: (ctx, input) =>
+            `SELECT COUNT(DISTINCT entity_id) AS count FROM ${ctx.facts()} f WHERE attribute = ${ctx.attribute(a("webhook_object"))} AND value_string = ${ctx.bind(input["object"])}`,
+        });
         return [[rows[0]!["count"]]];
       }
       // R12 4.1, workload 05 (highest revision wins; ties return every status at it)
       const revisions = (c: Context, object: string) =>
         `${F(c, a("webhook_object"), "{:entity_id ev}", `(= value_string ${object})`)} ${F(c, a("revision"), "{:entity_id ev} {:rev rev}", "", withInt("rev"))}`;
-      const rows = yield* execute("highest-source-revision", { object }, row({ status: TypeExpr.text }), {
-        xtql: (c, i) =>
-          `(-> (unify ${revisions(c, c.bind(i["object"]))} ${F(c, a("status"), "{:entity_id ev} {:value_string status}")} (where (= rev (q (-> (unify ${revisions(c, c.bind(i["object"]))}) (aggregate {:m (max rev)})))))) (aggregate status))`,
-        sql: (ctx, input) =>
-          `WITH f AS ${ctx.facts()}, revisions AS (SELECT object.entity_id AS event, ${integerChannel("revision")} AS revision FROM f object JOIN f revision ON object.entity_id = revision.entity_id WHERE object.attribute = ${ctx.attribute(a("webhook_object"))} AND object.value_string = ${ctx.bind(input["object"])} AND revision.attribute = ${ctx.attribute(a("revision"))}) SELECT DISTINCT status.value_string AS status FROM revisions r JOIN f status ON status.entity_id = r.event WHERE status.attribute = ${ctx.attribute(a("status"))} AND r.revision = (SELECT MAX(revision) FROM revisions)`,
-      });
+      const rows = yield* execute(
+        "highest-source-revision",
+        { object },
+        row({ status: TypeExpr.text }),
+        {
+          xtql: (c, i) =>
+            `(-> (unify ${revisions(c, c.bind(i["object"]))} ${F(c, a("status"), "{:entity_id ev} {:value_string status}")} (where (= rev (q (-> (unify ${revisions(c, c.bind(i["object"]))}) (aggregate {:m (max rev)})))))) (aggregate status))`,
+          sql: (ctx, input) =>
+            `WITH f AS ${ctx.facts()}, revisions AS (SELECT object.entity_id AS event, ${integerChannel("revision")} AS revision FROM f object JOIN f revision ON object.entity_id = revision.entity_id WHERE object.attribute = ${ctx.attribute(a("webhook_object"))} AND object.value_string = ${ctx.bind(input["object"])} AND revision.attribute = ${ctx.attribute(a("revision"))}) SELECT DISTINCT status.value_string AS status FROM revisions r JOIN f status ON status.entity_id = r.event WHERE status.attribute = ${ctx.attribute(a("status"))} AND r.revision = (SELECT MAX(revision) FROM revisions)`,
+        },
+      );
       return rows.map((value) => [value["status"]]);
     }
     if (id === "06") {
@@ -575,7 +575,10 @@ export const evaluateXtdbNativeWorkload = (
         ],
       ];
     }
-    if (["11", "13", "14", "15"].includes(id) || (id === "20" && entry["operation"] === "reachability_closure")) {
+    if (
+      ["11", "13", "14", "15"].includes(id) ||
+      (id === "20" && entry["operation"] === "reachability_closure")
+    ) {
       // [EXP-C8] Every closure below is answered by one read-only closure call in the run's
       // language. Answers are unchanged from the EXP-000/X02 builders: positive-length closure
       // targets joined to the same facts (R10 1.1 task table).
@@ -846,56 +849,23 @@ export const evaluateXtdbNativeWorkload = (
       return answer;
     }
     if (id === "20" && entry["operation"] === "reachability_supports") {
-      // R12 4.15
-      let paths = 0n;
-      for (let length = 1; length <= 3; length++) {
-        const rows = yield* execute(
-          `bounded-dag-witnesses-${length}`,
-          { from: p.from.value, to: p.to.value },
-          row({ count: TypeExpr.int64 }),
-          {
-            xtql: (c, i) => {
-              const parts: string[] = [];
-              for (let k = 0; k < length; k++) {
-                const where = [
-                  k === 0 ? `(= entity_id ${c.bind(i["from"])})` : "",
-                  k === length - 1 ? `(= value_string ${c.bind(i["to"])})` : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ");
-                parts.push(F(c, a("_support"), `{:entity_id n${k}} {:value_string n${k + 1}}`, where));
-              }
-              const keep = Array.from({ length: length - 1 }, (_, k) => `n${k + 1}`);
-              const distinct =
-                length === 1 ? "(return {:w true}) (aggregate w)" : `(aggregate ${keep.join(" ")})`;
-              return `(-> (-> (unify ${parts.join(" ")}) ${distinct}) (aggregate {:count (row-count)}))`;
-            },
-            sql: (ctx, input) => {
-              const conditions = Array.from(
-                { length },
-                (_, index) => `e${index}.attribute = ${ctx.attribute(a("_support"))}`,
-              );
-              conditions.push(
-                `e0.entity_id = ${ctx.bind(input["from"])}`,
-                `e${length - 1}.value_string = ${ctx.bind(input["to"])}`,
-              );
-              for (let index = 1; index < length; index++)
-                conditions.push(`e${index}.entity_id = e${index - 1}.value_string`);
-              const projected =
-                length === 1
-                  ? "TRUE AS witness"
-                  : Array.from(
-                      { length: length - 1 },
-                      (_, index) => `e${index}.value_string AS node${index}`,
-                    ).join(", ");
-              return `WITH f AS ${ctx.facts()} SELECT COUNT(*) AS count FROM (SELECT DISTINCT ${projected} FROM ${Array.from({ length }, (_, index) => `f e${index}`).join(" CROSS JOIN ")} WHERE ${conditions.join(" AND ")}) paths`;
-            },
-          },
-        );
-        paths += exact(rows[0]!["count"]);
-      }
+      // [EXP-C8-R2] Why: Q76d requires general simple paths at the pinned cut. Rejected: summing lengths 1-3 (fixture-specific).
+      const edges = yield* execute(
+        "support-edges",
+        {},
+        row({ source: TypeExpr.text, target: TypeExpr.text }),
+        {
+          xtql: (ctx) =>
+            `(-> ${ctx.facts()} (where (= attribute ${ctx.attribute(a("_support"))}) (= value_type "ref")) (return {:source entity_id :target value_string}) (aggregate source target) (limit ${SUPPORT_EDGE_LIMIT + 1}))`,
+          sql: (ctx) =>
+            `SELECT DISTINCT entity_id AS source, value_string AS target FROM ${ctx.facts()} f WHERE attribute = ${ctx.attribute(a("_support"))} AND value_type = 'ref' LIMIT ${SUPPORT_EDGE_LIMIT + 1}`,
+        },
+        entry,
+        SUPPORT_EDGE_LIMIT + 1,
+      );
+      const paths = yield* countSupportPaths(edges, p.from.value, p.to.value);
       trace.push({
-        normalization: "add three final native witness counts for the frozen four-node DAG fixture",
+        normalization: "Exact bounded simple-path count over distinct native support edges",
       });
       return [[paths > 0n, integer(paths)]];
     }
