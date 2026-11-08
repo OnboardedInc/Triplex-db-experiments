@@ -1,0 +1,1 @@
+node --test lab/bin/test/*.test.mjs > lab/verify/E01/baseline-tests.txt 2>&1  33.92s user 27.96s system 75% cpu 1:21.43 total

@@ -1,0 +1,13 @@
+{
+  "id": "M5b-admit-promotion",
+  "guards": "POSITIVE-PROMOTION (Q67j, admit)",
+  "exit": 1,
+  "pass": 110,
+  "fail": 2,
+  "failed": [
+    "admit: POSITIVE-PROMOTION documents are DIAGNOSTIC; the verdict is DIAGNOSTIC",
+    "qualify Q67j (Codex round 8 finding 11): a log-source promotion is rejected with a typed reason"
+  ],
+  "expectedTestFailed": true,
+  "seconds": 70
+}

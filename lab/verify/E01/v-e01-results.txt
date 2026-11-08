@@ -1,0 +1,148 @@
+TAP version 13
+# Subtest: check 2 (Q67b): with the tree label fixed, the identity changes with the source runner, a dependency, a symlink's text, an external directory, the lockfile and the buildSpec; the dist does not
+ok 1 - check 2 (Q67b): with the tree label fixed, the identity changes with the source runner, a dependency, a symlink's text, an external directory, the lockfile and the buildSpec; the dist does not
+  ---
+  duration_ms: 4471.50025
+  type: 'test'
+  ...
+# Subtest: check 2 GAP (Q67b): a file symlink to a path outside the checkout binds only its text; the target's bytes decide the answer and the identity is the same
+ok 2 - check 2 GAP (Q67b): a file symlink to a path outside the checkout binds only its text; the target's bytes decide the answer and the identity is the same
+  ---
+  duration_ms: 13617.405167
+  type: 'test'
+  ...
+# Subtest: check 2 GAP (Q67b): the toolchain is the evaluator's process.version, not the node on PATH that builds and runs the system under test
+ok 3 - check 2 GAP (Q67b): the toolchain is the evaluator's process.version, not the node on PATH that builds and runs the system under test
+  ---
+  duration_ms: 7796.118333
+  type: 'test'
+  ...
+# Subtest: check 2: two instances with one identity share the first instance (a candidate commit with A0's tree runs A0's cases on its own checkout)
+ok 4 - check 2: two instances with one identity share the first instance (a candidate commit with A0's tree runs A0's cases on its own checkout)
+  ---
+  duration_ms: 4706.695833
+  type: 'test'
+  ...
+# Subtest: check 3 T1 (Q67e): a system under test inside its own process group edits the oracle copy (no escape needed); the re-hash refuses the oracle
+ok 5 - check 3 T1 (Q67e): a system under test inside its own process group edits the oracle copy (no escape needed); the re-hash refuses the oracle
+  ---
+  duration_ms: 3370.217083
+  type: 'test'
+  ...
+# Subtest: check 3 T4 (Q67e): the same edit through a symlink the system under test makes in its own checkout is caught the same way
+ok 6 - check 3 T4 (Q67e): the same edit through a symlink the system under test makes in its own checkout is caught the same way
+  ---
+  duration_ms: 2755.842084
+  type: 'test'
+  ...
+# Subtest: check 3 T2 (Q67e): a double fork stays in the build's group and is killed; a helper that starts its own session (setsid) survives
+ok 7 - check 3 T2 (Q67e): a double fork stays in the build's group and is killed; a helper that starts its own session (setsid) survives
+  ---
+  duration_ms: 6561.1935
+  type: 'test'
+  ...
+# Subtest: check 3 T5-blob (Q67e): substituting the O-CONTRACT runner's blob everywhere also changes A0's checkout, so the whole-checkout identity (Q67b) fails it closed
+ok 8 - check 3 T5-blob (Q67e): substituting the O-CONTRACT runner's blob everywhere also changes A0's checkout, so the whole-checkout identity (Q67b) fails it closed
+  ---
+  duration_ms: 2772.899
+  type: 'test'
+  ...
+# Subtest: check 3 T5a GAP (Q67e): an unpinned COMPILED oracle's bytes are read from the repository after the candidate's build ran; `git replace` makes the evaluator run the candidate's bytes as the oracle
+ok 9 - check 3 T5a GAP (Q67e): an unpinned COMPILED oracle's bytes are read from the repository after the candidate's build ran; `git replace` makes the evaluator run the candidate's bytes as the oracle
+  ---
+  duration_ms: 4449.003542
+  type: 'test'
+  ...
+# Subtest: check 3 T5b GAP (Q67e): with a lying O-CONTRACT on the identity cases, the reference model qualifies a wrong candidate; only the lab's A0 re-run of the prerequisites catches it
+ok 10 - check 3 T5b GAP (Q67e): with a lying O-CONTRACT on the identity cases, the reference model qualifies a wrong candidate; only the lab's A0 re-run of the prerequisites catches it
+  ---
+  duration_ms: 6336.083167
+  type: 'test'
+  ...
+# Subtest: check 3 T5c GAP (Q67e): on a claimed obligation A0 is never re-run on (R.evaluator.incomplete-receipts, O-CONTRACT), a wrong candidate that substitutes the oracle reaches offlineVerdict QUALIFIED
+ok 11 - check 3 T5c GAP (Q67e): on a claimed obligation A0 is never re-run on (R.evaluator.incomplete-receipts, O-CONTRACT), a wrong candidate that substitutes the oracle reaches offlineVerdict QUALIFIED
+  ---
+  duration_ms: 12596.799834
+  type: 'test'
+  ...
+# Subtest: check 3 T8 (Q67e): `git replace` on A0's source makes the A0 rebuild differ from the registry, so it fails closed
+ok 12 - check 3 T8 (Q67e): `git replace` on A0's source makes the A0 rebuild differ from the registry, so it fails closed
+  ---
+  duration_ms: 2640.360875
+  type: 'test'
+  ...
+# Subtest: check 3 T6 GAP (Q67e): one HOME and TMPDIR serve the candidate's build, its runs, A0's build, A0's runs and every oracle run
+ok 13 - check 3 T6 GAP (Q67e): one HOME and TMPDIR serve the candidate's build, its runs, A0's build, A0's runs and every oracle run
+  ---
+  duration_ms: 4321.23025
+  type: 'test'
+  ...
+# Subtest: check 3 T7 GAP (Q67e): deleting an evidence object is not EVIDENCE-TAMPERED (only objects still present are re-hashed), and a read-only object needs no chmod to delete
+ok 14 - check 3 T7 GAP (Q67e): deleting an evidence object is not EVIDENCE-TAMPERED (only objects still present are re-hashed), and a read-only object needs no chmod to delete
+  ---
+  duration_ms: 4212.773208
+  type: 'test'
+  ...
+# Subtest: check 3 T3 GAP (Q67e): a build that rewrites the evaluator is reported in its own run, but every later run uses the rewritten evaluator, which can drop GATE-NOT-RUN
+ok 15 - check 3 T3 GAP (Q67e): a build that rewrites the evaluator is reported in its own run, but every later run uses the rewritten evaluator, which can drop GATE-NOT-RUN
+  ---
+  duration_ms: 21110.719333
+  type: 'test'
+  ...
+# Subtest: check 4 (Q67i): for every declared comparator, a pass pair passes and a fail pair fails, and compare (recompute) and caseResultVerdict agree
+ok 16 - check 4 (Q67i): for every declared comparator, a pass pair passes and a fail pair fails, and compare (recompute) and caseResultVerdict agree
+  ---
+  duration_ms: 1.163
+  type: 'test'
+  ...
+# Subtest: check 4 GAP (Q67i): an O-REPLAY answer is an object {commandOutcomes, queries, state}, so every row, page and error comparator is UNCOMPARABLE on it, even on identical bytes
+ok 17 - check 4 GAP (Q67i): an O-REPLAY answer is an object {commandOutcomes, queries, state}, so every row, page and error comparator is UNCOMPARABLE on it, even on identical bytes
+  ---
+  duration_ms: 0.285083
+  type: 'test'
+  ...
+# Subtest: check 4 (CMP-ERROR cause, Codex finding 9): a missing cause fails, as the compiled 0.3.9 rule says (Q67h, pending, would make it optional); any non-null value counts as "the original cause retained"
+ok 18 - check 4 (CMP-ERROR cause, Codex finding 9): a missing cause fails, as the compiled 0.3.9 rule says (Q67h, pending, would make it optional); any non-null value counts as "the original cause retained"
+  ---
+  duration_ms: 0.837625
+  type: 'test'
+  ...
+# Subtest: check 4: on a run with no observation, compare says FAIL and caseResultVerdict UNCOMPARABLE for the same record (both never PASS)
+ok 19 - check 4: on a run with no observation, compare says FAIL and caseResultVerdict UNCOMPARABLE for the same record (both never PASS)
+  ---
+  duration_ms: 1220.451875
+  type: 'test'
+  ...
+# Subtest: check 5 (Q67j): no promotion reaches QUALIFIED through qualify (offline or plan-only, engine-source or log-source) or admit
+ok 20 - check 5 (Q67j): no promotion reaches QUALIFIED through qualify (offline or plan-only, engine-source or log-source) or admit
+  ---
+  duration_ms: 24131.323458
+  type: 'test'
+  ...
+# Subtest: check 5 GAP (Q67j): admitCore never reads the kind it is now passed, so the reference model and run.core say QUALIFIED for a promotion; the same log-source claim labelled comparative qualifies offline
+ok 21 - check 5 GAP (Q67j): admitCore never reads the kind it is now passed, so the reference model and run.core say QUALIFIED for a promotion; the same log-source claim labelled comparative qualifies offline
+  ---
+  duration_ms: 9429.087334
+  type: 'test'
+  ...
+# Subtest: check 6: qualify is DIAGNOSTIC on every early return and on every exception; only paths that reach the gate step carry GATE-NOT-RUN
+ok 22 - check 6: qualify is DIAGNOSTIC on every early return and on every exception; only paths that reach the gate step carry GATE-NOT-RUN
+  ---
+  duration_ms: 351.929791
+  type: 'test'
+  ...
+# Subtest: check 6 GAP: a system under test that makes the evidence directory unreadable makes qualifyClaim throw instead of returning a verdict
+ok 23 - check 6 GAP: a system under test that makes the evidence directory unreadable makes qualifyClaim throw instead of returning a verdict
+  ---
+  duration_ms: 607.959542
+  type: 'test'
+  ...
+1..23
+# tests 23
+# suites 0
+# pass 23
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 149844.260917

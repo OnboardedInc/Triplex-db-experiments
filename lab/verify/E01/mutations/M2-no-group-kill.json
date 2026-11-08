@@ -1,0 +1,12 @@
+{
+  "id": "M2-no-group-kill",
+  "guards": "RUN-BACKGROUND-HELPER (Q67e)",
+  "exit": 1,
+  "pass": 111,
+  "fail": 1,
+  "failed": [
+    "qualify Q67e (Codex round 8 finding 6): a build helper left running is killed with the build's process group"
+  ],
+  "expectedTestFailed": true,
+  "seconds": 91
+}

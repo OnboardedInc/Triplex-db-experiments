@@ -1,0 +1,12 @@
+{
+  "id": "M5-qualify-promotion",
+  "guards": "RUN-PROMOTION (Q67j, qualify)",
+  "exit": 1,
+  "pass": 111,
+  "fail": 1,
+  "failed": [
+    "qualify Q67j (Codex round 8 finding 11): a log-source promotion is rejected with a typed reason"
+  ],
+  "expectedTestFailed": true,
+  "seconds": 79
+}

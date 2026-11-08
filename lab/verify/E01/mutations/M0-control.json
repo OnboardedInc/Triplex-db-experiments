@@ -1,0 +1,10 @@
+{
+  "id": "M0-control",
+  "guards": "none (copy unmutated)",
+  "exit": 0,
+  "pass": 112,
+  "fail": 0,
+  "failed": [],
+  "expectedTestFailed": null,
+  "seconds": 90
+}

@@ -1,0 +1,12 @@
+{
+  "id": "M3b-no-evidence-check",
+  "guards": "escaped process, evidence (Q67e)",
+  "exit": 1,
+  "pass": 111,
+  "fail": 1,
+  "failed": [
+    "qualify Q67e (Codex round 8 finding 6): an edited oracle copy is never run again, and edited evidence is reported"
+  ],
+  "expectedTestFailed": true,
+  "seconds": 90
+}

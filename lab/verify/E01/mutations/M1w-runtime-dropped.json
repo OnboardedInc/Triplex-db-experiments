@@ -1,0 +1,12 @@
+{
+  "id": "M1w-runtime-dropped",
+  "guards": "RUN-ALIAS-DIST (Q67b), weakened: tree label kept, runtime listing dropped",
+  "exit": 1,
+  "pass": 111,
+  "fail": 1,
+  "failed": [
+    "qualify build: the evaluator builds the claimed tree and rebuilds A0, which reproduces the registry's binarySha256"
+  ],
+  "expectedTestFailed": null,
+  "seconds": 99
+}

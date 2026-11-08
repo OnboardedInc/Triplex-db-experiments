@@ -1,0 +1,13 @@
+{
+  "id": "M1-alias-revert",
+  "guards": "RUN-ALIAS-DIST (Q67b)",
+  "exit": 1,
+  "pass": 110,
+  "fail": 2,
+  "failed": [
+    "qualify build: the evaluator builds the claimed tree and rebuilds A0, which reproduces the registry's binarySha256",
+    "qualify Q67b (Codex round 8 finding 2): a candidate with A0's dist bytes and another source runner runs its own instance"
+  ],
+  "expectedTestFailed": true,
+  "seconds": 96
+}

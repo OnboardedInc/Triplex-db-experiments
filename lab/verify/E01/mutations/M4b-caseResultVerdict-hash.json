@@ -1,0 +1,13 @@
+{
+  "id": "M4b-caseResultVerdict-hash",
+  "guards": "bag comparator in caseResultVerdict (Q67i)",
+  "exit": 1,
+  "pass": 110,
+  "fail": 2,
+  "failed": [
+    "qualify resolve, execute and record: every case of the pinned manifests in every mode, each as a case-result/2",
+    "qualify Q67i (Codex round 8 finding 10): case-result/2 is re-judged with its declared comparator on the retained raw objects"
+  ],
+  "expectedTestFailed": true,
+  "seconds": 81
+}

@@ -1,0 +1,17 @@
+{
+  "contractVersion": "0.3.9",
+  "selfCheckErrors": [],
+  "fixtures": 59,
+  "byVerdict": {
+    "QUALIFIED": 7,
+    "DIAGNOSTIC": 52
+  },
+  "executorCalls": 10712,
+  "agree": 59,
+  "disagree": [],
+  "withKind": [],
+  "documents": {
+    "n": 63,
+    "diagnostic": 63
+  }
+}
