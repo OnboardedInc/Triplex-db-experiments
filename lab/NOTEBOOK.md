@@ -1544,3 +1544,14 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **V-P2Q round 6 FIX-FIRST:** EHOSTDOWN and ENETDOWN are missing. This is the third round in a row whose finding is one more edge of the
   same classifier. **Learning:** when reviews keep finding members of a set, derive the set from the source (Node errno docs, the
   installed undici errors module) and add a test that fails when the source gains a member. Round 6 is told to do exactly that.
+
+## 2026-11-08 23:32Z: hourly pass: O-OBS accepted; contract 0.3.12 started; two Opus researchers launched
+- **Usage 3% weekly.** All running agents serve a priority or the correctness floor under them.
+- **V-O05 round 4 ACCEPT:** O-OBS at 23e2273 is safe to pin for screening (786 retained and 133 new cases; one shared context guard covers
+  every protocol). Four review rounds; each round's finding was a missing comparison, not a wrong one. Live collection is still unverified.
+- **Contract 0.3.12 (CX-A01-0312)** compiles Q72, Q79e-f, Q80, Q82-Q87 and pins O-OBS; G03's isolation pins wait for 0.3.13.
+- **Research launched from this hour's learnings:**
+  - **R31, route equivalence (P1, P4):** SQL01 F1 showed a derived store answering a basis it could not answer exactly. R31 lists every
+    read route in all three lanes, what basis shapes each answers exactly, and specifies one route-equivalence harness for all lanes.
+  - **R32, lane D durable storage:** lane D runs on Datomic dev storage, and Q86f bars its durable evidence until SQL storage. R32 sizes
+    SQL storage in the pool, sets out the tenant-isolation options for Sam's Q78e, covers excision for PII erasure, and drafts the migration brief.
