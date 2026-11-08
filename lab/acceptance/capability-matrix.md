@@ -170,6 +170,7 @@ Every lane's supported native fragments must offer these rows; removing one from
 
 | Id | Engine | Behavior | Evidence |
 | --- | --- | --- | --- |
+| KL-CORE-TAIL | core SQL compileRecursiveCTE (only adapters using it) | compileRecursiveCTE ignores recursive tail constraints. A lane unable to preserve a constraint must refuse typed, never omit it. Fix and qualify the compiler before a lane uses it; current XTDB/QLever C8 frontier paths are not declared users of this compiler | RULINGS Q76c; packages/core/src/datalog/compiler.ts compileRecursiveCTE |
 | KL-X1 | XTDB 2.2.0 | SUM over BIGINT accumulates with unchecked addition and wraps silently; scalar + and * are overflow-checked | references/xtdb/core/src/main/kotlin/xtdb/arrow/LongVector.kt:30-33 @ c6c1962; lab/research/R6-xtdb-gap-analysis.md finding 2 (source only, not probed) |
 | KL-X2 | XTDB 2.2.0 | aggregate and rank window functions fail with AbstractMethodError; frames unsupported; one window function per query | lab/research/R1-xtdb-capabilities.md Q4 (probed) |
 | KL-X3 | XTDB 2.2.0 | XTQL union-all parses but cannot be planned | lab/research/R1-xtdb-capabilities.md Q4 (probed) |

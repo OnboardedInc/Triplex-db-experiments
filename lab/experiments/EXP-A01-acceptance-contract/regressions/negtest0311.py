@@ -99,6 +99,7 @@ for name, reason in superseded.items():
     print("SUPERSEDED " + name + ": " + reason, flush=True)
 import hashlib
 print("SOURCE sha256=" + hashlib.sha256(src.encode()).hexdigest(), flush=True)
+tests.update({'R2 F1 payload projection disabled': [('fields = ("rows",) if "rows" in a else ("raw", "snapshot") if "raw" in a and "snapshot" in a else ()', 'fields = ()')], 'R2 F1 cut metadata ignored': [('key({k: v for k, v in a.items() if k not in fields}) == key({k: v for k, v in b.items() if k not in fields})', 'True')], 'R2 F2 Unicode recursion escaped': [('key = lambda x: json.dumps(x, sort_keys=True, separators=(",", ":"), ensure_ascii=False)', 'key = lambda x: json.dumps(x, sort_keys=True, separators=(",", ":"), ensure_ascii=True)')], 'R2 F3 composition excludes D': [('"engines": "each assignment is XTDB, QLever or Datomic"', '"engines": "each assignment is XTDB or QLever"')], 'R2 F3 receipt excludes D': [('each {engine: xtdb | qlever | datomic, imageDigest', 'each {engine: xtdb | qlever, imageDigest')], 'R2 F4 compiler defect omitted': [('"KL-CORE-TAIL": ("core SQL compileRecursiveCTE', '"KL-CORE-TAIL-REMOVED": ("core SQL compileRecursiveCTE')]})
 run, caught, missed, retired = 0, 0, [], []
 for name, pairs in tests.items():
     if any(src.count(a) < 1 for a, _ in pairs):

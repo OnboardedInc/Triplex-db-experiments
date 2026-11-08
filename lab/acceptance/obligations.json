@@ -26,13 +26,13 @@
     "lab/verify/O02/v-o04b/results/hashes.a9c1327.json": "256465151a1018faf17432f3706aa34650448b587e52d256b80972de7d9df1f1",
     "lab/verify/O02/BRIEF.md": "38d3c81f99da26438ff09ba0e6b6a88e75c5f402c4362a7d28d9b8df387376c4",
     "lab/verify/D01/BRIEF.md": "8fbdaaf67d2cbc1ae000d780ce7fcc45825ec6ba81edbbc9ed179ce517b5df88",
-    "lab/acceptance/build_contract.py": "512ef4c1da9e185771bcb94d6fc4680c349a52da37168048fe706a28b5a5cf7e"
+    "lab/acceptance/build_contract.py": "60055e9f236733365c4e558412368b0a2934df8cb1d5e9479d45758971940ccf"
   },
   "artifacts": {
-    "oracle-contract.json": "9e4b3541c1078a510f258edc4a9eb3331a97ebb9a65bf1c0b4ce75bcec99007c",
+    "oracle-contract.json": "a7ec2fe98f8bb066fe6ea55e89344905f5e9c760b076152f5377c414d18adbd0",
     "load-contract.json": "00169eedc83df0d7541f12c188aaec72f94c11f8ba70992e0411a4999d2adced",
     "budgets.json": "91a85c688b876f767c25afa73d4a3080eb2831bc21ed1daaf48e7b5a701bda00",
-    "capability-matrix.md": "488db5df92e1974cd4fafc6f16cc349101504d4352777e568f298df78891d0cd"
+    "capability-matrix.md": "544acb56083db7c37ecfdcbe5f8e140b9999d368ee84632acd103b3b5069ac40"
   },
   "lanes": [
     "xtdb-xtql",
@@ -2221,7 +2221,12 @@
       "history",
       "analytics"
     ],
-    "engines": "each assignment is XTDB or QLever",
+    "engines": "each assignment is XTDB, QLever or Datomic",
+    "engineIds": [
+      "xtdb",
+      "qlever",
+      "datomic"
+    ],
     "receiptBinding": "every receipt binds, per assignment, the engine image digest, configuration hash and slot; every replication edge (feed consumer source hash, translation generation); and each serving index's watermark at read time",
     "basis": "a basis is a source-of-truth position (POSITION coordinates (stream, epoch, offset, ordinal)) plus a valid time",
     "eligibility": "index I is eligible to serve basis B only when all hold: its watermark (a fully resolved prefix) has reached B in B's epoch; C1's eligibility for the query (mapping, valid time, exact cut); I can actually reconstruct B (a current-only index only when B is at or after the last change to every attribute the read touches, the validity interval of R18); and I has applied every erasure published so far, independently of B (ERASURE frontier) (RULINGS Q31d)",
@@ -3380,8 +3385,8 @@
       ],
       "answer": "canonical JSON {bound, unboundAssignments, imagesPinned, variant} for one composition-identity case {composition}, run from the authority's files (RULINGS Q59e, Q64c, Q65a)",
       "sha256": {
-        "lab/acceptance/build_contract.py": "512ef4c1da9e185771bcb94d6fc4680c349a52da37168048fe706a28b5a5cf7e",
-        "lab/acceptance/oracle-contract.json": "9e4b3541c1078a510f258edc4a9eb3331a97ebb9a65bf1c0b4ce75bcec99007c"
+        "lab/acceptance/build_contract.py": "60055e9f236733365c4e558412368b0a2934df8cb1d5e9479d45758971940ccf",
+        "lab/acceptance/oracle-contract.json": "a7ec2fe98f8bb066fe6ea55e89344905f5e9c760b076152f5377c414d18adbd0"
       }
     }
   },
@@ -3391,7 +3396,7 @@
     "configSha256",
     "slot"
   ],
-  "oracleAnswerRule": "Q75g: row comparators apply to each queries[i].result or queries[i].inFlight.acceptable[j].result; commandOutcomes and state compare exactly. The evaluator runs the runner's argv with {case} replaced by the path of the pinned case input (and {mode} by the mode where the argv names it) in a directory holding only the pinned oracle files; exit 2, or X-NOT-MODELED on stdout or stderr, is a refusal; any other nonzero exit is an oracle error; neither is ever PASS; on exit 0 stdout is one canonical JSON document (UTF-8, key-sorted, the exact bytes of its own canonical form after one trailing newline is removed), and for O-REPLAY the expected answer is the object of the report's commandOutcomes, state and queries members, the report's own identity and verdict fields (format, oracle, caseId, caseSha256, lane, verdict, divergedAtCommand, receiptConsistency, rulesInEffect, reservedNamespaces) not being part of it; a case input given to the oracle carries no expectations of its own (RULINGS Q61c)",
+  "oracleAnswerRule": "Q75g: row comparators apply to each queries[i].result or queries[i].inFlight.acceptable[j].result: bare arrays, rows arrays inside {cut, rows}, or both raw and snapshot arrays inside match/entityTriples results; all wrapper metadata (including cut, count and contract) compares exactly. Unknown row-bearing object shapes are uncomparable and fail closed. UTF-8 strings compare by code point without normalization. commandOutcomes and state compare exactly. The evaluator runs the runner's argv with {case} replaced by the path of the pinned case input (and {mode} by the mode where the argv names it) in a directory holding only the pinned oracle files; exit 2, or X-NOT-MODELED on stdout or stderr, is a refusal; any other nonzero exit is an oracle error; neither is ever PASS; on exit 0 stdout is one canonical JSON document (UTF-8, key-sorted, the exact bytes of its own canonical form after one trailing newline is removed), and for O-REPLAY the expected answer is the object of the report's commandOutcomes, state and queries members, the report's own identity and verdict fields (format, oracle, caseId, caseSha256, lane, verdict, divergedAtCommand, receiptConsistency, rulesInEffect, reservedNamespaces) not being part of it; a case input given to the oracle carries no expectations of its own (RULINGS Q61c)",
   "answerMembers": {
     "O-REPLAY": [
       "commandOutcomes",
@@ -12618,7 +12623,7 @@
         "G3.recursion.read-only-frontier",
         "PKT.full142"
       ],
-      "note": null,
+      "note": "KL-CORE-TAIL: core compileRecursiveCTE ignores tail constraints; fix before lane use or refuse typed. Existing frontier paths are not users.",
       "cells": {
         "x_raw": {
           "status": "NR",
@@ -13623,6 +13628,11 @@
     }
   ],
   "knownLimits": {
+    "KL-CORE-TAIL": {
+      "engine": "core SQL compileRecursiveCTE (only adapters using it)",
+      "behavior": "compileRecursiveCTE ignores recursive tail constraints. A lane unable to preserve a constraint must refuse typed, never omit it. Fix and qualify the compiler before a lane uses it; current XTDB/QLever C8 frontier paths are not declared users of this compiler",
+      "evidence": "RULINGS Q76c; packages/core/src/datalog/compiler.ts compileRecursiveCTE"
+    },
     "KL-X1": {
       "engine": "XTDB 2.2.0",
       "behavior": "SUM over BIGINT accumulates with unchecked addition and wraps silently; scalar + and * are overflow-checked",
@@ -16611,7 +16621,7 @@
       "contract": "{version, transitiveSha256}",
       "obligations": "[{id, definitionSha256}]",
       "lane": "lane id for lane-scope receipts; for engine-scope receipts the scope key (layer, engine, imageDigest, configSha256, slot) derived from the composition assignment of the obligation's layer (COMPOSITION scopeKey)",
-      "composition": "{source, current, history, analytics}: each {engine: xtdb | qlever, imageDigest, configSha256, slot} (RULINGS Q28); source also {variant: engine-source | log-source} and, for log-source, log {implementationSha256, fsyncMode, fullFsync, device} (RULINGS Q55b); no density field carries authority (RULINGS Q38a)",
+      "composition": "{source, current, history, analytics}: each {engine: xtdb | qlever | datomic, imageDigest, configSha256, slot} (RULINGS Q28); source also {variant: engine-source | log-source} and, for log-source, log {implementationSha256, fsyncMode, fullFsync, device} (RULINGS Q55b); no density field carries authority (RULINGS Q38a)",
       "nativeLanguage": "for XTDB receipts, TRIPLEX_XTDB_NATIVE_LANGUAGE (xtql or xtdb-sql) as executed; XTQL and SQL results never share an obligation closure (RULINGS Q39b)",
       "replicationEdges": "[{from, to, consumerSourceSha256, translationGeneration}] for every edge of the composition",
       "watermarks": "per read: {readId, basisPosition, servingIndex, watermarkAtRead, waitMs, route, surface, recipeLanguage, semanticQueryId (parameters, basis, meaning), totalLatencyMs} (RULINGS Q31d, Q34b)",
@@ -29993,5 +30003,5 @@
       ]
     }
   ],
-  "transitiveContractSha256": "52a5ce525172ea1a786fe3da3490d94dbff408fd81dfe929b7e239d49d7d0c0b"
+  "transitiveContractSha256": "8f522dee1df98b8546dd6ac0fa211c8253c67c3d790ed6d1eb16d646466d37d9"
 }

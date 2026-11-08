@@ -17,7 +17,12 @@
       "status": "PROVISIONAL (RULINGS Q68)"
     },
     "eligibility": "index I is eligible to serve basis B only when all hold: its watermark (a fully resolved prefix) has reached B in B's epoch; C1's eligibility for the query (mapping, valid time, exact cut); I can actually reconstruct B (a current-only index only when B is at or after the last change to every attribute the read touches, the validity interval of R18); and I has applied every erasure published so far, independently of B (ERASURE frontier) (RULINGS Q31d)",
-    "engines": "each assignment is XTDB or QLever",
+    "engineIds": [
+      "xtdb",
+      "qlever",
+      "datomic"
+    ],
+    "engines": "each assignment is XTDB, QLever or Datomic",
     "experimentDirections": {
       "EXP-P2B": "XTDB as a second replica behind the broker: one pgwire transaction per frame (ASSERT the marker, INSERT rows with a fixed _valid_from, INSERT the new marker; P0004 on guard failure); rows and marker read in one read-only transaction; the marker row is the eligibility authority; XTDB system time never carries broker positions; Local log first, InMemory log plus an epoch bump as an arm; predictions and measurements per R23 section 6; it starts after the Q62a fix round is re-verified, from the same author, so one writer owns the broker files (RULINGS Q58b; Q51b's original direction stays pending)",
       "EXP-P4": "provisional (RULINGS Q68a, Q68g): P4's fast path is one current structure holding live facts plus facts retired after a retention horizon H, served at basis B only when H <= B <= W (W its applied watermark), else the history path; its first copy lives in the broker, written with the frame (arm H1); engines get a smaller copy in the same transaction or guarded update (XTDB tx_current, QLever cur graph) for list and native queries; EXP-P4 measures arms A0, X1, X2, Q1 and H1 per R24 section 6, exactness gate first, and measures X1 (default temporal bounds) fresh and aged before any write-path change, because FOR ALL VALID_TIME on XTDB current reads forfeits the engine's current and historical split",

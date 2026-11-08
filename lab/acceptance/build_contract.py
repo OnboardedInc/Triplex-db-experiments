@@ -53,7 +53,7 @@ def contract_oracle_answer(case_bytes, contract):
                     unbound.append(k)
                     continue
                 extra = ["variant"] + list(variants[a["variant"]])
-            ok = set(a) == set(fields) | set(extra) and all(a[f] for f in fields)
+            ok = set(a) == set(fields) | set(extra) and all(a[f] for f in fields) and a["engine"] in contract["composition"]["engineIds"]
             if ok and "log" in extra:
                 lg = a["log"]
                 ok = isinstance(lg, dict) and set(lg) == set(logf) and all((isinstance(lg[f], bool) if t == "bool" else (isinstance(lg[f], str) and len(lg[f]) == 64 and all(ch in "0123456789abcdef" for ch in lg[f])) if t == "hex64" else s_(lg[f])) for f, t in logf.items())
@@ -962,6 +962,8 @@ COL_LANE = {"x_raw": "xtdb-xtql", "x_frag": "xtdb-xtql", "s_raw": "xtdb-sql", "s
 COL_SURFACE = {"x_raw": "raw", "s_raw": "raw", "q_raw": "raw", "x_frag": "frag", "s_frag": "frag", "q_frag": "frag", "repo_x": "repo", "repo_q": "repo", "d_raw": "raw", "d_frag": "frag", "repo_d": "repo"}
 
 KNOWN_LIMITS = {
+    # [EXP-A01-R2] Why: Q76c names a compiler defect outside the qualified frontier paths. Rejected: treating XTDB's native recursion gap as evidence for this different defect (F4).
+    "KL-CORE-TAIL": ("core SQL compileRecursiveCTE (only adapters using it)", "compileRecursiveCTE ignores recursive tail constraints. A lane unable to preserve a constraint must refuse typed, never omit it. Fix and qualify the compiler before a lane uses it; current XTDB/QLever C8 frontier paths are not declared users of this compiler", "RULINGS Q76c; packages/core/src/datalog/compiler.ts compileRecursiveCTE"),
     "KL-X1": ("XTDB 2.2.0", "SUM over BIGINT accumulates with unchecked addition and wraps silently; scalar + and * are overflow-checked", "references/xtdb/core/src/main/kotlin/xtdb/arrow/LongVector.kt:30-33 @ c6c1962; lab/research/R6-xtdb-gap-analysis.md finding 2 (source only, not probed)"),
     "KL-X2": ("XTDB 2.2.0", "aggregate and rank window functions fail with AbstractMethodError; frames unsupported; one window function per query", "lab/research/R1-xtdb-capabilities.md Q4 (probed)"),
     "KL-X3": ("XTDB 2.2.0", "XTQL union-all parses but cannot be planned", "lab/research/R1-xtdb-capabilities.md Q4 (probed)"),
@@ -1033,7 +1035,7 @@ MATRIX_ROWS = [
     row(32, "join on ref, reverse ref", "ref", "exact", True, True, ["R.raw.parity", "G3.plan.access-path-at-scale"]),
     row(33, "UNION / union-all", "any", "spec", False, False, [], {"x_raw": ("KL", ["KL-X3"], ""), "x_frag": ("NA", "not in the coverage set; no obligation needs it")}),
     row(34, "window functions", "any", "spec", False, False, [], {"x_raw": ("NA", "XTQL has no window operator"), "x_frag": ("NA", "XTQL has no window operator"), "s_raw": ("KL", ["KL-X2"], "")}),
-    row(35, "recursion / transitive closure (C8 frontier)", "ref", "exact, bounded, read-only", False, True, ["G3.recursion.scalable", "G3.recursion.read-only-frontier", "PKT.full142"], {"x_raw": ("KL", ["KL-X4"], ""), "s_raw": ("KL", ["KL-X4"], "")}),
+    row(35, "recursion / transitive closure (C8 frontier)", "ref", "exact, bounded, read-only", False, True, ["G3.recursion.scalable", "G3.recursion.read-only-frontier", "PKT.full142"], {"x_raw": ("KL", ["KL-X4"], ""), "s_raw": ("KL", ["KL-X4"], "")}, note="KL-CORE-TAIL: core compileRecursiveCTE ignores tail constraints; fix before lane use or refuse typed. Existing frontier paths are not users."),
     row(36, "interval union over valid time", "number endpoints", "exact", False, True, ["PKT.full142", "S.correctness.query-families"]),
     row(37, "engine-native system-time clause as a Triplex basis", "basis", "exact Triplex basis", False, False, [], {"x_raw": ("KL", ["KL-X8"], ""), "s_raw": ("KL", ["KL-X8"], ""), "x_frag": ("NA", "fragments express bases through row 38"), "s_frag": ("NA", "same"), "q_raw": ("NA", "no engine system time"), "q_frag": ("NA", "same")}),
     row(38, "as-of basis recipe (P, R, V)", "basis", "exact", True, True, ["R.raw.parity", "G8.publish.basis-honesty"]),
@@ -1409,7 +1411,7 @@ ORACLE_RUNNERS = {
     "O-CONTRACT": {"argv": ["python3", "-I", "-B", "lab/acceptance/build_contract.py", "--oracle", "O-CONTRACT", "{case}"], "files": ["lab/acceptance/build_contract.py", "lab/acceptance/oracle-contract.json"],
                    "answer": "canonical JSON {bound, unboundAssignments, imagesPinned, variant} for one composition-identity case {composition}, run from the authority's files (RULINGS Q59e, Q64c, Q65a)"},
 }
-ORACLE_ANSWER_RULE = "Q75g: row comparators apply to each queries[i].result or queries[i].inFlight.acceptable[j].result; commandOutcomes and state compare exactly. The evaluator runs the runner's argv with {case} replaced by the path of the pinned case input (and {mode} by the mode where the argv names it) in a directory holding only the pinned oracle files; exit 2, or X-NOT-MODELED on stdout or stderr, is a refusal; any other nonzero exit is an oracle error; neither is ever PASS; on exit 0 stdout is one canonical JSON document (UTF-8, key-sorted, the exact bytes of its own canonical form after one trailing newline is removed), and for O-REPLAY the expected answer is the object of the report's commandOutcomes, state and queries members, the report's own identity and verdict fields (format, oracle, caseId, caseSha256, lane, verdict, divergedAtCommand, receiptConsistency, rulesInEffect, reservedNamespaces) not being part of it; a case input given to the oracle carries no expectations of its own (RULINGS Q61c)"
+ORACLE_ANSWER_RULE = "Q75g: row comparators apply to each queries[i].result or queries[i].inFlight.acceptable[j].result: bare arrays, rows arrays inside {cut, rows}, or both raw and snapshot arrays inside match/entityTriples results; all wrapper metadata (including cut, count and contract) compares exactly. Unknown row-bearing object shapes are uncomparable and fail closed. UTF-8 strings compare by code point without normalization. commandOutcomes and state compare exactly. The evaluator runs the runner's argv with {case} replaced by the path of the pinned case input (and {mode} by the mode where the argv names it) in a directory holding only the pinned oracle files; exit 2, or X-NOT-MODELED on stdout or stderr, is a refusal; any other nonzero exit is an oracle error; neither is ever PASS; on exit 0 stdout is one canonical JSON document (UTF-8, key-sorted, the exact bytes of its own canonical form after one trailing newline is removed), and for O-REPLAY the expected answer is the object of the report's commandOutcomes, state and queries members, the report's own identity and verdict fields (format, oracle, caseId, caseSha256, lane, verdict, divergedAtCommand, receiptConsistency, rulesInEffect, reservedNamespaces) not being part of it; a case input given to the oracle carries no expectations of its own (RULINGS Q61c)"
 ANSWER_MEMBERS = {"O-REPLAY": ["commandOutcomes", "state", "queries"], "O-DOMAIN": None, "O-CONTRACT": None}  # None: the whole canonical document
 # RULINGS Q61d: the pinned case-manifest format (Q59f: manifests are pinned through contract versions, starting with CS-POSITION and CS-NS).
 CASE_MANIFEST = {
@@ -1454,7 +1456,7 @@ def composition_ok(comp):
             if a.get("variant") not in SOURCE_VARIANT_FIELDS:
                 return False
             extra = ("variant",) + SOURCE_VARIANT_FIELDS[a["variant"]]
-        if set(a) != set(COMPOSITION_FIELDS) | set(extra) or any(not a[f] for f in COMPOSITION_FIELDS):
+        if set(a) != set(COMPOSITION_FIELDS) | set(extra) or any(not a[f] for f in COMPOSITION_FIELDS) or a["engine"] not in COMPOSITION["engineIds"]:
             return False
         if "log" in extra and not (isinstance(a["log"], dict) and set(a["log"]) == set(LOG_FIELDS) and all(_typed(a["log"][f], t) for f, t in LOG_FIELDS.items())):
             return False
@@ -1617,18 +1619,27 @@ def reference_compare(comparator, expected, observed):
     (e_, ok1), (o_, ok2) = _canon(expected), _canon(observed)
     if not (ok1 and ok2):
         return False
-    key = lambda x: json.dumps(x, sort_keys=True, separators=(",", ":"))
+    key = lambda x: json.dumps(x, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
     # [EXP-A01] Why: row ordering belongs to each query result, while state and command decisions stay exact. Rejected: treating the whole replay object as a row array (Q75g).
     members = {"commandOutcomes", "state", "queries"}
     if comparator != "CMP-EXACT-VALUE" and isinstance(e_, dict) and members <= set(e_):
         if not isinstance(o_, dict) or set(e_) != members or set(o_) != members or key(e_["commandOutcomes"]) != key(o_["commandOutcomes"]) or key(e_["state"]) != key(o_["state"]):
             return False
+        def result_payload(a, b):
+            # [EXP-A01-R2] Why: the pinned oracle wraps aggregate rows and match raw/snapshot rows with exact cut metadata. Rejected: applying an array comparator to the entire wrapper (F1).
+            if isinstance(a, dict) and comparator in ("CMP-SET-ROWS", "CMP-BAG-ROWS", "CMP-ORDERED-ROWS", "CMP-PAGES", "CMP-DIAGNOSTICS"):
+                if not isinstance(b, dict) or set(a) != set(b):
+                    return False
+                fields = ("rows",) if "rows" in a else ("raw", "snapshot") if "raw" in a and "snapshot" in a else ()
+                return bool(fields) and key({k: v for k, v in a.items() if k not in fields}) == key({k: v for k, v in b.items() if k not in fields}) and all(reference_compare(comparator, key(a[k]).encode(), key(b[k]).encode()) for k in fields)
+            return reference_compare(comparator, key(a).encode(), key(b).encode())
+
         def result_pair(a, b):
             if not isinstance(a, dict) or not isinstance(b, dict) or set(a) != set(b):
                 return False
             if "result" in a:
                 return (key({k: v for k, v in a.items() if k != "result"}) == key({k: v for k, v in b.items() if k != "result"})
-                        and reference_compare(comparator, key(a["result"]).encode(), key(b["result"]).encode()))
+                        and result_payload(a["result"], b["result"]))
             if "inFlight" in a:
                 af, bf = a["inFlight"], b["inFlight"]
                 if not isinstance(af, dict) or not isinstance(bf, dict) or set(af) != set(bf) or "acceptable" not in af:
@@ -2142,7 +2153,8 @@ W0_PIN = {
 # ============================================================================ composition identity (TARGETS 4.1, RULINGS Q28)
 COMPOSITION = {
     "assignments": ["source", "current", "history", "analytics"],
-    "engines": "each assignment is XTDB or QLever",
+    "engines": "each assignment is XTDB, QLever or Datomic",
+    "engineIds": ["xtdb", "qlever", "datomic"],
     "receiptBinding": "every receipt binds, per assignment, the engine image digest, configuration hash and slot; every replication edge (feed consumer source hash, translation generation); and each serving index's watermark at read time",
     "basis": "a basis is a source-of-truth position (POSITION coordinates (stream, epoch, offset, ordinal)) plus a valid time",
     "eligibility": "index I is eligible to serve basis B only when all hold: its watermark (a fully resolved prefix) has reached B in B's epoch; C1's eligibility for the query (mapping, valid time, exact cut); I can actually reconstruct B (a current-only index only when B is at or after the last change to every attribute the read touches, the validity interval of R18); and I has applied every erasure published so far, independently of B (ERASURE frontier) (RULINGS Q31d)",
@@ -3141,7 +3153,7 @@ RECEIPT_SCHEMA = {
         "contract": "{version, transitiveSha256}",
         "obligations": "[{id, definitionSha256}]",
         "lane": "lane id for lane-scope receipts; for engine-scope receipts the scope key (layer, engine, imageDigest, configSha256, slot) derived from the composition assignment of the obligation's layer (COMPOSITION scopeKey)",
-        "composition": "{source, current, history, analytics}: each {engine: xtdb | qlever, imageDigest, configSha256, slot} (RULINGS Q28); source also {variant: engine-source | log-source} and, for log-source, log {implementationSha256, fsyncMode, fullFsync, device} (RULINGS Q55b); no density field carries authority (RULINGS Q38a)",
+        "composition": "{source, current, history, analytics}: each {engine: xtdb | qlever | datomic, imageDigest, configSha256, slot} (RULINGS Q28); source also {variant: engine-source | log-source} and, for log-source, log {implementationSha256, fsyncMode, fullFsync, device} (RULINGS Q55b); no density field carries authority (RULINGS Q38a)",
         "nativeLanguage": "for XTDB receipts, TRIPLEX_XTDB_NATIVE_LANGUAGE (xtql or xtdb-sql) as executed; XTQL and SQL results never share an obligation closure (RULINGS Q39b)",
         "replicationEdges": "[{from, to, consumerSourceSha256, translationGeneration}] for every edge of the composition",
         "watermarks": "per read: {readId, basisPosition, servingIndex, watermarkAtRead, waitMs, route, surface, recipeLanguage, semanticQueryId (parameters, basis, meaning), totalLatencyMs} (RULINGS Q31d, Q34b)",
@@ -5776,6 +5788,25 @@ def checks_0311():
         b["commandOutcomes"] = ["changed"]
         if reference_compare("CMP-BAG-ROWS", j(a), j(b)):
             e.append("Q75g: command outcomes stay exact")
+    # [EXP-A01-R2] Why: preserve real result wrappers and Unicode at recursive boundaries. Rejected: ASCII-only bare-list fixtures (F1/F2).
+    u = lambda v: json.dumps(v, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+    for wrap in (replay, inflight):
+        for payload in ([{"value": "東京😀café"}], {"cut": {"P": 1}, "rows": [["é"], ["東京"]]}, {"cut": {"P": 1}, "count": 2, "raw": [["é"], ["東京"]], "snapshot": [["é"], ["東京"]]}):
+            if not reference_compare("CMP-BAG-ROWS", u(wrap(payload)), u(wrap(payload))):
+                e.append("F1/F2: real replay result objects and Unicode must compare equal to themselves")
+        a = {"cut": {"P": 1}, "rows": [["é"], ["東京"]]}
+        b = dict(a, rows=list(reversed(a["rows"])))
+        if not reference_compare("CMP-BAG-ROWS", u(wrap(a)), u(wrap(b))) or reference_compare("CMP-ORDERED-ROWS", u(wrap(a)), u(wrap(b))) or reference_compare("CMP-BAG-ROWS", u(wrap(a)), u(wrap(dict(b, cut={"P": 2})))):
+            e.append("F1: result row projection preserves ordering policy and exact cut metadata")
+    if COMPOSITION.get("engineIds") != ["xtdb", "qlever", "datomic"] or "Datomic" not in COMPOSITION["engines"] or "datomic" not in RECEIPT_SCHEMA["fields"]["composition"]:
+        e.append("F3: authoritative composition and receipt engine declarations include Datomic")
+    dc = {k: {"engine": "datomic", "imageDigest": "unqualified", "configSha256": "cfg", "slot": "dev"} for k in COMPOSITION["assignments"]}
+    dc["source"]["variant"] = "engine-source"
+    da = json.loads(contract_oracle_answer(u({"composition": dc}), contract_oracle_projection()))
+    if not composition_ok(dc) or not da["bound"] or da["imagesPinned"]:
+        e.append("F3: Datomic composition identity is bound but its image remains unpinned")
+    if "KL-CORE-TAIL" not in KNOWN_LIMITS or "compileRecursiveCTE" not in KNOWN_LIMITS["KL-CORE-TAIL"][1] or "KL-CORE-TAIL" not in next(r for r in MATRIX_ROWS if r["n"] == 35).get("note", ""):
+        e.append("F4: Q76c compiler tail-constraint defect recorded in matrix and scoped known limit")
     err = {"_tag": "ReplicaUnavailable", "reason": "replica-unreachable"}
     if not reference_compare("CMP-ERROR", j(err), j(err)) or not reference_compare("CMP-ERROR", j(err), j(dict(err, cause={"message": "offline"}))) or reference_compare("CMP-ERROR", j(err), j(dict(err, cause="text"))) or reference_compare("CMP-ERROR", j(err), j(dict(err, cause={}))):
         e.append("Q75h: cause optional, structured when present")
