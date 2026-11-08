@@ -1,0 +1,19 @@
+// [EXP-SQL01] Why: verifier receipts bind unchanged product bytes and preserve first failures. Rejected: exit-only evidence (no identity).
+import fs from 'node:fs';
+import path from 'node:path';
+import { createHash } from 'node:crypto';
+import { execFileSync, spawn } from 'node:child_process';
+const [label, ...command] = process.argv.slice(2);
+const root = path.resolve('lab/verify/SQL01/evidence');
+fs.mkdirSync(root, { recursive: true });
+const hash = b => createHash('sha256').update(b).digest('hex');
+const inputs = () => Object.fromEntries(execFileSync('rg', ['--files', 'packages/qlever/src', 'packages/core/src', 'lab/verify/SQL01', '-g', '*.ts', '-g', '*.mjs'], { encoding: 'utf8' }).trim().split('\n').concat(['pnpm-lock.yaml']).sort().map(f => [f, hash(fs.readFileSync(f))]));
+const receipt = { label, command, start: new Date().toISOString(), head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), node: process.version, disk: execFileSync('df', ['-k', '.'], { encoding: 'utf8' }), inputs: inputs() };
+const fd = fs.openSync(path.join(root, label + '.log'), 'w');
+const child = spawn(process.execPath, ['lab/bin/heavy.mjs', '--label', 'CX-VSQL01-' + label, '--', ...command], { stdio: ['ignore', fd, fd] });
+const result = await new Promise(resolve => { child.on('error', e => resolve({ error: String(e) })); child.on('close', (code, signal) => resolve({ code, signal })); });
+fs.closeSync(fd);
+Object.assign(receipt, { end: new Date().toISOString(), result, sourceStillMatches: JSON.stringify(inputs()) === JSON.stringify(receipt.inputs), logSha256: hash(fs.readFileSync(path.join(root, label + '.log'))) });
+fs.writeFileSync(path.join(root, label + '.json'), JSON.stringify(receipt, null, 2) + '\n');
+console.log(JSON.stringify({ label, result, sourceStillMatches: receipt.sourceStillMatches }));
+process.exitCode = result.code ?? 1;

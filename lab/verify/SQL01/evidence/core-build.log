@@ -1,0 +1,6 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 36511 "CX-P2Q-R5-suites", pid 39384 "CX-A01-0311-R3-contract", pid 39385 "CX-A01-0311-R3-evaluator", pid 39445 "CX-VO05-R3-shipped-gates"
+[lab] heavy: waiting for one of 4 slots; held by pid 36511 "CX-P2Q-R5-suites", pid 39384 "CX-A01-0311-R3-contract", pid 39385 "CX-A01-0311-R3-evaluator", pid 39445 "CX-VO05-R3-shipped-gates"
+[lab] heavy: waiting for one of 4 slots; held by pid 36511 "CX-P2Q-R5-suites", pid 39384 "CX-A01-0311-R3-contract", pid 39385 "CX-A01-0311-R3-evaluator", pid 39445 "CX-VO05-R3-shipped-gates"
+[ERROR] Unknown option: 'store-dir'
+Did you mean 'stream'? Use "--config.unknown=value" to force an unknown option.
+For help, run: pnpm help run
