@@ -47,18 +47,18 @@ isolation; is Datomic dev storage acceptable for the final acceptance run, or mu
 | Agent | Role, model, effort | Priority | Output |
 | --- | --- | --- | --- |
 | CX-DA01 lane D adapter (exp/DA01-datomic-adapter, on DA00 702643f) | builder, Codex medium | lane D, goal 7 floor | storage adapter, Datalog executor, G1 |
-| CX-VP2Q-3 (verify/P2Q) | reviewer, Codex high | P2, P3 | delta re-check of the broker at 957e3a3 |
-| CX-VC8-3 (verify/C8) | reviewer, Codex high | P1 | delta re-check of C8 514c3b6 (1,024 offline, 25/25 probes) |
-| CX-VJ01-2 (verify/J01) | reviewer, Codex high | P2 | delta re-check of J01 0d9a860 for a default-off merge |
+| CX-P2Q-R3 (exp/P2Q-qlever-log-broker) | builder, Codex medium | P2, P3 | answer-request outages reported as replica-unreachable (last FIX-FIRST item) |
+| CX-X02-R3 (exp/X02-xtql-parity) | builder, Codex medium | XTQL lane | guard admits supported parenthesized subqueries (F1-R2); C8 514c3b6 ACCEPTED, merges after X02 |
+| CX-VA01-0311 (verify/A01-0311) | reviewer, Codex high | floor for claims | review of contract 0.3.11 36d7434 (338/338 regressions; lane D 153 obligations blocked) |
 | CX-VE01-4 (verify/E01) | reviewer, Codex high | floor for claims | delta re-check of E01 388209d (128/128, replay 70/70) |
-| CX-A01-0311 (contract/0.3.11) | builder, Codex medium | floor for claims | pin O-REPLAY 0.4.9; compile Q70, Q74-Q77, Q79, Q81; register lane D (blocked until DA00) |
-| CX-VX02-2 (verify/X02) | reviewer, Codex high | XTQL lane, numeric rule | delta re-check of X02 6cd68dc |
+| R28 isolation design for EXP-G03 | planner, Opus 5.5, high | floor for claims | /Users/sam/Claude/Projects/triplex-db-2/R28/ |
+| CX-VDA00 (verify/DA00) | reviewer, Codex high | lane D floor | review of lane D bring-up 702643f |
 | CX-O05-R2 (exp/O05-observation-oracle) | builder, Codex medium | floor: O-OBS blocks 62 obligations | Q80, Q82: obs-bundle/1, evaluator-owned context, source kinds, exact ratios, canaries |
 | R25 finish: SQLite pinned readers for the broker file and H1 (continuation) | planner, Opus 5.5, high | P1, P2, P4, P5 | /Users/sam/Claude/Projects/triplex-db-2/R25/ |
 | CX-K01-R2 (exp/K01-seed-clone) | builder, Codex medium | measurement speed | R30 freeze protocol (Q83), 500-subject golden and clone with C1-C8 |
 
 Paused at the 2026-11-08 Claude weekly limit and not resumed (effort may exceed high): the ten agents in lab/agents/handoffs/;
-their work is in WIP commits on their branches. Still waiting for a slot: DA00 review (Codex reviewer; DA00 702643f PROGRESSED, tx2-datomic-dev READY); a scale window (park tx2-datomic-dev) for K01 live, W01b GS, J01 compact-on G1, X02 and C8 exclusive reruns; W01b live GS rerun on an exclusive XTDB slot (W01b offline work done at 1d19199: harness and restart fixes, 23 tests, 20/20 golden regeneration, GS.12 patch checks; the shared-engine rerun stopped incomplete), R25
+their work is in WIP commits on their branches. Still waiting for a slot: J01 default-off merge after C8 and X02 (J01 F1/F3 pass at 0d9a860; F2 compact-on recipe needs an executable launch envelope, run in a scale window); a scale window (park tx2-datomic-dev) for K01 live, W01b GS, J01 compact-on G1, X02 and C8 exclusive reruns; W01b live GS rerun on an exclusive XTDB slot (W01b offline work done at 1d19199: harness and restart fixes, 23 tests, 20/20 golden regeneration, GS.12 patch checks; the shared-engine rerun stopped incomplete), R25
 R28 (planner); EXP-OBS01 observer sidecar per engine under engine.mjs (R27 section 6, Q82c) after O-OBS round 2, M01 (parked for the Q69a window).
 
 ## Codex review history
