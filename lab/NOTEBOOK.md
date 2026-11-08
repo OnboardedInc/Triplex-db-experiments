@@ -1169,3 +1169,21 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **Process errors caught:** (1) the scratch cleanup removed a tree V-O04e was still using for a re-check; scratch archives under review now
   stay until their verifier reports. (2) A STATE table rewrite cut through to the next blank line and dropped the queue; restored from
   3f1b214 as a numbered list with a blank line before it.
+
+## 2026-11-08 01:42Z: E01 closes Codex round 8 in claim.mjs; the broker fails on certification, not on answers; O-REPLAY 0.4.5
+- **EXP-E01 at 2796455 (floor for every claim):** each build is its own instance with an execution identity over the whole post-build
+  checkout, so identical dist bytes can no longer alias the A0 control; oracle copies are read-only and re-hashed before every call;
+  children die with their process group; comparators decide case results. 112/112 tests, reference replay 59/59. It says what is still
+  open: a process that leaves its group, check-to-use gaps, no filesystem or network isolation. So offline stays non-QUALIFIED until
+  EXP-G03. V-E01 (fresh Opus) is checking it adversarially. Questions ruled Q71 (install-metadata exclusions, toolchain, comparator in the
+  reference).
+- **V-P2Q round 2 (P2, P3): REJECT this head, not the design.** Every pull answer was exact (4,540 fuzz reads, outages included), and
+  1,017 ACKed commits survived random kills. The two blockers are certification failures, not wrong pulls: (N1) when the flock helper
+  dies, a second writer opens the stream; (N2) Datalog returned 0 rows labelled basis 2048 after a zero-downtime rewind between its two
+  marker probes, and the fuzz hit it unprompted 4 times in 153. Learning: a before/after probe around a separate request certifies nothing
+  about that request's snapshot. The marker has to travel inside the answering request, or an incarnation id has to prove nothing reset in
+  between (Q67c, now Q72b on every surface). Also measured: an outage pull replays the whole log synchronously (544 ms at 30k commands, and
+  it blocks commits), so the Q58c store is required before the broker can be a default.
+- **O-REPLAY 0.4.4 (00703e6)** fixed F7 and F8; its author found the F7 hole still reachable through a literal token from a plain read.
+  Ruled Q70c-e (any issuing read; latest of equal tokens; prefixes without the token left out); 0.4.5 is in progress, then one re-check.
+- **Contract 0.3.10** also compiles Q71b, Q71c and Q72f (one error id for a basis beyond the latest published position).
