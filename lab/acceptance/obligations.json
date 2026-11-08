@@ -28,7 +28,7 @@
     "lab/verify/D01/BRIEF.md": "8fbdaaf67d2cbc1ae000d780ce7fcc45825ec6ba81edbbc9ed179ce517b5df88",
     "lab/acceptance/pins/O-OBS-V-O05-round4.md": "aa275c634384c42977b6ed294be9cb527423a9ad824b9101556017b065bb12dc",
     "lab/acceptance/pins/O-OBS-23e2273-SHA256SUMS": "486a4209d38fcc70a9ccb64d7c7ed9e0dfe25eef405ca21b097fee67d2697300",
-    "lab/acceptance/build_contract.py": "fbcf2010b9304eb7a7fceb7c2a92b0c9b1264c0f9a19fc0e1ece6929c32bebfe"
+    "lab/acceptance/build_contract.py": "63a5145c6c05c5d1369ce78397f11e460c0818861c268096734a80646dd47b9b"
   },
   "artifacts": {
     "oracle-contract.json": "a7ec2fe98f8bb066fe6ea55e89344905f5e9c760b076152f5377c414d18adbd0",
@@ -2511,7 +2511,7 @@
     "caches",
     "checkpoints",
     "backups",
-    "observer outputs (QLever metrics log, XTDB DEBUG logs and spans, proxy captures, docker logs)",
+    "observer outputs",
     "old index generations",
     "freed blocks"
   ],
@@ -3756,7 +3756,7 @@
       ],
       "answer": "canonical JSON {bound, unboundAssignments, imagesPinned, variant} for one composition-identity case {composition}, run from the authority's files (RULINGS Q59e, Q64c, Q65a)",
       "sha256": {
-        "lab/acceptance/build_contract.py": "fbcf2010b9304eb7a7fceb7c2a92b0c9b1264c0f9a19fc0e1ece6929c32bebfe",
+        "lab/acceptance/build_contract.py": "63a5145c6c05c5d1369ce78397f11e460c0818861c268096734a80646dd47b9b",
         "lab/acceptance/oracle-contract.json": "a7ec2fe98f8bb066fe6ea55e89344905f5e9c760b076152f5377c414d18adbd0"
       }
     },
@@ -30826,5 +30826,5 @@
       ]
     }
   ],
-  "transitiveContractSha256": "ac5efb0e64e17b8be42dbb6fafdc87f3ba0e442ff23db7ba4622244a340bc046"
+  "transitiveContractSha256": "cc32dc539ca7a0c4bca117df2f722511d491e3240feedc68c86e10a1268bc765"
 }

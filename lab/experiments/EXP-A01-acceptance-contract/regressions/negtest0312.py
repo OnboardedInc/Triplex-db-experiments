@@ -100,7 +100,292 @@ for name, reason in superseded.items():
 import hashlib
 print("SOURCE sha256=" + hashlib.sha256(src.encode()).hexdigest(), flush=True)
 tests.update({'R2 F1 payload projection disabled': [('fields = ("rows",) if "rows" in a else ("raw", "snapshot") if "raw" in a and "snapshot" in a else ()', 'fields = ()')], 'R2 F1 cut metadata ignored': [('key({k: v for k, v in a.items() if k not in fields}) == key({k: v for k, v in b.items() if k not in fields})', 'True')], 'R2 F2 Unicode recursion escaped': [('key = lambda x: json.dumps(x, sort_keys=True, separators=(",", ":"), ensure_ascii=False)', 'key = lambda x: json.dumps(x, sort_keys=True, separators=(",", ":"), ensure_ascii=True)')], 'R2 F3 composition excludes D': [('"engines": "each assignment is XTDB, QLever or Datomic"', '"engines": "each assignment is XTDB or QLever"')], 'R2 F3 receipt excludes D': [('each {engine: xtdb | qlever | datomic, imageDigest', 'each {engine: xtdb | qlever, imageDigest')], 'R2 F4 compiler defect omitted': [('"KL-CORE-TAIL": ("core SQL compileRecursiveCTE', '"KL-CORE-TAIL-REMOVED": ("core SQL compileRecursiveCTE')]})
-tests.update({'Q72a literal weakened': [('"The flock helper runs detached in its own process group, ignores INT, TERM and HUP, and exits only on stdin EOF; when it exits for any reason the log fail-stops (every later append throws), and each append checks the helper is alive. A test kills the helper and Ctrl-Cs the holder\'s group and shows no second writer."', '"WEAKENED Q72a"')], 'Q72a consumer dropped': [('def checks_0312():', "BROKER_RULES.pop('Q72a', None)\n\ndef checks_0312():")], 'Q72b literal weakened': [('"Q67c applies to every broker read surface: a surface that answers in one request reads the marker in that request (a UNION with the marker triple, as pulls do); a surface that needs several requests (Datalog executor, dependencyState, native with awaitBasisMs) compares (incarnation, marker) before and after, and every fence and replay writes a new incarnation first. V-P2Q\'s live residual test (zero-downtime rewind between the probes) is a regression case."', '"WEAKENED Q72b"')], 'Q72b consumer dropped': [('def checks_0312():', "BROKER_RULES.pop('Q72b', None)\n\ndef checks_0312():")], 'Q72c literal weakened': [('"Rename reasons to the contract\'s strings now (`basis-not-reached`, `replica-unreachable`). Core tagged errors (Q67h) are required before the broker becomes a default, not for the default-off merge; until then no claim may close an obligation pinned to E-BASIS-NOT-AVAILABLE or E-REPLICA-UNAVAILABLE."', '"WEAKENED Q72c"')], 'Q72c consumer dropped': [('def checks_0312():', "BROKER_RULES.pop('Q72c', None)\n\ndef checks_0312():")], 'Q72d literal weakened': [('"The A0 change with the option off is a correctness fix (main answers a basis above the published position) and stays. The frozen A0 control (Q46b) is re-frozen at the P2Q merge, and every matched comparison names the change."', '"WEAKENED Q72d"')], 'Q72d consumer dropped': [('def checks_0312():', "BROKER_RULES.pop('Q72d', None)\n\ndef checks_0312():")], 'Q72e literal weakened': [('"The synchronous whole-log replay per outage pull is a blocker for default, not for default-off; it is replaced by the Q58c store (recent_rows or a current index, on R25\'s design). Probes are coalesced into one in-flight probe per replica in this round. Tests import src through tsx, never dist."', '"WEAKENED Q72e"')], 'Q72e consumer dropped': [('def checks_0312():', "BROKER_RULES.pop('Q72e', None)\n\ndef checks_0312():")], 'Q72g literal weakened': [('"Every broker-mode wiring passes `awaitBasisMs: 2000` (the Q58a default) until the core native facade exists; receipts are measured at the claimed head."', '"WEAKENED Q72g"')], 'Q72g consumer dropped': [('def checks_0312():', "BROKER_RULES.pop('Q72g', None)\n\ndef checks_0312():")], 'Q80a literal weakened': [('"O-OBS judges evidence only inside an evaluator-owned, contract-bound case and run context (obligation, case, witness kind, threshold ids, run id) and against collector objects the evaluator retained itself; evidence that only hashes itself is REFUSED. The collector and context format comes from R27."', '"WEAKENED Q80a"')], 'Q80a consumer dropped': [('def checks_0312():', "OBSERVATION_RULES.pop('Q80a', None)\n\ndef checks_0312():")], 'Q80b literal weakened': [('"Each fault transition and each wait bound has a witness schema of source-bound events (start, end, readback) checked against retained objects; a label naming the transition or the duration is never evidence of it."', '"WEAKENED Q80b"')], 'Q80b consumer dropped': [('def checks_0312():', "OBSERVATION_RULES.pop('Q80b', None)\n\ndef checks_0312():")], 'Q80c literal weakened': [('"Work ratios compare integer counters exactly against rational contract thresholds (cross-multiplication), never binary64."', '"WEAKENED Q80c"')], 'Q80c consumer dropped': [('def checks_0312():', "OBSERVATION_RULES.pop('Q80c', None)\n\ndef checks_0312():")], 'Q82a literal weakened': [('"O-OBS enforces six kinds in trust order: EI engine-internal, TO transport-observed (a wire proxy in a separate process), HO host-observed (cgroup, /proc, sockets, file scans), DR durable read-back, HR harness-observed (caller-side fields only), CR reported by Triplex code (rejected; includes the Datomic gateway, the broker\'s own timestamps, and a counter inside the client process). `source.kind` is `<code>/<engine>/<sourceId>`."', '"WEAKENED Q82a"')], 'Q82a consumer dropped': [('def checks_0312():', "OBSERVATION_RULES.pop('Q82a', None)\n\ndef checks_0312():")], 'Q82b literal weakened': [('"OBS-NO-MUTATION, OBS-PREABORT, OBS-CANCEL and OBS-ACK-ORDER pass only when two sources of different kinds agree."', '"WEAKENED Q82b"')], 'Q82b consumer dropped': [('def checks_0312():', "OBSERVATION_RULES.pop('Q82b', None)\n\ndef checks_0312():")], 'Q82c literal weakened': [('"Evidence arrives as an obs-bundle/1 written by an observer sidecar per engine container that engine.mjs starts (never builder code): content-addressed raw chunks, a hash chain per stream, HMAC-SHA256 chunk headers under a per-run key the SUT never sees, a witness log of chain heads written only by orchestrator tooling, a clock bridge with stated uncertainty, and hash-pinned normalizer scripts that O-OBS reruns; records are recomputed from raw bytes, never accepted as given. Because every agent runs as one macOS user, acceptance additionally repeats the collection by the verifier (ACCEPTANCE 5.8); the bundle alone suffices only for screening."', '"WEAKENED Q82c"')], 'Q82c consumer dropped': [('def checks_0312():', "OBSERVATION_RULES.pop('Q82c', None)\n\ndef checks_0312():")], 'Q82d literal weakened': [('"Every erasure-scan location first finds a canary written before the erasure with the same scanner, or the verdict is REFUSED (QLever\'s FSST-compressed vocabulary defeats plain grep). Observer outputs (QLever metrics log, XTDB DEBUG logs and spans, proxy captures, docker logs), old index generations and freed blocks join PROTECTED_COPY_INVENTORY."', '"WEAKENED Q82d"')], 'Q82d consumer dropped': [('def checks_0312():', "OBSERVATION_RULES.pop('Q82d', None)\n\ndef checks_0312():")], 'Q82e literal weakened': [('"XTDB mutation evidence is the gauge node.tx.latestCompletedTxId, never source-log offsets (flushes and compaction append to the log); XTDB EXPLAIN ANALYZE attributes are JSON (scan_rows_read, scan_pages_used, scan_files_used), and the P4 harness\'s decoding (p4.mjs:29) is fixed to read them; QLever runs with --enable-metrics and its per-query metrics log on. Lane D CANCEL and PREABORT use host-observed per-thread /proc series of the gateway JVM plus the proxy (HO + TO)."', '"WEAKENED Q82e"')], 'Q82e consumer dropped': [('def checks_0312():', "OBSERVATION_RULES.pop('Q82e', None)\n\ndef checks_0312():")], 'Q83a literal weakened': [('"Slots s1-s3 add `-Dlog4j2.shutdownHookEnabled=false` to javaOpts, so XTDB\'s shutdown hook can log `Stopping node...`, the three server-stopped lines and `Node stopped.` (Log4j\'s own hook otherwise drops them). The dev residents are unchanged. This changes the slot config hash and therefore every golden key; receipts before the change name the old hash."', '"WEAKENED Q83a"')], 'Q83a consumer dropped': [('def checks_0312():', "SEED_RULES.pop('Q83a', None)\n\ndef checks_0312():")], 'Q83b literal weakened': [('"Settled = two finish-blocks (the second records the post-compaction catalog), compactor jobs 0, and snapshot-independent evidence (new block file whose tx_id and latest_processed_msg_id equal the node gauges, block.last_upload_time advanced, xt.trie_stats showing the new tries, file listing and trie digest unchanged over three readings 5 s apart); never `xt.live_tables` (stale shared snapshot, upstream #6174). Clean stop = exit within 10 s with the stop lines and exit 143, well-formed LOG and REPLICA_LOG tails checked offline, empty `buffers/**/.tmp` (refuse, never delete). The freeze fingerprint is taken on a reference start of the source after the copy, and every arm, fresh or cloned, starts the same way. Re-test the second finish-block and the reference start when XTDB 2.2.1 is pinned."', '"WEAKENED Q83b"')], 'Q83b consumer dropped': [('def checks_0312():', "SEED_RULES.pop('Q83b', None)\n\ndef checks_0312():")], 'Q83c literal weakened': [('"Never read a block that may not exist (MemoryCache hangs the caller): list `buffers/v06/blocks/b*.binpb` first and query `xt.block_files` only for listed indices, re-listing just before each query; block numbers are not dense (GC keeps the latest 10)."', '"WEAKENED Q83c"')], 'Q83c consumer dropped': [('def checks_0312():', "SEED_RULES.pop('Q83c', None)\n\ndef checks_0312():")], 'Q84a literal weakened': [('"WAL, synchronous=FULL, fullfsync=ON on every non-readonly connection, checkpoint_fullfsync=ON, wal_autocheckpoint=0, journal_size_limit=16 MiB, locking NORMAL (not EXCLUSIVE); the single writer holds a SQLite exclusive lock on a separate broker.lock file for the life of the process (replaces the perl flock helper); assert SQLite >= 3.51.3 at open."', '"WEAKENED Q84a"')], 'Q84a consumer dropped': [('def checks_0312():', "BROKER_RULES.pop('Q84a', None)\n\ndef checks_0312():")], 'Q84b literal weakened': [('"One writer worker thread owns the read-write commit connection; one checkpointer thread runs wal_checkpoint(PASSIVE) every 4 s on its own connection; four reader threads with readonly connections fed over MessagePort; the main thread never touches broker.db. Backstop: above 64 MiB of WAL the writer closes a gate, readers park between transactions, the writer runs RESTART."', '"WEAKENED Q84b"')], 'Q84b consumer dropped': [('def checks_0312():', "BROKER_RULES.pop('Q84b', None)\n\ndef checks_0312():")], 'Q84c literal weakened': [('"Every read transaction starts with `SELECT lsn, epoch, h FROM marker` and is served only when h <= B <= lsn, else routed to the source; one unit of work per transaction (one pull or one 64-subject page). Long work keeps its basis through a retention pin (pinBasis holds H <= B), never an open read transaction."', '"WEAKENED Q84c"')], 'Q84c consumer dropped': [('def checks_0312():', "BROKER_RULES.pop('Q84c', None)\n\ndef checks_0312():")], 'Q84d literal weakened': [('"H1\'s current rows live in broker.db as live_rows and retired_rows clustered by entity, written in the commit\'s own transaction, so W is always the snapshot\'s marker."', '"WEAKENED Q84d"')], 'Q84d consumer dropped': [('def checks_0312():', "BROKER_RULES.pop('Q84d', None)\n\ndef checks_0312():")], 'Q84e literal weakened': [('"Lock, open (recovery), PASSIVE (sync adopted frames), bump the epoch, run the marker and ACKED-sidecar cross-checks, then start readers; a mid-WAL corruption that SQLite recovers silently is caught by the ACKED sidecar."', '"WEAKENED Q84e"')], 'Q84e consumer dropped': [('def checks_0312():', "BROKER_RULES.pop('Q84e', None)\n\ndef checks_0312():")], 'Q83d literal weakened': [('"Settle evidence does not require observing L0 tries: compaction may merge them before the first poll. Settled means the new block\'s tx_id and latest_processed_msg_id equal the node gauges, xt.trie_stats covers that block at whatever level it now sits, compactor jobs 0, and the file listing and trie digest are unchanged over three readings 5 s apart."', '"WEAKENED Q83d"')], 'Q83d consumer dropped': [('def checks_0312():', "SEED_RULES.pop('Q83d', None)\n\ndef checks_0312():")], 'Q79e literal weakened': [('"The quantified-comparison guard classifies the operand by a small grammar, not by listed shapes: any parenthesized query expression (SELECT, VALUES, and set operations UNION / INTERSECT / EXCEPT with or without ALL, at any nesting of parentheses, with comments anywhere) is a subquery and is admitted if it contains no nested unsafe comparison; anything else is refused. Tests are generated from the grammar\'s combinations (each form at depths 1-3, with and without comments) and each generated query is checked against XTDB\'s own answer, next to the round-2 rejections."', '"WEAKENED Q79e"')], 'Q79e consumer dropped': [('def checks_0312():', "EXACT_QUERY_RULES.pop('Q79e', None)\n\ndef checks_0312():")], 'Q85a literal weakened': [('"Database creation for a scope is idempotent and never resets or lowers an existing scope position; concurrent creates converge on one database with its position intact."', '"WEAKENED Q85a"')], 'Q85a consumer dropped': [('def checks_0312():', "DATOMIC_RULES.pop('Q85a', None)\n\ndef checks_0312():")], 'Q85b literal weakened': [('"The gateway accepts every scope name the public Triplex constructor can produce (mapped to a Datomic database name by a documented, reversible encoding) and nothing else."', '"WEAKENED Q85b"')], 'Q85b consumer dropped': [('def checks_0312():', "DATOMIC_RULES.pop('Q85b', None)\n\ndef checks_0312():")], 'Q85c literal weakened': [('"Every image build starts from a fresh context that contains only verified inputs listed in the input hash; a reused or dirty context refuses the build."', '"WEAKENED Q85c"')], 'Q85c consumer dropped': [('def checks_0312():', "DATOMIC_RULES.pop('Q85c', None)\n\ndef checks_0312():")], 'Q85d literal weakened': [('"The TypeScript and JVM codecs share one specification of each value kind\'s range and representation, with a shared test vector set; a value either codec cannot represent is refused by both."', '"WEAKENED Q85d"')], 'Q85d consumer dropped': [('def checks_0312():', "DATOMIC_RULES.pop('Q85d', None)\n\ndef checks_0312():")], 'Q86a literal weakened': [('"Every candidate process (builds, case runners, lane D gateways, A0) runs in a hardened container in the triplex2 VM and none on the Mac: uid 10001, --cap-drop ALL, no-new-privileges, --read-only with tmpfs, memory = memory-swap, --pids-limit, --oom-score-adj 500, no Docker socket, no Mac bind mounts. Inputs enter as a tar of the contract\'s `boxInputs` (built packages, workspace manifests, lockfile; never lab/) plus a read-only Linux pnpm store volume filled by orchestrator tooling; outputs leave only through per-case `docker exec` stdout (capped, timed, hashed on receipt) and a trusted walker container."', '"WEAKENED Q86a"')], 'Q86a consumer dropped': [('def checks_0312():', "ISOLATION_RULES.pop('Q86a', None)\n\ndef checks_0312():")], 'Q86b literal weakened': [('"Each container has its own PID namespace; after every case `docker top` must show only the runner\'s processes and at teardown the container cgroup must be gone (read by the R27 observer), else the run fails closed."', '"WEAKENED Q86b"')], 'Q86b consumer dropped': [('def checks_0312():', "ISOLATION_RULES.pop('Q86b', None)\n\ndef checks_0312():")], 'Q86c literal weakened': [('"One internal network per arm with no gateway, whose only other member is a trusted relay to that arm\'s slot engine (R27\'s TO proxy in its own container); builds and offline cases use --network none; a preflight check runs every time and any failure marks the run ISOLATION-NOT-IN-FORCE (DIAGNOSTIC)."', '"WEAKENED Q86c"')], 'Q86c consumer dropped': [('def checks_0312():', "ISOLATION_RULES.pop('Q86c', None)\n\ndef checks_0312():")], 'Q86d literal weakened': [('"Adds the image id and build-input hash, the toolchain read inside the image, the store volume listing hash, a canonical isolation-profile hash checked against docker inspect, and daemon, containerd, runc and kernel versions; container names, cpusets and slot stay placement (Q67g)."', '"WEAKENED Q86d"')], 'Q86d consumer dropped': [('def checks_0312():', "ISOLATION_RULES.pop('Q86d', None)\n\ndef checks_0312():")], 'Q86e literal weakened': [('"Oracle files never enter a candidate container and the candidate image has no python3 (closes oracle laundering, L1). The evaluator works from its own clone with commit ids passed explicitly, never `--authority-ref main` (closes D3, a builder moving main)."', '"WEAKENED Q86e"')], 'Q86e consumer dropped': [('def checks_0312():', "ISOLATION_RULES.pop('Q86e', None)\n\ndef checks_0312():")], 'Q86f literal weakened': [('"Paired arms put each arm\'s SUT, relay and observer on one shared core; lane D\'s candidate gateway leaves the engine container for its own container, and lane D durable-readback evidence is not accepted until SQL storage replaces dev storage (the H2 password lets the gateway write storage directly)."', '"WEAKENED Q86f"')], 'Q86f consumer dropped': [('def checks_0312():', "ISOLATION_RULES.pop('Q86f', None)\n\ndef checks_0312():")], 'Q79f literal weakened': [('"The X02 guard treats comments exactly as the pinned XTDB lexer does (SqlLexer.g4:12 defines BLOCK_COMMENT recursively): balanced nested block comments are consumed at any depth, an unterminated comment is an error, and the guard\'s tokenizer must agree with the lexer on every identifier boundary, including dollar-bearing, quoted and Unicode identifiers. Where the guard and the lexer disagree, the query is refused, never passed."', '"WEAKENED Q79f"')], 'Q79f consumer dropped': [('def checks_0312():', "EXACT_QUERY_RULES.pop('Q79f', None)\n\ndef checks_0312():")], 'Q87 literal weakened': [('"A contract version merges into main only when lab/bin/test/claim.test.mjs and claim-round2.test.mjs pass on the contract branch merged with main, in addition to build_contract.py --verify and the contract\'s own tests. Contract 0.3.11 at 3b46c8a passed its review but fails 8 of 108 evaluator tests; its merge into main (e074baf) was undone before anything built on it."', '"WEAKENED Q87"')], 'Q87 consumer dropped': [('def checks_0312():', "MERGE_GATES.pop('Q87', None)\n\ndef checks_0312():")], 'Q83e literal weakened': [('"Settle evidence records three values separately and never equates them: (a) the block-cut frontier F, the immutable block\'s latest_processed_msg_id; (b) the settled replay frontier M, the processed watcher after maintenance drains (lag 0, jobs 0, tries stable, over the Q83d polls); (c) the stable application transaction T. F < M is accepted only when every source message in (F, M] is read from the stopped log tail and is a maintenance message (TriesAdded, compactor output), never an application transaction; T is unchanged across the window. The final stopped log tails and the reference and clone resume are bound to M. Exact reference/clone equality and the two-start catalog checks stay. This replaces the part of Q83d that refused every F < M."', '"WEAKENED Q83e"')], 'Q83e consumer dropped': [('def checks_0312():', "SEED_RULES.pop('Q83e', None)\n\ndef checks_0312():")], 'O-OBS screening scope promoted': [('"acceptanceLevel": "screening", "acceptanceRequires":', '"acceptanceLevel": "full", "acceptanceRequires":')], 'O-OBS commit replaced': [('"files": "lab/acceptance/oracle/observe.py", "commit": "23e2273fc6b15b92821b318acd387f5484155d8a"', '"files": "lab/acceptance/oracle/observe.py", "commit": "ffffffffffffffffffffffffffffffffffffffff"')], 'O-OBS transitive runner omitted': [('O_OBS_FILES = dict(O_REPLAY_FILES, **', 'O_OBS_FILES = dict({}, **')], 'O-OBS pin hash altered': [('668136f3c99e09b5332363bb6beaac7f177d07ef7718eb59b2b801faeedcb2cb', 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')], 'O-OBS verifier removed': [('def checks_0312():', 'VERIFIER_REGISTRY["entries"].pop("V-O05-round4")\n\ndef checks_0312():')], 'Q82c screening admission bypass': [('            if pins[x].get("acceptanceLevel") == "screening":', '            if False:')], 'Q82c screening blocker bypass': [('        if pin and pin.get("acceptanceLevel") == "screening":', '        if False:')], 'Q82b single source safety': [('2 if _protocol in (', '1 if _protocol in (')], 'Q82d observer outputs omitted': [('"observer outputs (QLever metrics log, XTDB DEBUG logs and spans, proxy captures, docker logs)", "old index generations", "freed blocks"]', '"old index generations", "freed blocks"]')], 'Q83e resume bound to F': [('"resumeBoundTo": "M"', '"resumeBoundTo": "F"')], 'Q83b supersession removed': [('supersededBy=["Q83b", "Q83d", "Q83e"]', 'supersededBy=[]')], 'Q86 isolation prematurely in force': [('"inForce": False', '"inForce": True')], 'Q87 tests reduced': [('"minimumTests": 108', '"minimumTests": 107')], 'Q87 weakening assertions allowed': [('"weakenAssertions": False', '"weakenAssertions": True')]})
+tests.update({'Q72a literal weakened': [('"The flock helper runs detached in its own process group, ignores INT, TERM and '
+                            'HUP, and exits only on stdin EOF; when it exits for any reason the log '
+                            'fail-stops (every later append throws), and each append checks the helper is '
+                            "alive. A test kills the helper and Ctrl-Cs the holder's group and shows no "
+                            'second writer."',
+                            '"WEAKENED Q72a"')],
+ 'Q72a consumer dropped': [('def checks_0312():', "BROKER_RULES.pop('Q72a', None)\n\ndef checks_0312():")],
+ 'Q72b literal weakened': [('"Q67c applies to every broker read surface: a surface that answers in one '
+                            'request reads the marker in that request (a UNION with the marker triple, as '
+                            'pulls do); a surface that needs several requests (Datalog executor, '
+                            'dependencyState, native with awaitBasisMs) compares (incarnation, marker) '
+                            'before and after, and every fence and replay writes a new incarnation first. '
+                            "V-P2Q's live residual test (zero-downtime rewind between the probes) is a "
+                            'regression case."',
+                            '"WEAKENED Q72b"')],
+ 'Q72b consumer dropped': [('def checks_0312():', "BROKER_RULES.pop('Q72b', None)\n\ndef checks_0312():")],
+ 'Q72c literal weakened': [('"Rename reasons to the contract\'s strings now (`basis-not-reached`, '
+                            '`replica-unreachable`). Core tagged errors (Q67h) are required before the '
+                            'broker becomes a default, not for the default-off merge; until then no claim '
+                            'may close an obligation pinned to E-BASIS-NOT-AVAILABLE or '
+                            'E-REPLICA-UNAVAILABLE."',
+                            '"WEAKENED Q72c"')],
+ 'Q72c consumer dropped': [('def checks_0312():', "BROKER_RULES.pop('Q72c', None)\n\ndef checks_0312():")],
+ 'Q72d literal weakened': [('"The A0 change with the option off is a correctness fix (main answers a basis '
+                            'above the published position) and stays. The frozen A0 control (Q46b) is '
+                            're-frozen at the P2Q merge, and every matched comparison names the change."',
+                            '"WEAKENED Q72d"')],
+ 'Q72d consumer dropped': [('def checks_0312():', "BROKER_RULES.pop('Q72d', None)\n\ndef checks_0312():")],
+ 'Q72e literal weakened': [('"The synchronous whole-log replay per outage pull is a blocker for default, not '
+                            'for default-off; it is replaced by the Q58c store (recent_rows or a current '
+                            "index, on R25's design). Probes are coalesced into one in-flight probe per "
+                            'replica in this round. Tests import src through tsx, never dist."',
+                            '"WEAKENED Q72e"')],
+ 'Q72e consumer dropped': [('def checks_0312():', "BROKER_RULES.pop('Q72e', None)\n\ndef checks_0312():")],
+ 'Q72g literal weakened': [('"Every broker-mode wiring passes `awaitBasisMs: 2000` (the Q58a default) until '
+                            'the core native facade exists; receipts are measured at the claimed head."',
+                            '"WEAKENED Q72g"')],
+ 'Q72g consumer dropped': [('def checks_0312():', "BROKER_RULES.pop('Q72g', None)\n\ndef checks_0312():")],
+ 'Q80a literal weakened': [('"O-OBS judges evidence only inside an evaluator-owned, contract-bound case and '
+                            'run context (obligation, case, witness kind, threshold ids, run id) and against '
+                            'collector objects the evaluator retained itself; evidence that only hashes '
+                            'itself is REFUSED. The collector and context format comes from R27."',
+                            '"WEAKENED Q80a"')],
+ 'Q80a consumer dropped': [('def checks_0312():',
+                            "OBSERVATION_RULES.pop('Q80a', None)\n\ndef checks_0312():")],
+ 'Q80b literal weakened': [('"Each fault transition and each wait bound has a witness schema of source-bound '
+                            'events (start, end, readback) checked against retained objects; a label naming '
+                            'the transition or the duration is never evidence of it."',
+                            '"WEAKENED Q80b"')],
+ 'Q80b consumer dropped': [('def checks_0312():',
+                            "OBSERVATION_RULES.pop('Q80b', None)\n\ndef checks_0312():")],
+ 'Q80c literal weakened': [('"Work ratios compare integer counters exactly against rational contract '
+                            'thresholds (cross-multiplication), never binary64."',
+                            '"WEAKENED Q80c"')],
+ 'Q80c consumer dropped': [('def checks_0312():',
+                            "OBSERVATION_RULES.pop('Q80c', None)\n\ndef checks_0312():")],
+ 'Q82a literal weakened': [('"O-OBS enforces six kinds in trust order: EI engine-internal, TO '
+                            'transport-observed (a wire proxy in a separate process), HO host-observed '
+                            '(cgroup, /proc, sockets, file scans), DR durable read-back, HR harness-observed '
+                            '(caller-side fields only), CR reported by Triplex code (rejected; includes the '
+                            "Datomic gateway, the broker's own timestamps, and a counter inside the client "
+                            'process). `source.kind` is `<code>/<engine>/<sourceId>`."',
+                            '"WEAKENED Q82a"')],
+ 'Q82a consumer dropped': [('def checks_0312():',
+                            "OBSERVATION_RULES.pop('Q82a', None)\n\ndef checks_0312():")],
+ 'Q82b literal weakened': [('"OBS-NO-MUTATION, OBS-PREABORT, OBS-CANCEL and OBS-ACK-ORDER pass only when two '
+                            'sources of different kinds agree."',
+                            '"WEAKENED Q82b"')],
+ 'Q82b consumer dropped': [('def checks_0312():',
+                            "OBSERVATION_RULES.pop('Q82b', None)\n\ndef checks_0312():")],
+ 'Q82c literal weakened': [('"Evidence arrives as an obs-bundle/1 written by an observer sidecar per engine '
+                            'container that engine.mjs starts (never builder code): content-addressed raw '
+                            'chunks, a hash chain per stream, HMAC-SHA256 chunk headers under a per-run key '
+                            'the SUT never sees, a witness log of chain heads written only by orchestrator '
+                            'tooling, a clock bridge with stated uncertainty, and hash-pinned normalizer '
+                            'scripts that O-OBS reruns; records are recomputed from raw bytes, never '
+                            'accepted as given. Because every agent runs as one macOS user, acceptance '
+                            'additionally repeats the collection by the verifier (ACCEPTANCE 5.8); the '
+                            'bundle alone suffices only for screening."',
+                            '"WEAKENED Q82c"')],
+ 'Q82c consumer dropped': [('def checks_0312():',
+                            "OBSERVATION_RULES.pop('Q82c', None)\n\ndef checks_0312():")],
+ 'Q82d literal weakened': [('"Every erasure-scan location first finds a canary written before the erasure '
+                            "with the same scanner, or the verdict is REFUSED (QLever's FSST-compressed "
+                            'vocabulary defeats plain grep). Observer outputs (QLever metrics log, XTDB '
+                            'DEBUG logs and spans, proxy captures, docker logs), old index generations and '
+                            'freed blocks join PROTECTED_COPY_INVENTORY."',
+                            '"WEAKENED Q82d"')],
+ 'Q82d consumer dropped': [('def checks_0312():',
+                            "OBSERVATION_RULES.pop('Q82d', None)\n\ndef checks_0312():")],
+ 'Q82e literal weakened': [('"XTDB mutation evidence is the gauge node.tx.latestCompletedTxId, never '
+                            'source-log offsets (flushes and compaction append to the log); XTDB EXPLAIN '
+                            'ANALYZE attributes are JSON (scan_rows_read, scan_pages_used, scan_files_used), '
+                            "and the P4 harness's decoding (p4.mjs:29) is fixed to read them; QLever runs "
+                            'with --enable-metrics and its per-query metrics log on. Lane D CANCEL and '
+                            'PREABORT use host-observed per-thread /proc series of the gateway JVM plus the '
+                            'proxy (HO + TO)."',
+                            '"WEAKENED Q82e"')],
+ 'Q82e consumer dropped': [('def checks_0312():',
+                            "OBSERVATION_RULES.pop('Q82e', None)\n\ndef checks_0312():")],
+ 'Q83a literal weakened': [('"Slots s1-s3 add `-Dlog4j2.shutdownHookEnabled=false` to javaOpts, so XTDB\'s '
+                            'shutdown hook can log `Stopping node...`, the three server-stopped lines and '
+                            "`Node stopped.` (Log4j's own hook otherwise drops them). The dev residents are "
+                            'unchanged. This changes the slot config hash and therefore every golden key; '
+                            'receipts before the change name the old hash."',
+                            '"WEAKENED Q83a"')],
+ 'Q83a consumer dropped': [('def checks_0312():', "SEED_RULES.pop('Q83a', None)\n\ndef checks_0312():")],
+ 'Q83b literal weakened': [('"Settled = two finish-blocks (the second records the post-compaction catalog), '
+                            'compactor jobs 0, and snapshot-independent evidence (new block file whose tx_id '
+                            'and latest_processed_msg_id equal the node gauges, block.last_upload_time '
+                            'advanced, xt.trie_stats showing the new tries, file listing and trie digest '
+                            'unchanged over three readings 5 s apart); never `xt.live_tables` (stale shared '
+                            'snapshot, upstream #6174). Clean stop = exit within 10 s with the stop lines '
+                            'and exit 143, well-formed LOG and REPLICA_LOG tails checked offline, empty '
+                            '`buffers/**/.tmp` (refuse, never delete). The freeze fingerprint is taken on a '
+                            'reference start of the source after the copy, and every arm, fresh or cloned, '
+                            'starts the same way. Re-test the second finish-block and the reference start '
+                            'when XTDB 2.2.1 is pinned."',
+                            '"WEAKENED Q83b"')],
+ 'Q83b consumer dropped': [('def checks_0312():', "SEED_RULES.pop('Q83b', None)\n\ndef checks_0312():")],
+ 'Q83c literal weakened': [('"Never read a block that may not exist (MemoryCache hangs the caller): list '
+                            '`buffers/v06/blocks/b*.binpb` first and query `xt.block_files` only for listed '
+                            'indices, re-listing just before each query; block numbers are not dense (GC '
+                            'keeps the latest 10)."',
+                            '"WEAKENED Q83c"')],
+ 'Q83c consumer dropped': [('def checks_0312():', "SEED_RULES.pop('Q83c', None)\n\ndef checks_0312():")],
+ 'Q84a literal weakened': [('"WAL, synchronous=FULL, fullfsync=ON on every non-readonly connection, '
+                            'checkpoint_fullfsync=ON, wal_autocheckpoint=0, journal_size_limit=16 MiB, '
+                            'locking NORMAL (not EXCLUSIVE); the single writer holds a SQLite exclusive lock '
+                            'on a separate broker.lock file for the life of the process (replaces the perl '
+                            'flock helper); assert SQLite >= 3.51.3 at open."',
+                            '"WEAKENED Q84a"')],
+ 'Q84a consumer dropped': [('def checks_0312():', "BROKER_RULES.pop('Q84a', None)\n\ndef checks_0312():")],
+ 'Q84b literal weakened': [('"One writer worker thread owns the read-write commit connection; one '
+                            'checkpointer thread runs wal_checkpoint(PASSIVE) every 4 s on its own '
+                            'connection; four reader threads with readonly connections fed over MessagePort; '
+                            'the main thread never touches broker.db. Backstop: above 64 MiB of WAL the '
+                            'writer closes a gate, readers park between transactions, the writer runs '
+                            'RESTART."',
+                            '"WEAKENED Q84b"')],
+ 'Q84b consumer dropped': [('def checks_0312():', "BROKER_RULES.pop('Q84b', None)\n\ndef checks_0312():")],
+ 'Q84c literal weakened': [('"Every read transaction starts with `SELECT lsn, epoch, h FROM marker` and is '
+                            'served only when h <= B <= lsn, else routed to the source; one unit of work per '
+                            'transaction (one pull or one 64-subject page). Long work keeps its basis '
+                            'through a retention pin (pinBasis holds H <= B), never an open read '
+                            'transaction."',
+                            '"WEAKENED Q84c"')],
+ 'Q84c consumer dropped': [('def checks_0312():', "BROKER_RULES.pop('Q84c', None)\n\ndef checks_0312():")],
+ 'Q84d literal weakened': [('"H1\'s current rows live in broker.db as live_rows and retired_rows clustered '
+                            "by entity, written in the commit's own transaction, so W is always the "
+                            'snapshot\'s marker."',
+                            '"WEAKENED Q84d"')],
+ 'Q84d consumer dropped': [('def checks_0312():', "BROKER_RULES.pop('Q84d', None)\n\ndef checks_0312():")],
+ 'Q84e literal weakened': [('"Lock, open (recovery), PASSIVE (sync adopted frames), bump the epoch, run the '
+                            'marker and ACKED-sidecar cross-checks, then start readers; a mid-WAL corruption '
+                            'that SQLite recovers silently is caught by the ACKED sidecar."',
+                            '"WEAKENED Q84e"')],
+ 'Q84e consumer dropped': [('def checks_0312():', "BROKER_RULES.pop('Q84e', None)\n\ndef checks_0312():")],
+ 'Q83d literal weakened': [('"Settle evidence does not require observing L0 tries: compaction may merge them '
+                            "before the first poll. Settled means the new block's tx_id and "
+                            'latest_processed_msg_id equal the node gauges, xt.trie_stats covers that block '
+                            'at whatever level it now sits, compactor jobs 0, and the file listing and trie '
+                            'digest are unchanged over three readings 5 s apart."',
+                            '"WEAKENED Q83d"')],
+ 'Q83d consumer dropped': [('def checks_0312():', "SEED_RULES.pop('Q83d', None)\n\ndef checks_0312():")],
+ 'Q79e literal weakened': [('"The quantified-comparison guard classifies the operand by a small grammar, not '
+                            'by listed shapes: any parenthesized query expression (SELECT, VALUES, and set '
+                            'operations UNION / INTERSECT / EXCEPT with or without ALL, at any nesting of '
+                            'parentheses, with comments anywhere) is a subquery and is admitted if it '
+                            'contains no nested unsafe comparison; anything else is refused. Tests are '
+                            "generated from the grammar's combinations (each form at depths 1-3, with and "
+                            "without comments) and each generated query is checked against XTDB's own "
+                            'answer, next to the round-2 rejections."',
+                            '"WEAKENED Q79e"')],
+ 'Q79e consumer dropped': [('def checks_0312():',
+                            "EXACT_QUERY_RULES.pop('Q79e', None)\n\ndef checks_0312():")],
+ 'Q85a literal weakened': [('"Database creation for a scope is idempotent and never resets or lowers an '
+                            'existing scope position; concurrent creates converge on one database with its '
+                            'position intact."',
+                            '"WEAKENED Q85a"')],
+ 'Q85a consumer dropped': [('def checks_0312():', "DATOMIC_RULES.pop('Q85a', None)\n\ndef checks_0312():")],
+ 'Q85b literal weakened': [('"The gateway accepts every scope name the public Triplex constructor can '
+                            'produce (mapped to a Datomic database name by a documented, reversible '
+                            'encoding) and nothing else."',
+                            '"WEAKENED Q85b"')],
+ 'Q85b consumer dropped': [('def checks_0312():', "DATOMIC_RULES.pop('Q85b', None)\n\ndef checks_0312():")],
+ 'Q85c literal weakened': [('"Every image build starts from a fresh context that contains only verified '
+                            'inputs listed in the input hash; a reused or dirty context refuses the build."',
+                            '"WEAKENED Q85c"')],
+ 'Q85c consumer dropped': [('def checks_0312():', "DATOMIC_RULES.pop('Q85c', None)\n\ndef checks_0312():")],
+ 'Q85d literal weakened': [('"The TypeScript and JVM codecs share one specification of each value kind\'s '
+                            'range and representation, with a shared test vector set; a value either codec '
+                            'cannot represent is refused by both."',
+                            '"WEAKENED Q85d"')],
+ 'Q85d consumer dropped': [('def checks_0312():', "DATOMIC_RULES.pop('Q85d', None)\n\ndef checks_0312():")],
+ 'Q86a literal weakened': [('"Every candidate process (builds, case runners, lane D gateways, A0) runs in a '
+                            'hardened container in the triplex2 VM and none on the Mac: uid 10001, '
+                            '--cap-drop ALL, no-new-privileges, --read-only with tmpfs, memory = '
+                            'memory-swap, --pids-limit, --oom-score-adj 500, no Docker socket, no Mac bind '
+                            "mounts. Inputs enter as a tar of the contract's `boxInputs` (built packages, "
+                            'workspace manifests, lockfile; never lab/) plus a read-only Linux pnpm store '
+                            'volume filled by orchestrator tooling; outputs leave only through per-case '
+                            '`docker exec` stdout (capped, timed, hashed on receipt) and a trusted walker '
+                            'container."',
+                            '"WEAKENED Q86a"')],
+ 'Q86a consumer dropped': [('def checks_0312():', "ISOLATION_RULES.pop('Q86a', None)\n\ndef checks_0312():")],
+ 'Q86b literal weakened': [('"Each container has its own PID namespace; after every case `docker top` must '
+                            "show only the runner's processes and at teardown the container cgroup must be "
+                            'gone (read by the R27 observer), else the run fails closed."',
+                            '"WEAKENED Q86b"')],
+ 'Q86b consumer dropped': [('def checks_0312():', "ISOLATION_RULES.pop('Q86b', None)\n\ndef checks_0312():")],
+ 'Q86c literal weakened': [('"One internal network per arm with no gateway, whose only other member is a '
+                            "trusted relay to that arm's slot engine (R27's TO proxy in its own container); "
+                            'builds and offline cases use --network none; a preflight check runs every time '
+                            'and any failure marks the run ISOLATION-NOT-IN-FORCE (DIAGNOSTIC)."',
+                            '"WEAKENED Q86c"')],
+ 'Q86c consumer dropped': [('def checks_0312():', "ISOLATION_RULES.pop('Q86c', None)\n\ndef checks_0312():")],
+ 'Q86d literal weakened': [('"Adds the image id and build-input hash, the toolchain read inside the image, '
+                            'the store volume listing hash, a canonical isolation-profile hash checked '
+                            'against docker inspect, and daemon, containerd, runc and kernel versions; '
+                            'container names, cpusets and slot stay placement (Q67g)."',
+                            '"WEAKENED Q86d"')],
+ 'Q86d consumer dropped': [('def checks_0312():', "ISOLATION_RULES.pop('Q86d', None)\n\ndef checks_0312():")],
+ 'Q86e literal weakened': [('"Oracle files never enter a candidate container and the candidate image has no '
+                            'python3 (closes oracle laundering, L1). The evaluator works from its own clone '
+                            'with commit ids passed explicitly, never `--authority-ref main` (closes D3, a '
+                            'builder moving main)."',
+                            '"WEAKENED Q86e"')],
+ 'Q86e consumer dropped': [('def checks_0312():', "ISOLATION_RULES.pop('Q86e', None)\n\ndef checks_0312():")],
+ 'Q86f literal weakened': [('"Paired arms put each arm\'s SUT, relay and observer on one shared core; lane '
+                            "D's candidate gateway leaves the engine container for its own container, and "
+                            'lane D durable-readback evidence is not accepted until SQL storage replaces dev '
+                            'storage (the H2 password lets the gateway write storage directly)."',
+                            '"WEAKENED Q86f"')],
+ 'Q86f consumer dropped': [('def checks_0312():', "ISOLATION_RULES.pop('Q86f', None)\n\ndef checks_0312():")],
+ 'Q79f literal weakened': [('"The X02 guard treats comments exactly as the pinned XTDB lexer does '
+                            '(SqlLexer.g4:12 defines BLOCK_COMMENT recursively): balanced nested block '
+                            'comments are consumed at any depth, an unterminated comment is an error, and '
+                            "the guard's tokenizer must agree with the lexer on every identifier boundary, "
+                            'including dollar-bearing, quoted and Unicode identifiers. Where the guard and '
+                            'the lexer disagree, the query is refused, never passed."',
+                            '"WEAKENED Q79f"')],
+ 'Q79f consumer dropped': [('def checks_0312():',
+                            "EXACT_QUERY_RULES.pop('Q79f', None)\n\ndef checks_0312():")],
+ 'Q87 literal weakened': [('"A contract version merges into main only when lab/bin/test/claim.test.mjs and '
+                           'claim-round2.test.mjs pass on the contract branch merged with main, in addition '
+                           "to build_contract.py --verify and the contract's own tests. Contract 0.3.11 at "
+                           '3b46c8a passed its review but fails 8 of 108 evaluator tests; its merge into '
+                           'main (e074baf) was undone before anything built on it."',
+                           '"WEAKENED Q87"')],
+ 'Q87 consumer dropped': [('def checks_0312():', "MERGE_GATES.pop('Q87', None)\n\ndef checks_0312():")],
+ 'Q83e literal weakened': [('"Settle evidence records three values separately and never equates them: (a) '
+                            "the block-cut frontier F, the immutable block's latest_processed_msg_id; (b) "
+                            'the settled replay frontier M, the processed watcher after maintenance drains '
+                            '(lag 0, jobs 0, tries stable, over the Q83d polls); (c) the stable application '
+                            'transaction T. F < M is accepted only when every source message in (F, M] is '
+                            'read from the stopped log tail and is a maintenance message (TriesAdded, '
+                            'compactor output), never an application transaction; T is unchanged across the '
+                            'window. The final stopped log tails and the reference and clone resume are '
+                            'bound to M. Exact reference/clone equality and the two-start catalog checks '
+                            'stay. This replaces the part of Q83d that refused every F < M."',
+                            '"WEAKENED Q83e"')],
+ 'Q83e consumer dropped': [('def checks_0312():', "SEED_RULES.pop('Q83e', None)\n\ndef checks_0312():")],
+ 'O-OBS screening scope promoted': [('"acceptanceLevel": "screening", "acceptanceRequires":',
+                                     '"acceptanceLevel": "full", "acceptanceRequires":')],
+ 'O-OBS commit replaced': [('"files": "lab/acceptance/oracle/observe.py", "commit": '
+                            '"23e2273fc6b15b92821b318acd387f5484155d8a"',
+                            '"files": "lab/acceptance/oracle/observe.py", "commit": '
+                            '"ffffffffffffffffffffffffffffffffffffffff"')],
+ 'O-OBS transitive runner omitted': [('O_OBS_FILES = dict(O_REPLAY_FILES, **', 'O_OBS_FILES = dict({}, **')],
+ 'O-OBS pin hash altered': [('668136f3c99e09b5332363bb6beaac7f177d07ef7718eb59b2b801faeedcb2cb',
+                             'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')],
+ 'O-OBS verifier removed': [('def checks_0312():',
+                             'VERIFIER_REGISTRY["entries"].pop("V-O05-round4")\n\ndef checks_0312():')],
+ 'Q82c screening admission bypass': [('            if pins[x].get("acceptanceLevel") == "screening":',
+                                      '            if False:')],
+ 'Q82c screening blocker bypass': [('        if pin and pin.get("acceptanceLevel") == "screening":',
+                                    '        if False:')],
+ 'Q82b single source safety': [('2 if _protocol in (', '1 if _protocol in (')],
+ 'Q82d observer outputs omitted': [('"observer outputs", "old index generations", "freed blocks"]',
+                                    '"old index generations", "freed blocks"]')],
+ 'Q83e resume bound to F': [('"resumeBoundTo": "M"', '"resumeBoundTo": "F"')],
+ 'Q83b supersession removed': [('supersededBy=["Q83b", "Q83d", "Q83e"]', 'supersededBy=[]')],
+ 'Q86 isolation prematurely in force': [('"inForce": False', '"inForce": True')],
+ 'Q87 tests reduced': [('"minimumTests": 108', '"minimumTests": 107')],
+ 'Q87 weakening assertions allowed': [('"weakenAssertions": False', '"weakenAssertions": True')]})
 run, caught, missed, retired = 0, 0, [], []
 for name, pairs in tests.items():
     if any(src.count(a) < 1 for a, _ in pairs):

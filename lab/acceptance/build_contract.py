@@ -6053,7 +6053,7 @@ FREEZE_PROTOCOL = {"precedence": ["Q83b", "Q83d", "Q83e"], "frontiers": {"F": "b
 QUALIFICATION_RUN["contractSource"] = "the evaluator reads obligations.json and load-contract.json from its own clone at an explicitly supplied immutable authority commit, never --authority-ref main (Q86e supersedes Q61a lookup); never from the claimed commit; VERIFIER_REGISTRY is read as written (Q61b). Executing isolation integration remains deferred to G03."
 ISOLATION_ADMISSION = {"requiredBy": list(ISOLATION_RULES), "inForce": False, "pins": None, "pinVersion": "0.3.13 (G03 fixture migration)", "failureVerdict": "ISOLATION-NOT-IN-FORCE (DIAGNOSTIC)", "unprotected": ["R1", "R4", "D1", "D2", "D3", "L1", "N1", "N2", "N3", "N4"], "vmHardeningPending": "Q86g (Sam)"}
 
-PROTECTED_COPY_INVENTORY += ["observer outputs (QLever metrics log, XTDB DEBUG logs and spans, proxy captures, docker logs)", "old index generations", "freed blocks"]
+PROTECTED_COPY_INVENTORY += ["observer outputs", "old index generations", "freed blocks"]
 for _protocol, _spec in OBS_PROTOCOLS.items():
     _spec["evidenceFormat"] = "obs-bundle/1"
     _spec["contextFormat"] = "obs-context/1 (evaluator-owned and contract-bound)"
@@ -6104,7 +6104,7 @@ def checks_0312():
         errors.append("Q75c: every O-OBS runner file matches the retained hash table")
     if any(OBS_PROTOCOLS[p].get("independentSourceKinds") != 2 for p in ("OBS-NO-MUTATION", "OBS-PREABORT", "OBS-CANCEL", "OBS-ACK-ORDER")):
         errors.append("Q82b: two agreeing independent source kinds required")
-    if not all(x in PROTECTED_COPY_INVENTORY for x in ("observer outputs (QLever metrics log, XTDB DEBUG logs and spans, proxy captures, docker logs)", "old index generations", "freed blocks")):
+    if not all(x in PROTECTED_COPY_INVENTORY for x in ("observer outputs", "old index generations", "freed blocks")):
         errors.append("Q82d: complete protected physical-copy inventory required")
     if not all("oracle-screening-only:O-OBS" in contract_blockers(o) for o in OBL if "O-OBS" in o["oracles"]):
         errors.append("Q82c: screening pin cannot close acceptance obligations")
