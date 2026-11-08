@@ -10,6 +10,11 @@ import { docker, dockerArgs, inspect, REPO, sha256 } from './lib.mjs';
 export const BOX_ENV = ['HOME=/tmp/home', 'TMPDIR=/tmp', 'LANG=C.UTF-8', 'TZ=UTC', 'SOURCE_DATE_EPOCH=0', 'CI=1', 'NODE_OPTIONS=', 'npm_config_store_dir=/store', 'npm_config_offline=true'];
 export const HARDEN = ['--user', '10001:10001', '--cap-drop', 'ALL', '--security-opt', 'no-new-privileges=true', '--read-only', '--tmpfs', '/tmp:rw,nosuid,nodev,size=1g,mode=1777', '--ipc', 'private', '--ulimit', 'core=0', '--ulimit', 'nofile=8192:8192', '--oom-score-adj', '500', '--hostname', 'tx2-box', '--restart', 'no', '--stop-timeout', '1', '--log-driver', 'json-file', '--log-opt', 'max-size=1m', '--log-opt', 'max-file=1'];
 export const ISOLATION_PROFILE = { hardening: HARDEN, env: BOX_ENV, build: { memory: 2147483648, cpus: 2, pids: 1024, network: 'none', mounts: [['instance','/work','rw'],['store','/store','ro']] }, case: { memory: 805306368, cpus: 1, pids: 256, network: 'internal-no-gateway-per-arm', mounts: [['instance','/work','ro'],['inputs','/in','ro']] } };
+// [EXP-G03] Why: signed offline fixture authorities can reserve small bounded containers without a live engine grant.
+// Rejected: disabling admission or hardening for tests; defaults stay the production profile.
+export function isolationProfile(config) {
+  return {...ISOLATION_PROFILE,build:{...ISOLATION_PROFILE.build,memory:config.buildMemoryBytes??2147483648},case:{...ISOLATION_PROFILE.case,memory:config.caseMemoryBytes??805306368},walker:{memory:config.walkMemoryBytes??536870912}};
+}
 export const safeBoxPath = p => typeof p === 'string' && p.length > 0 && !p.startsWith('/') && !p.includes('\\') && !p.split('/').some(x => x === '..' || x === '.' || !x) && !p.includes('\0');
 export function selectBoxInputs(snapshot, selectors) {
   if (!Array.isArray(selectors) || !selectors.length || selectors.some(p => !safeBoxPath(p.replace(/\/$/, '')) || p === 'lab' || p.startsWith('lab/'))) throw new Error('contract boxInputs missing or unsafe');
@@ -127,7 +132,7 @@ export class BoxExecutor {
     this.engine('remove', ['--name', name]); this.resources = this.resources.filter(([, n]) => n !== name);
   }
   walk(volume, outputs = []) {
-    const name = this.create(`walk-${randomBytes(3).toString('hex')}`, { argv: ['node', '--input-type=module', '-', JSON.stringify(outputs)], mounts: [{ name: volume, target: '/work', rw: false }], memory: 536870912, input: true, trusted: true });
+    const name = this.create(`walk-${randomBytes(3).toString('hex')}`, { argv: ['node', '--input-type=module', '-', JSON.stringify(outputs)], mounts: [{ name: volume, target: '/work', rw: false }], memory: this.config.walkMemoryBytes ?? 536870912, input: true, trusted: true });
     const r = this.start(name, { input: Buffer.from(WALKER), max: 96 * 1024 * 1024 });
     this.engine('remove', ['--name', name]); this.resources = this.resources.filter(([, n]) => n !== name);
     if (r.status !== 0) throw Error(`walker failed ${r.stderr}`);
@@ -196,7 +201,7 @@ export class BoxExecutor {
   build(snapshot, spec) {
     const files = selectBoxInputs(snapshot, spec.boxInputs);
     const volume = this.volume(`inst-${randomBytes(3).toString('hex')}`); this.seed(volume, files);
-    const name = this.create(`build-${randomBytes(3).toString('hex')}`, { argv: spec.argv, mounts: [{ name: volume, target: '/work', rw: true }, { name: this.config.store, target: '/store', rw: false }], memory: 2147483648, cpus: 2, pids: 1024 });
+    const name = this.create(`build-${randomBytes(3).toString('hex')}`, { argv: ['sh','-c','mkdir -p "$HOME" && exec "$@"','build',...spec.argv], mounts: [{ name: volume, target: '/work', rw: true }, { name: this.config.store, target: '/store', rw: false }], memory: this.config.buildMemoryBytes ?? 2147483648, cpus: 2, pids: 1024 });
     const r = this.start(name, { timeout: this.config.buildTimeoutMs ?? 1800000 });
     this.remove(name);
     if (r.status !== 0) throw Error(`BUILD-FAILED ${r.stderr.toString().slice(-1000)}`);
@@ -208,7 +213,7 @@ export class BoxExecutor {
   case(instance, raw, mode, argv, network = 'none', env = []) {
     const inputs = this.volume(`in-${randomBytes(3).toString('hex')}`), hash = sha256(raw);
     this.seed(inputs, new Map([[`${hash}.json`, { bytes: raw, mode: '100644' }]]));
-    const name = this.create(`case-${randomBytes(3).toString('hex')}`, { argv: ['sleep', 'infinity'], mounts: [{ name: instance.volume, target: '/work', rw: false }, { name: inputs, target: '/in', rw: false }], network, memory: 805306368, pids: 256, env, extra: ['--init'], ...this.auxiliaryPlacement([...this.arms.values()].find(a=>a.network===network)?.slot.slot) });
+    const name = this.create(`case-${randomBytes(3).toString('hex')}`, { argv: ['sh','-c','mkdir -p "$HOME" && exec sleep infinity'], mounts: [{ name: instance.volume, target: '/work', rw: false }, { name: inputs, target: '/in', rw: false }], network, memory: this.config.caseMemoryBytes ?? 805306368, pids: 256, env, extra: ['--init'], ...this.auxiliaryPlacement([...this.arms.values()].find(a=>a.network===network)?.slot.slot) });
     let answer;
     try {
       docker(['start', name]);

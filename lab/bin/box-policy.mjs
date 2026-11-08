@@ -13,6 +13,7 @@ export function authorityPolicy(git, commit) {
   if (slots.doc.box?.imageId !== box.imageId || slots.doc.box?.buildInputsSha256 !== box.buildInputsSha256) throw Error('authority slots/contract box pins disagree');
   if (hash(git.blob(commit, 'pnpm-lock.yaml') ?? Buffer.alloc(0)) !== box.storeLockfileSha256) throw Error('authority lockfile/store pin mismatch');
   for (const [k, max] of Object.entries({stdoutMaxBytes:67108864,caseTimeoutMs:1800000,buildTimeoutMs:3600000})) if (!Number.isSafeInteger(box[k]) || box[k] <= 0 || box[k] > max) throw Error(`invalid authority limit ${k}`);
+  for (const k of ['buildMemoryBytes','caseMemoryBytes','walkMemoryBytes']) if (box[k] !== undefined && (!Number.isSafeInteger(box[k]) || box[k]<67108864 || box[k]>2147483648)) throw Error('invalid authority memory cap '+k);
   return { commit, contract: contract.doc, slots: slots.doc, load: load.doc, box, hashes: {contract:hash(contract.bytes),slots:hash(slots.bytes),load:hash(load.bytes)} };
 }
 export function bindStore(policy, receipt) {

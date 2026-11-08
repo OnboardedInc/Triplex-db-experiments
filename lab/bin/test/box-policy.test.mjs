@@ -1,6 +1,7 @@
 // [EXP-G03] Why: authority and placement failures must stop execution before any candidate is admitted.
 // Rejected: testing only a successful object shape without negative controls.
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import {createHash} from 'node:crypto';
+import {isolationProfile} from '../box.mjs';
 import {authorityPolicy,bindStore,pairLayout,gatewayPlan,checkPreflight,cgroupProofScript} from '../box-policy.mjs';
 const hash=b=>createHash('sha256').update(b).digest('hex'),commit='a'.repeat(40);
 function fixture(){const contract=JSON.parse(fs.readFileSync('lab/acceptance/obligations.json')),slots=JSON.parse(fs.readFileSync('lab/config/slots.json')),load=fs.readFileSync('lab/acceptance/load-contract.json'),lock=fs.readFileSync('pnpm-lock.yaml');const files=new Map([['lab/acceptance/obligations.json',Buffer.from(JSON.stringify(contract))],['lab/config/slots.json',Buffer.from(JSON.stringify(slots))],['lab/acceptance/load-contract.json',load],['pnpm-lock.yaml',lock]]);return {contract,slots,files,git:{resolve:r=>r===commit?commit:null,blob:(c,p)=>{assert.equal(c,commit);return files.get(p)}}};}
@@ -10,3 +11,18 @@ test('PAIR-0 separates arms, shares each auxiliary core, and refuses impossible 
 test('gateway uses candidate read-only source, overrides resident entrypoint, and refuses missing pins',()=>{const args={network:'tx2-g03-test-arm',volume:'tx2-g03-test-instance',cpuset:'4',sourcePath:'packages/datomic/gateway/src'},spec={imageId:'sha256:'+'a'.repeat(64),buildInputsSha256:'b'.repeat(64),storage:'dev'};const p=gatewayPlan(spec,args);assert.equal(p.durableReadbackAllowed,false);assert.ok(p.argv.at(-1).includes('alter-var-root'));assert.throws(()=>gatewayPlan({...spec,storage:'sql-readonly-peer'},args),/not implemented/);assert.equal(p.mounts.length,1);assert.equal(p.mounts[0].rw,false);assert.ok(p.env.includes('DATOMIC_EXT_CLASSPATH=/work/packages/datomic/gateway/src'));assert.deepEqual(p.extra.slice(0,2),['--entrypoint','/bin/bash']);assert.throws(()=>gatewayPlan({...spec,imageId:null},args));assert.throws(()=>gatewayPlan(spec,{...args,sourcePath:'/opt/gateway/src'}));assert.throws(()=>gatewayPlan(spec,{...args,network:'bridge'}));});
 test('preflight refuses forged omissions, reachable forbidden target, lost positive and DNS success',()=>{const targets=[['192.168.5.2',12345],['1.1.1.1',443]],doc={positive:true,publicDns:false,checks:targets.map(t=>[...t,false])};const result=d=>({status:0,stdout:Buffer.from(JSON.stringify(d))});assert.equal(checkPreflight(result(doc),targets).positive,true);for(const d of [{...doc,checks:[]},{...doc,positive:false},{...doc,publicDns:true},{...doc,checks:targets.map(t=>[...t,true])}])assert.throws(()=>checkPreflight(result(d),targets),/ISOLATION-NOT-IN-FORCE/);assert.throws(()=>checkPreflight({status:2,stdout:Buffer.from(JSON.stringify(doc))},targets));});
 test('cgroup proof refuses invalid identities before constructing a reader',()=>{assert.throws(()=>cgroupProofScript('x','y'));assert.throws(()=>cgroupProofScript('a'.repeat(64),'a'.repeat(64)));});
+
+// [EXP-G03] Why: fixture memory caps are authority bytes and identity-bound, never an admission bypass.
+// Rejected: unsigned environment overrides or accepting arbitrary tiny/unbounded caps.
+test('signed memory caps stay bounded and change the execution isolation identity',()=>{
+ const f=fixture(),base=isolationProfile(f.contract.buildSpec.boxSpec);
+ for(const key of ['buildMemoryBytes','caseMemoryBytes','walkMemoryBytes']){
+  for(const value of [0,67108863,2147483649,NaN,'67108864']){
+   f.contract.buildSpec.boxSpec[key]=value;f.files.set('lab/acceptance/obligations.json',Buffer.from(JSON.stringify(f.contract)));
+   assert.throws(()=>authorityPolicy(f.git,commit),/memory cap/);
+  }
+  f.contract.buildSpec.boxSpec[key]=67108864;f.files.set('lab/acceptance/obligations.json',Buffer.from(JSON.stringify(f.contract)));
+  const actual=isolationProfile(authorityPolicy(f.git,commit).box);assert.notDeepEqual(actual,base);
+  assert.equal(actual[{buildMemoryBytes:'build',caseMemoryBytes:'case',walkMemoryBytes:'walker'}[key]].memory,67108864);
+ }
+});

@@ -54,7 +54,7 @@
 // object repeats; extra fields in the contract's record schemas (Q47a fixes them exactly; proposals go to the next version);
 // any verifier record a claim carries as independent verification (Q55a: only the contract's VERIFIER_REGISTRY counts).
 import { authorityPolicy, bindStore, pairLayout } from './box-policy.mjs';
-import { BoxExecutor, ISOLATION_PROFILE } from './box.mjs';
+import { BoxExecutor, isolationProfile } from './box.mjs';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
@@ -1087,6 +1087,11 @@ export const runtimeListing = entries => entries.map(([p, k, h, m]) => `${h}  ${
  * as unbound, never hashed as if applied. Returns the canonical record bytes; its sha256 is the binarySha256 build returns and
  * A0_REGISTRY records. Rejected: the hash of the declared dist outputs alone (Codex round 8 finding 2).
  */
+// [EXP-G03] Why: one canonical v2 constructor binds actual walker modes/links in both runs and focused fixture checks.
+// Rejected: a fixture-only hash that could disagree with the evaluator's identity.
+export function boxExecutionIdentity({runner,...fields}) {
+  return Buffer.from(canonText({...fields,schema:'execution-identity/2',runnerSha256:sha256(runtimeListing(runner))}));
+}
 export function executionIdentity({ sourceTreeSha256, buildSpecSha256: specSha, lockfileSha256, toolchain, runner }) {
   return Buffer.from(canonText({ schema: 'execution-identity/1', sourceTreeSha256, buildSpecSha256: specSha, lockfileSha256: lockfileSha256 ?? null, toolchain, runnerSha256: sha256(runtimeListing(runner)), configSha256: null }));
 }
@@ -1229,19 +1234,31 @@ function prepareTrusted({ git, commit, authority, authorityRef, contract, ctx, o
  *   workload(o)                the evaluator's workload from the frozen trace (CR-NS and CR-GS only; no slot, Q67g)
  *   measure_pair(...)          no PAIR_0 paired-rounds runner exists: null (a CR-NS or CR-GS comparison fails closed)
  */
-function labExecutor({ commit, contract, ctx, spec, slots, loadContract, claim, pre, put, iso, runChild, toolchain, sut, why, run, box, canaryPort }) {
+// [EXP-G03] Why: the final-use guard is also checked directly for external controller faults; candidates see only read-only inputs.
+// Rejected: candidate callbacks with Mac filesystem access.
+export function verifyInputCopy(h,p,why) {
+  let ok=false;try{ok=sha256(fs.readFileSync(p))===h}catch{}
+  if(!ok)why('INPUT-TAMPERED',`the evaluator's copy of case input ${h} is missing, unreadable or changed after it was written (Q81a)`);
+  return ok;
+}
+export function verifyOracleCopy(x, root, why) {
+    if (root.broken) return false;
+    let now = null;
+    try { const w = walkTree(root.dir); now = w.outside.length ? null : runtimeListing(w.entries); } catch { now = null; }
+    if (now === root.expect) return true;
+    root.broken = true;
+    why('ORACLE-TAMPERED', `the evaluator's copy of ${x}'s files changed after it was written; the oracle is not run again (RULINGS Q67e)`);
+    return false;
+  }
+function labExecutor({ commit, contract, ctx, spec, slots, loadContract, claim, pre, put, iso, runChild, toolchain, sut, why, run, box, canaryPort, offline }) {
   const instances = [], byIdentity = new Map(), inputFiles = new Map(), answers = new Map(), repCount = new Map();
   const specSha = buildSpecSha256(spec), exclusions = Array.isArray(spec?.installMetadataExclusions) ? spec.installMetadataExclusions.filter(safePath) : [];
   const inputsDir = iso('inputs');
   let current = { o: null }, last = null, lastAnswer = null;
   ctx.onRun = (o, binary) => { current = { o, binary }; };
   // [EXP-E01] Why: Q81a covers persistent edits after final use. Rejected: pre-use checks alone (no next use to detect them).
-  function verifyInput(h, p) {
-    let ok = false;
-    try { ok = sha256(fs.readFileSync(p)) === h; } catch { ok = false; }
-    if (!ok) why('INPUT-TAMPERED', `the evaluator's copy of case input ${h} is missing, unreadable or changed after it was written (RULINGS Q67e, Q81a)`);
-    return ok;
-  }
+  const verifyInput = (h,p) => verifyInputCopy(h,p,why);
+
   // A case input is copied once and re-hashed before every use and at the end, before isolation cleanup.
   const inputPath = raw => {
     const h = sha256(raw), p = path.join(inputsDir, `${h}.json`);
@@ -1267,12 +1284,12 @@ function labExecutor({ commit, contract, ctx, spec, slots, loadContract, claim, 
         if (sha256(bytes) !== m.sha256) throw Error('walker module bytes mismatch');
         return { path: m.path, sha256: put(bytes) };
       });
-      const identityBytes = Buffer.from(canonText({ schema: 'execution-identity/2', sourceTreeSha256: tree, buildSpecSha256: specSha,
+      const identityBytes = boxExecutionIdentity({ sourceTreeSha256: tree, buildSpecSha256: specSha,
         boxInputsSha256: sha256(canonText(spec.boxInputs)), installMetadataExclusionsSha256: sha256(canonText(exclusions)), lockfileSha256: snap.files.get('pnpm-lock.yaml')?.sha256,
-        toolchain: box.toolchain, runnerSha256: sha256(runtimeListing(walk.entries)), configSha256: null,
+        toolchain: box.toolchain, runner:walk.entries, configSha256: null,
         imageId: box.config.imageId, imageBuildInputsSha256: box.config.buildInputsSha256, storeListingSha256: box.storeListingSha256,
-        isolationProfileSha256: sha256(canonText({ ...ISOLATION_PROFILE, resultLimits: { stdoutMaxBytes: box.config.stdoutMaxBytes ?? 16777216, caseTimeoutMs: box.config.caseTimeoutMs ?? 120000, buildTimeoutMs: box.config.buildTimeoutMs ?? 1800000 } })),
-        runtime: box.runtime, kernel: box.kernel, gateway: box.config.gatewaySpec ?? null }));
+        isolationProfileSha256: sha256(canonText({ ...isolationProfile(box.config), resultLimits: { stdoutMaxBytes: box.config.stdoutMaxBytes ?? 16777216, caseTimeoutMs: box.config.caseTimeoutMs ?? 120000, buildTimeoutMs: box.config.buildTimeoutMs ?? 1800000 } })),
+        runtime: box.runtime, kernel: box.kernel, gateway: box.config.gatewaySpec ?? null });
       const identity = put(identityBytes);
       const runnerSha256 = put(runtimeListing(walk.entries));
       const manifest = put({ schema: 'build-manifest/2', sourceTreeSha256: tree, binarySha256: identity, modules,
@@ -1299,7 +1316,7 @@ function labExecutor({ commit, contract, ctx, spec, slots, loadContract, claim, 
       if (answers.has(key)) return (lastAnswer = answers.get(key));
       const root = Buffer.isBuffer(raw) ? pre.oracles.get(orc) ?? null : null;
       let a = null;
-      if (root && verifyOracleCopy(orc, root)) {
+      if (root && verifyOracleCopy(orc, root, why)) {
         const casePath = inputPath(raw);
         if (casePath) {
           // O-DOMAIN (0.3.10 decodedInputArgv): a case carrying inputBase64 is decoded and fed on stdin with the case's op.
@@ -1345,10 +1362,10 @@ function labExecutor({ commit, contract, ctx, spec, slots, loadContract, claim, 
       if (!casePath) return null;
       let seen;
       try {
-        const arm = box.arm(comp, canaryPort);
+        const arm = offline ? {network:'none',env:[],configSha256:null} : box.arm(comp, canaryPort);
         let gateway;
         try {
-          if (comp.source.engine === 'datomic') {
+          if (!offline && comp.source.engine === 'datomic') {
             gateway = box.gateway(b, arm, box.config.gatewaySpec, box.auxiliaryPlacement(comp.source.slot).cpuset);
             if (!gateway.durableReadbackAllowed) why('DATOMIC-DEV-STORAGE', 'Datomic dev storage cannot qualify durable readback (Q86f); this run stays diagnostic');
           }
@@ -1408,19 +1425,11 @@ function labExecutor({ commit, contract, ctx, spec, slots, loadContract, claim, 
     for (const [h, p] of inputFiles) verifyInput(h, p);
     for (const b of instances) verifyBuild(b);
     if (box) box.attestStore();
-    for (const [x, root] of pre.oracles) if (root) verifyOracleCopy(x, root);
+    for (const [x, root] of pre.oracles) if (root) verifyOracleCopy(x, root, why);
   };
   // Q67e: immediately before every invocation, the oracle copy holds exactly the prepared files with their bytes and read-only
   // modes, and nothing else (no planted module, no bytecode cache); any change refuses the oracle for the rest of the run.
-  function verifyOracleCopy(x, root) {
-    if (root.broken) return false;
-    let now = null;
-    try { const w = walkTree(root.dir); now = w.outside.length ? null : runtimeListing(w.entries); } catch { now = null; }
-    if (now === root.expect) return true;
-    root.broken = true;
-    why('ORACLE-TAMPERED', `the evaluator's copy of ${x}'s files changed after it was written; the oracle is not run again (RULINGS Q67e)`);
-    return false;
-  }
+
   return ev;
 }
 
@@ -1439,9 +1448,9 @@ export function qualifyClaim(claim, env) {
   const reasons = [];
   const seen = new Set();
   const why = (code, detail, receipt) => { const k = `${code}\u0000${detail}`; if (!seen.has(k)) { seen.add(k); reasons.push(receipt ? { code, detail, receipt } : { code, detail }); } };
-  const run = { offline: typeof env?.sut === 'function', ignored: [], builds: {}, instances: [], cases: [], oracle: [], gate: null, objects: null, core: null, evaluator: null, toolchain: null, isolation: null, dirs: [] };
+  const run = { offline: env?.offline === true || typeof env?.sut === 'function', ignored: [], builds: {}, instances: [], cases: [], oracle: [], gate: null, objects: null, core: null, evaluator: null, toolchain: null, isolation: null, dirs: [] };
   why('GATE-NOT-RUN', 'no pinned case has yet completed through the isolated OBL executor and cleanup proofs (Q55a, Q86)');
-  if (run.offline) why('RUN-NOT-ON-GATE', 'the system under test ran locally from the evaluator\'s own build (offline stand-in for step 3), not through the gate on a registered slot');
+  if (run.offline) why('RUN-NOT-ON-GATE', 'the system under test runs in an offline container with network none; no registered engine configuration is applied');
   const state = {};
   try {
     // Q75a: the evaluator's own files match their blobs at its commit, and no earlier run marked this checkout poisoned.
@@ -1473,7 +1482,7 @@ export function qualifyClaim(claim, env) {
  * checkout), every handed-out case input is present with its bytes (Q81a), the toolchain's files are unchanged, and every
  * evidence object the run wrote is present with its bytes and nothing
  * else is in the store. */
-function endChecks(why, run, state) {
+export function endChecks(why, run, state) {
   state.verifyRuntime?.();
   if (state.integrity && !state.integrity.problems.length) {
     const now = evaluatorBytes(), changed = EVALUATOR_FILES.filter(f => now[f] !== state.integrity.files[f]);
@@ -1555,13 +1564,13 @@ function runQualification(claim, env, why, run, state) {
     box = state.box = new BoxExecutor({ config: bindStore(authorityPolicy(git, authority), env.storeReceipt), authority:{commit:authority,repo:git.repo}, workDir: env.workDir, holder: env.holder, put, why });
     if (env.pairSlots) { box.placement = pairLayout(authorityPolicy(git, authority), env.pairSlots); run.placement = box.placement; }
     box.attestStore();
-    run.isolation = { candidate: 'hardened-container', imageId: box.config.imageId, oracleSandbox: run.isolation.sandbox, residual: ['R1: shared VM kernel', 'R4/N4: engine egress pending Q86g H2', 'D1: development runs on Mac', 'D2: shared Docker socket and writable HOME VM mount', 'D3: external writers of authority refs', 'Q86g retains L1 and N1-N4 on the unprotected list until VM hardening'] };
+    run.isolation = { candidate: 'hardened-container', imageId: box.config.imageId, oracleSandbox: run.isolation.sandbox, toolchain:box.toolchain, residual: ['R1: shared VM kernel', 'R4/N4: engine egress pending Q86g H2', 'D1: development runs on Mac', 'D2: shared Docker socket and writable HOME VM mount', 'D3: external writers of authority refs', 'Q86g retains L1 and N1-N4 on the unprotected list until VM hardening'] };
   } catch (error) { return why('ISOLATION-NOT-IN-FORCE', String(error)); }
-  const ev = labExecutor({ commit, contract, ctx, spec: ctx.cfg.buildSpec, slots, loadContract, claim, pre, put, iso, runChild, toolchain: tools, sut: env.sut ?? null, why, run, box, canaryPort: env.canaryPort });
+  const ev = labExecutor({ commit, contract, ctx, spec: ctx.cfg.buildSpec, slots, loadContract, claim, pre, put, iso, runChild, toolchain: tools, sut: env.sut ?? null, why, run, box, canaryPort: env.canaryPort, offline: run.offline });
 
   state.verifyRuntime = ev.verifyRuntime;
 
-  run.gate = { gate: 'OBL', executing: true, registeredSlot: comp.source.slot };
+  run.gate = { gate: 'OBL', executing: !run.offline, offline: run.offline, registeredSlot: run.offline ? null : comp.source.slot };
   // [EXP-G03] Why: remove GATE-NOT-RUN only after a case actually returned through the isolated executor and cleanup passed.
   // Rejected: successful planning or a zero-case run as evidence of execution.
   // -- the verdict: the contract's reference model over the lab's executor, with the claim kind (Q67j, Q75i).
@@ -1573,7 +1582,8 @@ function runQualification(claim, env, why, run, state) {
     const notes = [];
     if (qualificationRun(o, entry.binarySha256, entry.composition, ev, ctx, ctx.pins, ctx.pinned, ctx.cfg.oracleRunners, d => notes.push(d)) === null) why('PREREQ-FAILED', `the evaluator's ${o.id} run of the A0 build did not pass (GATE-POSITION "A0 included", RULINGS Q38a): ${notes.join('; ')}`);
   }
-  state.gateExecuted = run.cases.length > 0 && run.cases.every(c => c.configApplied);
+  run.gate.executions = run.cases.length;
+  state.gateExecuted = !run.offline && run.cases.length > 0 && run.cases.every(c => c.configApplied);
   if (ids.length === (Array.isArray(claim.obligations) ? claim.obligations.length : -1)) {
     if (!isObj(ctx.cfg.buildSpec) || ['argv', 'outputs', 'run'].some(k => own(ctx.cfg.buildSpec, k) == null)) why('BUILD-SPEC-NULL', 'the contract\'s buildSpec (argv, outputs, run) is not specified, so no run qualifies (RULINGS Q55a step 1, Q61f)');
     if (!isObj(entry)) why('A0-REGISTRY-NULL', `A0_REGISTRY has no entry for source engine ${comp.source.engine}; every comparison is a diagnostic until A0 is frozen (RULINGS Q46b, Q47b)`);
@@ -1618,13 +1628,12 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.met
     try { claim = parseJson(fs.readFileSync(path.resolve(file))); } catch (error) { fail('USAGE', `cannot read ${file}: ${error.message}`); }
     const git = gitSource(repo);
     const workDir = path.resolve(options.work ?? path.join(EVALUATOR_ROOT, 'runs/qualify', `${String(claim?.claimId ?? 'claim').replace(/[^A-Za-z0-9._-]/g, '_')}-${new Date().toISOString().replace(/[:.]/g, '-')}`));
-    let sut = null;
-    // --offline-sut runs the system under test with the contract's buildSpec run argv (the authority's), locally.
-    if (options['offline-sut']) { const b = git.resolve(authorityRef) && git.blob(git.resolve(authorityRef), PATHS.contract); try { const s = b ? JSON.parse(b.toString('utf8')).buildSpec : null; sut = strList(s?.run) ? localSut(s) : null; } catch { sut = null; } }
+    // [EXP-G03] Why: offline mode executes authority argv inside network-none boxes and stays DIAGNOSTIC.
+    // Rejected: the legacy Mac localSut callback, which violates Q86 even for fixtures.
     const net = await import('node:net');
     const canary = net.createServer();
     await new Promise(resolve => canary.listen(0, '127.0.0.1', resolve));
-    try { result = qualifyClaim(claim, { git, authorityRef, workDir, holder: options.holder, pairSlots: options['pair-slots']?.split(','), storeReceipt: options['store-receipt'] ? JSON.parse(fs.readFileSync(path.resolve(options['store-receipt']))) : null, canaryPort: canary.address().port, ...(sut ? { sut } : {}), ...(options['no-sandbox'] ? { sandbox: false } : {}),
+    try { result = qualifyClaim(claim, { git, authorityRef, workDir, holder: options.holder, pairSlots: options['pair-slots']?.split(','), storeReceipt: options['store-receipt'] ? JSON.parse(fs.readFileSync(path.resolve(options['store-receipt']))) : null, canaryPort: canary.address().port, offline:Boolean(options['offline-sut']), ...(options['no-sandbox'] ? { sandbox: false } : {}),
       evaluator: { repo: path.resolve(options['evaluator-repo'] ?? EVALUATOR_ROOT), rev: options['evaluator-commit'] } });
     } finally { canary.close(); }
   }
