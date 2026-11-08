@@ -48,7 +48,7 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | CX-VC8 (verify/C8) | reviewer, Codex high | P1 | verdict on C8 d9b2dc8 |
 | CX-VJ01 (verify/J01) | reviewer, Codex high | P2 | verdict on J01 5cc42fb (compact encoding, default off) |
 | CX-E01-R2 (exp/E01-claim-evaluator) | builder, Codex medium | floor for claims | Q75a-j, 0.3.10 field names; then a reviewer delta check |
-| CX-VO04H (verify/O02) | reviewer, Codex high | correctness floor | verdict on O-REPLAY 0.4.8 3c52a1d |
+| CX-OREPLAY-049 (exp/O04b-oracle-0.4.2) | builder, Codex medium | correctness floor | Q70n completeness by execution, Q70o page selector; then a reviewer |
 | CX-VX02 (verify/X02) | reviewer, Codex high | XTQL lane | verdict on X02 bf1ad4d, minus the exclusive-slot rerun |
 | CX-W01B (exp/W01-golden-scenarios) | builder, Codex medium | GS | remaining XTDB scenarios, GS.04, GS.12 |
 | CX-O05 (exp/O05-observation-oracle) | builder, Codex medium | floor: O-OBS blocks 62 obligations | lab/acceptance/oracle/observe.py |

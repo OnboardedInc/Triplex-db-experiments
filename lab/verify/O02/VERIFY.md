@@ -178,3 +178,13 @@ here). Merged to main as 4591715.
 - Enumeration of every continuation and scope route is in the verifier's report (find pages: no continuation; cursorFrom on other kinds
   takes the named read's view; history with a cut silently ignores a `scope` field). Evidence: verify/O02 9984cdc,
   lab/verify/O02/V-O04g/results/; scratch tree at91ba352 kept. Ruled Q70l, Q70m.
+
+## V-O04h (CX-VO04H, Codex reviewer at high): O-REPLAY 0.4.8 at 3c52a1d: FIX-FIRST, two findings (saved by the orchestrator, 2026-11-08 21:23Z)
+- The three paged kinds pass every checked continuation case including F11-F13; 381 tests; 1,793 differential cases against 91ba352 with all
+  15 changes explained; 29/29 hashes match. Evidence: verify/O02 f977e36, lab/verify/O02/V-O04h/VERIFY.md and results/cx-vo04h/ there.
+- F14 (medium, blocks promotion): the Q70l self-check (selfcheck.py:351-372) recognises only literal two-element tuples whose first item
+  starts with "next" and follows only same-module bare calls; its runtime phase runs three hardcoded kinds. Planted kinds that emit
+  `nextPage` through a computed key, a helper in another module, or a nested dictionary all pass the self-check (6/6) while emitting it.
+- F15 (medium): `cursorFrom.page` goes through `int(ref.get("page", 0))` and list indexing (views.py:429): "0" and true are coerced, -2
+  selects the penultimate page, 0.0 crashes with an uncaught ValueError (exit 1). Predates 0.4.8.
+- Ruled Q70n, Q70o; 0.4.9 by a Codex builder, then a Codex reviewer.
