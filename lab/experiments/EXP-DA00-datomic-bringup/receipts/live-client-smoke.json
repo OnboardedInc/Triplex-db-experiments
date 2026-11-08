@@ -1,0 +1,21 @@
+{
+  "health": {
+    "datomicVersion": "1.0.7745",
+    "gatewaySourceHash": "0177dcf44530bc32f02b4230a2203ae0c03652b27a4fb61a1b559283d68be1dc"
+  },
+  "basis": {
+    "t": {
+      "t": "long",
+      "v": "1001"
+    },
+    "position": {
+      "t": "long",
+      "v": "0"
+    },
+    "recordedAt": null,
+    "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+  },
+  "productionScopeFenced": true,
+  "maxSockets": 512,
+  "passed": true
+}

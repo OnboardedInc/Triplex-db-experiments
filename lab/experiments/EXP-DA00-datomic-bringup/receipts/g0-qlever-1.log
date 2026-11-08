@@ -1,0 +1,5 @@
+[lab] G0-qlever-20261108T215153Z-3524cf: raw output runs/G0/G0-qlever-20261108T215153Z-3524cf
+[lab] heavy: waiting for one of 4 slots; held by pid 89476 "R25-ckthread-r8", pid 1535 "DA00-measure", pid 1980 "DA00-G0-final", pid 4744 "CX-J01-R2-unit"
+[lab] heavy: waiting for one of 4 slots; held by pid 89476 "R25-ckthread-r8", pid 4427 "CX-VX02-2-G0", pid 1980 "DA00-G0-final", pid 5185 "G0-xtdb-20261108T215157Z-138fc7 vitest-core"
+PASS G0 qlever scope=full executed=1018 pass=1018 fail=0 skip=67
+receipt: lab/runs/G0/G0-qlever-20261108T215153Z-3524cf.json

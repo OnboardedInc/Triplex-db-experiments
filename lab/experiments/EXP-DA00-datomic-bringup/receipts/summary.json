@@ -1,0 +1,170 @@
+{
+  "format": "EXP-DA00-builder-evidence/1",
+  "implementationCommit": "e1a933f2e8385624570c6964b4ad2165fb0aa954",
+  "verification": {
+    "zipSha256": "60ac6bc5f04fefb85a5aeef6a5e6c5369c5a880ca6b9f205e00a12719e7bd2dc",
+    "zipBytes": 272751248,
+    "peerSha1": "a976733ab47a8ed3f19c687995e09f406191f9b7",
+    "peerSha1Url": "https://repo.maven.apache.org/maven2/com/datomic/peer/1.0.7745/peer-1.0.7745.jar.sha1",
+    "gpgVerdict": "VALIDSIG",
+    "fingerprint": "749F6F7C583CA630FF76AECDF255D6EA3FD20B93",
+    "keySource": "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x749F6F7C583CA630FF76AECDF255D6EA3FD20B93",
+    "keyTrust": "Signature valid; keyserver key identity not independently certified",
+    "baseIndexDigest": "sha256:0eda5830ed7b669abc246a8dc520ea8a23cab06f9a8d4b6964109e2f2394e46f",
+    "arm64Manifest": "sha256:e29bfdff2f7245d8be69ee092651149c026e1b8c2b2d4967c9563963f30076f3",
+    "jars": {
+      "clojure-1.12.5.jar": "dfdee131460216a84fef22e537bb0d0579965f8f70338d748323dff26f8e5a8b",
+      "jetty-server-9.4.53.v20231009.jar": "9c4e9c6cb0a7a541031500af0823b678f65d809f481efa9cadd1ff81bda19f78",
+      "ring-jetty-adapter-1.10.0.jar": "8d224dc95a88da7e42da9b7f68527eca18070803fe0b1c74ee2da6a794281dfc",
+      "data.json-2.5.2.jar": "0938c730961d32b331ea7e5cd7c6a822c0a889def79d1c3f2af4dd201fdddeb3"
+    }
+  },
+  "imageId": "sha256:d0e2465fd9548980373a61f84b8f50e339a82cd627c56ead0ac284b87cb34c6d",
+  "imageSizeBytes": 371251125,
+  "buildInputsSha256": "c15195a2c2bffd4de222f55ea79c76266b321bc8b02f6451e9a157d386199256",
+  "sourceInputsSha256": "1ac6a327b79735778212eef110d1e7983a23c3fb15561415fbe613a9d85378cb",
+  "effectiveConfigSha256": "41160708b65bbc45ec2b56b835c0bd55adc641acd04887854f26afcef33055bd",
+  "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d",
+  "gatewaySourceSha256": "0177dcf44530bc32f02b4230a2203ae0c03652b27a4fb61a1b559283d68be1dc",
+  "restartToReadyMs": 20250.308916999995,
+  "creationEndpointLatencyMs": {
+    "count": 100,
+    "min": 167.19458299999678,
+    "median": 336.949208500002,
+    "mean": 364.9794120400004,
+    "p95NearestRank": 664.5294160000012,
+    "p99NearestRank": 849.0184169999993,
+    "max": 1407.510875
+  },
+  "measurementPassed": true,
+  "persistence": {
+    "volumeRetained": true,
+    "basisBefore": {
+      "t": {
+        "t": "long",
+        "v": "1001"
+      },
+      "position": {
+        "t": "long",
+        "v": "0"
+      },
+      "recordedAt": null,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    "basisAfter": {
+      "t": {
+        "t": "long",
+        "v": "1001"
+      },
+      "position": {
+        "t": "long",
+        "v": "0"
+      },
+      "recordedAt": null,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    "duplicateCreateCreated": false
+  },
+  "retention": {
+    "initialKept": {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-0\",\"1794174634082\"]",
+      "db": "s-5a377987b021d5401900564fbae6a1ee",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    "final": {
+      "kept": {
+        "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-0\",\"1794174950103\"]",
+        "db": "s-f43d78e756286da105c6aa52db4e63e5",
+        "created": true,
+        "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+      },
+      "deleted": 99,
+      "resident": "left running for orchestrator"
+    }
+  },
+  "independentReview": "not performed by builder",
+  "processStartWithRetainedVolumeToReadyMs": 18148.832208,
+  "storageVolumeExistedAtStart": true,
+  "initialEmptyVolumeColdStartToReadyMs": 19756.721125,
+  "runtime": {
+    "cpusetCpus": "0,1",
+    "mounts": [
+      {
+        "Type": "volume",
+        "Name": "tx2-datomic-dev-data",
+        "Source": "/var/lib/docker/volumes/tx2-datomic-dev-data/_data",
+        "Destination": "/data",
+        "Driver": "local",
+        "Mode": "z",
+        "RW": true,
+        "Propagation": ""
+      },
+      {
+        "Type": "bind",
+        "Source": "/Users/sam/projects/triplex-db-2/runs/engines/datomic-dev/transactor.properties",
+        "Destination": "/config/transactor.properties",
+        "Mode": "ro",
+        "RW": false,
+        "Propagation": "rprivate"
+      },
+      {
+        "Type": "bind",
+        "Source": "/Users/sam/projects/triplex-db-2/runs/engines/datomic-dev/entrypoint.sh",
+        "Destination": "/config/entrypoint.sh",
+        "Mode": "ro",
+        "RW": false,
+        "Propagation": "rprivate"
+      }
+    ]
+  },
+  "idle": {
+    "at": "2026-11-08T21:55:48.972Z",
+    "processes": "/proc/80 java -server -Xmx1g -Xms1g -Xms1g -Xmx1g -Ddatomic.objectCacheMax=320m -XX:MaxMetaspaceSize=160m -XX:MaxDirectMemorySize=128m -XX:+ExitOnOutOfMemoryError -cp resources:datomic-transactor-pro-1.0.7745.jar:lib/*:samples/clj:bin:/opt/gateway/src clojure.main -i bin/bridge.clj -m triplex.gateway.main \nName:\tjava\nPid:\t80\nVmHWM:\t  312228 kB\nVmRSS:\t  311512 kB\nThreads:\t39\nCpus_allowed_list:\t1\n/proc/9 java -server -cp resources:datomic-transactor-pro-1.0.7745.jar:lib/*:samples/clj:bin:/opt/gateway/src -Xmx640m -Xms640m -XX:MaxMetaspaceSize=160m -XX:MaxDirectMemorySize=128m -XX:+ExitOnOutOfMemoryError clojure.main --main datomic.launcher /data/effective-transactor.properties \nName:\tjava\nPid:\t9\nVmHWM:\t  366028 kB\nVmRSS:\t  366028 kB\nThreads:\t62\nCpus_allowed_list:\t0",
+    "stats": "{\"BlockIO\":\"24.6kB / 119kB\",\"CPUPerc\":\"28.73%\",\"Container\":\"tx2-datomic-dev\",\"ID\":\"4214fb9a0cfd\",\"MemPerc\":\"22.22%\",\"MemUsage\":\"625.8MiB / 2.75GiB\",\"Name\":\"tx2-datomic-dev\",\"NetIO\":\"2.54kB / 1.91kB\",\"PIDs\":\"109\"}"
+  },
+  "after100": {
+    "at": "2026-11-08T21:56:26.657Z",
+    "processes": "/proc/80 java -server -Xmx1g -Xms1g -Xms1g -Xmx1g -Ddatomic.objectCacheMax=320m -XX:MaxMetaspaceSize=160m -XX:MaxDirectMemorySize=128m -XX:+ExitOnOutOfMemoryError -cp resources:datomic-transactor-pro-1.0.7745.jar:lib/*:samples/clj:bin:/opt/gateway/src clojure.main -i bin/bridge.clj -m triplex.gateway.main \nName:\tjava\nPid:\t80\nVmHWM:\t  518996 kB\nVmRSS:\t  518996 kB\nThreads:\t375\nCpus_allowed_list:\t1\n/proc/9 java -server -cp resources:datomic-transactor-pro-1.0.7745.jar:lib/*:samples/clj:bin:/opt/gateway/src -Xmx640m -Xms640m -XX:MaxMetaspaceSize=160m -XX:MaxDirectMemorySize=128m -XX:+ExitOnOutOfMemoryError clojure.main --main datomic.launcher /data/effective-transactor.properties \nName:\tjava\nPid:\t9\nVmHWM:\t  570192 kB\nVmRSS:\t  570192 kB\nThreads:\t879\nCpus_allowed_list:\t0",
+    "stats": "{\"BlockIO\":\"24.6kB / 2.56MB\",\"CPUPerc\":\"5.98%\",\"Container\":\"tx2-datomic-dev\",\"ID\":\"4214fb9a0cfd\",\"MemPerc\":\"37.62%\",\"MemUsage\":\"1.035GiB / 2.75GiB\",\"Name\":\"tx2-datomic-dev\",\"NetIO\":\"54.4kB / 53kB\",\"PIDs\":\"1256\"}"
+  },
+  "measureSourceSha256": "dcd0b254f8d330a11d85efb9e944680421a31cd2de57a8332c48297195d4dd18",
+  "gates": {
+    "datomic": {
+      "runId": "G0-datomic-20261108T215822Z-205199",
+      "verdict": "PASS",
+      "counts": {
+        "executed": 1017,
+        "pass": 1017,
+        "fail": 0,
+        "skip": 46,
+        "expectedSkip": 46,
+        "unexpectedSkip": 0
+      }
+    },
+    "xtdb": {
+      "runId": "G0-xtdb-20261108T215858Z-977834",
+      "verdict": "PASS",
+      "counts": {
+        "executed": 1013,
+        "pass": 1013,
+        "fail": 0,
+        "skip": 130,
+        "expectedSkip": 130,
+        "unexpectedSkip": 0
+      }
+    },
+    "qlever": {
+      "runId": "G0-qlever-20261108T215940Z-c6686e",
+      "verdict": "PASS",
+      "counts": {
+        "executed": 1018,
+        "pass": 1018,
+        "fail": 0,
+        "skip": 67,
+        "expectedSkip": 67,
+        "unexpectedSkip": 0
+      }
+    }
+  }
+}
