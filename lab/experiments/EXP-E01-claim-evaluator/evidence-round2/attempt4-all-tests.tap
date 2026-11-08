@@ -1,0 +1,773 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 61484 "CX-P2Q-R2-verifier-live", pid 41295 "CX-VX02-writer-between", pid 39561 "CX-VX02-shared-XTQL-r2", pid 56433 "CX-K01-golden"
+[lab] heavy: waiting for one of 4 slots; held by pid 61484 "CX-P2Q-R2-verifier-live", pid 41295 "CX-VX02-writer-between", pid 39561 "CX-VX02-shared-XTQL-r2", pid 56433 "CX-K01-golden"
+[lab] heavy: waiting for one of 4 slots; held by pid 61484 "CX-P2Q-R2-verifier-live", pid 41295 "CX-VX02-writer-between", pid 39561 "CX-VX02-shared-XTQL-r2", pid 56433 "CX-K01-golden"
+[lab] heavy: waiting for one of 4 slots; held by pid 61484 "CX-P2Q-R2-verifier-live", pid 41295 "CX-VX02-writer-between", pid 39561 "CX-VX02-shared-XTQL-r2", pid 56433 "CX-K01-golden"
+TAP version 13
+# Subtest: V-E01 F1/T3: a persistently rewritten evaluator refuses the next run against its Git blobs
+ok 1 - V-E01 F1/T3: a persistently rewritten evaluator refuses the next run against its Git blobs
+  ---
+  duration_ms: 197.423208
+  type: 'test'
+  ...
+# Subtest: V-E01 F2/T5c: replace refs cannot substitute the oracle or qualify a wrong candidate
+ok 2 - V-E01 F2/T5c: replace refs cannot substitute the oracle or qualify a wrong candidate
+  ---
+  duration_ms: 9199.622375
+  type: 'test'
+  ...
+# Subtest: V-E01 F2/Q75c: an unpinned COMPILED runner leaves an otherwise honest run diagnostic
+ok 3 - V-E01 F2/Q75c: an unpinned COMPILED runner leaves an otherwise honest run diagnostic
+  ---
+  duration_ms: 12017.972
+  type: 'test'
+  ...
+# Subtest: V-E01 F3/F10: outside file and directory links are refused, never followed
+ok 4 - V-E01 F3/F10: outside file and directory links are refused, never followed
+  ---
+  duration_ms: 6013.865292
+  type: 'test'
+  ...
+# Subtest: V-E01 F4/T6: each build and execution gets a fresh HOME and TMPDIR
+ok 5 - V-E01 F4/T6: each build and execution gets a fresh HOME and TMPDIR
+  ---
+  duration_ms: 18186.70475
+  type: 'test'
+  ...
+# Subtest: V-E01 F7/T7: deleting a retained evidence object fails closed
+ok 6 - V-E01 F7/T7: deleting a retained evidence object fails closed
+  ---
+  duration_ms: 12123.754708
+  type: 'test'
+  ...
+# Subtest: V-E01 F8: admitCore refuses promotion before executing candidate code
+ok 7 - V-E01 F8: admitCore refuses promotion before executing candidate code
+  ---
+  duration_ms: 2922.375708
+  type: 'test'
+  ...
+# Subtest: V-E01 F9: every early return and caught exception carries GATE-NOT-RUN
+ok 8 - V-E01 F9: every early return and caught exception carries GATE-NOT-RUN
+  ---
+  duration_ms: 744.85475
+  type: 'test'
+  ...
+# Subtest: V-E01 F5/Q75g: O-REPLAY-shaped row comparisons stay UNCOMPARABLE on contract 0.3.10
+ok 9 - V-E01 F5/Q75g: O-REPLAY-shaped row comparisons stay UNCOMPARABLE on contract 0.3.10
+  ---
+  duration_ms: 0.342333
+  type: 'test'
+  ...
+# Subtest: V-E01 F6/Q75h: cause is optional but must be structured when present
+ok 10 - V-E01 F6/Q75h: cause is optional but must be structured when present
+  ---
+  duration_ms: 0.507708
+  type: 'test'
+  ...
+# Subtest: V-E01 F9: unreadable evidence becomes a diagnostic instead of an uncaught EACCES
+ok 11 - V-E01 F9: unreadable evidence becomes a diagnostic instead of an uncaught EACCES
+  ---
+  duration_ms: 3253.815792
+  type: 'test'
+  ...
+# Subtest: V-E01 F3: modes and internal symlink target bytes are identity-bound
+ok 12 - V-E01 F3: modes and internal symlink target bytes are identity-bound
+  ---
+  duration_ms: 9472.1445
+  type: 'test'
+  ...
+# Subtest: V-E01 F3: recorded PATH node is the binary a child actually runs
+ok 13 - V-E01 F3: recorded PATH node is the binary a child actually runs
+  ---
+  duration_ms: 4565.28925
+  type: 'test'
+  ...
+# Subtest: Q75b: edits within one build instance fail closed without an instance switch
+ok 14 - Q75b: edits within one build instance fail closed without an instance switch
+  ---
+  duration_ms: 3374.467583
+  type: 'test'
+  ...
+# Subtest: admitCore makes the contract's executor calls and reaches its verdict on every admit_claim call of its own self-check
+ok 15 - admitCore makes the contract's executor calls and reaches its verdict on every admit_claim call of its own self-check
+  ---
+  duration_ms: 129.416459
+  type: 'test'
+  ...
+# Subtest: documents: the contract's admit_claim (no executor) and claim.mjs admit both answer DIAGNOSTIC for every document fixture
+ok 16 - documents: the contract's admit_claim (no executor) and claim.mjs admit both answer DIAGNOSTIC for every document fixture
+  ---
+  duration_ms: 0.202458
+  type: 'test'
+  ...
+# Subtest: admit: POSITIVE-NS-SCREENING documents are QUALIFIED; the verdict is DIAGNOSTIC
+ok 17 - admit: POSITIVE-NS-SCREENING documents are QUALIFIED; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.11325
+  type: 'test'
+  ...
+# Subtest: admit: POSITIVE-GS-DOMAIN documents are QUALIFIED; the verdict is DIAGNOSTIC
+ok 18 - admit: POSITIVE-GS-DOMAIN documents are QUALIFIED; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.041417
+  type: 'test'
+  ...
+# Subtest: admit: POSITIVE-PROMOTION documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 19 - admit: POSITIVE-PROMOTION documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.047333
+  type: 'test'
+  ...
+# Subtest: admit: GEN-PREREQS-ONLY documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 20 - admit: GEN-PREREQS-ONLY documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.042042
+  type: 'test'
+  ...
+# Subtest: admit: GEN-NULL-OREPLAY-PIN documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 21 - admit: GEN-NULL-OREPLAY-PIN documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.037
+  type: 'test'
+  ...
+# Subtest: admit: GEN-SUPPLIED-NAMES documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 22 - admit: GEN-SUPPLIED-NAMES documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.081542
+  type: 'test'
+  ...
+# Subtest: admit: GEN-OTHER-TREE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 23 - admit: GEN-OTHER-TREE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.270625
+  type: 'test'
+  ...
+# Subtest: admit: GEN-MISSING-FALSIFIERS documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 24 - admit: GEN-MISSING-FALSIFIERS documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.285833
+  type: 'test'
+  ...
+# Subtest: admit: GEN-COMPOSITION-UNBOUND documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 25 - admit: GEN-COMPOSITION-UNBOUND documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.095458
+  type: 'test'
+  ...
+# Subtest: admit: GEN-W0-NULL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 26 - admit: GEN-W0-NULL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.038041
+  type: 'test'
+  ...
+# Subtest: admit: GEN-NO-W0-RECEIPT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 27 - admit: GEN-NO-W0-RECEIPT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.029542
+  type: 'test'
+  ...
+# Subtest: admit: GEN-EXCLUDED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 28 - admit: GEN-EXCLUDED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.033833
+  type: 'test'
+  ...
+# Subtest: admit: GEN-REFUSED-SET documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 29 - admit: GEN-REFUSED-SET documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.02125
+  type: 'test'
+  ...
+# Subtest: admit: GEN-STALE-DEFINITION documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 30 - admit: GEN-STALE-DEFINITION documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.021334
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R4-FABRICATED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 31 - admit: CODEX-R4-FABRICATED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.023167
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-STALE-BINARY documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 32 - admit: Q42A-STALE-BINARY documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.020208
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-EARLIER-COMMIT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 33 - admit: Q42A-EARLIER-COMMIT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.020833
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-BEFORE-CLOSURE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 34 - admit: Q42A-BEFORE-CLOSURE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.020125
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-OBJECT-CORRUPT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 35 - admit: Q42A-OBJECT-CORRUPT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.021667
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-OBJECT-OF-OTHER-CASE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 36 - admit: Q42A-OBJECT-OF-OTHER-CASE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.026792
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-MODES-SHORT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 37 - admit: Q42A-MODES-SHORT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.022
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-FAULT-REPS-SHORT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 38 - admit: Q42A-FAULT-REPS-SHORT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.019583
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-UNKNOWN-ID documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 39 - admit: Q42A-UNKNOWN-ID documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.023416
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-NO-CONTROL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 40 - admit: Q42A-NO-CONTROL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.020875
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-CONTROL-OTHER-SEED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 41 - admit: Q42A-CONTROL-OTHER-SEED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.020459
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-CONTROL-OTHER-WINDOW documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 42 - admit: Q42A-CONTROL-OTHER-WINDOW documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.020959
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-CORRECTNESS-FAIL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 43 - admit: Q42A-CORRECTNESS-FAIL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.020417
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-NO-VERIFIER documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 44 - admit: Q42A-NO-VERIFIER documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.020541
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R6-MODULES-NOT-RETAINED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 45 - admit: CODEX-R6-MODULES-NOT-RETAINED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.021042
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R6-BINARY-NOT-RETAINED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 46 - admit: CODEX-R6-BINARY-NOT-RETAINED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.02
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R6-NOT-A-VERIFIER-RECORD documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 47 - admit: CODEX-R6-NOT-A-VERIFIER-RECORD documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.020333
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R6-REFUSAL-LABELLED-PASS documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 48 - admit: CODEX-R6-REFUSAL-LABELLED-PASS documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.03475
+  type: 'test'
+  ...
+# Subtest: admit: Q47A-WRONG-LABELLED-PASS documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 49 - admit: Q47A-WRONG-LABELLED-PASS documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.021834
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R6-CONTROL-NO-WORKLOAD documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 50 - admit: CODEX-R6-CONTROL-NO-WORKLOAD documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.024084
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R6-CANDIDATE-SELECTED-CONTROL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 51 - admit: CODEX-R6-CANDIDATE-SELECTED-CONTROL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.025958
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R6-NO-A0-REGISTRY documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 52 - admit: CODEX-R6-NO-A0-REGISTRY documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.022625
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R6-MIGRATION-INDIRECT-REFUSAL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 53 - admit: CODEX-R6-MIGRATION-INDIRECT-REFUSAL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.027292
+  type: 'test'
+  ...
+# Subtest: admit: Q47C-MANIFESTS-UNPINNED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 54 - admit: Q47C-MANIFESTS-UNPINNED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.02425
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R7-INVENTED-CASES documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 55 - admit: CODEX-R7-INVENTED-CASES documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.024917
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R7-CANDIDATE-AS-A0 documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 56 - admit: CODEX-R7-CANDIDATE-AS-A0 documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.024875
+  type: 'test'
+  ...
+# Subtest: admit: RT-SWAP-ROLES documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 57 - admit: RT-SWAP-ROLES documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.024125
+  type: 'test'
+  ...
+# Subtest: admit: RT-RELABEL-PROFILE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 58 - admit: RT-RELABEL-PROFILE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.0245
+  type: 'test'
+  ...
+# Subtest: admit: RT-SCREENING-PREREQ documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 59 - admit: RT-SCREENING-PREREQ documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.02125
+  type: 'test'
+  ...
+# Subtest: admit: RT-RUNKIND-SWAP documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 60 - admit: RT-RUNKIND-SWAP documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.0205
+  type: 'test'
+  ...
+# Subtest: admit: RT-CONTROL-OTHER-PROFILE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 61 - admit: RT-CONTROL-OTHER-PROFILE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.020084
+  type: 'test'
+  ...
+# Subtest: admit: RT-SLOT-ARRAY documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 62 - admit: RT-SLOT-ARRAY documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.026333
+  type: 'test'
+  ...
+# Subtest: admit: RT-VERIFIER-IS-AUTHOR documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 63 - admit: RT-VERIFIER-IS-AUTHOR documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.019792
+  type: 'test'
+  ...
+# Subtest: admit: RT-DROP-FAIL-ATTEMPT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 64 - admit: RT-DROP-FAIL-ATTEMPT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.019667
+  type: 'test'
+  ...
+# Subtest: admit: RT-COUNTS-EDITED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 65 - admit: RT-COUNTS-EDITED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.019792
+  type: 'test'
+  ...
+# Subtest: admit: RT-CONTRACT-RELABEL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 66 - admit: RT-CONTRACT-RELABEL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.020541
+  type: 'test'
+  ...
+# Subtest: admit: RT-FAULTREPS-RELABEL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 67 - admit: RT-FAULTREPS-RELABEL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.019334
+  type: 'test'
+  ...
+# Subtest: admit: RT-DEP-UPPERCASE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 68 - admit: RT-DEP-UPPERCASE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.020625
+  type: 'test'
+  ...
+# Subtest: admit: RT-DEP-UNLISTED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 69 - admit: RT-DEP-UNLISTED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.01975
+  type: 'test'
+  ...
+# Subtest: admit: RT-DEP-OTHER-WORKSPACE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 70 - admit: RT-DEP-OTHER-WORKSPACE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.030416
+  type: 'test'
+  ...
+# Subtest: admit: RT-NARROW-ROOTS documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 71 - admit: RT-NARROW-ROOTS documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.0205
+  type: 'test'
+  ...
+# Subtest: admit: LAB-BRANCH-PINS-OWN-ORACLE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 72 - admit: LAB-BRANCH-PINS-OWN-ORACLE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.020167
+  type: 'test'
+  ...
+# Subtest: admit: LAB-ORACLE-FILE-DRIFT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 73 - admit: LAB-ORACLE-FILE-DRIFT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.020375
+  type: 'test'
+  ...
+# Subtest: admit: LAB-IMAGE-NOT-PINNED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 74 - admit: LAB-IMAGE-NOT-PINNED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.019458
+  type: 'test'
+  ...
+# Subtest: admit: LAB-FORBIDDEN-ENDPOINT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 75 - admit: LAB-FORBIDDEN-ENDPOINT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.02125
+  type: 'test'
+  ...
+# Subtest: admit: LAB-ADMISSION-BLOCKED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 76 - admit: LAB-ADMISSION-BLOCKED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.019541
+  type: 'test'
+  ...
+# Subtest: admit: LAB-CONTROL-NO-PREREQ documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 77 - admit: LAB-CONTROL-NO-PREREQ documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.020625
+  type: 'test'
+  ...
+# Subtest: admit: DOC-NO-SOURCE-VARIANT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 78 - admit: DOC-NO-SOURCE-VARIANT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.021708
+  type: 'test'
+  ...
+# Subtest: admit: DOC-UNREGISTERED-VERIFICATION documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 79 - admit: DOC-UNREGISTERED-VERIFICATION documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.019584
+  type: 'test'
+  ...
+# Subtest: every DIAGNOSTIC fixture names its cause; ids are distinct; Codex rounds 4, 6 and 7 are present
+ok 80 - every DIAGNOSTIC fixture names its cause; ids are distinct; Codex rounds 4, 6 and 7 are present
+  ---
+  duration_ms: 0.164208
+  type: 'test'
+  ...
+# Subtest: CLI admit: always exit 2 with DOCUMENT-ONLY, the document verdict shown, --json, usage exits 1
+ok 81 - CLI admit: always exit 2 with DOCUMENT-ONLY, the document verdict shown, --json, usage exits 1
+  ---
+  duration_ms: 2420.154625
+  type: 'test'
+  ...
+# Subtest: uncommitted pins in the working tree have no effect: the contract is read from the claimed commit and the authority ref
+ok 82 - uncommitted pins in the working tree have no effect: the contract is read from the claimed commit and the authority ref
+  ---
+  duration_ms: 281.177875
+  type: 'test'
+  ...
+# Subtest: malformed inputs are DIAGNOSTIC, never an exception (red-team pass 1 finding 5)
+ok 83 - malformed inputs are DIAGNOSTIC, never an exception (red-team pass 1 finding 5)
+  ---
+  duration_ms: 9715.629459
+  type: 'test'
+  ...
+# Subtest: comparators judge canonical answers; unknown comparators and non-canonical answers never pass
+ok 84 - comparators judge canonical answers; unknown comparators and non-canonical answers never pass
+  ---
+  duration_ms: 0.429542
+  type: 'test'
+  ...
+# Subtest: gitSource parses cat-file --batch and ls-tree for binary blobs, spaces, tabs, missing paths, directories and pathspec magic
+ok 85 - gitSource parses cat-file --batch and ls-tree for binary blobs, spaces, tabs, missing paths, directories and pathspec magic
+  ---
+  duration_ms: 290.475708
+  type: 'test'
+  ...
+# Subtest: qualify build: the evaluator builds the claimed tree and rebuilds A0, which reproduces the registry's binarySha256
+ok 86 - qualify build: the evaluator builds the claimed tree and rebuilds A0, which reproduces the registry's binarySha256
+  ---
+  duration_ms: 1.604584
+  type: 'test'
+  ...
+# Subtest: qualify Q67b (Codex round 8 finding 2): a candidate with A0's dist bytes and another source runner runs its own instance
+ok 87 - qualify Q67b (Codex round 8 finding 2): a candidate with A0's dist bytes and another source runner runs its own instance
+  ---
+  duration_ms: 0.141625
+  type: 'test'
+  ...
+# Subtest: qualify build: CX-R7-RELABELLED-CONTROL as a run, an A0 entry recording another binary than its tree rebuilds to
+ok 88 - qualify build: CX-R7-RELABELLED-CONTROL as a run, an A0 entry recording another binary than its tree rebuilds to
+  ---
+  duration_ms: 0.038167
+  type: 'test'
+  ...
+# Subtest: qualify resolve, execute and record: every case of the pinned manifests in every mode, each as a case-result/2
+ok 89 - qualify resolve, execute and record: every case of the pinned manifests in every mode, each as a case-result/2
+  ---
+  duration_ms: 8.797708
+  type: 'test'
+  ...
+# Subtest: qualify Q67i (Codex round 8 finding 10): case-result/2 is re-judged with its declared comparator on the retained raw objects
+ok 90 - qualify Q67i (Codex round 8 finding 10): case-result/2 is re-judged with its declared comparator on the retained raw objects
+  ---
+  duration_ms: 0.645084
+  type: 'test'
+  ...
+# Subtest: qualify expect: the oracle answer follows oracleAnswerRule (O-REPLAY answerMembers of one canonical JSON document)
+ok 91 - qualify expect: the oracle answer follows oracleAnswerRule (O-REPLAY answerMembers of one canonical JSON document)
+  ---
+  duration_ms: 0.186417
+  type: 'test'
+  ...
+# Subtest: qualify compare: a candidate whose answer differs from the pinned oracle's fails at its first case
+ok 92 - qualify compare: a candidate whose answer differs from the pinned oracle's fails at its first case
+  ---
+  duration_ms: 0.106542
+  type: 'test'
+  ...
+# Subtest: qualify: an oracle refusal (exit 2, X-NOT-MODELED) fails closed, and the static refusal also blocks (Q45b, Q47c)
+ok 93 - qualify: an oracle refusal (exit 2, X-NOT-MODELED) fails closed, and the static refusal also blocks (Q45b, Q47c)
+  ---
+  duration_ms: 0.071333
+  type: 'test'
+  ...
+# Subtest: qualify control: a CR-NS claim needs a PAIR_0 paired-rounds measurement, which no runner here produces
+ok 94 - qualify control: a CR-NS claim needs a PAIR_0 paired-rounds measurement, which no runner here produces
+  ---
+  duration_ms: 0.0375
+  type: 'test'
+  ...
+# Subtest: qualify: Codex round 7 forged records, selections, case lists and fingerprints in the claim are ignored
+ok 95 - qualify: Codex round 7 forged records, selections, case lists and fingerprints in the claim are ignored
+  ---
+  duration_ms: 650.148416
+  type: 'test'
+  ...
+# Subtest: qualify builds exact blobs despite git archive export-ignore attributes
+ok 96 - qualify builds exact blobs despite git archive export-ignore attributes
+  ---
+  duration_ms: 8457.670708
+  type: 'test'
+  ...
+# Subtest: qualify re-hashes a build before running it after another: a candidate that edits the A0 build is caught
+ok 97 - qualify re-hashes a build before running it after another: a candidate that edits the A0 build is caught
+  ---
+  duration_ms: 8538.354459
+  type: 'test'
+  ...
+# Subtest: qualify Q67e (Codex round 8 finding 6): an edited oracle copy is never run again, and edited evidence is reported
+ok 98 - qualify Q67e (Codex round 8 finding 6): an edited oracle copy is never run again, and edited evidence is reported
+  ---
+  duration_ms: 3301.97125
+  type: 'test'
+  ...
+# Subtest: qualify Q67e (Codex round 8 finding 6): a build helper left running is killed with the build's process group
+ok 99 - qualify Q67e (Codex round 8 finding 6): a build helper left running is killed with the build's process group
+  ---
+  duration_ms: 1146.068833
+  type: 'test'
+  ...
+# Subtest: qualify Q67j (Codex round 8 finding 11): a log-source promotion is rejected with a typed reason
+ok 100 - qualify Q67j (Codex round 8 finding 11): a log-source promotion is rejected with a typed reason
+  ---
+  duration_ms: 0.249375
+  type: 'test'
+  ...
+# Subtest: qualify verify: only the authority contract's VERIFIER_REGISTRY counts; supplied verifier records count for nothing
+ok 101 - qualify verify: only the authority contract's VERIFIER_REGISTRY counts; supplied verifier records count for nothing
+  ---
+  duration_ms: 2959.399167
+  type: 'test'
+  ...
+# Subtest: qualify Q55e: a claim cannot supply the W0 pin or the O-DOMAIN fingerprint
+ok 102 - qualify Q55e: a claim cannot supply the W0 pin or the O-DOMAIN fingerprint
+  ---
+  duration_ms: 0.109583
+  type: 'test'
+  ...
+# Subtest: qualify execute: the plan goes through gate.mjs --dry-run, which checks the registered slot
+ok 103 - qualify execute: the plan goes through gate.mjs --dry-run, which checks the registered slot
+  ---
+  duration_ms: 144.097334
+  type: 'test'
+  ...
+# Subtest: qualify: no path to QUALIFIED without a gate run; an offline run that passes everything reports offlineVerdict only
+ok 104 - qualify: no path to QUALIFIED without a gate run; an offline run that passes everything reports offlineVerdict only
+  ---
+  duration_ms: 2963.549208
+  type: 'test'
+  ...
+# Subtest: CLI qualify: --offline-sut runs offline and exits 2 with the offline verdict; usage errors exit 1
+ok 105 - CLI qualify: --offline-sut runs offline and exits 2 with the offline verdict; usage errors exit 1
+  ---
+  duration_ms: 11481.188375
+  type: 'test'
+  ...
+# Subtest: RULINGS Q64a: the proposed real build spec (lab/config/build.json) is a complete build-spec/1
+ok 106 - RULINGS Q64a: the proposed real build spec (lab/config/build.json) is a complete build-spec/1
+  ---
+  duration_ms: 1.07875
+  type: 'test'
+  ...
+# Subtest: pool admits the two dev engines when only they run
+ok 107 - pool admits the two dev engines when only they run
+  ---
+  duration_ms: 0.931166
+  type: 'test'
+  ...
+# Subtest: pool counts external research probes and refuses with their names
+ok 108 - pool counts external research probes and refuses with their names
+  ---
+  duration_ms: 0.876667
+  type: 'test'
+  ...
+# Subtest: an uncapped external container counts as the whole VM (fail closed)
+ok 109 - an uncapped external container counts as the whole VM (fail closed)
+  ---
+  duration_ms: 0.135833
+  type: 'test'
+  ...
+# Subtest: a reserved container counts once even while it also runs
+ok 110 - a reserved container counts once even while it also runs
+  ---
+  duration_ms: 0.126625
+  type: 'test'
+  ...
+# Subtest: disk forecast refuses past the 50 GiB used limit
+ok 111 - disk forecast refuses past the 50 GiB used limit
+  ---
+  duration_ms: 0.331166
+  type: 'test'
+  ...
+# Subtest: slotInfo rejects forbidden and probe ports and names containers and volumes
+ok 112 - slotInfo rejects forbidden and probe ports and names containers and volumes
+  ---
+  duration_ms: 1.148625
+  type: 'test'
+  ...
+# Subtest: withDirLock serializes and breaks a lock whose owner pid is dead
+ok 113 - withDirLock serializes and breaks a lock whose owner pid is dead
+  ---
+  duration_ms: 228.527084
+  type: 'test'
+  ...
+# [lab] waiting for pool lock (held by pid undefined)
+# [lab] waiting for pool lock (held by pid 63612)
+# [lab] heavy: waiting for one of 2 slots; held by pid 63584 "a", pid 63584 "b"
+# Subtest: withPool read-modify-writes the ledger atomically across processes
+ok 114 - withPool read-modify-writes the ledger atomically across processes
+  ---
+  duration_ms: 605.577125
+  type: 'test'
+  ...
+# Subtest: reconcile drops only reservations with no container and a dead reserving pid
+ok 115 - reconcile drops only reservations with no container and a dead reserving pid
+  ---
+  duration_ms: 1.6015
+  type: 'test'
+  ...
+# Subtest: heavy semaphore admits at most TX2_HEAVY_SLOTS holders
+ok 116 - heavy semaphore admits at most TX2_HEAVY_SLOTS holders
+  ---
+  duration_ms: 120.428917
+  type: 'test'
+  ...
+# Subtest: object store is content addressed and refuses dependency caches and secret-like names
+ok 117 - object store is content addressed and refuses dependency caches and secret-like names
+  ---
+  duration_ms: 1.805333
+  type: 'test'
+  ...
+# Subtest: language classification: pure XTQL, pure SQL, hybrid, strict substeps
+ok 118 - language classification: pure XTQL, pure SQL, hybrid, strict substeps
+  ---
+  duration_ms: 0.394125
+  type: 'test'
+  ...
+# Subtest: verdict fails closed on missing identity, zero executions, skips; subsets never PASS
+ok 119 - verdict fails closed on missing identity, zero executions, skips; subsets never PASS
+  ---
+  duration_ms: 0.20175
+  type: 'test'
+  ...
+# Subtest: caseLanguages lists every substep language in order
+ok 120 - caseLanguages lists every substep language in order
+  ---
+  duration_ms: 0.228875
+  type: 'test'
+  ...
+# Subtest: contract claims: full G2 on xtdb claims PKT.full142 for both XTDB lanes; subsets claim nothing
+ok 121 - contract claims: full G2 on xtdb claims PKT.full142 for both XTDB lanes; subsets claim nothing
+  ---
+  duration_ms: 0.598125
+  type: 'test'
+  ...
+# Subtest: second-writer guard refuses a second container on a slot volume unless its config is read-only
+ok 122 - second-writer guard refuses a second container on a slot volume unless its config is read-only
+  ---
+  duration_ms: 0.437375
+  type: 'test'
+  ...
+# Subtest: second-writer guard fails closed on every config that does not say exactly readOnlyDatabases: true
+ok 123 - second-writer guard fails closed on every config that does not say exactly readOnlyDatabases: true
+  ---
+  duration_ms: 0.193291
+  type: 'test'
+  ...
+# Subtest: follower config must be read-only and read the writer's own log and storage paths
+ok 124 - follower config must be read-only and read the writer's own log and storage paths
+  ---
+  duration_ms: 0.292583
+  type: 'test'
+  ...
+# Subtest: follower: own container and port, the slot volume mounted read-only, the read-only config bytes, slot lock shared
+ok 125 - follower: own container and port, the slot volume mounted read-only, the read-only config bytes, slot lock shared
+  ---
+  duration_ms: 4.345667
+  type: 'test'
+  ...
+# Subtest: cpusets parse against the VM and unpinned containers overlap everything
+ok 126 - cpusets parse against the VM and unpinned containers overlap everything
+  ---
+  duration_ms: 0.351167
+  type: 'test'
+  ...
+1..126
+# tests 126
+# suites 0
+# pass 126
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 169145.91475
