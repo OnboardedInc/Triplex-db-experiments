@@ -1,0 +1,15 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 72833 "R25-sweepshort-b-r4", pid 71487 "CX-VP2Q-3-nonzero-retry", pid 50198 "DA00-G0-final-source", pid 73337 "CX-VJ01-2-arrays"
+probes 0  t0.value_type AS value_type\nFROM (SELECT * FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = $1) t0\nWHERE t0.recorded_position <= 1 AND (t0.retracted_position IS NULL OR t0.retracted_position > 1) AND t0.valid_from <= 1 AND (t0.valid_to IS NULL OR t0.valid_to > 1) AND t0.entity_id = $2 AND t0.attribute = $3","SELECT DISTINCT t0.value_type AS value_type\nFROM (SELECT * FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = $1) t0\nWHERE t0.recorded_position <= 1 AND (t0.retracted_position IS NULL OR t0.retracted_position > 1) AND t0.valid_from <= 1 AND (t0.valid_to IS NULL OR t0.valid_to > 1) AND t0.entity_id = $2 AND t0.attribute = $3"]}
+
+ ✓ lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b pgwire exception variations > latches malformed E mid-pipeline, with fragmented later traffic and six reset windows 36ms
+ ✓ lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b pgwire exception variations > latches malformed C mid-pipeline, with fragmented later traffic and six reset windows 40ms
+ ✓ lab/verify/C8/variations.test.ts > CX-VC8-3 X02 merge spot checks > keeps token-aware quantified refusals and supported SQL including comments 3ms
+ ✓ lab/verify/C8/variations.test.ts > CX-VC8-3 X02 merge spot checks > refuses all five exact compute operators through the recoverable public Effect channel before answer execution 26ms
+
+ Test Files  3 passed (3)
+      Tests  34 passed (34)
+   Start at  17:00:39
+   Duration  2.93s (tests 36%, transform 34%, import 31%)
+
+JSON report written to /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round3/probe-results.json
+

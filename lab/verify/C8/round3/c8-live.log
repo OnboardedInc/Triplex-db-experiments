@@ -1,0 +1,14 @@
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round3/sut/packages/qualification
+
+ ↓ test/c8-reads-never-write.test.ts > C8 on XTDB: reads never write (engine boundary) > counts zero writes across rule queries, maintained reads, native closures and a load run
+stdout | test/c8-reads-never-write.test.ts > C8 on QLever: reads never write (engine boundary) > counts zero updates across rule queries, native closures and a load run
+{"c8":"qlever","readWindow":{"lane":"qlever","connections":29,"statements":29,"writes":0,"commits":0,"commands":0,"unparsed":0,"samples":[]},"frontierRoundMs":[2612,2488,52],"load":{"readers":1,"ms":2000,"recursiveReadIterations":1,"proxy":{"lane":"qlever","connections":29,"statements":29,"writes":0,"commits":0,"commands":0,"unparsed":0,"samples":[]}},"writerAlone":{"commits":1,"p50":5425,"p99":5425,"max":5425},"writerWithRecursiveReaders":{"commits":1,"p50":4276,"p99":4276,"max":4276}}
+
+ ✓ test/c8-reads-never-write.test.ts > C8 on QLever: reads never write (engine boundary) > counts zero updates across rule queries, native closures and a load run 139765ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 1 skipped (2)
+   Start at  17:01:47
+   Duration  140.16s (tests 100%)
+

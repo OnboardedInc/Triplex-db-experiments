@@ -1,0 +1,12 @@
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round3/sut/packages/qualification
+
+
+ Test Files  4 passed | 2 skipped (6)
+      Tests  92 passed | 50 skipped (142)
+   Start at  17:10:52
+   Duration  2.14s (import 59%, tests 33%, transform 8%, worker 1%)
+
+    Isolate  6 workers spawned · ~66ms startup each (spawn + environment, per file)
+             at least ~329ms faster with isolate: false — reuses workers across files instead of one per file
+

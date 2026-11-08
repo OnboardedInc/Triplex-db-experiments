@@ -1,0 +1,30 @@
+[
+  {
+    "name": "probes",
+    "cwd": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round3/sut",
+    "command": [
+      "/Users/sam/.hermes/node/bin/node",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round3/sut/node_modules/vitest/vitest.mjs",
+      "run",
+      "--config",
+      "lab/verify/C8/vitest.config.ts",
+      "lab/verify/C8/adversarial.test.ts",
+      "lab/verify/C8/delta.test.ts",
+      "lab/verify/C8/variations.test.ts",
+      "--reporter=verbose",
+      "--reporter=json",
+      "--outputFile=/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round3/probe-results.json"
+    ],
+    "env": {
+      "XTDB_INTEGRATION": "0",
+      "QLEVER_INTEGRATION": "0",
+      "TRIPLEX_INTEGRATION": "0",
+      "TRIPLEX_DUCKDB": "0"
+    },
+    "started": "2026-11-08T22:00:39.016Z",
+    "finished": "2026-11-08T22:00:42.297Z",
+    "status": 0,
+    "signal": null,
+    "error": ""
+  }
+]

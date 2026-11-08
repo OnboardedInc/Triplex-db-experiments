@@ -1,0 +1,43 @@
+{
+  "target": "514c3b6d05eef11cad9d5208292c98ff793d3ef5",
+  "source": "probes.log",
+  "forwardedUnknownHttpRequests": 61,
+  "httpMethods": [
+    "DELETE",
+    "GET",
+    "HEAD",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PROPFIND",
+    "PUT",
+    "TRACE"
+  ],
+  "httpWrites": 61,
+  "postExceptionResetWindows": 24,
+  "parserExceptionTypes": [
+    "B",
+    "C",
+    "E",
+    "P"
+  ],
+  "everyPostExceptionWindowCounted": true,
+  "refusedMalformedHttpFrames": 3,
+  "suites": [
+    {
+      "name": "adversarial.test.ts",
+      "passed": 15,
+      "failed": 0
+    },
+    {
+      "name": "delta.test.ts",
+      "passed": 10,
+      "failed": 0
+    },
+    {
+      "name": "variations.test.ts",
+      "passed": 9,
+      "failed": 0
+    }
+  ]
+}

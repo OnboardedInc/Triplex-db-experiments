@@ -1,0 +1,131 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 72833 "R25-sweepshort-b-r4", pid 71487 "CX-VP2Q-3-nonzero-retry", pid 50198 "DA00-G0-final-source", pid 73337 "CX-VJ01-2-arrays"
+[lab] heavy: waiting for one of 4 slots; held by pid 72833 "R25-sweepshort-b-r4", pid 81982 "CX-VJ01-2-frontier", pid 50198 "DA00-G0-final-source", pid 73337 "CX-VJ01-2-arrays"
+offline-core 0 
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round3/sut/packages/core
+
+
+ Test Files  57 passed (57)
+      Tests  849 passed (849)
+   Start at  17:01:04
+   Duration  19.19s (import 62%, tests 27%, transform 8%, worker 2%)
+
+     Import  155 modules were evaluated 210 times · 8.85s total, 62% of tracked time
+             ~2.32s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+offline-xtdb 0 
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round3/sut/packages/xtdb
+
+
+ Test Files  7 passed | 8 skipped (15)
+      Tests  38 passed | 84 skipped (122)
+   Start at  17:01:23
+   Duration  5.34s (import 74%, transform 23%, tests 2%, worker 1%)
+
+    Isolate  15 workers spawned · ~82ms startup each (spawn + environment, per file)
+             at least ~1.15s faster with isolate: false — reuses workers across files instead of one per file
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+offline-qlever 0 
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round3/sut/packages/qlever
+
+
+ Test Files  7 passed | 3 skipped (10)
+      Tests  27 passed | 21 skipped (48)
+   Start at  17:01:29
+   Duration  3.94s (import 62%, transform 35%, tests 2%, worker 1%)
+
+    Isolate  10 workers spawned · ~76ms startup each (spawn + environment, per file)
+             at least ~684ms faster with isolate: false — reuses workers across files instead of one per file
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+offline-qualification 1 .4 /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round3/sut/packages/qualification
+
+ ❯ test/xtdb-native-library.test.ts (25 tests | 1 failed) 44ms
+   ❯ XTDB native task library: one language and one cut per task (EXP-X02) (10)
+     × leaves nativeLanguage unset unless explicitly selected 5ms
+
+ Test Files  1 failed | 3 passed | 2 skipped (6)
+      Tests  1 failed | 91 passed | 50 skipped (142)
+   Start at  17:01:33
+   Duration  2.62s (import 47%, transform 32%, tests 20%, worker 1%)
+
+    Isolate  6 workers spawned · ~63ms startup each (spawn + environment, per file)
+             at least ~316ms faster with isolate: false — reuses workers across files instead of one per file
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/xtdb-native-library.test.ts > XTDB native task library: one language and one cut per task (EXP-X02) > leaves nativeLanguage unset unless explicitly selected
+Error: Cannot find module 'file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round3/sut/packages/xtdb/dist/index.js' imported from /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round3/sut/packages/qualification/src/index.ts
+ ❯ loadQualificationBackend src/index.ts:153:16
+    151|   if (!target?.startsWith("./dist/"))
+    152|     throw new Error(`Backend must expose built public artifacts: ${sel…
+    153|   const api = (await import(pathToFileURL(path.resolve(directory, targ…
+       |                ^
+    154|     string,
+    155|     unknown
+ ❯ test/xtdb-native-library.test.ts:186:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+offline-node 0 tion_ms: 4.866209
+  type: 'test'
+  ...
+# Subtest: fractional offered schedules never release before the actual clock reaches them
+ok 13 - fractional offered schedules never release before the actual clock reaches them
+  ---
+  duration_ms: 25.153334
+  type: 'test'
+  ...
+# Subtest: queued requests expire from their offered deadline without entering the backend or leaking a slot
+ok 14 - queued requests expire from their offered deadline without entering the backend or leaking a slot
+  ---
+  duration_ms: 22.746458
+  type: 'test'
+  ...
+# Subtest: bounded rejection is immediate and does not alter already admitted requests
+ok 15 - bounded rejection is immediate and does not alter already admitted requests
+  ---
+  duration_ms: 1.926542
+  type: 'test'
+  ...
+# Subtest: independent oracle follows returned P and keeps historical R stable across corrections
+ok 16 - independent oracle follows returned P and keeps historical R stable across corrections
+  ---
+  duration_ms: 8.116083
+  type: 'test'
+  ...
+# Subtest: cold probes span the declared distinct-entity population and never change under hot corrections
+ok 17 - cold probes span the declared distinct-entity population and never change under hot corrections
+  ---
+  duration_ms: 7.118167
+  type: 'test'
+  ...
+# Subtest: oracle refuses changed recipe, wrong seed commit count and an excessive catalog
+ok 18 - oracle refuses changed recipe, wrong seed commit count and an excessive catalog
+  ---
+  duration_ms: 0.905125
+  type: 'test'
+  ...
+1..18
+# tests 18
+# suites 0
+# pass 18
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 150.3215
+

@@ -1,0 +1,31 @@
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round3/sut/packages/qualification
+
+ ❯ test/xtdb-native-library.test.ts (25 tests | 1 failed) 44ms
+   ❯ XTDB native task library: one language and one cut per task (EXP-X02) (10)
+     × leaves nativeLanguage unset unless explicitly selected 5ms
+
+ Test Files  1 failed | 3 passed | 2 skipped (6)
+      Tests  1 failed | 91 passed | 50 skipped (142)
+   Start at  17:01:33
+   Duration  2.62s (import 47%, transform 32%, tests 20%, worker 1%)
+
+    Isolate  6 workers spawned · ~63ms startup each (spawn + environment, per file)
+             at least ~316ms faster with isolate: false — reuses workers across files instead of one per file
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/xtdb-native-library.test.ts > XTDB native task library: one language and one cut per task (EXP-X02) > leaves nativeLanguage unset unless explicitly selected
+Error: Cannot find module 'file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round3/sut/packages/xtdb/dist/index.js' imported from /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round3/sut/packages/qualification/src/index.ts
+ ❯ loadQualificationBackend src/index.ts:153:16
+    151|   if (!target?.startsWith("./dist/"))
+    152|     throw new Error(`Backend must expose built public artifacts: ${sel…
+    153|   const api = (await import(pathToFileURL(path.resolve(directory, targ…
+       |                ^
+    154|     string,
+    155|     unknown
+ ❯ test/xtdb-native-library.test.ts:186:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

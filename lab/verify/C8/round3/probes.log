@@ -1,0 +1,368 @@
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round3/sut
+
+ ✓ lab/verify/C8/delta.test.ts > CX-VC8-2 delta budgets and counting > F1: three-node terminal cycle refuses at two rounds and succeeds at three; empty confirmation stays legal 3ms
+ ✓ lab/verify/C8/delta.test.ts > CX-VC8-2 delta budgets and counting > F2: rule cycle enforces round and distinct-endpoint budgets including duplicate base rows 2ms
+ ✓ lab/verify/C8/delta.test.ts > CX-VC8-2 delta budgets and counting > F3: 24000-edge DAG and deep cyclic graph count exactly without recursive stack use; pathSteps edge is typed 256ms
+stdout | lab/verify/C8/delta.test.ts > CX-VC8-2 delta fail-closed accounting > F4: unknown request forms must count or refuse, while health and query controls stay clean
+{"shape":"POST /","counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<POST / application/json>"]},"forwarded":true}
+
+stdout | lab/verify/C8/delta.test.ts > CX-VC8-2 delta fail-closed accounting > F4: unknown request forms must count or refuse, while health and query controls stay clean
+{"shape":"POST /","counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<POST / multipart/form-data>"]},"forwarded":true}
+
+stdout | lab/verify/C8/delta.test.ts > CX-VC8-2 delta fail-closed accounting > F4: unknown request forms must count or refuse, while health and query controls stay clean
+{"shape":"GET /?unexpected-operation=change-data","counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<unclassified HTTP operation>"]},"forwarded":true}
+
+stdout | lab/verify/C8/delta.test.ts > CX-VC8-2 delta fail-closed accounting > F4: unknown request forms must count or refuse, while health and query controls stay clean
+{"shape":"GET /?action=unclassified","counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<unclassified HTTP operation>"]},"forwarded":true}
+
+stdout | lab/verify/C8/delta.test.ts > CX-VC8-2 delta fail-closed accounting > F4: unknown request forms must count or refuse, while health and query controls stay clean
+{"shape":"GET /?access-token=generic","counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<unclassified HTTP operation>"]},"forwarded":true}
+
+stdout | lab/verify/C8/delta.test.ts > CX-VC8-2 delta fail-closed accounting > F5 variation: bytes forwarded after a parser exception cannot become zero-write traffic after reset
+{"afterExceptionWindow":0,"counts":{"lane":"xtdb","connections":0,"statements":0,"writes":1,"commits":0,"commands":0,"unparsed":1,"samples":["<unparsed pgwire stream: traffic after parser error>"]}}
+
+stdout | lab/verify/C8/delta.test.ts > CX-VC8-2 delta fail-closed accounting > F5 variation: bytes forwarded after a parser exception cannot become zero-write traffic after reset
+{"afterExceptionWindow":1,"counts":{"lane":"xtdb","connections":0,"statements":0,"writes":1,"commits":0,"commands":0,"unparsed":1,"samples":["<unparsed pgwire stream: traffic after parser error>"]}}
+
+stdout | lab/verify/C8/delta.test.ts > CX-VC8-2 delta fail-closed accounting > F5 variation: bytes forwarded after a parser exception cannot become zero-write traffic after reset
+{"afterExceptionWindow":2,"counts":{"lane":"xtdb","connections":0,"statements":0,"writes":1,"commits":0,"commands":0,"unparsed":1,"samples":["<unparsed pgwire stream: traffic after parser error>"]}}
+
+stdout | lab/verify/C8/delta.test.ts > CX-VC8-2 Q76 follow-ups > Q76d: xtql workload counts three long cyclic supports at the requested cut
+{"lane":"xtql","calls":[{"text":"(-> (-> facts) (where (= attribute 'support') (= value_type \"ref\")) (return {:source entity_id :target value_string}) (aggregate source target) (limit 100000))","options":{"basis":{"recordedAt":1007,"validAt":1000000},"maxRows":100000}}]}
+
+stdout | lab/verify/C8/delta.test.ts > CX-VC8-2 Q76 follow-ups > Q76d: xtdb-sql workload counts three long cyclic supports at the requested cut
+{"lane":"xtdb-sql","calls":[{"text":"SELECT DISTINCT entity_id AS source, value_string AS target FROM (SELECT * FROM facts) f WHERE attribute = 'support' AND value_type = 'ref' LIMIT 100000","options":{"basis":{"recordedAt":1007,"validAt":1000000},"maxRows":100000}}]}
+
+stdout | lab/verify/C8/delta.test.ts > CX-VC8-2 Q76 follow-ups > Q76d: qlever workload counts three long cyclic supports at the requested cut
+{"lane":"qlever","calls":[{"text":"SELECT DISTINCT ?source ?target WHERE { { SELECT ?source ?target WHERE { ?assertion <urn:edge> ?target . } } } LIMIT 100000","options":{"basis":{"recordedAt":1007,"validAt":1000000},"maxRows":100000,"timeoutMs":20000}}]}
+
+ ✓ lab/verify/C8/delta.test.ts > CX-VC8-2 delta fail-closed accounting > F4: unknown request forms must count or refuse, while health and query controls stay clean 44ms
+ ✓ lab/verify/C8/delta.test.ts > CX-VC8-2 delta fail-closed accounting > F5: prepared reads, writes, commits, rebindings and Close remain classified across six resets 34ms
+ ✓ lab/verify/C8/delta.test.ts > CX-VC8-2 delta fail-closed accounting > F5 variation: bytes forwarded after a parser exception cannot become zero-write traffic after reset 15ms
+ ✓ lab/verify/C8/delta.test.ts > CX-VC8-2 Q76 follow-ups > Q76b: initialization never submits tx_query_relations schema 2ms
+ ✓ lab/verify/C8/delta.test.ts > CX-VC8-2 Q76 follow-ups > Q76d: xtql workload counts three long cyclic supports at the requested cut 3ms
+ ✓ lab/verify/C8/delta.test.ts > CX-VC8-2 Q76 follow-ups > Q76d: xtdb-sql workload counts three long cyclic supports at the requested cut 1ms
+ ✓ lab/verify/C8/delta.test.ts > CX-VC8-2 Q76 follow-ups > Q76d: qlever workload counts three long cyclic supports at the requested cut 2ms
+stdout | lab/verify/C8/adversarial.test.ts > CX-VC8 independent semantics > exhausts every directed 3-node graph including loops, cycles, diamonds, disconnected seeds
+{"graphCount":512,"originComparisons":2048,"ruleComparisons":4608,"pathComparisons":8192}
+
+ ✓ lab/verify/C8/adversarial.test.ts > CX-VC8 independent semantics > exhausts every directed 3-node graph including loops, cycles, diamonds, disconnected seeds 167ms
+stdout | lab/verify/C8/adversarial.test.ts > CX-VC8 guards and Datalog > staged XTDB rows reach main, count and rule selection queries through the same client identity
+{"overlayStatements":4,"stagedSourceRewrites":2}
+
+stdout | lab/verify/C8/adversarial.test.ts > CX-VC8 fail closed counter > BUG: pgwire execute of an existing prepared write after reset cannot silently count zero
+{"repeatedPreparedWriteAfterReset":{"lane":"xtdb","connections":0,"statements":1,"writes":1,"commits":0,"commands":0,"unparsed":0,"samples":["DELETE FROM t"]}}
+
+stdout | lab/verify/C8/adversarial.test.ts > CX-VC8 fail closed counter > QLever GET/form LOAD and CLEAR updates count; unknown multipart must count or fail
+{"unknownMultipart":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<POST / multipart/form-data>"]},"forwarded":5}
+
+ ✓ lab/verify/C8/adversarial.test.ts > CX-VC8 independent semantics > high fanout, duplicates and exact limits / one past visited, edges, roundRows, pairs, rounds 3ms
+ ✓ lab/verify/C8/adversarial.test.ts > CX-VC8 independent semantics > BUG: refuses a cycle that adds a reached seed beyond maxRounds 0ms
+ ✓ lab/verify/C8/adversarial.test.ts > CX-VC8 independent semantics > BUG: ruleClosure honors explicitly supplied maxRounds 0ms
+ ✓ lab/verify/C8/adversarial.test.ts > CX-VC8 independent semantics > BUG: ruleClosure honors explicitly supplied maxVisited 0ms
+ ✓ lab/verify/C8/adversarial.test.ts > CX-VC8 independent semantics > BUG: path counts on a 12000-node DAG within default frontier budgets do not overflow the JS stack 34ms
+ ✓ lab/verify/C8/adversarial.test.ts > CX-VC8 guards and Datalog > all storage read methods on both lanes send query only, although constructors retain writable clients 4ms
+ ✓ lab/verify/C8/adversarial.test.ts > CX-VC8 guards and Datalog > submit/update guards refuse without delegation, nested facade retains overlay identity 1ms
+ ✓ lab/verify/C8/adversarial.test.ts > CX-VC8 guards and Datalog > staged XTDB rows reach main, count and rule selection queries through the same client identity 11ms
+ ✓ lab/verify/C8/adversarial.test.ts > CX-VC8 guards and Datalog > QLever attribute-tail refusal is typed 3ms
+ ✓ lab/verify/C8/adversarial.test.ts > CX-VC8 guards and Datalog > XTDB public attribute-tail refusal is a typed ReadError with no partial answer 1ms
+ ✓ lab/verify/C8/adversarial.test.ts > CX-VC8 guards and Datalog > both lane evaluators preserve maxDepth and tail constraints on controlled direct-read relations 6ms
+ ✓ lab/verify/C8/adversarial.test.ts > CX-VC8 fail closed counter > BUG: pgwire execute of an existing prepared write after reset cannot silently count zero 16ms
+ ✓ lab/verify/C8/adversarial.test.ts > CX-VC8 fail closed counter > classifies required SQL adversaries as writes 0ms
+ ✓ lab/verify/C8/adversarial.test.ts > CX-VC8 fail closed counter > QLever GET/form LOAD and CLEAR updates count; unknown multipart must count or fail 34ms
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"GET","path":"/"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<unclassified HTTP operation>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"GET","path":"/unknown/operation"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<unclassified HTTP operation>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"GET","path":"/health?unexpected=1"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<unclassified HTTP operation>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"GET","path":"/ping?unexpected-action=unclassified"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<unclassified HTTP operation>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"HEAD","path":"/"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<unclassified HTTP operation>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"HEAD","path":"/unknown/operation"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<unclassified HTTP operation>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"HEAD","path":"/health?unexpected=1"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<unclassified HTTP operation>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"HEAD","path":"/ping?unexpected-action=unclassified"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<unclassified HTTP operation>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"OPTIONS","path":"/"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<unclassified HTTP operation>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"OPTIONS","path":"/unknown/operation"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<unclassified HTTP operation>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"OPTIONS","path":"/health?unexpected=1"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<unclassified HTTP operation>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"OPTIONS","path":"/ping?unexpected-action=unclassified"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<unclassified HTTP operation>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"POST","path":"/"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<unclassified HTTP operation>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"POST","path":"/unknown/operation"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<unclassified HTTP operation>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"POST","path":"/health?unexpected=1"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<unclassified HTTP operation>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"POST","path":"/ping?unexpected-action=unclassified"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<unclassified HTTP operation>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"PUT","path":"/"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<PUT / no content type>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"PUT","path":"/unknown/operation"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<PUT /unknown/operation no content type>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"PUT","path":"/health?unexpected=1"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<PUT /health no content type>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"PUT","path":"/ping?unexpected-action=unclassified"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<PUT /ping no content type>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"PATCH","path":"/"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<PATCH / no content type>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"PATCH","path":"/unknown/operation"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<PATCH /unknown/operation no content type>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"PATCH","path":"/health?unexpected=1"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<PATCH /health no content type>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"PATCH","path":"/ping?unexpected-action=unclassified"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<PATCH /ping no content type>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"DELETE","path":"/"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<DELETE / no content type>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"DELETE","path":"/unknown/operation"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<DELETE /unknown/operation no content type>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"DELETE","path":"/health?unexpected=1"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<DELETE /health no content type>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"DELETE","path":"/ping?unexpected-action=unclassified"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<DELETE /ping no content type>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"TRACE","path":"/"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<TRACE / no content type>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"TRACE","path":"/unknown/operation"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<TRACE /unknown/operation no content type>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"TRACE","path":"/health?unexpected=1"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<TRACE /health no content type>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"TRACE","path":"/ping?unexpected-action=unclassified"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<TRACE /ping no content type>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"PROPFIND","path":"/"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<PROPFIND / no content type>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"PROPFIND","path":"/unknown/operation"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<PROPFIND /unknown/operation no content type>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"PROPFIND","path":"/health?unexpected=1"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<PROPFIND /health no content type>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"PROPFIND","path":"/ping?unexpected-action=unclassified"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<PROPFIND /ping no content type>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"GET","path":"/?action=unclassified"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<unclassified HTTP operation>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"GET","path":"/?access-token=generic"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<unclassified HTTP operation>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"GET","path":"/?timeout=2"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<unclassified HTTP operation>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"GET","path":"/?send=10"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<unclassified HTTP operation>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"GET","path":"/?query-planning-budget=1"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<unclassified HTTP operation>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"GET","path":"/?query=SELECT%20*%20WHERE%20%7B%7D&unexpected=x"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<unclassified HTTP operation>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"GET","path":"/?cmd=stats&cmd=unknown"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["cmd=unknown"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"GET","path":"/?cmd=stats&unexpected=x"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<unclassified HTTP operation>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"GET","path":"/?%ZZ=bad"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<unclassified HTTP operation>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"GET","path":"/%zz?unknown=1"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<unclassified HTTP operation>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"GET","path":"/","body":"{\"cmd\":\"clear-delta-triples\"","type":"application/json"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<unclassified HTTP operation>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"POST","path":"/","body":"{\"cmd\":\"clear-delta-triples\"","type":"application/json"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<POST / application/json>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"OPTIONS","path":"/","body":"{\"cmd\":\"clear-delta-triples\"","type":"application/json"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<unclassified HTTP operation>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"GET","path":"/","body":"cmd=%ZZ","type":"application/x-www-form-urlencoded"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["cmd=%ZZ"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"POST","path":"/","body":"cmd=%ZZ","type":"application/x-www-form-urlencoded"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["cmd=%ZZ"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"OPTIONS","path":"/","body":"cmd=%ZZ","type":"application/x-www-form-urlencoded"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["cmd=%ZZ"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"GET","path":"/","body":"=","type":"application/x-www-form-urlencoded"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<unclassified HTTP operation>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"POST","path":"/","body":"=","type":"application/x-www-form-urlencoded"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<unclassified HTTP operation>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"OPTIONS","path":"/","body":"=","type":"application/x-www-form-urlencoded"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<unclassified HTTP operation>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"GET","path":"/","body":"--x\r\nContent-Disposition: form-data; name=\"query\"\r\n\r\nSELECT * WHERE {}","type":"multipart/form-data; boundary=x"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<unclassified HTTP operation>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"POST","path":"/","body":"--x\r\nContent-Disposition: form-data; name=\"query\"\r\n\r\nSELECT * WHERE {}","type":"multipart/form-data; boundary=x"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<POST / multipart/form-data>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"OPTIONS","path":"/","body":"--x\r\nContent-Disposition: form-data; name=\"query\"\r\n\r\nSELECT * WHERE {}","type":"multipart/form-data; boundary=x"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<unclassified HTTP operation>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"GET","path":"/","body":"opaque","type":"text/plain"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<unclassified HTTP operation>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"POST","path":"/","body":"opaque","type":"text/plain"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<POST / text/plain>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies
+{"http":{"method":"OPTIONS","path":"/","body":"opaque","type":"text/plain"},"status":200,"forwarded":1,"counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<unclassified HTTP operation>"]}}
+
+ ✓ lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > counts unknown operations across methods, paths, metadata, duplicate fields and malformed bodies 93ms
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > refuses malformed HTTP framing before upstream forwarding
+{"malformedHttp":"GET / HTTP/1.1\r\nHost: generic\r\nContent-Length: nope\r\n\r\n","response":"HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n","counts":{"lane":"qlever","connections":0,"statements":0,"writes":0,"commits":0,"commands":0,"unparsed":0,"samples":[]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > refuses malformed HTTP framing before upstream forwarding
+{"malformedHttp":"POST / HTTP/1.1\r\nHost: generic\r\nContent-Length: 1\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n\r\n","response":"HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n","counts":{"lane":"qlever","connections":0,"statements":0,"writes":0,"commits":0,"commands":0,"unparsed":0,"samples":[]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > refuses malformed HTTP framing before upstream forwarding
+{"malformedHttp":"GE T / HTTP/1.1\r\nHost: generic\r\n\r\n","response":"HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n","counts":{"lane":"qlever","connections":0,"statements":0,"writes":0,"commits":0,"commands":0,"unparsed":0,"samples":[]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b pgwire exception variations > latches malformed P mid-pipeline, with fragmented later traffic and six reset windows
+{"parserException":"P","window":0,"bytes":"450000000b727000000000005300000004","counts":{"lane":"xtdb","connections":0,"statements":0,"writes":2,"commits":0,"commands":0,"unparsed":2,"samples":["<unparsed pgwire stream: traffic after parser error>","<unparsed pgwire stream: traffic after parser error>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b pgwire exception variations > latches malformed P mid-pipeline, with fragmented later traffic and six reset windows
+{"parserException":"P","window":1,"bytes":"5300000004","counts":{"lane":"xtdb","connections":0,"statements":0,"writes":2,"commits":0,"commands":0,"unparsed":2,"samples":["<unparsed pgwire stream: traffic after parser error>","<unparsed pgwire stream: traffic after parser error>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b pgwire exception variations > latches malformed P mid-pipeline, with fragmented later traffic and six reset windows
+{"parserException":"P","window":2,"bytes":"51","counts":{"lane":"xtdb","connections":0,"statements":0,"writes":1,"commits":0,"commands":0,"unparsed":1,"samples":["<unparsed pgwire stream: traffic after parser error>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b pgwire exception variations > latches malformed P mid-pipeline, with fragmented later traffic and six reset windows
+{"parserException":"P","window":3,"bytes":"510000001244454c4554452046524f4d207400","counts":{"lane":"xtdb","connections":0,"statements":0,"writes":2,"commits":0,"commands":0,"unparsed":2,"samples":["<unparsed pgwire stream: traffic after parser error>","<unparsed pgwire stream: traffic after parser error>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b pgwire exception variations > latches malformed P mid-pipeline, with fragmented later traffic and six reset windows
+{"parserException":"P","window":4,"bytes":"500000000f6300434f4d4d4954000000420000000f7063006300000000000000450000000b706300000000005300000004","counts":{"lane":"xtdb","connections":0,"statements":0,"writes":2,"commits":0,"commands":0,"unparsed":2,"samples":["<unparsed pgwire stream: traffic after parser error>","<unparsed pgwire stream: traffic after parser error>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b pgwire exception variations > latches malformed P mid-pipeline, with fragmented later traffic and six reset windows
+{"parserException":"P","window":5,"bytes":"00","counts":{"lane":"xtdb","connections":0,"statements":0,"writes":1,"commits":0,"commands":0,"unparsed":1,"samples":["<unparsed pgwire stream: traffic after parser error>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b pgwire exception variations > latches malformed B mid-pipeline, with fragmented later traffic and six reset windows
+{"parserException":"B","window":0,"bytes":"450000000b727000000000005300000004","counts":{"lane":"xtdb","connections":0,"statements":0,"writes":2,"commits":0,"commands":0,"unparsed":2,"samples":["<unparsed pgwire stream: traffic after parser error>","<unparsed pgwire stream: traffic after parser error>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b pgwire exception variations > latches malformed B mid-pipeline, with fragmented later traffic and six reset windows
+{"parserException":"B","window":1,"bytes":"5300000004","counts":{"lane":"xtdb","connections":0,"statements":0,"writes":2,"commits":0,"commands":0,"unparsed":2,"samples":["<unparsed pgwire stream: traffic after parser error>","<unparsed pgwire stream: traffic after parser error>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b pgwire exception variations > latches malformed B mid-pipeline, with fragmented later traffic and six reset windows
+{"parserException":"B","window":2,"bytes":"51","counts":{"lane":"xtdb","connections":0,"statements":0,"writes":1,"commits":0,"commands":0,"unparsed":1,"samples":["<unparsed pgwire stream: traffic after parser error>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b pgwire exception variations > latches malformed B mid-pipeline, with fragmented later traffic and six reset windows
+{"parserException":"B","window":3,"bytes":"510000001244454c4554452046524f4d207400","counts":{"lane":"xtdb","connections":0,"statements":0,"writes":2,"commits":0,"commands":0,"unparsed":2,"samples":["<unparsed pgwire stream: traffic after parser error>","<unparsed pgwire stream: traffic after parser error>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b pgwire exception variations > latches malformed B mid-pipeline, with fragmented later traffic and six reset windows
+{"parserException":"B","window":4,"bytes":"500000000f6300434f4d4d4954000000420000000f7063006300000000000000450000000b706300000000005300000004","counts":{"lane":"xtdb","connections":0,"statements":0,"writes":2,"commits":0,"commands":0,"unparsed":2,"samples":["<unparsed pgwire stream: traffic after parser error>","<unparsed pgwire stream: traffic after parser error>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b pgwire exception variations > latches malformed B mid-pipeline, with fragmented later traffic and six reset windows
+{"parserException":"B","window":5,"bytes":"00","counts":{"lane":"xtdb","connections":0,"statements":0,"writes":1,"commits":0,"commands":0,"unparsed":1,"samples":["<unparsed pgwire stream: traffic after parser error>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b pgwire exception variations > latches malformed E mid-pipeline, with fragmented later traffic and six reset windows
+{"parserException":"E","window":0,"bytes":"450000000b727000000000005300000004","counts":{"lane":"xtdb","connections":0,"statements":0,"writes":2,"commits":0,"commands":0,"unparsed":2,"samples":["<unparsed pgwire stream: traffic after parser error>","<unparsed pgwire stream: traffic after parser error>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b pgwire exception variations > latches malformed E mid-pipeline, with fragmented later traffic and six reset windows
+{"parserException":"E","window":1,"bytes":"5300000004","counts":{"lane":"xtdb","connections":0,"statements":0,"writes":2,"commits":0,"commands":0,"unparsed":2,"samples":["<unparsed pgwire stream: traffic after parser error>","<unparsed pgwire stream: traffic after parser error>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b pgwire exception variations > latches malformed E mid-pipeline, with fragmented later traffic and six reset windows
+{"parserException":"E","window":2,"bytes":"51","counts":{"lane":"xtdb","connections":0,"statements":0,"writes":1,"commits":0,"commands":0,"unparsed":1,"samples":["<unparsed pgwire stream: traffic after parser error>"]}}
+
+ ✓ lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > preserves positive read, health and session controls with clean tallies 14ms
+ ✓ lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b HTTP variations > refuses malformed HTTP framing before upstream forwarding 4ms
+ ✓ lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b pgwire exception variations > latches malformed P mid-pipeline, with fragmented later traffic and six reset windows 34ms
+ ✓ lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b pgwire exception variations > latches malformed B mid-pipeline, with fragmented later traffic and six reset windows 37ms
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b pgwire exception variations > latches malformed E mid-pipeline, with fragmented later traffic and six reset windows
+{"parserException":"E","window":3,"bytes":"510000001244454c4554452046524f4d207400","counts":{"lane":"xtdb","connections":0,"statements":0,"writes":2,"commits":0,"commands":0,"unparsed":2,"samples":["<unparsed pgwire stream: traffic after parser error>","<unparsed pgwire stream: traffic after parser error>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b pgwire exception variations > latches malformed E mid-pipeline, with fragmented later traffic and six reset windows
+{"parserException":"E","window":4,"bytes":"500000000f6300434f4d4d4954000000420000000f7063006300000000000000450000000b706300000000005300000004","counts":{"lane":"xtdb","connections":0,"statements":0,"writes":2,"commits":0,"commands":0,"unparsed":2,"samples":["<unparsed pgwire stream: traffic after parser error>","<unparsed pgwire stream: traffic after parser error>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b pgwire exception variations > latches malformed E mid-pipeline, with fragmented later traffic and six reset windows
+{"parserException":"E","window":5,"bytes":"00","counts":{"lane":"xtdb","connections":0,"statements":0,"writes":1,"commits":0,"commands":0,"unparsed":1,"samples":["<unparsed pgwire stream: traffic after parser error>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b pgwire exception variations > latches malformed C mid-pipeline, with fragmented later traffic and six reset windows
+{"parserException":"C","window":0,"bytes":"450000000b727000000000005300000004","counts":{"lane":"xtdb","connections":0,"statements":0,"writes":2,"commits":0,"commands":0,"unparsed":2,"samples":["<unparsed pgwire stream: traffic after parser error>","<unparsed pgwire stream: traffic after parser error>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b pgwire exception variations > latches malformed C mid-pipeline, with fragmented later traffic and six reset windows
+{"parserException":"C","window":1,"bytes":"5300000004","counts":{"lane":"xtdb","connections":0,"statements":0,"writes":2,"commits":0,"commands":0,"unparsed":2,"samples":["<unparsed pgwire stream: traffic after parser error>","<unparsed pgwire stream: traffic after parser error>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b pgwire exception variations > latches malformed C mid-pipeline, with fragmented later traffic and six reset windows
+{"parserException":"C","window":2,"bytes":"51","counts":{"lane":"xtdb","connections":0,"statements":0,"writes":1,"commits":0,"commands":0,"unparsed":1,"samples":["<unparsed pgwire stream: traffic after parser error>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b pgwire exception variations > latches malformed C mid-pipeline, with fragmented later traffic and six reset windows
+{"parserException":"C","window":3,"bytes":"510000001244454c4554452046524f4d207400","counts":{"lane":"xtdb","connections":0,"statements":0,"writes":2,"commits":0,"commands":0,"unparsed":2,"samples":["<unparsed pgwire stream: traffic after parser error>","<unparsed pgwire stream: traffic after parser error>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b pgwire exception variations > latches malformed C mid-pipeline, with fragmented later traffic and six reset windows
+{"parserException":"C","window":4,"bytes":"500000000f6300434f4d4d4954000000420000000f7063006300000000000000450000000b706300000000005300000004","counts":{"lane":"xtdb","connections":0,"statements":0,"writes":2,"commits":0,"commands":0,"unparsed":2,"samples":["<unparsed pgwire stream: traffic after parser error>","<unparsed pgwire stream: traffic after parser error>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b pgwire exception variations > latches malformed C mid-pipeline, with fragmented later traffic and six reset windows
+{"parserException":"C","window":5,"bytes":"00","counts":{"lane":"xtdb","connections":0,"statements":0,"writes":1,"commits":0,"commands":0,"unparsed":1,"samples":["<unparsed pgwire stream: traffic after parser error>"]}}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 X02 merge spot checks > refuses all five exact compute operators through the recoverable public Effect channel before answer execution
+{"exactOperator":"+","exit":"Failure(Cause([Fail(DatalogValidationError: Exact integer computation is not qualified for this SQL dialect; evaluate in the exact TypeScript kernel)]))","calls":["SELECT DISTINCT t0.value_type AS value_type\nFROM (SELECT * FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = $1) t0\nWHERE t0.recorded_position <= 1 AND (t0.retracted_position IS NULL OR t0.retracted_position > 1) AND t0.valid_from <= 1 AND (t0.valid_to IS NULL OR t0.valid_to > 1) AND t0.entity_id = $2 AND t0.attribute = $3","SELECT DISTINCT t0.value_type AS value_type\nFROM (SELECT * FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = $1) t0\nWHERE t0.recorded_position <= 1 AND (t0.retracted_position IS NULL OR t0.retracted_position > 1) AND t0.valid_from <= 1 AND (t0.valid_to IS NULL OR t0.valid_to > 1) AND t0.entity_id = $2 AND t0.attribute = $3"]}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 X02 merge spot checks > refuses all five exact compute operators through the recoverable public Effect channel before answer execution
+{"exactOperator":"-","exit":"Failure(Cause([Fail(DatalogValidationError: Exact integer computation is not qualified for this SQL dialect; evaluate in the exact TypeScript kernel)]))","calls":["SELECT DISTINCT t0.value_type AS value_type\nFROM (SELECT * FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = $1) t0\nWHERE t0.recorded_position <= 1 AND (t0.retracted_position IS NULL OR t0.retracted_position > 1) AND t0.valid_from <= 1 AND (t0.valid_to IS NULL OR t0.valid_to > 1) AND t0.entity_id = $2 AND t0.attribute = $3","SELECT DISTINCT t0.value_type AS value_type\nFROM (SELECT * FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = $1) t0\nWHERE t0.recorded_position <= 1 AND (t0.retracted_position IS NULL OR t0.retracted_position > 1) AND t0.valid_from <= 1 AND (t0.valid_to IS NULL OR t0.valid_to > 1) AND t0.entity_id = $2 AND t0.attribute = $3"]}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 X02 merge spot checks > refuses all five exact compute operators through the recoverable public Effect channel before answer execution
+{"exactOperator":"*","exit":"Failure(Cause([Fail(DatalogValidationError: Exact integer computation is not qualified for this SQL dialect; evaluate in the exact TypeScript kernel)]))","calls":["SELECT DISTINCT t0.value_type AS value_type\nFROM (SELECT * FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = $1) t0\nWHERE t0.recorded_position <= 1 AND (t0.retracted_position IS NULL OR t0.retracted_position > 1) AND t0.valid_from <= 1 AND (t0.valid_to IS NULL OR t0.valid_to > 1) AND t0.entity_id = $2 AND t0.attribute = $3","SELECT DISTINCT t0.value_type AS value_type\nFROM (SELECT * FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = $1) t0\nWHERE t0.recorded_position <= 1 AND (t0.retracted_position IS NULL OR t0.retracted_position > 1) AND t0.valid_from <= 1 AND (t0.valid_to IS NULL OR t0.valid_to > 1) AND t0.entity_id = $2 AND t0.attribute = $3"]}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 X02 merge spot checks > refuses all five exact compute operators through the recoverable public Effect channel before answer execution
+{"exactOperator":"/","exit":"Failure(Cause([Fail(DatalogValidationError: Exact integer computation is not qualified for this SQL dialect; evaluate in the exact TypeScript kernel)]))","calls":["SELECT DISTINCT t0.value_type AS value_type\nFROM (SELECT * FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = $1) t0\nWHERE t0.recorded_position <= 1 AND (t0.retracted_position IS NULL OR t0.retracted_position > 1) AND t0.valid_from <= 1 AND (t0.valid_to IS NULL OR t0.valid_to > 1) AND t0.entity_id = $2 AND t0.attribute = $3","SELECT DISTINCT t0.value_type AS value_type\nFROM (SELECT * FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = $1) t0\nWHERE t0.recorded_position <= 1 AND (t0.retracted_position IS NULL OR t0.retracted_position > 1) AND t0.valid_from <= 1 AND (t0.valid_to IS NULL OR t0.valid_to > 1) AND t0.entity_id = $2 AND t0.attribute = $3"]}
+
+stdout | lab/verify/C8/variations.test.ts > CX-VC8-3 X02 merge spot checks > refuses all five exact compute operators through the recoverable public Effect channel before answer execution
+{"exactOperator":"%","exit":"Failure(Cause([Fail(DatalogValidationError: Exact integer computation is not qualified for this SQL dialect; evaluate in the exact TypeScript kernel)]))","calls":["SELECT DISTINCT t0.value_type AS value_type\nFROM (SELECT * FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = $1) t0\nWHERE t0.recorded_position <= 1 AND (t0.retracted_position IS NULL OR t0.retracted_position > 1) AND t0.valid_from <= 1 AND (t0.valid_to IS NULL OR t0.valid_to > 1) AND t0.entity_id = $2 AND t0.attribute = $3","SELECT DISTINCT t0.value_type AS value_type\nFROM (SELECT * FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = $1) t0\nWHERE t0.recorded_position <= 1 AND (t0.retracted_position IS NULL OR t0.retracted_position > 1) AND t0.valid_from <= 1 AND (t0.valid_to IS NULL OR t0.valid_to > 1) AND t0.entity_id = $2 AND t0.attribute = $3"]}
+
+ ✓ lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b pgwire exception variations > latches malformed E mid-pipeline, with fragmented later traffic and six reset windows 36ms
+ ✓ lab/verify/C8/variations.test.ts > CX-VC8-3 Q81b pgwire exception variations > latches malformed C mid-pipeline, with fragmented later traffic and six reset windows 40ms
+ ✓ lab/verify/C8/variations.test.ts > CX-VC8-3 X02 merge spot checks > keeps token-aware quantified refusals and supported SQL including comments 3ms
+ ✓ lab/verify/C8/variations.test.ts > CX-VC8-3 X02 merge spot checks > refuses all five exact compute operators through the recoverable public Effect channel before answer execution 26ms
+
+ Test Files  3 passed (3)
+      Tests  34 passed (34)
+   Start at  17:00:39
+   Duration  2.93s (tests 36%, transform 34%, import 31%)
+
+JSON report written to /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round3/probe-results.json

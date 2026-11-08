@@ -1,0 +1,60 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 73458 "G0-qlever-20261108T215940Z-c6686e build", pid 81982 "CX-VJ01-2-frontier", pid 50198 "DA00-G0-final-source", pid 81860 "CX-VC8-3-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 79027 "CX-A01-0311-regressions-host", pid 81982 "CX-VJ01-2-frontier", pid 82672 "R25-h1smoke", pid 81860 "CX-VC8-3-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 79027 "CX-A01-0311-regressions-host", pid 81982 "CX-VJ01-2-frontier", pid 82131 "CX-VP2Q-3-nonzero-final", pid 81860 "CX-VC8-3-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 79027 "CX-A01-0311-regressions-host", pid 81982 "CX-VJ01-2-frontier", pid 82131 "CX-VP2Q-3-nonzero-final", pid 81860 "CX-VC8-3-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 82782 "CX-VE01-4-prior", pid 81982 "CX-VJ01-2-frontier", pid 82131 "CX-VP2Q-3-nonzero-final", pid 82780 "CX-VE01-4-all"
+[lab] heavy: waiting for one of 4 slots; held by pid 82782 "CX-VE01-4-prior", pid 81982 "CX-VJ01-2-frontier", pid 84970 "CX-A01-0311-final-54cf064", pid 82780 "CX-VE01-4-all"
+[lab] heavy: waiting for one of 4 slots; held by pid 82782 "CX-VE01-4-prior", pid 81982 "CX-VJ01-2-frontier", pid 84970 "CX-A01-0311-final-54cf064", pid 82780 "CX-VE01-4-all"
+[lab] heavy: waiting for one of 4 slots; held by pid 82782 "CX-VE01-4-prior", pid 81982 "CX-VJ01-2-frontier", pid 84970 "CX-A01-0311-final-54cf064", pid 82780 "CX-VE01-4-all"
+[lab] heavy: waiting for one of 4 slots; held by pid 82782 "CX-VE01-4-prior", pid 84131 "R25-h1-split", pid 84970 "CX-A01-0311-final-54cf064", pid 82780 "CX-VE01-4-all"
+[lab] heavy: waiting for one of 4 slots; held by pid 82782 "CX-VE01-4-prior", pid 84131 "R25-h1-split", pid 84970 "CX-A01-0311-final-54cf064", pid 82780 "CX-VE01-4-all"
+[lab] heavy: waiting for one of 4 slots; held by pid 82782 "CX-VE01-4-prior", pid 84131 "R25-h1-split", pid 84970 "CX-A01-0311-final-54cf064", pid 34900 "CX-VE01-4-delta"
+[lab] heavy: waiting for one of 4 slots; held by pid 38669 "CX-VE01-4-supplement", pid 84131 "R25-h1-split", pid 20721 "CX-K01-R2-live", pid 34900 "CX-VE01-4-delta"
+[lab] heavy: waiting for one of 4 slots; held by pid 43503 "CX-VE01-4-fallback-routes", pid 84131 "R25-h1-split", pid 20721 "CX-K01-R2-live", pid 34900 "CX-VE01-4-delta"
+[lab] heavy: waiting for one of 4 slots; held by pid 47397 "CX-VE01-4-input-variations", pid 84131 "R25-h1-split", pid 20721 "CX-K01-R2-live", pid 43762 "CX-A01-0311-final-5ba1e75"
+[lab] heavy: waiting for one of 4 slots; held by pid 47397 "CX-VE01-4-input-variations", pid 84131 "R25-h1-split", pid 20721 "CX-K01-R2-live", pid 43762 "CX-A01-0311-final-5ba1e75"
+[lab] heavy: waiting for one of 4 slots; held by pid 47397 "CX-VE01-4-input-variations", pid 50809 "R25-h1-naive", pid 20721 "CX-K01-R2-live", pid 43762 "CX-A01-0311-final-5ba1e75"
+[lab] heavy: waiting for one of 4 slots; held by pid 86080 "CX-O05-R2-all", pid 50809 "R25-h1-naive", pid 20721 "CX-K01-R2-live", pid 43762 "CX-A01-0311-final-5ba1e75"
+[lab] heavy: waiting for one of 4 slots; held by pid 86080 "CX-O05-R2-all", pid 50809 "R25-h1-naive", pid 20721 "CX-K01-R2-live", pid 43762 "CX-A01-0311-final-5ba1e75"
+build-xtdb 0 4 kB │ gzip: 1.50 kB
+ℹ dist/index.js                      2.32 kB │ gzip: 0.84 kB
+ℹ dist/query/overlay.js              2.28 kB │ gzip: 1.03 kB
+ℹ dist/ReadOnlyClient.js             1.77 kB │ gzip: 0.91 kB
+ℹ dist/Operations.js                 1.37 kB │ gzip: 0.74 kB
+ℹ dist/TransactionContext.js         0.29 kB │ gzip: 0.21 kB
+ℹ dist/XtdbStorageAdapter.js.map    37.32 kB │ gzip: 9.90 kB
+ℹ dist/ConstraintValidation.js.map  22.47 kB │ gzip: 6.55 kB
+ℹ dist/MaintainedQueries.js.map     21.58 kB │ gzip: 6.55 kB
+ℹ dist/XtdbQueryExecutor.js.map     16.48 kB │ gzip: 5.07 kB
+ℹ dist/XtdbClient.js.map            15.12 kB │ gzip: 4.90 kB
+ℹ dist/TemporalQueries.js.map       14.83 kB │ gzip: 4.88 kB
+ℹ dist/codecs.js.map                14.09 kB │ gzip: 3.93 kB
+ℹ dist/native/Reachability.js.map   13.92 kB │ gzip: 5.09 kB
+ℹ dist/query/domains.js.map         13.32 kB │ gzip: 4.32 kB
+ℹ dist/query/recursion.js.map       12.77 kB │ gzip: 4.56 kB
+ℹ dist/native/NativeQueries.js.map  12.43 kB │ gzip: 3.95 kB
+ℹ dist/query/compiler.js.map        12.26 kB │ gzip: 4.68 kB
+ℹ dist/native/Sources.js.map        11.57 kB │ gzip: 4.13 kB
+ℹ dist/query/grouping.js.map         8.05 kB │ gzip: 2.77 kB
+ℹ dist/native/ReadOnlySql.js.map     7.44 kB │ gzip: 2.70 kB
+ℹ dist/index.js.map                  4.96 kB │ gzip: 1.72 kB
+ℹ dist/query/overlay.js.map          4.18 kB │ gzip: 1.73 kB
+ℹ dist/Operations.js.map             2.55 kB │ gzip: 1.16 kB
+ℹ dist/ReadOnlyClient.js.map         2.43 kB │ gzip: 1.20 kB
+ℹ dist/TransactionContext.js.map     0.90 kB │ gzip: 0.47 kB
+ℹ 40 files, total: 377.82 kB
+✔ Build complete in 35ms
+
+offline-qualification-retry 0 
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round3/sut/packages/qualification
+
+
+ Test Files  4 passed | 2 skipped (6)
+      Tests  92 passed | 50 skipped (142)
+   Start at  17:10:52
+   Duration  2.14s (import 59%, tests 33%, transform 8%, worker 1%)
+
+    Isolate  6 workers spawned · ~66ms startup each (spawn + environment, per file)
+             at least ~329ms faster with isolate: false — reuses workers across files instead of one per file
+
+
