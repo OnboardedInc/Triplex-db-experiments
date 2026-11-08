@@ -134,3 +134,6 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - GS.03: a vendor's older revision arriving after a newer one is acknowledged as `superseded`, changes no current value, and is journaled.
 
 - 22:35Z: running now: CX-A01-0311, CX-K01-R2, CX-DA01, CX-SQL01, CX-OBS01, CX-G03, CX-P2Q-R3 (round 4 fix F1), CX-VX02-3 (round 4 review), CX-O05-R2 (round 3 fixes R2-F1..F3). 9 of 10.
+- K01 round 2 (05a23dd): Q83d settle evidence implemented, 41 tests and tsc pass; offline review CX-VK01 launched. Live run waits for the
+  scale window: it needs pool capacity (park tx2-datomic-dev) and slot s1 cleared, but s1 holds CX-OBS01's retained source and canary, so
+  OBS01 must release s1 first. Nothing was deleted.
