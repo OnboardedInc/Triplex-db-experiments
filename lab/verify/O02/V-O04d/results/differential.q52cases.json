@@ -1,0 +1,559 @@
+{
+ "old": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/ata9c1327",
+ "new": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/at3e38a61",
+ "cases": 35,
+ "random": 0,
+ "seed": 1,
+ "identical": 3,
+ "bothRefused": 0,
+ "different": 32,
+ "differentByFeature": {
+  "erase (Q49-Q52 erasure)": 9,
+  "Q52e in flight": 10,
+  "Q52f toDecimal(json) rounding": 10,
+  "Q52g erasure spelling": 1,
+  "Q52g erase mixed": 1,
+  "Q52g erase preconditions": 1
+ },
+ "rows": [
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52run2/000_COUNT_of_distinct_salary_values_two_erased.case.json",
+   "path": "$.queries[0].error",
+   "old": {
+    "error": "X-NOT-MODELED",
+    "_tag": null,
+    "reason": null,
+    "phase": null,
+    "ruling": "R-ERA-4: Q49c counts erased assertions while AG-COUNT counts distinct values (ORCHESTRATOR-RULING-NEEDED)",
+    "message": "COUNT over a variable bound to several erased values"
+   },
+   "new": "<absent>",
+   "features": [
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52run2/001_COUNT_of_distinct_tags_of_p6_two_erased.case.json",
+   "path": "$.queries[0].error",
+   "old": {
+    "error": "X-NOT-MODELED",
+    "_tag": null,
+    "reason": null,
+    "phase": null,
+    "ruling": "R-ERA-4: Q49c counts erased assertions while AG-COUNT counts distinct values (ORCHESTRATOR-RULING-NEEDED)",
+    "message": "COUNT over a variable bound to several erased values"
+   },
+   "new": "<absent>",
+   "features": [
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52run2/002_count_of_assertions_raw_match_count.case.json",
+   "path": "$.queries[0].error",
+   "old": {
+    "error": "X-NOT-MODELED",
+    "_tag": null,
+    "reason": null,
+    "phase": null,
+    "ruling": "R-ERA-4: Q49c counts erased assertions while AG-COUNT counts distinct values (ORCHESTRATOR-RULING-NEEDED)",
+    "message": "COUNT over a variable bound to several erased values"
+   },
+   "new": "<absent>",
+   "features": [
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52run2/003_count_of_assertions_valueSupports_marker_group.case.json",
+   "path": "$.queries[0].error",
+   "old": {
+    "error": "X-NOT-MODELED",
+    "_tag": null,
+    "reason": null,
+    "phase": null,
+    "ruling": "R-ERA-4: Q49c counts erased assertions while AG-COUNT counts distinct values (ORCHESTRATOR-RULING-NEEDED)",
+    "message": "COUNT over a variable bound to several erased values"
+   },
+   "new": "<absent>",
+   "features": [
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52run2/004_ORDER_BY_salary_asc_over_readable_erased_and_missing.case.json",
+   "path": "$.queries[0].error",
+   "old": {
+    "error": "X-NOT-MODELED",
+    "_tag": null,
+    "reason": null,
+    "phase": null,
+    "ruling": "R-ERA-4: Q49c (erased last) and R-ENT-6 (missing last) do not order erased against missing (ORCHESTRATOR-RULING-NEEDED)",
+    "message": "orderBy salary over both erased and missing values"
+   },
+   "new": "<absent>",
+   "features": [
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52run2/005_ORDER_BY_salary_desc_over_readable_erased_and_missing.case.json",
+   "path": "$.queries[0].error",
+   "old": {
+    "error": "X-NOT-MODELED",
+    "_tag": null,
+    "reason": null,
+    "phase": null,
+    "ruling": "R-ERA-4: Q49c (erased last) and R-ENT-6 (missing last) do not order erased against missing (ORCHESTRATOR-RULING-NEEDED)",
+    "message": "orderBy salary over both erased and missing values"
+   },
+   "new": "<absent>",
+   "features": [
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52run2/006_GROUP_BY_ssn_over_markers_erased_at_200_and_300.case.json",
+   "path": "$.queries[0].error",
+   "old": {
+    "error": "X-NOT-MODELED",
+    "_tag": null,
+    "reason": null,
+    "phase": null,
+    "ruling": "R-ERA-4 (Q49c): one group keyed by the marker holds values erased at different instants, so the key's erasedAt is not determined (ORCHESTRATOR-RULING-NEEDED)",
+    "message": "values erased at different instants in one marker group"
+   },
+   "new": "<absent>",
+   "features": [
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52run2/007_card_many_marker_group_erased_at_500_and_600.case.json",
+   "path": "$.queries[0].error",
+   "old": {
+    "error": "X-NOT-MODELED",
+    "_tag": null,
+    "reason": null,
+    "phase": null,
+    "ruling": "R-ERA-4 (Q49c): one group keyed by the marker holds values erased at different instants, so the key's erasedAt is not determined (ORCHESTRATOR-RULING-NEEDED)",
+    "message": "values erased at different instants in one marker group"
+   },
+   "new": "<absent>",
+   "features": [
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52run2/008_ReferenceTarget_over_an_erased_dangling_reference.case.json",
+   "path": "$.caseId",
+   "old": "<absent>",
+   "new": "v-o04d/q52",
+   "features": [
+    "erase"
+   ],
+   "oldRefused": true,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52run2/010_SUM_in_flight_across_one_commit_erasing_two_values.case.json",
+   "path": "$.queries[0].error",
+   "old": {
+    "error": "X-NOT-MODELED",
+    "_tag": null,
+    "reason": null,
+    "phase": null,
+    "ruling": "R-ERA-6 (Q49d): a read that started before the erasure published may return the old value or the marker, so a computed answer over it has two readings (ORCHESTRATOR-RULING-NEEDED)",
+    "message": "aggregate over a value whose erasure is in flight for this read"
+   },
+   "new": "<absent>",
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52run2/011_match_in_flight_across_that_commit.case.json",
+   "path": "$.queries[0].error",
+   "old": {
+    "error": "X-NOT-MODELED",
+    "_tag": null,
+    "reason": null,
+    "phase": null,
+    "ruling": "R-ERA-6 (Q49d): a read that started before the erasure published may return the old value or the marker, so a computed answer over it has two readings (ORCHESTRATOR-RULING-NEEDED)",
+    "message": "aggregate over a value whose erasure is in flight for this read"
+   },
+   "new": "<absent>",
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52run2/012_a_read_that_does_not_depend_on_the_in_flight_commit.case.json",
+   "path": "$.queries[0].error",
+   "old": {
+    "error": "X-NOT-MODELED",
+    "_tag": null,
+    "reason": null,
+    "phase": null,
+    "ruling": "R-ERA-6 (Q49d): a read that started before the erasure published may return the old value or the marker, so a computed answer over it has two readings (ORCHESTRATOR-RULING-NEEDED)",
+    "message": "aggregate over a value whose erasure is in flight for this read"
+   },
+   "new": "<absent>",
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52run2/013_1_in_flight_erasure_commit_acceptable_answers.case.json",
+   "path": "$.queries[0].error",
+   "old": {
+    "error": "X-NOT-MODELED",
+    "_tag": null,
+    "reason": null,
+    "phase": null,
+    "ruling": "R-ERA-6 (Q49d): a read that started before the erasure published may return the old value or the marker, so a computed answer over it has two readings (ORCHESTRATOR-RULING-NEEDED)",
+    "message": "aggregate over a value whose erasure is in flight for this read"
+   },
+   "new": "<absent>",
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52run2/014_2_in_flight_erasure_commits_acceptable_answers.case.json",
+   "path": "$.queries[0].error",
+   "old": {
+    "error": "X-NOT-MODELED",
+    "_tag": null,
+    "reason": null,
+    "phase": null,
+    "ruling": "R-ERA-6 (Q49d): a read that started before the erasure published may return the old value or the marker, so a computed answer over it has two readings (ORCHESTRATOR-RULING-NEEDED)",
+    "message": "aggregate over a value whose erasure is in flight for this read"
+   },
+   "new": "<absent>",
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52run2/015_3_in_flight_erasure_commits_acceptable_answers.case.json",
+   "path": "$.queries[0].error",
+   "old": {
+    "error": "X-NOT-MODELED",
+    "_tag": null,
+    "reason": null,
+    "phase": null,
+    "ruling": "R-ERA-6 (Q49d): a read that started before the erasure published may return the old value or the marker, so a computed answer over it has two readings (ORCHESTRATOR-RULING-NEEDED)",
+    "message": "aggregate over a value whose erasure is in flight for this read"
+   },
+   "new": "<absent>",
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52run2/016_3_commits_read_started_after_the_first.case.json",
+   "path": "$.queries[0].error",
+   "old": {
+    "error": "X-NOT-MODELED",
+    "_tag": null,
+    "reason": null,
+    "phase": null,
+    "ruling": "R-ERA-6 (Q49d): a read that started before the erasure published may return the old value or the marker, so a computed answer over it has two readings (ORCHESTRATOR-RULING-NEEDED)",
+    "message": "aggregate over a value whose erasure is in flight for this read"
+   },
+   "new": "<absent>",
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52run2/017_scope_s_read_only_scope_s_s_erasure_is_in_flight.case.json",
+   "path": "$.queries[0].error",
+   "old": {
+    "error": "X-NOT-MODELED",
+    "_tag": null,
+    "reason": null,
+    "phase": null,
+    "ruling": "R-ERA-6 (Q49d): a read that started before the erasure published may return the old value or the marker, so a computed answer over it has two readings (ORCHESTRATOR-RULING-NEEDED)",
+    "message": "aggregate over a value whose erasure is in flight for this read"
+   },
+   "new": "<absent>",
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52run2/018_scope_t_read_only_scope_t_s_erasure_is_in_flight.case.json",
+   "path": "$.queries[0].error",
+   "old": {
+    "error": "X-NOT-MODELED",
+    "_tag": null,
+    "reason": null,
+    "phase": null,
+    "ruling": "R-ERA-6 (Q49d): a read that started before the erasure published may return the old value or the marker, so a computed answer over it has two readings (ORCHESTRATOR-RULING-NEEDED)",
+    "message": "aggregate over a value whose erasure is in flight for this read"
+   },
+   "new": "<absent>",
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52run2/019_cursorFrom_on_an_in_flight_entityPage_entry.case.json",
+   "path": "$.caseId",
+   "old": "v-o04d/q52",
+   "new": "<absent>",
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": true
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52run2/020_toDecimal_json_2_675_3_2_half_up_.case.json",
+   "path": "$.queries[0].error",
+   "old": {
+    "error": "X-NOT-MODELED",
+    "_tag": null,
+    "reason": null,
+    "phase": null,
+    "ruling": "R-DEC-18: DR-JSON-CONVERT and Q49e name no rounding (ORCHESTRATOR-RULING-NEEDED)",
+    "message": "toDecimal(json, p, s, rounding)"
+   },
+   "new": "<absent>",
+   "features": [
+    "Q52f toDecimal(json) rounding"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52run2/021_toDecimal_json_2_665_3_2_half_even_.case.json",
+   "path": "$.queries[0].error",
+   "old": {
+    "error": "X-NOT-MODELED",
+    "_tag": null,
+    "reason": null,
+    "phase": null,
+    "ruling": "R-DEC-18: DR-JSON-CONVERT and Q49e name no rounding (ORCHESTRATOR-RULING-NEEDED)",
+    "message": "toDecimal(json, p, s, rounding)"
+   },
+   "new": "<absent>",
+   "features": [
+    "Q52f toDecimal(json) rounding"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52run2/022_toDecimal_json_2_675_3_2_half_even_.case.json",
+   "path": "$.queries[0].error",
+   "old": {
+    "error": "X-NOT-MODELED",
+    "_tag": null,
+    "reason": null,
+    "phase": null,
+    "ruling": "R-DEC-18: DR-JSON-CONVERT and Q49e name no rounding (ORCHESTRATOR-RULING-NEEDED)",
+    "message": "toDecimal(json, p, s, rounding)"
+   },
+   "new": "<absent>",
+   "features": [
+    "Q52f toDecimal(json) rounding"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52run2/023_toDecimal_json_2_669_3_2_down_.case.json",
+   "path": "$.queries[0].error",
+   "old": {
+    "error": "X-NOT-MODELED",
+    "_tag": null,
+    "reason": null,
+    "phase": null,
+    "ruling": "R-DEC-18: DR-JSON-CONVERT and Q49e name no rounding (ORCHESTRATOR-RULING-NEEDED)",
+    "message": "toDecimal(json, p, s, rounding)"
+   },
+   "new": "<absent>",
+   "features": [
+    "Q52f toDecimal(json) rounding"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52run2/024_toDecimal_json_2_675_3_2_half_up_.case.json",
+   "path": "$.queries[0].error",
+   "old": {
+    "error": "X-NOT-MODELED",
+    "_tag": null,
+    "reason": null,
+    "phase": null,
+    "ruling": "R-DEC-18: DR-JSON-CONVERT and Q49e name no rounding (ORCHESTRATOR-RULING-NEEDED)",
+    "message": "toDecimal(json, p, s, rounding)"
+   },
+   "new": "<absent>",
+   "features": [
+    "Q52f toDecimal(json) rounding"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52run2/025_toDecimal_json_2_669_3_2_down_.case.json",
+   "path": "$.queries[0].error",
+   "old": {
+    "error": "X-NOT-MODELED",
+    "_tag": null,
+    "reason": null,
+    "phase": null,
+    "ruling": "R-DEC-18: DR-JSON-CONVERT and Q49e name no rounding (ORCHESTRATOR-RULING-NEEDED)",
+    "message": "toDecimal(json, p, s, rounding)"
+   },
+   "new": "<absent>",
+   "features": [
+    "Q52f toDecimal(json) rounding"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52run2/026_toDecimal_json_0_15_2_1_half_even_.case.json",
+   "path": "$.queries[0].error",
+   "old": {
+    "error": "X-NOT-MODELED",
+    "_tag": null,
+    "reason": null,
+    "phase": null,
+    "ruling": "R-DEC-18: DR-JSON-CONVERT and Q49e name no rounding (ORCHESTRATOR-RULING-NEEDED)",
+    "message": "toDecimal(json, p, s, rounding)"
+   },
+   "new": "<absent>",
+   "features": [
+    "Q52f toDecimal(json) rounding"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52run2/027_toDecimal_json_1_5_2_1_half_up_.case.json",
+   "path": "$.queries[0].error",
+   "old": {
+    "error": "X-NOT-MODELED",
+    "_tag": null,
+    "reason": null,
+    "phase": null,
+    "ruling": "R-DEC-18: DR-JSON-CONVERT and Q49e name no rounding (ORCHESTRATOR-RULING-NEEDED)",
+    "message": "toDecimal(json, p, s, rounding)"
+   },
+   "new": "<absent>",
+   "features": [
+    "Q52f toDecimal(json) rounding"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52run2/028_toDecimal_json_9_995_3_2_half_up_.case.json",
+   "path": "$.queries[0].error._tag",
+   "old": null,
+   "new": "InvalidTripleError",
+   "features": [
+    "Q52f toDecimal(json) rounding"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52run2/030_toDecimal_json_2_675_3_2_half_up_.case.json",
+   "path": "$.queries[0].error._tag",
+   "old": null,
+   "new": "InvalidTripleError",
+   "features": [
+    "Q52f toDecimal(json) rounding"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52run2/031_erase_shape_erasure.case.json",
+   "path": "$.caseId",
+   "old": "<absent>",
+   "new": "v-o04d/q52",
+   "features": [
+    "Q52g erasure spelling"
+   ],
+   "oldRefused": true,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52run2/032_erase_shape_mixed.case.json",
+   "path": "$.caseId",
+   "old": "<absent>",
+   "new": "v-o04d/q52",
+   "features": [
+    "Q52g erase mixed",
+    "erase"
+   ],
+   "oldRefused": true,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/q52run2/033_erase_shape_preconditions.case.json",
+   "path": "$.caseId",
+   "old": "<absent>",
+   "new": "v-o04d/q52",
+   "features": [
+    "Q52g erase preconditions",
+    "erase"
+   ],
+   "oldRefused": true,
+   "newRefused": false
+  }
+ ]
+}

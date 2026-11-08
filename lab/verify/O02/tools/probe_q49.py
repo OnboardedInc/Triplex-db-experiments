@@ -5,7 +5,10 @@ verifier from the ruling text and the contract, not from the oracle's tests or R
 Verdicts: MATCH, WRONG-ANSWER, REFUSES (declined where the ruling decides), DERIVED-NOTE (the oracle answers a case the
 ruling does not decide explicitly: recorded, not scored as wrong). V-O04c: the seven V-O04b DERIVED-NOTE rows are now
 checked rows with the Q56a-g expected answers (main lab/acceptance/RULINGS-PENDING.md, 0abc5ff), each with a planted
-wrong expectation in --self-test.
+wrong expectation in --self-test. V-O04d: version-aware; on O-REPLAY 0.4.2 the nine residual shapes carry the Q52a-g
+answers and the in-flight row the Q52e whole-answer shape (probe_q52.py checks Q52 and Q66 in depth).
+
+  python3 -I lab/verify/O02/tools/probe_q49.py WORKDIR [--self-test] [--results=DIR]   (DIR default v-o04b/results)
 
 Also: a plaintext-leak scan over the whole output of the erasure case (every surface queried), and a whole-journal
 comparison against the same command stream without the erase commands (Q49a, ER-JOURNAL-MODULO).
@@ -23,7 +26,12 @@ ROOT = Path(__file__).resolve().parents[4]
 CLI = ROOT / "lab/oracles/replay/cli.py"
 WORK = Path(sys.argv[1])
 SELF_TEST = "--self-test" in sys.argv
-OUT = ROOT / ("lab/verify/O02/v-o04b/results/probe_q49" + (".self-test" if SELF_TEST else "") + ".json")
+RESULTS = ROOT / "lab/verify/O02" / next((a.split("=", 1)[1] for a in sys.argv if a.startswith("--results=")), "v-o04b/results")
+OUT = RESULTS / ("probe_q49" + (".self-test" if SELF_TEST else "") + ".json")
+# V-O04d: from O-REPLAY 0.4.2 the Q52 shapes are answered (no longer refused) and an in-flight read lists whole answers
+# (Q52e) instead of 0.4.1's per-value InFlightErasure; the oracle version is read from its run.py text.
+ORACLE_VERSION = re.search(r'ORACLE_VERSION = "([0-9.]+)"', (ROOT / "lab/oracles/replay/run.py").read_text()).group(1)
+Q52 = tuple(int(x) for x in ORACLE_VERSION.split(".")) >= (0, 4, 2)
 C = json.loads((ROOT / "lab/acceptance/obligations.json").read_text())
 ERR = {r["id"]: r for r in C["errorTable"]}
 
@@ -475,10 +483,18 @@ single("Q49c", "SUM over only erased values", "SUM skips every value: null (as A
        lambda r: (res(r, "q")["rows"] == [{"s": None}], res(r, "q")["rows"]))
 # Q49d in flight
 inflight = [cmd([asrt("f1", "p1", SSN, S("OLD-VALUE-1"))], 100), cmd([erase("p1", SSN)], 200)]
-single("Q49d", "in-flight read accepts the old value or the marker", "readStart before the erase: InFlightErasure [old, marker(200)]",
-       case(inflight, [{"id": "m", "kind": "match", "cut": V, "pattern": {"entityId": "p1"}, "readStart": {"afterCommand": 0}}], schemas=SCHEMA),
-       lambda r: (res(r, "m")["raw"][0]["value"].get("_tag") == "InFlightErasure" and
-                  res(r, "m")["raw"][0]["value"]["acceptable"] == [S("OLD-VALUE-1"), marker(200)], res(r, "m")["raw"][0]["value"]))
+if Q52:  # Q52e: whole answers per in-flight commit, the all-old answer first
+    single("Q49d/Q52e", "in-flight read accepts the old value or the marker", "inFlight: [([], OLD-VALUE-1), ([tx:1], marker(200))]",
+           case(inflight, [{"id": "m", "kind": "match", "cut": V, "pattern": {"entityId": "p1"}, "readStart": {"afterCommand": 0}}],
+                schemas=SCHEMA),
+           lambda r: ([(a["erasuresSeen"], [x["value"] for x in a["result"]["raw"]]) for a in q(r, "m")["inFlight"]["acceptable"]]
+                      == [([], [S("OLD-VALUE-1")]), (["tx:1"], [marker(200)])], q(r, "m")))
+else:
+    single("Q49d", "in-flight read accepts the old value or the marker", "readStart before the erase: InFlightErasure [old, marker(200)]",
+           case(inflight, [{"id": "m", "kind": "match", "cut": V, "pattern": {"entityId": "p1"}, "readStart": {"afterCommand": 0}}],
+                schemas=SCHEMA),
+           lambda r: (res(r, "m")["raw"][0]["value"].get("_tag") == "InFlightErasure" and
+                      res(r, "m")["raw"][0]["value"]["acceptable"] == [S("OLD-VALUE-1"), marker(200)], res(r, "m")["raw"][0]["value"]))
 single("Q49d", "read started after the erase published", "readStart after the erase: the marker only",
        case(inflight, [{"id": "m", "kind": "match", "cut": V, "pattern": {"entityId": "p1"}, "readStart": {"afterCommand": 1}}], schemas=SCHEMA),
        lambda r: (res(r, "m")["raw"][0]["value"] == marker(200), res(r, "m")["raw"][0]["value"]))
@@ -583,42 +599,70 @@ single("Q56g", "retract by target of an already erased assertion", "commits; his
                   and res(r, "h")["rawLifetime"][0]["value"] == marker(200) and res(r, "h")["rawLifetime"][0]["retractedAt"] == 250,
                   [outc(r, 2), res(r, "h")["rawLifetime"]]))
 
-# ------------------------------------------------------------------ residual refusals (author's list; ruled later as Q52)
+# ------------------------------------------------------------------ residual shapes (author's 0.4.1 list; ruled Q52a-g)
+# 0.4.1 refuses each with X-NOT-MODELED; from 0.4.2 each is answered as Q52 rules (expected answers derived by the verifier).
+
+def find_alt_ids(r, qid):
+    return [(a["erasuresSeen"], [i for pg in a["result"]["pages"] for i in pg["ids"]]) for a in q(r, qid)["inFlight"]["acceptable"]]
+
 
 R_CASE = MAIN_CMDS
-single("residual", "COUNT over 2+ erased assertions", "X-NOT-MODELED",
-       case(R_CASE, [{"id": "q", "kind": "aggregate", "cut": V, "match": {"attributes": {"v": SAL}},
-                      "aggregates": [{"op": "count", "var": "v", "as": "c"}]}], schemas=SCHEMA),
-       lambda r: is_xnm(q(r, "q").get("error")), refusal=True)
-single("residual", "ORDER BY over erased plus missing", "X-NOT-MODELED",
-       case(R_CASE, [{"id": "q", "kind": "find", "entityType": "Person", "cut": V, "orderBy": [{"prop": "salary"}]}], schemas=SCHEMA),
-       lambda r: is_xnm(q(r, "q").get("error")), refusal=True)
 diff_at = [cmd([asrt("d1", "p1", SSN, S("SECRET-D1"))], 100), cmd([asrt("d2", "p2", SSN, S("SECRET-D2")),
                                                                     asrt("d3", "p2", ":person/name", S("Bo"))], 110),
            cmd([asrt("d4", "p1", ":person/name", S("Al"))], 120), cmd([erase("p1", SSN)], 200), cmd([erase("p2", SSN)], 300)]
-single("residual", "erasedAt of a group erased at different instants", "X-NOT-MODELED (GROUP BY ssn over markers from 200 and 300)",
-       case(diff_at, [{"id": "q", "kind": "aggregate", "cut": V, "match": {"attributes": {"n": ":person/name", "s": SSN}}, "groupBy": ["s"],
-                       "aggregates": [{"op": "count", "var": "n", "as": "c"}]}], schemas=SCHEMA),
-       lambda r: is_xnm(q(r, "q").get("error")), refusal=True)
-single("residual", "ReferenceTarget over an erased reference", "X-NOT-MODELED",
-       case([cmd([asrt("o1", "org:1", ":org/label", S("Acme"), "Org"), asrt("rr", "p1", ORG, R("org:1"))], 100),
-             cmd([erase("p1", ORG)], 200),
-             dict(cmd([asrt("n1", "p1", ":person/name", S("Ann"))], 300), meta={"commandId": "rt", "enforce": {"fromSchema": 1}})],
-            [], schemas=SCHEMA), lambda r: False, refusal=True)
-single("residual", "computed answer over an in-flight value", "X-NOT-MODELED (find by value with readStart before the erase)",
-       case(inflight, [{"id": "q", "kind": "find", "entityType": "Person", "cut": V, "readStart": {"afterCommand": 0},
-                        "where": [{"prop": "ssn", "op": "eq", "value": S("OLD-VALUE-1")}]}], schemas=SCHEMA),
-       lambda r: is_xnm(q(r, "q").get("error")), refusal=True)
-single("residual", "toDecimal(json, p, s, rounding)", "X-NOT-MODELED",
-       case(queries=[{"id": "q", "kind": "expr", "expr": ["toDecimal", J(0.15), 2, 1, "half-even"]}]),
-       lambda r: is_xnm(q(r, "q").get("error")), refusal=True)
-single("residual", "the `erasure` spelling", "X-NOT-MODELED",
-       case(base + [cmd([{"op": "erasure", "entityId": "p1", "attribute": SSN}], 200)], [], schemas=SCHEMA), lambda r: False, refusal=True)
-single("residual", "erase mixed with other ops", "X-NOT-MODELED",
-       case(base + [cmd([erase("p1", SSN), asrt("y", "p2", SSN, S("Y"))], 200)], [], schemas=SCHEMA), lambda r: False, refusal=True)
-single("residual", "preconditions on erase", "X-NOT-MODELED",
-       case(base + [dict(cmd([erase("p1", SSN)], 200), meta={"commandId": "pe", "preconditions": [{"_tag": "TripleLive", "target": "x1"}]})],
-            [], schemas=SCHEMA), lambda r: False, refusal=True)
+RESIDUAL = [
+    ("COUNT over 2+ erased assertions", "Q52a",
+     case(R_CASE, [{"id": "q", "kind": "aggregate", "cut": V, "match": {"attributes": {"v": SAL}},
+                    "aggregates": [{"op": "count", "var": "v", "as": "c"}]}], schemas=SCHEMA),
+     lambda r: is_xnm(q(r, "q").get("error")),
+     "COUNT 3: distinct 50, 30 and one marker group (sal1, a-sal6)",
+     lambda r: (res(r, "q")["rows"] == [{"c": I(3)}], res(r, "q")["rows"])),
+    ("ORDER BY over erased plus missing", "Q52b",
+     case(R_CASE, [{"id": "q", "kind": "find", "entityType": "Person", "cut": V, "orderBy": [{"prop": "salary"}]}], schemas=SCHEMA),
+     lambda r: is_xnm(q(r, "q").get("error")),
+     "[p3, p2, p6, p1, p4, p5, p7]: readable, markers by id (a-sal6 < sal1), missing by entity id",
+     lambda r: (find_ids(r, "q") == ["p3", "p2", "p6", "p1", "p4", "p5", "p7"], find_ids(r, "q"))),
+    ("erasedAt of a group erased at different instants", "Q52c",
+     case(diff_at, [{"id": "q", "kind": "aggregate", "cut": V, "match": {"attributes": {"n": ":person/name", "s": SSN}}, "groupBy": ["s"],
+                     "aggregates": [{"op": "count", "var": "n", "as": "c"}]}], schemas=SCHEMA),
+     lambda r: is_xnm(q(r, "q").get("error")),
+     "one group: s = marker(200) (the earliest), c = 2",
+     lambda r: (res(r, "q")["rows"] == [{"s": marker(200), "c": I(2)}], res(r, "q")["rows"])),
+    ("ReferenceTarget over an erased reference", "Q52d",
+     case([cmd([asrt("o1", "org:1", ":org/label", S("Acme"), "Org"), asrt("rr", "p1", ORG, R("org:1"))], 100),
+           cmd([erase("p1", ORG)], 200),
+           dict(cmd([asrt("n1", "p1", ":person/name", S("Ann"))], 300), meta={"commandId": "rt", "enforce": {"fromSchema": 1}})],
+          [], schemas=SCHEMA),
+     lambda r: False,
+     "the enforced command commits (probe_q52 has the dangling-reference control)",
+     lambda r: (outc(r, 2)["outcome"] == "committed", outc(r, 2))),
+    ("computed answer over an in-flight value", "Q52e",
+     case(inflight, [{"id": "q", "kind": "find", "entityType": "Person", "cut": V, "readStart": {"afterCommand": 0},
+                      "where": [{"prop": "ssn", "op": "eq", "value": S("OLD-VALUE-1")}]}], schemas=SCHEMA),
+     lambda r: is_xnm(q(r, "q").get("error")),
+     "inFlight: [([], [p1]), ([tx:1], [])]",
+     lambda r: (find_alt_ids(r, "q") == [([], ["p1"]), (["tx:1"], [])], q(r, "q"))),
+    ("toDecimal(json, p, s, rounding)", "Q52f",
+     case(queries=[{"id": "q", "kind": "expr", "expr": ["toDecimal", J(0.15), 2, 1, "half-even"]}]),
+     lambda r: is_xnm(q(r, "q").get("error")),
+     "decimal 0.2 at (2, 1): the as-written 0.15 rounded half-even (binary64 would give 0.1)",
+     lambda r: (res(r, "q") == {"type": "decimal", "value": "0.2", "scale": 1, "precision": 2}, res(r, "q") or q(r, "q").get("error"))),
+    ("the `erasure` spelling", "Q52g",
+     case(base + [cmd([{"op": "erasure", "entityId": "p1", "attribute": SSN}], 200)], [], schemas=SCHEMA),
+     lambda r: False, "rejected E-INVALID-VALUE", lambda r: (err_is(outc(r, 1), "E-INVALID-VALUE"), outc(r, 1))),
+    ("erase mixed with other ops", "Q52g",
+     case(base + [cmd([erase("p1", SSN), asrt("y", "p2", SSN, S("Y"))], 200)], [], schemas=SCHEMA),
+     lambda r: False, "rejected E-INVALID-VALUE", lambda r: (err_is(outc(r, 1), "E-INVALID-VALUE"), outc(r, 1))),
+    ("preconditions on erase", "Q52g",
+     case(base + [dict(cmd([erase("p1", SSN)], 200), meta={"commandId": "pe", "preconditions": [{"_tag": "TripleLive", "target": "x1"}]})],
+          [], schemas=SCHEMA),
+     lambda r: False, "rejected E-INVALID-VALUE", lambda r: (err_is(outc(r, 1), "E-INVALID-VALUE"), outc(r, 1))),
+]
+for pid, ruling, the_case, xnm_fn, want, fn in RESIDUAL:
+    if Q52:
+        single(ruling, pid, want, the_case, fn)
+    else:
+        single("residual", pid, "X-NOT-MODELED", the_case, xnm_fn, refusal=True)
 
 # ------------------------------------------------------------------ self-test: wrong expectations must not MATCH
 if SELF_TEST:

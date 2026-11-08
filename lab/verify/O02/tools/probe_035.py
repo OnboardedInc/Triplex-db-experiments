@@ -25,7 +25,9 @@ RESULTS = ROOT / "lab/verify/O02" / next((a.split("=", 1)[1] for a in sys.argv i
 OUT = RESULTS / "probe_035.json"
 C = json.loads((ROOT / "lab/acceptance/obligations.json").read_text())
 ERR = {r["id"]: r for r in C["errorTable"]}
-assert C["version"] in ("0.3.5", "0.3.6"), C["version"]
+assert C["version"] in ("0.3.5", "0.3.6", "0.3.7", "0.3.8", "0.3.9"), C["version"]
+# V-O04d: contract 0.3.8 compiles Q52; Q52g makes the `erasure` spelling a typed E-INVALID-VALUE rejection
+Q52_CONTRACT = tuple(int(x) for x in C["version"].split(".")) >= (0, 3, 8)
 
 I = lambda s: {"type": "integer", "value": str(s)}  # noqa: E731
 N = lambda x: {"type": "number", "value": x}  # noqa: E731
@@ -429,9 +431,14 @@ probe("erasure op 'erase' (Q49a)", "Q24 / Q49a / R-ERA-1", "commits; the value r
            [{"id": "q", "kind": "match", "cut": {"validAt": 1}, "pattern": {"entityId": "person:1"}}]),
       lambda rep: (outc(rep, 1).get("outcome") == "committed" and res(rep)["raw"][0]["value"] == {"_tag": "ErasedValue", "erasedAt": 200}
                    and "PLAINTEXT-SSN-123" not in json.dumps(rep), [outc(rep, 1), res(rep)["raw"][0]["value"]]))
-probe("refuse erasure op 'erasure'", "Q45b / R-CMD-13 (residual, Q52g)", "X-NOT-MODELED refusal (no expected answer)",
-      case([cmd([asrt("a", "person:1", ":person/ssn", S("123"))], 100),
-            cmd([{"op": "erasure", "entityId": "person:1", "attribute": ":person/ssn"}], 200)]), None, refusal=True)
+if Q52_CONTRACT:
+    probe("erasure op 'erasure' rejected (Q52g)", "Q52g / R-CMD-9 / Q33f", "rejected E-INVALID-VALUE (a typed invalid-command error)",
+          case([cmd([asrt("a", "person:1", ":person/ssn", S("123"))], 100),
+                cmd([{"op": "erasure", "entityId": "person:1", "attribute": ":person/ssn"}], 200)]), rejected("E-INVALID-VALUE", 1))
+else:
+    probe("refuse erasure op 'erasure'", "Q45b / R-CMD-13 (residual, Q52g)", "X-NOT-MODELED refusal (no expected answer)",
+          case([cmd([asrt("a", "person:1", ":person/ssn", S("123"))], 100),
+                cmd([{"op": "erasure", "entityId": "person:1", "attribute": ":person/ssn"}], 200)]), None, refusal=True)
 probe("refuse scale evolution (widen)", "DS-WIDEN / R-DEC-15", "X-NOT-MODELED refusal",
       case([cmd([asrt("r", "e", ":p/rate", DW("1.00"))])], attributeDeclarations=RATE,
            schemas=[{"version": 2, "entityTypes": {"P": {"attributes": {"rate": {"attribute": ":p/rate", "type": "decimal",

@@ -7,15 +7,45 @@ refusals count as equal). Cases come from existing probe directories and from a 
 """
 import json
 import random
+import re
 import subprocess
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[4]
-OLD, NEW, WORK = Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3])
-N, SEED = int(sys.argv[4]), int(sys.argv[5])
-DIRS = [Path(d) for d in sys.argv[6:]]
-OUT = ROOT / "lab/verify/O02/v-o04b/results/differential.json"
+ARGS = [a for a in sys.argv[1:] if not a.startswith("--out=")]
+OLD, NEW, WORK = Path(ARGS[0]), Path(ARGS[1]), Path(ARGS[2])
+N, SEED = int(ARGS[3]), int(ARGS[4])
+DIRS = [Path(d) for d in ARGS[5:]]
+OUT = Path(next((a.split("=", 1)[1] for a in sys.argv if a.startswith("--out=")), ROOT / "lab/verify/O02/v-o04b/results/differential.json"))
+
+
+def features(case_path):
+    """V-O04d: the case features a 0.4.1 -> 0.4.2 difference may come from (Q52 shapes, Q56f selector); none = UNEXPLAINED."""
+    try:
+        c = json.loads(case_path.read_text())
+    except ValueError:
+        return ["unparsed"]
+    found = set()
+    for command in c.get("commands") or []:
+        ops = command.get("operations") or []
+        names = {o.get("op") for o in ops if isinstance(o, dict)}
+        if "erasure" in names:
+            found.add("Q52g erasure spelling")
+        if "erase" in names:
+            found.add("erase")
+            if len(names) > 1 or len(ops) > len([o for o in ops if o.get("op") == "erase"]):
+                found.add("Q52g erase mixed")
+            if (command.get("meta") or {}).get("preconditions"):
+                found.add("Q52g erase preconditions")
+            if any("id" in o for o in ops if o.get("op") == "erase"):
+                found.add("Q56f id selector")
+    text = json.dumps(c.get("queries") or [])
+    if '"readStart"' in text and "erase" in found:
+        found.add("Q52e in flight")
+    if re.search(r'\["toDecimal", \{"type": "json", "value": [^}]*\}, -?\d+, -?\d+, "', text):
+        found.add("Q52f toDecimal(json) rounding")
+    return sorted(found)
 
 
 def run(root, case_path, out_path):
@@ -205,10 +235,15 @@ for p in cases:
     if d is None:
         same += 1
         continue
-    rows.append({"case": str(p), "path": d[0], "old": d[1], "new": d[2]})
+    rows.append({"case": str(p), "path": d[0], "old": d[1], "new": d[2], "features": features(p),
+                 "oldRefused": bool(a.get("refused")), "newRefused": bool(b.get("refused"))})
+by_feature = {}
+for r in rows:
+    key = " + ".join(f for f in r["features"] if f != "erase") or ("erase (Q49-Q52 erasure)" if "erase" in r["features"] else "UNEXPLAINED")
+    by_feature[key] = by_feature.get(key, 0) + 1
 out = {"old": str(OLD), "new": str(NEW), "cases": len(cases), "random": N, "seed": SEED, "identical": same, "bothRefused": both_refused,
-       "different": len(rows), "rows": rows}
+       "different": len(rows), "differentByFeature": by_feature, "rows": rows}
 OUT.write_text(json.dumps(out, indent=1, default=str) + "\n")
 print(json.dumps({k: v for k, v in out.items() if k != "rows"}))
 for r in rows:
-    print(Path(r["case"]).name, r["path"], json.dumps(r["old"], default=str)[:160], "->", json.dumps(r["new"], default=str)[:160])
+    print(Path(r["case"]).name, r["features"], r["path"], json.dumps(r["old"], default=str)[:120], "->", json.dumps(r["new"], default=str)[:120])
