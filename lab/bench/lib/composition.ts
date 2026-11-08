@@ -100,8 +100,10 @@ function failureOf(exit: any): StoreFailure {
   return { ok: false, tag: String(tag ?? "Unknown"), error };
 }
 
-async function publicComposition(lane: Lane, scope: string, variant: "public" | "public-queued" = "public"): Promise<CompositionHandle> {
-  const h: TriplesHandle = await openTriples(lane, scope, variant === "public-queued" ? { admissionQueue: true } : undefined);
+async function publicComposition(lane: Lane, scope: string, variant: "public" | "public-queued" | "x1" = "public"): Promise<CompositionHandle> {
+  if (variant === "x1" && lane !== "xtdb") throw new Error("composition x1 exists only on the xtdb lane");
+  // [EXP-P4 arm X1] same service, XTDB adapter current reads with default temporal bounds (R24 section 1).
+  const h: TriplesHandle = await openTriples(lane, scope, variant === "public-queued" ? { admissionQueue: true } : variant === "x1" ? { currentReadTemporalBounds: "default" } : undefined);
   const T = h.triples;
   const E = (id: string) => core.EntityId.make(id);
   const outcome = async <A>(effect: any): Promise<Outcome<A>> => {
@@ -132,7 +134,7 @@ async function publicComposition(lane: Lane, scope: string, variant: "public" | 
     // every basis it has published, so no wait and no fallback are possible here.
     return { triples, entities: seen.size, roundTrips, depth: roundTrips - 1, route: "source", language, waitedMs: 0 };
   };
-  const one = { lane, role: `triplex public Triples service on one engine slot${variant === "public-queued" && lane === "xtdb" ? " (XTDB adapter admissionQueue: true)" : ""}` };
+  const one = { lane, role: `triplex public Triples service on one engine slot${variant === "public-queued" && lane === "xtdb" ? " (XTDB adapter admissionQueue: true)" : variant === "x1" ? " (XTDB adapter currentReadTemporalBounds: default)" : ""}` };
   const language = lane === "xtdb" ? "triplex-entities(xtdb-sql)" : "triplex-entities(sparql)";
   return {
     name: variant,
@@ -158,6 +160,13 @@ export const COMPOSITIONS: Record<string, (lane: Lane, scope: string) => Promise
   public: (lane, scope) => publicComposition(lane, scope, "public"),
   /** Same surfaces; on XTDB the adapter queues writes in process (admissionQueue) instead of racing the scope position CAS. */
   "public-queued": (lane, scope) => publicComposition(lane, scope, "public-queued"),
+  /** [EXP-P4 arm X1] `public` with XTDB current reads under default temporal bounds (xtdb lane only). */
+  x1: (lane, scope) => publicComposition(lane, scope, "x1"),
+  /**
+   * [EXP-P4 arm H1] `public` as source of truth and fallback, plus an in-process current table (lib/current-table.ts)
+   * fed by this opening's receipts and the source feed (polled every 100 ms), served only for eligible bases.
+   */
+  h1: async (lane, scope) => (await import("./current-table.ts")).h1Composition(await publicComposition(lane, scope), { applyReceipts: true, followEveryMs: 100 }),
 };
 
 export async function openComposition(name: string, lane: Lane, scope: string): Promise<CompositionHandle> {

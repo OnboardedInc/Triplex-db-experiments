@@ -77,9 +77,29 @@ export const makeXtdbStorageAdapter = (
     readonly resolutionTimeoutMs?: number;
     readonly admissionQueue?: boolean;
     readonly constraintStrategy?: "portable" | "inline" | "projection";
+    /**
+     * [EXP-P4 arm X1] Temporal bounds of current (non-history) reads of `tx_assertions`.
+     * "all-valid-time" (default, unchanged) says `FOR ALL VALID_TIME`; "default" omits the clause, so the scan
+     * gets XTDB's default point bounds (valid time AS OF now, system time AS OF the snapshot).
+     * Why: R24 sections 1.3 to 1.6. XTDB 2.2.0 files rows whose versions were superseded into weekly
+     * historical files and drops those files and pages for a scan whose lower temporal bound is after their
+     * recency (`trie.clj:113-118`). `FOR ALL VALID_TIME` makes the valid-time lower bound the minimum long,
+     * so nothing is ever dropped and the polygon resolver runs for every event.
+     * Exactness: every `tx_assertions` version is written by `insertStatement` below with `_valid_from` 1970
+     * and no `_valid_to`, and nothing in this package deletes, erases or patches it, so the one version
+     * visible at the snapshot's system time is valid at every valid time and both bounds return the same
+     * rows. Triplex's own valid time stays in the `valid_from` and `valid_to` columns, filtered in SQL.
+     * Rejected: also changing `tx_meta`, claims and receipts reads (R24 lists them); X1 is the read-path
+     * arm only, measured alone first (RULINGS Q68g).
+     */
+    readonly currentReadTemporalBounds?: "all-valid-time" | "default";
   } = {},
 ): StorageAdapterService => {
   const key = Symbol(scopeKey);
+  const currentAssertionSource =
+    options.currentReadTemporalBounds === "default"
+      ? "tx_assertions"
+      : "tx_assertions FOR ALL VALID_TIME";
   const maxRetries = options.maxRetries ?? 12;
   const resolutionTimeoutMs = options.resolutionTimeoutMs ?? 30_000;
   const admission = Semaphore.makeUnsafe(1);
@@ -160,7 +180,7 @@ export const makeXtdbStorageAdapter = (
       const rows = yield* read(async (signal) =>
         (
           await client.query(
-            `SELECT ${assertionColumns.join(", ")} FROM tx_assertions FOR ALL VALID_TIME WHERE ${conditions.join(" AND ")}`,
+            `SELECT ${assertionColumns.join(", ")} FROM ${history ? "tx_assertions FOR ALL VALID_TIME" : currentAssertionSource} WHERE ${conditions.join(" AND ")}`,
             params,
             undefined,
             { signal, timeoutMs: 30_000 },

@@ -82,6 +82,10 @@ Register a new composition in `COMPOSITIONS` (name -> factory(lane, scope)); rea
 composition that routes reads must honor `WATERMARK_WAIT_MS` (10 ms, Q31d) and report `route` (`source`, an index
 name, or `fallback`), the surface `language` and `waitedMs`; the fallback's latency is part of the read's latency.
 `public` serves everything from the source of truth's own surface (`Triples.entities` at `{recordedAt, validAt}`).
+EXP-P4 adds two: `x1` (XTDB only) is `public` with the adapter's `currentReadTemporalBounds: "default"`, and `h1` is
+`public` plus the in-process current table of `lib/current-table.ts`, which serves a basis only when
+`instant(H) <= R <= instant(W)` and otherwise waits up to 10 ms and routes to `fallback:<reason>`. Each `h1` opening
+applies its own receipts and polls the source feed every 100 ms, so reader workers are followers with their own W.
 
 ## Reads
 

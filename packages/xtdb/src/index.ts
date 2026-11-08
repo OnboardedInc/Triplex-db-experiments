@@ -19,6 +19,8 @@ export interface XtdbRuntimeOptions {
   /** Experimental SQL constraint strategies; portable remains the default. */
   readonly constraintStrategy?: "portable" | "inline" | "projection";
   readonly queryLimits?: XtdbQueryLimits;
+  /** [EXP-P4 arm X1] See `makeXtdbStorageAdapter`; default "all-valid-time" keeps today's reads. */
+  readonly currentReadTemporalBounds?: "all-valid-time" | "default";
 }
 
 class Connection extends Context.Service<Connection, XtdbClient>()("triplex/xtdb/Connection") {}
@@ -52,6 +54,9 @@ export const makeXtdbRuntime = (
         ...(options.constraintStrategy === undefined
           ? {}
           : { constraintStrategy: options.constraintStrategy }),
+        ...(options.currentReadTemporalBounds === undefined
+          ? {}
+          : { currentReadTemporalBounds: options.currentReadTemporalBounds }),
       });
     }),
   ).pipe(Layer.provide(connection));
