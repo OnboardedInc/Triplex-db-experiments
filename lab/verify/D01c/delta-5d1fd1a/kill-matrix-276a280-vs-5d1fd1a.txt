@@ -1,0 +1,15 @@
+identical on cases, old tests, fingerprint and proposed kills: 71
+  M00 M01 M02 M03 M04 M05 M06 M07 [ported] M17 M08 [ported] M09 M10 M10b M11 [ported] M13 M14 M15 [ported] M16 M18c (+new tests test_f2_long_integer_tokens) M51 [ported] (+new tests test_f3_deep_payload_round_trip) M53 (+new tests test_f3_deep_payload_round_trip) M52 [ported] (+new tests test_f3_deep_values) M54 (+new tests test_f3_deep_payload_round_trip,test_writer_paths_agree) M55 [ported] (+new tests test_f3_deep_payload_round_trip) M56 M56b M57 M18 M19 (+new tests test_f1_cases_runner_reports_a_crash_as_fail) M20 (+new tests test_f1_cases_runner_reports_a_crash_as_fail) M21 (+new tests test_f1_cases_runner_reports_a_crash_as_fail) M22 M23 M24 M25 M26 M27 M28 M29 M30 M31 M32 M33 M34 M35 M36 M37 M38 M39 M40 M50 M41 M42 M43 M44 M45 M46 M47 M48 M49 M58 M59 M60 M61 M62 M64 M65 M69 M70 M72 M73
+different: 0
+X-mutants of the fix: 10
+  X01 is_date without its type check (F1 reverted): cases none; old tests none; new tests test_f1_containers_on_dates_and_instants,test_f3_deep_values; fp missed; proposed P02
+  X02 is_instant without its type check (F1 reverted): cases none; old tests none; new tests test_f1_containers_on_dates_and_instants; fp missed; proposed P01
+  X03 a token over 16 digits maps to 0 (inside the range): cases none; old tests none; new tests test_f2_long_integer_tokens; fp na; proposed P03
+  X04 digit bound 15 (rejects 16-digit values such as 2^53 - 1): cases C27,C39; old tests none; new tests test_f2_long_integer_tokens; fp na; proposed P03,P22,P23,P24
+  X05 the int/str digit limit is not lifted: cases none; old tests none; new tests test_f2_publish_and_receive_stay_exact; fp na; proposed none
+  X06 a container may close with the other bracket ([1} and {"a":1] parse): cases none; old tests none; new tests none; fp na; proposed none
+  X07 the iterative writer keeps object keys in input order: cases none; old tests test_canonical; new tests test_writer_paths_agree; fp na; proposed none
+  X08 the iterative writer writes the integer token -0 as -0: cases none; old tests test_canonical; new tests test_f3_deep_payload_round_trip; fp na; proposed P13
+  X09 no fallback when the json module hits its recursion guard: cases none; old tests none; new tests test_f3_deep_payload_round_trip; fp na; proposed none
+  X10 a duplicate key is detected only when the object closes after one member: cases none; old tests none; new tests none; fp na; proposed none
+control M00 5d1fd1a: 87/87 cases byte-identical | tests ran 126 failed [] | fp {'caught': False, 'differs': [], 'how': None, 'seconds': 96.3}

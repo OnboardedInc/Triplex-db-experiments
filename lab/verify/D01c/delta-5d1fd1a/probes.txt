@@ -1,0 +1,20 @@
+pl:a startDate               v=[]                                               -> {"error":"W0.E_VALUE"}
+pl:a startDate               v={}                                               -> {"error":"W0.E_VALUE"}
+pl:a startDate               v=["2026-11-02"]                                   -> {"error":"W0.E_VALUE"}
+pl:a section1AttestedAt      v=[]                                               -> {"error":"W0.E_VALUE"}
+pl:a section1AttestedAt      v={"erasedAt": "2026-11-01T00:00:00.000000Z"}      -> {"error":"W0.E_VALUE"}
+pl:a/doc:1 expiresOn         v={}                                               -> {"error":"W0.E_VALUE"}
+pl:a everifyStatusAt         v=[1]                                              -> {"error":"W0.E_VALUE"}
+pl:a payRateCents            v=[]                                               -> {"error":"W0.E_VALUE"}
+pl:a payRateCents            v={}                                               -> {"error":"W0.E_VALUE"}
+pl:a everifyStatus           v=[]                                               -> {"error":"W0.E_VALUE"}
+pl:a ssn                     v=[]                                               -> {"error":"W0.E_VALUE"}
+pl:a location                v={}                                               -> {"error":"W0.E_VALUE"}
+pl:a/doc:1 reverified        v=[]                                               -> {"error":"W0.E_VALUE"}
+erased marker whose erasedAt is an array (ssn)   SPEC: W0.E_VALUE   O-DOMAIN: {"error":"W0.E_VALUE"}
+erased marker whose erasedAt is an object (ssn)  SPEC: W0.E_VALUE   O-DOMAIN: {"error":"W0.E_VALUE"}
+payRateCents as a 5000-digit integer token       SPEC: W0.E_VALUE   O-DOMAIN: {"error":"W0.E_VALUE"}
+fact tx as a 5000-digit integer token            SPEC: W0.E_BASIS   O-DOMAIN: {"error":"W0.E_BASIS"}
+basis.tx as a 5000-digit integer token           SPEC: W0.E_BASIS   O-DOMAIN: {"error":"W0.E_BASIS"}
+fact v nested 600 arrays deep (startDate)        SPEC: W0.E_VALUE   O-DOMAIN: {"error":"W0.E_VALUE"}
+fact v nested 5000 arrays deep (startDate)       SPEC: W0.E_VALUE   O-DOMAIN: {"error":"W0.E_VALUE"}

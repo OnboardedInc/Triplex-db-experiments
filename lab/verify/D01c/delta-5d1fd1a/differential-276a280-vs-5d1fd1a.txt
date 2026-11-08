@@ -1,0 +1,10 @@
+entries 7127: identical 6833; old crashed 294; old syntax error, new value 0; other differences 0; new crashes 0
+  old crash    91  op CRASH:TypeError -> {"error":"W0.E_VALUE"}
+  old crash     9  op CRASH:ValueError -> {"applied":{"effects":[],"pr
+  old crash    17  op CRASH:ValueError -> {"applied":{"effects":[{"id"
+  old crash     9  op CRASH:ValueError -> {"deliveries":[],"state":{"i
+  old crash    32  op CRASH:ValueError -> {"deliveries":[{"id":"wi:b8e
+  old crash     2  op CRASH:ValueError -> {"deliveries":[{"id":"wi:ba3
+  old crash    99  op CRASH:ValueError -> {"error":"W0.E_BASIS"}
+  old crash     3  op CRASH:ValueError -> {"error":"W0.E_SHAPE"}
+  old crash    32  op CRASH:ValueError -> {"error":"W0.E_VALUE"}

@@ -1,0 +1,82 @@
+M00   cases:0   tests(other):0   fp:missed  101s  control: no mutation
+M01   cases:10  tests(other):1   fp:caught/block  8s  addBusinessDays counts the start day d itself (off by one for a weekday start)
+M02   cases:1   tests(other):1   fp:caught/block  8s  Saturday counts as a business day
+M03   cases:0   tests(other):1   fp:caught/block  8s  a weekend start first rolls to Monday, which is then not counted (Sat + 3 = Thu, not Wed)
+M04   cases:0   tests(other):0   fp:NA  4s  tie-break swapped: among equal from, greatest release string before greatest tx
+M05   cases:0   tests(other):1   fp:NA  4s  third tie-break reversed: among equal tx, the least release string
+M06   cases:0   tests(other):0   fp:NA  4s  an activation with from equal to the basis valid time is not a candidate
+M07   cases:0   tests(other):0   fp:NA  4s  an activation committed at basis.tx itself is rejected (tx >= basis.tx is E_BASIS) [ported to 5d1fd1a]
+M17   cases:0   tests(other):1   fp:NA  4s  an unknown picked hash falls back to the newest known candidate
+M08   cases:0   tests(other):1   fp:caught/final  108s  a fact committed at basis.tx itself is rejected (tx >= basis.tx is E_BASIS) [ported to 5d1fd1a]
+M09   cases:0   tests(other):0   fp:NA  4s  basis.tx 0 is rejected (range starts at 1)
+M10   cases:0   tests(other):0   fp:NA  4s  basis.tx 2^53 - 1 is rejected
+M10b  cases:0   tests(other):0   fp:NA  5s  basis.tx 2^53 is accepted
+M11   cases:0   tests(other):0   fp:missed  108s  within one fact, the tx check (E_BASIS) runs before the value check (E_VALUE) [ported to 5d1fd1a]
+M13   cases:0   tests(other):1   fp:missed  116s  a one-cardinality duplicate is reported at once, before later facts pass 3.2
+M14   cases:0   tests(other):1   fp:NA  6s  affected checks every subject (3.1) across all worlds before any fact
+M15   cases:0   tests(other):1   fp:NA  4s  within one activation, E_BASIS (tx) before E_VALUE (release, from) [ported to 5d1fd1a]
+M16   cases:0   tests(other):0   fp:NA  4s  activations are checked before the world
+M18c  cases:1   tests(other):1   fp:missed  142s  cents accept 2^53
+M51   cases:5   tests(other):3   fp:missed  136s  integral non-integer tokens (1650.0, 1.65e3, 3.0) are accepted as integers [ported to 5d1fd1a]
+M53   cases:0   tests(other):4   fp:missed  111s  -0 is not an integer token
+M52   cases:1   tests(other):2   fp:missed  108s  a duplicate key is silently last-wins [ported to 5d1fd1a]
+M54   cases:0   tests(other):2   fp:missed  106s  canonical writer leaves non-ASCII characters unescaped
+M55   cases:0   tests(other):2   fp:NA  5s  a non-integer number token in an opaque payload is rewritten as its value (JSON.stringify style) [ported to 5d1fd1a]
+M56   cases:7   tests(other):0   fp:caught/block  11s  a float sneaks into canonical JSON (floorCents written 1650.0)
+M56b  cases:16  tests(other):0   fp:caught/block  8s  a float sneaks into the work item version preimage (inputs as floats)
+M57   cases:0   tests(other):0   fp:missed  139s  pay-change arithmetic in IEEE doubles (SPEC says exact for 0..2^53-1)
+M18   cases:0   tests(other):0   fp:missed  112s  under R2 the local floor overrides the state floor (last present, not greatest)
+M19   cases:48  tests(other):3   fp:caught/block  8s  dropped wage-floor hop: (J, stateMinWageCents) read but not a dependency
+M20   cases:43  tests(other):2   fp:caught/block  8s  dropped hop: (L, jurisdiction) not a MINWAGE dependency
+M21   cases:35  tests(other):2   fp:caught/block  8s  pay exactly at the floor is below minimum
+M22   cases:1   tests(other):0   fp:missed  103s  an approval in the same transaction as the pay rate does not count
+M23   cases:0   tests(other):0   fp:missed  101s  pos(D) leaves out the subject's decisions fact
+M24   cases:1   tests(other):0   fp:missed  113s  equal-pos tie goes to the least decision id
+M25   cases:0   tests(other):0   fp:missed  115s  an incomplete record missing its verdict counts as an approval
+M26   cases:0   tests(other):0   fp:missed  132s  PROP's p is the earliest proposal, not the latest
+M27   cases:1   tests(other):0   fp:missed  140s  a counting decision at the same position as the latest proposal does not resolve it
+M28   cases:0   tests(other):0   fp:missed  170s  any reverified fact (false too) marks the document reverified
+M29   cases:4   tests(other):0   fp:caught/block  12s  window start off by one day (addDays(expiresOn, -lead))
+M30   cases:5   tests(other):0   fp:caught/block  15s  expiry boundary at the start of the expiry date
+M31   cases:0   tests(other):1   fp:missed  134s  pre-start includes the start instant itself (v <= startOf)
+M32   cases:2   tests(other):1   fp:missed  140s  overdue only strictly after dueAt
+M33   cases:2   tests(other):1   fp:missed  177s  a due obligation is kept when v equals dueAt
+M34   cases:1   tests(other):1   fp:caught/block  13s  the scoped OT params apply to every subject
+M35   cases:0   tests(other):0   fp:missed  159s  the scope test needs the jurisdiction's own stateMinWageCents fact
+M36   cases:3   tests(other):0   fp:caught/block  12s  the scoped OT entry leaves the location facts out of its inputs
+M37   cases:0   tests(other):1   fp:missed  148s  EVSUB tests the accepted submit result before the SSN rows
+M38   cases:1   tests(other):1   fp:caught/block  13s  an erased SSN does not count as present for Section 1
+M39   cases:1   tests(other):0   fp:caught/block  11s  the tnc due time is the start of the day, not the end
+M40   cases:0   tests(other):1   fp:missed  133s  DOCEXP items in fact order, not ascending by document id
+M50   cases:1   tests(other):1   fp:caught/block  9s  PROP items in first-seen order, not ascending by target
+M41   cases:0   tests(other):0   fp:NA  6s  affected subjects in world order, not ascending
+M42   cases:1   tests(other):0   fp:NA  7s  affected always uses R1 dependencies
+M43   cases:0   tests(other):0   fp:NA  6s  basis guard ignores validTime (equal tx, earlier validTime is applied)
+M44   cases:0   tests(other):0   fp:NA  5s  an equal-basis record is skipped
+M45   cases:0   tests(other):0   fp:NA  5s  retirement also retires other subjects' items
+M46   cases:1   tests(other):0   fp:NA  5s  a retired id reappearing with an equal payload publishes nothing
+M47   cases:0   tests(other):1   fp:NA  5s  a processed delivery releases at most one waiting delivery
+M48   cases:1   tests(other):0   fp:NA  6s  the projection re-applies an equal seq
+M49   cases:1   tests(other):0   fp:NA  5s  a delivery already waiting is queued again
+M58   cases:0   tests(other):0   fp:caught/block  9s  Zipf weight floor(10^12 / isqrt(r)) instead of isqrt(10^24 div r)
+M59   cases:0   tests(other):0   fp:caught/block  10s  evres drawn for any present SSN (dashed and erased too)
+M60   cases:0   tests(other):0   fp:caught/block  12s  the stale approval option is generated after the change
+M61   cases:0   tests(other):0   fp:caught/block  10s  location rank r maps to jurisdiction (r mod K) + 1
+M62   cases:0   tests(other):0   fp:caught/block  11s  a location's jurisdiction fact gets position K + r - 1
+M64   cases:0   tests(other):0   fp:caught/block  10s  world facts not sorted by canonical bytes
+M65   cases:0   tests(other):0   fp:caught/block  12s  weighted choice picks the first running total >= x (not > x)
+M69   cases:0   tests(other):0   fp:caught/block  12s  baseline = pay + c (sign flipped)
+M70   cases:0   tests(other):1   fp:caught/block  12s  n = ceil((T - F) / 3)
+M72   cases:0   tests(other):0   fp:caught/block  13s  a re-asserted one-cardinality pair keeps its first assertion
+M73   cases:0   tests(other):2   fp:caught/block  12s  the scheduled raise takes no position
+X01   cases:0   tests(other):2   fp:missed  154s  is_date without its type check (F1 reverted)
+X02   cases:0   tests(other):1   fp:missed  162s  is_instant without its type check (F1 reverted)
+X03   cases:0   tests(other):1   fp:NA  6s  a token over 16 digits maps to 0 (inside the range)
+X04   cases:2   tests(other):1   fp:NA  6s  digit bound 15 (rejects 16-digit values such as 2^53 - 1)
+X05   cases:0   tests(other):1   fp:NA  7s  the int/str digit limit is not lifted
+X06   cases:0   tests(other):0   fp:NA  6s  a container may close with the other bracket ([1} and {"a":1] parse)
+X07   cases:0   tests(other):2   fp:NA  6s  the iterative writer keeps object keys in input order
+X08   cases:0   tests(other):2   fp:NA  5s  the iterative writer writes the integer token -0 as -0
+X09   cases:0   tests(other):1   fp:NA  4s  no fallback when the json module hits its recursion guard
+X10   cases:0   tests(other):0   fp:NA  5s  a duplicate key is detected only when the object closes after one member
+exit=0

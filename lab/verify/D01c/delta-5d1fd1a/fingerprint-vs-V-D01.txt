@@ -1,0 +1,7 @@
+basisTx  match  4338757
+facts    match  44537987
+worlds   match  sha256:fec1d7cedee2b2f18c77e78210e4e9ed14fffb72e9629545155c7307e969c760
+R1       match  sha256:c1b2d410244121d64b476c2f99c32830ea1b1f536928c9d12b0e886132351a79
+R2       match  sha256:551bbbc479eecd15d4f5eb13698f61d20c09a900b7f83a2b10858fb2ba13b562
+R3       match  sha256:a595092272c16343b0dfe9c9db57fbcdd7556fbf8be40afbaed014710fceee2f
+all six match V-D01
