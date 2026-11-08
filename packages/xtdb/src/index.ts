@@ -94,5 +94,6 @@ export {
   type XtdbNativeReachabilityContext,
   type XtdbNativeReachabilityOptions,
 } from "./native/NativeQueries.js";
-export { type XtdbNativeReachability, NativeWorkingOutcomeUnknown } from "./native/Reachability.js";
+// [EXP-C8] NativeWorkingOutcomeUnknown is gone with the scratch writes it reported on.
+export { type XtdbNativeReachability } from "./native/Reachability.js";
 export { type XtdbNativeContext } from "./native/Sources.js";

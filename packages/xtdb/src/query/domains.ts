@@ -2,7 +2,7 @@ import type { DatalogQuery } from "@triplex-build/triplex/datalog";
 import { DatalogValidationError, assertDatalogQuery } from "@triplex-build/triplex/runtime";
 import type { XtdbClient } from "../XtdbClient.js";
 import { compileXtdb, type QueryBasis } from "./compiler.js";
-import { materializeRules } from "./recursion.js";
+import { evaluateRules, type RuleRelations } from "./recursion.js";
 
 const integerPresence = new WeakMap<XtdbClient, Map<string, boolean>>();
 const containsIntegerConstant = (value: unknown): boolean =>
@@ -19,7 +19,7 @@ export const resolveIntegerVariables = async (
   basis: QueryBasis,
   options: {
     readonly signal?: AbortSignal;
-    readonly runId?: string;
+    readonly ruleRelations?: RuleRelations;
     /** Receives only complete non-integer domain proofs, never an unknown hint. */
     readonly onNonIntegerProjection?: (variable: string) => void;
     /** Evaluate candidate domains at every server-generated interval span. */
@@ -91,9 +91,9 @@ export const resolveIntegerVariables = async (
   );
   const variables = new Set([...operated, ...projected]);
   const hints: string[] = [];
-  let runId = options.runId;
-  if (query.rules?.length && !runId)
-    runId = await materializeRules(client, query, scopeKey, basis, options.signal);
+  let ruleRelations = options.ruleRelations;
+  if (query.rules?.length && !ruleRelations)
+    ruleRelations = await evaluateRules(client, query, scopeKey, basis, options.signal);
   for (const variable of variables) {
     options.signal?.throwIfAborted();
     const positive = query.where.some(
@@ -132,7 +132,7 @@ export const resolveIntegerVariables = async (
     const compiled = compileXtdb(candidate, scopeKey, {
       basis,
       integerVariables: optional?.length ? [variable] : [],
-      ...(runId ? { runId } : {}),
+      ...(ruleRelations ? { ruleRelations } : {}),
       ...(options.wrapDomainQuery ? { temporalInWhere: true } : {}),
     });
     const columns = compiled.valueColumnMap.get(variable);

@@ -1,4 +1,5 @@
 import { Effect } from "effect";
+import { readOnlyXtdbClient } from "./ReadOnlyClient.js";
 import type { DatalogQuery } from "@triplex-build/triplex/datalog";
 import {
   DatalogValidationError,
@@ -48,7 +49,7 @@ const checkedTime = (value: number, name: string) => {
  * XTDB constructs spans, evaluates the correlated query and coalesces answers.
  * Only final bounded answers are transferred to the client.
  */
-export const makeXtdbTemporalQueries = (client: XtdbClient, scopeKey: string) => ({
+const temporalQueries = (client: XtdbClient, scopeKey: string) => ({
   queryIntervals: (
     query: DatalogQuery,
     options: IntervalQueryOptions,
@@ -224,3 +225,8 @@ export const makeXtdbTemporalQueries = (client: XtdbClient, scopeKey: string) =>
           : new ReadError({ message: "XTDB interval query failed", cause }),
     }),
 });
+
+// [EXP-C8] Read entry point: the shared client is handed over as a write-refusing view
+// (ReadOnlyClient.ts), so no read path can reach the engine with a write.
+export const makeXtdbTemporalQueries = (client: XtdbClient, scopeKey: string) =>
+  temporalQueries(readOnlyXtdbClient(client), scopeKey);

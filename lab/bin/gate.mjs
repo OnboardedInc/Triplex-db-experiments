@@ -449,6 +449,13 @@ async function gateG2(run, config) {
   if (cases.length === 0) run.reason('zero executed cases');
   if (unsupported) run.reason(`${unsupported} executions UNSUPPORTED (counted as skips)`);
   if (cases.length - pass - unsupported) run.reason(`${cases.length - pass - unsupported} failed executions`);
+  // [EXP-C8] Why: contract C8 ("reads never mutate") is checked at the engine boundary. The runner
+  // routes its native read client through a wire-level counter (engine-write-counter.ts); any write
+  // statement, commit or update request on it is a read path that wrote, so G2 fails. A runner
+  // without the counter records null (older branches), which is reported, not failed.
+  result.readPathEngineWrites = report.readPathEngineWrites ?? null;
+  if (report.readPathEngineWrites && (report.readPathEngineWrites.writes || report.readPathEngineWrites.unparsed))
+    run.reason(`C8: native reads issued ${report.readPathEngineWrites.writes} engine writes (${report.readPathEngineWrites.commits} commits, ${report.readPathEngineWrites.unparsed} unparsed streams)`);
   result.scope = expected === FULL_G2_EXECUTIONS ? 'full' : `subset:${expected}/${FULL_G2_EXECUTIONS} (workloads ${run.options.workloads})`;
   result.counts = { executed: cases.length, expected, pass, fail: cases.length - pass - unsupported, skip: unsupported + (expected - cases.length), statuses };
   result.languages = tallyLanguages(cases);

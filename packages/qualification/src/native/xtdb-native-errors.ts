@@ -16,12 +16,8 @@ export class NativeIntegerOverflowError extends Data.TaggedError("NativeIntegerO
   readonly cause?: unknown;
 }> {}
 
-// [EXP-X02] interim, replaced by EXP-X03
-export class NativeRecursionDepthError extends Data.TaggedError("NativeRecursionDepthError")<{
-  readonly code: "recursion-depth-exceeded";
-  readonly message: string;
-  readonly maxDepth: number;
-}> {}
+// [EXP-C8] NativeRecursionDepthError (the interim XTQL depth unrolling's budget) is gone: closure
+// budgets now fail with the shared RecursionBudgetExceeded from @triplex-build/triplex/runtime.
 
 export class NativeEngineHazardError extends Data.TaggedError("NativeEngineHazardError")<{
   readonly code: "mark-join-build-limit";

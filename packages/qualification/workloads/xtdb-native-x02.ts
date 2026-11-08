@@ -116,7 +116,7 @@ const session = (provider: any, mutate?: Mutate, afterFirst?: () => Promise<void
   const wrap =
     (method: string) =>
     (...callArgs: any[]) => {
-      const index = method === "selectSqlWithReachability" ? 3 : 2;
+      const index = method.endsWith("WithReachability") ? 3 : 2;
       const build = callArgs[index];
       callArgs[index] = (ctx: unknown, input: unknown) =>
         mutate ? mutate(build(ctx, input)) : build(ctx, input);
@@ -130,6 +130,7 @@ const session = (provider: any, mutate?: Mutate, afterFirst?: () => Promise<void
     select: wrap("select"),
     selectSql: wrap("selectSql"),
     selectSqlWithReachability: wrap("selectSqlWithReachability"),
+    selectWithReachability: wrap("selectWithReachability"), // [EXP-C8] XTQL closure reads
   };
 };
 const languages = ["xtql", "xtdb-sql"] as const;

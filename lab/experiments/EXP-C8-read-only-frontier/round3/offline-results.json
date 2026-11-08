@@ -1,0 +1,74 @@
+[
+  {
+    "name": "core",
+    "started": "2026-11-08T21:53:16.015Z",
+    "finished": "2026-11-08T21:53:34.720Z",
+    "command": [
+      "/Users/sam/.hermes/node/bin/node",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/node_modules/vitest/vitest.mjs",
+      "run",
+      "--maxWorkers=1",
+      "--no-file-parallelism"
+    ],
+    "status": 0,
+    "signal": null,
+    "error": ""
+  },
+  {
+    "name": "xtdb",
+    "started": "2026-11-08T21:53:34.722Z",
+    "finished": "2026-11-08T21:53:39.628Z",
+    "command": [
+      "/Users/sam/.hermes/node/bin/node",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/node_modules/vitest/vitest.mjs",
+      "run",
+      "--maxWorkers=1",
+      "--no-file-parallelism"
+    ],
+    "status": 0,
+    "signal": null,
+    "error": ""
+  },
+  {
+    "name": "qlever",
+    "started": "2026-11-08T21:53:39.628Z",
+    "finished": "2026-11-08T21:53:43.198Z",
+    "command": [
+      "/Users/sam/.hermes/node/bin/node",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/node_modules/vitest/vitest.mjs",
+      "run",
+      "--maxWorkers=1",
+      "--no-file-parallelism"
+    ],
+    "status": 0,
+    "signal": null,
+    "error": ""
+  },
+  {
+    "name": "qualification",
+    "started": "2026-11-08T21:53:43.199Z",
+    "finished": "2026-11-08T21:53:46.212Z",
+    "command": [
+      "/Users/sam/.hermes/node/bin/node",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/node_modules/vitest/vitest.mjs",
+      "run",
+      "--maxWorkers=1",
+      "--no-file-parallelism"
+    ],
+    "status": 0,
+    "signal": null,
+    "error": ""
+  },
+  {
+    "name": "qualification-node",
+    "command": [
+      "/Users/sam/.hermes/node/bin/node",
+      "--test",
+      "../../qualification/compare.test.mjs",
+      "load/dispatch.test.ts",
+      "load/model.test.ts"
+    ],
+    "status": 0,
+    "signal": null
+  }
+]
