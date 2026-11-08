@@ -7,7 +7,7 @@ performance targets are superseded and must not be used.
 
 ## 1. Mission and done condition
 
-**Mission.** Tune a Triplex fact store for Sam's five priorities on two lanes, with Triplex as the TypeScript interface used
+**Mission.** Tune a Triplex fact store for Sam's five priorities on three lanes (lane D, Datomic, added 2026-11-08), with Triplex as the TypeScript interface used
 almost like an ORM and raw native queries that still make sense:
 
 | Surface | Engine (pinned) | Native language |
@@ -15,6 +15,7 @@ almost like an ORM and raw native queries that still make sense:
 | X-XTQL | XTDB 2.2.0, image digest `a6a42650...` | XTQL (primary) |
 | X-SQL | XTDB 2.2.0, same foundation | XTDB SQL (named alternative) |
 | Q-SPARQL | QLever 0.6.0, image digest `37d5ede1...`, with its log of record when it is the source of truth | SPARQL |
+| D-DATALOG | Datomic (version and image pinned by the lane D design, 2026-11-08) | Datomic Datalog query and pull |
 
 **The five priorities (fixed, in order):**
 
@@ -180,17 +181,14 @@ under the load Onboarded expects. They are specified in `lab/TARGETS.md` section
 7. **Next generation:** mutate winners, retire hypotheses that failed twice for the same reason. A failed falsifier blocks its
    dependents.
 
-**Hourly learnings pass** (session cron `ae766d26`, hourly at :07): reread the north star, update the notebook from finished work,
-check every running experiment still serves a priority, and launch Sonnet research where the learnings raise a question.
+**Hourly learnings pass:** as in `lab/PROTOCOL.md` section 5 (research by Opus 5.5 at high; usage checked against the 65% pause).
 
 ### 6.2 Agent roles
 
-| Role | Model and effort | Job |
-| --- | --- | --- |
-| Research | Sonnet, xhigh | go wide on the web and in pinned source, probe engines, write `lab/research/*.md` |
-| Coding | Opus, high | one experiment per agent from a commander's-intent brief |
-| Verifier | Opus, high | rerun gates on the integrated candidate, try to break the claim |
-| Adversarial review | Codex `gpt-6.1-sol`, xhigh | plans, contracts, gate or oracle changes, major promotions |
+Superseded 2026-11-08 by `lab/PROTOCOL.md` (Sam's instruction): planners and thinkers, including research, are Opus 5.5 at high;
+code builders are Codex `gpt-6.1-sol` at medium; adversarial reviewers, including verifiers, are Codex `gpt-6.1-sol` at high;
+nothing above high; Codex is launched only through `lab/bin/agent.mjs`. The earlier table (Sonnet xhigh research, Opus coding and
+verifying, Codex xhigh review) is in git history.
 
 ### 6.3 Brief template
 
@@ -242,7 +240,7 @@ comparisons are matched (same slot configuration, fixture, co-runners, three run
 | Heavy slots | `s1` to `s3` | performance, destructive and crash tests; a scale window stops residents |
 | Disk | VM 60 GiB, stop new heavy runs at 50 GiB used | XTDB pre-GC peaks about 6x live data (R7); QLever rebuild overlap about 2x index |
 | Host processes | the QLever broker and log run on the macOS host (R13) | log fsync is `F_FULLFSYNC` |
-| Agents | at most 10 concurrent; at most 4 heavy local commands | research probes take the smallest cap that fits, default 1.5 GiB, with a time box |
+| Agents | at most 10 concurrent (Opus and Codex together, `lab/PROTOCOL.md`); at most 4 heavy local commands | research probes take the smallest cap that fits, default 1.5 GiB, with a time box |
 
 ## 8. Generation 2 (north-star order; reordered after the Codex plan-v2 review, finding 12)
 
@@ -268,6 +266,9 @@ After any context compaction, read `lab/SCOPE.md`, `lab/NORTH-STAR.md`, `lab/TAR
 notebook tail before acting.
 
 ## Changelog
+
+- 2026-11-08: `lab/PROTOCOL.md` takes over agent roles (Codex builders at medium, Codex reviewers at high, Opus planners at high,
+  nothing above high, 65% usage pause); lane D (Datomic) added by Sam.
 
 - v0 to v1.2, 2026-11-07: plan built, three rounds of Codex review, research R1 to R13 (see git history and the notebook).
 - v2, 2026-11-07: Sam's re-scope. The fitness is his five priorities (`lab/NORTH-STAR.md`), measured as in `lab/TARGETS.md`; the old
