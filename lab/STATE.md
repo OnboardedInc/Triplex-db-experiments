@@ -50,16 +50,16 @@ isolation; is Datomic dev storage acceptable for the final acceptance run, or mu
 | CX-P2Q-R2 broker fix round 2 (exp/P2Q-qlever-log-broker) | builder, Codex medium | P2, P3 | Q72a-g, Q67c/d/h; then a Codex reviewer delta check |
 | CX-C8-R2 (exp/C8-read-only-frontier) | builder, Codex medium | P1 | Q77a-c (budgets, iterative counting, counter fail-closed), Q76b, Q76d |
 | CX-VJ01 (verify/J01) | reviewer, Codex high | P2 | verdict on J01 5cc42fb (compact encoding, default off) |
-| CX-VE01-2 (verify/E01) | reviewer, Codex high | floor for claims | delta check of E01 422c8d3 (126/126 tests, replay 70/70) |
+| CX-VE01-3 (verify/E01; CX-VE01-2 stopped by the Codex content filter) | reviewer, Codex high | floor for claims | delta check of E01 422c8d3 (126/126 tests, replay 70/70) |
 | CX-OREPLAY-049 (exp/O04b-oracle-0.4.2) | builder, Codex medium | correctness floor | Q70n completeness by execution, Q70o page selector; then a reviewer |
 | CX-VX02 (verify/X02) | reviewer, Codex high | XTQL lane | verdict on X02 bf1ad4d, minus the exclusive-slot rerun |
-| CX-W01B (exp/W01-golden-scenarios) | builder, Codex medium | GS | remaining XTDB scenarios, GS.04, GS.12 |
+| R27 evidence sources per O-OBS protocol, three engines (planner, Opus high) | planner, Opus 5.5, high | floor: O-OBS CA01 | /Users/sam/Claude/Projects/triplex-db-2/R27/ |
 | CX-VO05 (verify/O05) | reviewer, Codex high | floor: O-OBS blocks 62 obligations | verdict on O-OBS 6852fc1 |
 | CX-K01 (exp/K01-seed-clone) | builder, Codex medium | measurement speed | clone tooling, 500-subject live check, E1 plan |
 
 Paused at the 2026-11-08 Claude weekly limit and not resumed (effort may exceed high): the ten agents in lab/agents/handoffs/;
-their work is in WIP commits on their branches. Still waiting for a slot: R25
-finish (planner; data in /Users/sam/Claude/Projects/triplex-db-2/R25/), R27 and R28 (planners), M01 (parked for the Q69a window).
+their work is in WIP commits on their branches. Still waiting for a slot: W01b live GS rerun on an exclusive XTDB slot (W01b offline work done at 1d19199: harness and restart fixes, 23 tests, 20/20 golden regeneration, GS.12 patch checks; the shared-engine rerun stopped incomplete), R25
+finish (planner; data in /Users/sam/Claude/Projects/triplex-db-2/R25/), R28 (planner), M01 (parked for the Q69a window).
 
 ## Codex review history
 Codex plan-v2 review DONE: NOT READY, 14 findings all accepted (lab/reviews/plan-v2-review.responses.md, 675db6b). Codex round 2 DONE: 7 closed, 7 partial, 6 new, NOT READY; all accepted as Q31a-k (743cb1f). Contract 0.3.3 committed 89376e1 (142 obligations). Codex round 3 DONE: 11 closed, 2 partial, 5 new, NOT READY; accepted as Q34a-e (9a4fbb4). Contract 0.3.4 committed 60e4c57 (147 obligations, byte-identical regeneration). Codex round 4 DONE: NOT READY; accepted as Q38a-f (baeb9fd). Contract 0.3.5 committed 15a07b6 (149 obligations; 124 fail closed on null oracle pins; Q40 recorded-not-compiled; Q41 in RULINGS-PENDING.md). Codex round 5 DONE: 6 closed, 2 partial, 3 new; Q42a-c pending (59047ac). Contract 0.3.6 compiles Q40-Q42 once W0-1.1.0 lands; then Codex round 6. Rounds 6-8 since: open findings 4, 5, 10; round 8 accepted as Q67 (lab/reviews/plan-v2-round8.responses.md).
