@@ -904,7 +904,8 @@ const removeDir = d => { try { if (fs.existsSync(d)) { fs.chmodSync(d, 0o755); s
 
 /** The files a run executes from the evaluator's working tree (claim.mjs, its import lib.mjs, gate.mjs for the plan) and the
  * reference model, each compared with its blob at the evaluator's commit (RULINGS Q75a). */
-export const EVALUATOR_FILES = ['lab/bin/claim.mjs', 'lab/bin/lib.mjs', 'lab/bin/gate.mjs', 'lab/acceptance/build_contract.py'];
+// [EXP-E01] Why: gate imports execute too. Rejected: pinning only direct entrypoints (transitive code could be poisoned).
+export const EVALUATOR_FILES = ['lab/bin/claim.mjs', 'lab/bin/lib.mjs', 'lab/bin/gate.mjs', 'lab/bin/engine.mjs', 'lab/bin/heavy-lock.mjs', 'lab/bin/receipt.mjs', 'lab/acceptance/build_contract.py'];
 const EVALUATOR_ROOT = path.resolve(import.meta.dirname, '../..');
 const POISON_MARKER = 'triplex-evaluator-poisoned.json';
 const evaluatorBytes = () => Object.fromEntries(EVALUATOR_FILES.map(f => { try { return [f, sha256(fs.readFileSync(path.join(EVALUATOR_ROOT, f)))]; } catch { return [f, null]; } }));
@@ -1012,6 +1013,7 @@ function childRunner({ iso, toolchainDir, toolchain, sandbox }) {
     const fds = [input ? fs.openSync(inp, 'r') : 'ignore', fs.openSync(out, 'w'), fs.openSync(err, 'w')];
     const env = { PATH: [toolchainDir, ...SYSTEM_PATH].join(':'), HOME: home, TMPDIR: home, LANG: 'C.UTF-8', GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1', GIT_NO_REPLACE_OBJECTS: '1', PYTHONDONTWRITEBYTECODE: '1' };
     // [EXP-E01] Why: refuse changed tools before each invocation. Rejected: end-only hashing (poisoned tools could run first).
+    if (TOOLS.includes(argv[0]) && (!toolchain[argv[0]] || !toolchain[argv[0]].version)) throw new Error(`unresolved toolchain: ${argv[0]}`);
     for (const [name, t] of Object.entries(toolchain)) if (t && (fs.realpathSync(path.join(toolchainDir, name)) !== t.path || sha256(fs.readFileSync(t.path)) !== t.sha256)) throw new Error(`toolchain changed: ${name}`);
     const command = toolchain[argv[0]] ? [toolchain[argv[0]].path, ...argv.slice(1)] : argv;
     const full = sandbox ? [SANDBOX_EXEC, '-p', sandboxProfile([...writable, home]), ...command] : command;
@@ -1108,14 +1110,17 @@ export function localSut(spec) {
 }
 
 /** Step 3 as far as it exists: gate.mjs OBL --dry-run checks the lane and the registered slot and echoes the plan. */
-export function gateDryRun(workDir) {
+export function gateDryRun(workDir, runChild) {
+  if (!runChild) throw new Error('gateDryRun requires the run-bound child runner');
   return plan => {
     const file = path.join(workDir, 'gate-plan.json');
     fs.writeFileSync(file, JSON.stringify(plan, null, 2) + '\n');
-    const r = spawnSync(process.execPath, [QUALIFY.gate, 'OBL', '--lane', String(plan.lane), '--slot', String(plan.slot), '--dry-run', '--plan', file], { encoding: 'utf8', timeout: 60_000 });
+    // [EXP-E01] Why: the gate uses the same recorded toolchain and per-child environment. Rejected: inherited HOME/PATH.
+    const argv = ['node', QUALIFY.gate, 'OBL', '--lane', String(plan.lane), '--slot', String(plan.slot), '--dry-run', '--plan', file];
+    const r = runChild(argv, { cwd: EVALUATOR_ROOT, writable: [workDir], timeout: 60_000, label: 'gate' });
     let out = null;
     try { out = JSON.parse(r.stdout); } catch { out = null; }
-    return r.status === 0 && isObj(out) ? { ok: true, ...out } : { ok: false, error: `${r.stderr || r.stdout}`.trim().slice(0, 400) };
+    return r.status === 0 && isObj(out) ? { ok: true, ...out } : { ok: false, error: `${r.stderr?.length ? r.stderr : r.stdout}`.trim().slice(0, 400) };
   };
 }
 
@@ -1224,7 +1229,7 @@ function labExecutor({ commit, contract, ctx, spec, slots, loadContract, claim, 
   const instances = [], byIdentity = new Map(), inputFiles = new Map(), answers = new Map(), repCount = new Map();
   const specSha = buildSpecSha256(spec), exclusions = Array.isArray(spec?.installMetadataExclusions) ? spec.installMetadataExclusions.filter(safePath) : [];
   const inputsDir = iso('inputs');
-  let lastInstance = null, current = { o: null }, last = null, lastAnswer = null;
+  let current = { o: null }, last = null, lastAnswer = null;
   ctx.onRun = (o, binary) => { current = { o, binary }; };
   // A case input is copied once into the evaluator's input directory and re-hashed before every use.
   const inputPath = raw => {
@@ -1252,6 +1257,9 @@ function labExecutor({ commit, contract, ctx, spec, slots, loadContract, claim, 
       const inputList = [...snap.files.keys()].filter(p => snap.files.get(p).sha256 && (pkgs.some(k => p.startsWith(`${k}/`)) || p === 'pnpm-lock.yaml' || p === 'package.json')).sort();
       const b = runChild(spec.argv, { cwd: dir, writable: [dir], timeout: 1_800_000, label: `build${n}` });
       if (b.status !== 0) { why('BUILD-FAILED', `${c}: ${spec.argv.join(' ')} exited ${b.status ?? b.signal}: ${b.stderr.toString('utf8').trim().slice(-300)}`); return null; }
+      // [EXP-E01] Why: never read output symlinks before refusing them. Rejected: collecting modules before the safe walk.
+      const walk = walkTree(dir, exclusions);
+      if (walk.outside.length) { why('BUILD-LINK-OUTSIDE', `${c}: ${walk.outside.join(', ')} resolves outside the checkout`); return null; }
       const files = [];
       for (const out of spec.outputs.map(p => p.replace(/\/$/, ''))) {
         const abs = path.join(dir, out);
@@ -1264,9 +1272,6 @@ function labExecutor({ commit, contract, ctx, spec, slots, loadContract, claim, 
       }
       const modules = [...new Set(files)].sort().map(p => ({ path: p, sha256: put(fs.readFileSync(path.join(dir, p))) }));
       if (!modules.length) { why('BUILD-OUTPUTS', `${c}: the build produced no files under ${spec.outputs.join(', ')}`); return null; }
-      const walk = walkTree(dir, exclusions);
-      // Q75e: a link out of the checkout would make the instance execute bytes no identity binds (V-E01 F3).
-      if (walk.outside.length) { why('BUILD-LINK-OUTSIDE', `${c}: ${walk.outside.slice(0, 5).join(', ')} ${walk.outside.length === 1 ? 'is a symlink that resolves' : 'are symlinks that resolve'} outside the checkout (RULINGS Q75e)`); return null; }
       const lock = walk.entries.find(e => e[0] === 'pnpm-lock.yaml');
       const identityBytes = executionIdentity({ sourceTreeSha256: tree, buildSpecSha256: specSha, lockfileSha256: lock?.[2], toolchain: toolchainIdentity(toolchain, spec), runner: walk.entries });
       const identity = put(identityBytes);
@@ -1281,7 +1286,6 @@ function labExecutor({ commit, contract, ctx, spec, slots, loadContract, claim, 
         buildManifestSha256: manifest, modules: modules.length, inputs: inputList.length, checkout: dir };
       run.instances.push(summary);
       run.builds[c] = summary;
-      lastInstance = rec;
       return identity;
     },
     manifest(set) { return pre.manifests.get(set) ?? null; },
@@ -1334,13 +1338,8 @@ function labExecutor({ commit, contract, ctx, spec, slots, loadContract, claim, 
       last = { instance: b?.n ?? null, build: b?.commit ?? null, binary, comp, x, mode, rep, observed: null };
       const raw = isObj(x) && safePath(x.input) ? pre.inputs.get(x.input) ?? null : null;
       if (!b || !raw || sha256(raw) !== own(x, 'contentSha256') || !sut) return null;
-      // Q67e: an instance is re-hashed (its whole checkout) whenever another instance ran since it last did, and an instance whose
-      // bytes changed is never run again.
-      if (lastInstance !== b) {
-        const now = walkTree(b.dir, exclusions);
-        if (runtimeListing(now.entries) !== runtimeListing(b.runtime) || now.outside.length) { b.tampered = true; why('BUILD-TAMPERED', `instance ${b.n} (${b.commit}): its checkout changed after the evaluator built it (RULINGS Q67b, Q67e)`); }
-        lastInstance = b;
-      }
+      // [EXP-E01] Why: same-instance mutations must fail too. Rejected: hashing only on instance switches (last-case edits escaped).
+      verifyBuild(b);
       if (b.tampered) return null;
       const casePath = inputPath(raw);
       if (!casePath) return null;
@@ -1361,7 +1360,7 @@ function labExecutor({ commit, contract, ctx, spec, slots, loadContract, claim, 
       // the composition is recorded as unbound configuration, not hashed as if applied.
       const executionSha256 = last?.binary ? sha256(canonText({ binarySha256: last.binary, configApplied: false })) : null;
       run.cases.push({ obligation: o?.id ?? null, instance: last?.instance ?? null, build: last?.build ?? null, executionSha256, configApplied: false, case: x?.id ?? null, mode: last?.mode ?? null, rep: last?.rep ?? null,
-        comparator: cmp, verdict: v, expectedSha256, observedSha256, recordSha256: rec });
+        comparator: cmp, verdict: v, expectedSha256, observedSha256, recordSha256: rec, unboundConfig: last?.comp ?? null });
       if (v !== 'PASS' && sut) why(v === 'UNCOMPARABLE' ? 'CASE-UNCOMPARABLE' : 'CASE-FAIL', `instance ${last?.instance ?? '?'} (${last?.build ?? '?'}) ${o?.id} ${x?.id} mode ${last?.mode}: ${cmp} ${v}${obs == null ? ` (no observation${last?.exit != null ? `, exit ${last.exit}` : ''})` : ''} (RULINGS Q55a, Q67i)`);
       return v === 'PASS';
     },
@@ -1382,6 +1381,19 @@ function labExecutor({ commit, contract, ctx, spec, slots, loadContract, claim, 
       why('PAIRED-NOT-RUN', 'the PAIR_0 paired-rounds measurement of the candidate against A0 (two registered slots with disjoint, equal cpusets, the NS gate) has no runner in this evaluator yet (RULINGS Q60, Q61g, Q67f, Q67g)');
       return null;
     },
+  };
+  function verifyBuild(b) {
+    if (b.tampered) return;
+    const now = walkTree(b.dir, exclusions);
+    if (runtimeListing(now.entries) !== runtimeListing(b.runtime) || now.outside.length) {
+      b.tampered = true;
+      why('BUILD-TAMPERED', `instance ${b.n} (${b.commit}): its checkout changed after the evaluator built it (RULINGS Q67b, Q67e)`);
+    }
+  }
+  // [EXP-E01] Why: detect even the final execution's edits. Rejected: pre-invocation-only checks (no later invocation).
+  ev.verifyRuntime = () => {
+    for (const b of instances) verifyBuild(b);
+    for (const [x, root] of pre.oracles) if (root) verifyOracleCopy(x, root);
   };
   // Q67e: immediately before every invocation, the oracle copy holds exactly the prepared files with their bytes and read-only
   // modes, and nothing else (no planted module, no bytecode cache); any change refuses the oracle for the rest of the run.
@@ -1434,6 +1446,7 @@ export function qualifyClaim(claim, env) {
  * checkout), the toolchain's files are unchanged, and every evidence object the run wrote is present with its bytes and nothing
  * else is in the store. */
 function endChecks(why, run, state) {
+  state.verifyRuntime?.();
   if (state.integrity && !state.integrity.problems.length) {
     const now = evaluatorBytes(), changed = EVALUATOR_FILES.filter(f => now[f] !== state.integrity.files[f]);
     if (changed.length) { why('EVALUATOR-TAMPERED', `${changed.join(', ')} changed during the run; the checkout is marked poisoned until restored from git (RULINGS Q75a)`); poison(state.integrity, `${changed.join(', ')} changed during a run`); }
@@ -1511,9 +1524,11 @@ function runQualification(claim, env, why, run, state) {
   pre.labels = new Map([...pre.snapshots.keys()].map(c => [c, sourceTreeIdOf(git.treeOf(c))]));
   const ev = labExecutor({ commit, contract, ctx, spec: ctx.cfg.buildSpec, slots, loadContract, claim, pre, put, iso, runChild, toolchain: tools, sut: env.sut ?? null, why, run });
 
+  state.verifyRuntime = ev.verifyRuntime;
+
   // -- step 3, as far as it exists: the plan goes through gate.mjs --dry-run, which checks the lane and the registered slot.
   const count = o => { const cs = resolveCases(o, ev, ctx.pinned); return cs ? cs.reduce((n, x) => n + o.closure.modes.length * (o.closure.rules.includes('CR-FAULT') && own(x, 'faultPoint') === true ? ctx.faultReps : 1), 0) : 0; };
-  run.gate = (env.gate ?? gateDryRun(env.workDir))({ claimId: claim.claimId ?? null, kind: claim.kind ?? null, commit, lane: comp.source.engine, slot: comp.source.slot,
+  run.gate = (env.gate ?? gateDryRun(env.workDir, runChild))({ claimId: claim.claimId ?? null, kind: claim.kind ?? null, commit, lane: comp.source.engine, slot: comp.source.slot,
     obligations: [...prereq, ...claimed].map(o => o.id), executions: [...prereq, ...claimed].reduce((n, o) => n + count(o), 0) + (entry ? [prereq[0], prereq[1]].reduce((n, o) => n + count(o), 0) : 0) });
   if (!run.gate.ok) why('GATE-SLOT', `gate.mjs refused the plan (lane ${comp.source.engine}, slot ${comp.source.slot}): ${run.gate.error}`);
 

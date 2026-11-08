@@ -421,7 +421,7 @@ export function buildFixtures(root) {
   const runClaim = (id, at, obligations = ['G10.scope.shared-collision'], extra = {}) => ({ id, repo: Rr.dir, claim: { format: FORMATS.claim, claimId: id, kind: 'comparative', obligations, commit: at.commit, sourceTreeSha256: at.label, composition: structuredClone(CANDIDATE), ...extra } });
   // Codex round 7 against a run: the wrong candidate carries a complete set of well-formed documents claiming every case passed,
   // plus a selection, a verifier record and an O-DOMAIN fingerprint of its own (Q55a, Q55e). qualify must read none of it.
-  const forged = runClaim('RUN-FORGED-RECORDS', Rr.WRONG, ['NS.P2'], { receipts: complete('RUN-FORGED-RECORDS', { variant: 'run', at: Rr.WRONG }).receipts, selection: 'all', caseList: ['INVENTED-0'], oDomainFingerprint: 'f'.repeat(64) });
+  const forged = runClaim('RUN-FORGED-RECORDS', Rr.WRONG, undefined, { receipts: complete('RUN-FORGED-RECORDS', { variant: 'run', at: Rr.WRONG }).receipts, selection: 'all', caseList: ['INVENTED-0'], oDomainFingerprint: 'f'.repeat(64) });
   const runFixtures = [
     runClaim('RUN-CANDIDATE', Rr.C2),
     runClaim('RUN-WRONG-CANDIDATE', Rr.WRONG),

@@ -304,3 +304,15 @@ test('V-E01 F3: recorded PATH node is the binary a child actually runs', () => {
   assert.ok(fs.readFileSync(marker,'utf8').trim().split('\n').length>1,'more than the version probe used this node');
   assert.notEqual(r.run.instances[0].binarySha256,R.a0Binary);
 });
+
+test('Q75b: edits within one build instance fail closed without an instance switch', () => {
+  const local=localSut(spec); let edited=false;
+  const r=q(claimFor(R.C2),{authorityRef:'main',sut:args=>{
+    const result=local(args);
+    if(!edited){fs.appendFileSync(path.join(args.dir,'runtime/shim.mjs'),'// changed after execution\n');edited=true;}
+    return result;
+  }});
+  assert.ok(edited);
+  assert.equal(r.offlineVerdict,'DIAGNOSTIC');
+  assert.ok(codes(r).includes('BUILD-TAMPERED'));
+});

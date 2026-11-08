@@ -322,8 +322,9 @@ test('qualify Q67i (Codex round 8 finding 10): case-result/2 is re-judged with i
     assert.equal(store.get(rec.observedSha256).bytes.toString(), '[2,1]');
     assert.equal(c.verdict, 'PASS');
     assert.equal(caseResultVerdict(rec, store), 'PASS');
-    // The reference's case_verdict (hash equality, case-result/1 documents) would reject it: an intentional divergence.
-    assert.equal(caseVerdict(rec, store), 'FAIL');
+    // [EXP-E01] Why: 0.3.10 dispatches case-result/2 to its comparator; only legacy case-result/1 uses hash equality. Rejected: treating both schemas alike.
+    assert.equal(caseVerdict(rec, store), 'PASS');
+    assert.equal(caseVerdict({ ...rec, schema: 'case-result/1' }, store), 'FAIL');
   }
   // Byte equality stays the exact comparator's rule; refusals, oracle errors and missing objects never pass.
   const b = v => Buffer.from(canonText(v));
