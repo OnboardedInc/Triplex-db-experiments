@@ -50,7 +50,7 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | EXP-E01 fix round 2 (opus, E01 author resumed): Q75a-j plus the 0.3.10 field names (slot to placement, Q67g) | floor for every claim | then V-E01 delta check (resume a38618f4537a2f419) |
 | V-X02 XTQL lane verification (opus) | XTQL primary lane | verdict on exp/X02-xtql-parity bf1ad4d |
 | EXP-P4 current-value path (opus) | P4 | read-path arms X1, X2, H1, Q1 |
-| O-REPLAY 0.4.8 (opus, O04b author resumed; on 91ba352) | correctness floor | Q70l one continuation rule over a paged-kind table, Q70m typed values; then V-O04h (brief lab/verify/O02/V-O04h/BRIEF.md) |
+| V-O04h re-check of O-REPLAY 0.4.8 3c52a1d (opus, resumed; brief lab/verify/O02/V-O04h/BRIEF.md) | correctness floor | ACCEPT -> pin 0.4.8 in contract 0.3.11 |
 | EXP-K01 seed-once clone tooling (opus, fresh; exp/K01-seed-clone) | measurement speed, all five | engine.mjs golden/clone, readiness checks, 500-subject live check, E1 plan |
 | R25 SQLite pinned readers beside one durable writer (sonnet xhigh; /Users/sam/Claude/Projects/triplex-db-2/R25/) | P1, P2, P4, P5 | one design for the broker's SQLite file |
 | EXP-M01 PARKED (handed back clean; no process running) | measurement floor | resumes in the Q69a measurement window |
@@ -60,6 +60,8 @@ Codex plan-v2 review DONE: NOT READY, 14 findings all accepted (lab/reviews/plan
 
 ## Queue (NEXT FREE SLOTS, in order; restored 2026-11-08 after a table rewrite dropped it)
 00. C8 follow-up after V-C8 (Q76b dead table, Q76d countSimplePaths in WL20) and clean XTDB G1/G2 on an exclusive slot after V-X02 (Q76f); merge C8 after X02.
+0r. Research at the next free slots, in this order after EXP-O05: R27 engine-side evidence sources per O-OBS protocol (brief
+    /Users/sam/Claude/Projects/triplex-db-2/R27/BRIEF.md), then R28 isolation design for EXP-G03 (brief .../R28/BRIEF.md). Sonnet xhigh.
 0. EXP-O05 O-OBS observation oracle (brief lab/experiments/EXP-O05-observation-oracle/BRIEF.md): dispatch at the next free slot;
    O-OBS blocks 62 of 157 obligations, then V-O05 and a pin. Next after it: O-HAND hand derivations (20 obligations).
 1. DONE: contract 0.3.10 merged 64ab545 (65 of 157 closable; 284/284 regressions); W0 kernel merged a199182.

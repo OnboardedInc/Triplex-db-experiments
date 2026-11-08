@@ -1287,3 +1287,24 @@ Where each priority stands, from evidence so far (research probes and baselines;
   the replica behind the broker, which is why P1 on QLever goes through broker-fed replicas (Q63b).
 - V-C8 (fresh Opus) dispatched; C8 merges after V-X02, since it carries X02. Ruled Q76 (closure scale, dead schema, tail constraints,
   WL20 supports, maintained-query publication from the feed, clean receipts on an exclusive slot).
+
+## 2026-11-08 02:29Z: hourly learnings pass (NORTH-STAR reread first)
+- **Learnings are current** through C8, V-O04g, V-E01, R26, N01 and contract 0.3.10 (entries 01:36Z to 02:24Z). O-REPLAY 0.4.8 (3c52a1d)
+  landed during this pass: one continuation table (run.py:64) with a self-check shown to fail when a paged kind is missing; V-O04h checks it.
+- **Host:** load { 9.60 11.65 14.04 }; disk 6.9Gi free; containers: tx2-xtdb-s2 1.129GiB / 3.5GiB;tx2-qlever-dev 1.057GiB / 3.5GiB;tx2-xtdb-dev 2.292GiB / 3GiB;
+- **Where evidence points, by priority:**
+  - **P1:** the floor is reached on both lanes (C8: read paths never write, 0 writes in 1,412 gate statements). What is left is
+    throughput and isolation: QLever's writer queues behind reads (R17, C8), so P1 on QLever runs through broker-fed replicas (Q63b);
+    on XTDB the default reads scan all valid time (N01: 1.3-2.3 s per entity round trip at 770k rows), which EXP-P4's X1 arm tests.
+  - **P2:** XTDB's default write path saturates at 10k with zero readers (112 of 15,617 commands); P2X's per-subject candidate and the
+    broker are the paths. The QLever broker's answers are exact; its certification is in fix round 2 (one-snapshot marker, lock helper).
+  - **P3:** the default feed page reads the whole journal (13.5-21.2 s); P2X's feed row plus tailer and the broker's log replace it.
+  - **P4:** EXP-P4 running (X1, X2, H1, Q1); C8 adds that closures need an id-keyed current copy to get cheaper (Q76a).
+  - **P5:** domain side is complete and pinned (W0-1.1.2, O-DOMAIN, the TS kernel); EXP-P5 waits for P2B and the SQLite store (R25).
+  - **Measurement:** EXP-K01 builds seed-once cloning; PAIR-0's live A/A waits for the Q69a window.
+  - **Floor for claims:** contract 0.3.10 closes 65 of 157; the biggest blocker is O-OBS (62); every claim also waits for EXP-G03.
+- **Research (Sonnet xhigh), queued because all ten slots are in use:** R27 (engine-side evidence sources per O-OBS protocol on both
+  engines, and a source-kind taxonomy O-OBS can enforce) and R28 (isolating candidate builds and runs for EXP-G03, after V-E01 showed
+  start/end hashing is not isolation). Not needed: QLever update-versus-query interference is already covered by R17 and R8.
+- **Running (10):** V-X02, W01b, P4, R25, P2Q fix round 2, K01, E01 fix round 2, V-O04h, V-C8, J01 (its G1 reruns). Next free slots, in
+  order: EXP-O05 (O-OBS), R27, R28.
