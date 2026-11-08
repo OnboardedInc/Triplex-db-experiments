@@ -1,0 +1,78 @@
+{
+  "source": "0d9a86008ba4714f404c3e6e9d7443f361b592e1",
+  "hashes": {
+    "lab/experiments/EXP-J01-bytes-per-commit/REPORT-round2.md": "15199373603b18b07450f2aff6f5a3deca5143d063bedbec0a4a0f5d687ccbf0",
+    "lab/bin/gate.mjs": "5c30a717277afa2a182ed2dff98284fadc73937c2dd190bfe3b5db6d4d8978fa",
+    "lab/bin/heavy.mjs": "fc4da6ab9d0e8634e6e277066588ee2e7972a009e7d703f52586c3d52a0d0fb7",
+    "lab/experiments/EXP-J01-bytes-per-commit/probes/p9-g1-mode-proof.mjs": "81a8b7dfb3a5e1abed22943fa8a68a00830cbfc27aeaa90cf9d8136d8c0cdfd3"
+  },
+  "commands": [
+    "export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock\nexport npm_config_store_dir=/Users/sam/projects/triplex-db-2/.pnpm-store\nnode lab/bin/engine.mjs up --lane xtdb --slot s1 --holder CX-J01-G1 --exp EXP-J01\nTRIPLEX_COMMIT_ENCODING=a0 node lab/bin/heavy.mjs --label CX-J01-G1-X-off -- node lab/bin/gate.mjs G1 --lane xtdb --slot s1 --holder CX-J01-G1 --exp EXP-J01 --note 'round2 explicit encoding=a0; retain environment envelope and persisted mode proof'\nTRIPLEX_COMMIT_ENCODING=compact node lab/bin/heavy.mjs --label CX-J01-G1-X-on -- node lab/bin/gate.mjs G1 --lane xtdb --slot s1 --holder CX-J01-G1 --exp EXP-J01 --note 'round2 explicit encoding=compact; retain environment envelope and persisted mode proof'\n# Capture all persisted-mode evidence BEFORE releasing this engine.\nnode lab/bin/engine.mjs down --lane xtdb --slot s1 --holder CX-J01-G1\nnode lab/bin/engine.mjs up --lane qlever --slot s1 --holder CX-J01-G1 --exp EXP-J01\nTRIPLEX_COMMIT_ENCODING=a0 node lab/bin/heavy.mjs --label CX-J01-G1-Q-off -- node lab/bin/gate.mjs G1 --lane qlever --slot s1 --holder CX-J01-G1 --exp EXP-J01 --profile f1 --planner-budget 1 --note 'round2 explicit encoding=a0; retain environment envelope and persisted mode proof'\nTRIPLEX_COMMIT_ENCODING=compact node lab/bin/heavy.mjs --label CX-J01-G1-Q-on -- node lab/bin/gate.mjs G1 --lane qlever --slot s1 --holder CX-J01-G1 --exp EXP-J01 --profile f1 --planner-budget 1 --note 'round2 explicit encoding=compact; retain environment envelope and persisted mode proof'\n# Capture all persisted-mode evidence BEFORE releasing this engine.\nnode lab/bin/engine.mjs down --lane qlever --slot s1 --holder CX-J01-G1\n",
+    "node lab/bin/heavy.mjs --label CX-J01-G1-X-mode -- node lab/experiments/EXP-J01-bytes-per-commit/probes/p9-g1-mode-proof.mjs runs/G1/<RUN-ID>/g1-report.json --lane xtdb\nnode lab/bin/heavy.mjs --label CX-J01-G1-Q-mode -- node lab/experiments/EXP-J01-bytes-per-commit/probes/p9-g1-mode-proof.mjs runs/G1/<RUN-ID>/g1-report.json --lane qlever\n"
+  ],
+  "effectiveChildMode": "compact",
+  "observations": [
+    "The four gate invocations propagate the explicit environment; cleanEnv does not strip TRIPLEX_COMMIT_ENCODING.",
+    "Gate result.profile.env contains QLever planner settings, not a snapshot of the child environment.",
+    "Neither heavy.mjs nor gate.mjs writes the separately required encoding launch envelope.",
+    "No listed command collects complete per-scope raw source-log/RDF rows or hashes those with the launch envelope.",
+    "P9 emits aggregate counts and an inferred label, not the required raw records; report lines 113-120 correctly disclaim sufficiency.",
+    "These are mocked diagnostic examples, not live engine evidence or semantic qualification."
+  ],
+  "diagnostic": [
+    {
+      "name": "zero-evidence",
+      "mockedScopeCounts": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ]
+      ],
+      "actualProbeOutput": {
+        "report": "unused-report.json",
+        "lane": "qlever",
+        "scopes": 2,
+        "startedAt": "2026-11-08T00:00:00Z",
+        "counts": {
+          "recordedAtNative": 0,
+          "schemaVersion": 0,
+          "rows": 0
+        },
+        "encoding": "a0"
+      }
+    },
+    {
+      "name": "missing-second-scope",
+      "mockedScopeCounts": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          0,
+          0,
+          0
+        ]
+      ],
+      "actualProbeOutput": {
+        "report": "unused-report.json",
+        "lane": "qlever",
+        "scopes": 2,
+        "startedAt": "2026-11-08T00:00:00Z",
+        "counts": {
+          "recordedAtNative": 1,
+          "schemaVersion": 1,
+          "rows": 1
+        },
+        "encoding": "a0"
+      }
+    }
+  ]
+}

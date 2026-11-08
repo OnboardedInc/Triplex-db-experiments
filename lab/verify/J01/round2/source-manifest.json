@@ -1,0 +1,358 @@
+{
+  "at": "2026-11-08T21:59:09.165Z",
+  "node": "v22.23.2",
+  "sources": {
+    "main": "ab31bebc54bf11a8fba82bb5a9a2c0a7198d6127",
+    "candidate": "0d9a86008ba4714f404c3e6e9d7443f361b592e1"
+  },
+  "files": {
+    "lab/verify/J01/round2/trees/main/xtdb/ConstraintValidation.ts": {
+      "source": "packages/xtdb/src/ConstraintValidation.ts",
+      "sha256": "b298dfe7841684ea3fda905b283e16f33853a0884af04f13b9913b89d82e9d29"
+    },
+    "lab/verify/J01/round2/trees/main/xtdb/MaintainedQueries.ts": {
+      "source": "packages/xtdb/src/MaintainedQueries.ts",
+      "sha256": "a0ec651af8aa68d1c6e63b64109af48996d4c7576930909a50f90306869d8dbd"
+    },
+    "lab/verify/J01/round2/trees/main/xtdb/Operations.ts": {
+      "source": "packages/xtdb/src/Operations.ts",
+      "sha256": "2fa4dc6fc4c50a42cc088d497f70e49029e2f535399ae84d9c94239125147b66"
+    },
+    "lab/verify/J01/round2/trees/main/xtdb/TemporalQueries.ts": {
+      "source": "packages/xtdb/src/TemporalQueries.ts",
+      "sha256": "df7163a21d18b5d704fdbd8a6dcd065498eb18edd249e0fcad7e4a92dae555a9"
+    },
+    "lab/verify/J01/round2/trees/main/xtdb/TransactionContext.ts": {
+      "source": "packages/xtdb/src/TransactionContext.ts",
+      "sha256": "f4696c6539db3088e940c305ab484fc514fe32a7d09ea6b6f3397cd9878a43ad"
+    },
+    "lab/verify/J01/round2/trees/main/xtdb/XtdbClient.ts": {
+      "source": "packages/xtdb/src/XtdbClient.ts",
+      "sha256": "fa5c31c44c45e9e129d65464ee2f012146911f5b11d433d1ce7d73aadee6c67c"
+    },
+    "lab/verify/J01/round2/trees/main/xtdb/XtdbQueryExecutor.ts": {
+      "source": "packages/xtdb/src/XtdbQueryExecutor.ts",
+      "sha256": "71fc5d949a8a9f51449cfeb97afb9cd10b6e869647962a2c6ad006a4ccf69c0c"
+    },
+    "lab/verify/J01/round2/trees/main/xtdb/XtdbStorageAdapter.ts": {
+      "source": "packages/xtdb/src/XtdbStorageAdapter.ts",
+      "sha256": "204b856f7c3792c04b46a61ebe19b51fa0db053c1594d6f5aaa1149f14179560"
+    },
+    "lab/verify/J01/round2/trees/main/xtdb/codecs.ts": {
+      "source": "packages/xtdb/src/codecs.ts",
+      "sha256": "f36b8de4af66fddd30b3a055ebf4473ad29c0634d9fd1ea0e45c7fb4e522e8f3"
+    },
+    "lab/verify/J01/round2/trees/main/xtdb/index.ts": {
+      "source": "packages/xtdb/src/index.ts",
+      "sha256": "5bdb382d4bd424e92ab6098ba0bed9954cae9a256ffe1fde2378c67bf8233de3"
+    },
+    "lab/verify/J01/round2/trees/main/xtdb/native/NativeQueries.ts": {
+      "source": "packages/xtdb/src/native/NativeQueries.ts",
+      "sha256": "f07285b60d00a661551873ab2ffe3995b88b91caedda7e776784185026ff3b01"
+    },
+    "lab/verify/J01/round2/trees/main/xtdb/native/Reachability.ts": {
+      "source": "packages/xtdb/src/native/Reachability.ts",
+      "sha256": "3929e03f7ba1b8e20a47d8fa94b71c68f64f0ad021beaf866deb210fa3fba932"
+    },
+    "lab/verify/J01/round2/trees/main/xtdb/native/ReadOnlySql.ts": {
+      "source": "packages/xtdb/src/native/ReadOnlySql.ts",
+      "sha256": "dacd259603497bffcae0000e57ed5b7d63103f1ad0da42419d21d46a52333529"
+    },
+    "lab/verify/J01/round2/trees/main/xtdb/native/Sources.ts": {
+      "source": "packages/xtdb/src/native/Sources.ts",
+      "sha256": "a32138e18c1a5a963f37f830beb36ceb87f328ed4c6af96bf1498dd0c2c00e31"
+    },
+    "lab/verify/J01/round2/trees/main/xtdb/query/compiler.ts": {
+      "source": "packages/xtdb/src/query/compiler.ts",
+      "sha256": "fd1d8fceb939e0623115ef8072300f9e046f6dabee30d573c3b0c1da56823123"
+    },
+    "lab/verify/J01/round2/trees/main/xtdb/query/domains.ts": {
+      "source": "packages/xtdb/src/query/domains.ts",
+      "sha256": "e51fc80fb211c265725d7def7cf0ab19bf84b51fc8843e1f807385dc413a92af"
+    },
+    "lab/verify/J01/round2/trees/main/xtdb/query/grouping.ts": {
+      "source": "packages/xtdb/src/query/grouping.ts",
+      "sha256": "2abd261779d9cd648d53b20485eccaee644f2fe4b5cf86d899d86c552bff4586"
+    },
+    "lab/verify/J01/round2/trees/main/xtdb/query/overlay.ts": {
+      "source": "packages/xtdb/src/query/overlay.ts",
+      "sha256": "118b8f8651d69516b64b50cf77c86e43de916a8e7042cdcfe2e3aa1379423491"
+    },
+    "lab/verify/J01/round2/trees/main/xtdb/query/recursion.ts": {
+      "source": "packages/xtdb/src/query/recursion.ts",
+      "sha256": "6c24b1157f9c05124ebef268d1d99234364fa3aabb5514c67e40422767296b89"
+    },
+    "lab/verify/J01/round2/trees/main/qlever/AggregateAnswers.ts": {
+      "source": "packages/qlever/src/AggregateAnswers.ts",
+      "sha256": "ff11d796be17ffbd7b9ad8d0d79e12a32550c63eb296cef580bd4ed10ca4b7de"
+    },
+    "lab/verify/J01/round2/trees/main/qlever/FamilyDomainDistinct.ts": {
+      "source": "packages/qlever/src/FamilyDomainDistinct.ts",
+      "sha256": "2c1d8a34f98721675afd69d4a82778b9338f7aec8bdd715a5b3b6b45ca69ea22"
+    },
+    "lab/verify/J01/round2/trees/main/qlever/FamilyDomainMask.ts": {
+      "source": "packages/qlever/src/FamilyDomainMask.ts",
+      "sha256": "65988dc4e689dd5e54eda0a90d60db0869914b38040011eaa4b2bcf4c8a47095"
+    },
+    "lab/verify/J01/round2/trees/main/qlever/FamilyDomains.ts": {
+      "source": "packages/qlever/src/FamilyDomains.ts",
+      "sha256": "2bc0fd77c940dc0b0ad8b7c6b2ac9cf3f20d6e62e6476b5f718ef01f096cc0cc"
+    },
+    "lab/verify/J01/round2/trees/main/qlever/Operations.ts": {
+      "source": "packages/qlever/src/Operations.ts",
+      "sha256": "c3851be7457eec8af340c79621aa2152662389d33ee6e9752f20fc7fcb69170e"
+    },
+    "lab/verify/J01/round2/trees/main/qlever/PersistedScalarSource.ts": {
+      "source": "packages/qlever/src/PersistedScalarSource.ts",
+      "sha256": "467c9ca94941e71377b4fe321c7dedf27795b6938c6661d63a79c49ebfb23919"
+    },
+    "lab/verify/J01/round2/trees/main/qlever/QleverClient.ts": {
+      "source": "packages/qlever/src/QleverClient.ts",
+      "sha256": "d199d25f49f3ee68e1db5035814d1d8f1722a4904f6711d8f2f2d5c063a1e10d"
+    },
+    "lab/verify/J01/round2/trees/main/qlever/QleverQueryExecutor.ts": {
+      "source": "packages/qlever/src/QleverQueryExecutor.ts",
+      "sha256": "c16ceb21ff23ce7251259fa61238defddcc72870abd7d9147a27309e6ad42319"
+    },
+    "lab/verify/J01/round2/trees/main/qlever/QleverStorageAdapter.ts": {
+      "source": "packages/qlever/src/QleverStorageAdapter.ts",
+      "sha256": "d3539b541f69c18c470a7dc9ab43dc554734b77f9a9c8bd74242009403fc952b"
+    },
+    "lab/verify/J01/round2/trees/main/qlever/ScalarSource.ts": {
+      "source": "packages/qlever/src/ScalarSource.ts",
+      "sha256": "72a8ba70dd0beced8e42c5d6a0656d44249a063e38d150ea054b07fd9ba6a3df"
+    },
+    "lab/verify/J01/round2/trees/main/qlever/TemporalQueries.ts": {
+      "source": "packages/qlever/src/TemporalQueries.ts",
+      "sha256": "a97c81e76f354a00f23ad1f5488269544456299c09671b70e97870420e6e326c"
+    },
+    "lab/verify/J01/round2/trees/main/qlever/compiler.ts": {
+      "source": "packages/qlever/src/compiler.ts",
+      "sha256": "9c60e5a7f491a92ffdb5f7d42cdf57d28dd01d6959066d2b4ed32850e14b012f"
+    },
+    "lab/verify/J01/round2/trees/main/qlever/index.ts": {
+      "source": "packages/qlever/src/index.ts",
+      "sha256": "bab363752c09c82bfd64f80e9e8a4963d0b290a6f0e05ecfc557ab97f231cb4c"
+    },
+    "lab/verify/J01/round2/trees/main/qlever/native/BasisRelations.ts": {
+      "source": "packages/qlever/src/native/BasisRelations.ts",
+      "sha256": "4d4d0c9dba971210f07edba989e2df608e4540f2d2942f666fd8b15c1adfe484"
+    },
+    "lab/verify/J01/round2/trees/main/qlever/native/NativeContext.ts": {
+      "source": "packages/qlever/src/native/NativeContext.ts",
+      "sha256": "9dfefa7313ec6acda922a493219077be9f72768a6f169594c3a6e0a86f06f8c8"
+    },
+    "lab/verify/J01/round2/trees/main/qlever/native/NativeQueries.ts": {
+      "source": "packages/qlever/src/native/NativeQueries.ts",
+      "sha256": "05df60e33c066f1fcd1a7cac100135a6dc9c9fa3e4af34d344b3a42728f8d21a"
+    },
+    "lab/verify/J01/round2/trees/main/qlever/rdf.ts": {
+      "source": "packages/qlever/src/rdf.ts",
+      "sha256": "0af2da3a021f56e9155a61e887038961bfb09c0b2b6767c50b4903740338285b"
+    },
+    "lab/verify/J01/round2/trees/main/qlever/recursion.ts": {
+      "source": "packages/qlever/src/recursion.ts",
+      "sha256": "b879595677ed2f0cfd4ff4c1f32f573ac724613e04f2a831e61fd96922bb15af"
+    },
+    "lab/verify/J01/round2/trees/candidate/xtdb/ConstraintValidation.ts": {
+      "source": "packages/xtdb/src/ConstraintValidation.ts",
+      "sha256": "b298dfe7841684ea3fda905b283e16f33853a0884af04f13b9913b89d82e9d29"
+    },
+    "lab/verify/J01/round2/trees/candidate/xtdb/MaintainedQueries.ts": {
+      "source": "packages/xtdb/src/MaintainedQueries.ts",
+      "sha256": "a0ec651af8aa68d1c6e63b64109af48996d4c7576930909a50f90306869d8dbd"
+    },
+    "lab/verify/J01/round2/trees/candidate/xtdb/Operations.ts": {
+      "source": "packages/xtdb/src/Operations.ts",
+      "sha256": "2fa4dc6fc4c50a42cc088d497f70e49029e2f535399ae84d9c94239125147b66"
+    },
+    "lab/verify/J01/round2/trees/candidate/xtdb/TemporalQueries.ts": {
+      "source": "packages/xtdb/src/TemporalQueries.ts",
+      "sha256": "df7163a21d18b5d704fdbd8a6dcd065498eb18edd249e0fcad7e4a92dae555a9"
+    },
+    "lab/verify/J01/round2/trees/candidate/xtdb/TransactionContext.ts": {
+      "source": "packages/xtdb/src/TransactionContext.ts",
+      "sha256": "f4696c6539db3088e940c305ab484fc514fe32a7d09ea6b6f3397cd9878a43ad"
+    },
+    "lab/verify/J01/round2/trees/candidate/xtdb/XtdbClient.ts": {
+      "source": "packages/xtdb/src/XtdbClient.ts",
+      "sha256": "b581b97b0d5eb449465655336b0fa7be76b8e82d1f07ea1c62a4b07d9ddbac9d"
+    },
+    "lab/verify/J01/round2/trees/candidate/xtdb/XtdbQueryExecutor.ts": {
+      "source": "packages/xtdb/src/XtdbQueryExecutor.ts",
+      "sha256": "71fc5d949a8a9f51449cfeb97afb9cd10b6e869647962a2c6ad006a4ccf69c0c"
+    },
+    "lab/verify/J01/round2/trees/candidate/xtdb/XtdbStorageAdapter.ts": {
+      "source": "packages/xtdb/src/XtdbStorageAdapter.ts",
+      "sha256": "cab61499308619709ea8740894501127d998dd819198e665872c3508c5249ed4"
+    },
+    "lab/verify/J01/round2/trees/candidate/xtdb/codecs.ts": {
+      "source": "packages/xtdb/src/codecs.ts",
+      "sha256": "f36b8de4af66fddd30b3a055ebf4473ad29c0634d9fd1ea0e45c7fb4e522e8f3"
+    },
+    "lab/verify/J01/round2/trees/candidate/xtdb/index.ts": {
+      "source": "packages/xtdb/src/index.ts",
+      "sha256": "efc6dd72c5041c907f511e31dcb5847a52e07cf749d681820c402da6c4fdbcf7"
+    },
+    "lab/verify/J01/round2/trees/candidate/xtdb/native/NativeQueries.ts": {
+      "source": "packages/xtdb/src/native/NativeQueries.ts",
+      "sha256": "f07285b60d00a661551873ab2ffe3995b88b91caedda7e776784185026ff3b01"
+    },
+    "lab/verify/J01/round2/trees/candidate/xtdb/native/Reachability.ts": {
+      "source": "packages/xtdb/src/native/Reachability.ts",
+      "sha256": "3929e03f7ba1b8e20a47d8fa94b71c68f64f0ad021beaf866deb210fa3fba932"
+    },
+    "lab/verify/J01/round2/trees/candidate/xtdb/native/ReadOnlySql.ts": {
+      "source": "packages/xtdb/src/native/ReadOnlySql.ts",
+      "sha256": "dacd259603497bffcae0000e57ed5b7d63103f1ad0da42419d21d46a52333529"
+    },
+    "lab/verify/J01/round2/trees/candidate/xtdb/native/Sources.ts": {
+      "source": "packages/xtdb/src/native/Sources.ts",
+      "sha256": "a32138e18c1a5a963f37f830beb36ceb87f328ed4c6af96bf1498dd0c2c00e31"
+    },
+    "lab/verify/J01/round2/trees/candidate/xtdb/query/compiler.ts": {
+      "source": "packages/xtdb/src/query/compiler.ts",
+      "sha256": "fd1d8fceb939e0623115ef8072300f9e046f6dabee30d573c3b0c1da56823123"
+    },
+    "lab/verify/J01/round2/trees/candidate/xtdb/query/domains.ts": {
+      "source": "packages/xtdb/src/query/domains.ts",
+      "sha256": "e51fc80fb211c265725d7def7cf0ab19bf84b51fc8843e1f807385dc413a92af"
+    },
+    "lab/verify/J01/round2/trees/candidate/xtdb/query/grouping.ts": {
+      "source": "packages/xtdb/src/query/grouping.ts",
+      "sha256": "2abd261779d9cd648d53b20485eccaee644f2fe4b5cf86d899d86c552bff4586"
+    },
+    "lab/verify/J01/round2/trees/candidate/xtdb/query/overlay.ts": {
+      "source": "packages/xtdb/src/query/overlay.ts",
+      "sha256": "118b8f8651d69516b64b50cf77c86e43de916a8e7042cdcfe2e3aa1379423491"
+    },
+    "lab/verify/J01/round2/trees/candidate/xtdb/query/recursion.ts": {
+      "source": "packages/xtdb/src/query/recursion.ts",
+      "sha256": "6c24b1157f9c05124ebef268d1d99234364fa3aabb5514c67e40422767296b89"
+    },
+    "lab/verify/J01/round2/trees/candidate/qlever/AggregateAnswers.ts": {
+      "source": "packages/qlever/src/AggregateAnswers.ts",
+      "sha256": "ff11d796be17ffbd7b9ad8d0d79e12a32550c63eb296cef580bd4ed10ca4b7de"
+    },
+    "lab/verify/J01/round2/trees/candidate/qlever/FamilyDomainDistinct.ts": {
+      "source": "packages/qlever/src/FamilyDomainDistinct.ts",
+      "sha256": "2c1d8a34f98721675afd69d4a82778b9338f7aec8bdd715a5b3b6b45ca69ea22"
+    },
+    "lab/verify/J01/round2/trees/candidate/qlever/FamilyDomainMask.ts": {
+      "source": "packages/qlever/src/FamilyDomainMask.ts",
+      "sha256": "65988dc4e689dd5e54eda0a90d60db0869914b38040011eaa4b2bcf4c8a47095"
+    },
+    "lab/verify/J01/round2/trees/candidate/qlever/FamilyDomains.ts": {
+      "source": "packages/qlever/src/FamilyDomains.ts",
+      "sha256": "2bc0fd77c940dc0b0ad8b7c6b2ac9cf3f20d6e62e6476b5f718ef01f096cc0cc"
+    },
+    "lab/verify/J01/round2/trees/candidate/qlever/Operations.ts": {
+      "source": "packages/qlever/src/Operations.ts",
+      "sha256": "c3851be7457eec8af340c79621aa2152662389d33ee6e9752f20fc7fcb69170e"
+    },
+    "lab/verify/J01/round2/trees/candidate/qlever/PersistedScalarSource.ts": {
+      "source": "packages/qlever/src/PersistedScalarSource.ts",
+      "sha256": "467c9ca94941e71377b4fe321c7dedf27795b6938c6661d63a79c49ebfb23919"
+    },
+    "lab/verify/J01/round2/trees/candidate/qlever/QleverClient.ts": {
+      "source": "packages/qlever/src/QleverClient.ts",
+      "sha256": "d199d25f49f3ee68e1db5035814d1d8f1722a4904f6711d8f2f2d5c063a1e10d"
+    },
+    "lab/verify/J01/round2/trees/candidate/qlever/QleverQueryExecutor.ts": {
+      "source": "packages/qlever/src/QleverQueryExecutor.ts",
+      "sha256": "c16ceb21ff23ce7251259fa61238defddcc72870abd7d9147a27309e6ad42319"
+    },
+    "lab/verify/J01/round2/trees/candidate/qlever/QleverStorageAdapter.ts": {
+      "source": "packages/qlever/src/QleverStorageAdapter.ts",
+      "sha256": "8cefbcc631375c196663232fd726dad147a153cbd1cc72a9c7f2b33ec0df9ab0"
+    },
+    "lab/verify/J01/round2/trees/candidate/qlever/ScalarSource.ts": {
+      "source": "packages/qlever/src/ScalarSource.ts",
+      "sha256": "72a8ba70dd0beced8e42c5d6a0656d44249a063e38d150ea054b07fd9ba6a3df"
+    },
+    "lab/verify/J01/round2/trees/candidate/qlever/TemporalQueries.ts": {
+      "source": "packages/qlever/src/TemporalQueries.ts",
+      "sha256": "a97c81e76f354a00f23ad1f5488269544456299c09671b70e97870420e6e326c"
+    },
+    "lab/verify/J01/round2/trees/candidate/qlever/compiler.ts": {
+      "source": "packages/qlever/src/compiler.ts",
+      "sha256": "9c60e5a7f491a92ffdb5f7d42cdf57d28dd01d6959066d2b4ed32850e14b012f"
+    },
+    "lab/verify/J01/round2/trees/candidate/qlever/index.ts": {
+      "source": "packages/qlever/src/index.ts",
+      "sha256": "e723431ec95da90d80074354e3063ad2a29cb05e426ade74ae56fa60c249914a"
+    },
+    "lab/verify/J01/round2/trees/candidate/qlever/native/BasisRelations.ts": {
+      "source": "packages/qlever/src/native/BasisRelations.ts",
+      "sha256": "4d4d0c9dba971210f07edba989e2df608e4540f2d2942f666fd8b15c1adfe484"
+    },
+    "lab/verify/J01/round2/trees/candidate/qlever/native/NativeContext.ts": {
+      "source": "packages/qlever/src/native/NativeContext.ts",
+      "sha256": "9dfefa7313ec6acda922a493219077be9f72768a6f169594c3a6e0a86f06f8c8"
+    },
+    "lab/verify/J01/round2/trees/candidate/qlever/native/NativeQueries.ts": {
+      "source": "packages/qlever/src/native/NativeQueries.ts",
+      "sha256": "05df60e33c066f1fcd1a7cac100135a6dc9c9fa3e4af34d344b3a42728f8d21a"
+    },
+    "lab/verify/J01/round2/trees/candidate/qlever/rdf.ts": {
+      "source": "packages/qlever/src/rdf.ts",
+      "sha256": "829ba773bbbf9455ada8d10f37ed8ae1f327a82a007748a69ea7070a925e5494"
+    },
+    "lab/verify/J01/round2/trees/candidate/qlever/recursion.ts": {
+      "source": "packages/qlever/src/recursion.ts",
+      "sha256": "b879595677ed2f0cfd4ff4c1f32f573ac724613e04f2a831e61fd96922bb15af"
+    },
+    "pnpm-lock.yaml": {
+      "sha256": "b2b3e6e8cdfb18df6d235a8724611ee4fe637426c722a5de34326346b3cb6500"
+    },
+    "packages/core/dist/index.js": {
+      "sha256": "58fe9072ed1d383387835600a7131d345005c95a630b75323cc32b1812140103"
+    },
+    "packages/core/dist/runtime/index.js": {
+      "sha256": "deecccb750935574eb1fe41a4c595081f4c5ce7ed5d02355ea0027ac2f9f6ef8"
+    },
+    "packages/xtdb/node_modules/postgres/src/types.js": {
+      "sha256": "1883bd4536eab1c94b9e708d325b13708b0f18ec80020e3a825f34a72f603b81"
+    }
+  },
+  "owners": {
+    "xtdb": {
+      "path": "/Users/sam/projects/triplex-db-2/lab/locks/xtdb-dev/owner.json",
+      "sha256": "a1ae3fbcd98bb1de559f5ad0d4b18ea159902e58a64c313db391eb771fcec2a6",
+      "owner": {
+        "format": "tx2-slot-owner/1",
+        "lane": "xtdb",
+        "slot": "dev",
+        "mode": "resident",
+        "container": "tx2-xtdb-dev",
+        "volume": "tx2-xtdb-dev-data",
+        "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5470/xtdb",
+        "port": 5470,
+        "holder": "worktree:/Users/sam/projects/triplex-db-2",
+        "experiment": "EXP-000",
+        "pid": 83679,
+        "worktree": "/Users/sam/projects/triplex-db-2",
+        "createdAt": "2026-11-07T18:54:24.240Z"
+      }
+    },
+    "qlever": {
+      "path": "/Users/sam/projects/triplex-db-2/lab/locks/qlever-dev/owner.json",
+      "sha256": "bf702d8316d2c7871fa163f3208fa41adfe7281df9f87c6ed2ddfd2c31824137",
+      "owner": {
+        "format": "tx2-slot-owner/1",
+        "lane": "qlever",
+        "slot": "dev",
+        "mode": "resident",
+        "container": "tx2-qlever-dev",
+        "volume": "tx2-qlever-dev-data",
+        "endpoint": "http://127.0.0.1:7070",
+        "port": 7070,
+        "holder": "EXP-000",
+        "experiment": null,
+        "pid": 6312,
+        "worktree": "/Users/sam/projects/triplex-db-2",
+        "createdAt": "2026-11-07T20:15:31.784Z"
+      }
+    }
+  }
+}

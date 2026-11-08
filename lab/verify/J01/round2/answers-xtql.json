@@ -1,0 +1,2729 @@
+{
+  "startedAt": "2026-11-08T22:01:55.635Z",
+  "live": true,
+  "source": {
+    "main": "ab31bebc54bf11a8fba82bb5a9a2c0a7198d6127",
+    "candidate": "0d9a86008ba4714f404c3e6e9d7443f361b592e1"
+  },
+  "cases": [
+    {
+      "mode": "unset",
+      "name": "empty",
+      "input": {
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "bytes": 2,
+        "value": []
+      },
+      "equal": true,
+      "main": {
+        "sha256": "9e3be069b629a311dfd919c75bb6ff3e08650531681ff5bf024a5897a023bf65",
+        "bytes": 222,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": []
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  []
+                ]
+              }
+            }
+          }
+        }
+      },
+      "candidate": {
+        "sha256": "9e3be069b629a311dfd919c75bb6ff3e08650531681ff5bf024a5897a023bf65",
+        "bytes": 222,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": []
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  []
+                ]
+              }
+            }
+          }
+        }
+      },
+      "surfaces": {
+        "xtql": {
+          "main": {
+            "sha256": "be3f7e137d78857e3376c6fb345e20f7947af5b9b10d557d58aca9771f71150b",
+            "bytes": 190,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": []
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  []
+                ]
+              }
+            }
+          },
+          "candidate": {
+            "sha256": "be3f7e137d78857e3376c6fb345e20f7947af5b9b10d557d58aca9771f71150b",
+            "bytes": 190,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": []
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  []
+                ]
+              }
+            }
+          },
+          "mainError": null,
+          "candidateError": null
+        }
+      }
+    },
+    {
+      "mode": "unset",
+      "name": "strings",
+      "input": {
+        "sha256": "0473ef2dc0d324ab659d3580c1134e9d812035905c4781fdd6d529b0c6860e13",
+        "bytes": 9,
+        "value": [
+          "a",
+          "b"
+        ]
+      },
+      "equal": true,
+      "main": {
+        "sha256": "dc5805d7602b45b4ee130916b2abee72e8184ffcb72c0ac26bfda64a3e8148b0",
+        "bytes": 236,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "a",
+                      "b"
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "a",
+                    "b"
+                  ]
+                ]
+              }
+            }
+          }
+        }
+      },
+      "candidate": {
+        "sha256": "dc5805d7602b45b4ee130916b2abee72e8184ffcb72c0ac26bfda64a3e8148b0",
+        "bytes": 236,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "a",
+                      "b"
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "a",
+                    "b"
+                  ]
+                ]
+              }
+            }
+          }
+        }
+      },
+      "surfaces": {
+        "xtql": {
+          "main": {
+            "sha256": "0c0b17a0781496cdac6228252752bf79a056c921bb7476b509705c08302a844e",
+            "bytes": 204,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "a",
+                      "b"
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "a",
+                    "b"
+                  ]
+                ]
+              }
+            }
+          },
+          "candidate": {
+            "sha256": "0c0b17a0781496cdac6228252752bf79a056c921bb7476b509705c08302a844e",
+            "bytes": 204,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "a",
+                      "b"
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "a",
+                    "b"
+                  ]
+                ]
+              }
+            }
+          },
+          "mainError": null,
+          "candidateError": null
+        }
+      }
+    },
+    {
+      "mode": "unset",
+      "name": "numeric",
+      "input": {
+        "sha256": "49a64717d5d4cb19952e6eac2946415cf6879adacf9908e7d872332d32c6e684",
+        "bytes": 5,
+        "value": [
+          1,
+          2
+        ]
+      },
+      "equal": true,
+      "main": {
+        "sha256": "ef5214ae3df21b9272e4e55c2bb980bcf5d5adec28a826ef95eff48ffa14d43a",
+        "bytes": 228,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      1,
+                      2
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    1,
+                    2
+                  ]
+                ]
+              }
+            }
+          }
+        }
+      },
+      "candidate": {
+        "sha256": "ef5214ae3df21b9272e4e55c2bb980bcf5d5adec28a826ef95eff48ffa14d43a",
+        "bytes": 228,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      1,
+                      2
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    1,
+                    2
+                  ]
+                ]
+              }
+            }
+          }
+        }
+      },
+      "surfaces": {
+        "xtql": {
+          "main": {
+            "sha256": "d19f0dce9fb7fd8b12597183f9e2f4b0a638f3c2e8b00c9a1644b0bfc6f9d575",
+            "bytes": 196,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      1,
+                      2
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    1,
+                    2
+                  ]
+                ]
+              }
+            }
+          },
+          "candidate": {
+            "sha256": "d19f0dce9fb7fd8b12597183f9e2f4b0a638f3c2e8b00c9a1644b0bfc6f9d575",
+            "bytes": 196,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      1,
+                      2
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    1,
+                    2
+                  ]
+                ]
+              }
+            }
+          },
+          "mainError": null,
+          "candidateError": null
+        }
+      }
+    },
+    {
+      "mode": "unset",
+      "name": "mixed",
+      "input": {
+        "sha256": "b70ec4a7e8fd0ae78f896f9f3dd1252a0085a0d70e455ab9496ae1b2fa792e68",
+        "bytes": 18,
+        "value": [
+          "a",
+          1,
+          null,
+          false
+        ]
+      },
+      "equal": true,
+      "main": {
+        "sha256": "4eb9aa0f7da2d866ee1f76b587474c835a627bb1d000bbe74066b42cb51e7b3e",
+        "bytes": 254,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "a",
+                      1,
+                      null,
+                      false
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "a",
+                    1,
+                    null,
+                    false
+                  ]
+                ]
+              }
+            }
+          }
+        }
+      },
+      "candidate": {
+        "sha256": "4eb9aa0f7da2d866ee1f76b587474c835a627bb1d000bbe74066b42cb51e7b3e",
+        "bytes": 254,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "a",
+                      1,
+                      null,
+                      false
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "a",
+                    1,
+                    null,
+                    false
+                  ]
+                ]
+              }
+            }
+          }
+        }
+      },
+      "surfaces": {
+        "xtql": {
+          "main": {
+            "sha256": "19984b77718afdb00478ccd96e1252aefc8e5f39574bc9156af3e933aea96244",
+            "bytes": 222,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "a",
+                      1,
+                      null,
+                      false
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "a",
+                    1,
+                    null,
+                    false
+                  ]
+                ]
+              }
+            }
+          },
+          "candidate": {
+            "sha256": "19984b77718afdb00478ccd96e1252aefc8e5f39574bc9156af3e933aea96244",
+            "bytes": 222,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "a",
+                      1,
+                      null,
+                      false
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "a",
+                    1,
+                    null,
+                    false
+                  ]
+                ]
+              }
+            }
+          },
+          "mainError": null,
+          "candidateError": null
+        }
+      }
+    },
+    {
+      "mode": "unset",
+      "name": "nested",
+      "input": {
+        "sha256": "8178b4cd213a1fd294e2e52c822b70dbc1f49e0a25e79b99dfe4cdb029088805",
+        "bytes": 36,
+        "value": [
+          [],
+          [
+            "a",
+            [
+              "b",
+              null
+            ]
+          ],
+          {
+            "list": [
+              1,
+              2
+            ]
+          }
+        ]
+      },
+      "equal": true,
+      "main": {
+        "sha256": "e59428bbb5743ed9ef6fe158c1e7650a67234eb8e586aeabb26549685ff0ea0b",
+        "bytes": 290,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      [],
+                      [
+                        "a",
+                        [
+                          "b",
+                          null
+                        ]
+                      ],
+                      {
+                        "list": [
+                          1,
+                          2
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    [],
+                    [
+                      "a",
+                      [
+                        "b",
+                        null
+                      ]
+                    ],
+                    {
+                      "list": [
+                        1,
+                        2
+                      ]
+                    }
+                  ]
+                ]
+              }
+            }
+          }
+        }
+      },
+      "candidate": {
+        "sha256": "e59428bbb5743ed9ef6fe158c1e7650a67234eb8e586aeabb26549685ff0ea0b",
+        "bytes": 290,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      [],
+                      [
+                        "a",
+                        [
+                          "b",
+                          null
+                        ]
+                      ],
+                      {
+                        "list": [
+                          1,
+                          2
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    [],
+                    [
+                      "a",
+                      [
+                        "b",
+                        null
+                      ]
+                    ],
+                    {
+                      "list": [
+                        1,
+                        2
+                      ]
+                    }
+                  ]
+                ]
+              }
+            }
+          }
+        }
+      },
+      "surfaces": {
+        "xtql": {
+          "main": {
+            "sha256": "20c98a6cc12b8a33f8c75153d9bfa67d606dd9f9f346e8a7f3f8e30326096ed0",
+            "bytes": 258,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      [],
+                      [
+                        "a",
+                        [
+                          "b",
+                          null
+                        ]
+                      ],
+                      {
+                        "list": [
+                          1,
+                          2
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    [],
+                    [
+                      "a",
+                      [
+                        "b",
+                        null
+                      ]
+                    ],
+                    {
+                      "list": [
+                        1,
+                        2
+                      ]
+                    }
+                  ]
+                ]
+              }
+            }
+          },
+          "candidate": {
+            "sha256": "20c98a6cc12b8a33f8c75153d9bfa67d606dd9f9f346e8a7f3f8e30326096ed0",
+            "bytes": 258,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      [],
+                      [
+                        "a",
+                        [
+                          "b",
+                          null
+                        ]
+                      ],
+                      {
+                        "list": [
+                          1,
+                          2
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    [],
+                    [
+                      "a",
+                      [
+                        "b",
+                        null
+                      ]
+                    ],
+                    {
+                      "list": [
+                        1,
+                        2
+                      ]
+                    }
+                  ]
+                ]
+              }
+            }
+          },
+          "mainError": null,
+          "candidateError": null
+        }
+      }
+    },
+    {
+      "mode": "unset",
+      "name": "json-looking-members",
+      "input": {
+        "sha256": "9b4fda33fb79ec24a10a9e55543f27091261b1a222902987e145d6a1afba85e8",
+        "bytes": 45,
+        "value": [
+          "[]",
+          "[\"a\"]",
+          "{\"x\":[1]}",
+          "null",
+          "\"s\""
+        ]
+      },
+      "equal": true,
+      "main": {
+        "sha256": "434bca38efea2af9587bb46a6efa091146a2271c58167f478bd859ba044f785f",
+        "bytes": 308,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "[]",
+                      "[\"a\"]",
+                      "{\"x\":[1]}",
+                      "null",
+                      "\"s\""
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "[]",
+                    "[\"a\"]",
+                    "{\"x\":[1]}",
+                    "null",
+                    "\"s\""
+                  ]
+                ]
+              }
+            }
+          }
+        }
+      },
+      "candidate": {
+        "sha256": "434bca38efea2af9587bb46a6efa091146a2271c58167f478bd859ba044f785f",
+        "bytes": 308,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "[]",
+                      "[\"a\"]",
+                      "{\"x\":[1]}",
+                      "null",
+                      "\"s\""
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "[]",
+                    "[\"a\"]",
+                    "{\"x\":[1]}",
+                    "null",
+                    "\"s\""
+                  ]
+                ]
+              }
+            }
+          }
+        }
+      },
+      "surfaces": {
+        "xtql": {
+          "main": {
+            "sha256": "323737cbc6502240af9d78d95eeb1da94905740c15479d9662b5c663cbd59f9e",
+            "bytes": 276,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "[]",
+                      "[\"a\"]",
+                      "{\"x\":[1]}",
+                      "null",
+                      "\"s\""
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "[]",
+                    "[\"a\"]",
+                    "{\"x\":[1]}",
+                    "null",
+                    "\"s\""
+                  ]
+                ]
+              }
+            }
+          },
+          "candidate": {
+            "sha256": "323737cbc6502240af9d78d95eeb1da94905740c15479d9662b5c663cbd59f9e",
+            "bytes": 276,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "[]",
+                      "[\"a\"]",
+                      "{\"x\":[1]}",
+                      "null",
+                      "\"s\""
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "[]",
+                    "[\"a\"]",
+                    "{\"x\":[1]}",
+                    "null",
+                    "\"s\""
+                  ]
+                ]
+              }
+            }
+          },
+          "mainError": null,
+          "candidateError": null
+        }
+      }
+    },
+    {
+      "mode": "unset",
+      "name": "json-looking-string",
+      "input": {
+        "sha256": "5ef4ebff0da25f40b074ac8d088f1cc125033b4199f4465bb8601c94cdaa6a73",
+        "bytes": 22,
+        "value": "[\"a\", {\"x\": []}]"
+      },
+      "equal": true,
+      "main": {
+        "sha256": "153acbfdf23aa3560d78ce919c6537208a74b2a92060fbc2b8c83d689126a5d5",
+        "bytes": 262,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": "[\"a\", {\"x\": []}]"
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  "[\"a\", {\"x\": []}]"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "candidate": {
+        "sha256": "153acbfdf23aa3560d78ce919c6537208a74b2a92060fbc2b8c83d689126a5d5",
+        "bytes": 262,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": "[\"a\", {\"x\": []}]"
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  "[\"a\", {\"x\": []}]"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "surfaces": {
+        "xtql": {
+          "main": {
+            "sha256": "2db0a46ea1c5e03fe1a914951d2baa3f5d265e460d51c34e448f9515aeb24c61",
+            "bytes": 230,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": "[\"a\", {\"x\": []}]"
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  "[\"a\", {\"x\": []}]"
+                ]
+              }
+            }
+          },
+          "candidate": {
+            "sha256": "2db0a46ea1c5e03fe1a914951d2baa3f5d265e460d51c34e448f9515aeb24c61",
+            "bytes": 230,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": "[\"a\", {\"x\": []}]"
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  "[\"a\", {\"x\": []}]"
+                ]
+              }
+            }
+          },
+          "mainError": null,
+          "candidateError": null
+        }
+      }
+    },
+    {
+      "mode": "unset",
+      "name": "json-object-string",
+      "input": {
+        "sha256": "8b4d5fbe9165d36f5b42b4633a46f0d4ee547793f54141d7929dd7d051359ad1",
+        "bytes": 20,
+        "value": "{\"list\":[\"a\"]}"
+      },
+      "equal": true,
+      "main": {
+        "sha256": "e3eba827031c9b713a508886299812c82f82b57861fcaec6189e9e4635e7699d",
+        "bytes": 258,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": "{\"list\":[\"a\"]}"
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  "{\"list\":[\"a\"]}"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "candidate": {
+        "sha256": "e3eba827031c9b713a508886299812c82f82b57861fcaec6189e9e4635e7699d",
+        "bytes": 258,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": "{\"list\":[\"a\"]}"
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  "{\"list\":[\"a\"]}"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "surfaces": {
+        "xtql": {
+          "main": {
+            "sha256": "78b1ac2d5ce6038f3839104ea652d4d6c19376163cbb3f8c59332dccf3b318ad",
+            "bytes": 226,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": "{\"list\":[\"a\"]}"
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  "{\"list\":[\"a\"]}"
+                ]
+              }
+            }
+          },
+          "candidate": {
+            "sha256": "78b1ac2d5ce6038f3839104ea652d4d6c19376163cbb3f8c59332dccf3b318ad",
+            "bytes": 226,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": "{\"list\":[\"a\"]}"
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  "{\"list\":[\"a\"]}"
+                ]
+              }
+            }
+          },
+          "mainError": null,
+          "candidateError": null
+        }
+      }
+    },
+    {
+      "mode": "unset",
+      "name": "unicode-escapes",
+      "input": {
+        "sha256": "027ed1baa986fb6659f5649896c2c3779f769ed9bd57c97ad64e8a1541aab2d6",
+        "bytes": 52,
+        "value": [
+          "𝄞",
+          "quote'",
+          "a,b",
+          "NULL",
+          "x\\y",
+          "line\nend",
+          ""
+        ]
+      },
+      "equal": true,
+      "main": {
+        "sha256": "b39cdf5c03e8e13ddbbf399b1d3f84d6b34d732f265ebf5de6f045341ae0721a",
+        "bytes": 322,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "𝄞",
+                      "quote'",
+                      "a,b",
+                      "NULL",
+                      "x\\y",
+                      "line\nend",
+                      ""
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "𝄞",
+                    "quote'",
+                    "a,b",
+                    "NULL",
+                    "x\\y",
+                    "line\nend",
+                    ""
+                  ]
+                ]
+              }
+            }
+          }
+        }
+      },
+      "candidate": {
+        "sha256": "b39cdf5c03e8e13ddbbf399b1d3f84d6b34d732f265ebf5de6f045341ae0721a",
+        "bytes": 322,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "𝄞",
+                      "quote'",
+                      "a,b",
+                      "NULL",
+                      "x\\y",
+                      "line\nend",
+                      ""
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "𝄞",
+                    "quote'",
+                    "a,b",
+                    "NULL",
+                    "x\\y",
+                    "line\nend",
+                    ""
+                  ]
+                ]
+              }
+            }
+          }
+        }
+      },
+      "surfaces": {
+        "xtql": {
+          "main": {
+            "sha256": "2894a6bc67a0c992f78435e4a67414407373b28e9588402edb1d05cf259f5545",
+            "bytes": 290,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "𝄞",
+                      "quote'",
+                      "a,b",
+                      "NULL",
+                      "x\\y",
+                      "line\nend",
+                      ""
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "𝄞",
+                    "quote'",
+                    "a,b",
+                    "NULL",
+                    "x\\y",
+                    "line\nend",
+                    ""
+                  ]
+                ]
+              }
+            }
+          },
+          "candidate": {
+            "sha256": "2894a6bc67a0c992f78435e4a67414407373b28e9588402edb1d05cf259f5545",
+            "bytes": 290,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "𝄞",
+                      "quote'",
+                      "a,b",
+                      "NULL",
+                      "x\\y",
+                      "line\nend",
+                      ""
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "𝄞",
+                    "quote'",
+                    "a,b",
+                    "NULL",
+                    "x\\y",
+                    "line\nend",
+                    ""
+                  ]
+                ]
+              }
+            }
+          },
+          "mainError": null,
+          "candidateError": null
+        }
+      }
+    },
+    {
+      "mode": "unset",
+      "name": "surrogate-member",
+      "input": {
+        "sha256": "bc162dcb3dca29938b740331b5f7bc804d09478e29f8b752f916dc3ed4cde091",
+        "bytes": 15,
+        "value": [
+          "ok",
+          "\ud800"
+        ]
+      },
+      "equal": true,
+      "main": {
+        "sha256": "2c6cb17049ed33a012d2ddd1ea1e97632f5ce8b9fbfc971a981401ece01ef901",
+        "bytes": 243,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "ok",
+                      "?"
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "ok",
+                    "\ud800"
+                  ]
+                ]
+              }
+            }
+          }
+        }
+      },
+      "candidate": {
+        "sha256": "2c6cb17049ed33a012d2ddd1ea1e97632f5ce8b9fbfc971a981401ece01ef901",
+        "bytes": 243,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "ok",
+                      "?"
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "ok",
+                    "\ud800"
+                  ]
+                ]
+              }
+            }
+          }
+        }
+      },
+      "surfaces": {
+        "xtql": {
+          "main": {
+            "sha256": "f9188d220d796963dfee1b85a11f7c2c10c8a574c96081511ea2fcd9f2a5ffb2",
+            "bytes": 211,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "ok",
+                      "?"
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "ok",
+                    "\ud800"
+                  ]
+                ]
+              }
+            }
+          },
+          "candidate": {
+            "sha256": "f9188d220d796963dfee1b85a11f7c2c10c8a574c96081511ea2fcd9f2a5ffb2",
+            "bytes": 211,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "ok",
+                      "?"
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "ok",
+                    "\ud800"
+                  ]
+                ]
+              }
+            }
+          },
+          "mainError": null,
+          "candidateError": null
+        }
+      }
+    },
+    {
+      "mode": "unset",
+      "name": "large-100k",
+      "input": {
+        "sha256": "4ccb5bd226d1cd108c23be67089c0ff9a3ad1c9290276881fbb2a472b1bb7708",
+        "bytes": 1588891
+      },
+      "equal": true,
+      "main": {
+        "sha256": "a9633678652f015a194adea33b0988219e95de2f981078b995e37865652f2722",
+        "bytes": 3178000
+      },
+      "candidate": {
+        "sha256": "a9633678652f015a194adea33b0988219e95de2f981078b995e37865652f2722",
+        "bytes": 3178000
+      },
+      "surfaces": {
+        "xtql": {
+          "main": {
+            "sha256": "bb34fd6888d73fdfdc8cfefbf3adac518347a2d1ad5e53b9273f70bebe8b73e0",
+            "bytes": 3177968
+          },
+          "candidate": {
+            "sha256": "bb34fd6888d73fdfdc8cfefbf3adac518347a2d1ad5e53b9273f70bebe8b73e0",
+            "bytes": 3177968
+          },
+          "mainError": null,
+          "candidateError": null
+        }
+      }
+    },
+    {
+      "mode": "a0",
+      "name": "empty",
+      "input": {
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "bytes": 2,
+        "value": []
+      },
+      "equal": true,
+      "main": {
+        "sha256": "9e3be069b629a311dfd919c75bb6ff3e08650531681ff5bf024a5897a023bf65",
+        "bytes": 222,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": []
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  []
+                ]
+              }
+            }
+          }
+        }
+      },
+      "candidate": {
+        "sha256": "9e3be069b629a311dfd919c75bb6ff3e08650531681ff5bf024a5897a023bf65",
+        "bytes": 222,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": []
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  []
+                ]
+              }
+            }
+          }
+        }
+      },
+      "surfaces": {
+        "xtql": {
+          "main": {
+            "sha256": "be3f7e137d78857e3376c6fb345e20f7947af5b9b10d557d58aca9771f71150b",
+            "bytes": 190,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": []
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  []
+                ]
+              }
+            }
+          },
+          "candidate": {
+            "sha256": "be3f7e137d78857e3376c6fb345e20f7947af5b9b10d557d58aca9771f71150b",
+            "bytes": 190,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": []
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  []
+                ]
+              }
+            }
+          },
+          "mainError": null,
+          "candidateError": null
+        }
+      }
+    },
+    {
+      "mode": "a0",
+      "name": "strings",
+      "input": {
+        "sha256": "0473ef2dc0d324ab659d3580c1134e9d812035905c4781fdd6d529b0c6860e13",
+        "bytes": 9,
+        "value": [
+          "a",
+          "b"
+        ]
+      },
+      "equal": true,
+      "main": {
+        "sha256": "dc5805d7602b45b4ee130916b2abee72e8184ffcb72c0ac26bfda64a3e8148b0",
+        "bytes": 236,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "a",
+                      "b"
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "a",
+                    "b"
+                  ]
+                ]
+              }
+            }
+          }
+        }
+      },
+      "candidate": {
+        "sha256": "dc5805d7602b45b4ee130916b2abee72e8184ffcb72c0ac26bfda64a3e8148b0",
+        "bytes": 236,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "a",
+                      "b"
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "a",
+                    "b"
+                  ]
+                ]
+              }
+            }
+          }
+        }
+      },
+      "surfaces": {
+        "xtql": {
+          "main": {
+            "sha256": "0c0b17a0781496cdac6228252752bf79a056c921bb7476b509705c08302a844e",
+            "bytes": 204,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "a",
+                      "b"
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "a",
+                    "b"
+                  ]
+                ]
+              }
+            }
+          },
+          "candidate": {
+            "sha256": "0c0b17a0781496cdac6228252752bf79a056c921bb7476b509705c08302a844e",
+            "bytes": 204,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "a",
+                      "b"
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "a",
+                    "b"
+                  ]
+                ]
+              }
+            }
+          },
+          "mainError": null,
+          "candidateError": null
+        }
+      }
+    },
+    {
+      "mode": "a0",
+      "name": "numeric",
+      "input": {
+        "sha256": "49a64717d5d4cb19952e6eac2946415cf6879adacf9908e7d872332d32c6e684",
+        "bytes": 5,
+        "value": [
+          1,
+          2
+        ]
+      },
+      "equal": true,
+      "main": {
+        "sha256": "ef5214ae3df21b9272e4e55c2bb980bcf5d5adec28a826ef95eff48ffa14d43a",
+        "bytes": 228,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      1,
+                      2
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    1,
+                    2
+                  ]
+                ]
+              }
+            }
+          }
+        }
+      },
+      "candidate": {
+        "sha256": "ef5214ae3df21b9272e4e55c2bb980bcf5d5adec28a826ef95eff48ffa14d43a",
+        "bytes": 228,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      1,
+                      2
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    1,
+                    2
+                  ]
+                ]
+              }
+            }
+          }
+        }
+      },
+      "surfaces": {
+        "xtql": {
+          "main": {
+            "sha256": "d19f0dce9fb7fd8b12597183f9e2f4b0a638f3c2e8b00c9a1644b0bfc6f9d575",
+            "bytes": 196,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      1,
+                      2
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    1,
+                    2
+                  ]
+                ]
+              }
+            }
+          },
+          "candidate": {
+            "sha256": "d19f0dce9fb7fd8b12597183f9e2f4b0a638f3c2e8b00c9a1644b0bfc6f9d575",
+            "bytes": 196,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      1,
+                      2
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    1,
+                    2
+                  ]
+                ]
+              }
+            }
+          },
+          "mainError": null,
+          "candidateError": null
+        }
+      }
+    },
+    {
+      "mode": "a0",
+      "name": "mixed",
+      "input": {
+        "sha256": "b70ec4a7e8fd0ae78f896f9f3dd1252a0085a0d70e455ab9496ae1b2fa792e68",
+        "bytes": 18,
+        "value": [
+          "a",
+          1,
+          null,
+          false
+        ]
+      },
+      "equal": true,
+      "main": {
+        "sha256": "4eb9aa0f7da2d866ee1f76b587474c835a627bb1d000bbe74066b42cb51e7b3e",
+        "bytes": 254,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "a",
+                      1,
+                      null,
+                      false
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "a",
+                    1,
+                    null,
+                    false
+                  ]
+                ]
+              }
+            }
+          }
+        }
+      },
+      "candidate": {
+        "sha256": "4eb9aa0f7da2d866ee1f76b587474c835a627bb1d000bbe74066b42cb51e7b3e",
+        "bytes": 254,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "a",
+                      1,
+                      null,
+                      false
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "a",
+                    1,
+                    null,
+                    false
+                  ]
+                ]
+              }
+            }
+          }
+        }
+      },
+      "surfaces": {
+        "xtql": {
+          "main": {
+            "sha256": "19984b77718afdb00478ccd96e1252aefc8e5f39574bc9156af3e933aea96244",
+            "bytes": 222,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "a",
+                      1,
+                      null,
+                      false
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "a",
+                    1,
+                    null,
+                    false
+                  ]
+                ]
+              }
+            }
+          },
+          "candidate": {
+            "sha256": "19984b77718afdb00478ccd96e1252aefc8e5f39574bc9156af3e933aea96244",
+            "bytes": 222,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "a",
+                      1,
+                      null,
+                      false
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "a",
+                    1,
+                    null,
+                    false
+                  ]
+                ]
+              }
+            }
+          },
+          "mainError": null,
+          "candidateError": null
+        }
+      }
+    },
+    {
+      "mode": "a0",
+      "name": "nested",
+      "input": {
+        "sha256": "8178b4cd213a1fd294e2e52c822b70dbc1f49e0a25e79b99dfe4cdb029088805",
+        "bytes": 36,
+        "value": [
+          [],
+          [
+            "a",
+            [
+              "b",
+              null
+            ]
+          ],
+          {
+            "list": [
+              1,
+              2
+            ]
+          }
+        ]
+      },
+      "equal": true,
+      "main": {
+        "sha256": "e59428bbb5743ed9ef6fe158c1e7650a67234eb8e586aeabb26549685ff0ea0b",
+        "bytes": 290,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      [],
+                      [
+                        "a",
+                        [
+                          "b",
+                          null
+                        ]
+                      ],
+                      {
+                        "list": [
+                          1,
+                          2
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    [],
+                    [
+                      "a",
+                      [
+                        "b",
+                        null
+                      ]
+                    ],
+                    {
+                      "list": [
+                        1,
+                        2
+                      ]
+                    }
+                  ]
+                ]
+              }
+            }
+          }
+        }
+      },
+      "candidate": {
+        "sha256": "e59428bbb5743ed9ef6fe158c1e7650a67234eb8e586aeabb26549685ff0ea0b",
+        "bytes": 290,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      [],
+                      [
+                        "a",
+                        [
+                          "b",
+                          null
+                        ]
+                      ],
+                      {
+                        "list": [
+                          1,
+                          2
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    [],
+                    [
+                      "a",
+                      [
+                        "b",
+                        null
+                      ]
+                    ],
+                    {
+                      "list": [
+                        1,
+                        2
+                      ]
+                    }
+                  ]
+                ]
+              }
+            }
+          }
+        }
+      },
+      "surfaces": {
+        "xtql": {
+          "main": {
+            "sha256": "20c98a6cc12b8a33f8c75153d9bfa67d606dd9f9f346e8a7f3f8e30326096ed0",
+            "bytes": 258,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      [],
+                      [
+                        "a",
+                        [
+                          "b",
+                          null
+                        ]
+                      ],
+                      {
+                        "list": [
+                          1,
+                          2
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    [],
+                    [
+                      "a",
+                      [
+                        "b",
+                        null
+                      ]
+                    ],
+                    {
+                      "list": [
+                        1,
+                        2
+                      ]
+                    }
+                  ]
+                ]
+              }
+            }
+          },
+          "candidate": {
+            "sha256": "20c98a6cc12b8a33f8c75153d9bfa67d606dd9f9f346e8a7f3f8e30326096ed0",
+            "bytes": 258,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      [],
+                      [
+                        "a",
+                        [
+                          "b",
+                          null
+                        ]
+                      ],
+                      {
+                        "list": [
+                          1,
+                          2
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    [],
+                    [
+                      "a",
+                      [
+                        "b",
+                        null
+                      ]
+                    ],
+                    {
+                      "list": [
+                        1,
+                        2
+                      ]
+                    }
+                  ]
+                ]
+              }
+            }
+          },
+          "mainError": null,
+          "candidateError": null
+        }
+      }
+    },
+    {
+      "mode": "a0",
+      "name": "json-looking-members",
+      "input": {
+        "sha256": "9b4fda33fb79ec24a10a9e55543f27091261b1a222902987e145d6a1afba85e8",
+        "bytes": 45,
+        "value": [
+          "[]",
+          "[\"a\"]",
+          "{\"x\":[1]}",
+          "null",
+          "\"s\""
+        ]
+      },
+      "equal": true,
+      "main": {
+        "sha256": "434bca38efea2af9587bb46a6efa091146a2271c58167f478bd859ba044f785f",
+        "bytes": 308,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "[]",
+                      "[\"a\"]",
+                      "{\"x\":[1]}",
+                      "null",
+                      "\"s\""
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "[]",
+                    "[\"a\"]",
+                    "{\"x\":[1]}",
+                    "null",
+                    "\"s\""
+                  ]
+                ]
+              }
+            }
+          }
+        }
+      },
+      "candidate": {
+        "sha256": "434bca38efea2af9587bb46a6efa091146a2271c58167f478bd859ba044f785f",
+        "bytes": 308,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "[]",
+                      "[\"a\"]",
+                      "{\"x\":[1]}",
+                      "null",
+                      "\"s\""
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "[]",
+                    "[\"a\"]",
+                    "{\"x\":[1]}",
+                    "null",
+                    "\"s\""
+                  ]
+                ]
+              }
+            }
+          }
+        }
+      },
+      "surfaces": {
+        "xtql": {
+          "main": {
+            "sha256": "323737cbc6502240af9d78d95eeb1da94905740c15479d9662b5c663cbd59f9e",
+            "bytes": 276,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "[]",
+                      "[\"a\"]",
+                      "{\"x\":[1]}",
+                      "null",
+                      "\"s\""
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "[]",
+                    "[\"a\"]",
+                    "{\"x\":[1]}",
+                    "null",
+                    "\"s\""
+                  ]
+                ]
+              }
+            }
+          },
+          "candidate": {
+            "sha256": "323737cbc6502240af9d78d95eeb1da94905740c15479d9662b5c663cbd59f9e",
+            "bytes": 276,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "[]",
+                      "[\"a\"]",
+                      "{\"x\":[1]}",
+                      "null",
+                      "\"s\""
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "[]",
+                    "[\"a\"]",
+                    "{\"x\":[1]}",
+                    "null",
+                    "\"s\""
+                  ]
+                ]
+              }
+            }
+          },
+          "mainError": null,
+          "candidateError": null
+        }
+      }
+    },
+    {
+      "mode": "a0",
+      "name": "json-looking-string",
+      "input": {
+        "sha256": "5ef4ebff0da25f40b074ac8d088f1cc125033b4199f4465bb8601c94cdaa6a73",
+        "bytes": 22,
+        "value": "[\"a\", {\"x\": []}]"
+      },
+      "equal": true,
+      "main": {
+        "sha256": "153acbfdf23aa3560d78ce919c6537208a74b2a92060fbc2b8c83d689126a5d5",
+        "bytes": 262,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": "[\"a\", {\"x\": []}]"
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  "[\"a\", {\"x\": []}]"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "candidate": {
+        "sha256": "153acbfdf23aa3560d78ce919c6537208a74b2a92060fbc2b8c83d689126a5d5",
+        "bytes": 262,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": "[\"a\", {\"x\": []}]"
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  "[\"a\", {\"x\": []}]"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "surfaces": {
+        "xtql": {
+          "main": {
+            "sha256": "2db0a46ea1c5e03fe1a914951d2baa3f5d265e460d51c34e448f9515aeb24c61",
+            "bytes": 230,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": "[\"a\", {\"x\": []}]"
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  "[\"a\", {\"x\": []}]"
+                ]
+              }
+            }
+          },
+          "candidate": {
+            "sha256": "2db0a46ea1c5e03fe1a914951d2baa3f5d265e460d51c34e448f9515aeb24c61",
+            "bytes": 230,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": "[\"a\", {\"x\": []}]"
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  "[\"a\", {\"x\": []}]"
+                ]
+              }
+            }
+          },
+          "mainError": null,
+          "candidateError": null
+        }
+      }
+    },
+    {
+      "mode": "a0",
+      "name": "json-object-string",
+      "input": {
+        "sha256": "8b4d5fbe9165d36f5b42b4633a46f0d4ee547793f54141d7929dd7d051359ad1",
+        "bytes": 20,
+        "value": "{\"list\":[\"a\"]}"
+      },
+      "equal": true,
+      "main": {
+        "sha256": "e3eba827031c9b713a508886299812c82f82b57861fcaec6189e9e4635e7699d",
+        "bytes": 258,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": "{\"list\":[\"a\"]}"
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  "{\"list\":[\"a\"]}"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "candidate": {
+        "sha256": "e3eba827031c9b713a508886299812c82f82b57861fcaec6189e9e4635e7699d",
+        "bytes": 258,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": "{\"list\":[\"a\"]}"
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  "{\"list\":[\"a\"]}"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "surfaces": {
+        "xtql": {
+          "main": {
+            "sha256": "78b1ac2d5ce6038f3839104ea652d4d6c19376163cbb3f8c59332dccf3b318ad",
+            "bytes": 226,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": "{\"list\":[\"a\"]}"
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  "{\"list\":[\"a\"]}"
+                ]
+              }
+            }
+          },
+          "candidate": {
+            "sha256": "78b1ac2d5ce6038f3839104ea652d4d6c19376163cbb3f8c59332dccf3b318ad",
+            "bytes": 226,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": "{\"list\":[\"a\"]}"
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  "{\"list\":[\"a\"]}"
+                ]
+              }
+            }
+          },
+          "mainError": null,
+          "candidateError": null
+        }
+      }
+    },
+    {
+      "mode": "a0",
+      "name": "unicode-escapes",
+      "input": {
+        "sha256": "027ed1baa986fb6659f5649896c2c3779f769ed9bd57c97ad64e8a1541aab2d6",
+        "bytes": 52,
+        "value": [
+          "𝄞",
+          "quote'",
+          "a,b",
+          "NULL",
+          "x\\y",
+          "line\nend",
+          ""
+        ]
+      },
+      "equal": true,
+      "main": {
+        "sha256": "b39cdf5c03e8e13ddbbf399b1d3f84d6b34d732f265ebf5de6f045341ae0721a",
+        "bytes": 322,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "𝄞",
+                      "quote'",
+                      "a,b",
+                      "NULL",
+                      "x\\y",
+                      "line\nend",
+                      ""
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "𝄞",
+                    "quote'",
+                    "a,b",
+                    "NULL",
+                    "x\\y",
+                    "line\nend",
+                    ""
+                  ]
+                ]
+              }
+            }
+          }
+        }
+      },
+      "candidate": {
+        "sha256": "b39cdf5c03e8e13ddbbf399b1d3f84d6b34d732f265ebf5de6f045341ae0721a",
+        "bytes": 322,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "𝄞",
+                      "quote'",
+                      "a,b",
+                      "NULL",
+                      "x\\y",
+                      "line\nend",
+                      ""
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "𝄞",
+                    "quote'",
+                    "a,b",
+                    "NULL",
+                    "x\\y",
+                    "line\nend",
+                    ""
+                  ]
+                ]
+              }
+            }
+          }
+        }
+      },
+      "surfaces": {
+        "xtql": {
+          "main": {
+            "sha256": "2894a6bc67a0c992f78435e4a67414407373b28e9588402edb1d05cf259f5545",
+            "bytes": 290,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "𝄞",
+                      "quote'",
+                      "a,b",
+                      "NULL",
+                      "x\\y",
+                      "line\nend",
+                      ""
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "𝄞",
+                    "quote'",
+                    "a,b",
+                    "NULL",
+                    "x\\y",
+                    "line\nend",
+                    ""
+                  ]
+                ]
+              }
+            }
+          },
+          "candidate": {
+            "sha256": "2894a6bc67a0c992f78435e4a67414407373b28e9588402edb1d05cf259f5545",
+            "bytes": 290,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "𝄞",
+                      "quote'",
+                      "a,b",
+                      "NULL",
+                      "x\\y",
+                      "line\nend",
+                      ""
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "𝄞",
+                    "quote'",
+                    "a,b",
+                    "NULL",
+                    "x\\y",
+                    "line\nend",
+                    ""
+                  ]
+                ]
+              }
+            }
+          },
+          "mainError": null,
+          "candidateError": null
+        }
+      }
+    },
+    {
+      "mode": "a0",
+      "name": "surrogate-member",
+      "input": {
+        "sha256": "bc162dcb3dca29938b740331b5f7bc804d09478e29f8b752f916dc3ed4cde091",
+        "bytes": 15,
+        "value": [
+          "ok",
+          "\ud800"
+        ]
+      },
+      "equal": true,
+      "main": {
+        "sha256": "2c6cb17049ed33a012d2ddd1ea1e97632f5ce8b9fbfc971a981401ece01ef901",
+        "bytes": 243,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "ok",
+                      "?"
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "ok",
+                    "\ud800"
+                  ]
+                ]
+              }
+            }
+          }
+        }
+      },
+      "candidate": {
+        "sha256": "2c6cb17049ed33a012d2ddd1ea1e97632f5ce8b9fbfc971a981401ece01ef901",
+        "bytes": 243,
+        "value": {
+          "calls": [],
+          "answers": {
+            "xtql": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "ok",
+                      "?"
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "ok",
+                    "\ud800"
+                  ]
+                ]
+              }
+            }
+          }
+        }
+      },
+      "surfaces": {
+        "xtql": {
+          "main": {
+            "sha256": "f9188d220d796963dfee1b85a11f7c2c10c8a574c96081511ea2fcd9f2a5ffb2",
+            "bytes": 211,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "ok",
+                      "?"
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "ok",
+                    "\ud800"
+                  ]
+                ]
+              }
+            }
+          },
+          "candidate": {
+            "sha256": "f9188d220d796963dfee1b85a11f7c2c10c8a574c96081511ea2fcd9f2a5ffb2",
+            "bytes": 211,
+            "value": {
+              "result": {
+                "rows": [
+                  {
+                    "value": [
+                      "ok",
+                      "?"
+                    ]
+                  }
+                ],
+                "query": "SELECT * FROM (XTQL ('(fn [triplex_param_1] (rel [{:value triplex_param_1}] [value]))', $1)\n) triplex_native_answer LIMIT 1001",
+                "parameters": [
+                  [
+                    "ok",
+                    "\ud800"
+                  ]
+                ]
+              }
+            }
+          },
+          "mainError": null,
+          "candidateError": null
+        }
+      }
+    },
+    {
+      "mode": "a0",
+      "name": "large-100k",
+      "input": {
+        "sha256": "4ccb5bd226d1cd108c23be67089c0ff9a3ad1c9290276881fbb2a472b1bb7708",
+        "bytes": 1588891
+      },
+      "equal": true,
+      "main": {
+        "sha256": "a9633678652f015a194adea33b0988219e95de2f981078b995e37865652f2722",
+        "bytes": 3178000
+      },
+      "candidate": {
+        "sha256": "a9633678652f015a194adea33b0988219e95de2f981078b995e37865652f2722",
+        "bytes": 3178000
+      },
+      "surfaces": {
+        "xtql": {
+          "main": {
+            "sha256": "bb34fd6888d73fdfdc8cfefbf3adac518347a2d1ad5e53b9273f70bebe8b73e0",
+            "bytes": 3177968
+          },
+          "candidate": {
+            "sha256": "bb34fd6888d73fdfdc8cfefbf3adac518347a2d1ad5e53b9273f70bebe8b73e0",
+            "bytes": 3177968
+          },
+          "mainError": null,
+          "candidateError": null
+        }
+      }
+    }
+  ],
+  "failures": [],
+  "ownerUnchanged": true,
+  "endedAt": "2026-11-08T22:02:15.953Z"
+}

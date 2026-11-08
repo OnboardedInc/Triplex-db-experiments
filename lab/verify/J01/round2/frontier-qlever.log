@@ -1,0 +1,31 @@
+qlever/main: 20 exact boundary/decimal-string/long-text values at commit
+qlever/main: read-your-own-write at exact valid/recorded cut
+qlever/main: retract/replacement, old cut stability, half-open valid interval, history
+qlever/main: typed stale precondition and duplicate command preserves original receipt
+qlever/main: journal exact changes, resumable feed, dependency and Datalog at old cut
+qlever/candidate: 20 exact boundary/decimal-string/long-text values at commit
+qlever/candidate: read-your-own-write at exact valid/recorded cut
+qlever/candidate: retract/replacement, old cut stability, half-open valid interval, history
+qlever/candidate: typed stale precondition and duplicate command preserves original receipt
+qlever/candidate: journal exact changes, resumable feed, dependency and Datalog at old cut
+{
+  "lane": "qlever",
+  "checks": [
+    [
+      "20 exact boundary/decimal-string/long-text values at commit",
+      "read-your-own-write at exact valid/recorded cut",
+      "retract/replacement, old cut stability, half-open valid interval, history",
+      "typed stale precondition and duplicate command preserves original receipt",
+      "journal exact changes, resumable feed, dependency and Datalog at old cut"
+    ],
+    [
+      "20 exact boundary/decimal-string/long-text values at commit",
+      "read-your-own-write at exact valid/recorded cut",
+      "retract/replacement, old cut stability, half-open valid interval, history",
+      "typed stale precondition and duplicate command preserves original receipt",
+      "journal exact changes, resumable feed, dependency and Datalog at old cut"
+    ]
+  ],
+  "failures": [],
+  "equivalent": true
+}

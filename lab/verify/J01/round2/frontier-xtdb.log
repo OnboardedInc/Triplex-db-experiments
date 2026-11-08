@@ -1,0 +1,31 @@
+xtdb/main: 20 exact boundary/decimal-string/long-text values at commit
+xtdb/main: read-your-own-write at exact valid/recorded cut
+xtdb/main: retract/replacement, old cut stability, half-open valid interval, history
+xtdb/main: typed stale precondition and duplicate command preserves original receipt
+xtdb/main: journal exact changes, resumable feed, dependency and Datalog at old cut
+xtdb/candidate: 20 exact boundary/decimal-string/long-text values at commit
+xtdb/candidate: read-your-own-write at exact valid/recorded cut
+xtdb/candidate: retract/replacement, old cut stability, half-open valid interval, history
+xtdb/candidate: typed stale precondition and duplicate command preserves original receipt
+xtdb/candidate: journal exact changes, resumable feed, dependency and Datalog at old cut
+{
+  "lane": "xtdb",
+  "checks": [
+    [
+      "20 exact boundary/decimal-string/long-text values at commit",
+      "read-your-own-write at exact valid/recorded cut",
+      "retract/replacement, old cut stability, half-open valid interval, history",
+      "typed stale precondition and duplicate command preserves original receipt",
+      "journal exact changes, resumable feed, dependency and Datalog at old cut"
+    ],
+    [
+      "20 exact boundary/decimal-string/long-text values at commit",
+      "read-your-own-write at exact valid/recorded cut",
+      "retract/replacement, old cut stability, half-open valid interval, history",
+      "typed stale precondition and duplicate command preserves original receipt",
+      "journal exact changes, resumable feed, dependency and Datalog at old cut"
+    ]
+  ],
+  "failures": [],
+  "equivalent": true
+}

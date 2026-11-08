@@ -1,0 +1,137 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 82782 "CX-VE01-4-prior", pid 84131 "R25-h1-split", pid 84970 "CX-A01-0311-final-54cf064", pid 82780 "CX-VE01-4-all"
+[lab] heavy: waiting for one of 4 slots; held by pid 82782 "CX-VE01-4-prior", pid 84131 "R25-h1-split", pid 84970 "CX-A01-0311-final-54cf064", pid 82780 "CX-VE01-4-all"
+[lab] heavy: waiting for one of 4 slots; held by pid 82782 "CX-VE01-4-prior", pid 84131 "R25-h1-split", pid 84970 "CX-A01-0311-final-54cf064", pid 82780 "CX-VE01-4-all"
+[lab] heavy: waiting for one of 4 slots; held by pid 38669 "CX-VE01-4-supplement", pid 84131 "R25-h1-split", pid 20721 "CX-K01-R2-live", pid 34900 "CX-VE01-4-delta"
+[lab] heavy: waiting for one of 4 slots; held by pid 38669 "CX-VE01-4-supplement", pid 84131 "R25-h1-split", pid 20721 "CX-K01-R2-live", pid 34900 "CX-VE01-4-delta"
+[lab] heavy: waiting for one of 4 slots; held by pid 43503 "CX-VE01-4-fallback-routes", pid 84131 "R25-h1-split", pid 20721 "CX-K01-R2-live", pid 43762 "CX-A01-0311-final-5ba1e75"
+[lab] heavy: waiting for one of 4 slots; held by pid 47397 "CX-VE01-4-input-variations", pid 84131 "R25-h1-split", pid 20721 "CX-K01-R2-live", pid 43762 "CX-A01-0311-final-5ba1e75"
+[lab] heavy: waiting for one of 4 slots; held by pid 47397 "CX-VE01-4-input-variations", pid 50809 "R25-h1-naive", pid 20721 "CX-K01-R2-live", pid 43762 "CX-A01-0311-final-5ba1e75"
+[lab] heavy: waiting for one of 4 slots; held by pid 47397 "CX-VE01-4-input-variations", pid 50809 "R25-h1-naive", pid 20721 "CX-K01-R2-live", pid 43762 "CX-A01-0311-final-5ba1e75"
+[lab] heavy: waiting for one of 4 slots; held by pid 86080 "CX-O05-R2-all", pid 50809 "R25-h1-naive", pid 20721 "CX-K01-R2-live", pid 43762 "CX-A01-0311-final-5ba1e75"
+[lab] heavy: waiting for one of 4 slots; held by pid 86080 "CX-O05-R2-all", pid 50809 "R25-h1-naive", pid 20721 "CX-K01-R2-live", pid 49141 "CX-P2Q-R3-suites"
+{
+  "sourceCopiesUnchanged": true,
+  "owners": {
+    "xtdb": {
+      "path": "/Users/sam/projects/triplex-db-2/lab/locks/xtdb-dev/owner.json",
+      "beforeSha256": "a1ae3fbcd98bb1de559f5ad0d4b18ea159902e58a64c313db391eb771fcec2a6",
+      "afterSha256": "a1ae3fbcd98bb1de559f5ad0d4b18ea159902e58a64c313db391eb771fcec2a6",
+      "unchanged": true
+    },
+    "qlever": {
+      "path": "/Users/sam/projects/triplex-db-2/lab/locks/qlever-dev/owner.json",
+      "beforeSha256": "bf702d8316d2c7871fa163f3208fa41adfe7281df9f87c6ed2ddfd2c31824137",
+      "afterSha256": "bf702d8316d2c7871fa163f3208fa41adfe7281df9f87c6ed2ddfd2c31824137",
+      "unchanged": true
+    }
+  },
+  "checks": {
+    "wire": {
+      "cases": 22,
+      "equal": 22,
+      "failures": []
+    },
+    "answers": {
+      "cases": 22,
+      "equal": 22,
+      "failures": []
+    },
+    "answers-xtql": {
+      "cases": 22,
+      "equal": 22,
+      "failures": []
+    },
+    "frontier-xtdb": {
+      "arms": [
+        {
+          "encoding": "main",
+          "stages": 5,
+          "surfaces": 17
+        },
+        {
+          "encoding": "candidate",
+          "stages": 5,
+          "surfaces": 17
+        }
+      ],
+      "equivalent": true
+    },
+    "frontier-qlever": {
+      "arms": [
+        {
+          "encoding": "main",
+          "stages": 5,
+          "surfaces": 17
+        },
+        {
+          "encoding": "candidate",
+          "stages": 5,
+          "surfaces": 17
+        }
+      ],
+      "equivalent": true
+    },
+    "jsonGuard": {
+      "attempts": 16,
+      "correctBinding": 8,
+      "controls": [
+        "passed",
+        "passed",
+        "passed",
+        "passed",
+        "passed",
+        "passed",
+        "passed",
+        "passed"
+      ]
+    },
+    "offline": [
+      {
+        "name": "xtdb: main/default-off/explicit-a0 statement equality",
+        "passed": true,
+        "normalizedSha256": "bb2f7a2920b7e5ceca5c7ac99449b956033fd21800f21be9a9cb5cd446bc102b",
+        "bytes": 142052,
+        "valueCases": 24
+      },
+      {
+        "name": "xtdb: staged compact/a0 rows exact",
+        "passed": true,
+        "rows": 24
+      },
+      {
+        "name": "qlever: main/default-off/explicit-a0 statement equality",
+        "passed": true,
+        "normalizedSha256": "3586b3ad9fb43dbb87c8e01ec17de83a3324dbf20c9a633547ec88f05e237f29",
+        "bytes": 346651,
+        "valueCases": 24
+      },
+      {
+        "name": "qlever: staged compact/a0 rows exact",
+        "passed": true,
+        "rows": 24
+      },
+      {
+        "name": "QLever persisted channels and _row roundtrip versus main across asserted/retracted shapes",
+        "passed": true,
+        "rows": 48
+      }
+    ]
+  },
+  "compressed": [
+    {
+      "path": "lab/verify/J01/round2/wire-attempt1.json.gz",
+      "rawBytes": 139376061,
+      "rawSha256": "6102185348a8b7411f4a6cddbf2d8158ee7254f37ffaf861ec75b9ff52f4dfac",
+      "gzipBytes": 12093336,
+      "gzipSha256": "8163252a2bda61bc90b72cfdf8da4d64f2251242333ed5cf60a1efe1a19c48c2"
+    },
+    {
+      "path": "lab/verify/J01/round2/wire.json.gz",
+      "rawBytes": 139498215,
+      "rawSha256": "51513802b2e0fc910acdf63cd2a9b38789bcf3a32f652c2c45cd419118395fe2",
+      "gzipBytes": 12098806,
+      "gzipSha256": "b5043f906e0b4e0a08c6fa34ed2aae22259ce7311860a21cf43f663d4bf880a4"
+    }
+  ],
+  "mainAtFinalReadback": "f3b989e8c2d535c7c0455067ad42f1eb58330a35"
+}
