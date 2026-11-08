@@ -316,3 +316,25 @@ test('Q75b: edits within one build instance fail closed without an instance swit
   assert.equal(r.offlineVerdict,'DIAGNOSTIC');
   assert.ok(codes(r).includes('BUILD-TAMPERED'));
 });
+
+// [EXP-E01] Why: reproduce verify/E01 9a1f51e supplement's final-use variants (Q81a). Rejected: edits before reuse (already checked).
+for (const mutation of ['delete', 'rewrite']) test(`V-E01 F11/Q81a: input ${mutation} after final use refuses the run`, () => {
+  const marker = path.join(EXT, `final-input-${mutation}`);
+  const edit = mutation === 'delete' ? 'fs.unlinkSync(process.argv[2]);' : "fs.chmodSync(process.argv[2], 0o644); fs.writeFileSync(process.argv[2], JSON.stringify({...c, p: c.p + 1000}));";
+  const candidate = branch(`final-input-${mutation}`, { 'packages/xtdb/src/run.ts': RUN_TS + `
+if (String(c.case).startsWith('CS-SCOPE/') && process.argv[3] === 'reopen') {
+  ${edit}
+  fs.writeFileSync(${JSON.stringify(marker)}, process.argv[2]);
+}
+` });
+  const auth = authority(`auth-final-input-${mutation}`, c => register(c, [candidate.commit], ['G10.scope.shared-collision']));
+  const r = q(claimFor(candidate), { authorityRef: auth, keepIsolation: true });
+  assert.ok(fs.existsSync(marker), 'candidate performed the final-use edit');
+  const changed = fs.readFileSync(marker, 'utf8');
+  if (mutation === 'delete') assert.equal(fs.existsSync(changed), false);
+  else assert.ok(JSON.parse(fs.readFileSync(changed, 'utf8')).p >= 1000);
+  assert.ok(r.run.cases.length > 0 && r.run.cases.every(c => c.verdict === 'PASS'), 'case comparisons passed before the end check');
+  assert.equal(r.offlineVerdict, 'DIAGNOSTIC', JSON.stringify(r.reasons));
+  assert.ok(codes(r).includes('INPUT-TAMPERED'), JSON.stringify(r.reasons));
+  assert.deepEqual([...new Set(codes(r))].sort(), ['GATE-NOT-RUN', 'INPUT-TAMPERED', 'RUN-NOT-ON-GATE']);
+});

@@ -1231,14 +1231,18 @@ function labExecutor({ commit, contract, ctx, spec, slots, loadContract, claim, 
   const inputsDir = iso('inputs');
   let current = { o: null }, last = null, lastAnswer = null;
   ctx.onRun = (o, binary) => { current = { o, binary }; };
-  // A case input is copied once into the evaluator's input directory and re-hashed before every use.
+  // [EXP-E01] Why: Q81a covers persistent edits after final use. Rejected: pre-use checks alone (no next use to detect them).
+  function verifyInput(h, p) {
+    let ok = false;
+    try { ok = sha256(fs.readFileSync(p)) === h; } catch { ok = false; }
+    if (!ok) why('INPUT-TAMPERED', `the evaluator's copy of case input ${h} is missing, unreadable or changed after it was written (RULINGS Q67e, Q81a)`);
+    return ok;
+  }
+  // A case input is copied once and re-hashed before every use and at the end, before isolation cleanup.
   const inputPath = raw => {
     const h = sha256(raw), p = path.join(inputsDir, `${h}.json`);
     if (!inputFiles.has(h)) { fs.writeFileSync(p, raw); fs.chmodSync(p, 0o444); inputFiles.set(h, p); }
-    let ok = false;
-    try { ok = sha256(fs.readFileSync(p)) === h; } catch { ok = false; }
-    if (!ok) { why('INPUT-TAMPERED', `the evaluator's copy of case input ${h} changed after it was written (RULINGS Q67e)`); return null; }
-    return p;
+    return verifyInput(h, p) ? p : null;
   };
   const ev = {
     slots: [...new Set(Object.values(isObj(slots?.slots) ? slots.slots : {}).flatMap(l => isObj(l) ? Object.keys(l) : []))],
@@ -1392,6 +1396,7 @@ function labExecutor({ commit, contract, ctx, spec, slots, loadContract, claim, 
   }
   // [EXP-E01] Why: detect even the final execution's edits. Rejected: pre-invocation-only checks (no later invocation).
   ev.verifyRuntime = () => {
+    for (const [h, p] of inputFiles) verifyInput(h, p);
     for (const b of instances) verifyBuild(b);
     for (const [x, root] of pre.oracles) if (root) verifyOracleCopy(x, root);
   };
@@ -1443,7 +1448,8 @@ export function qualifyClaim(claim, env) {
 }
 
 /** The checks after a run (RULINGS Q67e, Q75a, Q75d, Q75i): the evaluator's files are those it started with (a change poisons the
- * checkout), the toolchain's files are unchanged, and every evidence object the run wrote is present with its bytes and nothing
+ * checkout), every handed-out case input is present with its bytes (Q81a), the toolchain's files are unchanged, and every
+ * evidence object the run wrote is present with its bytes and nothing
  * else is in the store. */
 function endChecks(why, run, state) {
   state.verifyRuntime?.();
