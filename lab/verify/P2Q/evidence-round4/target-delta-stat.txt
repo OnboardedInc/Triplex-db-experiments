@@ -1,0 +1,9 @@
+ .../EXP-P2Q-qlever-log-broker/REPORT-round2.md     |  65 +++++++++
+ .../EXP-P2Q-qlever-log-broker/run-round3.py        |  39 +++++
+ lab/verify/P2Q/tests/harness.ts                    |   4 +-
+ lab/verify/P2Q/tests/round3.test.ts                | 160 +++++++++++++++++++++
+ packages/qlever/src/QleverQueryExecutor.ts         |  41 ++++--
+ packages/qlever/src/broker/errors.ts               |  12 +-
+ packages/qlever/src/native/NativeQueries.ts        |  30 +++-
+ packages/qlever/test/broker-answer-errors.test.ts  | 108 ++++++++++++++
+ 8 files changed, 441 insertions(+), 18 deletions(-)

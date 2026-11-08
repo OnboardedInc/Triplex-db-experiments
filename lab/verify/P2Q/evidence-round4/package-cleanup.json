@@ -1,0 +1,16 @@
+{
+  "at": "2026-11-08T22:26:10.446Z",
+  "reason": "Sandboxed package SIGKILL test failed before its child cleanup because pgrep could not discover its own helper.",
+  "actions": [
+    {
+      "pid": 3956,
+      "command": "/Users/sam/.hermes/node/bin/node --require /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/node_modules/.pnpm/tsx@4.19.0/node_modules/tsx/dist/preflight.cjs --import file:///Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/node_modules/.pnpm/tsx@4.19.0/node_modules/tsx/dist/loader.mjs /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/packages/qlever/test/fixtures/lock-holder.ts /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/runs/broker/EXP-P2Q/fixes/d61d00e8-0583-4350-ac40-cccd889d638c hold A",
+      "signal": "SIGKILL"
+    },
+    {
+      "pid": 3950,
+      "command": "node /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/node_modules/.bin/../tsx/dist/cli.mjs /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/packages/qlever/test/fixtures/lock-holder.ts /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/runs/broker/EXP-P2Q/fixes/d61d00e8-0583-4350-ac40-cccd889d638c hold A",
+      "signal": "SIGKILL"
+    }
+  ]
+}

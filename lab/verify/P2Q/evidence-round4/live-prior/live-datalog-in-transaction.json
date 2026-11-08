@@ -1,0 +1,25 @@
+{
+  "position": 2048,
+  "oracleRows": 1,
+  "inTransaction": {
+    "error": "ReadError:basis-not-reached",
+    "message": "Basis 2048 is not available on the QLever replica for datalog reads (observed 0 after 2430 ms)"
+  },
+  "outsideTransaction": {
+    "error": "ReadError:basis-not-reached",
+    "message": "Basis 2048 is not available on the QLever replica for datalog reads (observed 0 after 2006 ms)"
+  },
+  "inTransactionAfterPublication": [
+    {
+      "?v": "a-0"
+    }
+  ],
+  "outsideAfterPublication": {
+    "results": [
+      {
+        "?v": "a-0"
+      }
+    ],
+    "basis": 2048
+  }
+}

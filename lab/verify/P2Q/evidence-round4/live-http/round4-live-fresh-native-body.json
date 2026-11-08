@@ -1,0 +1,41 @@
+{
+  "kind": "fresh",
+  "surface": "native",
+  "timing": "body",
+  "required": 2048,
+  "observed": 4095,
+  "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"v-p2q-round4:9ad6cda5-775a-4d88-8ffb-bca329b875d4\",0]",
+  "upstream": "http://127.0.0.1:7070",
+  "events": [
+    "marker",
+    "answer-acquired",
+    "headers-flushed",
+    "partial-body-flushed",
+    "socket-destroyed"
+  ],
+  "answers": 1,
+  "forwarded": 2,
+  "ok": false,
+  "error": {
+    "name": "ReadError",
+    "tag": "ReadError",
+    "reason": "replica-unreachable",
+    "required": 2048,
+    "observed": 4095,
+    "replica": "the QLever replica",
+    "surface": "native",
+    "code": null,
+    "message": "QLever replica the QLever replica is unreachable for native reads: Error: aborted",
+    "cause": {
+      "name": "Error",
+      "reason": null,
+      "required": null,
+      "observed": null,
+      "replica": null,
+      "surface": null,
+      "code": "ECONNRESET",
+      "message": "aborted",
+      "cause": null
+    }
+  }
+}

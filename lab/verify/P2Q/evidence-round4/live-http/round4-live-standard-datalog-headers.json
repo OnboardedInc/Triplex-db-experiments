@@ -1,0 +1,49 @@
+{
+  "kind": "standard",
+  "surface": "datalog",
+  "timing": "headers",
+  "required": 2048,
+  "observed": 4095,
+  "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"v-p2q-round4:63d22479-c3bc-4119-bb06-d992595703f7\",0]",
+  "upstream": "http://127.0.0.1:7070",
+  "events": [
+    "answer-acquired",
+    "headers-flushed",
+    "socket-destroyed"
+  ],
+  "answers": 1,
+  "forwarded": 1,
+  "ok": false,
+  "error": {
+    "name": "ReadError",
+    "tag": "ReadError",
+    "reason": null,
+    "required": null,
+    "observed": null,
+    "replica": null,
+    "surface": null,
+    "code": null,
+    "message": "QLever Datalog execution failed: TypeError: terminated",
+    "cause": {
+      "name": "TypeError",
+      "reason": null,
+      "required": null,
+      "observed": null,
+      "replica": null,
+      "surface": null,
+      "code": null,
+      "message": "terminated",
+      "cause": {
+        "name": "SocketError",
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "surface": null,
+        "code": "UND_ERR_SOCKET",
+        "message": "other side closed",
+        "cause": null
+      }
+    }
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "kind": "standard",
+  "surface": "native",
+  "timing": "body",
+  "required": 2048,
+  "observed": 4095,
+  "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"v-p2q-round4:ece73b3b-770e-4eab-8360-8901b3a35914\",0]",
+  "upstream": "http://127.0.0.1:7070",
+  "events": [
+    "marker",
+    "answer-acquired",
+    "headers-flushed",
+    "partial-body-flushed",
+    "socket-destroyed"
+  ],
+  "answers": 1,
+  "forwarded": 2,
+  "ok": false,
+  "error": {
+    "name": "ReadError",
+    "tag": "ReadError",
+    "reason": null,
+    "required": null,
+    "observed": null,
+    "replica": null,
+    "surface": null,
+    "code": null,
+    "message": "QLever native SELECT failed: TypeError: terminated",
+    "cause": {
+      "name": "TypeError",
+      "reason": null,
+      "required": null,
+      "observed": null,
+      "replica": null,
+      "surface": null,
+      "code": null,
+      "message": "terminated",
+      "cause": {
+        "name": "SocketError",
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "surface": null,
+        "code": "UND_ERR_SOCKET",
+        "message": "other side closed",
+        "cause": null
+      }
+    }
+  }
+}

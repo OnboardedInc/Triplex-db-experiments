@@ -1,0 +1,37 @@
+{
+  "kind": "fresh",
+  "surface": "native",
+  "timing": "connect",
+  "required": 2048,
+  "observed": 4095,
+  "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"v-p2q-round4:da21c7e4-ffab-420e-8ff5-6abbfe3204cc\",0]",
+  "upstream": "http://127.0.0.1:7070",
+  "events": [
+    "marker"
+  ],
+  "answers": 0,
+  "forwarded": 1,
+  "ok": false,
+  "error": {
+    "name": "ReadError",
+    "tag": "ReadError",
+    "reason": "replica-unreachable",
+    "required": 2048,
+    "observed": 4095,
+    "replica": "the QLever replica",
+    "surface": "native",
+    "code": null,
+    "message": "QLever replica the QLever replica is unreachable for native reads: Error: connect ECONNREFUSED 127.0.0.1:65208",
+    "cause": {
+      "name": "Error",
+      "reason": null,
+      "required": null,
+      "observed": null,
+      "replica": null,
+      "surface": null,
+      "code": "ECONNREFUSED",
+      "message": "connect ECONNREFUSED 127.0.0.1:65208",
+      "cause": null
+    }
+  }
+}

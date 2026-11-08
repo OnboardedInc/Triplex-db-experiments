@@ -1,0 +1,40 @@
+{
+  "kind": "fresh",
+  "surface": "datalog",
+  "timing": "body",
+  "required": 2048,
+  "observed": 4095,
+  "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"v-p2q-round4:32601dc3-6a40-4cf5-973c-4eb5444ba66e\",0]",
+  "upstream": "http://127.0.0.1:7070",
+  "events": [
+    "answer-acquired",
+    "headers-flushed",
+    "partial-body-flushed",
+    "socket-destroyed"
+  ],
+  "answers": 1,
+  "forwarded": 1,
+  "ok": false,
+  "error": {
+    "name": "ReadError",
+    "tag": "ReadError",
+    "reason": "replica-unreachable",
+    "required": 2048,
+    "observed": 4095,
+    "replica": "the QLever replica",
+    "surface": "datalog",
+    "code": null,
+    "message": "QLever replica the QLever replica is unreachable for datalog reads: Error: aborted",
+    "cause": {
+      "name": "Error",
+      "reason": null,
+      "required": null,
+      "observed": null,
+      "replica": null,
+      "surface": null,
+      "code": "ECONNRESET",
+      "message": "aborted",
+      "cause": null
+    }
+  }
+}

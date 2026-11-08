@@ -1,0 +1,26 @@
+{
+  "middleFrameBits": 62760,
+  "statuses": {
+    "corruption": 62760
+  },
+  "header": {
+    "bad-header": 256
+  },
+  "fullOpens": {
+    "firstLsn": {
+      "opened": false,
+      "error": "Error: Broker log /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q/state-round4/c1-copy-e0bd0d56-82b4-4ebe-a00d-e68bc91830cf/segment-000001.log: bad-header (se",
+      "segmentUntouched": true
+    },
+    "lastFrame": {
+      "opened": false,
+      "error": "Error: Broker log /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q/state-round4/c1-copy-4c9db095-9b1c-4df0-8678-0130d23efc5e/segment-000001.log: WATERMARK name",
+      "segmentUntouched": true
+    },
+    "middle": {
+      "opened": false,
+      "error": "Error: Broker log /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q/state-round4/c1-copy-c0e1ae0d-a44b-4312-a7b9-09d58fd60a5a/segment-000001.log: corruption (pa",
+      "segmentUntouched": true
+    }
+  }
+}

@@ -1,0 +1,213 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../../vitest.workspace-aliases" without a file extension (lab/verify/P2Q/vitest.config.ts:5:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q
+
+ ❯ tests/round4.test.ts (42 tests | 4 failed | 12 skipped) 492ms
+   ❯ round4 real HTTP error matrix (local fixture, no engine) (30)
+     × standard native headers 51ms
+     × standard native body 46ms
+     × standard datalog headers 46ms
+     × standard datalog body 45ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/round4.test.ts > round4 real HTTP error matrix (local fixture, no engine) > standard native headers
+AssertionError: expected ReadError: QLever native SELECT failed: T… { _tag: '…' } to match object { reason: 'replica-unreachable', …(4) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "observed": 2048,
+-   "reason": "replica-unreachable",
+-   "replica": "the QLever replica",
+-   "required": 1024,
+-   "surface": "native",
++ ReadError {
++   "message": "QLever native SELECT failed: TypeError: terminated",
++   "cause": TypeError {
++     "message": "terminated",
++     "cause": SocketError {
++       "message": "other side closed",
++       "name": "SocketError",
++       "code": "UND_ERR_SOCKET",
++       "socket": {
++         "bytesRead": 178,
++         "bytesWritten": 359,
++         "localAddress": "127.0.0.1",
++         "localPort": 63822,
++         "remoteAddress": "127.0.0.1",
++         "remoteFamily": "IPv4",
++         "remotePort": 63820,
++         "timeout": undefined,
++       },
++       Symbol(undici.error.UND_ERR): true,
++       Symbol(undici.error.UND_ERR_SOCKET): true,
++     },
++   },
++   "_tag": "ReadError",
+  }
+
+ ❯ tests/round4.test.ts:105:29
+    103|         expect(res.ok).toBe(false);
+    104|         if (["connect", "headers", "body", "503"].includes(timing))
+    105|           expect(res.error).toMatchObject({ reason: "replica-unreachab…
+       |                             ^
+    106|         else expect(res.error?.reason).not.toBe("replica-unreachable");
+    107|       }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/round4.test.ts > round4 real HTTP error matrix (local fixture, no engine) > standard native body
+AssertionError: expected ReadError: QLever native SELECT failed: T… { _tag: '…' } to match object { reason: 'replica-unreachable', …(4) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "observed": 2048,
+-   "reason": "replica-unreachable",
+-   "replica": "the QLever replica",
+-   "required": 1024,
+-   "surface": "native",
++ ReadError {
++   "message": "QLever native SELECT failed: TypeError: terminated",
++   "cause": TypeError {
++     "message": "terminated",
++     "cause": SocketError {
++       "message": "other side closed",
++       "name": "SocketError",
++       "code": "UND_ERR_SOCKET",
++       "socket": {
++         "bytesRead": 230,
++         "bytesWritten": 359,
++         "localAddress": "127.0.0.1",
++         "localPort": 63826,
++         "remoteAddress": "127.0.0.1",
++         "remoteFamily": "IPv4",
++         "remotePort": 63824,
++         "timeout": undefined,
++       },
++       Symbol(undici.error.UND_ERR): true,
++       Symbol(undici.error.UND_ERR_SOCKET): true,
++     },
++   },
++   "_tag": "ReadError",
+  }
+
+ ❯ tests/round4.test.ts:105:29
+    103|         expect(res.ok).toBe(false);
+    104|         if (["connect", "headers", "body", "503"].includes(timing))
+    105|           expect(res.error).toMatchObject({ reason: "replica-unreachab…
+       |                             ^
+    106|         else expect(res.error?.reason).not.toBe("replica-unreachable");
+    107|       }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/round4.test.ts > round4 real HTTP error matrix (local fixture, no engine) > standard datalog headers
+AssertionError: expected ReadError: QLever Datalog execution faile… { _tag: '…' } to match object { reason: 'replica-unreachable', …(4) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "observed": 2048,
+-   "reason": "replica-unreachable",
+-   "replica": "the QLever replica",
+-   "required": 1024,
+-   "surface": "datalog",
++ ReadError {
++   "message": "QLever Datalog execution failed: TypeError: terminated",
++   "cause": TypeError {
++     "message": "terminated",
++     "cause": SocketError {
++       "message": "other side closed",
++       "name": "SocketError",
++       "code": "UND_ERR_SOCKET",
++       "socket": {
++         "bytesRead": 178,
++         "bytesWritten": 2704,
++         "localAddress": "127.0.0.1",
++         "localPort": 63849,
++         "remoteAddress": "127.0.0.1",
++         "remoteFamily": "IPv4",
++         "remotePort": 63848,
++         "timeout": undefined,
++       },
++       Symbol(undici.error.UND_ERR): true,
++       Symbol(undici.error.UND_ERR_SOCKET): true,
++     },
++   },
++   "_tag": "ReadError",
+  }
+
+ ❯ tests/round4.test.ts:105:29
+    103|         expect(res.ok).toBe(false);
+    104|         if (["connect", "headers", "body", "503"].includes(timing))
+    105|           expect(res.error).toMatchObject({ reason: "replica-unreachab…
+       |                             ^
+    106|         else expect(res.error?.reason).not.toBe("replica-unreachable");
+    107|       }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/round4.test.ts > round4 real HTTP error matrix (local fixture, no engine) > standard datalog body
+AssertionError: expected ReadError: QLever Datalog execution faile… { _tag: '…' } to match object { reason: 'replica-unreachable', …(4) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "observed": 2048,
+-   "reason": "replica-unreachable",
+-   "replica": "the QLever replica",
+-   "required": 1024,
+-   "surface": "datalog",
++ ReadError {
++   "message": "QLever Datalog execution failed: TypeError: terminated",
++   "cause": TypeError {
++     "message": "terminated",
++     "cause": SocketError {
++       "message": "other side closed",
++       "name": "SocketError",
++       "code": "UND_ERR_SOCKET",
++       "socket": {
++         "bytesRead": 230,
++         "bytesWritten": 2704,
++         "localAddress": "127.0.0.1",
++         "localPort": 63852,
++         "remoteAddress": "127.0.0.1",
++         "remoteFamily": "IPv4",
++         "remotePort": 63851,
++         "timeout": undefined,
++       },
++       Symbol(undici.error.UND_ERR): true,
++       Symbol(undici.error.UND_ERR_SOCKET): true,
++     },
++   },
++   "_tag": "ReadError",
+  }
+
+ ❯ tests/round4.test.ts:105:29
+    103|         expect(res.ok).toBe(false);
+    104|         if (["connect", "headers", "body", "503"].includes(timing))
+    105|           expect(res.error).toMatchObject({ reason: "replica-unreachab…
+       |                             ^
+    106|         else expect(res.error?.reason).not.toBe("replica-unreachable");
+    107|       }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 26 passed | 12 skipped (42)
+   Start at  17:24:12
+   Duration  839ms (tests 64%, import 25%, transform 11%)
+

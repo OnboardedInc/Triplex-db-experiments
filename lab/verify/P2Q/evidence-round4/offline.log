@@ -1,0 +1,73 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../../vitest.workspace-aliases" without a file extension (lab/verify/P2Q/vitest.config.ts:5:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q
+
+sysmon request failed with error: sysmond service not found
+pgrep: Cannot get process list
+sysmon request failed with error: sysmond service not found
+pgrep: Cannot get process list
+sysmon request failed with error: sysmond service not found
+pgrep: Cannot get process list
+sysmon request failed with error: sysmond service not found
+pgrep: Cannot get process list
+sysmon request failed with error: sysmond service not found
+pgrep: Cannot get process list
+ ❯ tests/check1-lock-process.test.ts (6 tests | 3 failed) 4455ms
+   ❯ kernel flock across processes (6)
+     × round3: group SIGTERM during drain and helper SIGHUP preserve exclusion 266ms
+     × the perl helper dies while the holder lives: does the holder notice, and does a second process get in? 248ms
+     × Ctrl-C to the process group of a holder that drains on SIGINT: the lock goes before the writes stop 2514ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/check1-lock-process.test.ts > kernel flock across processes > round3: group SIGTERM during drain and helper SIGHUP preserve exclusion
+TypeError: actual value must be number or bigint, received "undefined"
+ ❯ tests/check1-lock-process.test.ts:124:20
+    122|       await a.until((e) => e.event === "acked");
+    123|       const perl = perlChildOf(opened.pid)!;
+    124|       expect(perl).toBeGreaterThan(0);
+       |                    ^
+    125|       const before = a.acked().length;
+    126|       process.kill(perl, "SIGHUP");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/check1-lock-process.test.ts > kernel flock across processes > the perl helper dies while the holder lives: does the holder notice, and does a second process get in?
+TypeError: The "pid" argument must be of type number. Received undefined
+ ❯ tests/check1-lock-process.test.ts:189:13
+    187|     await a.until((e) => e.event === "acked");
+    188|     const perl = perlChildOf(opened.pid)!;
+    189|     process.kill(perl, "SIGKILL");
+       |             ^
+    190|     await waitGone(perl);
+    191|     await sleep(100);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  tests/check1-lock-process.test.ts > kernel flock across processes > Ctrl-C to the process group of a holder that drains on SIGINT: the lock goes before the writes stop
+AssertionError: expected +0 to be -1 // Object.is equality
+
+- Expected
++ Received
+
+- -1
++ 0
+
+ ❯ tests/check1-lock-process.test.ts:242:31
+    240|     };
+    241|     writeJson("check1-lock-sigint.json", record);
+    242|     expect(record.perlGoneMs).toBe(-1);
+       |                               ^
+    243|     expect(record.secondProcess).toBe("refused");
+    244|     expect(record.ackedB).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed | 10 passed | 2 skipped (13)
+      Tests  3 failed | 41 passed | 9 skipped (53)
+   Start at  17:22:55
+   Duration  73.91s (tests 96%, import 3%)
+

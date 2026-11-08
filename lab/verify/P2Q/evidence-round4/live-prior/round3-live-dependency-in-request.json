@@ -1,0 +1,38 @@
+{
+  "first": 2048,
+  "target": 3072,
+  "rewinds": 1,
+  "markerBefore": {
+    "brokerPosition": {
+      "type": "literal",
+      "value": "4095"
+    },
+    "brokerEpoch": {
+      "type": "literal",
+      "value": "1"
+    },
+    "brokerIncarnation": {
+      "type": "literal",
+      "value": "1.13a06447-fe42-43c5-b6cb-4dd33da5277b"
+    }
+  },
+  "markerAfter": {
+    "brokerPosition": {
+      "type": "literal",
+      "value": "4095"
+    },
+    "brokerEpoch": {
+      "type": "literal",
+      "value": "1"
+    },
+    "brokerIncarnation": {
+      "type": "literal",
+      "value": "1.3f8c55b9-20e1-4e7d-a8c3-0bdcc09cc0a8"
+    }
+  },
+  "outcome": {
+    "tag": "ReadError",
+    "reason": "basis-not-reached",
+    "message": "Basis 3072 is not available on the QLever replica for dependency-state reads (observed 2048 after 11208 ms)"
+  }
+}

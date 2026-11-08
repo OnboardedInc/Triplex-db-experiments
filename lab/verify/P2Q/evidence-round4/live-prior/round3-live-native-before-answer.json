@@ -1,0 +1,38 @@
+{
+  "first": 2048,
+  "target": 3072,
+  "rewinds": 1,
+  "markerBefore": {
+    "brokerPosition": {
+      "type": "literal",
+      "value": "4095"
+    },
+    "brokerEpoch": {
+      "type": "literal",
+      "value": "1"
+    },
+    "brokerIncarnation": {
+      "type": "literal",
+      "value": "1.1698e98e-3b08-4004-b71a-82852be1b241"
+    }
+  },
+  "markerAfter": {
+    "brokerPosition": {
+      "type": "literal",
+      "value": "4095"
+    },
+    "brokerEpoch": {
+      "type": "literal",
+      "value": "1"
+    },
+    "brokerIncarnation": {
+      "type": "literal",
+      "value": "1.f72b53b4-ce55-43cd-91d4-142c1188bf97"
+    }
+  },
+  "outcome": {
+    "tag": "ReadError",
+    "reason": "replica-unreachable",
+    "message": "QLever replica the QLever replica is unreachable for native reads: TimeoutError: The operation was aborted due to timeout"
+  }
+}

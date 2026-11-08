@@ -1,0 +1,15 @@
+{
+  "opened": {
+    "pid": 1415,
+    "event": "opened",
+    "nextLsn": 2,
+    "epoch": 1
+  },
+  "acked": 1,
+  "recovery": {
+    "outcome": "opened:clean-end",
+    "lost": 0,
+    "lostSample": [],
+    "broken": []
+  }
+}
