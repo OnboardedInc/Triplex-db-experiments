@@ -1481,3 +1481,16 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **Research:** no new question this hour; R28 (isolation for EXP-G03) is running. All ten slots are busy.
 - **Learning:** the review loop converges fastest when the ruling is general (one continuation table; one allowlist with everything else
   counted; one trusted context) and slowest when each round names a case.
+
+## 2026-11-08 22:32Z: R28 landed (Opus high): candidate code runs only in hardened containers; two VM security findings go to Sam; EXP-G03 dispatched
+- Saved as lab/research/R28-g03-isolation.md; ruled Q86a-g. Containers in the triplex2 VM with no Mac bind mounts, own PID namespaces
+  (setsid cannot escape; the kernel kills the namespace), one internal network per arm behind a trusted relay, execution-identity/2.
+- **New finding, oracle laundering (L1):** the candidate's checkout contains the pinned oracle files and python3 is on its PATH, so a
+  candidate could run the oracle and pass every case without an engine; the container design removes both.
+- **Security findings outside the lab's code (Q86g, for Sam):** colima mounts $HOME writable into the triplex2 VM by default, so every
+  Docker socket holder can write anywhere in Sam's home; the VM can reach every Mac 127.0.0.1 service, including ports 15442 and 17019.
+  Fixing either changes the VM's security settings and restarts it, so it is Sam's call, not the orchestrator's.
+- Also: lane D's gateway is candidate code baked into the engine container (DA00), so G03 moves it to its own container; lane D
+  durable-readback evidence waits for SQL storage. Builders can move refs/heads/main, so the evaluator uses its own clone (Q86e).
+- V-DA00 FIX-FIRST (Q85: create resets a position under concurrency, public scope names rejected, non-hermetic builds, codec mismatch)
+  goes into DA01's next round, since DA01 carries and edits that code.

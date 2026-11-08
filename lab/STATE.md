@@ -46,6 +46,10 @@ isolation; is Datomic dev storage acceptable for the final acceptance run, or mu
 ## Merged 2026-11-08: E01 claim evaluator (f060f7e, 128/128 on main); follow-up: the poison marker lives in the shared .git, so one
 worktree's refusal blocks every worktree (move it to the worktree's own git dir).
 
+## Pending Sam decisions on VM security (Q86g, from R28): (H1) narrow the triplex2 colima mounts: today $HOME is mounted writable
+into the VM, so every Docker socket holder (all lab agents) can write anywhere in Sam's home; (H2) block outbound traffic from tx2
+containers: today the VM reaches every Mac 127.0.0.1 service, including ports 15442 and 17019. Both need a VM restart (all residents).
+
 ## Running agents (10; protocol lab/PROTOCOL.md since 2026-11-08: Codex builders medium, Codex reviewers high, Opus planners high)
 | Agent | Role, model, effort | Priority | Output |
 | --- | --- | --- | --- |
@@ -54,7 +58,7 @@ worktree's refusal blocks every worktree (move it to the worktree's own git dir)
 | CX-SQL01 (exp/SQL01-broker-sqlite, on 1b55d2e) | builder, Codex medium | P2, P4, P5 | broker SQLite file per R25 (Q84): log of record, pinned readers, H1 rows |
 | CX-X02-R3 resumed (exp/X02-xtql-parity) | builder, Codex medium | XTQL lane | Q79e grammar-based operand classification with a generated corpus; C8 merges after X02 |
 | CX-A01-0311-R2 (contract/0.3.11) | builder, Codex medium | floor for claims | 0.3.11 fix round: O-REPLAY row results in comparators, Unicode, lane D composition fields, Q76c matrix record |
-| R28 isolation design for EXP-G03 | planner, Opus 5.5, high | floor for claims | /Users/sam/Claude/Projects/triplex-db-2/R28/ |
+| CX-G03 (exp/G03-executing-gate) | builder, Codex medium | floor for claims | executing gate with container isolation per R28 (Q86a-f) |
 | (queued) CX-DA01 round 2: Q85a-d (V-DA00 FIX-FIRST) after its current round | builder, Codex medium | lane D floor | then a joint DA00+DA01 review |
 | CX-VO05-2 (verify/O05) | reviewer, Codex high | floor | review of O-OBS round 2 463703d |
 | CX-OBS01 (exp/OBS01-observer) | builder, Codex medium | floor | observer sidecar writing obs-bundle/1 (R27, Q82) |
