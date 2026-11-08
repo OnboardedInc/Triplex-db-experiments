@@ -12,6 +12,8 @@ import { randomUUID } from "node:crypto";
 import {
   makeQleverClient,
   QleverHttpError,
+  QleverRequestError,
+  QleverDecodeError,
   type QleverClient,
   type QleverRequestOptions,
   type SparqlBinding,
@@ -63,7 +65,9 @@ export const makeFreshConnectionClient = (
           res.on("data", (chunk: Buffer) => {
             size += chunk.length;
             if (size > maxBytes) {
-              req.destroy(new RangeError("QLever response exceeds byte budget; no partial answer returned"));
+              req.destroy(
+                new RangeError("QLever response exceeds byte budget; no partial answer returned"),
+              );
               return;
             }
             chunks.push(chunk);
@@ -76,19 +80,25 @@ export const makeFreshConnectionClient = (
             } catch {
               parsed = text;
             }
-            if ((res.statusCode ?? 500) >= 400) reject(new QleverHttpError(res.statusCode ?? 500, parsed));
+            if ((res.statusCode ?? 500) >= 400)
+              reject(new QleverHttpError(res.statusCode ?? 500, parsed));
             else resolve(parsed);
           });
           res.on("error", reject);
         },
       );
       req.setNoDelay(true);
-      req.on("timeout", () => req.destroy(new Error(`QLever request deadline ${timeoutMs} ms exceeded`)));
+      req.on("timeout", () => req.destroy(new QleverRequestError("timeout")));
       req.on("error", reject);
       const signal = requestOptions.signal;
       if (signal) {
-        if (signal.aborted) req.destroy(signal.reason instanceof Error ? signal.reason : new Error("aborted"));
-        else signal.addEventListener("abort", () => req.destroy(new Error("aborted")), { once: true });
+        if (signal.aborted) req.destroy(new QleverRequestError("aborted", signal.reason));
+        else
+          signal.addEventListener(
+            "abort",
+            () => req.destroy(new QleverRequestError("aborted", signal.reason)),
+            { once: true },
+          );
       }
       if (body) req.end(body);
       else req.end();
@@ -100,7 +110,7 @@ export const makeFreshConnectionClient = (
         results?: { bindings?: SparqlBinding[] };
       };
       if (!Array.isArray(result.results?.bindings))
-        throw new TypeError("QLever did not return a SPARQL SELECT result");
+        throw new QleverDecodeError("QLever did not return a SPARQL SELECT result");
       return result.results.bindings;
     },
     update: (sparql, requestOptions) => request("update", sparql, requestOptions),

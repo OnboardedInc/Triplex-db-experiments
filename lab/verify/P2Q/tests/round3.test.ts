@@ -1,3 +1,4 @@
+// [EXP-P2Q] Why: outage fixtures carry real transport codes. Rejected: text-only errors (not transport evidence).
 // [CX-VP2Q-3] Why: vary the old review's schedules independently of builder assertions.
 // Rejected: accepting the builder receipts alone (cannot independently certify the delta).
 import fs from "node:fs";
@@ -32,7 +33,7 @@ describe("round3 probe, native and error variations", () => {
       active++; maxActive = Math.max(active, maxActive); count++;
       try {
         await sleep(35);
-        if (reject) throw new Error("ECONNRESET variation");
+        if (reject) throw Object.assign(new Error("ECONNRESET variation"), { code: "ECONNRESET" });
         return await query(sparql);
       } finally { active--; }
     };
@@ -73,7 +74,7 @@ describe("round3 probe, native and error variations", () => {
   it("reason variation: native socket reset in the answer request is replica-unreachable", async () => {
     const client: any = { query: async (sparql: string) => {
       if (sparql.startsWith("SELECT ?position")) return [{ position: { value: "2048" }, incarnation: { value: "r3" } }];
-      throw new Error("ECONNRESET after initial basis probe");
+      throw Object.assign(new Error("ECONNRESET after initial basis probe"), { code: "ECONNRESET" });
     } };
     const native = makeQleverNativeQueries(client, DatabaseScope.test(`round3-error:${randomUUID()}`), { awaitBasisMs: 2000 });
     const result = await select(native);
@@ -92,7 +93,7 @@ describe("round3 probe, native and error variations", () => {
       const query = replica.query.bind(replica);
       replica.query = async (sparql) => {
         if (sparql.startsWith("SELECT ?brokerPosition ?brokerEpoch")) return query(sparql);
-        throw new Error("ECONNRESET after successful basis probe");
+        throw Object.assign(new Error("ECONNRESET after successful basis probe"), { code: "ECONNRESET" });
       };
       const effect = surface === "datalog"
         ? rt.triples.queryAll({ find: ["?v"], where: [[EntityId.make("s:outage"), ":v/f0", "?v"]] } as any, { includeBasis: true })

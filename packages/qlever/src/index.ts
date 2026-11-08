@@ -124,6 +124,8 @@ export {
   type SparqlTerm,
   type QleverRequestOptions,
   QleverHttpError,
+  QleverRequestError,
+  QleverDecodeError,
 } from "./QleverClient.js";
 export {
   makeQleverStorageAdapter,

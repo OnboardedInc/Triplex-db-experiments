@@ -1,3 +1,4 @@
+// [EXP-P2Q] Why: outage fixtures carry real transport codes. Rejected: text-only errors (not transport evidence).
 // [EXP-P2Q] Why: outages after the gate must keep basis context; query errors must remain distinct.
 // Rejected: probe-only tests (they never exercise the failing answer-request boundary).
 import { Effect } from "effect";
@@ -68,7 +69,7 @@ const read = (surface: "native" | "datalog", cause: Error, broker = true) => {
 };
 
 describe.each(["native", "datalog"] as const)("%s broker answer errors", (surface) => {
-  it.each([new Error("ECONNRESET after basis probe"), new QleverHttpError(503, "unavailable")])(
+  it.each([Object.assign(new Error("ECONNRESET after basis probe"), { code: "ECONNRESET" }), new QleverHttpError(503, "unavailable")])(
     "classifies transport/5xx failures with the requested and observed basis",
     async (cause) => {
       const error = await read(surface, cause);
@@ -100,7 +101,7 @@ describe.each(["native", "datalog"] as const)("%s broker answer errors", (surfac
     expect(await read(surface, cause)).toBe(cause);
   });
   it("preserves A0 transport failure wrapping", async () => {
-    const cause = new Error("ECONNRESET after basis probe");
+    const cause = Object.assign(new Error("ECONNRESET after basis probe"), { code: "ECONNRESET" });
     const error = await read(surface, cause, false);
     expect(error).not.toBeInstanceOf(ReplicaUnavailable);
     expect(error).toMatchObject({ _tag: "ReadError", cause });

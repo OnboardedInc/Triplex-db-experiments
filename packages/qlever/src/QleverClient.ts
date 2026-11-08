@@ -29,6 +29,17 @@ export class QleverHttpError extends Error {
     super(`QLever HTTP ${status}: ${JSON.stringify(body)}`);
   }
 }
+// [EXP-P2Q] Why: request aborts/timeouts and completed decode failures need structured identities.
+// Rejected: classifying their prose (field names such as "connection" can appear in decode errors).
+export class QleverRequestError extends Error {
+  constructor(
+    readonly kind: "aborted" | "timeout",
+    cause?: unknown,
+  ) {
+    super(`QLever request ${kind}`, { cause });
+  }
+}
+export class QleverDecodeError extends TypeError {}
 export const makeQleverClient = (
   url: string,
   options: { readonly accessToken?: string; readonly timeoutMs?: number } = {},
@@ -112,6 +123,15 @@ export const makeQleverClient = (
       }
       if (!response.ok) throw new QleverHttpError(response.status, body);
       return body;
+    } catch (cause) {
+      if (signal.aborted)
+        throw new QleverRequestError(
+          signal.reason instanceof DOMException && signal.reason.name === "TimeoutError"
+            ? "timeout"
+            : "aborted",
+          cause,
+        );
+      throw cause;
     } finally {
       signal.removeEventListener("abort", onAbort);
     }
@@ -122,7 +142,7 @@ export const makeQleverClient = (
         results?: { bindings?: SparqlBinding[] };
       };
       if (!Array.isArray(result.results?.bindings))
-        throw new TypeError("QLever did not return a SPARQL SELECT result");
+        throw new QleverDecodeError("QLever did not return a SPARQL SELECT result");
       return result.results.bindings;
     },
     update: (sparql, requestOptions) => request(sparql, "update", requestOptions),
