@@ -1,6 +1,6 @@
 {
   "format": "triplex-db-2/load-contract/3",
-  "version": "0.3.8",
+  "version": "0.3.9",
   "generatedBy": "lab/acceptance/build_contract.py",
   "status": "provisional bars from lab/TARGETS.md section 1; calibration may tighten, loosening needs Sam",
   "obligations": [
@@ -134,6 +134,12 @@
       "burstPhase": "bursts start at 120 s + k x 600 s from the start of the measured window, identical for baselines and candidates",
       "scenarioOverlay": "a golden scenario's commands are added on top of the background trace, never instead of it; both streams accounted separately in the receipt",
       "freeze": "the generator source hash and the seed are bound in every receipt; a change to either starts a new comparison series",
+      "frozen": {
+        "sha256": null,
+        "seed": null,
+        "offerScheduleSha256": null,
+        "rule": "a required input: the generator source sha256, the seed and the offer schedule's sha256, pinned by a contract version once the trace is frozen; while null no CR-NS or CR-GS comparison has a workload identity and every such claim is a diagnostic (RULINGS Q61h)"
+      },
       "invalidCommands": {
         "share": 0.001,
         "rule": "0.1% of trace commands are deliberately invalid (values no engine may hold) and marked in the frozen trace; only those may end in a typed rejection",
@@ -226,7 +232,7 @@
       "commands": "the trace's own commands; the 10-fact probe is a diagnostic only",
       "readGuarantees": "each serving surface the composition claims is measured against COMPOSITION readGuarantees (RULINGS Q55c, provisional)",
       "hotSubjects": "COMPOSITION hotSubjects; E-OVERLOADED counts as an unjustified outcome (RULINGS Q51a)",
-      "storagePerCommit": "reported, never a bar: bytes and triples per 10-fact command on both lanes (EXP-J01; XTDB A0 27,581 bytes against the candidate's 95,364; QLever A0 about 750 triples against R17's 94), plus xt.txs and METADATA cost at 1M+ transactions (RULINGS Q50c, Q51d, Q51f)",
+      "storagePerCommit": "reported, never a bar: bytes and triples per 10-fact command on both lanes (EXP-J01; XTDB A0 27,581 bytes against the candidate's 95,364; QLever A0 653 triples per 10-fact command as V-P2Q measured it: 24 rows (10 facts and 14 journal rows) of about 27 triples each, the candidate 655 plus a 4-triple deleted marker, against R17's 94; the cause is the row encoding and journal on every lane, not the broker (RULINGS Q62c)), plus xt.txs and METADATA cost at 1M+ transactions (RULINGS Q50c, Q51d, Q51f)",
       "accounting": "every offered command is committed with a receipt, rejected with a typed error, or a typed conflict; zero unaccounted (NS-P2-UNACCOUNTED-MAX)",
       "progress": {
         "rule": "every oracle-valid trace command publishes; typed rejections count only for commands the frozen trace marks deliberately invalid, typed conflicts only where the oracle independently finds a compare-and-set race (NS-P2-UNJUSTIFIED-OUTCOMES-MAX)",
@@ -352,7 +358,58 @@
       "audit": "explain at a past basis, repeated three times; bit-for-bit identical"
     }
   },
+  "measurementProtocol": {
+    "status": "PROVISIONAL (RULINGS Q60); the margins are the orchestrator's interpretation and adjustable (NORTH-STAR item 4)",
+    "mode": "paired-rounds",
+    "design": {
+      "rule": "comparisons run as paired rounds: a duet (A0 and candidate at the same time on two identically configured slots, same trace window) or, as the fallback, same-engine ABBA; a single run never decides a bar (RULINGS Q60a)",
+      "designs": [
+        "duet",
+        "abba"
+      ],
+      "rounds": {
+        "min": 8,
+        "default": 12,
+        "max": 24
+      },
+      "roundS": 150,
+      "statistic": "pooled-quantile ratios with a bootstrap over rounds",
+      "looks": [
+        8,
+        12,
+        18,
+        24
+      ],
+      "confidence": 0.982,
+      "aa": "A/A rounds in the pre-flight and every sixth round"
+    },
+    "margins": {
+      "superiorityRatioDefault": 1.25,
+      "superiority": "the lower bound of A/B at or above the claimed ratio (1.25 by default)",
+      "holdP50Max": 1.1,
+      "holdP99Max": 1.15,
+      "hold": "the upper bound of B/A at or below 1.10 for p50 and 1.15 for p99",
+      "source": "RULINGS Q60b"
+    },
+    "slotRegime": {
+      "rule": "measurement slots run with a cpuset and no CPU quota; receipts record the effective cpu.max, cpuset and cpu.weight; quota and cpuset arms are never compared; A0 is measured again under the new regime (RULINGS Q60c)",
+      "receiptFields": [
+        "cpuMax",
+        "cpuset",
+        "cpuWeight"
+      ]
+    },
+    "accounting": "latency histograms include every offered command (expired, failed and rejected ones at their censor time) next to the committed-only view; reads get an open-loop probe at a fixed rate; per-second goodput and per-second maximum latency are recorded (RULINGS Q60d)",
+    "windows": "absolute bars are judged only in GREEN windows (the pre-registered noise signals and the A/A gate of R22 section 4.2); outside them an absolute bar is reported unjudged, which never counts as met (RULINGS Q60e)",
+    "screeningSeries": {
+      "rule": "a screening trace with a burst every 180 s is a new comparison series (TARGETS 2.1 item 5), so P2 and P3 rounds contain enough commands for p99; acceptance keeps the frozen trace (RULINGS Q60g)",
+      "burstEveryS": 180
+    },
+    "lease": "a measurement window takes every heavy token and freezes pool admission for its duration (RULINGS Q60h)",
+    "a0": "EXP-N01's single-run A0 is diagnostic only; A0 numbers for comparisons come from paired rounds (RULINGS Q60i)"
+  },
   "windows": {
+    "judging": "absolute bars are judged only in GREEN windows (the pre-registered noise signals and the A/A gate of R22 section 4.2); outside them an absolute bar is reported unjudged, which never counts as met (RULINGS Q60e)",
     "acceptance": {
       "warmupS": 120,
       "perLadderLevelS": 600,
