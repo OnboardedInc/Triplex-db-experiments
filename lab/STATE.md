@@ -143,3 +143,6 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - SQL01 delivered (53d41ad): 73 package + 23 semantic + 5 live tests, 80 SIGKILLs with zero ACKed commits lost, outage pulls 1 ms at 10k
   and 30k commands. Open: one unreproduced pinned read that returned 30 of 40 facts (possible P1 torn read). Review CX-VSQL01 launched,
   told to reproduce that first. EXP-P5 waits for the SQL01 merge.
+- DA01 round 1 delivered (4a540cc): G0 1,024 tests, G1 88/88 plus the full suite twice; resident READY, volume kept. Round 2 (Q85a-d
+  fixes from V-DA00) dispatched; then a joint DA00+DA01 review. The Datomic resident stays up for DA01 round 2, so the scale window
+  opens when K01 (offline review), X02 (review) and G03 (fixture migration) are ready for slot runs, not before.
