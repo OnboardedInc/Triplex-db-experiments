@@ -1,0 +1,47 @@
+{
+  "at": "2026-11-08T23:20:00.031Z",
+  "safe": [
+    {
+      "name": "regular",
+      "sql": "WITH a$tag$ AS (SELECT 1) SELECT 'x' AS v WHERE 1 = ANY/**/(SELECT 1) AND EXISTS(SELECT 1 AS z$tag$b)",
+      "exit": "Success({\"rows\":[{\"v\":\"x\"}],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-boundary-confirm\\\",0]\",\"recordedPosition\":0,\"validAt\":1794180000091},\"trace\":{\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (WITH a$tag$ AS (SELECT 1) SELECT 'x' AS v WHERE 1 = ANY/**/(SELECT 1) AND EXISTS(SELECT 1 AS z$tag$b)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-boundary-confirm\\\",0]\",\"recordedPosition\":0,\"validAt\":1794180000091},\"mappingId\":\"triplex-xtdb/assertion-native-basis/1\",\"contractId\":\"sha256-04549b17d4ba8b129443510ca5cf1432c1f7cbd0ddb7f90d7b9e13334abe16ec\",\"elapsedMs\":97.690875,\"steps\":[{\"phase\":\"source-cut\",\"language\":\"xtdb-sql\",\"query\":\"SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1\",\"parameters\":[\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-boundary-confirm\\\",0]\"],\"elapsedMs\":51.52745900000002},{\"phase\":\"answer\",\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (WITH a$tag$ AS (SELECT 1) SELECT 'x' AS v WHERE 1 = ANY/**/(SELECT 1) AND EXISTS(SELECT 1 AS z$tag$b)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"elapsedMs\":39.760167000000024}]}})",
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ],
+      "pass": true
+    },
+    {
+      "name": "backtick",
+      "sql": "WITH `a$tag$` AS (SELECT 1) SELECT 'x' AS v WHERE 1 = ANY/**/(SELECT 1) AND EXISTS(SELECT 1 AS `$tag$b`)",
+      "exit": "Success({\"rows\":[{\"v\":\"x\"}],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-boundary-confirm\\\",0]\",\"recordedPosition\":0,\"validAt\":1794180000176},\"trace\":{\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (WITH `a$tag$` AS (SELECT 1) SELECT 'x' AS v WHERE 1 = ANY/**/(SELECT 1) AND EXISTS(SELECT 1 AS `$tag$b`)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-boundary-confirm\\\",0]\",\"recordedPosition\":0,\"validAt\":1794180000176},\"mappingId\":\"triplex-xtdb/assertion-native-basis/1\",\"contractId\":\"sha256-04549b17d4ba8b129443510ca5cf1432c1f7cbd0ddb7f90d7b9e13334abe16ec\",\"elapsedMs\":38.10883299999995,\"steps\":[{\"phase\":\"source-cut\",\"language\":\"xtdb-sql\",\"query\":\"SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1\",\"parameters\":[\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-boundary-confirm\\\",0]\"],\"elapsedMs\":21.86229099999997},{\"phase\":\"answer\",\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (WITH `a$tag$` AS (SELECT 1) SELECT 'x' AS v WHERE 1 = ANY/**/(SELECT 1) AND EXISTS(SELECT 1 AS `$tag$b`)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"elapsedMs\":15.361999999999966}]}})",
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ],
+      "pass": true
+    }
+  ],
+  "unsafe": [
+    {
+      "name": "regular",
+      "sql": "WITH a$tag$ AS (SELECT 1) SELECT 'x' AS v WHERE 1 = ANY/**/(ARRAY[1,2]) AND EXISTS(SELECT 1 AS z$tag$b)",
+      "accepted": false,
+      "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)",
+      "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))]))",
+      "defect": false,
+      "answerDispatched": false
+    },
+    {
+      "name": "backtick",
+      "sql": "WITH `a$tag$` AS (SELECT 1) SELECT 'x' AS v WHERE 1 = ANY/**/(ARRAY[1,2]) AND EXISTS(SELECT 1 AS `$tag$b`)",
+      "accepted": false,
+      "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)",
+      "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))]))",
+      "defect": false,
+      "answerDispatched": false
+    }
+  ]
+}

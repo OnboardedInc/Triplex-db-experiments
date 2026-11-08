@@ -1,0 +1,9 @@
+{
+  "matches": 4,
+  "files": [
+    "native/ReadOnlySql",
+    "native/SqlTokens",
+    "native/SqlLexerPatterns",
+    "native/NativeQueries"
+  ]
+}

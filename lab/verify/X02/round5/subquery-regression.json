@@ -1,0 +1,121 @@
+{
+  "at": "2026-11-08T23:19:58.627Z",
+  "baseline": "bf1ad4d",
+  "target": "7b11af0",
+  "controls": [
+    {
+      "quantifier": "ANY",
+      "gap": "/**/",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY/**/((SELECT 1))",
+      "baseline": {
+        "accepted": true
+      },
+      "target": {
+        "accepted": true
+      },
+      "publicExit": "Success({\"rows\":[{\"v\":\"x\"}],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r2-subqueries\\\",0]\",\"recordedPosition\":0,\"validAt\":1794179998647},\"trace\":{\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = ANY/**/((SELECT 1))\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r2-subqueries\\\",0]\",\"recordedPosition\":0,\"validAt\":1794179998647},\"mappingId\":\"triplex-xtdb/assertion-native-basis/1\",\"contractId\":\"sha256-6ab9db7465be514891c9ae6e7debf670c6f48c071ee23a33c773d247969eb013\",\"elapsedMs\":21.186792000000025,\"steps\":[{\"phase\":\"source-cut\",\"language\":\"xtdb-sql\",\"query\":\"SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1\",\"parameters\":[\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r2-subqueries\\\",0]\"],\"elapsedMs\":16.42908299999999},{\"phase\":\"answer\",\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = ANY/**/((SELECT 1))\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"elapsedMs\":2.2397080000000074}]}})",
+      "isDefect": false,
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ],
+      "confirmedRegression": false
+    },
+    {
+      "quantifier": "ANY",
+      "gap": " /* subquery */ ",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY /* subquery */ ((SELECT 1))",
+      "baseline": {
+        "accepted": true
+      },
+      "target": {
+        "accepted": true
+      },
+      "publicExit": "Success({\"rows\":[{\"v\":\"x\"}],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r2-subqueries\\\",0]\",\"recordedPosition\":0,\"validAt\":1794179998666},\"trace\":{\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = ANY /* subquery */ ((SELECT 1))\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r2-subqueries\\\",0]\",\"recordedPosition\":0,\"validAt\":1794179998666},\"mappingId\":\"triplex-xtdb/assertion-native-basis/1\",\"contractId\":\"sha256-6ab9db7465be514891c9ae6e7debf670c6f48c071ee23a33c773d247969eb013\",\"elapsedMs\":15.918999999999983,\"steps\":[{\"phase\":\"source-cut\",\"language\":\"xtdb-sql\",\"query\":\"SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1\",\"parameters\":[\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r2-subqueries\\\",0]\"],\"elapsedMs\":12.589042000000006},{\"phase\":\"answer\",\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = ANY /* subquery */ ((SELECT 1))\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"elapsedMs\":2.6091670000000136}]}})",
+      "isDefect": false,
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ],
+      "confirmedRegression": false
+    },
+    {
+      "quantifier": "SOME",
+      "gap": "/**/",
+      "sql": "SELECT 'x' AS v WHERE 1 = SOME/**/((SELECT 1))",
+      "baseline": {
+        "accepted": true
+      },
+      "target": {
+        "accepted": true
+      },
+      "publicExit": "Success({\"rows\":[{\"v\":\"x\"}],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r2-subqueries\\\",0]\",\"recordedPosition\":0,\"validAt\":1794179998680},\"trace\":{\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = SOME/**/((SELECT 1))\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r2-subqueries\\\",0]\",\"recordedPosition\":0,\"validAt\":1794179998680},\"mappingId\":\"triplex-xtdb/assertion-native-basis/1\",\"contractId\":\"sha256-6ab9db7465be514891c9ae6e7debf670c6f48c071ee23a33c773d247969eb013\",\"elapsedMs\":10.85975000000002,\"steps\":[{\"phase\":\"source-cut\",\"language\":\"xtdb-sql\",\"query\":\"SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1\",\"parameters\":[\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r2-subqueries\\\",0]\"],\"elapsedMs\":7.805916999999965},{\"phase\":\"answer\",\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = SOME/**/((SELECT 1))\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"elapsedMs\":2.3134169999999585}]}})",
+      "isDefect": false,
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ],
+      "confirmedRegression": false
+    },
+    {
+      "quantifier": "SOME",
+      "gap": " /* subquery */ ",
+      "sql": "SELECT 'x' AS v WHERE 1 = SOME /* subquery */ ((SELECT 1))",
+      "baseline": {
+        "accepted": true
+      },
+      "target": {
+        "accepted": true
+      },
+      "publicExit": "Success({\"rows\":[{\"v\":\"x\"}],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r2-subqueries\\\",0]\",\"recordedPosition\":0,\"validAt\":1794179998693},\"trace\":{\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = SOME /* subquery */ ((SELECT 1))\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r2-subqueries\\\",0]\",\"recordedPosition\":0,\"validAt\":1794179998693},\"mappingId\":\"triplex-xtdb/assertion-native-basis/1\",\"contractId\":\"sha256-6ab9db7465be514891c9ae6e7debf670c6f48c071ee23a33c773d247969eb013\",\"elapsedMs\":11.343917000000033,\"steps\":[{\"phase\":\"source-cut\",\"language\":\"xtdb-sql\",\"query\":\"SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1\",\"parameters\":[\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r2-subqueries\\\",0]\"],\"elapsedMs\":8.946166999999946},{\"phase\":\"answer\",\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = SOME /* subquery */ ((SELECT 1))\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"elapsedMs\":1.8356660000000034}]}})",
+      "isDefect": false,
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ],
+      "confirmedRegression": false
+    },
+    {
+      "quantifier": "ALL",
+      "gap": "/**/",
+      "sql": "SELECT 'x' AS v WHERE 1 = ALL/**/((SELECT 1))",
+      "baseline": {
+        "accepted": true
+      },
+      "target": {
+        "accepted": true
+      },
+      "publicExit": "Success({\"rows\":[{\"v\":\"x\"}],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r2-subqueries\\\",0]\",\"recordedPosition\":0,\"validAt\":1794179998706},\"trace\":{\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = ALL/**/((SELECT 1))\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r2-subqueries\\\",0]\",\"recordedPosition\":0,\"validAt\":1794179998706},\"mappingId\":\"triplex-xtdb/assertion-native-basis/1\",\"contractId\":\"sha256-6ab9db7465be514891c9ae6e7debf670c6f48c071ee23a33c773d247969eb013\",\"elapsedMs\":10.91195799999997,\"steps\":[{\"phase\":\"source-cut\",\"language\":\"xtdb-sql\",\"query\":\"SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1\",\"parameters\":[\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r2-subqueries\\\",0]\"],\"elapsedMs\":7.846499999999992},{\"phase\":\"answer\",\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = ALL/**/((SELECT 1))\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"elapsedMs\":2.2983330000000137}]}})",
+      "isDefect": false,
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ],
+      "confirmedRegression": false
+    },
+    {
+      "quantifier": "ALL",
+      "gap": " /* subquery */ ",
+      "sql": "SELECT 'x' AS v WHERE 1 = ALL /* subquery */ ((SELECT 1))",
+      "baseline": {
+        "accepted": true
+      },
+      "target": {
+        "accepted": true
+      },
+      "publicExit": "Success({\"rows\":[{\"v\":\"x\"}],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r2-subqueries\\\",0]\",\"recordedPosition\":0,\"validAt\":1794179998722},\"trace\":{\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = ALL /* subquery */ ((SELECT 1))\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r2-subqueries\\\",0]\",\"recordedPosition\":0,\"validAt\":1794179998722},\"mappingId\":\"triplex-xtdb/assertion-native-basis/1\",\"contractId\":\"sha256-6ab9db7465be514891c9ae6e7debf670c6f48c071ee23a33c773d247969eb013\",\"elapsedMs\":14.295374999999979,\"steps\":[{\"phase\":\"source-cut\",\"language\":\"xtdb-sql\",\"query\":\"SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1\",\"parameters\":[\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r2-subqueries\\\",0]\"],\"elapsedMs\":10.827792000000045},{\"phase\":\"answer\",\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = ALL /* subquery */ ((SELECT 1))\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"elapsedMs\":2.7217089999999757}]}})",
+      "isDefect": false,
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ],
+      "confirmedRegression": false
+    }
+  ]
+}

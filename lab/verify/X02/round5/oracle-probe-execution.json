@@ -1,0 +1,21 @@
+{
+  "at": "2026-11-08T23:16:22.085291+00:00",
+  "args": [
+    "docker",
+    "exec",
+    "-i",
+    "tx2-xtdb-dev",
+    "java",
+    "-Xmx128m",
+    "-XX:-UsePerfData",
+    "-XX:ActiveProcessorCount=1",
+    "-cp",
+    "xtdb.jar:lib/*",
+    "clojure.main",
+    "-e",
+    ";; [CX-VX02-5] Why: use the resident's actual pinned generated lexer, including its longest-match and modes.\n;; Rejected: deriving an expected lexer from the builder's regex generator or submitting unsafe SQL to XTDB.\n(require '[clojure.edn :as edn] '[clojure.string :as str])\n(import '[org.antlr.v4.runtime CharStreams BaseErrorListener])\n(defn j [x] (cond (string? x) (pr-str x) (sequential? x) (str \"[\" (str/join \",\" (map j x)) \"]\") (nil? x) \"null\" :else (str x)))\n(doseq [[id sql] (edn/read (java.io.PushbackReader. *in*))]\n  (try\n    (let [errors (atom [])\n          lexer (proxy [xtdb.antlr.SqlLexer] [(CharStreams/fromString sql)]\n                  (skip [] (.setChannel this 1)))\n          listener (proxy [BaseErrorListener] []\n                     (syntaxError [recognizer offending line column message exception]\n                       (swap! errors conj [line column message]))) ]\n      (.removeErrorListeners lexer)\n      (.addErrorListener lexer listener)\n      (let [tokens (.getAllTokens lexer)\n            vocab (.getVocabulary lexer)]\n        (println (j [id (mapv (fn [t] [(.getSymbolicName vocab (.getType t)) (.getStartIndex t) (inc (.getStopIndex t)) (.getText t)]) tokens) @errors (.-_mode lexer)]))))\n    (catch Throwable e (println (j [id [] [[0 0 (str (class e) \": \" (.getMessage e))]] -1])))))\n"
+  ],
+  "exitCode": 0,
+  "inputs": 6,
+  "sourceSha256": "8cb3406436158b8b3fde4dc8d6f83a23ebf6efd583059ca2c018e628e9f3f39d"
+}

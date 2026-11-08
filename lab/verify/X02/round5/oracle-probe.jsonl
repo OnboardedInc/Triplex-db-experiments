@@ -1,0 +1,8 @@
+org.antlr.v4.runtime.BaseErrorListener
+#'user/j
+["0",[["SELECT",0,6,"SELECT"],["WHITESPACE",6,7," "],["UNSIGNED_INTEGER",7,8,"1"]],[],0]
+["1",[["BLOCK_COMMENT",0,17,"/* a /* b */ c */"],["WHITESPACE",17,18," "],["SELECT",18,24,"SELECT"],["WHITESPACE",24,25," "],["UNSIGNED_INTEGER",25,26,"1"]],[],0]
+["2",[["REGULAR_IDENTIFIER",0,6,"a$tag$"],["SEMI",6,7,";"],["DELETE",7,13,"DELETE"]],[],0]
+["3",[["SELECT",0,6,"SELECT"],["WHITESPACE",6,7," "],["DOLLAR_TAG",7,10,"$X$"],["DM_TEXT",10,11,"雪"],["DM_END_TAG",11,14,"$X$"]],[],0]
+["4",[["BLOCK_COMMENT",0,8,"/* /* */"],["WHITESPACE",8,9," "],["SELECT",9,15,"SELECT"],["WHITESPACE",15,16," "],["UNSIGNED_INTEGER",16,17,"1"]],[],0]
+["5",[["SELECT",0,6,"SELECT"],["WHITESPACE",6,7," "],["C_ESCAPES_STRING",7,13,"E'x\\n'"]],[],0]

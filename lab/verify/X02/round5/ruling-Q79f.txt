@@ -1,0 +1,2 @@
+## Q79f, Q87: X02 comment syntax; evaluator tests gate every contract merge
+| Q79f comments follow the pinned lexer | The X02 guard treats comments exactly as the pinned XTDB lexer does (SqlLexer.g4:12 defines BLOCK_COMMENT recursively): balanced nested block comments are consumed at any depth, an unterminated comment is an error, and the guard's tokenizer must agree with the lexer on every identifier boundary, including dollar-bearing, quoted and Unicode identifiers. Where the guard and the lexer disagree, the query is refused, never passed. | V-X02 round 4 F1-R4, F3-R4 |

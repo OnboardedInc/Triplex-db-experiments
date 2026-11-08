@@ -1,0 +1,23 @@
+{
+  "cases": 5387,
+  "counts": {
+    "exact": 4546,
+    "refusedValid": 32,
+    "refusedInvalid": 803,
+    "acceptedMismatch": 6,
+    "instrumentationMismatch": 0
+  },
+  "observedClasses": 363,
+  "metadata": [
+    [
+      "_metadata",
+      [
+        "xtdb.antlr.SqlLexer",
+        "4.13.2",
+        129761280
+      ],
+      [],
+      0
+    ]
+  ]
+}

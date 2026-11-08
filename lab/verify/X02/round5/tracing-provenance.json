@@ -1,0 +1,6 @@
+{
+  "source": "7b11af0:packages/xtdb/src/native/SqlTokens.ts",
+  "sourceSha256": "817699b64bca60c3d1760e1e825dc8f86fbdcae5adb169cf057223ee51a4bb38",
+  "instrumentedSha256": "5b998ac486e445c8e0e9d4b363be364f75a2e26a9fd77ea43cdd915be0ddbc32",
+  "purpose": "Append observed spans only; every input also runs original and requires equal return/error behavior."
+}

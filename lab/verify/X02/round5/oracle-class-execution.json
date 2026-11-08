@@ -1,0 +1,20 @@
+{
+  "args": [
+    "docker",
+    "exec",
+    "--env",
+    "JDK_JAVA_OPTIONS=",
+    "tx2-xtdb-dev",
+    "java",
+    "-Xmx128m",
+    "-XX:MaxDirectMemorySize=16m",
+    "-XX:-UsePerfData",
+    "-XX:ActiveProcessorCount=1",
+    "-cp",
+    "xtdb.jar:lib/*",
+    "clojure.main",
+    "-e",
+    "(let [bytes (.readAllBytes (.getResourceAsStream xtdb.antlr.SqlLexer \"/xtdb/antlr/SqlLexer.class\")) hash (.formatHex (java.util.HexFormat/of) (.digest (java.security.MessageDigest/getInstance \"SHA-256\") bytes))] (println (str \"{\\\"classSha256\\\":\\\"\" hash \"\\\",\\\"maxHeapBytes\\\":\" (.maxMemory (Runtime/getRuntime)) \"}\")))\n"
+  ],
+  "exitCode": 0
+}

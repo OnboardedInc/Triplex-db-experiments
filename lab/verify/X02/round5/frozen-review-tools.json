@@ -1,0 +1,46 @@
+{
+  "at": "2026-11-08T23:21:19.624499+00:00",
+  "target": "7b11af08b847fecf0667842a6e0b31139729373b",
+  "tools": [
+    {
+      "path": "grammar-review.ts",
+      "sha256": "62b5b4add40862ea654600e7ab3954b1090336d1cf9273c959a9589171bdbf77"
+    },
+    {
+      "path": "spot.ts",
+      "sha256": "1ab7906a9f2a06abe67a391ee2cb3595cd8692a5cbdd69fd546f2e4713cda1b5"
+    },
+    {
+      "path": "check-offline.ts",
+      "sha256": "b2de33088769155318a11b6347a0d883f8ea3de96e65b5afe3d9a71635ae0df7"
+    },
+    {
+      "path": "boundary-confirmation.ts",
+      "sha256": "edfe97d66264baffd9e81e3e0e58ce034c29fd72fd7729eb100a42a29958d56a"
+    },
+    {
+      "path": "run-regressions.mjs",
+      "sha256": "7ec5dc602b4de5c00db3f1820dc1c5c7a7cbd4d4b6aa5512384787849160fefc"
+    },
+    {
+      "path": "generate-lexer-inputs.py",
+      "sha256": "b196b2788275b94444877948d751876d970c147d69c534ff3fd89fac2c0649d5"
+    },
+    {
+      "path": "run-oracle.py",
+      "sha256": "660eb02eee012a45890c6cf645f4a54fc6ce7cdc760bfd6569f37bb95a98c093"
+    },
+    {
+      "path": "lexer-oracle.clj",
+      "sha256": "54f7d7330027c4e02e5da62d2ef659b4342e7d19109f216704de52fbc8d47b7e"
+    },
+    {
+      "path": "compare-lexer.ts",
+      "sha256": "0ebbd361195cdc5954ba8e9f8ecc81161915e46fdd19dcaa564ff0d12757f7dd"
+    },
+    {
+      "path": "traced-SqlTokens.ts",
+      "sha256": "5b998ac486e445c8e0e9d4b363be364f75a2e26a9fd77ea43cdd915be0ddbc32"
+    }
+  ]
+}

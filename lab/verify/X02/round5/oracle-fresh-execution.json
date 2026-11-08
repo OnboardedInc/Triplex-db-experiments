@@ -1,0 +1,24 @@
+{
+  "at": "2026-11-08T23:24:18.806512+00:00",
+  "args": [
+    "docker",
+    "exec",
+    "--env",
+    "JDK_JAVA_OPTIONS=",
+    "-i",
+    "tx2-xtdb-dev",
+    "java",
+    "-Xmx128m",
+    "-XX:MaxDirectMemorySize=16m",
+    "-XX:-UsePerfData",
+    "-XX:ActiveProcessorCount=1",
+    "-cp",
+    "xtdb.jar:lib/*",
+    "clojure.main",
+    "-e",
+    "(do\n;; [CX-VX02-5] Why: use the resident's actual pinned generated lexer, including its longest-match and modes.\n;; Rejected: deriving an expected lexer from the builder's regex generator or submitting unsafe SQL to XTDB.\n(require '[clojure.edn :as edn] '[clojure.string :as str])\n(import '[org.antlr.v4.runtime CharStreams BaseErrorListener] '[org.antlr.v4.runtime.atn LexerATNSimulator PredictionContextCache] '[org.antlr.v4.runtime.dfa DFA])\n(defn j [x] (cond (string? x) (str (char 34) (.encodeToString (java.util.Base64/getEncoder) (.getBytes x java.nio.charset.StandardCharsets/UTF_8)) (char 34)) (sequential? x) (str \"[\" (str/join \",\" (map j x)) \"]\") (nil? x) \"null\" :else (str x)))\n(println (j [\"_metadata\" [(.getName xtdb.antlr.SqlLexer) org.antlr.v4.runtime.RuntimeMetaData/VERSION (.maxMemory (Runtime/getRuntime))] [] 0]))\n(doseq [[id sql] (edn/read (java.io.PushbackReader. *in*))]\n  (try\n    (let [errors (atom [])\n          lexer (proxy [xtdb.antlr.SqlLexer] [(CharStreams/fromString sql)]\n                  (skip [] (.setChannel this 1)))\n          listener (proxy [BaseErrorListener] []\n                     (syntaxError [recognizer offending line column message exception]\n                       (swap! errors conj [line column message]))) ]\n      (let [atn (.getATN lexer)\n            dfa (into-array DFA (map-indexed (fn [i state] (DFA. state i)) (.-decisionToState atn)))]\n        (.setInterpreter lexer (LexerATNSimulator. lexer atn dfa (PredictionContextCache.))))\n      (.removeErrorListeners lexer)\n      (.addErrorListener lexer listener)\n      (let [tokens (.getAllTokens lexer)\n            vocab (.getVocabulary lexer)]\n        (println (j [id (mapv (fn [t] [(.getSymbolicName vocab (.getType t)) (.getStartIndex t) (inc (.getStopIndex t)) (.getText t)]) tokens) @errors (.-_mode lexer)]))))\n    (catch Throwable e (println (j [id [] [[0 0 (str (class e) \": \" (.getMessage e))]] -1])))))\n\n)\n"
+  ],
+  "exitCode": 0,
+  "inputs": 12,
+  "sourceSha256": "cf6e4c7624f858b206aa9f063caf2da3d73858a5eda7b76fcad0bdbfe5ff27e9"
+}

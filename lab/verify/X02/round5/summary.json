@@ -1,0 +1,250 @@
+{
+  "verdict": "ACCEPT",
+  "target": "7b11af08b847fecf0667842a6e0b31139729373b",
+  "G0": {
+    "runId": "G0-xtdb-20261108T231524Z-f60cae",
+    "counts": {
+      "executed": 968,
+      "pass": 968,
+      "fail": 0,
+      "skip": 130,
+      "expectedSkip": 130,
+      "unexpectedSkip": 0
+    },
+    "git": {
+      "head": "7b11af08b847fecf0667842a6e0b31139729373b",
+      "headTree": "01115ccd9f6bf9a1e0b6630fcb513b41ee7707e3",
+      "branch": "HEAD",
+      "dirty": false,
+      "stashCommit": null,
+      "stashTree": null,
+      "diffScope": [
+        "packages",
+        "qualification",
+        "lab/bin",
+        "lab/config",
+        "vitest.workspace-aliases.ts",
+        "tsconfig.base.json",
+        "tsconfig.node.json",
+        "package.json",
+        "pnpm-workspace.yaml",
+        "pnpm-lock.yaml",
+        "turbo.json"
+      ],
+      "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "diffBytes": 0,
+      "modifiedFiles": [],
+      "untrackedFiles": [],
+      "otherDirtyPaths": [],
+      "sourceTreeId": "6b11b52445add9c2a6d501f77badeb426348e8bee0b9c665c0330a37949ca7a8"
+    }
+  },
+  "grammar": {
+    "author-generator": {
+      "total": 1818,
+      "matches": 1818,
+      "mismatches": []
+    },
+    "boundary-control": {
+      "total": 3,
+      "matches": 0,
+      "mismatches": [
+        "safe-dollar-id",
+        "safe-dollar-backtick",
+        "safe-three-statements"
+      ]
+    },
+    "independent": {
+      "total": 162,
+      "matches": 162,
+      "mismatches": []
+    },
+    "reviewer-previous": {
+      "total": 12,
+      "matches": 12,
+      "mismatches": []
+    },
+    "unsafe": {
+      "total": 2362,
+      "typedPredispatchRefusals": 2362
+    }
+  },
+  "lexer": {
+    "cases": 5387,
+    "tokenClassesCovered": 363,
+    "tokenClassesExpected": 363,
+    "counts": {
+      "exact": 4546,
+      "refusedValid": 32,
+      "refusedInvalid": 797,
+      "acceptedMismatch": 0,
+      "instrumentationMismatch": 0,
+      "inconclusive": 12
+    },
+    "oracleGaps": [
+      {
+        "id": "5048",
+        "bytes": 4108,
+        "errors": [
+          [
+            0,
+            0,
+            "class java.lang.OutOfMemoryError: Java heap space"
+          ]
+        ]
+      },
+      {
+        "id": "5049",
+        "bytes": 4106,
+        "errors": [
+          [
+            0,
+            0,
+            "class java.lang.OutOfMemoryError: Java heap space"
+          ]
+        ]
+      },
+      {
+        "id": "5050",
+        "bytes": 4124,
+        "errors": [
+          [
+            0,
+            0,
+            "class java.lang.OutOfMemoryError: Java heap space"
+          ]
+        ]
+      },
+      {
+        "id": "5051",
+        "bytes": 4122,
+        "errors": [
+          [
+            0,
+            0,
+            "class java.lang.OutOfMemoryError: Java heap space"
+          ]
+        ]
+      },
+      {
+        "id": "5052",
+        "bytes": 4114,
+        "errors": [
+          [
+            0,
+            0,
+            "class java.lang.OutOfMemoryError: Java heap space"
+          ]
+        ]
+      },
+      {
+        "id": "5053",
+        "bytes": 4112,
+        "errors": [
+          [
+            0,
+            0,
+            "class java.lang.OutOfMemoryError: Java heap space"
+          ]
+        ]
+      },
+      {
+        "id": "5054",
+        "bytes": 16396,
+        "errors": [
+          [
+            0,
+            0,
+            "class java.lang.OutOfMemoryError: Java heap space"
+          ]
+        ]
+      },
+      {
+        "id": "5055",
+        "bytes": 16394,
+        "errors": [
+          [
+            0,
+            0,
+            "class java.lang.OutOfMemoryError: Java heap space"
+          ]
+        ]
+      },
+      {
+        "id": "5056",
+        "bytes": 16412,
+        "errors": [
+          [
+            0,
+            0,
+            "class java.lang.OutOfMemoryError: Java heap space"
+          ]
+        ]
+      },
+      {
+        "id": "5057",
+        "bytes": 16410,
+        "errors": [
+          [
+            0,
+            0,
+            "class java.lang.OutOfMemoryError: Java heap space"
+          ]
+        ]
+      },
+      {
+        "id": "5058",
+        "bytes": 16402,
+        "errors": [
+          [
+            0,
+            0,
+            "class java.lang.OutOfMemoryError: Java heap space"
+          ]
+        ]
+      },
+      {
+        "id": "5059",
+        "bytes": 16400,
+        "errors": [
+          [
+            0,
+            0,
+            "class java.lang.OutOfMemoryError: Java heap space"
+          ]
+        ]
+      }
+    ]
+  },
+  "earlier": {
+    "source-sums": {
+      "total": 20,
+      "pass": 20
+    },
+    "delta-sums": {
+      "total": 30,
+      "pass": 30
+    },
+    "delta-offline": {
+      "overflow": 10,
+      "exact": 120,
+      "defaults": 213
+    },
+    "sourceMapChecks": 13,
+    "check-offline": {
+      "unsafeRefusals": 4
+    },
+    "boundary-confirmation": {
+      "unsafeRefusals": 2
+    },
+    "deltaLive": {
+      "total": 22,
+      "unchangedExpectationMatches": 20,
+      "knownInvalidQuantifierSpellings": [
+        "parenthesized-any-operand",
+        "parenthesized-some-operand"
+      ]
+    },
+    "sourceHazardRecords": 13
+  }
+}

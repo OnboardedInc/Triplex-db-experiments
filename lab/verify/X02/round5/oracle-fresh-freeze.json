@@ -1,0 +1,6 @@
+{
+  "at": "2026-11-08T23:23:13.178036+00:00",
+  "reason": "Twelve deep-comment oracle inputs exhausted 128 MiB; retry with fresh DFA/context cache per input, unchanged ATN and same heap cap. Original failures retained.",
+  "sourceSha256": "cf6e4c7624f858b206aa9f063caf2da3d73858a5eda7b76fcad0bdbfe5ff27e9",
+  "inputs": 12
+}

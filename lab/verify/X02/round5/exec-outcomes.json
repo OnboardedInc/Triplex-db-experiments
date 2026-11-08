@@ -1,0 +1,12 @@
+[
+ {"task":"G0","sessionId":13599,"exitCode":0,"log":"G0.log"},
+ {"task":"oracle-probe","exitCode":0,"log":"oracle-probe.log","note":"Six initial lexer-only controls; original diagnostic protocol retained."},
+ {"task":"all-regressions","sessionId":6741,"exitCode":0,"log":"regressions.log","steps":"regression-exec-outcomes.json"},
+ {"task":"all-lexer-oracle-inputs","sessionId":58326,"exitCode":0,"log":"oracle.log","note":"5387 outputs; 12 oracle OOM observations preserved as mode=-1, not semantic PASS."},
+ {"task":"first-comparison","exitCode":1,"log":"lexer-comparison.log","note":"Invoked before oracle completion; refused partial 5315-of-5387 input set; no semantic JSON published."},
+ {"task":"completed-comparison","exitCode":1,"log":"lexer-comparison-r2.log","note":"Original comparison incorrectly grouped six accepted inputs with oracle resource exceptions as mismatches. Original JSON preserved."},
+ {"task":"oracle-fresh-context","sessionId":74097,"exitCode":0,"log":"oracle-fresh.log","note":"12 deep-comment retries with fresh DFA/context caches and unchanged 128 MiB heap cap; all still oracle-inconclusive."},
+ {"task":"final-comparison","exitCode":0,"log":"lexer-comparison-final.log","note":"0 admitted mismatches; 12 oracle resource gaps explicitly separated."},
+ {"task":"generated-pattern-check","exitCode":0,"log":"generator-check.log"},
+ {"task":"oracle-class-binding","exitCode":0,"log":"oracle-class-binding.log"}
+]

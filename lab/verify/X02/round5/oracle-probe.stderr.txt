@@ -1,0 +1,2 @@
+NOTE: Picked up JDK_JAVA_OPTIONS: -Xmx1500m -XX:MaxDirectMemorySize=1g
+NOTE: Picked up JDK_JAVA_OPTIONS: -Xmx1500m -XX:MaxDirectMemorySize=1g

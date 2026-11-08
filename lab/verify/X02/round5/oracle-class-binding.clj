@@ -1,0 +1,1 @@
+(let [bytes (.readAllBytes (.getResourceAsStream xtdb.antlr.SqlLexer "/xtdb/antlr/SqlLexer.class")) hash (.formatHex (java.util.HexFormat/of) (.digest (java.security.MessageDigest/getInstance "SHA-256") bytes))] (println (str "{\"classSha256\":\"" hash "\",\"maxHeapBytes\":" (.maxMemory (Runtime/getRuntime)) "}")))

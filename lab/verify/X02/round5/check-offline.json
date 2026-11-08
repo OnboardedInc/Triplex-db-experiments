@@ -1,0 +1,53 @@
+{
+  "at": "2026-11-08T23:19:59.682Z",
+  "controls": [
+    {
+      "name": "backtick-nested-array",
+      "sql": "SELECT 'x' AS v, 0 AS `a$tag$` WHERE 1 = ANY/**/(ARRAY[1,2]) AND EXISTS(SELECT 1 AS `$tag$b`)",
+      "accepted": false,
+      "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)",
+      "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))]))",
+      "defect": false,
+      "calls": [
+        "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1"
+      ],
+      "answerDispatched": false
+    },
+    {
+      "name": "identifier-nested-array",
+      "sql": "SELECT 'x' AS v, 0 AS a$tag$ WHERE 1 = ANY/**/(ARRAY[1,2]) AND EXISTS(SELECT 1 AS z$tag$b)",
+      "accepted": false,
+      "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)",
+      "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))]))",
+      "defect": false,
+      "calls": [
+        "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1"
+      ],
+      "answerDispatched": false
+    },
+    {
+      "name": "backtick-mutation",
+      "sql": "SELECT 1 AS `a$tag$`; DELETE FROM tx_assertions; SELECT 2 AS `$tag$b`",
+      "accepted": false,
+      "error": "TypeError: Native reads accept one query, not multiple statements",
+      "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: TypeError: Native reads accept one query, not multiple statements (cause: TypeError: Native reads accept one query, not multiple statements))]))",
+      "defect": false,
+      "calls": [
+        "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1"
+      ],
+      "answerDispatched": false
+    },
+    {
+      "name": "identifier-mutation",
+      "sql": "SELECT 1 AS a$tag$; DELETE FROM tx_assertions; SELECT 2 AS z$tag$b",
+      "accepted": false,
+      "error": "TypeError: Native reads accept one query, not multiple statements",
+      "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: TypeError: Native reads accept one query, not multiple statements (cause: TypeError: Native reads accept one query, not multiple statements))]))",
+      "defect": false,
+      "calls": [
+        "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1"
+      ],
+      "answerDispatched": false
+    }
+  ]
+}

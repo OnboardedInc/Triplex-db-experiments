@@ -1,0 +1,402 @@
+{
+  "at": "2026-11-08T23:19:59.056Z",
+  "controls": [
+    {
+      "name": "suffix-order",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY ((SELECT 1 AS k) ORDER BY 1)",
+      "guard": {
+        "accepted": true
+      },
+      "prior": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "exit": "Success({\"rows\":[{\"v\":\"x\"}],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\",\"recordedPosition\":0,\"validAt\":1794179999086},\"trace\":{\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = ANY ((SELECT 1 AS k) ORDER BY 1)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\",\"recordedPosition\":0,\"validAt\":1794179999086},\"mappingId\":\"triplex-xtdb/assertion-native-basis/1\",\"contractId\":\"sha256-f3ff962c31ddfb11ec64f5d1a35f56f10b569673cb068449ff6737514e53dfed\",\"elapsedMs\":36.11108300000001,\"steps\":[{\"phase\":\"source-cut\",\"language\":\"xtdb-sql\",\"query\":\"SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1\",\"parameters\":[\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\"],\"elapsedMs\":26.598250000000007},{\"phase\":\"answer\",\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = ANY ((SELECT 1 AS k) ORDER BY 1)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"elapsedMs\":6.878582999999992}]}})",
+      "defect": false,
+      "rows": [
+        {
+          "v": "x"
+        }
+      ],
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ]
+    },
+    {
+      "name": "suffix-limit",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY ((SELECT 1) LIMIT 1)",
+      "guard": {
+        "accepted": true
+      },
+      "prior": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "exit": "Success({\"rows\":[{\"v\":\"x\"}],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\",\"recordedPosition\":0,\"validAt\":1794179999112},\"trace\":{\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = ANY ((SELECT 1) LIMIT 1)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\",\"recordedPosition\":0,\"validAt\":1794179999112},\"mappingId\":\"triplex-xtdb/assertion-native-basis/1\",\"contractId\":\"sha256-f3ff962c31ddfb11ec64f5d1a35f56f10b569673cb068449ff6737514e53dfed\",\"elapsedMs\":15.73479199999997,\"steps\":[{\"phase\":\"source-cut\",\"language\":\"xtdb-sql\",\"query\":\"SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1\",\"parameters\":[\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\"],\"elapsedMs\":12.332583},{\"phase\":\"answer\",\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = ANY ((SELECT 1) LIMIT 1)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"elapsedMs\":2.456083000000035}]}})",
+      "defect": false,
+      "rows": [
+        {
+          "v": "x"
+        }
+      ],
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ]
+    },
+    {
+      "name": "suffix-offset",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY ((SELECT 1) OFFSET 0 ROWS)",
+      "guard": {
+        "accepted": true
+      },
+      "prior": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "exit": "Success({\"rows\":[{\"v\":\"x\"}],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\",\"recordedPosition\":0,\"validAt\":1794179999127},\"trace\":{\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = ANY ((SELECT 1) OFFSET 0 ROWS)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\",\"recordedPosition\":0,\"validAt\":1794179999127},\"mappingId\":\"triplex-xtdb/assertion-native-basis/1\",\"contractId\":\"sha256-f3ff962c31ddfb11ec64f5d1a35f56f10b569673cb068449ff6737514e53dfed\",\"elapsedMs\":12.446374999999989,\"steps\":[{\"phase\":\"source-cut\",\"language\":\"xtdb-sql\",\"query\":\"SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1\",\"parameters\":[\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\"],\"elapsedMs\":8.967332999999996},{\"phase\":\"answer\",\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = ANY ((SELECT 1) OFFSET 0 ROWS)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"elapsedMs\":2.634625000000028}]}})",
+      "defect": false,
+      "rows": [
+        {
+          "v": "x"
+        }
+      ],
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ]
+    },
+    {
+      "name": "suffix-fetch",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY ((SELECT 1) FETCH FIRST 1 ROW ONLY)",
+      "guard": {
+        "accepted": true
+      },
+      "prior": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "exit": "Success({\"rows\":[{\"v\":\"x\"}],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\",\"recordedPosition\":0,\"validAt\":1794179999143},\"trace\":{\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = ANY ((SELECT 1) FETCH FIRST 1 ROW ONLY)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\",\"recordedPosition\":0,\"validAt\":1794179999143},\"mappingId\":\"triplex-xtdb/assertion-native-basis/1\",\"contractId\":\"sha256-f3ff962c31ddfb11ec64f5d1a35f56f10b569673cb068449ff6737514e53dfed\",\"elapsedMs\":12.008166000000017,\"steps\":[{\"phase\":\"source-cut\",\"language\":\"xtdb-sql\",\"query\":\"SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1\",\"parameters\":[\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\"],\"elapsedMs\":8.825499999999977},{\"phase\":\"answer\",\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = ANY ((SELECT 1) FETCH FIRST 1 ROW ONLY)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"elapsedMs\":2.4891250000000014}]}})",
+      "defect": false,
+      "rows": [
+        {
+          "v": "x"
+        }
+      ],
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ]
+    },
+    {
+      "name": "group-set-suffix",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY ((SELECT 1 UNION ALL SELECT 2) ORDER BY 1 LIMIT 1)",
+      "guard": {
+        "accepted": true
+      },
+      "prior": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "exit": "Success({\"rows\":[{\"v\":\"x\"}],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\",\"recordedPosition\":0,\"validAt\":1794179999157},\"trace\":{\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = ANY ((SELECT 1 UNION ALL SELECT 2) ORDER BY 1 LIMIT 1)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\",\"recordedPosition\":0,\"validAt\":1794179999157},\"mappingId\":\"triplex-xtdb/assertion-native-basis/1\",\"contractId\":\"sha256-f3ff962c31ddfb11ec64f5d1a35f56f10b569673cb068449ff6737514e53dfed\",\"elapsedMs\":11.526917000000026,\"steps\":[{\"phase\":\"source-cut\",\"language\":\"xtdb-sql\",\"query\":\"SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1\",\"parameters\":[\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\"],\"elapsedMs\":8.028458},{\"phase\":\"answer\",\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = ANY ((SELECT 1 UNION ALL SELECT 2) ORDER BY 1 LIMIT 1)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"elapsedMs\":2.6943330000000287}]}})",
+      "defect": false,
+      "rows": [
+        {
+          "v": "x"
+        }
+      ],
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ]
+    },
+    {
+      "name": "backtick-open",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY (SELECT 1 AS `(`)",
+      "guard": {
+        "accepted": true
+      },
+      "prior": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "exit": "Success({\"rows\":[{\"v\":\"x\"}],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\",\"recordedPosition\":0,\"validAt\":1794179999175},\"trace\":{\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = ANY (SELECT 1 AS `(`)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\",\"recordedPosition\":0,\"validAt\":1794179999175},\"mappingId\":\"triplex-xtdb/assertion-native-basis/1\",\"contractId\":\"sha256-f3ff962c31ddfb11ec64f5d1a35f56f10b569673cb068449ff6737514e53dfed\",\"elapsedMs\":13.686916999999994,\"steps\":[{\"phase\":\"source-cut\",\"language\":\"xtdb-sql\",\"query\":\"SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1\",\"parameters\":[\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\"],\"elapsedMs\":10.722874999999988},{\"phase\":\"answer\",\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = ANY (SELECT 1 AS `(`)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"elapsedMs\":2.193083999999999}]}})",
+      "defect": false,
+      "rows": [
+        {
+          "v": "x"
+        }
+      ],
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ]
+    },
+    {
+      "name": "backtick-close",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY (SELECT 1 AS `)`)",
+      "guard": {
+        "accepted": true
+      },
+      "prior": {
+        "accepted": true
+      },
+      "exit": "Success({\"rows\":[{\"v\":\"x\"}],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\",\"recordedPosition\":0,\"validAt\":1794179999188},\"trace\":{\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = ANY (SELECT 1 AS `)`)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\",\"recordedPosition\":0,\"validAt\":1794179999188},\"mappingId\":\"triplex-xtdb/assertion-native-basis/1\",\"contractId\":\"sha256-f3ff962c31ddfb11ec64f5d1a35f56f10b569673cb068449ff6737514e53dfed\",\"elapsedMs\":10.213250000000016,\"steps\":[{\"phase\":\"source-cut\",\"language\":\"xtdb-sql\",\"query\":\"SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1\",\"parameters\":[\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\"],\"elapsedMs\":7.561999999999955},{\"phase\":\"answer\",\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = ANY (SELECT 1 AS `)`)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"elapsedMs\":2.133041999999989}]}})",
+      "defect": false,
+      "rows": [
+        {
+          "v": "x"
+        }
+      ],
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ]
+    },
+    {
+      "name": "backtick-union",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY (SELECT 1 AS `UNION`)",
+      "guard": {
+        "accepted": true
+      },
+      "prior": {
+        "accepted": true
+      },
+      "exit": "Success({\"rows\":[{\"v\":\"x\"}],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\",\"recordedPosition\":0,\"validAt\":1794179999200},\"trace\":{\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = ANY (SELECT 1 AS `UNION`)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\",\"recordedPosition\":0,\"validAt\":1794179999200},\"mappingId\":\"triplex-xtdb/assertion-native-basis/1\",\"contractId\":\"sha256-f3ff962c31ddfb11ec64f5d1a35f56f10b569673cb068449ff6737514e53dfed\",\"elapsedMs\":10.216583000000014,\"steps\":[{\"phase\":\"source-cut\",\"language\":\"xtdb-sql\",\"query\":\"SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1\",\"parameters\":[\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\"],\"elapsedMs\":7.779165999999975},{\"phase\":\"answer\",\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = ANY (SELECT 1 AS `UNION`)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"elapsedMs\":2.0267920000000004}]}})",
+      "defect": false,
+      "rows": [
+        {
+          "v": "x"
+        }
+      ],
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ]
+    },
+    {
+      "name": "backtick-safe",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY (SELECT 1 AS `harmless`)",
+      "guard": {
+        "accepted": true
+      },
+      "prior": {
+        "accepted": true
+      },
+      "exit": "Success({\"rows\":[{\"v\":\"x\"}],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\",\"recordedPosition\":0,\"validAt\":1794179999211},\"trace\":{\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = ANY (SELECT 1 AS `harmless`)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\",\"recordedPosition\":0,\"validAt\":1794179999211},\"mappingId\":\"triplex-xtdb/assertion-native-basis/1\",\"contractId\":\"sha256-f3ff962c31ddfb11ec64f5d1a35f56f10b569673cb068449ff6737514e53dfed\",\"elapsedMs\":9.454665999999975,\"steps\":[{\"phase\":\"source-cut\",\"language\":\"xtdb-sql\",\"query\":\"SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1\",\"parameters\":[\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\"],\"elapsedMs\":6.782582999999988},{\"phase\":\"answer\",\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = ANY (SELECT 1 AS `harmless`)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"elapsedMs\":1.8798750000000268}]}})",
+      "defect": false,
+      "rows": [
+        {
+          "v": "x"
+        }
+      ],
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ]
+    },
+    {
+      "name": "nested-comment",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY (SELECT /* a /* b */ c */ 1)",
+      "guard": {
+        "accepted": true
+      },
+      "prior": {
+        "accepted": false,
+        "error": "TypeError: Native SQL requires closed, non-nested block comments"
+      },
+      "exit": "Success({\"rows\":[{\"v\":\"x\"}],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\",\"recordedPosition\":0,\"validAt\":1794179999222},\"trace\":{\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = ANY (SELECT /* a /* b */ c */ 1)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\",\"recordedPosition\":0,\"validAt\":1794179999222},\"mappingId\":\"triplex-xtdb/assertion-native-basis/1\",\"contractId\":\"sha256-f3ff962c31ddfb11ec64f5d1a35f56f10b569673cb068449ff6737514e53dfed\",\"elapsedMs\":9.371624999999995,\"steps\":[{\"phase\":\"source-cut\",\"language\":\"xtdb-sql\",\"query\":\"SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1\",\"parameters\":[\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\"],\"elapsedMs\":6.769333000000017},{\"phase\":\"answer\",\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = ANY (SELECT /* a /* b */ c */ 1)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"elapsedMs\":2.0283749999999827}]}})",
+      "defect": false,
+      "rows": [
+        {
+          "v": "x"
+        }
+      ],
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ]
+    },
+    {
+      "name": "unicode-string",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY (SELECT 1 WHERE 'Σ 雪 😀'='Σ 雪 😀')",
+      "guard": {
+        "accepted": true
+      },
+      "prior": {
+        "accepted": true
+      },
+      "exit": "Success({\"rows\":[{\"v\":\"x\"}],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\",\"recordedPosition\":0,\"validAt\":1794179999236},\"trace\":{\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = ANY (SELECT 1 WHERE 'Σ 雪 😀'='Σ 雪 😀')\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\",\"recordedPosition\":0,\"validAt\":1794179999236},\"mappingId\":\"triplex-xtdb/assertion-native-basis/1\",\"contractId\":\"sha256-f3ff962c31ddfb11ec64f5d1a35f56f10b569673cb068449ff6737514e53dfed\",\"elapsedMs\":13.526624999999967,\"steps\":[{\"phase\":\"source-cut\",\"language\":\"xtdb-sql\",\"query\":\"SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1\",\"parameters\":[\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\"],\"elapsedMs\":7.976541999999995},{\"phase\":\"answer\",\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = ANY (SELECT 1 WHERE 'Σ 雪 😀'='Σ 雪 😀')\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"elapsedMs\":5.063792000000035}]}})",
+      "defect": false,
+      "rows": [
+        {
+          "v": "x"
+        }
+      ],
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ]
+    },
+    {
+      "name": "keyword-nonreserved",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY (SELECT 1 AS union)",
+      "guard": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "prior": {
+        "accepted": true
+      },
+      "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))]))",
+      "defect": false,
+      "rawError": "PostgresError: Errors parsing SQL statement:\n  - line 1:43 no viable alternative at input '(SELECT1ASunion'"
+    },
+    {
+      "name": "long-s",
+      "sql": "SELECT 'x' AS v WHERE 1 = ſOME (SELECT 1)",
+      "guard": {
+        "accepted": false,
+        "error": "TypeError: Native SQL contains a token outside the pinned XTDB lexer"
+      },
+      "prior": {
+        "accepted": true
+      },
+      "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL contains a token outside the pinned XTDB lexer (cause: TypeError: Native SQL contains a token outside the pinned XTDB lexer))]))",
+      "defect": false,
+      "rawError": "PostgresError: Errors parsing SQL statement:\n  - line 1:26 token recognition error at: 'ſ'"
+    },
+    {
+      "name": "kelvin",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANK (SELECT 1)",
+      "guard": {
+        "accepted": false,
+        "error": "TypeError: Native SQL contains a token outside the pinned XTDB lexer"
+      },
+      "prior": {
+        "accepted": true
+      },
+      "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL contains a token outside the pinned XTDB lexer (cause: TypeError: Native SQL contains a token outside the pinned XTDB lexer))]))",
+      "defect": false,
+      "rawError": "PostgresError: Errors parsing SQL statement:\n  - line 1:28 token recognition error at: 'K'"
+    },
+    {
+      "name": "mixed",
+      "sql": "SELECT 'x' AS v WHERE 1 = aNy (SELECT 1)",
+      "guard": {
+        "accepted": true
+      },
+      "prior": {
+        "accepted": true
+      },
+      "exit": "Success({\"rows\":[{\"v\":\"x\"}],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\",\"recordedPosition\":0,\"validAt\":1794179999281},\"trace\":{\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = aNy (SELECT 1)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\",\"recordedPosition\":0,\"validAt\":1794179999281},\"mappingId\":\"triplex-xtdb/assertion-native-basis/1\",\"contractId\":\"sha256-f3ff962c31ddfb11ec64f5d1a35f56f10b569673cb068449ff6737514e53dfed\",\"elapsedMs\":11.51933299999996,\"steps\":[{\"phase\":\"source-cut\",\"language\":\"xtdb-sql\",\"query\":\"SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1\",\"parameters\":[\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\"],\"elapsedMs\":7.00870800000007},{\"phase\":\"answer\",\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = aNy (SELECT 1)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"elapsedMs\":4.0199159999999665}]}})",
+      "defect": false,
+      "rows": [
+        {
+          "v": "x"
+        }
+      ],
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ]
+    },
+    {
+      "name": "nbsp",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY (SELECT 1)",
+      "guard": {
+        "accepted": false,
+        "error": "TypeError: Native SQL contains a token outside the pinned XTDB lexer"
+      },
+      "prior": {
+        "accepted": true
+      },
+      "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL contains a token outside the pinned XTDB lexer (cause: TypeError: Native SQL contains a token outside the pinned XTDB lexer))]))",
+      "defect": false,
+      "rawError": "PostgresError: Errors parsing SQL statement:\n  - line 1:29 token recognition error at: ' '"
+    },
+    {
+      "name": "vt",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY\u000b(SELECT 1)",
+      "guard": {
+        "accepted": false,
+        "error": "TypeError: Native SQL contains a token outside the pinned XTDB lexer"
+      },
+      "prior": {
+        "accepted": true
+      },
+      "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL contains a token outside the pinned XTDB lexer (cause: TypeError: Native SQL contains a token outside the pinned XTDB lexer))]))",
+      "defect": false,
+      "rawError": "PostgresError: Errors parsing SQL statement:\n  - line 1:29 token recognition error at: '\u000b'"
+    },
+    {
+      "name": "ff",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY\f(SELECT 1)",
+      "guard": {
+        "accepted": false,
+        "error": "TypeError: Native SQL contains a token outside the pinned XTDB lexer"
+      },
+      "prior": {
+        "accepted": true
+      },
+      "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL contains a token outside the pinned XTDB lexer (cause: TypeError: Native SQL contains a token outside the pinned XTDB lexer))]))",
+      "defect": false,
+      "rawError": "PostgresError: Errors parsing SQL statement:\n  - line 1:29 token recognition error at: '\f'"
+    },
+    {
+      "name": "bom",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY﻿(SELECT 1)",
+      "guard": {
+        "accepted": false,
+        "error": "TypeError: Native SQL contains a token outside the pinned XTDB lexer"
+      },
+      "prior": {
+        "accepted": true
+      },
+      "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL contains a token outside the pinned XTDB lexer (cause: TypeError: Native SQL contains a token outside the pinned XTDB lexer))]))",
+      "defect": false,
+      "rawError": "PostgresError: Errors parsing SQL statement:\n  - line 1:29 token recognition error at: '﻿'"
+    },
+    {
+      "name": "ls",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY (SELECT 1)",
+      "guard": {
+        "accepted": false,
+        "error": "TypeError: Native SQL contains a token outside the pinned XTDB lexer"
+      },
+      "prior": {
+        "accepted": true
+      },
+      "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL contains a token outside the pinned XTDB lexer (cause: TypeError: Native SQL contains a token outside the pinned XTDB lexer))]))",
+      "defect": false,
+      "rawError": "PostgresError: Errors parsing SQL statement:\n  - line 1:29 token recognition error at: ' '"
+    },
+    {
+      "name": "narrow",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY (SELECT 1)",
+      "guard": {
+        "accepted": false,
+        "error": "TypeError: Native SQL contains a token outside the pinned XTDB lexer"
+      },
+      "prior": {
+        "accepted": true
+      },
+      "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL contains a token outside the pinned XTDB lexer (cause: TypeError: Native SQL contains a token outside the pinned XTDB lexer))]))",
+      "defect": false,
+      "rawError": "PostgresError: Errors parsing SQL statement:\n  - line 1:29 token recognition error at: ' '"
+    }
+  ]
+}

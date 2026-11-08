@@ -1,0 +1,212 @@
+{
+  "verdict": "ACCEPT",
+  "target": "7b11af08b847fecf0667842a6e0b31139729373b",
+  "grammar": {
+    "author-generator": {
+      "total": 1818,
+      "matches": 1818,
+      "mismatches": []
+    },
+    "boundary-control": {
+      "total": 3,
+      "matches": 0,
+      "mismatches": [
+        "safe-dollar-id",
+        "safe-dollar-backtick",
+        "safe-three-statements"
+      ]
+    },
+    "independent": {
+      "total": 162,
+      "matches": 162,
+      "mismatches": []
+    },
+    "reviewer-previous": {
+      "total": 12,
+      "matches": 12,
+      "mismatches": []
+    },
+    "unsafe": {
+      "total": 2362,
+      "typedPredispatchRefusals": 2362
+    }
+  },
+  "lexer": {
+    "cases": 5387,
+    "tokenClassesCovered": 363,
+    "tokenClassesExpected": 363,
+    "counts": {
+      "exact": 4546,
+      "refusedValid": 32,
+      "refusedInvalid": 797,
+      "acceptedMismatch": 0,
+      "instrumentationMismatch": 0,
+      "inconclusive": 12
+    },
+    "oracleGaps": [
+      {
+        "id": "5048",
+        "bytes": 4108,
+        "errors": [
+          [
+            0,
+            0,
+            "class java.lang.OutOfMemoryError: Java heap space"
+          ]
+        ]
+      },
+      {
+        "id": "5049",
+        "bytes": 4106,
+        "errors": [
+          [
+            0,
+            0,
+            "class java.lang.OutOfMemoryError: Java heap space"
+          ]
+        ]
+      },
+      {
+        "id": "5050",
+        "bytes": 4124,
+        "errors": [
+          [
+            0,
+            0,
+            "class java.lang.OutOfMemoryError: Java heap space"
+          ]
+        ]
+      },
+      {
+        "id": "5051",
+        "bytes": 4122,
+        "errors": [
+          [
+            0,
+            0,
+            "class java.lang.OutOfMemoryError: Java heap space"
+          ]
+        ]
+      },
+      {
+        "id": "5052",
+        "bytes": 4114,
+        "errors": [
+          [
+            0,
+            0,
+            "class java.lang.OutOfMemoryError: Java heap space"
+          ]
+        ]
+      },
+      {
+        "id": "5053",
+        "bytes": 4112,
+        "errors": [
+          [
+            0,
+            0,
+            "class java.lang.OutOfMemoryError: Java heap space"
+          ]
+        ]
+      },
+      {
+        "id": "5054",
+        "bytes": 16396,
+        "errors": [
+          [
+            0,
+            0,
+            "class java.lang.OutOfMemoryError: Java heap space"
+          ]
+        ]
+      },
+      {
+        "id": "5055",
+        "bytes": 16394,
+        "errors": [
+          [
+            0,
+            0,
+            "class java.lang.OutOfMemoryError: Java heap space"
+          ]
+        ]
+      },
+      {
+        "id": "5056",
+        "bytes": 16412,
+        "errors": [
+          [
+            0,
+            0,
+            "class java.lang.OutOfMemoryError: Java heap space"
+          ]
+        ]
+      },
+      {
+        "id": "5057",
+        "bytes": 16410,
+        "errors": [
+          [
+            0,
+            0,
+            "class java.lang.OutOfMemoryError: Java heap space"
+          ]
+        ]
+      },
+      {
+        "id": "5058",
+        "bytes": 16402,
+        "errors": [
+          [
+            0,
+            0,
+            "class java.lang.OutOfMemoryError: Java heap space"
+          ]
+        ]
+      },
+      {
+        "id": "5059",
+        "bytes": 16400,
+        "errors": [
+          [
+            0,
+            0,
+            "class java.lang.OutOfMemoryError: Java heap space"
+          ]
+        ]
+      }
+    ]
+  },
+  "earlier": {
+    "source-sums": {
+      "total": 20,
+      "pass": 20
+    },
+    "delta-sums": {
+      "total": 30,
+      "pass": 30
+    },
+    "delta-offline": {
+      "overflow": 10,
+      "exact": 120,
+      "defaults": 213
+    },
+    "sourceMapChecks": 13,
+    "check-offline": {
+      "unsafeRefusals": 4
+    },
+    "boundary-confirmation": {
+      "unsafeRefusals": 2
+    },
+    "deltaLive": {
+      "total": 22,
+      "unchangedExpectationMatches": 20,
+      "knownInvalidQuantifierSpellings": [
+        "parenthesized-any-operand",
+        "parenthesized-some-operand"
+      ]
+    },
+    "sourceHazardRecords": 13
+  }
+}

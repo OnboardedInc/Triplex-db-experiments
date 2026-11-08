@@ -1,0 +1,21 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+5315 !== 5387
+
+    at <anonymous> (/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/round5/compare-lexer.ts:9:128)
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 5315,
+  expected: 5387,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.23.2
