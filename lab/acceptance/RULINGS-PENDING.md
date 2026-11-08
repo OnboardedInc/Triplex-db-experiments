@@ -93,3 +93,10 @@ These move into RULINGS.md when the contract version that compiles them is built
 | --- | --- | --- |
 | Q70a continuation view | Every `cursorFrom` continuation is answered from the source read's start, scope and prefixes, whether or not the source had commits in flight; a continuation's own readStart is never consulted. | V-O04e F7 |
 | Q70b literal token | A literal cursor token equal to a `nextCursor` that a read with commits in flight issued earlier in the same case continues that read per prefix; token bytes and the cursor vectors stay unchanged. Any other literal token keeps today's rule (the query's own read view). | V-O04e F8, fix (b) |
+
+## Q71: EXP-E01 round 8 questions (execution identity, toolchain, comparator in the reference)
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q71a install metadata | The contract's `buildSpec` names an exclusion list of install metadata that `executionIdentity` leaves out (to start: `node_modules/.modules.yaml`, `node_modules/.pnpm/lock.yaml`); the list is found by diffing two clean installs of the same lockfile and is contract-owned, never claimant-supplied. Every other file in the post-build checkout stays in the identity. | EXP-E01 question 1 |
+| Q71b toolchain | A build's toolchain is the node version, platform and arch, and the pnpm version when the build or run calls pnpm. The Python version that runs an oracle is not part of the build identity; it is recorded in each oracle invocation's evidence, because an oracle's answer can depend on it (for example integer-parsing limits). | EXP-E01 question 2 |
+| Q71c reference comparator | `build_contract.py`'s case verdict adopts Q67i for case-result/2 (the declared comparator on the retained raw objects); case-result/1 documents keep hash equality because they carry no comparator. | EXP-E01 question 3 |
