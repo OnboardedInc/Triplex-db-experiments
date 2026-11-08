@@ -16,7 +16,7 @@ from . import views as W
 
 CASE_FORMAT = "triplex-db-2/o-replay-case/1"
 OUTPUT_FORMAT = "triplex-db-2/o-replay-expected/1"
-ORACLE_VERSION = "0.4.1"   # EXP-O04: erasure (Q24, Q31f, TARGETS 7, held Q49) and DR-JSON-CONVERT; ACCEPTANCE 0.3.6
+ORACLE_VERSION = "0.4.9"   # EXP-O04b: Q52a-g, Q56f; Q66a-b; Q70a-o (V-O04e-h F7-F15); ACCEPTANCE 0.3.9
 SOURCE_FILES = ["__init__.py", "__main__.py", "cli.py", "errors.py", "values.py", "exact.py", "replay.py",
                 "constraints.py", "views.py", "entities.py", "scale.py", "run.py", "selfcheck.py"]
 
@@ -55,6 +55,44 @@ def _order_keys_not_modeled(run, query):
 
 for _kind in ("orderKey", "decimalKey", "tdk1Key"):
     QUERIES[_kind] = _order_keys_not_modeled
+
+
+# Q70l: every paged read kind continues by one rule, through this table: the parameter a
+# continuation passes, the field an earlier page issued it in, and the key a continuation must
+# share with the page that issued its value (same kind and key). The selfcheck section
+# "Q70l continuation table" fails when a query kind whose output carries a next* field is missing.
+CONTINUATIONS = {
+    # cursorFrom names the issuing query directly (Q66b, Q70a); a literal `cursor` matches a nextCursor (Q70b-f)
+    "entityPage": {"param": "cursor", "reference": "cursorFrom", "issued": "nextCursor", "integer": False,
+                   "what": "literal token", "key": lambda run, query: ()},
+    # Q70g, Q70i: the same journal scope
+    "transactions": {"param": "after", "issued": "next", "integer": True, "what": "journal after",
+                     "key": lambda run, query: (query.get("scope") or run.engine.default_scope,)},
+    # V-O04g F11: the same entity, scope and snapshotPosition
+    "transactionsForEntity": {"param": "beforePosition", "issued": "nextBeforePosition", "integer": True,
+                              "what": "entity journal beforePosition",
+                              "key": lambda run, query: (query.get("entityId"), query.get("scope") or run.engine.default_scope,
+                                                         W.continuation_int(query, "snapshotPosition", run.engine.scope(
+                                                             query.get("scope") or run.engine.default_scope).last_position))},
+}
+
+
+def issued_values(spec, answer):
+    """The continuation values a read's answer issued (Q70l): its `issued` field, at the top
+    level or on each of its pages."""
+    key, value = answer
+    if key != "result" or not isinstance(value, V.OrderedOut):
+        return set()
+    out = {value.get(spec["issued"])}
+    pages = value.get("pages")
+    if isinstance(pages, list):
+        out |= {page.get(spec["issued"]) for page in pages if isinstance(page, V.OrderedOut)}
+    return out - {None}
+
+
+INFLIGHT_RULE = ("ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees "
+                 "each commit whole, all of its values as they were or all as markers, and the commits in "
+                 "position order, so a prefix of them (RULINGS Q52e, Q66a)")
 
 _INTEGER_LEXEME = re.compile(r"-?(0|[1-9][0-9]*)")
 _COORDINATE_FIELDS = ("stream", "epoch", "offset", "ordinal")
@@ -119,6 +157,12 @@ class Run:
                                lane_ranges=case.get("laneIntegerRanges"),
                                declarations=E.decimal_declarations(self.schemas, case.get("attributeDeclarations")))
         self.results = {}
+        # Q66b / Q70: every query's read record: the read start and scope, its answers per erasure
+        # prefix ([(seen [(position, txId)], (key, value))]) and whether commits were in flight, so
+        # a continuation answers from the read it continues; `read_log` keeps them in case order
+        self.reads = {}
+        self.read_log = []
+        self.pinned = {}     # query id -> its result under the prefix being answered (Q66b)
         self.commands = list(case.get("commands") or [])
         for i, command in enumerate(self.commands):
             command["_index"] = i
@@ -527,23 +571,162 @@ class Run:
             if kind not in QUERIES:
                 raise V.OracleInputError(f"unknown query kind {kind!r}")
             entry = [("id", qid), ("kind", kind)]
-            # R-ERA-6: `readStart` is the last position published when the read started; erasures
-            # published after it are in flight for this read (ER-INFLIGHT-READ)
-            R.READ["start"] = self.read_start(query)
             try:
-                result = QUERIES[kind](self, query)
-                entry.append(("result", result))
-                self.results[qid] = result
-            except X.TypedError as error:
-                entry.append(("error", error.to_output()))
-            except E.Conflicts as error:
-                entry.append(("error", error.to_output()))
-            except V.InvalidValue as error:
-                entry.append(("error", X.TypedError(error.error_id, str(error)).to_output()))
-            finally:
-                R.READ["start"] = None
+                source, issued = self.continued_read(query)
+            except X.TypedError as error:       # Q70f: an ambiguous continuation fails closed
+                source, issued = "refused", error
+            if source == "refused":
+                scope = self.read_scope(query)
+                start, answers, in_flight = None, [([], ("error", issued.to_output()))], False
+            elif source is not None:
+                # Q66b / Q70a: a continuation cursor carries the erasure prefix its page was computed
+                # with, so every continuation is answered from the read it continues: that read's
+                # start, scope and prefixes, one answer per prefix, from that prefix's page; its own
+                # readStart is never consulted. A prefix whose page failed or has no next cursor has
+                # no continuation. Q70b, Q70e, Q70g: a literal token (or a journal `after`) continues
+                # the prefixes whose pages issued it.
+                start, scope = source["start"], source["scope"]
+                ref = query[CONTINUATIONS[kind]["reference"]]["query"] if issued is None else None
+                answers, missing = [], None
+                for seen, answer in source["answers"]:
+                    if issued is not None and not issued(answer):
+                        continue
+                    if ref is not None:
+                        self.pinned = {ref: answer[1] if answer[0] == "result" else None}
+                    try:
+                        answers.append((seen, self.answer_under(kind, query, start, scope, seen)))
+                    except W.NoContinuation as error:
+                        missing = error
+                    finally:
+                        self.pinned = {}
+                if not answers:
+                    if len(source["answers"]) == 1 and missing is not None:
+                        raise missing      # nothing was in flight: the case is malformed, as before
+                    raise V.OracleInputError(f"cursorFrom names query {ref!r}, which has no next cursor under any "
+                                             f"erasure prefix")
+                in_flight = source["inFlight"]
+            else:
+                # R-ERA-6: `readStart` is the last position published when the read started; erasure
+                # commits of the read's scope published after it are in flight for this read. Q52e:
+                # an erasure commit is atomic for readers, so the read sees each in-flight commit
+                # whole; Q66a: commits become visible in position order, so it sees a prefix of them.
+                # The acceptable answers are the n + 1 prefixes (none, the first, the first two, ...):
+                # for one commit, exactly the all-old and the all-marker answers.
+                scope = self.read_scope(query)
+                start = self.read_start(query)
+                pending = self.in_flight_erasures(scope, start)
+                answers = [(pending[:k], self.answer_under(kind, query, start, scope, pending[:k]))
+                           for k in range(len(pending) + 1)]
+                in_flight = bool(pending)
+            spec = CONTINUATIONS.get(kind)
+            record = {"start": start, "scope": scope, "answers": answers, "inFlight": in_flight, "kind": kind,
+                      "key": spec["key"](self, query) if spec else None}
+            self.reads[qid] = record
+            self.read_log.append(record)
+            if len({V.dumps(V.OrderedOut([answer]), indent=0) for _, answer in answers}) == 1:
+                # the read does not depend on the in-flight commits (or none is in flight)
+                key, value = answers[0][1]
+                entry.append((key, value))
+                if key == "result":
+                    self.results[qid] = value
+            else:
+                # answers differ: list every whole answer, the all-old prefix first
+                entry.append(("inFlight", V.OrderedOut([("rule", INFLIGHT_RULE), ("acceptable", [
+                    V.OrderedOut([("erasuresSeen", [tx for _, tx in seen]), answer]) for seen, answer in answers])])))
             out.append(V.OrderedOut(entry))
         return out
+
+    def continued_read(self, query):
+        """(the read record a continuation continues, a test of which of its answers issued the
+        continuation, or None for a reference), or (None, None) for a read of its own. Q70l: only
+        the kinds in CONTINUATIONS continue, through their parameter. A reference (`cursorFrom`)
+        continues the read of the query it names, whether or not that read had commits in flight
+        (Q70a; an unknown query is left to the page, which reports it). A continuation value equal
+        to one an earlier page of the same kind and key issued continues that read (Q70b, Q70c,
+        Q70g, V-O04g F11), compared as the parsed integer for integer parameters (Q70m). Only a
+        value no earlier page issued uses the query's own read view."""
+        kind = query.get("kind")
+        spec = CONTINUATIONS.get(kind)
+        if spec is None:
+            return None, None
+        if spec.get("reference") and spec["reference"] in query:
+            W.cursor_reference(query)
+        ref = query.get(spec["reference"]) if spec.get("reference") else None
+        if ref is not None:
+            return (self.reads.get(ref.get("query")) if isinstance(ref, dict) else None), None
+        if spec["integer"]:
+            value = W.continuation_int(query, spec["param"])
+        else:
+            value = query.get(spec["param"])
+            value = value if isinstance(value, str) and not isinstance(value, V.Lex) else None
+        if value is None:
+            return None, None
+        key = spec["key"](self, query)
+        return self.issuing_read(lambda answer: value in issued_values(spec, answer),
+                                 lambda record: record["kind"] == kind and record["key"] == key, spec["what"])
+
+    def issuing_read(self, issued, eligible, what):
+        """Q70c / Q70g: the earlier read that issued this continuation. Q70d: several issuers with
+        identical views (start, scope and the prefixes whose pages issued it) continue the latest
+        of them; Q70f: issuers whose views disagree make the continuation ambiguous, and it fails
+        closed with a typed X-NOT-MODELED instead of picking one view."""
+        issuers = [r for r in self.read_log if eligible(r) and any(issued(answer) for _, answer in r["answers"])]
+        if not issuers:
+            return None, None
+        views = {(r["start"], r["scope"], tuple(tuple(seen) for seen, answer in r["answers"] if issued(answer)))
+                 for r in issuers}
+        if len(views) > 1:
+            raise X.TypedError("X-NOT-MODELED", f"ambiguous {what}: {len(issuers)} earlier reads issued it with "
+                               f"different read views", ruling="Q70f: a continuation issued by reads whose start, "
+                               "scope or per-prefix answers disagree fails closed")
+        return issuers[-1], issued
+
+    def result_of(self, qid):
+        """The earlier result a continuation reads its cursor from: the one computed with the
+        erasure prefix being answered (Q66b), else the query's plain result."""
+        return self.pinned[qid] if qid in self.pinned else self.results.get(qid)
+
+    def answer_under(self, kind, query, start, scope, seen):
+        """One answer with the erasure commits of `scope` after `start` seen exactly as `seen`."""
+        R.READ.update(start=start, scope=scope, chosen=frozenset(position for position, _ in seen))
+        try:
+            return self.answer(kind, query)
+        finally:
+            R.READ.update(start=None, scope=None, chosen=frozenset())
+
+    def answer(self, kind, query):
+        """One answer to the query under the current erasure view: ("result", value) or
+        ("error", typed error)."""
+        try:
+            return ("result", QUERIES[kind](self, query))
+        except X.TypedError as error:
+            return ("error", error.to_output())
+        except E.Conflicts as error:
+            return ("error", error.to_output())
+        except V.InvalidValue as error:
+            return ("error", X.TypedError(error.error_id, str(error)).to_output())
+
+    def in_flight_erasures(self, scope, start):
+        """R-ERA-6 / Q52e: the erasure commits of `scope` that published after the read started,
+        as (position, txId) in publication order. An erasure commit counts once it first erased
+        a value (an erase that matched nothing or only re-erased values changes no reading)."""
+        state = self.engine.scopes.get(scope)
+        if start is None or state is None:
+            return []
+        commits = {(a.erasure.position, a.erasure.txId) for a in state.assertions.values()
+                   if a.erasure is not None and a.erasure.position > start}
+        return sorted(commits)
+
+    def read_scope(self, query):
+        """Q70j: the scope a read reads, so the scope whose erasure commits are in flight for it
+        and against which its `readStart` resolves. The journal kinds, `assertions`,
+        `cutCatalog` and a `history` without a cut read their own `scope` field; every other
+        read reads its cut's scope (the default scope when neither is given)."""
+        kinds = ("transactions", "transaction", "transactionByCommand", "transactionsForEntity", "journalFacts",
+                 "assertions", "cutCatalog")       # the kinds whose surface takes a `scope` field (views.py)
+        if query.get("kind") in kinds or (query.get("kind") == "history" and query.get("cut") is None):
+            return query.get("scope") or self.engine.default_scope
+        return (query.get("cut") or {}).get("scope") or self.engine.default_scope
 
     def read_start(self, query):
         """R-ERA-6: `readStart` = a position (ordinal), {"afterCommand": k} or {"coordinate": c};
@@ -551,7 +734,7 @@ class Run:
         raw = query.get("readStart")
         if raw is None:
             return None
-        scope = (query.get("cut") or {}).get("scope") or self.engine.default_scope
+        scope = self.read_scope(query)
         if isinstance(raw, V.Obj) and "afterCommand" in raw:
             index = int(raw["afterCommand"])
             if index not in self.command_positions:

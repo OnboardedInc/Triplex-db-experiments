@@ -328,25 +328,26 @@ def to_decimal(a, precision=None, scale=None, rounding=None):
 
 
 def _json_to_decimal(a, precision, scale, rounding):
-    """DR-JSON-CONVERT (ACC decimalRouting, Q38d; R-DEC-18, ruled by Q49e): an explicit
-    toDecimal(json, p, s) with a declared precision and scale validates the JSON value,
-    never rounding it. A JSON number converts from its as-written reading (Q33a's
-    read-back-as-written text, its shortest rendering), never its binary64 expansion:
-    toDecimal(json 0.1, 2, 1) = 0.1; excess fraction digits are E-DECIMAL-FRACTION, more than
-    p - s integer digits (or 38) E-DECIMAL-OVERFLOW. Any other JSON value, a string holding
-    decimal text included, is E-INVALID-VALUE. A rounding argument stays refused: neither
-    DR-JSON-CONVERT nor Q49e names one."""
-    if rounding is not None:
-        raise TypedError("X-NOT-MODELED", "toDecimal(json, p, s, rounding)",
-                         ruling="R-DEC-18: DR-JSON-CONVERT and Q49e name no rounding (ORCHESTRATOR-RULING-NEEDED)")
+    """DR-JSON-CONVERT (ACC decimalRouting, Q38d; R-DEC-18, ruled by Q49e and Q52f): an explicit
+    toDecimal(json, p, s) with a declared precision and scale validates the JSON value. A JSON
+    number converts from its as-written reading (Q33a's read-back-as-written text, its shortest
+    rendering), never its binary64 expansion: toDecimal(json 0.1, 2, 1) = 0.1. Without a
+    rounding argument excess fraction digits are E-DECIMAL-FRACTION; Q52f: with one, the named
+    mode (half-even, half-up or down, Q22) rounds the as-written reading once at scale s. More
+    than p - s integer digits (or 38) is E-DECIMAL-OVERFLOW, after rounding. Any other JSON
+    value, a string holding decimal text included, is E-INVALID-VALUE (DR-JSON-STRING-TEXT)."""
     if precision is None or scale is None:
         raise V.OracleInputError("DR-JSON-CONVERT: toDecimal of a json value needs a declared precision and scale")
     p, s = _param_int(precision, "toDecimal precision", 1), _param_int(scale, "toDecimal scale")
+    mode = None if rounding is None else _param_mode(rounding)
     node = a.extra.node
     if isinstance(node, bool) or not isinstance(node, float):
         raise TypedError("E-INVALID-VALUE", "toDecimal of a json value that is not a number (Q49e)", json=a.payload)
-    as_written = V.Value("decimal", Fraction(V.es_number_to_string(node)), (0, 1, False))
-    return _declared(as_written, p, s)
+    frac = Fraction(V.es_number_to_string(node))
+    if mode is None:
+        return _declared(V.Value("decimal", frac, (0, 1, False)), p, s)
+    frac = V.round_fraction(frac, s, mode)
+    return _declared(V.Value("decimal", frac, (s, max(1, V.integer_digits(frac) + s), False)), p, s)
 
 
 def _declared(value, p, s):

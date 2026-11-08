@@ -1,6 +1,6 @@
 {
   "format": "triplex-db-2/load-contract/3",
-  "version": "0.3.10",
+  "version": "0.3.11",
   "generatedBy": "lab/acceptance/build_contract.py",
   "status": "provisional bars from lab/TARGETS.md section 1; calibration may tighten, loosening needs Sam",
   "obligations": [
@@ -160,7 +160,44 @@
       }
     }
   },
-  "perSurface": "P1, P4 and P5 run separately in each lane language (xtdb-xtql, xtdb-sql, qlever-sparql); P2 and P3 run per engine; a mixed-language run is a diagnostic only",
+  "seedRules": {
+    "Q74a": {
+      "topic": "who may clone",
+      "rule": "Screening and development receipts may be seeded by clone of a golden; the receipt records `seededBy: clone` with the golden key (adapter commit, world and seed-generator hash, driver seed options, image digest, engine config hash) and the golden's freeze fingerprint. Acceptance runs seed fresh (TARGETS 6).",
+      "basis": "R26 design item 2"
+    },
+    "Q74b": {
+      "topic": "freeze state",
+      "rule": "The canonical freeze state is settled: `POST /system/finish-block`, compactor jobs 0, live index empty. A fresh-seeded arm compared with a cloned arm settles the same way before its window. Older unsettled A0 receipts are not compared with settled ones.",
+      "basis": "R26 design item 1"
+    },
+    "Q74c": {
+      "topic": "validation first",
+      "rule": "No clone-seeded receipt counts, even for screening, until validation E1 passes: a fresh-seeded slot against its clone under the PAIR-0 A/A procedure, holding within 1.10 at p50 and 1.15 at p99, with R26 section 6.9's seven predictions checked.",
+      "basis": "R26 section 6.9"
+    },
+    "Q74d": {
+      "topic": "readiness",
+      "rule": "A cloned slot is ready only after `/healthz/started` (read with `docker exec`) and the R26 C1-C8 checks pass, then the same warm-up on every arm.",
+      "basis": "R26 risk 2"
+    },
+    "Q74e": {
+      "topic": "maintenance in every window",
+      "rule": "Runs that measure P1 force one `finish-block` at a fixed trace time in every window, on every arm, so a settled clone still has a maintenance event.",
+      "basis": "R26 note"
+    },
+    "Q74f": {
+      "topic": "disk",
+      "rule": "A golden or clone is made only when host free disk after the copy stays at or above 5 GiB; clone volumes are removed after each run. At the 10k rung (3.41 GiB per XTDB volume) that allows one clone at a time today.",
+      "basis": "R26 risk 4; host 8.7 GiB free"
+    },
+    "Q74g": {
+      "topic": "broker compositions",
+      "rule": "A broker composition clones the engine volume and the broker directory together, from one stopped moment.",
+      "basis": "R26 design item 3"
+    }
+  },
+  "perSurface": "P1, P4 and P5 run separately in each lane language (xtdb-xtql, xtdb-sql, qlever-sparql, datomic-datalog query and pull); P2 and P3 run per engine; a mixed-language run is a diagnostic only",
   "measurements": {
     "P1": {
       "readers": "closed-loop, zero think time, each reader a distinct client id",
