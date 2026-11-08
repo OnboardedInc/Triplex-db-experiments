@@ -1,0 +1,41 @@
+{
+ "commit": "3c52a1d",
+ "oracleVersion": "0.4.8",
+ "count": 29,
+ "onlyInWorkingTree": [],
+ "onlyAtCommit": [],
+ "authorPathsMissingHere": [],
+ "allSameOnVerifyO02": false,
+ "selfReportedAllMatch": true,
+ "selfReported": 13,
+ "authorAllMatch": true
+}
+73cb5abda7dcded4c6d36d6e98ea855f79fd525ea5a0163fe7c4878ecde45b8e lab/oracles/replay/RULES.md MISMATCH sameOnVerifyO02
+b947fb34847d50fffa962839c8af2d81305e56bf9708f2a42a185b98d7b1d09d lab/oracles/replay/SCHEMA.md MISMATCH sameOnVerifyO02
+1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0 lab/oracles/replay/__init__.py 
+486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d lab/oracles/replay/__main__.py 
+1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5 lab/oracles/replay/cli.py 
+9e1e9d7b1ca8046ca67520bbc4905b03ad3bd663c260a4ed0d2b6ca024a91a1d lab/oracles/replay/constraints.py MISMATCH sameOnVerifyO02
+e92308b6df7a0996a26fe129b9df07e058d8b0c84cff54f2690cd7c76fc871b3 lab/oracles/replay/entities.py MISMATCH sameOnVerifyO02
+c2260e1e06af38b2ce97246d5f9ff5626484dd0dfaf4afe409ddfcd6eee634df lab/oracles/replay/errors.py MISMATCH sameOnVerifyO02
+4cfcf2c9af4b4ddf36f2218308685aff99d91416ac7f0d1dec053fb7a6e74d2a lab/oracles/replay/exact.py MISMATCH sameOnVerifyO02
+7549f07299668500a311e9a5fc3eb80904731d0b5a7d626090a7657f53a8d667 lab/oracles/replay/examples/entity-mini.case.json 
+d4e7aff8188ffaa902f1014d9527e63c92d6e0dd6925fef446cceb820c6d8b0f lab/oracles/replay/examples/entity-mini.expected.json MISMATCH sameOnVerifyO02
+3dd06dd0c30930e00ce1665ae7e9f40afcf7e06fa8a37759a8c5e65345fe9016 lab/oracles/replay/replay.py MISMATCH sameOnVerifyO02
+0dcd3f27acd7cc71611439d811dd60aa6f3a792c36335d22f089c6b74882133d lab/oracles/replay/run.py MISMATCH sameOnVerifyO02
+5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe lab/oracles/replay/scale.py 
+898f27a6a04292b0f650a862d746126573ebc0d14e37ca1a5f7689b53c844c91 lab/oracles/replay/selfcheck.py MISMATCH sameOnVerifyO02
+c533122597c940d69c8a101a1a175ba5e9d6ab62f1efdb2d5526c9f65a86a206 lab/oracles/replay/selfcheck_fixtures/freeze-ham-reference.mjs 
+d69c14f1abb236c3e1532ff95f1aba81b088fc5937ba82f9647e2e6a4e0407f2 lab/oracles/replay/selfcheck_fixtures/ham-v2-reference.json 
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 lab/oracles/replay/tests/__init__.py 
+c9189d8518aec45d42b4be09d0f5bbce538000a8c66870e051d330bb54ec8524 lab/oracles/replay/tests/helpers.py MISMATCH sameOnVerifyO02
+99273adb536a3835b62f49c7be7fddf690e871e5f7dccce5b73d9e1f3a44982e lab/oracles/replay/tests/test_contract_section4.py MISMATCH sameOnVerifyO02
+562feac4b58c11e8fabb8e30fff85c41cd9562cbd05a94df3d8c3d8f19caffe6 lab/oracles/replay/tests/test_entities.py 
+35aaf8384af0178e1fc929b94fe0e11a43aa64dbbe567bf50067658821b619b1 lab/oracles/replay/tests/test_exact.py 
+6900d4fc9710e3248c476c036aba84565c53b4265b231867778d776668feb7b9 lab/oracles/replay/tests/test_replay.py 
+3997f66b01be8f697977911ec1fdf5209223d5310206657f7ed65c7ea106aea4 lab/oracles/replay/tests/test_rulings.py 
+284f5b5f29b5a7b8053d01c1bd327f199b83b97f01fd315f1006ba4604a9293b lab/oracles/replay/tests/test_scale_and_selfcheck.py MISMATCH sameOnVerifyO02
+1070395875907bca8a46ab9b88fee0758a1b73aafe94b5b610b2117e2740d375 lab/oracles/replay/tests/test_values.py 
+614658e9e679391ba901d20a6ba84f5609d1fd0d4d3c81a6cf30efbb3ee81d7e lab/oracles/replay/tests/test_views.py 
+67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982 lab/oracles/replay/values.py 
+a79608e0b057543d2771a408bb22ca00a43987bcae6191121ce35885bafb70c5 lab/oracles/replay/views.py MISMATCH sameOnVerifyO02

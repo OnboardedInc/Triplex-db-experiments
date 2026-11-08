@@ -1,0 +1,404 @@
+{
+  "root": "/private/tmp/CX-VO04H-2xsggws9/at3c52a1d",
+  "rows": [
+    {
+      "label": "integer-zero",
+      "page": 0,
+      "ruling": "Q70m any other integer continuation parameter",
+      "expected": "answer",
+      "exit": 0,
+      "outputWritten": true,
+      "match": true,
+      "continuation": {
+        "id": "b",
+        "kind": "entityPage",
+        "result": {
+          "cut": {
+            "scope": "default",
+            "position": 1,
+            "recordedAt": null,
+            "validAt": 1
+          },
+          "pageSize": 1,
+          "pages": [
+            {
+              "entities": [
+                {
+                  "entityId": "e1",
+                  "bodyOrder": "set (sorted by id here)",
+                  "triples": [
+                    {
+                      "id": "a1",
+                      "entityId": "e1",
+                      "attribute": ":t/v",
+                      "value": {
+                        "type": "integer",
+                        "value": "1"
+                      },
+                      "validFrom": 0,
+                      "validTo": null,
+                      "recordedAt": 100,
+                      "recordedPosition": 1,
+                      "createdBy": null,
+                      "entityType": "T",
+                      "schemaVersion": null,
+                      "txId": "tx:0",
+                      "retractedAt": null,
+                      "retractedPosition": null,
+                      "retractTxId": null
+                    }
+                  ]
+                }
+              ],
+              "hasMore": true,
+              "nextCursor": "o-replay-cursor/1:eyJQIjoxLCJSIjpudWxsLCJWIjoiMSIsImFmdGVyIjoiZTEiLCJlbnRpdHlUeXBlIjoiVCIsInNjb3BlIjoiZGVmYXVsdCJ9.c953a74314a12311"
+            },
+            {
+              "entities": [
+                {
+                  "entityId": "e2",
+                  "bodyOrder": "set (sorted by id here)",
+                  "triples": [
+                    {
+                      "id": "a2",
+                      "entityId": "e2",
+                      "attribute": ":t/v",
+                      "value": {
+                        "type": "integer",
+                        "value": "2"
+                      },
+                      "validFrom": 0,
+                      "validTo": null,
+                      "recordedAt": 100,
+                      "recordedPosition": 1,
+                      "createdBy": null,
+                      "entityType": "T",
+                      "schemaVersion": null,
+                      "txId": "tx:0",
+                      "retractedAt": null,
+                      "retractedPosition": null,
+                      "retractTxId": null
+                    }
+                  ]
+                }
+              ],
+              "hasMore": true,
+              "nextCursor": "o-replay-cursor/1:eyJQIjoxLCJSIjpudWxsLCJWIjoiMSIsImFmdGVyIjoiZTIiLCJlbnRpdHlUeXBlIjoiVCIsInNjb3BlIjoiZGVmYXVsdCJ9.6660295bb8dc718d"
+            },
+            {
+              "entities": [
+                {
+                  "entityId": "e3",
+                  "bodyOrder": "set (sorted by id here)",
+                  "triples": [
+                    {
+                      "id": "a3",
+                      "entityId": "e3",
+                      "attribute": ":t/v",
+                      "value": {
+                        "type": "integer",
+                        "value": "3"
+                      },
+                      "validFrom": 0,
+                      "validTo": null,
+                      "recordedAt": 100,
+                      "recordedPosition": 1,
+                      "createdBy": null,
+                      "entityType": "T",
+                      "schemaVersion": null,
+                      "txId": "tx:0",
+                      "retractedAt": null,
+                      "retractedPosition": null,
+                      "retractTxId": null
+                    }
+                  ]
+                }
+              ],
+              "hasMore": false,
+              "nextCursor": null
+            }
+          ]
+        }
+      },
+      "stderr": ""
+    },
+    {
+      "label": "string-zero",
+      "page": "0",
+      "ruling": "Q70m any other integer continuation parameter",
+      "expected": "malformed",
+      "exit": 0,
+      "outputWritten": true,
+      "match": false,
+      "continuation": {
+        "id": "b",
+        "kind": "entityPage",
+        "result": {
+          "cut": {
+            "scope": "default",
+            "position": 1,
+            "recordedAt": null,
+            "validAt": 1
+          },
+          "pageSize": 1,
+          "pages": [
+            {
+              "entities": [
+                {
+                  "entityId": "e1",
+                  "bodyOrder": "set (sorted by id here)",
+                  "triples": [
+                    {
+                      "id": "a1",
+                      "entityId": "e1",
+                      "attribute": ":t/v",
+                      "value": {
+                        "type": "integer",
+                        "value": "1"
+                      },
+                      "validFrom": 0,
+                      "validTo": null,
+                      "recordedAt": 100,
+                      "recordedPosition": 1,
+                      "createdBy": null,
+                      "entityType": "T",
+                      "schemaVersion": null,
+                      "txId": "tx:0",
+                      "retractedAt": null,
+                      "retractedPosition": null,
+                      "retractTxId": null
+                    }
+                  ]
+                }
+              ],
+              "hasMore": true,
+              "nextCursor": "o-replay-cursor/1:eyJQIjoxLCJSIjpudWxsLCJWIjoiMSIsImFmdGVyIjoiZTEiLCJlbnRpdHlUeXBlIjoiVCIsInNjb3BlIjoiZGVmYXVsdCJ9.c953a74314a12311"
+            },
+            {
+              "entities": [
+                {
+                  "entityId": "e2",
+                  "bodyOrder": "set (sorted by id here)",
+                  "triples": [
+                    {
+                      "id": "a2",
+                      "entityId": "e2",
+                      "attribute": ":t/v",
+                      "value": {
+                        "type": "integer",
+                        "value": "2"
+                      },
+                      "validFrom": 0,
+                      "validTo": null,
+                      "recordedAt": 100,
+                      "recordedPosition": 1,
+                      "createdBy": null,
+                      "entityType": "T",
+                      "schemaVersion": null,
+                      "txId": "tx:0",
+                      "retractedAt": null,
+                      "retractedPosition": null,
+                      "retractTxId": null
+                    }
+                  ]
+                }
+              ],
+              "hasMore": true,
+              "nextCursor": "o-replay-cursor/1:eyJQIjoxLCJSIjpudWxsLCJWIjoiMSIsImFmdGVyIjoiZTIiLCJlbnRpdHlUeXBlIjoiVCIsInNjb3BlIjoiZGVmYXVsdCJ9.6660295bb8dc718d"
+            },
+            {
+              "entities": [
+                {
+                  "entityId": "e3",
+                  "bodyOrder": "set (sorted by id here)",
+                  "triples": [
+                    {
+                      "id": "a3",
+                      "entityId": "e3",
+                      "attribute": ":t/v",
+                      "value": {
+                        "type": "integer",
+                        "value": "3"
+                      },
+                      "validFrom": 0,
+                      "validTo": null,
+                      "recordedAt": 100,
+                      "recordedPosition": 1,
+                      "createdBy": null,
+                      "entityType": "T",
+                      "schemaVersion": null,
+                      "txId": "tx:0",
+                      "retractedAt": null,
+                      "retractedPosition": null,
+                      "retractTxId": null
+                    }
+                  ]
+                }
+              ],
+              "hasMore": false,
+              "nextCursor": null
+            }
+          ]
+        }
+      },
+      "stderr": ""
+    },
+    {
+      "label": "float-zero",
+      "page": 0.0,
+      "ruling": "Q70m any other integer continuation parameter",
+      "expected": "malformed",
+      "exit": 1,
+      "outputWritten": false,
+      "match": false,
+      "continuation": null,
+      "stderr": "Traceback (most recent call last):\n  File \"/private/tmp/CX-VO04H-2xsggws9/at3c52a1d/lab/oracles/replay/cli.py\", line 60, in <module>\n    raise SystemExit(main())\n                     ~~~~^^\n  File \"/private/tmp/CX-VO04H-2xsggws9/at3c52a1d/lab/oracles/replay/cli.py\", line 46, in main\n    report = RUN.evaluate_text(Path(args.case).read_bytes(), args.lane)\n  File \"/private/tmp/CX-VO04H-2xsggws9/at3c52a1d/lab/oracles/replay/run.py\", line 788, in evaluate_text\n    return evaluate_case(case, digest, lane)\n  File \"/private/tmp/CX-VO04H-2xsggws9/at3c52a1d/lab/oracles/replay/run.py\", line 752, in evaluate_case\n    queries = run.run_queries()\n  File \"/private/tmp/CX-VO04H-2xsggws9/at3c52a1d/lab/oracles/replay/run.py\", line 597, in run_queries\n    answers.append((seen, self.answer_under(kind, query, start, scope, seen)))\n                          ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/private/tmp/CX-VO04H-2xsggws9/at3c52a1d/lab/oracles/replay/run.py\", line 691, in answer_under\n    return self.answer(kind, query)\n           ~~~~~~~~~~~^^^^^^^^^^^^^\n  File \"/private/tmp/CX-VO04H-2xsggws9/at3c52a1d/lab/oracles/replay/run.py\", line 699, in answer\n    return (\"result\", QUERIES[kind](self, query))\n                      ~~~~~~~~~~~~~^^^^^^^^^^^^^\n  File \"/private/tmp/CX-VO04H-2xsggws9/at3c52a1d/lab/oracles/replay/views.py\", line 429, in q_entity_page\n    token = prior.get(\"pages\")[int(ref.get(\"page\", 0))].get(\"nextCursor\")\n                               ~~~^^^^^^^^^^^^^^^^^^^^\nValueError: invalid literal for int() with base 10: '0.0'\n"
+    },
+    {
+      "label": "negative-two",
+      "page": -2,
+      "ruling": "Q70m any other integer continuation parameter",
+      "expected": "malformed",
+      "exit": 0,
+      "outputWritten": true,
+      "match": false,
+      "continuation": {
+        "id": "b",
+        "kind": "entityPage",
+        "result": {
+          "cut": {
+            "scope": "default",
+            "position": 1,
+            "recordedAt": null,
+            "validAt": 1
+          },
+          "pageSize": 1,
+          "pages": [
+            {
+              "entities": [
+                {
+                  "entityId": "e3",
+                  "bodyOrder": "set (sorted by id here)",
+                  "triples": [
+                    {
+                      "id": "a3",
+                      "entityId": "e3",
+                      "attribute": ":t/v",
+                      "value": {
+                        "type": "integer",
+                        "value": "3"
+                      },
+                      "validFrom": 0,
+                      "validTo": null,
+                      "recordedAt": 100,
+                      "recordedPosition": 1,
+                      "createdBy": null,
+                      "entityType": "T",
+                      "schemaVersion": null,
+                      "txId": "tx:0",
+                      "retractedAt": null,
+                      "retractedPosition": null,
+                      "retractTxId": null
+                    }
+                  ]
+                }
+              ],
+              "hasMore": false,
+              "nextCursor": null
+            }
+          ]
+        }
+      },
+      "stderr": ""
+    },
+    {
+      "label": "boolean-true",
+      "page": true,
+      "ruling": "Q70m any other integer continuation parameter",
+      "expected": "malformed",
+      "exit": 0,
+      "outputWritten": true,
+      "match": false,
+      "continuation": {
+        "id": "b",
+        "kind": "entityPage",
+        "result": {
+          "cut": {
+            "scope": "default",
+            "position": 1,
+            "recordedAt": null,
+            "validAt": 1
+          },
+          "pageSize": 1,
+          "pages": [
+            {
+              "entities": [
+                {
+                  "entityId": "e2",
+                  "bodyOrder": "set (sorted by id here)",
+                  "triples": [
+                    {
+                      "id": "a2",
+                      "entityId": "e2",
+                      "attribute": ":t/v",
+                      "value": {
+                        "type": "integer",
+                        "value": "2"
+                      },
+                      "validFrom": 0,
+                      "validTo": null,
+                      "recordedAt": 100,
+                      "recordedPosition": 1,
+                      "createdBy": null,
+                      "entityType": "T",
+                      "schemaVersion": null,
+                      "txId": "tx:0",
+                      "retractedAt": null,
+                      "retractedPosition": null,
+                      "retractTxId": null
+                    }
+                  ]
+                }
+              ],
+              "hasMore": true,
+              "nextCursor": "o-replay-cursor/1:eyJQIjoxLCJSIjpudWxsLCJWIjoiMSIsImFmdGVyIjoiZTIiLCJlbnRpdHlUeXBlIjoiVCIsInNjb3BlIjoiZGVmYXVsdCJ9.6660295bb8dc718d"
+            },
+            {
+              "entities": [
+                {
+                  "entityId": "e3",
+                  "bodyOrder": "set (sorted by id here)",
+                  "triples": [
+                    {
+                      "id": "a3",
+                      "entityId": "e3",
+                      "attribute": ":t/v",
+                      "value": {
+                        "type": "integer",
+                        "value": "3"
+                      },
+                      "validFrom": 0,
+                      "validTo": null,
+                      "recordedAt": 100,
+                      "recordedPosition": 1,
+                      "createdBy": null,
+                      "entityType": "T",
+                      "schemaVersion": null,
+                      "txId": "tx:0",
+                      "retractedAt": null,
+                      "retractedPosition": null,
+                      "retractTxId": null
+                    }
+                  ]
+                }
+              ],
+              "hasMore": false,
+              "nextCursor": null
+            }
+          ]
+        }
+      },
+      "stderr": ""
+    }
+  ]
+}

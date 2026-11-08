@@ -1,0 +1,16 @@
+{"old": "/private/tmp/CX-VO04H-2xsggws9/at91ba352", "new": "/private/tmp/CX-VO04H-2xsggws9/at3c52a1d", "cases": 993, "random": 500, "seed": 49, "identical": 973, "bothRefused": 5, "different": 15, "differentByFeature": {"Q52e in flight": 12, "Q52e in flight + Q66b cursor": 2, "erase (Q49-Q52 erasure)": 1}}
+025_ST_Q70l_entity_page_2_own_view.case.json ['Q52e in flight', 'erase'] $.queries[1].inFlight "<absent>" -> {"rule": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, a
+026_ST_Q70l_disagreeing_issuers_continue_e1.case.json ['Q52e in flight', 'erase'] $.queries[2].error "<absent>" -> {"error": "X-NOT-MODELED", "_tag": null, "reason": null, "phase": null, "ruling": "Q70f: a continuation issued by reads 
+029_ST_Q70m_string_after_answered.case.json ['Q52e in flight', 'erase'] $.caseId "v-o04d/q52" -> "<absent>"
+030_ST_Q70l_non_paged_kind_continues_A.case.json ['Q52e in flight', 'Q66b cursor', 'erase'] $.queries[1].inFlight {"rule": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, a -> "<absent>"
+048_transactionsForEntity_page_2_by_beforePosition_page_1_s_nextBeforePosition_V_O04g_F11_.case.json ['Q52e in flight', 'erase'] $.queries[1].inFlight "<absent>" -> {"rule": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, a
+049_transactionsForEntity_beforePosition_issued_by_disagreeing_pages.case.json ['Q52e in flight', 'erase'] $.queries[2].error "<absent>" -> {"error": "X-NOT-MODELED", "_tag": null, "reason": null, "phase": null, "ruling": "Q70f: a continuation issued by reads 
+052_transactions_after_1_.case.json ['Q52e in flight', 'erase'] $.caseId "v-o04d/q52" -> "<absent>"
+053_transactions_after_1_0.case.json ['Q52e in flight', 'erase'] $.crashed 1 -> "<absent>"
+054_transactions_after_1.case.json ['Q52e in flight', 'erase'] $.caseId "v-o04d/q52" -> "<absent>"
+055_transactions_after_true.case.json ['Q52e in flight', 'erase'] $.caseId "v-o04d/q52" -> "<absent>"
+056_transactionsForEntity_beforePosition_2_.case.json ['Q52e in flight', 'erase'] $.caseId "v-o04d/q52" -> "<absent>"
+057_transactionsForEntity_beforePosition_2_0.case.json ['Q52e in flight', 'erase'] $.crashed 1 -> "<absent>"
+058_transactionsForEntity_beforePosition_2.case.json ['Q52e in flight', 'erase'] $.caseId "v-o04d/q52" -> "<absent>"
+059_transactionsForEntity_snapshotPosition_2_.case.json ['erase'] $.caseId "v-o04d/q52" -> "<absent>"
+060_cursorFrom_on_a_non_paged_kind_match_naming_an_in_flight_read.case.json ['Q52e in flight', 'Q66b cursor', 'erase'] $.queries[1].inFlight {"rule": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, a -> "<absent>"

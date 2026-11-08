@@ -1,0 +1,4218 @@
+{
+ "counts": {
+  "MATCH": 63,
+  "OBSERVED": 2,
+  "WRONG-ANSWER": 11
+ },
+ "probes": 76,
+ "rows": [
+  {
+   "ruling": "Q52a",
+   "probe": "COUNT of distinct salary values, two erased",
+   "expected": "3 (50, 30 and one marker group)",
+   "verdict": "MATCH",
+   "oracle": [
+    {
+     "x": {
+      "type": "integer",
+      "value": "3"
+     }
+    }
+   ]
+  },
+  {
+   "ruling": "Q52a",
+   "probe": "COUNT of distinct tags of p6, two erased",
+   "expected": "2 (pub and one marker group)",
+   "verdict": "MATCH",
+   "oracle": [
+    {
+     "x": {
+      "type": "integer",
+      "value": "2"
+     }
+    }
+   ]
+  },
+  {
+   "ruling": "Q52a",
+   "probe": "count of assertions: raw match count",
+   "expected": "5 (each erased assertion counts)",
+   "verdict": "MATCH",
+   "oracle": 5
+  },
+  {
+   "ruling": "Q52a",
+   "probe": "count of assertions: valueSupports marker group",
+   "expected": "the marker group of p6 tags has count 2, ids [t1, t2]",
+   "verdict": "MATCH",
+   "oracle": [
+    {
+     "entityId": "p6",
+     "attribute": ":person/tags",
+     "value": {
+      "type": "string",
+      "value": "pub"
+     },
+     "count": 1,
+     "assertionIds": [
+      "t3"
+     ]
+    },
+    {
+     "entityId": "p6",
+     "attribute": ":person/tags",
+     "value": {
+      "_tag": "ErasedValue",
+      "erasedAt": 200
+     },
+     "count": 2,
+     "assertionIds": [
+      "t1",
+      "t2"
+     ]
+    }
+   ]
+  },
+  {
+   "ruling": "Q52b",
+   "probe": "ORDER BY salary asc over readable, erased and missing",
+   "expected": "[p3, p2, p6, p1, p4, p5, p7]",
+   "verdict": "MATCH",
+   "oracle": [
+    "p3",
+    "p2",
+    "p6",
+    "p1",
+    "p4",
+    "p5",
+    "p7"
+   ]
+  },
+  {
+   "ruling": "Q52b",
+   "probe": "ORDER BY salary desc over readable, erased and missing",
+   "expected": "[p2, p3, p6, p1, p4, p5, p7]",
+   "verdict": "MATCH",
+   "oracle": [
+    "p2",
+    "p3",
+    "p6",
+    "p1",
+    "p4",
+    "p5",
+    "p7"
+   ]
+  },
+  {
+   "ruling": "Q52c",
+   "probe": "GROUP BY ssn over markers erased at 200 and 300",
+   "expected": "one row: s = marker(200), c = 2",
+   "verdict": "MATCH",
+   "oracle": [
+    {
+     "s": {
+      "_tag": "ErasedValue",
+      "erasedAt": 200
+     },
+     "c": {
+      "type": "integer",
+      "value": "2"
+     }
+    }
+   ]
+  },
+  {
+   "ruling": "Q52c",
+   "probe": "card-many marker group erased at 500 and 600",
+   "expected": "[pub, marker(500)], the marker's supports {k1, k2}",
+   "verdict": "MATCH",
+   "oracle": [
+    {
+     "value": {
+      "type": "string",
+      "value": "pub"
+     },
+     "supports": [
+      "k3"
+     ]
+    },
+    {
+     "value": {
+      "_tag": "ErasedValue",
+      "erasedAt": 500
+     },
+     "supports": [
+      "k1",
+      "k2"
+     ]
+    }
+   ]
+  },
+  {
+   "ruling": "Q52d",
+   "probe": "ReferenceTarget over an erased dangling reference",
+   "expected": "the enforced command commits (the erased reference is skipped)",
+   "verdict": "MATCH",
+   "oracle": {
+    "outcome": "committed"
+   }
+  },
+  {
+   "ruling": "Q52d",
+   "probe": "control: the same reference readable",
+   "expected": "rejected E-CONSTRAINT (reference-target)",
+   "verdict": "MATCH",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-CONSTRAINT",
+    "errorTag": "ConstraintViolationError",
+    "reason": "reference-target",
+    "phase": "commit",
+    "reasonAlternatives": [
+     "reference-target"
+    ],
+    "message": "new or worsened constraint violation",
+    "codes": [
+     "reference-target"
+    ],
+    "violations": [
+     {
+      "code": "reference-target",
+      "entityType": "Person",
+      "attribute": ":person/org",
+      "validAt": 0,
+      "actual": 0,
+      "subject": "p1",
+      "valueIdentity": "ref:ghost:1"
+     }
+    ]
+   }
+  },
+  {
+   "ruling": "Q52e",
+   "probe": "SUM in flight across one commit erasing two values",
+   "expected": "exactly [([], 7), ([tx:1], 4)]: never 5 or 6",
+   "verdict": "MATCH",
+   "oracle": [
+    [
+     [],
+     "7"
+    ],
+    [
+     [
+      "tx:1"
+     ],
+     "4"
+    ]
+   ]
+  },
+  {
+   "ruling": "Q52e",
+   "probe": "match in flight across that commit",
+   "expected": "two whole answers: all three readable; then p1 and p2 both markers",
+   "verdict": "MATCH",
+   "oracle": [
+    [
+     {
+      "type": "integer",
+      "value": "1"
+     },
+     {
+      "type": "integer",
+      "value": "2"
+     },
+     {
+      "type": "integer",
+      "value": "4"
+     }
+    ],
+    [
+     {
+      "_tag": "ErasedValue",
+      "erasedAt": 200
+     },
+     {
+      "_tag": "ErasedValue",
+      "erasedAt": 200
+     },
+     {
+      "type": "integer",
+      "value": "4"
+     }
+    ]
+   ]
+  },
+  {
+   "ruling": "Q52e",
+   "probe": "a read that does not depend on the in-flight commit",
+   "expected": "plain result (no inFlight): p3 salary 4",
+   "verdict": "MATCH",
+   "oracle": {
+    "id": "g3",
+    "kind": "get",
+    "result": {
+     "entityId": "p3",
+     "entityType": "Person",
+     "properties": {
+      "salary": {
+       "value": {
+        "type": "integer",
+        "value": "4"
+       },
+       "supports": [
+        "e3"
+       ]
+      }
+     },
+     "missingRequired": [],
+     "undeclaredAttributes": []
+    }
+   }
+  },
+  {
+   "ruling": "Q52e",
+   "probe": "1 in-flight erasure commit: acceptable answers",
+   "expected": "exactly the 2 prefixes in position order: [([], '7'), (['tx:1'], '6')]",
+   "verdict": "MATCH",
+   "oracle": [
+    [
+     [],
+     "7"
+    ],
+    [
+     [
+      "tx:1"
+     ],
+     "6"
+    ]
+   ]
+  },
+  {
+   "ruling": "Q66a",
+   "probe": "2 in-flight erasure commits: acceptable answers",
+   "expected": "exactly the 3 prefixes in position order: [([], '7'), (['tx:1'], '6'), (['tx:1', 'tx:2'], '4')]",
+   "verdict": "MATCH",
+   "oracle": [
+    [
+     [],
+     "7"
+    ],
+    [
+     [
+      "tx:1"
+     ],
+     "6"
+    ],
+    [
+     [
+      "tx:1",
+      "tx:2"
+     ],
+     "4"
+    ]
+   ]
+  },
+  {
+   "ruling": "Q66a",
+   "probe": "3 in-flight erasure commits: acceptable answers",
+   "expected": "exactly the 4 prefixes in position order: [([], '7'), (['tx:1'], '6'), (['tx:1', 'tx:2'], '4'), (['tx:1', 'tx:2', 'tx:3'], None)]",
+   "verdict": "MATCH",
+   "oracle": [
+    [
+     [],
+     "7"
+    ],
+    [
+     [
+      "tx:1"
+     ],
+     "6"
+    ],
+    [
+     [
+      "tx:1",
+      "tx:2"
+     ],
+     "4"
+    ],
+    [
+     [
+      "tx:1",
+      "tx:2",
+      "tx:3"
+     ],
+     null
+    ]
+   ]
+  },
+  {
+   "ruling": "Q66a",
+   "probe": "3 commits, read started after the first",
+   "expected": "prefixes of [tx:2, tx:3]: [([], 6), ([tx:2], 4), ([tx:2, tx:3], None)]",
+   "verdict": "MATCH",
+   "oracle": [
+    [
+     [],
+     "6"
+    ],
+    [
+     [
+      "tx:2"
+     ],
+     "4"
+    ],
+    [
+     [
+      "tx:2",
+      "tx:3"
+     ],
+     null
+    ]
+   ]
+  },
+  {
+   "ruling": "Q66c",
+   "probe": "scope s read: only scope s's erasure is in flight",
+   "expected": "[([], 1), ([tx:3], None)]",
+   "verdict": "MATCH",
+   "oracle": [
+    [
+     [],
+     "1"
+    ],
+    [
+     [
+      "tx:3"
+     ],
+     null
+    ]
+   ]
+  },
+  {
+   "ruling": "Q66c",
+   "probe": "scope t read: only scope t's erasure is in flight",
+   "expected": "[([], 2), ([tx:2], None)]",
+   "verdict": "MATCH",
+   "oracle": [
+    [
+     [],
+     "2"
+    ],
+    [
+     [
+      "tx:2"
+     ],
+     null
+    ]
+   ]
+  },
+  {
+   "ruling": "Q66b",
+   "probe": "continuation of an in-flight read (page 2 not affected)",
+   "expected": "plain: [p2 2, p3 4] (both prefixes agree)",
+   "verdict": "MATCH",
+   "oracle": [
+    [
+     "plain",
+     [
+      [
+       "p2",
+       [
+        "2"
+       ]
+      ],
+      [
+       "p3",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ]
+   ]
+  },
+  {
+   "ruling": "Q66b",
+   "probe": "two-page continuation, one commit erasing p2 and p4",
+   "expected": "[([], p3 3, p4 4), ([tx:1], p3 3, p4 M)]",
+   "verdict": "MATCH",
+   "oracle": [
+    [
+     [],
+     [
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ],
+    [
+     [
+      "tx:1"
+     ],
+     [
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "M"
+       ]
+      ]
+     ]
+    ]
+   ]
+  },
+  {
+   "ruling": "Q66b",
+   "probe": "two-page continuation, tx:1 erases p2 (page 1), tx:2 erases p4 (page 2)",
+   "expected": "page 2 per prefix: [([], p4 4), ([tx:1], p4 4), ([tx:1, tx:2], p4 M)]",
+   "verdict": "MATCH",
+   "oracle": [
+    [
+     [],
+     [
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ],
+    [
+     [
+      "tx:1"
+     ],
+     [
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ],
+    [
+     [
+      "tx:1",
+      "tx:2"
+     ],
+     [
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "M"
+       ]
+      ]
+     ]
+    ]
+   ]
+  },
+  {
+   "ruling": "Q66b",
+   "probe": "chained continuation: page 3 (c continues b continues a)",
+   "expected": "[([], p3 3, p4 4), ([tx:1], p3 3, p4 4), ([tx:1, tx:2], p3 M, p4 4)]",
+   "verdict": "MATCH",
+   "oracle": [
+    [
+     [],
+     [
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ],
+    [
+     [
+      "tx:1"
+     ],
+     [
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ],
+    [
+     [
+      "tx:1",
+      "tx:2"
+     ],
+     [
+      [
+       "p3",
+       [
+        "M"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ]
+   ]
+  },
+  {
+   "ruling": "Q66b",
+   "probe": "chained continuation: page 4 (d continues c), unaffected",
+   "expected": "plain: [p4 4]",
+   "verdict": "MATCH",
+   "oracle": [
+    [
+     "plain",
+     [
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ]
+   ]
+  },
+  {
+   "ruling": "Q66b",
+   "probe": "chained continuation: page 2 (b), every prefix lists p3 as of that prefix",
+   "expected": "[([], p2 2, p3 3, p4 4), ([tx:1], same), ([tx:1, tx:2], p3 M)]",
+   "verdict": "MATCH",
+   "oracle": [
+    [
+     [],
+     [
+      [
+       "p2",
+       [
+        "2"
+       ]
+      ],
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ],
+    [
+     [
+      "tx:1"
+     ],
+     [
+      [
+       "p2",
+       [
+        "2"
+       ]
+      ],
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ],
+    [
+     [
+      "tx:1",
+      "tx:2"
+     ],
+     [
+      [
+       "p2",
+       [
+        "2"
+       ]
+      ],
+      [
+       "p3",
+       [
+        "M"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ]
+   ]
+  },
+  {
+   "ruling": "Q66b",
+   "probe": "continuation with its own later readStart, source in flight",
+   "expected": "per the source's prefixes: [([], p2 2), ([tx:1], p2 2), ([tx:1, tx:2], p2 M)]",
+   "verdict": "MATCH",
+   "oracle": [
+    [
+     [],
+     [
+      [
+       "p2",
+       [
+        "2"
+       ]
+      ],
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ],
+    [
+     [
+      "tx:1"
+     ],
+     [
+      [
+       "p2",
+       [
+        "2"
+       ]
+      ],
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ],
+    [
+     [
+      "tx:1",
+      "tx:2"
+     ],
+     [
+      [
+       "p2",
+       [
+        "M"
+       ]
+      ],
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ]
+   ]
+  },
+  {
+   "ruling": "Q66b",
+   "probe": "continuation of a read with nothing in flight, own readStart before the erasure",
+   "expected": "plain: [p2 M, p3 3, p4 4] (page 1's view)",
+   "verdict": "MATCH",
+   "oracle": [
+    [
+     "plain",
+     [
+      [
+       "p2",
+       [
+        "M"
+       ]
+      ],
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ]
+   ]
+  },
+  {
+   "ruling": "Q66b",
+   "probe": "literal token: page a's nextCursor is the same in every alternative",
+   "expected": "recorded (a token cannot tell the prefixes apart)",
+   "verdict": "OBSERVED",
+   "oracle": {
+    "distinctTokens": 1
+   }
+  },
+  {
+   "ruling": "Q66b",
+   "probe": "literal token from an in-flight page, no readStart",
+   "expected": "per page a's prefixes: [([], p2 2, ...), ([tx:1], p2 M, ...)]",
+   "verdict": "MATCH",
+   "oracle": [
+    [
+     [],
+     [
+      [
+       "p2",
+       [
+        "2"
+       ]
+      ],
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ],
+    [
+     [
+      "tx:1"
+     ],
+     [
+      [
+       "p2",
+       [
+        "M"
+       ]
+      ],
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ]
+   ]
+  },
+  {
+   "ruling": "Q70b",
+   "probe": "literal token from an in-flight page, own readStart before the erasure",
+   "expected": "per page a's prefixes (own readStart not consulted)",
+   "verdict": "MATCH",
+   "oracle": [
+    [
+     [],
+     [
+      [
+       "p2",
+       [
+        "2"
+       ]
+      ],
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ],
+    [
+     [
+      "tx:1"
+     ],
+     [
+      [
+       "p2",
+       [
+        "M"
+       ]
+      ],
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ]
+   ]
+  },
+  {
+   "ruling": "Q70b",
+   "probe": "literal token from an in-flight page, own readStart after the erasure",
+   "expected": "per page a's prefixes, not plain markers",
+   "verdict": "MATCH",
+   "oracle": [
+    [
+     [],
+     [
+      [
+       "p2",
+       [
+        "2"
+       ]
+      ],
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ],
+    [
+     [
+      "tx:1"
+     ],
+     [
+      [
+       "p2",
+       [
+        "M"
+       ]
+      ],
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ]
+   ]
+  },
+  {
+   "ruling": "Q70c",
+   "probe": "literal token from a plain read, used with an earlier readStart",
+   "expected": "continues B: plain [p2 M, p3 3, p4 4]",
+   "verdict": "MATCH",
+   "oracle": [
+    [
+     "plain",
+     [
+      [
+       "p2",
+       [
+        "M"
+       ]
+      ],
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ]
+   ]
+  },
+  {
+   "ruling": "Q70f",
+   "probe": "equal tokens, plain B then in-flight A (A issued last)",
+   "expected": "typed X-NOT-MODELED 'ambiguous literal token'",
+   "verdict": "MATCH",
+   "oracle": {
+    "id": "x",
+    "kind": "entityPage",
+    "error": {
+     "error": "X-NOT-MODELED",
+     "_tag": null,
+     "reason": null,
+     "phase": null,
+     "ruling": "Q70f: a continuation issued by reads whose start, scope or per-prefix answers disagree fails closed",
+     "message": "ambiguous literal token: 2 earlier reads issued it with different read views"
+    }
+   }
+  },
+  {
+   "ruling": "Q70f",
+   "probe": "equal tokens, in-flight A then plain B (B issued last)",
+   "expected": "typed X-NOT-MODELED 'ambiguous literal token'",
+   "verdict": "MATCH",
+   "oracle": {
+    "id": "x",
+    "kind": "entityPage",
+    "error": {
+     "error": "X-NOT-MODELED",
+     "_tag": null,
+     "reason": null,
+     "phase": null,
+     "ruling": "Q70f: a continuation issued by reads whose start, scope or per-prefix answers disagree fails closed",
+     "message": "ambiguous literal token: 2 earlier reads issued it with different read views"
+    }
+   }
+  },
+  {
+   "ruling": "Q70f",
+   "probe": "page sequence A (all-old prefix) -> literal token also issued later by plain B (V-O04f F9)",
+   "expected": "A[] page 1 is p1 1 and x is refused (no forced mixed answer)",
+   "verdict": "MATCH",
+   "oracle": {
+    "A": [
+     [],
+     [
+      [
+       "p1",
+       [
+        "1"
+       ]
+      ],
+      [
+       "p2",
+       [
+        "2"
+       ]
+      ],
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ],
+    "x": {
+     "id": "x",
+     "kind": "entityPage",
+     "error": {
+      "error": "X-NOT-MODELED",
+      "_tag": null,
+      "reason": null,
+      "phase": null,
+      "ruling": "Q70f: a continuation issued by reads whose start, scope or per-prefix answers disagree fails closed",
+      "message": "ambiguous literal token: 2 earlier reads issued it with different read views"
+     }
+    }
+   }
+  },
+  {
+   "ruling": "Q70h",
+   "probe": "A (limit 1) page 1 and B (limit 2) page 0 issue one token",
+   "expected": "recorded precondition",
+   "verdict": "OBSERVED",
+   "oracle": {
+    "sharedToken": true
+   }
+  },
+  {
+   "ruling": "Q70h",
+   "probe": "identical views, different limits reaching the same token",
+   "expected": "continues: [([], p3 3, p4 4), ([tx:1], p3 M, p4 4)]",
+   "verdict": "MATCH",
+   "oracle": [
+    [
+     [],
+     [
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ],
+    [
+     [
+      "tx:1"
+     ],
+     [
+      [
+       "p3",
+       [
+        "M"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ]
+   ]
+  },
+  {
+   "ruling": "Q70a",
+   "probe": "cursorFrom page 1 of an in-flight read (pages 3-4 unaffected)",
+   "expected": "plain [p3 3, p4 4] (every prefix agrees)",
+   "verdict": "MATCH",
+   "oracle": [
+    [
+     "plain",
+     [
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ]
+   ]
+  },
+  {
+   "ruling": "Q70g",
+   "probe": "transactions page 2 by after = page 1's next, page 1 in flight (V-O04f F10)",
+   "expected": "per page 1's prefixes: [([], tx:1 2), ([tx:2], tx:1 M)], next 2",
+   "verdict": "MATCH",
+   "oracle": [
+    [
+     [],
+     [
+      [
+       "tx:1",
+       [
+        {
+         "type": "integer",
+         "value": "2"
+        }
+       ]
+      ]
+     ],
+     2
+    ],
+    [
+     [
+      "tx:2"
+     ],
+     [
+      [
+       "tx:1",
+       [
+        {
+         "_tag": "ErasedValue",
+         "erasedAt": 200
+        }
+       ]
+      ]
+     ],
+     2
+    ]
+   ]
+  },
+  {
+   "ruling": "Q70g",
+   "probe": "journal continuation of a plain page, own readStart before the erasure",
+   "expected": "continues page 1's view: plain [tx:1 M]",
+   "verdict": "MATCH",
+   "oracle": [
+    [
+     "plain",
+     [
+      [
+       "tx:1",
+       [
+        {
+         "_tag": "ErasedValue",
+         "erasedAt": 200
+        }
+       ]
+      ]
+     ],
+     2
+    ]
+   ]
+  },
+  {
+   "ruling": "Q70i",
+   "probe": "journal after issued by disagreeing pages",
+   "expected": "typed X-NOT-MODELED 'ambiguous journal after'",
+   "verdict": "MATCH",
+   "oracle": {
+    "id": "t2",
+    "kind": "transactions",
+    "error": {
+     "error": "X-NOT-MODELED",
+     "_tag": null,
+     "reason": null,
+     "phase": null,
+     "ruling": "Q70f: a continuation issued by reads whose start, scope or per-prefix answers disagree fails closed",
+     "message": "ambiguous journal after: 2 earlier reads issued it with different read views"
+    }
+   }
+  },
+  {
+   "ruling": "Q70i",
+   "probe": "after equal to another journal scope's next",
+   "expected": "own view of scope s: [([], tx:3 2), ([tx:4], tx:3 M)]",
+   "verdict": "MATCH",
+   "oracle": [
+    [
+     [],
+     [
+      [
+       "tx:3",
+       [
+        {
+         "type": "integer",
+         "value": "2"
+        }
+       ]
+      ]
+     ],
+     2
+    ],
+    [
+     [
+      "tx:4"
+     ],
+     [
+      [
+       "tx:3",
+       [
+        {
+         "_tag": "ErasedValue",
+         "erasedAt": 200
+        }
+       ]
+      ]
+     ],
+     2
+    ]
+   ]
+  },
+  {
+   "ruling": "Q70j",
+   "probe": "transactions on scope t: only t's erasure in flight",
+   "expected": "[([], q1 5), ([tx:3], marker)] for tx:1's change",
+   "verdict": "MATCH",
+   "oracle": [
+    [
+     [],
+     {
+      "transactions": [
+       {
+        "txId": "tx:1",
+        "position": 1,
+        "instant": 110,
+        "commandId": "c110",
+        "changes": [
+         {
+          "op": "assert",
+          "tripleId": "f1",
+          "entityId": "q1",
+          "attribute": ":person/salary",
+          "entityType": "Person",
+          "value": {
+           "type": "integer",
+           "value": "5"
+          },
+          "validFrom": 0,
+          "recordedAt": 110,
+          "assertionTxId": "tx:1"
+         }
+        ],
+        "changedEntities": [
+         "q1"
+        ]
+       },
+       {
+        "txId": "tx:3",
+        "position": 2,
+        "instant": 210,
+        "commandId": "c210",
+        "changes": [
+         {
+          "op": "erase",
+          "entityId": "q1",
+          "attribute": ":person/salary",
+          "assertionIds": [
+           "f1"
+          ]
+         }
+        ],
+        "changedEntities": [
+         "q1"
+        ]
+       }
+      ],
+      "next": 2
+     }
+    ],
+    [
+     [
+      "tx:3"
+     ],
+     {
+      "transactions": [
+       {
+        "txId": "tx:1",
+        "position": 1,
+        "instant": 110,
+        "commandId": "c110",
+        "changes": [
+         {
+          "op": "assert",
+          "tripleId": "f1",
+          "entityId": "q1",
+          "attribute": ":person/salary",
+          "entityType": "Person",
+          "value": {
+           "_tag": "ErasedValue",
+           "erasedAt": 210
+          },
+          "validFrom": 0,
+          "recordedAt": 110,
+          "assertionTxId": "tx:1"
+         }
+        ],
+        "changedEntities": [
+         "q1"
+        ]
+       },
+       {
+        "txId": "tx:3",
+        "position": 2,
+        "instant": 210,
+        "commandId": "c210",
+        "changes": [
+         {
+          "op": "erase",
+          "entityId": "q1",
+          "attribute": ":person/salary",
+          "assertionIds": [
+           "f1"
+          ]
+         }
+        ],
+        "changedEntities": [
+         "q1"
+        ]
+       }
+      ],
+      "next": 2
+     }
+    ]
+   ]
+  },
+  {
+   "ruling": "Q70k",
+   "probe": "assertions on scope t",
+   "expected": "[([], q1 5), ([tx:3], marker)]",
+   "verdict": "MATCH",
+   "oracle": [
+    [
+     [],
+     {
+      "scope": "t",
+      "assertions": [
+       {
+        "id": "f1",
+        "entityId": "q1",
+        "attribute": ":person/salary",
+        "value": {
+         "type": "integer",
+         "value": "5"
+        },
+        "validFrom": 0,
+        "validTo": null,
+        "recordedAt": 110,
+        "recordedPosition": 1,
+        "createdBy": null,
+        "entityType": "Person",
+        "schemaVersion": null,
+        "txId": "tx:1",
+        "retractedAt": null,
+        "retractedPosition": null,
+        "retractTxId": null
+       }
+      ]
+     }
+    ],
+    [
+     [
+      "tx:3"
+     ],
+     {
+      "scope": "t",
+      "assertions": [
+       {
+        "id": "f1",
+        "entityId": "q1",
+        "attribute": ":person/salary",
+        "value": {
+         "_tag": "ErasedValue",
+         "erasedAt": 210
+        },
+        "validFrom": 0,
+        "validTo": null,
+        "recordedAt": 110,
+        "recordedPosition": 1,
+        "createdBy": null,
+        "entityType": "Person",
+        "schemaVersion": null,
+        "txId": "tx:1",
+        "retractedAt": null,
+        "retractedPosition": null,
+        "retractTxId": null
+       }
+      ]
+     }
+    ]
+   ]
+  },
+  {
+   "ruling": "Q70k",
+   "probe": "history (no cut) on scope t",
+   "expected": "[([], q1 5), ([tx:3], marker)]",
+   "verdict": "MATCH",
+   "oracle": [
+    [
+     [],
+     {
+      "cut": {
+       "scope": "t",
+       "position": 2,
+       "recordedAt": null,
+       "validAt": null
+      },
+      "entityId": "q1",
+      "rawLifetime": [
+       {
+        "id": "f1",
+        "entityId": "q1",
+        "attribute": ":person/salary",
+        "value": {
+         "type": "integer",
+         "value": "5"
+        },
+        "validFrom": 0,
+        "validTo": null,
+        "recordedAt": 110,
+        "recordedPosition": 1,
+        "createdBy": null,
+        "entityType": "Person",
+        "schemaVersion": null,
+        "txId": "tx:1",
+        "retractedAt": null,
+        "retractedPosition": null,
+        "retractTxId": null
+       }
+      ],
+      "asOfSnapshot": [
+       {
+        "id": "f1",
+        "entityId": "q1",
+        "attribute": ":person/salary",
+        "value": {
+         "type": "integer",
+         "value": "5"
+        },
+        "validFrom": 0,
+        "validTo": null,
+        "recordedAt": 110,
+        "recordedPosition": 1,
+        "createdBy": null,
+        "entityType": "Person",
+        "schemaVersion": null,
+        "txId": "tx:1",
+        "retractedAt": null,
+        "retractedPosition": null,
+        "retractTxId": null
+       }
+      ]
+     }
+    ],
+    [
+     [
+      "tx:3"
+     ],
+     {
+      "cut": {
+       "scope": "t",
+       "position": 2,
+       "recordedAt": null,
+       "validAt": null
+      },
+      "entityId": "q1",
+      "rawLifetime": [
+       {
+        "id": "f1",
+        "entityId": "q1",
+        "attribute": ":person/salary",
+        "value": {
+         "_tag": "ErasedValue",
+         "erasedAt": 210
+        },
+        "validFrom": 0,
+        "validTo": null,
+        "recordedAt": 110,
+        "recordedPosition": 1,
+        "createdBy": null,
+        "entityType": "Person",
+        "schemaVersion": null,
+        "txId": "tx:1",
+        "retractedAt": null,
+        "retractedPosition": null,
+        "retractTxId": null
+       }
+      ],
+      "asOfSnapshot": [
+       {
+        "id": "f1",
+        "entityId": "q1",
+        "attribute": ":person/salary",
+        "value": {
+         "_tag": "ErasedValue",
+         "erasedAt": 210
+        },
+        "validFrom": 0,
+        "validTo": null,
+        "recordedAt": 110,
+        "recordedPosition": 1,
+        "createdBy": null,
+        "entityType": "Person",
+        "schemaVersion": null,
+        "txId": "tx:1",
+        "retractedAt": null,
+        "retractedPosition": null,
+        "retractTxId": null
+       }
+      ]
+     }
+    ]
+   ]
+  },
+  {
+   "ruling": "Q70k",
+   "probe": "transactionsForEntity on scope t",
+   "expected": "[([], q1 5), ([tx:3], marker)] for tx:1's change",
+   "verdict": "MATCH",
+   "oracle": [
+    [
+     [],
+     {
+      "transactions": [
+       {
+        "txId": "tx:3",
+        "position": 2,
+        "instant": 210,
+        "commandId": "c210",
+        "changes": [
+         {
+          "op": "erase",
+          "entityId": "q1",
+          "attribute": ":person/salary",
+          "assertionIds": [
+           "f1"
+          ]
+         }
+        ],
+        "changedEntities": [
+         "q1"
+        ]
+       },
+       {
+        "txId": "tx:1",
+        "position": 1,
+        "instant": 110,
+        "commandId": "c110",
+        "changes": [
+         {
+          "op": "assert",
+          "tripleId": "f1",
+          "entityId": "q1",
+          "attribute": ":person/salary",
+          "entityType": "Person",
+          "value": {
+           "type": "integer",
+           "value": "5"
+          },
+          "validFrom": 0,
+          "recordedAt": 110,
+          "assertionTxId": "tx:1"
+         }
+        ],
+        "changedEntities": [
+         "q1"
+        ]
+       }
+      ],
+      "snapshotPosition": 2
+     }
+    ],
+    [
+     [
+      "tx:3"
+     ],
+     {
+      "transactions": [
+       {
+        "txId": "tx:3",
+        "position": 2,
+        "instant": 210,
+        "commandId": "c210",
+        "changes": [
+         {
+          "op": "erase",
+          "entityId": "q1",
+          "attribute": ":person/salary",
+          "assertionIds": [
+           "f1"
+          ]
+         }
+        ],
+        "changedEntities": [
+         "q1"
+        ]
+       },
+       {
+        "txId": "tx:1",
+        "position": 1,
+        "instant": 110,
+        "commandId": "c110",
+        "changes": [
+         {
+          "op": "assert",
+          "tripleId": "f1",
+          "entityId": "q1",
+          "attribute": ":person/salary",
+          "entityType": "Person",
+          "value": {
+           "_tag": "ErasedValue",
+           "erasedAt": 210
+          },
+          "validFrom": 0,
+          "recordedAt": 110,
+          "assertionTxId": "tx:1"
+         }
+        ],
+        "changedEntities": [
+         "q1"
+        ]
+       }
+      ],
+      "snapshotPosition": 2
+     }
+    ]
+   ]
+  },
+  {
+   "ruling": "Q70k",
+   "probe": "transaction tx:1 on scope t",
+   "expected": "[([], q1 5), ([tx:3], marker)]",
+   "verdict": "MATCH",
+   "oracle": [
+    [
+     [],
+     {
+      "txId": "tx:1",
+      "position": 1,
+      "instant": 110,
+      "commandId": "c110",
+      "changes": [
+       {
+        "op": "assert",
+        "tripleId": "f1",
+        "entityId": "q1",
+        "attribute": ":person/salary",
+        "entityType": "Person",
+        "value": {
+         "type": "integer",
+         "value": "5"
+        },
+        "validFrom": 0,
+        "recordedAt": 110,
+        "assertionTxId": "tx:1"
+       }
+      ],
+      "changedEntities": [
+       "q1"
+      ]
+     }
+    ],
+    [
+     [
+      "tx:3"
+     ],
+     {
+      "txId": "tx:1",
+      "position": 1,
+      "instant": 110,
+      "commandId": "c110",
+      "changes": [
+       {
+        "op": "assert",
+        "tripleId": "f1",
+        "entityId": "q1",
+        "attribute": ":person/salary",
+        "entityType": "Person",
+        "value": {
+         "_tag": "ErasedValue",
+         "erasedAt": 210
+        },
+        "validFrom": 0,
+        "recordedAt": 110,
+        "assertionTxId": "tx:1"
+       }
+      ],
+      "changedEntities": [
+       "q1"
+      ]
+     }
+    ]
+   ]
+  },
+  {
+   "ruling": "Q70k",
+   "probe": "control: match with cut scope t (a cut-scoped kind)",
+   "expected": "[([], q1 5), ([tx:3], marker)]",
+   "verdict": "MATCH",
+   "oracle": [
+    [
+     [],
+     {
+      "cut": {
+       "scope": "t",
+       "position": 2,
+       "recordedAt": null,
+       "validAt": 1
+      },
+      "count": 1,
+      "contract": "raw-lifetime (AMB-01 A)",
+      "raw": [
+       {
+        "id": "f1",
+        "entityId": "q1",
+        "attribute": ":person/salary",
+        "value": {
+         "type": "integer",
+         "value": "5"
+        },
+        "validFrom": 0,
+        "validTo": null,
+        "recordedAt": 110,
+        "recordedPosition": 1,
+        "createdBy": null,
+        "entityType": "Person",
+        "schemaVersion": null,
+        "txId": "tx:1",
+        "retractedAt": null,
+        "retractedPosition": null,
+        "retractTxId": null
+       }
+      ],
+      "snapshot": [
+       {
+        "id": "f1",
+        "entityId": "q1",
+        "attribute": ":person/salary",
+        "value": {
+         "type": "integer",
+         "value": "5"
+        },
+        "validFrom": 0,
+        "validTo": null,
+        "recordedAt": 110,
+        "recordedPosition": 1,
+        "createdBy": null,
+        "entityType": "Person",
+        "schemaVersion": null,
+        "txId": "tx:1",
+        "retractedAt": null,
+        "retractedPosition": null,
+        "retractTxId": null
+       }
+      ]
+     }
+    ],
+    [
+     [
+      "tx:3"
+     ],
+     {
+      "cut": {
+       "scope": "t",
+       "position": 2,
+       "recordedAt": null,
+       "validAt": 1
+      },
+      "count": 1,
+      "contract": "raw-lifetime (AMB-01 A)",
+      "raw": [
+       {
+        "id": "f1",
+        "entityId": "q1",
+        "attribute": ":person/salary",
+        "value": {
+         "_tag": "ErasedValue",
+         "erasedAt": 210
+        },
+        "validFrom": 0,
+        "validTo": null,
+        "recordedAt": 110,
+        "recordedPosition": 1,
+        "createdBy": null,
+        "entityType": "Person",
+        "schemaVersion": null,
+        "txId": "tx:1",
+        "retractedAt": null,
+        "retractedPosition": null,
+        "retractTxId": null
+       }
+      ],
+      "snapshot": [
+       {
+        "id": "f1",
+        "entityId": "q1",
+        "attribute": ":person/salary",
+        "value": {
+         "_tag": "ErasedValue",
+         "erasedAt": 210
+        },
+        "validFrom": 0,
+        "validTo": null,
+        "recordedAt": 110,
+        "recordedPosition": 1,
+        "createdBy": null,
+        "entityType": "Person",
+        "schemaVersion": null,
+        "txId": "tx:1",
+        "retractedAt": null,
+        "retractedPosition": null,
+        "retractTxId": null
+       }
+      ]
+     }
+    ]
+   ]
+  },
+  {
+   "ruling": "Q70l",
+   "probe": "transactionsForEntity page 2 by beforePosition = page 1's nextBeforePosition (V-O04g F11)",
+   "expected": "per page 1's prefixes: [([], tx:0 1), ([tx:2], tx:0 M)]",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    [
+     "plain",
+     [
+      [
+       "tx:0",
+       [
+        {
+         "_tag": "ErasedValue",
+         "erasedAt": 200
+        }
+       ]
+      ]
+     ],
+     null
+    ]
+   ]
+  },
+  {
+   "ruling": "Q70l",
+   "probe": "transactionsForEntity beforePosition issued by disagreeing pages",
+   "expected": "typed X-NOT-MODELED 'ambiguous ...'",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "id": "e2",
+    "kind": "transactionsForEntity",
+    "result": {
+     "transactions": [
+      {
+       "txId": "tx:0",
+       "position": 1,
+       "instant": 100,
+       "commandId": "c100",
+       "changes": [
+        {
+         "op": "assert",
+         "tripleId": "s1",
+         "entityId": "p1",
+         "attribute": ":person/salary",
+         "entityType": "Person",
+         "value": {
+          "_tag": "ErasedValue",
+          "erasedAt": 200
+         },
+         "validFrom": 0,
+         "recordedAt": 100,
+         "assertionTxId": "tx:0"
+        }
+       ],
+       "changedEntities": [
+        "p1"
+       ]
+      }
+     ],
+     "snapshotPosition": 2
+    }
+   }
+  },
+  {
+   "ruling": "Q70l",
+   "probe": "transactionsForEntity with a different snapshotPosition",
+   "expected": "not matched: own view, plain [tx:0 M]",
+   "verdict": "MATCH",
+   "oracle": [
+    [
+     "plain",
+     [
+      [
+       "tx:0",
+       [
+        {
+         "_tag": "ErasedValue",
+         "erasedAt": 200
+        }
+       ]
+      ]
+     ],
+     null
+    ]
+   ]
+  },
+  {
+   "ruling": "Q70l",
+   "probe": "transactionsForEntity on another entity with the same beforePosition",
+   "expected": "not matched: own view, plain [tx:0 M, M]",
+   "verdict": "MATCH",
+   "oracle": [
+    [
+     "plain",
+     [
+      [
+       "tx:0",
+       [
+        {
+         "_tag": "ErasedValue",
+         "erasedAt": 200
+        },
+        {
+         "_tag": "ErasedValue",
+         "erasedAt": 200
+        }
+       ]
+      ]
+     ],
+     null
+    ]
+   ]
+  },
+  {
+   "ruling": "Q70m",
+   "probe": "transactions after \"1\"",
+   "expected": "malformed case (exit 2, no output)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "report": {
+     "format": "triplex-db-2/o-replay-expected/1",
+     "oracle": {
+      "id": "O-REPLAY",
+      "version": "0.4.7",
+      "sourceSha256": {
+       "__init__.py": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
+       "__main__.py": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
+       "cli.py": "1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5",
+       "errors.py": "c2260e1e06af38b2ce97246d5f9ff5626484dd0dfaf4afe409ddfcd6eee634df",
+       "values.py": "67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982",
+       "exact.py": "4cfcf2c9af4b4ddf36f2218308685aff99d91416ac7f0d1dec053fb7a6e74d2a",
+       "replay.py": "3dd06dd0c30930e00ce1665ae7e9f40afcf7e06fa8a37759a8c5e65345fe9016",
+       "constraints.py": "9e1e9d7b1ca8046ca67520bbc4905b03ad3bd663c260a4ed0d2b6ca024a91a1d",
+       "views.py": "3989f7d6e9b3bcac526eb35dd8246c0a27d6ee5cde370ba5900c0285cb4969e4",
+       "entities.py": "e92308b6df7a0996a26fe129b9df07e058d8b0c84cff54f2690cd7c76fc871b3",
+       "scale.py": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
+       "run.py": "c520c6dadca64db87c134ad5813024cb89292d0fd6c652c3bbaba7b242f10a33",
+       "selfcheck.py": "c1e0ae41cfe9bac7f2ed7f249715b5ae71e98f4d66e4ae152938b6d333c9418c"
+      }
+     },
+     "caseId": "v-o04d/q52",
+     "caseSha256": "4430e81e2f9371097a4b619c5f5d809c9729f9542b982c5af400fc48febf691e",
+     "lane": {
+      "name": "core",
+      "integerRange": [
+       "-9223372036854775808",
+       "9223372036854775807"
+      ]
+     },
+     "verdict": "EXPECTED-ONLY",
+     "divergedAtCommand": null,
+     "receiptConsistency": {
+      "status": "NOT-APPLICABLE",
+      "reason": "no receipts supplied"
+     },
+     "commandOutcomes": [
+      {
+       "command": 0,
+       "expected": {
+        "outcome": "committed"
+       },
+       "observed": null,
+       "verdict": "EXPECTED-ONLY"
+      },
+      {
+       "command": 1,
+       "expected": {
+        "outcome": "committed"
+       },
+       "observed": null,
+       "verdict": "EXPECTED-ONLY"
+      },
+      {
+       "command": 2,
+       "expected": {
+        "outcome": "committed"
+       },
+       "observed": null,
+       "verdict": "EXPECTED-ONLY"
+      }
+     ],
+     "state": [
+      {
+       "scope": "s",
+       "lastPosition": 3,
+       "assertions": [
+        {
+         "id": "s1",
+         "entityId": "p1",
+         "attribute": ":person/salary",
+         "value": {
+          "_tag": "ErasedValue",
+          "erasedAt": 200
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 100,
+         "recordedPosition": 1,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:0",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        },
+        {
+         "id": "s2",
+         "entityId": "p2",
+         "attribute": ":person/salary",
+         "value": {
+          "_tag": "ErasedValue",
+          "erasedAt": 200
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 110,
+         "recordedPosition": 2,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:1",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        }
+       ],
+       "transactions": [
+        {
+         "txId": "tx:0",
+         "position": 1,
+         "instant": 100,
+         "commandId": "c100",
+         "changes": [
+          {
+           "op": "assert",
+           "tripleId": "s1",
+           "entityId": "p1",
+           "attribute": ":person/salary",
+           "entityType": "Person",
+           "value": {
+            "_tag": "ErasedValue",
+            "erasedAt": 200
+           },
+           "validFrom": 0,
+           "recordedAt": 100,
+           "assertionTxId": "tx:0"
+          }
+         ],
+         "changedEntities": [
+          "p1"
+         ]
+        },
+        {
+         "txId": "tx:1",
+         "position": 2,
+         "instant": 110,
+         "commandId": "c110",
+         "changes": [
+          {
+           "op": "assert",
+           "tripleId": "s2",
+           "entityId": "p2",
+           "attribute": ":person/salary",
+           "entityType": "Person",
+           "value": {
+            "_tag": "ErasedValue",
+            "erasedAt": 200
+           },
+           "validFrom": 0,
+           "recordedAt": 110,
+           "assertionTxId": "tx:1"
+          }
+         ],
+         "changedEntities": [
+          "p2"
+         ]
+        },
+        {
+         "txId": "tx:2",
+         "position": 3,
+         "instant": 200,
+         "commandId": "c200",
+         "changes": [
+          {
+           "op": "erase",
+           "entityId": "p1",
+           "attribute": ":person/salary",
+           "assertionIds": [
+            "s1"
+           ]
+          },
+          {
+           "op": "erase",
+           "entityId": "p2",
+           "attribute": ":person/salary",
+           "assertionIds": [
+            "s2"
+           ]
+          }
+         ],
+         "changedEntities": [
+          "p1",
+          "p2"
+         ]
+        }
+       ]
+      }
+     ],
+     "queries": [
+      {
+       "id": "t1",
+       "kind": "transactions",
+       "inFlight": {
+        "rule": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers, and the commits in position order, so a prefix of them (RULINGS Q52e, Q66a)",
+        "acceptable": [
+         {
+          "erasuresSeen": [],
+          "result": {
+           "transactions": [
+            {
+             "txId": "tx:0",
+             "position": 1,
+             "instant": 100,
+             "commandId": "c100",
+             "changes": [
+              {
+               "op": "assert",
+               "tripleId": "s1",
+               "entityId": "p1",
+               "attribute": ":person/salary",
+               "entityType": "Person",
+               "value": {
+                "type": "integer",
+                "value": "1"
+               },
+               "validFrom": 0,
+               "recordedAt": 100,
+               "assertionTxId": "tx:0"
+              }
+             ],
+             "changedEntities": [
+              "p1"
+             ]
+            }
+           ],
+           "next": 1
+          }
+         },
+         {
+          "erasuresSeen": [
+           "tx:2"
+          ],
+          "result": {
+           "transactions": [
+            {
+             "txId": "tx:0",
+             "position": 1,
+             "instant": 100,
+             "commandId": "c100",
+             "changes": [
+              {
+               "op": "assert",
+               "tripleId": "s1",
+               "entityId": "p1",
+               "attribute": ":person/salary",
+               "entityType": "Person",
+               "value": {
+                "_tag": "ErasedValue",
+                "erasedAt": 200
+               },
+               "validFrom": 0,
+               "recordedAt": 100,
+               "assertionTxId": "tx:0"
+              }
+             ],
+             "changedEntities": [
+              "p1"
+             ]
+            }
+           ],
+           "next": 1
+          }
+         }
+        ]
+       }
+      },
+      {
+       "id": "t2",
+       "kind": "transactions",
+       "result": {
+        "transactions": [
+         {
+          "txId": "tx:1",
+          "position": 2,
+          "instant": 110,
+          "commandId": "c110",
+          "changes": [
+           {
+            "op": "assert",
+            "tripleId": "s2",
+            "entityId": "p2",
+            "attribute": ":person/salary",
+            "entityType": "Person",
+            "value": {
+             "_tag": "ErasedValue",
+             "erasedAt": 200
+            },
+            "validFrom": 0,
+            "recordedAt": 110,
+            "assertionTxId": "tx:1"
+           }
+          ],
+          "changedEntities": [
+           "p2"
+          ]
+         }
+        ],
+        "next": 2
+       }
+      }
+     ],
+     "rulesInEffect": {
+      "attributeSyntax": "any",
+      "createdByDefault": "null",
+      "datetimeRange": null,
+      "emptyIntervalRejected": true,
+      "journalChangeOrder": "operation-order",
+      "reservedNamespaces": null,
+      "retractNonLive": "transaction-conflict",
+      "retractPatternEmptyRejected": true,
+      "retractPatternSeesStaged": true,
+      "typeMembership": "valid-at-instant",
+      "validFromDefault": "transaction-instant"
+     },
+     "reservedNamespaces": {
+      "attributePrefixes": [
+       ":triplex/",
+       ":_tx/"
+      ],
+      "entityIdPrefixes": [
+       "_triplex/"
+      ],
+      "entityTypePrefixes": [
+       "triplex."
+      ],
+      "entityTypes": [
+       "_Transaction"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "ruling": "Q70m",
+   "probe": "transactions after 1.0",
+   "expected": "malformed case (exit 2, no output)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "crashed": 1,
+    "stderr": "^^^^^^^^^^^^^^^\n  File \"/private/tmp/CX-VO04H-2xsggws9/at91ba352/lab/oracles/replay/run.py\", line 671, in answer_under\n    return self.answer(kind, query)\n           ~~~~~~~~~~~^^^^^^^^^^^^^\n  File \"/private/tmp/CX-VO04H-2xsggws9/at91ba352/lab/oracles/replay/run.py\", line 679, in answer\n    return (\"result\", QUERIES[kind](self, query))\n                      ~~~~~~~~~~~~~^^^^^^^^^^^^^\n  File \"/private/tmp/CX-VO04H-2xsggws9/at91ba352/lab/oracles/replay/views.py\", line 280, in q_transactions\n    after = int(query.get(\"after\", V.Lex(\"0\")))\nValueError: invalid literal for int() with base 10: '1.0'\n"
+   }
+  },
+  {
+   "ruling": "Q70m",
+   "probe": "transactions after -1",
+   "expected": "malformed case (exit 2, no output)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "report": {
+     "format": "triplex-db-2/o-replay-expected/1",
+     "oracle": {
+      "id": "O-REPLAY",
+      "version": "0.4.7",
+      "sourceSha256": {
+       "__init__.py": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
+       "__main__.py": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
+       "cli.py": "1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5",
+       "errors.py": "c2260e1e06af38b2ce97246d5f9ff5626484dd0dfaf4afe409ddfcd6eee634df",
+       "values.py": "67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982",
+       "exact.py": "4cfcf2c9af4b4ddf36f2218308685aff99d91416ac7f0d1dec053fb7a6e74d2a",
+       "replay.py": "3dd06dd0c30930e00ce1665ae7e9f40afcf7e06fa8a37759a8c5e65345fe9016",
+       "constraints.py": "9e1e9d7b1ca8046ca67520bbc4905b03ad3bd663c260a4ed0d2b6ca024a91a1d",
+       "views.py": "3989f7d6e9b3bcac526eb35dd8246c0a27d6ee5cde370ba5900c0285cb4969e4",
+       "entities.py": "e92308b6df7a0996a26fe129b9df07e058d8b0c84cff54f2690cd7c76fc871b3",
+       "scale.py": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
+       "run.py": "c520c6dadca64db87c134ad5813024cb89292d0fd6c652c3bbaba7b242f10a33",
+       "selfcheck.py": "c1e0ae41cfe9bac7f2ed7f249715b5ae71e98f4d66e4ae152938b6d333c9418c"
+      }
+     },
+     "caseId": "v-o04d/q52",
+     "caseSha256": "9061d6a3963ae2d31c85e9013ee5b115c8f810b7c65b6e09a33516aed4477633",
+     "lane": {
+      "name": "core",
+      "integerRange": [
+       "-9223372036854775808",
+       "9223372036854775807"
+      ]
+     },
+     "verdict": "EXPECTED-ONLY",
+     "divergedAtCommand": null,
+     "receiptConsistency": {
+      "status": "NOT-APPLICABLE",
+      "reason": "no receipts supplied"
+     },
+     "commandOutcomes": [
+      {
+       "command": 0,
+       "expected": {
+        "outcome": "committed"
+       },
+       "observed": null,
+       "verdict": "EXPECTED-ONLY"
+      },
+      {
+       "command": 1,
+       "expected": {
+        "outcome": "committed"
+       },
+       "observed": null,
+       "verdict": "EXPECTED-ONLY"
+      },
+      {
+       "command": 2,
+       "expected": {
+        "outcome": "committed"
+       },
+       "observed": null,
+       "verdict": "EXPECTED-ONLY"
+      }
+     ],
+     "state": [
+      {
+       "scope": "s",
+       "lastPosition": 3,
+       "assertions": [
+        {
+         "id": "s1",
+         "entityId": "p1",
+         "attribute": ":person/salary",
+         "value": {
+          "_tag": "ErasedValue",
+          "erasedAt": 200
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 100,
+         "recordedPosition": 1,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:0",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        },
+        {
+         "id": "s2",
+         "entityId": "p2",
+         "attribute": ":person/salary",
+         "value": {
+          "_tag": "ErasedValue",
+          "erasedAt": 200
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 110,
+         "recordedPosition": 2,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:1",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        }
+       ],
+       "transactions": [
+        {
+         "txId": "tx:0",
+         "position": 1,
+         "instant": 100,
+         "commandId": "c100",
+         "changes": [
+          {
+           "op": "assert",
+           "tripleId": "s1",
+           "entityId": "p1",
+           "attribute": ":person/salary",
+           "entityType": "Person",
+           "value": {
+            "_tag": "ErasedValue",
+            "erasedAt": 200
+           },
+           "validFrom": 0,
+           "recordedAt": 100,
+           "assertionTxId": "tx:0"
+          }
+         ],
+         "changedEntities": [
+          "p1"
+         ]
+        },
+        {
+         "txId": "tx:1",
+         "position": 2,
+         "instant": 110,
+         "commandId": "c110",
+         "changes": [
+          {
+           "op": "assert",
+           "tripleId": "s2",
+           "entityId": "p2",
+           "attribute": ":person/salary",
+           "entityType": "Person",
+           "value": {
+            "_tag": "ErasedValue",
+            "erasedAt": 200
+           },
+           "validFrom": 0,
+           "recordedAt": 110,
+           "assertionTxId": "tx:1"
+          }
+         ],
+         "changedEntities": [
+          "p2"
+         ]
+        },
+        {
+         "txId": "tx:2",
+         "position": 3,
+         "instant": 200,
+         "commandId": "c200",
+         "changes": [
+          {
+           "op": "erase",
+           "entityId": "p1",
+           "attribute": ":person/salary",
+           "assertionIds": [
+            "s1"
+           ]
+          },
+          {
+           "op": "erase",
+           "entityId": "p2",
+           "attribute": ":person/salary",
+           "assertionIds": [
+            "s2"
+           ]
+          }
+         ],
+         "changedEntities": [
+          "p1",
+          "p2"
+         ]
+        }
+       ]
+      }
+     ],
+     "queries": [
+      {
+       "id": "t1",
+       "kind": "transactions",
+       "inFlight": {
+        "rule": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers, and the commits in position order, so a prefix of them (RULINGS Q52e, Q66a)",
+        "acceptable": [
+         {
+          "erasuresSeen": [],
+          "result": {
+           "transactions": [
+            {
+             "txId": "tx:0",
+             "position": 1,
+             "instant": 100,
+             "commandId": "c100",
+             "changes": [
+              {
+               "op": "assert",
+               "tripleId": "s1",
+               "entityId": "p1",
+               "attribute": ":person/salary",
+               "entityType": "Person",
+               "value": {
+                "type": "integer",
+                "value": "1"
+               },
+               "validFrom": 0,
+               "recordedAt": 100,
+               "assertionTxId": "tx:0"
+              }
+             ],
+             "changedEntities": [
+              "p1"
+             ]
+            }
+           ],
+           "next": 1
+          }
+         },
+         {
+          "erasuresSeen": [
+           "tx:2"
+          ],
+          "result": {
+           "transactions": [
+            {
+             "txId": "tx:0",
+             "position": 1,
+             "instant": 100,
+             "commandId": "c100",
+             "changes": [
+              {
+               "op": "assert",
+               "tripleId": "s1",
+               "entityId": "p1",
+               "attribute": ":person/salary",
+               "entityType": "Person",
+               "value": {
+                "_tag": "ErasedValue",
+                "erasedAt": 200
+               },
+               "validFrom": 0,
+               "recordedAt": 100,
+               "assertionTxId": "tx:0"
+              }
+             ],
+             "changedEntities": [
+              "p1"
+             ]
+            }
+           ],
+           "next": 1
+          }
+         }
+        ]
+       }
+      },
+      {
+       "id": "t2",
+       "kind": "transactions",
+       "result": {
+        "transactions": [
+         {
+          "txId": "tx:0",
+          "position": 1,
+          "instant": 100,
+          "commandId": "c100",
+          "changes": [
+           {
+            "op": "assert",
+            "tripleId": "s1",
+            "entityId": "p1",
+            "attribute": ":person/salary",
+            "entityType": "Person",
+            "value": {
+             "_tag": "ErasedValue",
+             "erasedAt": 200
+            },
+            "validFrom": 0,
+            "recordedAt": 100,
+            "assertionTxId": "tx:0"
+           }
+          ],
+          "changedEntities": [
+           "p1"
+          ]
+         }
+        ],
+        "next": 1
+       }
+      }
+     ],
+     "rulesInEffect": {
+      "attributeSyntax": "any",
+      "createdByDefault": "null",
+      "datetimeRange": null,
+      "emptyIntervalRejected": true,
+      "journalChangeOrder": "operation-order",
+      "reservedNamespaces": null,
+      "retractNonLive": "transaction-conflict",
+      "retractPatternEmptyRejected": true,
+      "retractPatternSeesStaged": true,
+      "typeMembership": "valid-at-instant",
+      "validFromDefault": "transaction-instant"
+     },
+     "reservedNamespaces": {
+      "attributePrefixes": [
+       ":triplex/",
+       ":_tx/"
+      ],
+      "entityIdPrefixes": [
+       "_triplex/"
+      ],
+      "entityTypePrefixes": [
+       "triplex."
+      ],
+      "entityTypes": [
+       "_Transaction"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "ruling": "Q70m",
+   "probe": "transactions after true",
+   "expected": "malformed case (exit 2, no output)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "report": {
+     "format": "triplex-db-2/o-replay-expected/1",
+     "oracle": {
+      "id": "O-REPLAY",
+      "version": "0.4.7",
+      "sourceSha256": {
+       "__init__.py": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
+       "__main__.py": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
+       "cli.py": "1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5",
+       "errors.py": "c2260e1e06af38b2ce97246d5f9ff5626484dd0dfaf4afe409ddfcd6eee634df",
+       "values.py": "67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982",
+       "exact.py": "4cfcf2c9af4b4ddf36f2218308685aff99d91416ac7f0d1dec053fb7a6e74d2a",
+       "replay.py": "3dd06dd0c30930e00ce1665ae7e9f40afcf7e06fa8a37759a8c5e65345fe9016",
+       "constraints.py": "9e1e9d7b1ca8046ca67520bbc4905b03ad3bd663c260a4ed0d2b6ca024a91a1d",
+       "views.py": "3989f7d6e9b3bcac526eb35dd8246c0a27d6ee5cde370ba5900c0285cb4969e4",
+       "entities.py": "e92308b6df7a0996a26fe129b9df07e058d8b0c84cff54f2690cd7c76fc871b3",
+       "scale.py": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
+       "run.py": "c520c6dadca64db87c134ad5813024cb89292d0fd6c652c3bbaba7b242f10a33",
+       "selfcheck.py": "c1e0ae41cfe9bac7f2ed7f249715b5ae71e98f4d66e4ae152938b6d333c9418c"
+      }
+     },
+     "caseId": "v-o04d/q52",
+     "caseSha256": "c4f906290b812fd840ace0aa0a58f73b5d1831549280e78ce315c4e71a43a9b8",
+     "lane": {
+      "name": "core",
+      "integerRange": [
+       "-9223372036854775808",
+       "9223372036854775807"
+      ]
+     },
+     "verdict": "EXPECTED-ONLY",
+     "divergedAtCommand": null,
+     "receiptConsistency": {
+      "status": "NOT-APPLICABLE",
+      "reason": "no receipts supplied"
+     },
+     "commandOutcomes": [
+      {
+       "command": 0,
+       "expected": {
+        "outcome": "committed"
+       },
+       "observed": null,
+       "verdict": "EXPECTED-ONLY"
+      },
+      {
+       "command": 1,
+       "expected": {
+        "outcome": "committed"
+       },
+       "observed": null,
+       "verdict": "EXPECTED-ONLY"
+      },
+      {
+       "command": 2,
+       "expected": {
+        "outcome": "committed"
+       },
+       "observed": null,
+       "verdict": "EXPECTED-ONLY"
+      }
+     ],
+     "state": [
+      {
+       "scope": "s",
+       "lastPosition": 3,
+       "assertions": [
+        {
+         "id": "s1",
+         "entityId": "p1",
+         "attribute": ":person/salary",
+         "value": {
+          "_tag": "ErasedValue",
+          "erasedAt": 200
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 100,
+         "recordedPosition": 1,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:0",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        },
+        {
+         "id": "s2",
+         "entityId": "p2",
+         "attribute": ":person/salary",
+         "value": {
+          "_tag": "ErasedValue",
+          "erasedAt": 200
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 110,
+         "recordedPosition": 2,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:1",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        }
+       ],
+       "transactions": [
+        {
+         "txId": "tx:0",
+         "position": 1,
+         "instant": 100,
+         "commandId": "c100",
+         "changes": [
+          {
+           "op": "assert",
+           "tripleId": "s1",
+           "entityId": "p1",
+           "attribute": ":person/salary",
+           "entityType": "Person",
+           "value": {
+            "_tag": "ErasedValue",
+            "erasedAt": 200
+           },
+           "validFrom": 0,
+           "recordedAt": 100,
+           "assertionTxId": "tx:0"
+          }
+         ],
+         "changedEntities": [
+          "p1"
+         ]
+        },
+        {
+         "txId": "tx:1",
+         "position": 2,
+         "instant": 110,
+         "commandId": "c110",
+         "changes": [
+          {
+           "op": "assert",
+           "tripleId": "s2",
+           "entityId": "p2",
+           "attribute": ":person/salary",
+           "entityType": "Person",
+           "value": {
+            "_tag": "ErasedValue",
+            "erasedAt": 200
+           },
+           "validFrom": 0,
+           "recordedAt": 110,
+           "assertionTxId": "tx:1"
+          }
+         ],
+         "changedEntities": [
+          "p2"
+         ]
+        },
+        {
+         "txId": "tx:2",
+         "position": 3,
+         "instant": 200,
+         "commandId": "c200",
+         "changes": [
+          {
+           "op": "erase",
+           "entityId": "p1",
+           "attribute": ":person/salary",
+           "assertionIds": [
+            "s1"
+           ]
+          },
+          {
+           "op": "erase",
+           "entityId": "p2",
+           "attribute": ":person/salary",
+           "assertionIds": [
+            "s2"
+           ]
+          }
+         ],
+         "changedEntities": [
+          "p1",
+          "p2"
+         ]
+        }
+       ]
+      }
+     ],
+     "queries": [
+      {
+       "id": "t1",
+       "kind": "transactions",
+       "inFlight": {
+        "rule": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers, and the commits in position order, so a prefix of them (RULINGS Q52e, Q66a)",
+        "acceptable": [
+         {
+          "erasuresSeen": [],
+          "result": {
+           "transactions": [
+            {
+             "txId": "tx:0",
+             "position": 1,
+             "instant": 100,
+             "commandId": "c100",
+             "changes": [
+              {
+               "op": "assert",
+               "tripleId": "s1",
+               "entityId": "p1",
+               "attribute": ":person/salary",
+               "entityType": "Person",
+               "value": {
+                "type": "integer",
+                "value": "1"
+               },
+               "validFrom": 0,
+               "recordedAt": 100,
+               "assertionTxId": "tx:0"
+              }
+             ],
+             "changedEntities": [
+              "p1"
+             ]
+            }
+           ],
+           "next": 1
+          }
+         },
+         {
+          "erasuresSeen": [
+           "tx:2"
+          ],
+          "result": {
+           "transactions": [
+            {
+             "txId": "tx:0",
+             "position": 1,
+             "instant": 100,
+             "commandId": "c100",
+             "changes": [
+              {
+               "op": "assert",
+               "tripleId": "s1",
+               "entityId": "p1",
+               "attribute": ":person/salary",
+               "entityType": "Person",
+               "value": {
+                "_tag": "ErasedValue",
+                "erasedAt": 200
+               },
+               "validFrom": 0,
+               "recordedAt": 100,
+               "assertionTxId": "tx:0"
+              }
+             ],
+             "changedEntities": [
+              "p1"
+             ]
+            }
+           ],
+           "next": 1
+          }
+         }
+        ]
+       }
+      },
+      {
+       "id": "t2",
+       "kind": "transactions",
+       "result": {
+        "transactions": [
+         {
+          "txId": "tx:1",
+          "position": 2,
+          "instant": 110,
+          "commandId": "c110",
+          "changes": [
+           {
+            "op": "assert",
+            "tripleId": "s2",
+            "entityId": "p2",
+            "attribute": ":person/salary",
+            "entityType": "Person",
+            "value": {
+             "_tag": "ErasedValue",
+             "erasedAt": 200
+            },
+            "validFrom": 0,
+            "recordedAt": 110,
+            "assertionTxId": "tx:1"
+           }
+          ],
+          "changedEntities": [
+           "p2"
+          ]
+         }
+        ],
+        "next": 2
+       }
+      }
+     ],
+     "rulesInEffect": {
+      "attributeSyntax": "any",
+      "createdByDefault": "null",
+      "datetimeRange": null,
+      "emptyIntervalRejected": true,
+      "journalChangeOrder": "operation-order",
+      "reservedNamespaces": null,
+      "retractNonLive": "transaction-conflict",
+      "retractPatternEmptyRejected": true,
+      "retractPatternSeesStaged": true,
+      "typeMembership": "valid-at-instant",
+      "validFromDefault": "transaction-instant"
+     },
+     "reservedNamespaces": {
+      "attributePrefixes": [
+       ":triplex/",
+       ":_tx/"
+      ],
+      "entityIdPrefixes": [
+       "_triplex/"
+      ],
+      "entityTypePrefixes": [
+       "triplex."
+      ],
+      "entityTypes": [
+       "_Transaction"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "ruling": "Q70m",
+   "probe": "transactionsForEntity beforePosition \"2\"",
+   "expected": "malformed case (exit 2, no output)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "report": {
+     "format": "triplex-db-2/o-replay-expected/1",
+     "oracle": {
+      "id": "O-REPLAY",
+      "version": "0.4.7",
+      "sourceSha256": {
+       "__init__.py": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
+       "__main__.py": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
+       "cli.py": "1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5",
+       "errors.py": "c2260e1e06af38b2ce97246d5f9ff5626484dd0dfaf4afe409ddfcd6eee634df",
+       "values.py": "67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982",
+       "exact.py": "4cfcf2c9af4b4ddf36f2218308685aff99d91416ac7f0d1dec053fb7a6e74d2a",
+       "replay.py": "3dd06dd0c30930e00ce1665ae7e9f40afcf7e06fa8a37759a8c5e65345fe9016",
+       "constraints.py": "9e1e9d7b1ca8046ca67520bbc4905b03ad3bd663c260a4ed0d2b6ca024a91a1d",
+       "views.py": "3989f7d6e9b3bcac526eb35dd8246c0a27d6ee5cde370ba5900c0285cb4969e4",
+       "entities.py": "e92308b6df7a0996a26fe129b9df07e058d8b0c84cff54f2690cd7c76fc871b3",
+       "scale.py": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
+       "run.py": "c520c6dadca64db87c134ad5813024cb89292d0fd6c652c3bbaba7b242f10a33",
+       "selfcheck.py": "c1e0ae41cfe9bac7f2ed7f249715b5ae71e98f4d66e4ae152938b6d333c9418c"
+      }
+     },
+     "caseId": "v-o04d/q52",
+     "caseSha256": "0154065851633d32e374f596cc11eb2373f475e886bca851d0ef62e925de4f96",
+     "lane": {
+      "name": "core",
+      "integerRange": [
+       "-9223372036854775808",
+       "9223372036854775807"
+      ]
+     },
+     "verdict": "EXPECTED-ONLY",
+     "divergedAtCommand": null,
+     "receiptConsistency": {
+      "status": "NOT-APPLICABLE",
+      "reason": "no receipts supplied"
+     },
+     "commandOutcomes": [
+      {
+       "command": 0,
+       "expected": {
+        "outcome": "committed"
+       },
+       "observed": null,
+       "verdict": "EXPECTED-ONLY"
+      },
+      {
+       "command": 1,
+       "expected": {
+        "outcome": "committed"
+       },
+       "observed": null,
+       "verdict": "EXPECTED-ONLY"
+      },
+      {
+       "command": 2,
+       "expected": {
+        "outcome": "committed"
+       },
+       "observed": null,
+       "verdict": "EXPECTED-ONLY"
+      }
+     ],
+     "state": [
+      {
+       "scope": "s",
+       "lastPosition": 3,
+       "assertions": [
+        {
+         "id": "s1",
+         "entityId": "p1",
+         "attribute": ":person/salary",
+         "value": {
+          "_tag": "ErasedValue",
+          "erasedAt": 200
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 100,
+         "recordedPosition": 1,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:0",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        },
+        {
+         "id": "n1",
+         "entityId": "p1",
+         "attribute": ":person/name",
+         "value": {
+          "_tag": "ErasedValue",
+          "erasedAt": 200
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 110,
+         "recordedPosition": 2,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:1",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        }
+       ],
+       "transactions": [
+        {
+         "txId": "tx:0",
+         "position": 1,
+         "instant": 100,
+         "commandId": "c100",
+         "changes": [
+          {
+           "op": "assert",
+           "tripleId": "s1",
+           "entityId": "p1",
+           "attribute": ":person/salary",
+           "entityType": "Person",
+           "value": {
+            "_tag": "ErasedValue",
+            "erasedAt": 200
+           },
+           "validFrom": 0,
+           "recordedAt": 100,
+           "assertionTxId": "tx:0"
+          }
+         ],
+         "changedEntities": [
+          "p1"
+         ]
+        },
+        {
+         "txId": "tx:1",
+         "position": 2,
+         "instant": 110,
+         "commandId": "c110",
+         "changes": [
+          {
+           "op": "assert",
+           "tripleId": "n1",
+           "entityId": "p1",
+           "attribute": ":person/name",
+           "entityType": "Person",
+           "value": {
+            "_tag": "ErasedValue",
+            "erasedAt": 200
+           },
+           "validFrom": 0,
+           "recordedAt": 110,
+           "assertionTxId": "tx:1"
+          }
+         ],
+         "changedEntities": [
+          "p1"
+         ]
+        },
+        {
+         "txId": "tx:2",
+         "position": 3,
+         "instant": 200,
+         "commandId": "c200",
+         "changes": [
+          {
+           "op": "erase",
+           "entityId": "p1",
+           "attribute": ":person/salary",
+           "assertionIds": [
+            "s1"
+           ]
+          },
+          {
+           "op": "erase",
+           "entityId": "p1",
+           "attribute": ":person/name",
+           "assertionIds": [
+            "n1"
+           ]
+          }
+         ],
+         "changedEntities": [
+          "p1"
+         ]
+        }
+       ]
+      }
+     ],
+     "queries": [
+      {
+       "id": "e1",
+       "kind": "transactionsForEntity",
+       "inFlight": {
+        "rule": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers, and the commits in position order, so a prefix of them (RULINGS Q52e, Q66a)",
+        "acceptable": [
+         {
+          "erasuresSeen": [],
+          "result": {
+           "transactions": [
+            {
+             "txId": "tx:1",
+             "position": 2,
+             "instant": 110,
+             "commandId": "c110",
+             "changes": [
+              {
+               "op": "assert",
+               "tripleId": "n1",
+               "entityId": "p1",
+               "attribute": ":person/name",
+               "entityType": "Person",
+               "value": {
+                "type": "string",
+                "value": "N"
+               },
+               "validFrom": 0,
+               "recordedAt": 110,
+               "assertionTxId": "tx:1"
+              }
+             ],
+             "changedEntities": [
+              "p1"
+             ]
+            }
+           ],
+           "snapshotPosition": 2,
+           "nextBeforePosition": 2
+          }
+         },
+         {
+          "erasuresSeen": [
+           "tx:2"
+          ],
+          "result": {
+           "transactions": [
+            {
+             "txId": "tx:1",
+             "position": 2,
+             "instant": 110,
+             "commandId": "c110",
+             "changes": [
+              {
+               "op": "assert",
+               "tripleId": "n1",
+               "entityId": "p1",
+               "attribute": ":person/name",
+               "entityType": "Person",
+               "value": {
+                "_tag": "ErasedValue",
+                "erasedAt": 200
+               },
+               "validFrom": 0,
+               "recordedAt": 110,
+               "assertionTxId": "tx:1"
+              }
+             ],
+             "changedEntities": [
+              "p1"
+             ]
+            }
+           ],
+           "snapshotPosition": 2,
+           "nextBeforePosition": 2
+          }
+         }
+        ]
+       }
+      },
+      {
+       "id": "e2",
+       "kind": "transactionsForEntity",
+       "result": {
+        "transactions": [
+         {
+          "txId": "tx:0",
+          "position": 1,
+          "instant": 100,
+          "commandId": "c100",
+          "changes": [
+           {
+            "op": "assert",
+            "tripleId": "s1",
+            "entityId": "p1",
+            "attribute": ":person/salary",
+            "entityType": "Person",
+            "value": {
+             "_tag": "ErasedValue",
+             "erasedAt": 200
+            },
+            "validFrom": 0,
+            "recordedAt": 100,
+            "assertionTxId": "tx:0"
+           }
+          ],
+          "changedEntities": [
+           "p1"
+          ]
+         }
+        ],
+        "snapshotPosition": 2
+       }
+      }
+     ],
+     "rulesInEffect": {
+      "attributeSyntax": "any",
+      "createdByDefault": "null",
+      "datetimeRange": null,
+      "emptyIntervalRejected": true,
+      "journalChangeOrder": "operation-order",
+      "reservedNamespaces": null,
+      "retractNonLive": "transaction-conflict",
+      "retractPatternEmptyRejected": true,
+      "retractPatternSeesStaged": true,
+      "typeMembership": "valid-at-instant",
+      "validFromDefault": "transaction-instant"
+     },
+     "reservedNamespaces": {
+      "attributePrefixes": [
+       ":triplex/",
+       ":_tx/"
+      ],
+      "entityIdPrefixes": [
+       "_triplex/"
+      ],
+      "entityTypePrefixes": [
+       "triplex."
+      ],
+      "entityTypes": [
+       "_Transaction"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "ruling": "Q70m",
+   "probe": "transactionsForEntity beforePosition 2.0",
+   "expected": "malformed case (exit 2, no output)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "crashed": 1,
+    "stderr": "1, in answer_under\n    return self.answer(kind, query)\n           ~~~~~~~~~~~^^^^^^^^^^^^^\n  File \"/private/tmp/CX-VO04H-2xsggws9/at91ba352/lab/oracles/replay/run.py\", line 679, in answer\n    return (\"result\", QUERIES[kind](self, query))\n                      ~~~~~~~~~~~~~^^^^^^^^^^^^^\n  File \"/private/tmp/CX-VO04H-2xsggws9/at91ba352/lab/oracles/replay/views.py\", line 312, in q_transactions_for_entity\n    before = int(query[\"beforePosition\"]) if query.get(\"beforePosition\") is not None else None\n             ~~~^^^^^^^^^^^^^^^^^^^^^^^^^\nValueError: invalid literal for int() with base 10: '2.0'\n"
+   }
+  },
+  {
+   "ruling": "Q70m",
+   "probe": "transactionsForEntity beforePosition -2",
+   "expected": "malformed case (exit 2, no output)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "report": {
+     "format": "triplex-db-2/o-replay-expected/1",
+     "oracle": {
+      "id": "O-REPLAY",
+      "version": "0.4.7",
+      "sourceSha256": {
+       "__init__.py": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
+       "__main__.py": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
+       "cli.py": "1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5",
+       "errors.py": "c2260e1e06af38b2ce97246d5f9ff5626484dd0dfaf4afe409ddfcd6eee634df",
+       "values.py": "67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982",
+       "exact.py": "4cfcf2c9af4b4ddf36f2218308685aff99d91416ac7f0d1dec053fb7a6e74d2a",
+       "replay.py": "3dd06dd0c30930e00ce1665ae7e9f40afcf7e06fa8a37759a8c5e65345fe9016",
+       "constraints.py": "9e1e9d7b1ca8046ca67520bbc4905b03ad3bd663c260a4ed0d2b6ca024a91a1d",
+       "views.py": "3989f7d6e9b3bcac526eb35dd8246c0a27d6ee5cde370ba5900c0285cb4969e4",
+       "entities.py": "e92308b6df7a0996a26fe129b9df07e058d8b0c84cff54f2690cd7c76fc871b3",
+       "scale.py": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
+       "run.py": "c520c6dadca64db87c134ad5813024cb89292d0fd6c652c3bbaba7b242f10a33",
+       "selfcheck.py": "c1e0ae41cfe9bac7f2ed7f249715b5ae71e98f4d66e4ae152938b6d333c9418c"
+      }
+     },
+     "caseId": "v-o04d/q52",
+     "caseSha256": "48d79fe7b1741aa8c6c21be3609e5fb055d5ce903fa3eefa271c851581e4de53",
+     "lane": {
+      "name": "core",
+      "integerRange": [
+       "-9223372036854775808",
+       "9223372036854775807"
+      ]
+     },
+     "verdict": "EXPECTED-ONLY",
+     "divergedAtCommand": null,
+     "receiptConsistency": {
+      "status": "NOT-APPLICABLE",
+      "reason": "no receipts supplied"
+     },
+     "commandOutcomes": [
+      {
+       "command": 0,
+       "expected": {
+        "outcome": "committed"
+       },
+       "observed": null,
+       "verdict": "EXPECTED-ONLY"
+      },
+      {
+       "command": 1,
+       "expected": {
+        "outcome": "committed"
+       },
+       "observed": null,
+       "verdict": "EXPECTED-ONLY"
+      },
+      {
+       "command": 2,
+       "expected": {
+        "outcome": "committed"
+       },
+       "observed": null,
+       "verdict": "EXPECTED-ONLY"
+      }
+     ],
+     "state": [
+      {
+       "scope": "s",
+       "lastPosition": 3,
+       "assertions": [
+        {
+         "id": "s1",
+         "entityId": "p1",
+         "attribute": ":person/salary",
+         "value": {
+          "_tag": "ErasedValue",
+          "erasedAt": 200
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 100,
+         "recordedPosition": 1,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:0",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        },
+        {
+         "id": "n1",
+         "entityId": "p1",
+         "attribute": ":person/name",
+         "value": {
+          "_tag": "ErasedValue",
+          "erasedAt": 200
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 110,
+         "recordedPosition": 2,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:1",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        }
+       ],
+       "transactions": [
+        {
+         "txId": "tx:0",
+         "position": 1,
+         "instant": 100,
+         "commandId": "c100",
+         "changes": [
+          {
+           "op": "assert",
+           "tripleId": "s1",
+           "entityId": "p1",
+           "attribute": ":person/salary",
+           "entityType": "Person",
+           "value": {
+            "_tag": "ErasedValue",
+            "erasedAt": 200
+           },
+           "validFrom": 0,
+           "recordedAt": 100,
+           "assertionTxId": "tx:0"
+          }
+         ],
+         "changedEntities": [
+          "p1"
+         ]
+        },
+        {
+         "txId": "tx:1",
+         "position": 2,
+         "instant": 110,
+         "commandId": "c110",
+         "changes": [
+          {
+           "op": "assert",
+           "tripleId": "n1",
+           "entityId": "p1",
+           "attribute": ":person/name",
+           "entityType": "Person",
+           "value": {
+            "_tag": "ErasedValue",
+            "erasedAt": 200
+           },
+           "validFrom": 0,
+           "recordedAt": 110,
+           "assertionTxId": "tx:1"
+          }
+         ],
+         "changedEntities": [
+          "p1"
+         ]
+        },
+        {
+         "txId": "tx:2",
+         "position": 3,
+         "instant": 200,
+         "commandId": "c200",
+         "changes": [
+          {
+           "op": "erase",
+           "entityId": "p1",
+           "attribute": ":person/salary",
+           "assertionIds": [
+            "s1"
+           ]
+          },
+          {
+           "op": "erase",
+           "entityId": "p1",
+           "attribute": ":person/name",
+           "assertionIds": [
+            "n1"
+           ]
+          }
+         ],
+         "changedEntities": [
+          "p1"
+         ]
+        }
+       ]
+      }
+     ],
+     "queries": [
+      {
+       "id": "e1",
+       "kind": "transactionsForEntity",
+       "inFlight": {
+        "rule": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers, and the commits in position order, so a prefix of them (RULINGS Q52e, Q66a)",
+        "acceptable": [
+         {
+          "erasuresSeen": [],
+          "result": {
+           "transactions": [
+            {
+             "txId": "tx:1",
+             "position": 2,
+             "instant": 110,
+             "commandId": "c110",
+             "changes": [
+              {
+               "op": "assert",
+               "tripleId": "n1",
+               "entityId": "p1",
+               "attribute": ":person/name",
+               "entityType": "Person",
+               "value": {
+                "type": "string",
+                "value": "N"
+               },
+               "validFrom": 0,
+               "recordedAt": 110,
+               "assertionTxId": "tx:1"
+              }
+             ],
+             "changedEntities": [
+              "p1"
+             ]
+            }
+           ],
+           "snapshotPosition": 2,
+           "nextBeforePosition": 2
+          }
+         },
+         {
+          "erasuresSeen": [
+           "tx:2"
+          ],
+          "result": {
+           "transactions": [
+            {
+             "txId": "tx:1",
+             "position": 2,
+             "instant": 110,
+             "commandId": "c110",
+             "changes": [
+              {
+               "op": "assert",
+               "tripleId": "n1",
+               "entityId": "p1",
+               "attribute": ":person/name",
+               "entityType": "Person",
+               "value": {
+                "_tag": "ErasedValue",
+                "erasedAt": 200
+               },
+               "validFrom": 0,
+               "recordedAt": 110,
+               "assertionTxId": "tx:1"
+              }
+             ],
+             "changedEntities": [
+              "p1"
+             ]
+            }
+           ],
+           "snapshotPosition": 2,
+           "nextBeforePosition": 2
+          }
+         }
+        ]
+       }
+      },
+      {
+       "id": "e2",
+       "kind": "transactionsForEntity",
+       "result": {
+        "transactions": [],
+        "snapshotPosition": 2
+       }
+      }
+     ],
+     "rulesInEffect": {
+      "attributeSyntax": "any",
+      "createdByDefault": "null",
+      "datetimeRange": null,
+      "emptyIntervalRejected": true,
+      "journalChangeOrder": "operation-order",
+      "reservedNamespaces": null,
+      "retractNonLive": "transaction-conflict",
+      "retractPatternEmptyRejected": true,
+      "retractPatternSeesStaged": true,
+      "typeMembership": "valid-at-instant",
+      "validFromDefault": "transaction-instant"
+     },
+     "reservedNamespaces": {
+      "attributePrefixes": [
+       ":triplex/",
+       ":_tx/"
+      ],
+      "entityIdPrefixes": [
+       "_triplex/"
+      ],
+      "entityTypePrefixes": [
+       "triplex."
+      ],
+      "entityTypes": [
+       "_Transaction"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "ruling": "Q70m",
+   "probe": "transactionsForEntity snapshotPosition \"2\"",
+   "expected": "malformed case (exit 2, no output)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "report": {
+     "format": "triplex-db-2/o-replay-expected/1",
+     "oracle": {
+      "id": "O-REPLAY",
+      "version": "0.4.7",
+      "sourceSha256": {
+       "__init__.py": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
+       "__main__.py": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
+       "cli.py": "1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5",
+       "errors.py": "c2260e1e06af38b2ce97246d5f9ff5626484dd0dfaf4afe409ddfcd6eee634df",
+       "values.py": "67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982",
+       "exact.py": "4cfcf2c9af4b4ddf36f2218308685aff99d91416ac7f0d1dec053fb7a6e74d2a",
+       "replay.py": "3dd06dd0c30930e00ce1665ae7e9f40afcf7e06fa8a37759a8c5e65345fe9016",
+       "constraints.py": "9e1e9d7b1ca8046ca67520bbc4905b03ad3bd663c260a4ed0d2b6ca024a91a1d",
+       "views.py": "3989f7d6e9b3bcac526eb35dd8246c0a27d6ee5cde370ba5900c0285cb4969e4",
+       "entities.py": "e92308b6df7a0996a26fe129b9df07e058d8b0c84cff54f2690cd7c76fc871b3",
+       "scale.py": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
+       "run.py": "c520c6dadca64db87c134ad5813024cb89292d0fd6c652c3bbaba7b242f10a33",
+       "selfcheck.py": "c1e0ae41cfe9bac7f2ed7f249715b5ae71e98f4d66e4ae152938b6d333c9418c"
+      }
+     },
+     "caseId": "v-o04d/q52",
+     "caseSha256": "205786d58a87cb373661ed3feab4d8bb8b040389f951bbcfd1026e862a6012e0",
+     "lane": {
+      "name": "core",
+      "integerRange": [
+       "-9223372036854775808",
+       "9223372036854775807"
+      ]
+     },
+     "verdict": "EXPECTED-ONLY",
+     "divergedAtCommand": null,
+     "receiptConsistency": {
+      "status": "NOT-APPLICABLE",
+      "reason": "no receipts supplied"
+     },
+     "commandOutcomes": [
+      {
+       "command": 0,
+       "expected": {
+        "outcome": "committed"
+       },
+       "observed": null,
+       "verdict": "EXPECTED-ONLY"
+      },
+      {
+       "command": 1,
+       "expected": {
+        "outcome": "committed"
+       },
+       "observed": null,
+       "verdict": "EXPECTED-ONLY"
+      },
+      {
+       "command": 2,
+       "expected": {
+        "outcome": "committed"
+       },
+       "observed": null,
+       "verdict": "EXPECTED-ONLY"
+      }
+     ],
+     "state": [
+      {
+       "scope": "s",
+       "lastPosition": 3,
+       "assertions": [
+        {
+         "id": "s1",
+         "entityId": "p1",
+         "attribute": ":person/salary",
+         "value": {
+          "_tag": "ErasedValue",
+          "erasedAt": 200
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 100,
+         "recordedPosition": 1,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:0",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        },
+        {
+         "id": "n1",
+         "entityId": "p1",
+         "attribute": ":person/name",
+         "value": {
+          "_tag": "ErasedValue",
+          "erasedAt": 200
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 110,
+         "recordedPosition": 2,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:1",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        }
+       ],
+       "transactions": [
+        {
+         "txId": "tx:0",
+         "position": 1,
+         "instant": 100,
+         "commandId": "c100",
+         "changes": [
+          {
+           "op": "assert",
+           "tripleId": "s1",
+           "entityId": "p1",
+           "attribute": ":person/salary",
+           "entityType": "Person",
+           "value": {
+            "_tag": "ErasedValue",
+            "erasedAt": 200
+           },
+           "validFrom": 0,
+           "recordedAt": 100,
+           "assertionTxId": "tx:0"
+          }
+         ],
+         "changedEntities": [
+          "p1"
+         ]
+        },
+        {
+         "txId": "tx:1",
+         "position": 2,
+         "instant": 110,
+         "commandId": "c110",
+         "changes": [
+          {
+           "op": "assert",
+           "tripleId": "n1",
+           "entityId": "p1",
+           "attribute": ":person/name",
+           "entityType": "Person",
+           "value": {
+            "_tag": "ErasedValue",
+            "erasedAt": 200
+           },
+           "validFrom": 0,
+           "recordedAt": 110,
+           "assertionTxId": "tx:1"
+          }
+         ],
+         "changedEntities": [
+          "p1"
+         ]
+        },
+        {
+         "txId": "tx:2",
+         "position": 3,
+         "instant": 200,
+         "commandId": "c200",
+         "changes": [
+          {
+           "op": "erase",
+           "entityId": "p1",
+           "attribute": ":person/salary",
+           "assertionIds": [
+            "s1"
+           ]
+          },
+          {
+           "op": "erase",
+           "entityId": "p1",
+           "attribute": ":person/name",
+           "assertionIds": [
+            "n1"
+           ]
+          }
+         ],
+         "changedEntities": [
+          "p1"
+         ]
+        }
+       ]
+      }
+     ],
+     "queries": [
+      {
+       "id": "e1",
+       "kind": "transactionsForEntity",
+       "result": {
+        "transactions": [
+         {
+          "txId": "tx:1",
+          "position": 2,
+          "instant": 110,
+          "commandId": "c110",
+          "changes": [
+           {
+            "op": "assert",
+            "tripleId": "n1",
+            "entityId": "p1",
+            "attribute": ":person/name",
+            "entityType": "Person",
+            "value": {
+             "_tag": "ErasedValue",
+             "erasedAt": 200
+            },
+            "validFrom": 0,
+            "recordedAt": 110,
+            "assertionTxId": "tx:1"
+           }
+          ],
+          "changedEntities": [
+           "p1"
+          ]
+         }
+        ],
+        "snapshotPosition": 2,
+        "nextBeforePosition": 2
+       }
+      }
+     ],
+     "rulesInEffect": {
+      "attributeSyntax": "any",
+      "createdByDefault": "null",
+      "datetimeRange": null,
+      "emptyIntervalRejected": true,
+      "journalChangeOrder": "operation-order",
+      "reservedNamespaces": null,
+      "retractNonLive": "transaction-conflict",
+      "retractPatternEmptyRejected": true,
+      "retractPatternSeesStaged": true,
+      "typeMembership": "valid-at-instant",
+      "validFromDefault": "transaction-instant"
+     },
+     "reservedNamespaces": {
+      "attributePrefixes": [
+       ":triplex/",
+       ":_tx/"
+      ],
+      "entityIdPrefixes": [
+       "_triplex/"
+      ],
+      "entityTypePrefixes": [
+       "triplex."
+      ],
+      "entityTypes": [
+       "_Transaction"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "ruling": "Q70l",
+   "probe": "cursorFrom on a non-paged kind (match) naming an in-flight read",
+   "expected": "own view: plain, p1 and p2 markers",
+   "verdict": "WRONG-ANSWER",
+   "oracle": "inFlight"
+  },
+  {
+   "ruling": "Q52f",
+   "probe": "toDecimal(json 2.675, 3, 2, half-up)",
+   "expected": "decimal 2.68 at (3, 2)",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "2.68",
+    "scale": 2,
+    "precision": 3
+   }
+  },
+  {
+   "ruling": "Q52f",
+   "probe": "toDecimal(json 2.665, 3, 2, half-even)",
+   "expected": "decimal 2.66 at (3, 2)",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "2.66",
+    "scale": 2,
+    "precision": 3
+   }
+  },
+  {
+   "ruling": "Q52f",
+   "probe": "toDecimal(json 2.675, 3, 2, half-even)",
+   "expected": "decimal 2.68 at (3, 2)",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "2.68",
+    "scale": 2,
+    "precision": 3
+   }
+  },
+  {
+   "ruling": "Q52f",
+   "probe": "toDecimal(json 2.669, 3, 2, down)",
+   "expected": "decimal 2.66 at (3, 2)",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "2.66",
+    "scale": 2,
+    "precision": 3
+   }
+  },
+  {
+   "ruling": "Q52f",
+   "probe": "toDecimal(json -2.675, 3, 2, half-up)",
+   "expected": "decimal -2.68 at (3, 2)",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "-2.68",
+    "scale": 2,
+    "precision": 3
+   }
+  },
+  {
+   "ruling": "Q52f",
+   "probe": "toDecimal(json -2.669, 3, 2, down)",
+   "expected": "decimal -2.66 at (3, 2)",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "-2.66",
+    "scale": 2,
+    "precision": 3
+   }
+  },
+  {
+   "ruling": "Q52f",
+   "probe": "toDecimal(json 0.15, 2, 1, half-even)",
+   "expected": "decimal 0.2 at (2, 1)",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "0.2",
+    "scale": 1,
+    "precision": 2
+   }
+  },
+  {
+   "ruling": "Q52f",
+   "probe": "toDecimal(json 1.5, 2, 1, half-up)",
+   "expected": "decimal 1.5 at (2, 1)",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "1.5",
+    "scale": 1,
+    "precision": 2
+   }
+  },
+  {
+   "ruling": "Q52f",
+   "probe": "toDecimal(json 9.995, 3, 2, half-up)",
+   "expected": "E-DECIMAL-OVERFLOW",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-DECIMAL-OVERFLOW",
+    "_tag": "InvalidTripleError",
+    "reason": "decimal-overflow",
+    "phase": "execution",
+    "message": "decimal: 10 has more than 1 integer digits (precision 3, scale 2, at most 38 digits)"
+   }
+  },
+  {
+   "ruling": "Q52f",
+   "probe": "toDecimal(json 2.675, 3, 2, None)",
+   "expected": "E-DECIMAL-FRACTION",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-DECIMAL-FRACTION",
+    "_tag": "InvalidTripleError",
+    "reason": "decimal-fraction",
+    "phase": "preflight",
+    "message": "decimal: 2.675 has more than 2 fractional digits"
+   }
+  },
+  {
+   "ruling": "Q52f",
+   "probe": "toDecimal(json '2.675', 3, 2, half-up)",
+   "expected": "E-INVALID-VALUE",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-INVALID-VALUE",
+    "_tag": "InvalidTripleError",
+    "reason": "invalid-value",
+    "phase": "preflight",
+    "message": "toDecimal of a json value that is not a number (Q49e)",
+    "json": "\"2.675\""
+   }
+  },
+  {
+   "ruling": "Q52g",
+   "probe": "erase shape: erasure",
+   "expected": "rejected E-INVALID-VALUE; nothing applied (x1 still readable, no y1)",
+   "verdict": "MATCH",
+   "oracle": [
+    {
+     "outcome": "rejected",
+     "error": "E-INVALID-VALUE",
+     "errorTag": "InvalidTripleError",
+     "reason": "invalid-value",
+     "phase": "preflight",
+     "message": "unknown op 'erasure'"
+    },
+    [
+     {
+      "type": "string",
+      "value": "SECRET-X1"
+     }
+    ]
+   ]
+  },
+  {
+   "ruling": "Q52g",
+   "probe": "erase shape: mixed",
+   "expected": "rejected E-INVALID-VALUE; nothing applied (x1 still readable, no y1)",
+   "verdict": "MATCH",
+   "oracle": [
+    {
+     "outcome": "rejected",
+     "error": "E-INVALID-VALUE",
+     "errorTag": "InvalidTripleError",
+     "reason": "invalid-value",
+     "phase": "preflight",
+     "message": "an erase is its own command: it cannot be mixed with other operations (Q52g)"
+    },
+    [
+     {
+      "type": "string",
+      "value": "SECRET-X1"
+     }
+    ]
+   ]
+  },
+  {
+   "ruling": "Q52g",
+   "probe": "erase shape: preconditions",
+   "expected": "rejected E-INVALID-VALUE; nothing applied (x1 still readable, no y1)",
+   "verdict": "MATCH",
+   "oracle": [
+    {
+     "outcome": "rejected",
+     "error": "E-INVALID-VALUE",
+     "errorTag": "InvalidTripleError",
+     "reason": "invalid-value",
+     "phase": "preflight",
+     "message": "an erase command takes no preconditions (Q52g)"
+    },
+    [
+     {
+      "type": "string",
+      "value": "SECRET-X1"
+     }
+    ]
+   ]
+  },
+  {
+   "ruling": "Q52g",
+   "probe": "control: the same erase alone",
+   "expected": "commits; x1 reads as marker(200)",
+   "verdict": "MATCH",
+   "oracle": [
+    {
+     "outcome": "committed"
+    },
+    [
+     {
+      "_tag": "ErasedValue",
+      "erasedAt": 200
+     }
+    ]
+   ]
+  }
+ ]
+}

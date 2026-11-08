@@ -1,0 +1,1076 @@
+{
+ "old": "/private/tmp/CX-VO04H-2xsggws9/at91ba352",
+ "new": "/private/tmp/CX-VO04H-2xsggws9/at3c52a1d",
+ "cases": 993,
+ "random": 500,
+ "seed": 49,
+ "identical": 973,
+ "bothRefused": 5,
+ "different": 15,
+ "differentByFeature": {
+  "Q52e in flight": 12,
+  "Q52e in flight + Q66b cursor": 2,
+  "erase (Q49-Q52 erasure)": 1
+ },
+ "rows": [
+  {
+   "case": "/private/tmp/CX-VO04H-2xsggws9/probe_q52/025_ST_Q70l_entity_page_2_own_view.case.json",
+   "path": "$.queries[1].inFlight",
+   "old": "<absent>",
+   "new": {
+    "rule": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers, and the commits in position order, so a prefix of them (RULINGS Q52e, Q66a)",
+    "acceptable": [
+     {
+      "erasuresSeen": [],
+      "result": {
+       "transactions": [
+        {
+         "txId": "tx:0",
+         "position": 1,
+         "instant": 100,
+         "commandId": "c100",
+         "changes": [
+          {
+           "op": "assert",
+           "tripleId": "s1",
+           "entityId": "p1",
+           "attribute": ":person/salary",
+           "entityType": "Person",
+           "value": {
+            "type": "integer",
+            "value": "1"
+           },
+           "validFrom": 0,
+           "recordedAt": 100,
+           "assertionTxId": "tx:0"
+          }
+         ],
+         "changedEntities": [
+          "p1"
+         ]
+        }
+       ],
+       "snapshotPosition": 2
+      }
+     },
+     {
+      "erasuresSeen": [
+       "tx:2"
+      ],
+      "result": {
+       "transactions": [
+        {
+         "txId": "tx:0",
+         "position": 1,
+         "instant": 100,
+         "commandId": "c100",
+         "changes": [
+          {
+           "op": "assert",
+           "tripleId": "s1",
+           "entityId": "p1",
+           "attribute": ":person/salary",
+           "entityType": "Person",
+           "value": {
+            "_tag": "ErasedValue",
+            "erasedAt": 200
+           },
+           "validFrom": 0,
+           "recordedAt": 100,
+           "assertionTxId": "tx:0"
+          }
+         ],
+         "changedEntities": [
+          "p1"
+         ]
+        }
+       ],
+       "snapshotPosition": 2
+      }
+     }
+    ]
+   },
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/CX-VO04H-2xsggws9/probe_q52/026_ST_Q70l_disagreeing_issuers_continue_e1.case.json",
+   "path": "$.queries[2].error",
+   "old": "<absent>",
+   "new": {
+    "error": "X-NOT-MODELED",
+    "_tag": null,
+    "reason": null,
+    "phase": null,
+    "ruling": "Q70f: a continuation issued by reads whose start, scope or per-prefix answers disagree fails closed",
+    "message": "ambiguous entity journal beforePosition: 2 earlier reads issued it with different read views"
+   },
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/CX-VO04H-2xsggws9/probe_q52/029_ST_Q70m_string_after_answered.case.json",
+   "path": "$.caseId",
+   "old": "v-o04d/q52",
+   "new": "<absent>",
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": true
+  },
+  {
+   "case": "/private/tmp/CX-VO04H-2xsggws9/probe_q52/030_ST_Q70l_non_paged_kind_continues_A.case.json",
+   "path": "$.queries[1].inFlight",
+   "old": {
+    "rule": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers, and the commits in position order, so a prefix of them (RULINGS Q52e, Q66a)",
+    "acceptable": [
+     {
+      "erasuresSeen": [],
+      "result": {
+       "cut": {
+        "scope": "s",
+        "position": 2,
+        "recordedAt": null,
+        "validAt": 1
+       },
+       "count": 4,
+       "contract": "raw-lifetime (AMB-01 A)",
+       "raw": [
+        {
+         "id": "s1",
+         "entityId": "p1",
+         "attribute": ":person/salary",
+         "value": {
+          "type": "integer",
+          "value": "1"
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 100,
+         "recordedPosition": 1,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:0",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        },
+        {
+         "id": "s2",
+         "entityId": "p2",
+         "attribute": ":person/salary",
+         "value": {
+          "type": "integer",
+          "value": "2"
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 100,
+         "recordedPosition": 1,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:0",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        },
+        {
+         "id": "s3",
+         "entityId": "p3",
+         "attribute": ":person/salary",
+         "value": {
+          "type": "integer",
+          "value": "3"
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 100,
+         "recordedPosition": 1,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:0",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        },
+        {
+         "id": "s4",
+         "entityId": "p4",
+         "attribute": ":person/salary",
+         "value": {
+          "type": "integer",
+          "value": "4"
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 100,
+         "recordedPosition": 1,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:0",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        }
+       ],
+       "snapshot": [
+        {
+         "id": "s1",
+         "entityId": "p1",
+         "attribute": ":person/salary",
+         "value": {
+          "type": "integer",
+          "value": "1"
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 100,
+         "recordedPosition": 1,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:0",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        },
+        {
+         "id": "s2",
+         "entityId": "p2",
+         "attribute": ":person/salary",
+         "value": {
+          "type": "integer",
+          "value": "2"
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 100,
+         "recordedPosition": 1,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:0",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        },
+        {
+         "id": "s3",
+         "entityId": "p3",
+         "attribute": ":person/salary",
+         "value": {
+          "type": "integer",
+          "value": "3"
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 100,
+         "recordedPosition": 1,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:0",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        },
+        {
+         "id": "s4",
+         "entityId": "p4",
+         "attribute": ":person/salary",
+         "value": {
+          "type": "integer",
+          "value": "4"
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 100,
+         "recordedPosition": 1,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:0",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        }
+       ]
+      }
+     },
+     {
+      "erasuresSeen": [
+       "tx:1"
+      ],
+      "result": {
+       "cut": {
+        "scope": "s",
+        "position": 2,
+        "recordedAt": null,
+        "validAt": 1
+       },
+       "count": 4,
+       "contract": "raw-lifetime (AMB-01 A)",
+       "raw": [
+        {
+         "id": "s1",
+         "entityId": "p1",
+         "attribute": ":person/salary",
+         "value": {
+          "_tag": "ErasedValue",
+          "erasedAt": 200
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 100,
+         "recordedPosition": 1,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:0",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        },
+        {
+         "id": "s2",
+         "entityId": "p2",
+         "attribute": ":person/salary",
+         "value": {
+          "_tag": "ErasedValue",
+          "erasedAt": 200
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 100,
+         "recordedPosition": 1,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:0",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        },
+        {
+         "id": "s3",
+         "entityId": "p3",
+         "attribute": ":person/salary",
+         "value": {
+          "type": "integer",
+          "value": "3"
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 100,
+         "recordedPosition": 1,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:0",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        },
+        {
+         "id": "s4",
+         "entityId": "p4",
+         "attribute": ":person/salary",
+         "value": {
+          "type": "integer",
+          "value": "4"
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 100,
+         "recordedPosition": 1,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:0",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        }
+       ],
+       "snapshot": [
+        {
+         "id": "s1",
+         "entityId": "p1",
+         "attribute": ":person/salary",
+         "value": {
+          "_tag": "ErasedValue",
+          "erasedAt": 200
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 100,
+         "recordedPosition": 1,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:0",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        },
+        {
+         "id": "s2",
+         "entityId": "p2",
+         "attribute": ":person/salary",
+         "value": {
+          "_tag": "ErasedValue",
+          "erasedAt": 200
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 100,
+         "recordedPosition": 1,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:0",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        },
+        {
+         "id": "s3",
+         "entityId": "p3",
+         "attribute": ":person/salary",
+         "value": {
+          "type": "integer",
+          "value": "3"
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 100,
+         "recordedPosition": 1,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:0",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        },
+        {
+         "id": "s4",
+         "entityId": "p4",
+         "attribute": ":person/salary",
+         "value": {
+          "type": "integer",
+          "value": "4"
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 100,
+         "recordedPosition": 1,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:0",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        }
+       ]
+      }
+     }
+    ]
+   },
+   "new": "<absent>",
+   "features": [
+    "Q52e in flight",
+    "Q66b cursor",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/CX-VO04H-2xsggws9/probe_q52/048_transactionsForEntity_page_2_by_beforePosition_page_1_s_nextBeforePosition_V_O04g_F11_.case.json",
+   "path": "$.queries[1].inFlight",
+   "old": "<absent>",
+   "new": {
+    "rule": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers, and the commits in position order, so a prefix of them (RULINGS Q52e, Q66a)",
+    "acceptable": [
+     {
+      "erasuresSeen": [],
+      "result": {
+       "transactions": [
+        {
+         "txId": "tx:0",
+         "position": 1,
+         "instant": 100,
+         "commandId": "c100",
+         "changes": [
+          {
+           "op": "assert",
+           "tripleId": "s1",
+           "entityId": "p1",
+           "attribute": ":person/salary",
+           "entityType": "Person",
+           "value": {
+            "type": "integer",
+            "value": "1"
+           },
+           "validFrom": 0,
+           "recordedAt": 100,
+           "assertionTxId": "tx:0"
+          }
+         ],
+         "changedEntities": [
+          "p1"
+         ]
+        }
+       ],
+       "snapshotPosition": 2
+      }
+     },
+     {
+      "erasuresSeen": [
+       "tx:2"
+      ],
+      "result": {
+       "transactions": [
+        {
+         "txId": "tx:0",
+         "position": 1,
+         "instant": 100,
+         "commandId": "c100",
+         "changes": [
+          {
+           "op": "assert",
+           "tripleId": "s1",
+           "entityId": "p1",
+           "attribute": ":person/salary",
+           "entityType": "Person",
+           "value": {
+            "_tag": "ErasedValue",
+            "erasedAt": 200
+           },
+           "validFrom": 0,
+           "recordedAt": 100,
+           "assertionTxId": "tx:0"
+          }
+         ],
+         "changedEntities": [
+          "p1"
+         ]
+        }
+       ],
+       "snapshotPosition": 2
+      }
+     }
+    ]
+   },
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/CX-VO04H-2xsggws9/probe_q52/049_transactionsForEntity_beforePosition_issued_by_disagreeing_pages.case.json",
+   "path": "$.queries[2].error",
+   "old": "<absent>",
+   "new": {
+    "error": "X-NOT-MODELED",
+    "_tag": null,
+    "reason": null,
+    "phase": null,
+    "ruling": "Q70f: a continuation issued by reads whose start, scope or per-prefix answers disagree fails closed",
+    "message": "ambiguous entity journal beforePosition: 2 earlier reads issued it with different read views"
+   },
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  },
+  {
+   "case": "/private/tmp/CX-VO04H-2xsggws9/probe_q52/052_transactions_after_1_.case.json",
+   "path": "$.caseId",
+   "old": "v-o04d/q52",
+   "new": "<absent>",
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": true
+  },
+  {
+   "case": "/private/tmp/CX-VO04H-2xsggws9/probe_q52/053_transactions_after_1_0.case.json",
+   "path": "$.crashed",
+   "old": 1,
+   "new": "<absent>",
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": true
+  },
+  {
+   "case": "/private/tmp/CX-VO04H-2xsggws9/probe_q52/054_transactions_after_1.case.json",
+   "path": "$.caseId",
+   "old": "v-o04d/q52",
+   "new": "<absent>",
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": true
+  },
+  {
+   "case": "/private/tmp/CX-VO04H-2xsggws9/probe_q52/055_transactions_after_true.case.json",
+   "path": "$.caseId",
+   "old": "v-o04d/q52",
+   "new": "<absent>",
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": true
+  },
+  {
+   "case": "/private/tmp/CX-VO04H-2xsggws9/probe_q52/056_transactionsForEntity_beforePosition_2_.case.json",
+   "path": "$.caseId",
+   "old": "v-o04d/q52",
+   "new": "<absent>",
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": true
+  },
+  {
+   "case": "/private/tmp/CX-VO04H-2xsggws9/probe_q52/057_transactionsForEntity_beforePosition_2_0.case.json",
+   "path": "$.crashed",
+   "old": 1,
+   "new": "<absent>",
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": true
+  },
+  {
+   "case": "/private/tmp/CX-VO04H-2xsggws9/probe_q52/058_transactionsForEntity_beforePosition_2.case.json",
+   "path": "$.caseId",
+   "old": "v-o04d/q52",
+   "new": "<absent>",
+   "features": [
+    "Q52e in flight",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": true
+  },
+  {
+   "case": "/private/tmp/CX-VO04H-2xsggws9/probe_q52/059_transactionsForEntity_snapshotPosition_2_.case.json",
+   "path": "$.caseId",
+   "old": "v-o04d/q52",
+   "new": "<absent>",
+   "features": [
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": true
+  },
+  {
+   "case": "/private/tmp/CX-VO04H-2xsggws9/probe_q52/060_cursorFrom_on_a_non_paged_kind_match_naming_an_in_flight_read.case.json",
+   "path": "$.queries[1].inFlight",
+   "old": {
+    "rule": "ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees each commit whole, all of its values as they were or all as markers, and the commits in position order, so a prefix of them (RULINGS Q52e, Q66a)",
+    "acceptable": [
+     {
+      "erasuresSeen": [],
+      "result": {
+       "cut": {
+        "scope": "s",
+        "position": 2,
+        "recordedAt": null,
+        "validAt": 1
+       },
+       "count": 4,
+       "contract": "raw-lifetime (AMB-01 A)",
+       "raw": [
+        {
+         "id": "s1",
+         "entityId": "p1",
+         "attribute": ":person/salary",
+         "value": {
+          "type": "integer",
+          "value": "1"
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 100,
+         "recordedPosition": 1,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:0",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        },
+        {
+         "id": "s2",
+         "entityId": "p2",
+         "attribute": ":person/salary",
+         "value": {
+          "type": "integer",
+          "value": "2"
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 100,
+         "recordedPosition": 1,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:0",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        },
+        {
+         "id": "s3",
+         "entityId": "p3",
+         "attribute": ":person/salary",
+         "value": {
+          "type": "integer",
+          "value": "3"
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 100,
+         "recordedPosition": 1,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:0",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        },
+        {
+         "id": "s4",
+         "entityId": "p4",
+         "attribute": ":person/salary",
+         "value": {
+          "type": "integer",
+          "value": "4"
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 100,
+         "recordedPosition": 1,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:0",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        }
+       ],
+       "snapshot": [
+        {
+         "id": "s1",
+         "entityId": "p1",
+         "attribute": ":person/salary",
+         "value": {
+          "type": "integer",
+          "value": "1"
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 100,
+         "recordedPosition": 1,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:0",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        },
+        {
+         "id": "s2",
+         "entityId": "p2",
+         "attribute": ":person/salary",
+         "value": {
+          "type": "integer",
+          "value": "2"
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 100,
+         "recordedPosition": 1,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:0",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        },
+        {
+         "id": "s3",
+         "entityId": "p3",
+         "attribute": ":person/salary",
+         "value": {
+          "type": "integer",
+          "value": "3"
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 100,
+         "recordedPosition": 1,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:0",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        },
+        {
+         "id": "s4",
+         "entityId": "p4",
+         "attribute": ":person/salary",
+         "value": {
+          "type": "integer",
+          "value": "4"
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 100,
+         "recordedPosition": 1,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:0",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        }
+       ]
+      }
+     },
+     {
+      "erasuresSeen": [
+       "tx:1"
+      ],
+      "result": {
+       "cut": {
+        "scope": "s",
+        "position": 2,
+        "recordedAt": null,
+        "validAt": 1
+       },
+       "count": 4,
+       "contract": "raw-lifetime (AMB-01 A)",
+       "raw": [
+        {
+         "id": "s1",
+         "entityId": "p1",
+         "attribute": ":person/salary",
+         "value": {
+          "_tag": "ErasedValue",
+          "erasedAt": 200
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 100,
+         "recordedPosition": 1,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:0",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        },
+        {
+         "id": "s2",
+         "entityId": "p2",
+         "attribute": ":person/salary",
+         "value": {
+          "_tag": "ErasedValue",
+          "erasedAt": 200
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 100,
+         "recordedPosition": 1,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:0",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        },
+        {
+         "id": "s3",
+         "entityId": "p3",
+         "attribute": ":person/salary",
+         "value": {
+          "type": "integer",
+          "value": "3"
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 100,
+         "recordedPosition": 1,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:0",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        },
+        {
+         "id": "s4",
+         "entityId": "p4",
+         "attribute": ":person/salary",
+         "value": {
+          "type": "integer",
+          "value": "4"
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 100,
+         "recordedPosition": 1,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:0",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        }
+       ],
+       "snapshot": [
+        {
+         "id": "s1",
+         "entityId": "p1",
+         "attribute": ":person/salary",
+         "value": {
+          "_tag": "ErasedValue",
+          "erasedAt": 200
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 100,
+         "recordedPosition": 1,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:0",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        },
+        {
+         "id": "s2",
+         "entityId": "p2",
+         "attribute": ":person/salary",
+         "value": {
+          "_tag": "ErasedValue",
+          "erasedAt": 200
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 100,
+         "recordedPosition": 1,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:0",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        },
+        {
+         "id": "s3",
+         "entityId": "p3",
+         "attribute": ":person/salary",
+         "value": {
+          "type": "integer",
+          "value": "3"
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 100,
+         "recordedPosition": 1,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:0",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        },
+        {
+         "id": "s4",
+         "entityId": "p4",
+         "attribute": ":person/salary",
+         "value": {
+          "type": "integer",
+          "value": "4"
+         },
+         "validFrom": 0,
+         "validTo": null,
+         "recordedAt": 100,
+         "recordedPosition": 1,
+         "createdBy": null,
+         "entityType": "Person",
+         "schemaVersion": null,
+         "txId": "tx:0",
+         "retractedAt": null,
+         "retractedPosition": null,
+         "retractTxId": null
+        }
+       ]
+      }
+     }
+    ]
+   },
+   "new": "<absent>",
+   "features": [
+    "Q52e in flight",
+    "Q66b cursor",
+    "erase"
+   ],
+   "oldRefused": false,
+   "newRefused": false
+  }
+ ]
+}

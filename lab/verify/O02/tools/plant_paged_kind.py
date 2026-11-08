@@ -61,6 +61,18 @@ try:
         assert run_py.count(HOOK) == 1
         (PKG / "run.py").write_text(run_py.replace(HOOK, plant["register"] + HOOK))
         proc = subprocess.run([sys.executable, "-I", str(PKG / "cli.py"), "--self-check"], capture_output=True, text=True, cwd=str(ROOT))
+        # [CX-VO04H] Why: demonstrate that each registered plant actually emits nextPage through the public CLI.
+        # Rejected: interpreting AST text alone as evidence of a paged output (it could be unreachable).
+        artifacts = OUT.parent / "plant-artifacts"
+        artifacts.mkdir(exist_ok=True)
+        stem = name.split()[0]
+        case_file = artifacts / f"{stem}.case.json"
+        case_file.write_text(json.dumps({"format": "triplex-db-2/o-replay-case/1", "caseId": f"CX-VO04H/{stem}",
+                                        "queries": [{"id": "fake", "kind": "fakePaged"}]}) + "\n")
+        fake = subprocess.run([sys.executable, "-I", str(PKG / "cli.py"), str(case_file)],
+                              capture_output=True, text=True, cwd=str(ROOT))
+        (artifacts / f"{stem}.expected.json").write_text(fake.stdout)
+        (artifacts / f"{stem}.self-check.json").write_text(proc.stdout)
         try:
             report = json.loads(proc.stdout)
         except ValueError:
@@ -69,7 +81,9 @@ try:
         sec = section(report)
         failed = [r["check"] for r in (sec or {}).get("checks", []) if not r.get("pass")]
         rows.append({"plant": name, "exit": proc.returncode, "selfCheckStatus": report.get("status"),
-                     "q70lSection": {k: v for k, v in (sec or {}).items() if k != "checks"}, "failedChecks": failed})
+                     "q70lSection": {k: v for k, v in (sec or {}).items() if k != "checks"}, "failedChecks": failed,
+                     "fakeQueryExit": fake.returncode,
+                     "fakeQueryOutput": json.loads(fake.stdout)["queries"] if fake.returncode == 0 else fake.stderr})
 finally:
     for f in FILES:
         (PKG / f).write_text(ORIGINAL[f])

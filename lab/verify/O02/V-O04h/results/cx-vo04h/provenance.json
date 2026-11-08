@@ -1,0 +1,68 @@
+{
+  "verifierHead": "e4ce78157d61da84e64e49cd67c574639070cbef",
+  "scratch": "/private/tmp/CX-VO04H-2xsggws9",
+  "archives": [
+    {
+      "commit": "3c52a1d8edfc165185298bfe3341d4b5fff803e3",
+      "archive": "/private/tmp/CX-VO04H-2xsggws9/3c52a1d.tar",
+      "sha256": "b79e8d170e135cf36655c18203227c43d11f509f7a855ddf6fd692a839d99393",
+      "paths": [
+        "lab/oracles/replay",
+        "lab/acceptance",
+        "lab/verify/O02/convert_and_run.py",
+        "lab/verify/O02/tools",
+        "qualification/capacity/historical-assertion-metadata-v2/oracle.mjs",
+        "qualification/capacity/historical-assertion-metadata-v1/oracle.mjs",
+        "qualification/capacity/configured-entities-v1/xtdb-tiny-v4/oracle.json",
+        "qualification/capacity/configured-entities-v1/CONTRACT.md",
+        "qualification/workloads/temporal-workloads.json",
+        "qualification/workloads/event_oracles.py"
+      ]
+    },
+    {
+      "commit": "91ba352028d6b9ed0f2945ff1850e8b1bb4f9c6e",
+      "archive": "/private/tmp/CX-VO04H-2xsggws9/91ba352.tar",
+      "sha256": "c19c78de316531f3709103831b98c48570fed04f12c8a63f923417e929de74c7",
+      "paths": [
+        "lab/oracles/replay",
+        "lab/acceptance",
+        "lab/verify/O02/convert_and_run.py",
+        "lab/verify/O02/tools",
+        "qualification/capacity/historical-assertion-metadata-v2/oracle.mjs",
+        "qualification/capacity/historical-assertion-metadata-v1/oracle.mjs",
+        "qualification/capacity/configured-entities-v1/xtdb-tiny-v4/oracle.json",
+        "qualification/capacity/configured-entities-v1/CONTRACT.md",
+        "qualification/workloads/temporal-workloads.json",
+        "qualification/workloads/event_oracles.py"
+      ]
+    }
+  ],
+  "toolHashes": {
+    "patch_converter.author.py": "01c1e6cb0f83f8f5288ede7ff330740849c0b453bfcc1964e3ddb615a2a8a76d",
+    "hash_table.py": "6f905cfdf2c6c1873c04a3c6123c670129eafc0b28422e7cbaa18721acbcefab",
+    "judge_changed.py": "b13ec881dfb4eeb6808c39018cf37f4c95989622f11b31d7fb5a9e4aa93a743d",
+    "scan_golden_delta.py": "79783f3c007bb98245645f1e81bf4dc73a970312c0ebbb20dae176999d089e5c",
+    "fuzz_stats.py": "020956c1980541dff6c84edc72d43ced0c255734e3048bb247d9ce44fd5900bd",
+    "compare_results.py": "413f11805cdfafa386f019ad0b7e3b90a08338f4088c4b2e222e9cad499d9e1b",
+    "plant_errors.py": "44c20875d40153e917fe556d8c4c85b36c163ff2289980d8889708ee66462703",
+    "convert_and_run.o02-patched.author.py": "4aca518361e559dcf0e09c094bf7a74981b417210ae39c9043f59a3110d6aac1",
+    "probe_section4.o01.py": "f1e337230c15b2b4b89a7d0bfc83d9f499c7595707a7d3033d839df692af3152",
+    "probe_delta_033.py": "0ff7eb4cb9e022958b95463b5b3626011beb4b61160873ba029d6a49b78ca406",
+    "transitions.py": "06e938c1afa3da2199285d5691ad319aab127fe1003b43943188dd07c1c0bcdd",
+    "probe_q49.py": "45c7653528f3601192b729c19cc6d417eb62d892f3bea2744cab415185935c9c",
+    "negative_control.o01.py": "a3c3659628c5506d4014624de827953df9f4a6ba658ca4177b8dfd9ccac84c73",
+    "hash_verify.py": "64d423428f3e200409ee778c62aefe76fa9a20eb87635e0c8e64d1c5b8c4b38e",
+    "f1_feasibility.py": "adfddde60579a4b4f190de18779e51e5f6635f49a3573e66e4ddd4846fbde253",
+    "plant_paged_kind.py": "6bde95de778680c77e91a9e2b1bf212e573ca71aad9632f7237543b43d7f5e43",
+    "diff_modulo_rule.py": "be61a68551daa7fd063c974645024a316c8f511631f4b71779f4b9e24087021a",
+    "differential.py": "7f8bd6c5483afbf78bf8ce1d84d51aafcf90deb57d6f806c494ad778808f08ed",
+    "probe_035.py": "9084d80a352e63321cd128ddcff4c08a09a79f6d9c7398801553facf5b212a27",
+    "probe_q52.py": "86a5b980a821dbb99784e84f27d783188ef632852c0f4e34cc47a7102b9e2086",
+    "convert_and_run.o01-original.py": "9e8288628bcb1e36968165563ad96a48b8196bd21b2a6c317c51a3bb1db50ebe",
+    "pin_scope.py": "3dd7fa1530173ec0225caa6f0441005e52fce854e51b5a6c20be05d9e3f39c86",
+    "qlever_legacy_check.py": "9217d5d08ee941e4dfd8121b299c16addb119d988c20fdf41bc874569c2e2e15",
+    "diff_runs.py": "48a7cd40b06647367d4f84f832bf204151c131334072a16ec405483dd92bab72"
+  },
+  "python": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 21.0.0 (clang-2100.0.123.102)]",
+  "startedAt": "2026-11-08T21:14:32Z"
+}

@@ -1,0 +1,4 @@
+mine   {"AGREE": 317, "AGREE-RULED": 19, "NOT-MODELED": 3, "VECTOR-BUG": 2} {"AGREE": 46, "AGREE+NOT-MODELED": 2, "AGREE+VECTOR-BUG": 1}
+author {"AGREE": 317, "AGREE-RULED": 19, "NOT-MODELED": 3, "VECTOR-BUG": 2} {"AGREE": 46, "AGREE+NOT-MODELED": 2, "AGREE+VECTOR-BUG": 1}
+item verdict differences: 0
+vector verdict differences: 0
