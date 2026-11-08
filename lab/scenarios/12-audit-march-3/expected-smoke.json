@@ -1,0 +1,280 @@
+{
+ "format": "tx2-gs-expected/1",
+ "scenario": 12,
+ "slug": "audit-march-3",
+ "rung": "smoke",
+ "seed": 20261112,
+ "genVersion": "w01-gen/1",
+ "streamSha256": "554f56651b4f6d3e95a845458abd4f618e7ad7e3e33ae002a2ff80e8777303ac",
+ "commands": 18,
+ "setupCommands": 2,
+ "facts": 322,
+ "oracle": {
+  "id": "O-REPLAY",
+  "version": "0.3.1",
+  "commit": "8cc2c26f6f17ed627a3ed608f1252fe0e240bb5b",
+  "sourceBranch": "main (O-REPLAY 0.3.1 accepted by independent verification, merge 4591715)",
+  "files": {
+   "lab/oracles/replay/RULES.md": "60e745ee8733271cede926a6f55e1f473d2b3c7a9a721500f9d277438971d54c",
+   "lab/oracles/replay/SCHEMA.md": "052587750dea7f59495dfc9475a2bb69bc2bf6a80581944b57180241b2b06a26",
+   "lab/oracles/replay/__init__.py": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
+   "lab/oracles/replay/__main__.py": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
+   "lab/oracles/replay/cli.py": "1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5",
+   "lab/oracles/replay/constraints.py": "e93fcba3ca36be607b05f522dd779869ced816e2834f629130ecdd2408527571",
+   "lab/oracles/replay/entities.py": "7b423d235cdc39871bd885ea46d0c4d3280c8d2879f4926c6afeb78191b9e365",
+   "lab/oracles/replay/errors.py": "5cfdd07ed710557d1db868bfae38e32f7c851dc3007fbcc9b2c0de521185f887",
+   "lab/oracles/replay/exact.py": "3574703eb821b94b18144d3461d5ccacecaad5665f5308308db2b69f76fde0b8",
+   "lab/oracles/replay/replay.py": "f8e4980591fa6e4056f0945fbc8ac2864d51d47672858904cd352f76ae0c8caa",
+   "lab/oracles/replay/run.py": "8ad651b255ed2ce5c9d015011d5f047fff33e9d3d6d57590797513b297a21183",
+   "lab/oracles/replay/scale.py": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
+   "lab/oracles/replay/selfcheck.py": "c1e0ae41cfe9bac7f2ed7f249715b5ae71e98f4d66e4ae152938b6d333c9418c",
+   "lab/oracles/replay/values.py": "67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982",
+   "lab/oracles/replay/views.py": "4d23472c85ac559f8d1bad7257fe219e7dc5fa7b0827c2595e7ff072d1816f28"
+  }
+ },
+ "oracleCases": [
+  {
+   "caseId": "GS/12/smoke/chunk-0000",
+   "caseSha256": "bcd58fe8cda98591b393c7e4a865fa3254611033f0a3f855fc101b3ff208cd22",
+   "verdict": "EXPECTED-ONLY"
+  }
+ ],
+ "validAts": [
+  1794052800000,
+  1772496000000
+ ],
+ "digestSubjects": 13,
+ "noDigestSubjects": [],
+ "outcomes": {
+  "10": {
+   "outcome": "rejected",
+   "category": "command-already-committed",
+   "errorTag": "CommandAlreadyCommittedError"
+  },
+  "11": {
+   "outcome": "rejected",
+   "category": "invalid-value",
+   "errorTag": "InvalidTripleError"
+  }
+ },
+ "notModeled": [],
+ "hand": null,
+ "gaps": [
+  "O-REPLAY is being corrected by EXP-O02 (numeric and -0 behavior); this scenario relies only on int64 text, strings, refs and datetimes"
+ ],
+ "digests": {
+  "m0000": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8",
+    "1772496000000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "bfecefbbe922e59f82cfead2",
+     "1772496000000": "bfecefbbe922e59f82cfead2"
+    },
+    "6": {
+     "1794052800000": "b63a832bf3d327244cd9dfa1",
+     "1772496000000": "b63a832bf3d327244cd9dfa1"
+    }
+   }
+  },
+  "m0001": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8",
+    "1772496000000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "ceb792735ccfb6cd758e0d54",
+     "1772496000000": "ceb792735ccfb6cd758e0d54"
+    }
+   }
+  },
+  "m0002": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8",
+    "1772496000000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "9e3d4906e41ec2d43ebc5c67",
+     "1772496000000": "9e3d4906e41ec2d43ebc5c67"
+    },
+    "8": {
+     "1794052800000": "55d4b08af94e197495ab9f70",
+     "1772496000000": "55d4b08af94e197495ab9f70"
+    }
+   }
+  },
+  "m0003": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8",
+    "1772496000000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "7bd28529949679e7b6c08d01",
+     "1772496000000": "7bd28529949679e7b6c08d01"
+    }
+   }
+  },
+  "m0004": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8",
+    "1772496000000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "03789892087530885ef62581",
+     "1772496000000": "03789892087530885ef62581"
+    },
+    "14": {
+     "1794052800000": "97e8049974c9f1c3601beaff",
+     "1772496000000": "97e8049974c9f1c3601beaff"
+    }
+   }
+  },
+  "m0005": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8",
+    "1772496000000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "6b05c6c77f0fee2600c06c03",
+     "1772496000000": "6b05c6c77f0fee2600c06c03"
+    }
+   }
+  },
+  "m0006": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8",
+    "1772496000000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "d8cfc40cc1c86556940f4d9d",
+     "1772496000000": "d8cfc40cc1c86556940f4d9d"
+    },
+    "15": {
+     "1794052800000": "f4cd49a6d33cc4a8853f35b6",
+     "1772496000000": "f4cd49a6d33cc4a8853f35b6"
+    }
+   }
+  },
+  "m0007": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8",
+    "1772496000000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "f5571e922796e6cd0c34caa9",
+     "1772496000000": "f5571e922796e6cd0c34caa9"
+    }
+   }
+  },
+  "tr00000": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8",
+    "1772496000000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "1": {
+     "1794052800000": "79e117a13ddf7ca5ec525c8e",
+     "1772496000000": "e3b0c44298fc1c149afbf4c8"
+    },
+    "2": {
+     "1794052800000": "5ab5a1e4045bbf368ce8bfc1",
+     "1772496000000": "e3b0c44298fc1c149afbf4c8"
+    },
+    "7": {
+     "1794052800000": "8c629f52190a68c797d27274",
+     "1772496000000": "e3b0c44298fc1c149afbf4c8"
+    },
+    "10": {
+     "1794052800000": "8c629f52190a68c797d27274",
+     "1772496000000": "e3b0c44298fc1c149afbf4c8",
+     "rejected": true
+    }
+   }
+  },
+  "tr00001": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8",
+    "1772496000000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "1": {
+     "1794052800000": "82b6cc47c2243fe5321ad0a2",
+     "1772496000000": "e3b0c44298fc1c149afbf4c8"
+    },
+    "16": {
+     "1794052800000": "117b3211273fa2dbd00f5085",
+     "1772496000000": "e3b0c44298fc1c149afbf4c8"
+    },
+    "17": {
+     "1794052800000": "69fd842f1fe3115c0c5307a3",
+     "1772496000000": "e3b0c44298fc1c149afbf4c8"
+    }
+   }
+  },
+  "tr00002": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8",
+    "1772496000000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "1": {
+     "1794052800000": "7050007f7c3ee17ab4d8f5de",
+     "1772496000000": "e3b0c44298fc1c149afbf4c8"
+    },
+    "4": {
+     "1794052800000": "2c2c995be82390d67f201b5e",
+     "1772496000000": "e3b0c44298fc1c149afbf4c8"
+    },
+    "13": {
+     "1794052800000": "555f031d21a1d9a02228a934",
+     "1772496000000": "e3b0c44298fc1c149afbf4c8"
+    }
+   }
+  },
+  "tr00003": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8",
+    "1772496000000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "1": {
+     "1794052800000": "6d23a7cee6c0ee3233bd374e",
+     "1772496000000": "e3b0c44298fc1c149afbf4c8"
+    },
+    "3": {
+     "1794052800000": "77e17d789f396ccb84fdf914",
+     "1772496000000": "e3b0c44298fc1c149afbf4c8"
+    }
+   }
+  },
+  "tr00004": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8",
+    "1772496000000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "1": {
+     "1794052800000": "0c9959453c693bf1742c28cd",
+     "1772496000000": "e3b0c44298fc1c149afbf4c8"
+    },
+    "5": {
+     "1794052800000": "5eed80627b09de6bd37a35b3",
+     "1772496000000": "e3b0c44298fc1c149afbf4c8"
+    },
+    "9": {
+     "1794052800000": "6ec99366826c34f27c9847c8",
+     "1772496000000": "e3b0c44298fc1c149afbf4c8"
+    }
+   }
+  }
+ }
+}

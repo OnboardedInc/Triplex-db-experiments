@@ -1,0 +1,54 @@
+{
+ "planted": 8,
+ "caught": 8,
+ "rows": [
+  {
+   "vector": "Q8F-03",
+   "item": "Q1",
+   "mutation": "bit flip in one binary64",
+   "verdict": "DISAGREE"
+  },
+  {
+   "vector": "Q8F-01",
+   "item": "Q1",
+   "mutation": "UTF-16 order instead of codepoint order",
+   "verdict": "DISAGREE"
+  },
+  {
+   "vector": "G9-CUT-01",
+   "item": "N4",
+   "mutation": "future retirement leaks into the snapshot",
+   "verdict": "DISAGREE"
+  },
+  {
+   "vector": "G9-CUT-01",
+   "item": "Q4",
+   "mutation": "exclusive R",
+   "verdict": "DISAGREE"
+  },
+  {
+   "vector": "G5-SUM-07",
+   "item": "Q",
+   "mutation": "binary64 rounding of an int64 sum",
+   "verdict": "DISAGREE"
+  },
+  {
+   "vector": "C5-02",
+   "item": "Q4",
+   "mutation": "wrong surviving support",
+   "verdict": "DISAGREE"
+  },
+  {
+   "vector": "C5-07",
+   "item": "cmd:C3",
+   "mutation": "worsened violation accepted",
+   "verdict": "DISAGREE"
+  },
+  {
+   "vector": "G9-HO-01",
+   "item": "V30.5",
+   "mutation": "inclusive validTo",
+   "verdict": "DISAGREE"
+  }
+ ]
+}

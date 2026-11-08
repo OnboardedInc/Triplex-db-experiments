@@ -1,0 +1,21 @@
+{
+  "id": "C96",
+  "slug": "err-affected-world-by-world",
+  "title": "A04: world 1 has a cardinality clash and world 2 a bad subject: W0.E_CARDINALITY",
+  "op": "affected",
+  "checks": [],
+  "notes": [
+    "From V-D01c P09 (A04). Step 3 runs 3.1 to 3.3 for one world at a time, in array order: world 1 fails 3.3 before",
+    "world 2's subject is checked."
+  ],
+  "input": {
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "release": "R1",
+    "worlds": [
+      {"subject": "pl:a", "facts": [{"e": "pl:a", "a": "startDate", "v": "2026-11-02", "tx": 1}, {"e": "pl:a", "a": "startDate", "v": "2026-11-03", "tx": 1}]},
+      {"subject": "xx:b", "facts": []}
+    ],
+    "writes": []
+  },
+  "expected": {"error": "W0.E_CARDINALITY"}
+}

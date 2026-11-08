@@ -1,0 +1,45 @@
+{
+ "cases": 800,
+ "refused": 0,
+ "commandOutcomes": {
+  "committed": 2476,
+  "rejected/E-DECIMAL-OVERFLOW": 86,
+  "rejected/E-TX-CONFLICT": 50,
+  "rejected/E-DECIMAL-FRACTION": 89,
+  "rejected/E-INVALID-VALUE": 703,
+  "rejected/E-COMMAND-COMMITTED": 43,
+  "rejected/E-CONSTRAINT": 184,
+  "rejected/E-VALUE-OUT-OF-RANGE": 12
+ },
+ "queryResultsByKind": {
+  "compare": 299,
+  "valueSupports": 289,
+  "entityPage": 265,
+  "aggregate": 299,
+  "assertionSnapshot": 283,
+  "transactions": 291,
+  "history": 307,
+  "assertions": 288,
+  "count": 271,
+  "cutCatalog": 325,
+  "timeline": 286,
+  "getMany": 269,
+  "match": 302,
+  "get": 256,
+  "journalFacts": 343,
+  "reachability": 282,
+  "expr": 157,
+  "find": 294
+ },
+ "queryErrors": {
+  "E-MIXED-FAMILY": 89,
+  "E-INVALID-VALUE": 51,
+  "X-NO-POSITION": 287,
+  "E-CONFLICTING-VALUES": 17,
+  "E-DECIMAL-BARE-DIVIDE": 20,
+  "E-INTEGER-OVERFLOW": 7,
+  "E-DECIMAL-AVG": 1,
+  "E-DIVISION-BY-ZERO": 9,
+  "E-INTEGER-AVG": 1
+ }
+}

@@ -1,0 +1,49 @@
+{
+ "old": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/at8cc2c26",
+ "new": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6",
+ "cases": 643,
+ "random": 400,
+ "seed": 49,
+ "identical": 632,
+ "bothRefused": 6,
+ "different": 5,
+ "rows": [
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/p035-o04/DR_JSON_CONVERT_excess_fraction.case.json",
+   "path": "$.queries[0].error._tag",
+   "old": "QueryError",
+   "new": "InvalidTripleError"
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/p035-o04/DR_JSON_CONVERT_non_number.case.json",
+   "path": "$.queries[0].error._tag",
+   "old": "QueryError",
+   "new": "InvalidTripleError"
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/p035-o04/DR_JSON_CONVERT_valid.case.json",
+   "path": "$.queries[0].error",
+   "old": {
+    "error": "E-INVALID-CONVERSION",
+    "_tag": "QueryError",
+    "reason": "invalid-conversion",
+    "phase": "execution",
+    "message": "toDecimal of json",
+    "operand": "json"
+   },
+   "new": "<absent>"
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/p035-o04/erasure_op_erase_Q49a_.case.json",
+   "path": "$.caseId",
+   "old": "<absent>",
+   "new": "v-o03/probe"
+  },
+  {
+   "case": "/private/tmp/claude-501/-Users-sam--claude-spares-spare-aGUQ31/f6cb21a3-65b3-4dbb-938c-068fe085c763/scratchpad/delta-o04/Q24_erasure_command.case.json",
+   "path": "$.caseId",
+   "old": "<absent>",
+   "new": "v-o02/delta"
+  }
+ ]
+}

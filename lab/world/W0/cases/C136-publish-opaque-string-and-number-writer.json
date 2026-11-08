@@ -1,0 +1,49 @@
+{
+  "id": "C136",
+  "slug": "publish-opaque-string-and-number-writer",
+  "title": "A07: the writer for opaque strings and numbers",
+  "op": "publish",
+  "checks": [],
+  "synthetic": true,
+  "notes": [
+    "RULINGS Q53a (A07), SPEC 9 item 7. The payload's string holds U+007F, the five characters with short escapes, U+0001,",
+    "a slash, U+2028 and a lone surrogate (\\ud800, legal JSON escape grammar). It is written \"\\u007f\\b\\f\\n\\r\\t\\u0001/\\u2028\\ud800\":",
+    "every character outside U+0020 to U+007E is escaped, \\b \\t \\n \\f \\r use their short forms, others use \\u with",
+    "lowercase hex, and the slash is not escaped. The numbers -0, 1E3, 1.50 and a 30-digit integer are written 0, 1E3, 1.50",
+    "and the same 30 digits: integer tokens as integers, other number tokens as their source text. The keys \"9\" and \"10\"",
+    "sort by code point, \"10\" first (a JavaScript object would put the array-index keys in numeric order)."
+  ],
+  "input": {
+    "evaluations": [
+      {
+        "basis": {"tx": 20, "validTime": "2026-11-04T12:00:00.000000Z"},
+        "release": "sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031",
+        "subject": "pl:a",
+        "workItems": [
+          {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "inputs": [], "key": "", "kind": "k", "payload": {"9": 1, "10": 2, "n": [-0, 1E3, 1.50, 123456789012345678901234567890], "s": "\u007f\b\f\n\r\t\u0001/\u2028\ud800"}, "rule": "MINWAGE", "version": "wv:s"}
+        ]
+      }
+    ],
+    "state": {
+      "items": [],
+      "pending": [],
+      "subjects": []
+    }
+  },
+  "expected": {
+    "deliveries": [
+      {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "key": "", "kind": "k", "payload": {"10": 2, "9": 1, "n": [0, 1E3, 1.50, 123456789012345678901234567890], "s": "\u007f\b\f\n\r\t\u0001/\u2028\ud800"}, "rule": "MINWAGE", "seq": 1, "subject": "pl:a", "version": "wv:s"}
+    ],
+    "state": {
+      "items": [
+        {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "payload": {"10": 2, "9": 1, "n": [0, 1E3, 1.50, 123456789012345678901234567890], "s": "\u007f\b\f\n\r\t\u0001/\u2028\ud800"}, "retired": false, "seq": 1, "subject": "pl:a"}
+      ],
+      "pending": [
+        {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "key": "", "kind": "k", "payload": {"10": 2, "9": 1, "n": [0, 1E3, 1.50, 123456789012345678901234567890], "s": "\u007f\b\f\n\r\t\u0001/\u2028\ud800"}, "rule": "MINWAGE", "seq": 1, "subject": "pl:a", "version": "wv:s"}
+      ],
+      "subjects": [
+        {"basis": {"tx": 20, "validTime": "2026-11-04T12:00:00.000000Z"}, "subject": "pl:a"}
+      ]
+    }
+  }
+}

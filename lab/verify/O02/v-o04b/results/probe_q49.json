@@ -1,0 +1,1631 @@
+{
+ "counts": {
+  "MATCH": 85
+ },
+ "probes": 85,
+ "rows": [
+  {
+   "ruling": "Q49a",
+   "probe": "every command commits (erasures included)",
+   "expected": "10 committed outcomes",
+   "verdict": "MATCH",
+   "oracle": [
+    "committed",
+    "committed",
+    "committed",
+    "committed",
+    "committed",
+    "committed",
+    "committed",
+    "committed",
+    "committed",
+    "committed"
+   ]
+  },
+  {
+   "ruling": "Q49a",
+   "probe": "erasure commit has a position and is in cutCatalog",
+   "expected": "positions 1..10; c5 at 6, c9 at 10",
+   "verdict": "MATCH",
+   "oracle": [
+    [
+     1,
+     0,
+     null
+    ],
+    [
+     2,
+     1,
+     null
+    ],
+    [
+     3,
+     2,
+     null
+    ],
+    [
+     4,
+     3,
+     null
+    ],
+    [
+     5,
+     4,
+     null
+    ],
+    [
+     6,
+     5,
+     true
+    ],
+    [
+     7,
+     6,
+     true
+    ],
+    [
+     8,
+     7,
+     true
+    ],
+    [
+     9,
+     8,
+     null
+    ],
+    [
+     10,
+     9,
+     true
+    ]
+   ]
+  },
+  {
+   "ruling": "Q49a",
+   "probe": "erasure commit in transactions()",
+   "expected": "10 records, tx:5 and tx:9 included",
+   "verdict": "MATCH",
+   "oracle": [
+    "tx:0",
+    "tx:1",
+    "tx:2",
+    "tx:3",
+    "tx:4",
+    "tx:5",
+    "tx:6",
+    "tx:7",
+    "tx:8",
+    "tx:9"
+   ]
+  },
+  {
+   "ruling": "Q49a",
+   "probe": "tx:5 changes are identities only",
+   "expected": "(p1 ssn [s1 s1b]) (p2 ssn [s2]) (p7 ssn [g1 g2]); no value field",
+   "verdict": "MATCH",
+   "oracle": [
+    {
+     "op": "erase",
+     "entityId": "p1",
+     "attribute": ":person/ssn",
+     "assertionIds": [
+      "s1",
+      "s1b"
+     ]
+    },
+    {
+     "op": "erase",
+     "entityId": "p2",
+     "attribute": ":person/ssn",
+     "assertionIds": [
+      "s2"
+     ]
+    },
+    {
+     "op": "erase",
+     "entityId": "p7",
+     "attribute": ":person/ssn",
+     "assertionIds": [
+      "g1",
+      "g2"
+     ]
+    }
+   ]
+  },
+  {
+   "ruling": "Q49a",
+   "probe": "tx:9 changes are identities only",
+   "expected": "(p1 salary [sal1]) (p6 salary [a-sal6]) (p1 org [r1]) (p1 tags [t1a])",
+   "verdict": "MATCH",
+   "oracle": [
+    {
+     "op": "erase",
+     "entityId": "p1",
+     "attribute": ":person/salary",
+     "assertionIds": [
+      "sal1"
+     ]
+    },
+    {
+     "op": "erase",
+     "entityId": "p6",
+     "attribute": ":person/salary",
+     "assertionIds": [
+      "a-sal6"
+     ]
+    },
+    {
+     "op": "erase",
+     "entityId": "p1",
+     "attribute": ":person/org",
+     "assertionIds": [
+      "r1"
+     ]
+    },
+    {
+     "op": "erase",
+     "entityId": "p1",
+     "attribute": ":person/tags",
+     "assertionIds": [
+      "t1a"
+     ]
+    }
+   ]
+  },
+  {
+   "ruling": "Q49a",
+   "probe": "tx:5 has its own :_tx/ facts",
+   "expected": "3 :_tx/change facts and changed entities {p1 p2 p7}",
+   "verdict": "MATCH",
+   "oracle": [
+    3,
+    [
+     "p1",
+     "p2",
+     "p7"
+    ],
+    [
+     "p1",
+     "p2",
+     "p7"
+    ]
+   ]
+  },
+  {
+   "ruling": "Q49a",
+   "probe": "erasure :_tx/change facts carry no value",
+   "expected": "json content of each tx:5 change fact has no value field",
+   "verdict": "MATCH",
+   "oracle": [
+    {
+     "op": "erase",
+     "entityId": "p1",
+     "attribute": ":person/ssn",
+     "assertionIds": [
+      "s1",
+      "s1b"
+     ]
+    },
+    {
+     "op": "erase",
+     "entityId": "p2",
+     "attribute": ":person/ssn",
+     "assertionIds": [
+      "s2"
+     ]
+    },
+    {
+     "op": "erase",
+     "entityId": "p7",
+     "attribute": ":person/ssn",
+     "assertionIds": [
+      "g1",
+      "g2"
+     ]
+    }
+   ]
+  },
+  {
+   "ruling": "Q49b",
+   "probe": "re-erase commits with an empty change list",
+   "expected": "tx:6 committed, changes []",
+   "verdict": "MATCH",
+   "oracle": [
+    [],
+    0
+   ]
+  },
+  {
+   "ruling": "Q49b",
+   "probe": "erase matching nothing commits with an empty change list",
+   "expected": "tx:7 committed, changes []",
+   "verdict": "MATCH",
+   "oracle": []
+  },
+  {
+   "ruling": "Q49b",
+   "probe": "first erasure sets erasedAt",
+   "expected": "s1b erasedAt 200 (not the re-erase's 210)",
+   "verdict": "MATCH",
+   "oracle": {
+    "_tag": "ErasedValue",
+    "erasedAt": 200
+   }
+  },
+  {
+   "ruling": "Q24/Q49a",
+   "probe": "mall: erased values are markers",
+   "expected": "the 8 live erased assertions show ErasedValue{erasedAt}",
+   "verdict": "MATCH",
+   "oracle": {
+    "wrong": [],
+    "missing": []
+   }
+  },
+  {
+   "ruling": "Q24/Q49a",
+   "probe": "mp1: erased values are markers",
+   "expected": "s1b, sal1, r1, t1a show the marker",
+   "verdict": "MATCH",
+   "oracle": {
+    "wrong": [],
+    "missing": []
+   }
+  },
+  {
+   "ruling": "Q24/Q49a",
+   "probe": "assertions relation: markers",
+   "expected": "all 9 erased assertions show the marker",
+   "verdict": "MATCH",
+   "oracle": {
+    "wrong": [],
+    "missing": []
+   }
+  },
+  {
+   "ruling": "Q24/Q49a",
+   "probe": "history raw lifetime: markers, retirement kept",
+   "expected": "s1 marker with its retirement (retracted at 140)",
+   "verdict": "MATCH",
+   "oracle": [
+    [
+     "n1",
+     {
+      "type": "string",
+      "value": "Ann"
+     },
+     null
+    ],
+    [
+     "s1",
+     {
+      "_tag": "ErasedValue",
+      "erasedAt": 200
+     },
+     140
+    ],
+    [
+     "m1",
+     {
+      "type": "string",
+      "value": "ann@x"
+     },
+     null
+    ],
+    [
+     "sal1",
+     {
+      "_tag": "ErasedValue",
+      "erasedAt": 240
+     },
+     null
+    ],
+    [
+     "t1a",
+     {
+      "_tag": "ErasedValue",
+      "erasedAt": 240
+     },
+     null
+    ],
+    [
+     "t1b",
+     {
+      "type": "string",
+      "value": "public"
+     },
+     null
+    ],
+    [
+     "r1",
+     {
+      "_tag": "ErasedValue",
+      "erasedAt": 240
+     },
+     null
+    ],
+    [
+     "s1b",
+     {
+      "_tag": "ErasedValue",
+      "erasedAt": 200
+     },
+     null
+    ]
+   ]
+  },
+  {
+   "ruling": "Q49a",
+   "probe": "earlier :_tx/change facts re-rendered with markers",
+   "expected": "tx:1's 7 change facts: s1, sal1, t1a, r1 carry markers, none carries plaintext",
+   "verdict": "MATCH",
+   "oracle": [
+    7,
+    "{\"cut\": {\"scope\": \"s\", \"position\": 10, \"recordedAt\": null, \"validAt\": 1000}, \"count\": 7, \"contract\": \"raw-lifetime (AMB-01 A)\", \"raw\": [{\"id\": \"journal:tx:1:change:0\", \"entityId\": \"tx:1\", \"attribute\": \":_tx/change\", \"value\": {\"type\": \"json\", \"value\": {\"op\": \"assert\", \"tripleId\": \"n1\", \"entityId\": \"p1\", \"attribute\": \":person/name\", \"entityType\": \"Person\", \"value\": {\"type\": \"string\", \"value\": \"Ann\"}"
+   ]
+  },
+  {
+   "ruling": "Q24",
+   "probe": "value written after the erasure is readable",
+   "expected": "p4 ssn LATER-555 readable",
+   "verdict": "MATCH",
+   "oracle": "s4"
+  },
+  {
+   "ruling": "Q24",
+   "probe": "timeline: markers",
+   "expected": "s1 and s1b markers at 200",
+   "verdict": "MATCH",
+   "oracle": [
+    {
+     "identity": "s1",
+     "value": {
+      "_tag": "ErasedValue",
+      "erasedAt": 200
+     },
+     "recordedAt": 110,
+     "recordedPosition": 2,
+     "txId": "tx:1",
+     "validFrom": 0,
+     "validTo": null,
+     "knownRetirement": {
+      "retractedAt": 140,
+      "retractTxId": "tx:4",
+      "retractedPosition": 5
+     }
+    },
+    {
+     "identity": "s1b",
+     "value": {
+      "_tag": "ErasedValue",
+      "erasedAt": 200
+     },
+     "recordedAt": 140,
+     "recordedPosition": 5,
+     "txId": "tx:4",
+     "validFrom": 0,
+     "validTo": null,
+     "knownRetirement": null
+    }
+   ]
+  },
+  {
+   "ruling": "Q24",
+   "probe": "entityPage bodies: markers",
+   "expected": "the 8 live erased assertions show the marker in page bodies",
+   "verdict": "MATCH",
+   "oracle": {
+    "wrong": [],
+    "missing": []
+   }
+  },
+  {
+   "ruling": "Q24/Q49c",
+   "probe": "get p1: single-support ssn is the marker",
+   "expected": "ssn = marker(200)",
+   "verdict": "MATCH",
+   "oracle": {
+    "value": {
+     "_tag": "ErasedValue",
+     "erasedAt": 200
+    },
+    "supports": [
+     "s1b"
+    ]
+   }
+  },
+  {
+   "ruling": "Q49c",
+   "probe": "get p1: erased reference not followed",
+   "expected": "org = marker(240); the include returns the marker",
+   "verdict": "MATCH",
+   "oracle": [
+    {
+     "value": {
+      "_tag": "ErasedValue",
+      "erasedAt": 240
+     },
+     "supports": [
+      "r1"
+     ]
+    },
+    {
+     "org": {
+      "_tag": "ErasedValue",
+      "erasedAt": 240
+     }
+    }
+   ]
+  },
+  {
+   "ruling": "Q49c",
+   "probe": "get p2: readable reference followed",
+   "expected": "include org returns the org:1 document (Acme)",
+   "verdict": "MATCH",
+   "oracle": {
+    "org": {
+     "entityId": "org:1",
+     "entityType": "Org",
+     "properties": {
+      "label": {
+       "value": {
+        "type": "string",
+        "value": "Acme"
+       },
+       "supports": [
+        "o1"
+       ]
+      }
+     },
+     "missingRequired": [],
+     "undeclaredAttributes": []
+    }
+   }
+  },
+  {
+   "ruling": "Q49c",
+   "probe": "get p1: card-many keeps the readable element and the marker",
+   "expected": "tags = {public, marker(240)}",
+   "verdict": "MATCH",
+   "oracle": {
+    "values": [
+     {
+      "value": {
+       "type": "string",
+       "value": "public"
+      },
+      "supports": [
+       "t1b"
+      ]
+     },
+     {
+      "value": {
+       "_tag": "ErasedValue",
+       "erasedAt": 240
+      },
+      "supports": [
+       "t1a"
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "ruling": "Q49c",
+   "probe": "get p7: two erased card-one values are one marker group",
+   "expected": "ssn = marker(200), no conflict",
+   "verdict": "MATCH",
+   "oracle": {
+    "id": "gp7",
+    "kind": "get",
+    "result": {
+     "entityId": "p7",
+     "entityType": "Person",
+     "properties": {
+      "name": {
+       "value": {
+        "type": "string",
+        "value": "Gus"
+       },
+       "supports": [
+        "n7"
+       ]
+      },
+      "ssn": {
+       "value": {
+        "_tag": "ErasedValue",
+        "erasedAt": 200
+       },
+       "supports": [
+        "g1",
+        "g2"
+       ]
+      }
+     },
+     "missingRequired": [],
+     "undeclaredAttributes": []
+    }
+   }
+  },
+  {
+   "ruling": "Q49c",
+   "probe": "valueSupports: one marker group per (entity, attribute)",
+   "expected": "p1 [s1b], p2 [s2], p7 [g1 g2] as markers; p3, p4 readable",
+   "verdict": "MATCH",
+   "oracle": [
+    {
+     "entityId": "p1",
+     "attribute": ":person/ssn",
+     "value": {
+      "_tag": "ErasedValue",
+      "erasedAt": 200
+     },
+     "count": 1,
+     "assertionIds": [
+      "s1b"
+     ]
+    },
+    {
+     "entityId": "p2",
+     "attribute": ":person/ssn",
+     "value": {
+      "_tag": "ErasedValue",
+      "erasedAt": 200
+     },
+     "count": 1,
+     "assertionIds": [
+      "s2"
+     ]
+    },
+    {
+     "entityId": "p3",
+     "attribute": ":person/ssn",
+     "value": {
+      "type": "string",
+      "value": "VISIBLE-CCC-333"
+     },
+     "count": 1,
+     "assertionIds": [
+      "s3"
+     ]
+    },
+    {
+     "entityId": "p4",
+     "attribute": ":person/ssn",
+     "value": {
+      "type": "string",
+      "value": "LATER-555"
+     },
+     "count": 1,
+     "assertionIds": [
+      "s4"
+     ]
+    },
+    {
+     "entityId": "p7",
+     "attribute": ":person/ssn",
+     "value": {
+      "_tag": "ErasedValue",
+      "erasedAt": 200
+     },
+     "count": 2,
+     "assertionIds": [
+      "g1",
+      "g2"
+     ]
+    }
+   ]
+  },
+  {
+   "ruling": "Q49c",
+   "probe": "match value pattern never matches an erased value",
+   "expected": "match ssn = SECRET-AAA-444: no rows",
+   "verdict": "MATCH",
+   "oracle": []
+  },
+  {
+   "ruling": "Q49c",
+   "probe": "match value pattern on a readable value",
+   "expected": "match ssn = VISIBLE-CCC-333: [s3]",
+   "verdict": "MATCH",
+   "oracle": [
+    "s3"
+   ]
+  },
+  {
+   "ruling": "Q49c",
+   "probe": "assertionSnapshot value pattern never matches an erased value",
+   "expected": "no rows",
+   "verdict": "MATCH",
+   "oracle": []
+  },
+  {
+   "ruling": "Q49c",
+   "probe": "find eq never selects by an erased value",
+   "expected": "[]",
+   "verdict": "MATCH",
+   "oracle": []
+  },
+  {
+   "ruling": "Q49c",
+   "probe": "find ne never selects by an erased value",
+   "expected": "[p3, p4] (not p1, p2, p7)",
+   "verdict": "MATCH",
+   "oracle": [
+    "p3",
+    "p4"
+   ]
+  },
+  {
+   "ruling": "Q49c",
+   "probe": "find exists sees an erased value",
+   "expected": "[p1, p2, p3, p4, p7]",
+   "verdict": "MATCH",
+   "oracle": [
+    "p1",
+    "p2",
+    "p3",
+    "p4",
+    "p7"
+   ]
+  },
+  {
+   "ruling": "Q49c",
+   "probe": "find missing does not",
+   "expected": "[p5, p6]",
+   "verdict": "MATCH",
+   "oracle": [
+    "p5",
+    "p6"
+   ]
+  },
+  {
+   "ruling": "Q49c",
+   "probe": "find range never selects by an erased value",
+   "expected": "salary > 10: [p2, p3]",
+   "verdict": "MATCH",
+   "oracle": [
+    "p2",
+    "p3"
+   ]
+  },
+  {
+   "ruling": "Q49c",
+   "probe": "ORDER BY asc: erased last by assertion id",
+   "expected": "[p3 (30), p2 (50), p6 (a-sal6), p1 (sal1)]",
+   "verdict": "MATCH",
+   "oracle": [
+    "p3",
+    "p2",
+    "p6",
+    "p1"
+   ]
+  },
+  {
+   "ruling": "Q49c",
+   "probe": "ORDER BY desc: erased last by assertion id",
+   "expected": "[p2, p3, p6, p1]",
+   "verdict": "MATCH",
+   "oracle": [
+    "p2",
+    "p3",
+    "p6",
+    "p1"
+   ]
+  },
+  {
+   "ruling": "Q49c",
+   "probe": "SUM/MIN/MAX/AVG skip erased values",
+   "expected": "sum 80, min 30, max 50, avg 40.0",
+   "verdict": "MATCH",
+   "oracle": [
+    {
+     "sum": {
+      "type": "integer",
+      "value": "80"
+     },
+     "min": {
+      "type": "integer",
+      "value": "30"
+     },
+     "max": {
+      "type": "integer",
+      "value": "50"
+     },
+     "avg": {
+      "type": "number",
+      "value": 40,
+      "bits": "0x4044000000000000"
+     }
+    }
+   ]
+  },
+  {
+   "ruling": "Q49c",
+   "probe": "GROUP BY: one marker group for the attribute",
+   "expected": "groups: marker(200) -> 3 names; VISIBLE-CCC-333 -> 1; LATER-555 -> 1",
+   "verdict": "MATCH",
+   "oracle": [
+    {
+     "s": {
+      "type": "string",
+      "value": "LATER-555"
+     },
+     "c": {
+      "type": "integer",
+      "value": "1"
+     }
+    },
+    {
+     "s": {
+      "type": "string",
+      "value": "VISIBLE-CCC-333"
+     },
+     "c": {
+      "type": "integer",
+      "value": "1"
+     }
+    },
+    {
+     "s": {
+      "_tag": "ErasedValue",
+      "erasedAt": 200
+     },
+     "c": {
+      "type": "integer",
+      "value": "3"
+     }
+    }
+   ]
+  },
+  {
+   "ruling": "Q49c",
+   "probe": "reachability does not follow an erased reference",
+   "expected": "from p1: closure []; from p2: [org:1]",
+   "verdict": "MATCH",
+   "oracle": [
+    [],
+    [
+     "org:1"
+    ]
+   ]
+  },
+  {
+   "ruling": "Q49a",
+   "probe": "no plaintext anywhere in the output",
+   "expected": "0 occurrences of the 8 erased plaintexts (state, journal, facts, every query)",
+   "verdict": "MATCH",
+   "oracle": "none"
+  },
+  {
+   "ruling": "Q49a",
+   "probe": "whole journal = control journal with markers",
+   "expected": "non-erasure records equal the no-erasure run's after markers replace erased values",
+   "verdict": "MATCH",
+   "oracle": {
+    "differingRecords": [],
+    "example": []
+   }
+  },
+  {
+   "ruling": "Q49a",
+   "probe": "journal facts = control facts with markers",
+   "expected": ":_tx/ facts of non-erasure transactions equal the control's with markers",
+   "verdict": "MATCH",
+   "oracle": {
+    "onlyControl": [],
+    "onlyErased": []
+   }
+  },
+  {
+   "ruling": "Q24/Q31f",
+   "probe": "assertion relation = control with markers (shape kept)",
+   "expected": "identical apart from the markers",
+   "verdict": "MATCH",
+   "oracle": {
+    "onlyControl": [],
+    "onlyErased": []
+   }
+  },
+  {
+   "ruling": "Q49b",
+   "probe": "erase of an entity that never existed",
+   "expected": "commits with an empty change list (an erase that matches nothing still commits)",
+   "verdict": "MATCH",
+   "oracle": [
+    {
+     "outcome": "committed"
+    },
+    {
+     "txId": "tx:1",
+     "position": 2,
+     "instant": 200,
+     "commandId": "c200",
+     "changes": [],
+     "changedEntities": []
+    }
+   ]
+  },
+  {
+   "ruling": "Q49b",
+   "probe": "erase by entity of an entity with no assertions of that attribute",
+   "expected": "commits, empty change list",
+   "verdict": "MATCH",
+   "oracle": [
+    {
+     "outcome": "committed"
+    },
+    {
+     "txId": "tx:1",
+     "position": 2,
+     "instant": 200,
+     "commandId": "c200",
+     "changes": [],
+     "changedEntities": []
+    }
+   ]
+  },
+  {
+   "ruling": "Q49b",
+   "probe": "erase by entity (every value of the entity)",
+   "expected": "both p1 assertions erased; change list names them",
+   "verdict": "MATCH",
+   "oracle": [
+    [
+     {
+      "id": "x1",
+      "entityId": "p1",
+      "attribute": ":person/ssn",
+      "value": {
+       "_tag": "ErasedValue",
+       "erasedAt": 200
+      },
+      "validFrom": 0,
+      "validTo": null,
+      "recordedAt": 100,
+      "recordedPosition": 1,
+      "createdBy": null,
+      "entityType": "Person",
+      "schemaVersion": null,
+      "txId": "tx:0",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     },
+     {
+      "id": "x2",
+      "entityId": "p1",
+      "attribute": ":person/name",
+      "value": {
+       "_tag": "ErasedValue",
+       "erasedAt": 200
+      },
+      "validFrom": 0,
+      "validTo": null,
+      "recordedAt": 100,
+      "recordedPosition": 1,
+      "createdBy": null,
+      "entityType": "Person",
+      "schemaVersion": null,
+      "txId": "tx:0",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     }
+    ],
+    {
+     "txId": "tx:1",
+     "position": 2,
+     "instant": 200,
+     "commandId": "c200",
+     "changes": [
+      {
+       "op": "erase",
+       "entityId": "p1",
+       "attribute": ":person/ssn",
+       "assertionIds": [
+        "x1"
+       ]
+      },
+      {
+       "op": "erase",
+       "entityId": "p1",
+       "attribute": ":person/name",
+       "assertionIds": [
+        "x2"
+       ]
+      }
+     ],
+     "changedEntities": [
+      "p1"
+     ]
+    }
+   ]
+  },
+  {
+   "ruling": "Q49c",
+   "probe": "retract-pattern never matches an erased value",
+   "expected": "commits, retracts nothing; the erased assertion stays live",
+   "verdict": "MATCH",
+   "oracle": [
+    {
+     "outcome": "committed"
+    },
+    [],
+    [
+     {
+      "id": "x1",
+      "entityId": "p1",
+      "attribute": ":person/ssn",
+      "value": {
+       "_tag": "ErasedValue",
+       "erasedAt": 200
+      },
+      "validFrom": 0,
+      "validTo": null,
+      "recordedAt": 100,
+      "recordedPosition": 1,
+      "createdBy": null,
+      "entityType": "Person",
+      "schemaVersion": null,
+      "txId": "tx:0",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     }
+    ]
+   ]
+  },
+  {
+   "ruling": "Q49c",
+   "probe": "Unique ignores an erased value",
+   "expected": "a second SECRET-U1 is committed",
+   "verdict": "MATCH",
+   "oracle": {
+    "outcome": "committed"
+   }
+  },
+  {
+   "ruling": "Q49c",
+   "probe": "Unique control (no erasure)",
+   "expected": "a second SECRET-U1 is rejected",
+   "verdict": "MATCH",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-CONSTRAINT",
+    "errorTag": "ConstraintViolationError",
+    "reason": "unique",
+    "phase": "commit",
+    "reasonAlternatives": [
+     "unique"
+    ],
+    "message": "new or worsened constraint violation",
+    "codes": [
+     "unique"
+    ],
+    "violations": [
+     {
+      "code": "unique",
+      "entityType": "Person",
+      "attribute": ":person/ssn",
+      "validAt": 0,
+      "actual": 2,
+      "subject": "p1",
+      "claimants": [
+       "p1",
+       "p2"
+      ],
+      "valueIdentity": "string:SECRET-U1"
+     }
+    ]
+   }
+  },
+  {
+   "ruling": "Q49c",
+   "probe": "COUNT counts one erased value",
+   "expected": "count of salary values with one erased among 50, 30: 3",
+   "verdict": "MATCH",
+   "oracle": [
+    {
+     "c": {
+      "type": "integer",
+      "value": "3"
+     }
+    }
+   ]
+  },
+  {
+   "ruling": "Q49c",
+   "probe": "SUM over only erased values",
+   "expected": "SUM skips every value: null (as AG-EMPTY-UNGROUPED); COUNT 1 is the residual-free form",
+   "verdict": "MATCH",
+   "oracle": [
+    {
+     "s": null
+    }
+   ]
+  },
+  {
+   "ruling": "Q49d",
+   "probe": "in-flight read accepts the old value or the marker",
+   "expected": "readStart before the erase: InFlightErasure [old, marker(200)]",
+   "verdict": "MATCH",
+   "oracle": {
+    "_tag": "InFlightErasure",
+    "acceptable": [
+     {
+      "type": "string",
+      "value": "OLD-VALUE-1"
+     },
+     {
+      "_tag": "ErasedValue",
+      "erasedAt": 200
+     }
+    ],
+    "rule": "ER-INFLIGHT-READ: the read started before the erasure published"
+   }
+  },
+  {
+   "ruling": "Q49d",
+   "probe": "read started after the erase published",
+   "expected": "readStart after the erase: the marker only",
+   "verdict": "MATCH",
+   "oracle": {
+    "_tag": "ErasedValue",
+    "erasedAt": 200
+   }
+  },
+  {
+   "ruling": "Q24",
+   "probe": "pre-erasure basis read after publication shows the marker",
+   "expected": "cut at position 1 (before the erase): marker",
+   "verdict": "MATCH",
+   "oracle": {
+    "_tag": "ErasedValue",
+    "erasedAt": 200
+   }
+  },
+  {
+   "ruling": "Q49e",
+   "probe": "toDecimal(json 0.1, 2, 1)",
+   "expected": "0.1 (as written, never the binary64 expansion)",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "0.1",
+    "scale": 1,
+    "precision": 2
+   }
+  },
+  {
+   "ruling": "Q49e",
+   "probe": "toDecimal(json 0.1, 20, 18)",
+   "expected": "0.100000000000000000 (as written, never the binary64 expansion)",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "0.100000000000000000",
+    "scale": 18,
+    "precision": 20
+   }
+  },
+  {
+   "ruling": "Q49e",
+   "probe": "toDecimal(json 0.30000000000000004, 18, 17)",
+   "expected": "0.30000000000000004 (as written, never the binary64 expansion)",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "0.30000000000000004",
+    "scale": 17,
+    "precision": 18
+   }
+  },
+  {
+   "ruling": "Q49e",
+   "probe": "toDecimal(json 1.5, 3, 2)",
+   "expected": "1.50 (as written, never the binary64 expansion)",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "1.50",
+    "scale": 2,
+    "precision": 3
+   }
+  },
+  {
+   "ruling": "Q49e",
+   "probe": "toDecimal(json 100, 3, 0)",
+   "expected": "100 (as written, never the binary64 expansion)",
+   "verdict": "MATCH",
+   "oracle": {
+    "type": "decimal",
+    "value": "100",
+    "scale": 0,
+    "precision": 3
+   }
+  },
+  {
+   "ruling": "Q49e",
+   "probe": "toDecimal(json '1.5', 2, 1)",
+   "expected": "E-INVALID-VALUE",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-INVALID-VALUE",
+    "_tag": "InvalidTripleError",
+    "reason": "invalid-value",
+    "phase": "preflight",
+    "message": "toDecimal of a json value that is not a number (Q49e)",
+    "json": "\"1.5\""
+   }
+  },
+  {
+   "ruling": "Q49e",
+   "probe": "toDecimal(json 1.55, 2, 1)",
+   "expected": "E-DECIMAL-FRACTION",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-DECIMAL-FRACTION",
+    "_tag": "InvalidTripleError",
+    "reason": "decimal-fraction",
+    "phase": "preflight",
+    "message": "decimal: 1.55 has more than 1 fractional digits"
+   }
+  },
+  {
+   "ruling": "Q49e",
+   "probe": "toDecimal(json 1234.5, 4, 1)",
+   "expected": "E-DECIMAL-OVERFLOW",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-DECIMAL-OVERFLOW",
+    "_tag": "InvalidTripleError",
+    "reason": "decimal-overflow",
+    "phase": "execution",
+    "message": "decimal: 1234.5 has more than 3 integer digits (precision 4, scale 1, at most 38 digits)"
+   }
+  },
+  {
+   "ruling": "Q56b",
+   "probe": "card-one: readable value plus an erased value",
+   "expected": "get is E-CONFLICTING-VALUES",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-CONFLICTING-VALUES",
+    "_tag": "ConflictingValuesError",
+    "reason": "conflicting-values",
+    "phase": "execution",
+    "conflicts": [
+     {
+      "entityId": "p8",
+      "attribute": ":person/ssn"
+     }
+    ]
+   }
+  },
+  {
+   "ruling": "Q56c",
+   "probe": "card-one: equal values, one support erased",
+   "expected": "get is E-CONFLICTING-VALUES (answers never depend on the erased value)",
+   "verdict": "MATCH",
+   "oracle": {
+    "error": "E-CONFLICTING-VALUES",
+    "_tag": "ConflictingValuesError",
+    "reason": "conflicting-values",
+    "phase": "execution",
+    "conflicts": [
+     {
+      "entityId": "p9",
+      "attribute": ":person/ssn"
+     }
+    ]
+   }
+  },
+  {
+   "ruling": "Q56c",
+   "probe": "control: the same history without the erase",
+   "expected": "one value SAME with supports [e1, e2], no error",
+   "verdict": "MATCH",
+   "oracle": {
+    "entityId": "p9",
+    "entityType": "Person",
+    "properties": {
+     "ssn": {
+      "value": {
+       "type": "string",
+       "value": "SAME"
+      },
+      "supports": [
+       "e1",
+       "e2"
+      ]
+     }
+    },
+    "missingRequired": [],
+    "undeclaredAttributes": []
+   }
+  },
+  {
+   "ruling": "Q56a",
+   "probe": "erase by an unknown assertion id (target)",
+   "expected": "rejected E-INVALID-VALUE, as for retract (Q33f)",
+   "verdict": "MATCH",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-INVALID-VALUE",
+    "errorTag": "InvalidTripleError",
+    "reason": "invalid-value",
+    "phase": "preflight",
+    "message": "retract target no-such-id is not a committed assertion"
+   }
+  },
+  {
+   "ruling": "Q56d",
+   "probe": "card-many: markers after the readable elements",
+   "expected": "[alpha, zeta, marker(200)]; the marker group's supports are {ka, kz}",
+   "verdict": "MATCH",
+   "oracle": [
+    {
+     "value": {
+      "type": "string",
+      "value": "alpha"
+     },
+     "supports": [
+      "k3"
+     ]
+    },
+    {
+     "value": {
+      "type": "string",
+      "value": "zeta"
+     },
+     "supports": [
+      "k1"
+     ]
+    },
+    {
+     "value": {
+      "_tag": "ErasedValue",
+      "erasedAt": 200
+     },
+     "supports": [
+      "kz",
+      "ka"
+     ]
+    }
+   ]
+  },
+  {
+   "ruling": "Q56e",
+   "probe": "Required satisfied by an erased value",
+   "expected": "the enforced command commits; get shows missingRequired []",
+   "verdict": "MATCH",
+   "oracle": [
+    {
+     "outcome": "committed"
+    },
+    {
+     "entityId": "p1",
+     "entityType": "Person",
+     "properties": {
+      "name": {
+       "value": {
+        "type": "string",
+        "value": "Q"
+       },
+       "supports": [
+        "q2"
+       ]
+      },
+      "ssn": {
+       "value": {
+        "_tag": "ErasedValue",
+        "erasedAt": 200
+       },
+       "supports": [
+        "q1"
+       ]
+      }
+     },
+     "missingRequired": [],
+     "undeclaredAttributes": []
+    }
+   ]
+  },
+  {
+   "ruling": "Q56e",
+   "probe": "control: no ssn at all",
+   "expected": "the enforced command is rejected E-CONSTRAINT (required)",
+   "verdict": "MATCH",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-CONSTRAINT",
+    "errorTag": "ConstraintViolationError",
+    "reason": "required",
+    "phase": "commit",
+    "reasonAlternatives": [
+     "required"
+    ],
+    "message": "new or worsened constraint violation",
+    "codes": [
+     "required"
+    ],
+    "violations": [
+     {
+      "code": "required",
+      "entityType": "Person",
+      "attribute": ":person/ssn",
+      "validAt": 0,
+      "actual": 0,
+      "subject": "p1"
+     }
+    ]
+   }
+  },
+  {
+   "ruling": "Q56e",
+   "probe": "control: read side with no ssn",
+   "expected": "get lists missingRequired [ssn]",
+   "verdict": "MATCH",
+   "oracle": {
+    "entityId": "p1",
+    "entityType": "Person",
+    "properties": {
+     "name": {
+      "value": {
+       "type": "string",
+       "value": "Q"
+      },
+      "supports": [
+       "q2"
+      ]
+     }
+    },
+    "missingRequired": [
+     "ssn"
+    ],
+    "undeclaredAttributes": []
+   }
+  },
+  {
+   "ruling": "Q24",
+   "probe": "pre-erasure cursor continues with markers",
+   "expected": "page 2 of a cursor issued before the erase shows the marker",
+   "verdict": "MATCH",
+   "oracle": [
+    {
+     "_tag": "ErasedValue",
+     "erasedAt": 200
+    }
+   ]
+  },
+  {
+   "ruling": "R-CMD-6",
+   "probe": "erase of a transaction entity is E-RESERVED",
+   "expected": "E-RESERVED (reserved namespace rule)",
+   "verdict": "MATCH",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-RESERVED",
+    "errorTag": "WriteError",
+    "reason": "reserved-namespace",
+    "phase": "preflight",
+    "message": "entity tx:0 is a transaction envelope (journal)"
+   }
+  },
+  {
+   "ruling": "Q49b",
+   "probe": "erase by entity only, entity never existed",
+   "expected": "commits with an empty change list (matches nothing)",
+   "verdict": "MATCH",
+   "oracle": [
+    {
+     "outcome": "committed"
+    },
+    {
+     "txId": "tx:1",
+     "position": 2,
+     "instant": 200,
+     "commandId": "c200",
+     "changes": [],
+     "changedEntities": []
+    }
+   ]
+  },
+  {
+   "ruling": "Q56a",
+   "probe": "erase by an unknown actual id ({id: ...})",
+   "expected": "rejected E-INVALID-VALUE, as for retract (Q33f)",
+   "verdict": "MATCH",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-INVALID-VALUE",
+    "errorTag": "InvalidTripleError",
+    "reason": "invalid-value",
+    "phase": "preflight",
+    "message": "retract id no-such-id is unknown in scope s"
+   }
+  },
+  {
+   "ruling": "Q56f",
+   "probe": "erase by a known actual id ({id: x1})",
+   "expected": "commits; x1 reads as marker(200); the change names x1 only",
+   "verdict": "MATCH",
+   "oracle": [
+    {
+     "outcome": "committed"
+    },
+    [
+     {
+      "id": "x1",
+      "entityId": "p1",
+      "attribute": ":person/ssn",
+      "value": {
+       "_tag": "ErasedValue",
+       "erasedAt": 200
+      },
+      "validFrom": 0,
+      "validTo": null,
+      "recordedAt": 100,
+      "recordedPosition": 1,
+      "createdBy": null,
+      "entityType": "Person",
+      "schemaVersion": null,
+      "txId": "tx:0",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null
+     }
+    ],
+    [
+     {
+      "op": "erase",
+      "entityId": "p1",
+      "attribute": ":person/ssn",
+      "assertionIds": [
+       "x1"
+      ]
+     }
+    ]
+   ]
+  },
+  {
+   "ruling": "R-CMD-9",
+   "probe": "erase with no selector",
+   "expected": "malformed erase op: E-INVALID-VALUE (operation fault, Q33f)",
+   "verdict": "MATCH",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-INVALID-VALUE",
+    "errorTag": "InvalidTripleError",
+    "reason": "invalid-value",
+    "phase": "preflight",
+    "message": "missing entityId"
+   }
+  },
+  {
+   "ruling": "Q24",
+   "probe": "erase of an already retracted assertion by target",
+   "expected": "commits; the retracted row shows the marker with its retirement",
+   "verdict": "MATCH",
+   "oracle": [
+    {
+     "id": "x1",
+     "entityId": "p1",
+     "attribute": ":person/ssn",
+     "value": {
+      "_tag": "ErasedValue",
+      "erasedAt": 200
+     },
+     "validFrom": 0,
+     "validTo": null,
+     "recordedAt": 100,
+     "recordedPosition": 1,
+     "createdBy": null,
+     "entityType": "Person",
+     "schemaVersion": null,
+     "txId": "tx:0",
+     "retractedAt": 150,
+     "retractedPosition": 2,
+     "retractTxId": "tx:1"
+    }
+   ]
+  },
+  {
+   "ruling": "Q56g",
+   "probe": "retract by target of an already erased assertion",
+   "expected": "commits; history shows marker(200) with retractedAt 250",
+   "verdict": "MATCH",
+   "oracle": [
+    {
+     "outcome": "committed"
+    },
+    [
+     {
+      "id": "x1",
+      "entityId": "p1",
+      "attribute": ":person/ssn",
+      "value": {
+       "_tag": "ErasedValue",
+       "erasedAt": 200
+      },
+      "validFrom": 0,
+      "validTo": null,
+      "recordedAt": 100,
+      "recordedPosition": 1,
+      "createdBy": null,
+      "entityType": "Person",
+      "schemaVersion": null,
+      "txId": "tx:0",
+      "retractedAt": 250,
+      "retractedPosition": 3,
+      "retractTxId": "tx:2"
+     }
+    ]
+   ]
+  },
+  {
+   "ruling": "residual",
+   "probe": "COUNT over 2+ erased assertions",
+   "expected": "X-NOT-MODELED",
+   "verdict": "MATCH",
+   "oracle": "typed X-NOT-MODELED"
+  },
+  {
+   "ruling": "residual",
+   "probe": "ORDER BY over erased plus missing",
+   "expected": "X-NOT-MODELED",
+   "verdict": "MATCH",
+   "oracle": "typed X-NOT-MODELED"
+  },
+  {
+   "ruling": "residual",
+   "probe": "erasedAt of a group erased at different instants",
+   "expected": "X-NOT-MODELED (GROUP BY ssn over markers from 200 and 300)",
+   "verdict": "MATCH",
+   "oracle": "typed X-NOT-MODELED"
+  },
+  {
+   "ruling": "residual",
+   "probe": "ReferenceTarget over an erased reference",
+   "expected": "X-NOT-MODELED",
+   "verdict": "MATCH",
+   "oracle": "o-replay: malformed case: X-NOT-MODELED: a ReferenceTarget rule over an erased reference (R-ERA-4)"
+  },
+  {
+   "ruling": "residual",
+   "probe": "computed answer over an in-flight value",
+   "expected": "X-NOT-MODELED (find by value with readStart before the erase)",
+   "verdict": "MATCH",
+   "oracle": "typed X-NOT-MODELED"
+  },
+  {
+   "ruling": "residual",
+   "probe": "toDecimal(json, p, s, rounding)",
+   "expected": "X-NOT-MODELED",
+   "verdict": "MATCH",
+   "oracle": "typed X-NOT-MODELED"
+  },
+  {
+   "ruling": "residual",
+   "probe": "the `erasure` spelling",
+   "expected": "X-NOT-MODELED",
+   "verdict": "MATCH",
+   "oracle": "o-replay: malformed case: X-NOT-MODELED: op 'erasure' is not an O-REPLAY op; erasure cases spell the op erase (RULINGS Q45b)"
+  },
+  {
+   "ruling": "residual",
+   "probe": "erase mixed with other ops",
+   "expected": "X-NOT-MODELED",
+   "verdict": "MATCH",
+   "oracle": "o-replay: malformed case: X-NOT-MODELED: a command mixing erase with other operations (R-ERA-2)"
+  },
+  {
+   "ruling": "residual",
+   "probe": "preconditions on erase",
+   "expected": "X-NOT-MODELED",
+   "verdict": "MATCH",
+   "oracle": "o-replay: malformed case: X-NOT-MODELED: preconditions on an erase command (R-ERA-2)"
+  }
+ ]
+}

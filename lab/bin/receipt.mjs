@@ -66,6 +66,8 @@ const REQUIRED = {
   G1: ['engine.imageId', 'engine.configSha256', 'engine.endpoint', 'contactedEndpoint'],
   G2: ['engine.imageId', 'engine.configSha256', 'engine.endpoint', 'contactedEndpoint', 'packet.sha256'],
   G4: ['engine.imageId', 'engine.configSha256', 'engine.endpoint', 'contactedEndpoint'],
+  // [EXP-N01] NS binds the generator source hash and seed (TARGETS 2.1 item 5) and the composition identity (4.1).
+  NS: ['engine.imageId', 'engine.configSha256', 'engine.endpoint', 'contactedEndpoint', 'ns.generator.traceSha256', 'ns.trace.digest', 'ns.trace.seed', 'compositionIdentity.assignments.source.imageId', 'oracle.commit'],
 };
 const pick = (object, key) => key.split('.').reduce((value, part) => value?.[part], object);
 

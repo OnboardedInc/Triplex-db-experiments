@@ -49,3 +49,18 @@ OOM-killed three times during the runs); both G1 receipts FAIL for infrastructur
 - The HTTP layer parses JSON bodies before the guard (precision lost there is undetectable): follow-up for EXP-R02 (parse with ExactJson).
 - sqlite, postgres, duckdb adapters still lose -0 in JSON: not qualified lanes, out of scope.
 - The KV runtime's own journal encoding is unchecked: follow-up.
+
+## QLever follow-up (cad7f3f, on the fresh 3.5 GiB resident)
+- Falsifier after the fix: QLever 0 silent changes (instant 3 silent to 0 with 7 typed; json 6 to 0; number 4 to 0); combined with XTDB,
+  38 silent changes before and 0 after across 1,762 records. The 27 remaining rejections are all typed: 23 intended native date/instant
+  ReadErrors (16 XTDB, 7 QLever) and 4 XTDB deadline timeouts from the overloaded resident. Run times on the fresh resident: QLever ledger
+  21 s (919 s on the old resident), QLever paths 16 s.
+- G1 qlever `G1-qlever-20261107T220838Z-86451c` (default profile, planner 1): 84/88, the same 4 failures as main's default-profile receipt
+  (two datalog aggregation cases needing a server result key); the f1-profile regression check is running.
+
+## G1 qlever, f1 profile (c443381)
+- `G1-qlever-20261107T221624Z-58b0eb`: 84/88; all 4 failures (actor due-work ranges, Datalog reads bounded by default, recursive relations
+  cursor pagination in both phases) and the suite failure are timeouts; no assertion failure. 478 s against 62 s in main's f1 PASS
+  (e08600). The two aggregation cases that fail under the default profile pass under f1. No regression from the fixes.
+- Branch for the verifier: 2b59021 (fixes), 08368fa (XTDB results), cad7f3f (QLever results, slots.json from main), c443381 (f1 receipt).
+- Owed: clean G1 xtdb and G1 qlever f1 reruns in a quiet gate window.

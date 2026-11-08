@@ -1,0 +1,667 @@
+{
+ "checked": 47,
+ "counts": {
+  "AGREE": 47
+ },
+ "rows": [
+  {
+   "vector": "C5-03",
+   "item": "Q1",
+   "verdict": "AGREE",
+   "rule": "ACC 4.7 E-CONFLICTING-VALUES (tag, reason, phase) + AMB-13 conflict set",
+   "oracle": {
+    "error": "E-CONFLICTING-VALUES",
+    "_tag": "ConflictingValuesError",
+    "reason": "conflicting-values",
+    "phase": "execution",
+    "conflicts": [
+     {
+      "entityId": "item:3",
+      "attribute": ":item/color"
+     }
+    ]
+   },
+   "golden": {
+    "_tag": "ConflictingValuesError",
+    "conflicts": [
+     {
+      "entityId": "item:3",
+      "attribute": ":item/color"
+     }
+    ]
+   }
+  },
+  {
+   "vector": "C5-03",
+   "item": "Q2",
+   "verdict": "AGREE",
+   "rule": "ACC 4.7 E-CONFLICTING-VALUES (tag, reason, phase) + AMB-13 conflict set",
+   "oracle": {
+    "error": "E-CONFLICTING-VALUES",
+    "_tag": "ConflictingValuesError",
+    "reason": "conflicting-values",
+    "phase": "execution",
+    "conflicts": [
+     {
+      "entityId": "item:3",
+      "attribute": ":item/color"
+     }
+    ]
+   },
+   "golden": {
+    "_tag": "ConflictingValuesError",
+    "conflicts": [
+     {
+      "entityId": "item:3",
+      "attribute": ":item/color"
+     }
+    ]
+   }
+  },
+  {
+   "vector": "C5-03",
+   "item": "Q4",
+   "verdict": "AGREE",
+   "rule": "ACC 4.7 E-CONFLICTING-VALUES (tag, reason, phase) + AMB-13 conflict set",
+   "oracle": {
+    "error": "E-CONFLICTING-VALUES",
+    "_tag": "ConflictingValuesError",
+    "reason": "conflicting-values",
+    "phase": "execution",
+    "conflicts": [
+     {
+      "entityId": "item:3",
+      "attribute": ":item/color"
+     }
+    ]
+   },
+   "golden": {
+    "_tag": "ConflictingValuesError",
+    "conflicts": [
+     {
+      "entityId": "item:3",
+      "attribute": ":item/color"
+     }
+    ]
+   }
+  },
+  {
+   "vector": "C5-03",
+   "item": "Q5",
+   "verdict": "AGREE",
+   "rule": "ACC 4.7 E-CONFLICTING-VALUES (tag, reason, phase) + AMB-13 conflict set",
+   "oracle": {
+    "error": "E-CONFLICTING-VALUES",
+    "_tag": "ConflictingValuesError",
+    "reason": "conflicting-values",
+    "phase": "execution",
+    "conflicts": [
+     {
+      "entityId": "item:3",
+      "attribute": ":item/color"
+     }
+    ]
+   },
+   "golden": {
+    "_tag": "ConflictingValuesError",
+    "conflicts": [
+     {
+      "entityId": "item:3",
+      "attribute": ":item/color"
+     }
+    ]
+   }
+  },
+  {
+   "vector": "C5-03",
+   "item": "Q6",
+   "verdict": "AGREE",
+   "rule": "ACC 4.7 E-CONFLICTING-VALUES (tag, reason, phase) + AMB-13 conflict set",
+   "oracle": {
+    "error": "E-CONFLICTING-VALUES",
+    "_tag": "ConflictingValuesError",
+    "reason": "conflicting-values",
+    "phase": "execution",
+    "conflicts": [
+     {
+      "entityId": "item:3",
+      "attribute": ":item/color"
+     }
+    ]
+   },
+   "golden": {
+    "_tag": "ConflictingValuesError",
+    "conflicts": [
+     {
+      "entityId": "item:3",
+      "attribute": ":item/color"
+     }
+    ]
+   }
+  },
+  {
+   "vector": "C5-04",
+   "item": "V10",
+   "verdict": "AGREE",
+   "rule": "ACC 4.7 E-CONFLICTING-VALUES (tag, reason, phase) + AMB-13 conflict set",
+   "oracle": {
+    "error": "E-CONFLICTING-VALUES",
+    "_tag": "ConflictingValuesError",
+    "reason": "conflicting-values",
+    "phase": "execution",
+    "conflicts": [
+     {
+      "entityId": "item:5",
+      "attribute": ":item/color"
+     }
+    ]
+   },
+   "golden": {
+    "_tag": "ConflictingValuesError",
+    "conflicts": [
+     {
+      "entityId": "item:5",
+      "attribute": ":item/color"
+     }
+    ]
+   }
+  },
+  {
+   "vector": "C5-04",
+   "item": "V19.999999999999996",
+   "verdict": "AGREE",
+   "rule": "ACC 4.7 E-CONFLICTING-VALUES (tag, reason, phase) + AMB-13 conflict set",
+   "oracle": {
+    "error": "E-CONFLICTING-VALUES",
+    "_tag": "ConflictingValuesError",
+    "reason": "conflicting-values",
+    "phase": "execution",
+    "conflicts": [
+     {
+      "entityId": "item:5",
+      "attribute": ":item/color"
+     }
+    ]
+   },
+   "golden": {
+    "_tag": "ConflictingValuesError",
+    "conflicts": [
+     {
+      "entityId": "item:5",
+      "attribute": ":item/color"
+     }
+    ]
+   }
+  },
+  {
+   "vector": "C5-07",
+   "item": "Q1",
+   "verdict": "AGREE",
+   "rule": "ACC 4.7 E-CONFLICTING-VALUES (tag, reason, phase) + AMB-13 conflict set",
+   "oracle": {
+    "error": "E-CONFLICTING-VALUES",
+    "_tag": "ConflictingValuesError",
+    "reason": "conflicting-values",
+    "phase": "execution",
+    "conflicts": [
+     {
+      "entityId": "item:8",
+      "attribute": ":item/color"
+     }
+    ]
+   },
+   "golden": {
+    "_tag": "ConflictingValuesError",
+    "conflicts": [
+     {
+      "entityId": "item:8",
+      "attribute": ":item/color"
+     }
+    ]
+   }
+  },
+  {
+   "vector": "C5-07",
+   "item": "Q2",
+   "verdict": "AGREE",
+   "rule": "ACC 4.7 E-CONFLICTING-VALUES (tag, reason, phase) + AMB-13 conflict set",
+   "oracle": {
+    "error": "E-CONFLICTING-VALUES",
+    "_tag": "ConflictingValuesError",
+    "reason": "conflicting-values",
+    "phase": "execution",
+    "conflicts": [
+     {
+      "entityId": "item:8",
+      "attribute": ":item/color"
+     }
+    ]
+   },
+   "golden": {
+    "_tag": "ConflictingValuesError",
+    "conflicts": [
+     {
+      "entityId": "item:8",
+      "attribute": ":item/color"
+     }
+    ]
+   }
+  },
+  {
+   "vector": "C5-08",
+   "item": "Q2",
+   "verdict": "AGREE",
+   "rule": "ACC 4.7 E-CONFLICTING-VALUES (tag, reason, phase) + AMB-13 conflict set",
+   "oracle": {
+    "error": "E-CONFLICTING-VALUES",
+    "_tag": "ConflictingValuesError",
+    "reason": "conflicting-values",
+    "phase": "execution",
+    "conflicts": [
+     {
+      "entityId": "item:9",
+      "attribute": ":item/color"
+     }
+    ]
+   },
+   "golden": {
+    "_tag": "ConflictingValuesError",
+    "conflicts": [
+     {
+      "entityId": "item:9",
+      "attribute": ":item/color"
+     }
+    ]
+   }
+  },
+  {
+   "vector": "C5-09",
+   "item": "Q1",
+   "verdict": "AGREE",
+   "rule": "ACC 4.7 E-CONFLICTING-VALUES (tag, reason, phase) + AMB-13 conflict set",
+   "oracle": {
+    "error": "E-CONFLICTING-VALUES",
+    "_tag": "ConflictingValuesError",
+    "reason": "conflicting-values",
+    "phase": "execution",
+    "conflicts": [
+     {
+      "entityId": "item:10",
+      "attribute": ":item/color"
+     }
+    ]
+   },
+   "golden": {
+    "_tag": "ConflictingValuesError",
+    "conflicts": [
+     {
+      "entityId": "item:10",
+      "attribute": ":item/color"
+     }
+    ]
+   }
+  },
+  {
+   "vector": "C5-09",
+   "item": "Q5",
+   "verdict": "AGREE",
+   "rule": "ACC 4.7 E-CONFLICTING-VALUES (tag, reason, phase) + AMB-13 conflict set",
+   "oracle": {
+    "error": "E-CONFLICTING-VALUES",
+    "_tag": "ConflictingValuesError",
+    "reason": "conflicting-values",
+    "phase": "execution",
+    "conflicts": [
+     {
+      "entityId": "item:10",
+      "attribute": ":item/color"
+     }
+    ]
+   },
+   "golden": {
+    "_tag": "ConflictingValuesError",
+    "conflicts": [
+     {
+      "entityId": "item:10",
+      "attribute": ":item/color"
+     }
+    ]
+   }
+  },
+  {
+   "vector": "C5-03",
+   "item": "Q7",
+   "verdict": "AGREE",
+   "rule": "C5.3: count({name}) does not reference the conflicted color",
+   "oracle": {
+    "cut": {
+     "scope": "fresh",
+     "position": 1,
+     "recordedAt": null,
+     "validAt": 10
+    },
+    "total": 1
+   }
+  },
+  {
+   "vector": "G5-SUM-01",
+   "item": "Q",
+   "verdict": "AGREE",
+   "rule": "ACC 4.4 AG-SUM-I -> E-INTEGER-OVERFLOW (tag, reason, phase), no partial rows; golden code/_tag/phase consistent",
+   "oracle": {
+    "error": "E-INTEGER-OVERFLOW",
+    "_tag": "QueryError",
+    "reason": "integer-overflow",
+    "phase": "execution",
+    "message": "result outside the core integer range [-2^63, 2^63-1]",
+    "result": "9223372036854775808"
+   },
+   "golden": {
+    "code": "integer-overflow",
+    "partialRows": "none"
+   }
+  },
+  {
+   "vector": "G5-SUM-05",
+   "item": "Q",
+   "verdict": "AGREE",
+   "rule": "ACC 4.4 AG-SUM-I -> E-INTEGER-OVERFLOW (tag, reason, phase), no partial rows; golden code/_tag/phase consistent",
+   "oracle": {
+    "error": "E-INTEGER-OVERFLOW",
+    "_tag": "QueryError",
+    "reason": "integer-overflow",
+    "phase": "execution",
+    "message": "result outside the core integer range [-2^63, 2^63-1]",
+    "result": "-9223372036854775809"
+   },
+   "golden": {
+    "code": "integer-overflow",
+    "partialRows": "none"
+   }
+  },
+  {
+   "vector": "G5-SUM-08",
+   "item": "Q",
+   "verdict": "AGREE",
+   "rule": "ACC 4.4 AG-SUM-I -> E-INTEGER-OVERFLOW (tag, reason, phase), no partial rows; golden code/_tag/phase consistent",
+   "oracle": {
+    "error": "E-INTEGER-OVERFLOW",
+    "_tag": "QueryError",
+    "reason": "integer-overflow",
+    "phase": "execution",
+    "message": "result outside the core integer range [-2^63, 2^63-1]",
+    "result": "9223372036854775808"
+   },
+   "golden": {
+    "code": "integer-overflow",
+    "partialRows": "none"
+   }
+  },
+  {
+   "vector": "G5-SUM-10",
+   "item": "Q",
+   "verdict": "AGREE",
+   "rule": "ACC 4.4 AG-AVG-I -> E-INTEGER-AVG (tag, reason, phase), no partial rows; golden code/_tag/phase consistent",
+   "oracle": {
+    "error": "E-INTEGER-AVG",
+    "_tag": "DatalogValidationError",
+    "reason": "integer-avg-requires-conversion",
+    "phase": "preflight",
+    "message": "AVG over integers requires an explicit conversion (toNumber)"
+   },
+   "golden": {
+    "phase": "preflight (before any backend runs)",
+    "_tag": "DatalogValidationError",
+    "tagGrounding": "derived: docs/datalog.md says unsupported programs fail with typed DatalogValidationError during preflight; Q8b says typed preflight error"
+   }
+  },
+  {
+   "vector": "G9-CUT-01",
+   "item": "T2",
+   "verdict": "AGREE",
+   "rule": "RS-RETIREMENT-CONTENT (AMB-02) + RS-TIMELINE (AMB-03)"
+  },
+  {
+   "vector": "G9-CUT-01",
+   "item": "T3",
+   "verdict": "AGREE",
+   "rule": "RS-RETIREMENT-CONTENT (AMB-02) + RS-TIMELINE (AMB-03)"
+  },
+  {
+   "vector": "G9-V4-03",
+   "item": "G9-V4-03-Q4",
+   "verdict": "AGREE",
+   "rule": "RS-RETIREMENT-CONTENT (AMB-02) + RS-TIMELINE (AMB-03)"
+  },
+  {
+   "vector": "G9-V4-04",
+   "item": "G9-V4-04-Q4",
+   "verdict": "AGREE",
+   "rule": "RS-RETIREMENT-CONTENT (AMB-02) + RS-TIMELINE (AMB-03)"
+  },
+  {
+   "vector": "G9-V4-06",
+   "item": "G9-V4-06-Q4",
+   "verdict": "AGREE",
+   "rule": "RS-RETIREMENT-CONTENT (AMB-02) + RS-TIMELINE (AMB-03)"
+  },
+  {
+   "vector": "C6-01",
+   "item": "Q11",
+   "verdict": "AGREE",
+   "rule": "R-JNL-5 / brief fact 4: one :_tx/changed-entity per entity"
+  },
+  {
+   "vector": "C6-01",
+   "item": "Q12",
+   "verdict": "AGREE",
+   "rule": "one :_tx/change per asserted or retracted fact"
+  },
+  {
+   "vector": "C6-01",
+   "item": "Q13",
+   "verdict": "AGREE",
+   "rule": "one :_tx/changed-entity per changed entity"
+  },
+  {
+   "vector": "G10-CUR-01",
+   "item": "E1",
+   "verdict": "AGREE",
+   "rule": "Q33h R-PAGE-4: a different basis is other-query",
+   "oracle": {
+    "error": "E-CURSOR",
+    "_tag": "PaginationCursorError",
+    "reason": "other-query",
+    "phase": "preflight",
+    "message": "the request's validAt differs from the cursor's pinned basis (CE-OTHER-QUERY)"
+   }
+  },
+  {
+   "vector": "G10-CUR-01",
+   "item": "E2",
+   "verdict": "AGREE",
+   "rule": "CE-OTHER-QUERY: another entity type is another query",
+   "oracle": {
+    "error": "E-CURSOR",
+    "_tag": "PaginationCursorError",
+    "reason": "other-query",
+    "phase": "preflight",
+    "message": "the cursor belongs to another query (CE-OTHER-QUERY)"
+   }
+  },
+  {
+   "vector": "G10-CUR-01",
+   "item": "E3",
+   "verdict": "AGREE",
+   "rule": "Q33h R-PAGE-3: limit 0 and 201 are PaginationCursorError / malformed",
+   "oracle": [
+    {
+     "error": "E-CURSOR",
+     "_tag": "PaginationCursorError",
+     "reason": "malformed",
+     "phase": "preflight",
+     "message": "entityPage limit must be an integer 1..200"
+    },
+    {
+     "error": "E-CURSOR",
+     "_tag": "PaginationCursorError",
+     "reason": "malformed",
+     "phase": "preflight",
+     "message": "entityPage limit must be an integer 1..200"
+    }
+   ]
+  },
+  {
+   "vector": "C5-03",
+   "item": "Q8",
+   "verdict": "AGREE",
+   "rule": "GOLDEN_RESOLUTIONS reading A-document-references-all-attributes matched by the oracle answer",
+   "reading": "A-document-references-all-attributes"
+  },
+  {
+   "vector": "C6-02",
+   "item": "Q2",
+   "verdict": "AGREE",
+   "rule": "GOLDEN_RESOLUTIONS reading B-exact-value-domain matched by the oracle answer",
+   "reading": "B-exact-value-domain"
+  },
+  {
+   "vector": "C6-03",
+   "item": "Q1",
+   "verdict": "AGREE",
+   "rule": "GOLDEN_RESOLUTIONS reading A-pattern-sees-staged-rows matched by the oracle answer",
+   "reading": "A-pattern-sees-staged-rows"
+  },
+  {
+   "vector": "G1-I64-01",
+   "item": "Q7",
+   "verdict": "AGREE",
+   "rule": "GOLDEN_RESOLUTIONS reading A-range-on-int64-supported matched by the oracle answer",
+   "reading": "A-range-on-int64-supported"
+  },
+  {
+   "vector": "G5-SUM-13",
+   "item": "Q",
+   "verdict": "AGREE",
+   "rule": "GOLDEN_RESOLUTIONS reading B-binding-set matched by the oracle answer",
+   "reading": "B-binding-set"
+  },
+  {
+   "vector": "G9-HO-03",
+   "item": "Q1",
+   "verdict": "AGREE",
+   "rule": "GOLDEN_RESOLUTIONS reading B-reject-invalid-interval matched by the oracle answer",
+   "reading": "B-reject-invalid-interval"
+  },
+  {
+   "vector": "G9-CUT-01",
+   "item": "Q2",
+   "verdict": "AGREE",
+   "rule": "GOLDEN_RESOLUTIONS reading A-raw-lifetime matched by the oracle answer",
+   "reading": "A-raw-lifetime"
+  },
+  {
+   "vector": "G9-CUT-01",
+   "item": "Q3",
+   "verdict": "AGREE",
+   "rule": "GOLDEN_RESOLUTIONS reading A-raw-lifetime matched by the oracle answer",
+   "reading": "A-raw-lifetime"
+  },
+  {
+   "vector": "G9-CUT-01",
+   "item": "Q7",
+   "verdict": "AGREE",
+   "rule": "GOLDEN_RESOLUTIONS reading A-raw-lifetime matched by the oracle answer",
+   "reading": "A-raw-lifetime"
+  },
+  {
+   "vector": "G9-V4-01",
+   "item": "G9-V4-01-Q1",
+   "verdict": "AGREE",
+   "rule": "GOLDEN_RESOLUTIONS reading A-raw-lifetime matched by the oracle answer",
+   "reading": "A-raw-lifetime"
+  },
+  {
+   "vector": "G9-V4-02",
+   "item": "G9-V4-02-Q1",
+   "verdict": "AGREE",
+   "rule": "GOLDEN_RESOLUTIONS reading A-raw-lifetime matched by the oracle answer",
+   "reading": "A-raw-lifetime"
+  },
+  {
+   "vector": "G9-V4-03",
+   "item": "G9-V4-03-Q1",
+   "verdict": "AGREE",
+   "rule": "GOLDEN_RESOLUTIONS reading A-raw-lifetime matched by the oracle answer",
+   "reading": "A-raw-lifetime"
+  },
+  {
+   "vector": "G9-V4-04",
+   "item": "G9-V4-04-Q1",
+   "verdict": "AGREE",
+   "rule": "GOLDEN_RESOLUTIONS reading A-raw-lifetime matched by the oracle answer",
+   "reading": "A-raw-lifetime"
+  },
+  {
+   "vector": "G9-V4-05",
+   "item": "G9-V4-05-Q1",
+   "verdict": "AGREE",
+   "rule": "GOLDEN_RESOLUTIONS reading A-raw-lifetime matched by the oracle answer",
+   "reading": "A-raw-lifetime"
+  },
+  {
+   "vector": "G9-V4-06",
+   "item": "G9-V4-06-Q1",
+   "verdict": "AGREE",
+   "rule": "GOLDEN_RESOLUTIONS reading A-raw-lifetime matched by the oracle answer",
+   "reading": "A-raw-lifetime"
+  },
+  {
+   "vector": "G9-V4-08",
+   "item": "G9-V4-08-Q1",
+   "verdict": "AGREE",
+   "rule": "GOLDEN_RESOLUTIONS reading A-raw-lifetime matched by the oracle answer",
+   "reading": "A-raw-lifetime"
+  },
+  {
+   "vector": "Q8F-05",
+   "item": "Q1",
+   "verdict": "AGREE",
+   "rule": "AMB-08 B + Q29b refinement: one element, lowest support's sign",
+   "oracle": [
+    {
+     "value": {
+      "type": "number",
+      "value": 0,
+      "bits": "0x8000000000000000"
+     },
+     "supports": [
+      "Z1",
+      "Z2"
+     ]
+    }
+   ],
+   "lowestSupport": "Z1"
+  },
+  {
+   "vector": "C6-03",
+   "item": "cmd:C1",
+   "verdict": "AGREE",
+   "rule": "AMB-06 A: retract-pattern over staged facts commits"
+  },
+  {
+   "vector": "G9-HO-03",
+   "item": "cmd:C1",
+   "verdict": "AGREE",
+   "rule": "AMB-12 B: validTo <= validFrom is E-INVALID-VALUE before mutation",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-INVALID-VALUE",
+    "errorTag": "InvalidTripleError",
+    "reason": "invalid-value",
+    "phase": "preflight",
+    "message": "validTo must be after validFrom"
+   }
+  }
+ ]
+}

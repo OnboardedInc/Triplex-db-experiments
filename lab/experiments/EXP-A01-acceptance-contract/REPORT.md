@@ -35,3 +35,31 @@ errors per negative case), O-OBS (engine-side observation protocol), O-SPEC (typ
 
 ## Open questions
 Q1 to Q12 were answered by the orchestrator in lab/acceptance/RULINGS.md.
+
+## Contract 0.3.8 (branch contract/0.3.8 f159abd, merged into main 445bc45; saved 2026-11-08 00:01Z)
+- 156 obligations (new G9.erasure.residual-shapes, G7.broker.promotion-hardening, G7.position.bound-after-publication); per lane 153/153/154,
+  engine-scope 50; thresholds 50, mutants 44; counterexamples 48/17. O-REPLAY pin scope 123 uses / 117 may close / 6 blocked (scale evolution:
+  G1.types.decimal, G1.types.storage-widening-safe, G7.migration.schema-evolution, G7.migration.valid-writes-never-rejected; Q52 shapes:
+  G9.erasure.residual-shapes; both: R.repo.mutation-controls). Newly closable: the 11 erasure obligations, G9.erasure.commit-semantics,
+  G9.erasure.query-semantics, G1.decimal.channel-routing. Pending at generation: Q51b, Q57a-e.
+- Hashes: transitive 4ee29f9b...6c53; obligations.json 86c26c4a...c718; ACCEPTANCE.md 1122c7f8...03d7; load-contract.json 85b25137...c4a2c7;
+  budgets.json 2ec648fd...2a52; capability-matrix.md 2450d5dd...5f72; build_contract.py 4e4f64cd...9a83; RULINGS.md 081399e6...2769;
+  RULINGS-PENDING.md 7aa835dd...ab24 (at generation).
+- Regressions 189/189 runnable caught (118 carried from tests-through-037.json, 71 new; 44 old entries no longer match, mostly admission
+  code Q55a replaced); 8 first-run misses fixed (7 fixtures with a second unrelated defect, 1 check crashing on a missing field); "Q38b
+  booleans" retired for a v2. Q47d probe (q47d_test038.py) PASS. Scripts in lab/experiments/EXP-A01-acceptance-contract/regressions/.
+- Changelog: (1) O-REPLAY 0.4.1 BUILT-ACCEPTED at a9c1327 with hashes.a9c1327.json as an input, excludes empty, refusals q52-shapes (6 named
+  CS-ERASURE cases + DR-JSON-CONVERT-ROUNDING at 7 sites), tdk1-keys (run.py:53), envelope-facts (views.py:129, unreached), scale-evolution
+  (entities.py:61), nextPin 0.4.2. (2) Q55a QUALIFICATION_RUN 8 steps (qualification_run, resolve_cases, rewritten admit_claim; A0_REGISTRY
+  binarySha256 must be reproduced; evidence_ok removed; VERIFIER_REGISTRY V-O03 8f631ab superseded, V-O04c fa6c236, V-D01-W0-1.1.1 bee0b25;
+  oracle pins, the W0 pin and each claimed obligation need registry entries; fixtures CX-R7-INVENTED-EVIDENCE, CX-R7-SELECTION-OVERREACH,
+  CX-R7-RELABELLED-CONTROL rejected). (3) Q55b COMMIT_OUTCOMES per variant, QT4s-SOURCE-PUBLISHED and QT4r-REPLICA-APPLIED, composition_ok
+  requires the source variant and, for a log source, implementationSha256, fsyncMode, fullFsync, device; fault points
+  C2-SOURCE-PUBLISHED-REPLICA-BEHIND, C2-CRASH-AFTER-SOURCE-PUBLISHED. (4) Q55c provisional per-surface guarantees (E-BASIS-NOT-AVAILABLE,
+  E-REPLICA-UNAVAILABLE; 7 CS-COMPOSITION cases; NS-P2-RYOW-PER-SURFACE). (5) Q55d NS-P3-EVERY-POSITION-ACCOUNTED; Q55e fingerprintOwnership.
+  (6) Q52/Q56 erasure (inFlight per commit; queriesResidual, commandShape, selectors, presence, syntheticData). (7) Q50c-e
+  G7.broker.promotion-hardening, GATE-BROKER-HARDENING, storagePerCommit, runQueue. (8) Q51a hotSubjects (NS-P2-HOT-SUBJECT-QUEUE), Q51c
+  POSITION binding, 100k rung deferred to EXP-J01, SIGKILL fault points, E-DUAL-COMMIT-PATH. (9) Q53 readings, Q54 checks. (10) Q50 (Q50b
+  superseded), Q51 without Q51b, Q52-Q56 moved into RULINGS.md.
+- Questions ruled Q59 (placement until 0.4.2; ER-INFLIGHT-READ narrowed; own brief file per verification; registry entry per claimed
+  obligation; pin each answer-producing oracle later; pin case manifests through contract bumps).

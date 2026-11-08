@@ -1,0 +1,249 @@
+{
+ "contract": "0.3.6",
+ "counts": {
+  "WRONG-ANSWER": 12,
+  "REFUSES": 1
+ },
+ "probes": 13,
+ "rows": [
+  {
+   "probe": "ST add value",
+   "rule": "self-test",
+   "contract": "1.76 (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "type": "decimal",
+    "value": "1.75",
+    "scale": 2,
+    "precision": 4
+   }
+  },
+  {
+   "probe": "ST add precision",
+   "rule": "self-test",
+   "contract": "precision 3 (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "type": "decimal",
+    "value": "1.75",
+    "scale": 2,
+    "precision": 4
+   }
+  },
+  {
+   "probe": "ST fraction as overflow",
+   "rule": "self-test",
+   "contract": "E-DECIMAL-OVERFLOW (wrong id)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-DECIMAL-FRACTION",
+    "errorTag": "InvalidTripleError",
+    "reason": "decimal-fraction",
+    "phase": "preflight",
+    "message": "decimal: 16.505 has more than 2 fractional digits",
+    "family": "decimal"
+   }
+  },
+  {
+   "probe": "ST divide half-up as half-even",
+   "rule": "self-test",
+   "contract": "-0.12 (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "type": "decimal",
+    "value": "-0.13",
+    "scale": 2,
+    "precision": 38
+   }
+  },
+  {
+   "probe": "ST round larger scale",
+   "rule": "self-test",
+   "contract": "1.5 (wrong scale)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "type": "decimal",
+    "value": "1.500",
+    "scale": 3,
+    "precision": 4
+   }
+  },
+  {
+   "probe": "ST AVG as bare divide",
+   "rule": "self-test",
+   "contract": "E-DECIMAL-BARE-DIVIDE (wrong id)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "error": "E-DECIMAL-AVG",
+    "_tag": "DatalogValidationError",
+    "reason": "decimal-avg-requires-divide",
+    "phase": "preflight",
+    "message": "AVG over decimals; write divide(SUM, COUNT, scale, rounding)"
+   }
+  },
+  {
+   "probe": "ST -0 basis as invalid value",
+   "rule": "self-test",
+   "contract": "E-INVALID-VALUE (wrong id)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "error": "E-NEGATIVE-ZERO-INSTANT",
+    "_tag": "InvalidTripleError",
+    "reason": "invalid-value",
+    "phase": "preflight",
+    "message": "validAt given as -0",
+    "detail": "no-negative-zero"
+   }
+  },
+  {
+   "probe": "ST abort gap sees 2",
+   "rule": "self-test",
+   "contract": "2 facts at the gap (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": 1
+  },
+  {
+   "probe": "ST nested negative passes",
+   "rule": "self-test",
+   "contract": "PASS (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "status": "FAIL",
+    "violations": [
+     {
+      "rule": "R-RCP-5",
+      "physicalGroup": "g",
+      "problem": "positions of one physical transaction are not consecutive",
+      "positions": [
+       {
+        "stream": "log",
+        "epoch": 1,
+        "offset": 7,
+        "ordinal": 0
+       },
+       {
+        "stream": "log",
+        "epoch": 1,
+        "offset": 7,
+        "ordinal": 2
+       },
+       {
+        "stream": "log",
+        "epoch": 1,
+        "offset": 7,
+        "ordinal": 3
+       }
+      ]
+     }
+    ],
+    "positions": [
+     {
+      "scope": "s",
+      "coordinates": "tuple",
+      "dense": null,
+      "aborted": []
+     }
+    ]
+   }
+  },
+  {
+   "probe": "ST erased value readable",
+   "rule": "self-test",
+   "contract": "the plaintext is still readable after the erase (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "_tag": "ErasedValue",
+    "erasedAt": 200
+   }
+  },
+  {
+   "probe": "ST erasedAt of the assert",
+   "rule": "self-test",
+   "contract": "erasedAt 100, the assert's instant (wrong: the erase commit's)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "_tag": "ErasedValue",
+    "erasedAt": 200
+   }
+  },
+  {
+   "probe": "ST refused 'erasure' answered",
+   "rule": "self-test",
+   "contract": "a non-refusal check on the refused `erasure` spelling must not MATCH",
+   "verdict": "REFUSES",
+   "oracle": "o-replay: malformed case: X-NOT-MODELED: op 'erasure' is not an O-REPLAY op; erasure cases spell the op erase (RULINGS Q45b)"
+  },
+  {
+   "probe": "ST cross-family eq as error",
+   "rule": "self-test",
+   "contract": "eq E-MIXED-FAMILY for string vs integer (wrong: eq is false)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "comparable": false,
+    "identical": false,
+    "eq": false,
+    "ne": true,
+    "lt": {
+     "error": "E-MIXED-FAMILY",
+     "_tag": "DatalogValidationError",
+     "reason": "mixed-family",
+     "phase": "preflight",
+     "message": "lt between string and integer needs an explicit conversion",
+     "left": "string",
+     "right": "integer",
+     "op": "lt"
+    },
+    "gt": {
+     "error": "E-MIXED-FAMILY",
+     "_tag": "DatalogValidationError",
+     "reason": "mixed-family",
+     "phase": "preflight",
+     "message": "gt between string and integer needs an explicit conversion",
+     "left": "string",
+     "right": "integer",
+     "op": "gt"
+    },
+    "sameGroup": false
+   }
+  }
+ ],
+ "reverseCheck": {
+  "tableDifferences": [
+   {
+    "id": "E-DECIMAL-OVERFLOW",
+    "oracle": [
+     "InvalidTripleError",
+     "decimal-overflow",
+     [
+      "preflight",
+      "execution"
+     ]
+    ],
+    "contract": [
+     "InvalidTripleError",
+     "decimal-overflow",
+     "preflight or execution"
+    ]
+   }
+  ],
+  "eLiteralsNotInContract": {},
+  "xIdsInSource": {
+   "X-NOT-MODELED": [
+    "entities.py",
+    "exact.py",
+    "replay.py",
+    "views.py"
+   ],
+   "X-NO-POSITION": [
+    "views.py"
+   ],
+   "X-CYCLE": [
+    "views.py"
+   ]
+  },
+  "producedNotInContract": [],
+  "droppedIdsStillInSource": {},
+  "retiredXIdsStillInSource": {}
+ }
+}

@@ -221,7 +221,7 @@ Round 4: R3-15 and R3-16 CLOSED; R3-14 and R3-17 PARTIAL; R3-18 NOT CLOSED in th
 | Q39a DECIMAL sums on XTDB (refines Q19) | An engine-side exact sum uses `SUM(CAST(x AS DECIMAL(32,0)))` and reads the result as text; it is never cast back to BIGINT or any numeric client type, because XTDB 2.2.0 rounds DECIMAL to BIGINT through a double (1e18 + 4 read back as 1e18). `packages/core/src/datalog/compiler.ts:572` is checked for this cast (EXP-R02). Added to the XTDB hazard list. | EXP-X02 |
 | Q39b language recorded | Every XTDB receipt records `TRIPLEX_XTDB_NATIVE_LANGUAGE` (xtql or xtdb-sql); XTQL and SQL results never share an obligation closure. | Q11 principle (per-surface measurement) |
 
-## Rulings on V-D01 (W0 review) (2026-11-08; Q40; recorded, compiled in the next contract version)
+## Rulings on V-D01 (W0 review) (2026-11-08; Q40; compiled in 0.3.6)
 W0 becomes W0-1.1.0 (not yet pinned, so no new world name).
 
 | Q | Ruling | Basis |
@@ -235,3 +235,149 @@ W0 becomes W0-1.1.0 (not yet pinned, so no new world name).
 | Q40g generator (F8) | Name every draw field (including the passport expiry draw); pin the population fingerprint once the O-DOMAIN author's independent generator reproduces V-D01's. | V-D01 F8 |
 | Q40h retirement (F9) | When a work item id disappears from a subject's outputs, the outbox records its retirement; a later reappearance publishes a new sequence even if the payload equals the last published one (so a second FNC notice is delivered). | real notices recur |
 | Q40i narrow release (F10) | Add release R3 that changes one rule with a narrow read set (OT threshold 2,400 to 2,700 minutes), so P5 exercises re-running only the subjects the release diff affects through the dependency index; add a runtime-outcome attribute (an action result written by the runtime writer class) and a few population facts with later valid-from dates. | P5; TARGETS 2 writer mix |
+
+## Q41: rulings on contract 0.3.5 questions (2026-11-08; compiled in 0.3.6 with Q40)
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q41a Q40 timing | Compile Q40 into 0.3.6 once W0-1.1.0 lands (Q40c and Q40h change the outbox rules again: a reappearing work item publishes a new sequence even with an unchanged payload). | Q40 |
+| Q41b Q37c correction | Q37c's tdk1_reference.py hash 923f7577... is superseded by Q38e's fix; the pinned hash is 73467589...bf33. | Q38e |
+| Q41c Q39b enforcement | Accepted: the 19 engine-scope XTDB obligations touching a native or raw surface are keyed by native language. | Q39b |
+| Q41d admit_claim | Accepted: the generator's admit_claim is a reference model with structural receipt checks; lab/bin's evaluator implements it as a minimum and adds the full receipt-validity (VA) rules. | Q38b |
+| Q41e O-TDK1 gating | Accepted: TDK1 and decimal-routing obligations fail closed until the independent vector review sets O-TDK1's acceptance and the V5 pin. | Q37b |
+
+## Q42: rulings on Codex plan-v2 round 5 (2026-11-08; review lab/reviews/plan-v2-round5.codex.md; compiled in 0.3.6)
+Round 5: R4-1, 2, 3, 5, 6, 7 CLOSED; R4-4 and R4-8 PARTIAL; 3 new (9 to 11). All accepted.
+
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q42a evidence-backed admission (R4-4, finding 11) | Claim admission opens and verifies the evidence, never only its shape: every referenced object exists in the content-addressed store and its bytes hash to the recorded value; the executed binary and modules are bound to the claimed source tree through a build/import manifest that is itself an object; receipts are fresh (produced at the claim's commit, after the last change to any file in their dependency closure); fault repetitions, modes and verifier evidence required by the obligation are present; the claimed obligation's own measurement receipts exist (for example NS.P2 measurements for an NS.P2 claim) with their correctness checks and a matched control (A0 on the same slot, trace, seed and window); unknown obligation ids are rejected, never dropped. Counterexample fixtures: all-zero object hashes, a stale binary under the same source label, a falsifier receipt from an earlier commit, a claim with prerequisites but no measurement receipt, an unknown id. This is implemented in lab/bin (EXP-E01), with the generator's admit_claim as the reference model. | round 5 findings 4, 11 |
+| Q42b receiver ordering (finding 9) | Receivers apply deliveries per id by publication sequence: a state projection records the highest sequence applied and ignores any lower one (it never regresses); an effect that needs every transition processes sequences in order and recovers gaps from the outbox before applying a later one; receiver deduplication is persisted atomically with the receiver's state or effect (or the recipient is idempotent by (id, seq)). Cases: reversed arrival (seq 2 before seq 1 ends on seq 2's payload), a gap, and receiver restart mid-sequence. W0 adds a sixth pure operation `receive(state, deliveries)` so O-DOMAIN gives the expected receiver state. | round 5 finding 9 |
+| Q42c one atomic unit (finding 10) | Per subject, the basis guard (Q40d), retirement state (Q40h), publication sequence, latest published payload and the outbox records are persisted in one atomic write under the subject's CAS; the guard advances on empty and unchanged evaluations too. Crash injection between every pair of these transitions is a required case set. | round 5 finding 10 |
+
+## Q43: rulings on EXP-O03's decisions (2026-11-08; oracle O-REPLAY 0.3.0 at 99d85be; compiled in 0.3.6)
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q43a decimal error ids (R-DEC-13, R-DEC-16) | The oracle follows contract 0.3.5, which compiled Q35e: E-DECIMAL-UNREPRESENTABLE is gone. A decimal value beyond its declared or 38-digit precision, including number-to-decimal overflow, is E-DECIMAL-OVERFLOW; excess fraction digits are E-DECIMAL-FRACTION. | Q35e (compiled in 0.3.4) |
+| Q43b R-DEC-14 | AVG over decimals is E-DECIMAL-AVG (the id contract 0.3.4 created), not E-DECIMAL-BARE-DIVIDE. | contract 0.3.4 |
+| Q43c R-DEC-8 | Accepted: an undeclared decimal literal has scale = written fraction digits and precision = max(1, integer digits + scale). | Q22 |
+| Q43d R-DEC-9 | Accepted: half-up rounds ties away from zero, including negative ties; half-even rounds ties to the even digit; down truncates toward zero. | Q22 |
+| Q43e R-DEC-10 | Accepted: inside an expression with no target column the precision limit is 38. | Q22 |
+| Q43f R-DEC-11 (overrides the refusal) | `round(x, s)` with s greater than x's scale is exact: it returns x at scale s by appending zeros, never refused (subject to the 38-digit limit). | exact operation |
+| Q43g R-DEC-12 | Accepted: `toInteger` of a whole decimal outside the integer range is E-INTEGER-OVERFLOW. | numeric rule item 3 |
+| Q43h R-CUT-4 | A read basis given as -0 is E-NEGATIVE-ZERO-INSTANT, consistent with Q30b. | Q30b |
+| Q43f-detail | Accepted the oracle author's choice: `round(x, s)` to a larger scale has result precision p + (s - s_x), capped at 38, so x's integer digits always fit. | Q43f |
+
+## Q44: rulings on the W0-1.1.0 re-review (2026-11-08; lab/verify/D01/VERIFY.md; compiled in 0.3.6)
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q44a fixes G1-G5, G6, G7, G9 | Accepted as the reviewer proposed: C68 holds the raw token `1.65e3` and validate.py asserts the raw token text of every numeric-error case; C76 carries the real id and validate.py recomputes every delivery id and checks every version against a record; one receive case with seq 1, 1, 3, 3, 2 pins both dedup rules; SPEC 12.7 states the fingerprint recipe exactly; the five SPEC contradictions are fixed; K = 4 x ceil(L / 80); 12.6 states that worlds can fall up to 2 facts below their bucket; publish and receive shape validation listed in 4.4 with one E_SHAPE case per operation. | V-D01 re-review |
+| Q44b narrowing by subject (G8, option a; amends Q40i) | R3 becomes a scoped release: it changes the OT threshold to 2,700 minutes only for placements whose location's jurisdiction is in a listed set (about 10% of jurisdictions), so the subjects R3 reaches are selected through the reverse two-hop dependency index, not by rule. Release scope is part of the release's content hash. Expected affected subjects and changed subjects are stated separately in SPEC 12. | Sam's paste: re-run the subjects the change affects; P5 |
+| Q44c publish only live reconciles (G10) | A delivery's subject comes from the evaluation record; only live reconciles at the current basis are published; previews (GS.11) and past-valid-time audit evaluations are never passed to publish, because the basis guard orders by tx first and would publish past payloads. | V-D01 G10 |
+| Q44d receivers from the start | Receivers exist from the first publication or are seeded with a state snapshot; a receiver that starts after acknowledged deliveries were pruned would wait forever for seq 1 (stated in SPEC 8.9). | V-D01 section 3 |
+
+## Q45: O-REPLAY pin and V-O03 findings (2026-11-08; compiled in 0.3.6)
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q45a pin | O-REPLAY is ACCEPTED at 8cc2c26 (29 file hashes in lab/verify/O02/v-o03/hashes.8cc2c26.json), acceptance receipt V-O03, against contract 0.3.5 + Q43. The contract gains a per-oracle exclusion list; O-REPLAY's excludes G1.decimal.channel-routing until F2 is fixed and re-verified. | V-O03 ACCEPT |
+| Q45b refusal handling (N2) | An oracle exit 2 with X-NOT-MODELED means "not modeled": the obligation fails closed; it is never treated as a case-authoring error. Erasure cases spell the op `erase`; outbox steps are never encoded as O-REPLAY ops (O-DOMAIN owns them). | V-O03 N2 |
+| Q45c G1.types.decimal (N3) | Its three key-byte cases move to the G1.decimal.tdk1-* obligations (owned by O-TDK1); G1.types.decimal keeps the value cases. | V-O03 N3 |
+| Q45d DO-ROUND (N1) | Compile Q43f-detail: round to a larger scale has precision p + (s - s_x), capped at 38. | Q43f |
+| Q45e follow-up EXP-O04 | The oracle author fixes F2 (DR-JSON-CONVERT per contract; add `decimalRouting` to RULES.md's table list and Coverage.TABLES) and models erasure (Q24, Q31f) so the 11 erasure-dependent obligations can close; then an independent re-check before the pin moves. | V-O03 F2 |
+
+## Q46: rulings on contract 0.3.6 questions (2026-11-08; held in lab/reviews/plan-v2-round6.responses.md; compiled in 0.3.7)
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q46a crash pairs | Accepted: Q42c's crash cases cover all 10 pairs of the five transitions, not only the 4 consecutive gaps. | Q42c |
+| Q46b A0 control identity | Accepted: once EXP-N01/N02 measures A0 (at the budget re-freeze), the A0 commit and tree are pinned in the contract and the evaluator takes the control's identity from there, never from the claim. | Q42a |
+| Q46c W0 pin layout | Accepted: the W0 pin's file list is adjusted when W0-1.1.1 merges, before V-D01's delta check. | Q44 |
+| Q46d O04 follow-up | Accepted: when EXP-O04 lands and is re-verified, a new pin is compiled and the excludes and refusals shrink in that version, with the pin-scope expected-differences list updated. | Q45e |
+
+## Q47: rulings on Codex plan-v2 round 6 (2026-11-08; review lab/reviews/plan-v2-round6.codex.md; compiled in 0.3.7)
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q47a evidence meaning, not only hashes (R5-4) | Admission validates the complete object graph and every record's schema: the build/import manifest's executed modules are retained objects whose bytes hash to the manifest; verifier records must match the verifier-record schema; every case verdict is recomputed from the retained raw result (an oracle exit 2 or X-NOT-MODELED can never count as PASS). Implemented in EXP-E01; the generator's reference model mirrors it. | round 6 finding 1 |
+| Q47b genuine matched control (R5-11) | Both the claim's measurement receipt and its control carry nonempty, validated workload identity (trace generator hash, seed, offer schedule hash, measurement window bounds, slot identity); a missing field never matches a missing field. The A0 control's identity comes from the frozen A0 registry in the contract (Q46b), never from the claim; a candidate-selected control cannot qualify a comparison. | round 6 finding 5 |
+| Q47c refusals resolved per case (finding 6) | Admission re-judges the oracle on every case the obligation selects, directly or through a broader case set, and rejects the claim if any case's retained oracle run refused; the per-oracle scope list is advisory, and the generator propagates unsupported-rule dependencies through indirect selections (for example CS-MIGRATION and CS-WIDEN reaching decimal scale evolution), so G7.migration.schema-evolution and G1.types.storage-widening-safe are classified blocked for any case that redeclares a decimal attribute. | round 6 finding 6 |
+| Q47d pending rulings (finding 7) | RULINGS-PENDING.md may hold ruling rows; they carry no authority, are never compiled, and their presence is recorded (file hash, listed as pending) without invalidating generation. Until 0.3.7 implements this, pending rows live in review response files. | round 6 finding 7 |
+
+## Q48: W0 accepted; V-D01 delta-check notes (2026-11-08; lab/verify/D01/VERIFY.md; compiled in 0.3.7)
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q48a W0 pin | W0-1.1.1 at ada2e90 is ACCEPTED (V-D01 delta check); the contract pins its 95 file hashes (lab/verify/D01/W0-1.1.1-ada2e90-SHA256SUMS) and the fingerprint once the O-DOMAIN author's independent generator reproduces it (Q40g). | V-D01 ACCEPT |
+| Q48b narrow-release rung (N3, N4) | The scoped-release P5 measurement runs at the 100k rung; a P5 receipt for a scoped sweep binds the reached-subject list (and its hash) instead of every placement. | V-D01 N3, N4 |
+| Q48c next W0 edit (N1, N2, N5) | W0-1.1.2 adds an R3 case with a listed jurisdiction that has no facts, adds "and A's entry for that rule is unscoped" to the SPEC 5.3 skip rule, and records measured R3 counts (9,497 reached, 418 changed) beside the expected ones; none changes an output, a case result, a floor or the fingerprint. | V-D01 N1, N2, N5 |
+
+## Q49: EXP-O04 erasure and decimal questions (2026-11-08; lab/experiments/EXP-O04-oracle-erasure/REPORT.md; compiled in 0.3.7)
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q49a erasure commit in the journal (R-ERA-2, R-ERA-5) | An erasure commit is an ordinary data-journal transaction: it has a position, a txId, a record in `transactions()` and its own `:_tx/` facts, and its changes list only identities (entity, attribute, assertion ids), never values. It is also written to the erasure ledger kept apart from the data (TARGETS 7 item 5), which restore and rebuild replay. Earlier transactions' `:_tx/change` facts for erased values show the ErasedValue marker (modulo erasure), so the whole-journal comparison of ER-JOURNAL-MODULO compares markers on both sides. | TARGETS 7; Q24, Q31f |
+| Q49b idempotence (R-ERA-3) | Accepted: the first erasure of an identity sets `erasedAt`; erasing it again changes nothing; an erase that matches nothing still commits (a journal record with an empty change list). | idempotent commands |
+| Q49c erased values in queries (R-ERA-4; provisional, under the Q24 flag for Sam) | An erased value is present with no readable value: it matches no value predicate (equality, inequality, range, pattern), so a filter never selects or rejects a subject by it; value aggregates (SUM, AVG, MIN, MAX) skip it while COUNT of assertions counts it; ORDER BY places erased markers last in a deterministic order by assertion id; grouping puts all erased values of an attribute in one group keyed by the marker; Unique ignores erased values; an erased reference cannot be followed (an include returns the marker). | hard error, never silent; deterministic answers |
+| Q49d in-flight reads (R-ERA-6) | Accepted: for a read that started before the erasure published, each erased value may be the old value or the marker. | TARGETS 7 item 1 |
+| Q49e JSON number to decimal (R-DEC-18) | A JSON number converts from its as-written reading (Q33a's read-back-as-written text): toDecimal(json 0.1, 2, 1) = 0.1. The exact binary64 expansion is never used for JSON. Decimal text inside a JSON string is E-INVALID-VALUE unless the query converts the string explicitly. | Q33a |
+
+## Q50: EXP-P2Q open questions (compiled in 0.3.8)
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q50a replica unreachable (open question 2) | Entity and repository pulls fall back to the broker's own record when the replica is unreachable (TARGETS 4.1: the source of truth's own query surface is an eligible fallback). The cheap way is a broker-side current-entity index, which is also a candidate current-index layer for P4 (per-subject current document served from the host, QLever kept for history and analytics); EXP-Q05 builds and measures it. | TARGETS 4.1 items 4-6; P4 |
+| Q50b native and Datalog reads beyond the watermark (open question 3; superseded by Q55c) | Native SPARQL and Datalog reads at a basis the replica has not reached wait within the read's deadline (Q31d's 10 ms, extended to the request's own timeout for native queries that name an explicit basis) and then fail with a typed `BasisNotAvailable` error, never an untyped failure; repository reads use the overlay or the broker. Read-your-own-write is a repository-pull guarantee. | Q31d, Q31e |
+| Q50c write amplification (open question 4) | Measure and reduce triples per command on QLever (about 750 per 10-fact command against R17's 94): the journal encoding is the first suspect. Owner: EXP-Q05 with EXP-R02. | P2, delta growth |
+| Q50d hardening (open question 5) | Required before promotion of the broker composition: an overlay memory bound with backpressure (typed `Overloaded` beyond the bound) for GS.04b-style replica outages, segment rotation with checkpoints, a kernel file lock (flock) in addition to the epoch and marker guard. Out-of-process broker and off-device copies are deferred. | GS.04b; C3 fencing |
+| Q50e measurement (open questions 1, 6) | The exclusive-slot run list (A0 and candidate at delta 0/100k/500k, persist-updates off, kill -9 replay, rebuild trigger cost, full trace with burst against QLever, keep-alive recheck on an idle slot) joins the QLever exclusive queue first. | Q47b matched controls |
+
+## Q51: EXP-P2X open questions (compiled in 0.3.8 except Q51b, which stays in RULINGS-PENDING.md)
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q51a hot subjects | Accepted for every lane: a per-subject FIFO queue in the runtime's command router (bounded; typed `Overloaded` beyond the bound, never an unbounded wait) and same-subject group commit (up to 8 queued commands of one subject in one engine transaction, positions by ordinal). Optimistic CAS stays for cross-node races. The queue is part of the candidate, not the driver. | P2 progress (accounting is not progress); trace hot subject 20% |
+| Q51c positions bound after commit | Accepted: the core binds a transaction's position after the source of truth publishes it; positions become an opaque, totally ordered value (bigint), so adapters stop returning placeholders and the 8-ordinal packing limit goes away. Lands with the broker's engine-agnostic extraction (EXP-P2B), on both lanes. | Q31c |
+| Q51d bytes per commit | One cross-lane experiment (EXP-J01) measures bytes and triples per 10-fact command on both lanes (XTDB A0 27,581 bytes, candidate 95,364; QLever A0 about 750 triples against R17's 94) and cuts the journal and parameter encoding. Q50c is folded into it. | P2, storage per commit |
+| Q51e 100k rung | Deferred until EXP-J01 lands; re-estimate the disk need from the new bytes per commit before asking for a large slot. | disk budget 50 GiB |
+| Q51f untested items | `lab/bin/engine.mjs` gains a `kill` verb (SIGKILL the engine process) so F3 can be tested engine-side on both lanes. A scope written by both commit paths at once is refused with a typed error at runtime, not left unsupported. xt.txs and METADATA cost at 1M+ transactions joins the EXP-J01 measurement list. | Q31c F3 |
+
+## Q52: EXP-O04 residual erasure and decimal questions (provisional, under the Q24 flag for Sam) (compiled in 0.3.8)
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q52a COUNT over erased values | A count of distinct values counts an attribute's erased values as one value (the marker group of Q49c), the same as GROUP BY; a count of assertions counts each erased assertion. | Q49c grouping |
+| Q52b ORDER BY with erased and missing values | Readable values first, then erased markers (by assertion id), then missing values, in both directions. | present before absent |
+| Q52c erasedAt of a marker group | The group's marker reports the earliest erasedAt among its members. | deterministic answers |
+| Q52d ReferenceTarget over an erased reference | An erased reference takes no part in reference constraints: it blocks no restrict delete, cascades nothing and is skipped by ReferenceTarget validation, because enforcing it would need the erased value. | Q24 |
+| Q52e computed answers over in-flight values | An erasure commit is atomic for readers: a read that started before it published sees either all of that commit's values as they were or all as markers, never a mix; the oracle accepts exactly those two whole answers. This narrows Q49d from per value to per commit. | Q49d |
+| Q52f toDecimal(json, p, s, rounding) | The named mode (half-even, half-up or down, Q22) applies to the JSON number's as-written decimal reading (Q49e); without a rounding argument, excess digits are E-DECIMAL-FRACTION. | Q22, Q49e |
+| Q52g erase command shape | The op is spelled `erase`; `erasure` is a typed invalid-command error. An erase is its own command: mixing it with other ops, or giving it preconditions, is a typed invalid-command error. | Q49a |
+
+## Q53: W0 SPEC-AMBIGUITY readings from EXP-D01c (compiled in 0.3.8)
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q53a readings A01-A10 | Accepted as written in lab/experiments/EXP-D01c-o-domain/REPORT.md. They change no golden case and no fingerprint value. | W0-1.1.1 outputs unchanged |
+| Q53b fold into W0 | W0-1.1.2 adds them to SPEC.md as clarifications and adds one golden case per reading (A10 is already exercised by the population), so the TypeScript kernel (EXP-D01b) and O-DOMAIN are held to the same reading. Every existing case and the fingerprint must stay byte-identical; V-D01c checks that. Until W0-1.1.2 lands, the W0 pin covers W0-1.1.1 with these readings recorded. | Q31i (two independent implementers) |
+
+## Q54: EXP-A01 contract 0.3.7 questions (compiled in 0.3.8)
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q54a third blocked obligation | Keep G7.migration.valid-writes-never-rejected blocked by the CS-MIGRATION:* reach: a valid-write migration case can redeclare a decimal attribute. Narrow the reach once the CS-MIGRATION manifest tags its decimal-redeclaring cases, or once O-REPLAY models R-DEC-15. | Q47c |
+| Q54b no reach for two selections | Confirmed: CS-REQ:no-silent-precision-loss and CS-TYPES8:decimal get no reach, because neither redeclares a scale. | Q47c |
+| Q54c 0.3.8 content | 0.3.8 compiles Q50 to Q54; Q52e replaces the 0.3.7 ERASURE inFlight text (per commit, not per value). | Q47d |
+| Q54d control production | Confirmed: tree and composition come from A0_REGISTRY; the control receipt is a fresh harness run at the claim's commit; the registry commit is the A0 code commit. EXP-E01 does the same. | Q47b, Q46b |
+| Q54e record schemas | build-manifest/1, verifier-record/1 and case-result/1 are adopted as written in 0.3.7; EXP-E01 conforms and proposes any change for 0.3.8. | Q47a |
+
+## Q55: Codex round 7 on contract 0.3.7 (compiled in 0.3.8)
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q55a qualification is a run, not a document | A QUALIFIED verdict comes only from a run the evaluator (lab/bin/claim.mjs) executes itself at the claimed commit: it builds the declared source tree (and A0 from the registry's tree and commit) and records its own build hashes; it resolves cases from the pinned manifests (every case and mode in each selected set; a claimant's `selection` or case list is ignored); it runs the system under test through the gate on a registered slot; it computes every expected answer by running the pinned oracle on the pinned input and applies the declared comparator. Records an experiment supplies are DIAGNOSTIC evidence only. Independent verification counts only through a contract-held VERIFIER_REGISTRY entry (verifier id, brief hash, branch, commit, verdict), added by a reviewed contract version, never by a record in a claim. | round 7 findings 1, 2 |
+| Q55b source and replica publication | QT4 splits into QT4s (the source of truth's decision is durable and its own read surface answers at that position: the broker's log reader or overlay, or the engine itself when the engine is the source) and QT4r (the replica's marker has reached the position). ACK is allowed after QT4s (Q31e). Every composition declares its source implementation; the receipt binds the broker or log identity and its durability configuration (fsync mode, F_FULLFSYNC, device) next to engine identities. Each protocol variant (engine as source; host log as source with an engine replica) has its own witnessed transition table in G7.commit.protocol-transitions. | round 7 finding 5; Q31e |
+| Q55c per-surface read guarantees (provisional, flagged for Sam) | Repository pulls: read-your-own-write by routing (replica, else overlay, else the source's log), never below the caller's basis; with the replica unreachable they fall back to the source (Q50a). Native SPARQL, XTQL, SQL and Datalog: every answer reports the basis it was computed at; with a basis token it is never below that basis (wait within the request deadline, then typed BasisNotAvailable); without one it answers at the replica's watermark and reports that position; with the replica unreachable it fails typed ReplicaUnavailable. No surface may present an answer as at a basis it was not computed at. NS.P2 and G7.composition.ack-and-routed-ryow test each surface the composition claims; this supersedes Q50b's wording. | round 7 finding 6; the goal's "raw native queries still make sense" |
+| Q55d P3 lag from source publication | P3 lag is measured from the source's own publication timestamp for each position (the broker's durable watermark update, or the engine's commit resolution when the engine is the source), recorded by the source independently of ACK delivery, to the consumer's durable record. Every committed position is accounted (no sample dropped for a missing ACK; missing ones are counted and fail the run). EXP-P2Q's ACK-to-consumer figure is not the contracted measurement until recomputed. | round 7 finding 7 |
+| Q55e domain fingerprint | Confirmed: the O-DOMAIN fingerprint pin changes only by a reviewed contract version; the evaluator owns the function argument and a claim cannot supply it. | round 7 finding 8 |
+
+## Q56: V-O04b findings on O-REPLAY 0.4.1 (provisional, under the Q24 flag for Sam) (compiled in 0.3.8)
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q56a unknown erase target (F3) | "Matches nothing" in Q49b means a well-formed entity or entity-plus-attribute selector with no assertions to erase, which commits with an empty change list. An erase naming an unknown assertion `target` or an unknown `id` is E-INVALID-VALUE, the same as retract (Q33f). | Q33f, Q49b |
+| Q56b card-one with a readable and an erased value (F4.1) | An erased value is still a present assertion, so a card-one attribute holding a readable value and an erased value conflicts (E-CONFLICTING-VALUES) exactly as two readable values would; the remedy is to retract the erased assertion. | Q49c "present" |
+| Q56c one of two equal supports erased (F4.2) | Answers after an erasure never depend on the erased value. A card-one attribute with a readable "SAME" and an erased support conflicts whatever the erased value was, so the read is E-CONFLICTING-VALUES even though the value read "SAME" before the erasure; returning "SAME" would reveal that the erased value equalled it. | TARGETS 7; Q24 |
+| Q56d card-many marker position (F4.3) | In a card-many value list, erased markers come after the readable elements, ordered by assertion id, the same as ORDER BY (Q49c). | Q49c |
+| Q56e Required over an erased value (F4.4) | Required is satisfied by an erased value, because the assertion is present. | Q49c |
+| Q56f the `id` selector (F4.5) | Erase accepts the same selectors as retract, including `{"id": ...}`; SCHEMA.md documents it in 0.4.2. | Q33f |
+| Q56g retract after erase (F4.6) | Retracting an already erased assertion by target commits; history shows the marker with the retraction's time. Erase then delete is a supported flow. | Q24 |
+| Q56h synthetic values only (N1) | In-flight outputs list the old value as acceptable (Q49d), so oracle outputs can hold the pre-erasure value. Every oracle case, fixture and golden scenario uses synthetic values only; no real personal data enters the lab. | Q49d |
+| Q56i pin | With Q56a-g ruled as the oracle answers, O-REPLAY 0.4.1 (a9c1327) pins unchanged once V-O04b converts its seven DERIVED-NOTE probes into checked probes and they pass. 0.4.2 adds Q52 and the SCHEMA.md note. | Q46d nextPin |
