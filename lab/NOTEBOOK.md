@@ -1394,3 +1394,17 @@ Where each priority stands, from evidence so far (research probes and baselines;
   provable freeze protocol. Also: probing a nonexistent block id hangs; enumerate published files instead.
 - **R25 finish** (Opus high) completes the SQLite pinned-readers design from the retained measurements and now must also serve H1's
   current_rows.
+
+## 2026-11-08 21:50Z: review round results (Codex reviewers): O-REPLAY 0.4.9 ACCEPTED; X02 stops silent rounding; three narrow FIX-FIRSTs
+- **O-REPLAY 0.4.9 ACCEPTED** (V-O04i): the completeness check now runs every registered kind, so every planted paged kind fails it;
+  1,793 seeded cases unchanged. Contract 0.3.11 (Codex builder) pins it, compiles Q70, Q74-Q77, Q79, Q81 and registers lane D's surface,
+  blocked until EXP-DA00 lands a pinned image.
+- **X02 fix round (6cd68dc):** exact Datalog arithmetic on XTDB now refuses typed instead of rounding 1000000000000000004 to
+  1000000000000000000 (Sam's "no silent precision loss" rule), SQL guards are token-aware, overflow is a typed failure, and an unset switch
+  restores historical routing; G0 949 passed. Reviewer delta check running; C8 round 3 merges it, since C8 carries X02.
+- **Narrow FIX-FIRSTs:** E01 (a case input deleted or rewritten after its last use is not detected; Q81a), C8 (an unclassified GET and pgwire
+  traffic after a parser exception still tally zero; Q81b), J01 (the default-off option changes the XTDB client's array-parameter contract;
+  compact-on G1 missing; Q81c). Each has a Codex builder on it.
+- **Learning:** each delta re-check finds a smaller residue on the same theme (the write counter: multipart, then GET; evaluator inputs:
+  before use, then after last use). The rounds converge; the fix that ends them is a positive allowlist with "everything else counts" rather
+  than a growing list of recognised bad cases.
