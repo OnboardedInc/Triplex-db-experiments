@@ -310,8 +310,8 @@ describe("surfaces that read the replica without the overlay (Q55c, Q58d, Q62a)"
       const after = await rt.adapter.resolveQueryBasis.after!(b).then(() => "accepted", (e) => reasonOf(e));
       const record = { basis: b, answerSnapshotMarker: answerMarker, markerAtAfterCheck: replica.marker().position, after, regressionsDetected: rt.broker.stats().replicaRegressions };
       writeJson("check3-residual-gap.json", record);
-      // Recorded as evidence for the residual-gap finding (the after-check cannot see this).
       expect(record.answerSnapshotMarker).toBeLessThan(a.position);
+      expect(record.after).toBe("ReadError:basis-not-reached");
     } finally {
       await rt.dispose();
       await rt.broker.close();
@@ -503,5 +503,6 @@ describe("seeded adversarial fuzz of repository pulls and the Datalog gate again
     expect(mismatches).toEqual([]);
     expect(summary.every((s) => s.converged)).toBe(true);
     expect(total("failedCommits")).toBe(0);
+    expect(total("gateStaleAccepted")).toBe(0);
   });
 });

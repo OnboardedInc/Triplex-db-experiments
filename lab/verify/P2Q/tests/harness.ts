@@ -212,6 +212,11 @@ export class ModelReplica implements QleverClient {
         },
       ];
     }
+    // [EXP-P2Q] Why: a combined dependency/marker request on an empty snapshot is valid
+    // and must reach the adapter's in-request marker check. Rejected: throwing unsupported
+    // (prevents exercising that check). Populated aggregates remain a live-QLever obligation.
+    if (sparql.startsWith("SELECT ?sourcePosition ?nextBoundary ?brokerPosition") && this.rowCount(q) === 0)
+      return [{ brokerPosition: { type: "literal", value: String(this.marker(q).position) } }, {}];
     if (sparql.startsWith("SELECT ?s WHERE { ?s ?p ?o } LIMIT 1")) return [];
     if (sparql.startsWith("SELECT ?row ?brokerPosition WHERE")) {
       const out: any[] = [];
@@ -261,7 +266,12 @@ export class ModelReplica implements QleverClient {
     const epNow = [...this.objects(q, META, BE)];
     const okPos = (posNow.length ? posNow : ['"0"']).includes(guard[1]!);
     const okEp = (epNow.length ? epNow : ['"0"']).includes(guard[2]!);
-    if (!(okPos && okEp))
+    // [EXP-P2Q] Why: real SPARQL guards the incarnation too. Rejected: ignoring it
+    // (an old in-flight publication could add its incarnation after a new fence in this model).
+    const incGuard = /COALESCE\(\?brokerIncarnation, ""\) = ("(?:[^"\\]|\\.)*")/.exec(sparql);
+    const incNow = [...this.objects(q, META, BI)];
+    const okInc = !incGuard || (incNow.length ? incNow : ['""']).includes(incGuard[1]!);
+    if (!(okPos && okEp && okInc))
       return { operations: [{ "delta-triples": { operation: { inserted: 0, deleted: 0 }, after: { total: 0 } } }] };
     const next: Quads = new Map(q);
     const touch = (s: string) => {

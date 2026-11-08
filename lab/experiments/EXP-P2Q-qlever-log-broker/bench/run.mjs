@@ -185,24 +185,30 @@ const startConsumer = (rt, arm, consumerDir) => {
  * engine's own journal after the consumer's starting position.
  */
 const sourcePrefix = async (rt, arm, startAfter) => {
-  const positions = [];
+  const positions = [], effects = [];
   if (arm === 'C') {
     const feed = new qlever.LogFeed(path.dirname(rt.broker.segmentPath));
     for (let cursor = feed.start(); ; ) {
       const page = feed.poll(cursor);
       if (page.resolutions.length === 0) break;
-      for (const r of page.resolutions) if (r.kind === 'commit') for (const tr of r.transacts) positions.push(tr.position);
+      for (const r of page.resolutions) if (r.kind === 'commit') for (const tr of r.transacts) {
+        positions.push(tr.position);
+        for (const subject of tr.subjects) effects.push([tr.position, subject]);
+      }
       cursor = page.cursor;
     }
   } else {
     for (let after = startAfter; ; ) {
       const page = await rt.run(rt.triples.transactions({ after, limit: 200 }));
       if (page.transactions.length === 0) break;
-      for (const r of page.transactions) positions.push(r.position);
+      for (const r of page.transactions) {
+        positions.push(r.position);
+        for (const subject of new Set(r.changes.map((c) => c.entityId))) effects.push([r.position, subject]);
+      }
       after = page.transactions.at(-1).position;
     }
   }
-  return [...new Set(positions)].sort((a, b) => a - b);
+  return { positions: [...new Set(positions)].sort((a, b) => a - b), effects };
 };
 
 const auditEffects = (consumerDir, consumer, committed, processed) => {
@@ -281,15 +287,17 @@ const trace = async () => {
   await Promise.all([...inflight]);
   const drainedAt = now();
   const consumed = await consumer.stop();
-  const committed = records.filter((r) => r.outcome === 'committed').map((r) => [r.position, `subj:${r.subject}`]);
-  const audit = auditEffects(consumerDir, `consumer-${arm}`, committed, consumed.processed);
   // RULINGS Q67d (V-P2Q m6, Q55d): P3 lag runs from the source's actual publication instant (TARGETS 1.1 P3
   // item 1) for every position of the final published source prefix, enumerated from the source's own record.
   // Candidate: the broker's WATERMARK publication for the position's frame. A0 (the engine as source): the
   // instant its guarded update applied (commit resolution). ACK records are reconciled afterwards: a position
   // with no ACK is a late or lost ACK (client-side accounting), never a feed defect; an ACK for a position the
   // source never published is a defect.
-  const prefix = await sourcePrefix(rt, arm, consumed.startAfter);
+  const source = await sourcePrefix(rt, arm, consumed.startAfter);
+  const prefix = source.positions;
+  // [EXP-P2Q] Why: Q67d makes source records the feed denominator, including lost ACKs.
+  // Rejected: ACK-derived effects (reports a correctly delivered lost-ACK commit as an extra).
+  const audit = auditEffects(consumerDir, `consumer-${arm}`, source.effects, consumed.processed);
   const watermarkByLsn = new Map(recorder.events.filter((e) => e.type === 'frame').map((e) => [e.lsn, performance.timeOrigin + e.watermarkAt]));
   const resolutions = [...rt.counts.resolutions].sort((a, b) => a[0] - b[0]);
   const resolvedAt = (position) => {
@@ -351,7 +359,7 @@ const trace = async () => {
     publication: arm === 'C'
       ? { updates: published.length, updateMs: summary(published.map((e) => e.ms)), membersPerUpdate: summary(published.map((e) => e.members)), lastDelta: published.at(-1)?.deltaTotal ?? null, rebuilds: recorder.events.filter((e) => e.type.startsWith('rebuild')), applyErrors: recorder.events.filter((e) => e.type === 'apply-error').length, drain }
       : { updates: rt.counts.updates, updateMs: summary(rt.counts.updateMs), lastDelta: rt.lastDelta() ?? null, updateErrors: rt.counts.updateErrors },
-    raw: { records, perPosition, events: recorder.events, a0Resolutions: arm === 'C' ? undefined : resolutions },
+    raw: { records, perPosition, sourceEffects: source.effects, events: recorder.events, a0Resolutions: arm === 'C' ? undefined : resolutions },
   };
   await rt.close();
   return result;
