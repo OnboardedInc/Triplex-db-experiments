@@ -1250,3 +1250,16 @@ Where each priority stands, from evidence so far (research probes and baselines;
   journal pages from their issuing read; 377/377 unit tests. Its author found one older journal gap (in-flight scope taken from cut.scope),
   ruled Q70j; 0.4.7 fixes it, then one re-check against Q70a-j.
 - **EXP-K01 dispatched:** clone tooling per R26 and Q74, validated live at 500 subjects (the rung N01 proposed for the A0 P1 ladder).
+
+## 2026-11-08 02:15Z: V-E01 FIX-FIRST: the evaluator trusted bytes the candidate could still reach
+- **What held:** every round-8 fix does what it claims (9 of 9 mutations break their guard; reference replay 59/59).
+- **What failed:** isolation (check 3). Two routes need no process escape: a build can rewrite claim.mjs so the next honest run returns
+  top-level QUALIFIED with exit 0 (F1), and an unpinned COMPILED oracle is read lazily, after candidate code ran, through a git that honours
+  `git replace` (F2, which also exposed a conflict: Q59e makes claims on unpinned oracles DIAGNOSTIC, but the code and the reference
+  accept COMPILED ones). Smaller: the identity records the evaluator's own node while children run the first node on PATH (v24 ran,
+  identity said v22); one HOME for every child; deleted evidence is not detected; row comparators cannot reach inside an O-REPLAY answer, so
+  those cases can never pass (fail closed).
+- **Learning:** "hash at start and end" protects one run, not the next; trust has to be anchored to git blobs read before any candidate
+  code runs, with replace refs disabled. And the identity must record what children actually execute, not what the evaluator runs on.
+- Ruled Q75a-j; E01 fix round 2 also adopts contract 0.3.10's field names; V-E01 does the delta check. Contract items (pinned runners,
+  comparators inside O-REPLAY answers, promotion in admit_claim) go into 0.3.11.
