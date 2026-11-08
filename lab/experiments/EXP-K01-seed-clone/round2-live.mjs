@@ -13,18 +13,25 @@ const base = ['--lane', 'xtdb', '--slot', 's1', '--holder', 'CX-K01-R2', '--exp'
 let n = 0;
 let ownsSlot = false;
 const attemptTag = Date.now();
-function run(label, args, { optional = false, extraEnv = {} } = {}) {
+function run(label, args, { optional = false, extraEnv = {}, expectCleanStop = false } = {}) {
   const file = `${evidence}/${attemptTag}-${String(++n).padStart(2, '0')}-${label}`;
   process.stderr.write(`[K01-R2] ${label}\n`);
   const t = Date.now();
   const r = spawnSync(process.execPath, args, { env: { ...env, ...extraEnv }, encoding: 'utf8', maxBuffer: 256 << 20, timeout: 1800_000 });
   fs.writeFileSync(file + '.stdout', r.stdout ?? '');
   fs.writeFileSync(file + '.stderr', r.stderr ?? '');
-  fs.writeFileSync(file + '.result.json', JSON.stringify({ args, exit: r.status, signal: r.signal, error: r.error?.message, elapsedS: (Date.now() - t) / 1000 }, null, 2) + '\n');
+  let semanticFailure = null;
+  // [EXP-K01-R3] Why: a stop command can exit zero while its proof fails. Rejected: using process status as the T1 prediction verdict (continues after missing stop lines).
+  if (expectCleanStop) {
+    try { if (JSON.parse(r.stdout).verdict?.ok !== true) semanticFailure = 'required clean-stop proof failed'; }
+    catch { semanticFailure = 'required clean-stop proof is unreadable'; }
+  }
+  fs.writeFileSync(file + '.result.json', JSON.stringify({ args, semanticFailure, exit: r.status, signal: r.signal, error: r.error?.message, elapsedS: (Date.now() - t) / 1000 }, null, 2) + '\n');
+  if (semanticFailure) throw new Error(`${label}: ${semanticFailure}`);
   if (r.status !== 0 && !optional) throw new Error(`${label} failed: ${r.stderr?.slice(-1000)}`);
   return r;
 }
-const engine = (label, cmd, args = [], options = {}) => run(label, ['lab/bin/engine.mjs', cmd, ...base, ...args], options);
+const engine = (label, cmd, args = [], options = {}) => run(label, ['lab/bin/engine.mjs', cmd, ...base, ...args], { ...options, expectCleanStop: cmd === 'stop' && !label.startsWith('T2') });
 const check = (label, cmd, args = []) => run(label, ['lab/bench/clone-check.ts', cmd, '--url', env.XTDB_URL, '--container', 'tx2-xtdb-s1', ...args]);
 const seedDir = `runs/xtdb-seed/k01-${attemptName}-golden`;
 const singlecutDir = `runs/xtdb-seed/k01-${attemptName}-singlecut`;

@@ -8,7 +8,14 @@ function run(command, args = []) {
   const stem = `lab/experiments/EXP-K01-seed-clone/evidence/round2/T1-${command}`;
   fs.writeFileSync(stem + '.stdout', result.stdout ?? '');
   fs.writeFileSync(stem + '.stderr', result.stderr ?? '');
-  fs.writeFileSync(stem + '.result.json', JSON.stringify({ command, args, exit: result.status, signal: result.signal }, null, 2) + '\n');
+  let semanticFailure = null;
+  // [EXP-K01-R3] Why: T1 requires the fresh stop proof, not just a successful command transport. Rejected: accepting exit-zero verdict.ok:false.
+  if (command === 'stop') {
+    try { if (JSON.parse(result.stdout).verdict?.ok !== true) semanticFailure = 'T1 clean-stop proof failed'; }
+    catch { semanticFailure = 'T1 clean-stop proof is unreadable'; }
+  }
+  fs.writeFileSync(stem + '.result.json', JSON.stringify({ semanticFailure, command, args, exit: result.status, signal: result.signal }, null, 2) + '\n');
+  if (semanticFailure) throw new Error(semanticFailure);
   if (result.status !== 0) throw new Error(result.stderr);
 }
 const retained = readJson(POOL_FILE(), {}).retainedVolumes?.find(v => v.volume === 'tx2-xtdb-s1-data' && v.holder !== 'CX-K01-R2');

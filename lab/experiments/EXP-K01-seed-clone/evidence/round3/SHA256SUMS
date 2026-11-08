@@ -1,0 +1,17 @@
+13b69aea6027a64724c5b6cd706682ac00e38182f86c4cfb971ddbb7164b9836  lab/experiments/EXP-K01-seed-clone/evidence/round3/extended.log
+ab056c3414b00afbe749391aefc7847a0d1da8f13dd9b997441db82ef925f781  lab/experiments/EXP-K01-seed-clone/evidence/round3/extra.tap
+026aab8148ec87fa19e81d55df9fded77e3b2193e55c070217d40d33f60b157b  lab/experiments/EXP-K01-seed-clone/evidence/round3/final-run.json
+2d06ab656ca8a561a8e1b18dd801a591fc97c88f5e939a075392c65c282baa12  lab/experiments/EXP-K01-seed-clone/evidence/round3/final.log
+e34861e2f3ce8eb20605891f086cc896eefb46f8d62a83b1d9d6f5af7dbe3806  lab/experiments/EXP-K01-seed-clone/evidence/round3/offline.log
+888a98f75054b5b1f2c55cd63169141c48f9a9941747ae2138103988834f007c  lab/experiments/EXP-K01-seed-clone/evidence/round3/reviewer-gates.log
+c3ae2bf3a3a5b2a71450c1f54051ce2fa97afefe6bde63f780d773ab196bdf28  lab/experiments/EXP-K01-seed-clone/evidence/round3/reviewer-input.json
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  lab/experiments/EXP-K01-seed-clone/evidence/round3/syntax-0.log
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  lab/experiments/EXP-K01-seed-clone/evidence/round3/syntax-1.log
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  lab/experiments/EXP-K01-seed-clone/evidence/round3/syntax-2.log
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  lab/experiments/EXP-K01-seed-clone/evidence/round3/syntax-3.log
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  lab/experiments/EXP-K01-seed-clone/evidence/round3/typecheck.log
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  lab/experiments/EXP-K01-seed-clone/evidence/round3/types-final.log
+d30992b5ff533c8bb218a8a4baf4fc86b8bfd040a34f5f9d4dc07645bb9f22b8  lab/verify/K01/evidence/baseline.tap
+2805072432b7516c0f668071ef40af3efb106176fa8a29094c08476559fdd2c0  lab/verify/K01/evidence/cases.json
+5c509c443b1fe82179f8e3815c7b3d24cffa804a8f87887685bbcdf628d5f338  lab/verify/K01/evidence/regressions.tap
+888a98f75054b5b1f2c55cd63169141c48f9a9941747ae2138103988834f007c  lab/verify/K01/evidence/run.json

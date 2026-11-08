@@ -1,0 +1,17 @@
+{
+  "reviewedHead": "05a23dd90fde0d7c1df5f8ecff2ef417fa436e20",
+  "reviewerBranchHead": "21d062678d29410c501a4b445099022954e3084f",
+  "sourceWorktree": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01",
+  "files": [
+    {
+      "path": "lab/verify/K01/offline.test.mjs",
+      "sha256": "c5e21f7251e1df21da35c77ed6bd659afea0150a83fc3f41183ae68357ad4d16",
+      "byteIdentical": true
+    },
+    {
+      "path": "lab/verify/K01/run-offline.mjs",
+      "sha256": "951304acea92c7f432a54a3b877a48946fd78aaafa2fa2b1b183919d5695f7c5",
+      "byteIdentical": true
+    }
+  ]
+}

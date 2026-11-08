@@ -102,6 +102,8 @@ async function settle() {
   for (let phase = 1; phase <= Number(opt("cuts", "2")); phase++) {
     const baseline = previous;
     const target = baseline.listing.length ? blockNumber(baseline.listing.at(-1)!) + 1 : 0;
+    if (!Number.isSafeInteger(before.gauges.latestCompletedTxId) || before.gauges.latestCompletedTxId! < 0)
+      return { settled: false, reason: "initial completed transaction gauge is missing or invalid", before, phases };
     const finishBlock = healthz("/system/finish-block", true);
     const evidence: any = { phase, target, finishBlock, polls: [] };
     phases.push(evidence);
@@ -116,7 +118,8 @@ async function settle() {
       const block = reading.blocks.find(r => blockNumber(r.block_idx) === target);
       const coverage = blockTrieCoverage(reading.trie.rows, block?.block_idx ?? "", requiredTables);
       const signature = digest([reading.listing, reading.trie.sha256]);
-      const ok = !!block && num(block.tx_id) === before.gauges.latestCompletedTxId &&
+      const ok = !!block && Number.isSafeInteger(g.latestCompletedTxId) && num(block.tx_id) === g.latestCompletedTxId &&
+        g.latestCompletedTxId === before.gauges.latestCompletedTxId &&
         num(block.latest_processed_msg_id) === g.latestProcessedMsgId && g.latestProcessedMsgId === g.latestSubmittedMsgId &&
         g.lagMsgId === 0 && g.jobsAvailable === 0 && g.lastUploadTime !== null && baseline.gauges.lastUploadTime !== null &&
         g.lastUploadTime > baseline.gauges.lastUploadTime &&
@@ -129,6 +132,9 @@ async function settle() {
       evidence.polls.push({ elapsedS: (Date.now() - started) / 1000, ...reading, requiredTables, coverage, ok, streak, supersededStreak });
       persist();
       log(`finish-block #${phase}: jobs ${g.jobsAvailable}, block ${block?.block_idx ?? "pending"}, stable ${streak}/3`);
+      // [EXP-K01-R3] Why: a current transaction change invalidates the frozen seed even if its old block still matches. Rejected: treating the initial gauge as fresh evidence for later polls.
+      if (!Number.isSafeInteger(g.latestCompletedTxId) || g.latestCompletedTxId !== before.gauges.latestCompletedTxId)
+        return { settled: false, reason: `current completed transaction ${g.latestCompletedTxId} differs from frozen seed ${before.gauges.latestCompletedTxId} or is invalid`, before, phases };
       if (supersededStreak >= 3) return { settled: false, reason: `block ${block.block_idx} source watermark ${block.latest_processed_msg_id} is permanently behind node ${g.latestProcessedMsgId}; Q83d equality cannot pass`, before, phases };
       if (streak >= 3) { previous = reading; evidence.after = reading; break; }
     }
@@ -151,7 +157,8 @@ async function startCheck(expected: any) {
   const started = healthz("/healthz/started");
   return { ok: started.status === 200 && resume !== null && Number(resume) === expectedMsgId && polls.every(p =>
     p.live.total === 0 && p.gauges.jobsAvailable === 0 && p.gauges.lagMsgId === 0 &&
-    p.gauges.latestCompletedTxId === expected.gauges.latestCompletedTxId && p.trie.sha256 === expected.trie.sha256 &&
+    p.gauges.latestCompletedTxId === expected.gauges.latestCompletedTxId &&
+    p.gauges.latestProcessedMsgId === expectedMsgId && p.gauges.latestSubmittedMsgId === expectedMsgId && p.trie.sha256 === expected.trie.sha256 &&
     canonical(p.listing) === canonical(expected.listing)), started, resume, expectedMsgId, polls,
     startLines: text.split("\n").filter(l => /starting follower:|resuming after/.test(l)) };
 }
@@ -237,12 +244,15 @@ async function verify() {
   const t = Date.now();
   const start = await startCheck(record.settle.after);
   const obs = await fingerprint(manifest);
-  const polls = [obs.c7?.jobsAvailable ?? null];
-  for (let k = 1; k < 3; k++) { await sleep(5000); polls.push((await gauges()).jobsAvailable); }
-  (obs as any).c7 = { ...(obs.c7 ?? {}), polls };
+  let currentGauge = await gauges();
+  const polls = [currentGauge.jobsAvailable];
+  for (let k = 1; k < 3; k++) { await sleep(5000); currentGauge = await gauges(); polls.push(currentGauge.jobsAvailable); }
+  (obs as any).c7 = { ...currentGauge, polls };
+  // [EXP-K01-R3] Why: fingerprint queries can outlive their initial startup evidence. Rejected: reusing the initial zero gauges after a transaction or restart during the fingerprint.
+  const finish = await startCheck(record.settle.after);
   Object.assign(checks, compareFreeze(record.freeze, obs, manifest));
-  checks["C2"]!.pass &&= start.ok;
-  checks["C2"]!.observed = { started, alive, start };
+  checks["C2"]!.pass &&= start.ok && finish.ok;
+  checks["C2"]!.observed = { started, alive, start, finish };
   if (!obs.ok) for (const k of ["C3", "C4", "C5", "C6", "C7", "C8"]) if (obs.errors.some((e) => e.startsWith(k.toLowerCase()))) checks[k] = { ...checks[k]!, pass: false, note: `${checks[k]!.note}; error: ${obs.errors.find((e) => e.startsWith(k.toLowerCase()))}` };
   const verdict = Object.values(checks).every((c) => c.pass) ? "PASS" : "FAIL";
   return {

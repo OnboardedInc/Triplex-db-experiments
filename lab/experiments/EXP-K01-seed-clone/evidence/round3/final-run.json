@@ -1,0 +1,110 @@
+{
+  "at": "2026-11-08T23:10:01.876Z",
+  "head": "b2b27e591fb035e8b9e3b0379eb7dcebf47913ea",
+  "node": "v22.23.2",
+  "offlineOnly": true,
+  "sourceSha256": {
+    "lab/bin/engine.mjs": "2e1bb90beefc8a2a901649c508fc4408a5c8fd3733bfc33a9964fa90adee7386",
+    "lab/bench/clone-check.ts": "c7d7ac22883004f4cff875f80ad1af5a904227fdc2cef392c350aa13651bf25f",
+    "lab/experiments/EXP-K01-seed-clone/round2-live.mjs": "cf7d9daf7d0fd5f06afb09dbcd3690fc16f924ad9464c56bff2724711bde7a4b",
+    "lab/experiments/EXP-K01-seed-clone/round2-t1.mjs": "94c4cfbeaaaa389ba2267db19427f9220a4be35a7e7ef51ff07dc060a5166328",
+    "lab/verify/K01/offline.test.mjs": "c5e21f7251e1df21da35c77ed6bd659afea0150a83fc3f41183ae68357ad4d16",
+    "lab/verify/K01/round3.test.mjs": "a13d7b99ca1acb2890aa650ef2468a02934babf037603a6c78ec2b5a9065d9af",
+    "lab/verify/K01/run-offline.mjs": "951304acea92c7f432a54a3b877a48946fd78aaafa2fa2b1b183919d5695f7c5",
+    "lab/verify/K01/run-round3.mjs": "1a93932c8875b1d00330c097a0feb52da479dbc699878cf12f5acb78e7c6d9f8"
+  },
+  "runs": [
+    {
+      "label": "reviewer-gates",
+      "command": [
+        "/Users/sam/.hermes/node/bin/node",
+        "lab/verify/K01/run-offline.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 1422,
+      "outputSha256": "888a98f75054b5b1f2c55cd63169141c48f9a9941747ae2138103988834f007c"
+    },
+    {
+      "label": "extended",
+      "command": [
+        "/Users/sam/.hermes/node/bin/node",
+        "--test",
+        "lab/verify/K01/round3.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 146,
+      "outputSha256": "13b69aea6027a64724c5b6cd706682ac00e38182f86c4cfb971ddbb7164b9836"
+    },
+    {
+      "label": "types-final",
+      "command": [
+        "/Users/sam/.hermes/node/bin/node",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "-p",
+        "lab/bench/tsconfig.json"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 1510,
+      "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "syntax-0",
+      "command": [
+        "/Users/sam/.hermes/node/bin/node",
+        "--check",
+        "lab/bin/engine.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 29,
+      "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "syntax-1",
+      "command": [
+        "/Users/sam/.hermes/node/bin/node",
+        "--check",
+        "lab/experiments/EXP-K01-seed-clone/round2-live.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 26,
+      "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "syntax-2",
+      "command": [
+        "/Users/sam/.hermes/node/bin/node",
+        "--check",
+        "lab/experiments/EXP-K01-seed-clone/round2-t1.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 26,
+      "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "syntax-3",
+      "command": [
+        "/Users/sam/.hermes/node/bin/node",
+        "--check",
+        "lab/verify/K01/run-round3.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 25,
+      "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}
