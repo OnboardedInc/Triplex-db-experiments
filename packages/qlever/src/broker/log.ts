@@ -343,17 +343,26 @@ export class HostLog {
       this.writing = false;
     }
   }
-  framesAfter(after: number, maxBytes = 32 * 1024 * 1024) {
-    return this.pool[0]!.sync<LogFrame[]>("after", { after, maxBytes }).map(normalize);
-  }
   async framesAfterAsync(after: number, maxFrames: number) {
-    return (
-      await this.pool[0]!.request<LogFrame[]>("after", {
+    const frames = (
+      await this.pool[0]!.request<(LogFrame & { prev_crc: number })[]>("after", {
         after,
         maxBytes: 32 * 1024 * 1024,
         maxFrames,
       })
-    ).map(normalize);
+    ).map(normalize) as (LogFrame & { prev_crc: number })[];
+    for (const f of frames) {
+      const encoded = encodeFrame({
+        lsn: f.lsn,
+        epoch: f.epoch,
+        kind: f.kind,
+        payload: f.payload,
+        prevCrc: f.prev_crc,
+      });
+      if (encoded.crc !== f.crc)
+        throw new BrokerLogError(`Replica replay CRC mismatch at ${f.lsn}`);
+    }
+    return frames;
   }
   async recentAsync(after: number, selection: Selection) {
     if (this.closed) throw new BrokerLogError("Broker log is closed");

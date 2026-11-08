@@ -1026,3 +1026,28 @@ describe("A0 M2 guard (pure guard behind A0's own path)", () => {
 
 void FrameKind;
 void BrokerLogError;
+
+// [EXP-SQL01] Why: catch-up must reach commits after any number of no-write restarts.
+// Rejected: counting epoch records against the commit batch limit (can retry the same empty page forever).
+describe("SQLite catch-up after consecutive restarts", () => {
+  it("skips epoch-only prefixes even with a one-command publication batch", async () => {
+    const dir = freshDir();
+    for (let i = 0; i < 5; i++) {
+      const { log } = await HostLog.open(dir, { minFreeBytes: 0 });
+      await log.close();
+    }
+    const replica = new MarkerReplica();
+    const rt = await openRt(dir, `sql01-epoch:${randomUUID()}`, replica, {
+      autoApply: false,
+      maxApplyCommands: 1,
+    });
+    try {
+      await rt.run(rt.triples.transact(ops("s:epoch", 1, "after restarts")));
+      rt.broker.startApplier();
+      expect(await rt.broker.drain(1500)).toBe(true);
+    } finally {
+      await rt.dispose();
+      await rt.broker.close();
+    }
+  });
+});

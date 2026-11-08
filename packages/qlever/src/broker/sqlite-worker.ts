@@ -48,6 +48,7 @@ try {
  }
  if(role==='writer') {
   db.exec('CREATE TABLE IF NOT EXISTS frames(lsn INTEGER PRIMARY KEY,epoch INT NOT NULL,kind INT NOT NULL,offset INT NOT NULL,end INT NOT NULL,prev_crc INT NOT NULL,crc INT NOT NULL,payload BLOB NOT NULL,committed_at INT NOT NULL);'+
+  'CREATE INDEX IF NOT EXISTS frames_commits ON frames(lsn) WHERE kind=1;'+
   'CREATE TABLE IF NOT EXISTS marker(id INTEGER PRIMARY KEY CHECK(id=1),lsn INT NOT NULL,epoch INT NOT NULL,h INT NOT NULL,position INT NOT NULL,crc INT NOT NULL,size INT NOT NULL);'+
   'CREATE TABLE IF NOT EXISTS heads(subject TEXT PRIMARY KEY,pos INT NOT NULL) WITHOUT ROWID;'+
   'CREATE TABLE IF NOT EXISTS claims(command TEXT PRIMARY KEY,txId TEXT NOT NULL,position INT NOT NULL) WITHOUT ROWID;'+
@@ -139,8 +140,14 @@ const handle = (op,a) => {
  if(op==='marker')return marker();
  if(op==='frames')return frames(a.from,a.upto,a.maxBytes);
  if(op==='after'){
-  const first=q('SELECT lsn,offset,prev_crc FROM frames WHERE lsn>? ORDER BY lsn LIMIT 1').get(a.after);
-  return first?frames({offset:first.offset,seed:first.prev_crc,nextLsn:first.lsn},marker().lsn,a.maxBytes,a.maxFrames).frames:[];
+  // [EXP-SQL01] Why: epoch-only prefixes must not consume the commit batch budget.
+  // Rejected: limiting all frame kinds (repeated restarts can retry an empty page forever).
+  const out=[];let bytes=0;
+  for(const f of q('SELECT * FROM frames WHERE kind=1 AND lsn>? ORDER BY lsn LIMIT ?').iterate(a.after,a.maxFrames??Number.MAX_SAFE_INTEGER)){
+   if(out.length && bytes+f.end-f.offset>a.maxBytes)break;
+   out.push(f);bytes+=f.end-f.offset;
+  }
+  return out;
  }
  if(op==='operation'){const r=q('SELECT receipt FROM operations WHERE op=?').get(a);return r?JSON.parse(r.receipt):undefined;}
  if(op==='claim')return q('SELECT txId,position FROM claims WHERE command=?').get(a);
