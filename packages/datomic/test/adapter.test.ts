@@ -67,6 +67,7 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")(
           try {
             expect(Buffer.from(created.db.slice(3), "base64url").toString("utf8")).toBe(scope);
             expect((await client.create(scope)).created).toBe(false);
+            expect((await client.basis(created.db)).position.v).toBe("0");
             const snapshot = await client.begin(created.db);
             try {
               expect(snapshot.position).toBe(0);

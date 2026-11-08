@@ -178,7 +178,8 @@ export class DatomicClient {
     return result.txId;
   }
   async basis(db: string): Promise<DatomicBasis> {
-    if (!/^s-[a-f0-9]{32}$/.test(db)) throw new TypeError("Invalid Datomic database name");
+    if (!/^(?:s-[a-f0-9]{32}|s2-[A-Za-z0-9_-]+)$/.test(db))
+      throw new TypeError("Invalid Datomic database name");
     const result = await this.request<DatomicBasis>("GET", `/v1/db/${db}/basis`);
     return { ...result, t: validateTagged(result.t), position: validateTagged(result.position) };
   }
