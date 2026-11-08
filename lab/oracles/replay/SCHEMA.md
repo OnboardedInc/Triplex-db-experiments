@@ -1,4 +1,4 @@
-# O-REPLAY case and output schema (v1; oracle 0.4.2)
+# O-REPLAY case and output schema (v1; oracle 0.4.3)
 
 O-REPLAY reads one case file and writes one expected-answer document. Python 3 standard library
 only; it imports nothing from Triplex. Semantic rules are in [RULES.md](RULES.md).
@@ -200,7 +200,9 @@ published when the read started; erasure commits of its scope published after it
 (R-ERA-6). Q52e: the read sees each in-flight commit whole, so when the answer depends on them the entry is
 `{"id", "kind", "inFlight": {"rule": "ER-INFLIGHT-ALL-OR-NONE ...", "acceptable": [{"erasuresSeen": [], "result":
 ...}, {"erasuresSeen": ["tx:3"], "result": ...}]}}` (each alternative a `result` or an `error`), one alternative per
-choice of seen commits, the all-old answer first; otherwise it is the plain `result` or `error`.
+prefix of the commits in position order (Q66a: none, the first, the first two, ...), the all-old answer first;
+otherwise it is the plain `result` or `error`. An `entityPage` whose `cursorFrom` names such a read is answered per
+prefix of that read, from that prefix's page (Q66b), in the same form.
 
 `where` items: `{"prop"|"var": ..., "op": "eq|ne|lt|lte|gt|gte|in|exists|missing", "value": ...}` (`values` for
 `in`); `value` is a typed value object or an untyped bare JSON string/number. `orderBy`:
@@ -219,7 +221,7 @@ select unmodeled transaction envelope facts is a typed `X-NOT-MODELED` answer (R
 ```jsonc
 {
   "format": "triplex-db-2/o-replay-expected/1",
-  "oracle": {"id": "O-REPLAY", "version": "0.4.2", "sourceSha256": {"values.py": "..."}},
+  "oracle": {"id": "O-REPLAY", "version": "0.4.3", "sourceSha256": {"values.py": "..."}},
   "caseId": "...", "caseSha256": "<sha256 of the case bytes>",
   "lane": {"name": "qlever", "integerRange": ["-576460752303423488", "576460752303423487"]},
   "verdict": "PASS | FAIL | EXPECTED-ONLY",

@@ -387,6 +387,12 @@ def _page_limit(raw):
     return int(text)
 
 
+class NoContinuation(V.OracleInputError):
+    """cursorFrom names no page with a next cursor. Under one erasure prefix of an in-flight
+    read (Q66b) that prefix has no continuation, and run.py leaves it out; otherwise the case
+    is malformed (exit 2)."""
+
+
 def q_entity_page(run, query):
     """entityPage: ids with a visible assertion carrying entityType, ordered by entity id
     in codepoint order (R-PAGE-2, AMB-15); bodies are all visible triples of the entity in
@@ -404,12 +410,14 @@ def q_entity_page(run, query):
     token = query.get("cursor")
     if query.get("cursorFrom") is not None:
         ref = query["cursorFrom"]
-        prior = run.results.get(ref["query"])
+        # Q66b: under an in-flight read the earlier page is the one computed with the erasure
+        # prefix being answered (run.result_of); otherwise the earlier query's plain result
+        prior = run.result_of(ref["query"])
         if prior is None:
-            raise V.OracleInputError(f"cursorFrom names unknown or failed query {ref['query']!r}")
+            raise NoContinuation(f"cursorFrom names unknown or failed query {ref['query']!r}")
         token = prior.get("pages")[int(ref.get("page", 0))].get("nextCursor")
         if token is None:
-            raise V.OracleInputError(f"query {ref['query']!r} page {ref.get('page', 0)} has no nextCursor")
+            raise NoContinuation(f"query {ref['query']!r} page {ref.get('page', 0)} has no nextCursor")
     after = None
     if token is not None:
         body = decode_cursor(token)

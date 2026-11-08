@@ -2086,7 +2086,8 @@ class Erasure(unittest.TestCase):
         """Q52e: an erasure commit is atomic for readers. A read that started before a commit
         erasing several values published lists exactly two whole answers, all old or all
         markers, never a mix; a read the commit does not change has one answer; with two
-        commits in flight each is seen whole or not at all, so every combination is listed."""
+        commits in flight each is seen whole and in position order, so the answers are the
+        three prefixes (Q66a)."""
         cmds = erasure_commands()
         cmds[2]["operations"] = [{"op": "erase", "entityId": "person:1"}]        # ssn1, ssn2 and name1 in one commit
         before = {"readStart": {"afterCommand": 1}}
@@ -2106,7 +2107,52 @@ class Erasure(unittest.TestCase):
         node = result(evaluate(case(two, [names], schemas=PERSON_SCHEMA)), "names")
         self.assertEqual([(a["erasuresSeen"], [r["value"] for r in a["result"]["raw"]]) for a in node["acceptable"]],
                          [([], [s("Ann"), s("Bo")]), (["tx:2"], [marker(300), s("Bo")]),
-                          (["tx:3"], [s("Ann"), marker(400)]), (["tx:2", "tx:3"], [marker(300), marker(400)])])
+                          (["tx:2", "tx:3"], [marker(300), marker(400)])])
+
+    def test_Q66a_inflight_prefixes_only(self):
+        """Q66a (V-O04d F5): erasure commits become visible in position order, so a read that
+        started before n of them has the n + 1 prefixes as its answers, never another subset;
+        a read that started after the first has the prefixes of the rest."""
+        base = [{"clock": 100, "operations": [assert_op(f"e{k}", f"p{k}", ":w/pay", i64(v)) for k, v in ((1, 1), (2, 2), (3, 4))]}]
+        erases = [{"clock": 200 + 10 * k, "operations": [{"op": "erase", "entityId": f"p{k}", "attribute": ":w/pay"}]}
+                  for k in (1, 2, 3)]
+
+        def sums(n, after):
+            q = {"id": "sum", "kind": "aggregate", "cut": {"validAt": 1}, "match": {"attributes": {"v": ":w/pay"}},
+                 "aggregates": [{"op": "sum", "var": "v", "as": "x"}], "readStart": {"afterCommand": after}}
+            node = result(evaluate(case(base + erases[:n], [q])), "sum")
+            return [(a["erasuresSeen"], a["result"]["rows"][0]["x"] and a["result"]["rows"][0]["x"]["value"])
+                    for a in node["acceptable"]]
+        self.assertEqual(sums(2, 0), [([], "7"), (["tx:1"], "6"), (["tx:1", "tx:2"], "4")])
+        self.assertEqual(sums(3, 0), [([], "7"), (["tx:1"], "6"), (["tx:1", "tx:2"], "4"), (["tx:1", "tx:2", "tx:3"], None)])
+        self.assertEqual(sums(3, 1), [([], "6"), (["tx:2"], "4"), (["tx:2", "tx:3"], None)])
+
+    def test_Q66b_cursor_continues_per_prefix(self):
+        """Q66b (V-O04d F6): a continuation cursor carries the erasure prefix its page was
+        computed with, so `cursorFrom` on a read with commits in flight is answered per prefix,
+        from that prefix's page, at the pinned basis; the plain result stands when every prefix
+        agrees. A continuation of a read with nothing in flight keeps its own read view (the
+        other entityPage and cursor tests)."""
+        page = lambda qid, **kw: dict({"id": qid, "kind": "entityPage", "entityType": "Person", "limit": 1}, **kw)
+        first = page("a", cut={"position": 2, "validAt": 1e15}, readStart={"afterCommand": 1})
+        rep = erasure_eval([first, page("b", cursorFrom={"query": "a"})])     # erases person:1's ssn
+        triples = [{t["id"]: t["value"] for t in alt["result"]["pages"][0]["entities"][0]["triples"]}
+                   for alt in result(rep, "a")["acceptable"]]
+        self.assertEqual(triples, [{"name1": s("Ann"), "ssn2": s("987-65-4321")}, {"name1": s("Ann"), "ssn2": marker(300)}])
+        b = result(rep, "b")                                              # person:2 does not depend on the erasure
+        self.assertEqual(([e["entityId"] for e in b["pages"][0]["entities"]], b["cut"]["position"]), (["person:2"], 2))
+        cmds = erasure_commands()
+        cmds[2]["operations"] = [{"op": "erase", "target": "name2"}]           # erases person:2's name instead
+        rep = evaluate(case(cmds, [first, page("b", cursorFrom={"query": "a"})], schemas=PERSON_SCHEMA))
+        self.assertEqual(len(result(rep, "a")["acceptable"]), 2)          # its second page holds person:2's name
+        node = result(rep, "b")
+        self.assertTrue(node["rule"].startswith("ER-INFLIGHT-ALL-OR-NONE"))
+        self.assertEqual([(alt["erasuresSeen"], alt["result"]["pages"][0]["entities"][0]["triples"][0]["value"])
+                          for alt in node["acceptable"]], [([], s("Bo")), (["tx:2"], marker(300))])
+        self.assertEqual([alt["result"]["cut"]["position"] for alt in node["acceptable"]], [2, 2])
+        with self.assertRaises(V.OracleInputError):                       # past the last page: no cursor under any prefix
+            evaluate(case(cmds, [first, page("b", cursorFrom={"query": "a"}), page("c", cursorFrom={"query": "b"})],
+                          schemas=PERSON_SCHEMA))
 
     def test_erase_receipts(self):
         c = case(erasure_commands(), [match_q("m")], schemas=PERSON_SCHEMA)

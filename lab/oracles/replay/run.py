@@ -16,7 +16,7 @@ from . import views as W
 
 CASE_FORMAT = "triplex-db-2/o-replay-case/1"
 OUTPUT_FORMAT = "triplex-db-2/o-replay-expected/1"
-ORACLE_VERSION = "0.4.2"   # EXP-O04b: erasure residual shapes (RULINGS Q52a-g, Q56f); ACCEPTANCE 0.3.9
+ORACLE_VERSION = "0.4.3"   # EXP-O04b: Q52a-g, Q56f; V-O04d F5/F6 (Q66a prefixes, Q66b cursors); ACCEPTANCE 0.3.9
 SOURCE_FILES = ["__init__.py", "__main__.py", "cli.py", "errors.py", "values.py", "exact.py", "replay.py",
                 "constraints.py", "views.py", "entities.py", "scale.py", "run.py", "selfcheck.py"]
 
@@ -57,7 +57,8 @@ for _kind in ("orderKey", "decimalKey", "tdk1Key"):
     QUERIES[_kind] = _order_keys_not_modeled
 
 INFLIGHT_RULE = ("ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees "
-                 "each commit whole, all of its values as they were or all as markers (RULINGS Q52e)")
+                 "each commit whole, all of its values as they were or all as markers, and the commits in "
+                 "position order, so a prefix of them (RULINGS Q52e, Q66a)")
 
 _INTEGER_LEXEME = re.compile(r"-?(0|[1-9][0-9]*)")
 _COORDINATE_FIELDS = ("stream", "epoch", "offset", "ordinal")
@@ -122,6 +123,10 @@ class Run:
                                lane_ranges=case.get("laneIntegerRanges"),
                                declarations=E.decimal_declarations(self.schemas, case.get("attributeDeclarations")))
         self.results = {}
+        # Q66b: every query's read record: the read start and scope, and its answers per erasure
+        # prefix ([(seen [(position, txId)], (key, value))]), so a continuation can answer per prefix
+        self.reads = {}
+        self.pinned = {}     # query id -> its result under the prefix being answered (Q66b)
         self.commands = list(case.get("commands") or [])
         for i, command in enumerate(self.commands):
             command["_index"] = i
@@ -530,25 +535,39 @@ class Run:
             if kind not in QUERIES:
                 raise V.OracleInputError(f"unknown query kind {kind!r}")
             entry = [("id", qid), ("kind", kind)]
-            # R-ERA-6: `readStart` is the last position published when the read started; erasure
-            # commits of the read's scope published after it are in flight for this read. Q52e: an
-            # erasure commit is atomic for readers, so the read sees each in-flight commit whole
-            # (all of its values as they were, or all as markers) and the acceptable answers are
-            # one per choice of seen commits: for one commit, exactly the all-old and the
-            # all-marker answers. The ruling treats each commit on its own, so with several
-            # commits in flight every combination is listed (none is ruled out).
-            scope = (query.get("cut") or {}).get("scope") or self.engine.default_scope
-            start = self.read_start(query)
-            pending = self.in_flight_erasures(scope, start)
-            R.READ.update(start=start, scope=scope)
-            answers = []
-            try:
-                for mask in range(1 << len(pending)):
-                    seen = [pending[k] for k in range(len(pending)) if mask >> k & 1]
-                    R.READ["chosen"] = frozenset(position for position, _ in seen)
-                    answers.append(([tx for _, tx in seen], self.answer(kind, query)))
-            finally:
-                R.READ.update(start=None, scope=None, chosen=frozenset())
+            source = self.continued_read(query)
+            if source is not None:
+                # Q66b: a continuation cursor carries the erasure prefix its page was computed with,
+                # so the continuation is answered once per prefix of the earlier read, from that
+                # prefix's page. A prefix whose page failed or has no next cursor has no continuation.
+                start, scope = source["start"], source["scope"]
+                answers = []
+                for seen, (key, prior) in source["answers"]:
+                    if key != "result":
+                        continue
+                    self.pinned = {query["cursorFrom"]["query"]: prior}
+                    try:
+                        answers.append((seen, self.answer_under(kind, query, start, scope, seen)))
+                    except W.NoContinuation:
+                        continue
+                    finally:
+                        self.pinned = {}
+                if not answers:
+                    raise V.OracleInputError(f"cursorFrom names query {query['cursorFrom']['query']!r}, which has no "
+                                             f"next cursor under any erasure prefix")
+            else:
+                # R-ERA-6: `readStart` is the last position published when the read started; erasure
+                # commits of the read's scope published after it are in flight for this read. Q52e:
+                # an erasure commit is atomic for readers, so the read sees each in-flight commit
+                # whole; Q66a: commits become visible in position order, so it sees a prefix of them.
+                # The acceptable answers are the n + 1 prefixes (none, the first, the first two, ...):
+                # for one commit, exactly the all-old and the all-marker answers.
+                scope = (query.get("cut") or {}).get("scope") or self.engine.default_scope
+                start = self.read_start(query)
+                pending = self.in_flight_erasures(scope, start)
+                answers = [(pending[:k], self.answer_under(kind, query, start, scope, pending[:k]))
+                           for k in range(len(pending) + 1)]
+            self.reads[qid] = {"start": start, "scope": scope, "answers": answers}
             if len({V.dumps(V.OrderedOut([answer]), indent=0) for _, answer in answers}) == 1:
                 # the read does not depend on the in-flight commits (or none is in flight)
                 key, value = answers[0][1]
@@ -556,11 +575,34 @@ class Run:
                 if key == "result":
                     self.results[qid] = value
             else:
-                # answers differ: list every whole answer; a later cursorFrom cannot name this query
+                # answers differ: list every whole answer, the all-old prefix first
                 entry.append(("inFlight", V.OrderedOut([("rule", INFLIGHT_RULE), ("acceptable", [
-                    V.OrderedOut([("erasuresSeen", seen), answer]) for seen, answer in answers])])))
+                    V.OrderedOut([("erasuresSeen", [tx for _, tx in seen]), answer]) for seen, answer in answers])])))
             out.append(V.OrderedOut(entry))
         return out
+
+    def continued_read(self, query):
+        """Q66b: the read record of the earlier query a `cursorFrom` continues, when that read had
+        erasure commits in flight (more than one prefix); None otherwise, and the continuation
+        is then answered with its own read view, as before."""
+        ref = query.get("cursorFrom")
+        if not isinstance(ref, dict) or ref.get("query") not in self.reads:
+            return None
+        source = self.reads[ref["query"]]
+        return source if len(source["answers"]) > 1 else None
+
+    def result_of(self, qid):
+        """The earlier result a continuation reads its cursor from: the one computed with the
+        erasure prefix being answered (Q66b), else the query's plain result."""
+        return self.pinned[qid] if qid in self.pinned else self.results.get(qid)
+
+    def answer_under(self, kind, query, start, scope, seen):
+        """One answer with the erasure commits of `scope` after `start` seen exactly as `seen`."""
+        R.READ.update(start=start, scope=scope, chosen=frozenset(position for position, _ in seen))
+        try:
+            return self.answer(kind, query)
+        finally:
+            R.READ.update(start=None, scope=None, chosen=frozenset())
 
     def answer(self, kind, query):
         """One answer to the query under the current erasure view: ("result", value) or

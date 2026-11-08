@@ -138,7 +138,7 @@ def build_model(run, cut, etype, entity_id, version):
     for name, p in props_def.items():
         mine = [a for a in facts if a.attribute == p["attribute"]]
         # R-ERA-6 (Q52e): erased as this read sees it; an in-flight erasure commit is seen whole
-        # or not at all, and run.py answers once per choice
+        # or not at all, and run.py answers once per prefix of the in-flight commits (Q66a)
         gone = [a for a in mine if erased(a)]
         groups = {}
         for a in mine:             # creation order: the first key of an identity class is Q14b's representative

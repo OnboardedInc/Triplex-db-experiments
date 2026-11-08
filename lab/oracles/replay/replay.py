@@ -19,7 +19,8 @@ marker, Unique ignores it and an erased reference is not followed; Q52: COUNT co
 marker group as one value, ORDER BY puts readable values, then markers by assertion id, then
 missing values, a marker group reports its earliest erasedAt, and ReferenceTarget skips an
 erased reference. A read that started before an erasure commit published sees that commit
-whole or not at all (Q52e); run.py answers it once per choice.
+whole or not at all (Q52e), and the commits in position order (Q66a); run.py answers it once
+per prefix of them.
 """
 
 from __future__ import annotations
@@ -158,8 +159,9 @@ class ErasureMark:
 # `start` is None for a read that starts after every erasure of the case published (the
 # default: the oracle answers after the whole command stream). A query's `readStart` sets it
 # to the last position of `scope` published when the read started; RULINGS Q52e (an erasure
-# commit is atomic for readers) then has run.py answer once per choice of which in-flight
-# erasure commits (`chosen`, by position) the read sees, all of a commit's values or none.
+# commit is atomic for readers) and Q66a (commits become visible in position order) then have
+# run.py answer once per prefix of the in-flight erasure commits (`chosen`, by position) the
+# read sees, all of a commit's values or none.
 READ = {"start": None, "scope": None, "chosen": frozenset()}
 
 
