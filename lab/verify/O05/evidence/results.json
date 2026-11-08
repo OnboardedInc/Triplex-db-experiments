@@ -1,0 +1,3536 @@
+[
+  {
+    "actual": {
+      "protocol": "OBS-CANCEL",
+      "reasons": [],
+      "thresholds": {
+        "T-DRAIN-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "derived from NS-P1-WRITER-WAIT-MAX-MS",
+          "unit": "ms from cancel request to the engine no longer listing the statement",
+          "value": 2000
+        }
+      },
+      "verdict": "PASS"
+    },
+    "canonical": true,
+    "code": 0,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-000.json",
+    "expected": "PASS",
+    "id": "CANCEL/positive",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-CANCEL",
+      "reasons": [
+        "drain deadline missed"
+      ],
+      "thresholds": {
+        "T-DRAIN-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "derived from NS-P1-WRITER-WAIT-MAX-MS",
+          "unit": "ms from cancel request to the engine no longer listing the statement",
+          "value": 2000
+        }
+      },
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-001.json",
+    "expected": "FAIL",
+    "id": "CANCEL/boundary",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-CANCEL",
+      "reasons": [
+        "missing required field: engineActiveSamples"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-002.json",
+    "expected": "FAIL",
+    "id": "CANCEL/missing-evidence",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-CANCEL",
+      "reasons": [
+        "unaccepted engine evidence source"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-003.json",
+    "expected": "FAIL",
+    "id": "CANCEL/client-source",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-CANCEL",
+      "reasons": [
+        "missing required field: records"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-004.json",
+    "expected": "FAIL",
+    "id": "CANCEL/label-only",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-CANCEL",
+      "reasons": [],
+      "thresholds": {
+        "T-DRAIN-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "derived from NS-P1-WRITER-WAIT-MAX-MS",
+          "unit": "ms from cancel request to the engine no longer listing the statement",
+          "value": 2000
+        }
+      },
+      "verdict": "PASS"
+    },
+    "canonical": true,
+    "code": 0,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-005.json",
+    "expected": "REFUSED",
+    "id": "CANCEL/invented-log",
+    "ok": false,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-PREABORT",
+      "reasons": [],
+      "thresholds": {},
+      "verdict": "PASS"
+    },
+    "canonical": true,
+    "code": 0,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-006.json",
+    "expected": "PASS",
+    "id": "PREABORT/positive",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-PREABORT",
+      "reasons": [
+        "preaborted request reached engine"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-007.json",
+    "expected": "FAIL",
+    "id": "PREABORT/boundary",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-PREABORT",
+      "reasons": [
+        "missing required field: coverage"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-008.json",
+    "expected": "FAIL",
+    "id": "PREABORT/missing-evidence",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-PREABORT",
+      "reasons": [
+        "unaccepted engine evidence source"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-009.json",
+    "expected": "FAIL",
+    "id": "PREABORT/client-source",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-PREABORT",
+      "reasons": [
+        "missing required field: records"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-010.json",
+    "expected": "FAIL",
+    "id": "PREABORT/label-only",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-PREABORT",
+      "reasons": [],
+      "thresholds": {},
+      "verdict": "PASS"
+    },
+    "canonical": true,
+    "code": 0,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-011.json",
+    "expected": "REFUSED",
+    "id": "PREABORT/invented-log",
+    "ok": false,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-CONNECTIONS",
+      "reasons": [],
+      "thresholds": {
+        "T-CONN-RELEASE-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "derived",
+          "unit": "ms after close for the engine-side connection count to return to baseline",
+          "value": 5000
+        }
+      },
+      "verdict": "PASS"
+    },
+    "canonical": true,
+    "code": 0,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-012.json",
+    "expected": "PASS",
+    "id": "CONNECTIONS/positive",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-CONNECTIONS",
+      "reasons": [
+        "pool maximum exceeded"
+      ],
+      "thresholds": {
+        "T-CONN-RELEASE-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "derived",
+          "unit": "ms after close for the engine-side connection count to return to baseline",
+          "value": 5000
+        }
+      },
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-013.json",
+    "expected": "FAIL",
+    "id": "CONNECTIONS/boundary",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-CONNECTIONS",
+      "reasons": [
+        "missing required field: baseline"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-014.json",
+    "expected": "FAIL",
+    "id": "CONNECTIONS/missing-evidence",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-CONNECTIONS",
+      "reasons": [
+        "unaccepted engine evidence source"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-015.json",
+    "expected": "FAIL",
+    "id": "CONNECTIONS/client-source",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-CONNECTIONS",
+      "reasons": [
+        "missing required field: records"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-016.json",
+    "expected": "FAIL",
+    "id": "CONNECTIONS/label-only",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-CONNECTIONS",
+      "reasons": [],
+      "thresholds": {
+        "T-CONN-RELEASE-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "derived",
+          "unit": "ms after close for the engine-side connection count to return to baseline",
+          "value": 5000
+        }
+      },
+      "verdict": "PASS"
+    },
+    "canonical": true,
+    "code": 0,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-017.json",
+    "expected": "REFUSED",
+    "id": "CONNECTIONS/invented-log",
+    "ok": false,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-SCRATCH",
+      "reasons": [],
+      "thresholds": {},
+      "verdict": "PASS"
+    },
+    "canonical": true,
+    "code": 0,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-018.json",
+    "expected": "PASS",
+    "id": "SCRATCH/positive",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-SCRATCH",
+      "reasons": [
+        "scratch relation count changed"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-019.json",
+    "expected": "FAIL",
+    "id": "SCRATCH/boundary",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-SCRATCH",
+      "reasons": [
+        "missing required field: resolutionReceipts"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-020.json",
+    "expected": "FAIL",
+    "id": "SCRATCH/missing-evidence",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-SCRATCH",
+      "reasons": [
+        "unaccepted engine evidence source"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-021.json",
+    "expected": "FAIL",
+    "id": "SCRATCH/client-source",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-SCRATCH",
+      "reasons": [
+        "missing required field: records"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-022.json",
+    "expected": "FAIL",
+    "id": "SCRATCH/label-only",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-SCRATCH",
+      "reasons": [],
+      "thresholds": {},
+      "verdict": "PASS"
+    },
+    "canonical": true,
+    "code": 0,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-023.json",
+    "expected": "REFUSED",
+    "id": "SCRATCH/invented-log",
+    "ok": false,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-NO-MUTATION",
+      "reasons": [],
+      "thresholds": {},
+      "verdict": "PASS"
+    },
+    "canonical": true,
+    "code": 0,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-024.json",
+    "expected": "PASS",
+    "id": "NO-MUTATION/positive",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-NO-MUTATION",
+      "reasons": [
+        "engine mutation counter changed"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-025.json",
+    "expected": "FAIL",
+    "id": "NO-MUTATION/boundary",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-NO-MUTATION",
+      "reasons": [
+        "missing required field: engineMutationCounterAfter"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-026.json",
+    "expected": "FAIL",
+    "id": "NO-MUTATION/missing-evidence",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-NO-MUTATION",
+      "reasons": [
+        "unaccepted engine evidence source"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-027.json",
+    "expected": "FAIL",
+    "id": "NO-MUTATION/client-source",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-NO-MUTATION",
+      "reasons": [
+        "missing required field: records"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-028.json",
+    "expected": "FAIL",
+    "id": "NO-MUTATION/label-only",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-NO-MUTATION",
+      "reasons": [],
+      "thresholds": {},
+      "verdict": "PASS"
+    },
+    "canonical": true,
+    "code": 0,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-029.json",
+    "expected": "REFUSED",
+    "id": "NO-MUTATION/invented-log",
+    "ok": false,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-RESOURCE",
+      "reasons": [],
+      "thresholds": {
+        "T-PLANNER-MEM-BYTES": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "lab/PLAN.md section 8 heavy slot cap",
+          "unit": "bytes of engine memory during a refused query (slot cap 3.5 GiB)",
+          "value": 3758096384
+        }
+      },
+      "verdict": "PASS"
+    },
+    "canonical": true,
+    "code": 0,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-030.json",
+    "expected": "PASS",
+    "id": "RESOURCE/positive",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-RESOURCE",
+      "reasons": [
+        "observed total exceeds forecast"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-031.json",
+    "expected": "FAIL",
+    "id": "RESOURCE/boundary",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-RESOURCE",
+      "reasons": [
+        "missing required field: peaks"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-032.json",
+    "expected": "FAIL",
+    "id": "RESOURCE/missing-evidence",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-RESOURCE",
+      "reasons": [
+        "unaccepted engine evidence source"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-033.json",
+    "expected": "FAIL",
+    "id": "RESOURCE/client-source",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-RESOURCE",
+      "reasons": [
+        "missing required field: records"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-034.json",
+    "expected": "FAIL",
+    "id": "RESOURCE/label-only",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-RESOURCE",
+      "reasons": [],
+      "thresholds": {
+        "T-PLANNER-MEM-BYTES": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "lab/PLAN.md section 8 heavy slot cap",
+          "unit": "bytes of engine memory during a refused query (slot cap 3.5 GiB)",
+          "value": 3758096384
+        }
+      },
+      "verdict": "PASS"
+    },
+    "canonical": true,
+    "code": 0,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-035.json",
+    "expected": "REFUSED",
+    "id": "RESOURCE/invented-log",
+    "ok": false,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-AVAILABILITY",
+      "reasons": [],
+      "thresholds": {
+        "T-AVAIL-WINDOW-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "derived from NS-P1-RECOVERY-MS",
+          "unit": "ms until writes and reads succeed after a resource failure",
+          "value": 60000
+        }
+      },
+      "verdict": "PASS"
+    },
+    "canonical": true,
+    "code": 0,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-036.json",
+    "expected": "PASS",
+    "id": "AVAILABILITY/positive",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-AVAILABILITY",
+      "reasons": [
+        "read and write availability not restored"
+      ],
+      "thresholds": {
+        "T-AVAIL-WINDOW-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "derived from NS-P1-RECOVERY-MS",
+          "unit": "ms until writes and reads succeed after a resource failure",
+          "value": 60000
+        }
+      },
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-037.json",
+    "expected": "FAIL",
+    "id": "AVAILABILITY/boundary",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-AVAILABILITY",
+      "reasons": [
+        "missing required field: probes"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-038.json",
+    "expected": "FAIL",
+    "id": "AVAILABILITY/missing-evidence",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-AVAILABILITY",
+      "reasons": [
+        "unaccepted engine evidence source"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-039.json",
+    "expected": "FAIL",
+    "id": "AVAILABILITY/client-source",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-AVAILABILITY",
+      "reasons": [
+        "missing required field: records"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-040.json",
+    "expected": "FAIL",
+    "id": "AVAILABILITY/label-only",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-AVAILABILITY",
+      "reasons": [],
+      "thresholds": {
+        "T-AVAIL-WINDOW-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "derived from NS-P1-RECOVERY-MS",
+          "unit": "ms until writes and reads succeed after a resource failure",
+          "value": 60000
+        }
+      },
+      "verdict": "PASS"
+    },
+    "canonical": true,
+    "code": 0,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-041.json",
+    "expected": "REFUSED",
+    "id": "AVAILABILITY/invented-log",
+    "ok": false,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-SCALE-COUNT",
+      "reasons": [],
+      "thresholds": {},
+      "verdict": "PASS"
+    },
+    "canonical": true,
+    "code": 0,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-042.json",
+    "expected": "PASS",
+    "id": "SCALE-COUNT/positive",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-SCALE-COUNT",
+      "reasons": [
+        "engine counts differ from O-REPLAY"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-043.json",
+    "expected": "FAIL",
+    "id": "SCALE-COUNT/boundary",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-SCALE-COUNT",
+      "reasons": [
+        "missing required field: countQueryCaseResult"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-044.json",
+    "expected": "FAIL",
+    "id": "SCALE-COUNT/missing-evidence",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-SCALE-COUNT",
+      "reasons": [
+        "unaccepted engine evidence source"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-045.json",
+    "expected": "FAIL",
+    "id": "SCALE-COUNT/client-source",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-SCALE-COUNT",
+      "reasons": [
+        "missing required field: records"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-046.json",
+    "expected": "FAIL",
+    "id": "SCALE-COUNT/label-only",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-SCALE-COUNT",
+      "reasons": [],
+      "thresholds": {},
+      "verdict": "PASS"
+    },
+    "canonical": true,
+    "code": 0,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-047.json",
+    "expected": "REFUSED",
+    "id": "SCALE-COUNT/invented-log",
+    "ok": false,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-WORK",
+      "reasons": [],
+      "thresholds": {
+        "T-REUSE-AVOIDED": {
+          "bound": "max",
+          "kind": "witness",
+          "source": "derived (positive reuse witness)",
+          "unit": "engine work units of a reused read divided by the first read at the same key",
+          "value": 0.5
+        }
+      },
+      "verdict": "PASS"
+    },
+    "canonical": true,
+    "code": 0,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-048.json",
+    "expected": "PASS",
+    "id": "WORK/positive",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-WORK",
+      "reasons": [
+        "threshold exceeded: T-REUSE-AVOIDED"
+      ],
+      "thresholds": {
+        "T-REUSE-AVOIDED": {
+          "bound": "max",
+          "kind": "witness",
+          "source": "derived (positive reuse witness)",
+          "unit": "engine work units of a reused read divided by the first read at the same key",
+          "value": 0.5
+        }
+      },
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-049.json",
+    "expected": "FAIL",
+    "id": "WORK/boundary",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-WORK",
+      "reasons": [
+        "missing required field: engineWorkUnits"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-050.json",
+    "expected": "FAIL",
+    "id": "WORK/missing-evidence",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-WORK",
+      "reasons": [
+        "unaccepted engine evidence source"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-051.json",
+    "expected": "FAIL",
+    "id": "WORK/client-source",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-WORK",
+      "reasons": [
+        "missing required field: records"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-052.json",
+    "expected": "FAIL",
+    "id": "WORK/label-only",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-WORK",
+      "reasons": [],
+      "thresholds": {
+        "T-REUSE-AVOIDED": {
+          "bound": "max",
+          "kind": "witness",
+          "source": "derived (positive reuse witness)",
+          "unit": "engine work units of a reused read divided by the first read at the same key",
+          "value": 0.5
+        }
+      },
+      "verdict": "PASS"
+    },
+    "canonical": true,
+    "code": 0,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-053.json",
+    "expected": "REFUSED",
+    "id": "WORK/invented-log",
+    "ok": false,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-MAINTENANCE",
+      "reasons": [],
+      "thresholds": {
+        "NS-P3-LAG-P99-MS": {
+          "bound": "max",
+          "kind": "ns",
+          "source": "lab/TARGETS.md section 1 P3; TARGETS 1.1 P3 items 1 and 4",
+          "unit": "ms p99 from commit time (the source's publication instant on the shared host monotonic clock) to the consumer's single durable write of the affected-subject set and its checkpoint, 256 readers running",
+          "value": 250
+        }
+      },
+      "verdict": "PASS"
+    },
+    "canonical": true,
+    "code": 0,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-054.json",
+    "expected": "PASS",
+    "id": "MAINTENANCE/positive",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-MAINTENANCE",
+      "reasons": [],
+      "thresholds": {
+        "NS-P3-LAG-P99-MS": {
+          "bound": "max",
+          "kind": "ns",
+          "source": "lab/TARGETS.md section 1 P3; TARGETS 1.1 P3 items 1 and 4",
+          "unit": "ms p99 from commit time (the source's publication instant on the shared host monotonic clock) to the consumer's single durable write of the affected-subject set and its checkpoint, 256 readers running",
+          "value": 250
+        }
+      },
+      "verdict": "PASS"
+    },
+    "canonical": true,
+    "code": 0,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-055.json",
+    "expected": "FAIL",
+    "id": "MAINTENANCE/boundary",
+    "ok": false,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-MAINTENANCE",
+      "reasons": [
+        "missing required field: lagSamples"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-056.json",
+    "expected": "FAIL",
+    "id": "MAINTENANCE/missing-evidence",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-MAINTENANCE",
+      "reasons": [
+        "unaccepted engine evidence source"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-057.json",
+    "expected": "FAIL",
+    "id": "MAINTENANCE/client-source",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-MAINTENANCE",
+      "reasons": [
+        "missing required field: records"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-058.json",
+    "expected": "FAIL",
+    "id": "MAINTENANCE/label-only",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-MAINTENANCE",
+      "reasons": [],
+      "thresholds": {
+        "NS-P3-LAG-P99-MS": {
+          "bound": "max",
+          "kind": "ns",
+          "source": "lab/TARGETS.md section 1 P3; TARGETS 1.1 P3 items 1 and 4",
+          "unit": "ms p99 from commit time (the source's publication instant on the shared host monotonic clock) to the consumer's single durable write of the affected-subject set and its checkpoint, 256 readers running",
+          "value": 250
+        }
+      },
+      "verdict": "PASS"
+    },
+    "canonical": true,
+    "code": 0,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-059.json",
+    "expected": "REFUSED",
+    "id": "MAINTENANCE/invented-log",
+    "ok": false,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-ERASURE-SCAN",
+      "reasons": [],
+      "thresholds": {},
+      "verdict": "PASS"
+    },
+    "canonical": true,
+    "code": 0,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-060.json",
+    "expected": "PASS",
+    "id": "ERASURE-SCAN/positive",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-ERASURE-SCAN",
+      "reasons": [
+        "protected plaintext or derived channel survives"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-061.json",
+    "expected": "FAIL",
+    "id": "ERASURE-SCAN/boundary",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-ERASURE-SCAN",
+      "reasons": [
+        "missing required field: scans"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-062.json",
+    "expected": "FAIL",
+    "id": "ERASURE-SCAN/missing-evidence",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-ERASURE-SCAN",
+      "reasons": [
+        "unaccepted engine evidence source"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-063.json",
+    "expected": "FAIL",
+    "id": "ERASURE-SCAN/client-source",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-ERASURE-SCAN",
+      "reasons": [
+        "missing required field: records"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-064.json",
+    "expected": "FAIL",
+    "id": "ERASURE-SCAN/label-only",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-ERASURE-SCAN",
+      "reasons": [],
+      "thresholds": {},
+      "verdict": "PASS"
+    },
+    "canonical": true,
+    "code": 0,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-065.json",
+    "expected": "REFUSED",
+    "id": "ERASURE-SCAN/invented-log",
+    "ok": false,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-WATERMARK",
+      "reasons": [],
+      "thresholds": {
+        "T-WATERMARK-WAIT-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "RULINGS Q31d; lab/TARGETS.md 4.1 item 5",
+          "unit": "ms a read may wait for an eligible index before routing to a deadline-aware fallback; the fallback latency counts in the read's own latency",
+          "value": 10
+        }
+      },
+      "verdict": "PASS"
+    },
+    "canonical": true,
+    "code": 0,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-066.json",
+    "expected": "PASS",
+    "id": "WATERMARK/positive",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-WATERMARK",
+      "reasons": [
+        "watermark wait exceeded"
+      ],
+      "thresholds": {
+        "T-WATERMARK-WAIT-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "RULINGS Q31d; lab/TARGETS.md 4.1 item 5",
+          "unit": "ms a read may wait for an eligible index before routing to a deadline-aware fallback; the fallback latency counts in the read's own latency",
+          "value": 10
+        }
+      },
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-067.json",
+    "expected": "FAIL",
+    "id": "WATERMARK/boundary",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-WATERMARK",
+      "reasons": [
+        "missing required field: eligibility"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-068.json",
+    "expected": "FAIL",
+    "id": "WATERMARK/missing-evidence",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-WATERMARK",
+      "reasons": [
+        "unaccepted engine evidence source"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-069.json",
+    "expected": "FAIL",
+    "id": "WATERMARK/client-source",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-WATERMARK",
+      "reasons": [
+        "missing required field: records"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-070.json",
+    "expected": "FAIL",
+    "id": "WATERMARK/label-only",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-WATERMARK",
+      "reasons": [],
+      "thresholds": {
+        "T-WATERMARK-WAIT-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "RULINGS Q31d; lab/TARGETS.md 4.1 item 5",
+          "unit": "ms a read may wait for an eligible index before routing to a deadline-aware fallback; the fallback latency counts in the read's own latency",
+          "value": 10
+        }
+      },
+      "verdict": "PASS"
+    },
+    "canonical": true,
+    "code": 0,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-071.json",
+    "expected": "REFUSED",
+    "id": "WATERMARK/invented-log",
+    "ok": false,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-ACK-ORDER",
+      "reasons": [],
+      "thresholds": {
+        "T-WATERMARK-WAIT-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "RULINGS Q31d; lab/TARGETS.md 4.1 item 5",
+          "unit": "ms a read may wait for an eligible index before routing to a deadline-aware fallback; the fallback latency counts in the read's own latency",
+          "value": 10
+        }
+      },
+      "verdict": "PASS"
+    },
+    "canonical": true,
+    "code": 0,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-072.json",
+    "expected": "PASS",
+    "id": "ACK-ORDER/positive",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-ACK-ORDER",
+      "reasons": [
+        "ACK preceded source publication"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-073.json",
+    "expected": "FAIL",
+    "id": "ACK-ORDER/boundary",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-ACK-ORDER",
+      "reasons": [
+        "missing required field: ryowPullRoute"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-074.json",
+    "expected": "FAIL",
+    "id": "ACK-ORDER/missing-evidence",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-ACK-ORDER",
+      "reasons": [
+        "unaccepted engine evidence source"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-075.json",
+    "expected": "FAIL",
+    "id": "ACK-ORDER/client-source",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-ACK-ORDER",
+      "reasons": [
+        "missing required field: records"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-076.json",
+    "expected": "FAIL",
+    "id": "ACK-ORDER/label-only",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-ACK-ORDER",
+      "reasons": [],
+      "thresholds": {
+        "T-WATERMARK-WAIT-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "RULINGS Q31d; lab/TARGETS.md 4.1 item 5",
+          "unit": "ms a read may wait for an eligible index before routing to a deadline-aware fallback; the fallback latency counts in the read's own latency",
+          "value": 10
+        }
+      },
+      "verdict": "PASS"
+    },
+    "canonical": true,
+    "code": 0,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-077.json",
+    "expected": "REFUSED",
+    "id": "ACK-ORDER/invented-log",
+    "ok": false,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-FAULT-TRANSITIONS",
+      "reasons": [],
+      "thresholds": {},
+      "verdict": "PASS"
+    },
+    "canonical": true,
+    "code": 0,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-078.json",
+    "expected": "PASS",
+    "id": "FAULT-TRANSITIONS/positive",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-FAULT-TRANSITIONS",
+      "reasons": [
+        "claimed transition is not last durable transition"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-079.json",
+    "expected": "FAIL",
+    "id": "FAULT-TRANSITIONS/boundary",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-FAULT-TRANSITIONS",
+      "reasons": [
+        "missing required field: transitions"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-080.json",
+    "expected": "FAIL",
+    "id": "FAULT-TRANSITIONS/missing-evidence",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-FAULT-TRANSITIONS",
+      "reasons": [
+        "unaccepted engine evidence source"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-081.json",
+    "expected": "FAIL",
+    "id": "FAULT-TRANSITIONS/client-source",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-FAULT-TRANSITIONS",
+      "reasons": [
+        "missing required field: records"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-082.json",
+    "expected": "FAIL",
+    "id": "FAULT-TRANSITIONS/label-only",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-FAULT-TRANSITIONS",
+      "reasons": [],
+      "thresholds": {},
+      "verdict": "PASS"
+    },
+    "canonical": true,
+    "code": 0,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-083.json",
+    "expected": "REFUSED",
+    "id": "FAULT-TRANSITIONS/invented-log",
+    "ok": false,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-CANCEL",
+      "reasons": [
+        "successful reuse record missing"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-084.json",
+    "expected": "FAIL",
+    "id": "CANCEL/different-reuse-connection",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-CANCEL",
+      "reasons": [
+        "query still active after drain"
+      ],
+      "thresholds": {
+        "T-DRAIN-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "derived from NS-P1-WRITER-WAIT-MAX-MS",
+          "unit": "ms from cancel request to the engine no longer listing the statement",
+          "value": 2000
+        }
+      },
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-085.json",
+    "expected": "FAIL",
+    "id": "CANCEL/active-after-drain",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-CANCEL",
+      "reasons": [
+        "sample coverage gap"
+      ],
+      "thresholds": {
+        "T-DRAIN-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "derived from NS-P1-WRITER-WAIT-MAX-MS",
+          "unit": "ms from cancel request to the engine no longer listing the statement",
+          "value": 2000
+        }
+      },
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-086.json",
+    "expected": "FAIL",
+    "id": "CANCEL/sample-gap",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-PREABORT",
+      "reasons": [
+        "statement log coverage hole"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-087.json",
+    "expected": "FAIL",
+    "id": "PREABORT/coverage-hole",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-PREABORT",
+      "reasons": [
+        "statement log coverage incomplete"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-088.json",
+    "expected": "FAIL",
+    "id": "PREABORT/short-coverage",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-CONNECTIONS",
+      "reasons": [
+        "pool did not return to baseline by deadline: writes"
+      ],
+      "thresholds": {
+        "T-CONN-RELEASE-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "derived",
+          "unit": "ms after close for the engine-side connection count to return to baseline",
+          "value": 5000
+        }
+      },
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-089.json",
+    "expected": "FAIL",
+    "id": "CONNECTIONS/missing-pool-baseline",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-CONNECTIONS",
+      "reasons": [
+        "duplicate pool label"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-090.json",
+    "expected": "FAIL",
+    "id": "CONNECTIONS/duplicate-pool",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-SCRATCH",
+      "reasons": [
+        "unresolved working outcome"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-091.json",
+    "expected": "FAIL",
+    "id": "SCRATCH/unresolved",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-SCRATCH",
+      "reasons": [
+        "unknown outcomes not exactly resolved"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-092.json",
+    "expected": "FAIL",
+    "id": "SCRATCH/wrong-command-receipt",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-NO-MUTATION",
+      "reasons": [
+        "MALFORMED: expected nonnegative integer"
+      ],
+      "thresholds": {},
+      "verdict": "REFUSED"
+    },
+    "canonical": true,
+    "code": 2,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-093.json",
+    "expected": "REFUSED",
+    "id": "NO-MUTATION/boolean-counter",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-NO-MUTATION",
+      "reasons": [
+        "MALFORMED: expected nonnegative integer"
+      ],
+      "thresholds": {},
+      "verdict": "REFUSED"
+    },
+    "canonical": true,
+    "code": 2,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-094.json",
+    "expected": "REFUSED",
+    "id": "NO-MUTATION/negative-counter",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-RESOURCE",
+      "reasons": [
+        "resource sample misses an owner"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-095.json",
+    "expected": "FAIL",
+    "id": "RESOURCE/missing-owner",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-RESOURCE",
+      "reasons": [
+        "forecast exceeds envelope"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-096.json",
+    "expected": "FAIL",
+    "id": "RESOURCE/oversized-forecast",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-AVAILABILITY",
+      "reasons": [
+        "manual restart observed"
+      ],
+      "thresholds": {
+        "T-AVAIL-WINDOW-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "derived from NS-P1-RECOVERY-MS",
+          "unit": "ms until writes and reads succeed after a resource failure",
+          "value": 60000
+        }
+      },
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-097.json",
+    "expected": "FAIL",
+    "id": "AVAILABILITY/manual-restart",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-AVAILABILITY",
+      "reasons": [
+        "read and write availability not restored"
+      ],
+      "thresholds": {
+        "T-AVAIL-WINDOW-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "derived from NS-P1-RECOVERY-MS",
+          "unit": "ms until writes and reads succeed after a resource failure",
+          "value": 60000
+        }
+      },
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-098.json",
+    "expected": "FAIL",
+    "id": "AVAILABILITY/all-read-probes",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-SCALE-COUNT",
+      "reasons": [
+        "supplied analytic count differs from O-REPLAY"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-099.json",
+    "expected": "FAIL",
+    "id": "SCALE-COUNT/invented-both-counts",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-SCALE-COUNT",
+      "reasons": [
+        "supplied analytic count differs from O-REPLAY"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-100.json",
+    "expected": "FAIL",
+    "id": "SCALE-COUNT/population-swap",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-WORK",
+      "reasons": [
+        "work increased from zero baseline: rowsWritten"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-101.json",
+    "expected": "FAIL",
+    "id": "WORK/zero-baseline-increase",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-WORK",
+      "reasons": [
+        "threshold exceeded: T-REUSE-AVOIDED"
+      ],
+      "thresholds": {
+        "T-REUSE-AVOIDED": {
+          "bound": "max",
+          "kind": "witness",
+          "source": "derived (positive reuse witness)",
+          "unit": "engine work units of a reused read divided by the first read at the same key",
+          "value": 0.5
+        }
+      },
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-102.json",
+    "expected": "FAIL",
+    "id": "WORK/one-channel-over",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-MAINTENANCE",
+      "reasons": [
+        "maintenance events absent"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-103.json",
+    "expected": "FAIL",
+    "id": "MAINTENANCE/missing-end-event",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-MAINTENANCE",
+      "reasons": [
+        "samples do not cover required window"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-104.json",
+    "expected": "FAIL",
+    "id": "MAINTENANCE/insufficient-coverage",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-ERASURE-SCAN",
+      "reasons": [
+        "scan did not follow erasure publication"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-105.json",
+    "expected": "FAIL",
+    "id": "ERASURE-SCAN/scan-at-publication",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-ERASURE-SCAN",
+      "reasons": [
+        "protected copy inventory not fully scanned"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-106.json",
+    "expected": "FAIL",
+    "id": "ERASURE-SCAN/missing-category",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-WATERMARK",
+      "reasons": [
+        "watermark crosses unresolved position"
+      ],
+      "thresholds": {
+        "T-WATERMARK-WAIT-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "RULINGS Q31d; lab/TARGETS.md 4.1 item 5",
+          "unit": "ms a read may wait for an eligible index before routing to a deadline-aware fallback; the fallback latency counts in the read's own latency",
+          "value": 10
+        }
+      },
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-107.json",
+    "expected": "FAIL",
+    "id": "WATERMARK/unresolved-prefix",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-WATERMARK",
+      "reasons": [
+        "erasure frontier behind"
+      ],
+      "thresholds": {
+        "T-WATERMARK-WAIT-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "RULINGS Q31d; lab/TARGETS.md 4.1 item 5",
+          "unit": "ms a read may wait for an eligible index before routing to a deadline-aware fallback; the fallback latency counts in the read's own latency",
+          "value": 10
+        }
+      },
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-108.json",
+    "expected": "FAIL",
+    "id": "WATERMARK/erasure-behind",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-WATERMARK",
+      "reasons": [
+        "attribute cannot reconstruct basis"
+      ],
+      "thresholds": {
+        "T-WATERMARK-WAIT-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "RULINGS Q31d; lab/TARGETS.md 4.1 item 5",
+          "unit": "ms a read may wait for an eligible index before routing to a deadline-aware fallback; the fallback latency counts in the read's own latency",
+          "value": 10
+        }
+      },
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-109.json",
+    "expected": "FAIL",
+    "id": "WATERMARK/attribute-after-basis",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-WATERMARK",
+      "reasons": [
+        "answer snapshot/incarnation not fenced"
+      ],
+      "thresholds": {
+        "T-WATERMARK-WAIT-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "RULINGS Q31d; lab/TARGETS.md 4.1 item 5",
+          "unit": "ms a read may wait for an eligible index before routing to a deadline-aware fallback; the fallback latency counts in the read's own latency",
+          "value": 10
+        }
+      },
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-110.json",
+    "expected": "FAIL",
+    "id": "WATERMARK/reset-incarnation",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-ACK-ORDER",
+      "reasons": [
+        "ACK sender is not source of truth"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-111.json",
+    "expected": "FAIL",
+    "id": "ACK-ORDER/replica-ack",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-ACK-ORDER",
+      "reasons": [
+        "pull not at returned commit"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-112.json",
+    "expected": "FAIL",
+    "id": "ACK-ORDER/pull-wrong-commit",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-FAULT-TRANSITIONS",
+      "reasons": [
+        "transition outside contract variant"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-113.json",
+    "expected": "FAIL",
+    "id": "FAULT-TRANSITIONS/wrong-variant",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-FAULT-TRANSITIONS",
+      "reasons": [
+        "no durable transition witnessed"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-114.json",
+    "expected": "FAIL",
+    "id": "FAULT-TRANSITIONS/no-witness",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-CANCEL",
+      "reasons": [],
+      "thresholds": {
+        "T-DEADLINE-GRACE-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "derived from NS-P1-READ-P99-256-MS",
+          "unit": "ms past timeoutMs for the typed timeout to reach the caller",
+          "value": 100
+        },
+        "T-DRAIN-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "derived from NS-P1-WRITER-WAIT-MAX-MS",
+          "unit": "ms from cancel request to the engine no longer listing the statement",
+          "value": 2000
+        }
+      },
+      "verdict": "PASS"
+    },
+    "canonical": true,
+    "code": 0,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-115.json",
+    "expected": "PASS",
+    "id": "CANCEL/timeout-positive",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-CANCEL",
+      "reasons": [
+        "timeout grace missed"
+      ],
+      "thresholds": {
+        "T-DEADLINE-GRACE-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "derived from NS-P1-READ-P99-256-MS",
+          "unit": "ms past timeoutMs for the typed timeout to reach the caller",
+          "value": 100
+        },
+        "T-DRAIN-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "derived from NS-P1-WRITER-WAIT-MAX-MS",
+          "unit": "ms from cancel request to the engine no longer listing the statement",
+          "value": 2000
+        }
+      },
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-116.json",
+    "expected": "FAIL",
+    "id": "CANCEL/timeout-boundary",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-WORK",
+      "reasons": [],
+      "thresholds": {
+        "T-INCR-WORK": {
+          "bound": "max",
+          "kind": "witness",
+          "source": "derived (incremental maintenance witness)",
+          "unit": "engine work for a one-entity change divided by full recomputation, at the 1m rung",
+          "value": 0.01
+        }
+      },
+      "verdict": "PASS"
+    },
+    "canonical": true,
+    "code": 0,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-117.json",
+    "expected": "PASS",
+    "id": "WORK/incremental-positive",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-WORK",
+      "reasons": [
+        "threshold exceeded: T-INCR-WORK"
+      ],
+      "thresholds": {
+        "T-INCR-WORK": {
+          "bound": "max",
+          "kind": "witness",
+          "source": "derived (incremental maintenance witness)",
+          "unit": "engine work for a one-entity change divided by full recomputation, at the 1m rung",
+          "value": 0.01
+        }
+      },
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-118.json",
+    "expected": "FAIL",
+    "id": "WORK/incremental-boundary",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-WORK",
+      "reasons": [],
+      "thresholds": {
+        "T-REUSE-AVOIDED": {
+          "bound": "max",
+          "kind": "witness",
+          "source": "derived (positive reuse witness)",
+          "unit": "engine work units of a reused read divided by the first read at the same key",
+          "value": 0.5
+        }
+      },
+      "verdict": "PASS"
+    },
+    "canonical": true,
+    "code": 0,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-119.json",
+    "expected": "FAIL",
+    "id": "WORK/threshold-laundering",
+    "ok": false,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-RESOURCE",
+      "reasons": [
+        "planner memory limit exceeded"
+      ],
+      "thresholds": {
+        "T-PLANNER-MEM-BYTES": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "lab/PLAN.md section 8 heavy slot cap",
+          "unit": "bytes of engine memory during a refused query (slot cap 3.5 GiB)",
+          "value": 3758096384
+        }
+      },
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-120.json",
+    "expected": "FAIL",
+    "id": "RESOURCE/planner-cap",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-RESOURCE",
+      "reasons": [],
+      "thresholds": {},
+      "verdict": "PASS"
+    },
+    "canonical": true,
+    "code": 0,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-121.json",
+    "expected": "FAIL",
+    "id": "RESOURCE/obligation-laundering",
+    "ok": false,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-WATERMARK",
+      "reasons": [],
+      "thresholds": {
+        "T-WATERMARK-WAIT-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "RULINGS Q31d; lab/TARGETS.md 4.1 item 5",
+          "unit": "ms a read may wait for an eligible index before routing to a deadline-aware fallback; the fallback latency counts in the read's own latency",
+          "value": 10
+        }
+      },
+      "verdict": "PASS"
+    },
+    "canonical": true,
+    "code": 0,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-122.json",
+    "expected": "REFUSED",
+    "id": "WATERMARK/unaccounted-pre-route-delay",
+    "ok": false,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-FAULT-TRANSITIONS",
+      "reasons": [],
+      "thresholds": {},
+      "verdict": "PASS"
+    },
+    "canonical": true,
+    "code": 0,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-123.json",
+    "expected": "FAIL",
+    "id": "FAULT-TRANSITIONS/transition-label-as-witness",
+    "ok": false,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-FAULT-TRANSITIONS",
+      "reasons": [],
+      "thresholds": {},
+      "verdict": "PASS"
+    },
+    "canonical": true,
+    "code": 0,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-124.json",
+    "expected": "FAIL",
+    "id": "FAULT-TRANSITIONS/verification-label-as-witness",
+    "ok": false,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-FAULT-TRANSITIONS",
+      "reasons": [],
+      "thresholds": {},
+      "verdict": "PASS"
+    },
+    "canonical": true,
+    "code": 0,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-125.json",
+    "expected": "FAIL",
+    "id": "FAULT-TRANSITIONS/declared-unwitnessed-transition",
+    "ok": false,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-ERASURE-SCAN",
+      "reasons": [],
+      "thresholds": {},
+      "verdict": "PASS"
+    },
+    "canonical": true,
+    "code": 0,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-126.json",
+    "expected": "REFUSED",
+    "id": "ERASURE-SCAN/category-labels-as-inventory",
+    "ok": false,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-CONNECTIONS",
+      "reasons": [
+        "pool leaked after release"
+      ],
+      "thresholds": {
+        "T-CONN-RELEASE-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "derived",
+          "unit": "ms after close for the engine-side connection count to return to baseline",
+          "value": 5000
+        }
+      },
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-127.json",
+    "expected": "FAIL",
+    "id": "CONNECTIONS/post-deadline-leak",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-WATERMARK",
+      "reasons": [],
+      "thresholds": {
+        "T-WATERMARK-WAIT-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "RULINGS Q31d; lab/TARGETS.md 4.1 item 5",
+          "unit": "ms a read may wait for an eligible index before routing to a deadline-aware fallback; the fallback latency counts in the read's own latency",
+          "value": 10
+        }
+      },
+      "verdict": "PASS"
+    },
+    "canonical": true,
+    "code": 0,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-128.json",
+    "expected": "PASS",
+    "id": "WATERMARK/fallback-positive",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-WATERMARK",
+      "reasons": [
+        "C1 scope/mapping mismatch"
+      ],
+      "thresholds": {
+        "T-WATERMARK-WAIT-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "RULINGS Q31d; lab/TARGETS.md 4.1 item 5",
+          "unit": "ms a read may wait for an eligible index before routing to a deadline-aware fallback; the fallback latency counts in the read's own latency",
+          "value": 10
+        }
+      },
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-129.json",
+    "expected": "FAIL",
+    "id": "WATERMARK/stale-fallback",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-CANCEL",
+      "reasons": [
+        "drain deadline missed"
+      ],
+      "thresholds": {
+        "T-DRAIN-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "derived from NS-P1-WRITER-WAIT-MAX-MS",
+          "unit": "ms from cancel request to the engine no longer listing the statement",
+          "value": 1999
+        }
+      },
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/verify/O05/evidence/contract-130.json",
+    "evidencePath": "lab/verify/O05/evidence/case-130.json",
+    "expected": "FAIL",
+    "id": "THRESHOLD/T-DRAIN-MS/tightened",
+    "ok": true,
+    "stderr": "",
+    "thresholdDefinitionMatchesContract": true
+  },
+  {
+    "actual": {
+      "protocol": "OBS-CANCEL",
+      "reasons": [
+        "CONTRACT-AMBIGUITY: missing threshold T-DRAIN-MS"
+      ],
+      "thresholds": {},
+      "verdict": "REFUSED"
+    },
+    "canonical": true,
+    "code": 2,
+    "contractPath": "lab/verify/O05/evidence/contract-131.json",
+    "evidencePath": "lab/verify/O05/evidence/case-131.json",
+    "expected": "REFUSED",
+    "id": "THRESHOLD/T-DRAIN-MS/missing",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-CANCEL",
+      "reasons": [
+        "drain deadline missed"
+      ],
+      "thresholds": {
+        "T-DRAIN-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "derived from NS-P1-WRITER-WAIT-MAX-MS",
+          "unit": "ms from cancel request to the engine no longer listing the statement",
+          "value": 1999
+        }
+      },
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/verify/O05/evidence/contract-132.json",
+    "evidencePath": "lab/verify/O05/evidence/case-132.json",
+    "expected": "FAIL",
+    "id": "THRESHOLD/T-DRAIN-MS/evidence-override",
+    "ok": true,
+    "stderr": "",
+    "thresholdDefinitionMatchesContract": true
+  },
+  {
+    "actual": {
+      "protocol": "OBS-CANCEL",
+      "reasons": [
+        "timeout grace missed"
+      ],
+      "thresholds": {
+        "T-DEADLINE-GRACE-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "derived from NS-P1-READ-P99-256-MS",
+          "unit": "ms past timeoutMs for the typed timeout to reach the caller",
+          "value": 99
+        },
+        "T-DRAIN-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "derived from NS-P1-WRITER-WAIT-MAX-MS",
+          "unit": "ms from cancel request to the engine no longer listing the statement",
+          "value": 2000
+        }
+      },
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/verify/O05/evidence/contract-133.json",
+    "evidencePath": "lab/verify/O05/evidence/case-133.json",
+    "expected": "FAIL",
+    "id": "THRESHOLD/T-DEADLINE-GRACE-MS/tightened",
+    "ok": true,
+    "stderr": "",
+    "thresholdDefinitionMatchesContract": true
+  },
+  {
+    "actual": {
+      "protocol": "OBS-CANCEL",
+      "reasons": [
+        "CONTRACT-AMBIGUITY: missing threshold T-DEADLINE-GRACE-MS"
+      ],
+      "thresholds": {
+        "T-DRAIN-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "derived from NS-P1-WRITER-WAIT-MAX-MS",
+          "unit": "ms from cancel request to the engine no longer listing the statement",
+          "value": 2000
+        }
+      },
+      "verdict": "REFUSED"
+    },
+    "canonical": true,
+    "code": 2,
+    "contractPath": "lab/verify/O05/evidence/contract-134.json",
+    "evidencePath": "lab/verify/O05/evidence/case-134.json",
+    "expected": "REFUSED",
+    "id": "THRESHOLD/T-DEADLINE-GRACE-MS/missing",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-CANCEL",
+      "reasons": [
+        "timeout grace missed"
+      ],
+      "thresholds": {
+        "T-DEADLINE-GRACE-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "derived from NS-P1-READ-P99-256-MS",
+          "unit": "ms past timeoutMs for the typed timeout to reach the caller",
+          "value": 99
+        },
+        "T-DRAIN-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "derived from NS-P1-WRITER-WAIT-MAX-MS",
+          "unit": "ms from cancel request to the engine no longer listing the statement",
+          "value": 2000
+        }
+      },
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/verify/O05/evidence/contract-135.json",
+    "evidencePath": "lab/verify/O05/evidence/case-135.json",
+    "expected": "FAIL",
+    "id": "THRESHOLD/T-DEADLINE-GRACE-MS/evidence-override",
+    "ok": true,
+    "stderr": "",
+    "thresholdDefinitionMatchesContract": true
+  },
+  {
+    "actual": {
+      "protocol": "OBS-CONNECTIONS",
+      "reasons": [
+        "pool did not return to baseline by deadline: reads"
+      ],
+      "thresholds": {
+        "T-CONN-RELEASE-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "derived",
+          "unit": "ms after close for the engine-side connection count to return to baseline",
+          "value": 4999
+        }
+      },
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/verify/O05/evidence/contract-136.json",
+    "evidencePath": "lab/verify/O05/evidence/case-136.json",
+    "expected": "FAIL",
+    "id": "THRESHOLD/T-CONN-RELEASE-MS/tightened",
+    "ok": true,
+    "stderr": "",
+    "thresholdDefinitionMatchesContract": true
+  },
+  {
+    "actual": {
+      "protocol": "OBS-CONNECTIONS",
+      "reasons": [
+        "CONTRACT-AMBIGUITY: missing threshold T-CONN-RELEASE-MS"
+      ],
+      "thresholds": {},
+      "verdict": "REFUSED"
+    },
+    "canonical": true,
+    "code": 2,
+    "contractPath": "lab/verify/O05/evidence/contract-137.json",
+    "evidencePath": "lab/verify/O05/evidence/case-137.json",
+    "expected": "REFUSED",
+    "id": "THRESHOLD/T-CONN-RELEASE-MS/missing",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-CONNECTIONS",
+      "reasons": [
+        "pool did not return to baseline by deadline: reads"
+      ],
+      "thresholds": {
+        "T-CONN-RELEASE-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "derived",
+          "unit": "ms after close for the engine-side connection count to return to baseline",
+          "value": 4999
+        }
+      },
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/verify/O05/evidence/contract-138.json",
+    "evidencePath": "lab/verify/O05/evidence/case-138.json",
+    "expected": "FAIL",
+    "id": "THRESHOLD/T-CONN-RELEASE-MS/evidence-override",
+    "ok": true,
+    "stderr": "",
+    "thresholdDefinitionMatchesContract": true
+  },
+  {
+    "actual": {
+      "protocol": "OBS-RESOURCE",
+      "reasons": [
+        "planner memory limit exceeded"
+      ],
+      "thresholds": {
+        "T-PLANNER-MEM-BYTES": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "lab/PLAN.md section 8 heavy slot cap",
+          "unit": "bytes of engine memory during a refused query (slot cap 3.5 GiB)",
+          "value": 3758096383
+        }
+      },
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/verify/O05/evidence/contract-139.json",
+    "evidencePath": "lab/verify/O05/evidence/case-139.json",
+    "expected": "FAIL",
+    "id": "THRESHOLD/T-PLANNER-MEM-BYTES/tightened",
+    "ok": true,
+    "stderr": "",
+    "thresholdDefinitionMatchesContract": true
+  },
+  {
+    "actual": {
+      "protocol": "OBS-RESOURCE",
+      "reasons": [
+        "CONTRACT-AMBIGUITY: missing threshold T-PLANNER-MEM-BYTES"
+      ],
+      "thresholds": {},
+      "verdict": "REFUSED"
+    },
+    "canonical": true,
+    "code": 2,
+    "contractPath": "lab/verify/O05/evidence/contract-140.json",
+    "evidencePath": "lab/verify/O05/evidence/case-140.json",
+    "expected": "REFUSED",
+    "id": "THRESHOLD/T-PLANNER-MEM-BYTES/missing",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-RESOURCE",
+      "reasons": [
+        "planner memory limit exceeded"
+      ],
+      "thresholds": {
+        "T-PLANNER-MEM-BYTES": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "lab/PLAN.md section 8 heavy slot cap",
+          "unit": "bytes of engine memory during a refused query (slot cap 3.5 GiB)",
+          "value": 3758096383
+        }
+      },
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/verify/O05/evidence/contract-141.json",
+    "evidencePath": "lab/verify/O05/evidence/case-141.json",
+    "expected": "FAIL",
+    "id": "THRESHOLD/T-PLANNER-MEM-BYTES/evidence-override",
+    "ok": true,
+    "stderr": "",
+    "thresholdDefinitionMatchesContract": true
+  },
+  {
+    "actual": {
+      "protocol": "OBS-AVAILABILITY",
+      "reasons": [
+        "read and write availability not restored"
+      ],
+      "thresholds": {
+        "T-AVAIL-WINDOW-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "derived from NS-P1-RECOVERY-MS",
+          "unit": "ms until writes and reads succeed after a resource failure",
+          "value": 59999
+        }
+      },
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/verify/O05/evidence/contract-142.json",
+    "evidencePath": "lab/verify/O05/evidence/case-142.json",
+    "expected": "FAIL",
+    "id": "THRESHOLD/T-AVAIL-WINDOW-MS/tightened",
+    "ok": true,
+    "stderr": "",
+    "thresholdDefinitionMatchesContract": true
+  },
+  {
+    "actual": {
+      "protocol": "OBS-AVAILABILITY",
+      "reasons": [
+        "CONTRACT-AMBIGUITY: missing threshold T-AVAIL-WINDOW-MS"
+      ],
+      "thresholds": {},
+      "verdict": "REFUSED"
+    },
+    "canonical": true,
+    "code": 2,
+    "contractPath": "lab/verify/O05/evidence/contract-143.json",
+    "evidencePath": "lab/verify/O05/evidence/case-143.json",
+    "expected": "REFUSED",
+    "id": "THRESHOLD/T-AVAIL-WINDOW-MS/missing",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-AVAILABILITY",
+      "reasons": [
+        "read and write availability not restored"
+      ],
+      "thresholds": {
+        "T-AVAIL-WINDOW-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "derived from NS-P1-RECOVERY-MS",
+          "unit": "ms until writes and reads succeed after a resource failure",
+          "value": 59999
+        }
+      },
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/verify/O05/evidence/contract-144.json",
+    "evidencePath": "lab/verify/O05/evidence/case-144.json",
+    "expected": "FAIL",
+    "id": "THRESHOLD/T-AVAIL-WINDOW-MS/evidence-override",
+    "ok": true,
+    "stderr": "",
+    "thresholdDefinitionMatchesContract": true
+  },
+  {
+    "actual": {
+      "protocol": "OBS-WORK",
+      "reasons": [
+        "threshold exceeded: T-REUSE-AVOIDED"
+      ],
+      "thresholds": {
+        "T-REUSE-AVOIDED": {
+          "bound": "max",
+          "kind": "witness",
+          "source": "derived (positive reuse witness)",
+          "unit": "engine work units of a reused read divided by the first read at the same key",
+          "value": 0.499
+        }
+      },
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/verify/O05/evidence/contract-145.json",
+    "evidencePath": "lab/verify/O05/evidence/case-145.json",
+    "expected": "FAIL",
+    "id": "THRESHOLD/T-REUSE-AVOIDED/tightened",
+    "ok": true,
+    "stderr": "",
+    "thresholdDefinitionMatchesContract": true
+  },
+  {
+    "actual": {
+      "protocol": "OBS-WORK",
+      "reasons": [
+        "CONTRACT-AMBIGUITY: missing threshold T-REUSE-AVOIDED"
+      ],
+      "thresholds": {},
+      "verdict": "REFUSED"
+    },
+    "canonical": true,
+    "code": 2,
+    "contractPath": "lab/verify/O05/evidence/contract-146.json",
+    "evidencePath": "lab/verify/O05/evidence/case-146.json",
+    "expected": "REFUSED",
+    "id": "THRESHOLD/T-REUSE-AVOIDED/missing",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-WORK",
+      "reasons": [
+        "threshold exceeded: T-REUSE-AVOIDED"
+      ],
+      "thresholds": {
+        "T-REUSE-AVOIDED": {
+          "bound": "max",
+          "kind": "witness",
+          "source": "derived (positive reuse witness)",
+          "unit": "engine work units of a reused read divided by the first read at the same key",
+          "value": 0.499
+        }
+      },
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/verify/O05/evidence/contract-147.json",
+    "evidencePath": "lab/verify/O05/evidence/case-147.json",
+    "expected": "FAIL",
+    "id": "THRESHOLD/T-REUSE-AVOIDED/evidence-override",
+    "ok": true,
+    "stderr": "",
+    "thresholdDefinitionMatchesContract": true
+  },
+  {
+    "actual": {
+      "protocol": "OBS-WORK",
+      "reasons": [
+        "threshold exceeded: T-INCR-WORK"
+      ],
+      "thresholds": {
+        "T-INCR-WORK": {
+          "bound": "max",
+          "kind": "witness",
+          "source": "derived (incremental maintenance witness)",
+          "unit": "engine work for a one-entity change divided by full recomputation, at the 1m rung",
+          "value": 0.009
+        }
+      },
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/verify/O05/evidence/contract-148.json",
+    "evidencePath": "lab/verify/O05/evidence/case-148.json",
+    "expected": "FAIL",
+    "id": "THRESHOLD/T-INCR-WORK/tightened",
+    "ok": true,
+    "stderr": "",
+    "thresholdDefinitionMatchesContract": true
+  },
+  {
+    "actual": {
+      "protocol": "OBS-WORK",
+      "reasons": [
+        "CONTRACT-AMBIGUITY: missing threshold T-INCR-WORK"
+      ],
+      "thresholds": {},
+      "verdict": "REFUSED"
+    },
+    "canonical": true,
+    "code": 2,
+    "contractPath": "lab/verify/O05/evidence/contract-149.json",
+    "evidencePath": "lab/verify/O05/evidence/case-149.json",
+    "expected": "REFUSED",
+    "id": "THRESHOLD/T-INCR-WORK/missing",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-WORK",
+      "reasons": [
+        "threshold exceeded: T-INCR-WORK"
+      ],
+      "thresholds": {
+        "T-INCR-WORK": {
+          "bound": "max",
+          "kind": "witness",
+          "source": "derived (incremental maintenance witness)",
+          "unit": "engine work for a one-entity change divided by full recomputation, at the 1m rung",
+          "value": 0.009
+        }
+      },
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/verify/O05/evidence/contract-150.json",
+    "evidencePath": "lab/verify/O05/evidence/case-150.json",
+    "expected": "FAIL",
+    "id": "THRESHOLD/T-INCR-WORK/evidence-override",
+    "ok": true,
+    "stderr": "",
+    "thresholdDefinitionMatchesContract": true
+  },
+  {
+    "actual": {
+      "protocol": "OBS-MAINTENANCE",
+      "reasons": [
+        "threshold exceeded: NS-P3-LAG-P99-MS"
+      ],
+      "thresholds": {
+        "NS-P3-LAG-P99-MS": {
+          "bound": "max",
+          "kind": "ns",
+          "source": "lab/TARGETS.md section 1 P3; TARGETS 1.1 P3 items 1 and 4",
+          "unit": "ms p99 from commit time (the source's publication instant on the shared host monotonic clock) to the consumer's single durable write of the affected-subject set and its checkpoint, 256 readers running",
+          "value": 199
+        }
+      },
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/verify/O05/evidence/contract-151.json",
+    "evidencePath": "lab/verify/O05/evidence/case-151.json",
+    "expected": "FAIL",
+    "id": "THRESHOLD/NS-P3-LAG-P99-MS/tightened",
+    "ok": true,
+    "stderr": "",
+    "thresholdDefinitionMatchesContract": true
+  },
+  {
+    "actual": {
+      "protocol": "OBS-MAINTENANCE",
+      "reasons": [
+        "CONTRACT-AMBIGUITY: missing threshold NS-P3-LAG-P99-MS"
+      ],
+      "thresholds": {},
+      "verdict": "REFUSED"
+    },
+    "canonical": true,
+    "code": 2,
+    "contractPath": "lab/verify/O05/evidence/contract-152.json",
+    "evidencePath": "lab/verify/O05/evidence/case-152.json",
+    "expected": "REFUSED",
+    "id": "THRESHOLD/NS-P3-LAG-P99-MS/missing",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-MAINTENANCE",
+      "reasons": [
+        "threshold exceeded: NS-P3-LAG-P99-MS"
+      ],
+      "thresholds": {
+        "NS-P3-LAG-P99-MS": {
+          "bound": "max",
+          "kind": "ns",
+          "source": "lab/TARGETS.md section 1 P3; TARGETS 1.1 P3 items 1 and 4",
+          "unit": "ms p99 from commit time (the source's publication instant on the shared host monotonic clock) to the consumer's single durable write of the affected-subject set and its checkpoint, 256 readers running",
+          "value": 199
+        }
+      },
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/verify/O05/evidence/contract-153.json",
+    "evidencePath": "lab/verify/O05/evidence/case-153.json",
+    "expected": "FAIL",
+    "id": "THRESHOLD/NS-P3-LAG-P99-MS/evidence-override",
+    "ok": true,
+    "stderr": "",
+    "thresholdDefinitionMatchesContract": true
+  },
+  {
+    "actual": {
+      "protocol": "OBS-WATERMARK",
+      "reasons": [
+        "watermark wait exceeded"
+      ],
+      "thresholds": {
+        "T-WATERMARK-WAIT-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "RULINGS Q31d; lab/TARGETS.md 4.1 item 5",
+          "unit": "ms a read may wait for an eligible index before routing to a deadline-aware fallback; the fallback latency counts in the read's own latency",
+          "value": 9
+        }
+      },
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/verify/O05/evidence/contract-154.json",
+    "evidencePath": "lab/verify/O05/evidence/case-154.json",
+    "expected": "FAIL",
+    "id": "THRESHOLD/T-WATERMARK-WAIT-MS/tightened",
+    "ok": true,
+    "stderr": "",
+    "thresholdDefinitionMatchesContract": true
+  },
+  {
+    "actual": {
+      "protocol": "OBS-WATERMARK",
+      "reasons": [
+        "CONTRACT-AMBIGUITY: missing threshold T-WATERMARK-WAIT-MS"
+      ],
+      "thresholds": {},
+      "verdict": "REFUSED"
+    },
+    "canonical": true,
+    "code": 2,
+    "contractPath": "lab/verify/O05/evidence/contract-155.json",
+    "evidencePath": "lab/verify/O05/evidence/case-155.json",
+    "expected": "REFUSED",
+    "id": "THRESHOLD/T-WATERMARK-WAIT-MS/missing",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-WATERMARK",
+      "reasons": [
+        "watermark wait exceeded"
+      ],
+      "thresholds": {
+        "T-WATERMARK-WAIT-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "RULINGS Q31d; lab/TARGETS.md 4.1 item 5",
+          "unit": "ms a read may wait for an eligible index before routing to a deadline-aware fallback; the fallback latency counts in the read's own latency",
+          "value": 9
+        }
+      },
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/verify/O05/evidence/contract-156.json",
+    "evidencePath": "lab/verify/O05/evidence/case-156.json",
+    "expected": "FAIL",
+    "id": "THRESHOLD/T-WATERMARK-WAIT-MS/evidence-override",
+    "ok": true,
+    "stderr": "",
+    "thresholdDefinitionMatchesContract": true
+  },
+  {
+    "actual": {
+      "protocol": "OBS-CANCEL",
+      "reasons": [
+        "source record digest mismatch"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-157.json",
+    "expected": "FAIL",
+    "id": "CANCEL/bad-digest",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-PREABORT",
+      "reasons": [
+        "source record digest mismatch"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-158.json",
+    "expected": "FAIL",
+    "id": "PREABORT/bad-digest",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-CONNECTIONS",
+      "reasons": [
+        "source record digest mismatch"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-159.json",
+    "expected": "FAIL",
+    "id": "CONNECTIONS/bad-digest",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-SCRATCH",
+      "reasons": [
+        "source record digest mismatch"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-160.json",
+    "expected": "FAIL",
+    "id": "SCRATCH/bad-digest",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-NO-MUTATION",
+      "reasons": [
+        "source record digest mismatch"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-161.json",
+    "expected": "FAIL",
+    "id": "NO-MUTATION/bad-digest",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-RESOURCE",
+      "reasons": [
+        "source record digest mismatch"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-162.json",
+    "expected": "FAIL",
+    "id": "RESOURCE/bad-digest",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-AVAILABILITY",
+      "reasons": [
+        "source record digest mismatch"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-163.json",
+    "expected": "FAIL",
+    "id": "AVAILABILITY/bad-digest",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-SCALE-COUNT",
+      "reasons": [
+        "source record digest mismatch"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-164.json",
+    "expected": "FAIL",
+    "id": "SCALE-COUNT/bad-digest",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-WORK",
+      "reasons": [
+        "source record digest mismatch"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-165.json",
+    "expected": "FAIL",
+    "id": "WORK/bad-digest",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-MAINTENANCE",
+      "reasons": [
+        "source record digest mismatch"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-166.json",
+    "expected": "FAIL",
+    "id": "MAINTENANCE/bad-digest",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-ERASURE-SCAN",
+      "reasons": [
+        "source record digest mismatch"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-167.json",
+    "expected": "FAIL",
+    "id": "ERASURE-SCAN/bad-digest",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-WATERMARK",
+      "reasons": [
+        "source record digest mismatch"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-168.json",
+    "expected": "FAIL",
+    "id": "WATERMARK/bad-digest",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-ACK-ORDER",
+      "reasons": [
+        "source record digest mismatch"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-169.json",
+    "expected": "FAIL",
+    "id": "ACK-ORDER/bad-digest",
+    "ok": true,
+    "stderr": ""
+  },
+  {
+    "actual": {
+      "protocol": "OBS-FAULT-TRANSITIONS",
+      "reasons": [
+        "source record digest mismatch"
+      ],
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    "canonical": true,
+    "code": 1,
+    "contractPath": "lab/acceptance/obligations.json",
+    "evidencePath": "lab/verify/O05/evidence/case-170.json",
+    "expected": "FAIL",
+    "id": "FAULT-TRANSITIONS/bad-digest",
+    "ok": true,
+    "stderr": ""
+  }
+]

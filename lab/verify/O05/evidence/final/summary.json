@@ -1,0 +1,86 @@
+{
+  "builderReruns": [
+    {
+      "code": 0,
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "-B",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/oracle/test_observe.py"
+      ]
+    },
+    {
+      "code": 0,
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "-B",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/oracle/test_cli.py"
+      ]
+    },
+    {
+      "code": 0,
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "-B",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/oracle/selfcheck.py"
+      ]
+    }
+  ],
+  "discrepancies": [
+    "CANCEL/invented-log",
+    "PREABORT/invented-log",
+    "CONNECTIONS/invented-log",
+    "SCRATCH/invented-log",
+    "NO-MUTATION/invented-log",
+    "RESOURCE/invented-log",
+    "AVAILABILITY/invented-log",
+    "SCALE-COUNT/invented-log",
+    "WORK/invented-log",
+    "MAINTENANCE/invented-log",
+    "ERASURE-SCAN/invented-log",
+    "WATERMARK/invented-log",
+    "ACK-ORDER/invented-log",
+    "FAULT-TRANSITIONS/invented-log",
+    "WORK/threshold-laundering",
+    "WORK/exact-ratio-above-half",
+    "WORK/exact-ratio-above-incremental",
+    "RESOURCE/obligation-laundering",
+    "WATERMARK/unaccounted-pre-route-delay",
+    "FAULT-TRANSITIONS/transition-label-as-witness",
+    "FAULT-TRANSITIONS/verification-label-as-witness",
+    "FAULT-TRANSITIONS/declared-unwitnessed-transition",
+    "ERASURE-SCAN/category-labels-as-inventory"
+  ],
+  "endedEpochSeconds": 1794173806.31719,
+  "hashesAfter": {
+    "lab/acceptance/ACCEPTANCE.md": "5852b46ddafc734c96456bcd3111ac47c3203b2e92c69373d9d76327bf7f9e49",
+    "lab/acceptance/obligations.json": "4d52bf6ef978f830f871b4a4e1f4234c21d5253a2af42d3d8057b10e7998b03f",
+    "lab/acceptance/oracle/README.md": "9ea52824ce4f7e46050aad6ff0379a175b3e07a065c0c151e7aa4764730cad6e",
+    "lab/acceptance/oracle/observe.py": "89ecd3de8e94ca957b3100e3f9d8fc423e28ecb7acdb3ca4fb1a443d7a385ad3",
+    "lab/verify/O05/review.py": "d2c4c2bce306e75bbb008e9c506bc94ca71d6cb2aecfa8efb04a147df612ed24"
+  },
+  "hashesBefore": {
+    "lab/acceptance/ACCEPTANCE.md": "5852b46ddafc734c96456bcd3111ac47c3203b2e92c69373d9d76327bf7f9e49",
+    "lab/acceptance/obligations.json": "4d52bf6ef978f830f871b4a4e1f4234c21d5253a2af42d3d8057b10e7998b03f",
+    "lab/acceptance/oracle/README.md": "9ea52824ce4f7e46050aad6ff0379a175b3e07a065c0c151e7aa4764730cad6e",
+    "lab/acceptance/oracle/observe.py": "89ecd3de8e94ca957b3100e3f9d8fc423e28ecb7acdb3ca4fb1a443d7a385ad3",
+    "lab/verify/O05/review.py": "d2c4c2bce306e75bbb008e9c506bc94ca71d6cb2aecfa8efb04a147df612ed24"
+  },
+  "hostDiskFreeBefore": 34715811840,
+  "invocation": [
+    "/opt/homebrew/opt/python@3.14/bin/python3.14",
+    "-I",
+    "-B",
+    "lab/verify/O05/review.py"
+  ],
+  "killed": 19,
+  "matched": 154,
+  "mutants": 19,
+  "reviewId": "CX-VO05",
+  "reviewedHead": "6852fc1b9abcba5db0d0ceb37cc340129a467456",
+  "sourceStable": true,
+  "startedEpochSeconds": 1794173694.9117482,
+  "total": 177
+}

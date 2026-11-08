@@ -1,0 +1,1102 @@
+[
+  {
+    "crashes": [],
+    "id": "allow-client-source",
+    "killed": true,
+    "patch": {
+      "new": "pass",
+      "old": "require(s['kind'] in KINDS[protocol], 'unaccepted engine evidence source')"
+    },
+    "path": "lab/verify/O05/scratch/final/allow-client-source.py",
+    "semanticCounterexamples": [
+      {
+        "actual": {
+          "protocol": "OBS-CANCEL",
+          "reasons": [],
+          "thresholds": {
+            "T-DRAIN-MS": {
+              "bound": "max",
+              "kind": "observe",
+              "source": "derived from NS-P1-WRITER-WAIT-MAX-MS",
+              "unit": "ms from cancel request to the engine no longer listing the statement",
+              "value": 2000
+            }
+          },
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "CANCEL/client-source",
+        "ok": false,
+        "stderr": ""
+      },
+      {
+        "actual": {
+          "protocol": "OBS-PREABORT",
+          "reasons": [],
+          "thresholds": {},
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "PREABORT/client-source",
+        "ok": false,
+        "stderr": ""
+      },
+      {
+        "actual": {
+          "protocol": "OBS-CONNECTIONS",
+          "reasons": [],
+          "thresholds": {
+            "T-CONN-RELEASE-MS": {
+              "bound": "max",
+              "kind": "observe",
+              "source": "derived",
+              "unit": "ms after close for the engine-side connection count to return to baseline",
+              "value": 5000
+            }
+          },
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "CONNECTIONS/client-source",
+        "ok": false,
+        "stderr": ""
+      },
+      {
+        "actual": {
+          "protocol": "OBS-SCRATCH",
+          "reasons": [],
+          "thresholds": {},
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "SCRATCH/client-source",
+        "ok": false,
+        "stderr": ""
+      },
+      {
+        "actual": {
+          "protocol": "OBS-NO-MUTATION",
+          "reasons": [],
+          "thresholds": {},
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "NO-MUTATION/client-source",
+        "ok": false,
+        "stderr": ""
+      },
+      {
+        "actual": {
+          "protocol": "OBS-RESOURCE",
+          "reasons": [],
+          "thresholds": {
+            "T-PLANNER-MEM-BYTES": {
+              "bound": "max",
+              "kind": "observe",
+              "source": "lab/PLAN.md section 8 heavy slot cap",
+              "unit": "bytes of engine memory during a refused query (slot cap 3.5 GiB)",
+              "value": 3758096384
+            }
+          },
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "RESOURCE/client-source",
+        "ok": false,
+        "stderr": ""
+      },
+      {
+        "actual": {
+          "protocol": "OBS-AVAILABILITY",
+          "reasons": [],
+          "thresholds": {
+            "T-AVAIL-WINDOW-MS": {
+              "bound": "max",
+              "kind": "observe",
+              "source": "derived from NS-P1-RECOVERY-MS",
+              "unit": "ms until writes and reads succeed after a resource failure",
+              "value": 60000
+            }
+          },
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "AVAILABILITY/client-source",
+        "ok": false,
+        "stderr": ""
+      },
+      {
+        "actual": {
+          "protocol": "OBS-SCALE-COUNT",
+          "reasons": [],
+          "thresholds": {},
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "SCALE-COUNT/client-source",
+        "ok": false,
+        "stderr": ""
+      },
+      {
+        "actual": {
+          "protocol": "OBS-WORK",
+          "reasons": [],
+          "thresholds": {
+            "T-REUSE-AVOIDED": {
+              "bound": "max",
+              "kind": "witness",
+              "source": "derived (positive reuse witness)",
+              "unit": "engine work units of a reused read divided by the first read at the same key",
+              "value": 0.5
+            }
+          },
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "WORK/client-source",
+        "ok": false,
+        "stderr": ""
+      },
+      {
+        "actual": {
+          "protocol": "OBS-MAINTENANCE",
+          "reasons": [],
+          "thresholds": {
+            "NS-P3-LAG-P99-MS": {
+              "bound": "max",
+              "kind": "ns",
+              "source": "lab/TARGETS.md section 1 P3; TARGETS 1.1 P3 items 1 and 4",
+              "unit": "ms p99 from commit time (the source's publication instant on the shared host monotonic clock) to the consumer's single durable write of the affected-subject set and its checkpoint, 256 readers running",
+              "value": 250
+            }
+          },
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "MAINTENANCE/client-source",
+        "ok": false,
+        "stderr": ""
+      },
+      {
+        "actual": {
+          "protocol": "OBS-ERASURE-SCAN",
+          "reasons": [],
+          "thresholds": {},
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "ERASURE-SCAN/client-source",
+        "ok": false,
+        "stderr": ""
+      },
+      {
+        "actual": {
+          "protocol": "OBS-WATERMARK",
+          "reasons": [],
+          "thresholds": {
+            "T-WATERMARK-WAIT-MS": {
+              "bound": "max",
+              "kind": "observe",
+              "source": "RULINGS Q31d; lab/TARGETS.md 4.1 item 5",
+              "unit": "ms a read may wait for an eligible index before routing to a deadline-aware fallback; the fallback latency counts in the read's own latency",
+              "value": 10
+            }
+          },
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "WATERMARK/client-source",
+        "ok": false,
+        "stderr": ""
+      },
+      {
+        "actual": {
+          "protocol": "OBS-ACK-ORDER",
+          "reasons": [],
+          "thresholds": {
+            "T-WATERMARK-WAIT-MS": {
+              "bound": "max",
+              "kind": "observe",
+              "source": "RULINGS Q31d; lab/TARGETS.md 4.1 item 5",
+              "unit": "ms a read may wait for an eligible index before routing to a deadline-aware fallback; the fallback latency counts in the read's own latency",
+              "value": 10
+            }
+          },
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "ACK-ORDER/client-source",
+        "ok": false,
+        "stderr": ""
+      },
+      {
+        "actual": {
+          "protocol": "OBS-FAULT-TRANSITIONS",
+          "reasons": [],
+          "thresholds": {},
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "FAULT-TRANSITIONS/client-source",
+        "ok": false,
+        "stderr": ""
+      }
+    ]
+  },
+  {
+    "crashes": [],
+    "id": "ignore-source-digest",
+    "killed": true,
+    "patch": {
+      "new": "pass",
+      "old": "require(digest(records) == s['sha256'], 'source record digest mismatch')"
+    },
+    "path": "lab/verify/O05/scratch/final/ignore-source-digest.py",
+    "semanticCounterexamples": [
+      {
+        "actual": {
+          "protocol": "OBS-CANCEL",
+          "reasons": [],
+          "thresholds": {
+            "T-DRAIN-MS": {
+              "bound": "max",
+              "kind": "observe",
+              "source": "derived from NS-P1-WRITER-WAIT-MAX-MS",
+              "unit": "ms from cancel request to the engine no longer listing the statement",
+              "value": 2000
+            }
+          },
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "CANCEL/bad-digest",
+        "ok": false,
+        "stderr": ""
+      },
+      {
+        "actual": {
+          "protocol": "OBS-PREABORT",
+          "reasons": [],
+          "thresholds": {},
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "PREABORT/bad-digest",
+        "ok": false,
+        "stderr": ""
+      },
+      {
+        "actual": {
+          "protocol": "OBS-CONNECTIONS",
+          "reasons": [],
+          "thresholds": {
+            "T-CONN-RELEASE-MS": {
+              "bound": "max",
+              "kind": "observe",
+              "source": "derived",
+              "unit": "ms after close for the engine-side connection count to return to baseline",
+              "value": 5000
+            }
+          },
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "CONNECTIONS/bad-digest",
+        "ok": false,
+        "stderr": ""
+      },
+      {
+        "actual": {
+          "protocol": "OBS-SCRATCH",
+          "reasons": [],
+          "thresholds": {},
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "SCRATCH/bad-digest",
+        "ok": false,
+        "stderr": ""
+      },
+      {
+        "actual": {
+          "protocol": "OBS-NO-MUTATION",
+          "reasons": [],
+          "thresholds": {},
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "NO-MUTATION/bad-digest",
+        "ok": false,
+        "stderr": ""
+      },
+      {
+        "actual": {
+          "protocol": "OBS-RESOURCE",
+          "reasons": [],
+          "thresholds": {
+            "T-PLANNER-MEM-BYTES": {
+              "bound": "max",
+              "kind": "observe",
+              "source": "lab/PLAN.md section 8 heavy slot cap",
+              "unit": "bytes of engine memory during a refused query (slot cap 3.5 GiB)",
+              "value": 3758096384
+            }
+          },
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "RESOURCE/bad-digest",
+        "ok": false,
+        "stderr": ""
+      },
+      {
+        "actual": {
+          "protocol": "OBS-AVAILABILITY",
+          "reasons": [],
+          "thresholds": {
+            "T-AVAIL-WINDOW-MS": {
+              "bound": "max",
+              "kind": "observe",
+              "source": "derived from NS-P1-RECOVERY-MS",
+              "unit": "ms until writes and reads succeed after a resource failure",
+              "value": 60000
+            }
+          },
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "AVAILABILITY/bad-digest",
+        "ok": false,
+        "stderr": ""
+      },
+      {
+        "actual": {
+          "protocol": "OBS-SCALE-COUNT",
+          "reasons": [],
+          "thresholds": {},
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "SCALE-COUNT/bad-digest",
+        "ok": false,
+        "stderr": ""
+      },
+      {
+        "actual": {
+          "protocol": "OBS-WORK",
+          "reasons": [],
+          "thresholds": {
+            "T-REUSE-AVOIDED": {
+              "bound": "max",
+              "kind": "witness",
+              "source": "derived (positive reuse witness)",
+              "unit": "engine work units of a reused read divided by the first read at the same key",
+              "value": 0.5
+            }
+          },
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "WORK/bad-digest",
+        "ok": false,
+        "stderr": ""
+      },
+      {
+        "actual": {
+          "protocol": "OBS-MAINTENANCE",
+          "reasons": [],
+          "thresholds": {
+            "NS-P3-LAG-P99-MS": {
+              "bound": "max",
+              "kind": "ns",
+              "source": "lab/TARGETS.md section 1 P3; TARGETS 1.1 P3 items 1 and 4",
+              "unit": "ms p99 from commit time (the source's publication instant on the shared host monotonic clock) to the consumer's single durable write of the affected-subject set and its checkpoint, 256 readers running",
+              "value": 250
+            }
+          },
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "MAINTENANCE/bad-digest",
+        "ok": false,
+        "stderr": ""
+      },
+      {
+        "actual": {
+          "protocol": "OBS-ERASURE-SCAN",
+          "reasons": [],
+          "thresholds": {},
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "ERASURE-SCAN/bad-digest",
+        "ok": false,
+        "stderr": ""
+      },
+      {
+        "actual": {
+          "protocol": "OBS-WATERMARK",
+          "reasons": [],
+          "thresholds": {
+            "T-WATERMARK-WAIT-MS": {
+              "bound": "max",
+              "kind": "observe",
+              "source": "RULINGS Q31d; lab/TARGETS.md 4.1 item 5",
+              "unit": "ms a read may wait for an eligible index before routing to a deadline-aware fallback; the fallback latency counts in the read's own latency",
+              "value": 10
+            }
+          },
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "WATERMARK/bad-digest",
+        "ok": false,
+        "stderr": ""
+      },
+      {
+        "actual": {
+          "protocol": "OBS-ACK-ORDER",
+          "reasons": [],
+          "thresholds": {
+            "T-WATERMARK-WAIT-MS": {
+              "bound": "max",
+              "kind": "observe",
+              "source": "RULINGS Q31d; lab/TARGETS.md 4.1 item 5",
+              "unit": "ms a read may wait for an eligible index before routing to a deadline-aware fallback; the fallback latency counts in the read's own latency",
+              "value": 10
+            }
+          },
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "ACK-ORDER/bad-digest",
+        "ok": false,
+        "stderr": ""
+      },
+      {
+        "actual": {
+          "protocol": "OBS-FAULT-TRANSITIONS",
+          "reasons": [],
+          "thresholds": {},
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "FAULT-TRANSITIONS/bad-digest",
+        "ok": false,
+        "stderr": ""
+      }
+    ]
+  },
+  {
+    "crashes": [],
+    "id": "drain-strict-boundary",
+    "killed": true,
+    "patch": {
+      "new": "drained - start < self.threshold('T-DRAIN-MS')",
+      "old": "drained - start <= self.threshold('T-DRAIN-MS')"
+    },
+    "path": "lab/verify/O05/scratch/final/drain-strict-boundary.py",
+    "semanticCounterexamples": [
+      {
+        "actual": {
+          "protocol": "OBS-CANCEL",
+          "reasons": [
+            "drain deadline missed"
+          ],
+          "thresholds": {
+            "T-DRAIN-MS": {
+              "bound": "max",
+              "kind": "observe",
+              "source": "derived from NS-P1-WRITER-WAIT-MAX-MS",
+              "unit": "ms from cancel request to the engine no longer listing the statement",
+              "value": 2000
+            }
+          },
+          "verdict": "FAIL"
+        },
+        "canonical": true,
+        "code": 1,
+        "expected": "PASS",
+        "id": "CANCEL/positive",
+        "ok": false,
+        "stderr": ""
+      },
+      {
+        "actual": {
+          "protocol": "OBS-CANCEL",
+          "reasons": [
+            "drain deadline missed"
+          ],
+          "thresholds": {
+            "T-DRAIN-MS": {
+              "bound": "max",
+              "kind": "observe",
+              "source": "derived from NS-P1-WRITER-WAIT-MAX-MS",
+              "unit": "ms from cancel request to the engine no longer listing the statement",
+              "value": 2000
+            }
+          },
+          "verdict": "FAIL"
+        },
+        "canonical": true,
+        "code": 1,
+        "expected": "PASS",
+        "id": "CANCEL/timeout-positive",
+        "ok": false,
+        "stderr": ""
+      }
+    ]
+  },
+  {
+    "crashes": [],
+    "id": "allow-active-after-drain",
+    "killed": true,
+    "patch": {
+      "new": "pass",
+      "old": "require(e['requestId'] not in ids, 'query still active after drain')"
+    },
+    "path": "lab/verify/O05/scratch/final/allow-active-after-drain.py",
+    "semanticCounterexamples": [
+      {
+        "actual": {
+          "protocol": "OBS-CANCEL",
+          "reasons": [],
+          "thresholds": {
+            "T-DRAIN-MS": {
+              "bound": "max",
+              "kind": "observe",
+              "source": "derived from NS-P1-WRITER-WAIT-MAX-MS",
+              "unit": "ms from cancel request to the engine no longer listing the statement",
+              "value": 2000
+            }
+          },
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "CANCEL/active-after-drain",
+        "ok": false,
+        "stderr": ""
+      }
+    ]
+  },
+  {
+    "crashes": [],
+    "id": "allow-other-reuse-connection",
+    "killed": true,
+    "patch": {
+      "new": "'connectionId': reuse['connectionId'],",
+      "old": "'connectionId': e['connectionId'],"
+    },
+    "path": "lab/verify/O05/scratch/final/allow-other-reuse-connection.py",
+    "semanticCounterexamples": [
+      {
+        "actual": {
+          "protocol": "OBS-CANCEL",
+          "reasons": [],
+          "thresholds": {
+            "T-DRAIN-MS": {
+              "bound": "max",
+              "kind": "observe",
+              "source": "derived from NS-P1-WRITER-WAIT-MAX-MS",
+              "unit": "ms from cancel request to the engine no longer listing the statement",
+              "value": 2000
+            }
+          },
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "CANCEL/different-reuse-connection",
+        "ok": false,
+        "stderr": ""
+      }
+    ]
+  },
+  {
+    "crashes": [],
+    "id": "preabort-forbidden-tag",
+    "killed": true,
+    "patch": {
+      "new": "pass",
+      "old": "require(s['tag'] != e['requestId'], 'preaborted request reached engine')"
+    },
+    "path": "lab/verify/O05/scratch/final/preabort-forbidden-tag.py",
+    "semanticCounterexamples": [
+      {
+        "actual": {
+          "protocol": "OBS-PREABORT",
+          "reasons": [],
+          "thresholds": {},
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "PREABORT/boundary",
+        "ok": false,
+        "stderr": ""
+      }
+    ]
+  },
+  {
+    "crashes": [],
+    "id": "pool-over-max",
+    "killed": true,
+    "patch": {
+      "new": "pass",
+      "old": "require(s['count'] <= limits[s['label']], 'pool maximum exceeded')"
+    },
+    "path": "lab/verify/O05/scratch/final/pool-over-max.py",
+    "semanticCounterexamples": [
+      {
+        "actual": {
+          "protocol": "OBS-CONNECTIONS",
+          "reasons": [],
+          "thresholds": {
+            "T-CONN-RELEASE-MS": {
+              "bound": "max",
+              "kind": "observe",
+              "source": "derived",
+              "unit": "ms after close for the engine-side connection count to return to baseline",
+              "value": 5000
+            }
+          },
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "CONNECTIONS/boundary",
+        "ok": false,
+        "stderr": ""
+      }
+    ]
+  },
+  {
+    "crashes": [],
+    "id": "scratch-count-drift",
+    "killed": true,
+    "patch": {
+      "new": "pass",
+      "old": "require(e['countBefore'] == e['countAfter'], 'scratch relation count changed')"
+    },
+    "path": "lab/verify/O05/scratch/final/scratch-count-drift.py",
+    "semanticCounterexamples": [
+      {
+        "actual": {
+          "protocol": "OBS-SCRATCH",
+          "reasons": [],
+          "thresholds": {},
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "SCRATCH/boundary",
+        "ok": false,
+        "stderr": ""
+      }
+    ]
+  },
+  {
+    "crashes": [],
+    "id": "counter-drift",
+    "killed": true,
+    "patch": {
+      "new": "True",
+      "old": "integer(e['engineMutationCounterBefore']) == integer(e['engineMutationCounterAfter'])"
+    },
+    "path": "lab/verify/O05/scratch/final/counter-drift.py",
+    "semanticCounterexamples": [
+      {
+        "actual": {
+          "protocol": "OBS-NO-MUTATION",
+          "reasons": [],
+          "thresholds": {},
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "NO-MUTATION/boundary",
+        "ok": false,
+        "stderr": ""
+      }
+    ]
+  },
+  {
+    "crashes": [],
+    "id": "resource-ignore-client",
+    "killed": true,
+    "patch": {
+      "new": "max(v[0] for v in group.values())",
+      "old": "sum(v[0] for v in group.values())"
+    },
+    "path": "lab/verify/O05/scratch/final/resource-ignore-client.py",
+    "semanticCounterexamples": [
+      {
+        "actual": {
+          "protocol": "OBS-RESOURCE",
+          "reasons": [],
+          "thresholds": {
+            "T-PLANNER-MEM-BYTES": {
+              "bound": "max",
+              "kind": "observe",
+              "source": "lab/PLAN.md section 8 heavy slot cap",
+              "unit": "bytes of engine memory during a refused query (slot cap 3.5 GiB)",
+              "value": 3758096384
+            }
+          },
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "RESOURCE/boundary",
+        "ok": false,
+        "stderr": ""
+      }
+    ]
+  },
+  {
+    "crashes": [],
+    "id": "manual-restart-allowed",
+    "killed": true,
+    "patch": {
+      "new": "pass",
+      "old": "require(not (event['kind'] == 'manual-restart' and event['t'] >= start), 'manual restart observed')"
+    },
+    "path": "lab/verify/O05/scratch/final/manual-restart-allowed.py",
+    "semanticCounterexamples": [
+      {
+        "actual": {
+          "protocol": "OBS-AVAILABILITY",
+          "reasons": [],
+          "thresholds": {
+            "T-AVAIL-WINDOW-MS": {
+              "bound": "max",
+              "kind": "observe",
+              "source": "derived from NS-P1-RECOVERY-MS",
+              "unit": "ms until writes and reads succeed after a resource failure",
+              "value": 60000
+            }
+          },
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "AVAILABILITY/manual-restart",
+        "ok": false,
+        "stderr": ""
+      }
+    ]
+  },
+  {
+    "crashes": [],
+    "id": "count-engine-not-compared",
+    "killed": true,
+    "patch": {
+      "new": "pass",
+      "old": "require(canonical(e['countQueryCaseResult']) == canonical(expected), 'engine counts differ from O-REPLAY')"
+    },
+    "path": "lab/verify/O05/scratch/final/count-engine-not-compared.py",
+    "semanticCounterexamples": [
+      {
+        "actual": {
+          "protocol": "OBS-SCALE-COUNT",
+          "reasons": [],
+          "thresholds": {},
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "SCALE-COUNT/boundary",
+        "ok": false,
+        "stderr": ""
+      }
+    ]
+  },
+  {
+    "crashes": [],
+    "id": "work-only-first-channel",
+    "killed": true,
+    "patch": {
+      "new": "ratios[0]",
+      "old": "max(ratios)"
+    },
+    "path": "lab/verify/O05/scratch/final/work-only-first-channel.py",
+    "semanticCounterexamples": [
+      {
+        "actual": {
+          "protocol": "OBS-WORK",
+          "reasons": [],
+          "thresholds": {
+            "T-REUSE-AVOIDED": {
+              "bound": "max",
+              "kind": "witness",
+              "source": "derived (positive reuse witness)",
+              "unit": "engine work units of a reused read divided by the first read at the same key",
+              "value": 0.5
+            }
+          },
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "WORK/one-channel-over",
+        "ok": false,
+        "stderr": ""
+      }
+    ]
+  },
+  {
+    "crashes": [],
+    "id": "maintenance-min-lag",
+    "killed": true,
+    "patch": {
+      "new": "lags[0]",
+      "old": "lags[math.ceil(.99 * len(lags)) - 1]"
+    },
+    "path": "lab/verify/O05/scratch/final/maintenance-min-lag.py",
+    "semanticCounterexamples": [
+      {
+        "actual": {
+          "protocol": "OBS-MAINTENANCE",
+          "reasons": [],
+          "thresholds": {
+            "NS-P3-LAG-P99-MS": {
+              "bound": "max",
+              "kind": "ns",
+              "source": "lab/TARGETS.md section 1 P3; TARGETS 1.1 P3 items 1 and 4",
+              "unit": "ms p99 from commit time (the source's publication instant on the shared host monotonic clock) to the consumer's single durable write of the affected-subject set and its checkpoint, 256 readers running",
+              "value": 250
+            }
+          },
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "MAINTENANCE/boundary",
+        "ok": false,
+        "stderr": ""
+      }
+    ]
+  },
+  {
+    "crashes": [],
+    "id": "ignore-derived-channel",
+    "killed": true,
+    "patch": {
+      "new": "if plain:",
+      "old": "if plain or derived:"
+    },
+    "path": "lab/verify/O05/scratch/final/ignore-derived-channel.py",
+    "semanticCounterexamples": [
+      {
+        "actual": {
+          "protocol": "OBS-ERASURE-SCAN",
+          "reasons": [],
+          "thresholds": {},
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "ERASURE-SCAN/boundary",
+        "ok": false,
+        "stderr": ""
+      }
+    ]
+  },
+  {
+    "crashes": [],
+    "id": "ignore-erasure-frontier",
+    "killed": true,
+    "patch": {
+      "new": "pass",
+      "old": "require(reached(x['erasureApplied'], x['erasurePublished']), 'erasure frontier behind')"
+    },
+    "path": "lab/verify/O05/scratch/final/ignore-erasure-frontier.py",
+    "semanticCounterexamples": [
+      {
+        "actual": {
+          "protocol": "OBS-WATERMARK",
+          "reasons": [],
+          "thresholds": {
+            "T-WATERMARK-WAIT-MS": {
+              "bound": "max",
+              "kind": "observe",
+              "source": "RULINGS Q31d; lab/TARGETS.md 4.1 item 5",
+              "unit": "ms a read may wait for an eligible index before routing to a deadline-aware fallback; the fallback latency counts in the read's own latency",
+              "value": 10
+            }
+          },
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "WATERMARK/erasure-behind",
+        "ok": false,
+        "stderr": ""
+      }
+    ]
+  },
+  {
+    "crashes": [],
+    "id": "allow-early-ack",
+    "killed": true,
+    "patch": {
+      "new": "pass",
+      "old": "require(num(e['tAck']) >= num(e['tSourcePublished']), 'ACK preceded source publication')"
+    },
+    "path": "lab/verify/O05/scratch/final/allow-early-ack.py",
+    "semanticCounterexamples": [
+      {
+        "actual": {
+          "protocol": "OBS-ACK-ORDER",
+          "reasons": [],
+          "thresholds": {
+            "T-WATERMARK-WAIT-MS": {
+              "bound": "max",
+              "kind": "observe",
+              "source": "RULINGS Q31d; lab/TARGETS.md 4.1 item 5",
+              "unit": "ms a read may wait for an eligible index before routing to a deadline-aware fallback; the fallback latency counts in the read's own latency",
+              "value": 10
+            }
+          },
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "ACK-ORDER/boundary",
+        "ok": false,
+        "stderr": ""
+      }
+    ]
+  },
+  {
+    "crashes": [],
+    "id": "allow-precrash-readback",
+    "killed": true,
+    "patch": {
+      "new": "pass",
+      "old": "require(num(obj['tReadBack']) > crash, 'durability not read back after crash')"
+    },
+    "path": "lab/verify/O05/scratch/final/allow-precrash-readback.py",
+    "semanticCounterexamples": [
+      {
+        "actual": {
+          "protocol": "OBS-FAULT-TRANSITIONS",
+          "reasons": [],
+          "thresholds": {},
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "FAULT-TRANSITIONS/boundary",
+        "ok": false,
+        "stderr": ""
+      }
+    ]
+  },
+  {
+    "crashes": [],
+    "id": "allow-old-incarnation",
+    "killed": true,
+    "patch": {
+      "new": "for k in ('before',))",
+      "old": "for k in ('before', 'after'))"
+    },
+    "path": "lab/verify/O05/scratch/final/allow-old-incarnation.py",
+    "semanticCounterexamples": [
+      {
+        "actual": {
+          "protocol": "OBS-WATERMARK",
+          "reasons": [],
+          "thresholds": {
+            "T-WATERMARK-WAIT-MS": {
+              "bound": "max",
+              "kind": "observe",
+              "source": "RULINGS Q31d; lab/TARGETS.md 4.1 item 5",
+              "unit": "ms a read may wait for an eligible index before routing to a deadline-aware fallback; the fallback latency counts in the read's own latency",
+              "value": 10
+            }
+          },
+          "verdict": "PASS"
+        },
+        "canonical": true,
+        "code": 0,
+        "expected": "FAIL",
+        "id": "WATERMARK/reset-incarnation",
+        "ok": false,
+        "stderr": ""
+      }
+    ]
+  }
+]

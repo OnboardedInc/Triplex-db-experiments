@@ -1,0 +1,1 @@
+{"countAfter":4,"countBefore":4,"relation":"scratch-a","resolutionReceipts":[{"outcome":"committed","receiptId":"receipt-a","workingId":"cmd-a"}],"source":{"kind":"engine-relation-scan","sha256":"0000000000000000000000000000000000000000000000000000000000000000"},"unknownOutcomes":["cmd-a"]}
