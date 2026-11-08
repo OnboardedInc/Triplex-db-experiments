@@ -1,0 +1,73 @@
+{
+  "id": "C133",
+  "slug": "publish-code-point-order",
+  "title": "A14: strings order by code point: U+E000 sorts before U+1F600",
+  "op": "publish",
+  "checks": [],
+  "synthetic": true,
+  "notes": [
+    "RULINGS Q57d (A14). By code point (= UTF-8 byte order) U+E000 < U+1F600; by UTF-16 code units the emoji (D83D DE00)",
+    "sorts first. Record 1 (subject pl:<emoji>, tx 5, validTime t<emoji>) lists wi:<emoji> then wi:<U+E000>; step 2 walks",
+    "them by id, so wi:<U+E000> publishes first. Record 2 (subject pl:<U+E000>) publishes wi:b. Record 3 (pl:<emoji>, tx 5,",
+    "validTime t<U+E000>) has an equal tx and a smaller validTime by code point: older, skipped (a UTF-16 order would apply it",
+    "and publish {late: 1}). Output: items wi:b, wi:<U+E000>, wi:<emoji>; subjects pl:<U+E000>, pl:<emoji>; the payload",
+    "keys of wi:<emoji> in the order U+E000, emoji; every non-ASCII character written as \\u escapes (UTF-16 pairs above U+FFFF)."
+  ],
+  "input": {
+    "evaluations": [
+      {
+        "basis": {"tx": 5, "validTime": "t\ud83d\ude00"},
+        "release": "sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031",
+        "subject": "pl:\ud83d\ude00",
+        "workItems": [
+          {"id": "wi:\ud83d\ude00", "inputs": [], "key": "", "kind": "k", "payload": {"\ud83d\ude00": 1, "\ue000": 2}, "rule": "BGC", "version": "wv:g"},
+          {"id": "wi:\ue000", "inputs": [], "key": "", "kind": "k", "payload": {}, "rule": "BGC", "version": "wv:e"}
+        ]
+      },
+      {
+        "basis": {"tx": 6, "validTime": "2026-11-04T12:00:00.000000Z"},
+        "release": "sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031",
+        "subject": "pl:\ue000",
+        "workItems": [
+          {"id": "wi:b", "inputs": [], "key": "", "kind": "k", "payload": {}, "rule": "BGC", "version": "wv:b"}
+        ]
+      },
+      {
+        "basis": {"tx": 5, "validTime": "t\ue000"},
+        "release": "sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031",
+        "subject": "pl:\ud83d\ude00",
+        "workItems": [
+          {"id": "wi:\ud83d\ude00", "inputs": [], "key": "", "kind": "k", "payload": {"late": 1}, "rule": "BGC", "version": "wv:late"}
+        ]
+      }
+    ],
+    "state": {
+      "items": [],
+      "pending": [],
+      "subjects": []
+    }
+  },
+  "expected": {
+    "deliveries": [
+      {"id": "wi:\ue000", "key": "", "kind": "k", "payload": {}, "rule": "BGC", "seq": 1, "subject": "pl:\ud83d\ude00", "version": "wv:e"},
+      {"id": "wi:\ud83d\ude00", "key": "", "kind": "k", "payload": {"\ud83d\ude00": 1, "\ue000": 2}, "rule": "BGC", "seq": 1, "subject": "pl:\ud83d\ude00", "version": "wv:g"},
+      {"id": "wi:b", "key": "", "kind": "k", "payload": {}, "rule": "BGC", "seq": 1, "subject": "pl:\ue000", "version": "wv:b"}
+    ],
+    "state": {
+      "items": [
+        {"id": "wi:b", "payload": {}, "retired": false, "seq": 1, "subject": "pl:\ue000"},
+        {"id": "wi:\ue000", "payload": {}, "retired": false, "seq": 1, "subject": "pl:\ud83d\ude00"},
+        {"id": "wi:\ud83d\ude00", "payload": {"\ud83d\ude00": 1, "\ue000": 2}, "retired": false, "seq": 1, "subject": "pl:\ud83d\ude00"}
+      ],
+      "pending": [
+        {"id": "wi:\ue000", "key": "", "kind": "k", "payload": {}, "rule": "BGC", "seq": 1, "subject": "pl:\ud83d\ude00", "version": "wv:e"},
+        {"id": "wi:\ud83d\ude00", "key": "", "kind": "k", "payload": {"\ud83d\ude00": 1, "\ue000": 2}, "rule": "BGC", "seq": 1, "subject": "pl:\ud83d\ude00", "version": "wv:g"},
+        {"id": "wi:b", "key": "", "kind": "k", "payload": {}, "rule": "BGC", "seq": 1, "subject": "pl:\ue000", "version": "wv:b"}
+      ],
+      "subjects": [
+        {"basis": {"tx": 6, "validTime": "2026-11-04T12:00:00.000000Z"}, "subject": "pl:\ue000"},
+        {"basis": {"tx": 5, "validTime": "t\ud83d\ude00"}, "subject": "pl:\ud83d\ude00"}
+      ]
+    }
+  }
+}

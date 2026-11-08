@@ -1,0 +1,46 @@
+{
+  "id": "C125",
+  "slug": "receive-two-waiting-released",
+  "title": "receive: arrivals 1, 4, 3, 2: seq 2 releases both waiting deliveries",
+  "op": "receive",
+  "checks": [],
+  "notes": [
+    "From V-D01c P38 (M47). C73's pay notice continued by a fourth publication (floor 1700 again, R2's version).",
+    "Projection: applies 1, then 4 (4 > 1); ignores 3 and 2. Effects: 1 processed (done 1); 4 waits; 3 waits; 2 processed,",
+    "then the waiting 3, then the waiting 4 (8.9: repeatedly). Effects 1, 2, 3, 4; done 4, nothing waiting."
+  ],
+  "input": {
+    "deliveries": [
+      {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1650, "payRateCents": 1600}, "rule": "MINWAGE", "seq": 1, "subject": "pl:a", "version": "wv:3e8b041f2e27ce4bb904c0301e0a2bb723d6afa591a26dc33da7158992ba9841"},
+      {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1700, "payRateCents": 1600}, "rule": "MINWAGE", "seq": 4, "subject": "pl:a", "version": "wv:2ebd2c91695acf5b399d4f590bd1e2f014bd56f1cc412876beab1550ecff3db8"},
+      {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1650, "payRateCents": 1600}, "rule": "MINWAGE", "seq": 3, "subject": "pl:a", "version": "wv:3e8b041f2e27ce4bb904c0301e0a2bb723d6afa591a26dc33da7158992ba9841"},
+      {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1700, "payRateCents": 1600}, "rule": "MINWAGE", "seq": 2, "subject": "pl:a", "version": "wv:2ebd2c91695acf5b399d4f590bd1e2f014bd56f1cc412876beab1550ecff3db8"}
+    ],
+    "state": {
+      "effects": [],
+      "projection": []
+    }
+  },
+  "expected": {
+    "applied": {
+      "effects": [
+        {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1650, "payRateCents": 1600}, "rule": "MINWAGE", "seq": 1, "subject": "pl:a", "version": "wv:3e8b041f2e27ce4bb904c0301e0a2bb723d6afa591a26dc33da7158992ba9841"},
+        {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1700, "payRateCents": 1600}, "rule": "MINWAGE", "seq": 2, "subject": "pl:a", "version": "wv:2ebd2c91695acf5b399d4f590bd1e2f014bd56f1cc412876beab1550ecff3db8"},
+        {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1650, "payRateCents": 1600}, "rule": "MINWAGE", "seq": 3, "subject": "pl:a", "version": "wv:3e8b041f2e27ce4bb904c0301e0a2bb723d6afa591a26dc33da7158992ba9841"},
+        {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1700, "payRateCents": 1600}, "rule": "MINWAGE", "seq": 4, "subject": "pl:a", "version": "wv:2ebd2c91695acf5b399d4f590bd1e2f014bd56f1cc412876beab1550ecff3db8"}
+      ],
+      "projection": [
+        {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1650, "payRateCents": 1600}, "rule": "MINWAGE", "seq": 1, "subject": "pl:a", "version": "wv:3e8b041f2e27ce4bb904c0301e0a2bb723d6afa591a26dc33da7158992ba9841"},
+        {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "key": "", "kind": "notify.pay-below-minimum", "payload": {"floorCents": 1700, "payRateCents": 1600}, "rule": "MINWAGE", "seq": 4, "subject": "pl:a", "version": "wv:2ebd2c91695acf5b399d4f590bd1e2f014bd56f1cc412876beab1550ecff3db8"}
+      ]
+    },
+    "state": {
+      "effects": [
+        {"done": 4, "id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "waiting": []}
+      ],
+      "projection": [
+        {"id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a", "payload": {"floorCents": 1700, "payRateCents": 1600}, "seq": 4}
+      ]
+    }
+  }
+}

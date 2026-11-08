@@ -1,0 +1,45 @@
+{
+  "id": "C134",
+  "slug": "receive-code-point-order",
+  "title": "A14: receiver state ordered by code point",
+  "op": "receive",
+  "checks": [],
+  "synthetic": true,
+  "notes": [
+    "RULINGS Q57d (A14). Deliveries for wi:<emoji> and then wi:<U+E000>, both seq 1, from an empty receiver: both are applied",
+    "and processed in arrival order; the state's effects and projection are ascending by id by code point, so",
+    "wi:<U+E000> comes first, and the projected payload's keys are written U+E000 first."
+  ],
+  "input": {
+    "deliveries": [
+      {"id": "wi:\ud83d\ude00", "key": "", "kind": "k", "payload": {"\ud83d\ude00": 1, "\ue000": 2}, "rule": "BGC", "seq": 1, "subject": "pl:a", "version": "wv:g"},
+      {"id": "wi:\ue000", "key": "", "kind": "k", "payload": {}, "rule": "BGC", "seq": 1, "subject": "pl:a", "version": "wv:e"}
+    ],
+    "state": {
+      "effects": [],
+      "projection": []
+    }
+  },
+  "expected": {
+    "applied": {
+      "effects": [
+        {"id": "wi:\ud83d\ude00", "key": "", "kind": "k", "payload": {"\ud83d\ude00": 1, "\ue000": 2}, "rule": "BGC", "seq": 1, "subject": "pl:a", "version": "wv:g"},
+        {"id": "wi:\ue000", "key": "", "kind": "k", "payload": {}, "rule": "BGC", "seq": 1, "subject": "pl:a", "version": "wv:e"}
+      ],
+      "projection": [
+        {"id": "wi:\ud83d\ude00", "key": "", "kind": "k", "payload": {"\ud83d\ude00": 1, "\ue000": 2}, "rule": "BGC", "seq": 1, "subject": "pl:a", "version": "wv:g"},
+        {"id": "wi:\ue000", "key": "", "kind": "k", "payload": {}, "rule": "BGC", "seq": 1, "subject": "pl:a", "version": "wv:e"}
+      ]
+    },
+    "state": {
+      "effects": [
+        {"done": 1, "id": "wi:\ue000", "waiting": []},
+        {"done": 1, "id": "wi:\ud83d\ude00", "waiting": []}
+      ],
+      "projection": [
+        {"id": "wi:\ue000", "payload": {}, "seq": 1},
+        {"id": "wi:\ud83d\ude00", "payload": {"\ud83d\ude00": 1, "\ue000": 2}, "seq": 1}
+      ]
+    }
+  }
+}
