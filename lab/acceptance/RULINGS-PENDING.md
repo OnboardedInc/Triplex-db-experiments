@@ -100,3 +100,21 @@ These move into RULINGS.md when the contract version that compiles them is built
 | Q71a install metadata | The contract's `buildSpec` names an exclusion list of install metadata that `executionIdentity` leaves out (to start: `node_modules/.modules.yaml`, `node_modules/.pnpm/lock.yaml`); the list is found by diffing two clean installs of the same lockfile and is contract-owned, never claimant-supplied. Every other file in the post-build checkout stays in the identity. | EXP-E01 question 1 |
 | Q71b toolchain | A build's toolchain is the node version, platform and arch, and the pnpm version when the build or run calls pnpm. The Python version that runs an oracle is not part of the build identity; it is recorded in each oracle invocation's evidence, because an oracle's answer can depend on it (for example integer-parsing limits). | EXP-E01 question 2 |
 | Q71c reference comparator | `build_contract.py`'s case verdict adopts Q67i for case-result/2 (the declared comparator on the retained raw objects); case-result/1 documents keep hash equality because they carry no comparator. | EXP-E01 question 3 |
+
+## Q70 additions: what O-REPLAY 0.4.4 left undecided
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q70c any issuing read | Q70b extends to every read: a literal cursor token equal to a `nextCursor` issued earlier in the same case by any read, in flight or not, continues that read (its start, scope and prefixes). Only a token no earlier read issued uses the query's own read view. This closes the F7 hole reached through a literal token. | O-REPLAY 0.4.4 author, item 1 |
+| Q70d equal tokens | When several earlier reads issued the same token, the continuation follows the latest of them in case order. | 0.4.4 author, item 2 |
+| Q70e prefixes without the token | Prefixes whose pages did not issue the token are left out, the same as a prefix with no next cursor under `cursorFrom`. | 0.4.4 author, item 3 |
+
+## Q72: V-P2Q round 2 on f711193 (broker fix round 2)
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q72a lock helper | The flock helper runs detached in its own process group, ignores INT, TERM and HUP, and exits only on stdin EOF; when it exits for any reason the log fail-stops (every later append throws), and each append checks the helper is alive. A test kills the helper and Ctrl-Cs the holder's group and shows no second writer. | V-P2Q N1 |
+| Q72b answer snapshot | Q67c applies to every broker read surface: a surface that answers in one request reads the marker in that request (a UNION with the marker triple, as pulls do); a surface that needs several requests (Datalog executor, dependencyState, native with awaitBasisMs) compares (incarnation, marker) before and after, and every fence and replay writes a new incarnation first. V-P2Q's live residual test (zero-downtime rewind between the probes) is a regression case. | V-P2Q N2; Q67c |
+| Q72c reasons | Rename reasons to the contract's strings now (`basis-not-reached`, `replica-unreachable`). Core tagged errors (Q67h) are required before the broker becomes a default, not for the default-off merge; until then no claim may close an obligation pinned to E-BASIS-NOT-AVAILABLE or E-REPLICA-UNAVAILABLE. | V-P2Q question 5; Q67h |
+| Q72d A0 guard | The A0 change with the option off is a correctness fix (main answers a basis above the published position) and stays. The frozen A0 control (Q46b) is re-frozen at the P2Q merge, and every matched comparison names the change. | V-P2Q N3; Q62a |
+| Q72e outage replay | The synchronous whole-log replay per outage pull is a blocker for default, not for default-off; it is replaced by the Q58c store (recent_rows or a current index, on R25's design). Probes are coalesced into one in-flight probe per replica in this round. Tests import src through tsx, never dist. | V-P2Q N4, N5, N8 |
+| Q72f one error id | One contract id covers a basis beyond the latest published position: E-BASIS-NOT-AVAILABLE. E-UNAVAILABLE-CUT is retired; obligations that used it move to E-BASIS-NOT-AVAILABLE. | V-P2Q contract note |
+| Q72g native in broker mode | Every broker-mode wiring passes `awaitBasisMs: 2000` (the Q58a default) until the core native facade exists; receipts are measured at the claimed head. | V-P2Q N7, m3 |
