@@ -1,0 +1,4505 @@
+{
+  "format": "tx2-x05-receipt/1",
+  "experiment": "EXP-X05",
+  "runId": "X05-s2-20261107T234308Z-ff17f3",
+  "runKind": "candidate",
+  "startedAt": "2026-11-07T23:43:08.888Z",
+  "params": {
+    "slot": "s2",
+    "smoke": false,
+    "subjects": 100000,
+    "active": 2000,
+    "rate": 20,
+    "levelS": 60,
+    "levels": [
+      4,
+      16,
+      64,
+      256
+    ],
+    "cap": 16,
+    "threads": 4,
+    "writerConns": 8,
+    "singleMaxConns": 28,
+    "splitShare": 0.1,
+    "lagEveryMs": 500,
+    "e5S": 120,
+    "burstS": 60,
+    "burstX": 5,
+    "burstKind": "large",
+    "burstConns": 12,
+    "recoverS": 30,
+    "warmS": 15,
+    "connRss": 256,
+    "phases": [
+      "ladder",
+      "e5",
+      "conn",
+      "burst"
+    ],
+    "seed": "x05-v1",
+    "drainMaxMs": 180000
+  },
+  "tables": {
+    "ent": "x522f7cd_ent",
+    "claim": "x522f7cd_claim",
+    "ledger": "x522f7cd_ledger",
+    "feed": "x522f7cd_feed"
+  },
+  "northStar": "P1 (TARGETS 1.1 P1): writer commit latency with readers on a read-only follower versus the zero-reader run on the same trace segment; zero stale reads.",
+  "semantics": "TARGETS 1.1 P1 items 1, 2, 4, 5 (item 3 by a forced block cut at +1 s in every window); R19 E1, E4, E5, E9.",
+  "git": {
+    "head": "cee73471c0700a952fc7048dce04afc8993e675c",
+    "headTree": "d5b2f9e9a1a972d4591fbe93d7b9bce70832cfe2",
+    "branch": "exp/X05-xtdb-read-follower",
+    "dirty": false,
+    "stashCommit": null,
+    "stashTree": null,
+    "diffScope": [
+      "packages",
+      "qualification",
+      "lab/bin",
+      "lab/config",
+      "vitest.workspace-aliases.ts",
+      "tsconfig.base.json",
+      "tsconfig.node.json",
+      "package.json",
+      "pnpm-workspace.yaml",
+      "pnpm-lock.yaml",
+      "turbo.json"
+    ],
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diffBytes": 0,
+    "modifiedFiles": [],
+    "untrackedFiles": [],
+    "otherDirtyPaths": [],
+    "sourceTreeId": "f1f539d82b684852fdd42124f6fdb79fc737f43afbd94c4a871187e0c1878b94"
+  },
+  "driver": {
+    "lab/experiments/EXP-X05-xtdb-read-follower/driver.mjs": "244ce3db86ba8ee11ea81ced6120ed7fcc1fcc0fc7197140bd9941656ed3c7aa",
+    "lab/experiments/EXP-X05-xtdb-read-follower/reader-worker.mjs": "1d357fe327b866fe8e75ef1ed6a7355873040f49e5c4051aadfa209f7b45702d",
+    "lab/experiments/EXP-X05-xtdb-read-follower/common.mjs": "a409b8fcfec202e14f23e2dfdcb266d4ab4244158bc8c8faa278ef51649c4e70"
+  },
+  "harness": {
+    "lab/bin/engine.mjs": "b2bb06172efd2791ec323285998e560ace543a38e022dff489c601d3c879c608",
+    "lab/bin/lib.mjs": "355519608a64bc5ed5738bbae089482e11b4187b1baf0e1e941e599575127c6f"
+  },
+  "slotsJsonSha256": "9c9e1562a747ab93fcba91ffef5899cbe80f9cf14d6e65955c5c0e9479022d9b",
+  "client": {
+    "postgresJs": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/cjs/src/index.js",
+    "postgresJsIndexSha256": "d8fea1a5311c47e65004646bc81f57305ac64d48f99004a5b3ca27bcfc6babf8",
+    "node": "v22.23.2",
+    "host": {
+      "cpus": 12,
+      "load": [
+        16.2607421875,
+        15.85205078125,
+        13.7822265625
+      ]
+    }
+  },
+  "reasons": [
+    "tx2-xtdb-s2-ro restarted or was replaced during the run"
+  ],
+  "enginesAtStart": {
+    "writer": {
+      "container": "tx2-xtdb-s2",
+      "containerId": "bc5b8f52faa9418d1e72b0aea3475f17f1905d1529d9e1acfae0f36b4fb33f6f",
+      "startedAt": "2026-11-07T23:41:54.067847752Z",
+      "running": true,
+      "health": "healthy",
+      "oomKilled": false,
+      "exitCode": 0,
+      "imageId": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+      "pinnedImageId": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+      "configSha256Label": "a95a454df5bbf091f88993e4cc842c78b42225b83b59e6f2aea40288fc57f1d6",
+      "effectiveConfigSha256": "a95a454df5bbf091f88993e4cc842c78b42225b83b59e6f2aea40288fc57f1d6",
+      "effectiveConfig": {
+        "lane": "xtdb",
+        "slot": "s2",
+        "image": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+        "configYamlSha256": "f6e1248ebb09af8a6959d67d15e0355a0be4c3783d8c3fc97ba97b00c7b3e379",
+        "env": {
+          "JDK_JAVA_OPTIONS": "-Xmx2g -XX:MaxDirectMemorySize=1g"
+        },
+        "memBytes": 3758096384,
+        "cpus": 2,
+        "cpusetCpus": "0,1",
+        "publish": "127.0.0.1:5472:5432",
+        "volume": "tx2-xtdb-s2-data:/var/lib/xtdb",
+        "cmd": [
+          "-f",
+          "/etc/xtdb/config.yaml"
+        ],
+        "health": "wget -q -O /dev/null http://127.0.0.1:8080/healthz/alive"
+      },
+      "configFileSha256": "f6e1248ebb09af8a6959d67d15e0355a0be4c3783d8c3fc97ba97b00c7b3e379",
+      "memCapBytes": 3758096384,
+      "nanoCpus": 2000000000,
+      "cpusetCpus": "0,1",
+      "mounts": [
+        {
+          "source": "tx2-xtdb-s2-data",
+          "destination": "/var/lib/xtdb",
+          "rw": true
+        },
+        {
+          "source": "/Users/sam/projects/triplex-db-2/runs/engines/xtdb-s2/config.yaml",
+          "destination": "/etc/xtdb/config.yaml",
+          "rw": false
+        }
+      ],
+      "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5472/xtdb",
+      "holder": "EXP-X05-xtdb-read-follower"
+    },
+    "follower": {
+      "container": "tx2-xtdb-s2-ro",
+      "containerId": "cb9a2895e9630fdaf6b1344570c1c216d00670da95d2fdce3ce471877f99aeb7",
+      "startedAt": "2026-11-07T23:42:22.368025664Z",
+      "running": true,
+      "health": "healthy",
+      "oomKilled": false,
+      "exitCode": 0,
+      "imageId": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+      "pinnedImageId": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+      "configSha256Label": "b39175ed0d1c54e2bd5d08a884e730e1e8bf53fac903a15a374a64aae67dd4d6",
+      "effectiveConfigSha256": "b39175ed0d1c54e2bd5d08a884e730e1e8bf53fac903a15a374a64aae67dd4d6",
+      "effectiveConfig": {
+        "lane": "xtdb",
+        "slot": "s2",
+        "role": "follower",
+        "follows": "tx2-xtdb-s2",
+        "profile": "small",
+        "image": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+        "configSource": "lab/config/xtdb-follower-small-config.yaml",
+        "configYamlSha256": "8e10ceb3be347bcc6160ad3c1409d4a16e848670682c2e903418e35048ab5994",
+        "env": {
+          "JDK_JAVA_OPTIONS": "-Xmx512m -XX:MaxDirectMemorySize=256m"
+        },
+        "memBytes": 1073741824,
+        "cpus": 2,
+        "cpusetCpus": "2,3",
+        "publish": "127.0.0.1:5482:5432",
+        "volume": "tx2-xtdb-s2-data:/var/lib/xtdb:ro",
+        "cmd": [
+          "-f",
+          "/etc/xtdb/config.yaml"
+        ],
+        "health": "wget -q -O /dev/null http://127.0.0.1:8080/healthz/alive"
+      },
+      "configFileSha256": "8e10ceb3be347bcc6160ad3c1409d4a16e848670682c2e903418e35048ab5994",
+      "memCapBytes": 1073741824,
+      "nanoCpus": 2000000000,
+      "cpusetCpus": "2,3",
+      "mounts": [
+        {
+          "source": "tx2-xtdb-s2-data",
+          "destination": "/var/lib/xtdb",
+          "rw": false
+        },
+        {
+          "source": "/Users/sam/projects/triplex-db-2/runs/engines/xtdb-s2-ro/config.yaml",
+          "destination": "/etc/xtdb/config.yaml",
+          "rw": false
+        }
+      ],
+      "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5482/xtdb",
+      "holder": "EXP-X05-xtdb-read-follower"
+    },
+    "volume": "tx2-xtdb-s2-data",
+    "slotOwner": {
+      "format": "tx2-slot-owner/1",
+      "lane": "xtdb",
+      "slot": "s2",
+      "mode": "exclusive",
+      "container": "tx2-xtdb-s2",
+      "volume": "tx2-xtdb-s2-data",
+      "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5472/xtdb",
+      "port": 5472,
+      "holder": "EXP-X05-xtdb-read-follower",
+      "experiment": "EXP-X05",
+      "pid": 37199,
+      "worktree": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a5b9cf52579902ee0",
+      "createdAt": "2026-11-07T22:56:51.306Z"
+    }
+  },
+  "tokenCheck": {
+    "systemTimeText": "2026-11-07 23:43:10.048981+00:00",
+    "awaitToken": "CgsKBHh0ZGISAwoBAA==",
+    "minted": "ChUKBHh0ZGISDQoLCI7vvtcGEIjIrRc=",
+    "mintedDecoded": {
+      "xtdb": [
+        "1794094990048981"
+      ]
+    },
+    "built": "ChUKBHh0ZGISDQoLCI7vvtcGEIjIrRc=",
+    "equal": true
+  },
+  "seed": {
+    "rid": -1,
+    "t": "1794095149914935",
+    "snapshotToken": "ChYKBHh0ZGISDgoMCK3wvtcGENiZo7QD",
+    "awaitToken": "Cg4KBHh0ZGISBgoE98W4Cw==",
+    "clock": "2026-11-07T23:45:49.914935Z",
+    "ms": 159443,
+    "blockCut": {
+      "at": 1794095149870.731,
+      "ms": 78,
+      "ok": true,
+      "out": "Block flush message sent to 1 database(s)."
+    },
+    "subjects": 100000
+  },
+  "followerCatchUp": {
+    "ms": 1347,
+    "rows": 100000
+  },
+  "trace": {
+    "digest": "53a6edab14b9f79ba0f1c6ea1b3425b0d7a84979ae6b049e7b48b57265aa3e5e",
+    "commands": 1163,
+    "rate": 20,
+    "seconds": 60
+  },
+  "watermarksAfterLadder": {
+    "writer": [
+      {
+        "db": "xtdb",
+        "part": 0,
+        "txId": 128120408,
+        "systemTime": "2026-11-07 23:57:27.406686+00:00"
+      }
+    ],
+    "follower": [
+      {
+        "db": "xtdb",
+        "part": 0,
+        "txId": 128120408,
+        "systemTime": "2026-11-07 23:57:27.406686+00:00"
+      }
+    ]
+  },
+  "e5": {
+    "a": {
+      "reads": 2370,
+      "skipped": 127,
+      "errors": {},
+      "exact": 2370,
+      "stale": 0,
+      "ahead": 0,
+      "issueMs": {
+        "n": 2370,
+        "p50": 1.57,
+        "p90": 3.15,
+        "p99": 7.26,
+        "max": 14.45,
+        "mean": 1.91
+      },
+      "ms": {
+        "n": 2370,
+        "p50": 21.5,
+        "p90": 54.69,
+        "p99": 163.61,
+        "max": 390.42,
+        "mean": 29.96
+      },
+      "within5ms": {
+        "reads": 2297,
+        "fail0B000": 0,
+        "stale": 0
+      }
+    },
+    "b": {
+      "reads": 2393,
+      "skipped": 104,
+      "errors": {
+        "0B000": 1
+      },
+      "exact": 2392,
+      "stale": 0,
+      "ahead": 0,
+      "issueMs": {
+        "n": 2393,
+        "p50": 1.59,
+        "p90": 3.17,
+        "p99": 7.28,
+        "max": 14.46,
+        "mean": 1.93
+      },
+      "ms": {
+        "n": 2392,
+        "p50": 18.26,
+        "p90": 47.12,
+        "p99": 147.7,
+        "max": 368.47,
+        "mean": 25.61
+      },
+      "within5ms": {
+        "reads": 2317,
+        "fail0B000": 1,
+        "stale": 0
+      }
+    },
+    "c": {
+      "reads": 2388,
+      "skipped": 109,
+      "errors": {},
+      "exact": 2378,
+      "stale": 5,
+      "ahead": 5,
+      "issueMs": {
+        "n": 2388,
+        "p50": 0.01,
+        "p90": 0.01,
+        "p99": 0.03,
+        "max": 0.44,
+        "mean": 0.01
+      },
+      "ms": {
+        "n": 2388,
+        "p50": 16.86,
+        "p90": 46.79,
+        "p99": 156.24,
+        "max": 385.51,
+        "mean": 24.96
+      },
+      "within5ms": {
+        "reads": 2388,
+        "fail0B000": 0,
+        "stale": 5
+      }
+    }
+  },
+  "connRss": {
+    "connections": 256,
+    "opened": 256,
+    "failures": {},
+    "openMs": 1330,
+    "rssBeforeMiB": 347,
+    "rssWithConnsMiB": 352,
+    "rssAfterCloseMiB": 352,
+    "perConnectionMiB": 0.02
+  },
+  "burstBacklogDrain": {
+    "ms": 0,
+    "leftQueued": 0,
+    "leftInflight": 0
+  },
+  "burst": {
+    "trace": {
+      "digest": "b5f5c132b75c28da241b0ca6b62ffbc2ec5e1cd1ce8d7e680565e0e2296cae58",
+      "commands": 6044,
+      "rate": 100,
+      "kind": "large",
+      "payloadNote": "50 facts, ledger values padded 400-1200 bytes each: about 20-60 KB per transaction"
+    }
+  },
+  "watermarksAtEnd": {
+    "writer": [
+      {
+        "db": "xtdb",
+        "part": 0,
+        "txId": 510731617,
+        "systemTime": "2026-11-08 00:07:29.429191+00:00"
+      }
+    ],
+    "follower": [
+      {
+        "db": "xtdb",
+        "part": 0,
+        "txId": 510731617,
+        "systemTime": "2026-11-08 00:07:29.429191+00:00"
+      }
+    ]
+  },
+  "metrics": {
+    "start": {
+      "writer": [
+        "block_upload_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.75\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.85\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.95\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.98\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.99\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.999\"} 0.0",
+        "block_upload_timer_seconds_count{node_id=\"8247d4d4\"} 0",
+        "block_upload_timer_seconds_sum{node_id=\"8247d4d4\"} 0.0",
+        "block_upload_timer_seconds_max{node_id=\"8247d4d4\"} 0.0",
+        "compactor_job_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.75\"} 0.0",
+        "compactor_job_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.85\"} 0.0",
+        "compactor_job_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.95\"} 0.0",
+        "compactor_job_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.98\"} 0.0",
+        "compactor_job_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.99\"} 0.0",
+        "compactor_job_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.999\"} 0.0",
+        "compactor_job_timer_seconds_count{node_id=\"8247d4d4\"} 0",
+        "compactor_job_timer_seconds_sum{node_id=\"8247d4d4\"} 0.0",
+        "compactor_job_timer_seconds_max{node_id=\"8247d4d4\"} 0.0",
+        "compactor_jobs_available{node_id=\"8247d4d4\"} 0.0",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"G1 Eden Space\",node_id=\"8247d4d4\"} 2.03423712E8",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"G1 Old Gen\",node_id=\"8247d4d4\"} 6.65168E7",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"G1 Survivor Space\",node_id=\"8247d4d4\"} 1.048576E7",
+        "node_tx_await_seconds{node_id=\"8247d4d4\",quantile=\"0.75\"} 0.015597568",
+        "node_tx_await_seconds{node_id=\"8247d4d4\",quantile=\"0.85\"} 0.019791872",
+        "node_tx_await_seconds{node_id=\"8247d4d4\",quantile=\"0.95\"} 0.062783488",
+        "node_tx_await_seconds{node_id=\"8247d4d4\",quantile=\"0.98\"} 0.108920832",
+        "node_tx_await_seconds{node_id=\"8247d4d4\",quantile=\"0.99\"} 0.108920832",
+        "node_tx_await_seconds{node_id=\"8247d4d4\",quantile=\"0.999\"} 0.108920832",
+        "node_tx_await_seconds_count{node_id=\"8247d4d4\"} 102",
+        "node_tx_await_seconds_sum{node_id=\"8247d4d4\"} 1.847111384",
+        "node_tx_await_seconds_max{node_id=\"8247d4d4\"} 0.105296",
+        "node_tx_execute_seconds{node_id=\"8247d4d4\",quantile=\"0.75\"} 0.028049408",
+        "node_tx_execute_seconds{node_id=\"8247d4d4\",quantile=\"0.85\"} 0.033292288",
+        "node_tx_execute_seconds{node_id=\"8247d4d4\",quantile=\"0.95\"} 0.083623936",
+        "node_tx_execute_seconds{node_id=\"8247d4d4\",quantile=\"0.98\"} 0.121372672",
+        "node_tx_execute_seconds{node_id=\"8247d4d4\",quantile=\"0.99\"} 0.121372672",
+        "node_tx_execute_seconds{node_id=\"8247d4d4\",quantile=\"0.999\"} 0.121372672",
+        "node_tx_execute_seconds_count{node_id=\"8247d4d4\"} 102",
+        "node_tx_execute_seconds_sum{node_id=\"8247d4d4\"} 3.137933428",
+        "node_tx_execute_seconds_max{node_id=\"8247d4d4\"} 0.119208631",
+        "node_tx_lag_MsgId{db=\"xtdb\",node_id=\"8247d4d4\"} 2699.0",
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"8247d4d4\"} 2.3995127E7",
+        "node_tx_latestProcessedMsgId{db=\"xtdb\",node_id=\"8247d4d4\"} 2.3995127E7",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"8247d4d4\"} 2.3997826E7",
+        "node_tx_submit_seconds{node_id=\"8247d4d4\",quantile=\"0.75\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"8247d4d4\",quantile=\"0.85\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"8247d4d4\",quantile=\"0.95\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"8247d4d4\",quantile=\"0.98\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"8247d4d4\",quantile=\"0.99\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"8247d4d4\",quantile=\"0.999\"} 0.0",
+        "node_tx_submit_seconds_count{node_id=\"8247d4d4\"} 0",
+        "node_tx_submit_seconds_sum{node_id=\"8247d4d4\"} 0.0",
+        "node_tx_submit_seconds_max{node_id=\"8247d4d4\"} 0.0",
+        "tx_op_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.75\"} 0.006283264",
+        "tx_op_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.85\"} 0.011001856",
+        "tx_op_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.95\"} 0.027254784",
+        "tx_op_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.98\"} 0.083877888",
+        "tx_op_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.99\"} 0.083877888",
+        "tx_op_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.999\"} 0.083877888",
+        "tx_op_timer_seconds_count{node_id=\"8247d4d4\"} 103"
+      ],
+      "follower": [
+        "jvm_memory_used_bytes{area=\"heap\",id=\"Eden Space\",node_id=\"20bff2a7\"} 2119056.0",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"Survivor Space\",node_id=\"20bff2a7\"} 1385400.0",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"Tenured Gen\",node_id=\"20bff2a7\"} 4.8436728E7",
+        "node_tx_await_seconds{node_id=\"20bff2a7\",quantile=\"0.75\"} 0.0",
+        "node_tx_await_seconds{node_id=\"20bff2a7\",quantile=\"0.85\"} 0.0",
+        "node_tx_await_seconds{node_id=\"20bff2a7\",quantile=\"0.95\"} 0.0",
+        "node_tx_await_seconds{node_id=\"20bff2a7\",quantile=\"0.98\"} 0.0",
+        "node_tx_await_seconds{node_id=\"20bff2a7\",quantile=\"0.99\"} 0.0",
+        "node_tx_await_seconds{node_id=\"20bff2a7\",quantile=\"0.999\"} 0.0",
+        "node_tx_await_seconds_count{node_id=\"20bff2a7\"} 0",
+        "node_tx_await_seconds_sum{node_id=\"20bff2a7\"} 0.0",
+        "node_tx_await_seconds_max{node_id=\"20bff2a7\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"20bff2a7\",quantile=\"0.75\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"20bff2a7\",quantile=\"0.85\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"20bff2a7\",quantile=\"0.95\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"20bff2a7\",quantile=\"0.98\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"20bff2a7\",quantile=\"0.99\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"20bff2a7\",quantile=\"0.999\"} 0.0",
+        "node_tx_execute_seconds_count{node_id=\"20bff2a7\"} 0",
+        "node_tx_execute_seconds_sum{node_id=\"20bff2a7\"} 0.0",
+        "node_tx_execute_seconds_max{node_id=\"20bff2a7\"} 0.0",
+        "node_tx_lag_MsgId{db=\"xtdb\",node_id=\"20bff2a7\"} 2699.0",
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"20bff2a7\"} 2.3995127E7",
+        "node_tx_latestProcessedMsgId{db=\"xtdb\",node_id=\"20bff2a7\"} 2.3995127E7",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"20bff2a7\"} 2.3997861E7",
+        "node_tx_submit_seconds{node_id=\"20bff2a7\",quantile=\"0.75\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"20bff2a7\",quantile=\"0.85\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"20bff2a7\",quantile=\"0.95\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"20bff2a7\",quantile=\"0.98\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"20bff2a7\",quantile=\"0.99\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"20bff2a7\",quantile=\"0.999\"} 0.0",
+        "node_tx_submit_seconds_count{node_id=\"20bff2a7\"} 0",
+        "node_tx_submit_seconds_sum{node_id=\"20bff2a7\"} 0.0",
+        "node_tx_submit_seconds_max{node_id=\"20bff2a7\"} 0.0",
+        "xtdb_block_last_upload_time_seconds{db=\"xtdb\",node_id=\"20bff2a7\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"20bff2a7\",quantile=\"0.75\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"20bff2a7\",quantile=\"0.85\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"20bff2a7\",quantile=\"0.95\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"20bff2a7\",quantile=\"0.98\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"20bff2a7\",quantile=\"0.99\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"20bff2a7\",quantile=\"0.999\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds_count{db=\"xtdb\",node_id=\"20bff2a7\"} 0",
+        "xtdb_replica_block_buffer_timer_seconds_sum{db=\"xtdb\",node_id=\"20bff2a7\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds_max{db=\"xtdb\",node_id=\"20bff2a7\"} 0.0",
+        "xtdb_replica_block_buffered_records_count{db=\"xtdb\",node_id=\"20bff2a7\"} 0",
+        "xtdb_replica_block_buffered_records_sum{db=\"xtdb\",node_id=\"20bff2a7\"} 0.0",
+        "xtdb_replica_block_buffered_records_max{db=\"xtdb\",node_id=\"20bff2a7\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"20bff2a7\",quantile=\"0.75\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"20bff2a7\",quantile=\"0.85\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"20bff2a7\",quantile=\"0.95\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"20bff2a7\",quantile=\"0.98\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"20bff2a7\",quantile=\"0.99\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"20bff2a7\",quantile=\"0.999\"} 0.0",
+        "xtdb_replica_process_timer_seconds_count{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"20bff2a7\"} 1",
+        "xtdb_replica_process_timer_seconds_sum{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"20bff2a7\"} 0.008078761",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"20bff2a7\",quantile=\"0.75\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"20bff2a7\",quantile=\"0.85\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"20bff2a7\",quantile=\"0.95\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"20bff2a7\",quantile=\"0.98\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"20bff2a7\",quantile=\"0.99\"} 0.0"
+      ]
+    },
+    "beforeBurst": {
+      "writer": [
+        "block_upload_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.75\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.85\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.95\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.98\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.99\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.999\"} 0.0",
+        "block_upload_timer_seconds_count{node_id=\"8247d4d4\"} 16",
+        "block_upload_timer_seconds_sum{node_id=\"8247d4d4\"} 3.143822651",
+        "block_upload_timer_seconds_max{node_id=\"8247d4d4\"} 0.070141887",
+        "compactor_job_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.75\"} 0.0",
+        "compactor_job_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.85\"} 0.0",
+        "compactor_job_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.95\"} 0.0",
+        "compactor_job_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.98\"} 0.0",
+        "compactor_job_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.99\"} 0.0",
+        "compactor_job_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.999\"} 0.0",
+        "compactor_job_timer_seconds_count{node_id=\"8247d4d4\"} 84",
+        "compactor_job_timer_seconds_sum{node_id=\"8247d4d4\"} 63.018252478",
+        "compactor_job_timer_seconds_max{node_id=\"8247d4d4\"} 1.392683037",
+        "compactor_jobs_available{node_id=\"8247d4d4\"} 0.0",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"G1 Eden Space\",node_id=\"8247d4d4\"} 4.8234496E7",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"G1 Old Gen\",node_id=\"8247d4d4\"} 1.19359208E8",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"G1 Survivor Space\",node_id=\"8247d4d4\"} 2301968.0",
+        "node_tx_await_seconds{node_id=\"8247d4d4\",quantile=\"0.75\"} 0.029097984",
+        "node_tx_await_seconds{node_id=\"8247d4d4\",quantile=\"0.85\"} 0.041680896",
+        "node_tx_await_seconds{node_id=\"8247d4d4\",quantile=\"0.95\"} 0.083623936",
+        "node_tx_await_seconds{node_id=\"8247d4d4\",quantile=\"0.98\"} 0.142344192",
+        "node_tx_await_seconds{node_id=\"8247d4d4\",quantile=\"0.99\"} 0.19267584",
+        "node_tx_await_seconds{node_id=\"8247d4d4\",quantile=\"0.999\"} 0.368836608",
+        "node_tx_await_seconds_count{node_id=\"8247d4d4\"} 17199",
+        "node_tx_await_seconds_sum{node_id=\"8247d4d4\"} 1500.511534646",
+        "node_tx_await_seconds_max{node_id=\"8247d4d4\"} 0.36175441",
+        "node_tx_execute_seconds{node_id=\"8247d4d4\",quantile=\"0.75\"} 0.033292288",
+        "node_tx_execute_seconds{node_id=\"8247d4d4\",quantile=\"0.85\"} 0.0458752",
+        "node_tx_execute_seconds{node_id=\"8247d4d4\",quantile=\"0.95\"} 0.08781824",
+        "node_tx_execute_seconds{node_id=\"8247d4d4\",quantile=\"0.98\"} 0.1507328",
+        "node_tx_execute_seconds{node_id=\"8247d4d4\",quantile=\"0.99\"} 0.201064448",
+        "node_tx_execute_seconds{node_id=\"8247d4d4\",quantile=\"0.999\"} 0.368836608",
+        "node_tx_execute_seconds_count{node_id=\"8247d4d4\"} 17199",
+        "node_tx_execute_seconds_sum{node_id=\"8247d4d4\"} 1692.704662635",
+        "node_tx_execute_seconds_max{node_id=\"8247d4d4\"} 0.368257733",
+        "node_tx_lag_MsgId{db=\"xtdb\",node_id=\"8247d4d4\"} 0.0",
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"8247d4d4\"} 1.84392448E8",
+        "node_tx_latestProcessedMsgId{db=\"xtdb\",node_id=\"8247d4d4\"} 1.84392448E8",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"8247d4d4\"} 1.84392448E8",
+        "node_tx_submit_seconds{node_id=\"8247d4d4\",quantile=\"0.75\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"8247d4d4\",quantile=\"0.85\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"8247d4d4\",quantile=\"0.95\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"8247d4d4\",quantile=\"0.98\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"8247d4d4\",quantile=\"0.99\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"8247d4d4\",quantile=\"0.999\"} 0.0",
+        "node_tx_submit_seconds_count{node_id=\"8247d4d4\"} 0",
+        "node_tx_submit_seconds_sum{node_id=\"8247d4d4\"} 0.0",
+        "node_tx_submit_seconds_max{node_id=\"8247d4d4\"} 0.0",
+        "tx_op_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.75\"} 0.003931904",
+        "tx_op_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.85\"} 0.00498048",
+        "tx_op_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.95\"} 0.00760192",
+        "tx_op_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.98\"} 0.009961216",
+        "tx_op_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.99\"} 0.013631232",
+        "tx_op_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.999\"} 0.039845632",
+        "tx_op_timer_seconds_count{node_id=\"8247d4d4\"} 102685"
+      ],
+      "follower": [
+        "jvm_memory_used_bytes{area=\"heap\",id=\"Eden Space\",node_id=\"a3454be9\"} 1.0519832E7",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"Survivor Space\",node_id=\"a3454be9\"} 2246048.0",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"Tenured Gen\",node_id=\"a3454be9\"} 6.9356984E7",
+        "node_tx_await_seconds{node_id=\"a3454be9\",quantile=\"0.75\"} 0.0",
+        "node_tx_await_seconds{node_id=\"a3454be9\",quantile=\"0.85\"} 0.0",
+        "node_tx_await_seconds{node_id=\"a3454be9\",quantile=\"0.95\"} 0.0",
+        "node_tx_await_seconds{node_id=\"a3454be9\",quantile=\"0.98\"} 0.0",
+        "node_tx_await_seconds{node_id=\"a3454be9\",quantile=\"0.99\"} 0.0",
+        "node_tx_await_seconds{node_id=\"a3454be9\",quantile=\"0.999\"} 0.0",
+        "node_tx_await_seconds_count{node_id=\"a3454be9\"} 0",
+        "node_tx_await_seconds_sum{node_id=\"a3454be9\"} 0.0",
+        "node_tx_await_seconds_max{node_id=\"a3454be9\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"a3454be9\",quantile=\"0.75\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"a3454be9\",quantile=\"0.85\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"a3454be9\",quantile=\"0.95\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"a3454be9\",quantile=\"0.98\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"a3454be9\",quantile=\"0.99\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"a3454be9\",quantile=\"0.999\"} 0.0",
+        "node_tx_execute_seconds_count{node_id=\"a3454be9\"} 0",
+        "node_tx_execute_seconds_sum{node_id=\"a3454be9\"} 0.0",
+        "node_tx_execute_seconds_max{node_id=\"a3454be9\"} 0.0",
+        "node_tx_lag_MsgId{db=\"xtdb\",node_id=\"a3454be9\"} 0.0",
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"a3454be9\"} 1.84392448E8",
+        "node_tx_latestProcessedMsgId{db=\"xtdb\",node_id=\"a3454be9\"} 1.84392448E8",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"a3454be9\"} 1.84392448E8",
+        "node_tx_submit_seconds{node_id=\"a3454be9\",quantile=\"0.75\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"a3454be9\",quantile=\"0.85\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"a3454be9\",quantile=\"0.95\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"a3454be9\",quantile=\"0.98\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"a3454be9\",quantile=\"0.99\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"a3454be9\",quantile=\"0.999\"} 0.0",
+        "node_tx_submit_seconds_count{node_id=\"a3454be9\"} 0",
+        "node_tx_submit_seconds_sum{node_id=\"a3454be9\"} 0.0",
+        "node_tx_submit_seconds_max{node_id=\"a3454be9\"} 0.0",
+        "xtdb_block_last_upload_time_seconds{db=\"xtdb\",node_id=\"a3454be9\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"a3454be9\",quantile=\"0.75\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"a3454be9\",quantile=\"0.85\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"a3454be9\",quantile=\"0.95\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"a3454be9\",quantile=\"0.98\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"a3454be9\",quantile=\"0.99\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"a3454be9\",quantile=\"0.999\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds_count{db=\"xtdb\",node_id=\"a3454be9\"} 1",
+        "xtdb_replica_block_buffer_timer_seconds_sum{db=\"xtdb\",node_id=\"a3454be9\"} 0.188070912",
+        "xtdb_replica_block_buffer_timer_seconds_max{db=\"xtdb\",node_id=\"a3454be9\"} 0.188070912",
+        "xtdb_replica_block_buffered_records_count{db=\"xtdb\",node_id=\"a3454be9\"} 1",
+        "xtdb_replica_block_buffered_records_sum{db=\"xtdb\",node_id=\"a3454be9\"} 0.0",
+        "xtdb_replica_block_buffered_records_max{db=\"xtdb\",node_id=\"a3454be9\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"a3454be9\",quantile=\"0.75\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"a3454be9\",quantile=\"0.85\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"a3454be9\",quantile=\"0.95\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"a3454be9\",quantile=\"0.98\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"a3454be9\",quantile=\"0.99\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"a3454be9\",quantile=\"0.999\"} 0.0",
+        "xtdb_replica_process_timer_seconds_count{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"a3454be9\"} 1",
+        "xtdb_replica_process_timer_seconds_sum{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"a3454be9\"} 0.008149158",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"a3454be9\",quantile=\"0.75\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"a3454be9\",quantile=\"0.85\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"a3454be9\",quantile=\"0.95\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"a3454be9\",quantile=\"0.98\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"a3454be9\",quantile=\"0.99\"} 0.0"
+      ]
+    },
+    "afterBurst": {
+      "writer": [
+        "block_upload_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.75\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.85\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.95\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.98\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.99\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.999\"} 0.0",
+        "block_upload_timer_seconds_count{node_id=\"8247d4d4\"} 19",
+        "block_upload_timer_seconds_sum{node_id=\"8247d4d4\"} 5.099807487",
+        "block_upload_timer_seconds_max{node_id=\"8247d4d4\"} 0.821484185",
+        "compactor_job_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.75\"} 0.0",
+        "compactor_job_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.85\"} 0.0",
+        "compactor_job_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.95\"} 0.0",
+        "compactor_job_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.98\"} 0.0",
+        "compactor_job_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.99\"} 0.0",
+        "compactor_job_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.999\"} 0.0",
+        "compactor_job_timer_seconds_count{node_id=\"8247d4d4\"} 100",
+        "compactor_job_timer_seconds_sum{node_id=\"8247d4d4\"} 83.019334984",
+        "compactor_job_timer_seconds_max{node_id=\"8247d4d4\"} 5.452470908",
+        "compactor_jobs_available{node_id=\"8247d4d4\"} 0.0",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"G1 Eden Space\",node_id=\"8247d4d4\"} 2.62144E8",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"G1 Old Gen\",node_id=\"8247d4d4\"} 1.465238E8",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"G1 Survivor Space\",node_id=\"8247d4d4\"} 4603464.0",
+        "node_tx_await_seconds{node_id=\"8247d4d4\",quantile=\"0.75\"} 0.016515072",
+        "node_tx_await_seconds{node_id=\"8247d4d4\",quantile=\"0.85\"} 0.0196608",
+        "node_tx_await_seconds{node_id=\"8247d4d4\",quantile=\"0.95\"} 0.02490368",
+        "node_tx_await_seconds{node_id=\"8247d4d4\",quantile=\"0.98\"} 0.03014656",
+        "node_tx_await_seconds{node_id=\"8247d4d4\",quantile=\"0.99\"} 0.043778048",
+        "node_tx_await_seconds{node_id=\"8247d4d4\",quantile=\"0.999\"} 0.047972352",
+        "node_tx_await_seconds_count{node_id=\"8247d4d4\"} 23243",
+        "node_tx_await_seconds_sum{node_id=\"8247d4d4\"} 2578.897589806",
+        "node_tx_await_seconds_max{node_id=\"8247d4d4\"} 1.387867304",
+        "node_tx_execute_seconds{node_id=\"8247d4d4\",quantile=\"0.75\"} 0.0196608",
+        "node_tx_execute_seconds{node_id=\"8247d4d4\",quantile=\"0.85\"} 0.022806528",
+        "node_tx_execute_seconds{node_id=\"8247d4d4\",quantile=\"0.95\"} 0.029097984",
+        "node_tx_execute_seconds{node_id=\"8247d4d4\",quantile=\"0.98\"} 0.037486592",
+        "node_tx_execute_seconds{node_id=\"8247d4d4\",quantile=\"0.99\"} 0.0458752",
+        "node_tx_execute_seconds{node_id=\"8247d4d4\",quantile=\"0.999\"} 0.052166656",
+        "node_tx_execute_seconds_count{node_id=\"8247d4d4\"} 23243",
+        "node_tx_execute_seconds_sum{node_id=\"8247d4d4\"} 2859.831737896",
+        "node_tx_execute_seconds_max{node_id=\"8247d4d4\"} 1.40038288",
+        "node_tx_lag_MsgId{db=\"xtdb\",node_id=\"8247d4d4\"} 0.0",
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"8247d4d4\"} 5.05004812E8",
+        "node_tx_latestProcessedMsgId{db=\"xtdb\",node_id=\"8247d4d4\"} 5.05004812E8",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"8247d4d4\"} 5.05004812E8",
+        "node_tx_submit_seconds{node_id=\"8247d4d4\",quantile=\"0.75\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"8247d4d4\",quantile=\"0.85\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"8247d4d4\",quantile=\"0.95\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"8247d4d4\",quantile=\"0.98\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"8247d4d4\",quantile=\"0.99\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"8247d4d4\",quantile=\"0.999\"} 0.0",
+        "node_tx_submit_seconds_count{node_id=\"8247d4d4\"} 0",
+        "node_tx_submit_seconds_sum{node_id=\"8247d4d4\"} 0.0",
+        "node_tx_submit_seconds_max{node_id=\"8247d4d4\"} 0.0",
+        "tx_op_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.75\"} 0.003276544",
+        "tx_op_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.85\"} 0.004456192",
+        "tx_op_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.95\"} 0.0062912",
+        "tx_op_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.98\"} 0.008388352",
+        "tx_op_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.99\"} 0.009961216",
+        "tx_op_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.999\"} 0.018874112",
+        "tx_op_timer_seconds_count{node_id=\"8247d4d4\"} 138949"
+      ],
+      "follower": [
+        "jvm_memory_used_bytes{area=\"heap\",id=\"Eden Space\",node_id=\"e52aa459\"} 1245632.0",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"Survivor Space\",node_id=\"e52aa459\"} 2553680.0",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"Tenured Gen\",node_id=\"e52aa459\"} 1.35418E8",
+        "node_tx_await_seconds{node_id=\"e52aa459\",quantile=\"0.75\"} 0.0",
+        "node_tx_await_seconds{node_id=\"e52aa459\",quantile=\"0.85\"} 0.0",
+        "node_tx_await_seconds{node_id=\"e52aa459\",quantile=\"0.95\"} 0.0",
+        "node_tx_await_seconds{node_id=\"e52aa459\",quantile=\"0.98\"} 0.0",
+        "node_tx_await_seconds{node_id=\"e52aa459\",quantile=\"0.99\"} 0.0",
+        "node_tx_await_seconds{node_id=\"e52aa459\",quantile=\"0.999\"} 0.0",
+        "node_tx_await_seconds_count{node_id=\"e52aa459\"} 0",
+        "node_tx_await_seconds_sum{node_id=\"e52aa459\"} 0.0",
+        "node_tx_await_seconds_max{node_id=\"e52aa459\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"e52aa459\",quantile=\"0.75\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"e52aa459\",quantile=\"0.85\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"e52aa459\",quantile=\"0.95\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"e52aa459\",quantile=\"0.98\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"e52aa459\",quantile=\"0.99\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"e52aa459\",quantile=\"0.999\"} 0.0",
+        "node_tx_execute_seconds_count{node_id=\"e52aa459\"} 0",
+        "node_tx_execute_seconds_sum{node_id=\"e52aa459\"} 0.0",
+        "node_tx_execute_seconds_max{node_id=\"e52aa459\"} 0.0",
+        "node_tx_lag_MsgId{db=\"xtdb\",node_id=\"e52aa459\"} 0.0",
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"e52aa459\"} 5.05004812E8",
+        "node_tx_latestProcessedMsgId{db=\"xtdb\",node_id=\"e52aa459\"} 5.05004812E8",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"e52aa459\"} 5.05004812E8",
+        "node_tx_submit_seconds{node_id=\"e52aa459\",quantile=\"0.75\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"e52aa459\",quantile=\"0.85\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"e52aa459\",quantile=\"0.95\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"e52aa459\",quantile=\"0.98\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"e52aa459\",quantile=\"0.99\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"e52aa459\",quantile=\"0.999\"} 0.0",
+        "node_tx_submit_seconds_count{node_id=\"e52aa459\"} 0",
+        "node_tx_submit_seconds_sum{node_id=\"e52aa459\"} 0.0",
+        "node_tx_submit_seconds_max{node_id=\"e52aa459\"} 0.0",
+        "xtdb_block_last_upload_time_seconds{db=\"xtdb\",node_id=\"e52aa459\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"e52aa459\",quantile=\"0.75\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"e52aa459\",quantile=\"0.85\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"e52aa459\",quantile=\"0.95\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"e52aa459\",quantile=\"0.98\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"e52aa459\",quantile=\"0.99\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"e52aa459\",quantile=\"0.999\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds_count{db=\"xtdb\",node_id=\"e52aa459\"} 0",
+        "xtdb_replica_block_buffer_timer_seconds_sum{db=\"xtdb\",node_id=\"e52aa459\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds_max{db=\"xtdb\",node_id=\"e52aa459\"} 0.0",
+        "xtdb_replica_block_buffered_records_count{db=\"xtdb\",node_id=\"e52aa459\"} 0",
+        "xtdb_replica_block_buffered_records_sum{db=\"xtdb\",node_id=\"e52aa459\"} 0.0",
+        "xtdb_replica_block_buffered_records_max{db=\"xtdb\",node_id=\"e52aa459\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e52aa459\",quantile=\"0.75\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e52aa459\",quantile=\"0.85\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e52aa459\",quantile=\"0.95\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e52aa459\",quantile=\"0.98\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e52aa459\",quantile=\"0.99\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e52aa459\",quantile=\"0.999\"} 0.0",
+        "xtdb_replica_process_timer_seconds_count{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e52aa459\"} 0",
+        "xtdb_replica_process_timer_seconds_sum{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"e52aa459\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"e52aa459\",quantile=\"0.75\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"e52aa459\",quantile=\"0.85\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"e52aa459\",quantile=\"0.95\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"e52aa459\",quantile=\"0.98\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"e52aa459\",quantile=\"0.99\"} 0.0"
+      ]
+    }
+  },
+  "logs": {
+    "writer": {
+      "lines": 1,
+      "badLines": 0,
+      "sample": [],
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "follower": {
+      "lines": 14,
+      "badLines": 0,
+      "sample": [],
+      "sha256": "966020e67271fb26f21d234bc464c9896dc6ae9d0d00856a06c50b37f9c72e9f"
+    }
+  },
+  "enginesAtEnd": {
+    "writer": {
+      "containerId": "bc5b8f52faa9418d1e72b0aea3475f17f1905d1529d9e1acfae0f36b4fb33f6f",
+      "startedAt": "2026-11-07T23:41:54.067847752Z",
+      "running": true,
+      "health": "healthy"
+    },
+    "follower": {
+      "containerId": "92a8e017ada4a93839128e7d6737f9147e43b4669a6d195955a7150d2cc7eb3c",
+      "startedAt": "2026-11-08T00:07:35.871731908Z",
+      "running": true,
+      "health": "healthy",
+      "oomKilled": false,
+      "exitCode": 0
+    }
+  },
+  "followerIncidents": [
+    {
+      "win": "S4",
+      "at": "23:49:30",
+      "cause": "java.lang.IllegalStateException: Invalid offset in log file: 292470294315008",
+      "recovery": {
+        "readyAfterS": 28,
+        "caughtUpAfterReadyS": 0.262,
+        "writerTx": 62657222,
+        "followerTx": 62657222,
+        "caughtUp": true
+      }
+    },
+    {
+      "win": "F64",
+      "at": "23:54:25",
+      "cause": "java.lang.IllegalStateException: Invalid offset in log file: 288230378080960511",
+      "recovery": {
+        "readyAfterS": 22,
+        "caughtUpAfterReadyS": 0.098,
+        "writerTx": 106304755,
+        "followerTx": 106304755,
+        "caughtUp": true
+      }
+    },
+    {
+      "win": "S256",
+      "at": "00:01:46",
+      "cause": "java.lang.IllegalStateException: log file corrupted - expected record separator at 12",
+      "recovery": {
+        "readyAfterS": 17,
+        "caughtUpAfterReadyS": 0.117,
+        "writerTx": 173488038,
+        "followerTx": 173488038,
+        "caughtUp": true
+      }
+    },
+    {
+      "win": "BURST",
+      "at": "00:03:45",
+      "cause": "java.lang.IllegalStateException: Invalid offset in log file: 3257288321540847736",
+      "recovery": {
+        "readyAfterS": 17,
+        "caughtUpAfterReadyS": 0.162,
+        "writerTx": 505004812,
+        "followerTx": 505004812,
+        "caughtUp": true
+      }
+    },
+    {
+      "win": "RECOVER",
+      "at": "00:07:23",
+      "cause": "java.lang.IllegalStateException: Invalid offset in log file: 8796093022208",
+      "recovery": {
+        "readyAfterS": 17,
+        "caughtUpAfterReadyS": 0.214,
+        "writerTx": 510731617,
+        "followerTx": 510731617,
+        "caughtUp": true
+      }
+    }
+  ],
+  "windows": [
+    {
+      "name": "warmF",
+      "mode": "follower",
+      "readers": 8,
+      "kind": "warm",
+      "seconds": 15,
+      "traceDigest": "a269443cf06f5d2294ecb1ebf70bbb062870993a6359feadcb9a62440165dec6",
+      "start": 1794095153157.85,
+      "end": 1794095168157.85,
+      "offerOverrunMs": 0,
+      "blockCut": {
+        "at": 1794095154158.4988,
+        "ms": 294,
+        "ok": true,
+        "out": "Block flush message sent to 1 database(s)."
+      },
+      "reads": {
+        "logicalReaders": 8,
+        "plan": [
+          {
+            "w": 0,
+            "readers": 2,
+            "conns": 2,
+            "cap": 4
+          },
+          {
+            "w": 1,
+            "readers": 2,
+            "conns": 2,
+            "cap": 4
+          },
+          {
+            "w": 2,
+            "readers": 2,
+            "conns": 2,
+            "cap": 4
+          },
+          {
+            "w": 3,
+            "readers": 2,
+            "conns": 2,
+            "cap": 4
+          }
+        ],
+        "connectMs": 187,
+        "pulls": 107,
+        "pullsPerS": 7.13,
+        "goodputPullsPerS": 7.13,
+        "queriesPerS": 31.53,
+        "pull": {
+          "n": 107,
+          "p50": 604.93,
+          "p90": 1370.25,
+          "p99": 1721.56,
+          "max": 1722.48,
+          "mean": 674.97
+        },
+        "capWait": {
+          "n": 107,
+          "p50": 0.02,
+          "p90": 0.16,
+          "p99": 0.34,
+          "max": 0.34,
+          "mean": 0.05
+        },
+        "errors": {},
+        "checkedRows": 4649,
+        "uncertainRows": 0,
+        "violations": 0,
+        "violationSamples": [],
+        "faults": {
+          "missing": 0,
+          "duplicate": 0,
+          "torn": 0
+        },
+        "splits": {
+          "n": 9,
+          "acked": 9,
+          "straddled": 9,
+          "repeatable": 9,
+          "showedStraddledCommand": 0
+        },
+        "elu": [
+          0.02,
+          0.02,
+          0.02,
+          0.02
+        ]
+      },
+      "lag": {
+        "follower": {
+          "n": 25,
+          "p50": 94.01,
+          "p90": 354.96,
+          "p99": 703.55,
+          "max": 703.55,
+          "mean": 142.49
+        },
+        "writer": {
+          "n": 25,
+          "p50": 81.79,
+          "p90": 241.5,
+          "p99": 557.07,
+          "max": 557.07,
+          "mean": 126.2
+        },
+        "excess": {
+          "n": 25,
+          "p50": 2.41,
+          "p90": 113.46,
+          "p99": 319.73,
+          "max": 319.73,
+          "mean": 16.3
+        },
+        "wrongPos": 0,
+        "errors": []
+      },
+      "stats": {
+        "writer": {
+          "samples": 6,
+          "cpuMean": 152,
+          "cpuMax": 188,
+          "memPeakMiB": 1090
+        },
+        "follower": {
+          "samples": 6,
+          "cpuMean": 115,
+          "cpuMax": 162,
+          "memPeakMiB": 359
+        }
+      },
+      "mainLoopDelayMs": {
+        "p50": 5.69,
+        "p99": 8.4,
+        "max": 20.09
+      },
+      "followerIncident": null,
+      "writer": {
+        "offered": 322,
+        "scheduled": 322,
+        "committed": 322,
+        "errors": {},
+        "maxQueue": 127,
+        "drain": {
+          "ms": 4140,
+          "leftQueued": 0,
+          "leftInflight": 0
+        },
+        "lat": {
+          "n": 322,
+          "p50": 4898.87,
+          "p90": 6176.69,
+          "p99": 7694.08,
+          "max": 7859.37,
+          "mean": 4821.25
+        },
+        "svc": {
+          "n": 322,
+          "p50": 333.07,
+          "p90": 789.45,
+          "p99": 2733.04,
+          "max": 2902.02,
+          "mean": 444.17
+        },
+        "byBand": {
+          "5-10": {
+            "n": 207,
+            "lat": 7707.03,
+            "svcP50": 308.96
+          },
+          "11-25": {
+            "n": 91,
+            "lat": 7357.69,
+            "svcP50": 365.74
+          },
+          "26-50": {
+            "n": 24,
+            "lat": 7694.08,
+            "svcP50": 452.1
+          }
+        },
+        "waitsOver2s": 322
+      }
+    },
+    {
+      "name": "warmS",
+      "mode": "single",
+      "readers": 8,
+      "kind": "warm",
+      "seconds": 15,
+      "traceDigest": "a269443cf06f5d2294ecb1ebf70bbb062870993a6359feadcb9a62440165dec6",
+      "start": 1794095176751.8752,
+      "end": 1794095191751.8752,
+      "offerOverrunMs": 0,
+      "blockCut": {
+        "at": 1794095177753.3835,
+        "ms": 353,
+        "ok": true,
+        "out": "Block flush message sent to 1 database(s)."
+      },
+      "reads": {
+        "logicalReaders": 8,
+        "plan": [
+          {
+            "w": 0,
+            "readers": 2,
+            "conns": 2,
+            "cap": 4
+          },
+          {
+            "w": 1,
+            "readers": 2,
+            "conns": 2,
+            "cap": 4
+          },
+          {
+            "w": 2,
+            "readers": 2,
+            "conns": 2,
+            "cap": 4
+          },
+          {
+            "w": 3,
+            "readers": 2,
+            "conns": 2,
+            "cap": 4
+          }
+        ],
+        "connectMs": 29,
+        "pulls": 196,
+        "pullsPerS": 13.07,
+        "goodputPullsPerS": 13.07,
+        "queriesPerS": 59.6,
+        "pull": {
+          "n": 196,
+          "p50": 286.33,
+          "p90": 774.86,
+          "p99": 2499.9,
+          "max": 2676.91,
+          "mean": 430.1
+        },
+        "capWait": {
+          "n": 196,
+          "p50": 0.01,
+          "p90": 0.03,
+          "p99": 0.1,
+          "max": 0.11,
+          "mean": 0.02
+        },
+        "errors": {},
+        "checkedRows": 8742,
+        "uncertainRows": 0,
+        "violations": 0,
+        "violationSamples": [],
+        "faults": {
+          "missing": 0,
+          "duplicate": 0,
+          "torn": 0
+        },
+        "splits": {
+          "n": 22,
+          "acked": 22,
+          "straddled": 22,
+          "repeatable": 22,
+          "showedStraddledCommand": 0
+        },
+        "elu": [
+          0.02,
+          0.02,
+          0.02,
+          0.02
+        ]
+      },
+      "lag": {
+        "follower": {
+          "n": 24,
+          "p50": 31.66,
+          "p90": 96.64,
+          "p99": 132.01,
+          "max": 132.01,
+          "mean": 47.76
+        },
+        "writer": {
+          "n": 24,
+          "p50": 113.84,
+          "p90": 317.4,
+          "p99": 397.5,
+          "max": 397.5,
+          "mean": 128.53
+        },
+        "excess": {
+          "n": 24,
+          "p50": -42.92,
+          "p90": -7.44,
+          "p99": 4.65,
+          "max": 4.65,
+          "mean": -80.77
+        },
+        "wrongPos": 0,
+        "errors": []
+      },
+      "stats": {
+        "writer": {
+          "samples": 5,
+          "cpuMean": 186,
+          "cpuMax": 198,
+          "memPeakMiB": 619
+        },
+        "follower": {
+          "samples": 5,
+          "cpuMean": 14,
+          "cpuMax": 25,
+          "memPeakMiB": 362
+        }
+      },
+      "mainLoopDelayMs": {
+        "p50": 5.56,
+        "p99": 7.58,
+        "max": 20.99
+      },
+      "followerIncident": null,
+      "writer": {
+        "offered": 322,
+        "scheduled": 322,
+        "committed": 322,
+        "errors": {},
+        "maxQueue": 58,
+        "drain": {
+          "ms": 242,
+          "leftQueued": 0,
+          "leftInflight": 0
+        },
+        "lat": {
+          "n": 322,
+          "p50": 1762.5,
+          "p90": 2851.27,
+          "p99": 3925.63,
+          "max": 4203.24,
+          "mean": 1672.68
+        },
+        "svc": {
+          "n": 322,
+          "p50": 288.32,
+          "p90": 609.57,
+          "p99": 1217.81,
+          "max": 1403.41,
+          "mean": 344.02
+        },
+        "byBand": {
+          "5-10": {
+            "n": 207,
+            "lat": 3546.15,
+            "svcP50": 276.91
+          },
+          "11-25": {
+            "n": 91,
+            "lat": 4203.24,
+            "svcP50": 294.61
+          },
+          "26-50": {
+            "n": 24,
+            "lat": 3833.54,
+            "svcP50": 456.42
+          }
+        },
+        "waitsOver2s": 151
+      }
+    },
+    {
+      "name": "Z0",
+      "mode": "zero",
+      "readers": 0,
+      "kind": "ladder",
+      "seconds": 60,
+      "traceDigest": "53a6edab14b9f79ba0f1c6ea1b3425b0d7a84979ae6b049e7b48b57265aa3e5e",
+      "start": 1794095196263.0662,
+      "end": 1794095256263.0662,
+      "offerOverrunMs": 0,
+      "blockCut": {
+        "at": 1794095197262.7754,
+        "ms": 65,
+        "ok": true,
+        "out": "Block flush message sent to 1 database(s)."
+      },
+      "reads": null,
+      "lag": {
+        "follower": {
+          "n": 107,
+          "p50": 25.62,
+          "p90": 57.66,
+          "p99": 81.27,
+          "max": 85.78,
+          "mean": 30.61
+        },
+        "writer": {
+          "n": 107,
+          "p50": 20.57,
+          "p90": 41.94,
+          "p99": 71.76,
+          "max": 104.07,
+          "mean": 24.35
+        },
+        "excess": {
+          "n": 107,
+          "p50": 4.81,
+          "p90": 19.24,
+          "p99": 34.31,
+          "max": 38.77,
+          "mean": 6.26
+        },
+        "wrongPos": 0,
+        "errors": []
+      },
+      "stats": {
+        "writer": {
+          "samples": 19,
+          "cpuMean": 72,
+          "cpuMax": 128,
+          "memPeakMiB": 623
+        },
+        "follower": {
+          "samples": 19,
+          "cpuMean": 13,
+          "cpuMax": 37,
+          "memPeakMiB": 365
+        }
+      },
+      "mainLoopDelayMs": {
+        "p50": 5.55,
+        "p99": 7.29,
+        "max": 57.05
+      },
+      "followerIncident": null,
+      "writer": {
+        "offered": 1163,
+        "scheduled": 1163,
+        "committed": 1163,
+        "errors": {},
+        "maxQueue": 7,
+        "drain": {
+          "ms": 33,
+          "leftQueued": 0,
+          "leftInflight": 0
+        },
+        "lat": {
+          "n": 1163,
+          "p50": 61.23,
+          "p90": 154.46,
+          "p99": 570.11,
+          "max": 1194.32,
+          "mean": 87.44
+        },
+        "svc": {
+          "n": 1163,
+          "p50": 59.71,
+          "p90": 140.17,
+          "p99": 431.8,
+          "max": 779.63,
+          "mean": 80.87
+        },
+        "byBand": {
+          "5-10": {
+            "n": 728,
+            "lat": 621.09,
+            "svcP50": 56.83
+          },
+          "11-25": {
+            "n": 326,
+            "lat": 495.92,
+            "svcP50": 66.45
+          },
+          "26-50": {
+            "n": 109,
+            "lat": 407.74,
+            "svcP50": 66.58
+          }
+        },
+        "waitsOver2s": 0
+      }
+    },
+    {
+      "name": "F4",
+      "mode": "follower",
+      "readers": 4,
+      "kind": "ladder",
+      "seconds": 60,
+      "traceDigest": "53a6edab14b9f79ba0f1c6ea1b3425b0d7a84979ae6b049e7b48b57265aa3e5e",
+      "start": 1794095260427.869,
+      "end": 1794095320427.869,
+      "offerOverrunMs": -1,
+      "blockCut": {
+        "at": 1794095261428.6282,
+        "ms": 245,
+        "ok": true,
+        "out": "Block flush message sent to 1 database(s)."
+      },
+      "reads": {
+        "logicalReaders": 4,
+        "plan": [
+          {
+            "w": 0,
+            "readers": 1,
+            "conns": 1,
+            "cap": 4
+          },
+          {
+            "w": 1,
+            "readers": 1,
+            "conns": 1,
+            "cap": 4
+          },
+          {
+            "w": 2,
+            "readers": 1,
+            "conns": 1,
+            "cap": 4
+          },
+          {
+            "w": 3,
+            "readers": 1,
+            "conns": 1,
+            "cap": 4
+          }
+        ],
+        "connectMs": 74,
+        "pulls": 1882,
+        "pullsPerS": 31.37,
+        "goodputPullsPerS": 31.37,
+        "queriesPerS": 142.97,
+        "pull": {
+          "n": 1882,
+          "p50": 78.74,
+          "p90": 178.72,
+          "p99": 425.74,
+          "max": 757.9,
+          "mean": 101.69
+        },
+        "capWait": {
+          "n": 1882,
+          "p50": 0.01,
+          "p90": 0.03,
+          "p99": 0.09,
+          "max": 1.26,
+          "mean": 0.02
+        },
+        "errors": {},
+        "checkedRows": 83890,
+        "uncertainRows": 0,
+        "violations": 0,
+        "violationSamples": [],
+        "faults": {
+          "missing": 0,
+          "duplicate": 0,
+          "torn": 0
+        },
+        "splits": {
+          "n": 210,
+          "acked": 210,
+          "straddled": 210,
+          "repeatable": 210,
+          "showedStraddledCommand": 0
+        },
+        "elu": [
+          0.04,
+          0.04,
+          0.04,
+          0.04
+        ]
+      },
+      "lag": {
+        "follower": {
+          "n": 107,
+          "p50": 22.4,
+          "p90": 77.02,
+          "p99": 196.26,
+          "max": 200.16,
+          "mean": 36.04
+        },
+        "writer": {
+          "n": 107,
+          "p50": 15.37,
+          "p90": 54.64,
+          "p99": 161.48,
+          "max": 213.59,
+          "mean": 27.7
+        },
+        "excess": {
+          "n": 107,
+          "p50": 6.34,
+          "p90": 23.26,
+          "p99": 67.37,
+          "max": 123.8,
+          "mean": 8.34
+        },
+        "wrongPos": 0,
+        "errors": []
+      },
+      "stats": {
+        "writer": {
+          "samples": 19,
+          "cpuMean": 64,
+          "cpuMax": 134,
+          "memPeakMiB": 698
+        },
+        "follower": {
+          "samples": 19,
+          "cpuMean": 148,
+          "cpuMax": 170,
+          "memPeakMiB": 391
+        }
+      },
+      "mainLoopDelayMs": {
+        "p50": 5.45,
+        "p99": 7.75,
+        "max": 61.47
+      },
+      "followerIncident": null,
+      "writer": {
+        "offered": 1163,
+        "scheduled": 1163,
+        "committed": 1163,
+        "errors": {},
+        "maxQueue": 16,
+        "drain": {
+          "ms": 0,
+          "leftQueued": 0,
+          "leftInflight": 0
+        },
+        "lat": {
+          "n": 1163,
+          "p50": 53.4,
+          "p90": 417.46,
+          "p99": 1075.38,
+          "max": 1400.45,
+          "mean": 138.49
+        },
+        "svc": {
+          "n": 1163,
+          "p50": 51.23,
+          "p90": 259.98,
+          "p99": 643.89,
+          "max": 759.46,
+          "mean": 103.51
+        },
+        "byBand": {
+          "5-10": {
+            "n": 728,
+            "lat": 1075.38,
+            "svcP50": 48.68
+          },
+          "11-25": {
+            "n": 326,
+            "lat": 1059.8,
+            "svcP50": 54.72
+          },
+          "26-50": {
+            "n": 109,
+            "lat": 973.11,
+            "svcP50": 61.65
+          }
+        },
+        "waitsOver2s": 0
+      }
+    },
+    {
+      "name": "S4",
+      "mode": "single",
+      "readers": 4,
+      "kind": "ladder",
+      "seconds": 60,
+      "traceDigest": "53a6edab14b9f79ba0f1c6ea1b3425b0d7a84979ae6b049e7b48b57265aa3e5e",
+      "start": 1794095324540.3767,
+      "end": 1794095384540.3767,
+      "offerOverrunMs": 0,
+      "blockCut": {
+        "at": 1794095325539.867,
+        "ms": 161,
+        "ok": true,
+        "out": "Block flush message sent to 1 database(s)."
+      },
+      "reads": {
+        "logicalReaders": 4,
+        "plan": [
+          {
+            "w": 0,
+            "readers": 1,
+            "conns": 1,
+            "cap": 4
+          },
+          {
+            "w": 1,
+            "readers": 1,
+            "conns": 1,
+            "cap": 4
+          },
+          {
+            "w": 2,
+            "readers": 1,
+            "conns": 1,
+            "cap": 4
+          },
+          {
+            "w": 3,
+            "readers": 1,
+            "conns": 1,
+            "cap": 4
+          }
+        ],
+        "connectMs": 24,
+        "pulls": 1717,
+        "pullsPerS": 28.62,
+        "goodputPullsPerS": 28.62,
+        "queriesPerS": 131.05,
+        "pull": {
+          "n": 1717,
+          "p50": 90.06,
+          "p90": 198.52,
+          "p99": 395.4,
+          "max": 794.83,
+          "mean": 112.18
+        },
+        "capWait": {
+          "n": 1717,
+          "p50": 0.02,
+          "p90": 0.03,
+          "p99": 0.08,
+          "max": 2.1,
+          "mean": 0.02
+        },
+        "errors": {},
+        "checkedRows": 76839,
+        "uncertainRows": 0,
+        "violations": 0,
+        "violationSamples": [],
+        "faults": {
+          "missing": 0,
+          "duplicate": 0,
+          "torn": 0
+        },
+        "splits": {
+          "n": 199,
+          "acked": 199,
+          "straddled": 199,
+          "repeatable": 199,
+          "showedStraddledCommand": 0
+        },
+        "elu": [
+          0.03,
+          0.03,
+          0.03,
+          0.03
+        ]
+      },
+      "lag": {
+        "follower": {
+          "n": 82,
+          "p50": 16.35,
+          "p90": 28.59,
+          "p99": 61,
+          "max": 61,
+          "mean": 18.67
+        },
+        "writer": {
+          "n": 107,
+          "p50": 24.33,
+          "p90": 53.68,
+          "p99": 155.71,
+          "max": 194.23,
+          "mean": 32.55
+        },
+        "excess": {
+          "n": 82,
+          "p50": -6.84,
+          "p90": 0.03,
+          "p99": 9.81,
+          "max": 9.81,
+          "mean": -9.98
+        },
+        "wrongPos": 0,
+        "errors": [
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000"
+        ]
+      },
+      "stats": {
+        "writer": {
+          "samples": 19,
+          "cpuMean": 151,
+          "cpuMax": 188,
+          "memPeakMiB": 698
+        },
+        "follower": {
+          "samples": 19,
+          "cpuMean": 7,
+          "cpuMax": 33,
+          "memPeakMiB": 393
+        }
+      },
+      "mainLoopDelayMs": {
+        "p50": 5.44,
+        "p99": 7.22,
+        "max": 36.01
+      },
+      "followerIncident": {
+        "win": "S4",
+        "at": "23:49:30",
+        "cause": "java.lang.IllegalStateException: Invalid offset in log file: 292470294315008",
+        "recovery": {
+          "readyAfterS": 28,
+          "caughtUpAfterReadyS": 0.262,
+          "writerTx": 62657222,
+          "followerTx": 62657222,
+          "caughtUp": true
+        }
+      },
+      "writer": {
+        "offered": 1163,
+        "scheduled": 1163,
+        "committed": 1163,
+        "errors": {},
+        "maxQueue": 6,
+        "drain": {
+          "ms": 0,
+          "leftQueued": 0,
+          "leftInflight": 0
+        },
+        "lat": {
+          "n": 1163,
+          "p50": 77.25,
+          "p90": 213.31,
+          "p99": 566.97,
+          "max": 766.98,
+          "mean": 109.64
+        },
+        "svc": {
+          "n": 1163,
+          "p50": 75.48,
+          "p90": 181.51,
+          "p99": 443.36,
+          "max": 766.73,
+          "mean": 100.55
+        },
+        "byBand": {
+          "5-10": {
+            "n": 728,
+            "lat": 566.97,
+            "svcP50": 77.06
+          },
+          "11-25": {
+            "n": 326,
+            "lat": 486.33,
+            "svcP50": 73.35
+          },
+          "26-50": {
+            "n": 109,
+            "lat": 589.24,
+            "svcP50": 76.64
+          }
+        },
+        "waitsOver2s": 0
+      }
+    },
+    {
+      "name": "F16",
+      "mode": "follower",
+      "readers": 16,
+      "kind": "ladder",
+      "seconds": 60,
+      "traceDigest": "53a6edab14b9f79ba0f1c6ea1b3425b0d7a84979ae6b049e7b48b57265aa3e5e",
+      "start": 1794095424154.1814,
+      "end": 1794095484154.1814,
+      "offerOverrunMs": 1,
+      "blockCut": {
+        "at": 1794095425154.3113,
+        "ms": 131,
+        "ok": true,
+        "out": "Block flush message sent to 1 database(s)."
+      },
+      "reads": {
+        "logicalReaders": 16,
+        "plan": [
+          {
+            "w": 0,
+            "readers": 4,
+            "conns": 4,
+            "cap": 4
+          },
+          {
+            "w": 1,
+            "readers": 4,
+            "conns": 4,
+            "cap": 4
+          },
+          {
+            "w": 2,
+            "readers": 4,
+            "conns": 4,
+            "cap": 4
+          },
+          {
+            "w": 3,
+            "readers": 4,
+            "conns": 4,
+            "cap": 4
+          }
+        ],
+        "connectMs": 841,
+        "pulls": 481,
+        "pullsPerS": 8.02,
+        "goodputPullsPerS": 8.02,
+        "queriesPerS": 36.73,
+        "pull": {
+          "n": 481,
+          "p50": 1265.7,
+          "p90": 3038.09,
+          "p99": 8808.35,
+          "max": 10812.63,
+          "mean": 1723.6
+        },
+        "capWait": {
+          "n": 481,
+          "p50": 0.02,
+          "p90": 0.06,
+          "p99": 0.49,
+          "max": 1.55,
+          "mean": 0.04
+        },
+        "errors": {},
+        "checkedRows": 21536,
+        "uncertainRows": 0,
+        "violations": 0,
+        "violationSamples": [],
+        "faults": {
+          "missing": 0,
+          "duplicate": 0,
+          "torn": 0
+        },
+        "splits": {
+          "n": 56,
+          "acked": 56,
+          "straddled": 35,
+          "repeatable": 56,
+          "showedStraddledCommand": 0
+        },
+        "elu": [
+          0.02,
+          0.02,
+          0.02,
+          0.02
+        ]
+      },
+      "lag": {
+        "follower": {
+          "n": 87,
+          "p50": 244.78,
+          "p90": 623.94,
+          "p99": 2409.43,
+          "max": 2409.43,
+          "mean": 340.73
+        },
+        "writer": {
+          "n": 95,
+          "p50": 39.94,
+          "p90": 119.98,
+          "p99": 540.42,
+          "max": 540.42,
+          "mean": 60.04
+        },
+        "excess": {
+          "n": 87,
+          "p50": 187.51,
+          "p90": 534.41,
+          "p99": 2351.6,
+          "max": 2351.6,
+          "mean": 281.9
+        },
+        "wrongPos": 0,
+        "errors": []
+      },
+      "stats": {
+        "writer": {
+          "samples": 20,
+          "cpuMean": 79,
+          "cpuMax": 142,
+          "memPeakMiB": 694
+        },
+        "follower": {
+          "samples": 20,
+          "cpuMean": 127,
+          "cpuMax": 164,
+          "memPeakMiB": 401
+        }
+      },
+      "mainLoopDelayMs": {
+        "p50": 5.59,
+        "p99": 8.72,
+        "max": 74.91
+      },
+      "followerIncident": null,
+      "writer": {
+        "offered": 1163,
+        "scheduled": 1163,
+        "committed": 1163,
+        "errors": {},
+        "maxQueue": 75,
+        "drain": {
+          "ms": 0,
+          "leftQueued": 0,
+          "leftInflight": 0
+        },
+        "lat": {
+          "n": 1163,
+          "p50": 387.32,
+          "p90": 2983.24,
+          "p99": 6092.85,
+          "max": 6470.78,
+          "mean": 950.23
+        },
+        "svc": {
+          "n": 1163,
+          "p50": 223.07,
+          "p90": 528.17,
+          "p99": 1073.98,
+          "max": 1639.8,
+          "mean": 266.34
+        },
+        "byBand": {
+          "5-10": {
+            "n": 728,
+            "lat": 5864.34,
+            "svcP50": 205.25
+          },
+          "11-25": {
+            "n": 326,
+            "lat": 6120.67,
+            "svcP50": 258.62
+          },
+          "26-50": {
+            "n": 109,
+            "lat": 6121.13,
+            "svcP50": 249.64
+          }
+        },
+        "waitsOver2s": 188
+      }
+    },
+    {
+      "name": "S16",
+      "mode": "single",
+      "readers": 16,
+      "kind": "ladder",
+      "seconds": 60,
+      "traceDigest": "53a6edab14b9f79ba0f1c6ea1b3425b0d7a84979ae6b049e7b48b57265aa3e5e",
+      "start": 1794095488924.3323,
+      "end": 1794095548924.3323,
+      "offerOverrunMs": 0,
+      "blockCut": {
+        "at": 1794095489924.5369,
+        "ms": 175,
+        "ok": true,
+        "out": "Block flush message sent to 1 database(s)."
+      },
+      "reads": {
+        "logicalReaders": 16,
+        "plan": [
+          {
+            "w": 0,
+            "readers": 4,
+            "conns": 4,
+            "cap": 4
+          },
+          {
+            "w": 1,
+            "readers": 4,
+            "conns": 4,
+            "cap": 4
+          },
+          {
+            "w": 2,
+            "readers": 4,
+            "conns": 4,
+            "cap": 4
+          },
+          {
+            "w": 3,
+            "readers": 4,
+            "conns": 4,
+            "cap": 4
+          }
+        ],
+        "connectMs": 73,
+        "pulls": 598,
+        "pullsPerS": 9.97,
+        "goodputPullsPerS": 9.97,
+        "queriesPerS": 45.62,
+        "pull": {
+          "n": 598,
+          "p50": 707.59,
+          "p90": 1410.57,
+          "p99": 2474.46,
+          "max": 2809.95,
+          "mean": 799.93
+        },
+        "capWait": {
+          "n": 598,
+          "p50": 0.02,
+          "p90": 0.08,
+          "p99": 0.64,
+          "max": 1.01,
+          "mean": 0.05
+        },
+        "errors": {},
+        "checkedRows": 26749,
+        "uncertainRows": 0,
+        "violations": 0,
+        "violationSamples": [],
+        "faults": {
+          "missing": 0,
+          "duplicate": 0,
+          "torn": 0
+        },
+        "splits": {
+          "n": 69,
+          "acked": 62,
+          "straddled": 62,
+          "repeatable": 69,
+          "showedStraddledCommand": 0
+        },
+        "elu": [
+          0.02,
+          0.02,
+          0.02,
+          0.02
+        ]
+      },
+      "lag": {
+        "follower": {
+          "n": 107,
+          "p50": 48.23,
+          "p90": 104.4,
+          "p99": 174.82,
+          "max": 489.57,
+          "mean": 61.66
+        },
+        "writer": {
+          "n": 106,
+          "p50": 116.51,
+          "p90": 308.82,
+          "p99": 508.76,
+          "max": 874.79,
+          "mean": 147.91
+        },
+        "excess": {
+          "n": 106,
+          "p50": -58.22,
+          "p90": -7.18,
+          "p99": 12.79,
+          "max": 20.81,
+          "mean": -86.35
+        },
+        "wrongPos": 0,
+        "errors": []
+      },
+      "stats": {
+        "writer": {
+          "samples": 21,
+          "cpuMean": 110,
+          "cpuMax": 132,
+          "memPeakMiB": 691
+        },
+        "follower": {
+          "samples": 21,
+          "cpuMean": 11,
+          "cpuMax": 23,
+          "memPeakMiB": 400
+        }
+      },
+      "mainLoopDelayMs": {
+        "p50": 5.63,
+        "p99": 8.63,
+        "max": 35.26
+      },
+      "followerIncident": null,
+      "writer": {
+        "offered": 1163,
+        "scheduled": 1163,
+        "committed": 1163,
+        "errors": {},
+        "maxQueue": 192,
+        "drain": {
+          "ms": 378,
+          "leftQueued": 0,
+          "leftInflight": 0
+        },
+        "lat": {
+          "n": 1163,
+          "p50": 6451.82,
+          "p90": 12349.39,
+          "p99": 21043.65,
+          "max": 22965.7,
+          "mean": 7114.73
+        },
+        "svc": {
+          "n": 1163,
+          "p50": 384.59,
+          "p90": 673.01,
+          "p99": 1242.99,
+          "max": 1491.41,
+          "mean": 421.05
+        },
+        "byBand": {
+          "5-10": {
+            "n": 728,
+            "lat": 21198.8,
+            "svcP50": 383.84
+          },
+          "11-25": {
+            "n": 326,
+            "lat": 20811.56,
+            "svcP50": 384.47
+          },
+          "26-50": {
+            "n": 109,
+            "lat": 19886.41,
+            "svcP50": 391.4
+          }
+        },
+        "waitsOver2s": 1130
+      }
+    },
+    {
+      "name": "Z1",
+      "mode": "zero",
+      "readers": 0,
+      "kind": "ladder",
+      "seconds": 60,
+      "traceDigest": "53a6edab14b9f79ba0f1c6ea1b3425b0d7a84979ae6b049e7b48b57265aa3e5e",
+      "start": 1794095559108.683,
+      "end": 1794095619108.683,
+      "offerOverrunMs": -2,
+      "blockCut": {
+        "at": 1794095560109.078,
+        "ms": 180,
+        "ok": true,
+        "out": "Block flush message sent to 1 database(s)."
+      },
+      "reads": null,
+      "lag": {
+        "follower": {
+          "n": 107,
+          "p50": 25.72,
+          "p90": 52.1,
+          "p99": 82.7,
+          "max": 107.06,
+          "mean": 30.94
+        },
+        "writer": {
+          "n": 107,
+          "p50": 20.46,
+          "p90": 43.56,
+          "p99": 133.75,
+          "max": 198.74,
+          "mean": 27.43
+        },
+        "excess": {
+          "n": 107,
+          "p50": 4.16,
+          "p90": 14.46,
+          "p99": 46.31,
+          "max": 67.22,
+          "mean": 3.51
+        },
+        "wrongPos": 0,
+        "errors": []
+      },
+      "stats": {
+        "writer": {
+          "samples": 19,
+          "cpuMean": 57,
+          "cpuMax": 134,
+          "memPeakMiB": 696
+        },
+        "follower": {
+          "samples": 19,
+          "cpuMean": 9,
+          "cpuMax": 21,
+          "memPeakMiB": 404
+        }
+      },
+      "mainLoopDelayMs": {
+        "p50": 5.51,
+        "p99": 7.52,
+        "max": 39.52
+      },
+      "followerIncident": null,
+      "writer": {
+        "offered": 1163,
+        "scheduled": 1163,
+        "committed": 1163,
+        "errors": {},
+        "maxQueue": 11,
+        "drain": {
+          "ms": 133,
+          "leftQueued": 0,
+          "leftInflight": 0
+        },
+        "lat": {
+          "n": 1163,
+          "p50": 71.4,
+          "p90": 317.71,
+          "p99": 736.94,
+          "max": 1344.57,
+          "mean": 131.31
+        },
+        "svc": {
+          "n": 1163,
+          "p50": 68.33,
+          "p90": 238.76,
+          "p99": 527.66,
+          "max": 626.4,
+          "mean": 109.97
+        },
+        "byBand": {
+          "5-10": {
+            "n": 728,
+            "lat": 750.19,
+            "svcP50": 65.97
+          },
+          "11-25": {
+            "n": 326,
+            "lat": 713.52,
+            "svcP50": 72.99
+          },
+          "26-50": {
+            "n": 109,
+            "lat": 575.45,
+            "svcP50": 77.56
+          }
+        },
+        "waitsOver2s": 0
+      }
+    },
+    {
+      "name": "F64",
+      "mode": "follower",
+      "readers": 64,
+      "kind": "ladder",
+      "seconds": 60,
+      "traceDigest": "53a6edab14b9f79ba0f1c6ea1b3425b0d7a84979ae6b049e7b48b57265aa3e5e",
+      "start": 1794095623465.1265,
+      "end": 1794095683465.1265,
+      "offerOverrunMs": 2,
+      "blockCut": {
+        "at": 1794095624465.3826,
+        "ms": 118,
+        "ok": true,
+        "out": "Block flush message sent to 1 database(s)."
+      },
+      "reads": {
+        "logicalReaders": 64,
+        "plan": [
+          {
+            "w": 0,
+            "readers": 16,
+            "conns": 16,
+            "cap": 4
+          },
+          {
+            "w": 1,
+            "readers": 16,
+            "conns": 16,
+            "cap": 4
+          },
+          {
+            "w": 2,
+            "readers": 16,
+            "conns": 16,
+            "cap": 4
+          },
+          {
+            "w": 3,
+            "readers": 16,
+            "conns": 16,
+            "cap": 4
+          }
+        ],
+        "connectMs": 139,
+        "pulls": 392,
+        "pullsPerS": 6.53,
+        "goodputPullsPerS": 6.53,
+        "queriesPerS": 29.47,
+        "pull": {
+          "n": 392,
+          "p50": 5209.4,
+          "p90": 8683.39,
+          "p99": 10597.05,
+          "max": 11700.03,
+          "mean": 5414.29
+        },
+        "capWait": {
+          "n": 392,
+          "p50": 3601.69,
+          "p90": 6565.4,
+          "p99": 8719.04,
+          "max": 9412.06,
+          "mean": 3868.64
+        },
+        "errors": {
+          "XX000": 2962
+        },
+        "checkedRows": 17320,
+        "uncertainRows": 0,
+        "violations": 0,
+        "violationSamples": [],
+        "faults": {
+          "missing": 0,
+          "duplicate": 0,
+          "torn": 0
+        },
+        "splits": {
+          "n": 40,
+          "acked": 40,
+          "straddled": 9,
+          "repeatable": 40,
+          "showedStraddledCommand": 0
+        },
+        "elu": [
+          0.05,
+          0.05,
+          0.05,
+          0.05
+        ]
+      },
+      "lag": {
+        "follower": {
+          "n": 61,
+          "p50": 230.68,
+          "p90": 619.07,
+          "p99": 1174.91,
+          "max": 1174.91,
+          "mean": 316.76
+        },
+        "writer": {
+          "n": 98,
+          "p50": 62.58,
+          "p90": 151.04,
+          "p99": 352.86,
+          "max": 352.86,
+          "mean": 80.05
+        },
+        "excess": {
+          "n": 61,
+          "p50": 173.2,
+          "p90": 483.24,
+          "p99": 1060.63,
+          "max": 1060.63,
+          "mean": 233.86
+        },
+        "wrongPos": 0,
+        "errors": [
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000"
+        ]
+      },
+      "stats": {
+        "writer": {
+          "samples": 21,
+          "cpuMean": 89,
+          "cpuMax": 145,
+          "memPeakMiB": 706
+        },
+        "follower": {
+          "samples": 21,
+          "cpuMean": 100,
+          "cpuMax": 135,
+          "memPeakMiB": 431
+        }
+      },
+      "mainLoopDelayMs": {
+        "p50": 5.8,
+        "p99": 10.48,
+        "max": 62.16
+      },
+      "followerIncident": {
+        "win": "F64",
+        "at": "23:54:25",
+        "cause": "java.lang.IllegalStateException: Invalid offset in log file: 288230378080960511",
+        "recovery": {
+          "readyAfterS": 22,
+          "caughtUpAfterReadyS": 0.098,
+          "writerTx": 106304755,
+          "followerTx": 106304755,
+          "caughtUp": true
+        }
+      },
+      "writer": {
+        "offered": 1163,
+        "scheduled": 1163,
+        "committed": 1163,
+        "errors": {},
+        "maxQueue": 167,
+        "drain": {
+          "ms": 5201,
+          "leftQueued": 0,
+          "leftInflight": 0
+        },
+        "lat": {
+          "n": 1163,
+          "p50": 3702.21,
+          "p90": 9760.77,
+          "p99": 15650.26,
+          "max": 16683.45,
+          "mean": 4414.67
+        },
+        "svc": {
+          "n": 1163,
+          "p50": 358.13,
+          "p90": 669.3,
+          "p99": 1128.46,
+          "max": 1235.43,
+          "mean": 390.43
+        },
+        "byBand": {
+          "5-10": {
+            "n": 728,
+            "lat": 15187.18,
+            "svcP50": 359.76
+          },
+          "11-25": {
+            "n": 326,
+            "lat": 15889.1,
+            "svcP50": 350.05
+          },
+          "26-50": {
+            "n": 109,
+            "lat": 15650.26,
+            "svcP50": 375.53
+          }
+        },
+        "waitsOver2s": 942
+      }
+    },
+    {
+      "name": "S64",
+      "mode": "single",
+      "readers": 64,
+      "kind": "ladder",
+      "seconds": 60,
+      "traceDigest": "53a6edab14b9f79ba0f1c6ea1b3425b0d7a84979ae6b049e7b48b57265aa3e5e",
+      "start": 1794095721903.5842,
+      "end": 1794095781903.5842,
+      "offerOverrunMs": -1,
+      "blockCut": {
+        "at": 1794095722903.487,
+        "ms": 174,
+        "ok": true,
+        "out": "Block flush message sent to 1 database(s)."
+      },
+      "reads": {
+        "logicalReaders": 64,
+        "plan": [
+          {
+            "w": 0,
+            "readers": 16,
+            "conns": 7,
+            "cap": 4
+          },
+          {
+            "w": 1,
+            "readers": 16,
+            "conns": 7,
+            "cap": 4
+          },
+          {
+            "w": 2,
+            "readers": 16,
+            "conns": 7,
+            "cap": 4
+          },
+          {
+            "w": 3,
+            "readers": 16,
+            "conns": 7,
+            "cap": 4
+          }
+        ],
+        "connectMs": 34,
+        "pulls": 1757,
+        "pullsPerS": 29.28,
+        "goodputPullsPerS": 29.28,
+        "queriesPerS": 132.05,
+        "pull": {
+          "n": 1757,
+          "p50": 1658.18,
+          "p90": 2753.45,
+          "p99": 4501.48,
+          "max": 5135.33,
+          "mean": 1867.67
+        },
+        "capWait": {
+          "n": 1757,
+          "p50": 1210.15,
+          "p90": 2062.01,
+          "p99": 3548.43,
+          "max": 4205.51,
+          "mean": 1365.96
+        },
+        "errors": {},
+        "checkedRows": 77619,
+        "uncertainRows": 0,
+        "violations": 0,
+        "violationSamples": [],
+        "faults": {
+          "missing": 0,
+          "duplicate": 0,
+          "torn": 0
+        },
+        "splits": {
+          "n": 179,
+          "acked": 179,
+          "straddled": 16,
+          "repeatable": 179,
+          "showedStraddledCommand": 0
+        },
+        "elu": [
+          0.03,
+          0.03,
+          0.03,
+          0.03
+        ]
+      },
+      "lag": {
+        "follower": {
+          "n": 105,
+          "p50": 46.93,
+          "p90": 93.16,
+          "p99": 272.08,
+          "max": 1029.98,
+          "mean": 63.78
+        },
+        "writer": {
+          "n": 106,
+          "p50": 86.98,
+          "p90": 196.23,
+          "p99": 301.52,
+          "max": 334.83,
+          "mean": 106.28
+        },
+        "excess": {
+          "n": 105,
+          "p50": -42.65,
+          "p90": 0.06,
+          "p99": 38.7,
+          "max": 945.02,
+          "mean": -41.69
+        },
+        "wrongPos": 0,
+        "errors": []
+      },
+      "stats": {
+        "writer": {
+          "samples": 20,
+          "cpuMean": 125,
+          "cpuMax": 142,
+          "memPeakMiB": 701
+        },
+        "follower": {
+          "samples": 20,
+          "cpuMean": 15,
+          "cpuMax": 53,
+          "memPeakMiB": 343
+        }
+      },
+      "mainLoopDelayMs": {
+        "p50": 5.46,
+        "p99": 7.59,
+        "max": 29.36
+      },
+      "followerIncident": null,
+      "writer": {
+        "offered": 1163,
+        "scheduled": 1163,
+        "committed": 1163,
+        "errors": {},
+        "maxQueue": 29,
+        "drain": {
+          "ms": 0,
+          "leftQueued": 0,
+          "leftInflight": 0
+        },
+        "lat": {
+          "n": 1163,
+          "p50": 274.54,
+          "p90": 1251.95,
+          "p99": 3322.75,
+          "max": 3859.76,
+          "mean": 545.73
+        },
+        "svc": {
+          "n": 1163,
+          "p50": 220.69,
+          "p90": 418.6,
+          "p99": 753.58,
+          "max": 1245.91,
+          "mean": 254.05
+        },
+        "byBand": {
+          "5-10": {
+            "n": 728,
+            "lat": 3397.99,
+            "svcP50": 215.62
+          },
+          "11-25": {
+            "n": 326,
+            "lat": 3322.75,
+            "svcP50": 231.26
+          },
+          "26-50": {
+            "n": 109,
+            "lat": 2868.03,
+            "svcP50": 229.4
+          }
+        },
+        "waitsOver2s": 55
+      }
+    },
+    {
+      "name": "Z2",
+      "mode": "zero",
+      "readers": 0,
+      "kind": "ladder",
+      "seconds": 60,
+      "traceDigest": "53a6edab14b9f79ba0f1c6ea1b3425b0d7a84979ae6b049e7b48b57265aa3e5e",
+      "start": 1794095787322.502,
+      "end": 1794095847322.502,
+      "offerOverrunMs": 0,
+      "blockCut": {
+        "at": 1794095788322.253,
+        "ms": 136,
+        "ok": true,
+        "out": "Block flush message sent to 1 database(s)."
+      },
+      "reads": null,
+      "lag": {
+        "follower": {
+          "n": 108,
+          "p50": 23.42,
+          "p90": 38.89,
+          "p99": 68.52,
+          "max": 81.65,
+          "mean": 25.55
+        },
+        "writer": {
+          "n": 108,
+          "p50": 11.36,
+          "p90": 22.99,
+          "p99": 48.69,
+          "max": 55.99,
+          "mean": 13.81
+        },
+        "excess": {
+          "n": 108,
+          "p50": 10.79,
+          "p90": 20.74,
+          "p99": 35.52,
+          "max": 43.33,
+          "mean": 11.74
+        },
+        "wrongPos": 0,
+        "errors": []
+      },
+      "stats": {
+        "writer": {
+          "samples": 19,
+          "cpuMean": 38,
+          "cpuMax": 100,
+          "memPeakMiB": 696
+        },
+        "follower": {
+          "samples": 19,
+          "cpuMean": 8,
+          "cpuMax": 18,
+          "memPeakMiB": 349
+        }
+      },
+      "mainLoopDelayMs": {
+        "p50": 5.54,
+        "p99": 7.05,
+        "max": 27.85
+      },
+      "followerIncident": null,
+      "writer": {
+        "offered": 1163,
+        "scheduled": 1163,
+        "committed": 1163,
+        "errors": {},
+        "maxQueue": 3,
+        "drain": {
+          "ms": 31,
+          "leftQueued": 0,
+          "leftInflight": 0
+        },
+        "lat": {
+          "n": 1163,
+          "p50": 36.39,
+          "p90": 89.07,
+          "p99": 253.5,
+          "max": 345.87,
+          "mean": 49.7
+        },
+        "svc": {
+          "n": 1163,
+          "p50": 36.07,
+          "p90": 84.03,
+          "p99": 253.83,
+          "max": 345.65,
+          "mean": 48.51
+        },
+        "byBand": {
+          "5-10": {
+            "n": 728,
+            "lat": 249.4,
+            "svcP50": 34.71
+          },
+          "11-25": {
+            "n": 326,
+            "lat": 253.82,
+            "svcP50": 37.1
+          },
+          "26-50": {
+            "n": 109,
+            "lat": 213.62,
+            "svcP50": 39.47
+          }
+        },
+        "waitsOver2s": 0
+      }
+    },
+    {
+      "name": "E5",
+      "mode": "zero",
+      "readers": 0,
+      "kind": "e5",
+      "seconds": 120,
+      "traceDigest": "a18fc8e5c30cc6ec2828845ed78217873ed510ce992b94d7d3b3964268e9d5dd",
+      "start": 1794095851453.6948,
+      "end": 1794095971453.6948,
+      "offerOverrunMs": 0,
+      "blockCut": {
+        "at": 1794095852455.1926,
+        "ms": 101,
+        "ok": true,
+        "out": "Block flush message sent to 1 database(s)."
+      },
+      "reads": null,
+      "lag": {
+        "follower": {
+          "n": 216,
+          "p50": 23.51,
+          "p90": 57.55,
+          "p99": 180.58,
+          "max": 243.53,
+          "mean": 33.49
+        },
+        "writer": {
+          "n": 216,
+          "p50": 13.37,
+          "p90": 27.24,
+          "p99": 55.24,
+          "max": 89.76,
+          "mean": 16.29
+        },
+        "excess": {
+          "n": 216,
+          "p50": 8.74,
+          "p90": 37.28,
+          "p99": 134.42,
+          "max": 232.19,
+          "mean": 17.21
+        },
+        "wrongPos": 0,
+        "errors": []
+      },
+      "stats": {
+        "writer": {
+          "samples": 39,
+          "cpuMean": 41,
+          "cpuMax": 108,
+          "memPeakMiB": 706
+        },
+        "follower": {
+          "samples": 39,
+          "cpuMean": 47,
+          "cpuMax": 83,
+          "memPeakMiB": 452
+        }
+      },
+      "mainLoopDelayMs": {
+        "p50": 5.37,
+        "p99": 6.9,
+        "max": 48.2
+      },
+      "followerIncident": null,
+      "writer": {
+        "offered": 2497,
+        "scheduled": 2497,
+        "committed": 2497,
+        "errors": {},
+        "maxQueue": 10,
+        "drain": {
+          "ms": 74,
+          "leftQueued": 0,
+          "leftInflight": 0
+        },
+        "lat": {
+          "n": 2497,
+          "p50": 43.66,
+          "p90": 119.23,
+          "p99": 403.21,
+          "max": 607.74,
+          "mean": 66.6
+        },
+        "svc": {
+          "n": 2497,
+          "p50": 43.07,
+          "p90": 110.98,
+          "p99": 341.67,
+          "max": 461.11,
+          "mean": 61.25
+        },
+        "byBand": {
+          "5-10": {
+            "n": 1521,
+            "lat": 399.05,
+            "svcP50": 42.61
+          },
+          "11-25": {
+            "n": 725,
+            "lat": 422.63,
+            "svcP50": 43.42
+          },
+          "26-50": {
+            "n": 251,
+            "lat": 345.63,
+            "svcP50": 46.74
+          }
+        },
+        "waitsOver2s": 0
+      }
+    },
+    {
+      "name": "F256",
+      "mode": "follower",
+      "readers": 256,
+      "kind": "ladder",
+      "seconds": 60,
+      "traceDigest": "53a6edab14b9f79ba0f1c6ea1b3425b0d7a84979ae6b049e7b48b57265aa3e5e",
+      "start": 1794095978910.283,
+      "end": 1794096038910.283,
+      "offerOverrunMs": -1,
+      "blockCut": {
+        "at": 1794095979910.8796,
+        "ms": 91,
+        "ok": true,
+        "out": "Block flush message sent to 1 database(s)."
+      },
+      "reads": {
+        "logicalReaders": 256,
+        "plan": [
+          {
+            "w": 0,
+            "readers": 64,
+            "conns": 64,
+            "cap": 4
+          },
+          {
+            "w": 1,
+            "readers": 64,
+            "conns": 64,
+            "cap": 4
+          },
+          {
+            "w": 2,
+            "readers": 64,
+            "conns": 64,
+            "cap": 4
+          },
+          {
+            "w": 3,
+            "readers": 64,
+            "conns": 64,
+            "cap": 4
+          }
+        ],
+        "connectMs": 1317,
+        "pulls": 2119,
+        "pullsPerS": 35.32,
+        "goodputPullsPerS": 35.32,
+        "queriesPerS": 160.85,
+        "pull": {
+          "n": 2119,
+          "p50": 5864.58,
+          "p90": 9915.2,
+          "p99": 11260.45,
+          "max": 12529.82,
+          "mean": 6425.96
+        },
+        "capWait": {
+          "n": 2119,
+          "p50": 5508.92,
+          "p90": 9326.52,
+          "p99": 10740.93,
+          "max": 12184.23,
+          "mean": 5971.47
+        },
+        "errors": {},
+        "checkedRows": 94395,
+        "uncertainRows": 0,
+        "violations": 0,
+        "violationSamples": [],
+        "faults": {
+          "missing": 0,
+          "duplicate": 0,
+          "torn": 0
+        },
+        "splits": {
+          "n": 235,
+          "acked": 235,
+          "straddled": 0,
+          "repeatable": 235,
+          "showedStraddledCommand": 0
+        },
+        "elu": [
+          0.04,
+          0.04,
+          0.03,
+          0.04
+        ]
+      },
+      "lag": {
+        "follower": {
+          "n": 105,
+          "p50": 64.05,
+          "p90": 155,
+          "p99": 489.86,
+          "max": 954.97,
+          "mean": 93.11
+        },
+        "writer": {
+          "n": 106,
+          "p50": 20.25,
+          "p90": 49.13,
+          "p99": 94.73,
+          "max": 96.95,
+          "mean": 26.35
+        },
+        "excess": {
+          "n": 105,
+          "p50": 44.51,
+          "p90": 121.96,
+          "p99": 451.07,
+          "max": 923,
+          "mean": 66.66
+        },
+        "wrongPos": 0,
+        "errors": []
+      },
+      "stats": {
+        "writer": {
+          "samples": 22,
+          "cpuMean": 42,
+          "cpuMax": 102,
+          "memPeakMiB": 715
+        },
+        "follower": {
+          "samples": 22,
+          "cpuMean": 134,
+          "cpuMax": 150,
+          "memPeakMiB": 532
+        }
+      },
+      "mainLoopDelayMs": {
+        "p50": 5.43,
+        "p99": 7.86,
+        "max": 38.21
+      },
+      "followerIncident": null,
+      "writer": {
+        "offered": 1163,
+        "scheduled": 1163,
+        "committed": 1163,
+        "errors": {},
+        "maxQueue": 14,
+        "drain": {
+          "ms": 0,
+          "leftQueued": 0,
+          "leftInflight": 0
+        },
+        "lat": {
+          "n": 1163,
+          "p50": 69.4,
+          "p90": 290.42,
+          "p99": 824.01,
+          "max": 1221.32,
+          "mean": 128.1
+        },
+        "svc": {
+          "n": 1163,
+          "p50": 67.51,
+          "p90": 220.85,
+          "p99": 494.08,
+          "max": 682.65,
+          "mean": 103.34
+        },
+        "byBand": {
+          "5-10": {
+            "n": 728,
+            "lat": 854.05,
+            "svcP50": 66.22
+          },
+          "11-25": {
+            "n": 326,
+            "lat": 697.51,
+            "svcP50": 71.53
+          },
+          "26-50": {
+            "n": 109,
+            "lat": 652.66,
+            "svcP50": 73.48
+          }
+        },
+        "waitsOver2s": 0
+      }
+    },
+    {
+      "name": "S256",
+      "mode": "single",
+      "readers": 256,
+      "kind": "ladder",
+      "seconds": 60,
+      "traceDigest": "53a6edab14b9f79ba0f1c6ea1b3425b0d7a84979ae6b049e7b48b57265aa3e5e",
+      "start": 1794096049940.7273,
+      "end": 1794096109940.7273,
+      "offerOverrunMs": 1,
+      "blockCut": {
+        "at": 1794096050940.3074,
+        "ms": 70,
+        "ok": true,
+        "out": "Block flush message sent to 1 database(s)."
+      },
+      "reads": {
+        "logicalReaders": 256,
+        "plan": [
+          {
+            "w": 0,
+            "readers": 64,
+            "conns": 7,
+            "cap": 4
+          },
+          {
+            "w": 1,
+            "readers": 64,
+            "conns": 7,
+            "cap": 4
+          },
+          {
+            "w": 2,
+            "readers": 64,
+            "conns": 7,
+            "cap": 4
+          },
+          {
+            "w": 3,
+            "readers": 64,
+            "conns": 7,
+            "cap": 4
+          }
+        ],
+        "connectMs": 81,
+        "pulls": 1643,
+        "pullsPerS": 27.38,
+        "goodputPullsPerS": 27.38,
+        "queriesPerS": 123.2,
+        "pull": {
+          "n": 1643,
+          "p50": 8073.33,
+          "p90": 10924.35,
+          "p99": 12449.44,
+          "max": 13192.38,
+          "mean": 8248.37
+        },
+        "capWait": {
+          "n": 1643,
+          "p50": 7551.57,
+          "p90": 10282.49,
+          "p99": 11802.13,
+          "max": 12355.03,
+          "mean": 7665.02
+        },
+        "errors": {},
+        "checkedRows": 72444,
+        "uncertainRows": 0,
+        "violations": 0,
+        "violationSamples": [],
+        "faults": {
+          "missing": 0,
+          "duplicate": 0,
+          "torn": 0
+        },
+        "splits": {
+          "n": 164,
+          "acked": 164,
+          "straddled": 1,
+          "repeatable": 164,
+          "showedStraddledCommand": 0
+        },
+        "elu": [
+          0.03,
+          0.03,
+          0.03,
+          0.03
+        ]
+      },
+      "lag": {
+        "follower": {
+          "n": 100,
+          "p50": 34.36,
+          "p90": 64.25,
+          "p99": 163.36,
+          "max": 163.36,
+          "mean": 39.54
+        },
+        "writer": {
+          "n": 107,
+          "p50": 99.76,
+          "p90": 199.27,
+          "p99": 303.05,
+          "max": 320.48,
+          "mean": 114.44
+        },
+        "excess": {
+          "n": 100,
+          "p50": -63.76,
+          "p90": -23.78,
+          "p99": 3.28,
+          "max": 3.28,
+          "mean": -77.51
+        },
+        "wrongPos": 0,
+        "errors": [
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000"
+        ]
+      },
+      "stats": {
+        "writer": {
+          "samples": 21,
+          "cpuMean": 130,
+          "cpuMax": 160,
+          "memPeakMiB": 713
+        },
+        "follower": {
+          "samples": 21,
+          "cpuMean": 7,
+          "cpuMax": 15,
+          "memPeakMiB": 532
+        }
+      },
+      "mainLoopDelayMs": {
+        "p50": 5.45,
+        "p99": 7.54,
+        "max": 68.22
+      },
+      "followerIncident": {
+        "win": "S256",
+        "at": "00:01:46",
+        "cause": "java.lang.IllegalStateException: log file corrupted - expected record separator at 12",
+        "recovery": {
+          "readyAfterS": 17,
+          "caughtUpAfterReadyS": 0.117,
+          "writerTx": 173488038,
+          "followerTx": 173488038,
+          "caughtUp": true
+        }
+      },
+      "writer": {
+        "offered": 1163,
+        "scheduled": 1163,
+        "committed": 1163,
+        "errors": {},
+        "maxQueue": 16,
+        "drain": {
+          "ms": 0,
+          "leftQueued": 0,
+          "leftInflight": 0
+        },
+        "lat": {
+          "n": 1163,
+          "p50": 289.6,
+          "p90": 834.86,
+          "p99": 1438.82,
+          "max": 1887.97,
+          "mean": 399.05
+        },
+        "svc": {
+          "n": 1163,
+          "p50": 233.91,
+          "p90": 403.95,
+          "p99": 669.31,
+          "max": 935.34,
+          "mean": 258.66
+        },
+        "byBand": {
+          "5-10": {
+            "n": 728,
+            "lat": 1495.07,
+            "svcP50": 231.74
+          },
+          "11-25": {
+            "n": 326,
+            "lat": 1311.86,
+            "svcP50": 237.44
+          },
+          "26-50": {
+            "n": 109,
+            "lat": 1295.04,
+            "svcP50": 229.91
+          }
+        },
+        "waitsOver2s": 0
+      }
+    },
+    {
+      "name": "Z3",
+      "mode": "zero",
+      "readers": 0,
+      "kind": "ladder",
+      "seconds": 60,
+      "traceDigest": "53a6edab14b9f79ba0f1c6ea1b3425b0d7a84979ae6b049e7b48b57265aa3e5e",
+      "start": 1794096142726.2407,
+      "end": 1794096202726.2407,
+      "offerOverrunMs": -1,
+      "blockCut": {
+        "at": 1794096143726.0298,
+        "ms": 101,
+        "ok": true,
+        "out": "Block flush message sent to 1 database(s)."
+      },
+      "reads": null,
+      "lag": {
+        "follower": {
+          "n": 107,
+          "p50": 31.52,
+          "p90": 63.19,
+          "p99": 120.35,
+          "max": 928.94,
+          "mean": 44.63
+        },
+        "writer": {
+          "n": 108,
+          "p50": 12.73,
+          "p90": 37.02,
+          "p99": 91.64,
+          "max": 133.52,
+          "mean": 18.77
+        },
+        "excess": {
+          "n": 107,
+          "p50": 15.79,
+          "p90": 37.01,
+          "p99": 53.61,
+          "max": 905.49,
+          "mean": 26.94
+        },
+        "wrongPos": 0,
+        "errors": []
+      },
+      "stats": {
+        "writer": {
+          "samples": 19,
+          "cpuMean": 45,
+          "cpuMax": 115,
+          "memPeakMiB": 735
+        },
+        "follower": {
+          "samples": 19,
+          "cpuMean": 14,
+          "cpuMax": 24,
+          "memPeakMiB": 347
+        }
+      },
+      "mainLoopDelayMs": {
+        "p50": 5.51,
+        "p99": 6.97,
+        "max": 30.82
+      },
+      "followerIncident": null,
+      "writer": {
+        "offered": 1163,
+        "scheduled": 1163,
+        "committed": 1163,
+        "errors": {},
+        "maxQueue": 5,
+        "drain": {
+          "ms": 22,
+          "leftQueued": 0,
+          "leftInflight": 0
+        },
+        "lat": {
+          "n": 1163,
+          "p50": 42.58,
+          "p90": 116.22,
+          "p99": 316.37,
+          "max": 428.56,
+          "mean": 62.35
+        },
+        "svc": {
+          "n": 1163,
+          "p50": 41.86,
+          "p90": 107.4,
+          "p99": 311.22,
+          "max": 418.88,
+          "mean": 59.84
+        },
+        "byBand": {
+          "5-10": {
+            "n": 728,
+            "lat": 309.3,
+            "svcP50": 41.41
+          },
+          "11-25": {
+            "n": 326,
+            "lat": 339.03,
+            "svcP50": 42.37
+          },
+          "26-50": {
+            "n": 109,
+            "lat": 235.99,
+            "svcP50": 45.49
+          }
+        },
+        "waitsOver2s": 0
+      }
+    },
+    {
+      "name": "BURST",
+      "mode": "follower",
+      "readers": 16,
+      "kind": "burst",
+      "seconds": 60,
+      "traceDigest": "b5f5c132b75c28da241b0ca6b62ffbc2ec5e1cd1ce8d7e680565e0e2296cae58",
+      "start": 1794096223748.929,
+      "end": 1794096283748.929,
+      "offerOverrunMs": 0,
+      "blockCut": {
+        "at": 1794096243749.4407,
+        "ms": 275,
+        "ok": true,
+        "out": "Block flush message sent to 1 database(s)."
+      },
+      "reads": {
+        "logicalReaders": 16,
+        "plan": [
+          {
+            "w": 0,
+            "readers": 4,
+            "conns": 4,
+            "cap": 4
+          },
+          {
+            "w": 1,
+            "readers": 4,
+            "conns": 4,
+            "cap": 4
+          },
+          {
+            "w": 2,
+            "readers": 4,
+            "conns": 4,
+            "cap": 4
+          },
+          {
+            "w": 3,
+            "readers": 4,
+            "conns": 4,
+            "cap": 4
+          }
+        ],
+        "connectMs": 48,
+        "pulls": 15,
+        "pullsPerS": 0.25,
+        "goodputPullsPerS": 0.25,
+        "queriesPerS": 1.08,
+        "pull": {
+          "n": 15,
+          "p50": 2100.95,
+          "p90": 2338.45,
+          "p99": 2338.93,
+          "max": 2338.93,
+          "mean": 2075.87
+        },
+        "capWait": {
+          "n": 15,
+          "p50": 0.08,
+          "p90": 0.8,
+          "p99": 0.85,
+          "max": 0.85,
+          "mean": 0.25
+        },
+        "errors": {
+          "XX000": 14566
+        },
+        "checkedRows": 641,
+        "uncertainRows": 0,
+        "violations": 0,
+        "violationSamples": [],
+        "faults": {
+          "missing": 0,
+          "duplicate": 0,
+          "torn": 0
+        },
+        "splits": {
+          "n": 1,
+          "acked": 1,
+          "straddled": 0,
+          "repeatable": 1,
+          "showedStraddledCommand": 0
+        },
+        "elu": [
+          0.1,
+          0.1,
+          0.1,
+          0.09
+        ]
+      },
+      "lag": {
+        "follower": {
+          "n": 3,
+          "p50": 318.84,
+          "p90": 416.48,
+          "p99": 416.48,
+          "max": 416.48,
+          "mean": 330.23
+        },
+        "writer": {
+          "n": 281,
+          "p50": 28.47,
+          "p90": 74.29,
+          "p99": 173.3,
+          "max": 323.23,
+          "mean": 38.13
+        },
+        "excess": {
+          "n": 3,
+          "p50": 296.44,
+          "p90": 375.45,
+          "p99": 375.45,
+          "max": 375.45,
+          "mean": 288.56
+        },
+        "wrongPos": 0,
+        "errors": [
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000"
+        ]
+      },
+      "stats": {
+        "writer": {
+          "samples": 54,
+          "cpuMean": 99,
+          "cpuMax": 165,
+          "memPeakMiB": 1105
+        },
+        "follower": {
+          "samples": 54,
+          "cpuMean": 34,
+          "cpuMax": 150,
+          "memPeakMiB": 400
+        }
+      },
+      "mainLoopDelayMs": {
+        "p50": 5.36,
+        "p99": 8.13,
+        "max": 64.03
+      },
+      "followerIncident": {
+        "win": "BURST",
+        "at": "00:03:45",
+        "cause": "java.lang.IllegalStateException: Invalid offset in log file: 3257288321540847736",
+        "recovery": {
+          "readyAfterS": 17,
+          "caughtUpAfterReadyS": 0.162,
+          "writerTx": 505004812,
+          "followerTx": 505004812,
+          "caughtUp": true
+        }
+      },
+      "writer": {
+        "offered": 6044,
+        "scheduled": 6044,
+        "committed": 6044,
+        "errors": {},
+        "maxQueue": 4108,
+        "drain": {
+          "ms": 103903,
+          "leftQueued": 0,
+          "leftInflight": 0
+        },
+        "lat": {
+          "n": 6044,
+          "p50": 53195.37,
+          "p90": 104858.02,
+          "p99": 114134.31,
+          "max": 114624.25,
+          "mean": 53002.25
+        },
+        "svc": {
+          "n": 6044,
+          "p50": 256.01,
+          "p90": 466.8,
+          "p99": 1007.39,
+          "max": 1460.84,
+          "mean": 275.53
+        },
+        "byBand": {
+          "5-10": {
+            "n": 0
+          },
+          "11-25": {
+            "n": 0
+          },
+          "26-50": {
+            "n": 6044,
+            "lat": 114134.31,
+            "svcP50": 256.01
+          }
+        },
+        "waitsOver2s": 5935
+      }
+    },
+    {
+      "name": "RECOVER",
+      "mode": "follower",
+      "readers": 4,
+      "kind": "recover",
+      "seconds": 30,
+      "traceDigest": "648a71cd01e4423ecaecb408308ce471594f3595af38e667c9d55caa19f33b4b",
+      "start": 1794096419375.219,
+      "end": 1794096449375.219,
+      "offerOverrunMs": 7,
+      "blockCut": {
+        "at": 1794096420374.7393,
+        "ms": 97,
+        "ok": true,
+        "out": "Block flush message sent to 1 database(s)."
+      },
+      "reads": {
+        "logicalReaders": 4,
+        "plan": [
+          {
+            "w": 0,
+            "readers": 1,
+            "conns": 1,
+            "cap": 4
+          },
+          {
+            "w": 1,
+            "readers": 1,
+            "conns": 1,
+            "cap": 4
+          },
+          {
+            "w": 2,
+            "readers": 1,
+            "conns": 1,
+            "cap": 4
+          },
+          {
+            "w": 3,
+            "readers": 1,
+            "conns": 1,
+            "cap": 4
+          }
+        ],
+        "connectMs": 195,
+        "pulls": 376,
+        "pullsPerS": 12.53,
+        "goodputPullsPerS": 12.53,
+        "queriesPerS": 55.8,
+        "pull": {
+          "n": 376,
+          "p50": 151.88,
+          "p90": 472.26,
+          "p99": 761.32,
+          "max": 1073.45,
+          "mean": 221.65
+        },
+        "capWait": {
+          "n": 376,
+          "p50": 0.01,
+          "p90": 0.04,
+          "p99": 1.18,
+          "max": 9.21,
+          "mean": 0.06
+        },
+        "errors": {
+          "XX000": 716
+        },
+        "checkedRows": 16434,
+        "uncertainRows": 0,
+        "violations": 0,
+        "violationSamples": [],
+        "faults": {
+          "missing": 0,
+          "duplicate": 0,
+          "torn": 0
+        },
+        "splits": {
+          "n": 34,
+          "acked": 34,
+          "straddled": 32,
+          "repeatable": 34,
+          "showedStraddledCommand": 0
+        },
+        "elu": [
+          0.02,
+          0.02,
+          0.02,
+          0.02
+        ]
+      },
+      "lag": {
+        "follower": {
+          "n": 40,
+          "p50": 65.08,
+          "p90": 123.34,
+          "p99": 346.38,
+          "max": 346.38,
+          "mean": 72.05
+        },
+        "writer": {
+          "n": 51,
+          "p50": 13.68,
+          "p90": 30.81,
+          "p99": 91.27,
+          "max": 91.27,
+          "mean": 20.36
+        },
+        "excess": {
+          "n": 40,
+          "p50": 32.16,
+          "p90": 87.77,
+          "p99": 324.76,
+          "max": 324.76,
+          "mean": 49.49
+        },
+        "wrongPos": 0,
+        "errors": [
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000"
+        ]
+      },
+      "stats": {
+        "writer": {
+          "samples": 9,
+          "cpuMean": 68,
+          "cpuMax": 137,
+          "memPeakMiB": 1419
+        },
+        "follower": {
+          "samples": 9,
+          "cpuMean": 144,
+          "cpuMax": 177,
+          "memPeakMiB": 456
+        }
+      },
+      "mainLoopDelayMs": {
+        "p50": 5.48,
+        "p99": 7.16,
+        "max": 17.1
+      },
+      "followerIncident": {
+        "win": "RECOVER",
+        "at": "00:07:23",
+        "cause": "java.lang.IllegalStateException: Invalid offset in log file: 8796093022208",
+        "recovery": {
+          "readyAfterS": 17,
+          "caughtUpAfterReadyS": 0.214,
+          "writerTx": 510731617,
+          "followerTx": 510731617,
+          "caughtUp": true
+        }
+      },
+      "writer": {
+        "offered": 589,
+        "scheduled": 589,
+        "committed": 589,
+        "errors": {},
+        "maxQueue": 21,
+        "drain": {
+          "ms": 10,
+          "leftQueued": 0,
+          "leftInflight": 0
+        },
+        "lat": {
+          "n": 589,
+          "p50": 56.51,
+          "p90": 593.2,
+          "p99": 1537.48,
+          "max": 2057.51,
+          "mean": 185.74
+        },
+        "svc": {
+          "n": 589,
+          "p50": 54.54,
+          "p90": 401.93,
+          "p99": 1343.58,
+          "max": 1537.02,
+          "mean": 135.08
+        },
+        "byBand": {
+          "5-10": {
+            "n": 347,
+            "lat": 1471.14,
+            "svcP50": 55.16
+          },
+          "11-25": {
+            "n": 171,
+            "lat": 1549.13,
+            "svcP50": 50.58
+          },
+          "26-50": {
+            "n": 71,
+            "lat": 1462.71,
+            "svcP50": 63.01
+          }
+        },
+        "waitsOver2s": 1
+      }
+    }
+  ],
+  "summaryTables": {
+    "baseline": {
+      "lat": {
+        "n": 4652,
+        "p50": 50.95,
+        "p90": 168.25,
+        "p99": 557.01,
+        "max": 1344.57,
+        "mean": 82.7
+      },
+      "svc": {
+        "n": 4652,
+        "p50": 50.06,
+        "p90": 152.53,
+        "p99": 411.75,
+        "max": 779.63,
+        "mean": 74.8
+      }
+    },
+    "rows": [
+      {
+        "window": "Z0",
+        "mode": "zero",
+        "readers": 0,
+        "commits": 1163,
+        "offered": 1163,
+        "errors": 0,
+        "latP50": 61.23,
+        "latP99": 570.11,
+        "svcP50": 59.71,
+        "svcP99": 431.8,
+        "latP50x": 1.2,
+        "latP99x": 1.02,
+        "svcP50x": 1.19,
+        "svcP99x": 1.05,
+        "waitsOver2s": 0,
+        "maxQueue": 7,
+        "writerCpu": 72,
+        "followerCpu": 13,
+        "pullsPerS": null,
+        "goodput": null,
+        "queriesPerS": null,
+        "pullP50": null,
+        "pullP99": null,
+        "violations": null,
+        "faults": null,
+        "readErrors": null,
+        "splits": null,
+        "lagFp50": 25.62,
+        "lagFp99": 81.27,
+        "lagWp50": 20.57,
+        "lagExcessP99": 34.31,
+        "loopP99": 7.29
+      },
+      {
+        "window": "F4",
+        "mode": "follower",
+        "readers": 4,
+        "commits": 1163,
+        "offered": 1163,
+        "errors": 0,
+        "latP50": 53.4,
+        "latP99": 1075.38,
+        "svcP50": 51.23,
+        "svcP99": 643.89,
+        "latP50x": 1.05,
+        "latP99x": 1.93,
+        "svcP50x": 1.02,
+        "svcP99x": 1.56,
+        "waitsOver2s": 0,
+        "maxQueue": 16,
+        "writerCpu": 64,
+        "followerCpu": 148,
+        "pullsPerS": 31.37,
+        "goodput": 31.37,
+        "queriesPerS": 142.97,
+        "pullP50": 78.74,
+        "pullP99": 425.74,
+        "violations": 0,
+        "faults": 0,
+        "readErrors": 0,
+        "splits": "210/210",
+        "lagFp50": 22.4,
+        "lagFp99": 196.26,
+        "lagWp50": 15.37,
+        "lagExcessP99": 67.37,
+        "loopP99": 7.75
+      },
+      {
+        "window": "S4",
+        "mode": "single",
+        "readers": 4,
+        "commits": 1163,
+        "offered": 1163,
+        "errors": 0,
+        "latP50": 77.25,
+        "latP99": 566.97,
+        "svcP50": 75.48,
+        "svcP99": 443.36,
+        "latP50x": 1.52,
+        "latP99x": 1.02,
+        "svcP50x": 1.51,
+        "svcP99x": 1.08,
+        "waitsOver2s": 0,
+        "maxQueue": 6,
+        "writerCpu": 151,
+        "followerCpu": 7,
+        "pullsPerS": 28.62,
+        "goodput": 28.62,
+        "queriesPerS": 131.05,
+        "pullP50": 90.06,
+        "pullP99": 395.4,
+        "violations": 0,
+        "faults": 0,
+        "readErrors": 0,
+        "splits": "199/199",
+        "lagFp50": 16.35,
+        "lagFp99": 61,
+        "lagWp50": 24.33,
+        "lagExcessP99": 9.81,
+        "loopP99": 7.22
+      },
+      {
+        "window": "F16",
+        "mode": "follower",
+        "readers": 16,
+        "commits": 1163,
+        "offered": 1163,
+        "errors": 0,
+        "latP50": 387.32,
+        "latP99": 6092.85,
+        "svcP50": 223.07,
+        "svcP99": 1073.98,
+        "latP50x": 7.6,
+        "latP99x": 10.94,
+        "svcP50x": 4.46,
+        "svcP99x": 2.61,
+        "waitsOver2s": 188,
+        "maxQueue": 75,
+        "writerCpu": 79,
+        "followerCpu": 127,
+        "pullsPerS": 8.02,
+        "goodput": 8.02,
+        "queriesPerS": 36.73,
+        "pullP50": 1265.7,
+        "pullP99": 8808.35,
+        "violations": 0,
+        "faults": 0,
+        "readErrors": 0,
+        "splits": "35/56",
+        "lagFp50": 244.78,
+        "lagFp99": 2409.43,
+        "lagWp50": 39.94,
+        "lagExcessP99": 2351.6,
+        "loopP99": 8.72
+      },
+      {
+        "window": "S16",
+        "mode": "single",
+        "readers": 16,
+        "commits": 1163,
+        "offered": 1163,
+        "errors": 0,
+        "latP50": 6451.82,
+        "latP99": 21043.65,
+        "svcP50": 384.59,
+        "svcP99": 1242.99,
+        "latP50x": 126.63,
+        "latP99x": 37.78,
+        "svcP50x": 7.68,
+        "svcP99x": 3.02,
+        "waitsOver2s": 1130,
+        "maxQueue": 192,
+        "writerCpu": 110,
+        "followerCpu": 11,
+        "pullsPerS": 9.97,
+        "goodput": 9.97,
+        "queriesPerS": 45.62,
+        "pullP50": 707.59,
+        "pullP99": 2474.46,
+        "violations": 0,
+        "faults": 0,
+        "readErrors": 0,
+        "splits": "62/69",
+        "lagFp50": 48.23,
+        "lagFp99": 174.82,
+        "lagWp50": 116.51,
+        "lagExcessP99": 12.79,
+        "loopP99": 8.63
+      },
+      {
+        "window": "Z1",
+        "mode": "zero",
+        "readers": 0,
+        "commits": 1163,
+        "offered": 1163,
+        "errors": 0,
+        "latP50": 71.4,
+        "latP99": 736.94,
+        "svcP50": 68.33,
+        "svcP99": 527.66,
+        "latP50x": 1.4,
+        "latP99x": 1.32,
+        "svcP50x": 1.36,
+        "svcP99x": 1.28,
+        "waitsOver2s": 0,
+        "maxQueue": 11,
+        "writerCpu": 57,
+        "followerCpu": 9,
+        "pullsPerS": null,
+        "goodput": null,
+        "queriesPerS": null,
+        "pullP50": null,
+        "pullP99": null,
+        "violations": null,
+        "faults": null,
+        "readErrors": null,
+        "splits": null,
+        "lagFp50": 25.72,
+        "lagFp99": 82.7,
+        "lagWp50": 20.46,
+        "lagExcessP99": 46.31,
+        "loopP99": 7.52
+      },
+      {
+        "window": "F64",
+        "mode": "follower",
+        "readers": 64,
+        "commits": 1163,
+        "offered": 1163,
+        "errors": 0,
+        "latP50": 3702.21,
+        "latP99": 15650.26,
+        "svcP50": 358.13,
+        "svcP99": 1128.46,
+        "latP50x": 72.66,
+        "latP99x": 28.1,
+        "svcP50x": 7.15,
+        "svcP99x": 2.74,
+        "waitsOver2s": 942,
+        "maxQueue": 167,
+        "writerCpu": 89,
+        "followerCpu": 100,
+        "pullsPerS": 6.53,
+        "goodput": 6.53,
+        "queriesPerS": 29.47,
+        "pullP50": 5209.4,
+        "pullP99": 10597.05,
+        "violations": 0,
+        "faults": 0,
+        "readErrors": 2962,
+        "splits": "9/40",
+        "lagFp50": 230.68,
+        "lagFp99": 1174.91,
+        "lagWp50": 62.58,
+        "lagExcessP99": 1060.63,
+        "loopP99": 10.48
+      },
+      {
+        "window": "S64",
+        "mode": "single",
+        "readers": 64,
+        "commits": 1163,
+        "offered": 1163,
+        "errors": 0,
+        "latP50": 274.54,
+        "latP99": 3322.75,
+        "svcP50": 220.69,
+        "svcP99": 753.58,
+        "latP50x": 5.39,
+        "latP99x": 5.97,
+        "svcP50x": 4.41,
+        "svcP99x": 1.83,
+        "waitsOver2s": 55,
+        "maxQueue": 29,
+        "writerCpu": 125,
+        "followerCpu": 15,
+        "pullsPerS": 29.28,
+        "goodput": 29.28,
+        "queriesPerS": 132.05,
+        "pullP50": 1658.18,
+        "pullP99": 4501.48,
+        "violations": 0,
+        "faults": 0,
+        "readErrors": 0,
+        "splits": "16/179",
+        "lagFp50": 46.93,
+        "lagFp99": 272.08,
+        "lagWp50": 86.98,
+        "lagExcessP99": 38.7,
+        "loopP99": 7.59
+      },
+      {
+        "window": "Z2",
+        "mode": "zero",
+        "readers": 0,
+        "commits": 1163,
+        "offered": 1163,
+        "errors": 0,
+        "latP50": 36.39,
+        "latP99": 253.5,
+        "svcP50": 36.07,
+        "svcP99": 253.83,
+        "latP50x": 0.71,
+        "latP99x": 0.46,
+        "svcP50x": 0.72,
+        "svcP99x": 0.62,
+        "waitsOver2s": 0,
+        "maxQueue": 3,
+        "writerCpu": 38,
+        "followerCpu": 8,
+        "pullsPerS": null,
+        "goodput": null,
+        "queriesPerS": null,
+        "pullP50": null,
+        "pullP99": null,
+        "violations": null,
+        "faults": null,
+        "readErrors": null,
+        "splits": null,
+        "lagFp50": 23.42,
+        "lagFp99": 68.52,
+        "lagWp50": 11.36,
+        "lagExcessP99": 35.52,
+        "loopP99": 7.05
+      },
+      {
+        "window": "F256",
+        "mode": "follower",
+        "readers": 256,
+        "commits": 1163,
+        "offered": 1163,
+        "errors": 0,
+        "latP50": 69.4,
+        "latP99": 824.01,
+        "svcP50": 67.51,
+        "svcP99": 494.08,
+        "latP50x": 1.36,
+        "latP99x": 1.48,
+        "svcP50x": 1.35,
+        "svcP99x": 1.2,
+        "waitsOver2s": 0,
+        "maxQueue": 14,
+        "writerCpu": 42,
+        "followerCpu": 134,
+        "pullsPerS": 35.32,
+        "goodput": 35.32,
+        "queriesPerS": 160.85,
+        "pullP50": 5864.58,
+        "pullP99": 11260.45,
+        "violations": 0,
+        "faults": 0,
+        "readErrors": 0,
+        "splits": "0/235",
+        "lagFp50": 64.05,
+        "lagFp99": 489.86,
+        "lagWp50": 20.25,
+        "lagExcessP99": 451.07,
+        "loopP99": 7.86
+      },
+      {
+        "window": "S256",
+        "mode": "single",
+        "readers": 256,
+        "commits": 1163,
+        "offered": 1163,
+        "errors": 0,
+        "latP50": 289.6,
+        "latP99": 1438.82,
+        "svcP50": 233.91,
+        "svcP99": 669.31,
+        "latP50x": 5.68,
+        "latP99x": 2.58,
+        "svcP50x": 4.67,
+        "svcP99x": 1.63,
+        "waitsOver2s": 0,
+        "maxQueue": 16,
+        "writerCpu": 130,
+        "followerCpu": 7,
+        "pullsPerS": 27.38,
+        "goodput": 27.38,
+        "queriesPerS": 123.2,
+        "pullP50": 8073.33,
+        "pullP99": 12449.44,
+        "violations": 0,
+        "faults": 0,
+        "readErrors": 0,
+        "splits": "1/164",
+        "lagFp50": 34.36,
+        "lagFp99": 163.36,
+        "lagWp50": 99.76,
+        "lagExcessP99": 3.28,
+        "loopP99": 7.54
+      },
+      {
+        "window": "Z3",
+        "mode": "zero",
+        "readers": 0,
+        "commits": 1163,
+        "offered": 1163,
+        "errors": 0,
+        "latP50": 42.58,
+        "latP99": 316.37,
+        "svcP50": 41.86,
+        "svcP99": 311.22,
+        "latP50x": 0.84,
+        "latP99x": 0.57,
+        "svcP50x": 0.84,
+        "svcP99x": 0.76,
+        "waitsOver2s": 0,
+        "maxQueue": 5,
+        "writerCpu": 45,
+        "followerCpu": 14,
+        "pullsPerS": null,
+        "goodput": null,
+        "queriesPerS": null,
+        "pullP50": null,
+        "pullP99": null,
+        "violations": null,
+        "faults": null,
+        "readErrors": null,
+        "splits": null,
+        "lagFp50": 31.52,
+        "lagFp99": 120.35,
+        "lagWp50": 12.73,
+        "lagExcessP99": 53.61,
+        "loopP99": 6.97
+      }
+    ],
+    "markdown": "Baseline (pooled Z0, Z1, Z2, Z3): commit from schedule p50 50.95 p99 557.01; service p50 50.06 p99 411.75 ms\n\n| window | mode | readers | commits | offered | errors | latP50 | latP99 | svcP50 | svcP99 | latP50x | latP99x | svcP50x | svcP99x | waitsOver2s | maxQueue | writerCpu | followerCpu | pullsPerS | goodput | queriesPerS | pullP50 | pullP99 | violations | faults | readErrors | splits | lagFp50 | lagFp99 | lagWp50 | lagExcessP99 | loopP99 |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| Z0 | zero | 0 | 1163 | 1163 | 0 | 61.23 | 570.11 | 59.71 | 431.8 | 1.2 | 1.02 | 1.19 | 1.05 | 0 | 7 | 72 | 13 | - | - | - | - | - | - | - | - | - | 25.62 | 81.27 | 20.57 | 34.31 | 7.29 |\n| F4 | follower | 4 | 1163 | 1163 | 0 | 53.4 | 1075.38 | 51.23 | 643.89 | 1.05 | 1.93 | 1.02 | 1.56 | 0 | 16 | 64 | 148 | 31.37 | 31.37 | 142.97 | 78.74 | 425.74 | 0 | 0 | 0 | 210/210 | 22.4 | 196.26 | 15.37 | 67.37 | 7.75 |\n| S4 | single | 4 | 1163 | 1163 | 0 | 77.25 | 566.97 | 75.48 | 443.36 | 1.52 | 1.02 | 1.51 | 1.08 | 0 | 6 | 151 | 7 | 28.62 | 28.62 | 131.05 | 90.06 | 395.4 | 0 | 0 | 0 | 199/199 | 16.35 | 61 | 24.33 | 9.81 | 7.22 |\n| F16 | follower | 16 | 1163 | 1163 | 0 | 387.32 | 6092.85 | 223.07 | 1073.98 | 7.6 | 10.94 | 4.46 | 2.61 | 188 | 75 | 79 | 127 | 8.02 | 8.02 | 36.73 | 1265.7 | 8808.35 | 0 | 0 | 0 | 35/56 | 244.78 | 2409.43 | 39.94 | 2351.6 | 8.72 |\n| S16 | single | 16 | 1163 | 1163 | 0 | 6451.82 | 21043.65 | 384.59 | 1242.99 | 126.63 | 37.78 | 7.68 | 3.02 | 1130 | 192 | 110 | 11 | 9.97 | 9.97 | 45.62 | 707.59 | 2474.46 | 0 | 0 | 0 | 62/69 | 48.23 | 174.82 | 116.51 | 12.79 | 8.63 |\n| Z1 | zero | 0 | 1163 | 1163 | 0 | 71.4 | 736.94 | 68.33 | 527.66 | 1.4 | 1.32 | 1.36 | 1.28 | 0 | 11 | 57 | 9 | - | - | - | - | - | - | - | - | - | 25.72 | 82.7 | 20.46 | 46.31 | 7.52 |\n| F64 | follower | 64 | 1163 | 1163 | 0 | 3702.21 | 15650.26 | 358.13 | 1128.46 | 72.66 | 28.1 | 7.15 | 2.74 | 942 | 167 | 89 | 100 | 6.53 | 6.53 | 29.47 | 5209.4 | 10597.05 | 0 | 0 | 2962 | 9/40 | 230.68 | 1174.91 | 62.58 | 1060.63 | 10.48 |\n| S64 | single | 64 | 1163 | 1163 | 0 | 274.54 | 3322.75 | 220.69 | 753.58 | 5.39 | 5.97 | 4.41 | 1.83 | 55 | 29 | 125 | 15 | 29.28 | 29.28 | 132.05 | 1658.18 | 4501.48 | 0 | 0 | 0 | 16/179 | 46.93 | 272.08 | 86.98 | 38.7 | 7.59 |\n| Z2 | zero | 0 | 1163 | 1163 | 0 | 36.39 | 253.5 | 36.07 | 253.83 | 0.71 | 0.46 | 0.72 | 0.62 | 0 | 3 | 38 | 8 | - | - | - | - | - | - | - | - | - | 23.42 | 68.52 | 11.36 | 35.52 | 7.05 |\n| F256 | follower | 256 | 1163 | 1163 | 0 | 69.4 | 824.01 | 67.51 | 494.08 | 1.36 | 1.48 | 1.35 | 1.2 | 0 | 14 | 42 | 134 | 35.32 | 35.32 | 160.85 | 5864.58 | 11260.45 | 0 | 0 | 0 | 0/235 | 64.05 | 489.86 | 20.25 | 451.07 | 7.86 |\n| S256 | single | 256 | 1163 | 1163 | 0 | 289.6 | 1438.82 | 233.91 | 669.31 | 5.68 | 2.58 | 4.67 | 1.63 | 0 | 16 | 130 | 7 | 27.38 | 27.38 | 123.2 | 8073.33 | 12449.44 | 0 | 0 | 0 | 1/164 | 34.36 | 163.36 | 99.76 | 3.28 | 7.54 |\n| Z3 | zero | 0 | 1163 | 1163 | 0 | 42.58 | 316.37 | 41.86 | 311.22 | 0.84 | 0.57 | 0.84 | 0.76 | 0 | 5 | 45 | 14 | - | - | - | - | - | - | - | - | - | 31.52 | 120.35 | 12.73 | 53.61 | 6.97 |\n\n- warmF: commits 322/322, errors {}, lat p50/p99 4898.87/7694.08, svc p50/p99 333.07/2733.04; lag follower p50/p99 94.01/703.55 (n 25, errors 0); reads 7.13/s p99 1721.56 viol 0 errors {}; block cut true 294 ms\n- warmS: commits 322/322, errors {}, lat p50/p99 1762.5/3925.63, svc p50/p99 288.32/1217.81; lag follower p50/p99 31.66/132.01 (n 24, errors 0); reads 13.07/s p99 2499.9 viol 0 errors {}; block cut true 353 ms\n- E5: commits 2497/2497, errors {}, lat p50/p99 43.66/403.21, svc p50/p99 43.07/341.67; lag follower p50/p99 23.51/180.58 (n 216, errors 0); reads -; block cut true 101 ms\n- BURST: commits 6044/6044, errors {}, lat p50/p99 53195.37/114134.31, svc p50/p99 256.01/1007.39; lag follower p50/p99 318.84/416.48 (n 3, errors 278); reads 0.25/s p99 2338.93 viol 0 errors {\"XX000\":14566}; block cut true 275 ms\n- RECOVER: commits 589/589, errors {}, lat p50/p99 56.51/1537.48, svc p50/p99 54.54/1343.58; lag follower p50/p99 65.08/346.38 (n 40, errors 11); reads 12.53/s p99 761.32 viol 0 errors {\"XX000\":716}; block cut true 97 ms\n"
+  },
+  "finishedAt": "2026-11-08T00:07:55.975Z"
+}

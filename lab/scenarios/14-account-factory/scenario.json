@@ -1,0 +1,26 @@
+{
+  "format": "tx2-gs-scenario/1",
+  "id": 14,
+  "slug": "account-factory",
+  "title": "Account factory",
+  "priorities": ["P1", "P2"],
+  "status": "spec",
+  "source": "lab/TARGETS.md section 6 row 14; section 3 (tenant isolation at the storage layer)",
+  "story": "A new tenant is provisioned with 10k entities and its first release while other tenants are live.",
+  "checked": "The new tenant is invisible to others at the storage layer; others' p99 holds.",
+  "seed": 20261114,
+  "yearOne": { "newTenantEntities": 10000 },
+  "params": { "digestEvery": 10 },
+  "rungs": {
+    "10k": { "newSubjects": 1000, "liveMs": 90000, "trace": { "subjects": 30, "factsPerSecond": 15 } }
+  },
+  "rungNote": "At 10k: 1,000 new-tenant subjects (3,000 entities, 12,000 facts) provisioned in bulk commands of 10 subjects.",
+  "witnesses": { "positive": "new-tenant subjects (exist in their own tenant after provisioning)", "negative": "existing-tenant trace subjects (their pulls never include new-tenant rows; reads of new-tenant ids through the existing route return nothing)" },
+  "domain": ["the new tenant's first release activation evaluates its subjects (O-DOMAIN)"],
+  "bars": [
+    { "id": "P1.read.p99", "metric": "read.p99", "op": "<=", "value": 100, "unit": "ms", "source": "TARGETS section 1 P1 (others' p99 holds)" },
+    { "id": "P2.trace.commit.p99", "metric": "commit.trace.p99", "op": "<=", "value": 50, "unit": "ms", "source": "TARGETS section 1 P2" }
+  ],
+  "faults": [],
+  "oracle": { "source": "O-REPLAY per tenant (tenant-local state); hand derivation for isolation (cited in expected hand.isolation)", "gaps": ["O-REPLAY has no tenancy rule: isolation is a storage property checked by the runner, not replayed", "the runner needs one composition per tenant (DatabaseScope.make with the tenant); lib/composition.mjs supports it but the multi-tenant runner is not built"] }
+}

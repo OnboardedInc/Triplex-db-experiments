@@ -1,0 +1,51 @@
+{
+  "at": "2026-11-07T22:57:12.852Z",
+  "volume": "tx2-xtdb-s2-data",
+  "mountedBy": [
+    "tx2-xtdb-s2-ro",
+    "tx2-xtdb-s2"
+  ],
+  "followerMount": {
+    "Type": "volume",
+    "Name": "tx2-xtdb-s2-data",
+    "Source": "/var/lib/docker/volumes/tx2-xtdb-s2-data/_data",
+    "Destination": "/var/lib/xtdb",
+    "Driver": "local",
+    "Mode": "ro",
+    "RW": false,
+    "Propagation": ""
+  },
+  "checks": [
+    {
+      "label": "a second container with the writer config (read-write) must be refused",
+      "container": "tx2-xtdb-s2-second",
+      "refused": true,
+      "message": "tx2-xtdb-s2-second would be a second read-write container on tx2-xtdb-s2-data (already mounted by tx2-xtdb-s2-ro, tx2-xtdb-s2); its config must set top-level readOnlyDatabases: true (R19 1.1: the Local log has no file locks)"
+    },
+    {
+      "label": "a second container with the follower config (read-only) passes",
+      "container": "tx2-xtdb-s2-ro2",
+      "refused": false,
+      "others": [
+        "tx2-xtdb-s2-ro",
+        "tx2-xtdb-s2"
+      ],
+      "readOnly": true
+    },
+    {
+      "label": "the running follower itself passes (restart is not a second writer)",
+      "container": "tx2-xtdb-s2-ro",
+      "refused": false,
+      "others": [
+        "tx2-xtdb-s2"
+      ],
+      "readOnly": true
+    }
+  ],
+  "writerDownWhileFollowerExists": {
+    "exitCode": 3,
+    "stderr": "[lab] REFUSED: tx2-xtdb-s2-ro still exists; run: node lab/bin/engine.mjs down --lane xtdb --slot s2 --follower",
+    "writerStillRunning": true
+  },
+  "ok": true
+}

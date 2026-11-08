@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// lab/bin/gate.mjs <G0|G1|G2|G4> --lane xtdb|qlever [--slot dev] [--exp EXP-NNN] [--note TEXT]
+// lab/bin/gate.mjs <G0|G1|G2|G4|GS> --lane xtdb|qlever [--slot dev] [--exp EXP-NNN] [--note TEXT]
 //   [--previous RUN-ID] [--holder NAME] [--cases N (G1 subset)] [--workloads 01,02 (G2 subset)]
 //   [--profile default|bounded|f1 (QLever query-plan profile)] [--planner-budget N (QLever, set+restore)]
 //
@@ -565,6 +565,59 @@ function runGit(args, encoding = 'utf8') {
   return encoding === 'buffer' ? out.stdout : out.stdout.toString('utf8');
 }
 
+// ---------------------------------------------------------------- GS (EXP-W01)
+
+// [EXP-W01] Why: the 20 golden scenarios (TARGETS section 6) run through lab/scenarios/run.mjs against the held
+// slot, with goldens from O-REPLAY bound by hash (scenario specs, expected files, generator, oracle sources).
+// A scenario counts as PASS only if its database checks, its bars and its domain checks (O-DOMAIN seam, fails
+// closed) all pass. Any selection short of all 20 at the year-one profile is a subset (PASS_SUBSET at best).
+// Kept as one function so EXP-N01's NS gate can land beside it without conflicts.
+const GS_TOTAL = 20;
+async function gateGS(run, config) {
+  const output = run.raw('gs-report.json');
+  const rung = String(run.options.rung ?? '10k');
+  const args = ['lab/scenarios/run.mjs', '--lane', run.lane, '--rung', rung, '--output', output, '--raw-dir', run.rawDir,
+    '--scenarios', String(run.options.scenario ?? 'all'), '--readers', String(run.options.readers ?? 16)];
+  for (const key of ['sweep-cap', 'sweep-concurrency', 'faults', 'drain-timeout-ms']) if (run.options[key]) args.push(`--${key}`, String(run.options[key]));
+  if (run.options['fresh-world']) args.push('--fresh-world');
+  const { result, step, bound } = await engineGate(run, config, { name: 'gs-scenarios', queryPath: `${run.lane}-datalog`, args, timeoutMs: 8 * 3600_000 });
+  if (!bound) return result;
+  const scen = path.join(REPO, 'lab/scenarios');
+  const fixtureFiles = [];
+  for (const entry of fs.readdirSync(scen, { withFileTypes: true })) {
+    const dir = path.join(scen, entry.name);
+    if (!entry.isDirectory()) { if (entry.name.endsWith('.mjs')) fixtureFiles.push(path.relative(REPO, dir)); continue; }
+    for (const f of fs.readdirSync(dir)) if (/\.(mjs|json)$/.test(f)) fixtureFiles.push(path.relative(REPO, path.join(dir, f)));
+  }
+  for (const f of fs.readdirSync(path.join(REPO, 'lab/oracles/replay'))) if (f.endsWith('.py')) fixtureFiles.push(`lab/oracles/replay/${f}`);
+  result.fixtures = fileHashes(run, fixtureFiles.sort(), 'oracle-fixture');
+  const report = readJson(output, null);
+  if (!report) { run.reason('no GS report written'); run.failure({ step: step.name, tail: step.tail }); return result; }
+  run.store(output, 'raw-outcome');
+  for (const f of fs.readdirSync(run.rawDir).filter(f => f.endsWith('-checkpoint.json'))) run.store(path.join(run.rawDir, f), 'raw-outcome');
+  result.contactedEndpoint = report.endpoint ?? null;
+  if (report.endpoint !== bound.info.endpoint) run.reason(`GS contacted ${report.endpoint}, slot is ${bound.info.endpoint}`);
+  if (report.status !== 'DONE') run.reason(`GS runner status ${report.status}: ${String(report.error ?? '').slice(0, 300)}`);
+  const ran = report.scenarios.filter(s => s.verdict !== 'NOT_RUN');
+  const pass = ran.filter(s => s.verdict === 'PASS');
+  for (const s of ran.filter(s => s.verdict !== 'PASS')) run.failure({ scenario: s.scenario, slug: s.slug, verdict: s.verdict, verdicts: s.verdicts, firstFailures: s.firstFailures });
+  if (ran.length === 0) run.reason('zero executed scenarios');
+  if (ran.length - pass.length) run.reason(`${ran.length - pass.length} of ${ran.length} scenarios did not PASS`);
+  result.scope = ran.length === GS_TOTAL && rung === '10m' && !report.profile?.reduced ? 'full' : `subset:${ran.length}/${GS_TOTAL} rung=${rung} readers=${report.readers}${report.profile?.reduced ? ' reduced-profile' : ''}`;
+  result.counts = { executed: ran.length, expected: ran.length, pass: pass.length, fail: ran.length - pass.length, skip: 0,
+    byVerdict: Object.fromEntries([...new Set(ran.map(s => s.verdict))].map(v => [v, ran.filter(s => s.verdict === v).length])),
+    database: { pass: ran.filter(s => s.verdicts?.database === 'PASS').length, fail: ran.filter(s => s.verdicts?.database !== 'PASS').length },
+    bars: { pass: ran.filter(s => s.verdicts?.bars === 'PASS').length, fail: ran.filter(s => s.verdicts?.bars !== 'PASS').length },
+    domain: Object.fromEntries([...new Set(ran.map(s => s.verdicts?.domain))].map(v => [v, ran.filter(s => s.verdicts?.domain === v).length])) };
+  result.gs = { rung, readers: report.readers, profile: report.profile, world: report.world, scope: report.scope, composition: report.composition, runTag: report.runTag,
+    scenarios: report.scenarios.map(s => ({ scenario: s.scenario, slug: s.slug, verdict: s.verdict, verdicts: s.verdicts, expectedFile: s.expectedFile, wallMs: s.wallMs,
+      correctness: s.correctness ? { pass: s.correctness.pass, fail: s.correctness.fail } : null, bars: s.bars?.map(b => ({ id: b.id, observed: b.observed, want: `${b.op} ${b.value}`, ok: b.ok })),
+      accounting: s.metrics?.accounting, subSchedules: s.subSchedules, firstFailures: s.firstFailures })) };
+  result.cases = ran.map(s => ({ caseId: `GS.${String(s.scenario).padStart(2, '0')}`, mode: rung, status: s.verdict, oracleId: 'O-REPLAY+O-DOMAIN', rawResultSha256: sha256(JSON.stringify(s)), languages: ['triplex-public'] }));
+  result.scopes = { worldScope: report.scope, fresh: !!run.options['fresh-world'] };
+  return result;
+}
+
 // ---------------------------------------------------------------- G4
 
 // [EXP-002] Why: G4 (PLAN 7.5) is "semantic counterexamples with original expected answers". The
@@ -617,14 +670,14 @@ main(async () => {
   // qualify would execute, without locks, builds or engines. OBL (run an obligation's pinned case manifest on a slot) exists
   // only as a plan: no executable case manifests are pinned yet, so it never runs.
   if (options['dry-run']) {
-    if (!['G0', 'G1', 'G2', 'G4', 'NS', 'OBL'].includes(gate) || !['xtdb', 'qlever'].includes(options.lane)) fail('USAGE', 'usage: gate.mjs G0|G1|G2|G4|NS|OBL --lane xtdb|qlever --slot S --dry-run [--plan FILE]');
+    if (!['G0', 'G1', 'G2', 'G4', 'NS', 'GS', 'OBL'].includes(gate) || !['xtdb', 'qlever'].includes(options.lane)) fail('USAGE', 'usage: gate.mjs G0|G1|G2|G4|NS|GS|OBL --lane xtdb|qlever --slot S --dry-run [--plan FILE]');
     const info = slotInfo(loadSlots(), options.lane, options.slot ?? 'dev');
     console.log(JSON.stringify({ dryRun: true, gate, lane: options.lane, slot: info.slot, endpoint: info.endpoint, container: info.container, mode: info.mode ?? null,
       plan: options.plan ? readJson(path.resolve(options.plan)) : null, executes: gate !== 'OBL', missing: gate === 'OBL' ? 'the OBL gate (run pinned case manifests on a slot) is not implemented' : null }));
     return;
   }
-  if (!['G0', 'G1', 'G2', 'G4', 'NS'].includes(gate) || !['xtdb', 'qlever'].includes(options.lane))
-    fail('USAGE', 'usage: gate.mjs G0|G1|G2|G4|NS --lane xtdb|qlever [--slot dev] [--exp EXP-NNN] [--note TEXT] [--previous RUN-ID] [--cases N] [--workloads 01,02]\n  NS: --rung 10k|100k|1m|10m [--slot s1] [--ns-profile smoke|screening|acceptance] [--zero-readers [--match-duration-s S]] [--baseline RUN-ID] [--composition public]');
+  if (!['G0', 'G1', 'G2', 'G4', 'NS', 'GS'].includes(gate) || !['xtdb', 'qlever'].includes(options.lane))
+    fail('USAGE', 'usage: gate.mjs G0|G1|G2|G4|NS|GS --lane xtdb|qlever [--slot dev] [--exp EXP-NNN] [--note TEXT] [--previous RUN-ID] [--cases N] [--workloads 01,02]\n  NS: --rung 10k|100k|1m|10m [--slot s1] [--ns-profile smoke|screening|acceptance] [--zero-readers [--match-duration-s S]] [--baseline RUN-ID] [--composition public]\n  GS: [--scenario 2,3] [--rung 10k] [--readers 16]');
   const config = loadSlots();
   // [EXP-000] runKind defaults to diagnostic so an unlabelled run can never close anything (V12, B7).
   const runKind = options['run-kind'] ?? 'diagnostic';
@@ -646,7 +699,7 @@ main(async () => {
     lockfileSha256 = run.store(path.join(REPO, 'pnpm-lock.yaml'), 'lockfile').sha256;
     gateScripts = Object.fromEntries(['lab/bin/gate.mjs', 'lab/bin/lib.mjs', 'lab/bin/receipt.mjs', 'lab/bin/engine.mjs', 'lab/bin/heavy-lock.mjs', 'lab/config/slots.json']
       .map(file => [file, run.store(path.join(REPO, file), 'gate-script').sha256]));
-    result = gate === 'G0' ? await gateG0(run) : gate === 'G1' ? await gateG1(run, config) : gate === 'G2' ? await gateG2(run, config) : gate === 'NS' ? await gateNS(run, config) : await gateG4(run, config);
+    result = gate === 'G0' ? await gateG0(run) : gate === 'G1' ? await gateG1(run, config) : gate === 'G2' ? await gateG2(run, config) : gate === 'NS' ? await gateNS(run, config) : gate === 'GS' ? await gateGS(run, config) : await gateG4(run, config);
   } catch (error) {
     run.reason(`harness error: ${error.message}`);
     run.failure({ harnessError: String(error.stack ?? error).slice(0, 3000) });

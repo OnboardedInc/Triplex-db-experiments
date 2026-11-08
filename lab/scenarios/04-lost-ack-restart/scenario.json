@@ -1,0 +1,83 @@
+{
+  "format": "tx2-gs-scenario/1",
+  "id": 4,
+  "slug": "lost-ack-restart",
+  "title": "Lost acknowledgements and a restart (with GS.04b current-index consumer cut)",
+  "priorities": [
+    "P2",
+    "P1"
+  ],
+  "status": "runnable",
+  "source": "lab/TARGETS.md section 6 row 4 and section 6.1 (GS.04b)",
+  "story": "1% of commits lose their ACK and are retried; mid-run, the engine (or QLever broker) is killed and restarted. Added schedule GS.04b: the current index's feed consumer is cut for 60 s while the source keeps committing.",
+  "checked": "Every retry returns the original receipt; no acknowledged commit is lost; readers resume at their pinned bases. GS.04b: reads at bases beyond the index watermark wait or route to a fallback per TARGETS 4.1; none answers from the stale index.",
+  "seed": 20261104,
+  "yearOne": {
+    "lostAckRate": 0.01,
+    "restart": "engine or QLever broker kill"
+  },
+  "params": {
+    "restartAtFraction": 0.5
+  },
+  "rungs": {
+    "10k": {
+      "subjects": 15,
+      "negatives": 5,
+      "lostAckRate": 0.2,
+      "liveMs": 25000,
+      "trace": {
+        "subjects": 15,
+        "factsPerSecond": 15
+      }
+    },
+    "smoke": {
+      "subjects": 8,
+      "negatives": 2,
+      "lostAckRate": 0.25,
+      "liveMs": 15000,
+      "trace": {
+        "subjects": 5,
+        "factsPerSecond": 15
+      }
+    }
+  },
+  "rungNote": "Sized for a shared 2-CPU dev slot (measured 2026-11-07: about 0.1 to 1 commits/s under pinned readers): the rung is the 10k-subject background world; the live phase runs the fixed trace (15 facts/s, open loop) for 25 s with a scaled scenario overlay. Year-one volumes wait for PLAN section 8 order 6. The lost-ACK rate is raised to 20% at 10k so about 6 losses happen in one run; the trace keeps its own 1%.",
+  "witnesses": {
+    "positive": "active subjects (two commands each, some with lost ACKs, some in flight at the restart)",
+    "negative": "idle onboarded subjects"
+  },
+  "domain": [],
+  "subSchedules": {
+    "restart": "Triplex runtime restart (client/broker side) on every slot; in-flight commands resolve by commandId",
+    "engine-kill": "engine container kill and restart: only on an exclusive slot with --faults engine",
+    "04b": "current-index consumer cut for 60 s: only on compositions with a separate current index (EXP-X04/EXP-Q05)"
+  },
+  "bars": [
+    {
+      "id": "P2.commit.p99",
+      "metric": "commit.scenario.p99",
+      "op": "<=",
+      "value": 50,
+      "unit": "ms",
+      "source": "TARGETS section 1 P2"
+    },
+    {
+      "id": "P1.writer.maxWait",
+      "metric": "writer.maxWaitMs",
+      "op": "<=",
+      "value": 2000,
+      "unit": "ms",
+      "source": "TARGETS section 1 P1"
+    }
+  ],
+  "faults": [
+    "lost ACK (client discards the receipt and retries)",
+    "Triplex runtime restart mid-run",
+    "engine kill (exclusive slot only)",
+    "GS.04b consumer cut (separate current index only)"
+  ],
+  "oracle": {
+    "source": "O-REPLAY (receipt-mode replay includes unknown outcomes with resolvedOutcome)",
+    "gaps": []
+  }
+}
