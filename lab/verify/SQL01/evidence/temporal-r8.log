@@ -1,0 +1,49 @@
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-sql01/lab/verify/SQL01
+
+ ❯ review.test.ts (4 tests | 1 failed | 3 skipped) 612ms
+   ❯ independent SQL01 review (4)
+     × source outage honors a recorded-time cut combined with a later position 611ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  review.test.ts > independent SQL01 review > source outage honors a recorded-time cut combined with a later position
+AssertionError: expected [ '01M6YQ9PE5J3X2QWD7MFG5GYXG', …(29) ] to deeply equal [ '01M6YQ9PE5J3X2QWD7MFG5GYX6', …(39) ]
+
+- Expected
++ Received
+
+@@ -1,16 +1,6 @@
+  [
+-   "01M6YQ9PE5J3X2QWD7MFG5GYX6",
+-   "01M6YQ9PE5J3X2QWD7MFG5GYX7",
+-   "01M6YQ9PE5J3X2QWD7MFG5GYX8",
+-   "01M6YQ9PE5J3X2QWD7MFG5GYX9",
+-   "01M6YQ9PE5J3X2QWD7MFG5GYXA",
+-   "01M6YQ9PE5J3X2QWD7MFG5GYXB",
+-   "01M6YQ9PE5J3X2QWD7MFG5GYXC",
+-   "01M6YQ9PE5J3X2QWD7MFG5GYXD",
+-   "01M6YQ9PE5J3X2QWD7MFG5GYXE",
+-   "01M6YQ9PE5J3X2QWD7MFG5GYXF",
+    "01M6YQ9PE5J3X2QWD7MFG5GYXG",
+    "01M6YQ9PE5J3X2QWD7MFG5GYXH",
+    "01M6YQ9PE6GAVPHPY9QG4MN25G",
+    "01M6YQ9PE6GAVPHPY9QG4MN25H",
+    "01M6YQ9PE6GAVPHPY9QG4MN25J",
+
+ ❯ review.test.ts:81:27
+     79|       expect(expected).toHaveLength(40);
+     80|       expect(fallback).toHaveLength(40);
+     81|       expect(ids(actual)).toEqual(ids(expected));
+       |                           ^
+     82|     } finally { await rt.close(); }
+     83|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 skipped (4)
+   Start at  18:18:33
+   Duration  1.09s (tests 62%, import 26%, transform 12%)
+

@@ -15,16 +15,23 @@ import type { QleverBrokerStorageAdapterService } from "../../../packages/qlever
 import { LogFeed } from "../../../packages/qlever/src/broker/feed.ts";
 const base = path.resolve(import.meta.dirname, "data");
 const fresh = (label: string) => path.join(base, label + "-" + randomUUID());
-const out = (name: string, value: unknown) => fs.writeFileSync(path.join(import.meta.dirname, "evidence", name + ".json"), JSON.stringify(value, null, 2));
+const out = (name: string, value: unknown) => fs.writeFileSync(path.join(import.meta.dirname, "evidence", (process.env.SQL01_ATTEMPT ? process.env.SQL01_ATTEMPT + "-" : "") + name + ".json"), JSON.stringify(value, null, 2));
 const empty: QleverClient = { query: async () => [], update: async () => ({}), command: async () => ({}), cancel: async () => {}, close: async () => {} };
-const outage: QleverClient = { ...empty, query: async () => { throw new TypeError("fetch failed"); } };
+const outage: QleverClient = { ...empty, query: async (text) => {
+  // [EXP-SQL01] Why: initialize checks connectivity before any fixture writes; fail only answer requests.
+  // Rejected: failing initialize (never exercises the H1 outage route).
+  if (text.includes("SELECT ?s WHERE")) return [];
+  throw new TypeError("fetch failed");
+} };
 async function runtime(dir: string, client = empty) {
   const scope = "vsql01:" + randomUUID();
   const broker = await HostBroker.open({ dir, scopeKey: scope, minFreeBytes: 0 });
   const adapter = makeQleverStorageAdapter(client, scope, { broker }) as QleverBrokerStorageAdapterService;
   const layer = Runtime.define({ name: "vsql01", storage: Layer.succeed(StorageAdapter, adapter), queries: Layer.succeed(QueryExecutor, makeQleverQueryExecutor(client, scope, { sourceView: adapter.sourceView })) }).layer({ scope: DatabaseScope.test(scope), capabilities: Capabilities.none });
   const managed = ManagedRuntime.make(layer);
-  const triples = await managed.runPromise(Triples.asEffect());
+  // [EXP-SQL01] Why: the current Effect service is yielded; asEffect is not part of this API.
+  // Rejected: changing the product service to accommodate an invalid verifier helper.
+  const triples = await managed.runPromise(Effect.gen(function* () { return yield* Triples; }));
   return { broker, adapter, triples, run: <A, E>(e: Effect.Effect<A, E>) => managed.runPromise(e), close: async () => { await managed.dispose(); await broker.close(); } };
 }
 const ops = (entity: string, tag: string, n = 5) => Array.from({ length: n }, (_, i) => ({ op: "assert" as const, entityId: EntityId.make(entity), attribute: ":vsql/a" + i, value: string(tag + "-" + i) }));
@@ -56,14 +63,21 @@ describe("independent SQL01 review", () => {
   it("source outage honors a recorded-time cut combined with a later position", async () => {
     const dir = fresh("recorded-cut"), rt = await runtime(dir, outage);
     try {
-      const first = await rt.run(rt.triples.transact(ops("time-cut", "first", 10)));
+      const first = await rt.run(rt.triples.transact(ops("time-cut", "first", 40)));
       await new Promise(r => setTimeout(r, 5));
-      const second = await rt.run(rt.triples.transact([{ op: "retract", id: first.triples[0]!.id }]));
+      const second = await rt.run(rt.triples.transact(first.triples.slice(0, 10).map(t => ({ op: "retract" as const, id: t.id }))));
       const basis = { validAt: Date.now() + 1, recordedAt: first.instant, recordedPosition: second.position };
       const actual = await rt.run(rt.adapter.getByEntity("time-cut", basis));
       const source = await rt.broker.fromLogAsync(0, { entities: ["time-cut"] }, () => true);
       const expected = source.filter(r => r.recorded_position <= basis.recordedPosition && r.recorded_at <= basis.recordedAt && (r.retracted_position === null || r.retracted_position > basis.recordedPosition || r.retracted_at! > basis.recordedAt));
-      out("recorded-cut", { dir, first, second, basis, actual, expected });
+      // [EXP-SQL01] Why: advance H past B using an unrelated commit, then repeat the identical request.
+      // Rejected: changing the requested position (could explain a changed answer independently of routing).
+      const third = await rt.run(rt.triples.transact(ops("unrelated", "advance", 1)));
+      const belowH = rt.broker.purgeCurrent(third.position);
+      const fallback = await rt.run(rt.adapter.getByEntity("time-cut", basis));
+      out("recorded-cut", { dir, first, second, third, basis, actual, expected, belowH, fallback });
+      expect(expected).toHaveLength(40);
+      expect(fallback).toHaveLength(40);
       expect(ids(actual)).toEqual(ids(expected));
     } finally { await rt.close(); }
   });

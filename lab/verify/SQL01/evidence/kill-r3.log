@@ -1,0 +1,2 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 40161 "CX-P2Q-R5-final-suites", pid 40193 "DA01-G1-repeat", pid 14284 "CX-A01-0311-R3-evaluator-b5af033", pid 42416 "CX-VSQL01-temporal-r4"
+{"kills":50,"acknowledged":163,"lost":0,"feedPositions":189,"feedDuplicates":0,"feedMissing":0,"root":"/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-sql01/lab/verify/SQL01/data/kill-04c56981-d44e-4640-adc6-e07bb6833af9"}

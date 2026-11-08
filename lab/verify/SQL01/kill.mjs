@@ -43,7 +43,7 @@ for (let cycle = 0; cycle <= 50; cycle++) {
   clearTimeout(timer);
   rounds.push({ cycle, mode, result, timedOut, barrier, recovered: recovery?.recovered.length, stderr, events });
   if (!recovery || timedOut || (cycle < 50 && (!barrier || result.signal !== 'SIGKILL')) || (cycle === 50 && result.code !== 0)) errors.push({ cycle, reason: 'incomplete cycle', stderr, result });
-  fs.writeFileSync('lab/verify/SQL01/evidence/kills.json', JSON.stringify({ root, acknowledged: acks.size, acks: [...acks], feedSeen, cursor, errors, rounds }, null, 2));
+  fs.writeFileSync('lab/verify/SQL01/evidence/' + (process.env.SQL01_ATTEMPT ?? 'kills') + '-results.json', JSON.stringify({ root, acknowledged: acks.size, acks: [...acks], feedSeen, cursor, errors, rounds }, null, 2));
   if (errors.length) throw Error('kill checks failed: ' + JSON.stringify(errors.slice(0, 2)));
 }
 const duplicates = feedSeen.filter((v, i) => feedSeen.indexOf(v) !== i);

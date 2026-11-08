@@ -1,0 +1,31 @@
+{
+  "root": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-sql01/lab/verify/SQL01/data/kill-d70e7961-4a0f-4271-8a5d-47d6c71684f8",
+  "acknowledged": 0,
+  "acks": [],
+  "feedSeen": [],
+  "cursor": null,
+  "errors": [
+    {
+      "cycle": 0,
+      "reason": "incomplete cycle",
+      "stderr": "\nnode:internal/modules/run_main:123\n    triggerUncaughtException(\n    ^\nError [ERR_MODULE_NOT_FOUND]: Cannot find module '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-sql01/packages/qlever/node_modules/@triplex-build/triplex/dist/index.js' imported from /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-sql01/packages/qlever/src/rdf.ts\n    at finalizeResolution (node:internal/modules/esm/resolve:275:11)\n    at moduleResolve (node:internal/modules/esm/resolve:861:10)\n    at defaultResolve (node:internal/modules/esm/resolve:985:11)\n    at nextResolve (node:internal/modules/esm/hooks:748:28)\n    at resolveBase (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-sql01/node_modules/.pnpm/tsx@4.19.0/node_modules/tsx/dist/esm/index.mjs?1794179516965:2:3212)\n    at resolveDirectory (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-sql01/node_modules/.pnpm/tsx@4.19.0/node_modules/tsx/dist/esm/index.mjs?1794179516965:2:3584)\n    at resolveTsPaths (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-sql01/node_modules/.pnpm/tsx@4.19.0/node_modules/tsx/dist/esm/index.mjs?1794179516965:2:4073)\n    at resolve (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-sql01/node_modules/.pnpm/tsx@4.19.0/node_modules/tsx/dist/esm/index.mjs?1794179516965:2:4447)\n    at nextResolve (node:internal/modules/esm/hooks:748:28)\n    at Hooks.resolve (node:internal/modules/esm/hooks:240:30) {\n  code: 'ERR_MODULE_NOT_FOUND',\n  url: 'file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-sql01/packages/qlever/node_modules/@triplex-build/triplex/dist/index.js'\n}\n\nNode.js v22.23.2\n",
+      "result": {
+        "code": 1,
+        "signal": null
+      }
+    }
+  ],
+  "rounds": [
+    {
+      "cycle": 0,
+      "mode": "before-append",
+      "result": {
+        "code": 1,
+        "signal": null
+      },
+      "timedOut": false,
+      "stderr": "\nnode:internal/modules/run_main:123\n    triggerUncaughtException(\n    ^\nError [ERR_MODULE_NOT_FOUND]: Cannot find module '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-sql01/packages/qlever/node_modules/@triplex-build/triplex/dist/index.js' imported from /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-sql01/packages/qlever/src/rdf.ts\n    at finalizeResolution (node:internal/modules/esm/resolve:275:11)\n    at moduleResolve (node:internal/modules/esm/resolve:861:10)\n    at defaultResolve (node:internal/modules/esm/resolve:985:11)\n    at nextResolve (node:internal/modules/esm/hooks:748:28)\n    at resolveBase (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-sql01/node_modules/.pnpm/tsx@4.19.0/node_modules/tsx/dist/esm/index.mjs?1794179516965:2:3212)\n    at resolveDirectory (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-sql01/node_modules/.pnpm/tsx@4.19.0/node_modules/tsx/dist/esm/index.mjs?1794179516965:2:3584)\n    at resolveTsPaths (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-sql01/node_modules/.pnpm/tsx@4.19.0/node_modules/tsx/dist/esm/index.mjs?1794179516965:2:4073)\n    at resolve (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-sql01/node_modules/.pnpm/tsx@4.19.0/node_modules/tsx/dist/esm/index.mjs?1794179516965:2:4447)\n    at nextResolve (node:internal/modules/esm/hooks:748:28)\n    at Hooks.resolve (node:internal/modules/esm/hooks:240:30) {\n  code: 'ERR_MODULE_NOT_FOUND',\n  url: 'file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-sql01/packages/qlever/node_modules/@triplex-build/triplex/dist/index.js'\n}\n\nNode.js v22.23.2\n",
+      "events": []
+    }
+  ]
+}

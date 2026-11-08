@@ -1,0 +1,2 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 77517 "CX-VX02-5-regressions", pid 61857 "CX-VA01-0311-R3-evaluator", pid 61931 "CX-VA01-0311-R3-mutations", pid 76046 "CX-VP2Q-4-r6-live"
+{"sqlite":{"version":"3.53.1","source":"2026-05-05 10:34:17 c88b22011a54b4f6fbd149e9f8e4de77658ce58143a1af0e3785e4e6475127e9"},"driverPackage":"12.10.0","builderManifestChecked":256,"mismatches":[],"productUnchanged":true,"rawFiles":67,"rawBytes":753136360}

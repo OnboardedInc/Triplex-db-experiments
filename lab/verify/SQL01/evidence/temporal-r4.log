@@ -1,0 +1,49 @@
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-sql01/lab/verify/SQL01
+
+ ❯ review.test.ts (4 tests | 1 failed | 3 skipped) 592ms
+   ❯ independent SQL01 review (4)
+     × source outage honors a recorded-time cut combined with a later position 590ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  review.test.ts > independent SQL01 review > source outage honors a recorded-time cut combined with a later position
+AssertionError: expected [ '01M6YPZWBPHQ3RE570BYVSRVVA', …(29) ] to deeply equal [ '01M6YPZWBPHQ3RE570BYVSRVV0', …(39) ]
+
+- Expected
++ Received
+
+@@ -1,16 +1,6 @@
+  [
+-   "01M6YPZWBPHQ3RE570BYVSRVV0",
+-   "01M6YPZWBPHQ3RE570BYVSRVV1",
+-   "01M6YPZWBPHQ3RE570BYVSRVV2",
+-   "01M6YPZWBPHQ3RE570BYVSRVV3",
+-   "01M6YPZWBPHQ3RE570BYVSRVV4",
+-   "01M6YPZWBPHQ3RE570BYVSRVV5",
+-   "01M6YPZWBPHQ3RE570BYVSRVV6",
+-   "01M6YPZWBPHQ3RE570BYVSRVV7",
+-   "01M6YPZWBPHQ3RE570BYVSRVV8",
+-   "01M6YPZWBPHQ3RE570BYVSRVV9",
+    "01M6YPZWBPHQ3RE570BYVSRVVA",
+    "01M6YPZWBPHQ3RE570BYVSRVVB",
+    "01M6YPZWBPHQ3RE570BYVSRVVC",
+    "01M6YPZWBPHQ3RE570BYVSRVVD",
+    "01M6YPZWBPHQ3RE570BYVSRVVE",
+
+ ❯ review.test.ts:78:27
+     76|       expect(expected).toHaveLength(40);
+     77|       expect(fallback).toHaveLength(40);
+     78|       expect(ids(actual)).toEqual(ids(expected));
+       |                           ^
+     79|     } finally { await rt.close(); }
+     80|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 skipped (4)
+   Start at  18:13:11
+   Duration  1.03s (tests 63%, import 24%, transform 12%)
+
