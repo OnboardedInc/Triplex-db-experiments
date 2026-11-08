@@ -44,6 +44,13 @@
         (is (pos? (:datoms commit)))
         (is (= "committed" (:status (storage/operation current "operation-1"))))
         (is (= 1 (count (:rows (query/run name current {"edn" "[:find ?id :in $ $rules :where [?f :f/id ?id] [(triplex.gateway.query/visible $ ?f 2.0 nil nil)]]" "relations" [] "timeoutMs" 1000}))))))
+      (let [current (gateway/sync-db uri)
+            claim-input {"sourceK" 1 "position" 2 "operationId" "claim-operation" "rows" [] "newIds" []
+                         "claims" [{"commandId" "claim-only" "txId" "claim-tx" "timestamp" 7.25}]}]
+        (storage/commit! conn current claim-input)
+        (let [tx (d/entity (gateway/sync-db uri) [:triplex.tx/operation-id "claim-operation"])]
+          (is (= "claim-tx" (:triplex.tx/id tx)))
+          (is (= 7.25 (:triplex.tx/recorded-at tx)))))
       (is (thrown? Exception (query/check-query! '[:find ?x :where [(clojure.core/slurp "/etc/passwd") ?x]])))
       (finally (storage/release! name handle) (gateway/delete-scope! base scope)))))
 (defn -main [& _]

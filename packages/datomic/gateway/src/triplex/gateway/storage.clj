@@ -66,14 +66,17 @@
         scope (d/q '[:find ?s . :where [?s :triplex.scope/key]] db)
         claims (get input "claims")
         sample (or (first fresh) (first old))
-        metadata {:position position :recorded-at (if (seq fresh) (:recorded_at sample) (:retracted_at sample))
-                  :id (if (seq fresh) (:tx_id sample) (:retract_tx_id sample))}]
+        ;; [EXP-DA01] Why: claims-only and position-only commits still require complete tx annotations. Rejected: deriving metadata only from assertion rows (loses claim receipts).
+        metadata {:position position
+                  :recorded-at (cond (seq fresh) (:recorded_at sample) (seq old) (:retracted_at sample)
+                                     (seq claims) (get (first claims) "timestamp") :else (double (System/currentTimeMillis)))
+                  :id (cond (seq fresh) (:tx_id sample) (seq old) (:retract_tx_id sample)
+                            (seq claims) (get (first claims) "txId") :else (get input "operationId"))}]
     (when-not (> position source) (codec/invalid "Commit position must advance"))
     (vec (remove nil? (concat [[:db/cas scope :triplex.scope/position source position]
-                  (cond-> {:db/id "datomic.tx" :triplex.tx/position position
-                           :triplex.tx/operation-id (get input "operationId")}
-                    (seq rows) (assoc :triplex.tx/id (or (:id metadata) "")
-                                      :triplex.tx/recorded-at (finite! (:recorded-at metadata))))]
+                  {:db/id "datomic.tx" :triplex.tx/position position
+                   :triplex.tx/operation-id (get input "operationId")
+                   :triplex.tx/id (or (:id metadata) "") :triplex.tx/recorded-at (finite! (:recorded-at metadata))}]
                  (upserts fresh) (map #(fact-map % metadata) fresh)
                  (mapcat (fn [row]
                            (let [eid (d/entid db [:f/id (:id row)]) entity (when eid (d/entity db eid))]
