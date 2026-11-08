@@ -22,7 +22,7 @@ export function makeDatomicRuntime(options: {
   const connection = Layer.effect(
     Connection,
     Effect.acquireRelease(
-      Effect.sync(() => new DatomicClient(options.url)),
+      Effect.sync(() => new DatomicClient(options.url, 35_000)),
       (client) => Effect.sync(() => client.close()),
     ),
   );

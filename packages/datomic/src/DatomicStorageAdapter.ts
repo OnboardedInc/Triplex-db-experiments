@@ -150,7 +150,7 @@ export const makeDatomicStorageAdapter = (
           }
           if (Date.now() >= until) break;
           await new Promise((resolve) => setTimeout(resolve, 25));
-        } while (true);
+        } while (Date.now() < until);
         throw new TransactionOutcomeUnknown({
           operationId,
           attemptId,

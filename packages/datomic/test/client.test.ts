@@ -64,3 +64,22 @@ it("uses keepalive, exact JSON, typed HTTP errors, and a total deadline", async 
     server.close();
   }
 });
+
+// [EXP-DA01] Why: a full shared-scope journal exceeds DA00's health-only 1 MiB cap; overflow still fails explicitly. Rejected: truncating JSON or unbounded response buffering.
+it("fails with a typed transport error when the configured response budget is exceeded", async () => {
+  const server = http.createServer((_req, res) =>
+    res.end(JSON.stringify({ data: "x".repeat(256) })),
+  );
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  const address = server.address();
+  if (!address || typeof address === "string") throw new Error("No address");
+  const client = new DatomicClient(`http://127.0.0.1:${address.port}`, 1000, 128);
+  try {
+    await expect(client.request("GET", "/")).rejects.toBeInstanceOf(DatomicTransportError);
+  } finally {
+    client.close();
+    server.closeAllConnections();
+    server.close();
+  }
+});

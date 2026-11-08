@@ -153,7 +153,7 @@ export function makeDatomicQueryExecutor(
             }
             results = results.map((row) => ({
               ...row,
-              ...(entities.get(String(row[optional.rowBinding])) ?? {}),
+              ...entities.get(String(row[optional.rowBinding])),
             }));
           }
           if (Date.now() - started > 30000)

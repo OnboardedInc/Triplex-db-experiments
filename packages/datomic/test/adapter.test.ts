@@ -26,11 +26,19 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")(
       const client = new DatomicClient(url, 5000);
       const scope = DatabaseScope.test(`da01-${randomUUID()}`);
       const adapter = makeDatomicStorageAdapter(client, scope, { resolutionTimeoutMs: timeout });
+      const create = client.create.bind(client);
+      client.create = async (scope) => {
+        const created = await create(scope);
+        console.log(JSON.stringify({ kind: "datomic-test-db-created", scope, ...created }));
+        return created;
+      };
       try {
         await Effect.runPromise(adapter.initialize());
         await run(adapter, client, scope);
       } finally {
-        await client.delete(scope);
+        const deleted = await client.delete(scope);
+        console.log(JSON.stringify({ kind: "datomic-test-db-deleted", scope, ...deleted }));
+        expect(deleted.deleted).toBe(true);
         client.close();
       }
     }
@@ -129,11 +137,16 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")(
         );
       }));
     it("preserves signed zero and int64 bounds and rejects noncanonical integers", async () =>
-      withStore(async (a) => {
+      withStore(async (a, client, scope) => {
         await Effect.runPromise(a.withTransaction(insert(a, "negative-zero", -0)));
         expect(
           Object.is((await Effect.runPromise(a.getById("negative-zero")))?.value_number, -0),
         ).toBe(true);
+        const q = makeDatomicQueryExecutor(client, scope);
+        const projected = await Effect.runPromise(
+          q.execute({ find: ["?v"], where: [["subject", ":value", "?v"]] }, false, { validAt: 2 }),
+        );
+        expect(Object.is(projected.results[0]?.["?v"], -0)).toBe(true);
         for (const value of ["-9223372036854775808", "9223372036854775807"]) {
           await Effect.runPromise(
             a.withTransaction(

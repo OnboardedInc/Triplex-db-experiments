@@ -5,7 +5,7 @@ import { finish, page } from "../src/kernel.js";
 describe("Datomic compiler and kernel", () => {
   it("keeps fact witnesses and escapes constants", () => {
     const q = compileDatomic(
-      { find: ["?e"], where: [["?e", ":name", 'x\" ) (evil']] },
+      { find: ["?e"], where: [["?e", ":name", 'x" ) (evil']] },
       { validAt: 0 },
     );
     expect(q.edn).toContain(":find ?v0 ?id0");

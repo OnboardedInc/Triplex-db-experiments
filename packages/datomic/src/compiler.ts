@@ -53,13 +53,19 @@ export function compileDatomic(input: DatalogQuery, basis: ResolvedTemporalBasis
           subject = `?s${n}`,
           attr = `?a${n}`,
           value = `?z${n}`;
+        const subjectKey = `[${subject} :triplex.entity/id ${term(c[0])}]`;
+        const subjectLink = `[${f} :f/subject ${subject}]`;
+        const attributeKey = `[${attr} :triplex.attr/key ${term(c[1])}]`;
+        const attributeLink = `[${f} :f/attr ${attr}]`;
+        // [EXP-DA01] Why: join selective identity/ref indexes before entity functions (shared-suite timeout; docs.datomic.com/query/query-executing.html). Rejected: leading global fact-ID scans in anti/semi joins.
+        if (!isVariable(c[0]) || bound.has(c[0]))
+          output.push(subjectKey, subjectLink, attributeLink, attributeKey);
+        else if (!isVariable(c[1]) || bound.has(c[1]))
+          output.push(attributeKey, attributeLink, subjectLink, subjectKey);
+        else output.push(subjectLink, subjectKey, attributeLink, attributeKey);
         output.push(
           `[${f} :f/id ?id${n}]`,
           `[(triplex.gateway.query/visible $ ${f} ${literal(basis.validAt)} ${literal(basis.recordedAt)} ${literal(basis.recordedPosition)})]`,
-          `[${f} :f/subject ${subject}]`,
-          `[${subject} :triplex.entity/id ${term(c[0])}]`,
-          `[${f} :f/attr ${attr}]`,
-          `[${attr} :triplex.attr/key ${term(c[1])}]`,
           `[(triplex.gateway.query/scalar $ ${f}) ${isVariable(c[2]) ? term(c[2]) : value}]`,
         );
         if (!isVariable(c[2])) {

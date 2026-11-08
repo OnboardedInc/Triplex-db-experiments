@@ -42,7 +42,15 @@ export class DatomicClient {
   constructor(
     endpoint: string,
     readonly timeoutMs = 5000,
+    readonly maxResponseBytes = 64 * 1024 ** 2,
   ) {
+    if (
+      !Number.isSafeInteger(timeoutMs) ||
+      timeoutMs <= 0 ||
+      !Number.isSafeInteger(maxResponseBytes) ||
+      maxResponseBytes <= 0
+    )
+      throw new RangeError("Invalid Datomic transport budget");
     this.endpoint = new URL(endpoint);
     if (this.endpoint.protocol !== "http:" || this.endpoint.username || this.endpoint.password)
       throw new TypeError("Expected HTTP gateway URL without credentials");
@@ -51,7 +59,12 @@ export class DatomicClient {
   close(): void {
     this.agent.destroy();
   }
-  async request<T>(method: "GET" | "POST", path: string, body?: unknown): Promise<T> {
+  async request<T>(
+    method: "GET" | "POST",
+    path: string,
+    body?: unknown,
+    timeoutMs = this.timeoutMs,
+  ): Promise<T> {
     const bytes = body === undefined ? undefined : Buffer.from(stringifyExact(body));
     return new Promise<T>((resolve, reject) => {
       const req = http.request(
@@ -71,7 +84,8 @@ export class DatomicClient {
           let size = 0;
           res.on("data", (chunk: Buffer) => {
             size += chunk.length;
-            if (size > 1024 * 1024) res.destroy(new Error("Gateway response exceeds 1 MiB"));
+            if (size > this.maxResponseBytes)
+              res.destroy(new Error(`Gateway response exceeds ${this.maxResponseBytes} bytes`));
             else chunks.push(chunk);
           });
           res.on("error", (error) =>
@@ -101,7 +115,7 @@ export class DatomicClient {
       );
       const timer = setTimeout(
         () => req.destroy(new Error("Gateway deadline exceeded")),
-        this.timeoutMs,
+        timeoutMs,
       );
       req.on("close", () => clearTimeout(timer));
       req.on("error", (error) =>
@@ -130,7 +144,7 @@ export class DatomicClient {
     return { handle: response.handle, position };
   }
   release(db: string, handle: string): Promise<unknown> {
-    return this.request("POST", `/v1/db/${db}/release`, { handle });
+    return this.request("POST", `/v1/db/${db}/release`, { handle }, 250);
   }
   async rows(db: string, input: Record<string, unknown>): Promise<readonly TripleRow[]> {
     const response = await this.request<{ rows: WireRow[] }>("POST", `/v1/db/${db}/read`, input);
