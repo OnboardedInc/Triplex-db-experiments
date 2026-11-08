@@ -38,18 +38,22 @@ if (lane === 'qlever') {
   // inside ASSERT argument bytes; the full scope key would appear with escaped quotes.
   const names = scopes.map((s) => JSON.parse(s)[3]);
   const hexNames = names.map((n) => Buffer.from(n).toString('hex'));
-  for (let i = 0; i < ids.length; i += 200) {
-    const lo = ids[i], hi = ids[Math.min(ids.length - 1, i + 199)];
-    const msgs = await sql.unsafe(`SELECT msg_id, tx_ops FROM xt.source_log_msgs WHERE msg_id BETWEEN ${lo} AND ${hi}`);
-    for (const m of msgs) {
-      counts.recordsScanned++;
-      const text = String(m.tx_ops);
-      if (!names.some((n) => text.includes(n)) && !hexNames.some((h) => text.includes(h))) continue;
-      counts.runRecords++;
-      if (text.includes("'triplex-assertion-identity-conflict'")) counts.a0Guards++;
-      if (text.includes("'triplex-identity-conflict'")) counts.compactGuards++;
-    }
+  // Read records one at a time, skipping large ones (other agents' bulk loads reach 1.3 MB; a G1 commit
+  // is 10-100 KB), so the probe stays light on the shared resident. Record size = next tx id - own id.
+  const small = ids.slice(0, -1).map((id, k) => ({ id, bytes: ids[k + 1] - id })).filter((r) => r.bytes < 150_000);
+  const step = Math.max(1, Math.floor(small.length / 400));
+  for (let k = 0; k < small.length; k += step) {
+    const { id } = small[k];
+    const [m] = await sql.unsafe(`SELECT msg_id, tx_ops FROM xt.source_log_msgs WHERE msg_id BETWEEN ${id} AND ${id}`);
+    if (!m) continue;
+    counts.recordsScanned++;
+    const text = String(m.tx_ops);
+    if (!names.some((n) => text.includes(n)) && !hexNames.some((h) => text.includes(h))) continue;
+    counts.runRecords++;
+    if (text.includes("'triplex-assertion-identity-conflict'")) counts.a0Guards++;
+    if (text.includes("'triplex-identity-conflict'")) counts.compactGuards++;
   }
+  counts.windowTransactions = ids.length;
   await sql.end();
   out.counts = counts;
   out.encoding = counts.compactGuards > 0 && counts.a0Guards === 0 ? 'compact' : counts.a0Guards > 0 && counts.compactGuards === 0 ? 'a0' : 'undetermined';
