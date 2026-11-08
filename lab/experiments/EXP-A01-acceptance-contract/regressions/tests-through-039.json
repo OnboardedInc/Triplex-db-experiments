@@ -1,0 +1,1764 @@
+{
+ "Q31a queue bound 5": [
+  [
+   "\"NS-P2-QUEUE-MAX-S\": th(\"ns\", 2,",
+   "\"NS-P2-QUEUE-MAX-S\": th(\"ns\", 5,"
+  ]
+ ],
+ "Q31a progress text": [
+  [
+   "and accounting is not progress: every oracle-valid trace command publishes;",
+   "and accounting is enough;"
+  ]
+ ],
+ "Q31b driver writes": [
+  [
+   "\"driverWrites\": \"none: the driver adds no writes of its own",
+   "\"driverWrites\": \"the driver commits its own writes"
+  ]
+ ],
+ "Q31c falsifier dropped": [
+  [
+   "\"falsifiers\": [\"FX-NESTED-CUTS\", \"FX-ABORT-GAP\", \"FX-CRASH-APPEND-RESOLUTION\", \"FX-RESUME-AT-ABORT-GAP\"],",
+   "\"falsifiers\": [\"FX-NESTED-CUTS\", \"FX-ABORT-GAP\", \"FX-CRASH-APPEND-RESOLUTION\"],"
+  ]
+ ],
+ "Q31c oracle text": [
+  [
+   "Positions are totally ordered coordinates (POSITION:",
+   "Positions are consecutive nested logical positions (POSITION:"
+  ]
+ ],
+ "Q31c gate removed": [
+  [
+   "        g.append(\"GATE-POSITION\")",
+   "        pass"
+  ]
+ ],
+ "Q31d wait 250": [
+  [
+   "\"T-WATERMARK-WAIT-MS\": th(\"observe\", 10,",
+   "\"T-WATERMARK-WAIT-MS\": th(\"observe\", 250,"
+  ]
+ ],
+ "Q31d reconstruct dropped": [
+  [
+   ",CO-RECONSTRUCT-OUTSIDE-VALIDITY,CO-ERASURE-FRONTIER",
+   ",CO-ERASURE-FRONTIER"
+  ]
+ ],
+ "Q31e old ack": [
+  [
+   "\"the source of truth sends the ACK after its own publication;",
+   "\"the source of truth ACKs only after the current index reached the commit;"
+  ]
+ ],
+ "Q31e GS04b": [
+  [
+   "commits and ACKs continue throughout the outage;",
+   "ACKs pause during the outage;"
+  ]
+ ],
+ "Q31f journal modulo": [
+  [
+   "C6-SLIM-BYTE-IDENTICAL), modulo erasure: both sides",
+   "C6-SLIM-BYTE-IDENTICAL), and: both sides"
+  ]
+ ],
+ "Q31f key evidence": [
+  [
+   "is encrypted only under the destroyed key; deleting some key is not evidence",
+   "has had some key deleted"
+  ]
+ ],
+ "Q31g widen": [
+  [
+   "only when the integer digits p - s do not shrink",
+   "always, whatever the integer digits"
+  ]
+ ],
+ "Q31h GS19": [
+  [
+   "\"no gap; zero duplicate externally visible effects throughout,",
+   "\"no gap, no duplicate processing; zero duplicate externally visible effects throughout,"
+  ]
+ ],
+ "Q31i floor": [
+  [
+   "\"W0-R2-CHANGED-SHARE\": th(\"coverage\", 0.20,",
+   "\"W0-R2-CHANGED-SHARE\": th(\"coverage\", 0.10,"
+  ]
+ ],
+ "Q31i gate": [
+  [
+   "    if \"O-DOMAIN\" in o[\"oracles\"] and o[\"id\"] != \"W0.coverage-floors\":\n        g.append(\"GATE-W0\")",
+   "    if False:\n        g.append(\"GATE-W0\")"
+  ]
+ ],
+ "Q31i pin bogus": [
+  [
+   "\"lab/world/W0/SPEC.md\": None,",
+   "\"lab/world/W0/SPEC.md\": \"00\","
+  ]
+ ],
+ "Q31j legacy dropped": [
+  [
+   "    \"G5-SUM-08\": {\"xtdb\": LEGACY_XTDB, \"qlever\": LEGACY_Q_SUM_GROUPED},\n",
+   ""
+  ]
+ ],
+ "Q31j qlever commits": [
+  [
+   "LEGACY_Q_SUM = \"C1 fails with E-VALUE-OUT-OF-RANGE before any mutation;",
+   "LEGACY_Q_SUM = \"C1 commits;"
+  ]
+ ],
+ "Q31k positive dropped": [
+  [
+   "\"CR-BUDGET\", \"CR-W0-COVERAGE\"]]",
+   "\"CR-BUDGET\"]]"
+  ]
+ ],
+ "Q29b agreement": [
+  [
+   "O-REPLAY computes it independently after EXP-O02; the two must agree (RULINGS Q29b)",
+   "O-REPLAY may differ"
+  ]
+ ],
+ "Q29a golden rule": [
+  [
+   "GOLDEN_RULE = \"The golden JSON files stay unchanged as the audit record (RULINGS Q29a). ",
+   "GOLDEN_RULE = \""
+  ]
+ ],
+ "Q30a guard after canonical": [
+  [
+   "the guard runs before CanonicalJson, whose",
+   "the guard runs after CanonicalJson, whose"
+  ]
+ ],
+ "Q30a nested dropped": [
+  [
+   "approximateNumbers: reject applies recursively inside List and Struct",
+   "approximateNumbers: reject applies at the top level"
+  ]
+ ],
+ "Q30b instant": [
+  [
+   "never turned into 0\", \"source\": \"RULINGS Q30b\"",
+   "turned into 0\", \"source\": \"RULINGS Q30b\""
+  ]
+ ],
+ "Q30c encoding": [
+  [
+   "any other encoding fails the projection check\", \"source\": \"RULINGS Q30c\"",
+   "other encodings are tolerated\", \"source\": \"RULINGS Q30c\""
+  ]
+ ],
+ "Q30d shadow": [
+  [
+   "parsing its %.13g rendering returns the same bits; integers only within +/-2^59;",
+   "it is finite;"
+  ]
+ ],
+ "Q30 write route dropped": [
+  [
+   "oracle=[\"O-REPLAY\", \"O-ERR\"], ep=[\"EP-TRIPLES\", \"EP-WRITER\", \"EP-BULK\", \"EP-REPLAY\"], modes=CUR_REOPEN,\n  mutants=[\"M-JSON-NEGZERO-NORMALIZE\"]",
+   "oracle=[\"O-REPLAY\", \"O-ERR\"], ep=[\"EP-TRIPLES\", \"EP-WRITER\"], modes=CUR_REOPEN,\n  mutants=[\"M-JSON-NEGZERO-NORMALIZE\"]"
+  ]
+ ],
+ "Q32b EXP-G02 dropped": [
+  [
+   "LEGACY_RULE = \"Follow-up EXP-G02 (RULINGS Q32b): QLever in-range companion vectors by an independent golden author. ",
+   "LEGACY_RULE = \""
+  ]
+ ],
+ "Q32c share": [
+  [
+   "\"invalidCommands\": {\"share\": 0.001,",
+   "\"invalidCommands\": {\"share\": 0.01,"
+  ]
+ ],
+ "Q32e A0 blocked": [
+  [
+   "\"A0-XTDB\": {\"source\": \"xtdb\", \"positionsDense\": True,",
+   "\"A0-XTDB\": {\"source\": \"xtdb\", \"positionsDense\": False,"
+  ]
+ ],
+ "Q32e falsifiers always": [
+  [
+   "    if composition.get(\"positionsDense\") is True:\n        return list(POSITION_DENSE_CASES)",
+   "    if False:\n        return list(POSITION_DENSE_CASES)"
+  ]
+ ],
+ "Q32e non-dense free": [
+  [
+   "    return list(POSITION_DENSE_CASES) + list(POSITION[\"falsifiers\"]) + [\"PO-ABORTED-LISTED\"]",
+   "    return list(POSITION_DENSE_CASES)"
+  ]
+ ],
+ "Q32e unknown density open": [
+  [
+   "    if \"positionsDense\" not in composition:\n        return True",
+   "    if \"positionsDense\" not in composition:\n        return False"
+  ]
+ ],
+ "Q32f no bump": [
+  [
+   "\"rule\": \"null until V-D01 reviews W0; pinning the hashes needs a contract version bump",
+   "\"rule\": \"null until V-D01 reviews W0"
+  ]
+ ],
+ "Q33a readback": [
+  [
+   "(its shortest round-trip binary64 rendering differs from the given text in canonical form, RULINGS Q33a: 0.1 accepted, 9007199254740993 rejected)",
+   "(RULINGS Q33a)"
+  ]
+ ],
+ "Q33d never false": [
+  [
+   "\"rule\": \"every ordered comparison across type families is a preflight E-MIXED-FAMILY, never false;",
+   "\"rule\": \"every ordered comparison across type families is a preflight E-MIXED-FAMILY, or false;"
+  ]
+ ],
+ "Q33h other-query": [
+  [
+   "\"rule\": \"continuing a cursor with a different basis is PaginationCursorError / other-query;",
+   "\"rule\": \"continuing a cursor with a different basis is PaginationCursorError / malformed;"
+  ]
+ ],
+ "Q33i list": [
+  [
+   "\"G1-I64-02#min-exact\", \"G5-SUM-01\"",
+   "\"G5-SUM-01\""
+  ]
+ ],
+ "Q33 rule dropped": [
+  [
+   "    {\"id\": \"R-CMD-12\",",
+   "    {\"id\": \"R-CMD-12-X\","
+  ]
+ ],
+ "Q34a declared density": [
+  [
+   "    return composition.get(\"allocatorBlocks\") == want",
+   "    return composition.get(\"positionsDense\") is True or composition.get(\"allocatorBlocks\") == want"
+  ]
+ ],
+ "Q34a static falsifiers": [
+  [
+   "cases=[\"CS-POSITION:\" + \",\".join(POSITION_DENSE_CASES)]",
+   "cases=[\"CS-POSITION:\" + \",\".join(POSITION_DENSE_CASES + POSITION[\"falsifiers\"])]"
+  ]
+ ],
+ "Q34a allowlist hash bad": [
+  [
+   "\"sha256\": \"f4e600f36f7563508610f03b3b4c6b9eb83b14fffa94a7cf7f92f3380be126bd\"",
+   "\"sha256\": \"f4e600\""
+  ]
+ ],
+ "Q34b native dropped": [
+  [
+   "ep=[\"EP-WRITER\", \"EP-REPO\", \"EP-NATIVE\", \"EP-FEED\", \"EP-ENGINE-OBS\"], profiles=[\"P-TINY-CONC\"], modes=CUR_REOPEN,\n  mutants=[\"M-ACK-BEFORE-PUBLICATION\"",
+   "ep=[\"EP-WRITER\", \"EP-REPO\", \"EP-FEED\", \"EP-ENGINE-OBS\"], profiles=[\"P-TINY-CONC\"], modes=CUR_REOPEN,\n  mutants=[\"M-ACK-BEFORE-PUBLICATION\""
+  ]
+ ],
+ "Q34c pair dropped": [
+  [
+   ", \"Q33-JSON-READBACK\", \"WIRE-JOURNAL-NUMBER-NEGZERO-ROUNDTRIP\"]}",
+   ", \"Q33-JSON-READBACK\"]}"
+  ]
+ ],
+ "Q34d bound ignored": [
+  [
+   "    if not claim.get(\"compositionBound\"):\n        return \"DIAGNOSTIC\"",
+   "    if False:\n        return \"DIAGNOSTIC\""
+  ]
+ ],
+ "Q35 example wrong": [
+  [
+   "[\"16.50\", \"p02165\"]",
+   "[\"16.50\", \"p021650\"]"
+  ]
+ ],
+ "Q35 no terminator": [
+  [
+   "return f\"n{99 - len(i):02d}{comp(i)}{comp(f)}z\"",
+   "return f\"n{99 - len(i):02d}{comp(i)}{comp(f)}\""
+  ]
+ ],
+ "Q35 old wording": [
+  [
+   "\"summary\": \"value-determined, order-preserving (TDK1):",
+   "\"summary\": \"fixed-width, sign-aware (TDK1):"
+  ]
+ ],
+ "Q35 old error": [
+  [
+   "    {\"id\": \"E-DECIMAL-AVG\",",
+   "    {\"id\": \"E-DECIMAL-UNREPRESENTABLE\", \"tag\": \"InvalidTripleError\", \"reason\": \"x\", \"phase\": \"preflight\", \"status\": \"x\"},\n    {\"id\": \"E-DECIMAL-AVG\","
+  ]
+ ],
+ "Q35 prefix allowed": [
+  [
+   "\"keys are never concatenated into a composite string and never used for prefix queries",
+   "\"keys may be used"
+  ]
+ ],
+ "Q35 V5 ungated": [
+  [
+   "        g.append(\"GATE-TDK1-VECTORS\")",
+   "        pass"
+  ]
+ ],
+ "Q36 zipf 1.0": [
+  [
+   "\"W0-LOCATION-ZIPF-S\": th(\"coverage\", 0.5,",
+   "\"W0-LOCATION-ZIPF-S\": th(\"coverage\", 1.0,"
+  ]
+ ],
+ "Q36 delivery key GS19b": [
+  [
+   "the receiver deduplicates by the delivery key (id, version) of WORLD_W0 workItemIdentity",
+   "the receiver deduplicates by the delivery key of WORLD_W0 workItemIdentity"
+  ]
+ ],
+ "Q36 early cutoff P5": [
+  [
+   "under the delivery key (id, version) with early cutoff, so an activation that leaves a payload unchanged publishes nothing (RULINGS Q36a), and equal",
+   "and equal"
+  ]
+ ],
+ "Q36e affected": [
+  [
+   "plus the subjects whose WORLD_W0 static read set contains a changed fact (O-DOMAIN, NS-P3-DOMAIN-AFFECTED-SET, RULINGS Q36e)",
+   "plus referenced subjects (O-DOMAIN, NS-P3-DOMAIN-AFFECTED-SET)"
+  ]
+ ],
+ "C1 replay status": [
+  [
+   "\"O-REPLAY\": {\"status\": \"BUILT-PENDING-PIN\",",
+   "\"O-REPLAY\": {\"status\": \"TO-BUILD\","
+  ]
+ ],
+ "C1 gate dropped": [
+  [
+   "    if \"O-REPLAY\" in o[\"oracles\"]:\n        g.append(\"GATE-ORACLE-PIN\")",
+   "    if False:\n        g.append(\"GATE-ORACLE-PIN\")"
+  ]
+ ],
+ "C2 contrast ignored": [
+  [
+   "+ ([v[\"contrastCase\"]] if isinstance(v.get(\"contrastCase\"), dict) else [])",
+   "+ []"
+  ]
+ ],
+ "Q31g/Q35b widen": [
+  [
+   "a declaration change that admits every existing value is metadata-only:",
+   "a declaration change is a migration:"
+  ]
+ ],
+ "Q30 write route dropped v2": [
+  [
+   "ep=[\"EP-TRIPLES\", \"EP-WRITER\", \"EP-BULK\", \"EP-REPLAY\"], modes=CUR_REOPEN,\n  mutants=[\"M-JSON-NEGZERO-NORMALIZE\", \"M-JSON-GUARD-ON-JOURNAL\"]",
+   "ep=[\"EP-TRIPLES\", \"EP-WRITER\"], modes=CUR_REOPEN,\n  mutants=[\"M-JSON-NEGZERO-NORMALIZE\", \"M-JSON-GUARD-ON-JOURNAL\"]"
+  ]
+ ],
+ "Q38a A0 exempt": [
+  [
+   "    return list(POSITION_REQUIRED_CASES)\n",
+   "    return list(POSITION_DENSE_CASES) if composition.get(\"source\") in (\"xtdb\", \"qlever\") and \"why\" in composition else list(POSITION_REQUIRED_CASES)\n"
+  ]
+ ],
+ "Q38a declared density": [
+  [
+   "    return list(POSITION_REQUIRED_CASES)\n",
+   "    return list(POSITION_DENSE_CASES) if composition.get(\"positionsDense\") else list(POSITION_REQUIRED_CASES)\n"
+  ]
+ ],
+ "Q38a static dense": [
+  [
+   "cases=[\"CS-POSITION:\" + \",\".join(POSITION_REQUIRED_CASES)]",
+   "cases=[\"CS-POSITION:\" + \",\".join(POSITION_DENSE_CASES)]"
+  ]
+ ],
+ "Q38a mutant dropped": [
+  [
+   "  mutants=[\"M-WITHTRANSACTION-REBIND\"], closure=(\"CR-PASS-ALL\", \"CR-FAULT\", \"CR-MUTANT-KILL\"),",
+   "  closure=(\"CR-PASS-ALL\", \"CR-FAULT\"),"
+  ]
+ ],
+ "Q38a allowlist back": [
+  [
+   "POSITION_REQUIRED_CASES = list(POSITION_DENSE_CASES)",
+   "A0_ALLOCATOR_ALLOWLIST = {}\nPOSITION_REQUIRED_CASES = list(POSITION_DENSE_CASES)"
+  ]
+ ],
+ "Q38b pins ignored": [
+  [
+   "    for x in oracles:\n        if x in pins:",
+   "    for x in []:\n        if x in pins:"
+  ]
+ ],
+ "Q38b other tree": [
+  [
+   "    if r.get(\"sourceTreeSha256\") != claim.get(\"sourceTreeSha256\") or r.get(\"composition\") != claim.get(\"composition\"):",
+   "    if r.get(\"composition\") != claim.get(\"composition\"):"
+  ]
+ ],
+ "Q38b W0 skipped": [
+  [
+   "    if domain and (any(v is None for v in w0[\"files\"].values()) or w0.get(\"reviewReceipt\") is None):",
+   "    if False:"
+  ]
+ ],
+ "Q38c ruling uncompiled": [
+  [
+   "    {\"id\": \"Q39\", \"topic\": \"EXP-X02 (Q39a, Q39b)\",",
+   "    {\"id\": \"Q39x\", \"topic\": \"EXP-X02 (Q39a, Q39b)\","
+  ]
+ ],
+ "Q38d mutant dropped": [
+  [
+   "  mutants=[\"M-DECIMAL-LEXICAL-ORDER\"], closure=(\"CR-PASS-ALL\", \"CR-MUTANT-KILL\"), sources=[\"RULINGS Q38d\"",
+   "  sources=[\"RULINGS Q38d\""
+  ]
+ ],
+ "Q38d SUM encode": [
+  [
+   "\"rule\": \"SUM over decimals decodes the keys or canonical text, computes exactly, and encodes any decimal result used for ordering;",
+   "\"rule\": \"SUM over decimals sums the keys;"
+  ]
+ ],
+ "Q38d JSON convert": [
+  [
+   "validates it (E-DECIMAL-FRACTION, E-DECIMAL-OVERFLOW or E-INVALID-VALUE) and encodes the TDK1 key",
+   "passes it through"
+  ]
+ ],
+ "Q38e status": [
+  [
+   "\"O-TDK1\": {\"status\": \"BUILT\",",
+   "\"O-TDK1\": {\"status\": \"TO-BUILD\","
+  ]
+ ],
+ "Q38e reference hash": [
+  [
+   "\"lab/oracles/decimal/tdk1_reference.py\": \"73467589480deb93fb700cdaf856cccb8f67b9a24d1963e26744a0ac4754bf33\"",
+   "\"lab/oracles/decimal/tdk1_reference.py\": \"923f7577\""
+  ]
+ ],
+ "Q38e vector pinned unreviewed": [
+  [
+   "TDK1_VECTOR_PIN = {\"file\": \"lab/oracles/decimal/tdk1-vectors.json\", \"sha256\": None,",
+   "TDK1_VECTOR_PIN = {\"file\": \"lab/oracles/decimal/tdk1-vectors.json\", \"sha256\": \"0a699f59e16821ddf00c82319569a7e727fa1042e6d36a95fc577a6a4213d2a5\","
+  ]
+ ],
+ "Q38e candidate wrong": [
+  [
+   "\"candidateSha256\": \"0a699f59e16821ddf00c82319569a7e727fa1042e6d36a95fc577a6a4213d2a5\"",
+   "\"candidateSha256\": \"29a4fc95\""
+  ]
+ ],
+ "Q38f version key": [
+  [
+   "    \"deliveryKey\": \"(id, publication sequence)\",",
+   "    \"deliveryKey\": \"(id, version)\","
+  ]
+ ],
+ "Q38f GS19b": [
+  [
+   "the receiver deduplicates by the delivery key (id, publication sequence) of OUTBOX",
+   "the receiver deduplicates by the delivery key (id, version) of OUTBOX"
+  ]
+ ],
+ "Q38f GS10": [
+  [
+   "work items publish under the delivery key (id, publication sequence) with early cutoff (OUTBOX, RULINGS Q38f).",
+   "work items publish with early cutoff."
+  ]
+ ],
+ "Q38f mutant dropped": [
+  [
+   "  mutants=[\"M-OUTBOX-VERSION-DEDUP\"], closure=(\"CR-PASS-ALL\", \"CR-FAULT\", \"CR-MUTANT-KILL\"),",
+   "  closure=(\"CR-PASS-ALL\", \"CR-FAULT\"),"
+  ]
+ ],
+ "Q39a hazard": [
+  [
+   "    \"KL-X9\": (\"XTDB 2.2.0\",",
+   "    \"KL-X9X\": (\"XTDB 2.2.0\","
+  ]
+ ],
+ "Q39a cast": [
+  [
+   "read as text and never cast back to BIGINT or any numeric client type",
+   "cast to BIGINT"
+  ]
+ ],
+ "C1 gate dropped v2": [
+  [
+   "    if set(o[\"oracles\"]) & set(ORACLE_PINS):\n        g.append(\"GATE-ORACLE-PIN\")",
+   "    if False:\n        g.append(\"GATE-ORACLE-PIN\")"
+  ]
+ ],
+ "Q38e O-TDK1 unpinned": [
+  [
+   "ORACLE_PINS = {\"O-TDK1\": {",
+   "ORACLE_PINS = {\"O-TDK1-X\": {"
+  ]
+ ],
+ "Q45a status": [
+  [
+   "\"O-REPLAY\": {\"status\": \"BUILT-ACCEPTED\",",
+   "\"O-REPLAY\": {\"status\": \"BUILT-PENDING-PIN\","
+  ]
+ ],
+ "Q45a hash wrong": [
+  [
+   "\"lab/oracles/replay/RULES.md\": \"60e745ee8733271cede926a6f55e1f473d2b3c7a9a721500f9d277438971d54c\"",
+   "\"lab/oracles/replay/RULES.md\": \"60e745ee\""
+  ]
+ ],
+ "Q45a exclusion dropped": [
+  [
+   "\"excludes\": [\"G1.decimal.channel-routing\"],",
+   "\"excludes\": [],"
+  ]
+ ],
+ "Q45a refusal dropped": [
+  [
+   "    \"erasure\": {\"sets\": [\"CS-ERASURE\"],",
+   "    \"erasure-x\": {\"sets\": [],"
+  ]
+ ],
+ "Q45a scope diff unrecorded": [
+  [
+   "PIN_SCOPE_EXPECTED_DIFF = {\"onlyGeneratorBlocked\": [],",
+   "PIN_SCOPE_EXPECTED_DIFF = {\"onlyGeneratorBlocked\": [\"X\"],"
+  ]
+ ],
+ "Q45b rule": [
+  [
+   "never treated as a case-authoring error and never skipped",
+   "may be skipped as a case-authoring error"
+  ]
+ ],
+ "Q45c key bytes back": [
+  [
+   "DECIMAL_CASES = [\"DEC-CROSS-SCALE-COMPARE\",",
+   "DECIMAL_CASES = [\"DEC-SMALL-PRECISION-TDK1\", \"DEC-CROSS-SCALE-COMPARE\","
+  ]
+ ],
+ "Q45d round": [
+  [
+   "p + (s - s_x), capped at 38, when s > s_x",
+   "p when s > s_x"
+  ]
+ ],
+ "Q43 avg id": [
+  [
+   "\"rule\": \"AVG over decimals is E-DECIMAL-AVG, not E-DECIMAL-BARE-DIVIDE\", \"error\": \"E-DECIMAL-AVG\",",
+   "\"rule\": \"AVG over decimals is E-DECIMAL-AVG, not E-DECIMAL-BARE-DIVIDE\", \"error\": \"E-DECIMAL-BARE-DIVIDE\","
+  ]
+ ],
+ "Q43 round refused": [
+  [
+   "x at scale s by appending zeros, never refused;",
+   "refused;"
+  ]
+ ],
+ "Q43 toInteger": [
+  [
+   "\"rule\": \"toInteger of a whole decimal outside the integer range\", \"error\": \"E-INTEGER-OVERFLOW\"",
+   "\"rule\": \"toInteger of a whole decimal outside the integer range\", \"error\": \"E-DECIMAL-OVERFLOW\""
+  ]
+ ],
+ "Q43 negzero basis": [
+  [
+   "\"rule\": \"a read basis given as -0\", \"error\": \"E-NEGATIVE-ZERO-INSTANT\"",
+   "\"rule\": \"a read basis given as -0\", \"error\": \"E-INVALID-VALUE\""
+  ]
+ ],
+ "Q40 retirement": [
+  [
+   "a later reappearance publishes a new sequence even if the payload equals the last published one",
+   "a later reappearance publishes nothing if the payload is unchanged"
+  ]
+ ],
+ "Q40 basis order": [
+  [
+   "an older-basis evaluation publishes nothing (RULINGS Q40d)",
+   "evaluations publish in arrival order"
+  ]
+ ],
+ "Q40 two hop": [
+  [
+   "S.location -> L.jurisdiction -> J.stateMinWageCents",
+   "S.location -> L.minWageCents"
+  ]
+ ],
+ "Q44 live only": [
+  [
+   "previews (GS.11) and past-valid-time audit evaluations never are",
+   "previews may be"
+  ]
+ ],
+ "Q44 fingerprint gate": [
+  [
+   "    if domain and (any(v is None for v in w0[\"files\"].values()) or w0.get(\"reviewReceipt\") is None or w0.get(\"deltaCheck\") is None or w0.get(\"oDomainFingerprint\") is None):",
+   "    if domain and (any(v is None for v in w0[\"files\"].values()) or w0.get(\"reviewReceipt\") is None):"
+  ]
+ ],
+ "Q42a hashes not opened": [
+  [
+   "    return isinstance(h, str) and h in store and hashlib.sha256(store[h]).hexdigest() == h",
+   "    return isinstance(h, str) and len(h) == 64"
+  ]
+ ],
+ "Q42a manifest ignored": [
+  [
+   "    if man.get(\"sourceTreeSha256\") != tree or man.get(\"binarySha256\") != r.get(\"executedBinarySha256\"):",
+   "    if False:"
+  ]
+ ],
+ "Q42a freshness ignored": [
+  [
+   "    if r.get(\"commit\") != commit or not isinstance(r.get(\"producedAt\"), int) or r[\"producedAt\"] <= env.get(\"dependencyClosureChangedAt\", 10 ** 18):",
+   "    if False:"
+  ]
+ ],
+ "Q42a no control needed": [
+  [
+   "        if not matched:\n            return \"DIAGNOSTIC\"",
+   "        if False:\n            return \"DIAGNOSTIC\""
+  ]
+ ],
+ "Q42a unknown dropped": [
+  [
+   "    if not ids or any(i not in obl for i in ids):",
+   "    ids = [i for i in ids if i in obl]\n    if not ids:"
+  ]
+ ],
+ "Q42a fault reps ignored": [
+  [
+   "    if \"CR-FAULT\" in obligation[\"closure\"][\"rules\"] and r.get(\"faultReps\", 0) < THRESHOLDS[\"T-FAULT-REPS\"][\"value\"]:",
+   "    if False:"
+  ]
+ ],
+ "Q42b regress mutant": [
+  [
+   "  mutants=[\"M-RECEIVER-REGRESS\"], closure=(\"CR-PASS-ALL\", \"CR-FAULT\", \"CR-MUTANT-KILL\"),",
+   "  closure=(\"CR-PASS-ALL\", \"CR-FAULT\"),"
+  ]
+ ],
+ "Q42b receivers rule": [
+  [
+   "records the highest sequence applied and ignores any lower one (never regresses)",
+   "applies deliveries in arrival order"
+  ]
+ ],
+ "Q42c pair dropped": [
+  [
+   "ATOMIC_UNIT_PARTS = [\"basis-guard\", \"retirement-state\", \"publication-sequence\", \"latest-published-payload\", \"outbox-records\"]",
+   "ATOMIC_UNIT_PARTS = [\"basis-guard\", \"publication-sequence\", \"latest-published-payload\", \"outbox-records\"]"
+  ]
+ ],
+ "Q42c receiver uses replay": [
+  [
+   "  scope=\"engine\", cases=[\"CS-RECEIVER\", \"CS-RECEIVER:\" + \",\".join(RECEIVER_CASES)], oracle=[\"O-DOMAIN\"],",
+   "  scope=\"engine\", cases=[\"CS-RECEIVER\", \"CS-RECEIVER:\" + \",\".join(RECEIVER_CASES)], oracle=[\"O-DOMAIN\", \"O-REPLAY\"],"
+  ]
+ ],
+ "Pending reads rows": [
+  [
+   "    pend = (REPO / \"lab/acceptance/RULINGS-PENDING.md\").read_text()",
+   "    pend = (REPO / \"lab/acceptance/RULINGS.md\").read_text()"
+  ]
+ ],
+ "Q38b other tree v2": [
+  [
+   "    if r.get(\"sourceTreeSha256\") != tree or r.get(\"composition\") != comp:",
+   "    if r.get(\"composition\") != comp:"
+  ]
+ ],
+ "Q38b pins ignored v2": [
+  [
+   "    for x in {x for o in claimed + [obl[i] for i in prereq] for x in o[\"oracles\"]}:",
+   "    for x in []:"
+  ]
+ ],
+ "Q38f GS10 v2": [
+  [
+   "work items publish under the delivery key (id, publication sequence) with early cutoff (OUTBOX, RULINGS Q38f); only live",
+   "work items publish with early cutoff (OUTBOX, RULINGS Q38f); only live"
+  ]
+ ],
+ "Q38f mutant dropped v2": [
+  [
+   "mutants=[\"M-OUTBOX-VERSION-DEDUP\", \"M-OUTBOX-RETIREMENT-IGNORED\"]",
+   "mutants=[\"M-OUTBOX-RETIREMENT-IGNORED\"]"
+  ]
+ ],
+ "Q38c uncompiled Q45": [
+  [
+   "    {\"id\": \"Q45\", \"topic\": \"O-REPLAY pin and V-O03 findings (Q45a to Q45e)\",",
+   "    {\"id\": \"Q45x\", \"topic\": \"O-REPLAY pin and V-O03 findings (Q45a to Q45e)\","
+  ]
+ ],
+ "Q39b language key": [
+  [
+   "        o[\"closure\"][\"params\"][\"keyByNativeLanguage\"] = True",
+   "        pass"
+  ]
+ ],
+ "Q31f journal modulo v2": [
+  [
+   "C6-SLIM-BYTE-IDENTICAL), modulo erasure: an erasure commit",
+   "C6-SLIM-BYTE-IDENTICAL), and: an erasure commit"
+  ]
+ ],
+ "Q31i pin bogus v2": [
+  [
+   "\"lab/world/W0/SPEC.md\": \"c93fcbd1f5ef145a0b1ab468482fb74ac6357bc318bc00ce948cd9bfac5d00a0\"",
+   "\"lab/world/W0/SPEC.md\": \"00\""
+  ]
+ ],
+ "Q32f no bump v2": [
+  [
+   "\"rule\": \"pinned at a contract version bump only",
+   "\"rule\": \"pinned"
+  ]
+ ],
+ "Q38d JSON convert v2": [
+  [
+   "validates the result (E-DECIMAL-FRACTION, E-DECIMAL-OVERFLOW or E-INVALID-VALUE) and encodes the TDK1 key",
+   "passes it through"
+  ]
+ ],
+ "Q45a scope diff unrecorded v2": [
+  [
+   "PIN_SCOPE_EXPECTED_DIFF = {\"onlyGeneratorBlocked\": [\"G1.types.storage-widening-safe\",",
+   "PIN_SCOPE_EXPECTED_DIFF = {\"onlyGeneratorBlocked\": [\"X\", \"G1.types.storage-widening-safe\","
+  ]
+ ],
+ "Q42a manifest ignored v2": [
+  [
+   "    if man is None or man[\"sourceTreeSha256\"] != tree or man[\"binarySha256\"] != r.get(\"executedBinarySha256\") or not _obj_ok(man[\"binarySha256\"], store):\n        return False",
+   "    if man is None:\n        return False"
+  ]
+ ],
+ "Q47d pending ids ignored": [
+  [
+   "    return ruling_row_ids((REPO / PENDING_RULINGS_FILE).read_text() if text is None else text)",
+   "    return []"
+  ]
+ ],
+ "Q47d pending gains authority": [
+  [
+   "    _compiled_ids = {r[\"id\"] for r in RULINGS}",
+   "    _compiled_ids = {r[\"id\"] for r in RULINGS} | {\"Q99z\"}"
+  ]
+ ],
+ "Q47d pending not hashed": [
+  [
+   "\"lab/acceptance/RULINGS.md\", \"lab/acceptance/RULINGS-PENDING.md\",",
+   "\"lab/acceptance/RULINGS.md\","
+  ]
+ ],
+ "Q47a binary not retained": [
+  [
+   " or man[\"binarySha256\"] != r.get(\"executedBinarySha256\") or not _obj_ok(man[\"binarySha256\"], store):",
+   " or man[\"binarySha256\"] != r.get(\"executedBinarySha256\"):"
+  ]
+ ],
+ "Q47a modules ignored": [
+  [
+   "    if not all(isinstance(x, dict) and set(x) == {\"path\", \"sha256\"} and _typed(x[\"path\"], \"str\") and _obj_ok(x[\"sha256\"], store) for x in man[\"modules\"]):",
+   "    if False:"
+  ]
+ ],
+ "Q47a verifier unchecked": [
+  [
+   "    if vr is None or vr[\"obligation\"] != obligation[\"id\"] or vr[\"definitionSha256\"] != obligation_hash(obligation) or vr[\"verdict\"] != \"ACCEPT\":",
+   "    if not _obj_ok(r.get(\"verifierObjectSha256\"), store):"
+  ]
+ ],
+ "Q47a schema ignored": [
+  [
+   "    if not isinstance(rec, dict) or set(rec) != set(spec) or rec.get(\"schema\") != schema or not all(_typed(rec[k], t) for k, t in spec.items()):",
+   "    if not isinstance(rec, dict) or rec.get(\"schema\") != schema:"
+  ]
+ ],
+ "Q47a verdict trusted": [
+  [
+   "        if case_verdict(rec, store) != \"PASS\" or x.get(\"verdict\") != \"PASS\":",
+   "        if x.get(\"verdict\") != \"PASS\":"
+  ]
+ ],
+ "Q47a refusal counts": [
+  [
+   "        return \"REFUSED\"",
+   "        return \"PASS\""
+  ]
+ ],
+ "Q47a observation unchecked": [
+  [
+   "    return \"PASS\" if rec[\"expectedSha256\"] == rec[\"observedSha256\"] else \"FAIL\"",
+   "    return \"PASS\""
+  ]
+ ],
+ "Q47c extra cases skipped": [
+  [
+   "        if case_verdict(rec, store) != \"PASS\" or x.get(\"verdict\") != \"PASS\":\n            return False",
+   "        if case_verdict(rec, store) != \"PASS\" or x.get(\"verdict\") != \"PASS\":\n            continue"
+  ]
+ ],
+ "Q47c reach dropped": [
+  [
+   "                        \"reachedThrough\": [[\"CS-DECIMAL\", \"scale-evolution\"], [\"CS-MIGRATION\", \"*\"], [\"CS-WIDEN\", \"*\"]],\n",
+   ""
+  ]
+ ],
+ "Q47c reach ignored": [
+  [
+   "            or any((s in sets) if t == \"*\" else ((s, t) in pairs) for s, t in ref.get(\"reachedThrough\", [])))",
+   "            or False)"
+  ]
+ ],
+ "Q47b none matches none": [
+  [
+   "evidence_ok(r, o, tree, comp, commit, env) and workload_ok(r.get(\"workload\"), comp)]",
+   "evidence_ok(r, o, tree, comp, commit, env)]"
+  ],
+  [
+   "                   and workload_ok(c.get(\"workload\"), entry[\"composition\"]) and any(c[\"workload\"] == m[\"workload\"] for m in own)]",
+   "                   and any(c.get(\"workload\") == m.get(\"workload\") for m in own)]"
+  ]
+ ],
+ "Q47b claimant control": [
+  [
+   "    entry = a0.get(A0_REGISTRY[\"byEngine\"].get((comp.get(\"source\") or {}).get(\"engine\")))",
+   "    entry = claim.get(\"control\") or a0.get(A0_REGISTRY[\"byEngine\"].get((comp.get(\"source\") or {}).get(\"engine\")))"
+  ]
+ ],
+ "Q47b registry filled": [
+  [
+   "    \"entries\": {\"A0-XTDB\": None, \"A0-QLEVER\": None},",
+   "    \"entries\": {\"A0-XTDB\": {\"commit\": \"x\", \"sourceTreeSha256\": \"t0\", \"composition\": {}, \"measuredBy\": \"x\"}, \"A0-QLEVER\": None},"
+  ]
+ ],
+ "Q47b slot unchecked": [
+  [
+   " and all(_typed(w[k], t) for k, t in f.items()) and w[\"slot\"] == ((comp or {}).get(\"source\") or {}).get(\"slot\")",
+   " and all(_typed(w[k], t) for k, t in f.items())"
+  ]
+ ],
+ "Q47b types unchecked": [
+  [
+   "    return isinstance(w, dict) and set(w) == set(f) and all(_typed(w[k], t) for k, t in f.items()) and",
+   "    return isinstance(w, dict) and set(w) == set(f) and"
+  ]
+ ],
+ "Q47 CX dropped": [
+  [
+   "    {\"id\": \"CX-R6-UNOPENED-MEANING\",",
+   "    {\"id\": \"CX-R6-UNOPENED\","
+  ]
+ ],
+ "Q46d pin note": [
+  [
+   "with PIN_SCOPE_EXPECTED_DIFF updated (RULINGS Q45e, Q46d)",
+   "with PIN_SCOPE_EXPECTED_DIFF updated (RULINGS Q45e)"
+  ]
+ ],
+ "Q48a fingerprint pinned": [
+  [
+   "\"oDomainFingerprint\": None, \"fingerprintCandidate\"",
+   "\"oDomainFingerprint\": \"F\", \"fingerprintCandidate\""
+  ]
+ ],
+ "Q48a hash dropped": [
+  [
+   "    \"lab/world/W0/README.md\": \"891af156079bac5fc3dab7614a6070f76580f0d97d9f8e400d41417c81b93052\",\n",
+   ""
+  ]
+ ],
+ "Q48a fingerprint wrong": [
+  [
+   "\"worldsSha256\": \"fec1d7cedee2b2f18c77e78210e4e9ed14fffb72e9629545155c7307e969c760\"",
+   "\"worldsSha256\": \"948ba617\""
+  ]
+ ],
+ "Q48a W0 gate dropped": [
+  [
+   "    if domain and (any(v is None for v in w0[\"files\"].values()) or w0.get(\"reviewReceipt\") is None or w0.get(\"deltaCheck\") is None or w0.get(\"oDomainFingerprint\") is None):",
+   "    if domain and w0.get(\"reviewReceipt\") is None:"
+  ]
+ ],
+ "Q48b rung": [
+  [
+   "\"scopedRelease\": {\"rung\": \"100k\",",
+   "\"scopedRelease\": {\"rung\": \"1M\","
+  ]
+ ],
+ "Q48b statement": [
+  [
+   "and its receipt binds the reached-subject list and that list's hash instead of every placement",
+   "and its receipt binds every placement"
+  ]
+ ],
+ "Q48c next edit": [
+  [
+   "records measured R3 counts (9,497 reached, 418 changed) beside the expected ones; it changes",
+   "records measured R3 counts beside the expected ones; it changes"
+  ]
+ ],
+ "Q49a identities": [
+  [
+   "and its changes list only identities (entity, attribute, assertion ids), never values; it is also written to the erasure ledger kept apart from the data, which restore and rebuild replay; earlier",
+   "and its changes list the values; it is also written to the erasure ledger kept apart from the data, which restore and rebuild replay; earlier"
+  ]
+ ],
+ "Q49a journal case dropped": [
+  [
+   "\"CS-ERASURE:ER-JOURNAL-MODULO,ER-COMMIT-JOURNAL-IDENTITY-ONLY,ER-EARLIER-CHANGE-MARKER\"",
+   "\"CS-ERASURE:ER-JOURNAL-MODULO\""
+  ]
+ ],
+ "Q49b empty commit": [
+  [
+   "an erase that matches nothing still commits, as a journal record with an empty change list (RULINGS Q49b)",
+   "an erase that matches nothing commits nothing (RULINGS Q49b)"
+  ]
+ ],
+ "Q49c count": [
+  [
+   "SUM, AVG, MIN and MAX skip it while COUNT of assertions counts it; ORDER BY places erased markers last in a deterministic order by assertion id;",
+   "SUM, AVG, MIN, MAX and COUNT skip it; ORDER BY places erased markers last in a deterministic order by assertion id;"
+  ]
+ ],
+ "Q49c case dropped": [
+  [
+   "\"ER-GROUP-ONE-MARKER\", \"ER-UNIQUE-IGNORES\", \"ER-REFERENCE-MARKER\"]  # RULINGS Q49c",
+   "\"ER-GROUP-ONE-MARKER\", \"ER-REFERENCE-MARKER\"]  # RULINGS Q49c"
+  ]
+ ],
+ "Q49c obligation off replay": [
+  [
+   "  cases=[\"CS-ERASURE:queries\", \"CS-ERASURE:\" + \",\".join(ERASURE_QUERY_CASES)], oracle=[\"O-REPLAY\"],",
+   "  cases=[\"CS-ERASURE:queries\", \"CS-ERASURE:\" + \",\".join(ERASURE_QUERY_CASES)], oracle=[\"O-HAND\"],"
+  ]
+ ],
+ "Q49d in-flight": [
+  [
+   "    \"inFlight\": \"for a read that started before the erasure published, each erased value may be the old value or the marker (RULINGS Q49d)\",",
+   "    \"inFlight\": \"for a read that started before the erasure published, each erased value is the old value (RULINGS Q49d)\","
+  ]
+ ],
+ "Q49e as written": [
+  [
+   "never its exact binary64 expansion, so toDecimal(json 0.1, 2, 1) = 0.1;",
+   "from its exact binary64 expansion;"
+  ]
+ ],
+ "Q49e string row": [
+  [
+   "    {\"id\": \"DR-JSON-STRING-TEXT\",",
+   "    {\"id\": \"DR-JSON-STRING-TEXT-X\","
+  ]
+ ],
+ "Q38b booleans v2": [
+  [
+   "    if ev is None:\n        return \"DIAGNOSTIC\"",
+   "    if claim.get(\"compositionBound\"):\n        return \"QUALIFIED\"\n    if ev is None:\n        return \"DIAGNOSTIC\""
+  ]
+ ],
+ "Q56i hash wrong": [
+  [
+   "\"lab/oracles/replay/RULES.md\": \"949ad8751e515bfb21a0bb811364146a21b330c7051f01ff1ff8dd801abbb67c\"",
+   "\"lab/oracles/replay/RULES.md\": \"949ad875\""
+  ]
+ ],
+ "Q56i commit back": [
+  [
+   "\"commit\": \"a9c1327d4e1d6756696db6844e17008671d4a193\", \"oracleVersion\": \"0.4.1\"",
+   "\"commit\": \"8cc2c26f6f17ed627a3ed608f1252fe0e240bb5b\", \"oracleVersion\": \"0.4.1\""
+  ]
+ ],
+ "Q56i unregistered receipt": [
+  [
+   "\"verifierEntry\": \"V-O04c\", \"excludes\": []",
+   "\"verifierEntry\": \"V-O05\", \"excludes\": []"
+  ]
+ ],
+ "Q56i excludes kept": [
+  [
+   "\"verifierEntry\": \"V-O04c\", \"excludes\": [], \"excludesWhy\": {}",
+   "\"verifierEntry\": \"V-O04c\", \"excludes\": [\"G1.decimal.channel-routing\"], \"excludesWhy\": {}"
+  ]
+ ],
+ "Q56i blanket refusal back": [
+  [
+   "    \"q52-shapes\": {\"sets\": [],",
+   "    \"erasure\": {\"sets\": [\"CS-ERASURE\"], \"cases\": [], \"until\": \"x\"},\n    \"q52-shapes\": {\"sets\": [],"
+  ]
+ ],
+ "Q56i residual refusal emptied": [
+  [
+   "    \"q52-shapes\": {\"sets\": [], \"cases\": [[\"CS-ERASURE\", c] for c in ERASURE_RESIDUAL_CASES] + [[\"CS-DECIMAL-ROUTING\", \"DR-JSON-CONVERT-ROUNDING\"]],",
+   "    \"q52-shapes\": {\"sets\": [], \"cases\": [],"
+  ]
+ ],
+ "Q56i tdk1 refusal dropped": [
+  [
+   "    \"tdk1-keys\": {\"sets\": [], \"cases\": [[\"CS-DECIMAL\", \"DEC-SMALL-PRECISION-TDK1\"], ",
+   "    \"tdk1-keys\": {\"sets\": [], \"cases\": ["
+  ]
+ ],
+ "Q56i scope diff unrecorded": [
+  [
+   "PIN_SCOPE_EXPECTED_DIFF = {\"onlyGeneratorBlocked\": [\"G1.types.storage-widening-safe\",",
+   "PIN_SCOPE_EXPECTED_DIFF = {\"onlyGeneratorBlocked\": [\"X\", \"G1.types.storage-widening-safe\","
+  ]
+ ],
+ "Q56i old hash table": [
+  [
+   "    hv = json.loads((REPO / \"lab/verify/O02/v-o04b/results/hashes.a9c1327.json\").read_text())",
+   "    hv = json.loads((REPO / \"lab/verify/O02/v-o03/hashes.8cc2c26.json\").read_text())"
+  ]
+ ],
+ "Q55a brief hash wrong": [
+  [
+   "\"briefSha256\": \"8fbdaaf67d2cbc1ae000d780ce7fcc45825ec6ba81edbbc9ed179ce517b5df88\"",
+   "\"briefSha256\": \"8fbdaaf6\""
+  ]
+ ],
+ "Q55a verdict not accept": [
+  [
+   "\"verdict\": \"ACCEPT for pinning O-REPLAY 0.4.1 unchanged\"",
+   "\"verdict\": \"FIX-FIRST\""
+  ]
+ ],
+ "Q55a subject commit wrong": [
+  [
+   "\"V-O04c\": {\"verifier\": \"V-O02 verifier, resumed for the V-O04b and V-O04c re-checks\", \"subject\": {\"kind\": \"oracle\", \"id\": \"O-REPLAY\", \"commit\": \"a9c1327d4e1d6756696db6844e17008671d4a193\"",
+   "\"V-O04c\": {\"verifier\": \"V-O02 verifier, resumed for the V-O04b and V-O04c re-checks\", \"subject\": {\"kind\": \"oracle\", \"id\": \"O-REPLAY\", \"commit\": \"8cc2c26f6f17ed627a3ed608f1252fe0e240bb5b\""
+  ]
+ ],
+ "Q55a records qualify": [
+  [
+   "    if ev is None:\n        return \"DIAGNOSTIC\"",
+   "    if ev is None:\n        return \"QUALIFIED\" if claim.get(\"receipts\") else \"DIAGNOSTIC\""
+  ]
+ ],
+ "Q55a manifest unchecked": [
+  [
+   " or hashlib.sha256(raw).hexdigest() != want:",
+   ":"
+  ]
+ ],
+ "Q55a unpinned manifest used": [
+  [
+   "        raw = ev[\"manifest\"](c[\"set\"]) if want else None\n        if not want or not isinstance(raw, bytes) or hashlib.sha256(raw).hexdigest() != want:",
+   "        raw = ev[\"manifest\"](c[\"set\"])\n        if not isinstance(raw, bytes) or (want and hashlib.sha256(raw).hexdigest() != want):"
+  ]
+ ],
+ "Q55a empty selection ok": [
+  [
+   "            if not hit:\n                return None",
+   "            if not hit:\n                continue"
+  ]
+ ],
+ "Q55a one mode": [
+  [
+   "        for mode in o[\"closure\"][\"modes\"]:\n            for _ in range(reps):",
+   "        for mode in o[\"closure\"][\"modes\"][:1]:\n            for _ in range(reps):"
+  ]
+ ],
+ "Q55a one repetition": [
+  [
+   "    reps = THRESHOLDS[\"T-FAULT-REPS\"][\"value\"] if \"CR-FAULT\" in o[\"closure\"][\"rules\"] else 1",
+   "    reps = 1"
+  ]
+ ],
+ "Q55a refusal accepted": [
+  [
+   "        if not isinstance(expected, dict) or expected.get(\"exit\") != 0 or expected.get(\"code\") is not None:",
+   "        if not isinstance(expected, dict):"
+  ]
+ ],
+ "Q55a comparator ignored": [
+  [
+   "                if not ev[\"compare\"](x[\"comparator\"], expected.get(\"output\"), ev[\"sut\"](binary, comp, x, mode)):",
+   "                if ev[\"sut\"](binary, comp, x, mode) is None:"
+  ]
+ ],
+ "Q55a A0 rebuild trusted": [
+  [
+   " or ev[\"build\"](entry[\"sourceTreeSha256\"], entry[\"commit\"]) != entry.get(\"binarySha256\"):",
+   ":"
+  ]
+ ],
+ "Q55a slot unchecked": [
+  [
+   " or any(comp[k][\"slot\"] not in ev.get(\"slots\", ()) for k in comp):",
+   ":"
+  ]
+ ],
+ "Q55a measure unchecked": [
+  [
+   " or m_.get(\"workload\") != wl or c_.get(\"workload\") != wl:",
+   ":"
+  ]
+ ],
+ "Q55a claim verification ignored": [
+  [
+   "        if not any(registered_acceptance(v, \"obligation\", o[\"id\"], commit, verifiers) for v in verifiers):",
+   "        if False:"
+  ]
+ ],
+ "Q55a pin verification ignored": [
+  [
+   " or not registered_acceptance(pins[x].get(\"verifierEntry\"), \"oracle\", x, pins[x].get(\"commit\"), verifiers):",
+   ":"
+  ]
+ ],
+ "Q55a W0 verification ignored": [
+  [
+   " or not registered_acceptance(w0.get(\"verifierEntry\"), \"world\", \"W0\", w0.get(\"commit\"), verifiers) or w0.get(\"deltaCheck\") is None",
+   " or w0.get(\"deltaCheck\") is None"
+  ]
+ ],
+ "Q55a CX dropped": [
+  [
+   "    {\"id\": \"CX-R7-RELABELLED-CONTROL\",",
+   "    {\"id\": \"CX-R7-RELABELLED\","
+  ]
+ ],
+ "Q55a steps changed": [
+  [
+   "        [\"control\", \"run one evaluator-chosen workload",
+   "        [\"compare-control\", \"run one evaluator-chosen workload"
+  ]
+ ],
+ "Q55b QT4 merged": [
+  [
+   "{\"id\": \"QT4s-SOURCE-PUBLISHED\", \"evidence\"",
+   "{\"id\": \"QT4-PUBLISHED\", \"evidence\""
+  ]
+ ],
+ "Q55b success after replica": [
+  [
+   "valid only if its timestamp is after the group's QT4s-SOURCE-PUBLISHED evidence",
+   "valid only if its timestamp is after the group's QT4r-REPLICA-APPLIED evidence"
+  ]
+ ],
+ "Q55b old table kept": [
+  [
+   "    \"variantRule\": \"every composition declares",
+   "    \"qlever\": {},\n    \"variantRule\": \"every composition declares"
+  ]
+ ],
+ "Q55b variant optional": [
+  [
+   "            if a.get(\"variant\") not in SOURCE_VARIANT_FIELDS:\n                return False\n            extra = (\"variant\",) + SOURCE_VARIANT_FIELDS[a[\"variant\"]]",
+   "            extra = tuple(x for x in (\"variant\",) if x in a) + SOURCE_VARIANT_FIELDS.get(a.get(\"variant\"), ())"
+  ]
+ ],
+ "Q55b durability unchecked": [
+  [
+   "        if \"log\" in extra and not (isinstance(a[\"log\"], dict) and set(a[\"log\"]) == set(LOG_FIELDS) and all(_typed(a[\"log\"][f], t) for f, t in LOG_FIELDS.items())):",
+   "        if False:"
+  ]
+ ],
+ "Q55b fault case dropped": [
+  [
+   "FAULT_Q55_CASES = [\"C2-SOURCE-PUBLISHED-REPLICA-BEHIND\", ",
+   "FAULT_Q55_CASES = ["
+  ]
+ ],
+ "Q55b receipt binding": [
+  [
+   "and, for log-source, log {implementationSha256, fsyncMode, fullFsync, device} (RULINGS Q55b)",
+   "(RULINGS Q55b)"
+  ]
+ ],
+ "Q55b statement": [
+  [
+   "match the transition table of the composition's declared protocol variant",
+   "match COMMIT_OUTCOMES"
+  ]
+ ],
+ "Q55c not provisional": [
+  [
+   "        \"status\": \"PROVISIONAL, flagged for Sam (RULINGS Q55c, superseding Q50b)\",",
+   "        \"status\": \"accepted (RULINGS Q55c, superseding Q50b)\","
+  ]
+ ],
+ "Q55c no typed wait": [
+  [
+   "then fails with the typed E-BASIS-NOT-AVAILABLE",
+   "then answers at the watermark"
+  ]
+ ],
+ "Q55c cases dropped": [
+  [
+   "CO-CROSS-LANGUAGE-RECIPE-IDENTITY,\" + \",\".join(READ_GUARANTEE_CASES)], oracle=[\"O-REPLAY\", \"O-OBS\", \"O-ERR\"],",
+   "CO-CROSS-LANGUAGE-RECIPE-IDENTITY\"], oracle=[\"O-REPLAY\", \"O-OBS\", \"O-ERR\"],"
+  ]
+ ],
+ "Q55c NS.P2 stand-in": [
+  [
+   "repository read-your-own-write never stands in for a native-surface guarantee",
+   "repository read-your-own-write covers every surface"
+  ]
+ ],
+ "Q55c error dropped": [
+  [
+   "    {\"id\": \"E-REPLICA-UNAVAILABLE\",",
+   "    {\"id\": \"E-REPLICA-DOWN\","
+  ]
+ ],
+ "Q55c replica-down fallback": [
+  [
+   "with the replica unreachable they fall back to the source (RULINGS Q50a)",
+   "with the replica unreachable they wait (RULINGS Q50a)"
+  ]
+ ],
+ "Q55d ack clock": [
+  [
+   "stamped by the source on the host monotonic clock the driver also reads, recorded independently of ACK delivery (RULINGS Q55d)",
+   "stamped at ACK delivery (RULINGS Q55d)"
+  ]
+ ],
+ "Q55d accounting": [
+  [
+   "a position with no consumer record is counted and fails the run (RULINGS Q55d)",
+   "a position with no consumer record is skipped (RULINGS Q55d)"
+  ]
+ ],
+ "Q55d case dropped": [
+  [
+   ", \"NS-P3-DOMAIN-AFFECTED-SET\", \"NS-P3-EVERY-POSITION-ACCOUNTED\"],",
+   ", \"NS-P3-DOMAIN-AFFECTED-SET\"],"
+  ]
+ ],
+ "Q55e claim fingerprint honoured": [
+  [
+   "    w0 = W0_PIN if w0 is None else w0\n    a0 = A0_REGISTRY[\"entries\"] if a0 is None else a0\n    verifiers",
+   "    w0 = W0_PIN if w0 is None else w0\n    if claim.get(\"oDomainFingerprint\"):\n        w0 = dict(w0, oDomainFingerprint=claim[\"oDomainFingerprint\"])\n    a0 = A0_REGISTRY[\"entries\"] if a0 is None else a0\n    verifiers"
+  ]
+ ],
+ "Q55e fingerprint pinned": [
+  [
+   "\"oDomainFingerprint\": None, \"fingerprintCandidate\"",
+   "\"oDomainFingerprint\": \"F\", \"fingerprintCandidate\""
+  ]
+ ],
+ "Q55e ownership text": [
+  [
+   "the evaluator owns the W0 pin it passes to admission and a claim can never supply it",
+   "a claim may supply it"
+  ]
+ ],
+ "Q52e per value back": [
+  [
+   "    \"inFlight\": \"an erasure commit is atomic for readers:",
+   "    \"inFlight\": \"each erased value may be the old value or the marker; formerly: an erasure commit is atomic for readers:"
+  ]
+ ],
+ "Q52 residual leaks into queries": [
+  [
+   "ERASURE_QUERY_CASES = [\"ER-PREDICATE-NO-MATCH\",",
+   "ERASURE_QUERY_CASES = [\"ER-COUNT-DISTINCT-MARKER\", \"ER-PREDICATE-NO-MATCH\","
+  ]
+ ],
+ "Q52f routing reaches rounding": [
+  [
+   "  cases=[\"CS-DECIMAL-ROUTING:repository,native,raw,derived,aggregate,json\", \"CS-DECIMAL-ROUTING:\"",
+   "  cases=[\"CS-DECIMAL-ROUTING\", \"CS-DECIMAL-ROUTING:\""
+  ]
+ ],
+ "Q52 residual case dropped": [
+  [
+   "\"ER-INFLIGHT-ALL-OR-NONE\", \"ER-ERASE-COMMAND-SHAPE\"]\nORACLE_REFUSALS",
+   "\"ER-INFLIGHT-ALL-OR-NONE\"]\nORACLE_REFUSALS"
+  ]
+ ],
+ "Q52c earliest": [
+  [
+   "a marker group reports the earliest erasedAt among its members (Q52c)",
+   "a marker group reports any erasedAt (Q52c)"
+  ]
+ ],
+ "Q56a unknown target commits": [
+  [
+   "an erase naming an unknown assertion target or an unknown id is E-INVALID-VALUE, as for retract (Q56a)",
+   "an erase naming an unknown assertion target or id commits (Q56a)"
+  ]
+ ],
+ "Q56b no conflict": [
+  [
+   "a card-one attribute holding a readable and an erased value conflicts with E-CONFLICTING-VALUES as two readable values would",
+   "a card-one attribute holding a readable and an erased value reads the readable value"
+  ]
+ ],
+ "Q56 case dropped": [
+  [
+   ", \"ER-CARD-MANY-MARKERS-LAST\", \"ER-REQUIRED-SATISFIED\"]  # RULINGS Q56b to Q56e",
+   ", \"ER-CARD-MANY-MARKERS-LAST\"]  # RULINGS Q56b to Q56e"
+  ]
+ ],
+ "Q56h synthetic": [
+  [
+   "uses synthetic values only; no real personal data enters the lab",
+   "may use any values"
+  ]
+ ],
+ "Q50d gate dropped": [
+  [
+   "GATES[\"GATE-BROKER-HARDENING\"] = {",
+   "GATES[\"GATE-BROKER\"] = {"
+  ]
+ ],
+ "Q50d case dropped": [
+  [
+   "BROKER_HARDENING_CASES = [\"BR-OVERLAY-BOUND-OVERLOADED\", ",
+   "BROKER_HARDENING_CASES = ["
+  ]
+ ],
+ "Q50a index note": [
+  [
+   "a broker-side current-entity index (the per-subject current document",
+   "an index (the per-subject current document"
+  ]
+ ],
+ "Q50e run queue": [
+  [
+   "\"qleverExclusiveFirst\": \"A0 and candidate at delta 0, 100k and 500k; persist-updates off;",
+   "\"qleverExclusiveFirst\": \"A0 and candidate at delta 0, 100k and 500k;"
+  ]
+ ],
+ "Q51a driver queue": [
+  [
+   "the queue is part of the candidate, never the driver (RULINGS Q51a)",
+   "the queue may be in the driver (RULINGS Q51a)"
+  ]
+ ],
+ "Q51a case dropped": [
+  [
+   ", \"NS-P2-RYOW-PER-SURFACE\", \"NS-P2-HOT-SUBJECT-QUEUE\"],",
+   ", \"NS-P2-RYOW-PER-SURFACE\"],"
+  ]
+ ],
+ "Q51c in gate": [
+  [
+   "POSITION_REQUIRED_CASES = list(POSITION_DENSE_CASES) + list(POSITION[\"falsifiers\"]) + [\"PO-ABORTED-LISTED\"]",
+   "POSITION_REQUIRED_CASES = list(POSITION_DENSE_CASES) + list(POSITION[\"falsifiers\"]) + [\"PO-ABORTED-LISTED\", \"PO-NO-PLACEHOLDER\"]"
+  ]
+ ],
+ "Q51c binding text": [
+  [
+   "a position is an opaque, totally ordered value (bigint)",
+   "a position is a packed value"
+  ]
+ ],
+ "Q51d storage bar": [
+  [
+   "\"storagePerCommit\": \"reported, never a bar:",
+   "\"storagePerCommit\": \"a bar:"
+  ]
+ ],
+ "Q51e rung": [
+  [
+   "\"xtdb100kRung\": \"deferred until EXP-J01 lands;",
+   "\"xtdb100kRung\": \"runs now;"
+  ]
+ ],
+ "Q51f error dropped": [
+  [
+   "    {\"id\": \"E-DUAL-COMMIT-PATH\",",
+   "    {\"id\": \"E-DUAL-PATH\","
+  ]
+ ],
+ "Q53 readings": [
+  [
+   "readings A01 to A10 in EXP-D01c's report",
+   "readings in EXP-D01c's report"
+  ]
+ ],
+ "Q53b next edit": [
+  [
+   "which V-D01c checks (RULINGS Q53b)",
+   "which V-D01c checks"
+  ]
+ ],
+ "Q54b reach added": [
+  [
+   "\"reachedThrough\": [[\"CS-DECIMAL\", \"scale-evolution\"], [\"CS-MIGRATION\", \"*\"], [\"CS-WIDEN\", \"*\"]],",
+   "\"reachedThrough\": [[\"CS-DECIMAL\", \"scale-evolution\"], [\"CS-MIGRATION\", \"*\"], [\"CS-WIDEN\", \"*\"], [\"CS-REQ\", \"no-silent-precision-loss\"]],"
+  ]
+ ],
+ "Q58a facade dropped": [
+  [
+   "go through a Triplex facade; engine ports are not a public surface.",
+   "may use engine ports directly."
+  ]
+ ],
+ "Q58a at token dropped": [
+  [
+   "or at: position (exact; the engine must also reconstruct it, else the typed E-BASIS-NOT-RECONSTRUCTIBLE)",
+   ""
+  ]
+ ],
+ "Q58a no basis range": [
+  [
+   "Every answer carries {basis: {low, high}, route}.",
+   "Answers report a position."
+  ]
+ ],
+ "Q58a deadline": [
+  [
+   "        \"nativeDeadlineMs\": 2000,",
+   "        \"nativeDeadlineMs\": 10,"
+  ]
+ ],
+ "Q58a error dropped": [
+  [
+   "    {\"id\": \"E-BASIS-NOT-RECONSTRUCTIBLE\",",
+   "    {\"id\": \"E-BASIS-NOT-AT\","
+  ]
+ ],
+ "Q58a cases unselected": [
+  [
+   "\",\".join(READ_GUARANTEE_CASES + NATIVE_TOKEN_CASES + P2Q_READ_CASES)",
+   "\",\".join(READ_GUARANTEE_CASES + P2Q_READ_CASES)"
+  ]
+ ],
+ "Q58a case dropped": [
+  [
+   "NATIVE_TOKEN_CASES = [\"CO-FACADE-ONLY\", ",
+   "NATIVE_TOKEN_CASES = ["
+  ]
+ ],
+ "Q58a not provisional": [
+  [
+   "\"native\": \"PROVISIONAL, flagged for Sam (RULINGS Q58a,",
+   "\"native\": \"accepted (RULINGS Q58a,"
+  ]
+ ],
+ "Q58b direction": [
+  [
+   "the marker row is the eligibility authority",
+   "the system time is the eligibility authority"
+  ]
+ ],
+ "Q58c pragma": [
+  [
+   "WAL, synchronous=FULL, fullfsync=ON, checkpoint_fullfsync=ON, locking_mode=EXCLUSIVE, application-driven PASSIVE checkpoints, a worker thread",
+   "WAL, synchronous=NORMAL, application-driven PASSIVE checkpoints, a worker thread"
+  ]
+ ],
+ "Q58c flock back": [
+  [
+   "BROKER_HARDENING_CASES = [\"BR-OVERLAY-BOUND-OVERLOADED\", ",
+   "BROKER_HARDENING_CASES = [\"BR-OVERLAY-BOUND-OVERLOADED\", \"BR-KERNEL-FLOCK\", "
+  ]
+ ],
+ "Q58c crc dropped": [
+  [
+   "\"BR-CRC-CHAIN-MID-WAL\", \"BR-COMMITTED-AT\",",
+   "\"BR-COMMITTED-AT\","
+  ]
+ ],
+ "Q58c statement": [
+  [
+   "a CRC32C prev-chain column detects mid-WAL corruption plain SQLite misses",
+   "a checksum detects corruption"
+  ]
+ ],
+ "Q58d overlay merges all": [
+  [
+   "the overlay merge is allowed for entity pulls only, keyed by id with the greater LSN winning",
+   "the overlay merge is allowed for every read, keyed by id with the later arrival winning"
+  ]
+ ],
+ "Q58d obligation dropped": [
+  [
+   "O(\"G7.composition.overlay-rules\", [\"G7\"],",
+   "O(\"G7.composition.overlay-rulez\", [\"G7\"],"
+  ]
+ ],
+ "Q58d tombstones": [
+  [
+   "frames carry explicit tombstones, so erasure and deletes cannot resurrect replica rows (RULINGS Q58d)",
+   "deletes are applied on replay (RULINGS Q58d)"
+  ]
+ ],
+ "Q58e log erasure": [
+  [
+   "value payloads in frames are encrypted per subject and erasure destroys the key (crypto-shredding)",
+   "values in frames are rewritten on erasure"
+  ]
+ ],
+ "Q58e inventory": [
+  [
+   "\"QLever broker log of record\", \"broker recent_rows overlay\", \"caches\"",
+   "\"QLever broker log of record\", \"caches\""
+  ]
+ ],
+ "Q58e case unselected": [
+  [
+   "\"CS-ERASURE:ER-ORDER-KEY-CHANNEL,ER-LEXICAL-CHANNEL,ER-KEY-EXCLUSIVE,ER-LOG-CRYPTO-SHRED\"]",
+   "\"CS-ERASURE:ER-ORDER-KEY-CHANNEL,ER-LEXICAL-CHANNEL,ER-KEY-EXCLUSIVE\"]"
+  ]
+ ],
+ "Q62a case dropped": [
+  [
+   "P2Q_READ_CASES = [\"CO-EXECUTOR-IN-TX-WAITS-OR-TYPED\", ",
+   "P2Q_READ_CASES = ["
+  ]
+ ],
+ "Q62a cases unselected": [
+  [
+   "\",\".join(READ_GUARANTEE_CASES + NATIVE_TOKEN_CASES + P2Q_READ_CASES)",
+   "\",\".join(READ_GUARANTEE_CASES + NATIVE_TOKEN_CASES)"
+  ]
+ ],
+ "Q62a two brokers unselected": [
+  [
+   "\"CS-FAULT:\" + \",\".join(FAULT_Q55_CASES + FAULT_Q62_CASES)]",
+   "\"CS-FAULT:\" + \",\".join(FAULT_Q55_CASES)]"
+  ]
+ ],
+ "Q62b default-off": [
+  [
+   "merging it behind a default-off option needs only the Q62a fixes, independently re-verified",
+   "merging it needs the hardening too"
+  ]
+ ],
+ "Q62c 750 back": [
+  [
+   "QLever A0 653 triples per 10-fact command as V-P2Q measured it",
+   "QLever A0 about 750 triples per 10-fact command"
+  ]
+ ],
+ "Q60a rounds": [
+  [
+   "\"rounds\": {\"min\": 8, \"default\": 12, \"max\": 24}",
+   "\"rounds\": {\"min\": 1, \"default\": 12, \"max\": 24}"
+  ]
+ ],
+ "Q60a single run ok": [
+  [
+   "a single run never decides a bar (RULINGS Q60a)",
+   "a single run may decide a bar (RULINGS Q60a)"
+  ]
+ ],
+ "Q60b margin": [
+  [
+   "\"superiorityRatioDefault\": 1.25,",
+   "\"superiorityRatioDefault\": 1.05,"
+  ]
+ ],
+ "Q60b hold p99": [
+  [
+   "\"holdP99Max\": 1.15,",
+   "\"holdP99Max\": 1.5,"
+  ]
+ ],
+ "Q60c regime unrecorded": [
+  [
+   "        \"slotRegime\": \"{cpuMax, cpuset, cpuWeight}: the effective cgroup values of every measurement slot (RULINGS Q60c)\",\n",
+   ""
+  ]
+ ],
+ "Q60d committed only": [
+  [
+   "latency histograms include every offered command (expired, failed and rejected ones at their censor time) next to the committed-only view",
+   "latency histograms include committed commands"
+  ]
+ ],
+ "Q60e windows": [
+  [
+   "outside them an absolute bar is reported unjudged, which never counts as met",
+   "outside them an absolute bar is judged anyway"
+  ]
+ ],
+ "Q60f modes": [
+  [
+   "NS_MODES = [\"single-execution\", \"paired-rounds\"]",
+   "NS_MODES = [\"single-execution\"]"
+  ]
+ ],
+ "Q60f CR-NS": [
+  [
+   "an absolute bar only from GREEN windows (an unjudged bar is never met)",
+   "an absolute bar from any window"
+  ]
+ ],
+ "Q60g burst": [
+  [
+   "\"burstEveryS\": 180},",
+   "\"burstEveryS\": 600},"
+  ]
+ ],
+ "Q60h lease": [
+  [
+   "a measurement window takes every heavy token and freezes pool admission for its duration",
+   "a measurement window shares the pool"
+  ]
+ ],
+ "Q60i A0 single run": [
+  [
+   "    \"measurement\": \"A0 numbers for comparisons come from paired rounds under PAIR_0;",
+   "    \"measurement\": \"A0 numbers for comparisons come from any run;"
+  ]
+ ],
+ "Q60 paired not checked": [
+  [
+   "            if not paired_ok(ev[\"measure_pair\"](binary, comp, entry[\"binarySha256\"], entry[\"composition\"], wl), wl):",
+   "            if False:"
+  ]
+ ],
+ "Q60 rounds unchecked": [
+  [
+   "    if not (_typed(m.get(\"rounds\"), \"int\") and d[\"rounds\"][\"min\"] <= m[\"rounds\"] <= d[\"rounds\"][\"max\"]):",
+   "    if False:"
+  ]
+ ],
+ "Q60 regimes unchecked": [
+  [
+   "    if not isinstance(regs, dict) or set(regs) != {\"candidate\", \"A0\"} or regs[\"candidate\"] != regs[\"A0\"]:\n        return False",
+   "    if not isinstance(regs, dict):\n        return False"
+  ]
+ ],
+ "Q60 quota allowed": [
+  [
+   " and r[\"cpuMax\"] == \"max\" and",
+   " and"
+  ]
+ ],
+ "Q60 CX dropped": [
+  [
+   "    {\"id\": \"CX-PAIR0-REGIME-MISMATCH\",",
+   "    {\"id\": \"CX-PAIR0-REGIME\","
+  ]
+ ],
+ "Q61c argv": [
+  [
+   "\"O-REPLAY\": {\"argv\": [\"python3\", \"-I\", \"lab/oracles/replay/cli.py\", \"{case}\"], \"files\": None,",
+   "\"O-REPLAY\": {\"argv\": [\"python3\", \"lab/oracles/replay/cli.py\", \"{case}\"], \"files\": None,"
+  ]
+ ],
+ "Q61c runner ignored": [
+  [
+   "        if orc not in o[\"oracles\"] or orc not in runners:",
+   "        if orc not in o[\"oracles\"]:"
+  ]
+ ],
+ "Q61c answer members": [
+  [
+   "ANSWER_MEMBERS = {\"O-REPLAY\": [\"commandOutcomes\", \"state\", \"queries\"]}",
+   "ANSWER_MEMBERS = {\"O-REPLAY\": [\"commandOutcomes\", \"state\", \"queries\", \"verdict\"]}"
+  ]
+ ],
+ "Q61d field unpinned": [
+  [
+   "    \"required\": [\"id\", \"tags\", \"input\", \"contentSha256\", \"comparator\"], \"optional\": [\"oracle\", \"faultPoint\"],",
+   "    \"required\": [\"id\", \"tags\", \"input\", \"comparator\"], \"optional\": [\"oracle\", \"faultPoint\", \"contentSha256\"],"
+  ]
+ ],
+ "Q61d input hash unchecked": [
+  [
+   "    return raw if isinstance(raw, bytes) and hashlib.sha256(raw).hexdigest() == x[\"contentSha256\"] else None",
+   "    return raw if isinstance(raw, bytes) else None"
+  ]
+ ],
+ "Q61e mode dropped": [
+  [
+   "\"observedSha256\": \"hex64\", \"mode\": \"str\", \"rep\": \"int\", \"comparator\": \"str\", \"inputSha256\": \"hex64\"},",
+   "\"observedSha256\": \"hex64\", \"rep\": \"int\", \"comparator\": \"str\", \"inputSha256\": \"hex64\"},"
+  ]
+ ],
+ "Q61f spec filled": [
+  [
+   "    \"format\": \"triplex-db-2/build-spec/1\", \"argv\": None,",
+   "    \"format\": \"triplex-db-2/build-spec/1\", \"argv\": [\"make\"],"
+  ]
+ ],
+ "Q61f spec unchecked": [
+  [
+   "    if any(cfg[\"buildSpec\"].get(k) is None for k in (\"argv\", \"outputs\", \"run\")):\n        return \"DIAGNOSTIC\"",
+   "    if False:\n        return \"DIAGNOSTIC\""
+  ]
+ ],
+ "Q61g workload everywhere": [
+  [
+   "        if set(o[\"closure\"][\"rules\"]) & {\"CR-NS\", \"CR-GS\"}:\n            wl = ev[\"workload\"](o)",
+   "        if True:\n            wl = ev[\"workload\"](o)"
+  ]
+ ],
+ "Q61h frozen filled": [
+  [
+   "        \"frozen\": {\"sha256\": None, \"seed\": None,",
+   "        \"frozen\": {\"sha256\": \"a\" * 64, \"seed\": None,"
+  ]
+ ],
+ "Q61h frozen unchecked": [
+  [
+   "            if (wl[\"generatorSourceSha256\"], wl[\"seed\"], wl[\"offerScheduleSha256\"]) != (frozen[\"sha256\"], frozen[\"seed\"], frozen[\"offerScheduleSha256\"]):\n                return \"DIAGNOSTIC\"",
+   "            if False:\n                return \"DIAGNOSTIC\""
+  ]
+ ],
+ "Q61i image unchecked": [
+  [
+   "    if any(comp[k][\"imageDigest\"] != (cfg[\"imagePins\"].get(comp[k][\"engine\"]) or {}).get(\"imageId\") for k in comp):\n        return \"DIAGNOSTIC\"",
+   "    if False:\n        return \"DIAGNOSTIC\""
+  ]
+ ],
+ "Q61i image wrong": [
+  [
+   "\"imageId\": \"sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec\"},\n}",
+   "\"imageId\": \"sha256:37d5ede1\"},\n}"
+  ]
+ ],
+ "Q61j witness unchecked": [
+  [
+   "                if reps > 1 and not fault_witness_ok(",
+   "                if False and not fault_witness_ok("
+  ]
+ ],
+ "Q61j witness point unchecked": [
+  [
+   " and w[\"rep\"] == rep and w[\"faultPointId\"] == x[\"id\"])",
+   " and w[\"rep\"] == rep)"
+  ]
+ ],
+ "Q61k measuredBy unchecked": [
+  [
+   "    if not registered_acceptance(entry.get(\"measuredBy\"), \"a0\", a0key, entry[\"commit\"], verifiers):\n        return \"DIAGNOSTIC\"",
+   "    if False:\n        return \"DIAGNOSTIC\""
+  ]
+ ],
+ "Q61a source": [
+  [
+   "from the authority ref (main), never from the claimed commit (RULINGS Q61a)",
+   "from the claimed commit (RULINGS Q61a)"
+  ]
+ ],
+ "Q59e unpinned allowed": [
+  [
+   "        elif ORACLES[x][\"status\"] != \"COMPILED\":\n            return \"DIAGNOSTIC\"  # RULINGS Q59e",
+   "        elif ORACLES[x][\"status\"] not in (\"EXISTS\", \"COMPILED\", \"ACCEPTED\", \"BUILT-ACCEPTED\"):\n            return \"DIAGNOSTIC\"  # RULINGS Q59e"
+  ]
+ ],
+ "Q59c brief rule": [
+  [
+   "\"briefRule\": \"every verification and re-check saves its own BRIEF file",
+   "\"briefRule\": \"verifications may share a brief"
+  ]
+ ]
+}

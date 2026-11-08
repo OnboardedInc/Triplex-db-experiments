@@ -14,18 +14,18 @@
     "lab/NORTH-STAR.md": "0176766d21385a37a0dea3091d7200f249901ce8a4eadd071acd56b2f70eb3e9",
     "lab/TARGETS.md": "cb30ffeb776a7deb0c885be2968872bcebd7dc05cca1b2cfb5913b809a804d95",
     "lab/research/SAM-pasted-numbers-2026-11-07.md": "f35a223edd83994a0ac2ebcb94f9ec7e7ea8f1a279ef23bbb69390b8c03d89f8",
-    "lab/acceptance/RULINGS.md": "bc55fe69a20a9e3700297603372a63479acff285eca6f0e474ba611c06214bdb",
-    "lab/acceptance/RULINGS-PENDING.md": "0b2c1127e502335b7bea64c087bb9b6aafc09e8954e7da70c524836b05ccb4cc",
+    "lab/acceptance/RULINGS.md": "b3e059a2408d45035225b4e04a0ed287826cfa70b83bce56e77af4f819c2e0df",
+    "lab/acceptance/RULINGS-PENDING.md": "ee23c44ceab225b4128fc8baa04d6dbd2f87ad3780091445c2db94183a5144b3",
     "lab/verify/O02/v-o03/pin_scope.json": "f8897d518cb380ff64de25b02ae82f4846af313e5f2c41bbf147509fe6025a32",
     "lab/verify/O02/v-o03/hashes.8cc2c26.json": "4b221aa280eb6f2aeb1f5252d29dcef99aefc629e0388ac7468c6f1f1353b962",
     "lab/verify/D01/W0-1.1.1-ada2e90-SHA256SUMS": "bad527e280e1769a18fd2d65016e4d6bbfb4969c872dd73069cfb83637bfba4d",
     "lab/verify/O02/v-o04b/results/hashes.a9c1327.json": "256465151a1018faf17432f3706aa34650448b587e52d256b80972de7d9df1f1",
     "lab/verify/O02/BRIEF.md": "38d3c81f99da26438ff09ba0e6b6a88e75c5f402c4362a7d28d9b8df387376c4",
     "lab/verify/D01/BRIEF.md": "8fbdaaf67d2cbc1ae000d780ce7fcc45825ec6ba81edbbc9ed179ce517b5df88",
-    "lab/acceptance/build_contract.py": "c710d0b8c693442c38552261c2eb24ffde22f6362017332e3ef54c7934048572"
+    "lab/acceptance/build_contract.py": "685b48066f7094d8e9c3cfc9c27840a9f3d2fb29fd4ae315da707e8346860a11"
   },
   "artifacts": {
-    "load-contract.json": "27f79af3533e7978a0d3f47569d42cae303203b7f2fb26b9b835de4abb8d2cca",
+    "load-contract.json": "e90e97d6f1a6462fb87a05f8b9af924b4a44aa82c8e3f0adc357b8698c80e354",
     "budgets.json": "3c567035c89161a61f0edc67836962d79073d82bf404a0506f31771ca9e38bfe",
     "capability-matrix.md": "da543292952ff01ba139c57e868bf576d4cf49c4a49d408275709d6aae8b2e5b"
   },
@@ -1086,6 +1086,126 @@
         "COMPOSITION brokerPromotion",
         "load-contract P2 storagePerCommit"
       ]
+    },
+    {
+      "id": "Q57",
+      "topic": "EXP-D01b W0 SPEC readings A11 to A15 (Q57a to Q57e), with V-D01e N1",
+      "ruling": "A11 NaN, Infinity and -Infinity are W0.E_SHAPE. A12 an integer token over 4,300 digits is still an integer token (E_VALUE, E_BASIS for a tx); implementations must not fail on integer-parsing limits. A13 any nesting depth is a valid JSON value, then E_VALUE. A14 strings order by Unicode code point (UTF-8 byte order) for keys, sorts and the basis guard's validTime comparison. A15 inconsistent receiver snapshots keep entries as given, re-sorted stably by seq; only seq = done + 1 releases. Compiled with W0-1.1.2, whose SPEC states them; V-D01e N1: publish and receive integers have no upper bound.",
+      "compiledInto": [
+        "WORLD_W0 readings, version, nextEdit",
+        "W0_PIN (W0-1.1.2)"
+      ]
+    },
+    {
+      "id": "Q63",
+      "topic": "EXP-X05 follower result and the P1 direction (Q63a to Q63d)",
+      "ruling": "Q63a the shared-volume follower is rejected for promotion; the guard and harness stay. Q63b read scaling on both lanes comes from broker-fed replicas; EXP-P2B measures the first XTDB replica; Kafka deferred. Q63c the torn-read repro joins the upstream-filing question for Sam; nothing is filed without him. Q63d seeders and appliers on XTDB use parameterised statements only.",
+      "compiledInto": [
+        "COMPOSITION sharedVolumeFollower",
+        "COMPOSITION experimentDirections P1-replicas",
+        "COMPOSITION parameterisedSql"
+      ]
+    },
+    {
+      "id": "Q64",
+      "topic": "Contract 0.3.9 questions (Q64a to Q64f)",
+      "ruling": "Q64a EXP-E01 proposes the real BUILD_SPEC values; a contract version pins them. Q64b EXP-M01 freezes the screening series and the acceptance trace, each with its own frozen entry. Q64c oracles compiled into the contract count as pinned. Q64d compile Q63b and Q63d. Q64e slots.json stays read but not hashed. Q64f a pending sub-id never also appears as a RULINGS.md row; a pending sub-id under a compiled base stays allowed.",
+      "compiledInto": [
+        "BUILD_SPEC proposal",
+        "WRITER_TRACE generator frozenScreening",
+        "admit_claim (COMPILED oracles)",
+        "Q64f check"
+      ]
+    },
+    {
+      "id": "Q65",
+      "topic": "EXP-E01 on contract 0.3.9 (Q65a to Q65f)",
+      "ruling": "Q65a O-CONTRACT gets a runner: a reference-model entry point in build_contract.py answering one composition-identity case as canonical JSON. Q65b buildSpecSha256 is the sha256 of the canonical JSON of {format, argv, outputs, run}. Q65c a case reached by several select entries records the first in contract order. Q65d each built package is the parent directory of a dist/ output. Q65e E01's build spec is pinned once obl-case.ts exists. Q65f an executing gate (EXP-G03) is the missing piece for any QUALIFIED claim.",
+      "compiledInto": [
+        "contract_oracle_answer",
+        "ORACLE_RUNNERS O-CONTRACT",
+        "build_spec_sha256",
+        "BUILD_SPEC specSha256Rule, inputs, proposal",
+        "EVIDENCE_SCHEMAS case-result/2",
+        "QUALIFICATION_RUN blockers"
+      ]
+    },
+    {
+      "id": "Q66",
+      "topic": "EXP-O04b O-REPLAY 0.4.2 limits (Q66a to Q66d)",
+      "ruling": "Q66a erasure commits become visible in position order, so a read before n in-flight erasure commits sees one of the n + 1 prefixes. Q66b a continuation cursor carries its page's erasure prefix. Q66c only erasures in the read's own scope are in flight. Q66d the explicitly converted half of DR-JSON-STRING-TEXT is a lane obligation.",
+      "compiledInto": [
+        "ERASURE inFlight",
+        "ERASURE_Q66_CASES",
+        "G9.erasure.residual-shapes",
+        "ORACLE_REFUSALS q52-shapes",
+        "DR-JSON-STRING-TEXT"
+      ]
+    },
+    {
+      "id": "Q67",
+      "topic": "Codex round 8 on contract 0.3.9 and claim.mjs (Q67a to Q67j)",
+      "ruling": "Q67a every blocker stays until EXP-G03's executing gate. Q67b an execution's identity is its source tree, build spec, lockfile, toolchain, runner and config hashes per instance, never its output hash. Q67c single-request surfaces read the marker with the answer; multi-request surfaces use incarnation fencing. Q67d P3 enumerates the final published source prefix and timestamps actual publication; ACKs are reconciled afterwards. Q67e builds and arms run isolated; oracle bytes from a re-hashed read-only copy. Q67f admission recomputes paired decisions from retained per-round data; rounds equal a registered look; RED-window and committed-only counterexamples execute. Q67g workload identity is separate from per-arm placement; a duet needs equal capacity, equal regime and disjoint cpusets. Q67h one error representation with {required, observed, replica}. Q67i case-result/2 uses its declared comparator. Q67j promotion qualification is rejected explicitly until supported. The design rules of Q67c, d and h are compiled with their cases' manifests null; the blockers stay.",
+      "compiledInto": [
+        "QUALIFICATION_RUN blockers, executionIdentity, isolation, kinds",
+        "COMPOSITION incarnationFencing",
+        "Q67_CASES",
+        "NS-P3-SOURCE-PREFIX-ENUMERATED",
+        "load-contract P3 publicationEnumeration",
+        "paired_ok",
+        "WORKLOAD_IDENTITY placement",
+        "ERROR_REPRESENTATION",
+        "reference_compare",
+        "case_verdict",
+        "admit_claim"
+      ]
+    },
+    {
+      "id": "Q68",
+      "topic": "R24 current-value path and release sweep (Q68a to Q68g; provisional)",
+      "ruling": "Q68a P4's fast path is one current structure served for H <= B <= W, first in the broker (H1), engines keeping smaller copies; EXP-P4 measures the arms. Q68b the default horizon trails head by one hour; pins hold it; no pin may make it trail by more than 24 hours. Q68c a sweep frame publishes up to 64 results as one atomic outbox commit, each its own work item. Q68d host-served reads count when route = host and the denominator includes broker and kernel CPU. Q68e expired facts retire through a valid-time horizon. Q68f every current copy is covered by per-subject keys; a QLever cur graph holds no personal-data literals. Q68g X1 is measured fresh and aged before any write-path change.",
+      "compiledInto": [
+        "COMPOSITION currentPath",
+        "COMPOSITION experimentDirections EXP-P4",
+        "OUTBOX sweepFrames",
+        "load-contract P1 and P4 hostServedReads",
+        "ERASURE currentCopies",
+        "PROTECTED_COPY_INVENTORY"
+      ]
+    },
+    {
+      "id": "Q69",
+      "topic": "EXP-M01 PAIR-0 decisions and the measurement window (Q69a to Q69g)",
+      "ruling": "Q69a a measurement window stops one dev resident for its duration, announced in STATE and enforced by the lease. Q69b INVALID for protocol departures, separate from INVALID_NOISE. Q69c A/B windows grade from the all-round s_d; acceptance-level claims swap roles over a second pair of lifetimes (provisional). Q69d duets run one continuous trace; ABBA keeps per-round randomization. Q69e the live A/A uses public-queued. Q69f screening-r4 is the pre-registered fallback series. Q69g thresholds stay pre-registered; a 7-day passive recorder sets them.",
+      "compiledInto": [
+        "PAIR_0 windowProcedure, verdicts, aaInAbMode, continuousTrace, liveComposition, calibration",
+        "PAIR_0 screeningSeries fallback",
+        "WRITER_TRACE generator frozenScreening"
+      ]
+    },
+    {
+      "id": "Q71",
+      "topic": "EXP-E01 round 8 questions (Q71a to Q71c)",
+      "ruling": "Q71a the build spec names a contract-owned exclusion list of install metadata found by diffing two clean installs (compiled as a rule; the list stays null). Q71b a build's toolchain is the node version, platform and arch, and the pnpm version when pnpm is used; an oracle's Python version goes into each oracle invocation's evidence. Q71c the reference model's case verdict uses the declared comparator for case-result/2; case-result/1 keeps hash equality.",
+      "compiledInto": [
+        "BUILD_SPEC installMetadataExclusions, installMetadataRule",
+        "QUALIFICATION_RUN executionIdentity toolchain, installMetadata",
+        "EVIDENCE_SCHEMAS oracle-invocation/1",
+        "reference_compare",
+        "case_verdict"
+      ]
+    },
+    {
+      "id": "Q72f",
+      "topic": "V-P2Q round 2: one error id (Q72f only; Q72a-e and Q72g stay pending)",
+      "ruling": "One contract id covers a basis beyond the latest published position: E-BASIS-NOT-AVAILABLE. E-UNAVAILABLE-CUT is retired; obligations that used it move to E-BASIS-NOT-AVAILABLE.",
+      "compiledInto": [
+        "ERROR_TABLE",
+        "RETIRED_ERRORS",
+        "CURSOR_TRANSITIONS permittedErrors CE-FUTURE-BASIS",
+        "G8.publish.basis-honesty",
+        "G10.cursor.continuation-transitions"
+      ]
     }
   ],
   "languageRules": {
@@ -1657,11 +1777,12 @@
     "journalCommit": "an erasure commit is an ordinary data-journal transaction: it has a position, a txId, a record in transactions() and its own :_tx/ facts, and its changes list only identities (entity, attribute, assertion ids), never values; it is also written to the erasure ledger kept apart from the data, which restore and rebuild replay; earlier transactions' :_tx/change facts for erased values show the ErasedValue marker, so ER-JOURNAL-MODULO compares markers on both sides (RULINGS Q49a)",
     "idempotence": "the first erasure of an identity sets erasedAt; erasing it again changes nothing; an erase that matches nothing still commits, as a journal record with an empty change list (RULINGS Q49b)",
     "queries": "provisional, under the Q24 flag for Sam: an erased value is present with no readable value; it matches no value predicate (equality, inequality, range, pattern), so a filter never selects or rejects a subject by it; SUM, AVG, MIN and MAX skip it while COUNT of assertions counts it; ORDER BY places erased markers last in a deterministic order by assertion id; grouping puts all erased values of an attribute in one group keyed by the marker; Unique ignores erased values; an erased reference cannot be followed (an include returns the marker) (RULINGS Q49c)",
-    "inFlight": "an erasure commit is atomic for readers: a read that started before it published sees either all of that commit's values as they were or all as markers, never a mix, and the oracle accepts exactly those two whole answers (RULINGS Q52e, narrowing Q49d from per value to per commit)",
+    "inFlight": "an erasure commit is atomic for readers: a read that started before it published sees either all of that commit's values as they were or all as markers, never a mix (RULINGS Q52e, narrowing Q49d from per value to per commit); erasure commits become visible in position order, so a read that started before n in-flight erasure commits in its scope sees a prefix of them, and the acceptable answers are the n + 1 prefixes, never all 2^n subsets (RULINGS Q66a); a continuation cursor carries the erasure prefix its page was computed with, and every later page answers with that same prefix (RULINGS Q66b); only erasures in the read's own scope are in flight, erasures in other scopes always apply (RULINGS Q66c)",
     "queriesResidual": "provisional, under the Q24 flag for Sam: a count of distinct values counts an attribute's erased values as one value (the marker group), a count of assertions counts each erased assertion (Q52a); ORDER BY puts readable values first, then erased markers by assertion id, then missing values, in both directions (Q52b); a marker group reports the earliest erasedAt among its members (Q52c); an erased reference takes no part in reference constraints: it blocks no restrict delete, cascades nothing and is skipped by ReferenceTarget validation (Q52d) (RULINGS Q52)",
     "commandShape": "the op is spelled erase; erasure is a typed invalid-command error; an erase is its own command, and mixing it with other operations or giving it preconditions is a typed invalid-command error (RULINGS Q52g)",
     "selectors": "matches nothing (Q49b) means a well-formed entity or entity-plus-attribute selector with no assertions to erase, which commits with an empty change list; an erase naming an unknown assertion target or an unknown id is E-INVALID-VALUE, as for retract (Q56a); erase accepts the same selectors as retract, including {id: ...} (Q56f); retracting an already erased assertion by target commits and history shows the marker with the retraction's time, so erase then delete is supported (Q56g) (RULINGS Q56)",
     "presence": "an erased value is still a present assertion: a card-one attribute holding a readable and an erased value conflicts with E-CONFLICTING-VALUES as two readable values would, the remedy being to retract the erased assertion (Q56b); answers never depend on the erased value, so a readable SAME beside an erased support conflicts whatever the erased value was (Q56c); in a card-many value list erased markers come after the readable elements, ordered by assertion id (Q56d); Required is satisfied by an erased value (Q56e) (RULINGS Q56, provisional under the Q24 flag)",
+    "currentCopies": "provisional: every current copy (the broker's current store, XTDB tx_current, the QLever cur graph) is covered by Q58e's per-subject keys; a QLever cur graph holds no personal-data literals (keys and references only, values from the encrypted host store) unless EXP-P4 shows a reindex-free erasure path (RULINGS Q68f)",
     "logErasure": "values held in the broker log, the recent_rows overlay and checkpoints are erasable: value payloads in frames are encrypted per subject and erasure destroys the key (crypto-shredding), so TARGETS 7 holds without rewriting the log; designed in the broker-hardening experiment (RULINGS Q58e)",
     "syntheticData": "in-flight outputs may hold pre-erasure values (Q49d, Q52e), so every oracle case, fixture and golden scenario uses synthetic values only; no real personal data enters the lab (RULINGS Q56h)",
     "tests": [
@@ -1680,6 +1801,7 @@
     "lexical channels",
     "QLever broker log of record",
     "broker recent_rows overlay",
+    "current-value copies (broker current store, XTDB tx_current, QLever cur graph)",
     "caches",
     "checkpoints",
     "backups"
@@ -1712,10 +1834,21 @@
     "hotSubjects": "a per-subject FIFO queue in the candidate's command router (bounded; the typed E-OVERLOADED beyond the bound, never an unbounded wait) with same-subject group commit (up to 8 queued commands of one subject in one engine transaction, positions by ordinal); optimistic compare-and-set stays for cross-node races; the queue is part of the candidate, never the driver (RULINGS Q51a)",
     "brokerCurrentIndex": "a broker-side current-entity index (the per-subject current document served from the host, QLever kept for history and analytics) is a candidate current-index layer for P4; EXP-Q05 builds and measures it (RULINGS Q50a)",
     "brokerPromotion": "before a log-source composition becomes a default it must close G7.broker.promotion-hardening: an overlay memory bound with backpressure (typed E-OVERLOADED beyond the bound) for replica outages of the GS.04b kind (RULINGS Q50d), and the SQLite substrate of RULINGS Q58c (replacing Q50d's segment rotation and file-lock items) with log erasure by crypto-shredding (RULINGS Q58e); an out-of-process broker and off-device copies are deferred; merging a broker behind a default-off option needs only the Q62a fixes, independently re-verified (RULINGS Q62b)",
+    "sharedVolumeFollower": "rejected for promotion: XTDB 2.2.0's ReadOnlyLocalLog reads half-written records and dies permanently (9 deaths in 30 minutes), though it never answered wrongly; the second-writer guard and the follower harness stay; the torn-read repro joins the R21 upstream-filing question for Sam, and nothing is filed without him (RULINGS Q63a, Q63c)",
+    "parameterisedSql": "seeders and appliers on XTDB use parameterised statements only; 1,000-row literal INSERTs exhausted a 2 GiB heap (EXP-X05), as per-cell expressions did in EXP-P2X (RULINGS Q63d)",
+    "currentPath": {
+      "status": "PROVISIONAL (RULINGS Q68)",
+      "horizon": "the default H trails head by one hour of positions (the 15% basis bucket); a pinned sweep or reconcile holds H at or below its pin; the broker refuses a new pin that would make H trail head by more than 24 hours (RULINGS Q68b)",
+      "expired": "facts whose valid_to has passed retire from the current structure through a valid-time horizon; EXP-P4 measures the 20% expired path (RULINGS Q68e)",
+      "design": "see experimentDirections EXP-P4 (RULINGS Q68a, Q68g)"
+    },
+    "incarnationFencing": "single-request read surfaces read the replica marker in the same request as the answer; multi-request surfaces (Datalog, executor) use replica incarnation fencing: every replay begins by writing a new incarnation id, and an answer is accepted only if (incarnation, marker) is equal before and after (RULINGS Q67c)",
     "overlay": "the overlay merge is allowed for entity pulls only, keyed by id with the greater LSN winning, under a tested invariant (identity columns never change; a retraction is a new version); engine aggregates, Datalog and executor reads and paged lists never merge: they wait or fail typed; frames carry explicit tombstones, so erasure and deletes cannot resurrect replica rows (RULINGS Q58d)",
     "experimentDirections": {
       "EXP-P2B": "XTDB as a second replica behind the broker: one pgwire transaction per frame (ASSERT the marker, INSERT rows with a fixed _valid_from, INSERT the new marker; P0004 on guard failure); rows and marker read in one read-only transaction; the marker row is the eligibility authority; XTDB system time never carries broker positions; Local log first, InMemory log plus an epoch bump as an arm; predictions and measurements per R23 section 6; it starts after the Q62a fix round is re-verified, from the same author, so one writer owns the broker files (RULINGS Q58b; Q51b's original direction stays pending)",
-      "broker-hardening": "after EXP-P2B: the host log moves to SQLite through better-sqlite3 (WAL, synchronous=FULL, fullfsync=ON, checkpoint_fullfsync=ON, locking_mode=EXCLUSIVE, application-driven PASSIVE checkpoints, a worker thread when readers share the process), keeping a CRC32C prev-chain column, a committed_at column, an epoch row and the marker and checkpoint cross-checks (plain SQLite misses mid-WAL corruption); heads, claims and operations become tables; the overlay becomes a persisted recent_rows table; predictions H1 to H6 of R23 section 6.4 (RULINGS Q58c)"
+      "broker-hardening": "after EXP-P2B: the host log moves to SQLite through better-sqlite3 (WAL, synchronous=FULL, fullfsync=ON, checkpoint_fullfsync=ON, locking_mode=EXCLUSIVE, application-driven PASSIVE checkpoints, a worker thread when readers share the process), keeping a CRC32C prev-chain column, a committed_at column, an epoch row and the marker and checkpoint cross-checks (plain SQLite misses mid-WAL corruption); heads, claims and operations become tables; the overlay becomes a persisted recent_rows table; predictions H1 to H6 of R23 section 6.4 (RULINGS Q58c)",
+      "P1-replicas": "read scaling on both lanes comes from replicas fed by the broker (Q58b): each XTDB or QLever replica has its own applier and marker, so readers never touch the writer's log or indexer and the shared-log follower is unnecessary; EXP-P2B measures the first XTDB replica and a second-replica arm follows; Kafka (E8, about 7 GiB) is deferred (RULINGS Q63b)",
+      "EXP-P4": "provisional (RULINGS Q68a, Q68g): P4's fast path is one current structure holding live facts plus facts retired after a retention horizon H, served at basis B only when H <= B <= W (W its applied watermark), else the history path; its first copy lives in the broker, written with the frame (arm H1); engines get a smaller copy in the same transaction or guarded update (XTDB tx_current, QLever cur graph) for list and native queries; EXP-P4 measures arms A0, X1, X2, Q1 and H1 per R24 section 6, exactness gate first, and measures X1 (default temporal bounds) fresh and aged before any write-path change, because FOR ALL VALID_TIME on XTDB current reads forfeits the engine's current and historical split"
     }
   },
   "worldW0": {
@@ -1738,9 +1871,9 @@
     "witnesses": "every scenario carries positive witnesses (subjects that must change) and negative witnesses (subjects that must not)",
     "workItemIdentity": "a work item's id is SHA-256 over canonical JSON of (subject, rule, kind, key) only; its content version hashes (release hash, input positions, payload) and is not the delivery identity; each id carries a durable publication sequence that increments whenever the payload to publish differs from the latest published payload for that id, and the outbox delivery key is (id, publication sequence); an activation that leaves the payload equal to the latest published one publishes nothing (early cutoff); duplicate-effect checks count by delivery key (RULINGS Q36a, Q38f)",
     "affectedSet": "the expected affected set of a transaction is the subjects whose static read set contains a changed fact; static read sets over-approximate and never miss (RULINGS Q36e)",
-    "version": "W0-1.1.1, ACCEPTED at ada2e90 by V-D01's delta check and merged (e7c1346); its 95 file hashes are pinned (W0_PIN); the fingerprint pin waits for O-DOMAIN's reproduction (RULINGS Q40, Q44, Q48a)",
-    "readings": "the SPEC-AMBIGUITY readings A01 to A10 in EXP-D01c's report (O-DOMAIN) are accepted as written: they change no golden case and no fingerprint value; until W0-1.1.2 lands the W0 pin covers W0-1.1.1 with these readings recorded (RULINGS Q53a)",
-    "nextEdit": "W0-1.1.2 adds the A01 to A10 readings to SPEC.md as clarifications with one golden case per reading (A10 is already exercised by the population), so the TypeScript kernel (EXP-D01b) and O-DOMAIN are held to the same reading, and every existing case and the fingerprint stay byte-identical, which V-D01c checks (RULINGS Q53b); it also adds an R3 case with a listed jurisdiction that has no facts, adds \"and A's entry for that rule is unscoped\" to the SPEC 5.3 skip rule, and records measured R3 counts (9,497 reached, 418 changed) beside the expected ones; it changes no output, case result, floor or the fingerprint, and re-pinning its hashes needs a contract version bump (RULINGS Q48c)",
+    "version": "W0-1.1.2, ACCEPTED at fedfcda (V-D01e with the orchestrator's diff check of the fix); its 146 file hashes and the SHA256SUMS digest are pinned (W0_PIN), and so is the population fingerprint O-DOMAIN reproduced (RULINGS Q40g, Q48a, Q57)",
+    "readings": "SPEC 1.1.2 states the readings A01 to A15 as clarifications, each with a golden case (A10 exercised by the population): A01 to A10 from EXP-D01c (RULINGS Q53) and A11 to A15 from EXP-D01b (RULINGS Q57): A11 NaN, Infinity and -Infinity are W0.E_SHAPE, extending A01; A12 an integer token over 4,300 digits is still an integer token (E_VALUE for a value, E_BASIS for a tx), and implementations must not fail on their integer-parsing limits; A13 any nesting depth is a valid JSON value, then E_VALUE, and implementations must not fail on recursion limits; A14 strings order by Unicode code point, which equals UTF-8 byte order, for object keys and the sorts of items, subjects, effects and projection and the basis guard's validTime comparison, escapes following A07; A15 inconsistent receiver snapshots keep their entries as given, re-sorted stably by seq, only seq = done + 1 releases, and entries at or below done and the second of two duplicates stay waiting. Beside A12 (V-D01e N1): publish and receive integers have no upper bound; W0-1.1.1 stated none either, so no meaning changed. None of the readings changes a case of W0-1.1.1, a release or the fingerprint",
+    "nextEdit": "none pending for W0; O-DOMAIN's next version adds unit tests for [1} (syntax error) and a duplicate key after the second member (V-D01c D1); its reading id A11 collides with W0-1.1.2's A11 (V-D01c D2, documentation only)",
     "ballast": "rule-neutral ballast (owned answer entities <S>/ans:k with field and value text no rule reads, and a reference chain deep enough for 3 to 6 hops) sizes each world from P4's frozen buckets (50% 50-200 facts, 35% 201-800, 15% 801-2,000; a world may fall up to 2 facts below its bucket); trace commands use W0 and ballast attributes only, other attributes stay E_UNKNOWN; a ballast write affects nobody (RULINGS Q40a, Q44a)",
     "twoHopFloor": "the wage floor is S.location -> L.jurisdiction -> J.stateMinWageCents (R2's local floor stays on L), so the dependency index follows two references; cases: a jurisdiction wage write, re-pointing (L, jurisdiction), and the R1/R2 split at that depth (RULINGS Q40b)",
     "positionOrdinal": "positions in W0 are the 1-based dense ordinal of committed Triplex transacts in the tenant's source-of-truth stream, in coordinate order, supplied identically to the kernel and to O-DOMAIN (RULINGS Q40f)",
@@ -2417,6 +2550,32 @@
   "qualificationRun": {
     "executor": "lab/bin/claim.mjs (EXP-E01); qualification_run and admit_claim in this generator are its reference model",
     "contractSource": "the evaluator reads the contract (obligations.json and load-contract.json) from the authority ref (main), never from the claimed commit (RULINGS Q61a); it reads VERIFIER_REGISTRY as written (RULINGS Q61b)",
+    "blockers": {
+      "rule": "every blocker stays until EXP-G03's executing gate exists; manifests, runners, the build spec, the frozen trace and A0 controls are pinned only through contract versions (RULINGS Q67a, Q65f)",
+      "list": [
+        "an executing gate.mjs OBL with obl-case.ts, a fault injector writing fault-witness/1 and the PAIR-0 paired-rounds runner (EXP-G03, after EXP-M01)",
+        "pinned case manifests (CS manifestSha256)",
+        "BUILD_SPEC",
+        "writerTrace.generator.frozen",
+        "A0_REGISTRY entries",
+        "a VERIFIER_REGISTRY entry per claimed obligation"
+      ]
+    },
+    "executionIdentity": {
+      "rule": "an execution's identity is its source tree, build spec, lockfile, toolchain versions, runner and config hashes per instance; executions are keyed by instance, never by output hash (RULINGS Q67b)",
+      "fields": [
+        "sourceTreeSha256",
+        "buildSpecSha256",
+        "lockfileSha256",
+        "toolchain",
+        "runnerSha256",
+        "configSha256"
+      ],
+      "toolchain": "the node version, platform and arch, and the pnpm version when the build or run calls pnpm; the Python version that runs an oracle is not part of the build identity but is recorded in each oracle invocation's evidence (oracle-invocation/1), because an oracle's answer can depend on it (RULINGS Q71b)",
+      "installMetadata": "the post-build checkout is in the identity except the contract-owned install-metadata exclusion list BUILD_SPEC.installMetadataExclusions, found by diffing two clean installs of the same lockfile, never claimant-supplied (RULINGS Q71a)"
+    },
+    "isolation": "builds and both arms run isolated from evaluator, oracle, evidence and control storage; oracle bytes run from an evaluator-owned read-only copy re-hashed before every invocation; offline verdicts stay diagnostics (RULINGS Q67e)",
+    "kinds": "a claim's kind is preserved; promotion prerequisites (GATE-BROKER-HARDENING and others) are enforced mechanically, and until that is supported promotion qualification is rejected explicitly (RULINGS Q67j)",
     "rule": "a QUALIFIED verdict comes only from a run the evaluator executes itself at the claimed commit; every record an experiment or a claimant supplies (receipts, case results, manifests, selections, verifier records, fingerprints) is DIAGNOSTIC evidence only (RULINGS Q55a)",
     "steps": [
       [
@@ -2550,7 +2709,24 @@
       "outputs": "repository-relative paths the build writes (each built package's dist/)",
       "run": "the system under test's argv, with {case} and {mode}"
     },
-    "inputs": "every tracked file of each built workspace package plus the lockfile and the root package.json, each listed with its sha256 in build-manifest/2 inputs and checked against the side's commit",
+    "inputs": "every tracked file of each built workspace package plus the lockfile and the root package.json, each listed with its sha256 in build-manifest/2 inputs and checked against the side's commit; each built package is the parent directory of a dist/ output (RULINGS Q65d)",
+    "installMetadataExclusions": null,
+    "installMetadataRule": "a required input, null until two clean installs of the same lockfile are diffed; the starting candidates are node_modules/.modules.yaml and node_modules/.pnpm/lock.yaml; contract-owned, never claimant-supplied (RULINGS Q71a)",
+    "specSha256Rule": "buildSpecSha256 is the sha256 of the canonical JSON (sorted keys, no whitespace) of {format, argv, outputs, run} (RULINGS Q65b)",
+    "proposal": {
+      "source": "EXP-E01 lab/config/build.json on exp/E01-claim-evaluator",
+      "argv": "pnpm install --offline --frozen-lockfile --store-dir <repo>/.pnpm-store, then the five package builds in dependency order",
+      "outputs": "the five dist/ directories",
+      "run": [
+        "node",
+        "packages/qualification/workloads/obl-case.ts",
+        "--case",
+        "{case}",
+        "--mode",
+        "{mode}"
+      ],
+      "pinWhen": "packages/qualification/workloads/obl-case.ts exists (RULINGS Q64a, Q65e); it does not exist on main, so argv, outputs and run stay null"
+    },
     "rule": "a required input: null fields fail closed, so no run qualifies until a contract version specifies the build (RULINGS Q55a step 1, Q61f)"
   },
   "imagePins": {
@@ -2666,9 +2842,9 @@
       "generatorSourceSha256": "hex64",
       "seed": "int",
       "offerScheduleSha256": "hex64",
-      "window": "window",
-      "slot": "str"
+      "window": "window"
     },
+    "placement": "each arm's placement {slot, cpuset, cpus} is separate from the shared workload identity; slots are per arm; a duet needs equal capacity, equal regime and disjoint cpusets; under cpusets the per-core denominator is the cpuset size (RULINGS Q67g)",
     "appliesTo": "obligations whose closure rules include CR-NS or CR-GS only; correctness obligations carry no workload identity (RULINGS Q61g)",
     "rule": "every measurement and control receipt carries workload {generatorSourceSha256 (trace generator hash), seed, offerScheduleSha256, window [from, to] with 0 <= from < to, slot (the source assignment's slot)}, every field present, typed and nonempty; a control matches a measurement only when the two workload identities are equal field by field; a missing field never matches a missing field (RULINGS Q47b)"
   },
@@ -2719,7 +2895,20 @@
         "comparator": "str",
         "inputSha256": "hex64"
       },
-      "rule": "case-result/1 plus the mode, the repetition, the comparator applied and the input's sha256; a run that cannot be expressed in this record fails closed (RULINGS Q61e)"
+      "rule": "case-result/1 plus the mode, the repetition, the comparator applied and the input's sha256; a run that cannot be expressed in this record fails closed (RULINGS Q61e); a case reached by several select entries records the first select entry in contract order (RULINGS Q65c); its verdict is recomputed with its declared comparator on the retained raw objects, never by hash equality (RULINGS Q67i, Q71c)"
+    },
+    "oracle-invocation/1": {
+      "fields": {
+        "schema": "str",
+        "oracle": "str",
+        "pinCommit": "str",
+        "argvSha256": "hex64",
+        "runtime": "str",
+        "inputSha256": "hex64",
+        "exit": "int",
+        "outputSha256": "hex64"
+      },
+      "rule": "one record per oracle invocation, with the runtime that ran it (for a Python oracle, its version), because an answer can depend on it (RULINGS Q71b)"
     },
     "fault-witness/1": {
       "fields": {
@@ -2776,7 +2965,7 @@
     "PO-ABORTED-LISTED"
   ],
   "claimAdmission": {
-    "rule": "when any comparative or promotion claim is admitted, including one from a screening (P-SCREEN) run, the verdict comes only from the evaluator's own QUALIFICATION_RUN at the claimed commit (RULINGS Q55a); records an experiment or the claimant supplies, never from supplied case names or Booleans, are diagnostics only. The evaluator builds the declared tree and requires: a passing G7.position.coordinates run for that build and composition over POSITION_REQUIRED_CASES; G10.composition.identity-bound with every assignment bound (engine, image digest, configuration hash, slot) and the source's protocol variant declared, a log source binding its log identity and durability configuration (RULINGS Q55b); where any claimed obligation uses O-DOMAIN, the W0 pin accepted through VERIFIER_REGISTRY, the O-DOMAIN fingerprint pinned by a reviewed contract version (never from the claim, RULINGS Q55e) and a passing W0.coverage-floors run; every oracle the claim or its prerequisites use pinned and accepted through VERIFIER_REGISTRY, with the claimed obligation outside that pin's excludes and refusals. Cases are resolved from the pinned manifests, every case in every mode; expected answers come from running the pinned oracle, so an oracle exit 2 or X-NOT-MODELED never counts as PASS; the declared comparator decides. The control is A0 from the A0_REGISTRY entry for the claim's source engine, rebuilt by the evaluator to the registry's binarySha256 and run on the same evaluator-chosen workload (WORKLOAD_IDENTITY) and slot (RULINGS Q46b, Q47b); while that entry is null every comparison is a diagnostic. Independent verification of the claimed obligation counts only through a VERIFIER_REGISTRY entry for that obligation and commit. Unknown obligation ids are rejected, never dropped. lab/bin/claim.mjs implements this (EXP-E01) with these functions as the reference model. A claim with a failed or pending prerequisite is a diagnostic, never a qualified winner; while O-REPLAY's pin is null every claim is a diagnostic, and A0 measurements may run and produce diagnostics, never closures (RULINGS Q34d, Q37b, Q38b)",
+    "rule": "when any comparative or promotion claim is admitted, including one from a screening (P-SCREEN) run, the verdict comes only from the evaluator's own QUALIFICATION_RUN at the claimed commit (RULINGS Q55a); records an experiment or the claimant supplies, never from supplied case names or Booleans, are diagnostics only. The evaluator builds the declared tree and requires: a passing G7.position.coordinates run for that build and composition over POSITION_REQUIRED_CASES; G10.composition.identity-bound with every assignment bound (engine, image digest, configuration hash, slot) and the source's protocol variant declared, a log source binding its log identity and durability configuration (RULINGS Q55b); where any claimed obligation uses O-DOMAIN, the W0 pin accepted through VERIFIER_REGISTRY, the O-DOMAIN fingerprint pinned by a reviewed contract version (never from the claim, RULINGS Q55e) and a passing W0.coverage-floors run; every oracle the claim or its prerequisites use pinned and accepted through VERIFIER_REGISTRY, with the claimed obligation outside that pin's excludes and refusals. Cases are resolved from the pinned manifests, every case in every mode; expected answers come from running the pinned oracle, so an oracle exit 2 or X-NOT-MODELED never counts as PASS; the declared comparator decides. The control is A0 from the A0_REGISTRY entry for the claim's source engine, rebuilt by the evaluator to the registry's binarySha256 and run on the same evaluator-chosen workload (WORKLOAD_IDENTITY) as paired rounds, each arm on its own registered slot and placement (RULINGS Q46b, Q47b, Q60, Q67g); a promotion claim is rejected explicitly until its prerequisites are enforced (RULINGS Q67j); while that entry is null every comparison is a diagnostic. Independent verification of the claimed obligation counts only through a VERIFIER_REGISTRY entry for that obligation and commit. Unknown obligation ids are rejected, never dropped. lab/bin/claim.mjs implements this (EXP-E01) with these functions as the reference model. A claim with a failed or pending prerequisite is a diagnostic, never a qualified winner; while O-REPLAY's pin is null every claim is a diagnostic, and A0 measurements may run and produce diagnostics, never closures (RULINGS Q34d, Q37b, Q38b)",
     "verdicts": [
       "QUALIFIED",
       "DIAGNOSTIC"
@@ -2784,63 +2973,11 @@
   },
   "pendingRulings": {
     "file": "lab/acceptance/RULINGS-PENDING.md",
-    "sha256": "0b2c1127e502335b7bea64c087bb9b6aafc09e8954e7da70c524836b05ccb4cc",
+    "sha256": "ee23c44ceab225b4128fc8baa04d6dbd2f87ad3780091445c2db94183a5144b3",
     "ids": [
       "Q51b",
-      "Q57a",
-      "Q57b",
-      "Q57c",
-      "Q57d",
-      "Q57e",
-      "Q63a",
-      "Q63b",
-      "Q63c",
-      "Q63d",
-      "Q64a",
-      "Q64b",
-      "Q64c",
-      "Q64d",
-      "Q64e",
-      "Q64f",
-      "Q65a",
-      "Q65b",
-      "Q65c",
-      "Q65d",
-      "Q65e",
-      "Q65f",
-      "Q66a",
-      "Q66b",
-      "Q66c",
-      "Q66d",
-      "Q67a",
-      "Q67b",
-      "Q67c",
-      "Q67d",
-      "Q67e",
-      "Q67f",
-      "Q67g",
-      "Q67h",
-      "Q67i",
-      "Q67j",
-      "Q68a",
-      "Q68b",
-      "Q68c",
-      "Q68d",
-      "Q68e",
-      "Q68f",
-      "Q68g",
-      "Q69a",
-      "Q69b",
-      "Q69c",
-      "Q69d",
-      "Q69e",
-      "Q69f",
-      "Q69g",
       "Q70a",
       "Q70b",
-      "Q71a",
-      "Q71b",
-      "Q71c",
       "Q70c",
       "Q70d",
       "Q70e",
@@ -2849,7 +2986,6 @@
       "Q72c",
       "Q72d",
       "Q72e",
-      "Q72f",
       "Q72g"
     ],
     "authority": "none",
@@ -3362,6 +3498,14 @@
           [
             "CS-ERASURE",
             "ER-ERASE-COMMAND-SHAPE"
+          ],
+          [
+            "CS-ERASURE",
+            "ER-INFLIGHT-PREFIXES"
+          ],
+          [
+            "CS-ERASURE",
+            "ER-CURSOR-ERASURE-PREFIX"
           ],
           [
             "CS-DECIMAL-ROUTING",
@@ -3909,6 +4053,8 @@
     "lab/oracles/decimal/gen_vectors.py": "b30b430acbfc7476cf47e676d38abaa247d3545b20aac5d481bea67a11cf11e1"
   },
   "outbox": {
+    "sweepFrames": "provisional: a sweep page may publish up to 64 results in one frame: one atomic outbox commit per frame, each result its own work item with its own delivery identity (RULINGS Q68c, Q38f)",
+    "sweepFrameMaxResults": 64,
     "deliveryKey": "(id, publication sequence)",
     "sequence": "durable per work-item id; increments when the payload to publish differs from the latest published payload for that id, so R1 to R2 to R1 publishes three deliveries (1650, 1700, 1650) and the receiver never suppresses the return",
     "contentVersion": "hashes (release, inputs, payload); recorded, never the delivery identity",
@@ -3975,7 +4121,7 @@
     },
     {
       "id": "DR-JSON-STRING-TEXT",
-      "rule": "decimal text inside a JSON string is E-INVALID-VALUE where a decimal is required, unless the query converts the string explicitly (RULINGS Q49e)",
+      "rule": "decimal text inside a JSON string is E-INVALID-VALUE where a decimal is required, unless the query converts the string explicitly (RULINGS Q49e); the explicitly converted half is a lane obligation, because O-REPLAY does not model text-to-decimal conversion (RULINGS Q66d)",
       "case": "DR-JSON-STRING-TEXT"
     }
   ],
@@ -4228,7 +4374,60 @@
       "Q61k",
       "Q62a",
       "Q62b",
-      "Q62c"
+      "Q62c",
+      "Q57a",
+      "Q57b",
+      "Q57c",
+      "Q57d",
+      "Q57e",
+      "Q63a",
+      "Q63b",
+      "Q63c",
+      "Q63d",
+      "Q64a",
+      "Q64b",
+      "Q64c",
+      "Q64d",
+      "Q64e",
+      "Q64f",
+      "Q65a",
+      "Q65b",
+      "Q65c",
+      "Q65d",
+      "Q65e",
+      "Q65f",
+      "Q66a",
+      "Q66b",
+      "Q66c",
+      "Q66d",
+      "Q67a",
+      "Q67b",
+      "Q67c",
+      "Q67d",
+      "Q67e",
+      "Q67f",
+      "Q67g",
+      "Q67h",
+      "Q67i",
+      "Q67j",
+      "Q68a",
+      "Q68b",
+      "Q68c",
+      "Q68d",
+      "Q68e",
+      "Q68f",
+      "Q68g",
+      "Q69a",
+      "Q69b",
+      "Q69c",
+      "Q69d",
+      "Q69e",
+      "Q69f",
+      "Q69g",
+      "Q71a",
+      "Q71b",
+      "Q71c",
+      "Q72f"
     ],
     "recordedNotCompiled": []
   },
@@ -5533,13 +5732,6 @@
       "status": "new reason; never closes an obligation that needs the shape"
     },
     {
-      "id": "E-UNAVAILABLE-CUT",
-      "tag": "ReadError",
-      "reason": "unavailable-cut",
-      "phase": "preflight",
-      "status": "new reason; permitted only for a basis beyond the latest committed position"
-    },
-    {
       "id": "E-ADMISSION",
       "tag": "ReadError",
       "reason": "admission-refused",
@@ -5586,7 +5778,8 @@
       "tag": "BasisNotAvailable",
       "reason": "basis-not-reached",
       "phase": "execution",
-      "status": "new tag (RULINGS Q55c): a native read with a basis token the serving replica has not reached within the request deadline"
+      "shape": "{_tag: BasisNotAvailable, required, observed, replica, cause?} (RULINGS Q67h)",
+      "status": "new tag (RULINGS Q55c, Q58a, Q72f): a read at a basis beyond the latest published position, or one the serving replica has not reached within the request deadline; the only id for that case (E-UNAVAILABLE-CUT is retired)"
     },
     {
       "id": "E-BASIS-NOT-RECONSTRUCTIBLE",
@@ -5600,6 +5793,7 @@
       "tag": "ReplicaUnavailable",
       "reason": "replica-unreachable",
       "phase": "execution",
+      "shape": "{_tag: ReplicaUnavailable, required, observed, replica, cause?} (RULINGS Q67h)",
       "status": "new tag (RULINGS Q55c): a native read while the replica is unreachable"
     },
     {
@@ -5736,6 +5930,16 @@
       "status": "existing class; carries operationId"
     }
   ],
+  "retiredErrors": {
+    "E-UNAVAILABLE-CUT": {
+      "was": "ReadError / unavailable-cut",
+      "replacedBy": "E-BASIS-NOT-AVAILABLE",
+      "moved": [
+        "CURSOR_TRANSITIONS.permittedErrors CE-FUTURE-BASIS (G8.publish.basis-honesty, G10.cursor.continuation-transitions)"
+      ]
+    }
+  },
+  "errorRepresentation": "BasisNotAvailable and ReplicaUnavailable have one representation: _tag BasisNotAvailable or ReplicaUnavailable with {required, observed, replica}; cause is optional; core gains these error classes and adapters return them (RULINGS Q67h)",
   "errorComparison": "An expected error matches when the observed error's _tag equals the pinned tag and its reason equals the pinned reason (or one of the listed alternatives for multi-reason ids, the case names which), the original cause is retained, and no rows are returned. Any other error, a success, or partial rows is a FAIL.",
   "commitOutcomes": {
     "source": "PLAN v1.1 C2 (QLever), XTDB adapter commit path (lab/research/R4 3.2, 3.7); acceptance review r1 finding 5",
@@ -5939,9 +6143,9 @@
       },
       {
         "id": "CE-FUTURE-BASIS",
-        "error": "E-UNAVAILABLE-CUT",
-        "reason": "unavailable-cut",
-        "when": "the requested position is beyond the latest committed position"
+        "error": "E-BASIS-NOT-AVAILABLE",
+        "reason": "basis-not-reached",
+        "when": "the requested position is beyond the latest published position (RULINGS Q72f: E-UNAVAILABLE-CUT retired)"
       },
       {
         "id": "CE-FENCED",
@@ -6427,6 +6631,19 @@
       "burstPhase": "bursts start at 120 s + k x 600 s from the start of the measured window, identical for baselines and candidates",
       "scenarioOverlay": "a golden scenario's commands are added on top of the background trace, never instead of it; both streams accounted separately in the receipt",
       "freeze": "the generator source hash and the seed are bound in every receipt; a change to either starts a new comparison series",
+      "frozenScreening": {
+        "screening-burst-180": {
+          "sha256": null,
+          "seed": null,
+          "offerScheduleSha256": null
+        },
+        "screening-r4": {
+          "sha256": null,
+          "seed": null,
+          "offerScheduleSha256": null
+        },
+        "rule": "each screening series has its own frozen entry, frozen by EXP-M01 (RULINGS Q64b, Q60g, Q69f); frozen is the acceptance trace; until frozen, claims stay diagnostics"
+      },
       "frozen": {
         "sha256": null,
         "seed": null,
@@ -11448,6 +11665,7 @@
         "NS-P3-CRASH-AFTER-CHECKPOINT",
         "NS-P3-DOMAIN-AFFECTED-SET",
         "NS-P3-EVERY-POSITION-ACCOUNTED",
+        "NS-P3-SOURCE-PREFIX-ENUMERATED",
         "NS-P4-BUCKETS",
         "NS-P4-MATCHED-HISTORY",
         "NS-P5-COVERAGE",
@@ -11599,7 +11817,9 @@
         "ER-GROUP-EARLIEST-ERASEDAT",
         "ER-REFERENCE-CONSTRAINT-SKIPPED",
         "ER-INFLIGHT-ALL-OR-NONE",
-        "ER-ERASE-COMMAND-SHAPE"
+        "ER-ERASE-COMMAND-SHAPE",
+        "ER-INFLIGHT-PREFIXES",
+        "ER-CURSOR-ERASURE-PREFIX"
       ],
       "manifest": "lab/acceptance/cases/CS-ERASURE.json",
       "manifestSha256": null,
@@ -11661,7 +11881,9 @@
         "CO-REPLICA-REGRESSION-REAL-MARKER",
         "CO-PULL-BEYOND-PREFIX-TYPED",
         "CO-OUTAGE-PULL-FALLBACK",
-        "CO-OUTAGE-RETRACTION-TARGET-FALLBACK"
+        "CO-OUTAGE-RETRACTION-TARGET-FALLBACK",
+        "CO-RESET-DURING-QUERY",
+        "CO-TYPED-ERROR-SHAPE"
       ],
       "manifest": "lab/acceptance/cases/CS-COMPOSITION.json",
       "manifestSha256": null,
@@ -12955,7 +13177,7 @@
   },
   "loadContractRef": {
     "path": "lab/acceptance/load-contract.json",
-    "sha256": "27f79af3533e7978a0d3f47569d42cae303203b7f2fb26b9b835de4abb8d2cca"
+    "sha256": "e90e97d6f1a6462fb87a05f8b9af924b4a44aa82c8e3f0adc357b8698c80e354"
   },
   "obligations": [
     {
@@ -20450,7 +20672,7 @@
         "NS"
       ],
       "title": "P3: an ordered, resumable change feed",
-      "statement": "Under TARGETS 1.1 P3: feed entries carry tx, entity, attribute and the valid-time range affected; lag runs from the source's own publication timestamp for each position (the broker's durable watermark update, or the engine's commit resolution when the engine is the source), recorded by the source on the shared host monotonic clock independently of ACK delivery, to the consumer's durable record, and every committed position is accounted: none is dropped for a missing ACK, and a missing one is counted and fails the run (NS-P3-EVERY-POSITION-ACCOUNTED, RULINGS Q55d); an ACK-to-consumer figure (such as EXP-P2Q's) is not this measurement until recomputed; the cursor is (epoch, position); the expected affected-subject set per transaction is the directly written subjects (O-REPLAY) plus the subjects whose WORLD_W0 static read set contains a changed fact (O-DOMAIN, NS-P3-DOMAIN-AFFECTED-SET, RULINGS Q36e); 'affected subjects known' is the consumer's single durable write of the set and its checkpoint. Over a run there are zero gaps (NS-P3-GAPS-MAX) and zero per-subject order violations (NS-P3-ORDER-VIOLATIONS-MAX); lag stays within NS-P3-LAG-P99-MS with P1's 256 readers running; delivery is at-least-once from the last checkpoint with effects keyed by (consumer, position, subject), so crashes before the effect, after the effect before the checkpoint, and after the checkpoint (NS-P3-CRASH-BEFORE-EFFECT, NS-P3-CRASH-AFTER-EFFECT, NS-P3-CRASH-AFTER-CHECKPOINT) leave zero visible duplicate effects (NS-P3-VISIBLE-DUP-EFFECTS-MAX) while replay attempts are counted separately; resume from a checkpoint replays exactly.",
+      "statement": "Under TARGETS 1.1 P3: feed entries carry tx, entity, attribute and the valid-time range affected; lag runs from the source's own publication timestamp for each position (the broker's durable watermark update, or the engine's commit resolution when the engine is the source), recorded by the source on the shared host monotonic clock independently of ACK delivery, to the consumer's durable record, and every committed position is accounted: none is dropped for a missing ACK, and a missing one is counted and fails the run (NS-P3-EVERY-POSITION-ACCOUNTED, RULINGS Q55d); an ACK-to-consumer figure (such as EXP-P2Q's) is not this measurement until recomputed; both arms enumerate the final published source prefix from the source's own record and timestamp actual publication (the broker's watermark publication, or commit resolution when the engine is the source), ACK records being reconciled afterwards, so a late or lost ACK is never a feed defect (NS-P3-SOURCE-PREFIX-ENUMERATED, RULINGS Q67d; manifest null until built); the cursor is (epoch, position); the expected affected-subject set per transaction is the directly written subjects (O-REPLAY) plus the subjects whose WORLD_W0 static read set contains a changed fact (O-DOMAIN, NS-P3-DOMAIN-AFFECTED-SET, RULINGS Q36e); 'affected subjects known' is the consumer's single durable write of the set and its checkpoint. Over a run there are zero gaps (NS-P3-GAPS-MAX) and zero per-subject order violations (NS-P3-ORDER-VIOLATIONS-MAX); lag stays within NS-P3-LAG-P99-MS with P1's 256 readers running; delivery is at-least-once from the last checkpoint with effects keyed by (consumer, position, subject), so crashes before the effect, after the effect before the checkpoint, and after the checkpoint (NS-P3-CRASH-BEFORE-EFFECT, NS-P3-CRASH-AFTER-EFFECT, NS-P3-CRASH-AFTER-CHECKPOINT) leave zero visible duplicate effects (NS-P3-VISIBLE-DUP-EFFECTS-MAX) while replay attempts are counted separately; resume from a checkpoint replays exactly.",
       "lanes": [
         "xtdb-xtql",
         "xtdb-sql",
@@ -20471,7 +20693,8 @@
             "NS-P3-CRASH-AFTER-EFFECT",
             "NS-P3-CRASH-AFTER-CHECKPOINT",
             "NS-P3-DOMAIN-AFFECTED-SET",
-            "NS-P3-EVERY-POSITION-ACCOUNTED"
+            "NS-P3-EVERY-POSITION-ACCOUNTED",
+            "NS-P3-SOURCE-PREFIX-ENUMERATED"
           ]
         }
       ],
@@ -20522,7 +20745,7 @@
       "notes": null,
       "layer": "source",
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "ba87a1b9cf332542bf303620a15850225cc2d372ef2db715cb738861ad1e17bd",
+      "definitionSha256": "2a6ce741c9f85f92aeb0430686c7748d94d9529d57b9fb4cf803aea539550ae7",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -23896,7 +24119,7 @@
         "G7"
       ],
       "title": "ACK after source publication; read-your-own-write by routing",
-      "statement": "Per COMPOSITION ackOwnership (RULINGS Q31e, replacing Q28's ACK clause): the source of truth sends every ACK after its own publication (CO-ACK-AFTER-SOURCE-PUBLICATION, OBS-ACK-ORDER); the pull at the returned position is served by an index eligible for it, else by the fallback, so read-your-own-write is exact (CO-RYOW-ROUTED); during a current-index outage commits and ACKs continue and pulls fall back (CO-OUTAGE-ACKS-CONTINUE), and the index catches up from the feed through a bounded queue (CO-CATCHUP-BOUNDED-QUEUE). Per COMPOSITION fallbackEquivalence (RULINGS Q34b) and readGuarantees (RULINGS Q55c, provisional, flagged for Sam; supersedes Q50b), each serving surface the composition claims in the lane's language is tested against its own guarantee (CO-RYOW-PER-SURFACE): repository pulls read their own write by routing and fall back to the source with the replica down (CO-REPO-REPLICA-DOWN-FALLBACK); native answers report their basis (CO-NATIVE-REPORTS-BASIS), are never below a basis token (CO-NATIVE-BASIS-TOKEN-WAIT) or fail with E-BASIS-NOT-AVAILABLE after the request deadline (CO-NATIVE-BASIS-NOT-AVAILABLE), answer at the replica's watermark without a token (CO-NATIVE-NO-TOKEN-WATERMARK) and fail with E-REPLICA-UNAVAILABLE with the replica down (CO-NATIVE-REPLICA-UNAVAILABLE); no surface presents an answer as at a basis it was not computed at (CO-NO-FALSE-BASIS). Per COMPOSITION readGuarantees native (RULINGS Q58a, provisional, flagged for Sam; supersedes Q55c's native half): native queries go only through the Triplex facade (CO-FACADE-ONLY); an after: token waits for the replica marker within the deadline, then fails with E-BASIS-NOT-AVAILABLE {required, observed, replica} (CO-NATIVE-AFTER-TOKEN); an at: token is exact (CO-NATIVE-AT-EXACT) or fails with E-BASIS-NOT-RECONSTRUCTIBLE (CO-NATIVE-AT-NOT-RECONSTRUCTIBLE); a session sends its high-water mark as an implicit after (CO-SESSION-HIGH-WATER); every answer carries {basis: {low, high}, route} (CO-ANSWER-BASIS-RANGE-ROUTE); the default deadline is 2 s (CO-NATIVE-DEFAULT-DEADLINE). Per V-P2Q (RULINGS Q62a): Datalog and executor reads inside a transaction wait for the replica to reach the transaction's source position or fail typed (CO-EXECUTOR-IN-TX-WAITS-OR-TYPED), and executor reads are scope-wide in the compare-and-set read set (CO-EXECUTOR-READS-IN-CAS-SET); after a replica regression the real marker is read with the answer and nothing is answered below the basis (CO-REPLICA-REGRESSION-REAL-MARKER); a pull beyond the resolved prefix waits or fails with E-BASIS-NOT-AVAILABLE, on A0 too (CO-PULL-BEYOND-PREFIX-TYPED); during an outage pulls and retraction-target reads fall back to the log or fail with E-REPLICA-UNAVAILABLE (CO-OUTAGE-PULL-FALLBACK, CO-OUTAGE-RETRACTION-TARGET-FALLBACK); a stale fallback is rejected (CO-STALE-FALLBACK-REJECTED); a cross-language fallback recipe is bound to the same semantic query identity (parameters, basis, meaning) and the same oracle answer (CO-CROSS-LANGUAGE-RECIPE-IDENTITY), with total request latency and language attribution recorded.",
+      "statement": "Per COMPOSITION ackOwnership (RULINGS Q31e, replacing Q28's ACK clause): the source of truth sends every ACK after its own publication (CO-ACK-AFTER-SOURCE-PUBLICATION, OBS-ACK-ORDER); the pull at the returned position is served by an index eligible for it, else by the fallback, so read-your-own-write is exact (CO-RYOW-ROUTED); during a current-index outage commits and ACKs continue and pulls fall back (CO-OUTAGE-ACKS-CONTINUE), and the index catches up from the feed through a bounded queue (CO-CATCHUP-BOUNDED-QUEUE). Per COMPOSITION fallbackEquivalence (RULINGS Q34b) and readGuarantees (RULINGS Q55c, provisional, flagged for Sam; supersedes Q50b), each serving surface the composition claims in the lane's language is tested against its own guarantee (CO-RYOW-PER-SURFACE): repository pulls read their own write by routing and fall back to the source with the replica down (CO-REPO-REPLICA-DOWN-FALLBACK); native answers report their basis (CO-NATIVE-REPORTS-BASIS), are never below a basis token (CO-NATIVE-BASIS-TOKEN-WAIT) or fail with E-BASIS-NOT-AVAILABLE after the request deadline (CO-NATIVE-BASIS-NOT-AVAILABLE), answer at the replica's watermark without a token (CO-NATIVE-NO-TOKEN-WATERMARK) and fail with E-REPLICA-UNAVAILABLE with the replica down (CO-NATIVE-REPLICA-UNAVAILABLE); no surface presents an answer as at a basis it was not computed at (CO-NO-FALSE-BASIS). Per COMPOSITION readGuarantees native (RULINGS Q58a, provisional, flagged for Sam; supersedes Q55c's native half): native queries go only through the Triplex facade (CO-FACADE-ONLY); an after: token waits for the replica marker within the deadline, then fails with E-BASIS-NOT-AVAILABLE {required, observed, replica} (CO-NATIVE-AFTER-TOKEN); an at: token is exact (CO-NATIVE-AT-EXACT) or fails with E-BASIS-NOT-RECONSTRUCTIBLE (CO-NATIVE-AT-NOT-RECONSTRUCTIBLE); a session sends its high-water mark as an implicit after (CO-SESSION-HIGH-WATER); every answer carries {basis: {low, high}, route} (CO-ANSWER-BASIS-RANGE-ROUTE); the default deadline is 2 s (CO-NATIVE-DEFAULT-DEADLINE). Per V-P2Q (RULINGS Q62a): Datalog and executor reads inside a transaction wait for the replica to reach the transaction's source position or fail typed (CO-EXECUTOR-IN-TX-WAITS-OR-TYPED), and executor reads are scope-wide in the compare-and-set read set (CO-EXECUTOR-READS-IN-CAS-SET); after a replica regression the real marker is read with the answer and nothing is answered below the basis (CO-REPLICA-REGRESSION-REAL-MARKER); a pull beyond the resolved prefix waits or fails with E-BASIS-NOT-AVAILABLE, on A0 too (CO-PULL-BEYOND-PREFIX-TYPED); during an outage pulls and retraction-target reads fall back to the log or fail with E-REPLICA-UNAVAILABLE (CO-OUTAGE-PULL-FALLBACK, CO-OUTAGE-RETRACTION-TARGET-FALLBACK). Per RULINGS Q67c: single-request surfaces read the replica marker in the same request as the answer, and multi-request surfaces (Datalog, executor) use replica incarnation fencing, accepting an answer only if (incarnation, marker) is equal before and after, the reset-during-query interleaving being an independently authored case (CO-RESET-DURING-QUERY); per RULINGS Q67h every such error has one representation, _tag BasisNotAvailable or ReplicaUnavailable with {required, observed, replica} and an optional cause (CO-TYPED-ERROR-SHAPE); both cases' manifests stay null until the design is built; a stale fallback is rejected (CO-STALE-FALLBACK-REJECTED); a cross-language fallback recipe is bound to the same semantic query identity (parameters, basis, meaning) and the same oracle answer (CO-CROSS-LANGUAGE-RECIPE-IDENTITY), with total request latency and language attribution recorded.",
       "lanes": [
         "xtdb-xtql",
         "xtdb-sql",
@@ -23940,7 +24163,9 @@
             "CO-REPLICA-REGRESSION-REAL-MARKER",
             "CO-PULL-BEYOND-PREFIX-TYPED",
             "CO-OUTAGE-PULL-FALLBACK",
-            "CO-OUTAGE-RETRACTION-TARGET-FALLBACK"
+            "CO-OUTAGE-RETRACTION-TARGET-FALLBACK",
+            "CO-RESET-DURING-QUERY",
+            "CO-TYPED-ERROR-SHAPE"
           ]
         }
       ],
@@ -23989,7 +24214,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "4b2e19fce6cc07221e2496521e1083c4f1272b3af0f87d800ad3a85c8aaffac3",
+      "definitionSha256": "972e069b62f621d9d269a4e8a7a0dbcf741a87f187475fe139306bb8deb0ff07",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -24426,7 +24651,7 @@
         "G1"
       ],
       "title": "The Q52 shapes the pinned oracle does not model yet",
-      "statement": "Per ERASURE queriesResidual, inFlight and commandShape (RULINGS Q52, provisional under the Q24 flag for Sam): a count of distinct values counts an attribute's erased values as one value (ER-COUNT-DISTINCT-MARKER, Q52a); ORDER BY puts readable values, then erased markers by assertion id, then missing values, in both directions (ER-ORDER-ERASED-THEN-MISSING, Q52b); a marker group reports the earliest erasedAt (ER-GROUP-EARLIEST-ERASEDAT, Q52c); an erased reference takes no part in reference constraints (ER-REFERENCE-CONSTRAINT-SKIPPED, Q52d); a read in flight across a commit erasing several values sees all old values or all markers, never a mix (ER-INFLIGHT-ALL-OR-NONE, Q52e); toDecimal(json, p, s, rounding) applies the named mode to the as-written reading and, without a rounding argument, excess digits are E-DECIMAL-FRACTION (DR-JSON-CONVERT-ROUNDING, Q52f); erasure is not an op and an erase mixed with other operations or given preconditions is a typed invalid-command error (ER-ERASE-COMMAND-SHAPE, Q52g). O-REPLAY 0.4.1 refuses these shapes (ORACLE_REFUSALS q52-shapes), so this obligation stays blocked until 0.4.2 is accepted.",
+      "statement": "Per ERASURE queriesResidual, inFlight and commandShape (RULINGS Q52, provisional under the Q24 flag for Sam): a count of distinct values counts an attribute's erased values as one value (ER-COUNT-DISTINCT-MARKER, Q52a); ORDER BY puts readable values, then erased markers by assertion id, then missing values, in both directions (ER-ORDER-ERASED-THEN-MISSING, Q52b); a marker group reports the earliest erasedAt (ER-GROUP-EARLIEST-ERASEDAT, Q52c); an erased reference takes no part in reference constraints (ER-REFERENCE-CONSTRAINT-SKIPPED, Q52d); a read in flight across a commit erasing several values sees all old values or all markers, never a mix (ER-INFLIGHT-ALL-OR-NONE, Q52e); toDecimal(json, p, s, rounding) applies the named mode to the as-written reading and, without a rounding argument, excess digits are E-DECIMAL-FRACTION (DR-JSON-CONVERT-ROUNDING, Q52f); erasure is not an op and an erase mixed with other operations or given preconditions is a typed invalid-command error (ER-ERASE-COMMAND-SHAPE, Q52g); a read that started before n in-flight erasure commits sees one of the n + 1 prefixes (ER-INFLIGHT-PREFIXES, Q66a); a continuation cursor keeps its page's erasure prefix (ER-CURSOR-ERASURE-PREFIX, Q66b). O-REPLAY 0.4.1 refuses these shapes (ORACLE_REFUSALS q52-shapes), so this obligation stays blocked until 0.4.2 is accepted.",
       "lanes": [
         "xtdb-xtql",
         "xtdb-sql",
@@ -24448,7 +24673,9 @@
             "ER-GROUP-EARLIEST-ERASEDAT",
             "ER-REFERENCE-CONSTRAINT-SKIPPED",
             "ER-INFLIGHT-ALL-OR-NONE",
-            "ER-ERASE-COMMAND-SHAPE"
+            "ER-ERASE-COMMAND-SHAPE",
+            "ER-INFLIGHT-PREFIXES",
+            "ER-CURSOR-ERASURE-PREFIX"
           ]
         },
         {
@@ -24499,7 +24726,7 @@
       "notes": "Provisional product ruling (RULINGS Q24), flagged for Sam; the loop proceeds on it.",
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "aa0792300d3016d3ca2162e3ff6ce7c934e0980611b6789a4e51e64804f92491",
+      "definitionSha256": "e985c7b63331a64210ca6fa21bc44d3c43c19a859536e45d47afea27014cc3d2",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -25325,5 +25552,5 @@
       ]
     }
   ],
-  "transitiveContractSha256": "fc272839545ac5fd9649cfa9eb806540617cabac523c08b0fbfaccd1d2536445"
+  "transitiveContractSha256": "fb69d66ebb82c560efb8d6b3a6395ff23f82f9203fd18d6d4e08e5553bd78d00"
 }
