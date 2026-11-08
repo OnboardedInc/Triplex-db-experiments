@@ -1,0 +1,14 @@
+{
+  "id": "C92",
+  "slug": "err-bytes-not-utf8",
+  "title": "A01: a 0xFF byte inside a string: W0.E_SHAPE",
+  "op": "evaluate",
+  "checks": [],
+  "notes": [
+    "From V-D01c P05 (A01, RULINGS Q53a). inputBase64 holds C01's canonical input with the SSN's last byte replaced by 0xFF,",
+    "which is not UTF-8. The bytes are not a JSON text: W0.E_SHAPE. A decoder that substitutes U+FFFD would instead give",
+    "a value error or a different output."
+  ],
+  "inputBase64": "eyJiYXNpcyI6eyJ0eCI6MTAsInZhbGlkVGltZSI6IjIwMjYtMTEtMDRUMTI6MDA6MDAuMDAwMDAwWiJ9LCJyZWxlYXNlIjoiUjEiLCJ3b3JsZCI6eyJmYWN0cyI6W3siYSI6Imp1cmlzZGljdGlvbiIsImUiOiJsb2M6bnljIiwidHgiOjEsInYiOiJqdXI6bnkifSx7ImEiOiJzdGF0ZU1pbldhZ2VDZW50cyIsImUiOiJqdXI6bnkiLCJ0eCI6MSwidiI6MTY1MH0seyJhIjoic3RhcnREYXRlIiwiZSI6InBsOmEiLCJ0eCI6MiwidiI6IjIwMjYtMTEtMDIifSx7ImEiOiJwYXlSYXRlQ2VudHMiLCJlIjoicGw6YSIsInR4IjoyLCJ2IjoxNjUwfSx7ImEiOiJsb2NhdGlvbiIsImUiOiJwbDphIiwidHgiOjIsInYiOiJsb2M6bnljIn0seyJhIjoic2VjdGlvbjFBdHRlc3RlZEF0IiwiZSI6InBsOmEiLCJ0eCI6MywidiI6IjIwMjYtMTAtMzBUMTU6MDA6MDAuMDAwMDAwWiJ9LHsiYSI6InNzbiIsImUiOiJwbDphIiwidHgiOjMsInYiOiIxMjM0NTY3OP8ifSx7ImEiOiJiZ2NTdGF0dXMiLCJlIjoicGw6YSIsInR4Ijo0LCJ2IjoiY2xlYXIifSx7ImEiOiJldmVyaWZ5U3RhdHVzIiwiZSI6InBsOmEiLCJ0eCI6NSwidiI6InBlbmRpbmcifSx7ImEiOiJldmVyaWZ5U3RhdHVzQXQiLCJlIjoicGw6YSIsInR4Ijo1LCJ2IjoiMjAyNi0xMS0wM1QxMDowMDowMC4wMDAwMDBaIn0seyJhIjoiZGVjaXNpb25zIiwiZSI6InBsOmEiLCJ0eCI6NiwidiI6InBsOmEvZGVjOjEifSx7ImEiOiJ0YXJnZXQiLCJlIjoicGw6YS9kZWM6MSIsInR4Ijo2LCJ2IjoiaTkuc2VjdGlvbjIifSx7ImEiOiJ2ZXJkaWN0IiwiZSI6InBsOmEvZGVjOjEiLCJ0eCI6NiwidiI6ImFwcHJvdmUifSx7ImEiOiJhdXRob3IiLCJlIjoicGw6YS9kZWM6MSIsInR4Ijo2LCJ2IjoicGVyc29uIn0seyJhIjoid2Vla2x5TWludXRlcyIsImUiOiJwbDphIiwidHgiOjcsInYiOjI0MDB9XSwic3ViamVjdCI6InBsOmEifX0=",
+  "expected": {"error": "W0.E_SHAPE"}
+}

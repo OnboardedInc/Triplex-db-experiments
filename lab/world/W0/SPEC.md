@@ -1,4 +1,4 @@
-# W0: the frozen world definition (spec version W0-1.1.1, 2026-11-08)
+# W0: the frozen world definition (spec version W0-1.1.2, 2026-11-08)
 
 W0 is a small synthetic world definition. It stands in for Onboarded's real world definition in every Triplex test: the P5
 release sweep, the P3 dependency rules and the domain expectations of the 20 golden scenarios (`lab/TARGETS.md` sections 1.1,
@@ -7,9 +7,11 @@ stdlib-only Python oracle O-DOMAIN, and they must produce byte-identical outputs
 of them has a bug or this file is ambiguous, and the ambiguity gets a named entry in section 14.
 
 **Frozen once pinned.** W0-1.1.0 replaced W0-1.0.0 after the independent review V-D01 (`lab/verify/D01/VERIFY.md`, RULINGS Q40),
-and W0-1.1.1 replaces W0-1.1.0 after its re-review (RULINGS Q44: small fixes, and R3 becomes a release scoped to listed
-jurisdictions). None was pinned, so the world keeps its name. After the pin nothing changes in place: a change of meaning makes a
-new world (`W1`) with its own releases and cases.
+and W0-1.1.1 replaced W0-1.1.0 after its re-review (RULINGS Q44: small fixes, and R3 becomes a release scoped to listed
+jurisdictions). W0-1.1.1 was pinned (contract 0.3.8). **W0-1.1.2 changes no meaning:** it writes in the readings A01 to A15 that
+the two implementations had to choose where this file was silent (RULINGS Q53, Q57), and adds the golden cases C88 to C136 that
+V-D01c's mutation review found missing. Cases C01 to C87, the three releases and the 100k fingerprint are byte-identical to
+W0-1.1.1. A change of meaning still makes a new world (`W1`) with its own releases and cases.
 
 ## 0. Contents
 
@@ -55,8 +57,11 @@ active. An activated sweep (GS.10, P5) is `reconcile` after the activation fact 
 | `schema.json` | the attribute table of section 3 and the release parameter table of section 5, as data |
 | `releases/R1.json`, `releases/R2.json`, `releases/R3.json` | the three releases (R3 carries a scope, 5.1) |
 | `releases/index.json` | release name to content hash |
-| `cases/*.json` | the 87 golden cases (section 11) |
+| `cases/*.json` | the 136 golden cases (section 11) |
+| `expected-sha256.json` | case id to the SHA-256 of `canonicalJson(expected)`, so a harness compares output bytes with frozen bytes (11.1) |
+| `input-sha256.json` | case id to the SHA-256 of the input bytes a harness hands over, so it can check them (11.1) |
 | `validate.py` | a stdlib-only shape validator (`python3 -I validate.py`); it holds no rule logic |
+| `SHA256SUMS` | the SHA-256 of every other file in this folder; `validate.py` checks it |
 | `README.md` | how to use the folder |
 
 ## 2. Value types
@@ -81,6 +86,20 @@ anything outside the type.
 **A JSON integer token** matches `-?(0|[1-9][0-9]*)` with no fraction and no exponent. `1650.0`, `1.65e3` and `"1650"` are not
 `cents` even though some parsers turn them into 1650. An integer token outside the domain (`-1`, `9007199254740992`) is invalid.
 Both are `W0.E_VALUE` (section 4.4).
+
+**`-0` is an integer token whose value is 0 (RULINGS Q53a, reading A02).** It is valid wherever 0 is and is written `0` in every
+output (case C93); as a fact's `tx` it is 0, below 1, so `W0.E_BASIS` (case C94).
+
+**An integer token has no length limit (RULINGS Q57b, reading A12).** A token of any number of digits is still an integer token.
+Outside its range it is `W0.E_VALUE` as a value (5,000 nines as `payRateCents`, case C90) and `W0.E_BASIS` as a position (5,000
+nines as `basis.tx`, case C129). An implementation must not fail on its language's limits: CPython refuses to convert more than
+4,300 digits by default, and a JavaScript `Number` rounds above 2^53. The fields with a stated range are the `cents` and `minutes`
+values, a fact's `tx`, the `basis.tx` of `evaluate`, `reconcile` and `affected`, and an activation's `tx`.
+
+**The integers of `publish` and `receive` have no upper bound (A12, O-DOMAIN's fix-round reading).** A `seq`, a `done`, the
+`basis.tx` of an evaluation record or subject state and a work item's `inputs` are compared, incremented and written exactly at
+any length; only the lower bounds of 4.4 step 1 apply. A stored `seq` of 5,000 nines publishes `seq` + 1 = 10^5000 (case C130),
+and a receiver at `done` 5,000 nines processes it (case C131). A TypeScript implementation needs `BigInt` for these fields.
 
 **Instants compare as strings.** Because every instant has the same 27-character shape and a four-digit year, byte order of the
 strings equals time order. Implementations compare instants as strings and never convert them to a native time type (a
@@ -198,6 +217,16 @@ For a many-cardinality attribute, `S.documents` is the set of its values.
 
 **An invalid input yields `{"error": "<code>"}` and nothing else.** Checks run in the order below and the first failure wins.
 
+**The input is one JSON text (RULINGS Q53a, Q57a, Q57c; readings A01, A11, A13).** Its bytes are UTF-8 with no byte order mark
+and hold exactly one JSON value (RFC 8259) with optional whitespace around it. Each of these is `W0.E_SHAPE` in step 1:
+- bytes that are not valid UTF-8 (case C92), or a leading byte order mark EF BB BF (case C91), although RFC 8259 section 8.1 lets
+  a general parser ignore one and some decoders replace bad bytes with U+FFFD;
+- a syntax error, a truncated text, or anything after the value;
+- the tokens `NaN`, `Infinity` and `-Infinity`, which are not JSON (case C128).
+
+Nesting depth is never an error: a value may nest to any depth, and an implementation must not fail on its recursion limit. A
+fact's `v` of 2,000 nested arrays passes step 1 and is `W0.E_VALUE` in step 3 (case C132).
+
 1. **`W0.E_SHAPE`:** the input is not a JSON object with exactly the keys of 4.3, or any of these kinds is wrong:
    - objects with exactly the listed keys: the input, `basis`, `world`, each fact, each activation;
    - arrays: `facts`, `activations`, `worlds`, `writes`; each write is a two-element array of strings;
@@ -216,26 +245,35 @@ For a many-cardinality attribute, `S.documents` is the set of its values.
    - `receive`: `deliveries` is an array of deliveries, each as in `publish`. `state` has the arrays `effects` and `projection`.
      An effect state's `done` is an integer token of at least 0, its `id` a string and its `waiting` an array of deliveries. A
      projection entry's `id` is a string, `payload` an object and `seq` an integer token of at least 1.
+   - These integers have no upper bound (section 2, A12).
    - These two operations run no step after step 1. They trust that their records came from `evaluate`, `reconcile` and
      `publish`, so a value of the right kind is not checked further: a `validTime` is not parsed, a hash is not recomputed and an
      id is not matched against its work item. Case C84 gives a state without `pending`, case C85 a delivery with `seq` 0.
+   - A payload, and every string these operations copy, may hold any JSON value, including number tokens with a fraction or an
+     exponent and non-ASCII characters; section 9 item 7 says how they are written (A07).
 
    Also `W0.E_SHAPE`: an object with a duplicate key anywhere in the input, including inside a fact's `v` (case C66); a `release`
    name other than `R1`, `R2` or `R3`; two worlds in `affected` with the same subject (case C67). A string that has the right kind
    but a bad form (an instant that is not an instant, an unknown entity id) is left to the later steps.
 2. **`W0.E_BASIS`:** `basis.validTime` is not a valid instant, or `basis.tx` is outside its range.
-3. **For each world in array order** (one world for `evaluate` and `reconcile`):
+3. **For each world in array order** (one world for `evaluate` and `reconcile`). `affected` runs sub-steps 1 to 3 for one
+   world before it starts the next (RULINGS Q53a, A04): an earlier world's cardinality clash wins over a later world's bad
+   subject (case C96).
    1. `W0.E_UNKNOWN` if `subject` is not a placement id.
    2. For each fact in array order, reachable or not, these three checks in this order, and the first failing fact decides:
       `W0.E_UNKNOWN` if `e` is not an allowed entity (4.2 item 3) or `a` is not an attribute of that kind; `W0.E_VALUE` if `v` is
       not a valid value of the attribute's type (section 2), including a ref of the wrong kind or owner and an erased marker on a
-      non-PII attribute; `W0.E_BASIS` if `tx` is less than 1 or greater than `basis.tx`. So a world whose first fact has a bad
-      `tx` and whose second fact has a bad date gives `W0.E_BASIS` (case C43).
+      non-PII attribute, and any value of a JSON kind the type does not take (an array or object on a date, instant or cents
+      attribute, cases C88 and C89); `W0.E_BASIS` if `tx` is less than 1 or greater than `basis.tx`. So a world whose first fact
+      has a bad `tx` and whose second fact has a bad date gives `W0.E_BASIS` (case C43), and one fact with both a bad date and a
+      bad `tx` gives `W0.E_VALUE` (case C112). A fact at `tx` = `basis.tx` is valid (case C107).
    3. `W0.E_CARDINALITY` if two facts share `(e, a)` for a one-cardinality attribute, or share `(e, a, v)` for a many-cardinality
-      attribute.
-4. **For `reconcile`, each activation in array order:** `W0.E_VALUE` if `release` does not match `^sha256:[0-9a-f]{64}$` or `from` is
-   not a valid instant; `W0.E_BASIS` if `tx` is less than 1 or greater than `basis.tx`. Then `W0.E_NO_RELEASE` if
-   `resolveRelease` finds no release (5.4).
+      attribute. This runs only after every fact of the world has passed sub-step 2 (RULINGS Q53a, A03), so a later unknown
+      attribute wins over an earlier duplicate (case C95).
+4. **For `reconcile`, after the world, each activation in array order, one at a time (RULINGS Q53a, A05):** `W0.E_VALUE` if
+   `release` does not match `^sha256:[0-9a-f]{64}$` or `from` is not a valid instant, then `W0.E_BASIS` if `tx` is less than 1 or
+   greater than `basis.tx`, before the next activation is looked at (cases C97, C98). An activation at `tx` = `basis.tx` is valid
+   (case C106). Then `W0.E_NO_RELEASE` if `resolveRelease` finds no release (5.4).
 
 `writes` entries in `affected` are not checked beyond their shape: any entity and attribute strings are allowed.
 
@@ -294,8 +332,9 @@ A scope is part of its rule entry, so it is part of the hash: listing one more j
 `diff(R1, R2) = ["I9S2", "DOCEXP", "MINWAGE"]`, `diff(R2, R3) = ["OT"]` and `diff(R1, R3) = ["I9S2", "DOCEXP", "MINWAGE", "OT"]`.
 A scope counts as part of the entry, so R2's and R3's `OT` entries differ. This is the definition tier of R18 section 3.1 item 3: a
 sweep may skip a `(subject, rule)` pair whose rule is not in the diff and whose inputs did not change. A sweep from A to B may also
-skip every subject outside the scope of every entry in `diff(A, B)` when each of those entries is scoped and its own `params` equal
-A's params for that rule, because such a subject gets A's params under B. R2 to R3 meets this: R3's `OT` params equal R2's.
+skip every subject outside the scope of every entry in `diff(A, B)` when each of those entries is scoped, its own `params` equal
+A's params for that rule, and A's entry for that rule is unscoped (RULINGS Q48c, V-D01 N2), because such a subject then gets A's
+params under B. R2 to R3 meets this: R2's `OT` entry is unscoped and R3's `OT` params equal R2's.
 
 ### 5.4 Activation
 
@@ -304,11 +343,13 @@ A's params for that rule, because such a subject gets A's params under B. R2 to 
 
 `resolveRelease(activations, v)`:
 
-1. Candidates are the activations with `from <= v` (string comparison).
+1. Candidates are the activations with `from <= v` (string comparison; `from` equal to `v` is a candidate, case C105).
 2. No candidate: `W0.E_NO_RELEASE`.
 3. Pick the candidate with the greatest `from`; among equal `from`, the greatest `tx`; among equal `tx`, the greatest `release`
-   string (byte order).
-4. If the picked hash is not R1's, R2's or R3's: `W0.E_NO_RELEASE`. Otherwise return it. Case C61 pins the equal-`from` tie.
+   string (byte order). The order of the keys matters: `tx` decides before the release string (case C103), and the release
+   string only when `from` and `tx` are equal (case C104).
+4. If the picked hash is not R1's, R2's or R3's: `W0.E_NO_RELEASE`, with no fall-back to another candidate (RULINGS Q53a, A06;
+   case C99). Otherwise return it. Case C61 pins the equal-`from` tie.
 
 In-flight reconciles finishing on the old release is runtime behavior: each reconcile resolves the release once, at its own basis.
 
@@ -628,8 +669,12 @@ single row-0 entry when there are no items. `row` is the matching row number. `i
 | `trace` | by the rule's position in the release, then ascending by `key` |
 | `inputs` | ascending integers, distinct |
 
-"Ascending" for strings is byte order of their ASCII bytes (equal here to Unicode code point order and to JavaScript's default
-string comparison, because every W0 string is printable ASCII).
+**"Ascending" for strings is Unicode code point order (RULINGS Q57d, A14),** which equals the byte order of their UTF-8
+encodings. It is not UTF-16 code unit order, which JavaScript's default `<` and `sort` use and which differs above U+FFFF: U+E000
+sorts before U+1F600 by code point and after it by code unit, since U+1F600 is the pair D83D DE00. Every W0 value string is
+printable ASCII, where the orders agree; the rule decides the order of the strings `publish` and `receive` copy unchecked. It
+covers object keys (section 9 item 2), the sorts of `items`, `subjects`, `effects` and `projection`, the work item order within
+a record (8.8 step 2) and the basis guard's `validTime` comparison (cases C133, C134).
 
 ### 8.8 The outbox: `publish` (RULINGS Q38f, Q40c, Q40d, Q40h)
 
@@ -645,33 +690,43 @@ delivery          = {"id", "key", "kind", "payload", "rule", "seq", "subject", "
 ```
 
 An evaluation record is the `basis`, `release`, `subject` and `workItems` of one `evaluate` or `reconcile` output. The empty
-state is `{"items": [], "pending": [], "subjects": []}`. In every state `items` is ascending by `id`, `subjects` ascending by
-`subject`, and `pending` in publication order.
+state is `{"items": [], "pending": [], "subjects": []}`. In every output state `items` is ascending by `id`, `subjects` ascending
+by `subject` (8.7), and `pending` in publication order.
+
+**An input state is read by key (RULINGS Q53a, A08).** `publish` indexes the input's `items` by `id` and its `subjects` by
+`subject`; when one appears twice, the later entry replaces the earlier one, and input order carries no other meaning. The
+output re-sorts both arrays. `pending` keeps the input's order and appends this call's deliveries (case C101).
 
 **Processing.** Evaluation records are applied one at a time, in array order:
 
 1. **Basis order (Q40d).** The subject is the record's `subject`. Let A be the subject's stored basis. When A exists and the
    record's basis is older (its `tx` is less than A's, or equal with a `validTime` earlier than A's), the record is skipped: no
-   delivery and no state change (case C77). Otherwise the record's basis becomes the subject's stored basis. An equal basis is not
-   older, so a re-applied record goes through steps 2 and 3 and publishes nothing new (case C75).
+   delivery and no state change (case C77; an equal `tx` with an earlier `validTime`, case C122). Otherwise the record's basis
+   becomes the subject's stored basis. An equal basis is not older, so a re-applied record goes through steps 2 and 3 and
+   publishes nothing new (case C75); a second, different record at an equal basis is applied too (case C123).
 2. **Publication (Q38f, Q40c).** For each work item W of the record, in `id` order, with I the item state of `W.id`:
    - no I: publish W with `seq` 1;
    - I is retired: publish W with `seq` = I.seq + 1, even when the payload equals I's (Q40h, case C78);
    - `canonicalJson(W.payload)` differs from `canonicalJson(I.payload)`: publish W with `seq` = I.seq + 1;
    - otherwise: nothing.
 
+   The `id` order is a stable sort (RULINGS Q53a, A09): two work items with one id in a record, which `evaluate` never
+   produces, keep their order in the record, and the second is compared with the item state the first left (case C102).
+   `I.seq + 1` is exact at any length (section 2, case C130).
+
    Publishing appends the delivery `{id, key, kind, payload, rule, seq, subject, version}` to this call's `deliveries` and to
    `state.pending`: `id`, `key`, `kind`, `payload`, `rule` and `version` come from W, `subject` from the record (RULINGS Q44c), and
    `seq` is the new sequence. It sets I to `{id, payload, retired: false, seq, subject}`.
 3. **Retirement (Q40h).** Every item state of this subject that is not retired and whose id is not among the record's work items
-   becomes retired; its `seq` and `payload` stay.
+   becomes retired; its `seq` and `payload` stay. Other subjects' item states are never touched (case C124).
 
 **Only live reconciles are published (RULINGS Q44c).** The records passed to `publish` are live reconciles: `reconcile` outputs
 read at the store's position at that moment, with "now" as the valid time. They may arrive late or out of order; the basis guard
 handles that (C77). A preview (GS.11: `evaluate` with a release that is not active) and an audit evaluation at a past valid time
 are never passed to `publish`: the basis guard orders by `tx` first, so an audit read at a newer `tx` but an older valid time
 would pass the guard and publish past payloads. With only live reconciles, one basis gives one record (one basis resolves one
-release), which is why applying and skipping an equal-basis record cannot be told apart.
+release), which is why applying and skipping an equal-basis record cannot be told apart in practice; `publish` as a function
+still applies it (case C123).
 
 **What the outputs mean.**
 
@@ -708,8 +763,18 @@ receiver keeps two views of each id:
   projection's `seq` for that id (or the id is new), and ignores lower and equal ones, so it never regresses (case C79).
 - **The effects** need every transition in order (for example, one notice per change). An id's effect state starts at `done` 0.
   A delivery with `seq` <= `done`, or already waiting, is a duplicate and is ignored (deduplication by `(id, seq)`). A delivery with
-  `seq` = `done` + 1 is processed, and then any waiting delivery whose `seq` is the next one, repeatedly. A delivery further ahead
-  waits: nothing past a gap is processed until the missing sequence arrives (cases C80 and C81).
+  `seq` = `done` + 1 is processed, and then any waiting delivery whose `seq` is the next one, repeatedly, so one arrival can
+  release several waiting deliveries (case C125). A delivery further ahead waits: nothing past a gap is processed until the
+  missing sequence arrives (cases C80 and C81).
+
+**An input state is read by key (RULINGS Q53a, A08),** as in 8.8: `effects` and `projection` are indexed by `id`, a later entry
+replacing an earlier one, and the output re-sorts both by `id` (8.7).
+
+**An inconsistent snapshot is kept as given (RULINGS Q57e, A15).** A seeded `waiting` list may hold entries at or below `done`,
+or two entries with one `seq`; `receive` never repairs it. It re-sorts `waiting` stably by `seq`. Only a waiting entry with `seq`
+= `done` + 1 is released, the first such entry in that order, and then the next `seq` is looked for. Entries at or below `done`,
+and the second of two entries with one `seq`, stay waiting. An arriving delivery is a duplicate when its `seq` is at or below
+`done` or an entry with its `seq` is waiting (case C135, which also pins A08 for `receive`).
 
 Deliveries are taken in array order; for each, the projection step runs, then the effects step. `applied.projection` lists the
 deliveries the projection applied and `applied.effects` the deliveries the effects processed, each in the order it happened. A
@@ -727,16 +792,33 @@ acknowledged deliveries were removed from `pending` would wait forever for seq 1
 bytes are equal.
 
 1. UTF-8, no byte order mark, no whitespace outside strings, no trailing newline.
-2. Objects: members sorted ascending by key in byte order, written `{"k":v,"k2":v2}`.
+2. Objects: members sorted ascending by key in Unicode code point order (8.7), written `{"k":v,"k2":v2}`.
 3. Arrays: elements in the order section 8.7 gives, written `[a,b]`.
-4. Strings: `"` + content + `"`, with `"` written `\"` and `\` written `\\`. W0 strings are printable ASCII, so no other escape occurs.
+4. Strings: `"` + content + `"`, with `"` written `\"` and `\` written `\\`. W0 strings are printable ASCII, so no other escape
+   occurs in a W0 value; item 7 covers the other strings.
 5. Integers: decimal digits, `-` only for negatives (none occur in W0 outputs), no leading zeros, no `+`, no fraction, no exponent.
 6. Literals: `true`, `false`, `null`.
+7. **Values that are not W0 values (RULINGS Q53a, A07).** `publish` and `receive` copy payloads, and the strings of ids, keys,
+   kinds, rules, subjects and versions, without checking them (4.4 step 1), so the writer handles any JSON value:
+   - an integer token is written as its integer: `-0` as `0`, and a token of any length keeps every digit (section 2);
+   - any other number token, one with a fraction or an exponent, is written exactly as its source text: `1.65e3`, `1E3` and
+     `1.50` stay as written, and `1.65e3` and `1650` are different values;
+   - in a string, `"` is written `\"` and `\` is written `\\`; U+0008, U+0009, U+000A, U+000C and U+000D are written `\b`, `\t`,
+     `\n`, `\f` and `\r`; every other character outside U+0020 to U+007E, U+007F included, is written `\u` and four lowercase
+     hex digits, a character above U+FFFF as its UTF-16 surrogate pair (U+1F600 as `\ud83d\ude00`) and a lone surrogate that
+     arrived as an input escape as its own escape (`\ud800`); every other character, `/` included, is written as itself.
 
-Python produces it with `json.dumps(x, sort_keys=True, separators=(",", ":"), ensure_ascii=True)`. JavaScript produces it with
-`JSON.stringify` over a copy whose object keys were inserted in sorted order, recursively. That recipe relies on a W0 fact: no
-object key in any W0 output or preimage is an array index such as `"7"`, which JavaScript would order first whatever the insertion
-order.
+   Two payloads are equal for 8.8 step 2 when these bytes are equal (cases C100 and C136). Python's `json.dumps(x,
+   ensure_ascii=True)` writes strings exactly this way; JavaScript's `JSON.stringify` does not (it writes non-ASCII characters
+   as themselves, and `JSON.parse` has already lost a number token's source text), so a JavaScript implementation keeps number
+   tokens from the input bytes and escapes strings itself.
+
+Python produces items 1 to 6 with `json.dumps(x, sort_keys=True, separators=(",", ":"), ensure_ascii=True)`; for item 7 the
+writer must also keep each non-integer number token's source text, which `json.dumps` cannot do alone (`validate.py` holds a
+short writer that does). JavaScript produces items 1 to 6 with `JSON.stringify` over a copy whose object keys were inserted in
+sorted order, recursively. That recipe relies on a W0 fact: no object key in any W0 output or preimage is an array index such as
+`"7"`, which JavaScript would order first whatever the insertion order. A payload key that `publish` copies can be one (case C136
+has `"9"` and `"10"`, which sort `"10"` first), so the item 7 writer emits keys in its own sorted order.
 
 ## 10. Affected subjects (P3, GS.06b)
 
@@ -777,8 +859,9 @@ order.
   "id": "C01", "slug": "...", "title": "...", "op": "evaluate" | "reconcile" | "affected" | "publish" | "receive",
   "checks": [{"rule": <rule id>, "polarity": "positive" | "negative"}, ...],
   "identicalTo": <case id>      (optional: the expected bytes equal that case's),
+  "synthetic": true             (optional: see below),
   "notes": [<derivation step>, ...],
-  "input": {...},
+  "input": {...}                or "inputBase64": "<base64 of the input bytes>",
   "expected": {...}
 }
 ```
@@ -787,7 +870,27 @@ order.
 derivation. A positive check means the rule emits at least one task, obligation, work item or flag in that case; a negative check
 means it emits none. The expected outputs were derived by hand from this file, not by a program.
 
-### 11.2 The 87 cases
+**The input is the bytes as written.** A harness hands the implementation the `input` value's bytes as they stand in the case
+file, so tokens such as `-0`, `1.65e3`, raw UTF-8 and C66's duplicate key arrive unchanged; a parse and re-serialize would
+rewrite them. Three more case forms exist from W0-1.1.2 on:
+- **`inputBase64`** replaces `input` when the input is not a JSON text, so a case file cannot hold it: a byte order mark (C91),
+  bytes that are not UTF-8 (C92) and a `NaN` token (C128). The input is the decoded bytes.
+- **`synthetic: true`** marks a `publish` or `receive` case whose records `evaluate` never produces (readings A07 to A09, A14 and
+  A15: cases C100 to C102 and C133 to C136). Its ids and versions are not hashes of anything, and its input states may be out of
+  order or inconsistent on purpose. `validate.py` checks its shapes and output order only.
+- **`expected-sha256.json`** gives, for every case, the SHA-256 of `canonicalJson(expected)` as this file defines it. A harness
+  compares the SHA-256 of the implementation's output bytes with that entry instead of re-serializing `expected` with the
+  implementation's own writer, so a writer defect shared by both cannot pass (V-D01c N1). `validate.py` recomputes every entry.
+- **`input-sha256.json`** gives, for every case, the SHA-256 of its input bytes: the `input` value exactly as it stands in the
+  case file, from its opening `{` to its closing `}` with the whitespace and line breaks between, or the decoded `inputBase64`
+  bytes. A harness checks the bytes it hands over against that entry, so a harness that re-serializes the input (and would turn
+  C93's `-0` into `0` without any case failing) is caught (V-D01e N3). `validate.py` recomputes every entry.
+
+`synthetic: true` is valid on exactly the seven cases listed above, and `validate.py` rejects it on any other case, because a
+synthetic case skips the id and version checks (V-D01e E2). `validate.py` also checks `SHA256SUMS` against the folder, the file
+itself excepted (V-D01e N2).
+
+### 11.2 The 136 cases
 
 | Id | Op, release | What it pins down |
 | --- | --- | --- |
@@ -878,6 +981,55 @@ means it emits none. The expected outputs were derived by hand from this file, n
 | C85 | receive | a delivery with `seq` 0: `W0.E_SHAPE` |
 | C86 | evaluate R3 | outside R3's scope (`jur:ny`), 2,700 weekly minutes: still overtime under R3 |
 | C87 | affected R3 | the subjects R3 reaches: placements at two locations of a listed jurisdiction, not the unlisted or unlocated ones |
+| C88 | evaluate R1 | an erased marker on a non-PII instant: `W0.E_VALUE` (V-D01c P01) |
+| C89 | evaluate R1 | an array as a `startDate`: `W0.E_VALUE` (P02) |
+| C90 | evaluate R1 | `payRateCents` as a 5,000-digit token: `W0.E_VALUE` (P03, A12) |
+| C91 | evaluate, bytes | a byte order mark before the input: `W0.E_SHAPE` (P04, A01) |
+| C92 | evaluate, bytes | a 0xFF byte inside a string: `W0.E_SHAPE` (P05, A01) |
+| C93 | evaluate R1 | `payRateCents` written `-0` is 0, written `0` (P06, A02) |
+| C94 | evaluate R1 | a fact `tx` written `-0` is 0: `W0.E_BASIS` (P07, A02) |
+| C95 | evaluate R1 | an unknown attribute after a duplicate: `W0.E_UNKNOWN` (P08, A03) |
+| C96 | affected R1 | world by world: world 1's clash before world 2's bad subject (P09, A04) |
+| C97 | reconcile | within one activation, value before basis: `W0.E_VALUE` (P10, A05) |
+| C98 | reconcile | the world before the activations: `W0.E_VALUE` (P11, A05) |
+| C99 | reconcile | a picked unknown hash: `W0.E_NO_RELEASE`, no fall-back (P12, A06) |
+| C100 | publish, synthetic | opaque payload tokens: `1.65e3` kept and unequal to `1650`, `-0` written `0`, non-ASCII escaped (P13, A07) |
+| C101 | publish, synthetic | an input state out of order with repeats: later entries win, outputs re-sorted (P14, A08) |
+| C102 | publish, synthetic | two work items with one id in a record: stable order (P15, A09) |
+| C103 | reconcile | equal `from`: the greater `tx` wins over the greater release string; C02's bytes (P16) |
+| C104 | reconcile | equal `from` and `tx`: the greater release string; C01's bytes (P17) |
+| C105 | reconcile | `from` equal to the valid time is in force; C01's bytes (P18) |
+| C106 | reconcile | an activation at `tx` = `basis.tx`; C01's bytes (P19) |
+| C107 | evaluate R1 | a fact at `tx` = `basis.tx` (P20) |
+| C108 | evaluate R1 | `basis.tx` 0 and an empty world (P21) |
+| C109 | evaluate R1 | `basis.tx` 2^53 - 1 (P22) |
+| C110 | evaluate R1 | `basis.tx` 2^53: `W0.E_BASIS` (P23) |
+| C111 | evaluate R1 | a fact `tx` of 2^53 + 1: `W0.E_BASIS` (P24) |
+| C112 | evaluate R1 | one fact with a bad date and a late `tx`: `W0.E_VALUE` (P25) |
+| C113 | evaluate R2 | a local floor below the state floor: the greater floor applies (P26) |
+| C114 | evaluate R1 | `pos(D)` counts the subject's `decisions` fact: a fresh pay-change approval (P27) |
+| C115 | evaluate R1 | an incomplete Section 2 record never counts (P28) |
+| C116 | evaluate R1 | `PROP` uses the latest proposal (P29) |
+| C117 | evaluate R1 | `reverified: false` is not reverified (P30) |
+| C118 | evaluate R3 | a listed jurisdiction with no facts is in R3's scope (P31, V-D01 N1) |
+| C119 | evaluate R1 | the basis at the start instant: no pre-start (P32) |
+| C120 | evaluate R1 | a dashed SSN before an accepted submit result (P33) |
+| C121 | affected R1 | worlds in descending order; C34's bytes (P34) |
+| C122 | publish | an equal `tx` with an earlier `validTime` is skipped (P35) |
+| C123 | publish | a second record at an equal basis is applied (P36) |
+| C124 | publish | retirement touches only the record's subject (P37) |
+| C125 | receive | arrivals 1, 4, 3, 2: seq 2 releases two waiting deliveries (P38) |
+| C126 | evaluate R1 | a Saturday start: Section 2 due Wednesday's end (P39) |
+| C127 | evaluate R1 | C19's facts reversed; C19's bytes (P40) |
+| C128 | evaluate, bytes | `NaN` as a value: `W0.E_SHAPE` (A11) |
+| C129 | evaluate R1 | `basis.tx` as a 5,000-digit token: `W0.E_BASIS` (A12) |
+| C130 | publish | a stored `seq` of 5,000 nines publishes 10^5000 (A12) |
+| C131 | receive | a receiver at `done` 5,000 nines processes 10^5000 (A12) |
+| C132 | evaluate R1 | 2,000 nested arrays as a value: `W0.E_VALUE` (A13) |
+| C133 | publish, synthetic | code point order for ids, subjects, payload keys and the guard's `validTime` (A14) |
+| C134 | receive, synthetic | code point order for effects and projection (A14) |
+| C135 | receive, synthetic | an inconsistent receiver snapshot kept as given (A15, A08) |
+| C136 | publish, synthetic | the writer for opaque strings, numbers and array-index keys (A07) |
 
 ### 11.3 Scenario map
 
@@ -889,9 +1041,9 @@ means it emits none. The expected outputs were derived by hand from this file, n
 | GS.06b shared location wage change | `MINWAGE` and `affected` at one and two hops (C23, C34 to C36, C58 to C60) |
 | GS.07 two reviewers, one I-9 | `final` in 6.2 (C17, C18) |
 | GS.09 start dates move | `LIFE` and every start-based due time (C03, C04) |
-| GS.10 and GS.11 activation and preview | `reconcile` against `evaluate` (C20, C31, C32, C61); `publish` of the activated sweep (C73, C76, C77, C82) |
-| P5 narrow release | R3's scope: the reached subjects (C87), inside and outside the scope (C54, C55, C86) |
-| GS.19b outbox and receiver | `publish` and `receive` (C73 to C85) |
+| GS.10 and GS.11 activation and preview | `reconcile` against `evaluate` (C20, C31, C32, C61, C103 to C106); `publish` of the activated sweep (C73, C76, C77, C82) |
+| P5 narrow release | R3's scope: the reached subjects (C87), inside and outside the scope (C54, C55, C86, C118) |
+| GS.19b outbox and receiver | `publish` and `receive` (C73 to C85, C100 to C102, C122 to C125, C130, C131, C133 to C136) |
 | GS.16 PII erasure | erased markers (C07) |
 | GS.17 agent proposals churn | `PROP` and proposal isolation (C14 to C16) |
 | GS.18 overdue I-9 dashboards | task `overdue` (C06) |
@@ -937,7 +1089,8 @@ from the golden cases; no evaluator is part of W0.
    accepted no longer gets an `everify.submit-case` work item. The measured values sit 5.0% and 2.4% below the expected 1.65% and
    2.52%.
 3. **The narrow release R3** is not a floor. Against R2 it reaches about 9,556 subjects (9.6%) and changes about 406 (0.41%), all
-   through `OT` (12.1 item 5, 12.4 item 4). Unscoped, as in W0-1.1.0, it reached all 100,000 and changed 4,291 (V-D01).
+   through `OT` (12.1 item 5, 12.4 item 4). Measured on W0-1.1.1 (V-D01, O-DOMAIN and the TypeScript kernel agree): 9,497
+   reached, 418 changed, 0 changed without being reached. Unscoped, as in W0-1.1.0, it reached all 100,000 and changed 4,291.
 
 The expected values are means over the seeded draws. At N = 100,000 the standard error of each share is under 0.2 percentage points.
 **The check that counts is the measured one** (12.7): the floors are judged on the actual population.
@@ -987,7 +1140,7 @@ raise below, which is valid only from `2026-11-16T00:00:00.000000Z` and so is no
 | Section 1 | `s1` | present 8500; absent 1500 | `section1AttestedAt = 2026-11-01T15:00:00.000000Z` |
 | SSN | `ssn` | absent 1000; valid 8730; dashed 180; erased 90 | valid: the 9 digits of 100000000 + i; dashed: the same digits as `DDD-DD-DDDD`; erased: `{"erasedAt": "2026-11-01T00:00:00.000000Z"}` |
 | E-Verify status | `ev`, `ev.u` | absent 3000; `pending` 4000; `tnc` 500; `authorized` 2200; `fnc` 300 | `everifyStatus`; with it `everifyStatusAt = startOf(addDays(2026-11-04, -u))`, u uniform 0 to 20 |
-| Runtime submit result | `evres`, only when the status is absent and the SSN valid | `accepted` 2000; `rejected` 500; absent 7500 | `everifySubmitResult`, written by the runtime writer class |
+| Runtime submit result | `evres`, only when the status is absent and the SSN draw is the `valid` option (not `dashed`, `erased` or `absent`; RULINGS Q53a, A10) | `accepted` 2000; `rejected` 500; absent 7500 | `everifySubmitResult`, written by the runtime writer class |
 | Background check | `bgc` | absent 2000; `pending` 2000; `clear` 5000; `consider` 1000 | `bgcStatus` |
 | Adjudication record | `bgcdec`, only when `consider` | none 4000; person approve 4000; person reject 1000; agent proposal (verdict approve) 1000 | record `dec:b1` |
 | Section 2 records | `i9dec` | none 3400; person approve 4800; person waive 300; person reject 400; agent proposal only (verdict approve) 600; person approve then person reject 300; person approve then agent proposal (verdict reject) 200 | records `dec:i1`, then `dec:i2` for the two-record options |
@@ -1082,6 +1235,10 @@ All choices are independent, so each frequency is a product of the weights above
      change; the sweep skips them (5.3) and publishes nothing for them.
    - `OT` fires under R3 for 17% - 0.41% = **16.6%** of subjects (the table above). Under unscoped R3 (W0-1.1.0) every subject was
      reached and 4,291 changed (V-D01).
+   - **Measured (RULINGS Q48c, V-D01 N5):** 9,497 reached, 418 changed, 0 changed without being reached; `OT` fires under R3 for
+     16.538% (V-D01's delta check of W0-1.1.1, reproduced exactly by O-DOMAIN and the TypeScript kernel). The expected and
+     measured counts hold at the 100k rung only (V-D01 N3): R3's ids name one jurisdiction at 10k and none at 1m or 10m (12.3),
+     so a narrow-release measurement runs at 100k.
 
 ### 12.5 Location and jurisdiction fanout and the GS.06b affected-subject counts
 
@@ -1150,8 +1307,8 @@ A 100k sweep therefore reads about 44.7 million facts (measured 44,537,987; V-D0
 
 1. **Measured, not assumed.** Whoever generates the population (the P5 driver, O-DOMAIN, or an independent reviewer) evaluates every
    placement under R1, R2 and R3 at B and reports the four measured floors, R3's affected and changed counts and the per-bucket
-   sizes, with the seed `W0-pop-1` and the spec version W0-1.1.1, which together fix the generator. A measured value below its bar
-   fails closed.
+   sizes, with the seed `W0-pop-1` and the spec version W0-1.1.2, which together fix the generator. A measured value below its bar
+   fails closed. W0-1.1.2 changed no parameter of the generator, the releases or the rules, so W0-1.1.1's measurements stand.
 2. **Fingerprint (RULINGS Q40g, Q44a).** The population fingerprint is six values: `basis.tx`, the fact count, the worlds digest and
    the R1, R2 and R3 output digests. It is pinned only after the O-DOMAIN author's independent generator reproduces the reviewer's.
    Every implementation computes it with this recipe, which is V-D01's:
@@ -1171,8 +1328,12 @@ A 100k sweep therefore reads about 44.7 million facts (measured 44,537,987; V-D0
      `canonicalJson(world_i)` for i = 1 to N - 1, then `]`.
    - **The output digest of release R** is the same construction over `canonicalJson(evaluate(world_i, R, B))` for i = 0 to N - 1,
      once each for R1, R2 and R3.
-   V-D01's W0-1.1.0 candidates for `basis.tx`, the worlds digest and the R1 and R2 digests carry over to W0-1.1.1 unchanged, because
-   the generator, R1 and R2 did not change; the R3 digest changes with R3's scope and is recomputed.
+   **The 100k fingerprint** (V-D01's delta check of W0-1.1.1, reproduced exactly by O-DOMAIN and by the TypeScript kernel, and
+   unchanged by W0-1.1.2): `basis.tx` 4,338,757; 44,537,987 facts; worlds
+   `sha256:fec1d7cedee2b2f18c77e78210e4e9ed14fffb72e9629545155c7307e969c760`; R1
+   `sha256:c1b2d410244121d64b476c2f99c32830ea1b1f536928c9d12b0e886132351a79`; R2
+   `sha256:551bbbc479eecd15d4f5eb13698f61d20c09a900b7f83a2b10858fb2ba13b562`; R3
+   `sha256:a595092272c16343b0dfe9c9db57fbcdd7556fbf8be40afbaed014710fceee2f`.
 3. **Golden-case witnesses** for each mechanism:
    - floor 1: C03 against C26 (`I9S2`), C19 against C20 (`DOCEXP`, and the `MINWAGE` notice payload), C25 (`MINWAGE` under R2);
    - floor 2: every rule's positive cases in section 11.2 (`validate.py` requires one positive and one negative per rule);
@@ -1201,14 +1362,15 @@ Implementations and test harnesses can check these on any input, not only the go
 6. **Ballast neutrality.** Removing every ballast fact from a world changes no output (C56 against C01).
 7. **Publication.** Per id, delivered sequences are 1, 2, 3 and so on with no gap and no repeat; a skipped record (older basis)
    changes nothing; the stored basis guard never moves backwards.
-8. **Reception.** Per id, the projection's `seq` never decreases, and the effects process every sequence exactly once, in order.
+8. **Reception.** From a consistent state, per id, the projection's `seq` never decreases, and the effects process every sequence
+   exactly once, in order. An inconsistent seeded snapshot is kept as given (8.9, A15).
 
 ## 14. Self-review: where two implementers could still differ, and the resolution chosen
 
 | # | Place | Risk | Resolution |
 | --- | --- | --- | --- |
 | 1 | `1650.0` in a JSON world, `3.0` as a `tx` | `JSON.parse` returns 1650 or 3 and hides the fraction | Integer tokens are checked at the token level for every integer field (section 2, 4.4 step 1); the TypeScript kernel's fixture reader must see number tokens (for example the `JSON.parse` reviver's `context.source` where the runtime has it, or a small scanner). Cases C38, C45, C68, C71 and C72. |
-| 2 | Integers above 2^53 - 1 | JavaScript rounds them on parse | Any such token is `W0.E_VALUE`; in JavaScript it parses to at least 2^53, so `Number.isSafeInteger` detects it. Case C39. |
+| 2 | Integers above 2^53 - 1 | JavaScript rounds them on parse | In a range-checked field any such token is `W0.E_VALUE` (a value) or `W0.E_BASIS` (a position); in JavaScript it parses to at least 2^53, so `Number.isSafeInteger` detects it. Cases C39, C110, C111. The integers of `publish` and `receive` have no upper bound and need `BigInt` (row 61). |
 | 3 | Instant comparison | converting to `Date` drops microseconds; time zones | Instants compare as strings and are never converted (section 2). |
 | 4 | Weekday and date arithmetic | local-time `Date` methods shift the day | Proleptic Gregorian arithmetic on dates only; JavaScript must use `Date.UTC` and `getUTCDay`. |
 | 5 | Business-day counting | counting the start day, or a weekend start | The start day is never counted; a Saturday start counts from Monday (6.1 examples). |
@@ -1256,8 +1418,24 @@ Implementations and test harnesses can check these on any input, not only the go
 | 47 | Raw numeric tokens in case files | a JSON round trip rewrites `1.65e3` as `1650.0` and the case stops testing the exponent | Case files are written by hand; `validate.py` asserts the raw token text of every numeric-error case (C37 to C39, C45, C68 to C72). |
 | 48 | Which evaluations reach `publish`, and when a receiver starts | a preview or a past-valid-time audit passes the tx-first guard and publishes past payloads; a late receiver waits forever for seq 1 | Only live reconciles are published (8.8, Q44c); receivers exist from the first publication or are seeded with a snapshot (8.9, Q44d). |
 | 49 | `publish` and `receive` shape errors | default a missing `pending` to empty; treat `seq` 0 as a duplicate | Both are `W0.E_SHAPE` (4.4 step 1; C84, C85). |
+| 50 | A01 input bytes | ignore a byte order mark (RFC 8259 8.1 allows it); replace invalid UTF-8 with U+FFFD | The input is one JSON text in UTF-8 with no BOM; anything else is `W0.E_SHAPE` (4.4; C91, C92). A TypeScript reader decodes with `TextDecoder("utf-8", {fatal: true, ignoreBOM: true})` and then rejects a leading U+FEFF. |
+| 51 | A02 `-0` | reject it, or keep the sign | An integer token with value 0, written `0` (section 2; C93, C94). |
+| 52 | A03 cardinality timing | report a duplicate as soon as it is seen | Sub-step 3.3 runs after every fact passed 3.2 (4.4; C95). |
+| 53 | A04 `affected` validation order | check every subject, or every fact, across all worlds first | One world completely, then the next (4.4 step 3; C96). |
+| 54 | A05 activation order | activations before the world; `tx` before `release` | After the world, one activation at a time, value before basis (4.4 step 4; C97, C98). |
+| 55 | A06 unknown picked hash | fall back to the newest known candidate | `W0.E_NO_RELEASE`, no fall-back (5.4; C99). |
+| 56 | A07 opaque values | `JSON.parse` turns `1.65e3` into 1650 and `-0` into 0; `JSON.stringify` writes non-ASCII raw | Section 9 item 7: integers as integers, other number tokens as source text, every character outside U+0020 to U+007E escaped (C100, C136). |
+| 57 | A08 repeated or unsorted input state | first entry wins; keep input order | A later entry replaces an earlier one; outputs re-sorted; `pending` keeps order and appends (8.8, 8.9; C101, C135). |
+| 58 | A09 two work items with one id in a record | unstable sort; compare both with the old state | Stable id order; the second is compared with the state the first left (8.8 step 2; C102). |
+| 59 | A10 the `evres` draw | draw for any present SSN | Only for the `valid` SSN option (12.3); pinned by the fingerprint. |
+| 60 | A11 `NaN`, `Infinity`, `-Infinity` | Python's `json` accepts them by default | Not JSON: `W0.E_SHAPE` (4.4; C128). |
+| 61 | A12 long integer tokens | CPython's 4,300-digit conversion limit raises; JavaScript rounds | No length limit: range-checked fields give `W0.E_VALUE` or `W0.E_BASIS` (C90, C129); `publish` and `receive` integers are exact at any length (C130, C131). |
+| 62 | A13 nesting depth | a recursive parser fails near 1,000 levels (RecursionError) | Any depth is valid JSON; the value is then checked as usual (4.4; C132). |
+| 63 | A14 string order | JavaScript's UTF-16 code unit order | Unicode code point order, equal to UTF-8 byte order, for keys, ids, subjects and the guard's `validTime` (8.7; C133, C134). |
+| 64 | A15 inconsistent receiver snapshot | repair it; drop entries at or below `done`; release both duplicates | Kept as given, re-sorted stably by `seq`; only `seq` = `done` + 1 releases (8.9; C135). |
+| 65 | A harness that re-serializes `expected` | a writer defect shared by implementation and harness passes | Compare the output's SHA-256 with `expected-sha256.json` (11.1; V-D01c N1). |
 
-## 15. Decided questions (RULINGS Q36, Q38f, Q40, Q42b, Q42c and Q44)
+## 15. Decided questions (RULINGS Q36, Q38f, Q40, Q42b, Q42c, Q44, Q48c, Q53 and Q57)
 
 Every open question of the first draft has a ruling. None remains open.
 
@@ -1302,3 +1480,14 @@ Every open question of the first draft has a ruling. None remains open.
 22. **Only live reconciles are published (Q44c).** A delivery's subject comes from the record; previews and past-valid-time audits
     never reach `publish` (8.8).
 23. **Receivers from the start (Q44d).** Receivers exist from the first publication or are seeded with a state snapshot (8.9).
+24. **Readings A01 to A10 (Q53a, Q53b).** The O-DOMAIN author's readings are written in as clarifications, each with a golden
+    case (A10 is pinned by the fingerprint): A01 and A13 in 4.4, A02 and A12 in section 2, A03 to A05 in 4.4, A06 in 5.4, A07 in
+    section 9 item 7, A08 in 8.8 and 8.9, A09 in 8.8 step 2, A10 in 12.3. They change no earlier case and no fingerprint value.
+25. **Readings A11 to A15 (Q57a to Q57e).** The TypeScript kernel author's readings are written in the same way: A11 and A13 in
+    4.4, A12 in section 2 (with O-DOMAIN's fix-round reading that `publish` and `receive` integers have no upper bound), A14 in
+    8.7 and section 9, A15 in 8.9.
+26. **V-D01 notes N1, N2, N5 (Q48c).** C118 is the R3 case with a listed jurisdiction that has no facts; the 5.3 skip rule needs A's
+    entry to be unscoped; 12.2 and 12.4 record the measured R3 counts beside the expected ones.
+27. **V-D01c coverage (W0-1.1.2).** C88 to C127 are V-D01c's proposed cases P01 to P40, re-derived by hand from this file; C128 to
+    C136 cover the readings V-D01c proposed no case for and A12's integers. Every mutant of V-D01c's table A, and every
+    kernel-relevant mutant of its table B, fails at least one of them.

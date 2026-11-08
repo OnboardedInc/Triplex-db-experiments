@@ -1,0 +1,23 @@
+{
+  "id": "C98",
+  "slug": "err-world-before-activations",
+  "title": "A05: a world value error and an activation basis error: the world wins",
+  "op": "reconcile",
+  "checks": [],
+  "notes": [
+    "From V-D01c P11 (A05). Step 3: weeklyMinutes 10081 is W0.E_VALUE. Step 4 (activation tx 11 > 10, W0.E_BASIS) never runs."
+  ],
+  "input": {
+    "activations": [
+      {"from": "2026-11-01T00:00:00.000000Z", "release": "sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031", "tx": 11}
+    ],
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "world": {
+      "subject": "pl:a",
+      "facts": [
+        {"e": "pl:a", "a": "weeklyMinutes", "v": 10081, "tx": 1}
+      ]
+    }
+  },
+  "expected": {"error": "W0.E_VALUE"}
+}

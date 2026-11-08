@@ -1,0 +1,146 @@
+{
+  "experiment": "EXP-D01b",
+  "spec": "W0-1.1.2",
+  "seed": "W0-pop-1",
+  "rung": {
+    "N": 100000,
+    "L": 2000,
+    "K": 100
+  },
+  "fingerprint": {
+    "basisTx": 4338757,
+    "facts": 44537987,
+    "worlds": "sha256:fec1d7cedee2b2f18c77e78210e4e9ed14fffb72e9629545155c7307e969c760",
+    "R1": "sha256:c1b2d410244121d64b476c2f99c32830ea1b1f536928c9d12b0e886132351a79",
+    "R2": "sha256:551bbbc479eecd15d4f5eb13698f61d20c09a900b7f83a2b10858fb2ba13b562",
+    "R3": "sha256:a595092272c16343b0dfe9c9db57fbcdd7556fbf8be40afbaed014710fceee2f"
+  },
+  "releases": {
+    "R1": "sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031",
+    "R2": "sha256:7d2f4008e55f43458ae1288cb65a4cf92f3f04a40a1c6eeafb3fc754435807a9",
+    "R3": "sha256:f345d9fe4291803259021ad30ff00afecc1f48af4d4b403860b3ace52315312e"
+  },
+  "invalidWorlds": 0,
+  "wireCrossCheck": {
+    "every": 50,
+    "evaluations": 6000,
+    "mismatches": 0
+  },
+  "floors": {
+    "r2ChangesPct": 62.293,
+    "r2RuleChangesPct": {
+      "I9S2": 46.109,
+      "DOCEXP": 22.516,
+      "MINWAGE": 9.798
+    },
+    "firesPct": {
+      "R1": {
+        "LIFE": 20.027,
+        "I9S1": 23.374,
+        "I9S2": 50.026,
+        "EVSUB": 24.709,
+        "EVSTAT": 29.862,
+        "BGC": 25.925,
+        "DOCEXP": 40.475,
+        "MINWAGE": 7.81,
+        "OT": 16.956,
+        "PAYCHG": 9.585,
+        "PROP": 9.591
+      },
+      "R2": {
+        "LIFE": 20.027,
+        "I9S1": 23.374,
+        "I9S2": 50.026,
+        "EVSUB": 24.709,
+        "EVSTAT": 29.862,
+        "BGC": 25.925,
+        "DOCEXP": 40.475,
+        "MINWAGE": 16.194,
+        "OT": 16.956,
+        "PAYCHG": 9.585,
+        "PROP": 9.591
+      },
+      "R3": {
+        "LIFE": 20.027,
+        "I9S1": 23.374,
+        "I9S2": 50.026,
+        "EVSUB": 24.709,
+        "EVSTAT": 29.862,
+        "BGC": 25.925,
+        "DOCEXP": 40.475,
+        "MINWAGE": 16.194,
+        "OT": 16.538,
+        "PAYCHG": 9.585,
+        "PROP": 9.591
+      }
+    },
+    "threePlusWorkItemsPct": {
+      "R1": 1.567,
+      "R2": 2.459,
+      "R3": 2.459
+    },
+    "locations": {
+      "used": 2000,
+      "largest": 1100,
+      "smallest": 14,
+      "rank1": 1100,
+      "rank2": 801,
+      "rank1000": 29,
+      "meanOverL": 49.543,
+      "located": 99086
+    }
+  },
+  "r3": {
+    "reached": 9497,
+    "changed": 418,
+    "changedNotReached": 0
+  },
+  "sizes": {
+    "bucketSharePct": [
+      50.098,
+      34.894,
+      15.008
+    ],
+    "bucketMeanFacts": [
+      124,
+      499.6,
+      1392.1
+    ],
+    "worldsBelowBucketBound": [
+      343,
+      56,
+      15
+    ],
+    "hopsSharePct": {
+      "3": 40.144,
+      "4": 35.01,
+      "6": 24.846
+    },
+    "maxNonBallastFacts": 32,
+    "meanFacts": 445.37987
+  },
+  "run": {
+    "seconds": 102.968836708,
+    "basisPassSeconds": 13.871484458,
+    "cpuSeconds": 97.212421,
+    "node": "v22.23.2",
+    "host": {
+      "platform": "darwin",
+      "arch": "arm64",
+      "cpus": 12,
+      "loadavgStart": [
+        17.44873046875,
+        18.720703125,
+        18.31494140625
+      ],
+      "loadavgEnd": [
+        11.267578125,
+        16.22998046875,
+        17.39013671875
+      ]
+    },
+    "rssMB": 107,
+    "gitCommit": "a2ad1c45bb31aef61c8c319f12ef29a3363c2fec",
+    "finishedAt": "2026-11-08T01:41:22.421Z"
+  }
+}

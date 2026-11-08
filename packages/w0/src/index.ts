@@ -1,5 +1,5 @@
 /**
- * @triplex-build/w0: the TypeScript reference kernel for the W0 world definition (lab/world/W0/SPEC.md, W0-1.1.1).
+ * @triplex-build/w0: the TypeScript reference kernel for the W0 world definition (lab/world/W0/SPEC.md, W0-1.1.2).
  *
  * The functions are pure and return plain values; this module adds the Effect boundary only (typed errors as tagged values
  * carrying the SPEC 4.4 `W0.E_*` codes). Nothing inside the rules or the arithmetic runs on the Effect runtime.

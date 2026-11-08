@@ -176,7 +176,7 @@ for (const f of factsOf) factSum += f;
 const summary = {
   experiment: "EXP-D01b",
   measurement: "per-subject cost, single thread, 100k population at B (SPEC 12.7)",
-  spec: "W0-1.1.1",
+  spec: "W0-1.1.2",
   rung: { N, L: R.L, K: R.K },
   basis: B,
   meanFactsPerWorld: factSum / N,

@@ -147,3 +147,19 @@ here). Merged to main as 4591715.
 - Evidence: verify/O02 4eec2ba; tools probe_q52.py, differential.py, diff_modulo_rule.py (new); results lab/verify/O02/V-O04e/results/.
 - Process note: the orchestrator's scratchpad cleanup removed the 3e38a61 scratch tree after both differential runs had finished; the
   verifier re-extracted it from git for one re-check. Scratch archives under review stay until their verifier reports.
+
+## V-O04f: O-REPLAY 0.4.5 at acf9fce: implements Q70a-e exactly; two ruling gaps (F9, F10) (saved by the orchestrator, 2026-11-08 01:56Z)
+- probe_q52 with new Q70 rows: 52 probes, 49 MATCH, 0 WRONG, 3 OBSERVED; self-test 21/21; 5 of the new rows fail against 0.4.3, so they
+  separate the versions. Q70e not reachable (erasure never changes entityPage membership, so every prefix issues the same token).
+  Differential against 45bfa59: seed 49, 787 cases, 777 identical, 5 refused by both, 5 different (all cursor-continuation rows, each
+  explained); seed 4949, 800/800 identical. probe_q49 85/85, probe_035 119/119, probe_delta_033 20/20, unit 375/375, self-check 61/61,
+  converters 0 differences on both lanes, refusal sites unchanged, independence holds. 29/29 hashes match hashes.0.4.5.txt; 13/13 match
+  the self-report.
+- F9 (ruling gap from Q70d): in-flight A, then plain B issuing the same token, then a literal-token continuation follows B; A's all-old
+  page (p1 1) joins x's marker page (p2 M), so tx:1 is half-seen across the sequence and a lane that continues A faithfully is judged wrong.
+- F10 (not covered): `transactions(after 0, limit 1)` with a readStart before tx:2 gives two prefixes and next = 1; `transactions(after 1)`
+  with no readStart gives the post-erasure value only, so the all-old page 1 plus page 2 half-sees tx:2.
+- Reach today: no CS-ERASURE required case in contract 0.3.9 uses literal-token or journal-page sequences (ER-CURSOR-MODULO compares modulo
+  markers), so both gaps matter for future cases. Ruled Q70f, Q70g; fixed in 0.4.6 before any pin.
+- Evidence: verify/O02 4fc48af, lab/verify/O02/V-O04f/results/ (at-0.4.3/ for the new rows); scratch tree atacf9fce kept until 0.4.6 is
+  checked.
