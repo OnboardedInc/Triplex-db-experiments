@@ -1,0 +1,10 @@
+[
+  {
+    "file": "packages/qlever/test/fixtures/lock-holder.ts",
+    "sha256": "8bfcc8899e9acb94d3ed185803648882e8668ff70ed1983d644571ed0ec6df44"
+  },
+  {
+    "file": "lab/verify/P2Q/scripts/lock-holder.ts",
+    "sha256": "282489505cd770232d04264da2392abad3d1c236a63ec0c7552c4361e7d8fde3"
+  }
+]

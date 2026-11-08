@@ -1,0 +1,66 @@
+[
+  {
+    "variant": "keyed-split",
+    "injected": {
+      "before-effect": 34,
+      "after-effect-before-checkpoint": 33,
+      "after-checkpoint": 33
+    },
+    "injectedTotal": 100,
+    "restarts": 101,
+    "deliveries": 665,
+    "expected": 400,
+    "missing": 0,
+    "extras": 0,
+    "visibleDuplicates": 0,
+    "storeReplayAttempts": 129
+  },
+  {
+    "variant": "unkeyed-split",
+    "injected": {
+      "before-effect": 34,
+      "after-effect-before-checkpoint": 33,
+      "after-checkpoint": 33
+    },
+    "injectedTotal": 100,
+    "restarts": 101,
+    "deliveries": 665,
+    "expected": 400,
+    "missing": 0,
+    "extras": 0,
+    "visibleDuplicates": 129,
+    "storeReplayAttempts": 0
+  },
+  {
+    "variant": "keyed-atomic",
+    "injected": {
+      "before-effect": 34,
+      "after-effect-before-checkpoint": 33,
+      "after-checkpoint": 33
+    },
+    "injectedTotal": 100,
+    "restarts": 101,
+    "deliveries": 665,
+    "expected": 400,
+    "missing": 0,
+    "extras": 0,
+    "visibleDuplicates": 0,
+    "storeReplayAttempts": 0
+  },
+  {
+    "variant": "unkeyed-atomic",
+    "injected": {
+      "before-effect": 34,
+      "after-effect-before-checkpoint": 33,
+      "after-checkpoint": 33
+    },
+    "injectedTotal": 100,
+    "restarts": 101,
+    "deliveries": 665,
+    "expected": 400,
+    "missing": 0,
+    "extras": 0,
+    "visibleDuplicates": 0,
+    "storeReplayAttempts": 0
+  }
+]
