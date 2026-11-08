@@ -1,0 +1,426 @@
+diff --git a/packages/qlever/src/QleverClient.ts b/packages/qlever/src/QleverClient.ts
+index 5e5d10be..740f5894 100644
+--- a/packages/qlever/src/QleverClient.ts
++++ b/packages/qlever/src/QleverClient.ts
+@@ -29,6 +29,17 @@ export class QleverHttpError extends Error {
+     super(`QLever HTTP ${status}: ${JSON.stringify(body)}`);
+   }
+ }
++// [EXP-P2Q] Why: request aborts/timeouts and completed decode failures need structured identities.
++// Rejected: classifying their prose (field names such as "connection" can appear in decode errors).
++export class QleverRequestError extends Error {
++  constructor(
++    readonly kind: "aborted" | "timeout",
++    cause?: unknown,
++  ) {
++    super(`QLever request ${kind}`, { cause });
++  }
++}
++export class QleverDecodeError extends TypeError {}
+ export const makeQleverClient = (
+   url: string,
+   options: { readonly accessToken?: string; readonly timeoutMs?: number } = {},
+@@ -112,6 +123,15 @@ export const makeQleverClient = (
+       }
+       if (!response.ok) throw new QleverHttpError(response.status, body);
+       return body;
++    } catch (cause) {
++      if (signal.aborted)
++        throw new QleverRequestError(
++          signal.reason instanceof DOMException && signal.reason.name === "TimeoutError"
++            ? "timeout"
++            : "aborted",
++          cause,
++        );
++      throw cause;
+     } finally {
+       signal.removeEventListener("abort", onAbort);
+     }
+@@ -122,7 +142,7 @@ export const makeQleverClient = (
+         results?: { bindings?: SparqlBinding[] };
+       };
+       if (!Array.isArray(result.results?.bindings))
+-        throw new TypeError("QLever did not return a SPARQL SELECT result");
++        throw new QleverDecodeError("QLever did not return a SPARQL SELECT result");
+       return result.results.bindings;
+     },
+     update: (sparql, requestOptions) => request(sparql, "update", requestOptions),
+diff --git a/packages/qlever/src/broker/errors.ts b/packages/qlever/src/broker/errors.ts
+index 3b97e859..534eeb40 100644
+--- a/packages/qlever/src/broker/errors.ts
++++ b/packages/qlever/src/broker/errors.ts
+@@ -12,7 +12,7 @@
+  *   dependencyState, native SPARQL). Repository pulls do not raise it: they fall back to the broker's log.
+  */
+ import { ReadError } from "@triplex-build/triplex/runtime";
+-import { QleverHttpError } from "../QleverClient.js";
++import { QleverHttpError, QleverRequestError, QleverDecodeError } from "../QleverClient.js";
+ 
+ export type BasisSurface = "repository" | "datalog" | "dependency-state" | "native" | "a0-repository";
+ 
+@@ -72,30 +72,37 @@ export class ReplicaUnavailable extends ReadError {
+  * a request deadline, an aborted request, an HTTP 5xx) rather than a bad query (HTTP 4xx, a decode error).
+  */
+ export const isUnreachable = (error: unknown): boolean => {
+-  // [EXP-P2Q] Why: fetch body interruptions wrap UND_ERR_SOCKET in TypeError("terminated").
+-  // Rejected: matching "terminated" or all TypeErrors (decode/query failures are not outages).
++  // [EXP-P2Q] Why: only structured request/socket identities prove an outage; decode prose does not.
++  // Rejected: returning on the first positive (a deeper HTTP/basis/decode failure must stay distinct).
+   const seen = new Set<unknown>();
+   let current = error;
++  let transport = false;
+   for (let depth = 0; depth < 32 && current != null && !seen.has(current); depth++) {
+     seen.add(current);
+-    if (current instanceof BasisNotAvailable) return false;
+-    if (current instanceof QleverHttpError) return current.status >= 500;
+-    const code = (current as { code?: unknown }).code;
+     if (
+-      typeof code === "string" &&
+-      /^(UND_ERR_SOCKET|UND_ERR_CONNECT_TIMEOUT|UND_ERR_HEADERS_TIMEOUT|UND_ERR_BODY_TIMEOUT)$/.test(
+-        code,
+-      )
++      current instanceof BasisNotAvailable ||
++      current instanceof SyntaxError ||
++      current instanceof QleverDecodeError
+     )
+-      return true;
+-    const text = `${code ?? ""} ${String((current as Error)?.message ?? current)}`;
++      return false;
++    if (current instanceof QleverHttpError) {
++      if (current.status < 500) return false;
++      transport = true;
++    }
++    const code = (current as { code?: unknown }).code;
+     if (
+-      /ECONNREFUSED|ECONNRESET|EPIPE|ETIMEDOUT|EHOSTUNREACH|ENOTFOUND|socket hang up|deadline|aborted|timed? ?out|fetch failed|connect/i.test(
+-        text,
+-      )
++      current instanceof QleverRequestError ||
++      (current instanceof DOMException &&
++        (current.name === "AbortError" || current.name === "TimeoutError")) ||
++      (typeof code === "string" &&
++        /^(ECONNREFUSED|ECONNRESET|ECONNABORTED|EPIPE|ETIMEDOUT|EHOSTUNREACH|ENETUNREACH|ENOTFOUND|EAI_AGAIN|ABORT_ERR|UND_ERR_SOCKET|UND_ERR_CONNECT_TIMEOUT|UND_ERR_HEADERS_TIMEOUT|UND_ERR_BODY_TIMEOUT|UND_ERR_ABORTED)$/.test(
++          code,
++        ))
+     )
+-      return true;
++      transport = true;
+     current = (current as { cause?: unknown }).cause;
+   }
+-  return false;
++  // [EXP-P2Q] Why: an unvisited suffix may contain a protected decode/HTTP/basis failure.
++  // Rejected: accepting an early code when the traversal limit hides the remaining cause chain.
++  return transport && (current == null || seen.has(current));
+ };
+diff --git a/packages/qlever/src/broker/http.ts b/packages/qlever/src/broker/http.ts
+index eae0bf1e..480c628c 100644
+--- a/packages/qlever/src/broker/http.ts
++++ b/packages/qlever/src/broker/http.ts
+@@ -12,6 +12,8 @@ import { randomUUID } from "node:crypto";
+ import {
+   makeQleverClient,
+   QleverHttpError,
++  QleverRequestError,
++  QleverDecodeError,
+   type QleverClient,
+   type QleverRequestOptions,
+   type SparqlBinding,
+@@ -63,7 +65,9 @@ export const makeFreshConnectionClient = (
+           res.on("data", (chunk: Buffer) => {
+             size += chunk.length;
+             if (size > maxBytes) {
+-              req.destroy(new RangeError("QLever response exceeds byte budget; no partial answer returned"));
++              req.destroy(
++                new RangeError("QLever response exceeds byte budget; no partial answer returned"),
++              );
+               return;
+             }
+             chunks.push(chunk);
+@@ -76,19 +80,25 @@ export const makeFreshConnectionClient = (
+             } catch {
+               parsed = text;
+             }
+-            if ((res.statusCode ?? 500) >= 400) reject(new QleverHttpError(res.statusCode ?? 500, parsed));
++            if ((res.statusCode ?? 500) >= 400)
++              reject(new QleverHttpError(res.statusCode ?? 500, parsed));
+             else resolve(parsed);
+           });
+           res.on("error", reject);
+         },
+       );
+       req.setNoDelay(true);
+-      req.on("timeout", () => req.destroy(new Error(`QLever request deadline ${timeoutMs} ms exceeded`)));
++      req.on("timeout", () => req.destroy(new QleverRequestError("timeout")));
+       req.on("error", reject);
+       const signal = requestOptions.signal;
+       if (signal) {
+-        if (signal.aborted) req.destroy(signal.reason instanceof Error ? signal.reason : new Error("aborted"));
+-        else signal.addEventListener("abort", () => req.destroy(new Error("aborted")), { once: true });
++        if (signal.aborted) req.destroy(new QleverRequestError("aborted", signal.reason));
++        else
++          signal.addEventListener(
++            "abort",
++            () => req.destroy(new QleverRequestError("aborted", signal.reason)),
++            { once: true },
++          );
+       }
+       if (body) req.end(body);
+       else req.end();
+@@ -100,7 +110,7 @@ export const makeFreshConnectionClient = (
+         results?: { bindings?: SparqlBinding[] };
+       };
+       if (!Array.isArray(result.results?.bindings))
+-        throw new TypeError("QLever did not return a SPARQL SELECT result");
++        throw new QleverDecodeError("QLever did not return a SPARQL SELECT result");
+       return result.results.bindings;
+     },
+     update: (sparql, requestOptions) => request("update", sparql, requestOptions),
+diff --git a/packages/qlever/src/index.ts b/packages/qlever/src/index.ts
+index fe1b960e..67b18f07 100644
+--- a/packages/qlever/src/index.ts
++++ b/packages/qlever/src/index.ts
+@@ -124,6 +124,8 @@ export {
+   type SparqlTerm,
+   type QleverRequestOptions,
+   QleverHttpError,
++  QleverRequestError,
++  QleverDecodeError,
+ } from "./QleverClient.js";
+ export {
+   makeQleverStorageAdapter,
+diff --git a/packages/qlever/test/broker-answer-errors.test.ts b/packages/qlever/test/broker-answer-errors.test.ts
+index e5c26325..ff08758b 100644
+--- a/packages/qlever/test/broker-answer-errors.test.ts
++++ b/packages/qlever/test/broker-answer-errors.test.ts
+@@ -1,3 +1,4 @@
++// [EXP-P2Q] Why: outage fixtures carry real transport codes. Rejected: text-only errors (not transport evidence).
+ // [EXP-P2Q] Why: outages after the gate must keep basis context; query errors must remain distinct.
+ // Rejected: probe-only tests (they never exercise the failing answer-request boundary).
+ import { Effect } from "effect";
+@@ -68,7 +69,7 @@ const read = (surface: "native" | "datalog", cause: Error, broker = true) => {
+ };
+ 
+ describe.each(["native", "datalog"] as const)("%s broker answer errors", (surface) => {
+-  it.each([new Error("ECONNRESET after basis probe"), new QleverHttpError(503, "unavailable")])(
++  it.each([Object.assign(new Error("ECONNRESET after basis probe"), { code: "ECONNRESET" }), new QleverHttpError(503, "unavailable")])(
+     "classifies transport/5xx failures with the requested and observed basis",
+     async (cause) => {
+       const error = await read(surface, cause);
+@@ -100,7 +101,7 @@ describe.each(["native", "datalog"] as const)("%s broker answer errors", (surfac
+     expect(await read(surface, cause)).toBe(cause);
+   });
+   it("preserves A0 transport failure wrapping", async () => {
+-    const cause = new Error("ECONNRESET after basis probe");
++    const cause = Object.assign(new Error("ECONNRESET after basis probe"), { code: "ECONNRESET" });
+     const error = await read(surface, cause, false);
+     expect(error).not.toBeInstanceOf(ReplicaUnavailable);
+     expect(error).toMatchObject({ _tag: "ReadError", cause });
+diff --git a/packages/qlever/test/broker-fixes.test.ts b/packages/qlever/test/broker-fixes.test.ts
+index ee50d116..1d268a58 100644
+--- a/packages/qlever/test/broker-fixes.test.ts
++++ b/packages/qlever/test/broker-fixes.test.ts
+@@ -1,3 +1,4 @@
++// [EXP-P2Q] Why: outage fixtures carry real transport codes. Rejected: text-only errors (not transport evidence).
+ // EXP-P2Q fix round (V-P2Q findings C1, C2, C3, M1, M2, M3, m1; RULINGS Q62a). Offline: a controllable replica
+ // that keeps only the broker marker (and the A0 `position` triple) and applies the broker's guarded updates to
+ // it, so waits, regressions, outages and typed failures can be scheduled exactly. Row content is not modelled
+@@ -61,7 +62,7 @@ class MarkerReplica implements QleverClient {
+     return m ? Number(m[1]) : undefined;
+   }
+   async query(sparql: string) {
+-    if (this.down) throw new Error("connect ECONNREFUSED 127.0.0.1:7070 (marker replica down)");
++    if (this.down) throw Object.assign(new Error("connect ECONNREFUSED 127.0.0.1:7070 (marker replica down)"), { code: "ECONNREFUSED" });
+     this.queries.push(sparql);
+     if (sparql.startsWith("SELECT ?brokerPosition ?brokerEpoch")) {
+       this.markerReads++;
+@@ -101,8 +102,8 @@ class MarkerReplica implements QleverClient {
+     return [];
+   }
+   async update(sparql: string) {
+-    if (this.down) throw new Error("connect ECONNREFUSED 127.0.0.1:7070 (marker replica down)");
+-    if (this.rejectUpdates) throw new Error("socket hang up (marker replica refuses updates)");
++    if (this.down) throw Object.assign(new Error("connect ECONNREFUSED 127.0.0.1:7070 (marker replica down)"), { code: "ECONNREFUSED" });
++    if (this.rejectUpdates) throw Object.assign(new Error("socket hang up (marker replica refuses updates)"), { code: "ECONNRESET" });
+     const guard =
+       /COALESCE\(\?brokerPosition, "0"\) = "(\d+)" && COALESCE\(\?brokerEpoch, "0"\) = "(\d+)"/.exec(
+         sparql,
+diff --git a/packages/qlever/test/broker-request-errors.test.ts b/packages/qlever/test/broker-request-errors.test.ts
+new file mode 100644
+index 00000000..deadb0f4
+--- /dev/null
++++ b/packages/qlever/test/broker-request-errors.test.ts
+@@ -0,0 +1,174 @@
++// [EXP-P2Q] Why: transport classification must depend on request identities, including real abort/timeouts.
++// Rejected: reproducing these errors with prose-only mocks (the removed heuristic would pass them).
++import http from "node:http";
++import { Effect } from "effect";
++import { describe, expect, it } from "vitest";
++import { TypeExpr } from "@triplex-build/triplex/config";
++import { DatabaseScope } from "@triplex-build/triplex/runtime";
++import {
++  makeQleverClient,
++  QleverHttpError,
++  QleverRequestError,
++  QleverDecodeError,
++} from "../src/QleverClient.js";
++import { makeFreshConnectionClient } from "../src/broker/http.js";
++import { BasisNotAvailable, isUnreachable } from "../src/broker/errors.js";
++import { makeQleverNativeQueries } from "../src/native/NativeQueries.js";
++import { makeQleverQueryExecutor } from "../src/QleverQueryExecutor.js";
++
++const wrap = (cause: unknown) => new TypeError("fetch failed", { cause });
++const coded = (cause?: unknown) =>
++  Object.assign(new Error("opaque", { cause }), { code: "ECONNRESET" });
++
++describe("structured transport identity", () => {
++  it.each([
++    "connection",
++    "ECONNRESET",
++    "fetch failed",
++    "deadline",
++    "aborted",
++    "timeout",
++    "socket hang up",
++    "terminated",
++  ])("never uses message text: %s", (message) => {
++    expect(isUnreachable(new Error(message))).toBe(false);
++    expect(isUnreachable(new TypeError(message))).toBe(false);
++    expect(isUnreachable(wrap(new SyntaxError(message)))).toBe(false);
++  });
++  it.each([0, 1, 8, 30])(
++    "keeps protected failures distinct at depth %i after a positive transport code",
++    (depth) => {
++      for (const leaf of [
++        new SyntaxError("opaque"),
++        new QleverDecodeError("opaque"),
++        new QleverHttpError(400, "opaque"),
++        new BasisNotAvailable({
++          required: 4,
++          observed: 2,
++          replica: "test",
++          surface: "native",
++          waitedMs: 1,
++        }),
++      ]) {
++        let error: unknown = leaf;
++        for (let i = 0; i < depth; i++) error = wrap(error);
++        expect(isUnreachable(coded(error))).toBe(false);
++      }
++    },
++  );
++  it("does not accept an early transport code when a protected suffix exceeds the bound", () => {
++    for (const leaf of [
++      new SyntaxError("opaque"),
++      new QleverHttpError(400, "opaque"),
++      new BasisNotAvailable({
++        required: 4,
++        observed: 2,
++        replica: "test",
++        surface: "native",
++        waitedMs: 1,
++      }),
++    ]) {
++      let error: unknown = leaf;
++      for (let i = 0; i < 32; i++) error = wrap(error);
++      expect(isUnreachable(coded(error))).toBe(false);
++    }
++  });
++  it("requires exact codes or real exception identities", () => {
++    expect(isUnreachable({ code: "prefix_ECONNRESET_suffix" })).toBe(false);
++    expect(isUnreachable({ name: "AbortError", message: "aborted" })).toBe(false);
++    expect(isUnreachable(new DOMException("opaque", "AbortError"))).toBe(true);
++    expect(isUnreachable(new DOMException("opaque", "TimeoutError"))).toBe(true);
++    expect(isUnreachable(new QleverRequestError("timeout"))).toBe(true);
++    expect(isUnreachable(new QleverRequestError("aborted", new Error("opaque reason")))).toBe(true);
++  });
++});
++
++describe.each([makeQleverClient, makeFreshConnectionClient])(
++  "real request abort/timeout",
++  (maker) => {
++    it.each(["timeout", "abort"])(
++      "recognizes %s without relying on the reason's prose",
++      async (kind) => {
++        const server = http.createServer((_req, res) => {
++          res.writeHead(200);
++          res.flushHeaders();
++        });
++        await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
++        const url = `http://127.0.0.1:${(server.address() as { port: number }).port}`;
++        const client = maker(url);
++        const controller = new AbortController();
++        const reason = new Error("opaque caller reason");
++        const timer =
++          kind === "abort" ? setTimeout(() => controller.abort(reason), 100) : undefined;
++        try {
++          const error = await client
++            .query("SELECT ?s WHERE { ?s ?p ?o }", {
++              timeoutMs: kind === "timeout" ? 100 : 5000,
++              ...(kind === "abort" ? { signal: controller.signal } : {}),
++            })
++            .then(
++              () => {
++                throw new Error("expected failure");
++              },
++              (cause: unknown) => cause,
++            );
++          expect(isUnreachable(error)).toBe(true);
++          expect(error).toBeInstanceOf(QleverRequestError);
++          expect(error).toMatchObject({ kind: kind === "timeout" ? "timeout" : "aborted" });
++        } finally {
++          clearTimeout(timer);
++          await client.close();
++          server.closeAllConnections();
++          await new Promise<void>((resolve) => server.close(() => resolve()));
++        }
++      },
++    );
++  },
++);
++
++it.each(["native", "datalog"])(
++  "%s preserves a nested decode failure after a transport-coded wrapper",
++  async (surface) => {
++    const cause = coded(wrap(new QleverDecodeError("connection field")));
++    const client = {
++      ...makeQleverClient("http://127.0.0.1:7070"),
++      query: async (sparql: string) => {
++        if (sparql.startsWith("SELECT ?position"))
++          return [{ position: { type: "literal", value: "2048" } }];
++        throw cause;
++      },
++    };
++    const snapshot = {
++      basis: 1024,
++      marker: { position: 2048, epoch: 1, incarnation: "test" },
++      fencedIncarnation: "test",
++      surface: "datalog" as const,
++      started: 0,
++    };
++    const gate = Object.assign(async () => snapshot, {
++      inTransaction: async () => snapshot,
++      after: async () => {},
++    });
++    const effect =
++      surface === "native"
++        ? makeQleverNativeQueries(client, DatabaseScope.test("decode"), { awaitBasisMs: 1 }).select(
++            { name: "decode", parameters: TypeExpr.any, row: TypeExpr.any },
++            {},
++            () => "SELECT ?s WHERE { ?s ?p ?o }",
++          )
++        : makeQleverQueryExecutor(client, "decode", { resolveBasis: gate }).execute({
++            find: ["?v"],
++            where: [["s", ":v", "?v"]],
++          });
++    const error = await Effect.runPromise(
++      Effect.match(effect as Effect.Effect<unknown, unknown>, {
++        onFailure: (e) => e,
++        onSuccess: () => {
++          throw new Error("expected failure");
++        },
++      }),
++    );
++    expect(error).toMatchObject({ _tag: "ReadError", cause });
++    expect((error as { reason?: unknown }).reason).not.toBe("replica-unreachable");
++  },
++);

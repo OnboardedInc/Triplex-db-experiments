@@ -1,0 +1,13 @@
+--- reviewer-72010a6/round5.test.ts
++++ target-c2d4aa0/round5.test.ts
+@@ -33,7 +33,9 @@
+   { name: "cycle-with-socket", make: () => twoCycle(true), unreachable: true },
+   { name: "aggregate-errors-only", make: () => new AggregateError([socket()], "all candidates failed"), unreachable: false, boundary: ".errors is not a cause edge" },
+   { name: "aggregate-with-cause", make: () => new AggregateError([new Error("detail")], "all candidates failed", { cause: socket() }), unreachable: true },
+-  { name: "aggregate-fetch-wrapper", make: () => new TypeError("fetch failed", { cause: new AggregateError([socket()], "all candidates failed") }), unreachable: true },
++  // [EXP-P2Q] Why: the round-five structured-only rule supersedes the old fetch-failed prose expectation.
++  // Rejected: accepting this wrapper as transport (neither cause node carries transport identity).
++  { name: "aggregate-fetch-wrapper", make: () => new TypeError("fetch failed", { cause: new AggregateError([socket()], "all candidates failed") }), unreachable: false, boundary: "message text is no longer transport identity; .errors is not a cause edge" },
+   { name: "aggregate-mixed", make: () => new AggregateError([http400(), socket()], "all candidates failed"), unreachable: false, boundary: "mixed errors have no unambiguous single transport cause" },
+   { name: "abort-default", make: () => new DOMException("This operation was aborted", "AbortError"), unreachable: true },
+   { name: "timeout-default", make: () => new DOMException("The operation was aborted due to timeout", "TimeoutError"), unreachable: true },

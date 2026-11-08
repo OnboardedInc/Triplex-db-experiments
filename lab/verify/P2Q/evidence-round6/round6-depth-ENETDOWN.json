@@ -1,0 +1,1511 @@
+{
+  "code": "ENETDOWN",
+  "rows": [
+    {
+      "depth": 0,
+      "predicate": false,
+      "surfaces": {
+        "native": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        },
+        "datalog": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        }
+      }
+    },
+    {
+      "depth": 1,
+      "predicate": false,
+      "surfaces": {
+        "native": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        },
+        "datalog": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        }
+      }
+    },
+    {
+      "depth": 2,
+      "predicate": false,
+      "surfaces": {
+        "native": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        },
+        "datalog": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        }
+      }
+    },
+    {
+      "depth": 3,
+      "predicate": false,
+      "surfaces": {
+        "native": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        },
+        "datalog": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        }
+      }
+    },
+    {
+      "depth": 4,
+      "predicate": false,
+      "surfaces": {
+        "native": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        },
+        "datalog": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        }
+      }
+    },
+    {
+      "depth": 5,
+      "predicate": false,
+      "surfaces": {
+        "native": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        },
+        "datalog": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        }
+      }
+    },
+    {
+      "depth": 6,
+      "predicate": false,
+      "surfaces": {
+        "native": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        },
+        "datalog": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        }
+      }
+    },
+    {
+      "depth": 7,
+      "predicate": false,
+      "surfaces": {
+        "native": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        },
+        "datalog": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        }
+      }
+    },
+    {
+      "depth": 8,
+      "predicate": false,
+      "surfaces": {
+        "native": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        },
+        "datalog": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        }
+      }
+    },
+    {
+      "depth": 9,
+      "predicate": false,
+      "surfaces": {
+        "native": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        },
+        "datalog": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        }
+      }
+    },
+    {
+      "depth": 10,
+      "predicate": false,
+      "surfaces": {
+        "native": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        },
+        "datalog": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        }
+      }
+    },
+    {
+      "depth": 11,
+      "predicate": false,
+      "surfaces": {
+        "native": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        },
+        "datalog": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        }
+      }
+    },
+    {
+      "depth": 12,
+      "predicate": false,
+      "surfaces": {
+        "native": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        },
+        "datalog": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        }
+      }
+    },
+    {
+      "depth": 13,
+      "predicate": false,
+      "surfaces": {
+        "native": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        },
+        "datalog": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        }
+      }
+    },
+    {
+      "depth": 14,
+      "predicate": false,
+      "surfaces": {
+        "native": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        },
+        "datalog": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        }
+      }
+    },
+    {
+      "depth": 15,
+      "predicate": false,
+      "surfaces": {
+        "native": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        },
+        "datalog": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        }
+      }
+    },
+    {
+      "depth": 16,
+      "predicate": false,
+      "surfaces": {
+        "native": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        },
+        "datalog": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        }
+      }
+    },
+    {
+      "depth": 17,
+      "predicate": false,
+      "surfaces": {
+        "native": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        },
+        "datalog": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        }
+      }
+    },
+    {
+      "depth": 18,
+      "predicate": false,
+      "surfaces": {
+        "native": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        },
+        "datalog": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        }
+      }
+    },
+    {
+      "depth": 19,
+      "predicate": false,
+      "surfaces": {
+        "native": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        },
+        "datalog": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        }
+      }
+    },
+    {
+      "depth": 20,
+      "predicate": false,
+      "surfaces": {
+        "native": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        },
+        "datalog": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        }
+      }
+    },
+    {
+      "depth": 21,
+      "predicate": false,
+      "surfaces": {
+        "native": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        },
+        "datalog": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        }
+      }
+    },
+    {
+      "depth": 22,
+      "predicate": false,
+      "surfaces": {
+        "native": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        },
+        "datalog": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        }
+      }
+    },
+    {
+      "depth": 23,
+      "predicate": false,
+      "surfaces": {
+        "native": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        },
+        "datalog": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        }
+      }
+    },
+    {
+      "depth": 24,
+      "predicate": false,
+      "surfaces": {
+        "native": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        },
+        "datalog": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        }
+      }
+    },
+    {
+      "depth": 25,
+      "predicate": false,
+      "surfaces": {
+        "native": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        },
+        "datalog": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        }
+      }
+    },
+    {
+      "depth": 26,
+      "predicate": false,
+      "surfaces": {
+        "native": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        },
+        "datalog": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        }
+      }
+    },
+    {
+      "depth": 27,
+      "predicate": false,
+      "surfaces": {
+        "native": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        },
+        "datalog": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        }
+      }
+    },
+    {
+      "depth": 28,
+      "predicate": false,
+      "surfaces": {
+        "native": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        },
+        "datalog": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        }
+      }
+    },
+    {
+      "depth": 29,
+      "predicate": false,
+      "surfaces": {
+        "native": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        },
+        "datalog": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        }
+      }
+    },
+    {
+      "depth": 30,
+      "predicate": false,
+      "surfaces": {
+        "native": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        },
+        "datalog": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        }
+      }
+    },
+    {
+      "depth": 31,
+      "predicate": false,
+      "surfaces": {
+        "native": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        },
+        "datalog": {
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "preservesCause": true
+        }
+      }
+    }
+  ],
+  "mismatches": [
+    {
+      "depth": 0,
+      "surface": "native",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 0,
+      "surface": "datalog",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 0,
+      "surface": "predicate",
+      "observed": false
+    },
+    {
+      "depth": 1,
+      "surface": "native",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 1,
+      "surface": "datalog",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 1,
+      "surface": "predicate",
+      "observed": false
+    },
+    {
+      "depth": 2,
+      "surface": "native",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 2,
+      "surface": "datalog",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 2,
+      "surface": "predicate",
+      "observed": false
+    },
+    {
+      "depth": 3,
+      "surface": "native",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 3,
+      "surface": "datalog",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 3,
+      "surface": "predicate",
+      "observed": false
+    },
+    {
+      "depth": 4,
+      "surface": "native",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 4,
+      "surface": "datalog",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 4,
+      "surface": "predicate",
+      "observed": false
+    },
+    {
+      "depth": 5,
+      "surface": "native",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 5,
+      "surface": "datalog",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 5,
+      "surface": "predicate",
+      "observed": false
+    },
+    {
+      "depth": 6,
+      "surface": "native",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 6,
+      "surface": "datalog",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 6,
+      "surface": "predicate",
+      "observed": false
+    },
+    {
+      "depth": 7,
+      "surface": "native",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 7,
+      "surface": "datalog",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 7,
+      "surface": "predicate",
+      "observed": false
+    },
+    {
+      "depth": 8,
+      "surface": "native",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 8,
+      "surface": "datalog",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 8,
+      "surface": "predicate",
+      "observed": false
+    },
+    {
+      "depth": 9,
+      "surface": "native",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 9,
+      "surface": "datalog",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 9,
+      "surface": "predicate",
+      "observed": false
+    },
+    {
+      "depth": 10,
+      "surface": "native",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 10,
+      "surface": "datalog",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 10,
+      "surface": "predicate",
+      "observed": false
+    },
+    {
+      "depth": 11,
+      "surface": "native",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 11,
+      "surface": "datalog",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 11,
+      "surface": "predicate",
+      "observed": false
+    },
+    {
+      "depth": 12,
+      "surface": "native",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 12,
+      "surface": "datalog",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 12,
+      "surface": "predicate",
+      "observed": false
+    },
+    {
+      "depth": 13,
+      "surface": "native",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 13,
+      "surface": "datalog",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 13,
+      "surface": "predicate",
+      "observed": false
+    },
+    {
+      "depth": 14,
+      "surface": "native",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 14,
+      "surface": "datalog",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 14,
+      "surface": "predicate",
+      "observed": false
+    },
+    {
+      "depth": 15,
+      "surface": "native",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 15,
+      "surface": "datalog",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 15,
+      "surface": "predicate",
+      "observed": false
+    },
+    {
+      "depth": 16,
+      "surface": "native",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 16,
+      "surface": "datalog",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 16,
+      "surface": "predicate",
+      "observed": false
+    },
+    {
+      "depth": 17,
+      "surface": "native",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 17,
+      "surface": "datalog",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 17,
+      "surface": "predicate",
+      "observed": false
+    },
+    {
+      "depth": 18,
+      "surface": "native",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 18,
+      "surface": "datalog",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 18,
+      "surface": "predicate",
+      "observed": false
+    },
+    {
+      "depth": 19,
+      "surface": "native",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 19,
+      "surface": "datalog",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 19,
+      "surface": "predicate",
+      "observed": false
+    },
+    {
+      "depth": 20,
+      "surface": "native",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 20,
+      "surface": "datalog",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 20,
+      "surface": "predicate",
+      "observed": false
+    },
+    {
+      "depth": 21,
+      "surface": "native",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 21,
+      "surface": "datalog",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 21,
+      "surface": "predicate",
+      "observed": false
+    },
+    {
+      "depth": 22,
+      "surface": "native",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 22,
+      "surface": "datalog",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 22,
+      "surface": "predicate",
+      "observed": false
+    },
+    {
+      "depth": 23,
+      "surface": "native",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 23,
+      "surface": "datalog",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 23,
+      "surface": "predicate",
+      "observed": false
+    },
+    {
+      "depth": 24,
+      "surface": "native",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 24,
+      "surface": "datalog",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 24,
+      "surface": "predicate",
+      "observed": false
+    },
+    {
+      "depth": 25,
+      "surface": "native",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 25,
+      "surface": "datalog",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 25,
+      "surface": "predicate",
+      "observed": false
+    },
+    {
+      "depth": 26,
+      "surface": "native",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 26,
+      "surface": "datalog",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 26,
+      "surface": "predicate",
+      "observed": false
+    },
+    {
+      "depth": 27,
+      "surface": "native",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 27,
+      "surface": "datalog",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 27,
+      "surface": "predicate",
+      "observed": false
+    },
+    {
+      "depth": 28,
+      "surface": "native",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 28,
+      "surface": "datalog",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 28,
+      "surface": "predicate",
+      "observed": false
+    },
+    {
+      "depth": 29,
+      "surface": "native",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 29,
+      "surface": "datalog",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 29,
+      "surface": "predicate",
+      "observed": false
+    },
+    {
+      "depth": 30,
+      "surface": "native",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 30,
+      "surface": "datalog",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 30,
+      "surface": "predicate",
+      "observed": false
+    },
+    {
+      "depth": 31,
+      "surface": "native",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 31,
+      "surface": "datalog",
+      "observed": {
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "preservesCause": true
+      }
+    },
+    {
+      "depth": 31,
+      "surface": "predicate",
+      "observed": false
+    }
+  ]
+}

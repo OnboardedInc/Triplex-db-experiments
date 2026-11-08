@@ -1,0 +1,1181 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../../vitest.workspace-aliases" without a file extension (lab/verify/P2Q/vitest.config.ts:5:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q
+
+ ❯ tests/round6.test.ts (28 tests | 10 failed) 403ms
+   ❯ round6 structured transport and protected-depth matrix (19)
+     × EHOSTDOWN at every inspectable depth, predicate and both surfaces 21ms
+     × ENETDOWN at every inspectable depth, predicate and both surfaces 14ms
+   ❯ round6 real exported clients propagate missing OS transport codes (8)
+     × standard native EHOSTDOWN 16ms
+     × standard datalog EHOSTDOWN 4ms
+     × fresh native EHOSTDOWN 4ms
+     × fresh datalog EHOSTDOWN 2ms
+     × standard native ENETDOWN 2ms
+     × standard datalog ENETDOWN 2ms
+     × fresh native ENETDOWN 2ms
+     × fresh datalog ENETDOWN 5ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/round6.test.ts > round6 structured transport and protected-depth matrix > EHOSTDOWN at every inspectable depth, predicate and both surfaces
+ FAIL  tests/round6.test.ts > round6 structured transport and protected-depth matrix > ENETDOWN at every inspectable depth, predicate and both surfaces
+AssertionError: expected [ { depth: +0, …(2) }, …(95) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "depth": 0,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "native",
++   },
++   {
++     "depth": 0,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "datalog",
++   },
++   {
++     "depth": 0,
++     "observed": false,
++     "surface": "predicate",
++   },
++   {
++     "depth": 1,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "native",
++   },
++   {
++     "depth": 1,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "datalog",
++   },
++   {
++     "depth": 1,
++     "observed": false,
++     "surface": "predicate",
++   },
++   {
++     "depth": 2,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "native",
++   },
++   {
++     "depth": 2,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "datalog",
++   },
++   {
++     "depth": 2,
++     "observed": false,
++     "surface": "predicate",
++   },
++   {
++     "depth": 3,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "native",
++   },
++   {
++     "depth": 3,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "datalog",
++   },
++   {
++     "depth": 3,
++     "observed": false,
++     "surface": "predicate",
++   },
++   {
++     "depth": 4,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "native",
++   },
++   {
++     "depth": 4,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "datalog",
++   },
++   {
++     "depth": 4,
++     "observed": false,
++     "surface": "predicate",
++   },
++   {
++     "depth": 5,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "native",
++   },
++   {
++     "depth": 5,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "datalog",
++   },
++   {
++     "depth": 5,
++     "observed": false,
++     "surface": "predicate",
++   },
++   {
++     "depth": 6,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "native",
++   },
++   {
++     "depth": 6,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "datalog",
++   },
++   {
++     "depth": 6,
++     "observed": false,
++     "surface": "predicate",
++   },
++   {
++     "depth": 7,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "native",
++   },
++   {
++     "depth": 7,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "datalog",
++   },
++   {
++     "depth": 7,
++     "observed": false,
++     "surface": "predicate",
++   },
++   {
++     "depth": 8,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "native",
++   },
++   {
++     "depth": 8,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "datalog",
++   },
++   {
++     "depth": 8,
++     "observed": false,
++     "surface": "predicate",
++   },
++   {
++     "depth": 9,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "native",
++   },
++   {
++     "depth": 9,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "datalog",
++   },
++   {
++     "depth": 9,
++     "observed": false,
++     "surface": "predicate",
++   },
++   {
++     "depth": 10,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "native",
++   },
++   {
++     "depth": 10,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "datalog",
++   },
++   {
++     "depth": 10,
++     "observed": false,
++     "surface": "predicate",
++   },
++   {
++     "depth": 11,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "native",
++   },
++   {
++     "depth": 11,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "datalog",
++   },
++   {
++     "depth": 11,
++     "observed": false,
++     "surface": "predicate",
++   },
++   {
++     "depth": 12,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "native",
++   },
++   {
++     "depth": 12,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "datalog",
++   },
++   {
++     "depth": 12,
++     "observed": false,
++     "surface": "predicate",
++   },
++   {
++     "depth": 13,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "native",
++   },
++   {
++     "depth": 13,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "datalog",
++   },
++   {
++     "depth": 13,
++     "observed": false,
++     "surface": "predicate",
++   },
++   {
++     "depth": 14,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "native",
++   },
++   {
++     "depth": 14,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "datalog",
++   },
++   {
++     "depth": 14,
++     "observed": false,
++     "surface": "predicate",
++   },
++   {
++     "depth": 15,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "native",
++   },
++   {
++     "depth": 15,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "datalog",
++   },
++   {
++     "depth": 15,
++     "observed": false,
++     "surface": "predicate",
++   },
++   {
++     "depth": 16,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "native",
++   },
++   {
++     "depth": 16,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "datalog",
++   },
++   {
++     "depth": 16,
++     "observed": false,
++     "surface": "predicate",
++   },
++   {
++     "depth": 17,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "native",
++   },
++   {
++     "depth": 17,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "datalog",
++   },
++   {
++     "depth": 17,
++     "observed": false,
++     "surface": "predicate",
++   },
++   {
++     "depth": 18,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "native",
++   },
++   {
++     "depth": 18,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "datalog",
++   },
++   {
++     "depth": 18,
++     "observed": false,
++     "surface": "predicate",
++   },
++   {
++     "depth": 19,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "native",
++   },
++   {
++     "depth": 19,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "datalog",
++   },
++   {
++     "depth": 19,
++     "observed": false,
++     "surface": "predicate",
++   },
++   {
++     "depth": 20,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "native",
++   },
++   {
++     "depth": 20,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "datalog",
++   },
++   {
++     "depth": 20,
++     "observed": false,
++     "surface": "predicate",
++   },
++   {
++     "depth": 21,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "native",
++   },
++   {
++     "depth": 21,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "datalog",
++   },
++   {
++     "depth": 21,
++     "observed": false,
++     "surface": "predicate",
++   },
++   {
++     "depth": 22,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "native",
++   },
++   {
++     "depth": 22,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "datalog",
++   },
++   {
++     "depth": 22,
++     "observed": false,
++     "surface": "predicate",
++   },
++   {
++     "depth": 23,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "native",
++   },
++   {
++     "depth": 23,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "datalog",
++   },
++   {
++     "depth": 23,
++     "observed": false,
++     "surface": "predicate",
++   },
++   {
++     "depth": 24,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "native",
++   },
++   {
++     "depth": 24,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "datalog",
++   },
++   {
++     "depth": 24,
++     "observed": false,
++     "surface": "predicate",
++   },
++   {
++     "depth": 25,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "native",
++   },
++   {
++     "depth": 25,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "datalog",
++   },
++   {
++     "depth": 25,
++     "observed": false,
++     "surface": "predicate",
++   },
++   {
++     "depth": 26,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "native",
++   },
++   {
++     "depth": 26,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "datalog",
++   },
++   {
++     "depth": 26,
++     "observed": false,
++     "surface": "predicate",
++   },
++   {
++     "depth": 27,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "native",
++   },
++   {
++     "depth": 27,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "datalog",
++   },
++   {
++     "depth": 27,
++     "observed": false,
++     "surface": "predicate",
++   },
++   {
++     "depth": 28,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "native",
++   },
++   {
++     "depth": 28,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "datalog",
++   },
++   {
++     "depth": 28,
++     "observed": false,
++     "surface": "predicate",
++   },
++   {
++     "depth": 29,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "native",
++   },
++   {
++     "depth": 29,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "datalog",
++   },
++   {
++     "depth": 29,
++     "observed": false,
++     "surface": "predicate",
++   },
++   {
++     "depth": 30,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "native",
++   },
++   {
++     "depth": 30,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "datalog",
++   },
++   {
++     "depth": 30,
++     "observed": false,
++     "surface": "predicate",
++   },
++   {
++     "depth": 31,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "native",
++   },
++   {
++     "depth": 31,
++     "observed": {
++       "observed": null,
++       "preservesCause": true,
++       "reason": null,
++       "replica": null,
++       "required": null,
++     },
++     "surface": "datalog",
++   },
++   {
++     "depth": 31,
++     "observed": false,
++     "surface": "predicate",
++   },
++ ]
+
+ ❯ tests/round6.test.ts:56:24
+     54|     }
+     55|     writeJson(`round6-depth-${code}.json`, { code, rows, mismatches });
+     56|     expect(mismatches).toEqual([]);
+       |                        ^
+     57|   });
+     58|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  tests/round6.test.ts > round6 real exported clients propagate missing OS transport codes > standard native EHOSTDOWN
+AssertionError: expected ReadError: QLever native SELECT failed: T… { _tag: '…' } to match object { reason: 'replica-unreachable', …(4) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "observed": 2048,
+-   "reason": "replica-unreachable",
+-   "replica": "the QLever replica",
+-   "required": 1024,
+-   "surface": "native",
++ ReadError {
++   "message": "QLever native SELECT failed: TypeError: fetch failed",
++   "cause": TypeError {
++     "message": "fetch failed",
++     "cause": Error {
++       "message": "opaque",
++       "code": "EHOSTDOWN",
++     },
++   },
++   "_tag": "ReadError",
+  }
+
+ ❯ tests/round6.test.ts:153:21
+    151|       expect(injected).toBeGreaterThan(0);
+    152|       expect(chain.some(cause => cause.code === code)).toBe(true);
+    153|       expect(error).toMatchObject({ reason: "replica-unreachable", req…
+       |                     ^
+    154|     } finally {
+    155|       mock.mockRestore();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  tests/round6.test.ts > round6 real exported clients propagate missing OS transport codes > standard datalog EHOSTDOWN
+AssertionError: expected ReadError: QLever Datalog execution faile… { _tag: '…' } to match object { reason: 'replica-unreachable', …(4) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "observed": 2048,
+-   "reason": "replica-unreachable",
+-   "replica": "the QLever replica",
+-   "required": 1024,
+-   "surface": "datalog",
++ ReadError {
++   "message": "QLever Datalog execution failed: TypeError: fetch failed",
++   "cause": TypeError {
++     "message": "fetch failed",
++     "cause": Error {
++       "message": "opaque",
++       "code": "EHOSTDOWN",
++     },
++   },
++   "_tag": "ReadError",
+  }
+
+ ❯ tests/round6.test.ts:153:21
+    151|       expect(injected).toBeGreaterThan(0);
+    152|       expect(chain.some(cause => cause.code === code)).toBe(true);
+    153|       expect(error).toMatchObject({ reason: "replica-unreachable", req…
+       |                     ^
+    154|     } finally {
+    155|       mock.mockRestore();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  tests/round6.test.ts > round6 real exported clients propagate missing OS transport codes > fresh native EHOSTDOWN
+AssertionError: expected ReadError: QLever native SELECT failed: E… { _tag: '…' } to match object { reason: 'replica-unreachable', …(4) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "observed": 2048,
+-   "reason": "replica-unreachable",
+-   "replica": "the QLever replica",
+-   "required": 1024,
+-   "surface": "native",
++ ReadError {
++   "message": "QLever native SELECT failed: Error: opaque",
++   "cause": Error {
++     "message": "opaque",
++     "code": "EHOSTDOWN",
++   },
++   "_tag": "ReadError",
+  }
+
+ ❯ tests/round6.test.ts:153:21
+    151|       expect(injected).toBeGreaterThan(0);
+    152|       expect(chain.some(cause => cause.code === code)).toBe(true);
+    153|       expect(error).toMatchObject({ reason: "replica-unreachable", req…
+       |                     ^
+    154|     } finally {
+    155|       mock.mockRestore();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  tests/round6.test.ts > round6 real exported clients propagate missing OS transport codes > fresh datalog EHOSTDOWN
+AssertionError: expected ReadError: QLever Datalog execution faile… { _tag: '…' } to match object { reason: 'replica-unreachable', …(4) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "observed": 2048,
+-   "reason": "replica-unreachable",
+-   "replica": "the QLever replica",
+-   "required": 1024,
+-   "surface": "datalog",
++ ReadError {
++   "message": "QLever Datalog execution failed: Error: opaque",
++   "cause": Error {
++     "message": "opaque",
++     "code": "EHOSTDOWN",
++   },
++   "_tag": "ReadError",
+  }
+
+ ❯ tests/round6.test.ts:153:21
+    151|       expect(injected).toBeGreaterThan(0);
+    152|       expect(chain.some(cause => cause.code === code)).toBe(true);
+    153|       expect(error).toMatchObject({ reason: "replica-unreachable", req…
+       |                     ^
+    154|     } finally {
+    155|       mock.mockRestore();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  tests/round6.test.ts > round6 real exported clients propagate missing OS transport codes > standard native ENETDOWN
+AssertionError: expected ReadError: QLever native SELECT failed: T… { _tag: '…' } to match object { reason: 'replica-unreachable', …(4) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "observed": 2048,
+-   "reason": "replica-unreachable",
+-   "replica": "the QLever replica",
+-   "required": 1024,
+-   "surface": "native",
++ ReadError {
++   "message": "QLever native SELECT failed: TypeError: fetch failed",
++   "cause": TypeError {
++     "message": "fetch failed",
++     "cause": Error {
++       "message": "opaque",
++       "code": "ENETDOWN",
++     },
++   },
++   "_tag": "ReadError",
+  }
+
+ ❯ tests/round6.test.ts:153:21
+    151|       expect(injected).toBeGreaterThan(0);
+    152|       expect(chain.some(cause => cause.code === code)).toBe(true);
+    153|       expect(error).toMatchObject({ reason: "replica-unreachable", req…
+       |                     ^
+    154|     } finally {
+    155|       mock.mockRestore();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  tests/round6.test.ts > round6 real exported clients propagate missing OS transport codes > standard datalog ENETDOWN
+AssertionError: expected ReadError: QLever Datalog execution faile… { _tag: '…' } to match object { reason: 'replica-unreachable', …(4) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "observed": 2048,
+-   "reason": "replica-unreachable",
+-   "replica": "the QLever replica",
+-   "required": 1024,
+-   "surface": "datalog",
++ ReadError {
++   "message": "QLever Datalog execution failed: TypeError: fetch failed",
++   "cause": TypeError {
++     "message": "fetch failed",
++     "cause": Error {
++       "message": "opaque",
++       "code": "ENETDOWN",
++     },
++   },
++   "_tag": "ReadError",
+  }
+
+ ❯ tests/round6.test.ts:153:21
+    151|       expect(injected).toBeGreaterThan(0);
+    152|       expect(chain.some(cause => cause.code === code)).toBe(true);
+    153|       expect(error).toMatchObject({ reason: "replica-unreachable", req…
+       |                     ^
+    154|     } finally {
+    155|       mock.mockRestore();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  tests/round6.test.ts > round6 real exported clients propagate missing OS transport codes > fresh native ENETDOWN
+AssertionError: expected ReadError: QLever native SELECT failed: E… { _tag: '…' } to match object { reason: 'replica-unreachable', …(4) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "observed": 2048,
+-   "reason": "replica-unreachable",
+-   "replica": "the QLever replica",
+-   "required": 1024,
+-   "surface": "native",
++ ReadError {
++   "message": "QLever native SELECT failed: Error: opaque",
++   "cause": Error {
++     "message": "opaque",
++     "code": "ENETDOWN",
++   },
++   "_tag": "ReadError",
+  }
+
+ ❯ tests/round6.test.ts:153:21
+    151|       expect(injected).toBeGreaterThan(0);
+    152|       expect(chain.some(cause => cause.code === code)).toBe(true);
+    153|       expect(error).toMatchObject({ reason: "replica-unreachable", req…
+       |                     ^
+    154|     } finally {
+    155|       mock.mockRestore();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  tests/round6.test.ts > round6 real exported clients propagate missing OS transport codes > fresh datalog ENETDOWN
+AssertionError: expected ReadError: QLever Datalog execution faile… { _tag: '…' } to match object { reason: 'replica-unreachable', …(4) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "observed": 2048,
+-   "reason": "replica-unreachable",
+-   "replica": "the QLever replica",
+-   "required": 1024,
+-   "surface": "datalog",
++ ReadError {
++   "message": "QLever Datalog execution failed: Error: opaque",
++   "cause": Error {
++     "message": "opaque",
++     "code": "ENETDOWN",
++   },
++   "_tag": "ReadError",
+  }
+
+ ❯ tests/round6.test.ts:153:21
+    151|       expect(injected).toBeGreaterThan(0);
+    152|       expect(chain.some(cause => cause.code === code)).toBe(true);
+    153|       expect(error).toMatchObject({ reason: "replica-unreachable", req…
+       |                     ^
+    154|     } finally {
+    155|       mock.mockRestore();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 18 passed (28)
+   Start at  18:21:32
+   Duration  1.51s (import 48%, tests 29%, transform 23%)
+
