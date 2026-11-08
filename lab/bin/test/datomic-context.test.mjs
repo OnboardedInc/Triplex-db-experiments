@@ -26,5 +26,14 @@ test('Datomic context refuses reused directories, extra bytes, and symlinks', ()
     assert.throws(() => verifyDatomicContext(clean, expected), /special path/);
     fs.symlinkSync(path.join(source, 'verified'), path.join(source, 'link'));
     assert.throws(() => verifiedTree(source), /special path/);
+    const rootLink = path.join(root, 'source-link');
+    fs.symlinkSync(source, rootLink);
+    assert.throws(() => verifiedTree(rootLink), /source root/);
+    fs.unlinkSync(path.join(source, 'link'));
+    fs.mkdirSync(path.join(source, 'empty'));
+    assert.throws(() => verifiedTree(source), /empty directory/);
+    fs.unlinkSync(path.join(clean, 'link'));
+    fs.mkdirSync(path.join(clean, 'empty'));
+    assert.throws(() => verifyDatomicContext(clean, expected), /empty directory/);
   } finally { fs.rmSync(root, { recursive: true, force: true }); }
 });

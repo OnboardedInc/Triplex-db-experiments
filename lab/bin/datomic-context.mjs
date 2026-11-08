@@ -4,9 +4,12 @@ import { createHash } from 'node:crypto';
 
 // [EXP-DA01] Why: exclusive creation and a final byte comparison close V-DA00's extra-file retry. Rejected: recursive copy into an existing content-addressed directory (unhashed payload survives).
 export function verifiedTree(root) {
+  if (!fs.lstatSync(root).isDirectory()) throw new Error(`Unverified source root: ${root}`);
   const files = [];
   const visit = dir => {
-    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    if (!entries.length) throw new Error(`Unverified empty directory: ${dir}`);
+    for (const entry of entries) {
       const file = path.join(dir, entry.name);
       if (entry.isDirectory()) visit(file);
       else if (entry.isFile()) {
