@@ -1,0 +1,49 @@
+[K01-R2 2026-11-08T22:11:44.869Z] waiting for pool capacity; no heavy token held
+[K01-R2 2026-11-08T22:12:17.849Z] waiting for pool capacity; no heavy token held
+[K01-R2 2026-11-08T22:12:53.351Z] waiting for pool capacity; no heavy token held
+[K01-R2 2026-11-08T22:13:26.176Z] waiting for pool capacity; no heavy token held
+[K01-R2 2026-11-08T22:13:59.204Z] waiting for pool capacity; no heavy token held
+[K01-R2 2026-11-08T22:14:32.398Z] waiting for pool capacity; no heavy token held
+[K01-R2 2026-11-08T22:15:05.348Z] waiting for pool capacity; no heavy token held
+[K01-R2 2026-11-08T22:15:38.645Z] waiting for pool capacity; no heavy token held
+[K01-R2 2026-11-08T22:16:14.612Z] waiting for pool capacity; no heavy token held
+[K01-R2 2026-11-08T22:16:47.938Z] waiting for pool capacity; no heavy token held
+[K01-R2 2026-11-08T22:17:20.789Z] waiting for pool capacity; no heavy token held
+[K01-R2] admission
+[K01-R2] tools
+[K01-R2] T2-up
+[K01-R2] T2-stop
+[K01-R2] T2-down
+[K01-R2] singlecut-up
+[K01-R2] singlecut-seed
+[K01-R2] singlecut-probe
+[K01-R2] cleanup-source-clone
+[K01-R2] cleanup-status
+file:///Users/sam/projects/triplex-db-2/.claude/worktrees/k01/lab/experiments/EXP-K01-seed-clone/round2-live.mjs:19
+  if (r.status !== 0 && !optional) throw new Error(`${label} failed: ${r.stderr?.slice(-1000)}`);
+                                         ^
+
+Error: singlecut-probe failed: #1: jobs 0, block 00, stable 0/3
+[clone-check 22:20:49] finish-block #1: jobs 0, block 00, stable 0/3
+[clone-check 22:20:54] finish-block #1: jobs 0, block 00, stable 0/3
+[clone-check 22:21:00] finish-block #1: jobs 0, block 00, stable 0/3
+[clone-check 22:21:05] finish-block #1: jobs 0, block 00, stable 0/3
+[clone-check 22:21:10] finish-block #1: jobs 0, block 00, stable 0/3
+[clone-check 22:21:15] finish-block #1: jobs 0, block 00, stable 0/3
+[clone-check 22:21:20] finish-block #1: jobs 0, block 00, stable 0/3
+[clone-check 22:21:25] finish-block #1: jobs 0, block 00, stable 0/3
+[clone-check 22:21:30] finish-block #1: jobs 0, block 00, stable 0/3
+[clone-check 22:21:35] finish-block #1: jobs 0, block 00, stable 0/3
+[clone-check 22:21:41] finish-block #1: jobs 0, block 00, stable 0/3
+[clone-check 22:21:46] finish-block #1: jobs 0, block 00, stable 0/3
+[clone-check 22:21:51] finish-block #1: jobs 0, block 00, stable 0/3
+[lab] ENGINE: clone-check settle exited null without a JSON verdict: 
+
+    at run (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/k01/lab/experiments/EXP-K01-seed-clone/round2-live.mjs:19:42)
+    at engine (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/k01/lab/experiments/EXP-K01-seed-clone/round2-live.mjs:22:57)
+    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/k01/lab/experiments/EXP-K01-seed-clone/round2-live.mjs:60:3
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.23.2

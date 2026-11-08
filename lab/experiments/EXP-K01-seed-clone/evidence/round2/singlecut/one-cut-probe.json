@@ -1,0 +1,65 @@
+{
+  "format": "tx2-k01-singlecut-probe/1",
+  "volume": "tx2-k01-singlecut-1794176371138",
+  "at": "2026-11-08T22:19:31.138Z",
+  "diagnosticOnly": true,
+  "before": {
+    "snapshot": {
+      "listing": [],
+      "blocks": [],
+      "gauges": {
+        "jobsAvailable": 0,
+        "latestCompletedTxId": 51471995,
+        "lagMsgId": 0,
+        "latestSubmittedMsgId": 51471995,
+        "latestProcessedMsgId": 51471995,
+        "lastUploadTime": 0,
+        "rows": 6
+      },
+      "trie": {
+        "rows": [],
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      }
+    },
+    "live": {
+      "total": 61709,
+      "rows": [
+        [
+          "tx_assertions",
+          61384
+        ],
+        [
+          "tx_attempts",
+          81
+        ],
+        [
+          "tx_claims",
+          81
+        ],
+        [
+          "tx_constraint_generations",
+          0
+        ],
+        [
+          "tx_constraint_graphs",
+          0
+        ],
+        [
+          "tx_meta",
+          81
+        ],
+        [
+          "tx_query_relations",
+          0
+        ],
+        [
+          "txs",
+          82
+        ]
+      ]
+    }
+  },
+  "error": "clone-check settle exited null without a JSON verdict: ",
+  "snapshotRemoved": true,
+  "removalOutput": null
+}

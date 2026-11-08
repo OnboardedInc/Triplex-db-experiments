@@ -1,0 +1,8 @@
+{
+  "command": "up",
+  "args": [
+    "--fresh"
+  ],
+  "exit": 3,
+  "signal": null
+}

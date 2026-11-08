@@ -1,0 +1,1 @@
+[lab] REFUSED: pool refuses tx2-xtdb-s1: memory: 9.25 GiB reserved + 3.50 GiB requested = 12.75 GiB > pool 11.00 GiB. Holding: tx2-xtdb-dev 3.00 GiB (EXP-W01), tx2-qlever-dev 3.50 GiB (EXP-000), tx2-datomic-dev 2.75 GiB (EXP-DA01)

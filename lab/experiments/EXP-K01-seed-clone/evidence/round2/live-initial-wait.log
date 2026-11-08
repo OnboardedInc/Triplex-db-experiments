@@ -1,0 +1,19 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 82782 "CX-VE01-4-prior", pid 84131 "R25-h1-split", pid 84970 "CX-A01-0311-final-54cf064", pid 82780 "CX-VE01-4-all"
+[lab] heavy: waiting for one of 4 slots; held by pid 82782 "CX-VE01-4-prior", pid 84131 "R25-h1-split", pid 84970 "CX-A01-0311-final-54cf064", pid 82780 "CX-VE01-4-all"
+[lab] heavy: waiting for one of 4 slots; held by pid 82782 "CX-VE01-4-prior", pid 84131 "R25-h1-split", pid 84970 "CX-A01-0311-final-54cf064", pid 34900 "CX-VE01-4-delta"
+[K01-R2] admission
+[K01-R2] waiting 30 s for engine admission; residents untouched
+[K01-R2] admission
+[K01-R2] waiting 30 s for engine admission; residents untouched
+[K01-R2] admission
+[K01-R2] waiting 30 s for engine admission; residents untouched
+[K01-R2] admission
+[K01-R2] waiting 30 s for engine admission; residents untouched
+[K01-R2] admission
+[K01-R2] waiting 30 s for engine admission; residents untouched
+[K01-R2] admission
+[K01-R2] waiting 30 s for engine admission; residents untouched
+[K01-R2] admission
+[K01-R2] waiting 30 s for engine admission; residents untouched
+[K01-R2] admission
+[K01-R2] waiting 30 s for engine admission; residents untouched

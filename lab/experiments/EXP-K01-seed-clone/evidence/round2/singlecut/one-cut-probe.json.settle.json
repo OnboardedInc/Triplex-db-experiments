@@ -1,0 +1,2461 @@
+{
+  "before": {
+    "listing": [],
+    "blocks": [],
+    "gauges": {
+      "jobsAvailable": 0,
+      "latestCompletedTxId": 51471995,
+      "lagMsgId": 0,
+      "latestSubmittedMsgId": 51471995,
+      "latestProcessedMsgId": 51471995,
+      "lastUploadTime": 0,
+      "rows": 6
+    },
+    "trie": {
+      "rows": [],
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  },
+  "phases": [
+    {
+      "phase": 1,
+      "target": 0,
+      "finishBlock": {
+        "status": 200,
+        "body": "Block flush message sent to 1 database(s)."
+      },
+      "polls": [
+        {
+          "elapsedS": 5.345,
+          "listing": [
+            "00"
+          ],
+          "blocks": [
+            {
+              "block_idx": "00",
+              "tx_id": "51471995",
+              "system_time": "2026-11-08T22:19:30.901Z",
+              "latest_processed_msg_id": "52133232",
+              "table_names": "[\"public/tx_assertions\" \"public/tx_attempts\" \"public/tx_claims\" \"public/tx_constraint_generations\" \"public/tx_constraint_graphs\" \"public/tx_meta\" \"public/tx_query_relations\" \"xt/role_membership\" \"xt/txs\"]",
+              "boundary_replica_msg_id": "44109771",
+              "file_size": "678"
+            }
+          ],
+          "gauges": {
+            "jobsAvailable": 0,
+            "latestCompletedTxId": 51471995,
+            "lagMsgId": 0,
+            "latestSubmittedMsgId": 52134271,
+            "latestProcessedMsgId": 52134271,
+            "lastUploadTime": 1794176372,
+            "rows": 6
+          },
+          "trie": {
+            "rows": [
+              [
+                "tx_assertions",
+                "l01-rc-b00",
+                1,
+                "live",
+                43286990,
+                61384
+              ],
+              [
+                "tx_attempts",
+                "l01-rc-b00",
+                1,
+                "live",
+                29990,
+                81
+              ],
+              [
+                "tx_claims",
+                "l01-rc-b00",
+                1,
+                "live",
+                28342,
+                81
+              ],
+              [
+                "tx_meta",
+                "l01-r20261109-b00",
+                1,
+                "live",
+                18782,
+                80
+              ],
+              [
+                "tx_meta",
+                "l01-rc-b00",
+                1,
+                "live",
+                2446,
+                1
+              ],
+              [
+                "txs",
+                "l01-rc-b00",
+                1,
+                "live",
+                8182,
+                82
+              ]
+            ],
+            "sha256": "4534cb4137d820de1fdc7271556e0798bc1219aed35d0b3a5944132925943eec"
+          },
+          "requiredTables": [
+            "tx_assertions",
+            "tx_attempts",
+            "tx_claims",
+            "tx_meta",
+            "txs"
+          ],
+          "seenL0Tables": [],
+          "sawL0": false,
+          "ok": false,
+          "streak": 0
+        },
+        {
+          "elapsedS": 10.505,
+          "listing": [
+            "00"
+          ],
+          "blocks": [
+            {
+              "block_idx": "00",
+              "tx_id": "51471995",
+              "system_time": "2026-11-08T22:19:30.901Z",
+              "latest_processed_msg_id": "52133232",
+              "table_names": "[\"public/tx_assertions\" \"public/tx_attempts\" \"public/tx_claims\" \"public/tx_constraint_generations\" \"public/tx_constraint_graphs\" \"public/tx_meta\" \"public/tx_query_relations\" \"xt/role_membership\" \"xt/txs\"]",
+              "boundary_replica_msg_id": "44109771",
+              "file_size": "678"
+            }
+          ],
+          "gauges": {
+            "jobsAvailable": 0,
+            "latestCompletedTxId": 51471995,
+            "lagMsgId": 0,
+            "latestSubmittedMsgId": 52134271,
+            "latestProcessedMsgId": 52134271,
+            "lastUploadTime": 1794176372,
+            "rows": 6
+          },
+          "trie": {
+            "rows": [
+              [
+                "tx_assertions",
+                "l01-rc-b00",
+                1,
+                "live",
+                43286990,
+                61384
+              ],
+              [
+                "tx_attempts",
+                "l01-rc-b00",
+                1,
+                "live",
+                29990,
+                81
+              ],
+              [
+                "tx_claims",
+                "l01-rc-b00",
+                1,
+                "live",
+                28342,
+                81
+              ],
+              [
+                "tx_meta",
+                "l01-r20261109-b00",
+                1,
+                "live",
+                18782,
+                80
+              ],
+              [
+                "tx_meta",
+                "l01-rc-b00",
+                1,
+                "live",
+                2446,
+                1
+              ],
+              [
+                "txs",
+                "l01-rc-b00",
+                1,
+                "live",
+                8182,
+                82
+              ]
+            ],
+            "sha256": "4534cb4137d820de1fdc7271556e0798bc1219aed35d0b3a5944132925943eec"
+          },
+          "requiredTables": [
+            "tx_assertions",
+            "tx_attempts",
+            "tx_claims",
+            "tx_meta",
+            "txs"
+          ],
+          "seenL0Tables": [],
+          "sawL0": false,
+          "ok": false,
+          "streak": 0
+        },
+        {
+          "elapsedS": 15.683,
+          "listing": [
+            "00"
+          ],
+          "blocks": [
+            {
+              "block_idx": "00",
+              "tx_id": "51471995",
+              "system_time": "2026-11-08T22:19:30.901Z",
+              "latest_processed_msg_id": "52133232",
+              "table_names": "[\"public/tx_assertions\" \"public/tx_attempts\" \"public/tx_claims\" \"public/tx_constraint_generations\" \"public/tx_constraint_graphs\" \"public/tx_meta\" \"public/tx_query_relations\" \"xt/role_membership\" \"xt/txs\"]",
+              "boundary_replica_msg_id": "44109771",
+              "file_size": "678"
+            }
+          ],
+          "gauges": {
+            "jobsAvailable": 0,
+            "latestCompletedTxId": 51471995,
+            "lagMsgId": 0,
+            "latestSubmittedMsgId": 52134271,
+            "latestProcessedMsgId": 52134271,
+            "lastUploadTime": 1794176372,
+            "rows": 6
+          },
+          "trie": {
+            "rows": [
+              [
+                "tx_assertions",
+                "l01-rc-b00",
+                1,
+                "live",
+                43286990,
+                61384
+              ],
+              [
+                "tx_attempts",
+                "l01-rc-b00",
+                1,
+                "live",
+                29990,
+                81
+              ],
+              [
+                "tx_claims",
+                "l01-rc-b00",
+                1,
+                "live",
+                28342,
+                81
+              ],
+              [
+                "tx_meta",
+                "l01-r20261109-b00",
+                1,
+                "live",
+                18782,
+                80
+              ],
+              [
+                "tx_meta",
+                "l01-rc-b00",
+                1,
+                "live",
+                2446,
+                1
+              ],
+              [
+                "txs",
+                "l01-rc-b00",
+                1,
+                "live",
+                8182,
+                82
+              ]
+            ],
+            "sha256": "4534cb4137d820de1fdc7271556e0798bc1219aed35d0b3a5944132925943eec"
+          },
+          "requiredTables": [
+            "tx_assertions",
+            "tx_attempts",
+            "tx_claims",
+            "tx_meta",
+            "txs"
+          ],
+          "seenL0Tables": [],
+          "sawL0": false,
+          "ok": false,
+          "streak": 0
+        },
+        {
+          "elapsedS": 20.939,
+          "listing": [
+            "00"
+          ],
+          "blocks": [
+            {
+              "block_idx": "00",
+              "tx_id": "51471995",
+              "system_time": "2026-11-08T22:19:30.901Z",
+              "latest_processed_msg_id": "52133232",
+              "table_names": "[\"public/tx_assertions\" \"public/tx_attempts\" \"public/tx_claims\" \"public/tx_constraint_generations\" \"public/tx_constraint_graphs\" \"public/tx_meta\" \"public/tx_query_relations\" \"xt/role_membership\" \"xt/txs\"]",
+              "boundary_replica_msg_id": "44109771",
+              "file_size": "678"
+            }
+          ],
+          "gauges": {
+            "jobsAvailable": 0,
+            "latestCompletedTxId": 51471995,
+            "lagMsgId": 0,
+            "latestSubmittedMsgId": 52134271,
+            "latestProcessedMsgId": 52134271,
+            "lastUploadTime": 1794176372,
+            "rows": 6
+          },
+          "trie": {
+            "rows": [
+              [
+                "tx_assertions",
+                "l01-rc-b00",
+                1,
+                "live",
+                43286990,
+                61384
+              ],
+              [
+                "tx_attempts",
+                "l01-rc-b00",
+                1,
+                "live",
+                29990,
+                81
+              ],
+              [
+                "tx_claims",
+                "l01-rc-b00",
+                1,
+                "live",
+                28342,
+                81
+              ],
+              [
+                "tx_meta",
+                "l01-r20261109-b00",
+                1,
+                "live",
+                18782,
+                80
+              ],
+              [
+                "tx_meta",
+                "l01-rc-b00",
+                1,
+                "live",
+                2446,
+                1
+              ],
+              [
+                "txs",
+                "l01-rc-b00",
+                1,
+                "live",
+                8182,
+                82
+              ]
+            ],
+            "sha256": "4534cb4137d820de1fdc7271556e0798bc1219aed35d0b3a5944132925943eec"
+          },
+          "requiredTables": [
+            "tx_assertions",
+            "tx_attempts",
+            "tx_claims",
+            "tx_meta",
+            "txs"
+          ],
+          "seenL0Tables": [],
+          "sawL0": false,
+          "ok": false,
+          "streak": 0
+        },
+        {
+          "elapsedS": 26.102,
+          "listing": [
+            "00"
+          ],
+          "blocks": [
+            {
+              "block_idx": "00",
+              "tx_id": "51471995",
+              "system_time": "2026-11-08T22:19:30.901Z",
+              "latest_processed_msg_id": "52133232",
+              "table_names": "[\"public/tx_assertions\" \"public/tx_attempts\" \"public/tx_claims\" \"public/tx_constraint_generations\" \"public/tx_constraint_graphs\" \"public/tx_meta\" \"public/tx_query_relations\" \"xt/role_membership\" \"xt/txs\"]",
+              "boundary_replica_msg_id": "44109771",
+              "file_size": "678"
+            }
+          ],
+          "gauges": {
+            "jobsAvailable": 0,
+            "latestCompletedTxId": 51471995,
+            "lagMsgId": 0,
+            "latestSubmittedMsgId": 52134271,
+            "latestProcessedMsgId": 52134271,
+            "lastUploadTime": 1794176372,
+            "rows": 6
+          },
+          "trie": {
+            "rows": [
+              [
+                "tx_assertions",
+                "l01-rc-b00",
+                1,
+                "live",
+                43286990,
+                61384
+              ],
+              [
+                "tx_attempts",
+                "l01-rc-b00",
+                1,
+                "live",
+                29990,
+                81
+              ],
+              [
+                "tx_claims",
+                "l01-rc-b00",
+                1,
+                "live",
+                28342,
+                81
+              ],
+              [
+                "tx_meta",
+                "l01-r20261109-b00",
+                1,
+                "live",
+                18782,
+                80
+              ],
+              [
+                "tx_meta",
+                "l01-rc-b00",
+                1,
+                "live",
+                2446,
+                1
+              ],
+              [
+                "txs",
+                "l01-rc-b00",
+                1,
+                "live",
+                8182,
+                82
+              ]
+            ],
+            "sha256": "4534cb4137d820de1fdc7271556e0798bc1219aed35d0b3a5944132925943eec"
+          },
+          "requiredTables": [
+            "tx_assertions",
+            "tx_attempts",
+            "tx_claims",
+            "tx_meta",
+            "txs"
+          ],
+          "seenL0Tables": [],
+          "sawL0": false,
+          "ok": false,
+          "streak": 0
+        },
+        {
+          "elapsedS": 31.268,
+          "listing": [
+            "00"
+          ],
+          "blocks": [
+            {
+              "block_idx": "00",
+              "tx_id": "51471995",
+              "system_time": "2026-11-08T22:19:30.901Z",
+              "latest_processed_msg_id": "52133232",
+              "table_names": "[\"public/tx_assertions\" \"public/tx_attempts\" \"public/tx_claims\" \"public/tx_constraint_generations\" \"public/tx_constraint_graphs\" \"public/tx_meta\" \"public/tx_query_relations\" \"xt/role_membership\" \"xt/txs\"]",
+              "boundary_replica_msg_id": "44109771",
+              "file_size": "678"
+            }
+          ],
+          "gauges": {
+            "jobsAvailable": 0,
+            "latestCompletedTxId": 51471995,
+            "lagMsgId": 0,
+            "latestSubmittedMsgId": 52134271,
+            "latestProcessedMsgId": 52134271,
+            "lastUploadTime": 1794176372,
+            "rows": 6
+          },
+          "trie": {
+            "rows": [
+              [
+                "tx_assertions",
+                "l01-rc-b00",
+                1,
+                "live",
+                43286990,
+                61384
+              ],
+              [
+                "tx_attempts",
+                "l01-rc-b00",
+                1,
+                "live",
+                29990,
+                81
+              ],
+              [
+                "tx_claims",
+                "l01-rc-b00",
+                1,
+                "live",
+                28342,
+                81
+              ],
+              [
+                "tx_meta",
+                "l01-r20261109-b00",
+                1,
+                "live",
+                18782,
+                80
+              ],
+              [
+                "tx_meta",
+                "l01-rc-b00",
+                1,
+                "live",
+                2446,
+                1
+              ],
+              [
+                "txs",
+                "l01-rc-b00",
+                1,
+                "live",
+                8182,
+                82
+              ]
+            ],
+            "sha256": "4534cb4137d820de1fdc7271556e0798bc1219aed35d0b3a5944132925943eec"
+          },
+          "requiredTables": [
+            "tx_assertions",
+            "tx_attempts",
+            "tx_claims",
+            "tx_meta",
+            "txs"
+          ],
+          "seenL0Tables": [],
+          "sawL0": false,
+          "ok": false,
+          "streak": 0
+        },
+        {
+          "elapsedS": 36.569,
+          "listing": [
+            "00"
+          ],
+          "blocks": [
+            {
+              "block_idx": "00",
+              "tx_id": "51471995",
+              "system_time": "2026-11-08T22:19:30.901Z",
+              "latest_processed_msg_id": "52133232",
+              "table_names": "[\"public/tx_assertions\" \"public/tx_attempts\" \"public/tx_claims\" \"public/tx_constraint_generations\" \"public/tx_constraint_graphs\" \"public/tx_meta\" \"public/tx_query_relations\" \"xt/role_membership\" \"xt/txs\"]",
+              "boundary_replica_msg_id": "44109771",
+              "file_size": "678"
+            }
+          ],
+          "gauges": {
+            "jobsAvailable": 0,
+            "latestCompletedTxId": 51471995,
+            "lagMsgId": 0,
+            "latestSubmittedMsgId": 52134271,
+            "latestProcessedMsgId": 52134271,
+            "lastUploadTime": 1794176372,
+            "rows": 6
+          },
+          "trie": {
+            "rows": [
+              [
+                "tx_assertions",
+                "l01-rc-b00",
+                1,
+                "live",
+                43286990,
+                61384
+              ],
+              [
+                "tx_attempts",
+                "l01-rc-b00",
+                1,
+                "live",
+                29990,
+                81
+              ],
+              [
+                "tx_claims",
+                "l01-rc-b00",
+                1,
+                "live",
+                28342,
+                81
+              ],
+              [
+                "tx_meta",
+                "l01-r20261109-b00",
+                1,
+                "live",
+                18782,
+                80
+              ],
+              [
+                "tx_meta",
+                "l01-rc-b00",
+                1,
+                "live",
+                2446,
+                1
+              ],
+              [
+                "txs",
+                "l01-rc-b00",
+                1,
+                "live",
+                8182,
+                82
+              ]
+            ],
+            "sha256": "4534cb4137d820de1fdc7271556e0798bc1219aed35d0b3a5944132925943eec"
+          },
+          "requiredTables": [
+            "tx_assertions",
+            "tx_attempts",
+            "tx_claims",
+            "tx_meta",
+            "txs"
+          ],
+          "seenL0Tables": [],
+          "sawL0": false,
+          "ok": false,
+          "streak": 0
+        },
+        {
+          "elapsedS": 41.746,
+          "listing": [
+            "00"
+          ],
+          "blocks": [
+            {
+              "block_idx": "00",
+              "tx_id": "51471995",
+              "system_time": "2026-11-08T22:19:30.901Z",
+              "latest_processed_msg_id": "52133232",
+              "table_names": "[\"public/tx_assertions\" \"public/tx_attempts\" \"public/tx_claims\" \"public/tx_constraint_generations\" \"public/tx_constraint_graphs\" \"public/tx_meta\" \"public/tx_query_relations\" \"xt/role_membership\" \"xt/txs\"]",
+              "boundary_replica_msg_id": "44109771",
+              "file_size": "678"
+            }
+          ],
+          "gauges": {
+            "jobsAvailable": 0,
+            "latestCompletedTxId": 51471995,
+            "lagMsgId": 0,
+            "latestSubmittedMsgId": 52134271,
+            "latestProcessedMsgId": 52134271,
+            "lastUploadTime": 1794176372,
+            "rows": 6
+          },
+          "trie": {
+            "rows": [
+              [
+                "tx_assertions",
+                "l01-rc-b00",
+                1,
+                "live",
+                43286990,
+                61384
+              ],
+              [
+                "tx_attempts",
+                "l01-rc-b00",
+                1,
+                "live",
+                29990,
+                81
+              ],
+              [
+                "tx_claims",
+                "l01-rc-b00",
+                1,
+                "live",
+                28342,
+                81
+              ],
+              [
+                "tx_meta",
+                "l01-r20261109-b00",
+                1,
+                "live",
+                18782,
+                80
+              ],
+              [
+                "tx_meta",
+                "l01-rc-b00",
+                1,
+                "live",
+                2446,
+                1
+              ],
+              [
+                "txs",
+                "l01-rc-b00",
+                1,
+                "live",
+                8182,
+                82
+              ]
+            ],
+            "sha256": "4534cb4137d820de1fdc7271556e0798bc1219aed35d0b3a5944132925943eec"
+          },
+          "requiredTables": [
+            "tx_assertions",
+            "tx_attempts",
+            "tx_claims",
+            "tx_meta",
+            "txs"
+          ],
+          "seenL0Tables": [],
+          "sawL0": false,
+          "ok": false,
+          "streak": 0
+        },
+        {
+          "elapsedS": 47.229,
+          "listing": [
+            "00"
+          ],
+          "blocks": [
+            {
+              "block_idx": "00",
+              "tx_id": "51471995",
+              "system_time": "2026-11-08T22:19:30.901Z",
+              "latest_processed_msg_id": "52133232",
+              "table_names": "[\"public/tx_assertions\" \"public/tx_attempts\" \"public/tx_claims\" \"public/tx_constraint_generations\" \"public/tx_constraint_graphs\" \"public/tx_meta\" \"public/tx_query_relations\" \"xt/role_membership\" \"xt/txs\"]",
+              "boundary_replica_msg_id": "44109771",
+              "file_size": "678"
+            }
+          ],
+          "gauges": {
+            "jobsAvailable": 0,
+            "latestCompletedTxId": 51471995,
+            "lagMsgId": 0,
+            "latestSubmittedMsgId": 52134271,
+            "latestProcessedMsgId": 52134271,
+            "lastUploadTime": 1794176372,
+            "rows": 6
+          },
+          "trie": {
+            "rows": [
+              [
+                "tx_assertions",
+                "l01-rc-b00",
+                1,
+                "live",
+                43286990,
+                61384
+              ],
+              [
+                "tx_attempts",
+                "l01-rc-b00",
+                1,
+                "live",
+                29990,
+                81
+              ],
+              [
+                "tx_claims",
+                "l01-rc-b00",
+                1,
+                "live",
+                28342,
+                81
+              ],
+              [
+                "tx_meta",
+                "l01-r20261109-b00",
+                1,
+                "live",
+                18782,
+                80
+              ],
+              [
+                "tx_meta",
+                "l01-rc-b00",
+                1,
+                "live",
+                2446,
+                1
+              ],
+              [
+                "txs",
+                "l01-rc-b00",
+                1,
+                "live",
+                8182,
+                82
+              ]
+            ],
+            "sha256": "4534cb4137d820de1fdc7271556e0798bc1219aed35d0b3a5944132925943eec"
+          },
+          "requiredTables": [
+            "tx_assertions",
+            "tx_attempts",
+            "tx_claims",
+            "tx_meta",
+            "txs"
+          ],
+          "seenL0Tables": [],
+          "sawL0": false,
+          "ok": false,
+          "streak": 0
+        },
+        {
+          "elapsedS": 52.362,
+          "listing": [
+            "00"
+          ],
+          "blocks": [
+            {
+              "block_idx": "00",
+              "tx_id": "51471995",
+              "system_time": "2026-11-08T22:19:30.901Z",
+              "latest_processed_msg_id": "52133232",
+              "table_names": "[\"public/tx_assertions\" \"public/tx_attempts\" \"public/tx_claims\" \"public/tx_constraint_generations\" \"public/tx_constraint_graphs\" \"public/tx_meta\" \"public/tx_query_relations\" \"xt/role_membership\" \"xt/txs\"]",
+              "boundary_replica_msg_id": "44109771",
+              "file_size": "678"
+            }
+          ],
+          "gauges": {
+            "jobsAvailable": 0,
+            "latestCompletedTxId": 51471995,
+            "lagMsgId": 0,
+            "latestSubmittedMsgId": 52134271,
+            "latestProcessedMsgId": 52134271,
+            "lastUploadTime": 1794176372,
+            "rows": 6
+          },
+          "trie": {
+            "rows": [
+              [
+                "tx_assertions",
+                "l01-rc-b00",
+                1,
+                "live",
+                43286990,
+                61384
+              ],
+              [
+                "tx_attempts",
+                "l01-rc-b00",
+                1,
+                "live",
+                29990,
+                81
+              ],
+              [
+                "tx_claims",
+                "l01-rc-b00",
+                1,
+                "live",
+                28342,
+                81
+              ],
+              [
+                "tx_meta",
+                "l01-r20261109-b00",
+                1,
+                "live",
+                18782,
+                80
+              ],
+              [
+                "tx_meta",
+                "l01-rc-b00",
+                1,
+                "live",
+                2446,
+                1
+              ],
+              [
+                "txs",
+                "l01-rc-b00",
+                1,
+                "live",
+                8182,
+                82
+              ]
+            ],
+            "sha256": "4534cb4137d820de1fdc7271556e0798bc1219aed35d0b3a5944132925943eec"
+          },
+          "requiredTables": [
+            "tx_assertions",
+            "tx_attempts",
+            "tx_claims",
+            "tx_meta",
+            "txs"
+          ],
+          "seenL0Tables": [],
+          "sawL0": false,
+          "ok": false,
+          "streak": 0
+        },
+        {
+          "elapsedS": 57.492,
+          "listing": [
+            "00"
+          ],
+          "blocks": [
+            {
+              "block_idx": "00",
+              "tx_id": "51471995",
+              "system_time": "2026-11-08T22:19:30.901Z",
+              "latest_processed_msg_id": "52133232",
+              "table_names": "[\"public/tx_assertions\" \"public/tx_attempts\" \"public/tx_claims\" \"public/tx_constraint_generations\" \"public/tx_constraint_graphs\" \"public/tx_meta\" \"public/tx_query_relations\" \"xt/role_membership\" \"xt/txs\"]",
+              "boundary_replica_msg_id": "44109771",
+              "file_size": "678"
+            }
+          ],
+          "gauges": {
+            "jobsAvailable": 0,
+            "latestCompletedTxId": 51471995,
+            "lagMsgId": 0,
+            "latestSubmittedMsgId": 52134271,
+            "latestProcessedMsgId": 52134271,
+            "lastUploadTime": 1794176372,
+            "rows": 6
+          },
+          "trie": {
+            "rows": [
+              [
+                "tx_assertions",
+                "l01-rc-b00",
+                1,
+                "live",
+                43286990,
+                61384
+              ],
+              [
+                "tx_attempts",
+                "l01-rc-b00",
+                1,
+                "live",
+                29990,
+                81
+              ],
+              [
+                "tx_claims",
+                "l01-rc-b00",
+                1,
+                "live",
+                28342,
+                81
+              ],
+              [
+                "tx_meta",
+                "l01-r20261109-b00",
+                1,
+                "live",
+                18782,
+                80
+              ],
+              [
+                "tx_meta",
+                "l01-rc-b00",
+                1,
+                "live",
+                2446,
+                1
+              ],
+              [
+                "txs",
+                "l01-rc-b00",
+                1,
+                "live",
+                8182,
+                82
+              ]
+            ],
+            "sha256": "4534cb4137d820de1fdc7271556e0798bc1219aed35d0b3a5944132925943eec"
+          },
+          "requiredTables": [
+            "tx_assertions",
+            "tx_attempts",
+            "tx_claims",
+            "tx_meta",
+            "txs"
+          ],
+          "seenL0Tables": [],
+          "sawL0": false,
+          "ok": false,
+          "streak": 0
+        },
+        {
+          "elapsedS": 62.617,
+          "listing": [
+            "00"
+          ],
+          "blocks": [
+            {
+              "block_idx": "00",
+              "tx_id": "51471995",
+              "system_time": "2026-11-08T22:19:30.901Z",
+              "latest_processed_msg_id": "52133232",
+              "table_names": "[\"public/tx_assertions\" \"public/tx_attempts\" \"public/tx_claims\" \"public/tx_constraint_generations\" \"public/tx_constraint_graphs\" \"public/tx_meta\" \"public/tx_query_relations\" \"xt/role_membership\" \"xt/txs\"]",
+              "boundary_replica_msg_id": "44109771",
+              "file_size": "678"
+            }
+          ],
+          "gauges": {
+            "jobsAvailable": 0,
+            "latestCompletedTxId": 51471995,
+            "lagMsgId": 0,
+            "latestSubmittedMsgId": 52134271,
+            "latestProcessedMsgId": 52134271,
+            "lastUploadTime": 1794176372,
+            "rows": 6
+          },
+          "trie": {
+            "rows": [
+              [
+                "tx_assertions",
+                "l01-rc-b00",
+                1,
+                "live",
+                43286990,
+                61384
+              ],
+              [
+                "tx_attempts",
+                "l01-rc-b00",
+                1,
+                "live",
+                29990,
+                81
+              ],
+              [
+                "tx_claims",
+                "l01-rc-b00",
+                1,
+                "live",
+                28342,
+                81
+              ],
+              [
+                "tx_meta",
+                "l01-r20261109-b00",
+                1,
+                "live",
+                18782,
+                80
+              ],
+              [
+                "tx_meta",
+                "l01-rc-b00",
+                1,
+                "live",
+                2446,
+                1
+              ],
+              [
+                "txs",
+                "l01-rc-b00",
+                1,
+                "live",
+                8182,
+                82
+              ]
+            ],
+            "sha256": "4534cb4137d820de1fdc7271556e0798bc1219aed35d0b3a5944132925943eec"
+          },
+          "requiredTables": [
+            "tx_assertions",
+            "tx_attempts",
+            "tx_claims",
+            "tx_meta",
+            "txs"
+          ],
+          "seenL0Tables": [],
+          "sawL0": false,
+          "ok": false,
+          "streak": 0
+        },
+        {
+          "elapsedS": 67.74,
+          "listing": [
+            "00"
+          ],
+          "blocks": [
+            {
+              "block_idx": "00",
+              "tx_id": "51471995",
+              "system_time": "2026-11-08T22:19:30.901Z",
+              "latest_processed_msg_id": "52133232",
+              "table_names": "[\"public/tx_assertions\" \"public/tx_attempts\" \"public/tx_claims\" \"public/tx_constraint_generations\" \"public/tx_constraint_graphs\" \"public/tx_meta\" \"public/tx_query_relations\" \"xt/role_membership\" \"xt/txs\"]",
+              "boundary_replica_msg_id": "44109771",
+              "file_size": "678"
+            }
+          ],
+          "gauges": {
+            "jobsAvailable": 0,
+            "latestCompletedTxId": 51471995,
+            "lagMsgId": 0,
+            "latestSubmittedMsgId": 52134271,
+            "latestProcessedMsgId": 52134271,
+            "lastUploadTime": 1794176372,
+            "rows": 6
+          },
+          "trie": {
+            "rows": [
+              [
+                "tx_assertions",
+                "l01-rc-b00",
+                1,
+                "live",
+                43286990,
+                61384
+              ],
+              [
+                "tx_attempts",
+                "l01-rc-b00",
+                1,
+                "live",
+                29990,
+                81
+              ],
+              [
+                "tx_claims",
+                "l01-rc-b00",
+                1,
+                "live",
+                28342,
+                81
+              ],
+              [
+                "tx_meta",
+                "l01-r20261109-b00",
+                1,
+                "live",
+                18782,
+                80
+              ],
+              [
+                "tx_meta",
+                "l01-rc-b00",
+                1,
+                "live",
+                2446,
+                1
+              ],
+              [
+                "txs",
+                "l01-rc-b00",
+                1,
+                "live",
+                8182,
+                82
+              ]
+            ],
+            "sha256": "4534cb4137d820de1fdc7271556e0798bc1219aed35d0b3a5944132925943eec"
+          },
+          "requiredTables": [
+            "tx_assertions",
+            "tx_attempts",
+            "tx_claims",
+            "tx_meta",
+            "txs"
+          ],
+          "seenL0Tables": [],
+          "sawL0": false,
+          "ok": false,
+          "streak": 0
+        },
+        {
+          "elapsedS": 72.879,
+          "listing": [
+            "00"
+          ],
+          "blocks": [
+            {
+              "block_idx": "00",
+              "tx_id": "51471995",
+              "system_time": "2026-11-08T22:19:30.901Z",
+              "latest_processed_msg_id": "52133232",
+              "table_names": "[\"public/tx_assertions\" \"public/tx_attempts\" \"public/tx_claims\" \"public/tx_constraint_generations\" \"public/tx_constraint_graphs\" \"public/tx_meta\" \"public/tx_query_relations\" \"xt/role_membership\" \"xt/txs\"]",
+              "boundary_replica_msg_id": "44109771",
+              "file_size": "678"
+            }
+          ],
+          "gauges": {
+            "jobsAvailable": 0,
+            "latestCompletedTxId": 51471995,
+            "lagMsgId": 0,
+            "latestSubmittedMsgId": 52134271,
+            "latestProcessedMsgId": 52134271,
+            "lastUploadTime": 1794176372,
+            "rows": 6
+          },
+          "trie": {
+            "rows": [
+              [
+                "tx_assertions",
+                "l01-rc-b00",
+                1,
+                "live",
+                43286990,
+                61384
+              ],
+              [
+                "tx_attempts",
+                "l01-rc-b00",
+                1,
+                "live",
+                29990,
+                81
+              ],
+              [
+                "tx_claims",
+                "l01-rc-b00",
+                1,
+                "live",
+                28342,
+                81
+              ],
+              [
+                "tx_meta",
+                "l01-r20261109-b00",
+                1,
+                "live",
+                18782,
+                80
+              ],
+              [
+                "tx_meta",
+                "l01-rc-b00",
+                1,
+                "live",
+                2446,
+                1
+              ],
+              [
+                "txs",
+                "l01-rc-b00",
+                1,
+                "live",
+                8182,
+                82
+              ]
+            ],
+            "sha256": "4534cb4137d820de1fdc7271556e0798bc1219aed35d0b3a5944132925943eec"
+          },
+          "requiredTables": [
+            "tx_assertions",
+            "tx_attempts",
+            "tx_claims",
+            "tx_meta",
+            "txs"
+          ],
+          "seenL0Tables": [],
+          "sawL0": false,
+          "ok": false,
+          "streak": 0
+        },
+        {
+          "elapsedS": 78.007,
+          "listing": [
+            "00"
+          ],
+          "blocks": [
+            {
+              "block_idx": "00",
+              "tx_id": "51471995",
+              "system_time": "2026-11-08T22:19:30.901Z",
+              "latest_processed_msg_id": "52133232",
+              "table_names": "[\"public/tx_assertions\" \"public/tx_attempts\" \"public/tx_claims\" \"public/tx_constraint_generations\" \"public/tx_constraint_graphs\" \"public/tx_meta\" \"public/tx_query_relations\" \"xt/role_membership\" \"xt/txs\"]",
+              "boundary_replica_msg_id": "44109771",
+              "file_size": "678"
+            }
+          ],
+          "gauges": {
+            "jobsAvailable": 0,
+            "latestCompletedTxId": 51471995,
+            "lagMsgId": 0,
+            "latestSubmittedMsgId": 52134271,
+            "latestProcessedMsgId": 52134271,
+            "lastUploadTime": 1794176372,
+            "rows": 6
+          },
+          "trie": {
+            "rows": [
+              [
+                "tx_assertions",
+                "l01-rc-b00",
+                1,
+                "live",
+                43286990,
+                61384
+              ],
+              [
+                "tx_attempts",
+                "l01-rc-b00",
+                1,
+                "live",
+                29990,
+                81
+              ],
+              [
+                "tx_claims",
+                "l01-rc-b00",
+                1,
+                "live",
+                28342,
+                81
+              ],
+              [
+                "tx_meta",
+                "l01-r20261109-b00",
+                1,
+                "live",
+                18782,
+                80
+              ],
+              [
+                "tx_meta",
+                "l01-rc-b00",
+                1,
+                "live",
+                2446,
+                1
+              ],
+              [
+                "txs",
+                "l01-rc-b00",
+                1,
+                "live",
+                8182,
+                82
+              ]
+            ],
+            "sha256": "4534cb4137d820de1fdc7271556e0798bc1219aed35d0b3a5944132925943eec"
+          },
+          "requiredTables": [
+            "tx_assertions",
+            "tx_attempts",
+            "tx_claims",
+            "tx_meta",
+            "txs"
+          ],
+          "seenL0Tables": [],
+          "sawL0": false,
+          "ok": false,
+          "streak": 0
+        },
+        {
+          "elapsedS": 83.136,
+          "listing": [
+            "00"
+          ],
+          "blocks": [
+            {
+              "block_idx": "00",
+              "tx_id": "51471995",
+              "system_time": "2026-11-08T22:19:30.901Z",
+              "latest_processed_msg_id": "52133232",
+              "table_names": "[\"public/tx_assertions\" \"public/tx_attempts\" \"public/tx_claims\" \"public/tx_constraint_generations\" \"public/tx_constraint_graphs\" \"public/tx_meta\" \"public/tx_query_relations\" \"xt/role_membership\" \"xt/txs\"]",
+              "boundary_replica_msg_id": "44109771",
+              "file_size": "678"
+            }
+          ],
+          "gauges": {
+            "jobsAvailable": 0,
+            "latestCompletedTxId": 51471995,
+            "lagMsgId": 0,
+            "latestSubmittedMsgId": 52134271,
+            "latestProcessedMsgId": 52134271,
+            "lastUploadTime": 1794176372,
+            "rows": 6
+          },
+          "trie": {
+            "rows": [
+              [
+                "tx_assertions",
+                "l01-rc-b00",
+                1,
+                "live",
+                43286990,
+                61384
+              ],
+              [
+                "tx_attempts",
+                "l01-rc-b00",
+                1,
+                "live",
+                29990,
+                81
+              ],
+              [
+                "tx_claims",
+                "l01-rc-b00",
+                1,
+                "live",
+                28342,
+                81
+              ],
+              [
+                "tx_meta",
+                "l01-r20261109-b00",
+                1,
+                "live",
+                18782,
+                80
+              ],
+              [
+                "tx_meta",
+                "l01-rc-b00",
+                1,
+                "live",
+                2446,
+                1
+              ],
+              [
+                "txs",
+                "l01-rc-b00",
+                1,
+                "live",
+                8182,
+                82
+              ]
+            ],
+            "sha256": "4534cb4137d820de1fdc7271556e0798bc1219aed35d0b3a5944132925943eec"
+          },
+          "requiredTables": [
+            "tx_assertions",
+            "tx_attempts",
+            "tx_claims",
+            "tx_meta",
+            "txs"
+          ],
+          "seenL0Tables": [],
+          "sawL0": false,
+          "ok": false,
+          "streak": 0
+        },
+        {
+          "elapsedS": 88.273,
+          "listing": [
+            "00"
+          ],
+          "blocks": [
+            {
+              "block_idx": "00",
+              "tx_id": "51471995",
+              "system_time": "2026-11-08T22:19:30.901Z",
+              "latest_processed_msg_id": "52133232",
+              "table_names": "[\"public/tx_assertions\" \"public/tx_attempts\" \"public/tx_claims\" \"public/tx_constraint_generations\" \"public/tx_constraint_graphs\" \"public/tx_meta\" \"public/tx_query_relations\" \"xt/role_membership\" \"xt/txs\"]",
+              "boundary_replica_msg_id": "44109771",
+              "file_size": "678"
+            }
+          ],
+          "gauges": {
+            "jobsAvailable": 0,
+            "latestCompletedTxId": 51471995,
+            "lagMsgId": 0,
+            "latestSubmittedMsgId": 52134271,
+            "latestProcessedMsgId": 52134271,
+            "lastUploadTime": 1794176372,
+            "rows": 6
+          },
+          "trie": {
+            "rows": [
+              [
+                "tx_assertions",
+                "l01-rc-b00",
+                1,
+                "live",
+                43286990,
+                61384
+              ],
+              [
+                "tx_attempts",
+                "l01-rc-b00",
+                1,
+                "live",
+                29990,
+                81
+              ],
+              [
+                "tx_claims",
+                "l01-rc-b00",
+                1,
+                "live",
+                28342,
+                81
+              ],
+              [
+                "tx_meta",
+                "l01-r20261109-b00",
+                1,
+                "live",
+                18782,
+                80
+              ],
+              [
+                "tx_meta",
+                "l01-rc-b00",
+                1,
+                "live",
+                2446,
+                1
+              ],
+              [
+                "txs",
+                "l01-rc-b00",
+                1,
+                "live",
+                8182,
+                82
+              ]
+            ],
+            "sha256": "4534cb4137d820de1fdc7271556e0798bc1219aed35d0b3a5944132925943eec"
+          },
+          "requiredTables": [
+            "tx_assertions",
+            "tx_attempts",
+            "tx_claims",
+            "tx_meta",
+            "txs"
+          ],
+          "seenL0Tables": [],
+          "sawL0": false,
+          "ok": false,
+          "streak": 0
+        },
+        {
+          "elapsedS": 93.409,
+          "listing": [
+            "00"
+          ],
+          "blocks": [
+            {
+              "block_idx": "00",
+              "tx_id": "51471995",
+              "system_time": "2026-11-08T22:19:30.901Z",
+              "latest_processed_msg_id": "52133232",
+              "table_names": "[\"public/tx_assertions\" \"public/tx_attempts\" \"public/tx_claims\" \"public/tx_constraint_generations\" \"public/tx_constraint_graphs\" \"public/tx_meta\" \"public/tx_query_relations\" \"xt/role_membership\" \"xt/txs\"]",
+              "boundary_replica_msg_id": "44109771",
+              "file_size": "678"
+            }
+          ],
+          "gauges": {
+            "jobsAvailable": 0,
+            "latestCompletedTxId": 51471995,
+            "lagMsgId": 0,
+            "latestSubmittedMsgId": 52134271,
+            "latestProcessedMsgId": 52134271,
+            "lastUploadTime": 1794176372,
+            "rows": 6
+          },
+          "trie": {
+            "rows": [
+              [
+                "tx_assertions",
+                "l01-rc-b00",
+                1,
+                "live",
+                43286990,
+                61384
+              ],
+              [
+                "tx_attempts",
+                "l01-rc-b00",
+                1,
+                "live",
+                29990,
+                81
+              ],
+              [
+                "tx_claims",
+                "l01-rc-b00",
+                1,
+                "live",
+                28342,
+                81
+              ],
+              [
+                "tx_meta",
+                "l01-r20261109-b00",
+                1,
+                "live",
+                18782,
+                80
+              ],
+              [
+                "tx_meta",
+                "l01-rc-b00",
+                1,
+                "live",
+                2446,
+                1
+              ],
+              [
+                "txs",
+                "l01-rc-b00",
+                1,
+                "live",
+                8182,
+                82
+              ]
+            ],
+            "sha256": "4534cb4137d820de1fdc7271556e0798bc1219aed35d0b3a5944132925943eec"
+          },
+          "requiredTables": [
+            "tx_assertions",
+            "tx_attempts",
+            "tx_claims",
+            "tx_meta",
+            "txs"
+          ],
+          "seenL0Tables": [],
+          "sawL0": false,
+          "ok": false,
+          "streak": 0
+        },
+        {
+          "elapsedS": 98.557,
+          "listing": [
+            "00"
+          ],
+          "blocks": [
+            {
+              "block_idx": "00",
+              "tx_id": "51471995",
+              "system_time": "2026-11-08T22:19:30.901Z",
+              "latest_processed_msg_id": "52133232",
+              "table_names": "[\"public/tx_assertions\" \"public/tx_attempts\" \"public/tx_claims\" \"public/tx_constraint_generations\" \"public/tx_constraint_graphs\" \"public/tx_meta\" \"public/tx_query_relations\" \"xt/role_membership\" \"xt/txs\"]",
+              "boundary_replica_msg_id": "44109771",
+              "file_size": "678"
+            }
+          ],
+          "gauges": {
+            "jobsAvailable": 0,
+            "latestCompletedTxId": 51471995,
+            "lagMsgId": 0,
+            "latestSubmittedMsgId": 52134271,
+            "latestProcessedMsgId": 52134271,
+            "lastUploadTime": 1794176372,
+            "rows": 6
+          },
+          "trie": {
+            "rows": [
+              [
+                "tx_assertions",
+                "l01-rc-b00",
+                1,
+                "live",
+                43286990,
+                61384
+              ],
+              [
+                "tx_attempts",
+                "l01-rc-b00",
+                1,
+                "live",
+                29990,
+                81
+              ],
+              [
+                "tx_claims",
+                "l01-rc-b00",
+                1,
+                "live",
+                28342,
+                81
+              ],
+              [
+                "tx_meta",
+                "l01-r20261109-b00",
+                1,
+                "live",
+                18782,
+                80
+              ],
+              [
+                "tx_meta",
+                "l01-rc-b00",
+                1,
+                "live",
+                2446,
+                1
+              ],
+              [
+                "txs",
+                "l01-rc-b00",
+                1,
+                "live",
+                8182,
+                82
+              ]
+            ],
+            "sha256": "4534cb4137d820de1fdc7271556e0798bc1219aed35d0b3a5944132925943eec"
+          },
+          "requiredTables": [
+            "tx_assertions",
+            "tx_attempts",
+            "tx_claims",
+            "tx_meta",
+            "txs"
+          ],
+          "seenL0Tables": [],
+          "sawL0": false,
+          "ok": false,
+          "streak": 0
+        },
+        {
+          "elapsedS": 103.698,
+          "listing": [
+            "00"
+          ],
+          "blocks": [
+            {
+              "block_idx": "00",
+              "tx_id": "51471995",
+              "system_time": "2026-11-08T22:19:30.901Z",
+              "latest_processed_msg_id": "52133232",
+              "table_names": "[\"public/tx_assertions\" \"public/tx_attempts\" \"public/tx_claims\" \"public/tx_constraint_generations\" \"public/tx_constraint_graphs\" \"public/tx_meta\" \"public/tx_query_relations\" \"xt/role_membership\" \"xt/txs\"]",
+              "boundary_replica_msg_id": "44109771",
+              "file_size": "678"
+            }
+          ],
+          "gauges": {
+            "jobsAvailable": 0,
+            "latestCompletedTxId": 51471995,
+            "lagMsgId": 0,
+            "latestSubmittedMsgId": 52134271,
+            "latestProcessedMsgId": 52134271,
+            "lastUploadTime": 1794176372,
+            "rows": 6
+          },
+          "trie": {
+            "rows": [
+              [
+                "tx_assertions",
+                "l01-rc-b00",
+                1,
+                "live",
+                43286990,
+                61384
+              ],
+              [
+                "tx_attempts",
+                "l01-rc-b00",
+                1,
+                "live",
+                29990,
+                81
+              ],
+              [
+                "tx_claims",
+                "l01-rc-b00",
+                1,
+                "live",
+                28342,
+                81
+              ],
+              [
+                "tx_meta",
+                "l01-r20261109-b00",
+                1,
+                "live",
+                18782,
+                80
+              ],
+              [
+                "tx_meta",
+                "l01-rc-b00",
+                1,
+                "live",
+                2446,
+                1
+              ],
+              [
+                "txs",
+                "l01-rc-b00",
+                1,
+                "live",
+                8182,
+                82
+              ]
+            ],
+            "sha256": "4534cb4137d820de1fdc7271556e0798bc1219aed35d0b3a5944132925943eec"
+          },
+          "requiredTables": [
+            "tx_assertions",
+            "tx_attempts",
+            "tx_claims",
+            "tx_meta",
+            "txs"
+          ],
+          "seenL0Tables": [],
+          "sawL0": false,
+          "ok": false,
+          "streak": 0
+        },
+        {
+          "elapsedS": 108.827,
+          "listing": [
+            "00"
+          ],
+          "blocks": [
+            {
+              "block_idx": "00",
+              "tx_id": "51471995",
+              "system_time": "2026-11-08T22:19:30.901Z",
+              "latest_processed_msg_id": "52133232",
+              "table_names": "[\"public/tx_assertions\" \"public/tx_attempts\" \"public/tx_claims\" \"public/tx_constraint_generations\" \"public/tx_constraint_graphs\" \"public/tx_meta\" \"public/tx_query_relations\" \"xt/role_membership\" \"xt/txs\"]",
+              "boundary_replica_msg_id": "44109771",
+              "file_size": "678"
+            }
+          ],
+          "gauges": {
+            "jobsAvailable": 0,
+            "latestCompletedTxId": 51471995,
+            "lagMsgId": 0,
+            "latestSubmittedMsgId": 52134271,
+            "latestProcessedMsgId": 52134271,
+            "lastUploadTime": 1794176372,
+            "rows": 6
+          },
+          "trie": {
+            "rows": [
+              [
+                "tx_assertions",
+                "l01-rc-b00",
+                1,
+                "live",
+                43286990,
+                61384
+              ],
+              [
+                "tx_attempts",
+                "l01-rc-b00",
+                1,
+                "live",
+                29990,
+                81
+              ],
+              [
+                "tx_claims",
+                "l01-rc-b00",
+                1,
+                "live",
+                28342,
+                81
+              ],
+              [
+                "tx_meta",
+                "l01-r20261109-b00",
+                1,
+                "live",
+                18782,
+                80
+              ],
+              [
+                "tx_meta",
+                "l01-rc-b00",
+                1,
+                "live",
+                2446,
+                1
+              ],
+              [
+                "txs",
+                "l01-rc-b00",
+                1,
+                "live",
+                8182,
+                82
+              ]
+            ],
+            "sha256": "4534cb4137d820de1fdc7271556e0798bc1219aed35d0b3a5944132925943eec"
+          },
+          "requiredTables": [
+            "tx_assertions",
+            "tx_attempts",
+            "tx_claims",
+            "tx_meta",
+            "txs"
+          ],
+          "seenL0Tables": [],
+          "sawL0": false,
+          "ok": false,
+          "streak": 0
+        },
+        {
+          "elapsedS": 113.947,
+          "listing": [
+            "00"
+          ],
+          "blocks": [
+            {
+              "block_idx": "00",
+              "tx_id": "51471995",
+              "system_time": "2026-11-08T22:19:30.901Z",
+              "latest_processed_msg_id": "52133232",
+              "table_names": "[\"public/tx_assertions\" \"public/tx_attempts\" \"public/tx_claims\" \"public/tx_constraint_generations\" \"public/tx_constraint_graphs\" \"public/tx_meta\" \"public/tx_query_relations\" \"xt/role_membership\" \"xt/txs\"]",
+              "boundary_replica_msg_id": "44109771",
+              "file_size": "678"
+            }
+          ],
+          "gauges": {
+            "jobsAvailable": 0,
+            "latestCompletedTxId": 51471995,
+            "lagMsgId": 0,
+            "latestSubmittedMsgId": 52134271,
+            "latestProcessedMsgId": 52134271,
+            "lastUploadTime": 1794176372,
+            "rows": 6
+          },
+          "trie": {
+            "rows": [
+              [
+                "tx_assertions",
+                "l01-rc-b00",
+                1,
+                "live",
+                43286990,
+                61384
+              ],
+              [
+                "tx_attempts",
+                "l01-rc-b00",
+                1,
+                "live",
+                29990,
+                81
+              ],
+              [
+                "tx_claims",
+                "l01-rc-b00",
+                1,
+                "live",
+                28342,
+                81
+              ],
+              [
+                "tx_meta",
+                "l01-r20261109-b00",
+                1,
+                "live",
+                18782,
+                80
+              ],
+              [
+                "tx_meta",
+                "l01-rc-b00",
+                1,
+                "live",
+                2446,
+                1
+              ],
+              [
+                "txs",
+                "l01-rc-b00",
+                1,
+                "live",
+                8182,
+                82
+              ]
+            ],
+            "sha256": "4534cb4137d820de1fdc7271556e0798bc1219aed35d0b3a5944132925943eec"
+          },
+          "requiredTables": [
+            "tx_assertions",
+            "tx_attempts",
+            "tx_claims",
+            "tx_meta",
+            "txs"
+          ],
+          "seenL0Tables": [],
+          "sawL0": false,
+          "ok": false,
+          "streak": 0
+        },
+        {
+          "elapsedS": 119.087,
+          "listing": [
+            "00"
+          ],
+          "blocks": [
+            {
+              "block_idx": "00",
+              "tx_id": "51471995",
+              "system_time": "2026-11-08T22:19:30.901Z",
+              "latest_processed_msg_id": "52133232",
+              "table_names": "[\"public/tx_assertions\" \"public/tx_attempts\" \"public/tx_claims\" \"public/tx_constraint_generations\" \"public/tx_constraint_graphs\" \"public/tx_meta\" \"public/tx_query_relations\" \"xt/role_membership\" \"xt/txs\"]",
+              "boundary_replica_msg_id": "44109771",
+              "file_size": "678"
+            }
+          ],
+          "gauges": {
+            "jobsAvailable": 0,
+            "latestCompletedTxId": 51471995,
+            "lagMsgId": 0,
+            "latestSubmittedMsgId": 52134271,
+            "latestProcessedMsgId": 52134271,
+            "lastUploadTime": 1794176372,
+            "rows": 6
+          },
+          "trie": {
+            "rows": [
+              [
+                "tx_assertions",
+                "l01-rc-b00",
+                1,
+                "live",
+                43286990,
+                61384
+              ],
+              [
+                "tx_attempts",
+                "l01-rc-b00",
+                1,
+                "live",
+                29990,
+                81
+              ],
+              [
+                "tx_claims",
+                "l01-rc-b00",
+                1,
+                "live",
+                28342,
+                81
+              ],
+              [
+                "tx_meta",
+                "l01-r20261109-b00",
+                1,
+                "live",
+                18782,
+                80
+              ],
+              [
+                "tx_meta",
+                "l01-rc-b00",
+                1,
+                "live",
+                2446,
+                1
+              ],
+              [
+                "txs",
+                "l01-rc-b00",
+                1,
+                "live",
+                8182,
+                82
+              ]
+            ],
+            "sha256": "4534cb4137d820de1fdc7271556e0798bc1219aed35d0b3a5944132925943eec"
+          },
+          "requiredTables": [
+            "tx_assertions",
+            "tx_attempts",
+            "tx_claims",
+            "tx_meta",
+            "txs"
+          ],
+          "seenL0Tables": [],
+          "sawL0": false,
+          "ok": false,
+          "streak": 0
+        },
+        {
+          "elapsedS": 124.216,
+          "listing": [
+            "00"
+          ],
+          "blocks": [
+            {
+              "block_idx": "00",
+              "tx_id": "51471995",
+              "system_time": "2026-11-08T22:19:30.901Z",
+              "latest_processed_msg_id": "52133232",
+              "table_names": "[\"public/tx_assertions\" \"public/tx_attempts\" \"public/tx_claims\" \"public/tx_constraint_generations\" \"public/tx_constraint_graphs\" \"public/tx_meta\" \"public/tx_query_relations\" \"xt/role_membership\" \"xt/txs\"]",
+              "boundary_replica_msg_id": "44109771",
+              "file_size": "678"
+            }
+          ],
+          "gauges": {
+            "jobsAvailable": 0,
+            "latestCompletedTxId": 51471995,
+            "lagMsgId": 0,
+            "latestSubmittedMsgId": 52134271,
+            "latestProcessedMsgId": 52134271,
+            "lastUploadTime": 1794176372,
+            "rows": 6
+          },
+          "trie": {
+            "rows": [
+              [
+                "tx_assertions",
+                "l01-rc-b00",
+                1,
+                "live",
+                43286990,
+                61384
+              ],
+              [
+                "tx_attempts",
+                "l01-rc-b00",
+                1,
+                "live",
+                29990,
+                81
+              ],
+              [
+                "tx_claims",
+                "l01-rc-b00",
+                1,
+                "live",
+                28342,
+                81
+              ],
+              [
+                "tx_meta",
+                "l01-r20261109-b00",
+                1,
+                "live",
+                18782,
+                80
+              ],
+              [
+                "tx_meta",
+                "l01-rc-b00",
+                1,
+                "live",
+                2446,
+                1
+              ],
+              [
+                "txs",
+                "l01-rc-b00",
+                1,
+                "live",
+                8182,
+                82
+              ]
+            ],
+            "sha256": "4534cb4137d820de1fdc7271556e0798bc1219aed35d0b3a5944132925943eec"
+          },
+          "requiredTables": [
+            "tx_assertions",
+            "tx_attempts",
+            "tx_claims",
+            "tx_meta",
+            "txs"
+          ],
+          "seenL0Tables": [],
+          "sawL0": false,
+          "ok": false,
+          "streak": 0
+        },
+        {
+          "elapsedS": 129.393,
+          "listing": [
+            "00"
+          ],
+          "blocks": [
+            {
+              "block_idx": "00",
+              "tx_id": "51471995",
+              "system_time": "2026-11-08T22:19:30.901Z",
+              "latest_processed_msg_id": "52133232",
+              "table_names": "[\"public/tx_assertions\" \"public/tx_attempts\" \"public/tx_claims\" \"public/tx_constraint_generations\" \"public/tx_constraint_graphs\" \"public/tx_meta\" \"public/tx_query_relations\" \"xt/role_membership\" \"xt/txs\"]",
+              "boundary_replica_msg_id": "44109771",
+              "file_size": "678"
+            }
+          ],
+          "gauges": {
+            "jobsAvailable": 0,
+            "latestCompletedTxId": 51471995,
+            "lagMsgId": 0,
+            "latestSubmittedMsgId": 52134271,
+            "latestProcessedMsgId": 52134271,
+            "lastUploadTime": 1794176372,
+            "rows": 6
+          },
+          "trie": {
+            "rows": [
+              [
+                "tx_assertions",
+                "l01-rc-b00",
+                1,
+                "live",
+                43286990,
+                61384
+              ],
+              [
+                "tx_attempts",
+                "l01-rc-b00",
+                1,
+                "live",
+                29990,
+                81
+              ],
+              [
+                "tx_claims",
+                "l01-rc-b00",
+                1,
+                "live",
+                28342,
+                81
+              ],
+              [
+                "tx_meta",
+                "l01-r20261109-b00",
+                1,
+                "live",
+                18782,
+                80
+              ],
+              [
+                "tx_meta",
+                "l01-rc-b00",
+                1,
+                "live",
+                2446,
+                1
+              ],
+              [
+                "txs",
+                "l01-rc-b00",
+                1,
+                "live",
+                8182,
+                82
+              ]
+            ],
+            "sha256": "4534cb4137d820de1fdc7271556e0798bc1219aed35d0b3a5944132925943eec"
+          },
+          "requiredTables": [
+            "tx_assertions",
+            "tx_attempts",
+            "tx_claims",
+            "tx_meta",
+            "txs"
+          ],
+          "seenL0Tables": [],
+          "sawL0": false,
+          "ok": false,
+          "streak": 0
+        },
+        {
+          "elapsedS": 134.753,
+          "listing": [
+            "00"
+          ],
+          "blocks": [
+            {
+              "block_idx": "00",
+              "tx_id": "51471995",
+              "system_time": "2026-11-08T22:19:30.901Z",
+              "latest_processed_msg_id": "52133232",
+              "table_names": "[\"public/tx_assertions\" \"public/tx_attempts\" \"public/tx_claims\" \"public/tx_constraint_generations\" \"public/tx_constraint_graphs\" \"public/tx_meta\" \"public/tx_query_relations\" \"xt/role_membership\" \"xt/txs\"]",
+              "boundary_replica_msg_id": "44109771",
+              "file_size": "678"
+            }
+          ],
+          "gauges": {
+            "jobsAvailable": 0,
+            "latestCompletedTxId": 51471995,
+            "lagMsgId": 0,
+            "latestSubmittedMsgId": 52134271,
+            "latestProcessedMsgId": 52134271,
+            "lastUploadTime": 1794176372,
+            "rows": 6
+          },
+          "trie": {
+            "rows": [
+              [
+                "tx_assertions",
+                "l01-rc-b00",
+                1,
+                "live",
+                43286990,
+                61384
+              ],
+              [
+                "tx_attempts",
+                "l01-rc-b00",
+                1,
+                "live",
+                29990,
+                81
+              ],
+              [
+                "tx_claims",
+                "l01-rc-b00",
+                1,
+                "live",
+                28342,
+                81
+              ],
+              [
+                "tx_meta",
+                "l01-r20261109-b00",
+                1,
+                "live",
+                18782,
+                80
+              ],
+              [
+                "tx_meta",
+                "l01-rc-b00",
+                1,
+                "live",
+                2446,
+                1
+              ],
+              [
+                "txs",
+                "l01-rc-b00",
+                1,
+                "live",
+                8182,
+                82
+              ]
+            ],
+            "sha256": "4534cb4137d820de1fdc7271556e0798bc1219aed35d0b3a5944132925943eec"
+          },
+          "requiredTables": [
+            "tx_assertions",
+            "tx_attempts",
+            "tx_claims",
+            "tx_meta",
+            "txs"
+          ],
+          "seenL0Tables": [],
+          "sawL0": false,
+          "ok": false,
+          "streak": 0
+        },
+        {
+          "elapsedS": 139.924,
+          "listing": [
+            "00"
+          ],
+          "blocks": [
+            {
+              "block_idx": "00",
+              "tx_id": "51471995",
+              "system_time": "2026-11-08T22:19:30.901Z",
+              "latest_processed_msg_id": "52133232",
+              "table_names": "[\"public/tx_assertions\" \"public/tx_attempts\" \"public/tx_claims\" \"public/tx_constraint_generations\" \"public/tx_constraint_graphs\" \"public/tx_meta\" \"public/tx_query_relations\" \"xt/role_membership\" \"xt/txs\"]",
+              "boundary_replica_msg_id": "44109771",
+              "file_size": "678"
+            }
+          ],
+          "gauges": {
+            "jobsAvailable": 0,
+            "latestCompletedTxId": 51471995,
+            "lagMsgId": 0,
+            "latestSubmittedMsgId": 52134271,
+            "latestProcessedMsgId": 52134271,
+            "lastUploadTime": 1794176372,
+            "rows": 6
+          },
+          "trie": {
+            "rows": [
+              [
+                "tx_assertions",
+                "l01-rc-b00",
+                1,
+                "live",
+                43286990,
+                61384
+              ],
+              [
+                "tx_attempts",
+                "l01-rc-b00",
+                1,
+                "live",
+                29990,
+                81
+              ],
+              [
+                "tx_claims",
+                "l01-rc-b00",
+                1,
+                "live",
+                28342,
+                81
+              ],
+              [
+                "tx_meta",
+                "l01-r20261109-b00",
+                1,
+                "live",
+                18782,
+                80
+              ],
+              [
+                "tx_meta",
+                "l01-rc-b00",
+                1,
+                "live",
+                2446,
+                1
+              ],
+              [
+                "txs",
+                "l01-rc-b00",
+                1,
+                "live",
+                8182,
+                82
+              ]
+            ],
+            "sha256": "4534cb4137d820de1fdc7271556e0798bc1219aed35d0b3a5944132925943eec"
+          },
+          "requiredTables": [
+            "tx_assertions",
+            "tx_attempts",
+            "tx_claims",
+            "tx_meta",
+            "txs"
+          ],
+          "seenL0Tables": [],
+          "sawL0": false,
+          "ok": false,
+          "streak": 0
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "args": [
+    "lab/bin/engine.mjs",
+    "one-cut-probe",
+    "--lane",
+    "xtdb",
+    "--slot",
+    "s1",
+    "--holder",
+    "CX-K01-R2",
+    "--exp",
+    "EXP-K01",
+    "--manifest",
+    "runs/xtdb-seed/k01-r2-singlecut/manifest.json"
+  ],
+  "exit": 1,
+  "signal": null,
+  "elapsedS": 142.009
+}

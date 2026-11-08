@@ -1,0 +1,3 @@
+[xtdb-seed 22:18:29] seeding 500 subjects (20 accounts) into scope ns-xtdb-dev500-seed-ns-v2-0604cd31 at postgres://xtdb:xtdb@127.0.0.1:5471/xtdb through composition public
+[xtdb-seed 22:18:46] seed: 20 shared account worlds in 17.2 s
+[xtdb-seed 22:19:31] seed: 500 subjects in 61.8 s

@@ -1,0 +1,18 @@
+{
+  "args": [
+    "lab/bin/engine.mjs",
+    "up",
+    "--lane",
+    "xtdb",
+    "--slot",
+    "s1",
+    "--holder",
+    "CX-K01-R2",
+    "--exp",
+    "EXP-K01",
+    "--fresh"
+  ],
+  "exit": 3,
+  "signal": null,
+  "elapsedS": 0.359
+}

@@ -1,0 +1,6 @@
+{
+  "at": "2026-11-08T22:21:52.997Z",
+  "pid": 82418,
+  "signal": "SIGTERM",
+  "reason": "G3 is permanently unsatisfiable for block 00: its immutable latest_processed_msg_id 52133232 is less than the monotonically advanced node source watermark 52134271. Five-second polls also observe only compacted L1 tries. Preserve this attempt; do not wait for the 15-minute timeout or weaken Q83."
+}

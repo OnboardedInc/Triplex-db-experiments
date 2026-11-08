@@ -1,0 +1,13 @@
+file:///Users/sam/projects/triplex-db-2/.claude/worktrees/k01/lab/experiments/EXP-K01-seed-clone/round2-t1.mjs:11
+  if (result.status !== 0) throw new Error(result.stderr);
+                                 ^
+
+Error: [lab] REFUSED: pool refuses tx2-xtdb-s1: memory: 9.25 GiB reserved + 3.50 GiB requested = 12.75 GiB > pool 11.00 GiB. Holding: tx2-xtdb-dev 3.00 GiB (EXP-W01), tx2-qlever-dev 3.50 GiB (EXP-000), tx2-datomic-dev 2.75 GiB (EXP-DA01)
+
+    at run (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/k01/lab/experiments/EXP-K01-seed-clone/round2-t1.mjs:11:34)
+    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/k01/lab/experiments/EXP-K01-seed-clone/round2-t1.mjs:13:7
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.23.2

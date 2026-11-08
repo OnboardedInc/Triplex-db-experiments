@@ -1,0 +1,92 @@
+{
+  "image": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+  "at": "2026-11-08T22:18:04.723Z",
+  "pass": true,
+  "missing": [],
+  "checks": [
+    {
+      "name": "busybox",
+      "status": "ok",
+      "output": "/bin/busybox BusyBox v1.37.0 (2025-12-16 14:19:28 UTC) multi-call binary.",
+      "pass": true
+    },
+    {
+      "name": "cp-a",
+      "status": "ok",
+      "output": "20000:20000 640 1577836800",
+      "pass": true
+    },
+    {
+      "name": "find-exec-plus",
+      "status": "ok",
+      "output": "/t/dst/a/.tmp/g 1 /t/dst/a/f 1",
+      "pass": true
+    },
+    {
+      "name": "find-prune-rm",
+      "status": "ok",
+      "output": "removed",
+      "pass": true
+    },
+    {
+      "name": "stat-c",
+      "status": "ok",
+      "output": "/t/dst/a/f|1|640|20000|20000",
+      "pass": true
+    },
+    {
+      "name": "sha256sum",
+      "status": "ok",
+      "output": "2d711642b726b04401627ca9fbac32f5c8530fb1903cc4db02258717921a4881  /t/dst/a/f",
+      "pass": true
+    },
+    {
+      "name": "sort-k",
+      "status": "ok",
+      "output": "a 1 b 2",
+      "pass": true
+    },
+    {
+      "name": "chown",
+      "status": "ok",
+      "output": "20000:20000",
+      "pass": true
+    },
+    {
+      "name": "sync",
+      "status": "ok",
+      "output": "",
+      "pass": true
+    },
+    {
+      "name": "wget-post-data",
+      "status": "ok",
+      "output": "/usr/bin/wget GNU Wget 1.25.0 built on linux-musl. post-data=1",
+      "pass": true
+    },
+    {
+      "name": "du-k",
+      "status": "ok",
+      "output": "36\t/t",
+      "pass": true
+    },
+    {
+      "name": "offline-valid",
+      "status": "ok",
+      "output": "LOG|21|0|0 REPLICA_LOG|21|0|0 @@blocks 00 @@end",
+      "pass": true
+    },
+    {
+      "name": "offline-corrupt",
+      "status": "ok",
+      "output": "refused",
+      "pass": true
+    },
+    {
+      "name": "offline-tmp",
+      "status": "ok",
+      "output": "refused",
+      "pass": true
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "args": [
+    "lab/bench/xtdb-seed.ts",
+    "--subjects",
+    "500",
+    "--composition",
+    "public",
+    "--out",
+    "runs/xtdb-seed/k01-r2-singlecut"
+  ],
+  "exit": 0,
+  "signal": null,
+  "elapsedS": 62.89
+}

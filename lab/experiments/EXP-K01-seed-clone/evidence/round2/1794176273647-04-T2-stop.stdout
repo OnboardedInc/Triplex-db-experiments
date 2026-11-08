@@ -1,0 +1,18 @@
+{
+  "container": "tx2-xtdb-s1",
+  "containerId": "c622c0ce8cf83f3c9cac33e6ddb79687669e9b26c2e8917ba4ce3b696d70dfdb",
+  "startedAt": "2026-11-08T22:18:05.413527213Z",
+  "finishedAt": "2026-11-08T22:18:16.431614055Z",
+  "stopMs": 639,
+  "wasRunning": true,
+  "verdict": {
+    "ok": false,
+    "componentLines": [],
+    "stoppedLine": null,
+    "exitCode": 143,
+    "oomKilled": false,
+    "reasons": [
+      "no \"Node stopped.\" in this run's log"
+    ]
+  }
+}
