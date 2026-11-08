@@ -570,8 +570,10 @@ export function gitSource(repo) {
       if (!safePath(file)) return null;
       const key = COMMIT.test(rev) ? `blob:${rev}:${file}` : null; // only full commit ids are immutable
       if (key && cache.has(key)) return cache.get(key);
-      const o = batch([`${rev}:${file}`])[0];
-      const bytes = o && o.type === 'blob' ? o.bytes : null;
+      // [EXP-E01] Why: bind bytes to the tree entry, not a separately resolved name. Rejected: trusting cat-file's header alone (substitution).
+      const commit = api.resolve(rev), entry = commit && api.tree(commit)?.find(e => e.path === file && e.type === 'blob');
+      const o = entry ? batch([entry.oid])[0] : null;
+      const bytes = o && o.type === 'blob' && o.oid === entry.oid ? o.bytes : null;
       if (key) cache.set(key, bytes);
       return bytes;
     },
@@ -612,7 +614,7 @@ export function gitSource(repo) {
       const want = [...new Set(list)].filter(f => !cache.has(`${commit}:${f}`));
       for (const f of want.filter(f => !safePath(f))) cache.set(`${commit}:${f}`, null);
       const ok = want.filter(safePath);
-      batch(ok.map(f => `${commit}:${f}`)).forEach((o, i) => cache.set(`${commit}:${ok[i]}`, o && o.type === 'blob' ? sha256(o.bytes) : null));
+      for (const f of ok) { const b = api.blob(commit, f); cache.set(`${commit}:${f}`, b ? sha256(b) : null); }
       return new Map(list.map(f => [f, cache.get(`${commit}:${f}`) ?? null]));
     },
   };
@@ -991,14 +993,17 @@ const sandboxProfile = writable => `(version 1)(allow default)(deny file-write*)
  * configuration, and its own process group, killed as soon as it exits; with sandbox-exec, writes only inside `writable` and its
  * HOME. Output goes to files, so a helper left running cannot keep the evaluator waiting on a pipe.
  */
-function childRunner({ iso, toolchainDir, sandbox }) {
+function childRunner({ iso, toolchainDir, toolchain, sandbox }) {
   return (argv, { cwd, writable = [], timeout = 120_000, input = null, label = 'child' } = {}) => {
     const home = iso(`home-${label}`), io = iso(`io-${label}`);
     const out = path.join(io, 'stdout'), err = path.join(io, 'stderr'), inp = path.join(io, 'stdin');
     if (input) fs.writeFileSync(inp, input);
     const fds = [input ? fs.openSync(inp, 'r') : 'ignore', fs.openSync(out, 'w'), fs.openSync(err, 'w')];
     const env = { PATH: [toolchainDir, ...SYSTEM_PATH].join(':'), HOME: home, TMPDIR: home, LANG: 'C.UTF-8', GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1', GIT_NO_REPLACE_OBJECTS: '1', PYTHONDONTWRITEBYTECODE: '1' };
-    const full = sandbox ? [SANDBOX_EXEC, '-p', sandboxProfile([...writable, home]), ...argv] : argv;
+    // [EXP-E01] Why: refuse changed tools before each invocation. Rejected: end-only hashing (poisoned tools could run first).
+    for (const [name, t] of Object.entries(toolchain)) if (t && (fs.realpathSync(path.join(toolchainDir, name)) !== t.path || sha256(fs.readFileSync(t.path)) !== t.sha256)) throw new Error(`toolchain changed: ${name}`);
+    const command = toolchain[argv[0]] ? [toolchain[argv[0]].path, ...argv.slice(1)] : argv;
+    const full = sandbox ? [SANDBOX_EXEC, '-p', sandboxProfile([...writable, home]), ...command] : command;
     let r;
     try { r = spawnSync(full[0], full.slice(1), { cwd, env, timeout, detached: true, stdio: fds }); }
     finally { for (const fd of fds) if (typeof fd === 'number') fs.closeSync(fd); }
@@ -1044,11 +1049,11 @@ function walkTree(root, exclude = []) {
       const st = fs.lstatSync(abs);
       if (st.isSymbolicLink()) {
         const text = fs.readlinkSync(abs, { encoding: 'buffer' });
-        entries.push([r, 'l', sha256(text), '']);
+        entries.push([r, 'l', sha256(text), (st.mode & 0o7777).toString(8)]);
         let resolved = null;
         try { resolved = fs.realpathSync(abs); } catch { resolved = null; }
         if (!isInside(real, path.resolve(path.dirname(abs), text.toString())) || (resolved !== null && !isInside(real, resolved))) outside.push(r);
-      } else if (st.isDirectory()) visit(r);
+      } else if (st.isDirectory()) { entries.push([r, 'd', sha256(''), (st.mode & 0o7777).toString(8)]); visit(r); }
       else entries.push([r, st.isFile() ? 'f' : 'x', st.isFile() ? sha256(fs.readFileSync(abs)) : sha256(Buffer.from(String(st.mode))), (st.mode & 0o7777).toString(8)]);
     }
   };
@@ -1228,6 +1233,8 @@ function labExecutor({ commit, contract, ctx, spec, slots, loadContract, claim, 
       // Q67b: every build call is its own instance, in its own directory; nothing is shared with another instance.
       const n = instances.length, dir = iso(`build${n}-${c.slice(0, 12)}`);
       writeCheckout(snap, dir);
+      // [EXP-E01] Why: reject external source links before the build can read them. Rejected: post-build detection (already executed).
+      if (walkTree(dir).outside.length) { why('BUILD-LINK-OUTSIDE', `${c}: source checkout contains an outside symlink`); return null; }
       // build-manifest/2 inputs: every tracked file of each built package (the output's parent of dist/), the lockfile and the
       // root package.json, from the prepared tree (RULINGS Q61f, Q65d).
       const pkgs = [...new Set(spec.outputs.map(p => p.replace(/\/$/, '').replace(/\/?dist$/, '')).filter(Boolean))];
@@ -1341,7 +1348,7 @@ function labExecutor({ commit, contract, ctx, spec, slots, loadContract, claim, 
         expectedSha256, observedSha256, mode: last.mode, rep: last.rep, comparator: cmp, inputSha256: x.contentSha256 }) : null;
       // Q67b, Q75e: an execution is the instance plus the configuration it ran under; offline no engine configuration is applied, so
       // the composition is recorded as unbound configuration, not hashed as if applied.
-      const executionSha256 = last?.binary ? sha256(canonText({ binarySha256: last.binary, configApplied: false, unboundConfig: last.comp ?? null })) : null;
+      const executionSha256 = last?.binary ? sha256(canonText({ binarySha256: last.binary, configApplied: false })) : null;
       run.cases.push({ obligation: o?.id ?? null, instance: last?.instance ?? null, build: last?.build ?? null, executionSha256, configApplied: false, case: x?.id ?? null, mode: last?.mode ?? null, rep: last?.rep ?? null,
         comparator: cmp, verdict: v, expectedSha256, observedSha256, recordSha256: rec });
       if (v !== 'PASS' && sut) why(v === 'UNCOMPARABLE' ? 'CASE-UNCOMPARABLE' : 'CASE-FAIL', `instance ${last?.instance ?? '?'} (${last?.build ?? '?'}) ${o?.id} ${x?.id} mode ${last?.mode}: ${cmp} ${v}${obs == null ? ` (no observation${last?.exit != null ? `, exit ${last.exit}` : ''})` : ''} (RULINGS Q55a, Q67i)`);
@@ -1483,7 +1490,7 @@ function runQualification(claim, env, why, run, state) {
   run.toolchain = Object.fromEntries(Object.entries(tools).map(([k, t]) => [k, toolRecord(t)]));
   const sandbox = env.sandbox !== false && sandboxWorks();
   run.isolation = { root: isolationRoot, sandbox: sandbox ? 'sandbox-exec: writes confined to each child\'s own directories, no network, no mach-lookup, signals inside the sandbox only' : `none (${env.sandbox === false ? 'disabled by the caller' : 'sandbox-exec is not available here'}): detection only`, perChildHome: true, pathPinned: [toolchainDir, ...SYSTEM_PATH].join(':') };
-  const runChild = childRunner({ iso, toolchainDir, sandbox });
+  const runChild = childRunner({ iso, toolchainDir, toolchain: tools, sandbox });
   const ids = Array.isArray(claim.obligations) ? claim.obligations.filter(i => typeof i === 'string' && ctx.byId.has(i)) : [];
   const claimed = ids.map(i => ctx.byId.get(i));
   const domain = claimed.some(o => o.oracles.includes('O-DOMAIN'));
@@ -1517,7 +1524,7 @@ function runQualification(claim, env, why, run, state) {
     // oracle run from the authority's runner files without such a list leaves every claim that depends on it DIAGNOSTIC.
     for (const x of new Set([...prereq, ...claimed].flatMap(o => o.oracles))) {
       const pin = own(ctx.pins, x);
-      if (!(isObj(pin?.sha256) && Object.keys(pin.sha256).length && Object.values(pin.sha256).every(sha))) why('ORACLE-RUNNER-UNPINNED', `oracle ${x} has no sha256 for every runner file in the contract${own(own(ctx.cfg.oracleRunners, x), 'files') ? ` (its runner files ${own(own(ctx.cfg.oracleRunners, x), 'files').join(', ')} are run from ${authorityRef} unhashed)` : ''}, so a claim depending on it is DIAGNOSTIC (RULINGS Q59e, Q75c)`);
+      if (!(isObj(pin?.sha256) && Object.keys(pin.sha256).length && Object.values(pin.sha256).every(sha) && (ctx.cfg.oracleRunners[x]?.files ?? []).every(f => sha(pin.sha256[f])))) why('ORACLE-RUNNER-UNPINNED', `oracle ${x} has no sha256 for every runner file in the contract${own(own(ctx.cfg.oracleRunners, x), 'files') ? ` (its runner files ${own(own(ctx.cfg.oracleRunners, x), 'files').join(', ')} are run from ${authorityRef} unhashed)` : ''}, so a claim depending on it is DIAGNOSTIC (RULINGS Q59e, Q75c)`);
     }
   }
 }
