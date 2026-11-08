@@ -1323,3 +1323,11 @@ Where each priority stands, from evidence so far (research probes and baselines;
   commits on seven branches, and lab/agents/handoffs/ holds each one's last state. Codex agents continue from those.
 - **Running now (10):** R29 (Opus high) designs lane D; nine Codex agents continue lanes X and Q (broker round 2, P4, E01 round 2, W01b,
   J01, O-OBS) and three reviews (V-C8, V-O04h, V-X02).
+
+## 2026-11-08 21:16Z: EXP-J01 done (CX-J01, Codex builder): compact encoding saves 12% (XTDB) and 33% (QLever); the 3x target is not met
+- Report on exp/J01-bytes-per-commit 5cc42fb (lab/experiments/EXP-J01-bytes-per-commit/REPORT.md). The attribution of every XTDB
+  source-log byte for a 10-fact command closes with 0 unexplained (A0 30,061 bytes; compact 26,397, 1.14x); QLever inserted triples drop
+  32.6% (1.48x). Full G1 still fails (overload), XTDB compact-on is unverified; not promoted, and it needs an independent review first.
+- **Learning for P2:** the journal and its identity guards are 47.9% of an XTDB commit's bytes, and change-row JSON plus canonical value
+  identity is the biggest single block; even dropping both saves 5,736 bytes, not 3x. Per-commit write cost is set by the journal design,
+  so the P2 lever is structural (the broker's log as the journal, P2B; per-subject keys, P2X), not a denser encoding of the same rows.

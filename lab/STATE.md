@@ -52,10 +52,10 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | CX-VX02 (verify/X02) | reviewer, Codex high | XTQL lane | verdict on X02 bf1ad4d, minus the exclusive-slot rerun |
 | CX-W01B (exp/W01-golden-scenarios) | builder, Codex medium | GS | remaining XTDB scenarios, GS.04, GS.12 |
 | CX-O05 (exp/O05-observation-oracle) | builder, Codex medium | floor: O-OBS blocks 62 obligations | lab/acceptance/oracle/observe.py |
-| CX-J01 (exp/J01-bytes-per-commit) | builder, Codex medium | P2 | final report |
+| CX-K01 (exp/K01-seed-clone) | builder, Codex medium | measurement speed | clone tooling, 500-subject live check, E1 plan |
 
 Paused at the 2026-11-08 Claude weekly limit and not resumed (effort may exceed high): the ten agents in lab/agents/handoffs/;
-their work is in WIP commits on their branches. Still waiting for a slot: EXP-K01 (builder; worktree k01, clean at 870976e), R25
+their work is in WIP commits on their branches. Still waiting for a slot: R25
 finish (planner; data in /Users/sam/Claude/Projects/triplex-db-2/R25/), R27 and R28 (planners), M01 (parked for the Q69a window).
 
 ## Codex review history
