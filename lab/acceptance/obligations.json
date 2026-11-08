@@ -11,7 +11,7 @@
     "lab/TARGETS.md": "cb30ffeb776a7deb0c885be2968872bcebd7dc05cca1b2cfb5913b809a804d95",
     "lab/research/SAM-pasted-numbers-2026-11-07.md": "f35a223edd83994a0ac2ebcb94f9ec7e7ea8f1a279ef23bbb69390b8c03d89f8",
     "lab/acceptance/RULINGS.md": "081399e65433afe3fa2a032dd34a90a5e71a54225ad11f31d438bfdf21a053a4",
-    "lab/acceptance/RULINGS-PENDING.md": "7aa835dd817df59b199c0fddbba475aa8cf75557511f05e57220e3666276ab24",
+    "lab/acceptance/RULINGS-PENDING.md": "5ec95e96788e739305890dba1cfd900cdaf2973267c8a4bb1fa8cfcff5f57e50",
     "lab/verify/O02/v-o03/pin_scope.json": "f8897d518cb380ff64de25b02ae82f4846af313e5f2c41bbf147509fe6025a32",
     "lab/verify/O02/v-o03/hashes.8cc2c26.json": "4b221aa280eb6f2aeb1f5252d29dcef99aefc629e0388ac7468c6f1f1353b962",
     "lab/verify/D01/W0-1.1.1-ada2e90-SHA256SUMS": "bad527e280e1769a18fd2d65016e4d6bbfb4969c872dd73069cfb83637bfba4d",
@@ -2454,14 +2454,48 @@
   },
   "pendingRulings": {
     "file": "lab/acceptance/RULINGS-PENDING.md",
-    "sha256": "7aa835dd817df59b199c0fddbba475aa8cf75557511f05e57220e3666276ab24",
+    "sha256": "5ec95e96788e739305890dba1cfd900cdaf2973267c8a4bb1fa8cfcff5f57e50",
     "ids": [
       "Q51b",
       "Q57a",
       "Q57b",
       "Q57c",
       "Q57d",
-      "Q57e"
+      "Q57e",
+      "Q58a",
+      "Q58b",
+      "Q58c",
+      "Q58d",
+      "Q58e",
+      "Q59a",
+      "Q59b",
+      "Q59c",
+      "Q59d",
+      "Q59e",
+      "Q59f",
+      "Q60a",
+      "Q60b",
+      "Q60c",
+      "Q60d",
+      "Q60e",
+      "Q60f",
+      "Q60g",
+      "Q60h",
+      "Q60i",
+      "Q61a",
+      "Q61b",
+      "Q61c",
+      "Q61d",
+      "Q61e",
+      "Q61f",
+      "Q61g",
+      "Q61h",
+      "Q61i",
+      "Q61j",
+      "Q61k",
+      "Q62a",
+      "Q62b",
+      "Q62c"
     ],
     "authority": "none",
     "rule": "RULINGS-PENDING.md may hold ruling rows; they carry no authority, are never compiled into this contract and never count as compiled RULINGS.md entries; the generator records the file's hash under inputs and lists the pending ids, and their presence never invalidates generation or --verify (RULINGS Q47d)"
@@ -24183,5 +24217,5 @@
       ]
     }
   ],
-  "transitiveContractSha256": "4ee29f9b448c96593831fa8620de35278c2706cf0f3702077d01a316d3186c53"
+  "transitiveContractSha256": "e3d7c2faef0a5c85ae4c3b6d1f1932b1462e446b35bf836d3e6b88e4e9f42482"
 }

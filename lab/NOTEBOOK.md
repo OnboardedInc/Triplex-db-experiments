@@ -1013,3 +1013,26 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - Goal status: not complete. The contract is NOT READY for qualified comparisons (Codex round 7, Q55); A0 is not frozen on either lane;
   P2/P3 have one strong candidate per lane (P2Q broker; P2X subject-stamp, P2B next), P5 has its kernel and cost, P1 and P4 wait on X05, C8
   and the current-index work (Q05, Q50a).
+
+## 2026-11-08 00:02Z: V-P2Q REJECT; R22 and R23 landed; contract 0.3.8 merged; E01 implements "qualification is a run"
+- **V-P2Q rejects the QLever broker at d7c6086.** Repository pulls were exact on 3,190 adversarial reads, the ACK path, feed and position
+  falsifiers hold, A0 is unchanged; but in-transaction Datalog answers from a replica behind the basis (C1), reads trust a cached replica
+  marker after an unnoticed regression (C2), and two brokers in one process lose ACKed frames (C3). Learning: the composition is sound where
+  every read goes through the routed repository path; every side path (executor, dependency state, native queries) needs the same basis
+  check, so Q58d forbids merging outside entity pulls and Q58a puts native queries behind a facade with explicit tokens.
+- **P3 recomputed from source publication (Q55d):** offline p99 13.7 ms, dev 24.9 ms, every position accounted: the P2Q feed result survives
+  the stricter measurement.
+- **QLever write amplification is 653 triples per 10-fact command** (24 rows at about 27 triples), the row encoding and journal, not the
+  broker; EXP-J01 owns it.
+- **R23 learnings:** every mature log-plus-replica system has two token kinds ("at least", "exactly at") and threads the session's token
+  automatically; Q58a adopts that (flagged for Sam). SQLite with fullfsync matches the hand-rolled log's commit cost (3.0 / 6.0 ms against
+  3.0 / 6.9 ms) and survived 30 SIGKILLs over 8,959 commits, but its macOS default is not durable and it misses mid-WAL corruption, so the
+  marker cross-checks stay (Q58c). XTDB fits behind the broker with an ASSERT-guarded marker row (Q58b).
+- **R22 learnings:** on this host only simultaneous pairing shares the noise (5 s window medians of two concurrent processes correlate
+  0.985; 60 s apart in one process 0.08); the  quota throttled the busiest slot in 77% of its periods; VM steal is always 0; a p99
+  claim needs about 25,000 commands per arm, so P2/P3 rounds need bursts. Adopted as PAIR-0 (Q60, provisional).
+- **Contract 0.3.8 merged (445bc45):** O-REPLAY 0.4.1 pinned with the oracle in one commit; 117 obligations closable, 6 blocked; qualification
+  is a run. **E01:** claim.mjs `qualify` builds both sides itself and ignores supplied records; no path to QUALIFIED until an executing gate
+  exists (and none should exist).
+- Disk: 14 GiB free on the host data volume (97%). Removing nine finished worktrees freed little because pnpm hard-links node_modules;
+  their runs and untracked files are archived in /Users/sam/Claude/Projects/triplex-db-2/worktree-archive/.
