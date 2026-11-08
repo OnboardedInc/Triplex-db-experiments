@@ -77,6 +77,22 @@ class SelfChecks(unittest.TestCase):
         self.assertIn(False, [r["pass"] for r in rows if r["check"] == "ham-case:" + case["id"]])
         self.assertTrue(real.exists())
 
+    def test_continuation_table_check_detects_a_missing_paged_kind(self):
+        """Q70l: dropping a paged kind from run.CONTINUATIONS, or adding a query kind whose
+        output carries a next* field, fails the self-check."""
+        self.assertTrue(all(r["pass"] for r in C.check_continuations()))
+        table = {k: v for k, v in C.RUN.CONTINUATIONS.items() if k != "transactionsForEntity"}
+        failed = [r["check"] for r in C.check_continuations(table=table) if not r["pass"]]
+        self.assertEqual(failed, ["continuation-table:transactionsForEntity", "continuation-runtime:transactionsForEntity"])
+        queries = dict(C.RUN.QUERIES, fakePaged=_fake_paged)
+        failed = [r["check"] for r in C.check_continuations(queries=queries) if not r["pass"]]
+        self.assertEqual(failed, ["continuation-table:fakePaged"])
+
+
+def _fake_paged(run, query):
+    """A paged kind left off the continuation table (for the self-check test above)."""
+    return C.V.OrderedOut([("rows", []), ("nextPage", 1)])
+
 
 if __name__ == "__main__":
     unittest.main()

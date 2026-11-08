@@ -2,13 +2,19 @@
 cut semantics where the domains overlap. Each check re-expresses the other
 oracle's fixture as an O-REPLAY case (command stream + receipts) and compares the
 replayed answers with the other oracle's frozen expectations.
+
+RULINGS Q70l adds one structural check: every query kind whose output carries a next*
+field is in run.CONTINUATIONS with that field as its issued value, so a new paged kind
+cannot be left outside the one continuation rule.
 """
 
 from __future__ import annotations
 
+import ast
 import hashlib
 import importlib.util
 import json
+import sys
 from pathlib import Path
 
 from . import run as RUN
@@ -339,9 +345,82 @@ def check_evt():
     return results
 
 
+# --------------------------------------------------------------------------- Q70l
+
+
+def next_fields_by_kind(queries=None):
+    """Static scan: for every query kind, the output field names starting `next` that its
+    function, or a function of the same module it calls, puts in an output pair."""
+    queries = RUN.QUERIES if queries is None else queries
+    funcs = {}
+    for module in {fn.__module__ for fn in queries.values()}:
+        tree = ast.parse(Path(sys.modules[module].__file__).read_text())
+        funcs.update({(module, node.name): node for node in tree.body if isinstance(node, ast.FunctionDef)})
+
+    def fields(module, name, seen):
+        if (module, name) in seen or (module, name) not in funcs:
+            return set()
+        seen.add((module, name))
+        out = set()
+        for node in ast.walk(funcs[(module, name)]):
+            if isinstance(node, ast.Tuple) and len(node.elts) == 2 and isinstance(node.elts[0], ast.Constant) \
+                    and isinstance(node.elts[0].value, str) and node.elts[0].value.startswith("next"):
+                out.add(node.elts[0].value)
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+                out |= fields(module, node.func.id, seen)
+        return out
+    return {kind: fields(fn.__module__, fn.__name__, set()) for kind, fn in queries.items()}
+
+
+def _paged_case():
+    ops = [{"op": "assert", "ref": f"a{k}", "entityId": f"e{k}", "attribute": ":x/v", "entityType": "T",
+            "value": {"type": "integer", "value": str(k)}, "validFrom": 0} for k in range(3)]
+    commands = [{"clock": 100 + k, "operations": [op]} for k, op in enumerate(ops)]
+    queries = [{"id": "entityPage", "kind": "entityPage", "entityType": "T", "limit": 1, "cut": {"validAt": 1}},
+               {"id": "transactions", "kind": "transactions", "limit": 1},
+               {"id": "transactionsForEntity", "kind": "transactionsForEntity", "entityId": "e0", "limit": 1}]
+    commands.append({"clock": 200, "operations": [dict(ops[0], ref="b0", value={"type": "integer", "value": "9"})]})
+    return {"format": RUN.CASE_FORMAT, "caseId": "selfcheck/continuations", "defaultScope": "s",
+            "commands": commands, "queries": queries}
+
+
+def _next_keys(node, out):
+    if isinstance(node, dict):
+        for k, v in node.items():
+            if k.startswith("next"):
+                out.add(k)
+            _next_keys(v, out)
+    elif isinstance(node, list):
+        for v in node:
+            _next_keys(v, out)
+    return out
+
+
+def check_continuations(table=None, queries=None):
+    """Q70l: the continuation table covers every paged kind. Static: each kind whose function
+    builds a next* output field is in the table with that field as its issued value, and each
+    table kind builds its issued field. Runtime: the paged kinds' actual outputs carry only
+    their table field."""
+    table = RUN.CONTINUATIONS if table is None else table
+    produced = next_fields_by_kind(queries)
+    rows = []
+    for kind in sorted(k for k, f in produced.items() if f or k in table):
+        spec = table.get(kind)
+        rows.append({"check": f"continuation-table:{kind}", "pass": spec is not None and produced[kind] == {spec["issued"]},
+                     "nextFields": sorted(produced[kind]), "issued": spec and spec["issued"]})
+    report = plain(evaluate(_paged_case()))
+    for q in report["queries"]:
+        got = _next_keys(q.get("result"), set())
+        spec = table.get(q["kind"])
+        rows.append({"check": f"continuation-runtime:{q['kind']}", "pass": spec is not None and got == {spec["issued"]},
+                     "nextFields": sorted(got)})
+    return rows
+
+
 def run_all():
     sections = [("O-HAM finite-nine (v2 nine definitions, same-R control)", check_ham),
-                ("O-CFG8 tiny-v4", check_cfg8), ("O-EVT cut semantics (overlap)", check_evt)]
+                ("O-CFG8 tiny-v4", check_cfg8), ("O-EVT cut semantics (overlap)", check_evt),
+                ("Q70l continuation table", check_continuations)]
     out, all_pass = [], True
     for title, fn in sections:
         rows = fn()

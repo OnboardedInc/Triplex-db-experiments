@@ -1,4 +1,4 @@
-# O-REPLAY case and output schema (v1; oracle 0.4.7)
+# O-REPLAY case and output schema (v1; oracle 0.4.8)
 
 O-REPLAY reads one case file and writes one expected-answer document. Python 3 standard library
 only; it imports nothing from Triplex. Semantic rules are in [RULES.md](RULES.md).
@@ -175,9 +175,9 @@ Every query has `id`, `kind`, and usually a `cut`:
 | `entityTriples` | `cut`, `entityId` | visible rows of one entity, as `match` |
 | `history` | `entityId`, optional `cut` (no V needed), `applyValidAt` | `rawLifetime` and `asOfSnapshot` |
 | `assertionSnapshot` | `cut`, `mode` (`live-at-valid`/`known-at-valid`), `pattern` | O-HAM SnapshotAssertion rows; `knownRetirement` `{retractedAt, retractTxId, retractedPosition}` (AMB-02) |
-| `transactions` | `after`, `limit` (1..1000, default 100; outside it E-CURSOR malformed, R-JNL-7) | `{transactions, next}` |
+| `transactions` | `after` (a JSON integer >= 0, Q70m), `limit` (1..1000, default 100; outside it E-CURSOR malformed, R-JNL-7) | `{transactions, next}` |
 | `transaction` / `transactionByCommand` | `txId` / `commandId` | record or null |
-| `transactionsForEntity` | `entityId`, `limit`, `snapshotPosition`, `beforePosition` | newest first, `nextBeforePosition` |
+| `transactionsForEntity` | `entityId`, `limit`, `snapshotPosition`, `beforePosition` (JSON integers >= 0, Q70m) | newest first, `nextBeforePosition` |
 | `cutCatalog` | `scope` | every position (the oracle's ordinal) with instant, txId, command, internal flag, group, the receipt `coordinate` when the scope uses coordinates, and `erasure: true` for an erasure commit |
 | `entityPage` | `entityType`, `limit` (1..200, default 50), `cut`, or `cursorFrom: {query, page}` / `cursor` | pages of complete bodies, ids in codepoint order, `nextCursor` per page (R-PAGE-2..4) |
 | `get` / `getMany` | `entityType`, `entityId` / `entityIds`, `include`, `schemaVersion`, `cut` | model(s) or E-CONFLICTING-VALUES |
@@ -207,9 +207,17 @@ whether or not that read had commits in flight: per prefix of that read, from th
 never with its own `readStart` (Q66b, Q70a). A literal `cursor` token equal to a `nextCursor` that any earlier read of the
 case issued continues that read the same way, for the prefixes whose pages issued it; several issuers with identical
 views continue the latest, and issuers whose views disagree make the entry a typed `X-NOT-MODELED` error, "ambiguous
-literal token" (Q70b to Q70f). A `transactions` call whose `after` equals a `next` an earlier `transactions` page of
-the same journal scope issued continues that read the same way (Q70g). Only a token or `after` no earlier read issued
-uses the query's own read view.
+literal token" (Q70b to Q70f). Q70l: every paged kind continues by that rule, through one table:
+
+| Kind | Continuation parameter | Issued value | Matched on |
+| --- | --- | --- | --- |
+| `entityPage` | `cursorFrom` (names the query) or `cursor` | `nextCursor` | the token |
+| `transactions` | `after` | `next` | the same journal `scope` (Q70g, Q70i) |
+| `transactionsForEntity` | `beforePosition` | `nextBeforePosition` | the same `entityId`, `scope` and `snapshotPosition` |
+
+A value equal to one an earlier page of the same kind and key issued continues that page's read per prefix; only a
+value no earlier page issued uses the query's own read view. Integer parameters are JSON integers >= 0 (Q70m): a
+string, a float or a negative value exits 2 (malformed case).
 
 `where` items: `{"prop"|"var": ..., "op": "eq|ne|lt|lte|gt|gte|in|exists|missing", "value": ...}` (`values` for
 `in`); `value` is a typed value object or an untyped bare JSON string/number. `orderBy`:
@@ -221,15 +229,15 @@ example `E-CONFLICTING-VALUES`, `E-INTEGER-OVERFLOW`, `E-MIXED-FAMILY`, `E-INTEG
 conflicted `{entityId, attribute}`). Errors without a 4.7 row use `X-` ids (`X-CYCLE`, `X-NO-POSITION`,
 `X-NOT-MODELED`) with `ruling` naming the RULING-NEEDED item (R-ERR-2). A case the oracle cannot answer
 exactly (decimal scale evolution, TDK1 keys) exits 2 with a message starting `X-NOT-MODELED`; a pattern that could
-select unmodeled transaction envelope facts (R-JNL-6) and an ambiguous continuation (a literal token or journal `after`
-issued by earlier reads whose views disagree, R-ERA-6 / Q70f) are typed `X-NOT-MODELED` answers.
+select unmodeled transaction envelope facts (R-JNL-6) and an ambiguous continuation (a continuation value issued by
+earlier reads whose views disagree, R-ERA-6 / Q70f, Q70l) are typed `X-NOT-MODELED` answers.
 
 ## 4. Output document
 
 ```jsonc
 {
   "format": "triplex-db-2/o-replay-expected/1",
-  "oracle": {"id": "O-REPLAY", "version": "0.4.7", "sourceSha256": {"values.py": "..."}},
+  "oracle": {"id": "O-REPLAY", "version": "0.4.8", "sourceSha256": {"values.py": "..."}},
   "caseId": "...", "caseSha256": "<sha256 of the case bytes>",
   "lane": {"name": "qlever", "integerRange": ["-576460752303423488", "576460752303423487"]},
   "verdict": "PASS | FAIL | EXPECTED-ONLY",

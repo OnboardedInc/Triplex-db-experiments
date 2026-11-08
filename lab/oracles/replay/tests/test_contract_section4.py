@@ -2274,6 +2274,48 @@ class Erasure(unittest.TestCase):
         self.assertNotIn("acceptable", node)                                # nothing in flight on t
         self.assertEqual(node["transactions"][0]["changes"][0]["value"], i64(2))
 
+    def test_Q70l_entity_journal_pages(self):
+        """Q70l (V-O04g F11): transactionsForEntity continues through the continuation table: a
+        `beforePosition` equal to the `nextBeforePosition` an earlier page of the same entity,
+        scope and snapshotPosition issued continues that page's read per prefix; a different
+        snapshotPosition is not a continuation of it."""
+        cmds = [{"clock": 100, "operations": [assert_op("s1", "p1", ":w/pay", i64(1))]},
+                {"clock": 110, "operations": [assert_op("s2", "p1", ":w/pay", i64(2))]},
+                {"clock": 200, "operations": [{"op": "erase", "entityId": "p1"}]}]
+        first = {"id": "e1", "kind": "transactionsForEntity", "entityId": "p1", "limit": 1, "snapshotPosition": 2,
+                 "readStart": {"afterCommand": 1}}
+        second = {"id": "e2", "kind": "transactionsForEntity", "entityId": "p1", "limit": 1, "snapshotPosition": 2,
+                  "beforePosition": 2}
+
+        def values(node):
+            alts = node["acceptable"] if "acceptable" in node else [{"erasuresSeen": "plain", "result": node}]
+            return [(a["erasuresSeen"], [c["value"] for tx in a["result"]["transactions"] for c in tx["changes"]],
+                     a["result"].get("nextBeforePosition")) for a in alts]
+        rep = evaluate(case(cmds, [first, second]))
+        self.assertEqual(values(result(rep, "e1")), [([], [i64(2)], 2), (["tx:2"], [marker(200)], 2)])
+        self.assertEqual(values(result(rep, "e2")), [([], [i64(1)], None), (["tx:2"], [marker(200)], None)])
+        other = evaluate(case(cmds, [first, dict(second, snapshotPosition=3)]))   # another snapshot: own view
+        self.assertEqual(values(result(other, "e2")), [("plain", [marker(200)], None)])
+
+    def test_Q70m_typed_continuation_values(self):
+        """Q70m (V-O04g F12, F13): integer continuation parameters must be JSON integers >= 0;
+        a string, a float or a negative value makes the case malformed (exit 2), never a crash
+        and never a skipped continuation."""
+        cmds = [{"clock": 100, "operations": [assert_op("s1", "p1", ":w/pay", i64(1))]},
+                {"clock": 110, "operations": [assert_op("s2", "p1", ":w/pay", i64(2))]}]
+        page1 = {"id": "t1", "kind": "transactions", "after": 0, "limit": 1}
+        bad = [{"kind": "transactions", "after": "1"}, {"kind": "transactions", "after": 1.0},
+               {"kind": "transactions", "after": -1},
+               {"kind": "transactionsForEntity", "entityId": "p1", "beforePosition": "2"},
+               {"kind": "transactionsForEntity", "entityId": "p1", "beforePosition": 2.5},
+               {"kind": "transactionsForEntity", "entityId": "p1", "snapshotPosition": 2.0}]
+        for q in bad:
+            with self.assertRaises(V.OracleInputError, msg=q) as ctx:
+                evaluate(case(cmds, [page1, dict(q, id="t2", limit=1)]))
+            self.assertIn("Q70m", str(ctx.exception))
+        rep = evaluate(case(cmds, [page1, {"id": "t2", "kind": "transactions", "after": 1, "limit": 1}]))
+        self.assertEqual([r["txId"] for r in result(rep, "t2")["transactions"]], ["tx:1"])
+
     def test_erase_receipts(self):
         c = case(erasure_commands(), [match_q("m")], schemas=PERSON_SCHEMA)
         c["receipts"] = committed_receipts(c)

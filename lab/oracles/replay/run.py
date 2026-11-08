@@ -16,7 +16,7 @@ from . import views as W
 
 CASE_FORMAT = "triplex-db-2/o-replay-case/1"
 OUTPUT_FORMAT = "triplex-db-2/o-replay-expected/1"
-ORACLE_VERSION = "0.4.7"   # EXP-O04b: Q52a-g, Q56f; Q66a-b (V-O04d F5/F6); Q70a-j (V-O04e/f F7-F10); ACCEPTANCE 0.3.9
+ORACLE_VERSION = "0.4.8"   # EXP-O04b: Q52a-g, Q56f; Q66a-b; Q70a-m (V-O04e-g F7-F13); ACCEPTANCE 0.3.9
 SOURCE_FILES = ["__init__.py", "__main__.py", "cli.py", "errors.py", "values.py", "exact.py", "replay.py",
                 "constraints.py", "views.py", "entities.py", "scale.py", "run.py", "selfcheck.py"]
 
@@ -57,21 +57,37 @@ for _kind in ("orderKey", "decimalKey", "tdk1Key"):
     QUERIES[_kind] = _order_keys_not_modeled
 
 
-def issued_cursors(answer):
-    """The next cursors a read's answer issued: every page's `nextCursor` (Q70b)."""
+# Q70l: every paged read kind continues by one rule, through this table: the parameter a
+# continuation passes, the field an earlier page issued it in, and the key a continuation must
+# share with the page that issued its value (same kind and key). The selfcheck section
+# "Q70l continuation table" fails when a query kind whose output carries a next* field is missing.
+CONTINUATIONS = {
+    # cursorFrom names the issuing query directly (Q66b, Q70a); a literal `cursor` matches a nextCursor (Q70b-f)
+    "entityPage": {"param": "cursor", "reference": "cursorFrom", "issued": "nextCursor", "integer": False,
+                   "what": "literal token", "key": lambda run, query: ()},
+    # Q70g, Q70i: the same journal scope
+    "transactions": {"param": "after", "issued": "next", "integer": True, "what": "journal after",
+                     "key": lambda run, query: (query.get("scope") or run.engine.default_scope,)},
+    # V-O04g F11: the same entity, scope and snapshotPosition
+    "transactionsForEntity": {"param": "beforePosition", "issued": "nextBeforePosition", "integer": True,
+                              "what": "entity journal beforePosition",
+                              "key": lambda run, query: (query.get("entityId"), query.get("scope") or run.engine.default_scope,
+                                                         W.continuation_int(query, "snapshotPosition", run.engine.scope(
+                                                             query.get("scope") or run.engine.default_scope).last_position))},
+}
+
+
+def issued_values(spec, answer):
+    """The continuation values a read's answer issued (Q70l): its `issued` field, at the top
+    level or on each of its pages."""
     key, value = answer
-    pages = value.get("pages") if key == "result" and isinstance(value, V.OrderedOut) else None
-    if not isinstance(pages, list):
+    if key != "result" or not isinstance(value, V.OrderedOut):
         return set()
-    return {page.get("nextCursor") for page in pages
-            if isinstance(page, V.OrderedOut) and page.get("nextCursor") is not None}
-
-
-def issued_next(answer):
-    """The `next` position a transactions page issued (Q70g)."""
-    key, value = answer
-    nxt = value.get("next") if key == "result" and isinstance(value, V.OrderedOut) else None
-    return set() if nxt is None else {nxt}
+    out = {value.get(spec["issued"])}
+    pages = value.get("pages")
+    if isinstance(pages, list):
+        out |= {page.get(spec["issued"]) for page in pages if isinstance(page, V.OrderedOut)}
+    return out - {None}
 
 
 INFLIGHT_RULE = ("ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees "
@@ -570,7 +586,7 @@ class Run:
                 # no continuation. Q70b, Q70e, Q70g: a literal token (or a journal `after`) continues
                 # the prefixes whose pages issued it.
                 start, scope = source["start"], source["scope"]
-                ref = query["cursorFrom"]["query"] if issued is None else None
+                ref = query[CONTINUATIONS[kind]["reference"]]["query"] if issued is None else None
                 answers, missing = [], None
                 for seen, answer in source["answers"]:
                     if issued is not None and not issued(answer):
@@ -602,8 +618,9 @@ class Run:
                 answers = [(pending[:k], self.answer_under(kind, query, start, scope, pending[:k]))
                            for k in range(len(pending) + 1)]
                 in_flight = bool(pending)
+            spec = CONTINUATIONS.get(kind)
             record = {"start": start, "scope": scope, "answers": answers, "inFlight": in_flight, "kind": kind,
-                      "journalScope": query.get("scope") or self.engine.default_scope}
+                      "key": spec["key"](self, query) if spec else None}
             self.reads[qid] = record
             self.read_log.append(record)
             if len({V.dumps(V.OrderedOut([answer]), indent=0) for _, answer in answers}) == 1:
@@ -621,27 +638,30 @@ class Run:
 
     def continued_read(self, query):
         """(the read record a continuation continues, a test of which of its answers issued the
-        continuation, or None for `cursorFrom`), or (None, None) for a read of its own.
-        Q70a: a `cursorFrom` continues the read of the query it names, whether or not that read
-        had commits in flight (an unknown query is left to the page, which reports it). Q70b,
-        Q70c: a literal `cursor` token equal to a `nextCursor` issued earlier in the case by any
-        read, in flight or not, continues that read. Q70g: a `transactions` call whose `after`
-        equals a `next` an earlier transactions page of the same journal scope issued continues
-        that read. Only a token or `after` no earlier read issued uses the query's own view."""
-        ref = query.get("cursorFrom")
+        continuation, or None for a reference), or (None, None) for a read of its own. Q70l: only
+        the kinds in CONTINUATIONS continue, through their parameter. A reference (`cursorFrom`)
+        continues the read of the query it names, whether or not that read had commits in flight
+        (Q70a; an unknown query is left to the page, which reports it). A continuation value equal
+        to one an earlier page of the same kind and key issued continues that read (Q70b, Q70c,
+        Q70g, V-O04g F11), compared as the parsed integer for integer parameters (Q70m). Only a
+        value no earlier page issued uses the query's own read view."""
+        kind = query.get("kind")
+        spec = CONTINUATIONS.get(kind)
+        if spec is None:
+            return None, None
+        ref = query.get(spec["reference"]) if spec.get("reference") else None
         if ref is not None:
             return (self.reads.get(ref.get("query")) if isinstance(ref, dict) else None), None
-        token = query.get("cursor")
-        if query.get("kind") == "entityPage" and isinstance(token, str) and not isinstance(token, V.Lex):
-            return self.issuing_read(lambda answer: token in issued_cursors(answer), lambda record: True,
-                                     "literal token")
-        after = query.get("after")
-        if query.get("kind") == "transactions" and isinstance(after, V.Lex) and re.fullmatch(r"(0|[1-9][0-9]*)", after):
-            scope = query.get("scope") or self.engine.default_scope
-            return self.issuing_read(lambda answer: int(after) in issued_next(answer),
-                                     lambda record: record["kind"] == "transactions" and record["journalScope"] == scope,
-                                     "journal after")
-        return None, None
+        if spec["integer"]:
+            value = W.continuation_int(query, spec["param"])
+        else:
+            value = query.get(spec["param"])
+            value = value if isinstance(value, str) and not isinstance(value, V.Lex) else None
+        if value is None:
+            return None, None
+        key = spec["key"](self, query)
+        return self.issuing_read(lambda answer: value in issued_values(spec, answer),
+                                 lambda record: record["kind"] == kind and record["key"] == key, spec["what"])
 
     def issuing_read(self, issued, eligible, what):
         """Q70c / Q70g: the earlier read that issued this continuation. Q70d: several issuers with

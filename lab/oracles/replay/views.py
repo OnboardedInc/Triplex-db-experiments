@@ -274,10 +274,22 @@ def _limit(raw, default=100, maximum=1000):
     return value
 
 
+def continuation_int(query, name, default=None):
+    """Q70m: an integer continuation parameter (`after`, `beforePosition`, and the
+    `snapshotPosition` a continuation is matched on) must be a JSON integer >= 0; a string, a
+    float or a negative value makes the case malformed (exit 2), never a crash."""
+    raw = query.get(name)
+    if raw is None:
+        return default
+    if not isinstance(raw, V.Lex) or not raw.isdigit() or (raw[0] == "0" and raw != "0"):
+        raise V.OracleInputError(f"{query.get('kind')} {name} must be a JSON integer >= 0 (RULINGS Q70m), got {raw!r}")
+    return int(raw)
+
+
 def q_transactions(run, query):
     """transactions({after, limit}): position > after, ascending (R-JNL-3)."""
     scope = query.get("scope") or run.engine.default_scope
-    after = int(query.get("after", V.Lex("0")))
+    after = continuation_int(query, "after", 0)
     limit = _limit(query.get("limit"))
     rows = [r for r in _journal(run, scope) if r.position > after][:limit]
     out = [("transactions", [record_output(r) for r in rows])]
@@ -307,9 +319,8 @@ def q_transactions_for_entity(run, query):
     scope = query.get("scope") or run.engine.default_scope
     entity = query["entityId"]
     limit = _limit(query.get("limit"))
-    snapshot = int(query["snapshotPosition"]) if query.get("snapshotPosition") is not None \
-        else run.engine.scope(scope).last_position
-    before = int(query["beforePosition"]) if query.get("beforePosition") is not None else None
+    snapshot = continuation_int(query, "snapshotPosition", run.engine.scope(scope).last_position)
+    before = continuation_int(query, "beforePosition")
     # Q49a: an erasure commit's identity changes name the entity, so it is listed like any change
     rows = [r for r in _journal(run, scope) if not r.internal and r.position <= snapshot
             and (before is None or r.position < before)
