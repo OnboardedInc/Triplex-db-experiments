@@ -1195,7 +1195,7 @@ function prepareTrusted({ git, commit, authority, authorityRef, contract, ctx, o
       const dir = iso(`oracle-${x}`);
       for (const [p, b] of files) { fs.mkdirSync(path.dirname(path.join(dir, p)), { recursive: true }); fs.writeFileSync(path.join(dir, p), b); }
       setReadOnly(dir, true);
-      out = { dir, argv: runner.argv, runner, pinCommit, from, expect: runtimeListing(files.map(([p, , h]) => [p, 'f', h, '444']).sort((a, b) => cmpStr(a[0], b[0]))) };
+      out = { dir, argv: runner.argv, runner, pinCommit, from, expect: runtimeListing(walkTree(dir).entries) };
     }
     oracles.set(x, out);
   }

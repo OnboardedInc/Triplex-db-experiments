@@ -259,3 +259,48 @@ test('V-E01 F6/Q75h: cause is optional but must be structured when present', () 
   assert.equal(compare({cause:{message:'original'}}),'PASS');
   for(const cause of [false,0,'',[],{},null]) assert.equal(compare({cause}),'FAIL');
 });
+
+test('V-E01 F9: unreadable evidence becomes a diagnostic instead of an uncaught EACCES', () => {
+  const workDir = path.join(root, 'unreadable-evidence'), local = localSut(spec);
+  let changed = false, r;
+  try {
+    r = q(claimFor(R.C2), { workDir, authorityRef: 'main', sut: args => {
+      if (!changed) { fs.chmodSync(path.join(workDir,'objects'),0); changed = true; }
+      return local(args);
+    } });
+  } finally { fs.chmodSync(path.join(workDir,'objects'),0o755); }
+  assert.ok(changed);
+  assert.equal(r.offlineVerdict,'DIAGNOSTIC');
+  assert.ok(codes(r).includes('GATE-NOT-RUN'));
+  assert.ok(codes(r).includes('EVALUATOR-ERROR') || codes(r).includes('EVIDENCE-MISSING'));
+});
+
+test('V-E01 F3: modes and internal symlink target bytes are identity-bound', () => {
+  const modeFile = path.join(EXT,'mode.json');
+  const build = BUILD + `\nconst m=JSON.parse(fs.readFileSync(${JSON.stringify(modeFile)})); fs.writeFileSync('runtime/target.mjs',m.text); fs.symlinkSync('target.mjs','runtime/link.mjs'); fs.chmodSync('runtime/target.mjs',m.mode);\n`;
+  const at = branch('ve01-mode', {'build.mjs':build});
+  const identity = (mode,text) => {
+    fs.writeFileSync(modeFile,JSON.stringify({mode,text}));
+    const r = q(claimFor(at),{offline:false,authorityRef:'main'});
+    assert.ok(r.run.instances[0],JSON.stringify(r.reasons));
+    return r.run.instances[0].binarySha256;
+  };
+  const base=identity(0o644,'export const x=1;');
+  assert.notEqual(base,identity(0o755,'export const x=1;'));
+  assert.notEqual(base,identity(0o644,'export const x=2;'));
+});
+
+test('V-E01 F3: recorded PATH node is the binary a child actually runs', () => {
+  const bin=path.join(root,'alternate-bin'), marker=path.join(root,'alternate-node-ran');
+  fs.mkdirSync(bin);
+  const wrapper=path.join(bin,'node');
+  fs.writeFileSync(wrapper,`#!/bin/sh\necho invoked >> '${marker}'\nexec '${process.execPath}' "$@"\n`,{mode:0o755});
+  const before=process.env.PATH;
+  let r;
+  try { process.env.PATH=bin+':'+before; r=q(claimFor(R.C2),{authorityRef:'main'}); }
+  finally { process.env.PATH=before; }
+  assert.equal(r.run.toolchain.node.path,fs.realpathSync(wrapper));
+  assert.equal(r.run.toolchain.node.sha256,sha256(fs.readFileSync(wrapper)));
+  assert.ok(fs.readFileSync(marker,'utf8').trim().split('\n').length>1,'more than the version probe used this node');
+  assert.notEqual(r.run.instances[0].binarySha256,R.a0Binary);
+});
