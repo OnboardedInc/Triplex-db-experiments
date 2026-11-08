@@ -86,6 +86,18 @@ export const readOnlyNativeSql = (sql: string): string => {
       index++;
     }
   }
+  // [EXP-X02-R3] Why: query operands may wrap SELECT in balanced parentheses
+  // (F1-R2, XTDB 2.2.0 Sql.g4 queryExpression). Rejected: skipping arbitrary
+  // opening tokens (would admit incomplete layers); rescanning SQL loses comments.
+  const closingParentheses = new Map<number, number>();
+  const openings: number[] = [];
+  for (let i = 0; i < tokens.length; i++) {
+    if (tokens[i] === "(") openings.push(i);
+    else if (tokens[i] === ")") {
+      const opening = openings.pop();
+      if (opening !== undefined) closingParentheses.set(opening, i);
+    }
+  }
   // [EXP-X02-R2] Why: Q79a requires comment-aware operands, including bare arrays.
   // Rejected: raw-character lookahead (ANY/**/(...) bypasses it). ALL after SELECT
   // or UNION is a set quantifier; other quantified operands must be subqueries.
@@ -97,9 +109,22 @@ export const readOnlyNativeSql = (sql: string): string => {
     if (!["=", ">", "<"].includes(tokens[i - 1] ?? "")) continue;
     if (token === "ALL" && ["SELECT", "UNION", "INTERSECT", "EXCEPT"].includes(tokens[i - 1] ?? ""))
       continue;
+    let opening = i + 1;
+    let closing = closingParentheses.get(opening);
+    while (
+      tokens[opening + 1] === "(" &&
+      closing !== undefined &&
+      closingParentheses.get(opening + 1) === closing - 1
+    ) {
+      opening++;
+      closing--;
+    }
+    // [EXP-X02-R3] Why: classification must not advance i past the operand:
+    // nested unsafe comparisons still need checking. Rejected: skipping the query body.
     if (
-      tokens[i + 1] !== "(" ||
-      !["SELECT", "VALUES", "WITH", "FROM"].includes(tokens[i + 2] ?? "")
+      tokens[opening] !== "(" ||
+      closing === undefined ||
+      !["SELECT", "VALUES", "WITH", "FROM"].includes(tokens[opening + 1] ?? "")
     )
       throw new TypeError(
         "Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)",

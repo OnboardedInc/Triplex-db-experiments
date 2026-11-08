@@ -67,6 +67,11 @@ describe("XTDB native read provider", () => {
     "SOME/**/(ARRAY[1,2])",
     "ALL--comment\r(ARRAY[1,2])",
     "ANY/**/ ARRAY[1,2]",
+    "ANY/**/((ARRAY[1,2]))",
+    "SOME /* subquery */ (((ARRAY[1,2])))",
+    "ANY ((SELECT 1 WHERE 1 = SOME/**/ ARRAY[1,2]))",
+    "ALL (((SELECT 1 WHERE 1 = ANY ((ARRAY[1,2])))))",
+    "ANY ((SELECT 1)",
   ])("refuses quantified operand %s in the public error channel", async (operand) => {
     const { client, calls } = fixture();
     const exit = await Effect.runPromiseExit(
@@ -82,6 +87,23 @@ describe("XTDB native read provider", () => {
       expect(String(exit.cause)).toContain("non-subquery operand");
     }
     expect(calls.some(({ sql }) => sql.includes("ARRAY[1,2]"))).toBe(false);
+  });
+  // [EXP-X02-R3] Why: retain all six F1-R2 public-provider forms and deeper
+  // comment-aware layers. Rejected: lexical acceptance alone as provider coverage.
+  it.each(
+    ["ANY", "SOME", "ALL"].flatMap((quantifier) =>
+      ["/**/", " /* subquery */ "].map((gap) => `${quantifier}${gap}`),
+    ),
+  )("admits balanced query layers after %s", async (prefix) => {
+    for (const operand of ["((SELECT 1))", "(( /* layer */ (VALUES (1))))"]) {
+      const { client, calls } = fixture();
+      const sql = `SELECT 1 AS count WHERE 1 = ${prefix}${operand}`;
+      const answer = await Effect.runPromise(
+        makeXtdbNativeQueries(client, scope).selectSql(contract, { owner: "o" }, () => sql),
+      );
+      expect(answer.rows).toEqual([{ count: integer("9223372036854775807") }]);
+      expect(calls.some((call) => call.sql.includes(sql))).toBe(true);
+    }
   });
   it.each([
     "SELECT ALL 1",
