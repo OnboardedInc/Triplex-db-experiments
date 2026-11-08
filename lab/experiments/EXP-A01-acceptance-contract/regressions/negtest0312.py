@@ -386,6 +386,8 @@ tests.update({'Q72a literal weakened': [('"The flock helper runs detached in its
  'Q86 isolation prematurely in force': [('"inForce": False', '"inForce": True')],
  'Q87 tests reduced': [('"minimumTests": 108', '"minimumTests": 107')],
  'Q87 weakening assertions allowed': [('"weakenAssertions": False', '"weakenAssertions": True')]})
+# [EXP-A01-0312] Why: Q86e supersedes Q61a's mutable-ref lookup; mutate the operative field rather than its overwritten history. Rejected: counting the old no-op as a semantic defect or dropping its control.
+tests["Q61a source"] = T(("never --authority-ref main (Q86e supersedes Q61a lookup)", "from the claimed commit (Q61a)"))
 run, caught, missed, retired = 0, 0, [], []
 for name, pairs in tests.items():
     if any(src.count(a) < 1 for a, _ in pairs):
