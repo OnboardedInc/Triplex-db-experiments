@@ -1,0 +1,3 @@
+{"field":"transition","value":"QT2-LOGGED"}
+{"field":"t","value":30}
+{"field":"durableEvidenceObject","value":{"readbackOperationId":"command-a","readbackPosition":7,"record":{"facts":{"commitRecord":{"absences":[{"attribute":"status","entity":"subject-a","value":"pending"}],"contents":{"status":"approved"},"effects":[{"attribute":"status","entity":"subject-a","value":"approved"}],"operationId":"command-a","position":7,"type":"COMMIT"},"decision":"commit","durable":true,"recordType":"COMMIT"},"operationId":"command-a","position":7,"t":30,"transition":"QT2-LOGGED"},"sha256":"887903cc605a26692a061f04c290e9b50142f4329f4d97f0156135b00187a88e","tReadBack":120}}

@@ -1,0 +1,36 @@
+{
+  "start": 1794179053.405797,
+  "end": 1794179078.645568,
+  "freeBytes": 23144771584,
+  "subjectCommit": "537adf8",
+  "oracleSha256": "daeefcf312806dd045c37e19bd1d53205c085b7f1951a2ea4165d941403159ea",
+  "sourceStable": true,
+  "inputStable": true,
+  "total": 306,
+  "matched": 306,
+  "discrepancies": [],
+  "expectedChanges": [
+    {
+      "id": "CANCEL/clock-margin-positive",
+      "reason": "Independent interval model requires cadence and final-edge slack; original input unchanged.",
+      "result": {
+        "protocol": "OBS-CANCEL",
+        "qualification": "screening-only",
+        "reasons": [
+          "samples do not cover uncertain required window"
+        ],
+        "sourceStrength": "direct",
+        "thresholds": {
+          "T-DRAIN-MS": {
+            "bound": "max",
+            "kind": "observe",
+            "source": "derived from NS-P1-WRITER-WAIT-MAX-MS",
+            "unit": "ms from cancel request to the engine no longer listing the statement",
+            "value": 2000
+          }
+        },
+        "verdict": "FAIL"
+      }
+    }
+  ]
+}

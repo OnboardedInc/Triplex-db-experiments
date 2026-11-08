@@ -1,0 +1,90 @@
+{
+  "start": 1794179239.241913,
+  "end": 1794179319.347462,
+  "freeBytes": 21968683008,
+  "sourceBefore": {
+    "selfcheck.py": "154eeedc4622d5265686477787d088fdb52b58e5279a5e28eda78d1f046b3881",
+    "bundle_fixtures.py": "b9318445cb47f4a23917afb884d2a39c2d41d4f7203b471d61aca7f0e09fb32c",
+    "replay_review_round2.py": "e21a1151cbad4636d64fe9391c3cb3cc19347354faea545a3e882d51664301e9",
+    "gates.py": "c0ece061a5864e7f4236cba73f0f6ac74ea0bebca2bd67a7d233e941eb6e087c",
+    "README.md": "f0c700babb3379d441ed0491c283488d621a04cbfb042d199fcdf2c9e298c79c",
+    "gates_round3.py": "a34495d0a0554d0d57f0e834e1f1406e5c8b0375620d61061985648e8c7e0b62",
+    "fixture_normalizer.py": "886b40be26cc44a6b8078804bd80ab28016f400fe8820aa3e0e2409ccb85785e",
+    "observe.py": "daeefcf312806dd045c37e19bd1d53205c085b7f1951a2ea4165d941403159ea",
+    "test_observe.py": "dcc4f01d7b55e4691acfd40709612484377547006a5a7bb040ac7a3f9731501d",
+    "gates_round2.py": "9a5aedb4bc2cb1c8cde2b31f32919b89b38f59058ccb7a8c0cc698d094de8f99",
+    "fixtures.json": "d850aa97ec158aa319589b7148182a8a395ad40195751b1edc50cd17d00e21bf",
+    "test_round2.py": "7e39e3e6c0c2cf3ed696f2b208025d11d4d617ce09265be4fd8f41077ec371f8",
+    "test_cli.py": "c0aa0f0d7fcba3745789ab3c75943d49b2ce4862d9b117280b7f8ddf14d9ac92",
+    "test_round3.py": "6a35bb20b8fcc5de2403060205aebc94a1d618080836c595e13b0e43ae7654bd"
+  },
+  "sourceAfter": {
+    "selfcheck.py": "154eeedc4622d5265686477787d088fdb52b58e5279a5e28eda78d1f046b3881",
+    "bundle_fixtures.py": "b9318445cb47f4a23917afb884d2a39c2d41d4f7203b471d61aca7f0e09fb32c",
+    "replay_review_round2.py": "e21a1151cbad4636d64fe9391c3cb3cc19347354faea545a3e882d51664301e9",
+    "gates.py": "c0ece061a5864e7f4236cba73f0f6ac74ea0bebca2bd67a7d233e941eb6e087c",
+    "README.md": "f0c700babb3379d441ed0491c283488d621a04cbfb042d199fcdf2c9e298c79c",
+    "gates_round3.py": "a34495d0a0554d0d57f0e834e1f1406e5c8b0375620d61061985648e8c7e0b62",
+    "fixture_normalizer.py": "886b40be26cc44a6b8078804bd80ab28016f400fe8820aa3e0e2409ccb85785e",
+    "observe.py": "daeefcf312806dd045c37e19bd1d53205c085b7f1951a2ea4165d941403159ea",
+    "test_observe.py": "dcc4f01d7b55e4691acfd40709612484377547006a5a7bb040ac7a3f9731501d",
+    "gates_round2.py": "9a5aedb4bc2cb1c8cde2b31f32919b89b38f59058ccb7a8c0cc698d094de8f99",
+    "fixtures.json": "d850aa97ec158aa319589b7148182a8a395ad40195751b1edc50cd17d00e21bf",
+    "test_round2.py": "7e39e3e6c0c2cf3ed696f2b208025d11d4d617ce09265be4fd8f41077ec371f8",
+    "test_cli.py": "c0aa0f0d7fcba3745789ab3c75943d49b2ce4862d9b117280b7f8ddf14d9ac92",
+    "test_round3.py": "6a35bb20b8fcc5de2403060205aebc94a1d618080836c595e13b0e43ae7654bd"
+  },
+  "sourceStable": true,
+  "gates": [
+    {
+      "gate": "test_observe.py",
+      "code": 0,
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "-B",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/oracle/test_observe.py"
+      ]
+    },
+    {
+      "gate": "test_cli.py",
+      "code": 0,
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "-B",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/oracle/test_cli.py"
+      ]
+    },
+    {
+      "gate": "test_round2.py",
+      "code": 0,
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "-B",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/oracle/test_round2.py"
+      ]
+    },
+    {
+      "gate": "test_round3.py",
+      "code": 0,
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "-B",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/oracle/test_round3.py"
+      ]
+    },
+    {
+      "gate": "selfcheck.py",
+      "code": 0,
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "-B",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/oracle/selfcheck.py"
+      ]
+    }
+  ]
+}

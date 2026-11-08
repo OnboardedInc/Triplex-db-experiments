@@ -1,0 +1,3 @@
+{"field":"lagSamples","value":[{"lagMs":250,"t":100},{"lagMs":250,"t":1100}]}
+{"field":"events","value":[{"kind":"start","t":100},{"kind":"end","t":1100}]}
+{"field":"threshold","value":"NS-P1-WRITER-WAIT-MAX-MS"}

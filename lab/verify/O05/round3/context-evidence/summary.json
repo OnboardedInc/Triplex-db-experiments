@@ -1,0 +1,556 @@
+{
+  "start": 1794179443.910623,
+  "end": 1794179446.1336708,
+  "freeBytes": 21589680128,
+  "oracleSha256": "daeefcf312806dd045c37e19bd1d53205c085b7f1951a2ea4165d941403159ea",
+  "sourceStable": true,
+  "unrelatedObligation": {
+    "id": "G1.found.unchanged44",
+    "goals": [
+      "G1"
+    ],
+    "title": "Unchanged44 on the lane foundation",
+    "statement": "The unchanged 44-case shared conformance suite (CS-U44) passes against the lane engine's Triples foundation in current and reopened form: 44 named cases per mode, zero skipped.",
+    "lanes": [
+      "xtdb-xtql",
+      "xtdb-sql",
+      "qlever-sparql"
+    ],
+    "receiptScope": "engine",
+    "cases": [
+      {
+        "set": "CS-U44",
+        "select": [
+          "all"
+        ]
+      }
+    ],
+    "oracles": [
+      "O-TESTKIT"
+    ],
+    "entrypoints": [
+      "EP-TRIPLES"
+    ],
+    "profiles": [
+      "P-TINY"
+    ],
+    "closure": {
+      "rules": [
+        "CR-PASS-ALL"
+      ],
+      "modes": [
+        "current",
+        "reopen"
+      ],
+      "params": {
+        "gates": []
+      }
+    },
+    "thresholds": [],
+    "mutationControls": [],
+    "contracts": [],
+    "sources": [
+      "wiki/goals.md:20-23",
+      "lab/research/R4-codebase-harness-map.md 5.3"
+    ],
+    "grounding": "grounded",
+    "notes": null,
+    "layer": "source",
+    "verifierMode": "rerun",
+    "definitionSha256": "ca4bc28547d905ddb9ae7e30b1310665d8b74501575ff69d4096b6ed140d2415",
+    "status": {
+      "xtdb-xtql": "OPEN",
+      "xtdb-sql": "OPEN",
+      "qlever-sparql": "OPEN"
+    },
+    "needsNewOracle": []
+  },
+  "total": 14,
+  "matched": 1,
+  "results": [
+    {
+      "id": "CANCEL/obligation-does-not-use-O-OBS",
+      "expected": "REJECT",
+      "code": 0,
+      "result": {
+        "protocol": "OBS-CANCEL",
+        "qualification": "screening-only",
+        "reasons": [],
+        "sourceStrength": "direct",
+        "thresholds": {
+          "T-DRAIN-MS": {
+            "bound": "max",
+            "kind": "observe",
+            "source": "derived from NS-P1-WRITER-WAIT-MAX-MS",
+            "unit": "ms from cancel request to the engine no longer listing the statement",
+            "value": 2000
+          }
+        },
+        "verdict": "PASS"
+      },
+      "ok": false,
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "-B",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/oracle/observe.py",
+        "check",
+        "OBS-CANCEL",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/CANCEL/evidence.json",
+        "--contract",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/obligations.json",
+        "--context",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/CANCEL/context.json",
+        "--bundle",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/CANCEL/bundle",
+        "--key-file",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/CANCEL/run.key"
+      ]
+    },
+    {
+      "id": "PREABORT/obligation-does-not-use-O-OBS",
+      "expected": "REJECT",
+      "code": 0,
+      "result": {
+        "protocol": "OBS-PREABORT",
+        "qualification": "screening-only",
+        "reasons": [],
+        "sourceStrength": "direct",
+        "thresholds": {},
+        "verdict": "PASS"
+      },
+      "ok": false,
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "-B",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/oracle/observe.py",
+        "check",
+        "OBS-PREABORT",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/PREABORT/evidence.json",
+        "--contract",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/obligations.json",
+        "--context",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/PREABORT/context.json",
+        "--bundle",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/PREABORT/bundle",
+        "--key-file",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/PREABORT/run.key"
+      ]
+    },
+    {
+      "id": "CONNECTIONS/obligation-does-not-use-O-OBS",
+      "expected": "REJECT",
+      "code": 0,
+      "result": {
+        "protocol": "OBS-CONNECTIONS",
+        "qualification": "screening-only",
+        "reasons": [],
+        "sourceStrength": "indirect",
+        "thresholds": {
+          "T-CONN-RELEASE-MS": {
+            "bound": "max",
+            "kind": "observe",
+            "source": "derived",
+            "unit": "ms after close for the engine-side connection count to return to baseline",
+            "value": 5000
+          }
+        },
+        "verdict": "PASS"
+      },
+      "ok": false,
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "-B",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/oracle/observe.py",
+        "check",
+        "OBS-CONNECTIONS",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/CONNECTIONS/evidence.json",
+        "--contract",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/obligations.json",
+        "--context",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/CONNECTIONS/context.json",
+        "--bundle",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/CONNECTIONS/bundle",
+        "--key-file",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/CONNECTIONS/run.key"
+      ]
+    },
+    {
+      "id": "SCRATCH/obligation-does-not-use-O-OBS",
+      "expected": "REJECT",
+      "code": 0,
+      "result": {
+        "protocol": "OBS-SCRATCH",
+        "qualification": "screening-only",
+        "reasons": [],
+        "sourceStrength": "direct",
+        "thresholds": {},
+        "verdict": "PASS"
+      },
+      "ok": false,
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "-B",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/oracle/observe.py",
+        "check",
+        "OBS-SCRATCH",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/SCRATCH/evidence.json",
+        "--contract",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/obligations.json",
+        "--context",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/SCRATCH/context.json",
+        "--bundle",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/SCRATCH/bundle",
+        "--key-file",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/SCRATCH/run.key"
+      ]
+    },
+    {
+      "id": "NO-MUTATION/obligation-does-not-use-O-OBS",
+      "expected": "REJECT",
+      "code": 0,
+      "result": {
+        "protocol": "OBS-NO-MUTATION",
+        "qualification": "screening-only",
+        "reasons": [],
+        "sourceStrength": "direct",
+        "thresholds": {},
+        "verdict": "PASS"
+      },
+      "ok": false,
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "-B",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/oracle/observe.py",
+        "check",
+        "OBS-NO-MUTATION",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/NO-MUTATION/evidence.json",
+        "--contract",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/obligations.json",
+        "--context",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/NO-MUTATION/context.json",
+        "--bundle",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/NO-MUTATION/bundle",
+        "--key-file",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/NO-MUTATION/run.key"
+      ]
+    },
+    {
+      "id": "RESOURCE/obligation-does-not-use-O-OBS",
+      "expected": "REJECT",
+      "code": 0,
+      "result": {
+        "protocol": "OBS-RESOURCE",
+        "qualification": "screening-only",
+        "reasons": [],
+        "sourceStrength": "indirect",
+        "thresholds": {},
+        "verdict": "PASS"
+      },
+      "ok": false,
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "-B",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/oracle/observe.py",
+        "check",
+        "OBS-RESOURCE",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/RESOURCE/evidence.json",
+        "--contract",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/obligations.json",
+        "--context",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/RESOURCE/context.json",
+        "--bundle",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/RESOURCE/bundle",
+        "--key-file",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/RESOURCE/run.key"
+      ]
+    },
+    {
+      "id": "AVAILABILITY/obligation-does-not-use-O-OBS",
+      "expected": "REJECT",
+      "code": 0,
+      "result": {
+        "protocol": "OBS-AVAILABILITY",
+        "qualification": "screening-only",
+        "reasons": [],
+        "sourceStrength": "direct",
+        "thresholds": {
+          "T-AVAIL-WINDOW-MS": {
+            "bound": "max",
+            "kind": "observe",
+            "source": "derived from NS-P1-RECOVERY-MS",
+            "unit": "ms until writes and reads succeed after a resource failure",
+            "value": 60000
+          }
+        },
+        "verdict": "PASS"
+      },
+      "ok": false,
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "-B",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/oracle/observe.py",
+        "check",
+        "OBS-AVAILABILITY",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/AVAILABILITY/evidence.json",
+        "--contract",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/obligations.json",
+        "--context",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/AVAILABILITY/context.json",
+        "--bundle",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/AVAILABILITY/bundle",
+        "--key-file",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/AVAILABILITY/run.key"
+      ]
+    },
+    {
+      "id": "SCALE-COUNT/obligation-does-not-use-O-OBS",
+      "expected": "REJECT",
+      "code": 0,
+      "result": {
+        "protocol": "OBS-SCALE-COUNT",
+        "qualification": "screening-only",
+        "reasons": [],
+        "sourceStrength": "direct",
+        "thresholds": {},
+        "verdict": "PASS"
+      },
+      "ok": false,
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "-B",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/oracle/observe.py",
+        "check",
+        "OBS-SCALE-COUNT",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/SCALE-COUNT/evidence.json",
+        "--contract",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/obligations.json",
+        "--context",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/SCALE-COUNT/context.json",
+        "--bundle",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/SCALE-COUNT/bundle",
+        "--key-file",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/SCALE-COUNT/run.key"
+      ]
+    },
+    {
+      "id": "WORK/obligation-does-not-use-O-OBS",
+      "expected": "REJECT",
+      "code": 2,
+      "result": {
+        "protocol": "OBS-WORK",
+        "qualification": "screening-only",
+        "reasons": [
+          "CONTEXT-CONTRADICTION: obligation does not select one OBS-WORK witness"
+        ],
+        "sourceStrength": null,
+        "thresholds": {},
+        "verdict": "REFUSED"
+      },
+      "ok": true,
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "-B",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/oracle/observe.py",
+        "check",
+        "OBS-WORK",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/WORK/evidence.json",
+        "--contract",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/obligations.json",
+        "--context",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/WORK/context.json",
+        "--bundle",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/WORK/bundle",
+        "--key-file",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/WORK/run.key"
+      ]
+    },
+    {
+      "id": "MAINTENANCE/obligation-does-not-use-O-OBS",
+      "expected": "REJECT",
+      "code": 0,
+      "result": {
+        "protocol": "OBS-MAINTENANCE",
+        "qualification": "screening-only",
+        "reasons": [],
+        "sourceStrength": "direct",
+        "thresholds": {
+          "NS-P3-LAG-P99-MS": {
+            "bound": "max",
+            "kind": "ns",
+            "source": "lab/TARGETS.md section 1 P3; TARGETS 1.1 P3 items 1 and 4",
+            "unit": "ms p99 from commit time (the source's publication instant on the shared host monotonic clock) to the consumer's single durable write of the affected-subject set and its checkpoint, 256 readers running",
+            "value": 250
+          }
+        },
+        "verdict": "PASS"
+      },
+      "ok": false,
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "-B",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/oracle/observe.py",
+        "check",
+        "OBS-MAINTENANCE",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/MAINTENANCE/evidence.json",
+        "--contract",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/obligations.json",
+        "--context",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/MAINTENANCE/context.json",
+        "--bundle",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/MAINTENANCE/bundle",
+        "--key-file",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/MAINTENANCE/run.key"
+      ]
+    },
+    {
+      "id": "ERASURE-SCAN/obligation-does-not-use-O-OBS",
+      "expected": "REJECT",
+      "code": 0,
+      "result": {
+        "protocol": "OBS-ERASURE-SCAN",
+        "qualification": "screening-only",
+        "reasons": [],
+        "sourceStrength": "indirect",
+        "thresholds": {},
+        "verdict": "PASS"
+      },
+      "ok": false,
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "-B",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/oracle/observe.py",
+        "check",
+        "OBS-ERASURE-SCAN",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/ERASURE-SCAN/evidence.json",
+        "--contract",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/obligations.json",
+        "--context",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/ERASURE-SCAN/context.json",
+        "--bundle",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/ERASURE-SCAN/bundle",
+        "--key-file",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/ERASURE-SCAN/run.key"
+      ]
+    },
+    {
+      "id": "WATERMARK/obligation-does-not-use-O-OBS",
+      "expected": "REJECT",
+      "code": 0,
+      "result": {
+        "protocol": "OBS-WATERMARK",
+        "qualification": "screening-only",
+        "reasons": [],
+        "sourceStrength": "indirect",
+        "thresholds": {
+          "T-WATERMARK-WAIT-MS": {
+            "bound": "max",
+            "kind": "observe",
+            "source": "RULINGS Q31d; lab/TARGETS.md 4.1 item 5",
+            "unit": "ms a read may wait for an eligible index before routing to a deadline-aware fallback; the fallback latency counts in the read's own latency",
+            "value": 10
+          }
+        },
+        "verdict": "PASS"
+      },
+      "ok": false,
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "-B",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/oracle/observe.py",
+        "check",
+        "OBS-WATERMARK",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/WATERMARK/evidence.json",
+        "--contract",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/obligations.json",
+        "--context",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/WATERMARK/context.json",
+        "--bundle",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/WATERMARK/bundle",
+        "--key-file",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/WATERMARK/run.key"
+      ]
+    },
+    {
+      "id": "ACK-ORDER/obligation-does-not-use-O-OBS",
+      "expected": "REJECT",
+      "code": 0,
+      "result": {
+        "protocol": "OBS-ACK-ORDER",
+        "qualification": "screening-only",
+        "reasons": [],
+        "sourceStrength": "direct",
+        "thresholds": {
+          "T-WATERMARK-WAIT-MS": {
+            "bound": "max",
+            "kind": "observe",
+            "source": "RULINGS Q31d; lab/TARGETS.md 4.1 item 5",
+            "unit": "ms a read may wait for an eligible index before routing to a deadline-aware fallback; the fallback latency counts in the read's own latency",
+            "value": 10
+          }
+        },
+        "verdict": "PASS"
+      },
+      "ok": false,
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "-B",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/oracle/observe.py",
+        "check",
+        "OBS-ACK-ORDER",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/ACK-ORDER/evidence.json",
+        "--contract",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/obligations.json",
+        "--context",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/ACK-ORDER/context.json",
+        "--bundle",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/ACK-ORDER/bundle",
+        "--key-file",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/ACK-ORDER/run.key"
+      ]
+    },
+    {
+      "id": "FAULT-TRANSITIONS/obligation-does-not-use-O-OBS",
+      "expected": "REJECT",
+      "code": 0,
+      "result": {
+        "protocol": "OBS-FAULT-TRANSITIONS",
+        "qualification": "screening-only",
+        "reasons": [],
+        "sourceStrength": "direct",
+        "thresholds": {},
+        "verdict": "PASS"
+      },
+      "ok": false,
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "-B",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/oracle/observe.py",
+        "check",
+        "OBS-FAULT-TRANSITIONS",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/FAULT-TRANSITIONS/evidence.json",
+        "--contract",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/obligations.json",
+        "--context",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/FAULT-TRANSITIONS/context.json",
+        "--bundle",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/FAULT-TRANSITIONS/bundle",
+        "--key-file",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/context-evidence/FAULT-TRANSITIONS/run.key"
+      ]
+    }
+  ]
+}

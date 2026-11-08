@@ -1,0 +1,1 @@
+{"protocol":"OBS-FAULT-TRANSITIONS","qualification":"screening-only","reasons":["post-crash readback identity mismatch"],"sourceStrength":"direct","thresholds":{},"verdict":"FAIL"}

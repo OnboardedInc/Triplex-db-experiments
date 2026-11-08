@@ -1,0 +1,1 @@
+{"protocol":"OBS-CANCEL","qualification":"screening-only","reasons":["same-connection successful reuse missing"],"sourceStrength":"direct","thresholds":{"T-DRAIN-MS":{"bound":"max","kind":"observe","source":"derived from NS-P1-WRITER-WAIT-MAX-MS","unit":"ms from cancel request to the engine no longer listing the statement","value":2000}},"verdict":"FAIL"}

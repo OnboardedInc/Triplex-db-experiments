@@ -1,0 +1,28 @@
+{
+  "start": 1794179188.748849,
+  "end": 1794179238.957601,
+  "freeBytes": 22130216960,
+  "sourceBefore": {
+    "lab/acceptance/oracle/observe.py": "daeefcf312806dd045c37e19bd1d53205c085b7f1951a2ea4165d941403159ea",
+    "lab/acceptance/obligations.json": "4d52bf6ef978f830f871b4a4e1f4234c21d5253a2af42d3d8057b10e7998b03f",
+    "lab/verify/O05/round3/review.py": "3740287deeb69fd0a7cd8cb939b28f8c3cd2d844d3851c8a002561169a4664f1",
+    "lab/verify/O05/round2/normalize.py": "74a98782a5323efd899f0204e8b58d82a2eca6f64b89918a5556ebe9c8409112",
+    "lab/verify/O05/round2/review_round2.py": "ff6409c3ee88e8bb9de7623d5741e708a64d2439f79f8542e6af2eb40875fb62"
+  },
+  "sourceAfter": {
+    "lab/acceptance/oracle/observe.py": "daeefcf312806dd045c37e19bd1d53205c085b7f1951a2ea4165d941403159ea",
+    "lab/acceptance/obligations.json": "4d52bf6ef978f830f871b4a4e1f4234c21d5253a2af42d3d8057b10e7998b03f",
+    "lab/verify/O05/round3/review.py": "3740287deeb69fd0a7cd8cb939b28f8c3cd2d844d3851c8a002561169a4664f1",
+    "lab/verify/O05/round2/normalize.py": "74a98782a5323efd899f0204e8b58d82a2eca6f64b89918a5556ebe9c8409112",
+    "lab/verify/O05/round2/review_round2.py": "ff6409c3ee88e8bb9de7623d5741e708a64d2439f79f8542e6af2eb40875fb62"
+  },
+  "sourceStable": true,
+  "cliTotal": 462,
+  "cliMatched": 462,
+  "intendedGuardMatches": 462,
+  "discrepancies": [],
+  "selectorTotal": 15700,
+  "selectorMatched": 15700,
+  "primitiveTotal": 50,
+  "primitiveMatched": 50
+}

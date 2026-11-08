@@ -1,0 +1,7 @@
+{"field":"reuseQueryId","value":"query-b"}
+{"field":"reuseResult","value":{"connectionId":"conn-a","outcome":"success","queryId":"query-b","t":2200}}
+{"field":"tCallerSettled","value":110}
+{"field":"tCancelRequested","value":102}
+{"field":"tDrained","value":2100}
+{"field":"tReuseOk","value":2200}
+{"field":"transportAck","value":{"kind":"cancel-ack","t":120}}

@@ -1,0 +1,1 @@
+{"protocol":"OBS-CANCEL","qualification":"screening-only","reasons":["UNTRUSTED-BUNDLE: raw chunk mismatch"],"sourceStrength":null,"thresholds":{},"verdict":"REFUSED"}

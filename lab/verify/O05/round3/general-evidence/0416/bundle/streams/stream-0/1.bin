@@ -1,0 +1,7 @@
+{"field":"transportAck","value":{"kind":"cancel-ack","t":20}}
+{"field":"tDrained","value":2010}
+{"field":"engineActiveSamples","value":[{"activeQueryIds":[],"t":0},{"activeQueryIds":[],"t":500},{"activeQueryIds":[],"t":1000},{"activeQueryIds":[],"t":1500},{"activeQueryIds":[],"t":2000},{"activeQueryIds":[],"t":2500},{"activeQueryIds":[],"t":3000},{"activeQueryIds":[],"t":3500},{"activeQueryIds":[],"t":4000},{"activeQueryIds":[],"t":4500},{"activeQueryIds":[],"t":5000},{"activeQueryIds":[],"t":5500},{"activeQueryIds":[],"t":6000},{"activeQueryIds":[],"t":6500},{"activeQueryIds":[],"t":7000},{"activeQueryIds":[],"t":7500},{"activeQueryIds":[],"t":8000}]}
+{"field":"reuseQueryId","value":"query-b"}
+{"field":"reuseConnectionId","value":"conn-a"}
+{"field":"tReuseOk","value":2100}
+{"field":"reuseResult","value":{"connectionId":"conn-a","outcome":"success","queryId":"query-b","t":2100}}

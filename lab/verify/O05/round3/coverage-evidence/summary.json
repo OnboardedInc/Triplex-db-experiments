@@ -1,0 +1,180 @@
+{
+  "start": 1794179394.896736,
+  "end": 1794179395.4748642,
+  "freeBytes": 21675118592,
+  "original": "lab/verify/O05/round2/supplement-evidence/018/evidence.json",
+  "originalSha256": "bd4313fd8e90f6f827140b500034c1de251e01bfecdadeba8397156d1582ba57",
+  "inputStable": true,
+  "sourceStable": true,
+  "oracleSha256": "daeefcf312806dd045c37e19bd1d53205c085b7f1951a2ea4165d941403159ea",
+  "total": 4,
+  "matched": 4,
+  "results": [
+    {
+      "id": "original",
+      "expected": "REJECT",
+      "code": 1,
+      "result": {
+        "protocol": "OBS-CANCEL",
+        "qualification": "screening-only",
+        "reasons": [
+          "samples do not cover uncertain required window"
+        ],
+        "sourceStrength": "direct",
+        "thresholds": {
+          "T-DRAIN-MS": {
+            "bound": "max",
+            "kind": "observe",
+            "source": "derived from NS-P1-WRITER-WAIT-MAX-MS",
+            "unit": "ms from cancel request to the engine no longer listing the statement",
+            "value": 2000
+          }
+        },
+        "verdict": "FAIL"
+      },
+      "ok": true,
+      "intendedGuard": true,
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "-B",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/oracle/observe.py",
+        "check",
+        "OBS-CANCEL",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/coverage-evidence/original/evidence.json",
+        "--contract",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/obligations.json",
+        "--context",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/coverage-evidence/original/context.json",
+        "--bundle",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/coverage-evidence/original/bundle",
+        "--key-file",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/coverage-evidence/original/run.key"
+      ]
+    },
+    {
+      "id": "cadence-only",
+      "expected": "REJECT",
+      "code": 1,
+      "result": {
+        "protocol": "OBS-CANCEL",
+        "qualification": "screening-only",
+        "reasons": [
+          "samples do not cover uncertain required window"
+        ],
+        "sourceStrength": "direct",
+        "thresholds": {
+          "T-DRAIN-MS": {
+            "bound": "max",
+            "kind": "observe",
+            "source": "derived from NS-P1-WRITER-WAIT-MAX-MS",
+            "unit": "ms from cancel request to the engine no longer listing the statement",
+            "value": 2000
+          }
+        },
+        "verdict": "FAIL"
+      },
+      "ok": true,
+      "intendedGuard": true,
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "-B",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/oracle/observe.py",
+        "check",
+        "OBS-CANCEL",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/coverage-evidence/cadence-only/evidence.json",
+        "--contract",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/obligations.json",
+        "--context",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/coverage-evidence/cadence-only/context.json",
+        "--bundle",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/coverage-evidence/cadence-only/bundle",
+        "--key-file",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/coverage-evidence/cadence-only/run.key"
+      ]
+    },
+    {
+      "id": "last-edge-only",
+      "expected": "REJECT",
+      "code": 1,
+      "result": {
+        "protocol": "OBS-CANCEL",
+        "qualification": "screening-only",
+        "reasons": [
+          "uncertain sample coverage gap"
+        ],
+        "sourceStrength": "direct",
+        "thresholds": {
+          "T-DRAIN-MS": {
+            "bound": "max",
+            "kind": "observe",
+            "source": "derived from NS-P1-WRITER-WAIT-MAX-MS",
+            "unit": "ms from cancel request to the engine no longer listing the statement",
+            "value": 2000
+          }
+        },
+        "verdict": "FAIL"
+      },
+      "ok": true,
+      "intendedGuard": true,
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "-B",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/oracle/observe.py",
+        "check",
+        "OBS-CANCEL",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/coverage-evidence/last-edge-only/evidence.json",
+        "--contract",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/obligations.json",
+        "--context",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/coverage-evidence/last-edge-only/context.json",
+        "--bundle",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/coverage-evidence/last-edge-only/bundle",
+        "--key-file",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/coverage-evidence/last-edge-only/run.key"
+      ]
+    },
+    {
+      "id": "both",
+      "expected": "PASS",
+      "code": 0,
+      "result": {
+        "protocol": "OBS-CANCEL",
+        "qualification": "screening-only",
+        "reasons": [],
+        "sourceStrength": "direct",
+        "thresholds": {
+          "T-DRAIN-MS": {
+            "bound": "max",
+            "kind": "observe",
+            "source": "derived from NS-P1-WRITER-WAIT-MAX-MS",
+            "unit": "ms from cancel request to the engine no longer listing the statement",
+            "value": 2000
+          }
+        },
+        "verdict": "PASS"
+      },
+      "ok": true,
+      "intendedGuard": true,
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "-B",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/oracle/observe.py",
+        "check",
+        "OBS-CANCEL",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/coverage-evidence/both/evidence.json",
+        "--contract",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/acceptance/obligations.json",
+        "--context",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/coverage-evidence/both/context.json",
+        "--bundle",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/coverage-evidence/both/bundle",
+        "--key-file",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round3/coverage-evidence/both/run.key"
+      ]
+    }
+  ]
+}

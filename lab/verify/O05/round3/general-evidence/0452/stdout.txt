@@ -1,0 +1,1 @@
+{"protocol":"OBS-ERASURE-SCAN","qualification":"screening-only","reasons":["wrong destroyed subject key or destruction after scan"],"sourceStrength":"indirect","thresholds":{},"verdict":"FAIL"}

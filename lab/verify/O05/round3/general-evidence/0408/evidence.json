@@ -1,0 +1,1 @@
+{"events":[],"probes":[{"kind":"read","outcome":"success","t":200},{"kind":"write","outcome":"success","t":200}],"source":{"kind":"EI-metric/xtdb/X1","records":{"events":[],"probes":[{"kind":"read","outcome":"success","t":200},{"kind":"write","outcome":"success","t":200}],"tFailure":20},"streamRefs":["stream-0"]},"tFailure":20}

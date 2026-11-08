@@ -1,0 +1,1 @@
+{"protocol":"OBS-MAINTENANCE","qualification":"screening-only","reasons":["samples do not cover uncertain required window"],"sourceStrength":"direct","thresholds":{},"verdict":"FAIL"}

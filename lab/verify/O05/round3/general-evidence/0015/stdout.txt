@@ -1,0 +1,1 @@
+{"protocol":"OBS-FAULT-TRANSITIONS","qualification":"screening-only","reasons":["readback facts differ from case expectations"],"sourceStrength":"direct","thresholds":{},"verdict":"FAIL"}

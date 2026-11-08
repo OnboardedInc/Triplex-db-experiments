@@ -1,0 +1,1 @@
+{"protocol":"OBS-PREABORT","qualification":"screening-only","reasons":["empty coverage window"],"sourceStrength":"direct","thresholds":{},"verdict":"FAIL"}

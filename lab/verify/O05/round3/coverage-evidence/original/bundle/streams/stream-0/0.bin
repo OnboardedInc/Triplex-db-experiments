@@ -1,0 +1,6 @@
+{"field":"callerError","value":"E-CANCELLED"}
+{"field":"connectionId","value":"conn-a"}
+{"field":"engineActiveSamples","value":[{"activeQueryIds":["query-a"],"t":100},{"activeQueryIds":["query-a"],"t":1100},{"activeQueryIds":[],"t":2100},{"activeQueryIds":[],"t":3100},{"activeQueryIds":[],"t":4100},{"activeQueryIds":[],"t":5100},{"activeQueryIds":[],"t":6100},{"activeQueryIds":[],"t":7100}]}
+{"field":"expectedError","value":"E-CANCELLED"}
+{"field":"requestId","value":"query-a"}
+{"field":"reuseConnectionId","value":"conn-a"}

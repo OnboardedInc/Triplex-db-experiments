@@ -1,0 +1,3 @@
+{"field":"transition","value":"XT2-ENGINE-COMMITTED"}
+{"field":"t","value":30}
+{"field":"durableEvidenceObject","value":{"readbackOperationId":"command-a","readbackPosition":7,"record":{"facts":{"committed":true,"marker":{"contents":{"status":"wrong"},"operationId":"command-a","position":7},"operationMarkerPresent":true,"transaction":{"contents":{"status":"approved"},"operationId":"command-a","position":7}},"operationId":"command-a","position":7,"t":30,"transition":"XT2-ENGINE-COMMITTED"},"sha256":"c48020b34823d88b54fec42b9ffe22df5181e08f9214f74f2b9f9aa84311257f","tReadBack":120}}

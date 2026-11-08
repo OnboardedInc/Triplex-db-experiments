@@ -1,0 +1,3 @@
+{"field":"lagSamples","value":[{"lagMs":200,"t":0},{"lagMs":200,"t":500},{"lagMs":200,"t":1000}]}
+{"field":"events","value":[{"kind":"start","t":10},{"kind":"end","t":990}]}
+{"field":"threshold","value":"NS-P3-LAG-P99-MS"}

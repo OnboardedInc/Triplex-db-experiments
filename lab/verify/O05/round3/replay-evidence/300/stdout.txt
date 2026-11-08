@@ -1,0 +1,1 @@
+{"protocol":"OBS-RESOURCE","qualification":"screening-only","reasons":["obligation differs from evaluator case"],"sourceStrength":"indirect","thresholds":{},"verdict":"FAIL"}

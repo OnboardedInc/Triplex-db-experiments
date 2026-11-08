@@ -1,0 +1,1 @@
+{"protocol":"OBS-NO-MUTATION","qualification":"screening-only","reasons":["normalized records differ from authenticated raw bytes"],"sourceStrength":null,"thresholds":{},"verdict":"FAIL"}

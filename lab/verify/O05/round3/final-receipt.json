@@ -1,0 +1,20 @@
+{
+  "reviewedCommit": "537adf8cc3d6ff28a69940649febc3c05b566ede",
+  "mergeCommit": "f98dd459403365b8d6005aced0ce8da483c773ef",
+  "totalCli": 786,
+  "matched": 773,
+  "unexpectedPass": 13,
+  "verdictCounts": {
+    "REFUSED": 544,
+    "PASS": 70,
+    "FAIL": 172
+  },
+  "reportSha256": "eb0331e0db0e7f187b8c100a0246c78c1ad391989e566dfd1cb94cd22fb60e37",
+  "summaryHashes": {
+    "replay": "b6bf9443a65582c4b2e9cd2304236da33374bade7eb7de1089412c677511395d",
+    "general": "3e03d30e25f75ddf239e45677d6466002054f375e2196bbc20a1443c63e7013a",
+    "coverage": "00bd3d63547fa3a1c09d13939b0b9e89395ebf6004335b78eb0766c00f27c66f",
+    "context": "555963c121060d92b581f434dee6b0f8f22a633959f97eb60e6730dbeeb8e1e9",
+    "gate": "533fb51b0c3ac12fb621be6660b531319ecdf9fd7772b33668dd3fdd3bb030fb"
+  }
+}

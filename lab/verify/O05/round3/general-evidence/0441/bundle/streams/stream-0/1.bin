@@ -1,0 +1,2 @@
+{"field":"events","value":[{"kind":"manual-restart","t":19}]}
+{"field":"probes","value":[{"kind":"read","outcome":"success","t":200},{"kind":"write","outcome":"success","t":200}]}

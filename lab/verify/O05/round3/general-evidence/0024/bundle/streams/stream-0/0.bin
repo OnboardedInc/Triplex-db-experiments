@@ -1,0 +1,3 @@
+{"field":"transition","value":"QT6-ACKED"}
+{"field":"t","value":30}
+{"field":"durableEvidenceObject","value":{"readbackOperationId":"command-a","readbackPosition":7,"record":{"facts":{"callerOutcome":"success","receipt":{"contents":{"status":"wrong"},"operationId":"command-a","position":7}},"operationId":"command-a","position":7,"t":30,"transition":"QT6-ACKED"},"sha256":"eebe7ce34f5c7892cffb6638b94116d2e6c0e05fff059f24e27b0665adde7ea9","tReadBack":120}}

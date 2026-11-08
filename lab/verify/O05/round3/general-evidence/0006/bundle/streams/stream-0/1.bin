@@ -1,0 +1,3 @@
+{"field":"transitions","value":[{"durableEvidenceObject":{"readbackOperationId":"command-a","readbackPosition":7,"record":{"facts":{"accepted":true,"request":{"contents":{"status":"approved"},"operationId":"command-a","position":7},"validation":{"contents":{"status":"approved"},"operationId":"command-a","position":7}},"operationId":"command-a","position":7,"t":30,"transition":"QT1-VALIDATED"},"sha256":"532eeb7c7ffa58d207409e8db765aa95a01a666c2b8aeb7906cac0b44c7c90ef","tReadBack":120},"t":30,"transition":"QT1-VALIDATED"}]}
+{"field":"tCrash","value":100}
+{"field":"variant","value":"log-source"}
