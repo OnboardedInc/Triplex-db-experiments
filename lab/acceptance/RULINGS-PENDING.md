@@ -33,3 +33,13 @@ These move into RULINGS.md when the contract version that compiles them is built
 | Q64d Q63 | Compile Q63b (P1 through broker-fed replicas) into COMPOSITION.experimentDirections and Q63d (parameterised SQL for seeders and appliers) as a rule in 0.3.10. | Q63 |
 | Q64e slots.json | Keep it read but not hashed; an image change still fails generation until the pin moves in a contract version. | Q61i |
 | Q64f pending sub-ids | The orchestrator moves sub-id rows together with their compiled section; 0.3.10 adds a check that a pending sub-id never also appears as a RULINGS.md row, while still allowing a pending sub-id (Q51b) under a compiled base. | Q47d |
+
+## Q65: EXP-E01 on contract 0.3.9
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q65a O-CONTRACT runner | O-CONTRACT gets an `oracleRunners` entry run from the authority's files (Q59e): a reference-model entry point in build_contract.py that answers one composition-identity case as canonical JSON. Without it G10.composition.identity-bound, a prerequisite of every claim, can never run. | Q61c |
+| Q65b buildSpecSha256 | sha256 of the canonical JSON of {format, argv, outputs, run}. | Q61f |
+| Q65c case-result/2 selection | A case reached by several select entries records the first select entry in contract order. | Q61e |
+| Q65d build-manifest/2 packages | "Each built package" is the parent directory of each `dist/` output. | Q61f |
+| Q65e build spec | E01's proposal (lab/config/build.json on exp/E01-claim-evaluator: `pnpm install --offline --frozen-lockfile --store-dir <repo>/.pnpm-store` then the five package builds in dependency order; outputs the five dist/ directories; run `node packages/qualification/workloads/obl-case.ts --case {case} --mode {mode}`) is pinned in 0.3.10 once `obl-case.ts` exists. | Q64a |
+| Q65f executing OBL gate | The missing piece for any QUALIFIED claim is an executing `gate.mjs OBL` with `obl-case.ts`, a fault injector that writes fault-witness/1 records, and the PAIR-0 paired-rounds runner from EXP-M01. One experiment (EXP-G03) builds it after EXP-M01 lands. | Q55a |
