@@ -1,0 +1,28 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 39561 "CX-VX02-shared-XTQL-r2", pid 62024 "CX-E01-R2-acceptance"
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 39561 "CX-VX02-shared-XTQL-r2", pid 62671 "CX-E01-R2-final-reference"
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 39561 "CX-VX02-shared-XTQL-r2", pid 66560 "CX-P2Q-R2-broker-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 39561 "CX-VX02-shared-XTQL-r2", pid 66560 "CX-P2Q-R2-broker-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 39561 "CX-VX02-shared-XTQL-r2", pid 66560 "CX-P2Q-R2-broker-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 82568 "CX-OREPLAY-049-core", pid 3529 "CX-VO05-review"
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 3529 "CX-VO05-review"
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 3529 "CX-VO05-review"
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 3529 "CX-VO05-review"
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 3529 "CX-VO05-review"
+[lab] heavy: waiting for one of 4 slots; held by pid 6260 "CX-C8-R2-light-checks", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 3529 "CX-VO05-review"
+[lab] heavy: waiting for one of 4 slots; held by pid 6260 "CX-C8-R2-light-checks", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 6062 "CX-VE01-2-prior"
+[lab] heavy: waiting for one of 4 slots; held by pid 6260 "CX-C8-R2-light-checks", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 6062 "CX-VE01-2-prior"
+[lab] heavy: waiting for one of 4 slots; held by pid 6260 "CX-C8-R2-light-checks", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 6062 "CX-VE01-2-prior"
+[lab] heavy: waiting for one of 4 slots; held by pid 6260 "CX-C8-R2-light-checks", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 12504 "CX-VJ01-checks-r3"
+[lab] heavy: waiting for one of 4 slots; held by pid 12842 "CX-VO05-final", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 12504 "CX-VJ01-checks-r3"
+[lab] heavy: waiting for one of 4 slots; held by pid 12842 "CX-VO05-final", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 12504 "CX-VJ01-checks-r3"
+[lab] heavy: waiting for one of 4 slots; held by pid 12842 "CX-VO05-final", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 12504 "CX-VJ01-checks-r3"
+[lab] heavy: waiting for one of 4 slots; held by pid 12842 "CX-VO05-final", pid 99699 "CX-C8-R2-offline", pid 73700 "CX-K01-retry", pid 12504 "CX-VJ01-checks-r3"
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16
+
+
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+   Start at  16:36:47
+   Duration  704ms (tests 35%, transform 33%, import 32%)
+
