@@ -1,0 +1,12 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../../vitest.workspace-aliases" without a file extension (lab/verify/P2Q/vitest.config.ts:5:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/sql01/lab/verify/P2Q
+
+
+ Test Files  6 passed (6)
+      Tests  23 passed (23)
+   Start at  17:38:10
+   Duration  244.93s (tests 99%)
+

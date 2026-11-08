@@ -1,0 +1,17 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 5260 "CX-VP2Q-4-package-live", pid 2977 "CX-VP2Q-4-live-http", pid 3055 "CX-VP2Q-4-live-prior", pid 9405 "DA01-peer-selftest"
+Scope: all 23 workspace projects
+Lockfile is up to date, resolution step is skipped
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Packages: +161
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 161, reused 159, downloaded 0, added 161, done
+
+╭ Warning ─────────────────────────────────────────────────────────────────────╮
+│                                                                              │
+│   Ignored build scripts: cpu-features, foundationdb, protobufjs, ssh2.       │
+│   Run "pnpm approve-builds" to pick which dependencies should be allowed     │
+│   to run scripts.                                                            │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+Done in 5.5s using pnpm v10.11.0

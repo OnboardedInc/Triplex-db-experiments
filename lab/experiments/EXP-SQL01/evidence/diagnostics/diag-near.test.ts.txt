@@ -1,0 +1,21 @@
+import {it,expect} from 'vitest';
+import {Effect} from 'effect';
+import fs from 'node:fs';
+import path from 'node:path';
+import {openRt,ops,at} from '/Users/sam/projects/triplex-db-2/.claude/worktrees/sql01/lab/verify/P2Q/tests/harness.ts';
+it('repeats the hot-subject case with retained diagnostic rows',async()=>{
+ const records=[];
+ for(let n=0;n<50;n++){
+  const rt=await openRt(path.join(import.meta.dirname,'near-data-'+n),'sql01-hot-'+n);
+  try{
+   await rt.run(Effect.all(Array.from({length:32},(_,i)=>rt.triples.transact(ops('distinct-'+i,5,'d'))),{concurrency:'unbounded'}));
+   const hot=await rt.run(Effect.all(Array.from({length:8},(_,i)=>rt.triples.transact(ops('hot',5,'h'+i))),{concurrency:'unbounded'}));
+   const positions=hot.map(r=>r.position),basis={validAt:Date.now()+1,recordedPosition:Math.max(...positions)};
+   const rows=await rt.run(rt.adapter.getByEntity('hot',basis));
+   const all=rt.broker.fromLog(0,{entities:['hot']},()=>true);
+   const rec={n,basis,positions,instants:hot.map(r=>r.instant),now:Date.now(),visible:rows.length,all:all.map(r=>({id:r.id,v:r.value_string,p:r.recorded_position,recorded:r.recorded_at,from:r.valid_from,to:r.valid_to,retracted:r.retracted_position})),head:rt.broker.head()};
+   records.push(rec);fs.writeFileSync(path.join(import.meta.dirname,'results.json'),JSON.stringify(records,null,2));
+   expect(rows.length,JSON.stringify(rec)).toBe(40);
+  }finally{await rt.dispose();await rt.broker.close();}
+ }
+});

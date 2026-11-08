@@ -1,0 +1,5 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 3357 "CX-VP2Q-4-package", pid 2977 "CX-VP2Q-4-live-http", pid 3055 "CX-VP2Q-4-live-prior", pid 3323 "CX-VP2Q-4-fuzz60"
+[lab] heavy: waiting for one of 4 slots; held by pid 4561 "CX-VO05-2-independent", pid 2977 "CX-VP2Q-4-live-http", pid 3055 "CX-VP2Q-4-live-prior", pid 6060 "DA01-image-build"
+[ERROR] Unknown option: 'store-dir'
+Did you mean 'stream'? Use "--config.unknown=value" to force an unknown option.
+For help, run: pnpm help run

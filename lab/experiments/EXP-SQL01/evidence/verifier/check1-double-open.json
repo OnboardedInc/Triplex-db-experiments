@@ -1,0 +1,8 @@
+{
+  "second": "refused: Error: Broker log /Users/sam/projects/triplex-db-2/.claude/worktrees/sql01/runs/broker/V-P2Q/c1-lock-5b69f866-2499-4549-a5a0-1d06f110b8ed is already open in thi",
+  "viaLink": "refused: Error: Broker log /Users/sam/projects/triplex-db-2/.claude/worktrees/sql01/runs/broker/V-P2Q/c1-lock-5b69f866-2499-4549-a5a0-1d06f110b8ed is already open in thi",
+  "survived": {
+    "a1": true,
+    "a2": true
+  }
+}

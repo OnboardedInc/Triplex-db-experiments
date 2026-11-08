@@ -1,0 +1,12 @@
+file:///Users/sam/projects/triplex-db-2/.claude/worktrees/sql01/packages/qlever/dist/broker/log.js:62
+				reject(new BrokerLogError(`SQLite ${op} timed out; outcome unknown`));
+				       ^
+
+BrokerLogError: SQLite init timed out; outcome unknown
+    at Timeout._onTimeout (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/sql01/packages/qlever/dist/broker/log.js:62:12)
+    at listOnTimeout (node:internal/timers:585:17)
+    at process.processTimers (node:internal/timers:521:7) {
+  _tag: 'BrokerLogError'
+}
+
+Node.js v22.23.2

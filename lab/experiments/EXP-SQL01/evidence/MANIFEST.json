@@ -1,0 +1,1049 @@
+{
+  "implementationHead": "3a53c3b891ee50d59486a0edb650dd28c3d1e1df",
+  "files": {
+    "lab/experiments/EXP-SQL01/read-write.ts": {
+      "sha256": "21090653e0584c1d52cef0e1c7503f3ebec9b84b24885b25e687d78a1f47c34b",
+      "bytes": 3812
+    },
+    "lab/experiments/EXP-SQL01/flip-wal.mjs": {
+      "sha256": "10af81ee0504a871db8eeb7161e445673158dbdb2f891f1af91f5533f280a4f8",
+      "bytes": 2235
+    },
+    "lab/experiments/EXP-SQL01/REPORT.md": {
+      "sha256": "fdf6e1189d8690d8ff49793e7ae6dae87ab17b261ce672cb45c7e2e0eadad3b1",
+      "bytes": 16880
+    },
+    "lab/experiments/EXP-SQL01/kill-writer.ts": {
+      "sha256": "989541b370d33df1ec509118f437764a86a9071305d12aef2e1ad519643b1504",
+      "bytes": 2310
+    },
+    "lab/experiments/EXP-SQL01/kill-test.mjs": {
+      "sha256": "13bc1cec9364a6d7278f00a8bb55b21edf9bfc39acf476ef12dffb19881ddd51",
+      "bytes": 2474
+    },
+    "lab/experiments/EXP-SQL01/run-gate.mjs": {
+      "sha256": "e92910c2c8a437dc78716100b63a80464716bc551f7a8b5a5bc185304920da9a",
+      "bytes": 2361
+    },
+    "lab/experiments/EXP-SQL01/evidence/typecheck-4.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "lab/experiments/EXP-SQL01/evidence/kill80.json": {
+      "sha256": "8735ae305b977aebfafc94121495e760c351dec5f0e458e678db8b74ceaec7ec",
+      "bytes": 432681
+    },
+    "lab/experiments/EXP-SQL01/evidence/unit-3.log": {
+      "sha256": "83445082198986187c0c6f23818e6f5b8c8c5edd6778ab64125b246413454471",
+      "bytes": 3452
+    },
+    "lab/experiments/EXP-SQL01/evidence/kill80.log": {
+      "sha256": "1c3add26ddf1699acf6cd401198d713638bbd83fd606cf04020e3fc802625d27",
+      "bytes": 369
+    },
+    "lab/experiments/EXP-SQL01/evidence/epoch-fixed.log": {
+      "sha256": "13349439d41e60171f29c2f93456c1ab5cdc4d584fde99c96dc5a8ce7ad18805",
+      "bytes": 598
+    },
+    "lab/experiments/EXP-SQL01/evidence/hot-exact.log": {
+      "sha256": "bf066ea8eb6fb5aa5d13f6f5fff88edc4bc36afe153de2e8fa593fad2e5318fa",
+      "bytes": 234
+    },
+    "lab/experiments/EXP-SQL01/evidence/unit-2.log": {
+      "sha256": "3d061a1e05273a7cf71d7f0f722db288cab9e9542efa3cff7c60799b1899774d",
+      "bytes": 2852
+    },
+    "lab/experiments/EXP-SQL01/evidence/flip-wal.json": {
+      "sha256": "f69ca3ae10ed1b32a2e346d3c5fa7bf81eb125c924ac496b7a927911f6ed9cf0",
+      "bytes": 1784
+    },
+    "lab/experiments/EXP-SQL01/evidence/esm-source.log": {
+      "sha256": "0f54368960035b9c1439ccfd3696ebde692647750472639383610f3e07aa72f3",
+      "bytes": 583
+    },
+    "lab/experiments/EXP-SQL01/evidence/read-write-e5f6ae9.json": {
+      "sha256": "02853f01ada493f483177eeff4126ea63bb70b61e8303624211d87cb6dc78271",
+      "bytes": 1475
+    },
+    "lab/experiments/EXP-SQL01/evidence/kill80-final.json": {
+      "sha256": "5d6bcff0eb0579e0190cfa202936f77400a33bd3f2a22b412806b988a31d60c2",
+      "bytes": 377477
+    },
+    "lab/experiments/EXP-SQL01/evidence/typecheck-2.log": {
+      "sha256": "d0273673c7ec440bddb25a878a5c544dbabc55452f612f08e85c85b786e2f49b",
+      "bytes": 21201
+    },
+    "lab/experiments/EXP-SQL01/evidence/unit-4.log": {
+      "sha256": "e8852eab83cf61c2ac6d8928d99615f01c0314b0e09f552b1a3c0985472bef0e",
+      "bytes": 613
+    },
+    "lab/experiments/EXP-SQL01/evidence/typecheck-3.log": {
+      "sha256": "423eec7edd249abe382858b53875eb0e56e8575a2f8a5dfd8330c50e581815a6",
+      "bytes": 198
+    },
+    "lab/experiments/EXP-SQL01/evidence/lint-first.log": {
+      "sha256": "7619a924354e49bb83883b901350b4bb1d91fb11b630fc291994d315b0c0151d",
+      "bytes": 91
+    },
+    "lab/experiments/EXP-SQL01/evidence/sqlite-first.log": {
+      "sha256": "c05fcf5325e100443e59cf3f517a6155850a8971d5ae090bbcad0793bb645115",
+      "bytes": 1771
+    },
+    "lab/experiments/EXP-SQL01/evidence/read-write-a358809.json": {
+      "sha256": "183c3532eda07369a401eb272b088ae4dc2e95a7b0dbbf5ba8b41549de14e77d",
+      "bytes": 1485
+    },
+    "lab/experiments/EXP-SQL01/evidence/verifier-first.log": {
+      "sha256": "39b1625bee9d2f6f4818bff0add78aacba06ae286eb1eb51e283b7c9deb960f4",
+      "bytes": 10422
+    },
+    "lab/experiments/EXP-SQL01/evidence/build-dependencies.json": {
+      "sha256": "3e1f01b900c45b2c222ce8a43f9066705b66db7a8d5b7bbf93b469c7ef77974d",
+      "bytes": 68346
+    },
+    "lab/experiments/EXP-SQL01/evidence/cleanup.json": {
+      "sha256": "2f71163543e7d913c9784f2e3aff624b410777fae3761bfd692cef4ddcbc6b86",
+      "bytes": 1084
+    },
+    "lab/experiments/EXP-SQL01/evidence/flip-wal-e5f6ae9.json": {
+      "sha256": "e4377ab9b2a8d6550503c9d3d41fb576eb8c4be8cb1e7236b1f688e410652433",
+      "bytes": 1784
+    },
+    "lab/experiments/EXP-SQL01/evidence/hot-near.log": {
+      "sha256": "077f27490f3b88474df4331d75b9ca7c7ec33eaa41cde712c963b95eb33db946",
+      "bytes": 412
+    },
+    "lab/experiments/EXP-SQL01/evidence/hot-diagnostic.log": {
+      "sha256": "f8c1b8af6f9e617b1b83a3e2adb8445aec0edde1c0f4ea2fea5f619a97a818ca",
+      "bytes": 1094
+    },
+    "lab/experiments/EXP-SQL01/evidence/read-write.json": {
+      "sha256": "3b09e817a71f58e3faeb663d296f919b986a437ba5a2ee88c2b93d31eefd8a35",
+      "bytes": 1465
+    },
+    "lab/experiments/EXP-SQL01/evidence/build-dependencies-e5f6ae9.json": {
+      "sha256": "251f7d85db198eb5c892f3f37fdfb60147246554d7eb1b06a1eedf5e2a3ed415",
+      "bytes": 68346
+    },
+    "lab/experiments/EXP-SQL01/evidence/baseline-source.json": {
+      "sha256": "89e9f5a41fc8c82ebc1e286b060e35c58990d03bf9a35634f5b58a22f8801675",
+      "bytes": 18361
+    },
+    "lab/experiments/EXP-SQL01/evidence/lint-final.log": {
+      "sha256": "b0a5149fedf6d5af69a9d75d10d497b74ba816ce1d3d690eac1870f8b6c059a3",
+      "bytes": 92
+    },
+    "lab/experiments/EXP-SQL01/evidence/core-build.log": {
+      "sha256": "7c96c9f209d01fba099ed27ad5fb083ec6efacf2960c93bbe69ba176cb3af3b7",
+      "bytes": 38945
+    },
+    "lab/experiments/EXP-SQL01/evidence/kill80-e5f6ae9.json": {
+      "sha256": "e6c03d37e5f238d68bbc23a7ec1ede6252adb240e0d2dc4d1c056a3a1a3164b0",
+      "bytes": 377477
+    },
+    "lab/experiments/EXP-SQL01/evidence/cleanup-final.json": {
+      "sha256": "ece237b2a7d3d11808a767a9386d3838f28a484f93116b5a7f701c6f37c9a04e",
+      "bytes": 119
+    },
+    "lab/experiments/EXP-SQL01/evidence/epoch-before.log": {
+      "sha256": "ba0c991603f7d34ba247a1bfa75551030fb8ed7cb03ce157002465e3cdaa187e",
+      "bytes": 1575
+    },
+    "lab/experiments/EXP-SQL01/evidence/before.log": {
+      "sha256": "819d59c62acb3bd66c29c6bd90bf69e692f300eaf6509993809a7fe5e785a075",
+      "bytes": 2558
+    },
+    "lab/experiments/EXP-SQL01/evidence/before2.log": {
+      "sha256": "2aff335bd4dab61c487ac28509b0bf580b5f39f2b7945dfb82bfd96ca91f3f44",
+      "bytes": 647
+    },
+    "lab/experiments/EXP-SQL01/evidence/flip-wal-a358809.json": {
+      "sha256": "ace68f3f6d90a147e4bf8066d78a1d691bc8d15c25c520013681cd103a667cc7",
+      "bytes": 1783
+    },
+    "lab/experiments/EXP-SQL01/evidence/typecheck-first.log": {
+      "sha256": "e251101a6b051068ff49fd30a8744dd7d54aeed237fcfd8ed83f0fd91b50ef37",
+      "bytes": 493
+    },
+    "lab/experiments/EXP-SQL01/evidence/kill80-a358809.json": {
+      "sha256": "1a51ef6c071f3edd739f8a03e5380f345234361f9710b91504c78ce99076381a",
+      "bytes": 377783
+    },
+    "lab/experiments/EXP-SQL01/evidence/install.log": {
+      "sha256": "3bf8d9c4fd5ad40709b3512a68bae0287045a6e7d80df2d8b4c645cbce0e1f74",
+      "bytes": 1403
+    },
+    "lab/experiments/EXP-SQL01/evidence/epoch-before-vitest.log": {
+      "sha256": "52a12355498c6326dbbd4283d890b2a63d3c810df445f90d340378d1c7517eb7",
+      "bytes": 1547
+    },
+    "lab/experiments/EXP-SQL01/evidence/unit-first.log": {
+      "sha256": "ff63e7445c2c9162a7a43c73be653996b412dae77de8744b2ad774797a582fe3",
+      "bytes": 318
+    },
+    "lab/experiments/EXP-SQL01/evidence/build-dependencies-a358809.json": {
+      "sha256": "de2303a2f8ba98f34207b9417ab0e4e8a4ae22dbcaca0b3a6c4b599f2eeb7129",
+      "bytes": 68325
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/vitest-near.config.ts.txt": {
+      "sha256": "9cbc57c8c687b6e05e0576c3154a7633627813893971609432e00c7bddc41d98",
+      "bytes": 324
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-1.json": {
+      "sha256": "f3f97a48c2595a21042df907b20d24033b6806ede93d9c13fea3c1656fa1f560",
+      "bytes": 27252
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-46.json": {
+      "sha256": "84e939797c24087dd86f46b242f0b8ef0b6e24d44decdd4ef9d1aa0318e8498b",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-11.json": {
+      "sha256": "a788d66de52cfdc78530656423c136db5eae76862e639610ce2fcc89aab8a26f",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-31.json": {
+      "sha256": "f61213fc06fa93abb4e16261705da56089070e647b72831563c804a7562fbc8b",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-27.json": {
+      "sha256": "199bab3c7bc05d92f325a95604c081121bc5d8de6d4e10116db1962ee203edbc",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-26.json": {
+      "sha256": "f486d92caaa1531d5f1da1a79199769b8def83e708b5c71bbdcb1589fb55ecb0",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-30.json": {
+      "sha256": "973e992337a4ebd029d6c6ff16e3c89b34bdb9ded8d1c644880487c938a2aa9a",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-10.json": {
+      "sha256": "f853667b4d800f8e1532b69ad06ca412b9d560a869eba9a6199acc4bfe26d068",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-47.json": {
+      "sha256": "bd599cbb33f1cb4ddb3b9f5d3020d4eafcc58c7961663264a13637bafab1d3b4",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-0.json": {
+      "sha256": "0db70ab7e35981da84842288bcf1dac0eee0e3aedecbd2731419559868e2bdd5",
+      "bytes": 27252
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-37.json": {
+      "sha256": "e0f44b31d1f37129999bf68aad3d77eb3fcbd01d9d389c22b5c56f03a4f4aebe",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-21.json": {
+      "sha256": "a74b39c961fd252ce3b1c2d28ffad69fd97e08d7395a3712bfb8ad2a18c026c8",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-7.json": {
+      "sha256": "fb429ca713966b3b28eb5f6c8289aaf75be4f64fa7180dac7b599f9495470458",
+      "bytes": 27252
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/results.json": {
+      "sha256": "17d07c927e27b6559cbca681beea10b333d20c2a57eea0413fac01b5a2817bbe",
+      "bytes": 451742
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-40.json": {
+      "sha256": "29db916fb17d944eb199e0b7742bc218ba018d999e640c29889a51ed5cf15839",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-17.json": {
+      "sha256": "6621a678b4f3f816f4110493c5b7865482cfbea9b5dd58b7d60141247182d703",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-16.json": {
+      "sha256": "92f81bb33bc784a8a123e33148364f99fa4b78e2478cf8ca0e135673b467ce64",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-41.json": {
+      "sha256": "02d9b0d0613cf851e854e95b2761cde7efe42106024c7688c0293cea2d1f59fd",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-6.json": {
+      "sha256": "ee8ae72e40e9df0fb4f9889fa8742c81f9625acea7ae9acf847a02c29af69903",
+      "bytes": 27252
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-20.json": {
+      "sha256": "373451ef098377035308e3cb66494e7db6a14af142846c0a2761397c0552f95b",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-36.json": {
+      "sha256": "783b8acc4484039b7fa928cd19925cd7d8adc70ae710112b47168533780d2d87",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-19.json": {
+      "sha256": "ec5a7d0f9da95b224cc07cba82d0920275467f6a382a6a80eac9fa336f8d714a",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-23.json": {
+      "sha256": "261b89539a2b367719c4531d57f0f0990f7540108e0e4daf9d7b8dee35ccd918",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-35.json": {
+      "sha256": "1bb208c2fbd19c4f67d6d8dc161a335ea0afcd396cef92d4c8734d904c5342b3",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-9.json": {
+      "sha256": "884a88773a5f1ecc7fd04de2ce0c4cbc58f6f785bfa744f5237cfd7ed80d3ce4",
+      "bytes": 27252
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/README.json": {
+      "sha256": "71a1813c7f61682152b20d33067cc3476a44632c0a2d854b1c3a5f3999f2cbe7",
+      "bytes": 426
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-15.json": {
+      "sha256": "ae14e44c38996b22825b1d0754dbfad19a19aad408a84a8d15590071a41e6447",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-42.json": {
+      "sha256": "1fea07f3ad5a1e4ecc2817d64b38e71845b36184f128dc478d24b804944a2a35",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-5.json": {
+      "sha256": "4e55fdc0ba8b4bd99ba87a0982297dc7b237d75871e4aacdbc737d5748703824",
+      "bytes": 27252
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-39.json": {
+      "sha256": "c31883992f6a21f0cac6d809b8377307ae2d499fc3167da9c2ab8599dff5ee94",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-38.json": {
+      "sha256": "e52c7f8c1871e4948ea96dbd0f83a3069fe3edb492fba2a8b4b56071098d6f21",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-4.json": {
+      "sha256": "a12945a651eafca6dc075653a9cea80f73599ce32ab70ff61a8b0b77234fef71",
+      "bytes": 27252
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/vitest-exact.config.ts.txt": {
+      "sha256": "ff44cf332e2debc2a8e2c075e234370821852fd7982036f663d52b9bc3bd3f79",
+      "bytes": 320
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-43.json": {
+      "sha256": "87187cd0a36f0ba09247100b7dc0c06de76d65538c87b99f258e4780c0255c23",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-14.json": {
+      "sha256": "818d98248dd272aa9e56912ca4a9bbdfce27b0fde0c4d1d14f48ab6092c09855",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-8.json": {
+      "sha256": "6932433acc62db94a612d145692b397b583a77e4cab3ee39403add64c2df2076",
+      "bytes": 27252
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-34.json": {
+      "sha256": "8ac3c19e058437d926f39f28c67857de8fa42b82c27fdce328870d3eb8c5fe37",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-22.json": {
+      "sha256": "968c64d4c5909a650d27453c151fbbb9b6a74718c9357a5d18a407bd8eb897dc",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-18.json": {
+      "sha256": "903a13a3d202de054123772a8e7f2d75dbb5afb07112ef108a9f08c8d4ff9447",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-13.json": {
+      "sha256": "4d8347a21758b9e9737fc02d6e10f74c6671eb860c5d1b7642ed3bdfa7defac1",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-44.json": {
+      "sha256": "b39c3eae1453ac04c3ceed488ba7e923153dfea5c845f49f87b3550320aed437",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/diag-near.test.ts.txt": {
+      "sha256": "a08f3121aad4101844956258677fde85b08f7a667f2be142ab4909377fc8141c",
+      "bytes": 1470
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-29.json": {
+      "sha256": "e718c1945c75b6f8278afea9648401ce7c1bf58a33dd2ca0e2b299a59c78bb55",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-3.json": {
+      "sha256": "81263722cfcf020de48c80df52e603ef5f48e0d9e8b99acd8fbc8c628e8f69b0",
+      "bytes": 27252
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-48.json": {
+      "sha256": "d3f2105e9ae743eaec5089a54e877b4f65de140d871138150cf0cede714a1471",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-25.json": {
+      "sha256": "1ac2a0f95742956be8acacd233322cfd3fbd501afb2a7be369e53521525814f3",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-33.json": {
+      "sha256": "f3a87e882b8d6559894cec7cea7bbe04c14ebf1ff170503e31c5d036172002d9",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/vitest.config.ts.txt": {
+      "sha256": "be5cc0f31822860818c2eaf7d9c22ca015521a3f5997cc7b5fa35058ff8bb541",
+      "bytes": 319
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-32.json": {
+      "sha256": "5ed469721ff238197c8e3a27cc3980bec4dfeefdd4f696c5660a1f0dd57ba575",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-24.json": {
+      "sha256": "4275dbbb029ab6827f9af2c4cc0dd31c48c482e47a0acfe778e314375e93b5c7",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/diag.test.ts.txt": {
+      "sha256": "7e8fea14ecb47886f236236ded5fcf91f1d3dc33b553da78dd3bf318a88a182c",
+      "bytes": 1429
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-49.json": {
+      "sha256": "7ee1f86c75222b6e16e94b2560f728251faab77f6f788aa22625a8dc7218e865",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact.test.ts.txt": {
+      "sha256": "3faa24082c244a32435eac6628f9ae823028843e49b40dde1f1e28ede71de504",
+      "bytes": 20199
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-2.json": {
+      "sha256": "4598d4d71b7e95faadc35aeadb8db5675f3f304e6852a149221b50cb5d68ddd1",
+      "bytes": 27252
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-28.json": {
+      "sha256": "9f70d5532e7223595c34e8217c808068f016d0c45187aebc6a77b78a139cd4af",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-45.json": {
+      "sha256": "f421d6747ec1df3e8f28a2f83e0b0795be9265d3a0382f6fa070c3260861fad7",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/diagnostics/exact-12.json": {
+      "sha256": "aa0bcea4bab9e21fc6f16802802d895d92bc5374e0eb9091dcf087577eb02e87",
+      "bytes": 27253
+    },
+    "lab/experiments/EXP-SQL01/evidence/verifier/check6-a0-guard.json": {
+      "sha256": "72ba046440002d65c5e9b33e8bebdefee886d5ec5e27c00610d88dfef7567eed",
+      "bytes": 1096
+    },
+    "lab/experiments/EXP-SQL01/evidence/verifier/check3-probe-load.json": {
+      "sha256": "7c1f70b982e1891554c34ec0e9c3af1faf18216398bff4bcd4f6c7857185c544",
+      "bytes": 361
+    },
+    "lab/experiments/EXP-SQL01/evidence/verifier/round3-datalog-mid-answer-outage.json": {
+      "sha256": "e7d6453f9a8d51c24af0dd8da9d6e171d36273ef47f9f99387421fe7d3ada2c9",
+      "bytes": 205
+    },
+    "lab/experiments/EXP-SQL01/evidence/verifier/check3-regression-cached-marker.json": {
+      "sha256": "d49fa4742f5ac4a317949ac787816a13940a5df018758c5f0290391d04a5f0e6",
+      "bytes": 558
+    },
+    "lab/experiments/EXP-SQL01/evidence/verifier/check3-fuzz-summary.json": {
+      "sha256": "b0b3e97e4d742fd35a229392f1a50eec8af74304d0586e9eb54b63862b50dfd9",
+      "bytes": 29267
+    },
+    "lab/experiments/EXP-SQL01/evidence/verifier/check1-lock-exit.json": {
+      "sha256": "5ecc62c52f20c5a061e10037b95665da44a4c670aa84d6fba4f1b2e3837adb07",
+      "bytes": 40
+    },
+    "lab/experiments/EXP-SQL01/evidence/verifier/check3-S7-future-basis.json": {
+      "sha256": "d7f351712e3d9a502e4e9e5b6aa8d9fdbd97f36d29012e3090cd7b8bcec4f44f",
+      "bytes": 130
+    },
+    "lab/experiments/EXP-SQL01/evidence/verifier/round3-source-prefix.json": {
+      "sha256": "591abcf9f01bffc38cb5fe589bf36caafaea1edf03c8809e5b20dbef791f5be1",
+      "bytes": 1245
+    },
+    "lab/experiments/EXP-SQL01/evidence/verifier/check4-crash.json": {
+      "sha256": "12d1aa2a6bb0f49caecc39e3898499a443b1b79070ae1b6a0c01537444aab793",
+      "bytes": 1400
+    },
+    "lab/experiments/EXP-SQL01/evidence/verifier/q55c-native-basis.json": {
+      "sha256": "88026d533f5d4ddf8b09a99f18c959926b0b258f1c6ff2b7b72d971da06f8cbc",
+      "bytes": 219
+    },
+    "lab/experiments/EXP-SQL01/evidence/verifier/check3-S3-unreachable.json": {
+      "sha256": "d422451731b46f91a4fc102d9b6b8bde7203563118c056d4a59ba8b563630f25",
+      "bytes": 425
+    },
+    "lab/experiments/EXP-SQL01/evidence/verifier/check3-residual-gap.json": {
+      "sha256": "025556f16a2421facc220a8a1b0743312a4aa81a3ae42daa2eca0c6c692e4e9f",
+      "bytes": 415
+    },
+    "lab/experiments/EXP-SQL01/evidence/verifier/round3-probe-rejection.json": {
+      "sha256": "b12358fe9d3fec543d5995c175d27fda4c581d79670a8381722b6cad550e0ce9",
+      "bytes": 57
+    },
+    "lab/experiments/EXP-SQL01/evidence/verifier/check1-lock-sigkill.json": {
+      "sha256": "a57092e40f352c24a7e7e1de7e3fabec4968acbb863531397ff8b6d76343be3b",
+      "bytes": 96
+    },
+    "lab/experiments/EXP-SQL01/evidence/verifier/check2-duplicates.json": {
+      "sha256": "533fd1f06e2cbd5d80179fdef05f2a8c536e3f98f5554a04c616dfa0734af9fe",
+      "bytes": 217
+    },
+    "lab/experiments/EXP-SQL01/evidence/verifier/round3-native-mid-answer-outage.json": {
+      "sha256": "37ab26f76fb86a76317159d08a80f79a6fc264287ef937db5eb27305d405fcd0",
+      "bytes": 201
+    },
+    "lab/experiments/EXP-SQL01/evidence/verifier/check1-random-kills.json": {
+      "sha256": "222752082559536b492f2730d63a838522419365ff65dacfbbe8e9355f3cea4a",
+      "bytes": 3075
+    },
+    "lab/experiments/EXP-SQL01/evidence/verifier/check3-outage-scale.json": {
+      "sha256": "7d2c64c025071129b362c314f0ec9767a48afd3f12ae5fd41cbdeb6d496b3462",
+      "bytes": 535
+    },
+    "lab/experiments/EXP-SQL01/evidence/verifier/check3-datalog-in-transaction.json": {
+      "sha256": "aa1c1799fc09c43744197fe85d269b85655c32ad9fa3912f4f299f017781b651",
+      "bytes": 169
+    },
+    "lab/experiments/EXP-SQL01/evidence/verifier/check2-cas.json": {
+      "sha256": "2ec3b927d0d53c5e14d1bc4c103ef507194bb200d6eedca329a22eaddba559cc",
+      "bytes": 225
+    },
+    "lab/experiments/EXP-SQL01/evidence/verifier/check5-allocator.json": {
+      "sha256": "f82ae08da37ebcb5f00ecc56d03cb32ab630ffcd457f376c851be595e79f0969",
+      "bytes": 1246
+    },
+    "lab/experiments/EXP-SQL01/evidence/verifier/round3-dependency-state-mid-answer-outage.json": {
+      "sha256": "935c3249f6ba04cbadd430c8d5dd6eaa800baf41a6d1024636e86fb45514d0f3",
+      "bytes": 214
+    },
+    "lab/experiments/EXP-SQL01/evidence/verifier/check1-crash-before-watermark.json": {
+      "sha256": "4add92fbec34acfe6f139983a645a3af6caa0d252eb488ffee05dd37430bfa15",
+      "bytes": 262
+    },
+    "lab/experiments/EXP-SQL01/evidence/verifier/round3-subprocess-source.json": {
+      "sha256": "2ad4b3132031d4c0e0fd7d1e453773f6fa5daa7fb157f79edcc3bfba5600364f",
+      "bytes": 295
+    },
+    "lab/experiments/EXP-SQL01/evidence/verifier/check5-nested.json": {
+      "sha256": "d8a1609772a5b4e323c85cfed397e126f3fa60d2a776103f99970bbd20a9dc12",
+      "bytes": 247
+    },
+    "lab/experiments/EXP-SQL01/evidence/verifier/round3-native-default-deadline.json": {
+      "sha256": "57e47d42922e84b3e2d5120238f253758be52883a225c9c10846d99bbbaa44dc",
+      "bytes": 99
+    },
+    "lab/experiments/EXP-SQL01/evidence/verifier/check1-double-open.json": {
+      "sha256": "a1dbfda9ecb65c5f544a69c7e71507b90fb8aaaa038d1ffddb0c3ff4dcefe09a",
+      "bytes": 425
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/before.json": {
+      "sha256": "0b2fea0132cd788eeff72299790a643f0f58b5548d2a201bbee348b966f9928a",
+      "bytes": 10048
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r2-unit.json": {
+      "sha256": "ae661376533b3a7f2f813b0cdd4f5de17caa580ce9f21cdb41fe7dab1aceff75",
+      "bytes": 9704
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r2-flip-wal.log": {
+      "sha256": "0a448fa3af4f7f184b31d95921ea0d31b520538a704984cb4ae3aba6bd8a78f3",
+      "bytes": 1883
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/kill80.json": {
+      "sha256": "f3678f7907624594b138ef60f2a04b3979b1dd400f7f9766d22cbd3c58489767",
+      "bytes": 9624
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r2-flip-wal.json": {
+      "sha256": "4516b0efc619ebd834174a7a9ae78c1c4dbcb219847d27e4f592023f798be071",
+      "bytes": 9668
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/kill80.log": {
+      "sha256": "58b40d866dd1f21df18fba3374659bd48810b492cb5d8b80dd18c73b09b043d2",
+      "bytes": 249
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r2-unit-repeat.log": {
+      "sha256": "68e1c3d32bba773ca1f2a66a04d607b153bf407a59c01d0f46bba9fc4d1ff1af",
+      "bytes": 599
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-dist-smoke.log": {
+      "sha256": "f44619e2429783374074888d9f217eabe3c07ad440295887179a9382ece6d9f9",
+      "bytes": 99
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r2-kill80.log": {
+      "sha256": "393322633f18f34ff9e9d8dbcd4ae8285a4f04ea233ed6c6d6fa4cce93767464",
+      "bytes": 171
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-flip-wal.log": {
+      "sha256": "7f67863a5f7a625137b9bbe2573714a6bf6424e5b0913cfa9f1a32326e813e74",
+      "bytes": 1563
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/flip-wal.json": {
+      "sha256": "2592598dede6361ab207798ac2475ed4cee1f4c258cda6dc1ee98d2ce1bd399f",
+      "bytes": 9625
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-storage.log": {
+      "sha256": "09cf975d8d0136ba1962242fb84ad29a20ea98b112737cf6fcedb8b1df7ce5d6",
+      "bytes": 596
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-dist-smoke.json": {
+      "sha256": "3c12566afb21bd7e6b54e608c8d11fedaa8300d607212c6a83deb77933113d45",
+      "bytes": 10131
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-verifier.json": {
+      "sha256": "441ff2604db7ab012e7eead0d4cdd2a873f74983c9600a505f39ec9e454e0119",
+      "bytes": 10250
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/live.log": {
+      "sha256": "8b5fbee8a40bcefc308545ae1f2b235421a7cb9d4c14722b9b5bd3f74cd13030",
+      "bytes": 909
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r2-unit-repeat.json": {
+      "sha256": "e047ad869fff33fc406078ef265d6e29ed73b273b6d73d5370f19302fe279733",
+      "bytes": 9711
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r2-build.log": {
+      "sha256": "923039401f01e63ba715b79dd4a70007753306cf9f0f560ca856e8ddf6437e9a",
+      "bytes": 6756
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/dist-smoke.json": {
+      "sha256": "549c1bed7575b9d045463afae8c27f1ae298b4c9fa29ed9b5e7b5a2a0a59a3f6",
+      "bytes": 10128
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-unit.json": {
+      "sha256": "a162fb9c6989d0b7664e96b91a7618e9a5913027fd86e707e27aafc5a6399e67",
+      "bytes": 9704
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/live.json": {
+      "sha256": "c4350ee380f4b4a5d60a9ddf5d164e388dcb8e9d17d377de0f9d484c22be1153",
+      "bytes": 9771
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/frozen-install.log": {
+      "sha256": "5079732adb5b30e29af78156d19228cc54481d4c8a06f138a36a62979be912bc",
+      "bytes": 1027
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-build.json": {
+      "sha256": "ddfe11c39900512d5f7b6a80c26a8621361bbc270930931eb0382e4245e9eb9d",
+      "bytes": 9784
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-kill80.json": {
+      "sha256": "4d07de64c6ffa26e22abc9237f3fc91bc25946beeeecdb9ab4af832b08ad24e5",
+      "bytes": 9667
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/typecheck.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/frozen-install.json": {
+      "sha256": "46703292c759e792b9dffe488cc3748d09e78cf673c9f8add522bb9a91eb2aba",
+      "bytes": 9736
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r2-typecheck.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-unit.log": {
+      "sha256": "60bb1cc47622b928d6d6a267a6148e9486deb5b10fe21ea2e6d08bdbbd8da817",
+      "bytes": 613
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r2-unit.log": {
+      "sha256": "c8b64d4f6c5200f6b3995803d28f9325e2f2f3a2335e9433037cecfe7b2863f9",
+      "bytes": 1709
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/dist-smoke.log": {
+      "sha256": "8f4c59af0734a37f379dd3599bc11882372dafef48a40dc21fd5bffb220eb2e8",
+      "bytes": 535
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-build.log": {
+      "sha256": "0580bdc780db45547a74f6d46f8cfa431b757eb03566cc1ebe088f33b5a59ad4",
+      "bytes": 5575
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/flip-wal.log": {
+      "sha256": "3a04500e4f05c460c062bad730bfdc0ca3314951640ae8cd38d09215711cea54",
+      "bytes": 2459
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-typecheck.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/verifier-storage.log": {
+      "sha256": "7a4baf035e8b28e72be6b7e91ef4b9cf9dce691aef46947a29b863a5e7395fce",
+      "bytes": 597
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/verifier-semantic.log": {
+      "sha256": "38c65b5ffd1b59f468dcf7be4345a3e09211856da6aa20990a31db88a1fe4b4a",
+      "bytes": 563
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r2-live.json": {
+      "sha256": "3dea3c494fceea3336241745c7edd6d52a7eba66bfa05420597f1cfee6ca621e",
+      "bytes": 9814
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r2-read-write.log": {
+      "sha256": "2f07b8ccfc69559ec09360dc61a0f7bbb598291a8d3001b741c3d598a0fe4d66",
+      "bytes": 794
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r2-typecheck.json": {
+      "sha256": "4993420d7db299529e113b89e982886bcd9975feb0d8b5e938076f3d0fda06ab",
+      "bytes": 9732
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-typecheck.json": {
+      "sha256": "d58bed89a3f0e56c29bf702bfeb04ed43690217947a569a93a4ebe7c94df7886",
+      "bytes": 9732
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-read-write.log": {
+      "sha256": "431099b10c64c517f85476fc1bb35c4891cbeb5565afa1e85b9c85300c8263d1",
+      "bytes": 8246
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/read-write.json": {
+      "sha256": "3c7e68a4f1d99aa3f0617d0a2a295d074ccc73ab6e87a857618a6b10bcd43ab8",
+      "bytes": 9655
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/unit.log": {
+      "sha256": "d09dd197744b757bc88d20f0672106b3d979f14347d65251c470ed37a99ba10d",
+      "bytes": 613
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-storage.json": {
+      "sha256": "4005bf6869ffbd9925bdce239cf428d2ab46e41b0b6046a3518da0336d5b932d",
+      "bytes": 10154
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/verifier-storage.json": {
+      "sha256": "4017169eb33df3ad97fb39585b5fcbfaac7fcc13ac733f4779888bbbd55ca205",
+      "bytes": 10138
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-kill80.log": {
+      "sha256": "95cbc38be83bc84b431c7e54ab6ff7f49237e983a99d06767bd509b91031eee3",
+      "bytes": 171
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r2-read-write.json": {
+      "sha256": "f2083980dd05678d9448005775004b9e46ef495783e61f47d672badd78dc091a",
+      "bytes": 9698
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/typecheck.json": {
+      "sha256": "cd4c3a400601e008b512fc80468d31ba5cbde7cc0eaf20f6a2f5c1b86ee38333",
+      "bytes": 9689
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/read-write.log": {
+      "sha256": "5aa34bc07da92d87fbe79c64113f040cb6d0b82f84aacc4ba890b4cf4c97185f",
+      "bytes": 804
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/before.log": {
+      "sha256": "fb0a3e0b5689a78ae037ac4f9e9c2423d99a47bace2f50ae5b716045b82cb521",
+      "bytes": 831
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-live.json": {
+      "sha256": "5aff139b264f69c34b406f86f1a88ae60fbf8a9f600413d26bee1dd55b1d6a19",
+      "bytes": 9814
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/unit.json": {
+      "sha256": "9dee56606e56dbb4626ab29a867f4abf6227bcc5bb6e7e4729704df275ea9233",
+      "bytes": 9661
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r2-verifier.json": {
+      "sha256": "bbc5fdf7f76a2d6fd2084fffdc2f6eeeca43dfe86be02d4f35dc22df7dc8f2dd",
+      "bytes": 10250
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-read-write.json": {
+      "sha256": "fb65130bb7c616944c7620c3d3f9302754a052e1e213a47ad9a0f1b2019e6135",
+      "bytes": 9698
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/verifier-semantic.json": {
+      "sha256": "8ae3fab4b3047fb6fdd7893aef33230ffc0403135840f72627b0c156fb2ef17c",
+      "bytes": 10216
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-verifier.log": {
+      "sha256": "1339a78a8b7872b88b6f463bab202c4927a466e0c88d8d558d11a3490829cd53",
+      "bytes": 563
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r2-kill80.json": {
+      "sha256": "603e280ecbe8bdfcfce91dca6321e35bc865776359e3413cbf4ed6335bb75f38",
+      "bytes": 9667
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/build.json": {
+      "sha256": "31705660eba2720f20869691245f977658edb841090e3ad57f1adf861aa1cdf4",
+      "bytes": 9741
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r2-verifier.log": {
+      "sha256": "1cfedf94632f7c8adef86def4287b2bc0fe80b02b2fba6aac9020956272d7676",
+      "bytes": 574
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-live.log": {
+      "sha256": "64b951436908adc9e1675ee970ce70600a1952e5ead570baac3726efefe90be9",
+      "bytes": 560
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r2-live.log": {
+      "sha256": "86e19cb4a6ff9b4fe4f741205c7419f3150d82ef98fdbf0dfaea72f0a94ed0fa",
+      "bytes": 1229
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-flip-wal.json": {
+      "sha256": "f2ccb130df672d8faa54b4514a90bb2d4e1760b12b5aed36693a379b7a2fe0e9",
+      "bytes": 9668
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/build.log": {
+      "sha256": "92bfd099b48e7b49979cbc149c6f1b95249598ee2d8d416d5d356e8c03d8eae8",
+      "bytes": 5574
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r2-build.json": {
+      "sha256": "ed0c2c8b1c8b98279e0a1b30f0b7399eb899d4abf1062a4102103d982c9c34ef",
+      "bytes": 9784
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/verifier-storage/check4-crash.json": {
+      "sha256": "12d1aa2a6bb0f49caecc39e3898499a443b1b79070ae1b6a0c01537444aab793",
+      "bytes": 1400
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/verifier-storage/check2-duplicates.json": {
+      "sha256": "533fd1f06e2cbd5d80179fdef05f2a8c536e3f98f5554a04c616dfa0734af9fe",
+      "bytes": 217
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/verifier-storage/check2-cas.json": {
+      "sha256": "2ec3b927d0d53c5e14d1bc4c103ef507194bb200d6eedca329a22eaddba559cc",
+      "bytes": 225
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/verifier-storage/check5-allocator.json": {
+      "sha256": "f82ae08da37ebcb5f00ecc56d03cb32ab630ffcd457f376c851be595e79f0969",
+      "bytes": 1246
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/verifier-storage/check5-nested.json": {
+      "sha256": "d8a1609772a5b4e323c85cfed397e126f3fa60d2a776103f99970bbd20a9dc12",
+      "bytes": 247
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r2-verifier/check6-a0-guard.json": {
+      "sha256": "532a77f5e93a0ac429e817c33083a4a600999e5897301ac2617af30417ca67a8",
+      "bytes": 1096
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r2-verifier/check3-probe-load.json": {
+      "sha256": "9447a9b1e04ead0ba6af3ef754b3967d799becfeffd831e5e6ba0db44c0d5abc",
+      "bytes": 361
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r2-verifier/round3-datalog-mid-answer-outage.json": {
+      "sha256": "e7d6453f9a8d51c24af0dd8da9d6e171d36273ef47f9f99387421fe7d3ada2c9",
+      "bytes": 205
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r2-verifier/check3-regression-cached-marker.json": {
+      "sha256": "010775f5ad1c6500f07161143bf7f4c7bf18e971238b2ee771efbd7b06f25971",
+      "bytes": 559
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r2-verifier/check3-fuzz-summary.json": {
+      "sha256": "d48882bf162559e915e4e00e79d959f7e59392cf0c051fecc4cc1510f9bdd353",
+      "bytes": 72440
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r2-verifier/check3-S7-future-basis.json": {
+      "sha256": "d7f351712e3d9a502e4e9e5b6aa8d9fdbd97f36d29012e3090cd7b8bcec4f44f",
+      "bytes": 130
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r2-verifier/round3-source-prefix.json": {
+      "sha256": "591abcf9f01bffc38cb5fe589bf36caafaea1edf03c8809e5b20dbef791f5be1",
+      "bytes": 1245
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r2-verifier/q55c-native-basis.json": {
+      "sha256": "40aa60a4313d693b87c918983c2ae3b714d2b22dd94281e38a7daeea6e0a2d4b",
+      "bytes": 219
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r2-verifier/check3-S3-unreachable.json": {
+      "sha256": "d422451731b46f91a4fc102d9b6b8bde7203563118c056d4a59ba8b563630f25",
+      "bytes": 425
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r2-verifier/check3-residual-gap.json": {
+      "sha256": "2b019896a5d588a36a0b410c6b3ab537f2a91166aecb8ae06dcb5297ae5fdcd4",
+      "bytes": 416
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r2-verifier/round3-probe-rejection.json": {
+      "sha256": "b12358fe9d3fec543d5995c175d27fda4c581d79670a8381722b6cad550e0ce9",
+      "bytes": 57
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r2-verifier/round3-native-mid-answer-outage.json": {
+      "sha256": "37ab26f76fb86a76317159d08a80f79a6fc264287ef937db5eb27305d405fcd0",
+      "bytes": 201
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r2-verifier/check3-outage-scale.json": {
+      "sha256": "eab9bfab276dbc6dac87abff936fe0235a443993de84b61dc86fa3187f59e2a2",
+      "bytes": 534
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r2-verifier/check3-datalog-in-transaction.json": {
+      "sha256": "aa1c1799fc09c43744197fe85d269b85655c32ad9fa3912f4f299f017781b651",
+      "bytes": 169
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r2-verifier/round3-dependency-state-mid-answer-outage.json": {
+      "sha256": "935c3249f6ba04cbadd430c8d5dd6eaa800baf41a6d1024636e86fb45514d0f3",
+      "bytes": 214
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r2-verifier/round3-subprocess-source.json": {
+      "sha256": "2ad4b3132031d4c0e0fd7d1e453773f6fa5daa7fb157f79edcc3bfba5600364f",
+      "bytes": 295
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r2-verifier/round3-native-default-deadline.json": {
+      "sha256": "eb747246af57009908d3457f98e844695cf28104b0e4c43e892fd396f5272583",
+      "bytes": 99
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-verifier/check6-a0-guard.json": {
+      "sha256": "72ba046440002d65c5e9b33e8bebdefee886d5ec5e27c00610d88dfef7567eed",
+      "bytes": 1096
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-verifier/check3-probe-load.json": {
+      "sha256": "f22d503459d79ffbe5dc60edca2e29c90443b26e9c7db4578b159f872330d476",
+      "bytes": 361
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-verifier/round3-datalog-mid-answer-outage.json": {
+      "sha256": "e7d6453f9a8d51c24af0dd8da9d6e171d36273ef47f9f99387421fe7d3ada2c9",
+      "bytes": 205
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-verifier/check3-regression-cached-marker.json": {
+      "sha256": "9a903814385abdd066ac416945fcb8cc19ace30762fe7dc48e0e4abe86d827eb",
+      "bytes": 558
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-verifier/check3-fuzz-summary.json": {
+      "sha256": "0a04ec06fb4be6ebb76734a8abbea944f35d3bebf8b236e990a2211c856c553a",
+      "bytes": 72559
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-verifier/check3-S7-future-basis.json": {
+      "sha256": "7a97fcf1cca20032e2959b167eedfaab36d8f3672844402861db868bfaec5ed3",
+      "bytes": 130
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-verifier/round3-source-prefix.json": {
+      "sha256": "591abcf9f01bffc38cb5fe589bf36caafaea1edf03c8809e5b20dbef791f5be1",
+      "bytes": 1245
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-verifier/q55c-native-basis.json": {
+      "sha256": "5a91d9decdac396a90a44e0c8771fdfff23a09d05e53132c533345a1898e4202",
+      "bytes": 219
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-verifier/check3-S3-unreachable.json": {
+      "sha256": "d422451731b46f91a4fc102d9b6b8bde7203563118c056d4a59ba8b563630f25",
+      "bytes": 425
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-verifier/check3-residual-gap.json": {
+      "sha256": "10127b66e1e9a025a0485e36ca570c64714232827d65ec0f7faf650dca592647",
+      "bytes": 416
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-verifier/round3-probe-rejection.json": {
+      "sha256": "b12358fe9d3fec543d5995c175d27fda4c581d79670a8381722b6cad550e0ce9",
+      "bytes": 57
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-verifier/round3-native-mid-answer-outage.json": {
+      "sha256": "37ab26f76fb86a76317159d08a80f79a6fc264287ef937db5eb27305d405fcd0",
+      "bytes": 201
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-verifier/check3-outage-scale.json": {
+      "sha256": "8a1138d903f1e47689a92ba8fbe7ca3c632c791e2faac07201a637aa462cec17",
+      "bytes": 533
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-verifier/check3-datalog-in-transaction.json": {
+      "sha256": "aa1c1799fc09c43744197fe85d269b85655c32ad9fa3912f4f299f017781b651",
+      "bytes": 169
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-verifier/round3-dependency-state-mid-answer-outage.json": {
+      "sha256": "935c3249f6ba04cbadd430c8d5dd6eaa800baf41a6d1024636e86fb45514d0f3",
+      "bytes": 214
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-verifier/round3-subprocess-source.json": {
+      "sha256": "2ad4b3132031d4c0e0fd7d1e453773f6fa5daa7fb157f79edcc3bfba5600364f",
+      "bytes": 295
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-verifier/round3-native-default-deadline.json": {
+      "sha256": "038fc32e41770b9ee7d9878f9879920eaaa038a43aa3b54f13517da227e0010e",
+      "bytes": 92
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/before/check3-outage-scale.json": {
+      "sha256": "4777299f4c4d4b28d668d8ee17fa1ca40327d8731d61961b7aeca2f01eef496e",
+      "bytes": 547
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-storage/check4-crash.json": {
+      "sha256": "12d1aa2a6bb0f49caecc39e3898499a443b1b79070ae1b6a0c01537444aab793",
+      "bytes": 1400
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-storage/check2-duplicates.json": {
+      "sha256": "533fd1f06e2cbd5d80179fdef05f2a8c536e3f98f5554a04c616dfa0734af9fe",
+      "bytes": 217
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-storage/check2-cas.json": {
+      "sha256": "2ec3b927d0d53c5e14d1bc4c103ef507194bb200d6eedca329a22eaddba559cc",
+      "bytes": 225
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-storage/check5-allocator.json": {
+      "sha256": "f82ae08da37ebcb5f00ecc56d03cb32ab630ffcd457f376c851be595e79f0969",
+      "bytes": 1246
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/r3-storage/check5-nested.json": {
+      "sha256": "d8a1609772a5b4e323c85cfed397e126f3fa60d2a776103f99970bbd20a9dc12",
+      "bytes": 247
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/verifier/check6-a0-guard.json": {
+      "sha256": "72ba046440002d65c5e9b33e8bebdefee886d5ec5e27c00610d88dfef7567eed",
+      "bytes": 1096
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/verifier/check3-probe-load.json": {
+      "sha256": "db63b9f217f2b30b116822016612a86941224e52e5fc8f093bc6732ecc816e50",
+      "bytes": 361
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/verifier/round3-datalog-mid-answer-outage.json": {
+      "sha256": "e7d6453f9a8d51c24af0dd8da9d6e171d36273ef47f9f99387421fe7d3ada2c9",
+      "bytes": 205
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/verifier/check3-regression-cached-marker.json": {
+      "sha256": "e479a2b6e83b8a0fb4ec935eea6672cb551607dee54e3dfa472a9cfaca413fca",
+      "bytes": 558
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/verifier/check3-fuzz-summary.json": {
+      "sha256": "e4d4ce82498684f07d8dbe4310a280fcd387e4b3480bf6c4772f9298b5418367",
+      "bytes": 72550
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/verifier/check3-S7-future-basis.json": {
+      "sha256": "7a97fcf1cca20032e2959b167eedfaab36d8f3672844402861db868bfaec5ed3",
+      "bytes": 130
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/verifier/round3-source-prefix.json": {
+      "sha256": "591abcf9f01bffc38cb5fe589bf36caafaea1edf03c8809e5b20dbef791f5be1",
+      "bytes": 1245
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/verifier/q55c-native-basis.json": {
+      "sha256": "bc633fb61bd8db268aba6304f04bd7771464667b79077f8b7f026546ba80b08f",
+      "bytes": 219
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/verifier/check3-S3-unreachable.json": {
+      "sha256": "d422451731b46f91a4fc102d9b6b8bde7203563118c056d4a59ba8b563630f25",
+      "bytes": 425
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/verifier/check3-residual-gap.json": {
+      "sha256": "fdec2ba108f5032b45d1182cfeab113540e37962a41fa25caec522eb412b6946",
+      "bytes": 415
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/verifier/round3-probe-rejection.json": {
+      "sha256": "b12358fe9d3fec543d5995c175d27fda4c581d79670a8381722b6cad550e0ce9",
+      "bytes": 57
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/verifier/round3-native-mid-answer-outage.json": {
+      "sha256": "37ab26f76fb86a76317159d08a80f79a6fc264287ef937db5eb27305d405fcd0",
+      "bytes": 201
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/verifier/check3-outage-scale.json": {
+      "sha256": "d3fe919acf77f063468e2b0f6514271372f47af76def0f848cef7c8861b53cb8",
+      "bytes": 533
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/verifier/check3-datalog-in-transaction.json": {
+      "sha256": "aa1c1799fc09c43744197fe85d269b85655c32ad9fa3912f4f299f017781b651",
+      "bytes": 169
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/verifier/round3-dependency-state-mid-answer-outage.json": {
+      "sha256": "935c3249f6ba04cbadd430c8d5dd6eaa800baf41a6d1024636e86fb45514d0f3",
+      "bytes": 214
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/verifier/round3-subprocess-source.json": {
+      "sha256": "2ad4b3132031d4c0e0fd7d1e453773f6fa5daa7fb157f79edcc3bfba5600364f",
+      "bytes": 295
+    },
+    "lab/experiments/EXP-SQL01/evidence/final/verifier/round3-native-default-deadline.json": {
+      "sha256": "39008aef07c6afb2cb3224a87156f13cdcdb370e93e40a27e0458e9797a36a42",
+      "bytes": 92
+    },
+    "lab/experiments/EXP-SQL01/evidence/before2/check3-outage-scale.json": {
+      "sha256": "318cf8f4ba0bfbdac87deadb1659f36442b7dae19e8fe9da6a03f7a33db6f00e",
+      "bytes": 547
+    }
+  },
+  "dependencyBuildEntriesVerified": 562,
+  "passingFinalReceiptsVerified": [
+    "r3-unit",
+    "r3-typecheck",
+    "r3-build",
+    "r3-dist-smoke",
+    "r3-live",
+    "r3-verifier",
+    "r3-storage",
+    "r3-kill80",
+    "r3-read-write",
+    "r3-flip-wal",
+    "frozen-install"
+  ],
+  "knownFailuresRetained": [
+    "evidence/verifier-first.log",
+    "evidence/final/r2-unit.log",
+    "evidence/final/dist-smoke.log",
+    "evidence/epoch-before-vitest.log"
+  ]
+}

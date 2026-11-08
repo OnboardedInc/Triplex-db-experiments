@@ -1,0 +1,37 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (packages/qlever/vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/sql01/packages/qlever
+
+ ❯ test/broker-fixes.test.ts (22 tests | 1 failed | 21 skipped) 3909ms
+   ❯ SQLite catch-up after consecutive restarts (1)
+     × skips epoch-only prefixes even with a one-command publication batch 3907ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/broker-fixes.test.ts > SQLite catch-up after consecutive restarts > skips epoch-only prefixes even with a one-command publication batch
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ test/broker-fixes.test.ts:1044:43
+    1042|       await rt.run(rt.triples.transact(ops("s:epoch", 1, "after restar…
+    1043|       rt.broker.startApplier();
+    1044|       expect(await rt.broker.drain(1500)).toBe(true);
+       |                                           ^
+    1045|     } finally {
+    1046|       await rt.dispose();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 21 skipped (22)
+   Start at  17:42:56
+   Duration  4.36s (tests 92%, import 5%, transform 3%)
+

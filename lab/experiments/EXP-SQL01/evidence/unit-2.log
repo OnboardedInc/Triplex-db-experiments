@@ -1,0 +1,59 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 4561 "CX-VO05-2-independent", pid 2977 "CX-VP2Q-4-live-http", pid 3055 "CX-VP2Q-4-live-prior", pid 8174 "CX-K01-R2-Q83d-types"
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (packages/qlever/vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/sql01/packages/qlever
+
+ ❯ test/broker-fixes.test.ts (0 test)
+ ❯ test/query.test.ts (0 test)
+ ❯ test/broker.test.ts (0 test)
+ ❯ test/broker-qlever.test.ts (0 test)
+ ❯ test/storage.test.ts (0 test)
+ ❯ test/negation.test.ts (0 test)
+ ❯ test/intervals.test.ts (0 test)
+ ❯ test/native.test.ts (0 test)
+ ❯ test/broker-answer-errors.test.ts (0 test)
+ ❯ test/unicode.test.ts (0 test)
+ ❯ test/aggregate-answers.test.ts (0 test)
+ ❯ test/native-relations.test.ts (0 test)
+ ❯ test/outcomes.test.ts (0 test)
+ ❯ test/temporal-profile.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 14 ⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/aggregate-answers.test.ts [ test/aggregate-answers.test.ts ]
+ FAIL  test/broker-answer-errors.test.ts [ test/broker-answer-errors.test.ts ]
+ FAIL  test/broker-fixes.test.ts [ test/broker-fixes.test.ts ]
+ FAIL  test/broker-qlever.test.ts [ test/broker-qlever.test.ts ]
+ FAIL  test/broker.test.ts [ test/broker.test.ts ]
+ FAIL  test/intervals.test.ts [ test/intervals.test.ts ]
+ FAIL  test/native-relations.test.ts [ test/native-relations.test.ts ]
+ FAIL  test/native.test.ts [ test/native.test.ts ]
+ FAIL  test/negation.test.ts [ test/negation.test.ts ]
+ FAIL  test/outcomes.test.ts [ test/outcomes.test.ts ]
+ FAIL  test/query.test.ts [ test/query.test.ts ]
+ FAIL  test/storage.test.ts [ test/storage.test.ts ]
+ FAIL  test/temporal-profile.test.ts [ test/temporal-profile.test.ts ]
+ FAIL  test/unicode.test.ts [ test/unicode.test.ts ]
+Error: Cannot find package 'ulidx' imported from /Users/sam/projects/triplex-db-2/.claude/worktrees/sql01/packages/core/src/utils/id.ts
+ ❯ ../core/src/utils/id.ts:8:1
+      6|  */
+      7|
+      8| import { monotonicFactory } from "ulidx";
+       | ^
+      9| import { TransactionId, TripleId } from "../Branded.js";
+     10|
+ ❯ ../core/src/store/RuntimeServices.ts:3:1
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯
+
+
+ Test Files  14 failed (14)
+      Tests  no tests
+   Start at  17:26:52
+   Duration  3.75s (worker 97%, environment 3%)
+
+    Isolate  14 workers spawned · ~68ms startup each (spawn + environment, per file)
+             at least ~881ms faster with isolate: false — reuses workers across files instead of one per file
+
