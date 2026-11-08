@@ -1,0 +1,39 @@
+{
+  "receipt": "lab/runs/G2/G2-qlever-20261108T000030Z-11fa64.json",
+  "runId": "G2-qlever-20261108T000030Z-11fa64",
+  "verdict": "PASS_SUBSET",
+  "counts": {
+    "executed": 8,
+    "expected": 8,
+    "pass": 8,
+    "fail": 0,
+    "skip": 0,
+    "statuses": {
+      "PASS": 8
+    }
+  },
+  "rawPath": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/runs/G2/G2-qlever-20261108T000030Z-11fa64/g2-report.json",
+  "rawBytes": 260362,
+  "rawSha256": "244d29a9446b83e4811ea2f4617a6b179da922ee626f7ff083a2862beded9799",
+  "receiptObject": {
+    "path": "runs/G2/G2-qlever-20261108T000030Z-11fa64/g2-report.json",
+    "role": "raw-outcome",
+    "bytes": 260362,
+    "sha256": "244d29a9446b83e4811ea2f4617a6b179da922ee626f7ff083a2862beded9799"
+  },
+  "objectHashMatches": true,
+  "rawCounter": {
+    "method": "wire-proxy/engine-write-counter.ts; native read client only",
+    "lane": "qlever",
+    "connections": 16,
+    "statements": 16,
+    "writes": 0,
+    "commits": 0,
+    "commands": 0,
+    "unparsed": 0,
+    "samples": []
+  },
+  "matchesReceipt": true,
+  "status": "RAW_COUNTER_RECOMPUTED",
+  "zeroWrites": true
+}

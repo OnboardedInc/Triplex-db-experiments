@@ -1,0 +1,41 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 83377 "CX-VO04H-rerun-resume", pid 83228 "GS-xtdb-20261108T211523Z-ea6353 gs-scenarios", pid 99387 "CX-P4-final-gates", pid 84732 "CX-E01-R2"
+[lab] heavy: waiting for one of 4 slots; held by pid 83377 "CX-VO04H-rerun-resume", pid 83228 "GS-xtdb-20261108T211523Z-ea6353 gs-scenarios", pid 99387 "CX-P4-final-gates", pid 84732 "CX-E01-R2"
+[lab] heavy: waiting for one of 4 slots; held by pid 83377 "CX-VO04H-rerun-resume", pid 83228 "GS-xtdb-20261108T211523Z-ea6353 gs-scenarios", pid 11262 "CX-E01-R2-reference", pid 8869 "CX-K01"
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8
+
+ ❯ lab/verify/C8/light-live.test.ts (1 test | 1 failed) 566ms
+   ❯ CX-VC8 light QLever only (1)
+     × native seeded closure on cycle and diamond, single-read and rounds, zero writes 565ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  lab/verify/C8/light-live.test.ts > CX-VC8 light QLever only > native seeded closure on cycle and diamond, single-read and rounds, zero writes
+AssertionError: expected [] to deeply equal [ 'b', 'c', 'd' ]
+
+- Expected
++ Received
+
+- [
+-   "b",
+-   "c",
+-   "d",
+- ]
++ []
+
+ ❯ lab/verify/C8/light-live.test.ts:27:62
+     25|           { relationStrategy, timeoutMs: 15_000 },
+     26|         ));
+     27|         expect(result.rows.map((r: any) => r.target).sort()).toEqual([…
+       |                                                              ^
+     28|         const counts = counter.counts();
+     29|         expect(counts).toMatchObject({ writes: 0, commits: 0, unparsed…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  16:18:39
+   Duration  1.22s (tests 50%, transform 27%, import 22%)
+

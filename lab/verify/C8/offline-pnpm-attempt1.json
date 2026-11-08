@@ -1,0 +1,86 @@
+[
+  {
+    "name": "core",
+    "started": "2026-11-08T21:13:19.788Z",
+    "finished": "2026-11-08T21:13:20.144Z",
+    "command": [
+      "pnpm",
+      "--store-dir",
+      "/Users/sam/projects/triplex-db-2/.pnpm-store",
+      "exec",
+      "vitest",
+      "run",
+      "--maxWorkers=1",
+      "--no-file-parallelism"
+    ],
+    "status": 1,
+    "signal": null,
+    "error": ""
+  },
+  {
+    "name": "xtdb",
+    "started": "2026-11-08T21:13:20.146Z",
+    "finished": "2026-11-08T21:13:20.470Z",
+    "command": [
+      "pnpm",
+      "--store-dir",
+      "/Users/sam/projects/triplex-db-2/.pnpm-store",
+      "exec",
+      "vitest",
+      "run",
+      "--maxWorkers=1",
+      "--no-file-parallelism"
+    ],
+    "status": 1,
+    "signal": null,
+    "error": ""
+  },
+  {
+    "name": "qlever",
+    "started": "2026-11-08T21:13:20.470Z",
+    "finished": "2026-11-08T21:13:20.836Z",
+    "command": [
+      "pnpm",
+      "--store-dir",
+      "/Users/sam/projects/triplex-db-2/.pnpm-store",
+      "exec",
+      "vitest",
+      "run",
+      "--maxWorkers=1",
+      "--no-file-parallelism"
+    ],
+    "status": 1,
+    "signal": null,
+    "error": ""
+  },
+  {
+    "name": "qualification",
+    "started": "2026-11-08T21:13:20.836Z",
+    "finished": "2026-11-08T21:13:21.217Z",
+    "command": [
+      "pnpm",
+      "--store-dir",
+      "/Users/sam/projects/triplex-db-2/.pnpm-store",
+      "exec",
+      "vitest",
+      "run",
+      "--maxWorkers=1",
+      "--no-file-parallelism"
+    ],
+    "status": 1,
+    "signal": null,
+    "error": ""
+  },
+  {
+    "name": "qualification-node",
+    "command": [
+      "/Users/sam/.hermes/node/bin/node",
+      "--test",
+      "../../qualification/compare.test.mjs",
+      "load/dispatch.test.ts",
+      "load/model.test.ts"
+    ],
+    "status": 0,
+    "signal": null
+  }
+]

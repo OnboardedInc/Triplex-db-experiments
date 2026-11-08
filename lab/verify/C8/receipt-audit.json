@@ -1,0 +1,288 @@
+[
+  {
+    "receipt": "lab/runs/G1/G1-qlever-20261107T230659Z-119525.json",
+    "runId": "G1-qlever-20261107T230659Z-119525",
+    "verdict": "PASS",
+    "counts": {
+      "executed": 88,
+      "expected": 88,
+      "pass": 88,
+      "fail": 0,
+      "skip": 0,
+      "suite": "PASS",
+      "byPhase": {
+        "current": {
+          "pass": 44,
+          "total": 44
+        },
+        "reopen": {
+          "pass": 44,
+          "total": 44
+        }
+      }
+    },
+    "status": "NO_NATIVE_COUNTER_WINDOW_G1_OR_PRE_COUNTER"
+  },
+  {
+    "receipt": "lab/runs/G1/G1-xtdb-20261108T000559Z-55f61b.json",
+    "runId": "G1-xtdb-20261108T000559Z-55f61b",
+    "verdict": "FAIL",
+    "counts": {
+      "executed": 88,
+      "expected": 88,
+      "pass": 86,
+      "fail": 2,
+      "skip": 0,
+      "suite": "FAIL",
+      "byPhase": {
+        "current": {
+          "pass": 43,
+          "total": 44
+        },
+        "reopen": {
+          "pass": 43,
+          "total": 44
+        }
+      }
+    },
+    "status": "NO_NATIVE_COUNTER_WINDOW_G1_OR_PRE_COUNTER"
+  },
+  {
+    "receipt": "lab/runs/G2/G2-qlever-20261107T234008Z-471d0f.json",
+    "runId": "G2-qlever-20261107T234008Z-471d0f",
+    "verdict": "FAIL",
+    "counts": {
+      "executed": 142,
+      "expected": 142,
+      "pass": 140,
+      "fail": 2,
+      "skip": 0,
+      "statuses": {
+        "PASS": 140,
+        "FAIL_PUBLIC_API": 2
+      }
+    },
+    "rawPath": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/runs/G2/G2-qlever-20261107T234008Z-471d0f/g2-report.json",
+    "rawBytes": 2649771,
+    "rawSha256": "69848e317c4f5fb0fdb05df8efe32409bffac429361a8136a4b49cbc7da62e94",
+    "receiptObject": {
+      "path": "runs/G2/G2-qlever-20261107T234008Z-471d0f/g2-report.json",
+      "role": "raw-outcome",
+      "bytes": 2649771,
+      "sha256": "69848e317c4f5fb0fdb05df8efe32409bffac429361a8136a4b49cbc7da62e94"
+    },
+    "objectHashMatches": true,
+    "rawCounter": {
+      "method": "wire-proxy/engine-write-counter.ts; native read client only",
+      "lane": "qlever",
+      "connections": 504,
+      "statements": 502,
+      "writes": 0,
+      "commits": 0,
+      "commands": 2,
+      "unparsed": 0,
+      "samples": []
+    },
+    "matchesReceipt": true,
+    "status": "RAW_COUNTER_RECOMPUTED",
+    "zeroWrites": true
+  },
+  {
+    "receipt": "lab/runs/G2/G2-qlever-20261108T000030Z-11fa64.json",
+    "runId": "G2-qlever-20261108T000030Z-11fa64",
+    "verdict": "PASS_SUBSET",
+    "counts": {
+      "executed": 8,
+      "expected": 8,
+      "pass": 8,
+      "fail": 0,
+      "skip": 0,
+      "statuses": {
+        "PASS": 8
+      }
+    },
+    "rawPath": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/runs/G2/G2-qlever-20261108T000030Z-11fa64/g2-report.json",
+    "rawBytes": 260362,
+    "rawSha256": "244d29a9446b83e4811ea2f4617a6b179da922ee626f7ff083a2862beded9799",
+    "receiptObject": {
+      "path": "runs/G2/G2-qlever-20261108T000030Z-11fa64/g2-report.json",
+      "role": "raw-outcome",
+      "bytes": 260362,
+      "sha256": "244d29a9446b83e4811ea2f4617a6b179da922ee626f7ff083a2862beded9799"
+    },
+    "objectHashMatches": true,
+    "rawCounter": {
+      "method": "wire-proxy/engine-write-counter.ts; native read client only",
+      "lane": "qlever",
+      "connections": 16,
+      "statements": 16,
+      "writes": 0,
+      "commits": 0,
+      "commands": 0,
+      "unparsed": 0,
+      "samples": []
+    },
+    "matchesReceipt": true,
+    "status": "RAW_COUNTER_RECOMPUTED",
+    "zeroWrites": true
+  },
+  {
+    "receipt": "lab/runs/G2/G2-xtdb-20261107T221854Z-6aa715.json",
+    "runId": "G2-xtdb-20261107T221854Z-6aa715",
+    "verdict": "FAIL",
+    "counts": {
+      "executed": 34,
+      "expected": 34,
+      "pass": 25,
+      "fail": 9,
+      "skip": 0,
+      "statuses": {
+        "PASS": 25,
+        "FAIL_PUBLIC_API": 9
+      }
+    },
+    "rawPath": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/runs/G2/G2-xtdb-20261107T221854Z-6aa715/g2-report.json",
+    "rawBytes": 546085,
+    "rawSha256": "89fd2f73018d4835674d058f233d3ab959441bed58572f283401fdb207de33b2",
+    "receiptObject": {
+      "path": "runs/G2/G2-xtdb-20261107T221854Z-6aa715/g2-report.json",
+      "role": "raw-outcome",
+      "bytes": 546085,
+      "sha256": "89fd2f73018d4835674d058f233d3ab959441bed58572f283401fdb207de33b2"
+    },
+    "objectHashMatches": true,
+    "rawCounter": {
+      "method": "wire-proxy/engine-write-counter.ts; native read client only",
+      "lane": "xtdb",
+      "connections": 23,
+      "statements": 200,
+      "writes": 0,
+      "commits": 0,
+      "commands": 0,
+      "unparsed": 0,
+      "samples": []
+    },
+    "matchesReceipt": true,
+    "status": "RAW_COUNTER_RECOMPUTED",
+    "zeroWrites": true
+  },
+  {
+    "receipt": "lab/runs/G2/G2-xtdb-20261108T002737Z-fdf72d.json",
+    "runId": "G2-xtdb-20261108T002737Z-fdf72d",
+    "verdict": "FAIL",
+    "counts": {
+      "executed": 142,
+      "expected": 142,
+      "pass": 127,
+      "fail": 15,
+      "skip": 0,
+      "statuses": {
+        "PASS": 127,
+        "FAIL_PUBLIC_API": 15
+      }
+    },
+    "rawPath": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/runs/G2/G2-xtdb-20261108T002737Z-fdf72d/g2-report.json",
+    "rawBytes": 2371846,
+    "rawSha256": "e9ced1a76ffc389de913313d66e32a266f71af3da3cfe37126ce6273f0bd5ac7",
+    "receiptObject": {
+      "path": "runs/G2/G2-xtdb-20261108T002737Z-fdf72d/g2-report.json",
+      "role": "raw-outcome",
+      "bytes": 2371846,
+      "sha256": "e9ced1a76ffc389de913313d66e32a266f71af3da3cfe37126ce6273f0bd5ac7"
+    },
+    "objectHashMatches": true,
+    "rawCounter": {
+      "method": "wire-proxy/engine-write-counter.ts; native read client only",
+      "lane": "xtdb",
+      "connections": 59,
+      "statements": 482,
+      "writes": 0,
+      "commits": 0,
+      "commands": 0,
+      "unparsed": 0,
+      "samples": []
+    },
+    "matchesReceipt": true,
+    "status": "RAW_COUNTER_RECOMPUTED",
+    "zeroWrites": true
+  },
+  {
+    "receipt": "lab/runs/G2/G2-xtdb-20261108T005622Z-d76802.json",
+    "runId": "G2-xtdb-20261108T005622Z-d76802",
+    "verdict": "FAIL",
+    "counts": {
+      "executed": 112,
+      "expected": 142,
+      "pass": 81,
+      "fail": 31,
+      "skip": 30,
+      "statuses": {
+        "PASS": 81,
+        "FAIL_PUBLIC_API": 31
+      }
+    },
+    "rawPath": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/runs/G2/G2-xtdb-20261108T005622Z-d76802/g2-report.json",
+    "rawBytes": 720843,
+    "rawSha256": "5e6e984ef0c2a1d4d2d06804817668d3e847d473251e3a70fe4c17f7de47576b",
+    "receiptObject": {
+      "path": "runs/G2/G2-xtdb-20261108T005622Z-d76802/g2-report.json",
+      "role": "raw-outcome",
+      "bytes": 720843,
+      "sha256": "5e6e984ef0c2a1d4d2d06804817668d3e847d473251e3a70fe4c17f7de47576b"
+    },
+    "objectHashMatches": true,
+    "rawCounter": {
+      "method": "wire-proxy/engine-write-counter.ts; native read client only",
+      "lane": "xtdb",
+      "connections": 75,
+      "statements": 362,
+      "writes": 0,
+      "commits": 0,
+      "commands": 0,
+      "unparsed": 0,
+      "samples": []
+    },
+    "matchesReceipt": true,
+    "status": "RAW_COUNTER_RECOMPUTED",
+    "zeroWrites": true
+  },
+  {
+    "receipt": "lab/runs/G2/G2-xtdb-20261108T020051Z-04bfa8.json",
+    "runId": "G2-xtdb-20261108T020051Z-04bfa8",
+    "verdict": "FAIL",
+    "counts": {
+      "executed": 20,
+      "expected": 20,
+      "pass": 0,
+      "fail": 20,
+      "skip": 0,
+      "statuses": {
+        "FAIL_PUBLIC_API": 20
+      }
+    },
+    "rawPath": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/runs/G2/G2-xtdb-20261108T020051Z-04bfa8/g2-report.json",
+    "rawBytes": 39263,
+    "rawSha256": "052f13d4362fbc835c644e5803c1c7cc0f22ecc5ebb5892f730f8190b974e3a1",
+    "receiptObject": {
+      "path": "runs/G2/G2-xtdb-20261108T020051Z-04bfa8/g2-report.json",
+      "role": "raw-outcome",
+      "bytes": 39263,
+      "sha256": "052f13d4362fbc835c644e5803c1c7cc0f22ecc5ebb5892f730f8190b974e3a1"
+    },
+    "objectHashMatches": true,
+    "rawCounter": {
+      "method": "wire-proxy/engine-write-counter.ts; native read client only",
+      "lane": "xtdb",
+      "connections": 32,
+      "statements": 66,
+      "writes": 0,
+      "commits": 0,
+      "commands": 0,
+      "unparsed": 0,
+      "samples": []
+    },
+    "matchesReceipt": true,
+    "status": "RAW_COUNTER_RECOMPUTED",
+    "zeroWrites": true
+  }
+]

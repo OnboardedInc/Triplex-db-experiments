@@ -1,0 +1,321 @@
+{
+  "capturedAt": "2026-11-08T21:23:11.242123+00:00",
+  "reviewedHead": "d9b2dc8a568bda85cc78e77f0d53537b2820ad87",
+  "scope": "git diff bf1ad4d d9b2dc8; C8 commit attribution excludes unrelated merged lab/entity work",
+  "branch": "verify/C8",
+  "node": "v22.23.2",
+  "documents": [
+    {
+      "source": "/Users/sam/projects/triplex-db-2/CLAUDE.md",
+      "copy": "lab/verify/C8/inputs/CLAUDE.md",
+      "bytes": 858,
+      "sha256": "22aee24c573eccdaf5ffe1b8bca1893b59cf27391e4c9921f76121c24ac87aa7"
+    },
+    {
+      "source": "/Users/sam/projects/triplex-db-2/lab/SCOPE.md",
+      "copy": "lab/verify/C8/inputs/lab__SCOPE.md",
+      "bytes": 5655,
+      "sha256": "94527879db763dd6f3e7d233470250cd53b86f4fb594c8ade2aedc730cb14f96"
+    },
+    {
+      "source": "/Users/sam/projects/triplex-db-2/lab/NORTH-STAR.md",
+      "copy": "lab/verify/C8/inputs/lab__NORTH-STAR.md",
+      "bytes": 2460,
+      "sha256": "0176766d21385a37a0dea3091d7200f249901ce8a4eadd071acd56b2f70eb3e9"
+    },
+    {
+      "source": "/Users/sam/projects/triplex-db-2/lab/TARGETS.md",
+      "copy": "lab/verify/C8/inputs/lab__TARGETS.md",
+      "bytes": 31906,
+      "sha256": "cb30ffeb776a7deb0c885be2968872bcebd7dc05cca1b2cfb5913b809a804d95"
+    },
+    {
+      "source": "/Users/sam/projects/triplex-db-2/lab/PROTOCOL.md",
+      "copy": "lab/verify/C8/inputs/lab__PROTOCOL.md",
+      "bytes": 5120,
+      "sha256": "c368bf5b4e208a9e0360b6bd3c5524d454b83150e94192282abb4d462b703f1d"
+    },
+    {
+      "source": "/Users/sam/projects/triplex-db-2/lab/verify/C8/BRIEF.md",
+      "copy": "lab/verify/C8/inputs/lab__verify__C8__BRIEF.md",
+      "bytes": 3465,
+      "sha256": "c5ed8beb4b89017e44311ff4165a1baf0098cf0e09baa7084e00e30d605f1e09"
+    },
+    {
+      "source": "/Users/sam/projects/triplex-db-2/lab/agents/handoffs/V-C8.md",
+      "copy": "lab/verify/C8/inputs/lab__agents__handoffs__V-C8.md",
+      "bytes": 1923,
+      "sha256": "4dcf90c14ae9b789e1121383c0d1b5c3c8ab73d25331874c267bbd09adc8a08f"
+    },
+    {
+      "source": "/Users/sam/projects/triplex-db-2/lab/experiments/EXP-C8-read-only-frontier/REPORT.md",
+      "copy": "lab/verify/C8/inputs/lab__experiments__EXP-C8-read-only-frontier__REPORT.md",
+      "bytes": 6283,
+      "sha256": "246f9a0d1fe98776d357890c8e2410d29207e5a1dd196afb4031f0e1453d7e60"
+    },
+    {
+      "source": "/Users/sam/projects/triplex-db-2/lab/experiments/EXP-C8-read-only-frontier/BRIEF.md",
+      "copy": "lab/verify/C8/inputs/lab__experiments__EXP-C8-read-only-frontier__BRIEF.md",
+      "bytes": 4148,
+      "sha256": "d8e6d35095b35aefe36ef42f979c3fa663b85b5da1775be5a29b54d781270ac5"
+    },
+    {
+      "source": "/Users/sam/projects/triplex-db-2/lab/research/R10-read-only-recursion.md",
+      "copy": "lab/verify/C8/inputs/lab__research__R10-read-only-recursion.md",
+      "bytes": 59194,
+      "sha256": "7d8833b4f19096a03d2ea5c78794bf1803730f71770260a646a6db332a733808"
+    }
+  ],
+  "sourceFiles": [
+    {
+      "path": "lab/bin/gate.mjs",
+      "bytes": 41285,
+      "sha256": "315dd668874aaf8a284313da014ef44f36d4ee22370e793e9501709ae42c5ec3",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "packages/core/src/native/FrontierClosure.ts",
+      "bytes": 21782,
+      "sha256": "aa46e6894008c657f20060cedba2bae3c89fe6980af245d18ab80ba994691787",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "packages/core/src/runtime/index.ts",
+      "bytes": 2425,
+      "sha256": "1e887d771e6359355d252a527b49a20401ff8db610b6c4ecaab94ec5e4e39375",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "packages/core/test/native/frontier-closure.test.ts",
+      "bytes": 17146,
+      "sha256": "54005d825d7ff90aba30ee2265d57759b4c6101cad0e267f9c51514c11a3a690",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "packages/qlever/NATIVE-QUERIES.md",
+      "bytes": 5103,
+      "sha256": "65df2055b27d2d580c109f7b7b1562812b0ef87c8f9fee8f05bd85420270c809",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "packages/qlever/src/QleverQueryExecutor.ts",
+      "bytes": 20227,
+      "sha256": "433080bc14b2c7922d91e0bfa2e36b4ac2e92823968ecaa6c81cff96ad77bde5",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "packages/qlever/src/ReadOnlyClient.ts",
+      "bytes": 1395,
+      "sha256": "74f922964fd5c40fb191008b85e4c13eba219527fcc29ec410eb365b94751924",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "packages/qlever/src/TemporalQueries.ts",
+      "bytes": 9201,
+      "sha256": "986ba49d9c7af25f6a5ec4cf4f2bda97746e1fc4f232dbe9c9b00f9eeeb5bb3f",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "packages/qlever/src/compiler.ts",
+      "bytes": 45143,
+      "sha256": "a41494f5b85a14ec1f0f6a137a6e51216d1ec26d81372fa986cc97e62f51d9b0",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "packages/qlever/src/index.ts",
+      "bytes": 3672,
+      "sha256": "83c5013a074d75892aa2124e4ebe7ae7cb73d026f688c494157b64c4827afc92",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "packages/qlever/src/native/BasisRelations.ts",
+      "bytes": 11128,
+      "sha256": "a4651692d16c68e79e65253a4f389fb579078295814a62eec052b4f75b9f8826",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "packages/qlever/src/native/NativeQueries.ts",
+      "bytes": 9382,
+      "sha256": "a05f98b30825370d967b646cb9df31e07e8e71d696909e62c472b7ab5f6bff3c",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "packages/qlever/src/recursion.ts",
+      "bytes": 8181,
+      "sha256": "4c9747745f3a317326d0c8bfb0a34a859a4c93a2bcc0472459014fe99d48c88e",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "packages/qlever/test/native-relations.test.ts",
+      "bytes": 6168,
+      "sha256": "ccde3b93566d8678c376ddbd74dbbdaa53b93ca12c7c8d5d35e16331c1b51a1c",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "packages/qlever/test/native.test.ts",
+      "bytes": 7151,
+      "sha256": "6a3f9f5b28112053c4b5d3ac822ccde3b9fee5c6346aebf044239c0bfbc0a01b",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "packages/qualification/src/engine-write-counter.ts",
+      "bytes": 21418,
+      "sha256": "36be1a823c668a4fdd3c5800c6a382619d59db3716669ae77a4cbb4da151e695",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "packages/qualification/src/index.ts",
+      "bytes": 13695,
+      "sha256": "b95e16f17d76c0947b5766e1335000d0b2601f5a362e4dfe903aaecfbdc238a8",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "packages/qualification/src/native/qlever-recursion.ts",
+      "bytes": 16067,
+      "sha256": "0d2f26abe38e35da65d75c82a23280dd62174bd7a1081fcde48673a73218f058",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "packages/qualification/src/native/xtdb-native-errors.ts",
+      "bytes": 2912,
+      "sha256": "9482600cf9c146c33e59aecfaa2592001779479fcf12aecb9e6be59d22abd74e",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "packages/qualification/src/native/xtdb-workloads.ts",
+      "bytes": 57656,
+      "sha256": "c5d10675db855169623678be006a300ca740c71115b151206147e140540e5254",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "packages/qualification/src/native/xtdb-xtql-reach.ts",
+      "deleted": true
+    },
+    {
+      "path": "packages/qualification/test/c8-reads-never-write.test.ts",
+      "bytes": 17942,
+      "sha256": "7fb67ccfc4688725983003c380070f2fbb7c2977a5289cefc946cdae4b118882",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "packages/qualification/test/engine-write-counter.test.ts",
+      "bytes": 22713,
+      "sha256": "a99ca45e2d89e0e6d9f2664b0edcf42457504f862c6bbd80e194fe20aae8837d",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "packages/qualification/test/xtdb-native-library.test.ts",
+      "bytes": 13019,
+      "sha256": "0ab44b70a4d38e52a0fce9f071e6cef45cf867c21a03eb4643573a22c5ecd13b",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "packages/qualification/workloads/runner.ts",
+      "bytes": 41055,
+      "sha256": "e13a872ea5bde90a9bcf37f83885036df4f635295ce57ab45261d78928567208",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "packages/qualification/workloads/xtdb-native-x02.ts",
+      "bytes": 33082,
+      "sha256": "01130a6e2fcc63bf6718df70241dcbea6e636c0176b8f181636bb96a16de6d84",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "packages/xtdb/README.md",
+      "bytes": 13225,
+      "sha256": "dd22e339871489dba12accb9f9cabc6cd802c2969bb41fda85fad64f56b89091",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "packages/xtdb/src/MaintainedQueries.ts",
+      "bytes": 15437,
+      "sha256": "2e8618e3e27e3cc7d60b237aebc17922b6a5e12389ffbb31d4adaf922317dabe",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "packages/xtdb/src/ReadOnlyClient.ts",
+      "bytes": 1810,
+      "sha256": "279ce5833b5f123f8f3a326defca0fbb60d1d369738dd91a203ddf70b37fdfac",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "packages/xtdb/src/TemporalQueries.ts",
+      "bytes": 10448,
+      "sha256": "5b2223281e10d076498fe6c1c1676643a9e70591cca337998eebd9f19fbcfc14",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "packages/xtdb/src/XtdbQueryExecutor.ts",
+      "bytes": 11288,
+      "sha256": "5e219a2c6c4aef5ad187d140653f46b8260731f5dc2019535017bb1d4cf79c7d",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "packages/xtdb/src/index.ts",
+      "bytes": 3890,
+      "sha256": "85baf1532e9e5c5d37e33686f95b16c6c2adafe951234ae773ff1cd5db1699db",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "packages/xtdb/src/native/NativeQueries.ts",
+      "bytes": 9357,
+      "sha256": "ff9b1eecad9294bb67bb8764ef2c2224882127ba2a7b8c608d81cf8de9ca7cee",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "packages/xtdb/src/native/Reachability.ts",
+      "bytes": 10666,
+      "sha256": "d404e84931d4cecb339b5f935a4791b0035afb4e7999c7010fdec90f26680e91",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "packages/xtdb/src/query/compiler.ts",
+      "bytes": 8317,
+      "sha256": "d3c8e61cea87a46fad632739764a07b1712dfd11a8d3ff4c960c7acf1e746c71",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "packages/xtdb/src/query/domains.ts",
+      "bytes": 8644,
+      "sha256": "6e9369d2005f63e54b52afd0a6d90c9ffe1ad463612d90e2a0f4f607db20819a",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "packages/xtdb/src/query/recursion.ts",
+      "bytes": 8751,
+      "sha256": "6796b505545ad47a3f60cfc69823f20256b4856953a5f68cfb7b17f9b2d7c5be",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "packages/xtdb/test/maintained.test.ts",
+      "bytes": 7353,
+      "sha256": "d66b05953d859e285653bc42ccdb72412e365e1e4fdeec8932cfbb7e91e39e61",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "packages/xtdb/test/native-reachability.test.ts",
+      "bytes": 7846,
+      "sha256": "2c2c7a26bc41074910319861b4b473744ddb16187a189a52022f31cb504d50a6",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "packages/xtdb/test/query-compiler.test.ts",
+      "bytes": 3480,
+      "sha256": "dd620c729d97cb66b7773d8cf6781e1262a4ce2904805e64685f20721c4fbdbd",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "bytes": 289866,
+      "sha256": "7a02f735718ecdd29fdbfaf8ec2e2b05c92ad773cdc27d1920a278c5c7f4ba14",
+      "matchesReviewedHead": true
+    },
+    {
+      "path": "vitest.workspace-aliases.ts",
+      "bytes": 1951,
+      "sha256": "0e79694cf7c6857eeeae4c5610652a981542594e2548c70d60ea48ff3e810ce4",
+      "matchesReviewedHead": true
+    }
+  ]
+}

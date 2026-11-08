@@ -1,0 +1,40 @@
+{
+  "receipt": "lab/runs/G2/G2-xtdb-20261108T005622Z-d76802.json",
+  "runId": "G2-xtdb-20261108T005622Z-d76802",
+  "verdict": "FAIL",
+  "counts": {
+    "executed": 112,
+    "expected": 142,
+    "pass": 81,
+    "fail": 31,
+    "skip": 30,
+    "statuses": {
+      "PASS": 81,
+      "FAIL_PUBLIC_API": 31
+    }
+  },
+  "rawPath": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/runs/G2/G2-xtdb-20261108T005622Z-d76802/g2-report.json",
+  "rawBytes": 720843,
+  "rawSha256": "5e6e984ef0c2a1d4d2d06804817668d3e847d473251e3a70fe4c17f7de47576b",
+  "receiptObject": {
+    "path": "runs/G2/G2-xtdb-20261108T005622Z-d76802/g2-report.json",
+    "role": "raw-outcome",
+    "bytes": 720843,
+    "sha256": "5e6e984ef0c2a1d4d2d06804817668d3e847d473251e3a70fe4c17f7de47576b"
+  },
+  "objectHashMatches": true,
+  "rawCounter": {
+    "method": "wire-proxy/engine-write-counter.ts; native read client only",
+    "lane": "xtdb",
+    "connections": 75,
+    "statements": 362,
+    "writes": 0,
+    "commits": 0,
+    "commands": 0,
+    "unparsed": 0,
+    "samples": []
+  },
+  "matchesReceipt": true,
+  "status": "RAW_COUNTER_RECOMPUTED",
+  "zeroWrites": true
+}

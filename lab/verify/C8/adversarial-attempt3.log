@@ -1,0 +1,129 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 83377 "CX-VO04H-rerun-resume", pid 83228 "GS-xtdb-20261108T211523Z-ea6353 gs-scenarios", pid 11262 "CX-E01-R2-reference", pid 90300 "CX-VX02-unset-tests-r3"
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8
+
+stdout | lab/verify/C8/adversarial.test.ts > CX-VC8 independent semantics > exhausts every directed 3-node graph including loops, cycles, diamonds, disconnected seeds
+{"graphCount":512,"originComparisons":2048,"ruleComparisons":4608,"pathComparisons":8192}
+
+ ✓ lab/verify/C8/adversarial.test.ts > CX-VC8 independent semantics > exhausts every directed 3-node graph including loops, cycles, diamonds, disconnected seeds 248ms
+stdout | lab/verify/C8/adversarial.test.ts > CX-VC8 guards and Datalog > staged XTDB rows reach main, count and rule selection queries through the same client identity
+{"overlayStatements":4,"stagedSourceRewrites":2}
+
+ ✓ lab/verify/C8/adversarial.test.ts > CX-VC8 independent semantics > high fanout, duplicates and exact limits / one past visited, edges, roundRows, pairs, rounds 5ms
+ × lab/verify/C8/adversarial.test.ts > CX-VC8 independent semantics > BUG: refuses a cycle that adds a reached seed beyond maxRounds 3ms
+   → expected undefined to be an instance of RecursionBudgetExceeded
+ × lab/verify/C8/adversarial.test.ts > CX-VC8 independent semantics > BUG: ruleClosure honors explicitly supplied maxRounds 0ms
+   → expected undefined to be an instance of RecursionBudgetExceeded
+ × lab/verify/C8/adversarial.test.ts > CX-VC8 independent semantics > BUG: ruleClosure honors explicitly supplied maxVisited 0ms
+   → expected undefined to be an instance of RecursionBudgetExceeded
+ × lab/verify/C8/adversarial.test.ts > CX-VC8 independent semantics > BUG: path counts on a 12000-node DAG within default frontier budgets do not overflow the JS stack 70ms
+   → Maximum call stack size exceeded
+ ✓ lab/verify/C8/adversarial.test.ts > CX-VC8 guards and Datalog > submit/update guards refuse without delegation, nested facade retains overlay identity 4ms
+ ✓ lab/verify/C8/adversarial.test.ts > CX-VC8 guards and Datalog > staged XTDB rows reach main, count and rule selection queries through the same client identity 11ms
+ ✓ lab/verify/C8/adversarial.test.ts > CX-VC8 guards and Datalog > QLever attribute-tail refusal is typed 5ms
+ ✓ lab/verify/C8/adversarial.test.ts > CX-VC8 guards and Datalog > XTDB public attribute-tail refusal is a typed ReadError with no partial answer 2ms
+ ✓ lab/verify/C8/adversarial.test.ts > CX-VC8 guards and Datalog > both lane evaluators preserve maxDepth and tail constraints on controlled direct-read relations 7ms
+stdout | lab/verify/C8/adversarial.test.ts > CX-VC8 fail closed counter > BUG: pgwire execute of an existing prepared write after reset cannot silently count zero
+{"repeatedPreparedWriteAfterReset":{"lane":"xtdb","connections":0,"statements":0,"writes":0,"commits":0,"commands":0,"unparsed":0,"samples":[]}}
+
+ × lab/verify/C8/adversarial.test.ts > CX-VC8 fail closed counter > BUG: pgwire execute of an existing prepared write after reset cannot silently count zero 29ms
+   → expected 0 to be greater than 0
+ ✓ lab/verify/C8/adversarial.test.ts > CX-VC8 fail closed counter > classifies required SQL adversaries as writes 0ms
+stdout | lab/verify/C8/adversarial.test.ts > CX-VC8 fail closed counter > QLever GET/form LOAD and CLEAR updates count; unknown multipart must count or fail
+{"unknownMultipart":{"lane":"qlever","connections":1,"statements":0,"writes":0,"commits":0,"commands":0,"unparsed":0,"samples":[]},"forwarded":5}
+
+ × lab/verify/C8/adversarial.test.ts > CX-VC8 fail closed counter > QLever GET/form LOAD and CLEAR updates count; unknown multipart must count or fail 82ms
+   → expected 0 to be greater than 0
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  lab/verify/C8/adversarial.test.ts > CX-VC8 independent semantics > BUG: refuses a cycle that adds a reached seed beyond maxRounds
+AssertionError: expected undefined to be an instance of RecursionBudgetExceeded
+ ❯ refusal lab/verify/C8/adversarial.test.ts:56:17
+     54|   let error: any;
+     55|   try { await run(); } catch (e) { error = e; }
+     56|   expect(error).toBeInstanceOf(RecursionBudgetExceeded);
+       |                 ^
+     57|   expect(error._tag).toBe("RecursionBudgetExceeded");
+     58|   expect(error.kind).toBe(kind);
+ ❯ lab/verify/C8/adversarial.test.ts:116:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  lab/verify/C8/adversarial.test.ts > CX-VC8 independent semantics > BUG: ruleClosure honors explicitly supplied maxRounds
+AssertionError: expected undefined to be an instance of RecursionBudgetExceeded
+ ❯ refusal lab/verify/C8/adversarial.test.ts:56:17
+     54|   let error: any;
+     55|   try { await run(); } catch (e) { error = e; }
+     56|   expect(error).toBeInstanceOf(RecursionBudgetExceeded);
+       |                 ^
+     57|   expect(error._tag).toBe("RecursionBudgetExceeded");
+     58|   expect(error.kind).toBe(kind);
+ ❯ lab/verify/C8/adversarial.test.ts:120:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  lab/verify/C8/adversarial.test.ts > CX-VC8 independent semantics > BUG: ruleClosure honors explicitly supplied maxVisited
+AssertionError: expected undefined to be an instance of RecursionBudgetExceeded
+ ❯ refusal lab/verify/C8/adversarial.test.ts:56:17
+     54|   let error: any;
+     55|   try { await run(); } catch (e) { error = e; }
+     56|   expect(error).toBeInstanceOf(RecursionBudgetExceeded);
+       |                 ^
+     57|   expect(error._tag).toBe("RecursionBudgetExceeded");
+     58|   expect(error.kind).toBe(kind);
+ ❯ lab/verify/C8/adversarial.test.ts:124:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  lab/verify/C8/adversarial.test.ts > CX-VC8 independent semantics > BUG: path counts on a 12000-node DAG within default frontier budgets do not overflow the JS stack
+RangeError: Maximum call stack size exceeded
+ ❯ paths packages/core/src/native/FrontierClosure.ts:476:26
+    474|       if (known !== undefined) return known;
+    475|       let total = 0n;
+    476|       for (const next of out(node)) total += next === to ? 1n : paths(…
+       |                          ^
+    477|       memo.set(node, total);
+    478|       return total;
+ ❯ paths packages/core/src/native/FrontierClosure.ts:476:65
+ ❯ paths packages/core/src/native/FrontierClosure.ts:476:65
+ ❯ paths packages/core/src/native/FrontierClosure.ts:476:65
+ ❯ paths packages/core/src/native/FrontierClosure.ts:476:65
+ ❯ paths packages/core/src/native/FrontierClosure.ts:476:65
+ ❯ paths packages/core/src/native/FrontierClosure.ts:476:65
+ ❯ paths packages/core/src/native/FrontierClosure.ts:476:65
+ ❯ paths packages/core/src/native/FrontierClosure.ts:476:65
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  lab/verify/C8/adversarial.test.ts > CX-VC8 fail closed counter > BUG: pgwire execute of an existing prepared write after reset cannot silently count zero
+AssertionError: expected 0 to be greater than 0
+ ❯ lab/verify/C8/adversarial.test.ts:218:39
+    216|       await waitBytes(startup.length + parse.length + bind.length + ex…
+    217|       console.log(JSON.stringify({ repeatedPreparedWriteAfterReset: co…
+    218|       expect(counter.counts().writes).toBeGreaterThan(0);
+       |                                       ^
+    219|     } finally {
+    220|       client.destroy(); await counter.close();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  lab/verify/C8/adversarial.test.ts > CX-VC8 fail closed counter > QLever GET/form LOAD and CLEAR updates count; unknown multipart must count or fail
+AssertionError: expected 0 to be greater than 0
+ ❯ lab/verify/C8/adversarial.test.ts:248:39
+    246|       await response.text();
+    247|       console.log(JSON.stringify({ unknownMultipart: counter.counts(),…
+    248|       expect(counter.counts().writes).toBeGreaterThan(0);
+       |                                       ^
+    249|     } finally { await counter.close(); await new Promise<void>(r => up…
+    250|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 8 passed (14)
+   Start at  16:18:46
+   Duration  2.17s (transform 42%, import 34%, tests 23%)
+
+JSON report written to /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/adversarial-results.json

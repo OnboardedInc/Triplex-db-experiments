@@ -1,0 +1,97 @@
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8
+
+stdout | lab/verify/C8/adversarial.test.ts > CX-VC8 fail closed counter > QLever GET/form LOAD and CLEAR updates count; unknown multipart must count or fail
+{"unknownMultipart":{"lane":"qlever","connections":1,"statements":0,"writes":0,"commits":0,"commands":0,"unparsed":0,"samples":[]},"forwarded":5}
+
+ ❯ lab/verify/C8/adversarial.test.ts (11 tests | 5 failed) 272ms
+   ❯ CX-VC8 independent semantics (5)
+     × BUG: refuses a cycle that adds a reached seed beyond maxRounds 2ms
+     × BUG: ruleClosure honors explicitly supplied maxRounds 0ms
+     × BUG: ruleClosure honors explicitly supplied maxVisited 0ms
+   ❯ CX-VC8 guards and Datalog (4)
+     × BUG: XTDB attribute-tail refusal is equally typed at the evaluator boundary 4ms
+   ❯ CX-VC8 fail closed counter (2)
+     × QLever GET/form LOAD and CLEAR updates count; unknown multipart must count or fail 45ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  lab/verify/C8/adversarial.test.ts > CX-VC8 independent semantics > BUG: refuses a cycle that adds a reached seed beyond maxRounds
+AssertionError: expected undefined to be an instance of RecursionBudgetExceeded
+ ❯ refusal lab/verify/C8/adversarial.test.ts:56:17
+     54|   let error: any;
+     55|   try { await run(); } catch (e) { error = e; }
+     56|   expect(error).toBeInstanceOf(RecursionBudgetExceeded);
+       |                 ^
+     57|   expect(error._tag).toBe("RecursionBudgetExceeded");
+     58|   expect(error.kind).toBe(kind);
+ ❯ lab/verify/C8/adversarial.test.ts:116:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  lab/verify/C8/adversarial.test.ts > CX-VC8 independent semantics > BUG: ruleClosure honors explicitly supplied maxRounds
+AssertionError: expected undefined to be an instance of RecursionBudgetExceeded
+ ❯ refusal lab/verify/C8/adversarial.test.ts:56:17
+     54|   let error: any;
+     55|   try { await run(); } catch (e) { error = e; }
+     56|   expect(error).toBeInstanceOf(RecursionBudgetExceeded);
+       |                 ^
+     57|   expect(error._tag).toBe("RecursionBudgetExceeded");
+     58|   expect(error.kind).toBe(kind);
+ ❯ lab/verify/C8/adversarial.test.ts:120:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  lab/verify/C8/adversarial.test.ts > CX-VC8 independent semantics > BUG: ruleClosure honors explicitly supplied maxVisited
+AssertionError: expected undefined to be an instance of RecursionBudgetExceeded
+ ❯ refusal lab/verify/C8/adversarial.test.ts:56:17
+     54|   let error: any;
+     55|   try { await run(); } catch (e) { error = e; }
+     56|   expect(error).toBeInstanceOf(RecursionBudgetExceeded);
+       |                 ^
+     57|   expect(error._tag).toBe("RecursionBudgetExceeded");
+     58|   expect(error.kind).toBe(kind);
+ ❯ lab/verify/C8/adversarial.test.ts:124:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  lab/verify/C8/adversarial.test.ts > CX-VC8 guards and Datalog > BUG: XTDB attribute-tail refusal is equally typed at the evaluator boundary
+AssertionError: expected Error: Rule r: a recursive tail bound to … to match object { _tag: 'DatalogValidationError' }
+
+- Expected
++ Received
+
+- {
+-   "_tag": "DatalogValidationError",
++ Error {
++   "message": "Rule r: a recursive tail bound to the attribute is not supported",
+  }
+
+ ❯ lab/verify/C8/adversarial.test.ts:163:94
+    161|   it("BUG: XTDB attribute-tail refusal is equally typed at the evaluat…
+    162|     const client: any = { query: async () => [] };
+    163|     await expect(evaluateRules(client, refused, "test", { validAt: 0, …
+       |                                                                                              ^
+    164|   });
+    165| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  lab/verify/C8/adversarial.test.ts > CX-VC8 fail closed counter > QLever GET/form LOAD and CLEAR updates count; unknown multipart must count or fail
+AssertionError: expected 0 to be greater than 0
+ ❯ lab/verify/C8/adversarial.test.ts:191:39
+    189|       await response.text();
+    190|       console.log(JSON.stringify({ unknownMultipart: counter.counts(),…
+    191|       expect(counter.counts().writes).toBeGreaterThan(0);
+       |                                       ^
+    192|     } finally { await counter.close(); await new Promise<void>(r => up…
+    193|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 6 passed (11)
+   Start at  16:15:47
+   Duration  1.35s (transform 54%, import 24%, tests 22%)
+

@@ -1,0 +1,44 @@
+{
+  "reviewer": "CX-VC8",
+  "verdict": "FIX-FIRST",
+  "reviewedHead": "d9b2dc8a568bda85cc78e77f0d53537b2820ad87",
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "P2"
+    },
+    {
+      "id": "F2",
+      "severity": "P2"
+    },
+    {
+      "id": "F3",
+      "severity": "P2"
+    },
+    {
+      "id": "F4",
+      "severity": "P2"
+    },
+    {
+      "id": "F5",
+      "severity": "P2"
+    }
+  ],
+  "existingTestsPassed": 998,
+  "existingTestsSkipped": 155,
+  "adversarial": {
+    "numTotalTests": 15,
+    "numPassedTests": 9,
+    "numFailedTests": 6
+  },
+  "lightLive": {
+    "numTotalTests": 1,
+    "numPassedTests": 1,
+    "numFailedTests": 0
+  },
+  "historicalCounterStatements": 1628,
+  "historicalCounterWrites": 0,
+  "liveApplicationReadMutationDemonstrated": false,
+  "freshXtdbGatesRun": false,
+  "containerLifecycleOperations": false
+}
