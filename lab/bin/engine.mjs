@@ -441,6 +441,11 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
   const { positional, options } = parseArgs(process.argv.slice(2));
   const command = positional[0];
   const config = loadSlots();
+  if (command === 'box') {
+    const { boxCommand } = await import('./box-engine.mjs');
+    console.log(JSON.stringify(await boxCommand(config, positional[1], options)));
+    return;
+  }
   if (command === 'status') return status(config);
   if (!['up', 'down', 'logs'].includes(command)) fail('USAGE', 'usage: engine.mjs up|down|status|logs --lane xtdb|qlever --slot dev|s1|s2|s3 [--fresh] [--follower] [--cpuset-cpus LIST]');
   if (!options.lane || !options.slot) fail('USAGE', '--lane and --slot are required');

@@ -1,0 +1,29 @@
+Scope: 5 of 24 workspace projects
+Lockfile is up to date, resolution step is skipped
+Progress: resolved 1, reused 0, downloaded 0, added 0
+.                                        | +421 ++++++++++++++++++++++++++++++++
+Progress: resolved 421, reused 168, downloaded 0, added 0
+Progress: resolved 421, reused 418, downloaded 0, added 0
+Progress: resolved 421, reused 418, downloaded 0, added 59
+Progress: resolved 421, reused 418, downloaded 0, added 149
+Progress: resolved 421, reused 418, downloaded 0, added 171
+Progress: resolved 421, reused 418, downloaded 0, added 172
+Progress: resolved 421, reused 418, downloaded 0, added 184
+Progress: resolved 421, reused 418, downloaded 0, added 216
+Progress: resolved 421, reused 418, downloaded 0, added 221
+Progress: resolved 421, reused 418, downloaded 0, added 236
+Progress: resolved 421, reused 418, downloaded 0, added 382
+Progress: resolved 421, reused 418, downloaded 0, added 421, done
+ EACCES  Error while trying to symlink "../../../node_modules/.pnpm/typescript@6.0.2/node_modules/typescript" to "/work/packages/qualification/node_modules/typescript". The error happened while trying to create the parent directory for the symlink target. Details: Error: EACCES: permission denied, mkdir '/work/packages/qualification/node_modules'
+
+pnpm: Error while trying to symlink "../../../node_modules/.pnpm/typescript@6.0.2/node_modules/typescript" to "/work/packages/qualification/node_modules/typescript". The error happened while trying to create the parent directory for the symlink target. Details: Error: EACCES: permission denied, mkdir '/work/packages/qualification/node_modules'
+    at async Object.mkdir (node:internal/fs/promises:858:10)
+    at async forceSymlink (/opt/corepack/v1/pnpm/10.11.0/dist/pnpm.cjs:94335:15)
+    at async /opt/corepack/v1/pnpm/10.11.0/dist/pnpm.cjs:146608:14
+    at async Promise.all (index 2)
+    at async linkDirectDepsOfProject (/opt/corepack/v1/pnpm/10.11.0/dist/pnpm.cjs:146596:7)
+    at async Promise.all (index 0)
+    at async linkDirectDeps (/opt/corepack/v1/pnpm/10.11.0/dist/pnpm.cjs:146537:34)
+    at async headlessInstall (/opt/corepack/v1/pnpm/10.11.0/dist/pnpm.cjs:146956:26)
+    at async tryFrozenInstall (/opt/corepack/v1/pnpm/10.11.0/dist/pnpm.cjs:185941:44)
+    at async _install (/opt/corepack/v1/pnpm/10.11.0/dist/pnpm.cjs:185757:37)

@@ -1,0 +1,16 @@
+{
+  "at": "2026-11-08T22:55:30.119Z",
+  "files": {
+    "lab/bin/claim.mjs": "1e2c6da3871c823dd4c948f933c2504e7448284212e9a9526fd754f84592e45d",
+    "lab/bin/box.mjs": "798a2445cbdc8ea87f9e02c0a816d35f8e74ad632c3bedfbb706676f3823848a",
+    "lab/bin/box-engine.mjs": "8ae44ed3b549aa76904d2b23d34b5f2965c3ee2db2948e79906677a78d30929a",
+    "lab/config/box/Dockerfile": "ed78a8e03b2fc8dfaa9fb9b8ee42c886b4e2c7be8cf7c96cc6f7cacad50b0f2e",
+    "lab/config/slots.json": "eb178fae5d3f18a6e1544f5b367d6039686ca003909e6f50711765eb24c47903",
+    "lab/bin/lib.mjs": "c89f2a34e84d652db511a6bc410522b82dd077b95d688164267e9620b1257b6f",
+    "lab/bin/gate.mjs": "42a3fefe50241e688208e17615ebfa74f9426cf4f93329adfcd7a5a5be97a31d",
+    "lab/bin/engine.mjs": "4fb8c37ef9bd2cf2310adab9d568d80ff49d334cd117a789a59e7d25b638efaf",
+    "lab/bin/heavy-lock.mjs": "88dd2071c8d8c1e3212c9a65dc719b79af46fbe6cc2e6ede8fbe0b61112803fa",
+    "lab/bin/receipt.mjs": "ebdcfb60284d6efe378923c0f42eb4eb7ad9a260141ceb46958e86752d0d2d2c",
+    "lab/acceptance/build_contract.py": "685b48066f7094d8e9c3cfc9c27840a9f3d2fb29fd4ae315da707e8346860a11"
+  }
+}

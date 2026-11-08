@@ -1,0 +1,1 @@
+[lab] USAGE: gate.mjs OBL --claim FILE --repo SOURCE --authority SHA --evaluator-commit SHA [--holder NAME]

@@ -1,0 +1,1 @@
+{"dryRun":true,"gate":"OBL","lane":"xtdb","slot":"s1","endpoint":"postgres://xtdb:xtdb@127.0.0.1:5471/xtdb","container":"tx2-xtdb-s1","mode":"exclusive","plan":null,"executes":false,"missing":"dry-run is a plan only; executing OBL requires --claim, --authority and --evaluator-commit"}

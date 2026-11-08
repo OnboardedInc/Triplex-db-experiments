@@ -669,11 +669,21 @@ main(async () => {
   // [EXP-E01] --dry-run (RULINGS Q55a step 3): validate the gate, lane and registered slot and print the plan claim.mjs
   // qualify would execute, without locks, builds or engines. OBL (run an obligation's pinned case manifest on a slot) exists
   // only as a plan: no executable case manifests are pinned yet, so it never runs.
+  if (gate === 'OBL' && !options['dry-run']) {
+    // [EXP-G03] Why: OBL and qualify use one evaluator-owned execution path; claimant plans never supply cases.
+    // Rejected: a second manifest resolver (selection and oracle checks would drift).
+    if (!options.claim || !options.authority || !options['evaluator-commit']) fail('USAGE', 'gate.mjs OBL --claim FILE --repo SOURCE --authority SHA --evaluator-commit SHA [--holder NAME]');
+    const args = ['lab/bin/claim.mjs', 'qualify', path.resolve(options.claim), '--repo', path.resolve(options.repo ?? REPO), '--authority', options.authority, '--evaluator-commit', options['evaluator-commit'], '--holder', options.holder ?? defaultHolder(options), '--json'];
+    if (options.work) args.push('--work', path.resolve(options.work));
+    const result = spawnSync(process.execPath, args, { cwd: REPO, stdio: 'inherit' });
+    process.exitCode = result.status ?? 2;
+    return;
+  }
   if (options['dry-run']) {
     if (!['G0', 'G1', 'G2', 'G4', 'NS', 'GS', 'OBL'].includes(gate) || !['xtdb', 'qlever'].includes(options.lane)) fail('USAGE', 'usage: gate.mjs G0|G1|G2|G4|NS|GS|OBL --lane xtdb|qlever --slot S --dry-run [--plan FILE]');
     const info = slotInfo(loadSlots(), options.lane, options.slot ?? 'dev');
     console.log(JSON.stringify({ dryRun: true, gate, lane: options.lane, slot: info.slot, endpoint: info.endpoint, container: info.container, mode: info.mode ?? null,
-      plan: options.plan ? readJson(path.resolve(options.plan)) : null, executes: gate !== 'OBL', missing: gate === 'OBL' ? 'the OBL gate (run pinned case manifests on a slot) is not implemented' : null }));
+      plan: options.plan ? readJson(path.resolve(options.plan)) : null, executes: false, missing: gate === 'OBL' ? 'dry-run is a plan only; executing OBL requires --claim, --authority and --evaluator-commit' : null }));
     return;
   }
   if (!['G0', 'G1', 'G2', 'G4', 'NS', 'GS'].includes(gate) || !['xtdb', 'qlever'].includes(options.lane))

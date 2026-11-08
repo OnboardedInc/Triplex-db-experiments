@@ -1,0 +1,289 @@
+{
+  "stamp": 1794178049247,
+  "config": {
+    "storeListingSha256": "c13cf21f64047faa85410506693d395759deb687084023bfd4d60027ce92cafd",
+    "format": "tx2-box/1",
+    "image": "tx2-box:60fc3d789137",
+    "imageId": "sha256:d9daa33801a8c73d7cafd01f4ac39695257215ea4608d7083f8086512f0da506",
+    "buildInputsSha256": "60fc3d78913757014366477ba46259ee71e61d89039676a45986160f4cb02334",
+    "base": "node:22.23.2-bookworm-slim@sha256:48e4b67d85f87bd551df43704e24d252f56cc5f8e9718841aace50f19948f0f9",
+    "lockfileSha256": "b2b3e6e8cdfb18df6d235a8724611ee4fe637426c722a5de34326346b3cb6500",
+    "store": "tx2-g03-prep3-store-b2b3e6e8cdfb",
+    "authority": "317750312fa912e118e70e122700ab497fe2f0f8",
+    "fetchedContainer": "07bf76c41f94f0ef9e5954096cc9aada5c3cf00fbd7b11139638a33859e9ee6e",
+    "at": "2026-11-08T22:44:48.035Z"
+  },
+  "results": [
+    {
+      "id": "P4-P6",
+      "instance": 0,
+      "status": "FAIL",
+      "seconds": 18.877,
+      "memoryCapBytes": 1610612736,
+      "productionBuildCapBytes": 2147483648,
+      "inspect": {
+        "Id": "9e89a5da0785cdbd901d6907803418a661b0f5cbdb29fa4c94f1d05c20cb1f4f",
+        "Created": "2026-11-08T22:47:49.441452161Z",
+        "Path": "docker-entrypoint.sh",
+        "Args": [
+          "sh",
+          "-c",
+          "pnpm install --offline --frozen-lockfile --store-dir /store --config.package-import-method=copy --filter \"@triplex-build/triplex-qualification...\" --filter \"@triplex-build/triplex-xtdb...\" --filter \"@triplex-build/triplex-qlever...\" && pnpm --filter @triplex-build/triplex build && pnpm --filter @triplex-build/triplex-testkit build && pnpm --filter @triplex-build/triplex-xtdb build && pnpm --filter @triplex-build/triplex-qlever build && pnpm --filter @triplex-build/triplex-qualification build"
+        ],
+        "State": {
+          "Status": "exited",
+          "Running": false,
+          "Paused": false,
+          "Restarting": false,
+          "OOMKilled": false,
+          "Dead": false,
+          "Pid": 0,
+          "ExitCode": 243,
+          "Error": "",
+          "StartedAt": "2026-11-08T22:47:49.518940915Z",
+          "FinishedAt": "2026-11-08T22:48:07.607078101Z"
+        },
+        "Image": "sha256:d9daa33801a8c73d7cafd01f4ac39695257215ea4608d7083f8086512f0da506",
+        "ResolvConfPath": "/var/lib/docker/containers/9e89a5da0785cdbd901d6907803418a661b0f5cbdb29fa4c94f1d05c20cb1f4f/resolv.conf",
+        "HostnamePath": "/var/lib/docker/containers/9e89a5da0785cdbd901d6907803418a661b0f5cbdb29fa4c94f1d05c20cb1f4f/hostname",
+        "HostsPath": "/var/lib/docker/containers/9e89a5da0785cdbd901d6907803418a661b0f5cbdb29fa4c94f1d05c20cb1f4f/hosts",
+        "LogPath": "/var/lib/docker/containers/9e89a5da0785cdbd901d6907803418a661b0f5cbdb29fa4c94f1d05c20cb1f4f/9e89a5da0785cdbd901d6907803418a661b0f5cbdb29fa4c94f1d05c20cb1f4f-json.log",
+        "Name": "/tx2-g03-49da2c33c66e0fcd-build-0",
+        "RestartCount": 0,
+        "Driver": "overlayfs",
+        "Platform": "linux",
+        "MountLabel": "",
+        "ProcessLabel": "",
+        "AppArmorProfile": "docker-default",
+        "ExecIDs": null,
+        "HostConfig": {
+          "Binds": [
+            "tx2-g03-49da2c33c66e0fcd-instance-0:/work:rw",
+            "tx2-g03-prep3-store-b2b3e6e8cdfb:/store:ro"
+          ],
+          "ContainerIDFile": "",
+          "LogConfig": {
+            "Type": "json-file",
+            "Config": {
+              "max-file": "1",
+              "max-size": "1m"
+            }
+          },
+          "NetworkMode": "none",
+          "PortBindings": {},
+          "RestartPolicy": {
+            "Name": "no",
+            "MaximumRetryCount": 0
+          },
+          "AutoRemove": false,
+          "VolumeDriver": "",
+          "VolumesFrom": null,
+          "ConsoleSize": [
+            0,
+            0
+          ],
+          "CapAdd": null,
+          "CapDrop": [
+            "ALL"
+          ],
+          "CgroupnsMode": "private",
+          "Dns": null,
+          "DnsOptions": [],
+          "DnsSearch": [],
+          "ExtraHosts": null,
+          "GroupAdd": null,
+          "IpcMode": "private",
+          "Cgroup": "",
+          "Links": null,
+          "OomScoreAdj": 500,
+          "PidMode": "",
+          "Privileged": false,
+          "PublishAllPorts": false,
+          "ReadonlyRootfs": true,
+          "SecurityOpt": [
+            "no-new-privileges=true"
+          ],
+          "Tmpfs": {
+            "/tmp": "rw,nosuid,nodev,size=1g,mode=1777"
+          },
+          "UTSMode": "",
+          "UsernsMode": "",
+          "ShmSize": 67108864,
+          "Runtime": "runc",
+          "Isolation": "",
+          "CpuShares": 0,
+          "Memory": 1610612736,
+          "NanoCpus": 1000000000,
+          "CgroupParent": "",
+          "BlkioWeight": 0,
+          "BlkioWeightDevice": [],
+          "BlkioDeviceReadBps": [],
+          "BlkioDeviceWriteBps": [],
+          "BlkioDeviceReadIOps": [],
+          "BlkioDeviceWriteIOps": [],
+          "CpuPeriod": 0,
+          "CpuQuota": 0,
+          "CpuRealtimePeriod": 0,
+          "CpuRealtimeRuntime": 0,
+          "CpusetCpus": "",
+          "CpusetMems": "",
+          "Devices": [],
+          "DeviceCgroupRules": null,
+          "DeviceRequests": null,
+          "MemoryReservation": 0,
+          "MemorySwap": 1610612736,
+          "MemorySwappiness": null,
+          "OomKillDisable": null,
+          "PidsLimit": 1024,
+          "Ulimits": [
+            {
+              "Name": "core",
+              "Hard": 0,
+              "Soft": 0
+            },
+            {
+              "Name": "nofile",
+              "Hard": 8192,
+              "Soft": 8192
+            }
+          ],
+          "CpuCount": 0,
+          "CpuPercent": 0,
+          "IOMaximumIOps": 0,
+          "IOMaximumBandwidth": 0,
+          "MaskedPaths": [
+            "/proc/acpi",
+            "/proc/asound",
+            "/proc/interrupts",
+            "/proc/kcore",
+            "/proc/keys",
+            "/proc/latency_stats",
+            "/proc/sched_debug",
+            "/proc/scsi",
+            "/proc/timer_list",
+            "/proc/timer_stats",
+            "/sys/devices/virtual/powercap",
+            "/sys/firmware"
+          ],
+          "ReadonlyPaths": [
+            "/proc/bus",
+            "/proc/fs",
+            "/proc/irq",
+            "/proc/sys",
+            "/proc/sysrq-trigger"
+          ]
+        },
+        "Storage": {
+          "RootFS": {
+            "Snapshot": {
+              "Name": "overlayfs"
+            }
+          }
+        },
+        "Mounts": [
+          {
+            "Type": "volume",
+            "Name": "tx2-g03-49da2c33c66e0fcd-instance-0",
+            "Source": "/var/lib/docker/volumes/tx2-g03-49da2c33c66e0fcd-instance-0/_data",
+            "Destination": "/work",
+            "Driver": "local",
+            "Mode": "rw",
+            "RW": true,
+            "Propagation": ""
+          },
+          {
+            "Type": "volume",
+            "Name": "tx2-g03-prep3-store-b2b3e6e8cdfb",
+            "Source": "/var/lib/docker/volumes/tx2-g03-prep3-store-b2b3e6e8cdfb/_data",
+            "Destination": "/store",
+            "Driver": "local",
+            "Mode": "ro",
+            "RW": false,
+            "Propagation": ""
+          }
+        ],
+        "Config": {
+          "Hostname": "tx2-box",
+          "Domainname": "",
+          "User": "10001:10001",
+          "AttachStdin": false,
+          "AttachStdout": true,
+          "AttachStderr": true,
+          "Tty": false,
+          "OpenStdin": false,
+          "StdinOnce": false,
+          "Env": [
+            "HOME=/tmp/home",
+            "TMPDIR=/tmp",
+            "TZ=UTC",
+            "SOURCE_DATE_EPOCH=0",
+            "LANG=C.UTF-8",
+            "CI=1",
+            "NODE_OPTIONS=",
+            "npm_config_store_dir=/store",
+            "npm_config_offline=true",
+            "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+            "NODE_VERSION=22.23.2",
+            "YARN_VERSION=1.22.22",
+            "COREPACK_HOME=/opt/corepack",
+            "COREPACK_ENABLE_NETWORK=0"
+          ],
+          "Cmd": [
+            "sh",
+            "-c",
+            "pnpm install --offline --frozen-lockfile --store-dir /store --config.package-import-method=copy --filter \"@triplex-build/triplex-qualification...\" --filter \"@triplex-build/triplex-xtdb...\" --filter \"@triplex-build/triplex-qlever...\" && pnpm --filter @triplex-build/triplex build && pnpm --filter @triplex-build/triplex-testkit build && pnpm --filter @triplex-build/triplex-xtdb build && pnpm --filter @triplex-build/triplex-qlever build && pnpm --filter @triplex-build/triplex-qualification build"
+          ],
+          "Image": "sha256:d9daa33801a8c73d7cafd01f4ac39695257215ea4608d7083f8086512f0da506",
+          "Volumes": null,
+          "WorkingDir": "/work",
+          "Entrypoint": [
+            "docker-entrypoint.sh"
+          ],
+          "Labels": {
+            "tx2.box-build-inputs-sha256": "60fc3d78913757014366477ba46259ee71e61d89039676a45986160f4cb02334",
+            "tx2.holder": "CX-G03",
+            "tx2.managed-by": "lab/bin/engine.mjs",
+            "tx2.run": "49da2c33c66e0fcd"
+          },
+          "StopTimeout": 1
+        },
+        "NetworkSettings": {
+          "SandboxID": "",
+          "SandboxKey": "",
+          "Ports": {},
+          "Networks": {
+            "none": {
+              "IPAMConfig": null,
+              "Links": null,
+              "Aliases": null,
+              "DriverOpts": null,
+              "GwPriority": 0,
+              "NetworkID": "c823c0802a8831bcd83023b3e39d9bbb2e82ffc6fa79f76a0e5476db790deb93",
+              "EndpointID": "",
+              "Gateway": "",
+              "IPAddress": "",
+              "MacAddress": "",
+              "IPPrefixLen": 0,
+              "IPv6Gateway": "",
+              "GlobalIPv6Address": "",
+              "GlobalIPv6PrefixLen": 0,
+              "DNSNames": null
+            }
+          }
+        },
+        "ImageManifestDescriptor": {
+          "mediaType": "application/vnd.oci.image.manifest.v1+json",
+          "digest": "sha256:80c7681779c78b7a9c858e1ac6f4286ded454e09b30e9468f3edd967f7e4718d",
+          "size": 1623,
+          "platform": {
+            "architecture": "arm64",
+            "os": "linux"
+          }
+        }
+      },
+      "stderr": ""
+    }
+  ],
+  "remaining": [],
+  "rawDir": "/Users/sam/projects/triplex-db-2/.claude/worktrees/g03/runs/g03-build-probes/1794178049247"
+}

@@ -1,0 +1,11 @@
+{
+  "stamp": 1794178293010,
+  "results": [
+    {
+      "id": "exclusive-slot",
+      "code": 3,
+      "stdout": "",
+      "stderr": "[lab] REFUSED: pool refuses tx2-xtdb-s3: memory: 9.75 GiB reserved + 3.50 GiB requested = 13.25 GiB > pool 11.00 GiB. Holding: tx2-xtdb-dev 3.00 GiB (EXP-W01), tx2-qlever-dev 3.50 GiB (EXP-000), tx2-datomic-dev 2.75 GiB (EXP-DA01), tx2-g03-8603e20eb62e2ce2-walk-cda573 512 MiB (CX-G03)\n"
+    }
+  ]
+}

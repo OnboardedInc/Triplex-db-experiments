@@ -1,0 +1,401 @@
+{
+  "stamp": 1794178167399,
+  "config": {
+    "storeListingSha256": "c13cf21f64047faa85410506693d395759deb687084023bfd4d60027ce92cafd",
+    "format": "tx2-box/1",
+    "image": "tx2-box:60fc3d789137",
+    "imageId": "sha256:d9daa33801a8c73d7cafd01f4ac39695257215ea4608d7083f8086512f0da506",
+    "buildInputsSha256": "60fc3d78913757014366477ba46259ee71e61d89039676a45986160f4cb02334",
+    "base": "node:22.23.2-bookworm-slim@sha256:48e4b67d85f87bd551df43704e24d252f56cc5f8e9718841aace50f19948f0f9",
+    "lockfileSha256": "b2b3e6e8cdfb18df6d235a8724611ee4fe637426c722a5de34326346b3cb6500",
+    "store": "tx2-g03-prep3-store-b2b3e6e8cdfb",
+    "authority": "317750312fa912e118e70e122700ab497fe2f0f8",
+    "fetchedContainer": "07bf76c41f94f0ef9e5954096cc9aada5c3cf00fbd7b11139638a33859e9ee6e",
+    "at": "2026-11-08T22:44:48.035Z",
+    "caseTimeoutMs": 1500,
+    "stdoutMaxBytes": 4096
+  },
+  "results": [
+    {
+      "id": "toolchain-store",
+      "status": "PASS"
+    },
+    {
+      "id": "oracle-python-host-absent-readonly-input",
+      "status": "PASS"
+    },
+    {
+      "id": "survivor-rejected-and-cgroup-gone",
+      "status": "PASS"
+    },
+    {
+      "id": "output-cap-kills-container",
+      "status": "PASS"
+    },
+    {
+      "id": "timeout-kills-container",
+      "status": "PASS"
+    },
+    {
+      "id": "pid-one-termination-fails-closed",
+      "status": "PASS"
+    },
+    {
+      "id": "walker-rejects-outside-link",
+      "status": "PASS"
+    }
+  ],
+  "records": [
+    {
+      "name": "tx2-g03-c760716652d8147f-walk-bf7f51",
+      "inspectSha256": "bdb16eb777cf4063713f89c3a416257c90c04b6bf87aca2bf6b746fbd1aa72c1",
+      "trusted": true,
+      "profile": {
+        "image": "sha256:d9daa33801a8c73d7cafd01f4ac39695257215ea4608d7083f8086512f0da506",
+        "network": "none",
+        "memory": 536870912,
+        "cpus": 1,
+        "pids": 128,
+        "mounts": [
+          {
+            "name": "tx2-g03-prep3-store-b2b3e6e8cdfb",
+            "target": "/work",
+            "rw": false
+          }
+        ],
+        "env": []
+      }
+    },
+    {
+      "name": "tx2-g03-c760716652d8147f-toolchain",
+      "inspectSha256": "23f804ffaab58eeeeff1903d45773286cd13aab8ec90790a046849ee20e3b543",
+      "trusted": true,
+      "profile": {
+        "image": "sha256:d9daa33801a8c73d7cafd01f4ac39695257215ea4608d7083f8086512f0da506",
+        "network": "none",
+        "memory": 134217728,
+        "cpus": 1,
+        "pids": 128,
+        "mounts": [],
+        "env": []
+      }
+    },
+    {
+      "name": "tx2-g03-c760716652d8147f-seed-acc9cb",
+      "inspectSha256": "1588d48775f07d9d9bd39f16c3524aa31b2e1fea11af9a1e3bd4e7df8d24d056",
+      "trusted": false,
+      "profile": {
+        "image": "sha256:d9daa33801a8c73d7cafd01f4ac39695257215ea4608d7083f8086512f0da506",
+        "network": "none",
+        "memory": 67108864,
+        "cpus": 1,
+        "pids": 128,
+        "mounts": [
+          {
+            "name": "tx2-g03-c760716652d8147f-instance",
+            "target": "/work",
+            "rw": true
+          }
+        ],
+        "env": []
+      }
+    },
+    {
+      "name": "tx2-g03-c760716652d8147f-seed-8ce7ea",
+      "inspectSha256": "4fdb18c27d192dd51fc353ae0e2ef090026362b0ad1ee47faf683a332fa2c551",
+      "trusted": false,
+      "profile": {
+        "image": "sha256:d9daa33801a8c73d7cafd01f4ac39695257215ea4608d7083f8086512f0da506",
+        "network": "none",
+        "memory": 67108864,
+        "cpus": 1,
+        "pids": 128,
+        "mounts": [
+          {
+            "name": "tx2-g03-c760716652d8147f-in-64649e",
+            "target": "/work",
+            "rw": true
+          }
+        ],
+        "env": []
+      }
+    },
+    {
+      "name": "tx2-g03-c760716652d8147f-case-1034da",
+      "inspectSha256": "1beb53e31514301700d5b46ebd4101ca5018714d17ac8348c00e6e97ddf2482a",
+      "trusted": false,
+      "profile": {
+        "image": "sha256:d9daa33801a8c73d7cafd01f4ac39695257215ea4608d7083f8086512f0da506",
+        "network": "none",
+        "memory": 805306368,
+        "cpus": 1,
+        "pids": 256,
+        "mounts": [
+          {
+            "name": "tx2-g03-c760716652d8147f-instance",
+            "target": "/work",
+            "rw": false
+          },
+          {
+            "name": "tx2-g03-c760716652d8147f-in-64649e",
+            "target": "/in",
+            "rw": false
+          }
+        ],
+        "env": []
+      }
+    },
+    {
+      "removed": "tx2-g03-c760716652d8147f-case-1034da",
+      "id": "e1b4aaa397ab94ef24e9a5260530fe9ac68a8407d763ea4526aabe35ea11a448",
+      "cgroupGone": true
+    },
+    {
+      "name": "tx2-g03-c760716652d8147f-seed-928135",
+      "inspectSha256": "7463daf899e0e95d3e64f4e6a13ba387bdaa8230480f0a65ab3a5f3c23f29dce",
+      "trusted": false,
+      "profile": {
+        "image": "sha256:d9daa33801a8c73d7cafd01f4ac39695257215ea4608d7083f8086512f0da506",
+        "network": "none",
+        "memory": 67108864,
+        "cpus": 1,
+        "pids": 128,
+        "mounts": [
+          {
+            "name": "tx2-g03-c760716652d8147f-in-007908",
+            "target": "/work",
+            "rw": true
+          }
+        ],
+        "env": []
+      }
+    },
+    {
+      "name": "tx2-g03-c760716652d8147f-case-18f286",
+      "inspectSha256": "0a7eb432e0ea364d3883e96932033a8e798beff67f11fba7258d5c0f2e6082ee",
+      "trusted": false,
+      "profile": {
+        "image": "sha256:d9daa33801a8c73d7cafd01f4ac39695257215ea4608d7083f8086512f0da506",
+        "network": "none",
+        "memory": 805306368,
+        "cpus": 1,
+        "pids": 256,
+        "mounts": [
+          {
+            "name": "tx2-g03-c760716652d8147f-instance",
+            "target": "/work",
+            "rw": false
+          },
+          {
+            "name": "tx2-g03-c760716652d8147f-in-007908",
+            "target": "/in",
+            "rw": false
+          }
+        ],
+        "env": []
+      }
+    },
+    {
+      "removed": "tx2-g03-c760716652d8147f-case-18f286",
+      "id": "58c47c1282437be96ec31f2b9a7d0222578e6439d1dfc77d4e5a414f2c1b04ab",
+      "cgroupGone": true
+    },
+    {
+      "name": "tx2-g03-c760716652d8147f-seed-b5dc1e",
+      "inspectSha256": "95005be378d2df9146290498a099dfc72187833bbc271f9c42be4c226c40df67",
+      "trusted": false,
+      "profile": {
+        "image": "sha256:d9daa33801a8c73d7cafd01f4ac39695257215ea4608d7083f8086512f0da506",
+        "network": "none",
+        "memory": 67108864,
+        "cpus": 1,
+        "pids": 128,
+        "mounts": [
+          {
+            "name": "tx2-g03-c760716652d8147f-in-8ce4c4",
+            "target": "/work",
+            "rw": true
+          }
+        ],
+        "env": []
+      }
+    },
+    {
+      "name": "tx2-g03-c760716652d8147f-case-ea33a6",
+      "inspectSha256": "153cbdef44b4d936182542004fcb98d1e3b3441f021809c8ec037f00a79ff3b8",
+      "trusted": false,
+      "profile": {
+        "image": "sha256:d9daa33801a8c73d7cafd01f4ac39695257215ea4608d7083f8086512f0da506",
+        "network": "none",
+        "memory": 805306368,
+        "cpus": 1,
+        "pids": 256,
+        "mounts": [
+          {
+            "name": "tx2-g03-c760716652d8147f-instance",
+            "target": "/work",
+            "rw": false
+          },
+          {
+            "name": "tx2-g03-c760716652d8147f-in-8ce4c4",
+            "target": "/in",
+            "rw": false
+          }
+        ],
+        "env": []
+      }
+    },
+    {
+      "removed": "tx2-g03-c760716652d8147f-case-ea33a6",
+      "id": "ba4193ce4b3bf9fadd05b144bf10bb3a8f8f0491c5ce04d3a0db89aae4d9de0e",
+      "cgroupGone": true
+    },
+    {
+      "name": "tx2-g03-c760716652d8147f-seed-33ca37",
+      "inspectSha256": "04ba9c0a02b9a0d4202d05e134d87d742590752a537b5d355bf2077d5dd46131",
+      "trusted": false,
+      "profile": {
+        "image": "sha256:d9daa33801a8c73d7cafd01f4ac39695257215ea4608d7083f8086512f0da506",
+        "network": "none",
+        "memory": 67108864,
+        "cpus": 1,
+        "pids": 128,
+        "mounts": [
+          {
+            "name": "tx2-g03-c760716652d8147f-in-45a843",
+            "target": "/work",
+            "rw": true
+          }
+        ],
+        "env": []
+      }
+    },
+    {
+      "name": "tx2-g03-c760716652d8147f-case-2db512",
+      "inspectSha256": "25b32308c0f06dec5aa3e342f848b6267c34d67006a6367aed4fdd60d1b4e905",
+      "trusted": false,
+      "profile": {
+        "image": "sha256:d9daa33801a8c73d7cafd01f4ac39695257215ea4608d7083f8086512f0da506",
+        "network": "none",
+        "memory": 805306368,
+        "cpus": 1,
+        "pids": 256,
+        "mounts": [
+          {
+            "name": "tx2-g03-c760716652d8147f-instance",
+            "target": "/work",
+            "rw": false
+          },
+          {
+            "name": "tx2-g03-c760716652d8147f-in-45a843",
+            "target": "/in",
+            "rw": false
+          }
+        ],
+        "env": []
+      }
+    },
+    {
+      "removed": "tx2-g03-c760716652d8147f-case-2db512",
+      "id": "a8ff3803b90a4e53efa8e66ffbc58ccd429ca6e8fab4512eab621f489e57f51c",
+      "cgroupGone": true
+    },
+    {
+      "name": "tx2-g03-c760716652d8147f-seed-386a5e",
+      "inspectSha256": "d953ffa7aeb008c836d3f58359d7a59a00bd6a1003f551f000680b6f1a605544",
+      "trusted": false,
+      "profile": {
+        "image": "sha256:d9daa33801a8c73d7cafd01f4ac39695257215ea4608d7083f8086512f0da506",
+        "network": "none",
+        "memory": 67108864,
+        "cpus": 1,
+        "pids": 128,
+        "mounts": [
+          {
+            "name": "tx2-g03-c760716652d8147f-in-0cef9b",
+            "target": "/work",
+            "rw": true
+          }
+        ],
+        "env": []
+      }
+    },
+    {
+      "name": "tx2-g03-c760716652d8147f-case-451240",
+      "inspectSha256": "9b911f1803d5779783429b27155fa8bf5989184f9f3f150730b89dd34d232aa3",
+      "trusted": false,
+      "profile": {
+        "image": "sha256:d9daa33801a8c73d7cafd01f4ac39695257215ea4608d7083f8086512f0da506",
+        "network": "none",
+        "memory": 805306368,
+        "cpus": 1,
+        "pids": 256,
+        "mounts": [
+          {
+            "name": "tx2-g03-c760716652d8147f-instance",
+            "target": "/work",
+            "rw": false
+          },
+          {
+            "name": "tx2-g03-c760716652d8147f-in-0cef9b",
+            "target": "/in",
+            "rw": false
+          }
+        ],
+        "env": []
+      }
+    },
+    {
+      "removed": "tx2-g03-c760716652d8147f-case-451240",
+      "id": "0af36f1f0adc58d5071cdbb509825045c92a7a1da6dd31231d5f2acd9e4fe462",
+      "cgroupGone": true
+    },
+    {
+      "name": "tx2-g03-c760716652d8147f-link-fixture",
+      "inspectSha256": "211ff1dd31aec9fd4ae1ff0c33c36330a4ce1b2d8762339464cc04339120966d",
+      "trusted": false,
+      "profile": {
+        "image": "sha256:d9daa33801a8c73d7cafd01f4ac39695257215ea4608d7083f8086512f0da506",
+        "network": "none",
+        "memory": 134217728,
+        "cpus": 1,
+        "pids": 128,
+        "mounts": [
+          {
+            "name": "tx2-g03-c760716652d8147f-instance",
+            "target": "/work",
+            "rw": true
+          }
+        ],
+        "env": []
+      }
+    },
+    {
+      "removed": "tx2-g03-c760716652d8147f-link-fixture",
+      "id": "5061684efe89529ee4f62e8bd05f667379cc17aefa7e9aa058f8576ecd232237",
+      "cgroupGone": true
+    },
+    {
+      "name": "tx2-g03-c760716652d8147f-walk-5f3538",
+      "inspectSha256": "11b2b778c028ece640ee421d459095dd703cdf3c035254ef62a205c90c85a3de",
+      "trusted": true,
+      "profile": {
+        "image": "sha256:d9daa33801a8c73d7cafd01f4ac39695257215ea4608d7083f8086512f0da506",
+        "network": "none",
+        "memory": 536870912,
+        "cpus": 1,
+        "pids": 128,
+        "mounts": [
+          {
+            "name": "tx2-g03-c760716652d8147f-instance",
+            "target": "/work",
+            "rw": false
+          }
+        ],
+        "env": []
+      }
+    }
+  ],
+  "remaining": [],
+  "objects": "/Users/sam/projects/triplex-db-2/.claude/worktrees/g03/runs/g03-smoke/1794178167399/objects"
+}

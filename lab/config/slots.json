@@ -50,5 +50,12 @@
       "s2": { "port": 7072, "memBytes": 3758096384, "cpus": 2, "qleverMemory": "2500M", "diskForecastBytes": 8589934592, "mode": "exclusive" },
       "s3": { "port": 7073, "memBytes": 3758096384, "cpus": 2, "qleverMemory": "2500M", "diskForecastBytes": 8589934592, "mode": "exclusive" }
     }
+  },
+  "box": {
+    "image": "tx2-box:60fc3d789137",
+    "imageId": "sha256:d9daa33801a8c73d7cafd01f4ac39695257215ea4608d7083f8086512f0da506",
+    "buildInputsSha256": "60fc3d78913757014366477ba46259ee71e61d89039676a45986160f4cb02334",
+    "base": "node:22.23.2-bookworm-slim@sha256:48e4b67d85f87bd551df43704e24d252f56cc5f8e9718841aace50f19948f0f9",
+    "note": "EXP-G03 built image only; qualification also requires authority-pinned buildSpec.boxSpec and a freshly prepared, verified Linux store. Probe store is removed at cleanup."
   }
 }

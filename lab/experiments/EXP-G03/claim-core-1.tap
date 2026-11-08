@@ -1,0 +1,400 @@
+TAP version 13
+# Subtest: admitCore makes the contract's executor calls and reaches its verdict on every admit_claim call of its own self-check
+ok 1 - admitCore makes the contract's executor calls and reaches its verdict on every admit_claim call of its own self-check
+  ---
+  duration_ms: 148.823333
+  type: 'test'
+  ...
+# Subtest: admit: POSITIVE-NS-SCREENING documents are QUALIFIED; the verdict is DIAGNOSTIC
+ok 2 - admit: POSITIVE-NS-SCREENING documents are QUALIFIED; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.269917
+  type: 'test'
+  ...
+# Subtest: admit: POSITIVE-GS-DOMAIN documents are QUALIFIED; the verdict is DIAGNOSTIC
+ok 3 - admit: POSITIVE-GS-DOMAIN documents are QUALIFIED; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.0495
+  type: 'test'
+  ...
+# Subtest: admit: POSITIVE-PROMOTION documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 4 - admit: POSITIVE-PROMOTION documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.052959
+  type: 'test'
+  ...
+# Subtest: admit: GEN-PREREQS-ONLY documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 5 - admit: GEN-PREREQS-ONLY documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.110292
+  type: 'test'
+  ...
+# Subtest: admit: GEN-NULL-OREPLAY-PIN documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 6 - admit: GEN-NULL-OREPLAY-PIN documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.085709
+  type: 'test'
+  ...
+# Subtest: admit: GEN-SUPPLIED-NAMES documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 7 - admit: GEN-SUPPLIED-NAMES documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.040417
+  type: 'test'
+  ...
+# Subtest: admit: GEN-OTHER-TREE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 8 - admit: GEN-OTHER-TREE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.080709
+  type: 'test'
+  ...
+# Subtest: admit: GEN-MISSING-FALSIFIERS documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 9 - admit: GEN-MISSING-FALSIFIERS documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.375125
+  type: 'test'
+  ...
+# Subtest: admit: GEN-COMPOSITION-UNBOUND documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 10 - admit: GEN-COMPOSITION-UNBOUND documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.156709
+  type: 'test'
+  ...
+# Subtest: admit: GEN-W0-NULL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 11 - admit: GEN-W0-NULL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.126959
+  type: 'test'
+  ...
+# Subtest: admit: GEN-NO-W0-RECEIPT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 12 - admit: GEN-NO-W0-RECEIPT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.040875
+  type: 'test'
+  ...
+# Subtest: admit: GEN-EXCLUDED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 13 - admit: GEN-EXCLUDED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.027667
+  type: 'test'
+  ...
+# Subtest: admit: GEN-REFUSED-SET documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 14 - admit: GEN-REFUSED-SET documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.024416
+  type: 'test'
+  ...
+# Subtest: admit: GEN-STALE-DEFINITION documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 15 - admit: GEN-STALE-DEFINITION documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.02425
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R4-FABRICATED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 16 - admit: CODEX-R4-FABRICATED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.025292
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-STALE-BINARY documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 17 - admit: Q42A-STALE-BINARY documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.021792
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-EARLIER-COMMIT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 18 - admit: Q42A-EARLIER-COMMIT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.028084
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-BEFORE-CLOSURE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 19 - admit: Q42A-BEFORE-CLOSURE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.022042
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-OBJECT-CORRUPT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 20 - admit: Q42A-OBJECT-CORRUPT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.02625
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-OBJECT-OF-OTHER-CASE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 21 - admit: Q42A-OBJECT-OF-OTHER-CASE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.091583
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-MODES-SHORT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 22 - admit: Q42A-MODES-SHORT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.023292
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-FAULT-REPS-SHORT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 23 - admit: Q42A-FAULT-REPS-SHORT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.020583
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-UNKNOWN-ID documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 24 - admit: Q42A-UNKNOWN-ID documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.021292
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-NO-CONTROL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 25 - admit: Q42A-NO-CONTROL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.027542
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-CONTROL-OTHER-SEED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 26 - admit: Q42A-CONTROL-OTHER-SEED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.020542
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-CONTROL-OTHER-WINDOW documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 27 - admit: Q42A-CONTROL-OTHER-WINDOW documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.019959
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-CORRECTNESS-FAIL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 28 - admit: Q42A-CORRECTNESS-FAIL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.020042
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-NO-VERIFIER documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 29 - admit: Q42A-NO-VERIFIER documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.019834
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R6-MODULES-NOT-RETAINED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 30 - admit: CODEX-R6-MODULES-NOT-RETAINED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.022459
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R6-BINARY-NOT-RETAINED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 31 - admit: CODEX-R6-BINARY-NOT-RETAINED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.01975
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R6-NOT-A-VERIFIER-RECORD documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 32 - admit: CODEX-R6-NOT-A-VERIFIER-RECORD documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.020209
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R6-REFUSAL-LABELLED-PASS documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 33 - admit: CODEX-R6-REFUSAL-LABELLED-PASS documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.02025
+  type: 'test'
+  ...
+# Subtest: admit: Q47A-WRONG-LABELLED-PASS documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 34 - admit: Q47A-WRONG-LABELLED-PASS documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.040083
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R6-CONTROL-NO-WORKLOAD documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 35 - admit: CODEX-R6-CONTROL-NO-WORKLOAD documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.02475
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R6-CANDIDATE-SELECTED-CONTROL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 36 - admit: CODEX-R6-CANDIDATE-SELECTED-CONTROL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.024417
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R6-NO-A0-REGISTRY documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 37 - admit: CODEX-R6-NO-A0-REGISTRY documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.020958
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R6-MIGRATION-INDIRECT-REFUSAL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 38 - admit: CODEX-R6-MIGRATION-INDIRECT-REFUSAL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.024708
+  type: 'test'
+  ...
+# Subtest: admit: Q47C-MANIFESTS-UNPINNED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 39 - admit: Q47C-MANIFESTS-UNPINNED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.023875
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R7-INVENTED-CASES documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 40 - admit: CODEX-R7-INVENTED-CASES documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.024083
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R7-CANDIDATE-AS-A0 documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 41 - admit: CODEX-R7-CANDIDATE-AS-A0 documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.022666
+  type: 'test'
+  ...
+# Subtest: admit: RT-SWAP-ROLES documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 42 - admit: RT-SWAP-ROLES documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.021958
+  type: 'test'
+  ...
+# Subtest: admit: RT-RELABEL-PROFILE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 43 - admit: RT-RELABEL-PROFILE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.02025
+  type: 'test'
+  ...
+# Subtest: admit: RT-SCREENING-PREREQ documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 44 - admit: RT-SCREENING-PREREQ documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.022125
+  type: 'test'
+  ...
+# Subtest: admit: RT-RUNKIND-SWAP documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 45 - admit: RT-RUNKIND-SWAP documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.02075
+  type: 'test'
+  ...
+# Subtest: admit: RT-CONTROL-OTHER-PROFILE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 46 - admit: RT-CONTROL-OTHER-PROFILE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.019792
+  type: 'test'
+  ...
+# Subtest: admit: RT-SLOT-ARRAY documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 47 - admit: RT-SLOT-ARRAY documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.020292
+  type: 'test'
+  ...
+# Subtest: admit: RT-VERIFIER-IS-AUTHOR documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 48 - admit: RT-VERIFIER-IS-AUTHOR documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.020208
+  type: 'test'
+  ...
+# Subtest: admit: RT-DROP-FAIL-ATTEMPT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 49 - admit: RT-DROP-FAIL-ATTEMPT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.019833
+  type: 'test'
+  ...
+# Subtest: admit: RT-COUNTS-EDITED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 50 - admit: RT-COUNTS-EDITED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.019958
+  type: 'test'
+  ...
+# Subtest: admit: RT-CONTRACT-RELABEL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 51 - admit: RT-CONTRACT-RELABEL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.038958
+  type: 'test'
+  ...
+# Subtest: admit: RT-FAULTREPS-RELABEL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 52 - admit: RT-FAULTREPS-RELABEL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.025958
+  type: 'test'
+  ...
+# Subtest: admit: RT-DEP-UPPERCASE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 53 - admit: RT-DEP-UPPERCASE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.0345
+  type: 'test'
+  ...
+# Subtest: admit: RT-DEP-UNLISTED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 54 - admit: RT-DEP-UNLISTED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.020375
+  type: 'test'
+  ...
+# Subtest: admit: RT-DEP-OTHER-WORKSPACE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 55 - admit: RT-DEP-OTHER-WORKSPACE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.020334
+  type: 'test'
+  ...
+# Subtest: admit: RT-NARROW-ROOTS documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 56 - admit: RT-NARROW-ROOTS documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.021583
+  type: 'test'
+  ...
+# Subtest: admit: LAB-BRANCH-PINS-OWN-ORACLE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 57 - admit: LAB-BRANCH-PINS-OWN-ORACLE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.021875
+  type: 'test'
+  ...
+# Subtest: admit: LAB-ORACLE-FILE-DRIFT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 58 - admit: LAB-ORACLE-FILE-DRIFT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.021167
+  type: 'test'
+  ...
+# Subtest: admit: LAB-IMAGE-NOT-PINNED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 59 - admit: LAB-IMAGE-NOT-PINNED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.019875
+  type: 'test'
+  ...
+# Subtest: admit: LAB-FORBIDDEN-ENDPOINT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 60 - admit: LAB-FORBIDDEN-ENDPOINT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.03025
+  type: 'test'
+  ...
+# Subtest: admit: LAB-ADMISSION-BLOCKED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 61 - admit: LAB-ADMISSION-BLOCKED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.018958
+  type: 'test'
+  ...
+# Subtest: admit: LAB-CONTROL-NO-PREREQ documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 62 - admit: LAB-CONTROL-NO-PREREQ documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.019333
+  type: 'test'
+  ...
+# Subtest: admit: DOC-NO-SOURCE-VARIANT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 63 - admit: DOC-NO-SOURCE-VARIANT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.024333
+  type: 'test'
+  ...
+# Subtest: admit: DOC-UNREGISTERED-VERIFICATION documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 64 - admit: DOC-UNREGISTERED-VERIFICATION documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.018916
+  type: 'test'
+  ...
+# Subtest: RULINGS Q64a: the proposed real build spec (lab/config/build.json) is a complete build-spec/1
+ok 65 - RULINGS Q64a: the proposed real build spec (lab/config/build.json) is a complete build-spec/1
+  ---
+  duration_ms: 0.567667
+  type: 'test'
+  ...
+1..65
+# tests 65
+# suites 0
+# pass 65
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 36379.174542

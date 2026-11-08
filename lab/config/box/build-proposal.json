@@ -1,0 +1,82 @@
+{
+  "format": "triplex-db-2/build-spec/1",
+  "status": "EXP-G03 proposal only; contract owner must version and pin after independent review and live gates",
+  "argv": [
+    "sh",
+    "-c",
+    "pnpm install --offline --frozen-lockfile --store-dir /store --config.package-import-method=copy --filter \"@triplex-build/triplex-qualification...\" --filter \"@triplex-build/triplex-xtdb...\" --filter \"@triplex-build/triplex-qlever...\" && pnpm --filter @triplex-build/triplex build && pnpm --filter @triplex-build/triplex-testkit build && pnpm --filter @triplex-build/triplex-xtdb build && pnpm --filter @triplex-build/triplex-qlever build && pnpm --filter @triplex-build/triplex-qualification build"
+  ],
+  "outputs": [
+    "packages/core/dist/",
+    "packages/testkit/dist/",
+    "packages/xtdb/dist/",
+    "packages/qlever/dist/",
+    "packages/qualification/dist/"
+  ],
+  "run": [
+    "node",
+    "packages/qualification/workloads/obl-case.ts",
+    "--case",
+    "{case}",
+    "--mode",
+    "{mode}"
+  ],
+  "notes": {
+    "scope": "No lab, oracle, evaluator, evidence, git, or Mac store input. Runtime entrypoint is still unimplemented in current authority; null contract pins stay blockers.",
+    "identity": "execution-identity/2 includes canonical hardening, image/build pins, read-back toolchain, store listing, daemon components and kernel. Placement is separate.",
+    "metadataEvidence": "build-probes-1794178215198.json P7 measured exactly these two differing paths; proposal requires contract review before use."
+  },
+  "boxInputs": [
+    "packages/core/",
+    "packages/testkit/",
+    "packages/xtdb/",
+    "packages/qlever/",
+    "packages/qualification/",
+    "pnpm-lock.yaml",
+    "pnpm-workspace.yaml",
+    "package.json",
+    "examples/compliance-host/package.json",
+    "examples/config-explorer/package.json",
+    "examples/demo/package.json",
+    "examples/http-api/package.json",
+    "examples/tenant-host-cloudflare/package.json",
+    "experiments/qlever-common/generated/56e246a9-cf9a-4249-9de0-129df5289a7f/source/packages/qlever/package.json",
+    "packages/cli/package.json",
+    "packages/cloudflare/package.json",
+    "packages/core/package.json",
+    "packages/dashboard/package.json",
+    "packages/duckdb/package.json",
+    "packages/foundationdb/package.json",
+    "packages/host/package.json",
+    "packages/http/package.json",
+    "packages/postgres/package.json",
+    "packages/qlever/package.json",
+    "packages/qualification/package.json",
+    "packages/sql/package.json",
+    "packages/sqlite/package.json",
+    "packages/testkit/package.json",
+    "packages/w0/package.json",
+    "packages/xtdb/package.json",
+    "test/integration/package.json",
+    "test/stress/package.json",
+    "tsconfig.alchemy.json",
+    "tsconfig.base.json",
+    "tsconfig.node.json",
+    "vendor/duckdb-temporal/runtime/adapter/build-deps/package.json",
+    "vendor/duckdb-temporal/runtime/package.json"
+  ],
+  "boxSpec": {
+    "imageId": null,
+    "buildInputsSha256": null,
+    "store": null,
+    "storeListingSha256": null,
+    "stdoutMaxBytes": 16777216,
+    "stderrKeepBytes": 65536,
+    "caseTimeoutMs": 120000,
+    "buildTimeoutMs": 1800000
+  },
+  "installMetadataExclusions": [
+    "node_modules/.modules.yaml",
+    "node_modules/.pnpm-workspace-state.json"
+  ]
+}

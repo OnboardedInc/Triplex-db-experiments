@@ -1,0 +1,51 @@
+{
+  "run": "probe-1794177783076",
+  "at": "2026-11-08T22:43:05.790Z",
+  "base": "sha256:48e4b67d85f87bd551df43704e24d252f56cc5f8e9718841aace50f19948f0f9",
+  "results": [
+    {
+      "id": "P1",
+      "status": "PASS",
+      "observation": {
+        "positive": true,
+        "mac": false,
+        "vm": false
+      }
+    },
+    {
+      "id": "P2",
+      "status": "BLOCKED_OR_FAIL",
+      "error": "Error: NOT RUN: Q86g H2 VM egress changes await Sam; no VM network settings changed"
+    },
+    {
+      "id": "P3",
+      "status": "PASS",
+      "observation": {
+        "driver": "cgroupfs/2",
+        "top": "PID                 PPID                SID                 COMMAND\n2528914             2528890             2528914             node\n2528941             2528914             2528941             node",
+        "cgroupGone": true,
+        "note": "detached child uses setsid via Node detached spawn; heartbeat namespace removed, no post-removal heartbeat volume retained"
+      }
+    },
+    {
+      "id": "P4",
+      "status": "BLOCKED_OR_FAIL",
+      "error": "Error: PENDING: Linux image/store preparation and two admitted build instances required"
+    },
+    {
+      "id": "P5",
+      "status": "BLOCKED_OR_FAIL",
+      "error": "Error: PENDING: Linux image/store preparation and two admitted build instances required"
+    },
+    {
+      "id": "P6",
+      "status": "BLOCKED_OR_FAIL",
+      "error": "Error: PENDING: Linux image/store preparation and two admitted build instances required"
+    },
+    {
+      "id": "P7",
+      "status": "BLOCKED_OR_FAIL",
+      "error": "Error: PENDING: Linux image/store preparation and two admitted build instances required"
+    }
+  ]
+}

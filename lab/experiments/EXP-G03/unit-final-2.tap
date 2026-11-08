@@ -1,0 +1,46 @@
+TAP version 13
+# Subtest: input allowlist never includes lab, links or missing dependency roots
+ok 1 - input allowlist never includes lab, links or missing dependency roots
+  ---
+  duration_ms: 1.080833
+  type: 'test'
+  ...
+# Subtest: tar carries exact bytes, executable mode and long ustar path without extracting
+ok 2 - tar carries exact bytes, executable mode and long ustar path without extracting
+  ---
+  duration_ms: 10.74275
+  type: 'test'
+  ...
+# Subtest: inspect check refuses changed containment, limits, image, mounts and environment
+ok 3 - inspect check refuses changed containment, limits, image, mounts and environment
+  ---
+  duration_ms: 0.537708
+  type: 'test'
+  ...
+# Subtest: qualification refuses refs and never calls a supplied candidate callback
+ok 4 - qualification refuses refs and never calls a supplied candidate callback
+  ---
+  duration_ms: 0.284958
+  type: 'test'
+  ...
+# Subtest: failed cleanup reservations survive reconciliation
+ok 5 - failed cleanup reservations survive reconciliation
+  ---
+  duration_ms: 0.326708
+  type: 'test'
+  ...
+# Subtest: a separate clone in a shared writable root is still refused
+ok 6 - a separate clone in a shared writable root is still refused
+  ---
+  duration_ms: 0.175208
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 75.430541

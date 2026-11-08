@@ -15,8 +15,8 @@
 //            checkout per build instance verified against the tree, identified by its execution identity (Q67b), the
 //            authority's build spec, manifests from the claimed commit checked against the contract's pins, the pinned oracle
 //            files alone in a read-only copy re-hashed before every invocation (Q67e), the declared comparator (Q67i), the
-//            evaluator's own workload, and the gate. Step 3 (the gate) exists only as gate.mjs --dry-run, so qualify is DIAGNOSTIC
-//            (GATE-NOT-RUN) until an executing OBL gate exists; an offline run (--offline-sut) reports offlineVerdict.
+//            evaluator's own workload, and the gate. Step 3 uses the engine-managed container executor (EXP-G03); unpinned prerequisites, missing isolation
+//            or missing actual case executions stay DIAGNOSTIC. Offline requests always stay DIAGNOSTIC.
 //   admit    judges a claim's documents: receipts and records a claimant supplies. Its verdict is always DIAGNOSTIC
 //            (DOCUMENT-ONLY), as the reference's admit_claim is without an executor (ev None); documentVerdict says whether
 //            the documents pass the document checks below. Codex round 7 showed well-formed records can be invented (finding 1)
@@ -53,6 +53,7 @@
 // ones; carrying receipts forward from ancestor commits (ACCEPTANCE 5.7); trusting any inline receipt field that no retained
 // object repeats; extra fields in the contract's record schemas (Q47a fixes them exactly; proposals go to the next version);
 // any verifier record a claim carries as independent verification (Q55a: only the contract's VERIFIER_REGISTRY counts).
+import { BoxExecutor, ISOLATION_PROFILE } from './box.mjs';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
@@ -566,6 +567,7 @@ export function gitSource(repo) {
     resolve(rev) { if (!str(rev) || rev.startsWith('-')) return null; try { return run(['rev-parse', '--verify', '--quiet', `${rev}^{commit}`]).toString().trim() || null; } catch { return null; } },
     treeOf(commit) { return run(['rev-parse', `${commit}^{tree}`]).toString().trim(); },
     commitTime(commit) { return Number(run(['show', '-s', '--format=%ct', commit]).toString().trim()); },
+    commonDir() { try { return fs.realpathSync(path.resolve(repo, run(['rev-parse', '--git-common-dir']).toString().trim())); } catch { return null; } },
     gitDir() { try { return run(['rev-parse', '--absolute-git-dir']).toString().trim() || null; } catch { return null; } },
     blob(rev, file) {
       if (!safePath(file)) return null;
@@ -905,7 +907,7 @@ const removeDir = d => { try { if (fs.existsSync(d)) { fs.chmodSync(d, 0o755); s
 /** The files a run executes from the evaluator's working tree (claim.mjs, its import lib.mjs, gate.mjs for the plan) and the
  * reference model, each compared with its blob at the evaluator's commit (RULINGS Q75a). */
 // [EXP-E01] Why: gate imports execute too. Rejected: pinning only direct entrypoints (transitive code could be poisoned).
-export const EVALUATOR_FILES = ['lab/bin/claim.mjs', 'lab/bin/lib.mjs', 'lab/bin/gate.mjs', 'lab/bin/engine.mjs', 'lab/bin/heavy-lock.mjs', 'lab/bin/receipt.mjs', 'lab/acceptance/build_contract.py'];
+export const EVALUATOR_FILES = ['lab/bin/claim.mjs', 'lab/bin/box.mjs', 'lab/bin/box-engine.mjs', 'lab/config/box/Dockerfile', 'lab/config/slots.json', 'lab/bin/lib.mjs', 'lab/bin/gate.mjs', 'lab/bin/engine.mjs', 'lab/bin/heavy-lock.mjs', 'lab/bin/receipt.mjs', 'lab/acceptance/build_contract.py'];
 const EVALUATOR_ROOT = path.resolve(import.meta.dirname, '../..');
 const POISON_MARKER = 'triplex-evaluator-poisoned.json';
 const evaluatorBytes = () => Object.fromEntries(EVALUATOR_FILES.map(f => { try { return [f, sha256(fs.readFileSync(path.join(EVALUATOR_ROOT, f)))]; } catch { return [f, null]; } }));
@@ -1225,7 +1227,7 @@ function prepareTrusted({ git, commit, authority, authorityRef, contract, ctx, o
  *   workload(o)                the evaluator's workload from the frozen trace (CR-NS and CR-GS only; no slot, Q67g)
  *   measure_pair(...)          no PAIR_0 paired-rounds runner exists: null (a CR-NS or CR-GS comparison fails closed)
  */
-function labExecutor({ commit, contract, ctx, spec, slots, loadContract, claim, pre, put, iso, runChild, toolchain, sut, why, run }) {
+function labExecutor({ commit, contract, ctx, spec, slots, loadContract, claim, pre, put, iso, runChild, toolchain, sut, why, run, box, canaryPort }) {
   const instances = [], byIdentity = new Map(), inputFiles = new Map(), answers = new Map(), repCount = new Map();
   const specSha = buildSpecSha256(spec), exclusions = Array.isArray(spec?.installMetadataExclusions) ? spec.installMetadataExclusions.filter(safePath) : [];
   const inputsDir = iso('inputs');
@@ -1251,37 +1253,29 @@ function labExecutor({ commit, contract, ctx, spec, slots, loadContract, claim, 
       if (!snap || pre.labels.get(c) !== tree) { why('BUILD-REFUSED', `tree ${tree} at ${c} is not a tree the run read before its first candidate process (the claimed commit or the A0 entry's, under its clean label; RULINGS Q55a step 1, Q75b)`); return null; }
       if (!strList(spec?.argv) || !Array.isArray(spec?.outputs) || !spec.outputs.length || !spec.outputs.every(p => safePath(p.replace(/\/$/, '')))) { why('BUILD-SPEC', 'the contract\'s buildSpec argv or outputs are not usable (RULINGS Q61f)'); return null; }
       // Q67b: every build call is its own instance, in its own directory; nothing is shared with another instance.
-      const n = instances.length, dir = iso(`build${n}-${c.slice(0, 12)}`);
-      writeCheckout(snap, dir);
-      // [EXP-E01] Why: reject external source links before the build can read them. Rejected: post-build detection (already executed).
-      if (walkTree(dir).outside.length) { why('BUILD-LINK-OUTSIDE', `${c}: source checkout contains an outside symlink`); return null; }
-      // build-manifest/2 inputs: every tracked file of each built package (the output's parent of dist/), the lockfile and the
-      // root package.json, from the prepared tree (RULINGS Q61f, Q65d).
-      const pkgs = [...new Set(spec.outputs.map(p => p.replace(/\/$/, '').replace(/\/?dist$/, '')).filter(Boolean))];
-      const inputList = [...snap.files.keys()].filter(p => snap.files.get(p).sha256 && (pkgs.some(k => p.startsWith(`${k}/`)) || p === 'pnpm-lock.yaml' || p === 'package.json')).sort();
-      const b = runChild(spec.argv, { cwd: dir, writable: [dir], timeout: 1_800_000, label: `build${n}` });
-      if (b.status !== 0) { why('BUILD-FAILED', `${c}: ${spec.argv.join(' ')} exited ${b.status ?? b.signal}: ${b.stderr.toString('utf8').trim().slice(-300)}`); return null; }
-      // [EXP-E01] Why: never read output symlinks before refusing them. Rejected: collecting modules before the safe walk.
-      const walk = walkTree(dir, exclusions);
-      if (walk.outside.length) { why('BUILD-LINK-OUTSIDE', `${c}: ${walk.outside.join(', ')} resolves outside the checkout`); return null; }
-      const files = [];
-      for (const out of spec.outputs.map(p => p.replace(/\/$/, ''))) {
-        const abs = path.join(dir, out);
-        if (!fs.existsSync(abs)) { why('BUILD-OUTPUTS', `${c}: build output ${out} was not produced`); continue; }
-        for (const e of fs.statSync(abs).isDirectory() ? fs.readdirSync(abs, { recursive: true, withFileTypes: true }).map(d => path.join(d.parentPath ?? d.path, d.name)) : [abs]) {
-          const st = fs.lstatSync(e);
-          if (st.isSymbolicLink()) why('BUILD-OUTPUTS', `${c}: build output ${path.relative(dir, e)} is a symlink`);
-          else if (st.isFile()) files.push(path.relative(dir, e).split(path.sep).join('/'));
-        }
-      }
-      const modules = [...new Set(files)].sort().map(p => ({ path: p, sha256: put(fs.readFileSync(path.join(dir, p))) }));
-      if (!modules.length) { why('BUILD-OUTPUTS', `${c}: the build produced no files under ${spec.outputs.join(', ')}`); return null; }
-      const lock = walk.entries.find(e => e[0] === 'pnpm-lock.yaml');
-      const identityBytes = executionIdentity({ sourceTreeSha256: tree, buildSpecSha256: specSha, lockfileSha256: lock?.[2], toolchain: toolchainIdentity(toolchain, spec), runner: walk.entries });
+      if (!box) { why('ISOLATION-NOT-IN-FORCE', 'no container executor; candidate builds are refused'); return null; }
+      const n = instances.length;
+      let built;
+      try { built = box.build(snap, spec); }
+      catch (error) { why('ISOLATION-NOT-IN-FORCE', String(error)); return null; }
+      const dir = built.volume, walk = { ...built.walk, entries: built.walk.entries.filter(e => !exclusions.includes(e[0])) };
+      const inputList = [...built.files.keys()];
+      const modules = walk.modules.map(m => {
+        const bytes = Buffer.from(m.base64, 'base64');
+        if (sha256(bytes) !== m.sha256) throw Error('walker module bytes mismatch');
+        return { path: m.path, sha256: put(bytes) };
+      });
+      const identityBytes = Buffer.from(canonText({ schema: 'execution-identity/2', sourceTreeSha256: tree, buildSpecSha256: specSha,
+        boxInputsSha256: sha256(canonText(spec.boxInputs)), installMetadataExclusionsSha256: sha256(canonText(exclusions)), lockfileSha256: snap.files.get('pnpm-lock.yaml')?.sha256,
+        toolchain: box.toolchain, runnerSha256: sha256(runtimeListing(walk.entries)), configSha256: null,
+        imageId: box.config.imageId, imageBuildInputsSha256: box.config.buildInputsSha256, storeListingSha256: box.storeListingSha256,
+        isolationProfileSha256: sha256(canonText({ ...ISOLATION_PROFILE, resultLimits: { stdoutMaxBytes: box.config.stdoutMaxBytes ?? 16777216, caseTimeoutMs: box.config.caseTimeoutMs ?? 120000, buildTimeoutMs: box.config.buildTimeoutMs ?? 1800000 } })),
+        runtime: box.runtime, kernel: box.kernel }));
       const identity = put(identityBytes);
       const runnerSha256 = put(runtimeListing(walk.entries));
-      const manifest = put({ schema: 'build-manifest/2', sourceTreeSha256: tree, binarySha256: identity, modules, inputs: inputList.map(p => ({ path: p, sha256: snap.files.get(p).sha256 })), buildSpecSha256: specSha });
-      const rec = { n, commit: c, dir, identity, runtime: walk.entries, manifest, tampered: false };
+      const manifest = put({ schema: 'build-manifest/2', sourceTreeSha256: tree, binarySha256: identity, modules,
+        inputs: inputList.map(p => ({ path: p, sha256: snap.files.get(p).sha256 })), buildSpecSha256: specSha });
+      const rec = { n, commit: c, dir, volume: built.volume, identity, runtime: walk.entries, manifest, tampered: false };
       instances.push(rec);
       // Two instances with one identity have byte-identical checkouts (same tree, spec, toolchain, every file and mode), so either
       // executes the same code; the first one serves both.
@@ -1341,13 +1335,19 @@ function labExecutor({ commit, contract, ctx, spec, slots, loadContract, claim, 
       repCount.set(k, rep + 1);
       last = { instance: b?.n ?? null, build: b?.commit ?? null, binary, comp, x, mode, rep, observed: null };
       const raw = isObj(x) && safePath(x.input) ? pre.inputs.get(x.input) ?? null : null;
-      if (!b || !raw || sha256(raw) !== own(x, 'contentSha256') || !sut) return null;
+      if (!b || !raw || sha256(raw) !== own(x, 'contentSha256') || !box) return null;
       // [EXP-E01] Why: same-instance mutations must fail too. Rejected: hashing only on instance switches (last-case edits escaped).
       verifyBuild(b);
       if (b.tampered) return null;
       const casePath = inputPath(raw);
       if (!casePath) return null;
-      const seen = sut({ dir: b.dir, casePath, mode, instance: b.n, runChild });
+      let seen;
+      try {
+        const arm = box.arm(comp, canaryPort);
+        seen = box.case(b, raw, mode, spec.run, arm.network, arm.env);
+        last.configSha256 = arm.configSha256;
+      } catch (error) { why('ISOLATION-NOT-IN-FORCE', String(error)); return null; }
+      last.rawStdoutSha256 = put(seen.stdout); last.rawStderrSha256 = put(seen.stderr.subarray(0, 65536));
       last.observed = seen.exit === 0 ? trimNl(seen.stdout) : null;
       last.exit = seen.exit;
       return last.observed;
@@ -1362,10 +1362,10 @@ function labExecutor({ commit, contract, ctx, spec, slots, loadContract, claim, 
         expectedSha256, observedSha256, mode: last.mode, rep: last.rep, comparator: cmp, inputSha256: x.contentSha256 }) : null;
       // Q67b, Q75e: an execution is the instance plus the configuration it ran under; offline no engine configuration is applied, so
       // the composition is recorded as unbound configuration, not hashed as if applied.
-      const executionSha256 = last?.binary ? sha256(canonText({ binarySha256: last.binary, configApplied: false })) : null;
-      run.cases.push({ obligation: o?.id ?? null, instance: last?.instance ?? null, build: last?.build ?? null, executionSha256, configApplied: false, case: x?.id ?? null, mode: last?.mode ?? null, rep: last?.rep ?? null,
-        comparator: cmp, verdict: v, expectedSha256, observedSha256, recordSha256: rec, unboundConfig: last?.comp ?? null });
-      if (v !== 'PASS' && sut) why(v === 'UNCOMPARABLE' ? 'CASE-UNCOMPARABLE' : 'CASE-FAIL', `instance ${last?.instance ?? '?'} (${last?.build ?? '?'}) ${o?.id} ${x?.id} mode ${last?.mode}: ${cmp} ${v}${obs == null ? ` (no observation${last?.exit != null ? `, exit ${last.exit}` : ''})` : ''} (RULINGS Q55a, Q67i)`);
+      const executionSha256 = last?.binary ? sha256(canonText({ binarySha256: last.binary, configApplied: Boolean(last?.configSha256), configSha256: last?.configSha256 ?? null })) : null;
+      run.cases.push({ obligation: o?.id ?? null, instance: last?.instance ?? null, build: last?.build ?? null, executionSha256, configApplied: Boolean(last?.configSha256), case: x?.id ?? null, mode: last?.mode ?? null, rep: last?.rep ?? null,
+        comparator: cmp, verdict: v, rawStdoutSha256: last?.rawStdoutSha256 ?? null, rawStderrSha256: last?.rawStderrSha256 ?? null, expectedSha256, observedSha256, recordSha256: rec, unboundConfig: last?.comp ?? null });
+      if (v !== 'PASS' && box) why(v === 'UNCOMPARABLE' ? 'CASE-UNCOMPARABLE' : 'CASE-FAIL', `instance ${last?.instance ?? '?'} (${last?.build ?? '?'}) ${o?.id} ${x?.id} mode ${last?.mode}: ${cmp} ${v}${obs == null ? ` (no observation${last?.exit != null ? `, exit ${last.exit}` : ''})` : ''} (RULINGS Q55a, Q67i)`);
       return v === 'PASS';
     },
     witness(oid, binary, comp, x, mode, rep) {
@@ -1388,7 +1388,7 @@ function labExecutor({ commit, contract, ctx, spec, slots, loadContract, claim, 
   };
   function verifyBuild(b) {
     if (b.tampered) return;
-    const now = walkTree(b.dir, exclusions);
+    const now = box ? { entries: box.walk(b.volume).entries.filter(e => !exclusions.includes(e[0])), outside: [] } : walkTree(b.dir, exclusions);
     if (runtimeListing(now.entries) !== runtimeListing(b.runtime) || now.outside.length) {
       b.tampered = true;
       why('BUILD-TAMPERED', `instance ${b.n} (${b.commit}): its checkout changed after the evaluator built it (RULINGS Q67b, Q67e)`);
@@ -1398,6 +1398,7 @@ function labExecutor({ commit, contract, ctx, spec, slots, loadContract, claim, 
   ev.verifyRuntime = () => {
     for (const [h, p] of inputFiles) verifyInput(h, p);
     for (const b of instances) verifyBuild(b);
+    if (box) box.attestStore();
     for (const [x, root] of pre.oracles) if (root) verifyOracleCopy(x, root);
   };
   // Q67e: immediately before every invocation, the oracle copy holds exactly the prepared files with their bytes and read-only
@@ -1414,37 +1415,49 @@ function labExecutor({ commit, contract, ctx, spec, slots, loadContract, claim, 
   return ev;
 }
 
-/**
- * Qualify a claim by running it (RULINGS Q55a). env = { git: gitSource(repo), authorityRef, workDir, isolationRoot?, sut?:
- * localSut(spec) for an offline run, gate?: (plan) -> result (default gateDryRun), sandbox? (default true: confine children's
- * writes with sandbox-exec where it works), evaluator?: { repo, rev } (whose commit vouches for the evaluator's files; default the
- * repository they live in, at HEAD), keepIsolation? }.
- * Returns { verdict, offlineVerdict, reasons, run }. admitCore (the contract's reference model) decides over labExecutor; the
- * verdict is QUALIFIED only from a run whose system under test ran through an executing gate, which does not exist yet, so every
- * return path is DIAGNOSTIC with GATE-NOT-RUN from the start (Q75i). offlineVerdict (offline runs only) is the verdict the run would
- * reach had the local observations come from the gate. run records the build instances, every comparison (with its case-result/2),
- * every oracle invocation, the toolchain, the isolation in force, the gate plan and the evaluator's object store.
- */
+/** Execute only from a protected evaluator clone with explicit commit ids. Candidates use BoxExecutor;
+ * trusted oracles retain the existing copied, rehashed Mac runner. Offline requests remain diagnostic. */
+export function evaluatorCloneProblems(root, sourceGit, evaluatorGit, workDir) {
+  const problems = [], absolute = path.resolve(root);
+  const writable = ['/Users/sam/projects/triplex-db-2', '/Users/sam/Claude/Projects/triplex-db-2', '/tmp', '/private/tmp', os.tmpdir()];
+  if (writable.some(p => absolute === path.resolve(p) || absolute.startsWith(path.resolve(p) + path.sep))) problems.push('evaluator is inside an agent writable root');
+  if (!evaluatorGit.commonDir() || evaluatorGit.commonDir() === sourceGit.commonDir() || evaluatorGit.gitDir() !== evaluatorGit.commonDir()) problems.push('evaluator requires an independent clone, not a shared worktree');
+  const output = path.resolve(workDir ?? absolute);
+  if (!output.startsWith(absolute + path.sep)) problems.push('evidence work directory must be inside the protected evaluator clone');
+  return problems;
+}
 export function qualifyClaim(claim, env) {
   const reasons = [];
   const seen = new Set();
   const why = (code, detail, receipt) => { const k = `${code}\u0000${detail}`; if (!seen.has(k)) { seen.add(k); reasons.push(receipt ? { code, detail, receipt } : { code, detail }); } };
   const run = { offline: typeof env?.sut === 'function', ignored: [], builds: {}, instances: [], cases: [], oracle: [], gate: null, objects: null, core: null, evaluator: null, toolchain: null, isolation: null, dirs: [] };
-  why('GATE-NOT-RUN', 'step 3: gate.mjs OBL is plan-only (--dry-run); no executing gate runs pinned case manifests on a registered slot yet, so no run is QUALIFIED (RULINGS Q55a, Q75i)');
+  why('GATE-NOT-RUN', 'no pinned case has yet completed through the isolated OBL executor and cleanup proofs (Q55a, Q86)');
   if (run.offline) why('RUN-NOT-ON-GATE', 'the system under test ran locally from the evaluator\'s own build (offline stand-in for step 3), not through the gate on a registered slot');
   const state = {};
   try {
     // Q75a: the evaluator's own files match their blobs at its commit, and no earlier run marked this checkout poisoned.
-    state.integrity = evaluatorIntegrity(env?.evaluator ?? {});
+    if (!COMMIT.test(env?.authorityRef ?? '') || !COMMIT.test(env?.evaluator?.rev ?? '')) {
+      why('ISOLATION-NOT-IN-FORCE', 'qualification requires explicit --authority and --evaluator-commit full commit ids (Q86e)');
+    } else if (path.resolve(env.evaluator.repo ?? EVALUATOR_ROOT) !== EVALUATOR_ROOT || evaluatorCloneProblems(EVALUATOR_ROOT, env.git, gitSource(EVALUATOR_ROOT), env.workDir).length) {
+      why('ISOLATION-NOT-IN-FORCE', 'the executing evaluator must be in its own clone, with no shared git directory with candidate source (Q86e)');
+    } else state.integrity = evaluatorIntegrity(env?.evaluator ?? {});
+    if (state.integrity) {
     run.evaluator = { repo: state.integrity.repo, commit: state.integrity.commit, files: state.integrity.files };
     if (state.integrity.problems.length) { for (const p of state.integrity.problems) why('EVALUATOR-TAMPERED', `${p}; the run is refused (RULINGS Q75a)`); poison(state.integrity, state.integrity.problems.join('; ')); }
     else runQualification(claim, env, why, run, state);
+    }
   } catch (error) { why('EVALUATOR-ERROR', `qualification stopped: ${error?.message ?? error} (fail closed)`); }
   // Q75i: the end checks run inside a try of their own, so an unreadable store or file is a reason, never an exception.
   try { endChecks(why, run, state); } catch (error) { why('EVALUATOR-ERROR', `the end-of-run checks stopped: ${error?.message ?? error} (fail closed)`); }
+  if (state.box) {
+    try { state.box.close(); } catch (error) { why('ISOLATION-NOT-IN-FORCE', `cleanup proof failed: ${error}`); }
+    run.isolation = { ...run.isolation, records: state.box.records, resourcesRemaining: state.box.resources };
+  }
+  if (state.gateExecuted && !reasons.some(r => r.code === 'ISOLATION-NOT-IN-FORCE')) {
+    const index = reasons.findIndex(r => r.code === 'GATE-NOT-RUN'); if (index >= 0) reasons.splice(index, 1);
+  }
   if (!env?.keepIsolation) for (const d of run.dirs) removeDir(d);
-  const blocking = reasons.filter(r => !NOT_ON_GATE.has(r.code));
-  return { verdict: reasons.length ? 'DIAGNOSTIC' : 'QUALIFIED', offlineVerdict: run.offline ? (blocking.length ? 'DIAGNOSTIC' : 'QUALIFIED') : null, reasons: summarise(reasons), run };
+  return { verdict: reasons.length ? 'DIAGNOSTIC' : 'QUALIFIED', offlineVerdict: run.offline ? 'DIAGNOSTIC' : null, reasons: summarise(reasons), run };
 }
 
 /** The checks after a run (RULINGS Q67e, Q75a, Q75d, Q75i): the evaluator's files are those it started with (a change poisons the
@@ -1528,16 +1541,19 @@ function runQualification(claim, env, why, run, state) {
   const a0Commit = isObj(entry) && str(entry.commit) && COMMIT.test(entry.commit) && git.resolve(entry.commit) === entry.commit ? entry.commit : null;
   const pre = prepareTrusted({ git, commit, authority, authorityRef, contract, ctx, obligations: [...prereq, ...claimed], a0Commit, why, iso });
   pre.labels = new Map([...pre.snapshots.keys()].map(c => [c, sourceTreeIdOf(git.treeOf(c))]));
-  const ev = labExecutor({ commit, contract, ctx, spec: ctx.cfg.buildSpec, slots, loadContract, claim, pre, put, iso, runChild, toolchain: tools, sut: env.sut ?? null, why, run });
+  let box;
+  try {
+    box = state.box = new BoxExecutor({ config: ctx.cfg.buildSpec?.boxSpec, workDir: env.workDir, holder: env.holder, put, why });
+    box.attestStore();
+    run.isolation = { candidate: 'hardened-container', imageId: box.config.imageId, oracleSandbox: run.isolation.sandbox, residual: ['R1: shared VM kernel', 'R4/N4: engine egress pending Q86g H2', 'D1: development runs on Mac', 'D2: shared Docker socket and writable HOME VM mount', 'D3: external writers of authority refs', 'Q86g retains L1 and N1-N4 on the unprotected list until VM hardening'] };
+  } catch (error) { return why('ISOLATION-NOT-IN-FORCE', String(error)); }
+  const ev = labExecutor({ commit, contract, ctx, spec: ctx.cfg.buildSpec, slots, loadContract, claim, pre, put, iso, runChild, toolchain: tools, sut: env.sut ?? null, why, run, box, canaryPort: env.canaryPort });
 
   state.verifyRuntime = ev.verifyRuntime;
 
-  // -- step 3, as far as it exists: the plan goes through gate.mjs --dry-run, which checks the lane and the registered slot.
-  const count = o => { const cs = resolveCases(o, ev, ctx.pinned); return cs ? cs.reduce((n, x) => n + o.closure.modes.length * (o.closure.rules.includes('CR-FAULT') && own(x, 'faultPoint') === true ? ctx.faultReps : 1), 0) : 0; };
-  run.gate = (env.gate ?? gateDryRun(env.workDir, runChild))({ claimId: claim.claimId ?? null, kind: claim.kind ?? null, commit, lane: comp.source.engine, slot: comp.source.slot,
-    obligations: [...prereq, ...claimed].map(o => o.id), executions: [...prereq, ...claimed].reduce((n, o) => n + count(o), 0) + (entry ? [prereq[0], prereq[1]].reduce((n, o) => n + count(o), 0) : 0) });
-  if (!run.gate.ok) why('GATE-SLOT', `gate.mjs refused the plan (lane ${comp.source.engine}, slot ${comp.source.slot}): ${run.gate.error}`);
-
+  run.gate = { gate: 'OBL', executing: true, registeredSlot: comp.source.slot };
+  // [EXP-G03] Why: remove GATE-NOT-RUN only after a case actually returned through the isolated executor and cleanup passed.
+  // Rejected: successful planning or a zero-case run as evidence of execution.
   // -- the verdict: the contract's reference model over the lab's executor, with the claim kind (Q67j, Q75i).
   run.core = admitCore({ kind: claim.kind, obligations: claim.obligations, commit, sourceTreeSha256: claim.sourceTreeSha256, composition: comp }, ev, ctx);
   for (const r of run.core.reasons) why(r.code, r.detail);
@@ -1547,6 +1563,7 @@ function runQualification(claim, env, why, run, state) {
     const notes = [];
     if (qualificationRun(o, entry.binarySha256, entry.composition, ev, ctx, ctx.pins, ctx.pinned, ctx.cfg.oracleRunners, d => notes.push(d)) === null) why('PREREQ-FAILED', `the evaluator's ${o.id} run of the A0 build did not pass (GATE-POSITION "A0 included", RULINGS Q38a): ${notes.join('; ')}`);
   }
+  state.gateExecuted = run.cases.length > 0 && run.cases.every(c => c.configApplied);
   if (ids.length === (Array.isArray(claim.obligations) ? claim.obligations.length : -1)) {
     if (!isObj(ctx.cfg.buildSpec) || ['argv', 'outputs', 'run'].some(k => own(ctx.cfg.buildSpec, k) == null)) why('BUILD-SPEC-NULL', 'the contract\'s buildSpec (argv, outputs, run) is not specified, so no run qualifies (RULINGS Q55a step 1, Q61f)');
     if (!isObj(entry)) why('A0-REGISTRY-NULL', `A0_REGISTRY has no entry for source engine ${comp.source.engine}; every comparison is a diagnostic until A0 is frozen (RULINGS Q46b, Q47b)`);
@@ -1570,7 +1587,7 @@ export function admitFile(file, { repo = REPO, objects = OBJECTS, authorityRef =
   return admitClaim(claim, { git: gitSource(repo), objects: objectStore(objects), authorityRef });
 }
 
-const USAGE = 'usage: claim.mjs admit <claim.json> [--repo DIR] [--objects DIR] [--authority-ref main] [--json]\n       claim.mjs qualify <claim.json> [--repo DIR] [--authority-ref main] [--work DIR] [--offline-sut] [--no-sandbox] [--evaluator-repo DIR] [--json]\n       claim.mjs restore-evaluator [--evaluator-repo DIR]';
+const USAGE = 'usage: claim.mjs admit <claim.json> [--repo DIR] [--objects DIR] [--authority-ref main] [--json]\n       claim.mjs qualify <claim.json> --repo SOURCE --authority SHA --evaluator-commit SHA [--work DIR] [--holder NAME] [--offline-sut] [--json]\n       claim.mjs restore-evaluator [--evaluator-repo DIR]';
 if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.meta.filename)) main(async () => {
   const { positional, options } = parseArgs(process.argv.slice(2));
   const [command, file] = positional;
@@ -1583,19 +1600,23 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.met
   }
   if (!['admit', 'qualify'].includes(command) || !file) fail('USAGE', USAGE);
   const repo = path.resolve(options.repo ?? REPO);
-  const authorityRef = options['authority-ref'] ?? 'main';
+  const authorityRef = options.authority ?? options['authority-ref'] ?? 'main';
   let result;
   if (command === 'admit') result = admitFile(path.resolve(file), { repo, objects: path.resolve(options.objects ?? path.join(repo, 'runs/objects')), authorityRef });
   else {
     let claim = null;
     try { claim = parseJson(fs.readFileSync(path.resolve(file))); } catch (error) { fail('USAGE', `cannot read ${file}: ${error.message}`); }
     const git = gitSource(repo);
-    const workDir = path.resolve(options.work ?? path.join(repo, 'runs/qualify', `${String(claim?.claimId ?? 'claim').replace(/[^A-Za-z0-9._-]/g, '_')}-${new Date().toISOString().replace(/[:.]/g, '-')}`));
+    const workDir = path.resolve(options.work ?? path.join(EVALUATOR_ROOT, 'runs/qualify', `${String(claim?.claimId ?? 'claim').replace(/[^A-Za-z0-9._-]/g, '_')}-${new Date().toISOString().replace(/[:.]/g, '-')}`));
     let sut = null;
     // --offline-sut runs the system under test with the contract's buildSpec run argv (the authority's), locally.
     if (options['offline-sut']) { const b = git.resolve(authorityRef) && git.blob(git.resolve(authorityRef), PATHS.contract); try { const s = b ? JSON.parse(b.toString('utf8')).buildSpec : null; sut = strList(s?.run) ? localSut(s) : null; } catch { sut = null; } }
-    result = qualifyClaim(claim, { git, authorityRef, workDir, ...(sut ? { sut } : {}), ...(options['no-sandbox'] ? { sandbox: false } : {}),
-      ...(options['evaluator-repo'] ? { evaluator: { repo: path.resolve(options['evaluator-repo']) } } : {}) });
+    const net = await import('node:net');
+    const canary = net.createServer();
+    await new Promise(resolve => canary.listen(0, '127.0.0.1', resolve));
+    try { result = qualifyClaim(claim, { git, authorityRef, workDir, holder: options.holder, canaryPort: canary.address().port, ...(sut ? { sut } : {}), ...(options['no-sandbox'] ? { sandbox: false } : {}),
+      evaluator: { repo: path.resolve(options['evaluator-repo'] ?? EVALUATOR_ROOT), rev: options['evaluator-commit'] } });
+    } finally { canary.close(); }
   }
   if (options.json) process.stdout.write(JSON.stringify(result, null, 2) + '\n');
   else {

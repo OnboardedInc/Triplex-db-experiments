@@ -1,0 +1,580 @@
+Scope: 5 of 24 workspace projects
+Lockfile is up to date, resolution step is skipped
+Progress: resolved 1, reused 0, downloaded 0, added 0
+.                                        | +421 ++++++++++++++++++++++++++++++++
+Progress: resolved 421, reused 202, downloaded 0, added 0
+Progress: resolved 421, reused 418, downloaded 0, added 61
+Progress: resolved 421, reused 418, downloaded 0, added 158
+Progress: resolved 421, reused 418, downloaded 0, added 171
+Progress: resolved 421, reused 418, downloaded 0, added 172
+Progress: resolved 421, reused 418, downloaded 0, added 184
+Progress: resolved 421, reused 418, downloaded 0, added 216
+Progress: resolved 421, reused 418, downloaded 0, added 221
+Progress: resolved 421, reused 418, downloaded 0, added 281
+Progress: resolved 421, reused 418, downloaded 0, added 421, done
+.../esbuild@0.28.2/node_modules/esbuild postinstall$ node install.js
+.../esbuild@0.23.1/node_modules/esbuild postinstall$ node install.js
+.../node_modules/workerd postinstall$ node install.js
+.../esbuild@0.28.2/node_modules/esbuild postinstall: Done
+.../esbuild@0.23.1/node_modules/esbuild postinstall: Done
+.                                        |  WARN  An error occurred while uploading /work/node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild
+.../node_modules/workerd postinstall: Done
+.                                        |  WARN  An error occurred while uploading /work/node_modules/.pnpm/esbuild@0.23.1/node_modules/esbuild
+.                                        |  WARN  An error occurred while uploading /work/node_modules/.pnpm/workerd@1.20260918.1/node_modules/workerd
+Done in 17s using pnpm v10.11.0
+
+> @triplex-build/triplex@0.2.0 build /work/packages/core
+> tsdown
+
+[34mℹ[39m [34mtsdown v0.21.7[39m powered by [91mrolldown v1.0.0-rc.12[39m
+[34mℹ[39m config file: [4m/work/packages/core/tsdown.config.ts[24m 
+[34mℹ[39m entry: [34msrc/Branded.ts, src/Constraint.ts, src/EntityPage.ts, src/Error.ts, src/Pagination.ts, src/Temporal.ts, src/Triple.ts, src/Value.ts, src/index.ts, src/internal.ts, src/params.ts, src/config/Attribute.ts, src/config/BoolExpr.ts, src/config/Catalog.ts, src/config/ConfigNode.ts, src/config/ConfigRuntime.ts, src/config/ConfigStore.ts, src/config/Entity.ts, src/config/EntityType.ts, src/config/EntityValidation.ts, src/config/Evaluate.ts, src/config/GraphConstraint.ts, src/config/InMemoryConfigStore.ts, src/config/Reactor.ts, src/config/TypeExpr.ts, src/config/TypeSchema.ts, src/config/TypeSubsumption.ts, src/config/World.ts, src/config/index.ts, src/derivation/Derivation.ts, src/derivation/Materialization.ts, src/derivation/Overlay.ts, src/derivation/index.ts, src/dialects/index.ts, src/dialects/postgresql.ts, src/dialects/sqlite.ts, src/dialects/types.ts, src/entity/Descriptors.ts, src/entity/EntityCodec.ts, src/entity/Errors.ts, src/entity/Model.ts, src/entity/PhysicalNames.ts, src/entity/Plan.ts, src/entity/ProjectionSpec.ts, src/entity/Repository.ts, src/entity/index.ts, src/content/CanonicalJson.ts, src/content/ContentId.ts, src/content/Sha256.ts, src/content/index.ts, src/datalog/compiler.ts, src/datalog/index.ts, src/datalog/schema.ts, src/datalog/types.ts, src/datalog/validation.ts, src/datalog/wrapper.ts, src/errors/index.ts, src/kv/index.ts, src/native/NativeQuery.ts, src/operational/ConsumerCheckpoint.ts, src/operational/index.ts, src/snapshots/EntitySnapshotsCapability.ts, src/snapshots/SnapshotService.ts, src/snapshots/SnapshotServiceLive.ts, src/snapshots/canonical.ts, src/snapshots/index.ts, src/runtime/Capabilities.ts, src/runtime/DatabaseScope.ts, src/runtime/Runtime.ts, src/runtime/index.ts, src/store/ChangeEmissionCapability.ts, src/store/ChangeEmitter.ts, src/store/DatabaseManager.ts, src/store/DatabaseRegistry.ts, src/store/RuntimeServices.ts, src/store/StoreCapability.ts, src/store/TripleStoreRuntime.ts, src/store/Triples.ts, src/store/TriplesLive.ts, src/store/entityTransactionHistory.ts, src/store/systemNamespace.ts, src/store/transactionMetadata.ts, src/store/writeEventUtils.ts, src/storage/QueryExecutor.ts, src/storage/StorageAdapter.ts, src/storage/types.ts, src/types/Pattern.ts, src/subscriptions/SubscriptionManager.ts, src/subscriptions/SyncHub.ts, src/subscriptions/TopicTree.ts, src/subscriptions/extract-dependencies.ts, src/subscriptions/index.ts, src/subscriptions/invalidation.ts, src/subscriptions/query-hash.ts, src/subscriptions/types.ts, src/utils/id.ts, src/kv/datalog/executor.ts, src/kv/datalog/index.ts, src/kv/datalog/pattern.ts, src/kv/datalog/predicate.ts, src/kv/datalog/types.ts, src/kv/kv/InMemoryKvBackend.ts, src/kv/kv/KvBackend.ts, src/kv/kv/encoding.ts, src/kv/kv/index.ts, src/kv/hexastore/KvTripleStore.ts, src/kv/hexastore/index.ts, src/kv/hexastore/indexes.ts, src/kv/hexastore/scan.ts, src/kv/hexastore/tuple.ts, src/kv/layers/KvTriplesLive.ts, src/kv/layers/index.ts[39m
+[34mℹ[39m target: [34mesnext[39m
+[34mℹ[39m tsconfig: [34mtsconfig.json[39m
+[34mℹ[39m Build start
+[34mℹ[39m [2mdist/[22m[1mdatalog/compiler.js[22m                           [2m 61.37 kB[22m [2m│ gzip: 12.43 kB[22m
+[34mℹ[39m [2mdist/[22m[1mkv/layers/KvTriplesLive.js[22m                    [2m 26.90 kB[22m [2m│ gzip:  6.67 kB[22m
+[34mℹ[39m [2mdist/[22m[1mconfig/EntityValidation.js[22m                    [2m 24.92 kB[22m [2m│ gzip:  5.80 kB[22m
+[34mℹ[39m [2mdist/[22m[1mkv/hexastore/KvTripleStore.js[22m                 [2m 24.82 kB[22m [2m│ gzip:  6.07 kB[22m
+[34mℹ[39m [2mdist/[22m[1mkv/datalog/executor.js[22m                        [2m 21.33 kB[22m [2m│ gzip:  5.71 kB[22m
+[34mℹ[39m [2mdist/[22m[1mdatalog/schema.js[22m                             [2m 20.80 kB[22m [2m│ gzip:  5.72 kB[22m
+[34mℹ[39m [2mdist/[22m[1mentity/ProjectionSpec.js[22m                      [2m 19.70 kB[22m [2m│ gzip:  6.56 kB[22m
+[34mℹ[39m [2mdist/[22m[1mstore/TriplesLive.js[22m                          [2m 19.70 kB[22m [2m│ gzip:  5.05 kB[22m
+[34mℹ[39m [2mdist/[22m[1mderivation/Materialization.js[22m                 [2m 15.91 kB[22m [2m│ gzip:  3.95 kB[22m
+[34mℹ[39m [2mdist/[22m[1mconfig/Evaluate.js[22m                            [2m 14.98 kB[22m [2m│ gzip:  5.06 kB[22m
+[34mℹ[39m [2mdist/[22m[1msnapshots/SnapshotServiceLive.js[22m              [2m 14.94 kB[22m [2m│ gzip:  3.02 kB[22m
+[34mℹ[39m [2mdist/[22m[1mdatalog/validation.js[22m                         [2m 13.80 kB[22m [2m│ gzip:  3.40 kB[22m
+[34mℹ[39m [2mdist/[22m[1mconfig/InMemoryConfigStore.js[22m                 [2m 13.71 kB[22m [2m│ gzip:  4.89 kB[22m
+[34mℹ[39m [2mdist/[22m[1mderivation/Derivation.js[22m                      [2m 12.29 kB[22m [2m│ gzip:  3.58 kB[22m
+[34mℹ[39m [2mdist/[22m[1mconfig/ConfigStore.js[22m                         [2m 12.28 kB[22m [2m│ gzip:  3.37 kB[22m
+[34mℹ[39m [2mdist/[22m[1mkv/datalog/pattern.js[22m                         [2m 11.71 kB[22m [2m│ gzip:  3.40 kB[22m
+[34mℹ[39m [2mdist/[22m[1mdatalog/wrapper.js[22m                            [2m 11.62 kB[22m [2m│ gzip:  3.36 kB[22m
+[34mℹ[39m [2mdist/[22m[1mkv/hexastore/tuple.js[22m                         [2m 11.53 kB[22m [2m│ gzip:  3.20 kB[22m
+[34mℹ[39m [2mdist/[22m[1mconfig/ConfigNode.js[22m                          [2m 11.37 kB[22m [2m│ gzip:  4.42 kB[22m
+[34mℹ[39m [2mdist/[22m[1mConstraint.js[22m                                 [2m 10.65 kB[22m [2m│ gzip:  3.06 kB[22m
+[34mℹ[39m [2mdist/[22m[1mconfig/GraphConstraint.js[22m                     [2m 10.29 kB[22m [2m│ gzip:  2.96 kB[22m
+[34mℹ[39m [2mdist/[22m[1minternal.js[22m                                   [2m  9.71 kB[22m [2m│ gzip:  2.35 kB[22m
+[34mℹ[39m [2mdist/[22m[1mentity/Descriptors.js[22m                         [2m  9.40 kB[22m [2m│ gzip:  3.16 kB[22m
+[34mℹ[39m [2mdist/[22m[1mkv/kv/InMemoryKvBackend.js[22m                    [2m  8.97 kB[22m [2m│ gzip:  2.77 kB[22m
+[34mℹ[39m [2mdist/[22m[1mentity/PhysicalNames.js[22m                       [2m  8.21 kB[22m [2m│ gzip:  3.39 kB[22m
+[34mℹ[39m [2mdist/[22m[1mconfig/TypeSubsumption.js[22m                     [2m  8.18 kB[22m [2m│ gzip:  3.02 kB[22m
+[34mℹ[39m [2mdist/[22m[1mPagination.js[22m                                 [2m  8.04 kB[22m [2m│ gzip:  2.50 kB[22m
+[34mℹ[39m [2mdist/[22m[1mconfig/TypeExpr.js[22m                            [2m  7.60 kB[22m [2m│ gzip:  2.81 kB[22m
+[34mℹ[39m [2mdist/[22m[1mentity/EntityCodec.js[22m                         [2m  7.51 kB[22m [2m│ gzip:  2.52 kB[22m
+[34mℹ[39m [2mdist/[22m[1moperational/ConsumerCheckpoint.js[22m             [2m  7.42 kB[22m [2m│ gzip:  2.12 kB[22m
+[34mℹ[39m [2mdist/[22m[1mderivation/Overlay.js[22m                         [2m  6.89 kB[22m [2m│ gzip:  2.40 kB[22m
+[34mℹ[39m [2mdist/[22m[1mconfig/World.js[22m                               [2m  6.56 kB[22m [2m│ gzip:  2.75 kB[22m
+[34mℹ[39m [2mdist/[22m[1msubscriptions/SyncHub.js[22m                      [2m  6.46 kB[22m [2m│ gzip:  1.79 kB[22m
+[34mℹ[39m [2mdist/[22m[1mstore/transactionMetadata.js[22m                  [2m  6.09 kB[22m [2m│ gzip:  1.75 kB[22m
+[34mℹ[39m [2mdist/[22m[1msnapshots/EntitySnapshotsCapability.js[22m        [2m  6.03 kB[22m [2m│ gzip:  1.91 kB[22m
+[34mℹ[39m [2mdist/[22m[1mconfig/ConfigRuntime.js[22m                       [2m  5.66 kB[22m [2m│ gzip:  2.11 kB[22m
+[34mℹ[39m [2mdist/[22m[1mTriple.js[22m                                     [2m  5.26 kB[22m [2m│ gzip:  1.07 kB[22m
+[34mℹ[39m [2mdist/[22m[1mconfig/TypeSchema.js[22m                          [2m  5.20 kB[22m [2m│ gzip:  2.14 kB[22m
+[34mℹ[39m [2mdist/[22m[1msubscriptions/TopicTree.js[22m                    [2m  5.13 kB[22m [2m│ gzip:  1.29 kB[22m
+[34mℹ[39m [2mdist/[22m[1msubscriptions/extract-dependencies.js[22m         [2m  5.01 kB[22m [2m│ gzip:  1.62 kB[22m
+[34mℹ[39m [2mdist/[22m[1mkv/hexastore/indexes.js[22m                       [2m  4.86 kB[22m [2m│ gzip:  1.43 kB[22m
+[34mℹ[39m [2mdist/[22m[1mnative/NativeQuery.js[22m                         [2m  4.64 kB[22m [2m│ gzip:  1.66 kB[22m
+[34mℹ[39m [2mdist/[22m[1msubscriptions/SubscriptionManager.js[22m          [2m  4.63 kB[22m [2m│ gzip:  1.27 kB[22m
+[34mℹ[39m [2mdist/[22m[1mconfig/Entity.js[22m                              [2m  4.63 kB[22m [2m│ gzip:  2.08 kB[22m
+[34mℹ[39m [2mdist/[22m[1mcontent/CanonicalJson.js[22m                      [2m  4.48 kB[22m [2m│ gzip:  1.90 kB[22m
+[34mℹ[39m [2mdist/[22m[1mindex.js[22m                                      [2m  4.48 kB[22m [2m│ gzip:  1.18 kB[22m
+[34mℹ[39m [2mdist/[22m[1merrors/index.js[22m                               [2m  4.36 kB[22m [2m│ gzip:  1.36 kB[22m
+[34mℹ[39m [2mdist/[22m[1mconfig/Reactor.js[22m                             [2m  4.34 kB[22m [2m│ gzip:  1.61 kB[22m
+[34mℹ[39m [2mdist/[22m[1mcontent/Sha256.js[22m                             [2m  4.15 kB[22m [2m│ gzip:  2.13 kB[22m
+[34mℹ[39m [2mdist/[22m[1msnapshots/canonical.js[22m                        [2m  4.06 kB[22m [2m│ gzip:  1.48 kB[22m
+[34mℹ[39m [2mdist/[22m[1mEntityPage.js[22m                                 [2m  3.88 kB[22m [2m│ gzip:  1.25 kB[22m
+[34mℹ[39m [2mdist/[22m[1mconfig/EntityType.js[22m                          [2m  3.68 kB[22m [2m│ gzip:  1.34 kB[22m
+[34mℹ[39m [2mdist/[22m[1mconfig/BoolExpr.js[22m                            [2m  3.43 kB[22m [2m│ gzip:  1.45 kB[22m
+[34mℹ[39m [2mdist/[22m[1mstore/writeEventUtils.js[22m                      [2m  3.43 kB[22m [2m│ gzip:  1.18 kB[22m
+[34mℹ[39m [2mdist/[22m[1mcontent/ContentId.js[22m                          [2m  3.42 kB[22m [2m│ gzip:  1.51 kB[22m
+[34mℹ[39m [2mdist/[22m[1mconfig/Attribute.js[22m                           [2m  3.14 kB[22m [2m│ gzip:  1.29 kB[22m
+[34mℹ[39m [2mdist/[22m[1mstore/entityTransactionHistory.js[22m             [2m  3.13 kB[22m [2m│ gzip:  1.20 kB[22m
+[34mℹ[39m [2mdist/[22m[1mValue.js[22m                                      [2m  3.03 kB[22m [2m│ gzip:  1.08 kB[22m
+[34mℹ[39m [2mdist/[22m[1msubscriptions/invalidation.js[22m                 [2m  2.81 kB[22m [2m│ gzip:  1.02 kB[22m
+[34mℹ[39m [2mdist/[22m[1mentity/Errors.js[22m                              [2m  2.78 kB[22m [2m│ gzip:  1.26 kB[22m
+[34mℹ[39m [2mdist/[22m[1mconfig/Catalog.js[22m                             [2m  2.77 kB[22m [2m│ gzip:  1.35 kB[22m
+[34mℹ[39m [2mdist/[22m[1mruntime/index.js[22m                              [2m  2.57 kB[22m [2m│ gzip:  0.66 kB[22m
+[34mℹ[39m [2mdist/[22m[1mstore/StoreCapability.js[22m                      [2m  2.57 kB[22m [2m│ gzip:  1.11 kB[22m
+[34mℹ[39m [2mdist/[22m[1mkv/hexastore/scan.js[22m                          [2m  2.38 kB[22m [2m│ gzip:  0.77 kB[22m
+[34mℹ[39m [2mdist/[22m[1mruntime/Runtime.js[22m                            [2m  2.37 kB[22m [2m│ gzip:  0.84 kB[22m
+[34mℹ[39m [2mdist/[22m[1mstore/RuntimeServices.js[22m                      [2m  2.37 kB[22m [2m│ gzip:  0.87 kB[22m
+[34mℹ[39m [2mdist/[22m[1mstore/systemNamespace.js[22m                      [2m  2.22 kB[22m [2m│ gzip:  0.79 kB[22m
+[34mℹ[39m [2mdist/[22m[1mkv/kv/encoding.js[22m                             [2m  2.20 kB[22m [2m│ gzip:  0.94 kB[22m
+[34mℹ[39m [2mdist/[22m[1mentity/Repository.js[22m                          [2m  2.16 kB[22m [2m│ gzip:  1.00 kB[22m
+[34mℹ[39m [2mdist/[22m[1mkv/datalog/predicate.js[22m                       [2m  2.01 kB[22m [2m│ gzip:  0.84 kB[22m
+[34mℹ[39m [2mdist/[22m[1mkv/datalog/types.js[22m                           [2m  1.99 kB[22m [2m│ gzip:  0.73 kB[22m
+[34mℹ[39m [2mdist/[22m[1mkv/index.js[22m                                   [2m  1.98 kB[22m [2m│ gzip:  0.63 kB[22m
+[34mℹ[39m [2mdist/[22m[1mstore/TripleStoreRuntime.js[22m                   [2m  1.93 kB[22m [2m│ gzip:  0.59 kB[22m
+[34mℹ[39m [2mdist/[22m[1mBranded.js[22m                                    [2m  1.92 kB[22m [2m│ gzip:  0.60 kB[22m
+[34mℹ[39m [2mdist/[22m[1mruntime/Capabilities.js[22m                       [2m  1.82 kB[22m [2m│ gzip:  0.63 kB[22m
+[34mℹ[39m [2mdist/[22m[1mconfig/index.js[22m                               [2m  1.74 kB[22m [2m│ gzip:  0.40 kB[22m
+[34mℹ[39m [2mdist/[22m[1mruntime/DatabaseScope.js[22m                      [2m  1.58 kB[22m [2m│ gzip:  0.69 kB[22m
+[34mℹ[39m [2mdist/[22m[1msubscriptions/query-hash.js[22m                   [2m  1.28 kB[22m [2m│ gzip:  0.63 kB[22m
+[34mℹ[39m [2mdist/[22m[1mTemporal.js[22m                                   [2m  1.22 kB[22m [2m│ gzip:  0.58 kB[22m
+[34mℹ[39m [2mdist/[22m[1mutils/id.js[22m                                   [2m  1.17 kB[22m [2m│ gzip:  0.60 kB[22m
+[34mℹ[39m [2mdist/[22m[1mstore/ChangeEmissionCapability.js[22m             [2m  1.15 kB[22m [2m│ gzip:  0.61 kB[22m
+[34mℹ[39m [2mdist/[22m[1mdatalog/index.js[22m                              [2m  1.10 kB[22m [2m│ gzip:  0.29 kB[22m
+[34mℹ[39m [2mdist/[22m[1mentity/Plan.js[22m                                [2m  1.08 kB[22m [2m│ gzip:  0.53 kB[22m
+[34mℹ[39m [2mdist/[22m[1mstore/Triples.js[22m                              [2m  1.00 kB[22m [2m│ gzip:  0.57 kB[22m
+[34mℹ[39m [2mdist/[22m[1mkv/hexastore/index.js[22m                         [2m  0.97 kB[22m [2m│ gzip:  0.35 kB[22m
+[34mℹ[39m [2mdist/[22m[1mstore/ChangeEmitter.js[22m                        [2m  0.84 kB[22m [2m│ gzip:  0.46 kB[22m
+[34mℹ[39m [2mdist/[22m[1mentity/index.js[22m                               [2m  0.83 kB[22m [2m│ gzip:  0.26 kB[22m
+[34mℹ[39m [2mdist/[22m[1mdialects/postgresql.js[22m                        [2m  0.83 kB[22m [2m│ gzip:  0.52 kB[22m
+[34mℹ[39m [2mdist/[22m[1mdialects/sqlite.js[22m                            [2m  0.77 kB[22m [2m│ gzip:  0.48 kB[22m
+[34mℹ[39m [2mdist/[22m[1mstorage/QueryExecutor.js[22m                      [2m  0.76 kB[22m [2m│ gzip:  0.42 kB[22m
+[34mℹ[39m [2mdist/[22m[1msnapshots/SnapshotService.js[22m                  [2m  0.75 kB[22m [2m│ gzip:  0.40 kB[22m
+[34mℹ[39m [2mdist/[22m[1msnapshots/index.js[22m                            [2m  0.71 kB[22m [2m│ gzip:  0.26 kB[22m
+[34mℹ[39m [2mdist/[22m[1mkv/kv/KvBackend.js[22m                            [2m  0.67 kB[22m [2m│ gzip:  0.43 kB[22m
+[34mℹ[39m [2mdist/[22m[1mstorage/StorageAdapter.js[22m                     [2m  0.65 kB[22m [2m│ gzip:  0.38 kB[22m
+[34mℹ[39m [2mdist/[22m[1msubscriptions/index.js[22m                        [2m  0.62 kB[22m [2m│ gzip:  0.23 kB[22m
+[34mℹ[39m [2mdist/[22m[1mstore/DatabaseRegistry.js[22m                     [2m  0.61 kB[22m [2m│ gzip:  0.36 kB[22m
+[34mℹ[39m [2mdist/[22m[1mstore/DatabaseManager.js[22m                      [2m  0.58 kB[22m [2m│ gzip:  0.34 kB[22m
+[34mℹ[39m [2mdist/[22m[1mkv/datalog/index.js[22m                           [2m  0.53 kB[22m [2m│ gzip:  0.22 kB[22m
+[34mℹ[39m [2mdist/[22m[1mError.js[22m                                      [2m  0.51 kB[22m [2m│ gzip:  0.23 kB[22m
+[34mℹ[39m [2mdist/[22m[1mparams.js[22m                                     [2m  0.46 kB[22m [2m│ gzip:  0.28 kB[22m
+[34mℹ[39m [2mdist/[22m[1mderivation/index.js[22m                           [2m  0.45 kB[22m [2m│ gzip:  0.19 kB[22m
+[34mℹ[39m [2mdist/[22m[1mtypes/Pattern.js[22m                              [2m  0.43 kB[22m [2m│ gzip:  0.26 kB[22m
+[34mℹ[39m [2mdist/[22m[1mkv/kv/index.js[22m                                [2m  0.34 kB[22m [2m│ gzip:  0.16 kB[22m
+[34mℹ[39m [2mdist/[22m[1mcontent/index.js[22m                              [2m  0.27 kB[22m [2m│ gzip:  0.12 kB[22m
+[34mℹ[39m [2mdist/[22m[1mdialects/types.js[22m                             [2m  0.21 kB[22m [2m│ gzip:  0.17 kB[22m
+[34mℹ[39m [2mdist/[22m[1mdialects/index.js[22m                             [2m  0.20 kB[22m [2m│ gzip:  0.11 kB[22m
+[34mℹ[39m [2mdist/[22m[1mdatalog/types.js[22m                              [2m  0.17 kB[22m [2m│ gzip:  0.15 kB[22m
+[34mℹ[39m [2mdist/[22m[1moperational/index.js[22m                          [2m  0.13 kB[22m [2m│ gzip:  0.08 kB[22m
+[34mℹ[39m [2mdist/[22m[1mkv/layers/index.js[22m                            [2m  0.10 kB[22m [2m│ gzip:  0.07 kB[22m
+[34mℹ[39m [2mdist/[22m[1mentity/Model.js[22m                               [2m  0.01 kB[22m [2m│ gzip:  0.03 kB[22m
+[34mℹ[39m [2mdist/[22m[1mstorage/types.js[22m                              [2m  0.01 kB[22m [2m│ gzip:  0.03 kB[22m
+[34mℹ[39m [2mdist/[22m[1msubscriptions/types.js[22m                        [2m  0.01 kB[22m [2m│ gzip:  0.03 kB[22m
+[34mℹ[39m [2mdist/[22mdatalog/compiler.js.map                       [2m124.20 kB[22m [2m│ gzip: 26.82 kB[22m
+[34mℹ[39m [2mdist/[22mkv/layers/KvTriplesLive.js.map                [2m 55.47 kB[22m [2m│ gzip: 13.09 kB[22m
+[34mℹ[39m [2mdist/[22mconfig/EntityValidation.js.map                [2m 51.61 kB[22m [2m│ gzip: 11.44 kB[22m
+[34mℹ[39m [2mdist/[22mkv/hexastore/KvTripleStore.js.map             [2m 49.31 kB[22m [2m│ gzip: 11.46 kB[22m
+[34mℹ[39m [2mdist/[22mkv/datalog/executor.js.map                    [2m 46.11 kB[22m [2m│ gzip: 11.30 kB[22m
+[34mℹ[39m [2mdist/[22mentity/ProjectionSpec.js.map                  [2m 43.44 kB[22m [2m│ gzip: 12.36 kB[22m
+[34mℹ[39m [2mdist/[22mstore/TriplesLive.js.map                      [2m 42.35 kB[22m [2m│ gzip:  9.63 kB[22m
+[34mℹ[39m [2mdist/[22mdatalog/schema.js.map                         [2m 37.31 kB[22m [2m│ gzip:  9.00 kB[22m
+[34mℹ[39m [2mdist/[22mderivation/Materialization.js.map             [2m 32.03 kB[22m [2m│ gzip:  7.43 kB[22m
+[34mℹ[39m [2mdist/[22mconfig/Evaluate.js.map                        [2m 29.98 kB[22m [2m│ gzip:  8.91 kB[22m
+[34mℹ[39m [2mdist/[22msnapshots/SnapshotServiceLive.js.map          [2m 29.31 kB[22m [2m│ gzip:  5.80 kB[22m
+[34mℹ[39m [2mdist/[22mconfig/InMemoryConfigStore.js.map             [2m 29.07 kB[22m [2m│ gzip:  8.87 kB[22m
+[34mℹ[39m [2mdist/[22mderivation/Derivation.js.map                  [2m 28.61 kB[22m [2m│ gzip:  7.66 kB[22m
+[34mℹ[39m [2mdist/[22mconfig/ConfigStore.js.map                     [2m 27.61 kB[22m [2m│ gzip:  6.85 kB[22m
+[34mℹ[39m [2mdist/[22mdatalog/validation.js.map                     [2m 25.63 kB[22m [2m│ gzip:  6.30 kB[22m
+[34mℹ[39m [2mdist/[22mdatalog/wrapper.js.map                        [2m 25.07 kB[22m [2m│ gzip:  6.84 kB[22m
+[34mℹ[39m [2mdist/[22mkv/hexastore/tuple.js.map                     [2m 23.45 kB[22m [2m│ gzip:  5.91 kB[22m
+[34mℹ[39m [2mdist/[22mkv/datalog/pattern.js.map                     [2m 22.39 kB[22m [2m│ gzip:  5.96 kB[22m
+[34mℹ[39m [2mdist/[22mConstraint.js.map                             [2m 21.81 kB[22m [2m│ gzip:  5.67 kB[22m
+[34mℹ[39m [2mdist/[22mconfig/ConfigNode.js.map                      [2m 20.24 kB[22m [2m│ gzip:  6.61 kB[22m
+[34mℹ[39m [2mdist/[22mconfig/GraphConstraint.js.map                 [2m 20.01 kB[22m [2m│ gzip:  5.35 kB[22m
+[34mℹ[39m [2mdist/[22mentity/Descriptors.js.map                     [2m 18.69 kB[22m [2m│ gzip:  5.51 kB[22m
+[34mℹ[39m [2mdist/[22mkv/kv/InMemoryKvBackend.js.map                [2m 18.42 kB[22m [2m│ gzip:  5.43 kB[22m
+[34mℹ[39m [2mdist/[22mconfig/TypeSubsumption.js.map                 [2m 15.90 kB[22m [2m│ gzip:  5.27 kB[22m
+[34mℹ[39m [2mdist/[22mPagination.js.map                             [2m 15.77 kB[22m [2m│ gzip:  4.42 kB[22m
+[34mℹ[39m [2mdist/[22mconfig/TypeExpr.js.map                        [2m 14.43 kB[22m [2m│ gzip:  4.38 kB[22m
+[34mℹ[39m [2mdist/[22mentity/EntityCodec.js.map                     [2m 14.30 kB[22m [2m│ gzip:  4.35 kB[22m
+[34mℹ[39m [2mdist/[22moperational/ConsumerCheckpoint.js.map         [2m 13.96 kB[22m [2m│ gzip:  3.81 kB[22m
+[34mℹ[39m [2mdist/[22msubscriptions/SyncHub.js.map                  [2m 13.26 kB[22m [2m│ gzip:  3.64 kB[22m
+[34mℹ[39m [2mdist/[22msnapshots/EntitySnapshotsCapability.js.map    [2m 12.86 kB[22m [2m│ gzip:  3.66 kB[22m
+[34mℹ[39m [2mdist/[22mderivation/Overlay.js.map                     [2m 12.85 kB[22m [2m│ gzip:  4.14 kB[22m
+[34mℹ[39m [2mdist/[22msubscriptions/SubscriptionManager.js.map      [2m 12.69 kB[22m [2m│ gzip:  3.25 kB[22m
+[34mℹ[39m [2mdist/[22mstore/Triples.js.map                          [2m 12.27 kB[22m [2m│ gzip:  3.42 kB[22m
+[34mℹ[39m [2mdist/[22mstore/transactionMetadata.js.map              [2m 11.71 kB[22m [2m│ gzip:  3.27 kB[22m
+[34mℹ[39m [2mdist/[22mconfig/Reactor.js.map                         [2m 11.44 kB[22m [2m│ gzip:  4.01 kB[22m
+[34mℹ[39m [2mdist/[22mentity/PhysicalNames.js.map                   [2m 11.30 kB[22m [2m│ gzip:  4.30 kB[22m
+[34mℹ[39m [2mdist/[22mconfig/ConfigRuntime.js.map                   [2m 11.10 kB[22m [2m│ gzip:  3.67 kB[22m
+[34mℹ[39m [2mdist/[22msnapshots/canonical.js.map                    [2m 10.97 kB[22m [2m│ gzip:  3.01 kB[22m
+[34mℹ[39m [2mdist/[22mkv/hexastore/indexes.js.map                   [2m 10.83 kB[22m [2m│ gzip:  2.75 kB[22m
+[34mℹ[39m [2mdist/[22mconfig/World.js.map                           [2m 10.35 kB[22m [2m│ gzip:  3.89 kB[22m
+[34mℹ[39m [2mdist/[22mnative/NativeQuery.js.map                     [2m 10.31 kB[22m [2m│ gzip:  3.37 kB[22m
+[34mℹ[39m [2mdist/[22mconfig/TypeSchema.js.map                      [2m 10.06 kB[22m [2m│ gzip:  3.43 kB[22m
+[34mℹ[39m [2mdist/[22mTriple.js.map                                 [2m  9.71 kB[22m [2m│ gzip:  1.88 kB[22m
+[34mℹ[39m [2mdist/[22msubscriptions/extract-dependencies.js.map     [2m  9.42 kB[22m [2m│ gzip:  2.90 kB[22m
+[34mℹ[39m [2mdist/[22msubscriptions/TopicTree.js.map                [2m  9.36 kB[22m [2m│ gzip:  2.52 kB[22m
+[34mℹ[39m [2mdist/[22mconfig/Entity.js.map                          [2m  9.32 kB[22m [2m│ gzip:  3.48 kB[22m
+[34mℹ[39m [2mdist/[22mconfig/Attribute.js.map                       [2m  8.97 kB[22m [2m│ gzip:  3.10 kB[22m
+[34mℹ[39m [2mdist/[22mdatalog/schema.d.ts.map                       [2m  8.95 kB[22m [2m│ gzip:  0.99 kB[22m
+[34mℹ[39m [2mdist/[22merrors/index.js.map                           [2m  8.93 kB[22m [2m│ gzip:  2.39 kB[22m
+[34mℹ[39m [2mdist/[22mconfig/EntityType.js.map                      [2m  8.65 kB[22m [2m│ gzip:  2.85 kB[22m
+[34mℹ[39m [2mdist/[22mentity/Repository.js.map                      [2m  8.65 kB[22m [2m│ gzip:  2.91 kB[22m
+[34mℹ[39m [2mdist/[22mentity/Plan.js.map                            [2m  7.97 kB[22m [2m│ gzip:  2.96 kB[22m
+[34mℹ[39m [2mdist/[22mEntityPage.js.map                             [2m  7.89 kB[22m [2m│ gzip:  2.33 kB[22m
+[34mℹ[39m [2mdist/[22mstore/writeEventUtils.js.map                  [2m  7.64 kB[22m [2m│ gzip:  2.43 kB[22m
+[34mℹ[39m [2mdist/[22mcontent/CanonicalJson.js.map                  [2m  7.57 kB[22m [2m│ gzip:  2.86 kB[22m
+[34mℹ[39m [2mdist/[22mcontent/Sha256.js.map                         [2m  7.09 kB[22m [2m│ gzip:  2.86 kB[22m
+[34mℹ[39m [2mdist/[22mconfig/BoolExpr.js.map                        [2m  6.56 kB[22m [2m│ gzip:  2.24 kB[22m
+[34mℹ[39m [2mdist/[22mruntime/Runtime.js.map                        [2m  6.45 kB[22m [2m│ gzip:  1.94 kB[22m
+[34mℹ[39m [2mdist/[22mstore/entityTransactionHistory.js.map         [2m  6.09 kB[22m [2m│ gzip:  2.17 kB[22m
+[34mℹ[39m [2mdist/[22mstorage/QueryExecutor.js.map                  [2m  6.05 kB[22m [2m│ gzip:  1.87 kB[22m
+[34mℹ[39m [2mdist/[22mstore/StoreCapability.js.map                  [2m  5.84 kB[22m [2m│ gzip:  1.95 kB[22m
+[34mℹ[39m [2mdist/[22mValue.js.map                                  [2m  5.64 kB[22m [2m│ gzip:  1.76 kB[22m
+[34mℹ[39m [2mdist/[22msubscriptions/invalidation.js.map             [2m  5.44 kB[22m [2m│ gzip:  1.91 kB[22m
+[34mℹ[39m [2mdist/[22mruntime/Capabilities.js.map                   [2m  5.15 kB[22m [2m│ gzip:  1.63 kB[22m
+[34mℹ[39m [2mdist/[22mkv/datalog/types.js.map                       [2m  5.15 kB[22m [2m│ gzip:  1.74 kB[22m
+[34mℹ[39m [2mdist/[22mstore/RuntimeServices.js.map                  [2m  4.79 kB[22m [2m│ gzip:  1.63 kB[22m
+[34mℹ[39m [2mdist/[22mstorage/StorageAdapter.js.map                 [2m  4.71 kB[22m [2m│ gzip:  1.57 kB[22m
+[34mℹ[39m [2mdist/[22mentity/Errors.js.map                          [2m  4.67 kB[22m [2m│ gzip:  1.79 kB[22m
+[34mℹ[39m [2mdist/[22mkv/hexastore/scan.js.map                      [2m  4.63 kB[22m [2m│ gzip:  1.43 kB[22m
+[34mℹ[39m [2mdist/[22mstore/systemNamespace.js.map                  [2m  4.42 kB[22m [2m│ gzip:  1.50 kB[22m
+[34mℹ[39m [2mdist/[22mkv/kv/KvBackend.js.map                        [2m  4.42 kB[22m [2m│ gzip:  1.61 kB[22m
+[34mℹ[39m [2mdist/[22mcontent/ContentId.js.map                      [2m  4.41 kB[22m [2m│ gzip:  1.86 kB[22m
+[34mℹ[39m [2mdist/[22mstore/DatabaseRegistry.js.map                 [2m  4.11 kB[22m [2m│ gzip:  1.10 kB[22m
+[34mℹ[39m [2mdist/[22msnapshots/SnapshotService.js.map              [2m  4.08 kB[22m [2m│ gzip:  1.24 kB[22m
+[34mℹ[39m [2mdist/[22mkv/kv/encoding.js.map                         [2m  3.91 kB[22m [2m│ gzip:  1.46 kB[22m
+[34mℹ[39m [2mdist/[22mconfig/Catalog.js.map                         [2m  3.88 kB[22m [2m│ gzip:  1.74 kB[22m
+[34mℹ[39m [2mdist/[22mstore/Triples.d.ts.map                        [2m  3.85 kB[22m [2m│ gzip:  1.11 kB[22m
+[34mℹ[39m [2mdist/[22mkv/datalog/predicate.js.map                   [2m  3.84 kB[22m [2m│ gzip:  1.39 kB[22m
+[34mℹ[39m [2mdist/[22mBranded.js.map                                [2m  3.66 kB[22m [2m│ gzip:  1.01 kB[22m
+[34mℹ[39m [2mdist/[22mstore/TripleStoreRuntime.js.map               [2m  3.48 kB[22m [2m│ gzip:  1.12 kB[22m
+[34mℹ[39m [2mdist/[22mruntime/DatabaseScope.js.map                  [2m  3.22 kB[22m [2m│ gzip:  1.34 kB[22m
+[34mℹ[39m [2mdist/[22mentity/Repository.d.ts.map                    [2m  2.96 kB[22m [2m│ gzip:  0.91 kB[22m
+[34mℹ[39m [2mdist/[22mconfig/InMemoryConfigStore.d.ts.map           [2m  2.87 kB[22m [2m│ gzip:  0.79 kB[22m
+[34mℹ[39m [2mdist/[22merrors/index.d.ts.map                         [2m  2.74 kB[22m [2m│ gzip:  0.67 kB[22m
+[34mℹ[39m [2mdist/[22mdatalog/compiler.d.ts.map                     [2m  2.71 kB[22m [2m│ gzip:  0.81 kB[22m
+[34mℹ[39m [2mdist/[22mTemporal.js.map                               [2m  2.67 kB[22m [2m│ gzip:  1.20 kB[22m
+[34mℹ[39m [2mdist/[22mentity/Model.d.ts.map                         [2m  2.67 kB[22m [2m│ gzip:  0.75 kB[22m
+[34mℹ[39m [2mdist/[22mstore/ChangeEmitter.js.map                    [2m  2.60 kB[22m [2m│ gzip:  1.01 kB[22m
+[34mℹ[39m [2mdist/[22mentity/ProjectionSpec.d.ts.map                [2m  2.52 kB[22m [2m│ gzip:  0.76 kB[22m
+[34mℹ[39m [2mdist/[22mstore/DatabaseManager.js.map                  [2m  2.49 kB[22m [2m│ gzip:  0.84 kB[22m
+[34mℹ[39m [2mdist/[22mconfig/EntityValidation.d.ts.map              [2m  2.43 kB[22m [2m│ gzip:  0.73 kB[22m
+[34mℹ[39m [2mdist/[22mderivation/Derivation.d.ts.map                [2m  2.38 kB[22m [2m│ gzip:  0.72 kB[22m
+[34mℹ[39m [2mdist/[22mconfig/ConfigNode.d.ts.map                    [2m  2.23 kB[22m [2m│ gzip:  0.61 kB[22m
+[34mℹ[39m [2mdist/[22mutils/id.js.map                               [2m  2.21 kB[22m [2m│ gzip:  1.05 kB[22m
+[34mℹ[39m [2mdist/[22mconfig/TypeExpr.d.ts.map                      [2m  2.21 kB[22m [2m│ gzip:  0.59 kB[22m
+[34mℹ[39m [2mdist/[22mTriple.d.ts.map                               [2m  2.15 kB[22m [2m│ gzip:  0.49 kB[22m
+[34mℹ[39m [2mdist/[22mconfig/Evaluate.d.ts.map                      [2m  2.04 kB[22m [2m│ gzip:  0.61 kB[22m
+[34mℹ[39m [2mdist/[22mconfig/Attribute.d.ts.map                     [2m  1.99 kB[22m [2m│ gzip:  0.69 kB[22m
+[34mℹ[39m [2mdist/[22mconfig/Entity.d.ts.map                        [2m  1.90 kB[22m [2m│ gzip:  0.64 kB[22m
+[34mℹ[39m [2mdist/[22mstore/ChangeEmissionCapability.js.map         [2m  1.83 kB[22m [2m│ gzip:  0.88 kB[22m
+[34mℹ[39m [2mdist/[22mstorage/StorageAdapter.d.ts.map               [2m  1.81 kB[22m [2m│ gzip:  0.62 kB[22m
+[34mℹ[39m [2mdist/[22msubscriptions/query-hash.js.map               [2m  1.77 kB[22m [2m│ gzip:  0.80 kB[22m
+[34mℹ[39m [2mdist/[22mkv/hexastore/indexes.d.ts.map                 [2m  1.70 kB[22m [2m│ gzip:  0.48 kB[22m
+[34mℹ[39m [2mdist/[22mkv/hexastore/KvTripleStore.d.ts.map           [2m  1.65 kB[22m [2m│ gzip:  0.57 kB[22m
+[34mℹ[39m [2mdist/[22mentity/Plan.d.ts.map                          [2m  1.63 kB[22m [2m│ gzip:  0.61 kB[22m
+[34mℹ[39m [2mdist/[22mBranded.d.ts.map                              [2m  1.62 kB[22m [2m│ gzip:  0.42 kB[22m
+[34mℹ[39m [2mdist/[22mConstraint.d.ts.map                           [2m  1.58 kB[22m [2m│ gzip:  0.47 kB[22m
+[34mℹ[39m [2mdist/[22mdatalog/types.js.map                          [2m  1.55 kB[22m [2m│ gzip:  0.61 kB[22m
+[34mℹ[39m [2mdist/[22mconfig/ConfigStore.d.ts.map                   [2m  1.52 kB[22m [2m│ gzip:  0.55 kB[22m
+[34mℹ[39m [2mdist/[22mstorage/QueryExecutor.d.ts.map                [2m  1.48 kB[22m [2m│ gzip:  0.49 kB[22m
+[34mℹ[39m [2mdist/[22mdialects/sqlite.js.map                        [2m  1.47 kB[22m [2m│ gzip:  0.83 kB[22m
+[34mℹ[39m [2mdist/[22mkv/kv/KvBackend.d.ts.map                      [2m  1.47 kB[22m [2m│ gzip:  0.50 kB[22m
+[34mℹ[39m [2mdist/[22mconfig/BoolExpr.d.ts.map                      [2m  1.45 kB[22m [2m│ gzip:  0.42 kB[22m
+[34mℹ[39m [2mdist/[22msubscriptions/types.d.ts.map                  [2m  1.34 kB[22m [2m│ gzip:  0.52 kB[22m
+[34mℹ[39m [2mdist/[22mconfig/GraphConstraint.d.ts.map               [2m  1.32 kB[22m [2m│ gzip:  0.49 kB[22m
+[34mℹ[39m [2mdist/[22mdialects/postgresql.js.map                    [2m  1.32 kB[22m [2m│ gzip:  0.76 kB[22m
+[34mℹ[39m [2mdist/[22mtypes/Pattern.js.map                          [2m  1.31 kB[22m [2m│ gzip:  0.63 kB[22m
+[34mℹ[39m [2mdist/[22msnapshots/SnapshotService.d.ts.map            [2m  1.30 kB[22m [2m│ gzip:  0.44 kB[22m
+[34mℹ[39m [2mdist/[22mValue.d.ts.map                                [2m  1.29 kB[22m [2m│ gzip:  0.40 kB[22m
+[34mℹ[39m [2mdist/[22mderivation/Materialization.d.ts.map           [2m  1.25 kB[22m [2m│ gzip:  0.45 kB[22m
+[34mℹ[39m [2mdist/[22mnative/NativeQuery.d.ts.map                   [2m  1.25 kB[22m [2m│ gzip:  0.44 kB[22m
+[34mℹ[39m [2mdist/[22msnapshots/canonical.d.ts.map                  [2m  1.25 kB[22m [2m│ gzip:  0.42 kB[22m
+[34mℹ[39m [2mdist/[22mkv/hexastore/tuple.d.ts.map                   [2m  1.23 kB[22m [2m│ gzip:  0.43 kB[22m
+[34mℹ[39m [2mdist/[22mconfig/Reactor.d.ts.map                       [2m  1.23 kB[22m [2m│ gzip:  0.43 kB[22m
+[34mℹ[39m [2mdist/[22mstore/DatabaseRegistry.d.ts.map               [2m  1.21 kB[22m [2m│ gzip:  0.44 kB[22m
+[34mℹ[39m [2mdist/[22mconfig/World.d.ts.map                         [2m  1.20 kB[22m [2m│ gzip:  0.45 kB[22m
+[34mℹ[39m [2mdist/[22mruntime/Runtime.d.ts.map                      [2m  1.18 kB[22m [2m│ gzip:  0.43 kB[22m
+[34mℹ[39m [2mdist/[22mparams.js.map                                 [2m  1.17 kB[22m [2m│ gzip:  0.58 kB[22m
+[34mℹ[39m [2mdist/[22msubscriptions/SubscriptionManager.d.ts.map    [2m  1.14 kB[22m [2m│ gzip:  0.46 kB[22m
+[34mℹ[39m [2mdist/[22mconfig/EntityType.d.ts.map                    [2m  1.09 kB[22m [2m│ gzip:  0.45 kB[22m
+[34mℹ[39m [2mdist/[22mentity/Descriptors.d.ts.map                   [2m  1.04 kB[22m [2m│ gzip:  0.41 kB[22m
+[34mℹ[39m [2mdist/[22mstore/DatabaseManager.d.ts.map                [2m  1.01 kB[22m [2m│ gzip:  0.36 kB[22m
+[34mℹ[39m [2mdist/[22mruntime/Capabilities.d.ts.map                 [2m  1.00 kB[22m [2m│ gzip:  0.43 kB[22m
+[34mℹ[39m [2mdist/[22mconfig/ConfigRuntime.d.ts.map                 [2m  0.99 kB[22m [2m│ gzip:  0.40 kB[22m
+[34mℹ[39m [2mdist/[22msubscriptions/SyncHub.d.ts.map                [2m  0.96 kB[22m [2m│ gzip:  0.41 kB[22m
+[34mℹ[39m [2mdist/[22mstore/RuntimeServices.d.ts.map                [2m  0.90 kB[22m [2m│ gzip:  0.36 kB[22m
+[34mℹ[39m [2mdist/[22moperational/ConsumerCheckpoint.d.ts.map       [2m  0.90 kB[22m [2m│ gzip:  0.37 kB[22m
+[34mℹ[39m [2mdist/[22mentity/Errors.d.ts.map                        [2m  0.87 kB[22m [2m│ gzip:  0.32 kB[22m
+[34mℹ[39m [2mdist/[22mstore/systemNamespace.d.ts.map                [2m  0.84 kB[22m [2m│ gzip:  0.36 kB[22m
+[34mℹ[39m [2mdist/[22mPagination.d.ts.map                           [2m  0.81 kB[22m [2m│ gzip:  0.36 kB[22m
+[34mℹ[39m [2mdist/[22mError.js.map                                  [2m  0.80 kB[22m [2m│ gzip:  0.38 kB[22m
+[34mℹ[39m [2mdist/[22mdialects/types.js.map                         [2m  0.74 kB[22m [2m│ gzip:  0.41 kB[22m
+[34mℹ[39m [2mdist/[22mstore/transactionMetadata.d.ts.map            [2m  0.68 kB[22m [2m│ gzip:  0.33 kB[22m
+[34mℹ[39m [2mdist/[22mstore/TripleStoreRuntime.d.ts.map             [2m  0.67 kB[22m [2m│ gzip:  0.31 kB[22m
+[34mℹ[39m [2mdist/[22mconfig/TypeSubsumption.d.ts.map               [2m  0.66 kB[22m [2m│ gzip:  0.29 kB[22m
+[34mℹ[39m [2mdist/[22mkv/datalog/executor.d.ts.map                  [2m  0.61 kB[22m [2m│ gzip:  0.28 kB[22m
+[34mℹ[39m [2mdist/[22mentity/EntityCodec.d.ts.map                   [2m  0.60 kB[22m [2m│ gzip:  0.28 kB[22m
+[34mℹ[39m [2mdist/[22mEntityPage.d.ts.map                           [2m  0.59 kB[22m [2m│ gzip:  0.26 kB[22m
+[34mℹ[39m [2mdist/[22mderivation/Overlay.d.ts.map                   [2m  0.58 kB[22m [2m│ gzip:  0.29 kB[22m
+[34mℹ[39m [2mdist/[22mkv/datalog/types.d.ts.map                     [2m  0.55 kB[22m [2m│ gzip:  0.27 kB[22m
+[34mℹ[39m [2mdist/[22mkv/datalog/pattern.d.ts.map                   [2m  0.54 kB[22m [2m│ gzip:  0.28 kB[22m
+[34mℹ[39m [2mdist/[22mentity/PhysicalNames.d.ts.map                 [2m  0.52 kB[22m [2m│ gzip:  0.29 kB[22m
+[34mℹ[39m [2mdist/[22mstore/StoreCapability.d.ts.map                [2m  0.52 kB[22m [2m│ gzip:  0.28 kB[22m
+[34mℹ[39m [2mdist/[22mdatalog/wrapper.d.ts.map                      [2m  0.49 kB[22m [2m│ gzip:  0.29 kB[22m
+[34mℹ[39m [2mdist/[22mstore/ChangeEmitter.d.ts.map                  [2m  0.48 kB[22m [2m│ gzip:  0.28 kB[22m
+[34mℹ[39m [2mdist/[22mconfig/Catalog.d.ts.map                       [2m  0.47 kB[22m [2m│ gzip:  0.27 kB[22m
+[34mℹ[39m [2mdist/[22mstore/entityTransactionHistory.d.ts.map       [2m  0.47 kB[22m [2m│ gzip:  0.26 kB[22m
+[34mℹ[39m [2mdist/[22mtypes/Pattern.d.ts.map                        [2m  0.46 kB[22m [2m│ gzip:  0.26 kB[22m
+[34mℹ[39m [2mdist/[22msubscriptions/TopicTree.d.ts.map              [2m  0.46 kB[22m [2m│ gzip:  0.26 kB[22m
+[34mℹ[39m [2mdist/[22mcontent/ContentId.d.ts.map                    [2m  0.44 kB[22m [2m│ gzip:  0.25 kB[22m
+[34mℹ[39m [2mdist/[22mkv/kv/encoding.d.ts.map                       [2m  0.41 kB[22m [2m│ gzip:  0.23 kB[22m
+[34mℹ[39m [2mdist/[22mTemporal.d.ts.map                             [2m  0.39 kB[22m [2m│ gzip:  0.24 kB[22m
+[34mℹ[39m [2mdist/[22mruntime/DatabaseScope.d.ts.map                [2m  0.39 kB[22m [2m│ gzip:  0.24 kB[22m
+[34mℹ[39m [2mdist/[22mcontent/CanonicalJson.d.ts.map                [2m  0.38 kB[22m [2m│ gzip:  0.24 kB[22m
+[34mℹ[39m [2mdist/[22mkv/hexastore/scan.d.ts.map                    [2m  0.38 kB[22m [2m│ gzip:  0.23 kB[22m
+[34mℹ[39m [2mdist/[22m_virtual/_rolldown/runtime.js                 [2m  0.35 kB[22m [2m│ gzip:  0.25 kB[22m
+[34mℹ[39m [2mdist/[22mdatalog/validation.d.ts.map                   [2m  0.35 kB[22m [2m│ gzip:  0.20 kB[22m
+[34mℹ[39m [2mdist/[22mconfig/TypeSchema.d.ts.map                    [2m  0.32 kB[22m [2m│ gzip:  0.20 kB[22m
+[34mℹ[39m [2mdist/[22mkv/datalog/predicate.d.ts.map                 [2m  0.32 kB[22m [2m│ gzip:  0.20 kB[22m
+[34mℹ[39m [2mdist/[22mdialects/types.d.ts.map                       [2m  0.32 kB[22m [2m│ gzip:  0.20 kB[22m
+[34mℹ[39m [2mdist/[22mstore/writeEventUtils.d.ts.map                [2m  0.29 kB[22m [2m│ gzip:  0.20 kB[22m
+[34mℹ[39m [2mdist/[22mkv/layers/KvTriplesLive.d.ts.map              [2m  0.28 kB[22m [2m│ gzip:  0.20 kB[22m
+[34mℹ[39m [2mdist/[22msnapshots/SnapshotServiceLive.d.ts.map        [2m  0.28 kB[22m [2m│ gzip:  0.17 kB[22m
+[34mℹ[39m [2mdist/[22mstorage/types.d.ts.map                        [2m  0.28 kB[22m [2m│ gzip:  0.18 kB[22m
+[34mℹ[39m [2mdist/[22msubscriptions/invalidation.d.ts.map           [2m  0.28 kB[22m [2m│ gzip:  0.19 kB[22m
+[34mℹ[39m [2mdist/[22mparams.d.ts.map                               [2m  0.24 kB[22m [2m│ gzip:  0.18 kB[22m
+[34mℹ[39m [2mdist/[22msubscriptions/extract-dependencies.d.ts.map   [2m  0.24 kB[22m [2m│ gzip:  0.18 kB[22m
+[34mℹ[39m [2mdist/[22mutils/id.d.ts.map                             [2m  0.23 kB[22m [2m│ gzip:  0.18 kB[22m
+[34mℹ[39m [2mdist/[22mstore/ChangeEmissionCapability.d.ts.map       [2m  0.22 kB[22m [2m│ gzip:  0.17 kB[22m
+[34mℹ[39m [2mdist/[22mError.d.ts.map                                [2m  0.21 kB[22m [2m│ gzip:  0.16 kB[22m
+[34mℹ[39m [2mdist/[22mdatalog/types.d.ts.map                        [2m  0.20 kB[22m [2m│ gzip:  0.17 kB[22m
+[34mℹ[39m [2mdist/[22mstore/TriplesLive.d.ts.map                    [2m  0.20 kB[22m [2m│ gzip:  0.15 kB[22m
+[34mℹ[39m [2mdist/[22mkv/kv/InMemoryKvBackend.d.ts.map              [2m  0.20 kB[22m [2m│ gzip:  0.16 kB[22m
+[34mℹ[39m [2mdist/[22msnapshots/EntitySnapshotsCapability.d.ts.map  [2m  0.19 kB[22m [2m│ gzip:  0.16 kB[22m
+[34mℹ[39m [2mdist/[22msubscriptions/query-hash.d.ts.map             [2m  0.17 kB[22m [2m│ gzip:  0.14 kB[22m
+[34mℹ[39m [2mdist/[22mcontent/Sha256.d.ts.map                       [2m  0.15 kB[22m [2m│ gzip:  0.14 kB[22m
+[34mℹ[39m [2mdist/[22mdialects/postgresql.d.ts.map                  [2m  0.15 kB[22m [2m│ gzip:  0.13 kB[22m
+[34mℹ[39m [2mdist/[22mdialects/sqlite.d.ts.map                      [2m  0.13 kB[22m [2m│ gzip:  0.13 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mdatalog/schema.d.ts[22m[39m                           [2m186.01 kB[22m [2m│ gzip:  8.64 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mTriple.d.ts[22m[39m                                   [2m 34.72 kB[22m [2m│ gzip:  2.19 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1minternal.d.ts[22m[39m                                 [2m 13.45 kB[22m [2m│ gzip:  3.08 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1merrors/index.d.ts[22m[39m                             [2m 12.69 kB[22m [2m│ gzip:  2.02 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mentity/ProjectionSpec.d.ts[22m[39m                    [2m 10.48 kB[22m [2m│ gzip:  3.62 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mstore/Triples.d.ts[22m[39m                            [2m 10.45 kB[22m [2m│ gzip:  2.95 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mdatalog/compiler.d.ts[22m[39m                         [2m  9.46 kB[22m [2m│ gzip:  2.29 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mconfig/InMemoryConfigStore.d.ts[22m[39m               [2m  9.32 kB[22m [2m│ gzip:  2.81 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mconfig/EntityValidation.d.ts[22m[39m                  [2m  8.26 kB[22m [2m│ gzip:  1.93 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mconfig/ConfigNode.d.ts[22m[39m                        [2m  7.95 kB[22m [2m│ gzip:  2.65 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mconfig/Evaluate.d.ts[22m[39m                          [2m  7.50 kB[22m [2m│ gzip:  2.81 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mentity/Plan.d.ts[22m[39m                              [2m  6.85 kB[22m [2m│ gzip:  2.44 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mindex.d.ts[22m[39m                                    [2m  6.58 kB[22m [2m│ gzip:  1.60 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mentity/Repository.d.ts[22m[39m                        [2m  6.17 kB[22m [2m│ gzip:  2.00 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mderivation/Derivation.d.ts[22m[39m                    [2m  6.13 kB[22m [2m│ gzip:  1.74 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mkv/hexastore/KvTripleStore.d.ts[22m[39m               [2m  5.80 kB[22m [2m│ gzip:  2.04 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mentity/Errors.d.ts[22m[39m                            [2m  5.59 kB[22m [2m│ gzip:  1.59 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mconfig/Attribute.d.ts[22m[39m                         [2m  5.18 kB[22m [2m│ gzip:  1.75 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mconfig/TypeExpr.d.ts[22m[39m                          [2m  5.11 kB[22m [2m│ gzip:  1.71 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mconfig/ConfigStore.d.ts[22m[39m                       [2m  5.01 kB[22m [2m│ gzip:  1.47 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mstorage/QueryExecutor.d.ts[22m[39m                    [2m  4.96 kB[22m [2m│ gzip:  1.60 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mConstraint.d.ts[22m[39m                               [2m  4.86 kB[22m [2m│ gzip:  1.37 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mderivation/Materialization.d.ts[22m[39m               [2m  4.86 kB[22m [2m│ gzip:  1.43 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1msubscriptions/types.d.ts[22m[39m                      [2m  4.66 kB[22m [2m│ gzip:  1.45 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mentity/Model.d.ts[22m[39m                             [2m  4.49 kB[22m [2m│ gzip:  1.53 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mkv/hexastore/tuple.d.ts[22m[39m                       [2m  4.46 kB[22m [2m│ gzip:  1.36 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mkv/hexastore/indexes.d.ts[22m[39m                     [2m  4.28 kB[22m [2m│ gzip:  1.23 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mruntime/index.d.ts[22m[39m                            [2m  4.27 kB[22m [2m│ gzip:  1.03 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mconfig/World.d.ts[22m[39m                             [2m  4.24 kB[22m [2m│ gzip:  1.68 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mValue.d.ts[22m[39m                                    [2m  4.20 kB[22m [2m│ gzip:  0.98 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mconfig/ConfigRuntime.d.ts[22m[39m                     [2m  4.11 kB[22m [2m│ gzip:  1.22 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1moperational/ConsumerCheckpoint.d.ts[22m[39m           [2m  4.10 kB[22m [2m│ gzip:  1.12 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mstorage/StorageAdapter.d.ts[22m[39m                   [2m  4.04 kB[22m [2m│ gzip:  1.31 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mconfig/GraphConstraint.d.ts[22m[39m                   [2m  4.03 kB[22m [2m│ gzip:  1.15 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mconfig/Entity.d.ts[22m[39m                            [2m  4.02 kB[22m [2m│ gzip:  1.48 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1msubscriptions/SubscriptionManager.d.ts[22m[39m        [2m  4.01 kB[22m [2m│ gzip:  1.22 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mentity/PhysicalNames.d.ts[22m[39m                     [2m  3.97 kB[22m [2m│ gzip:  1.63 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mkv/kv/KvBackend.d.ts[22m[39m                          [2m  3.58 kB[22m [2m│ gzip:  1.30 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mconfig/TypeSubsumption.d.ts[22m[39m                   [2m  3.31 kB[22m [2m│ gzip:  0.84 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mnative/NativeQuery.d.ts[22m[39m                       [2m  3.23 kB[22m [2m│ gzip:  1.12 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1msnapshots/canonical.d.ts[22m[39m                      [2m  3.22 kB[22m [2m│ gzip:  1.04 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mconfig/BoolExpr.d.ts[22m[39m                          [2m  3.08 kB[22m [2m│ gzip:  1.06 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1msnapshots/SnapshotService.d.ts[22m[39m                [2m  3.06 kB[22m [2m│ gzip:  0.99 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mconfig/Reactor.d.ts[22m[39m                           [2m  3.02 kB[22m [2m│ gzip:  1.09 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mkv/datalog/pattern.d.ts[22m[39m                       [2m  3.02 kB[22m [2m│ gzip:  1.21 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mstore/DatabaseRegistry.d.ts[22m[39m                   [2m  3.01 kB[22m [2m│ gzip:  0.86 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mentity/Descriptors.d.ts[22m[39m                       [2m  2.92 kB[22m [2m│ gzip:  1.05 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mBranded.d.ts[22m[39m                                  [2m  2.90 kB[22m [2m│ gzip:  0.51 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mderivation/Overlay.d.ts[22m[39m                       [2m  2.87 kB[22m [2m│ gzip:  1.04 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mcontent/ContentId.d.ts[22m[39m                        [2m  2.62 kB[22m [2m│ gzip:  0.94 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mstore/StoreCapability.d.ts[22m[39m                    [2m  2.52 kB[22m [2m│ gzip:  1.04 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mkv/datalog/types.d.ts[22m[39m                         [2m  2.41 kB[22m [2m│ gzip:  0.89 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mconfig/EntityType.d.ts[22m[39m                        [2m  2.37 kB[22m [2m│ gzip:  0.95 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mkv/index.d.ts[22m[39m                                 [2m  2.34 kB[22m [2m│ gzip:  0.72 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mstore/systemNamespace.d.ts[22m[39m                    [2m  2.24 kB[22m [2m│ gzip:  0.74 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mruntime/Capabilities.d.ts[22m[39m                     [2m  2.24 kB[22m [2m│ gzip:  0.73 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mPagination.d.ts[22m[39m                               [2m  2.17 kB[22m [2m│ gzip:  0.83 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mkv/datalog/executor.d.ts[22m[39m                      [2m  2.10 kB[22m [2m│ gzip:  0.80 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mruntime/Runtime.d.ts[22m[39m                          [2m  2.08 kB[22m [2m│ gzip:  0.69 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mstore/DatabaseManager.d.ts[22m[39m                    [2m  2.08 kB[22m [2m│ gzip:  0.64 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mstore/RuntimeServices.d.ts[22m[39m                    [2m  1.88 kB[22m [2m│ gzip:  0.53 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mstore/TripleStoreRuntime.d.ts[22m[39m                 [2m  1.82 kB[22m [2m│ gzip:  0.57 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mconfig/index.d.ts[22m[39m                             [2m  1.81 kB[22m [2m│ gzip:  0.41 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1msubscriptions/SyncHub.d.ts[22m[39m                    [2m  1.75 kB[22m [2m│ gzip:  0.64 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mstore/transactionMetadata.d.ts[22m[39m                [2m  1.71 kB[22m [2m│ gzip:  0.55 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mdatalog/wrapper.d.ts[22m[39m                          [2m  1.70 kB[22m [2m│ gzip:  0.76 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mTemporal.d.ts[22m[39m                                 [2m  1.66 kB[22m [2m│ gzip:  0.76 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mkv/layers/KvTriplesLive.d.ts[22m[39m                  [2m  1.61 kB[22m [2m│ gzip:  0.74 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mstore/ChangeEmitter.d.ts[22m[39m                      [2m  1.60 kB[22m [2m│ gzip:  0.71 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1msubscriptions/invalidation.d.ts[22m[39m               [2m  1.58 kB[22m [2m│ gzip:  0.66 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mutils/id.d.ts[22m[39m                                 [2m  1.57 kB[22m [2m│ gzip:  0.73 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1msubscriptions/index.d.ts[22m[39m                      [2m  1.53 kB[22m [2m│ gzip:  0.44 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mcontent/Sha256.d.ts[22m[39m                           [2m  1.47 kB[22m [2m│ gzip:  0.81 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mentity/EntityCodec.d.ts[22m[39m                       [2m  1.43 kB[22m [2m│ gzip:  0.50 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mcontent/CanonicalJson.d.ts[22m[39m                    [2m  1.42 kB[22m [2m│ gzip:  0.63 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mdatalog/index.d.ts[22m[39m                            [2m  1.36 kB[22m [2m│ gzip:  0.37 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mdatalog/types.d.ts[22m[39m                            [2m  1.33 kB[22m [2m│ gzip:  0.59 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mconfig/Catalog.d.ts[22m[39m                           [2m  1.31 kB[22m [2m│ gzip:  0.62 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mkv/kv/encoding.d.ts[22m[39m                           [2m  1.26 kB[22m [2m│ gzip:  0.59 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mconfig/TypeSchema.d.ts[22m[39m                        [2m  1.25 kB[22m [2m│ gzip:  0.66 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mstore/writeEventUtils.d.ts[22m[39m                    [2m  1.24 kB[22m [2m│ gzip:  0.63 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1msubscriptions/extract-dependencies.d.ts[22m[39m       [2m  1.21 kB[22m [2m│ gzip:  0.55 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mEntityPage.d.ts[22m[39m                               [2m  1.15 kB[22m [2m│ gzip:  0.39 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mentity/index.d.ts[22m[39m                             [2m  1.15 kB[22m [2m│ gzip:  0.37 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mkv/datalog/predicate.d.ts[22m[39m                     [2m  1.15 kB[22m [2m│ gzip:  0.53 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mkv/hexastore/index.d.ts[22m[39m                       [2m  1.14 kB[22m [2m│ gzip:  0.41 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mdatalog/validation.d.ts[22m[39m                       [2m  1.09 kB[22m [2m│ gzip:  0.43 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mkv/hexastore/scan.d.ts[22m[39m                        [2m  1.05 kB[22m [2m│ gzip:  0.49 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mstore/entityTransactionHistory.d.ts[22m[39m           [2m  1.02 kB[22m [2m│ gzip:  0.44 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1msubscriptions/TopicTree.d.ts[22m[39m                  [2m  1.00 kB[22m [2m│ gzip:  0.46 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mruntime/DatabaseScope.d.ts[22m[39m                    [2m  0.99 kB[22m [2m│ gzip:  0.47 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mError.d.ts[22m[39m                                    [2m  0.97 kB[22m [2m│ gzip:  0.33 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1msnapshots/index.d.ts[22m[39m                          [2m  0.96 kB[22m [2m│ gzip:  0.30 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1msubscriptions/query-hash.d.ts[22m[39m                 [2m  0.96 kB[22m [2m│ gzip:  0.49 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mtypes/Pattern.d.ts[22m[39m                            [2m  0.82 kB[22m [2m│ gzip:  0.37 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mstore/ChangeEmissionCapability.d.ts[22m[39m           [2m  0.75 kB[22m [2m│ gzip:  0.38 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mstorage/types.d.ts[22m[39m                            [2m  0.73 kB[22m [2m│ gzip:  0.35 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mdialects/types.d.ts[22m[39m                           [2m  0.71 kB[22m [2m│ gzip:  0.36 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mderivation/index.d.ts[22m[39m                         [2m  0.69 kB[22m [2m│ gzip:  0.24 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mkv/datalog/index.d.ts[22m[39m                         [2m  0.65 kB[22m [2m│ gzip:  0.25 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1msnapshots/SnapshotServiceLive.d.ts[22m[39m            [2m  0.59 kB[22m [2m│ gzip:  0.25 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mstore/TriplesLive.d.ts[22m[39m                        [2m  0.55 kB[22m [2m│ gzip:  0.25 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1msnapshots/EntitySnapshotsCapability.d.ts[22m[39m      [2m  0.51 kB[22m [2m│ gzip:  0.26 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mkv/kv/InMemoryKvBackend.d.ts[22m[39m                  [2m  0.49 kB[22m [2m│ gzip:  0.26 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mkv/kv/index.d.ts[22m[39m                              [2m  0.47 kB[22m [2m│ gzip:  0.21 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mdialects/postgresql.d.ts[22m[39m                      [2m  0.44 kB[22m [2m│ gzip:  0.30 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mparams.d.ts[22m[39m                                   [2m  0.43 kB[22m [2m│ gzip:  0.25 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mdialects/sqlite.d.ts[22m[39m                          [2m  0.33 kB[22m [2m│ gzip:  0.23 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mcontent/index.d.ts[22m[39m                            [2m  0.28 kB[22m [2m│ gzip:  0.12 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mdialects/index.d.ts[22m[39m                           [2m  0.23 kB[22m [2m│ gzip:  0.12 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1moperational/index.d.ts[22m[39m                        [2m  0.13 kB[22m [2m│ gzip:  0.09 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mkv/layers/index.d.ts[22m[39m                          [2m  0.10 kB[22m [2m│ gzip:  0.07 kB[22m
+[34mℹ[39m 412 files, total: 2.62 MB
+[32m✔[39m Build complete in [32m7151ms[39m
+
+> @triplex-build/triplex-testkit@0.2.0 build /work/packages/testkit
+> tsdown
+
+[34mℹ[39m [34mtsdown v0.21.7[39m powered by [91mrolldown v1.0.0-rc.12[39m
+[34mℹ[39m config file: [4m/work/packages/testkit/tsdown.config.ts[24m 
+[34mℹ[39m entry: [34msrc/index.ts[39m
+[34mℹ[39m target: [34mesnext[39m
+[34mℹ[39m tsconfig: [34mtsconfig.json[39m
+[34mℹ[39m Build start
+[34mℹ[39m [2mdist/[22m[1mindex.js[22m        [2m 87.34 kB[22m [2m│ gzip: 16.05 kB[22m
+[34mℹ[39m [2mdist/[22mindex.js.map    [2m157.31 kB[22m [2m│ gzip: 27.44 kB[22m
+[34mℹ[39m [2mdist/[22mindex.d.ts.map  [2m  0.85 kB[22m [2m│ gzip:  0.35 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mindex.d.ts[22m[39m      [2m  2.24 kB[22m [2m│ gzip:  0.86 kB[22m
+[34mℹ[39m 4 files, total: 247.75 kB
+[32m✔[39m Build complete in [32m2681ms[39m
+
+> @triplex-build/triplex-xtdb@0.1.0 build /work/packages/xtdb
+> tsdown && tsc --declaration --emitDeclarationOnly --rootDir src --outDir dist
+
+[34mℹ[39m [34mtsdown v0.21.7[39m powered by [91mrolldown v1.0.0-rc.12[39m
+[34mℹ[39m config file: [4m/work/packages/xtdb/tsdown.config.ts[24m 
+[34mℹ[39m entry: [34msrc/ConstraintValidation.ts, src/MaintainedQueries.ts, src/Operations.ts, src/TemporalQueries.ts, src/TransactionContext.ts, src/XtdbClient.ts, src/XtdbQueryExecutor.ts, src/XtdbStorageAdapter.ts, src/codecs.ts, src/index.ts, src/native/NativeQueries.ts, src/native/Reachability.ts, src/native/ReadOnlySql.ts, src/native/Sources.ts, src/query/compiler.ts, src/query/domains.ts, src/query/grouping.ts, src/query/overlay.ts, src/query/recursion.ts[39m
+[34mℹ[39m target: [34mesnext[39m
+[34mℹ[39m tsconfig: [34mtsconfig.json[39m
+[34mℹ[39m Build start
+[34mℹ[39m [2mdist/[22m[1mXtdbStorageAdapter.js[22m        [2m19.15 kB[22m [2m│ gzip: 5.38 kB[22m
+[34mℹ[39m [2mdist/[22m[1mConstraintValidation.js[22m      [2m12.62 kB[22m [2m│ gzip: 3.77 kB[22m
+[34mℹ[39m [2mdist/[22m[1mnative/Reachability.js[22m       [2m 8.99 kB[22m [2m│ gzip: 2.90 kB[22m
+[34mℹ[39m [2mdist/[22m[1mXtdbQueryExecutor.js[22m         [2m 8.14 kB[22m [2m│ gzip: 2.67 kB[22m
+[34mℹ[39m [2mdist/[22m[1mMaintainedQueries.js[22m         [2m 7.97 kB[22m [2m│ gzip: 2.80 kB[22m
+[34mℹ[39m [2mdist/[22m[1mTemporalQueries.js[22m           [2m 7.84 kB[22m [2m│ gzip: 2.85 kB[22m
+[34mℹ[39m [2mdist/[22m[1mcodecs.js[22m                    [2m 7.56 kB[22m [2m│ gzip: 2.15 kB[22m
+[34mℹ[39m [2mdist/[22m[1mXtdbClient.js[22m                [2m 6.72 kB[22m [2m│ gzip: 2.34 kB[22m
+[34mℹ[39m [2mdist/[22m[1mquery/domains.js[22m             [2m 6.41 kB[22m [2m│ gzip: 2.13 kB[22m
+[34mℹ[39m [2mdist/[22m[1mquery/recursion.js[22m           [2m 6.03 kB[22m [2m│ gzip: 2.09 kB[22m
+[34mℹ[39m [2mdist/[22m[1mquery/compiler.js[22m            [2m 5.35 kB[22m [2m│ gzip: 2.20 kB[22m
+[34mℹ[39m [2mdist/[22m[1mnative/NativeQueries.js[22m      [2m 5.14 kB[22m [2m│ gzip: 1.88 kB[22m
+[34mℹ[39m [2mdist/[22m[1mquery/grouping.js[22m            [2m 4.61 kB[22m [2m│ gzip: 1.72 kB[22m
+[34mℹ[39m [2mdist/[22m[1mnative/Sources.js[22m            [2m 4.55 kB[22m [2m│ gzip: 1.60 kB[22m
+[34mℹ[39m [2mdist/[22m[1mnative/ReadOnlySql.js[22m        [2m 3.03 kB[22m [2m│ gzip: 1.29 kB[22m
+[34mℹ[39m [2mdist/[22m[1mindex.js[22m                     [2m 2.42 kB[22m [2m│ gzip: 0.88 kB[22m
+[34mℹ[39m [2mdist/[22m[1mquery/overlay.js[22m             [2m 2.28 kB[22m [2m│ gzip: 1.03 kB[22m
+[34mℹ[39m [2mdist/[22m[1mOperations.js[22m                [2m 1.37 kB[22m [2m│ gzip: 0.74 kB[22m
+[34mℹ[39m [2mdist/[22m[1mTransactionContext.js[22m        [2m 0.29 kB[22m [2m│ gzip: 0.21 kB[22m
+[34mℹ[39m [2mdist/[22mXtdbStorageAdapter.js.map    [2m37.48 kB[22m [2m│ gzip: 9.93 kB[22m
+[34mℹ[39m [2mdist/[22mConstraintValidation.js.map  [2m22.47 kB[22m [2m│ gzip: 6.55 kB[22m
+[34mℹ[39m [2mdist/[22mMaintainedQueries.js.map     [2m15.63 kB[22m [2m│ gzip: 4.84 kB[22m
+[34mℹ[39m [2mdist/[22mXtdbQueryExecutor.js.map     [2m15.62 kB[22m [2m│ gzip: 4.83 kB[22m
+[34mℹ[39m [2mdist/[22mXtdbClient.js.map            [2m15.12 kB[22m [2m│ gzip: 4.90 kB[22m
+[34mℹ[39m [2mdist/[22mnative/Reachability.js.map   [2m14.75 kB[22m [2m│ gzip: 4.73 kB[22m
+[34mℹ[39m [2mdist/[22mTemporalQueries.js.map       [2m14.41 kB[22m [2m│ gzip: 4.73 kB[22m
+[34mℹ[39m [2mdist/[22mcodecs.js.map                [2m14.09 kB[22m [2m│ gzip: 3.93 kB[22m
+[34mℹ[39m [2mdist/[22mquery/domains.js.map         [2m13.24 kB[22m [2m│ gzip: 4.31 kB[22m
+[34mℹ[39m [2mdist/[22mquery/recursion.js.map       [2m11.39 kB[22m [2m│ gzip: 3.80 kB[22m
+[34mℹ[39m [2mdist/[22mquery/compiler.js.map        [2m10.99 kB[22m [2m│ gzip: 4.11 kB[22m
+[34mℹ[39m [2mdist/[22mnative/NativeQueries.js.map  [2m10.47 kB[22m [2m│ gzip: 3.37 kB[22m
+[34mℹ[39m [2mdist/[22mnative/Sources.js.map        [2m 9.21 kB[22m [2m│ gzip: 3.25 kB[22m
+[34mℹ[39m [2mdist/[22mquery/grouping.js.map        [2m 8.05 kB[22m [2m│ gzip: 2.77 kB[22m
+[34mℹ[39m [2mdist/[22mnative/ReadOnlySql.js.map    [2m 5.69 kB[22m [2m│ gzip: 2.12 kB[22m
+[34mℹ[39m [2mdist/[22mindex.js.map                 [2m 4.90 kB[22m [2m│ gzip: 1.67 kB[22m
+[34mℹ[39m [2mdist/[22mquery/overlay.js.map         [2m 4.18 kB[22m [2m│ gzip: 1.73 kB[22m
+[34mℹ[39m [2mdist/[22mOperations.js.map            [2m 2.55 kB[22m [2m│ gzip: 1.16 kB[22m
+[34mℹ[39m [2mdist/[22mTransactionContext.js.map    [2m 0.90 kB[22m [2m│ gzip: 0.47 kB[22m
+[34mℹ[39m 38 files, total: 351.60 kB
+[32m✔[39m Build complete in [32m44ms[39m
+
+> @triplex-build/triplex-qlever@0.1.0 build /work/packages/qlever
+> tsdown && tsc --declaration --emitDeclarationOnly --rootDir src --outDir dist
+
+[34mℹ[39m [34mtsdown v0.21.7[39m powered by [91mrolldown v1.0.0-rc.12[39m
+[34mℹ[39m config file: [4m/work/packages/qlever/tsdown.config.ts[24m 
+[34mℹ[39m entry: [34msrc/AggregateAnswers.ts, src/FamilyDomainDistinct.ts, src/FamilyDomainMask.ts, src/FamilyDomains.ts, src/Operations.ts, src/PersistedScalarSource.ts, src/QleverClient.ts, src/QleverQueryExecutor.ts, src/QleverStorageAdapter.ts, src/ScalarSource.ts, src/TemporalQueries.ts, src/compiler.ts, src/index.ts, src/rdf.ts, src/recursion.ts, src/native/BasisRelations.ts, src/native/NativeContext.ts, src/native/NativeQueries.ts[39m
+[34mℹ[39m target: [34mesnext[39m
+[34mℹ[39m tsconfig: [34mtsconfig.json[39m
+[34mℹ[39m Build start
+[34mℹ[39m [2mdist/[22m[1mcompiler.js[22m                   [2m34.54 kB[22m [2m│ gzip:  9.32 kB[22m
+[34mℹ[39m [2mdist/[22m[1mQleverStorageAdapter.js[22m       [2m17.69 kB[22m [2m│ gzip:  5.06 kB[22m
+[34mℹ[39m [2mdist/[22m[1mQleverQueryExecutor.js[22m        [2m14.21 kB[22m [2m│ gzip:  3.81 kB[22m
+[34mℹ[39m [2mdist/[22m[1mnative/BasisRelations.js[22m      [2m 9.78 kB[22m [2m│ gzip:  3.15 kB[22m
+[34mℹ[39m [2mdist/[22m[1mrdf.js[22m                        [2m 8.37 kB[22m [2m│ gzip:  2.58 kB[22m
+[34mℹ[39m [2mdist/[22m[1mTemporalQueries.js[22m            [2m 6.97 kB[22m [2m│ gzip:  2.47 kB[22m
+[34mℹ[39m [2mdist/[22m[1mnative/NativeQueries.js[22m       [2m 6.02 kB[22m [2m│ gzip:  2.10 kB[22m
+[34mℹ[39m [2mdist/[22m[1mnative/NativeContext.js[22m       [2m 5.65 kB[22m [2m│ gzip:  1.91 kB[22m
+[34mℹ[39m [2mdist/[22m[1mrecursion.js[22m                  [2m 4.75 kB[22m [2m│ gzip:  1.80 kB[22m
+[34mℹ[39m [2mdist/[22m[1mAggregateAnswers.js[22m           [2m 4.25 kB[22m [2m│ gzip:  1.62 kB[22m
+[34mℹ[39m [2mdist/[22m[1mQleverClient.js[22m               [2m 3.55 kB[22m [2m│ gzip:  1.46 kB[22m
+[34mℹ[39m [2mdist/[22m[1mindex.js[22m                      [2m 2.30 kB[22m [2m│ gzip:  0.78 kB[22m
+[34mℹ[39m [2mdist/[22m[1mPersistedScalarSource.js[22m      [2m 2.21 kB[22m [2m│ gzip:  0.79 kB[22m
+[34mℹ[39m [2mdist/[22m[1mFamilyDomainMask.js[22m           [2m 1.92 kB[22m [2m│ gzip:  0.84 kB[22m
+[34mℹ[39m [2mdist/[22m[1mOperations.js[22m                 [2m 1.30 kB[22m [2m│ gzip:  0.66 kB[22m
+[34mℹ[39m [2mdist/[22m[1mFamilyDomainDistinct.js[22m       [2m 1.29 kB[22m [2m│ gzip:  0.64 kB[22m
+[34mℹ[39m [2mdist/[22m[1mFamilyDomains.js[22m              [2m 0.01 kB[22m [2m│ gzip:  0.03 kB[22m
+[34mℹ[39m [2mdist/[22m[1mScalarSource.js[22m               [2m 0.01 kB[22m [2m│ gzip:  0.03 kB[22m
+[34mℹ[39m [2mdist/[22mcompiler.js.map               [2m70.40 kB[22m [2m│ gzip: 18.32 kB[22m
+[34mℹ[39m [2mdist/[22mQleverStorageAdapter.js.map   [2m34.46 kB[22m [2m│ gzip:  9.39 kB[22m
+[34mℹ[39m [2mdist/[22mQleverQueryExecutor.js.map    [2m28.22 kB[22m [2m│ gzip:  7.11 kB[22m
+[34mℹ[39m [2mdist/[22mnative/BasisRelations.js.map  [2m17.91 kB[22m [2m│ gzip:  5.41 kB[22m
+[34mℹ[39m [2mdist/[22mrdf.js.map                    [2m15.64 kB[22m [2m│ gzip:  4.55 kB[22m
+[34mℹ[39m [2mdist/[22mTemporalQueries.js.map        [2m13.01 kB[22m [2m│ gzip:  4.19 kB[22m
+[34mℹ[39m [2mdist/[22mnative/NativeQueries.js.map   [2m12.58 kB[22m [2m│ gzip:  4.04 kB[22m
+[34mℹ[39m [2mdist/[22mnative/NativeContext.js.map   [2m10.88 kB[22m [2m│ gzip:  3.37 kB[22m
+[34mℹ[39m [2mdist/[22mrecursion.js.map              [2m 9.48 kB[22m [2m│ gzip:  3.21 kB[22m
+[34mℹ[39m [2mdist/[22mAggregateAnswers.js.map       [2m 8.48 kB[22m [2m│ gzip:  2.99 kB[22m
+[34mℹ[39m [2mdist/[22mQleverClient.js.map           [2m 7.43 kB[22m [2m│ gzip:  2.74 kB[22m
+[34mℹ[39m [2mdist/[22mindex.js.map                  [2m 4.70 kB[22m [2m│ gzip:  1.49 kB[22m
+[34mℹ[39m [2mdist/[22mPersistedScalarSource.js.map  [2m 3.85 kB[22m [2m│ gzip:  1.31 kB[22m
+[34mℹ[39m [2mdist/[22mFamilyDomainMask.js.map       [2m 3.35 kB[22m [2m│ gzip:  1.38 kB[22m
+[34mℹ[39m [2mdist/[22mOperations.js.map             [2m 2.42 kB[22m [2m│ gzip:  1.07 kB[22m
+[34mℹ[39m [2mdist/[22mFamilyDomainDistinct.js.map   [2m 2.34 kB[22m [2m│ gzip:  1.05 kB[22m
+[34mℹ[39m 34 files, total: 369.94 kB
+[32m✔[39m Build complete in [32m54ms[39m
+
+> @triplex-build/triplex-qualification@0.1.0 build /work/packages/qualification
+> tsdown && tsc --declaration --emitDeclarationOnly --rootDir src --outDir dist
+
+[34mℹ[39m [34mtsdown v0.21.7[39m powered by [91mrolldown v1.0.0-rc.12[39m
+[34mℹ[39m config file: [4m/work/packages/qualification/tsdown.config.ts[24m 
+[34mℹ[39m entry: [34msrc/index.ts[39m
+[34mℹ[39m target: [34mesnext[39m
+[34mℹ[39m tsconfig: [34mtsconfig.json[39m
+[34mℹ[39m Build start
+[34mℹ[39m [2mdist/[22m[1mindex.js[22m                        [2m 8.33 kB[22m [2m│ gzip:  2.57 kB[22m
+[34mℹ[39m [2mdist/[22mnative/xtdb-workloads.js.map    [2m51.22 kB[22m [2m│ gzip: 11.77 kB[22m
+[34mℹ[39m [2mdist/[22mnative/qlever-workloads.js.map  [2m43.03 kB[22m [2m│ gzip: 11.24 kB[22m
+[34mℹ[39m [2mdist/[22mnative/xtdb-workloads.js        [2m27.59 kB[22m [2m│ gzip:  6.78 kB[22m
+[34mℹ[39m [2mdist/[22mnative/qlever-recursion.js.map  [2m22.25 kB[22m [2m│ gzip:  6.24 kB[22m
+[34mℹ[39m [2mdist/[22mnative/qlever-workloads.js      [2m20.30 kB[22m [2m│ gzip:  5.85 kB[22m
+[34mℹ[39m [2mdist/[22mindex.js.map                    [2m17.27 kB[22m [2m│ gzip:  5.08 kB[22m
+[34mℹ[39m [2mdist/[22mnative/qlever-recursion.js      [2m10.12 kB[22m [2m│ gzip:  3.30 kB[22m
+[34mℹ[39m 8 files, total: 200.11 kB
+[32m✔[39m Build complete in [32m44ms[39m

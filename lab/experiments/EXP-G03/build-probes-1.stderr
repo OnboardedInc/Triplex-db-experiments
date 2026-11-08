@@ -1,0 +1,2 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 42970 "CX-O05-R3-final", pid 43591 "CX-SQL01-r2-verifier", pid 44695 "DA01-G1", pid 43135 "CX-SQL01-r2-kill80"
+[lab] heavy: waiting for one of 4 slots; held by pid 42970 "CX-O05-R3-final", pid 43591 "CX-SQL01-r2-verifier", pid 44733 "DA01-G0", pid 44509 "CX-G03-smoke"

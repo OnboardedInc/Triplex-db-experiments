@@ -1,0 +1,3 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 45994 "CX-VP2Q-4-r5-live", pid 43591 "CX-SQL01-r2-verifier", pid 51245 "orch-claim-tests", pid 43700 "CX-SQL01-r2-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 45994 "CX-VP2Q-4-r5-live", pid 66545 "CX-G03-smoke2", pid 51245 "orch-claim-tests", pid 43700 "CX-SQL01-r2-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 45994 "CX-VP2Q-4-r5-live", pid 67228 "DA01-pack-check", pid 51245 "orch-claim-tests", pid 43700 "CX-SQL01-r2-live"
