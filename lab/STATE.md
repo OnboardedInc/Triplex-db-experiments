@@ -52,8 +52,8 @@ worktree's refusal blocks every worktree (move it to the worktree's own git dir)
 | CX-DA01 lane D adapter (exp/DA01-datomic-adapter, on DA00 702643f) | builder, Codex medium | lane D, goal 7 floor | storage adapter, Datalog executor, G1 |
 | CX-VP2Q-4 (verify/P2Q) | reviewer, Codex high | P2, P3 | delta re-check of broker round 3 1b55d2e |
 | CX-SQL01 (exp/SQL01-broker-sqlite, on 1b55d2e) | builder, Codex medium | P2, P4, P5 | broker SQLite file per R25 (Q84): log of record, pinned readers, H1 rows |
-| CX-VX02-3 (verify/X02) | reviewer, Codex high | XTQL lane | delta re-check of X02 round 3 200d669; C8 514c3b6 ACCEPTED, merges after X02 |
-| CX-VA01-0311 (verify/A01-0311) | reviewer, Codex high | floor for claims | review of contract 0.3.11 36d7434 (338/338 regressions; lane D 153 obligations blocked) |
+| CX-X02-R3 resumed (exp/X02-xtql-parity) | builder, Codex medium | XTQL lane | Q79e grammar-based operand classification with a generated corpus; C8 merges after X02 |
+| CX-A01-0311-R2 (contract/0.3.11) | builder, Codex medium | floor for claims | 0.3.11 fix round: O-REPLAY row results in comparators, Unicode, lane D composition fields, Q76c matrix record |
 | R28 isolation design for EXP-G03 | planner, Opus 5.5, high | floor for claims | /Users/sam/Claude/Projects/triplex-db-2/R28/ |
 | CX-VDA00 (verify/DA00) | reviewer, Codex high | lane D floor | review of lane D bring-up 702643f |
 | CX-VO05-2 (verify/O05) | reviewer, Codex high | floor | review of O-OBS round 2 463703d |
