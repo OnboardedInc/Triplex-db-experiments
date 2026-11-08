@@ -1344,3 +1344,9 @@ Where each priority stands, from evidence so far (research probes and baselines;
   read-path tweak on the engine; it becomes durable on R25's SQLite design and needs erasure (Q58e) and a flatness fix. Engine copies (X2,
   Q1) are still worth measuring for native queries.
 - Next: Codex reviewer for J01 now (P2 outranks P4, and X2/Q1 wait for it), then a reviewer for P4.
+
+## 2026-11-08 21:25Z: O-OBS built (CX-O05, Codex builder): 14 protocols, fail-closed, 14/14 planted mutants caught
+- exp/O05-observation-oracle 6852fc1: lab/acceptance/oracle/observe.py with 96 fixtures, 8 CLI tests, 14/14 mutants detected; no engine
+  evidence used. Twelve contract ambiguities (CA01-CA12, lab/acceptance/oracle/README.md there); the deepest is CA01: the contract names no
+  serialized source kinds and no authenticated collector format, so hashes bind content but cannot attest that evidence came from the
+  engine. That is R27's question (engine-side evidence sources), which goes next. Codex reviewer CX-VO05 dispatched.

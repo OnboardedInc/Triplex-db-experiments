@@ -51,7 +51,7 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | CX-OREPLAY-049 (exp/O04b-oracle-0.4.2) | builder, Codex medium | correctness floor | Q70n completeness by execution, Q70o page selector; then a reviewer |
 | CX-VX02 (verify/X02) | reviewer, Codex high | XTQL lane | verdict on X02 bf1ad4d, minus the exclusive-slot rerun |
 | CX-W01B (exp/W01-golden-scenarios) | builder, Codex medium | GS | remaining XTDB scenarios, GS.04, GS.12 |
-| CX-O05 (exp/O05-observation-oracle) | builder, Codex medium | floor: O-OBS blocks 62 obligations | lab/acceptance/oracle/observe.py |
+| CX-VO05 (verify/O05) | reviewer, Codex high | floor: O-OBS blocks 62 obligations | verdict on O-OBS 6852fc1 |
 | CX-K01 (exp/K01-seed-clone) | builder, Codex medium | measurement speed | clone tooling, 500-subject live check, E1 plan |
 
 Paused at the 2026-11-08 Claude weekly limit and not resumed (effort may exceed high): the ten agents in lab/agents/handoffs/;
