@@ -167,7 +167,7 @@ class SemanticTests(unittest.TestCase):
             e['engineWorkUnits']['rowsScanned'] = 2**53+1
             e['comparison']['engineWorkUnits']['rowsScanned'] = 100*2**53
         def context(c, e):
-            c.update(witnessKind='incremental', selectedThreshold='T-INCR-WORK')
+            c.update(witnessKind='incremental', selectedThreshold='T-INCR-WORK', obligation='G8.support.incremental-witness', thresholdIds=['T-INCR-WORK'])
         result, code = self.run_case('WORK', change, context)
         self.assertEqual(code, 1, result)
         self.assertIn('exact work ratio', result['reasons'][0])
@@ -179,7 +179,7 @@ class SemanticTests(unittest.TestCase):
             e['comparison']['engineWorkUnits'] = dict.fromkeys(e['engineWorkUnits'], 0)
             e['engineWorkUnits']['rowsScanned'] = 2**53
             e['comparison']['engineWorkUnits']['rowsScanned'] = 100*2**53
-        result, code = self.run_case('WORK', change, lambda c, e: c.update(witnessKind='incremental', selectedThreshold='T-INCR-WORK'))
+        result, code = self.run_case('WORK', change, lambda c, e: c.update(witnessKind='incremental', selectedThreshold='T-INCR-WORK', obligation='G8.support.incremental-witness', thresholdIds=['T-INCR-WORK']))
         self.assertEqual(code, 0, result)
 
     def test_wait_duration_label(self):

@@ -100,3 +100,46 @@ reviewed source-specific normalizers and collector configuration; absent those i
 an observer. `test_round2.py` exercises authenticated-byte, HMAC, chain, head, parser, case, ratio, wait, fault and canary boundaries,
 and replays all 177 reviewer legacy inputs from commit 74d1152 through the mandatory context boundary.
 `selfcheck.py` still requires semantic wrong-PASS kills, with positive controls, for all 14 protocol omissions.
+
+## Round 3: contract consistency and timing intervals
+
+R2-F1 is fixed by comparing the complete observed facts against evaluator expectations for **every** fault transition,
+after checking the transition's concrete schema. QT5 additionally requires complete effect/absence arrays and agreement
+across all three access paths. Matching identity, hashes and a structurally valid payload do not excuse wrong contents.
+
+For OBS-WORK, the bound contract obligation must use O-OBS and declare exactly one work threshold. That declaration derives
+both the threshold and the witness kind. `selectedThreshold`, `witnessKind`, and the work thresholds in `thresholdIds` must
+agree with it; unrelated obligations and contradictory unions return REFUSED. ACK-ORDER's legitimate nested WATERMARK
+threshold remains separately available. Synthetic work contexts now bind the actual reuse or incremental obligation.
+
+`ClockBounds` is the single policy for observation timing gates. Each event has interval `[t-u,t+u]`, where u is the
+bundle's authenticated uncertainty. A required `a <= b` passes only when `a+u <= b-u`; strict order uses `<`. Elapsed-time
+upper bounds include `2u`. Decimal values are compared as rational numbers. The policy covers cancellation/drain, timeout
+grace, caller/ACK/reuse ordering, connection-release windows, availability/probe windows and possible manual restarts,
+PREABORT coverage, sample ordering/cadence/window coverage, maintenance interval/lag p99, canary/erasure/key-destruction
+ordering, wait/route containment, ACK/read ordering, and fault/crash/readback ordering. Samples that could overlap a
+safety window are included rather than silently discarded.
+
+There is no per-field clock correlation model in obs-context/1. Equal numeric timestamps on different event fields do
+not prove a shared offset. Accordingly, nonzero uncertainty needs slack at coverage edges and between samples as well
+as at deadlines. The review's `CANCEL/clock-margin-positive` has a 1998 ms drain but also 1000 ms sample gaps and a final
+sample exactly at drain+5000. It now fails coverage with u=1; it does not establish that independent endpoint intervals
+meet the cadence and full-window rules. Zero-uncertainty positive bundles remain valid, and the new timing tests include
+nonzero-uncertainty positive controls with sufficient slack.
+
+Collector chunk timestamps are explicitly native observer monotonic times, and bridge send/receive timestamps share
+the harness clock; those format-integrity checks retain their declared same-clock arithmetic. Application valid-time
+values in index eligibility are exact semantic inputs, not uncertain observation-clock measurements. Equality checks
+linking two references to the same retained event remain identity checks. None of these exceptions infer correlation
+between distinct observation events.
+
+Run the full round-three builder cohort under one heavy admission:
+
+```sh
+node lab/bin/heavy.mjs --label CX-O05-R3 -- python3 -I -B lab/acceptance/oracle/gates_round3.py ATTEMPT
+```
+
+It retains new attempt artifacts, source hashes and process exits. `test_round3.py` adds contract-derived transition and
+timing regressions. `replay_review_round2.py` extracts the pinned read-only review commit into a temporary snapshot and
+reruns all 306 retained CLI inputs. Only the normalizer's absolute path is relocated; parser bytes, raw chunks, HMACs,
+expected facts, contract, and witness heads remain unchanged. The stricter coverage result above is identified explicitly.

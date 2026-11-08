@@ -97,4 +97,6 @@ def fixture(case, directory, contract):
         context['bindings']['tDeadline'] = e['tDeadline']
     if protocol == 'WORK':
         context['witnessKind'] = 'reuse'
+        context['obligation'] = 'G8.reuse.positive-witness'
+        context['thresholdIds'] = ['T-REUSE-AVOIDED']
     return e, context, root, keyfile

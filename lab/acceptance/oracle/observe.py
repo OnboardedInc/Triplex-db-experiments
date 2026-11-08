@@ -149,11 +149,49 @@ def times(samples):
     return ts
 
 
-def coverage(samples, start, end, gap):
-    ts = times(samples)
-    require(ts[0] <= start and ts[-1] >= end, 'samples do not cover required window')
-    require(all(b - a <= gap for a, b in zip(ts, ts[1:]) if b > start and a < end),
-            'sample coverage gap')
+class ClockBounds:
+    # [EXP-O05-R3] Why: all observation timing gates use worst-case endpoint intervals. Rejected: handler-local margins (R2-F3).
+    def __init__(self, uncertainty):
+        self.u = Fraction(str(num(uncertainty)))
+
+    def value(self, t):
+        return Fraction(str(num(t)))
+
+    def le(self, a, b):
+        return self.value(a) + self.u <= self.value(b) - self.u
+
+    def lt(self, a, b):
+        return self.value(a) + self.u < self.value(b) - self.u
+
+    def within(self, start, end, limit):
+        return self.le(start, end) and self.value(end) - self.value(start) + 2 * self.u <= self.value(limit)
+
+    def upper_duration(self, duration):
+        return self.value(duration) + 2 * self.u
+
+    def times(self, samples):
+        ts = times(samples)
+        require(all(self.lt(a, b) for a, b in zip(ts, ts[1:])), 'uncertain sample time order')
+        return ts
+
+    def coverage(self, samples, start, end, gap):
+        ts = self.times(samples)
+        require(self.le(ts[0], start) and self.le(end, ts[-1]), 'samples do not cover uncertain required window')
+        require(all(self.within(a, b, gap) for a, b in zip(ts, ts[1:])
+                    if not self.lt(b, start) and not self.lt(end, a)), 'uncertain sample coverage gap')
+
+
+def work_selection(obligation, context):
+    # [EXP-O05-R3] Why: the contract obligation selects the bar, even in trusted context. Rejected: threshold unions (R2-F2).
+    kinds = {'T-REUSE-AVOIDED': 'reuse', 'T-INCR-WORK': 'incremental'}
+    bars = set(obligation['thresholds']) & set(kinds)
+    if 'O-OBS' not in obligation['oracles'] or len(bars) != 1:
+        raise Refused('CONTEXT-CONTRADICTION: obligation does not select one OBS-WORK witness')
+    selected = next(iter(bars))
+    if (context['selectedThreshold'] != selected or context['witnessKind'] != kinds[selected]
+            or set(context['thresholdIds']) & set(kinds) != {selected}):
+        raise Refused('CONTEXT-CONTRADICTION: work threshold differs from bound obligation')
+    return selected
 
 
 def source(e, protocol, authenticated, engine):
@@ -323,7 +361,8 @@ class Judge:
         self.used = {}
         self.context = context
         self.authenticated = {}
-        self.uncertainty = 0
+        self.clock = ClockBounds(0)
+        self.workThreshold = None
 
     def threshold(self, key, allowed=None):
         if allowed is not None:
@@ -352,41 +391,41 @@ class Judge:
         start, drained = num(e['tCancelRequested']), num(e['tDrained'])
         require(e['expectedError'] in ('E-CANCELLED', 'E-TIMEOUT') and e['callerError'] == e['expectedError'],
                 'caller error differs from case-pinned error')
-        require(start <= num(e['tCallerSettled']) <= num(e['tReuseOk']), 'caller/reuse time order')
-        require(0 <= drained - start <= self.threshold('T-DRAIN-MS'), 'drain deadline missed')
+        require(self.clock.le(start, e['tCallerSettled']) and self.clock.le(e['tCallerSettled'], e['tReuseOk']), 'caller/reuse time order')
+        require(self.clock.within(start, drained, self.threshold('T-DRAIN-MS')), 'drain deadline missed')
         ack = need(e['transportAck'], 'kind', 't')
-        require(ack['kind'] in ('cancel-ack', 'close-ack') and start <= num(ack['t']) <= drained,
+        require(ack['kind'] in ('cancel-ack', 'close-ack') and self.clock.le(start, ack['t']) and self.clock.le(ack['t'], drained),
                 'transport acknowledgement absent or late')
-        coverage(e['engineActiveSamples'], start, drained + 5000, 1000)
+        self.clock.coverage(e['engineActiveSamples'], start, drained + 5000, 1000)
         for s in e['engineActiveSamples']:
             ids = array(need(s, 'activeQueryIds')['activeQueryIds'], False)
             for q in ids:
                 name(q)
-            if s['t'] >= drained:
+            if not self.clock.lt(s['t'], drained):
                 require(e['requestId'] not in ids, 'query still active after drain')
         require(e['reuseConnectionId'] == e['connectionId'] and e['reuseQueryId'] != e['requestId']
-                and num(e['tReuseOk']) >= drained, 'same-connection successful reuse missing')
+                and self.clock.le(drained, e['tReuseOk']), 'same-connection successful reuse missing')
         if e['expectedError'] == 'E-TIMEOUT':
             need(e, 'tDeadline')
-            require(start <= num(e['tDeadline']) <= e['tCallerSettled']
-                    <= e['tDeadline'] + self.threshold('T-DEADLINE-GRACE-MS'), 'timeout grace missed')
+            require(self.clock.le(start, e['tDeadline']) and self.clock.within(e['tDeadline'], e['tCallerSettled'],
+                    self.threshold('T-DEADLINE-GRACE-MS')), 'timeout grace missed')
             require(e['source']['records'].get('tDeadline') == e['tDeadline'], 'deadline not source-bound')
 
     def preabort(self, e):
         name(e['requestId'])
         c = need(e['coverage'], 'from', 'to', 'maxGapMs', 'segments')
         lo, hi = num(c['from']), num(c['to'])
-        require(lo < hi, 'empty coverage window')
+        require(self.clock.lt(lo, hi), 'empty coverage window')
         require(num(c['maxGapMs']) == 0, 'statement log coverage must be complete')
         end = lo
         for s in array(c['segments']):
             need(s, 'from', 'to')
-            require(num(s['from']) <= end < num(s['to']), 'statement log coverage hole')
+            require(self.clock.le(s['from'], end) and self.clock.lt(end, s['to']), 'statement log coverage hole')
             end = s['to']
-        require(end >= hi, 'statement log coverage incomplete')
+        require(self.clock.le(hi, end), 'statement log coverage incomplete')
         for s in array(e['engineStatementLog'], False):
             need(s, 't', 'tag'); name(s['tag'])
-            require(lo <= num(s['t']) <= hi, 'statement outside coverage')
+            require(self.clock.le(lo, s['t']) and self.clock.le(s['t'], hi), 'statement outside coverage')
             require(s['tag'] != e['requestId'], 'preaborted request reached engine')
 
     def connections(self, e):
@@ -405,10 +444,10 @@ class Judge:
             samples[s['label']].append(s)
         for label, rows in samples.items():
             base = integer(e['baseline'][label]); require(base <= limits[label], 'baseline exceeds pool max')
-            times(rows)
-            require(any(e['tClose'] <= s['t'] <= deadline and s['count'] == base for s in rows),
+            self.clock.times(rows)
+            require(any(self.clock.within(e['tClose'], s['t'], self.threshold('T-CONN-RELEASE-MS')) and s['count'] == base for s in rows),
                     'pool did not return to baseline by deadline: ' + label)
-            require(all(s['count'] == base for s in rows if s['t'] > deadline), 'pool leaked after release')
+            require(all(s['count'] == base for s in rows if not self.clock.le(s['t'], deadline)), 'pool leaked after release')
 
     def scratch(self, e):
         name(e['relation']); integer(e['countBefore']); integer(e['countAfter'])
@@ -458,12 +497,12 @@ class Judge:
         start = num(e['tFailure']); end = start + self.threshold('T-AVAIL-WINDOW-MS')
         for event in array(e['events'], False):
             need(event, 'kind', 't'); num(event['t']); name(event['kind'])
-            require(not (event['kind'] == 'manual-restart' and event['t'] >= start), 'manual restart observed')
+            require(not (event['kind'] == 'manual-restart' and not self.clock.lt(event['t'], start)), 'manual restart observed')
         successes = set()
         for p in array(e['probes']):
             need(p, 't', 'kind', 'outcome'); num(p['t'])
             require(p['kind'] in ('write', 'read') and p['outcome'] in ('success', 'failure'), 'invalid probe')
-            if start <= p['t'] <= end and p['outcome'] == 'success':
+            if self.clock.within(start, p['t'], self.threshold('T-AVAIL-WINDOW-MS')) and p['outcome'] == 'success':
                 successes.add(p['kind'])
         require(successes == {'write', 'read'}, 'read and write availability not restored')
 
@@ -500,7 +539,7 @@ class Judge:
             if y:
                 ratios.append((x, y))
         require(bool(ratios), 'zero-work baseline is not a witness')
-        key = self.context['selectedThreshold']
+        key = self.workThreshold
         require(e['threshold'] == key, 'evidence selected a different threshold')
         limit = Fraction(str(self.threshold(key, {'T-REUSE-AVOIDED', 'T-INCR-WORK'})))
         require(self.used[key]['bound'] == 'max', 'work requires maximum ratio threshold')
@@ -508,14 +547,15 @@ class Judge:
 
     def maintenance(self, e):
         require(e['kind'] in ('compaction', 'index-rebuild', 'delta-merge', 'index-catch-up'), 'unknown maintenance kind')
-        lo, hi = num(e['tStart']), num(e['tEnd']); require(lo < hi, 'empty maintenance interval')
+        lo, hi = num(e['tStart']), num(e['tEnd']); require(self.clock.lt(lo, hi), 'empty maintenance interval')
         events = array(e['events'])
         for event in events:
             need(event, 'kind', 't'); num(event['t'])
         require(any(s['kind'] == 'start' and s['t'] == lo for s in events)
                 and any(s['kind'] == 'end' and s['t'] == hi for s in events), 'maintenance events absent')
-        coverage(e['lagSamples'], lo, hi, 1000)
-        lags = sorted(num(need(s, 'lagMs')['lagMs']) for s in e['lagSamples'] if lo <= s['t'] <= hi)
+        self.clock.coverage(e['lagSamples'], lo, hi, 1000)
+        lags = sorted(self.clock.upper_duration(need(s, 'lagMs')['lagMs']) for s in e['lagSamples']
+                      if not self.clock.lt(s['t'], lo) and not self.clock.lt(hi, s['t']))
         require(bool(lags), 'no in-window lag samples')
         require(e['threshold'] == self.context['selectedThreshold'], 'threshold differs from evaluator case')
         self.bound(lags[(99 * len(lags) + 99) // 100 - 1], self.context['selectedThreshold'], {'NS-P3-LAG-P99-MS'})
@@ -535,18 +575,18 @@ class Judge:
             require(r['location'] == location['location'] and r['scanMethod'] == location['scanMethod'], 'scan location/method differs from evaluator inventory')
             control = need(r.get('positiveControl'), 'canary', 'tWritten', 'tFound', 'hits', 'scanMethod', 'location')
             if not (control['canary'] == location['canary'] and integer(control['hits']) > 0 and
-                    num(control['tWritten']) <= num(control['tFound']) < published and
+                    self.clock.le(control['tWritten'], control['tFound']) and self.clock.lt(control['tFound'], published) and
                     control['scanMethod'] == r['scanMethod'] and control['location'] == r['location']):
                 raise Refused('scanner blind: positive canary control missing')
             seen.add(label)
-            require(num(r['tScan']) > published, 'scan did not follow erasure publication')
+            require(self.clock.lt(published, r['tScan']), 'scan did not follow erasure publication')
             plain, derived = integer(r['plaintextHits']), integer(r['derivedChannelHits'])
             if plain or derived:
                 raise Failed('protected plaintext or derived channel survives')
             key = r['keyDestroyedEvidence']
             if key is not None:
                 need(key, 'subjectKey', 'destroyedKey', 'tDestroyed', 'survivingCopies')
-                require(name(key['subjectKey']) == name(key['destroyedKey']) and num(key['tDestroyed']) <= r['tScan'],
+                require(name(key['subjectKey']) == name(key['destroyedKey']) and self.clock.le(key['tDestroyed'], r['tScan']),
                         'wrong destroyed subject key or destruction after scan')
                 for copy in array(key['survivingCopies']):
                     need(copy, 'id', 'encryptionKeys'); name(copy['id'])
@@ -564,10 +604,10 @@ class Judge:
         require(num(start['t']) == e['tReadStart'] and num(end['t']) == e['tRouteStart'], 'wait event time mismatch')
         actual = num(end['t']) - num(start['t'])
         require(actual >= 0 and e['waitMs'] == actual, 'duration label differs from source events')
-        require(actual + 2 * self.uncertainty <= self.threshold('T-WATERMARK-WAIT-MS'), 'watermark wait exceeded')
-        require(num(e['tReadStart']) <= num(e['tRouteStart']) <= num(e['tRouteEnd']) <= num(e['tReadEnd']),
+        require(self.clock.within(start['t'], end['t'], self.threshold('T-WATERMARK-WAIT-MS')), 'watermark wait exceeded')
+        require(self.clock.le(e['tReadStart'], e['tRouteStart']) and self.clock.le(e['tRouteStart'], e['tRouteEnd'])
+                and self.clock.le(e['tRouteEnd'], e['tReadEnd']),
                 'route latency excluded from read latency')
-        require(e['tRouteStart'] - e['tReadStart'] >= e['waitMs'], 'wait excluded from read latency')
         if e['route'] == 'fallback':
             require(name(e['fallbackIndex']) == e['servingIndex'], 'fallback identity differs from serving index')
         else:
@@ -621,28 +661,28 @@ class Judge:
 
     def ack_order(self, e):
         position(e['commitPosition'])
-        require(num(e['tAck']) - self.uncertainty >= num(e['tSourcePublished']) + self.uncertainty, 'ACK preceded source publication')
+        require(self.clock.le(e['tSourcePublished'], e['tAck']), 'ACK preceded source publication')
         require(name(e['ackSender']) == name(e['sourceOfTruth']), 'ACK sender is not source of truth')
         pull = need(e['ryowPullRoute'])
         need(pull, *FIELDS['WATERMARK'].split())
         source(pull, 'WATERMARK', self.authenticated, self.context['engine'])
-        require(pull['basisPosition'] == e['commitPosition'] and pull['tReadStart'] >= e['tAck'], 'pull not at returned commit')
+        require(pull['basisPosition'] == e['commitPosition'] and self.clock.le(e['tAck'], pull['tReadStart']), 'pull not at returned commit')
         self.watermark(pull)
 
     def fault_transitions(self, e):
-        crash = num(e['tCrash']); previous = -1; last = None
+        crash = num(e['tCrash']); previous = None; last = None
         variants = need(self.contract.get('commitOutcomes'), 'log-source', 'engine-source')
         require(e['variant'] == self.context['variant'] and e['variant'] in ('log-source', 'engine-source'), 'variant differs from evaluator context')
         allowed = {row['id'] for row in variants[e['variant']]['transitions']}
         for row in array(e['transitions']):
             need(row, 'transition', 't', 'durableEvidenceObject'); name(row['transition'])
             require(row['transition'] in allowed, 'transition outside contract variant')
-            t = num(row['t']); require(previous < t <= crash, 'transition time order'); previous = t
+            t = num(row['t']); require((previous is None or self.clock.lt(previous, t)) and self.clock.le(t, crash), 'transition time order'); previous = t
             obj = row['durableEvidenceObject']
             require(obj is not None, 'declared transition has no witness')
             if obj is not None:
                 need(obj, 'sha256', 'record', 'tReadBack')
-                require(num(obj['tReadBack']) > crash, 'durability not read back after crash')
+                require(self.clock.lt(crash, obj['tReadBack']), 'durability not read back after crash')
                 record = need(obj['record'], 'transition', 't')
                 require(digest(record) == obj['sha256'] and record['transition'] == row['transition']
                         and record['t'] == t, 'durable record does not witness transition')
@@ -656,7 +696,8 @@ class Judge:
         # [EXP-O05-R2] Why: concrete readback facts prove each state. Rejected: a transition label/hash as its own witness (F3).
         facts = need(record.get('facts'))
         expected = self.context['transitionExpectations'][transition]
-        need(expected, 'operationId', 'position')
+        need(expected, 'operationId', 'position', 'facts')
+        need(expected['facts'])
         require(record['operationId'] == expected['operationId'] and record['position'] == expected['position'],
                 'fault witness operation/position differs from case')
         schemas = {
@@ -696,12 +737,15 @@ class Judge:
                         'COMMIT readback missing concrete effects')
             if field == 'sourceReadback':
                 need(value, 'effects', 'absences')
-                require(canonical(facts) == canonical(expected['facts']), 'readback facts differ from case expectations')
+        # [EXP-O05-R3] Why: every transition must prove expected contents. Rejected: comparing only QT4s (R2-F1).
+        require(canonical(facts) == canonical(expected['facts']), 'readback facts differ from case expectations')
         if transition == 'QT5-VERIFIED':
             paths = need(facts, 'accessPaths')['accessPaths']
             require(set(paths) == {'eav', 'ave', 'vea'}, 'verification requires three access paths')
             for result in paths.values():
                 need(result, 'effects', 'absences')
+                array(result['effects'], False); array(result['absences'], False)
+                require(canonical(result) == canonical(paths['eav']), 'verification access paths disagree')
         require(obj['readbackOperationId'] == expected['operationId'] and obj['readbackPosition'] == expected['position'],
                 'post-crash readback identity mismatch')
 
@@ -741,17 +785,16 @@ def check(protocol, evidence, contract, context=None, bundle_dir=None, key_file=
             name(context[field])
         obligations = [o for o in contract['obligations'] if o['id'] == context['obligation']]
         require(len(obligations) == 1, 'unknown evaluator obligation')
-        require(set(obligations[0]['thresholds']) <= set(context['thresholdIds']), 'context omitted obligation thresholds')
+        selected_work = work_selection(obligations[0], context) if key == 'WORK' else None
+        if not set(obligations[0]['thresholds']) <= set(context['thresholdIds']):
+            raise Refused('CONTEXT-CONTRADICTION: context omitted obligation thresholds')
         for field, expected in need(context['bindings']).items():
             require(field in evidence and canonical(evidence[field]) == canonical(expected), 'case input mismatch: ' + field)
-        if key == 'WORK':
-            selection = {'reuse': 'T-REUSE-AVOIDED', 'incremental': 'T-INCR-WORK'}
-            require(context['witnessKind'] in selection and context['selectedThreshold'] == selection[context['witnessKind']],
-                    'work threshold differs from evaluator witness kind')
-        else:
+        if key != 'WORK':
             require(context['witnessKind'] == key, 'witness kind differs from protocol')
         judge = Judge(contract, context)
-        judge.authenticated, judge.uncertainty = authenticated, uncertainty
+        judge.authenticated, judge.clock = authenticated, ClockBounds(uncertainty)
+        judge.workThreshold = selected_work
         if protocol not in contract['obsProtocols']:
             raise Refused('protocol missing from selected contract')
         need(evidence, *FIELDS[key].split())
