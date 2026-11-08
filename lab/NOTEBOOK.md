@@ -1291,7 +1291,7 @@ Where each priority stands, from evidence so far (research probes and baselines;
 ## 2026-11-08 02:29Z: hourly learnings pass (NORTH-STAR reread first)
 - **Learnings are current** through C8, V-O04g, V-E01, R26, N01 and contract 0.3.10 (entries 01:36Z to 02:24Z). O-REPLAY 0.4.8 (3c52a1d)
   landed during this pass: one continuation table (run.py:64) with a self-check shown to fail when a paged kind is missing; V-O04h checks it.
-- **Host:** load { 9.60 11.65 14.04 }; disk 6.9Gi free; containers: tx2-xtdb-s2 1.129GiB / 3.5GiB;tx2-qlever-dev 1.057GiB / 3.5GiB;tx2-xtdb-dev 2.292GiB / 3GiB;
+- **Host:** load { 9.60 11.65 14.04 }; disk 6.9Gi free (scratch cleanup of finished verifiers' copies, 2.6 GB, followed; V-O04h's trees kept); containers: tx2-xtdb-s2 1.129GiB / 3.5GiB;tx2-qlever-dev 1.057GiB / 3.5GiB;tx2-xtdb-dev 2.292GiB / 3GiB;
 - **Where evidence points, by priority:**
   - **P1:** the floor is reached on both lanes (C8: read paths never write, 0 writes in 1,412 gate statements). What is left is
     throughput and isolation: QLever's writer queues behind reads (R17, C8), so P1 on QLever runs through broker-fed replicas (Q63b);
