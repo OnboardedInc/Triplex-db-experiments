@@ -581,14 +581,14 @@
   "L": 2000,
   "N": 100000
  },
- "seconds": 99.5,
+ "seconds": 100.9,
  "seed": "W0-pop-1",
  "sources": {
-  "cli.py": "320f3e308d8e5aebb346ca05386229d44ee377176f94cf78347e142a9e22349a",
-  "jsontok.py": "9059876210dcb57fd6668666cfe06425e50d5f25db25642494df85832aa3a29a",
+  "cli.py": "fb14ef13bffe12c963a01b76b37f52fbde921476d4482f9616022a3cdbdbb6d8",
+  "jsontok.py": "c428c5b889bea9f6397eaf1515fc94af2eace3c3ff9a6268dd7f7a069ed903c0",
   "population.py": "7c33da567e3530b40210c7fcae3ad850026cf1dd037b5edc0808f78be1d7eb3d",
-  "test_domain.py": "9d62740dacc5ec820f3d34bd17ef16be93ff0954e5071f4427f61f2ceba2341c",
-  "w0.py": "35737dfc0204cf1710fe09c7f1167d31c2f51ae748924788cae5f0cff17d6faf"
+  "test_domain.py": "9103d227207999538ddba6e19bb8c6e64397ddfcf6a585bf42890538416b5f08",
+  "w0.py": "841f7d9d2e175e09474fdf23969bfddda77851995335828ed1c97b34d9167f00"
  },
  "specVersion": "W0-1.1.1"
 }

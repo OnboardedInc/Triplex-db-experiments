@@ -476,6 +476,138 @@ class Population(unittest.TestCase):
         self.assertEqual(len(s['blockDigests']['worlds']), 1)
 
 
+class RobustnessFixes(unittest.TestCase):
+    """V-D01c F1 to F3: every invalid input gets its SPEC error; nothing crashes (RULINGS-PENDING Q57b, Q57c)."""
+
+    BASIS = '{"tx":10,"validTime":"2026-11-04T12:00:00.000000Z"}'
+
+    def evaluate_text(self, facts_json, basis=None):
+        text = '{"basis":%s,"release":"R1","world":{"subject":"pl:a","facts":[%s]}}' % (basis or self.BASIS, facts_json)
+        return w0.run_op_bytes('evaluate', text.encode(), releases())
+
+    def fact(self, a, v_json, tx='1', e='pl:a'):
+        return '{"e":"%s","a":"%s","v":%s,"tx":%s}' % (e, a, v_json, tx)
+
+    # ---- F1: arrays and objects on date and instant attributes are W0.E_VALUE ----
+    def test_f1_containers_on_dates_and_instants(self):
+        attrs = [('pl:a', 'startDate'), ('pl:a', 'section1AttestedAt'), ('pl:a', 'everifyStatusAt'),
+                 ('pl:a/doc:1', 'expiresOn')]
+        for e, a in attrs:
+            for v in ('[]', '{}', '["2026-11-02"]', '[1]', '{"erasedAt":"2026-11-01T00:00:00.000000Z"}'):
+                self.assertEqual(self.evaluate_text(self.fact(a, v, e=e)), {'error': w0.E_VALUE}, (a, v))
+        for v in ('{"erasedAt":[]}', '{"erasedAt":{}}', '{"erasedAt":["2026-11-01T00:00:00.000000Z"]}'):
+            self.assertEqual(self.evaluate_text(self.fact('ssn', v)), {'error': w0.E_VALUE}, v)
+        # The same values as activation `from` and basis validTime keep their step-1 kinds (strings only).
+        self.assertEqual(self.evaluate_text('', basis='{"tx":10,"validTime":[]}'), {'error': w0.E_SHAPE})
+
+    def test_f1_cases_runner_reports_a_crash_as_fail(self):
+        import contextlib
+        import io
+        import shutil
+        import tempfile
+        import cli
+        src = [p for p in case_paths() if os.path.basename(p)[:4] in ('C01-', 'C02-')]
+        real = cli.w0.run_op
+
+        def boom(op, inp, rels):
+            if inp['release'] == 'R1':
+                raise TypeError('planted crash')
+            return real(op, inp, rels)
+
+        with tempfile.TemporaryDirectory() as d:
+            for p in src:
+                shutil.copy(p, d)
+            buf = io.StringIO()
+            cli.w0.run_op = boom
+            try:
+                with contextlib.redirect_stdout(buf):
+                    rc = cli.cmd_cases(d, releases())
+            finally:
+                cli.w0.run_op = real
+        text = buf.getvalue()
+        self.assertEqual(rc, 1)
+        self.assertIn('FAIL C01 (C01-base-r1.json) crashed: TypeError: planted crash', text)
+        self.assertIn('PASS C02', text)
+        self.assertIn('1/2 cases byte-identical; failed: C01', text)
+
+    # ---- F2: integer tokens of any length ----
+    def test_f2_long_integer_tokens(self):
+        big = '9' * 5000
+        self.assertEqual(self.evaluate_text(self.fact('payRateCents', big)), {'error': w0.E_VALUE})
+        self.assertEqual(self.evaluate_text(self.fact('payRateCents', '-' + big)), {'error': w0.E_VALUE})
+        self.assertEqual(self.evaluate_text(self.fact('weeklyMinutes', big)), {'error': w0.E_VALUE})
+        self.assertEqual(self.evaluate_text(self.fact('payRateCents', '10000000000000000')), {'error': w0.E_VALUE})
+        self.assertEqual(self.evaluate_text(self.fact('payRateCents', '9007199254740992')), {'error': w0.E_VALUE})
+        self.assertNotIn('error', self.evaluate_text(self.fact('payRateCents', '9007199254740991')))
+        self.assertEqual(self.evaluate_text(self.fact('startDate', '"2026-11-02"', tx=big)), {'error': w0.E_BASIS})
+        self.assertEqual(self.evaluate_text(self.fact('startDate', '"2026-11-02"', tx='-' + big)), {'error': w0.E_BASIS})
+        self.assertEqual(self.evaluate_text('', basis='{"tx":%s,"validTime":"2026-11-04T12:00:00.000000Z"}' % big),
+                         {'error': w0.E_BASIS})
+        h = releases().by_name['R1'].hash
+        text = ('{"activations":[{"from":"2026-11-01T00:00:00.000000Z","release":"%s","tx":%s}],"basis":%s,'
+                '"world":{"subject":"pl:a","facts":[]}}' % (h, big, self.BASIS))
+        self.assertEqual(w0.run_op_bytes('reconcile', text.encode(), releases()), {'error': w0.E_BASIS})
+        self.assertEqual(jsontok.ranged_int_token_value(JNum(big)), 10 ** 16)
+        self.assertEqual(jsontok.ranged_int_token_value(JNum('-' + big)), -(10 ** 16))
+        self.assertEqual(jsontok.ranged_int_token_value(JNum('9007199254740991')), 9007199254740991)
+
+    def test_f2_publish_and_receive_stay_exact(self):
+        # SPEC sets no range on publish and receive integers: they are compared and incremented exactly.
+        big = '9' * 5000
+        wid = 'wi:' + 'a' * 64
+        item = '{"id":"%s","payload":{"n":1},"retired":false,"seq":%s,"subject":"pl:a"}' % (wid, big)
+        wi = '{"id":"%s","inputs":[%s],"key":"","kind":"bgc.order","payload":{"n":%s},"rule":"BGC","version":"wv:x"}' % (
+            wid, big, big)
+        text = ('{"evaluations":[{"basis":{"tx":%s,"validTime":"2026-11-04T12:00:00.000000Z"},"release":"r",'
+                '"subject":"pl:a","workItems":[%s]}],"state":{"items":[%s],"pending":[],"subjects":[]}}' % (big, wi, item))
+        out = canonical(w0.run_op_bytes('publish', text.encode(), releases()))
+        nxt = '1' + '0' * 5000
+        self.assertIn('"seq":%s,"subject":"pl:a","version":"wv:x"' % nxt, out)
+        self.assertIn('"payload":{"n":%s}' % big, out)
+        self.assertIn('"basis":{"tx":%s,' % big, out)
+        dl = '{"id":"%s","key":"","kind":"k","payload":{},"rule":"BGC","seq":%s,"subject":"pl:a","version":"v"}'
+        text = '{"deliveries":[%s],"state":{"effects":[{"done":%s,"id":"%s","waiting":[]}],"projection":[]}}' % (
+            dl % (wid, nxt), big, wid)
+        out = w0.run_op_bytes('receive', text.encode(), releases())
+        self.assertEqual(len(out['applied']['effects']), 1)
+        self.assertIn('"done":%s' % nxt, canonical(out))
+
+    # ---- F3: any nesting depth is a JSON value ----
+    def test_f3_deep_values(self):
+        for depth in (600, 5000, 100000):
+            v = '[' * depth + '"2026-11-02"' + ']' * depth
+            self.assertEqual(self.evaluate_text(self.fact('startDate', v)), {'error': w0.E_VALUE}, depth)
+        v = '{"a":' * 50000 + '{"k":1,"k":2}' + '}' * 50000
+        self.assertEqual(self.evaluate_text(self.fact('startDate', v)), {'error': w0.E_SHAPE})   # duplicate key, deep
+        with self.assertRaises(ValueError):
+            parse_bytes(b'[' * 100000 + b']' * 99999)
+        x = parse_bytes(b'[' * 100000 + b'7' + b']' * 100000)
+        for _ in range(100000):
+            self.assertEqual(len(x), 1)
+            x = x[0]
+        self.assertEqual(x, JNum('7'))
+
+    def test_f3_deep_payload_round_trip(self):
+        depth = 300000                        # past the json module's recursion guard: the iterative writer takes over
+        payload = '{"d":' * depth + '[-0,1.5e1,"\\u00e9"]' + '}' * depth
+        wid = 'wi:' + 'b' * 64
+        wi = '{"id":"%s","inputs":[],"key":"","kind":"bgc.order","payload":%s,"rule":"BGC","version":"wv:y"}' % (wid, payload)
+        text = ('{"evaluations":[{"basis":{"tx":1,"validTime":"2026-11-04T12:00:00.000000Z"},"release":"r",'
+                '"subject":"pl:a","workItems":[%s]}],"state":{"items":[],"pending":[],"subjects":[]}}' % wi)
+        out = canonical(w0.run_op_bytes('publish', text.encode(), releases()))
+        want = '{"d":' * depth + '[0,1.5e1,"\\u00e9"]' + '}' * depth
+        self.assertEqual(out.count(want), 3)  # the delivery, the pending copy and the item state
+
+    def test_writer_paths_agree(self):
+        # The iterative writer and the json module give the same bytes for every golden expected output (V-D01c N1).
+        for p in case_paths():
+            exp = load(p)['expected']
+            self.assertEqual(jsontok._canon(exp), canonical(to_plain(exp)), p)
+        self.assertEqual(canonical('é'), '"\\u00e9"')                  # SPEC 9 via ensure_ascii; never raw UTF-8
+        self.assertEqual(canonical({'é': 1, 'e': 2}), '{"e":2,"\\u00e9":1}')
+        self.assertEqual(jsontok._canon({'é': 1, 'e': 2}), '{"e":2,"\\u00e9":1}')
+
+
 class CommandLine(unittest.TestCase):
     def test_run_case(self):
         cli = os.path.join(HERE, 'cli.py')
