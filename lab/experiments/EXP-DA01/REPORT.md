@@ -185,3 +185,103 @@ publication, subagent launch, homebase checkout/port access or unrelated cleanup
 
 Delivered artifact checksums are in `receipts/continued/final/FILES-final.json`. The first checksum draft included its still-active
 stdout log; it is retained and marked unqualified by `manifest-validation.json`. The final index excludes generation logs.
+
+
+## Round 2 — Q85a–d and the DA00 review
+
+This round addresses `verify/DA00` at `d393484`, specifically F1–F4, under Q85a–d in the main checkout's
+`lab/acceptance/RULINGS-PENDING.md`. Executable source is committed at `e622b3b3ab5412f612794c5685b6b18051dff991` (full identity in the round-2 summary).
+The previous round's results above remain historical; round-2 raw evidence is kept separately in `round2/`.
+
+Q85a: retained the atomic, unique-value bootstrap guard added in round 1. The new synchronized regression pauses initializer A's
+actual position-zero transaction, completes B, writes position 7, then resumes A. Both creators return the same database and position
+7 survives. This uses the actual Peer API and transactions, with a promise-based interleaving adapted from the reviewer's reproduction.
+All scratch databases are deleted. No mock database result or sleep-based race assertion is used.
+
+Q85b: all canonical scopes from public `DatabaseScope.make` and `.test` are accepted, including environments other than `test`.
+The name is `s2-` plus unpadded URL-safe Base64 of the canonical scope text's UTF-8 bytes; the JVM inverse verifies a canonical
+round trip. The canonical serializer matches JavaScript string escaping, including lone UTF-16 surrogates, and JavaScript trim's
+whitespace set. Blank identities, alternate tuple versions, string/negative/unsafe generations and noncanonical JSON spellings are
+refused. Adapter and executor share the same TypeScript address helper. Live regressions use the actual public constructor, Unicode,
+quotes, slash/backslash, a lone surrogate, trim-sensitive strings, negative-zero generation and the maximum safe generation.
+Legacy hash names remain readable to preserve DA00's proof databases; provisioning uses the reversible names. This is identity
+compatibility, not production authentication, tenancy or provisioning qualification.
+
+Q85c: builds exclusively create a new context per attempt, refuse existing directories, reject symlinks (including source roots), special paths and empty directories, and
+compare every staged file's path, length and SHA-256 against verified distribution/config/gateway/codec inputs before Docker runs.
+No copy merges into an old context. The input hash includes the shared codec specification and the duplicated Dockerfile is checked
+against the verified config copy. The documented bin-file executable-bit restoration remains the only post-copy mode transform.
+The regression pre-seeds the reviewer's `datomic/UNVERIFIED-CX-VDA00` file, checks refusal, then injects an extra file and symlink into
+a clean staged context and checks final verification refuses both. Additional regressions reject symlink roots and empty directories;
+the verified ZIP contains no empty directories. The real build uses that same staging/verification helper.
+
+Q85d: `packages/datomic/src/codec-spec.json` is the single grammar/range/representation definition consumed by both runtimes.
+The builder stages that exact file into the JVM image and includes its hash in image inputs. Shared acceptance vectors retain the
+reviewer's 62 cases, with `-0` integer text updated to the already-established canonical-integer contract, plus seven boundary cases.
+TypeScript uses exact BigInt exponent and fractional-digit arithmetic. Both reject `1E-2147483648`, `1.0E-2147483647` and the huge
+exponent while accepting `1E+2147483648` (scale -2147483648). Whole-string grammar checks also reject trailing newlines consistently.
+Keyword whitespace is an explicit shared character set to avoid Java/JavaScript regex differences. JVM decimal re-encoding preserves
+coefficient and scale, while spelling can normalize (for example decimal negative zero); no binary64 coercion is used for decimals.
+
+The rebuilt image is `sha256:1af4d8bcf83ca61459ea9f3beec576d50565da91fbde935ea977e8e217190312`.
+Its build input hash is `1b536858f5f4b1a0a27539fe27a0312318f2c040192272ef941ffc18a2b80ccd`, source input hash
+`19e7db07386b9f5a19d41b44f59759034c8d2978c5fb27ba0a83e9b07c0d1356`, and gateway source hash
+`d1a6b21cca7171d4a1377cfa634f17f00185140ff17ee9b0929f39ae8649bd98`. It is locally built and pinned by image ID.
+The authorized `engine.mjs down`/`up` retained `tx2-datomic-dev-data`; both DA00 proof databases still return their original basis
+`t=1001`, position 0 and original schema hash. The dev resident is READY and remains owned by EXP-DA01.
+
+The first live attempt is retained in `round2/live-1.log`: the new scope test exceeded Vitest's default five seconds, and ten adapter
+cases exposed remaining old hash-based addresses. The first G1 at source `f709873a` therefore failed 86/88 executions (2 passed);
+its terminal receipt and cleanup are retained. The address helper correction and a bounded 30-second budget for the three-database
+identity test are committed separately. The next G1 at `339b2058` failed 62/88 executions because the client basis-name guard still
+accepted only legacy hashes; its full-suite failure and cleanup are retained too. The final correction admits encoded names at that
+guard and adds basis readback to the public-constructor regression. All assertions and runtime request budgets remain intact. The initial lab-test invocation
+used a directory path unsupported by this Node runner; `lab-tests-first.log` retains that harness invocation failure and the explicit
+`*.test.mjs` rerun passes 23/23. Earlier results are not substituted for final-source acceptance.
+
+The G0 live-test skip policy adds exactly one named Datomic test (11 Datomic live skips total); independent verifier review of that
+policy change remains required. Existing X/Q/qualification skip entries are unchanged.
+
+Validation: JVM selftest 6 tests/135 assertions; TypeScript codec/query 100/100; lab helper/control tests 23/23 (including the final
+context hardening); Datomic TypeScript typecheck passed; live package tests 111/111 with 13/13 databases deleted. Gate results follow.
+
+
+No external dependency or lockfile pin changed in round 2. The image build, resident lifecycle, live suite and every engine-backed
+gate run use the lab heavy wrapper. The resident was never started with `--fresh`; no volume was removed. No X/Q lifecycle action,
+exclusive-slot acquisition, main-checkout edit, merge, push or publication occurred. Final gate receipts report zero executed-source
+diff bytes; dirty paths are reports/receipts only. Optional `git stash create` cannot write the index from the gate's sandbox, so its
+warning remains visible rather than being represented as a successful stash; actual source/build manifests still bind the executed bytes.
+
+Independent adversarial review, including the added skip-policy entry, remains required. This round does not rerun large-scale or
+P1–P5 performance qualification, production/authentication/tenancy certification, erasure, full resource/cancellation acceptance,
+package consumer qualification or root `pnpm pack:check`. The earlier root pack failure remains as described above; no fresh tarball
+or consumer PASS is claimed for the round-2 source. DA02 native/pull and later storage qualification remain out of scope.
+
+
+A second fresh-context build exercises the final empty-directory/root-symlink guard. It reproduces the identical immutable image ID
+and input hashes, so the already-recreated resident is running the exact final image. The Datomic package tree is identical at live-test
+source `9a7c837238855fe132b177f5248aba197846efd1` and final builder source `e622b3b3ab5412f612794c5685b6b18051dff991`:
+Git tree `9a636a7ad19d6033e96060c90deabca3474b69a7`. Final G0/G1 are rerun against the latter commit; the 111-test live result binds
+that unchanged package tree. No extra resident restart is needed for the byte-identical image.
+
+
+Final-source acceptance (all three receipts bind `e622b3b3ab5412f612794c5685b6b18051dff991`, with no executed-source changes):
+
+| Gate | Run | Result | Cleanup |
+| --- | --- | --- | --- |
+| G0 | `G0-datomic-20261108T234411Z-39ad84` | PASS: 1093/1093, 57 expected skips, zero unexpected skips | No live Datomic tests in G0 |
+| G1 | `G1-datomic-20261108T234745Z-c6de65` | PASS: 88/88 (44 current + 44 reopened), complete suite PASS | 89/89 deleted |
+| G1 `--previous` | `G1-datomic-20261108T234916Z-200550` | PASS: 88/88, complete suite PASS; previous `c6de65` | 89/89 deleted |
+
+The final evidence collector verifies the linked same-source G1 passes, zero source diff bytes, complete-suite results, every gate
+cleanup response, the live package tree, actual running container image ID, owner EXP-DA01, gateway health/source hash and unchanged
+DA00 proofs. Both fresh builds contain exactly 811 verified regular-file inputs and produce the same image. Final host free space was
+14,133,837,824 bytes. The resident remains READY, capped at 2.75 GiB, with its existing volume retained.
+
+Evidence: [round-2 summary](round2/SUMMARY.json), [file checksums](round2/FILES.json), [final resident status](round2/engine-status-final.txt),
+[actual resident image](round2/resident-image.json), [first build receipt](round2/build-1-receipt.json),
+[final fresh build receipt](round2/build-2-receipt.json), [live tests](round2/live-final.log), [JVM selftest](round2/selftest-1.log),
+and copied terminal gate receipts/raw artifacts under `round2/gates/`. Canonical original receipts remain in `lab/runs/G0/` and
+`lab/runs/G1/`; original raw runs, contexts, images and object preimages are retained. No failed attempt was deleted or adopted as a PASS.
+
+Open: independent DA00/DA01 review and the skip-policy review; later storage/provisioning/tenancy and performance acceptance listed above.
