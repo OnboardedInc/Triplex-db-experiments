@@ -15,7 +15,7 @@ import {
 import { DatomicClient, DatomicHttpError } from "./DatomicClient.js";
 import { matchesPattern, packValue, visibleAt } from "./rows.js";
 import { stagedInput } from "./protocol.js";
-import { createHash } from "node:crypto";
+import { databaseName } from "./scopeName.js";
 import { CurrentTransactions, type TransactionState } from "./TransactionContext.js";
 
 export class DatomicSerializationConflict extends WriteError {
@@ -32,7 +32,7 @@ export const makeDatomicStorageAdapter = (
   } = {},
 ): StorageAdapterService => {
   const key = Symbol(scopeKey);
-  const db = `s-${createHash("sha256").update(scopeKey).digest("hex").slice(0, 32)}`;
+  const db = databaseName(scopeKey);
   const maxRetries = options.maxRetries ?? 12;
   const resolutionTimeoutMs = options.resolutionTimeoutMs ?? 30_000;
   const admission = Semaphore.makeUnsafe(1);

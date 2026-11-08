@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { databaseName } from "./scopeName.js";
 import { Effect } from "effect";
 import { integer, type ResolvedTemporalBasis } from "@triplex-build/triplex";
 import {
@@ -30,7 +30,7 @@ export function makeDatomicQueryExecutor(
   client: DatomicClient,
   scopeKey: string,
 ): QueryExecutorService {
-  const db = `s-${createHash("sha256").update(scopeKey).digest("hex").slice(0, 32)}`;
+  const db = databaseName(scopeKey);
   const source = Effect.map(CurrentTransactions, (transactions) =>
     [...transactions.values()].find((s) => s.client === client && s.scopeKey === scopeKey),
   );

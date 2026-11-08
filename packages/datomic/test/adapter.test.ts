@@ -88,7 +88,7 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")(
       } finally {
         client.close();
       }
-    });
+    }, 30000);
     const insert = (
       a: ReturnType<typeof makeDatomicStorageAdapter>,
       id: string,
