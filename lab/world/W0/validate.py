@@ -5,14 +5,22 @@ keys and the output-assembly consistency rules of SPEC.md section 8 (overdue fla
 in dependencies, publish deliveries copied from their work items and appended to pending). Every delivery, item state and
 projection entry anywhere in the cases must name a work item some case's record carries: its id is recomputed from (key, kind,
 rule, subject) and its (id, version) must match a record. Every numeric-error case must hold its raw token text unchanged.
+Two case forms need care (SPEC 11.1): an `inputBase64` case carries its input as bytes, and a `synthetic` case holds records
+that evaluate never produces (readings A07 to A09, A14, A15), so only its shapes and output order are checked. Integer tokens of
+any length and values nested to any depth are read without hitting Python's default limits (readings A12, A13).
 It holds no rule logic: it never decides which tasks, obligations, work items, flags or deliveries a world produces.
 """
+import base64
 import datetime
 import hashlib
 import json
 import os
 import re
 import sys
+
+if hasattr(sys, "set_int_max_str_digits"):
+    sys.set_int_max_str_digits(0)  # integer tokens of any length (A12; cases C90, C129 to C131)
+sys.setrecursionlimit(20000)  # values nested to any depth (A13; case C132)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 MAX = 9007199254740991
@@ -35,9 +43,27 @@ NUMERIC_ERROR_TOKENS = {
     "C72": ("activation.tx", None, "9.0"),
 }
 
+# Raw text that must stay in a case file as written (W0-1.1.2): tokens a JSON round trip would rewrite or that Python reads as
+# something else (-0 as 0, NaN as a float, 1.65e3 as 1650.0, raw UTF-8 as an escape, a long or deep token as anything shorter).
+RAW_TEXT = {
+    "C90": ['"v": ' + "9" * 5000 + ","],
+    "C93": ['"v": -0,'],
+    "C94": ['"tx": -0}'],
+    "C100": ['"payload": {"floorCents": 1.65e3, "note": "é", "payRateCents": -0}',
+             '"payload": {"floorCents": 1.65e3, "note": "\\u00e9", "payRateCents": 0}'],
+    "C129": ['"tx": ' + "9" * 5000 + ","],
+    "C130": ['"seq": ' + "9" * 5000 + ",", '"seq": 1' + "0" * 5000 + ","],
+    "C132": ['"v": ' + "[" * 2000 + "]" * 2000 + ","],
+    "C136": ['"n": [-0, 1E3, 1.50, 123456789012345678901234567890]'],
+}
+
 
 class FloatToken(str):
     """A number token with a fraction or exponent, kept as its source text."""
+
+
+class ConstToken(str):
+    """NaN, Infinity or -Infinity: not JSON (A11); read only so the validator can reject a case file that holds one."""
 
 
 class DuplicateKey(Exception):
@@ -55,33 +81,41 @@ def load(path, allow_duplicates=False):
             raise DuplicateKey(f"duplicate key in {path}")
         return dict(items)
 
-    def bad_constant(name):
-        raise ValueError(f"non-JSON constant {name} in {path}")
-
     with open(path, encoding="utf-8") as fh:
-        return json.loads(fh.read(), object_pairs_hook=pairs, parse_float=FloatToken, parse_constant=bad_constant)
+        return json.loads(fh.read(), object_pairs_hook=pairs, parse_float=FloatToken, parse_constant=ConstToken)
 
 
 def canon(x):
-    return json.dumps(x, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+    """SPEC 9 with item 7 (A07): integers as integers, other number tokens as source text, strings with \\u escapes."""
+    if isinstance(x, (FloatToken, ConstToken)):
+        return str(x)
+    if x is True or x is False or x is None:
+        return json.dumps(x)
+    if isinstance(x, int):
+        return str(x)
+    if isinstance(x, str):
+        return json.dumps(x, ensure_ascii=True)
+    if isinstance(x, list):
+        return "[" + ",".join(canon(v) for v in x) + "]"
+    return "{" + ",".join(json.dumps(k, ensure_ascii=True) + ":" + canon(x[k]) for k in sorted(x)) + "}"
 
 
 def sha(x):
     return hashlib.sha256(canon(x).encode("utf-8")).hexdigest()
 
 
-def has_float(x):
-    if isinstance(x, FloatToken):
+def has_float(x, kinds=(FloatToken,)):
+    if isinstance(x, kinds):
         return True
     if isinstance(x, dict):
-        return any(has_float(v) for v in x.values())
+        return any(has_float(v, kinds) for v in x.values())
     if isinstance(x, list):
-        return any(has_float(v) for v in x)
+        return any(has_float(v, kinds) for v in x)
     return False
 
 
 def is_int(x):
-    return isinstance(x, int) and not isinstance(x, bool) and not isinstance(x, FloatToken)
+    return isinstance(x, int) and not isinstance(x, bool)
 
 
 def token_text(x):
@@ -442,6 +476,69 @@ def check_receive(where, inp, exp):
         DELIVERIES.append((where, dl))
 
 
+def check_synthetic(where, op, inp, exp):
+    """A synthetic case (SPEC 11.1): the 4.4 step 1 shapes and the output order only, no provenance, id or version check."""
+    dkeys = {"id", "key", "kind", "payload", "rule", "seq", "subject", "version"}
+
+    def delivery_ok(d):
+        return isinstance(d, dict) and set(d) == dkeys and is_int(d["seq"]) and d["seq"] >= 1 and isinstance(d["payload"], dict) \
+            and all(isinstance(d[k], str) for k in ("id", "key", "kind", "rule", "subject", "version"))
+
+    def basis_ok(b):
+        return isinstance(b, dict) and set(b) == {"tx", "validTime"} and is_int(b["tx"]) and isinstance(b["validTime"], str)
+
+    if op == "publish":
+        if set(inp) != {"evaluations", "state"} or set(exp) != {"deliveries", "state"}:
+            return err(where, "publish input must be {evaluations, state} and output {deliveries, state}")
+        wkeys = {"id", "inputs", "key", "kind", "payload", "rule", "version"}
+        for ev in inp["evaluations"]:
+            if set(ev) != {"basis", "release", "subject", "workItems"} or not basis_ok(ev["basis"]) \
+                    or not all(set(w) == wkeys and isinstance(w["payload"], dict) and all(is_int(i) for i in w["inputs"])
+                               for w in ev["workItems"]):
+                err(where, f"bad evaluation record shape {ev.get('subject')}")
+        for st_name, st in (("input state", inp["state"]), ("output state", exp["state"])):
+            if set(st) != {"items", "pending", "subjects"} \
+                    or any(set(i) != {"id", "payload", "retired", "seq", "subject"} or not is_int(i["seq"]) or i["seq"] < 1
+                           or not isinstance(i["retired"], bool) for i in st["items"]) \
+                    or any(set(x) != {"basis", "subject"} or not basis_ok(x["basis"]) for x in st["subjects"]) \
+                    or not all(delivery_ok(d) for d in st["pending"]):
+                err(where, f"{st_name} has a bad shape")
+        out = exp["state"]
+        if not sorted_unique([i["id"] for i in out["items"]]) or not sorted_unique([x["subject"] for x in out["subjects"]]):
+            err(where, "output items or subjects not in ascending code-point order")
+        if not all(delivery_ok(d) for d in exp["deliveries"]) or out["pending"] != inp["state"]["pending"] + exp["deliveries"]:
+            err(where, "output pending must be input pending followed by this call's deliveries")
+        return
+    if set(inp) != {"deliveries", "state"} or set(exp) != {"applied", "state"} or set(exp["applied"]) != {"effects", "projection"}:
+        return err(where, "receive input must be {deliveries, state} and output {applied: {effects, projection}, state}")
+    for st_name, st in (("input state", inp["state"]), ("output state", exp["state"])):
+        if set(st) != {"effects", "projection"} \
+                or any(set(e) != {"done", "id", "waiting"} or not is_int(e["done"]) or e["done"] < 0
+                       or not all(delivery_ok(d) for d in e["waiting"]) for e in st["effects"]) \
+                or any(set(p) != {"id", "payload", "seq"} or not is_int(p["seq"]) or p["seq"] < 1 for p in st["projection"]):
+            err(where, f"{st_name} has a bad shape")
+    out = exp["state"]
+    if not sorted_unique([e["id"] for e in out["effects"]]) or not sorted_unique([p["id"] for p in out["projection"]]) \
+            or any([x["seq"] for x in e["waiting"]] != sorted(x["seq"] for x in e["waiting"]) for e in out["effects"]):
+        err(where, "output effects, projection or waiting not in order")
+    if not all(delivery_ok(d) for d in inp["deliveries"] + exp["applied"]["effects"] + exp["applied"]["projection"]):
+        err(where, "bad delivery shape")
+
+
+def check_bytes_case(w, c):
+    """An inputBase64 case (SPEC 11.1): its bytes must not be one JSON text in UTF-8 without a BOM (A01), so W0.E_SHAPE."""
+    if c["expected"] != {"error": "W0.E_SHAPE"}:
+        return err(w, "an inputBase64 case must expect W0.E_SHAPE")
+    data = base64.b64decode(c["inputBase64"], validate=True)
+    try:
+        if data.startswith(b"\xef\xbb\xbf"):
+            raise ValueError("BOM")
+        json.loads(data.decode("utf-8", errors="strict"), parse_constant=lambda s: (_ for _ in ()).throw(ValueError(s)))
+    except ValueError:
+        return
+    err(w, "inputBase64 decodes to one JSON text, so it is not a byte-level E_SHAPE case")
+
+
 def emitted_rules(out):
     rules = set()
     for name in ("flags", "obligations", "tasks", "workItems"):
@@ -459,16 +556,28 @@ def check_case(path, releases, by_hash, cases):
     with open(path, encoding="utf-8") as fh:
         raw = fh.read()
     w = os.path.basename(path)
-    need = {"id", "slug", "title", "op", "checks", "notes", "input", "expected"}
-    if not need <= set(c) or not set(c) <= need | {"identicalTo"}:
+    need = {"id", "slug", "title", "op", "checks", "notes", "expected"} | ({"inputBase64"} if "inputBase64" in c else {"input"})
+    if not need <= set(c) or not set(c) <= need | {"identicalTo", "synthetic"}:
         return err(w, f"case keys {sorted(c)}")
     if not w.startswith(c["id"] + "-" + c["slug"]):
         err(w, "file name must be <id>-<slug>.json")
+    for text in RAW_TEXT.get(c["id"], []):
+        if text not in raw:
+            err(w, f"raw text {text[:40]!r} must stay in the file as written")
+    cases[c["id"]] = c
+    if "inputBase64" in c:
+        return check_bytes_case(w, c)
     exp, inp, op = c["expected"], c["input"], c["op"]
     is_error = isinstance(exp, dict) and set(exp) == {"error"}
-    if has_float(exp) or (has_float(inp) and not is_error):
-        err(w, "float tokens are allowed only in the input of an error case")
-    cases[c["id"]] = c
+    synthetic = c.get("synthetic", False)
+    if synthetic is not True and "synthetic" in c or synthetic and (is_error or op not in ("publish", "receive") or c["checks"]):
+        return err(w, "synthetic is true only on a valid publish or receive case without checks")
+    if has_float(c, (ConstToken,)):
+        err(w, "NaN and Infinity are not JSON: a case with them in its input uses inputBase64")
+    if not synthetic and (has_float(exp) or (has_float(inp) and not is_error)):
+        err(w, "float tokens are allowed only in the input of an error case or in a synthetic case")
+    if synthetic:
+        return check_synthetic(w, op, inp, exp)
     if is_error:
         if exp["error"] not in SCHEMA["errorCodes"]:
             err(w, f"unknown error code {exp['error']}")
@@ -533,9 +642,16 @@ def main():
     for f in files:
         check_case(os.path.join(HERE, "cases", f), releases, by_hash, cases)
     check_references()
-    for cid in NUMERIC_ERROR_TOKENS:
+    for cid in list(NUMERIC_ERROR_TOKENS) + list(RAW_TEXT):
         if cid not in cases:
-            err("NUMERIC_ERROR_TOKENS", f"{cid} is listed but missing")
+            err("NUMERIC_ERROR_TOKENS or RAW_TEXT", f"{cid} is listed but missing")
+    manifest = load(os.path.join(HERE, "expected-sha256.json"))
+    if set(manifest) != set(cases):
+        err("expected-sha256.json", "must list exactly the case ids")
+    for cid, c in cases.items():
+        want = hashlib.sha256(canon(c["expected"]).encode("utf-8")).hexdigest()
+        if manifest.get(cid) != want:
+            err("expected-sha256.json", f"{cid} should be {want} (sha256 of canonicalJson(expected), SPEC 9)")
     for c in cases.values():
         other = c.get("identicalTo")
         if other and (other not in cases or canon(cases[other]["expected"]) != canon(c["expected"])):

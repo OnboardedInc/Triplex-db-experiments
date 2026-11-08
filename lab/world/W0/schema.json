@@ -1,6 +1,6 @@
 {
   "world": "W0",
-  "specVersion": "W0-1.1.1",
+  "specVersion": "W0-1.1.2",
   "types": {
     "date": {"json": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", "yearMin": 2000, "yearMax": 2099, "note": "real proleptic Gregorian date"},
     "instant": {"json": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{6}Z$", "yearMin": 2000, "yearMax": 2099, "note": "UTC, microseconds, hour 00-23, minute 00-59, second 00-59"},
