@@ -1308,3 +1308,18 @@ Where each priority stands, from evidence so far (research probes and baselines;
   start/end hashing is not isolation). Not needed: QLever update-versus-query interference is already covered by R17 and R8.
 - **Running (10):** V-X02, W01b, P4, R25, P2Q fix round 2, K01, E01 fix round 2, V-O04h, V-C8, J01 (its G1 reruns). Next free slots, in
   order: EXP-O05 (O-OBS), R27, R28.
+
+## 2026-11-08 21:12Z: PROTOCOL v1: new agent roles, a third lane (Datomic), and the weekly-limit pause handled without losing work
+- **What happened:** all ten Claude agents stopped mid-work on the Claude weekly limit (about 03:30Z to 11:00Z on 2026-11-08). The window
+  has reset (0% used at 21:04Z).
+- **Sam's instruction (2026-11-08):** Codex gpt-6.1-sol at medium builds code, Codex at high reviews adversarially, Opus 5.5 at high plans
+  and thinks, nothing above high, a Datomic lane joins XTDB and QLever, and work pauses gracefully at 65% usage. Written into
+  lab/PROTOCOL.md (replaces PLAN 6.2), SCOPE.md (three lanes) and the memory.
+- **Tooling:** lab/bin/agent.mjs is the only way Codex is launched: it forces model, effort (builder medium, reviewer high) and the
+  workspace-write sandbox with the shared ledgers writable, prepends lab/agents/CODEX-PREAMBLE.md (the lab rules) to every prompt, and
+  records launches, sessions and exits in lab/agents/ledger.jsonl. Needed because ~/.codex/config.toml defaults to effort max with
+  full disk access. A smoke run confirmed Docker, git, the pnpm store and the QLever resident are reachable from the sandbox.
+- **In-flight work kept:** the paused agents were not resumed, since their effort may exceed high; their uncommitted work went into WIP
+  commits on seven branches, and lab/agents/handoffs/ holds each one's last state. Codex agents continue from those.
+- **Running now (10):** R29 (Opus high) designs lane D; nine Codex agents continue lanes X and Q (broker round 2, P4, E01 round 2, W01b,
+  J01, O-OBS) and three reviews (V-C8, V-O04h, V-X02).

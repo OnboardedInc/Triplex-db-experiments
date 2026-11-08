@@ -40,20 +40,23 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | contract 0.3.7 (main ca42e06) | Q46-Q49 compiled; 153 obligations; W0-1.1.1 pinned ACCEPTED; O-DOMAIN fingerprint null; Q50-Q54 pending rows (no authority) | Codex round 7 DONE: NOT READY, 5 open (2 partial, 3 new), all accepted as Q55; 0.3.8 compiles Q50-Q55 |
 | contract 0.3.3 (main 89376e1) | Q29-Q32 compiled; 142 obligations, 50 thresholds; W0 pin null until V-D01 | Codex round 3 |
 
-## Running agents (9 active, C8 and J01 waiting on runs; N01, C8 and J01 resume on their own when their runs finish; dispatch nothing new until a slot frees)
-| Agent | Priority | Output |
-| --- | --- | --- |
-| EXP-J01 bytes per commit, both lanes (opus; fresh-scope service-time runs) | P2 (and delta growth for P3/P5) | per-source tables, candidate encoding |
-| V-C8 independent check of C8 d9b2dc8 (opus, fresh; verify/C8; brief lab/verify/C8/BRIEF.md) | P1, C8 floor | verdict; merge after V-X02 (C8 carries X02) |
-| EXP-W01b remaining XTDB scenarios (opus, W01 author resumed) | GS correctness on XTDB | 12 scenarios, GS.04 rerun, GS.12 patch |
-| P2Q fix round 2 (opus, P2Q author a56ab43df1f0e0ef7 resumed; exp/P2Q-qlever-log-broker) | P2, P3 | Q72a lock helper, Q72b/Q67c answer snapshot, Q72c reasons, Q67d P3 timing |
-| EXP-E01 fix round 2 (opus, E01 author resumed): Q75a-j plus the 0.3.10 field names (slot to placement, Q67g) | floor for every claim | then V-E01 delta check (resume a38618f4537a2f419) |
-| V-X02 XTQL lane verification (opus) | XTQL primary lane | verdict on exp/X02-xtql-parity bf1ad4d |
-| EXP-P4 current-value path (opus) | P4 | read-path arms X1, X2, H1, Q1 |
-| V-O04h re-check of O-REPLAY 0.4.8 3c52a1d (opus, resumed; brief lab/verify/O02/V-O04h/BRIEF.md) | correctness floor | ACCEPT -> pin 0.4.8 in contract 0.3.11 |
-| EXP-K01 seed-once clone tooling (opus, fresh; exp/K01-seed-clone) | measurement speed, all five | engine.mjs golden/clone, readiness checks, 500-subject live check, E1 plan |
-| R25 SQLite pinned readers beside one durable writer (sonnet xhigh; /Users/sam/Claude/Projects/triplex-db-2/R25/) | P1, P2, P4, P5 | one design for the broker's SQLite file |
-| EXP-M01 PARKED (handed back clean; no process running) | measurement floor | resumes in the Q69a measurement window |
+## Running agents (10; protocol lab/PROTOCOL.md since 2026-11-08: Codex builders medium, Codex reviewers high, Opus planners high)
+| Agent | Role, model, effort | Priority | Output |
+| --- | --- | --- | --- |
+| R29 lane D (Datomic) design | planner, Opus 5.5, high | all five on lane D | /Users/sam/Claude/Projects/triplex-db-2/R29/ report + EXP-DA00-02 briefs |
+| CX-P2Q-R2 broker fix round 2 (exp/P2Q-qlever-log-broker) | builder, Codex medium | P2, P3 | Q72a-g, Q67c/d/h; then a Codex reviewer delta check |
+| CX-VC8 (verify/C8) | reviewer, Codex high | P1 | verdict on C8 d9b2dc8 |
+| CX-P4 (exp/P4-current-path; holds s2) | builder, Codex medium | P4 | arms X1, X2, H1, Q1 |
+| CX-E01-R2 (exp/E01-claim-evaluator) | builder, Codex medium | floor for claims | Q75a-j, 0.3.10 field names; then a reviewer delta check |
+| CX-VO04H (verify/O02) | reviewer, Codex high | correctness floor | verdict on O-REPLAY 0.4.8 3c52a1d |
+| CX-VX02 (verify/X02) | reviewer, Codex high | XTQL lane | verdict on X02 bf1ad4d, minus the exclusive-slot rerun |
+| CX-W01B (exp/W01-golden-scenarios) | builder, Codex medium | GS | remaining XTDB scenarios, GS.04, GS.12 |
+| CX-O05 (exp/O05-observation-oracle) | builder, Codex medium | floor: O-OBS blocks 62 obligations | lab/acceptance/oracle/observe.py |
+| CX-J01 (exp/J01-bytes-per-commit) | builder, Codex medium | P2 | final report |
+
+Paused at the 2026-11-08 Claude weekly limit and not resumed (effort may exceed high): the ten agents in lab/agents/handoffs/;
+their work is in WIP commits on their branches. Still waiting for a slot: EXP-K01 (builder; worktree k01, clean at 870976e), R25
+finish (planner; data in /Users/sam/Claude/Projects/triplex-db-2/R25/), R27 and R28 (planners), M01 (parked for the Q69a window).
 
 ## Codex review history
 Codex plan-v2 review DONE: NOT READY, 14 findings all accepted (lab/reviews/plan-v2-review.responses.md, 675db6b). Codex round 2 DONE: 7 closed, 7 partial, 6 new, NOT READY; all accepted as Q31a-k (743cb1f). Contract 0.3.3 committed 89376e1 (142 obligations). Codex round 3 DONE: 11 closed, 2 partial, 5 new, NOT READY; accepted as Q34a-e (9a4fbb4). Contract 0.3.4 committed 60e4c57 (147 obligations, byte-identical regeneration). Codex round 4 DONE: NOT READY; accepted as Q38a-f (baeb9fd). Contract 0.3.5 committed 15a07b6 (149 obligations; 124 fail closed on null oracle pins; Q40 recorded-not-compiled; Q41 in RULINGS-PENDING.md). Codex round 5 DONE: 6 closed, 2 partial, 3 new; Q42a-c pending (59047ac). Contract 0.3.6 compiles Q40-Q42 once W0-1.1.0 lands; then Codex round 6. Rounds 6-8 since: open findings 4, 5, 10; round 8 accepted as Q67 (lab/reviews/plan-v2-round8.responses.md).
