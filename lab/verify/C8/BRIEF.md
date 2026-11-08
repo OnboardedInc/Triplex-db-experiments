@@ -37,3 +37,10 @@ lab/verify/C8/. Never touch /Users/sam/projects/triplex-db or ports 15442 and 17
 
 ## Return
 Verdict ACCEPT, FIX-FIRST or REJECT; a per-check table; each finding with severity, file:line, reproduction and proposed fix; your commit.
+
+## Verdict (CX-VC8, Codex reviewer at high), saved by the orchestrator 2026-11-08 21:26Z
+FIX-FIRST at d9b2dc8; evidence verify/C8 74e5627 (lab/verify/C8/VERIFY.md there). No live read mutation was found; 998 existing tests
+pass; light QLever checks 0 writes; XTDB live gates unverified. Findings (all P2 severity in the reviewer's scale): F1 a terminal cycle
+can exceed maxRounds and still succeed; F2 ruleClosure ignores accepted maxRounds and maxVisited; F3 path counting overflows the JS
+stack on an admitted 12,000-node DAG; F4 unclassified multipart traffic passes with a zero-write tally; F5 pgwire write executions vanish
+across a counter reset (prepared statements and portals). Ruled Q77 (pending).

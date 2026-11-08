@@ -88,3 +88,10 @@ These move into RULINGS.md when the contract version that compiles them is built
 | Q76f clean receipts | XTDB G1/G2 receipts for C8 are rerun on an exclusive slot after V-X02's; the overloaded-dev receipts stay as diagnostic. | C8 question 8 |
 | Q70n completeness by execution | The Q70l completeness check runs every query kind registered in `run.QUERIES` on generated cases and inspects the actual output (top level, pages and nested objects) for any `next*` key; a kind whose output carries one and is not in `CONTINUATIONS` fails, and a kind that cannot be exercised fails conservatively. Static source matching may stay as an extra check, never as the only one. Negative controls: a computed key, a helper in another module, a nested dictionary. | V-O04h F14 |
 | Q70o page selector typed | `cursorFrom.page` is an integer continuation parameter under Q70m: a JSON integer from 0 to the last page index, otherwise the case is malformed (exit 2); invalid reference shapes raise the oracle's input error, never an uncaught exception. | V-O04h F15 |
+
+## Q77: V-C8 findings (C8 fix round)
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q77a budgets are exact | Every accepted recursion budget is enforced with a typed refusal and never a partial or over-budget success: a confirmation read may not extend the answer past maxRounds; ruleClosure enforces maxRounds and maxVisited (or rejects budget fields it does not support). maxDepth keeps its Datalog meaning. | V-C8 F1, F2 |
+| Q77b no recursion in counting | Path counting uses iterative DP over DAGs and an explicit stack for bounded cyclic enumeration; pathSteps refusal stays typed. | V-C8 F3 |
+| Q77c counter fails closed on every unknown | The write counter positively classifies every operation it forwards; any multipart, prepared, portal or other operation it cannot classify counts as a write (or is refused). Classifications of prepared statements and portals survive tally resets, and Execute operations are what is counted. | V-C8 F4, F5 |
