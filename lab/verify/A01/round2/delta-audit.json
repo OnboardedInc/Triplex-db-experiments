@@ -1,0 +1,93 @@
+{
+  "revision": "3b46c8a07ff3c6285252736cc10e04267f7dbe1d",
+  "round1Source": "36d74348df2dd224ec15e29856a04a4e8daa4a30",
+  "transitiveContractSha256": "68304280363e5c602a2b343f405448c0d3e218dc4ff5de24af7cd8b219aebca7",
+  "topLevelChangedFields": [
+    "artifacts",
+    "capabilityMatrix",
+    "composition",
+    "inputs",
+    "knownLimits",
+    "oracleAnswerRule",
+    "oracleRunners",
+    "pendingRulings",
+    "receiptSchema",
+    "transitiveContractSha256"
+  ],
+  "mergeOnlyJsonDelta": [
+    ".inputs.lab/acceptance/RULINGS-PENDING.md",
+    ".pendingRulings.ids",
+    ".pendingRulings.sha256",
+    ".transitiveContractSha256"
+  ],
+  "allObligationRecordsUnchanged": true,
+  "allOldMatrixCellMapsUnchanged": true,
+  "compiledRulingsUnchanged": true,
+  "oracleAndWorldPinsUnchanged": true,
+  "imagePinsAndA0Unchanged": true,
+  "pending": {
+    "file": "lab/acceptance/RULINGS-PENDING.md",
+    "sha256": "53cf5267cf8e6f32f3ec139a79861ecf8de03da6f7d227ded95d0ebe03291c11",
+    "ids": [
+      "Q51b",
+      "Q72a",
+      "Q72b",
+      "Q72c",
+      "Q72d",
+      "Q72e",
+      "Q72g",
+      "Q73a",
+      "Q73b",
+      "Q78e",
+      "Q80a",
+      "Q80b",
+      "Q80c",
+      "Q81b",
+      "Q81c",
+      "Q82a",
+      "Q82b",
+      "Q82c",
+      "Q82d",
+      "Q82e",
+      "Q83a",
+      "Q83b",
+      "Q83c",
+      "Q84a",
+      "Q84b",
+      "Q84c",
+      "Q84d",
+      "Q84e",
+      "Q83d"
+    ],
+    "authority": "none",
+    "rule": "RULINGS-PENDING.md may hold ruling rows; they carry no authority, are never compiled into this contract and never count as compiled RULINGS.md entries; the generator records the file's hash under inputs and lists the pending ids, and their presence never invalidates generation or --verify (RULINGS Q47d)"
+  },
+  "pendingEqualsMainMinus50": true,
+  "pendingCompiledIntersection": [],
+  "importedBinConfigDifferentFromMainParent": [],
+  "round1ReproductionsCopiedExactly": true,
+  "round1ReproductionsSha256": "9f258188b525cd512dc2a515e8acf5745593c4de97b1ff23ea2ca14b48c370aa",
+  "externalOracleTableSha256": "357d747af267eee5863033288143d5f18952e21a43d2038b68258384a3aab322",
+  "all29OracleHashesMatch": true,
+  "knownLimit": {
+    "engine": "core SQL compileRecursiveCTE (only adapters using it)",
+    "behavior": "compileRecursiveCTE ignores recursive tail constraints. A lane unable to preserve a constraint must refuse typed, never omit it. Fix and qualify the compiler before a lane uses it; current XTDB/QLever C8 frontier paths are not declared users of this compiler",
+    "evidence": "RULINGS Q76c; packages/core/src/datalog/compiler.ts compileRecursiveCTE"
+  },
+  "datomicSurfaceCounts": {
+    "total": 153,
+    "closable": 0,
+    "blocked": 153
+  },
+  "qualificationBlockers": {
+    "rule": "every blocker stays until EXP-G03's executing gate exists; manifests, runners, the build spec, the frozen trace and A0 controls are pinned only through contract versions (RULINGS Q67a, Q65f)",
+    "list": [
+      "an executing gate.mjs OBL with obl-case.ts, a fault injector writing fault-witness/1 and the PAIR-0 paired-rounds runner (EXP-G03, after EXP-M01)",
+      "pinned case manifests (CS manifestSha256)",
+      "BUILD_SPEC",
+      "writerTrace.generator.frozen",
+      "A0_REGISTRY entries",
+      "a VERIFIER_REGISTRY entry per claimed obligation"
+    ]
+  }
+}

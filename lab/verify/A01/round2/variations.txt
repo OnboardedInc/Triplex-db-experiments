@@ -1,0 +1,28 @@
+test_actual_cli_inflight_aggregate_match_and_entity_triples (__main__.DeltaVariations.test_actual_cli_inflight_aggregate_match_and_entity_triples) ... ok
+test_all_153_datomic_obligations_stay_image_blocked (__main__.DeltaVariations.test_all_153_datomic_obligations_stay_image_blocked) ... ok
+test_all_datomic_and_mixed_compositions_bind_with_unpinned_images (__main__.DeltaVariations.test_all_datomic_and_mixed_compositions_bind_with_unpinned_images) ... ok
+test_codepoints_not_normalized (__main__.DeltaVariations.test_codepoints_not_normalized) ... ok
+test_datomic_engine_schema_and_receipt_complete (__main__.DeltaVariations.test_datomic_engine_schema_and_receipt_complete) ... ok
+test_empty_arrays_supported (__main__.DeltaVariations.test_empty_arrays_supported) ... ok
+test_every_assignment_rejects_unknown_engine (__main__.DeltaVariations.test_every_assignment_rejects_unknown_engine) ... ok
+test_exact_comparator_does_not_reorder_wrapper_rows (__main__.DeltaVariations.test_exact_comparator_does_not_reorder_wrapper_rows) ... ok
+test_extra_or_missing_wrapper_keys_fail (__main__.DeltaVariations.test_extra_or_missing_wrapper_keys_fail) ... ok
+test_later_query_wrapper_is_compared (__main__.DeltaVariations.test_later_query_wrapper_is_compared) ... ok
+test_match_both_row_fields_reorder_independently (__main__.DeltaVariations.test_match_both_row_fields_reorder_independently) ... ok
+test_match_each_field_rejects_value_change (__main__.DeltaVariations.test_match_each_field_rejects_value_change) ... ok
+test_ordered_and_pages_keep_order (__main__.DeltaVariations.test_ordered_and_pages_keep_order) ... ok
+test_prefix_metadata_and_prefix_count_preserved (__main__.DeltaVariations.test_prefix_metadata_and_prefix_count_preserved) ... ok
+test_q76c_record_is_scoped_and_rendered (__main__.DeltaVariations.test_q76c_record_is_scoped_and_rendered) ... ok
+test_query_metadata_preserved (__main__.DeltaVariations.test_query_metadata_preserved) ... ok
+test_rows_bag_rejects_lost_duplicate (__main__.DeltaVariations.test_rows_bag_rejects_lost_duplicate) ... ok
+test_rows_bag_reorders_with_duplicates (__main__.DeltaVariations.test_rows_bag_reorders_with_duplicates) ... ok
+test_rows_set_deduplicates (__main__.DeltaVariations.test_rows_set_deduplicates) ... ok
+test_state_and_commands_remain_exact_with_wrappers (__main__.DeltaVariations.test_state_and_commands_remain_exact_with_wrappers) ... ok
+test_unicode_keys_and_values_at_recursive_boundaries (__main__.DeltaVariations.test_unicode_keys_and_values_at_recursive_boundaries) ... ok
+test_unknown_and_partial_row_wrappers_refused (__main__.DeltaVariations.test_unknown_and_partial_row_wrappers_refused) ... ok
+test_wrapper_metadata_exact_for_all_placements (__main__.DeltaVariations.test_wrapper_metadata_exact_for_all_placements) ... ok
+
+----------------------------------------------------------------------
+Ran 23 tests in 0.124s
+
+OK

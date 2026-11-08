@@ -1,0 +1,40 @@
+{
+  "revision": "3b46c8a07ff3c6285252736cc10e04267f7dbe1d",
+  "round1Source": "36d74348df2dd224ec15e29856a04a4e8daa4a30",
+  "transitiveContractSha256": "68304280363e5c602a2b343f405448c0d3e218dc4ff5de24af7cd8b219aebca7",
+  "topLevelChangedFields": [
+    "artifacts",
+    "capabilityMatrix",
+    "composition",
+    "inputs",
+    "knownLimits",
+    "oracleAnswerRule",
+    "oracleRunners",
+    "pendingRulings",
+    "receiptSchema",
+    "transitiveContractSha256"
+  ],
+  "mergeOnlyJsonDelta": [
+    ".inputs.lab/acceptance/RULINGS-PENDING.md",
+    ".pendingRulings.ids",
+    ".pendingRulings.sha256",
+    ".transitiveContractSha256"
+  ],
+  "allObligationRecordsUnchanged": true,
+  "allOldMatrixCellMapsUnchanged": true,
+  "compiledRulingsUnchanged": true,
+  "oracleAndWorldPinsUnchanged": true,
+  "imagePinsAndA0Unchanged": true,
+  "pendingEqualsMainMinus50": true,
+  "pendingCompiledIntersection": [],
+  "importedBinConfigDifferentFromMainParent": [],
+  "round1ReproductionsCopiedExactly": true,
+  "round1ReproductionsSha256": "9f258188b525cd512dc2a515e8acf5745593c4de97b1ff23ea2ca14b48c370aa",
+  "externalOracleTableSha256": "357d747af267eee5863033288143d5f18952e21a43d2038b68258384a3aab322",
+  "all29OracleHashesMatch": true,
+  "datomicSurfaceCounts": {
+    "total": 153,
+    "closable": 0,
+    "blocked": 153
+  }
+}

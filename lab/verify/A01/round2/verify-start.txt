@@ -1,0 +1,17 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 23904 "CX-P2Q-R4-suites", pid 26205 "CX-SQL01-kill80", pid 26420 "CX-SQL01-verifier-semantic", pid 26204 "CX-SQL01-unit"
+[lab] heavy: waiting for one of 4 slots; held by pid 23904 "CX-P2Q-R4-suites", pid 26205 "CX-SQL01-kill80", pid 26420 "CX-SQL01-verifier-semantic", pid 26737 "DA01-suite-diagnostic"
+[lab] heavy: waiting for one of 4 slots; held by pid 23904 "CX-P2Q-R4-suites", pid 26205 "CX-SQL01-kill80", pid 26420 "CX-SQL01-verifier-semantic", pid 26486 "CX-SQL01-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 23904 "CX-P2Q-R4-suites", pid 26813 "CX-VA01-0311-R2-negtest", pid 26420 "CX-SQL01-verifier-semantic", pid 26486 "CX-SQL01-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 23904 "CX-P2Q-R4-suites", pid 26813 "CX-VA01-0311-R2-negtest", pid 26420 "CX-SQL01-verifier-semantic", pid 26486 "CX-SQL01-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 23904 "CX-P2Q-R4-suites", pid 26813 "CX-VA01-0311-R2-negtest", pid 26420 "CX-SQL01-verifier-semantic", pid 26486 "CX-SQL01-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 23904 "CX-P2Q-R4-suites", pid 26813 "CX-VA01-0311-R2-negtest", pid 26420 "CX-SQL01-verifier-semantic", pid 26527 "CX-SQL01-flip-wal"
+[lab] heavy: waiting for one of 4 slots; held by pid 23904 "CX-P2Q-R4-suites", pid 26813 "CX-VA01-0311-R2-negtest", pid 26420 "CX-SQL01-verifier-semantic", pid 27969 "CX-O05-R3-first"
+[lab] heavy: waiting for one of 4 slots; held by pid 23904 "CX-P2Q-R4-suites", pid 26813 "CX-VA01-0311-R2-negtest", pid 27893 "CX-VX02-4-grammar-review", pid 27969 "CX-O05-R3-first"
+verify transitive hash: 68304280363e5c602a2b343f405448c0d3e218dc4ff5de24af7cd8b219aebca7
+verify oracle-contract.json: a7ec2fe98f8bb066fe6ea55e89344905f5e9c760b076152f5377c414d18adbd0
+verify obligations.json: 14469dc55956828e5b31e688747769d3808d7f2cbfdd4782ed3adad5e2bc934e
+verify load-contract.json: 00169eedc83df0d7541f12c188aaec72f94c11f8ba70992e0411a4999d2adced
+verify budgets.json: 91a85c688b876f767c25afa73d4a3080eb2831bc21ed1daaf48e7b5a701bda00
+verify capability-matrix.md: 544acb56083db7c37ecfdcbe5f8e140b9999d368ee84632acd103b3b5069ac40
+verify ACCEPTANCE.md: a62e022e0547f442c21ac2cd8e346ca0e64f2e1141041dfcfb59f5a87dddd124
+second regeneration byte-identical (RULINGS Q34e)
