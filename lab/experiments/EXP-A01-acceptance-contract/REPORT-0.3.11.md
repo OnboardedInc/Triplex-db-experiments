@@ -315,3 +315,62 @@ No engines, containers, installs, benchmarks, publishing, pushes, or main-branch
 | `lab/acceptance/build_contract.py` | `512ef4c1da9e185771bcb94d6fc4680c349a52da37168048fe706a28b5a5cf7e` |
 | `lab/acceptance/oracle-contract.json` | `9e4b3541c1078a510f258edc4a9eb3331a97ebb9a65bf1c0b4ce75bcec99007c` |
 
+
+
+## Round 2 — CX-A01-0311 fixes for independent review ae3f091
+
+North star: correctness floor for P1 exact pinned answers and P3 continuation, with the same composition identity requirements on lane D. This section describes the current contract; earlier sections and their hashes remain the round-1 historical record.
+
+Source head: `da79107aa3be440ff38012962b0ea161198411df`. Fix commit: `a6b3028`. Merged main `8f1722612b05ceeabbd36041e8bed2ad6459bf0a` in `da79107`, as requested. Reviewer findings were read from immutable verifier commit `ae3f09137e6216dfa2580ec1f00d7d6c06133c73` (`lab/verify/A01/VERIFY-0.3.11.md` and regressions). The reviewer's regression script is copied unchanged to `lab/verify/A01/regressions_review0311.py`; SHA-256 `9f258188b525cd512dc2a515e8acf5745593c4de97b1ff23ea2ca14b48c370aa`.
+
+### Fixes
+
+| Finding | Change | Controls |
+| --- | --- | --- |
+| F1 — real O-REPLAY result objects | Row comparators project `rows` from aggregate `{cut, rows}` results and both `raw`/`snapshot` arrays from match/entityTriples results. Bare row arrays remain supported. The same projection applies to each in-flight acceptable result. All other wrapper/query/prefix metadata, including cut, count and contract, remains exact. Unknown row-object shapes fail closed and are explicitly described as uncomparable. | Unchanged real aggregate CLI regression; new real CLI aggregate and match payloads with two rows; BAG reorder succeeds, ORDERED reorder fails, changed cut/count/contract fails; direct and in-flight placements; unknown/partial wrappers fail. |
+| F2 — Unicode recursive serialization | Recursive canonical row keys use UTF-8 (`ensure_ascii=False`), matching `_canon`. Strings retain code points without normalization. | All three formerly failing reviewer Unicode tests pass; SET/BAG/ORDERED with Japanese, emoji and accented strings, direct and in-flight; composed and decomposed accents compare unequal. |
+| F3 — Datomic composition/receipt schemas | `composition.engines` and `receiptSchema.fields.composition` include Datomic. Structured `composition.engineIds` enumerates xtdb/qlever/datomic and is enforced by `composition_ok` and O-CONTRACT identity. Datomic image/imageId and A0 stay null. | Reviewer schema check; Datomic identity is bound while `imagesPinned` is false; unknown engine identity refuses; all D obligations retain their image blocker. |
+| F4 — Q76c matrix record | Matrix row 35 references `KL-CORE-TAIL`; the generated known-limit table identifies core `compileRecursiveCTE` ignoring tail constraints. It requires a fix before a lane uses that compiler, or typed refusal if the constraint cannot be preserved. It does not claim existing XTDB/QLever C8 frontier paths use that compiler and adds no universal engine failure. | Reviewer matrix check; generator check binds row note to scoped known limit; all 51 prior matrix cell maps remain unchanged. |
+
+Six additional mutation controls cover disabling real payload projection, ignoring cut metadata, escaping Unicode at the recursive boundary, removing Datomic from each schema, and removing the compiler defect record. They extend the existing negtest0311 catalog.
+
+### Main merge and pending authority
+
+Only generated-file conflicts and the pending-file conflict required resolution. Generated files were rebuilt from the fixed generator. Main's pending rows were retained after subtracting the same 50 already-compiled 0.3.11 rows; no new ruling was compiled. A source comparison confirms the resulting pending ID set is exactly the merged main parent's pending set minus those 50 rows.
+
+There are now **29 pending rows, authority none**: Q51b, Q72a, Q72b, Q72c, Q72d, Q72e, Q72g, Q73a, Q73b, Q78e, Q80a, Q80b, Q80c, Q81b, Q81c, Q82a, Q82b, Q82c, Q82d, Q82e, Q83a, Q83b, Q83c, Q84a, Q84b, Q84c, Q84d, Q84e, Q83d. In particular Q81b/c, Q82a-e, Q83a-d and Q84a-e remain pending, as do the prior Q51b/Q72/Q73/Q78e/Q80 rows. Q83b's newer freeze definition is not silently substituted for compiled Q74b.
+
+Main also contains the E01 evaluator implementation, research and operational records; the authorized merge preserves them. This round makes no new execution or qualification claim for that imported implementation. `git diff --cached --check` during the merge reported pre-existing trailing whitespace in imported E01 source/raw transcripts; those imported files were preserved. Round-2 authored source/report checks are recorded separately.
+
+### Counts and current pins
+
+Counts are unchanged from round 1: **157 distinct / 40 pin-level closable / 117 blocked**. Per surface: XTQL 154/39/115; SQL 154/39/115; SPARQL 155/39/116; Datomic Datalog/pull 153/0/153 (total/closable/blocked). These are not achieved closure counts. Every Datomic obligation remains blocked by `image-unpinned:datomic`.
+
+O-REPLAY remains 0.4.9 at f195f30, all 29 file hashes unchanged, accepted by V-O04i. No world/oracle/image/A0 pin was promoted. The generated O-CONTRACT projection and generator hashes change with the schema/comparator fixes; both remain explicitly pinned.
+
+Current transitive contract hash: `68304280363e5c602a2b343f405448c0d3e218dc4ff5de24af7cd8b219aebca7`.
+
+| Current artifact | SHA-256 |
+| --- | --- |
+| `build_contract.py` | `60055e9f236733365c4e558412368b0a2934df8cb1d5e9479d45758971940ccf` |
+| `RULINGS-PENDING.md` | `53cf5267cf8e6f32f3ec139a79861ecf8de03da6f7d227ded95d0ebe03291c11` |
+| `ACCEPTANCE.md` | `a62e022e0547f442c21ac2cd8e346ca0e64f2e1141041dfcfb59f5a87dddd124` |
+| `obligations.json` | `14469dc55956828e5b31e688747769d3808d7f2cbfdd4782ed3adad5e2bc934e` |
+| `oracle-contract.json` | `a7ec2fe98f8bb066fe6ea55e89344905f5e9c760b076152f5377c414d18adbd0` |
+| `capability-matrix.md` | `544acb56083db7c37ecfdcbe5f8e140b9999d368ee84632acd103b3b5069ac40` |
+| `load-contract.json` | `00169eedc83df0d7541f12c188aaec72f94c11f8ba70992e0411a4999d2adced` |
+| `budgets.json` | `91a85c688b876f767c25afa73d4a3080eb2831bc21ed1daaf48e7b5a701bda00` |
+
+Full source/pin/pending identities: [source-and-hashes.json](evidence-0.3.11-round2/source-and-hashes.json), [pins-and-pending.json](evidence-0.3.11-round2/pins-and-pending.json). Round-1 receipts remain unchanged.
+
+### Round-2 validation
+
+- Extended `negtest0311.py`: **344/344 runnable mutations caught, zero misses**, including all six round-2 defect controls and all 50 previously compiled ruling controls. Catalog 425; 81 retired anchors and one separately superseded status-only legacy mutation are not counted as runnable passes. The recorded source hash matches the committed merged generator.
+- Reviewer's unchanged `regressions_review0311.py`: **35/35 PASS**, including all six previously failing regressions. This is a builder rerun of independent test code, not independent delta acceptance.
+- Additional `regressions_round2.py`: **5/5 PASS**, exercising real public-CLI aggregate/match payloads, direct and in-flight placement, reordering, exact metadata, Unicode and Datomic identity.
+- `q47d_test0311.py`: **PASS**; synthetic pending rows stay non-authoritative, both prohibited regression mutants are detected, and all six generated files restore byte-for-byte.
+- Generator `--verify`: **PASS**, byte-identical. Authored source/report whitespace check: **PASS**; imported main whitespace is separately noted above.
+
+Receipts: [negtest.txt](evidence-0.3.11-round2/negtest.txt), [reviewer-regressions.txt](evidence-0.3.11-round2/reviewer-regressions.txt), [real-payloads.txt](evidence-0.3.11-round2/real-payloads.txt), [q47d.txt](evidence-0.3.11-round2/q47d.txt), [verify.txt](evidence-0.3.11-round2/verify.txt), [validation-summary.json](evidence-0.3.11-round2/validation-summary.json). Actual CLI inputs/answers are retained under `lab/verify/A01/replay-aggregate-*` and `lab/verify/A01/round2-real-*`. The raw Q47d transcript retains one emitted trailing space; it is preserved verbatim and excluded from the authored source/report whitespace claim.
+
+No engine/container lifecycle, package installation, benchmark, package build or full root pnpm check was performed. The core compiler defect is recorded, not fixed in production code. This is builder validation of the contract fix; an independent delta review remains required before contract acceptance. Nothing was pushed or merged into main, and the main checkout was not edited.
