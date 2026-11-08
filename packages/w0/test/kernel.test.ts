@@ -1,6 +1,6 @@
 /**
  * Unit tests: release documents and hashes (SPEC 5), dates (SPEC 6.1), the token-level reader and canonical writer (SPEC 2,
- * 9, 14 rows 1, 2, 34), the Q53 readings A01 to A09, the new SPEC-AMBIGUITY readings D01b-A11 to A14, and invariants of
+ * 9, 14 rows 1, 2, 34), the readings A01 to A15 (SPEC 14 rows 50 to 64, RULINGS Q53 and Q57), and invariants of
  * SPEC 13 on generated worlds.
  */
 import { readFileSync } from "node:fs";
@@ -126,9 +126,11 @@ describe("token-level reader and canonical writer (SPEC 2, 9, 14)", () => {
     ])
       expect(() => scan(bad), bad).toThrow();
   });
-  it("is iterative: 200,000 levels of nesting scan without a stack overflow (D01b-A13)", () => {
+  it("is iterative: 200,000 levels of nesting scan and write without a stack overflow (SPEC 4.4, A13)", () => {
     const deep = "[".repeat(200_000) + "]".repeat(200_000);
-    expect(scan(deep).t).toBe("arr");
+    const v = scan(deep);
+    expect(v.t).toBe("arr");
+    expect(canonicalJV(v)).toBe(deep);
   });
   it("decodes strict UTF-8 and refuses a byte order mark (A01)", () => {
     expect(decodeUtf8Strict(Uint8Array.from([0xef, 0xbb, 0xbf, 0x7b, 0x7d]))).toBeNull();
@@ -141,7 +143,7 @@ describe("token-level reader and canonical writer (SPEC 2, 9, 14)", () => {
     expect(quote("\u0000\b\f\n\r\t\u001f\u007f")).toBe('"\\u0000\\b\\f\\n\\r\\t\\u001f\\u007f"');
     expect(quote("é€😀")).toBe('"\\u00e9\\u20ac\\ud83d\\ude00"');
   });
-  it("orders keys by code point, which is UTF-8 byte order (SPEC 9 item 2, D01b-A14)", () => {
+  it("orders keys by code point, which is UTF-8 byte order (SPEC 8.7 and 9 item 2, A14)", () => {
     // U+E000 sorts before U+1F600 by code point; UTF-16 code units would put the surrogate pair (0xD83D) first.
     const pua = String.fromCharCode(0xe000);
     const smile = String.fromCodePoint(0x1f600);
@@ -314,7 +316,7 @@ describe("Q53 readings A01 to A09", () => {
   });
 });
 
-describe("D01b-A11 and D01b-A12: number tokens a lenient parser would accept or refuse", () => {
+describe("readings A11 to A13 (SPEC 2, 4.4): number tokens and depth a lenient or recursive parser gets wrong", () => {
   it("NaN and Infinity are not JSON values: E_SHAPE, not E_VALUE", () => {
     const text = JSON.stringify(evalInput(baseFacts)).replace('"v":1650,"tx":2', '"v":NaN,"tx":2');
     expect(runText("evaluate", text)).toBe(err("E_SHAPE"));
@@ -330,13 +332,37 @@ describe("D01b-A11 and D01b-A12: number tokens a lenient parser would accept or 
       runText("evaluate", JSON.stringify(evalInput(baseFacts)).replace('"tx":10', `"tx":${big}`)),
     ).toBe(err("E_BASIS"));
   });
-  it("a 10,000-deep array as a fact value is E_VALUE (D01b-A13)", () => {
+  it("a 10,000-deep array as a fact value is E_VALUE (A13)", () => {
     const deep = "[".repeat(10_000) + "]".repeat(10_000);
     const text = JSON.stringify(evalInput(baseFacts)).replace(
       '"v":1650,"tx":2',
       `"v":${deep},"tx":2`,
     );
     expect(runText("evaluate", text)).toBe(err("E_VALUE"));
+  });
+  it("a 200,000-deep payload passes publish and receive and is written back exactly (A13, SPEC 9 item 7)", () => {
+    const deep = "[".repeat(200_000) + "]".repeat(200_000);
+    const payload = `{"d":${deep}}`;
+    const delivery = (seq: number) =>
+      `{"id":"wi:x","key":"","kind":"k","payload":${payload},"rule":"MINWAGE","seq":${seq},"subject":"pl:a","version":"wv:x"}`;
+    const published = runText(
+      "publish",
+      `{"evaluations":[{"basis":{"tx":1,"validTime":"2026-11-04T12:00:00.000000Z"},"release":"r","subject":"pl:a",` +
+        `"workItems":[{"id":"wi:x","inputs":[],"key":"","kind":"k","payload":${payload},"rule":"MINWAGE","version":"wv:x"}]}],` +
+        `"state":{"items":[],"pending":[],"subjects":[]}}`,
+    );
+    expect(
+      published.startsWith(
+        `{"deliveries":[${delivery(1)}],"state":{"items":[{"id":"wi:x","payload":${payload},`,
+      ),
+    ).toBe(true);
+    const received = runText(
+      "receive",
+      `{"deliveries":[${delivery(1)}],"state":{"effects":[],"projection":[]}}`,
+    );
+    expect(
+      received.startsWith(`{"applied":{"effects":[${delivery(1)}],"projection":[${delivery(1)}]}`),
+    ).toBe(true);
   });
 });
 

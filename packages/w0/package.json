@@ -2,7 +2,7 @@
   "name": "@triplex-build/w0",
   "version": "0.0.0",
   "private": true,
-  "description": "TypeScript reference kernel for the W0 world definition (lab/world/W0/SPEC.md, W0-1.1.1)",
+  "description": "TypeScript reference kernel for the W0 world definition (lab/world/W0/SPEC.md, W0-1.1.2)",
   "license": "MIT",
   "type": "module",
   "sideEffects": false,
