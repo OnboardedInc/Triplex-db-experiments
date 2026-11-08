@@ -12,7 +12,8 @@ human is watching this run. Your role and task follow after these rules.
 3. **Docker and engines.** Docker only through DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock (already set). Container
    lifecycle only through lab/bin/engine.mjs with your own holder name. Never stop or recreate the shared residents tx2-xtdb-dev or
    tx2-qlever-dev. Never touch Sam's default colima VM. Take an exclusive slot only when engine.mjs's reservation gives it to you,
-   and release it when you finish.
+   and release it when you finish. Lane D's resident tx2-datomic-dev is parkable: only the orchestrator parks or unparks it
+   (`engine.mjs down` keeps its volume); while it runs, no 3.5 GiB exclusive slot fits in the pool (Q78b).
 4. **Heavy jobs** (fingerprints, gates with engines, benchmarks, long test suites) run through
    `node lab/bin/heavy.mjs --label <your id> -- <command>`. Do not start a heavy run when host disk free is below 5 GiB.
 5. **pnpm** only with `--store-dir /Users/sam/projects/triplex-db-2/.pnpm-store`; never `pnpm config set`.

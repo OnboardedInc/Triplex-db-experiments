@@ -1372,3 +1372,13 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **Research:** all ten slots are busy, so R27 (evidence sources for O-OBS, now sharper: CA01 says the contract has no authenticated
   collector format), R28 (isolation for EXP-G03) and the R25 finish wait, in that order, as Opus high planners. No new question beyond those
   three this hour.
+
+## 2026-11-08 21:33Z: lane D designed (R29, Opus high); bring-up EXP-DA00 dispatched to a Codex builder
+- Saved as lab/research/R29-datomic-lane-design.md with briefs lab/experiments/EXP-DA00..02/BRIEF.md; ruled Q78a-e.
+- Datomic Pro 1.0.7745 on dev storage; one container per slot with the transactor and a Clojure gateway peer pinned to separate CPUs,
+  which is lane D's P1 hypothesis (on XTDB, readers and the indexer share one JVM and 4 readers raised commit service time about 5x, R16);
+  values tagged so longs and entity ids never lose precision; one database per scope; fact entities with valid time as attributes.
+- **Unknowns, not assumptions:** no published on-prem Datomic latency exists, so every P1-P5 cost is an estimate until EXP-DA03's NS smoke;
+  R18's claim that Datomic does not separate current from history conflicts with an internals guide, and DA03 settles it. No Datomic source
+  exists, so lane D has workarounds only. Pool: the 2.75 GiB resident is parkable, so lane D resident work and lane X/Q exclusive slots do
+  not overlap (Q78b). Two calls are Sam's (Q78e: tenancy on shared dev storage; dev storage for final acceptance).

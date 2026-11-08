@@ -40,10 +40,13 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | contract 0.3.7 (main ca42e06) | Q46-Q49 compiled; 153 obligations; W0-1.1.1 pinned ACCEPTED; O-DOMAIN fingerprint null; Q50-Q54 pending rows (no authority) | Codex round 7 DONE: NOT READY, 5 open (2 partial, 3 new), all accepted as Q55; 0.3.8 compiles Q50-Q55 |
 | contract 0.3.3 (main 89376e1) | Q29-Q32 compiled; 142 obligations, 50 thresholds; W0 pin null until V-D01 | Codex round 3 |
 
+## Pending Sam decisions for lane D (Q78e): does one Datomic database per tenant on a shared dev storage file count as storage-layer
+isolation; is Datomic dev storage acceptable for the final acceptance run, or must it be SQL storage.
+
 ## Running agents (10; protocol lab/PROTOCOL.md since 2026-11-08: Codex builders medium, Codex reviewers high, Opus planners high)
 | Agent | Role, model, effort | Priority | Output |
 | --- | --- | --- | --- |
-| R29 lane D (Datomic) design | planner, Opus 5.5, high | all five on lane D | /Users/sam/Claude/Projects/triplex-db-2/R29/ report + EXP-DA00-02 briefs |
+| CX-DA00 lane D bring-up (exp/DA00-datomic-bringup) | builder, Codex medium | lane D floor | Datomic image, parkable resident, gateway skeleton, G0 |
 | CX-P2Q-R2 broker fix round 2 (exp/P2Q-qlever-log-broker) | builder, Codex medium | P2, P3 | Q72a-g, Q67c/d/h; then a Codex reviewer delta check |
 | CX-C8-R2 (exp/C8-read-only-frontier) | builder, Codex medium | P1 | Q77a-c (budgets, iterative counting, counter fail-closed), Q76b, Q76d |
 | CX-VJ01 (verify/J01) | reviewer, Codex high | P2 | verdict on J01 5cc42fb (compact encoding, default off) |
