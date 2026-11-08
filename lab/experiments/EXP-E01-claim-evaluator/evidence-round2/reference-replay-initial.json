@@ -1,0 +1,325 @@
+{
+  "contractVersion": "0.3.10",
+  "selfCheckErrors": [],
+  "fixtures": 70,
+  "executorCalls": 13840,
+  "agree": 70,
+  "disagree": [],
+  "documents": [
+    {
+      "id": "POSITIVE-NS-SCREENING",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "POSITIVE-GS-DOMAIN",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "POSITIVE-PROMOTION",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "GEN-PREREQS-ONLY",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "GEN-NULL-OREPLAY-PIN",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "GEN-SUPPLIED-NAMES",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "GEN-OTHER-TREE",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "GEN-MISSING-FALSIFIERS",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "GEN-COMPOSITION-UNBOUND",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "GEN-W0-NULL",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "GEN-NO-W0-RECEIPT",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "GEN-EXCLUDED",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "GEN-REFUSED-SET",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "GEN-STALE-DEFINITION",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "CODEX-R4-FABRICATED",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "Q42A-STALE-BINARY",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "Q42A-EARLIER-COMMIT",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "Q42A-BEFORE-CLOSURE",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "Q42A-OBJECT-CORRUPT",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "Q42A-OBJECT-OF-OTHER-CASE",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "Q42A-MODES-SHORT",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "Q42A-FAULT-REPS-SHORT",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "Q42A-UNKNOWN-ID",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "Q42A-NO-CONTROL",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "Q42A-CONTROL-OTHER-SEED",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "Q42A-CONTROL-OTHER-WINDOW",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "Q42A-CORRECTNESS-FAIL",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "Q42A-NO-VERIFIER",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "CODEX-R6-MODULES-NOT-RETAINED",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "CODEX-R6-BINARY-NOT-RETAINED",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "CODEX-R6-NOT-A-VERIFIER-RECORD",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "CODEX-R6-REFUSAL-LABELLED-PASS",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "Q47A-WRONG-LABELLED-PASS",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "CODEX-R6-CONTROL-NO-WORKLOAD",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "CODEX-R6-CANDIDATE-SELECTED-CONTROL",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "CODEX-R6-NO-A0-REGISTRY",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "CODEX-R6-MIGRATION-INDIRECT-REFUSAL",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "Q47C-MANIFESTS-UNPINNED",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "CODEX-R7-INVENTED-CASES",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "CODEX-R7-CANDIDATE-AS-A0",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "RT-SWAP-ROLES",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "RT-RELABEL-PROFILE",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "RT-SCREENING-PREREQ",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "RT-RUNKIND-SWAP",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "RT-CONTROL-OTHER-PROFILE",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "RT-SLOT-ARRAY",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "RT-VERIFIER-IS-AUTHOR",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "RT-DROP-FAIL-ATTEMPT",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "RT-COUNTS-EDITED",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "RT-CONTRACT-RELABEL",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "RT-FAULTREPS-RELABEL",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "RT-DEP-UPPERCASE",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "RT-DEP-UNLISTED",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "RT-DEP-OTHER-WORKSPACE",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "RT-NARROW-ROOTS",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "LAB-BRANCH-PINS-OWN-ORACLE",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "LAB-ORACLE-FILE-DRIFT",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "LAB-IMAGE-NOT-PINNED",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "LAB-FORBIDDEN-ENDPOINT",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "LAB-ADMISSION-BLOCKED",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "LAB-CONTROL-NO-PREREQ",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "DOC-NO-SOURCE-VARIANT",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    },
+    {
+      "id": "DOC-UNREGISTERED-VERIFICATION",
+      "reference": "DIAGNOSTIC",
+      "lab": "DIAGNOSTIC"
+    }
+  ]
+}
