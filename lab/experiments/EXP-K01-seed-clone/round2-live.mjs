@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { POOL_FILE, readJson } from '../../bin/lib.mjs';
 const root = process.cwd();
 const attemptName = process.env.TX2_K01_ATTEMPT ?? 'round2';
 if (!/^[a-zA-Z0-9-]+$/.test(attemptName)) throw new Error('invalid attempt name');
@@ -10,6 +11,7 @@ fs.mkdirSync(evidence, { recursive: true });
 const env = { ...process.env, TX2_CONFIG_DIR: root, XTDB_URL: 'postgres://xtdb:xtdb@127.0.0.1:5471/xtdb' };
 const base = ['--lane', 'xtdb', '--slot', 's1', '--holder', 'CX-K01-R2', '--exp', 'EXP-K01'];
 let n = 0;
+let ownsSlot = false;
 const attemptTag = Date.now();
 function run(label, args, { optional = false, extraEnv = {} } = {}) {
   const file = `${evidence}/${attemptTag}-${String(++n).padStart(2, '0')}-${label}`;
@@ -30,8 +32,11 @@ try {
   for (;;) {
     const disk = fs.statfsSync(root);
     if (disk.bavail * disk.bsize < 5 * 1024 ** 3) throw new Error('host disk below 5 GiB floor');
+    // [EXP-K01-R2] Why: an available reservation does not authorize deleting another holder's retained source/canary. Rejected: --fresh on an unrelated retained volume (destroys evidence).
+    const retained = readJson(POOL_FILE(), {}).retainedVolumes?.find(v => v.volume === 'tx2-xtdb-s1-data' && v.holder !== 'CX-K01-R2');
+    if (retained) throw new Error(`s1 retains ${retained.holder}'s source: ${retained.note}; owner cleanup is required before --fresh`);
     const admitted = engine('admission', 'up', ['--fresh'], { optional: true });
-    if (admitted.status === 0) break;
+    if (admitted.status === 0) { ownsSlot = true; break; }
     if (!admitted.stderr.includes('pool refuses')) throw new Error(admitted.stderr);
     process.stderr.write('[K01-R2] waiting 30 s for engine admission; residents untouched\n');
     await new Promise(resolve => setTimeout(resolve, 30000));
@@ -81,7 +86,7 @@ try {
   engine('singlecut-down', 'down', ['--remove-volume']);
 
 } finally {
-  engine('cleanup-source-clone', 'down', ['--remove-volume'], { optional: true });
+  if (ownsSlot) engine('cleanup-source-clone', 'down', ['--remove-volume'], { optional: true });
   const record = `${seedDir}/golden.json`;
   if (fs.existsSync(record)) engine('cleanup-golden', 'golden-rm', ['--golden-record', record], { optional: true });
   else if (fs.existsSync(seedDir)) {
