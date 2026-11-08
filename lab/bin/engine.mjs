@@ -722,7 +722,13 @@ async function golden(config, info, opts) {
     const referenceStop = await stopSlot(config, info, { ...opts, print: false });
     Object.assign(attempt, { referenceStop, status: 'REFERENCE_STOPPED' });
     writeJson(attemptFile, attempt);
-    if (!freeze.ok || !referenceStop.verdict.ok || timings.freezeS >= 600 || canonicalJson(end.snapshot.listing) !== canonicalJson(settled.after.listing))
+    if (!freeze.ok || freeze.c4?.position !== manifest.result.lastPosition || !referenceStop.verdict.ok || timings.freezeS >= 600 ||
+      end.live.total !== 0 || end.snapshot.trie.sha256 !== settled.after.trie.sha256 ||
+      end.snapshot.gauges.jobsAvailable !== 0 || end.snapshot.gauges.lagMsgId !== 0 ||
+      end.snapshot.gauges.latestCompletedTxId !== settled.after.gauges.latestCompletedTxId ||
+      end.snapshot.gauges.latestProcessedMsgId !== settled.after.gauges.latestProcessedMsgId ||
+      end.snapshot.gauges.latestSubmittedMsgId !== settled.after.gauges.latestSubmittedMsgId ||
+      canonicalJson(end.snapshot.listing) !== canonicalJson(settled.after.listing))
       fail('REFUSED', 'reference fingerprint, timer, listing or stop failed; golden is unpublished');
     const goldenBytes = volumeBytes(config, volume);
     const filesFile = path.join(path.dirname(manifestFile), 'golden-files.json');
@@ -795,8 +801,10 @@ async function oneCutProbe(config, info, opts) {
     } });
     const args = ['--url', info.endpoint, '--container', info.container, '--manifest', path.resolve(opts.manifest)];
     save({ beforeWrite: cloneCheck(['freeze', ...args]) });
+    if (!attempt.beforeWrite.ok || !attempt.beforeWrite.c8?.plan?.sha256) fail('REFUSED', 'T6 before-write fingerprint is incomplete');
     save({ write: cloneCheck(['probe-write', ...args]) });
     save({ afterWrite: cloneCheck(['freeze', ...args]) });
+    if (!attempt.afterWrite.ok || !attempt.afterWrite.c8?.plan?.sha256) fail('REFUSED', 'T6 after-write fingerprint is incomplete');
     save({ t6PlanChanged: attempt.beforeWrite.c8?.plan?.sha256 !== attempt.afterWrite.c8?.plan?.sha256 });
   } catch (error) {
     save({ error: String(error.message ?? error) });
@@ -882,18 +890,54 @@ async function verify(config, info, opts) {
   const owner = readOwner(info);
   const content = owner?.volumeContent;
   if (content?.kind !== 'clone') fail('REFUSED', `${info.lane}-${info.slot} holds no clone (owner.json volumeContent)`);
-  requireRunningSlot(config, info);
-  const { recordFile } = loadGolden(path.resolve(REPO, content.goldenRecord));
   const t = Date.now();
-  const verdict = cloneCheck(['verify', '--url', info.endpoint, '--container', info.container, '--golden-record', recordFile, '--owner', info.ownerFile]);
-  const file = path.join(REPO, 'runs/xtdb-clone', `${info.slot}-${new Date().toISOString().replace(/[:.]/g, '')}.json`);
-  writeJson(file, verdict);
-  const latest = readOwner(info);
-  latest.volumeContent.readiness = { verdict: verdict.verdict, at: now(), checksS: (Date.now() - t) / 1000, file: path.relative(REPO, file), sha256: sha256File(file), failed: Object.entries(verdict.checks ?? {}).filter(([, v]) => !v.pass).map(([k]) => k) };
-  atomicJson(info.ownerFile, latest);
-  process.stdout.write(JSON.stringify(verdict, null, 2) + '\n');
-  process.stderr.write(`[lab] ${info.container} readiness ${verdict.verdict} (${latest.volumeContent.readiness.failed.join(', ') || 'C1-C8 pass'}) in ${latest.volumeContent.readiness.checksS.toFixed(1)} s; ${path.relative(REPO, file)}\n`);
-  if (verdict.verdict !== 'PASS') fail('ENGINE', `${info.container} is not ready: ${latest.volumeContent.readiness.failed.join(', ')} failed (Q74d)`);
+  const attemptId = `${info.slot}-${t}-${Math.random().toString(16).slice(2)}`;
+  const file = path.join(REPO, 'runs/xtdb-clone', `${attemptId}.json`);
+  // [EXP-K01-R3] Why: every new verification revokes admission before fallible checks. Rejected: retaining a previous PASS until the new process returns (an exception leaves stale admission usable).
+  const previousReadiness = content.readiness;
+  const identity = c => JSON.stringify([c.containerId, c.key, c.manifestSha256, c.goldenRecord, c.goldenRecordSha256, c.copy?.treeSha256]);
+  content.verificationHistory = [...(content.verificationHistory ?? []), ...(previousReadiness ? [previousReadiness] : [])];
+  content.readiness = { verdict: 'PENDING', attemptId, at: now() };
+  let result;
+  try {
+    atomicJson(info.ownerFile, owner);
+    writeJson(file, { verdict: 'PENDING', attemptId, at: now() });
+    const running = requireRunningSlot(config, info);
+    if (running?.c && running.c.Id !== content.containerId) throw new Error('clone container identity changed before verification');
+    const { recordFile } = loadGolden(path.resolve(REPO, content.goldenRecord));
+    const verdict = cloneCheck(['verify', '--url', info.endpoint, '--container', info.container, '--golden-record', recordFile, '--owner', info.ownerFile]);
+    if (!['PASS', 'FAIL'].includes(verdict.verdict) || !['C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8'].every(k => typeof verdict.checks?.[k]?.pass === 'boolean') ||
+      (verdict.verdict === 'PASS' && Object.values(verdict.checks).some(check => check.pass !== true))) throw new Error('incomplete or inconsistent verification verdict');
+    const fresh = requireRunningSlot(config, info);
+    if (running?.c && (fresh.c.Id !== running.c.Id || fresh.c.State.StartedAt !== running.c.State.StartedAt)) throw new Error('clone restarted during verification');
+    writeJson(file, { ...verdict, attemptId });
+    const receiptSha256 = sha256File(file);
+    if (content.goldenRecordSha256 && sha256File(recordFile) !== content.goldenRecordSha256) throw new Error('golden record changed since the clone was copied');
+    const latest = readOwner(info);
+    if (latest?.volumeContent?.readiness?.attemptId !== attemptId) throw new Error('verification superseded by another slot operation');
+    if (identity(latest.volumeContent) !== identity(content)) throw new Error('clone ownership content changed during verification');
+    latest.volumeContent.readiness = { verdict: verdict.verdict, attemptId, at: now(), checksS: (Date.now() - t) / 1000, file: path.relative(REPO, file), sha256: receiptSha256, failed: Object.entries(verdict.checks).filter(([, v]) => !v.pass).map(([k]) => k) };
+    if (fresh?.c) latest.volumeContent.startedAt = fresh.c.State.StartedAt;
+    atomicJson(info.ownerFile, latest);
+    process.stdout.write(JSON.stringify(verdict, null, 2) + '\n');
+    process.stderr.write(`[lab] ${info.container} readiness ${verdict.verdict} (${latest.volumeContent.readiness.failed.join(', ') || 'C1-C8 pass'}) in ${latest.volumeContent.readiness.checksS.toFixed(1)} s; ${path.relative(REPO, file)}\n`);
+    result = verdict;
+  } catch (error) {
+    const refusal = { verdict: 'ERROR', attemptId, at: now(), error: String(error.message ?? error) };
+    let receipt = {};
+    try { writeJson(file, refusal); receipt = { file: path.relative(REPO, file), sha256: sha256File(file) }; }
+    catch (receiptError) { receipt = { receiptWriteError: String(receiptError.message ?? receiptError) }; }
+    // [EXP-K01-R3] Why: only this attempt may replace its readiness, including a failed PASS publication. Rejected: overwriting a newer attempt or resurrecting the historical PASS after an error.
+    const latest = readOwner(info);
+    const initialRevocationFailed = latest?.volumeContent && identity(latest.volumeContent) === identity(content) && JSON.stringify(latest.volumeContent.readiness) === JSON.stringify(previousReadiness);
+    if (latest?.volumeContent?.readiness?.attemptId === attemptId || initialRevocationFailed) {
+      if (initialRevocationFailed) latest.volumeContent.verificationHistory = content.verificationHistory;
+      latest.volumeContent.readiness = { ...refusal, ...receipt };
+      atomicJson(info.ownerFile, latest);
+    }
+    throw error;
+  }
+  if (result.verdict !== 'PASS') fail('ENGINE', `${info.container} is not ready: ${Object.entries(result.checks).filter(([, v]) => !v.pass).map(([k]) => k).join(', ')} failed (Q74d)`);
 }
 
 /** List a stopped slot's volume through a read-only helper; with --golden-record, diff it with the golden (R26 P-e). */
