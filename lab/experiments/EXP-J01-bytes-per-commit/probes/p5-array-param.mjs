@@ -37,7 +37,7 @@ const forms = {
   'per-id parameters (A0 form)': (ids) => [`ASSERT NOT EXISTS (SELECT 1 FROM j01_ids WHERE scope_key = $1 AND id IN (${ids.map((_v, i) => `$${i + 2}`).join(', ')})), 'j01-found'`, [sql.typed(scope, 25), ...ids.map((x) => sql.typed(x, 25))]],
   'text[] parameter, = ANY': (ids) => [`ASSERT NOT EXISTS (SELECT 1 FROM j01_ids WHERE scope_key = $1 AND id = ANY($2)), 'j01-found'`, [sql.typed(scope, 25), sql.typed(ids, 1009)]],
   'text[] parameter, IN UNNEST': (ids) => [`ASSERT NOT EXISTS (SELECT 1 FROM j01_ids WHERE scope_key = $1 AND id IN (SELECT x FROM UNNEST($2) AS t (x))), 'j01-found'`, [sql.typed(scope, 25), sql.typed(ids, 1009)]],
-  'json parameter, IN UNNEST': (ids) => [`ASSERT NOT EXISTS (SELECT 1 FROM j01_ids WHERE scope_key = $1 AND id IN (SELECT x FROM UNNEST($2) AS t (x))), 'j01-found'`, [sql.typed(scope, 25), sql.typed(JSON.stringify(ids), 114)]],
+  'double-encoded JSON string control, IN UNNEST': (ids) => [`ASSERT NOT EXISTS (SELECT 1 FROM j01_ids WHERE scope_key = $1 AND id IN (SELECT x FROM UNNEST($2) AS t (x))), 'j01-found'`, [sql.typed(scope, 25), sql.typed(JSON.stringify(ids), 114)]],
 };
 const out = {};
 for (const [name, form] of Object.entries(forms)) {

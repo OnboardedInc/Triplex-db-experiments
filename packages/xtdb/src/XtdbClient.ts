@@ -1,5 +1,14 @@
 import postgres from "postgres";
 
+// [EXP-J01] Why: only compact guards opt into text[]; ordinary public/native arrays
+// retain JSON OID 114. Rejected: inferring transport type from array contents (Q81c).
+class XtdbTextArray {
+  constructor(readonly values: readonly string[]) {}
+}
+
+export const compactTextArray = (values: readonly string[]): XtdbTextArray =>
+  new XtdbTextArray([...values]);
+
 export interface XtdbBasis {
   readonly snapshotToken?: string;
   readonly clockTime?: string;
@@ -138,20 +147,12 @@ export const makeXtdbClient = (
         throw new TypeError(
           "XTDB text requires well-formed Unicode; isolated UTF-16 surrogates are not representable",
         );
-      // [EXP-J01] A non-empty list of strings is a text[] parameter (oid 1009), for `= ANY($n)`
-      // commit guards. Why not the JSON default (114) every other object gets: XTDB 2.2 reads a JSON
-      // parameter as one JSON value, and `id = ANY(<json>)` matched nothing (EXP-J01 probe p5), so
-      // a guard bound that way would silently pass. No A0 statement passes an array.
-      if (
-        Array.isArray(value) &&
-        value.length > 0 &&
-        value.every((item) => typeof item === "string")
-      ) {
-        if (!value.every((item: string) => item.isWellFormed()))
+      if (value instanceof XtdbTextArray) {
+        if (!value.values.every((item) => typeof item === "string" && item.isWellFormed()))
           throw new TypeError(
             "XTDB text requires well-formed Unicode; isolated UTF-16 surrogates are not representable",
           );
-        return pool.typed(value as never, 1009);
+        return pool.typed(value.values as never, 1009);
       }
       // The native-f64-parameters-v1 public probe observed -0 returning as the
       // integer text "0" in SQL and XTQL, while native double literals retained

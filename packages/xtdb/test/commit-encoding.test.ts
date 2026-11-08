@@ -13,7 +13,7 @@ import {
   Runtime,
   StorageAdapter,
 } from "@triplex-build/triplex/runtime";
-import { makeXtdbClient, XtdbTransactionRejected } from "../src/XtdbClient.js";
+import { compactTextArray, makeXtdbClient, XtdbTransactionRejected } from "../src/XtdbClient.js";
 import { compactGuards, makeXtdbStorageAdapter } from "../src/XtdbStorageAdapter.js";
 import { makeXtdbQueryExecutor } from "../src/XtdbQueryExecutor.js";
 import { commitEncodingOf } from "../src/index.js";
@@ -28,8 +28,8 @@ describe("XTDB compact commit guards (EXP-J01)", () => {
     expect(one).toHaveLength(2);
     expect(one.map((s) => s.sql)).toEqual(many.map((s) => s.sql));
     expect(one.every((s) => s.parameterSyntax === "postgresql")).toBe(true);
-    expect(many[0]!.params).toEqual(["scope", 4, ["cmd", "cmd2"]]);
-    expect(many[1]!.params).toEqual(["scope", "op", ["a", "b", "c"]]);
+    expect(many[0]!.params).toEqual(["scope", 4, compactTextArray(["cmd", "cmd2"])]);
+    expect(many[1]!.params).toEqual(["scope", "op", compactTextArray(["a", "b", "c"])]);
     // The failure classes A0 maps: the first is a retryable serialization conflict, the second is not.
     expect(one[0]!.sql).toMatch(/'triplex-cas-conflict'$/);
     expect(one[1]!.sql).toMatch(/'triplex-identity-conflict'$/);

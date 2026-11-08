@@ -11,7 +11,12 @@ import {
   MigrationError,
   TransactionOutcomeUnknown,
 } from "@triplex-build/triplex/runtime";
-import { type XtdbClient, type XtdbStatement, XtdbTransactionRejected } from "./XtdbClient.js";
+import {
+  compactTextArray,
+  type XtdbClient,
+  type XtdbStatement,
+  XtdbTransactionRejected,
+} from "./XtdbClient.js";
 import {
   assertionColumns,
   assertionValue,
@@ -92,12 +97,11 @@ export type XtdbCommitEncoding = "a0" | "compact";
  *   2. The scope key is bound once per statement (`$1`, reused), not once per subquery.
  *   3. Each id list is one `text[]` parameter compared with `= ANY($n)`: one list column instead of
  *      one column per id, and SQL text that is constant across commits.
+ * The old p5 JSON probe double-encoded a string; it does not reject JSON arrays as an alternative.
  * Measured (probe p7, same command): 26,397 bytes against 30,061.
  * Rejected: SQL string literals (XTDB 2.2's lexer refuses a raw newline inside a literal, probe p4,
- * so caller-supplied command ids cannot be inlined, and per-commit SQL text defeats plan reuse); a
- * JSON-typed list parameter (probe p5: `= ANY` over a JSON value matched nothing, so the guard
- * passed with an id that exists: a silent false pass); one merged ASSERT (it would erase the
- * retryable/definite distinction for 144 more bytes).
+ * so caller-supplied command ids cannot be inlined, and per-commit SQL text defeats plan reuse);
+ * one merged ASSERT (it would erase the retryable/definite distinction for 144 more bytes).
  */
 export const compactGuards = (
   scopeKey: string,
@@ -113,7 +117,7 @@ export const compactGuards = (
         ? " AND NOT EXISTS (SELECT 1 FROM tx_claims FOR ALL VALID_TIME WHERE scope_key = $1 AND command_id = ANY($3))"
         : "") +
       ", 'triplex-cas-conflict'",
-    params: [scopeKey, sourceK, ...(commandIds.length > 0 ? [[...commandIds]] : [])],
+    params: [scopeKey, sourceK, ...(commandIds.length > 0 ? [compactTextArray(commandIds)] : [])],
     parameterSyntax: "postgresql",
   },
   {
@@ -123,7 +127,7 @@ export const compactGuards = (
         ? " AND NOT EXISTS (SELECT 1 FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = $1 AND id = ANY($3))"
         : "") +
       ", 'triplex-identity-conflict'",
-    params: [scopeKey, operationId, ...(newIds.length > 0 ? [[...newIds]] : [])],
+    params: [scopeKey, operationId, ...(newIds.length > 0 ? [compactTextArray(newIds)] : [])],
     parameterSyntax: "postgresql",
   },
 ];

@@ -129,8 +129,8 @@ Both public runtime factories accept `commitEncoding: "compact"`; unset/default 
 `TRIPLEX_COMMIT_ENCODING=compact`; explicit options win and unknown values throw. Core journal generation is unchanged.
 
 XTDB combines four guards into two, keeps retryable CAS/claim conflicts distinct from definite identity conflicts, reuses
-the scope parameter, and binds assertion/command ID lists as PostgreSQL text arrays with ANY. A JSON list was rejected:
-the probe found it silently failed to match existing IDs. Rows and journal payloads are unchanged.
+the scope parameter, and binds assertion/command ID lists as PostgreSQL text arrays with ANY. The original p5 JSON alternative was double-encoded as a JSON string, not an array; its
+false pass does not reject correctly bound JSON arrays. See REPORT-round2.md for the corrected probe. Rows and journal payloads are unchanged.
 
 QLever removes nine currently populated unread channels per asserted row: lexical/exact/native recorded-at shadows,
 lexical/exact recorded-position shadows, and all four schema-version channels. Five analogous retraction channels are
