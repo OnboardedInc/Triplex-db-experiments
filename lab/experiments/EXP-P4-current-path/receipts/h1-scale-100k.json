@@ -1,0 +1,409 @@
+{
+  "format": "tx2-p4-h1-scale/1",
+  "subjects": 100000,
+  "accounts": 200,
+  "population": {
+    "subjects": 100000,
+    "accounts": 200,
+    "hopCount": {
+      "3": 40000,
+      "4": 35000,
+      "6": 25000
+    },
+    "bucketSubjects": {
+      "small": 50000,
+      "medium": 35000,
+      "large": 15000
+    },
+    "ownEntities": 1240000,
+    "sharedEntities": 15906,
+    "entities": 1255906,
+    "ownFacts": 3770000,
+    "sharedFacts": 78930,
+    "liveFactsAtSeedEnd": 3848930,
+    "seedAssertions": 3848930,
+    "worldFacts": {
+      "min": 50,
+      "max": 1997,
+      "mean": 432.35
+    }
+  },
+  "steps": [
+    {
+      "label": "d1",
+      "mix": {
+        "count": 5000,
+        "minMs": 0.006,
+        "maxMs": 18.858,
+        "meanMs": 0.154,
+        "p50Ms": 0.056,
+        "p90Ms": 0.287,
+        "p99Ms": 2.191,
+        "p999Ms": 5.759
+      },
+      "byBucket": {
+        "small": {
+          "count": 2520,
+          "minMs": 0.006,
+          "maxMs": 5.796,
+          "meanMs": 0.052,
+          "p50Ms": 0.028,
+          "p90Ms": 0.059,
+          "p99Ms": 0.391,
+          "p999Ms": 4.575
+        },
+        "medium": {
+          "count": 1751,
+          "minMs": 0.014,
+          "maxMs": 5.49,
+          "meanMs": 0.179,
+          "p50Ms": 0.097,
+          "p90Ms": 0.231,
+          "p99Ms": 2.511,
+          "p999Ms": 5.375
+        },
+        "large": {
+          "count": 729,
+          "minMs": 0.063,
+          "maxMs": 18.858,
+          "meanMs": 0.443,
+          "p50Ms": 0.271,
+          "p90Ms": 0.627,
+          "p99Ms": 3.631,
+          "p999Ms": 18.858
+        }
+      },
+      "flat": {
+        "count": 1000,
+        "minMs": 0.008,
+        "maxMs": 10.278,
+        "meanMs": 0.175,
+        "p50Ms": 0.055,
+        "p90Ms": 0.283,
+        "p99Ms": 2.607,
+        "p999Ms": 10.278
+      },
+      "pullsPerS": 6343.608531542961,
+      "pullsPerCpuS": 8319.716730284767,
+      "rowsPerPull": 427.6082,
+      "bytesPerPull": 18286.4716,
+      "factsPerPull": 427.6082,
+      "flatRowsPerPull": 431.417,
+      "flatBytesPerPull": 18456.126,
+      "table": {
+        "watermark": 10322,
+        "horizon": 0,
+        "entities": 1255906,
+        "rows": 3848930,
+        "live": 3848930,
+        "retracted": 0,
+        "approxBytes": 395659922,
+        "strictInstants": true,
+        "poisoned": null,
+        "pending": 0,
+        "counters": {
+          "applied": 10322,
+          "buffered": 0,
+          "duplicates": 0,
+          "purgedRows": 0,
+          "instantOrderViolations": 0,
+          "applyMs": 6142.033255000038,
+          "applyMaxMs": 176.22641699999986,
+          "appliedRows": 3848930
+        }
+      },
+      "rssMiB": 1473.171875,
+      "heapUsedMiB": 1401.4719696044922
+    },
+    {
+      "label": "d3",
+      "mix": {
+        "count": 5000,
+        "minMs": 0.006,
+        "maxMs": 23.503,
+        "meanMs": 0.141,
+        "p50Ms": 0.05,
+        "p90Ms": 0.236,
+        "p99Ms": 1.887,
+        "p999Ms": 7.071
+      },
+      "byBucket": {
+        "small": {
+          "count": 2487,
+          "minMs": 0.006,
+          "maxMs": 2.852,
+          "meanMs": 0.039,
+          "p50Ms": 0.026,
+          "p90Ms": 0.053,
+          "p99Ms": 0.169,
+          "p999Ms": 1.887
+        },
+        "medium": {
+          "count": 1800,
+          "minMs": 0.016,
+          "maxMs": 23.503,
+          "meanMs": 0.179,
+          "p50Ms": 0.085,
+          "p90Ms": 0.194,
+          "p99Ms": 2.159,
+          "p999Ms": 21.759
+        },
+        "large": {
+          "count": 713,
+          "minMs": 0.048,
+          "maxMs": 11.848,
+          "meanMs": 0.402,
+          "p50Ms": 0.239,
+          "p90Ms": 0.499,
+          "p99Ms": 4.127,
+          "p999Ms": 11.848
+        }
+      },
+      "flat": {
+        "count": 1000,
+        "minMs": 0.009,
+        "maxMs": 3.581,
+        "meanMs": 0.123,
+        "p50Ms": 0.055,
+        "p90Ms": 0.257,
+        "p99Ms": 0.747,
+        "p999Ms": 3.581
+      },
+      "pullsPerS": 7011.250541482395,
+      "pullsPerCpuS": 9091.024794861027,
+      "rowsPerPull": 425.0256,
+      "bytesPerPull": 18180.8726,
+      "factsPerPull": 424.988,
+      "flatRowsPerPull": 435.417,
+      "flatBytesPerPull": 18624.126,
+      "table": {
+        "watermark": 10362,
+        "horizon": 0,
+        "entities": 1255906,
+        "rows": 3852930,
+        "live": 3848930,
+        "retracted": 4000,
+        "approxBytes": 396043922,
+        "strictInstants": true,
+        "poisoned": null,
+        "pending": 0,
+        "counters": {
+          "applied": 10362,
+          "buffered": 0,
+          "duplicates": 0,
+          "purgedRows": 0,
+          "instantOrderViolations": 0,
+          "applyMs": 6168.172798000046,
+          "applyMaxMs": 176.22641699999986,
+          "appliedRows": 3856930
+        }
+      },
+      "rssMiB": 1431.328125,
+      "heapUsedMiB": 1410.268653869629
+    },
+    {
+      "label": "d10",
+      "mix": {
+        "count": 5000,
+        "minMs": 0.008,
+        "maxMs": 19.557,
+        "meanMs": 0.158,
+        "p50Ms": 0.057,
+        "p90Ms": 0.263,
+        "p99Ms": 2.319,
+        "p999Ms": 10.495
+      },
+      "byBucket": {
+        "small": {
+          "count": 2505,
+          "minMs": 0.008,
+          "maxMs": 8.843,
+          "meanMs": 0.057,
+          "p50Ms": 0.029,
+          "p90Ms": 0.065,
+          "p99Ms": 0.369,
+          "p999Ms": 4.015
+        },
+        "medium": {
+          "count": 1762,
+          "minMs": 0.02,
+          "maxMs": 19.557,
+          "meanMs": 0.175,
+          "p50Ms": 0.095,
+          "p90Ms": 0.213,
+          "p99Ms": 2.239,
+          "p999Ms": 13.503
+        },
+        "large": {
+          "count": 733,
+          "minMs": 0.05,
+          "maxMs": 11.64,
+          "meanMs": 0.463,
+          "p50Ms": 0.263,
+          "p90Ms": 0.571,
+          "p99Ms": 4.015,
+          "p999Ms": 11.64
+        }
+      },
+      "flat": {
+        "count": 1000,
+        "minMs": 0.012,
+        "maxMs": 13.238,
+        "meanMs": 0.28,
+        "p50Ms": 0.08,
+        "p90Ms": 0.493,
+        "p99Ms": 4.255,
+        "p999Ms": 13.238
+      },
+      "pullsPerS": 6193.964618961658,
+      "pullsPerCpuS": 8484.210883545722,
+      "rowsPerPull": 428.834,
+      "bytesPerPull": 18342.0596,
+      "factsPerPull": 428.6756,
+      "flatRowsPerPull": 449.417,
+      "flatBytesPerPull": 19212.126,
+      "table": {
+        "watermark": 10502,
+        "horizon": 0,
+        "entities": 1255906,
+        "rows": 3866930,
+        "live": 3848930,
+        "retracted": 18000,
+        "approxBytes": 397387922,
+        "strictInstants": true,
+        "poisoned": null,
+        "pending": 0,
+        "counters": {
+          "applied": 10502,
+          "buffered": 0,
+          "duplicates": 0,
+          "purgedRows": 0,
+          "instantOrderViolations": 0,
+          "applyMs": 6189.886505000023,
+          "applyMaxMs": 176.22641699999986,
+          "appliedRows": 3884930
+        }
+      },
+      "rssMiB": 1429.59375,
+      "heapUsedMiB": 1425.5990829467773
+    },
+    {
+      "label": "d10x",
+      "mix": {
+        "count": 5000,
+        "minMs": 0.008,
+        "maxMs": 26.745,
+        "meanMs": 0.141,
+        "p50Ms": 0.053,
+        "p90Ms": 0.24,
+        "p99Ms": 2.015,
+        "p999Ms": 8.703
+      },
+      "byBucket": {
+        "small": {
+          "count": 2484,
+          "minMs": 0.008,
+          "maxMs": 11.149,
+          "meanMs": 0.053,
+          "p50Ms": 0.027,
+          "p90Ms": 0.057,
+          "p99Ms": 0.357,
+          "p999Ms": 4.319
+        },
+        "medium": {
+          "count": 1760,
+          "minMs": 0.014,
+          "maxMs": 26.745,
+          "meanMs": 0.163,
+          "p50Ms": 0.088,
+          "p90Ms": 0.19,
+          "p99Ms": 2.111,
+          "p999Ms": 12.671
+        },
+        "large": {
+          "count": 756,
+          "minMs": 0.052,
+          "maxMs": 17.207,
+          "meanMs": 0.382,
+          "p50Ms": 0.242,
+          "p90Ms": 0.515,
+          "p99Ms": 2.943,
+          "p999Ms": 17.207
+        }
+      },
+      "flat": {
+        "count": 1000,
+        "minMs": 0.011,
+        "maxMs": 16.963,
+        "meanMs": 0.249,
+        "p50Ms": 0.07,
+        "p90Ms": 0.395,
+        "p99Ms": 2.959,
+        "p999Ms": 16.963
+      },
+      "pullsPerS": 6985.959966956422,
+      "pullsPerCpuS": 8338.503205320632,
+      "rowsPerPull": 435.3346,
+      "bytesPerPull": 18617.1786,
+      "factsPerPull": 435.057,
+      "flatRowsPerPull": 459.078,
+      "flatBytesPerPull": 19753.554,
+      "table": {
+        "watermark": 10522,
+        "horizon": 0,
+        "entities": 1255906,
+        "rows": 3876591,
+        "live": 3858591,
+        "retracted": 18000,
+        "approxBytes": 398451044,
+        "strictInstants": true,
+        "poisoned": null,
+        "pending": 0,
+        "counters": {
+          "applied": 10522,
+          "buffered": 0,
+          "duplicates": 0,
+          "purgedRows": 0,
+          "instantOrderViolations": 0,
+          "applyMs": 6219.611048000023,
+          "applyMaxMs": 176.22641699999986,
+          "appliedRows": 3894591
+        }
+      },
+      "rssMiB": 1414.859375,
+      "heapUsedMiB": 1433.3029098510742
+    }
+  ],
+  "seed": {
+    "positions": 10322,
+    "wallS": 9.249793542,
+    "applyMs": 6142.033255000038,
+    "applyMsPerCommand": 0.595042942743658,
+    "rssMiB": 1429.90625,
+    "heapUsedMiB": 1396.4971771240234,
+    "table": {
+      "watermark": 10322,
+      "horizon": 0,
+      "entities": 1255906,
+      "rows": 3848930,
+      "live": 3848930,
+      "retracted": 0,
+      "approxBytes": 395659922,
+      "strictInstants": true,
+      "poisoned": null,
+      "pending": 0,
+      "counters": {
+        "applied": 10322,
+        "buffered": 0,
+        "duplicates": 0,
+        "purgedRows": 0,
+        "instantOrderViolations": 0,
+        "applyMs": 6142.033255000038,
+        "applyMaxMs": 176.22641699999986,
+        "appliedRows": 3848930
+      }
+    }
+  },
+  "applyMsPerRow": 0.0015969869616604218,
+  "applyMaxMs": 176.22641699999986
+}

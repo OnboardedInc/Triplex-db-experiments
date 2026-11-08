@@ -1,0 +1,409 @@
+{
+  "format": "tx2-p4-h1-scale/1",
+  "subjects": 10000,
+  "accounts": 20,
+  "population": {
+    "subjects": 10000,
+    "accounts": 20,
+    "hopCount": {
+      "3": 4000,
+      "4": 3500,
+      "6": 2500
+    },
+    "bucketSubjects": {
+      "small": 5000,
+      "medium": 3500,
+      "large": 1500
+    },
+    "ownEntities": 124000,
+    "sharedEntities": 1569,
+    "entities": 125569,
+    "ownFacts": 377000,
+    "sharedFacts": 7785,
+    "liveFactsAtSeedEnd": 384785,
+    "seedAssertions": 384785,
+    "worldFacts": {
+      "min": 60,
+      "max": 1242,
+      "mean": 426.95
+    }
+  },
+  "steps": [
+    {
+      "label": "d1",
+      "mix": {
+        "count": 3000,
+        "minMs": 0.005,
+        "maxMs": 2.265,
+        "meanMs": 0.058,
+        "p50Ms": 0.028,
+        "p90Ms": 0.109,
+        "p99Ms": 0.455,
+        "p999Ms": 1.943
+      },
+      "byBucket": {
+        "small": {
+          "count": 1548,
+          "minMs": 0.005,
+          "maxMs": 1.939,
+          "meanMs": 0.021,
+          "p50Ms": 0.014,
+          "p90Ms": 0.028,
+          "p99Ms": 0.093,
+          "p999Ms": 0.711
+        },
+        "medium": {
+          "count": 1017,
+          "minMs": 0.022,
+          "maxMs": 1.942,
+          "meanMs": 0.075,
+          "p50Ms": 0.051,
+          "p90Ms": 0.125,
+          "p99Ms": 0.451,
+          "p999Ms": 1.031
+        },
+        "large": {
+          "count": 435,
+          "minMs": 0.066,
+          "maxMs": 2.265,
+          "meanMs": 0.152,
+          "p50Ms": 0.092,
+          "p90Ms": 0.259,
+          "p99Ms": 1.159,
+          "p999Ms": 2.265
+        }
+      },
+      "flat": {
+        "count": 1000,
+        "minMs": 0.004,
+        "maxMs": 1.056,
+        "meanMs": 0.063,
+        "p50Ms": 0.033,
+        "p90Ms": 0.143,
+        "p99Ms": 0.499,
+        "p999Ms": 1.055
+      },
+      "pullsPerS": 16797.51228843008,
+      "pullsPerCpuS": 17455.053237912376,
+      "rowsPerPull": 417.113,
+      "bytesPerPull": 17841.162,
+      "factsPerPull": 417.113,
+      "flatRowsPerPull": 423.527,
+      "flatBytesPerPull": 18121.263,
+      "table": {
+        "watermark": 1031,
+        "horizon": 0,
+        "entities": 125569,
+        "rows": 384785,
+        "live": 384785,
+        "retracted": 0,
+        "approxBytes": 39285453,
+        "strictInstants": true,
+        "poisoned": null,
+        "pending": 0,
+        "counters": {
+          "applied": 1031,
+          "buffered": 0,
+          "duplicates": 0,
+          "purgedRows": 0,
+          "instantOrderViolations": 0,
+          "applyMs": 262.34123999999963,
+          "applyMaxMs": 12.58137499999998,
+          "appliedRows": 384785
+        }
+      },
+      "rssMiB": 437.4375,
+      "heapUsedMiB": 322.9692916870117
+    },
+    {
+      "label": "d3",
+      "mix": {
+        "count": 3000,
+        "minMs": 0.005,
+        "maxMs": 69.203,
+        "meanMs": 0.083,
+        "p50Ms": 0.03,
+        "p90Ms": 0.126,
+        "p99Ms": 0.457,
+        "p999Ms": 1.607
+      },
+      "byBucket": {
+        "small": {
+          "count": 1507,
+          "minMs": 0.005,
+          "maxMs": 0.575,
+          "meanMs": 0.021,
+          "p50Ms": 0.015,
+          "p90Ms": 0.033,
+          "p99Ms": 0.102,
+          "p999Ms": 0.567
+        },
+        "medium": {
+          "count": 1083,
+          "minMs": 0.022,
+          "maxMs": 69.203,
+          "meanMs": 0.144,
+          "p50Ms": 0.052,
+          "p90Ms": 0.144,
+          "p99Ms": 0.691,
+          "p999Ms": 1.631
+        },
+        "large": {
+          "count": 410,
+          "minMs": 0.062,
+          "maxMs": 1.192,
+          "meanMs": 0.148,
+          "p50Ms": 0.098,
+          "p90Ms": 0.265,
+          "p99Ms": 0.835,
+          "p999Ms": 1.191
+        }
+      },
+      "flat": {
+        "count": 1000,
+        "minMs": 0.006,
+        "maxMs": 0.877,
+        "meanMs": 0.044,
+        "p50Ms": 0.025,
+        "p90Ms": 0.085,
+        "p99Ms": 0.277,
+        "p999Ms": 0.877
+      },
+      "pullsPerS": 11974.21950540486,
+      "pullsPerCpuS": 6626.832042941871,
+      "rowsPerPull": 421.105,
+      "bytesPerPull": 18012.598,
+      "factsPerPull": 420.7316666666667,
+      "flatRowsPerPull": 427.527,
+      "flatBytesPerPull": 18289.263,
+      "table": {
+        "watermark": 1071,
+        "horizon": 0,
+        "entities": 125569,
+        "rows": 388785,
+        "live": 384785,
+        "retracted": 4000,
+        "approxBytes": 39665453,
+        "strictInstants": true,
+        "poisoned": null,
+        "pending": 0,
+        "counters": {
+          "applied": 1071,
+          "buffered": 0,
+          "duplicates": 0,
+          "purgedRows": 0,
+          "instantOrderViolations": 0,
+          "applyMs": 267.97452999999894,
+          "applyMaxMs": 12.58137499999998,
+          "appliedRows": 392785
+        }
+      },
+      "rssMiB": 441.296875,
+      "heapUsedMiB": 296.0124282836914
+    },
+    {
+      "label": "d10",
+      "mix": {
+        "count": 3000,
+        "minMs": 0.006,
+        "maxMs": 3.145,
+        "meanMs": 0.064,
+        "p50Ms": 0.033,
+        "p90Ms": 0.131,
+        "p99Ms": 0.489,
+        "p999Ms": 1.383
+      },
+      "byBucket": {
+        "small": {
+          "count": 1477,
+          "minMs": 0.006,
+          "maxMs": 1.073,
+          "meanMs": 0.021,
+          "p50Ms": 0.015,
+          "p90Ms": 0.034,
+          "p99Ms": 0.102,
+          "p999Ms": 0.675
+        },
+        "medium": {
+          "count": 1075,
+          "minMs": 0.023,
+          "maxMs": 3.145,
+          "meanMs": 0.082,
+          "p50Ms": 0.054,
+          "p90Ms": 0.137,
+          "p99Ms": 0.535,
+          "p999Ms": 2.287
+        },
+        "large": {
+          "count": 448,
+          "minMs": 0.067,
+          "maxMs": 1.383,
+          "meanMs": 0.164,
+          "p50Ms": 0.107,
+          "p90Ms": 0.319,
+          "p99Ms": 0.903,
+          "p999Ms": 1.383
+        }
+      },
+      "flat": {
+        "count": 1000,
+        "minMs": 0.008,
+        "maxMs": 2.296,
+        "meanMs": 0.097,
+        "p50Ms": 0.042,
+        "p90Ms": 0.211,
+        "p99Ms": 0.767,
+        "p999Ms": 2.296
+      },
+      "pullsPerS": 15381.900518614613,
+      "pullsPerCpuS": 15284.132014142915,
+      "rowsPerPull": 433.58366666666666,
+      "bytesPerPull": 18537.163666666667,
+      "factsPerPull": 431.8496666666667,
+      "flatRowsPerPull": 441.527,
+      "flatBytesPerPull": 18877.263,
+      "table": {
+        "watermark": 1211,
+        "horizon": 0,
+        "entities": 125569,
+        "rows": 402785,
+        "live": 384785,
+        "retracted": 18000,
+        "approxBytes": 40995453,
+        "strictInstants": true,
+        "poisoned": null,
+        "pending": 0,
+        "counters": {
+          "applied": 1211,
+          "buffered": 0,
+          "duplicates": 0,
+          "purgedRows": 0,
+          "instantOrderViolations": 0,
+          "applyMs": 282.1093589999981,
+          "applyMaxMs": 12.58137499999998,
+          "appliedRows": 420785
+        }
+      },
+      "rssMiB": 557.78125,
+      "heapUsedMiB": 438.3118591308594
+    },
+    {
+      "label": "d10x",
+      "mix": {
+        "count": 3000,
+        "minMs": 0.006,
+        "maxMs": 2.078,
+        "meanMs": 0.072,
+        "p50Ms": 0.036,
+        "p90Ms": 0.146,
+        "p99Ms": 0.631,
+        "p999Ms": 1.847
+      },
+      "byBucket": {
+        "small": {
+          "count": 1488,
+          "minMs": 0.006,
+          "maxMs": 1.21,
+          "meanMs": 0.023,
+          "p50Ms": 0.017,
+          "p90Ms": 0.037,
+          "p99Ms": 0.103,
+          "p999Ms": 0.275
+        },
+        "medium": {
+          "count": 1033,
+          "minMs": 0.023,
+          "maxMs": 2.075,
+          "meanMs": 0.095,
+          "p50Ms": 0.058,
+          "p90Ms": 0.163,
+          "p99Ms": 1.063,
+          "p999Ms": 1.847
+        },
+        "large": {
+          "count": 479,
+          "minMs": 0.068,
+          "maxMs": 2.078,
+          "meanMs": 0.176,
+          "p50Ms": 0.104,
+          "p90Ms": 0.327,
+          "p99Ms": 1.127,
+          "p999Ms": 2.078
+        }
+      },
+      "flat": {
+        "count": 1000,
+        "minMs": 0.007,
+        "maxMs": 1.513,
+        "meanMs": 0.081,
+        "p50Ms": 0.037,
+        "p90Ms": 0.167,
+        "p99Ms": 0.783,
+        "p999Ms": 1.513
+      },
+      "pullsPerS": 13712.76298639679,
+      "pullsPerCpuS": 13940.390888560514,
+      "rowsPerPull": 437.43,
+      "bytesPerPull": 18712.363666666668,
+      "factsPerPull": 434.66833333333335,
+      "flatRowsPerPull": 451.188,
+      "flatBytesPerPull": 19409.084,
+      "table": {
+        "watermark": 1231,
+        "horizon": 0,
+        "entities": 125569,
+        "rows": 412446,
+        "live": 394446,
+        "retracted": 18000,
+        "approxBytes": 42039307,
+        "strictInstants": true,
+        "poisoned": null,
+        "pending": 0,
+        "counters": {
+          "applied": 1231,
+          "buffered": 0,
+          "duplicates": 0,
+          "purgedRows": 0,
+          "instantOrderViolations": 0,
+          "applyMs": 289.0249439999976,
+          "applyMaxMs": 12.58137499999998,
+          "appliedRows": 430446
+        }
+      },
+      "rssMiB": 693.703125,
+      "heapUsedMiB": 589.031379699707
+    }
+  ],
+  "seed": {
+    "positions": 1031,
+    "wallS": 0.395824667,
+    "applyMs": 262.34123999999963,
+    "applyMsPerCommand": 0.2544531910766243,
+    "rssMiB": 290.328125,
+    "heapUsedMiB": 173.73931121826172,
+    "table": {
+      "watermark": 1031,
+      "horizon": 0,
+      "entities": 125569,
+      "rows": 384785,
+      "live": 384785,
+      "retracted": 0,
+      "approxBytes": 39285453,
+      "strictInstants": true,
+      "poisoned": null,
+      "pending": 0,
+      "counters": {
+        "applied": 1031,
+        "buffered": 0,
+        "duplicates": 0,
+        "purgedRows": 0,
+        "instantOrderViolations": 0,
+        "applyMs": 262.34123999999963,
+        "applyMaxMs": 12.58137499999998,
+        "appliedRows": 384785
+      }
+    }
+  },
+  "applyMsPerRow": 0.000671454593607555,
+  "applyMaxMs": 12.58137499999998
+}

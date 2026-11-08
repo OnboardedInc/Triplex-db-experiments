@@ -271,6 +271,8 @@ const dropIdentityAssert = (statements: any[]) => statements.filter((s) => !Stri
 
 async function settle(label: string) {
   if (source !== "engine") return { label, skipped: "memory source" };
+  // --settle none: functional smokes on a shared dev resident, where a block flush would touch other agents' scopes.
+  if (opt("settle") === "none") return { label, skipped: "--settle none (functional smoke; measurements invalid)" };
   const t0 = now();
   const out: any = { label };
   if (lane === "xtdb") {
@@ -649,6 +651,35 @@ async function eligibilityTests() {
     const after = await cmp(follower, subjects[0]!, b, "above-w-after");
     out.aboveW = { routeBefore: before.route, msBefore: before.ms, caughtUp: caught, routeAfter: after.route };
   }
+  // 1b. R24 prediction 8: fallback share at the 80/15/5 mix for a follower polling the feed every 100 ms while
+  // commits arrive at about the trace's steady rate (1 per second), against the synchronous writer's table.
+  {
+    const follower = h1Composition(arms[0]!.comp, { applyReceipts: false, followEveryMs: 100 }, CurrentTable.fromSnapshot(writer.table.snapshot()));
+    await follower.catchUp();
+    const rng = new Rng(seedOf(`steady:${runTag}`));
+    const routes: Record<string, Record<string, number>> = { follower: {}, writer: {} };
+    const lagAtRead: number[] = [];
+    const t0 = now();
+    let lastCommit = 0, reads = 0;
+    while (now() - t0 < Math.min(30, cfg.cutS) * 1000) {
+      if (now() - lastCommit > 1_000) { await flagCommit(flags++); lastCommit = now(); }
+      const latest = receipts.at(-1)!;
+      const u = rng.next();
+      const r = u < 0.8 ? latest : receipts[receipts.length - 1 - rng.int(Math.min(40, receipts.length))]!;
+      const b = basisOf(r.instant, Math.floor(u < 0.95 ? r.instant : r.instant - rng.int(89) * DAY), "elig", r.position, "elig:steady");
+      const s = subjects[reads % subjects.length]!;
+      lagAtRead.push(latest.position - follower.table.watermark);
+      const x = await cmp(follower, s, b, "steady-follower");
+      const w = await pullOn({ name: "h1", comp: writer }, s, { recordedAt: b.recordedAt, validAt: b.validAt });
+      routes.follower![x.route] = (routes.follower![x.route] ?? 0) + 1;
+      routes.writer![w.route] = (routes.writer![w.route] ?? 0) + 1;
+      reads++;
+      await sleep(20);
+    }
+    follower.setFollowing(false);
+    const share = (m: Record<string, number>) => 1 - (m["current-h1"] ?? 0) / Math.max(1, Object.values(m).reduce((a, b) => a + b, 0));
+    out.steadyFollower = { seconds: Math.min(30, cfg.cutS), reads, routes, fallbackShare: { follower: share(routes.follower!), writer: share(routes.writer!) }, positionsBehindAtRead: { mean: lagAtRead.reduce((a, b) => a + b, 0) / Math.max(1, lagAtRead.length), max: Math.max(0, ...lagAtRead) } };
+  }
   // 2. GS.04b consumer cut: a following follower stops consuming for cutS seconds while commits continue.
   {
     const follower = h1Composition(arms[0]!.comp, { applyReceipts: false, followEveryMs: 100 }, CurrentTable.fromSnapshot(writer.table.snapshot()));
@@ -942,6 +973,9 @@ async function main() {
   report.status = report.oracle?.status === "PASS" && crossArmMismatchCount === 0 && Object.values(gateErrors).every((n) => n === 0) ? "PASS" : cfg.skipOracle ? "NO-ORACLE" : "FAIL";
   report.finishedAt = new Date().toISOString();
   save();
+  // --receipt NAME: a copy of the report in the experiment's receipts folder (raw samples stay in --out, compressed).
+  const receiptName = opt("receipt");
+  if (receiptName && /^[a-z0-9-]+$/.test(receiptName)) fs.copyFileSync(path.join(outDir, "p4-report.json"), path.join(REPO, "lab/experiments/EXP-P4-current-path/receipts", `${receiptName}.json`));
   log(`done: ${report.status}; oracle ${JSON.stringify(report.oracle ? { status: report.oracle.status, perArm: Object.fromEntries(Object.entries(report.oracle.perArm ?? {}).map(([k, v]: any) => [k, { pulls: v.pulls, mismatched: v.mismatchedPulls }])) } : null)}`);
   for (const a of arms) await a.comp.close().catch(() => {});
   if (rawXtdb) await rawXtdb.close().catch(() => {});
