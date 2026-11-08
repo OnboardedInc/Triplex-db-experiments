@@ -542,7 +542,11 @@ async function gateNS(run, config) {
     invalid.push(`seeded by clone of golden ${String(sp.golden?.key).slice(0, 8)} (${sp.golden?.volume}): RULINGS Q74c, clone-seeded receipts do not count until validation E1 passes`);
     if (sp.golden?.containerId !== bound.engine.containerId) run.reason(`clone record names container ${String(sp.golden?.containerId).slice(0, 12)}, the run measured ${String(bound.engine.containerId).slice(0, 12)}`);
     const recordFile = sp.golden?.record ? path.resolve(REPO, sp.golden.record) : null;
-    if (recordFile && fs.existsSync(recordFile)) run.store(recordFile, 'golden-record');
+    if (sp.golden?.startedAt !== bound.engine.startedAt) run.reason('clone readiness belongs to a different container start');
+    if (recordFile && fs.existsSync(recordFile)) {
+      if (sha256File(recordFile) !== sp.golden.recordSha256) run.reason('golden record changed since clone creation');
+      run.store(recordFile, 'golden-record');
+    }
     else run.reason(`golden record ${sp.golden?.record} is missing`);
   }
   if (sp.seededBy === 'unverified') invalid.push('seed manifest without a bound slot owner record: what the slot volume holds is unverified');

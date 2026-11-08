@@ -1,0 +1,47 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 39561 "CX-VX02-shared-XTQL-r2", pid 62024 "CX-E01-R2-acceptance"
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 39561 "CX-VX02-shared-XTQL-r2", pid 62024 "CX-E01-R2-acceptance"
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 39561 "CX-VX02-shared-XTQL-r2", pid 62024 "CX-E01-R2-acceptance"
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 39561 "CX-VX02-shared-XTQL-r2", pid 62024 "CX-E01-R2-acceptance"
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 39561 "CX-VX02-shared-XTQL-r2", pid 62024 "CX-E01-R2-acceptance"
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 39561 "CX-VX02-shared-XTQL-r2", pid 90310 "CX-OREPLAY-049-qlever"
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 39561 "CX-VX02-shared-XTQL-r2", pid 66560 "CX-P2Q-R2-broker-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 39561 "CX-VX02-shared-XTQL-r2", pid 66560 "CX-P2Q-R2-broker-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 39561 "CX-VX02-shared-XTQL-r2", pid 66560 "CX-P2Q-R2-broker-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 82568 "CX-OREPLAY-049-core", pid 3529 "CX-VO05-review"
+[lab] tx2-xtdb-s1 ready (health=healthy pgwire=open started=200); cap 3.50 GiB, 2 CPU, config 13f5a70b3665
+export XTDB_URL='postgres://xtdb:xtdb@127.0.0.1:5471/xtdb'
+export XTDB_INTEGRATION=1
+export TRIPLEX_LAB_SLOT_OWNER='/Users/sam/projects/triplex-db-2/lab/locks/xtdb-s1/owner.json'
+export DOCKER_HOST='unix:///Users/sam/.colima/triplex2/docker.sock'  # only for manual docker calls; never the default context
+[xtdb-seed 21:30:10] seeding 500 subjects (20 accounts) into scope ns-xtdb-dev500-seed-ns-v2-0604cd31 at postgres://xtdb:xtdb@127.0.0.1:5471/xtdb through composition public-queued
+[xtdb-seed 21:30:31] seed: 20 shared account worlds in 21.1 s
+[xtdb-seed 21:31:15] seed: 500 subjects in 64.8 s
+{"out":"runs/xtdb-seed/CX-K01-500-retry","scope":"ns-xtdb-dev500-seed-ns-v2-0604cd31","subjects":500,"complete":true,"assertions":26635,"closedForm":true,"commands":81,"lastPosition":81,"wallS":64.8,"factsPerS":411.1}
+[clone-check 21:31:15] settle: 0 block files, 61709 live rows, compactor jobs 0; POST /system/finish-block
+[clone-check 21:31:21] settle: jobs 0, live rows 61709, blocks 1
+[clone-check 21:31:51] settle: jobs 0, live rows 61709, blocks 1
+[clone-check 21:32:22] settle: jobs 0, live rows 61709, blocks 1
+[clone-check 21:32:52] settle: jobs 0, live rows 61709, blocks 1
+[clone-check 21:33:23] settle: jobs 0, live rows 61709, blocks 1
+[clone-check 21:33:54] settle: jobs 0, live rows 61709, blocks 1
+[clone-check 21:34:24] settle: jobs 0, live rows 61709, blocks 1
+[clone-check 21:34:55] settle: jobs 0, live rows 61709, blocks 1
+[clone-check 21:35:26] settle: jobs 0, live rows 61709, blocks 1
+[clone-check 21:35:57] settle: jobs 0, live rows 61709, blocks 1
+[clone-check 21:36:27] settle: jobs 0, live rows 61709, blocks 1
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+Error: write CONNECTION_CLOSED 127.0.0.1:5471
+    at Socket.closed (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/k01/node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/connection.js:453:57)
+    at Socket.emit (node:events:519:28)
+    at TCP.<anonymous> (node:net:347:12) {
+  code: 'CONNECTION_CLOSED',
+  errno: 'CONNECTION_CLOSED',
+  address: [ '127.0.0.1' ],
+  port: [ 5471 ]
+}
+
+Node.js v22.23.2
+[lab] ENGINE: clone-check settle exited 1 without a JSON verdict: 

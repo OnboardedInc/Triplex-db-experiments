@@ -1,0 +1,7 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 83377 "CX-VO04H-rerun-resume", pid 83228 "GS-xtdb-20261108T211523Z-ea6353 gs-scenarios", pid 99387 "CX-P4-final-gates", pid 84732 "CX-E01-R2"
+[lab] heavy: waiting for one of 4 slots; held by pid 83377 "CX-VO04H-rerun-resume", pid 83228 "GS-xtdb-20261108T211523Z-ea6353 gs-scenarios", pid 99387 "CX-P4-final-gates", pid 4054 "CX-P2Q-R2-verifier-live"
+[lab] tx2-xtdb-s1 ready (health=healthy pgwire=open started=200); cap 3.50 GiB, 2 CPU, config 13f5a70b3665
+export XTDB_URL='postgres://xtdb:xtdb@127.0.0.1:5471/xtdb'
+export XTDB_INTEGRATION=1
+export TRIPLEX_LAB_SLOT_OWNER='/Users/sam/projects/triplex-db-2/lab/locks/xtdb-s1/owner.json'
+export DOCKER_HOST='unix:///Users/sam/.colima/triplex2/docker.sock'  # only for manual docker calls; never the default context

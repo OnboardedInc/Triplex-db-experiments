@@ -5,6 +5,7 @@
  */
 import { createHash } from "node:crypto";
 import fs from "node:fs";
+import path from "node:path";
 import type { CompositionHandle } from "./composition.ts";
 import type { SeedResult } from "./seed.ts";
 import { SEED_VALID_FROM, seedAddress } from "./world.ts";
@@ -50,4 +51,28 @@ export function seedPathOf(m: any, manifestFile: string | null, ownerFile: strin
     ...base, seededBy: "clone",
     golden: { key: c.key, volume: c.goldenVolume, record: c.goldenRecord, recordSha256: c.goldenRecordSha256, freezeSha256: c.freezeSha256, clonedAt: c.clonedAt, containerId: c.containerId, startedAt: c.startedAt, copy: { copyS: c.copy?.copyS, treeSha256: c.copy?.treeSha256, c1: c.copy?.c1?.pass ?? null }, timings: c.timings, readiness: c.readiness },
   };
+}
+
+/** [EXP-K01] Why: a recorded key names old bytes until compared with the executing build. Rejected: trusting the manifest hash alone (a stale golden still hashes correctly). */
+export function assertSeedInputsCurrent(m: any, root: string): void {
+  const inputs = m.seedInputs;
+  if (!inputs?.generator || !inputs?.adapter?.dist) throw new Error("Q74a: XTDB seed inputs are missing");
+  const sha = (bytes: Buffer | string) => createHash("sha256").update(bytes).digest("hex");
+  for (const [rel, expected] of Object.entries(inputs.generator)) {
+    const file = path.resolve(root, rel);
+    if (!file.startsWith(path.resolve(root) + path.sep) || !fs.existsSync(file) || sha(fs.readFileSync(file)) !== expected)
+      throw new Error(`Q74a: stale seed generator ${rel}`);
+  }
+  if (!Object.keys(inputs.generator).length) throw new Error("Q74a: seed generator hashes are missing");
+  for (const pkg of ["core", "xtdb", "qualification"]) {
+    const dir = path.join(root, "packages", pkg, "dist");
+    const files: string[] = [];
+    const visit = (p: string) => { for (const e of fs.readdirSync(p, { withFileTypes: true })) { const f = path.join(p, e.name); if (e.isDirectory()) visit(f); else if (e.isFile()) files.push(path.relative(root, f)); } };
+    if (!fs.existsSync(dir)) throw new Error(`Q74a: packages/${pkg}/dist is missing`);
+    visit(dir);
+    const lines = files.sort((a, b) => a.localeCompare(b)).map((rel) => `${sha(fs.readFileSync(path.join(root, rel)))}  ${rel}\n`);
+    const expected = inputs.adapter.dist[pkg];
+    if (!expected || expected.files !== files.length || expected.sha256 !== sha(lines.join("")))
+      throw new Error(`Q74a: stale seed adapter build ${pkg}`);
+  }
 }

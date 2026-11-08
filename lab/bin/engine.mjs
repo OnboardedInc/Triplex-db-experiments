@@ -540,7 +540,7 @@ export function parseListing(text) {
 /** Files that differ between two listings (R26 P-e: a first start may only append to the logs and add files). */
 export function diffListings(before, after) {
   const a = new Map(before.files.map(f => [f.path, f])), b = new Map(after.files.map(f => [f.path, f]));
-  const changed = [...a.keys()].filter(p => b.has(p) && (a.get(p).sha256 !== b.get(p).sha256 || a.get(p).bytes !== b.get(p).bytes || a.get(p).mode !== b.get(p).mode || a.get(p).uid !== b.get(p).uid));
+  const changed = [...a.keys()].filter(p => b.has(p) && (a.get(p).sha256 !== b.get(p).sha256 || a.get(p).bytes !== b.get(p).bytes || a.get(p).mode !== b.get(p).mode || a.get(p).uid !== b.get(p).uid || a.get(p).gid !== b.get(p).gid));
   const removed = [...a.keys()].filter(p => !b.has(p));
   const added = [...b.keys()].filter(p => !a.has(p));
   const logs = new Set(['./log/LOG', './log/REPLICA_LOG']);
@@ -634,16 +634,26 @@ async function golden(config, info, opts) {
   const volume = `tx2-golden-xtdb-${k.key8}`;
   if (docker(['volume', 'inspect', volume], { allowFail: true })) fail('REFUSED', `${volume} already exists (goldens are write-once; engine.mjs golden-rm first)`);
   const timings = {};
+  // [EXP-K01] Why: a clean-stop refusal must retain its successful freeze and actual stop outcome. Rejected: publishing only golden.json on success (loses first-failure evidence).
+  const attemptFile = path.join(path.dirname(manifestFile), `golden-attempt-${Date.now()}.json`);
+  const attempt = { format: 'tx2-xtdb-golden-attempt/1', at: now(), key: k.key, volume, manifestSha256: sha256File(manifestFile), containerId: c.Id, timings, status: 'SETTLING' };
+  writeJson(attemptFile, attempt);
   let t = Date.now();
   const settled = cloneCheck(['settle', '--url', info.endpoint, '--container', info.container]);
   timings.settleS = (Date.now() - t) / 1000;
+  Object.assign(attempt, { settled, status: settled.settled ? 'FREEZING' : 'REFUSED_SETTLE' });
+  writeJson(attemptFile, attempt);
   if (!settled.settled) fail('ENGINE', `${info.container} did not settle: ${settled.reason}`);
   t = Date.now();
   const freeze = cloneCheck(['freeze', '--url', info.endpoint, '--container', info.container, '--manifest', manifestFile]);
   timings.freezeS = (Date.now() - t) / 1000;
+  Object.assign(attempt, { freeze, status: freeze.ok ? 'STOPPING' : 'REFUSED_FREEZE' });
+  writeJson(attemptFile, attempt);
   if (!freeze.ok) fail('ENGINE', `freeze fingerprint failed: ${JSON.stringify(freeze.errors ?? freeze).slice(0, 600)}`);
   const stop = await stopSlot(config, info, { ...opts, print: false });
   timings.stopS = stop.stopMs / 1000;
+  Object.assign(attempt, { stop, status: stop.verdict.ok ? 'COPYING' : 'REFUSED_STOP' });
+  writeJson(attemptFile, attempt);
   if (!stop.verdict.ok) fail('REFUSED', `${info.container} did not stop cleanly (${stop.verdict.reasons.join('; ')}); no golden made`);
   const sourceBytes = volumeBytes(config, info.volume);
   const diskBefore = hostDisk();
@@ -676,6 +686,8 @@ async function golden(config, info, opts) {
     rule: 'never start an engine on this volume; clone it (engine.mjs clone --golden-record this file)',
   };
   writeJson(recordFile, record);
+  Object.assign(attempt, { status: 'GOLDEN_CREATED', record: recordFile });
+  writeJson(attemptFile, attempt);
   await withPool(async ledger => {
     ledger.goldens = (ledger.goldens ?? []).filter(g => g.volume !== volume);
     ledger.goldens.push({ volume, key: k.key, bytes: goldenBytes, holder: defaultHolder(opts), record: recordFile, at: now() });

@@ -45,10 +45,11 @@ export interface Check { pass: boolean; expected?: unknown; observed?: unknown; 
  * clone-check.ts `fingerprint()` returns. C1 (copy) and C2 (healthz) are decided outside, from their own evidence.
  */
 export function compareFreeze(freeze: any, obs: any, manifest: { result: { lastPosition: number } }): Record<string, Check> {
+  // [EXP-K01] Why: missing observations must fail even when both sides are missing. Rejected: equality alone (undefined equals undefined).
   const eq = (a: unknown, b: unknown) => canonical(a) === canonical(b);
   const out: Record<string, Check> = {};
   out["C3"] = {
-    pass: eq(freeze.c3, obs.c3),
+    pass: !!freeze.c3 && !!obs.c3 && eq(freeze.c3, obs.c3),
     expected: freeze.c3, observed: obs.c3, note: "latest completed tx per partition (SHOW LATEST_COMPLETED_TXS) and xt.txs count, min and max system time",
   };
   const positionOk = obs.c4?.position === manifest.result.lastPosition && freeze.c4?.position === manifest.result.lastPosition;
@@ -57,9 +58,9 @@ export function compareFreeze(freeze: any, obs: any, manifest: { result: { lastP
     expected: { ...freeze.c4, manifestPosition: manifest.result.lastPosition }, observed: obs.c4,
     note: "Triplex position (equal to the manifest's last position) and current row counts of the scope",
   };
-  out["C5"] = { pass: eq(freeze.c5, obs.c5), expected: freeze.c5, observed: obs.c5, note: "history row counts over all system and valid time, distinct tx system times" };
+  out["C5"] = { pass: !!freeze.c5 && !!obs.c5 && eq(freeze.c5, obs.c5), expected: freeze.c5, observed: obs.c5, note: "history row counts over all system and valid time, distinct tx system times" };
   out["C6"] = {
-    pass: freeze.c6?.sha256 === obs.c6?.sha256 && eq(freeze.c6?.liveTables?.rows ?? [], obs.c6?.liveTables?.rows ?? []),
+    pass: typeof freeze.c6?.sha256 === "string" && freeze.c6.sha256.length > 0 && freeze.c6.sha256 === obs.c6?.sha256 && eq(freeze.c6?.liveTables?.rows ?? [], obs.c6?.liveTables?.rows ?? []),
     expected: { sha256: freeze.c6?.sha256, trieStats: freeze.c6?.trieStats?.sha256, blockFiles: freeze.c6?.blockFiles?.sha256, liveTables: freeze.c6?.liveTables?.rows },
     observed: { sha256: obs.c6?.sha256, trieStats: obs.c6?.trieStats?.sha256, blockFiles: obs.c6?.blockFiles?.sha256, liveTables: obs.c6?.liveTables?.rows },
     note: "layout: xt.trie_stats, xt.block_files and xt.live_tables rows",
@@ -67,10 +68,19 @@ export function compareFreeze(freeze: any, obs: any, manifest: { result: { lastP
   const polls: number[] = obs.c7?.polls ?? [obs.c7?.jobsAvailable];
   out["C7"] = { pass: polls.length >= 3 && polls.every((v) => v === 0), expected: [0, 0, 0], observed: polls, note: "compactor.jobs.available, three readings 5 s apart" };
   out["C8"] = {
-    pass: freeze.c8?.resultSha256 === obs.c8?.resultSha256 && freeze.c8?.plan?.sha256 === obs.c8?.plan?.sha256,
+    pass: typeof freeze.c8?.resultSha256 === "string" && freeze.c8.resultSha256.length > 0 && typeof freeze.c8?.plan?.sha256 === "string" && freeze.c8.plan.sha256.length > 0 && freeze.c8.resultSha256 === obs.c8?.resultSha256 && freeze.c8.plan.sha256 === obs.c8?.plan?.sha256,
     expected: { resultSha256: freeze.c8?.resultSha256, planSha256: freeze.c8?.plan?.sha256, subjects: freeze.c8?.subjects?.length },
     observed: { resultSha256: obs.c8?.resultSha256, planSha256: obs.c8?.plan?.sha256, subjects: obs.c8?.subjects?.length, plan: obs.c8?.plan?.sha256 === freeze.c8?.plan?.sha256 ? undefined : obs.c8?.plan?.rows },
     note: "fixed subjects' pull result digest at the manifest basis, and the probe query's EXPLAIN ANALYZE files, pages and rows",
   };
   return out;
+}
+
+/** [EXP-K01] Why: query only published block ids; a missing block can strand XTDB's cache loader. Rejected: sentinel missing-block queries (observed hang on a fresh seed). */
+export function publishedBlockIndices(listing: string): string[] {
+  return listing.split("\n").filter(Boolean).map((file) => {
+    const match = /^\/var\/lib\/xtdb\/buffers\/v06\/blocks\/b([0-9a-f]+)\.binpb$/.exec(file);
+    if (!match) throw new Error(`unexpected block file ${file}`);
+    return match[1];
+  }).sort();
 }

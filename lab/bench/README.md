@@ -173,3 +173,9 @@ The driver reads the slot owner record: a clone without a PASS readiness verdict
 NS gate marks clone-seeded receipts INVALID until validation E1 passes (Q74c). `engine.mjs settle` settles a fresh-seeded
 arm the same way (Q74b); `stop`, `listing --golden-record` and `verify` exist for E1's restart and P-e checks.
 A copy is refused when host free disk after it would fall below 5 GiB (Q74f).
+
+The driver also compares the manifest's generator and adapter dist hashes with the executing checkout before continuing
+an XTDB seed. NS binds clone readiness to the container's start instant and checks the golden-record hash. These checks
+do not authorize clone screening: E1 is still required. Block fingerprints enumerate published files in the pinned
+local `buffers/v06/blocks` layout before querying `xt.block_files`; querying a nonexistent block stalled the first
+CX-K01 live attempt, preserved in the experiment report.

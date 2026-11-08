@@ -4,6 +4,10 @@
 until E1 shows that a measurement on a clone is indistinguishable from the same measurement on a fresh-seeded slot within
 the PAIR-0 hold margins. E1 needs two exclusive XTDB slots at once, so it runs in a measurement window (Q69a).
 
+The CX-K01 continuation did not create a golden: clean-stop log proof was absent. It also observed a stale live-table
+read view after finish-block, cleared by a restart. REPORT records both gaps. Resolve and review those prerequisites
+before executing this plan; the manual restart diagnostic is not an approved change to the canonical freeze protocol.
+
 ## 1. Question and decision
 
 | Item | Value |
@@ -44,20 +48,20 @@ cpuset-regime slot if the regime changes any other field.
    `xtdb-seed.ts --out runs/xtdb-seed/e1-A` with the same options; `engine.mjs settle --lane xtdb --slot s3`;
    `clone-check.ts freeze --url <s3> --container tx2-xtdb-s3 --manifest runs/xtdb-seed/e1-A/manifest.json > e1-A-freeze.json`.
    Check that the A manifest's `seedInputs` give the same golden key as G (`goldenKey` in engine.mjs; same system config).
-3. **Window opens (Q69a).** The orchestrator stops qlever-dev and announces the window.
-4. **Arm B clone (s1).** `engine.mjs clone --lane xtdb --slot s1 --golden-record runs/xtdb-seed/e1-G/golden.json`; readiness
-   must be PASS (C1-C8). Record P-c (docker run to `/healthz/started`) and P-f (copy time) from `owner.json volumeContent.timings`.
-5. **Pre-duet checks.** P-a: compare `e1-A-freeze.json` with G's freeze record (section 4 lists the fields). P-b: C8 on B equals
-   G's freeze (already part of C1-C8), and C8 on A equals A's freeze after its warm-up.
+3. **Window opens (Q69a).** The orchestrator arranges the required capacity and announces the window; K01 does not stop shared residents.
+4. **First-start immutability (s1).** Make a sacrificial clone of G on s1, run C1-C8, stop it, and run
+   `listing --golden-record ...`. P-e requires no changed buffer files and no removed files before any measured writer
+   or maintenance event. Remove this slot volume. Record this attempt separately from the measured clone.
+5. **Measured B clone and pre-duet checks.** `engine.mjs clone --lane xtdb --slot s1 --golden-record
+   runs/xtdb-seed/e1-G/golden.json`; C1-C8 must PASS. Record P-c from `volumeContent.timings.runToStartedS` and P-f from
+   `volumeContent.copy.copyS`. P-a: compare `e1-A-freeze.json` with G's freeze record (section 4 lists the fields).
+   P-b: C8 on B equals G's freeze before and after warm-up, and C8 on A equals A's freeze after warm-up.
 6. **Duet.** `gate.mjs PAIR --lane xtdb --slots s3,s1 --mode aa --rounds 8 --composition public-queued --series screening-b180
    --seed-manifest-a runs/xtdb-seed/e1-A/manifest.json --seed-manifest-b runs/xtdb-seed/e1-G/manifest.json` (A first, so slot
    bias reads as B/A). Same warm-up on both arms (the series' warm-up period), in the same order.
-7. **After.** P-e: `engine.mjs stop --lane xtdb --slot s1` and `engine.mjs listing --lane xtdb --slot s1 --golden-record ...`
-   (this lists the clone after a full run, so only `changedOutsideLogs` and `removed` count: a run adds files and appends logs).
-   Then `down --remove-volume` on both slots, `golden-rm` unless the orchestrator keeps the golden for screening, and recreate
-   qlever-dev fresh.
+7. **After.** Optionally retain a post-window listing as diagnostic evidence; compaction during the window may legitimately remove or change files, so it cannot decide P-e. Then `down --remove-volume` on both slots, `golden-rm` unless the orchestrator keeps the golden for screening, and return resident lifecycle control to the orchestrator. K01 never stops or recreates shared residents.
 
-## 4. Predictions (R26 6.9), corrected where the 500-subject check showed R26's wording cannot hold
+## 4. Predictions (R26 6.9), with cross-seed and first-start distinctions
 
 | # | Prediction | How E1 reads it | If wrong |
 | --- | --- | --- | --- |
@@ -65,21 +69,20 @@ cpuset-regime slot if the regime changes any other field.
 | P-b | C8 plan and result hashes on B equal G's freeze, before and after warm-up | C8 in readiness, and C8 rerun after the warm-up | restart-dependent planning (R7): add a second restart to the clone protocol, then re-verify |
 | P-c | B reaches `/healthz/started` within 60 s of docker run | `volumeContent.timings.runToStartedS` | budget more per clone; at 10k replay is longer only for an unsettled golden |
 | P-d | A/A slot bias at p50 and p99 within 1.10 and 1.15 | the PAIR verdict (`stats` primary commitAll q0.5, p50, p99; and probeAll) | find the source before adoption: rerun with R26's restarted arm A to split copy from restart; check page-cache warmth (copy order) |
-| P-e | a start rewrites no `buffers/` file | `listing --golden-record`: `changedOutsideLogs` empty, `removed` empty | storage is not immutable at start: re-check the read-only rule for goldens |
+| P-e | a start rewrites no `buffers/` file | sacrificial first-start `listing --golden-record` before any window: `changedOutsideLogs` empty, `removed` empty | storage is not immutable at start: re-check the read-only rule for goldens |
 | P-f | the copy of R's volume takes 8 to 60 s | `volumeContent.copy.copyS` | re-plan disk and duet scheduling |
 | P-g | the pinned image has the tools | `engine.mjs toolcheck` | use the QLever image for the helper |
 
-The 500-subject live check (REPORT, evidence/) already answers P-c, P-e (first start) and P-g at that rung; E1 re-reads
-them at R.
+The 500-subject live check is documented in REPORT with its actual verdicts and failures; E1 must repeat these checks at R. Historical tool receipts are not fresh execution.
 
 ## 5. Rung and disk
 
 | Rung | Volume | Volumes at once | VM disk at peak | Host free needed when each copy starts (Q74f, 5 GiB floor) |
 | --- | --- | --- | --- | --- |
 | 10k | 3.41 GiB (N01 A0 receipt) | golden, arm A, clone B: 3 | about 10.2 GiB above today's 7.7 GiB | 8.4 GiB at the golden copy and again at the clone copy |
-| dev:500 | measured in the live check (evidence/) | 3 | well under 1 GiB | about 5 GiB |
+| dev:500 | not measured: golden creation refused | 3 | estimate only, must measure | 5 GiB plus measured copy bytes |
 
-Today the host has 6.9 GiB free, so a 10k E1 is refused by Q74f until about 1.5 GiB more is free at each copy (the
+The original planning snapshot had 6.9 GiB free; measure host free disk again before E1. At that snapshot a 10k E1 was refused by Q74f until about 1.5 GiB more was free at each copy (the
 check assumes every copied byte grows the VM's sparse disk; blocks freed inside the VM are often reused, so the real growth
 is usually lower, but the rule stays conservative). Two decisions for the orchestrator (new rulings):
 

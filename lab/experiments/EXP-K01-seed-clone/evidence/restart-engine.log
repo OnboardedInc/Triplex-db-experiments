@@ -1,0 +1,19 @@
+NOTE: Picked up JDK_JAVA_OPTIONS: -Xmx2g -XX:MaxDirectMemorySize=1g
+NOTE: Picked up JDK_JAVA_OPTIONS: -Xmx2g -XX:MaxDirectMemorySize=1g
+Starting 2.2.0 [c6c1962] ...
+21:30:07 | INFO  xtdb.Metrics | tagging all metrics with node-id: 5cbd7169
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::allocateMemory has been called by io.netty.util.internal.PlatformDependent0$2 (file:/usr/local/lib/xtdb/xtdb.jar)
+WARNING: Please consider reporting this to the maintainers of class io.netty.util.internal.PlatformDependent0$2
+WARNING: sun.misc.Unsafe::allocateMemory will be removed in a future release
+21:30:08 | INFO  xtdb.indexer.LogProcessor | [xtdb] starting follower: pending block: false, src: -1, replica: -1
+21:30:08 | INFO  xtdb.indexer.LogProcessor | [xtdb] claim at term 1 conferred leadership
+21:30:08 | INFO  xtdb.indexer.LogProcessor | [xtdb] leader startup complete, resuming after -1
+21:30:08 | INFO  xtdb.api.FlightSql | Flight SQL server started, port 35615
+21:30:08 | INFO  xtdb.pgwire | Server started at postgres://0.0.0.0:5432
+21:30:08 | INFO  xtdb.healthz | Healthz server started at http://0.0.0.0:8080 - startup targets: {"xtdb" [-1]}
+21:30:08 | INFO  xtdb.main | Node started
+21:36:37 | INFO  xtdb.main | Stopping node...
+NOTE: Picked up JDK_JAVA_OPTIONS: -Xmx2g -XX:MaxDirectMemorySize=1g
+NOTE: Picked up JDK_JAVA_OPTIONS: -Xmx2g -XX:MaxDirectMemorySize=1g
+Starting 2.2.0 [c6c1962] ...

@@ -1,0 +1,17 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 40843 "CX-P2Q-R2-verifier-offline", pid 41295 "CX-VX02-writer-between", pid 39561 "CX-VX02-shared-XTQL-r2", pid 25645 "CX-E01-R2-final"
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+Error: write CONNECTION_CLOSED 127.0.0.1:5471
+    at Socket.closed (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/k01/node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/connection.js:453:57)
+    at Socket.emit (node:events:519:28)
+    at TCP.<anonymous> (node:net:347:12) {
+  code: 'CONNECTION_CLOSED',
+  errno: 'CONNECTION_CLOSED',
+  address: [ '127.0.0.1' ],
+  port: [ 5471 ]
+}
+
+Node.js v22.23.2
+[lab] ENGINE: clone-check settle exited 1 without a JSON verdict: 

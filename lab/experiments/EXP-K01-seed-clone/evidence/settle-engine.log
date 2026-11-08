@@ -1,0 +1,31 @@
+NOTE: Picked up JDK_JAVA_OPTIONS: -Xmx2g -XX:MaxDirectMemorySize=1g
+NOTE: Picked up JDK_JAVA_OPTIONS: -Xmx2g -XX:MaxDirectMemorySize=1g
+Starting 2.2.0 [c6c1962] ...
+21:18:28 | INFO  xtdb.Metrics | tagging all metrics with node-id: 9af57a77
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::allocateMemory has been called by io.netty.util.internal.PlatformDependent0$2 (file:/usr/local/lib/xtdb/xtdb.jar)
+WARNING: Please consider reporting this to the maintainers of class io.netty.util.internal.PlatformDependent0$2
+WARNING: sun.misc.Unsafe::allocateMemory will be removed in a future release
+21:18:30 | INFO  xtdb.indexer.LogProcessor | [xtdb] starting follower: pending block: false, src: -1, replica: -1
+21:18:31 | INFO  xtdb.indexer.LogProcessor | [xtdb] claim at term 1 conferred leadership
+21:18:31 | INFO  xtdb.indexer.LogProcessor | [xtdb] leader startup complete, resuming after -1
+21:18:31 | INFO  xtdb.api.FlightSql | Flight SQL server started, port 36751
+21:18:31 | INFO  xtdb.pgwire | Server started at postgres://0.0.0.0:5432
+21:18:31 | INFO  xtdb.healthz | Healthz server started at http://0.0.0.0:8080 - startup targets: {"xtdb" [-1]}
+21:18:31 | INFO  xtdb.main | Node started
+21:21:56 | ERROR xtdb.util | Uncaught exception:
+java.lang.IllegalStateException: Object blocks/b00.binpb doesn't exist.
+	at xtdb.storage.LocalStorage$Companion.objectMissingException(LocalStorage.kt:59)
+	at xtdb.storage.LocalStorage$Companion.orThrowIfMissing(LocalStorage.kt:61)
+	at xtdb.storage.LocalStorage$Companion.access$orThrowIfMissing(LocalStorage.kt:53)
+	at xtdb.storage.LocalStorage$getByteArray$1$1.invoke(LocalStorage.kt:70)
+	at xtdb.cache.MemoryCache$FetchReq$handle$2$2.invokeSuspend(MemoryCache.kt:123)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.internal.LimitedDispatcher$Worker.run(LimitedDispatcher.kt:124)
+	at kotlinx.coroutines.scheduling.TaskImpl.run(Tasks.kt:89)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler.runSafely(CoroutineScheduler.kt:586)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.executeTask(CoroutineScheduler.kt:798)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runWorker(CoroutineScheduler.kt:717)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.run(CoroutineScheduler.kt:704)
+	Suppressed: kotlinx.coroutines.internal.DiagnosticCoroutineContextException: [CoroutineName(MemoryCache-Fetch-PathSlice(path=xtdb/0/blocks/b00.binpb, slice=null)), StandaloneCoroutine{Cancelling}@3ce30e9f, Dispatchers.IO]

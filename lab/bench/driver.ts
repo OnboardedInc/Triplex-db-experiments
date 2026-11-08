@@ -37,7 +37,7 @@ import { TRACE_DEFAULTS, generateTrace, traceDigest, traceStats, type TraceEvent
 import { BUCKETS, HOP_SHARE, RUNGS, SEED_VALID_FROM, accountsFor, accountOfSubject, hopOf, ids, populationCounts, subjectInCell, worldFactsOf, type Bucket } from "./lib/world.ts";
 import { REPO } from "./lib/triplex.ts";
 import { chooseHistorySample, chooseSamples } from "./lib/samples.ts";
-import { seedFromManifest, seedPathOf } from "./lib/bulk.ts";
+import { assertSeedInputsCurrent, seedFromManifest, seedPathOf } from "./lib/bulk.ts";
 
 // ---------------------------------------------------------------- arguments
 
@@ -100,6 +100,7 @@ if (bulkManifest && (bulkManifest.subjects !== rungSubjects || bulkManifest.lane
   throw new Error(`--seed-manifest is for ${bulkManifest.lane}/${bulkManifest.subjects} subjects/seed ${bulkManifest.seed}, not ${lane}/${rungSubjects}/${config.seed}`);
 const scopeName = bulkManifest ? bulkManifest.scope : `ns-${lane}-${config.rung.replace(/[^a-z0-9]/gi, "")}-${runTag}`;
 // [EXP-K01] Bound before anything runs: a clone without a PASS readiness verdict for this manifest's golden is refused.
+if (bulkManifest?.lane === "xtdb") assertSeedInputsCurrent(bulkManifest, REPO);
 const seedPath = seedPathOf(bulkManifest, config.seedManifest ? path.resolve(config.seedManifest) : null, process.env["TRIPLEX_LAB_SLOT_OWNER"]);
 const now = () => performance.timeOrigin + performance.now();
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));

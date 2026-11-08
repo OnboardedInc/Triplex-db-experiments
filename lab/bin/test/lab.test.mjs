@@ -336,5 +336,8 @@ test('volume listings parse, hash every field, fail closed on truncation, and di
   const blockChanged = diffListings(a, parseListing(text(h('b')).replace(`${h('a')}  ./buffers`, `${h('e')}  ./buffers`)));
   assert.deepEqual(blockChanged.changedOutsideLogs, ['./buffers/v06/blocks/b00.binpb']);
   assert.equal(blockChanged.storageImmutable, false);
+  const groupChanged = structuredClone(a);
+  groupChanged.files[0].gid = '0';
+  assert.equal(diffListings(a, groupChanged).storageImmutable, false, 'group ownership is part of storage immutability');
   assert.match(listingScript('/dst'), /! -path '\*\/\.tmp\/\*'/);
 });

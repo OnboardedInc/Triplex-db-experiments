@@ -22,7 +22,7 @@ import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { canonical, compareFreeze, digest, planShape, pullDigest, type Check } from "./lib/clone.ts";
+import { canonical, compareFreeze, digest, planShape, pullDigest, publishedBlockIndices, type Check } from "./lib/clone.ts";
 import { chooseSamples } from "./lib/samples.ts";
 import { SEED_VALID_FROM, ids } from "./lib/world.ts";
 
@@ -57,22 +57,26 @@ const num = (v: unknown) => (v === null || v === undefined ? null : Number(v));
 
 async function gauges() {
   const rows = await q("SELECT name, value FROM xt.metrics_gauges WHERE name IN ('compactor.jobs.available', 'node.tx.latestCompletedTxId', 'node.tx.lag.MsgId')");
-  const sum = (name: string) => rows.filter((r) => r.name === name).reduce((s, r) => s + Number(r.value), 0);
+  // [EXP-K01] Why: an absent gauge is missing evidence, not an idle compactor. Rejected: reducing an empty set to zero (false settle).
+  const sum = (name: string) => { const found = rows.filter((r) => r.name === name); return found.length ? found.reduce((s, r) => s + Number(r.value), 0) : null; };
   return { jobsAvailable: sum("compactor.jobs.available"), latestCompletedTxId: sum("node.tx.latestCompletedTxId"), lagMsgId: sum("node.tx.lag.MsgId"), rows: rows.length };
 }
 async function liveRows() {
   const rows = await q("SELECT table_name, row_count FROM xt.live_tables ORDER BY table_name");
   return { total: rows.reduce((s, r) => s + Number(r.row_count), 0), rows: rows.map((r) => [r.table_name, Number(r.row_count)]) };
 }
-// xt.block_files refuses a scan without block_idx bounds (lex-hex text, block_tables.clj:131-140), and a wide range
-// reads every block number in it (a BETWEEN '00' AND '2fff' scan outlived a 60 s deadline on a busy node). Block
-// numbers are dense from 0, so read them one by one with equality and stop after three missing numbers in a row.
-const lexHex = (n: number) => { const body = n.toString(16); return `${(body.length - 1).toString(16)}${body}`; };
+// [EXP-K01] Why: the pinned node hangs reading a missing block through its memory cache (first live attempt, evidence/settle-engine.log).
+// Rejected: probing dense block numbers until three misses (the very first seed may have no completed block).
+// Enumerate only published block files through a read-only exec, then ask SQL for exactly those rows.
 async function blockFileRows(): Promise<any[]> {
+  const r = spawnSync("docker", ["-H", DOCKER_HOST, "exec", container!, "sh", "-c", "if [ -d /var/lib/xtdb/buffers/v06/blocks ]; then find /var/lib/xtdb/buffers/v06/blocks -maxdepth 1 -type f -name 'b*.binpb'; fi"], { encoding: "utf8", timeout: 30_000 });
+  if (r.status !== 0) throw new Error(`block file discovery failed: ${r.stderr}`);
+  const indices = publishedBlockIndices(r.stdout ?? "");
   const rows: any[] = [];
-  for (let i = 0, misses = 0; misses < 3 && i < 4096; i++) {
-    const r = await q("SELECT block_idx, tx_id, system_time, latest_processed_msg_id, table_names, boundary_replica_msg_id, file_size FROM xt.block_files WHERE block_idx = ?", [lexHex(i)]);
-    if (r.length) { rows.push(...r); misses = 0; } else misses++;
+  for (const index of indices) {
+    const found = await q("SELECT block_idx, tx_id, system_time, latest_processed_msg_id, table_names, boundary_replica_msg_id, file_size FROM xt.block_files WHERE block_idx = ?", [index]);
+    if (found.length !== 1) throw new Error(`published block ${index} returned ${found.length} rows`);
+    rows.push(...found);
   }
   return rows;
 }

@@ -1,11 +1,12 @@
 /** EXP-K01 clone readiness unit tests (G0): canonical digests, probe-plan shape, freeze comparison, seed-path binding. */
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
-import { canonical, compareFreeze, digest, planShape, pullDigest } from "../lib/clone.ts";
-import { seedPathOf } from "../lib/bulk.ts";
+import { canonical, compareFreeze, digest, planShape, pullDigest, publishedBlockIndices } from "../lib/clone.ts";
+import { assertSeedInputsCurrent, seedPathOf } from "../lib/bulk.ts";
 
 const freeze = {
   c3: { latestCompletedTxs: [{ db: "xtdb", tx: 1 }], txs: { n: 10, minSystemTime: "2026-11-08T00:00:00.000Z", maxSystemTime: "2026-11-08T00:01:00.000Z", maxId: 9, notCommitted: 0 } },
@@ -74,4 +75,44 @@ test("seed path: driver, QLever bulk index, XTDB seed-writer, unverified, clone 
   fs.writeFileSync(owner, JSON.stringify({ holder: "K01", volumeContent: { ...content, manifestSha256: "other" } }));
   assert.throws(() => seedPathOf(xtdb, mf, owner), /not this manifest/);
   assert.throws(() => seedPathOf({ ...xtdb, format: "x" }, mf, owner), /not an XTDB seed manifest/);
+});
+
+// [EXP-K01] Why: two incomplete fingerprints cannot certify a clone. Rejected: only testing unequal populated fixtures (misses absent evidence).
+test("clone check: missing evidence on both sides fails closed", () => {
+  const checks = compareFreeze({}, {}, manifest);
+  for (const [name, check] of Object.entries(checks)) assert.equal(check.pass, false, name);
+});
+
+// [EXP-K01] Why: exercise changed bytes and added files, not just manifest self-consistency. Rejected: accepting any self-hashing old key (does not bind the current build).
+test("seed identity: refuse changed generators and stale or expanded adapter builds", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "tx2-k01-identity-"));
+  const sha = (s: string) => createHash("sha256").update(s).digest("hex");
+  try {
+    fs.writeFileSync(path.join(root, "generator.ts"), "generator");
+    const dist: any = {};
+    for (const pkg of ["core", "xtdb", "qualification"]) {
+      const rel = `packages/${pkg}/dist/index.js`;
+      fs.mkdirSync(path.dirname(path.join(root, rel)), { recursive: true });
+      fs.writeFileSync(path.join(root, rel), "build");
+      dist[pkg] = { files: 1, sha256: sha(`${sha("build")}  ${rel}\n`) };
+    }
+    const m = { seedInputs: { generator: { "generator.ts": sha("generator") }, adapter: { dist } } };
+    assert.doesNotThrow(() => assertSeedInputsCurrent(m, root));
+    fs.writeFileSync(path.join(root, "generator.ts"), "changed");
+    assert.throws(() => assertSeedInputsCurrent(m, root), /stale seed generator/);
+    fs.writeFileSync(path.join(root, "generator.ts"), "generator");
+    fs.writeFileSync(path.join(root, "packages/core/dist/index.js"), "changed");
+    assert.throws(() => assertSeedInputsCurrent(m, root), /stale seed adapter build core/);
+    fs.writeFileSync(path.join(root, "packages/core/dist/index.js"), "build");
+    fs.writeFileSync(path.join(root, "packages/core/dist/extra.js"), "extra");
+    assert.throws(() => assertSeedInputsCurrent(m, root), /stale seed adapter build core/);
+    assert.throws(() => assertSeedInputsCurrent({}, root), /inputs are missing/);
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});
+
+// [EXP-K01] Why: a seed below the first automatic block cut has no block files. Rejected: querying b00 regardless (first live failure).
+test("published block discovery: empty is empty, gaps are preserved, malformed paths refuse", () => {
+  assert.deepEqual(publishedBlockIndices(""), []);
+  assert.deepEqual(publishedBlockIndices("/var/lib/xtdb/buffers/v06/blocks/b02.binpb\n/var/lib/xtdb/buffers/v06/blocks/b00.binpb\n"), ["00", "02"]);
+  assert.throws(() => publishedBlockIndices("/other/b00.binpb"), /unexpected block file/);
 });

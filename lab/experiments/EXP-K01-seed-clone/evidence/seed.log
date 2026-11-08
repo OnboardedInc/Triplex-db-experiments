@@ -1,0 +1,5 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 83377 "CX-VO04H-rerun-resume", pid 40570 "CX-P2Q-R2-typecheck", pid 39561 "CX-VX02-shared-XTQL-r2", pid 25645 "CX-E01-R2-final"
+[xtdb-seed 21:19:38] seeding 500 subjects (20 accounts) into scope ns-xtdb-dev500-seed-ns-v2-0604cd31 at postgres://xtdb:xtdb@127.0.0.1:5471/xtdb through composition public-queued
+[xtdb-seed 21:20:14] seed: 20 shared account worlds in 35.9 s
+[xtdb-seed 21:21:09] seed: 500 subjects in 90.9 s
+{"out":"runs/xtdb-seed/CX-K01-500","scope":"ns-xtdb-dev500-seed-ns-v2-0604cd31","subjects":500,"complete":true,"assertions":26635,"closedForm":true,"commands":81,"lastPosition":81,"wallS":90.9,"factsPerS":293}

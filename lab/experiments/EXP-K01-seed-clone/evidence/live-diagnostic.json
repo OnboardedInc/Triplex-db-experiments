@@ -1,0 +1,93 @@
+[
+  {
+    "sql": "SELECT table_name, row_count FROM xt.live_tables ORDER BY table_name",
+    "rows": [
+      {
+        "table_name": "tx_assertions",
+        "row_count": "61384"
+      },
+      {
+        "table_name": "tx_attempts",
+        "row_count": "81"
+      },
+      {
+        "table_name": "tx_claims",
+        "row_count": "81"
+      },
+      {
+        "table_name": "tx_constraint_generations",
+        "row_count": "0"
+      },
+      {
+        "table_name": "tx_constraint_graphs",
+        "row_count": "0"
+      },
+      {
+        "table_name": "tx_meta",
+        "row_count": "81"
+      },
+      {
+        "table_name": "tx_query_relations",
+        "row_count": "0"
+      },
+      {
+        "table_name": "txs",
+        "row_count": "82"
+      }
+    ]
+  },
+  {
+    "sql": "SELECT table_name, row_count FROM xt.live_tables WHERE row_count >= 0 ORDER BY table_name",
+    "rows": [
+      {
+        "table_name": "tx_assertions",
+        "row_count": "61384"
+      },
+      {
+        "table_name": "tx_attempts",
+        "row_count": "81"
+      },
+      {
+        "table_name": "tx_claims",
+        "row_count": "81"
+      },
+      {
+        "table_name": "tx_constraint_generations",
+        "row_count": "0"
+      },
+      {
+        "table_name": "tx_constraint_graphs",
+        "row_count": "0"
+      },
+      {
+        "table_name": "tx_meta",
+        "row_count": "81"
+      },
+      {
+        "table_name": "tx_query_relations",
+        "row_count": "0"
+      },
+      {
+        "table_name": "txs",
+        "row_count": "82"
+      }
+    ]
+  },
+  {
+    "sql": "SELECT name, value FROM xt.metrics_gauges WHERE name LIKE '%live%' OR name LIKE '%compactor%'",
+    "rows": [
+      {
+        "name": "compactor.jobs.available",
+        "value": 0
+      },
+      {
+        "name": "jvm.gc.live.data.size",
+        "value": 196590680
+      },
+      {
+        "name": "jvm.threads.live",
+        "value": 33
+      }
+    ]
+  }
+]

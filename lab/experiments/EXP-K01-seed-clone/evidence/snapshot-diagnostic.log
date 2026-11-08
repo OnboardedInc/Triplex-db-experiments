@@ -1,0 +1,22 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 6260 "CX-C8-R2-light-checks", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 6062 "CX-VE01-2-prior"
+[lab] heavy: waiting for one of 4 slots; held by pid 6260 "CX-C8-R2-light-checks", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 6062 "CX-VE01-2-prior"
+[lab] heavy: waiting for one of 4 slots; held by pid 6260 "CX-C8-R2-light-checks", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 6380 "CX-OREPLAY-049-converters-final"
+[lab] heavy: waiting for one of 4 slots; held by pid 5586 "CX-OREPLAY-049-unit-final", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 12504 "CX-VJ01-checks-r3"
+[lab] heavy: waiting for one of 4 slots; held by pid 12842 "CX-VO05-final", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 12504 "CX-VJ01-checks-r3"
+[lab] heavy: waiting for one of 4 slots; held by pid 12842 "CX-VO05-final", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 12504 "CX-VJ01-checks-r3"
+[lab] heavy: waiting for one of 4 slots; held by pid 12842 "CX-VO05-final", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 12504 "CX-VJ01-checks-r3"
+[lab] heavy: waiting for one of 4 slots; held by pid 12842 "CX-VO05-final", pid 16708 "CX-VE01-3-delta", pid 16706 "CX-VE01-3-prior", pid 12504 "CX-VJ01-checks-r3"
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+Error: connect ECONNREFUSED 127.0.0.1:5471
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1638:16) {
+  errno: -61,
+  code: 'ECONNREFUSED',
+  syscall: 'connect',
+  address: '127.0.0.1',
+  port: 5471
+}
+
+Node.js v22.23.2

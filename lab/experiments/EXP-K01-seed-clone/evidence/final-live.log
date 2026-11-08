@@ -1,0 +1,27 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 16329 "CX-P2Q-R2-final-round", pid 20080 "CX-VE01-3-all", pid 20242 "CX-VE01-3-reference", pid 12504 "CX-VJ01-checks-r3"
+[lab] tx2-xtdb-s1 ready (health=healthy pgwire=open started=200); cap 3.50 GiB, 2 CPU, config 13f5a70b3665
+export XTDB_URL='postgres://xtdb:xtdb@127.0.0.1:5471/xtdb'
+export XTDB_INTEGRATION=1
+export TRIPLEX_LAB_SLOT_OWNER='/Users/sam/projects/triplex-db-2/lab/locks/xtdb-s1/owner.json'
+export DOCKER_HOST='unix:///Users/sam/.colima/triplex2/docker.sock'  # only for manual docker calls; never the default context
+[clone-check 21:37:19] settle: 1 block files, 0 live rows, compactor jobs 0; POST /system/finish-block
+[clone-check 21:37:24] settle: jobs 0, live rows 0, blocks 2 (settled reading 1/3)
+[clone-check 21:37:29] settle: jobs 0, live rows 0, blocks 2 (settled reading 2/3)
+[clone-check 21:37:34] settle: jobs 0, live rows 0, blocks 2 (settled reading 3/3)
+[lab] REFUSED: tx2-xtdb-s1 did not stop cleanly (no "Node stopped." in this run's log); no golden made
+[lab] tx2-xtdb-s1 removed; volume tx2-xtdb-s1-data removed; reservation and slot lock released
+file:///Users/sam/projects/triplex-db-2/.claude/worktrees/k01/[eval1]:5
+const run=(args,optional=false)=>{const r=spawnSync(process.execPath,args,{stdio:'inherit'}); if(!optional&&r.status!==0) throw Error(`${args.join(' ')} exited ${r.status}`); return r.status;};
+                                                                                                                                ^
+
+Error: lab/bin/engine.mjs golden --lane xtdb --slot s1 --holder CX-K01 --manifest runs/xtdb-seed/CX-K01-500-retry/manifest.json exited 3
+    at run (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/k01/[eval1]:5:129)
+    at engine (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/k01/[eval1]:6:29)
+    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/k01/[eval1]:10:2
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:282:26)
+    at async ModuleLoader.executeModuleJob (node:internal/modules/esm/loader:278:20)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.23.2
