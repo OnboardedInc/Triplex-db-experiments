@@ -1,0 +1,150 @@
+TAP version 13
+# (node:58574) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: R3: config failure revokes the historical PASS durably
+ok 1 - R3: config failure revokes the historical PASS durably
+  ---
+  duration_ms: 2.115125
+  type: 'test'
+  ...
+# Subtest: R3: golden failure revokes the historical PASS durably
+ok 2 - R3: golden failure revokes the historical PASS durably
+  ---
+  duration_ms: 0.498458
+  type: 'test'
+  ...
+# Subtest: R3: query failure revokes the historical PASS durably
+ok 3 - R3: query failure revokes the historical PASS durably
+  ---
+  duration_ms: 0.408917
+  type: 'test'
+  ...
+# Subtest: R3: pending-owner failure revokes the historical PASS durably
+ok 4 - R3: pending-owner failure revokes the historical PASS durably
+  ---
+  duration_ms: 0.281417
+  type: 'test'
+  ...
+# Subtest: R3: pending-receipt failure revokes the historical PASS durably
+ok 5 - R3: pending-receipt failure revokes the historical PASS durably
+  ---
+  duration_ms: 0.3435
+  type: 'test'
+  ...
+# Subtest: R3: result-receipt failure revokes the historical PASS durably
+ok 6 - R3: result-receipt failure revokes the historical PASS durably
+  ---
+  duration_ms: 0.602333
+  type: 'test'
+  ...
+# Subtest: R3: receipt-hash failure revokes the historical PASS durably
+ok 7 - R3: receipt-hash failure revokes the historical PASS durably
+  ---
+  duration_ms: 0.572167
+  type: 'test'
+  ...
+# Subtest: R3: publish-owner failure revokes the historical PASS durably
+ok 8 - R3: publish-owner failure revokes the historical PASS durably
+  ---
+  duration_ms: 0.412167
+  type: 'test'
+  ...
+# Subtest: R3: restart failure revokes the historical PASS durably
+ok 9 - R3: restart failure revokes the historical PASS durably
+  ---
+  duration_ms: 0.931167
+  type: 'test'
+  ...
+# Subtest: R3: golden-changed failure revokes the historical PASS durably
+ok 10 - R3: golden-changed failure revokes the historical PASS durably
+  ---
+  duration_ms: 0.544625
+  type: 'test'
+  ...
+# Subtest: R3: identity failure revokes the historical PASS durably
+ok 11 - R3: identity failure revokes the historical PASS durably
+  ---
+  duration_ms: 0.449416
+  type: 'test'
+  ...
+# Subtest: R3: incomplete failure revokes the historical PASS durably
+ok 12 - R3: incomplete failure revokes the historical PASS durably
+  ---
+  duration_ms: 0.315708
+  type: 'test'
+  ...
+# Subtest: R3: PASS is published only with a durable new receipt and fresh start binding
+ok 13 - R3: PASS is published only with a durable new receipt and fresh start binding
+  ---
+  duration_ms: 0.660916
+  type: 'test'
+  ...
+# Subtest: R3: a semantic FAIL keeps its full failed-check receipt
+ok 14 - R3: a semantic FAIL keeps its full failed-check receipt
+  ---
+  duration_ms: 0.330583
+  type: 'test'
+  ...
+# Subtest: R3: an older attempt cannot overwrite a newer verification
+ok 15 - R3: an older attempt cannot overwrite a newer verification
+  ---
+  duration_ms: 0.321208
+  type: 'test'
+  ...
+# Subtest: R3: standalone T1 handles false semantic stop proof
+ok 16 - R3: standalone T1 handles false semantic stop proof
+  ---
+  duration_ms: 0.706375
+  type: 'test'
+  ...
+# Subtest: R3: standalone T1 handles unreadable semantic stop proof
+ok 17 - R3: standalone T1 handles unreadable semantic stop proof
+  ---
+  duration_ms: 0.354625
+  type: 'test'
+  ...
+# Subtest: R3: standalone T1 handles clean semantic stop proof
+ok 18 - R3: standalone T1 handles clean semantic stop proof
+  ---
+  duration_ms: 0.318792
+  type: 'test'
+  ...
+# Subtest: R3: a current source gauge cannot hide behind an earlier startup log watermark
+ok 19 - R3: a current source gauge cannot hide behind an earlier startup log watermark
+  ---
+  duration_ms: 1.001917
+  type: 'test'
+  ...
+# Subtest: R3: golden end readings refuse drift after the initial reference check
+ok 20 - R3: golden end readings refuse drift after the initial reference check
+  ---
+  duration_ms: 1.207625
+  type: 'test'
+  ...
+# Subtest: R3: T6 cannot call a missing fingerprint a changed plan
+ok 21 - R3: T6 cannot call a missing fingerprint a changed plan
+  ---
+  duration_ms: 0.502583
+  type: 'test'
+  ...
+# Subtest: R3: invalid or changed current completed-tx gauges refuse on the first poll
+ok 22 - R3: invalid or changed current completed-tx gauges refuse on the first poll
+  ---
+  duration_ms: 5.956958
+  type: 'test'
+  ...
+# Subtest: R3: clone verification uses fresh post-fingerprint gauges and a final start check
+ok 23 - R3: clone verification uses fresh post-fingerprint gauges and a final start check
+  ---
+  duration_ms: 2.17525
+  type: 'test'
+  ...
+1..23
+# tests 23
+# suites 0
+# pass 23
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 93.951333

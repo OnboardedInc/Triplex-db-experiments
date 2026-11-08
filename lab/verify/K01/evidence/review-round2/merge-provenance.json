@@ -1,0 +1,38 @@
+{
+  "merge": "7a10abfbf6d9739b1453cdf1a82a204cdf291ba6",
+  "note": "Historical manifests describe their own commit trees. Both sets of conflicting bytes are preserved explicitly; no historical PASS is claimed as a new run.",
+  "conflicts": [
+    {
+      "conflictingPath": "lab/verify/K01/evidence/baseline.tap",
+      "reviewerCommit": "21d0626",
+      "reviewerSha256": "d0fbd2bb52a56813eb6f3ae756fa59891f8f4997e28857890f3a8c99ef5b1d99",
+      "builderCommit": "a13316c",
+      "builderArchivedPath": "lab/verify/K01/evidence/builder-round3/baseline.tap",
+      "builderSha256": "d30992b5ff533c8bb218a8a4baf4fc86b8bfd040a34f5f9d4dc07645bb9f22b8"
+    },
+    {
+      "conflictingPath": "lab/verify/K01/evidence/cases.json",
+      "reviewerCommit": "21d0626",
+      "reviewerSha256": "20212a64b966e20aa484d6b87ca2022334c56b0df70f0da68a30f52d217f3cd8",
+      "builderCommit": "a13316c",
+      "builderArchivedPath": "lab/verify/K01/evidence/builder-round3/cases.json",
+      "builderSha256": "2805072432b7516c0f668071ef40af3efb106176fa8a29094c08476559fdd2c0"
+    },
+    {
+      "conflictingPath": "lab/verify/K01/evidence/regressions.tap",
+      "reviewerCommit": "21d0626",
+      "reviewerSha256": "97ceb9990f9e2f8930330197fda0b2a15733a1f4181687a7ab6c6e3771e0b928",
+      "builderCommit": "a13316c",
+      "builderArchivedPath": "lab/verify/K01/evidence/builder-round3/regressions.tap",
+      "builderSha256": "5c509c443b1fe82179f8e3815c7b3d24cffa804a8f87887685bbcdf628d5f338"
+    },
+    {
+      "conflictingPath": "lab/verify/K01/evidence/run.json",
+      "reviewerCommit": "21d0626",
+      "reviewerSha256": "92f8ae5c01f3eee10f6b759522abddcd08b5c8e13c10c6d04f7bf7d3483cf38a",
+      "builderCommit": "a13316c",
+      "builderArchivedPath": "lab/verify/K01/evidence/builder-round3/run.json",
+      "builderSha256": "888a98f75054b5b1f2c55cd63169141c48f9a9941747ae2138103988834f007c"
+    }
+  ]
+}

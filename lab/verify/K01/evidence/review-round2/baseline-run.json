@@ -1,0 +1,68 @@
+{
+  "at": "2026-11-08T23:14:54.783Z",
+  "phase": "baseline",
+  "head": "7a10abfbf6d9739b1453cdf1a82a204cdf291ba6",
+  "reviewedBuilder": "a13316c",
+  "node": "v22.23.2",
+  "offlineOnly": true,
+  "hostDisk": {
+    "type": 25,
+    "bsize": 4096,
+    "blocks": 120699413,
+    "bfree": 5166383,
+    "bavail": 5166383,
+    "files": 217830601,
+    "ffree": 206655320
+  },
+  "sourceSha256": {
+    "lab/bin/engine.mjs": "2e1bb90beefc8a2a901649c508fc4408a5c8fd3733bfc33a9964fa90adee7386",
+    "lab/bench/clone-check.ts": "c7d7ac22883004f4cff875f80ad1af5a904227fdc2cef392c350aa13651bf25f",
+    "lab/bench/lib/clone.ts": "a1ab9d0f23ad34d7567044069570977fab451a0a14b1d7df23f587a0c480883e",
+    "lab/bench/lib/bulk.ts": "8983cbc234c01984c65a334263e056862a79abc536c442b0636b330902e4bc07",
+    "lab/experiments/EXP-K01-seed-clone/round2-live.mjs": "cf7d9daf7d0fd5f06afb09dbcd3690fc16f924ad9464c56bff2724711bde7a4b",
+    "lab/experiments/EXP-K01-seed-clone/round2-t1.mjs": "94c4cfbeaaaa389ba2267db19427f9220a4be35a7e7ef51ff07dc060a5166328",
+    "lab/verify/K01/offline.test.mjs": "c5e21f7251e1df21da35c77ed6bd659afea0150a83fc3f41183ae68357ad4d16",
+    "lab/verify/K01/round3.test.mjs": "a13d7b99ca1acb2890aa650ef2468a02934babf037603a6c78ec2b5a9065d9af",
+    "lab/verify/K01/run-review-round2.mjs": "5d828c7326ca5b8c3735edea77b09984c2f1a89ef6b103588d91f8754e5d175e"
+  },
+  "runs": [
+    {
+      "name": "baseline",
+      "args": [
+        "--test",
+        "lab/bin/test/lab.test.mjs",
+        "lab/bench/test/bench.test.ts",
+        "lab/bench/test/clone.test.ts"
+      ],
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "wallMs": 995,
+      "outputSha256": "9179a7bb2bf1cb53ba09ae4d525e3eac9e53a02272261bbb3e85d0d36ba82c6c"
+    },
+    {
+      "name": "original-21",
+      "args": [
+        "--test",
+        "lab/verify/K01/offline.test.mjs"
+      ],
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "wallMs": 156,
+      "outputSha256": "66ae66f68a53bf292d308d5887881ee5e1c3d1c6234f4020f6aa62f7df34a3e8"
+    },
+    {
+      "name": "builder-23",
+      "args": [
+        "--test",
+        "lab/verify/K01/round3.test.mjs"
+      ],
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "wallMs": 127,
+      "outputSha256": "b324d907a030411893af6af36a5271e9875c52bdf37951800081d0f61f223558"
+    }
+  ]
+}
