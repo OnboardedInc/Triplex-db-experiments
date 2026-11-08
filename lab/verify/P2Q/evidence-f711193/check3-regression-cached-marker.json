@@ -1,0 +1,16 @@
+{
+  "position": 2048,
+  "gate": {
+    "ok": true,
+    "b": 2048,
+    "markerAtReturn": 3071
+  },
+  "waitedMs": 12,
+  "dependencyState": "ReadError:",
+  "dependencyStateArrivedAt": [
+    3071
+  ],
+  "regressionsDetected": 2,
+  "pullRoute": "replica",
+  "pullEqual": true
+}

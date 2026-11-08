@@ -127,13 +127,16 @@ const service = async () => {
 
 // ------------------------------------------------------------------ trace (open loop, TARGETS 2.1)
 
-/** Feed consumer polling the host log (candidate) or the Triplex journal (A0); one durable record per page. */
-const startConsumer = (rt, arm, consumerDir, acks) => {
+/**
+ * Feed consumer polling the host log (candidate) or the Triplex journal (A0); one durable record per page.
+ * RULINGS Q67d: the consumer records only when it saw each position (its durable record). Nothing about ACKs is
+ * looked up while it runs: the ACK can legitimately arrive after the feed delivered the frame (the watermark is
+ * published before the ACK is sent), so ACKs are reconciled after the run, never counted as feed defects.
+ */
+const startConsumer = (rt, arm, consumerDir) => {
   const store = new qlever.FeedConsumerStore(consumerDir, `consumer-${arm}`, 'atomic', true);
-  // V-P2Q m6: per-position consumer instants (the durable record), so lag is computed from the source instant
-  // afterwards and nothing is dropped silently; missing ACKs are listed, not only counted.
-  const lags = [], processed = [], consumerAt = new Map(), missingAckPositions = [], stats = { polls: 0, writes: 0, aborted: 0, missingAck: 0 };
-  let stopping = false;
+  const processed = [], consumerAt = new Map(), stats = { polls: 0, writes: 0, aborted: 0 };
+  let stopping = false, startAfter;
   const loop = (async () => {
     if (arm === 'C') {
       const feed = new qlever.LogFeed(path.dirname(rt.broker.segmentPath));
@@ -149,13 +152,14 @@ const startConsumer = (rt, arm, consumerDir, acks) => {
           }
           store.recordEffects(effects, page.cursor); stats.writes++;
           const t = wall();
-          for (const r of page.resolutions) if (r.kind === 'commit') for (const tr of r.transacts) { if (!consumerAt.has(tr.position)) consumerAt.set(tr.position, t); const a = acks.get(tr.position); if (a === undefined) { stats.missingAck++; missingAckPositions.push(tr.position); } else lags.push(t - a); }
+          for (const r of page.resolutions) if (r.kind === 'commit') for (const tr of r.transacts) if (!consumerAt.has(tr.position)) consumerAt.set(tr.position, t);
           cursor = page.cursor;
         } else if (stopping) break;
         else await sleep(5);
       }
     } else {
       let after = await rt.run(rt.triples.currentPosition());
+      startAfter = after;
       for (;;) {
         const page = await rt.run(rt.triples.transactions({ after, limit: 200 })); stats.polls++;
         const records = page.transactions;
@@ -165,14 +169,40 @@ const startConsumer = (rt, arm, consumerDir, acks) => {
           const cursor = { lsn: records.at(-1).position, offset: 0, seed: 0, nextLsn: records.at(-1).position + 1 };
           store.recordEffects(effects, cursor); stats.writes++;
           const t = wall();
-          for (const r of records) { if (!consumerAt.has(r.position)) consumerAt.set(r.position, t); const a = acks.get(r.position); if (a === undefined) { stats.missingAck++; missingAckPositions.push(r.position); } else lags.push(t - a); }
+          for (const r of records) if (!consumerAt.has(r.position)) consumerAt.set(r.position, t);
           after = records.at(-1).position;
         } else if (stopping) break;
         else await sleep(5);
       }
     }
   })();
-  return { stop: async () => { stopping = true; await loop; store.close(); return { lags, processed, stats, consumerAt, missingAckPositions }; } };
+  return { stop: async () => { stopping = true; await loop; store.close(); return { processed, stats, consumerAt, startAfter }; } };
+};
+
+/**
+ * RULINGS Q67d: the final published source prefix, enumerated from the source's own record after the run. The
+ * candidate's source is the host log up to its WATERMARK (a fresh LogFeed from the start); A0's source is the
+ * engine's own journal after the consumer's starting position.
+ */
+const sourcePrefix = async (rt, arm, startAfter) => {
+  const positions = [];
+  if (arm === 'C') {
+    const feed = new qlever.LogFeed(path.dirname(rt.broker.segmentPath));
+    for (let cursor = feed.start(); ; ) {
+      const page = feed.poll(cursor);
+      if (page.resolutions.length === 0) break;
+      for (const r of page.resolutions) if (r.kind === 'commit') for (const tr of r.transacts) positions.push(tr.position);
+      cursor = page.cursor;
+    }
+  } else {
+    for (let after = startAfter; ; ) {
+      const page = await rt.run(rt.triples.transactions({ after, limit: 200 }));
+      if (page.transactions.length === 0) break;
+      for (const r of page.transactions) positions.push(r.position);
+      after = page.transactions.at(-1).position;
+    }
+  }
+  return [...new Set(positions)].sort((a, b) => a - b);
 };
 
 const auditEffects = (consumerDir, consumer, committed, processed) => {
@@ -204,7 +234,7 @@ const trace = async () => {
   });
   const consumerDir = path.join(BROKER_ROOT, 'consumers', scope.replace(/[^a-zA-Z0-9-]/g, '_'));
   const acks = new Map();
-  const consumer = startConsumer(rt, arm, consumerDir, acks);
+  const consumer = startConsumer(rt, arm, consumerDir);
   const records = [], originals = new Map(), inflight = new Set();
   const startAt = now() + 1000;
   let ryowCount = 0;
@@ -253,21 +283,38 @@ const trace = async () => {
   const consumed = await consumer.stop();
   const committed = records.filter((r) => r.outcome === 'committed').map((r) => [r.position, `subj:${r.subject}`]);
   const audit = auditEffects(consumerDir, `consumer-${arm}`, committed, consumed.processed);
-  // V-P2Q m6 / Q55d: P3 lag runs from the source's publication instant (TARGETS 1.1 P3 item 1). For the
-  // candidate that is the frame's fsync return (the broker's frame event); A0 publishes before it ACKs, so its
-  // ACK is its source instant. Every ACKed position must have all three instants, and the run fails otherwise.
-  const sourceByLsn = new Map(recorder.events.filter((e) => e.type === 'frame').map((e) => [e.lsn, performance.timeOrigin + e.at]));
-  const perPosition = [...new Set(committed.map(([p]) => p))].sort((a, b) => a - b).map((position) => ({
+  // RULINGS Q67d (V-P2Q m6, Q55d): P3 lag runs from the source's actual publication instant (TARGETS 1.1 P3
+  // item 1) for every position of the final published source prefix, enumerated from the source's own record.
+  // Candidate: the broker's WATERMARK publication for the position's frame. A0 (the engine as source): the
+  // instant its guarded update applied (commit resolution). ACK records are reconciled afterwards: a position
+  // with no ACK is a late or lost ACK (client-side accounting), never a feed defect; an ACK for a position the
+  // source never published is a defect.
+  const prefix = await sourcePrefix(rt, arm, consumed.startAfter);
+  const watermarkByLsn = new Map(recorder.events.filter((e) => e.type === 'frame').map((e) => [e.lsn, performance.timeOrigin + e.watermarkAt]));
+  const resolutions = [...rt.counts.resolutions].sort((a, b) => a[0] - b[0]);
+  const resolvedAt = (position) => {
+    // The first applied A0 update whose new position covers this one (binary search over sorted positions).
+    let lo = 0, hi = resolutions.length;
+    while (lo < hi) { const mid = (lo + hi) >> 1; if (resolutions[mid][0] < position) lo = mid + 1; else hi = mid; }
+    return lo < resolutions.length ? resolutions[lo][1] : null;
+  };
+  const perPosition = prefix.map((position) => ({
     position,
-    sourceAt: arm === 'C' ? (sourceByLsn.get(qlever.lsnOf(position)) ?? null) : (acks.get(position) ?? null),
-    ackAt: acks.get(position) ?? null,
+    sourceAt: arm === 'C' ? (watermarkByLsn.get(qlever.lsnOf(position)) ?? null) : resolvedAt(position),
     consumerAt: consumed.consumerAt.get(position) ?? null,
+    ackAt: acks.get(position) ?? null,
   }));
-  const incomplete = perPosition.filter((p) => p.sourceAt === null || p.ackAt === null || p.consumerAt === null);
+  const inPrefix = new Set(prefix);
+  const undelivered = perPosition.filter((p) => p.consumerAt === null);
+  const unstamped = perPosition.filter((p) => p.sourceAt === null);
+  const ackedNotPublished = [...acks.keys()].filter((p) => !inPrefix.has(p));
+  const lateOrLostAcks = perPosition.filter((p) => p.ackAt === null).map((p) => p.position);
   const lagFromSource = perPosition.filter((p) => p.sourceAt !== null && p.consumerAt !== null).map((p) => p.consumerAt - p.sourceAt);
+  const lagFromAck = perPosition.filter((p) => p.ackAt !== null && p.consumerAt !== null).map((p) => p.consumerAt - p.ackAt);
   const harnessFailures = [
-    ...(consumed.missingAckPositions.length ? [`${consumed.missingAckPositions.length} delivered positions have no ACK record`] : []),
-    ...(incomplete.length ? [`${incomplete.length} ACKed positions lack a source, ACK or consumer instant`] : []),
+    ...(undelivered.length ? [`feed: ${undelivered.length} positions of the published source prefix were never delivered`] : []),
+    ...(ackedNotPublished.length ? [`accounting: ${ackedNotPublished.length} ACKed positions are not in the source's published prefix`] : []),
+    ...(unstamped.length ? [`instrumentation: ${unstamped.length} source positions have no publication instant`] : []),
   ];
   const originalsOnly = records.filter((r) => !r.resend);
   const committedOriginals = originalsOnly.filter((r) => r.outcome === 'committed');
@@ -294,14 +341,17 @@ const trace = async () => {
     throughput: { committedPerS: round(committedOriginals.length / windowS, 2), drainAfterWindowS: round((drainedAt - startAt) / 1000 - windowS, 1) },
     ryow: { trials: ryowRecords.length, hits: ryowRecords.filter((r) => r.ryow).length, routes: tally(ryowRecords.map((r) => r.route)), readMs: summary(ryowRecords.map((r) => r.ryowMs)) },
     feed: {
-      lagFromSourceMs: summary(lagFromSource), sourceInstant: arm === 'C' ? 'frame fsync return' : 'ACK (A0 publishes before its ACK)',
-      lagFromAckMs: summary(consumed.lags), ...audit, ...consumed.stats, missingAckPositions: consumed.missingAckPositions.slice(0, 20), incompletePositions: incomplete.length,
+      lagFromSourceMs: summary(lagFromSource),
+      sourceInstant: arm === 'C' ? 'WATERMARK publication of the frame (Q67d)' : 'guarded update applied (commit resolution, Q67d)',
+      sourcePrefix: { positions: prefix.length, undelivered: undelivered.length, unstamped: unstamped.length },
+      lagFromAckMs: summary(lagFromAck), ...audit, ...consumed.stats,
+      ackReconciliation: { acked: acks.size, ackedNotPublished: ackedNotPublished.length, lateOrLostAcks: lateOrLostAcks.length, lateOrLostSample: lateOrLostAcks.slice(0, 20) },
     },
     failed: harnessFailures.length > 0, harnessFailures,
     publication: arm === 'C'
       ? { updates: published.length, updateMs: summary(published.map((e) => e.ms)), membersPerUpdate: summary(published.map((e) => e.members)), lastDelta: published.at(-1)?.deltaTotal ?? null, rebuilds: recorder.events.filter((e) => e.type.startsWith('rebuild')), applyErrors: recorder.events.filter((e) => e.type === 'apply-error').length, drain }
       : { updates: rt.counts.updates, updateMs: summary(rt.counts.updateMs), lastDelta: rt.lastDelta() ?? null, updateErrors: rt.counts.updateErrors },
-    raw: { records, perPosition, lags: consumed.lags, events: recorder.events },
+    raw: { records, perPosition, events: recorder.events, a0Resolutions: arm === 'C' ? undefined : resolutions },
   };
   await rt.close();
   return result;

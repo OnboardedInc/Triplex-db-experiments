@@ -1,0 +1,10 @@
+{
+  "lastLsn": 5,
+  "frameBytes": 1885,
+  "cutsScanned": 1885,
+  "classes": {
+    "clean-end": 1,
+    "torn-tail": 1884
+  },
+  "fullOpens": 74
+}

@@ -26,17 +26,20 @@ import type { QleverSourcePlan } from "./ScalarSource.js";
 import { materializeQleverRules } from "./recursion.js";
 import { prepareAggregateAnswers } from "./AggregateAnswers.js";
 import { BasisNotAvailable, ReplicaUnavailable } from "./broker/errors.js";
+import type { ReplicaSnapshot } from "./broker/broker.js";
 
 export interface QleverQueryOptions {
   readonly sourceView?: Effect.Effect<QleverSourceView | undefined>;
   /**
-   * EXP-P2Q broker mode (default absent): the basis for a query outside a transaction. The compiled query
-   * reads only the replica, so the broker adapter waits (deadline-aware, RULINGS Q31d) until the replica
-   * has reached the requested basis, or the broker head when none is named, and fails otherwise.
+   * EXP-P2Q broker mode (default absent): the basis gate (`BasisGate` in broker/BrokerStorageAdapter.ts). The
+   * compiled query reads only the replica, in several requests, so the broker adapter waits (deadline-aware,
+   * RULINGS Q31d) until the replica has reached the requested basis (or sourceK inside a transaction, or the
+   * broker head when none is named) and returns a snapshot; once the last request has returned, `after` refuses
+   * the answer if the replica was reset in between (RULINGS Q67c, Q72b).
    */
-  readonly resolveBasis?: ((requested: number | undefined) => Promise<number>) & {
-    readonly inTransaction?: (sourceK: number) => Promise<number>;
-    readonly after?: (position: number) => Promise<void>;
+  readonly resolveBasis?: ((requested: number | undefined) => Promise<ReplicaSnapshot>) & {
+    readonly inTransaction: (sourceK: number) => Promise<ReplicaSnapshot>;
+    readonly after: (snapshot: ReplicaSnapshot) => Promise<void>;
   };
   readonly sourcePlan?: QleverSourcePlan;
   readonly domainPlan?: QleverDomainPlan;
@@ -224,17 +227,18 @@ export const makeQleverQueryExecutor = (
               message:
                 "QLever historical Datalog inside a pending transaction is not yet qualified",
             });
-          // EXP-P2Q broker mode (V-P2Q C1, C2): the compiled SPARQL reads only the replica, so inside a
+          // EXP-P2Q broker mode (V-P2Q C1, C2, N2): the compiled SPARQL reads only the replica, so inside a
           // transaction the replica's real marker must reach sourceK, and outside it the requested basis, before
-          // the query runs; `after` re-checks the marker once the answer exists. A0 has no gate (unchanged).
+          // the query runs; `after` checks the snapshot once the last request has returned. A0 has no gate.
           const gate = options.resolveBasis;
+          const snapshot = gate
+            ? sourceView
+              ? await gate.inTransaction(sourceView.sourcePosition)
+              : await gate(basis?.recordedPosition)
+            : undefined;
           const position =
-            (sourceView
-              ? gate?.inTransaction
-                ? await gate.inTransaction(sourceView.sourcePosition)
-                : sourceView.sourcePosition
-              : undefined) ??
-            (gate && !sourceView ? await gate(basis?.recordedPosition) : undefined) ??
+            snapshot?.basis ??
+            sourceView?.sourcePosition ??
             basis?.recordedPosition ??
             safeCount(
               (
@@ -384,7 +388,7 @@ export const makeQleverQueryExecutor = (
                 })
               )[0]?.["total"]?.value,
             );
-          if (gate?.after) await gate.after(position);
+          if (gate && snapshot) await gate.after(snapshot);
           const executionTimeMs = Math.max(
             0,
             performance.now() - executionStarted - compilationTimeMs,

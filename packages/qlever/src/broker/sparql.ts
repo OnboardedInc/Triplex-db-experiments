@@ -31,11 +31,20 @@ export interface ReplicaMarker {
   /** Packed position of the last applied ordinal slot (lastPositionOf(lsn)), 0 when nothing applied. */
   readonly position: number;
   readonly epoch: number;
+  /**
+   * The replica incarnation (RULINGS Q67c, Q72b): a fresh random id that every fence writes before any replay,
+   * "" when the graph has none. Publications leave it unchanged and guard on it. A reader that needs several
+   * requests compares it before and after: a replica that was reset and replayed between them has a different
+   * incarnation even when its marker is back at or above the basis (V-P2Q N2). Absent in a `from` marker
+   * means "do not guard on it" (a test that rewinds the marker by hand, as a restart would).
+   */
+  readonly incarnation?: string;
 }
 
 export const markerFields = {
   position: f("broker_position"),
   epoch: f("broker_epoch"),
+  incarnation: f("broker_incarnation"),
 } as const;
 
 const quad = (s: string, p: string, o: string) => `${s} ${p} ${o} .`;
@@ -105,23 +114,37 @@ export const buildPublication = (
   return { sparql, inserts: inserts.length + 4, deletes: deletes.length, members: members.length };
 };
 
-/** Marker guard; an absent marker reads as (0, 0) so a fresh graph accepts the first update. */
+/**
+ * Marker guard; an absent marker reads as (0, 0, "") so a fresh graph accepts the first update. The incarnation
+ * is guarded only when `from` names one, so a replica restarted onto an older incarnation with the same
+ * (position, epoch) fails the guard and is fenced.
+ */
 const guard = (graph: string, from: ReplicaMarker) =>
   `OPTIONAL { GRAPH ${graph} { ${metaIri} ${markerFields.position} ?brokerPosition } } ` +
   `OPTIONAL { GRAPH ${graph} { ${metaIri} ${markerFields.epoch} ?brokerEpoch } } ` +
-  `FILTER(COALESCE(?brokerPosition, "0") = ${lit(String(from.position))} && COALESCE(?brokerEpoch, "0") = ${lit(String(from.epoch))})`;
+  (from.incarnation === undefined ? "" : `OPTIONAL { GRAPH ${graph} { ${metaIri} ${markerFields.incarnation} ?brokerIncarnation } } `) +
+  `FILTER(COALESCE(?brokerPosition, "0") = ${lit(String(from.position))} && COALESCE(?brokerEpoch, "0") = ${lit(String(from.epoch))}` +
+  (from.incarnation === undefined ? "" : ` && COALESCE(?brokerIncarnation, "") = ${lit(from.incarnation)}`) +
+  `)`;
 
-/** Fencing update at broker startup: keep the position, take the epoch (R13 6.5 step 6, C3.3). */
-export const buildFence = (scopeKey: string, from: ReplicaMarker, epoch: number): string => {
+/**
+ * The fence (R13 6.5 step 6, C3.3; RULINGS Q67c, Q72b): keep the position, take the epoch, and write a new
+ * incarnation, in one guarded update sent before any replay publication. One update is one QLever delta step,
+ * so a reader sees either the old (epoch, incarnation) or the new one, never a mix. Used at broker startup and
+ * after every replica regression, so every fence and every replay starts with a new incarnation.
+ */
+export const buildFence = (scopeKey: string, from: ReplicaMarker, epoch: number, incarnation: string): string => {
   const graph = graphIri(scopeKey);
+  const old = [quad(metaIri, markerFields.epoch, lit(String(from.epoch)))];
+  if (from.incarnation) old.push(quad(metaIri, markerFields.incarnation, lit(from.incarnation)));
   return (
-    `DELETE { GRAPH ${graph} { ${quad(metaIri, markerFields.epoch, lit(String(from.epoch)))} } } ` +
-    `INSERT { GRAPH ${graph} { ${quad(metaIri, markerFields.epoch, lit(String(epoch)))} } } ` +
-    `WHERE { ${guard(graph, from)} }`
+    `DELETE { GRAPH ${graph} { ${old.join("\n")} } } ` +
+    `INSERT { GRAPH ${graph} { ${[quad(metaIri, markerFields.epoch, lit(String(epoch))), quad(metaIri, markerFields.incarnation, lit(incarnation))].join("\n")} } } ` +
+    `WHERE { ${guard(graph, { ...from, incarnation: from.incarnation ?? "" })} }`
   );
 };
 
 export const markerQuery = (scopeKey: string): string => {
   const graph = graphIri(scopeKey);
-  return `SELECT ?brokerPosition ?brokerEpoch WHERE { OPTIONAL { GRAPH ${graph} { ${metaIri} ${markerFields.position} ?brokerPosition } } OPTIONAL { GRAPH ${graph} { ${metaIri} ${markerFields.epoch} ?brokerEpoch } } }`;
+  return `SELECT ?brokerPosition ?brokerEpoch ?brokerIncarnation WHERE { OPTIONAL { GRAPH ${graph} { ${metaIri} ${markerFields.position} ?brokerPosition } } OPTIONAL { GRAPH ${graph} { ${metaIri} ${markerFields.epoch} ?brokerEpoch } } OPTIONAL { GRAPH ${graph} { ${metaIri} ${markerFields.incarnation} ?brokerIncarnation } } }`;
 };

@@ -2,7 +2,10 @@
  * Typed read failures for the broker composition (V-P2Q findings C1, C2, M2, M3; RULINGS Q58a, Q62a).
  *
  * Both keep ReadError's tag, as TransactionOutcomeUnknown keeps WriteError's, so every adapter and executor
- * signature (`Effect<..., ReadError>`) stays unchanged; callers branch on `reason` or `instanceof`.
+ * signature (`Effect<..., ReadError>`) stays unchanged; callers branch on `reason` or `instanceof`. The reasons
+ * are the contract's strings, `basis-not-reached` and `replica-unreachable` (RULINGS Q72c). Core tagged errors
+ * (`_tag` "BasisNotAvailable" / "ReplicaUnavailable", Q67h) come before the broker becomes a default; until then
+ * no claim may close an obligation pinned to E-BASIS-NOT-AVAILABLE or E-REPLICA-UNAVAILABLE.
  * - BasisNotAvailable: the surface waited within its deadline and the source (the replica's real marker, or the
  *   broker's resolved prefix) did not reach the required basis. Nothing was answered.
  * - ReplicaUnavailable: the replica could not be reached and the surface has no exact fallback (Datalog,
@@ -14,7 +17,7 @@ import { QleverHttpError } from "../QleverClient.js";
 export type BasisSurface = "repository" | "datalog" | "dependency-state" | "native" | "a0-repository";
 
 export class BasisNotAvailable extends ReadError {
-  readonly reason = "basis-not-available" as const;
+  readonly reason = "basis-not-reached" as const;
   readonly required: number;
   readonly observed: number;
   readonly replica: string;
@@ -41,7 +44,7 @@ export class BasisNotAvailable extends ReadError {
 }
 
 export class ReplicaUnavailable extends ReadError {
-  readonly reason = "replica-unavailable" as const;
+  readonly reason = "replica-unreachable" as const;
   readonly replica: string;
   readonly surface: BasisSurface;
   constructor(input: { readonly replica: string; readonly surface: BasisSurface; readonly cause?: unknown }) {

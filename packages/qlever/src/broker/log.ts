@@ -2,7 +2,7 @@
  * The host log of record (EXP-P2Q; R13 sections 2 and 6, PLAN C2 and C3).
  *
  * One directory per broker stream:
- *   LOCK                  pid lock for the broker's whole life (see `acquireLock` for its limits)
+ *   LOCK                  the flock target (see `KernelLock`); it also holds the holder's pid for operators
  *   segment-000001.log    the single segment (rotation is out of scope for this experiment)
  *   WATERMARK             32 bytes: the durable watermark, rewritten in place after every fsync
  *   broken-*.bin          bytes cut from a torn tail, kept before truncation (etcd `Repair` style)
@@ -78,61 +78,115 @@ const fsyncDir = (dir: string) => {
     fs.closeSync(fd);
   }
 };
-
 /**
- * One writer per stream (V-P2Q C3; RULINGS Q62a, Q50d item 3). Two layers:
+ * One writer per stream (V-P2Q C3 and N1; RULINGS Q62a, Q72a). Two layers:
  * 1. A process-wide registry keyed by the directory's realpath. A second open in the same process is refused,
  *    because two HostLog objects appending to one file each believe they own the chain: V-P2Q showed ACKed
  *    frames truncated as a torn tail and one LSN naming two frames. `takeover: true` (crash-simulation tests
  *    only) abandons the earlier holder first, so its later appends fail instead of interleaving.
- * 2. A kernel flock(LOCK_EX) on LOCK, held by a perl child until its stdin closes (R23: Node 22 has no flock;
- *    the contender exits 3 while the holder lives and gets the lock once the holder is SIGKILLed). The kernel
- *    releases it when this process dies, so a real crash never leaves a stale lock, and another process is
- *    refused while this one lives. The previous pid file treated a lock held by its own pid as stale.
- * The marker guard `(broker_position, broker_epoch)` in every QLever update still fences a second writer at the
- * resource (R13 1.1 item 3, 5.1); the lock keeps the log itself single-writer.
+ * 2. A kernel flock(LOCK_EX) on LOCK. Node 22 has no flock (R23), so a perl helper takes it, but on an open
+ *    file description this process owns: Node opens LOCK and passes that descriptor to the helper as fd 3.
+ *    flock locks belong to the open file description, not the process (flock(2) on macOS and Linux), so the
+ *    lock lasts until this process closes its descriptor or dies. The helper closes its own copy once the
+ *    lock is taken. V-P2Q N1 found the round-1 lock lived in the helper: a SIGKILL of the helper, or a Ctrl-C
+ *    to the holder's process group while it drained, freed the lock while this process still appended, and a
+ *    second process got in. With the lock on this process's own descriptor, no signal to the helper can free
+ *    it, and a crash of this process frees it at once (the kernel closes the descriptor), so a real crash
+ *    never leaves a stale lock. Measured on this host (scratch flock check, 2026-11-07): a contender exits 3
+ *    while this process holds the descriptor, after the helper is SIGKILLed and after SIGINT to its group;
+ *    it gets the lock as soon as the descriptor closes.
+ *    Q72a, kept as ruled: the helper runs detached (its own process group, so a terminal Ctrl-C does not reach
+ *    it), ignores INT, TERM and HUP, and exits only on stdin EOF (this process closing the pipe or dying). If
+ *    it exits for any other reason the log fail-stops: every later append throws, and each append checks the
+ *    helper is alive. With the lock on this process's descriptor that fail-stop is defensive, not what keeps
+ *    a second writer out.
+ * The marker guard `(broker_position, broker_epoch, broker_incarnation)` in every QLever update still fences a
+ * second writer at the resource (R13 1.1 item 3, 5.1); the lock keeps the log itself single-writer.
  */
 const OPENING = "opening" as const;
 const openStreams = new Map<string, HostLog | typeof OPENING>();
 const FLOCK_HELPER =
-  'use Fcntl qw(:flock); $|=1; open(F,">>",$ARGV[0]) or exit 2; flock(F,LOCK_EX|LOCK_NB) or exit 3; print "locked\\n"; my $x=<STDIN>; exit 0;';
+  "$SIG{INT}=$SIG{TERM}=$SIG{HUP}='IGNORE'; use Fcntl qw(:flock); $|=1; " +
+  'open(my $f, ">>&=", 3) or exit 2; flock($f, LOCK_EX|LOCK_NB) or exit 3; close($f); ' +
+  'print "locked\\n"; 1 while defined(my $l = <STDIN>); exit 0;';
 
 export class KernelLock {
-  private constructor(private readonly child: ChildProcess) {}
+  private releasing = false;
+  private lost: string | undefined;
+  private onLost: ((reason: string) => void) | undefined;
+  private constructor(
+    private readonly child: ChildProcess,
+    private readonly fd: number,
+  ) {
+    child.once("exit", (code, signal) => {
+      if (this.releasing) return;
+      this.lost = `flock helper ${child.pid} exited (${signal ?? `code ${code}`}) while the log was open`;
+      this.onLost?.(this.lost);
+    });
+  }
   static acquire(file: string): Promise<KernelLock> {
     return new Promise((resolve, reject) => {
-      const child = spawn("perl", ["-e", FLOCK_HELPER, file], { stdio: ["pipe", "pipe", "ignore"] });
+      const fd = fs.openSync(file, "a", 0o600);
+      let child: ChildProcess;
+      try {
+        child = spawn("perl", ["-e", FLOCK_HELPER], { stdio: ["pipe", "pipe", "ignore", fd], detached: true });
+      } catch (error) {
+        fs.closeSync(fd);
+        return reject(new BrokerLogError(`Cannot start the flock helper (perl): ${String(error)}`));
+      }
       let settled = false;
-      child.stdout!.once("data", (chunk: Buffer) => {
+      const fail = (error: BrokerLogError) => {
         if (settled) return;
         settled = true;
-        if (!chunk.toString().startsWith("locked")) return reject(new BrokerLogError(`flock helper said ${chunk}`));
+        try {
+          fs.closeSync(fd);
+        } catch {
+          /* already closed */
+        }
+        reject(error);
+      };
+      child.stdout!.once("data", (chunk: Buffer) => {
+        if (settled) return;
+        if (!chunk.toString().startsWith("locked")) return fail(new BrokerLogError(`flock helper said ${chunk}`));
+        settled = true;
         // Do not keep the event loop alive for the lock; the pipe stays open until release() or process exit.
         child.unref();
         (child.stdin as unknown as { unref?: () => void }).unref?.();
         (child.stdout as unknown as { unref?: () => void }).unref?.();
-        resolve(new KernelLock(child));
+        resolve(new KernelLock(child, fd));
       });
-      child.once("exit", (code) => {
-        if (settled) return;
-        settled = true;
-        reject(
+      child.once("exit", (code) =>
+        fail(
           new BrokerLogError(
             code === 3
               ? `Broker log lock ${file} is held by another process`
               : `flock helper exited with code ${code} for ${file}`,
           ),
-        );
-      });
-      child.once("error", (error) => {
-        if (settled) return;
-        settled = true;
-        reject(new BrokerLogError(`Cannot start the flock helper (perl): ${String(error)}`));
-      });
+        ),
+      );
+      child.once("error", (error) => fail(new BrokerLogError(`Cannot start the flock helper (perl): ${String(error)}`)));
     });
   }
-  /** Close the helper's stdin; it exits and the kernel drops the lock. Resolves once it has exited. */
+  /** Why the lock is no longer trusted, or undefined while the helper lives. */
+  get lostReason(): string | undefined {
+    if (this.lost === undefined && (this.child.exitCode !== null || this.child.signalCode !== null))
+      this.lost = `flock helper ${this.child.pid} is not running`;
+    return this.lost;
+  }
+  watch(onLost: (reason: string) => void): void {
+    this.onLost = onLost;
+    const reason = this.lostReason;
+    if (reason !== undefined) onLost(reason);
+  }
+  /** Close this process's descriptor (the kernel drops the lock now) and the helper's stdin (it exits). */
   release(): Promise<void> {
+    if (this.releasing) return Promise.resolve();
+    this.releasing = true;
+    try {
+      fs.closeSync(this.fd);
+    } catch {
+      /* already closed */
+    }
     if (this.child.exitCode !== null || this.child.signalCode !== null) return Promise.resolve();
     return new Promise((resolve) => {
       // The helper was unref'd while held; ref it again so the wait for its exit keeps the event loop alive.
@@ -215,9 +269,8 @@ export class HostLog {
     try {
       lock = await KernelLock.acquire(path.join(dir, "LOCK"));
       fs.writeFileSync(path.join(dir, "LOCK"), `${process.pid}\n`);
-      const opened = await HostLog.recover(dir, options);
+      const opened = await HostLog.recover(dir, options, lock);
       opened.log.real = real;
-      opened.log.lock = lock;
       openStreams.set(real, opened.log);
       return opened;
     } catch (error) {
@@ -230,6 +283,7 @@ export class HostLog {
   private static async recover(
     dir: string,
     options: { readonly minFreeBytes?: number; readonly requireFullFsync?: boolean },
+    lock: KernelLock,
   ): Promise<OpenedLog> {
     // R13 2.6: ENOSPC mid-frame is the one torn write the broker causes itself, so refuse below a floor.
     const stats = fs.statfsSync(dir);
@@ -290,6 +344,11 @@ export class HostLog {
     const watermarkPath = path.join(dir, "WATERMARK");
     const watermarkFd = fs.openSync(watermarkPath, fs.existsSync(watermarkPath) ? "r+" : "w+");
     const log = new HostLog(dir, handle, watermarkFd, lastEpoch, scan.nextLsn, prevCrc, scan.validEnd);
+    // Q72a: from here on, a helper exit fail-stops the log, including during the EPOCH_BEGIN append below.
+    log.lock = lock;
+    lock.watch((reason) => {
+      if (!log.closed && !log.failed) log.failed = new BrokerLogError(`Broker log lock lost; fail-stop: ${reason}`);
+    });
     const abortedLsns = status === "torn-tail" ? [scan.nextLsn] : [];
     const begin: EpochBeginPayload = {
       v: 1,
@@ -332,6 +391,12 @@ export class HostLog {
   async append(kind: number, payload: Buffer, options: { readonly sync?: boolean } = {}): Promise<LogFrame> {
     if (this.failed) throw this.failed;
     if (this.closed) throw new BrokerLogError("Broker log is closed");
+    // Q72a: each append checks the flock helper is alive (its exit event may not have been delivered yet).
+    const lost = this.lock?.lostReason;
+    if (lost !== undefined) {
+      this.failed = new BrokerLogError(`Broker log lock lost; fail-stop: ${lost}`);
+      throw this.failed;
+    }
     if (this.writing) throw new BrokerLogError("Broker log append while another append is in flight");
     this.writing = true;
     const lsn = this.nextLsn;

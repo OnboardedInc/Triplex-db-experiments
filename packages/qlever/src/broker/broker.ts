@@ -19,6 +19,7 @@
  * Failure (R13 1.3, 6.3 item 5): any write or fsync error fails the broker: every pending command gets an
  * outcome-unknown error (the frame may be on disk), nothing is retried, and recovery re-reads the log.
  */
+import { randomUUID } from "node:crypto";
 import type { TripleRow } from "@triplex-build/triplex/runtime";
 import { TxAttributes } from "@triplex-build/triplex/internal";
 import type { QleverClient } from "../QleverClient.js";
@@ -49,6 +50,20 @@ export interface BrokerTransaction {
   readonly priors: ReadonlyMap<string, TripleRow>;
   readonly newIds: ReadonlySet<string>;
 }
+/**
+ * What a multi-request read relied on (RULINGS Q67c, Q72b): the basis, the replica marker its first probe saw,
+ * and the incarnation this broker had last written. `verifySnapshot` accepts the answer only if, in a probe sent
+ * after the last answer request returned, the replica has the same incarnation and a marker still at or above
+ * the basis, and this broker has not fenced since. Publications during the read only add rows above the basis,
+ * which the read filters out, so the marker may advance; a reset and replay always changes the incarnation.
+ */
+export interface ReplicaSnapshot {
+  readonly basis: number;
+  readonly marker: ReplicaMarker;
+  readonly fencedIncarnation: string;
+  readonly surface: BasisSurface;
+  readonly started: number;
+}
 export type BrokerDecision =
   | {
       readonly kind: "committed";
@@ -72,7 +87,17 @@ export class BrokerInvalidTransaction extends Error {
 }
 
 export type BrokerEvent =
-  | { readonly type: "frame"; readonly lsn: number; readonly members: number; readonly bytes: number; readonly appendMs: number; readonly at: number }
+  | {
+      readonly type: "frame";
+      readonly lsn: number;
+      readonly members: number;
+      readonly bytes: number;
+      readonly appendMs: number;
+      /** fsync return. */
+      readonly at: number;
+      /** WATERMARK publication: the frame's source publication instant for feed lag (RULINGS Q67d). */
+      readonly watermarkAt: number;
+    }
   | {
       readonly type: "published";
       readonly fromLsn: number;
@@ -141,6 +166,12 @@ interface Receipt {
 
 const isJournalRow = (row: TripleRow) => row.entity_type === "_Transaction" && row.entity_id === row.tx_id;
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+/** A fresh replica incarnation (Q72b): the epoch for operators, then a random id, so no two fences share one. */
+const newIncarnation = (epoch: number) => `${epoch}.${randomUUID()}`;
+/** Q72e: the least gap between two paced marker probes of one replica. */
+const PROBE_GAP_MS = 25;
+const sameMarker = (a: ReplicaMarker, b: ReplicaMarker) =>
+  a.position === b.position && a.epoch === b.epoch && (a.incarnation ?? "") === (b.incarnation ?? "");
 
 /** Delta counts from a QLever 0.6.0 update response (`operations[0]["delta-triples"]`). */
 const deltaOf = (response: unknown) => {
@@ -188,7 +219,15 @@ export class HostBroker {
   private readonly byEntity = new Map<string, Set<string>>();
   private evictedThroughLsn = 0;
   // Publication.
-  private replicaMarker: ReplicaMarker = { position: 0, epoch: 0 };
+  private replicaMarker: ReplicaMarker = { position: 0, epoch: 0, incarnation: "" };
+  // Q72b: the incarnation this broker last wrote, set before the fence that writes it is sent.
+  private incarnation = "";
+  // Q72e: one in-flight marker probe per replica, shared by every reader that may use it.
+  private probeInFlight: { readonly sentAt: number; readonly promise: Promise<ReplicaMarker> } | undefined;
+  private probeNext: Promise<ReplicaMarker> | undefined;
+  private pacedNext: Promise<ReplicaMarker> | undefined;
+  private lastProbeSentAt = -Infinity;
+  private lastPublishedAt = -Infinity;
   private publishedLsn = 0;
   private readonly publishWaiters: { position: number; resolve: (ok: boolean) => void }[] = [];
   private readonly durableWaiters: { position: number; resolve: () => void }[] = [];
@@ -233,7 +272,7 @@ export class HostBroker {
       status: opened.recovery.status,
       fsyncCalibrationMs: opened.recovery.fsyncCalibrationMs,
     });
-    let marker: ReplicaMarker = { position: 0, epoch: 0 };
+    let marker: ReplicaMarker = { position: 0, epoch: 0, incarnation: "" };
     if (options.replica) marker = await broker.readReplicaMarker();
     const lastLsn = opened.frames[opened.frames.length - 1]?.lsn ?? 0;
     // R13 2.4 known limit: damage to the last acknowledged frame looks like a torn write. A replica marker
@@ -249,11 +288,14 @@ export class HostBroker {
     if (options.replica) {
       // Fence: take the epoch on the replica before applying anything (R13 6.5 step 6, C3.3). A broker of
       // an older epoch then matches no guard.
-      await options.replica.update(buildFence(options.scopeKey, marker, opened.log.epoch), {
+      // The startup replay below publishes on top of whatever the replica holds, so it is a replay too: a new
+      // incarnation first (Q72b).
+      broker.incarnation = newIncarnation(opened.log.epoch);
+      await options.replica.update(buildFence(options.scopeKey, marker, opened.log.epoch, broker.incarnation), {
         timeoutMs: options.applyTimeoutMs ?? 120_000,
       });
       const fenced = await broker.readReplicaMarker();
-      if (fenced.epoch !== opened.log.epoch || fenced.position !== marker.position)
+      if (fenced.epoch !== opened.log.epoch || fenced.position !== marker.position || fenced.incarnation !== broker.incarnation)
         throw new BrokerFailed(`Replica fence failed: marker ${JSON.stringify(fenced)}`);
       broker.replicaMarker = fenced;
       if (options.autoApply !== false) broker.startApplier();
@@ -423,6 +465,7 @@ export class HostBroker {
       return;
     }
     const ackAt = performance.now();
+    let watermarkAt = ackAt;
     // The fsync returned: the decision is irrevocable. Record it, publish the watermark, expose the frame
     // to readers through the overlay, and only then ACK (Q31e: ACK after the source's own publication).
     try {
@@ -433,6 +476,7 @@ export class HostBroker {
       this.counters.commits += members.length;
       this.addOverlay({ lsn: frame.lsn, members });
       this.log.publishWatermark({ epoch, lsn: frame.lsn, position: this.headPosition });
+      watermarkAt = performance.now();
     } catch (cause) {
       // V-P2Q m1: the frame is durable but the publication step failed, so no ACK may be sent. Fail the broker
       // and answer outcome-unknown; a restart replays the frame and a resend returns the original receipt.
@@ -447,7 +491,7 @@ export class HostBroker {
     this.notifyDurable();
     this.wakeApplier?.();
     try {
-      this.options.onEvent?.({ type: "frame", lsn: frame.lsn, members: members.length, bytes: payload.length, appendMs: ackAt - t0, at: ackAt });
+      this.options.onEvent?.({ type: "frame", lsn: frame.lsn, members: members.length, bytes: payload.length, appendMs: ackAt - t0, at: ackAt, watermarkAt });
     } catch {
       /* instrumentation never fails a commit */
     }
@@ -636,9 +680,10 @@ export class HostBroker {
     });
     const position = Number(rows[0]?.["brokerPosition"]?.value ?? 0);
     const epoch = Number(rows[0]?.["brokerEpoch"]?.value ?? 0);
+    const incarnation = rows[0]?.["brokerIncarnation"]?.value ?? "";
     if (!Number.isSafeInteger(position) || !Number.isSafeInteger(epoch))
       throw new BrokerFailed("Unsafe replica marker");
-    return { position, epoch };
+    return { position, epoch, incarnation };
   }
 
   startApplier(): void {
@@ -653,22 +698,112 @@ export class HostBroker {
   }
 
   /**
-   * The replica's real marker, read now in its own request (V-P2Q C2: never the cached `replicaMarker`).
-   * A lower marker than the cached one wakes the applier to fence and replay. Unreachable: ReplicaUnavailable.
+   * The replica's real marker, read in its own request (V-P2Q C2: never the cached `replicaMarker`).
+   * A lower marker than the cached one, or another epoch or incarnation, wakes the applier to fence and replay.
+   * Unreachable: ReplicaUnavailable.
+   *
+   * Q72e (V-P2Q N5): probes are coalesced into one in-flight request per replica. A caller passes `notBefore`
+   * when the read must be sent after some instant (an after-check must be sent after the last answer request
+   * returned, or it could execute before that answer's snapshot); it joins the in-flight probe only if that
+   * probe was sent at or after `notBefore`, and otherwise shares the one follow-up probe sent when it returns.
    */
-  async probeReplica(surface: BasisSurface): Promise<ReplicaMarker> {
-    if (!this.options.replica) return { position: 0, epoch: 0 };
+  async probeReplica(surface: BasisSurface, notBefore = -Infinity, paced = false): Promise<ReplicaMarker> {
+    if (!this.options.replica) return { position: 0, epoch: 0, incarnation: "" };
     let marker: ReplicaMarker;
     try {
-      marker = await this.readReplicaMarker();
+      marker = await (paced ? this.pacedMarkerRead(notBefore) : this.sharedMarkerRead(notBefore));
     } catch (cause) {
       throw new ReplicaUnavailable({ replica: this.replicaName, surface, cause });
     }
-    if (marker.position < this.replicaMarker.position || marker.epoch !== this.replicaMarker.epoch) {
+    if (
+      marker.position < this.replicaMarker.position ||
+      marker.epoch !== this.replicaMarker.epoch ||
+      marker.incarnation !== this.replicaMarker.incarnation
+    ) {
       this.suspectRegression = true;
       this.wakeApplier?.();
     }
     return marker;
+  }
+
+  private sharedMarkerRead(notBefore: number): Promise<ReplicaMarker> {
+    const current = this.probeInFlight;
+    if (current === undefined) return this.startProbe();
+    if (current.sentAt >= notBefore) return current.promise;
+    if (this.probeNext === undefined) {
+      const after = performance.now();
+      this.probeNext = current.promise
+        .then(
+          () => undefined,
+          () => undefined,
+        )
+        .then(() => {
+          this.probeNext = undefined;
+          const latest = this.probeInFlight;
+          return latest !== undefined && latest.sentAt >= after ? latest.promise : this.startProbe();
+        });
+    }
+    return this.probeNext;
+  }
+
+  /**
+   * Q72e: a waiter re-checking the replica (no publication woke it) takes the next shared probe, sent at least
+   * PROBE_GAP_MS after the previous probe of this replica. Every waiter that asks before it is sent shares it, so
+   * N waiters cost one probe per gap instead of N (V-P2Q N5 measured 89 per waiter per second). First probes and
+   * after-checks never wait for the pace (`sharedMarkerRead`).
+   */
+  private pacedMarkerRead(notBefore: number): Promise<ReplicaMarker> {
+    const current = this.probeInFlight;
+    if (current !== undefined && current.sentAt >= notBefore) return current.promise;
+    if (this.pacedNext === undefined) {
+      const delay = Math.max(0, this.lastProbeSentAt + PROBE_GAP_MS - performance.now());
+      this.pacedNext = sleep(delay).then(() => {
+        this.pacedNext = undefined;
+        return this.startProbe();
+      });
+    }
+    return this.pacedNext;
+  }
+
+  private startProbe(): Promise<ReplicaMarker> {
+    const sentAt = performance.now();
+    this.lastProbeSentAt = sentAt;
+    const promise: Promise<ReplicaMarker> = this.readReplicaMarker().finally(() => {
+      if (this.probeInFlight?.promise === promise) this.probeInFlight = undefined;
+    });
+    this.probeInFlight = { sentAt, promise };
+    return promise;
+  }
+
+  /**
+   * Q72b: open the snapshot a multi-request read relies on. Waits (deadline-aware) for the replica's real marker
+   * to reach `b`, then records that marker and this broker's incarnation. Pair with `verifySnapshot`.
+   */
+  async openSnapshot(b: number, deadlineMs: number, surface: BasisSurface): Promise<ReplicaSnapshot> {
+    const started = performance.now();
+    const marker = await this.awaitReplica(b, deadlineMs, surface);
+    // Read after the marker, so a fence that finished during the wait does not refuse a read that began after it.
+    return { basis: b, marker, fencedIncarnation: this.incarnation, surface, started };
+  }
+
+  /**
+   * Q72b: call after the last answer request returned. Refuses with BasisNotAvailable (basis-not-reached) if the
+   * replica was reset during the read: another incarnation on the replica, a fence by this broker, or a marker
+   * below the basis. The probe is sent after this call starts (never an earlier in-flight one).
+   */
+  async verifySnapshot(snapshot: ReplicaSnapshot): Promise<void> {
+    const after = await this.probeReplica(snapshot.surface, performance.now());
+    const reset = after.incarnation !== snapshot.marker.incarnation || this.incarnation !== snapshot.fencedIncarnation;
+    if (reset || after.position < snapshot.basis)
+      throw new BasisNotAvailable({
+        required: snapshot.basis,
+        observed: after.position,
+        replica: reset
+          ? `the QLever replica (reset during the read: incarnation ${snapshot.marker.incarnation || "none"} became ${after.incarnation || "none"})`
+          : "the QLever replica (went backwards during the read)",
+        surface: snapshot.surface,
+        waitedMs: performance.now() - snapshot.started,
+      });
   }
 
   /**
@@ -677,15 +812,24 @@ export class HostBroker {
    */
   async awaitReplica(b: number, deadlineMs: number, surface: BasisSurface): Promise<ReplicaMarker> {
     const started = performance.now();
+    // After a publication wake, only a probe sent after that publication can show it; every waiter it woke
+    // shares that one probe. Any other re-check takes the paced shared probe (Q72e).
+    let notBefore = -Infinity;
+    let paced = false;
     for (;;) {
-      const real = await this.probeReplica(surface);
+      const real = await this.probeReplica(surface, notBefore, paced);
       if (real.position >= b) return real;
       const remaining = deadlineMs - (performance.now() - started);
       if (remaining <= 0)
         throw new BasisNotAvailable({ required: b, observed: real.position, replica: this.replicaName, surface, waitedMs: performance.now() - started });
-      // Wake on the next publication, but never spin when the cached marker is already (wrongly) ahead.
-      if (this.replicaMarker.position >= b) await sleep(Math.min(remaining, 10));
-      else await this.waitPublished(b, Math.min(remaining, 100));
+      // Wake on the next publication. When the cached marker is already (wrongly) ahead, the probe above has
+      // woken the applier to fence; re-check at the shared pace.
+      notBefore = performance.now();
+      paced = true;
+      if (this.replicaMarker.position < b && (await this.waitPublished(b, Math.min(remaining, 100)))) {
+        notBefore = this.lastPublishedAt;
+        paced = false;
+      }
     }
   }
 
@@ -799,15 +943,20 @@ export class HostBroker {
       this.fail(new BrokerFailed(`Replica guard failed at ${JSON.stringify(expected)}; another writer owns the replica`));
       return false;
     }
+    // Q72b: a new incarnation before the fence is sent, so a snapshot opened before this point is refused even
+    // if its after-check reads the replica before the fence lands.
+    const incarnation = newIncarnation(this.log.epoch);
+    this.incarnation = incarnation;
     try {
-      await this.options.replica!.update(buildFence(this.options.scopeKey, marker, this.log.epoch), {
+      await this.options.replica!.update(buildFence(this.options.scopeKey, marker, this.log.epoch, incarnation), {
         timeoutMs: this.options.applyTimeoutMs ?? 120_000,
       });
     } catch {
       return true; // unreachable again; the next pass re-reads the marker
     }
     const fenced = await this.replicaMarkerWithRetry();
-    if (fenced.epoch !== this.log.epoch) return true; // lost a race; the next pass re-reads the marker
+    // Lost a race (the replica moved again) or the fence did not land: the next pass re-reads the marker.
+    if (fenced.epoch !== this.log.epoch || fenced.incarnation !== incarnation) return true;
     this.counters.replicaRegressions++;
     this.options.onEvent?.({ type: "replica-regressed", from: this.replicaMarker.position, to: fenced.position, at: performance.now() });
     this.replicaMarker = fenced;
@@ -839,13 +988,14 @@ export class HostBroker {
           } catch {
             marker = undefined; // unreachable: retry on the next probe
           }
-          if (marker && !(marker.position === this.replicaMarker.position && marker.epoch === this.replicaMarker.epoch))
+          if (marker && !sameMarker(marker, this.replicaMarker))
             if (!(await this.onMarkerMismatch(marker, this.replicaMarker))) return;
         }
         continue;
       }
       const from = this.replicaMarker;
-      const to: ReplicaMarker = { position: lastPositionOf(batch[batch.length - 1]!.lsn), epoch: this.log.epoch };
+      // A publication keeps the incarnation and guards on it (Q72b).
+      const to: ReplicaMarker = { position: lastPositionOf(batch[batch.length - 1]!.lsn), epoch: this.log.epoch, incarnation: from.incarnation ?? "" };
       const update = buildPublication(this.options.scopeKey, from, to, batch.flatMap((frame) => frame.members));
       const t0 = performance.now();
       let resends = 0;
@@ -870,12 +1020,13 @@ export class HostBroker {
         // Zero change counts: either this update already applied (a re-send after a lost response) or the
         // guard failed because another epoch owns the replica. The marker decides (R13 6.5 step 8).
         const marker = await this.replicaMarkerWithRetry();
-        if (!(marker.position === to.position && marker.epoch === to.epoch)) {
+        if (!sameMarker(marker, to)) {
           if (!(await this.onMarkerMismatch(marker, from))) return;
           continue;
         }
       }
       const at = performance.now();
+      this.lastPublishedAt = at;
       this.replicaMarker = to;
       this.publishedLsn = batch[batch.length - 1]!.lsn;
       for (const frame of this.overlayFrames)
