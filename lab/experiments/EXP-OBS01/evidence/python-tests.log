@@ -1,0 +1,23 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 5260 "CX-VP2Q-4-package-live", pid 2977 "CX-VP2Q-4-live-http", pid 3055 "CX-VP2Q-4-live-prior", pid 10096 "DA01-G1"
+[lab] heavy: waiting for one of 4 slots; held by pid 5260 "CX-VP2Q-4-package-live", pid 2977 "CX-VP2Q-4-live-http", pid 3055 "CX-VP2Q-4-live-prior", pid 10096 "DA01-G1"
+[lab] heavy: waiting for one of 4 slots; held by pid 5260 "CX-VP2Q-4-package-live", pid 2977 "CX-VP2Q-4-live-http", pid 3055 "CX-VP2Q-4-live-prior", pid 10096 "DA01-G1"
+[lab] heavy: waiting for one of 4 slots; held by pid 5260 "CX-VP2Q-4-package-live", pid 10109 "G1-datomic-20261108T222718Z-b4f74f build", pid 3055 "CX-VP2Q-4-live-prior", pid 10096 "DA01-G1"
+[lab] heavy: waiting for one of 4 slots; held by pid 11143 "CX-SQL01-core-build", pid 10808 "CX-VO05-2-builder-gates", pid 3055 "CX-VP2Q-4-live-prior", pid 10096 "DA01-G1"
+test_budget_exhaustion_not_silently_sealed (__main__.CollectorTests.test_budget_exhaustion_not_silently_sealed) ... ok
+test_chunk_omission_rejected (__main__.CollectorTests.test_chunk_omission_rejected) ... ok
+test_corrupted_raw_rejected (__main__.CollectorTests.test_corrupted_raw_rejected) ... ok
+test_high_uncertainty_rejected (__main__.CollectorTests.test_high_uncertainty_rejected) ... ok
+test_http_chunked_bytes_decode (__main__.CollectorTests.test_http_chunked_bytes_decode) ... ok
+test_log_rotation_does_not_claim_continuous_coverage (__main__.CollectorTests.test_log_rotation_does_not_claim_continuous_coverage) ... ok
+test_missing_final_witness_rejected (__main__.CollectorTests.test_missing_final_witness_rejected) ... ok
+test_parser_replacement_rejected (__main__.CollectorTests.test_parser_replacement_rejected) ... ok
+test_real_writer_verifies_in_pinned_oracle (__main__.CollectorTests.test_real_writer_verifies_in_pinned_oracle) ... ok
+test_rerun_preserves_existing_bundle (__main__.CollectorTests.test_rerun_preserves_existing_bundle) ... ok
+test_unsealed_refused (__main__.CollectorTests.test_unsealed_refused) ... ok
+test_vendor_metrics_preserve_tags_and_exact_values (__main__.CollectorTests.test_vendor_metrics_preserve_tags_and_exact_values) ... ok
+test_wrong_key_rejected (__main__.CollectorTests.test_wrong_key_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 0.171s
+
+OK

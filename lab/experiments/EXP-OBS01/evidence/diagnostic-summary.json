@@ -1,0 +1,582 @@
+{
+  "runs": {
+    "obs01-qlever-01": {
+      "bundleSha256": "137fcc95fec50576f1744d41f8f6c144f5207b437cca3dcad2914702c33bbf64",
+      "cancelEvents": [
+        {
+          "client-ip": "",
+          "event": "start",
+          "qid": "obs01-cancel-01",
+          "query": "SELECT ?a ?c ?e WHERE { ?a <urn:obs01:p> ?b . ?c <urn:obs01:p> ?d . ?e <urn:obs01:p> ?f } ORDER BY ?e ?c ?a",
+          "ts-ms": 1794177541334
+        },
+        {
+          "event": "end",
+          "qid": "obs01-cancel-01",
+          "status": "failed",
+          "ts-ms": 1794177541335
+        }
+      ],
+      "clock": {
+        "accepted": 1,
+        "rejected": [
+          {
+            "at": "2026-11-08T22:39:01.292Z",
+            "error": "socket hang up"
+          },
+          {
+            "at": "2026-11-08T22:39:02.392Z",
+            "error": "clock bridge RTT 2.8837080001831055ms exceeds 2ms"
+          }
+        ],
+        "rttMs": [
+          1.6540840864181519
+        ]
+      },
+      "collector": {
+        "cgroupPath": "0::/docker/afbd7b6e77fe43cbe5632f89b1fc890eafd088aba700e90cd6d4a94c14955c08",
+        "configSha256": "e6370eb0b02a064c77b03ea7bd668d3473b844c4ec76afab3103b376a6448dbe",
+        "containerId": "bf404de649e3",
+        "cpuset": "5",
+        "imageDigest": "python@sha256:e48f59cdba69a3cbd9ed2cf0f348d90d45a8d350d98134cf1070bc106ee9ed90",
+        "sourceSha256": "554c5e58de66f098a44b24fd722f910311d9c66abdb95c9d163b427962fda5c5",
+        "startedAtMono": 115692326.822338,
+        "startedAtReal": 1794177541563.993
+      },
+      "qleverCounterSamples": [
+        "qlever_sparql_operation_running{operation=\"update\"} 0",
+        "qlever_sparql_operation_running{operation=\"query\"} 0",
+        "qlever_sparql_operation_finished_total{operation=\"query\"} 28",
+        "qlever_sparql_operation_finished_total{operation=\"update\"} 1",
+        "qlever_sparql_operation_started_total{operation=\"update\"} 1",
+        "qlever_sparql_operation_started_total{operation=\"query\"} 29",
+        "qlever_sparql_operation_duration_milliseconds_count{operation=\"query\"} 28",
+        "qlever_sparql_operation_duration_milliseconds_sum{operation=\"query\"} 35",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"query\",le=\"1\"} 22",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"query\",le=\"5\"} 27",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"query\",le=\"10\"} 28",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"query\",le=\"50\"} 28",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"query\",le=\"100\"} 28",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"query\",le=\"500\"} 28",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"query\",le=\"1000\"} 28",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"query\",le=\"5000\"} 28",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"query\",le=\"30000\"} 28",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"query\",le=\"60000\"} 28",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"query\",le=\"300000\"} 28",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"query\",le=\"+Inf\"} 28",
+        "qlever_sparql_operation_duration_milliseconds_count{operation=\"update\"} 1",
+        "qlever_sparql_operation_duration_milliseconds_sum{operation=\"update\"} 3",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"update\",le=\"1\"} 0",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"update\",le=\"5\"} 1",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"update\",le=\"10\"} 1",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"update\",le=\"50\"} 1",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"update\",le=\"100\"} 1",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"update\",le=\"500\"} 1",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"update\",le=\"1000\"} 1",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"update\",le=\"5000\"} 1",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"update\",le=\"30000\"} 1",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"update\",le=\"60000\"} 1",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"update\",le=\"300000\"} 1",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"update\",le=\"+Inf\"} 1",
+        "qlever_sparql_operation_errors_total{type=\"in_use\"} 0",
+        "qlever_sparql_operation_errors_total{type=\"protocol\"} 0",
+        "qlever_sparql_operation_errors_total{type=\"send_streamable_response\"} 0",
+        "qlever_sparql_operation_errors_total{type=\"timeout\"} 0",
+        "qlever_sparql_operation_errors_total{type=\"syntax\"} 0",
+        "qlever_sparql_operation_errors_total{type=\"system_error\"} 0",
+        "qlever_sparql_operation_errors_total{type=\"internal\"} 1"
+      ],
+      "retained": "/Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-qlever-01",
+      "sealed": true,
+      "streams": {
+        "H1-cpu-stat": 17,
+        "H1-io-stat": 17,
+        "H1-memory-current": 17,
+        "H1-memory-events": 17,
+        "H1-memory-peak": 17,
+        "H1-memory-stat": 17,
+        "H4-tcp": 17,
+        "H4-tcp6": 17,
+        "Q1-metrics": 8,
+        "Q3-events": 8,
+        "Q4-active": 8
+      },
+      "sut": {
+        "engineConfigSha256": "2226e179a55e2ea0879958319d53c6645bfa6f4d1c4990db2b71ffecf2f21ef7",
+        "engineContainerId": "bf404de649e3ab101b614a5a6d7b1fb19b4094462cd5dd0528f0cd86bbd1b999",
+        "engineImageDigest": "sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec",
+        "enginePids": [
+          {
+            "pid": 1,
+            "role": "qlever-server",
+            "starttime": 11557500
+          }
+        ],
+        "lane": "qlever"
+      }
+    },
+    "obs01-qlever-02": {
+      "bundleSha256": "a0f2f2f6206899633531b8004bc5092d32c7f8e85a7932f25ab27f3e503777a0",
+      "cancelEvents": [
+        {
+          "client-ip": "",
+          "event": "start",
+          "qid": "obs01-cancel-01",
+          "query": "SELECT ?a ?c ?e WHERE { ?a <urn:obs01:p> ?b . ?c <urn:obs01:p> ?d . ?e <urn:obs01:p> ?f } ORDER BY ?e ?c ?a",
+          "ts-ms": 1794177541334
+        },
+        {
+          "event": "end",
+          "qid": "obs01-cancel-01",
+          "status": "failed",
+          "ts-ms": 1794177541335
+        },
+        {
+          "client-ip": "",
+          "event": "start",
+          "qid": "obs01-cancel-02",
+          "query": "SELECT ?a ?c ?e WHERE { ?a <urn:obs01:p> ?b . ?c <urn:obs01:p> ?d . ?e <urn:obs01:p> ?f . FILTER(?b < 120 && ?d < 120 && ?f < 120) } ORDER BY ?e ?c ?a",
+          "ts-ms": 1794177673090
+        },
+        {
+          "event": "end",
+          "qid": "obs01-cancel-02",
+          "status": "cancelled",
+          "ts-ms": 1794177673105
+        }
+      ],
+      "clock": {
+        "accepted": 0,
+        "rejected": [
+          {
+            "at": "2026-11-08T22:41:13.111Z",
+            "error": "socket hang up"
+          },
+          {
+            "at": "2026-11-08T22:41:14.186Z",
+            "error": "clock bridge RTT 2.7540841102600098ms exceeds 2ms"
+          },
+          {
+            "at": "2026-11-08T22:41:15.202Z",
+            "error": "clock bridge RTT 2.2732919454574585ms exceeds 2ms"
+          }
+        ],
+        "rttMs": []
+      },
+      "collector": {
+        "cgroupPath": "0::/docker/5b5d3634696a3ef1b0917de724512289d0a038f15b4b5edf7dc151aa1dcd17bb",
+        "configSha256": "c3e0a8b343820f80850a93414ea3b6d24e00c838e33d2a6d36d2b107072cf84c",
+        "containerId": "c6b7ab5f9cdf",
+        "cpuset": "5",
+        "imageDigest": "python@sha256:e48f59cdba69a3cbd9ed2cf0f348d90d45a8d350d98134cf1070bc106ee9ed90",
+        "sourceSha256": "f2e76b0d2ba97e102b3f4fd0605990fca7bb89a20cef39a1cc07a7346a2f50c1",
+        "startedAtMono": 115823949.108077,
+        "startedAtReal": 1794177673186.2786
+      },
+      "qleverCounterSamples": [
+        "qlever_sparql_operation_running{operation=\"update\"} 0",
+        "qlever_sparql_operation_running{operation=\"query\"} 0",
+        "qlever_sparql_operation_finished_total{operation=\"query\"} 1",
+        "qlever_sparql_operation_finished_total{operation=\"update\"} 1",
+        "qlever_sparql_operation_started_total{operation=\"update\"} 1",
+        "qlever_sparql_operation_started_total{operation=\"query\"} 2",
+        "qlever_sparql_operation_duration_milliseconds_count{operation=\"query\"} 1",
+        "qlever_sparql_operation_duration_milliseconds_sum{operation=\"query\"} 1",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"query\",le=\"1\"} 1",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"query\",le=\"5\"} 1",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"query\",le=\"10\"} 1",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"query\",le=\"50\"} 1",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"query\",le=\"100\"} 1",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"query\",le=\"500\"} 1",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"query\",le=\"1000\"} 1",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"query\",le=\"5000\"} 1",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"query\",le=\"30000\"} 1",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"query\",le=\"60000\"} 1",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"query\",le=\"300000\"} 1",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"query\",le=\"+Inf\"} 1",
+        "qlever_sparql_operation_duration_milliseconds_count{operation=\"update\"} 1",
+        "qlever_sparql_operation_duration_milliseconds_sum{operation=\"update\"} 2",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"update\",le=\"1\"} 0",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"update\",le=\"5\"} 1",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"update\",le=\"10\"} 1",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"update\",le=\"50\"} 1",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"update\",le=\"100\"} 1",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"update\",le=\"500\"} 1",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"update\",le=\"1000\"} 1",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"update\",le=\"5000\"} 1",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"update\",le=\"30000\"} 1",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"update\",le=\"60000\"} 1",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"update\",le=\"300000\"} 1",
+        "qlever_sparql_operation_duration_milliseconds_bucket{operation=\"update\",le=\"+Inf\"} 1",
+        "qlever_sparql_operation_errors_total{type=\"in_use\"} 0",
+        "qlever_sparql_operation_errors_total{type=\"protocol\"} 0",
+        "qlever_sparql_operation_errors_total{type=\"send_streamable_response\"} 0",
+        "qlever_sparql_operation_errors_total{type=\"syntax\"} 0",
+        "qlever_sparql_operation_errors_total{type=\"internal\"} 0",
+        "qlever_sparql_operation_errors_total{type=\"system_error\"} 0",
+        "qlever_sparql_operation_errors_total{type=\"timeout\"} 1"
+      ],
+      "retained": "/Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-qlever-02",
+      "sealed": true,
+      "streams": {
+        "H1-cpu-stat": 19,
+        "H1-io-stat": 18,
+        "H1-memory-current": 19,
+        "H1-memory-events": 19,
+        "H1-memory-peak": 19,
+        "H1-memory-stat": 19,
+        "H4-tcp": 18,
+        "H4-tcp6": 18,
+        "Q1-metrics": 9,
+        "Q3-events": 8,
+        "Q4-active": 8
+      },
+      "sut": {
+        "engineConfigSha256": "2226e179a55e2ea0879958319d53c6645bfa6f4d1c4990db2b71ffecf2f21ef7",
+        "engineContainerId": "c6b7ab5f9cdff7f764a0ac16cb156fd0a67b30411974c0ecbc09b3f0ce87af71",
+        "engineImageDigest": "sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec",
+        "enginePids": [
+          {
+            "pid": 1,
+            "role": "qlever-server",
+            "starttime": 11582095
+          }
+        ],
+        "lane": "qlever"
+      }
+    },
+    "obs01-xtdb-03": {
+      "bundleSha256": "55e111b9e5fc27b382a7704cab528efb4ae6172934cfe4f79e2e10394015b9d1",
+      "clock": {
+        "accepted": 36,
+        "rejected": [
+          {
+            "at": "2026-11-08T22:34:23.232Z",
+            "error": "socket hang up"
+          },
+          {
+            "at": "2026-11-08T22:34:24.310Z",
+            "error": "clock bridge RTT 4.374083042144775ms exceeds 2ms"
+          },
+          {
+            "at": "2026-11-08T22:34:25.334Z",
+            "error": "clock bridge RTT 2.2445420026779175ms exceeds 2ms"
+          },
+          {
+            "at": "2026-11-08T22:34:26.354Z",
+            "error": "clock bridge RTT 2.1162919998168945ms exceeds 2ms"
+          },
+          {
+            "at": "2026-11-08T22:34:29.478Z",
+            "error": "clock bridge RTT 2.490417003631592ms exceeds 2ms"
+          },
+          {
+            "at": "2026-11-08T22:34:31.540Z",
+            "error": "clock bridge RTT 2.4928330183029175ms exceeds 2ms"
+          },
+          {
+            "at": "2026-11-08T22:34:32.562Z",
+            "error": "clock bridge RTT 3.6787919998168945ms exceeds 2ms"
+          },
+          {
+            "at": "2026-11-08T22:34:34.676Z",
+            "error": "clock bridge RTT 2.8799580335617065ms exceeds 2ms"
+          },
+          {
+            "at": "2026-11-08T22:34:40.840Z",
+            "error": "clock bridge RTT 2.187416911125183ms exceeds 2ms"
+          },
+          {
+            "at": "2026-11-08T22:34:47.057Z",
+            "error": "clock bridge RTT 2.0853331089019775ms exceeds 2ms"
+          },
+          {
+            "at": "2026-11-08T22:34:48.075Z",
+            "error": "clock bridge RTT 2.2991249561309814ms exceeds 2ms"
+          },
+          {
+            "at": "2026-11-08T22:34:51.173Z",
+            "error": "clock bridge RTT 8.075083017349243ms exceeds 2ms"
+          },
+          {
+            "at": "2026-11-08T22:35:04.603Z",
+            "error": "clock bridge RTT 2.138332962989807ms exceeds 2ms"
+          },
+          {
+            "at": "2026-11-08T22:35:05.661Z",
+            "error": "clock bridge RTT 2.372957944869995ms exceeds 2ms"
+          },
+          {
+            "at": "2026-11-08T22:35:08.758Z",
+            "error": "clock bridge RTT 4.487291932106018ms exceeds 2ms"
+          },
+          {
+            "at": "2026-11-08T22:35:12.865Z",
+            "error": "clock bridge RTT 2.6925830841064453ms exceeds 2ms"
+          },
+          {
+            "at": "2026-11-08T22:35:17.013Z",
+            "error": "clock bridge RTT 2.685832977294922ms exceeds 2ms"
+          },
+          {
+            "at": "2026-11-08T22:35:18.048Z",
+            "error": "socket hang up"
+          }
+        ],
+        "rttMs": [
+          1.7174160480499268,
+          1.6707080602645874,
+          1.6970000267028809,
+          1.3067920207977295,
+          1.5180840492248535,
+          1.2656669616699219,
+          1.3615840673446655,
+          1.503000020980835,
+          1.2122920751571655,
+          1.761625051498413,
+          1.333292007446289,
+          1.5920829772949219,
+          1.4267909526824951,
+          1.7342500686645508,
+          1.3364579677581787,
+          1.452583909034729,
+          1.648041009902954,
+          1.8749580383300781,
+          1.8235419988632202,
+          1.522125005722046,
+          1.6560419797897339,
+          1.637624979019165,
+          1.915416955947876,
+          1.9907090663909912,
+          1.5396250486373901,
+          1.2483339309692383,
+          1.5547499656677246,
+          1.358875036239624,
+          1.3914580345153809,
+          1.6008329391479492,
+          1.7202919721603394,
+          1.3702501058578491,
+          1.3246248960494995,
+          1.7681249380111694,
+          1.6477919816970825,
+          1.5907909870147705
+        ]
+      },
+      "collector": {
+        "cgroupPath": "0::/docker/c45fbef3b33002856081636f6af81950f0e5e5df8e42373d46286bdf61145078",
+        "configSha256": "8b560dc1480e2de3b982d130638631c77708cce110a36eabb1e59349c8e357dd",
+        "containerId": "50d0b888e6d5",
+        "cpuset": "5",
+        "imageDigest": "python@sha256:e48f59cdba69a3cbd9ed2cf0f348d90d45a8d350d98134cf1070bc106ee9ed90",
+        "sourceSha256": "554c5e58de66f098a44b24fd722f910311d9c66abdb95c9d163b427962fda5c5",
+        "startedAtMono": 115414085.66988,
+        "startedAtReal": 1794177263322.8403
+      },
+      "completedTxGauge": {
+        "first": {
+          "metric": "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2a4f64b2\"}",
+          "t": 115414236.946076,
+          "value": "-1.0"
+        },
+        "last": {
+          "metric": "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2a4f64b2\"}",
+          "t": 115468210.625622,
+          "value": "0.0"
+        },
+        "orderedDistinctValues": [
+          "-1.0",
+          "0.0"
+        ],
+        "samples": 195
+      },
+      "failure": {
+        "error": "bundle byte budget exhausted; retain unsealed evidence",
+        "tMono": 115468447.642126
+      },
+      "retained": "/Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-xtdb-03",
+      "sealed": false,
+      "streams": {
+        "H1-cpu-stat": 469,
+        "H1-io-stat": 469,
+        "H1-memory-current": 470,
+        "H1-memory-events": 469,
+        "H1-memory-peak": 469,
+        "H1-memory-stat": 469,
+        "H4-tcp": 469,
+        "H4-tcp6": 465,
+        "X1-metrics": 195
+      },
+      "sut": {
+        "engineConfigSha256": "89d806504587238943e37a177cff0e630befecfc7cefeb1b77ff60376ba21267",
+        "engineContainerId": "50d0b888e6d5830720e36a61a213fa3977dc06c221d64062114ddb3491d6b81b",
+        "engineImageDigest": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+        "enginePids": [
+          {
+            "pid": 1,
+            "role": "java",
+            "starttime": 11529290
+          }
+        ],
+        "lane": "xtdb"
+      }
+    },
+    "obs01-xtdb-04": {
+      "bundleSha256": "1d3dc656d1de3320fa78561505ec651895c1cbac15283daeb0f9d524f5d5e4b2",
+      "clock": {
+        "accepted": 1,
+        "rejected": [
+          {
+            "at": "2026-11-08T22:36:17.612Z",
+            "error": "socket hang up"
+          },
+          {
+            "at": "2026-11-08T22:36:18.689Z",
+            "error": "clock bridge RTT 3.1313750743865967ms exceeds 2ms"
+          },
+          {
+            "at": "2026-11-08T22:36:20.751Z",
+            "error": "clock bridge RTT 4.684332966804504ms exceeds 2ms"
+          }
+        ],
+        "rttMs": [
+          1.9243749380111694
+        ]
+      },
+      "collector": {
+        "cgroupPath": "0::/docker/85018ea97dd46e61b845b2a7e858063e4e01c65f47ab676e56b19e3b0e02da59",
+        "configSha256": "11d566d146d1ececfd2ef0b1285f420d60677012b47507455d3a9a2ddd7dee10",
+        "containerId": "50d0b888e6d5",
+        "cpuset": "5",
+        "imageDigest": "python@sha256:e48f59cdba69a3cbd9ed2cf0f348d90d45a8d350d98134cf1070bc106ee9ed90",
+        "sourceSha256": "554c5e58de66f098a44b24fd722f910311d9c66abdb95c9d163b427962fda5c5",
+        "startedAtMono": 115528460.355949,
+        "startedAtReal": 1794177377697.5266
+      },
+      "completedTxGauge": {
+        "first": {
+          "metric": "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2a4f64b2\"}",
+          "t": 115528513.999561,
+          "value": "0.0"
+        },
+        "last": {
+          "metric": "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2a4f64b2\"}",
+          "t": 115532059.26996,
+          "value": "1563.0"
+        },
+        "orderedDistinctValues": [
+          "0.0",
+          "1563.0"
+        ],
+        "samples": 14
+      },
+      "retained": "/Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-xtdb-04",
+      "sealed": true,
+      "streams": {
+        "H1-cpu-stat": 30,
+        "H1-io-stat": 30,
+        "H1-memory-current": 30,
+        "H1-memory-events": 30,
+        "H1-memory-peak": 30,
+        "H1-memory-stat": 30,
+        "H4-tcp": 30,
+        "H4-tcp6": 30,
+        "X1-metrics": 14
+      },
+      "sut": {
+        "engineConfigSha256": "89d806504587238943e37a177cff0e630befecfc7cefeb1b77ff60376ba21267",
+        "engineContainerId": "50d0b888e6d5830720e36a61a213fa3977dc06c221d64062114ddb3491d6b81b",
+        "engineImageDigest": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+        "enginePids": [
+          {
+            "pid": 1,
+            "role": "java",
+            "starttime": 11529290
+          }
+        ],
+        "lane": "xtdb"
+      }
+    },
+    "obs01-xtdb-05": {
+      "bundleSha256": "22d34008d86fd1d8b866b572c2541680e77fd568de303e6e7e3ec3e894570efc",
+      "clock": {
+        "accepted": 1,
+        "rejected": [
+          {
+            "at": "2026-11-08T22:45:10.131Z",
+            "error": "socket hang up"
+          },
+          {
+            "at": "2026-11-08T22:45:11.228Z",
+            "error": "clock bridge RTT 2.4529999494552612ms exceeds 2ms"
+          },
+          {
+            "at": "2026-11-08T22:45:12.245Z",
+            "error": "clock bridge RTT 2.222041964530945ms exceeds 2ms"
+          },
+          {
+            "at": "2026-11-08T22:45:14.297Z",
+            "error": "clock bridge RTT 2.184125065803528ms exceeds 2ms"
+          }
+        ],
+        "rttMs": [
+          1.7245420217514038
+        ]
+      },
+      "collector": {
+        "cgroupPath": "/sys/fs/cgroup/docker/14c3500adb709a8dad1df07304890036eb806341b816d9a0d793807903429c8d",
+        "configSha256": "70e0dad251a6da24ca349bb01474a23be97474f1d2ba9ea8f7b8a1d0ef235198",
+        "containerId": "14c3500adb709a8dad1df07304890036eb806341b816d9a0d793807903429c8d",
+        "cpuset": "5",
+        "imageDigest": "python@sha256:e48f59cdba69a3cbd9ed2cf0f348d90d45a8d350d98134cf1070bc106ee9ed90",
+        "sourceSha256": "14c26da90a0ffef06a980a43a2f3985edb5a33cb81ad278e832549b9a9289855",
+        "startedAtMono": 116061018.526903,
+        "startedAtReal": 1794177910255.6973
+      },
+      "completedTxGauge": {
+        "first": {
+          "metric": "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"05f94ca2\"}",
+          "t": 116061142.561973,
+          "value": "1563.0"
+        },
+        "last": {
+          "metric": "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"05f94ca2\"}",
+          "t": 116064933.129311,
+          "value": "3126.0"
+        },
+        "orderedDistinctValues": [
+          "1563.0",
+          "3126.0"
+        ],
+        "samples": 16
+      },
+      "retained": "/Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-xtdb-05",
+      "sealed": true,
+      "streams": {
+        "H1-cpu-stat": 39,
+        "H1-io-stat": 39,
+        "H1-memory-current": 39,
+        "H1-memory-events": 39,
+        "H1-memory-peak": 39,
+        "H1-memory-stat": 39,
+        "H4-tcp": 39,
+        "H4-tcp6": 39,
+        "X1-metrics": 16
+      },
+      "sut": {
+        "engineConfigInputsSha256": "ccf830988d7c89c44d433167ea12b9df03bd6f4cac200df851d8afd05808d401",
+        "engineConfigSha256": "89d806504587238943e37a177cff0e630befecfc7cefeb1b77ff60376ba21267",
+        "engineContainerId": "c57d7fad169f9afee411e6efc8faa454b752fc1cf0fd68a0d9071bdbb042eb6b",
+        "engineImageDigest": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+        "enginePids": [
+          {
+            "pid": 1,
+            "role": "java",
+            "starttime": 11604376
+          }
+        ],
+        "lane": "xtdb"
+      }
+    }
+  },
+  "status": "diagnostic-only; independent verifier recollection still required"
+}

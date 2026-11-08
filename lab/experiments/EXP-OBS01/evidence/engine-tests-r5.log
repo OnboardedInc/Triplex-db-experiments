@@ -1,0 +1,40 @@
+TAP version 13
+# Subtest: requires disjoint CPU pinning
+ok 1 - requires disjoint CPU pinning
+  ---
+  duration_ms: 0.734083
+  type: 'test'
+  ...
+# Subtest: requires evaluator key, immutable image and safe identities
+ok 2 - requires evaluator key, immutable image and safe identities
+  ---
+  duration_ms: 2.313833
+  type: 'test'
+  ...
+# Subtest: output budget is bounded before admission
+ok 3 - output budget is bounded before admission
+  ---
+  duration_ms: 2.09125
+  type: 'test'
+  ...
+# Subtest: XTDB completed transaction source and host sources are collected
+ok 4 - XTDB completed transaction source and host sources are collected
+  ---
+  duration_ms: 0.55025
+  type: 'test'
+  ...
+# Subtest: QLever profile is opt-in and resident script remains unchanged
+ok 5 - QLever profile is opt-in and resident script remains unchanged
+  ---
+  duration_ms: 5.466333
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 101.959875

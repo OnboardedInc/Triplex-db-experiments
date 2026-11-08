@@ -1,0 +1,3 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 23904 "CX-P2Q-R4-suites", pid 26205 "CX-SQL01-kill80", pid 26420 "CX-SQL01-verifier-semantic", pid 26204 "CX-SQL01-unit"
+[lab] heavy: waiting for one of 4 slots; held by pid 23904 "CX-P2Q-R4-suites", pid 26205 "CX-SQL01-kill80", pid 26420 "CX-SQL01-verifier-semantic", pid 26737 "DA01-suite-diagnostic"
+{"runId":"obs01-qlever-01","evidence":"/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/experiments/EXP-OBS01/evidence/obs01-qlever-01"}

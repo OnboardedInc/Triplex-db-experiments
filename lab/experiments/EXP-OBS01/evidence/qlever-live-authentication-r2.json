@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/verify_retained.py", line 17, in <module>
+    records, uncertainty = oracle.authenticate(retention.parent / 'output/bundle', context, sys.argv[2])
+                           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/runs/OBS01/oracle/observe.py", line 254, in authenticate
+    require(bool(bridge), 'clock bridge absent')
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/runs/OBS01/oracle/observe.py", line 143, in require
+    raise Failed(reason)
+observe.Failed: clock bridge absent

@@ -1,0 +1,32 @@
+[
+  {
+    "operation": "before",
+    "sql": "SELECT 1 AS before",
+    "hostStart": 807707802.279708,
+    "hostEnd": 807707838.414375,
+    "rows": [
+      {
+        "before": 1
+      }
+    ]
+  },
+  {
+    "operation": "write",
+    "sql": "INSERT INTO obs01_probe (_id, n) VALUES ('obs01-canary', 17)",
+    "hostStart": 807708345.922791,
+    "hostEnd": 807708420.399291,
+    "rows": []
+  },
+  {
+    "operation": "read",
+    "sql": "SELECT * FROM obs01_probe",
+    "hostStart": 807708924.56675,
+    "hostEnd": 807708937.202375,
+    "rows": [
+      {
+        "_id": "obs01-canary",
+        "n": 17
+      }
+    ]
+  }
+]

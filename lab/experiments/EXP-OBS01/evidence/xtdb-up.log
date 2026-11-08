@@ -1,0 +1,15 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 5260 "CX-VP2Q-4-package-live", pid 2977 "CX-VP2Q-4-live-http", pid 3055 "CX-VP2Q-4-live-prior", pid 10096 "DA01-G1"
+[lab] heavy: waiting for one of 4 slots; held by pid 5260 "CX-VP2Q-4-package-live", pid 2977 "CX-VP2Q-4-live-http", pid 3055 "CX-VP2Q-4-live-prior", pid 10096 "DA01-G1"
+[lab] heavy: waiting for one of 4 slots; held by pid 5260 "CX-VP2Q-4-package-live", pid 2977 "CX-VP2Q-4-live-http", pid 3055 "CX-VP2Q-4-live-prior", pid 10096 "DA01-G1"
+[lab] heavy: waiting for one of 4 slots; held by pid 5260 "CX-VP2Q-4-package-live", pid 2977 "CX-VP2Q-4-live-http", pid 3055 "CX-VP2Q-4-live-prior", pid 10096 "DA01-G1"
+[lab] heavy: waiting for one of 4 slots; held by pid 5260 "CX-VP2Q-4-package-live", pid 2977 "CX-VP2Q-4-live-http", pid 3055 "CX-VP2Q-4-live-prior", pid 10096 "DA01-G1"
+[lab] heavy: waiting for one of 4 slots; held by pid 5260 "CX-VP2Q-4-package-live", pid 2977 "CX-VP2Q-4-live-http", pid 3055 "CX-VP2Q-4-live-prior", pid 10096 "DA01-G1"
+[lab] heavy: waiting for one of 4 slots; held by pid 10259 "CX-VDA00-scratch-cleanup-retry", pid 10808 "CX-VO05-2-builder-gates", pid 3055 "CX-VP2Q-4-live-prior", pid 10096 "DA01-G1"
+[lab] heavy: waiting for one of 4 slots; held by pid 12030 "CX-X02-Q79e-G0", pid 10808 "CX-VO05-2-builder-gates", pid 12627 "CX-X02-Q79e-live", pid 13688 "G0-xtdb-20261108T223050Z-fdac21 typecheck"
+[lab] heavy: waiting for one of 4 slots; held by pid 15369 "CX-SQL01-package3", pid 10808 "CX-VO05-2-builder-gates", pid 12627 "CX-X02-Q79e-live", pid 14715 "CX-SQL01-kill80"
+[lab] heavy: waiting for one of 4 slots; held by pid 15464 "CX-SQL01-verifier", pid 15837 "CX-VP2Q-4-native-rewind-retry", pid 12627 "CX-X02-Q79e-live", pid 14715 "CX-SQL01-kill80"
+[lab] tx2-xtdb-s1 ready (health=healthy pgwire=open); cap 1.50 GiB, 1 CPU, config 89d806504587
+export XTDB_URL='postgres://xtdb:xtdb@127.0.0.1:5471/xtdb'
+export XTDB_INTEGRATION=1
+export TRIPLEX_LAB_SLOT_OWNER='/Users/sam/projects/triplex-db-2/lab/locks/xtdb-s1/owner.json'
+export DOCKER_HOST='unix:///Users/sam/.colima/triplex2/docker.sock'  # only for manual docker calls; never the default context

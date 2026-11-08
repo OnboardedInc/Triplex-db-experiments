@@ -18,6 +18,7 @@
 // the small read-only config file is bind-mounted.
 // Rejected: docker compose per slot (project labels and a second config source of truth);
 // a daemon (no process to babysit with at most 10 agents).
+import { observerUp, observerDown, observerWatch, observerWitness, observerImage, observerBridge, observerRetain } from './observer.mjs';
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import net from 'node:net';
@@ -66,6 +67,11 @@ export function assertSingleWriter(info, eff) {
 
 /** Effective engine configuration: the bytes the container actually runs with. */
 export function effectiveConfig(config, info) {
+  if (info.observationSources) {
+    const clockPort = info.port + 10000;
+    if (config.forbiddenPorts.includes(clockPort) || clockPort > 65535 || config.reservedPortRanges.some(r => clockPort >= r.from && clockPort <= r.to))
+      fail('REFUSED', 'observer clock forward collides with a protected port');
+  }
   const dir = path.join(ENGINE_DIR, `${info.lane}-${info.slot}${info.role === 'follower' ? '-ro' : ''}`);
   fs.mkdirSync(dir, { recursive: true });
   // [EXP-X05] A cpuset joins the effective config only when given, so every existing slot keeps its hash.
@@ -77,6 +83,7 @@ export function effectiveConfig(config, info) {
     const effective = {
       lane: 'xtdb', slot: info.slot, role: 'follower', follows: info.writer, ...(info.profile ? { profile: info.profile } : {}), image: info.laneConf.image, configSource: info.configSource,
       configYamlSha256: sha256(yaml), env: { JDK_JAVA_OPTIONS: info.javaOpts }, memBytes: info.memBytes, cpus: info.cpus, ...pin,
+      ...(info.observationSources ? { observerClockPublish: `127.0.0.1:${info.port + 10000}:18080` } : {}),
       publish: `127.0.0.1:${info.port}:5432`, volume: `${info.volume}:/var/lib/xtdb${info.volumeMode === 'ro' ? ':ro' : ''}`, cmd: ['-f', '/etc/xtdb/config.yaml'],
       health: 'wget -q -O /dev/null http://127.0.0.1:8080/healthz/alive',
     };
@@ -91,6 +98,7 @@ export function effectiveConfig(config, info) {
     const effective = {
       lane: 'xtdb', slot: info.slot, image: info.laneConf.image, configYamlSha256: sha256(yaml),
       env: { JDK_JAVA_OPTIONS: info.javaOpts }, memBytes: info.memBytes, cpus: info.cpus, ...pin,
+      ...(info.observationSources ? { observerClockPublish: `127.0.0.1:${info.port + 10000}:18080` } : {}),
       publish: `127.0.0.1:${info.port}:5432`, volume: `${info.volume}:/var/lib/xtdb`, cmd: ['-f', '/etc/xtdb/config.yaml'],
       health: 'wget -q -O /dev/null http://127.0.0.1:8080/healthz/alive',
     };
@@ -99,12 +107,15 @@ export function effectiveConfig(config, info) {
   // QLever: repo qlever-start.sh with the slot's query memory (-m). Port stays 7019 inside.
   const original = fs.readFileSync(path.join(CONFIG_DIR, 'qlever-start.sh'), 'utf8');
   if (!/ -m 2G /.test(original)) fail('CONFIG', 'qlever-start.sh no longer has "-m 2G"; update engine.mjs');
-  const script = original.replace(' -m 2G ', ` -m ${info.qleverMemory} `);
+  let script = original.replace(' -m 2G ', ` -m ${info.qleverMemory} `);
+  // [EXP-OBS01] Why: protocol slots need Q1/Q3; rejected: altering shared dev residents.
+  if (info.observationSources) script = script.replace('--no-metrics-log', '--enable-metrics');
   const file = path.join(dir, 'start.sh');
   fs.writeFileSync(file, script);
   const effective = {
     lane: 'qlever', slot: info.slot, image: info.laneConf.image, startScriptSha256: sha256(script),
-    sourceStartScriptSha256: sha256(original), qleverMemory: info.qleverMemory, memBytes: info.memBytes, cpus: info.cpus,
+    sourceStartScriptSha256: sha256(original), qleverMemory: info.qleverMemory, memBytes: info.memBytes, cpus: info.cpus, ...pin,
+    ...(info.observationSources ? { observerClockPublish: `127.0.0.1:${info.port + 10000}:18080` } : {}),
     publish: `127.0.0.1:${info.port}:7019`, volume: `${info.volume}:/data`, volumeInit: 'marker /data/.tx2-volume, chown -R 999:999 /data (image user qlever); no -w (start.sh does cd /data)', entrypoint: ['/bin/bash', '/config/start.sh'],
     health: "curl -fsS -o /dev/null 'http://127.0.0.1:7019/?query=SELECT%20*%20WHERE%20%7B%20%3Fs%20%3Fp%20%3Fo%20%7D%20LIMIT%201'",
   };
@@ -120,7 +131,7 @@ function runArgs(info, eff, holder) {
     ...(info.role === 'follower' ? ['--label', 'tx2.role=follower', '--label', `tx2.follows=${info.writer}`, '--label', `tx2.follower-profile=${info.profile ?? 'default'}`] : []),
     '--memory', String(info.memBytes), '--memory-swap', String(info.memBytes), '--cpus', String(info.cpus),
     ...(e.cpusetCpus ? ['--cpuset-cpus', e.cpusetCpus] : []),
-    '-p', e.publish, '-v', e.volume,
+    '-p', e.publish, ...(e.observerClockPublish ? ['-p', e.observerClockPublish] : []), '-v', e.volume,
     '--health-cmd', e.health, '--health-interval', '5s', '--health-timeout', '3s', '--health-start-period', '20s', '--health-retries', '3',
   ];
   if (info.lane === 'xtdb')
@@ -206,6 +217,7 @@ function releaseSlot(info) {
 
 async function up(config, info, opts) {
   const holder = defaultHolder(opts);
+  if (opts.fresh && inspect(`tx2-obs-${info.lane}-${info.slot}`)) fail('REFUSED', 'stop the observer before replacing its engine');
   const slot = acquireSlot(info, holder, opts.exp);
   try {
     const eff = effectiveConfig(config, info);
@@ -227,6 +239,9 @@ async function up(config, info, opts) {
       reconcile(ledger, all);
       const disk = vmDisk(config);
       const request = { container: info.container, memBytes: info.memBytes, diskForecastBytes: info.diskForecastBytes };
+      // [EXP-OBS01] Why: an admitted observer owns its CPU for this slot run. Rejected: quotas as pinning.
+      for (const r of ledger.reservations) if (r.role === 'observer' && (!info.cpusetCpus || cpusetOverlap(r.cpusetCpus, info.cpusetCpus, config.vm.cpus).length))
+        fail('REFUSED', `engine CPU overlaps observer ${r.container}`);
       const verdict = admission({ config, reservations: ledger.reservations, running: all, request, diskUsedBytes: disk.usedBytes });
       ledger.external = verdict.external;
       if (!verdict.ok)
@@ -286,6 +301,7 @@ async function down(config, info, opts) {
   // its pool reservation; take it down first, explicitly.
   if (info.lane === 'xtdb' && config.lanes.xtdb.follower && inspect(`${info.container}-ro`))
     fail('REFUSED', `${info.container}-ro still exists; run: node lab/bin/engine.mjs down --lane xtdb --slot ${info.slot} --follower`);
+  if (inspect(`tx2-obs-${info.lane}-${info.slot}`)) fail('REFUSED', 'stop the slot observer before its engine');
   const existing = inspect(info.container);
   if (existing) {
     if (!existing.Config.Labels?.['tx2.managed-by']) fail('REFUSED', `${info.container} was not started by lab/bin/engine.mjs; not stopping it`);
@@ -442,9 +458,26 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
   const command = positional[0];
   const config = loadSlots();
   if (command === 'status') return status(config);
-  if (!['up', 'down', 'logs'].includes(command)) fail('USAGE', 'usage: engine.mjs up|down|status|logs --lane xtdb|qlever --slot dev|s1|s2|s3 [--fresh] [--follower] [--cpuset-cpus LIST]');
+  if (command === 'observer-image') return observerImage(options);
+  if (command === 'observer-retain') return observerRetain(options);
+  if (!['up', 'down', 'logs', 'observer-up', 'observer-down', 'observer-watch', 'observer-witness', 'observer-bridge'].includes(command)) fail('USAGE', 'usage: engine.mjs up|down|status|logs --lane xtdb|qlever --slot dev|s1|s2|s3 [--fresh] [--follower] [--cpuset-cpus LIST]');
   if (!options.lane || !options.slot) fail('USAGE', '--lane and --slot are required');
   const info = slotInfo(config, options.lane, options.slot);
+  if (command === 'logs' && options.observer) {
+    spawnSync('docker', dockerArgs(['logs', '--tail', String(options.tail ?? 200), `tx2-obs-${info.lane}-${info.slot}`]), { stdio: 'inherit' });
+    return;
+  }
+  if (command.startsWith('observer-')) {
+    if (command === 'observer-up') return observerUp(config, info, options);
+    if (command === 'observer-down') return observerDown(info, options);
+    if (command === 'observer-watch') return observerWatch(info, options);
+    if (command === 'observer-witness') return observerWitness(info, options);
+    return observerBridge(info, options);
+  }
+  if (options['observation-sources']) {
+    if (info.mode !== 'exclusive') fail('REFUSED', 'observation sources only on exclusive slots');
+    info.observationSources = true;
+  }
   if (options.follower) {
     const fol = followerInfo(config, info, options);
     if (command === 'up') return followerUp(config, info, fol, options);

@@ -1,0 +1,252 @@
+test_budget_exhaustion_not_silently_sealed (__main__.CollectorTests.test_budget_exhaustion_not_silently_sealed) ... ERROR
+test_chunk_omission_rejected (__main__.CollectorTests.test_chunk_omission_rejected) ... ERROR
+test_corrupted_raw_rejected (__main__.CollectorTests.test_corrupted_raw_rejected) ... ERROR
+test_high_uncertainty_rejected (__main__.CollectorTests.test_high_uncertainty_rejected) ... ERROR
+test_http_chunked_bytes_decode (__main__.CollectorTests.test_http_chunked_bytes_decode) ... ERROR
+test_log_rotation_does_not_claim_continuous_coverage (__main__.CollectorTests.test_log_rotation_does_not_claim_continuous_coverage) ... ERROR
+test_missing_final_witness_rejected (__main__.CollectorTests.test_missing_final_witness_rejected) ... ERROR
+test_parser_replacement_rejected (__main__.CollectorTests.test_parser_replacement_rejected) ... ERROR
+test_real_writer_verifies_in_pinned_oracle (__main__.CollectorTests.test_real_writer_verifies_in_pinned_oracle) ... ERROR
+test_rerun_preserves_existing_bundle (__main__.CollectorTests.test_rerun_preserves_existing_bundle) ... ERROR
+test_unsealed_refused (__main__.CollectorTests.test_unsealed_refused) ... ERROR
+test_vendor_metrics_preserve_tags_and_exact_values (__main__.CollectorTests.test_vendor_metrics_preserve_tags_and_exact_values) ... ERROR
+test_wrong_key_rejected (__main__.CollectorTests.test_wrong_key_rejected) ... ERROR
+
+======================================================================
+ERROR: test_budget_exhaustion_not_silently_sealed (__main__.CollectorTests.test_budget_exhaustion_not_silently_sealed)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/test_collector.py", line 40, in setUp
+    self.bundle = collector.Bundle(self.root, config, self.key)
+                  ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/collector.py", line 54, in __init__
+    self.envelope['collector'].update(configSha256=sha(canonical(config) + b'\n'), containerId=os.environ.get('HOSTNAME', 'unknown'), cgroupPath=Path('/proc/self/cgroup').read_text().strip(), startedAtMono=mono(), startedAtReal=time.time_ns() / 1_000_000)
+                                                                                                                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 787, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 771, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/proc/self/cgroup'
+
+======================================================================
+ERROR: test_chunk_omission_rejected (__main__.CollectorTests.test_chunk_omission_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/test_collector.py", line 40, in setUp
+    self.bundle = collector.Bundle(self.root, config, self.key)
+                  ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/collector.py", line 54, in __init__
+    self.envelope['collector'].update(configSha256=sha(canonical(config) + b'\n'), containerId=os.environ.get('HOSTNAME', 'unknown'), cgroupPath=Path('/proc/self/cgroup').read_text().strip(), startedAtMono=mono(), startedAtReal=time.time_ns() / 1_000_000)
+                                                                                                                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 787, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 771, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/proc/self/cgroup'
+
+======================================================================
+ERROR: test_corrupted_raw_rejected (__main__.CollectorTests.test_corrupted_raw_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/test_collector.py", line 40, in setUp
+    self.bundle = collector.Bundle(self.root, config, self.key)
+                  ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/collector.py", line 54, in __init__
+    self.envelope['collector'].update(configSha256=sha(canonical(config) + b'\n'), containerId=os.environ.get('HOSTNAME', 'unknown'), cgroupPath=Path('/proc/self/cgroup').read_text().strip(), startedAtMono=mono(), startedAtReal=time.time_ns() / 1_000_000)
+                                                                                                                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 787, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 771, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/proc/self/cgroup'
+
+======================================================================
+ERROR: test_high_uncertainty_rejected (__main__.CollectorTests.test_high_uncertainty_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/test_collector.py", line 40, in setUp
+    self.bundle = collector.Bundle(self.root, config, self.key)
+                  ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/collector.py", line 54, in __init__
+    self.envelope['collector'].update(configSha256=sha(canonical(config) + b'\n'), containerId=os.environ.get('HOSTNAME', 'unknown'), cgroupPath=Path('/proc/self/cgroup').read_text().strip(), startedAtMono=mono(), startedAtReal=time.time_ns() / 1_000_000)
+                                                                                                                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 787, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 771, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/proc/self/cgroup'
+
+======================================================================
+ERROR: test_http_chunked_bytes_decode (__main__.CollectorTests.test_http_chunked_bytes_decode)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/test_collector.py", line 40, in setUp
+    self.bundle = collector.Bundle(self.root, config, self.key)
+                  ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/collector.py", line 54, in __init__
+    self.envelope['collector'].update(configSha256=sha(canonical(config) + b'\n'), containerId=os.environ.get('HOSTNAME', 'unknown'), cgroupPath=Path('/proc/self/cgroup').read_text().strip(), startedAtMono=mono(), startedAtReal=time.time_ns() / 1_000_000)
+                                                                                                                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 787, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 771, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/proc/self/cgroup'
+
+======================================================================
+ERROR: test_log_rotation_does_not_claim_continuous_coverage (__main__.CollectorTests.test_log_rotation_does_not_claim_continuous_coverage)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/test_collector.py", line 40, in setUp
+    self.bundle = collector.Bundle(self.root, config, self.key)
+                  ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/collector.py", line 54, in __init__
+    self.envelope['collector'].update(configSha256=sha(canonical(config) + b'\n'), containerId=os.environ.get('HOSTNAME', 'unknown'), cgroupPath=Path('/proc/self/cgroup').read_text().strip(), startedAtMono=mono(), startedAtReal=time.time_ns() / 1_000_000)
+                                                                                                                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 787, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 771, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/proc/self/cgroup'
+
+======================================================================
+ERROR: test_missing_final_witness_rejected (__main__.CollectorTests.test_missing_final_witness_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/test_collector.py", line 40, in setUp
+    self.bundle = collector.Bundle(self.root, config, self.key)
+                  ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/collector.py", line 54, in __init__
+    self.envelope['collector'].update(configSha256=sha(canonical(config) + b'\n'), containerId=os.environ.get('HOSTNAME', 'unknown'), cgroupPath=Path('/proc/self/cgroup').read_text().strip(), startedAtMono=mono(), startedAtReal=time.time_ns() / 1_000_000)
+                                                                                                                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 787, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 771, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/proc/self/cgroup'
+
+======================================================================
+ERROR: test_parser_replacement_rejected (__main__.CollectorTests.test_parser_replacement_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/test_collector.py", line 40, in setUp
+    self.bundle = collector.Bundle(self.root, config, self.key)
+                  ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/collector.py", line 54, in __init__
+    self.envelope['collector'].update(configSha256=sha(canonical(config) + b'\n'), containerId=os.environ.get('HOSTNAME', 'unknown'), cgroupPath=Path('/proc/self/cgroup').read_text().strip(), startedAtMono=mono(), startedAtReal=time.time_ns() / 1_000_000)
+                                                                                                                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 787, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 771, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/proc/self/cgroup'
+
+======================================================================
+ERROR: test_real_writer_verifies_in_pinned_oracle (__main__.CollectorTests.test_real_writer_verifies_in_pinned_oracle)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/test_collector.py", line 40, in setUp
+    self.bundle = collector.Bundle(self.root, config, self.key)
+                  ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/collector.py", line 54, in __init__
+    self.envelope['collector'].update(configSha256=sha(canonical(config) + b'\n'), containerId=os.environ.get('HOSTNAME', 'unknown'), cgroupPath=Path('/proc/self/cgroup').read_text().strip(), startedAtMono=mono(), startedAtReal=time.time_ns() / 1_000_000)
+                                                                                                                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 787, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 771, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/proc/self/cgroup'
+
+======================================================================
+ERROR: test_rerun_preserves_existing_bundle (__main__.CollectorTests.test_rerun_preserves_existing_bundle)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/test_collector.py", line 40, in setUp
+    self.bundle = collector.Bundle(self.root, config, self.key)
+                  ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/collector.py", line 54, in __init__
+    self.envelope['collector'].update(configSha256=sha(canonical(config) + b'\n'), containerId=os.environ.get('HOSTNAME', 'unknown'), cgroupPath=Path('/proc/self/cgroup').read_text().strip(), startedAtMono=mono(), startedAtReal=time.time_ns() / 1_000_000)
+                                                                                                                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 787, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 771, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/proc/self/cgroup'
+
+======================================================================
+ERROR: test_unsealed_refused (__main__.CollectorTests.test_unsealed_refused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/test_collector.py", line 40, in setUp
+    self.bundle = collector.Bundle(self.root, config, self.key)
+                  ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/collector.py", line 54, in __init__
+    self.envelope['collector'].update(configSha256=sha(canonical(config) + b'\n'), containerId=os.environ.get('HOSTNAME', 'unknown'), cgroupPath=Path('/proc/self/cgroup').read_text().strip(), startedAtMono=mono(), startedAtReal=time.time_ns() / 1_000_000)
+                                                                                                                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 787, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 771, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/proc/self/cgroup'
+
+======================================================================
+ERROR: test_vendor_metrics_preserve_tags_and_exact_values (__main__.CollectorTests.test_vendor_metrics_preserve_tags_and_exact_values)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/test_collector.py", line 40, in setUp
+    self.bundle = collector.Bundle(self.root, config, self.key)
+                  ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/collector.py", line 54, in __init__
+    self.envelope['collector'].update(configSha256=sha(canonical(config) + b'\n'), containerId=os.environ.get('HOSTNAME', 'unknown'), cgroupPath=Path('/proc/self/cgroup').read_text().strip(), startedAtMono=mono(), startedAtReal=time.time_ns() / 1_000_000)
+                                                                                                                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 787, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 771, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/proc/self/cgroup'
+
+======================================================================
+ERROR: test_wrong_key_rejected (__main__.CollectorTests.test_wrong_key_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/test_collector.py", line 40, in setUp
+    self.bundle = collector.Bundle(self.root, config, self.key)
+                  ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/collector.py", line 54, in __init__
+    self.envelope['collector'].update(configSha256=sha(canonical(config) + b'\n'), containerId=os.environ.get('HOSTNAME', 'unknown'), cgroupPath=Path('/proc/self/cgroup').read_text().strip(), startedAtMono=mono(), startedAtReal=time.time_ns() / 1_000_000)
+                                                                                                                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 787, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 771, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/proc/self/cgroup'
+
+----------------------------------------------------------------------
+Ran 13 tests in 0.010s
+
+FAILED (errors=13)

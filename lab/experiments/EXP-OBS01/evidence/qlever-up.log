@@ -1,0 +1,5 @@
+[lab] tx2-qlever-s1 ready (sparql HTTP 200); cap 1.00 GiB, 1 CPU, config 2226e179a55e
+export QLEVER_URL='http://127.0.0.1:7071'
+export QLEVER_INTEGRATION=1
+export TRIPLEX_LAB_SLOT_OWNER='/Users/sam/projects/triplex-db-2/lab/locks/qlever-s1/owner.json'
+export DOCKER_HOST='unix:///Users/sam/.colima/triplex2/docker.sock'  # only for manual docker calls; never the default context

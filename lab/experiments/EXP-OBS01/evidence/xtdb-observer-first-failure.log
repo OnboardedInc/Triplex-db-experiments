@@ -1,0 +1,18 @@
+Traceback (most recent call last):
+  File "/collector/collector.py", line 242, in <module>
+    run(*sys.argv[1:])
+    ~~~^^^^^^^^^^^^^^^
+  File "/collector/collector.py", line 226, in run
+    payload = read_source(stream)
+  File "/collector/collector.py", line 148, in read_source
+    return http_raw(source['endpoint'])
+  File "/collector/collector.py", line 142, in http_raw
+    response.close()
+    ~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/client.py", line 447, in close
+    super().close() # set "closed" flag
+    ~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/client.py", line 460, in flush
+    self.fp.flush()
+    ^^^^^^^^^^^^^
+AttributeError: 'RecordingFile' object has no attribute 'flush'

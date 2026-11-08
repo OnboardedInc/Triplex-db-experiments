@@ -1,0 +1,53 @@
+test_budget_exhaustion_not_silently_sealed (__main__.CollectorTests.test_budget_exhaustion_not_silently_sealed) ... ok
+test_chunk_omission_rejected (__main__.CollectorTests.test_chunk_omission_rejected) ... ok
+test_corrupted_raw_rejected (__main__.CollectorTests.test_corrupted_raw_rejected) ... ok
+test_high_uncertainty_rejected (__main__.CollectorTests.test_high_uncertainty_rejected) ... ok
+test_http_chunked_bytes_decode (__main__.CollectorTests.test_http_chunked_bytes_decode) ... ok
+test_http_source_keeps_actual_wire_response (__main__.CollectorTests.test_http_source_keeps_actual_wire_response) ... ok
+test_log_rotation_does_not_claim_continuous_coverage (__main__.CollectorTests.test_log_rotation_does_not_claim_continuous_coverage) ... ok
+test_missing_final_witness_rejected (__main__.CollectorTests.test_missing_final_witness_rejected) ... ok
+test_parser_replacement_rejected (__main__.CollectorTests.test_parser_replacement_rejected) ... ok
+test_real_writer_verifies_in_pinned_oracle (__main__.CollectorTests.test_real_writer_verifies_in_pinned_oracle) ... ok
+test_rerun_preserves_existing_bundle (__main__.CollectorTests.test_rerun_preserves_existing_bundle) ... ok
+test_unsealed_refused (__main__.CollectorTests.test_unsealed_refused) ... ok
+test_vendor_metrics_preserve_tags_and_exact_values (__main__.CollectorTests.test_vendor_metrics_preserve_tags_and_exact_values) ... ok
+test_wrong_key_rejected (__main__.CollectorTests.test_wrong_key_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 2.731s
+
+OK
+TAP version 13
+# Subtest: requires disjoint CPU pinning
+ok 1 - requires disjoint CPU pinning
+  ---
+  duration_ms: 0.683708
+  type: 'test'
+  ...
+# Subtest: requires evaluator key, immutable image and safe identities
+ok 2 - requires evaluator key, immutable image and safe identities
+  ---
+  duration_ms: 0.721791
+  type: 'test'
+  ...
+# Subtest: XTDB completed transaction source and host sources are collected
+ok 3 - XTDB completed transaction source and host sources are collected
+  ---
+  duration_ms: 1.235792
+  type: 'test'
+  ...
+# Subtest: QLever profile is opt-in and resident script remains unchanged
+ok 4 - QLever profile is opt-in and resident script remains unchanged
+  ---
+  duration_ms: 1.996084
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 83.047

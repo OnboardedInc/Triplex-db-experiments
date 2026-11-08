@@ -1,0 +1,1 @@
+{"authenticated": true, "consumer": "463703d", "maxUncertaintyMs": 1, "semanticAcceptance": false, "streams": {"H1-cpu-stat": 30, "H1-io-stat": 30, "H1-memory-current": 30, "H1-memory-events": 30, "H1-memory-peak": 30, "H1-memory-stat": 30, "H4-tcp": 30, "H4-tcp6": 30, "X1-metrics": 14}}

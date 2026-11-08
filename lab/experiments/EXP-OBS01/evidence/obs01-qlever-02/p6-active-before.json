@@ -1,0 +1,4 @@
+{
+  "status": 200,
+  "body": "{\n    \"obs01-cancel-02\": {\n        \"query\": \"SELECT ?a ?c ?e WHERE { ?a <urn:obs01:p> ?b . ?c <urn:obs01:p> ?d . ?e <urn:obs01:p> ?f . FILTER(?b < 120 && ?d < 120 && ?f < 120) } ORDER BY ?e ?c ?a\",\n        \"started-at\": 1794177673090\n    }\n}"
+}

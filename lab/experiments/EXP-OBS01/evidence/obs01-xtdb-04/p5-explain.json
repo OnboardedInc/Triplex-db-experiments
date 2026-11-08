@@ -1,0 +1,43 @@
+[
+  {
+    "row_count": 1,
+    "pushdowns": null,
+    "time_to_first_page": "PT0.000309S",
+    "page_count": 1,
+    "self_time": "PT0.00004S",
+    "attributes": null,
+    "depth": "->",
+    "op": "project",
+    "total_time": "PT0.000335S"
+  },
+  {
+    "row_count": 1,
+    "pushdowns": null,
+    "time_to_first_page": "PT0.000275S",
+    "page_count": 1,
+    "self_time": "PT0.00004S",
+    "attributes": null,
+    "depth": "  ->",
+    "op": "rename",
+    "total_time": "PT0.000295S"
+  },
+  {
+    "row_count": 1,
+    "pushdowns": null,
+    "time_to_first_page": "PT0.00024S",
+    "page_count": 1,
+    "self_time": "PT0.000255S",
+    "attributes": {
+      "scan_db": "xtdb",
+      "scan_source": "public.obs01_probe",
+      "scan_files_pruned": 0,
+      "scan_files_used": 0,
+      "scan_pages_pruned": 0,
+      "scan_pages_used": 1,
+      "scan_rows_read": 2
+    },
+    "depth": "    ->",
+    "op": "scan",
+    "total_time": "PT0.000255S"
+  }
+]
