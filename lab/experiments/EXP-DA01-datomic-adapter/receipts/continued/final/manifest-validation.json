@@ -1,0 +1,6 @@
+{
+  "initialIndex": "FILES.json",
+  "status": "UNQUALIFIED_DRAFT",
+  "reason": "Included manifest.log while its stdout writer was still active; only that entry changed.",
+  "supersededBy": "FILES-final.json"
+}

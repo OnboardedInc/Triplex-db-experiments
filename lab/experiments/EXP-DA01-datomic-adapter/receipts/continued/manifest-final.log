@@ -1,0 +1,3 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 77517 "CX-VX02-5-regressions", pid 61857 "CX-VA01-0311-R3-evaluator", pid 61931 "CX-VA01-0311-R3-mutations", pid 76046 "CX-VP2Q-4-r6-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 77515 "CX-VX02-5-lexer-oracle", pid 61857 "CX-VA01-0311-R3-evaluator", pid 61931 "CX-VA01-0311-R3-mutations", pid 76046 "CX-VP2Q-4-r6-live"
+{"files":254,"bytes":7198346}

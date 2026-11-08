@@ -1,0 +1,44 @@
+{"name":"actor due-work ranges preserve numeric aliases, visibility, ordering, and limits","elapsedMs":1108,"status":"PASS"}
+{"name":"Datalog reads are bounded by default and cursors traverse the complete snapshot","elapsedMs":338,"status":"PASS"}
+{"name":"historical cursor pages intersect recorded time and the commit snapshot","elapsedMs":76,"status":"PASS"}
+{"name":"recursive relations support cursor pagination and optional total counts","elapsedMs":147,"status":"PASS"}
+{"name":"assert then get and match return the fact","elapsedMs":21,"status":"PASS"}
+{"name":"same-value facts in one batch keep distinct identities","elapsedMs":22,"status":"PASS"}
+{"name":"datalog query finds asserted facts","elapsedMs":18,"status":"PASS"}
+{"name":"datalog projections preserve scalar types without guessing from text","elapsedMs":27,"status":"PASS"}
+{"name":"datalog deduplicates flattened scalar families before grouping and pagination","elapsedMs":57,"status":"PASS"}
+{"name":"datalog constant projections retain their scalar values through pagination","elapsedMs":34,"status":"PASS"}
+{"name":"datalog pattern constants use flattened scalar identity in filters","elapsedMs":91,"status":"PASS"}
+{"name":"datalog value joins compare every scalar family","elapsedMs":34,"status":"PASS"}
+{"name":"datalog equality predicates compare numeric values as numbers","elapsedMs":28,"status":"PASS"}
+{"name":"datalog equality keeps identity bindings string-typed","elapsedMs":47,"status":"PASS"}
+{"name":"ordered Datalog predicates accept only numeric scalar families","elapsedMs":24,"status":"PASS"}
+{"name":"datalog reverse lookup matches an explicitly typed ref constant","elapsedMs":23,"status":"PASS"}
+{"name":"datalog joins a variable bound from a ref in value position","elapsedMs":33,"status":"PASS"}
+{"name":"datalog supports multi-hop joins over ref edges","elapsedMs":32,"status":"PASS"}
+{"name":"datalog recursive rules compute the same transitive closure","elapsedMs":121,"status":"PASS"}
+{"name":"datalog rule patterns unify repeated variables","elapsedMs":27,"status":"PASS"}
+{"name":"datalog aggregations group, filter, and order consistently","elapsedMs":20,"status":"PASS"}
+{"name":"datalog having preserves typed group and aggregate equality","elapsedMs":35,"status":"PASS"}
+{"name":"datalog aggregates preserve duplicate rows and define empty and distinct results","elapsedMs":28,"status":"PASS"}
+{"name":"datalog conjunctions establish bindings independent of clause order","elapsedMs":29,"status":"PASS"}
+{"name":"datalog rejects invalid and unbound queries with backend-neutral typed errors","elapsedMs":1,"status":"PASS"}
+{"name":"wrapped filters preserve scalar types and SQL null semantics","elapsedMs":222,"status":"PASS"}
+{"name":"Datalog ordering and pagination preserve mixed scalar order","elapsedMs":124,"status":"PASS"}
+{"name":"datalog untyped strings match string and ref values while typed refs stay exact","elapsedMs":29,"status":"PASS"}
+{"name":"transact records provenance datoms","elapsedMs":12,"status":"PASS"}
+{"name":"conditional transactions are atomic and journal their changes","elapsedMs":140,"status":"PASS"}
+{"name":"entity transaction history is indexed, complete, and snapshot-stable","elapsedMs":152,"status":"PASS"}
+{"name":"graph constraints reject invalid post-states across valid time","elapsedMs":567,"status":"PASS"}
+{"name":"dependency state is attribute-scoped and schedules temporal edges","elapsedMs":345,"status":"PASS"}
+{"name":"derivation materialization uses indexed dependency freshness","elapsedMs":873,"status":"PASS"}
+{"name":"graph constraints agree across storage backends","elapsedMs":243,"status":"PASS"}
+{"name":"consumer checkpoints advance atomically and remain queryable","elapsedMs":164,"status":"PASS"}
+{"name":"retractByPattern respects entityType","elapsedMs":118,"status":"PASS"}
+{"name":"reserved Triplex namespaces reject ordinary writes atomically","elapsedMs":22,"status":"PASS"}
+{"name":"transaction journals cannot be retracted through ordinary writes","elapsedMs":90,"status":"PASS"}
+{"name":"direct and Datalog reads share one bitemporal basis","elapsedMs":54,"status":"PASS"}
+{"name":"historical corrections preserve what was previously recorded","elapsedMs":43,"status":"PASS"}
+{"name":"batch entity reads preserve association, missing entries, and temporal basis","elapsedMs":53,"status":"PASS"}
+{"name":"retract is coherent across write and datalog paths","elapsedMs":44,"status":"PASS"}
+{"name":"paged queries use deterministic snapshot-stable cursors","elapsedMs":66,"status":"PASS"}

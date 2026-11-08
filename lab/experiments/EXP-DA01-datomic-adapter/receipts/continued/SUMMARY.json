@@ -1,0 +1,371 @@
+{
+  "format": "tx2-da01-builder-evidence/1",
+  "at": "2026-11-08T22:57:30.246Z",
+  "implementationHead": "3c738b226fe94e8fe0912351c3181347266d6009",
+  "scriptSha256": "4a740747f4b693564813181063e67362dd25a78f7df30f176ed04a2bc689ab2f",
+  "gates": [
+    {
+      "runId": "G0-datomic-20261108T222137Z-82057a",
+      "verdict": "FAIL",
+      "head": "ff7854ebeb4a8c02c3c69d851208c021fd5d8ff4",
+      "counts": {
+        "executed": 1022,
+        "pass": 1021,
+        "fail": 1,
+        "skip": 54,
+        "expectedSkip": 54,
+        "unexpectedSkip": 0
+      },
+      "previous": null,
+      "deletedDatabases": 0,
+      "receiptSha256": "09b90fe8cd9187a7fe8ba06d3905fff56b21b34ce79f3da0cb6c1564afd4d0ec"
+    },
+    {
+      "runId": "G0-datomic-20261108T223725Z-45c7d7",
+      "verdict": "PASS",
+      "head": "13a57c3be2784ef91ed60de68099fdccd400a9f1",
+      "counts": {
+        "executed": 1023,
+        "pass": 1023,
+        "fail": 0,
+        "skip": 56,
+        "expectedSkip": 56,
+        "unexpectedSkip": 0
+      },
+      "previous": null,
+      "deletedDatabases": 0,
+      "receiptSha256": "84c4c1ab10c28eb01fee20d1230a33f291a95b939bf1bcb49f22118ed3da58f1"
+    },
+    {
+      "runId": "G0-datomic-20261108T224655Z-68c953",
+      "verdict": "PASS",
+      "head": "3c738b226fe94e8fe0912351c3181347266d6009",
+      "counts": {
+        "executed": 1024,
+        "pass": 1024,
+        "fail": 0,
+        "skip": 56,
+        "expectedSkip": 56,
+        "unexpectedSkip": 0
+      },
+      "previous": null,
+      "deletedDatabases": 0,
+      "receiptSha256": "056d9314104488c6bdaab1eed48c82c17fe909445dbaec9d6806137e46c9620c"
+    },
+    {
+      "runId": "G1-datomic-20261108T222406Z-bff062",
+      "verdict": "FAIL",
+      "head": "ff7854ebeb4a8c02c3c69d851208c021fd5d8ff4",
+      "counts": {
+        "executed": 88,
+        "expected": 88,
+        "pass": 71,
+        "fail": 17,
+        "skip": 0,
+        "suite": "FAIL",
+        "byPhase": {
+          "current": {
+            "pass": 35,
+            "total": 44
+          },
+          "reopen": {
+            "pass": 36,
+            "total": 44
+          }
+        }
+      },
+      "previous": null,
+      "deletedDatabases": 89,
+      "receiptSha256": "eb0594b90fa943c9ae12070d1940810fa627635f0376656332adc8e3c12e56cb"
+    },
+    {
+      "runId": "G1-datomic-20261108T223616Z-1dff2b",
+      "verdict": "FAIL",
+      "head": "13a57c3be2784ef91ed60de68099fdccd400a9f1",
+      "counts": {
+        "executed": 88,
+        "expected": 88,
+        "pass": 88,
+        "fail": 0,
+        "skip": 0,
+        "suite": "FAIL",
+        "byPhase": {
+          "current": {
+            "pass": 44,
+            "total": 44
+          },
+          "reopen": {
+            "pass": 44,
+            "total": 44
+          }
+        }
+      },
+      "previous": "G1-datomic-20261108T222406Z-bff062",
+      "deletedDatabases": 89,
+      "receiptSha256": "81d800748385f9b6cc74b5ae9b5dff9cc1250eb1b42971bea28b90b0936bf92b"
+    },
+    {
+      "runId": "G1-datomic-20261108T224620Z-529728",
+      "verdict": "PASS",
+      "head": "3c738b226fe94e8fe0912351c3181347266d6009",
+      "counts": {
+        "executed": 88,
+        "expected": 88,
+        "pass": 88,
+        "fail": 0,
+        "skip": 0,
+        "suite": "PASS",
+        "byPhase": {
+          "current": {
+            "pass": 44,
+            "total": 44
+          },
+          "reopen": {
+            "pass": 44,
+            "total": 44
+          }
+        }
+      },
+      "previous": "G1-datomic-20261108T223616Z-1dff2b",
+      "deletedDatabases": 89,
+      "receiptSha256": "d8ce8a8ea22488789f491e0d8d7af1f4ff84da73e72f4b1f34f8e03a50fcf364"
+    },
+    {
+      "runId": "G1-datomic-20261108T224821Z-5d506c",
+      "verdict": "PASS",
+      "head": "3c738b226fe94e8fe0912351c3181347266d6009",
+      "counts": {
+        "executed": 88,
+        "expected": 88,
+        "pass": 88,
+        "fail": 0,
+        "skip": 0,
+        "suite": "PASS",
+        "byPhase": {
+          "current": {
+            "pass": 44,
+            "total": 44
+          },
+          "reopen": {
+            "pass": 44,
+            "total": 44
+          }
+        }
+      },
+      "previous": "G1-datomic-20261108T224620Z-529728",
+      "deletedDatabases": 89,
+      "receiptSha256": "7e86481c87fd0952ecfa8240f895aae59bb8b3666145a75f00ee9c28a407835a"
+    }
+  ],
+  "builds": [
+    {
+      "attempt": 1,
+      "imageId": "sha256:535de9c352a1321aa70a2ecd4c85e75e42f545118083fd0a740f92cc5ce367c2",
+      "imageSize": 371254673,
+      "sourceInputsSha256": "5aad6ff6118c2e7a31e191cb82dc13109fb072650db4122d95e7e26409d41d1e",
+      "buildInputsSha256": "321f0d96fb60b8c5117216ec20428c3569add2d3321ca0714b0ddd3e72abbd5d",
+      "gatewaySourceSha256": "ff4a22eb47a653ec225615a3ef6a2372eda98af833247f57cec0551a0ecb2673",
+      "receipt": "/Users/sam/projects/triplex-db-2/runs/engines/datomic-build/321f0d96fb60b8c5117216ec20428c3569add2d3321ca0714b0ddd3e72abbd5d/build-receipt.json",
+      "receiptSha256": "cd99363a46b0a5ecffdbc6bfc82059a7ce1b558c8f1b3d6d0442b9809d5d2d58"
+    },
+    {
+      "attempt": 2,
+      "imageId": "sha256:26a29b852ec0880089a56acc212207756b1f480bc2027d4a1d1007ac23233bfd",
+      "imageSize": 371255242,
+      "sourceInputsSha256": "80a310dea39510f5388a7b7d2a99f965438171c9fb7ee41caaf3ab5ac05d63c7",
+      "buildInputsSha256": "ea16e11f03e1ecf3e53177cfe77e520aa43b4944db9b4e7a490f6d18c5484286",
+      "gatewaySourceSha256": "7cf9f6e3289a007a62549115627a30fe6bd9a3af1a2252ae4af268cdaf6925de",
+      "receipt": "/Users/sam/projects/triplex-db-2/runs/engines/datomic-build/ea16e11f03e1ecf3e53177cfe77e520aa43b4944db9b4e7a490f6d18c5484286/build-receipt.json",
+      "receiptSha256": "9f8c4249ae5922a1af265372ab8d5dca17ca1c73c599f20d26c7a15e3cd6f198"
+    },
+    {
+      "attempt": 3,
+      "imageId": "sha256:812198b90dd5e7159c6bea4f453c8de31d52d6ad97fdf2afaffeb444081a8eec",
+      "imageSize": 371255189,
+      "sourceInputsSha256": "5fc08d0df936dfb2c93e2818ca7135ecaf60fb607d7083da53bfef771a7f1285",
+      "buildInputsSha256": "20fc46c840c44e95056acc3379ce86168b71a0e74589a264088fba98962e748a",
+      "gatewaySourceSha256": "89173b053a6a345fd7631ea5a5ea9aa6ca87882f8bfe17b703e4be0735837423",
+      "receipt": "/Users/sam/projects/triplex-db-2/runs/engines/datomic-build/20fc46c840c44e95056acc3379ce86168b71a0e74589a264088fba98962e748a/build-receipt.json",
+      "receiptSha256": "7350cb652bad6ec98c460ccdf1fded6a9e512d589159895332d00e741c244dbc"
+    },
+    {
+      "attempt": 4,
+      "imageId": "sha256:36a38b9e01ec7b5d7ccaacc22f4ecc6711aa88555028c189bfa22961b9f975b2",
+      "imageSize": 371255655,
+      "sourceInputsSha256": "7904ed8256deb4d0504bb58ce1c91bf36b0ea3742bfd81691d83bde998822a35",
+      "buildInputsSha256": "d59b45693917171bd13be3b53c8fb55c4b5572fd120732d01b6766d5e0c91b73",
+      "gatewaySourceSha256": "58bc8d3d15488e36688e64c5d359f27cde311dd42727402ec58e524f7ccf5dd9",
+      "receipt": "/Users/sam/projects/triplex-db-2/runs/engines/datomic-build/d59b45693917171bd13be3b53c8fb55c4b5572fd120732d01b6766d5e0c91b73/build-receipt.json",
+      "receiptSha256": "0525c35631bed679d884212aa13dd4090d17db4177485fe24df2e22e6721fd2f"
+    },
+    {
+      "attempt": 5,
+      "imageId": "sha256:e17aa3fc258b15b78f0d831ed252db7ae4baac77342b445bbd3c8d3358588f73",
+      "imageSize": 371256030,
+      "sourceInputsSha256": "a2eff3f1a740a33c4c3b7062cfb6b05af0a8e54861263522d91c23fbc16dc914",
+      "buildInputsSha256": "4dc1aacb1e911086090548525fa5fb37a69e02b6d9de83a4459bbb1d451e2926",
+      "gatewaySourceSha256": "964c58ead14530e7f687a7a6639fe4a35bb4fdbaf9d37bab9b1b1e1efa9b76e5",
+      "receipt": "/Users/sam/projects/triplex-db-2/runs/engines/datomic-build/4dc1aacb1e911086090548525fa5fb37a69e02b6d9de83a4459bbb1d451e2926/build-receipt.json",
+      "receiptSha256": "9bec9f7576c46de60b647a351b36bb85deb7ab392228346ead3bf66e6ab29439"
+    }
+  ],
+  "health": {
+    "datomicVersion": "1.0.7745",
+    "gatewaySourceHash": "964c58ead14530e7f687a7a6639fe4a35bb4fdbaf9d37bab9b1b1e1efa9b76e5"
+  },
+  "owner": {
+    "format": "tx2-slot-owner/1",
+    "lane": "datomic",
+    "slot": "dev",
+    "mode": "resident",
+    "container": "tx2-datomic-dev",
+    "volume": "tx2-datomic-dev-data",
+    "endpoint": "http://127.0.0.1:8470",
+    "port": 8470,
+    "holder": "EXP-DA01",
+    "experiment": "EXP-DA01",
+    "pid": 18259,
+    "worktree": "/Users/sam/projects/triplex-db-2/.claude/worktrees/da01",
+    "createdAt": "2026-11-08T22:33:18.640Z"
+  },
+  "da00Preservation": [
+    {
+      "db": "s-5a377987b021d5401900564fbae6a1ee",
+      "basis": {
+        "t": {
+          "t": "long",
+          "v": "1001"
+        },
+        "position": {
+          "t": "long",
+          "v": "0"
+        },
+        "recordedAt": null,
+        "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+      }
+    },
+    {
+      "db": "s-f43d78e756286da105c6aa52db4e63e5",
+      "basis": {
+        "t": {
+          "t": "long",
+          "v": "1001"
+        },
+        "position": {
+          "t": "long",
+          "v": "0"
+        },
+        "recordedAt": null,
+        "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+      }
+    }
+  ],
+  "hostDiskFreeBytes": 24129671168,
+  "datoms": {
+    "at": "2026-11-08T22:43:30.973Z",
+    "scriptSha256": "65913c4568f5e466746a084c2f8fa4653124e152cdb1f54199b9bf1715b0467a",
+    "health": {
+      "datomicVersion": "1.0.7745",
+      "gatewaySourceHash": "964c58ead14530e7f687a7a6639fe4a35bb4fdbaf9d37bab9b1b1e1efa9b76e5"
+    },
+    "imageId": "sha256:e17aa3fc258b15b78f0d831ed252db7ae4baac77342b445bbd3c8d3358588f73",
+    "measurements": [
+      {
+        "facts": 5,
+        "scope": "[\"triplex-scope-v1\",\"test\",\"da01\",\"datoms-5-19d9ad09-8dc6-49e3-a0ca-eca02f87b194\",0]",
+        "created": {
+          "db": "s-6547509780b587b30772970954ca0971",
+          "created": true,
+          "schemaHash": "d12389fbc5d53f8b8a1a59acd32db4a6d88145f30d49f6aac5d18f56c393dadd"
+        },
+        "commit": {
+          "t": {
+            "t": "long",
+            "v": "1003"
+          },
+          "position": {
+            "t": "long",
+            "v": "1"
+          },
+          "datoms": 54
+        },
+        "readback": {
+          "count": 5,
+          "exact": true
+        },
+        "deleted": {
+          "db": "s-6547509780b587b30772970954ca0971",
+          "deleted": true
+        }
+      },
+      {
+        "facts": 10,
+        "scope": "[\"triplex-scope-v1\",\"test\",\"da01\",\"datoms-10-20f5a9d4-85f2-4178-8672-45ffc07cf8b5\",0]",
+        "created": {
+          "db": "s-3bea24f927b77f8f5f1d5b94084a1b37",
+          "created": true,
+          "schemaHash": "d12389fbc5d53f8b8a1a59acd32db4a6d88145f30d49f6aac5d18f56c393dadd"
+        },
+        "commit": {
+          "t": {
+            "t": "long",
+            "v": "1003"
+          },
+          "position": {
+            "t": "long",
+            "v": "1"
+          },
+          "datoms": 99
+        },
+        "readback": {
+          "count": 10,
+          "exact": true
+        },
+        "deleted": {
+          "db": "s-3bea24f927b77f8f5f1d5b94084a1b37",
+          "deleted": true
+        }
+      },
+      {
+        "facts": 50,
+        "scope": "[\"triplex-scope-v1\",\"test\",\"da01\",\"datoms-50-f1af6871-6a9b-4ca1-845d-4d6d1af6ed3f\",0]",
+        "created": {
+          "db": "s-c4639f5dd96742a05d15f6828cb6dd60",
+          "created": true,
+          "schemaHash": "d12389fbc5d53f8b8a1a59acd32db4a6d88145f30d49f6aac5d18f56c393dadd"
+        },
+        "commit": {
+          "t": {
+            "t": "long",
+            "v": "1003"
+          },
+          "position": {
+            "t": "long",
+            "v": "1"
+          },
+          "datoms": 459
+        },
+        "readback": {
+          "count": 50,
+          "exact": true
+        },
+        "deleted": {
+          "db": "s-c4639f5dd96742a05d15f6828cb6dd60",
+          "deleted": true
+        }
+      }
+    ]
+  },
+  "packedConsumer": {
+    "scriptSha256": "898fc525b7aad75524c48ec3f2f736799585399f152b30d713ebdc238f7343fa",
+    "core": {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/da01/runs/pack/DA01/triplex-pack-nBA1J3/tarballs/triplex-build-triplex-0.2.0.tgz",
+      "sha256": "02204a1107762b9374c8c5f6e45783cd4bd39e753ed6b2f479cee2d791529505"
+    },
+    "datomic": {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/da01/lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/package/triplex-build-triplex-datomic-0.1.0.tgz",
+      "sha256": "e04d8ebd3f7a20fd21d74fcdc0a6f52a56bb74a06e06722baa8287133b14dcb4"
+    },
+    "result": "PASS"
+  }
+}
