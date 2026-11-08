@@ -1,0 +1,17 @@
+{
+  "basis": {
+    "basis": 2048,
+    "marker": {
+      "position": 3071,
+      "epoch": 1,
+      "incarnation": "1.b93eefef-8628-401f-b99a-db9934919701"
+    },
+    "fencedIncarnation": "1.b93eefef-8628-401f-b99a-db9934919701",
+    "surface": "datalog",
+    "started": 2243.944041
+  },
+  "answerSnapshotMarker": 0,
+  "markerAtAfterCheck": 3071,
+  "after": "ReadError:basis-not-reached",
+  "regressionsDetected": 1
+}

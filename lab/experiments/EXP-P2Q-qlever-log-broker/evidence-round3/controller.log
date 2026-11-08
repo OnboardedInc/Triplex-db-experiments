@@ -1,0 +1,15 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 47397 "CX-VE01-4-input-variations", pid 84131 "R25-h1-split", pid 20721 "CX-K01-R2-live", pid 43762 "CX-A01-0311-final-5ba1e75"
+[lab] heavy: waiting for one of 4 slots; held by pid 47397 "CX-VE01-4-input-variations", pid 84131 "R25-h1-split", pid 20721 "CX-K01-R2-live", pid 43762 "CX-A01-0311-final-5ba1e75"
+[lab] heavy: waiting for one of 4 slots; held by pid 47397 "CX-VE01-4-input-variations", pid 50809 "R25-h1-naive", pid 20721 "CX-K01-R2-live", pid 43762 "CX-A01-0311-final-5ba1e75"
+[lab] heavy: waiting for one of 4 slots; held by pid 86080 "CX-O05-R2-all", pid 50809 "R25-h1-naive", pid 20721 "CX-K01-R2-live", pid 43762 "CX-A01-0311-final-5ba1e75"
+[lab] heavy: waiting for one of 4 slots; held by pid 86080 "CX-O05-R2-all", pid 50809 "R25-h1-naive", pid 20721 "CX-K01-R2-live", pid 83145 "CX-VC8-3-build-qualification"
+START unit
+END unit 1
+START typecheck
+END typecheck 0
+START reviewer-regressions
+END reviewer-regressions 0
+START verifier-offline
+END verifier-offline 1
+START light-live
+END light-live 0

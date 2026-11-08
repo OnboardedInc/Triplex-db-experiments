@@ -1,0 +1,3 @@
+Final process check 2026-11-08T22:18:09.894362+00:00
+No matching worktree lock-holder or CX-P2Q-R3 heavy-controller processes remain.
+Earlier cleanup targeted only proven orphan fixture PIDs 55100 and 55110 with SIGKILL; their exact stream path is in REPORT-round3.md.

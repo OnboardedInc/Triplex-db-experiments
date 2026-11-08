@@ -1,0 +1,10 @@
+{
+  "watermarkLsn": 2,
+  "appendedLsn": 3,
+  "delivered": [
+    1,
+    2
+  ],
+  "fileHasFrame": true,
+  "ackedPosition": 2048
+}
