@@ -760,7 +760,14 @@ export class HostBroker {
 
   // ------------------------------------------------------------------ publication
 
-  private async readReplicaMarker(): Promise<ReplicaMarker> {
+  private readReplicaMarker(): Promise<ReplicaMarker> {
+    // [EXP-P2Q] Why: applier/startup reads share the same coalescer as reader gates.
+    // Rejected: a second direct query path (permits two marker requests per replica).
+    // A post-fence read must never join a probe sent before that fence completed.
+    return this.sharedMarkerRead(performance.now());
+  }
+
+  private async requestReplicaMarker(): Promise<ReplicaMarker> {
     const rows = await this.options.replica!.query(markerQuery(this.options.scopeKey), {
       timeoutMs: this.options.applyTimeoutMs ?? 120_000,
     });
@@ -862,7 +869,7 @@ export class HostBroker {
   private startProbe(): Promise<ReplicaMarker> {
     const sentAt = performance.now();
     this.lastProbeSentAt = sentAt;
-    const promise: Promise<ReplicaMarker> = this.readReplicaMarker().finally(() => {
+    const promise: Promise<ReplicaMarker> = this.requestReplicaMarker().finally(() => {
       if (this.probeInFlight?.promise === promise) this.probeInFlight = undefined;
     });
     this.probeInFlight = { sentAt, promise };

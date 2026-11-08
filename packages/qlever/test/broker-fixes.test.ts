@@ -742,7 +742,7 @@ describe("Q72e one in-flight marker probe per replica (V-P2Q N5)", () => {
       expect(new Set(outcomes)).toEqual(new Set(["basis-not-reached"]));
       // Round 1 sent about 89 probes per waiter per second here. Shared probes plus the applier's own reads:
       expect(probes / 16 / seconds).toBeLessThan(5);
-      expect(replica.maxMarkerInFlight).toBeLessThanOrEqual(2);
+      expect(replica.maxMarkerInFlight).toBe(1);
     } finally {
       replica.rejectUpdates = false;
       await rt.dispose();
