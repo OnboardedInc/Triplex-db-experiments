@@ -284,21 +284,38 @@ async function settle(label: string) {
   const t0 = now();
   const out: any = { label };
   if (lane === "xtdb") {
-    out.finishBlock = dexec(["wget", "-qO-", "--post-data=", "http://127.0.0.1:8080/system/finish-block"]) !== null;
-    let jobs = NaN, polls = 0;
-    for (; polls < 600; polls++) {
+    const metric = (text: string, name: string) => {
+      const line = text.split("\n").find((l) => l.startsWith(name));
+      return line ? Number(line.trim().split(/\s+/).at(-1)) : NaN;
+    };
+    const read = () => {
       const text = dexec(["wget", "-qO-", "http://127.0.0.1:8080/metrics"]) ?? "";
-      const line = text.split("\n").find((l) => l.startsWith("compactor_jobs_available"));
-      jobs = line ? Number(line.trim().split(/\s+/).at(-1)) : NaN;
-      if (polls === 0) out.metricLine = line ?? null;
-      if (jobs === 0 && polls >= 2) break;
+      return { jobs: metric(text, "compactor_jobs_available"), done: metric(text, "compactor_job_timer_seconds_count"), blocks: metric(text, "block_upload_timer_seconds_count") };
+    };
+    const before = read();
+    out.before = before;
+    out.finishBlock = dexec(["wget", "-qO-", "--post-data=", "http://127.0.0.1:8080/system/finish-block"]) !== null;
+    // Settled means: the forced block was uploaded, no compaction job is available, and the completed-job count has
+    // not moved for 3 polls (6 s). R7 Q1/Q6: L0 files have no blooms and no recency, so measuring early is wrong.
+    let polls = 0, stable = 0, last = read(), blockSeen = false;
+    for (; polls < 900; polls++) {
       await sleep(2_000);
+      const m = read();
+      blockSeen ||= m.blocks > before.blocks;
+      stable = m.jobs === 0 && m.done === last.done ? stable + 1 : 0;
+      last = m;
+      if (blockSeen && stable >= 3) break;
+      if (!blockSeen && polls >= 30) break; // an empty live index uploads no block
     }
-    out.compactorJobsAvailable = jobs;
-    out.polls = polls;
-    // Queries see compaction output after the next transaction (upstream #6174, R16 4.2): one write to a side table.
+    // Queries see compaction output after the next transaction (upstream #6174, R16 4.2): one write to a side table,
+    // then the same settled test again (the write itself may produce work at the next flush, not now).
     const at = agedClock !== null ? [{ sql: `SET TRANSACTION READ WRITE, SYSTEM_TIME = TIMESTAMP '${new Date((agedClock += 1_000)).toISOString()}'` }] : [];
     await rawXtdb.submit([...at, { sql: "INSERT INTO p4_tick (_id, at_ms) VALUES (?, ?)", params: [randomBytes(8).toString("hex"), Date.now()] }]);
+    await sleep(2_000);
+    out.after = read();
+    out.blockSeen = blockSeen;
+    out.polls = polls;
+    out.compactorJobsAvailable = out.after.jobs;
   }
   out.waitS = (now() - t0) / 1000;
   log(`settle ${label}: ${JSON.stringify(out)}`);
@@ -985,7 +1002,7 @@ async function main() {
     st.timing = await runTiming(stage);
     log(`timing ${stage}: mix ${JSON.stringify(st.timing.weightedMix)}; flat ${JSON.stringify(st.timing.flatness)}`);
     st.bytes = await runBytes(stage);
-    st.closedLoop = cfg.closedLevels.length ? await runClosedLoop(stage) : null;
+    st.closedLoop = cfg.closedLevels.length && (opt("closed-stages") ?? stage).split(",").includes(stage) ? await runClosedLoop(stage) : null;
     st.crossArmMismatchCount = crossArmMismatchCount;
     report.stages.push(st);
     save();
