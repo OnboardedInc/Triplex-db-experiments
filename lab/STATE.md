@@ -132,3 +132,5 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - R21: file the XTDB DECIMAL-to-BIGINT-through-double and `= ANY` precedence findings upstream? (publishes lab findings; not done)
 - R18: Datomic-style `noHistory` for high-churn attributes? Default kept: history for everything (audit is a must-have).
 - GS.03: a vendor's older revision arriving after a newer one is acknowledged as `superseded`, changes no current value, and is journaled.
+
+- 22:35Z: running now: CX-A01-0311, CX-K01-R2, CX-DA01, CX-SQL01, CX-OBS01, CX-G03, CX-P2Q-R3 (round 4 fix F1), CX-VX02-3 (round 4 review), CX-O05-R2 (round 3 fixes R2-F1..F3). 9 of 10.

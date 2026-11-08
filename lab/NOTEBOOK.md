@@ -1494,3 +1494,15 @@ Where each priority stands, from evidence so far (research probes and baselines;
   durable-readback evidence waits for SQL storage. Builders can move refs/heads/main, so the evaluator uses its own clone (Q86e).
 - V-DA00 FIX-FIRST (Q85: create resets a position under concurrency, public scope names rejected, non-hermetic builds, codec mismatch)
   goes into DA01's next round, since DA01 carries and edits that code.
+
+## 2026-11-08 22:35Z: three reviews in; P2Q and O-OBS go back for fixes, X02 round 3 goes to review
+- **V-P2Q round 4 FIX-FIRST (P1, P2):** the two earlier regressions pass, and a 60-seed routing fuzz has zero stale accepts. But with
+  the exported standard client, a socket closed mid-response arrives as TypeError "terminated" with a nested UND_ERR_SOCKET cause, so
+  native SPARQL and Datalog both lose replica-unreachable and the basis fields. **Learning:** classify failures from structured nested causes,
+  never from the outer message alone, and test with real HTTP sockets on every exported client, not just the one the runtime factory uses.
+- **V-O05 round 2 FIX-FIRST:** all 177 round-1 inputs now refuse and the 14 positive bundles pass, but signed observations with the wrong
+  contents still pass: fact comparison runs only for QT4s; a context can pick the reuse threshold for an incremental obligation; clock
+  uncertainty applies to only two timing gates. **Learning:** authentication proves which bytes were observed, not that they are correct;
+  every transition needs a content check against the evaluator's expectation.
+- **X02 round 3 (Q79e grammar) done:** 1,818 generated queries match XTDB, 1,818 unsafe mutations are rejected, G0 is 967/967. Reviewer
+  round 4 is checking variations outside the generated set.
