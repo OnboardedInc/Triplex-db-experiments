@@ -8,6 +8,8 @@ import tempfile
 import unittest
 
 HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+from bundle_fixtures import fixture
 
 
 class CliTests(unittest.TestCase):
@@ -20,10 +22,18 @@ class CliTests(unittest.TestCase):
 
     def invoke(self, evidence=None, contract=None, raw=None, protocol=None):
         ep = self.directory / 'e.json'; cp = self.directory / 'c.json'
-        ep.write_text(raw if raw is not None else json.dumps(evidence or self.case['evidence']))
-        cp.write_text(json.dumps(contract or self.contract))
+        import shutil
+        run = self.directory / 'run'
+        if run.exists(): shutil.rmtree(run)
+        run.mkdir()
+        c = contract or self.contract
+        case = dict(self.case, evidence=evidence or self.case['evidence'])
+        e, context, bundle, key = fixture(case, run, c)
+        ep.write_text(raw if raw is not None else json.dumps(e))
+        cp.write_text(json.dumps(c))
+        xp = self.directory / 'context.json'; xp.write_text(json.dumps(context))
         proc = subprocess.run([sys.executable, '-I', str(HERE / 'observe.py'), 'check',
-                               protocol or self.case['protocol'], str(ep), '--contract', str(cp)],
+                               protocol or self.case['protocol'], str(ep), '--contract', str(cp), '--bundle', str(bundle), '--context', str(xp), '--key-file', str(key)],
                               capture_output=True, text=True, timeout=30)
         self.assertEqual(proc.stderr, '')
         result = json.loads(proc.stdout)
