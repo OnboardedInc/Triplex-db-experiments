@@ -1,0 +1,71 @@
+{
+  "target": "200d6697bd8e78375f17660c9277bccb00f9dece",
+  "verdict": "FIX-FIRST",
+  "originalSubqueries": {
+    "total": 6,
+    "resolved": 6
+  },
+  "unionRegression": {
+    "total": 6,
+    "confirmed": 6
+  },
+  "addedVariations": {
+    "total": 57,
+    "matchedExploratoryExpectation": 42,
+    "unsafeTypedRefusals": 15,
+    "supportedFalseRefusals": [
+      "safe-ANY-union-left-parens",
+      "safe-ANY-union-both-parens",
+      "safe-ANY-union-deep-left",
+      "safe-ANY-union-left-comments",
+      "safe-SOME-union-left-parens",
+      "safe-SOME-union-both-parens",
+      "safe-SOME-union-deep-left",
+      "safe-SOME-union-left-comments",
+      "safe-ALL-union-left-parens",
+      "safe-ALL-union-both-parens",
+      "safe-ALL-union-deep-left",
+      "safe-ALL-union-left-comments"
+    ],
+    "engineErrorControls": [
+      {
+        "name": "safe-ANY-with",
+        "rawError": "PostgresError: Unknown symbol: '_sq_2'"
+      },
+      {
+        "name": "safe-SOME-with",
+        "rawError": "PostgresError: Unknown symbol: '_sq_2'"
+      },
+      {
+        "name": "safe-ALL-with",
+        "rawError": "PostgresError: Unknown symbol: '_sq_2'"
+      }
+    ]
+  },
+  "earlierDeltaLive": {
+    "total": 22,
+    "expectationMatches": 20,
+    "knownEngineSyntaxErrors": [
+      "parenthesized-any-operand",
+      "parenthesized-some-operand"
+    ]
+  },
+  "earlierDeltaOffline": {
+    "overflow": 10,
+    "exact": 120,
+    "defaults": 213,
+    "ordinaryDefault": {
+      "queryPath": "xtdb-datalog",
+      "nativeWorkload": "undefined",
+      "pass": true
+    }
+  },
+  "source-sums": {
+    "total": 20,
+    "pass": 20
+  },
+  "delta-sums": {
+    "total": 30,
+    "pass": 30
+  }
+}

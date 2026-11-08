@@ -1,0 +1,21 @@
+{
+  "G0": {
+    "status": 0,
+    "sessionId": 89824
+  },
+  "priorAndVariationRunner": {
+    "status": 1,
+    "sessionId": 45273,
+    "note": "variations retained 15 expectation mismatches, individually classified"
+  },
+  "unionFirstAttempt": {
+    "status": 1,
+    "log": "union-regression.log",
+    "note": "wrong cwd prevented tool creation; module resolution failed before queries"
+  },
+  "unionCorrectedAttempt": {
+    "status": 0,
+    "log": "union-regression-r2.log",
+    "semanticFinding": "six confirmed false refusals"
+  }
+}

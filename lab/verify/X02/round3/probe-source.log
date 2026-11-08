@@ -1,0 +1,7 @@
+any-control {"error":"Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))])","elapsedMs":44}
+any-comment {"error":"Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))])","elapsedMs":11}
+any-bare {"error":"Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))])","elapsedMs":11}
+some-comment {"error":"Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))])","elapsedMs":10}
+decimal-bigint {"result":[{"v":"1000000000000000000"}],"error":null,"elapsedMs":37}
+decimal-text {"result":[{"v":"1000000000000000004"}],"error":null,"elapsedMs":8}
+text-bigint {"result":[{"v":"1000000000000000004"}],"error":null,"elapsedMs":81}
