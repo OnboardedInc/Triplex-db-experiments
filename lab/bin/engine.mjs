@@ -207,10 +207,14 @@ export function effectiveConfig(config, info) {
   }
   if (info.lane === 'datomic') {
     const sources = datomicSources();
+    const transactor = path.join(dir, 'transactor.properties');
+    const entrypoint = path.join(dir, 'entrypoint.sh');
+    fs.copyFileSync(path.join(CONFIG_DIR, 'lab/config/datomic/transactor.properties'), transactor);
+    fs.copyFileSync(path.join(CONFIG_DIR, 'lab/config/datomic/entrypoint.sh'), entrypoint);
     const effective = {
       lane: 'datomic', slot: info.slot, image: info.laneConf.image, imageId: info.laneConf.imageId,
       buildInputsSha256: info.laneConf.buildInputsSha256, sourceInputsSha256: sources.sha256,
-      gatewaySourceSha256: sha256(JSON.stringify(sources.gateway)),
+      gatewaySourceSha256: sha256(JSON.stringify(sources.gateway)), configMountMode: 'ro',
       transactorOpts: info.transactorOpts, gatewayOpts: info.gatewayOpts,
       txCpus: info.txCpus, gwCpus: info.gwCpus, profile: info.slot === 'dev' ? 'dev' : 'exclusive',
       memBytes: info.memBytes, cpus: info.cpus, ...pin,
@@ -223,7 +227,7 @@ export function effectiveConfig(config, info) {
       for (const cpu of [...parseCpuset(info.txCpus, config.vm.cpus), ...parseCpuset(info.gwCpus, config.vm.cpus)])
         if (!allowed.includes(cpu)) fail('CONFIG', 'Datomic JVM CPUs outside container cpuset');
     }
-    return { effective, sha256: sha256(JSON.stringify(effective)), files: {} };
+    return { effective, sha256: sha256(JSON.stringify(effective)), files: { transactor, entrypoint } };
   }
   // QLever: repo qlever-start.sh with the slot's query memory (-m). Port stays 7019 inside.
   const original = fs.readFileSync(path.join(CONFIG_DIR, 'qlever-start.sh'), 'utf8');
@@ -253,7 +257,7 @@ function runArgs(info, eff, holder) {
     '--health-cmd', e.health, '--health-interval', '5s', '--health-timeout', '3s', '--health-start-period', '20s', '--health-retries', '3',
   ];
   if (info.lane === 'datomic')
-    return [...common, '-e', `TRANSACTOR_JAVA_OPTS=${e.transactorOpts}`, '-e', `GATEWAY_JAVA_OPTS=${e.gatewayOpts}`,
+    return [...common, '-v', `${eff.files.transactor}:/config/transactor.properties:ro`, '-v', `${eff.files.entrypoint}:/config/entrypoint.sh:ro`, '-e', `TRANSACTOR_JAVA_OPTS=${e.transactorOpts}`, '-e', `GATEWAY_JAVA_OPTS=${e.gatewayOpts}`,
       '-e', `TX_CPUS=${e.txCpus}`, '-e', `GW_CPUS=${e.gwCpus}`, '-e', `DATOMIC_PROFILE=${e.profile}`,
       '-e', `GATEWAY_SOURCE_SHA256=${e.gatewaySourceSha256}`, info.laneConf.imageId];
   if (info.lane === 'xtdb')

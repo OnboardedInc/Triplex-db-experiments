@@ -74,6 +74,7 @@
         "cpus": 2,
         "transactorOpts": "-Xms640m -Xmx640m -XX:MaxMetaspaceSize=160m -XX:MaxDirectMemorySize=128m -XX:+ExitOnOutOfMemoryError",
         "gatewayOpts": "-Xms1g -Xmx1g -Ddatomic.objectCacheMax=320m -XX:MaxMetaspaceSize=160m -XX:MaxDirectMemorySize=128m -XX:+ExitOnOutOfMemoryError",
+        "cpusetCpus": "0,1",
         "txCpus": "0",
         "gwCpus": "1",
         "diskForecastBytes": 4294967296,
@@ -86,6 +87,7 @@
         "cpus": 3,
         "transactorOpts": "-Xms1g -Xmx1g -XX:MaxMetaspaceSize=160m -XX:MaxDirectMemorySize=128m -XX:+ExitOnOutOfMemoryError",
         "gatewayOpts": "-Xms1792m -Xmx1792m -Ddatomic.objectCacheMax=896m -XX:MaxMetaspaceSize=160m -XX:MaxDirectMemorySize=128m -XX:+ExitOnOutOfMemoryError",
+        "cpusetCpus": "0,1,2",
         "txCpus": "0",
         "gwCpus": "1,2",
         "diskForecastBytes": 8589934592
@@ -97,6 +99,7 @@
         "cpus": 3,
         "transactorOpts": "-Xms1g -Xmx1g -XX:MaxMetaspaceSize=160m -XX:MaxDirectMemorySize=128m -XX:+ExitOnOutOfMemoryError",
         "gatewayOpts": "-Xms1792m -Xmx1792m -Ddatomic.objectCacheMax=896m -XX:MaxMetaspaceSize=160m -XX:MaxDirectMemorySize=128m -XX:+ExitOnOutOfMemoryError",
+        "cpusetCpus": "0,1,2",
         "txCpus": "0",
         "gwCpus": "1,2",
         "diskForecastBytes": 8589934592
@@ -108,6 +111,7 @@
         "cpus": 3,
         "transactorOpts": "-Xms1g -Xmx1g -XX:MaxMetaspaceSize=160m -XX:MaxDirectMemorySize=128m -XX:+ExitOnOutOfMemoryError",
         "gatewayOpts": "-Xms1792m -Xmx1792m -Ddatomic.objectCacheMax=896m -XX:MaxMetaspaceSize=160m -XX:MaxDirectMemorySize=128m -XX:+ExitOnOutOfMemoryError",
+        "cpusetCpus": "0,1,2",
         "txCpus": "0",
         "gwCpus": "1,2",
         "diskForecastBytes": 8589934592

@@ -287,7 +287,9 @@ test('Datomic resident is parkable, pins separate JVM CPUs, and cannot coexist w
   assert.equal(info.parkable, true);
   assert.equal(info.memBytes, 2.75 * GiB);
   assert.equal(info.port, 8470);
+  assert.equal(info.cpusetCpus, '0,1');
   const effective = effectiveConfig(config, info).effective;
+  assert.equal(effective.configMountMode, 'ro');
   assert.match(effective.transactorOpts, /-Xmx640m/);
   assert.match(effective.gatewayOpts, /-Xmx1g/);
   assert.deepEqual(lib.cpusetOverlap(effective.txCpus, effective.gwCpus, config.vm.cpus), []);
