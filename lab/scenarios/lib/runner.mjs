@@ -153,13 +153,13 @@ class Executor {
     const epoch = this.ctx.epoch;
     const faulted = () => this.ctx.restarting || this.ctx.epoch !== epoch;
     try { r = await comp.transact(this.physOps(cmd), this.physMeta(cmd)); }
-    catch (error) { r = { status: 'error', tag: error?._tag ?? null, message: String(error?.message ?? error).slice(0, 800) }; }
+    catch (error) { const message = String(error?.message ?? error).slice(0, 800); r = /no (assertion )?id for (precondition )?ref/.test(message) ? { status: "blocked", category: "predecessor-not-committed", message } : { status: "error", tag: error?._tag ?? null, message }; }
     a.conflicts = r.conflicts ?? 0;
     // Outcome unknown: a lost ACK by fault (runtime restart), or a transient infrastructure WriteError (a
     // deadline, "Cannot acquire XTDB source cut") after which the command may or may not have committed.
     // Resolve by commandId; re-send with the same commandId only if it never committed (claims make it safe).
     // A ReadError inside transact (seen on XTDB under load: "XTDB read failed") also leaves the outcome open.
-    const transient = x => (x.status === 'rejected' && x.category === 'write-error' && /cannot acquire|deadline|timeout|timed out|econn|connection|outcome/i.test(x.message ?? ''))
+    const transient = x => (x.status === 'rejected' && x.category === 'write-error' && /cannot acquire|cannot read|deadline|timeout|timed out|econn|connection|outcome/i.test(x.message ?? ''))
       || (x.status === 'error' && x.tag === 'ReadError');
     if (r.status === 'unknown' || (r.status !== 'committed' && faulted()) || transient(r)) {
       a.unknown = { tag: r.tag, message: r.message ?? null };
@@ -206,7 +206,7 @@ class Executor {
       }
     } else {
       a.message = r.message ?? null;
-      check(`command-${cmd.index}-untyped-failure`, false, `${r.tag ?? 'error'}: ${r.message}`);
+      check(`command-${cmd.index}-${r.status === "blocked" ? "blocked-by-uncommitted-predecessor" : "untyped-failure"}`, false, `${r.tag ?? r.status}: ${r.message}`);
     }
     await this.ctx.hooks.onSettled?.(this.ctx, cmd, a);
     return a;
@@ -342,13 +342,13 @@ export async function runScenario({ spec, expected, hooks, comp, world, opts, lo
   const cpu = process.cpuUsage(cpu0); const wall = performance.now() - wall0;
   ctx.extra.clientCpuFraction = round((cpu.user + cpu.system) / 1000 / wall);
   ctx.Pend = await comp.currentPosition();
-  const feedUntil = performance.now() + 30_000;
+  const feedUntil = performance.now() + 120_000;
   while (ctx.feedSeen.length && ctx.feedSeen[ctx.feedSeen.length - 1].position < ctx.Pend && performance.now() < feedUntil) await sleep(50);
   feedStop = true; await feed;
 
   // Final state of every golden subject at latest, after quiescence.
   ctx.finals = {};
-  for (const sid of gen.digestSubjects) { const r = await pullDigest(ctx, sid, { validAt: BT.NOW }); ctx.finals[sid] = r; }
+  for (const sid of gen.digestSubjects) { let r; for (let t = 0; t < 5; t++) { r = await pullDigest(ctx, sid, { validAt: BT.NOW }); if (r.ok) break; await sleep(1000 * (t + 1)); } ctx.finals[sid] = r; } // final reads retry a ReadError under load
   log('final pulls done; checking'); await commonChecks(ctx);
   if (hooks.check) await hooks.check(ctx);
   await postRunOracle(ctx);
