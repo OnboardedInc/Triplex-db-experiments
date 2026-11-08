@@ -65,3 +65,14 @@ These move into RULINGS.md when the contract version that compiles them is built
 | Q67h error representation | One representation: `_tag` "BasisNotAvailable" or "ReplicaUnavailable" with {required, observed, replica}; `cause` is optional; core gains these error classes and adapters return them. | finding 9; Q58a |
 | Q67i comparators | case-result/2 is recomputed with its declared comparator on retained raw objects; byte equality applies only to CMP-EXACT. | finding 10; Q61e |
 | Q67j promotion | Claim kind is preserved and promotion prerequisites (GATE-BROKER-HARDENING and others) are enforced mechanically; until supported, promotion qualification is rejected explicitly. | finding 11; Q62b |
+
+## Q68: R24 current-value path and release sweep (lab/research/R24-current-path-and-sweep.md; provisional)
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q68a P4 design | P4's fast path is one current structure holding live facts plus facts retired after a retention horizon H, served at basis B only when H <= B <= W (W its applied watermark), else the history path. The first copy lives in the broker, written with the frame (H1); engines get a smaller copy in the same transaction or guarded update (XTDB `tx_current`, QLever `cur` graph) for list and native queries. EXP-P4 measures arms A0, X1, X2, Q1, H1 per R24 section 6, exactness gate first. | R24 sections 0, 6 |
+| Q68b horizon | Default H trails head by one hour of positions (the 15% basis bucket); a pinned sweep or reconcile holds H at or below its pin; the broker refuses a new pin that would make H trail head by more than 24 hours. | R24 open question 1 |
+| Q68c sweep publication | A sweep page may publish up to 64 results in one frame: one atomic outbox commit per frame, each result its own work item with its own delivery identity (Q38f). | R24 open question 6; TARGETS 1.1 P5 item 3 |
+| Q68d host-served reads | Reads served from the broker count for P1 and P4 bars when the receipt records route = host and the per-core denominator includes broker and kernel CPU. | R24 open question 7; TARGETS 4.1 item 5 |
+| Q68e expired facts | Facts whose valid_to has passed retire from the current structure through a valid-time horizon; EXP-P4 measures the 20% expired path. | R24 open question 5 |
+| Q68f erasure of current copies | Every current copy (broker store, `tx_current`, `cur` graph) is covered by Q58e's per-subject keys; a QLever `cur` graph holds no personal-data literals (keys and references only, values from the encrypted host store) unless EXP-P4 shows a reindex-free erasure path. | TARGETS 7 item 3; R24 open question 4 |
+| Q68g read-path change first | `FOR ALL VALID_TIME` on XTDB current reads forfeits the engine's current/historical split (R24 section 1); EXP-P4 measures X1 (default temporal bounds) in both a fresh and an aged regime before any write-path change. | R24 section 1 |

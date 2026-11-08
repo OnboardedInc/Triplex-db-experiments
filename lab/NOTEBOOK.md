@@ -1090,3 +1090,13 @@ Where each priority stands, from evidence so far (research probes and baselines;
   the substance". Q67f makes PAIR-0 recompute decisions from retained data, Q67e isolates builds, Q67c fences replicas by incarnation.
 - Owners: EXP-E01 (Q67b, e, i, j), A01 0.3.10 (Q63-Q67 compile), the P2Q author after V-P2Q's verdict (Q67c, d, h), EXP-M01 (artifact format
   for Q67f, g), EXP-G03 (executing gate, isolation).
+
+## 2026-11-08 01:07Z: R24 landed: P4 and P5 have designs; XTDB may already split current from history
+- **XTDB 2.2.0 physically separates current from historical files and prunes by recency, but Triplex forfeits it:** every adapter read says
+  `FOR ALL VALID_TIME` and finds facts through non-`_id` predicates. A read-path change (X1) is the cheapest P4 experiment there is.
+- **P4 design (Q68a):** one current structure with a retention horizon H and watermark W, served only when H <= B <= W; first copy in the
+  broker (in the same frame), smaller engine copies for list and native queries. QLever's per-round floor of 3.4-6.5 ms means a host store or
+  a one-scan bundle is the only way under 5 ms there.
+- **P5 design:** pinned basis by holding H, cursor pages from a worker that also runs the kernel, admission on live queue delay, publication in
+  64-record frames (Q68c). Estimated 25-35 s for 100k subjects on the host-store design, against the 100 s bar.
+- Dispatched EXP-P4 (read-path arms first; write-path arms after EXP-J01 merges). EXP-P5 waits for the O-DOMAIN pin, P2B and the SQLite store.
