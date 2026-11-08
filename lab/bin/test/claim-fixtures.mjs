@@ -14,7 +14,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { sha256, sourceTreeIdOf } from '../lib.mjs';
-import { FORMATS, admitClaim, bindingOf, gitSource, listingHash, objectStore } from '../claim.mjs';
+import { FORMATS, admitClaim, bindingOf, canonText, executionIdentity, gitSource, listingHash, objectStore, toolchainOf } from '../claim.mjs';
 
 const LAB_REPO = path.resolve(import.meta.dirname, '../../..');
 const real = file => fs.readFileSync(path.join(LAB_REPO, file), 'utf8');
@@ -42,13 +42,16 @@ sys.stdout.write(json.dumps(report, sort_keys=True, separators=(",", ":")) + "\\
 // The fixture O-CONTRACT (compiled into the contract, so unpinned; run from the authority's files) prints the answer itself.
 const CONTRACT_PY = `import json, sys
 case = json.loads(open(sys.argv[1], encoding="utf-8").read())
-sys.stdout.write(json.dumps({"commandOutcomes": [], "queries": {"next": case["p"] + 1}, "state": {}}, sort_keys=True, separators=(",", ":")) + "\\n")
+answer = case["rows"] if "rows" in case else {"commandOutcomes": [], "queries": {"next": case["p"] + 1}, "state": {}}
+sys.stdout.write(json.dumps(answer, sort_keys=True, separators=(",", ":")) + "\\n")
 `;
 const SRC = {
   'packages/xtdb/package.json': '{ "name": "@fixture/xtdb", "version": "0.0.0" }\n',
   'packages/xtdb/src/index.ts': "export { nextCommitPosition } from './alloc.mjs';\n",
   'packages/xtdb/src/alloc.ts': 'export const nextCommitPosition = p => p + 1; // v1 (A0)\n',
-  'packages/xtdb/src/run.ts': "import fs from 'node:fs';\nimport { nextCommitPosition } from './alloc.mjs';\nconst c = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));\nprocess.stdout.write(JSON.stringify({ commandOutcomes: [], queries: { next: nextCommitPosition(c.p) }, state: {} }) + '\\n');\n",
+  'packages/xtdb/src/run.ts': "import fs from 'node:fs';\nimport { nextCommitPosition } from './alloc.mjs';\nimport { adjust } from '../../../runtime/shim.mjs';\nconst c = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));\nprocess.stdout.write(JSON.stringify(Array.isArray(c.rows) ? [...c.rows].reverse() : { commandOutcomes: [], queries: { next: adjust(nextCommitPosition(c.p), c) }, state: {} }) + '\\n');\n",
+  // A source runner outside the declared build outputs (Codex round 8 finding 2): dist/run.mjs imports it from the checkout.
+  'runtime/shim.mjs': 'export const adjust = (n, c) => n;\n',
   'test/helper/package.json': '{ "name": "@fixture/helper", "version": "0.0.0" }\n',
   'package.json': '{ "name": "fixture-root", "private": true }\n',
   'build.mjs': "import fs from 'node:fs';\nfs.mkdirSync('packages/xtdb/dist', { recursive: true });\nfor (const f of fs.readdirSync('packages/xtdb/src')) fs.writeFileSync(`packages/xtdb/dist/${f.replace(/\\.ts$/, '.mjs')}`, fs.readFileSync(`packages/xtdb/src/${f}`));\n",
@@ -71,6 +74,15 @@ const SRC = {
 export const FIXTURE_BUILD_SPEC = { format: 'triplex-db-2/build-spec/1', argv: ['node', 'build.mjs'], outputs: ['packages/xtdb/dist/'], run: ['node', 'packages/xtdb/dist/run.mjs', '{case}', '{mode}'] };
 const ALLOC_V2 = 'export const nextCommitPosition = p => p + 1; // v2 candidate: nested transacts share one offset\n';
 const ALLOC_WRONG = 'export const nextCommitPosition = p => p + 2; // a candidate that skips a position\n';
+// Codex round 8 finding 2: A0's allocator and so A0's dist bytes exactly, with a source runner that answers CS-SCOPE cases wrongly.
+const SHIM_ALIAS = "export const adjust = (n, c) => String(c.case).startsWith('CS-SCOPE/') ? n + 1 : n;\n";
+// Codex round 8 finding 6: a build that leaves a helper running, which later writes a marker and edits any oracle copy it finds.
+const bgBuild = marker => {
+  const helper = `setTimeout(() => { const fs = require('fs'), path = require('path'); fs.writeFileSync(${JSON.stringify(marker)}, 'a build helper outlived its build\\n'); `
+    + `const root = path.dirname(process.env.HOME); for (const d of fs.readdirSync(root)) if (d.startsWith('tx2-oracle-')) { const f = path.join(root, d, 'lab/oracles/replay/cli.py'); `
+    + `try { fs.chmodSync(f, 0o644); fs.appendFileSync(f, '# edited by a background build helper\\n'); } catch {} } }, 300);`;
+  return SRC['build.mjs'] + `import { spawn } from 'node:child_process';\nspawn(process.execPath, ['-e', ${JSON.stringify(helper)}], { stdio: 'ignore' }).unref();\n`;
+};
 
 // ---------------------------------------------------------------- pinned case manifests with inputs (Q47c, Q55a, Q61d)
 
@@ -79,20 +91,35 @@ const tagsFor = (set, id) => set === 'CS-POSITION' ? (id.startsWith('FX-') ? ['f
   : set === 'CS-COMPOSITION' ? (['CO-RECEIPT-BINDS-ALL', 'CO-SCOPE-KEY-FROM-ASSIGNMENT'].includes(id) ? ['identity'] : ['watermark'])
     : set === 'CS-NS' ? [`p${id[4]}`] : set === 'CS-GS' ? [id.slice(0, 5)] : set === 'CS-MIGRATION' ? ['valid-writes'] : [];
 export const MANIFEST_SETS = ['CS-POSITION', 'CS-COMPOSITION', 'CS-W0-COVERAGE', 'CS-NS', 'CS-GS', 'CS-MIGRATION', 'CS-SCOPE'];
-const inputText = (set, id, i) => JSON.stringify({ case: `${set}/${id}`, p: 40 + i, ...(id === 'MIG-DECIMAL-5-2-TO-6-3' ? { redeclareDecimal: true } : {}) }) + '\n';
+// CO-SCOPE-KEY-FROM-ASSIGNMENT is the bag case (Codex round 8 finding 10): its answer is rows, which the system under test
+// prints in reverse order, so only its declared CMP-BAG-ROWS (not byte equality) accepts them.
+export const BAG_CASE = 'CO-SCOPE-KEY-FROM-ASSIGNMENT';
+const inputText = (set, id, i) => JSON.stringify({ case: `${set}/${id}`, p: 40 + i, ...(id === 'MIG-DECIMAL-5-2-TO-6-3' ? { redeclareDecimal: true } : {}), ...(id === BAG_CASE ? { rows: [1, 2] } : {}) }) + '\n';
 // caseManifest (0.3.9): id, tags, input, contentSha256, comparator, optional oracle. No case is marked faultPoint: no fault
 // injector exists, so a faultPoint case could never produce its fault-witness/1 (RULINGS Q61j) and offline runs would always fail.
 export function caseManifest(set) {
   const ids = [...REAL_CONTRACT.caseSets[set].requiredCases, ...(EXTRA_CASES[set] ?? [])];
   return { format: REAL_CONTRACT.caseManifest.format, set, cases: ids.map((id, i) => ({ id, tags: tagsFor(set, id), input: `lab/acceptance/cases/inputs/${set}/${id}.json`, contentSha256: h(inputText(set, id, i)),
-    comparator: 'CMP-EXACT-VALUE', ...(set === 'CS-COMPOSITION' ? { oracle: 'O-CONTRACT' } : {}) })) };
+    comparator: id === BAG_CASE ? 'CMP-BAG-ROWS' : 'CMP-EXACT-VALUE', ...(set === 'CS-COMPOSITION' ? { oracle: 'O-CONTRACT' } : {}) })) };
 }
 const manifestText = set => JSON.stringify(caseManifest(set), null, 2) + '\n';
 
-/** The evaluator's binary hash of a commit's build (FIXTURE_BUILD_SPEC copies packages/xtdb/src/*.ts to dist/*.mjs): the
- * listing of the built files, which is what A0_REGISTRY binarySha256 records and every qualification run must reproduce. */
-export const distListing = files => Object.keys(files).filter(f => /^packages\/xtdb\/src\/[^/]+\.ts$/.test(f)).map(f => [f.replace('/src/', '/dist/').replace(/\.ts$/, '.mjs'), h(files[f])])
-  .sort((a, b) => a[0] < b[0] ? -1 : 1).map(([p, x]) => `${x}  ${p}\n`).join('');
+const byPath = (a, b) => a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0;
+/** The built files of a commit (FIXTURE_BUILD_SPEC copies packages/xtdb/src/*.ts to dist/*.mjs): [path, sha256], sorted. */
+export const distFiles = files => Object.keys(files).filter(f => /^packages\/xtdb\/src\/[^/]+\.ts$/.test(f)).map(f => [f.replace('/src/', '/dist/').replace(/\.ts$/, '.mjs'), h(files[f])]).sort(byPath);
+/** The buildSpec every non-real fixture contract compiles (the real 0.3.9 fields with the fixture's argv, outputs and run). */
+export const EFFECTIVE_BUILD_SPEC = { ...REAL_CONTRACT.buildSpec, ...FIXTURE_BUILD_SPEC };
+/**
+ * The execution-identity/1 record of a commit's build (RULINGS Q67b), computed from the commit's files: the source tree label,
+ * the build spec, the lockfile, the toolchain, and every file of the built checkout (the tracked files plus dist/). Its sha256 is
+ * what A0_REGISTRY binarySha256 records and every qualification run must reproduce. Rejected: the dist listing alone, which an
+ * alias candidate with A0's dist bytes and another source runner shares (Codex round 8 finding 2).
+ */
+export const identityOf = c => {
+  const dist = distFiles(c.files);
+  return executionIdentity({ sourceTreeSha256: c.label, buildSpecSha256: sha256(canonText(EFFECTIVE_BUILD_SPEC)), lockfileSha256: h(c.files['pnpm-lock.yaml']), toolchain: toolchainOf(EFFECTIVE_BUILD_SPEC),
+    runtime: [...Object.entries(c.files).map(([p, t]) => [p, 'f', h(t)]), ...dist.map(([p, x]) => [p, 'f', x])].sort(byPath), dist });
+};
 /** Obligations a fixture claim can name; VERIFIER_REGISTRY accepts each at every verified commit. */
 const VERIFIED_OBLIGATIONS = ['NS.P2', 'GS.05', 'G1.decimal.channel-routing', 'G9.erasure.residual-shapes', 'G7.migration.schema-evolution', 'G10.scope.shared-collision'];
 const FIX_ORACLE_COMMIT = 'f1'.repeat(20);
@@ -147,6 +174,8 @@ export const composition = (sourceEngine, currentEngine, slot = 'dev', variant =
   return c;
 };
 export const CANDIDATE = composition('xtdb', 'qlever');
+/** The candidate as a log-source composition (LOG_FIELDS: log identity and durability configuration). */
+export const LOG_SOURCE = (() => { const c = composition('xtdb', 'qlever', 'dev', 'log-source'); c.source.log = { implementationSha256: h('fixture broker'), fsyncMode: 'fdatasync', fullFsync: true, device: 'fixture-ssd' }; return c; })();
 export const A0 = composition('xtdb', 'xtdb');
 const WORKLOAD = { generatorSourceSha256: h('frozen trace generator'), seed: SEED, offerScheduleSha256: h(`schedule ${SEED}`), window: [120, 720], slot: 'dev' };
 
@@ -165,7 +194,7 @@ function makeRepo(dir, variant) {
   write('lab/config/slots.json', JSON.stringify(REAL_SLOTS, null, 2) + '\n');
   writeContract({});
   const C1 = commit('C1: A0 (allocator v1)', T.c1);
-  const a0 = { a0Commit: C1.commit, a0Label: C1.label, a0Binary: h(distListing(C1.files)) };
+  const a0 = { a0Commit: C1.commit, a0Label: C1.label, a0Binary: sha256(identityOf(C1)) };
   write('packages/xtdb/src/alloc.ts', ALLOC_V2);
   writeContract(a0);
   const C2 = commit('C2: candidate (allocator v2); A0 registered', T.c2);
@@ -175,14 +204,17 @@ function makeRepo(dir, variant) {
   if (variant === 'pinned') branch('drift', () => write('lab/oracles/obs/obs.py', '# O-OBS (fixture), edited after the pin\n'));
   if (variant === 'pinned') branch('unverified', () => write('NOTES.md', 'a commit no verifier has seen\n'));
   if (variant === 'run') branch('wrong', () => write('packages/xtdb/src/alloc.ts', ALLOC_WRONG));
+  // Codex round 8: an alias candidate (A0's dist bytes, another source runner) and a build that leaves a helper running.
+  if (variant === 'run') branch('alias', () => { write('packages/xtdb/src/alloc.ts', SRC['packages/xtdb/src/alloc.ts']); write('runtime/shim.mjs', SHIM_ALIAS); });
+  if (variant === 'run') { out.bgMarker = path.join(path.dirname(dir), 'bg-helper-marker'); branch('bg', () => write('build.mjs', bgBuild(out.bgMarker))); }
   // A reviewed later contract version on main (the authority) registers the verifications of C2 (and of the wrong candidate):
   // a commit's own contract can never hold its verification (RULINGS Q55a, Q61a).
   if (variant !== 'real') {
-    writeContract({ ...a0, verified: [C2.commit, ...(out.WRONG ? [out.WRONG.commit] : [])] });
+    writeContract({ ...a0, verified: [C2.commit, ...['WRONG', 'ALIAS', 'BG'].filter(k => out[k]).map(k => out[k].commit)] });
     out.C3 = commit('C3: contract registers verifications', T.c4);
   }
   // An authority (branch badreg) whose A0 entry records the candidate's binary for C1's tree (CX-R7-RELABELLED-CONTROL).
-  if (variant === 'run') branch('badreg', () => writeContract({ ...a0, a0Binary: h(distListing(C2.files)), verified: [C2.commit] }), T.c4);
+  if (variant === 'run') branch('badreg', () => writeContract({ ...a0, a0Binary: sha256(identityOf(C2)), verified: [C2.commit] }), T.c4);
   return out;
 }
 
@@ -229,9 +261,9 @@ function run(S, o, homes) {
     { path: 'node_modules/effect/dist/index.js', bytes: 'effect', origin: 'dependency' }, ...(o.extraModules ?? [])]
     .map(x => ({ ...x, sha256: x.retain === false ? h(x.bytes) : S.put(x.bytes) }));
   const modules = mods.map(x => ({ path: x.path, sha256: x.sha256 }));
-  // An A0-side run executes the evaluator's build of the code it was built from: the registry's binarySha256 when that is the
-  // A0 commit, another binary when a candidate build is relabelled as A0 (Codex round 7 finding 2).
-  const binary = o.binaryNotRetained ? h(`unretained ${id}`) : side === 'A0' ? S.put(distListing(from.files)) : S.put(listingHash(modules.map(x => [x.path, x.sha256])) + ` ${id}`);
+  // An A0-side run executes the evaluator's build of the code it was built from: the registry's binarySha256 (its execution
+  // identity, Q67b) when that is the A0 commit, another identity when a candidate build is relabelled as A0 (Codex round 7 finding 2).
+  const binary = o.binaryNotRetained ? h(`unretained ${id}`) : side === 'A0' ? S.put(identityOf(from)) : S.put(listingHash(modules.map(x => [x.path, x.sha256])) + ` ${id}`);
   r.buildManifestSha256 = S.put({ schema: 'build-manifest/1', sourceTreeSha256: tree, binarySha256: binary, modules });
   r.executedBinarySha256 = binary;
   const build = { id: 'xtdb', package: 'packages/xtdb', sourceRoots: o.narrowRoots ? ['packages/xtdb/package.json'] : ['packages/xtdb'],
@@ -297,7 +329,7 @@ export function buildFixtures(root) {
   // -- positives: the document passes every check, and is still only DIAGNOSTIC evidence (RULINGS Q55a)
   add('POSITIVE-NS-SCREENING', 'Q38b positive control (0.3.7 format)', 'QUALIFIED', 'none: NS.P2 screening comparison, prerequisites for both compositions, registry A0 control, workload identity', 'pinned', complete('POSITIVE-NS-SCREENING'));
   add('POSITIVE-GS-DOMAIN', 'Q38b domain positive control', 'QUALIFIED', 'none: GS.05 with W0 pinned and a W0.coverage-floors receipt', 'w0', complete('POSITIVE-GS-DOMAIN', { variant: 'w0', obligation: 'GS.05' }));
-  add('POSITIVE-PROMOTION', 'promotion', 'QUALIFIED', 'none: promotion on P-NS acceptance receipts', 'pinned', complete('POSITIVE-PROMOTION', { kind: 'promotion' }));
+  add('POSITIVE-PROMOTION', 'promotion; Codex round 8 finding 11, Q67j', 'DIAGNOSTIC', 'otherwise complete promotion on P-NS acceptance receipts: promotion is rejected until its prerequisites are enforced', 'pinned', complete('POSITIVE-PROMOTION', { kind: 'promotion' }));
 
   // -- the generator's self-check, in this format
   add('GEN-PREREQS-ONLY', 'Q42a "prerequisites but no measurement"', 'DIAGNOSTIC', 'only prerequisite receipts', 'pinned', complete('GEN-PREREQS-ONLY', { drop: ['meas', 'ctrl'] }));
@@ -393,6 +425,12 @@ export function buildFixtures(root) {
     runClaim('RUN-SUPPLIED-FINGERPRINT', Rr.C2, ['GS.05'], { oDomainFingerprint: 'f'.repeat(64), w0Pin: contractVariant('w0').w0Pin }),
     // CX-R7-RELABELLED-CONTROL as a run: an authority whose A0 entry records the candidate's binary; the rebuild of C1 differs.
     { ...runClaim('RUN-A0-REBUILD-MISMATCH', Rr.C2), authorityRef: 'badreg' },
+    // Codex round 8 finding 2: A0's dist bytes with another source runner; the candidate's own instance must run.
+    runClaim('RUN-ALIAS-DIST', Rr.ALIAS),
+    // Codex round 8 finding 6: the candidate's build leaves a helper running that would edit the oracle copy.
+    runClaim('RUN-BACKGROUND-HELPER', Rr.BG),
+    // Codex round 8 finding 11: a log-source promotion, which the reference qualifies without any hardening case (Q67j).
+    runClaim('RUN-PROMOTION', Rr.C2, undefined, { kind: 'promotion', composition: LOG_SOURCE }),
   ];
   return { root, repos, objects: S.dir, fixtures, runFixtures };
 

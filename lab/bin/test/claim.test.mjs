@@ -7,8 +7,11 @@
 //      order; admitCore must make exactly the same executor calls in the same order and reach the same verdict. On documents
 //      the reference (no executor) and claim.mjs admit both answer DIAGNOSTIC.
 //   2. Documents (claim.mjs admit): every fixture's documentVerdict and its cause; the verdict itself is always DIAGNOSTIC (Q55a).
-//   3. Runs (claim.mjs qualify, offline): the evaluator's own builds (A0 reproducing the registry's binarySha256), manifest-
-//      resolved cases, oracle answers and comparator; supplied records ignored; no path to QUALIFIED while the gate is plan-only.
+//   3. Runs (claim.mjs qualify, offline): the evaluator's own builds (A0 reproducing the registry's binarySha256, an execution
+//      identity per instance), manifest-resolved cases, oracle answers from a re-hashed read-only copy, the declared comparator;
+//      supplied records ignored; promotion rejected; no path to QUALIFIED while the gate is plan-only. Codex round 8's
+//      counterexamples (identical-dist aliasing, a build helper left running, an edited oracle copy, a bag comparator, a
+//      promotion claim) are fixtures here.
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -16,8 +19,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
 import { sha256, sourceTreeIdOf } from '../lib.mjs';
-import { admitClaim, admitCore, canonText, caseVerdict, coreContext, gitSource, localSut, objectStore, openRecord, qualifyClaim, recompute } from '../claim.mjs';
-import { buildFixtures, evaluateLab, evaluateReference } from './claim-fixtures.mjs';
+import { admitClaim, admitCore, canonText, caseResultVerdict, caseVerdict, coreContext, gitSource, localSut, objectStore, openRecord, qualifyClaim, recompute } from '../claim.mjs';
+import { BAG_CASE, buildFixtures, evaluateLab, evaluateReference } from './claim-fixtures.mjs';
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tx2-claim-test-'));
 const built = buildFixtures(root);
@@ -50,7 +53,7 @@ const CAUSE = {
   'RT-DEP-UNLISTED': 'DEPENDENCY-UNBOUND', 'RT-DEP-OTHER-WORKSPACE': 'DEPENDENCY-UNBOUND', 'RT-NARROW-ROOTS': 'BUILD-ROOTS',
   'LAB-BRANCH-PINS-OWN-ORACLE': 'ORACLE-UNPINNED', 'LAB-ORACLE-FILE-DRIFT': 'ORACLE-FILES', 'LAB-IMAGE-NOT-PINNED': 'IMAGE-NOT-PINNED',
   'LAB-FORBIDDEN-ENDPOINT': 'RECEIPT-ENDPOINT', 'LAB-ADMISSION-BLOCKED': 'RECEIPT-ADMISSION', 'LAB-CONTROL-NO-PREREQ': 'PREREQ-MISSING',
-  'DOC-NO-SOURCE-VARIANT': 'COMPOSITION-UNBOUND', 'DOC-UNREGISTERED-VERIFICATION': 'VERIFIER-UNREGISTERED',
+  'DOC-NO-SOURCE-VARIANT': 'COMPOSITION-UNBOUND', 'DOC-UNREGISTERED-VERIFICATION': 'VERIFIER-UNREGISTERED', 'POSITIVE-PROMOTION': 'PROMOTION-UNSUPPORTED',
 };
 
 // ---------------------------------------------------------------- 1. the contract's reference model
@@ -228,8 +231,11 @@ test('gitSource parses cat-file --batch and ls-tree for binary blobs, spaces, ta
 const R = built.repos.run;
 const spec = JSON.parse(execFileSync('git', ['show', 'main:lab/acceptance/obligations.json'], { cwd: R.dir })).buildSpec;
 const runFx = id => built.runFixtures.find(x => x.id === id);
-const qualify = (id, { offline = true, ...extra } = {}) => qualifyClaim(runFx(id).claim, { git: gitSource(runFx(id).repo), authorityRef: runFx(id).authorityRef ?? 'main', workDir: path.join(root, 'work', `${id}-${offline}`), ...(offline ? { sut: localSut(spec) } : {}), ...extra });
-const runs = Object.fromEntries(['RUN-CANDIDATE', 'RUN-WRONG-CANDIDATE', 'RUN-FORGED-RECORDS', 'RUN-REFUSED-CASE', 'RUN-UNREGISTERED-VERIFICATION', 'RUN-A0-REBUILD-MISMATCH', 'RUN-NS-NO-PAIRED'].map(id => [id, qualify(id)]));
+// Every run's isolation directories (checkouts, HOME, inputs, oracle copies) go under one directory of the test's own (Q67e).
+const ISO = path.join(root, 'iso');
+const qualify = (id, { offline = true, ...extra } = {}) => qualifyClaim(runFx(id).claim, { git: gitSource(runFx(id).repo), authorityRef: runFx(id).authorityRef ?? 'main', workDir: path.join(root, 'work', `${id}-${offline}`), isolationRoot: ISO, ...(offline ? { sut: localSut(spec) } : {}), ...extra });
+const runs = Object.fromEntries(['RUN-CANDIDATE', 'RUN-WRONG-CANDIDATE', 'RUN-FORGED-RECORDS', 'RUN-REFUSED-CASE', 'RUN-UNREGISTERED-VERIFICATION', 'RUN-A0-REBUILD-MISMATCH', 'RUN-NS-NO-PAIRED',
+  'RUN-ALIAS-DIST', 'RUN-BACKGROUND-HELPER', 'RUN-PROMOTION'].map(id => [id, qualify(id)]));
 const planOnly = Object.fromEntries(['RUN-CANDIDATE', 'RUN-UNREGISTERED-SLOT', 'RUN-SUPPLIED-FINGERPRINT'].map(id => [id, qualify(id, { offline: false })]));
 const isPosition = c => /^(FX|PO)-/.test(c.case);
 
@@ -250,6 +256,34 @@ test('qualify build: the evaluator builds the claimed tree and rebuilds A0, whic
   const alloc = c => { const m = store.json(run.builds[c].buildManifestSha256).value; return store.get(m.modules.find(x => x.path === 'packages/xtdb/dist/alloc.mjs').sha256).bytes.toString(); };
   assert.match(alloc(R.C1.commit), /v1 \(A0\)/);
   assert.match(alloc(R.C2.commit), /v2 candidate/);
+  // RULINGS Q67b: binarySha256 is an execution-identity/1 record over the whole built checkout, so it binds the source runner
+  // runtime/shim.mjs that dist/run.mjs imports, which build-manifest/2 modules (the declared dist outputs) do not list.
+  const id = JSON.parse(store.get(man.binarySha256).bytes.toString());
+  assert.equal(id.schema, 'execution-identity/1');
+  assert.equal(id.buildSpecSha256, man.buildSpecSha256);
+  assert.equal(id.sourceTreeSha256, R.C2.label);
+  assert.equal(id.toolchain.node, process.version);
+  assert.match(store.get(id.runtimeSha256).bytes.toString(), / f runtime\/shim\.mjs\n/);
+  assert.ok(!man.modules.some(m => m.path === 'runtime/shim.mjs'));
+});
+
+test('qualify Q67b (Codex round 8 finding 2): a candidate with A0\'s dist bytes and another source runner runs its own instance', () => {
+  const r = runs['RUN-ALIAS-DIST'];
+  const [cand, a0] = r.run.instances;
+  assert.equal(cand.commit, R.ALIAS.commit);
+  assert.equal(a0.commit, R.C1.commit);
+  assert.equal(cand.distSha256, a0.distSha256, 'the fixture must share A0\'s dist bytes exactly');
+  assert.notEqual(cand.binarySha256, a0.binarySha256);
+  assert.equal(a0.binarySha256, R.a0Binary);
+  // Keyed by output hash, the A0 build would have replaced the candidate's entry and the candidate's cases would have run A0's
+  // checkout; keyed by instance, the CS-SCOPE comparison runs the alias's own shim and fails.
+  const scope = r.run.cases.filter(c => c.obligation === 'G10.scope.shared-collision');
+  assert.ok(scope.length && scope.every(c => c.instance === cand.instance && c.build === R.ALIAS.commit), JSON.stringify(scope));
+  assert.equal(scope.at(-1).verdict, 'FAIL');
+  assert.ok(codes(r).includes('CASE-FAIL') && codes(r).includes('MEASUREMENT-RUN-FAILED'), JSON.stringify(codes(r)));
+  assert.equal(r.offlineVerdict, 'DIAGNOSTIC');
+  // Executions differ by instance and composition (Q67b): the alias's prerequisite cases and A0's are distinct executions.
+  assert.notEqual(r.run.cases.find(c => c.instance === cand.instance).executionSha256, r.run.cases.find(c => c.instance === a0.instance)?.executionSha256);
 });
 
 test('qualify build: CX-R7-RELABELLED-CONTROL as a run, an A0 entry recording another binary than its tree rebuilds to', () => {
@@ -270,9 +304,38 @@ test('qualify resolve, execute and record: every case of the pinned manifests in
   const ctx = coreContext(CONTRACT);
   for (const c of run.cases) {
     const rec = openRecord(c.recordSha256, store, 'case-result/2', ctx.schemas);
-    assert.ok(rec && rec.obligation === c.obligation && rec.mode === c.mode && rec.rep === 0 && rec.comparator === 'CMP-EXACT-VALUE', JSON.stringify(c));
-    assert.equal(caseVerdict(rec, store), 'PASS');
+    assert.ok(rec && rec.obligation === c.obligation && rec.mode === c.mode && rec.rep === 0 && rec.comparator === (c.case === BAG_CASE ? 'CMP-BAG-ROWS' : 'CMP-EXACT-VALUE'), JSON.stringify(c));
+    assert.equal(caseResultVerdict(rec, store), 'PASS', c.case);
   }
+});
+
+test('qualify Q67i (Codex round 8 finding 10): case-result/2 is re-judged with its declared comparator on the retained raw objects', () => {
+  const { run } = runs['RUN-CANDIDATE'];
+  const store = objectStore(run.objects);
+  const ctx = coreContext(CONTRACT);
+  const bag = run.cases.filter(c => c.case === BAG_CASE);
+  assert.ok(bag.length >= 2, 'the bag case runs on the candidate and on A0');
+  for (const c of bag) {
+    const rec = openRecord(c.recordSha256, store, 'case-result/2', ctx.schemas);
+    assert.equal(store.get(rec.expectedSha256).bytes.toString(), '[1,2]');
+    assert.equal(store.get(rec.observedSha256).bytes.toString(), '[2,1]');
+    assert.equal(c.verdict, 'PASS');
+    assert.equal(caseResultVerdict(rec, store), 'PASS');
+    // The reference's case_verdict (hash equality, case-result/1 documents) would reject it: an intentional divergence.
+    assert.equal(caseVerdict(rec, store), 'FAIL');
+  }
+  // Byte equality stays the exact comparator's rule; refusals, oracle errors and missing objects never pass.
+  const b = v => Buffer.from(canonText(v));
+  const objs = new Map([[sha256(b([1, 2])), b([1, 2])], [sha256(b([2, 1])), b([2, 1])]]);
+  const mem = { get: h => objs.has(h) ? { ok: true, bytes: objs.get(h) } : { ok: false } };
+  const rec = comparator => ({ oracleExit: 0, oracleCode: null, comparator, expectedSha256: sha256(b([1, 2])), observedSha256: sha256(b([2, 1])) });
+  assert.equal(caseResultVerdict(rec('CMP-BAG-ROWS'), mem), 'PASS');
+  assert.equal(caseResultVerdict(rec('CMP-SET-ROWS'), mem), 'PASS');
+  assert.equal(caseResultVerdict(rec('CMP-ORDERED-ROWS'), mem), 'FAIL');
+  assert.equal(caseResultVerdict(rec('CMP-EXACT-VALUE'), mem), 'FAIL');
+  assert.equal(caseResultVerdict({ ...rec('CMP-BAG-ROWS'), oracleExit: 2, oracleCode: 'X-NOT-MODELED' }, mem), 'REFUSED');
+  assert.equal(caseResultVerdict({ ...rec('CMP-BAG-ROWS'), oracleExit: 1, oracleCode: 'X-ORACLE-ERROR' }, mem), 'FAIL');
+  assert.equal(caseResultVerdict({ ...rec('CMP-BAG-ROWS'), observedSha256: '0'.repeat(64) }, mem), 'FAIL');
 });
 
 test('qualify expect: the oracle answer follows oracleAnswerRule (O-REPLAY answerMembers of one canonical JSON document)', () => {
@@ -325,16 +388,79 @@ test('qualify builds the tree its label names: a checkout that git archive alter
   assert.equal(r.run.builds[commit], undefined);
 });
 
+// A process that escaped its group (the offline gap Q67e names) is simulated by a system under test that edits files outside its
+// own checkout: everything it can reach is under the isolation root, a sibling of its HOME.
+const escaped = (iso, edit) => { const local = localSut(spec); return args => { edit(args, iso); return local(args); }; };
+const isoDirs = (iso, prefix) => fs.existsSync(iso) ? fs.readdirSync(iso).filter(d => d.startsWith(prefix)).map(d => path.join(iso, d)) : [];
+
 test('qualify re-hashes a build before running it after another: a candidate that edits the A0 build is caught', () => {
-  const a0Alloc = path.join(root, 'work', 'tamper', 'checkouts', R.C1.commit.slice(0, 12), 'packages/xtdb/dist/alloc.mjs');
-  const local = localSut(spec);
+  const iso = path.join(root, 'iso-tamper');
   let edited = false;
   // The candidate edits A0's built allocator as soon as A0 has been built (A0 is rebuilt after the candidate's prerequisites).
-  const sut = args => { if (!edited && fs.existsSync(a0Alloc) && !args.dir.includes(R.C1.commit.slice(0, 12))) { fs.appendFileSync(a0Alloc, '// edited by the candidate\n'); edited = true; } return local(args); };
-  const r = qualifyClaim(runFx('RUN-CANDIDATE').claim, { git: gitSource(R.dir), authorityRef: 'main', workDir: path.join(root, 'work', 'tamper'), sut });
+  const sut = escaped(iso, args => {
+    const a0 = isoDirs(iso, 'tx2-build').find(d => d.includes(R.C1.commit.slice(0, 12)));
+    if (!edited && a0 && args.dir !== a0) { fs.appendFileSync(path.join(a0, 'packages/xtdb/dist/alloc.mjs'), '// edited by the candidate\n'); edited = true; }
+  });
+  const r = qualifyClaim(runFx('RUN-CANDIDATE').claim, { git: gitSource(R.dir), authorityRef: 'main', workDir: path.join(root, 'work', 'tamper'), isolationRoot: iso, sut });
   assert.ok(edited);
   assert.ok(codes(r).includes('BUILD-TAMPERED') && codes(r).includes('PREREQ-FAILED'), JSON.stringify(codes(r)));
   assert.equal(r.offlineVerdict, 'DIAGNOSTIC');
+});
+
+test('qualify Q67e (Codex round 8 finding 6): an edited oracle copy is never run again, and edited evidence is reported', () => {
+  const iso = path.join(root, 'iso-oracle');
+  let edited = false;
+  const sut = escaped(iso, (args, dir) => {
+    if (edited) return;
+    const copy = isoDirs(dir, 'tx2-oracle-O-REPLAY')[0];
+    const cli = copy && path.join(copy, 'lab/oracles/replay/cli.py');
+    if (!cli) return;
+    // A read-only copy stops a careless write, not a same-user process: it makes the file writable and edits it.
+    assert.throws(() => fs.appendFileSync(cli, '# x\n'), /EACCES|EPERM/);
+    fs.chmodSync(cli, 0o644);
+    fs.appendFileSync(cli, 'sys.stdout.write("{}")\n');
+    const objects = path.join(root, 'work', 'oracle-tamper', 'objects'), victim = path.join(objects, fs.readdirSync(objects)[0]);
+    fs.chmodSync(victim, 0o644);
+    fs.appendFileSync(victim, ' ');
+    edited = true;
+  });
+  const r = qualifyClaim(runFx('RUN-CANDIDATE').claim, { git: gitSource(R.dir), authorityRef: 'main', workDir: path.join(root, 'work', 'oracle-tamper'), isolationRoot: iso, sut });
+  assert.ok(edited);
+  for (const code of ['ORACLE-TAMPERED', 'EVIDENCE-TAMPERED', 'PREREQ-FAILED']) assert.ok(codes(r).includes(code), `${code}: ${codes(r)}`);
+  assert.equal(r.offlineVerdict, 'DIAGNOSTIC');
+  // No O-REPLAY run after the edit: every recorded O-REPLAY output is one JSON document, as only the pinned bytes print.
+  const store = objectStore(r.run.objects);
+  const replays = r.run.oracle.filter(x => x.oracle === 'O-REPLAY');
+  assert.ok(replays.length >= 1);
+  for (const o of replays) assert.doesNotThrow(() => JSON.parse(store.get(o.outputSha256).bytes.toString()));
+  assert.deepEqual(fs.readdirSync(iso), [], 'isolation directories are removed after the run');
+});
+
+test('qualify Q67e (Codex round 8 finding 6): a build helper left running is killed with the build\'s process group', async () => {
+  const r = runs['RUN-BACKGROUND-HELPER'];
+  assert.equal(r.offlineVerdict, 'QUALIFIED', JSON.stringify(r.reasons));
+  await new Promise(done => setTimeout(done, 700));
+  assert.equal(fs.existsSync(R.bgMarker), false, 'the helper outlived the build');
+  // Control: the same build run without the group kill leaves its helper running, which writes the marker.
+  const dir = fs.mkdtempSync(path.join(root, 'bg-control-'));
+  fs.mkdirSync(path.join(dir, 'packages/xtdb/src'), { recursive: true });
+  fs.mkdirSync(path.join(dir, 'home'));
+  fs.writeFileSync(path.join(dir, 'packages/xtdb/src/a.ts'), 'export {};\n');
+  fs.writeFileSync(path.join(dir, 'build.mjs'), R.BG.files['build.mjs']);
+  assert.equal(spawnSync(process.execPath, ['build.mjs'], { cwd: dir, env: { PATH: process.env.PATH, HOME: path.join(dir, 'home') }, stdio: 'ignore' }).status, 0);
+  for (let i = 0; i < 40 && !fs.existsSync(R.bgMarker); i++) await new Promise(done => setTimeout(done, 100));
+  assert.ok(fs.existsSync(R.bgMarker), 'the control helper never wrote its marker, so the check above proves nothing');
+  fs.rmSync(R.bgMarker);
+});
+
+test('qualify Q67j (Codex round 8 finding 11): a log-source promotion is rejected with a typed reason', () => {
+  const r = runs['RUN-PROMOTION'];
+  // The reference model ignores the claim kind and qualifies it, executing no hardening case; the lab rejects it.
+  assert.equal(r.run.core.verdict, 'QUALIFIED');
+  assert.equal(r.reasons[0].code, 'PROMOTION-UNSUPPORTED');
+  assert.equal(r.offlineVerdict, 'DIAGNOSTIC');
+  assert.equal(runFx('RUN-PROMOTION').claim.composition.source.variant, 'log-source');
+  assert.equal(lab['POSITIVE-PROMOTION'].documentVerdict, 'DIAGNOSTIC');
 });
 
 test('qualify verify: only the authority contract\'s VERIFIER_REGISTRY counts; supplied verifier records count for nothing', () => {
@@ -384,6 +510,7 @@ test('qualify: no path to QUALIFIED without a gate run; an offline run that pass
   assert.equal(stub.verdict, 'DIAGNOSTIC');
   assert.ok(codes(stub).includes('GATE-NOT-RUN'));
   for (const r of [...Object.values(runs), ...Object.values(planOnly)]) assert.equal(r.verdict, 'DIAGNOSTIC');
+  assert.deepEqual(fs.existsSync(ISO) ? fs.readdirSync(ISO) : [], [], 'isolation directories are removed after every run');
 });
 
 test('CLI qualify: --offline-sut runs offline and exits 2 with the offline verdict; usage errors exit 1', () => {
