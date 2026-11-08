@@ -607,7 +607,8 @@ const qleverReachable =
     () => false,
   ));
 describe.skipIf(!qleverReachable)("QLever write counter (live)", () => {
-  const graph = "urn:triplex:c8-write-counter-probe";
+  // [INT-XCJ] Why: isolate the shared-resident live control per run. Rejected: fixed graph (parallel runs share cleanup).
+  const graph = `urn:triplex:c8-write-counter-probe:${randomUUID()}`;
   const triple = `GRAPH <${graph}> { <urn:c8:s> <urn:c8:p> "1" }`;
   const token = process.env["QLEVER_ACCESS_TOKEN"];
   it("queries count zero writes; one update counts one write", async () => {

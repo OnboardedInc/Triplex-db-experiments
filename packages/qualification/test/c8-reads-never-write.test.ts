@@ -376,14 +376,16 @@ describe.skipIf(process.env["QLEVER_INTEGRATION"] !== "1")("C8 on QLever: reads 
         }),
       );
 
+      // [INT-XCJ] Why: isolate shared-resident positive controls. Rejected: fixed graph (cross-run cleanup races).
+      const controlGraph = `urn:triplex:c8-write-counter-control:${randomUUID()}`;
       counter.reset();
       await readClient.update(
-        "INSERT DATA { GRAPH <urn:triplex:c8-write-counter-control> { <urn:c8:s> <urn:c8:p> \"1\" } }",
+        `INSERT DATA { GRAPH <${controlGraph}> { <urn:c8:s> <urn:c8:p> "1" } }`,
       );
       expect(counter.counts().commits).toBe(1);
       const cleanup = makeQleverClient(qleverUrl);
       await cleanup.update(
-        "DELETE DATA { GRAPH <urn:triplex:c8-write-counter-control> { <urn:c8:s> <urn:c8:p> \"1\" } }",
+        `DELETE DATA { GRAPH <${controlGraph}> { <urn:c8:s> <urn:c8:p> "1" } }`,
       );
       await cleanup.close();
     } finally {
