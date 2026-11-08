@@ -42,7 +42,10 @@ const read = (surface: string, query: (sparql: string, opts?: any) => Promise<an
   };
   if (surface === "native")
     return failed(
-      makeQleverNativeQueries(client, DatabaseScope.test("round6"), { awaitBasisMs: 50 }).select(
+      makeQleverNativeQueries(client, DatabaseScope.test("round6"), {
+        awaitBasisMs: 50,
+        defaultTimeoutMs: 2000,
+      }).select(
         { name: "round6", parameters: TypeExpr.any, row: TypeExpr.any },
         {},
         () => "SELECT ?s WHERE { ?s ?p ?o }",
@@ -61,11 +64,14 @@ const read = (surface: string, query: (sparql: string, opts?: any) => Promise<an
     after: async () => {},
   });
   return failed(
-    makeQleverQueryExecutor(client, "round6", { resolveBasis: gate }).execute(
-      { find: ["?v"], where: [["s:round6", ":v/f0", "?v"]] },
-      false,
-      { validAt: 0, recordedPosition: 1024 },
-    ),
+    makeQleverQueryExecutor(client, "round6", {
+      resolveBasis: gate,
+      timeoutMs: 2000,
+      nativeTimeoutMs: 2000,
+    }).execute({ find: ["?v"], where: [["s:round6", ":v/f0", "?v"]] }, false, {
+      validAt: 0,
+      recordedPosition: 1024,
+    }),
   );
 };
 
@@ -83,7 +89,7 @@ describe("round6 real exported clients propagate missing OS transport codes", ()
   it.each(matrix)(
     "$kind $surface $code depth=$depth",
     async ({ code, transport, depth, kind, surface }) => {
-      const server = http.createServer((_req, res) => res.end('{"results":{"bindings":[]}}'));
+      const server = http.createServer((_req, _res) => {});
       await new Promise<void>((resolve, reject) => {
         server.once("error", reject);
         server.listen(0, "127.0.0.1", resolve);
@@ -98,9 +104,13 @@ describe("round6 real exported clients propagate missing OS transport codes", ()
         ...args: any[]
       ): net.Socket {
         const connected = (original as any).apply(this, args);
-        injected++;
-        const cause = depth === 0 ? coded(code) : new TypeError("opaque", { cause: coded(code) });
-        queueMicrotask(() => this.destroy(cause));
+        // [EXP-P2Q] Why: Undici retries pre-request UND_ERR_SOCKET; establish a running request first.
+        // Rejected: repeated pre-connect injection (it tests the client's retry loop and can exhaust memory).
+        if (injected === 0) {
+          injected++;
+          const cause = depth === 0 ? coded(code) : new TypeError("opaque", { cause: coded(code) });
+          this.once("connect", () => setImmediate(() => this.destroy(cause)));
+        }
         return connected;
       } as any);
       try {
@@ -125,7 +135,7 @@ describe("round6 real exported clients propagate missing OS transport codes", ()
           injected,
           uv,
           injection:
-            "synthetic errno on the real client-owned net.Socket; no OS network outage induced",
+            "one synthetic code after connection establishment with the response held open; no OS network outage induced",
           chain,
         });
         expect(injected).toBeGreaterThan(0);
