@@ -1079,3 +1079,14 @@ Where each priority stands, from evidence so far (research probes and baselines;
   prior art from Datomic, XTDB 1.x, KTables, CQRS projections and materialized views, the smallest Triplex change for an exact current read at
   basis B, sweep isolation and admission control).
 - **Running (10):** C8, J01, P2Q fix round, E01, M01, V-X02, W0-1.1.2, V-D01c delta check, O-REPLAY 0.4.2, R24 (N01's A0 run in background).
+
+## 2026-11-08 00:54Z: Codex round 8: NOT READY, 10 open (14, 13, 7, 6, 5, 4, 5, 10)
+- Closed: the source/replica ACK split (R7-5). No receipt-shaped input reaches QUALIFIED in claim.mjs (admit always DIAGNOSTIC, qualify always
+  GATE-NOT-RUN), so the document-forgery line of attack is finished.
+- New critical findings come from the new machinery: (6) a candidate's build runs unsandboxed and could edit the oracle or the A0 control;
+  (7) PAIR-0 admission checks only labels, so a RED window with a SLOWER verdict, or no numbers at all, qualified in the reference model.
+  The broker fix round's before/after marker check misses a replica reset that completes inside one query (R7-6).
+- Learning: each new mechanism is first written as labels and checked as labels; the attack that always works is "supply the label without
+  the substance". Q67f makes PAIR-0 recompute decisions from retained data, Q67e isolates builds, Q67c fences replicas by incarnation.
+- Owners: EXP-E01 (Q67b, e, i, j), A01 0.3.10 (Q63-Q67 compile), the P2Q author after V-P2Q's verdict (Q67c, d, h), EXP-M01 (artifact format
+  for Q67f, g), EXP-G03 (executing gate, isolation).

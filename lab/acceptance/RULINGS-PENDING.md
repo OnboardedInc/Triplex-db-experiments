@@ -51,3 +51,17 @@ These move into RULINGS.md when the contract version that compiles them is built
 | Q66b cursor over an in-flight read | A continuation cursor carries the erasure prefix its page was computed with, and every later page answers with that same prefix; the oracle answers `cursorFrom` on an in-flight entry per prefix instead of refusing. | Q52e; G10.cursor.stable |
 | Q66c scope | Only erasures in the read's own scope are in flight; erasures in other scopes always apply. Confirmed. | scopes are independent sources |
 | Q66d explicit text conversion | The explicitly converted half of DR-JSON-STRING-TEXT is a lane obligation; the oracle does not model text-to-decimal conversion. Confirmed. | Q49e |
+
+## Q67: Codex round 8 on contract 0.3.9 and claim.mjs
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q67a blockers stay | Every blocker stays until EXP-G03's executing gate exists; manifests, runners, build spec, frozen trace and A0 controls are pinned only through contract versions. | round 8 finding 1 |
+| Q67b execution identity | An execution's identity is its source tree, build spec, lockfile, toolchain versions, runner and config hashes per instance; executions are keyed by instance, never by output hash. | finding 2 |
+| Q67c reset during a query | Single-request read surfaces read the replica marker in the same request as the answer. Multi-request surfaces (Datalog, executor) use replica incarnation fencing: every replay begins by writing a new incarnation id, and an answer is accepted only if (incarnation, marker) is equal before and after. The reset-during-query interleaving is an independently authored case. | finding 4 |
+| Q67d P3 timing | Both arms enumerate the final published source prefix from the source's own record and timestamp actual publication (broker: watermark publication; engine as source: commit resolution); ACK records are reconciled afterwards; a late or lost ACK is never a feed defect. | finding 5; Q55d |
+| Q67e isolation | Builds and both arms run isolated from evaluator, oracle, evidence and control storage; oracle bytes run from an evaluator-owned read-only copy re-hashed before every invocation; offline verdicts stay DIAGNOSTIC. | finding 6 |
+| Q67f PAIR-0 admission | Admission recomputes every paired decision, noise grade, offered-command accounting and bar from retained per-round histograms, signals and events; the number of rounds must equal a registered look (8, 12, 18 or 24); the RED-window and committed-only counterexamples execute against admission. | finding 7; Q60 |
+| Q67g placement | Shared workload identity is separate from each arm's placement; a duet needs equal capacity, equal regime and disjoint cpusets; slots are per arm; under cpusets the per-core denominator is the cpuset size. | finding 8; R22 |
+| Q67h error representation | One representation: `_tag` "BasisNotAvailable" or "ReplicaUnavailable" with {required, observed, replica}; `cause` is optional; core gains these error classes and adapters return them. | finding 9; Q58a |
+| Q67i comparators | case-result/2 is recomputed with its declared comparator on retained raw objects; byte equality applies only to CMP-EXACT. | finding 10; Q61e |
+| Q67j promotion | Claim kind is preserved and promotion prerequisites (GATE-BROKER-HARDENING and others) are enforced mechanically; until supported, promotion qualification is rejected explicitly. | finding 11; Q62b |
