@@ -1,0 +1,136 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 16329 "CX-P2Q-R2-final-round", pid 44149 "CX-VO04I-review", pid 67198 "CX-VE01-3-fallback-routes", pid 12504 "CX-VJ01-checks-r3"
+offline-core 1 kv/layers/KvTriples.query.test.ts [ test/kv/layers/KvTriples.query.test.ts ]
+ FAIL  test/kv/layers/KvTriples.store.test.ts [ test/kv/layers/KvTriples.store.test.ts ]
+ FAIL  test/kv/layers/KvTriples.test.ts [ test/kv/layers/KvTriples.test.ts ]
+ FAIL  test/kv/kv/InMemoryKvBackend.test.ts [ test/kv/kv/InMemoryKvBackend.test.ts ]
+ FAIL  test/kv/kv/encoding.test.ts [ test/kv/kv/encoding.test.ts ]
+ FAIL  test/unit/security/sql-injection.test.ts [ test/unit/security/sql-injection.test.ts ]
+Error: Transform failed with 1 error:
+
+[31m[TSCONFIG_ERROR] [0mFailed to load tsconfig '../../tsconfig.node.json': Tsconfig not found
+
+  Plugin: vite:oxc
+  File: /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/packages/core/test/Branded.test.ts
+ ❯ transformWithOxc ../../../../../../../node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:4103:19
+ ❯ TransformPluginContext.transform ../../../../../../../node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:4174:26
+ ❯ EnvironmentPluginContainer.transform ../../../../../../../node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:30932:51
+ ❯ loadAndTransform ../../../../../../../node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:20671:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/57]⎯
+
+
+offline-xtdb 1 IL  test/json-compatibility.test.ts [ test/json-compatibility.test.ts ]
+ FAIL  test/maintained.test.ts [ test/maintained.test.ts ]
+ FAIL  test/native-query.test.ts [ test/native-query.test.ts ]
+ FAIL  test/native-reachability.test.ts [ test/native-reachability.test.ts ]
+ FAIL  test/native-sql-envelope.test.ts [ test/native-sql-envelope.test.ts ]
+ FAIL  test/query-compiler.test.ts [ test/query-compiler.test.ts ]
+ FAIL  test/query-integration.test.ts [ test/query-integration.test.ts ]
+Error: Transform failed with 1 error:
+
+[31m[TSCONFIG_ERROR] [0mFailed to load tsconfig '../../tsconfig.node.json': Tsconfig not found
+
+  Plugin: vite:oxc
+  File: /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/packages/xtdb/test/adapter.test.ts
+ ❯ transformWithOxc ../../../../../../../node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:4103:19
+ ❯ TransformPluginContext.transform ../../../../../../../node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:4174:26
+ ❯ EnvironmentPluginContainer.transform ../../../../../../../node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:30932:51
+ ❯ loadAndTransform ../../../../../../../node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:20671:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/15]⎯
+
+
+offline-qlever 1 tervals.test.ts ]
+ FAIL  test/native-relations.test.ts [ test/native-relations.test.ts ]
+ FAIL  test/native.test.ts [ test/native.test.ts ]
+ FAIL  test/negation.test.ts [ test/negation.test.ts ]
+ FAIL  test/outcomes.test.ts [ test/outcomes.test.ts ]
+ FAIL  test/query.test.ts [ test/query.test.ts ]
+ FAIL  test/storage.test.ts [ test/storage.test.ts ]
+ FAIL  test/temporal-profile.test.ts [ test/temporal-profile.test.ts ]
+ FAIL  test/unicode.test.ts [ test/unicode.test.ts ]
+Error: Transform failed with 1 error:
+
+[31m[TSCONFIG_ERROR] [0mFailed to load tsconfig '../../tsconfig.node.json': Tsconfig not found
+
+  Plugin: vite:oxc
+  File: /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/packages/qlever/test/aggregate-answers.test.ts
+ ❯ transformWithOxc ../../../../../../../node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:4103:19
+ ❯ TransformPluginContext.transform ../../../../../../../node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:4174:26
+ ❯ EnvironmentPluginContainer.transform ../../../../../../../node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:30932:51
+ ❯ loadAndTransform ../../../../../../../node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:20671:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+
+offline-qualification 1 led Suites 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/c8-reads-never-write.test.ts [ test/c8-reads-never-write.test.ts ]
+ FAIL  test/c8-support-paths.test.ts [ test/c8-support-paths.test.ts ]
+ FAIL  test/engine-write-counter.test.ts [ test/engine-write-counter.test.ts ]
+ FAIL  test/query-paths.test.ts [ test/query-paths.test.ts ]
+ FAIL  test/runtime-conformance.test.ts [ test/runtime-conformance.test.ts ]
+ FAIL  test/xtdb-native-library.test.ts [ test/xtdb-native-library.test.ts ]
+Error: Transform failed with 1 error:
+
+[31m[TSCONFIG_ERROR] [0mFailed to load tsconfig '../../tsconfig.node.json': Tsconfig not found
+
+  Plugin: vite:oxc
+  File: /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/packages/qualification/test/c8-reads-never-write.test.ts
+ ❯ transformWithOxc ../../../../../../../node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:4103:19
+ ❯ TransformPluginContext.transform ../../../../../../../node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:4174:26
+ ❯ EnvironmentPluginContainer.transform ../../../../../../../node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:30932:51
+ ❯ loadAndTransform ../../../../../../../node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:20671:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+
+offline-node 1 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: fractional offered schedules never release before the actual clock reaches them
+ok 2 - fractional offered schedules never release before the actual clock reaches them
+  ---
+  duration_ms: 25.113833
+  type: 'test'
+  ...
+# Subtest: queued requests expire from their offered deadline without entering the backend or leaking a slot
+ok 3 - queued requests expire from their offered deadline without entering the backend or leaking a slot
+  ---
+  duration_ms: 22.988917
+  type: 'test'
+  ...
+# Subtest: bounded rejection is immediate and does not alter already admitted requests
+ok 4 - bounded rejection is immediate and does not alter already admitted requests
+  ---
+  duration_ms: 2.11725
+  type: 'test'
+  ...
+# Subtest: independent oracle follows returned P and keeps historical R stable across corrections
+ok 5 - independent oracle follows returned P and keeps historical R stable across corrections
+  ---
+  duration_ms: 12.140292
+  type: 'test'
+  ...
+# Subtest: cold probes span the declared distinct-entity population and never change under hot corrections
+ok 6 - cold probes span the declared distinct-entity population and never change under hot corrections
+  ---
+  duration_ms: 9.461625
+  type: 'test'
+  ...
+# Subtest: oracle refuses changed recipe, wrong seed commit count and an excessive catalog
+ok 7 - oracle refuses changed recipe, wrong seed commit count and an excessive catalog
+  ---
+  duration_ms: 1.90925
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 6
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 143.313958
+

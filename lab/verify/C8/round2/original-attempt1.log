@@ -1,0 +1,33 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 16329 "CX-P2Q-R2-final-round", pid 44149 "CX-VO04I-review", pid 20258 "CX-VE01-3-prior", pid 12504 "CX-VJ01-checks-r3"
+[lab] heavy: waiting for one of 4 slots; held by pid 16329 "CX-P2Q-R2-final-round", pid 44149 "CX-VO04I-review", pid 20258 "CX-VE01-3-prior", pid 12504 "CX-VJ01-checks-r3"
+[lab] heavy: waiting for one of 4 slots; held by pid 16329 "CX-P2Q-R2-final-round", pid 44149 "CX-VO04I-review", pid 20258 "CX-VE01-3-prior", pid 12504 "CX-VJ01-checks-r3"
+[lab] heavy: waiting for one of 4 slots; held by pid 16329 "CX-P2Q-R2-final-round", pid 44149 "CX-VO04I-review", pid 20258 "CX-VE01-3-prior", pid 12504 "CX-VJ01-checks-r3"
+[lab] heavy: waiting for one of 4 slots; held by pid 16329 "CX-P2Q-R2-final-round", pid 44149 "CX-VO04I-review", pid 67198 "CX-VE01-3-fallback-routes", pid 12504 "CX-VJ01-checks-r3"
+[lab] heavy: waiting for one of 4 slots; held by pid 16329 "CX-P2Q-R2-final-round", pid 44149 "CX-VO04I-review", pid 72798 "CX-VC8-2-offline", pid 12504 "CX-VJ01-checks-r3"
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  lab/verify/C8/adversarial.test.ts [ lab/verify/C8/adversarial.test.ts ]
+Error: Transform failed with 1 error:
+
+[31m[TSCONFIG_ERROR] [0mFailed to load tsconfig 'tsconfig.node.json': Tsconfig not found
+
+  Plugin: vite:oxc
+  File: /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/packages/core/src/native/FrontierClosure.ts
+ ❯ transformWithOxc ../../../../../node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:4103:19
+ ❯ TransformPluginContext.transform ../../../../../node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:4174:26
+ ❯ EnvironmentPluginContainer.transform ../../../../../node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:30932:51
+ ❯ loadAndTransform ../../../../../node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:20671:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  16:43:45
+   Duration  372ms (worker 98%, environment 2%)
+
+JSON report written to /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/original-results.json

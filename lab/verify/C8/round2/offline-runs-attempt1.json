@@ -1,0 +1,112 @@
+[
+  {
+    "name": "offline-core",
+    "cwd": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/packages/core",
+    "command": [
+      "/Users/sam/.hermes/node/bin/node",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/node_modules/vitest/vitest.mjs",
+      "run",
+      "--maxWorkers=1",
+      "--no-file-parallelism"
+    ],
+    "env": {
+      "XTDB_INTEGRATION": "0",
+      "QLEVER_INTEGRATION": "0",
+      "TRIPLEX_INTEGRATION": "0",
+      "TRIPLEX_DUCKDB": "0"
+    },
+    "started": "2026-11-08T21:43:27.449Z",
+    "finished": "2026-11-08T21:43:34.920Z",
+    "status": 1,
+    "signal": null,
+    "error": ""
+  },
+  {
+    "name": "offline-xtdb",
+    "cwd": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/packages/xtdb",
+    "command": [
+      "/Users/sam/.hermes/node/bin/node",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/node_modules/vitest/vitest.mjs",
+      "run",
+      "--maxWorkers=1",
+      "--no-file-parallelism"
+    ],
+    "env": {
+      "XTDB_INTEGRATION": "0",
+      "QLEVER_INTEGRATION": "0",
+      "TRIPLEX_INTEGRATION": "0",
+      "TRIPLEX_DUCKDB": "0"
+    },
+    "started": "2026-11-08T21:43:34.922Z",
+    "finished": "2026-11-08T21:43:37.477Z",
+    "status": 1,
+    "signal": null,
+    "error": ""
+  },
+  {
+    "name": "offline-qlever",
+    "cwd": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/packages/qlever",
+    "command": [
+      "/Users/sam/.hermes/node/bin/node",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/node_modules/vitest/vitest.mjs",
+      "run",
+      "--maxWorkers=1",
+      "--no-file-parallelism"
+    ],
+    "env": {
+      "XTDB_INTEGRATION": "0",
+      "QLEVER_INTEGRATION": "0",
+      "TRIPLEX_INTEGRATION": "0",
+      "TRIPLEX_DUCKDB": "0"
+    },
+    "started": "2026-11-08T21:43:37.478Z",
+    "finished": "2026-11-08T21:43:39.293Z",
+    "status": 1,
+    "signal": null,
+    "error": ""
+  },
+  {
+    "name": "offline-qualification",
+    "cwd": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/packages/qualification",
+    "command": [
+      "/Users/sam/.hermes/node/bin/node",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/node_modules/vitest/vitest.mjs",
+      "run",
+      "--maxWorkers=1",
+      "--no-file-parallelism"
+    ],
+    "env": {
+      "XTDB_INTEGRATION": "0",
+      "QLEVER_INTEGRATION": "0",
+      "TRIPLEX_INTEGRATION": "0",
+      "TRIPLEX_DUCKDB": "0"
+    },
+    "started": "2026-11-08T21:43:39.296Z",
+    "finished": "2026-11-08T21:43:40.201Z",
+    "status": 1,
+    "signal": null,
+    "error": ""
+  },
+  {
+    "name": "offline-node",
+    "cwd": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/packages/qualification",
+    "command": [
+      "/Users/sam/.hermes/node/bin/node",
+      "--test",
+      "../../qualification/compare.test.mjs",
+      "load/dispatch.test.ts",
+      "load/model.test.ts"
+    ],
+    "env": {
+      "XTDB_INTEGRATION": "0",
+      "QLEVER_INTEGRATION": "0",
+      "TRIPLEX_INTEGRATION": "0",
+      "TRIPLEX_DUCKDB": "0"
+    },
+    "started": "2026-11-08T21:43:40.201Z",
+    "finished": "2026-11-08T21:43:40.379Z",
+    "status": 1,
+    "signal": null,
+    "error": ""
+  }
+]

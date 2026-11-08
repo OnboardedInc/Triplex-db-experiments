@@ -1,0 +1,77 @@
+[
+  {
+    "name": "light-live",
+    "cwd": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut",
+    "command": [
+      "/Users/sam/.hermes/node/bin/node",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/node_modules/vitest/vitest.mjs",
+      "run",
+      "--config",
+      "lab/verify/C8/vitest.config.ts",
+      "lab/verify/C8/light-live.test.ts",
+      "--reporter=verbose"
+    ],
+    "env": {
+      "XTDB_INTEGRATION": "0",
+      "QLEVER_INTEGRATION": "0",
+      "TRIPLEX_INTEGRATION": "0",
+      "TRIPLEX_DUCKDB": "0",
+      "C8_LIGHT_LIVE": "1"
+    },
+    "started": "2026-11-08T21:45:08.490Z",
+    "finished": "2026-11-08T21:45:10.441Z",
+    "status": 0,
+    "signal": null,
+    "error": ""
+  },
+  {
+    "name": "counter-live",
+    "cwd": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/packages/qualification",
+    "command": [
+      "/Users/sam/.hermes/node/bin/node",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/node_modules/vitest/vitest.mjs",
+      "run",
+      "test/engine-write-counter.test.ts",
+      "-t",
+      "QLever write counter \\(live\\)",
+      "--reporter=verbose"
+    ],
+    "env": {
+      "XTDB_INTEGRATION": "0",
+      "QLEVER_INTEGRATION": "1",
+      "TRIPLEX_INTEGRATION": "0",
+      "TRIPLEX_DUCKDB": "0",
+      "QLEVER_URL": "http://127.0.0.1:7070"
+    },
+    "started": "2026-11-08T21:45:10.442Z",
+    "finished": "2026-11-08T21:45:16.924Z",
+    "status": 0,
+    "signal": null,
+    "error": ""
+  },
+  {
+    "name": "c8-live",
+    "cwd": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/packages/qualification",
+    "command": [
+      "/Users/sam/.hermes/node/bin/node",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/node_modules/vitest/vitest.mjs",
+      "run",
+      "test/c8-reads-never-write.test.ts",
+      "--reporter=verbose"
+    ],
+    "env": {
+      "XTDB_INTEGRATION": "0",
+      "QLEVER_INTEGRATION": "1",
+      "TRIPLEX_INTEGRATION": "0",
+      "TRIPLEX_DUCKDB": "0",
+      "QLEVER_URL": "http://127.0.0.1:7070",
+      "C8_READERS": "1",
+      "C8_LOAD_MS": "2000"
+    },
+    "started": "2026-11-08T21:45:16.924Z",
+    "finished": "2026-11-08T21:47:06.462Z",
+    "status": 0,
+    "signal": null,
+    "error": ""
+  }
+]

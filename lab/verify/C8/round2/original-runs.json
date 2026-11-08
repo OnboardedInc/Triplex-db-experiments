@@ -1,0 +1,47 @@
+[
+  {
+    "name": "source-binding",
+    "cwd": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2",
+    "command": [
+      "/Users/sam/.hermes/node/bin/node",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/prepare.mjs"
+    ],
+    "env": {
+      "XTDB_INTEGRATION": "0",
+      "QLEVER_INTEGRATION": "0",
+      "TRIPLEX_INTEGRATION": "0",
+      "TRIPLEX_DUCKDB": "0"
+    },
+    "started": "2026-11-08T21:44:56.741Z",
+    "finished": "2026-11-08T21:45:06.775Z",
+    "status": 0,
+    "signal": null,
+    "error": ""
+  },
+  {
+    "name": "original",
+    "cwd": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut",
+    "command": [
+      "/Users/sam/.hermes/node/bin/node",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/node_modules/vitest/vitest.mjs",
+      "run",
+      "--config",
+      "lab/verify/C8/vitest.config.ts",
+      "lab/verify/C8/adversarial.test.ts",
+      "--reporter=verbose",
+      "--reporter=json",
+      "--outputFile=/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/original-results.json"
+    ],
+    "env": {
+      "XTDB_INTEGRATION": "0",
+      "QLEVER_INTEGRATION": "0",
+      "TRIPLEX_INTEGRATION": "0",
+      "TRIPLEX_DUCKDB": "0"
+    },
+    "started": "2026-11-08T21:45:06.776Z",
+    "finished": "2026-11-08T21:45:07.643Z",
+    "status": 0,
+    "signal": null,
+    "error": ""
+  }
+]

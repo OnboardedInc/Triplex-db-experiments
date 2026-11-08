@@ -1,0 +1,328 @@
+{
+  "reviewer": "CX-VC8-2",
+  "verdict": "FIX-FIRST",
+  "revision": "0527233c21c0073280c5eaf56bf6077e101c2cf2",
+  "findings": [
+    {
+      "id": "F4-R2",
+      "severity": "P2",
+      "location": "packages/qualification/src/engine-write-counter.ts:478",
+      "problem": "Unclassified GET shapes remain clean"
+    },
+    {
+      "id": "F5-R2",
+      "severity": "P2",
+      "location": "packages/qualification/src/engine-write-counter.ts:354",
+      "problem": "Post-exception forwarded traffic disappears across resets"
+    }
+  ],
+  "original": [
+    {
+      "title": "exhausts every directed 3-node graph including loops, cycles, diamonds, disconnected seeds",
+      "status": "passed"
+    },
+    {
+      "title": "high fanout, duplicates and exact limits / one past visited, edges, roundRows, pairs, rounds",
+      "status": "passed"
+    },
+    {
+      "title": "BUG: refuses a cycle that adds a reached seed beyond maxRounds",
+      "status": "passed"
+    },
+    {
+      "title": "BUG: ruleClosure honors explicitly supplied maxRounds",
+      "status": "passed"
+    },
+    {
+      "title": "BUG: ruleClosure honors explicitly supplied maxVisited",
+      "status": "passed"
+    },
+    {
+      "title": "BUG: path counts on a 12000-node DAG within default frontier budgets do not overflow the JS stack",
+      "status": "passed"
+    },
+    {
+      "title": "all storage read methods on both lanes send query only, although constructors retain writable clients",
+      "status": "passed"
+    },
+    {
+      "title": "submit/update guards refuse without delegation, nested facade retains overlay identity",
+      "status": "passed"
+    },
+    {
+      "title": "staged XTDB rows reach main, count and rule selection queries through the same client identity",
+      "status": "passed"
+    },
+    {
+      "title": "QLever attribute-tail refusal is typed",
+      "status": "passed"
+    },
+    {
+      "title": "XTDB public attribute-tail refusal is a typed ReadError with no partial answer",
+      "status": "passed"
+    },
+    {
+      "title": "both lane evaluators preserve maxDepth and tail constraints on controlled direct-read relations",
+      "status": "passed"
+    },
+    {
+      "title": "BUG: pgwire execute of an existing prepared write after reset cannot silently count zero",
+      "status": "passed"
+    },
+    {
+      "title": "classifies required SQL adversaries as writes",
+      "status": "passed"
+    },
+    {
+      "title": "QLever GET/form LOAD and CLEAR updates count; unknown multipart must count or fail",
+      "status": "passed"
+    }
+  ],
+  "delta": [
+    {
+      "title": "F1: three-node terminal cycle refuses at two rounds and succeeds at three; empty confirmation stays legal",
+      "status": "passed"
+    },
+    {
+      "title": "F2: rule cycle enforces round and distinct-endpoint budgets including duplicate base rows",
+      "status": "passed"
+    },
+    {
+      "title": "F3: 24000-edge DAG and deep cyclic graph count exactly without recursive stack use; pathSteps edge is typed",
+      "status": "passed"
+    },
+    {
+      "title": "F4: unknown request forms must count or refuse, while health and query controls stay clean",
+      "status": "failed"
+    },
+    {
+      "title": "F5: prepared reads, writes, commits, rebindings and Close remain classified across six resets",
+      "status": "passed"
+    },
+    {
+      "title": "F5 variation: bytes forwarded after a parser exception cannot become zero-write traffic after reset",
+      "status": "failed"
+    },
+    {
+      "title": "Q76b: initialization never submits tx_query_relations schema",
+      "status": "passed"
+    },
+    {
+      "title": "Q76d: xtql workload counts three long cyclic supports at the requested cut",
+      "status": "passed"
+    },
+    {
+      "title": "Q76d: xtdb-sql workload counts three long cyclic supports at the requested cut",
+      "status": "passed"
+    },
+    {
+      "title": "Q76d: qlever workload counts three long cyclic supports at the requested cut",
+      "status": "passed"
+    }
+  ],
+  "offline": [
+    {
+      "name": "offline-core",
+      "cwd": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/packages/core",
+      "command": [
+        "/Users/sam/.hermes/node/bin/node",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/node_modules/vitest/vitest.mjs",
+        "run",
+        "--maxWorkers=1",
+        "--no-file-parallelism"
+      ],
+      "env": {
+        "XTDB_INTEGRATION": "0",
+        "QLEVER_INTEGRATION": "0",
+        "TRIPLEX_INTEGRATION": "0",
+        "TRIPLEX_DUCKDB": "0"
+      },
+      "started": "2026-11-08T21:44:57.754Z",
+      "finished": "2026-11-08T21:45:12.455Z",
+      "status": 0,
+      "signal": null,
+      "error": ""
+    },
+    {
+      "name": "offline-xtdb",
+      "cwd": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/packages/xtdb",
+      "command": [
+        "/Users/sam/.hermes/node/bin/node",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/node_modules/vitest/vitest.mjs",
+        "run",
+        "--maxWorkers=1",
+        "--no-file-parallelism"
+      ],
+      "env": {
+        "XTDB_INTEGRATION": "0",
+        "QLEVER_INTEGRATION": "0",
+        "TRIPLEX_INTEGRATION": "0",
+        "TRIPLEX_DUCKDB": "0"
+      },
+      "started": "2026-11-08T21:45:12.456Z",
+      "finished": "2026-11-08T21:45:16.606Z",
+      "status": 0,
+      "signal": null,
+      "error": ""
+    },
+    {
+      "name": "offline-qlever",
+      "cwd": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/packages/qlever",
+      "command": [
+        "/Users/sam/.hermes/node/bin/node",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/node_modules/vitest/vitest.mjs",
+        "run",
+        "--maxWorkers=1",
+        "--no-file-parallelism"
+      ],
+      "env": {
+        "XTDB_INTEGRATION": "0",
+        "QLEVER_INTEGRATION": "0",
+        "TRIPLEX_INTEGRATION": "0",
+        "TRIPLEX_DUCKDB": "0"
+      },
+      "started": "2026-11-08T21:45:16.607Z",
+      "finished": "2026-11-08T21:45:20.099Z",
+      "status": 0,
+      "signal": null,
+      "error": ""
+    },
+    {
+      "name": "offline-qualification",
+      "cwd": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/packages/qualification",
+      "command": [
+        "/Users/sam/.hermes/node/bin/node",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/node_modules/vitest/vitest.mjs",
+        "run",
+        "--maxWorkers=1",
+        "--no-file-parallelism"
+      ],
+      "env": {
+        "XTDB_INTEGRATION": "0",
+        "QLEVER_INTEGRATION": "0",
+        "TRIPLEX_INTEGRATION": "0",
+        "TRIPLEX_DUCKDB": "0"
+      },
+      "started": "2026-11-08T21:45:20.099Z",
+      "finished": "2026-11-08T21:45:22.393Z",
+      "status": 0,
+      "signal": null,
+      "error": ""
+    },
+    {
+      "name": "offline-node",
+      "cwd": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/packages/qualification",
+      "command": [
+        "/Users/sam/.hermes/node/bin/node",
+        "--test",
+        "../../qualification/compare.test.mjs",
+        "load/dispatch.test.ts",
+        "load/model.test.ts"
+      ],
+      "env": {
+        "XTDB_INTEGRATION": "0",
+        "QLEVER_INTEGRATION": "0",
+        "TRIPLEX_INTEGRATION": "0",
+        "TRIPLEX_DUCKDB": "0"
+      },
+      "started": "2026-11-08T21:45:22.393Z",
+      "finished": "2026-11-08T21:45:22.573Z",
+      "status": 0,
+      "signal": null,
+      "error": ""
+    }
+  ],
+  "live": [
+    {
+      "name": "light-live",
+      "cwd": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut",
+      "command": [
+        "/Users/sam/.hermes/node/bin/node",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "lab/verify/C8/vitest.config.ts",
+        "lab/verify/C8/light-live.test.ts",
+        "--reporter=verbose"
+      ],
+      "env": {
+        "XTDB_INTEGRATION": "0",
+        "QLEVER_INTEGRATION": "0",
+        "TRIPLEX_INTEGRATION": "0",
+        "TRIPLEX_DUCKDB": "0",
+        "C8_LIGHT_LIVE": "1"
+      },
+      "started": "2026-11-08T21:45:08.490Z",
+      "finished": "2026-11-08T21:45:10.441Z",
+      "status": 0,
+      "signal": null,
+      "error": ""
+    },
+    {
+      "name": "counter-live",
+      "cwd": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/packages/qualification",
+      "command": [
+        "/Users/sam/.hermes/node/bin/node",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/node_modules/vitest/vitest.mjs",
+        "run",
+        "test/engine-write-counter.test.ts",
+        "-t",
+        "QLever write counter \\(live\\)",
+        "--reporter=verbose"
+      ],
+      "env": {
+        "XTDB_INTEGRATION": "0",
+        "QLEVER_INTEGRATION": "1",
+        "TRIPLEX_INTEGRATION": "0",
+        "TRIPLEX_DUCKDB": "0",
+        "QLEVER_URL": "http://127.0.0.1:7070"
+      },
+      "started": "2026-11-08T21:45:10.442Z",
+      "finished": "2026-11-08T21:45:16.924Z",
+      "status": 0,
+      "signal": null,
+      "error": ""
+    },
+    {
+      "name": "c8-live",
+      "cwd": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/packages/qualification",
+      "command": [
+        "/Users/sam/.hermes/node/bin/node",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/node_modules/vitest/vitest.mjs",
+        "run",
+        "test/c8-reads-never-write.test.ts",
+        "--reporter=verbose"
+      ],
+      "env": {
+        "XTDB_INTEGRATION": "0",
+        "QLEVER_INTEGRATION": "1",
+        "TRIPLEX_INTEGRATION": "0",
+        "TRIPLEX_DUCKDB": "0",
+        "QLEVER_URL": "http://127.0.0.1:7070",
+        "C8_READERS": "1",
+        "C8_LOAD_MS": "2000"
+      },
+      "started": "2026-11-08T21:45:16.924Z",
+      "finished": "2026-11-08T21:47:06.462Z",
+      "status": 0,
+      "signal": null,
+      "error": ""
+    }
+  ],
+  "offlineTotals": {
+    "passed": 1004,
+    "skipped": 155,
+    "failed": 0
+  },
+  "notRun": [
+    "XTDB live C8/transaction overlay",
+    "full G1/G2",
+    "P1 performance acceptance",
+    "root build/docs/pack",
+    "other backend integration"
+  ],
+  "report": {
+    "path": "../VERIFY-round2.md",
+    "sha256": "d657e478e6df563ecd69346bf741ac45a6137824d61c20200387a6076b73e796"
+  }
+}

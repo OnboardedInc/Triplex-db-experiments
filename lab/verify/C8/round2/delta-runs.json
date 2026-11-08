@@ -1,0 +1,28 @@
+[
+  {
+    "name": "delta",
+    "cwd": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut",
+    "command": [
+      "/Users/sam/.hermes/node/bin/node",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/node_modules/vitest/vitest.mjs",
+      "run",
+      "--config",
+      "lab/verify/C8/vitest.config.ts",
+      "lab/verify/C8/delta.test.ts",
+      "--reporter=verbose",
+      "--reporter=json",
+      "--outputFile=/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/delta-results.json"
+    ],
+    "env": {
+      "XTDB_INTEGRATION": "0",
+      "QLEVER_INTEGRATION": "0",
+      "TRIPLEX_INTEGRATION": "0",
+      "TRIPLEX_DUCKDB": "0"
+    },
+    "started": "2026-11-08T21:46:04.605Z",
+    "finished": "2026-11-08T21:46:05.858Z",
+    "status": 1,
+    "signal": null,
+    "error": ""
+  }
+]

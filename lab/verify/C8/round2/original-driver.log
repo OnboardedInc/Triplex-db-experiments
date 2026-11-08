@@ -1,0 +1,20 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 77135 "G0-xtdb-20261108T214444Z-145b50 vitest-core", pid 44149 "CX-VO04I-review", pid 50657 "CX-VJ01-recovery-frontier", pid 38152 "CX-VE01-3-supplement"
+source-binding 0 {"revision":"0527233c21c0073280c5eaf56bf6077e101c2cf2","tree":"b8f384941a8340381aa5321d70882601d7ee5802","files":845,"allGitBlobsMatch":true,"lockfile":{"revisionSha256":"7a02f735718ecdd29fdbfaf8ec2e2b05c92ad773cdc27d1920a278c5c7f4ba14","installedWorktreeSha256":"7a02f735718ecdd29fdbfaf8ec2e2b05c92ad773cdc27d1920a278c5c7f4ba14"}}
+
+original 0 rial.test.ts > CX-VC8 guards and Datalog > all storage read methods on both lanes send query only, although constructors retain writable clients 3ms
+ ✓ lab/verify/C8/adversarial.test.ts > CX-VC8 guards and Datalog > submit/update guards refuse without delegation, nested facade retains overlay identity 1ms
+ ✓ lab/verify/C8/adversarial.test.ts > CX-VC8 guards and Datalog > staged XTDB rows reach main, count and rule selection queries through the same client identity 10ms
+ ✓ lab/verify/C8/adversarial.test.ts > CX-VC8 guards and Datalog > QLever attribute-tail refusal is typed 3ms
+ ✓ lab/verify/C8/adversarial.test.ts > CX-VC8 guards and Datalog > XTDB public attribute-tail refusal is a typed ReadError with no partial answer 1ms
+ ✓ lab/verify/C8/adversarial.test.ts > CX-VC8 guards and Datalog > both lane evaluators preserve maxDepth and tail constraints on controlled direct-read relations 8ms
+ ✓ lab/verify/C8/adversarial.test.ts > CX-VC8 fail closed counter > BUG: pgwire execute of an existing prepared write after reset cannot silently count zero 15ms
+ ✓ lab/verify/C8/adversarial.test.ts > CX-VC8 fail closed counter > classifies required SQL adversaries as writes 0ms
+ ✓ lab/verify/C8/adversarial.test.ts > CX-VC8 fail closed counter > QLever GET/form LOAD and CLEAR updates count; unknown multipart must count or fail 25ms
+
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+   Start at  16:45:06
+   Duration  678ms (tests 41%, transform 30%, import 29%)
+
+JSON report written to /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/original-results.json
+

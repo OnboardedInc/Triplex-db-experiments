@@ -1,0 +1,135 @@
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut
+
+ ✓ lab/verify/C8/delta.test.ts > CX-VC8-2 delta budgets and counting > F1: three-node terminal cycle refuses at two rounds and succeeds at three; empty confirmation stays legal 2ms
+ ✓ lab/verify/C8/delta.test.ts > CX-VC8-2 delta budgets and counting > F2: rule cycle enforces round and distinct-endpoint budgets including duplicate base rows 3ms
+ ✓ lab/verify/C8/delta.test.ts > CX-VC8-2 delta budgets and counting > F3: 24000-edge DAG and deep cyclic graph count exactly without recursive stack use; pathSteps edge is typed 242ms
+stdout | lab/verify/C8/delta.test.ts > CX-VC8-2 delta fail-closed accounting > F4: unknown request forms must count or refuse, while health and query controls stay clean
+{"shape":"POST /","counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<POST / application/json>"]},"forwarded":true}
+
+stdout | lab/verify/C8/delta.test.ts > CX-VC8-2 delta fail-closed accounting > F4: unknown request forms must count or refuse, while health and query controls stay clean
+{"shape":"POST /","counts":{"lane":"qlever","connections":1,"statements":0,"writes":1,"commits":1,"commands":0,"unparsed":0,"samples":["<POST / multipart/form-data>"]},"forwarded":true}
+
+stdout | lab/verify/C8/delta.test.ts > CX-VC8-2 delta fail-closed accounting > F4: unknown request forms must count or refuse, while health and query controls stay clean
+{"shape":"GET /?unexpected-operation=change-data","counts":{"lane":"qlever","connections":1,"statements":0,"writes":0,"commits":0,"commands":1,"unparsed":0,"samples":[]},"forwarded":true}
+
+stdout | lab/verify/C8/delta.test.ts > CX-VC8-2 delta fail-closed accounting > F4: unknown request forms must count or refuse, while health and query controls stay clean
+{"shape":"GET /?action=unclassified","counts":{"lane":"qlever","connections":1,"statements":0,"writes":0,"commits":0,"commands":0,"unparsed":0,"samples":[]},"forwarded":true}
+
+stdout | lab/verify/C8/delta.test.ts > CX-VC8-2 delta fail-closed accounting > F4: unknown request forms must count or refuse, while health and query controls stay clean
+{"shape":"GET /?access-token=generic","counts":{"lane":"qlever","connections":1,"statements":0,"writes":0,"commits":0,"commands":0,"unparsed":0,"samples":[]},"forwarded":true}
+
+stdout | lab/verify/C8/delta.test.ts > CX-VC8-2 delta fail-closed accounting > F5 variation: bytes forwarded after a parser exception cannot become zero-write traffic after reset
+{"afterExceptionWindow":0,"counts":{"lane":"xtdb","connections":0,"statements":0,"writes":0,"commits":0,"commands":0,"unparsed":0,"samples":[]}}
+
+stdout | lab/verify/C8/delta.test.ts > CX-VC8-2 delta fail-closed accounting > F5 variation: bytes forwarded after a parser exception cannot become zero-write traffic after reset
+{"afterExceptionWindow":1,"counts":{"lane":"xtdb","connections":0,"statements":0,"writes":0,"commits":0,"commands":0,"unparsed":0,"samples":[]}}
+
+stdout | lab/verify/C8/delta.test.ts > CX-VC8-2 delta fail-closed accounting > F5 variation: bytes forwarded after a parser exception cannot become zero-write traffic after reset
+{"afterExceptionWindow":2,"counts":{"lane":"xtdb","connections":0,"statements":0,"writes":0,"commits":0,"commands":0,"unparsed":0,"samples":[]}}
+
+ × lab/verify/C8/delta.test.ts > CX-VC8-2 delta fail-closed accounting > F4: unknown request forms must count or refuse, while health and query controls stay clean 51ms
+   → GET /?unexpected-operation=change-data: expected false to be true // Object.is equality
+   → GET /?action=unclassified: expected false to be true // Object.is equality
+   → GET /?access-token=generic: expected false to be true // Object.is equality
+ ✓ lab/verify/C8/delta.test.ts > CX-VC8-2 delta fail-closed accounting > F5: prepared reads, writes, commits, rebindings and Close remain classified across six resets 38ms
+stdout | lab/verify/C8/delta.test.ts > CX-VC8-2 Q76 follow-ups > Q76d: xtql workload counts three long cyclic supports at the requested cut
+{"lane":"xtql","calls":[{"text":"(-> (-> facts) (where (= attribute 'support') (= value_type \"ref\")) (return {:source entity_id :target value_string}) (aggregate source target) (limit 100000))","options":{"basis":{"recordedAt":1007,"validAt":1000000},"maxRows":100000}}]}
+
+stdout | lab/verify/C8/delta.test.ts > CX-VC8-2 Q76 follow-ups > Q76d: xtdb-sql workload counts three long cyclic supports at the requested cut
+{"lane":"xtdb-sql","calls":[{"text":"SELECT DISTINCT entity_id AS source, value_string AS target FROM (SELECT * FROM facts) f WHERE attribute = 'support' AND value_type = 'ref' LIMIT 100000","options":{"basis":{"recordedAt":1007,"validAt":1000000},"maxRows":100000}}]}
+
+stdout | lab/verify/C8/delta.test.ts > CX-VC8-2 Q76 follow-ups > Q76d: qlever workload counts three long cyclic supports at the requested cut
+{"lane":"qlever","calls":[{"text":"SELECT DISTINCT ?source ?target WHERE { { SELECT ?source ?target WHERE { ?assertion <urn:edge> ?target . } } } LIMIT 100000","options":{"basis":{"recordedAt":1007,"validAt":1000000},"maxRows":100000,"timeoutMs":20000}}]}
+
+ × lab/verify/C8/delta.test.ts > CX-VC8-2 delta fail-closed accounting > F5 variation: bytes forwarded after a parser exception cannot become zero-write traffic after reset 14ms
+   → expected 0 to be greater than 0
+   → expected 0 to be greater than 0
+   → expected 0 to be greater than 0
+ ✓ lab/verify/C8/delta.test.ts > CX-VC8-2 Q76 follow-ups > Q76b: initialization never submits tx_query_relations schema 1ms
+ ✓ lab/verify/C8/delta.test.ts > CX-VC8-2 Q76 follow-ups > Q76d: xtql workload counts three long cyclic supports at the requested cut 2ms
+ ✓ lab/verify/C8/delta.test.ts > CX-VC8-2 Q76 follow-ups > Q76d: xtdb-sql workload counts three long cyclic supports at the requested cut 1ms
+ ✓ lab/verify/C8/delta.test.ts > CX-VC8-2 Q76 follow-ups > Q76d: qlever workload counts three long cyclic supports at the requested cut 1ms
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 8 passed (10)
+   Start at  16:46:04
+   Duration  953ms (tests 42%, import 33%, transform 25%)
+
+JSON report written to /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/delta-results.json
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  lab/verify/C8/delta.test.ts > CX-VC8-2 delta fail-closed accounting > F4: unknown request forms must count or refuse, while health and query controls stay clean
+AssertionError: GET /?unexpected-operation=change-data: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ lab/verify/C8/delta.test.ts:228:82
+    226|           }),
+    227|         );
+    228|         expect.soft(!response.ok || counts.writes > 0, init.method + "…
+       |                                                                                  ^
+    229|       }
+    230|     } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  lab/verify/C8/delta.test.ts > CX-VC8-2 delta fail-closed accounting > F4: unknown request forms must count or refuse, while health and query controls stay clean
+AssertionError: GET /?action=unclassified: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ lab/verify/C8/delta.test.ts:228:82
+    226|           }),
+    227|         );
+    228|         expect.soft(!response.ok || counts.writes > 0, init.method + "…
+       |                                                                                  ^
+    229|       }
+    230|     } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  lab/verify/C8/delta.test.ts > CX-VC8-2 delta fail-closed accounting > F4: unknown request forms must count or refuse, while health and query controls stay clean
+AssertionError: GET /?access-token=generic: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ lab/verify/C8/delta.test.ts:228:82
+    226|           }),
+    227|         );
+    228|         expect.soft(!response.ok || counts.writes > 0, init.method + "…
+       |                                                                                  ^
+    229|       }
+    230|     } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  lab/verify/C8/delta.test.ts > CX-VC8-2 delta fail-closed accounting > F5 variation: bytes forwarded after a parser exception cannot become zero-write traffic after reset
+ FAIL  lab/verify/C8/delta.test.ts > CX-VC8-2 delta fail-closed accounting > F5 variation: bytes forwarded after a parser exception cannot become zero-write traffic after reset
+ FAIL  lab/verify/C8/delta.test.ts > CX-VC8-2 delta fail-closed accounting > F5 variation: bytes forwarded after a parser exception cannot become zero-write traffic after reset
+AssertionError: expected 0 to be greater than 0
+ ❯ lab/verify/C8/delta.test.ts:287:46
+    285|         await send(Buffer.concat([frame("Q", Buffer.from("DELETE FROM …
+    286|         console.log(JSON.stringify({ afterExceptionWindow: i, counts: …
+    287|         expect.soft(counter.counts().writes).toBeGreaterThan(0);
+       |                                              ^
+    288|       }
+    289|     });
+ ❯ pgFixture lab/verify/C8/delta.test.ts:169:5
+ ❯ lab/verify/C8/delta.test.ts:280:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+

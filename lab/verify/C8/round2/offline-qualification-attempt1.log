@@ -1,0 +1,40 @@
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/packages/qualification
+
+ ❯ test/engine-write-counter.test.ts (0 test)
+ ❯ test/xtdb-native-library.test.ts (0 test)
+ ❯ test/query-paths.test.ts (0 test)
+ ❯ test/c8-reads-never-write.test.ts (0 test)
+ ❯ test/c8-support-paths.test.ts (0 test)
+ ❯ test/runtime-conformance.test.ts (0 test)
+
+ Test Files  6 failed (6)
+      Tests  no tests
+   Start at  16:43:39
+   Duration  638ms (worker 97%, environment 3%)
+
+    Isolate  6 workers spawned · ~78ms startup each (spawn + environment, per file)
+             at least ~390ms faster with isolate: false — reuses workers across files instead of one per file
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/c8-reads-never-write.test.ts [ test/c8-reads-never-write.test.ts ]
+ FAIL  test/c8-support-paths.test.ts [ test/c8-support-paths.test.ts ]
+ FAIL  test/engine-write-counter.test.ts [ test/engine-write-counter.test.ts ]
+ FAIL  test/query-paths.test.ts [ test/query-paths.test.ts ]
+ FAIL  test/runtime-conformance.test.ts [ test/runtime-conformance.test.ts ]
+ FAIL  test/xtdb-native-library.test.ts [ test/xtdb-native-library.test.ts ]
+Error: Transform failed with 1 error:
+
+[31m[TSCONFIG_ERROR] [0mFailed to load tsconfig '../../tsconfig.node.json': Tsconfig not found
+
+  Plugin: vite:oxc
+  File: /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/packages/qualification/test/c8-reads-never-write.test.ts
+ ❯ transformWithOxc ../../../../../../../node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:4103:19
+ ❯ TransformPluginContext.transform ../../../../../../../node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:4174:26
+ ❯ EnvironmentPluginContainer.transform ../../../../../../../node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:30932:51
+ ❯ loadAndTransform ../../../../../../../node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:20671:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+

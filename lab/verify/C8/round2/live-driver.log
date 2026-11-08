@@ -1,0 +1,44 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 77455 "CX-VC8-2-offline-rerun", pid 44149 "CX-VO04I-review", pid 50657 "CX-VJ01-recovery-frontier", pid 77453 "CX-VC8-2-original-rerun"
+light-live 0 IsInRlc3QiLCJjeC12YzgtbGlnaHQiLDBd> { <urn:triplex:meta> <urn:triplex:field:position> ?position } }","parameters":[],"elapsedMs":390.03262500000005},{"phase":"frontier-round","language":"sparql-1.1","query":"SELECT DISTINCT ?source ?target WHERE { VALUES ?source { \"a\" \"absent\" } { SELECT ?source ?target WHERE { VALUES (?source ?target) { (\"a\" \"b\") (\"a\" \"c\") (\"b\" \"d\") (\"c\" \"d\") (\"d\" \"b\") } } } } LIMIT 1000001","parameters":[],"elapsedMs":60.442999999999984},{"phase":"frontier-round","language":"sparql-1.1","query":"SELECT DISTINCT ?source ?target WHERE { VALUES ?source { \"b\" \"c\" } { SELECT ?source ?target WHERE { VALUES (?source ?target) { (\"a\" \"b\") (\"a\" \"c\") (\"b\" \"d\") (\"c\" \"d\") (\"d\" \"b\") } } } } LIMIT 1000001","parameters":[],"elapsedMs":55.72283400000015},{"phase":"frontier-round","language":"sparql-1.1","query":"SELECT DISTINCT ?source ?target WHERE { VALUES ?source { \"d\" } { SELECT ?source ?target WHERE { VALUES (?source ?target) { (\"a\" \"b\") (\"a\" \"c\") (\"b\" \"d\") (\"c\" \"d\") (\"d\" \"b\") } } } } LIMIT 1000001","parameters":[],"elapsedMs":53.55374999999981},{"phase":"answer","language":"sparql-1.1","query":"SELECT ?target WHERE { VALUES (?target) { (\"b\") (\"c\") (\"d\") } }","parameters":[],"elapsedMs":62.222375000000056}]}]}
+
+ ✓ lab/verify/C8/light-live.test.ts > CX-VC8 light QLever only > native seeded closure on cycle and diamond, single-read and rounds, zero writes 1266ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  16:45:08
+   Duration  1.72s (tests 77%, import 12%, transform 10%)
+
+
+counter-live 0 unter.test.ts > pgwire frontend parser > extracts Q and Execute texts whole, byte by byte, and at random chunk boundaries
+ ↓ test/engine-write-counter.test.ts > pgwire frontend parser > classifies reused portals, closed names and unknown operations
+ ↓ test/engine-write-counter.test.ts > pgwire frontend parser > reports a TLS stream or a bad message type as opaque instead of skipping it
+ ↓ test/engine-write-counter.test.ts > pgwire frontend parser > stops after a CancelRequest and reports FunctionCall
+ ↓ test/engine-write-counter.test.ts > XTDB write counter proxy > forwards bytes unchanged both ways and counts the statements
+ ↓ test/engine-write-counter.test.ts > XTDB write counter proxy > counts an unparseable stream as a write and close() ends open connections
+ ↓ test/engine-write-counter.test.ts > QLever write counter proxy > counts QleverClient queries as reads and updates as writes, passing replies through
+ ↓ test/engine-write-counter.test.ts > QLever write counter proxy > classifies the other SPARQL protocol forms and passes errors through
+ ↓ test/engine-write-counter.test.ts > QLever write counter proxy > keeps the target path prefix and aborts upstream when the client aborts
+ ↓ test/engine-write-counter.test.ts > XTDB write counter (live) > reads count zero writes; one submit counts one commit
+ ✓ test/engine-write-counter.test.ts > QLever write counter (live) > queries count zero writes; one update counts one write 5363ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 61 skipped (62)
+   Start at  16:45:10
+   Duration  6.24s (tests 87%, transform 9%, import 4%)
+
+
+c8-live 0 
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/packages/qualification
+
+ ↓ test/c8-reads-never-write.test.ts > C8 on XTDB: reads never write (engine boundary) > counts zero writes across rule queries, maintained reads, native closures and a load run
+stdout | test/c8-reads-never-write.test.ts > C8 on QLever: reads never write (engine boundary) > counts zero updates across rule queries, native closures and a load run
+{"c8":"qlever","readWindow":{"lane":"qlever","connections":29,"statements":29,"writes":0,"commits":0,"commands":0,"unparsed":0,"samples":[]},"frontierRoundMs":[1312,1395,1296],"load":{"readers":1,"ms":2000,"recursiveReadIterations":1,"proxy":{"lane":"qlever","connections":29,"statements":29,"writes":0,"commits":0,"commands":0,"unparsed":0,"samples":[]}},"writerAlone":{"commits":1,"p50":7113,"p99":7113,"max":7113},"writerWithRecursiveReaders":{"commits":1,"p50":4335,"p99":4335,"max":4335}}
+
+ ✓ test/c8-reads-never-write.test.ts > C8 on QLever: reads never write (engine boundary) > counts zero updates across rule queries, native closures and a load run 108774ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 1 skipped (2)
+   Start at  16:45:17
+   Duration  109.28s (tests 100%)
+
+

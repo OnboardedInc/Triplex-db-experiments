@@ -1,0 +1,37 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 86364 "G0-datomic-20261108T214521Z-c3e3a3 vitest-qualification", pid 80186 "DA00-G0-D", pid 50657 "CX-VJ01-recovery-frontier", pid 82310 "CX-VC8-2-light-live"
+delta 1 request forms must count or refuse, while health and query controls stay clean
+AssertionError: GET /?access-token=generic: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ lab/verify/C8/delta.test.ts:228:82
+    226|           }),
+    227|         );
+    228|         expect.soft(!response.ok || counts.writes > 0, init.method + "…
+       |                                                                                  ^
+    229|       }
+    230|     } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  lab/verify/C8/delta.test.ts > CX-VC8-2 delta fail-closed accounting > F5 variation: bytes forwarded after a parser exception cannot become zero-write traffic after reset
+ FAIL  lab/verify/C8/delta.test.ts > CX-VC8-2 delta fail-closed accounting > F5 variation: bytes forwarded after a parser exception cannot become zero-write traffic after reset
+ FAIL  lab/verify/C8/delta.test.ts > CX-VC8-2 delta fail-closed accounting > F5 variation: bytes forwarded after a parser exception cannot become zero-write traffic after reset
+AssertionError: expected 0 to be greater than 0
+ ❯ lab/verify/C8/delta.test.ts:287:46
+    285|         await send(Buffer.concat([frame("Q", Buffer.from("DELETE FROM …
+    286|         console.log(JSON.stringify({ afterExceptionWindow: i, counts: …
+    287|         expect.soft(counter.counts().writes).toBeGreaterThan(0);
+       |                                              ^
+    288|       }
+    289|     });
+ ❯ pgFixture lab/verify/C8/delta.test.ts:169:5
+ ❯ lab/verify/C8/delta.test.ts:280:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+

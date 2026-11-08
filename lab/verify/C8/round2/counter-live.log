@@ -1,0 +1,71 @@
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/packages/qualification
+
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "SELECT 1 AS x" -> read
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "  select * from tx_meta" -> read
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "SETTING SNAPSHOT_TOKEN = 'abc''INSERT', CLOCK_TIME = TIMESTAMP WITH TIME ZONE '2026-11-07T00:00:00Z' SELECT position FROM tx_meta" -> read
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "SETTING SNAPSHOT_TOKEN = 'x' WITH f AS (SELECT 1 AS a) SELECT a FROM f" -> read
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "XTQL ('(-> (from :tx_meta [position]) (limit 1))', $1)" -> read
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "XTQL ('(from :t [{:op \"INSERT INTO\"}])')" -> read
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "FROM tx_meta SELECT position" -> read
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "VALUES (1), (2)" -> read
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "SHOW AWAIT_TOKEN" -> read
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "EXPLAIN SELECT 1" -> read
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "TABLE tx_meta" -> read
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "-- INSERT INTO t\nSELECT 1" -> read
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "-- comment ending at CR\rSELECT 1" -> read
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "/* DELETE FROM t */ SELECT 'UPDATE t SET x = 1' AS \"ERASE\"" -> read
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "SELECT E'it\\'s INSERT' AS x" -> read
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "SELECT 1;" -> read
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "SET AWAIT_TOKEN = 'token-with-INSERT-inside'" -> session
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "ROLLBACK" -> session
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "BEGIN READ ONLY" -> session
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "START TRANSACTION READ ONLY" -> session
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "DISCARD ALL" -> session
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "DEALLOCATE ALL" -> session
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "" -> session
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "  -- only a comment" -> session
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "COMMIT" -> commit
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "COMMIT SYNC" -> commit
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "commit" -> commit
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "BEGIN READ WRITE" -> write
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "BEGIN" -> write
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "START TRANSACTION" -> write
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "START TRANSACTION READ WRITE" -> write
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "INSERT INTO tx_native_relation_attempts (_id, _valid_from, scope_key, run_id, attempt_id, phase) VALUES ($1, TIMESTAMP WITH TIME ZONE '1970-01-01T00:00:00Z', $2, $3, $4, $5)" -> write
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "INSERT INTO tx_constraint_graphs (_id, _valid_from) SELECT g.id, TIMESTAMP WITH TIME ZONE '1970-01-01T00:00:00Z' FROM (WITH a AS (SELECT 1 AS id) SELECT * FROM a) g" -> write
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "ERASE FROM tx_native_relations WHERE scope_key = $1 AND run_id = $2" -> write
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "ASSERT NOT EXISTS (SELECT 1 FROM tx_attempts FOR ALL VALID_TIME WHERE scope_key = ? AND operation_id = ?), 'triplex-operation-duplicate'" -> write
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "CREATE TABLE tx_meta (_id, scope_key, position)" -> write
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "DELETE FROM t WHERE _id = 1" -> write
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "UPDATE t SET v = 2 WHERE _id = 1" -> write
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "PATCH INTO t RECORDS {_id: 1, v: 2}" -> write
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "DROP TABLE t" -> write
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "COPY t FROM STDIN" -> write
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "EXECUTE p" -> write
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "CALL f()" -> write
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "ABORT" -> write
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "WITH x AS (INSERT INTO t (_id) VALUES (1) RETURNING _id) SELECT * FROM x" -> write
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "EXPLAIN ANALYZE DELETE FROM t" -> write
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "SETTING DEFAULT VALID_TIME FROM NOW TO NOW CREATE TABLE t (_id)" -> write
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "SETTING SNAPSHOT_TOKEN = 'x' INSERT INTO t (_id) VALUES (1)" -> write
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "/* /* */ INSERT INTO t (_id) VALUES (1) */" -> write
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "SELECT 1; INSERT INTO t (_id) VALUES (1)" -> write
+ ↓ test/engine-write-counter.test.ts > classifyXtdbStatement > "SELECT 1; COMMIT" -> commit
+ ↓ test/engine-write-counter.test.ts > pgwire frontend parser > extracts Q and Execute texts whole, byte by byte, and at random chunk boundaries
+ ↓ test/engine-write-counter.test.ts > pgwire frontend parser > classifies reused portals, closed names and unknown operations
+ ↓ test/engine-write-counter.test.ts > pgwire frontend parser > reports a TLS stream or a bad message type as opaque instead of skipping it
+ ↓ test/engine-write-counter.test.ts > pgwire frontend parser > stops after a CancelRequest and reports FunctionCall
+ ↓ test/engine-write-counter.test.ts > XTDB write counter proxy > forwards bytes unchanged both ways and counts the statements
+ ↓ test/engine-write-counter.test.ts > XTDB write counter proxy > counts an unparseable stream as a write and close() ends open connections
+ ↓ test/engine-write-counter.test.ts > QLever write counter proxy > counts QleverClient queries as reads and updates as writes, passing replies through
+ ↓ test/engine-write-counter.test.ts > QLever write counter proxy > classifies the other SPARQL protocol forms and passes errors through
+ ↓ test/engine-write-counter.test.ts > QLever write counter proxy > keeps the target path prefix and aborts upstream when the client aborts
+ ↓ test/engine-write-counter.test.ts > XTDB write counter (live) > reads count zero writes; one submit counts one commit
+ ✓ test/engine-write-counter.test.ts > QLever write counter (live) > queries count zero writes; one update counts one write 5363ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 61 skipped (62)
+   Start at  16:45:10
+   Duration  6.24s (tests 87%, transform 9%, import 4%)
+

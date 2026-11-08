@@ -1,0 +1,112 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 77135 "G0-xtdb-20261108T214444Z-145b50 vitest-core", pid 44149 "CX-VO04I-review", pid 50657 "CX-VJ01-recovery-frontier", pid 38152 "CX-VE01-3-supplement"
+offline-core 0 
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/packages/core
+
+
+ Test Files  57 passed (57)
+      Tests  848 passed (848)
+   Start at  16:44:57
+   Duration  14.51s (import 62%, tests 29%, transform 7%, worker 2%)
+
+     Import  155 modules were evaluated 214 times · 6.62s total, 62% of tracked time
+             ~1.83s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+offline-xtdb 0 
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/packages/xtdb
+
+
+ Test Files  7 passed | 8 skipped (15)
+      Tests  25 passed | 84 skipped (109)
+   Start at  16:45:12
+   Duration  3.96s (import 80%, transform 17%, tests 2%, worker 1%)
+
+    Isolate  15 workers spawned · ~66ms startup each (spawn + environment, per file)
+             at least ~924ms faster with isolate: false — reuses workers across files instead of one per file
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+offline-qlever 0 
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/packages/qlever
+
+
+ Test Files  7 passed | 3 skipped (10)
+      Tests  27 passed | 21 skipped (48)
+   Start at  16:45:16
+   Duration  3.27s (import 73%, transform 24%, tests 3%, worker 1%)
+
+    Isolate  10 workers spawned · ~70ms startup each (spawn + environment, per file)
+             at least ~628ms faster with isolate: false — reuses workers across files instead of one per file
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+offline-qualification 0 
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/packages/qualification
+
+
+ Test Files  4 passed | 2 skipped (6)
+      Tests  86 passed | 50 skipped (136)
+   Start at  16:45:20
+   Duration  2.09s (import 60%, tests 23%, transform 15%, worker 1%)
+
+    Isolate  6 workers spawned · ~68ms startup each (spawn + environment, per file)
+             at least ~340ms faster with isolate: false — reuses workers across files instead of one per file
+
+
+offline-node 0 tion_ms: 4.495625
+  type: 'test'
+  ...
+# Subtest: fractional offered schedules never release before the actual clock reaches them
+ok 13 - fractional offered schedules never release before the actual clock reaches them
+  ---
+  duration_ms: 24.994333
+  type: 'test'
+  ...
+# Subtest: queued requests expire from their offered deadline without entering the backend or leaking a slot
+ok 14 - queued requests expire from their offered deadline without entering the backend or leaking a slot
+  ---
+  duration_ms: 22.496583
+  type: 'test'
+  ...
+# Subtest: bounded rejection is immediate and does not alter already admitted requests
+ok 15 - bounded rejection is immediate and does not alter already admitted requests
+  ---
+  duration_ms: 1.890917
+  type: 'test'
+  ...
+# Subtest: independent oracle follows returned P and keeps historical R stable across corrections
+ok 16 - independent oracle follows returned P and keeps historical R stable across corrections
+  ---
+  duration_ms: 8.2705
+  type: 'test'
+  ...
+# Subtest: cold probes span the declared distinct-entity population and never change under hot corrections
+ok 17 - cold probes span the declared distinct-entity population and never change under hot corrections
+  ---
+  duration_ms: 4.605792
+  type: 'test'
+  ...
+# Subtest: oracle refuses changed recipe, wrong seed commit count and an excessive catalog
+ok 18 - oracle refuses changed recipe, wrong seed commit count and an excessive catalog
+  ---
+  duration_ms: 1.398917
+  type: 'test'
+  ...
+1..18
+# tests 18
+# suites 0
+# pass 18
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 148.920666
+

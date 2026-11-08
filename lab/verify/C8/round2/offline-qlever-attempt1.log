@@ -1,0 +1,51 @@
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/packages/qlever
+
+ ❯ test/negation.test.ts (0 test)
+ ❯ test/native.test.ts (0 test)
+ ❯ test/temporal-profile.test.ts (0 test)
+ ❯ test/native-relations.test.ts (0 test)
+ ❯ test/aggregate-answers.test.ts (0 test)
+ ❯ test/unicode.test.ts (0 test)
+ ❯ test/storage.test.ts (0 test)
+ ❯ test/intervals.test.ts (0 test)
+ ❯ test/outcomes.test.ts (0 test)
+ ❯ test/query.test.ts (0 test)
+
+ Test Files  10 failed (10)
+      Tests  no tests
+   Start at  16:43:37
+   Duration  1.36s (worker 97%, environment 3%)
+
+    Isolate  10 workers spawned · ~96ms startup each (spawn + environment, per file)
+             at least ~867ms faster with isolate: false — reuses workers across files instead of one per file
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 10 ⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/aggregate-answers.test.ts [ test/aggregate-answers.test.ts ]
+ FAIL  test/intervals.test.ts [ test/intervals.test.ts ]
+ FAIL  test/native-relations.test.ts [ test/native-relations.test.ts ]
+ FAIL  test/native.test.ts [ test/native.test.ts ]
+ FAIL  test/negation.test.ts [ test/negation.test.ts ]
+ FAIL  test/outcomes.test.ts [ test/outcomes.test.ts ]
+ FAIL  test/query.test.ts [ test/query.test.ts ]
+ FAIL  test/storage.test.ts [ test/storage.test.ts ]
+ FAIL  test/temporal-profile.test.ts [ test/temporal-profile.test.ts ]
+ FAIL  test/unicode.test.ts [ test/unicode.test.ts ]
+Error: Transform failed with 1 error:
+
+[31m[TSCONFIG_ERROR] [0mFailed to load tsconfig '../../tsconfig.node.json': Tsconfig not found
+
+  Plugin: vite:oxc
+  File: /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/packages/qlever/test/aggregate-answers.test.ts
+ ❯ transformWithOxc ../../../../../../../node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:4103:19
+ ❯ TransformPluginContext.transform ../../../../../../../node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:4174:26
+ ❯ EnvironmentPluginContainer.transform ../../../../../../../node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:30932:51
+ ❯ loadAndTransform ../../../../../../../node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:20671:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+

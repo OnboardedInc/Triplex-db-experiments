@@ -1,0 +1,61 @@
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/packages/xtdb
+
+ ❯ test/query-compiler.test.ts (0 test)
+ ❯ test/native-query.test.ts (0 test)
+ ❯ test/json-compatibility.test.ts (0 test)
+ ❯ test/native-reachability.test.ts (0 test)
+ ❯ test/client-parameters.test.ts (0 test)
+ ❯ test/native-sql-envelope.test.ts (0 test)
+ ❯ test/adapter.test.ts (0 test)
+ ❯ test/computed-query.test.ts (0 test)
+ ❯ test/conformance.test.ts (0 test)
+ ❯ test/constraints.test.ts (0 test)
+ ❯ test/integer-query.test.ts (0 test)
+ ❯ test/integer-storage.test.ts (0 test)
+ ❯ test/intervals.test.ts (0 test)
+ ❯ test/maintained.test.ts (0 test)
+ ❯ test/query-integration.test.ts (0 test)
+
+ Test Files  15 failed (15)
+      Tests  no tests
+   Start at  16:43:35
+   Duration  2.24s (worker 97%, environment 3%)
+
+    Isolate  15 workers spawned · ~110ms startup each (spawn + environment, per file)
+             at least ~1.54s faster with isolate: false — reuses workers across files instead of one per file
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 15 ⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/adapter.test.ts [ test/adapter.test.ts ]
+ FAIL  test/client-parameters.test.ts [ test/client-parameters.test.ts ]
+ FAIL  test/computed-query.test.ts [ test/computed-query.test.ts ]
+ FAIL  test/conformance.test.ts [ test/conformance.test.ts ]
+ FAIL  test/constraints.test.ts [ test/constraints.test.ts ]
+ FAIL  test/integer-query.test.ts [ test/integer-query.test.ts ]
+ FAIL  test/integer-storage.test.ts [ test/integer-storage.test.ts ]
+ FAIL  test/intervals.test.ts [ test/intervals.test.ts ]
+ FAIL  test/json-compatibility.test.ts [ test/json-compatibility.test.ts ]
+ FAIL  test/maintained.test.ts [ test/maintained.test.ts ]
+ FAIL  test/native-query.test.ts [ test/native-query.test.ts ]
+ FAIL  test/native-reachability.test.ts [ test/native-reachability.test.ts ]
+ FAIL  test/native-sql-envelope.test.ts [ test/native-sql-envelope.test.ts ]
+ FAIL  test/query-compiler.test.ts [ test/query-compiler.test.ts ]
+ FAIL  test/query-integration.test.ts [ test/query-integration.test.ts ]
+Error: Transform failed with 1 error:
+
+[31m[TSCONFIG_ERROR] [0mFailed to load tsconfig '../../tsconfig.node.json': Tsconfig not found
+
+  Plugin: vite:oxc
+  File: /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/packages/xtdb/test/adapter.test.ts
+ ❯ transformWithOxc ../../../../../../../node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:4103:19
+ ❯ TransformPluginContext.transform ../../../../../../../node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:4174:26
+ ❯ EnvironmentPluginContainer.transform ../../../../../../../node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:30932:51
+ ❯ loadAndTransform ../../../../../../../node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:20671:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/15]⎯
+

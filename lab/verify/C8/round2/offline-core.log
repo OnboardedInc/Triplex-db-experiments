@@ -1,0 +1,16 @@
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/packages/core
+
+
+ Test Files  57 passed (57)
+      Tests  848 passed (848)
+   Start at  16:44:57
+   Duration  14.51s (import 62%, tests 29%, transform 7%, worker 2%)
+
+     Import  155 modules were evaluated 214 times · 6.62s total, 62% of tracked time
+             ~1.83s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.

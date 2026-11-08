@@ -1,0 +1,145 @@
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/packages/core
+
+ ❯ test/config/Reactor.test.ts (0 test)
+ ❯ test/native/frontier-closure.test.ts (0 test)
+ ❯ test/kv/kv/InMemoryKvBackend.test.ts (0 test)
+ ❯ test/config/EntityValidation.e2e.test.ts (0 test)
+ ❯ test/config/Catalog.test.ts (0 test)
+ ❯ test/config/Evaluate.test.ts (0 test)
+ ❯ test/kv/kv/encoding.test.ts (0 test)
+ ❯ test/utils/id.test.ts (0 test)
+ ❯ test/derivation/Derivation.e2e.test.ts (0 test)
+ ❯ test/kv/integration/triples-coherence.test.ts (0 test)
+ ❯ test/config/InMemoryConfigStore.test.ts (0 test)
+ ❯ test/entity/PhysicalNames.test.ts (0 test)
+ ❯ test/config/Lifecycle.e2e.test.ts (0 test)
+ ❯ test/config/TypeExpr.test.ts (0 test)
+ ❯ test/config/TriplesConfigStore.e2e.test.ts (0 test)
+ ❯ test/kv/layers/KvTriples.store.test.ts (0 test)
+ ❯ test/kv/layers/KvTriples.test.ts (0 test)
+ ❯ test/Constraint.test.ts (0 test)
+ ❯ test/kv/hexastore/KvTripleStore.test.ts (0 test)
+ ❯ test/entity/ProjectionSpec.test.ts (0 test)
+ ❯ test/config/OntologyDsl.test.ts (0 test)
+ ❯ test/runtime/runtime.test.ts (0 test)
+ ❯ test/kv/layers/KvTriples.query.test.ts (0 test)
+ ❯ test/config/Releases.test.ts (0 test)
+ ❯ test/entity/Descriptors.test.ts (0 test)
+ ❯ test/subscriptions/subscription-manager.test.ts (0 test)
+ ❯ test/kv/datalog/executor.test.ts (0 test)
+ ❯ test/content/Sha256.test.ts (0 test)
+ ❯ test/datalog/schema.test.ts (0 test)
+ ❯ test/config/Proof.test.ts (0 test)
+ ❯ test/datalog/compiler.test.ts (0 test)
+ ❯ test/Pagination.test.ts (0 test)
+ ❯ test/config/Entity.test.ts (0 test)
+ ❯ test/integer.test.ts (0 test)
+ ❯ test/unit/security/sql-injection.test.ts (0 test)
+ ❯ test/config/ConfigNode.test.ts (0 test)
+ ❯ test/runtime/read-basis.test.ts (0 test)
+ ❯ test/datalog/wrapper.test.ts (0 test)
+ ❯ test/subscriptions/invalidation.test.ts (0 test)
+ ❯ test/datalog/validation.test.ts (0 test)
+ ❯ test/entity/ProjectionSpec.fixes.test.ts (0 test)
+ ❯ test/kv/hexastore/indexes.test.ts (0 test)
+ ❯ test/kv/hexastore/tuple.test.ts (0 test)
+ ❯ test/datalog/integer-projection.test.ts (0 test)
+ ❯ test/datalog/recursive-execution.test.ts (0 test)
+ ❯ test/native-query.test.ts (0 test)
+ ❯ test/subscriptions/extract-dependencies.test.ts (0 test)
+ ❯ test/change-emission-capability.test.ts (0 test)
+ ❯ test/subscriptions/query-hash.test.ts (0 test)
+ ❯ test/entity/stubs.test.ts (0 test)
+ ❯ test/sql/params.test.ts (0 test)
+ ❯ test/content/CanonicalJson.test.ts (0 test)
+ ❯ test/subscriptions/topic-tree.test.ts (0 test)
+ ❯ test/subscriptions/sync-hub.test.ts (0 test)
+ ❯ test/Branded.test.ts (0 test)
+ ❯ test/content/ContentId.test.ts (0 test)
+ ❯ test/exports.test.ts (0 test)
+
+ Test Files  57 failed (57)
+      Tests  no tests
+   Start at  16:43:27
+   Duration  7.02s (worker 98%, environment 2%)
+
+    Isolate  57 workers spawned · ~88ms startup each (spawn + environment, per file)
+             at least ~4.93s faster with isolate: false — reuses workers across files instead of one per file
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 57 ⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/Branded.test.ts [ test/Branded.test.ts ]
+ FAIL  test/Constraint.test.ts [ test/Constraint.test.ts ]
+ FAIL  test/Pagination.test.ts [ test/Pagination.test.ts ]
+ FAIL  test/change-emission-capability.test.ts [ test/change-emission-capability.test.ts ]
+ FAIL  test/exports.test.ts [ test/exports.test.ts ]
+ FAIL  test/integer.test.ts [ test/integer.test.ts ]
+ FAIL  test/native-query.test.ts [ test/native-query.test.ts ]
+ FAIL  test/content/CanonicalJson.test.ts [ test/content/CanonicalJson.test.ts ]
+ FAIL  test/content/ContentId.test.ts [ test/content/ContentId.test.ts ]
+ FAIL  test/content/Sha256.test.ts [ test/content/Sha256.test.ts ]
+ FAIL  test/config/Catalog.test.ts [ test/config/Catalog.test.ts ]
+ FAIL  test/config/ConfigNode.test.ts [ test/config/ConfigNode.test.ts ]
+ FAIL  test/config/Entity.test.ts [ test/config/Entity.test.ts ]
+ FAIL  test/config/EntityValidation.e2e.test.ts [ test/config/EntityValidation.e2e.test.ts ]
+ FAIL  test/config/Evaluate.test.ts [ test/config/Evaluate.test.ts ]
+ FAIL  test/config/InMemoryConfigStore.test.ts [ test/config/InMemoryConfigStore.test.ts ]
+ FAIL  test/config/Lifecycle.e2e.test.ts [ test/config/Lifecycle.e2e.test.ts ]
+ FAIL  test/config/OntologyDsl.test.ts [ test/config/OntologyDsl.test.ts ]
+ FAIL  test/config/Proof.test.ts [ test/config/Proof.test.ts ]
+ FAIL  test/config/Reactor.test.ts [ test/config/Reactor.test.ts ]
+ FAIL  test/config/Releases.test.ts [ test/config/Releases.test.ts ]
+ FAIL  test/config/TriplesConfigStore.e2e.test.ts [ test/config/TriplesConfigStore.e2e.test.ts ]
+ FAIL  test/config/TypeExpr.test.ts [ test/config/TypeExpr.test.ts ]
+ FAIL  test/datalog/compiler.test.ts [ test/datalog/compiler.test.ts ]
+ FAIL  test/datalog/integer-projection.test.ts [ test/datalog/integer-projection.test.ts ]
+ FAIL  test/datalog/recursive-execution.test.ts [ test/datalog/recursive-execution.test.ts ]
+ FAIL  test/datalog/schema.test.ts [ test/datalog/schema.test.ts ]
+ FAIL  test/datalog/validation.test.ts [ test/datalog/validation.test.ts ]
+ FAIL  test/datalog/wrapper.test.ts [ test/datalog/wrapper.test.ts ]
+ FAIL  test/derivation/Derivation.e2e.test.ts [ test/derivation/Derivation.e2e.test.ts ]
+ FAIL  test/entity/Descriptors.test.ts [ test/entity/Descriptors.test.ts ]
+ FAIL  test/entity/PhysicalNames.test.ts [ test/entity/PhysicalNames.test.ts ]
+ FAIL  test/entity/ProjectionSpec.fixes.test.ts [ test/entity/ProjectionSpec.fixes.test.ts ]
+ FAIL  test/entity/ProjectionSpec.test.ts [ test/entity/ProjectionSpec.test.ts ]
+ FAIL  test/entity/stubs.test.ts [ test/entity/stubs.test.ts ]
+ FAIL  test/native/frontier-closure.test.ts [ test/native/frontier-closure.test.ts ]
+ FAIL  test/subscriptions/extract-dependencies.test.ts [ test/subscriptions/extract-dependencies.test.ts ]
+ FAIL  test/subscriptions/invalidation.test.ts [ test/subscriptions/invalidation.test.ts ]
+ FAIL  test/subscriptions/query-hash.test.ts [ test/subscriptions/query-hash.test.ts ]
+ FAIL  test/subscriptions/subscription-manager.test.ts [ test/subscriptions/subscription-manager.test.ts ]
+ FAIL  test/subscriptions/sync-hub.test.ts [ test/subscriptions/sync-hub.test.ts ]
+ FAIL  test/subscriptions/topic-tree.test.ts [ test/subscriptions/topic-tree.test.ts ]
+ FAIL  test/sql/params.test.ts [ test/sql/params.test.ts ]
+ FAIL  test/runtime/read-basis.test.ts [ test/runtime/read-basis.test.ts ]
+ FAIL  test/runtime/runtime.test.ts [ test/runtime/runtime.test.ts ]
+ FAIL  test/utils/id.test.ts [ test/utils/id.test.ts ]
+ FAIL  test/kv/datalog/executor.test.ts [ test/kv/datalog/executor.test.ts ]
+ FAIL  test/kv/hexastore/KvTripleStore.test.ts [ test/kv/hexastore/KvTripleStore.test.ts ]
+ FAIL  test/kv/hexastore/indexes.test.ts [ test/kv/hexastore/indexes.test.ts ]
+ FAIL  test/kv/hexastore/tuple.test.ts [ test/kv/hexastore/tuple.test.ts ]
+ FAIL  test/kv/integration/triples-coherence.test.ts [ test/kv/integration/triples-coherence.test.ts ]
+ FAIL  test/kv/layers/KvTriples.query.test.ts [ test/kv/layers/KvTriples.query.test.ts ]
+ FAIL  test/kv/layers/KvTriples.store.test.ts [ test/kv/layers/KvTriples.store.test.ts ]
+ FAIL  test/kv/layers/KvTriples.test.ts [ test/kv/layers/KvTriples.test.ts ]
+ FAIL  test/kv/kv/InMemoryKvBackend.test.ts [ test/kv/kv/InMemoryKvBackend.test.ts ]
+ FAIL  test/kv/kv/encoding.test.ts [ test/kv/kv/encoding.test.ts ]
+ FAIL  test/unit/security/sql-injection.test.ts [ test/unit/security/sql-injection.test.ts ]
+Error: Transform failed with 1 error:
+
+[31m[TSCONFIG_ERROR] [0mFailed to load tsconfig '../../tsconfig.node.json': Tsconfig not found
+
+  Plugin: vite:oxc
+  File: /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-c8/lab/verify/C8/round2/sut/packages/core/test/Branded.test.ts
+ ❯ transformWithOxc ../../../../../../../node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:4103:19
+ ❯ TransformPluginContext.transform ../../../../../../../node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:4174:26
+ ❯ EnvironmentPluginContainer.transform ../../../../../../../node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:30932:51
+ ❯ loadAndTransform ../../../../../../../node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:20671:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/57]⎯
+
