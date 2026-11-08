@@ -1,0 +1,164 @@
+diff -ruN a/packages/core/src/config/ConfigStore.ts b/packages/core/src/config/ConfigStore.ts
+--- a/packages/core/src/config/ConfigStore.ts	2026-11-07 19:54:16
++++ b/packages/core/src/config/ConfigStore.ts	2026-11-07 19:54:16
+@@ -16,6 +16,7 @@
+   ReadError,
+   TransactionConflictError,
+   WriteError,
++  InvalidTripleError,
+ } from "../errors/index.js";
+ import { Triples } from "../store/Triples.js";
+ import type { TransactionResult } from "../store/Triples.js";
+@@ -79,6 +80,7 @@
+ export type CommitError =
+   | LoadError
+   | WriteError
++  | InvalidTripleError
+   | TransactionConflictError
+   | CommandAlreadyCommittedError
+   | ConstraintViolationError
+@@ -110,6 +112,7 @@
+     InMemoryConfigStore.ConfigSnapshot,
+     | LoadError
+     | WriteError
++    | InvalidTripleError
+     | TransactionConflictError
+     | CommandAlreadyCommittedError
+     | ConstraintViolationError
+diff -ruN a/packages/core/src/config/EntityValidation.ts b/packages/core/src/config/EntityValidation.ts
+--- a/packages/core/src/config/EntityValidation.ts	2026-11-07 19:54:16
++++ b/packages/core/src/config/EntityValidation.ts	2026-11-07 19:54:16
+@@ -17,6 +17,7 @@
+   ReadError,
+   TransactionConflictError,
+   WriteError,
++  InvalidTripleError,
+ } from "../errors/index.js";
+ import { Triples } from "../store/Triples.js";
+ import type { TransactionResult } from "../store/Triples.js";
+@@ -184,6 +185,7 @@
+ export type RevalidateError =
+   | ReadError
+   | WriteError
++  | InvalidTripleError
+   | TransactionConflictError
+   | CommandAlreadyCommittedError
+   | ConstraintViolationError
+diff -ruN a/packages/core/src/derivation/Materialization.ts b/packages/core/src/derivation/Materialization.ts
+--- a/packages/core/src/derivation/Materialization.ts	2026-11-07 19:54:16
++++ b/packages/core/src/derivation/Materialization.ts	2026-11-07 19:54:16
+@@ -21,6 +21,7 @@
+   ReadError,
+   TransactionConflictError,
+   WriteError,
++  InvalidTripleError,
+ } from "../errors/index.js";
+ import { transactSystem } from "../store/systemNamespace.js";
+ import type { TransactionRecord, TransactionResult, TriplesService } from "../store/Triples.js";
+@@ -150,6 +151,7 @@
+ export type MaterializationError =
+   | ReadError
+   | WriteError
++  | InvalidTripleError
+   | TransactionConflictError
+   | CommandAlreadyCommittedError
+   | ConstraintViolationError
+diff -ruN a/packages/core/src/operational/ConsumerCheckpoint.ts b/packages/core/src/operational/ConsumerCheckpoint.ts
+--- a/packages/core/src/operational/ConsumerCheckpoint.ts	2026-11-07 19:54:16
++++ b/packages/core/src/operational/ConsumerCheckpoint.ts	2026-11-07 19:54:16
+@@ -16,6 +16,7 @@
+   ReadError,
+   TransactionConflictError,
+   WriteError,
++  InvalidTripleError,
+ } from "../errors/index.js";
+ import type { TransactionMeta, TriplesService } from "../store/Triples.js";
+ import { transactSystemUnjournaled } from "../store/systemNamespace.js";
+@@ -71,6 +72,7 @@
+   | InvalidConsumerCheckpointError
+   | ConsumerCheckpointConflictError
+   | CorruptConsumerCheckpointError
++  | InvalidTripleError
+   | ReadError
+   | WriteError
+   | TransactionConflictError
+diff -ruN a/packages/core/src/store/Triples.ts b/packages/core/src/store/Triples.ts
+--- a/packages/core/src/store/Triples.ts	2026-11-07 19:54:16
++++ b/packages/core/src/store/Triples.ts	2026-11-07 19:54:16
+@@ -32,6 +32,7 @@
+   CommandAlreadyCommittedError,
+   TransactionConflictError,
+   ConstraintViolationError,
++  InvalidTripleError,
+   PaginationCursorError,
+ } from "../errors/index.js";
+ import type { DatalogQuery, WrappedQuery } from "../datalog/types.js";
+@@ -228,6 +229,7 @@
+     | TransactionConflictError
+     | CommandAlreadyCommittedError
+     | ConstraintViolationError
++    | InvalidTripleError
+   >;
+   // --- Triple-level reads --------------------------------------------------
+   /** Fetch a single triple by id. */
+diff -ruN a/packages/core/src/store/TriplesLive.ts b/packages/core/src/store/TriplesLive.ts
+--- a/packages/core/src/store/TriplesLive.ts	2026-11-07 19:54:16
++++ b/packages/core/src/store/TriplesLive.ts	2026-11-07 19:54:16
+@@ -10,7 +10,7 @@
+  * The same service owns storage mutations and query execution.
+  */
+ 
+-import { Effect, Layer, Option } from "effect";
++import { Effect, Layer, Option, Schema } from "effect";
+ import {
+   Triples,
+   type TriplesService,
+@@ -31,7 +31,7 @@
+   TransactOp,
+ } from "../Triple.js";
+ import { queryToPattern } from "../Triple.js";
+-import { integer } from "../Value.js";
++import { integer, TripleValue } from "../Value.js";
+ import type { Pattern } from "../types/Pattern.js";
+ import type { DatalogQuery, WrappedQuery } from "../datalog/types.js";
+ import { validateDatalogQuery, validateWrappedQuery } from "../datalog/validation.js";
+@@ -45,8 +45,13 @@
+   CommandAlreadyCommittedError,
+   TransactionConflictError,
+   ConstraintViolationError,
++  InvalidTripleError,
+   PaginationCursorError,
+ } from "../errors/index.js";
++
++// A value the TripleValue schema rejects (an int64 outside [-2^63, 2^63-1] or non-canonical, a non-finite
++// number, ...) is the caller's typed error, decided before any adapter packs it (GS.12, O-REPLAY InvalidTripleError).
++const isTripleValue = Schema.is(TripleValue);
+ import { unsafe } from "../Branded.js";
+ import * as Constraint from "../Constraint.js";
+ import { TripleStoreRuntime } from "./TripleStoreRuntime.js";
+@@ -260,6 +265,7 @@
+       | TransactionConflictError
+       | CommandAlreadyCommittedError
+       | ConstraintViolationError
++      | InvalidTripleError
+     > =>
+       Effect.flatMap(
+         Effect.try({
+@@ -274,6 +280,17 @@
+         ({ operations, meta }) =>
+           adapter.withTransaction(
+             Effect.gen(function* () {
++              const invalidValue = operations.find(
++                (operation) => operation.op === "assert" && !isTripleValue(operation.value),
++              );
++              if (invalidValue?.op === "assert")
++                return yield* Effect.fail(
++                  new InvalidTripleError({
++                    field: "value",
++                    value: invalidValue.value,
++                    message: `Invalid ${String(invalidValue.value?.type)} value for ${invalidValue.attribute} on ${invalidValue.entityId}`,
++                  }),
++                );
+               const unsupportedValue = operations.find(
+                 (operation) =>
+                   operation.op === "assert" &&
