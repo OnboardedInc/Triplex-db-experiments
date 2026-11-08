@@ -1463,3 +1463,21 @@ Where each priority stands, from evidence so far (research probes and baselines;
   Learning: checkpoint placement decides WAL growth (on the writer thread PASSIVE never finished under readers; WAL reached 714 MB).
 - Dispatched: EXP-SQL01 (broker SQLite file per Q84, on the broker branch), EXP-OBS01 (observer sidecar per R27), and three reviewers
   (O-OBS round 2, broker round 3, X02 round 3).
+
+## 2026-11-08 22:27Z: hourly learnings pass (NORTH-STAR reread first; research is Opus high)
+- **Learnings current** through E01's merge, R25, R27, R30, contract 0.3.11's review (FIX-FIRST: comparators on real O-REPLAY rows, Unicode,
+  lane D composition fields, the Q76c matrix record) and K01 round 2 (G3 blocked by fast compaction; ruled Q83d).
+- **Host:** load 7.0 / 7.1 / 8.0; disk 25 GiB free; engines: the three dev residents (XTDB, QLever, Datomic); Claude usage 2% of the week.
+- **Where evidence points, by priority:**
+  - **P1:** reads never write (C8 accepted; merges after X02's last check). Lane D's process split is the next P1 hypothesis to measure.
+  - **P2:** the broker is one review from a default-off merge; EXP-SQL01 moves it onto the R25 SQLite file (0 acked commits lost in 80
+    kills; readers add 0.2-0.8 ms to a 3 ms commit). Engine-side encoding tweaks are capped at 12-33% (J01).
+  - **P3:** the broker log is the feed; P3 timing now comes from the log's own record.
+  - **P4:** H1 lives in the same SQLite file (0.10 ms p50 3-hop pulls, rows examined flat across depth); SQL01 builds it.
+  - **P5:** R25's pinned sweep (20,000 subjects in 2.09 s at a pinned basis, 0 mismatches) puts 100k near 10.5 s of one reader thread
+    against the 100 s bar, before kernel evaluation (15.8 s of one core); EXP-P5 can start once SQL01 lands.
+  - **Lane D:** bring-up done and under review; the adapter (DA01) is building.
+  - **Floor:** E01 on main; O-OBS round 2 and the observer sidecar in flight; contract 0.3.11 fix round in flight.
+- **Research:** no new question this hour; R28 (isolation for EXP-G03) is running. All ten slots are busy.
+- **Learning:** the review loop converges fastest when the ruling is general (one continuation table; one allowlist with everything else
+  counted; one trusted context) and slowest when each round names a case.
