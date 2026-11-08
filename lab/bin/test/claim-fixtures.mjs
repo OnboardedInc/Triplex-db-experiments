@@ -60,6 +60,8 @@ const SRC = {
   'pnpm-lock.yaml': "lockfileVersion: '9.0'\npackages:\n  effect@3.10.0:\n    resolution: {integrity: sha512-fixture}\n",
   'lab/oracles/replay/cli.py': ORACLE_PY,
   'lab/oracles/contract/cli.py': CONTRACT_PY,
+  // [EXP-A01-R3] Why: the document-only GS positive fixture also names O-ERR, which Q75c can no longer infer from COMPILED. Rejected: weakening its positive assertion or granting the unpinned production O-ERR acceptance.
+  'lab/oracles/errors/errors.py': CONTRACT_PY,
   'lab/oracles/obs/obs.py': '# O-OBS (fixture)\n',
   'lab/oracles/domain/domain.py': '# O-DOMAIN (fixture)\n',
   'lab/oracles/hand/hand.json': '{}\n',
@@ -142,6 +144,7 @@ function contractVariant(variant, { a0Commit, a0Label, a0Binary, verified } = {}
   // The pinned fixture still scopes G1.decimal.channel-routing out, as 0.3.7's pin did, so GEN-EXCLUDED keeps a pin with excludes.
   c.oraclePins['O-REPLAY'] = { ...c.oraclePins['O-REPLAY'], sha256: { 'lab/oracles/replay/cli.py': h(ORACLE_PY) }, acceptReceipt: variant === 'null' ? null : 'FIXTURE-V-O04c', excludes: ['G1.decimal.channel-routing'] };
   c.oraclePins['O-CONTRACT'] = filePin('O-CONTRACT', 'lab/oracles/contract', 'lab/oracles/contract/cli.py');
+  c.oraclePins['O-ERR'] = filePin('O-ERR', 'lab/oracles/errors', 'lab/oracles/errors/errors.py');
   c.oraclePins['O-OBS'] = filePin('O-OBS', 'lab/oracles/obs', 'lab/oracles/obs/obs.py');
   c.oraclePins['O-DOMAIN'] = filePin('O-DOMAIN', 'lab/oracles/domain', 'lab/oracles/domain/domain.py');
   c.oraclePins['O-HAND'] = filePin('O-HAND', 'lab/oracles/hand', 'lab/oracles/hand/hand.json');
