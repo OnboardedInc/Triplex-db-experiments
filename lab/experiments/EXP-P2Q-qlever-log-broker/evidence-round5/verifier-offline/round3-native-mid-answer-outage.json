@@ -1,0 +1,6 @@
+{
+  "ok": false,
+  "tag": "ReadError",
+  "reason": "replica-unreachable",
+  "message": "QLever replica the QLever replica is unreachable for native reads: Error: ECONNRESET after initial basis probe"
+}

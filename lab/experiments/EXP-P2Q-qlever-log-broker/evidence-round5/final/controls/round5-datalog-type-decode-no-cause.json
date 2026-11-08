@@ -1,0 +1,12 @@
+{
+  "expectedUnreachable": false,
+  "error": {
+    "tag": "ReadError",
+    "reason": null,
+    "message": "QLever Datalog execution failed: TypeError: Cannot decode the connection field",
+    "required": null,
+    "observed": null,
+    "replica": null
+  },
+  "preservesCause": true
+}

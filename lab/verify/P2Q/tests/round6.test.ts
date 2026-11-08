@@ -118,8 +118,8 @@ describe("round6 structured transport and protected-depth matrix", () => {
     scan(classifier);
     writeJson("round6-no-message-observation.json", { reads, rows, properties: [...properties], calls: [...calls] });
     expect(reads).toBe(0);
-    expect([...properties].sort()).toEqual(["add", "cause", "code", "has", "name", "status", "test"]);
-    expect([...calls].every(call => call === "seen.has" || call === "seen.add" || call.endsWith(".test"))).toBe(true);
+    expect([...properties].sort()).toEqual(["add", "cause", "code", "get", "has", "name", "status"]);
+    expect([...calls].every(call => call === "seen.has" || call === "seen.add" || call === "qleverTransportCodes.get")).toBe(true);
   });
 });
 
