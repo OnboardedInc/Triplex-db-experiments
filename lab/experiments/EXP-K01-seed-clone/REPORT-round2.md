@@ -52,3 +52,9 @@ Evidence paths in the table are relative to `evidence/round2/` unless already pr
 1. How should G3 prove adoption after fast L0-to-L1 compaction removes the L0 view before the first five-second sample? Disk evidence or a compacted descendant might suffice, but that is a new protocol decision.
 2. Should G3 bind the block's watermark to an observation at its cut, then allow later compaction messages while requiring the second checkpoint block to match the final gauges? The current strict equality cannot hold after those source messages advance.
 3. After that ruling, rerun T1 and T3-T7, make the golden and clone, and independently verify C1-C8 before proceeding to E1. PAIR per-arm manifests, the fixed-time P1 finish-block, the measurement window and Q74c's latency holds remain separate prerequisites.
+
+## Q83d continuation (new attempt; historical refusal above retained)
+
+Q83d now permits live trie coverage at any level. The implementation replaces accumulated L0 sightings with current per-table live coverage for the target block. A fast-compaction regression accepts L1/L3 coverage and rejects another block, missing tables, garbage tries and missing levels. The explicit completed/source watermark equalities, upload advancement, idle compactor and stable listing/digest checks remain intact. Three stable readings with the node source watermark irreversibly past the immutable target block now return an explicit refusal rather than spending the rest of the timeout.
+
+The new attempt uses distinct `round2-q83d` evidence and seed paths; no first-failure artifacts are overwritten. T1 is captured before seeded work, and the golden/clone path is attempted before the sacrificial T6 diagnostic. Current focused unit result: 41/41 pass. Typecheck and live qualification are pending admission; final results follow below.

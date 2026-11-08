@@ -21,7 +21,7 @@ import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { canonical, compareFreeze, digest, planShape, pullDigest, publishedBlockIndices, type Check } from "./lib/clone.ts";
+import { canonical, compareFreeze, blockTrieCoverage, digest, planShape, pullDigest, publishedBlockIndices, type Check } from "./lib/clone.ts";
 import { chooseSamples } from "./lib/samples.ts";
 import { SEED_VALID_FROM, ids } from "./lib/world.ts";
 
@@ -107,27 +107,29 @@ async function settle() {
     phases.push(evidence);
     persist();
     if (finishBlock.status !== 200) return { settled: false, reason: `finish-block #${phase} failed`, before, phases };
-    let streak = 0, stable = "";
-    const seenL0Tables = new Set<string>();
+    let streak = 0, stable = "", supersededStreak = 0;
     const requiredTables = ["tx_assertions", "tx_attempts", "tx_claims", "tx_meta", "txs"];
     const deadline = Date.now() + (phase === 1 ? Number(opt("timeout-s", "900")) : 180) * 1000;
     while (Date.now() < deadline) {
       await sleep(5000);
       const reading = await snapshot(), g = reading.gauges;
       const block = reading.blocks.find(r => blockNumber(r.block_idx) === target);
-      for (const r of reading.trie.rows) if (r[2] === 0 && block && String(r[1]).endsWith(`-b${block.block_idx}`)) seenL0Tables.add(String(r[0]));
-      const sawL0 = requiredTables.every(table => seenL0Tables.has(table));
+      const coverage = blockTrieCoverage(reading.trie.rows, block?.block_idx ?? "", requiredTables);
       const signature = digest([reading.listing, reading.trie.sha256]);
       const ok = !!block && num(block.tx_id) === before.gauges.latestCompletedTxId &&
         num(block.latest_processed_msg_id) === g.latestProcessedMsgId && g.latestProcessedMsgId === g.latestSubmittedMsgId &&
         g.lagMsgId === 0 && g.jobsAvailable === 0 && g.lastUploadTime !== null && baseline.gauges.lastUploadTime !== null &&
         g.lastUploadTime > baseline.gauges.lastUploadTime &&
-        (phase === 1 ? sawL0 : reading.trie.sha256 === baseline.trie.sha256);
+        (phase === 1 ? coverage.covered : reading.trie.sha256 === baseline.trie.sha256);
       streak = ok ? (signature === stable ? streak + 1 : 1) : 0;
+      // [EXP-K01-R2] Why: an immutable block cannot catch a monotone source watermark (Q83d still requires equality). Rejected: waiting out 15 minutes after three stable, irreversibly unequal readings (wastes the exclusive slot).
+      supersededStreak = block && g.jobsAvailable === 0 && g.latestProcessedMsgId !== null &&
+        g.latestProcessedMsgId > Number(block.latest_processed_msg_id) && signature === stable ? supersededStreak + 1 : 0;
       stable = signature;
-      evidence.polls.push({ elapsedS: (Date.now() - started) / 1000, ...reading, requiredTables, seenL0Tables: [...seenL0Tables].sort(), sawL0, ok, streak });
+      evidence.polls.push({ elapsedS: (Date.now() - started) / 1000, ...reading, requiredTables, coverage, ok, streak, supersededStreak });
       persist();
       log(`finish-block #${phase}: jobs ${g.jobsAvailable}, block ${block?.block_idx ?? "pending"}, stable ${streak}/3`);
+      if (supersededStreak >= 3) return { settled: false, reason: `block ${block.block_idx} source watermark ${block.latest_processed_msg_id} is permanently behind node ${g.latestProcessedMsgId}; Q83d equality cannot pass`, before, phases };
       if (streak >= 3) { previous = reading; evidence.after = reading; break; }
     }
     if (!evidence.after) return { settled: false, reason: `finish-block #${phase} evidence did not settle`, before, phases };

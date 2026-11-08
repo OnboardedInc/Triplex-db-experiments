@@ -84,3 +84,10 @@ export function publishedBlockIndices(listing: string): string[] {
     return match[1];
   }).sort();
 }
+
+// [EXP-K01-R2] Why: Q83d accepts an already compacted block at any trie level. Rejected: requiring transient L0 observations (fast compaction finishes before the first poll).
+export function blockTrieCoverage(rows: readonly (readonly unknown[])[], blockIndex: string, requiredTables: readonly string[]) {
+  const tables = [...new Set(rows.filter(r => typeof r[2] === "number" && Number.isInteger(r[2]) && r[2] >= 0 &&
+    r[3] === "live" && typeof r[1] === "string" && r[1].endsWith(`-b${blockIndex}`) && Number(r[5]) > 0).map(r => String(r[0])))].sort();
+  return { covered: requiredTables.every(table => tables.includes(table)), tables, missing: requiredTables.filter(table => !tables.includes(table)) };
+}

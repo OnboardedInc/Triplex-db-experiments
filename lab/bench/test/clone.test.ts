@@ -5,7 +5,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
-import { canonical, compareFreeze, digest, planShape, pullDigest, publishedBlockIndices } from "../lib/clone.ts";
+import { canonical, compareFreeze, blockTrieCoverage, digest, planShape, pullDigest, publishedBlockIndices } from "../lib/clone.ts";
 import { assertSeedInputsCurrent, seedPathOf } from "../lib/bulk.ts";
 
 const freeze = {
@@ -115,4 +115,15 @@ test("published block discovery: empty is empty, gaps are preserved, malformed p
   assert.deepEqual(publishedBlockIndices(""), []);
   assert.deepEqual(publishedBlockIndices("/var/lib/xtdb/buffers/v06/blocks/b02.binpb\n/var/lib/xtdb/buffers/v06/blocks/b00.binpb\n"), ["00", "02"]);
   assert.throws(() => publishedBlockIndices("/other/b00.binpb"), /unexpected block file/);
+});
+
+test("Q83d: fast compaction covers the new block with L1 tries before the first poll", () => {
+  const tables = ["tx_assertions", "tx_attempts", "tx_claims", "tx_meta", "txs"];
+  const rows = tables.map(table => [table, "l01-rc-b00", 1, "live", 1000, 10]);
+  assert.deepEqual(blockTrieCoverage(rows, "00", tables), { covered: true, tables: [...tables].sort(), missing: [] });
+  assert.equal(blockTrieCoverage(rows.map(r => [...r.slice(0, 2), 3, ...r.slice(3)]), "00", tables).covered, true);
+  assert.equal(blockTrieCoverage(rows, "01", tables).covered, false, "another block is not coverage");
+  assert.deepEqual(blockTrieCoverage(rows.slice(1), "00", tables).missing, ["tx_assertions"]);
+  assert.equal(blockTrieCoverage(rows.map(r => [...r.slice(0, 3), "garbage", ...r.slice(4)]), "00", tables).covered, false);
+  assert.equal(blockTrieCoverage(rows.map(r => [...r.slice(0, 2), null, ...r.slice(3)]), "00", tables).covered, false);
 });

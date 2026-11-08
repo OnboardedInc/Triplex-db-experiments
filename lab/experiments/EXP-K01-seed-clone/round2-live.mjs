@@ -3,7 +3,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 const root = process.cwd();
-const evidence = 'lab/experiments/EXP-K01-seed-clone/evidence/round2';
+const attemptName = process.env.TX2_K01_ATTEMPT ?? 'round2';
+if (!/^[a-zA-Z0-9-]+$/.test(attemptName)) throw new Error('invalid attempt name');
+const evidence = `lab/experiments/EXP-K01-seed-clone/evidence/${attemptName}`;
+fs.mkdirSync(evidence, { recursive: true });
 const env = { ...process.env, TX2_CONFIG_DIR: root, XTDB_URL: 'postgres://xtdb:xtdb@127.0.0.1:5471/xtdb' };
 const base = ['--lane', 'xtdb', '--slot', 's1', '--holder', 'CX-K01-R2', '--exp', 'EXP-K01'];
 let n = 0;
@@ -21,7 +24,8 @@ function run(label, args, { optional = false, extraEnv = {} } = {}) {
 }
 const engine = (label, cmd, args = [], options = {}) => run(label, ['lab/bin/engine.mjs', cmd, ...base, ...args], options);
 const check = (label, cmd, args = []) => run(label, ['lab/bench/clone-check.ts', cmd, '--url', env.XTDB_URL, '--container', 'tx2-xtdb-s1', ...args]);
-const seedDir = 'runs/xtdb-seed/k01-r2-golden';
+const seedDir = `runs/xtdb-seed/k01-${attemptName}-golden`;
+const singlecutDir = `runs/xtdb-seed/k01-${attemptName}-singlecut`;
 try {
   for (;;) {
     const disk = fs.statfsSync(root);
@@ -32,9 +36,12 @@ try {
     process.stderr.write('[K01-R2] waiting 30 s for engine admission; residents untouched\n');
     await new Promise(resolve => setTimeout(resolve, 30000));
   }
+  engine('T1-stop', 'stop');
+  engine('T1-logs', 'logs', ['--tail', '5000']);
+  engine('T1-up', 'up');
   engine('tools', 'toolcheck');
   // [EXP-K01-R2] Why: a no-flag s1-only config observes T2 without touching resident configuration. Rejected: editing shared config or recreating a dev resident.
-  const noFlag = `${root}/runs/k01-r2-no-flag`;
+  const noFlag = `${root}/runs/k01-${attemptName}-no-flag`;
   fs.mkdirSync(`${noFlag}/lab/config`, { recursive: true });
   const slots = JSON.parse(fs.readFileSync('lab/config/slots.json', 'utf8'));
   slots.slots.xtdb.s1.javaOpts = slots.slots.xtdb.s1.javaOpts.replace(' -Dlog4j2.shutdownHookEnabled=false', '');
@@ -55,12 +62,6 @@ try {
       engine(`T1-${k}-down`, 'down', ['--remove-volume']);
     }
   }
-  engine('singlecut-up', 'up', ['--fresh']);
-  run('singlecut-seed', ['lab/bench/xtdb-seed.ts', '--subjects', '500', '--composition', 'public', '--out', 'runs/xtdb-seed/k01-r2-singlecut']);
-  engine('singlecut-probe', 'one-cut-probe', ['--manifest', 'runs/xtdb-seed/k01-r2-singlecut/manifest.json']);
-  engine('singlecut-logs', 'logs', ['--tail', '5000']);
-  engine('singlecut-stop', 'stop');
-  engine('singlecut-down', 'down', ['--remove-volume']);
   engine('golden-up', 'up', ['--fresh']);
   run('seed', ['lab/bench/xtdb-seed.ts', '--subjects', '500', '--composition', 'public', '--out', seedDir]);
   check('before-cut-diagnostic', 'diagnostic');
@@ -71,6 +72,14 @@ try {
   engine('clone-logs', 'logs', ['--tail', '5000']);
   engine('clone-stop', 'stop');
   engine('clone-listing', 'listing', ['--golden-record', `${seedDir}/golden.json`, '--out', `${evidence}/clone-listing.json`]);
+  engine('clone-down', 'down', ['--remove-volume']);
+  engine('singlecut-up', 'up', ['--fresh']);
+  run('singlecut-seed', ['lab/bench/xtdb-seed.ts', '--subjects', '500', '--composition', 'public', '--out', singlecutDir]);
+  engine('singlecut-probe', 'one-cut-probe', ['--manifest', `${singlecutDir}/manifest.json`]);
+  engine('singlecut-logs', 'logs', ['--tail', '5000']);
+  engine('singlecut-stop', 'stop');
+  engine('singlecut-down', 'down', ['--remove-volume']);
+
 } finally {
   engine('cleanup-source-clone', 'down', ['--remove-volume'], { optional: true });
   const record = `${seedDir}/golden.json`;
