@@ -50,9 +50,8 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | V-X02 XTQL lane verification (opus) | XTQL primary lane | verdict on exp/X02-xtql-parity bf1ad4d |
 | EXP-P4 current-value path (opus) | P4 | read-path arms X1, X2, H1, Q1 |
 | EXP-A01 contract 0.3.10 (opus, resumed; contract/0.3.10) | floor for every claim | W0-1.1.2 + O-DOMAIN 5d1fd1a pins; Q57, Q63-Q69 compiled; Q70 pending |
-| V-O04f re-check of O-REPLAY 0.4.5 acf9fce (opus, V-O04e resumed) | correctness floor | ACCEPT -> pin 0.4.5 in contract 0.3.11 |
+| O-REPLAY 0.4.6 (opus, O04b author resumed; on acf9fce) | correctness floor | Q70f ambiguous literal token refused, Q70g journal pagination; then V-O04g |
 | R25 SQLite pinned readers beside one durable writer (sonnet xhigh; /Users/sam/Claude/Projects/triplex-db-2/R25/) | P1, P2, P4, P5 | one design for the broker's SQLite file |
-| R26 seed once, clone faithfully (sonnet xhigh; /Users/sam/Claude/Projects/triplex-db-2/R26/) | measurement speed, all five | clone procedure and faithfulness checks |
 | EXP-M01 PARKED (handed back clean; no process running) | measurement floor | resumes in the Q69a measurement window |
 
 ## Codex review history
@@ -65,7 +64,8 @@ Codex plan-v2 review DONE: NOT READY, 14 findings all accepted (lab/reviews/plan
     resume N01 a4d931a315c6b5664. Use R26's clone procedure if it is faithful.
 1e. engine.mjs build-index-from-seed step for QLever (N01's 10k bulk seed at runs/qlever-seed/ns-v2-10k/), then the QLever A0 NS run.
 1c. W0-1.1.3 when a W0 author slot frees: Q73a, Q73b cases; O-DOMAIN and the kernel must pass them.
-2. V-O04f: re-check O-REPLAY 0.4.5 (Q70a-e) when its fix round reports (resume V-O04e a24def81f188f0df6); pin 0.4.5 in contract 0.3.11.
+0. EXP-K01 seed-once clone tooling (brief lab/experiments/EXP-K01-seed-clone/BRIEF.md): dispatch as soon as C8 or J01 reports.
+2. V-O04g: re-check O-REPLAY 0.4.6 (Q70f, Q70g) when it reports (resume a24def81f188f0df6); pin 0.4.6 in contract 0.3.11.
 3. V-P2Q delta re-verify after fix round 2 (resume aea2afc01cf3f010f); then merge P2Q behind its default-off option and re-freeze the A0
    control (Q72d); then EXP-P2B (XTDB behind the broker, Q58b), then the SQLite store (Q58c)
    on R25's design.

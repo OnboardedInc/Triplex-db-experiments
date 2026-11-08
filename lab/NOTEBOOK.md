@@ -1213,3 +1213,22 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **Pool:** xtdb-dev 2.3 of 3.0 GiB, qlever-dev 1.0 of 3.5, xtdb-s2 1.1 of 3.5 (EXP-P4's slot smoke). With s2 taken, s1 cannot also fit
   in the 11 GiB pool, so V-X02's exclusive XTQL rerun waits for P4 to release s2; engine.mjs's reservations arbitrate this.
 - **Host:** load 15.9 / 26.2 / 22.4 (the 5-minute peak is the highest yet); disk 9.2 GiB free (rule: no new heavy run below 5 GiB).
+
+## 2026-11-08 01:57Z: R26 landed (clones are faithful if settled); disk is the binding constraint; O-REPLAY gets one more round (0.4.6)
+- **R26 (measurement speed for all five):** XTDB 2.2.0 keeps no persistent node identity (node id random per process; the leader term is
+  re-claimed from the copy's own log), and blocks and tries copy byte-identically, so query cost matches. A clone is faithful when the
+  slot is stopped cleanly and settled first (finish-block, compactor idle), `log/` and `buffers/` are copied from one moment, and image and
+  config bytes match. QLever's `/data` copies faithfully too, but saves only 1-4 minutes because its bulk index build already takes about
+  one. Estimated saving: a 10k XTDB run's 38-minute seed becomes 2-4 minutes; a PAIR-0 duet's 76-106 minutes becomes 5-8.
+  Ruled Q74: screening may clone, acceptance seeds fresh, settled is the canonical freeze state, and no clone-seeded receipt counts until
+  validation E1 (fresh against clone under PAIR-0 hold margins) passes. EXP-K01 is briefed to build the tooling and validate at 500 subjects.
+- **Disk:** removing six dangling anonymous volumes from the first bring-up freed 4.7 GB inside the VM but nothing on the host (the VM
+  disk is sparse and does not shrink). Host free is 8.7 GiB, a 10k XTDB volume is 3.41 GiB, and a golden plus two duet clones is about
+  10 GiB, so at the 10k rung only one clone fits at a time (Q74f). Small rungs are unaffected.
+- **V-O04f on O-REPLAY 0.4.5:** implements Q70a-e exactly (49 MATCH, 0 WRONG), and found two shapes no ruling covered: a literal token
+  issued by two reads with different views (F9) and journal pages continued by `after = next` (F10). Neither reaches a required case
+  today. Ruled Q70f (refuse an ambiguous token, typed) and Q70g (journal pages continue the issuing read); 0.4.6 is in progress, and the
+  pin waits for it so the contract pins one version without known gaps.
+- **Learning:** every continuation mechanism in the oracle (cursorFrom, literal token, journal `after`) needed the same rule stated
+  separately; the verifier found each one only by enumerating ways to continue a page. Future read surfaces with cursors get the
+  enumeration up front.
