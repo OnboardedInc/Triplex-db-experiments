@@ -41,6 +41,9 @@ function caseCommand(command, subjects, refsKept) {
       operations.push(op);
     } else if (op.op === 'retract') {
       if (refsKept.has(op.target)) operations.push(op);
+    } else if (op.op === 'erase') {
+      // R-ERA-2 erasure by entity (and attribute): kept when the entity belongs to this chunk's subjects.
+      if (op.entityId && subjects.has(subjectOfEntity(op.entityId))) operations.push(op);
     } else throw new Error(`unsupported op ${op.op} in command ${command.index}`);
   }
   const meta = { ...command.meta };

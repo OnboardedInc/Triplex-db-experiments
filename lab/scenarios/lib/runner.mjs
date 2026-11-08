@@ -421,6 +421,13 @@ async function commonChecks(ctx) {
   const w = ctx.gen.witnesses ?? { positive: [], negative: [] };
   check('witnesses-declared', w.positive.length > 0 && w.negative.length > 0, { positive: w.positive.length, negative: w.negative.length });
   const unchanged = [], changed = [];
+  // Witnesses of another kind (domain, valid-time, erasure) change outside the live-phase writes: the database
+  // check is then that no witness is written in the live phase; the scenario's own check judges the change.
+  if (w.kind) {
+    for (const sid of [...w.positive, ...w.negative]) { const f = await finalOf(sid); const live = (ex.ledger.get(sid) ?? []).filter(e => !setupIdx.has(e.index)); if (!f.ok || f.digest !== postSetup(sid) || live.length) changed.push(sid); }
+    check(`${w.kind}-witnesses-not-written-in-live-phase`, changed.length === 0, { changed: changed.slice(0, 5), count: changed.length });
+    return;
+  }
   for (const sid of w.positive) { const f = await finalOf(sid); if (!f.ok || f.digest === postSetup(sid)) unchanged.push(sid); }
   for (const sid of w.negative) { const f = await finalOf(sid); const live = (ex.ledger.get(sid) ?? []).filter(e => !setupIdx.has(e.index)); if (!f.ok || f.digest !== postSetup(sid) || live.length) changed.push(sid); }
   check('positive-witnesses-changed', unchanged.length === 0, { notChanged: unchanged.slice(0, 5), count: unchanged.length, of: w.positive.length });

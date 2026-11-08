@@ -52,7 +52,7 @@ try {
   for (const dir of scenarioDirs()) {
     const s = await loadScenario(dir);
     if (which !== 'all' && !which.split(',').map(Number).includes(s.spec.id)) continue;
-    if (s.spec.status !== 'runnable') { report.scenarios.push({ scenario: s.spec.id, slug: s.spec.slug, verdict: 'NOT_RUN', reason: `status ${s.spec.status}` }); continue; }
+    if (s.spec.status !== 'runnable') { report.scenarios.push({ scenario: s.spec.id, slug: s.spec.slug, verdict: 'NOT_RUN', reason: s.spec.blockedReason ?? `status ${s.spec.status}` }); continue; }
     const expectedFile = path.join(dir, `expected-${rung}.json`);
     const expected = JSON.parse(fs.readFileSync(expectedFile, 'utf8'));
     log(`scenario ${s.spec.id} ${s.spec.slug}: start`);
