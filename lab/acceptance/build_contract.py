@@ -5754,7 +5754,7 @@ def checks_0311():
     for x in ("O-CONTRACT", "O-REPLAY"):
         for hashes in (None, {}, {"other-file": "f" * 64}):
             runners = {k: dict(v) for k, v in ORACLE_RUNNERS.items()}
-            runners[x]["sha256"] = hashes
+            runners.setdefault(x, {})["sha256"] = hashes
             pins = {k: dict(v) for k, v in ORACLE_PINS.items()}
             if x in pins:
                 pins[x]["sha256"] = hashes
