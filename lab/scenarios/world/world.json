@@ -1,0 +1,7 @@
+{
+  "format": "tx2-gs-world/1",
+  "note": "Background world of each rung (TARGETS section 2 'Rungs'). World subject n is placement:w<n> -> worker:w<n> with 5 facts (lib/gen.mjs worldOps), loaded through the bulk lane in batches of 100 subjects (one command each, commandId world/<rung>/<seed>/batch-<k>), idempotently, into the scope gs-world-<rung>-s<seed>-<gen hash>. The full N01 subject world (50 to 2,000 facts, 3 to 6 hops) replaces this when lab/bench lands. goldenSubjects is how many world subjects carry O-REPLAY digests (all of them at 10k).",
+  "seed": 20261107,
+  "rungs": { "smoke": 500, "10k": 10000, "100k": 100000, "1m": 1000000, "10m": 10000000 },
+  "goldenSubjects": 10000
+}

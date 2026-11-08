@@ -1,0 +1,334 @@
+{
+ "format": "tx2-gs-expected/1",
+ "scenario": 2,
+ "slug": "form-submit",
+ "rung": "smoke",
+ "seed": 20261102,
+ "genVersion": "w01-gen/1",
+ "streamSha256": "1fb6b68fa05eed3af43f29171d42188b7376da25aed49e2406c517fe4c3d854a",
+ "commands": 37,
+ "setupCommands": 3,
+ "facts": 635,
+ "oracle": {
+  "id": "O-REPLAY",
+  "version": "0.3.1",
+  "commit": "8cc2c26f6f17ed627a3ed608f1252fe0e240bb5b",
+  "sourceBranch": "main (O-REPLAY 0.3.1 accepted by independent verification, merge 4591715)",
+  "files": {
+   "lab/oracles/replay/RULES.md": "60e745ee8733271cede926a6f55e1f473d2b3c7a9a721500f9d277438971d54c",
+   "lab/oracles/replay/SCHEMA.md": "052587750dea7f59495dfc9475a2bb69bc2bf6a80581944b57180241b2b06a26",
+   "lab/oracles/replay/__init__.py": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
+   "lab/oracles/replay/__main__.py": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
+   "lab/oracles/replay/cli.py": "1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5",
+   "lab/oracles/replay/constraints.py": "e93fcba3ca36be607b05f522dd779869ced816e2834f629130ecdd2408527571",
+   "lab/oracles/replay/entities.py": "7b423d235cdc39871bd885ea46d0c4d3280c8d2879f4926c6afeb78191b9e365",
+   "lab/oracles/replay/errors.py": "5cfdd07ed710557d1db868bfae38e32f7c851dc3007fbcc9b2c0de521185f887",
+   "lab/oracles/replay/exact.py": "3574703eb821b94b18144d3461d5ccacecaad5665f5308308db2b69f76fde0b8",
+   "lab/oracles/replay/replay.py": "f8e4980591fa6e4056f0945fbc8ac2864d51d47672858904cd352f76ae0c8caa",
+   "lab/oracles/replay/run.py": "8ad651b255ed2ce5c9d015011d5f047fff33e9d3d6d57590797513b297a21183",
+   "lab/oracles/replay/scale.py": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
+   "lab/oracles/replay/selfcheck.py": "c1e0ae41cfe9bac7f2ed7f249715b5ae71e98f4d66e4ae152938b6d333c9418c",
+   "lab/oracles/replay/values.py": "67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982",
+   "lab/oracles/replay/views.py": "4d23472c85ac559f8d1bad7257fe219e7dc5fa7b0827c2595e7ff072d1816f28"
+  }
+ },
+ "oracleCases": [
+  {
+   "caseId": "GS/2/smoke/chunk-0000",
+   "caseSha256": "847247c0f91de016bf640990e4d46df5bf75b14d15cf77053b634a5d3f67965d",
+   "verdict": "EXPECTED-ONLY"
+  }
+ ],
+ "validAts": [
+  1794052800000
+ ],
+ "digestSubjects": 16,
+ "noDigestSubjects": [],
+ "outcomes": {
+  "27": {
+   "outcome": "rejected",
+   "category": "command-already-committed",
+   "errorTag": "CommandAlreadyCommittedError"
+  },
+  "31": {
+   "outcome": "rejected",
+   "category": "command-already-committed",
+   "errorTag": "CommandAlreadyCommittedError"
+  },
+  "36": {
+   "outcome": "rejected",
+   "category": "command-already-committed",
+   "errorTag": "CommandAlreadyCommittedError"
+  }
+ },
+ "notModeled": [],
+ "hand": null,
+ "gaps": [],
+ "digests": {
+  "f0000": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "0a18a179f9a8cd824dc7246d"
+    },
+    "6": {
+     "1794052800000": "59a3f08045b66b193a5e5a4b"
+    }
+   }
+  },
+  "f0001": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "9b835ca7296e9198a5f11434"
+    },
+    "11": {
+     "1794052800000": "133d58ae3a75a2688f4f16c8"
+    }
+   }
+  },
+  "f0002": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "2a4f42dc5501c6cef7cd2e08"
+    },
+    "14": {
+     "1794052800000": "ea292024f00477d34e70a8dd"
+    }
+   }
+  },
+  "f0003": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "e1cfd26fc25cfebdaffa0b83"
+    },
+    "17": {
+     "1794052800000": "66f1ea32ea0b9cd92859d256"
+    }
+   }
+  },
+  "f0004": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "8e85ccaa22d13586787e7b0c"
+    },
+    "21": {
+     "1794052800000": "bd2fa81d4a2afd73880c937e"
+    }
+   }
+  },
+  "f0005": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "857895e2b1fb42a5e563781a"
+    },
+    "24": {
+     "1794052800000": "0d7f1d22cea899ae5e36e681"
+    }
+   }
+  },
+  "f0006": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "3e706be6b08944b4ce1d0015"
+    },
+    "30": {
+     "1794052800000": "20604758dc98eb787161521d"
+    }
+   }
+  },
+  "f0007": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "ef7ef310f7e8dc0da9df0e54"
+    },
+    "33": {
+     "1794052800000": "f85b06f48be4e0d6a70df165"
+    }
+   }
+  },
+  "f0008": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "42c03e29b6f375e7bd0335e1"
+    }
+   }
+  },
+  "f0009": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "c27ba3fc95ee38add2be64b1"
+    }
+   }
+  },
+  "f0010": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "1": {
+     "1794052800000": "3df60d02986c9c2d6df368a8"
+    }
+   }
+  },
+  "tr00000": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "2": {
+     "1794052800000": "031c60c8a1245cff95e961c6"
+    },
+    "18": {
+     "1794052800000": "14f54c48a1599efe176e7489"
+    },
+    "26": {
+     "1794052800000": "ba5424817f054359dfc053e0"
+    },
+    "29": {
+     "1794052800000": "8c4d723e96e0a369ba6bb022"
+    },
+    "31": {
+     "1794052800000": "8c4d723e96e0a369ba6bb022",
+     "rejected": true
+    }
+   }
+  },
+  "tr00001": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "2": {
+     "1794052800000": "3f2822368be8a9fd8b49e3d6"
+    },
+    "9": {
+     "1794052800000": "6b01a7a4186c31187bf601d1"
+    },
+    "22": {
+     "1794052800000": "f9b6ef1164122e0fb739045b"
+    },
+    "25": {
+     "1794052800000": "e7642aaec2f76dfa84a790f9"
+    }
+   }
+  },
+  "tr00002": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "2": {
+     "1794052800000": "0bd8b2f6c538af7ae6f9920c"
+    },
+    "4": {
+     "1794052800000": "e852110e46c381899e2f43aa"
+    },
+    "13": {
+     "1794052800000": "3f2f83fb7098ebba2324bdc6"
+    },
+    "15": {
+     "1794052800000": "29a6813e21b22cc7571e4421"
+    },
+    "23": {
+     "1794052800000": "be20cc6ffb552c4b2470b7d7"
+    },
+    "27": {
+     "1794052800000": "be20cc6ffb552c4b2470b7d7",
+     "rejected": true
+    },
+    "28": {
+     "1794052800000": "f08c1d1231ed742de762c15e"
+    },
+    "32": {
+     "1794052800000": "38f50a452ed6feac4353a57e"
+    },
+    "35": {
+     "1794052800000": "1bac19d35e03b9db2a331c9f"
+    },
+    "36": {
+     "1794052800000": "1bac19d35e03b9db2a331c9f",
+     "rejected": true
+    }
+   }
+  },
+  "tr00003": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "2": {
+     "1794052800000": "e29276f9fc90825f7bf08c8c"
+    },
+    "3": {
+     "1794052800000": "582ab2b6753d224646f23ab2"
+    },
+    "7": {
+     "1794052800000": "df4f8415accaf5b41af1e9ce"
+    },
+    "8": {
+     "1794052800000": "00198006c93ff92661621ae9"
+    },
+    "10": {
+     "1794052800000": "c166b2f1c9ad9b1c214ff61b"
+    },
+    "12": {
+     "1794052800000": "4690bee95c489e4df00d8e59"
+    },
+    "19": {
+     "1794052800000": "4840ff1fc46d737ce8638a04"
+    }
+   }
+  },
+  "tr00004": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "2": {
+     "1794052800000": "285f9f033b2c3b75a60e600d"
+    },
+    "5": {
+     "1794052800000": "a58fe4881e0154dda6bee669"
+    },
+    "16": {
+     "1794052800000": "3722dd330cfb240a273611c6"
+    },
+    "20": {
+     "1794052800000": "e9ba85dcf2f17006945b5285"
+    },
+    "34": {
+     "1794052800000": "2ea6c99e3d006bf018d70231"
+    }
+   }
+  }
+ }
+}
