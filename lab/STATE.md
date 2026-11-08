@@ -46,11 +46,11 @@ isolation; is Datomic dev storage acceptable for the final acceptance run, or mu
 ## Running agents (10; protocol lab/PROTOCOL.md since 2026-11-08: Codex builders medium, Codex reviewers high, Opus planners high)
 | Agent | Role, model, effort | Priority | Output |
 | --- | --- | --- | --- |
-| CX-DA00 lane D bring-up (exp/DA00-datomic-bringup) | builder, Codex medium | lane D floor | Datomic image, parkable resident, gateway skeleton, G0 |
+| CX-DA01 lane D adapter (exp/DA01-datomic-adapter, on DA00 702643f) | builder, Codex medium | lane D, goal 7 floor | storage adapter, Datalog executor, G1 |
 | CX-VP2Q-3 (verify/P2Q) | reviewer, Codex high | P2, P3 | delta re-check of the broker at 957e3a3 |
 | CX-VC8-3 (verify/C8) | reviewer, Codex high | P1 | delta re-check of C8 514c3b6 (1,024 offline, 25/25 probes) |
 | CX-VJ01-2 (verify/J01) | reviewer, Codex high | P2 | delta re-check of J01 0d9a860 for a default-off merge |
-| CX-E01-R3 (exp/E01-claim-evaluator) | builder, Codex medium | floor for claims | Q81a final input checks (delta check CX-VE01-3: FIX-FIRST, one gap) |
+| CX-VE01-4 (verify/E01) | reviewer, Codex high | floor for claims | delta re-check of E01 388209d (128/128, replay 70/70) |
 | CX-A01-0311 (contract/0.3.11) | builder, Codex medium | floor for claims | pin O-REPLAY 0.4.9; compile Q70, Q74-Q77, Q79, Q81; register lane D (blocked until DA00) |
 | CX-VX02-2 (verify/X02) | reviewer, Codex high | XTQL lane, numeric rule | delta re-check of X02 6cd68dc |
 | CX-O05-R2 (exp/O05-observation-oracle) | builder, Codex medium | floor: O-OBS blocks 62 obligations | Q80, Q82: obs-bundle/1, evaluator-owned context, source kinds, exact ratios, canaries |
@@ -58,7 +58,7 @@ isolation; is Datomic dev storage acceptable for the final acceptance run, or mu
 | CX-K01-R2 (exp/K01-seed-clone) | builder, Codex medium | measurement speed | R30 freeze protocol (Q83), 500-subject golden and clone with C1-C8 |
 
 Paused at the 2026-11-08 Claude weekly limit and not resumed (effort may exceed high): the ten agents in lab/agents/handoffs/;
-their work is in WIP commits on their branches. Still waiting for a slot: W01b live GS rerun on an exclusive XTDB slot (W01b offline work done at 1d19199: harness and restart fixes, 23 tests, 20/20 golden regeneration, GS.12 patch checks; the shared-engine rerun stopped incomplete), R25
+their work is in WIP commits on their branches. Still waiting for a slot: DA00 review (Codex reviewer; DA00 702643f PROGRESSED, tx2-datomic-dev READY); a scale window (park tx2-datomic-dev) for K01 live, W01b GS, J01 compact-on G1, X02 and C8 exclusive reruns; W01b live GS rerun on an exclusive XTDB slot (W01b offline work done at 1d19199: harness and restart fixes, 23 tests, 20/20 golden regeneration, GS.12 patch checks; the shared-engine rerun stopped incomplete), R25
 R28 (planner); EXP-OBS01 observer sidecar per engine under engine.mjs (R27 section 6, Q82c) after O-OBS round 2, M01 (parked for the Q69a window).
 
 ## Codex review history

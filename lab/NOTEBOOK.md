@@ -1429,3 +1429,10 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - Decisions taken by the orchestrator (lab configuration, not product calls): the log4j flag on slots only (Q83a) and the canonical
   freeze state (Q83b). Learning: two "engine misbehaves" observations were a logging-library default and a known upstream bug; the K01
   gate's refusal to make an unproven golden was right both times.
+
+## 2026-11-08 22:04Z: MILESTONE: lane D (Datomic) is up: tx2-datomic-dev READY, G0 green on all three lanes
+- EXP-DA00 (Codex builder) at exp/DA00-datomic-bringup 702643f: verified Datomic Pro 1.0.7745 download, a locally built image with the
+  transactor and the Clojure gateway on pinned CPUs, engine.mjs lane D lifecycle (dev parkable), the tagged value codec; 22 lab tests and 34
+  gateway assertions pass; data survived park and restart. Review pending; EXP-DA01 (adapter, G1) builds on it now.
+- Pool consequence (Q78b): with the 2.75 GiB lane D resident up, no 3.5 GiB exclusive slot fits, so K01's live check, the W01b GS rerun,
+  J01's compact-on G1 and the X02/C8 exclusive reruns wait for a scale window in which the orchestrator parks tx2-datomic-dev.
