@@ -43,17 +43,21 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 ## Pending Sam decisions for lane D (Q78e): does one Datomic database per tenant on a shared dev storage file count as storage-layer
 isolation; is Datomic dev storage acceptable for the final acceptance run, or must it be SQL storage.
 
+## Merged 2026-11-08: E01 claim evaluator (f060f7e, 128/128 on main); follow-up: the poison marker lives in the shared .git, so one
+worktree's refusal blocks every worktree (move it to the worktree's own git dir).
+
 ## Running agents (10; protocol lab/PROTOCOL.md since 2026-11-08: Codex builders medium, Codex reviewers high, Opus planners high)
 | Agent | Role, model, effort | Priority | Output |
 | --- | --- | --- | --- |
 | CX-DA01 lane D adapter (exp/DA01-datomic-adapter, on DA00 702643f) | builder, Codex medium | lane D, goal 7 floor | storage adapter, Datalog executor, G1 |
-| CX-P2Q-R3 (exp/P2Q-qlever-log-broker) | builder, Codex medium | P2, P3 | answer-request outages reported as replica-unreachable (last FIX-FIRST item) |
-| CX-X02-R3 (exp/X02-xtql-parity) | builder, Codex medium | XTQL lane | guard admits supported parenthesized subqueries (F1-R2); C8 514c3b6 ACCEPTED, merges after X02 |
+| CX-VP2Q-4 (verify/P2Q) | reviewer, Codex high | P2, P3 | delta re-check of broker round 3 1b55d2e |
+| CX-SQL01 (exp/SQL01-broker-sqlite, on 1b55d2e) | builder, Codex medium | P2, P4, P5 | broker SQLite file per R25 (Q84): log of record, pinned readers, H1 rows |
+| CX-VX02-3 (verify/X02) | reviewer, Codex high | XTQL lane | delta re-check of X02 round 3 200d669; C8 514c3b6 ACCEPTED, merges after X02 |
 | CX-VA01-0311 (verify/A01-0311) | reviewer, Codex high | floor for claims | review of contract 0.3.11 36d7434 (338/338 regressions; lane D 153 obligations blocked) |
-| CX-VE01-4 (verify/E01) | reviewer, Codex high | floor for claims | delta re-check of E01 388209d (128/128, replay 70/70) |
 | R28 isolation design for EXP-G03 | planner, Opus 5.5, high | floor for claims | /Users/sam/Claude/Projects/triplex-db-2/R28/ |
 | CX-VDA00 (verify/DA00) | reviewer, Codex high | lane D floor | review of lane D bring-up 702643f |
-| CX-O05-R2 (exp/O05-observation-oracle) | builder, Codex medium | floor: O-OBS blocks 62 obligations | Q80, Q82: obs-bundle/1, evaluator-owned context, source kinds, exact ratios, canaries |
+| CX-VO05-2 (verify/O05) | reviewer, Codex high | floor | review of O-OBS round 2 463703d |
+| CX-OBS01 (exp/OBS01-observer) | builder, Codex medium | floor | observer sidecar writing obs-bundle/1 (R27, Q82) |
 | R25 finish: SQLite pinned readers for the broker file and H1 (continuation) | planner, Opus 5.5, high | P1, P2, P4, P5 | /Users/sam/Claude/Projects/triplex-db-2/R25/ |
 | CX-K01-R2 (exp/K01-seed-clone) | builder, Codex medium | measurement speed | R30 freeze protocol (Q83), 500-subject golden and clone with C1-C8 |
 

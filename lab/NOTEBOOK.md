@@ -1450,3 +1450,16 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **DA01** was correctly blocked (its gateway routes need the resident recreated, which my prompt forbade); authorized and resumed. That
   exposed a tool bug: `codex exec resume` takes no -s or --add-dir, so agent.mjs now passes sandbox and writable roots as config keys.
 - R28 (Opus high) designs build and run isolation for EXP-G03.
+
+## 2026-11-08 22:21Z: E01 merged; R25 landed (SQLite design, Q84); broker SQLite store and observer sidecar dispatched
+- **E01 merged into main (f060f7e)** after four review rounds; 128/128 on main. First run after the merge failed 32 tests because my test
+  run during the uncommitted merge correctly saw claim.mjs differ from git and poisoned the checkout; the marker sits in the shared .git, so
+  it blocked every later run until `claim.mjs restore-evaluator`. The guard works; its scope (all worktrees) is a follow-up.
+- **R25 (Opus high) finished from the retained measurements:** drop EXCLUSIVE locking; one writer thread plus a separate checkpointer
+  thread plus four readonly reader threads; a broker.lock file replaces the perl flock helper; marker-first read transactions with one unit of
+  work each; long work pins H instead of holding a read transaction; H1's rows in the same file. Numbers: 0 acked commits lost in 80 writer
+  SIGKILLs; 0 SQLITE_BUSY in about 300,000 commits; readers add 0.2-0.8 ms to a 3.0-3.3 ms commit; four reader threads ~20k reads/s; H1
+  3-hop pulls 0.10 ms p50 with rows examined flat across history depth; a 20,000-subject pinned sweep in 2.09 s with 0 mismatches.
+  Learning: checkpoint placement decides WAL growth (on the writer thread PASSIVE never finished under readers; WAL reached 714 MB).
+- Dispatched: EXP-SQL01 (broker SQLite file per Q84, on the broker branch), EXP-OBS01 (observer sidecar per R27), and three reviewers
+  (O-OBS round 2, broker round 3, X02 round 3).
