@@ -16,7 +16,7 @@ from . import views as W
 
 CASE_FORMAT = "triplex-db-2/o-replay-case/1"
 OUTPUT_FORMAT = "triplex-db-2/o-replay-expected/1"
-ORACLE_VERSION = "0.4.3"   # EXP-O04b: Q52a-g, Q56f; V-O04d F5/F6 (Q66a prefixes, Q66b cursors); ACCEPTANCE 0.3.9
+ORACLE_VERSION = "0.4.4"   # EXP-O04b: Q52a-g, Q56f; Q66a-b (V-O04d F5/F6); Q70a-b (V-O04e F7/F8); ACCEPTANCE 0.3.9
 SOURCE_FILES = ["__init__.py", "__main__.py", "cli.py", "errors.py", "values.py", "exact.py", "replay.py",
                 "constraints.py", "views.py", "entities.py", "scale.py", "run.py", "selfcheck.py"]
 
@@ -55,6 +55,17 @@ def _order_keys_not_modeled(run, query):
 
 for _kind in ("orderKey", "decimalKey", "tdk1Key"):
     QUERIES[_kind] = _order_keys_not_modeled
+
+
+def issued_cursors(answer):
+    """The next cursors a read's answer issued: every page's `nextCursor` (Q70b)."""
+    key, value = answer
+    pages = value.get("pages") if key == "result" and isinstance(value, V.OrderedOut) else None
+    if not isinstance(pages, list):
+        return set()
+    return {page.get("nextCursor") for page in pages
+            if isinstance(page, V.OrderedOut) and page.get("nextCursor") is not None}
+
 
 INFLIGHT_RULE = ("ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees "
                  "each commit whole, all of its values as they were or all as markers, and the commits in "
@@ -123,9 +134,11 @@ class Run:
                                lane_ranges=case.get("laneIntegerRanges"),
                                declarations=E.decimal_declarations(self.schemas, case.get("attributeDeclarations")))
         self.results = {}
-        # Q66b: every query's read record: the read start and scope, and its answers per erasure
-        # prefix ([(seen [(position, txId)], (key, value))]), so a continuation can answer per prefix
+        # Q66b / Q70: every query's read record: the read start and scope, its answers per erasure
+        # prefix ([(seen [(position, txId)], (key, value))]) and whether commits were in flight, so
+        # a continuation answers from the read it continues; `read_log` keeps them in case order
         self.reads = {}
+        self.read_log = []
         self.pinned = {}     # query id -> its result under the prefix being answered (Q66b)
         self.commands = list(case.get("commands") or [])
         for i, command in enumerate(self.commands):
@@ -537,24 +550,31 @@ class Run:
             entry = [("id", qid), ("kind", kind)]
             source = self.continued_read(query)
             if source is not None:
-                # Q66b: a continuation cursor carries the erasure prefix its page was computed with,
-                # so the continuation is answered once per prefix of the earlier read, from that
-                # prefix's page. A prefix whose page failed or has no next cursor has no continuation.
+                # Q66b / Q70a: a continuation cursor carries the erasure prefix its page was computed
+                # with, so every continuation is answered from the read it continues: that read's
+                # start, scope and prefixes, one answer per prefix, from that prefix's page; its own
+                # readStart is never consulted. A prefix whose page failed or has no next cursor has
+                # no continuation. Q70b: a literal token continues the prefixes whose pages issued it.
                 start, scope = source["start"], source["scope"]
-                answers = []
-                for seen, (key, prior) in source["answers"]:
-                    if key != "result":
+                ref = query["cursorFrom"]["query"] if query.get("cursorFrom") is not None else None
+                answers, missing = [], None
+                for seen, answer in source["answers"]:
+                    if ref is None and query["cursor"] not in issued_cursors(answer):
                         continue
-                    self.pinned = {query["cursorFrom"]["query"]: prior}
+                    if ref is not None:
+                        self.pinned = {ref: answer[1] if answer[0] == "result" else None}
                     try:
                         answers.append((seen, self.answer_under(kind, query, start, scope, seen)))
-                    except W.NoContinuation:
-                        continue
+                    except W.NoContinuation as error:
+                        missing = error
                     finally:
                         self.pinned = {}
                 if not answers:
-                    raise V.OracleInputError(f"cursorFrom names query {query['cursorFrom']['query']!r}, which has no "
-                                             f"next cursor under any erasure prefix")
+                    if len(source["answers"]) == 1 and missing is not None:
+                        raise missing      # nothing was in flight: the case is malformed, as before
+                    raise V.OracleInputError(f"cursorFrom names query {ref!r}, which has no next cursor under any "
+                                             f"erasure prefix")
+                in_flight = source["inFlight"]
             else:
                 # R-ERA-6: `readStart` is the last position published when the read started; erasure
                 # commits of the read's scope published after it are in flight for this read. Q52e:
@@ -567,7 +587,10 @@ class Run:
                 pending = self.in_flight_erasures(scope, start)
                 answers = [(pending[:k], self.answer_under(kind, query, start, scope, pending[:k]))
                            for k in range(len(pending) + 1)]
-            self.reads[qid] = {"start": start, "scope": scope, "answers": answers}
+                in_flight = bool(pending)
+            record = {"start": start, "scope": scope, "answers": answers, "inFlight": in_flight}
+            self.reads[qid] = record
+            self.read_log.append(record)
             if len({V.dumps(V.OrderedOut([answer]), indent=0) for _, answer in answers}) == 1:
                 # the read does not depend on the in-flight commits (or none is in flight)
                 key, value = answers[0][1]
@@ -582,14 +605,21 @@ class Run:
         return out
 
     def continued_read(self, query):
-        """Q66b: the read record of the earlier query a `cursorFrom` continues, when that read had
-        erasure commits in flight (more than one prefix); None otherwise, and the continuation
-        is then answered with its own read view, as before."""
+        """The read record a continuation continues, or None for a read of its own.
+        Q70a: a `cursorFrom` continues the read of the query it names, whether or not that read
+        had commits in flight (an unknown query is left to the page, which reports it). Q70b: a
+        literal `cursor` token equal to a `nextCursor` issued earlier in the case by a read with
+        commits in flight continues that read (the latest such read); any other literal token
+        is answered with the query's own read view."""
         ref = query.get("cursorFrom")
-        if not isinstance(ref, dict) or ref.get("query") not in self.reads:
-            return None
-        source = self.reads[ref["query"]]
-        return source if len(source["answers"]) > 1 else None
+        if ref is not None:
+            return self.reads.get(ref.get("query")) if isinstance(ref, dict) else None
+        token = query.get("cursor")
+        if isinstance(token, str) and not isinstance(token, V.Lex):
+            for record in reversed(self.read_log):
+                if record["inFlight"] and any(token in issued_cursors(answer) for _, answer in record["answers"]):
+                    return record
+        return None
 
     def result_of(self, qid):
         """The earlier result a continuation reads its cursor from: the one computed with the

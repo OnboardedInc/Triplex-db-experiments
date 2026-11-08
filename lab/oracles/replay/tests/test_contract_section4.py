@@ -2154,6 +2154,49 @@ class Erasure(unittest.TestCase):
             evaluate(case(cmds, [first, page("b", cursorFrom={"query": "a"}), page("c", cursorFrom={"query": "b"})],
                           schemas=PERSON_SCHEMA))
 
+    def test_Q70a_continuation_answers_from_the_source_read(self):
+        """Q70a (V-O04e F7): every `cursorFrom` continuation answers from the read it continues,
+        whether or not that read had commits in flight; its own readStart is never consulted, so
+        a page 2 with an earlier readStart cannot reopen a value page 1's read saw erased."""
+        cmds = erasure_commands()
+        cmds[2]["operations"] = [{"op": "erase", "target": "name2"}]           # person:2's name, on page 2
+        page = lambda qid, **kw: dict({"id": qid, "kind": "entityPage", "entityType": "Person", "limit": 1}, **kw)
+        rep = evaluate(case(cmds, [page("a", cut={"position": 2, "validAt": 1e15}),
+                                   page("b", cursorFrom={"query": "a"}, readStart={"afterCommand": 1})],
+                            schemas=PERSON_SCHEMA))
+        self.assertNotIn("acceptable", result(rep, "a"))                    # nothing in flight for a
+        b = result(rep, "b")
+        self.assertNotIn("acceptable", b)                                   # one answer: a's view
+        self.assertEqual(b["pages"][0]["entities"][0]["triples"][0]["value"], marker(300))
+        self.assertNotIn('"Bo"', json.dumps(b))
+
+    def test_Q70b_literal_token_from_an_in_flight_read(self):
+        """Q70b (V-O04e F8): a literal `cursor` token equal to a nextCursor that a read with
+        commits in flight issued earlier in the case continues that read per prefix (its own
+        readStart is not consulted); the token bytes are unchanged. A token issued by a read
+        with nothing in flight keeps the query's own read view."""
+        cmds = erasure_commands()
+        cmds[2]["operations"] = [{"op": "erase", "target": "name2"}]
+        page = lambda qid, **kw: dict({"id": qid, "kind": "entityPage", "entityType": "Person", "limit": 1}, **kw)
+        first = page("a", cut={"position": 2, "validAt": 1e15}, readStart={"afterCommand": 1})
+        source = evaluate(case(cmds, [first], schemas=PERSON_SCHEMA))
+        tokens = {alt["result"]["pages"][0]["nextCursor"] for alt in result(source, "a")["acceptable"]}
+        self.assertEqual(len(tokens), 1)                                    # the token cannot tell prefixes apart
+        token = tokens.pop()
+
+        def names(rep, qid):
+            return [(alt["erasuresSeen"], alt["result"]["pages"][0]["entities"][0]["triples"][0]["value"])
+                    for alt in result(rep, qid)["acceptable"]]
+        rep = evaluate(case(cmds, [first, page("b", cursor=token), page("c", cursor=token, readStart={"afterCommand": 2})],
+                            schemas=PERSON_SCHEMA))
+        self.assertEqual(names(rep, "b"), [([], s("Bo")), (["tx:2"], marker(300))])
+        self.assertEqual(names(rep, "c"), names(rep, "b"))
+        self.assertEqual([alt["result"]["pages"][0].get("nextCursor") for alt in result(rep, "b")["acceptable"]], [None, None])
+        plain = page("a", cut={"position": 2, "validAt": 1e15})               # the same token from a plain read
+        rep = evaluate(case(cmds, [plain, page("b", cursor=token)], schemas=PERSON_SCHEMA))
+        self.assertEqual(result(rep, "a")["pages"][0]["nextCursor"], token)
+        self.assertEqual(result(rep, "b")["pages"][0]["entities"][0]["triples"][0]["value"], marker(300))
+
     def test_erase_receipts(self):
         c = case(erasure_commands(), [match_q("m")], schemas=PERSON_SCHEMA)
         c["receipts"] = committed_receipts(c)
