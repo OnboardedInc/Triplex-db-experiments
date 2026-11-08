@@ -1,0 +1,84 @@
+{
+  "diskFreeBeforeBytes": 35665244160,
+  "runs": [
+    {
+      "argv": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "-B",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/o05/lab/acceptance/oracle/test_observe.py"
+      ],
+      "exitCode": 0,
+      "output": "lab/experiments/EXP-O05-observation-oracle/evidence/test_observe.final.txt"
+    },
+    {
+      "argv": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "-B",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/o05/lab/acceptance/oracle/test_cli.py"
+      ],
+      "exitCode": 0,
+      "output": "lab/experiments/EXP-O05-observation-oracle/evidence/test_cli.final.txt"
+    },
+    {
+      "argv": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "-B",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/o05/lab/acceptance/oracle/selfcheck.py"
+      ],
+      "exitCode": 0,
+      "output": "lab/experiments/EXP-O05-observation-oracle/evidence/selfcheck.final.txt"
+    }
+  ],
+  "scope": "builder gates only; independent review and engine verification not performed",
+  "sourceHashesAfter": {
+    "lab/acceptance/obligations.json": "4d52bf6ef978f830f871b4a4e1f4234c21d5253a2af42d3d8057b10e7998b03f",
+    "lab/acceptance/oracle/README.md": "9ea52824ce4f7e46050aad6ff0379a175b3e07a065c0c151e7aa4764730cad6e",
+    "lab/acceptance/oracle/fixtures.json": "a9665035eaef44dfc2efafb96c3a5f34cb0d3fcaf78f51fa5981198cc2111f98",
+    "lab/acceptance/oracle/gates.py": "c0ece061a5864e7f4236cba73f0f6ac74ea0bebca2bd67a7d233e941eb6e087c",
+    "lab/acceptance/oracle/observe.py": "89ecd3de8e94ca957b3100e3f9d8fc423e28ecb7acdb3ca4fb1a443d7a385ad3",
+    "lab/acceptance/oracle/selfcheck.py": "154eeedc4622d5265686477787d088fdb52b58e5279a5e28eda78d1f046b3881",
+    "lab/acceptance/oracle/test_cli.py": "95331f81cc55c8230e8fd637f8f26f0db28832a7fb09784c927afe2c05a3178a",
+    "lab/acceptance/oracle/test_observe.py": "fe47f7e0ea3f413853b096fef1c4d33f5b0390cf3dedbb1f09390d77ab61cac2",
+    "lab/oracles/replay/__init__.py": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
+    "lab/oracles/replay/__main__.py": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
+    "lab/oracles/replay/cli.py": "1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5",
+    "lab/oracles/replay/constraints.py": "9b9a9fcbdbb787e784a6cefd9b9e9ba525cf5e0ea8a9cdcc0e5278fe1ff19e43",
+    "lab/oracles/replay/entities.py": "2af069de69a53a027f225756a955544c5ecec126d4ba99f66f40586fb5879371",
+    "lab/oracles/replay/errors.py": "5cfdd07ed710557d1db868bfae38e32f7c851dc3007fbcc9b2c0de521185f887",
+    "lab/oracles/replay/exact.py": "d2cdbabe0c7131983e347e4f04d0e63ebd9db9793b5ccccc5732324fb6037544",
+    "lab/oracles/replay/replay.py": "585524ba205b5ce19a42efd7ff2ef5886d0462abcd4fe4d22035c0b55880980d",
+    "lab/oracles/replay/run.py": "9fa40089db5c50fa5f7f245f14c050dee4cd3d0bfefd1e7e171461226e154032",
+    "lab/oracles/replay/scale.py": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
+    "lab/oracles/replay/selfcheck.py": "c1e0ae41cfe9bac7f2ed7f249715b5ae71e98f4d66e4ae152938b6d333c9418c",
+    "lab/oracles/replay/values.py": "67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982",
+    "lab/oracles/replay/views.py": "df8dba0ba607c98ccd204ab9adbf5f6192d1a4fe250b103ed458b5dec70ad26a"
+  },
+  "sourceHashesBefore": {
+    "lab/acceptance/obligations.json": "4d52bf6ef978f830f871b4a4e1f4234c21d5253a2af42d3d8057b10e7998b03f",
+    "lab/acceptance/oracle/README.md": "9ea52824ce4f7e46050aad6ff0379a175b3e07a065c0c151e7aa4764730cad6e",
+    "lab/acceptance/oracle/fixtures.json": "a9665035eaef44dfc2efafb96c3a5f34cb0d3fcaf78f51fa5981198cc2111f98",
+    "lab/acceptance/oracle/gates.py": "c0ece061a5864e7f4236cba73f0f6ac74ea0bebca2bd67a7d233e941eb6e087c",
+    "lab/acceptance/oracle/observe.py": "89ecd3de8e94ca957b3100e3f9d8fc423e28ecb7acdb3ca4fb1a443d7a385ad3",
+    "lab/acceptance/oracle/selfcheck.py": "154eeedc4622d5265686477787d088fdb52b58e5279a5e28eda78d1f046b3881",
+    "lab/acceptance/oracle/test_cli.py": "95331f81cc55c8230e8fd637f8f26f0db28832a7fb09784c927afe2c05a3178a",
+    "lab/acceptance/oracle/test_observe.py": "fe47f7e0ea3f413853b096fef1c4d33f5b0390cf3dedbb1f09390d77ab61cac2",
+    "lab/oracles/replay/__init__.py": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
+    "lab/oracles/replay/__main__.py": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
+    "lab/oracles/replay/cli.py": "1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5",
+    "lab/oracles/replay/constraints.py": "9b9a9fcbdbb787e784a6cefd9b9e9ba525cf5e0ea8a9cdcc0e5278fe1ff19e43",
+    "lab/oracles/replay/entities.py": "2af069de69a53a027f225756a955544c5ecec126d4ba99f66f40586fb5879371",
+    "lab/oracles/replay/errors.py": "5cfdd07ed710557d1db868bfae38e32f7c851dc3007fbcc9b2c0de521185f887",
+    "lab/oracles/replay/exact.py": "d2cdbabe0c7131983e347e4f04d0e63ebd9db9793b5ccccc5732324fb6037544",
+    "lab/oracles/replay/replay.py": "585524ba205b5ce19a42efd7ff2ef5886d0462abcd4fe4d22035c0b55880980d",
+    "lab/oracles/replay/run.py": "9fa40089db5c50fa5f7f245f14c050dee4cd3d0bfefd1e7e171461226e154032",
+    "lab/oracles/replay/scale.py": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
+    "lab/oracles/replay/selfcheck.py": "c1e0ae41cfe9bac7f2ed7f249715b5ae71e98f4d66e4ae152938b6d333c9418c",
+    "lab/oracles/replay/values.py": "67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982",
+    "lab/oracles/replay/views.py": "df8dba0ba607c98ccd204ab9adbf5f6192d1a4fe250b103ed458b5dec70ad26a"
+  },
+  "utc": "2026-11-08T21:23:10.406193+00:00",
+  "verdict": "PASS"
+}
