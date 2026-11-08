@@ -12,7 +12,7 @@
  *   dependencyState, native SPARQL). Repository pulls do not raise it: they fall back to the broker's log.
  */
 import { ReadError } from "@triplex-build/triplex/runtime";
-import { QleverHttpError } from "../QleverClient.js";
+import { QleverHttpError, QleverRequestError, QleverDecodeError } from "../QleverClient.js";
 
 export type BasisSurface = "repository" | "datalog" | "dependency-state" | "native" | "a0-repository";
 
@@ -72,30 +72,35 @@ export class ReplicaUnavailable extends ReadError {
  * a request deadline, an aborted request, an HTTP 5xx) rather than a bad query (HTTP 4xx, a decode error).
  */
 export const isUnreachable = (error: unknown): boolean => {
-  // [EXP-P2Q] Why: fetch body interruptions wrap UND_ERR_SOCKET in TypeError("terminated").
-  // Rejected: matching "terminated" or all TypeErrors (decode/query failures are not outages).
+  // [EXP-P2Q] Why: only structured request/socket identities prove an outage; decode prose does not.
+  // Rejected: returning on the first positive (a deeper HTTP/basis/decode failure must stay distinct).
   const seen = new Set<unknown>();
   let current = error;
+  let transport = false;
   for (let depth = 0; depth < 32 && current != null && !seen.has(current); depth++) {
     seen.add(current);
-    if (current instanceof BasisNotAvailable) return false;
-    if (current instanceof QleverHttpError) return current.status >= 500;
+    if (
+      current instanceof BasisNotAvailable ||
+      current instanceof SyntaxError ||
+      current instanceof QleverDecodeError
+    )
+      return false;
+    if (current instanceof QleverHttpError) {
+      if (current.status < 500) return false;
+      transport = true;
+    }
     const code = (current as { code?: unknown }).code;
     if (
-      typeof code === "string" &&
-      /^(UND_ERR_SOCKET|UND_ERR_CONNECT_TIMEOUT|UND_ERR_HEADERS_TIMEOUT|UND_ERR_BODY_TIMEOUT)$/.test(
-        code,
-      )
+      current instanceof QleverRequestError ||
+      (current instanceof DOMException &&
+        (current.name === "AbortError" || current.name === "TimeoutError")) ||
+      (typeof code === "string" &&
+        /^(ECONNREFUSED|ECONNRESET|ECONNABORTED|EPIPE|ETIMEDOUT|EHOSTUNREACH|ENETUNREACH|ENOTFOUND|EAI_AGAIN|ABORT_ERR|UND_ERR_SOCKET|UND_ERR_CONNECT_TIMEOUT|UND_ERR_HEADERS_TIMEOUT|UND_ERR_BODY_TIMEOUT|UND_ERR_ABORTED)$/.test(
+          code,
+        ))
     )
-      return true;
-    const text = `${code ?? ""} ${String((current as Error)?.message ?? current)}`;
-    if (
-      /ECONNREFUSED|ECONNRESET|EPIPE|ETIMEDOUT|EHOSTUNREACH|ENOTFOUND|socket hang up|deadline|aborted|timed? ?out|fetch failed|connect/i.test(
-        text,
-      )
-    )
-      return true;
+      transport = true;
     current = (current as { cause?: unknown }).cause;
   }
-  return false;
+  return transport;
 };

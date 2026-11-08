@@ -1,3 +1,4 @@
+// [EXP-P2Q] Why: outage fixtures carry real transport codes. Rejected: text-only errors (not transport evidence).
 // EXP-P2Q fix round (V-P2Q findings C1, C2, C3, M1, M2, M3, m1; RULINGS Q62a). Offline: a controllable replica
 // that keeps only the broker marker (and the A0 `position` triple) and applies the broker's guarded updates to
 // it, so waits, regressions, outages and typed failures can be scheduled exactly. Row content is not modelled
@@ -61,7 +62,7 @@ class MarkerReplica implements QleverClient {
     return m ? Number(m[1]) : undefined;
   }
   async query(sparql: string) {
-    if (this.down) throw new Error("connect ECONNREFUSED 127.0.0.1:7070 (marker replica down)");
+    if (this.down) throw Object.assign(new Error("connect ECONNREFUSED 127.0.0.1:7070 (marker replica down)"), { code: "ECONNREFUSED" });
     this.queries.push(sparql);
     if (sparql.startsWith("SELECT ?brokerPosition ?brokerEpoch")) {
       this.markerReads++;
@@ -101,8 +102,8 @@ class MarkerReplica implements QleverClient {
     return [];
   }
   async update(sparql: string) {
-    if (this.down) throw new Error("connect ECONNREFUSED 127.0.0.1:7070 (marker replica down)");
-    if (this.rejectUpdates) throw new Error("socket hang up (marker replica refuses updates)");
+    if (this.down) throw Object.assign(new Error("connect ECONNREFUSED 127.0.0.1:7070 (marker replica down)"), { code: "ECONNREFUSED" });
+    if (this.rejectUpdates) throw Object.assign(new Error("socket hang up (marker replica refuses updates)"), { code: "ECONNRESET" });
     const guard =
       /COALESCE\(\?brokerPosition, "0"\) = "(\d+)" && COALESCE\(\?brokerEpoch, "0"\) = "(\d+)"/.exec(
         sparql,

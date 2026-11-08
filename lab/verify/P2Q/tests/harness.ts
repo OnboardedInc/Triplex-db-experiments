@@ -1,3 +1,4 @@
+// [EXP-P2Q] Why: outage fixtures carry real transport codes. Rejected: text-only errors (not transport evidence).
 // V-P2Q verifier harness (independent of the branch's tests).
 //
 // 1. An independent reader of the broker's segment file and an oracle that replays the log to a basis B
@@ -195,11 +196,11 @@ export class ModelReplica implements QleverClient {
   }
 
   async query(sparql: string): Promise<any[]> {
-    if (this.down) throw new Error("connect ECONNREFUSED 127.0.0.1:7070 (model replica down)");
+    if (this.down) throw Object.assign(new Error("connect ECONNREFUSED 127.0.0.1:7070 (model replica down)"), { code: "ECONNREFUSED" });
     const q = this.quads; // snapshot at arrival
     const delay = this.queryDelay();
     if (delay > 0) await sleep(delay);
-    if (this.down) throw new Error("socket hang up (model replica went down mid-query)");
+    if (this.down) throw Object.assign(new Error("socket hang up (model replica went down mid-query)"), { code: "ECONNRESET" });
     if (sparql.startsWith("SELECT ?brokerPosition ?brokerEpoch")) {
       const m = this.marker(q);
       const pos = [...this.objects(q, META, BP)][0];
@@ -244,12 +245,12 @@ export class ModelReplica implements QleverClient {
   }
 
   async update(sparql: string): Promise<unknown> {
-    if (this.down) throw new Error("connect ECONNREFUSED 127.0.0.1:7070 (model replica down)");
+    if (this.down) throw Object.assign(new Error("connect ECONNREFUSED 127.0.0.1:7070 (model replica down)"), { code: "ECONNREFUSED" });
     this.updates++;
     if (this.gate) await this.gate;
     const delay = this.updateDelay();
     if (delay > 0) await sleep(delay);
-    if (this.down) throw new Error("socket hang up (model replica went down mid-update)");
+    if (this.down) throw Object.assign(new Error("socket hang up (model replica went down mid-update)"), { code: "ECONNRESET" });
     const g = this.graph;
     const delStart = `DELETE { GRAPH ${g} { `;
     const insStart = ` } } INSERT { GRAPH ${g} { `;
