@@ -82,6 +82,44 @@ describe("independent SQL01 review", () => {
     } finally { await rt.close(); }
   });
 
+  it("every temporal basis shape agrees across overlay, outage H1 and below-horizon source", async () => {
+    let online = true;
+    const client: QleverClient = { ...empty, query: text => online ? empty.query(text) : outage.query(text) };
+    const rt = await runtime(fresh("route-equivalence"), client);
+    const observations: unknown[] = [];
+    try {
+      const first = await rt.run(rt.triples.transact(ops("cuts", "first", 40)));
+      await new Promise(r => setTimeout(r, 5));
+      const second = await rt.run(rt.triples.transact(first.triples.slice(0, 10).map(t => ({ op: "retract" as const, id: t.id }))));
+      const all = await rt.broker.fromLogAsync(0, { entities: ["cuts"] }, () => true);
+      const cuts: ({ validAt: number; recordedAt?: number; recordedPosition?: number } | undefined)[] = [undefined];
+      for (const validAt of [first.instant - 1, first.instant, second.instant + 1])
+        for (const recordedAt of [undefined, first.instant - 1, first.instant, second.instant])
+          for (const recordedPosition of [undefined, first.position, second.position])
+            cuts.push({ validAt, ...(recordedAt === undefined ? {} : { recordedAt }), ...(recordedPosition === undefined ? {} : { recordedPosition }) });
+      const expected = cuts.map(c => ids(all.filter(r =>
+        r.recorded_position <= (c?.recordedPosition ?? second.position) &&
+        (c?.recordedAt === undefined || r.recorded_at <= c.recordedAt) &&
+        !(r.retracted_position !== null && r.retracted_at !== null && r.retracted_position <= (c?.recordedPosition ?? second.position) && (c?.recordedAt === undefined || r.retracted_at <= c.recordedAt)) &&
+        (c === undefined || r.valid_from <= c.validAt && (r.valid_to === null || r.valid_to > c.validAt))
+      )));
+      // [EXP-SQL01] Why: identical cuts traverse each route, including time-only and combined cuts after purge.
+      // Rejected: testing only a latest-position read (cannot expose H1's lost retired rows).
+      for (const route of ["overlay", "outage", "purged-source"]) {
+        online = route === "overlay";
+        if (route === "purged-source") {
+          const third = await rt.run(rt.triples.transact(ops("other", "advance", 1)));
+          rt.broker.purgeCurrent(third.position);
+        }
+        for (let i = 0; i < cuts.length; i++) {
+          const actual = ids(await rt.run(rt.adapter.getByEntity("cuts", cuts[i])));
+          observations.push({ route, basis: cuts[i], actual, expected: expected[i] });
+          expect(actual, JSON.stringify({ route, basis: cuts[i] })).toEqual(expected[i]);
+        }
+      }
+    } finally { out("route-equivalence", observations); await rt.close(); }
+  });
+
   it("pinned hot replacements remain whole under concurrent writers, retention and WAL resets", async () => {
     const dir = fresh("overlap"), b = await HostBroker.open({ dir, scopeKey: "vsql01-overlap", minFreeBytes: 0 });
     const receipts: { basis: number; ids: string[] }[] = [];

@@ -1,0 +1,20 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 24342 "CX-INT-XCJ-X02-G0", pid 24500 "CX-INT-XCJ-X02-evaluator", pid 24362 "G0-xtdb-20261108T233156Z-643900 typecheck", pid 23921 "DA01-r2-G1"
+[lab] heavy: waiting for one of 4 slots; held by pid 39926 "CX-P2Q-R6-suites", pid 24500 "CX-INT-XCJ-X02-evaluator", pid 33700 "CX-VSQL01-r2b-live", pid 33682 "CX-VSQL01-r2b-review"
+[lab] heavy: waiting for one of 4 slots; held by pid 39926 "CX-P2Q-R6-suites", pid 24500 "CX-INT-XCJ-X02-evaluator", pid 33700 "CX-VSQL01-r2b-live", pid 33682 "CX-VSQL01-r2b-review"
+[lab] heavy: waiting for one of 4 slots; held by pid 39926 "CX-P2Q-R6-suites", pid 24500 "CX-INT-XCJ-X02-evaluator", pid 33700 "CX-VSQL01-r2b-live", pid 33682 "CX-VSQL01-r2b-review"
+[lab] heavy: waiting for one of 4 slots; held by pid 39926 "CX-P2Q-R6-suites", pid 24500 "CX-INT-XCJ-X02-evaluator", pid 33700 "CX-VSQL01-r2b-live", pid 33693 "CX-VSQL01-r2b-kill50"
+[lab] heavy: waiting for one of 4 slots; held by pid 39926 "CX-P2Q-R6-suites", pid 24500 "CX-INT-XCJ-X02-evaluator", pid 33700 "CX-VSQL01-r2b-live", pid 45246 "CX-VSQL01-r2b-storage"
+[lab] heavy: waiting for one of 4 slots; held by pid 39926 "CX-P2Q-R6-suites", pid 47647 "DA01-r2-G0-final", pid 54104 "CX-OBS01-R2-x06", pid 48240 "DA01-r2-G1-final"
+[lab] heavy: waiting for one of 4 slots; held by pid 39926 "CX-P2Q-R6-suites", pid 33691 "CX-VSQL01-r2b-semantic", pid 54104 "CX-OBS01-R2-x06", pid 49177 "CX-G03-r3-smoke2"
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (packages/qlever/vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/sql01/packages/qlever
+
+
+ Test Files  11 passed | 4 skipped (15)
+      Tests  73 passed | 26 skipped (99)
+   Start at  18:36:12
+   Duration  51.94s (tests 92%, import 6%, transform 1%)
+

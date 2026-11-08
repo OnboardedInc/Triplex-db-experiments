@@ -1,0 +1,26 @@
+[
+  {
+    "commands": 10000,
+    "segmentBytes": 89956352,
+    "overlayPullMs": 2,
+    "outagePullMs": 1,
+    "eightConcurrentOutagePullsMs": 2,
+    "loneCommitMs": 5,
+    "commitDuringOutagePullMs": 6,
+    "rssDeltaMB": 0,
+    "exact": true,
+    "route": "log"
+  },
+  {
+    "commands": 30000,
+    "segmentBytes": 264994816,
+    "overlayPullMs": 1,
+    "outagePullMs": 1,
+    "eightConcurrentOutagePullsMs": 5,
+    "loneCommitMs": 4,
+    "commitDuringOutagePullMs": 19,
+    "rssDeltaMB": 0,
+    "exact": true,
+    "route": "log"
+  }
+]

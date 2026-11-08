@@ -1,0 +1,3245 @@
+{
+  "root": "/Users/sam/projects/triplex-db-2/.claude/worktrees/sql01/lab/verify/SQL01/data/kill-2d89ebdf-801b-4289-8c78-7fa15ca3cc2c",
+  "acknowledged": 163,
+  "acks": [
+    [
+      "op-0-0",
+      2048
+    ],
+    [
+      "op-0-1",
+      3072
+    ],
+    [
+      "op-0-2",
+      4096
+    ],
+    [
+      "op-1-0",
+      6144
+    ],
+    [
+      "op-1-1",
+      7168
+    ],
+    [
+      "op-1-2",
+      8192
+    ],
+    [
+      "op-2-0",
+      11264
+    ],
+    [
+      "op-2-1",
+      12288
+    ],
+    [
+      "op-2-2",
+      13312
+    ],
+    [
+      "op-3-0",
+      16384
+    ],
+    [
+      "op-3-1",
+      17408
+    ],
+    [
+      "op-3-2",
+      18432
+    ],
+    [
+      "op-4-0",
+      21504
+    ],
+    [
+      "op-4-1",
+      22528
+    ],
+    [
+      "op-4-2",
+      23552
+    ],
+    [
+      "op-4-3",
+      24576
+    ],
+    [
+      "op-5-0",
+      26624
+    ],
+    [
+      "op-5-1",
+      27648
+    ],
+    [
+      "op-5-2",
+      28672
+    ],
+    [
+      "op-6-0",
+      30720
+    ],
+    [
+      "op-6-1",
+      31744
+    ],
+    [
+      "op-6-2",
+      32768
+    ],
+    [
+      "op-7-0",
+      35840
+    ],
+    [
+      "op-7-1",
+      36864
+    ],
+    [
+      "op-7-2",
+      37888
+    ],
+    [
+      "op-8-0",
+      40960
+    ],
+    [
+      "op-8-1",
+      41984
+    ],
+    [
+      "op-8-2",
+      43008
+    ],
+    [
+      "op-9-0",
+      46080
+    ],
+    [
+      "op-9-1",
+      47104
+    ],
+    [
+      "op-9-2",
+      48128
+    ],
+    [
+      "op-9-3",
+      49152
+    ],
+    [
+      "op-10-0",
+      51200
+    ],
+    [
+      "op-10-1",
+      52224
+    ],
+    [
+      "op-10-2",
+      53248
+    ],
+    [
+      "op-11-0",
+      55296
+    ],
+    [
+      "op-11-1",
+      56320
+    ],
+    [
+      "op-11-2",
+      57344
+    ],
+    [
+      "op-12-0",
+      60416
+    ],
+    [
+      "op-12-1",
+      61440
+    ],
+    [
+      "op-12-2",
+      62464
+    ],
+    [
+      "op-13-0",
+      65536
+    ],
+    [
+      "op-13-1",
+      66560
+    ],
+    [
+      "op-13-2",
+      67584
+    ],
+    [
+      "op-14-0",
+      70656
+    ],
+    [
+      "op-14-1",
+      71680
+    ],
+    [
+      "op-14-2",
+      72704
+    ],
+    [
+      "op-14-3",
+      73728
+    ],
+    [
+      "op-15-0",
+      75776
+    ],
+    [
+      "op-15-1",
+      76800
+    ],
+    [
+      "op-15-2",
+      77824
+    ],
+    [
+      "op-16-0",
+      79872
+    ],
+    [
+      "op-16-1",
+      80896
+    ],
+    [
+      "op-16-2",
+      81920
+    ],
+    [
+      "op-16-3",
+      82944
+    ],
+    [
+      "op-17-0",
+      84992
+    ],
+    [
+      "op-17-1",
+      86016
+    ],
+    [
+      "op-17-2",
+      87040
+    ],
+    [
+      "op-18-0",
+      90112
+    ],
+    [
+      "op-18-1",
+      91136
+    ],
+    [
+      "op-18-2",
+      92160
+    ],
+    [
+      "op-19-0",
+      95232
+    ],
+    [
+      "op-19-1",
+      96256
+    ],
+    [
+      "op-19-2",
+      97280
+    ],
+    [
+      "op-19-3",
+      98304
+    ],
+    [
+      "op-20-0",
+      100352
+    ],
+    [
+      "op-20-1",
+      101376
+    ],
+    [
+      "op-20-2",
+      102400
+    ],
+    [
+      "op-21-0",
+      104448
+    ],
+    [
+      "op-21-1",
+      105472
+    ],
+    [
+      "op-21-2",
+      106496
+    ],
+    [
+      "op-21-3",
+      107520
+    ],
+    [
+      "op-22-0",
+      109568
+    ],
+    [
+      "op-22-1",
+      110592
+    ],
+    [
+      "op-22-2",
+      111616
+    ],
+    [
+      "op-23-0",
+      114688
+    ],
+    [
+      "op-23-1",
+      115712
+    ],
+    [
+      "op-23-2",
+      116736
+    ],
+    [
+      "op-24-0",
+      119808
+    ],
+    [
+      "op-24-1",
+      120832
+    ],
+    [
+      "op-24-2",
+      121856
+    ],
+    [
+      "op-24-3",
+      122880
+    ],
+    [
+      "op-25-0",
+      124928
+    ],
+    [
+      "op-25-1",
+      125952
+    ],
+    [
+      "op-25-2",
+      126976
+    ],
+    [
+      "op-26-0",
+      129024
+    ],
+    [
+      "op-26-1",
+      130048
+    ],
+    [
+      "op-26-2",
+      131072
+    ],
+    [
+      "op-26-3",
+      132096
+    ],
+    [
+      "op-27-0",
+      134144
+    ],
+    [
+      "op-27-1",
+      135168
+    ],
+    [
+      "op-27-2",
+      136192
+    ],
+    [
+      "op-28-0",
+      139264
+    ],
+    [
+      "op-28-1",
+      140288
+    ],
+    [
+      "op-28-2",
+      141312
+    ],
+    [
+      "op-29-0",
+      144384
+    ],
+    [
+      "op-29-1",
+      145408
+    ],
+    [
+      "op-29-2",
+      146432
+    ],
+    [
+      "op-29-3",
+      147456
+    ],
+    [
+      "op-30-0",
+      149504
+    ],
+    [
+      "op-30-1",
+      150528
+    ],
+    [
+      "op-30-2",
+      151552
+    ],
+    [
+      "op-31-0",
+      153600
+    ],
+    [
+      "op-31-1",
+      154624
+    ],
+    [
+      "op-31-2",
+      155648
+    ],
+    [
+      "op-32-0",
+      158720
+    ],
+    [
+      "op-32-1",
+      159744
+    ],
+    [
+      "op-32-2",
+      160768
+    ],
+    [
+      "op-33-0",
+      163840
+    ],
+    [
+      "op-33-1",
+      164864
+    ],
+    [
+      "op-33-2",
+      165888
+    ],
+    [
+      "op-34-0",
+      168960
+    ],
+    [
+      "op-34-1",
+      169984
+    ],
+    [
+      "op-34-2",
+      171008
+    ],
+    [
+      "op-34-3",
+      172032
+    ],
+    [
+      "op-35-0",
+      174080
+    ],
+    [
+      "op-35-1",
+      175104
+    ],
+    [
+      "op-35-2",
+      176128
+    ],
+    [
+      "op-36-0",
+      178176
+    ],
+    [
+      "op-36-1",
+      179200
+    ],
+    [
+      "op-36-2",
+      180224
+    ],
+    [
+      "op-37-0",
+      183296
+    ],
+    [
+      "op-37-1",
+      184320
+    ],
+    [
+      "op-37-2",
+      185344
+    ],
+    [
+      "op-38-0",
+      188416
+    ],
+    [
+      "op-38-1",
+      189440
+    ],
+    [
+      "op-38-2",
+      190464
+    ],
+    [
+      "op-39-0",
+      193536
+    ],
+    [
+      "op-39-1",
+      194560
+    ],
+    [
+      "op-39-2",
+      195584
+    ],
+    [
+      "op-39-3",
+      196608
+    ],
+    [
+      "op-40-0",
+      198656
+    ],
+    [
+      "op-40-1",
+      199680
+    ],
+    [
+      "op-40-2",
+      200704
+    ],
+    [
+      "op-41-0",
+      202752
+    ],
+    [
+      "op-41-1",
+      203776
+    ],
+    [
+      "op-41-2",
+      204800
+    ],
+    [
+      "op-42-0",
+      207872
+    ],
+    [
+      "op-42-1",
+      208896
+    ],
+    [
+      "op-42-2",
+      209920
+    ],
+    [
+      "op-43-0",
+      212992
+    ],
+    [
+      "op-43-1",
+      214016
+    ],
+    [
+      "op-43-2",
+      215040
+    ],
+    [
+      "op-44-0",
+      218112
+    ],
+    [
+      "op-44-1",
+      219136
+    ],
+    [
+      "op-44-2",
+      220160
+    ],
+    [
+      "op-44-3",
+      221184
+    ],
+    [
+      "op-45-0",
+      223232
+    ],
+    [
+      "op-45-1",
+      224256
+    ],
+    [
+      "op-45-2",
+      225280
+    ],
+    [
+      "op-46-0",
+      227328
+    ],
+    [
+      "op-46-1",
+      228352
+    ],
+    [
+      "op-46-2",
+      229376
+    ],
+    [
+      "op-47-0",
+      232448
+    ],
+    [
+      "op-47-1",
+      233472
+    ],
+    [
+      "op-47-2",
+      234496
+    ],
+    [
+      "op-48-0",
+      237568
+    ],
+    [
+      "op-48-1",
+      238592
+    ],
+    [
+      "op-48-2",
+      239616
+    ],
+    [
+      "op-49-0",
+      242688
+    ],
+    [
+      "op-49-1",
+      243712
+    ],
+    [
+      "op-49-2",
+      244736
+    ],
+    [
+      "op-49-3",
+      245760
+    ]
+  ],
+  "feedSeen": [
+    2048,
+    3072,
+    4096,
+    6144,
+    7168,
+    8192,
+    9216,
+    11264,
+    12288,
+    13312,
+    14336,
+    16384,
+    17408,
+    18432,
+    19456,
+    21504,
+    22528,
+    23552,
+    24576,
+    26624,
+    27648,
+    28672,
+    30720,
+    31744,
+    32768,
+    33792,
+    35840,
+    36864,
+    37888,
+    38912,
+    40960,
+    41984,
+    43008,
+    44032,
+    46080,
+    47104,
+    48128,
+    49152,
+    51200,
+    52224,
+    53248,
+    55296,
+    56320,
+    57344,
+    58368,
+    60416,
+    61440,
+    62464,
+    63488,
+    65536,
+    66560,
+    67584,
+    68608,
+    70656,
+    71680,
+    72704,
+    73728,
+    75776,
+    76800,
+    77824,
+    79872,
+    80896,
+    81920,
+    82944,
+    84992,
+    86016,
+    87040,
+    88064,
+    90112,
+    91136,
+    92160,
+    93184,
+    95232,
+    96256,
+    97280,
+    98304,
+    100352,
+    101376,
+    102400,
+    104448,
+    105472,
+    106496,
+    107520,
+    109568,
+    110592,
+    111616,
+    112640,
+    114688,
+    115712,
+    116736,
+    117760,
+    119808,
+    120832,
+    121856,
+    122880,
+    124928,
+    125952,
+    126976,
+    129024,
+    130048,
+    131072,
+    132096,
+    134144,
+    135168,
+    136192,
+    137216,
+    139264,
+    140288,
+    141312,
+    142336,
+    144384,
+    145408,
+    146432,
+    147456,
+    149504,
+    150528,
+    151552,
+    153600,
+    154624,
+    155648,
+    156672,
+    158720,
+    159744,
+    160768,
+    161792,
+    163840,
+    164864,
+    165888,
+    166912,
+    168960,
+    169984,
+    171008,
+    172032,
+    174080,
+    175104,
+    176128,
+    178176,
+    179200,
+    180224,
+    181248,
+    183296,
+    184320,
+    185344,
+    186368,
+    188416,
+    189440,
+    190464,
+    191488,
+    193536,
+    194560,
+    195584,
+    196608,
+    198656,
+    199680,
+    200704,
+    202752,
+    203776,
+    204800,
+    205824,
+    207872,
+    208896,
+    209920,
+    210944,
+    212992,
+    214016,
+    215040,
+    216064,
+    218112,
+    219136,
+    220160,
+    221184,
+    223232,
+    224256,
+    225280,
+    227328,
+    228352,
+    229376,
+    230400,
+    232448,
+    233472,
+    234496,
+    235520,
+    237568,
+    238592,
+    239616,
+    240640,
+    242688,
+    243712,
+    244736,
+    245760
+  ],
+  "cursor": {
+    "lsn": 241,
+    "offset": 268209,
+    "seed": 2570965890,
+    "nextLsn": 242
+  },
+  "errors": [],
+  "rounds": [
+    {
+      "cycle": 0,
+      "mode": "before-append",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "before-append",
+      "recovered": 0,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 0,
+          "feedPositions": []
+        },
+        {
+          "event": "acked",
+          "op": "op-0-0",
+          "position": 2048,
+          "cycle": 0
+        },
+        {
+          "event": "acked",
+          "op": "op-0-1",
+          "position": 3072,
+          "cycle": 0
+        },
+        {
+          "event": "acked",
+          "op": "op-0-2",
+          "position": 4096,
+          "cycle": 0
+        },
+        {
+          "event": "barrier",
+          "point": "before-append"
+        }
+      ]
+    },
+    {
+      "cycle": 1,
+      "mode": "inflight",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "inflight",
+      "recovered": 3,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 3,
+          "feedPositions": [
+            2048,
+            3072,
+            4096
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-1-0",
+          "position": 6144,
+          "cycle": 1
+        },
+        {
+          "event": "acked",
+          "op": "op-1-1",
+          "position": 7168,
+          "cycle": 1
+        },
+        {
+          "event": "acked",
+          "op": "op-1-2",
+          "position": 8192,
+          "cycle": 1
+        },
+        {
+          "event": "barrier",
+          "point": "inflight"
+        }
+      ]
+    },
+    {
+      "cycle": 2,
+      "mode": "after-append",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "after-append",
+      "recovered": 7,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 7,
+          "feedPositions": [
+            6144,
+            7168,
+            8192,
+            9216
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-2-0",
+          "position": 11264,
+          "cycle": 2
+        },
+        {
+          "event": "acked",
+          "op": "op-2-1",
+          "position": 12288,
+          "cycle": 2
+        },
+        {
+          "event": "acked",
+          "op": "op-2-2",
+          "position": 13312,
+          "cycle": 2
+        },
+        {
+          "event": "barrier",
+          "point": "after-append"
+        }
+      ]
+    },
+    {
+      "cycle": 3,
+      "mode": "after-sidecar",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "after-sidecar",
+      "recovered": 11,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 11,
+          "feedPositions": [
+            11264,
+            12288,
+            13312,
+            14336
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-3-0",
+          "position": 16384,
+          "cycle": 3
+        },
+        {
+          "event": "acked",
+          "op": "op-3-1",
+          "position": 17408,
+          "cycle": 3
+        },
+        {
+          "event": "acked",
+          "op": "op-3-2",
+          "position": 18432,
+          "cycle": 3
+        },
+        {
+          "event": "barrier",
+          "point": "after-sidecar"
+        }
+      ]
+    },
+    {
+      "cycle": 4,
+      "mode": "acked",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "acked",
+      "recovered": 15,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 15,
+          "feedPositions": [
+            16384,
+            17408,
+            18432,
+            19456
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-4-0",
+          "position": 21504,
+          "cycle": 4
+        },
+        {
+          "event": "acked",
+          "op": "op-4-1",
+          "position": 22528,
+          "cycle": 4
+        },
+        {
+          "event": "acked",
+          "op": "op-4-2",
+          "position": 23552,
+          "cycle": 4
+        },
+        {
+          "event": "acked",
+          "op": "op-4-3",
+          "position": 24576,
+          "cycle": 4
+        },
+        {
+          "event": "barrier",
+          "point": "acked"
+        }
+      ]
+    },
+    {
+      "cycle": 5,
+      "mode": "before-append",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "before-append",
+      "recovered": 19,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 19,
+          "feedPositions": [
+            21504,
+            22528,
+            23552,
+            24576
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-5-0",
+          "position": 26624,
+          "cycle": 5
+        },
+        {
+          "event": "acked",
+          "op": "op-5-1",
+          "position": 27648,
+          "cycle": 5
+        },
+        {
+          "event": "acked",
+          "op": "op-5-2",
+          "position": 28672,
+          "cycle": 5
+        },
+        {
+          "event": "barrier",
+          "point": "before-append"
+        }
+      ]
+    },
+    {
+      "cycle": 6,
+      "mode": "inflight",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "inflight",
+      "recovered": 22,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 22,
+          "feedPositions": [
+            26624,
+            27648,
+            28672
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-6-0",
+          "position": 30720,
+          "cycle": 6
+        },
+        {
+          "event": "acked",
+          "op": "op-6-1",
+          "position": 31744,
+          "cycle": 6
+        },
+        {
+          "event": "acked",
+          "op": "op-6-2",
+          "position": 32768,
+          "cycle": 6
+        },
+        {
+          "event": "barrier",
+          "point": "inflight"
+        }
+      ]
+    },
+    {
+      "cycle": 7,
+      "mode": "after-append",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "after-append",
+      "recovered": 26,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 26,
+          "feedPositions": [
+            30720,
+            31744,
+            32768,
+            33792
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-7-0",
+          "position": 35840,
+          "cycle": 7
+        },
+        {
+          "event": "acked",
+          "op": "op-7-1",
+          "position": 36864,
+          "cycle": 7
+        },
+        {
+          "event": "acked",
+          "op": "op-7-2",
+          "position": 37888,
+          "cycle": 7
+        },
+        {
+          "event": "barrier",
+          "point": "after-append"
+        }
+      ]
+    },
+    {
+      "cycle": 8,
+      "mode": "after-sidecar",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "after-sidecar",
+      "recovered": 30,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 30,
+          "feedPositions": [
+            35840,
+            36864,
+            37888,
+            38912
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-8-0",
+          "position": 40960,
+          "cycle": 8
+        },
+        {
+          "event": "acked",
+          "op": "op-8-1",
+          "position": 41984,
+          "cycle": 8
+        },
+        {
+          "event": "acked",
+          "op": "op-8-2",
+          "position": 43008,
+          "cycle": 8
+        },
+        {
+          "event": "barrier",
+          "point": "after-sidecar"
+        }
+      ]
+    },
+    {
+      "cycle": 9,
+      "mode": "acked",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "acked",
+      "recovered": 34,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 34,
+          "feedPositions": [
+            40960,
+            41984,
+            43008,
+            44032
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-9-0",
+          "position": 46080,
+          "cycle": 9
+        },
+        {
+          "event": "acked",
+          "op": "op-9-1",
+          "position": 47104,
+          "cycle": 9
+        },
+        {
+          "event": "acked",
+          "op": "op-9-2",
+          "position": 48128,
+          "cycle": 9
+        },
+        {
+          "event": "acked",
+          "op": "op-9-3",
+          "position": 49152,
+          "cycle": 9
+        },
+        {
+          "event": "barrier",
+          "point": "acked"
+        }
+      ]
+    },
+    {
+      "cycle": 10,
+      "mode": "before-append",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "before-append",
+      "recovered": 38,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 38,
+          "feedPositions": [
+            46080,
+            47104,
+            48128,
+            49152
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-10-0",
+          "position": 51200,
+          "cycle": 10
+        },
+        {
+          "event": "acked",
+          "op": "op-10-1",
+          "position": 52224,
+          "cycle": 10
+        },
+        {
+          "event": "acked",
+          "op": "op-10-2",
+          "position": 53248,
+          "cycle": 10
+        },
+        {
+          "event": "barrier",
+          "point": "before-append"
+        }
+      ]
+    },
+    {
+      "cycle": 11,
+      "mode": "inflight",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "inflight",
+      "recovered": 41,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 41,
+          "feedPositions": [
+            51200,
+            52224,
+            53248
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-11-0",
+          "position": 55296,
+          "cycle": 11
+        },
+        {
+          "event": "acked",
+          "op": "op-11-1",
+          "position": 56320,
+          "cycle": 11
+        },
+        {
+          "event": "acked",
+          "op": "op-11-2",
+          "position": 57344,
+          "cycle": 11
+        },
+        {
+          "event": "barrier",
+          "point": "inflight"
+        }
+      ]
+    },
+    {
+      "cycle": 12,
+      "mode": "after-append",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "after-append",
+      "recovered": 45,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 45,
+          "feedPositions": [
+            55296,
+            56320,
+            57344,
+            58368
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-12-0",
+          "position": 60416,
+          "cycle": 12
+        },
+        {
+          "event": "acked",
+          "op": "op-12-1",
+          "position": 61440,
+          "cycle": 12
+        },
+        {
+          "event": "acked",
+          "op": "op-12-2",
+          "position": 62464,
+          "cycle": 12
+        },
+        {
+          "event": "barrier",
+          "point": "after-append"
+        }
+      ]
+    },
+    {
+      "cycle": 13,
+      "mode": "after-sidecar",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "after-sidecar",
+      "recovered": 49,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 49,
+          "feedPositions": [
+            60416,
+            61440,
+            62464,
+            63488
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-13-0",
+          "position": 65536,
+          "cycle": 13
+        },
+        {
+          "event": "acked",
+          "op": "op-13-1",
+          "position": 66560,
+          "cycle": 13
+        },
+        {
+          "event": "acked",
+          "op": "op-13-2",
+          "position": 67584,
+          "cycle": 13
+        },
+        {
+          "event": "barrier",
+          "point": "after-sidecar"
+        }
+      ]
+    },
+    {
+      "cycle": 14,
+      "mode": "acked",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "acked",
+      "recovered": 53,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 53,
+          "feedPositions": [
+            65536,
+            66560,
+            67584,
+            68608
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-14-0",
+          "position": 70656,
+          "cycle": 14
+        },
+        {
+          "event": "acked",
+          "op": "op-14-1",
+          "position": 71680,
+          "cycle": 14
+        },
+        {
+          "event": "acked",
+          "op": "op-14-2",
+          "position": 72704,
+          "cycle": 14
+        },
+        {
+          "event": "acked",
+          "op": "op-14-3",
+          "position": 73728,
+          "cycle": 14
+        },
+        {
+          "event": "barrier",
+          "point": "acked"
+        }
+      ]
+    },
+    {
+      "cycle": 15,
+      "mode": "before-append",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "before-append",
+      "recovered": 57,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 57,
+          "feedPositions": [
+            70656,
+            71680,
+            72704,
+            73728
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-15-0",
+          "position": 75776,
+          "cycle": 15
+        },
+        {
+          "event": "acked",
+          "op": "op-15-1",
+          "position": 76800,
+          "cycle": 15
+        },
+        {
+          "event": "acked",
+          "op": "op-15-2",
+          "position": 77824,
+          "cycle": 15
+        },
+        {
+          "event": "barrier",
+          "point": "before-append"
+        }
+      ]
+    },
+    {
+      "cycle": 16,
+      "mode": "inflight",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "inflight",
+      "recovered": 60,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 60,
+          "feedPositions": [
+            75776,
+            76800,
+            77824
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-16-0",
+          "position": 79872,
+          "cycle": 16
+        },
+        {
+          "event": "acked",
+          "op": "op-16-1",
+          "position": 80896,
+          "cycle": 16
+        },
+        {
+          "event": "acked",
+          "op": "op-16-2",
+          "position": 81920,
+          "cycle": 16
+        },
+        {
+          "event": "barrier",
+          "point": "inflight"
+        },
+        {
+          "event": "acked",
+          "op": "op-16-3",
+          "position": 82944,
+          "cycle": 16
+        }
+      ]
+    },
+    {
+      "cycle": 17,
+      "mode": "after-append",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "after-append",
+      "recovered": 64,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 64,
+          "feedPositions": [
+            79872,
+            80896,
+            81920,
+            82944
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-17-0",
+          "position": 84992,
+          "cycle": 17
+        },
+        {
+          "event": "acked",
+          "op": "op-17-1",
+          "position": 86016,
+          "cycle": 17
+        },
+        {
+          "event": "acked",
+          "op": "op-17-2",
+          "position": 87040,
+          "cycle": 17
+        },
+        {
+          "event": "barrier",
+          "point": "after-append"
+        }
+      ]
+    },
+    {
+      "cycle": 18,
+      "mode": "after-sidecar",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "after-sidecar",
+      "recovered": 68,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 68,
+          "feedPositions": [
+            84992,
+            86016,
+            87040,
+            88064
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-18-0",
+          "position": 90112,
+          "cycle": 18
+        },
+        {
+          "event": "acked",
+          "op": "op-18-1",
+          "position": 91136,
+          "cycle": 18
+        },
+        {
+          "event": "acked",
+          "op": "op-18-2",
+          "position": 92160,
+          "cycle": 18
+        },
+        {
+          "event": "barrier",
+          "point": "after-sidecar"
+        }
+      ]
+    },
+    {
+      "cycle": 19,
+      "mode": "acked",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "acked",
+      "recovered": 72,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 72,
+          "feedPositions": [
+            90112,
+            91136,
+            92160,
+            93184
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-19-0",
+          "position": 95232,
+          "cycle": 19
+        },
+        {
+          "event": "acked",
+          "op": "op-19-1",
+          "position": 96256,
+          "cycle": 19
+        },
+        {
+          "event": "acked",
+          "op": "op-19-2",
+          "position": 97280,
+          "cycle": 19
+        },
+        {
+          "event": "acked",
+          "op": "op-19-3",
+          "position": 98304,
+          "cycle": 19
+        },
+        {
+          "event": "barrier",
+          "point": "acked"
+        }
+      ]
+    },
+    {
+      "cycle": 20,
+      "mode": "before-append",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "before-append",
+      "recovered": 76,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 76,
+          "feedPositions": [
+            95232,
+            96256,
+            97280,
+            98304
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-20-0",
+          "position": 100352,
+          "cycle": 20
+        },
+        {
+          "event": "acked",
+          "op": "op-20-1",
+          "position": 101376,
+          "cycle": 20
+        },
+        {
+          "event": "acked",
+          "op": "op-20-2",
+          "position": 102400,
+          "cycle": 20
+        },
+        {
+          "event": "barrier",
+          "point": "before-append"
+        }
+      ]
+    },
+    {
+      "cycle": 21,
+      "mode": "inflight",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "inflight",
+      "recovered": 79,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 79,
+          "feedPositions": [
+            100352,
+            101376,
+            102400
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-21-0",
+          "position": 104448,
+          "cycle": 21
+        },
+        {
+          "event": "acked",
+          "op": "op-21-1",
+          "position": 105472,
+          "cycle": 21
+        },
+        {
+          "event": "acked",
+          "op": "op-21-2",
+          "position": 106496,
+          "cycle": 21
+        },
+        {
+          "event": "barrier",
+          "point": "inflight"
+        },
+        {
+          "event": "acked",
+          "op": "op-21-3",
+          "position": 107520,
+          "cycle": 21
+        }
+      ]
+    },
+    {
+      "cycle": 22,
+      "mode": "after-append",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "after-append",
+      "recovered": 83,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 83,
+          "feedPositions": [
+            104448,
+            105472,
+            106496,
+            107520
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-22-0",
+          "position": 109568,
+          "cycle": 22
+        },
+        {
+          "event": "acked",
+          "op": "op-22-1",
+          "position": 110592,
+          "cycle": 22
+        },
+        {
+          "event": "acked",
+          "op": "op-22-2",
+          "position": 111616,
+          "cycle": 22
+        },
+        {
+          "event": "barrier",
+          "point": "after-append"
+        }
+      ]
+    },
+    {
+      "cycle": 23,
+      "mode": "after-sidecar",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "after-sidecar",
+      "recovered": 87,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 87,
+          "feedPositions": [
+            109568,
+            110592,
+            111616,
+            112640
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-23-0",
+          "position": 114688,
+          "cycle": 23
+        },
+        {
+          "event": "acked",
+          "op": "op-23-1",
+          "position": 115712,
+          "cycle": 23
+        },
+        {
+          "event": "acked",
+          "op": "op-23-2",
+          "position": 116736,
+          "cycle": 23
+        },
+        {
+          "event": "barrier",
+          "point": "after-sidecar"
+        }
+      ]
+    },
+    {
+      "cycle": 24,
+      "mode": "acked",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "acked",
+      "recovered": 91,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 91,
+          "feedPositions": [
+            114688,
+            115712,
+            116736,
+            117760
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-24-0",
+          "position": 119808,
+          "cycle": 24
+        },
+        {
+          "event": "acked",
+          "op": "op-24-1",
+          "position": 120832,
+          "cycle": 24
+        },
+        {
+          "event": "acked",
+          "op": "op-24-2",
+          "position": 121856,
+          "cycle": 24
+        },
+        {
+          "event": "acked",
+          "op": "op-24-3",
+          "position": 122880,
+          "cycle": 24
+        },
+        {
+          "event": "barrier",
+          "point": "acked"
+        }
+      ]
+    },
+    {
+      "cycle": 25,
+      "mode": "before-append",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "before-append",
+      "recovered": 95,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 95,
+          "feedPositions": [
+            119808,
+            120832,
+            121856,
+            122880
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-25-0",
+          "position": 124928,
+          "cycle": 25
+        },
+        {
+          "event": "acked",
+          "op": "op-25-1",
+          "position": 125952,
+          "cycle": 25
+        },
+        {
+          "event": "acked",
+          "op": "op-25-2",
+          "position": 126976,
+          "cycle": 25
+        },
+        {
+          "event": "barrier",
+          "point": "before-append"
+        }
+      ]
+    },
+    {
+      "cycle": 26,
+      "mode": "inflight",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "inflight",
+      "recovered": 98,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 98,
+          "feedPositions": [
+            124928,
+            125952,
+            126976
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-26-0",
+          "position": 129024,
+          "cycle": 26
+        },
+        {
+          "event": "acked",
+          "op": "op-26-1",
+          "position": 130048,
+          "cycle": 26
+        },
+        {
+          "event": "acked",
+          "op": "op-26-2",
+          "position": 131072,
+          "cycle": 26
+        },
+        {
+          "event": "barrier",
+          "point": "inflight"
+        },
+        {
+          "event": "acked",
+          "op": "op-26-3",
+          "position": 132096,
+          "cycle": 26
+        }
+      ]
+    },
+    {
+      "cycle": 27,
+      "mode": "after-append",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "after-append",
+      "recovered": 102,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 102,
+          "feedPositions": [
+            129024,
+            130048,
+            131072,
+            132096
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-27-0",
+          "position": 134144,
+          "cycle": 27
+        },
+        {
+          "event": "acked",
+          "op": "op-27-1",
+          "position": 135168,
+          "cycle": 27
+        },
+        {
+          "event": "acked",
+          "op": "op-27-2",
+          "position": 136192,
+          "cycle": 27
+        },
+        {
+          "event": "barrier",
+          "point": "after-append"
+        }
+      ]
+    },
+    {
+      "cycle": 28,
+      "mode": "after-sidecar",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "after-sidecar",
+      "recovered": 106,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 106,
+          "feedPositions": [
+            134144,
+            135168,
+            136192,
+            137216
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-28-0",
+          "position": 139264,
+          "cycle": 28
+        },
+        {
+          "event": "acked",
+          "op": "op-28-1",
+          "position": 140288,
+          "cycle": 28
+        },
+        {
+          "event": "acked",
+          "op": "op-28-2",
+          "position": 141312,
+          "cycle": 28
+        },
+        {
+          "event": "barrier",
+          "point": "after-sidecar"
+        }
+      ]
+    },
+    {
+      "cycle": 29,
+      "mode": "acked",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "acked",
+      "recovered": 110,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 110,
+          "feedPositions": [
+            139264,
+            140288,
+            141312,
+            142336
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-29-0",
+          "position": 144384,
+          "cycle": 29
+        },
+        {
+          "event": "acked",
+          "op": "op-29-1",
+          "position": 145408,
+          "cycle": 29
+        },
+        {
+          "event": "acked",
+          "op": "op-29-2",
+          "position": 146432,
+          "cycle": 29
+        },
+        {
+          "event": "acked",
+          "op": "op-29-3",
+          "position": 147456,
+          "cycle": 29
+        },
+        {
+          "event": "barrier",
+          "point": "acked"
+        }
+      ]
+    },
+    {
+      "cycle": 30,
+      "mode": "before-append",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "before-append",
+      "recovered": 114,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 114,
+          "feedPositions": [
+            144384,
+            145408,
+            146432,
+            147456
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-30-0",
+          "position": 149504,
+          "cycle": 30
+        },
+        {
+          "event": "acked",
+          "op": "op-30-1",
+          "position": 150528,
+          "cycle": 30
+        },
+        {
+          "event": "acked",
+          "op": "op-30-2",
+          "position": 151552,
+          "cycle": 30
+        },
+        {
+          "event": "barrier",
+          "point": "before-append"
+        }
+      ]
+    },
+    {
+      "cycle": 31,
+      "mode": "inflight",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "inflight",
+      "recovered": 117,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 117,
+          "feedPositions": [
+            149504,
+            150528,
+            151552
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-31-0",
+          "position": 153600,
+          "cycle": 31
+        },
+        {
+          "event": "acked",
+          "op": "op-31-1",
+          "position": 154624,
+          "cycle": 31
+        },
+        {
+          "event": "acked",
+          "op": "op-31-2",
+          "position": 155648,
+          "cycle": 31
+        },
+        {
+          "event": "barrier",
+          "point": "inflight"
+        }
+      ]
+    },
+    {
+      "cycle": 32,
+      "mode": "after-append",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "after-append",
+      "recovered": 121,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 121,
+          "feedPositions": [
+            153600,
+            154624,
+            155648,
+            156672
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-32-0",
+          "position": 158720,
+          "cycle": 32
+        },
+        {
+          "event": "acked",
+          "op": "op-32-1",
+          "position": 159744,
+          "cycle": 32
+        },
+        {
+          "event": "acked",
+          "op": "op-32-2",
+          "position": 160768,
+          "cycle": 32
+        },
+        {
+          "event": "barrier",
+          "point": "after-append"
+        }
+      ]
+    },
+    {
+      "cycle": 33,
+      "mode": "after-sidecar",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "after-sidecar",
+      "recovered": 125,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 125,
+          "feedPositions": [
+            158720,
+            159744,
+            160768,
+            161792
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-33-0",
+          "position": 163840,
+          "cycle": 33
+        },
+        {
+          "event": "acked",
+          "op": "op-33-1",
+          "position": 164864,
+          "cycle": 33
+        },
+        {
+          "event": "acked",
+          "op": "op-33-2",
+          "position": 165888,
+          "cycle": 33
+        },
+        {
+          "event": "barrier",
+          "point": "after-sidecar"
+        }
+      ]
+    },
+    {
+      "cycle": 34,
+      "mode": "acked",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "acked",
+      "recovered": 129,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 129,
+          "feedPositions": [
+            163840,
+            164864,
+            165888,
+            166912
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-34-0",
+          "position": 168960,
+          "cycle": 34
+        },
+        {
+          "event": "acked",
+          "op": "op-34-1",
+          "position": 169984,
+          "cycle": 34
+        },
+        {
+          "event": "acked",
+          "op": "op-34-2",
+          "position": 171008,
+          "cycle": 34
+        },
+        {
+          "event": "acked",
+          "op": "op-34-3",
+          "position": 172032,
+          "cycle": 34
+        },
+        {
+          "event": "barrier",
+          "point": "acked"
+        }
+      ]
+    },
+    {
+      "cycle": 35,
+      "mode": "before-append",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "before-append",
+      "recovered": 133,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 133,
+          "feedPositions": [
+            168960,
+            169984,
+            171008,
+            172032
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-35-0",
+          "position": 174080,
+          "cycle": 35
+        },
+        {
+          "event": "acked",
+          "op": "op-35-1",
+          "position": 175104,
+          "cycle": 35
+        },
+        {
+          "event": "acked",
+          "op": "op-35-2",
+          "position": 176128,
+          "cycle": 35
+        },
+        {
+          "event": "barrier",
+          "point": "before-append"
+        }
+      ]
+    },
+    {
+      "cycle": 36,
+      "mode": "inflight",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "inflight",
+      "recovered": 136,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 136,
+          "feedPositions": [
+            174080,
+            175104,
+            176128
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-36-0",
+          "position": 178176,
+          "cycle": 36
+        },
+        {
+          "event": "acked",
+          "op": "op-36-1",
+          "position": 179200,
+          "cycle": 36
+        },
+        {
+          "event": "acked",
+          "op": "op-36-2",
+          "position": 180224,
+          "cycle": 36
+        },
+        {
+          "event": "barrier",
+          "point": "inflight"
+        }
+      ]
+    },
+    {
+      "cycle": 37,
+      "mode": "after-append",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "after-append",
+      "recovered": 140,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 140,
+          "feedPositions": [
+            178176,
+            179200,
+            180224,
+            181248
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-37-0",
+          "position": 183296,
+          "cycle": 37
+        },
+        {
+          "event": "acked",
+          "op": "op-37-1",
+          "position": 184320,
+          "cycle": 37
+        },
+        {
+          "event": "acked",
+          "op": "op-37-2",
+          "position": 185344,
+          "cycle": 37
+        },
+        {
+          "event": "barrier",
+          "point": "after-append"
+        }
+      ]
+    },
+    {
+      "cycle": 38,
+      "mode": "after-sidecar",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "after-sidecar",
+      "recovered": 144,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 144,
+          "feedPositions": [
+            183296,
+            184320,
+            185344,
+            186368
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-38-0",
+          "position": 188416,
+          "cycle": 38
+        },
+        {
+          "event": "acked",
+          "op": "op-38-1",
+          "position": 189440,
+          "cycle": 38
+        },
+        {
+          "event": "acked",
+          "op": "op-38-2",
+          "position": 190464,
+          "cycle": 38
+        },
+        {
+          "event": "barrier",
+          "point": "after-sidecar"
+        }
+      ]
+    },
+    {
+      "cycle": 39,
+      "mode": "acked",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "acked",
+      "recovered": 148,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 148,
+          "feedPositions": [
+            188416,
+            189440,
+            190464,
+            191488
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-39-0",
+          "position": 193536,
+          "cycle": 39
+        },
+        {
+          "event": "acked",
+          "op": "op-39-1",
+          "position": 194560,
+          "cycle": 39
+        },
+        {
+          "event": "acked",
+          "op": "op-39-2",
+          "position": 195584,
+          "cycle": 39
+        },
+        {
+          "event": "acked",
+          "op": "op-39-3",
+          "position": 196608,
+          "cycle": 39
+        },
+        {
+          "event": "barrier",
+          "point": "acked"
+        }
+      ]
+    },
+    {
+      "cycle": 40,
+      "mode": "before-append",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "before-append",
+      "recovered": 152,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 152,
+          "feedPositions": [
+            193536,
+            194560,
+            195584,
+            196608
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-40-0",
+          "position": 198656,
+          "cycle": 40
+        },
+        {
+          "event": "acked",
+          "op": "op-40-1",
+          "position": 199680,
+          "cycle": 40
+        },
+        {
+          "event": "acked",
+          "op": "op-40-2",
+          "position": 200704,
+          "cycle": 40
+        },
+        {
+          "event": "barrier",
+          "point": "before-append"
+        }
+      ]
+    },
+    {
+      "cycle": 41,
+      "mode": "inflight",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "inflight",
+      "recovered": 155,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 155,
+          "feedPositions": [
+            198656,
+            199680,
+            200704
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-41-0",
+          "position": 202752,
+          "cycle": 41
+        },
+        {
+          "event": "acked",
+          "op": "op-41-1",
+          "position": 203776,
+          "cycle": 41
+        },
+        {
+          "event": "acked",
+          "op": "op-41-2",
+          "position": 204800,
+          "cycle": 41
+        },
+        {
+          "event": "barrier",
+          "point": "inflight"
+        }
+      ]
+    },
+    {
+      "cycle": 42,
+      "mode": "after-append",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "after-append",
+      "recovered": 159,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 159,
+          "feedPositions": [
+            202752,
+            203776,
+            204800,
+            205824
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-42-0",
+          "position": 207872,
+          "cycle": 42
+        },
+        {
+          "event": "acked",
+          "op": "op-42-1",
+          "position": 208896,
+          "cycle": 42
+        },
+        {
+          "event": "acked",
+          "op": "op-42-2",
+          "position": 209920,
+          "cycle": 42
+        },
+        {
+          "event": "barrier",
+          "point": "after-append"
+        }
+      ]
+    },
+    {
+      "cycle": 43,
+      "mode": "after-sidecar",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "after-sidecar",
+      "recovered": 163,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 163,
+          "feedPositions": [
+            207872,
+            208896,
+            209920,
+            210944
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-43-0",
+          "position": 212992,
+          "cycle": 43
+        },
+        {
+          "event": "acked",
+          "op": "op-43-1",
+          "position": 214016,
+          "cycle": 43
+        },
+        {
+          "event": "acked",
+          "op": "op-43-2",
+          "position": 215040,
+          "cycle": 43
+        },
+        {
+          "event": "barrier",
+          "point": "after-sidecar"
+        }
+      ]
+    },
+    {
+      "cycle": 44,
+      "mode": "acked",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "acked",
+      "recovered": 167,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 167,
+          "feedPositions": [
+            212992,
+            214016,
+            215040,
+            216064
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-44-0",
+          "position": 218112,
+          "cycle": 44
+        },
+        {
+          "event": "acked",
+          "op": "op-44-1",
+          "position": 219136,
+          "cycle": 44
+        },
+        {
+          "event": "acked",
+          "op": "op-44-2",
+          "position": 220160,
+          "cycle": 44
+        },
+        {
+          "event": "acked",
+          "op": "op-44-3",
+          "position": 221184,
+          "cycle": 44
+        },
+        {
+          "event": "barrier",
+          "point": "acked"
+        }
+      ]
+    },
+    {
+      "cycle": 45,
+      "mode": "before-append",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "before-append",
+      "recovered": 171,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 171,
+          "feedPositions": [
+            218112,
+            219136,
+            220160,
+            221184
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-45-0",
+          "position": 223232,
+          "cycle": 45
+        },
+        {
+          "event": "acked",
+          "op": "op-45-1",
+          "position": 224256,
+          "cycle": 45
+        },
+        {
+          "event": "acked",
+          "op": "op-45-2",
+          "position": 225280,
+          "cycle": 45
+        },
+        {
+          "event": "barrier",
+          "point": "before-append"
+        }
+      ]
+    },
+    {
+      "cycle": 46,
+      "mode": "inflight",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "inflight",
+      "recovered": 174,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 174,
+          "feedPositions": [
+            223232,
+            224256,
+            225280
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-46-0",
+          "position": 227328,
+          "cycle": 46
+        },
+        {
+          "event": "acked",
+          "op": "op-46-1",
+          "position": 228352,
+          "cycle": 46
+        },
+        {
+          "event": "acked",
+          "op": "op-46-2",
+          "position": 229376,
+          "cycle": 46
+        },
+        {
+          "event": "barrier",
+          "point": "inflight"
+        }
+      ]
+    },
+    {
+      "cycle": 47,
+      "mode": "after-append",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "after-append",
+      "recovered": 178,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 178,
+          "feedPositions": [
+            227328,
+            228352,
+            229376,
+            230400
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-47-0",
+          "position": 232448,
+          "cycle": 47
+        },
+        {
+          "event": "acked",
+          "op": "op-47-1",
+          "position": 233472,
+          "cycle": 47
+        },
+        {
+          "event": "acked",
+          "op": "op-47-2",
+          "position": 234496,
+          "cycle": 47
+        },
+        {
+          "event": "barrier",
+          "point": "after-append"
+        }
+      ]
+    },
+    {
+      "cycle": 48,
+      "mode": "after-sidecar",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "after-sidecar",
+      "recovered": 182,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 182,
+          "feedPositions": [
+            232448,
+            233472,
+            234496,
+            235520
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-48-0",
+          "position": 237568,
+          "cycle": 48
+        },
+        {
+          "event": "acked",
+          "op": "op-48-1",
+          "position": 238592,
+          "cycle": 48
+        },
+        {
+          "event": "acked",
+          "op": "op-48-2",
+          "position": 239616,
+          "cycle": 48
+        },
+        {
+          "event": "barrier",
+          "point": "after-sidecar"
+        }
+      ]
+    },
+    {
+      "cycle": 49,
+      "mode": "acked",
+      "result": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "timedOut": false,
+      "barrier": "acked",
+      "recovered": 186,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 186,
+          "feedPositions": [
+            237568,
+            238592,
+            239616,
+            240640
+          ]
+        },
+        {
+          "event": "acked",
+          "op": "op-49-0",
+          "position": 242688,
+          "cycle": 49
+        },
+        {
+          "event": "acked",
+          "op": "op-49-1",
+          "position": 243712,
+          "cycle": 49
+        },
+        {
+          "event": "acked",
+          "op": "op-49-2",
+          "position": 244736,
+          "cycle": 49
+        },
+        {
+          "event": "acked",
+          "op": "op-49-3",
+          "position": 245760,
+          "cycle": 49
+        },
+        {
+          "event": "barrier",
+          "point": "acked"
+        }
+      ]
+    },
+    {
+      "cycle": 50,
+      "mode": "verify",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "timedOut": false,
+      "recovered": 190,
+      "stderr": "",
+      "events": [
+        {
+          "event": "recovered",
+          "count": 190,
+          "feedPositions": [
+            242688,
+            243712,
+            244736,
+            245760
+          ]
+        }
+      ]
+    }
+  ]
+}
