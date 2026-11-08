@@ -24,7 +24,28 @@ The source-message equality required by Q83d is unchanged. This round does not r
 
 ## Offline gates
 
-Final source-bound gates and receipts will be recorded below after the committed-source rerun. Preliminary runs passed the 41 original tests, the 21 copied reviewer regressions and the first 20 additional boundary cases. The extended boundary suite also includes initial owner-write failure, malformed/current transaction gauges and post-fingerprint freshness.
+Implementation source commit: `b2b27e591fb035e8b9e3b0379eb7dcebf47913ea`. The final run verified the unchanged implementation and test bytes listed in `evidence/round3/final-run.json`.
+
+| Gate | Result | Evidence |
+| --- | --- | --- |
+| Original focused suites | **41/41 PASS**, zero skips | `lab/verify/K01/evidence/baseline.tap` |
+| Copied reviewer suite | **21/21 PASS**, zero skips | `lab/verify/K01/evidence/regressions.tap` |
+| Additional round-3 boundaries | **23/23 PASS**, zero skips | `evidence/round3/extended.log` |
+| TypeScript, lab bench | **exit 0** | `evidence/round3/types-final.log` |
+| Engine and runner syntax | **all exit 0** | `evidence/round3/syntax-*.log` |
+| Patch whitespace | **PASS** | `git diff --check` |
+
+The 85 tests cover revocation on early config/golden/query errors, initial owner-write and receipt/hash/publication failures, incomplete verdicts, identity/restart drift, preserving a complete FAIL receipt, protecting a newer attempt, both T1 runners, malformed/current transaction gauges, post-fingerprint gauges/start state, golden-end drift and incomplete T6 fingerprints. The reviewer tests are copied without assertion changes.
+
+Reproduction (offline; shared heavy grant):
+
+```sh
+node lab/bin/heavy.mjs --label CX-K01-R3-final -- node lab/verify/K01/run-round3.mjs
+```
+
+The runner records actual command arguments, exits, signals, Node version, source head, source hashes, output hashes and elapsed times. `lab/verify/K01/evidence/run.json` records the required original/reviewer suite exits separately. The copied review helper's `cases.json` retains its legacy `sourceHead: 05a23dd` field naming the reviewed base; the current executed head is in `run.json` and `final-run.json`, and current extracted function bytes are bound by the case-file source hashes. This field is not presented as fresh evidence of executing the old head.
+
+Host free disk was approximately 21.5 GiB before heavy admission, above the 5 GiB floor. Temporary test fixtures were confined to this worktree's `lab/verify/K01/tmp` and removed after the test processes exited. No volume or engine cleanup was necessary. Evidence checksums are in `evidence/round3/SHA256SUMS`.
 
 ## Limits and handoff
 
