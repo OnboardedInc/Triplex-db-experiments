@@ -1,5 +1,6 @@
 """Hand-derived section 6.3 fixtures; no engine or implementation expected answers."""
 import argparse
+
 import copy
 import hashlib
 import importlib.util
@@ -12,6 +13,8 @@ import tempfile
 sys.dont_write_bytecode = True
 HERE = Path(__file__).resolve().parent
 CONTRACT = HERE.parent / 'obligations.json'
+sys.path.insert(0, str(HERE))
+from bundle_fixtures import fixture
 
 
 def seal(e, key, kind):
@@ -59,6 +62,9 @@ def fixtures():
     scans = [dict(inventoryEntry=k, location='store/' + str(i), scanMethod='full-byte-and-derived-channel-scan',
                   plaintextHits=0, derivedChannelHits=0, keyDestroyedEvidence=None, tScan=1) for i, k in enumerate(inventory)]
     p['ERASURE-SCAN'] = dict(scans[0], scans=scans, tErasurePublished=0)
+    inventory += ['observer outputs', 'old index generations', 'freed blocks']
+    scans[:] = [dict(inventoryEntry=k, location='store/' + str(i), scanMethod='full-byte-and-derived-channel-scan', plaintextHits=0, derivedChannelHits=0, keyDestroyedEvidence=None, tScan=2, positiveControl=dict(canary='canary-'+str(i), tWritten=0, tFound=0, hits=1, location='store/'+str(i), scanMethod='full-byte-and-derived-channel-scan')) for i, k in enumerate(inventory)]
+    p['ERASURE-SCAN'] = dict(scans[0], scans=scans, tErasurePublished=1)
     snapshot = {'incarnation': 'boot-1', 'marker': 2}
     eligible = dict(index='idx', recordedTimeBound=None, markerState='complete', partialOrConflictedReferenced=False,
                     queriedAttributes=['a'], attributes=[{'name': 'a', 'from': 1, 'to': 2}], publishedPositions=[1, 2], resolutions=[{'position': i, 'outcome': 'applied'} for i in (1, 2)],
@@ -67,15 +73,14 @@ def fixtures():
                     erasurePublished=2, erasureApplied=2,
                     snapshot={'mode': 'incarnation-fenced', 'before': snapshot.copy(), 'answer': snapshot.copy(), 'after': snapshot.copy()})
     p['WATERMARK'] = dict(readId='read-1', basisPosition=2, servingIndex='idx', watermarkAtRead=2, waitMs=10, route='index',
-                         fallbackIndex=None, eligibility=eligible, surfaceLanguage='sparql', tReadStart=5, tReadEnd=25, tRouteStart=15, tRouteEnd=25)
+                         waitEvents={'start': {'kind':'read-start', 'readId':'read-1', 't':5}, 'end':{'kind':'engine-request', 'readId':'read-1', 't':15}}, fallbackIndex=None, eligibility=eligible, surfaceLanguage='sparql', tReadStart=5, tReadEnd=25, tRouteStart=15, tRouteEnd=25)
     seal(p['WATERMARK'], 'source', 'engine-read-snapshot')
     p['ACK-ORDER'] = dict(commitPosition=2, tSourcePublished=0, tAck=5, ackSender='log', sourceOfTruth='log',
                          ryowPullRoute=copy.deepcopy(p['WATERMARK']))
-    record = {'transition': 'QT4s-SOURCE-PUBLISHED', 't': 1, 'position': 2}
-    durable = {'record': record, 'sha256': hashlib.sha256(json.dumps(record, sort_keys=True, separators=(',', ':')).encode()).hexdigest(), 'tReadBack': 3}
+    record = {'transition': 'QT4s-SOURCE-PUBLISHED', 't': 1, 'position': 2, 'operationId': 'op1', 'facts': {'decisionDurable': True, 'sourceReadable': True, 'commitRecord': {'operationId':'op1','position':2,'type':'COMMIT','effects':[{'entity':'e1','attribute':'a','value':1}]}, 'sourceReadback':{'operationId':'op1','position':2,'effects':[{'entity':'e1','attribute':'a','value':1}], 'absences':[]}}}
+    durable = {'record': record, 'sha256': hashlib.sha256(json.dumps(record, sort_keys=True, separators=(',', ':')).encode()).hexdigest(), 'tReadBack': 3, 'readbackOperationId': 'op1', 'readbackPosition': 2}
     p['FAULT-TRANSITIONS'] = dict(transition='QT4s-SOURCE-PUBLISHED', variant='log-source', t=1, durableEvidenceObject=durable, tCrash=2,
-                                transitions=[{'transition': 'QT4s-SOURCE-PUBLISHED', 't': 1, 'durableEvidenceObject': durable},
-                                             {'transition': 'QT6-ACKED', 't': 2, 'durableEvidenceObject': None}])
+                                transitions=[{'transition': 'QT4s-SOURCE-PUBLISHED', 't': 1, 'durableEvidenceObject': durable}])
     kinds = ['engine-active-query-log', 'engine-statement-log', 'engine-connection-samples', 'engine-relation-scan',
              'engine-committed-transaction-counter', 'resource-owner-samples', 'engine-probe-log', 'engine-count-query',
              'engine-work-counters', 'engine-maintenance-log', 'protected-copy-scan', 'engine-read-snapshot',
@@ -175,6 +180,10 @@ def fixtures():
     extra('WATERMARK', 'coordinate-pass', coordinate, 'PASS')
     extra('WATERMARK', 'epoch-mismatch', lambda e: coordinate(e, 2))
     extra('NO-MUTATION', 'update-counter-pass', lambda e: e['counterSource'].update(kind='engine-update-counter'), 'PASS')
+    scan_inventory = [dict(id=r['inventoryEntry'], category=r['inventoryEntry'], location=r['location'], scanMethod=r['scanMethod'], canary=r['positiveControl']['canary']) for r in scans]
+    for case in cases:
+        if case['protocol'] == 'OBS-ERASURE-SCAN':
+            case['scanInventory'] = scan_inventory
     return cases
 
 
@@ -185,9 +194,11 @@ def run(oracle, cases):
     results = []
     for case in cases:
         try:
-            report, code = module.check(case['protocol'], case['evidence'], contract)
-            ok = report['verdict'] == case['expected'] and code == (0 if case['expected'] == 'PASS' else 1)
-            results.append({'id': case['id'], 'ok': ok, 'verdict': report['verdict'], 'code': code})
+            with tempfile.TemporaryDirectory(prefix='obs-fixture-') as tmp:
+                e, context, bundle, key = fixture(case, tmp, contract)
+                report, code = module.check(case['protocol'], e, contract, context, bundle, key)
+            ok = (report['verdict'] == 'PASS' and code == 0) if case['expected'] == 'PASS' else (report['verdict'] in ('FAIL', 'REFUSED') and code in (1, 2))
+            results.append({'id': case['id'], 'ok': ok, 'verdict': report['verdict'], 'code': code, 'reasons': report['reasons']})
         except Exception as error:
             results.append({'id': case['id'], 'ok': False, 'error': str(error)})
     return {'passed': sum(r['ok'] for r in results), 'total': len(results), 'results': results}

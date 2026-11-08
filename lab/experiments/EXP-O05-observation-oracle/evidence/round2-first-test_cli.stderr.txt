@@ -1,0 +1,34 @@
+..F....F
+======================================================================
+FAIL: test_missing_threshold (__main__.CliTests.test_missing_threshold)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/o05/lab/acceptance/oracle/test_cli.py", line 81, in test_missing_threshold
+    self.assertEqual((code, result['verdict']), (2, 'REFUSED'))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Tuples differ: (1, 'FAIL') != (2, 'REFUSED')
+
+First differing element 0:
+1
+2
+
+- (1, 'FAIL')
++ (2, 'REFUSED')
+
+======================================================================
+FAIL: test_wrong_types (__main__.CliTests.test_wrong_types)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/o05/lab/acceptance/oracle/test_cli.py", line 72, in test_wrong_types
+    code, result = self.invoke(raw=json.dumps(bad))
+                   ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/o05/lab/acceptance/oracle/test_cli.py", line 38, in invoke
+    self.assertEqual(proc.stderr, '')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+AssertionError: 'Traceback (most recent call last):\n  Fil[943 chars]\'\n' != ''
+Diff is 992 characters long. Set self.maxDiff to None to see it.
+
+----------------------------------------------------------------------
+Ran 8 tests in 1.236s
+
+FAILED (failures=2)
