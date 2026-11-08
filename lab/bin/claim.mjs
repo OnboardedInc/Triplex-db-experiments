@@ -538,7 +538,8 @@ const blobOid = (bytes, oidLength) => createHash(oidLength === 40 ? 'sha1' : 'sh
  * or its tree entry names, so a `git replace` or a rewritten object file never supplies bytes (RULINGS Q75a, Q75b; V-E01 F2).
  */
 export function gitSource(repo) {
-  const env = { ...process.env, GIT_NO_REPLACE_OBJECTS: '1', GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null', GIT_TERMINAL_PROMPT: '0', GIT_OPTIONAL_LOCKS: '0' };
+  // [EXP-E01] Why: inherited Git overrides must not select another object store or user configuration. Rejected: spreading GIT_* from the caller.
+  const env = { ...Object.fromEntries(Object.entries(process.env).filter(([k]) => !k.startsWith('GIT_'))), GIT_NO_REPLACE_OBJECTS: '1', GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null', GIT_TERMINAL_PROMPT: '0', GIT_OPTIONAL_LOCKS: '0' };
   const run = (args, input) => execFileSync('git', ['--no-replace-objects', '--literal-pathspecs', ...args], { cwd: repo, env, input, maxBuffer: 1 << 30, stdio: ['pipe', 'pipe', 'pipe'] });
   const cache = new Map();
   /** cat-file --batch over the given object names: one { oid, type, bytes } per name (null when missing), each blob verified. */
@@ -580,10 +581,13 @@ export function gitSource(repo) {
     /** Every entry of a commit's tree, recursively: { mode, type, oid, path }, sorted by path; null when git fails. */
     tree(commit) {
       if (!COMMIT.test(commit)) return null;
+      if (cache.has(`tree:${commit}`)) return cache.get(`tree:${commit}`);
       try {
-        return run(['ls-tree', '-r', '-z', '--full-tree', commit]).toString('utf8').split('\0').filter(Boolean).map(line => {
+        const tree = run(['ls-tree', '-r', '-z', '--full-tree', commit]).toString('utf8').split('\0').filter(Boolean).map(line => {
           const tab = line.indexOf('\t'); const [mode, type, oid] = line.slice(0, tab).split(' '); return { mode, type, oid, path: line.slice(tab + 1) };
         }).sort((a, b) => a.path < b.path ? -1 : a.path > b.path ? 1 : 0);
+        cache.set(`tree:${commit}`, tree);
+        return tree;
       } catch { return null; }
     },
     /** Map oid -> blob bytes for the given object ids, each verified against its id; cache is shared between calls. */
@@ -614,7 +618,10 @@ export function gitSource(repo) {
       const want = [...new Set(list)].filter(f => !cache.has(`${commit}:${f}`));
       for (const f of want.filter(f => !safePath(f))) cache.set(`${commit}:${f}`, null);
       const ok = want.filter(safePath);
-      for (const f of ok) { const b = api.blob(commit, f); cache.set(`${commit}:${f}`, b ? sha256(b) : null); }
+      const at = api.resolve(commit), tree = at ? api.tree(at) : null;
+      const entries = new Map((tree ?? []).filter(e => e.type === 'blob').map(e => [e.path, e.oid]));
+      const objects = api.objects(ok.map(f => entries.get(f)).filter(Boolean));
+      for (const f of ok) { const b = objects.get(entries.get(f)); cache.set(`${commit}:${f}`, b ? sha256(b) : null); }
       return new Map(list.map(f => [f, cache.get(`${commit}:${f}`) ?? null]));
     },
   };
@@ -960,8 +967,12 @@ function resolveTool(name, pathEnv) {
 export function resolveToolchain(pathEnv = process.env.PATH ?? '') {
   const tools = Object.fromEntries(TOOLS.map(n => [n, resolveTool(n, pathEnv)]));
   for (const t of Object.values(tools)) if (t) {
-    const r = spawnSync(t.path, ['--version'], { encoding: 'utf8', env: { PATH: [...(tools.node ? [path.dirname(tools.node.path)] : []), ...SYSTEM_PATH].join(':'), HOME: os.tmpdir() }, timeout: 60_000 });
-    t.version = r.status === 0 ? `${r.stdout}${r.stderr}`.trim().split('\n')[0] : null;
+    // [EXP-E01] Why: version probes are children too. Rejected: a shared temporary HOME (cross-child state).
+    const home = fs.mkdtempSync(path.join(os.tmpdir(), 'tx2-version-'));
+    try {
+      const r = spawnSync(t.path, ['--version'], { encoding: 'utf8', env: { PATH: [...(tools.node ? [path.dirname(tools.node.path)] : []), ...SYSTEM_PATH].join(':'), HOME: home, TMPDIR: home }, timeout: 60_000 });
+      t.version = r.status === 0 ? `${r.stdout}${r.stderr}`.trim().split('\n')[0] : null;
+    } finally { removeDir(home); }
   }
   return tools;
 }

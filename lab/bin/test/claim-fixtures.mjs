@@ -162,6 +162,7 @@ function contractVariant(variant, { a0Commit, a0Label, a0Binary, verified } = {}
     // The fixture's own W0 files (the real pin lists W0-1.1.1's 95 files), plus a directory pin of its cases.
     files: { ...Object.fromEntries(Object.keys(SRC).filter(f => f.startsWith('lab/world/W0/') && !f.startsWith('lab/world/W0/cases/')).map(f => [f, h(SRC[f])])),
       'lab/world/W0/cases/': listingHash([['lab/world/W0/cases/c1.json', h(SRC['lab/world/W0/cases/c1.json'])]]) } };
+  if (variant === 'null') c.w0Pin.deltaCheck = null;
   c.verifierRegistry = { ...c.verifierRegistry, entries: reg };
   return c;
 }
