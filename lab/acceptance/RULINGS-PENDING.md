@@ -124,3 +124,9 @@ These move into RULINGS.md when the contract version that compiles them is built
 | --- | --- | --- |
 | Q73a deep writes | A publish or receive payload of any nesting depth is copied and written exactly (A13 applies to the writer as well as the reader). W0-1.1.3 adds a synthetic publish case with a payload of 20,000 nested arrays, delivered and stored unchanged. | EXP-D01b-112 SPEC-AMBIGUITY 1 |
 | Q73b waiting at done + 1 | An inconsistent receiver snapshot with a waiting entry at done + 1 is kept as given (A15); an arriving seq equal to that entry is a duplicate, so the entry is never released. W0-1.1.3 adds a synthetic receive case: state {done 2, waiting [seq 3]}, deliveries [seq 3, seq 5]; projection applies 3 and 5, effects apply nothing, waiting [3, 5]. | EXP-D01b-112 SPEC-AMBIGUITY 2; A15 |
+
+## Q70 additions: V-O04f gaps (O-REPLAY 0.4.6)
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q70f ambiguous literal token | When the earlier reads that issued a literal token disagree in start, scope or per-prefix answers, the continuation fails closed with a typed X-NOT-MODELED "ambiguous literal token" (a fourth listed refusal site). Issuers with identical views continue as Q70d says. | V-O04f F9 |
+| Q70g journal pagination | Q70c extends to the journal: a `transactions` call whose `after` equals a `next` that an earlier transactions page issued in the same case continues that read (its start and prefixes), one answer per prefix; an `after` no earlier page issued uses the call's own read view. | V-O04f F10 |
