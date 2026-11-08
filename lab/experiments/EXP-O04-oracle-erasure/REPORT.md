@@ -88,3 +88,14 @@
   MATCH); converters 0 of 341 items differ on either lane; refusal sites unchanged (run.py:53, views.py:129, entities.py:61). Changed files:
   RULES.md, SCHEMA.md, examples/entity-mini.expected.json, run.py, tests/test_contract_section4.py (views.py in 0.4.4). Hashes and receipts
   in /Users/sam/Claude/Projects/triplex-db-2/EXP-O04b-oracle-0.4.2/ (hashes.0.4.5.txt, selfcheck.045.json, probe_q52.045.json).
+
+## O-REPLAY 0.4.6 (565bc26) and 0.4.7 (91ba352), one commit each on acf9fce; saved 2026-11-08 02:07Z
+- 0.4.6, Q70f: a continuation whose issuing reads disagree in view (start, scope, prefixes that issued the token) fails closed with a typed
+  X-NOT-MODELED "ambiguous literal token" or "ambiguous journal after" in the query's entry (run.py:657, a fourth refusal site; the others
+  run.py:53, views.py:129, entities.py:61). Q70g: a `transactions` call whose `after` equals an earlier page's `next` in the same journal
+  scope continues that read per prefix. Read records carry the query kind and journal scope. 377/377 unit, 61/61 self-check.
+- 0.4.7, Q70j: `read_scope(query)` decides the in-flight scope from the scope a read reads; used for in-flight erasure commits, the scope of
+  an ambiguous-continuation entry and readStart resolution. Applied to every kind with a `scope` field (`transactions`, `transaction`,
+  `transactionByCommand`, `transactionsForEntity`, `journalFacts`, `assertions`, `cutCatalog`, `history` with no cut), ruled Q70k; other kinds
+  use their cut's scope. New test_Q70j_journal_read_scope separates 0.4.6 from 0.4.7. 378/378 unit, 61/61 self-check, converters 0 of 341
+  items differ on either lane. Hashes in /Users/sam/Claude/Projects/triplex-db-2/EXP-O04b-oracle-0.4.2/hashes.0.4.7.txt.

@@ -50,7 +50,7 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | V-E01 independent check of claim.mjs at 2796455 (opus, fresh; verify/E01; brief lab/verify/E01/BRIEF.md) | floor for every claim | verdict on merging E01 |
 | V-X02 XTQL lane verification (opus) | XTQL primary lane | verdict on exp/X02-xtql-parity bf1ad4d |
 | EXP-P4 current-value path (opus) | P4 | read-path arms X1, X2, H1, Q1 |
-| O-REPLAY 0.4.7 (opus, O04b author resumed; 0.4.6 at 565bc26) | correctness floor | Q70j journal in-flight scope; then V-O04g on Q70a-j |
+| V-O04g re-check of O-REPLAY 0.4.7 91ba352 (opus, resumed; brief lab/verify/O02/V-O04g/BRIEF.md) | correctness floor | ACCEPT -> pin 0.4.7 in contract 0.3.11 with Q70 compiled |
 | EXP-K01 seed-once clone tooling (opus, fresh; exp/K01-seed-clone) | measurement speed, all five | engine.mjs golden/clone, readiness checks, 500-subject live check, E1 plan |
 | R25 SQLite pinned readers beside one durable writer (sonnet xhigh; /Users/sam/Claude/Projects/triplex-db-2/R25/) | P1, P2, P4, P5 | one design for the broker's SQLite file |
 | EXP-M01 PARKED (handed back clean; no process running) | measurement floor | resumes in the Q69a measurement window |
