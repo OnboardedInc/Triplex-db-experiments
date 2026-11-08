@@ -27,7 +27,10 @@ import { BasisNotAvailable, ReplicaUnavailable } from "../src/broker/errors.js";
 import { BrokerLogError, HostLog, readWatermark } from "../src/broker/log.js";
 import { FrameKind } from "../src/broker/frame.js";
 import { lastPositionOf, lsnOf } from "../src/broker/position.js";
-import { BROKER_NATIVE_AWAIT_BASIS_MS, makeQleverNativeQueries } from "../src/native/NativeQueries.js";
+import {
+  BROKER_NATIVE_AWAIT_BASIS_MS,
+  makeQleverNativeQueries,
+} from "../src/native/NativeQueries.js";
 
 const ROOT = path.resolve(import.meta.dirname, "../../../runs/broker/EXP-P2Q/fixes");
 const dirs: string[] = [];
@@ -74,14 +77,18 @@ class MarkerReplica implements QleverClient {
         {
           brokerPosition: { type: "literal", value: String(this.position) },
           brokerEpoch: { type: "literal", value: String(this.epoch) },
-          ...(this.incarnation ? { brokerIncarnation: { type: "literal", value: this.incarnation } } : {}),
+          ...(this.incarnation
+            ? { brokerIncarnation: { type: "literal", value: this.incarnation } }
+            : {}),
         },
       ];
     if (sparql.startsWith("SELECT ?position"))
       return [
         {
           position: { type: "literal", value: String(this.position) },
-          ...(this.incarnation ? { incarnation: { type: "literal", value: this.incarnation } } : {}),
+          ...(this.incarnation
+            ? { incarnation: { type: "literal", value: this.incarnation } }
+            : {}),
         },
       ];
     // dependencyState: the marker row and one aggregate row over no rows (content is not modelled).
@@ -96,7 +103,10 @@ class MarkerReplica implements QleverClient {
   async update(sparql: string) {
     if (this.down) throw new Error("connect ECONNREFUSED 127.0.0.1:7070 (marker replica down)");
     if (this.rejectUpdates) throw new Error("socket hang up (marker replica refuses updates)");
-    const guard = /COALESCE\(\?brokerPosition, "0"\) = "(\d+)" && COALESCE\(\?brokerEpoch, "0"\) = "(\d+)"/.exec(sparql);
+    const guard =
+      /COALESCE\(\?brokerPosition, "0"\) = "(\d+)" && COALESCE\(\?brokerEpoch, "0"\) = "(\d+)"/.exec(
+        sparql,
+      );
     const guardIncarnation = /COALESCE\(\?brokerIncarnation, ""\) = "([^"]*)"/.exec(sparql);
     const insert = sparql.slice(sparql.indexOf(" INSERT {"), sparql.indexOf(" WHERE {"));
     if (
@@ -105,11 +115,20 @@ class MarkerReplica implements QleverClient {
       Number(guard[2]) !== this.epoch ||
       (guardIncarnation !== null && guardIncarnation[1] !== this.incarnation)
     )
-      return { operations: [{ "delta-triples": { operation: { inserted: 0, deleted: 0 }, after: { total: 0 } } }] };
+      return {
+        operations: [
+          { "delta-triples": { operation: { inserted: 0, deleted: 0 }, after: { total: 0 } } },
+        ],
+      };
     this.position = this.literal(insert, "broker_position") ?? this.position;
     this.epoch = this.literal(insert, "broker_epoch") ?? this.epoch;
-    this.incarnation = /<urn:triplex:field:broker_incarnation> "([^"]*)"/.exec(insert)?.[1] ?? this.incarnation;
-    return { operations: [{ "delta-triples": { operation: { inserted: 4, deleted: 4 }, after: { total: 4 } } }] };
+    this.incarnation =
+      /<urn:triplex:field:broker_incarnation> "([^"]*)"/.exec(insert)?.[1] ?? this.incarnation;
+    return {
+      operations: [
+        { "delta-triples": { operation: { inserted: 4, deleted: 4 }, after: { total: 4 } } },
+      ],
+    };
   }
   async command() {
     return {};
@@ -126,29 +145,61 @@ const openRt = async (
   basisWaitMs = 250,
   executorClient?: QleverClient,
 ) => {
-  const broker = await HostBroker.open({ dir, scopeKey: scope, minFreeBytes: 256 * 1024 ** 2, ...(replica ? { replica } : {}), idleProbeMs: 50, ...extra });
+  const broker = await HostBroker.open({
+    dir,
+    scopeKey: scope,
+    minFreeBytes: 256 * 1024 ** 2,
+    ...(replica ? { replica } : {}),
+    idleProbeMs: 50,
+    ...extra,
+  });
   const client = replica ?? new MarkerReplica();
-  const adapter = makeQleverStorageAdapter(client, scope, { broker, brokerOptions: { basisWaitMs } }) as QleverBrokerStorageAdapterService;
-  const executor = makeQleverQueryExecutor(executorClient ?? client, scope, { sourceView: adapter.sourceView, resolveBasis: adapter.resolveQueryBasis });
+  const adapter = makeQleverStorageAdapter(client, scope, {
+    broker,
+    brokerOptions: { basisWaitMs },
+  }) as QleverBrokerStorageAdapterService;
+  const executor = makeQleverQueryExecutor(executorClient ?? client, scope, {
+    sourceView: adapter.sourceView,
+    resolveBasis: adapter.resolveQueryBasis,
+  });
   const managed = ManagedRuntime.make(
-    Runtime.define({ name: "p2q-fixes", storage: Layer.succeed(StorageAdapter, adapter), queries: Layer.succeed(QueryExecutor, executor) })
-      .layer({ scope: DatabaseScope.test(scope), capabilities: Capabilities.none }),
+    Runtime.define({
+      name: "p2q-fixes",
+      storage: Layer.succeed(StorageAdapter, adapter),
+      queries: Layer.succeed(QueryExecutor, executor),
+    }).layer({ scope: DatabaseScope.test(scope), capabilities: Capabilities.none }),
   );
-  const triples = await managed.runPromise(Effect.gen(function* () {
-    return yield* Triples;
-  }));
+  const triples = await managed.runPromise(
+    Effect.gen(function* () {
+      return yield* Triples;
+    }),
+  );
   return {
-    broker, adapter, executor, triples,
+    broker,
+    adapter,
+    executor,
+    triples,
     run: <A, E>(e: Effect.Effect<A, E>) => managed.runPromise(e),
     exit: <A, E>(e: Effect.Effect<A, E>) =>
-      managed.runPromise(Effect.match(e, { onFailure: (error) => ({ ok: false as const, error: error as any }), onSuccess: (value) => ({ ok: true as const, value }) })),
+      managed.runPromise(
+        Effect.match(e, {
+          onFailure: (error) => ({ ok: false as const, error: error as any }),
+          onSuccess: (value) => ({ ok: true as const, value }),
+        }),
+      ),
     dispose: () => managed.dispose(),
   };
 };
 const ops = (subject: string, facts: number, tag: string) =>
-  Array.from({ length: facts }, (_v, i) => ({ op: "assert" as const, entityId: EntityId.make(subject), attribute: `:x/f${i}`, value: string(`${tag}-${i}`) }));
+  Array.from({ length: facts }, (_v, i) => ({
+    op: "assert" as const,
+    entityId: EntityId.make(subject),
+    attribute: `:x/f${i}`,
+    value: string(`${tag}-${i}`),
+  }));
 const at = (position: number) => ({ validAt: Date.now() + 10 ** 9, recordedPosition: position });
-const q = (subject: string) => ({ find: ["?v"], where: [[EntityId.make(subject), ":x/f0", "?v"]] }) as any;
+const q = (subject: string) =>
+  ({ find: ["?v"], where: [[EntityId.make(subject), ":x/f0", "?v"]] }) as any;
 const ids = (rows: readonly TripleRow[]) => rows.map((row) => row.id).sort();
 
 describe("C1 Datalog inside a transaction", () => {
@@ -167,7 +218,9 @@ describe("C1 Datalog inside a transaction", () => {
       expect(exit.error.required).toBe(rt.broker.head());
       expect(ms).toBeGreaterThanOrEqual(240);
       // Only marker probes were sent; no Datalog SPARQL reached a replica below sourceK.
-      expect(replica.queries.every((s) => s.startsWith("SELECT ?brokerPosition ?brokerEpoch"))).toBe(true);
+      expect(
+        replica.queries.every((s) => s.startsWith("SELECT ?brokerPosition ?brokerEpoch")),
+      ).toBe(true);
       // Once the replica reaches sourceK, the same in-transaction query runs.
       rt.broker.startApplier();
       expect(await rt.broker.drain(5_000)).toBe(true);
@@ -226,10 +279,22 @@ describe("C2 the cached replica marker is never trusted for an answer", () => {
       // The replica restarts without its delta and refuses updates for now: the applier cannot catch up.
       replica.rejectUpdates = true;
       replica.position = 0;
-      const basis = await rt.exit(Effect.promise(() => rt.adapter.resolveQueryBasis(a.position).then((b) => b, (error) => ({ error }))));
+      const basis = await rt.exit(
+        Effect.promise(() =>
+          rt.adapter.resolveQueryBasis(a.position).then(
+            (b) => b,
+            (error) => ({ error }),
+          ),
+        ),
+      );
       expect((basis as any).value?.error).toBeInstanceOf(BasisNotAvailable);
       expect((basis as any).value.error.observed).toBe(0);
-      const dep = await rt.exit(rt.adapter.dependencyState([":x/f0"], { validAt: Date.now(), recordedPosition: a.position }));
+      const dep = await rt.exit(
+        rt.adapter.dependencyState([":x/f0"], {
+          validAt: Date.now(),
+          recordedPosition: a.position,
+        }),
+      );
       expect(dep.ok).toBe(false);
       expect(dep.error).toBeInstanceOf(BasisNotAvailable);
       // Repository pulls stay exact: their own request shows marker 0, so the overlay or the log answers.
@@ -266,7 +331,12 @@ describe("C2 the cached replica marker is never trusted for an answer", () => {
         }
         return out;
       };
-      const exit = await rt.exit(rt.executor.execute(q("s:c2b"), { validAt: Date.now(), recordedPosition: a.position } as any));
+      const exit = await rt.exit(
+        rt.executor.execute(q("s:c2b"), {
+          validAt: Date.now(),
+          recordedPosition: a.position,
+        } as any),
+      );
       expect(exit.ok).toBe(false);
       expect(exit.error).toBeInstanceOf(BasisNotAvailable);
       expect(exit.error.reason).toBe("basis-not-reached");
@@ -285,7 +355,9 @@ describe("C3 one writer per stream", () => {
     const a = await openRt(dir, scope, undefined);
     try {
       await a.run(a.triples.transact(ops("s:l", 1, "a1"), { commandId: "a1" }));
-      await expect(HostBroker.open({ dir, scopeKey: scope, minFreeBytes: 0 })).rejects.toThrow(/already open in this process/);
+      await expect(HostBroker.open({ dir, scopeKey: scope, minFreeBytes: 0 })).rejects.toThrow(
+        /already open in this process/,
+      );
       const b = await HostBroker.open({ dir, scopeKey: scope, minFreeBytes: 0, takeover: true });
       const late = await a.exit(a.triples.transact(ops("s:l", 1, "a2"), { commandId: "a2" }));
       expect(late.ok).toBe(false);
@@ -308,11 +380,18 @@ describe("C3 one writer per stream", () => {
   const HOLDER = path.resolve(import.meta.dirname, "fixtures/lock-holder.ts");
   const contend = (dir: string) =>
     new Promise<number>((resolve) => {
-      const child = spawn("perl", ["-e", 'use Fcntl qw(:flock); open(F,">>",$ARGV[0]) or exit 2; flock(F,LOCK_EX|LOCK_NB) or exit 3; exit 0;', path.join(dir, "LOCK")]);
+      const child = spawn("perl", [
+        "-e",
+        'use Fcntl qw(:flock); open(F,">>",$ARGV[0]) or exit 2; flock(F,LOCK_EX|LOCK_NB) or exit 3; exit 0;',
+        path.join(dir, "LOCK"),
+      ]);
       child.on("exit", (code) => resolve(code ?? -1));
     });
   const holder = (dir: string, mode: "hold" | "graceful", tag: string, detached = false) => {
-    const child = spawn(TSX, [HOLDER, dir, mode, tag], { stdio: ["ignore", "pipe", "inherit"], detached });
+    const child = spawn(TSX, [HOLDER, dir, mode, tag], {
+      stdio: ["ignore", "pipe", "inherit"],
+      detached,
+    });
     const events: any[] = [];
     let buf = "";
     child.stdout!.on("data", (d: Buffer) => {
@@ -345,7 +424,14 @@ describe("C3 one writer per stream", () => {
       }
       return undefined;
     };
-    return { child, events, until, exited, kill, acked: () => events.filter((e) => e.event === "acked") };
+    return {
+      child,
+      events,
+      until,
+      exited,
+      kill,
+      acked: () => events.filter((e) => e.event === "acked"),
+    };
   };
   const helperOf = (pid: number) => {
     const out = spawnSync("pgrep", ["-P", String(pid), "perl"], { encoding: "utf8" }).stdout.trim();
@@ -355,7 +441,9 @@ describe("C3 one writer per stream", () => {
   const lostAcked = async (dir: string, acked: readonly { tag: string; lsn: number }[]) => {
     const opened = await HostLog.open(dir, { minFreeBytes: 0 });
     const present = new Set(
-      opened.frames.filter((f) => f.kind === FrameKind.COMMIT_GROUP).map((f) => `${JSON.parse(f.payload.toString()).s}:${f.lsn}`),
+      opened.frames
+        .filter((f) => f.kind === FrameKind.COMMIT_GROUP)
+        .map((f) => `${JSON.parse(f.payload.toString()).s}:${f.lsn}`),
     );
     await opened.log.close();
     return acked.filter((a) => !present.has(`${a.tag}:${a.lsn}`));
@@ -389,7 +477,9 @@ describe("C3 one writer per stream", () => {
     // The lock lives on the holder's own descriptor: the helper's death does not free it.
     expect(await contend(dir)).toBe(3);
     const b = holder(dir, "hold", "B");
-    expect((await b.until((e) => e.event === "opened" || e.event === "refused"))?.event).toBe("refused");
+    expect((await b.until((e) => e.event === "opened" || e.event === "refused"))?.event).toBe(
+      "refused",
+    );
     const ackedA = a.acked();
     a.kill();
     await a.exited;
@@ -462,7 +552,10 @@ describe("Q72b answer snapshot: a reset between the probes of a multi-request re
 
   it("the Datalog executor refuses an answer computed on a replica that was reset and replayed past B", async () => {
     const replica = new MarkerReplica();
-    const { client, state } = rewindingClient(replica, (sparql) => !sparql.startsWith("SELECT ?brokerPosition"));
+    const { client, state } = rewindingClient(
+      replica,
+      (sparql) => !sparql.startsWith("SELECT ?brokerPosition"),
+    );
     const rt = await openRt(freshDir(), `fx:${randomUUID()}`, replica, {}, 2_000, client);
     try {
       const a = await rt.run(rt.triples.transact(ops("s:gap", 1, "g")));
@@ -470,7 +563,12 @@ describe("Q72b answer snapshot: a reset between the probes of a multi-request re
       const incarnationBefore = replica.incarnation;
       state.target = a.position;
       state.armed = true;
-      const exit = await rt.exit(rt.executor.execute(q("s:gap"), { validAt: Date.now(), recordedPosition: a.position } as any));
+      const exit = await rt.exit(
+        rt.executor.execute(q("s:gap"), {
+          validAt: Date.now(),
+          recordedPosition: a.position,
+        } as any),
+      );
       state.armed = false;
       expect(state.rewinds).toBeGreaterThanOrEqual(1);
       // Both probes saw the marker at or above B; only the incarnation shows the reset.
@@ -481,7 +579,12 @@ describe("Q72b answer snapshot: a reset between the probes of a multi-request re
       expect(exit.error.reason).toBe("basis-not-reached");
       expect(exit.error.message).toMatch(/reset during the read/);
       // Without a reset the same read answers.
-      const again = await rt.exit(rt.executor.execute(q("s:gap"), { validAt: Date.now(), recordedPosition: a.position } as any));
+      const again = await rt.exit(
+        rt.executor.execute(q("s:gap"), {
+          validAt: Date.now(),
+          recordedPosition: a.position,
+        } as any),
+      );
       expect(again.ok).toBe(true);
     } finally {
       state.armed = false;
@@ -490,21 +593,48 @@ describe("Q72b answer snapshot: a reset between the probes of a multi-request re
     }
   });
 
+  it("Q67c refuses a changed marker even when both probes reached the basis", async () => {
+    const replica = new MarkerReplica();
+    const rt = await openRt(freshDir(), `fx:${randomUUID()}`, replica, { autoApply: false });
+    try {
+      replica.position = 3071;
+      const snapshot = await rt.broker.openSnapshot(2048, 250, "datalog");
+      replica.position = 4095;
+      await expect(rt.broker.verifySnapshot(snapshot)).rejects.toBeInstanceOf(BasisNotAvailable);
+    } finally {
+      await rt.dispose();
+      await rt.broker.close();
+    }
+  });
+
   it("native SPARQL with awaitBasisMs refuses an answer computed across a reset and replay", async () => {
     const replica = new MarkerReplica();
     const rt = await openRt(freshDir(), `fx:${randomUUID()}`, replica);
-    const { client, state } = rewindingClient(replica, (sparql) => !sparql.startsWith("SELECT ?position") && !sparql.startsWith("SELECT ?brokerPosition"));
+    const { client, state } = rewindingClient(
+      replica,
+      (sparql) =>
+        !sparql.startsWith("SELECT ?position") && !sparql.startsWith("SELECT ?brokerPosition"),
+    );
     try {
       const a = await rt.run(rt.triples.transact(ops("s:ngap", 1, "g")));
       expect(await rt.broker.drain(5_000)).toBe(true);
-      const native = makeQleverNativeQueries(client, DatabaseScope.test(`fx-native-${randomUUID()}`), { awaitBasisMs: BROKER_NATIVE_AWAIT_BASIS_MS });
+      const native = makeQleverNativeQueries(
+        client,
+        DatabaseScope.test(`fx-native-${randomUUID()}`),
+        { awaitBasisMs: BROKER_NATIVE_AWAIT_BASIS_MS },
+      );
       const contract = { name: "fx-native-gap", parameters: TypeExpr.any, row: TypeExpr.any };
       const run = () =>
         Effect.runPromise(
-          Effect.match(native.select(contract, {}, () => "SELECT ?s WHERE { ?s ?p ?o }", { basis: { recordedPosition: a.position } } as any), {
-            onFailure: (e) => e as any,
-            onSuccess: () => "ok",
-          }),
+          Effect.match(
+            native.select(contract, {}, () => "SELECT ?s WHERE { ?s ?p ?o }", {
+              basis: { recordedPosition: a.position },
+            } as any),
+            {
+              onFailure: (e) => e as any,
+              onSuccess: () => "ok",
+            },
+          ),
         );
       state.target = a.position;
       state.armed = true;
@@ -528,15 +658,33 @@ describe("Q72b answer snapshot: a reset between the probes of a multi-request re
     try {
       const a = await rt.run(rt.triples.transact(ops("s:dep", 1, "d")));
       const n = replica.queries.length;
-      const pending = rt.exit(rt.adapter.dependencyState([":x/f0"], { validAt: Date.now(), recordedPosition: a.position }));
+      const pending = rt.exit(
+        rt.adapter.dependencyState([":x/f0"], {
+          validAt: Date.now(),
+          recordedPosition: a.position,
+        }),
+      );
       await sleep(150);
       rt.broker.startApplier();
       const dep = await pending;
       expect(dep.ok).toBe(true);
-      const asked = replica.queries.slice(n).filter((sparql) => sparql.startsWith("SELECT ?sourcePosition ?nextBoundary ?brokerPosition"));
+      const asked = replica.queries
+        .slice(n)
+        .filter((sparql) =>
+          sparql.startsWith("SELECT ?sourcePosition ?nextBoundary ?brokerPosition"),
+        );
       expect(asked.length).toBe(1); // the broker knew the replica was behind: it waited, then asked once
       const m = replica.queries.length;
-      expect((await rt.exit(rt.adapter.dependencyState([":x/f0"], { validAt: Date.now(), recordedPosition: a.position }))).ok).toBe(true);
+      expect(
+        (
+          await rt.exit(
+            rt.adapter.dependencyState([":x/f0"], {
+              validAt: Date.now(),
+              recordedPosition: a.position,
+            }),
+          )
+        ).ok,
+      ).toBe(true);
       expect(replica.queries.slice(m)).toHaveLength(1); // at B: the answer request alone, no marker probes
     } finally {
       await rt.dispose();
@@ -546,10 +694,33 @@ describe("Q72b answer snapshot: a reset between the probes of a multi-request re
 });
 
 describe("Q72e one in-flight marker probe per replica (V-P2Q N5)", () => {
+  it("a paced timer joins an immediate probe that started while it waited", async () => {
+    const replica = new MarkerReplica();
+    const rt = await openRt(freshDir(), `fx:${randomUUID()}`, replica, { autoApply: false });
+    try {
+      await rt.broker.probeReplica("datalog");
+      replica.markerDelayMs = 100;
+      replica.maxMarkerInFlight = 0;
+      const paced = rt.broker.probeReplica("datalog", performance.now(), true);
+      const immediate = rt.broker.probeReplica("datalog");
+      await Promise.all([paced, immediate]);
+      expect(replica.maxMarkerInFlight).toBe(1);
+    } finally {
+      await rt.dispose();
+      await rt.broker.close();
+    }
+  });
+
   it("16 gate waiters during an unrepaired regression share probes", async () => {
     const replica = new MarkerReplica();
     replica.markerDelayMs = 5;
-    const rt = await openRt(freshDir(), `fx:${randomUUID()}`, replica, { idleProbeMs: 60_000 }, 1_000);
+    const rt = await openRt(
+      freshDir(),
+      `fx:${randomUUID()}`,
+      replica,
+      { idleProbeMs: 60_000 },
+      1_000,
+    );
     try {
       const a = await rt.run(rt.triples.transact(ops("s:probe", 1, "p")));
       expect(await rt.broker.drain(5_000)).toBe(true);
@@ -559,7 +730,12 @@ describe("Q72e one in-flight marker probe per replica (V-P2Q N5)", () => {
       replica.maxMarkerInFlight = 0;
       const t0 = performance.now();
       const outcomes = await Promise.all(
-        Array.from({ length: 16 }, () => rt.adapter.resolveQueryBasis(a.position).then(() => "answered", (e: any) => e?.reason)),
+        Array.from({ length: 16 }, () =>
+          rt.adapter.resolveQueryBasis(a.position).then(
+            () => "answered",
+            (e: any) => e?.reason,
+          ),
+        ),
       );
       const seconds = (performance.now() - t0) / 1000;
       const probes = replica.markerReads - reads;
@@ -580,7 +756,8 @@ describe("M1 header damage and a WATERMARK above the valid end", () => {
     const dir = freshDir();
     const scope = `fx:${randomUUID()}`;
     const rt = await openRt(dir, scope, undefined);
-    for (let i = 0; i < 3; i++) await rt.run(rt.triples.transact(ops(`s:${i}`, 3, `h${i}`), { commandId: `h${i}` }));
+    for (let i = 0; i < 3; i++)
+      await rt.run(rt.triples.transact(ops(`s:${i}`, 3, `h${i}`), { commandId: `h${i}` }));
     await rt.dispose();
     await rt.broker.abandon();
     return { dir, scope, segment: path.join(dir, "segment-000001.log") };
@@ -589,7 +766,14 @@ describe("M1 header damage and a WATERMARK above the valid end", () => {
     const { dir, scope, segment } = await build();
     const bytes = fs.readFileSync(segment);
     let refused = 0;
-    for (const [i, bit] of [[8, 0], [12, 3], [16, 1], [24, 0], [30, 4], [31, 7]] as const) {
+    for (const [i, bit] of [
+      [8, 0],
+      [12, 3],
+      [16, 1],
+      [24, 0],
+      [30, 4],
+      [31, 7],
+    ] as const) {
       const flipped = Buffer.from(bytes);
       flipped[i]! ^= 1 << bit;
       fs.writeFileSync(segment, flipped);
@@ -611,9 +795,13 @@ describe("M1 header damage and a WATERMARK above the valid end", () => {
     const flipped = Buffer.from(bytes);
     flipped[bytes.length - 20]! ^= 1; // inside the last frame (the EPOCH_BEGIN is not last: the commit is)
     fs.writeFileSync(segment, flipped);
-    await expect(HostBroker.open({ dir, scopeKey: scope, minFreeBytes: 0 })).rejects.toThrow(/WATERMARK names LSN/);
+    await expect(HostBroker.open({ dir, scopeKey: scope, minFreeBytes: 0 })).rejects.toThrow(
+      /WATERMARK names LSN/,
+    );
     fs.writeFileSync(segment, bytes.subarray(0, bytes.length - 7)); // cut instead of flipped
-    await expect(HostBroker.open({ dir, scopeKey: scope, minFreeBytes: 0 })).rejects.toThrow(/WATERMARK names LSN/);
+    await expect(HostBroker.open({ dir, scopeKey: scope, minFreeBytes: 0 })).rejects.toThrow(
+      /WATERMARK names LSN/,
+    );
     expect(fs.readFileSync(segment).length).toBe(bytes.length - 7);
     expect(mark.lsn).toBeGreaterThan(1);
     fs.writeFileSync(segment, bytes);
@@ -637,7 +825,11 @@ describe("M2 a basis beyond the resolved prefix", () => {
       for (let i = 0; i < 3; i++) await rt.run(rt.triples.transact(ops("s:m2", 1, `b${i}`)));
       const answered = await pending;
       expect(answered.ok).toBe(true);
-      const wanted = rt.broker.fromLog(0, { entities: ["s:m2"] }, (row) => row.recorded_position <= future);
+      const wanted = rt.broker.fromLog(
+        0,
+        { entities: ["s:m2"] },
+        (row) => row.recorded_position <= future,
+      );
       expect(ids(answered.value)).toEqual(ids(wanted));
       expect(a.position).toBeLessThan(future);
     } finally {
@@ -663,7 +855,12 @@ describe("M3 an unreachable replica", () => {
       expect(after).toHaveLength(2);
       const datalog = await rt.exit(rt.executor.execute(q("s:m3")));
       expect(datalog.error).toBeInstanceOf(ReplicaUnavailable);
-      const dep = await rt.exit(rt.adapter.dependencyState([":x/f0"], { validAt: Date.now(), recordedPosition: a.position }));
+      const dep = await rt.exit(
+        rt.adapter.dependencyState([":x/f0"], {
+          validAt: Date.now(),
+          recordedPosition: a.position,
+        }),
+      );
       expect(dep.error).toBeInstanceOf(ReplicaUnavailable);
     } finally {
       replica.down = false;
@@ -672,14 +869,46 @@ describe("M3 an unreachable replica", () => {
     }
   });
 
+  it("environment-selected broker mode gates a separately constructed native facade", async () => {
+    const saved = process.env["QLEVER_COMMIT_PATH"];
+    try {
+      process.env["QLEVER_COMMIT_PATH"] = "broker";
+      const replica = new MarkerReplica();
+      replica.down = true;
+      const native = makeQleverNativeQueries(replica, DatabaseScope.test(`fx-env-${randomUUID()}`));
+      const error = await Effect.runPromise(
+        Effect.match(
+          native.select(
+            { name: "fx-env", parameters: TypeExpr.any, row: TypeExpr.any },
+            {},
+            () => "SELECT ?s WHERE { ?s ?p ?o }",
+          ),
+          { onFailure: (e) => e, onSuccess: () => "ok" },
+        ),
+      );
+      expect(error).toBeInstanceOf(ReplicaUnavailable);
+      expect((error as ReplicaUnavailable).reason).toBe("replica-unreachable");
+    } finally {
+      if (saved === undefined) delete process.env["QLEVER_COMMIT_PATH"];
+      else process.env["QLEVER_COMMIT_PATH"] = saved;
+    }
+  });
+
   it("native SPARQL in broker mode: a token above the replica waits then BasisNotAvailable; down is ReplicaUnavailable", async () => {
     const replica = new MarkerReplica();
     replica.position = 3071;
     const scope = DatabaseScope.test(`fx-native-${randomUUID()}`);
-    const native = makeQleverNativeQueries(replica, scope, { awaitBasisMs: BROKER_NATIVE_AWAIT_BASIS_MS });
+    const native = makeQleverNativeQueries(replica, scope, {
+      awaitBasisMs: BROKER_NATIVE_AWAIT_BASIS_MS,
+    });
     const contract = { name: "fx-native", parameters: TypeExpr.any, row: TypeExpr.any };
     const run = (options: any) =>
-      Effect.runPromise(Effect.match(native.select(contract, {}, () => "SELECT ?s WHERE { ?s ?p ?o }", options), { onFailure: (e) => e, onSuccess: () => "ok" }));
+      Effect.runPromise(
+        Effect.match(
+          native.select(contract, {}, () => "SELECT ?s WHERE { ?s ?p ?o }", options),
+          { onFailure: (e) => e, onSuccess: () => "ok" },
+        ),
+      );
     const t0 = performance.now();
     const above = await run({ basis: { recordedPosition: 5000 } });
     expect(above).toBeInstanceOf(BasisNotAvailable);
@@ -694,20 +923,48 @@ describe("M3 outage answers against an independent replay of the log", () => {
   const oracle = (segment: string, b: number, subject: string) => {
     const buf = fs.readFileSync(segment);
     const latest = new Map<string, TripleRow>();
-    const COLS = ["id", "entity_id", "attribute", "value_type", "value_string", "value_number", "value_boolean", "value_datetime", "value_json", "recorded_at", "recorded_position", "valid_from", "valid_to", "created_by", "retracted_at", "retracted_position", "retract_tx_id", "entity_type", "schema_version", "tx_id"];
+    const COLS = [
+      "id",
+      "entity_id",
+      "attribute",
+      "value_type",
+      "value_string",
+      "value_number",
+      "value_boolean",
+      "value_datetime",
+      "value_json",
+      "recorded_at",
+      "recorded_position",
+      "valid_from",
+      "valid_to",
+      "created_by",
+      "retracted_at",
+      "retracted_position",
+      "retract_tx_id",
+      "entity_type",
+      "schema_version",
+      "tx_id",
+    ];
     for (let off = 32; off + 32 <= buf.length; ) {
       const len = buf.readUInt32LE(off + 4);
       const lsn = Number(buf.readBigUInt64LE(off + 8));
       if (buf.readUInt16LE(off + 24) === 1 && lsn <= lsnOf(b))
         for (const m of JSON.parse(buf.subarray(off + 32, off + 32 + len).toString()).m)
           for (const cells of m.r) {
-            const row = Object.fromEntries(COLS.map((c, i) => [c, cells[i] ?? null])) as unknown as TripleRow;
+            const row = Object.fromEntries(
+              COLS.map((c, i) => [c, cells[i] ?? null]),
+            ) as unknown as TripleRow;
             latest.set(row.id, row);
           }
       off += 32 + len + 4;
     }
     return [...latest.values()]
-      .filter((r) => r.entity_id === subject && r.recorded_position <= b && !(r.retracted_position !== null && r.retracted_position <= b))
+      .filter(
+        (r) =>
+          r.entity_id === subject &&
+          r.recorded_position <= b &&
+          !(r.retracted_position !== null && r.retracted_position <= b),
+      )
       .map((r) => r.id)
       .sort();
   };
@@ -715,7 +972,7 @@ describe("M3 outage answers against an independent replay of the log", () => {
     const replica = new MarkerReplica();
     const rt = await openRt(freshDir(), `fx:${randomUUID()}`, replica, { autoApply: false });
     let seed = 7;
-    const r = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+    const r = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
     const subjects = ["s:o0", "s:o1", "s:o2", "s:o3"];
     const positions: number[] = [];
     const live: string[] = [];
@@ -726,8 +983,14 @@ describe("M3 outage answers against an independent replay of the log", () => {
         replica.down = r() < 0.5;
         if (r() < 0.45) {
           const s = subjects[Math.floor(r() * subjects.length)]!;
-          const retract = live.length && r() < 0.4 ? live.splice(Math.floor(r() * live.length), 1)[0] : undefined;
-          const res = await rt.run(rt.triples.transact([...(retract ? [{ op: "retract" as const, id: retract }] : []), ...ops(s, 1 + Math.floor(r() * 2), `o${step}`)]));
+          const retract =
+            live.length && r() < 0.4 ? live.splice(Math.floor(r() * live.length), 1)[0] : undefined;
+          const res = await rt.run(
+            rt.triples.transact([
+              ...(retract ? [{ op: "retract" as const, id: retract }] : []),
+              ...ops(s, 1 + Math.floor(r() * 2), `o${step}`),
+            ]),
+          );
           positions.push(res.position);
           for (const t of res.triples) live.push(t.id);
         } else if (positions.length) {
@@ -736,7 +999,8 @@ describe("M3 outage answers against an independent replay of the log", () => {
           replica.down = true;
           const got = ids(await rt.run(rt.adapter.getByEntity(s, at(b))));
           reads++;
-          if (JSON.stringify(got) !== JSON.stringify(oracle(rt.broker.segmentPath, b, s))) mismatches++;
+          if (JSON.stringify(got) !== JSON.stringify(oracle(rt.broker.segmentPath, b, s)))
+            mismatches++;
         }
       }
       expect(reads).toBeGreaterThan(80);
@@ -761,7 +1025,10 @@ describe("m1 an exception after the fsync", () => {
     const escaped: unknown[] = [];
     const listener = (reason: unknown) => escaped.push(reason);
     process.on("unhandledRejection", listener);
-    const result = await Promise.race([rt.exit(rt.triples.transact(ops("s:w", 1, "x"), { commandId: "w1" })), sleep(3_000).then(() => "hang")]);
+    const result = await Promise.race([
+      rt.exit(rt.triples.transact(ops("s:w", 1, "x"), { commandId: "w1" })),
+      sleep(3_000).then(() => "hang"),
+    ]);
     await sleep(50);
     process.off("unhandledRejection", listener);
     expect(result).not.toBe("hang");
@@ -773,7 +1040,9 @@ describe("m1 an exception after the fsync", () => {
     await rt.broker.abandon();
     const reopened = await openRt(dir, scope, undefined);
     try {
-      const resend = await reopened.exit(reopened.triples.transact(ops("s:w", 1, "x"), { commandId: "w1" }));
+      const resend = await reopened.exit(
+        reopened.triples.transact(ops("s:w", 1, "x"), { commandId: "w1" }),
+      );
       expect(resend.error?._tag).toBe("CommandAlreadyCommittedError");
     } finally {
       await reopened.dispose();
@@ -789,7 +1058,9 @@ describe("A0 M2 guard (pure guard behind A0's own path)", () => {
     const client: QleverClient = {
       query: async (sparql: string) => {
         calls.push(sparql.startsWith("SELECT ?position") ? "position" : "rows");
-        return sparql.startsWith("SELECT ?position") ? [{ position: { type: "literal", value: String(published) } }] : [];
+        return sparql.startsWith("SELECT ?position")
+          ? [{ position: { type: "literal", value: String(published) } }]
+          : [];
       },
       update: async () => ({}),
       command: async () => ({}),

@@ -26,7 +26,10 @@ const perlChildOf = (pid: number): number | undefined => {
   }
 };
 const holder = (dir: string, mode: string, tag: string, detached = false) => {
-  const child = spawn(TSX, [SCRIPT, dir, mode, tag], { stdio: ["ignore", "pipe", "pipe"], detached });
+  const child = spawn(TSX, [SCRIPT, dir, mode, tag], {
+    stdio: ["ignore", "pipe", "pipe"],
+    detached,
+  });
   const events: any[] = [];
   let buf = "";
   child.stdout!.on("data", (d: Buffer) => {
@@ -78,9 +81,16 @@ const recover = async (dir: string, acked: { tag: string; lsn: number }[]) => {
     outcome = `refused:${String(error).slice(0, 160)}`;
   }
   const frames = readSegment(path.join(dir, "segment-000001.log"));
-  const present = new Set(frames.filter((f) => f.kind === 1).map((f) => `${JSON.parse(f.payload.toString()).s}:${f.lsn}`));
+  const present = new Set(
+    frames.filter((f) => f.kind === 1).map((f) => `${JSON.parse(f.payload.toString()).s}:${f.lsn}`),
+  );
   const lost = acked.filter((a) => !present.has(`${a.tag}:${a.lsn}`));
-  return { outcome, lost: lost.length, lostSample: lost.slice(0, 5), broken: fs.readdirSync(dir).filter((f) => f.startsWith("broken-")) };
+  return {
+    outcome,
+    lost: lost.length,
+    lostSample: lost.slice(0, 5),
+    broken: fs.readdirSync(dir).filter((f) => f.startsWith("broken-")),
+  };
 };
 
 describe("kernel flock across processes", () => {
@@ -92,13 +102,19 @@ describe("kernel flock across processes", () => {
     await a.until((e) => e.event === "acked");
     const perl = perlChildOf(opened.pid)!;
     const contender = holder(dir, "hold", "X");
-    const refusedWhileAlive = await contender.until((e) => e.event === "refused" || e.event === "opened");
+    const refusedWhileAlive = await contender.until(
+      (e) => e.event === "refused" || e.event === "opened",
+    );
     killQuiet(opened.pid);
     const perlGoneMs = await waitGone(perl);
     const b = holder(dir, "hold", "B");
     const reopened = await b.until((e) => e.event === "opened" || e.event === "refused");
     killQuiet(reopened?.pid ?? b.child.pid!);
-    writeJson("check1-lock-sigkill.json", { contenderWhileHolderAlive: refusedWhileAlive?.event, perlGoneMs, reopenedAfterKill: reopened?.event });
+    writeJson("check1-lock-sigkill.json", {
+      contenderWhileHolderAlive: refusedWhileAlive?.event,
+      perlGoneMs,
+      reopenedAfterKill: reopened?.event,
+    });
     expect(refusedWhileAlive?.event).toBe("refused");
     expect(perlGoneMs).toBeGreaterThanOrEqual(0);
     expect(reopened?.event).toBe("opened");
@@ -135,9 +151,18 @@ describe("kernel flock across processes", () => {
     await sleep(200);
     const acked = [...a.acked(), ...b.acked()];
     const rec = await recover(dir, acked);
-    const record = { secondProcess: second?.event, holderNoticed: aAppendFailed, ackedA: a.acked().length, ackedB: b.acked().length, recovery: rec };
+    const record = {
+      secondProcess: second?.event,
+      holderNoticed: aAppendFailed,
+      ackedA: a.acked().length,
+      ackedB: b.acked().length,
+      recovery: rec,
+    };
     writeJson("check1-lock-perl-dies.json", record);
-    expect(record).toBeDefined(); // recorded; the verdict reads the record
+    expect(record.secondProcess).toBe("refused");
+    expect(record.holderNoticed).toBe(true);
+    expect(record.ackedB).toBe(0);
+    expect(record.recovery.lost).toBe(0);
   }, 60_000);
 
   it("Ctrl-C to the process group of a holder that drains on SIGINT: the lock goes before the writes stop", async () => {
@@ -151,14 +176,23 @@ describe("kernel flock across processes", () => {
     const b = holder(dir, "hold", "B");
     const second = await b.until((e) => e.event === "opened" || e.event === "refused", 1_800);
     await sleep(1_000);
-    const ackedAfterSigint = a.acked().filter((e) => true).length;
+    const ackedAfterSigint = a.acked().length;
     await waitGone(opened.pid, 6_000);
     if (second?.pid) killQuiet(second.pid);
     if (second?.pid) await waitGone(second.pid);
     await sleep(200);
     const rec = await recover(dir, [...a.acked(), ...b.acked()]);
-    const record = { perlGoneMs, secondProcess: second?.event, ackedA: ackedAfterSigint, ackedB: b.acked().length, recovery: rec };
+    const record = {
+      perlGoneMs,
+      secondProcess: second?.event,
+      ackedA: ackedAfterSigint,
+      ackedB: b.acked().length,
+      recovery: rec,
+    };
     writeJson("check1-lock-sigint.json", record);
-    expect(record).toBeDefined();
+    expect(record.perlGoneMs).toBe(-1);
+    expect(record.secondProcess).toBe("refused");
+    expect(record.ackedB).toBe(0);
+    expect(record.recovery.lost).toBe(0);
   }, 60_000);
 });

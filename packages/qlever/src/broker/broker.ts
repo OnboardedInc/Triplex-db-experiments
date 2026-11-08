@@ -30,7 +30,13 @@ import {
   type FrameMember,
   type MemberClaim,
 } from "./frames.js";
-import { HostLog, readFramesFrom, segmentStart, type EpochBeginPayload, type LogFrame } from "./log.js";
+import {
+  HostLog,
+  readFramesFrom,
+  segmentStart,
+  type EpochBeginPayload,
+  type LogFrame,
+} from "./log.js";
 import { ORDINALS, lastPositionOf, lsnOf, packPosition } from "./position.js";
 import { buildFence, buildPublication, markerQuery, type ReplicaMarker } from "./sparql.js";
 import { BasisNotAvailable, ReplicaUnavailable, type BasisSurface } from "./errors.js";
@@ -53,9 +59,8 @@ export interface BrokerTransaction {
 /**
  * What a multi-request read relied on (RULINGS Q67c, Q72b): the basis, the replica marker its first probe saw,
  * and the incarnation this broker had last written. `verifySnapshot` accepts the answer only if, in a probe sent
- * after the last answer request returned, the replica has the same incarnation and a marker still at or above
- * the basis, and this broker has not fenced since. Publications during the read only add rows above the basis,
- * which the read filters out, so the marker may advance; a reset and replay always changes the incarnation.
+ * after the last answer request returned, the replica has the same incarnation and marker, and this broker
+ * has not fenced since. Q67c conservatively refuses changed markers, including forward publications.
  */
 export interface ReplicaSnapshot {
   readonly basis: number;
@@ -112,8 +117,19 @@ export type BrokerEvent =
     }
   | { readonly type: "apply-error"; readonly error: string; readonly at: number }
   | { readonly type: "rebuild-start"; readonly deltaTotal: number; readonly at: number }
-  | { readonly type: "rebuild-end"; readonly ms: number; readonly ok: boolean; readonly error?: string; readonly at: number }
-  | { readonly type: "replica-regressed"; readonly from: number; readonly to: number; readonly at: number }
+  | {
+      readonly type: "rebuild-end";
+      readonly ms: number;
+      readonly ok: boolean;
+      readonly error?: string;
+      readonly at: number;
+    }
+  | {
+      readonly type: "replica-regressed";
+      readonly from: number;
+      readonly to: number;
+      readonly at: number;
+    }
   | { readonly type: "fenced"; readonly detail: string; readonly at: number };
 
 export interface HostBrokerOptions {
@@ -164,19 +180,23 @@ interface Receipt {
   readonly positions: readonly number[];
 }
 
-const isJournalRow = (row: TripleRow) => row.entity_type === "_Transaction" && row.entity_id === row.tx_id;
+const isJournalRow = (row: TripleRow) =>
+  row.entity_type === "_Transaction" && row.entity_id === row.tx_id;
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 /** A fresh replica incarnation (Q72b): the epoch for operators, then a random id, so no two fences share one. */
 const newIncarnation = (epoch: number) => `${epoch}.${randomUUID()}`;
 /** Q72e: the least gap between two paced marker probes of one replica. */
 const PROBE_GAP_MS = 25;
 const sameMarker = (a: ReplicaMarker, b: ReplicaMarker) =>
-  a.position === b.position && a.epoch === b.epoch && (a.incarnation ?? "") === (b.incarnation ?? "");
+  a.position === b.position &&
+  a.epoch === b.epoch &&
+  (a.incarnation ?? "") === (b.incarnation ?? "");
 
 /** Delta counts from a QLever 0.6.0 update response (`operations[0]["delta-triples"]`). */
 const deltaOf = (response: unknown) => {
-  const op = (response as { operations?: { "delta-triples"?: Record<string, Record<string, number>> }[] })
-    ?.operations?.[0]?.["delta-triples"];
+  const op = (
+    response as { operations?: { "delta-triples"?: Record<string, Record<string, number>> }[] }
+  )?.operations?.[0]?.["delta-triples"];
   return {
     inserted: op?.["operation"]?.["inserted"],
     deleted: op?.["operation"]?.["deleted"],
@@ -223,7 +243,9 @@ export class HostBroker {
   // Q72b: the incarnation this broker last wrote, set before the fence that writes it is sent.
   private incarnation = "";
   // Q72e: one in-flight marker probe per replica, shared by every reader that may use it.
-  private probeInFlight: { readonly sentAt: number; readonly promise: Promise<ReplicaMarker> } | undefined;
+  private probeInFlight:
+    | { readonly sentAt: number; readonly promise: Promise<ReplicaMarker> }
+    | undefined;
   private probeNext: Promise<ReplicaMarker> | undefined;
   private pacedNext: Promise<ReplicaMarker> | undefined;
   private lastProbeSentAt = -Infinity;
@@ -240,7 +262,15 @@ export class HostBroker {
   private readonly queue: Pending[] = [];
   private deciding = false;
   private failed: Error | undefined;
-  private counters = { frames: 0, commits: 0, conflicts: 0, replays: 0, applyErrors: 0, rebuilds: 0, replicaRegressions: 0 };
+  private counters = {
+    frames: 0,
+    commits: 0,
+    conflicts: 0,
+    replays: 0,
+    applyErrors: 0,
+    rebuilds: 0,
+    replicaRegressions: 0,
+  };
   private lastDeltaTotal: number | undefined;
 
   private constructor(
@@ -252,7 +282,9 @@ export class HostBroker {
   static async open(options: HostBrokerOptions): Promise<HostBroker> {
     const opened = await HostLog.open(options.dir, {
       ...(options.minFreeBytes === undefined ? {} : { minFreeBytes: options.minFreeBytes }),
-      ...(options.requireFullFsync === undefined ? {} : { requireFullFsync: options.requireFullFsync }),
+      ...(options.requireFullFsync === undefined
+        ? {}
+        : { requireFullFsync: options.requireFullFsync }),
       ...(options.takeover === undefined ? {} : { takeover: options.takeover }),
     });
     try {
@@ -291,16 +323,27 @@ export class HostBroker {
       // The startup replay below publishes on top of whatever the replica holds, so it is a replay too: a new
       // incarnation first (Q72b).
       broker.incarnation = newIncarnation(opened.log.epoch);
-      await options.replica.update(buildFence(options.scopeKey, marker, opened.log.epoch, broker.incarnation), {
-        timeoutMs: options.applyTimeoutMs ?? 120_000,
-      });
+      await options.replica.update(
+        buildFence(options.scopeKey, marker, opened.log.epoch, broker.incarnation),
+        {
+          timeoutMs: options.applyTimeoutMs ?? 120_000,
+        },
+      );
       const fenced = await broker.readReplicaMarker();
-      if (fenced.epoch !== opened.log.epoch || fenced.position !== marker.position || fenced.incarnation !== broker.incarnation)
+      if (
+        fenced.epoch !== opened.log.epoch ||
+        fenced.position !== marker.position ||
+        fenced.incarnation !== broker.incarnation
+      )
         throw new BrokerFailed(`Replica fence failed: marker ${JSON.stringify(fenced)}`);
       broker.replicaMarker = fenced;
       if (options.autoApply !== false) broker.startApplier();
     }
-    broker.log.publishWatermark({ epoch: broker.log.epoch, lsn: broker.durableLsn, position: broker.headPosition });
+    broker.log.publishWatermark({
+      epoch: broker.log.epoch,
+      lsn: broker.durableLsn,
+      position: broker.headPosition,
+    });
     return broker;
   }
 
@@ -321,7 +364,8 @@ export class HostBroker {
     for (const member of members) {
       const last = member.positions[member.positions.length - 1]!;
       this.operations.set(member.operationId, { lsn, epoch, positions: member.positions });
-      for (const claim of member.claims) this.claims.set(claim.commandId, { txId: claim.txId, position: last });
+      for (const claim of member.claims)
+        this.claims.set(claim.commandId, { txId: claim.txId, position: last });
       for (const subject of member.subjects) this.heads.set(subject, last);
       if (last > this.headPosition) this.headPosition = last;
     }
@@ -375,7 +419,11 @@ export class HostBroker {
       while (this.queue.length > 0 && !this.failed) await this.commitGroup();
     } catch (cause) {
       // pump() is called without await, so nothing may escape it as an unhandled rejection (V-P2Q m1).
-      this.fail(new BrokerFailed(`Broker decision loop failed; outcome of pending commands unknown: ${String(cause)}`));
+      this.fail(
+        new BrokerFailed(
+          `Broker decision loop failed; outcome of pending commands unknown: ${String(cause)}`,
+        ),
+      );
     } finally {
       this.deciding = false;
     }
@@ -391,7 +439,8 @@ export class HostBroker {
       operations: new Set<string>(),
       head: this.headPosition,
     };
-    const accepted: { pending: Pending; member: FrameMember; positions: Map<number, number> }[] = [];
+    const accepted: { pending: Pending; member: FrameMember; positions: Map<number, number> }[] =
+      [];
     // Conflicts are answered only after this group is durable, so the retry reads a head that already
     // includes the member it lost to (otherwise it would re-stage at the old head and conflict again).
     const conflicts: { pending: Pending; decision: BrokerDecision }[] = [];
@@ -404,7 +453,11 @@ export class HostBroker {
       if (ordinal + width > ORDINALS) {
         if (accepted.length === 0) {
           this.queue.splice(taken, 1);
-          pending.reject(new BrokerInvalidTransaction(`Transaction needs ${width} ordinals; the frame holds ${ORDINALS}`));
+          pending.reject(
+            new BrokerInvalidTransaction(
+              `Transaction needs ${width} ordinals; the frame holds ${ORDINALS}`,
+            ),
+          );
           continue;
         }
         break;
@@ -459,7 +512,11 @@ export class HostBroker {
     try {
       frame = await this.log.append(FrameKind.COMMIT_GROUP, payload);
     } catch (cause) {
-      this.fail(new BrokerFailed(`Broker log append failed; outcome of ${accepted.length} commands unknown: ${String(cause)}`));
+      this.fail(
+        new BrokerFailed(
+          `Broker log append failed; outcome of ${accepted.length} commands unknown: ${String(cause)}`,
+        ),
+      );
       for (const entry of accepted) entry.pending.reject(this.failed);
       for (const entry of conflicts) entry.pending.reject(this.failed);
       return;
@@ -480,18 +537,37 @@ export class HostBroker {
     } catch (cause) {
       // V-P2Q m1: the frame is durable but the publication step failed, so no ACK may be sent. Fail the broker
       // and answer outcome-unknown; a restart replays the frame and a resend returns the original receipt.
-      this.fail(new BrokerFailed(`Broker failed after the fsync of LSN ${frame.lsn}; outcome of ${accepted.length} commands unknown: ${String(cause)}`));
+      this.fail(
+        new BrokerFailed(
+          `Broker failed after the fsync of LSN ${frame.lsn}; outcome of ${accepted.length} commands unknown: ${String(cause)}`,
+        ),
+      );
       for (const entry of accepted) entry.pending.reject(this.failed);
       for (const entry of conflicts) entry.pending.reject(this.failed);
       return;
     }
     for (const entry of accepted)
-      entry.pending.resolve({ kind: "committed", lsn: frame.lsn, epoch, positions: entry.positions, ackAt, replayed: false });
+      entry.pending.resolve({
+        kind: "committed",
+        lsn: frame.lsn,
+        epoch,
+        positions: entry.positions,
+        ackAt,
+        replayed: false,
+      });
     answerConflicts();
     this.notifyDurable();
     this.wakeApplier?.();
     try {
-      this.options.onEvent?.({ type: "frame", lsn: frame.lsn, members: members.length, bytes: payload.length, appendMs: ackAt - t0, at: ackAt, watermarkAt });
+      this.options.onEvent?.({
+        type: "frame",
+        lsn: frame.lsn,
+        members: members.length,
+        bytes: payload.length,
+        appendMs: ackAt - t0,
+        at: ackAt,
+        watermarkAt,
+      });
     } catch {
       /* instrumentation never fails a commit */
     }
@@ -505,7 +581,8 @@ export class HostBroker {
     for (const claim of txn.claims)
       if (this.claims.has(claim.commandId) || staged.claims.has(claim.commandId))
         return { kind: "conflict", reason: "claim" };
-    if (txn.reads.scopeWide && staged.head > txn.sourceK) return { kind: "conflict", reason: "scope" };
+    if (txn.reads.scopeWide && staged.head > txn.sourceK)
+      return { kind: "conflict", reason: "scope" };
     const guarded = new Set(txn.reads.entities);
     for (const row of txn.rows) if (!isJournalRow(row)) guarded.add(row.entity_id);
     for (const entity of guarded) {
@@ -522,7 +599,9 @@ export class HostBroker {
     base: number,
   ): { member: FrameMember; positions: Map<number, number> } {
     const positions = new Map<number, number>();
-    txn.placeholders.forEach((placeholder, i) => positions.set(placeholder, packPosition(lsn, base + i)));
+    txn.placeholders.forEach((placeholder, i) =>
+      positions.set(placeholder, packPosition(lsn, base + i)),
+    );
     if (positions.size === 0) positions.set(Number.NaN, packPosition(lsn, base));
     const subjects = new Set<string>();
     const rows: TripleRow[] = [];
@@ -530,16 +609,21 @@ export class HostBroker {
     for (const row of txn.rows) {
       const fresh = txn.newIds.has(row.id);
       const recorded = positions.get(row.recorded_position);
-      const retracted = row.retracted_position === null ? undefined : positions.get(row.retracted_position);
+      const retracted =
+        row.retracted_position === null ? undefined : positions.get(row.retracted_position);
       if (fresh ? recorded === undefined : retracted === undefined)
-        throw new BrokerInvalidTransaction("Staged rows must carry positions from nextCommitPosition");
+        throw new BrokerInvalidTransaction(
+          "Staged rows must carry positions from nextCommitPosition",
+        );
       const positionFact =
         isJournalRow(row) &&
         row.attribute === TxAttributes.POSITION &&
         row.value_number !== null &&
         positions.has(row.value_number);
       if (!positionFact && row.value_number !== null && positions.has(row.value_number))
-        throw new BrokerInvalidTransaction("A placeholder commit position escaped into a fact value");
+        throw new BrokerInvalidTransaction(
+          "A placeholder commit position escaped into a fact value",
+        );
       const final: TripleRow = {
         ...row,
         ...(fresh ? { recorded_position: recorded! } : {}),
@@ -549,7 +633,8 @@ export class HostBroker {
       rows.push(final);
       if (!fresh) {
         const prior = txn.priors.get(row.id);
-        if (!prior) throw new BrokerInvalidTransaction(`Retraction of ${row.id} has no prior version`);
+        if (!prior)
+          throw new BrokerInvalidTransaction(`Retraction of ${row.id} has no prior version`);
         priors.push(prior);
       }
       if (!isJournalRow(row)) subjects.add(row.entity_id);
@@ -629,7 +714,8 @@ export class HostBroker {
     };
     if (selection.id !== undefined) take(selection.id);
     else if (selection.entities !== undefined)
-      for (const entity of selection.entities) for (const id of this.byEntity.get(entity) ?? []) take(id);
+      for (const entity of selection.entities)
+        for (const id of this.byEntity.get(entity) ?? []) take(id);
     else for (const id of this.versions.keys()) take(id);
     return out;
   }
@@ -707,7 +793,11 @@ export class HostBroker {
    * returned, or it could execute before that answer's snapshot); it joins the in-flight probe only if that
    * probe was sent at or after `notBefore`, and otherwise shares the one follow-up probe sent when it returns.
    */
-  async probeReplica(surface: BasisSurface, notBefore = -Infinity, paced = false): Promise<ReplicaMarker> {
+  async probeReplica(
+    surface: BasisSurface,
+    notBefore = -Infinity,
+    paced = false,
+  ): Promise<ReplicaMarker> {
     if (!this.options.replica) return { position: 0, epoch: 0, incarnation: "" };
     let marker: ReplicaMarker;
     try {
@@ -740,7 +830,9 @@ export class HostBroker {
         .then(() => {
           this.probeNext = undefined;
           const latest = this.probeInFlight;
-          return latest !== undefined && latest.sentAt >= after ? latest.promise : this.startProbe();
+          return latest !== undefined && latest.sentAt >= after
+            ? latest.promise
+            : this.startProbe();
         });
     }
     return this.probeNext;
@@ -759,7 +851,9 @@ export class HostBroker {
       const delay = Math.max(0, this.lastProbeSentAt + PROBE_GAP_MS - performance.now());
       this.pacedNext = sleep(delay).then(() => {
         this.pacedNext = undefined;
-        return this.startProbe();
+        // [EXP-P2Q] Why: an immediate read may start while this timer waits.
+        // Rejected: startProbe here (would overlap that read and replace its in-flight handle).
+        return this.sharedMarkerRead(notBefore);
       });
     }
     return this.pacedNext;
@@ -779,7 +873,11 @@ export class HostBroker {
    * Q72b: open the snapshot a multi-request read relies on. Waits (deadline-aware) for the replica's real marker
    * to reach `b`, then records that marker and this broker's incarnation. Pair with `verifySnapshot`.
    */
-  async openSnapshot(b: number, deadlineMs: number, surface: BasisSurface): Promise<ReplicaSnapshot> {
+  async openSnapshot(
+    b: number,
+    deadlineMs: number,
+    surface: BasisSurface,
+  ): Promise<ReplicaSnapshot> {
     const started = performance.now();
     const marker = await this.awaitReplica(b, deadlineMs, surface);
     // Read after the marker, so a fence that finished during the wait does not refuse a read that began after it.
@@ -793,14 +891,23 @@ export class HostBroker {
    */
   async verifySnapshot(snapshot: ReplicaSnapshot): Promise<void> {
     const after = await this.probeReplica(snapshot.surface, performance.now());
-    const reset = after.incarnation !== snapshot.marker.incarnation || this.incarnation !== snapshot.fencedIncarnation;
-    if (reset || after.position < snapshot.basis)
+    const reset =
+      after.incarnation !== snapshot.marker.incarnation ||
+      this.incarnation !== snapshot.fencedIncarnation;
+    // [EXP-P2Q] Why: Q67c requires an unchanged marker pair. Rejected: accepting forward
+    // movement (cannot certify that an intermediate answer used the same replica snapshot).
+    if (
+      reset ||
+      after.position !== snapshot.marker.position ||
+      after.epoch !== snapshot.marker.epoch ||
+      after.position < snapshot.basis
+    )
       throw new BasisNotAvailable({
         required: snapshot.basis,
         observed: after.position,
         replica: reset
           ? `the QLever replica (reset during the read: incarnation ${snapshot.marker.incarnation || "none"} became ${after.incarnation || "none"})`
-          : "the QLever replica (went backwards during the read)",
+          : "the QLever replica (went backwards or marker changed during the read)",
         surface: snapshot.surface,
         waitedMs: performance.now() - snapshot.started,
       });
@@ -821,12 +928,21 @@ export class HostBroker {
       if (real.position >= b) return real;
       const remaining = deadlineMs - (performance.now() - started);
       if (remaining <= 0)
-        throw new BasisNotAvailable({ required: b, observed: real.position, replica: this.replicaName, surface, waitedMs: performance.now() - started });
+        throw new BasisNotAvailable({
+          required: b,
+          observed: real.position,
+          replica: this.replicaName,
+          surface,
+          waitedMs: performance.now() - started,
+        });
       // Wake on the next publication. When the cached marker is already (wrongly) ahead, the probe above has
       // woken the applier to fence; re-check at the shared pace.
       notBefore = performance.now();
       paced = true;
-      if (this.replicaMarker.position < b && (await this.waitPublished(b, Math.min(remaining, 100)))) {
+      if (
+        this.replicaMarker.position < b &&
+        (await this.waitPublished(b, Math.min(remaining, 100)))
+      ) {
         notBefore = this.lastPublishedAt;
         paced = false;
       }
@@ -852,11 +968,14 @@ export class HostBroker {
       await new Promise<void>((resolve) => {
         const waiter = { position: b, resolve };
         this.durableWaiters.push(waiter);
-        setTimeout(() => {
-          const i = this.durableWaiters.indexOf(waiter);
-          if (i !== -1) this.durableWaiters.splice(i, 1);
-          resolve();
-        }, Math.min(remaining, 100));
+        setTimeout(
+          () => {
+            const i = this.durableWaiters.indexOf(waiter);
+            if (i !== -1) this.durableWaiters.splice(i, 1);
+            resolve();
+          },
+          Math.min(remaining, 100),
+        );
       });
     }
   }
@@ -864,7 +983,8 @@ export class HostBroker {
   private notifyDurable() {
     const covered = lastPositionOf(this.durableLsn);
     for (let i = this.durableWaiters.length - 1; i >= 0; i--)
-      if (this.durableWaiters[i]!.position <= covered) this.durableWaiters.splice(i, 1)[0]!.resolve();
+      if (this.durableWaiters[i]!.position <= covered)
+        this.durableWaiters.splice(i, 1)[0]!.resolve();
   }
 
   /** Resolve true once the cached replica marker reaches `position` (false on timeout); pacing only. */
@@ -888,7 +1008,10 @@ export class HostBroker {
    * that LSN, otherwise from the log on disk (after a replica regression the overlay may have evicted
    * frames the replica no longer has).
    */
-  private nextBatch(afterLsn: number, maxApply: number): { readonly lsn: number; readonly members: readonly FrameMember[] }[] {
+  private nextBatch(
+    afterLsn: number,
+    maxApply: number,
+  ): { readonly lsn: number; readonly members: readonly FrameMember[] }[] {
     const batch: { lsn: number; members: readonly FrameMember[] }[] = [];
     let commands = 0;
     const take = (lsn: number, members: readonly FrameMember[]) => {
@@ -898,7 +1021,8 @@ export class HostBroker {
       return true;
     };
     if (this.evictedThroughLsn <= afterLsn) {
-      for (const frame of this.overlayFrames) if (frame.lsn > afterLsn && !take(frame.lsn, frame.members)) break;
+      for (const frame of this.overlayFrames)
+        if (frame.lsn > afterLsn && !take(frame.lsn, frame.members)) break;
       return batch;
     }
     const first = this.index.findIndex((entry) => entry.lsn > afterLsn);
@@ -914,7 +1038,11 @@ export class HostBroker {
       32 * 1024 * 1024,
     );
     for (const frame of frames)
-      if (frame.kind === FrameKind.COMMIT_GROUP && !take(frame.lsn, decodeCommitGroup(frame.payload).members)) break;
+      if (
+        frame.kind === FrameKind.COMMIT_GROUP &&
+        !take(frame.lsn, decodeCommitGroup(frame.payload).members)
+      )
+        break;
     return batch;
   }
 
@@ -939,8 +1067,16 @@ export class HostBroker {
    */
   private async onMarkerMismatch(marker: ReplicaMarker, expected: ReplicaMarker): Promise<boolean> {
     if (marker.epoch > this.log.epoch || lsnOf(marker.position) > this.durableLsn) {
-      this.options.onEvent?.({ type: "fenced", detail: `marker ${JSON.stringify(marker)} expected ${JSON.stringify(expected)}`, at: performance.now() });
-      this.fail(new BrokerFailed(`Replica guard failed at ${JSON.stringify(expected)}; another writer owns the replica`));
+      this.options.onEvent?.({
+        type: "fenced",
+        detail: `marker ${JSON.stringify(marker)} expected ${JSON.stringify(expected)}`,
+        at: performance.now(),
+      });
+      this.fail(
+        new BrokerFailed(
+          `Replica guard failed at ${JSON.stringify(expected)}; another writer owns the replica`,
+        ),
+      );
       return false;
     }
     // Q72b: a new incarnation before the fence is sent, so a snapshot opened before this point is refused even
@@ -948,9 +1084,12 @@ export class HostBroker {
     const incarnation = newIncarnation(this.log.epoch);
     this.incarnation = incarnation;
     try {
-      await this.options.replica!.update(buildFence(this.options.scopeKey, marker, this.log.epoch, incarnation), {
-        timeoutMs: this.options.applyTimeoutMs ?? 120_000,
-      });
+      await this.options.replica!.update(
+        buildFence(this.options.scopeKey, marker, this.log.epoch, incarnation),
+        {
+          timeoutMs: this.options.applyTimeoutMs ?? 120_000,
+        },
+      );
     } catch {
       return true; // unreachable again; the next pass re-reads the marker
     }
@@ -958,7 +1097,12 @@ export class HostBroker {
     // Lost a race (the replica moved again) or the fence did not land: the next pass re-reads the marker.
     if (fenced.epoch !== this.log.epoch || fenced.incarnation !== incarnation) return true;
     this.counters.replicaRegressions++;
-    this.options.onEvent?.({ type: "replica-regressed", from: this.replicaMarker.position, to: fenced.position, at: performance.now() });
+    this.options.onEvent?.({
+      type: "replica-regressed",
+      from: this.replicaMarker.position,
+      to: fenced.position,
+      at: performance.now(),
+    });
     this.replicaMarker = fenced;
     this.publishedLsn = lsnOf(fenced.position);
     return true;
@@ -995,20 +1139,35 @@ export class HostBroker {
       }
       const from = this.replicaMarker;
       // A publication keeps the incarnation and guards on it (Q72b).
-      const to: ReplicaMarker = { position: lastPositionOf(batch[batch.length - 1]!.lsn), epoch: this.log.epoch, incarnation: from.incarnation ?? "" };
-      const update = buildPublication(this.options.scopeKey, from, to, batch.flatMap((frame) => frame.members));
+      const to: ReplicaMarker = {
+        position: lastPositionOf(batch[batch.length - 1]!.lsn),
+        epoch: this.log.epoch,
+        incarnation: from.incarnation ?? "",
+      };
+      const update = buildPublication(
+        this.options.scopeKey,
+        from,
+        to,
+        batch.flatMap((frame) => frame.members),
+      );
       const t0 = performance.now();
       let resends = 0;
       let response: unknown;
       for (;;) {
         try {
-          response = await replica.update(update.sparql, { timeoutMs: this.options.applyTimeoutMs ?? 120_000 });
+          response = await replica.update(update.sparql, {
+            timeoutMs: this.options.applyTimeoutMs ?? 120_000,
+          });
           break;
         } catch (error) {
           // Re-sending the identical update is the first repair (R13 6.7 C2.6); the guard makes a second
           // application a no-op, which the marker check below detects.
           this.counters.applyErrors++;
-          this.options.onEvent?.({ type: "apply-error", error: String(error), at: performance.now() });
+          this.options.onEvent?.({
+            type: "apply-error",
+            error: String(error),
+            at: performance.now(),
+          });
           if (this.stopping) return;
           resends++;
           await sleep(Math.min(1_000, 25 * 2 ** Math.min(resends, 6)));
@@ -1016,7 +1175,11 @@ export class HostBroker {
       }
       const delta = deltaOf(response);
       // Unknown response shape or a re-send: never assume success without the marker.
-      if ((delta.inserted === 0 && delta.deleted === 0) || delta.inserted === undefined || resends > 0) {
+      if (
+        (delta.inserted === 0 && delta.deleted === 0) ||
+        delta.inserted === undefined ||
+        resends > 0
+      ) {
         // Zero change counts: either this update already applied (a re-send after a lost response) or the
         // guard failed because another epoch owns the replica. The marker decides (R13 6.5 step 8).
         const marker = await this.replicaMarkerWithRetry();
@@ -1030,7 +1193,8 @@ export class HostBroker {
       this.replicaMarker = to;
       this.publishedLsn = batch[batch.length - 1]!.lsn;
       for (const frame of this.overlayFrames)
-        if (frame.lsn <= this.publishedLsn && frame.publishedAt === undefined) frame.publishedAt = at;
+        if (frame.lsn <= this.publishedLsn && frame.publishedAt === undefined)
+          frame.publishedAt = at;
       if (delta.total !== undefined) this.lastDeltaTotal = delta.total;
       this.options.onEvent?.({
         type: "published",
@@ -1045,7 +1209,8 @@ export class HostBroker {
         resends,
       });
       for (let i = this.publishWaiters.length - 1; i >= 0; i--)
-        if (this.publishWaiters[i]!.position <= to.position) this.publishWaiters.splice(i, 1)[0]!.resolve(true);
+        if (this.publishWaiters[i]!.position <= to.position)
+          this.publishWaiters.splice(i, 1)[0]!.resolve(true);
       this.evict(at);
       this.maybeRebuild();
     }
@@ -1058,7 +1223,8 @@ export class HostBroker {
    */
   private maybeRebuild() {
     const threshold = this.options.rebuildAtDeltaTriples;
-    if (threshold === undefined || this.rebuilding || (this.lastDeltaTotal ?? 0) < threshold) return;
+    if (threshold === undefined || this.rebuilding || (this.lastDeltaTotal ?? 0) < threshold)
+      return;
     this.rebuilding = true;
     this.counters.rebuilds++;
     const t0 = performance.now();
@@ -1066,9 +1232,21 @@ export class HostBroker {
     void this.options
       .replica!.command("rebuild-index", { timeoutMs: 1_800_000 })
       .then(
-        () => this.options.onEvent?.({ type: "rebuild-end", ms: performance.now() - t0, ok: true, at: performance.now() }),
+        () =>
+          this.options.onEvent?.({
+            type: "rebuild-end",
+            ms: performance.now() - t0,
+            ok: true,
+            at: performance.now(),
+          }),
         (error) =>
-          this.options.onEvent?.({ type: "rebuild-end", ms: performance.now() - t0, ok: false, error: String(error), at: performance.now() }),
+          this.options.onEvent?.({
+            type: "rebuild-end",
+            ms: performance.now() - t0,
+            ok: false,
+            error: String(error),
+            at: performance.now(),
+          }),
       )
       .finally(() => {
         this.rebuilding = false;
@@ -1094,7 +1272,8 @@ export class HostBroker {
       headPosition: this.headPosition,
       durableLsn: this.durableLsn,
       replicaPosition: this.replicaMarker.position,
-      unpublishedFrames: this.overlayFrames.filter((frame) => frame.publishedAt === undefined).length,
+      unpublishedFrames: this.overlayFrames.filter((frame) => frame.publishedAt === undefined)
+        .length,
       overlayFrames: this.overlayFrames.length,
       ...this.counters,
       abortedLsns: [...this.aborted],
