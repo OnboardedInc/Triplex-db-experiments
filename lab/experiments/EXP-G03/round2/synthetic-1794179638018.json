@@ -1,0 +1,156 @@
+{
+  "source": {
+    "commit": "2efba925a876be89a93092747b082f9216e44a62",
+    "hashes": {
+      "contract": "f6637c11b6472c5242c8128757aecc9bf7cd74522ee2466f256c886d0b70fd2d",
+      "slots": "d8a2f18de7afe55090b514da6e01f3c1c33de6dfe35ee5c1a55c91e49289e8d1",
+      "load": "677d27fd8a0599a75c1dc0357d4ad2f053a1be13b7d97f5cc1db8bdbda4af78c"
+    }
+  },
+  "stamp": 1794179638018,
+  "diagnostic": true,
+  "results": [
+    {
+      "id": "live-cgroup-is-rejected",
+      "status": "PASS"
+    },
+    {
+      "id": "absent-cgroup-with-visible-reader-is-accepted",
+      "status": "PASS"
+    },
+    {
+      "id": "invisible-reader-is-rejected",
+      "status": "PASS"
+    },
+    {
+      "id": "isolated-positive",
+      "status": "PASS"
+    },
+    {
+      "id": "reachable-forbidden-target",
+      "status": "PASS"
+    },
+    {
+      "id": "positive-endpoint-missing",
+      "status": "PASS"
+    }
+  ],
+  "records": [
+    {
+      "name": "tx2-g03-7758c5fd3e73cbd2-live",
+      "inspectSha256": "60640978f3789481bf1149c3ced25fafccb1466f6342f21cef7b3cde461a6556",
+      "trusted": false,
+      "profile": {
+        "image": "sha256:302cbcd48d5b68ca49d020204c08814fac74c451fb51e13a62b908f368423575",
+        "network": "none",
+        "memory": 67108864,
+        "cpus": 1,
+        "pids": 128,
+        "mounts": [],
+        "env": []
+      }
+    },
+    {
+      "name": "tx2-g03-7758c5fd3e73cbd2-reader",
+      "inspectSha256": "b7399cf7c7822e6e5d507dae96eeb1faa7e8831d87167e8b93ba6bdeb46d25d1",
+      "trusted": true,
+      "profile": {
+        "image": "sha256:302cbcd48d5b68ca49d020204c08814fac74c451fb51e13a62b908f368423575",
+        "network": "none",
+        "memory": 67108864,
+        "cpus": 1,
+        "pids": 128,
+        "mounts": [],
+        "env": []
+      }
+    },
+    {
+      "removed": "tx2-g03-7758c5fd3e73cbd2-live",
+      "id": "6c35d1ec0ac8c0b44096613c26d7816295911ccf50f87d4061d2909b0a325d3a",
+      "cgroupGone": true
+    },
+    {
+      "removed": "tx2-g03-7758c5fd3e73cbd2-reader",
+      "id": "e3ca596a90391c9bb41b5de2820503dee81b36f5ec3fc09f74eb07c1ddf11dfb",
+      "cgroupGone": true
+    },
+    {
+      "name": "tx2-g03-7758c5fd3e73cbd2-server",
+      "inspectSha256": "f725cb8a9abc234801d2a7a5869e14b4a1ba5d878043dca0ae763cba20cf7b43",
+      "trusted": true,
+      "profile": {
+        "image": "sha256:302cbcd48d5b68ca49d020204c08814fac74c451fb51e13a62b908f368423575",
+        "network": "tx2-g03-7758c5fd3e73cbd2-synthetic-arm",
+        "memory": 67108864,
+        "cpus": 1,
+        "pids": 128,
+        "mounts": [],
+        "env": []
+      }
+    },
+    {
+      "name": "tx2-g03-7758c5fd3e73cbd2-isolated-positive",
+      "inspectSha256": "1ac91a6f56a4528de1c586ff016467bee4bd0362818d450bfaa1f78e7a781d0c",
+      "trusted": true,
+      "profile": {
+        "image": "sha256:302cbcd48d5b68ca49d020204c08814fac74c451fb51e13a62b908f368423575",
+        "network": "tx2-g03-7758c5fd3e73cbd2-synthetic-arm",
+        "memory": 67108864,
+        "cpus": 1,
+        "pids": 128,
+        "mounts": [],
+        "env": []
+      }
+    },
+    {
+      "removed": "tx2-g03-7758c5fd3e73cbd2-isolated-positive",
+      "id": "fd7087f1e38287eed18a4e490e19c61693177130dc966a18a3ed60b52a068ec6",
+      "cgroupGone": true
+    },
+    {
+      "name": "tx2-g03-7758c5fd3e73cbd2-reachable-forbidden-target",
+      "inspectSha256": "6c8f7de3ccfc0c188b45423e0a1e14cb3fd4cfb29449eb4bfe45b69c22b4123d",
+      "trusted": true,
+      "profile": {
+        "image": "sha256:302cbcd48d5b68ca49d020204c08814fac74c451fb51e13a62b908f368423575",
+        "network": "tx2-g03-7758c5fd3e73cbd2-synthetic-arm",
+        "memory": 67108864,
+        "cpus": 1,
+        "pids": 128,
+        "mounts": [],
+        "env": []
+      }
+    },
+    {
+      "removed": "tx2-g03-7758c5fd3e73cbd2-reachable-forbidden-target",
+      "id": "f4b049f2123330e7c1fd1b6dff025be57a6d9eff6c9707b9001c74e431726dce",
+      "cgroupGone": true
+    },
+    {
+      "name": "tx2-g03-7758c5fd3e73cbd2-positive-endpoint-missing",
+      "inspectSha256": "175cc6bd785afc70f15366cacbd6d4838c38b6b111892c19047998093913006f",
+      "trusted": true,
+      "profile": {
+        "image": "sha256:302cbcd48d5b68ca49d020204c08814fac74c451fb51e13a62b908f368423575",
+        "network": "tx2-g03-7758c5fd3e73cbd2-synthetic-arm",
+        "memory": 67108864,
+        "cpus": 1,
+        "pids": 128,
+        "mounts": [],
+        "env": []
+      }
+    },
+    {
+      "removed": "tx2-g03-7758c5fd3e73cbd2-positive-endpoint-missing",
+      "id": "b0b11f38d1eeacc781aa61676bd1f2e418186bcc590397a492cc7cded90be38a",
+      "cgroupGone": true
+    },
+    {
+      "removed": "tx2-g03-7758c5fd3e73cbd2-server",
+      "id": "0db31cd0aa6929a1e6079d09026661722c80bd1d4a79e902c89dd36bac525e5c",
+      "cgroupGone": true
+    }
+  ],
+  "remaining": [],
+  "rawDir": "/Users/sam/projects/triplex-db-2/.claude/worktrees/g03/runs/g03-r2/1794179638018"
+}

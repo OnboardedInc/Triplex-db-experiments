@@ -1,0 +1,2 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 40161 "CX-P2Q-R5-final-suites", pid 40193 "DA01-G1-repeat", pid 14284 "CX-A01-0311-R3-evaluator-b5af033", pid 42466 "CX-VSQL01-kill-r3"
+[lab] heavy: waiting for one of 4 slots; held by pid 40161 "CX-P2Q-R5-final-suites", pid 50008 "CX-OBS01-R2-slot", pid 14284 "CX-A01-0311-R3-evaluator-b5af033", pid 42466 "CX-VSQL01-kill-r3"

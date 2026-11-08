@@ -121,3 +121,77 @@ No unknown engine volume, resident, original source, first failure or unrelated 
 `evidence/source/` and `source-final.json` retain final evaluator source preimages/hashes. These final source pins are not retroactive
 execution identities for earlier diagnostic attempts. Raw temporary probe directories also remain under `runs/g03-*` in this worktree.
 No source or dependency cache was copied into evidence. Do not adopt these builder diagnostics as semantic qualification.
+
+---
+
+# Round 2 — work without an exclusive slot
+
+**Result:** implemented the requested no-slot policy, harness fault controls, layout and gateway code. No exclusive admission
+was attempted this round; no resident was parked. **Still UNQUALIFIED and not merge-ready under Q87** because the full legacy
+evaluator suites have 33 failures. No approval, promotion or completion of business cases is asserted.
+
+## Changes
+
+- Contract **0.3.12 draft** now pins the box image/build inputs, Linux store listing and authority lockfile, limits, regular source
+  allowlist and the two measured metadata exclusions. The semantic build argv/outputs/run remain null under Q65e; a missing
+  `obl-case.ts` is not replaced with a placeholder. Generator validation/regeneration passes. No A0, verifier, oracle or manifest
+  acceptance was invented.
+- `box-policy.mjs` reads obligations, slots, load contract and lockfile through the supplied Git object's explicit full commit id.
+  It checks the load-contract hash, slots/image agreement and lockfile/store agreement. A store receipt supplies only the physical
+  volume name; image/build/listing/lockfile mismatches are rejected. Engine-side box operations and slot operations accept the same
+  explicit authority/repository. Qualification forwards these values, so it does not select main by name. An inventory check with
+  `TX2_CONFIG_DIR` deliberately set to a missing directory succeeded using pinned policy (`round2/authority-inventory.json`).
+- The production cgroup proof and network preflight were extracted into shared scripts/validators. Preflight results require the
+  complete ordered target list, a positive engine endpoint, failed blocked-target connections and failed public DNS; missing or
+  altered evidence fails closed. Synthetic failures exercise those same implementations, without a production weakening flag.
+- PAIR-0's contract layout assigns engines 0–1 / 2–3 and auxiliary cores 4 / 5. SUT, relay and observer share their arm's auxiliary
+  core; arms never share a core. Layout validation rejects duplicate slots, overlap, out-of-range cores and inconsistent auxiliary
+  placement. `BoxExecutor` applies optional layout to relay/case auxiliary placement with cpuset and no CPU quota. This is **not**
+  M01 statistical execution; engine/observer no-quota placement and cgroup regime readback remain integration work.
+- Lane D now has a separate candidate gateway plan and launcher: read-only instance source, pinned image/build inputs, ordinary
+  hardening, 1.5 GiB cap, private arm network, alias `gateway`, one auxiliary core, and readiness check. Its entrypoint overrides the
+  resident launcher so it cannot start a transactor. DA01 source at `1f09771c25b7bc11ef4344de9de389352ba8b4b4` hardcodes a loopback
+  `base-uri`; the adapter retargets that Clojure var to `engine:4334` before main without rewriting read-only source. The arm relays
+  4334 and 4335 and requires a transactor-only engine labelled with advertised host `engine`. Gateway image pins remain null until
+  DA01's image/source integration is independently reviewed. No gateway JVM or Datomic engine was started. Dev durable readback
+  remains DIAGNOSTIC, and the code explicitly refuses unimplemented SQL-peer storage instead of trusting a storage label.
+- `round2/window.mjs` is a one-shot slot diagnostic with explicit source/authority/evaluator identities, copied authority configuration,
+  retained-volume refusal, store verification, real relay/preflight and a containerized TCP canary. It cleans only its new slot state.
+  `round2/SLOT-RUN.md` gives exact commands pinned to implementation/authority
+  **`e847718a23d08ceb57ffc5dfb444b505e57653b7`**. They require the orchestrator's window and were **not run** here.
+
+## Gates and retained failures
+
+- `round2/unit-final.tap`: **12/12 PASS** (original six box tests plus six policy/layout/gateway/proof controls).
+- `round2/contract-generate-2.txt`: generator validation and second regeneration byte-identical for draft 0.3.12.
+- `round2/synthetic-1794179638018.json`: **6/6 PASS** on source/authority
+  `2efba925a876be89a93092747b082f9216e44a62`, with retained authority file hashes. Actual synthetic containers demonstrated:
+  live cgroup rejection; acceptance after deletion with a visible reader; rejection when reader visibility is missing;
+  isolated positive preflight; rejection of a deliberately reachable forbidden target; rejection of a missing positive endpoint.
+  All synthetic containers/networks/volumes were removed. Raw preflight/request/inspect objects are copied to `round2/evidence/`.
+- `round2/claim-suites.tap`: full `claim.test.mjs` and `claim-round2.test.mjs`, through heavy.mjs: **75 PASS / 33 FAIL / 108**.
+  The failed fixtures expect the old ref-based, same-repository Mac runner, callbacks, plan-only gate or offline-qualified behavior;
+  they now stop at the explicit-commit/protected-clone guard, with downstream expectations consequently failing (one reads null core,
+  another expects an evidence directory that was never created). They were **not skipped or weakened**. They need migration to the
+  new contained fixture model before Q87 allows a contract merge. This is a material remaining test-suite blocker.
+- The first synthetic attempt `round2/synthetic-1794179442305.json` failed before candidate execution: the prior pinned image
+  `d9daa...` was absent from the daemon. Retained as the first failure. Engine-managed preparation using explicit commit
+  `e64c2b9c1e91be685771e374a3244a0f5128dd1b` and the same pinned Dockerfile/base/lockfile completed. Image and store hashes changed;
+  **no substitution was accepted against the old pins**. A new draft contract pins the observed image
+  `sha256:302cbcd48d5b68ca49d020204c08814fac74c451fb51e13a62b908f368423575` and store listing
+  `64bfed7194f5f8d852286cd923bd050f520f47562dd1937a86c3253d5bbc356e` (`round2/store.json`). The cause of different rebuild bytes was
+  not established. Do not infer reproducible image/store rebuilding from a shared recipe hash.
+- `node --check` passed for edited execution modules; `git diff --check` passed. Evaluator integrity at frozen implementation
+  `e847718a23d08ceb57ffc5dfb444b505e57653b7` reported no problems. Synthetic checks are diagnostics, not independent verification.
+
+## Retention and next action
+
+`round2/inventory-final.json` shows no CX-G03 containers or networks. One deliberately retained, engine-labelled immutable Linux store
+remains: `tx2-g03-r2store-store-b2b3e6e8cdfb`. Its retention is declared in the shared engine ledger and `round2/store-retention.json`,
+so the requested window can start without a network fetch. It has no resident process or memory reservation. Do not prune it before
+that window; the final command in `round2/SLOT-RUN.md` removes it explicitly afterward. No credential/dependency cache was copied
+into evidence; only the prepared Docker volume holds the dependency store.
+
+The next orchestrator action is the frozen diagnostic command sequence after opening a window. Before any semantic qualification,
+migrate the 33 legacy fixture failures, integrate/pin the real OBL runner and fault/paired measurement paths, integrate R27 observer/TO,
+and review DA01's transactor-only/gateway image and source. No H1/H2 VM changes were made; Q86g residuals from round 1 remain.
