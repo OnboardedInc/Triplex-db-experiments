@@ -1059,3 +1059,23 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **Learning (Q63d): parameterise every XTDB statement;** literal multi-row INSERTs exhausted a 2 GiB heap (X05), as per-cell expressions did
   in P2X.
 - Dispatched V-X02 (the XTQL native lane, waiting since bf1ad4d) and W0-1.1.2 (readings A01-A15 plus V-D01c's 40 cases).
+
+## 2026-11-08 00:28Z: hourly learnings pass (NORTH-STAR reread first)
+- **Learnings are current** through contract 0.3.9, the O-DOMAIN fix round, V-D01c, V-P2Q, X05, W01, R22, R23, E01 and D01b (entries
+  23:26Z to 00:18Z). Headers now come from `date -u` in the same command; two more heredoc substitutions were caught and restored, so
+  notebook text is written through quoted heredocs with a placeholder for the time.
+- **Residents and host:** xtdb-dev 2.25 of 3.0 GiB at 202% CPU (V-X02 and others share it); qlever-dev 930 MiB of 3.5 GiB; xtdb-s1 1.26 GiB
+  for EXP-N01's diagnostic A0. Pool 10.0 of 11 GiB. Host load 8.4 / 8.2 / 9.8, the lowest yet. Host disk 13 GiB free (97%).
+- **Where evidence points, by priority:**
+  - P1: XTDB's shared-volume follower is out (X05); read scaling goes through broker-fed replicas (Q63b), first measured in EXP-P2B.
+  - P2 and P3: the broker design holds on every routed read and on the feed (lag from source publication p99 13.7-24.9 ms) but failed on its
+    side paths (V-P2Q); fix round running, then P2B, then the SQLite substrate (Q58c).
+  - **P4: no experiment yet.** What exists is indirect: `_id` point reads cost 3-5 ms on XTDB while scope scans grow with history; GS.04b needs
+    a separate current index; the broker's recent_rows could become a current store. **R24 dispatched** to design EXP-P4.
+  - **P5:** the kernel prices the sweep (15.8 s of one core per 100k; validation 80%), but the read side of the sweep and its effect on live
+    traffic are unmeasured; R24 also designs EXP-P5 (a dedicated broker-fed replica for sweeps is the leading idea).
+  - Measurement: PAIR-0 (Q60) is being built (EXP-M01); until it lands every comparison stays relative and DIAGNOSTIC.
+- **Research dispatched (Sonnet xhigh): R24** current-value path and sweep design (XTDB 2.2.0 current versus as-of internals, QLever options,
+  prior art from Datomic, XTDB 1.x, KTables, CQRS projections and materialized views, the smallest Triplex change for an exact current read at
+  basis B, sweep isolation and admission control).
+- **Running (10):** C8, J01, P2Q fix round, E01, M01, V-X02, W0-1.1.2, V-D01c delta check, O-REPLAY 0.4.2, R24 (N01's A0 run in background).
