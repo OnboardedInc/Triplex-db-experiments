@@ -9,6 +9,8 @@ in-flight reads, equal tokens issued last by either), plus two recorded page seq
 V-O04g: Q70f-k rows (ambiguous tokens and journal `after` fail closed, journal pagination, identical views with different
 bodies, read scope for scope-field kinds); the V-O04f F9/F10 rows are checked; new OBSERVED rows record the page
 continuations Q70a-k still does not name (transactionsForEntity pages, a string or decimal `after`).
+V-O04h: those three rows are checked from Q70l and Q70m, with a row per paged kind in the oracle's table and
+malformed-value rows (after "1", 1.0, -1, true; beforePosition and snapshotPosition likewise).
 
   python3 -I lab/verify/O02/tools/probe_q52.py WORKDIR [--self-test] [--results=DIR]
       -> DIR/probe_q52[.self-test].json (default lab/verify/O02/V-O04d/results)
@@ -481,17 +483,51 @@ single("Q70k", "transaction tx:1 on scope t", "[([], q1 5), ([tx:3], marker)]", 
        lambda r: (seen_and(r, "t1", lambda res: res["changes"][0]["value"]) == Q1_ALTS, seen_and(r, "t1", lambda res: res)))
 single("Q70k", "control: match with cut scope t (a cut-scoped kind)", "[([], q1 5), ([tx:3], marker)]", Q70J,
        lambda r: (seen_and(r, "m", lambda res: res["raw"][0]["value"]) == Q1_ALTS, seen_and(r, "m", lambda res: res)))
-# ------------------------------------------------------------------ V-O04g: page continuations Q70a-k does not name (recorded)
+# ------------------------------------------------------------------ V-O04h: Q70l (one continuation table), Q70m (typed values)
+# V-O04g F11 as a checked row: transactionsForEntity continues by beforePosition = an earlier page's nextBeforePosition on
+# the same entity, scope and snapshotPosition (Q70l). p1: salary 1 (tx:0, pos 1), name N (tx:1, pos 2); tx:2 erases p1.
 FE = [cmd([asrt("s1", "p1", SAL, I(1))], 100), cmd([asrt("n1", "p1", NAME, S("N"))], 110), cmd([erase("p1")], 200)]
-observe("beyond Q70", "transactionsForEntity page 2 by beforePosition = page 1's nextBeforePosition (no readStart)",
-        "recorded: page 1 alternatives and page 2's answer",
-        case(FE, [{"id": "e1", "kind": "transactionsForEntity", "entityId": "p1", "limit": 1, "snapshotPosition": 2, "readStart": {"afterCommand": 1}},
-                  {"id": "e2", "kind": "transactionsForEntity", "entityId": "p1", "limit": 1, "snapshotPosition": 2, "beforePosition": 2}]),
-        lambda r: {"page1": tx_entry(r, "e1"), "page2": tx_entry(r, "e2")})
-observe("beyond Q70", "transactions page 2 with after given as the string \"1\"", "recorded: page 2's answer",
-        case(TXP, [TQ("t1", 0, readStart={"afterCommand": 1}), TQ("t2", "1")]), lambda r: {"page1": tx_entry(r, "t1"), "page2": tx_entry(r, "t2")})
-observe("beyond Q70", "transactions page 2 with after given as 1.0", "recorded: exit status",
-        case(TXP, [TQ("t1", 0, readStart={"afterCommand": 1}), TQ("t2", 1.0)]), lambda r: {"page2": tx_entry(r, "t2")})
+FQ = lambda qid, **kw: {"id": qid, "kind": "transactionsForEntity", "entityId": "p1", "limit": 1, **kw}  # noqa: E731
+Q70L_FE = case(FE, [FQ("e1", snapshotPosition=2, readStart={"afterCommand": 1}), FQ("e2", snapshotPosition=2, beforePosition=2)])
+FE_ALTS = [([], [("tx:0", [I(1)])], None), (["tx:2"], [("tx:0", [marker(200)])], None)]
+single("Q70l", "transactionsForEntity page 2 by beforePosition = page 1's nextBeforePosition (V-O04g F11)",
+       "per page 1's prefixes: [([], tx:0 1), ([tx:2], tx:0 M)]", Q70L_FE, lambda r: (tx_entry(r, "e2") == FE_ALTS, tx_entry(r, "e2")))
+Q70L_FE_AMB = case(FE, [FQ("e1", snapshotPosition=2, readStart={"afterCommand": 1}), FQ("e1b", snapshotPosition=2),
+                        FQ("e2", snapshotPosition=2, beforePosition=2)])
+single("Q70l", "transactionsForEntity beforePosition issued by disagreeing pages", "typed X-NOT-MODELED 'ambiguous ...'", Q70L_FE_AMB,
+       lambda r: (ambiguous_any(r, "e2", ""), q(r, "e2")))
+Q70L_FE_SNAP = case(FE, [FQ("e1", snapshotPosition=2, readStart={"afterCommand": 1}), FQ("e2", snapshotPosition=3, beforePosition=2)])
+single("Q70l", "transactionsForEntity with a different snapshotPosition", "not matched: own view, plain [tx:0 M]", Q70L_FE_SNAP,
+       lambda r: (tx_entry(r, "e2") == [("plain", [("tx:0", [marker(200)])], None)], tx_entry(r, "e2")))
+# p9 shares tx:0 with p1 and is erased by the same commit, so continuing p1's in-flight read would list alternatives
+FE9 = [cmd([asrt("s1", "p1", SAL, I(1)), asrt("s9", "p9", SAL, I(9))], 100), cmd([asrt("n1", "p1", NAME, S("N"))], 110),
+       cmd([erase("p1"), erase("p9")], 200)]
+Q70L_FE_OTHER = case(FE9, [FQ("e1", snapshotPosition=2, readStart={"afterCommand": 1}),
+                           {"id": "e2", "kind": "transactionsForEntity", "entityId": "p9", "limit": 1, "snapshotPosition": 2, "beforePosition": 2}])
+single("Q70l", "transactionsForEntity on another entity with the same beforePosition", "not matched: own view, plain [tx:0 M, M]",
+       Q70L_FE_OTHER, lambda r: (tx_entry(r, "e2") == [("plain", [("tx:0", [marker(200), marker(200)])], None)], tx_entry(r, "e2")))
+# Q70m: integer continuation values must be JSON integers >= 0; anything else makes the case malformed (exit 2)
+
+
+def malformed(ruling, pid, the_case):
+    out = run(case_name(pid), the_case)
+    ok = "refused" in out and not out.get("outputWritten") and "malformed case" in out["refused"]
+    score(ruling, pid, "malformed case (exit 2, no output)", "MATCH" if ok else "WRONG-ANSWER", out.get("refused") or out)
+
+
+for label, value in (('"1"', "1"), ("1.0", 1.0), ("-1", -1), ("true", True)):
+    malformed("Q70m", f"transactions after {label}", case(TXP, [TQ("t1", 0, readStart={"afterCommand": 1}), TQ("t2", value)]))
+for label, value in (('"2"', "2"), ("2.0", 2.0), ("-2", -2)):
+    malformed("Q70m", f"transactionsForEntity beforePosition {label}",
+              case(FE, [FQ("e1", snapshotPosition=2, readStart={"afterCommand": 1}), FQ("e2", snapshotPosition=2, beforePosition=value)]))
+malformed("Q70m", 'transactionsForEntity snapshotPosition "2"', case(FE, [FQ("e1", snapshotPosition="2")]))
+# Q70l: only the kinds in the table continue. A non-paged kind with cursorFrom is a read of its own (the author's 0.4.8
+# rule; 0.4.7 gave it the named read's view): match with cursorFrom naming the in-flight read A, no readStart -> markers only
+Q70L_NONPAGED = case(LIT_CMDS, [ep("A", readStart={"afterCommand": 0}),
+                                {"id": "m", "kind": "match", "cut": V, "pattern": {"attribute": SAL}, "cursorFrom": {"query": "A"}}])
+single("Q70l", "cursorFrom on a non-paged kind (match) naming an in-flight read", "own view: plain, p1 and p2 markers", Q70L_NONPAGED,
+       lambda r: ("inFlight" not in q(r, "m") and [x["value"] for x in res(r, "m")["raw"]][:2] == [marker(200), marker(200)],
+                  q(r, "m").get("inFlight") and "inFlight" or [x["value"] for x in res(r, "m")["raw"]]))
 
 # ------------------------------------------------------------------ Q52f: toDecimal(json, p, s, rounding)
 DEC = [  # (json, p, s, mode, expected decimal text or error id): the as-written reading rounded once (Q52f, Q22, Q43d)
@@ -585,6 +621,16 @@ if SELF_TEST:
            lambda r: (any(s == ["tx:2"] for s, _ in seen_and(r, "tx", lambda res: None)), seen_and(r, "tx", lambda res: None)))
     single("ST", "ST Q70k assertions plain", "plain (wrong: t's erasure is in flight)", Q70J,
            lambda r: ("inFlight" not in q(r, "as"), q(r, "as").keys() and list(q(r, "as").keys())))
+    single("ST", "ST Q70l entity page 2 own view", "plain [tx:0 M] (wrong: continues page 1)", Q70L_FE,
+           lambda r: (tx_entry(r, "e2") == [("plain", [("tx:0", [marker(200)])], None)], tx_entry(r, "e2")))
+    single("ST", "ST Q70l disagreeing issuers continue e1", "page 1's prefixes (wrong: refuse)", Q70L_FE_AMB,
+           lambda r: (tx_entry(r, "e2") == FE_ALTS, tx_entry(r, "e2")))
+    single("ST", "ST Q70l other snapshotPosition matched", "page 1's prefixes (wrong: own view)", Q70L_FE_SNAP,
+           lambda r: (tx_entry(r, "e2") == FE_ALTS, tx_entry(r, "e2")))
+    single("ST", "ST Q70l other entity matched", "in flight (wrong: own view)", Q70L_FE_OTHER, lambda r: ("inFlight" in q(r, "e2"), tx_entry(r, "e2")))
+    single("ST", "ST Q70m string after answered", "an answer (wrong: malformed)",
+           case(TXP, [TQ("t1", 0, readStart={"afterCommand": 1}), TQ("t2", "1")]), lambda r: (True, "answered"))
+    single("ST", "ST Q70l non-paged kind continues A", "in flight (wrong: own view)", Q70L_NONPAGED, lambda r: ("inFlight" in q(r, "m"), q(r, "m")))
     single("ST", "ST Q70a page 1 continuation in flight", "x has inFlight (wrong)", Q70A_PAGE1,
            lambda r: ("inFlight" in q(r, "x"), entry(r, "x")))
     single("ST", "ST Q52f binary64 expansion", "json 2.675 half-up = 2.67 (wrong)",

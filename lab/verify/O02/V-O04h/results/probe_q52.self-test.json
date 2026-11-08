@@ -1,0 +1,1111 @@
+{
+ "counts": {
+  "WRONG-ANSWER": 33,
+  "REFUSES": 1
+ },
+ "probes": 34,
+ "rows": [
+  {
+   "ruling": "ST",
+   "probe": "ST Q52a each erased value counts",
+   "expected": "COUNT 4 (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    {
+     "x": {
+      "type": "integer",
+      "value": "3"
+     }
+    }
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q52b missing before markers",
+   "expected": "[p3, p2, p4, p5, p7, p6, p1] (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    "p3",
+    "p2",
+    "p6",
+    "p1",
+    "p4",
+    "p5",
+    "p7"
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q52b desc reverses the markers",
+   "expected": "[p2, p3, p1, p6, p4, p5, p7] (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    "p2",
+    "p3",
+    "p6",
+    "p1",
+    "p4",
+    "p5",
+    "p7"
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q52c latest erasedAt",
+   "expected": "marker(300) (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    {
+     "s": {
+      "_tag": "ErasedValue",
+      "erasedAt": 200
+     },
+     "c": {
+      "type": "integer",
+      "value": "2"
+     }
+    }
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q52d erased reference enforced",
+   "expected": "rejected E-CONSTRAINT (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "outcome": "committed"
+   }
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q52e a mixed answer accepted",
+   "expected": "an alternative with SUM 5 or 6 (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    [
+     [],
+     "7"
+    ],
+    [
+     [
+      "tx:1"
+     ],
+     "4"
+    ]
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q66a all-old answer missing",
+   "expected": "first alternative has erasuresSeen [tx:1] (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    [
+     [],
+     "7"
+    ],
+    [
+     [
+      "tx:1"
+     ],
+     "6"
+    ],
+    [
+     [
+      "tx:1",
+      "tx:2"
+     ],
+     "4"
+    ]
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q66c other scope in flight",
+   "expected": "scope s lists 4 alternatives (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    [
+     [],
+     "1"
+    ],
+    [
+     [
+      "tx:3"
+     ],
+     null
+    ]
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q66b unaffected page 2 listed in flight",
+   "expected": "page b has inFlight (wrong: both prefixes agree)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    [
+     "plain",
+     [
+      [
+       "p2",
+       [
+        "2"
+       ]
+      ],
+      [
+       "p3",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ]
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q66b two-page: all-old prefix shows p4 marker",
+   "expected": "([], p3 3, p4 M) first (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    [
+     [],
+     [
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ],
+    [
+     [
+      "tx:1"
+     ],
+     [
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "M"
+       ]
+      ]
+     ]
+    ]
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q66b two commits: page 2 plain",
+   "expected": "plain (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    [
+     [],
+     [
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ],
+    [
+     [
+      "tx:1"
+     ],
+     [
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ],
+    [
+     [
+      "tx:1",
+      "tx:2"
+     ],
+     [
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "M"
+       ]
+      ]
+     ]
+    ]
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q66b chain: page 3 has two alternatives",
+   "expected": "2 alternatives (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    [
+     [],
+     [
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ],
+    [
+     [
+      "tx:1"
+     ],
+     [
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ],
+    [
+     [
+      "tx:1",
+      "tx:2"
+     ],
+     [
+      [
+       "p3",
+       [
+        "M"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ]
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q66b own readStart: one plain page",
+   "expected": "plain (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    [
+     [],
+     [
+      [
+       "p2",
+       [
+        "2"
+       ]
+      ],
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ],
+    [
+     [
+      "tx:1"
+     ],
+     [
+      [
+       "p2",
+       [
+        "2"
+       ]
+      ],
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ],
+    [
+     [
+      "tx:1",
+      "tx:2"
+     ],
+     [
+      [
+       "p2",
+       [
+        "M"
+       ]
+      ],
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ]
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q66b plain source: page b an error",
+   "expected": "an error (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    [
+     "plain",
+     [
+      [
+       "p2",
+       [
+        "M"
+       ]
+      ],
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ]
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q70b own later readStart wins",
+   "expected": "plain markers (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    [
+     [],
+     [
+      [
+       "p2",
+       [
+        "2"
+       ]
+      ],
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ],
+    [
+     [
+      "tx:1"
+     ],
+     [
+      [
+       "p2",
+       [
+        "M"
+       ]
+      ],
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ]
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q70c own readStart reopens the old value",
+   "expected": "x lists ([], p2 2) (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    [
+     "plain",
+     [
+      [
+       "p2",
+       [
+        "M"
+       ]
+      ],
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ]
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q70f latest issuer followed (A last)",
+   "expected": "per A's prefixes (wrong: views disagree, refuse)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    [
+     "plain",
+     {
+      "error": "X-NOT-MODELED",
+      "_tag": null,
+      "reason": null,
+      "phase": null,
+      "ruling": "Q70f: a continuation issued by reads whose start, scope or per-prefix answers disagree fails closed",
+      "message": "ambiguous literal token: 2 earlier reads issued it with different read views"
+     }
+    ]
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q70f latest issuer followed (B last)",
+   "expected": "plain markers (wrong: views disagree, refuse)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    [
+     "plain",
+     {
+      "error": "X-NOT-MODELED",
+      "_tag": null,
+      "reason": null,
+      "phase": null,
+      "ruling": "Q70f: a continuation issued by reads whose start, scope or per-prefix answers disagree fails closed",
+      "message": "ambiguous literal token: 2 earlier reads issued it with different read views"
+     }
+    ]
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q70h identical views refused",
+   "expected": "refused (wrong: identical views continue)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    [
+     [],
+     [
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ],
+    [
+     [
+      "tx:1"
+     ],
+     [
+      [
+       "p3",
+       [
+        "M"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ]
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q70g page 2 own view",
+   "expected": "plain [tx:1 M] (wrong: continues page 1)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    [
+     [],
+     [
+      [
+       "tx:1",
+       [
+        {
+         "type": "integer",
+         "value": "2"
+        }
+       ]
+      ]
+     ],
+     2
+    ],
+    [
+     [
+      "tx:2"
+     ],
+     [
+      [
+       "tx:1",
+       [
+        {
+         "_tag": "ErasedValue",
+         "erasedAt": 200
+        }
+       ]
+      ]
+     ],
+     2
+    ]
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q70g own readStart consulted",
+   "expected": "page 2 in flight (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    [
+     "plain",
+     [
+      [
+       "tx:1",
+       [
+        {
+         "_tag": "ErasedValue",
+         "erasedAt": 200
+        }
+       ]
+      ]
+     ],
+     2
+    ]
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q70i ambiguous after continues t1",
+   "expected": "page 2 per t1's prefixes (wrong: refuse)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    [
+     "error",
+     "X-NOT-MODELED"
+    ]
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q70i other journal scope matched",
+   "expected": "plain [tx:3 M] (wrong: own view)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    [
+     [],
+     [
+      [
+       "tx:3",
+       [
+        {
+         "type": "integer",
+         "value": "2"
+        }
+       ]
+      ]
+     ],
+     2
+    ],
+    [
+     [
+      "tx:4"
+     ],
+     [
+      [
+       "tx:3",
+       [
+        {
+         "_tag": "ErasedValue",
+         "erasedAt": 200
+        }
+       ]
+      ]
+     ],
+     2
+    ]
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q70j default scope in flight",
+   "expected": "erasuresSeen [tx:2] (wrong: scope t's tx:3)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    [
+     [],
+     null
+    ],
+    [
+     [
+      "tx:3"
+     ],
+     null
+    ]
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q70k assertions plain",
+   "expected": "plain (wrong: t's erasure is in flight)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    "id",
+    "kind",
+    "inFlight"
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q70l entity page 2 own view",
+   "expected": "plain [tx:0 M] (wrong: continues page 1)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    [
+     [],
+     [
+      [
+       "tx:0",
+       [
+        {
+         "type": "integer",
+         "value": "1"
+        }
+       ]
+      ]
+     ],
+     null
+    ],
+    [
+     [
+      "tx:2"
+     ],
+     [
+      [
+       "tx:0",
+       [
+        {
+         "_tag": "ErasedValue",
+         "erasedAt": 200
+        }
+       ]
+      ]
+     ],
+     null
+    ]
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q70l disagreeing issuers continue e1",
+   "expected": "page 1's prefixes (wrong: refuse)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    [
+     "error",
+     "X-NOT-MODELED"
+    ]
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q70l other snapshotPosition matched",
+   "expected": "page 1's prefixes (wrong: own view)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    [
+     "plain",
+     [
+      [
+       "tx:0",
+       [
+        {
+         "_tag": "ErasedValue",
+         "erasedAt": 200
+        }
+       ]
+      ]
+     ],
+     null
+    ]
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q70l other entity matched",
+   "expected": "in flight (wrong: own view)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    [
+     "plain",
+     [
+      [
+       "tx:0",
+       [
+        {
+         "_tag": "ErasedValue",
+         "erasedAt": 200
+        },
+        {
+         "_tag": "ErasedValue",
+         "erasedAt": 200
+        }
+       ]
+      ]
+     ],
+     null
+    ]
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q70m string after answered",
+   "expected": "an answer (wrong: malformed)",
+   "verdict": "REFUSES",
+   "oracle": {
+    "refused": "o-replay: malformed case: transactions after must be a JSON integer >= 0 (RULINGS Q70m), got '1'",
+    "outputWritten": false
+   }
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q70l non-paged kind continues A",
+   "expected": "in flight (wrong: own view)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "id": "m",
+    "kind": "match",
+    "result": {
+     "cut": {
+      "scope": "s",
+      "position": 2,
+      "recordedAt": null,
+      "validAt": 1
+     },
+     "count": 4,
+     "contract": "raw-lifetime (AMB-01 A)",
+     "raw": [
+      {
+       "id": "s1",
+       "entityId": "p1",
+       "attribute": ":person/salary",
+       "value": {
+        "_tag": "ErasedValue",
+        "erasedAt": 200
+       },
+       "validFrom": 0,
+       "validTo": null,
+       "recordedAt": 100,
+       "recordedPosition": 1,
+       "createdBy": null,
+       "entityType": "Person",
+       "schemaVersion": null,
+       "txId": "tx:0",
+       "retractedAt": null,
+       "retractedPosition": null,
+       "retractTxId": null
+      },
+      {
+       "id": "s2",
+       "entityId": "p2",
+       "attribute": ":person/salary",
+       "value": {
+        "_tag": "ErasedValue",
+        "erasedAt": 200
+       },
+       "validFrom": 0,
+       "validTo": null,
+       "recordedAt": 100,
+       "recordedPosition": 1,
+       "createdBy": null,
+       "entityType": "Person",
+       "schemaVersion": null,
+       "txId": "tx:0",
+       "retractedAt": null,
+       "retractedPosition": null,
+       "retractTxId": null
+      },
+      {
+       "id": "s3",
+       "entityId": "p3",
+       "attribute": ":person/salary",
+       "value": {
+        "type": "integer",
+        "value": "3"
+       },
+       "validFrom": 0,
+       "validTo": null,
+       "recordedAt": 100,
+       "recordedPosition": 1,
+       "createdBy": null,
+       "entityType": "Person",
+       "schemaVersion": null,
+       "txId": "tx:0",
+       "retractedAt": null,
+       "retractedPosition": null,
+       "retractTxId": null
+      },
+      {
+       "id": "s4",
+       "entityId": "p4",
+       "attribute": ":person/salary",
+       "value": {
+        "type": "integer",
+        "value": "4"
+       },
+       "validFrom": 0,
+       "validTo": null,
+       "recordedAt": 100,
+       "recordedPosition": 1,
+       "createdBy": null,
+       "entityType": "Person",
+       "schemaVersion": null,
+       "txId": "tx:0",
+       "retractedAt": null,
+       "retractedPosition": null,
+       "retractTxId": null
+      }
+     ],
+     "snapshot": [
+      {
+       "id": "s1",
+       "entityId": "p1",
+       "attribute": ":person/salary",
+       "value": {
+        "_tag": "ErasedValue",
+        "erasedAt": 200
+       },
+       "validFrom": 0,
+       "validTo": null,
+       "recordedAt": 100,
+       "recordedPosition": 1,
+       "createdBy": null,
+       "entityType": "Person",
+       "schemaVersion": null,
+       "txId": "tx:0",
+       "retractedAt": null,
+       "retractedPosition": null,
+       "retractTxId": null
+      },
+      {
+       "id": "s2",
+       "entityId": "p2",
+       "attribute": ":person/salary",
+       "value": {
+        "_tag": "ErasedValue",
+        "erasedAt": 200
+       },
+       "validFrom": 0,
+       "validTo": null,
+       "recordedAt": 100,
+       "recordedPosition": 1,
+       "createdBy": null,
+       "entityType": "Person",
+       "schemaVersion": null,
+       "txId": "tx:0",
+       "retractedAt": null,
+       "retractedPosition": null,
+       "retractTxId": null
+      },
+      {
+       "id": "s3",
+       "entityId": "p3",
+       "attribute": ":person/salary",
+       "value": {
+        "type": "integer",
+        "value": "3"
+       },
+       "validFrom": 0,
+       "validTo": null,
+       "recordedAt": 100,
+       "recordedPosition": 1,
+       "createdBy": null,
+       "entityType": "Person",
+       "schemaVersion": null,
+       "txId": "tx:0",
+       "retractedAt": null,
+       "retractedPosition": null,
+       "retractTxId": null
+      },
+      {
+       "id": "s4",
+       "entityId": "p4",
+       "attribute": ":person/salary",
+       "value": {
+        "type": "integer",
+        "value": "4"
+       },
+       "validFrom": 0,
+       "validTo": null,
+       "recordedAt": 100,
+       "recordedPosition": 1,
+       "createdBy": null,
+       "entityType": "Person",
+       "schemaVersion": null,
+       "txId": "tx:0",
+       "retractedAt": null,
+       "retractedPosition": null,
+       "retractTxId": null
+      }
+     ]
+    }
+   }
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q70a page 1 continuation in flight",
+   "expected": "x has inFlight (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": [
+    [
+     "plain",
+     [
+      [
+       "p3",
+       [
+        "3"
+       ]
+      ],
+      [
+       "p4",
+       [
+        "4"
+       ]
+      ]
+     ]
+    ]
+   ]
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q52f binary64 expansion",
+   "expected": "json 2.675 half-up = 2.67 (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "type": "decimal",
+    "value": "2.68",
+    "scale": 2,
+    "precision": 3
+   }
+  },
+  {
+   "ruling": "ST",
+   "probe": "ST Q52g erasure spelling commits",
+   "expected": "committed (wrong)",
+   "verdict": "WRONG-ANSWER",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-INVALID-VALUE",
+    "errorTag": "InvalidTripleError",
+    "reason": "invalid-value",
+    "phase": "preflight",
+    "message": "unknown op 'erasure'"
+   }
+  }
+ ]
+}
