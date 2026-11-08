@@ -1534,3 +1534,13 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - Durability held: 50 abrupt process stops kept all 163 ACKs; retried commits applied once; the feed had no gaps or repeats.
 - Contract 0.3.11 round 3: 108/108 evaluator tests with fixture changes; in delta review. G03 round 2: 33 fixtures need migration to the
   contained model. O-OBS round 4: 786 of 786 reviewer cases; in review. P2Q round 5, X02 round 4 and K01 round 3 are in review.
+
+## 2026-11-08 23:25Z: K01 gets a three-frontier settle rule (Q83e); P2Q's classifier converges by edge cases
+- **V-K01 round 2 FIX-FIRST (offline):** four new gaps: cleanup can delete a golden from an earlier run; the final owner read and the
+  publication are not atomic; a changed copy-proof binding keeps PASS; a failed inspect still yields a stop proof. **The reviewer also
+  answered the watermark question from pinned XTDB source:** a block always records its cut F, and XTDB always appends a later
+  maintenance message (TriesAdded, compactor output), so a settled node has F < M forever. Q83d's demand for F = M could never be met
+  live. **Q83e:** record F, M and T separately, and accept F < M only when every message in (F, M] is maintenance.
+- **V-P2Q round 6 FIX-FIRST:** EHOSTDOWN and ENETDOWN are missing. This is the third round in a row whose finding is one more edge of the
+  same classifier. **Learning:** when reviews keep finding members of a set, derive the set from the source (Node errno docs, the
+  installed undici errors module) and add a test that fails when the source gains a member. Round 6 is told to do exactly that.
