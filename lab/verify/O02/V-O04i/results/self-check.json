@@ -1,0 +1,617 @@
+{
+ "format": "triplex-db-2/o-replay-selfcheck/1",
+ "status": "PASS",
+ "sources": {
+  "ham-v2-oracle": {
+   "path": "qualification/capacity/historical-assertion-metadata-v2/oracle.mjs",
+   "sha256": "f661e8138d5194bbcbbe56eec9ec35f8766bc9938540192e7b0d92d04685721b"
+  },
+  "ham-v1-oracle": {
+   "path": "qualification/capacity/historical-assertion-metadata-v1/oracle.mjs",
+   "sha256": "bc93f24c88365add1d215747cd95705a3c2a2b4fd1c6cdd7e347a014fb23b290"
+  },
+  "cfg8-tiny-v4-oracle": {
+   "path": "qualification/capacity/configured-entities-v1/xtdb-tiny-v4/oracle.json",
+   "sha256": "07767506fdd43b20e88f1d823c694b3a8fc95bb99c7a5b147906fae8dede22cf"
+  },
+  "cfg8-contract": {
+   "path": "qualification/capacity/configured-entities-v1/CONTRACT.md",
+   "sha256": "430b867bed49fee527e7949157b8c69db165110b85e668af38fbdec2d4c079fa"
+  },
+  "evt-workloads": {
+   "path": "qualification/workloads/temporal-workloads.json",
+   "sha256": "322c773db2049b5a704d36925738859aef4982ca27194d13a659d1b0e9081271"
+  },
+  "evt-oracle": {
+   "path": "qualification/workloads/event_oracles.py",
+   "sha256": "6870caddffa3909c3b89e70484176388c74b9e5eae5db1af281ee58e0b3d9b02"
+  }
+ },
+ "missingFixtures": {
+  "qualification/reviews/configured-entity-xtdb-tiny-v4-terminal-independent.json": {
+   "present": false,
+   "what": "independent V4 review naming the five failing retirement-metadata checks (sha256 a79d1ad9...c95c1 per historical-assertion-metadata-v1/reproducers.json)"
+  },
+  "qualification/reviews/historical-assertion-metadata-v1-source-independent.json": {
+   "present": false,
+   "what": "independent v1 source review cited by historical-assertion-metadata-v2/README.md"
+  }
+ },
+ "oracleSourceSha256": {
+  "__init__.py": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
+  "__main__.py": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
+  "cli.py": "1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5",
+  "errors.py": "c2260e1e06af38b2ce97246d5f9ff5626484dd0dfaf4afe409ddfcd6eee634df",
+  "values.py": "67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982",
+  "exact.py": "4cfcf2c9af4b4ddf36f2218308685aff99d91416ac7f0d1dec053fb7a6e74d2a",
+  "replay.py": "3dd06dd0c30930e00ce1665ae7e9f40afcf7e06fa8a37759a8c5e65345fe9016",
+  "constraints.py": "9e1e9d7b1ca8046ca67520bbc4905b03ad3bd663c260a4ed0d2b6ca024a91a1d",
+  "views.py": "bbfb8989e054ba7ed4998f466478bdef92ede643e9554c313672f7db2a865901",
+  "entities.py": "e92308b6df7a0996a26fe129b9df07e058d8b0c84cff54f2690cd7c76fc871b3",
+  "scale.py": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
+  "run.py": "c967ad2d6d811f006da6f5766a0ca7aa7ef0c4c220ad239f7a55b7b994a4f856",
+  "selfcheck.py": "5a298c577b50204dddf5dce6577207d0dd1e90b339b3ee3d9c3bbf2b431ed8fd"
+ },
+ "sections": [
+  {
+   "section": "O-HAM finite-nine (v2 nine definitions, same-R control)",
+   "passed": 18,
+   "total": 18,
+   "checks": [
+    {
+     "check": "ham-reference-source-hash",
+     "pass": true
+    },
+    {
+     "check": "ham-receipts-and-outcomes",
+     "pass": true
+    },
+    {
+     "check": "ham-case:before-creation",
+     "pass": true
+    },
+    {
+     "check": "ham-case:original-R-after-all-writes",
+     "pass": true
+    },
+    {
+     "check": "ham-case:corrected-R",
+     "pass": true
+    },
+    {
+     "check": "ham-case:presence-off-R",
+     "pass": true
+    },
+    {
+     "check": "ham-case:latest-no-invented-R",
+     "pass": true
+    },
+    {
+     "check": "ham-case:inclusive-valid-start",
+     "pass": true
+    },
+    {
+     "check": "ham-case:exclusive-valid-end",
+     "pass": true
+    },
+    {
+     "check": "ham-case:history-before-retirement",
+     "pass": true
+    },
+    {
+     "check": "ham-case:history-at-retirement",
+     "pass": true
+    },
+    {
+     "check": "ham-case:history-latest-retains-all-lineage",
+     "pass": true
+    },
+    {
+     "check": "ham-same-time:P1",
+     "pass": true
+    },
+    {
+     "check": "ham-same-time:P2",
+     "pass": true
+    },
+    {
+     "check": "ham-raw-lifetime-retirement-authority",
+     "pass": true
+    },
+    {
+     "check": "ham-open-ended:validAt=10.124",
+     "pass": true
+    },
+    {
+     "check": "ham-open-ended:validAt=10.125",
+     "pass": true
+    },
+    {
+     "check": "ham-open-ended:validAt=1000000000000",
+     "pass": true
+    }
+   ]
+  },
+  {
+   "section": "O-CFG8 tiny-v4",
+   "passed": 20,
+   "total": 20,
+   "checks": [
+    {
+     "check": "cfg8-sparse-rows",
+     "pass": true,
+     "rows": 28,
+     "expectedRows": 28
+    },
+    {
+     "check": "cfg8-sparse-cut-0",
+     "pass": true
+    },
+    {
+     "check": "cfg8-sparse-cut-0-valid-window",
+     "pass": true
+    },
+    {
+     "check": "cfg8-sparse-cut-1",
+     "pass": true
+    },
+    {
+     "check": "cfg8-sparse-cut-1-valid-window",
+     "pass": true
+    },
+    {
+     "check": "cfg8-sparse-cut-2",
+     "pass": true
+    },
+    {
+     "check": "cfg8-sparse-cut-2-valid-window",
+     "pass": true
+    },
+    {
+     "check": "cfg8-sparse-cut-3",
+     "pass": true
+    },
+    {
+     "check": "cfg8-sparse-cut-3-valid-window",
+     "pass": true
+    },
+    {
+     "check": "cfg8-sparse-analytic-counts",
+     "pass": true
+    },
+    {
+     "check": "cfg8-dense-rows",
+     "pass": true,
+     "rows": 100,
+     "expectedRows": 100
+    },
+    {
+     "check": "cfg8-dense-cut-0",
+     "pass": true
+    },
+    {
+     "check": "cfg8-dense-cut-0-valid-window",
+     "pass": true
+    },
+    {
+     "check": "cfg8-dense-cut-1",
+     "pass": true
+    },
+    {
+     "check": "cfg8-dense-cut-1-valid-window",
+     "pass": true
+    },
+    {
+     "check": "cfg8-dense-cut-2",
+     "pass": true
+    },
+    {
+     "check": "cfg8-dense-cut-2-valid-window",
+     "pass": true
+    },
+    {
+     "check": "cfg8-dense-cut-3",
+     "pass": true
+    },
+    {
+     "check": "cfg8-dense-cut-3-valid-window",
+     "pass": true
+    },
+    {
+     "check": "cfg8-dense-analytic-counts",
+     "pass": true
+    }
+   ]
+  },
+  {
+   "section": "O-EVT cut semantics (overlap)",
+   "passed": 23,
+   "total": 23,
+   "checks": [
+    {
+     "check": "evt-01/paid-after-shipment-known",
+     "operation": "state_at",
+     "pass": true,
+     "oEvtAgrees": true
+    },
+    {
+     "check": "evt-01/shipment-boundary",
+     "operation": "state_at",
+     "pass": true,
+     "oEvtAgrees": true
+    },
+    {
+     "check": "evt-01/earlier-knowledge",
+     "operation": "state_at",
+     "pass": true,
+     "oEvtAgrees": true
+    },
+    {
+     "check": "evt-01/before-first-status",
+     "operation": "state_at",
+     "pass": true,
+     "oEvtAgrees": true
+    },
+    {
+     "check": "evt-02/original-known-address",
+     "operation": "state_at",
+     "pass": true,
+     "oEvtAgrees": true
+    },
+    {
+     "check": "evt-02/corrected-same-valid-time",
+     "operation": "state_at",
+     "pass": true,
+     "oEvtAgrees": true
+    },
+    {
+     "check": "evt-02/before-any-knowledge",
+     "operation": "state_at",
+     "pass": true,
+     "oEvtAgrees": true
+    },
+    {
+     "check": "evt-03/at-price-boundary",
+     "operation": "state_at",
+     "pass": true,
+     "oEvtAgrees": true
+    },
+    {
+     "check": "evt-03/before-price-history",
+     "operation": "state_at",
+     "pass": true,
+     "oEvtAgrees": true
+    },
+    {
+     "check": "evt-04/corrected-end",
+     "operation": "relation_exists",
+     "pass": true,
+     "oEvtAgrees": true
+    },
+    {
+     "check": "evt-05/revision-wins-arrival",
+     "operation": "state_at",
+     "pass": true,
+     "oEvtAgrees": true
+    },
+    {
+     "check": "evt-05/before-newer",
+     "operation": "state_at",
+     "pass": true,
+     "oEvtAgrees": true
+    },
+    {
+     "check": "evt-05/older-revision-fills-history",
+     "operation": "state_at",
+     "pass": true,
+     "oEvtAgrees": true
+    },
+    {
+     "check": "evt-06/balance800",
+     "operation": "account_balance",
+     "pass": true,
+     "oEvtAgrees": true
+    },
+    {
+     "check": "evt-06/distinct-equal-postings",
+     "operation": "account_balance",
+     "pass": true,
+     "oEvtAgrees": true
+    },
+    {
+     "check": "evt-06/business-reversal",
+     "operation": "account_balance",
+     "pass": true,
+     "oEvtAgrees": true
+    },
+    {
+     "check": "evt-06/empty-currency",
+     "operation": "account_balance",
+     "pass": true,
+     "oEvtAgrees": true
+    },
+    {
+     "check": "evt-19/restated-feature-separate",
+     "operation": "state_at",
+     "pass": true,
+     "oEvtAgrees": true
+    },
+    {
+     "check": "evt-19/future-valid-feature",
+     "operation": "state_at",
+     "pass": true,
+     "oEvtAgrees": true
+    },
+    {
+     "check": "evt-20/two-supports",
+     "operation": "reachability_supports",
+     "pass": true,
+     "oEvtAgrees": true
+    },
+    {
+     "check": "evt-20/one-support",
+     "operation": "reachability_supports",
+     "pass": true,
+     "oEvtAgrees": true
+    },
+    {
+     "check": "evt-20/last-support-removed",
+     "operation": "reachability_supports",
+     "pass": true,
+     "oEvtAgrees": true
+    },
+    {
+     "check": "evt-20/remaining-closure",
+     "operation": "reachability_closure",
+     "pass": true,
+     "oEvtAgrees": true
+    }
+   ]
+  },
+  {
+   "section": "Q70l continuation table",
+   "passed": 29,
+   "total": 29,
+   "checks": [
+    {
+     "check": "continuation-runtime:aggregate",
+     "pass": true,
+     "exercised": 4,
+     "nextFields": [],
+     "issued": null,
+     "errors": []
+    },
+    {
+     "check": "continuation-runtime:analyticCounts",
+     "pass": true,
+     "exercised": 4,
+     "nextFields": [],
+     "issued": null,
+     "errors": []
+    },
+    {
+     "check": "continuation-runtime:assertionSnapshot",
+     "pass": true,
+     "exercised": 4,
+     "nextFields": [],
+     "issued": null,
+     "errors": []
+    },
+    {
+     "check": "continuation-runtime:assertions",
+     "pass": true,
+     "exercised": 4,
+     "nextFields": [],
+     "issued": null,
+     "errors": []
+    },
+    {
+     "check": "continuation-runtime:compare",
+     "pass": true,
+     "exercised": 4,
+     "nextFields": [],
+     "issued": null,
+     "errors": []
+    },
+    {
+     "check": "continuation-runtime:count",
+     "pass": true,
+     "exercised": 4,
+     "nextFields": [],
+     "issued": null,
+     "errors": []
+    },
+    {
+     "check": "continuation-runtime:cutCatalog",
+     "pass": true,
+     "exercised": 4,
+     "nextFields": [],
+     "issued": null,
+     "errors": []
+    },
+    {
+     "check": "continuation-runtime:decimalKey",
+     "pass": true,
+     "exercised": 4,
+     "nextFields": [],
+     "issued": null,
+     "errors": []
+    },
+    {
+     "check": "continuation-runtime:entityPage",
+     "pass": true,
+     "exercised": 4,
+     "nextFields": [
+      "nextCursor"
+     ],
+     "issued": "nextCursor",
+     "errors": []
+    },
+    {
+     "check": "continuation-runtime:entityTriples",
+     "pass": true,
+     "exercised": 4,
+     "nextFields": [],
+     "issued": null,
+     "errors": []
+    },
+    {
+     "check": "continuation-runtime:expr",
+     "pass": true,
+     "exercised": 4,
+     "nextFields": [],
+     "issued": null,
+     "errors": []
+    },
+    {
+     "check": "continuation-runtime:find",
+     "pass": true,
+     "exercised": 4,
+     "nextFields": [],
+     "issued": null,
+     "errors": []
+    },
+    {
+     "check": "continuation-runtime:get",
+     "pass": true,
+     "exercised": 4,
+     "nextFields": [],
+     "issued": null,
+     "errors": []
+    },
+    {
+     "check": "continuation-runtime:getMany",
+     "pass": true,
+     "exercised": 4,
+     "nextFields": [],
+     "issued": null,
+     "errors": []
+    },
+    {
+     "check": "continuation-runtime:history",
+     "pass": true,
+     "exercised": 4,
+     "nextFields": [],
+     "issued": null,
+     "errors": []
+    },
+    {
+     "check": "continuation-runtime:journalFacts",
+     "pass": true,
+     "exercised": 4,
+     "nextFields": [],
+     "issued": null,
+     "errors": []
+    },
+    {
+     "check": "continuation-runtime:match",
+     "pass": true,
+     "exercised": 4,
+     "nextFields": [],
+     "issued": null,
+     "errors": []
+    },
+    {
+     "check": "continuation-runtime:modelTimeline",
+     "pass": true,
+     "exercised": 4,
+     "nextFields": [],
+     "issued": null,
+     "errors": []
+    },
+    {
+     "check": "continuation-runtime:orderKey",
+     "pass": true,
+     "exercised": 4,
+     "nextFields": [],
+     "issued": null,
+     "errors": []
+    },
+    {
+     "check": "continuation-runtime:reachability",
+     "pass": true,
+     "exercised": 4,
+     "nextFields": [],
+     "issued": null,
+     "errors": []
+    },
+    {
+     "check": "continuation-runtime:sortValues",
+     "pass": true,
+     "exercised": 4,
+     "nextFields": [],
+     "issued": null,
+     "errors": []
+    },
+    {
+     "check": "continuation-runtime:tdk1Key",
+     "pass": true,
+     "exercised": 4,
+     "nextFields": [],
+     "issued": null,
+     "errors": []
+    },
+    {
+     "check": "continuation-runtime:timeline",
+     "pass": true,
+     "exercised": 4,
+     "nextFields": [],
+     "issued": null,
+     "errors": []
+    },
+    {
+     "check": "continuation-runtime:transaction",
+     "pass": true,
+     "exercised": 4,
+     "nextFields": [],
+     "issued": null,
+     "errors": []
+    },
+    {
+     "check": "continuation-runtime:transactionByCommand",
+     "pass": true,
+     "exercised": 4,
+     "nextFields": [],
+     "issued": null,
+     "errors": []
+    },
+    {
+     "check": "continuation-runtime:transactions",
+     "pass": true,
+     "exercised": 4,
+     "nextFields": [
+      "next"
+     ],
+     "issued": "next",
+     "errors": []
+    },
+    {
+     "check": "continuation-runtime:transactionsForEntity",
+     "pass": true,
+     "exercised": 4,
+     "nextFields": [
+      "nextBeforePosition"
+     ],
+     "issued": "nextBeforePosition",
+     "errors": []
+    },
+    {
+     "check": "continuation-runtime:validTimeline",
+     "pass": true,
+     "exercised": 4,
+     "nextFields": [],
+     "issued": null,
+     "errors": []
+    },
+    {
+     "check": "continuation-runtime:valueSupports",
+     "pass": true,
+     "exercised": 4,
+     "nextFields": [],
+     "issued": null,
+     "errors": []
+    }
+   ]
+  }
+ ]
+}

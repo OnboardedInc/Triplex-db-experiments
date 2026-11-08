@@ -1,0 +1,556 @@
+{
+  "root": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+  "rows": [
+    {
+      "label": "integer-zero",
+      "page": 0,
+      "ruling": "Q70o page selector",
+      "expected": "answer",
+      "exit": 0,
+      "outputWritten": true,
+      "match": true,
+      "continuation": {
+        "id": "b",
+        "kind": "entityPage",
+        "result": {
+          "cut": {
+            "scope": "default",
+            "position": 1,
+            "recordedAt": null,
+            "validAt": 1
+          },
+          "pageSize": 1,
+          "pages": [
+            {
+              "entities": [
+                {
+                  "entityId": "e1",
+                  "bodyOrder": "set (sorted by id here)",
+                  "triples": [
+                    {
+                      "id": "a1",
+                      "entityId": "e1",
+                      "attribute": ":t/v",
+                      "value": {
+                        "type": "integer",
+                        "value": "1"
+                      },
+                      "validFrom": 0,
+                      "validTo": null,
+                      "recordedAt": 100,
+                      "recordedPosition": 1,
+                      "createdBy": null,
+                      "entityType": "T",
+                      "schemaVersion": null,
+                      "txId": "tx:0",
+                      "retractedAt": null,
+                      "retractedPosition": null,
+                      "retractTxId": null
+                    }
+                  ]
+                }
+              ],
+              "hasMore": true,
+              "nextCursor": "o-replay-cursor/1:eyJQIjoxLCJSIjpudWxsLCJWIjoiMSIsImFmdGVyIjoiZTEiLCJlbnRpdHlUeXBlIjoiVCIsInNjb3BlIjoiZGVmYXVsdCJ9.c953a74314a12311"
+            },
+            {
+              "entities": [
+                {
+                  "entityId": "e2",
+                  "bodyOrder": "set (sorted by id here)",
+                  "triples": [
+                    {
+                      "id": "a2",
+                      "entityId": "e2",
+                      "attribute": ":t/v",
+                      "value": {
+                        "type": "integer",
+                        "value": "2"
+                      },
+                      "validFrom": 0,
+                      "validTo": null,
+                      "recordedAt": 100,
+                      "recordedPosition": 1,
+                      "createdBy": null,
+                      "entityType": "T",
+                      "schemaVersion": null,
+                      "txId": "tx:0",
+                      "retractedAt": null,
+                      "retractedPosition": null,
+                      "retractTxId": null
+                    }
+                  ]
+                }
+              ],
+              "hasMore": true,
+              "nextCursor": "o-replay-cursor/1:eyJQIjoxLCJSIjpudWxsLCJWIjoiMSIsImFmdGVyIjoiZTIiLCJlbnRpdHlUeXBlIjoiVCIsInNjb3BlIjoiZGVmYXVsdCJ9.6660295bb8dc718d"
+            },
+            {
+              "entities": [
+                {
+                  "entityId": "e3",
+                  "bodyOrder": "set (sorted by id here)",
+                  "triples": [
+                    {
+                      "id": "a3",
+                      "entityId": "e3",
+                      "attribute": ":t/v",
+                      "value": {
+                        "type": "integer",
+                        "value": "3"
+                      },
+                      "validFrom": 0,
+                      "validTo": null,
+                      "recordedAt": 100,
+                      "recordedPosition": 1,
+                      "createdBy": null,
+                      "entityType": "T",
+                      "schemaVersion": null,
+                      "txId": "tx:0",
+                      "retractedAt": null,
+                      "retractedPosition": null,
+                      "retractTxId": null
+                    }
+                  ]
+                }
+              ],
+              "hasMore": false,
+              "nextCursor": null
+            }
+          ]
+        }
+      },
+      "stderr": ""
+    },
+    {
+      "label": "string-zero",
+      "page": "0",
+      "ruling": "Q70o page selector",
+      "expected": "malformed",
+      "exit": 2,
+      "outputWritten": false,
+      "match": true,
+      "continuation": null,
+      "stderr": "o-replay: malformed case: None page must be a JSON integer >= 0 (RULINGS Q70m), got '0'\n"
+    },
+    {
+      "label": "float-zero",
+      "page": 0.0,
+      "ruling": "Q70o page selector",
+      "expected": "malformed",
+      "exit": 2,
+      "outputWritten": false,
+      "match": true,
+      "continuation": null,
+      "stderr": "o-replay: malformed case: None page must be a JSON integer >= 0 (RULINGS Q70m), got '0.0'\n"
+    },
+    {
+      "label": "negative-two",
+      "page": -2,
+      "ruling": "Q70o page selector",
+      "expected": "malformed",
+      "exit": 2,
+      "outputWritten": false,
+      "match": true,
+      "continuation": null,
+      "stderr": "o-replay: malformed case: None page must be a JSON integer >= 0 (RULINGS Q70m), got '-2'\n"
+    },
+    {
+      "label": "boolean-true",
+      "page": true,
+      "ruling": "Q70o page selector",
+      "expected": "malformed",
+      "exit": 2,
+      "outputWritten": false,
+      "match": true,
+      "continuation": null,
+      "stderr": "o-replay: malformed case: None page must be a JSON integer >= 0 (RULINGS Q70m), got True\n"
+    },
+    {
+      "label": "out-of-range",
+      "page": 4,
+      "ruling": "Q70o page selector",
+      "expected": "malformed",
+      "exit": 2,
+      "outputWritten": false,
+      "match": true,
+      "continuation": null,
+      "stderr": "o-replay: malformed case: cursorFrom.page is outside the source page range (RULINGS Q70o)\n"
+    },
+    {
+      "label": "huge-index",
+      "page": 10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000,
+      "ruling": "Q70o page selector",
+      "expected": "malformed",
+      "exit": 2,
+      "outputWritten": false,
+      "match": true,
+      "continuation": null,
+      "stderr": "o-replay: malformed case: cursorFrom.page is outside the source page range (RULINGS Q70o)\n"
+    },
+    {
+      "label": "null-page",
+      "page": null,
+      "ruling": "Q70o page selector",
+      "expected": "malformed",
+      "exit": 2,
+      "outputWritten": false,
+      "match": true,
+      "continuation": null,
+      "stderr": "o-replay: malformed case: cursorFrom.page must be a JSON integer (RULINGS Q70o)\n"
+    },
+    {
+      "label": "array-page",
+      "page": [],
+      "ruling": "Q70o page selector",
+      "expected": "malformed",
+      "exit": 2,
+      "outputWritten": false,
+      "match": true,
+      "continuation": null,
+      "stderr": "o-replay: malformed case: None page must be a JSON integer >= 0 (RULINGS Q70m), got []\n"
+    },
+    {
+      "label": "object-page",
+      "page": {},
+      "ruling": "Q70o page selector",
+      "expected": "malformed",
+      "exit": 2,
+      "outputWritten": false,
+      "match": true,
+      "continuation": null,
+      "stderr": "o-replay: malformed case: None page must be a JSON integer >= 0 (RULINGS Q70m), got {}\n"
+    },
+    {
+      "label": "false-page",
+      "page": false,
+      "ruling": "Q70o page selector",
+      "expected": "malformed",
+      "exit": 2,
+      "outputWritten": false,
+      "match": true,
+      "continuation": null,
+      "stderr": "o-replay: malformed case: None page must be a JSON integer >= 0 (RULINGS Q70m), got False\n"
+    },
+    {
+      "label": "fractional-page",
+      "page": 0.5,
+      "ruling": "Q70o page selector",
+      "expected": "malformed",
+      "exit": 2,
+      "outputWritten": false,
+      "match": true,
+      "continuation": null,
+      "stderr": "o-replay: malformed case: None page must be a JSON integer >= 0 (RULINGS Q70m), got '0.5'\n"
+    },
+    {
+      "label": "exponent-page",
+      "page": 1.0,
+      "ruling": "Q70o page selector",
+      "expected": "malformed",
+      "exit": 2,
+      "outputWritten": false,
+      "match": true,
+      "continuation": null,
+      "stderr": "o-replay: malformed case: None page must be a JSON integer >= 0 (RULINGS Q70m), got '1.0'\n"
+    },
+    {
+      "label": "integer-one",
+      "page": 1,
+      "ruling": "Q70o page selector",
+      "expected": "answer",
+      "exit": 0,
+      "outputWritten": true,
+      "match": true,
+      "continuation": {
+        "id": "b",
+        "kind": "entityPage",
+        "result": {
+          "cut": {
+            "scope": "default",
+            "position": 1,
+            "recordedAt": null,
+            "validAt": 1
+          },
+          "pageSize": 1,
+          "pages": [
+            {
+              "entities": [
+                {
+                  "entityId": "e2",
+                  "bodyOrder": "set (sorted by id here)",
+                  "triples": [
+                    {
+                      "id": "a2",
+                      "entityId": "e2",
+                      "attribute": ":t/v",
+                      "value": {
+                        "type": "integer",
+                        "value": "2"
+                      },
+                      "validFrom": 0,
+                      "validTo": null,
+                      "recordedAt": 100,
+                      "recordedPosition": 1,
+                      "createdBy": null,
+                      "entityType": "T",
+                      "schemaVersion": null,
+                      "txId": "tx:0",
+                      "retractedAt": null,
+                      "retractedPosition": null,
+                      "retractTxId": null
+                    }
+                  ]
+                }
+              ],
+              "hasMore": true,
+              "nextCursor": "o-replay-cursor/1:eyJQIjoxLCJSIjpudWxsLCJWIjoiMSIsImFmdGVyIjoiZTIiLCJlbnRpdHlUeXBlIjoiVCIsInNjb3BlIjoiZGVmYXVsdCJ9.6660295bb8dc718d"
+            },
+            {
+              "entities": [
+                {
+                  "entityId": "e3",
+                  "bodyOrder": "set (sorted by id here)",
+                  "triples": [
+                    {
+                      "id": "a3",
+                      "entityId": "e3",
+                      "attribute": ":t/v",
+                      "value": {
+                        "type": "integer",
+                        "value": "3"
+                      },
+                      "validFrom": 0,
+                      "validTo": null,
+                      "recordedAt": 100,
+                      "recordedPosition": 1,
+                      "createdBy": null,
+                      "entityType": "T",
+                      "schemaVersion": null,
+                      "txId": "tx:0",
+                      "retractedAt": null,
+                      "retractedPosition": null,
+                      "retractTxId": null
+                    }
+                  ]
+                }
+              ],
+              "hasMore": false,
+              "nextCursor": null
+            }
+          ]
+        }
+      },
+      "stderr": ""
+    },
+    {
+      "label": "terminal-page",
+      "page": 3,
+      "ruling": "Q70o page selector",
+      "expected": "malformed",
+      "exit": 2,
+      "outputWritten": false,
+      "match": true,
+      "continuation": null,
+      "stderr": "o-replay: malformed case: query 'a' page 3 has no nextCursor\n"
+    },
+    {
+      "label": "omitted-page",
+      "page": "OMIT",
+      "ruling": "Q70o page selector",
+      "expected": "answer",
+      "exit": 0,
+      "outputWritten": true,
+      "match": true,
+      "continuation": {
+        "id": "b",
+        "kind": "entityPage",
+        "result": {
+          "cut": {
+            "scope": "default",
+            "position": 1,
+            "recordedAt": null,
+            "validAt": 1
+          },
+          "pageSize": 1,
+          "pages": [
+            {
+              "entities": [
+                {
+                  "entityId": "e1",
+                  "bodyOrder": "set (sorted by id here)",
+                  "triples": [
+                    {
+                      "id": "a1",
+                      "entityId": "e1",
+                      "attribute": ":t/v",
+                      "value": {
+                        "type": "integer",
+                        "value": "1"
+                      },
+                      "validFrom": 0,
+                      "validTo": null,
+                      "recordedAt": 100,
+                      "recordedPosition": 1,
+                      "createdBy": null,
+                      "entityType": "T",
+                      "schemaVersion": null,
+                      "txId": "tx:0",
+                      "retractedAt": null,
+                      "retractedPosition": null,
+                      "retractTxId": null
+                    }
+                  ]
+                }
+              ],
+              "hasMore": true,
+              "nextCursor": "o-replay-cursor/1:eyJQIjoxLCJSIjpudWxsLCJWIjoiMSIsImFmdGVyIjoiZTEiLCJlbnRpdHlUeXBlIjoiVCIsInNjb3BlIjoiZGVmYXVsdCJ9.c953a74314a12311"
+            },
+            {
+              "entities": [
+                {
+                  "entityId": "e2",
+                  "bodyOrder": "set (sorted by id here)",
+                  "triples": [
+                    {
+                      "id": "a2",
+                      "entityId": "e2",
+                      "attribute": ":t/v",
+                      "value": {
+                        "type": "integer",
+                        "value": "2"
+                      },
+                      "validFrom": 0,
+                      "validTo": null,
+                      "recordedAt": 100,
+                      "recordedPosition": 1,
+                      "createdBy": null,
+                      "entityType": "T",
+                      "schemaVersion": null,
+                      "txId": "tx:0",
+                      "retractedAt": null,
+                      "retractedPosition": null,
+                      "retractTxId": null
+                    }
+                  ]
+                }
+              ],
+              "hasMore": true,
+              "nextCursor": "o-replay-cursor/1:eyJQIjoxLCJSIjpudWxsLCJWIjoiMSIsImFmdGVyIjoiZTIiLCJlbnRpdHlUeXBlIjoiVCIsInNjb3BlIjoiZGVmYXVsdCJ9.6660295bb8dc718d"
+            },
+            {
+              "entities": [
+                {
+                  "entityId": "e3",
+                  "bodyOrder": "set (sorted by id here)",
+                  "triples": [
+                    {
+                      "id": "a3",
+                      "entityId": "e3",
+                      "attribute": ":t/v",
+                      "value": {
+                        "type": "integer",
+                        "value": "3"
+                      },
+                      "validFrom": 0,
+                      "validTo": null,
+                      "recordedAt": 100,
+                      "recordedPosition": 1,
+                      "createdBy": null,
+                      "entityType": "T",
+                      "schemaVersion": null,
+                      "txId": "tx:0",
+                      "retractedAt": null,
+                      "retractedPosition": null,
+                      "retractTxId": null
+                    }
+                  ]
+                }
+              ],
+              "hasMore": false,
+              "nextCursor": null
+            }
+          ]
+        }
+      },
+      "stderr": ""
+    },
+    {
+      "label": "null-ref",
+      "page": "REF_NULL",
+      "ruling": "Q70o page selector",
+      "expected": "malformed",
+      "exit": 2,
+      "outputWritten": false,
+      "match": true,
+      "continuation": null,
+      "stderr": "o-replay: malformed case: cursorFrom must be an object naming a query (RULINGS Q70o)\n"
+    },
+    {
+      "label": "array-ref",
+      "page": "REF_ARRAY",
+      "ruling": "Q70o page selector",
+      "expected": "malformed",
+      "exit": 2,
+      "outputWritten": false,
+      "match": true,
+      "continuation": null,
+      "stderr": "o-replay: malformed case: cursorFrom must be an object naming a query (RULINGS Q70o)\n"
+    },
+    {
+      "label": "string-ref",
+      "page": "REF_STRING",
+      "ruling": "Q70o page selector",
+      "expected": "malformed",
+      "exit": 2,
+      "outputWritten": false,
+      "match": true,
+      "continuation": null,
+      "stderr": "o-replay: malformed case: cursorFrom must be an object naming a query (RULINGS Q70o)\n"
+    },
+    {
+      "label": "boolean-ref",
+      "page": "REF_BOOL",
+      "ruling": "Q70o page selector",
+      "expected": "malformed",
+      "exit": 2,
+      "outputWritten": false,
+      "match": true,
+      "continuation": null,
+      "stderr": "o-replay: malformed case: cursorFrom must be an object naming a query (RULINGS Q70o)\n"
+    },
+    {
+      "label": "number-query",
+      "page": "QUERY_NUMBER",
+      "ruling": "Q70o page selector",
+      "expected": "malformed",
+      "exit": 2,
+      "outputWritten": false,
+      "match": true,
+      "continuation": null,
+      "stderr": "o-replay: malformed case: cursorFrom must be an object naming a query (RULINGS Q70o)\n"
+    },
+    {
+      "label": "missing-query",
+      "page": "NO_QUERY",
+      "ruling": "Q70o page selector",
+      "expected": "malformed",
+      "exit": 2,
+      "outputWritten": false,
+      "match": true,
+      "continuation": null,
+      "stderr": "o-replay: malformed case: cursorFrom must be an object naming a query (RULINGS Q70o)\n"
+    },
+    {
+      "label": "unknown-query",
+      "page": "UNKNOWN_QUERY",
+      "ruling": "Q70o page selector",
+      "expected": "malformed",
+      "exit": 2,
+      "outputWritten": false,
+      "match": true,
+      "continuation": null,
+      "stderr": "o-replay: malformed case: None page must be a JSON integer >= 0 (RULINGS Q70m), got 'UNKNOWN_QUERY'\n"
+    }
+  ]
+}

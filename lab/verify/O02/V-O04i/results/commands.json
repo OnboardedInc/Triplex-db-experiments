@@ -1,0 +1,292 @@
+[
+  {
+    "name": "unit-tests",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/atf195f30/lab/oracles/replay/cli.py",
+      "--test"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 0,
+    "seconds": 18.864,
+    "environmentOverrides": {}
+  },
+  {
+    "name": "self-check",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/atf195f30/lab/oracles/replay/cli.py",
+      "--self-check",
+      "-o",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/results/self-check.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 0,
+    "seconds": 0.182,
+    "environmentOverrides": {}
+  },
+  {
+    "name": "plant_paged_kind",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/plant_paged_kind.py",
+      "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/results/plant_paged_kind.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 0,
+    "seconds": 2.3,
+    "environmentOverrides": {}
+  },
+  {
+    "name": "probe_reference_page",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/probe_reference_page.py",
+      "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/results/reference-page"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 0,
+    "seconds": 1.514,
+    "environmentOverrides": {}
+  },
+  {
+    "name": "probe_q52",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/atf195f30/lab/verify/O02/tools/probe_q52.py",
+      "/private/tmp/CX-VO04I-utlp61cs/probe_q52",
+      "--results=/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/results"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 0,
+    "seconds": 5.082,
+    "environmentOverrides": {}
+  },
+  {
+    "name": "probe_q52.self-test",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/atf195f30/lab/verify/O02/tools/probe_q52.py",
+      "/private/tmp/CX-VO04I-utlp61cs/probe_q52",
+      "--results=/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/results",
+      "--self-test"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 0,
+    "seconds": 6.99,
+    "environmentOverrides": {}
+  },
+  {
+    "name": "probe_q49",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/atf195f30/lab/verify/O02/tools/probe_q49.py",
+      "/private/tmp/CX-VO04I-utlp61cs/probe_q49",
+      "--results=/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/results"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 0,
+    "seconds": 2.999,
+    "environmentOverrides": {}
+  },
+  {
+    "name": "probe_q49.self-test",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/atf195f30/lab/verify/O02/tools/probe_q49.py",
+      "/private/tmp/CX-VO04I-utlp61cs/probe_q49",
+      "--results=/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/results",
+      "--self-test"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 0,
+    "seconds": 3.919,
+    "environmentOverrides": {}
+  },
+  {
+    "name": "probe_035",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/atf195f30/lab/verify/O02/tools/probe_035.py",
+      "/private/tmp/CX-VO04I-utlp61cs/probe_035",
+      "--results=/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/results"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 0,
+    "seconds": 7.7,
+    "environmentOverrides": {}
+  },
+  {
+    "name": "probe_035.self-test",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/atf195f30/lab/verify/O02/tools/probe_035.py",
+      "/private/tmp/CX-VO04I-utlp61cs/probe_035",
+      "--results=/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/results",
+      "--self-test"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 0,
+    "seconds": 0.898,
+    "environmentOverrides": {}
+  },
+  {
+    "name": "probe_delta_033",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/atf195f30/lab/verify/O02/tools/probe_delta_033.py",
+      "/private/tmp/CX-VO04I-utlp61cs/delta"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 0,
+    "seconds": 1.312,
+    "environmentOverrides": {}
+  },
+  {
+    "name": "converter.core",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/atf195f30/lab/verify/O02/convert_and_run.py"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 0,
+    "seconds": 6.471,
+    "environmentOverrides": {
+      "O02_LANE": "core"
+    }
+  },
+  {
+    "name": "converter-compare.core",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/tools/compare_results.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/results/converter.core.json",
+      "/Users/sam/Claude/Projects/triplex-db-2/EXP-O04b-oracle-0.4.2/results.048.core.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 0,
+    "seconds": 0.038,
+    "environmentOverrides": {}
+  },
+  {
+    "name": "converter.qlever",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/atf195f30/lab/verify/O02/convert_and_run.py"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 0,
+    "seconds": 6.172,
+    "environmentOverrides": {
+      "O02_LANE": "qlever"
+    }
+  },
+  {
+    "name": "converter-compare.qlever",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/tools/compare_results.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/results/converter.qlever.json",
+      "/Users/sam/Claude/Projects/triplex-db-2/EXP-O04b-oracle-0.4.2/results.048.qlever.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 0,
+    "seconds": 0.026,
+    "environmentOverrides": {}
+  },
+  {
+    "name": "differential.seed49",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/tools/differential.py",
+      "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d",
+      "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+      "/private/tmp/CX-VO04I-utlp61cs/diff-49",
+      "500",
+      "49",
+      "/private/tmp/CX-VO04I-utlp61cs/prior-corpus/probe_q52",
+      "/private/tmp/CX-VO04I-utlp61cs/prior-corpus/probe_q49",
+      "/private/tmp/CX-VO04I-utlp61cs/prior-corpus/probe_035",
+      "/private/tmp/CX-VO04I-utlp61cs/prior-corpus/delta",
+      "/private/tmp/CX-VO04I-utlp61cs/prior-corpus/golden-core",
+      "/private/tmp/CX-VO04I-utlp61cs/prior-corpus/golden-qlever",
+      "--out=/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/results/differential.seed49.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 0,
+    "seconds": 132.57,
+    "environmentOverrides": {}
+  },
+  {
+    "name": "differential.seed4949",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/tools/differential.py",
+      "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d",
+      "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+      "/private/tmp/CX-VO04I-utlp61cs/diff-4949",
+      "800",
+      "4949",
+      "--out=/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/results/differential.seed4949.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 0,
+    "seconds": 127.232,
+    "environmentOverrides": {}
+  },
+  {
+    "name": "differential.reference-page",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/tools/differential.py",
+      "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d",
+      "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+      "/private/tmp/CX-VO04I-utlp61cs/diff-pages",
+      "0",
+      "0",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/results/reference-page",
+      "--out=/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/results/differential.reference-page.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 0,
+    "seconds": 2.953,
+    "environmentOverrides": {}
+  },
+  {
+    "name": "hashes",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/tools/hash_verify.py",
+      "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+      "f195f30",
+      "/private/tmp/CX-VO04I-utlp61cs/probe_q52/040_journal_after_issued_by_disagreeing_pages.expected.json",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/results/hashes.f195f30.json",
+      "/Users/sam/Claude/Projects/triplex-db-2/EXP-O04b-oracle-0.4.2/hashes.0.4.9.txt"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 0,
+    "seconds": 0.048,
+    "environmentOverrides": {}
+  }
+]

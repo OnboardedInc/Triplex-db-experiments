@@ -1,0 +1,14 @@
+{
+  "scratch": "/private/tmp/CX-VO04I-utlp61cs",
+  "reason": "Stronger plant assertions, actual exponent lexeme and 5000-digit page control; raw differential receipts",
+  "toolHashes": {
+    "plant_paged_kind_plus.py": "98faa6fdfb1ca876aa9bf2e07a9749cfe1c4ec0d6e955b316030f63bb78e4c83",
+    "probe_reference_page.py": "e3ebba75ef8b3bd7db41e2ef60a8e675622e75d3d6732860ecd57faf2f987634",
+    "probe_reference_page_plus.py": "e7fd80ab8059027dcb969261ac79c563174797f9994cd0be007b948a60836dbf",
+    "rerun.py": "0773a397d599230fbdbbe2182b657c927e3cbda13cabe8ebabfa1df07424ede0",
+    "plant_paged_kind.py": "ab3e65e016e6e948f5aebfe9f4129fd7bc90d5cffd2f6e230c96037ab17175db",
+    "supplement.py": "8a64ecefc39c9f42944869e455e7482d0eff59359a64539fcdc1fdafccf2c24d"
+  },
+  "hostDiskFreeBytesBefore": 32412901376,
+  "startedAt": "2026-11-08T21:45:23Z"
+}

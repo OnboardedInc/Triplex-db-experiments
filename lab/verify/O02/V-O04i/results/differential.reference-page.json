@@ -1,0 +1,191 @@
+{
+ "old": "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d",
+ "new": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+ "cases": 23,
+ "random": 0,
+ "seed": 0,
+ "identical": 3,
+ "bothRefused": 4,
+ "different": 16,
+ "differentByFeature": {
+  "Q66b cursor": 16
+ },
+ "rows": [
+  {
+   "case": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/results/reference-page/array-page.case.json",
+   "path": "$.crashed",
+   "old": 1,
+   "new": "<absent>",
+   "features": [
+    "Q66b cursor"
+   ],
+   "oldRefused": false,
+   "newRefused": true
+  },
+  {
+   "case": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/results/reference-page/array-ref.case.json",
+   "path": "$.crashed",
+   "old": 1,
+   "new": "<absent>",
+   "features": [
+    "Q66b cursor"
+   ],
+   "oldRefused": false,
+   "newRefused": true
+  },
+  {
+   "case": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/results/reference-page/boolean-ref.case.json",
+   "path": "$.crashed",
+   "old": 1,
+   "new": "<absent>",
+   "features": [
+    "Q66b cursor"
+   ],
+   "oldRefused": false,
+   "newRefused": true
+  },
+  {
+   "case": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/results/reference-page/boolean-true.case.json",
+   "path": "$.caseId",
+   "old": "CX-VO04I/reference-page/boolean-true",
+   "new": "<absent>",
+   "features": [
+    "Q66b cursor"
+   ],
+   "oldRefused": false,
+   "newRefused": true
+  },
+  {
+   "case": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/results/reference-page/exponent-page.case.json",
+   "path": "$.crashed",
+   "old": 1,
+   "new": "<absent>",
+   "features": [
+    "Q66b cursor"
+   ],
+   "oldRefused": false,
+   "newRefused": true
+  },
+  {
+   "case": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/results/reference-page/false-page.case.json",
+   "path": "$.caseId",
+   "old": "CX-VO04I/reference-page/false-page",
+   "new": "<absent>",
+   "features": [
+    "Q66b cursor"
+   ],
+   "oldRefused": false,
+   "newRefused": true
+  },
+  {
+   "case": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/results/reference-page/float-zero.case.json",
+   "path": "$.crashed",
+   "old": 1,
+   "new": "<absent>",
+   "features": [
+    "Q66b cursor"
+   ],
+   "oldRefused": false,
+   "newRefused": true
+  },
+  {
+   "case": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/results/reference-page/fractional-page.case.json",
+   "path": "$.crashed",
+   "old": 1,
+   "new": "<absent>",
+   "features": [
+    "Q66b cursor"
+   ],
+   "oldRefused": false,
+   "newRefused": true
+  },
+  {
+   "case": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/results/reference-page/huge-index.case.json",
+   "path": "$.crashed",
+   "old": 1,
+   "new": "<absent>",
+   "features": [
+    "Q66b cursor"
+   ],
+   "oldRefused": false,
+   "newRefused": true
+  },
+  {
+   "case": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/results/reference-page/missing-query.case.json",
+   "path": "$.crashed",
+   "old": 1,
+   "new": "<absent>",
+   "features": [
+    "Q66b cursor"
+   ],
+   "oldRefused": false,
+   "newRefused": true
+  },
+  {
+   "case": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/results/reference-page/negative-two.case.json",
+   "path": "$.caseId",
+   "old": "CX-VO04I/reference-page/negative-two",
+   "new": "<absent>",
+   "features": [
+    "Q66b cursor"
+   ],
+   "oldRefused": false,
+   "newRefused": true
+  },
+  {
+   "case": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/results/reference-page/null-page.case.json",
+   "path": "$.crashed",
+   "old": 1,
+   "new": "<absent>",
+   "features": [
+    "Q66b cursor"
+   ],
+   "oldRefused": false,
+   "newRefused": true
+  },
+  {
+   "case": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/results/reference-page/object-page.case.json",
+   "path": "$.crashed",
+   "old": 1,
+   "new": "<absent>",
+   "features": [
+    "Q66b cursor"
+   ],
+   "oldRefused": false,
+   "newRefused": true
+  },
+  {
+   "case": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/results/reference-page/out-of-range.case.json",
+   "path": "$.crashed",
+   "old": 1,
+   "new": "<absent>",
+   "features": [
+    "Q66b cursor"
+   ],
+   "oldRefused": false,
+   "newRefused": true
+  },
+  {
+   "case": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/results/reference-page/string-ref.case.json",
+   "path": "$.crashed",
+   "old": 1,
+   "new": "<absent>",
+   "features": [
+    "Q66b cursor"
+   ],
+   "oldRefused": false,
+   "newRefused": true
+  },
+  {
+   "case": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/results/reference-page/string-zero.case.json",
+   "path": "$.caseId",
+   "old": "CX-VO04I/reference-page/string-zero",
+   "new": "<absent>",
+   "features": [
+    "Q66b cursor"
+   ],
+   "oldRefused": false,
+   "newRefused": true
+  }
+ ]
+}

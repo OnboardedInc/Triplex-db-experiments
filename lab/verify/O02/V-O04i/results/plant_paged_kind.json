@@ -1,0 +1,285 @@
+{
+ "root": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+ "plants": [
+  {
+   "plant": "P1 tuple literal",
+   "exit": 1,
+   "selfCheckStatus": "FAIL",
+   "q70lSection": {
+    "section": "Q70l continuation table",
+    "passed": 29,
+    "total": 30
+   },
+   "failedChecks": [
+    "continuation-runtime:fakePaged"
+   ],
+   "fakeQueryExit": 0,
+   "runtimeCheck": {
+    "check": "continuation-runtime:fakePaged",
+    "pass": false,
+    "exercised": 4,
+    "nextFields": [
+     "nextPage"
+    ],
+    "issued": null,
+    "errors": []
+   },
+   "fakeQueryOutput": [
+    {
+     "id": "fake",
+     "kind": "fakePaged",
+     "result": {
+      "rows": [],
+      "nextPage": 1
+     }
+    }
+   ]
+  },
+  {
+   "plant": "P2 computed key",
+   "exit": 1,
+   "selfCheckStatus": "FAIL",
+   "q70lSection": {
+    "section": "Q70l continuation table",
+    "passed": 29,
+    "total": 30
+   },
+   "failedChecks": [
+    "continuation-runtime:fakePaged"
+   ],
+   "fakeQueryExit": 0,
+   "runtimeCheck": {
+    "check": "continuation-runtime:fakePaged",
+    "pass": false,
+    "exercised": 4,
+    "nextFields": [
+     "nextPage"
+    ],
+    "issued": null,
+    "errors": []
+   },
+   "fakeQueryOutput": [
+    {
+     "id": "fake",
+     "kind": "fakePaged",
+     "result": {
+      "rows": [],
+      "nextPage": 1
+     }
+    }
+   ]
+  },
+  {
+   "plant": "P3 helper elsewhere",
+   "exit": 1,
+   "selfCheckStatus": "FAIL",
+   "q70lSection": {
+    "section": "Q70l continuation table",
+    "passed": 29,
+    "total": 30
+   },
+   "failedChecks": [
+    "continuation-runtime:fakePaged"
+   ],
+   "fakeQueryExit": 0,
+   "runtimeCheck": {
+    "check": "continuation-runtime:fakePaged",
+    "pass": false,
+    "exercised": 4,
+    "nextFields": [
+     "nextPage"
+    ],
+    "issued": null,
+    "errors": []
+   },
+   "fakeQueryOutput": [
+    {
+     "id": "fake",
+     "kind": "fakePaged",
+     "result": {
+      "rows": [],
+      "nextPage": 1
+     }
+    }
+   ]
+  },
+  {
+   "plant": "P4 dict literal",
+   "exit": 1,
+   "selfCheckStatus": "FAIL",
+   "q70lSection": {
+    "section": "Q70l continuation table",
+    "passed": 29,
+    "total": 30
+   },
+   "failedChecks": [
+    "continuation-runtime:fakePaged"
+   ],
+   "fakeQueryExit": 0,
+   "runtimeCheck": {
+    "check": "continuation-runtime:fakePaged",
+    "pass": false,
+    "exercised": 4,
+    "nextFields": [
+     "nextPage"
+    ],
+    "issued": null,
+    "errors": []
+   },
+   "fakeQueryOutput": [
+    {
+     "id": "fake",
+     "kind": "fakePaged",
+     "result": {
+      "rows": [],
+      "page": {
+       "nextPage": 1
+      }
+     }
+    }
+   ]
+  },
+  {
+   "plant": "P5 mixed array tree",
+   "exit": 1,
+   "selfCheckStatus": "FAIL",
+   "q70lSection": {
+    "section": "Q70l continuation table",
+    "passed": 29,
+    "total": 30
+   },
+   "failedChecks": [
+    "continuation-runtime:fakePaged"
+   ],
+   "fakeQueryExit": 0,
+   "runtimeCheck": {
+    "check": "continuation-runtime:fakePaged",
+    "pass": false,
+    "exercised": 4,
+    "nextFields": [
+     "nextOffset"
+    ],
+    "issued": null,
+    "errors": []
+   },
+   "fakeQueryOutput": [
+    {
+     "id": "fake",
+     "kind": "fakePaged",
+     "result": {
+      "pages": [
+       {
+        "items": [
+         0,
+         {
+          "payload": {
+           "nextOffset": null
+          }
+         }
+        ]
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "plant": "P6 tuple in object",
+   "exit": 1,
+   "selfCheckStatus": "FAIL",
+   "q70lSection": {
+    "section": "Q70l continuation table",
+    "passed": 29,
+    "total": 30
+   },
+   "failedChecks": [
+    "continuation-runtime:fakePaged"
+   ],
+   "fakeQueryExit": 0,
+   "runtimeCheck": {
+    "check": "continuation-runtime:fakePaged",
+    "pass": false,
+    "exercised": 4,
+    "nextFields": [
+     "nextToken"
+    ],
+    "issued": null,
+    "errors": []
+   },
+   "fakeQueryOutput": [
+    {
+     "id": "fake",
+     "kind": "fakePaged",
+     "result": {
+      "payload": [
+       [],
+       {
+        "nested": [
+         {
+          "nextToken": "token"
+         }
+        ]
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "plant": "P7 missing fixture",
+   "exit": 1,
+   "selfCheckStatus": "FAIL",
+   "q70lSection": {
+    "section": "Q70l continuation table",
+    "passed": 29,
+    "total": 30
+   },
+   "failedChecks": [
+    "continuation-runtime:fakePaged"
+   ],
+   "fakeQueryExit": 2,
+   "runtimeCheck": {
+    "check": "continuation-runtime:fakePaged",
+    "pass": false,
+    "exercised": 0,
+    "nextFields": [],
+    "issued": null,
+    "errors": [
+     "OracleInputError: missing fake fixture",
+     "OracleInputError: missing fake fixture",
+     "OracleInputError: missing fake fixture",
+     "OracleInputError: missing fake fixture"
+    ]
+   },
+   "fakeQueryOutput": "o-replay: malformed case: missing fake fixture\n"
+  },
+  {
+   "plant": "P8 unencodable output",
+   "exit": 1,
+   "selfCheckStatus": "FAIL",
+   "q70lSection": {
+    "section": "Q70l continuation table",
+    "passed": 29,
+    "total": 30
+   },
+   "failedChecks": [
+    "continuation-runtime:fakePaged"
+   ],
+   "fakeQueryExit": 1,
+   "runtimeCheck": {
+    "check": "continuation-runtime:fakePaged",
+    "pass": false,
+    "exercised": 0,
+    "nextFields": [],
+    "issued": null,
+    "errors": [
+     "TypeError: cannot emit set",
+     "TypeError: cannot emit set",
+     "TypeError: cannot emit set",
+     "TypeError: cannot emit set"
+    ]
+   },
+   "fakeQueryOutput": "Traceback (most recent call last):\n  File \"/private/tmp/CX-VO04I-utlp61cs/atf195f30/lab/oracles/replay/cli.py\", line 60, in <module>\n    raise SystemExit(main())\n                     ~~~~^^\n  File \"/private/tmp/CX-VO04I-utlp61cs/atf195f30/lab/oracles/replay/cli.py\", line 46, in main\n    report = RUN.evaluate_text(Path(args.case).read_bytes(), args.lane)\n  File \"/private/tmp/CX-VO04I-utlp61cs/atf195f30/lab/oracles/replay/run.py\", line 791, in evaluate_text\n    return evaluate_case(case, digest, lane)\n  File \"/private/tmp/CX-VO04I-utlp61cs/atf195f30/lab/oracles/replay/run.py\", line 755, in evaluate_case\n    queries = run.run_queries()\n  File \"/private/tmp/CX-VO04I-utlp61cs/atf195f30/lab/oracles/replay/run.py\", line 627, in run_queries\n    if len({V.dumps(V.OrderedOut([answer]), indent=0) for _, answer in answers}) == 1:\n            ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/private/tmp/CX-VO04I-utlp61cs/atf195f30/lab/oracles/replay/values.py\", line 952, in dumps\n    items = [json.dumps(k, ensure_ascii=True) + \": \" + dumps(v, indent, _level + 1) for k, v in node]\n                                                       ~~~~~^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/private/tmp/CX-VO04I-utlp61cs/atf195f30/lab/oracles/replay/values.py\", line 955, in dumps\n    return dumps(OrderedOut(node.items()), indent, _level)\n  File \"/private/tmp/CX-VO04I-utlp61cs/atf195f30/lab/oracles/replay/values.py\", line 952, in dumps\n    items = [json.dumps(k, ensure_ascii=True) + \": \" + dumps(v, indent, _level + 1) for k, v in node]\n                                                       ~~~~~^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/private/tmp/CX-VO04I-utlp61cs/atf195f30/lab/oracles/replay/values.py\", line 961, in dumps\n    raise TypeError(f\"cannot emit {type(node).__name__}\")\nTypeError: cannot emit set\n"
+  }
+ ]
+}

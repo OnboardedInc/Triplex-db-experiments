@@ -1,0 +1,490 @@
+{
+ "format": "triplex-db-2/o-replay-expected/1",
+ "oracle": {
+  "id": "O-REPLAY",
+  "version": "0.4.9",
+  "sourceSha256": {
+   "__init__.py": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
+   "__main__.py": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
+   "cli.py": "1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5",
+   "errors.py": "c2260e1e06af38b2ce97246d5f9ff5626484dd0dfaf4afe409ddfcd6eee634df",
+   "values.py": "67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982",
+   "exact.py": "4cfcf2c9af4b4ddf36f2218308685aff99d91416ac7f0d1dec053fb7a6e74d2a",
+   "replay.py": "3dd06dd0c30930e00ce1665ae7e9f40afcf7e06fa8a37759a8c5e65345fe9016",
+   "constraints.py": "9e1e9d7b1ca8046ca67520bbc4905b03ad3bd663c260a4ed0d2b6ca024a91a1d",
+   "views.py": "bbfb8989e054ba7ed4998f466478bdef92ede643e9554c313672f7db2a865901",
+   "entities.py": "e92308b6df7a0996a26fe129b9df07e058d8b0c84cff54f2690cd7c76fc871b3",
+   "scale.py": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
+   "run.py": "c967ad2d6d811f006da6f5766a0ca7aa7ef0c4c220ad239f7a55b7b994a4f856",
+   "selfcheck.py": "5a298c577b50204dddf5dce6577207d0dd1e90b339b3ee3d9c3bbf2b431ed8fd"
+  }
+ },
+ "caseId": "CX-VO04I/reference-page/omitted-page",
+ "caseSha256": "b19bcf95d0872b53f73031f3a5d56406ecb0358731cef773ab30258a2dac3f0a",
+ "lane": {
+  "name": "core",
+  "integerRange": [
+   "-9223372036854775808",
+   "9223372036854775807"
+  ]
+ },
+ "verdict": "EXPECTED-ONLY",
+ "divergedAtCommand": null,
+ "receiptConsistency": {
+  "status": "NOT-APPLICABLE",
+  "reason": "no receipts supplied"
+ },
+ "commandOutcomes": [
+  {
+   "command": 0,
+   "expected": {
+    "outcome": "committed"
+   },
+   "observed": null,
+   "verdict": "EXPECTED-ONLY"
+  }
+ ],
+ "state": [
+  {
+   "scope": "default",
+   "lastPosition": 1,
+   "assertions": [
+    {
+     "id": "a0",
+     "entityId": "e0",
+     "attribute": ":t/v",
+     "value": {
+      "type": "integer",
+      "value": "0"
+     },
+     "validFrom": 0,
+     "validTo": null,
+     "recordedAt": 100,
+     "recordedPosition": 1,
+     "createdBy": null,
+     "entityType": "T",
+     "schemaVersion": null,
+     "txId": "tx:0",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "a1",
+     "entityId": "e1",
+     "attribute": ":t/v",
+     "value": {
+      "type": "integer",
+      "value": "1"
+     },
+     "validFrom": 0,
+     "validTo": null,
+     "recordedAt": 100,
+     "recordedPosition": 1,
+     "createdBy": null,
+     "entityType": "T",
+     "schemaVersion": null,
+     "txId": "tx:0",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "a2",
+     "entityId": "e2",
+     "attribute": ":t/v",
+     "value": {
+      "type": "integer",
+      "value": "2"
+     },
+     "validFrom": 0,
+     "validTo": null,
+     "recordedAt": 100,
+     "recordedPosition": 1,
+     "createdBy": null,
+     "entityType": "T",
+     "schemaVersion": null,
+     "txId": "tx:0",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "a3",
+     "entityId": "e3",
+     "attribute": ":t/v",
+     "value": {
+      "type": "integer",
+      "value": "3"
+     },
+     "validFrom": 0,
+     "validTo": null,
+     "recordedAt": 100,
+     "recordedPosition": 1,
+     "createdBy": null,
+     "entityType": "T",
+     "schemaVersion": null,
+     "txId": "tx:0",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    }
+   ],
+   "transactions": [
+    {
+     "txId": "tx:0",
+     "position": 1,
+     "instant": 100,
+     "changes": [
+      {
+       "op": "assert",
+       "tripleId": "a0",
+       "entityId": "e0",
+       "attribute": ":t/v",
+       "entityType": "T",
+       "value": {
+        "type": "integer",
+        "value": "0"
+       },
+       "validFrom": 0,
+       "recordedAt": 100,
+       "assertionTxId": "tx:0"
+      },
+      {
+       "op": "assert",
+       "tripleId": "a1",
+       "entityId": "e1",
+       "attribute": ":t/v",
+       "entityType": "T",
+       "value": {
+        "type": "integer",
+        "value": "1"
+       },
+       "validFrom": 0,
+       "recordedAt": 100,
+       "assertionTxId": "tx:0"
+      },
+      {
+       "op": "assert",
+       "tripleId": "a2",
+       "entityId": "e2",
+       "attribute": ":t/v",
+       "entityType": "T",
+       "value": {
+        "type": "integer",
+        "value": "2"
+       },
+       "validFrom": 0,
+       "recordedAt": 100,
+       "assertionTxId": "tx:0"
+      },
+      {
+       "op": "assert",
+       "tripleId": "a3",
+       "entityId": "e3",
+       "attribute": ":t/v",
+       "entityType": "T",
+       "value": {
+        "type": "integer",
+        "value": "3"
+       },
+       "validFrom": 0,
+       "recordedAt": 100,
+       "assertionTxId": "tx:0"
+      }
+     ],
+     "changedEntities": [
+      "e0",
+      "e1",
+      "e2",
+      "e3"
+     ]
+    }
+   ]
+  }
+ ],
+ "queries": [
+  {
+   "id": "a",
+   "kind": "entityPage",
+   "result": {
+    "cut": {
+     "scope": "default",
+     "position": 1,
+     "recordedAt": null,
+     "validAt": 1
+    },
+    "pageSize": 1,
+    "pages": [
+     {
+      "entities": [
+       {
+        "entityId": "e0",
+        "bodyOrder": "set (sorted by id here)",
+        "triples": [
+         {
+          "id": "a0",
+          "entityId": "e0",
+          "attribute": ":t/v",
+          "value": {
+           "type": "integer",
+           "value": "0"
+          },
+          "validFrom": 0,
+          "validTo": null,
+          "recordedAt": 100,
+          "recordedPosition": 1,
+          "createdBy": null,
+          "entityType": "T",
+          "schemaVersion": null,
+          "txId": "tx:0",
+          "retractedAt": null,
+          "retractedPosition": null,
+          "retractTxId": null
+         }
+        ]
+       }
+      ],
+      "hasMore": true,
+      "nextCursor": "o-replay-cursor/1:eyJQIjoxLCJSIjpudWxsLCJWIjoiMSIsImFmdGVyIjoiZTAiLCJlbnRpdHlUeXBlIjoiVCIsInNjb3BlIjoiZGVmYXVsdCJ9.f74ea1d2e54a9c23"
+     },
+     {
+      "entities": [
+       {
+        "entityId": "e1",
+        "bodyOrder": "set (sorted by id here)",
+        "triples": [
+         {
+          "id": "a1",
+          "entityId": "e1",
+          "attribute": ":t/v",
+          "value": {
+           "type": "integer",
+           "value": "1"
+          },
+          "validFrom": 0,
+          "validTo": null,
+          "recordedAt": 100,
+          "recordedPosition": 1,
+          "createdBy": null,
+          "entityType": "T",
+          "schemaVersion": null,
+          "txId": "tx:0",
+          "retractedAt": null,
+          "retractedPosition": null,
+          "retractTxId": null
+         }
+        ]
+       }
+      ],
+      "hasMore": true,
+      "nextCursor": "o-replay-cursor/1:eyJQIjoxLCJSIjpudWxsLCJWIjoiMSIsImFmdGVyIjoiZTEiLCJlbnRpdHlUeXBlIjoiVCIsInNjb3BlIjoiZGVmYXVsdCJ9.c953a74314a12311"
+     },
+     {
+      "entities": [
+       {
+        "entityId": "e2",
+        "bodyOrder": "set (sorted by id here)",
+        "triples": [
+         {
+          "id": "a2",
+          "entityId": "e2",
+          "attribute": ":t/v",
+          "value": {
+           "type": "integer",
+           "value": "2"
+          },
+          "validFrom": 0,
+          "validTo": null,
+          "recordedAt": 100,
+          "recordedPosition": 1,
+          "createdBy": null,
+          "entityType": "T",
+          "schemaVersion": null,
+          "txId": "tx:0",
+          "retractedAt": null,
+          "retractedPosition": null,
+          "retractTxId": null
+         }
+        ]
+       }
+      ],
+      "hasMore": true,
+      "nextCursor": "o-replay-cursor/1:eyJQIjoxLCJSIjpudWxsLCJWIjoiMSIsImFmdGVyIjoiZTIiLCJlbnRpdHlUeXBlIjoiVCIsInNjb3BlIjoiZGVmYXVsdCJ9.6660295bb8dc718d"
+     },
+     {
+      "entities": [
+       {
+        "entityId": "e3",
+        "bodyOrder": "set (sorted by id here)",
+        "triples": [
+         {
+          "id": "a3",
+          "entityId": "e3",
+          "attribute": ":t/v",
+          "value": {
+           "type": "integer",
+           "value": "3"
+          },
+          "validFrom": 0,
+          "validTo": null,
+          "recordedAt": 100,
+          "recordedPosition": 1,
+          "createdBy": null,
+          "entityType": "T",
+          "schemaVersion": null,
+          "txId": "tx:0",
+          "retractedAt": null,
+          "retractedPosition": null,
+          "retractTxId": null
+         }
+        ]
+       }
+      ],
+      "hasMore": false,
+      "nextCursor": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "b",
+   "kind": "entityPage",
+   "result": {
+    "cut": {
+     "scope": "default",
+     "position": 1,
+     "recordedAt": null,
+     "validAt": 1
+    },
+    "pageSize": 1,
+    "pages": [
+     {
+      "entities": [
+       {
+        "entityId": "e1",
+        "bodyOrder": "set (sorted by id here)",
+        "triples": [
+         {
+          "id": "a1",
+          "entityId": "e1",
+          "attribute": ":t/v",
+          "value": {
+           "type": "integer",
+           "value": "1"
+          },
+          "validFrom": 0,
+          "validTo": null,
+          "recordedAt": 100,
+          "recordedPosition": 1,
+          "createdBy": null,
+          "entityType": "T",
+          "schemaVersion": null,
+          "txId": "tx:0",
+          "retractedAt": null,
+          "retractedPosition": null,
+          "retractTxId": null
+         }
+        ]
+       }
+      ],
+      "hasMore": true,
+      "nextCursor": "o-replay-cursor/1:eyJQIjoxLCJSIjpudWxsLCJWIjoiMSIsImFmdGVyIjoiZTEiLCJlbnRpdHlUeXBlIjoiVCIsInNjb3BlIjoiZGVmYXVsdCJ9.c953a74314a12311"
+     },
+     {
+      "entities": [
+       {
+        "entityId": "e2",
+        "bodyOrder": "set (sorted by id here)",
+        "triples": [
+         {
+          "id": "a2",
+          "entityId": "e2",
+          "attribute": ":t/v",
+          "value": {
+           "type": "integer",
+           "value": "2"
+          },
+          "validFrom": 0,
+          "validTo": null,
+          "recordedAt": 100,
+          "recordedPosition": 1,
+          "createdBy": null,
+          "entityType": "T",
+          "schemaVersion": null,
+          "txId": "tx:0",
+          "retractedAt": null,
+          "retractedPosition": null,
+          "retractTxId": null
+         }
+        ]
+       }
+      ],
+      "hasMore": true,
+      "nextCursor": "o-replay-cursor/1:eyJQIjoxLCJSIjpudWxsLCJWIjoiMSIsImFmdGVyIjoiZTIiLCJlbnRpdHlUeXBlIjoiVCIsInNjb3BlIjoiZGVmYXVsdCJ9.6660295bb8dc718d"
+     },
+     {
+      "entities": [
+       {
+        "entityId": "e3",
+        "bodyOrder": "set (sorted by id here)",
+        "triples": [
+         {
+          "id": "a3",
+          "entityId": "e3",
+          "attribute": ":t/v",
+          "value": {
+           "type": "integer",
+           "value": "3"
+          },
+          "validFrom": 0,
+          "validTo": null,
+          "recordedAt": 100,
+          "recordedPosition": 1,
+          "createdBy": null,
+          "entityType": "T",
+          "schemaVersion": null,
+          "txId": "tx:0",
+          "retractedAt": null,
+          "retractedPosition": null,
+          "retractTxId": null
+         }
+        ]
+       }
+      ],
+      "hasMore": false,
+      "nextCursor": null
+     }
+    ]
+   }
+  }
+ ],
+ "rulesInEffect": {
+  "attributeSyntax": "any",
+  "createdByDefault": "null",
+  "datetimeRange": null,
+  "emptyIntervalRejected": true,
+  "journalChangeOrder": "operation-order",
+  "reservedNamespaces": null,
+  "retractNonLive": "transaction-conflict",
+  "retractPatternEmptyRejected": true,
+  "retractPatternSeesStaged": true,
+  "typeMembership": "valid-at-instant",
+  "validFromDefault": "transaction-instant"
+ },
+ "reservedNamespaces": {
+  "attributePrefixes": [
+   ":triplex/",
+   ":_tx/"
+  ],
+  "entityIdPrefixes": [
+   "_triplex/"
+  ],
+  "entityTypePrefixes": [
+   "triplex."
+  ],
+  "entityTypes": [
+   "_Transaction"
+  ]
+ }
+}

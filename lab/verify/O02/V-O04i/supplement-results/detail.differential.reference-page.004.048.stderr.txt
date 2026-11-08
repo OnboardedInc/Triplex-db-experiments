@@ -1,0 +1,23 @@
+Traceback (most recent call last):
+  File "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d/lab/oracles/replay/cli.py", line 60, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d/lab/oracles/replay/cli.py", line 46, in main
+    report = RUN.evaluate_text(Path(args.case).read_bytes(), args.lane)
+  File "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d/lab/oracles/replay/run.py", line 788, in evaluate_text
+    return evaluate_case(case, digest, lane)
+  File "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d/lab/oracles/replay/run.py", line 752, in evaluate_case
+    queries = run.run_queries()
+  File "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d/lab/oracles/replay/run.py", line 597, in run_queries
+    answers.append((seen, self.answer_under(kind, query, start, scope, seen)))
+                          ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d/lab/oracles/replay/run.py", line 691, in answer_under
+    return self.answer(kind, query)
+           ~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d/lab/oracles/replay/run.py", line 699, in answer
+    return ("result", QUERIES[kind](self, query))
+                      ~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d/lab/oracles/replay/views.py", line 429, in q_entity_page
+    token = prior.get("pages")[int(ref.get("page", 0))].get("nextCursor")
+                               ~~~^^^^^^^^^^^^^^^^^^^^
+ValueError: invalid literal for int() with base 10: '1e0'

@@ -1,0 +1,1 @@
+o-replay: malformed case: cursorFrom must be an object naming a query (RULINGS Q70o)

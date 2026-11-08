@@ -1,0 +1,133 @@
+{
+  "files": {
+    "lab/oracles/replay/RULES.md": {
+      "author": "5e9de540e26e0c370c10a904a625a96ba67f279172aa5000aea043b73cfa4241",
+      "actual": "5e9de540e26e0c370c10a904a625a96ba67f279172aa5000aea043b73cfa4241"
+    },
+    "lab/oracles/replay/SCHEMA.md": {
+      "author": "baf2c949c6c59538914340dd0b2da5d3556b150f6908be68b2a6741138f459d3",
+      "actual": "baf2c949c6c59538914340dd0b2da5d3556b150f6908be68b2a6741138f459d3"
+    },
+    "lab/oracles/replay/__init__.py": {
+      "author": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
+      "actual": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0"
+    },
+    "lab/oracles/replay/__main__.py": {
+      "author": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
+      "actual": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d"
+    },
+    "lab/oracles/replay/cli.py": {
+      "author": "1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5",
+      "actual": "1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5"
+    },
+    "lab/oracles/replay/constraints.py": {
+      "author": "9e1e9d7b1ca8046ca67520bbc4905b03ad3bd663c260a4ed0d2b6ca024a91a1d",
+      "actual": "9e1e9d7b1ca8046ca67520bbc4905b03ad3bd663c260a4ed0d2b6ca024a91a1d"
+    },
+    "lab/oracles/replay/entities.py": {
+      "author": "e92308b6df7a0996a26fe129b9df07e058d8b0c84cff54f2690cd7c76fc871b3",
+      "actual": "e92308b6df7a0996a26fe129b9df07e058d8b0c84cff54f2690cd7c76fc871b3"
+    },
+    "lab/oracles/replay/errors.py": {
+      "author": "c2260e1e06af38b2ce97246d5f9ff5626484dd0dfaf4afe409ddfcd6eee634df",
+      "actual": "c2260e1e06af38b2ce97246d5f9ff5626484dd0dfaf4afe409ddfcd6eee634df"
+    },
+    "lab/oracles/replay/exact.py": {
+      "author": "4cfcf2c9af4b4ddf36f2218308685aff99d91416ac7f0d1dec053fb7a6e74d2a",
+      "actual": "4cfcf2c9af4b4ddf36f2218308685aff99d91416ac7f0d1dec053fb7a6e74d2a"
+    },
+    "lab/oracles/replay/examples/entity-mini.case.json": {
+      "author": "7549f07299668500a311e9a5fc3eb80904731d0b5a7d626090a7657f53a8d667",
+      "actual": "7549f07299668500a311e9a5fc3eb80904731d0b5a7d626090a7657f53a8d667"
+    },
+    "lab/oracles/replay/examples/entity-mini.expected.json": {
+      "author": "d4e7aff8188ffaa902f1014d9527e63c92d6e0dd6925fef446cceb820c6d8b0f",
+      "actual": "d4e7aff8188ffaa902f1014d9527e63c92d6e0dd6925fef446cceb820c6d8b0f"
+    },
+    "lab/oracles/replay/replay.py": {
+      "author": "3dd06dd0c30930e00ce1665ae7e9f40afcf7e06fa8a37759a8c5e65345fe9016",
+      "actual": "3dd06dd0c30930e00ce1665ae7e9f40afcf7e06fa8a37759a8c5e65345fe9016"
+    },
+    "lab/oracles/replay/run.py": {
+      "author": "c967ad2d6d811f006da6f5766a0ca7aa7ef0c4c220ad239f7a55b7b994a4f856",
+      "actual": "c967ad2d6d811f006da6f5766a0ca7aa7ef0c4c220ad239f7a55b7b994a4f856"
+    },
+    "lab/oracles/replay/scale.py": {
+      "author": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
+      "actual": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe"
+    },
+    "lab/oracles/replay/selfcheck.py": {
+      "author": "5a298c577b50204dddf5dce6577207d0dd1e90b339b3ee3d9c3bbf2b431ed8fd",
+      "actual": "5a298c577b50204dddf5dce6577207d0dd1e90b339b3ee3d9c3bbf2b431ed8fd"
+    },
+    "lab/oracles/replay/selfcheck_fixtures/freeze-ham-reference.mjs": {
+      "author": "c533122597c940d69c8a101a1a175ba5e9d6ab62f1efdb2d5526c9f65a86a206",
+      "actual": "c533122597c940d69c8a101a1a175ba5e9d6ab62f1efdb2d5526c9f65a86a206"
+    },
+    "lab/oracles/replay/selfcheck_fixtures/ham-v2-reference.json": {
+      "author": "d69c14f1abb236c3e1532ff95f1aba81b088fc5937ba82f9647e2e6a4e0407f2",
+      "actual": "d69c14f1abb236c3e1532ff95f1aba81b088fc5937ba82f9647e2e6a4e0407f2"
+    },
+    "lab/oracles/replay/tests/__init__.py": {
+      "author": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "actual": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "lab/oracles/replay/tests/helpers.py": {
+      "author": "005be879fb88580f578f8befc73d22218006cd38504a88226fedb91b3ede3703",
+      "actual": "005be879fb88580f578f8befc73d22218006cd38504a88226fedb91b3ede3703"
+    },
+    "lab/oracles/replay/tests/test_contract_section4.py": {
+      "author": "99273adb536a3835b62f49c7be7fddf690e871e5f7dccce5b73d9e1f3a44982e",
+      "actual": "99273adb536a3835b62f49c7be7fddf690e871e5f7dccce5b73d9e1f3a44982e"
+    },
+    "lab/oracles/replay/tests/test_entities.py": {
+      "author": "562feac4b58c11e8fabb8e30fff85c41cd9562cbd05a94df3d8c3d8f19caffe6",
+      "actual": "562feac4b58c11e8fabb8e30fff85c41cd9562cbd05a94df3d8c3d8f19caffe6"
+    },
+    "lab/oracles/replay/tests/test_exact.py": {
+      "author": "35aaf8384af0178e1fc929b94fe0e11a43aa64dbbe567bf50067658821b619b1",
+      "actual": "35aaf8384af0178e1fc929b94fe0e11a43aa64dbbe567bf50067658821b619b1"
+    },
+    "lab/oracles/replay/tests/test_replay.py": {
+      "author": "6900d4fc9710e3248c476c036aba84565c53b4265b231867778d776668feb7b9",
+      "actual": "6900d4fc9710e3248c476c036aba84565c53b4265b231867778d776668feb7b9"
+    },
+    "lab/oracles/replay/tests/test_rulings.py": {
+      "author": "3997f66b01be8f697977911ec1fdf5209223d5310206657f7ed65c7ea106aea4",
+      "actual": "3997f66b01be8f697977911ec1fdf5209223d5310206657f7ed65c7ea106aea4"
+    },
+    "lab/oracles/replay/tests/test_scale_and_selfcheck.py": {
+      "author": "3b78a5adc8e665730c2b53799de7fbfbc04b99cae343404f630fc856f4b255f4",
+      "actual": "3b78a5adc8e665730c2b53799de7fbfbc04b99cae343404f630fc856f4b255f4"
+    },
+    "lab/oracles/replay/tests/test_values.py": {
+      "author": "1070395875907bca8a46ab9b88fee0758a1b73aafe94b5b610b2117e2740d375",
+      "actual": "1070395875907bca8a46ab9b88fee0758a1b73aafe94b5b610b2117e2740d375"
+    },
+    "lab/oracles/replay/tests/test_views.py": {
+      "author": "d79f5bab47c842aa443ffe814df88ff65bf153777c95ff39a32e5501e16c1584",
+      "actual": "d79f5bab47c842aa443ffe814df88ff65bf153777c95ff39a32e5501e16c1584"
+    },
+    "lab/oracles/replay/values.py": {
+      "author": "67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982",
+      "actual": "67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982"
+    },
+    "lab/oracles/replay/views.py": {
+      "author": "bbfb8989e054ba7ed4998f466478bdef92ede643e9554c313672f7db2a865901",
+      "actual": "bbfb8989e054ba7ed4998f466478bdef92ede643e9554c313672f7db2a865901"
+    }
+  },
+  "authorMatched": 29,
+  "selfReportedMatched": 13,
+  "converterSources": {
+    "core": {
+      "documents": 87,
+      "mismatches": []
+    },
+    "qlever": {
+      "documents": 87,
+      "mismatches": []
+    }
+  },
+  "hostDiskFreeBytesAfter": 32410775552
+}

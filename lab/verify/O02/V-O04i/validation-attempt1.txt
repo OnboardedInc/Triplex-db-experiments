@@ -1,0 +1,1 @@
+Generic JSON artifact scan stopped at an empty P7/P8 fake-query expected-output artifact. These negative-control CLI runs intentionally emit no JSON. Corrected validation distinguishes emitted documents from captured empty stdout, and preserves 5000-digit numeric lexemes with parse_int=str. No oracle run was repeated or changed.

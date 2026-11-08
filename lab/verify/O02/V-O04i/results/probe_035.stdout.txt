@@ -1,0 +1,2 @@
+{"MATCH": 119} 119 probes
+reverse: {"tableDifferences": [{"id": "E-DECIMAL-OVERFLOW", "oracle": ["InvalidTripleError", "decimal-overflow", ["preflight", "execution"]], "contract": ["InvalidTripleError", "decimal-overflow", "preflight or execution"]}], "eLiteralsNotInContract": {}, "xIdsInSource": {"X-NOT-MODELED": ["run.py", "views.py"], "X-NO-POSITION": ["views.py"], "X-CYCLE": ["views.py"]}, "producedNotInContract": [], "droppedIdsStillInSource": {}, "retiredXIdsStillInSource": {}}

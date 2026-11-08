@@ -1,0 +1,3 @@
+{"MATCH": 74, "OBSERVED": 2} 76 probes
+OBSERVED      Q66b   literal token: page a's nextCursor is the same in every alte | {"distinctTokens": 1}
+OBSERVED      Q70h   A (limit 1) page 1 and B (limit 2) page 0 issue one token    | {"sharedToken": true}

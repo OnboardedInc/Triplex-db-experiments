@@ -1,0 +1,9 @@
+146 nonempty JSON artifacts parse with integer lexemes preserved; 4 intentional empty negative-control stdout artifacts
+Initial tool hashes match initial provenance
+Supplemental tool hashes match supplemental provenance
+Seed summaries, all 24 selector controls, all 8 plant controls match expectations
+Empty captures:
+results/plant-artifacts/P7.expected.json
+results/plant-artifacts/P8.expected.json
+supplement-results/plant-artifacts/P7.expected.json
+supplement-results/plant-artifacts/P8.expected.json

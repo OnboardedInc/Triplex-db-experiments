@@ -1,0 +1,550 @@
+[
+  {
+    "name": "self-check.048",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d/lab/oracles/replay/cli.py",
+      "--self-check",
+      "-o",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/self-check.048.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d",
+    "exit": 0,
+    "seconds": 0.189
+  },
+  {
+    "name": "plant-plus",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/plant_paged_kind_plus.py",
+      "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/plant_paged_kind.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 0,
+    "seconds": 1.872
+  },
+  {
+    "name": "reference-page-plus",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/probe_reference_page_plus.py",
+      "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/reference-page"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 0,
+    "seconds": 1.439
+  },
+  {
+    "name": "differential.reference-page-plus",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/tools/differential.py",
+      "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d",
+      "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+      "/private/tmp/CX-VO04I-utlp61cs/diff-pages-plus",
+      "0",
+      "0",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/reference-page",
+      "--out=/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/differential.reference-page.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 0,
+    "seconds": 2.88
+  },
+  {
+    "name": "detail.differential.reference-page.000.048",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d/lab/oracles/replay/cli.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/reference-page/array-page.case.json",
+      "-o",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/differential-details/differential.reference-page.000.048.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d",
+    "exit": 1,
+    "seconds": 0.123
+  },
+  {
+    "name": "detail.differential.reference-page.000.049",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/atf195f30/lab/oracles/replay/cli.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/reference-page/array-page.case.json",
+      "-o",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/differential-details/differential.reference-page.000.049.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 2,
+    "seconds": 0.094
+  },
+  {
+    "name": "detail.differential.reference-page.001.048",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d/lab/oracles/replay/cli.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/reference-page/array-ref.case.json",
+      "-o",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/differential-details/differential.reference-page.001.048.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d",
+    "exit": 1,
+    "seconds": 0.084
+  },
+  {
+    "name": "detail.differential.reference-page.001.049",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/atf195f30/lab/oracles/replay/cli.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/reference-page/array-ref.case.json",
+      "-o",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/differential-details/differential.reference-page.001.049.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 2,
+    "seconds": 0.058
+  },
+  {
+    "name": "detail.differential.reference-page.002.048",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d/lab/oracles/replay/cli.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/reference-page/boolean-ref.case.json",
+      "-o",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/differential-details/differential.reference-page.002.048.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d",
+    "exit": 1,
+    "seconds": 0.055
+  },
+  {
+    "name": "detail.differential.reference-page.002.049",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/atf195f30/lab/oracles/replay/cli.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/reference-page/boolean-ref.case.json",
+      "-o",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/differential-details/differential.reference-page.002.049.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 2,
+    "seconds": 0.057
+  },
+  {
+    "name": "detail.differential.reference-page.003.048",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d/lab/oracles/replay/cli.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/reference-page/boolean-true.case.json",
+      "-o",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/differential-details/differential.reference-page.003.048.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d",
+    "exit": 0,
+    "seconds": 0.058
+  },
+  {
+    "name": "detail.differential.reference-page.003.049",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/atf195f30/lab/oracles/replay/cli.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/reference-page/boolean-true.case.json",
+      "-o",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/differential-details/differential.reference-page.003.049.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 2,
+    "seconds": 0.057
+  },
+  {
+    "name": "detail.differential.reference-page.004.048",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d/lab/oracles/replay/cli.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/reference-page/exponent-page.case.json",
+      "-o",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/differential-details/differential.reference-page.004.048.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d",
+    "exit": 1,
+    "seconds": 0.055
+  },
+  {
+    "name": "detail.differential.reference-page.004.049",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/atf195f30/lab/oracles/replay/cli.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/reference-page/exponent-page.case.json",
+      "-o",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/differential-details/differential.reference-page.004.049.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 2,
+    "seconds": 0.056
+  },
+  {
+    "name": "detail.differential.reference-page.005.048",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d/lab/oracles/replay/cli.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/reference-page/false-page.case.json",
+      "-o",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/differential-details/differential.reference-page.005.048.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d",
+    "exit": 0,
+    "seconds": 0.058
+  },
+  {
+    "name": "detail.differential.reference-page.005.049",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/atf195f30/lab/oracles/replay/cli.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/reference-page/false-page.case.json",
+      "-o",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/differential-details/differential.reference-page.005.049.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 2,
+    "seconds": 0.056
+  },
+  {
+    "name": "detail.differential.reference-page.006.048",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d/lab/oracles/replay/cli.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/reference-page/float-zero.case.json",
+      "-o",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/differential-details/differential.reference-page.006.048.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d",
+    "exit": 1,
+    "seconds": 0.054
+  },
+  {
+    "name": "detail.differential.reference-page.006.049",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/atf195f30/lab/oracles/replay/cli.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/reference-page/float-zero.case.json",
+      "-o",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/differential-details/differential.reference-page.006.049.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 2,
+    "seconds": 0.057
+  },
+  {
+    "name": "detail.differential.reference-page.007.048",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d/lab/oracles/replay/cli.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/reference-page/fractional-page.case.json",
+      "-o",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/differential-details/differential.reference-page.007.048.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d",
+    "exit": 1,
+    "seconds": 0.064
+  },
+  {
+    "name": "detail.differential.reference-page.007.049",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/atf195f30/lab/oracles/replay/cli.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/reference-page/fractional-page.case.json",
+      "-o",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/differential-details/differential.reference-page.007.049.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 2,
+    "seconds": 0.058
+  },
+  {
+    "name": "detail.differential.reference-page.008.048",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d/lab/oracles/replay/cli.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/reference-page/huge-index.case.json",
+      "-o",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/differential-details/differential.reference-page.008.048.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d",
+    "exit": 1,
+    "seconds": 0.054
+  },
+  {
+    "name": "detail.differential.reference-page.008.049",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/atf195f30/lab/oracles/replay/cli.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/reference-page/huge-index.case.json",
+      "-o",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/differential-details/differential.reference-page.008.049.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 2,
+    "seconds": 0.054
+  },
+  {
+    "name": "detail.differential.reference-page.009.048",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d/lab/oracles/replay/cli.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/reference-page/missing-query.case.json",
+      "-o",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/differential-details/differential.reference-page.009.048.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d",
+    "exit": 1,
+    "seconds": 0.057
+  },
+  {
+    "name": "detail.differential.reference-page.009.049",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/atf195f30/lab/oracles/replay/cli.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/reference-page/missing-query.case.json",
+      "-o",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/differential-details/differential.reference-page.009.049.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 2,
+    "seconds": 0.058
+  },
+  {
+    "name": "detail.differential.reference-page.010.048",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d/lab/oracles/replay/cli.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/reference-page/negative-two.case.json",
+      "-o",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/differential-details/differential.reference-page.010.048.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d",
+    "exit": 0,
+    "seconds": 0.061
+  },
+  {
+    "name": "detail.differential.reference-page.010.049",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/atf195f30/lab/oracles/replay/cli.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/reference-page/negative-two.case.json",
+      "-o",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/differential-details/differential.reference-page.010.049.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 2,
+    "seconds": 0.061
+  },
+  {
+    "name": "detail.differential.reference-page.011.048",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d/lab/oracles/replay/cli.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/reference-page/null-page.case.json",
+      "-o",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/differential-details/differential.reference-page.011.048.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d",
+    "exit": 1,
+    "seconds": 0.061
+  },
+  {
+    "name": "detail.differential.reference-page.011.049",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/atf195f30/lab/oracles/replay/cli.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/reference-page/null-page.case.json",
+      "-o",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/differential-details/differential.reference-page.011.049.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 2,
+    "seconds": 0.056
+  },
+  {
+    "name": "detail.differential.reference-page.012.048",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d/lab/oracles/replay/cli.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/reference-page/object-page.case.json",
+      "-o",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/differential-details/differential.reference-page.012.048.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d",
+    "exit": 1,
+    "seconds": 0.06
+  },
+  {
+    "name": "detail.differential.reference-page.012.049",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/atf195f30/lab/oracles/replay/cli.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/reference-page/object-page.case.json",
+      "-o",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/differential-details/differential.reference-page.012.049.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 2,
+    "seconds": 0.057
+  },
+  {
+    "name": "detail.differential.reference-page.013.048",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d/lab/oracles/replay/cli.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/reference-page/out-of-range.case.json",
+      "-o",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/differential-details/differential.reference-page.013.048.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d",
+    "exit": 1,
+    "seconds": 0.056
+  },
+  {
+    "name": "detail.differential.reference-page.013.049",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/atf195f30/lab/oracles/replay/cli.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/reference-page/out-of-range.case.json",
+      "-o",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/differential-details/differential.reference-page.013.049.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 2,
+    "seconds": 0.054
+  },
+  {
+    "name": "detail.differential.reference-page.014.048",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d/lab/oracles/replay/cli.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/reference-page/over-digit-limit.case.json",
+      "-o",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/differential-details/differential.reference-page.014.048.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d",
+    "exit": 1,
+    "seconds": 0.057
+  },
+  {
+    "name": "detail.differential.reference-page.014.049",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/atf195f30/lab/oracles/replay/cli.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/reference-page/over-digit-limit.case.json",
+      "-o",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/differential-details/differential.reference-page.014.049.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 2,
+    "seconds": 0.054
+  },
+  {
+    "name": "detail.differential.reference-page.015.048",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d/lab/oracles/replay/cli.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/reference-page/string-ref.case.json",
+      "-o",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/differential-details/differential.reference-page.015.048.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d",
+    "exit": 1,
+    "seconds": 0.059
+  },
+  {
+    "name": "detail.differential.reference-page.015.049",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/atf195f30/lab/oracles/replay/cli.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/reference-page/string-ref.case.json",
+      "-o",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/differential-details/differential.reference-page.015.049.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 2,
+    "seconds": 0.058
+  },
+  {
+    "name": "detail.differential.reference-page.016.048",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d/lab/oracles/replay/cli.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/reference-page/string-zero.case.json",
+      "-o",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/differential-details/differential.reference-page.016.048.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d",
+    "exit": 0,
+    "seconds": 0.057
+  },
+  {
+    "name": "detail.differential.reference-page.016.049",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/atf195f30/lab/oracles/replay/cli.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/reference-page/string-zero.case.json",
+      "-o",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/differential-details/differential.reference-page.016.049.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 2,
+    "seconds": 0.057
+  },
+  {
+    "name": "self-check.049-final",
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/private/tmp/CX-VO04I-utlp61cs/atf195f30/lab/oracles/replay/cli.py",
+      "--self-check",
+      "-o",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a24def81f188f0df6/lab/verify/O02/V-O04i/supplement-results/self-check.049-final.json"
+    ],
+    "cwd": "/private/tmp/CX-VO04I-utlp61cs/atf195f30",
+    "exit": 0,
+    "seconds": 0.162
+  }
+]

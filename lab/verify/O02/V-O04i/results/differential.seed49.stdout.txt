@@ -1,0 +1,1 @@
+{"old": "/private/tmp/CX-VO04I-utlp61cs/at3c52a1d", "new": "/private/tmp/CX-VO04I-utlp61cs/atf195f30", "cases": 993, "random": 500, "seed": 49, "identical": 979, "bothRefused": 14, "different": 0, "differentByFeature": {}}

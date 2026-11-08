@@ -1,0 +1,35 @@
+{"WRONG-ANSWER": 33, "REFUSES": 1} 34 probes
+WRONG-ANSWER  ST     ST Q52a each erased value counts                             | [{"x": {"type": "integer", "value": "3"}}]
+WRONG-ANSWER  ST     ST Q52b missing before markers                               | ["p3", "p2", "p6", "p1", "p4", "p5", "p7"]
+WRONG-ANSWER  ST     ST Q52b desc reverses the markers                            | ["p2", "p3", "p6", "p1", "p4", "p5", "p7"]
+WRONG-ANSWER  ST     ST Q52c latest erasedAt                                      | [{"s": {"_tag": "ErasedValue", "erasedAt": 200}, "c": {"type": "integer", "value": "2"}}]
+WRONG-ANSWER  ST     ST Q52d erased reference enforced                            | {"outcome": "committed"}
+WRONG-ANSWER  ST     ST Q52e a mixed answer accepted                              | [[[], "7"], [["tx:1"], "4"]]
+WRONG-ANSWER  ST     ST Q66a all-old answer missing                               | [[[], "7"], [["tx:1"], "6"], [["tx:1", "tx:2"], "4"]]
+WRONG-ANSWER  ST     ST Q66c other scope in flight                                | [[[], "1"], [["tx:3"], null]]
+WRONG-ANSWER  ST     ST Q66b unaffected page 2 listed in flight                   | [["plain", [["p2", ["2"]], ["p3", ["4"]]]]]
+WRONG-ANSWER  ST     ST Q66b two-page: all-old prefix shows p4 marker             | [[[], [["p3", ["3"]], ["p4", ["4"]]]], [["tx:1"], [["p3", ["3"]], ["p4", ["M"]]]]]
+WRONG-ANSWER  ST     ST Q66b two commits: page 2 plain                            | [[[], [["p3", ["3"]], ["p4", ["4"]]]], [["tx:1"], [["p3", ["3"]], ["p4", ["4"]]]], [["tx:1", "tx:2"], [["p3", ["3"]], ["p4", ["M"]]]]]
+WRONG-ANSWER  ST     ST Q66b chain: page 3 has two alternatives                   | [[[], [["p3", ["3"]], ["p4", ["4"]]]], [["tx:1"], [["p3", ["3"]], ["p4", ["4"]]]], [["tx:1", "tx:2"], [["p3", ["M"]], ["p4", ["4"]]]]]
+WRONG-ANSWER  ST     ST Q66b own readStart: one plain page                        | [[[], [["p2", ["2"]], ["p3", ["3"]], ["p4", ["4"]]]], [["tx:1"], [["p2", ["2"]], ["p3", ["3"]], ["p4", ["4"]]]], [["tx:1", "tx:2"], [["p2", ["M"]], ["p3", ["3"]], ["p4", ["4"]]]]]
+WRONG-ANSWER  ST     ST Q66b plain source: page b an error                        | [["plain", [["p2", ["M"]], ["p3", ["3"]], ["p4", ["4"]]]]]
+WRONG-ANSWER  ST     ST Q70b own later readStart wins                             | [[[], [["p2", ["2"]], ["p3", ["3"]], ["p4", ["4"]]]], [["tx:1"], [["p2", ["M"]], ["p3", ["3"]], ["p4", ["4"]]]]]
+WRONG-ANSWER  ST     ST Q70c own readStart reopens the old value                  | [["plain", [["p2", ["M"]], ["p3", ["3"]], ["p4", ["4"]]]]]
+WRONG-ANSWER  ST     ST Q70f latest issuer followed (A last)                      | [["plain", {"error": "X-NOT-MODELED", "_tag": null, "reason": null, "phase": null, "ruling": "Q70f: a continuation issued by reads whose start, scope or per-prefix answers disagree fails closed", "message": "ambiguous literal token: 2 earlier reads issued it with different read views"}]]
+WRONG-ANSWER  ST     ST Q70f latest issuer followed (B last)                      | [["plain", {"error": "X-NOT-MODELED", "_tag": null, "reason": null, "phase": null, "ruling": "Q70f: a continuation issued by reads whose start, scope or per-prefix answers disagree fails closed", "message": "ambiguous literal token: 2 earlier reads issued it with different read views"}]]
+WRONG-ANSWER  ST     ST Q70h identical views refused                              | [[[], [["p3", ["3"]], ["p4", ["4"]]]], [["tx:1"], [["p3", ["M"]], ["p4", ["4"]]]]]
+WRONG-ANSWER  ST     ST Q70g page 2 own view                                      | [[[], [["tx:1", [{"type": "integer", "value": "2"}]]], 2], [["tx:2"], [["tx:1", [{"_tag": "ErasedValue", "erasedAt": 200}]]], 2]]
+WRONG-ANSWER  ST     ST Q70g own readStart consulted                              | [["plain", [["tx:1", [{"_tag": "ErasedValue", "erasedAt": 200}]]], 2]]
+WRONG-ANSWER  ST     ST Q70i ambiguous after continues t1                         | [["error", "X-NOT-MODELED"]]
+WRONG-ANSWER  ST     ST Q70i other journal scope matched                          | [[[], [["tx:3", [{"type": "integer", "value": "2"}]]], 2], [["tx:4"], [["tx:3", [{"_tag": "ErasedValue", "erasedAt": 200}]]], 2]]
+WRONG-ANSWER  ST     ST Q70j default scope in flight                              | [[[], null], [["tx:3"], null]]
+WRONG-ANSWER  ST     ST Q70k assertions plain                                     | ["id", "kind", "inFlight"]
+WRONG-ANSWER  ST     ST Q70l entity page 2 own view                               | [[[], [["tx:0", [{"type": "integer", "value": "1"}]]], null], [["tx:2"], [["tx:0", [{"_tag": "ErasedValue", "erasedAt": 200}]]], null]]
+WRONG-ANSWER  ST     ST Q70l disagreeing issuers continue e1                      | [["error", "X-NOT-MODELED"]]
+WRONG-ANSWER  ST     ST Q70l other snapshotPosition matched                       | [["plain", [["tx:0", [{"_tag": "ErasedValue", "erasedAt": 200}]]], null]]
+WRONG-ANSWER  ST     ST Q70l other entity matched                                 | [["plain", [["tx:0", [{"_tag": "ErasedValue", "erasedAt": 200}, {"_tag": "ErasedValue", "erasedAt": 200}]]], null]]
+REFUSES       ST     ST Q70m string after answered                                | {"refused": "o-replay: malformed case: transactions after must be a JSON integer >= 0 (RULINGS Q70m), got '1'", "outputWritten": false}
+WRONG-ANSWER  ST     ST Q70l non-paged kind continues A                           | {"id": "m", "kind": "match", "result": {"cut": {"scope": "s", "position": 2, "recordedAt": null, "validAt": 1}, "count": 4, "contract": "raw-lifetime (AMB-01 A)", "raw": [{"id": "s1", "entityId": "p1", "attribute": ":person/salary", "value": {"_tag": "ErasedValue", "erasedAt": 200}, "validFrom": 0, "validTo": null, "recordedAt": 100, "recordedPosition": 1, "createdBy": null, "entityType": "Person"
+WRONG-ANSWER  ST     ST Q70a page 1 continuation in flight                        | [["plain", [["p3", ["3"]], ["p4", ["4"]]]]]
+WRONG-ANSWER  ST     ST Q52f binary64 expansion                                   | {"type": "decimal", "value": "2.68", "scale": 2, "precision": 3}
+WRONG-ANSWER  ST     ST Q52g erasure spelling commits                             | {"outcome": "rejected", "error": "E-INVALID-VALUE", "errorTag": "InvalidTripleError", "reason": "invalid-value", "phase": "preflight", "message": "unknown op 'erasure'"}
