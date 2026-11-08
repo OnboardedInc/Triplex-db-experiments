@@ -1263,3 +1263,12 @@ Where each priority stands, from evidence so far (research probes and baselines;
   code runs, with replace refs disabled. And the identity must record what children actually execute, not what the evaluator runs on.
 - Ruled Q75a-j; E01 fix round 2 also adopts contract 0.3.10's field names; V-E01 does the delta check. Contract items (pinned runners,
   comparators inside O-REPLAY answers, promotion in admit_claim) go into 0.3.11.
+
+## 2026-11-08 02:20Z: V-O04g: 0.4.7 passes every Q70 row; the fourth continuation route found, so one general rule replaces the patches
+- Every Q70a-k row passes (61 MATCH, 0 WRONG), V-O04f's F9 and F10 are closed, read scope is right, four refusal sites. Still mixing:
+  `transactionsForEntity` pages continued by `beforePosition` (F11) and a string `after` (F12); `after: 1.0` crashes (F13, pre-existing).
+- **Learning:** four rounds (F7-F8, F9-F10, Q70j, F11-F12) each found one more way to continue a page, because each ruling named a route.
+  Q70l states one rule over a table of paged kinds and adds a self-check that fails when any kind with a `next*` output is missing from it;
+  Q70m types continuation values. A rule that names cases invites the next case; a rule over an enumerated table with a completeness check
+  does not. This applies to every future paged surface in the lanes too (pull cursors, feed pages).
+- 0.4.8 in progress; V-O04h has a saved brief.
