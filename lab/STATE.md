@@ -140,3 +140,6 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - Running (9): CX-DA01, CX-SQL01, CX-A01-0311 (r3: evaluator suite), CX-X02-R3 (r4: Q79f), CX-P2Q-R3 (r5), CX-K01-R2 (r3),
   CX-VO05-2 (O-OBS r3 review), CX-OBS01 (r2; releases s1), CX-G03 (r2, no-slot work). Contract 0.3.11 merge undone per Q87.
   Scale window after DA01: park tx2-datomic-dev; K01 live, G03 slot run, W01b GS, J01 compact-on G1, X02/C8 exclusive reruns.
+- SQL01 delivered (53d41ad): 73 package + 23 semantic + 5 live tests, 80 SIGKILLs with zero ACKed commits lost, outage pulls 1 ms at 10k
+  and 30k commands. Open: one unreproduced pinned read that returned 30 of 40 facts (possible P1 torn read). Review CX-VSQL01 launched,
+  told to reproduce that first. EXP-P5 waits for the SQL01 merge.
