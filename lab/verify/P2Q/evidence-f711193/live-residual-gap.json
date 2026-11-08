@@ -1,0 +1,9 @@
+{
+  "basis": 2048,
+  "rewinds": 1,
+  "outcome": {
+    "results": 0,
+    "reportedBasis": 2048
+  },
+  "regressionsDetected": 1
+}

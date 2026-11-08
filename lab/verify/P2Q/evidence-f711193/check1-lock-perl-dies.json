@@ -1,0 +1,12 @@
+{
+  "secondProcess": "opened",
+  "holderNoticed": false,
+  "ackedA": 54,
+  "ackedB": 31,
+  "recovery": {
+    "outcome": "refused:Error: Broker log /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/runs/broker/V-P2Q/lock-perl-dies-22d01068-4259-4bca-834e-6673b93bf9",
+    "lost": 0,
+    "lostSample": [],
+    "broken": []
+  }
+}

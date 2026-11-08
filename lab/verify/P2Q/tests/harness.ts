@@ -29,10 +29,12 @@ import type {
   QleverBrokerStorageAdapterService,
 } from "../../../../packages/qlever/src/broker/BrokerStorageAdapter.js";
 import { decodeRow } from "../../../../packages/qlever/src/rdf.js";
+import { crc32c as crc32cRef } from "../../../../packages/qlever/src/broker/crc32c.js";
 
 export const REPO = path.resolve(import.meta.dirname, "../../../..");
 export const RUNS = path.join(REPO, "runs/broker/V-P2Q");
-export const OUT = "/Users/sam/Claude/Projects/triplex-db-2/V-P2Q";
+// Evidence for the head under test (the d7c6086 round's evidence is committed in lab/verify/P2Q/evidence/).
+export const OUT = path.join("/Users/sam/Claude/Projects/triplex-db-2/V-P2Q", process.env["V_P2Q_HEAD"] ?? "f711193");
 fs.mkdirSync(OUT, { recursive: true });
 export const freshDir = (tag: string) => {
   const dir = path.join(RUNS, `${tag}-${randomUUID()}`);
@@ -327,6 +329,7 @@ export const openRt = async (
   scope: string,
   replica?: QleverClient,
   brokerExtra: Partial<HostBrokerOptions> = {},
+  adapterExtra: Record<string, unknown> = {},
 ): Promise<Rt> => {
   const broker = await HostBroker.open({
     dir,
@@ -339,7 +342,7 @@ export const openRt = async (
   const reads: BrokerReadEvent[] = [];
   const adapter = makeQleverStorageAdapter(client, scope, {
     broker,
-    brokerOptions: { onRead: (e) => reads.push(e) },
+    brokerOptions: { ...adapterExtra, onRead: (e) => reads.push(e) },
   }) as QleverBrokerStorageAdapterService;
   const executor = makeQleverQueryExecutor(client, scope, {
     sourceView: adapter.sourceView,
@@ -394,5 +397,15 @@ export const attempt = <A, E>(rt: Rt, effect: Effect.Effect<A, E>) =>
       onSuccess: (value: A) => ({ ok: true as const, value, error: undefined as any }),
     }),
   );
+/** Write a WATERMARK file (format of log.ts publishWatermark) naming `lsn`, to model which frame was ACKed. */
+export const writeWatermark = (dir: string, epoch: number, lsn: number, position: number) => {
+  const out = Buffer.alloc(32);
+  out.writeUInt32LE(0x4d575854, 0);
+  out.writeUInt32LE(epoch >>> 0, 4);
+  out.writeBigUInt64LE(BigInt(lsn), 8);
+  out.writeBigUInt64LE(BigInt(position), 16);
+  out.writeUInt32LE(crc32cRef(out, 0, 0, 24), 24);
+  fs.writeFileSync(path.join(dir, "WATERMARK"), out);
+};
 export const writeJson = (name: string, value: unknown) =>
   fs.writeFileSync(path.join(OUT, name), JSON.stringify(value, null, 2));
