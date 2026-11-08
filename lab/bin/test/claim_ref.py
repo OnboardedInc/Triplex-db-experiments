@@ -1,10 +1,11 @@
 """The contract's reference model over the claim fixtures (EXP-E01). Usage: python3 -I -B claim_ref.py <input.json>
 
 input = {"fixtures": [{"id", "repo", "claim"}]}. Prints
-  {"documents": {id: {"verdict"}},   lab/acceptance/build_contract.py admit_claim (contract 0.3.8) on each document fixture: with no
+  {"documents": {id: {"verdict"}},   lab/acceptance/build_contract.py admit_claim (contract 0.3.9) on each document fixture: with no
                                      executor (ev None) the reference judges no document, so every verdict is DIAGNOSTIC (Q55a)
    "contractFixtures": [{...}]}      every admit_claim call the contract's own self-check (ruling_checks) makes: the claim, the pins,
-                                     W0 pin, A0 registry, verifier registry and manifest pins it was given, the executor's slots,
+                                     W0 pin, A0 registry, verifier registry, manifest pins and configuration (overrides) it was given,
+                                     the executor's slots and functions,
                                      every executor call in order (function, arguments, result) and the verdict. lab/bin/claim.mjs
                                      admitCore is checked by replaying those calls: it must make the same calls in the same order
                                      and reach the same verdict, without the fixtures being retyped.
@@ -42,7 +43,7 @@ def contract_fixtures():
     calls = []
     source = pathlib.Path(bc.__file__).read_text().splitlines()
 
-    def recorder(claim, ev=None, pins=None, w0=None, a0=None, verifiers=None, pinned=None):
+    def recorder(claim, ev=None, pins=None, w0=None, a0=None, verifiers=None, pinned=None, overrides=None):
         log, wrapped = [], None
         if ev is not None:
             wrapped = {}
@@ -55,12 +56,13 @@ def contract_fixtures():
                     wrapped[k] = f
                 else:
                     wrapped[k] = v
-        verdict = ADMIT(claim, ev=wrapped, pins=pins, w0=w0, a0=a0, verifiers=verifiers, pinned=pinned)
+        verdict = ADMIT(claim, ev=wrapped, pins=pins, w0=w0, a0=a0, verifiers=verifiers, pinned=pinned, overrides=overrides)
+        cfg = dict({"buildSpec": bc.BUILD_SPEC, "frozenTrace": bc.WRITER_TRACE["generator"]["frozen"], "imagePins": bc.IMAGE_PINS, "oracleRunners": bc.ORACLE_RUNNERS}, **(overrides or {}))
         frame = sys._getframe(1)
         while frame.f_code.co_name != "ruling_checks" and frame.f_back is not None:  # label by the self-check line, not the _adm helper
             frame = frame.f_back
         calls.append({"line": frame.f_lineno, "label": source[frame.f_lineno - 1].strip()[:200], "claim": enc(claim),
-                      "ev": None if ev is None else {"slots": enc(ev.get("slots", ())), "calls": log},
+                      "ev": None if ev is None else {"slots": enc(ev.get("slots", ())), "keys": sorted(k for k, v in ev.items() if callable(v)), "calls": log}, "overrides": enc(cfg),
                       "pins": enc(bc.ORACLE_PINS if pins is None else pins), "w0": enc(bc.W0_PIN if w0 is None else w0),
                       "a0": enc(bc.A0_REGISTRY["entries"] if a0 is None else a0), "verifiers": enc(bc.VERIFIER_REGISTRY["entries"] if verifiers is None else verifiers),
                       "pinned": enc({k: v["manifestSha256"] for k, v in bc.CS.items()} if pinned is None else pinned), "verdict": verdict})

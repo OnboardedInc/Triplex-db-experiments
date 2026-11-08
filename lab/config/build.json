@@ -1,0 +1,29 @@
+{
+  "format": "triplex-db-2/build-spec/1",
+  "status": "PROPOSED by EXP-E01 under RULINGS Q64a; a later contract version pins it as obligations.json buildSpec. claim.mjs reads only the contract's buildSpec, never this file.",
+  "argv": [
+    "sh",
+    "-c",
+    "pnpm install --offline --frozen-lockfile --store-dir /Users/sam/projects/triplex-db-2/.pnpm-store && pnpm --filter @triplex-build/triplex build && pnpm --filter @triplex-build/triplex-testkit build && pnpm --filter @triplex-build/triplex-xtdb build && pnpm --filter @triplex-build/triplex-qlever build && pnpm --filter @triplex-build/triplex-qualification build"
+  ],
+  "outputs": [
+    "packages/core/dist/",
+    "packages/testkit/dist/",
+    "packages/xtdb/dist/",
+    "packages/qlever/dist/",
+    "packages/qualification/dist/"
+  ],
+  "run": [
+    "node",
+    "packages/qualification/workloads/obl-case.ts",
+    "--case",
+    "{case}",
+    "--mode",
+    "{mode}"
+  ],
+  "notes": {
+    "argv": "one argv, run by the evaluator in a clean git-archive checkout of the side's commit: an offline, frozen-lockfile install from the lab's pnpm store, then each package gate.mjs builds (PACKAGES: core, testkit, xtdb, qlever, qualification) built on its own in dependency order (core, then testkit, then the lanes and qualification), both lanes so either engine can serve an assignment",
+    "outputs": "each built package's dist/; the binary hash is the listing of every file under them (gate.mjs hashDist convention), and build-manifest/2 inputs are each package's tracked files, the lockfile and the root package.json",
+    "run": "the gate's system-under-test form (node on a packages/qualification/workloads entry point, with the slot binding XTDB_URL or the QLever endpoint in the environment, as engineGate sets it) for one case and mode; obl-case.ts does not exist yet: the OBL gate adds it, reading the case input at {case} and printing the answer object (the oracle's answerMembers) as one canonical JSON document"
+  }
+}

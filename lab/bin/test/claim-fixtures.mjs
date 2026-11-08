@@ -29,26 +29,34 @@ const h = text => sha256(Buffer.from(text));
 
 // ---------------------------------------------------------------- the fixture repositories' files
 
+// The fixture O-REPLAY prints a report in oracleAnswerRule's shape: one canonical JSON document whose answerMembers
+// (commandOutcomes, queries, state) are the expected answer, beside identity and verdict fields that are not (RULINGS Q61c).
 const ORACLE_PY = `import json, sys
 case = json.loads(open(sys.argv[1], encoding="utf-8").read())
 if case.get("redeclareDecimal"):
     sys.stderr.write("o-replay: malformed case: X-NOT-MODELED: redeclares a decimal (5,2) to (6,3)\\n")
     sys.exit(2)
-sys.stdout.write(json.dumps({"next": case["p"] + 1}, sort_keys=True, separators=(",", ":")) + "\\n")
+report = {"format": "o-replay/report", "caseId": case["case"], "verdict": "EXPECTED-ONLY", "commandOutcomes": [], "queries": {"next": case["p"] + 1}, "state": {}}
+sys.stdout.write(json.dumps(report, sort_keys=True, separators=(",", ":")) + "\\n")
+`;
+// The fixture O-CONTRACT (compiled into the contract, so unpinned; run from the authority's files) prints the answer itself.
+const CONTRACT_PY = `import json, sys
+case = json.loads(open(sys.argv[1], encoding="utf-8").read())
+sys.stdout.write(json.dumps({"commandOutcomes": [], "queries": {"next": case["p"] + 1}, "state": {}}, sort_keys=True, separators=(",", ":")) + "\\n")
 `;
 const SRC = {
   'packages/xtdb/package.json': '{ "name": "@fixture/xtdb", "version": "0.0.0" }\n',
   'packages/xtdb/src/index.ts': "export { nextCommitPosition } from './alloc.mjs';\n",
   'packages/xtdb/src/alloc.ts': 'export const nextCommitPosition = p => p + 1; // v1 (A0)\n',
-  'packages/xtdb/src/run.ts': "import fs from 'node:fs';\nimport { nextCommitPosition } from './alloc.mjs';\nconst c = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));\nprocess.stdout.write(JSON.stringify({ next: nextCommitPosition(c.p) }) + '\\n');\n",
+  'packages/xtdb/src/run.ts': "import fs from 'node:fs';\nimport { nextCommitPosition } from './alloc.mjs';\nconst c = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));\nprocess.stdout.write(JSON.stringify({ commandOutcomes: [], queries: { next: nextCommitPosition(c.p) }, state: {} }) + '\\n');\n",
   'test/helper/package.json': '{ "name": "@fixture/helper", "version": "0.0.0" }\n',
+  'package.json': '{ "name": "fixture-root", "private": true }\n',
   'build.mjs': "import fs from 'node:fs';\nfs.mkdirSync('packages/xtdb/dist', { recursive: true });\nfor (const f of fs.readdirSync('packages/xtdb/src')) fs.writeFileSync(`packages/xtdb/dist/${f.replace(/\\.ts$/, '.mjs')}`, fs.readFileSync(`packages/xtdb/src/${f}`));\n",
-  'lab/config/build.json': JSON.stringify({ argv: ['node', 'build.mjs'], outputs: ['packages/xtdb/dist'], run: ['node', 'packages/xtdb/dist/run.mjs', '{case}'] }, null, 2) + '\n',
   'lab/bin/position.mjs': '// position falsifier driver (fixture)\n',
   'lab/bin/ns.mjs': '// north-star driver (fixture)\n',
   'pnpm-lock.yaml': "lockfileVersion: '9.0'\npackages:\n  effect@3.10.0:\n    resolution: {integrity: sha512-fixture}\n",
   'lab/oracles/replay/cli.py': ORACLE_PY,
-  'lab/oracles/contract/cli.py': ORACLE_PY,
+  'lab/oracles/contract/cli.py': CONTRACT_PY,
   'lab/oracles/obs/obs.py': '# O-OBS (fixture)\n',
   'lab/oracles/domain/domain.py': '# O-DOMAIN (fixture)\n',
   'lab/oracles/hand/hand.json': '{}\n',
@@ -59,35 +67,39 @@ const SRC = {
   'lab/world/W0/schema.json': '{}\n',
   'lab/world/W0/cases/c1.json': '{"case":1}\n',
 };
+/** The fixture's buildSpec (contract 0.3.9 BUILD_SPEC shape, triplex-db-2/build-spec/1). */
+export const FIXTURE_BUILD_SPEC = { format: 'triplex-db-2/build-spec/1', argv: ['node', 'build.mjs'], outputs: ['packages/xtdb/dist/'], run: ['node', 'packages/xtdb/dist/run.mjs', '{case}', '{mode}'] };
 const ALLOC_V2 = 'export const nextCommitPosition = p => p + 1; // v2 candidate: nested transacts share one offset\n';
 const ALLOC_WRONG = 'export const nextCommitPosition = p => p + 2; // a candidate that skips a position\n';
 
-// ---------------------------------------------------------------- pinned case manifests with inputs (Q47c, Q55a)
+// ---------------------------------------------------------------- pinned case manifests with inputs (Q47c, Q55a, Q61d)
 
 const EXTRA_CASES = { 'CS-GS': ['GS-05-SCENARIO'], 'CS-MIGRATION': ['MIG-ADD-ATTRIBUTE', 'MIG-DECIMAL-5-2-TO-6-3'] };
 const tagsFor = (set, id) => set === 'CS-POSITION' ? (id.startsWith('FX-') ? ['falsifiers'] : id === 'PO-NESTED-CUTS-DENSE' ? ['ordering', 'dense'] : ['ordering'])
   : set === 'CS-COMPOSITION' ? (['CO-RECEIPT-BINDS-ALL', 'CO-SCOPE-KEY-FROM-ASSIGNMENT'].includes(id) ? ['identity'] : ['watermark'])
     : set === 'CS-NS' ? [`p${id[4]}`] : set === 'CS-GS' ? [id.slice(0, 5)] : set === 'CS-MIGRATION' ? ['valid-writes'] : [];
-export const MANIFEST_SETS = ['CS-POSITION', 'CS-COMPOSITION', 'CS-W0-COVERAGE', 'CS-NS', 'CS-GS', 'CS-MIGRATION'];
+export const MANIFEST_SETS = ['CS-POSITION', 'CS-COMPOSITION', 'CS-W0-COVERAGE', 'CS-NS', 'CS-GS', 'CS-MIGRATION', 'CS-SCOPE'];
 const inputText = (set, id, i) => JSON.stringify({ case: `${set}/${id}`, p: 40 + i, ...(id === 'MIG-DECIMAL-5-2-TO-6-3' ? { redeclareDecimal: true } : {}) }) + '\n';
+// caseManifest (0.3.9): id, tags, input, contentSha256, comparator, optional oracle. No case is marked faultPoint: no fault
+// injector exists, so a faultPoint case could never produce its fault-witness/1 (RULINGS Q61j) and offline runs would always fail.
 export function caseManifest(set) {
   const ids = [...REAL_CONTRACT.caseSets[set].requiredCases, ...(EXTRA_CASES[set] ?? [])];
-  return { format: 'triplex-db-2/case-manifest/1', set, cases: ids.map((id, i) => ({ id, tags: tagsFor(set, id), input: `lab/acceptance/cases/inputs/${set}/${id}.json`, contentSha256: h(inputText(set, id, i)),
-    comparator: 'CMP-EXACT-VALUE', ...(set === 'CS-COMPOSITION' ? { oracle: 'O-CONTRACT' } : {}), ...(id === 'FX-CRASH-APPEND-RESOLUTION' ? { faultPoint: true } : {}) })) };
+  return { format: REAL_CONTRACT.caseManifest.format, set, cases: ids.map((id, i) => ({ id, tags: tagsFor(set, id), input: `lab/acceptance/cases/inputs/${set}/${id}.json`, contentSha256: h(inputText(set, id, i)),
+    comparator: 'CMP-EXACT-VALUE', ...(set === 'CS-COMPOSITION' ? { oracle: 'O-CONTRACT' } : {}) })) };
 }
 const manifestText = set => JSON.stringify(caseManifest(set), null, 2) + '\n';
 
-/** The evaluator's binary hash of a commit's build (lab/config/build.json copies packages/xtdb/src/*.ts to dist/*.mjs): the
+/** The evaluator's binary hash of a commit's build (FIXTURE_BUILD_SPEC copies packages/xtdb/src/*.ts to dist/*.mjs): the
  * listing of the built files, which is what A0_REGISTRY binarySha256 records and every qualification run must reproduce. */
 export const distListing = files => Object.keys(files).filter(f => /^packages\/xtdb\/src\/[^/]+\.ts$/.test(f)).map(f => [f.replace('/src/', '/dist/').replace(/\.ts$/, '.mjs'), h(files[f])])
   .sort((a, b) => a[0] < b[0] ? -1 : 1).map(([p, x]) => `${x}  ${p}\n`).join('');
 /** Obligations a fixture claim can name; VERIFIER_REGISTRY accepts each at every verified commit. */
-const VERIFIED_OBLIGATIONS = ['NS.P2', 'GS.05', 'G1.decimal.channel-routing', 'G9.erasure.residual-shapes', 'G7.migration.schema-evolution'];
+const VERIFIED_OBLIGATIONS = ['NS.P2', 'GS.05', 'G1.decimal.channel-routing', 'G9.erasure.residual-shapes', 'G7.migration.schema-evolution', 'G10.scope.shared-collision'];
 const FIX_ORACLE_COMMIT = 'f1'.repeat(20);
 
 function contractVariant(variant, { a0Commit, a0Label, a0Binary, verified } = {}) {
   const c = structuredClone(REAL_CONTRACT);
-  if (variant === 'real') return c; // contract 0.3.8 exactly as compiled on main
+  if (variant === 'real') return c; // contract 0.3.9 exactly as compiled on main
   // Fixture oracles are pinned like the real ones: per-file hashes, an acceptance receipt, and a VERIFIER_REGISTRY entry that
   // accepts the oracle at the pin's commit (RULINGS Q55a). O-REPLAY keeps the real pin's commit and verifier entry (V-O04c).
   const reg = { ...c.verifierRegistry.entries };
@@ -99,25 +111,31 @@ function contractVariant(variant, { a0Commit, a0Label, a0Binary, verified } = {}
   c.oraclePins['O-DOMAIN'] = filePin('O-DOMAIN', 'lab/oracles/domain', 'lab/oracles/domain/domain.py');
   c.oraclePins['O-HAND'] = filePin('O-HAND', 'lab/oracles/hand', 'lab/oracles/hand/hand.json');
   for (const set of MANIFEST_SETS) c.caseSets[set] = { ...c.caseSets[set], manifestSha256: h(manifestText(set)) };
-  // RULINGS Q61c as ruled (compiled in 0.3.9): how an oracle without a default runner is invoked.
-  c.oracleRunners = { 'O-CONTRACT': { argv: ['python3', '-I', 'lab/oracles/contract/cli.py', '{case}'], files: ['lab/oracles/contract/cli.py'] } };
+  // oracleRunners (0.3.9, Q61c): the real O-REPLAY runner, plus O-CONTRACT, which is COMPILED and unpinned, so its runner names
+  // the files to run from the authority (filesRule, RULINGS Q59e). buildSpec (Q61f) is the fixture's build.
+  c.oracleRunners = { ...c.oracleRunners, 'O-CONTRACT': { argv: ['python3', '-I', 'lab/oracles/contract/cli.py', '{case}'], files: ['lab/oracles/contract/cli.py'] } };
+  c.buildSpec = { ...c.buildSpec, ...FIXTURE_BUILD_SPEC };
   // A reviewed later contract version accepts the claimed obligations at the verified commits (0.3.8 VERIFIER_REGISTRY shape, Q61b).
   for (const commit of verified ?? []) for (const id of VERIFIED_OBLIGATIONS)
     reg[`V-FIX-${id}@${commit.slice(0, 12)}`] = { verifier: 'V-FIXTURE', subject: { kind: 'obligation', id, commit }, brief: 'fixture', briefSha256: h(`brief ${commit}`), branch: 'verify/fixture', commit, verdict: 'ACCEPT (fixture)', status: 'current' };
-  c.verifierRegistry = { ...c.verifierRegistry, entries: reg };
-  if (a0Commit && variant !== 'noreg') c.a0Registry = { ...c.a0Registry, entries: { ...c.a0Registry.entries, 'A0-XTDB': { commit: a0Commit, sourceTreeSha256: a0Label, binarySha256: a0Binary, composition: A0, measuredBy: 'FIXTURE-N01' } } };
+  // The A0 entry's measuredBy is a VERIFIER_REGISTRY entry of kind a0 for the A0 key at the A0 commit (RULINGS Q61k).
+  if (a0Commit && variant !== 'noreg') {
+    c.a0Registry = { ...c.a0Registry, entries: { ...c.a0Registry.entries, 'A0-XTDB': { commit: a0Commit, sourceTreeSha256: a0Label, binarySha256: a0Binary, composition: A0, measuredBy: 'V-FIX-A0-XTDB' } } };
+    reg['V-FIX-A0-XTDB'] = { verifier: 'V-FIXTURE', subject: { kind: 'a0', id: 'A0-XTDB', commit: a0Commit }, brief: 'fixture', briefSha256: h(`brief A0 ${a0Commit}`), branch: 'verify/fixture', commit: a0Commit, verdict: 'ACCEPT (fixture)', status: 'current' };
+  }
   // The W0 pin keeps the real VERIFIER_REGISTRY acceptance (V-D01-W0-1.1.1); the fixture supplies its own files, a delta check and
   // a fingerprint, which only a reviewed contract version sets (RULINGS Q55e).
   if (variant === 'w0') c.w0Pin = { ...c.w0Pin, deltaCheck: 'FIXTURE-DELTA', oDomainFingerprint: 'f'.repeat(64),
     // The fixture's own W0 files (the real pin lists W0-1.1.1's 95 files), plus a directory pin of its cases.
     files: { ...Object.fromEntries(Object.keys(SRC).filter(f => f.startsWith('lab/world/W0/') && !f.startsWith('lab/world/W0/cases/')).map(f => [f, h(SRC[f])])),
       'lab/world/W0/cases/': listingHash([['lab/world/W0/cases/c1.json', h(SRC['lab/world/W0/cases/c1.json'])]]) } };
+  c.verifierRegistry = { ...c.verifierRegistry, entries: reg };
   return c;
 }
 function loadVariant(variant) {
-  // RULINGS Q61h as ruled (compiled in 0.3.9): load-contract.json pins the frozen generator, seed and offer schedule.
+  // load-contract.json writerTrace.generator.frozen (0.3.9, Q61h; null in the real contract): the fixture pins its trace.
   const l = structuredClone(REAL_LOAD);
-  if (variant !== 'real') l.writerTrace.generator.frozen = { sha256: WORKLOAD.generatorSourceSha256, seed: SEED, offerScheduleSha256: WORKLOAD.offerScheduleSha256 };
+  if (variant !== 'real') l.writerTrace.generator.frozen = { ...l.writerTrace.generator.frozen, sha256: WORKLOAD.generatorSourceSha256, seed: SEED, offerScheduleSha256: WORKLOAD.offerScheduleSha256 };
   return l;
 }
 
@@ -358,7 +376,9 @@ export function buildFixtures(root) {
 
   // -- qualification runs (RULINGS Q55a): what the evaluator builds, resolves and runs itself
   const Rr = repos.run;
-  const runClaim = (id, at, obligations = ['NS.P2'], extra = {}) => ({ id, repo: Rr.dir, claim: { format: FORMATS.claim, claimId: id, kind: 'comparative', obligations, commit: at.commit, sourceTreeSha256: at.label, composition: structuredClone(CANDIDATE), ...extra } });
+  // The offline positive is a correctness obligation (CR-PASS-ALL, O-REPLAY): a CR-NS or CR-GS claim needs a PAIR_0 paired-rounds
+  // measurement, which no runner in this evaluator produces, so it can only be DIAGNOSTIC offline (RUN-NS-NO-PAIRED).
+  const runClaim = (id, at, obligations = ['G10.scope.shared-collision'], extra = {}) => ({ id, repo: Rr.dir, claim: { format: FORMATS.claim, claimId: id, kind: 'comparative', obligations, commit: at.commit, sourceTreeSha256: at.label, composition: structuredClone(CANDIDATE), ...extra } });
   // Codex round 7 against a run: the wrong candidate carries a complete set of well-formed documents claiming every case passed,
   // plus a selection, a verifier record and an O-DOMAIN fingerprint of its own (Q55a, Q55e). qualify must read none of it.
   const forged = runClaim('RUN-FORGED-RECORDS', Rr.WRONG, ['NS.P2'], { receipts: complete('RUN-FORGED-RECORDS', { variant: 'run', at: Rr.WRONG }).receipts, selection: 'all', caseList: ['INVENTED-0'], oDomainFingerprint: 'f'.repeat(64) });
@@ -368,7 +388,8 @@ export function buildFixtures(root) {
     forged,
     runClaim('RUN-REFUSED-CASE', Rr.C2, ['G7.migration.schema-evolution']),
     runClaim('RUN-UNREGISTERED-VERIFICATION', Rr.C1),
-    runClaim('RUN-UNREGISTERED-SLOT', Rr.C2, ['NS.P2'], { composition: composition('xtdb', 'qlever', 's9') }),
+    runClaim('RUN-UNREGISTERED-SLOT', Rr.C2, undefined, { composition: composition('xtdb', 'qlever', 's9') }),
+    runClaim('RUN-NS-NO-PAIRED', Rr.C2, ['NS.P2']),
     runClaim('RUN-SUPPLIED-FINGERPRINT', Rr.C2, ['GS.05'], { oDomainFingerprint: 'f'.repeat(64), w0Pin: contractVariant('w0').w0Pin }),
     // CX-R7-RELABELLED-CONTROL as a run: an authority whose A0 entry records the candidate's binary; the rebuild of C1 differs.
     { ...runClaim('RUN-A0-REBUILD-MISMATCH', Rr.C2), authorityRef: 'badreg' },
@@ -405,9 +426,9 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.met
   const root = keep > 0 ? path.resolve(process.argv[keep + 1]) : fs.mkdtempSync(path.join(os.tmpdir(), 'tx2-claim-fixtures-'));
   const built = buildFixtures(root);
   const ref = evaluateReference(built);
-  // The contract's admit_claim (0.3.8) judges no document (ev None: DIAGNOSTIC), and so does claim.mjs admit; documentVerdict is
+  // The contract's admit_claim (0.3.9) judges no document (ev None: DIAGNOSTIC), and so does claim.mjs admit; documentVerdict is
   // what the lab's document checks find, the expected column its expected value.
-  console.log('| Fixture | Source | Defect | Contract admit_claim 0.3.8 | Lab admit verdict | Expected documentVerdict | Lab documentVerdict | Lab reasons (besides DOCUMENT-ONLY) |');
+  console.log('| Fixture | Source | Defect | Contract admit_claim 0.3.9 | Lab admit verdict | Expected documentVerdict | Lab documentVerdict | Lab reasons (besides DOCUMENT-ONLY) |');
   console.log('| --- | --- | --- | --- | --- | --- | --- | --- |');
   for (const f of built.fixtures) {
     const lab = evaluateLab(f, built.objects);

@@ -2,7 +2,7 @@
 // Print the document fixture table: node lab/bin/test/claim-fixtures.mjs
 //
 // Three things are checked.
-//   1. The contract's reference model (0.3.8): admitCore is replayed against every admit_claim call the contract's own
+//   1. The contract's reference model (0.3.9): admitCore is replayed against every admit_claim call the contract's own
 //      self-check makes. claim_ref.py records each call's inputs and every executor call (function, arguments, result) in
 //      order; admitCore must make exactly the same executor calls in the same order and reach the same verdict. On documents
 //      the reference (no executor) and claim.mjs admit both answer DIAGNOSTIC.
@@ -16,7 +16,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
 import { sha256, sourceTreeIdOf } from '../lib.mjs';
-import { admitClaim, admitCore, canonText, coreContext, gitSource, localSut, objectStore, qualifyClaim, recompute } from '../claim.mjs';
+import { admitClaim, admitCore, canonText, caseVerdict, coreContext, gitSource, localSut, objectStore, openRecord, qualifyClaim, recompute } from '../claim.mjs';
 import { buildFixtures, evaluateLab, evaluateReference } from './claim-fixtures.mjs';
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tx2-claim-test-'));
@@ -26,6 +26,7 @@ const ref = evaluateReference(built);
 const CLAIM = path.resolve(import.meta.dirname, '../claim.mjs');
 const GATE = path.resolve(import.meta.dirname, '../gate.mjs');
 const CONTRACT = JSON.parse(fs.readFileSync(path.resolve(import.meta.dirname, '../../acceptance/obligations.json'), 'utf8'));
+const LOAD = JSON.parse(fs.readFileSync(path.resolve(import.meta.dirname, '../../acceptance/load-contract.json'), 'utf8'));
 const fx = id => built.fixtures.find(x => x.id === id);
 const codes = r => r.reasons.map(x => x.code);
 process.on('exit', () => fs.rmSync(root, { recursive: true, force: true }));
@@ -69,25 +70,25 @@ function replay(rec) {
     i++;
     return dec(c.result);
   };
-  return { ev: { slots: rec.slots, ...Object.fromEntries(['build', 'manifest', 'oracle', 'sut', 'compare', 'workload', 'measure'].map(k => [k, fn(k)])) }, made: () => i };
+  return { ev: { slots: rec.slots, ...Object.fromEntries(rec.keys.map(k => [k, fn(k)])) }, made: () => i };
 }
 
 test('admitCore makes the contract\'s executor calls and reaches its verdict on every admit_claim call of its own self-check', () => {
   assert.deepEqual(ref.selfCheckErrors, [], 'the contract self-check itself reports admission errors');
   const fixtures = ref.contractFixtures;
-  assert.ok(fixtures.length >= 40 && fixtures.filter(f => f.verdict === 'QUALIFIED').length >= 5, `only ${fixtures.length} contract fixtures`);
+  assert.ok(fixtures.length >= 59 && fixtures.filter(f => f.verdict === 'QUALIFIED').length >= 7, `only ${fixtures.length} contract fixtures`);
   for (const cx of ['CX-R7-INVENTED-EVIDENCE', 'CX-R7-SELECTION-OVERREACH', 'CX-R7-RELABELLED-CONTROL']) assert.ok(fixtures.some(f => f.label.includes(cx) && f.verdict === 'DIAGNOSTIC'), cx);
   const disagree = [];
   let calls = 0;
   for (const f of fixtures) {
     const r_ = f.ev && replay(f.ev);
     let r;
-    try { r = admitCore(f.claim, r_?.ev ?? null, coreContext(CONTRACT, { pins: f.pins, w0: f.w0, a0: f.a0, verifiers: f.verifiers, pinned: f.pinned })); } catch (error) { r = { verdict: 'DIVERGED', reasons: [{ detail: error.message }] }; }
+    try { r = admitCore(f.claim, r_?.ev ?? null, coreContext(CONTRACT, { pins: f.pins, w0: f.w0, a0: f.a0, verifiers: f.verifiers, pinned: f.pinned, overrides: f.overrides }, LOAD)); } catch (error) { r = { verdict: 'DIVERGED', reasons: [{ detail: error.message }] }; }
     if (r.verdict !== f.verdict || (r_ && r_.made() !== f.ev.calls.length)) disagree.push(`line ${f.line} ${f.label}: contract ${f.verdict} after ${f.ev?.calls.length ?? 0} calls, admitCore ${r.verdict} after ${r_?.made() ?? 0}: ${r.reasons[0]?.detail}`);
     calls += f.ev?.calls.length ?? 0;
   }
   assert.deepEqual(disagree, []);
-  assert.ok(calls > 1000, `only ${calls} executor calls replayed`);
+  assert.ok(calls > 10000, `only ${calls} executor calls replayed`);
 });
 
 test('documents: the contract\'s admit_claim (no executor) and claim.mjs admit both answer DIAGNOSTIC for every document fixture', () => {
@@ -225,10 +226,10 @@ test('gitSource parses cat-file --batch and ls-tree for binary blobs, spaces, ta
 // ---------------------------------------------------------------- 3. runs (RULINGS Q55a)
 
 const R = built.repos.run;
-const spec = JSON.parse(fs.readFileSync(path.join(R.dir, 'lab/config/build.json'), 'utf8'));
+const spec = JSON.parse(execFileSync('git', ['show', 'main:lab/acceptance/obligations.json'], { cwd: R.dir })).buildSpec;
 const runFx = id => built.runFixtures.find(x => x.id === id);
 const qualify = (id, { offline = true, ...extra } = {}) => qualifyClaim(runFx(id).claim, { git: gitSource(runFx(id).repo), authorityRef: runFx(id).authorityRef ?? 'main', workDir: path.join(root, 'work', `${id}-${offline}`), ...(offline ? { sut: localSut(spec) } : {}), ...extra });
-const runs = Object.fromEntries(['RUN-CANDIDATE', 'RUN-WRONG-CANDIDATE', 'RUN-FORGED-RECORDS', 'RUN-REFUSED-CASE', 'RUN-UNREGISTERED-VERIFICATION', 'RUN-A0-REBUILD-MISMATCH'].map(id => [id, qualify(id)]));
+const runs = Object.fromEntries(['RUN-CANDIDATE', 'RUN-WRONG-CANDIDATE', 'RUN-FORGED-RECORDS', 'RUN-REFUSED-CASE', 'RUN-UNREGISTERED-VERIFICATION', 'RUN-A0-REBUILD-MISMATCH', 'RUN-NS-NO-PAIRED'].map(id => [id, qualify(id)]));
 const planOnly = Object.fromEntries(['RUN-CANDIDATE', 'RUN-UNREGISTERED-SLOT', 'RUN-SUPPLIED-FINGERPRINT'].map(id => [id, qualify(id, { offline: false })]));
 const isPosition = c => /^(FX|PO)-/.test(c.case);
 
@@ -238,32 +239,50 @@ test('qualify build: the evaluator builds the claimed tree and rebuilds A0, whic
   assert.equal(run.builds[R.C1.commit].sourceTreeSha256, R.C1.label);
   assert.equal(run.builds[R.C1.commit].binarySha256, R.a0Binary);
   assert.notEqual(run.builds[R.C2.commit].binarySha256, R.a0Binary);
-  // The A0 control executes the registry commit's allocator (Codex round 7 finding 2: a candidate binary labelled as A0).
+  // build-manifest/2 (RULINGS Q61f): the built package's tracked files, the lockfile and the root package.json, and the spec hash.
   const store = objectStore(run.objects);
-  const alloc = c => { const man = store.json(run.builds[c].buildManifestSha256).value; return store.get(man.modules.find(m => m.path === 'packages/xtdb/dist/alloc.mjs').sha256).bytes.toString(); };
+  const man = store.json(run.builds[R.C2.commit].buildManifestSha256).value;
+  assert.equal(man.schema, 'build-manifest/2');
+  assert.equal(man.buildSpecSha256, sha256(canonText(spec)));
+  assert.deepEqual(man.inputs.map(x => x.path), ['package.json', 'packages/xtdb/package.json', 'packages/xtdb/src/alloc.ts', 'packages/xtdb/src/index.ts', 'packages/xtdb/src/run.ts', 'pnpm-lock.yaml']);
+  assert.equal(man.inputs.find(x => x.path === 'packages/xtdb/src/alloc.ts').sha256, sha256(Buffer.from(R.C2.files['packages/xtdb/src/alloc.ts'])));
+  // The A0 control executes the registry commit's allocator (Codex round 7 finding 2: a candidate binary labelled as A0).
+  const alloc = c => { const m = store.json(run.builds[c].buildManifestSha256).value; return store.get(m.modules.find(x => x.path === 'packages/xtdb/dist/alloc.mjs').sha256).bytes.toString(); };
   assert.match(alloc(R.C1.commit), /v1 \(A0\)/);
   assert.match(alloc(R.C2.commit), /v2 candidate/);
-  assert.equal(store.json(run.builds[R.C2.commit].buildManifestSha256).value.schema, 'build-manifest/1');
 });
 
 test('qualify build: CX-R7-RELABELLED-CONTROL as a run, an A0 entry recording another binary than its tree rebuilds to', () => {
   const r = runs['RUN-A0-REBUILD-MISMATCH'];
-  assert.ok(codes(r).includes('A0-REBUILD-MISMATCH'), JSON.stringify(codes(r)));
+  assert.equal(r.run.core.reasons[0].code, 'A0-REBUILD-MISMATCH');
   assert.equal(r.offlineVerdict, 'DIAGNOSTIC');
 });
 
-test('qualify resolve and execute: every case of the pinned manifests in every mode, CR-FAULT cases T-FAULT-REPS times', () => {
+test('qualify resolve, execute and record: every case of the pinned manifests in every mode, each as a case-result/2', () => {
   const { run } = runs['RUN-CANDIDATE'];
-  // G7.position.coordinates (CR-FAULT): 8 cases x 3 modes x 3 repetitions, on the candidate and (lab, GATE-POSITION) on A0.
-  assert.equal(run.cases.filter(c => c.build === R.C2.commit && isPosition(c)).length, 8 * 3 * 3);
-  assert.equal(run.cases.filter(c => c.build === R.C1.commit && isPosition(c)).length, 8 * 3 * 3);
-  assert.equal(run.cases.filter(c => c.build === R.C2.commit && c.case === 'FX-CRASH-APPEND-RESOLUTION' && c.mode === 'reopen').length, 3);
+  // G7.position.coordinates: 8 cases x 3 modes, on the candidate and (lab, GATE-POSITION "A0 included") on A0.
+  assert.equal(run.cases.filter(c => c.build === R.C2.commit && isPosition(c)).length, 8 * 3);
+  assert.equal(run.cases.filter(c => c.build === R.C1.commit && isPosition(c)).length, 8 * 3);
   assert.equal(run.cases.length, run.gate.plan.executions);
   assert.ok(run.cases.every(c => c.verdict === 'PASS'));
   assert.ok(run.oracle.every(o => o.exit === 0 && o.code === null));
+  const store = objectStore(run.objects);
+  const ctx = coreContext(CONTRACT);
+  for (const c of run.cases) {
+    const rec = openRecord(c.recordSha256, store, 'case-result/2', ctx.schemas);
+    assert.ok(rec && rec.obligation === c.obligation && rec.mode === c.mode && rec.rep === 0 && rec.comparator === 'CMP-EXACT-VALUE', JSON.stringify(c));
+    assert.equal(caseVerdict(rec, store), 'PASS');
+  }
 });
 
-test('qualify expect and compare: a candidate whose answer differs from the pinned oracle\'s fails at its first case', () => {
+test('qualify expect: the oracle answer follows oracleAnswerRule (O-REPLAY answerMembers of one canonical JSON document)', () => {
+  const { run } = runs['RUN-CANDIDATE'];
+  const store = objectStore(run.objects);
+  const answer = JSON.parse(store.get(run.cases.find(c => c.obligation === 'G10.scope.shared-collision').expectedSha256).bytes.toString());
+  assert.deepEqual(Object.keys(answer).sort(), [...CONTRACT.answerMembers['O-REPLAY']].sort());
+});
+
+test('qualify compare: a candidate whose answer differs from the pinned oracle\'s fails at its first case', () => {
   const r = runs['RUN-WRONG-CANDIDATE'];
   assert.equal(r.offlineVerdict, 'DIAGNOSTIC');
   assert.deepEqual(r.run.cases.map(c => [c.build, c.verdict]), [[R.WRONG.commit, 'FAIL']]);
@@ -272,8 +291,14 @@ test('qualify expect and compare: a candidate whose answer differs from the pinn
 
 test('qualify: an oracle refusal (exit 2, X-NOT-MODELED) fails closed, and the static refusal also blocks (Q45b, Q47c)', () => {
   const r = runs['RUN-REFUSED-CASE'];
-  assert.ok(r.run.oracle.some(o => o.exit === 2 && o.code === 'X-NOT-MODELED' && o.input.endsWith('MIG-DECIMAL-5-2-TO-6-3.json')));
+  assert.ok(r.run.oracle.some(o => o.exit === 2 && o.code === 'X-NOT-MODELED'));
   for (const code of ['CASE-REFUSED', 'MEASUREMENT-RUN-FAILED', 'ORACLE-REFUSES']) assert.ok(codes(r).includes(code), code);
+});
+
+test('qualify control: a CR-NS claim needs a PAIR_0 paired-rounds measurement, which no runner here produces', () => {
+  const r = runs['RUN-NS-NO-PAIRED'];
+  assert.ok(codes(r).includes('PAIRED-NOT-RUN'));
+  assert.equal(r.run.core.reasons[0].code, 'CONTROL-UNMATCHED');
 });
 
 test('qualify: Codex round 7 forged records, selections, case lists and fingerprints in the claim are ignored', () => {
@@ -313,14 +338,13 @@ test('qualify re-hashes a build before running it after another: a candidate tha
 });
 
 test('qualify verify: only the authority contract\'s VERIFIER_REGISTRY counts; supplied verifier records count for nothing', () => {
-  const r = runs['RUN-UNREGISTERED-VERIFICATION'];
-  assert.equal(r.run.core.reasons[0].code, 'VERIFIER-UNREGISTERED');
+  assert.equal(runs['RUN-UNREGISTERED-VERIFICATION'].run.core.reasons[0].code, 'VERIFIER-UNREGISTERED');
   assert.ok(!codes(runs['RUN-CANDIDATE']).includes('VERIFIER-UNREGISTERED'));
-  // The real 0.3.8 contract: no A0 entry, no pinned manifests, and no registry entry for the claim's obligation.
-  const real = qualifyClaim({ format: 'triplex-db-2/claim/1', kind: 'comparative', obligations: ['NS.P2'], commit: built.repos.real.C2.commit, sourceTreeSha256: built.repos.real.C2.label, composition: runFx('RUN-CANDIDATE').claim.composition },
+  // The real 0.3.9 contract: buildSpec null (fails first), no A0 entry, and no registry entry for the claim's obligation.
+  const real = qualifyClaim({ format: 'triplex-db-2/claim/1', kind: 'comparative', obligations: ['G10.scope.shared-collision'], commit: built.repos.real.C2.commit, sourceTreeSha256: built.repos.real.C2.label, composition: runFx('RUN-CANDIDATE').claim.composition },
     { git: gitSource(built.repos.real.dir), authorityRef: 'main', workDir: path.join(root, 'work', 'real') });
-  for (const code of ['A0-REGISTRY-NULL', 'VERIFIER-UNREGISTERED', 'PREREQ-FAILED', 'GATE-NOT-RUN']) assert.ok(codes(real).includes(code), `${code}: ${codes(real)}`);
-  assert.match(real.reasons.find(x => x.code === 'PREREQ-FAILED').detail, /no pinned manifest/);
+  assert.equal(real.run.core.reasons[0].code, 'BUILD-SPEC-NULL');
+  for (const code of ['A0-REGISTRY-NULL', 'VERIFIER-UNREGISTERED', 'GATE-NOT-RUN']) assert.ok(codes(real).includes(code), `${code}: ${codes(real)}`);
 });
 
 test('qualify Q55e: a claim cannot supply the W0 pin or the O-DOMAIN fingerprint', () => {
@@ -371,4 +395,13 @@ test('CLI qualify: --offline-sut runs offline and exits 2 with the offline verdi
   assert.equal(js.verdict, 'DIAGNOSTIC');
   assert.equal(js.offlineVerdict, 'QUALIFIED');
   assert.equal(spawnSync(process.execPath, [CLAIM, 'qualify'], { encoding: 'utf8' }).status, 1);
+});
+
+test('RULINGS Q64a: the proposed real build spec (lab/config/build.json) is a complete build-spec/1', () => {
+  const p = JSON.parse(fs.readFileSync(path.resolve(import.meta.dirname, '../../config/build.json'), 'utf8'));
+  assert.equal(p.format, CONTRACT.buildSpec.format);
+  for (const k of ['argv', 'outputs', 'run']) assert.ok(Array.isArray(p[k]) && p[k].length, k);
+  assert.match(p.argv.join(' '), /pnpm install --offline --frozen-lockfile --store-dir \/Users\/sam\/projects\/triplex-db-2\/\.pnpm-store/);
+  assert.ok(p.run.includes('{case}') && p.run.includes('{mode}'));
+  assert.ok(p.outputs.every(o => /^packages\/[a-z0-9-]+\/dist\/$/.test(o)));
 });
