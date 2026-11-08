@@ -5,6 +5,7 @@ import { TypeExpr } from "@triplex-build/triplex/config";
 import { DatabaseScope } from "@triplex-build/triplex/runtime";
 import type { XtdbBasis, XtdbClient, XtdbQueryOptions } from "../src/XtdbClient.js";
 import { makeXtdbNativeQueries } from "../src/native/NativeQueries.js";
+import { queryExpressionCorpus } from "./query-expression-corpus.js";
 import { readOnlyNativeSql } from "../src/native/ReadOnlySql.js";
 
 const scope = DatabaseScope.test("native-unit");
@@ -87,6 +88,29 @@ describe("XTDB native read provider", () => {
       expect(String(exit.cause)).toContain("non-subquery operand");
     }
     expect(calls.some(({ sql }) => sql.includes("ARRAY[1,2]"))).toBe(false);
+  });
+  // [EXP-X02-Q79e] Why: check every generated expression and invalid productions
+  // through the provider. Rejected: six more hand-selected UNION spellings.
+  it("classifies the generated query-expression grammar", async () => {
+    for (const entry of queryExpressionCorpus()) {
+      const { client, calls } = fixture();
+      await Effect.runPromise(
+        makeXtdbNativeQueries(client, scope).selectSql(contract, { owner: "o" }, () => entry.sql),
+      );
+      expect(calls.some((call) => call.sql.includes(entry.sql))).toBe(true);
+    }
+  });
+  it.each([
+    "ARRAY[1]",
+    "(ARRAY[1])",
+    "SELECT 1 UNION ARRAY[2]",
+    "(SELECT 1) UNION (ARRAY[2])",
+    "SELECT 1 UNION",
+    "()",
+  ])("refuses non-query production %s", (operand) => {
+    expect(() => readOnlyNativeSql(`SELECT 1 WHERE 1 = ANY (${operand})`)).toThrow(
+      "non-subquery operand",
+    );
   });
   // [EXP-X02-R3] Why: retain all six F1-R2 public-provider forms and deeper
   // comment-aware layers. Rejected: lexical acceptance alone as provider coverage.

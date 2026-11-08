@@ -86,9 +86,8 @@ export const readOnlyNativeSql = (sql: string): string => {
       index++;
     }
   }
-  // [EXP-X02-R3] Why: query operands may wrap SELECT in balanced parentheses
-  // (F1-R2, XTDB 2.2.0 Sql.g4 queryExpression). Rejected: skipping arbitrary
-  // opening tokens (would admit incomplete layers); rescanning SQL loses comments.
+  // [EXP-X02-Q79e] Why: match groups once on comment/literal-aware tokens.
+  // Rejected: character lookahead (comments and quoted parentheses change boundaries).
   const closingParentheses = new Map<number, number>();
   const openings: number[] = [];
   for (let i = 0; i < tokens.length; i++) {
@@ -98,6 +97,44 @@ export const readOnlyNativeSql = (sql: string): string => {
       if (opening !== undefined) closingParentheses.set(opening, i);
     }
   }
+  // [EXP-X02-Q79e] Why: Sql.g4 queryExpression combines query primaries with
+  // set operators; a parenthesized primary need not wrap the entire operand.
+  // Grammar: query := primary (set-op [ALL | DISTINCT] primary)*;
+  // primary := '(' query ')' | SELECT/VALUES/WITH/FROM body.
+  // Bodies stay opaque SQL for XTDB to validate, but balanced groups cannot
+  // conceal set operators at this level. Rejected: enumerating parenthesis shapes
+  // (misses compound queries) or skipping arbitrary '(' (admits wrapped arrays).
+  const setOperators = new Set(["UNION", "INTERSECT", "EXCEPT"]);
+  const isQueryExpression = (start: number, end: number): boolean => {
+    let cursor = start;
+    while (cursor < end) {
+      if (tokens[cursor] === "(") {
+        const close = closingParentheses.get(cursor);
+        if (close === undefined || close >= end || !isQueryExpression(cursor + 1, close))
+          return false;
+        cursor = close + 1;
+      } else {
+        if (!["SELECT", "VALUES", "WITH", "FROM"].includes(tokens[cursor] ?? "")) return false;
+        const body = ++cursor;
+        while (cursor < end && !setOperators.has(tokens[cursor]!)) {
+          if (tokens[cursor] === "(") {
+            const close = closingParentheses.get(cursor);
+            if (close === undefined || close >= end) return false;
+            cursor = close + 1;
+          } else {
+            if (tokens[cursor] === ")") return false;
+            cursor++;
+          }
+        }
+        if (cursor === body) return false;
+      }
+      if (cursor === end) return true;
+      if (!setOperators.has(tokens[cursor]!)) return false;
+      cursor++;
+      if (tokens[cursor] === "ALL" || tokens[cursor] === "DISTINCT") cursor++;
+    }
+    return false;
+  };
   // [EXP-X02-R2] Why: Q79a requires comment-aware operands, including bare arrays.
   // Rejected: raw-character lookahead (ANY/**/(...) bypasses it). ALL after SELECT
   // or UNION is a set quantifier; other quantified operands must be subqueries.
@@ -109,22 +146,14 @@ export const readOnlyNativeSql = (sql: string): string => {
     if (!["=", ">", "<"].includes(tokens[i - 1] ?? "")) continue;
     if (token === "ALL" && ["SELECT", "UNION", "INTERSECT", "EXCEPT"].includes(tokens[i - 1] ?? ""))
       continue;
-    let opening = i + 1;
-    let closing = closingParentheses.get(opening);
-    while (
-      tokens[opening + 1] === "(" &&
-      closing !== undefined &&
-      closingParentheses.get(opening + 1) === closing - 1
-    ) {
-      opening++;
-      closing--;
-    }
-    // [EXP-X02-R3] Why: classification must not advance i past the operand:
-    // nested unsafe comparisons still need checking. Rejected: skipping the query body.
+    const opening = i + 1;
+    const closing = closingParentheses.get(opening);
+    // [EXP-X02-Q79e] Why: continue scanning every token after classification,
+    // including each set arm. Rejected: jumping over a safe outer query (hides unsafe inner comparisons).
     if (
       tokens[opening] !== "(" ||
       closing === undefined ||
-      !["SELECT", "VALUES", "WITH", "FROM"].includes(tokens[opening + 1] ?? "")
+      !isQueryExpression(opening + 1, closing)
     )
       throw new TypeError(
         "Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)",
