@@ -44,7 +44,7 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | Agent | Priority | Output |
 | --- | --- | --- |
 | EXP-J01 bytes per commit, both lanes (opus; fresh-scope service-time runs) | P2 (and delta growth for P3/P5) | per-source tables, candidate encoding |
-| EXP-C8 reads never write (opus; SQL G2 run) | P1, C8 floor | both lanes |
+| V-C8 independent check of C8 d9b2dc8 (opus, fresh; verify/C8; brief lab/verify/C8/BRIEF.md) | P1, C8 floor | verdict; merge after V-X02 (C8 carries X02) |
 | EXP-W01b remaining XTDB scenarios (opus, W01 author resumed) | GS correctness on XTDB | 12 scenarios, GS.04 rerun, GS.12 patch |
 | P2Q fix round 2 (opus, P2Q author a56ab43df1f0e0ef7 resumed; exp/P2Q-qlever-log-broker) | P2, P3 | Q72a lock helper, Q72b/Q67c answer snapshot, Q72c reasons, Q67d P3 timing |
 | EXP-E01 fix round 2 (opus, E01 author resumed): Q75a-j plus the 0.3.10 field names (slot to placement, Q67g) | floor for every claim | then V-E01 delta check (resume a38618f4537a2f419) |
@@ -59,6 +59,7 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 Codex plan-v2 review DONE: NOT READY, 14 findings all accepted (lab/reviews/plan-v2-review.responses.md, 675db6b). Codex round 2 DONE: 7 closed, 7 partial, 6 new, NOT READY; all accepted as Q31a-k (743cb1f). Contract 0.3.3 committed 89376e1 (142 obligations). Codex round 3 DONE: 11 closed, 2 partial, 5 new, NOT READY; accepted as Q34a-e (9a4fbb4). Contract 0.3.4 committed 60e4c57 (147 obligations, byte-identical regeneration). Codex round 4 DONE: NOT READY; accepted as Q38a-f (baeb9fd). Contract 0.3.5 committed 15a07b6 (149 obligations; 124 fail closed on null oracle pins; Q40 recorded-not-compiled; Q41 in RULINGS-PENDING.md). Codex round 5 DONE: 6 closed, 2 partial, 3 new; Q42a-c pending (59047ac). Contract 0.3.6 compiles Q40-Q42 once W0-1.1.0 lands; then Codex round 6. Rounds 6-8 since: open findings 4, 5, 10; round 8 accepted as Q67 (lab/reviews/plan-v2-round8.responses.md).
 
 ## Queue (NEXT FREE SLOTS, in order; restored 2026-11-08 after a table rewrite dropped it)
+00. C8 follow-up after V-C8 (Q76b dead table, Q76d countSimplePaths in WL20) and clean XTDB G1/G2 on an exclusive slot after V-X02 (Q76f); merge C8 after X02.
 0. EXP-O05 O-OBS observation oracle (brief lab/experiments/EXP-O05-observation-oracle/BRIEF.md): dispatch at the next free slot;
    O-OBS blocks 62 of 157 obligations, then V-O05 and a pin. Next after it: O-HAND hand derivations (20 obligations).
 1. DONE: contract 0.3.10 merged 64ab545 (65 of 157 closable; 284/284 regressions); W0 kernel merged a199182.

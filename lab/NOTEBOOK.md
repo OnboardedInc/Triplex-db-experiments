@@ -1272,3 +1272,18 @@ Where each priority stands, from evidence so far (research probes and baselines;
   Q70m types continuation values. A rule that names cases invites the next case; a rule over an enumerated table with a completeness check
   does not. This applies to every future paged surface in the lanes too (pull cursors, feed pages).
 - 0.4.8 in progress; V-O04h has a saved brief.
+
+## 2026-11-08 02:24Z: MILESTONE (P1 floor): read paths never write, on both lanes
+- **EXP-C8 (d9b2dc8):** every read entry point runs on a read-only client view; five read-path mutators are gone (XTDB scratch tables and
+  per-round COMMIT SYNC for native reachability, Datalog relation tables, maintained-query writes on query(); QLever scratch graphs and
+  never-cleaned derived graphs). A wire-level write counter that fails closed counts 0 writes and 0 commits across every gate run (1,412
+  statements), and a positive control registers its commit. QLever G1 88/88 and its G2 closure workloads pass; XTDB failures are all
+  timeouts on the overloaded shared engine.
+- **Faster as well as read-only:** the single-read default reads each edge relation once and runs the frontier in memory: XTDB native wl15
+  2.6-3.2 s against 5.2-10.3 s before (5-7 write transactions per call before); QLever tree native 1.1-1.7 s against 3.2-4.9 s. Learning:
+  on the current ledger one recursion round costs as much as reading the whole edge relation, so per-round reads only pay once there is an
+  id-keyed current copy (P4's structure); C8's closure scale limits (1M / 100k edge rows) wait for that (Q76a).
+- **P1 side observation:** QLever updates appear to queue behind queries (writer 4.4 s p50 alone, one 20 s commit with 4 readers). That is
+  the replica behind the broker, which is why P1 on QLever goes through broker-fed replicas (Q63b).
+- V-C8 (fresh Opus) dispatched; C8 merges after V-X02, since it carries X02. Ruled Q76 (closure scale, dead schema, tail constraints,
+  WL20 supports, maintained-query publication from the feed, clean receipts on an exclusive slot).
