@@ -2,30 +2,34 @@
 // lab/bin/claim.mjs admit   <claim.json> [--repo DIR] [--objects DIR] [--authority-ref main] [--json]
 // lab/bin/claim.mjs qualify <claim.json> [--repo DIR] [--authority-ref main] [--work DIR] [--offline-sut] [--json]
 //
-// Claim admission (EXP-E01; contract 0.3.7 CLAIM_ADMISSION; RULINGS Q34d, Q37b, Q38a, Q38b, Q41d, Q42a, Q45a, Q45b, Q46b,
-// Q47a to Q47d; Q55a and Q55e as the coordinator directs). Exit 0 for QUALIFIED, 2 for DIAGNOSTIC with every reason found, 1
-// for usage errors. An evaluator exception is itself a DIAGNOSTIC (fail closed). Pending rulings (RULINGS-PENDING.md,
-// authority "none", Q47d) are never cited as authority for admitting anything.
+// Claim admission (EXP-E01; contract 0.3.8 QUALIFICATION_RUN and CLAIM_ADMISSION; RULINGS Q34d, Q37b, Q38a, Q38b, Q41d,
+// Q42a, Q45a, Q45b, Q46b, Q47a to Q47d, Q55a, Q55b, Q55e; Q61a and Q61b as ruled). Exit 0 for QUALIFIED, 2 for DIAGNOSTIC with
+// the reasons found, 1 for usage errors. An evaluator exception is itself a DIAGNOSTIC (fail closed). Pending rulings
+// (RULINGS-PENDING.md, authority "none", Q47d) are never cited as authority for admitting anything.
 //
 // Qualification is a run, not a document (Q55a). Two commands:
+//   qualify  runs the claim (qualifyClaim). admitCore below is the contract's reference model, build_contract.py admit_claim
+//            and qualification_run, ported function by function; it decides the verdict and takes an executor `ev` (build,
+//            manifest, oracle, sut, compare, workload, measure, slots). labExecutor is the lab's executor: fresh git-archive
+//            checkouts verified against the tree, the authority's build spec, manifests from the claimed commit checked against
+//            the contract's pins, the pinned oracle files materialised alone, the declared comparator, the evaluator's own
+//            workload, and the gate. Step 3 (the gate) exists only as gate.mjs --dry-run, so qualify is DIAGNOSTIC
+//            (GATE-NOT-RUN) until an executing OBL gate exists; an offline run (--offline-sut) reports offlineVerdict.
 //   admit    judges a claim's documents: receipts and records a claimant supplies. Its verdict is always DIAGNOSTIC
-//            (DOCUMENT-ONLY); documentVerdict says whether the documents would pass the checks below. Codex round 7 showed
-//            that well-formed records can be invented (finding 1) and a candidate binary can be labelled as A0 (finding 2);
-//            no check of a document can tell an invented record from a real one, so none can qualify.
-//   qualify  runs the claim itself (qualifyClaim below): it builds the claimed tree and the registry's A0 from fresh git
-//            archives, resolves every case and mode from the pinned manifests, computes every expected answer with the pinned
-//            oracle on the pinned input, runs the system under test through the gate, applies the declared comparator, and
-//            judges only the receipts it made. The claim's receipts, selections and case lists are ignored. Step 3 (the gate)
-//            exists only as gate.mjs --dry-run, so qualify is DIAGNOSTIC (GATE-NOT-RUN) until an executing OBL gate exists.
+//            (DOCUMENT-ONLY), as the reference's admit_claim is without an executor (ev None); documentVerdict says whether
+//            the documents pass the document checks below. Codex round 7 showed well-formed records can be invented (finding 1)
+//            and a candidate binary labelled as A0 (finding 2); no check of a document can tell those from real ones.
 //
-// The document checks have two layers.
-//   1. admitCore: the contract's reference model (lab/acceptance/build_contract.py admit_claim, evidence_ok, open_record,
-//      case_verdict, workload_ok, refused_by, selected_pairs), ported function by function with the contract's names, record
-//      schemas (EVIDENCE_SCHEMAS), workload identity (WORKLOAD_IDENTITY) and A0 registry (A0_REGISTRY), read from the contract
-//      document. Q41d: the lab implements the reference as a minimum, so on any input this layer reaches the reference's
-//      verdict; lab/bin/test/claim.test.mjs checks that on the contract's own admission fixtures.
-//   2. admitClaim: the lab layer (the full VA rules, Q41d), which runs the core on what I/O finds and then requires more:
-//      - the contract is read from the claimed commit, never the working tree, and equals the authority ref's (VA6);
+// Both commands read the contract from the authority ref (main), never from the claimed commit or the working tree (VA6,
+// RULINGS Q61a): the A0 and verifier registries are entries a later reviewed contract version adds, so a claimed commit's own
+// contract can never hold its verification.
+//
+// The document checks (admit) have two layers.
+//   1. documentCore: contract 0.3.7's admit_claim and evidence_ok over supplied receipts (0.3.8 removed evidence_ok when
+//      admission became a run), kept as the document check and updated to read 0.3.8's fields: composition_ok with the
+//      source variant (Q55b), the A0 registry's binarySha256 (a control's executed binary must be it), and VERIFIER_REGISTRY
+//      acceptance of oracle pins, the W0 pin and the claimed obligation at the claimed commit (Q55a, Q61b).
+//   2. evaluate: the lab layer (the full VA rules, Q41d), which runs documentCore on what I/O finds and then requires more:
 //      - the claim's and the A0 registry's source labels are the clean labels of real commits;
 //      - every receipt the claim carries verifies (not just one per prerequisite: rerun-until-green bundles, B11);
 //      - a run ledger object binds the receipt's run fields (bindingOf) to the evidence list, counts, modes and fault
@@ -79,9 +83,9 @@ export const listingHash = rows => sha256(rows.map(([p, h]) => `${h}  ${p}\n`).j
  * no pathspec magic (red-team pass 2: node_modules/./@x and node_modules//@x spelled a first-party package another way). */
 const safePath = p => typeof p === 'string' && p.length > 0 && !p.startsWith(':') && !p.startsWith('-') && !/[\u0000-\u001f\u007f\\]/.test(p) && p.split('/').every(s => s !== '' && s !== '.' && s !== '..');
 const agentKey = a => typeof a === 'string' ? a.trim().toLowerCase() : null; // red-team pass 2: "Agent-Candidate-Author"
-/** Four assignments, each with string engine, imageDigest, configSha256 (a sha256) and slot (VA14; red-team pass 1: a slot
- * array or a missing field must not count as bound). */
-const boundComposition = (c, assignments) => sameKeys(c, assignments) && assignments.every(k => sameKeys(c[k], COMPOSITION_FIELDS) && COMPOSITION_FIELDS.every(f => str(c[k][f])) && sha(c[k].configSha256));
+/** composition_ok (0.3.8, the source variant included), and the lab's stricter typing: string engine, imageDigest, configSha256
+ * (a sha256) and slot (VA14; red-team pass 1: a slot array or a missing field must not count as bound). */
+const boundComposition = (c, ctx) => compositionOk(c, ctx) && ctx.assignments.every(k => COMPOSITION_FIELDS.every(f => str(c[k][f])) && sha(c[k].configSha256));
 /** VA4: every assignment runs the image lab/config/slots.json pins for its engine (the contract pins no images). */
 const imageProblems = (c, slots, assignments) => assignments.flatMap(k => { const pin = slots?.lanes?.[c[k].engine]?.imageId; return !pin || c[k].imageDigest !== pin ? [`${k} image ${c[k].imageDigest} is not the pinned ${pin ?? '(no pin)'}`] : []; });
 /** Every reason in order; more than three with the same code on one receipt are summarised with a count. */
@@ -166,6 +170,7 @@ function typed(v, t) {
   if (t === 'int') return Number.isSafeInteger(v);
   if (t === 'list') return Array.isArray(v) && v.length > 0;
   if (t === 'window') return Array.isArray(v) && v.length === 2 && v.every(x => typed(x, 'int')) && 0 <= v[0] && v[0] < v[1];
+  if (t === 'bool') return typeof v === 'boolean';
   if (t === 'str-or-null') return v === null || (typeof v === 'string' && v !== '');
   return typeof v === 'string' && v.trim() !== '';
 }
@@ -208,23 +213,158 @@ export function refusedBy(o, ref, caseSets) {
     || (ref.reachedThrough ?? []).some(([s, t]) => t === '*' ? sets.has(s) : pairs.has(`${s}\u0000${t}`));
 }
 
-/** The reference's context, read from a contract document (obligations.json). Pins, W0 and A0 may be overridden by fixtures. */
-export function coreContext(contract, { pins, w0, a0 } = {}) {
+/** The reference's context, read from a contract document (obligations.json). Pins, W0, A0, the verifier registry and the
+ * manifest pins may be overridden, exactly as admit_claim's parameters allow (the contract's own fixtures use that). */
+export function coreContext(contract, { pins, w0, a0, verifiers, pinned } = {}) {
   return {
     byId: new Map(contract.obligations.map(o => [o.id, o])), assignments: contract.composition.assignments, positionRequired: contract.positionRequiredCases,
     faultReps: contract.thresholds['T-FAULT-REPS'].value, schemas: contract.evidenceSchemas, workloadFields: contract.workloadIdentity.fields,
     pins: pins ?? contract.oraclePins, w0: w0 ?? contract.w0Pin, a0: a0 ?? contract.a0Registry.entries, byEngine: contract.a0Registry.byEngine,
+    verifiers: verifiers ?? contract.verifierRegistry?.entries ?? {},
+    pinned: pinned ?? Object.fromEntries(Object.entries(contract.caseSets).map(([k, v]) => [k, v.manifestSha256 ?? null])),
+    comparators: Object.keys(contract.comparators ?? {}), sourceVariantFields: contract.sourceVariantFields ?? {}, logFields: contract.logFields ?? {},
     oracles: contract.oracles, refusals: contract.oracleRefusals, caseSets: contract.caseSets,
   };
 }
+const cmpStr = (a, b) => a < b ? -1 : a > b ? 1 : 0;
 
-/** build_contract.evidence_ok: one receipt as evidence for one obligation, tree, composition and commit. Returns the first reason it fails, or null. */
+/** build_contract.composition_ok (Q28, Q55b): four bound assignments; the source declares its protocol variant
+ * (SOURCE_VARIANT_FIELDS) and, for log-source, its log identity and durability configuration (LOG_FIELDS). */
+export function compositionOk(comp, ctx) {
+  if (!isObj(comp) || !sameKeys(comp, ctx.assignments)) return false;
+  for (const [k, a] of Object.entries(comp)) {
+    if (!isObj(a)) return false;
+    let extra = [];
+    if (k === 'source') {
+      const v = own(a, 'variant');
+      if (typeof v !== 'string' || !Object.prototype.hasOwnProperty.call(ctx.sourceVariantFields, v)) return false;
+      extra = ['variant', ...ctx.sourceVariantFields[v]];
+    }
+    if (!sameKeys(a, [...new Set([...COMPOSITION_FIELDS, ...extra])]) || COMPOSITION_FIELDS.some(f => pyFalsy(a[f]))) return false;
+    if (extra.includes('log') && !(isObj(a.log) && sameKeys(a.log, Object.keys(ctx.logFields)) && Object.entries(ctx.logFields).every(([f, t]) => typed(a.log[f], t)))) return false;
+  }
+  return true;
+}
+
+/** build_contract.resolve_cases (Q55a): cases from the pinned manifests only, deduplicated by (set, id) and sorted; null when any
+ * selection is unresolvable. ev.manifest(set) returns the manifest bytes the evaluator found. */
+export function resolveCases(o, ev, pinned, note = () => {}) {
+  const out = new Map();
+  for (const c of o.cases) {
+    const want = own(pinned, c.set);
+    const raw = pyFalsy(want) ? null : ev.manifest(c.set);
+    if (pyFalsy(want) || !Buffer.isBuffer(raw) || sha256(raw) !== want) { note(`${o.id}: case set ${c.set} has no pinned manifest, or the manifest found does not hash to the pin`); return null; }
+    let cases;
+    try { cases = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(raw)).cases; } catch { cases = undefined; }
+    if (!Array.isArray(cases)) { note(`${o.id}: ${c.set} manifest has no case list`); return null; }
+    for (const t of c.select) {
+      const hit = cases.filter(x => isObj(x) && (t === 'all' || own(x, 'id') === t || (Array.isArray(own(x, 'tags')) && x.tags.includes(t))));
+      if (!hit.length) { note(`${o.id}: ${c.set} selection ${t} resolves to no case of the pinned manifest`); return null; }
+      for (const x of hit) out.set(JSON.stringify([c.set, x.id]), [c.set, x.id, x]);
+    }
+  }
+  return [...out.values()].sort((a, b) => cmpStr(a[0], b[0]) || cmpStr(a[1], b[1])).map(k => k[2]);
+}
+
+/** build_contract.qualification_run (Q55a): every resolved case, the pinned oracle's answer (exit 0, no code), and the declared
+ * comparator on the system's observation in every mode, T-FAULT-REPS times for CR-FAULT obligations. null on any failure. */
+export function qualificationRun(o, binary, comp, ev, ctx, pins = ctx.pins, pinned = ctx.pinned, note = () => {}) {
+  const cases = resolveCases(o, ev, pinned, note);
+  if (!cases || !cases.length) { if (cases) note(`${o.id}: no case resolved`); return null; }
+  const reps = o.closure.rules.includes('CR-FAULT') ? ctx.faultReps : 1;
+  for (const x of cases) {
+    const orc = !pyFalsy(own(x, 'oracle')) ? x.oracle : (o.oracles.length ? o.oracles[0] : null);
+    if (!o.oracles.includes(orc) || !ctx.comparators.includes(own(x, 'comparator'))) { note(`${o.id} ${x.id}: oracle ${orc} is not the obligation's, or comparator ${own(x, 'comparator')} is not a contract comparator`); return null; }
+    const pin = own(pins, orc);
+    const expected = ev.oracle(orc, own(pyFalsy(pin) ? {} : pin, 'commit') ?? null, own(x, 'input') ?? null);
+    // Q45b, Q47a: a refusal (exit 2, X-NOT-MODELED) or any oracle failure fails the obligation closed.
+    if (!isObj(expected) || expected.exit !== 0 || (own(expected, 'code') ?? null) !== null) { note(`${o.id} ${x.id}: oracle ${orc} gave no answer (exit ${own(expected, 'exit')}, code ${own(expected, 'code')})`); return null; }
+    for (const mode of o.closure.modes) for (let i = 0; i < reps; i++)
+      if (pyFalsy(ev.compare(x.comparator, own(expected, 'output') ?? null, ev.sut(binary, comp, x, mode)))) { note(`${o.id} ${x.id} mode ${mode}${reps > 1 ? ` repetition ${i + 1}` : ''}: ${x.comparator} rejects the observation`); return null; }
+  }
+  return { obligation: o.id, cases: cases.map(x => x.id), modes: [...o.closure.modes], reps };
+}
+
+/** build_contract.registered_acceptance (Q55a): a VERIFIER_REGISTRY entry accepting exactly this subject at this commit. */
+export function registeredAcceptance(entryId, kind, subjectId, commit, registry) {
+  const e = typeof entryId === 'string' ? own(registry, entryId) : undefined;
+  if (pyFalsy(e) || !isObj(e) || typeof own(e, 'verdict') !== 'string' || !e.verdict.startsWith('ACCEPT')) return false;
+  const s = own(e, 'subject');
+  return isObj(s) && same(s, { ...s, kind, id: subjectId, commit: commit ?? null });
+}
+
+/** admit_claim's contract-level conditions, in its order (no executor call): W0 accepted and fingerprinted (GATE-W0, Q55e),
+ * every oracle pinned and accepted through VERIFIER_REGISTRY or an accepted unpinned status (Q37b, Q55a), excludes (Q45a),
+ * refusals reached directly or through a broader set (Q45b, Q47c). All are returned; admit_claim stops at the first. */
+export function contractBlockers(claimed, prereq, domain, ctx) {
+  const out = [];
+  const w0 = ctx.w0 ?? {};
+  if (domain && (Object.values(own(w0, 'files') ?? {}).some(v => v == null) || !registeredAcceptance(own(w0, 'verifierEntry'), 'world', 'W0', own(w0, 'commit'), ctx.verifiers) || own(w0, 'deltaCheck') == null || own(w0, 'oDomainFingerprint') == null))
+    out.push({ code: 'W0-UNPINNED', detail: 'a W0 file hash, the W0 pin\'s VERIFIER_REGISTRY acceptance, the delta check or the O-DOMAIN fingerprint is missing; the fingerprint comes only from a reviewed contract version (GATE-W0, RULINGS Q55a, Q55e)' });
+  for (const x of new Set([...claimed, ...prereq].flatMap(o => o.oracles))) {
+    if (isObj(ctx.pins) && Object.prototype.hasOwnProperty.call(ctx.pins, x)) {
+      const pin = isObj(ctx.pins[x]) ? ctx.pins[x] : {}, h = own(pin, 'sha256');
+      if (own(pin, 'acceptReceipt') == null || h == null || (isObj(h) && Object.values(h).some(v => v == null)) || !registeredAcceptance(own(pin, 'verifierEntry'), 'oracle', x, own(pin, 'commit'), ctx.verifiers))
+        out.push({ code: 'ORACLE-UNPINNED', detail: `oracle ${x} has no pin accepted through VERIFIER_REGISTRY at its commit (RULINGS Q37b, Q55a)` });
+      else for (const o of claimed) if ((own(pin, 'excludes') ?? []).includes(o.id)) out.push({ code: 'ORACLE-EXCLUDED', detail: `${o.id} is excluded from oracle ${x}'s pin (RULINGS Q45a)` });
+    } else if (!ACCEPTED_ORACLE_STATUS.includes(ctx.oracles[x]?.status)) out.push({ code: 'ORACLE-UNACCEPTED', detail: `oracle ${x} is ${ctx.oracles[x]?.status ?? 'unknown'} and unpinned` });
+  }
+  for (const o of claimed) for (const x of o.oracles) for (const [name, ref] of Object.entries(own(ctx.refusals, x) ?? {}))
+    if (refusedBy(o, ref, ctx.caseSets)) out.push({ code: 'ORACLE-REFUSES', detail: `${o.id} selects cases oracle ${x} refuses, directly or through a broader set (${name}; RULINGS Q45b, Q47c)` });
+  return out;
+}
+
+/**
+ * build_contract.admit_claim (0.3.8; Q38b, Q42a, Q47, Q55a). claim = {obligations, commit, sourceTreeSha256, composition}; any
+ * other field is ignored. ev is the evaluator's executor (labExecutor, or the recorded calls of the contract's fixtures); with
+ * no executor the verdict is DIAGNOSTIC. Same checks, order and executor calls as the reference, stopping at the first failure;
+ * returns { verdict, reasons } with that one reason and the executor's notes on it.
+ */
+export function admitCore(claim, ev, ctx) {
+  const notes = [];
+  const note = d => notes.push(d);
+  const stop = (code, detail) => ({ verdict: 'DIAGNOSTIC', reasons: [{ code, detail: [detail, ...notes].join('; ') }] });
+  if (ev == null) return stop('NO-RUN', 'no evaluator run; supplied records are diagnostic evidence only (RULINGS Q55a)');
+  const ids = Array.isArray(own(claim, 'obligations')) ? claim.obligations : [];
+  if (!ids.length) return stop('CLAIM-NO-OBLIGATIONS', 'the claim names no obligation');
+  if (ids.some(i => typeof i !== 'string' || !ctx.byId.has(i))) return stop('UNKNOWN-OBLIGATION', `unknown obligation ids in ${JSON.stringify(ids)} are rejected, never dropped (RULINGS Q42a)`);
+  const claimed = ids.map(i => ctx.byId.get(i));
+  const tree = own(claim, 'sourceTreeSha256') ?? null, comp = pyFalsy(own(claim, 'composition')) ? {} : claim.composition, commit = own(claim, 'commit') ?? null;
+  const slots = [...(ev.slots ?? [])];
+  if (!compositionOk(comp, ctx)) return stop('COMPOSITION-UNBOUND', 'the composition must bind four assignments (engine, imageDigest, configSha256, slot), the source declaring its protocol variant and, for log-source, its log (RULINGS Q28, Q55b)');
+  if (Object.keys(comp).some(k => !slots.includes(comp[k].slot))) return stop('SLOT-UNREGISTERED', `an assignment's slot is not a registered slot (${slots.join(', ')}) (RULINGS Q55a)`);
+  const binary = ev.build(tree, commit);
+  if (!typed(binary, 'hex64')) return stop('BUILD-FAILED', `the evaluator could not build tree ${tree} at ${commit} (RULINGS Q55a step 1)`);
+  const domain = claimed.some(o => o.oracles.includes('O-DOMAIN'));
+  const prereq = [PREREQ.position, PREREQ.identity, ...(domain ? [PREREQ.w0] : [])].map(i => ctx.byId.get(i));
+  for (const o of prereq) if (qualificationRun(o, binary, comp, ev, ctx, ctx.pins, ctx.pinned, note) === null) return stop('PREREQ-FAILED', `the evaluator's ${o.id} run did not pass (RULINGS Q34d, Q38b, Q55a)`);
+  const entry = own(ctx.a0, own(ctx.byEngine, comp.source.engine));
+  if (pyFalsy(entry)) return stop('A0-REGISTRY-NULL', `A0_REGISTRY has no entry for source engine ${comp.source.engine}; every comparison is a diagnostic until A0 is frozen (RULINGS Q46b, Q47b)`);
+  if (!compositionOk(own(entry, 'composition'), ctx)) return stop('A0-REGISTRY', 'the A0 registry entry\'s composition is not bound (RULINGS Q55b)');
+  // Q55a, Codex round 7 finding 2: the control's binary is the evaluator's rebuild of the registry tree, never a manifest label.
+  const rebuilt = ev.build(own(entry, 'sourceTreeSha256') ?? null, own(entry, 'commit') ?? null);
+  if (!typed(own(entry, 'binarySha256'), 'hex64') || rebuilt !== entry.binarySha256) return stop('A0-REBUILD-MISMATCH', `rebuilding A0 (${own(entry, 'commit')}) gave ${rebuilt}, the registry says ${own(entry, 'binarySha256')} (RULINGS Q55a)`);
+  for (const o of claimed) {
+    if (qualificationRun(o, binary, comp, ev, ctx, ctx.pins, ctx.pinned, note) === null) return stop('MEASUREMENT-RUN-FAILED', `the evaluator's ${o.id} run did not pass (RULINGS Q55a)`);
+    const wl = ev.workload(o);
+    if (!workloadOk(wl, comp, ctx.workloadFields) || !workloadOk(wl, entry.composition, ctx.workloadFields)) return stop('WORKLOAD-IDENTITY', `the evaluator's workload for ${o.id} is missing, untyped, or not on both compositions' source slot (RULINGS Q47b)`);
+    const m = ev.measure(binary, comp, wl), c = ev.measure(entry.binarySha256, entry.composition, wl);
+    if (!isObj(m) || !isObj(c) || !same(own(m, 'workload') ?? null, wl) || !same(own(c, 'workload') ?? null, wl)) return stop('CONTROL-UNMATCHED', `${o.id}: the candidate and A0 measurements did not both run the evaluator's workload (RULINGS Q47b, Q55a)`);
+    if (!Object.keys(ctx.verifiers ?? {}).some(v => registeredAcceptance(v, 'obligation', o.id, commit, ctx.verifiers))) return stop('VERIFIER-UNREGISTERED', `no VERIFIER_REGISTRY entry accepts ${o.id} at ${commit} (RULINGS Q55a)`);
+  }
+  const blocked = contractBlockers(claimed, prereq, domain, ctx);
+  if (blocked.length) return stop(blocked[0].code, blocked[0].detail);
+  return { verdict: 'QUALIFIED', reasons: [] };
+}
+
+/** Contract 0.3.7's evidence_ok, kept as the document check: one supplied receipt as evidence for one obligation, tree,
+ * composition and commit (0.3.8's composition_ok included). Returns the first reason it fails, or null. */
 export function evidenceOk(r, o, tree, comp, commit, env, ctx) {
   const store = env.store;
   if (!isObj(r)) return 'not a receipt';
   if (r.obligation !== o.id || r.definitionSha256 !== o.definitionSha256) return `not ${o.id} at its current definition`;
   if (r.sourceTreeSha256 !== tree || !same(r.composition, comp)) return 'another source tree or composition';
-  if (!sameKeys(comp, ctx.assignments) || ctx.assignments.some(k => !sameKeys(comp[k], COMPOSITION_FIELDS) || COMPOSITION_FIELDS.some(f => pyFalsy(comp[k][f])))) return 'composition unbound (VA14)';
+  if (!compositionOk(comp, ctx)) return 'composition unbound, or the source declares no protocol variant (VA14, RULINGS Q55b)';
   if (r.commit !== commit || !Number.isSafeInteger(r.producedAt) || r.producedAt <= (env.dependencyClosureChangedAt ?? 1e18)) return 'not fresh: another commit, or produced before the last change to its dependency closure (Q42a)';
   const man = openRecord(r.buildManifestSha256, store, 'build-manifest/1', ctx.schemas);
   if (!man || man.sourceTreeSha256 !== tree || man.binarySha256 !== r.executedBinarySha256 || !objOk(man.binarySha256, store)) return 'build manifest absent, invalid, for another tree or binary, or binary not retained (Q42a, Q47a)';
@@ -247,10 +387,12 @@ export function evidenceOk(r, o, tree, comp, commit, env, ctx) {
 }
 
 /**
- * build_contract.admit_claim. env = { store: {get(h) -> {ok, bytes}}, dependencyClosureChangedAt }. The verdict is the
- * reference's; every reason the reference would stop at is collected (it stops at the first).
+ * The document check (contract 0.3.7's admit_claim over supplied receipts, with 0.3.8's fields): env = { store,
+ * dependencyClosureChangedAt }. Every reason is collected. 0.3.8 additions: the control's executed binary must be the A0
+ * registry's binarySha256 (Codex round 7 finding 2), the claimed obligation must be accepted in VERIFIER_REGISTRY at the
+ * claimed commit, and oracle and W0 acceptance goes through VERIFIER_REGISTRY (contractBlockers).
  */
-export function admitCore(claim, env, ctx) {
+export function documentCore(claim, env, ctx) {
   const reasons = [];
   const why = (code, detail) => reasons.push({ code, detail });
   const done = () => ({ verdict: reasons.length ? 'DIAGNOSTIC' : 'QUALIFIED', reasons });
@@ -270,28 +412,19 @@ export function admitCore(claim, env, ctx) {
   // Q46b, Q47b: the control's identity comes from A0_REGISTRY for the claim's source engine, never from the claim.
   const entry = own(ctx.a0, own(ctx.byEngine, own(own(comp, 'source'), 'engine')));
   if (!entry) why('A0-REGISTRY-NULL', `A0_REGISTRY has no entry for source engine ${own(own(comp, 'source'), 'engine')}; every comparison is a diagnostic until A0 is frozen (RULINGS Q46b, Q47b)`);
+  else if (!compositionOk(entry.composition, ctx) || !sha(entry.binarySha256)) why('A0-REGISTRY', 'the A0 registry entry has no bound composition or no binarySha256 (RULINGS Q55a, Q55b)');
   for (const o of claimed) {
     const mine = rs.filter(r => own(r, 'role') === 'measurement' && own(r, 'obligation') === o.id);
     const ownOk = mine.filter(r => evidenceOk(r, o, tree, comp, commit, env, ctx) === null && workloadOk(r.workload, comp, ctx.workloadFields));
-    if (!ownOk.length) { why('MEASUREMENT-MISSING', `no valid ${o.id} measurement with a validated workload identity${mine.length ? `: ${mine.map(r => evidenceOk(r, o, tree, comp, commit, env, ctx) ?? 'workload identity missing or invalid (Q47b)').join('; ')}` : ''} (RULINGS Q42a, Q47b)`); continue; }
-    if (!entry) continue;
+    if (!ownOk.length) why('MEASUREMENT-MISSING', `no valid ${o.id} measurement with a validated workload identity${mine.length ? `: ${mine.map(r => evidenceOk(r, o, tree, comp, commit, env, ctx) ?? 'workload identity missing or invalid (Q47b)').join('; ')}` : ''} (RULINGS Q42a, Q47b)`);
+    if (!Object.keys(ctx.verifiers ?? {}).some(v => registeredAcceptance(v, 'obligation', o.id, commit, ctx.verifiers))) why('VERIFIER-UNREGISTERED', `no VERIFIER_REGISTRY entry accepts ${o.id} at ${commit}; a verifier record in the claim counts for nothing (RULINGS Q55a)`);
+    if (!ownOk.length || !entry) continue;
     const theirs = rs.filter(c => own(c, 'role') === 'control' && own(c, 'obligation') === o.id);
-    const matched = theirs.filter(c => evidenceOk(c, o, entry.sourceTreeSha256, entry.composition, commit, env, ctx) === null && workloadOk(c.workload, entry.composition, ctx.workloadFields)
-      && ownOk.some(m => same(c.workload, m.workload)));
-    if (!matched.length) why('CONTROL-UNMATCHED', `no ${o.id} control on the registry's A0 tree and composition whose workload identity equals the measurement's${theirs.length ? `: ${theirs.map(c => evidenceOk(c, o, entry.sourceTreeSha256, entry.composition, commit, env, ctx) ?? 'workload identity missing, invalid or different (Q47b)').join('; ')}` : ''} (RULINGS Q42a, Q47b)`);
+    const matched = theirs.filter(c => evidenceOk(c, o, entry.sourceTreeSha256, entry.composition, commit, env, ctx) === null && c.executedBinarySha256 === entry.binarySha256
+      && workloadOk(c.workload, entry.composition, ctx.workloadFields) && ownOk.some(m => same(c.workload, m.workload)));
+    if (!matched.length) why('CONTROL-UNMATCHED', `no ${o.id} control that executed the registry's A0 binary on its tree and composition with the measurement's workload identity${theirs.length ? `: ${theirs.map(c => evidenceOk(c, o, entry.sourceTreeSha256, entry.composition, commit, env, ctx) ?? (c.executedBinarySha256 !== entry.binarySha256 ? `executed binary ${c.executedBinarySha256} is not the registry's ${entry.binarySha256} (Codex round 7 finding 2)` : 'workload identity missing, invalid or different (Q47b)')).join('; ')}` : ''} (RULINGS Q42a, Q47b, Q55a)`);
   }
-  const w0 = ctx.w0;
-  if (domain && (Object.values(w0.files ?? {}).some(v => v == null) || w0.reviewReceipt == null || w0.deltaCheck == null || w0.oDomainFingerprint == null)) why('W0-UNPINNED', 'W0 pin, review receipt, delta check or O-DOMAIN fingerprint is null (GATE-W0)');
-  for (const x of new Set([...claimed, ...prereq.map(i => ctx.byId.get(i))].flatMap(o => o.oracles))) {
-    const pin = own(ctx.pins, x);
-    if (pin) {
-      const h = pin.sha256;
-      if (pin.acceptReceipt == null || h == null || (isObj(h) && Object.values(h).some(v => v == null))) why('ORACLE-UNPINNED', `oracle ${x} has no accepted pin (RULINGS Q37b, Q38b)`);
-      else for (const o of claimed) if ((pin.excludes ?? []).includes(o.id)) why('ORACLE-EXCLUDED', `${o.id} is excluded from oracle ${x}'s pin (RULINGS Q45a)`);
-    } else if (!ACCEPTED_ORACLE_STATUS.includes(ctx.oracles[x]?.status)) why('ORACLE-UNACCEPTED', `oracle ${x} is ${ctx.oracles[x]?.status ?? 'unknown'} and unpinned`);
-  }
-  for (const o of claimed) for (const x of o.oracles) for (const [name, ref] of Object.entries(own(ctx.refusals, x) ?? {}))
-    if (refusedBy(o, ref, ctx.caseSets)) why('ORACLE-REFUSES', `${o.id} selects cases oracle ${x} refuses, directly or through a broader set (${name}; RULINGS Q45b, Q47c)`);
+  for (const b of contractBlockers(claimed, prereq.map(i => ctx.byId.get(i)), domain, ctx)) why(b.code, b.detail);
   return done();
 }
 
@@ -416,37 +549,34 @@ function evaluate(claim, env, why) {
   const claimLabel = label(commit);
   const closureTime = git.commitTime(commit); // dependencyClosureChangedAt: no file at the claimed commit changed after it was committed
 
-  // -- the contract: from the claimed commit, byte-equal to the authority ref's (VA6). Why: pins, definitions, schemas and
-  // the A0 registry decide admission; a branch or a working copy must not supply its own.
-  const contractBytes = git.blob(commit, PATHS.contract), loadBytes = git.blob(commit, PATHS.loadContract);
-  if (!contractBytes || !loadBytes) return why('CONTRACT-MISSING', `${PATHS.contract} or ${PATHS.loadContract} is missing at ${commit}`);
+  // -- the contract: the authority ref's, never the claimed commit's or the working tree's (VA6, RULINGS Q61a). Why: pins,
+  // definitions, schemas and the A0 and verifier registries decide admission; a branch or a working copy must not supply its
+  // own, and a claimed commit's own contract can never hold the registry entry that verifies it.
   const authority = git.resolve(authorityRef);
-  if (!authority) why('CONTRACT-AUTHORITY', `authority ref ${authorityRef} does not resolve`);
-  else for (const [file, bytes] of [[PATHS.contract, contractBytes], [PATHS.loadContract, loadBytes]]) {
-    const theirs = git.blob(authority, file);
-    if (!theirs || !theirs.equals(bytes)) why('CONTRACT-NOT-AUTHORITY', `${file} at the claimed commit differs from ${authorityRef} (VA6)`);
-  }
+  if (!authority) return why('CONTRACT-AUTHORITY', `authority ref ${authorityRef} does not resolve`);
+  const contractBytes = git.blob(authority, PATHS.contract), loadBytes = git.blob(authority, PATHS.loadContract);
+  if (!contractBytes || !loadBytes) return why('CONTRACT-MISSING', `${PATHS.contract} or ${PATHS.loadContract} is missing at ${authorityRef}`);
   const contract = JSON.parse(contractBytes.toString('utf8'));
   const loadContract = JSON.parse(loadBytes.toString('utf8'));
-  const slots = (() => { const b = authority && git.blob(authority, PATHS.slots); try { return b ? JSON.parse(b.toString('utf8')) : null; } catch { return null; } })();
+  const slots = (() => { const b = git.blob(authority, PATHS.slots); try { return b ? JSON.parse(b.toString('utf8')) : null; } catch { return null; } })();
   const ctx = coreContext(contract);
 
-  // -- layer 1: the reference model on what I/O found.
-  const core = admitCore(claim, { store: objects, dependencyClosureChangedAt: closureTime }, ctx);
+  // -- layer 1: the document check on what I/O found.
+  const core = documentCore(claim, { store: objects, dependencyClosureChangedAt: closureTime }, ctx);
   for (const r of core.reasons) why(r.code, r.detail);
 
   // -- layer 2: the lab's VA rules.
   if (claim.sourceTreeSha256 !== claimLabel) why('CLAIM-SOURCE-LABEL', `sourceTreeSha256 ${claim.sourceTreeSha256} is not the clean label ${claimLabel} of ${commit} (a dirty-tree label can never be bound)`);
   const comp = claim.composition;
-  const bound = c => boundComposition(c, ctx.assignments);
-  if (!bound(comp)) why('COMPOSITION-UNBOUND', 'the claim composition must bind four assignments with string engine, imageDigest, configSha256 (sha256) and slot (VA14; red-team pass 1)');
+  const bound = c => boundComposition(c, ctx);
+  if (!bound(comp)) why('COMPOSITION-UNBOUND', 'the claim composition must bind four assignments with string engine, imageDigest, configSha256 (sha256) and slot, and the source its protocol variant (VA14, RULINGS Q55b; red-team pass 1)');
   const entryId = own(ctx.byEngine, own(own(comp, 'source'), 'engine'));
   const entry = own(ctx.a0, entryId);
   let a0Commit = null;
   if (entry) {
     a0Commit = str(entry.commit) && COMMIT.test(entry.commit) ? git.resolve(entry.commit) : null;
     if (a0Commit !== entry.commit || label(a0Commit) !== entry.sourceTreeSha256) why('A0-REGISTRY', `${entryId}: commit ${entry.commit} does not resolve here or its clean label is not ${entry.sourceTreeSha256}`);
-    if (!bound(entry.composition)) why('A0-REGISTRY', `${entryId} composition is not fully bound`);
+    if (!bound(entry.composition) || !sha(entry.binarySha256)) why('A0-REGISTRY', `${entryId} composition is not fully bound or it records no binarySha256 (RULINGS Q55a, Q55b)`);
     if (same(entry.composition, comp)) why('CONTROL-IS-CANDIDATE', 'the claimed composition is the A0 control itself');
   }
   // VA4: every assignment runs the pinned image (lab/config/slots.json at the authority ref; the contract pins no images).
@@ -608,19 +738,20 @@ function evaluate(claim, env, why) {
 
 // ================================================================ qualification: a run, not a document (RULINGS Q55a)
 
+// Three inputs below use the names Q61 ruled, which contract 0.3.9 compiles; compiled 0.3.8 does not carry them, so on the
+// real contract each falls back as stated: oracleRunners (Q61c; default below covers O-REPLAY only), lab/config/build.json
+// (Q61g; read from the authority ref), writerTrace.generator.frozen in load-contract.json (Q61h; absent means TRACE-NOT-FROZEN).
 export const QUALIFY = { build: 'lab/config/build.json', gate: path.join(import.meta.dirname, 'gate.mjs') };
-/** How an oracle is invoked when the contract does not say (contract 0.3.7 has no invocation field; proposed for 0.3.8 as
- * oracleRunners). {case} is the pinned input's path, {mode} the mode. O-REPLAY's CLI is lab/oracles/replay/cli.py. */
+/** {case} is the verified case input's path. O-REPLAY's CLI is lab/oracles/replay/cli.py. */
 export const DEFAULT_ORACLE_RUNNERS = { 'O-REPLAY': { argv: ['python3', '-I', 'lab/oracles/replay/cli.py', '{case}'] } };
 /** Reasons that only say the run was not on the gate; offlineVerdict is the verdict without them. */
 const NOT_ON_GATE = new Set(['GATE-NOT-RUN', 'RUN-NOT-ON-GATE']);
-/** Reasons admitCore gives from the contract alone (no receipt needed): kept from a core pass over no receipts. */
-const STATIC_CORE = new Set(['A0-REGISTRY-NULL', 'W0-UNPINNED', 'ORACLE-UNPINNED', 'ORACLE-EXCLUDED', 'ORACLE-UNACCEPTED', 'ORACLE-REFUSES']);
 const CLAIM_FIELDS = ['format', 'claimId', 'kind', 'obligations', 'commit', 'sourceTreeSha256', 'composition'];
 /** A child process sees no user configuration and no credentials: only PATH, a HOME inside the work directory and a locale. */
 const childEnv = home => ({ PATH: process.env.PATH ?? '/usr/bin:/bin', HOME: home, LANG: 'C.UTF-8', GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1' });
 const trimNl = b => b.length && b[b.length - 1] === 10 ? b.subarray(0, b.length - 1) : b;
 const fill = (argv, vars) => argv.map(a => Object.entries(vars).reduce((s, [k, v]) => s.replaceAll(`{${k}}`, v), a));
+const spawn = (argv, opts) => spawnSync(argv[0], argv.slice(1), opts);
 
 /** A content-addressed directory the evaluator writes its own records into; returns put(bytes | string | value) -> sha256. */
 function writeStore(dir) {
@@ -651,13 +782,13 @@ function checkoutProblems(git, commit, dir) {
   return out;
 }
 /** Built modules whose bytes no longer hash to the build manifest (an earlier process edited them). */
-const tamperedModules = s => s.build.modules.filter(m => { try { return sha256(fs.readFileSync(path.join(s.dir, m.path))) !== m.sha256; } catch { return true; } }).map(m => m.path);
+const tamperedModules = b => b.modules.filter(m => { try { return sha256(fs.readFileSync(path.join(b.dir, m.path))) !== m.sha256; } catch { return true; } }).map(m => m.path);
 
 /** The offline stand-in for step 3: the evaluator-built system under test run locally with the build spec's run argv. Its
  * observations make the run DIAGNOSTIC (RUN-NOT-ON-GATE) whatever they show; it exists so steps 1, 2 and 4 are testable. */
 export function localSut(spec) {
   return ({ dir, casePath, mode }) => {
-    const r = spawnSync(...(a => [a[0], a.slice(1)])(fill(spec.run, { case: casePath, mode })), { cwd: dir, env: childEnv(dir), timeout: 120_000, maxBuffer: 1 << 28 });
+    const r = spawn(fill(spec.run, { case: casePath, mode }), { cwd: dir, env: childEnv(dir), timeout: 120_000, maxBuffer: 1 << 28 });
     return { exit: r.status ?? -1, stdout: r.stdout ?? Buffer.alloc(0), stderr: r.stderr ?? Buffer.alloc(0) };
   };
 }
@@ -675,17 +806,166 @@ export function gateDryRun(workDir) {
 }
 
 /**
- * Qualify a claim by running it (RULINGS Q55a). env = { git: gitSource(repo), authorityRef, workDir, now (seconds),
- * sut?: localSut(spec) for an offline run, gate?: (plan) -> result (default gateDryRun) }.
- * Returns { verdict, offlineVerdict, reasons, run }: verdict is QUALIFIED only from a run whose system under test ran through
- * an executing gate, which does not exist yet, so it is DIAGNOSTIC today; offlineVerdict (offline runs only) is the verdict
- * the run would reach if the local observations had come from the gate. run records the builds, every case, the gate plan,
- * the evaluator's object store and the receipts it assembled.
+ * The lab's executor for admitCore (QUALIFICATION_RUN steps build, resolve, execute, expect, compare, control, record). Every
+ * value it returns comes from the evaluator's own work; the claim supplies only obligations, commit, tree label and composition.
+ *   build(tree, commit)        a fresh git archive of commit, verified against the tree, built with the authority's build spec;
+ *                              refused unless tree is commit's clean label; returns the evaluator's binary hash
+ *   manifest(set)              the case-set manifest at the claimed commit (admitCore checks it against the contract's pin);
+ *                              every case input is checked against its contentSha256 and copied into the work directory
+ *   oracle(orc, commit, input) the pinned oracle's files only (hash-checked, materialised alone) run on a verified input
+ *   sut(binary, comp, x, mode) offline: the evaluator's build of that binary run locally; through the gate: not yet (null)
+ *   compare(cmp, exp, obs)     recompute with the declared comparator; both objects are retained
+ *   workload(o) / measure(...) the evaluator's workload from the frozen trace; measure is an offline stand-in or null
+ */
+function labExecutor({ git, commit, authority, authorityRef, contract, ctx, spec, slots, loadContract, claim, workDir, sut, why, run }) {
+  const put = writeStore(path.join(workDir, 'objects'));
+  run.objects = path.join(workDir, 'objects');
+  const builds = new Map(), byBinary = new Map(), inputs = new Map(), oracleRoots = new Map(), answers = new Map();
+  let lastBuild = null, last = null;
+  const ev = {
+    slots: [...new Set(Object.values(isObj(slots?.slots) ? slots.slots : {}).flatMap(l => isObj(l) ? Object.keys(l) : []))],
+    build(tree, c) {
+      if (builds.has(c)) return builds.get(c)?.binary ?? null;
+      builds.set(c, null);
+      const resolved = str(c) && COMMIT.test(c) ? git.resolve(c) : null;
+      if (resolved !== c || sourceTreeIdOf(git.treeOf(c)) !== tree) { why('BUILD-REFUSED', `tree ${tree} is not the clean label of a commit ${c} in this repository; the evaluator builds only a commit's own tree (RULINGS Q55a step 1)`); return null; }
+      const dir = path.join(workDir, 'checkouts', c.slice(0, 12));
+      fs.rmSync(dir, { recursive: true, force: true });
+      fs.mkdirSync(dir, { recursive: true });
+      execFileSync('tar', ['-x', '-f', '-', '-C', dir], { input: git.archive(c), maxBuffer: 1 << 30 });
+      const differ = checkoutProblems(git, c, dir);
+      if (differ.length) { why('CHECKOUT-MISMATCH', `${c}: the archive differs from the tree at ${differ.slice(0, 5).join(', ')} (export-ignore or export-subst attributes?)`); return null; }
+      const b = spawn(spec.argv, { cwd: dir, env: childEnv(dir), timeout: 900_000, maxBuffer: 1 << 28, encoding: 'utf8' });
+      if (b.status !== 0) { why('BUILD-FAILED', `${c}: ${spec.argv.join(' ')} exited ${b.status ?? b.signal}: ${`${b.stderr}`.trim().slice(-300)}`); return null; }
+      const files = [];
+      for (const out of spec.outputs) {
+        const abs = path.join(dir, out);
+        if (!fs.existsSync(abs)) { why('BUILD-OUTPUTS', `${c}: build output ${out} was not produced`); continue; }
+        for (const e of fs.statSync(abs).isDirectory() ? fs.readdirSync(abs, { recursive: true, withFileTypes: true }).map(d => path.join(d.parentPath ?? d.path, d.name)) : [abs]) {
+          const st = fs.lstatSync(e);
+          if (st.isSymbolicLink()) why('BUILD-OUTPUTS', `${c}: build output ${path.relative(dir, e)} is a symlink`);
+          else if (st.isFile()) files.push(path.relative(dir, e).split(path.sep).join('/'));
+        }
+      }
+      const modules = [...new Set(files)].sort().map(p => ({ path: p, sha256: put(fs.readFileSync(path.join(dir, p))) }));
+      if (!modules.length) { why('BUILD-OUTPUTS', `${c}: the build produced no files under ${spec.outputs.join(', ')}`); return null; }
+      // The binary hash is the listing of the built files (gate.mjs hashDist convention); it is what A0_REGISTRY binarySha256 records.
+      const binary = put(modules.map(x => `${x.sha256}  ${x.path}\n`).join(''));
+      const manifest = put({ schema: 'build-manifest/1', sourceTreeSha256: tree, binarySha256: binary, modules });
+      const rec = { commit: c, dir, binary, modules, manifest, tampered: false };
+      builds.set(c, rec);
+      byBinary.set(binary, rec);
+      run.builds[c] = { commit: c, sourceTreeSha256: tree, binarySha256: binary, buildManifestSha256: manifest, modules: modules.length, checkout: dir };
+      return binary;
+    },
+    manifest(set) {
+      const cs = own(contract.caseSets, set);
+      const bytes = isObj(cs) && safePath(cs.manifest) ? git.blob(commit, cs.manifest) : null;
+      if (!bytes) return null;
+      let m = null;
+      try { m = JSON.parse(bytes.toString('utf8')); } catch { m = null; }
+      for (const x of Array.isArray(m?.cases) ? m.cases : []) {
+        if (!isObj(x) || !safePath(x.input) || inputs.has(x.input)) continue;
+        const b = git.blob(commit, x.input);
+        if (!b || !sha(x.contentSha256) || sha256(b) !== x.contentSha256) { why('CASE-INPUT', `case ${x.id} input ${x.input} at ${commit} does not hash to the manifest's contentSha256 ${x.contentSha256}`); inputs.set(x.input, null); continue; }
+        const p = path.join(workDir, 'inputs', `${x.contentSha256}.json`);
+        fs.mkdirSync(path.dirname(p), { recursive: true });
+        fs.writeFileSync(p, b);
+        inputs.set(x.input, p);
+      }
+      return bytes;
+    },
+    oracle(orc, pinCommit, input) {
+      const key = `${orc}\u0000${typeof input === 'string' ? input : canonText(input)}`;
+      if (answers.has(key)) return answers.get(key);
+      const casePath = typeof input === 'string' ? inputs.get(input) : null;
+      const root = casePath ? oracleRoot(orc) : null;
+      if (!casePath) why('CASE-INPUT', `oracle ${orc}: input ${JSON.stringify(input)} is not a verified case input of a pinned manifest`);
+      let a = null;
+      if (root) {
+        const r = spawn(fill(root.argv, { case: casePath }), { cwd: root.dir, env: childEnv(root.dir), timeout: 120_000, maxBuffer: 1 << 28 });
+        const exit = r.status ?? -1, stderr = r.stderr ?? Buffer.alloc(0), stdout = r.stdout ?? Buffer.alloc(0);
+        // Q45b, Q47a: exit 2 or X-NOT-MODELED is a refusal, never an answer; any other failure is an oracle error, never a PASS.
+        const refused = exit === 2 || stderr.includes('X-NOT-MODELED') || stdout.includes('X-NOT-MODELED');
+        a = refused ? { exit, code: 'X-NOT-MODELED', output: null } : exit !== 0 ? { exit, code: 'X-ORACLE-ERROR', output: null } : { exit: 0, code: null, output: trimNl(stdout) };
+        if (a.code) why(refused ? 'CASE-REFUSED' : 'ORACLE-ERROR', `oracle ${orc} on ${input}: exit ${exit} ${a.code}: ${stderr.toString('utf8').trim().slice(0, 200)} (RULINGS Q45b, Q47a)`);
+        run.oracle.push({ oracle: orc, input, exit, code: a.code, outputSha256: put(a.output ?? stderr) });
+      }
+      answers.set(key, a);
+      return a;
+    },
+    sut(binary, comp, x, mode) {
+      const b = byBinary.get(binary), casePath = isObj(x) && typeof x.input === 'string' ? inputs.get(x.input) : null;
+      last = { build: b?.commit ?? null, case: own(x, 'id'), mode, observed: null };
+      if (!b || !casePath || !sut) return null;
+      // Offline runs are not sandboxed (the gate's containers are the isolation): before a build runs after another one did,
+      // its modules are re-hashed, and a build an earlier process edited is not run again.
+      if (lastBuild !== b) { const t = tamperedModules(b); if (t.length) { b.tampered = true; why('BUILD-TAMPERED', `${b.commit}: ${t.slice(0, 5).join(', ')} changed after the evaluator built them`); } lastBuild = b; }
+      if (b.tampered) return null;
+      const seen = sut({ dir: b.dir, casePath, mode });
+      last.observed = seen.exit === 0 ? trimNl(seen.stdout) : null;
+      last.exit = seen.exit;
+      return last.observed;
+    },
+    compare(cmp, exp, obs) {
+      const v = Buffer.isBuffer(exp) && Buffer.isBuffer(obs) ? recompute(cmp, exp, obs) : 'FAIL';
+      run.cases.push({ build: last?.build ?? null, case: last?.case ?? null, mode: last?.mode ?? null, comparator: cmp, verdict: v,
+        expectedSha256: Buffer.isBuffer(exp) ? put(exp) : null, observedSha256: Buffer.isBuffer(obs) ? put(obs) : null });
+      if (v !== 'PASS' && sut) why(v === 'UNCOMPARABLE' ? 'CASE-UNCOMPARABLE' : 'CASE-FAIL', `${last?.build ?? '?'} ${last?.case} mode ${last?.mode}: ${cmp} ${v}${obs == null ? ` (no observation${last?.exit != null ? `, exit ${last.exit}` : ''})` : ''} (RULINGS Q55a)`);
+      return v === 'PASS';
+    },
+    workload() {
+      const frozen = loadContract.writerTrace?.generator?.frozen, w = (loadContract.windows ?? {})[claim.kind === 'promotion' ? 'acceptance' : 'screening'];
+      if (!(isObj(frozen) && sha(frozen.sha256) && Number.isSafeInteger(frozen.seed) && sha(frozen.offerScheduleSha256) && Number.isSafeInteger(w?.warmupS) && Number.isSafeInteger(w?.perLadderLevelS))) {
+        why('TRACE-NOT-FROZEN', `${PATHS.loadContract} pins no frozen trace (writerTrace.generator.frozen {sha256, seed, offerScheduleSha256}) and window, so no comparison has a workload identity (VA15, RULINGS Q47b, Q61h)`);
+        return null;
+      }
+      return { generatorSourceSha256: frozen.sha256, seed: frozen.seed, offerScheduleSha256: frozen.offerScheduleSha256, window: [w.warmupS, w.warmupS + w.perLadderLevelS], slot: claim.composition.source.slot };
+    },
+    measure(binary, comp, w) {
+      // The NS gate does not exist yet: offline, the stand-in only says which build would run on which workload (no metrics).
+      return sut && byBinary.has(binary) ? { workload: w, binary, metrics: null, standIn: 'offline: no NS gate run' } : null;
+    },
+  };
+  // Expected answers come only from the pinned oracle's files, materialised alone (the claimed commit's copies are used only after
+  // they hash to the pin); an unpinned oracle the contract lists as accepted runs the authority's copy of the files its runner
+  // names. The expected answer never comes from the candidate's code.
+  function oracleRoot(x) {
+    if (oracleRoots.has(x)) return oracleRoots.get(x);
+    const pin = own(ctx.pins, x), runner = own(contract.oracleRunners, x) ?? DEFAULT_ORACLE_RUNNERS[x];
+    let files = null, from = null;
+    if (!isObj(runner) || !strList(runner.argv)) why('ORACLE-NO-RUNNER', `the contract does not say how to invoke ${x} (oracleRunners, RULINGS Q61c, arrives in contract 0.3.9)`);
+    else if (pin) {
+      if (pin.acceptReceipt == null || !isObj(pin.sha256) || !Object.values(pin.sha256).every(sha) || Object.keys(pin.sha256).some(p => p.endsWith('/') || !safePath(p))) why('ORACLE-UNPINNED', `${x} has no accepted per-file pin, so its expected answers cannot be computed from pinned code (RULINGS Q37b, Q55a)`);
+      else { const problems = pinnedFileProblems(git, commit, pin.sha256); for (const p of problems) why('ORACLE-FILES', `${x} at ${commit}: ${p} (VA6)`); if (!problems.length) { files = Object.keys(pin.sha256); from = commit; } }
+    } else if (ACCEPTED_ORACLE_STATUS.includes(ctx.oracles[x]?.status) && strList(runner.files) && runner.files.every(safePath)) { files = runner.files; from = authority; }
+    else why('ORACLE-UNPINNED', `${x} is ${ctx.oracles[x]?.status ?? 'unknown'}, unpinned, and names no files to run from ${authorityRef}`);
+    let dir = null;
+    if (files) {
+      dir = path.join(workDir, 'oracles', x);
+      fs.rmSync(dir, { recursive: true, force: true });
+      for (const f of files) { const b = git.blob(from, f); if (!b) { why('ORACLE-FILES', `${x}: ${f} is missing at ${from}`); dir = null; break; } fs.mkdirSync(path.dirname(path.join(dir, f)), { recursive: true }); fs.writeFileSync(path.join(dir, f), b); }
+    }
+    const out = dir ? { dir, argv: runner.argv } : null;
+    oracleRoots.set(x, out);
+    return out;
+  }
+  return ev;
+}
+
+/**
+ * Qualify a claim by running it (RULINGS Q55a). env = { git: gitSource(repo), authorityRef, workDir, sut?: localSut(spec) for
+ * an offline run, gate?: (plan) -> result (default gateDryRun) }.
+ * Returns { verdict, offlineVerdict, reasons, run }. admitCore (the contract's reference model) decides over labExecutor; the
+ * verdict is QUALIFIED only from a run whose system under test ran through an executing gate, which does not exist yet, so it
+ * is DIAGNOSTIC today. offlineVerdict (offline runs only) is the verdict the run would reach had the local observations come
+ * from the gate. run records the builds, every comparison, every oracle run, the gate plan and the evaluator's object store.
  */
 export function qualifyClaim(claim, env) {
   const reasons = [];
-  const why = (code, detail, receipt) => reasons.push(receipt ? { code, detail, receipt } : { code, detail });
-  const run = { offline: typeof env.sut === 'function', ignored: [], builds: {}, cases: [], gate: null, objects: null, receipts: null };
+  const seen = new Set();
+  const why = (code, detail, receipt) => { const k = `${code}\u0000${detail}`; if (!seen.has(k)) { seen.add(k); reasons.push(receipt ? { code, detail, receipt } : { code, detail }); } };
+  const run = { offline: typeof env.sut === 'function', ignored: [], builds: {}, cases: [], oracle: [], gate: null, objects: null, core: null };
   try { runQualification(claim, env, why, run); } catch (error) { why('EVALUATOR-ERROR', `qualification stopped: ${error?.message ?? error} (fail closed)`); }
   const blocking = reasons.filter(r => !NOT_ON_GATE.has(r.code));
   return { verdict: reasons.length ? 'DIAGNOSTIC' : 'QUALIFIED', offlineVerdict: run.offline ? (blocking.length ? 'DIAGNOSTIC' : 'QUALIFIED') : null, reasons: summarise(reasons), run };
@@ -694,7 +974,6 @@ export function qualifyClaim(claim, env) {
 function runQualification(claim, env, why, run) {
   const { git } = env;
   const authorityRef = env.authorityRef ?? 'main';
-  const now = Number.isSafeInteger(env.now) ? env.now : Math.floor(Date.now() / 1000);
   if (!isObj(claim) || claim.format !== FORMATS.claim) return why('CLAIM-FORMAT', `claim format must be ${FORMATS.claim}`);
   // Q55a: the claimant states only what to run. Receipts, records, selections, case lists, a control, a verifier record, a W0
   // pin or an O-DOMAIN fingerprint (Q55e) in the claim are never read; they are listed so nobody believes they counted.
@@ -702,240 +981,53 @@ function runQualification(claim, env, why, run) {
   if (!['comparative', 'promotion'].includes(claim.kind)) why('CLAIM-KIND', 'kind must be comparative or promotion');
   const commit = str(claim.commit) && COMMIT.test(claim.commit) ? git.resolve(claim.commit) : null;
   if (!commit || commit !== claim.commit) return why('CLAIM-COMMIT', `commit ${JSON.stringify(claim.commit)} is not a full commit id in this repository`);
-
-  // -- the contract, the build spec and the slots: the authority's reviewed versions, never the claimed commit's or the working
-  // tree's (VA6). Q55a: the A0 and verifier registries are entries a reviewed contract version adds, so the authority (not the
-  // candidate branch) holds them; the candidate's tree is only what is built and measured.
+  // -- the contract, load contract, build spec and slots: the authority's reviewed versions (VA6, RULINGS Q61a).
   const authority = git.resolve(authorityRef);
   if (!authority) return why('CONTRACT-AUTHORITY', `authority ref ${authorityRef} does not resolve`);
   const readJson = (c, f) => { const b = git.blob(c, f); try { return b ? JSON.parse(b.toString('utf8')) : null; } catch { return null; } };
   const contract = readJson(authority, PATHS.contract), loadContract = readJson(authority, PATHS.loadContract), slots = readJson(authority, PATHS.slots), spec = readJson(authority, QUALIFY.build);
   if (!isObj(contract) || !isObj(loadContract)) return why('CONTRACT-MISSING', `${PATHS.contract} or ${PATHS.loadContract} is missing or unreadable at ${authorityRef}`);
   const ctx = coreContext(contract);
-  const ids = Array.isArray(claim.obligations) ? claim.obligations : [];
-  if (!ids.length || ids.some(i => typeof i !== 'string' || !ctx.byId.has(i))) return why('UNKNOWN-OBLIGATION', `obligations ${JSON.stringify(claim.obligations)} must be a nonempty list of contract ids (RULINGS Q42a)`);
-  const claimed = [...new Set(ids)].map(i => ctx.byId.get(i));
   const label = sourceTreeIdOf(git.treeOf(commit));
   if (claim.sourceTreeSha256 !== label) why('CLAIM-SOURCE-LABEL', `sourceTreeSha256 ${claim.sourceTreeSha256} is not the clean label ${label} of ${commit}`);
   const comp = claim.composition;
-  if (!boundComposition(comp, ctx.assignments)) return why('COMPOSITION-UNBOUND', 'the claim composition must bind four assignments with string engine, imageDigest, configSha256 (sha256) and slot (VA14)');
+  if (!boundComposition(comp, ctx)) return why('COMPOSITION-UNBOUND', 'the claim composition must bind four assignments with string engine, imageDigest, configSha256 (sha256) and slot, and the source its protocol variant (VA14, RULINGS Q55b)');
   for (const p of imageProblems(comp, slots, ctx.assignments)) why('IMAGE-NOT-PINNED', `candidate ${p} (VA4)`);
-
-  // -- the control: A0 from the registry entry for the claim's source engine, built from its own commit (Q46b, Q47b, Q55a step 1).
-  const entryId = own(ctx.byEngine, comp.source.engine), entry = own(ctx.a0, entryId);
-  const sides = [{ side: 'candidate', commit, label, comp, role: 'measurement', prereqs: null }];
-  if (!entry) why('A0-REGISTRY-NULL', `A0_REGISTRY has no entry for source engine ${comp.source.engine}; every comparison is a diagnostic until A0 is frozen (RULINGS Q46b, Q47b)`);
-  else {
-    const a0Commit = str(entry.commit) && COMMIT.test(entry.commit) ? git.resolve(entry.commit) : null;
-    if (a0Commit !== entry.commit || sourceTreeIdOf(git.treeOf(a0Commit)) !== entry.sourceTreeSha256) why('A0-REGISTRY', `${entryId}: commit ${entry.commit} does not resolve here or its clean label is not ${entry.sourceTreeSha256}`);
-    else if (!boundComposition(entry.composition, ctx.assignments)) why('A0-REGISTRY', `${entryId} composition is not fully bound`);
-    else if (same(entry.composition, comp)) why('CONTROL-IS-CANDIDATE', 'the claimed composition is the A0 control itself');
-    else {
-      for (const p of imageProblems(entry.composition, slots, ctx.assignments)) why('IMAGE-NOT-PINNED', `A0 ${p} (VA4)`);
-      sides.push({ side: 'A0', commit: a0Commit, label: entry.sourceTreeSha256, comp: entry.composition, role: 'control', verifier: `${entryId} (${entry.measuredBy})` });
-    }
+  const entry = own(ctx.a0, own(ctx.byEngine, comp.source.engine));
+  if (isObj(entry) && boundComposition(entry.composition, ctx)) {
+    for (const p of imageProblems(entry.composition, slots, ctx.assignments)) why('IMAGE-NOT-PINNED', `A0 ${p} (VA4)`);
+    if (same(entry.composition, comp)) why('CONTROL-IS-CANDIDATE', 'the claimed composition is the A0 control itself');
   }
-  // -- independent verification (Q55a step 5): only a VERIFIER_REGISTRY entry of the authority's contract for this commit counts.
-  const vreg = own(own(contract, 'verifierRegistry'), 'entries');
-  const ventry = Array.isArray(vreg) ? vreg.find(v => isObj(v) && v.commit === commit && v.verdict === 'ACCEPT' && str(v.verifier) && sha(v.briefSha256) && str(v.branch)) : null;
-  if (!Array.isArray(vreg)) why('VERIFIER-REGISTRY-ABSENT', `${PATHS.contract} at ${authorityRef} has no verifierRegistry.entries; no verification can count (RULINGS Q55a; proposed for contract 0.3.8)`);
-  else if (!ventry) why('VERIFIER-UNREGISTERED', `no VERIFIER_REGISTRY entry (verifier, briefSha256, branch, commit, verdict ACCEPT) for ${commit} (RULINGS Q55a)`);
-  sides[0].verifier = ventry?.verifier ?? null;
-
-  // -- the obligations each side runs: the claimed ones, and the prerequisites (GATE-POSITION covers A0 too, Q38a).
-  const domain = claimed.some(o => o.oracles.includes('O-DOMAIN'));
-  const prereqIds = [PREREQ.position, PREREQ.identity, ...(domain ? [PREREQ.w0] : [])];
-  sides[0].prereqs = prereqIds;
-  if (sides[1]) sides[1].prereqs = [PREREQ.position, PREREQ.identity];
-
-  // -- step 1: build every side from a fresh archive of its commit with the authority's build spec; record our own hashes.
   if (!isObj(spec) || !strList(spec.argv) || !Array.isArray(spec.outputs) || !spec.outputs.length || !spec.outputs.every(safePath) || !strList(spec.run))
-    return why('BUILD-SPEC', `${QUALIFY.build} at ${authorityRef} must give argv, outputs (relative paths) and run (the system under test's argv); proposed for the contract in 0.3.8`);
+    return why('BUILD-SPEC', `${QUALIFY.build} at ${authorityRef} must give argv, outputs (relative paths) and run (the system under test's argv) (RULINGS Q61g)`);
   fs.mkdirSync(env.workDir, { recursive: true });
-  const objectsDir = path.join(env.workDir, 'objects');
-  const put = writeStore(objectsDir);
-  run.objects = objectsDir;
-  for (const s of sides) {
-    s.dir = path.join(env.workDir, 'checkouts', `${s.side}-${s.commit.slice(0, 12)}`);
-    fs.rmSync(s.dir, { recursive: true, force: true });
-    fs.mkdirSync(s.dir, { recursive: true });
-    execFileSync('tar', ['-x', '-f', '-', '-C', s.dir], { input: git.archive(s.commit), maxBuffer: 1 << 30 });
-    const differ = checkoutProblems(git, s.commit, s.dir);
-    if (differ.length) { why('CHECKOUT-MISMATCH', `${s.side} ${s.commit}: the archive differs from the tree at ${differ.slice(0, 5).join(', ')} (export-ignore or export-subst attributes?)`); s.build = null; continue; }
-    const b = spawnSync(spec.argv[0], spec.argv.slice(1), { cwd: s.dir, env: childEnv(s.dir), timeout: 900_000, maxBuffer: 1 << 28, encoding: 'utf8' });
-    if (b.status !== 0) { why('BUILD-FAILED', `${s.side} ${s.commit}: ${spec.argv.join(' ')} exited ${b.status ?? b.signal}: ${`${b.stderr}`.trim().slice(-300)}`); s.build = null; continue; }
-    const files = [];
-    for (const out of spec.outputs) {
-      const abs = path.join(s.dir, out);
-      if (!fs.existsSync(abs)) { why('BUILD-OUTPUTS', `${s.side}: build output ${out} was not produced`); continue; }
-      for (const e of fs.statSync(abs).isDirectory() ? fs.readdirSync(abs, { recursive: true, withFileTypes: true }).map(d => path.join(d.parentPath ?? d.path, d.name)) : [abs]) {
-        const st = fs.lstatSync(e);
-        if (st.isSymbolicLink()) why('BUILD-OUTPUTS', `${s.side}: build output ${path.relative(s.dir, e)} is a symlink`);
-        else if (st.isFile()) files.push(path.relative(s.dir, e).split(path.sep).join('/'));
-      }
-    }
-    const modules = [...new Set(files)].sort().map(p => ({ path: p, sha256: put(fs.readFileSync(path.join(s.dir, p))) }));
-    if (!modules.length) { why('BUILD-OUTPUTS', `${s.side}: the build produced no files under ${spec.outputs.join(', ')}`); s.build = null; continue; }
-    const binary = put(modules.map(x => `${x.sha256}  ${x.path}\n`).join(''));
-    s.build = { binary, modules, manifest: put({ schema: 'build-manifest/1', sourceTreeSha256: s.label, binarySha256: binary, modules }) };
-    run.builds[s.side] = { commit: s.commit, sourceTreeSha256: s.label, buildManifestSha256: s.build.manifest, executedBinarySha256: binary, modules: modules.length, checkout: s.dir };
-  }
+  const ev = labExecutor({ git, commit, authority, authorityRef, contract, ctx, spec, slots, loadContract, claim, workDir: env.workDir, sut: env.sut ?? null, why, run });
 
-  // -- step 2: cases from the pinned manifests at the claimed commit: every case each select entry resolves to, in every mode the
-  // obligation's closure lists, a fault point T-FAULT-REPS times (ACCEPTANCE 5.3, Q47c, Q42a). The claimant chooses none of it.
-  const comparators = Object.keys(contract.comparators ?? {});
-  const manifests = new Map();
-  const manifestOf = name => {
-    if (manifests.has(name)) return manifests.get(name);
-    const cs = contract.caseSets?.[name];
-    let m = null;
-    if (!cs || !safePath(cs.manifest) || !sha(cs.manifestSha256)) why('SELECTION-UNRESOLVED', `case set ${name} has no pinned manifest (manifestSha256 ${cs?.manifestSha256 ?? 'null'}; ACCEPTANCE 5.3)`);
-    else {
-      const bytes = git.blob(commit, cs.manifest);
-      try { m = bytes && sha256(bytes) === cs.manifestSha256 ? JSON.parse(bytes.toString('utf8')) : null; } catch { m = null; }
-      const runnable = c => isObj(c) && str(c.id) && Array.isArray(c.tags) && c.tags.every(str) && safePath(c.input) && sha(c.contentSha256) && comparators.includes(c.comparator) && (c.oracle === undefined || str(c.oracle)) && (c.faultPoint === undefined || typeof c.faultPoint === 'boolean');
-      if (!isObj(m) || m.set !== name || !Array.isArray(m.cases) || !m.cases.every(runnable) || new Set(m.cases.map(c => c.id)).size !== m.cases.length || (cs.requiredCases ?? []).some(id => !m.cases.some(c => c.id === id))) {
-        why('CASE-MANIFEST', `${cs.manifest} at ${commit} is not the pinned, complete manifest of ${name}, or a case lacks input, contentSha256, a contract comparator or a valid oracle (Q55a step 2)`);
-        m = null;
-      }
-    }
-    manifests.set(name, m);
-    return m;
-  };
-  const inputs = new Map();
-  const inputPath = c => {
-    if (inputs.has(c.input)) return inputs.get(c.input);
-    const bytes = git.blob(commit, c.input);
-    let p = null;
-    if (!bytes || sha256(bytes) !== c.contentSha256) why('CASE-INPUT', `case ${c.id} input ${c.input} at ${commit} does not hash to the manifest's ${c.contentSha256}`);
-    else { p = path.join(env.workDir, 'inputs', `${c.contentSha256}.json`); fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, bytes); }
-    inputs.set(c.input, p);
-    return p;
-  };
-  const plans = new Map(); // obligation id -> [{ id, selection, mode, rep, casePath, oracle, comparator }]
-  const planOf = o => {
-    if (plans.has(o.id)) return plans.get(o.id);
-    const items = [];
-    for (const sel of o.cases) for (const t of sel.select) {
-      const m = manifestOf(sel.set);
-      if (!m) continue;
-      const hits = m.cases.filter(c => t === 'all' || c.id === t || c.tags.includes(t));
-      if (!hits.length) why('SELECTION-UNRESOLVED', `${o.id}: ${sel.set} selection ${t} resolves to no case of the pinned manifest`);
-      for (const c of hits) {
-        const oracle = c.oracle ?? o.oracles[0];
-        if (!str(oracle) || (o.oracles.length && !o.oracles.includes(oracle))) { why('CASE-ORACLE', `${o.id} ${c.id}: no oracle among ${JSON.stringify(o.oracles)} computes its expected answer (Q55a step 4)`); continue; }
-        const casePath = inputPath(c);
-        if (!casePath) continue;
-        for (const mode of o.closure.modes) for (let rep = 1; rep <= (c.faultPoint ? ctx.faultReps : 1); rep++) items.push({ id: c.id, selection: t, mode, rep, casePath, oracle, comparator: c.comparator });
-      }
-    }
-    plans.set(o.id, items);
-    return items;
-  };
-
-  // -- step 4: expected answers from the pinned oracle files only, materialised alone into the work directory (the claimed
-  // commit's copies are used only after they hash to the pin). An unpinned oracle the contract lists as accepted runs the
-  // authority's copy of the files its runner names. The expected answer never comes from the candidate's code.
-  const oracleRoots = new Map();
-  const oracleRoot = x => {
-    if (oracleRoots.has(x)) return oracleRoots.get(x);
-    const pin = own(ctx.pins, x), runner = own(contract.oracleRunners, x) ?? DEFAULT_ORACLE_RUNNERS[x];
-    let files = null, from = null;
-    if (!isObj(runner) || !strList(runner.argv)) why('ORACLE-NO-RUNNER', `the contract does not say how to invoke ${x} (oracleRunners; proposed for 0.3.8)`);
-    else if (pin) {
-      if (pin.acceptReceipt == null || !isObj(pin.sha256) || !Object.values(pin.sha256).every(sha) || Object.keys(pin.sha256).some(p => p.endsWith('/') || !safePath(p))) why('ORACLE-UNPINNED', `${x} has no accepted per-file pin, so its expected answers cannot be computed from pinned code (RULINGS Q37b, Q55a step 4)`);
-      else { const problems = pinnedFileProblems(git, commit, pin.sha256); for (const p of problems) why('ORACLE-FILES', `${x} at ${commit}: ${p} (VA6)`); if (!problems.length) { files = Object.keys(pin.sha256); from = commit; } }
-    } else if (ACCEPTED_ORACLE_STATUS.includes(ctx.oracles[x]?.status) && strList(runner.files) && runner.files.every(safePath)) { files = runner.files; from = authority; }
-    else why('ORACLE-UNPINNED', `${x} is ${ctx.oracles[x]?.status ?? 'unknown'}, unpinned, and names no files to run from ${authorityRef}`);
-    let root = null;
-    if (files) {
-      root = path.join(env.workDir, 'oracles', x);
-      fs.rmSync(root, { recursive: true, force: true });
-      for (const f of files) { const b = git.blob(from, f); if (!b) { why('ORACLE-FILES', `${x}: ${f} is missing at ${from}`); root = null; break; } fs.mkdirSync(path.dirname(path.join(root, f)), { recursive: true }); fs.writeFileSync(path.join(root, f), b); }
-    }
-    const out = root ? { root, argv: runner.argv } : null;
-    oracleRoots.set(x, out);
-    return out;
-  };
-  const answers = new Map();
-  const expectedFor = item => {
-    const key = `${item.oracle}\u0000${item.casePath}\u0000${item.mode}`;
-    if (answers.has(key)) return answers.get(key);
-    const o = oracleRoot(item.oracle);
-    let a = null;
-    if (o) {
-      const r = spawnSync(...(v => [v[0], v.slice(1)])(fill(o.argv, { case: item.casePath, mode: item.mode })), { cwd: o.root, env: childEnv(o.root), timeout: 120_000, maxBuffer: 1 << 28 });
-      const exit = r.status ?? -1, stderr = r.stderr ?? Buffer.alloc(0), stdout = r.stdout ?? Buffer.alloc(0);
-      // Q45b, Q47a: exit 2 or X-NOT-MODELED is a refusal, never an answer; any other failure is an oracle error, never a PASS.
-      const refused = exit === 2 || stderr.includes('X-NOT-MODELED') || stdout.includes('X-NOT-MODELED');
-      a = refused ? { oracleExit: exit, oracleCode: 'X-NOT-MODELED', bytes: stderr } : exit !== 0 ? { oracleExit: exit, oracleCode: 'X-ORACLE-ERROR', bytes: stderr } : { oracleExit: 0, oracleCode: null, bytes: trimNl(stdout) };
-    }
-    answers.set(key, a);
-    return a;
-  };
-  const used = [...new Map([...sides.flatMap(s => [...s.prereqs, ...claimed.map(o => o.id)])].map(i => [i, ctx.byId.get(i)])).values()];
-  for (const o of used) for (const item of planOf(o)) expectedFor(item);
-
-  // -- step 3: the system under test through the gate on a registered slot. gate.mjs OBL is plan-only (--dry-run), so no run is
-  // on the gate; an offline run (env.sut) observes the locally built system instead and stays DIAGNOSTIC.
-  const gatePlan = { claimId: claim.claimId ?? null, commit, lane: comp.source.engine, slot: comp.source.slot, obligations: used.map(o => o.id),
-    sides: sides.map(s => ({ side: s.side, commit: s.commit, sourceTreeSha256: s.label, composition: s.comp, buildManifestSha256: s.build?.manifest ?? null, obligations: [...s.prereqs, ...claimed.map(o => o.id)] })),
-    cases: sides.reduce((n, s) => n + [...s.prereqs, ...claimed.map(o => o.id)].reduce((k, i) => k + planOf(ctx.byId.get(i)).length, 0), 0) };
-  run.gate = (env.gate ?? gateDryRun(env.workDir))(gatePlan);
-  if (!run.gate.ok) why('GATE-SLOT', `gate.mjs refused the plan (lane ${gatePlan.lane}, slot ${gatePlan.slot}): ${run.gate.error}`);
+  // -- step 3, as far as it exists: the plan goes through gate.mjs --dry-run, which checks the lane and the registered slot.
+  const ids = Array.isArray(claim.obligations) ? claim.obligations.filter(i => typeof i === 'string' && ctx.byId.has(i)) : [];
+  const claimed = ids.map(i => ctx.byId.get(i));
+  const domain = claimed.some(o => o.oracles.includes('O-DOMAIN'));
+  const prereq = [PREREQ.position, PREREQ.identity, ...(domain ? [PREREQ.w0] : [])].map(i => ctx.byId.get(i));
+  const count = o => { const cs = resolveCases(o, ev, ctx.pinned); return cs ? cs.length * o.closure.modes.length * (o.closure.rules.includes('CR-FAULT') ? ctx.faultReps : 1) : 0; };
+  run.gate = (env.gate ?? gateDryRun(env.workDir))({ claimId: claim.claimId ?? null, commit, lane: comp.source.engine, slot: comp.source.slot,
+    obligations: [...prereq, ...claimed].map(o => o.id), executions: [...prereq, ...claimed].reduce((n, o) => n + count(o), 0) + (entry ? [prereq[0], prereq[1]].reduce((n, o) => n + count(o), 0) : 0) });
+  if (!run.gate.ok) why('GATE-SLOT', `gate.mjs refused the plan (lane ${comp.source.engine}, slot ${comp.source.slot}): ${run.gate.error}`);
   why('GATE-NOT-RUN', 'step 3: gate.mjs OBL is plan-only (--dry-run); no executing gate runs pinned case manifests on a registered slot yet, so no run is QUALIFIED (RULINGS Q55a)');
   if (run.offline) why('RUN-NOT-ON-GATE', 'the system under test ran locally from the evaluator\'s own build (offline stand-in for step 3), not through the gate on a registered slot');
 
-  // -- comparison: apply the declared comparator to the oracle's answer and the observation; write case-result/1 records.
-  const frozen = loadContract.writerTrace?.generator?.frozen;
-  const windows = loadContract.windows ?? {};
-  const win = claim.kind === 'promotion' ? windows.acceptance : windows.screening;
-  const workload = isObj(frozen) && sha(frozen.sha256) && Number.isSafeInteger(frozen.seed) && sha(frozen.offerScheduleSha256) && Number.isSafeInteger(win?.warmupS) && Number.isSafeInteger(win?.perLadderLevelS)
-    ? s => ({ generatorSourceSha256: frozen.sha256, seed: frozen.seed, offerScheduleSha256: frozen.offerScheduleSha256, window: [win.warmupS, win.warmupS + win.perLadderLevelS], slot: s.comp.source.slot }) : null;
-  if (!workload) why('TRACE-NOT-FROZEN', `${PATHS.loadContract} pins no frozen trace (writerTrace.generator.frozen {sha256, seed, offerScheduleSha256}) and window, so no comparison has a workload identity (VA15, RULINGS Q47b)`);
-  const receipts = [];
-  // Offline runs are not sandboxed (the gate's containers are the isolation): the candidate runs first, so before each side runs
-  // its built modules are re-hashed, and a side whose code an earlier process edited is not run.
-  for (const s of sides) {
-    if (run.offline && s.build) { const t = tamperedModules(s); if (t.length) { why('BUILD-TAMPERED', `${s.side}: ${t.slice(0, 5).join(', ')} changed after the evaluator built them`); s.build = null; } }
-    for (const oid of [...s.prereqs, ...claimed.map(o => o.id)]) {
-      const o = ctx.byId.get(oid), role = s.prereqs.includes(oid) ? 'prerequisite' : s.role, rid = `${s.side}:${oid}`;
-      const caseResults = [];
-      for (const item of planOf(o)) {
-        const a = expectedFor(item);
-        const entry = { side: s.side, obligation: oid, case: item.id, selection: item.selection, mode: item.mode, rep: item.rep, oracle: item.oracle, oracleExit: a?.oracleExit ?? null, oracleCode: a?.oracleCode ?? null, verdict: null };
-        run.cases.push(entry);
-        if (!a || !run.offline || !s.build) continue;
-        const seen = env.sut({ side: s.side, dir: s.dir, casePath: item.casePath, mode: item.mode });
-        const observed = seen.exit === 0 ? trimNl(seen.stdout) : Buffer.concat([Buffer.from(`X-SUT-EXIT ${seen.exit}\n`), seen.stderr]);
-        const expectedSha256 = put(a.bytes), observedSha256 = put(observed);
-        const v = a.oracleCode === 'X-NOT-MODELED' ? 'REFUSED' : a.oracleExit !== 0 ? 'FAIL' : recompute(item.comparator, a.bytes, observed);
-        // case-result/1 (0.3.7) judges by hash equality and has no comparator field, so a comparator PASS on different bytes cannot
-        // be recorded as a PASS that the reference would recompute; it fails closed (proposed for 0.3.8).
-        const recorded = v === 'PASS' && expectedSha256 !== observedSha256 ? 'FAIL' : v;
-        if (recorded !== v) why('CASE-RECORD-INEXPRESSIBLE', `${item.id}: ${item.comparator} passes on different bytes, which case-result/1 cannot record`, rid);
-        entry.verdict = recorded;
-        if (recorded !== 'PASS') why(recorded === 'REFUSED' ? 'CASE-REFUSED' : recorded === 'UNCOMPARABLE' ? 'CASE-UNCOMPARABLE' : 'CASE-FAIL', `${s.side} ${oid} ${item.selection}:${item.id} mode ${item.mode}${item.rep > 1 ? ` rep ${item.rep}` : ''}: ${recorded} (oracle ${item.oracle} exit ${a.oracleExit}${a.oracleCode ? ` ${a.oracleCode}` : ''}; RULINGS Q45b, Q47a, Q55a)`, rid);
-        const rec = { schema: 'case-result/1', obligation: oid, case: item.id, selection: item.selection, oracle: item.oracle, oracleExit: a.oracleExit, oracleCode: a.oracleCode, expectedSha256, observedSha256 };
-        caseResults.push({ case: item.id, selection: item.selection, verdict: recorded, objectSha256: put(rec) });
-      }
-      if (!run.offline || !s.build) continue;
-      const r = { obligation: oid, definitionSha256: o.definitionSha256, sourceTreeSha256: s.label, composition: s.comp, role, commit, producedAt: now, buildManifestSha256: s.build.manifest,
-        executedBinarySha256: s.build.binary, modes: o.closure.modes, faultReps: ctx.faultReps, caseResults };
-      if (s.verifier) r.verifierObjectSha256 = put({ schema: 'verifier-record/1', obligation: oid, definitionSha256: o.definitionSha256, verifier: s.verifier, verdict: 'ACCEPT' });
-      if (role !== 'prerequisite' && workload) r.workload = workload(s);
-      receipts.push(r);
-    }
+  // -- the verdict: the contract's reference model over the lab's executor.
+  run.core = admitCore({ obligations: claim.obligations, commit, sourceTreeSha256: claim.sourceTreeSha256, composition: comp }, ev, ctx);
+  for (const r of run.core.reasons) why(r.code, r.detail);
+  // Lab, stricter than the reference (Q41d): GATE-POSITION covers A0 too (Q38a), so the registry's A0 build must pass its own
+  // position and identity runs; and every contract-level blocker is reported, not only the first.
+  if (run.core.verdict === 'QUALIFIED') for (const o of [prereq[0], prereq[1]]) {
+    const notes = [];
+    if (qualificationRun(o, entry.binarySha256, entry.composition, ev, ctx, ctx.pins, ctx.pinned, d => notes.push(d)) === null) why('PREREQ-FAILED', `the evaluator's ${o.id} run of the A0 build did not pass (GATE-POSITION "A0 included", RULINGS Q38a): ${notes.join('; ')}`);
   }
-
-  // -- consistency: the contract's reference model over the receipts this run made. Contract-level blockers (A0, W0, pins,
-  // excludes, refusals) are reported for every run; evidence reasons only when there were observations to judge.
-  const coreClaim = { obligations: claimed.map(o => o.id), commit, sourceTreeSha256: label, composition: comp, receipts };
-  const coreEnv = { store: objectStore(objectsDir), dependencyClosureChangedAt: git.commitTime(commit) };
-  for (const r of admitCore({ ...coreClaim, receipts: [] }, coreEnv, ctx).reasons) if (STATIC_CORE.has(r.code)) why(r.code, r.detail);
-  if (run.offline) {
-    run.receipts = receipts;
-    for (const r of admitCore(coreClaim, coreEnv, ctx).reasons) if (!STATIC_CORE.has(r.code)) why(r.code, `evaluator-made receipts: ${r.detail}`);
+  if (ids.length === (Array.isArray(claim.obligations) ? claim.obligations.length : -1)) {
+    if (!isObj(entry)) why('A0-REGISTRY-NULL', `A0_REGISTRY has no entry for source engine ${comp.source.engine}; every comparison is a diagnostic until A0 is frozen (RULINGS Q46b, Q47b)`);
+    for (const o of claimed) if (!Object.keys(ctx.verifiers ?? {}).some(v => registeredAcceptance(v, 'obligation', o.id, commit, ctx.verifiers))) why('VERIFIER-UNREGISTERED', `no VERIFIER_REGISTRY entry accepts ${o.id} at ${commit} (RULINGS Q55a)`);
+    for (const b of contractBlockers(claimed, prereq, domain, ctx)) why(b.code, b.detail);
   }
 }
 

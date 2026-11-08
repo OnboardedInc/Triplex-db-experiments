@@ -2,12 +2,13 @@
 // Print the document fixture table: node lab/bin/test/claim-fixtures.mjs
 //
 // Three things are checked.
-//   1. The contract's reference model: admitCore reaches lab/acceptance/build_contract.py admit_claim's verdict on every call
-//      the contract's own self-check makes (claim_ref.py records them with their exact inputs), and on every document fixture
-//      that is not lab-only (Q41d: the reference is the minimum).
+//   1. The contract's reference model (0.3.8): admitCore is replayed against every admit_claim call the contract's own
+//      self-check makes. claim_ref.py records each call's inputs and every executor call (function, arguments, result) in
+//      order; admitCore must make exactly the same executor calls in the same order and reach the same verdict. On documents
+//      the reference (no executor) and claim.mjs admit both answer DIAGNOSTIC.
 //   2. Documents (claim.mjs admit): every fixture's documentVerdict and its cause; the verdict itself is always DIAGNOSTIC (Q55a).
-//   3. Runs (claim.mjs qualify, offline): the evaluator's own builds, manifest-resolved cases, oracle answers and comparator;
-//      supplied records ignored; no path to QUALIFIED while the gate is plan-only.
+//   3. Runs (claim.mjs qualify, offline): the evaluator's own builds (A0 reproducing the registry's binarySha256), manifest-
+//      resolved cases, oracle answers and comparator; supplied records ignored; no path to QUALIFIED while the gate is plan-only.
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -15,7 +16,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
 import { sha256, sourceTreeIdOf } from '../lib.mjs';
-import { admitClaim, admitCore, canonText, coreContext, gitSource, localSut, objectStore, qualifyClaim, recompute, storeFrom } from '../claim.mjs';
+import { admitClaim, admitCore, canonText, coreContext, gitSource, localSut, objectStore, qualifyClaim, recompute } from '../claim.mjs';
 import { buildFixtures, evaluateLab, evaluateReference } from './claim-fixtures.mjs';
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tx2-claim-test-'));
@@ -41,42 +42,59 @@ const CAUSE = {
   'CODEX-R6-MODULES-NOT-RETAINED': 'PREREQ-MISSING', 'CODEX-R6-BINARY-NOT-RETAINED': 'PREREQ-MISSING', 'CODEX-R6-NOT-A-VERIFIER-RECORD': 'PREREQ-MISSING',
   'CODEX-R6-REFUSAL-LABELLED-PASS': 'MEASUREMENT-MISSING', 'Q47A-WRONG-LABELLED-PASS': 'MEASUREMENT-MISSING', 'CODEX-R6-CONTROL-NO-WORKLOAD': ['MEASUREMENT-MISSING', 'WORKLOAD-IDENTITY'],
   'CODEX-R6-CANDIDATE-SELECTED-CONTROL': 'CONTROL-UNMATCHED', 'CODEX-R6-NO-A0-REGISTRY': 'A0-REGISTRY-NULL', 'CODEX-R6-MIGRATION-INDIRECT-REFUSAL': ['ORACLE-REFUSES', 'MEASUREMENT-MISSING'],
-  'Q47C-MANIFESTS-UNPINNED': ['SELECTION-UNRESOLVED', 'A0-REGISTRY-NULL'], 'CODEX-R7-INVENTED-CASES': 'CASES-MISSING', 'CODEX-R7-CANDIDATE-AS-A0': 'BUILD-INPUT-STALE',
+  'Q47C-MANIFESTS-UNPINNED': ['SELECTION-UNRESOLVED', 'A0-REGISTRY-NULL'], 'CODEX-R7-INVENTED-CASES': 'CASES-MISSING', 'CODEX-R7-CANDIDATE-AS-A0': ['CONTROL-UNMATCHED', 'BUILD-INPUT-STALE'],
   'RT-SWAP-ROLES': 'MEASUREMENT-MISSING', 'RT-RELABEL-PROFILE': 'LEDGER', 'RT-SCREENING-PREREQ': 'RECEIPT-SCREENING', 'RT-RUNKIND-SWAP': 'RECEIPT-RUN-KIND',
   'RT-CONTROL-OTHER-PROFILE': 'CONTROL-UNMATCHED', 'RT-SLOT-ARRAY': 'COMPOSITION-UNBOUND', 'RT-VERIFIER-IS-AUTHOR': 'VERIFIER-NOT-INDEPENDENT', 'RT-DROP-FAIL-ATTEMPT': 'LEDGER-MISMATCH',
   'RT-COUNTS-EDITED': 'LEDGER-MISMATCH', 'RT-CONTRACT-RELABEL': 'LEDGER', 'RT-FAULTREPS-RELABEL': 'LEDGER-MISMATCH', 'RT-DEP-UPPERCASE': 'DEPENDENCY-UNBOUND',
   'RT-DEP-UNLISTED': 'DEPENDENCY-UNBOUND', 'RT-DEP-OTHER-WORKSPACE': 'DEPENDENCY-UNBOUND', 'RT-NARROW-ROOTS': 'BUILD-ROOTS',
-  'LAB-BRANCH-PINS-OWN-ORACLE': 'CONTRACT-NOT-AUTHORITY', 'LAB-ORACLE-FILE-DRIFT': 'ORACLE-FILES', 'LAB-IMAGE-NOT-PINNED': 'IMAGE-NOT-PINNED',
+  'LAB-BRANCH-PINS-OWN-ORACLE': 'ORACLE-UNPINNED', 'LAB-ORACLE-FILE-DRIFT': 'ORACLE-FILES', 'LAB-IMAGE-NOT-PINNED': 'IMAGE-NOT-PINNED',
   'LAB-FORBIDDEN-ENDPOINT': 'RECEIPT-ENDPOINT', 'LAB-ADMISSION-BLOCKED': 'RECEIPT-ADMISSION', 'LAB-CONTROL-NO-PREREQ': 'PREREQ-MISSING',
+  'DOC-NO-SOURCE-VARIANT': 'COMPOSITION-UNBOUND', 'DOC-UNREGISTERED-VERIFICATION': 'VERIFIER-UNREGISTERED',
 };
 
 // ---------------------------------------------------------------- 1. the contract's reference model
 
-test('admitCore reaches the contract\'s verdict on every admit_claim call of the contract\'s own self-check', () => {
+const isObj = v => v !== null && typeof v === 'object' && !Array.isArray(v);
+const dec = v => isObj(v) && Object.keys(v).length === 1 && '$bytes' in v ? Buffer.from(v.$bytes, 'base64') : Array.isArray(v) ? v.map(dec) : isObj(v) ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, dec(x)])) : v;
+// The compiled obligations.json adds four derived fields to each obligation; the generator's in-memory obligation has none.
+const COMPILED_ONLY = ['definitionSha256', 'needsNewOracle', 'status', 'verifierMode'];
+const enc = v => Buffer.isBuffer(v) ? { $bytes: v.toString('base64') } : v === undefined ? null : Array.isArray(v) ? v.map(enc)
+  : isObj(v) ? Object.fromEntries(Object.entries(v).filter(([k]) => !('closure' in v && 'id' in v && COMPILED_ONLY.includes(k))).map(([k, x]) => [k, enc(x)])) : v;
+/** An executor that replays one recorded admit_claim call: each call must be the next recorded one, with equal arguments. */
+function replay(rec) {
+  let i = 0;
+  const fn = name => (...args) => {
+    const c = rec.calls[i];
+    if (!c || c.fn !== name || canonText(enc(args)) !== canonText(c.args)) throw new Error(`call ${i}: admitCore made ${name}(${canonText(enc(args)).slice(0, 160)}), the contract ${c ? `${c.fn}(${canonText(c.args).slice(0, 160)})` : 'no further call'}`);
+    i++;
+    return dec(c.result);
+  };
+  return { ev: { slots: rec.slots, ...Object.fromEntries(['build', 'manifest', 'oracle', 'sut', 'compare', 'workload', 'measure'].map(k => [k, fn(k)])) }, made: () => i };
+}
+
+test('admitCore makes the contract\'s executor calls and reaches its verdict on every admit_claim call of its own self-check', () => {
   assert.deepEqual(ref.selfCheckErrors, [], 'the contract self-check itself reports admission errors');
   const fixtures = ref.contractFixtures;
-  assert.ok(fixtures.length >= 46 && fixtures.filter(f => f.verdict === 'QUALIFIED').length >= 2, `only ${fixtures.length} contract fixtures`);
-  for (const cx of ['CX-R6-UNOPENED-MEANING', 'CX-R6-UNMATCHED-CONTROL', 'CX-R6-INDIRECT-REFUSAL']) assert.ok(fixtures.some(f => f.label === cx && f.verdict === 'DIAGNOSTIC'), cx);
+  assert.ok(fixtures.length >= 40 && fixtures.filter(f => f.verdict === 'QUALIFIED').length >= 5, `only ${fixtures.length} contract fixtures`);
+  for (const cx of ['CX-R7-INVENTED-EVIDENCE', 'CX-R7-SELECTION-OVERREACH', 'CX-R7-RELABELLED-CONTROL']) assert.ok(fixtures.some(f => f.label.includes(cx) && f.verdict === 'DIAGNOSTIC'), cx);
   const disagree = [];
+  let calls = 0;
   for (const f of fixtures) {
-    const bytes = new Map(f.store.map(([h, b]) => [h, Buffer.from(b, 'base64')]));
-    const env = { store: storeFrom(h => bytes.get(h) ?? null), ...(f.dependencyClosureChangedAt == null ? {} : { dependencyClosureChangedAt: f.dependencyClosureChangedAt }) };
-    const r = admitCore(f.claim, env, coreContext(CONTRACT, { pins: f.pins, w0: f.w0, a0: f.a0 }));
-    if (r.verdict !== f.verdict) disagree.push(`line ${f.line} ${f.label}: contract ${f.verdict}, admitCore ${r.verdict} ${JSON.stringify(r.reasons)}`);
+    const r_ = f.ev && replay(f.ev);
+    let r;
+    try { r = admitCore(f.claim, r_?.ev ?? null, coreContext(CONTRACT, { pins: f.pins, w0: f.w0, a0: f.a0, verifiers: f.verifiers, pinned: f.pinned })); } catch (error) { r = { verdict: 'DIVERGED', reasons: [{ detail: error.message }] }; }
+    if (r.verdict !== f.verdict || (r_ && r_.made() !== f.ev.calls.length)) disagree.push(`line ${f.line} ${f.label}: contract ${f.verdict} after ${f.ev?.calls.length ?? 0} calls, admitCore ${r.verdict} after ${r_?.made() ?? 0}: ${r.reasons[0]?.detail}`);
+    calls += f.ev?.calls.length ?? 0;
   }
   assert.deepEqual(disagree, []);
+  assert.ok(calls > 1000, `only ${calls} executor calls replayed`);
 });
 
-test('the contract\'s admit_claim reaches the lab\'s document verdict on every shared document fixture', () => {
-  const disagree = built.fixtures.filter(f => !f.labOnly && ref.documents[f.id].verdict !== lab[f.id].documentVerdict).map(f => `${f.id}: contract ${ref.documents[f.id].verdict}, lab ${lab[f.id].documentVerdict}`);
-  assert.deepEqual(disagree, []);
-});
-
-test('Q41d minimum: whatever the contract rejects, the lab rejects; lab-only fixtures are exactly where the contract admits', () => {
-  for (const f of built.fixtures) if (ref.documents[f.id].verdict === 'DIAGNOSTIC') assert.equal(lab[f.id].documentVerdict, 'DIAGNOSTIC', f.id);
-  for (const f of built.fixtures.filter(x => x.labOnly)) assert.equal(ref.documents[f.id].verdict, 'QUALIFIED', `${f.id} is marked lab-only but the contract rejects it too`);
-  // Codex round 7: the 0.3.7 reference admits both forgeries as documents.
-  for (const id of ['CODEX-R7-INVENTED-CASES', 'CODEX-R7-CANDIDATE-AS-A0']) assert.equal(ref.documents[id].verdict, 'QUALIFIED', id);
+test('documents: the contract\'s admit_claim (no executor) and claim.mjs admit both answer DIAGNOSTIC for every document fixture', () => {
+  for (const f of built.fixtures) {
+    assert.equal(ref.documents[f.id].verdict, 'DIAGNOSTIC', f.id);
+    assert.equal(lab[f.id].verdict, 'DIAGNOSTIC', f.id);
+  }
 });
 
 // ---------------------------------------------------------------- 2. documents
@@ -208,53 +226,54 @@ test('gitSource parses cat-file --batch and ls-tree for binary blobs, spaces, ta
 
 const R = built.repos.run;
 const spec = JSON.parse(fs.readFileSync(path.join(R.dir, 'lab/config/build.json'), 'utf8'));
-const NOW = Date.parse('2026-11-07T14:00:00Z') / 1000;
 const runFx = id => built.runFixtures.find(x => x.id === id);
-const qualify = (id, { offline = true, ...extra } = {}) => qualifyClaim(runFx(id).claim, { git: gitSource(runFx(id).repo), authorityRef: 'main', workDir: path.join(root, 'work', `${id}-${offline}`), now: NOW, ...(offline ? { sut: localSut(spec) } : {}), ...extra });
-const runs = Object.fromEntries(['RUN-CANDIDATE', 'RUN-WRONG-CANDIDATE', 'RUN-FORGED-RECORDS', 'RUN-REFUSED-CASE'].map(id => [id, qualify(id)]));
-const planOnly = Object.fromEntries(['RUN-CANDIDATE', 'RUN-UNREGISTERED-VERIFICATION', 'RUN-UNREGISTERED-SLOT', 'RUN-SUPPLIED-FINGERPRINT'].map(id => [id, qualify(id, { offline: false })]));
+const qualify = (id, { offline = true, ...extra } = {}) => qualifyClaim(runFx(id).claim, { git: gitSource(runFx(id).repo), authorityRef: runFx(id).authorityRef ?? 'main', workDir: path.join(root, 'work', `${id}-${offline}`), ...(offline ? { sut: localSut(spec) } : {}), ...extra });
+const runs = Object.fromEntries(['RUN-CANDIDATE', 'RUN-WRONG-CANDIDATE', 'RUN-FORGED-RECORDS', 'RUN-REFUSED-CASE', 'RUN-UNREGISTERED-VERIFICATION', 'RUN-A0-REBUILD-MISMATCH'].map(id => [id, qualify(id)]));
+const planOnly = Object.fromEntries(['RUN-CANDIDATE', 'RUN-UNREGISTERED-SLOT', 'RUN-SUPPLIED-FINGERPRINT'].map(id => [id, qualify(id, { offline: false })]));
+const isPosition = c => /^(FX|PO)-/.test(c.case);
 
-test('qualify step 1: the evaluator builds the claimed tree and the registry\'s A0 itself and records its own hashes', () => {
+test('qualify build: the evaluator builds the claimed tree and rebuilds A0, which reproduces the registry\'s binarySha256', () => {
   const { run } = runs['RUN-CANDIDATE'];
-  assert.equal(run.builds.candidate.sourceTreeSha256, R.C2.label);
-  assert.equal(run.builds.A0.sourceTreeSha256, R.C1.label);
-  assert.equal(run.builds.A0.commit, R.C1.commit);
-  assert.notEqual(run.builds.A0.executedBinarySha256, run.builds.candidate.executedBinarySha256);
+  assert.equal(run.builds[R.C2.commit].sourceTreeSha256, R.C2.label);
+  assert.equal(run.builds[R.C1.commit].sourceTreeSha256, R.C1.label);
+  assert.equal(run.builds[R.C1.commit].binarySha256, R.a0Binary);
+  assert.notEqual(run.builds[R.C2.commit].binarySha256, R.a0Binary);
   // The A0 control executes the registry commit's allocator (Codex round 7 finding 2: a candidate binary labelled as A0).
   const store = objectStore(run.objects);
-  const alloc = side => { const man = store.json(run.builds[side].buildManifestSha256).value; return store.get(man.modules.find(m => m.path === 'packages/xtdb/dist/alloc.mjs').sha256).bytes.toString(); };
-  assert.match(alloc('A0'), /v1 \(A0\)/);
-  assert.match(alloc('candidate'), /v2 candidate/);
-  assert.equal(objectStore(run.objects).json(run.builds.candidate.buildManifestSha256).value.schema, 'build-manifest/1');
+  const alloc = c => { const man = store.json(run.builds[c].buildManifestSha256).value; return store.get(man.modules.find(m => m.path === 'packages/xtdb/dist/alloc.mjs').sha256).bytes.toString(); };
+  assert.match(alloc(R.C1.commit), /v1 \(A0\)/);
+  assert.match(alloc(R.C2.commit), /v2 candidate/);
+  assert.equal(store.json(run.builds[R.C2.commit].buildManifestSha256).value.schema, 'build-manifest/1');
 });
 
-test('qualify step 2: cases come from the pinned manifests, every case and mode, fault points T-FAULT-REPS times', () => {
-  const { run } = runs['RUN-CANDIDATE'];
-  const of = (side, oid) => run.cases.filter(c => c.side === side && c.obligation === oid);
-  // G7.position.coordinates: 8 cases x 3 modes, FX-CRASH-APPEND-RESOLUTION (a fault point) 3 times each.
-  assert.equal(of('candidate', 'G7.position.coordinates').length, 7 * 3 + 3 * 3);
-  assert.equal(of('candidate', 'G7.position.coordinates').filter(c => c.case === 'FX-CRASH-APPEND-RESOLUTION' && c.mode === 'reopen').length, 3);
-  // NS.P2 selects tag p2 (7 cases) and the same 7 ids: each case is covered under both selections.
-  assert.equal(of('candidate', 'NS.P2').length, 14);
-  assert.equal(of('A0', 'NS.P2').length, 14);
-  assert.equal(run.cases.length, 96);
-  assert.ok(run.cases.every(c => c.verdict === 'PASS' && c.oracleExit === 0));
-});
-
-test('qualify step 4 and the comparator: a candidate whose answers differ from the pinned oracle\'s fails; A0 does not', () => {
-  const r = runs['RUN-WRONG-CANDIDATE'];
-  assert.equal(r.verdict, 'DIAGNOSTIC');
+test('qualify build: CX-R7-RELABELLED-CONTROL as a run, an A0 entry recording another binary than its tree rebuilds to', () => {
+  const r = runs['RUN-A0-REBUILD-MISMATCH'];
+  assert.ok(codes(r).includes('A0-REBUILD-MISMATCH'), JSON.stringify(codes(r)));
   assert.equal(r.offlineVerdict, 'DIAGNOSTIC');
-  assert.ok(r.run.cases.filter(c => c.side === 'candidate').every(c => c.verdict === 'FAIL'));
-  assert.ok(r.run.cases.filter(c => c.side === 'A0').every(c => c.verdict === 'PASS'));
-  assert.ok(codes(r).includes('CASE-FAIL') && codes(r).includes('MEASUREMENT-MISSING'));
 });
 
-test('qualify: an oracle refusal (exit 2, X-NOT-MODELED) is REFUSED, never PASS, and the static refusal also blocks (Q45b, Q47c)', () => {
+test('qualify resolve and execute: every case of the pinned manifests in every mode, CR-FAULT cases T-FAULT-REPS times', () => {
+  const { run } = runs['RUN-CANDIDATE'];
+  // G7.position.coordinates (CR-FAULT): 8 cases x 3 modes x 3 repetitions, on the candidate and (lab, GATE-POSITION) on A0.
+  assert.equal(run.cases.filter(c => c.build === R.C2.commit && isPosition(c)).length, 8 * 3 * 3);
+  assert.equal(run.cases.filter(c => c.build === R.C1.commit && isPosition(c)).length, 8 * 3 * 3);
+  assert.equal(run.cases.filter(c => c.build === R.C2.commit && c.case === 'FX-CRASH-APPEND-RESOLUTION' && c.mode === 'reopen').length, 3);
+  assert.equal(run.cases.length, run.gate.plan.executions);
+  assert.ok(run.cases.every(c => c.verdict === 'PASS'));
+  assert.ok(run.oracle.every(o => o.exit === 0 && o.code === null));
+});
+
+test('qualify expect and compare: a candidate whose answer differs from the pinned oracle\'s fails at its first case', () => {
+  const r = runs['RUN-WRONG-CANDIDATE'];
+  assert.equal(r.offlineVerdict, 'DIAGNOSTIC');
+  assert.deepEqual(r.run.cases.map(c => [c.build, c.verdict]), [[R.WRONG.commit, 'FAIL']]);
+  assert.ok(codes(r).includes('CASE-FAIL') && codes(r).includes('PREREQ-FAILED'));
+});
+
+test('qualify: an oracle refusal (exit 2, X-NOT-MODELED) fails closed, and the static refusal also blocks (Q45b, Q47c)', () => {
   const r = runs['RUN-REFUSED-CASE'];
-  const mig = r.run.cases.filter(c => c.case === 'MIG-DECIMAL-5-2-TO-6-3');
-  assert.ok(mig.length === 6 && mig.every(c => c.verdict === 'REFUSED' && c.oracleExit === 2 && c.oracleCode === 'X-NOT-MODELED'));
-  assert.ok(codes(r).includes('CASE-REFUSED') && codes(r).includes('ORACLE-REFUSES'));
+  assert.ok(r.run.oracle.some(o => o.exit === 2 && o.code === 'X-NOT-MODELED' && o.input.endsWith('MIG-DECIMAL-5-2-TO-6-3.json')));
+  for (const code of ['CASE-REFUSED', 'MEASUREMENT-RUN-FAILED', 'ORACLE-REFUSES']) assert.ok(codes(r).includes(code), code);
 });
 
 test('qualify: Codex round 7 forged records, selections, case lists and fingerprints in the claim are ignored', () => {
@@ -262,7 +281,6 @@ test('qualify: Codex round 7 forged records, selections, case lists and fingerpr
   assert.deepEqual(r.run.ignored.sort(), ['caseList', 'oDomainFingerprint', 'receipts', 'selection']);
   assert.deepEqual(codes(r), codes(plain));
   assert.deepEqual(r.run.cases.map(c => c.verdict), plain.run.cases.map(c => c.verdict));
-  // The same documents through admit are DIAGNOSTIC as well.
   const doc = admitClaim(runFx('RUN-FORGED-RECORDS').claim, { git: gitSource(R.dir), objects: objectStore(built.objects), authorityRef: 'main' });
   assert.equal(doc.verdict, 'DIAGNOSTIC');
 });
@@ -277,29 +295,32 @@ test('qualify builds the tree its label names: a checkout that git archive alter
   const commit = git(['rev-parse', 'HEAD']), tree = git(['rev-parse', 'HEAD^{tree}']);
   git(['checkout', '-q', 'main']);
   const claim = { ...runFx('RUN-CANDIDATE').claim, claimId: 'RUN-ATTRS', commit, sourceTreeSha256: sourceTreeIdOf(tree) };
-  const r = qualifyClaim(claim, { git: gitSource(R.dir), authorityRef: 'main', workDir: path.join(root, 'work', 'attrs'), now: NOW });
-  assert.ok(codes(r).includes('CHECKOUT-MISMATCH'), JSON.stringify(r.reasons));
-  assert.equal(r.run.builds.candidate, undefined);
+  const r = qualifyClaim(claim, { git: gitSource(R.dir), authorityRef: 'main', workDir: path.join(root, 'work', 'attrs'), sut: localSut(spec) });
+  assert.ok(codes(r).includes('CHECKOUT-MISMATCH') && codes(r).includes('BUILD-FAILED'), JSON.stringify(r.reasons));
+  assert.equal(r.run.builds[commit], undefined);
 });
 
-test('qualify re-hashes a side\'s built modules before running it: a candidate that edits the A0 build is caught', () => {
-  const a0Dir = path.join(root, 'work', 'tamper', 'checkouts', `A0-${R.C1.commit.slice(0, 12)}`);
+test('qualify re-hashes a build before running it after another: a candidate that edits the A0 build is caught', () => {
+  const a0Alloc = path.join(root, 'work', 'tamper', 'checkouts', R.C1.commit.slice(0, 12), 'packages/xtdb/dist/alloc.mjs');
   const local = localSut(spec);
   let edited = false;
-  const sut = args => { if (args.side === 'candidate' && !edited) { fs.appendFileSync(path.join(a0Dir, 'packages/xtdb/dist/alloc.mjs'), '// edited by the candidate\n'); edited = true; } return local(args); };
-  const r = qualifyClaim(runFx('RUN-CANDIDATE').claim, { git: gitSource(R.dir), authorityRef: 'main', workDir: path.join(root, 'work', 'tamper'), now: NOW, sut });
+  // The candidate edits A0's built allocator as soon as A0 has been built (A0 is rebuilt after the candidate's prerequisites).
+  const sut = args => { if (!edited && fs.existsSync(a0Alloc) && !args.dir.includes(R.C1.commit.slice(0, 12))) { fs.appendFileSync(a0Alloc, '// edited by the candidate\n'); edited = true; } return local(args); };
+  const r = qualifyClaim(runFx('RUN-CANDIDATE').claim, { git: gitSource(R.dir), authorityRef: 'main', workDir: path.join(root, 'work', 'tamper'), sut });
   assert.ok(edited);
-  assert.ok(codes(r).includes('BUILD-TAMPERED') && codes(r).includes('CONTROL-UNMATCHED'), JSON.stringify(codes(r)));
+  assert.ok(codes(r).includes('BUILD-TAMPERED') && codes(r).includes('PREREQ-FAILED'), JSON.stringify(codes(r)));
   assert.equal(r.offlineVerdict, 'DIAGNOSTIC');
 });
 
-test('qualify step 5: only the authority contract\'s VERIFIER_REGISTRY counts; supplied verifier records count for nothing', () => {
-  assert.ok(codes(planOnly['RUN-UNREGISTERED-VERIFICATION']).includes('VERIFIER-UNREGISTERED'));
+test('qualify verify: only the authority contract\'s VERIFIER_REGISTRY counts; supplied verifier records count for nothing', () => {
+  const r = runs['RUN-UNREGISTERED-VERIFICATION'];
+  assert.equal(r.run.core.reasons[0].code, 'VERIFIER-UNREGISTERED');
   assert.ok(!codes(runs['RUN-CANDIDATE']).includes('VERIFIER-UNREGISTERED'));
-  // The real 0.3.7 contract has no registry at all, nor an A0 entry, nor pinned manifests.
+  // The real 0.3.8 contract: no A0 entry, no pinned manifests, and no registry entry for the claim's obligation.
   const real = qualifyClaim({ format: 'triplex-db-2/claim/1', kind: 'comparative', obligations: ['NS.P2'], commit: built.repos.real.C2.commit, sourceTreeSha256: built.repos.real.C2.label, composition: runFx('RUN-CANDIDATE').claim.composition },
-    { git: gitSource(built.repos.real.dir), authorityRef: 'main', workDir: path.join(root, 'work', 'real'), now: NOW });
-  for (const code of ['VERIFIER-REGISTRY-ABSENT', 'A0-REGISTRY-NULL', 'SELECTION-UNRESOLVED', 'TRACE-NOT-FROZEN', 'GATE-NOT-RUN']) assert.ok(codes(real).includes(code), `${code}: ${codes(real)}`);
+    { git: gitSource(built.repos.real.dir), authorityRef: 'main', workDir: path.join(root, 'work', 'real') });
+  for (const code of ['A0-REGISTRY-NULL', 'VERIFIER-UNREGISTERED', 'PREREQ-FAILED', 'GATE-NOT-RUN']) assert.ok(codes(real).includes(code), `${code}: ${codes(real)}`);
+  assert.match(real.reasons.find(x => x.code === 'PREREQ-FAILED').detail, /no pinned manifest/);
 });
 
 test('qualify Q55e: a claim cannot supply the W0 pin or the O-DOMAIN fingerprint', () => {
@@ -308,14 +329,14 @@ test('qualify Q55e: a claim cannot supply the W0 pin or the O-DOMAIN fingerprint
   assert.ok(codes(r).includes('W0-UNPINNED'));
 });
 
-test('qualify step 3: the plan goes through gate.mjs --dry-run, which checks the registered slot', () => {
+test('qualify execute: the plan goes through gate.mjs --dry-run, which checks the registered slot', () => {
   const ok = runs['RUN-CANDIDATE'].run.gate;
   assert.equal(ok.ok, true);
   assert.equal(ok.dryRun, true);
   assert.equal(ok.executes, false);
   assert.equal(ok.slot, 'dev');
-  assert.equal(ok.plan.cases, 96);
-  assert.ok(codes(planOnly['RUN-UNREGISTERED-SLOT']).includes('GATE-SLOT'));
+  const slot = planOnly['RUN-UNREGISTERED-SLOT'];
+  assert.ok(codes(slot).includes('GATE-SLOT') && codes(slot).includes('SLOT-UNREGISTERED'));
   const g = args => spawnSync(process.execPath, [GATE, ...args], { encoding: 'utf8' });
   const dry = g(['OBL', '--lane', 'xtdb', '--slot', 'dev', '--dry-run']);
   assert.equal(dry.status, 0, dry.stderr);
@@ -326,19 +347,14 @@ test('qualify step 3: the plan goes through gate.mjs --dry-run, which checks the
 
 test('qualify: no path to QUALIFIED without a gate run; an offline run that passes everything reports offlineVerdict only', () => {
   const pass = runs['RUN-CANDIDATE'];
+  assert.equal(pass.run.core.verdict, 'QUALIFIED');
   assert.equal(pass.verdict, 'DIAGNOSTIC');
   assert.equal(pass.offlineVerdict, 'QUALIFIED');
   assert.deepEqual(codes(pass), ['GATE-NOT-RUN', 'RUN-NOT-ON-GATE']);
-  // The run's own receipts satisfy the contract's reference model: the offline verdict is not a lab invention.
-  const ctx = coreContext(JSON.parse(execFileSync('git', ['show', 'main:lab/acceptance/obligations.json'], { cwd: R.dir })));
-  const claim = runFx('RUN-CANDIDATE').claim;
-  assert.equal(admitCore({ ...claim, receipts: pass.run.receipts }, { store: objectStore(pass.run.objects), dependencyClosureChangedAt: R.C2.time }, ctx).verdict, 'QUALIFIED');
-  // Plan only (no observations at all): DIAGNOSTIC, nothing judged, oracle answers still computed.
+  // Plan only (no observations): DIAGNOSTIC; the reference stops at the first case, which has no observation.
   const plan = planOnly['RUN-CANDIDATE'];
-  assert.deepEqual(codes(plan), ['GATE-NOT-RUN']);
+  assert.deepEqual(codes(plan), ['GATE-NOT-RUN', 'PREREQ-FAILED']);
   assert.equal(plan.offlineVerdict, null);
-  assert.equal(plan.run.receipts, null);
-  assert.ok(plan.run.cases.every(c => c.verdict === null && c.oracleExit === 0));
   // A gate stub that says it executed changes nothing: no code path reads observations from a gate yet.
   const stub = qualify('RUN-CANDIDATE', { offline: false, gate: () => ({ ok: true, executes: true, observations: [] }) });
   assert.equal(stub.verdict, 'DIAGNOSTIC');
