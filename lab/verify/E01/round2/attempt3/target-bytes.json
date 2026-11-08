@@ -1,0 +1,34 @@
+{
+  "lab/bin/claim.mjs": {
+    "sha256": "fe7b4b5acc84ea4d336db697606b0de90b3170aeca8d44623ecfab3ef1d32661",
+    "matches422c8d3": true
+  },
+  "lab/bin/test/claim-fixtures.mjs": {
+    "sha256": "46dec7b2f0d823f073ccbc99a3052c369caa318889d9c529e35d66f99ae3eeb1",
+    "matches422c8d3": true
+  },
+  "lab/bin/test/claim-round2.test.mjs": {
+    "sha256": "bebe0f75082aa5da47c72455412f1b9fb04d4e115c2a48fd09e8fa45b0c73785",
+    "matches422c8d3": true
+  },
+  "lab/bin/heavy.mjs": {
+    "sha256": "fc4da6ab9d0e8634e6e277066588ee2e7972a009e7d703f52586c3d52a0d0fb7",
+    "matches422c8d3": true
+  },
+  "lab/bin/heavy-lock.mjs": {
+    "sha256": "88dd2071c8d8c1e3212c9a65dc719b79af46fbe6cc2e6ede8fbe0b61112803fa",
+    "matches422c8d3": true
+  },
+  "lab/acceptance/obligations.json": {
+    "sha256": "c0fa6e7871b7bd80197ba048564f8aa7fa22fa96a50a6944419f41a6e7a7861e",
+    "matches422c8d3": true
+  },
+  "lab/acceptance/load-contract.json": {
+    "sha256": "e90e97d6f1a6462fb87a05f8b9af924b4a44aa82c8e3f0adc357b8698c80e354",
+    "matches422c8d3": true
+  },
+  "lab/experiments/EXP-E01-claim-evaluator/REPORT-round2.md": {
+    "sha256": "d32003c6c83ea44380fb998393c18e993c8dc1ec9b14c14fe1f4ddb9d341a134",
+    "matches422c8d3": true
+  }
+}

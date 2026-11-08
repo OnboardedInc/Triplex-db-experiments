@@ -1,0 +1,88 @@
+TAP version 13
+# Subtest: control: honest fixture qualifies offline
+ok 1 - control: honest fixture qualifies offline
+  ---
+  duration_ms: 11231.407875
+  type: 'test'
+  ...
+# Subtest: F1 new route: each transitive JS import is checked, poison persists after bytes restored
+ok 2 - F1 new route: each transitive JS import is checked, poison persists after bytes restored
+  ---
+  duration_ms: 924.721084
+  type: 'test'
+  ...
+# Subtest: F2 new route: loose object substitution without replace refs fails the blob OID check
+ok 3 - F2 new route: loose object substitution without replace refs fails the blob OID check
+  ---
+  duration_ms: 121.773
+  type: 'test'
+  ...
+# Subtest: F2/F7 GAP: deleting the completed claimed-case input persists without refusal
+ok 4 - F2/F7 GAP: deleting the completed claimed-case input persists without refusal
+  ---
+  duration_ms: 11924.042333
+  type: 'test'
+  ...
+# Subtest: F3 new route: a child changing the resolved node entrypoint is refused
+ok 5 - F3 new route: a child changing the resolved node entrypoint is refused
+  ---
+  duration_ms: 3104.798084
+  type: 'test'
+  ...
+# Subtest: F3/F10 new route: a two-link external chain and a cycle refuse safely
+ok 6 - F3/F10 new route: a two-link external chain and a cycle refuse safely
+  ---
+  duration_ms: 12574.64225
+  type: 'test'
+  ...
+# Subtest: F4 new route: gate child HOME/TMPDIR cannot see preceding version probes
+ok 7 - F4 new route: gate child HOME/TMPDIR cannot see preceding version probes
+  ---
+  duration_ms: 17765.1185
+  type: 'test'
+  ...
+# Subtest: F5 new route: inFlight alternatives cannot accidentally turn object comparators green
+ok 8 - F5 new route: inFlight alternatives cannot accidentally turn object comparators green
+  ---
+  duration_ms: 0.437875
+  type: 'test'
+  ...
+# Subtest: F6 new route: structured cause must contain a nonempty string, not a tag-shaped number
+ok 9 - F6 new route: structured cause must contain a nonempty string, not a tag-shaped number
+  ---
+  duration_ms: 0.125958
+  type: 'test'
+  ...
+# Subtest: F7 new route: extra content-addressed object written by the child refuses
+ok 10 - F7 new route: extra content-addressed object written by the child refuses
+  ---
+  duration_ms: 11570.927375
+  type: 'test'
+  ...
+# Subtest: F8 new route: core refuses promotion before touching even an adversarial executor
+ok 11 - F8 new route: core refuses promotion before touching even an adversarial executor
+  ---
+  duration_ms: 14.436583
+  type: 'test'
+  ...
+# Subtest: F9 new route: deleting the whole objects directory never throws or loses gate blocker
+ok 12 - F9 new route: deleting the whole objects directory never throws or loses gate blocker
+  ---
+  duration_ms: 3458.788667
+  type: 'test'
+  ...
+# Subtest: Q67g: 0.3.10 workload fields exclude slot, duet placement rejects overlap and unequal capacity
+ok 13 - Q67g: 0.3.10 workload fields exclude slot, duet placement rejects overlap and unequal capacity
+  ---
+  duration_ms: 14.2625
+  type: 'test'
+  ...
+1..13
+# tests 13
+# suites 0
+# pass 13
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 82358.24875

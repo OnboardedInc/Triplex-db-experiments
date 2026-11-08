@@ -1,0 +1,506 @@
+TAP version 13
+# Subtest: check 2 (Q67b): with the tree label fixed, the identity changes with the source runner, a dependency, a symlink's text, an external directory, the lockfile and the buildSpec; the dist does not
+not ok 1 - check 2 (Q67b): with the tree label fixed, the identity changes with the source runner, a dependency, a symlink's text, an external directory, the lockfile and the buildSpec; the dist does not
+  ---
+  duration_ms: 2959.958084
+  type: 'test'
+  location: '/private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:171:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of undefined (reading 'binarySha256')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    idOf (file:///private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:168:114)
+    planIdentity (file:///private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:169:83)
+    TestContext.<anonymous> (file:///private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:172:16)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: check 2 GAP (Q67b): a file symlink to a path outside the checkout binds only its text; the target's bytes decide the answer and the identity is the same
+not ok 2 - check 2 GAP (Q67b): a file symlink to a path outside the checkout binds only its text; the target's bytes decide the answer and the identity is the same
+  ---
+  duration_ms: 5891.045375
+  type: 'test'
+  location: '/private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:190:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of undefined (reading 'binarySha256')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    idOf (file:///private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:168:114)
+    TestContext.<anonymous> (file:///private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:195:16)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: check 2 GAP (Q67b): the toolchain is the evaluator's process.version, not the node on PATH that builds and runs the system under test
+not ok 3 - check 2 GAP (Q67b): the toolchain is the evaluator's process.version, not the node on PATH that builds and runs the system under test
+  ---
+  duration_ms: 5796.682958
+  type: 'test'
+  location: '/private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:209:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of undefined (reading 'binarySha256')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    idOf (file:///private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:168:114)
+    TestContext.<anonymous> (file:///private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:217:16)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: check 2: two instances with one identity share the first instance (a candidate commit with A0's tree runs A0's cases on its own checkout)
+ok 4 - check 2: two instances with one identity share the first instance (a candidate commit with A0's tree runs A0's cases on its own checkout)
+  ---
+  duration_ms: 11810.876416
+  type: 'test'
+  ...
+# Subtest: check 3 T1 (Q67e): a system under test inside its own process group edits the oracle copy (no escape needed); the re-hash refuses the oracle
+not ok 5 - check 3 T1 (Q67e): a system under test inside its own process group edits the oracle copy (no escape needed); the re-hash refuses the oracle
+  ---
+  duration_ms: 7246.771333
+  type: 'test'
+  location: '/private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:234:1'
+  failureType: 'testCodeFailure'
+  error: '["GATE-NOT-RUN","RUN-NOT-ON-GATE","CASE-FAIL","MEASUREMENT-RUN-FAILED"]'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:236:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: check 3 T4 (Q67e): the same edit through a symlink the system under test makes in its own checkout is caught the same way
+not ok 6 - check 3 T4 (Q67e): the same edit through a symlink the system under test makes in its own checkout is caught the same way
+  ---
+  duration_ms: 7043.401625
+  type: 'test'
+  location: '/private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:240:1'
+  failureType: 'testCodeFailure'
+  error: '["GATE-NOT-RUN","RUN-NOT-ON-GATE","CASE-FAIL","MEASUREMENT-RUN-FAILED","BUILD-TAMPERED"]'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:242:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: check 3 T2 (Q67e): a double fork stays in the build's group and is killed; a helper that starts its own session (setsid) survives
+not ok 7 - check 3 T2 (Q67e): a double fork stays in the build's group and is killed; a helper that starts its own session (setsid) survives
+  ---
+  duration_ms: 13889.465833
+  type: 'test'
+  location: '/private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:246:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    the setsid helper was killed (the gap the report names would be closed)
+    
+    false !== true
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:251:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: check 3 T5-blob (Q67e): substituting the O-CONTRACT runner's blob everywhere also changes A0's checkout, so the whole-checkout identity (Q67b) fails it closed
+not ok 8 - check 3 T5-blob (Q67e): substituting the O-CONTRACT runner's blob everywhere also changes A0's checkout, so the whole-checkout identity (Q67b) fails it closed
+  ---
+  duration_ms: 3043.752417
+  type: 'test'
+  location: '/private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:255:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    ["GATE-NOT-RUN","RUN-NOT-ON-GATE","BUILD-FAILED","BUILD-FAILED"]
+    + actual - expected
+    
+    + 'BUILD-FAILED'
+    - 'A0-REBUILD-MISMATCH'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'A0-REBUILD-MISMATCH'
+  actual: 'BUILD-FAILED'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:259:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: check 3 T5a GAP (Q67e): an unpinned COMPILED oracle's bytes are read from the repository after the candidate's build ran; `git replace` makes the evaluator run the candidate's bytes as the oracle
+not ok 9 - check 3 T5a GAP (Q67e): an unpinned COMPILED oracle's bytes are read from the repository after the candidate's build ran; `git replace` makes the evaluator run the candidate's bytes as the oracle
+  ---
+  duration_ms: 3319.738917
+  type: 'test'
+  location: '/private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:262:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    the O-CONTRACT copy that ran was not the candidate's: [{"code":"GATE-NOT-RUN","detail":"step 3: gate.mjs OBL is plan-only (--dry-run); no executing gate runs pinned case manifests on a registered slot yet, so no run is QUALIFIED (RULINGS Q55a, Q75i)"},{"code":"RUN-NOT-ON-GATE","detail":"the system under test ran locally from the evaluator's own build (offline stand-in for step 3), not through the gate on a registered slot"},{"code":"BUILD-FAILED","detail":"3dfdf6f5556bd135534e596eb234cc42caa9d8fb: node build.mjs exited 1: 2, 103, 101, 116,  32, 112,  97, 116,\n    104,  32, 111, 102,  32,  68,  65,  82,  87,  73,  78,  95,\n     85,  83,  69,  82,  95,  84,  69,  77,  80,  95,  68,  73,\n     82,  59,  32, 117, 115, 105, 110, 103,  32,  47, 116, 109,\n    112,  32, 105, 110,\n    ... 408 more items\n  ]\n}\n\nNode.js v22.23.2"},{"code":"BUILD-FAILED","detail":"the evaluator could not build tree 4931e15fe608a899e936898571720a992b8c5146074a064dbe9a22f2040400ae at 3dfdf6f5556bd135534e596eb234cc42caa9d8fb (RULINGS Q55a step 1)"}][]
+    
+    false !== true
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:267:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: check 3 T5b GAP (Q67e): with a lying O-CONTRACT on the identity cases, the reference model qualifies a wrong candidate; only the lab's A0 re-run of the prerequisites catches it
+not ok 10 - check 3 T5b GAP (Q67e): with a lying O-CONTRACT on the identity cases, the reference model qualifies a wrong candidate; only the lab's A0 re-run of the prerequisites catches it
+  ---
+  duration_ms: 3341.433125
+  type: 'test'
+  location: '/private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:272:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    admitCore over the lab executor
+    + actual - expected
+    
+    + 'DIAGNOSTIC'
+    - 'QUALIFIED'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'QUALIFIED'
+  actual: 'DIAGNOSTIC'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:276:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: check 3 T5c GAP (Q67e): on a claimed obligation A0 is never re-run on (R.evaluator.incomplete-receipts, O-CONTRACT), a wrong candidate that substitutes the oracle reaches offlineVerdict QUALIFIED
+not ok 11 - check 3 T5c GAP (Q67e): on a claimed obligation A0 is never re-run on (R.evaluator.incomplete-receipts, O-CONTRACT), a wrong candidate that substitutes the oracle reaches offlineVerdict QUALIFIED
+  ---
+  duration_ms: 10773.555459
+  type: 'test'
+  location: '/private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:284:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    ["GATE-NOT-RUN","RUN-NOT-ON-GATE","BUILD-FAILED","BUILD-FAILED"]
+    + actual - expected
+    
+    + 'DIAGNOSTIC'
+    - 'QUALIFIED'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'QUALIFIED'
+  actual: 'DIAGNOSTIC'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:292:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: check 3 T8 (Q67e): `git replace` on A0's source makes the A0 rebuild differ from the registry, so it fails closed
+not ok 12 - check 3 T8 (Q67e): `git replace` on A0's source makes the A0 rebuild differ from the registry, so it fails closed
+  ---
+  duration_ms: 2996.087542
+  type: 'test'
+  location: '/private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:298:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    ["GATE-NOT-RUN","RUN-NOT-ON-GATE","BUILD-FAILED","BUILD-FAILED"]
+    + actual - expected
+    
+    + 'BUILD-FAILED'
+    - 'A0-REBUILD-MISMATCH'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'A0-REBUILD-MISMATCH'
+  actual: 'BUILD-FAILED'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:302:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: check 3 T6 GAP (Q67e): one HOME and TMPDIR serve the candidate's build, its runs, A0's build, A0's runs and every oracle run
+not ok 13 - check 3 T6 GAP (Q67e): one HOME and TMPDIR serve the candidate's build, its runs, A0's build, A0's runs and every oracle run
+  ---
+  duration_ms: 3199.590208
+  type: 'test'
+  location: '/private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:305:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'DIAGNOSTIC'
+    - 'QUALIFIED'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'QUALIFIED'
+  actual: 'DIAGNOSTIC'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:309:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: check 3 T7 GAP (Q67e): deleting an evidence object is not EVIDENCE-TAMPERED (only objects still present are re-hashed), and a read-only object needs no chmod to delete
+not ok 14 - check 3 T7 GAP (Q67e): deleting an evidence object is not EVIDENCE-TAMPERED (only objects still present are re-hashed), and a read-only object needs no chmod to delete
+  ---
+  duration_ms: 12276.402334
+  type: 'test'
+  location: '/private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:315:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'DIAGNOSTIC'
+    - 'QUALIFIED'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'QUALIFIED'
+  actual: 'DIAGNOSTIC'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:333:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: check 3 T3 GAP (Q67e): a build that rewrites the evaluator is reported in its own run, but every later run uses the rewritten evaluator, which can drop GATE-NOT-RUN
+not ok 15 - check 3 T3 GAP (Q67e): a build that rewrites the evaluator is reported in its own run, but every later run uses the rewritten evaluator, which can drop GATE-NOT-RUN
+  ---
+  duration_ms: 3778.299667
+  type: 'test'
+  location: '/private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:336:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    an edit restored before the end hash is not reported (and changes nothing in this run)
+    + actual - expected
+    
+      [
+        'GATE-NOT-RUN',
+        'RUN-NOT-ON-GATE',
+    +   'A0-REBUILD-MISMATCH'
+      ]
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0: 'GATE-NOT-RUN'
+    1: 'RUN-NOT-ON-GATE'
+  actual:
+    0: 'GATE-NOT-RUN'
+    1: 'RUN-NOT-ON-GATE'
+    2: 'A0-REBUILD-MISMATCH'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:361:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: check 4 (Q67i): for every declared comparator, a pass pair passes and a fail pair fails, and compare (recompute) and caseResultVerdict agree
+ok 16 - check 4 (Q67i): for every declared comparator, a pass pair passes and a fail pair fails, and compare (recompute) and caseResultVerdict agree
+  ---
+  duration_ms: 0.971208
+  type: 'test'
+  ...
+# Subtest: check 4 GAP (Q67i): an O-REPLAY answer is an object {commandOutcomes, queries, state}, so every row, page and error comparator is UNCOMPARABLE on it, even on identical bytes
+ok 17 - check 4 GAP (Q67i): an O-REPLAY answer is an object {commandOutcomes, queries, state}, so every row, page and error comparator is UNCOMPARABLE on it, even on identical bytes
+  ---
+  duration_ms: 0.229375
+  type: 'test'
+  ...
+# Subtest: check 4 (CMP-ERROR cause, Codex finding 9): a missing cause fails, as the compiled 0.3.9 rule says (Q67h, pending, would make it optional); any non-null value counts as "the original cause retained"
+not ok 18 - check 4 (CMP-ERROR cause, Codex finding 9): a missing cause fails, as the compiled 0.3.9 rule says (Q67h, pending, would make it optional); any non-null value counts as "the original cause retained"
+  ---
+  duration_ms: 0.321
+  type: 'test'
+  location: '/private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:402:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    a deadline-style typed error without a cause
+    + actual - expected
+    
+      [
+    +   'PASS',
+    +   'PASS'
+    -   'FAIL',
+    -   'FAIL'
+      ]
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0: 'FAIL'
+    1: 'FAIL'
+  actual:
+    0: 'PASS'
+    1: 'PASS'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:404:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: check 4: on a run with no observation, compare says FAIL and caseResultVerdict UNCOMPARABLE for the same record (both never PASS)
+ok 19 - check 4: on a run with no observation, compare says FAIL and caseResultVerdict UNCOMPARABLE for the same record (both never PASS)
+  ---
+  duration_ms: 3202.82375
+  type: 'test'
+  ...
+# Subtest: check 5 (Q67j): no promotion reaches QUALIFIED through qualify (offline or plan-only, engine-source or log-source) or admit
+ok 20 - check 5 (Q67j): no promotion reaches QUALIFIED through qualify (offline or plan-only, engine-source or log-source) or admit
+  ---
+  duration_ms: 33558.575791
+  type: 'test'
+  ...
+# Subtest: check 5 GAP (Q67j): admitCore never reads the kind it is now passed, so the reference model and run.core say QUALIFIED for a promotion; the same log-source claim labelled comparative qualifies offline
+not ok 21 - check 5 GAP (Q67j): admitCore never reads the kind it is now passed, so the reference model and run.core say QUALIFIED for a promotion; the same log-source claim labelled comparative qualifies offline
+  ---
+  duration_ms: 2552.616708
+  type: 'test'
+  location: '/private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:438:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'DIAGNOSTIC'
+    - 'QUALIFIED'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'QUALIFIED'
+  actual: 'DIAGNOSTIC'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:440:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: check 6: qualify is DIAGNOSTIC on every early return and on every exception; only paths that reach the gate step carry GATE-NOT-RUN
+not ok 22 - check 6: qualify is DIAGNOSTIC on every early return and on every exception; only paths that reach the gate step carry GATE-NOT-RUN
+  ---
+  duration_ms: 3169.507041
+  type: 'test'
+  location: '/private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:450:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    CLAIM-FORMAT unexpectedly reaches the gate step
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:467:49)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: check 6 GAP: a system under test that makes the evidence directory unreadable makes qualifyClaim throw instead of returning a verdict
+not ok 23 - check 6 GAP: a system under test that makes the evidence directory unreadable makes qualifyClaim throw instead of returning a verdict
+  ---
+  duration_ms: 2968.381708
+  type: 'test'
+  location: '/private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:471:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected exception.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  operator: 'throws'
+  stack: |-
+    TestContext.<anonymous> (file:///private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3/lab/verify/E01/v-e01.test.mjs:475:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..23
+# tests 23
+# suites 0
+# pass 5
+# fail 18
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 152793.61625

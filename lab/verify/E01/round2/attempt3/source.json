@@ -1,0 +1,19 @@
+{
+  "reviewer": "CX-VE01-3",
+  "target": "422c8d3ba3564f4ad5f97b336c19418b9e8f31ce",
+  "targetWorktree": "/private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3",
+  "verifierHead": "c706344acfdc9c5fb9374a3b35396ba4e8e57b5d",
+  "node": "v22.23.2",
+  "startedUtc": "2026-11-08T21:35:23.891067+00:00",
+  "diskFreeBytes": 34172796928,
+  "files": {
+    "v-e01.test.mjs": "fdd23765dd4f5ec04f29e37db187bc2c8f8afea0ba0f43151834743679a405b2",
+    "t3-driver.mjs": "6f2b64fc7c29ee20ffd8d12b1502f121ccf8a2793ee3d3e9ece5ef035a070d34",
+    "reference-replay.mjs": "98f0acf81d4a6f9268b0aef892c1614b64793d0df4e5740190d3588b2ba917ba",
+    "round2/delta.test.mjs": "3d29ddf6b60e9ad666000780596c9de3b6e46244d900c70a041d0694f1ea9a07"
+  },
+  "additionalTests": {
+    "lab/verify/E01/round2/supplement.test.mjs": "3599257d61bd500c9a3e1ae28e527e6c08513a0794b63b91362c0dce9be5c28d",
+    "lab/verify/E01/round2/fallback-routes.test.mjs": "4dad872aaee712ef3a07be875ced4c571407ee1def098303fae4365742a3890e"
+  }
+}

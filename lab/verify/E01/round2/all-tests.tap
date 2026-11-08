@@ -1,0 +1,7 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 3529 "CX-VO05-review"
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 3529 "CX-VO05-review"
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 3529 "CX-VO05-review"
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 3529 "CX-VO05-review"
+[lab] heavy: waiting for one of 4 slots; held by pid 6260 "CX-C8-R2-light-checks", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 5642 "CX-VJ01-build-r2"
+[lab] heavy: waiting for one of 4 slots; held by pid 6260 "CX-C8-R2-light-checks", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 6062 "CX-VE01-2-prior"
+[lab] heavy: waiting for one of 4 slots; held by pid 6260 "CX-C8-R2-light-checks", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 6062 "CX-VE01-2-prior"

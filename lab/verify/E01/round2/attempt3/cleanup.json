@@ -1,0 +1,8 @@
+{
+  "atUtc": "2026-11-08T21:47:27.688504+00:00",
+  "targetWorktreeRemoved": true,
+  "command": "git worktree remove --force /private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3",
+  "exitCode": 0,
+  "retained": "All verifier sources and results under lab/verify/E01; original partial round2 files retained.",
+  "diskFreeBytesAfter": 33348022272
+}

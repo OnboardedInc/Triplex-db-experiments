@@ -1,0 +1,83 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 3529 "CX-VO05-review"
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 3529 "CX-VO05-review"
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 3529 "CX-VO05-review"
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 3529 "CX-VO05-review"
+[lab] heavy: waiting for one of 4 slots; held by pid 6260 "CX-C8-R2-light-checks", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 5642 "CX-VJ01-build-r2"
+TAP version 13
+# Subtest: check 2 (Q67b): with the tree label fixed, the identity changes with the source runner, a dependency, a symlink's text, an external directory, the lockfile and the buildSpec; the dist does not
+not ok 1 - check 2 (Q67b): with the tree label fixed, the identity changes with the source runner, a dependency, a symlink's text, an external directory, the lockfile and the buildSpec; the dist does not
+  ---
+  duration_ms: 3049.177583
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-e01/lab/verify/E01/v-e01.test.mjs:171:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of undefined (reading 'binarySha256')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    idOf (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-e01/lab/verify/E01/v-e01.test.mjs:168:114)
+    planIdentity (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-e01/lab/verify/E01/v-e01.test.mjs:169:83)
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-e01/lab/verify/E01/v-e01.test.mjs:172:16)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: check 2 GAP (Q67b): a file symlink to a path outside the checkout binds only its text; the target's bytes decide the answer and the identity is the same
+not ok 2 - check 2 GAP (Q67b): a file symlink to a path outside the checkout binds only its text; the target's bytes decide the answer and the identity is the same
+  ---
+  duration_ms: 5813.860917
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-e01/lab/verify/E01/v-e01.test.mjs:190:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of undefined (reading 'binarySha256')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    idOf (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-e01/lab/verify/E01/v-e01.test.mjs:168:114)
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-e01/lab/verify/E01/v-e01.test.mjs:195:16)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: check 2 GAP (Q67b): the toolchain is the evaluator's process.version, not the node on PATH that builds and runs the system under test
+not ok 3 - check 2 GAP (Q67b): the toolchain is the evaluator's process.version, not the node on PATH that builds and runs the system under test
+  ---
+  duration_ms: 5913.878291
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-e01/lab/verify/E01/v-e01.test.mjs:209:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of undefined (reading 'binarySha256')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    idOf (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-e01/lab/verify/E01/v-e01.test.mjs:168:114)
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-e01/lab/verify/E01/v-e01.test.mjs:217:16)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: check 2: two instances with one identity share the first instance (a candidate commit with A0's tree runs A0's cases on its own checkout)
+ok 4 - check 2: two instances with one identity share the first instance (a candidate commit with A0's tree runs A0's cases on its own checkout)
+  ---
+  duration_ms: 11573.098375
+  type: 'test'
+  ...
+# Subtest: check 3 T1 (Q67e): a system under test inside its own process group edits the oracle copy (no escape needed); the re-hash refuses the oracle
+ok 5 - check 3 T1 (Q67e): a system under test inside its own process group edits the oracle copy (no escape needed); the re-hash refuses the oracle
+  ---
+  duration_ms: 7280.311333
+  type: 'test'
+  ...
+# Subtest: check 3 T4 (Q67e): the same edit through a symlink the system under test makes in its own checkout is caught the same way
+ok 6 - check 3 T4 (Q67e): the same edit through a symlink the system under test makes in its own checkout is caught the same way
+  ---
+  duration_ms: 7204.731625
+  type: 'test'
+  ...

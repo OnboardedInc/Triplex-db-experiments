@@ -1,0 +1,160 @@
+[
+  {
+    "id": "control",
+    "verdict": "DIAGNOSTIC",
+    "offlineVerdict": "QUALIFIED",
+    "codes": [
+      "GATE-NOT-RUN",
+      "RUN-NOT-ON-GATE"
+    ]
+  },
+  {
+    "id": "F1-engine.mjs",
+    "verdict": "DIAGNOSTIC",
+    "offlineVerdict": null,
+    "codes": [
+      "GATE-NOT-RUN",
+      "EVALUATOR-TAMPERED"
+    ]
+  },
+  {
+    "id": "F1-heavy-lock.mjs",
+    "verdict": "DIAGNOSTIC",
+    "offlineVerdict": null,
+    "codes": [
+      "GATE-NOT-RUN",
+      "EVALUATOR-TAMPERED"
+    ]
+  },
+  {
+    "id": "F1-receipt.mjs",
+    "verdict": "DIAGNOSTIC",
+    "offlineVerdict": null,
+    "codes": [
+      "GATE-NOT-RUN",
+      "EVALUATOR-TAMPERED"
+    ]
+  },
+  {
+    "id": "F2-loose-blob",
+    "refused": true
+  },
+  {
+    "id": "F2/F7-input-delete",
+    "verdict": "DIAGNOSTIC",
+    "offlineVerdict": "QUALIFIED",
+    "codes": [
+      "GATE-NOT-RUN",
+      "RUN-NOT-ON-GATE"
+    ],
+    "deleted": true
+  },
+  {
+    "id": "F3-tool",
+    "verdict": "DIAGNOSTIC",
+    "offlineVerdict": "DIAGNOSTIC",
+    "codes": [
+      "GATE-NOT-RUN",
+      "RUN-NOT-ON-GATE",
+      "EVALUATOR-ERROR",
+      "TOOLCHAIN-TAMPERED"
+    ]
+  },
+  {
+    "id": "F3/F10-chain",
+    "verdict": "DIAGNOSTIC",
+    "offlineVerdict": "DIAGNOSTIC",
+    "codes": [
+      "GATE-NOT-RUN",
+      "RUN-NOT-ON-GATE",
+      "BUILD-LINK-OUTSIDE",
+      "BUILD-FAILED",
+      "VERIFIER-UNREGISTERED"
+    ]
+  },
+  {
+    "id": "F10-cycle",
+    "verdict": "DIAGNOSTIC",
+    "offlineVerdict": "DIAGNOSTIC",
+    "codes": [
+      "GATE-NOT-RUN",
+      "RUN-NOT-ON-GATE",
+      "VERIFIER-UNREGISTERED"
+    ]
+  },
+  {
+    "id": "F4-fresh-env",
+    "verdict": "DIAGNOSTIC",
+    "offlineVerdict": "QUALIFIED",
+    "codes": [
+      "GATE-NOT-RUN",
+      "RUN-NOT-ON-GATE"
+    ],
+    "homes": 64,
+    "uniqueHomes": 64
+  },
+  {
+    "id": "F5-inFlight",
+    "allUncomparable": true
+  },
+  {
+    "id": "F6-cause-types",
+    "allRejected": true
+  },
+  {
+    "id": "F7-extra-object",
+    "verdict": "DIAGNOSTIC",
+    "offlineVerdict": "DIAGNOSTIC",
+    "codes": [
+      "GATE-NOT-RUN",
+      "RUN-NOT-ON-GATE",
+      "EVIDENCE-UNEXPECTED"
+    ]
+  },
+  {
+    "id": "F8-direct-core",
+    "verdict": "DIAGNOSTIC",
+    "reasons": [
+      {
+        "code": "PROMOTION-UNSUPPORTED",
+        "detail": "claim kind \"promotion\" is not qualified: promotion prerequisites (GATE-BROKER-HARDENING and the others) are not enforced mechanically yet (RULINGS Q67j, Q75i)"
+      }
+    ]
+  },
+  {
+    "id": "F9-gone-directory",
+    "verdict": "DIAGNOSTIC",
+    "offlineVerdict": "DIAGNOSTIC",
+    "codes": [
+      "GATE-NOT-RUN",
+      "RUN-NOT-ON-GATE",
+      "EVALUATOR-ERROR",
+      "EVIDENCE-MISSING",
+      "EVIDENCE-MISSING",
+      "EVIDENCE-MISSING",
+      "EVALUATOR-ERROR",
+      "EVIDENCE-MISSING"
+    ]
+  },
+  {
+    "id": "Q67g",
+    "fields": [
+      "generatorSourceSha256",
+      "seed",
+      "offerScheduleSha256",
+      "window"
+    ],
+    "placement": {
+      "candidate": {
+        "slot": "s1",
+        "cpuset": "0-1",
+        "cpus": 2
+      },
+      "A0": {
+        "slot": "s2",
+        "cpuset": "2-3",
+        "cpus": 2
+      }
+    }
+  }
+]

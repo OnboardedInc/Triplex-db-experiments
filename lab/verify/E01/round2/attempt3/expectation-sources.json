@@ -1,0 +1,9 @@
+{
+  "capturedUtc": "2026-11-08T21:46:35.225026+00:00",
+  "mainHeadAtCapture": "731114f5036e5609493a1ef6254763ad8383e994",
+  "files": {
+    "/Users/sam/projects/triplex-db-2/lab/acceptance/RULINGS-PENDING.md": "502db1620b8b23b36c54bc0543cb2c9054a1b4b9db03ba9624bbafc3a1736581",
+    "/Users/sam/projects/triplex-db-2/lab/verify/E01/VERIFY.md": "e584fccff4f832698518a792bc9e2f36f4c477072ef7de8dddda9eca440664a8"
+  },
+  "note": "Read-only main-checkout expectations; selected Q75 rows and prior findings copied as evidence, not as target implementation."
+}

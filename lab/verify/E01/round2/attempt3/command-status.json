@@ -1,0 +1,12 @@
+{
+  "finishedUtc": "2026-11-08T21:46:03.986039+00:00",
+  "exitCodes": {
+    "all": 0,
+    "reference": 0,
+    "prior": 1,
+    "delta": 0,
+    "fallback-routes": 0,
+    "supplement": 1
+  },
+  "note": "Exit codes observed from the tool command completions; strict supplemental failures retained as findings, never relabelled PASS."
+}

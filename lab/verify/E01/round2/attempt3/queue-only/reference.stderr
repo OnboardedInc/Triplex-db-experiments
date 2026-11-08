@@ -1,0 +1,3 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 12842 "CX-VO05-final", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 12504 "CX-VJ01-checks-r3"
+[lab] heavy: waiting for one of 4 slots; held by pid 12842 "CX-VO05-final", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 12504 "CX-VJ01-checks-r3"
+[lab] heavy: waiting for one of 4 slots; held by pid 12842 "CX-VO05-final", pid 99699 "CX-C8-R2-offline", pid 73700 "CX-K01-retry", pid 12504 "CX-VJ01-checks-r3"

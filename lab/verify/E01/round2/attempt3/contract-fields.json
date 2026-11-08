@@ -1,0 +1,14 @@
+{
+  "version": "0.3.10",
+  "workloadIdentity": {
+    "fields": {
+      "generatorSourceSha256": "hex64",
+      "seed": "int",
+      "offerScheduleSha256": "hex64",
+      "window": "window"
+    },
+    "placement": "each arm's placement {slot, cpuset, cpus} is separate from the shared workload identity; slots are per arm; a duet needs equal capacity, equal regime and disjoint cpusets; under cpusets the per-core denominator is the cpuset size (RULINGS Q67g)",
+    "appliesTo": "obligations whose closure rules include CR-NS or CR-GS only; correctness obligations carry no workload identity (RULINGS Q61g)",
+    "rule": "every measurement and control receipt carries workload {generatorSourceSha256 (trace generator hash), seed, offerScheduleSha256, window [from, to] with 0 <= from < to, slot (the source assignment's slot)}, every field present, typed and nonempty; a control matches a measurement only when the two workload identities are equal field by field; a missing field never matches a missing field (RULINGS Q47b)"
+  }
+}

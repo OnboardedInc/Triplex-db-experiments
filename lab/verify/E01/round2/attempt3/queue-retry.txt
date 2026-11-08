@@ -1,0 +1,1 @@
+Initial wrappers were still waiting; host ps showed slot pid 41295 absent. Sandbox process.kill(pid,0) returns EPERM, which pidAlive treats as live. Terminated only review wrappers 16706,16708,16709,16711 and restarted heavy.mjs with host process visibility. No other holder terminated; heavy.mjs handles stale slot itself.

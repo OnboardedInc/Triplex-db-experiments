@@ -1,0 +1,18 @@
+{
+  "target": "/private/tmp/tx2-ve01-target-422c8d3-CX-VE01-3",
+  "verifierScriptCopiesMatch": {
+    "v-e01.test.mjs": true,
+    "t3-driver.mjs": true,
+    "reference-replay.mjs": true,
+    "round2/delta.test.mjs": true,
+    "round2/supplement.test.mjs": true,
+    "round2/fallback-routes.test.mjs": true
+  },
+  "targetEvaluatorAndContractUnchanged": true,
+  "activeReviewHeavyWrappers": 0,
+  "retainedResults": [
+    "delta-results.json",
+    "supplement-results.json"
+  ],
+  "retention": "All source scripts, raw attempt logs, summaries and first failures retained in review branch; only disposable detached target checkout will be removed."
+}

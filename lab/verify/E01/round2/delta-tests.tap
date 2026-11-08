@@ -1,0 +1,2 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 6260 "CX-C8-R2-light-checks", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 6062 "CX-VE01-2-prior"
+[lab] heavy: waiting for one of 4 slots; held by pid 6260 "CX-C8-R2-light-checks", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 6062 "CX-VE01-2-prior"

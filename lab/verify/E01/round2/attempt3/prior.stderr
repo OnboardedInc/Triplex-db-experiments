@@ -1,0 +1,7 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 16329 "CX-P2Q-R2-final-round", pid 20080 "CX-VE01-3-all", pid 20242 "CX-VE01-3-reference", pid 12504 "CX-VJ01-checks-r3"
+[lab] heavy: waiting for one of 4 slots; held by pid 16329 "CX-P2Q-R2-final-round", pid 20080 "CX-VE01-3-all", pid 21293 "CX-K01-final-live", pid 12504 "CX-VJ01-checks-r3"
+[lab] heavy: waiting for one of 4 slots; held by pid 16329 "CX-P2Q-R2-final-round", pid 20080 "CX-VE01-3-all", pid 21293 "CX-K01-final-live", pid 12504 "CX-VJ01-checks-r3"
+[lab] heavy: waiting for one of 4 slots; held by pid 16329 "CX-P2Q-R2-final-round", pid 20080 "CX-VE01-3-all", pid 36435 "CX-VJ01-existing-identities", pid 12504 "CX-VJ01-checks-r3"
+[lab] heavy: waiting for one of 4 slots; held by pid 16329 "CX-P2Q-R2-final-round", pid 20080 "CX-VE01-3-all", pid 43779 "CX-K01-final-types", pid 12504 "CX-VJ01-checks-r3"
+[lab] heavy: waiting for one of 4 slots; held by pid 16329 "CX-P2Q-R2-final-round", pid 20080 "CX-VE01-3-all", pid 20306 "CX-VE01-3-delta", pid 12504 "CX-VJ01-checks-r3"
+[lab] heavy: waiting for one of 4 slots; held by pid 16329 "CX-P2Q-R2-final-round", pid 44149 "CX-VO04I-review", pid 20306 "CX-VE01-3-delta", pid 12504 "CX-VJ01-checks-r3"
