@@ -61,3 +61,41 @@
   d25a8991...51bd; errors.py c2260e1e...34df; exact.py 4cfcf2c9...74d2a; examples/entity-mini.expected.json 9d7705a2...bd4ca; replay.py
   bf0a3476...4010; run.py 1f4b0e05...c674b; tests/helpers.py c9189d85...4cd; tests/test_contract_section4.py d4a7a03f...f3d; views.py
   0fc172e4...9eb8072 (full table in /Users/sam/Claude/Projects/triplex-db-2/EXP-O04b-oracle-0.4.2/hashes.3e38a61.txt with all evidence).
+
+## O-REPLAY 0.4.3 (45bfa59, one commit on 3e38a61; saved 2026-11-08 01:20Z)
+- F5 (Q66a): run_queries iterates pending[:k] for k = 0..n (publication order from in_flight_erasures); all-old answer first; a plain result when
+  every prefix agrees; R-ERA-6, SCHEMA.md and comments say "prefixes".
+- F6 (Q66b): every query keeps a read record (start, scope, answer per prefix); `cursorFrom` on a read with commits in flight runs once per prefix
+  using that prefix's page (run.result_of) and that read's start, output in the plain-or-inFlight form with erasuresSeen and page per alternative;
+  continuations chain; a prefix whose page failed or has no next cursor is left out; no prefix left = malformed, as before. Author's choices: the
+  continuation's own readStart is not consulted; a literal `cursor` token carries no prefix and uses the query's own read view (token encoding
+  unchanged).
+- Results: probe_q52 34 MATCH + 1 OBSERVED (3 Q66a rows MATCH; Q66b: `a` lists 2 prefixes, `b` answers plainly with pages p2, p3); 372/372 tests
+  (new test_Q66a_inflight_prefixes_only, test_Q66b_cursor_continues_per_prefix); self-check 61/61; converters 0 of 341 item differences on both
+  lanes; negative control 8/8; probe_delta_033 20/20. Refusals unchanged (run.py:53, views.py:129, entities.py:61).
+- Changed files: RULES.md 72419e34...d94f; SCHEMA.md 17a91b57...6112; entities.py e92308b6...71b3; examples/entity-mini.expected.json
+  0b846699...c71f; replay.py 3dd06dd0...9016; run.py 644a0b83...4893; tests/test_contract_section4.py 73372857...aed; views.py 2885d618...d1d32 (all
+  29 in /Users/sam/Claude/Projects/triplex-db-2/EXP-O04b-oracle-0.4.2/hashes.45bfa59.txt). V-O04e re-check running.
+
+## O-REPLAY 0.4.4 (00703e6) and 0.4.5 (acf9fce), one commit each on 45bfa59; saved 2026-11-08 01:44Z
+- 0.4.4, Q70a (V-O04e F7): every `cursorFrom` continuation answers from the source read's start, scope and prefixes, one answer per prefix,
+  whether or not the source had commits in flight; a continuation's own readStart is never consulted. Q70b (F8, option b): a literal token
+  equal to a `nextCursor` an in-flight read issued earlier continues that read for the prefixes whose pages issued it; read records carry
+  an `inFlight` flag in case order; `issued_cursors` collects each page's nextCursor. Token bytes and cursor vectors unchanged.
+- 0.4.5, Q70c: the literal-token match no longer needs the issuing read to be in flight, so a token from a plain read can no longer bring
+  back a value that read saw erased; Q70d (latest issuing read in case order) and Q70e (prefixes without the token left out) as before.
+- Results at acf9fce: unit and coverage 375/375; self-check 61/61; the verifier's probe_q52 at 4eec2ba 43 MATCH, 2 OBSERVED (F7 and F8 rows
+  MATCH); converters 0 of 341 items differ on either lane; refusal sites unchanged (run.py:53, views.py:129, entities.py:61). Changed files:
+  RULES.md, SCHEMA.md, examples/entity-mini.expected.json, run.py, tests/test_contract_section4.py (views.py in 0.4.4). Hashes and receipts
+  in /Users/sam/Claude/Projects/triplex-db-2/EXP-O04b-oracle-0.4.2/ (hashes.0.4.5.txt, selfcheck.045.json, probe_q52.045.json).
+
+## O-REPLAY 0.4.6 (565bc26) and 0.4.7 (91ba352), one commit each on acf9fce; saved 2026-11-08 02:07Z
+- 0.4.6, Q70f: a continuation whose issuing reads disagree in view (start, scope, prefixes that issued the token) fails closed with a typed
+  X-NOT-MODELED "ambiguous literal token" or "ambiguous journal after" in the query's entry (run.py:657, a fourth refusal site; the others
+  run.py:53, views.py:129, entities.py:61). Q70g: a `transactions` call whose `after` equals an earlier page's `next` in the same journal
+  scope continues that read per prefix. Read records carry the query kind and journal scope. 377/377 unit, 61/61 self-check.
+- 0.4.7, Q70j: `read_scope(query)` decides the in-flight scope from the scope a read reads; used for in-flight erasure commits, the scope of
+  an ambiguous-continuation entry and readStart resolution. Applied to every kind with a `scope` field (`transactions`, `transaction`,
+  `transactionByCommand`, `transactionsForEntity`, `journalFacts`, `assertions`, `cutCatalog`, `history` with no cut), ruled Q70k; other kinds
+  use their cut's scope. New test_Q70j_journal_read_scope separates 0.4.6 from 0.4.7. 378/378 unit, 61/61 self-check, converters 0 of 341
+  items differ on either lane. Hashes in /Users/sam/Claude/Projects/triplex-db-2/EXP-O04b-oracle-0.4.2/hashes.0.4.7.txt.

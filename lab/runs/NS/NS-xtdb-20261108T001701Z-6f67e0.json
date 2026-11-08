@@ -1,0 +1,1320 @@
+{
+  "format": "tx2-gate-receipt/1",
+  "gate": "NS",
+  "lane": "xtdb",
+  "slot": "s1",
+  "runId": "NS-xtdb-20261108T001701Z-6f67e0",
+  "experiment": "EXP-N01",
+  "note": "A0 XTDB 10k smoke: zero-reader matched baseline (public-queued)",
+  "previous": null,
+  "startedAt": "2026-11-08T00:17:01.868Z",
+  "endedAt": "2026-11-08T01:41:16.349Z",
+  "durationMs": 5054481,
+  "scope": "rung:10k/profile:smoke",
+  "runKind": "candidate",
+  "mutation": null,
+  "contractVersion": "0.3.8",
+  "contract": {
+    "format": "triplex-db-2/acceptance-obligations/3",
+    "version": "0.3.8",
+    "status": "CANDIDATE-1.0.0: retargeted to Sam's re-scope (SCOPE.md, NORTH-STAR.md, TARGETS.md); freezes as 1.0.0 after orchestrator acceptance and adversarial review",
+    "sha256": "917fd0546ab3dcecc1f38a694483c5b8810f743cb92860390fb5ca8a2a18af35"
+  },
+  "obligations": [],
+  "engineName": "xtdb",
+  "git": {
+    "head": "89d092c8736bd55e76fadddb8b851cf004d788b1",
+    "headTree": "325beb242b5d9b69dd82d475fef4a81e3298b4c1",
+    "branch": "exp/N01-northstar-bench",
+    "dirty": false,
+    "stashCommit": null,
+    "stashTree": null,
+    "diffScope": [
+      "packages",
+      "qualification",
+      "lab/bin",
+      "lab/config",
+      "vitest.workspace-aliases.ts",
+      "tsconfig.base.json",
+      "tsconfig.node.json",
+      "package.json",
+      "pnpm-workspace.yaml",
+      "pnpm-lock.yaml",
+      "turbo.json"
+    ],
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diffBytes": 0,
+    "modifiedFiles": [],
+    "untrackedFiles": [],
+    "otherDirtyPaths": [],
+    "sourceTreeId": "5cf2c5834529f04972f5d4ab00358ece0ebcb5daf9fca34d1122020676e2c762"
+  },
+  "lockfileSha256": "b2b3e6e8cdfb18df6d235a8724611ee4fe637426c722a5de34326346b3cb6500",
+  "toolchain": {
+    "node": "v22.23.2",
+    "pnpm": "10.11.0",
+    "platform": "darwin-arm64"
+  },
+  "gateScripts": {
+    "lab/bin/gate.mjs": "e7e9d5fc9505393a247f0b5589d751035b1e3a1dff9a7fd9fe7f7fa9f2caff78",
+    "lab/bin/lib.mjs": "199ba832f81bc8e228bf6e29de0fbd2ef872a4b1d15fd40d2523a49be1f28740",
+    "lab/bin/receipt.mjs": "ebdcfb60284d6efe378923c0f42eb4eb7ad9a260141ceb46958e86752d0d2d2c",
+    "lab/bin/engine.mjs": "2c3bd842205e572a0cd456f2ceaf2a0d1003fd1553b03f446a27874b170ee72e",
+    "lab/bin/heavy-lock.mjs": "88dd2071c8d8c1e3212c9a65dc719b79af46fbe6cc2e6ede8fbe0b61112803fa",
+    "lab/config/slots.json": "24af2a4d0e7c04a085731335e9d9490b69b7477ab70fae452f32971098e841b5"
+  },
+  "build": {
+    "manifestSha256": "6f0761236993ab2c79561a5f4a2fce52cb9521f988b28223027c448ab0f8d7d6",
+    "manifest": "runs/NS/NS-xtdb-20261108T001701Z-6f67e0/build-manifest.json",
+    "packages": {
+      "core": {
+        "files": 412,
+        "bytes": 2619654,
+        "sha256": "17367520063f3016fcd9a7f7d472ee1b5b6fffb9ed1f5957023c5d68a2abde22"
+      },
+      "testkit": {
+        "files": 4,
+        "bytes": 247745,
+        "sha256": "b30558fbe016aa34202d9f260055ea944877ce3176a7604e2522e53a02c7251f"
+      },
+      "xtdb": {
+        "files": 76,
+        "bytes": 387271,
+        "sha256": "773d6a386201bb3ca7c432db7ed9f0e3158d1f7e7986c9453732aae22aa56e21"
+      },
+      "qualification": {
+        "files": 16,
+        "bytes": 212702,
+        "sha256": "19c1dd683a7e04a53b87902c6c2c2a304771a1000db8caff989778035de4da5c"
+      }
+    }
+  },
+  "engine": {
+    "container": "tx2-xtdb-s1",
+    "containerId": "1b2aceb71ad47d4eb96f1ddd7fa896b3519cbddd2bfda8df8b5739eb422004bd",
+    "startedAt": "2026-11-08T00:16:35.499254299Z",
+    "imageId": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+    "repoDigests": [
+      "ghcr.io/xtdb/xtdb@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77"
+    ],
+    "configSha256": "13f5a70b36655b51fdf6daca77cc8bc215c4ef8bc044569867500fb286458927",
+    "effectiveConfig": {
+      "lane": "xtdb",
+      "slot": "s1",
+      "image": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+      "configYamlSha256": "f6e1248ebb09af8a6959d67d15e0355a0be4c3783d8c3fc97ba97b00c7b3e379",
+      "env": {
+        "JDK_JAVA_OPTIONS": "-Xmx2g -XX:MaxDirectMemorySize=1g"
+      },
+      "memBytes": 3758096384,
+      "cpus": 2,
+      "publish": "127.0.0.1:5471:5432",
+      "volume": "tx2-xtdb-s1-data:/var/lib/xtdb",
+      "cmd": [
+        "-f",
+        "/etc/xtdb/config.yaml"
+      ],
+      "health": "wget -q -O /dev/null http://127.0.0.1:8080/healthz/alive"
+    },
+    "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5471/xtdb",
+    "port": 5471,
+    "memCapBytes": 3758096384,
+    "nanoCpus": 2000000000,
+    "ownerSha256": "140abfce9634cd331e38b95aec3b4fa8de81e57cc89aa6378b42ac09456e0074",
+    "holder": "EXP-N01"
+  },
+  "profile": {
+    "name": "default",
+    "env": {}
+  },
+  "queryPath": "xtdb-datalog",
+  "diskBefore": {
+    "totalBytes": 63088406528,
+    "usedBytes": 10066313216,
+    "availableBytes": 49784197120
+  },
+  "containers": {
+    "tx2-xtdb-s1": {
+      "samples": 1681,
+      "peakMemBytes": 2005749727,
+      "peakCpuPercent": 266.71,
+      "memLimitBytes": 3758096384
+    },
+    "tx2-qlever-dev": {
+      "samples": 1681,
+      "peakMemBytes": 1691143373,
+      "peakCpuPercent": 276.18,
+      "memLimitBytes": 3758096384
+    },
+    "tx2-xtdb-dev": {
+      "samples": 1681,
+      "peakMemBytes": 2923798987,
+      "peakCpuPercent": 361.15,
+      "memLimitBytes": 3221225472
+    },
+    "--": {
+      "samples": 1,
+      "peakMemBytes": 0,
+      "peakCpuPercent": 0,
+      "memLimitBytes": null
+    }
+  },
+  "coRunning": [
+    {
+      "name": "tx2-xtdb-s1",
+      "memCapBytes": 3758096384,
+      "nanoCpus": 2000000000,
+      "health": "healthy"
+    },
+    {
+      "name": "tx2-qlever-dev",
+      "memCapBytes": 3758096384,
+      "nanoCpus": 2000000000,
+      "health": "healthy"
+    },
+    {
+      "name": "tx2-xtdb-dev",
+      "memCapBytes": 3221225472,
+      "nanoCpus": 2000000000,
+      "health": "healthy"
+    }
+  ],
+  "volumeBytes": 3666530304,
+  "diskAfter": {
+    "totalBytes": 63088406528,
+    "usedBytes": 14122237952,
+    "availableBytes": 45728272384
+  },
+  "fixtures": {
+    "lab/bench/driver.ts": "bf463127b34a749b33288134a9cb2521547275f0e339c3f0c5971678f7f63cbc",
+    "lab/bench/reader-worker.ts": "97b3b5439f47301ea9fd758a6edfb7923e1811fafabfcd38c499e0c9f7df057d",
+    "lab/bench/lib/bulk.ts": "4acb046a0cd2a6f065a802c635e42ae088904d96f3548370c2ceb34ef755e98f",
+    "lab/bench/lib/commands.ts": "6abe490726b867f0304a525d3963383a71ca75eca5ed65cad106c500e19ffce8",
+    "lab/bench/lib/composition.ts": "6776d3a1573c49f9b231e1eae42ad82fa176539dc58dccb24d3cb847beb7e826",
+    "lab/bench/lib/evaluate.ts": "948e511af9a11040378316073386828600ca2ec3d47b37c71bb02d1d562ac6d4",
+    "lab/bench/lib/feed.ts": "935e7ce993c087e5b19f9eceafe71855a705c26161d24ef1d1ef2aa42951b4de",
+    "lab/bench/lib/hist.ts": "dad68c421251334d768dcd8ebfb7817bab5f800190cfcf882f129a3dc0aa5d2a",
+    "lab/bench/lib/memory.ts": "7b6efca251667e8e5d68835c7aebda06ae31884a0a3ac884fe516fb042f1e3b4",
+    "lab/bench/lib/model.ts": "252a8c1099b999936522b664eb96c7630ab95062d5626c217ebf27c66695a691",
+    "lab/bench/lib/observe.ts": "7a60e6e068ddbbf53d7dd9b1718df5ff25bacf8ea2b72b02cf93ded32a66597e",
+    "lab/bench/lib/oracle.ts": "ff7467e85fe4947e4efbaef2c5fd735ba9379208ca7f28509185b89f45a9d693",
+    "lab/bench/lib/phases.ts": "b2a144d7e95383ace5e1a7d35b0b44580fae671c475371fe83a1436895b75281",
+    "lab/bench/lib/rng.ts": "f9fe6c5d720bc5eff773f4b428874728e1760abb35ea9aa82804b2bf776d8f50",
+    "lab/bench/lib/samples.ts": "7ae23e69d6430e295efe684b19ef576256010c0584e0bf342f4057c75ecdd009",
+    "lab/bench/lib/scheduler.ts": "18d0d7b7de7a328b8488965a88ae9ca93de907d50e16c18b4806448c1f623798",
+    "lab/bench/lib/seed.ts": "c1b6ecc5fe2ca157d59253ffb6ad636fe4f2c296a5db6ad5a42849f87b7fdaf5",
+    "lab/bench/lib/trace.ts": "201f721287b3d3f93e230dc310516369024bcba35cc9151f8c0f3ed3e7f342e4",
+    "lab/bench/lib/triplex.ts": "4544a41dc3cf7e304bf37cfc7c07c944d0225a85f004a19d6e9b59b1ac372a60",
+    "lab/bench/lib/world.ts": "866a7ac5523c6b4567e94c3be25427b665d88138d197635cbb8b20e1533315a3",
+    "lab/bench/test/bench.test.ts": "56d102078a5f96b4f93c68ec58410f71b90ad2d4af8dcd33124bbf9d1b6a3424",
+    "lab/bench/README.md": "3815722fc58637679685ec61060a9de605be46ed2234082c8fa9ebd4451f44f6"
+  },
+  "oracle": {
+    "id": "O-REPLAY",
+    "ref": "exp/O01-replay-oracle",
+    "commit": "03d86f3346cccd6794487b77293fb56077dd020e",
+    "tarSha256": "a37eb7b6b351eef126d43868d71d0e8ec1eac40143b022ce1a4797cb78fa4c67"
+  },
+  "contactedEndpoint": "postgres://xtdb:xtdb@127.0.0.1:5471/xtdb",
+  "counts": {
+    "executed": 112,
+    "pass": 110,
+    "fail": 2,
+    "violations": 0,
+    "errors": 2,
+    "skip": 0
+  },
+  "compositionIdentity": {
+    "name": "public-queued",
+    "scopeKey": "composition:public-queued/source:xtdb/scope:ns-xtdb-10k-nsmw731toa4cd4",
+    "assignments": {
+      "source": {
+        "role": "source",
+        "lane": "xtdb",
+        "slot": "s1",
+        "container": "tx2-xtdb-s1",
+        "imageId": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+        "repoDigests": [
+          "ghcr.io/xtdb/xtdb@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77"
+        ],
+        "configSha256": "13f5a70b36655b51fdf6daca77cc8bc215c4ef8bc044569867500fb286458927",
+        "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5471/xtdb",
+        "cpuQuota": 2,
+        "memCapBytes": 3758096384,
+        "declared": {
+          "lane": "xtdb",
+          "role": "triplex public Triples service on one engine slot (XTDB adapter admissionQueue: true)"
+        }
+      },
+      "current": {
+        "role": "current",
+        "lane": "xtdb",
+        "slot": "s1",
+        "container": "tx2-xtdb-s1",
+        "imageId": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+        "repoDigests": [
+          "ghcr.io/xtdb/xtdb@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77"
+        ],
+        "configSha256": "13f5a70b36655b51fdf6daca77cc8bc215c4ef8bc044569867500fb286458927",
+        "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5471/xtdb",
+        "cpuQuota": 2,
+        "memCapBytes": 3758096384,
+        "declared": {
+          "lane": "xtdb",
+          "role": "triplex public Triples service on one engine slot (XTDB adapter admissionQueue: true)"
+        }
+      },
+      "history": {
+        "role": "history",
+        "lane": "xtdb",
+        "slot": "s1",
+        "container": "tx2-xtdb-s1",
+        "imageId": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+        "repoDigests": [
+          "ghcr.io/xtdb/xtdb@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77"
+        ],
+        "configSha256": "13f5a70b36655b51fdf6daca77cc8bc215c4ef8bc044569867500fb286458927",
+        "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5471/xtdb",
+        "cpuQuota": 2,
+        "memCapBytes": 3758096384,
+        "declared": {
+          "lane": "xtdb",
+          "role": "triplex public Triples service on one engine slot (XTDB adapter admissionQueue: true)"
+        }
+      },
+      "analytics": {
+        "role": "analytics",
+        "lane": "xtdb",
+        "slot": "s1",
+        "container": "tx2-xtdb-s1",
+        "imageId": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+        "repoDigests": [
+          "ghcr.io/xtdb/xtdb@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77"
+        ],
+        "configSha256": "13f5a70b36655b51fdf6daca77cc8bc215c4ef8bc044569867500fb286458927",
+        "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5471/xtdb",
+        "cpuQuota": 2,
+        "memCapBytes": 3758096384,
+        "declared": {
+          "lane": "xtdb",
+          "role": "triplex public Triples service on one engine slot (XTDB adapter admissionQueue: true)"
+        }
+      }
+    },
+    "replicationEdges": [],
+    "watermarksAtRead": [
+      {
+        "phase": "baseline",
+        "source": {
+          "min": {
+            "stream": "triplex-journal:ns-xtdb-10k-nsmw731toa4cd4",
+            "epoch": 0,
+            "offset": 1033,
+            "ordinal": 0
+          },
+          "max": {
+            "stream": "triplex-journal:ns-xtdb-10k-nsmw731toa4cd4",
+            "epoch": 0,
+            "offset": 1036,
+            "ordinal": 0
+          }
+        }
+      },
+      {
+        "phase": "L1",
+        "source": {
+          "min": {
+            "stream": "triplex-journal:ns-xtdb-10k-nsmw731toa4cd4",
+            "epoch": 0,
+            "offset": 1037,
+            "ordinal": 0
+          },
+          "max": {
+            "stream": "triplex-journal:ns-xtdb-10k-nsmw731toa4cd4",
+            "epoch": 0,
+            "offset": 1040,
+            "ordinal": 0
+          }
+        }
+      },
+      {
+        "phase": "L4",
+        "source": {
+          "min": {
+            "stream": "triplex-journal:ns-xtdb-10k-nsmw731toa4cd4",
+            "epoch": 0,
+            "offset": 1040,
+            "ordinal": 0
+          },
+          "max": {
+            "stream": "triplex-journal:ns-xtdb-10k-nsmw731toa4cd4",
+            "epoch": 0,
+            "offset": 1043,
+            "ordinal": 0
+          }
+        }
+      },
+      {
+        "phase": "L16",
+        "source": {
+          "min": {
+            "stream": "triplex-journal:ns-xtdb-10k-nsmw731toa4cd4",
+            "epoch": 0,
+            "offset": 1043,
+            "ordinal": 0
+          },
+          "max": {
+            "stream": "triplex-journal:ns-xtdb-10k-nsmw731toa4cd4",
+            "epoch": 0,
+            "offset": 1046,
+            "ordinal": 0
+          }
+        }
+      },
+      {
+        "phase": "L64",
+        "source": {
+          "min": {
+            "stream": "triplex-journal:ns-xtdb-10k-nsmw731toa4cd4",
+            "epoch": 0,
+            "offset": 1046,
+            "ordinal": 0
+          },
+          "max": {
+            "stream": "triplex-journal:ns-xtdb-10k-nsmw731toa4cd4",
+            "epoch": 0,
+            "offset": 1050,
+            "ordinal": 0
+          }
+        }
+      },
+      {
+        "phase": "L256",
+        "source": {
+          "min": {
+            "stream": "triplex-journal:ns-xtdb-10k-nsmw731toa4cd4",
+            "epoch": 0,
+            "offset": 1051,
+            "ordinal": 0
+          },
+          "max": {
+            "stream": "triplex-journal:ns-xtdb-10k-nsmw731toa4cd4",
+            "epoch": 0,
+            "offset": 1054,
+            "ordinal": 0
+          }
+        }
+      },
+      {
+        "phase": "L1024",
+        "source": {
+          "min": {
+            "stream": "triplex-journal:ns-xtdb-10k-nsmw731toa4cd4",
+            "epoch": 0,
+            "offset": 1054,
+            "ordinal": 0
+          },
+          "max": {
+            "stream": "triplex-journal:ns-xtdb-10k-nsmw731toa4cd4",
+            "epoch": 0,
+            "offset": 1057,
+            "ordinal": 0
+          }
+        }
+      },
+      {
+        "phase": "recovery",
+        "source": {
+          "min": {
+            "stream": "triplex-journal:ns-xtdb-10k-nsmw731toa4cd4",
+            "epoch": 0,
+            "offset": 1057,
+            "ordinal": 0
+          },
+          "max": {
+            "stream": "triplex-journal:ns-xtdb-10k-nsmw731toa4cd4",
+            "epoch": 0,
+            "offset": 1060,
+            "ordinal": 0
+          }
+        }
+      },
+      {
+        "phase": "p4mix",
+        "source": {
+          "min": {
+            "stream": "triplex-journal:ns-xtdb-10k-nsmw731toa4cd4",
+            "epoch": 0,
+            "offset": 1060,
+            "ordinal": 0
+          },
+          "max": {
+            "stream": "triplex-journal:ns-xtdb-10k-nsmw731toa4cd4",
+            "epoch": 0,
+            "offset": 1063,
+            "ordinal": 0
+          }
+        }
+      },
+      {
+        "phase": "p4h1",
+        "source": {
+          "min": {
+            "stream": "triplex-journal:ns-xtdb-10k-nsmw731toa4cd4",
+            "epoch": 0,
+            "offset": 1063,
+            "ordinal": 0
+          },
+          "max": {
+            "stream": "triplex-journal:ns-xtdb-10k-nsmw731toa4cd4",
+            "epoch": 0,
+            "offset": 1066,
+            "ordinal": 0
+          }
+        }
+      },
+      {
+        "phase": "p4h3",
+        "source": {
+          "min": {
+            "stream": "triplex-journal:ns-xtdb-10k-nsmw731toa4cd4",
+            "epoch": 0,
+            "offset": 1139,
+            "ordinal": 0
+          },
+          "max": {
+            "stream": "triplex-journal:ns-xtdb-10k-nsmw731toa4cd4",
+            "epoch": 0,
+            "offset": 1140,
+            "ordinal": 0
+          }
+        }
+      },
+      {
+        "phase": "p4h10",
+        "source": {
+          "min": {
+            "stream": "triplex-journal:ns-xtdb-10k-nsmw731toa4cd4",
+            "epoch": 0,
+            "offset": 1140,
+            "ordinal": 0
+          },
+          "max": {
+            "stream": "triplex-journal:ns-xtdb-10k-nsmw731toa4cd4",
+            "epoch": 0,
+            "offset": 1141,
+            "ordinal": 0
+          }
+        }
+      },
+      {
+        "phase": "presweep",
+        "source": {
+          "min": {
+            "stream": "triplex-journal:ns-xtdb-10k-nsmw731toa4cd4",
+            "epoch": 0,
+            "offset": 1141,
+            "ordinal": 0
+          },
+          "max": {
+            "stream": "triplex-journal:ns-xtdb-10k-nsmw731toa4cd4",
+            "epoch": 0,
+            "offset": 1143,
+            "ordinal": 0
+          }
+        }
+      },
+      {
+        "phase": "sweep",
+        "source": {
+          "min": {
+            "stream": "triplex-journal:ns-xtdb-10k-nsmw731toa4cd4",
+            "epoch": 0,
+            "offset": 1143,
+            "ordinal": 0
+          },
+          "max": {
+            "stream": "triplex-journal:ns-xtdb-10k-nsmw731toa4cd4",
+            "epoch": 0,
+            "offset": 1144,
+            "ordinal": 0
+          }
+        }
+      }
+    ]
+  },
+  "ns": {
+    "format": "tx2-ns-report/2",
+    "semantics": "TARGETS v2 sections 1.1, 2.1, 4.1",
+    "config": {
+      "lane": "xtdb",
+      "rung": "10k",
+      "rungSubjects": 10000,
+      "profile": "smoke",
+      "zeroReaders": true,
+      "matchDurationS": 1800,
+      "baselineWrites": null,
+      "devOverrides": [],
+      "composition": "public-queued",
+      "seed": "ns-v2",
+      "readerThreads": 4,
+      "seedBudgetS": 3600,
+      "seedBatchFacts": 400,
+      "writerMaxInFlight": 32,
+      "writerDeadlineMs": 30000,
+      "sweepConcurrency": 16,
+      "sweepMax": 100000,
+      "maxReaders": null,
+      "burstMultiplier": 50,
+      "rateScale": 1,
+      "levelS": null,
+      "oracleSampleSubjects": 12,
+      "oracleRate": 0.01,
+      "oracleMaxReads": 24,
+      "splitShare": 0.1,
+      "probe10PerS": 1,
+      "historySample": 1000,
+      "p5Mutations": 10,
+      "oracleRoot": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a4d931a315c6b5664/runs/NS/NS-xtdb-20261108T001701Z-6f67e0/oracle",
+      "seedManifest": null,
+      "settleS": 2
+    },
+    "generator": {
+      "traceSha256": "201f721287b3d3f93e230dc310516369024bcba35cc9151f8c0f3ed3e7f342e4",
+      "worldSha256": "866a7ac5523c6b4567e94c3be25427b665d88138d197635cbb8b20e1533315a3",
+      "seed": "ns-v2"
+    },
+    "trace": {
+      "digest": "aa8a7636ff027ab3",
+      "seed": "ns-v2",
+      "generatorSha256": "201f721287b3d3f93e230dc310516369024bcba35cc9151f8c0f3ed3e7f342e4",
+      "generated": {
+        "commands": 46724,
+        "resends": 1407,
+        "facts": 639302,
+        "corrections": 454,
+        "ackLoss": 451,
+        "burstCommands": 39725,
+        "activeShare": 0.9506891533259139,
+        "distinctSubjects": 2736,
+        "byKind": {
+          "runtime": 9349,
+          "person": 18762,
+          "system": 13913,
+          "agent": 4700
+        }
+      }
+    },
+    "seed": {
+      "plannedSubjects": 10000,
+      "seededSubjects": 10000,
+      "complete": true,
+      "commands": 1031,
+      "assertions": 384785,
+      "expectedAssertions": 384785,
+      "assertionsMatchClosedForm": true,
+      "wallS": 2281.605040417,
+      "factsPerS": 168.64662953658024,
+      "commitMs": {
+        "p50": 1917.703582999995,
+        "max": 16922.229291999945
+      },
+      "failureCount": 0,
+      "failures": [],
+      "firstPosition": {
+        "stream": "triplex-journal:ns-xtdb-10k-nsmw731toa4cd4",
+        "epoch": 0,
+        "offset": 1,
+        "ordinal": 0
+      },
+      "lastPosition": {
+        "stream": "triplex-journal:ns-xtdb-10k-nsmw731toa4cd4",
+        "epoch": 0,
+        "offset": 1031,
+        "ordinal": 0
+      },
+      "lastInstant": 1794099312151,
+      "population": {
+        "planned": {
+          "subjects": 10000,
+          "accounts": 20,
+          "hopCount": {
+            "3": 4000,
+            "4": 3500,
+            "6": 2500
+          },
+          "bucketSubjects": {
+            "small": 5000,
+            "medium": 3500,
+            "large": 1500
+          },
+          "ownEntities": 124000,
+          "sharedEntities": 1569,
+          "entities": 125569,
+          "ownFacts": 377000,
+          "sharedFacts": 7785,
+          "liveFactsAtSeedEnd": 384785,
+          "seedAssertions": 384785,
+          "worldFacts": {
+            "min": 60,
+            "max": 1242,
+            "mean": 426.95
+          }
+        },
+        "seeded": {
+          "subjects": 10000,
+          "accounts": 20,
+          "hopCount": {
+            "3": 4000,
+            "4": 3500,
+            "6": 2500
+          },
+          "bucketSubjects": {
+            "small": 5000,
+            "medium": 3500,
+            "large": 1500
+          },
+          "ownEntities": 124000,
+          "sharedEntities": 1569,
+          "entities": 125569,
+          "ownFacts": 377000,
+          "sharedFacts": 7785,
+          "liveFactsAtSeedEnd": 384785,
+          "seedAssertions": 384785,
+          "worldFacts": {
+            "min": 60,
+            "max": 1242,
+            "mean": 426.95
+          }
+        }
+      }
+    },
+    "writer": {
+      "offered": 18110,
+      "completed": 145,
+      "expired": 17965,
+      "notOffered": 32036,
+      "maxInFlightSeen": 32,
+      "pendingAtEnd": 0,
+      "offeredUntilTraceS": 2468.45607421875,
+      "overlays": {
+        "probe10": 2015
+      }
+    },
+    "correctness": {
+      "reads": 112,
+      "correct": 110,
+      "violations": 0,
+      "errors": 2,
+      "violationKinds": {},
+      "violationSample": [],
+      "rule": "a read is correct when its :placement/stamp and whole-world multiset digest equal the expected-state model at the basis the driver requested (receipt instant R, valid time V); errors and wrong answers are never goodput"
+    },
+    "client": {
+      "saturatedPhases": [],
+      "invalid": false,
+      "processCpu": {
+        "userCores": 0.28009562293726564,
+        "kernelCores": 0.07475552705859968,
+        "hostCores": 12
+      },
+      "readerThreads": 0,
+      "rule": "INVALID when a reader worker or the main thread has mean event-loop utilization > 0.9 in a measured window"
+    },
+    "oracle": {
+      "status": "NOT-RUN",
+      "reason": "zero-reader baseline run"
+    },
+    "bars": {
+      "P1": [
+        {
+          "id": "NS-P1-VIOLATIONS-MAX (L256)",
+          "value": 0,
+          "bar": "= 0",
+          "pass": true
+        },
+        {
+          "id": "NS-P1-GOODPUT-256-VS-64",
+          "value": null,
+          "bar": ">= 1.0",
+          "pass": true
+        },
+        {
+          "id": "NS-P1-READ-P99-256-MS",
+          "value": null,
+          "bar": "<= 100",
+          "pass": null
+        },
+        {
+          "id": "NS-P1-WRITER-P99-RATIO-256",
+          "value": 1.0094991541226324,
+          "bar": "<= 1.25",
+          "pass": false,
+          "note": "UNMATCHED: in-run baseline phase (different trace segment); cannot close NS.P1"
+        },
+        {
+          "id": "NS-P1-WRITER-WAIT-MAX-MS (L256)",
+          "value": 44967.41455078125,
+          "bar": "<= 2000",
+          "pass": false
+        },
+        {
+          "id": "NS-P1-VIOLATIONS-MAX (L1024)",
+          "value": 0,
+          "bar": "= 0",
+          "pass": true
+        },
+        {
+          "id": "NS-P1-GOODPUT-1024-VS-256",
+          "value": null,
+          "bar": ">= 0.9",
+          "pass": null
+        },
+        {
+          "id": "NS-P1-WRITER-P99-RATIO-1024",
+          "value": 0.9570883418886402,
+          "bar": "<= 2.0",
+          "pass": false,
+          "note": "UNMATCHED: in-run baseline phase (different trace segment); cannot close NS.P1"
+        },
+        {
+          "id": "NS-P1-RECOVERY-MS",
+          "value": null,
+          "bar": "<= 60000",
+          "pass": false,
+          "note": "no matched zero-reader run: the writer part of the 256-level bar cannot be judged, so recovery cannot be shown"
+        },
+        {
+          "id": "1.1 P1.1 hot-set share of reads (min over ladder levels)",
+          "value": 0,
+          "bar": ">= 0.5",
+          "pass": false
+        },
+        {
+          "id": "1.1 P1.2 split reads straddling a frozen-trace command, all correct",
+          "value": 0,
+          "bar": "> 0 and all correct",
+          "pass": false,
+          "note": "step 1 before the trace command's ACK, step 2 after; the driver adds no writes (RULINGS Q31b)"
+        },
+        {
+          "id": "4.1.5 fallback share per window (reported)",
+          "value": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "bar": "reported",
+          "pass": null,
+          "note": "one-engine composition: every read is served by the source of truth's own surface"
+        },
+        {
+          "id": "1.1 P1.3 a maintenance event in every P1 window",
+          "value": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "bar": "every window >= 1",
+          "pass": false,
+          "note": "observed in engine logs only; the driver cannot force compaction or a rebuild yet (seam)"
+        }
+      ],
+      "P2": [
+        {
+          "id": "NS-P2 5-10 band p50 ms (L256)",
+          "value": 22151.167,
+          "bar": "<= 10",
+          "pass": false
+        },
+        {
+          "id": "NS-P2 5-10 band p99 ms (L256)",
+          "value": 44967.415,
+          "bar": "<= 50",
+          "pass": false
+        },
+        {
+          "id": "NS-P2 11-25 band p50 ms (L256)",
+          "value": 29842.936,
+          "bar": "<= 10",
+          "pass": false
+        },
+        {
+          "id": "NS-P2 11-25 band p99 ms (L256)",
+          "value": 29842.936,
+          "bar": "<= 50",
+          "pass": false
+        },
+        {
+          "id": "NS-P2 26-50 band p99 ms (L256, provisional)",
+          "value": null,
+          "bar": "<= 100",
+          "pass": null
+        },
+        {
+          "id": "NS-P2 every offered command accounted",
+          "value": 17982,
+          "bar": "= 0",
+          "pass": false
+        },
+        {
+          "id": "NS-P2 every oracle-valid trace command published",
+          "value": "112/15617",
+          "bar": "all",
+          "pass": false
+        },
+        {
+          "id": "NS-P2 typed rejections only for deliberately invalid commands",
+          "value": 0,
+          "bar": "= 0 (the trace holds no invalid commands yet)",
+          "pass": true
+        },
+        {
+          "id": "NS-P2 typed conflicts only where the oracle finds a CAS race",
+          "value": 0,
+          "bar": "= 0 (serial per subject: the trace has no CAS race)",
+          "pass": true
+        },
+        {
+          "id": "NS-P2 steady-state queue <= 2 s of offered rate",
+          "value": 6707,
+          "bar": "<= 2.19 commands",
+          "pass": false
+        },
+        {
+          "id": "NS-P2 queue drains within 60 s after each burst",
+          "value": [
+            null,
+            null,
+            null,
+            null
+          ],
+          "bar": "every burst <= 60 s",
+          "pass": false
+        },
+        {
+          "id": "NS-P2 read-your-own-write at the returned tx",
+          "value": 0.9821428571428571,
+          "bar": "= 1.0",
+          "pass": false
+        },
+        {
+          "id": "NS-P2 duplicates return the original receipt",
+          "value": null,
+          "bar": "= 1.0",
+          "pass": null
+        },
+        {
+          "id": "NS-P2 lost ACKs return the original receipt",
+          "value": null,
+          "bar": "= 1.0",
+          "pass": null
+        }
+      ],
+      "P3": [
+        {
+          "id": "NS-P3 gaps",
+          "value": 11,
+          "bar": "= 0",
+          "pass": false
+        },
+        {
+          "id": "NS-P3 per-subject order violations",
+          "value": 0,
+          "bar": "= 0",
+          "pass": true
+        },
+        {
+          "id": "NS-P3 visible duplicate effects",
+          "value": 0,
+          "bar": "= 0",
+          "pass": true,
+          "note": "replay attempts (allowed): 1"
+        },
+        {
+          "id": "NS-P3 resume from checkpoint replays exactly",
+          "value": true,
+          "bar": "= true",
+          "pass": true
+        },
+        {
+          "id": "NS-P3 crash injection at three points",
+          "value": 3,
+          "bar": "= 3",
+          "pass": true
+        },
+        {
+          "id": "NS-P3 lag p99 ms at L256",
+          "value": 41625.84,
+          "bar": "<= 250",
+          "pass": false
+        },
+        {
+          "id": "NS-P3 affected-subject set matches",
+          "value": 0,
+          "bar": "= 0",
+          "pass": true
+        },
+        {
+          "id": "NS-P3 corrections report their valid-time range",
+          "value": null,
+          "bar": "= 1.0",
+          "pass": null
+        }
+      ],
+      "P4": [
+        {
+          "id": "NS-P4 weighted-mix pull p50 ms",
+          "value": null,
+          "bar": "<= 5",
+          "pass": null
+        },
+        {
+          "id": "NS-P4 weighted-mix pull p99 ms",
+          "value": null,
+          "bar": "<= 25",
+          "pass": null
+        },
+        {
+          "id": "NS-P4 largest bucket p99 ms (provisional)",
+          "value": null,
+          "bar": "<= 50",
+          "pass": null
+        },
+        {
+          "id": "NS-P4 pulls/s per engine core (CPU quota)",
+          "value": 0,
+          "bar": ">= 1100",
+          "pass": false
+        },
+        {
+          "id": "NS-P4 history flatness p99 depth10 / depth1",
+          "value": null,
+          "bar": "<= 1.1",
+          "pass": null
+        },
+        {
+          "id": "NS-P4 history flatness bytes read depth10 / depth1",
+          "value": null,
+          "bar": "<= 1.1",
+          "pass": null,
+          "note": "engine bytes read are not measured (seam); client-observed bytes are reported"
+        }
+      ],
+      "P5": []
+    },
+    "baseline": null,
+    "bulkSeed": null,
+    "seedPath": {
+      "kind": "transact"
+    },
+    "invalid": [],
+    "positionCoordinates": "TARGETS 4.1 item 3: (stream, epoch, offset, ordinal); Triplex gives one dense position per scope and one engine transaction per transact, so offset = position and ordinal = 0",
+    "reportSha256": "ad56f1431049eba9f45baf0925d50cce037c0d338069b529789bba98c981384c"
+  },
+  "nsVerdict": "MEASURED",
+  "steps": [
+    {
+      "name": "pnpm-version",
+      "command": "pnpm --version",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 517,
+      "cwd": ".",
+      "stdout": "runs/NS/NS-xtdb-20261108T001701Z-6f67e0/pnpm-version.stdout.txt",
+      "stderr": "runs/NS/NS-xtdb-20261108T001701Z-6f67e0/pnpm-version.stderr.txt"
+    },
+    {
+      "name": "oracle-extract",
+      "command": "tar -xf /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a4d931a315c6b5664/runs/NS/NS-xtdb-20261108T001701Z-6f67e0/oracle.tar -C /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a4d931a315c6b5664/runs/NS/NS-xtdb-20261108T001701Z-6f67e0/oracle",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 10,
+      "cwd": ".",
+      "stdout": "runs/NS/NS-xtdb-20261108T001701Z-6f67e0/oracle-extract.stdout.txt",
+      "stderr": "runs/NS/NS-xtdb-20261108T001701Z-6f67e0/oracle-extract.stderr.txt"
+    },
+    {
+      "name": "build",
+      "command": "pnpm --filter @triplex-build/triplex --filter @triplex-build/triplex-testkit --filter @triplex-build/triplex-xtdb --filter @triplex-build/triplex-qualification build",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 6907,
+      "cwd": ".",
+      "stdout": "runs/NS/NS-xtdb-20261108T001701Z-6f67e0/build.stdout.txt",
+      "stderr": "runs/NS/NS-xtdb-20261108T001701Z-6f67e0/build.stderr.txt"
+    },
+    {
+      "name": "ns-driver",
+      "command": "node lab/bench/driver.ts --lane xtdb --rung 10k --profile smoke --output /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a4d931a315c6b5664/runs/NS/NS-xtdb-20261108T001701Z-6f67e0/ns-report.json --oracle-root /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a4d931a315c6b5664/runs/NS/NS-xtdb-20261108T001701Z-6f67e0/oracle --composition public-queued --zero-readers --match-duration-s 1800",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 5042247,
+      "cwd": ".",
+      "stdout": "runs/NS/NS-xtdb-20261108T001701Z-6f67e0/ns-driver.stdout.txt",
+      "stderr": "runs/NS/NS-xtdb-20261108T001701Z-6f67e0/ns-driver.stderr.txt"
+    }
+  ],
+  "firstFailures": [],
+  "rawDir": "runs/NS/NS-xtdb-20261108T001701Z-6f67e0",
+  "reasons": [],
+  "verdict": "MEASURED",
+  "objects": [
+    {
+      "path": "pnpm-lock.yaml",
+      "role": "lockfile",
+      "bytes": 290287,
+      "sha256": "b2b3e6e8cdfb18df6d235a8724611ee4fe637426c722a5de34326346b3cb6500"
+    },
+    {
+      "path": "lab/bin/gate.mjs",
+      "role": "gate-script",
+      "bytes": 50346,
+      "sha256": "e7e9d5fc9505393a247f0b5589d751035b1e3a1dff9a7fd9fe7f7fa9f2caff78"
+    },
+    {
+      "path": "lab/bin/lib.mjs",
+      "role": "gate-script",
+      "bytes": 19956,
+      "sha256": "199ba832f81bc8e228bf6e29de0fbd2ef872a4b1d15fd40d2523a49be1f28740"
+    },
+    {
+      "path": "lab/bin/receipt.mjs",
+      "role": "gate-script",
+      "bytes": 5363,
+      "sha256": "ebdcfb60284d6efe378923c0f42eb4eb7ad9a260141ceb46958e86752d0d2d2c"
+    },
+    {
+      "path": "lab/bin/engine.mjs",
+      "role": "gate-script",
+      "bytes": 17892,
+      "sha256": "2c3bd842205e572a0cd456f2ceaf2a0d1003fd1553b03f446a27874b170ee72e"
+    },
+    {
+      "path": "lab/bin/heavy-lock.mjs",
+      "role": "gate-script",
+      "bytes": 1841,
+      "sha256": "88dd2071c8d8c1e3212c9a65dc719b79af46fbe6cc2e6ede8fbe0b61112803fa"
+    },
+    {
+      "path": "lab/config/slots.json",
+      "role": "gate-script",
+      "bytes": 3648,
+      "sha256": "24af2a4d0e7c04a085731335e9d9490b69b7477ab70fae452f32971098e841b5"
+    },
+    {
+      "path": "runs/NS/NS-xtdb-20261108T001701Z-6f67e0/build-manifest.json",
+      "role": "build-manifest",
+      "bytes": 100989,
+      "sha256": "6f0761236993ab2c79561a5f4a2fce52cb9521f988b28223027c448ab0f8d7d6"
+    },
+    {
+      "path": "xtdb-s1 effective config",
+      "role": "engine-effective-config",
+      "bytes": 560,
+      "sha256": "2fa285efb09270fef6f93ae0d7d91b3bab1d46feefb01dbc67263b26472ec8af"
+    },
+    {
+      "path": "config.yaml",
+      "role": "engine-config-file",
+      "bytes": 198,
+      "sha256": "f6e1248ebb09af8a6959d67d15e0355a0be4c3783d8c3fc97ba97b00c7b3e379"
+    },
+    {
+      "path": "runs/NS/NS-xtdb-20261108T001701Z-6f67e0/build-manifest-after.json",
+      "role": "build-manifest",
+      "bytes": 100989,
+      "sha256": "6f0761236993ab2c79561a5f4a2fce52cb9521f988b28223027c448ab0f8d7d6"
+    },
+    {
+      "path": "runs/NS/NS-xtdb-20261108T001701Z-6f67e0/ns-driver.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/NS/NS-xtdb-20261108T001701Z-6f67e0/ns-driver.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 2666,
+      "sha256": "39ded1c8bc08aac0944268a29cb6b7b010730b8ba7d03812365608c77450733c"
+    },
+    {
+      "path": "lab/bench/driver.ts",
+      "role": "bench-source",
+      "bytes": 75527,
+      "sha256": "bf463127b34a749b33288134a9cb2521547275f0e339c3f0c5971678f7f63cbc"
+    },
+    {
+      "path": "lab/bench/reader-worker.ts",
+      "role": "bench-source",
+      "bytes": 10623,
+      "sha256": "97b3b5439f47301ea9fd758a6edfb7923e1811fafabfcd38c499e0c9f7df057d"
+    },
+    {
+      "path": "lab/bench/lib/bulk.ts",
+      "role": "bench-source",
+      "bytes": 1645,
+      "sha256": "4acb046a0cd2a6f065a802c635e42ae088904d96f3548370c2ceb34ef755e98f"
+    },
+    {
+      "path": "lab/bench/lib/commands.ts",
+      "role": "bench-source",
+      "bytes": 6259,
+      "sha256": "6abe490726b867f0304a525d3963383a71ca75eca5ed65cad106c500e19ffce8"
+    },
+    {
+      "path": "lab/bench/lib/composition.ts",
+      "role": "bench-source",
+      "bytes": 8455,
+      "sha256": "6776d3a1573c49f9b231e1eae42ad82fa176539dc58dccb24d3cb847beb7e826"
+    },
+    {
+      "path": "lab/bench/lib/evaluate.ts",
+      "role": "bench-source",
+      "bytes": 2313,
+      "sha256": "948e511af9a11040378316073386828600ca2ec3d47b37c71bb02d1d562ac6d4"
+    },
+    {
+      "path": "lab/bench/lib/feed.ts",
+      "role": "bench-source",
+      "bytes": 12542,
+      "sha256": "935e7ce993c087e5b19f9eceafe71855a705c26161d24ef1d1ef2aa42951b4de"
+    },
+    {
+      "path": "lab/bench/lib/hist.ts",
+      "role": "bench-source",
+      "bytes": 4305,
+      "sha256": "dad68c421251334d768dcd8ebfb7817bab5f800190cfcf882f129a3dc0aa5d2a"
+    },
+    {
+      "path": "lab/bench/lib/memory.ts",
+      "role": "bench-source",
+      "bytes": 6289,
+      "sha256": "7b6efca251667e8e5d68835c7aebda06ae31884a0a3ac884fe516fb042f1e3b4"
+    },
+    {
+      "path": "lab/bench/lib/model.ts",
+      "role": "bench-source",
+      "bytes": 4460,
+      "sha256": "252a8c1099b999936522b664eb96c7630ab95062d5626c217ebf27c66695a691"
+    },
+    {
+      "path": "lab/bench/lib/observe.ts",
+      "role": "bench-source",
+      "bytes": 1875,
+      "sha256": "7a60e6e068ddbbf53d7dd9b1718df5ff25bacf8ea2b72b02cf93ded32a66597e"
+    },
+    {
+      "path": "lab/bench/lib/oracle.ts",
+      "role": "bench-source",
+      "bytes": 6003,
+      "sha256": "ff7467e85fe4947e4efbaef2c5fd735ba9379208ca7f28509185b89f45a9d693"
+    },
+    {
+      "path": "lab/bench/lib/phases.ts",
+      "role": "bench-source",
+      "bytes": 2675,
+      "sha256": "b2a144d7e95383ace5e1a7d35b0b44580fae671c475371fe83a1436895b75281"
+    },
+    {
+      "path": "lab/bench/lib/rng.ts",
+      "role": "bench-source",
+      "bytes": 2427,
+      "sha256": "f9fe6c5d720bc5eff773f4b428874728e1760abb35ea9aa82804b2bf776d8f50"
+    },
+    {
+      "path": "lab/bench/lib/samples.ts",
+      "role": "bench-source",
+      "bytes": 1371,
+      "sha256": "7ae23e69d6430e295efe684b19ef576256010c0584e0bf342f4057c75ecdd009"
+    },
+    {
+      "path": "lab/bench/lib/scheduler.ts",
+      "role": "bench-source",
+      "bytes": 5201,
+      "sha256": "18d0d7b7de7a328b8488965a88ae9ca93de907d50e16c18b4806448c1f623798"
+    },
+    {
+      "path": "lab/bench/lib/seed.ts",
+      "role": "bench-source",
+      "bytes": 7862,
+      "sha256": "c1b6ecc5fe2ca157d59253ffb6ad636fe4f2c296a5db6ad5a42849f87b7fdaf5"
+    },
+    {
+      "path": "lab/bench/lib/trace.ts",
+      "role": "bench-source",
+      "bytes": 10349,
+      "sha256": "201f721287b3d3f93e230dc310516369024bcba35cc9151f8c0f3ed3e7f342e4"
+    },
+    {
+      "path": "lab/bench/lib/triplex.ts",
+      "role": "bench-source",
+      "bytes": 2796,
+      "sha256": "4544a41dc3cf7e304bf37cfc7c07c944d0225a85f004a19d6e9b59b1ac372a60"
+    },
+    {
+      "path": "lab/bench/lib/world.ts",
+      "role": "bench-source",
+      "bytes": 13649,
+      "sha256": "866a7ac5523c6b4567e94c3be25427b665d88138d197635cbb8b20e1533315a3"
+    },
+    {
+      "path": "lab/bench/test/bench.test.ts",
+      "role": "bench-source",
+      "bytes": 14808,
+      "sha256": "56d102078a5f96b4f93c68ec58410f71b90ad2d4af8dcd33124bbf9d1b6a3424"
+    },
+    {
+      "path": "lab/bench/README.md",
+      "role": "bench-source",
+      "bytes": 10704,
+      "sha256": "3815722fc58637679685ec61060a9de605be46ed2234082c8fa9ebd4451f44f6"
+    },
+    {
+      "path": "runs/NS/NS-xtdb-20261108T001701Z-6f67e0/ns-report.json",
+      "role": "raw-outcome",
+      "bytes": 278941,
+      "sha256": "ad56f1431049eba9f45baf0925d50cce037c0d338069b529789bba98c981384c"
+    },
+    {
+      "path": "runs/NS/NS-xtdb-20261108T001701Z-6f67e0/ns-writes.jsonl",
+      "role": "raw-outcome",
+      "bytes": 2862816,
+      "sha256": "c850390a94652e7c4acfb17e6ae397a7ac2555801193f5c733f5cba257248c64"
+    },
+    {
+      "path": "runs/NS/NS-xtdb-20261108T001701Z-6f67e0/ns-log.txt",
+      "role": "raw-outcome",
+      "bytes": 2589,
+      "sha256": "a11b321cff541c8d47d5dd3d92eff7af229f1587fe7bc726d6c6249f9c9c5a21"
+    },
+    {
+      "path": "runs/NS/NS-xtdb-20261108T001701Z-6f67e0/feed-checkpoints.jsonl",
+      "role": "raw-outcome",
+      "bytes": 13729,
+      "sha256": "5df60f869dd8ba5d1830a052a2ed670888e8dc45a40069ceb86153450d5795bb"
+    },
+    {
+      "path": "runs/NS/NS-xtdb-20261108T001701Z-6f67e0/feed-effects.jsonl",
+      "role": "raw-outcome",
+      "bytes": 13780,
+      "sha256": "215bcfdfe3de48d7bac3e3dcc4e041df003bec4bca7c9414b46f82c8ead65945"
+    },
+    {
+      "path": "lab/acceptance/obligations.json",
+      "role": "acceptance-contract",
+      "bytes": 786571,
+      "sha256": "917fd0546ab3dcecc1f38a694483c5b8810f743cb92860390fb5ca8a2a18af35"
+    }
+  ]
+}

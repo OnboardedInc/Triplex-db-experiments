@@ -54,6 +54,7 @@
 // object repeats; extra fields in the contract's record schemas (Q47a fixes them exactly; proposals go to the next version);
 // any verifier record a claim carries as independent verification (Q55a: only the contract's VERIFIER_REGISTRY counts).
 import { execFileSync, spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -62,6 +63,8 @@ import { OBJECTS, REPO, fail, main, parseArgs, sha256, sourceTreeIdOf } from './
 export const FORMATS = { claim: 'triplex-db-2/claim/1', receipt: 'triplex-db-2/receipt/2', ledger: 'run-ledger/1', provenance: 'build-provenance/1' };
 export const PATHS = { contract: 'lab/acceptance/obligations.json', loadContract: 'lab/acceptance/load-contract.json', slots: 'lab/config/slots.json', lockfile: 'pnpm-lock.yaml' };
 export const PREREQ = { position: 'G7.position.coordinates', identity: 'G10.composition.identity-bound', w0: 'W0.coverage-floors' };
+/** Claim kinds a run may qualify: the reference's "comparison" and "screening", and the claim format's "comparative" (Q67j, Q75i). */
+const ADMITTED_KINDS = ['comparison', 'screening', 'comparative'];
 const COMPOSITION_FIELDS = ['engine', 'imageDigest', 'configSha256', 'slot'];
 const ACCEPTED_ORACLE_STATUS = ['EXISTS', 'COMPILED', 'ACCEPTED', 'BUILT-ACCEPTED'];
 const SHA = /^[0-9a-f]{64}$/;
@@ -150,7 +153,10 @@ export function recompute(comparator, expectedBytes, observedBytes) {
       // The expected answer names a nonempty reason or reason list; [undefined].includes(undefined) never matches (red-team pass 2).
       const reasons = Array.isArray(e?.reasons) ? e.reasons : [e?.reason];
       if (!isObj(e) || !isObj(o) || !str(e._tag) || !reasons.length || !reasons.every(str)) return 'UNCOMPARABLE';
-      return verdict(o._tag === e._tag && reasons.includes(o.reason) && o.cause != null && (o.rows === undefined || (Array.isArray(o.rows) && o.rows.length === 0)));
+      // Q67h (compiled errorRepresentation), Q75h (V-E01 F6): cause is optional; when present it is a structured object with a
+      // _tag or a message, never any non-null value.
+      const causeOk = !has(o, 'cause') || (isObj(o.cause) && (str(o.cause._tag) || str(o.cause.message)));
+      return verdict(o._tag === e._tag && reasons.includes(o.reason) && causeOk && (o.rows === undefined || (Array.isArray(o.rows) && o.rows.length === 0)));
     }
     default: return 'UNCOMPARABLE';
   }
@@ -188,15 +194,33 @@ export function openRecord(h, store, schema, schemas) {
   if (!spec || !isObj(rec) || !sameKeys(rec, Object.keys(spec)) || rec.schema !== schema || !Object.entries(spec).every(([k, t]) => typed(rec[k], t))) return null;
   return rec;
 }
-/** build_contract.case_verdict (Q47a): recomputed from the retained raw result, never read from the receipt. */
+/** build_contract.case_verdict (0.3.10; Q47a, Q67i, Q71c): recomputed from the retained raw result, never read from the receipt.
+ * case-result/2 uses its declared comparator on the retained raw objects; case-result/1 carries no comparator and keeps hash
+ * equality. */
 export function caseVerdict(rec, store) {
   if (rec.oracleExit === 2 || rec.oracleCode === 'X-NOT-MODELED') return 'REFUSED';
   if (rec.oracleExit !== 0 || rec.oracleCode !== null || !objOk(rec.expectedSha256, store) || !objOk(rec.observedSha256, store)) return 'FAIL';
+  if (rec.schema === 'case-result/2') return recompute(rec.comparator, store.get(rec.expectedSha256).bytes, store.get(rec.observedSha256).bytes) === 'PASS' ? 'PASS' : 'FAIL';
   return rec.expectedSha256 === rec.observedSha256 ? 'PASS' : 'FAIL';
 }
-/** build_contract.workload_ok (Q47b): every field present, typed and nonempty; the slot is the source assignment's. */
+/** build_contract.workload_ok (0.3.10; Q47b, Q67g): every field present, typed and nonempty. The slot is no longer part of the
+ * shared workload identity: each arm's placement {slot, cpuset, cpus} is in the paired measurement (workloadIdentity.placement). */
 export function workloadOk(w, comp, fields) {
-  return sameKeys(w, Object.keys(fields)) && Object.entries(fields).every(([k, t]) => typed(w[k], t)) && w.slot === own(own(comp, 'source'), 'slot');
+  return sameKeys(w, Object.keys(fields)) && Object.entries(fields).every(([k, t]) => typed(w[k], t));
+}
+/** build_contract._cpuset: "0-1,4" -> the set of cpus, or null when unparsable or empty. */
+function cpuset(s) {
+  if (typeof s !== 'string') return null;
+  // Python's str.partition("-") and int(): surrounding whitespace, a sign and digit-group underscores are accepted.
+  const pyInt = t => /^\s*[+-]?\d+(?:_\d+)*\s*$/.test(t) ? Number(t.replace(/[\s_+]/g, '')) : NaN;
+  const out = new Set();
+  for (const part of s.split(',')) {
+    const i = part.indexOf('-'), a = i < 0 ? part : part.slice(0, i), b = i < 0 ? '' : part.slice(i + 1);
+    const x = pyInt(a), y = pyInt(b || a);
+    if (Number.isNaN(x) || Number.isNaN(y)) return null;
+    for (let k = x; k <= y; k++) out.add(k);
+  }
+  return out.size ? out : null;
 }
 /** build_contract.selected_pairs */
 export function selectedPairs(o, caseSets) {
@@ -318,16 +342,25 @@ export function qualificationRun(o, binary, comp, ev, ctx, pins = ctx.pins, pinn
   return { obligation: o.id, cases: cases.map(x => x.id), modes: [...o.closure.modes] };
 }
 
-/** build_contract.paired_ok (Q60a, Q60c): a comparison measured as paired rounds under PAIR_0 (load-contract
- * measurementProtocol), both sides under the same cpuset regime with no quota. */
+/** build_contract.paired_ok (0.3.10; Q60a, Q60c, Q67f, Q67g): paired rounds under PAIR_0 (load-contract measurementProtocol): a
+ * registered look's number of rounds, retained per-round histograms and signals, a GREEN window with all-offered accounting, and
+ * each arm's placement {slot, cpuset, cpus} (cpus = the cpuset's size; a duet on separate slots with equal capacity and disjoint
+ * cpusets), each arm's regime a cpuset with no quota equal to its placement, the two regimes equal. */
 export function pairedOk(m, wl, pair0) {
   const d = pair0?.design;
   if (!isObj(d) || !isObj(m) || own(m, 'mode') !== 'paired-rounds' || !(d.designs ?? []).includes(own(m, 'design')) || !same(own(m, 'workload') ?? null, wl)) return false;
-  if (!(typed(own(m, 'rounds'), 'int') && d.rounds.min <= m.rounds && m.rounds <= d.rounds.max)) return false;
+  if (!(typed(own(m, 'rounds'), 'int') && (d.looks ?? []).includes(m.rounds))) return false;
+  const per = own(m, 'perRound');
+  if (!Array.isArray(per) || per.length !== m.rounds || !per.every(r => isObj(r) && isObj(own(r, 'histograms')) && sameKeys(r.histograms, ['candidate', 'A0']) && isObj(own(r, 'signals')))) return false;
+  if (own(m, 'window') !== 'GREEN' || own(m, 'accounting') !== 'all-offered') return false;
+  const pl = own(m, 'placement');
+  if (!isObj(pl) || !sameKeys(pl, ['candidate', 'A0']) || !Object.values(pl).every(p => isObj(p) && typed(own(p, 'slot'), 'str') && typed(own(p, 'cpus'), 'int') && cpuset(own(p, 'cpuset')))) return false;
+  if (Object.values(pl).some(p => cpuset(p.cpuset).size !== p.cpus)) return false;
+  if (m.design === 'duet' && (pl.candidate.cpus !== pl.A0.cpus || [...cpuset(pl.candidate.cpuset)].some(c => cpuset(pl.A0.cpuset).has(c)) || pl.candidate.slot === pl.A0.slot)) return false;
   const regs = own(m, 'slotRegimes');
-  if (!isObj(regs) || !sameKeys(regs, ['candidate', 'A0']) || !same(regs.candidate, regs.A0)) return false;
-  const r = regs.candidate;
-  return isObj(r) && sameKeys(r, pair0.slotRegime.receiptFields) && r.cpuMax === 'max' && typed(r.cpuset, 'str') && typed(r.cpuWeight, 'int');
+  if (!isObj(regs) || !sameKeys(regs, ['candidate', 'A0']) || !Object.values(regs).every(r => isObj(r) && sameKeys(r, pair0.slotRegime.receiptFields))) return false;
+  if (['candidate', 'A0'].some(k => regs[k].cpuMax !== 'max' || !typed(regs[k].cpuWeight, 'int') || !same(regs[k].cpuset, pl[k].cpuset))) return false;
+  return same(regs.candidate.cpuMax, regs.A0.cpuMax) && same(regs.candidate.cpuWeight, regs.A0.cpuWeight);
 }
 
 /** build_contract.registered_acceptance (Q55a): a VERIFIER_REGISTRY entry accepting exactly this subject at this commit. */
@@ -380,6 +413,11 @@ export function admitCore(claim, ev, ctx) {
   if (ids.some(i => typeof i !== 'string' || !ctx.byId.has(i))) return stop('UNKNOWN-OBLIGATION', `unknown obligation ids in ${JSON.stringify(ids)} are rejected, never dropped (RULINGS Q42a)`);
   const claimed = ids.map(i => ctx.byId.get(i));
   const tree = own(claim, 'sourceTreeSha256') ?? null, comp = pyFalsy(own(claim, 'composition')) ? {} : claim.composition, commit = own(claim, 'commit') ?? null;
+  // 0.3.10 (Q67j, Q75i): a promotion is rejected explicitly until its prerequisites are enforced mechanically. The reference admits
+  // kinds "comparison" and "screening" (a missing kind is "comparison"); the claim format and CLAIM_ADMISSION say "comparative", so
+  // that is admitted too (an intentional divergence, reported until a contract version names one vocabulary).
+  const kind = has(claim, 'kind') ? claim.kind : 'comparison';
+  if (!ADMITTED_KINDS.includes(kind)) return stop(kind === 'promotion' ? 'PROMOTION-UNSUPPORTED' : 'CLAIM-KIND', `claim kind ${JSON.stringify(kind)} is not qualified: promotion prerequisites (GATE-BROKER-HARDENING and the others) are not enforced mechanically yet (RULINGS Q67j, Q75i)`);
   const slots = [...(ev.slots ?? [])];
   if (!compositionOk(comp, ctx)) return stop('COMPOSITION-UNBOUND', 'the composition must bind four assignments (engine, imageDigest, configSha256, slot), the source declaring its protocol variant and, for log-source, its log (RULINGS Q28, Q55b)');
   if (Object.keys(comp).some(k => !slots.includes(comp[k].slot))) return stop('SLOT-UNREGISTERED', `an assignment's slot is not a registered slot (${slots.join(', ')}) (RULINGS Q55a)`);
@@ -401,10 +439,11 @@ export function admitCore(claim, ev, ctx) {
     if (qualificationRun(o, binary, comp, ev, ctx, ctx.pins, ctx.pinned, cfg.oracleRunners, note) === null) return stop('MEASUREMENT-RUN-FAILED', `the evaluator's ${o.id} run did not pass (RULINGS Q55a)`);
     if (measured(o)) {
       const wl = ev.workload(o);
-      if (!workloadOk(wl, comp, ctx.workloadFields) || !workloadOk(wl, entry.composition, ctx.workloadFields)) return stop('WORKLOAD-IDENTITY', `the evaluator's workload for ${o.id} is missing, untyped, or not on both compositions' source slot (RULINGS Q47b)`);
+      if (!workloadOk(wl, comp, ctx.workloadFields) || !workloadOk(wl, entry.composition, ctx.workloadFields)) return stop('WORKLOAD-IDENTITY', `the evaluator's workload for ${o.id} is missing, untyped or has other fields than WORKLOAD_IDENTITY (RULINGS Q47b, Q67g)`);
       if (!isObj(frozen) || ['sha256', 'seed', 'offerScheduleSha256'].some(k => own(frozen, k) == null)) return stop('TRACE-NOT-FROZEN', 'load-contract.json writerTrace.generator.frozen (sha256, seed, offerScheduleSha256) is null, so no CR-NS or CR-GS comparison has a workload identity (RULINGS Q61h)');
       if (wl.generatorSourceSha256 !== frozen.sha256 || wl.seed !== frozen.seed || wl.offerScheduleSha256 !== frozen.offerScheduleSha256) return stop('TRACE-NOT-FROZEN', `${o.id}: the workload is not the frozen trace (VA15, RULINGS Q61h)`);
-      if (!pairedOk(ev.measure_pair(binary, comp, entry.binarySha256, entry.composition, wl), wl, ctx.pair0)) return stop('CONTROL-UNMATCHED', `${o.id}: no paired-rounds measurement of the candidate against A0 under PAIR_0 on the evaluator's workload (RULINGS Q47b, Q60, Q61g)`);
+      const mp = ev.measure_pair(binary, comp, entry.binarySha256, entry.composition, wl);
+      if (!pairedOk(mp, wl, ctx.pair0) || mp.placement.candidate.slot !== comp.source.slot || mp.placement.A0.slot !== entry.composition.source.slot) return stop('CONTROL-UNMATCHED', `${o.id}: no paired-rounds measurement of the candidate against A0 under PAIR_0 on the evaluator's workload, each arm on its own composition's source slot (RULINGS Q47b, Q60, Q61g, Q67f, Q67g)`);
     }
     if (!Object.keys(ctx.verifiers ?? {}).some(v => registeredAcceptance(v, 'obligation', o.id, commit, ctx.verifiers))) return stop('VERIFIER-UNREGISTERED', `no VERIFIER_REGISTRY entry accepts ${o.id} at ${commit} (RULINGS Q55a)`);
   }
@@ -490,24 +529,72 @@ export function documentCore(claim, env, ctx) {
 
 // ================================================================ I/O: git and the object store
 
-/** Read-only git access; blob hashes are sha256 of the blob bytes, cached per commit:path. Failures return null. */
+/** The git object id of a blob's bytes, in a sha1 or a sha256 repository. */
+const blobOid = (bytes, oidLength) => createHash(oidLength === 40 ? 'sha1' : 'sha256').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');
+
+/**
+ * Read-only git access; blob hashes are sha256 of the blob bytes, cached per commit:path. Failures return null. Replace refs are
+ * ignored and user and system configuration is not read, and every object read is checked against the object id it was asked for
+ * or its tree entry names, so a `git replace` or a rewritten object file never supplies bytes (RULINGS Q75a, Q75b; V-E01 F2).
+ */
 export function gitSource(repo) {
-  const run = (args, input) => execFileSync('git', ['--literal-pathspecs', ...args], { cwd: repo, input, maxBuffer: 1 << 30, stdio: ['pipe', 'pipe', 'pipe'] });
+  // [EXP-E01] Why: inherited Git overrides must not select another object store or user configuration. Rejected: spreading GIT_* from the caller.
+  const env = { ...Object.fromEntries(Object.entries(process.env).filter(([k]) => !k.startsWith('GIT_'))), GIT_NO_REPLACE_OBJECTS: '1', GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null', GIT_TERMINAL_PROMPT: '0', GIT_OPTIONAL_LOCKS: '0' };
+  const run = (args, input) => execFileSync('git', ['--no-replace-objects', '--literal-pathspecs', ...args], { cwd: repo, env, input, maxBuffer: 1 << 30, stdio: ['pipe', 'pipe', 'pipe'] });
   const cache = new Map();
+  /** cat-file --batch over the given object names: one { oid, type, bytes } per name (null when missing), each blob verified. */
+  const batch = names => {
+    if (!names.length) return [];
+    let out;
+    try { out = run(['cat-file', '--batch'], names.map(n => `${n}\n`).join('')); } catch { return names.map(() => null); }
+    let at = 0;
+    return names.map(() => {
+      const nl = out.indexOf(10, at);
+      if (nl < 0) return null;
+      const header = out.subarray(at, nl).toString('utf8');
+      at = nl + 1;
+      // A found object's header is exactly "<oid> <type> <size>"; anything else ("<name> missing", "ambiguous") has no body.
+      const m = /^([0-9a-f]{40}|[0-9a-f]{64}) (\w+) (\d+)$/.exec(header);
+      if (!m) return null;
+      const size = Number(m[3]), bytes = out.subarray(at, at + size);
+      at += size + 1;
+      if (m[2] === 'blob' && blobOid(bytes, m[1].length) !== m[1]) return null;
+      return { oid: m[1], type: m[2], bytes: Buffer.from(bytes) };
+    });
+  };
   const api = {
     resolve(rev) { if (!str(rev) || rev.startsWith('-')) return null; try { return run(['rev-parse', '--verify', '--quiet', `${rev}^{commit}`]).toString().trim() || null; } catch { return null; } },
     treeOf(commit) { return run(['rev-parse', `${commit}^{tree}`]).toString().trim(); },
     commitTime(commit) { return Number(run(['show', '-s', '--format=%ct', commit]).toString().trim()); },
-    /** The commit's tracked tree as a tar stream (the fresh checkout qualify builds from; Q55a step 1). */
-    archive(commit) { return COMMIT.test(commit) ? run(['archive', '--format=tar', commit]) : null; },
+    gitDir() { try { return run(['rev-parse', '--absolute-git-dir']).toString().trim() || null; } catch { return null; } },
     blob(rev, file) {
       if (!safePath(file)) return null;
       const key = COMMIT.test(rev) ? `blob:${rev}:${file}` : null; // only full commit ids are immutable
       if (key && cache.has(key)) return cache.get(key);
-      let bytes = null;
-      try { bytes = run(['cat-file', 'blob', `${rev}:${file}`]); } catch { bytes = null; }
+      // [EXP-E01] Why: bind bytes to the tree entry, not a separately resolved name. Rejected: trusting cat-file's header alone (substitution).
+      const commit = api.resolve(rev), entry = commit && api.tree(commit)?.find(e => e.path === file && e.type === 'blob');
+      const o = entry ? batch([entry.oid])[0] : null;
+      const bytes = o && o.type === 'blob' && o.oid === entry.oid ? o.bytes : null;
       if (key) cache.set(key, bytes);
       return bytes;
+    },
+    /** Every entry of a commit's tree, recursively: { mode, type, oid, path }, sorted by path; null when git fails. */
+    tree(commit) {
+      if (!COMMIT.test(commit)) return null;
+      if (cache.has(`tree:${commit}`)) return cache.get(`tree:${commit}`);
+      try {
+        const tree = run(['ls-tree', '-r', '-z', '--full-tree', commit]).toString('utf8').split('\0').filter(Boolean).map(line => {
+          const tab = line.indexOf('\t'); const [mode, type, oid] = line.slice(0, tab).split(' '); return { mode, type, oid, path: line.slice(tab + 1) };
+        }).sort((a, b) => a.path < b.path ? -1 : a.path > b.path ? 1 : 0);
+        cache.set(`tree:${commit}`, tree);
+        return tree;
+      } catch { return null; }
+    },
+    /** Map oid -> blob bytes for the given object ids, each verified against its id; cache is shared between calls. */
+    objects(oids, shared = new Map()) {
+      const want = [...new Set(oids)].filter(o => !shared.has(o) && /^([0-9a-f]{40}|[0-9a-f]{64})$/.test(o));
+      batch(want).forEach((o, i) => shared.set(want[i], o && o.type === 'blob' && o.oid === want[i] ? o.bytes : null));
+      return new Map(oids.map(o => [o, shared.get(o) ?? null]));
     },
     /** Tracked files (blobs) under the given roots (null: the whole tree), sorted; null when a root is unsafe or git fails. */
     list(commit, roots) { const e = api.entries(commit, roots); return e && e.map(x => x.path); },
@@ -531,23 +618,10 @@ export function gitSource(repo) {
       const want = [...new Set(list)].filter(f => !cache.has(`${commit}:${f}`));
       for (const f of want.filter(f => !safePath(f))) cache.set(`${commit}:${f}`, null);
       const ok = want.filter(safePath);
-      if (ok.length) {
-        let out;
-        try { out = run(['cat-file', '--batch'], ok.map(f => `${commit}:${f}\n`).join('')); } catch { out = null; }
-        let at = 0;
-        for (const f of ok) {
-          if (!out) { cache.set(`${commit}:${f}`, null); continue; }
-          const nl = out.indexOf(10, at);
-          const header = out.subarray(at, nl).toString('utf8');
-          at = nl + 1;
-          // A found object's header is exactly "<oid> <type> <size>"; anything else ("<name> missing", "ambiguous") has no body.
-          const m = /^([0-9a-f]{40}|[0-9a-f]{64}) (\w+) (\d+)$/.exec(header);
-          if (!m) { cache.set(`${commit}:${f}`, null); continue; }
-          const size = Number(m[3]);
-          cache.set(`${commit}:${f}`, m[2] === 'blob' ? sha256(out.subarray(at, at + size)) : null);
-          at += size + 1;
-        }
-      }
+      const at = api.resolve(commit), tree = at ? api.tree(at) : null;
+      const entries = new Map((tree ?? []).filter(e => e.type === 'blob').map(e => [e.path, e.oid]));
+      const objects = api.objects(ok.map(f => entries.get(f)).filter(Boolean));
+      for (const f of ok) { const b = objects.get(entries.get(f)); cache.set(`${commit}:${f}`, b ? sha256(b) : null); }
       return new Map(list.map(f => [f, cache.get(`${commit}:${f}`) ?? null]));
     },
   };
@@ -800,134 +874,22 @@ function evaluate(claim, env, why) {
 
 // ================================================================ qualification: a run, not a document (RULINGS Q55a)
 
-// The run reads contract 0.3.9's fields by their compiled names: buildSpec (Q61f; null fields fail closed), oracleRunners and
-// oracleAnswerRule with answerMembers (Q61c), caseManifest (Q61d), imagePins (Q61i), build-manifest/2, case-result/2 and
-// fault-witness/1 (Q61e, Q61f, Q61j), and load-contract.json writerTrace.generator.frozen (Q61h) and measurementProtocol (PAIR_0).
+// The run reads contract 0.3.10's fields by their compiled names: buildSpec (Q61f; null fields fail closed; buildSpecSha256 by
+// specSha256Rule, Q65b; installMetadataExclusions, Q71a), oracleRunners (decodedInputArgv for O-DOMAIN) and oracleAnswerRule with
+// answerMembers (Q61c), caseManifest (Q61d), imagePins (Q61i), qualificationRun.executionIdentity (Q67b, Q71b), the evidence
+// schemas build-manifest/2, case-result/2, oracle-invocation/1 and fault-witness/1 (Q61e, Q61f, Q61j, Q71b), and load-contract.json
+// writerTrace.generator.frozen (Q61h) and measurementProtocol (PAIR_0, Q67f, Q67g).
 export const QUALIFY = { gate: path.join(import.meta.dirname, 'gate.mjs') };
 /** Reasons that only say the run was not on the gate; offlineVerdict is the verdict without them. */
 const NOT_ON_GATE = new Set(['GATE-NOT-RUN', 'RUN-NOT-ON-GATE']);
 const CLAIM_FIELDS = ['format', 'claimId', 'kind', 'obligations', 'commit', 'sourceTreeSha256', 'composition'];
-/** A child process sees no user configuration and no credentials: only PATH, a HOME and TMPDIR outside every checkout, oracle
- * copy and evidence directory, a locale, and no bytecode writes (an oracle copy is read-only and must stay byte-identical). */
-const childEnv = home => ({ PATH: process.env.PATH ?? '/usr/bin:/bin', HOME: home, TMPDIR: home, LANG: 'C.UTF-8', GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1', PYTHONDONTWRITEBYTECODE: '1' });
 const trimNl = b => b.length && b[b.length - 1] === 10 ? b.subarray(0, b.length - 1) : b;
 const fill = (argv, vars) => argv.map(a => Object.entries(vars).reduce((s, [k, v]) => s.replaceAll(`{${k}}`, v), a));
-
-/**
- * Run a child in its own process group with its output going to files, then kill the whole group (RULINGS Q67e). Why: with
- * pipes, a background process the child leaves behind keeps the pipe open and the evaluator waits on it; killing the group after
- * the child exits stops every process that stayed in it, so a build cannot leave a helper running into the oracle and control
- * phases. A process that starts its own session (setsid) escapes this; only the gate's containers stop that (EXP-G03).
- */
-function runIsolated(argv, { cwd, env, timeout = 120_000, scratch }) {
-  const dir = fs.mkdtempSync(path.join(scratch, 'io-'));
-  const out = path.join(dir, 'stdout'), err = path.join(dir, 'stderr');
-  const fo = fs.openSync(out, 'w'), fe = fs.openSync(err, 'w');
-  let r;
-  try { r = spawnSync(argv[0], argv.slice(1), { cwd, env, timeout, detached: true, stdio: ['ignore', fo, fe] }); }
-  finally { fs.closeSync(fo); fs.closeSync(fe); }
-  if (r.pid) { try { process.kill(-r.pid, 'SIGKILL'); } catch { /* the group is already gone */ } }
-  const result = { status: r.status, signal: r.signal, error: r.error, stdout: fs.readFileSync(out), stderr: fs.readFileSync(err) };
-  fs.rmSync(dir, { recursive: true, force: true });
-  return result;
-}
-
-/** A content-addressed directory the evaluator writes its own records into; returns put(bytes | string | value) -> sha256. Each
- * object is made read-only once written, and is verified by hash whenever it is read. */
-function writeStore(dir) {
-  fs.mkdirSync(dir, { recursive: true });
-  return value => {
-    const bytes = Buffer.isBuffer(value) ? value : Buffer.from(typeof value === 'string' ? value : JSON.stringify(value));
-    const h = sha256(bytes), file = path.join(dir, h);
-    if (!fs.existsSync(file)) { fs.writeFileSync(file, bytes); fs.chmodSync(file, 0o444); }
-    return h;
-  };
-}
-
-/** Every entry under dir except directories, sorted: [path, kind, sha256] with kind f (file bytes) or l (symlink target text). */
-function walkTree(dir) {
-  const out = [];
-  for (const d of fs.readdirSync(dir, { recursive: true, withFileTypes: true })) {
-    const abs = path.join(d.parentPath ?? d.path, d.name), rel = path.relative(dir, abs).split(path.sep).join('/');
-    const st = fs.lstatSync(abs);
-    if (st.isSymbolicLink()) out.push([rel, 'l', sha256(Buffer.from(fs.readlinkSync(abs)))]);
-    else if (st.isFile()) out.push([rel, 'f', sha256(fs.readFileSync(abs))]);
-    else if (!st.isDirectory()) out.push([rel, 'x', sha256(Buffer.from(String(st.mode)))]);
-  }
-  return out.sort((a, b) => cmpStr(a[0], b[0]));
-}
-const runtimeListing = entries => entries.map(([p, k, h]) => `${h}  ${k} ${p}\n`).join('');
-
-/**
- * The execution identity of one build instance (RULINGS Q67b; Codex round 8 finding 2): the source tree, the build spec, the
- * lockfile, the toolchain, and the complete post-build checkout (sources, source runners, installed dependencies and built
- * outputs, every file's bytes and every link's target). Returns the canonical record bytes; its sha256 is the binarySha256 the
- * evaluator returns from build and that A0_REGISTRY records. Rejected: the hash of the declared dist outputs alone, which two
- * builds with different runners or dependencies can share, so one would execute in place of the other.
- */
-export function executionIdentity({ sourceTreeSha256, buildSpecSha256, lockfileSha256, toolchain, runtime, dist }) {
-  return Buffer.from(canonText({ schema: 'execution-identity/1', sourceTreeSha256, buildSpecSha256, lockfileSha256: lockfileSha256 ?? null, toolchain,
-    runtimeSha256: sha256(runtimeListing(runtime)), distSha256: sha256(dist.map(([p, h]) => `${h}  ${p}\n`).join('')) }));
-}
-/** The toolchain part of an execution identity: the evaluator's node, the platform, and pnpm's version when the build uses pnpm. */
-let pnpmVersion;
-export function toolchainOf(spec) {
-  const usesPnpm = [...(spec?.argv ?? []), ...(spec?.run ?? [])].some(a => typeof a === 'string' && /\bpnpm\b/.test(a));
-  if (usesPnpm && pnpmVersion === undefined) { const r = spawnSync('pnpm', ['--version'], { encoding: 'utf8', env: { PATH: process.env.PATH ?? '/usr/bin:/bin' }, timeout: 60_000 }); pnpmVersion = r.status === 0 ? r.stdout.trim() : null; }
-  return { node: process.version, platform: `${process.platform}-${process.arch}`, pnpm: usesPnpm ? pnpmVersion : null };
-}
-
-/**
- * Re-judge a case-result/2 record (RULINGS Q67i; Codex round 8 finding 10): a refusal is REFUSED, any other oracle failure FAIL,
- * otherwise the declared comparator on the retained raw expected and observed objects. Byte equality is the comparator only for
- * CMP-EXACT-VALUE (recompute's exact rule); CMP-BAG-ROWS accepts [1,2] against [2,1].
- */
-export function caseResultVerdict(rec, store) {
-  if (rec.oracleExit === 2 || rec.oracleCode === 'X-NOT-MODELED') return 'REFUSED';
-  if (rec.oracleExit !== 0 || rec.oracleCode !== null) return 'FAIL';
-  const e = store.get(rec.expectedSha256), o = store.get(rec.observedSha256);
-  return e.ok && o.ok ? recompute(rec.comparator, e.bytes, o.bytes) : 'FAIL';
-}
-
-/** Paths where a checkout differs from its commit's tree: every tracked blob must be present with its bytes (a symlink with its
- * target text) and nothing else may be there. Why: git archive applies the tree's own .gitattributes (export-ignore,
- * export-subst), so a candidate could make the archive it is built from differ from the tree its label names. */
-function checkoutProblems(git, commit, dir) {
-  const entries = git.entries(commit, null) ?? [];
-  const want = git.blobHashes(commit, entries.map(e => e.path));
-  const out = entries.filter(e => {
-    const abs = path.join(dir, e.path);
-    try { const st = fs.lstatSync(abs); return (st.isSymbolicLink() ? sha256(Buffer.from(fs.readlinkSync(abs))) : st.isFile() ? sha256(fs.readFileSync(abs)) : null) !== want.get(e.path); } catch { return true; }
-  }).map(e => e.path);
-  const tracked = new Set(entries.map(e => e.path));
-  for (const d of fs.readdirSync(dir, { recursive: true, withFileTypes: true })) {
-    const p = path.relative(dir, path.join(d.parentPath ?? d.path, d.name)).split(path.sep).join('/');
-    if (!d.isDirectory() && !tracked.has(p)) out.push(p);
-  }
-  return out;
-}
-
-/** The offline stand-in for step 3: the evaluator-built system under test run locally with the build spec's run argv, in its own
- * process group. Its observations make the run DIAGNOSTIC (RUN-NOT-ON-GATE) whatever they show. */
-export function localSut(spec) {
-  return ({ dir, home, scratch, casePath, mode }) => {
-    const r = runIsolated(fill(spec.run, { case: casePath, mode }), { cwd: dir, env: childEnv(home ?? dir), scratch: scratch ?? home ?? dir });
-    return { exit: r.status ?? -1, stdout: r.stdout, stderr: r.stderr };
-  };
-}
-
-/** Step 3 as far as it exists: gate.mjs OBL --dry-run checks the lane and the registered slot and echoes the plan. */
-export function gateDryRun(workDir) {
-  return plan => {
-    const file = path.join(workDir, 'gate-plan.json');
-    fs.writeFileSync(file, JSON.stringify(plan, null, 2) + '\n');
-    const r = spawnSync(process.execPath, [QUALIFY.gate, 'OBL', '--lane', String(plan.lane), '--slot', String(plan.slot), '--dry-run', '--plan', file], { encoding: 'utf8', timeout: 60_000 });
-    let out = null;
-    try { out = JSON.parse(r.stdout); } catch { out = null; }
-    return r.status === 0 && isObj(out) ? { ok: true, ...out } : { ok: false, error: `${r.stderr || r.stdout}`.trim().slice(0, 400) };
-  };
-}
-
+const SANDBOX_EXEC = '/usr/bin/sandbox-exec';
+/** System directories a child may run tools from besides the recorded toolchain (root-owned on macOS and Linux). */
+const SYSTEM_PATH = ['/usr/bin', '/bin', '/usr/sbin', '/sbin'];
+const TOOLS = ['node', 'pnpm', 'python3'];
+const isInside = (root, p) => { const r = path.relative(root, p); return r === '' || (!r.startsWith('..') && !path.isAbsolute(r)); };
 /** Make a directory tree read-only (files 0444, directories 0555) or writable again (for clean-up). */
 function setReadOnly(dir, readOnly) {
   const entries = fs.readdirSync(dir, { recursive: true, withFileTypes: true }).map(d => path.join(d.parentPath ?? d.path, d.name));
@@ -936,41 +898,338 @@ function setReadOnly(dir, readOnly) {
     if (!st.isSymbolicLink()) fs.chmodSync(p, st.isDirectory() ? (readOnly ? 0o555 : 0o755) : (readOnly ? 0o444 : 0o644));
   }
 }
+const removeDir = d => { try { if (fs.existsSync(d)) { fs.chmodSync(d, 0o755); setReadOnly(d, false); } fs.rmSync(d, { recursive: true, force: true }); } catch { /* left for the OS to collect */ } };
+
+// ---------------------------------------------------------------- the evaluator's own files (RULINGS Q75a)
+
+/** The files a run executes from the evaluator's working tree (claim.mjs, its import lib.mjs, gate.mjs for the plan) and the
+ * reference model, each compared with its blob at the evaluator's commit (RULINGS Q75a). */
+// [EXP-E01] Why: gate imports execute too. Rejected: pinning only direct entrypoints (transitive code could be poisoned).
+export const EVALUATOR_FILES = ['lab/bin/claim.mjs', 'lab/bin/lib.mjs', 'lab/bin/gate.mjs', 'lab/bin/engine.mjs', 'lab/bin/heavy-lock.mjs', 'lab/bin/receipt.mjs', 'lab/acceptance/build_contract.py'];
+const EVALUATOR_ROOT = path.resolve(import.meta.dirname, '../..');
+const POISON_MARKER = 'triplex-evaluator-poisoned.json';
+const evaluatorBytes = () => Object.fromEntries(EVALUATOR_FILES.map(f => { try { return [f, sha256(fs.readFileSync(path.join(EVALUATOR_ROOT, f)))]; } catch { return [f, null]; } }));
+
+/**
+ * RULINGS Q75a (V-E01 F1): at the start of every run, each evaluator file must be byte-identical to its blob at the evaluator's
+ * commit (git read with replace refs ignored, each blob checked against its tree entry's object id), and no earlier run may have
+ * marked this checkout poisoned. repo is the repository whose commit vouches for the files (default: the one they live in).
+ * Returns { repo, commit, files, marker, problems }.
+ */
+export function evaluatorIntegrity({ repo = EVALUATOR_ROOT, rev = 'HEAD' } = {}) {
+  const git = gitSource(repo);
+  const commit = git.resolve(rev), problems = [];
+  const files = evaluatorBytes();
+  if (!commit) problems.push(`the evaluator's repository ${repo} has no commit ${rev}`);
+  else {
+    const want = git.blobHashes(commit, EVALUATOR_FILES);
+    for (const f of EVALUATOR_FILES) if (files[f] === null || want.get(f) !== files[f]) problems.push(`${f} (${files[f] ?? 'unreadable'}) is not its blob at ${commit} (${want.get(f) ?? 'absent'})`);
+  }
+  const gitDir = git.gitDir(), marker = gitDir ? path.join(gitDir, POISON_MARKER) : null;
+  if (marker && fs.existsSync(marker)) problems.push(`an earlier run marked this evaluator checkout poisoned (${marker}); restore it from git with claim.mjs restore-evaluator`);
+  return { repo, commit, files, marker, problems };
+}
+function poison(integrity, detail) {
+  if (!integrity?.marker) return;
+  try { fs.writeFileSync(integrity.marker, JSON.stringify({ at: new Date().toISOString(), detail }, null, 2) + '\n'); } catch { /* the reason is reported either way */ }
+}
+/** Restore every evaluator file from its blob at the evaluator's commit and clear the poison marker once all of them match. */
+export function restoreEvaluator({ repo = EVALUATOR_ROOT, rev = 'HEAD' } = {}) {
+  const git = gitSource(repo), commit = git.resolve(rev);
+  if (!commit) return { ok: false, problems: [`no commit ${rev} in ${repo}`] };
+  for (const f of EVALUATOR_FILES) { const b = git.blob(commit, f); if (b) fs.writeFileSync(path.join(EVALUATOR_ROOT, f), b); }
+  const marker = git.gitDir() ? path.join(git.gitDir(), POISON_MARKER) : null;
+  const before = marker && fs.existsSync(marker);
+  if (before) fs.rmSync(marker);
+  const after = evaluatorIntegrity({ repo, rev });
+  if (after.problems.length && before) poison(after, 'restore did not make every evaluator file match its blob');
+  return { ok: !after.problems.length, commit, problems: after.problems };
+}
+
+// ---------------------------------------------------------------- the toolchain children run (RULINGS Q71b, Q75d)
+
+function resolveTool(name, pathEnv) {
+  for (const d of pathEnv.split(':').filter(x => path.isAbsolute(x))) {
+    const found = path.join(d, name);
+    try {
+      fs.accessSync(found, fs.constants.X_OK);
+      if (!fs.statSync(found).isFile()) continue;
+      const real = fs.realpathSync(found);
+      return { found, path: real, sha256: sha256(fs.readFileSync(real)), version: null };
+    } catch { /* not here */ }
+  }
+  return null;
+}
+/**
+ * The tools a run's children may execute, resolved once from the evaluator's PATH before any candidate process runs (RULINGS Q75b,
+ * Q75d): for node, pnpm and python3 the first executable on PATH, its real path, the sha256 of that file and its --version. Children
+ * get a PATH of one directory linking each name to its real path, then the system directories.
+ */
+export function resolveToolchain(pathEnv = process.env.PATH ?? '') {
+  const tools = Object.fromEntries(TOOLS.map(n => [n, resolveTool(n, pathEnv)]));
+  for (const t of Object.values(tools)) if (t) {
+    // [EXP-E01] Why: version probes are children too. Rejected: a shared temporary HOME (cross-child state).
+    const home = fs.mkdtempSync(path.join(os.tmpdir(), 'tx2-version-'));
+    try {
+      const r = spawnSync(t.path, ['--version'], { encoding: 'utf8', env: { PATH: [...(tools.node ? [path.dirname(tools.node.path)] : []), ...SYSTEM_PATH].join(':'), HOME: home, TMPDIR: home }, timeout: 60_000 });
+      t.version = r.status === 0 ? `${r.stdout}${r.stderr}`.trim().split('\n')[0] : null;
+    } finally { removeDir(home); }
+  }
+  return tools;
+}
+const usesPnpm = spec => [...(spec?.argv ?? []), ...(spec?.run ?? [])].some(a => typeof a === 'string' && /\bpnpm\b/.test(a));
+const toolRecord = t => t ? { path: t.path, sha256: t.sha256, version: t.version } : null;
+/** The toolchain part of an execution identity (qualificationRun.executionIdentity.toolchain, Q71b, Q75d): node, platform and
+ * arch, and pnpm when the build or run calls it, each by path, sha256 and version. Python is recorded per oracle invocation. */
+export const toolchainIdentity = (tools, spec) => ({ node: toolRecord(tools.node), pnpm: usesPnpm(spec) ? toolRecord(tools.pnpm) : null, platform: process.platform, arch: process.arch });
+/** buildSpecSha256 (Q65b specSha256Rule): sha256 of the canonical JSON of {format, argv, outputs, run}. */
+export const buildSpecSha256 = spec => sha256(canonText(Object.fromEntries(['format', 'argv', 'outputs', 'run'].map(k => [k, own(spec, k) ?? null]))));
+
+// ---------------------------------------------------------------- children: one fresh HOME each, a process group, a write sandbox
+
+let sandboxProbe;
+/** macOS sandbox-exec, if it can run a profile here (it can be missing, or refused inside another sandbox). */
+function sandboxWorks() {
+  if (sandboxProbe === undefined) sandboxProbe = process.platform === 'darwin' && fs.existsSync(SANDBOX_EXEC) && spawnSync(SANDBOX_EXEC, ['-p', '(version 1)(allow default)', '/usr/bin/true'], { timeout: 30_000 }).status === 0;
+  return sandboxProbe;
+}
+const sbpl = p => `"${p.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
+/** A child may write only its own directories (its checkout for a build or a system under test, and its fresh HOME); it has no
+ * network (unix sockets included), no mach-lookup (so it cannot ask launchd to start a process outside the sandbox), and may
+ * signal only processes in the same sandbox. Every descendant inherits the profile, a setsid helper included. */
+const sandboxProfile = writable => `(version 1)(allow default)(deny file-write*)(allow file-write* ${writable.map(p => `(subpath ${sbpl(fs.realpathSync(p))})`).join(' ')} (literal "/dev/null") (literal "/dev/zero") (literal "/dev/dtracehelper") (regex #"^/dev/tty"))(deny network*)(deny mach-lookup)(deny signal)(allow signal (target same-sandbox))`;
+
+/**
+ * runChild(argv, { cwd, writable, timeout, input, label }) for one run (RULINGS Q67e, Q75d, Q75f). Each child gets a fresh HOME and
+ * TMPDIR of its own (removed after it exits), PATH pinned to the run's toolchain directory and the system directories, no user
+ * configuration, and its own process group, killed as soon as it exits; with sandbox-exec, writes only inside `writable` and its
+ * HOME. Output goes to files, so a helper left running cannot keep the evaluator waiting on a pipe.
+ */
+function childRunner({ iso, toolchainDir, toolchain, sandbox }) {
+  return (argv, { cwd, writable = [], timeout = 120_000, input = null, label = 'child' } = {}) => {
+    const home = iso(`home-${label}`), io = iso(`io-${label}`);
+    const out = path.join(io, 'stdout'), err = path.join(io, 'stderr'), inp = path.join(io, 'stdin');
+    if (input) fs.writeFileSync(inp, input);
+    const fds = [input ? fs.openSync(inp, 'r') : 'ignore', fs.openSync(out, 'w'), fs.openSync(err, 'w')];
+    const env = { PATH: [toolchainDir, ...SYSTEM_PATH].join(':'), HOME: home, TMPDIR: home, LANG: 'C.UTF-8', GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1', GIT_NO_REPLACE_OBJECTS: '1', PYTHONDONTWRITEBYTECODE: '1' };
+    // [EXP-E01] Why: refuse changed tools before each invocation. Rejected: end-only hashing (poisoned tools could run first).
+    if (TOOLS.includes(argv[0]) && (!toolchain[argv[0]] || !toolchain[argv[0]].version)) throw new Error(`unresolved toolchain: ${argv[0]}`);
+    for (const [name, t] of Object.entries(toolchain)) if (t && (fs.realpathSync(path.join(toolchainDir, name)) !== t.path || sha256(fs.readFileSync(t.path)) !== t.sha256)) throw new Error(`toolchain changed: ${name}`);
+    const command = toolchain[argv[0]] ? [toolchain[argv[0]].path, ...argv.slice(1)] : argv;
+    const full = sandbox ? [SANDBOX_EXEC, '-p', sandboxProfile([...writable, home]), ...command] : command;
+    let r;
+    try { r = spawnSync(full[0], full.slice(1), { cwd, env, timeout, detached: true, stdio: fds }); }
+    finally { for (const fd of fds) if (typeof fd === 'number') fs.closeSync(fd); }
+    if (r.pid) { try { process.kill(-r.pid, 'SIGKILL'); } catch { /* the group is already gone */ } }
+    const result = { status: r.status, signal: r.signal, error: r.error, stdout: fs.readFileSync(out), stderr: fs.readFileSync(err) };
+    removeDir(io);
+    removeDir(home);
+    return result;
+  };
+}
+
+// ---------------------------------------------------------------- the evaluator's records
+
+/** A content-addressed directory the evaluator writes its own records into; put(bytes | string | value) -> sha256. Each object is
+ * made read-only once written, and put.written holds every hash this run wrote, so a deleted object is noticed (RULINGS Q75i). */
+function writeStore(dir) {
+  fs.mkdirSync(dir, { recursive: true });
+  const written = new Set();
+  const put = value => {
+    const bytes = Buffer.isBuffer(value) ? value : Buffer.from(typeof value === 'string' ? value : JSON.stringify(value));
+    const h = sha256(bytes), file = path.join(dir, h);
+    if (!fs.existsSync(file)) { fs.writeFileSync(file, bytes); fs.chmodSync(file, 0o444); }
+    written.add(h);
+    return h;
+  };
+  put.written = written;
+  put.dir = dir;
+  return put;
+}
+
+/**
+ * Every entry under root except directories, sorted: [path, kind, sha256, mode] with kind f (file bytes), l (symlink text) or x
+ * (anything else), mode the permission bits (RULINGS Q75e). It uses lstat and never descends into a symlinked directory; outside
+ * lists every symlink whose target resolves outside root, lexically or through the filesystem (V-E01 F3, F10). Paths in exclude
+ * (BUILD_SPEC.installMetadataExclusions, Q71a) are left out.
+ */
+function walkTree(root, exclude = []) {
+  const real = fs.realpathSync(root), entries = [], outside = [], skip = new Set(exclude);
+  const visit = rel => {
+    for (const d of fs.readdirSync(path.join(real, rel), { withFileTypes: true })) {
+      const r = rel ? `${rel}/${d.name}` : d.name, abs = path.join(real, r);
+      if (skip.has(r)) continue;
+      const st = fs.lstatSync(abs);
+      if (st.isSymbolicLink()) {
+        const text = fs.readlinkSync(abs, { encoding: 'buffer' });
+        entries.push([r, 'l', sha256(text), (st.mode & 0o7777).toString(8)]);
+        let resolved = null;
+        try { resolved = fs.realpathSync(abs); } catch { resolved = null; }
+        if (!isInside(real, path.resolve(path.dirname(abs), text.toString())) || (resolved !== null && !isInside(real, resolved))) outside.push(r);
+      } else if (st.isDirectory()) { entries.push([r, 'd', sha256(''), (st.mode & 0o7777).toString(8)]); visit(r); }
+      else entries.push([r, st.isFile() ? 'f' : 'x', st.isFile() ? sha256(fs.readFileSync(abs)) : sha256(Buffer.from(String(st.mode))), (st.mode & 0o7777).toString(8)]);
+    }
+  };
+  visit('');
+  return { entries: entries.sort((a, b) => cmpStr(a[0], b[0])), outside: outside.sort() };
+}
+export const runtimeListing = entries => entries.map(([p, k, h, m]) => `${h}  ${k} ${m} ${p}\n`).join('');
+
+/**
+ * The execution identity of one build instance (qualificationRun.executionIdentity, RULINGS Q67b, Q71a, Q71b, Q75d, Q75e): the
+ * source tree label, the build spec hash, the lockfile, the toolchain (each tool by path, sha256 and version), runnerSha256 over
+ * the whole post-build checkout (every file's bytes and mode and every link's text; install metadata excluded) and configSha256,
+ * which is null: no engine configuration is applied offline, so the composition's configuration is recorded with each execution
+ * as unbound, never hashed as if applied. Returns the canonical record bytes; its sha256 is the binarySha256 build returns and
+ * A0_REGISTRY records. Rejected: the hash of the declared dist outputs alone (Codex round 8 finding 2).
+ */
+export function executionIdentity({ sourceTreeSha256, buildSpecSha256: specSha, lockfileSha256, toolchain, runner }) {
+  return Buffer.from(canonText({ schema: 'execution-identity/1', sourceTreeSha256, buildSpecSha256: specSha, lockfileSha256: lockfileSha256 ?? null, toolchain, runnerSha256: sha256(runtimeListing(runner)), configSha256: null }));
+}
+
+/**
+ * Re-judge a case-result/2 record (RULINGS Q67i, Q71c): a refusal is REFUSED, any other oracle failure FAIL, otherwise the declared
+ * comparator on the retained raw expected and observed objects (recompute). No comparator is plain byte equality; CMP-EXACT-VALUE
+ * compares the canonical values, and hash equality applies only to case-result/1 documents (Q75j).
+ */
+export function caseResultVerdict(rec, store) {
+  if (rec.oracleExit === 2 || rec.oracleCode === 'X-NOT-MODELED') return 'REFUSED';
+  if (rec.oracleExit !== 0 || rec.oracleCode !== null) return 'FAIL';
+  const e = store.get(rec.expectedSha256), o = store.get(rec.observedSha256);
+  return e.ok && o.ok ? recompute(rec.comparator, e.bytes, o.bytes) : 'FAIL';
+}
+
+/** The offline stand-in for step 3: the evaluator-built system under test run locally with the build spec's run argv, through the
+ * run's child runner (fresh HOME, pinned PATH, own process group, writes confined to its checkout). Its observations make the run
+ * DIAGNOSTIC (RUN-NOT-ON-GATE) whatever they show. */
+export function localSut(spec) {
+  return ({ dir, casePath, mode, runChild }) => {
+    const r = runChild(fill(spec.run, { case: casePath, mode }), { cwd: dir, writable: [dir], label: 'sut' });
+    return { exit: r.status ?? -1, stdout: r.stdout, stderr: r.stderr };
+  };
+}
+
+/** Step 3 as far as it exists: gate.mjs OBL --dry-run checks the lane and the registered slot and echoes the plan. */
+export function gateDryRun(workDir, runChild) {
+  if (!runChild) throw new Error('gateDryRun requires the run-bound child runner');
+  return plan => {
+    const file = path.join(workDir, 'gate-plan.json');
+    fs.writeFileSync(file, JSON.stringify(plan, null, 2) + '\n');
+    // [EXP-E01] Why: the gate uses the same recorded toolchain and per-child environment. Rejected: inherited HOME/PATH.
+    const argv = ['node', QUALIFY.gate, 'OBL', '--lane', String(plan.lane), '--slot', String(plan.slot), '--dry-run', '--plan', file];
+    const r = runChild(argv, { cwd: EVALUATOR_ROOT, writable: [workDir], timeout: 60_000, label: 'gate' });
+    let out = null;
+    try { out = JSON.parse(r.stdout); } catch { out = null; }
+    return r.status === 0 && isObj(out) ? { ok: true, ...out } : { ok: false, error: `${r.stderr?.length ? r.stderr : r.stdout}`.trim().slice(0, 400) };
+  };
+}
+
+// ---------------------------------------------------------------- trusted bytes, read before any candidate process (Q75b)
+
+/** Every tracked entry of a commit with its bytes, each blob checked against its tree entry's object id (RULINGS Q75b). */
+function snapshotCommit(git, commit, cache) {
+  const tree = git.tree(commit);
+  if (!tree) return null;
+  const blobs = git.objects(tree.filter(e => e.type === 'blob').map(e => e.oid), cache);
+  const files = new Map();
+  for (const e of tree) {
+    if (e.type === 'blob') { const b = blobs.get(e.oid); if (!b) return null; files.set(e.path, { mode: e.mode, bytes: b, sha256: sha256(b) }); }
+    else if (e.type === 'commit') files.set(e.path, { mode: e.mode, bytes: null, sha256: null });
+  }
+  return { commit, files };
+}
+/** Write a snapshot as a checkout: files with their git mode (0644 or 0755, set explicitly, not by umask), links with their text,
+ * a submodule as an empty directory (as git archive writes it). No filter, attribute or export rule applies. */
+function writeCheckout(snap, dir) {
+  for (const [p, f] of snap.files) {
+    const abs = path.join(dir, p);
+    fs.mkdirSync(path.dirname(abs), { recursive: true });
+    if (f.mode === '120000') fs.symlinkSync(f.bytes, abs);
+    else if (f.mode === '160000') fs.mkdirSync(abs, { recursive: true });
+    else { fs.writeFileSync(abs, f.bytes); fs.chmodSync(abs, f.mode === '100755' ? 0o755 : 0o644); }
+  }
+}
+/** pinnedFileProblems over a snapshot: each pinned file a regular blob with the pinned sha256; a key ending in "/" pins the listing
+ * hash of the directory's tracked files (VA6). */
+function snapshotPinProblems(snap, map) {
+  const out = [];
+  for (const p of Object.keys(map).filter(k => !k.endsWith('/'))) { const f = snap.files.get(p); if (!f || f.mode === '120000' || f.mode === '160000' || f.sha256 !== map[p]) out.push(`${p} hashes to ${f?.sha256 ?? null}, pinned ${map[p]}`); }
+  for (const dir of Object.keys(map).filter(k => k.endsWith('/'))) {
+    const listed = [...snap.files.keys()].filter(p => p.startsWith(dir)).sort();
+    const actual = listed.length ? listingHash(listed.map(p => [p, snap.files.get(p).sha256])) : null;
+    if (actual !== map[dir]) out.push(`directory ${dir} hashes to ${actual}, pinned ${map[dir]}`);
+  }
+  return out;
+}
+
+/**
+ * Read, hash and copy everything the run trusts before the first candidate process runs (RULINGS Q75b; V-E01 F2): the claimed
+ * commit's and the A0 commit's trees (every blob checked against its object id), the case manifests and inputs of every obligation
+ * the run may execute, and every oracle's files, copied into a read-only directory of their own (pinned files from the claimed
+ * commit once they hash to the pin; an unpinned COMPILED oracle's runner files from the authority). Nothing is read from git after
+ * this: a request the run did not prepare is refused, never read late.
+ */
+function prepareTrusted({ git, commit, authority, authorityRef, contract, ctx, obligations, a0Commit, why, iso }) {
+  const cache = new Map(), snapshots = new Map();
+  for (const c of [commit, a0Commit].filter(Boolean)) if (!snapshots.has(c)) { const s = snapshotCommit(git, c, cache); if (s) snapshots.set(c, s); else why('SNAPSHOT-FAILED', `the tree of ${c} could not be read with every blob matching its object id (RULINGS Q75b)`); }
+  const snap = snapshots.get(commit), manifests = new Map(), inputs = new Map();
+  for (const set of new Set(obligations.flatMap(o => o.cases.map(c => c.set)))) {
+    const cs = own(contract.caseSets, set), f = isObj(cs) && safePath(cs.manifest) ? snap?.files.get(cs.manifest) : null;
+    const bytes = f?.bytes ?? null;
+    manifests.set(set, bytes);
+    let cases = [];
+    try { cases = bytes ? JSON.parse(bytes.toString('utf8')).cases : []; } catch { cases = []; }
+    for (const x of Array.isArray(cases) ? cases : []) if (isObj(x) && safePath(x.input)) { const b = snap?.files.get(x.input); if (b?.bytes && b.mode !== '120000') inputs.set(x.input, b.bytes); }
+  }
+  const oracles = new Map();
+  for (const x of new Set(obligations.flatMap(o => o.oracles))) {
+    const pin = own(ctx.pins, x), runner = own(ctx.cfg.oracleRunners, x);
+    let files = null, pinCommit = null, from = null;
+    if (!isObj(runner) || !strList(runner.argv)) why('ORACLE-NO-RUNNER', `the contract's oracleRunners give no argv for ${x} (RULINGS Q61c)`);
+    else if (isObj(pin?.sha256)) {
+      if (pin.acceptReceipt == null || !Object.values(pin.sha256).every(sha) || Object.keys(pin.sha256).some(p => p.endsWith('/') || !safePath(p))) why('ORACLE-UNPINNED', `${x} has no accepted per-file pin, so its expected answers cannot be computed from pinned code (RULINGS Q37b, Q55a)`);
+      else if (!snap) why('ORACLE-FILES', `${x}: the claimed commit's tree was not read`);
+      else { const problems = snapshotPinProblems(snap, pin.sha256); for (const p of problems) why('ORACLE-FILES', `${x} at ${commit}: ${p} (VA6)`); if (!problems.length) { files = Object.keys(pin.sha256).map(p => [p, snap.files.get(p).bytes, pin.sha256[p]]); pinCommit = str(pin.commit) ? pin.commit : commit; from = commit; } }
+    } else if (!pin && ctx.oracles[x]?.status === 'COMPILED' && strList(runner.files) && runner.files.every(safePath)) {
+      const read = runner.files.map(p => [p, git.blob(authority, p)]);
+      if (read.some(([, b]) => !b)) why('ORACLE-FILES', `${x}: a runner file is missing at ${authorityRef}, or its blob does not match its object id (RULINGS Q75b)`);
+      else { files = read.map(([p, b]) => [p, b, sha256(b)]); pinCommit = authority; from = authority; }
+    } else why('ORACLE-UNPINNED', `${x} is ${ctx.oracles[x]?.status ?? 'unknown'}, has no per-file pin, and its runner names no files to run from ${authorityRef} (RULINGS Q59e, Q61c)`);
+    let out = null;
+    if (files) {
+      const dir = iso(`oracle-${x}`);
+      for (const [p, b] of files) { fs.mkdirSync(path.dirname(path.join(dir, p)), { recursive: true }); fs.writeFileSync(path.join(dir, p), b); }
+      setReadOnly(dir, true);
+      out = { dir, argv: runner.argv, runner, pinCommit, from, expect: runtimeListing(walkTree(dir).entries) };
+    }
+    oracles.set(x, out);
+  }
+  return { snapshots, manifests, inputs, oracles };
+}
 
 /**
  * The lab's executor for admitCore (QUALIFICATION_RUN steps build, resolve, execute, expect, compare, control, record). Every
- * value it returns comes from the evaluator's own work; the claim supplies only kind, obligations, commit, tree label and
- * composition.
- *   build(tree, commit)        a new instance per call: a fresh git archive of commit in its own directory, verified against the
- *                              tree, built with the contract's buildSpec in its own process group; returns the instance's
- *                              execution identity (executionIdentity), and writes build-manifest/2 and execution-identity/1
- *   manifest(set) / input(p)   the case-set manifest and a case input at the claimed commit (admitCore checks both hashes)
- *   oracle(orc, commit, raw)   the pinned oracle's files only, copied once into an evaluator-owned read-only directory and
- *                              re-listed and re-hashed against the pin immediately before every invocation; the answer follows
- *                              oracleAnswerRule (canonical JSON; answerMembers for O-REPLAY)
- *   sut(binary, comp, x, mode) offline: the instance with that execution identity, re-hashed whenever another instance ran
- *                              in between, run locally in its own process group; through the gate: not yet (null)
+ * value it returns comes from the evaluator's own work and from bytes prepareTrusted read before any candidate process ran; the
+ * claim supplies only kind, obligations, commit, tree label and composition.
+ *   build(tree, commit)        a new instance per call: the prepared tree of commit written into a fresh directory, built with the
+ *                              contract's buildSpec as a child (fresh HOME, pinned PATH, own process group, writes confined to its
+ *                              checkout); a symlink resolving outside the checkout is refused; returns the instance's execution
+ *                              identity and writes build-manifest/2 and execution-identity/1
+ *   manifest(set) / input(p)   the prepared manifest and case input bytes (admitCore checks both hashes)
+ *   oracle(orc, commit, raw)   the oracle's read-only copy, re-listed and re-hashed before every invocation, run as a child with
+ *                              no writable directory but its HOME; oracleAnswerRule decides the answer; one oracle-invocation/1 each
+ *   sut(binary, comp, x, mode) offline: the instance with that execution identity, re-hashed whenever another instance ran in
+ *                              between, run as a child; through the gate: not yet (null)
  *   compare(cmp, exp, obs)     the declared comparator (recompute); writes case-result/2, re-judged the same way (Q67i)
  *   witness(...)               no fault injector exists, so no fault-witness/1: null (a faultPoint case fails closed)
- *   workload(o)                the evaluator's workload from the frozen trace (CR-NS and CR-GS only)
+ *   workload(o)                the evaluator's workload from the frozen trace (CR-NS and CR-GS only; no slot, Q67g)
  *   measure_pair(...)          no PAIR_0 paired-rounds runner exists: null (a CR-NS or CR-GS comparison fails closed)
- *
- * Isolation offline (RULINGS Q67e): each checkout, the children's HOME and TMPDIR, the case inputs and each oracle copy is its
- * own random mkdtemp directory under isolationRoot, apart from the evidence store (workDir); oracle copies and evidence objects
- * are read-only; every child's process group is killed when it exits; checkouts, inputs and oracle copies are re-hashed before
- * use, and the evaluator's own files and the evidence store at the end. Still unprotected offline, and so never QUALIFIED: a
- * same-user process that escapes its group (setsid) and searches the filesystem can still change bytes between a check and their
- * use, or make a directory writable again; network access is open. The executing gate's containers close that (EXP-G03).
  */
-function labExecutor({ git, commit, authority, authorityRef, contract, ctx, spec, slots, loadContract, claim, workDir, isolationRoot, sut, why, run }) {
-  const put = writeStore(path.join(workDir, 'objects'));
-  run.objects = path.join(workDir, 'objects');
-  const iso = prefix => { const d = fs.mkdtempSync(path.join(isolationRoot, `tx2-${prefix}-`)); run.isolation.push(d); return d; };
-  const home = iso('home'), inputsDir = iso('inputs');
-  const instances = [], byIdentity = new Map(), inputFiles = new Map(), oracleRoots = new Map(), answers = new Map(), repCount = new Map();
-  const specSha256 = sha256(canonText(spec));
-  const toolchain = toolchainOf(spec);
-  let lastInstance = null, current = { o: null }, last = null, lastAnswer = null;
+function labExecutor({ commit, contract, ctx, spec, slots, loadContract, claim, pre, put, iso, runChild, toolchain, sut, why, run }) {
+  const instances = [], byIdentity = new Map(), inputFiles = new Map(), answers = new Map(), repCount = new Map();
+  const specSha = buildSpecSha256(spec), exclusions = Array.isArray(spec?.installMetadataExclusions) ? spec.installMetadataExclusions.filter(safePath) : [];
+  const inputsDir = iso('inputs');
+  let current = { o: null }, last = null, lastAnswer = null;
   ctx.onRun = (o, binary) => { current = { o, binary }; };
   // A case input is copied once into the evaluator's input directory and re-hashed before every use.
   const inputPath = raw => {
@@ -984,22 +1243,23 @@ function labExecutor({ git, commit, authority, authorityRef, contract, ctx, spec
   const ev = {
     slots: [...new Set(Object.values(isObj(slots?.slots) ? slots.slots : {}).flatMap(l => isObj(l) ? Object.keys(l) : []))],
     build(tree, c) {
-      const resolved = str(c) && COMMIT.test(c) ? git.resolve(c) : null;
-      if (resolved !== c || sourceTreeIdOf(git.treeOf(c)) !== tree) { why('BUILD-REFUSED', `tree ${tree} is not the clean label of a commit ${c} in this repository; the evaluator builds only a commit's own tree (RULINGS Q55a step 1)`); return null; }
+      const snap = pre.snapshots.get(c);
+      if (!snap || pre.labels.get(c) !== tree) { why('BUILD-REFUSED', `tree ${tree} at ${c} is not a tree the run read before its first candidate process (the claimed commit or the A0 entry's, under its clean label; RULINGS Q55a step 1, Q75b)`); return null; }
       if (!strList(spec?.argv) || !Array.isArray(spec?.outputs) || !spec.outputs.length || !spec.outputs.every(p => safePath(p.replace(/\/$/, '')))) { why('BUILD-SPEC', 'the contract\'s buildSpec argv or outputs are not usable (RULINGS Q61f)'); return null; }
       // Q67b: every build call is its own instance, in its own directory; nothing is shared with another instance.
-      const n = instances.length;
-      const dir = iso(`build${n}-${c.slice(0, 12)}`);
-      execFileSync('tar', ['-x', '-f', '-', '-C', dir], { input: git.archive(c), maxBuffer: 1 << 30 });
-      const differ = checkoutProblems(git, c, dir);
-      if (differ.length) { why('CHECKOUT-MISMATCH', `${c}: the archive differs from the tree at ${differ.slice(0, 5).join(', ')} (export-ignore or export-subst attributes?)`); return null; }
+      const n = instances.length, dir = iso(`build${n}-${c.slice(0, 12)}`);
+      writeCheckout(snap, dir);
+      // [EXP-E01] Why: reject external source links before the build can read them. Rejected: post-build detection (already executed).
+      if (walkTree(dir).outside.length) { why('BUILD-LINK-OUTSIDE', `${c}: source checkout contains an outside symlink`); return null; }
       // build-manifest/2 inputs: every tracked file of each built package (the output's parent of dist/), the lockfile and the
-      // root package.json, read from the side's commit (RULINGS Q61f).
+      // root package.json, from the prepared tree (RULINGS Q61f, Q65d).
       const pkgs = [...new Set(spec.outputs.map(p => p.replace(/\/$/, '').replace(/\/?dist$/, '')).filter(Boolean))];
-      const inputList = [...new Set([...(git.list(c, pkgs) ?? []), ...['pnpm-lock.yaml', 'package.json'].filter(f => git.blob(c, f))])].sort();
-      const inputHashes = git.blobHashes(c, inputList);
-      const b = runIsolated(spec.argv, { cwd: dir, env: childEnv(home), timeout: 1_800_000, scratch: home });
+      const inputList = [...snap.files.keys()].filter(p => snap.files.get(p).sha256 && (pkgs.some(k => p.startsWith(`${k}/`)) || p === 'pnpm-lock.yaml' || p === 'package.json')).sort();
+      const b = runChild(spec.argv, { cwd: dir, writable: [dir], timeout: 1_800_000, label: `build${n}` });
       if (b.status !== 0) { why('BUILD-FAILED', `${c}: ${spec.argv.join(' ')} exited ${b.status ?? b.signal}: ${b.stderr.toString('utf8').trim().slice(-300)}`); return null; }
+      // [EXP-E01] Why: never read output symlinks before refusing them. Rejected: collecting modules before the safe walk.
+      const walk = walkTree(dir, exclusions);
+      if (walk.outside.length) { why('BUILD-LINK-OUTSIDE', `${c}: ${walk.outside.join(', ')} resolves outside the checkout`); return null; }
       const files = [];
       for (const out of spec.outputs.map(p => p.replace(/\/$/, ''))) {
         const abs = path.join(dir, out);
@@ -1012,52 +1272,57 @@ function labExecutor({ git, commit, authority, authorityRef, contract, ctx, spec
       }
       const modules = [...new Set(files)].sort().map(p => ({ path: p, sha256: put(fs.readFileSync(path.join(dir, p))) }));
       if (!modules.length) { why('BUILD-OUTPUTS', `${c}: the build produced no files under ${spec.outputs.join(', ')}`); return null; }
-      const runtime = walkTree(dir);
-      const lock = runtime.find(e => e[0] === 'pnpm-lock.yaml');
-      const identityBytes = executionIdentity({ sourceTreeSha256: tree, buildSpecSha256: specSha256, lockfileSha256: lock?.[2], toolchain, runtime, dist: modules.map(x => [x.path, x.sha256]) });
+      const lock = walk.entries.find(e => e[0] === 'pnpm-lock.yaml');
+      const identityBytes = executionIdentity({ sourceTreeSha256: tree, buildSpecSha256: specSha, lockfileSha256: lock?.[2], toolchain: toolchainIdentity(toolchain, spec), runner: walk.entries });
       const identity = put(identityBytes);
-      put(runtimeListing(runtime));
-      const manifest = put({ schema: 'build-manifest/2', sourceTreeSha256: tree, binarySha256: identity, modules, inputs: inputList.map(p => ({ path: p, sha256: inputHashes.get(p) })), buildSpecSha256: specSha256 });
-      const rec = { n, commit: c, dir, identity, runtime, manifest, tampered: false };
+      const runnerSha256 = put(runtimeListing(walk.entries));
+      const manifest = put({ schema: 'build-manifest/2', sourceTreeSha256: tree, binarySha256: identity, modules, inputs: inputList.map(p => ({ path: p, sha256: snap.files.get(p).sha256 })), buildSpecSha256: specSha });
+      const rec = { n, commit: c, dir, identity, runtime: walk.entries, manifest, tampered: false };
       instances.push(rec);
-      // Two instances with one identity have byte-identical runtimes (same tree, spec, toolchain and every file), so either
+      // Two instances with one identity have byte-identical checkouts (same tree, spec, toolchain, every file and mode), so either
       // executes the same code; the first one serves both.
       if (!byIdentity.has(identity)) byIdentity.set(identity, rec);
-      const summary = { instance: n, commit: c, sourceTreeSha256: tree, binarySha256: identity, distSha256: JSON.parse(identityBytes.toString()).distSha256, runtimeFiles: runtime.length,
+      const summary = { instance: n, commit: c, sourceTreeSha256: tree, binarySha256: identity, runnerSha256, distSha256: listingHash(modules.map(x => [x.path, x.sha256])), runtimeFiles: walk.entries.length,
         buildManifestSha256: manifest, modules: modules.length, inputs: inputList.length, checkout: dir };
       run.instances.push(summary);
       run.builds[c] = summary;
       return identity;
     },
-    manifest(set) {
-      const cs = own(contract.caseSets, set);
-      return isObj(cs) && safePath(cs.manifest) ? git.blob(commit, cs.manifest) : null;
-    },
+    manifest(set) { return pre.manifests.get(set) ?? null; },
     input(p) {
-      const b = safePath(p) ? git.blob(commit, p) : null;
-      if (!b) why('CASE-INPUT', `case input ${p} is not a file at ${commit}`);
+      const b = pre.inputs.get(p) ?? null;
+      if (!b) why('CASE-INPUT', `case input ${p} is not a file at ${commit} (or was not named by a manifest the run read before its first candidate process)`);
       return b;
     },
     oracle(orc, pinCommit, raw) {
       const key = `${orc}\u0000${Buffer.isBuffer(raw) ? sha256(raw) : ''}`;
       if (answers.has(key)) return (lastAnswer = answers.get(key));
-      const root = Buffer.isBuffer(raw) ? oracleRoot(orc) : null;
+      const root = Buffer.isBuffer(raw) ? pre.oracles.get(orc) ?? null : null;
       let a = null;
       if (root && verifyOracleCopy(orc, root)) {
         const casePath = inputPath(raw);
         if (casePath) {
-          const r = runIsolated(fill(root.argv, { case: casePath }), { cwd: root.dir, env: childEnv(home), scratch: home });
+          // O-DOMAIN (0.3.10 decodedInputArgv): a case carrying inputBase64 is decoded and fed on stdin with the case's op.
+          let doc = null;
+          try { doc = JSON.parse(raw.toString('utf8')); } catch { doc = null; }
+          const decoded = strList(root.runner.decodedInputArgv) && isObj(doc) && typeof doc.inputBase64 === 'string' && str(doc.op);
+          const argv = decoded ? fill(root.runner.decodedInputArgv, { op: doc.op }) : fill(root.argv, { case: casePath });
+          const r = runChild(argv, { cwd: root.dir, writable: [], label: `oracle-${orc}`, input: decoded ? Buffer.from(doc.inputBase64, 'base64') : null });
           const exit = r.status ?? -1, stderr = r.stderr, stdout = r.stdout;
           // oracleAnswerRule (Q45b, Q47a, Q61c): exit 2 or X-NOT-MODELED on either stream is a refusal; any other nonzero exit is an
           // oracle error; on exit 0 stdout is one canonical JSON document, and the answer is its answerMembers (O-REPLAY:
-          // commandOutcomes, state, queries) or, for an oracle without answerMembers, the whole document.
+          // commandOutcomes, state, queries) or, for an oracle whose answerMembers are null, the whole document.
           const refused = exit === 2 || stderr.includes('X-NOT-MODELED') || stdout.includes('X-NOT-MODELED');
-          const doc = !refused && exit === 0 ? canonicalAnswer(trimNl(stdout)) : { ok: false };
+          const parsed = !refused && exit === 0 ? canonicalAnswer(trimNl(stdout)) : { ok: false };
           const members = own(ctx.answerMembers, orc);
-          const answer = doc.ok && Array.isArray(members) ? (isObj(doc.value) && members.every(k => has(doc.value, k)) ? Buffer.from(canonText(Object.fromEntries(members.map(k => [k, doc.value[k]])))) : null) : doc.ok ? trimNl(stdout) : null;
+          const answer = parsed.ok && Array.isArray(members) ? (isObj(parsed.value) && members.every(k => has(parsed.value, k)) ? Buffer.from(canonText(Object.fromEntries(members.map(k => [k, parsed.value[k]])))) : null) : parsed.ok ? trimNl(stdout) : null;
           a = refused ? { exit, code: 'X-NOT-MODELED', output: null } : exit !== 0 || !answer ? { exit, code: 'X-ORACLE-ERROR', output: null } : { exit: 0, code: null, output: answer };
           if (a.code) why(refused ? 'CASE-REFUSED' : 'ORACLE-ERROR', `oracle ${orc} on input ${sha256(raw)}: exit ${exit} ${a.code}${exit === 0 && !refused ? ' (stdout is not one canonical JSON document with the answer members)' : ''}: ${stderr.toString('utf8').trim().slice(0, 200)} (RULINGS Q45b, Q47a, Q61c)`);
-          run.oracle.push({ oracle: orc, inputSha256: sha256(raw), exit, code: a.code, outputSha256: put(a.output ?? stderr) });
+          // oracle-invocation/1 (Q71b): the runtime that ran it, because an answer can depend on it.
+          const tool = toolchain[argv[0]] ?? null;
+          const invocation = put({ schema: 'oracle-invocation/1', oracle: orc, pinCommit: root.pinCommit, argvSha256: sha256(canonText(decoded ? root.runner.decodedInputArgv : root.argv)), runtime: tool ? `${tool.version} (${tool.path}, sha256 ${tool.sha256})` : String(argv[0]),
+            inputSha256: sha256(raw), exit, outputSha256: put(stdout) });
+          run.oracle.push({ oracle: orc, inputSha256: sha256(raw), exit, code: a.code, outputSha256: put(a.output ?? stderr), invocationSha256: invocation });
           a = { ...a, oracle: orc, inputSha256: sha256(raw) };
         }
       }
@@ -1071,36 +1336,32 @@ function labExecutor({ git, commit, authority, authorityRef, contract, ctx, spec
       const rep = repCount.get(k) ?? 0;
       repCount.set(k, rep + 1);
       last = { instance: b?.n ?? null, build: b?.commit ?? null, binary, comp, x, mode, rep, observed: null };
-      const raw = isObj(x) && safePath(x.input) ? git.blob(commit, x.input) : null;
+      const raw = isObj(x) && safePath(x.input) ? pre.inputs.get(x.input) ?? null : null;
       if (!b || !raw || sha256(raw) !== own(x, 'contentSha256') || !sut) return null;
-      // Q67e: an instance is re-hashed (its whole runtime) whenever another instance or process ran since it last did, and an
-      // instance whose bytes changed is never run again.
-      if (lastInstance !== b) {
-        const now = runtimeListing(walkTree(b.dir));
-        if (now !== runtimeListing(b.runtime)) { b.tampered = true; why('BUILD-TAMPERED', `instance ${b.n} (${b.commit}): its checkout changed after the evaluator built it (RULINGS Q67b, Q67e)`); }
-        lastInstance = b;
-      }
+      // [EXP-E01] Why: same-instance mutations must fail too. Rejected: hashing only on instance switches (last-case edits escaped).
+      verifyBuild(b);
       if (b.tampered) return null;
       const casePath = inputPath(raw);
       if (!casePath) return null;
-      const seen = sut({ dir: b.dir, home, scratch: home, casePath, mode, instance: b.n });
+      const seen = sut({ dir: b.dir, casePath, mode, instance: b.n, runChild });
       last.observed = seen.exit === 0 ? trimNl(seen.stdout) : null;
       last.exit = seen.exit;
       return last.observed;
     },
     compare(cmp, exp, obs) {
-      // Q67i: the declared comparator decides, on the raw objects retained below; byte equality only for CMP-EXACT-VALUE.
+      // Q67i: the declared comparator decides, on the raw objects retained below.
       const v = Buffer.isBuffer(exp) && Buffer.isBuffer(obs) ? recompute(cmp, exp, obs) : 'FAIL';
       const expectedSha256 = Buffer.isBuffer(exp) ? put(exp) : null, observedSha256 = put(Buffer.isBuffer(obs) ? obs : Buffer.from(`X-NO-OBSERVATION${last?.exit != null ? ` exit ${last.exit}` : ''}\n`));
       const o = current.o, x = last?.x;
       const selection = o && isObj(x) ? (o.cases.flatMap(c => c.select).find(t => t === 'all' || t === x.id || (Array.isArray(x.tags) && x.tags.includes(t))) ?? null) : null;
       const rec = o && isObj(x) && expectedSha256 && lastAnswer ? put({ schema: 'case-result/2', obligation: o.id, case: x.id, selection, oracle: lastAnswer.oracle, oracleExit: lastAnswer.exit, oracleCode: lastAnswer.code,
         expectedSha256, observedSha256, mode: last.mode, rep: last.rep, comparator: cmp, inputSha256: x.contentSha256 }) : null;
-      // Q67b: the execution is the instance plus the composition (its configuration hashes) it ran under.
-      const executionSha256 = last?.binary ? sha256(canonText({ binarySha256: last.binary, composition: last.comp ?? null })) : null;
-      run.cases.push({ obligation: o?.id ?? null, instance: last?.instance ?? null, build: last?.build ?? null, executionSha256, case: x?.id ?? null, mode: last?.mode ?? null, rep: last?.rep ?? null,
-        comparator: cmp, verdict: v, expectedSha256, observedSha256, recordSha256: rec });
-      if (v !== 'PASS' && sut) why(v === 'UNCOMPARABLE' ? 'CASE-UNCOMPARABLE' : 'CASE-FAIL', `instance ${last?.instance ?? '?'} (${last?.build ?? '?'}) ${o?.id} ${x?.id} mode ${last?.mode}: ${cmp} ${v}${obs == null ? ` (no observation${last?.exit != null ? `, exit ${last.exit}` : ''})` : ''} (RULINGS Q55a)`);
+      // Q67b, Q75e: an execution is the instance plus the configuration it ran under; offline no engine configuration is applied, so
+      // the composition is recorded as unbound configuration, not hashed as if applied.
+      const executionSha256 = last?.binary ? sha256(canonText({ binarySha256: last.binary, configApplied: false })) : null;
+      run.cases.push({ obligation: o?.id ?? null, instance: last?.instance ?? null, build: last?.build ?? null, executionSha256, configApplied: false, case: x?.id ?? null, mode: last?.mode ?? null, rep: last?.rep ?? null,
+        comparator: cmp, verdict: v, expectedSha256, observedSha256, recordSha256: rec, unboundConfig: last?.comp ?? null });
+      if (v !== 'PASS' && sut) why(v === 'UNCOMPARABLE' ? 'CASE-UNCOMPARABLE' : 'CASE-FAIL', `instance ${last?.instance ?? '?'} (${last?.build ?? '?'}) ${o?.id} ${x?.id} mode ${last?.mode}: ${cmp} ${v}${obs == null ? ` (no observation${last?.exit != null ? `, exit ${last.exit}` : ''})` : ''} (RULINGS Q55a, Q67i)`);
       return v === 'PASS';
     },
     witness(oid, binary, comp, x, mode, rep) {
@@ -1113,84 +1374,101 @@ function labExecutor({ git, commit, authority, authorityRef, contract, ctx, spec
         why('TRACE-NOT-FROZEN', `${PATHS.loadContract} writerTrace.generator.frozen (sha256, seed, offerScheduleSha256) or the window is not pinned, so no CR-NS or CR-GS comparison has a workload identity (VA15, RULINGS Q47b, Q61h)`);
         return null;
       }
-      return { generatorSourceSha256: frozen.sha256, seed: frozen.seed, offerScheduleSha256: frozen.offerScheduleSha256, window: [w.warmupS, w.warmupS + w.perLadderLevelS], slot: claim.composition.source.slot };
+      // 0.3.10 (Q67g): the shared workload identity has no slot; each arm's placement is in the paired measurement.
+      return { generatorSourceSha256: frozen.sha256, seed: frozen.seed, offerScheduleSha256: frozen.offerScheduleSha256, window: [w.warmupS, w.warmupS + w.perLadderLevelS] };
     },
     measure_pair() {
-      why('PAIRED-NOT-RUN', 'the PAIR_0 paired-rounds measurement of the candidate against A0 (two identically configured registered slots, the NS gate) has no runner in this evaluator yet (RULINGS Q60, Q61g)');
+      why('PAIRED-NOT-RUN', 'the PAIR_0 paired-rounds measurement of the candidate against A0 (two registered slots with disjoint, equal cpusets, the NS gate) has no runner in this evaluator yet (RULINGS Q60, Q61g, Q67f, Q67g)');
       return null;
     },
   };
-  // Expected answers come only from the pinned oracle's files, copied into an evaluator-owned read-only directory of their own
-  // (the claimed commit's copies are used only after they hash to the pin); oracleRunners files are used only for an oracle
-  // without a per-file pin, read from the authority, and such an oracle may only be one COMPILED into the contract (Q59e).
-  function oracleRoot(x) {
-    if (oracleRoots.has(x)) return oracleRoots.get(x);
-    const pin = own(ctx.pins, x), runner = own(ctx.cfg.oracleRunners, x);
-    let files = null, from = null;
-    if (!isObj(runner) || !strList(runner.argv)) why('ORACLE-NO-RUNNER', `the contract's oracleRunners give no argv for ${x} (RULINGS Q61c)`);
-    else if (isObj(pin?.sha256)) {
-      if (pin.acceptReceipt == null || !Object.values(pin.sha256).every(sha) || Object.keys(pin.sha256).some(p => p.endsWith('/') || !safePath(p))) why('ORACLE-UNPINNED', `${x} has no accepted per-file pin, so its expected answers cannot be computed from pinned code (RULINGS Q37b, Q55a)`);
-      else { const problems = pinnedFileProblems(git, commit, pin.sha256); for (const p of problems) why('ORACLE-FILES', `${x} at ${commit}: ${p} (VA6)`); if (!problems.length) { files = Object.keys(pin.sha256); from = commit; } }
-    } else if (!pin && ctx.oracles[x]?.status === 'COMPILED' && strList(runner.files) && runner.files.every(safePath)) { files = runner.files; from = authority; }
-    else why('ORACLE-UNPINNED', `${x} is ${ctx.oracles[x]?.status ?? 'unknown'}, has no per-file pin, and its runner names no files to run from ${authorityRef} (RULINGS Q59e, Q61c)`);
-    let out = null;
-    if (files) {
-      const dir = iso(`oracle-${x}`), expect = [];
-      for (const f of files) {
-        const b = git.blob(from, f);
-        if (!b) { why('ORACLE-FILES', `${x}: ${f} is missing at ${from}`); expect.length = 0; break; }
-        fs.mkdirSync(path.dirname(path.join(dir, f)), { recursive: true });
-        fs.writeFileSync(path.join(dir, f), b);
-        expect.push([f, 'f', isObj(pin?.sha256) ? pin.sha256[f] : sha256(b)]);
-      }
-      if (expect.length === files.length) { setReadOnly(dir, true); out = { dir, argv: runner.argv, expect: runtimeListing(expect.sort((a, b) => cmpStr(a[0], b[0]))) }; }
+  function verifyBuild(b) {
+    if (b.tampered) return;
+    const now = walkTree(b.dir, exclusions);
+    if (runtimeListing(now.entries) !== runtimeListing(b.runtime) || now.outside.length) {
+      b.tampered = true;
+      why('BUILD-TAMPERED', `instance ${b.n} (${b.commit}): its checkout changed after the evaluator built it (RULINGS Q67b, Q67e)`);
     }
-    oracleRoots.set(x, out);
-    return out;
   }
-  // Q67e: immediately before every invocation, the oracle copy holds exactly the pinned files with the pinned bytes, and nothing
-  // else (no planted module, no bytecode cache); any change refuses the oracle for the rest of the run.
+  // [EXP-E01] Why: detect even the final execution's edits. Rejected: pre-invocation-only checks (no later invocation).
+  ev.verifyRuntime = () => {
+    for (const b of instances) verifyBuild(b);
+    for (const [x, root] of pre.oracles) if (root) verifyOracleCopy(x, root);
+  };
+  // Q67e: immediately before every invocation, the oracle copy holds exactly the prepared files with their bytes and read-only
+  // modes, and nothing else (no planted module, no bytecode cache); any change refuses the oracle for the rest of the run.
   function verifyOracleCopy(x, root) {
     if (root.broken) return false;
     let now = null;
-    try { now = runtimeListing(walkTree(root.dir)); } catch { now = null; }
+    try { const w = walkTree(root.dir); now = w.outside.length ? null : runtimeListing(w.entries); } catch { now = null; }
     if (now === root.expect) return true;
     root.broken = true;
-    why('ORACLE-TAMPERED', `the evaluator's copy of ${x}'s pinned files changed after it was written; the oracle is not run (RULINGS Q67e)`);
+    why('ORACLE-TAMPERED', `the evaluator's copy of ${x}'s files changed after it was written; the oracle is not run again (RULINGS Q67e)`);
     return false;
   }
   return ev;
 }
 
-/** sha256 of the evaluator's own files (claim.mjs, lib.mjs, gate.mjs), checked at the start and the end of every run (Q67e). */
-const evaluatorFiles = () => Object.fromEntries(['claim.mjs', 'lib.mjs', 'gate.mjs'].map(f => { try { return [f, sha256(fs.readFileSync(path.join(import.meta.dirname, f)))]; } catch { return [f, null]; } }));
-
 /**
  * Qualify a claim by running it (RULINGS Q55a). env = { git: gitSource(repo), authorityRef, workDir, isolationRoot?, sut?:
- * localSut(spec) for an offline run, gate?: (plan) -> result (default gateDryRun) }.
+ * localSut(spec) for an offline run, gate?: (plan) -> result (default gateDryRun), sandbox? (default true: confine children's
+ * writes with sandbox-exec where it works), evaluator?: { repo, rev } (whose commit vouches for the evaluator's files; default the
+ * repository they live in, at HEAD), keepIsolation? }.
  * Returns { verdict, offlineVerdict, reasons, run }. admitCore (the contract's reference model) decides over labExecutor; the
- * verdict is QUALIFIED only from a run whose system under test ran through an executing gate, which does not exist yet, so it
- * is DIAGNOSTIC today. offlineVerdict (offline runs only) is the verdict the run would reach had the local observations come
- * from the gate. run records the build instances, every comparison (with its case-result/2), every oracle run, the gate plan and
- * the evaluator's object store.
+ * verdict is QUALIFIED only from a run whose system under test ran through an executing gate, which does not exist yet, so every
+ * return path is DIAGNOSTIC with GATE-NOT-RUN from the start (Q75i). offlineVerdict (offline runs only) is the verdict the run would
+ * reach had the local observations come from the gate. run records the build instances, every comparison (with its case-result/2),
+ * every oracle invocation, the toolchain, the isolation in force, the gate plan and the evaluator's object store.
  */
 export function qualifyClaim(claim, env) {
   const reasons = [];
   const seen = new Set();
   const why = (code, detail, receipt) => { const k = `${code}\u0000${detail}`; if (!seen.has(k)) { seen.add(k); reasons.push(receipt ? { code, detail, receipt } : { code, detail }); } };
-  const run = { offline: typeof env.sut === 'function', ignored: [], builds: {}, instances: [], cases: [], oracle: [], gate: null, objects: null, core: null, isolation: [] };
-  const own0 = evaluatorFiles();
-  try { runQualification(claim, env, why, run); } catch (error) { why('EVALUATOR-ERROR', `qualification stopped: ${error?.message ?? error} (fail closed)`); }
-  // Q67e: the evaluator's own files and the evidence store are unchanged at the end of the run.
-  const own1 = evaluatorFiles();
-  for (const f of Object.keys(own0)) if (own0[f] !== own1[f]) why('EVALUATOR-TAMPERED', `${f} changed during the run (RULINGS Q67e)`);
-  if (run.objects && fs.existsSync(run.objects)) for (const h of fs.readdirSync(run.objects)) { let ok = false; try { ok = sha256(fs.readFileSync(path.join(run.objects, h))) === h; } catch { ok = false; } if (!ok) why('EVIDENCE-TAMPERED', `evidence object ${h} no longer hashes to its name (RULINGS Q67e)`); }
-  if (!env.keepIsolation) for (const d of run.isolation) { try { setReadOnly(d, false); fs.rmSync(d, { recursive: true, force: true }); } catch { /* left for the OS to collect */ } }
+  const run = { offline: typeof env?.sut === 'function', ignored: [], builds: {}, instances: [], cases: [], oracle: [], gate: null, objects: null, core: null, evaluator: null, toolchain: null, isolation: null, dirs: [] };
+  why('GATE-NOT-RUN', 'step 3: gate.mjs OBL is plan-only (--dry-run); no executing gate runs pinned case manifests on a registered slot yet, so no run is QUALIFIED (RULINGS Q55a, Q75i)');
+  if (run.offline) why('RUN-NOT-ON-GATE', 'the system under test ran locally from the evaluator\'s own build (offline stand-in for step 3), not through the gate on a registered slot');
+  const state = {};
+  try {
+    // Q75a: the evaluator's own files match their blobs at its commit, and no earlier run marked this checkout poisoned.
+    state.integrity = evaluatorIntegrity(env?.evaluator ?? {});
+    run.evaluator = { repo: state.integrity.repo, commit: state.integrity.commit, files: state.integrity.files };
+    if (state.integrity.problems.length) { for (const p of state.integrity.problems) why('EVALUATOR-TAMPERED', `${p}; the run is refused (RULINGS Q75a)`); poison(state.integrity, state.integrity.problems.join('; ')); }
+    else runQualification(claim, env, why, run, state);
+  } catch (error) { why('EVALUATOR-ERROR', `qualification stopped: ${error?.message ?? error} (fail closed)`); }
+  // Q75i: the end checks run inside a try of their own, so an unreadable store or file is a reason, never an exception.
+  try { endChecks(why, run, state); } catch (error) { why('EVALUATOR-ERROR', `the end-of-run checks stopped: ${error?.message ?? error} (fail closed)`); }
+  if (!env?.keepIsolation) for (const d of run.dirs) removeDir(d);
   const blocking = reasons.filter(r => !NOT_ON_GATE.has(r.code));
   return { verdict: reasons.length ? 'DIAGNOSTIC' : 'QUALIFIED', offlineVerdict: run.offline ? (blocking.length ? 'DIAGNOSTIC' : 'QUALIFIED') : null, reasons: summarise(reasons), run };
 }
 
-function runQualification(claim, env, why, run) {
+/** The checks after a run (RULINGS Q67e, Q75a, Q75d, Q75i): the evaluator's files are those it started with (a change poisons the
+ * checkout), the toolchain's files are unchanged, and every evidence object the run wrote is present with its bytes and nothing
+ * else is in the store. */
+function endChecks(why, run, state) {
+  state.verifyRuntime?.();
+  if (state.integrity && !state.integrity.problems.length) {
+    const now = evaluatorBytes(), changed = EVALUATOR_FILES.filter(f => now[f] !== state.integrity.files[f]);
+    if (changed.length) { why('EVALUATOR-TAMPERED', `${changed.join(', ')} changed during the run; the checkout is marked poisoned until restored from git (RULINGS Q75a)`); poison(state.integrity, `${changed.join(', ')} changed during a run`); }
+  }
+  for (const [name, t] of Object.entries(state.toolchain ?? {})) if (t) {
+    let h = null;
+    try { h = sha256(fs.readFileSync(t.path)); } catch { h = null; }
+    if (h !== t.sha256) why('TOOLCHAIN-TAMPERED', `${name} at ${t.path} changed during the run (RULINGS Q75d)`);
+  }
+  const put = state.put;
+  if (put) {
+    for (const h of put.written) {
+      let bytes = null;
+      try { bytes = fs.readFileSync(path.join(put.dir, h)); } catch { bytes = null; }
+      if (bytes === null) why('EVIDENCE-MISSING', `evidence object ${h} the run wrote is gone (RULINGS Q75i)`);
+      else if (sha256(bytes) !== h) why('EVIDENCE-TAMPERED', `evidence object ${h} no longer hashes to its name (RULINGS Q67e)`);
+    }
+    for (const h of fs.readdirSync(put.dir)) if (!put.written.has(h)) why('EVIDENCE-UNEXPECTED', `${h} is in the evidence store but this run did not write it (RULINGS Q75i)`);
+  }
+}
+
+function runQualification(claim, env, why, run, state) {
   const { git } = env;
   const authorityRef = env.authorityRef ?? 'main';
   if (!isObj(claim) || claim.format !== FORMATS.claim) return why('CLAIM-FORMAT', `claim format must be ${FORMATS.claim}`);
@@ -1198,8 +1476,8 @@ function runQualification(claim, env, why, run) {
   // pin or an O-DOMAIN fingerprint (Q55e) in the claim are never read; they are listed so nobody believes they counted.
   run.ignored = Object.keys(claim).filter(k => !CLAIM_FIELDS.includes(k));
   if (!['comparative', 'promotion'].includes(claim.kind)) why('CLAIM-KIND', 'kind must be comparative or promotion');
-  // Q67j (Codex round 8 finding 11): promotion prerequisites (GATE-BROKER-HARDENING for a log-source composition, and the others
-  // a promotion needs) are not enforced mechanically yet, so a promotion claim is never qualified.
+  // Q67j, Q75i (Codex round 8 finding 11): promotion prerequisites (GATE-BROKER-HARDENING for a log-source composition, and the
+  // others a promotion needs) are not enforced mechanically yet, so a promotion claim is never qualified; admitCore says so too.
   if (claim.kind === 'promotion') why('PROMOTION-UNSUPPORTED', 'promotion prerequisites (GATE-BROKER-HARDENING and the others a promotion needs) are not enforced mechanically yet, so promotion qualification is rejected (RULINGS Q62b, Q67j)');
   const commit = str(claim.commit) && COMMIT.test(claim.commit) ? git.resolve(claim.commit) : null;
   if (!commit || commit !== claim.commit) return why('CLAIM-COMMIT', `commit ${JSON.stringify(claim.commit)} is not a full commit id in this repository`);
@@ -1220,24 +1498,41 @@ function runQualification(claim, env, why, run) {
     if (same(entry.composition, comp)) why('CONTROL-IS-CANDIDATE', 'the claimed composition is the A0 control itself');
   }
   fs.mkdirSync(env.workDir, { recursive: true });
-  const isolationRoot = path.resolve(env.isolationRoot ?? os.tmpdir());
-  fs.mkdirSync(isolationRoot, { recursive: true });
-  const ev = labExecutor({ git, commit, authority, authorityRef, contract, ctx, spec: ctx.cfg.buildSpec, slots, loadContract, claim, workDir: env.workDir, isolationRoot, sut: env.sut ?? null, why, run });
+  const isoBase = path.resolve(env.isolationRoot ?? os.tmpdir());
+  fs.mkdirSync(isoBase, { recursive: true });
+  const isolationRoot = fs.realpathSync(isoBase);
+  const iso = prefix => { const d = fs.mkdtempSync(path.join(isolationRoot, `tx2-${prefix}-`)); run.dirs.push(d); return d; };
+  const put = state.put = writeStore(path.join(env.workDir, 'objects'));
+  run.objects = put.dir;
 
-  // -- step 3, as far as it exists: the plan goes through gate.mjs --dry-run, which checks the lane and the registered slot.
+  // -- Q75b, Q75d: everything trusted is read, hashed and copied before the first candidate process: the toolchain, the trees to
+  // build, the manifests and inputs, and the oracle copies.
+  const tools = state.toolchain = resolveToolchain(process.env.PATH ?? '');
+  const toolchainDir = iso('toolchain');
+  for (const [name, t] of Object.entries(tools)) if (t) fs.symlinkSync(t.path, path.join(toolchainDir, name));
+  setReadOnly(toolchainDir, true);
+  run.toolchain = Object.fromEntries(Object.entries(tools).map(([k, t]) => [k, toolRecord(t)]));
+  const sandbox = env.sandbox !== false && sandboxWorks();
+  run.isolation = { root: isolationRoot, sandbox: sandbox ? 'sandbox-exec: writes confined to each child\'s own directories, no network, no mach-lookup, signals inside the sandbox only' : `none (${env.sandbox === false ? 'disabled by the caller' : 'sandbox-exec is not available here'}): detection only`, perChildHome: true, pathPinned: [toolchainDir, ...SYSTEM_PATH].join(':') };
+  const runChild = childRunner({ iso, toolchainDir, toolchain: tools, sandbox });
   const ids = Array.isArray(claim.obligations) ? claim.obligations.filter(i => typeof i === 'string' && ctx.byId.has(i)) : [];
   const claimed = ids.map(i => ctx.byId.get(i));
   const domain = claimed.some(o => o.oracles.includes('O-DOMAIN'));
   const prereq = [PREREQ.position, PREREQ.identity, ...(domain ? [PREREQ.w0] : [])].map(i => ctx.byId.get(i));
+  const a0Commit = isObj(entry) && str(entry.commit) && COMMIT.test(entry.commit) && git.resolve(entry.commit) === entry.commit ? entry.commit : null;
+  const pre = prepareTrusted({ git, commit, authority, authorityRef, contract, ctx, obligations: [...prereq, ...claimed], a0Commit, why, iso });
+  pre.labels = new Map([...pre.snapshots.keys()].map(c => [c, sourceTreeIdOf(git.treeOf(c))]));
+  const ev = labExecutor({ commit, contract, ctx, spec: ctx.cfg.buildSpec, slots, loadContract, claim, pre, put, iso, runChild, toolchain: tools, sut: env.sut ?? null, why, run });
+
+  state.verifyRuntime = ev.verifyRuntime;
+
+  // -- step 3, as far as it exists: the plan goes through gate.mjs --dry-run, which checks the lane and the registered slot.
   const count = o => { const cs = resolveCases(o, ev, ctx.pinned); return cs ? cs.reduce((n, x) => n + o.closure.modes.length * (o.closure.rules.includes('CR-FAULT') && own(x, 'faultPoint') === true ? ctx.faultReps : 1), 0) : 0; };
-  run.gate = (env.gate ?? gateDryRun(env.workDir))({ claimId: claim.claimId ?? null, kind: claim.kind ?? null, commit, lane: comp.source.engine, slot: comp.source.slot,
+  run.gate = (env.gate ?? gateDryRun(env.workDir, runChild))({ claimId: claim.claimId ?? null, kind: claim.kind ?? null, commit, lane: comp.source.engine, slot: comp.source.slot,
     obligations: [...prereq, ...claimed].map(o => o.id), executions: [...prereq, ...claimed].reduce((n, o) => n + count(o), 0) + (entry ? [prereq[0], prereq[1]].reduce((n, o) => n + count(o), 0) : 0) });
   if (!run.gate.ok) why('GATE-SLOT', `gate.mjs refused the plan (lane ${comp.source.engine}, slot ${comp.source.slot}): ${run.gate.error}`);
-  why('GATE-NOT-RUN', 'step 3: gate.mjs OBL is plan-only (--dry-run); no executing gate runs pinned case manifests on a registered slot yet, so no run is QUALIFIED (RULINGS Q55a)');
-  if (run.offline) why('RUN-NOT-ON-GATE', 'the system under test ran locally from the evaluator\'s own build (offline stand-in for step 3), not through the gate on a registered slot');
 
-  // -- the verdict: the contract's reference model over the lab's executor. The claim kind is passed through (Q67j); the
-  // reference ignores it, and the lab rejects promotion above.
+  // -- the verdict: the contract's reference model over the lab's executor, with the claim kind (Q67j, Q75i).
   run.core = admitCore({ kind: claim.kind, obligations: claim.obligations, commit, sourceTreeSha256: claim.sourceTreeSha256, composition: comp }, ev, ctx);
   for (const r of run.core.reasons) why(r.code, r.detail);
   // Lab, stricter than the reference (Q41d): GATE-POSITION covers A0 too (Q38a), so the registry's A0 build must pass its own
@@ -1251,8 +1546,15 @@ function runQualification(claim, env, why, run) {
     if (!isObj(entry)) why('A0-REGISTRY-NULL', `A0_REGISTRY has no entry for source engine ${comp.source.engine}; every comparison is a diagnostic until A0 is frozen (RULINGS Q46b, Q47b)`);
     for (const o of claimed) if (!Object.keys(ctx.verifiers ?? {}).some(v => registeredAcceptance(v, 'obligation', o.id, commit, ctx.verifiers))) why('VERIFIER-UNREGISTERED', `no VERIFIER_REGISTRY entry accepts ${o.id} at ${commit} (RULINGS Q55a)`);
     for (const b of contractBlockers(claimed, prereq, domain, ctx)) why(b.code, b.detail);
+    // Q75c (V-E01 F2, Q59e literally): an oracle is pinned only when the contract lists sha256 for every file it runs; a COMPILED
+    // oracle run from the authority's runner files without such a list leaves every claim that depends on it DIAGNOSTIC.
+    for (const x of new Set([...prereq, ...claimed].flatMap(o => o.oracles))) {
+      const pin = own(ctx.pins, x);
+      if (!(isObj(pin?.sha256) && Object.keys(pin.sha256).length && Object.values(pin.sha256).every(sha) && (ctx.cfg.oracleRunners[x]?.files ?? []).every(f => sha(pin.sha256[f])))) why('ORACLE-RUNNER-UNPINNED', `oracle ${x} has no sha256 for every runner file in the contract${own(own(ctx.cfg.oracleRunners, x), 'files') ? ` (its runner files ${own(own(ctx.cfg.oracleRunners, x), 'files').join(', ')} are run from ${authorityRef} unhashed)` : ''}, so a claim depending on it is DIAGNOSTIC (RULINGS Q59e, Q75c)`);
+    }
   }
 }
+
 // ================================================================ CLI
 
 export function admitFile(file, { repo = REPO, objects = OBJECTS, authorityRef = 'main' } = {}) {
@@ -1262,10 +1564,17 @@ export function admitFile(file, { repo = REPO, objects = OBJECTS, authorityRef =
   return admitClaim(claim, { git: gitSource(repo), objects: objectStore(objects), authorityRef });
 }
 
-const USAGE = 'usage: claim.mjs admit <claim.json> [--repo DIR] [--objects DIR] [--authority-ref main] [--json]\n       claim.mjs qualify <claim.json> [--repo DIR] [--authority-ref main] [--work DIR] [--offline-sut] [--json]';
+const USAGE = 'usage: claim.mjs admit <claim.json> [--repo DIR] [--objects DIR] [--authority-ref main] [--json]\n       claim.mjs qualify <claim.json> [--repo DIR] [--authority-ref main] [--work DIR] [--offline-sut] [--no-sandbox] [--evaluator-repo DIR] [--json]\n       claim.mjs restore-evaluator [--evaluator-repo DIR]';
 if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.meta.filename)) main(async () => {
   const { positional, options } = parseArgs(process.argv.slice(2));
   const [command, file] = positional;
+  if (command === 'restore-evaluator') {
+    // Q75a: the only way to clear a poisoned evaluator checkout is to restore its files from git.
+    const r = restoreEvaluator(options['evaluator-repo'] ? { repo: path.resolve(options['evaluator-repo']) } : {});
+    console.log(r.ok ? `evaluator restored from ${r.commit}` : `evaluator not restored: ${r.problems.join('; ')}`);
+    process.exitCode = r.ok ? 0 : 2;
+    return;
+  }
   if (!['admit', 'qualify'].includes(command) || !file) fail('USAGE', USAGE);
   const repo = path.resolve(options.repo ?? REPO);
   const authorityRef = options['authority-ref'] ?? 'main';
@@ -1279,7 +1588,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.met
     let sut = null;
     // --offline-sut runs the system under test with the contract's buildSpec run argv (the authority's), locally.
     if (options['offline-sut']) { const b = git.resolve(authorityRef) && git.blob(git.resolve(authorityRef), PATHS.contract); try { const s = b ? JSON.parse(b.toString('utf8')).buildSpec : null; sut = strList(s?.run) ? localSut(s) : null; } catch { sut = null; } }
-    result = qualifyClaim(claim, { git, authorityRef, workDir, ...(sut ? { sut } : {}) });
+    result = qualifyClaim(claim, { git, authorityRef, workDir, ...(sut ? { sut } : {}), ...(options['no-sandbox'] ? { sandbox: false } : {}),
+      ...(options['evaluator-repo'] ? { evaluator: { repo: path.resolve(options['evaluator-repo']) } } : {}) });
   }
   if (options.json) process.stdout.write(JSON.stringify(result, null, 2) + '\n');
   else {

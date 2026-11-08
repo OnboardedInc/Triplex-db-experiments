@@ -129,3 +129,37 @@ here). Merged to main as 4591715.
   Q52 shapes (13 Q52a-d, 12 Q52e including the F6 cursor case, 8 Q52f, 7 Q52g in seed 49), none from Q56f.
 - Hash table of 29 files at 3e38a61 matches the author's (12 changed against 0.4.1, equal to git diff --stat). Verifier commit 403afe1 on
   verify/O02; tools lab/verify/O02/tools/probe_q52.py (new), probe_q49.py, probe_035.py, differential.py; results lab/verify/O02/V-O04d/results/.
+
+## V-O04e: O-REPLAY 0.4.3 at 45bfa59: FIX-FIRST, narrow, two cursor-continuation holes (saved by the orchestrator, 2026-11-08 01:33Z)
+- F5 and F6 fixed: in-flight reads list exactly the n + 1 prefixes in position order; `cursorFrom` on an in-flight read is answered per
+  prefix (two-page, three-page and chained continuations keep one prefix across pages). Refusal sites unchanged (entities.py:61, run.py:53,
+  views.py:129). probe_q52 45 probes: 41 MATCH, 2 WRONG (F7, F8), 2 OBSERVED, self-test 16/16; probe_q49 85/85; probe_035 119/119;
+  probe_delta_033 20/20; unit 372/372; self-check 61/61; converter 0 differences on both lanes. Differential against 3e38a61: seed 49, 780
+  cases, 22 different (12 rule label only, 3 Q66a prefix rows, 7 Q66b cursor rows); seed 4949, 800/800 identical; 0 golden or random
+  differences. 29 file hashes match the author's hashes.45bfa59.txt; 13/13 match the oracle's sourceSha256.
+- F7: `run.py` `continued_read` returns the source read only when `len(source["answers"]) > 1`, so a continuation of a read with nothing
+  in flight falls back to its own read view and readStart; a page 2 with an earlier readStart reopens the erased value's old plaintext after
+  page 1 showed the marker. Fix: every `cursorFrom` continuation uses the source read's start, scope and prefixes (drop the `> 1`).
+- F8: a literal cursor token encodes position, valid time, entity type, scope and the `after` id but no prefix, so it is byte-identical in
+  every alternative; with no readStart the continuation is answered after every erasure, and a lane that keeps page 1's all-old prefix is
+  judged wrong. Recommended fix (b): a literal token equal to a `nextCursor` issued earlier in the same case by a read with commits in
+  flight continues that read per prefix (token bytes and cursor vectors unchanged). Both holes existed in 0.4.2.
+- Evidence: verify/O02 4eec2ba; tools probe_q52.py, differential.py, diff_modulo_rule.py (new); results lab/verify/O02/V-O04e/results/.
+- Process note: the orchestrator's scratchpad cleanup removed the 3e38a61 scratch tree after both differential runs had finished; the
+  verifier re-extracted it from git for one re-check. Scratch archives under review stay until their verifier reports.
+
+## V-O04f: O-REPLAY 0.4.5 at acf9fce: implements Q70a-e exactly; two ruling gaps (F9, F10) (saved by the orchestrator, 2026-11-08 01:56Z)
+- probe_q52 with new Q70 rows: 52 probes, 49 MATCH, 0 WRONG, 3 OBSERVED; self-test 21/21; 5 of the new rows fail against 0.4.3, so they
+  separate the versions. Q70e not reachable (erasure never changes entityPage membership, so every prefix issues the same token).
+  Differential against 45bfa59: seed 49, 787 cases, 777 identical, 5 refused by both, 5 different (all cursor-continuation rows, each
+  explained); seed 4949, 800/800 identical. probe_q49 85/85, probe_035 119/119, probe_delta_033 20/20, unit 375/375, self-check 61/61,
+  converters 0 differences on both lanes, refusal sites unchanged, independence holds. 29/29 hashes match hashes.0.4.5.txt; 13/13 match
+  the self-report.
+- F9 (ruling gap from Q70d): in-flight A, then plain B issuing the same token, then a literal-token continuation follows B; A's all-old
+  page (p1 1) joins x's marker page (p2 M), so tx:1 is half-seen across the sequence and a lane that continues A faithfully is judged wrong.
+- F10 (not covered): `transactions(after 0, limit 1)` with a readStart before tx:2 gives two prefixes and next = 1; `transactions(after 1)`
+  with no readStart gives the post-erasure value only, so the all-old page 1 plus page 2 half-sees tx:2.
+- Reach today: no CS-ERASURE required case in contract 0.3.9 uses literal-token or journal-page sequences (ER-CURSOR-MODULO compares modulo
+  markers), so both gaps matter for future cases. Ruled Q70f, Q70g; fixed in 0.4.6 before any pin.
+- Evidence: verify/O02 4fc48af, lab/verify/O02/V-O04f/results/ (at-0.4.3/ for the new rows); scratch tree atacf9fce kept until 0.4.6 is
+  checked.

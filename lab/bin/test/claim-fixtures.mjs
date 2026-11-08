@@ -14,7 +14,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { sha256, sourceTreeIdOf } from '../lib.mjs';
-import { FORMATS, admitClaim, bindingOf, canonText, executionIdentity, gitSource, listingHash, objectStore, toolchainOf } from '../claim.mjs';
+import { FORMATS, admitClaim, bindingOf, canonText, executionIdentity, gitSource, listingHash, objectStore, resolveToolchain, toolchainIdentity, buildSpecSha256 } from '../claim.mjs';
 
 const LAB_REPO = path.resolve(import.meta.dirname, '../../..');
 const real = file => fs.readFileSync(path.join(LAB_REPO, file), 'utf8');
@@ -115,10 +115,15 @@ export const EFFECTIVE_BUILD_SPEC = { ...REAL_CONTRACT.buildSpec, ...FIXTURE_BUI
  * what A0_REGISTRY binarySha256 records and every qualification run must reproduce. Rejected: the dist listing alone, which an
  * alias candidate with A0's dist bytes and another source runner shares (Codex round 8 finding 2).
  */
+const fixtureTools = resolveToolchain();
 export const identityOf = c => {
   const dist = distFiles(c.files);
-  return executionIdentity({ sourceTreeSha256: c.label, buildSpecSha256: sha256(canonText(EFFECTIVE_BUILD_SPEC)), lockfileSha256: h(c.files['pnpm-lock.yaml']), toolchain: toolchainOf(EFFECTIVE_BUILD_SPEC),
-    runtime: [...Object.entries(c.files).map(([p, t]) => [p, 'f', h(t)]), ...dist.map(([p, x]) => [p, 'f', x])].sort(byPath), dist });
+  // [EXP-E01] Why: reproduce the full mode-bound checkout identity. Rejected: dist-only pins (runner aliasing).
+  const entries = [...Object.entries(c.files).map(([p, t]) => [p, 'f', h(t), '644']), ...dist.map(([p, x]) => [p, 'f', x, '644'])];
+  const dirs = new Set();
+  for (const [p] of entries) { let d = path.posix.dirname(p); while (d !== '.') { dirs.add(d); d = path.posix.dirname(d); } }
+  entries.push(...[...dirs].map(p => [p, 'd', h(''), '755']));
+  return executionIdentity({ sourceTreeSha256: c.label, buildSpecSha256: buildSpecSha256(EFFECTIVE_BUILD_SPEC), lockfileSha256: h(c.files['pnpm-lock.yaml']), toolchain: toolchainIdentity(fixtureTools, EFFECTIVE_BUILD_SPEC), runner: entries.sort(byPath) });
 };
 /** Obligations a fixture claim can name; VERIFIER_REGISTRY accepts each at every verified commit. */
 const VERIFIED_OBLIGATIONS = ['NS.P2', 'GS.05', 'G1.decimal.channel-routing', 'G9.erasure.residual-shapes', 'G7.migration.schema-evolution', 'G10.scope.shared-collision'];
@@ -134,6 +139,7 @@ function contractVariant(variant, { a0Commit, a0Label, a0Binary, verified } = {}
     return { files: `${dir}/`, sha256: { [file]: h(SRC[file]) }, acceptReceipt: 'FIXTURE-ACCEPT', verifierEntry: `V-FIX-${id}`, commit: FIX_ORACLE_COMMIT, acceptedAfter: 'fixture', rule: 'fixture pin' }; };
   // The pinned fixture still scopes G1.decimal.channel-routing out, as 0.3.7's pin did, so GEN-EXCLUDED keeps a pin with excludes.
   c.oraclePins['O-REPLAY'] = { ...c.oraclePins['O-REPLAY'], sha256: { 'lab/oracles/replay/cli.py': h(ORACLE_PY) }, acceptReceipt: variant === 'null' ? null : 'FIXTURE-V-O04c', excludes: ['G1.decimal.channel-routing'] };
+  c.oraclePins['O-CONTRACT'] = filePin('O-CONTRACT', 'lab/oracles/contract', 'lab/oracles/contract/cli.py');
   c.oraclePins['O-OBS'] = filePin('O-OBS', 'lab/oracles/obs', 'lab/oracles/obs/obs.py');
   c.oraclePins['O-DOMAIN'] = filePin('O-DOMAIN', 'lab/oracles/domain', 'lab/oracles/domain/domain.py');
   c.oraclePins['O-HAND'] = filePin('O-HAND', 'lab/oracles/hand', 'lab/oracles/hand/hand.json');
@@ -156,6 +162,8 @@ function contractVariant(variant, { a0Commit, a0Label, a0Binary, verified } = {}
     // The fixture's own W0 files (the real pin lists W0-1.1.1's 95 files), plus a directory pin of its cases.
     files: { ...Object.fromEntries(Object.keys(SRC).filter(f => f.startsWith('lab/world/W0/') && !f.startsWith('lab/world/W0/cases/')).map(f => [f, h(SRC[f])])),
       'lab/world/W0/cases/': listingHash([['lab/world/W0/cases/c1.json', h(SRC['lab/world/W0/cases/c1.json'])]]) } };
+  // [EXP-E01] Why: fixtures without W0 acceptance keep that gap explicit even though the real 0.3.10 W0 is pinned. Rejected: inheriting live acceptance into negative fixtures.
+  if (variant !== 'w0') c.w0Pin.deltaCheck = null;
   c.verifierRegistry = { ...c.verifierRegistry, entries: reg };
   return c;
 }
@@ -177,7 +185,7 @@ export const CANDIDATE = composition('xtdb', 'qlever');
 /** The candidate as a log-source composition (LOG_FIELDS: log identity and durability configuration). */
 export const LOG_SOURCE = (() => { const c = composition('xtdb', 'qlever', 'dev', 'log-source'); c.source.log = { implementationSha256: h('fixture broker'), fsyncMode: 'fdatasync', fullFsync: true, device: 'fixture-ssd' }; return c; })();
 export const A0 = composition('xtdb', 'xtdb');
-const WORKLOAD = { generatorSourceSha256: h('frozen trace generator'), seed: SEED, offerScheduleSha256: h(`schedule ${SEED}`), window: [120, 720], slot: 'dev' };
+const WORKLOAD = { generatorSourceSha256: h('frozen trace generator'), seed: SEED, offerScheduleSha256: h(`schedule ${SEED}`), window: [120, 720] };
 
 function makeRepo(dir, variant) {
   fs.mkdirSync(dir, { recursive: true });
@@ -413,7 +421,7 @@ export function buildFixtures(root) {
   const runClaim = (id, at, obligations = ['G10.scope.shared-collision'], extra = {}) => ({ id, repo: Rr.dir, claim: { format: FORMATS.claim, claimId: id, kind: 'comparative', obligations, commit: at.commit, sourceTreeSha256: at.label, composition: structuredClone(CANDIDATE), ...extra } });
   // Codex round 7 against a run: the wrong candidate carries a complete set of well-formed documents claiming every case passed,
   // plus a selection, a verifier record and an O-DOMAIN fingerprint of its own (Q55a, Q55e). qualify must read none of it.
-  const forged = runClaim('RUN-FORGED-RECORDS', Rr.WRONG, ['NS.P2'], { receipts: complete('RUN-FORGED-RECORDS', { variant: 'run', at: Rr.WRONG }).receipts, selection: 'all', caseList: ['INVENTED-0'], oDomainFingerprint: 'f'.repeat(64) });
+  const forged = runClaim('RUN-FORGED-RECORDS', Rr.WRONG, undefined, { receipts: complete('RUN-FORGED-RECORDS', { variant: 'run', at: Rr.WRONG }).receipts, selection: 'all', caseList: ['INVENTED-0'], oDomainFingerprint: 'f'.repeat(64) });
   const runFixtures = [
     runClaim('RUN-CANDIDATE', Rr.C2),
     runClaim('RUN-WRONG-CANDIDATE', Rr.WRONG),

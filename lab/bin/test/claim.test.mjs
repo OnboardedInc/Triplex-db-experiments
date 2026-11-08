@@ -19,7 +19,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
 import { sha256, sourceTreeIdOf } from '../lib.mjs';
-import { admitClaim, admitCore, canonText, caseResultVerdict, caseVerdict, coreContext, gitSource, localSut, objectStore, openRecord, qualifyClaim, recompute } from '../claim.mjs';
+import { admitClaim, admitCore, canonText, caseResultVerdict, caseVerdict, coreContext, gitSource, localSut, objectStore, openRecord, buildSpecSha256, qualifyClaim, recompute } from '../claim.mjs';
 import { BAG_CASE, buildFixtures, evaluateLab, evaluateReference } from './claim-fixtures.mjs';
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tx2-claim-test-'));
@@ -195,7 +195,7 @@ test('comparators judge canonical answers; unknown comparators and non-canonical
   assert.equal(recompute('CMP-SET-ROWS', b([[1], [2], [2]]), b([[2], [1]])), 'PASS');
   assert.equal(recompute('CMP-BAG-ROWS', b([[1], [2], [2]]), b([[2], [1]])), 'FAIL');
   assert.equal(recompute('CMP-ORDERED-ROWS', b([[1], [2]]), b([[2], [1]])), 'FAIL');
-  assert.equal(recompute('CMP-ERROR', b({ _tag: 'InvalidTripleError', reasons: ['invalid-value'] }), b({ _tag: 'InvalidTripleError', reason: 'invalid-value', cause: {}, rows: [] })), 'PASS');
+  assert.equal(recompute('CMP-ERROR', b({ _tag: 'InvalidTripleError', reasons: ['invalid-value'] }), b({ _tag: 'InvalidTripleError', reason: 'invalid-value', cause: { message: 'original' }, rows: [] })), 'PASS');
   assert.equal(recompute('CMP-ERROR', b({ _tag: 'E' }), b({ _tag: 'E', cause: {} })), 'UNCOMPARABLE');
   assert.equal(recompute('CMP-NEW', b(1), b(1)), 'UNCOMPARABLE');
   for (const bad of ['{"v":9007199254740993}', '{"v":1e400}', '{"v":12.30}', '{"v":0.5}', '{"v":-0}', '{"v":"a","v":"a"}', '{ "v":1}', '{"b":1,"a":2}', '['.repeat(70) + ']'.repeat(70)])
@@ -249,7 +249,7 @@ test('qualify build: the evaluator builds the claimed tree and rebuilds A0, whic
   const store = objectStore(run.objects);
   const man = store.json(run.builds[R.C2.commit].buildManifestSha256).value;
   assert.equal(man.schema, 'build-manifest/2');
-  assert.equal(man.buildSpecSha256, sha256(canonText(spec)));
+  assert.equal(man.buildSpecSha256, buildSpecSha256(spec));
   assert.deepEqual(man.inputs.map(x => x.path), ['package.json', 'packages/xtdb/package.json', 'packages/xtdb/src/alloc.ts', 'packages/xtdb/src/index.ts', 'packages/xtdb/src/run.ts', 'pnpm-lock.yaml']);
   assert.equal(man.inputs.find(x => x.path === 'packages/xtdb/src/alloc.ts').sha256, sha256(Buffer.from(R.C2.files['packages/xtdb/src/alloc.ts'])));
   // The A0 control executes the registry commit's allocator (Codex round 7 finding 2: a candidate binary labelled as A0).
@@ -262,8 +262,9 @@ test('qualify build: the evaluator builds the claimed tree and rebuilds A0, whic
   assert.equal(id.schema, 'execution-identity/1');
   assert.equal(id.buildSpecSha256, man.buildSpecSha256);
   assert.equal(id.sourceTreeSha256, R.C2.label);
-  assert.equal(id.toolchain.node, process.version);
-  assert.match(store.get(id.runtimeSha256).bytes.toString(), / f runtime\/shim\.mjs\n/);
+  assert.equal(id.toolchain.node.version, run.toolchain.node.version);
+  assert.equal(id.toolchain.node.sha256, run.toolchain.node.sha256);
+  assert.match(store.get(run.builds[R.C2.commit].runnerSha256).bytes.toString(), / f 644 runtime\/shim\.mjs\n/);
   assert.ok(!man.modules.some(m => m.path === 'runtime/shim.mjs'));
 });
 
@@ -321,8 +322,9 @@ test('qualify Q67i (Codex round 8 finding 10): case-result/2 is re-judged with i
     assert.equal(store.get(rec.observedSha256).bytes.toString(), '[2,1]');
     assert.equal(c.verdict, 'PASS');
     assert.equal(caseResultVerdict(rec, store), 'PASS');
-    // The reference's case_verdict (hash equality, case-result/1 documents) would reject it: an intentional divergence.
-    assert.equal(caseVerdict(rec, store), 'FAIL');
+    // [EXP-E01] Why: 0.3.10 dispatches case-result/2 to its comparator; only legacy case-result/1 uses hash equality. Rejected: treating both schemas alike.
+    assert.equal(caseVerdict(rec, store), 'PASS');
+    assert.equal(caseVerdict({ ...rec, schema: 'case-result/1' }, store), 'FAIL');
   }
   // Byte equality stays the exact comparator's rule; refusals, oracle errors and missing objects never pass.
   const b = v => Buffer.from(canonText(v));
@@ -373,7 +375,7 @@ test('qualify: Codex round 7 forged records, selections, case lists and fingerpr
   assert.equal(doc.verdict, 'DIAGNOSTIC');
 });
 
-test('qualify builds the tree its label names: a checkout that git archive altered through .gitattributes is refused', () => {
+test('qualify builds exact blobs despite git archive export-ignore attributes', () => {
   const env = { ...process.env, GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1' };
   const git = args => execFileSync('git', ['-c', 'user.name=lab fixture', '-c', 'user.email=fixture@lab.invalid', '-c', 'commit.gpgsign=false', ...args], { cwd: R.dir, env, encoding: 'utf8' }).trim();
   git(['checkout', '-q', '-b', 'attrs', R.C2.commit]);
@@ -384,8 +386,9 @@ test('qualify builds the tree its label names: a checkout that git archive alter
   git(['checkout', '-q', 'main']);
   const claim = { ...runFx('RUN-CANDIDATE').claim, claimId: 'RUN-ATTRS', commit, sourceTreeSha256: sourceTreeIdOf(tree) };
   const r = qualifyClaim(claim, { git: gitSource(R.dir), authorityRef: 'main', workDir: path.join(root, 'work', 'attrs'), sut: localSut(spec) });
-  assert.ok(codes(r).includes('CHECKOUT-MISMATCH') && codes(r).includes('BUILD-FAILED'), JSON.stringify(r.reasons));
-  assert.equal(r.run.builds[commit], undefined);
+  assert.ok(r.run.builds[commit], JSON.stringify(r.reasons));
+  assert.ok(!codes(r).includes('CHECKOUT-MISMATCH'));
+  assert.equal(r.run.core.reasons[0].code, 'VERIFIER-UNREGISTERED');
 });
 
 // A process that escaped its group (the offline gap Q67e names) is simulated by a system under test that edits files outside its
@@ -456,8 +459,8 @@ test('qualify Q67e (Codex round 8 finding 6): a build helper left running is kil
 test('qualify Q67j (Codex round 8 finding 11): a log-source promotion is rejected with a typed reason', () => {
   const r = runs['RUN-PROMOTION'];
   // The reference model ignores the claim kind and qualifies it, executing no hardening case; the lab rejects it.
-  assert.equal(r.run.core.verdict, 'QUALIFIED');
-  assert.equal(r.reasons[0].code, 'PROMOTION-UNSUPPORTED');
+  assert.equal(r.run.core.verdict, 'DIAGNOSTIC');
+  assert.ok(codes(r).includes('PROMOTION-UNSUPPORTED')); 
   assert.equal(r.offlineVerdict, 'DIAGNOSTIC');
   assert.equal(runFx('RUN-PROMOTION').claim.composition.source.variant, 'log-source');
   assert.equal(lab['POSITIVE-PROMOTION'].documentVerdict, 'DIAGNOSTIC');

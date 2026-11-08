@@ -1,6 +1,6 @@
 {
   "format": "triplex-db-2/load-contract/3",
-  "version": "0.3.9",
+  "version": "0.3.10",
   "generatedBy": "lab/acceptance/build_contract.py",
   "status": "provisional bars from lab/TARGETS.md section 1; calibration may tighten, loosening needs Sam",
   "obligations": [
@@ -134,6 +134,19 @@
       "burstPhase": "bursts start at 120 s + k x 600 s from the start of the measured window, identical for baselines and candidates",
       "scenarioOverlay": "a golden scenario's commands are added on top of the background trace, never instead of it; both streams accounted separately in the receipt",
       "freeze": "the generator source hash and the seed are bound in every receipt; a change to either starts a new comparison series",
+      "frozenScreening": {
+        "screening-burst-180": {
+          "sha256": null,
+          "seed": null,
+          "offerScheduleSha256": null
+        },
+        "screening-r4": {
+          "sha256": null,
+          "seed": null,
+          "offerScheduleSha256": null
+        },
+        "rule": "each screening series has its own frozen entry, frozen by EXP-M01 (RULINGS Q64b, Q60g, Q69f); frozen is the acceptance trace; until frozen, claims stay diagnostics"
+      },
       "frozen": {
         "sha256": null,
         "seed": null,
@@ -162,6 +175,7 @@
       "stress": 1024,
       "zeroReaderBaseline": "level 0 = writer trace alone, same trace segment and burst phase",
       "readShape": "subject pull (P4 shape) at a named basis: valid time plus record time or tx; 80% at the latest committed tx (named exactly), 15% at a tx within the last hour, 5% at a past basis up to 90 days back (RULINGS Q16, TARGETS section 2)",
+      "hostServedReads": "provisional: reads served from the broker count for the P1 and P4 bars when the receipt records route = host and the per-core denominator includes broker and kernel CPU (RULINGS Q68d)",
       "hotSet": {
         "minShare": 0.5,
         "rule": "at least 50% of reads target subjects written in the previous 60 s (the writer trace's active set)"
@@ -262,6 +276,7 @@
     "P3": {
       "commitTime": "the source's own publication timestamp for each position (the broker's durable watermark update, or the engine's commit resolution when the engine is the source), stamped by the source on the host monotonic clock the driver also reads, recorded independently of ACK delivery (RULINGS Q55d)",
       "accounting": "every committed position is accounted; no lag sample is dropped for a missing ACK; a position with no consumer record is counted and fails the run (RULINGS Q55d)",
+      "publicationEnumeration": "both arms enumerate the final published source prefix from the source's own record and timestamp actual publication (broker: watermark publication; engine as source: commit resolution); ACK records are reconciled afterwards; a late or lost ACK is never a feed defect (RULINGS Q67d)",
       "cursor": "(epoch, position), a total order over transactions; per-subject order follows from it",
       "expectedAffected": "subjects written directly (O-REPLAY) plus the subjects whose WORLD_W0 static read set contains a changed fact (O-DOMAIN; RULINGS Q36e)",
       "milestone": "the consumer durably records the affected-subject set and its checkpoint in one durable write; lag runs from commit time to that record",
@@ -321,6 +336,7 @@
       "tails": "the p50 and p99 bars apply to the weighted mix; each bucket reports its own p50 and p99; the largest bucket has NS-P4-PULL-P99-LARGEST-MS",
       "throughput": "closed-loop pulls; cores = the CPU quota bound in the receipt; host broker and kernel CPU reported beside engine-core throughput",
       "history": "one matched sample of 1,000 subjects: measure at history depth 1, add corrections to the same subjects to depth 3 and then 10, measure again; compare p99 latency and bytes read (RULINGS Q16, Q27)",
+      "hostServedReads": "provisional: reads served from the broker count for the P4 bars when the receipt records route = host and the per-core denominator includes broker and kernel CPU (RULINGS Q68d)",
       "bars": [
         "NS-P4-PULL-P50-MS",
         "NS-P4-PULL-P99-MS",
@@ -403,10 +419,24 @@
     "windows": "absolute bars are judged only in GREEN windows (the pre-registered noise signals and the A/A gate of R22 section 4.2); outside them an absolute bar is reported unjudged, which never counts as met (RULINGS Q60e)",
     "screeningSeries": {
       "rule": "a screening trace with a burst every 180 s is a new comparison series (TARGETS 2.1 item 5), so P2 and P3 rounds contain enough commands for p99; acceptance keeps the frozen trace (RULINGS Q60g)",
-      "burstEveryS": 180
+      "burstEveryS": 180,
+      "fallback": {
+        "name": "screening-r4",
+        "rule": "4x the steady rate, no bursts; pre-registered and used only if the burst series makes commitAll p50 NOT_ESTIMABLE in the A/A run (RULINGS Q69f)"
+      }
     },
     "lease": "a measurement window takes every heavy token and freezes pool admission for its duration (RULINGS Q60h)",
-    "a0": "EXP-N01's single-run A0 is diagnostic only; A0 numbers for comparisons come from paired rounds (RULINGS Q60i)"
+    "a0": "EXP-N01's single-run A0 is diagnostic only; A0 numbers for comparisons come from paired rounds (RULINGS Q60i)",
+    "windowProcedure": "the pool cannot hold two 3.5 GiB slots beside both dev residents, so a measurement window stops one dev resident for its duration (qlever-dev by default, recreated fresh after; xtdb-dev when the window is QLever's) once no running agent depends on it; the orchestrator announces the window in STATE; no agent starts engine work during it; the lease enforces it (RULINGS Q69a)",
+    "verdicts": {
+      "INVALID": "a protocol departure: development overrides, the wrong regime, no lease, or an unregistered round count",
+      "INVALID_NOISE": "a window that fails the noise gate",
+      "source": "RULINGS Q69b"
+    },
+    "aaInAbMode": "provisional: A/B windows grade from the all-round s_d (conservative); acceptance-level claims add a second pair of container lifetimes with roles swapped (RULINGS Q69c)",
+    "continuousTrace": "duets run one continuous trace, so both arms see the same content at the same time; ABBA fallback runs keep per-round window randomization (RULINGS Q69d)",
+    "liveComposition": "the live A/A uses public-queued, matching EXP-N01's A0 (RULINGS Q69e)",
+    "calibration": "thresholds stay as pre-registered; a passive recorder (signals every 10 s, calibration every 10 minutes) runs for 7 days to set them, started after EXP-M01 merges (RULINGS Q69g)"
   },
   "windows": {
     "judging": "absolute bars are judged only in GREEN windows (the pre-registered noise signals and the A/A gate of R22 section 4.2); outside them an absolute bar is reported unjudged, which never counts as met (RULINGS Q60e)",

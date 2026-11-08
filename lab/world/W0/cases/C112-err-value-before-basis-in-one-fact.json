@@ -1,0 +1,22 @@
+{
+  "id": "C112",
+  "slug": "err-value-before-basis-in-one-fact",
+  "title": "One fact with an invalid date and a tx after the basis: W0.E_VALUE",
+  "op": "evaluate",
+  "checks": [],
+  "notes": [
+    "From V-D01c P25 (M11). Within one fact the order is unknown, value, basis: 2026-02-30 is not a date, W0.E_VALUE, before",
+    "the tx check. C43 pins the order across two facts only."
+  ],
+  "input": {
+    "basis": {"tx": 10, "validTime": "2026-11-04T12:00:00.000000Z"},
+    "release": "R1",
+    "world": {
+      "subject": "pl:a",
+      "facts": [
+        {"e": "pl:a", "a": "startDate", "v": "2026-02-30", "tx": 11}
+      ]
+    }
+  },
+  "expected": {"error": "W0.E_VALUE"}
+}

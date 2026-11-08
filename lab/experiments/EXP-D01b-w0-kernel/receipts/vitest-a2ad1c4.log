@@ -1,0 +1,183 @@
+
+ RUN  v5.0.4 <repo>/packages/w0
+
+ ✓ test/cases.test.ts > W0 golden case list (SPEC 11.2) > every case file is named after its id 3ms
+ ✓ test/cases.test.ts > W0 golden case list (SPEC 11.2) > the case folder, expected-sha256.json, input-sha256.json and SPEC 11.2 list the same ids 2ms
+ ✓ test/cases.test.ts > W0 golden case list (SPEC 11.2) > synthetic sits on exactly the cases SPEC 11.1 lists, all publish or receive 1ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C01 evaluate 3ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C02 evaluate 1ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C03 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C04 evaluate 1ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C05 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C06 evaluate 2ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C07 evaluate 1ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C08 evaluate 2ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C09 evaluate 1ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C10 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C11 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C12 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C13 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C14 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C15 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C16 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C17 evaluate 1ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C18 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C19 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C20 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C21 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C22 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C23 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C24 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C25 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C26 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C27 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C28 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C29 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C30 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C31 reconcile 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C32 reconcile 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C33 reconcile 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C34 affected 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C35 affected 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C36 affected 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C37 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C38 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C39 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C40 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C41 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C42 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C43 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C44 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C45 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C46 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C47 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C48 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C49 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C50 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C51 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C52 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C53 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C54 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C55 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C56 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C57 affected 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C58 affected 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C59 affected 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C60 affected 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C61 reconcile 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C62 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C63 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C64 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C65 reconcile 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C66 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C67 affected 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C68 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C69 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C70 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C71 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C72 reconcile 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C73 publish 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C74 publish 1ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C75 publish 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C76 publish 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C77 publish 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C78 publish 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C79 receive 1ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C80 receive 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C81 receive 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C82 publish 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C83 receive 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C84 publish 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C85 receive 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C86 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C87 affected 1ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C88 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C89 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C90 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C91 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C92 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C93 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C94 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C95 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C96 affected 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C97 reconcile 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C98 reconcile 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C99 reconcile 1ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C100 publish synthetic 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C101 publish synthetic 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C102 publish synthetic 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C103 reconcile 1ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C104 reconcile 1ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C105 reconcile 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C106 reconcile 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C107 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C108 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C109 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C110 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C111 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C112 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C113 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C114 evaluate 1ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C115 evaluate 3ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C116 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C117 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C118 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C119 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C120 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C121 affected 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C122 publish 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C123 publish 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C124 publish 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C125 receive 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C126 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C127 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C128 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C129 evaluate 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C130 publish 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C131 receive 1ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C132 evaluate 1ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C133 publish synthetic 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C134 receive synthetic 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C135 receive synthetic 0ms
+ ✓ test/cases.test.ts > W0 golden cases (SPEC 11), by SHA-256 of the bytes > C136 publish synthetic 0ms
+ ✓ test/kernel.test.ts > releases (SPEC 5) > R1 equals releases/R1.json and its index hash 2ms
+ ✓ test/kernel.test.ts > releases (SPEC 5) > R2 equals releases/R2.json and its index hash 1ms
+ ✓ test/kernel.test.ts > releases (SPEC 5) > R3 equals releases/R3.json and its index hash 0ms
+ ✓ test/kernel.test.ts > releases (SPEC 5) > diff (SPEC 5.3) 1ms
+ ✓ test/kernel.test.ts > dates (SPEC 6.1) > SPEC 6.1 addBusinessDays examples 0ms
+ ✓ test/kernel.test.ts > dates (SPEC 6.1) > matches Date.UTC and getUTCDay on every day from 1999 to 2100 220ms
+ ✓ test/kernel.test.ts > dates (SPEC 6.1) > validates dates: years 2000 to 2099, real days only 0ms
+ ✓ test/kernel.test.ts > token-level reader and canonical writer (SPEC 2, 9, 14) > keeps integer and non-integer number tokens apart 0ms
+ ✓ test/kernel.test.ts > token-level reader and canonical writer (SPEC 2, 9, 14) > flags a duplicate key on every enclosing container 0ms
+ ✓ test/kernel.test.ts > token-level reader and canonical writer (SPEC 2, 9, 14) > rejects what is not one JSON value 1ms
+ ✓ test/kernel.test.ts > token-level reader and canonical writer (SPEC 2, 9, 14) > is iterative: 200,000 levels of nesting scan and write without a stack overflow (SPEC 4.4, A13) 94ms
+ ✓ test/kernel.test.ts > token-level reader and canonical writer (SPEC 2, 9, 14) > decodes strict UTF-8 and refuses a byte order mark (A01) 0ms
+ ✓ test/kernel.test.ts > token-level reader and canonical writer (SPEC 2, 9, 14) > escapes as json.dumps(ensure_ascii=True) (A07) 0ms
+ ✓ test/kernel.test.ts > token-level reader and canonical writer (SPEC 2, 9, 14) > orders keys by code point, which is UTF-8 byte order (SPEC 8.7 and 9 item 2, A14) 0ms
+ ✓ test/kernel.test.ts > Q53 readings A01 to A09 > the base world is valid 0ms
+ ✓ test/kernel.test.ts > Q53 readings A01 to A09 > A01: bytes that are not one JSON value are E_SHAPE 0ms
+ ✓ test/kernel.test.ts > Q53 readings A01 to A09 > A02: -0 is an integer token with value 0, written 0 1ms
+ ✓ test/kernel.test.ts > Q53 readings A01 to A09 > A03: cardinality runs after every fact passes 3.2, so a later E_UNKNOWN beats an earlier duplicate 0ms
+ ✓ test/kernel.test.ts > Q53 readings A01 to A09 > A04: affected validates world by world 0ms
+ ✓ test/kernel.test.ts > Q53 readings A01 to A09 > A05: activations one at a time in array order; within one, E_VALUE before E_BASIS 1ms
+ ✓ test/kernel.test.ts > Q53 readings A01 to A09 > A06: a picked activation naming an unknown well-formed hash is E_NO_RELEASE, no fall-back 0ms
+ ✓ test/kernel.test.ts > Q53 readings A01 to A09 > A07: opaque payloads keep integer tokens, other number tokens as source text, escaped strings 0ms
+ ✓ test/kernel.test.ts > Q53 readings A01 to A09 > A08: input states indexed by id (later wins); arrays re-sorted; pending keeps input order and appends 0ms
+ ✓ test/kernel.test.ts > Q53 readings A01 to A09 > A09: a duplicate work-item id in one record is processed in stable id order 0ms
+ ✓ test/kernel.test.ts > readings A11 to A13 (SPEC 2, 4.4): number tokens and depth a lenient or recursive parser gets wrong > NaN and Infinity are not JSON values: E_SHAPE, not E_VALUE 0ms
+ ✓ test/kernel.test.ts > readings A11 to A13 (SPEC 2, 4.4): number tokens and depth a lenient or recursive parser gets wrong > an integer token with 5,000 digits is an integer token outside its domain 1ms
+ ✓ test/kernel.test.ts > readings A11 to A13 (SPEC 2, 4.4): number tokens and depth a lenient or recursive parser gets wrong > a 10,000-deep array as a fact value is E_VALUE (A13) 5ms
+ ✓ test/kernel.test.ts > readings A11 to A13 (SPEC 2, 4.4): number tokens and depth a lenient or recursive parser gets wrong > a 200,000-deep payload passes publish and receive and is written back exactly (A13, SPEC 9 item 7) 107ms
+ ✓ test/kernel.test.ts > typed entry points > bigint and number integers give the same bytes 1ms
+ ✓ test/kernel.test.ts > typed entry points > the Effect boundary carries the W0 error code as a tagged value 1ms
+ ✓ test/kernel.test.ts > population (SPEC 12.3) and invariants (SPEC 13) > isqrt is exact 0ms
+ ✓ test/kernel.test.ts > population (SPEC 12.3) and invariants (SPEC 13) > generated worlds are valid under R1, R2 and R3 and hold 48 to 2,000 facts 67ms
+ ✓ test/kernel.test.ts > population (SPEC 12.3) and invariants (SPEC 13) > 13.1 determinism: shuffling facts changes nothing 31ms
+ ✓ test/kernel.test.ts > population (SPEC 12.3) and invariants (SPEC 13) > 13.6 ballast neutrality: removing every ballast fact changes no output 63ms
+ ✓ test/kernel.test.ts > population (SPEC 12.3) and invariants (SPEC 13) > sweepSubject gives the output, its bytes and its outbox record 0ms
+
+ Test Files  2 passed (2)
+      Tests  174 passed (174)
+   Start at  20:41:22
+   Duration  1.00s (tests 53%, import 44%, transform 3%)
+
