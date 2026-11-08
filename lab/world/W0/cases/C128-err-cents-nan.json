@@ -1,0 +1,15 @@
+{
+  "id": "C128",
+  "slug": "err-cents-nan",
+  "title": "A11: payRateCents written NaN: W0.E_SHAPE",
+  "op": "evaluate",
+  "checks": [],
+  "notes": [
+    "RULINGS Q57a (A11). inputBase64 holds C01's canonical input with payRateCents written NaN. NaN, Infinity and",
+    "-Infinity are not JSON (RFC 8259 section 6), so the bytes are not one JSON text: W0.E_SHAPE (4.4 step 1). A parser that",
+    "accepts NaN as a number would instead reach 3.2 and report W0.E_VALUE. The case uses inputBase64 because a case file",
+    "holding NaN would not be JSON itself."
+  ],
+  "inputBase64": "eyJiYXNpcyI6eyJ0eCI6MTAsInZhbGlkVGltZSI6IjIwMjYtMTEtMDRUMTI6MDA6MDAuMDAwMDAwWiJ9LCJyZWxlYXNlIjoiUjEiLCJ3b3JsZCI6eyJmYWN0cyI6W3siYSI6Imp1cmlzZGljdGlvbiIsImUiOiJsb2M6bnljIiwidHgiOjEsInYiOiJqdXI6bnkifSx7ImEiOiJzdGF0ZU1pbldhZ2VDZW50cyIsImUiOiJqdXI6bnkiLCJ0eCI6MSwidiI6MTY1MH0seyJhIjoic3RhcnREYXRlIiwiZSI6InBsOmEiLCJ0eCI6MiwidiI6IjIwMjYtMTEtMDIifSx7ImEiOiJwYXlSYXRlQ2VudHMiLCJlIjoicGw6YSIsInR4IjoyLCJ2IjpOYU59LHsiYSI6ImxvY2F0aW9uIiwiZSI6InBsOmEiLCJ0eCI6MiwidiI6ImxvYzpueWMifSx7ImEiOiJzZWN0aW9uMUF0dGVzdGVkQXQiLCJlIjoicGw6YSIsInR4IjozLCJ2IjoiMjAyNi0xMC0zMFQxNTowMDowMC4wMDAwMDBaIn0seyJhIjoic3NuIiwiZSI6InBsOmEiLCJ0eCI6MywidiI6IjEyMzQ1Njc4OSJ9LHsiYSI6ImJnY1N0YXR1cyIsImUiOiJwbDphIiwidHgiOjQsInYiOiJjbGVhciJ9LHsiYSI6ImV2ZXJpZnlTdGF0dXMiLCJlIjoicGw6YSIsInR4Ijo1LCJ2IjoicGVuZGluZyJ9LHsiYSI6ImV2ZXJpZnlTdGF0dXNBdCIsImUiOiJwbDphIiwidHgiOjUsInYiOiIyMDI2LTExLTAzVDEwOjAwOjAwLjAwMDAwMFoifSx7ImEiOiJkZWNpc2lvbnMiLCJlIjoicGw6YSIsInR4Ijo2LCJ2IjoicGw6YS9kZWM6MSJ9LHsiYSI6InRhcmdldCIsImUiOiJwbDphL2RlYzoxIiwidHgiOjYsInYiOiJpOS5zZWN0aW9uMiJ9LHsiYSI6InZlcmRpY3QiLCJlIjoicGw6YS9kZWM6MSIsInR4Ijo2LCJ2IjoiYXBwcm92ZSJ9LHsiYSI6ImF1dGhvciIsImUiOiJwbDphL2RlYzoxIiwidHgiOjYsInYiOiJwZXJzb24ifSx7ImEiOiJ3ZWVrbHlNaW51dGVzIiwiZSI6InBsOmEiLCJ0eCI6NywidiI6MjQwMH1dLCJzdWJqZWN0IjoicGw6YSJ9fQ==",
+  "expected": {"error": "W0.E_SHAPE"}
+}

@@ -55,3 +55,23 @@ cases; other oracle-derived ones accepted only after hand-checking every decisiv
 ## sha256 of lab/oracles/domain at 276a280 (recomputed; equals EXP-D01c's report and the receipt's source hashes)
 README.md e071fd2a...24ce; cli.py 320f3e30...349a; jsontok.py 90598762...a29a; population.py 7c33da56...eb3d; receipts/population-100k.json
 75e2e206...09ab; test_domain.py 9d62740d...341c; w0.py 35737dfc...6faf (full table: lab/verify/D01c/O-DOMAIN-276a280-SHA256SUMS on verify/D01c).
+
+## V-D01c delta check: O-DOMAIN at 5d1fd1a: ACCEPT, pin (saved by the orchestrator, 2026-11-08 01:35Z)
+- F1-F3 fixed with no change to any valid-input answer. Seeded differential 276a280 against 5d1fd1a in separate processes, 7,127 entries
+  (127 case inputs, 3,000 perturbations, 4,000 parser and writer texts): 6,833 identical; all 294 differences are inputs where 276a280
+  crashed (91 F1, 167 F2, 36 huge publish/receive integers); 0 other differences, 0 new crashes. 20/20 F1-F3 probes give the SPEC answer.
+- P01-P40 40/40 three ways (API with either writer's expected bytes, CLI); 87/87 golden; 126/126 unit tests. Kill matrix: 71 of 71 rows
+  identical (7 mutants ported because their target text moved). Fingerprint through heavy.mjs: all six values equal V-D01's (basis.tx
+  4,338,757; 44,537,987 facts; worlds fec1d7ce...c760; R1 c1b2d410...1a79; R2 551bbbc4...b562; R3 a5950922...ee2f); all 400 block digests and
+  every floor equal.
+- Low notes, not blocking: D1 two parser mutants survive every case (X06 accepts `[1}`; X10 misses a duplicate key after the second
+  member) though the shipped parser is right on the verifier's corpus; add unit tests `[1}` -> syntax error and `{"a":1,"b":2,"a":3}` ->
+  duplicate in a later O-DOMAIN version. D2 O-DOMAIN's reading id "A11" collides with W0-1.1.2's A11 (NaN, Q57a); documentation only, since
+  W0-1.1.2 decides the same exact reading (A12, C130, C131) and O-DOMAIN passes those cases. D3 lifting the digit limit makes huge integers
+  slow (int() roughly quadratic), not wrong.
+- Evidence: verify/D01c 7f05819 (merge 0c36116 brings 5d1fd1a), lab/verify/D01c/delta-5d1fd1a/; scratch
+  /Users/sam/Claude/Projects/triplex-db-2/V-D01c/delta-5d1fd1a/.
+- Orchestrator cross-check against W0-1.1.2 (fedfcda): `cli.py --world-dir <W0 1.1.2> cases` gives 133/136 byte-identical; the other three
+  (C91, C92, C128) use the new `inputBase64` form, which O-DOMAIN's case loader does not read; run as decoded bytes through `cli.py evaluate -`
+  all three MATCH (`W0.E_SHAPE`). So O-DOMAIN 5d1fd1a passes all 136 W0-1.1.2 cases; its case loader needs `inputBase64` support before an
+  evaluator runs it over the case folder (contract runner note for 0.3.10).

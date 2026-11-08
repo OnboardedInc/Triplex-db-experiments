@@ -77,3 +77,28 @@ contract; retained fault witnesses; A0 side verified through the registry's meas
   Offline positive G10.scope.shared-collision: core QUALIFIED with 64 case-result/2 comparisons and the A0 rebuild reproducing binarySha256;
   verdict DIAGNOSTIC (GATE-NOT-RUN). No path to QUALIFIED without a gate run.
 - Build spec proposal (Q64a, ruled Q65e) in lab/config/build.json on the branch; questions ruled Q65a-d; the executing OBL gate is Q65f.
+
+## Codex round 8 fixes (head 2796455 on merge ce908a8 of main; Q67b, e, i, j; saved 2026-11-08 01:39Z)
+- 112/112 tests (`node --test lab/bin/test/*.test.mjs`, about 110 s). Reference replay unchanged on 0.3.9: 59/59 admit_claim calls agree
+  (7 QUALIFIED), 10,712 executor calls, 0 self-check errors; documents DIAGNOSTIC on all 63. Changed only lab/bin/claim.mjs,
+  lab/bin/test/claim-fixtures.mjs and lab/bin/test/claim.test.mjs.
+- Q67b (finding 2): every build is a new instance in its own git-archive checkout with an execution-identity/1 hash over the source tree
+  label, buildSpec sha256, lockfile, toolchain (node, platform, pnpm when used), the whole post-build checkout listing (sources, source
+  runners, dependencies, symlink targets) and the dist listing; `byBinary` became `byIdentity`; each comparison records an executionSha256.
+- Q67e (finding 6): separate mkdtemp roots for checkouts, child HOME/TMPDIR, case inputs and each oracle copy; oracle copies and evidence
+  read-only; the oracle copy is listed and re-hashed against the pin before every invocation (ORACLE-TAMPERED refuses the oracle for the
+  rest of the run); inputs re-hashed (INPUT-TAMPERED); an instance's runtime re-hashed when another instance ran in between
+  (BUILD-TAMPERED); children run detached and their process group is SIGKILLed; claim.mjs, lib.mjs and gate.mjs hashed at start and end
+  (EVALUATOR-TAMPERED); evidence verified at the end (EVIDENCE-TAMPERED).
+- Q67i (finding 10): `compare` returns the declared comparator's verdict on the retained raw objects; `caseResultVerdict` gives REFUSED for
+  exit 2 or X-NOT-MODELED, FAIL for other oracle errors or a missing object. Q67j (finding 11): `kind` reaches admitCore; promotion claims
+  get PROMOTION-UNSUPPORTED (DIAGNOSTIC).
+- Codex's counterexamples are now fixtures: identical-dist aliasing (RUN-ALIAS-DIST: the alias runs on its own instance and fails), a
+  build helper left running (RUN-BACKGROUND-HELPER: killed with its group; a control without the group kill writes the marker), an escaped
+  process editing the oracle copy and evidence (ORACLE-TAMPERED, EVIDENCE-TAMPERED, PREREQ-FAILED), the bag comparator ([1,2] against [2,1]
+  passes), and a log-source promotion (PROMOTION-UNSUPPORTED).
+- Still unprotected offline, so offline is never QUALIFIED and GATE-NOT-RUN stays: a process that leaves its group (setsid, double fork);
+  check-to-use gaps between a re-hash and the read after it; runtime re-hashed only between instances, not per case; no filesystem or
+  network isolation. Full isolation is EXP-G03's.
+- Questions, ruled Q71 (pending): install-metadata exclusions for the identity of a real pnpm build; what "toolchain" covers; whether the
+  reference's case_verdict follows Q67i for case-result/2.
