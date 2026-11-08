@@ -55,4 +55,21 @@ describe("XTDB PostgreSQL parameter encoding", () => {
     expect(driver.connection.release).toHaveBeenCalledOnce();
     await client.close();
   });
+
+  it("binds a non-empty list of strings as text[] and rejects ill-formed members (EXP-J01)", async () => {
+    const client = makeXtdbClient("postgresql://unused-unit-test");
+    await client.query("SELECT 1 WHERE $1 = ANY($2)", ["a", ["a", "b,c", "it's"]], undefined, {
+      parameterSyntax: "postgresql",
+    });
+    expect(driver.typed.mock.calls).toEqual([
+      ["a", 25],
+      [["a", "b,c", "it's"], 1009],
+    ]);
+    await expect(
+      client.query("SELECT $1", [["ok", String.fromCharCode(0xd800)]], undefined, {
+        parameterSyntax: "postgresql",
+      }),
+    ).rejects.toThrow(/well-formed Unicode/);
+    await client.close();
+  });
 });

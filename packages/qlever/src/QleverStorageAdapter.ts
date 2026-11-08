@@ -21,7 +21,8 @@ import {
   literal as lit,
   packValue,
   decodeRow,
-  rowFields,
+  encodedRowFields,
+  type QleverCommitEncoding,
   numericOrderKey as order,
   numericFromOrderKey,
 } from "./rdf.js";
@@ -79,8 +80,13 @@ export const makeQleverStorageAdapter = (
     readonly maxRetries?: number;
     readonly resolutionTimeoutMs?: number;
     readonly admissionQueue?: boolean;
+    /** EXP-J01: default `a0`; `compact` omits never-read channels (rdf.ts UNREAD_CHANNELS). */
+    readonly commitEncoding?: QleverCommitEncoding;
   } = {},
 ): QleverStorageAdapterService => {
+  const commitEncoding = options.commitEncoding ?? "a0";
+  if (commitEncoding !== "a0" && commitEncoding !== "compact")
+    throw new TypeError("Unknown QLever commit encoding; choose a0 or compact");
   const graph = graphIri(scopeKey),
     key = Symbol(scopeKey),
     admission = Semaphore.makeUnsafe(1);
@@ -193,7 +199,7 @@ export const makeQleverStorageAdapter = (
       try: async () => {
         const values: [string, string, string][] = [];
         for (const row of state.rows.values())
-          for (const [column, value] of rowFields(row))
+          for (const [column, value] of encodedRowFields(row, commitEncoding))
             values.push([assertionIri(row.id), f(column), value]);
         values.push(
           [metaIri, f("position"), lit(String(state.position))],
