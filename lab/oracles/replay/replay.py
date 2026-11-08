@@ -10,13 +10,16 @@ expected outcome is reported as a mismatch; it never changes the expected state.
 
 Every rejection carries its ACC 4.7 error id, tag and reason (R-CMD-9).
 
-Erasure (TARGETS 7, RULINGS Q24, Q31f, Q49; RULES.md R-ERA-*): an `erase` command is an
-ordinary journaled commit whose changes name identities only, and marks the values it erases.
-Every read the oracle answers starts after every erasure in the case has published, so it
-returns `ErasedValue {erasedAt}` in place of an erased value at any basis, with identities
-and intervals unchanged. Q49c: an erased value matches no value predicate, value aggregates
-skip it, ORDER BY puts it last by assertion id, grouping keys it by the marker, Unique
-ignores it and an erased reference is not followed.
+Erasure (TARGETS 7, RULINGS Q24, Q31f, Q49, Q52; RULES.md R-ERA-*): an `erase` command is
+its own ordinary journaled commit whose changes name identities only, and marks the values it
+erases. A read that starts after an erasure published returns `ErasedValue {erasedAt}` in
+place of an erased value at any basis, with identities and intervals unchanged. Q49c: an
+erased value matches no value predicate, value aggregates skip it, grouping keys it by the
+marker, Unique ignores it and an erased reference is not followed; Q52: COUNT counts the
+marker group as one value, ORDER BY puts readable values, then markers by assertion id, then
+missing values, a marker group reports its earliest erasedAt, and ReferenceTarget skips an
+erased reference. A read that started before an erasure commit published sees that commit
+whole or not at all (Q52e); run.py answers it once per choice.
 """
 
 from __future__ import annotations
@@ -25,7 +28,6 @@ import re
 from fractions import Fraction
 
 from . import errors as ERR
-from . import exact as X
 from . import values as V
 
 DEFAULT_RULES = {
@@ -146,77 +148,58 @@ def _num(n):
 
 class ErasureMark:
     """The first erasure commit that erased an assertion's value: its instant (the marker's
-    erasedAt), position and txId."""
+    erasedAt), position, txId and scope."""
 
-    def __init__(self, instant, position, tx_id):
-        self.instant, self.position, self.txId = instant, position, tx_id
+    def __init__(self, instant, position, tx_id, scope=None):
+        self.instant, self.position, self.txId, self.scope = instant, position, tx_id, scope
 
 
 # The read being answered. TARGETS 7.1: the boundary is the erasure commit's publication.
 # `start` is None for a read that starts after every erasure of the case published (the
-# default: the oracle answers after the whole command stream); a query's `readStart` sets it to
-# the last position published when the read started (R-ERA-6, ER-INFLIGHT-READ).
-READ = {"start": None}
+# default: the oracle answers after the whole command stream). A query's `readStart` sets it
+# to the last position of `scope` published when the read started; RULINGS Q52e (an erasure
+# commit is atomic for readers) then has run.py answer once per choice of which in-flight
+# erasure commits (`chosen`, by position) the read sees, all of a commit's values or none.
+READ = {"start": None, "scope": None, "chosen": frozenset()}
 
-IN_FLIGHT_RULING = ("R-ERA-6 (Q49d): a read that started before the erasure published may return the old "
-                    "value or the marker, so a computed answer over it has two readings (ORCHESTRATOR-RULING-NEEDED)")
-ERASED_AT_RULING = ("R-ERA-4 (Q49c): one group keyed by the marker holds values erased at different instants, "
-                    "so the key's erasedAt is not determined (ORCHESTRATOR-RULING-NEEDED)")
+
+def erasure_applies(mark):
+    """Does this read see the erasure commit `mark` names? (R-ERA-6, Q52e)"""
+    if READ["start"] is None or mark.scope != READ["scope"] or mark.position <= READ["start"]:
+        return True
+    return mark.position in READ["chosen"]
+
+
+def erased(a):
+    """Is `a`'s value erased for the read being answered? (R-ERA-1, R-ERA-6)"""
+    return a.erasure is not None and erasure_applies(a.erasure)
 
 
 class ErasedValue:
     """What a read returns in place of erased values (TARGETS 7.1, Q24): the marker
     `{"_tag": "ErasedValue", "erasedAt": <the erasure commit's instant>}`. Q49c: all erased
     values of one attribute form one group keyed by the marker, so an ErasedValue may stand
-    for several erased assertions. For a read that started before the erasure published, the
-    old value is also acceptable (Q49d), so a single value's output lists both (R-ERA-6)."""
+    for several erased assertions; Q52c: the group's marker reports the earliest erasedAt
+    among its members."""
 
     family = "erased"
 
     def __init__(self, *assertions):
         self.assertions = list(assertions)
         self.ids = sorted(a.id for a in self.assertions)
-        self.in_flight = READ["start"] is not None and any(a.erasure.position > READ["start"] for a in self.assertions)
 
     def erased_at(self):
-        instants = {a.erasure.instant.frac for a in self.assertions}
-        if len(instants) > 1:
-            raise X.TypedError("X-NOT-MODELED", "values erased at different instants in one marker group",
-                               ruling=ERASED_AT_RULING)
-        return self.assertions[0].erasure.instant
+        return min((a.erasure.instant for a in self.assertions), key=lambda n: n.frac)
 
     def marker(self):
         return V.OrderedOut([("_tag", "ErasedValue"), ("erasedAt", _num(self.erased_at()))])
 
-    def settled(self, what):
-        """For a computed answer: the marker reading only (Q49c), refused while in flight."""
-        if self.in_flight:
-            raise X.TypedError("X-NOT-MODELED", f"{what} over a value whose erasure is in flight for this read",
-                               ruling=IN_FLIGHT_RULING)
-        return self
-
     def sort_key(self):
-        """Q49c: ORDER BY places erased markers last, in a deterministic order by assertion id."""
+        """Q49c / Q52b: ORDER BY places erased markers after readable values, by assertion id."""
         return self.ids[0]
 
     def to_output(self):
-        if not self.in_flight:
-            return self.marker()
-        if len(self.assertions) != 1:
-            raise X.TypedError("X-NOT-MODELED", "a marker group with a value in flight", ruling=IN_FLIGHT_RULING)
-        return V.OrderedOut([("_tag", "InFlightErasure"), ("acceptable", [self.assertions[0].value.to_output(),
-                                                                          self.marker()]),
-                             ("rule", "ER-INFLIGHT-READ: the read started before the erasure published")])
-
-
-def is_erased(a, what="a computed answer"):
-    """R-ERA-4: is `a`'s value erased for the computation at hand? Refused while in flight."""
-    if a.erasure is None:
-        return False
-    if READ["start"] is not None and a.erasure.position > READ["start"]:
-        raise X.TypedError("X-NOT-MODELED", f"{what} over a value whose erasure is in flight for this read",
-                           ruling=IN_FLIGHT_RULING)
-    return True
+        return self.marker()
 
 
 def read_value(a):
@@ -225,21 +208,19 @@ def read_value(a):
     of the value (Q49a: earlier transactions' change facts show the marker)."""
     if a.about is not None:
         kind, target, record = a.about
-        if target.erasure is None:
+        if not erased(target):
             return a.value
         doc = V.JsonDoc(_json_node(change_output(kind, target, record)))
         return V.Value("json", doc.canonical, doc)
-    return a.value if a.erasure is None else ErasedValue(a)
+    return ErasedValue(a) if erased(a) else a.value
 
 
-def value_matches(a, expected, what="a value pattern"):
+def value_matches(a, expected):
     """Q49c: an erased value matches no value predicate (equality, inequality, range,
     pattern). A journal change fact compares its re-rendered (marker) content."""
     if a.about is not None:
-        if a.about[1].erasure is not None:
-            is_erased(a.about[1], what)
         return read_value(a) == expected
-    if is_erased(a, what):
+    if erased(a):
         return False
     return a.value == expected
 
@@ -461,7 +442,7 @@ class Engine:
         meta = command.get("meta") or {}
         kinds = {op.get("op") for op in operations if isinstance(op, dict)}
         if "erase" in kinds:
-            self._check_erase_command(command, kinds, meta)
+            self._check_erase_command(kinds, meta)
         retracted = []          # targets retracted so far by this command, in order
         staged = []             # (opIndex, fields) of this command's asserts so far (AMB-06 A)
         for index, op in enumerate(operations):
@@ -499,11 +480,9 @@ class Engine:
                 for target in self._plan_erase(state, op):
                     if target not in plan.erasures:
                         plan.erasures.append(target)
-            elif kind == "erasure":
-                # Q45b: erasure cases spell the op `erase`; the other spelling is refused, not guessed
-                raise V.OracleInputError("X-NOT-MODELED: op 'erasure' is not an O-REPLAY op; erasure cases spell "
-                                         "the op erase (RULINGS Q45b)")
             else:
+                # R-CMD-9 (Q33f): an operation fault with no ERROR_TABLE row; Q52g: `erasure` is not an
+                # op (the op is spelled `erase`), so it is this typed invalid-command error too
                 raise Rejected("E-INVALID-VALUE", f"unknown op {kind!r}")
         # command claim (R-CMD-1)
         command_id = meta.get("commandId")
@@ -550,12 +529,9 @@ class Engine:
         # constraint enforcement (R-CON-*)
         rules = self.rules_for(command)
         if rules:
-            # R-ERA-4 (Q49c): Unique ignores erased values (constraints.py); Required and Cardinality
-            # read presence and counts, which erasure keeps. ReferenceTarget over an erased reference
-            # is not ruled (the target cannot be read), so it is refused.
-            erased_attrs = {a.attribute for a in state.live() if a.erasure is not None}
-            if any(r.get("_tag") == "ReferenceTarget" and r.get("attribute") in erased_attrs for r in rules):
-                raise V.OracleInputError("X-NOT-MODELED: a ReferenceTarget rule over an erased reference (R-ERA-4)")
+            # R-ERA-4: Unique ignores erased values (Q49c) and ReferenceTarget skips an erased reference
+            # (Q52d), both in constraints.py; Required and Cardinality read presence and counts, which
+            # erasure keeps (Q56e).
             from .constraints import newly_violated
             violations = newly_violated(self, state, plan, rules, instant)
             if violations:
@@ -566,14 +542,15 @@ class Engine:
         return plan
 
     @staticmethod
-    def _check_erase_command(command, kinds, meta):
-        """R-ERA-2: an erase command holds erase operations only, and no preconditions. Mixed
-        commands (whether a staged assert is erased, how the journal records the mix) and
-        preconditions on an erasure are not ruled, so they are refused (X-NOT-MODELED)."""
+    def _check_erase_command(kinds, meta):
+        """R-ERA-2 (Q52g): an erase is its own command. Mixing it with other operations, or
+        giving it preconditions, is a typed invalid-command error: E-INVALID-VALUE, the ACC 4.7
+        mapping of an operation fault with no row of its own (R-CMD-9, Q33f)."""
         if kinds != {"erase"}:
-            raise V.OracleInputError("X-NOT-MODELED: a command mixing erase with other operations (R-ERA-2)")
+            raise Rejected("E-INVALID-VALUE", "an erase is its own command: it cannot be mixed with other "
+                           "operations (Q52g)")
         if meta.get("preconditions"):
-            raise V.OracleInputError("X-NOT-MODELED: preconditions on an erase command (R-ERA-2)")
+            raise Rejected("E-INVALID-VALUE", "an erase command takes no preconditions (Q52g)")
 
     def _plan_erase(self, state, op):
         """R-ERA-2: `{"op": "erase", "entityId": E, "attribute": A}` erases the value of every
@@ -676,7 +653,7 @@ class Engine:
             # again changes nothing; identities, intervals and retirement fields keep their shape
             a = state.assertions[target]
             if a.erasure is None:
-                a.erasure = ErasureMark(instant, position, tx_id)
+                a.erasure = ErasureMark(instant, position, tx_id, state.name)
                 newly.append(a)
         meta = command.get("meta") or {}
         if meta.get("commandId") is not None:

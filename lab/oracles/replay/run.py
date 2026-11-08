@@ -16,7 +16,7 @@ from . import views as W
 
 CASE_FORMAT = "triplex-db-2/o-replay-case/1"
 OUTPUT_FORMAT = "triplex-db-2/o-replay-expected/1"
-ORACLE_VERSION = "0.4.1"   # EXP-O04: erasure (Q24, Q31f, TARGETS 7, held Q49) and DR-JSON-CONVERT; ACCEPTANCE 0.3.6
+ORACLE_VERSION = "0.4.2"   # EXP-O04b: erasure residual shapes (RULINGS Q52a-g, Q56f); ACCEPTANCE 0.3.9
 SOURCE_FILES = ["__init__.py", "__main__.py", "cli.py", "errors.py", "values.py", "exact.py", "replay.py",
                 "constraints.py", "views.py", "entities.py", "scale.py", "run.py", "selfcheck.py"]
 
@@ -55,6 +55,9 @@ def _order_keys_not_modeled(run, query):
 
 for _kind in ("orderKey", "decimalKey", "tdk1Key"):
     QUERIES[_kind] = _order_keys_not_modeled
+
+INFLIGHT_RULE = ("ER-INFLIGHT-ALL-OR-NONE: the read started before these erasure commits published; it sees "
+                 "each commit whole, all of its values as they were or all as markers (RULINGS Q52e)")
 
 _INTEGER_LEXEME = re.compile(r"-?(0|[1-9][0-9]*)")
 _COORDINATE_FIELDS = ("stream", "epoch", "offset", "ordinal")
@@ -527,23 +530,60 @@ class Run:
             if kind not in QUERIES:
                 raise V.OracleInputError(f"unknown query kind {kind!r}")
             entry = [("id", qid), ("kind", kind)]
-            # R-ERA-6: `readStart` is the last position published when the read started; erasures
-            # published after it are in flight for this read (ER-INFLIGHT-READ)
-            R.READ["start"] = self.read_start(query)
+            # R-ERA-6: `readStart` is the last position published when the read started; erasure
+            # commits of the read's scope published after it are in flight for this read. Q52e: an
+            # erasure commit is atomic for readers, so the read sees each in-flight commit whole
+            # (all of its values as they were, or all as markers) and the acceptable answers are
+            # one per choice of seen commits: for one commit, exactly the all-old and the
+            # all-marker answers. The ruling treats each commit on its own, so with several
+            # commits in flight every combination is listed (none is ruled out).
+            scope = (query.get("cut") or {}).get("scope") or self.engine.default_scope
+            start = self.read_start(query)
+            pending = self.in_flight_erasures(scope, start)
+            R.READ.update(start=start, scope=scope)
+            answers = []
             try:
-                result = QUERIES[kind](self, query)
-                entry.append(("result", result))
-                self.results[qid] = result
-            except X.TypedError as error:
-                entry.append(("error", error.to_output()))
-            except E.Conflicts as error:
-                entry.append(("error", error.to_output()))
-            except V.InvalidValue as error:
-                entry.append(("error", X.TypedError(error.error_id, str(error)).to_output()))
+                for mask in range(1 << len(pending)):
+                    seen = [pending[k] for k in range(len(pending)) if mask >> k & 1]
+                    R.READ["chosen"] = frozenset(position for position, _ in seen)
+                    answers.append(([tx for _, tx in seen], self.answer(kind, query)))
             finally:
-                R.READ["start"] = None
+                R.READ.update(start=None, scope=None, chosen=frozenset())
+            if len({V.dumps(V.OrderedOut([answer]), indent=0) for _, answer in answers}) == 1:
+                # the read does not depend on the in-flight commits (or none is in flight)
+                key, value = answers[0][1]
+                entry.append((key, value))
+                if key == "result":
+                    self.results[qid] = value
+            else:
+                # answers differ: list every whole answer; a later cursorFrom cannot name this query
+                entry.append(("inFlight", V.OrderedOut([("rule", INFLIGHT_RULE), ("acceptable", [
+                    V.OrderedOut([("erasuresSeen", seen), answer]) for seen, answer in answers])])))
             out.append(V.OrderedOut(entry))
         return out
+
+    def answer(self, kind, query):
+        """One answer to the query under the current erasure view: ("result", value) or
+        ("error", typed error)."""
+        try:
+            return ("result", QUERIES[kind](self, query))
+        except X.TypedError as error:
+            return ("error", error.to_output())
+        except E.Conflicts as error:
+            return ("error", error.to_output())
+        except V.InvalidValue as error:
+            return ("error", X.TypedError(error.error_id, str(error)).to_output())
+
+    def in_flight_erasures(self, scope, start):
+        """R-ERA-6 / Q52e: the erasure commits of `scope` that published after the read started,
+        as (position, txId) in publication order. An erasure commit counts once it first erased
+        a value (an erase that matched nothing or only re-erased values changes no reading)."""
+        state = self.engine.scopes.get(scope)
+        if start is None or state is None:
+            return []
+        commits = {(a.erasure.position, a.erasure.txId) for a in state.assertions.values()
+                   if a.erasure is not None and a.erasure.position > start}
+        return sorted(commits)
 
     def read_start(self, query):
         """R-ERA-6: `readStart` = a position (ordinal), {"afterCommand": k} or {"coordinate": c};

@@ -11,7 +11,7 @@ import json
 from . import exact as X
 from . import replay as RP
 from . import values as V
-from .replay import ErasedValue, _num, assertion_output, is_erased, read_value, record_output, value_matches
+from .replay import ErasedValue, _num, assertion_output, erased, read_value, record_output, value_matches
 
 
 # --------------------------------------------------------------------------- cuts
@@ -461,18 +461,19 @@ def q_value_supports(run, query):
     representation of the support with the lowest (recordedPosition, op index)."""
     cut = resolve_cut(run, query.get("cut"))
     pattern = _decode_pattern(query.get("pattern") or V.Obj([]))
-    groups, erased = {}, {}
+    groups, gone = {}, {}
     for a in ordered(fact_source(run, cut, pattern)):
         if visible(a, cut) and _pattern_match(a, pattern):
-            if a.about is None and is_erased(a, "valueSupports"):
+            if a.about is None and erased(a):
                 # Q49c: all erased values of an attribute form one group keyed by the marker
-                erased.setdefault((a.entityId, a.attribute), []).append(a)
+                # (Q52c: reporting the earliest erasedAt; its count counts each assertion, Q52a)
+                gone.setdefault((a.entityId, a.attribute), []).append(a)
             else:
                 groups.setdefault((a.entityId, a.attribute, read_value(a)), []).append(a.id)
     keys = sorted(groups, key=lambda k: (k[0], k[1], 0, k[2].order_key()))
     rows = [(k[0], k[1], k[2].to_output(), groups[k]) for k in keys]
     rows += [(e, attr, ErasedValue(*members).to_output(), [m.id for m in members])
-             for (e, attr), members in erased.items()]
+             for (e, attr), members in gone.items()]
     rows.sort(key=lambda r: (r[0], r[1]))        # stable: readable values first, the marker group last
     return V.OrderedOut([("cut", cut.to_output()), ("supports", [
         V.OrderedOut([("entityId", e), ("attribute", attr), ("value", value), ("count", len(ids)),
@@ -490,7 +491,7 @@ def q_reachability(run, query):
     edges = {}
     for a in ordered(scope_assertions(run, cut)):
         # Q49c: an erased reference cannot be followed
-        if a.attribute == attribute and visible(a, cut) and not is_erased(a, "reachability") \
+        if a.attribute == attribute and visible(a, cut) and not erased(a) \
                 and a.value.family in ("ref", "string"):
             edges.setdefault(a.entityId, {}).setdefault(a.value.payload, []).append(a.id)
     origin = query["from"]
@@ -548,15 +549,15 @@ def _rows(run, cut, match):
         choices = []
         for name in names:
             attr = match["attributes"][name]
-            distinct, erased = {}, []
+            distinct, gone = {}, []
             for a in facts:
                 if a.attribute == attr:
-                    if is_erased(a, "aggregate"):
-                        erased.append(a)
+                    if erased(a):
+                        gone.append(a)
                     else:
                         distinct.setdefault(a.value, a.value)   # first (lowest creation order) representative
             # Q49c: the entity's erased values of the attribute bind once, as the marker group, last
-            choices.append(sorted(distinct, key=lambda v: v.order_key()) + ([ErasedValue(*erased)] if erased else []))
+            choices.append(sorted(distinct, key=lambda v: v.order_key()) + ([ErasedValue(*gone)] if gone else []))
         if any(not c for c in choices):
             continue
         combos = [[]]
@@ -652,12 +653,14 @@ def q_aggregate(run, query):
             convert = agg.get("convert") or legacy_convert
             values = [r[agg["var"]] for r in members]
             items = [v for v in values if not isinstance(v, ErasedValue)]   # Q49c: value aggregates skip it
-            if agg["op"] == "count":
-                _check_count(values)
             if convert is not None and agg["op"] != "avg":
                 raise V.OracleInputError("convert is defined for avg only (AMB-11)")
             result = X.aggregate(agg["op"], items, convert=convert if agg["op"] == "avg" else None)
             if agg["op"] == "count":
+                # Q52a: AG-COUNT counts distinct values, and the attribute's erased values are one
+                # value (the marker group of Q49c, the same key as GROUP BY), so all erased values
+                # bound here add one. Counts of assertions (valueSupports count, raw count) count
+                # each erased assertion.
                 result = V.integer(result.payload + (1 if len(items) < len(values) else 0))
             if result is None and query.get("emptyAs") is not None:
                 result = V.decode_value(query["emptyAs"])   # AG-PACKET-COALESCE (task-specific)
@@ -667,18 +670,6 @@ def q_aggregate(run, query):
 
 
 _ERASED_KEY = object()      # the marker group key of Q49c
-
-
-def _check_count(values):
-    """AG-COUNT counts distinct values of the variable; Q49c says COUNT of assertions counts
-    an erased value. The marker group counts once as a distinct value; where that differs from
-    counting each erased assertion (two or more erased assertions bound), the two readings
-    disagree and the oracle refuses (R-ERA-4)."""
-    erased = [a for v in values if isinstance(v, ErasedValue) for a in v.assertions]
-    if len(erased) > 1:
-        raise X.TypedError("X-NOT-MODELED", "COUNT over a variable bound to several erased values",
-                           ruling="R-ERA-4: Q49c counts erased assertions while AG-COUNT counts distinct values "
-                           "(ORCHESTRATOR-RULING-NEEDED)")
 
 
 def _decode_expr(node):

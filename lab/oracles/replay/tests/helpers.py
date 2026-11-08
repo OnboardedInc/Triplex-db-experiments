@@ -51,7 +51,7 @@ def evaluate(c, raw_text=None):
 def result(report, qid):
     for q in report["queries"]:
         if q["id"] == qid:
-            return q.get("result", q.get("error"))
+            return q.get("result", q.get("error", q.get("inFlight")))
     raise KeyError(qid)
 
 
