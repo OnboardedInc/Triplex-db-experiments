@@ -46,16 +46,20 @@ isolation; is Datomic dev storage acceptable for the final acceptance run, or mu
 ## Merged 2026-11-08: E01 claim evaluator (f060f7e, 128/128 on main); follow-up: the poison marker lives in the shared .git, so one
 worktree's refusal blocks every worktree (move it to the worktree's own git dir).
 
+## Pending Sam decisions on VM security (Q86g, from R28): (H1) narrow the triplex2 colima mounts: today $HOME is mounted writable
+into the VM, so every Docker socket holder (all lab agents) can write anywhere in Sam's home; (H2) block outbound traffic from tx2
+containers: today the VM reaches every Mac 127.0.0.1 service, including ports 15442 and 17019. Both need a VM restart (all residents).
+
 ## Running agents (10; protocol lab/PROTOCOL.md since 2026-11-08: Codex builders medium, Codex reviewers high, Opus planners high)
 | Agent | Role, model, effort | Priority | Output |
 | --- | --- | --- | --- |
 | CX-DA01 lane D adapter (exp/DA01-datomic-adapter, on DA00 702643f) | builder, Codex medium | lane D, goal 7 floor | storage adapter, Datalog executor, G1 |
 | CX-VP2Q-4 (verify/P2Q) | reviewer, Codex high | P2, P3 | delta re-check of broker round 3 1b55d2e |
 | CX-SQL01 (exp/SQL01-broker-sqlite, on 1b55d2e) | builder, Codex medium | P2, P4, P5 | broker SQLite file per R25 (Q84): log of record, pinned readers, H1 rows |
-| CX-VX02-3 (verify/X02) | reviewer, Codex high | XTQL lane | delta re-check of X02 round 3 200d669; C8 514c3b6 ACCEPTED, merges after X02 |
-| CX-VA01-0311 (verify/A01-0311) | reviewer, Codex high | floor for claims | review of contract 0.3.11 36d7434 (338/338 regressions; lane D 153 obligations blocked) |
-| R28 isolation design for EXP-G03 | planner, Opus 5.5, high | floor for claims | /Users/sam/Claude/Projects/triplex-db-2/R28/ |
-| CX-VDA00 (verify/DA00) | reviewer, Codex high | lane D floor | review of lane D bring-up 702643f |
+| CX-X02-R3 resumed (exp/X02-xtql-parity) | builder, Codex medium | XTQL lane | Q79e grammar-based operand classification with a generated corpus; C8 merges after X02 |
+| CX-A01-0311-R2 (contract/0.3.11) | builder, Codex medium | floor for claims | 0.3.11 fix round: O-REPLAY row results in comparators, Unicode, lane D composition fields, Q76c matrix record |
+| CX-G03 (exp/G03-executing-gate) | builder, Codex medium | floor for claims | executing gate with container isolation per R28 (Q86a-f) |
+| (queued) CX-DA01 round 2: Q85a-d (V-DA00 FIX-FIRST) after its current round | builder, Codex medium | lane D floor | then a joint DA00+DA01 review |
 | CX-VO05-2 (verify/O05) | reviewer, Codex high | floor | review of O-OBS round 2 463703d |
 | CX-OBS01 (exp/OBS01-observer) | builder, Codex medium | floor | observer sidecar writing obs-bundle/1 (R27, Q82) |
 | R25 finish: SQLite pinned readers for the broker file and H1 (continuation) | planner, Opus 5.5, high | P1, P2, P4, P5 | /Users/sam/Claude/Projects/triplex-db-2/R25/ |
@@ -128,3 +132,14 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - R21: file the XTDB DECIMAL-to-BIGINT-through-double and `= ANY` precedence findings upstream? (publishes lab findings; not done)
 - R18: Datomic-style `noHistory` for high-churn attributes? Default kept: history for everything (audit is a must-have).
 - GS.03: a vendor's older revision arriving after a newer one is acknowledged as `superseded`, changes no current value, and is journaled.
+
+- 22:35Z: running now: CX-A01-0311, CX-K01-R2, CX-DA01, CX-SQL01, CX-OBS01, CX-G03, CX-P2Q-R3 (round 4 fix F1), CX-VX02-3 (round 4 review), CX-O05-R2 (round 3 fixes R2-F1..F3). 9 of 10.
+- K01 round 2 (05a23dd): Q83d settle evidence implemented, 41 tests and tsc pass; offline review CX-VK01 launched. Live run waits for the
+  scale window: it needs pool capacity (park tx2-datomic-dev) and slot s1 cleared, but s1 holds CX-OBS01's retained source and canary, so
+  OBS01 must release s1 first. Nothing was deleted.
+- Running (9): CX-DA01, CX-SQL01, CX-A01-0311 (r3: evaluator suite), CX-X02-R3 (r4: Q79f), CX-P2Q-R3 (r5), CX-K01-R2 (r3),
+  CX-VO05-2 (O-OBS r3 review), CX-OBS01 (r2; releases s1), CX-G03 (r2, no-slot work). Contract 0.3.11 merge undone per Q87.
+  Scale window after DA01: park tx2-datomic-dev; K01 live, G03 slot run, W01b GS, J01 compact-on G1, X02/C8 exclusive reruns.
+- SQL01 delivered (53d41ad): 73 package + 23 semantic + 5 live tests, 80 SIGKILLs with zero ACKed commits lost, outage pulls 1 ms at 10k
+  and 30k commands. Open: one unreproduced pinned read that returned 30 of 40 facts (possible P1 torn read). Review CX-VSQL01 launched,
+  told to reproduce that first. EXP-P5 waits for the SQL01 merge.

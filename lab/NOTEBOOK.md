@@ -1463,3 +1463,63 @@ Where each priority stands, from evidence so far (research probes and baselines;
   Learning: checkpoint placement decides WAL growth (on the writer thread PASSIVE never finished under readers; WAL reached 714 MB).
 - Dispatched: EXP-SQL01 (broker SQLite file per Q84, on the broker branch), EXP-OBS01 (observer sidecar per R27), and three reviewers
   (O-OBS round 2, broker round 3, X02 round 3).
+
+## 2026-11-08 22:27Z: hourly learnings pass (NORTH-STAR reread first; research is Opus high)
+- **Learnings current** through E01's merge, R25, R27, R30, contract 0.3.11's review (FIX-FIRST: comparators on real O-REPLAY rows, Unicode,
+  lane D composition fields, the Q76c matrix record) and K01 round 2 (G3 blocked by fast compaction; ruled Q83d).
+- **Host:** load 7.0 / 7.1 / 8.0; disk 25 GiB free; engines: the three dev residents (XTDB, QLever, Datomic); Claude usage 2% of the week.
+- **Where evidence points, by priority:**
+  - **P1:** reads never write (C8 accepted; merges after X02's last check). Lane D's process split is the next P1 hypothesis to measure.
+  - **P2:** the broker is one review from a default-off merge; EXP-SQL01 moves it onto the R25 SQLite file (0 acked commits lost in 80
+    kills; readers add 0.2-0.8 ms to a 3 ms commit). Engine-side encoding tweaks are capped at 12-33% (J01).
+  - **P3:** the broker log is the feed; P3 timing now comes from the log's own record.
+  - **P4:** H1 lives in the same SQLite file (0.10 ms p50 3-hop pulls, rows examined flat across depth); SQL01 builds it.
+  - **P5:** R25's pinned sweep (20,000 subjects in 2.09 s at a pinned basis, 0 mismatches) puts 100k near 10.5 s of one reader thread
+    against the 100 s bar, before kernel evaluation (15.8 s of one core); EXP-P5 can start once SQL01 lands.
+  - **Lane D:** bring-up done and under review; the adapter (DA01) is building.
+  - **Floor:** E01 on main; O-OBS round 2 and the observer sidecar in flight; contract 0.3.11 fix round in flight.
+- **Research:** no new question this hour; R28 (isolation for EXP-G03) is running. All ten slots are busy.
+- **Learning:** the review loop converges fastest when the ruling is general (one continuation table; one allowlist with everything else
+  counted; one trusted context) and slowest when each round names a case.
+
+## 2026-11-08 22:32Z: R28 landed (Opus high): candidate code runs only in hardened containers; two VM security findings go to Sam; EXP-G03 dispatched
+- Saved as lab/research/R28-g03-isolation.md; ruled Q86a-g. Containers in the triplex2 VM with no Mac bind mounts, own PID namespaces
+  (setsid cannot escape; the kernel kills the namespace), one internal network per arm behind a trusted relay, execution-identity/2.
+- **New finding, oracle laundering (L1):** the candidate's checkout contains the pinned oracle files and python3 is on its PATH, so a
+  candidate could run the oracle and pass every case without an engine; the container design removes both.
+- **Security findings outside the lab's code (Q86g, for Sam):** colima mounts $HOME writable into the triplex2 VM by default, so every
+  Docker socket holder can write anywhere in Sam's home; the VM can reach every Mac 127.0.0.1 service, including ports 15442 and 17019.
+  Fixing either changes the VM's security settings and restarts it, so it is Sam's call, not the orchestrator's.
+- Also: lane D's gateway is candidate code baked into the engine container (DA00), so G03 moves it to its own container; lane D
+  durable-readback evidence waits for SQL storage. Builders can move refs/heads/main, so the evaluator uses its own clone (Q86e).
+- V-DA00 FIX-FIRST (Q85: create resets a position under concurrency, public scope names rejected, non-hermetic builds, codec mismatch)
+  goes into DA01's next round, since DA01 carries and edits that code.
+
+## 2026-11-08 22:35Z: three reviews in; P2Q and O-OBS go back for fixes, X02 round 3 goes to review
+- **V-P2Q round 4 FIX-FIRST (P1, P2):** the two earlier regressions pass, and a 60-seed routing fuzz has zero stale accepts. But with
+  the exported standard client, a socket closed mid-response arrives as TypeError "terminated" with a nested UND_ERR_SOCKET cause, so
+  native SPARQL and Datalog both lose replica-unreachable and the basis fields. **Learning:** classify failures from structured nested causes,
+  never from the outer message alone, and test with real HTTP sockets on every exported client, not just the one the runtime factory uses.
+- **V-O05 round 2 FIX-FIRST:** all 177 round-1 inputs now refuse and the 14 positive bundles pass, but signed observations with the wrong
+  contents still pass: fact comparison runs only for QT4s; a context can pick the reuse threshold for an incremental obligation; clock
+  uncertainty applies to only two timing gates. **Learning:** authentication proves which bytes were observed, not that they are correct;
+  every transition needs a content check against the evaluator's expectation.
+- **X02 round 3 (Q79e grammar) done:** 1,818 generated queries match XTDB, 1,818 unsafe mutations are rejected, G0 is 967/967. Reviewer
+  round 4 is checking variations outside the generated set.
+
+## 2026-11-08 23:01Z: contract 0.3.11 merge undone (evaluator suite broke); seven rounds dispatched
+- **Contract 0.3.11 passed its review (V-A01 round 2 ACCEPT: 344/344 mutations, 63 tests), but merging it broke 8 of 108 evaluator
+  tests on main.** The contract's review never ran claim.mjs's suite, which reads the contract. I undid the unpushed merge (main back at
+  5d34fdc; only main contained it). **Q87:** every contract merge now needs the evaluator suite to pass on the branch merged with main.
+  **Learning:** a reviewer's ACCEPT covers what it tested; the merge gate has to cover everything that reads the merged file.
+- **V-X02 round 4 FIX-FIRST:** dollar-bearing identifiers let unsafe operands and second statements past the guard; 36 supported queries
+  are falsely refused; nested block comments are refused although the pinned lexer allows them. **Q79f:** the guard follows the pinned
+  lexer, and refuses wherever it and the lexer disagree.
+- **V-P2Q round 5 FIX-FIRST:** the cause walk fixed truncation (42/42 HTTP cases) but now matches the word "connection" in decode errors.
+  Classification goes by error codes and typed errors only, never message text.
+- **V-K01 FIX-FIRST (offline):** a failed re-verify kept an old PASS; T1 ignored a failed stop proof; settle read the initial gauge. All
+  three are a stale earlier value standing in for a fresh reading; the builder is told to look for that pattern everywhere.
+- **O-OBS round 3 is back with all nine counterexamples rejected,** so it goes to review. OBS01 and G03 delivered partial work: both need
+  slot time. OBS01 releases s1 to K01 after copying its evidence out; G03 does all its no-slot work and scripts the slot run.
+- **The scale window opens after CX-DA01 finishes with tx2-datomic-dev.** It covers K01 live, G03's slot run, W01b's GS rerun, J01's
+  compact-on G1, and the X02 and C8 exclusive reruns.
