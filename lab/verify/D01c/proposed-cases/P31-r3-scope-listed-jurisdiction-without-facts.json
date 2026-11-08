@@ -1,0 +1,119 @@
+{
+ "id": "P31",
+ "slug": "r3-scope-listed-jurisdiction-without-facts",
+ "title": "R3: a listed jurisdiction with no facts is in scope (ids only); 2,700 minutes is not overtime",
+ "op": "evaluate",
+ "checks": [
+  {
+   "rule": "OT",
+   "polarity": "negative"
+  },
+  {
+   "rule": "MINWAGE",
+   "polarity": "positive"
+  }
+ ],
+ "notes": [
+  "5.1: the scope test compares ids only. jur(S) = jur:j010 (listed), although the world has no jur:j010 fact: threshold",
+  "2,700; 2,700 is not > 2,700: OT row 3, no flag, inputs [1, 2, 7] (location facts included, 6.3).",
+  "MINWAGE (R3 reads both floor sources, as R2): (jur:j010, stateMinWageCents) and (loc:x, localMinWageCents) are",
+  "dependencies but absent: row 3, task pay.floor-unknown. V-D01 note N1 asked for this case."
+ ],
+ "input": {
+  "basis": {
+   "tx": 10,
+   "validTime": "2026-11-04T12:00:00.000000Z"
+  },
+  "release": "R3",
+  "world": {
+   "subject": "pl:a",
+   "facts": [
+    {
+     "e": "pl:a",
+     "a": "startDate",
+     "v": "2026-11-02",
+     "tx": 2
+    },
+    {
+     "e": "pl:a",
+     "a": "payRateCents",
+     "v": 1650,
+     "tx": 2
+    },
+    {
+     "e": "pl:a",
+     "a": "section1AttestedAt",
+     "v": "2026-10-30T15:00:00.000000Z",
+     "tx": 3
+    },
+    {
+     "e": "pl:a",
+     "a": "ssn",
+     "v": "123456789",
+     "tx": 3
+    },
+    {
+     "e": "pl:a",
+     "a": "bgcStatus",
+     "v": "clear",
+     "tx": 4
+    },
+    {
+     "e": "pl:a",
+     "a": "everifyStatus",
+     "v": "pending",
+     "tx": 5
+    },
+    {
+     "e": "pl:a",
+     "a": "everifyStatusAt",
+     "v": "2026-11-03T10:00:00.000000Z",
+     "tx": 5
+    },
+    {
+     "e": "pl:a",
+     "a": "decisions",
+     "v": "pl:a/dec:1",
+     "tx": 6
+    },
+    {
+     "e": "pl:a/dec:1",
+     "a": "target",
+     "v": "i9.section2",
+     "tx": 6
+    },
+    {
+     "e": "pl:a/dec:1",
+     "a": "verdict",
+     "v": "approve",
+     "tx": 6
+    },
+    {
+     "e": "pl:a/dec:1",
+     "a": "author",
+     "v": "person",
+     "tx": 6
+    },
+    {
+     "e": "pl:a",
+     "a": "weeklyMinutes",
+     "v": 2700,
+     "tx": 7
+    },
+    {
+     "e": "loc:x",
+     "a": "jurisdiction",
+     "v": "jur:j010",
+     "tx": 1
+    },
+    {
+     "e": "pl:a",
+     "a": "location",
+     "v": "loc:x",
+     "tx": 2
+    }
+   ]
+  }
+ },
+ "expected": {"basis":{"tx":10,"validTime":"2026-11-04T12:00:00.000000Z"},"dependencies":[["jur:j010","stateMinWageCents"],["loc:x","jurisdiction"],["loc:x","localMinWageCents"],["pl:a","baselinePayRateCents"],["pl:a","bgcStatus"],["pl:a","decisions"],["pl:a","documents"],["pl:a","everifyStatus"],["pl:a","everifyStatusAt"],["pl:a","everifySubmitResult"],["pl:a","location"],["pl:a","payRateCents"],["pl:a","section1AttestedAt"],["pl:a","ssn"],["pl:a","startDate"],["pl:a","weeklyMinutes"],["pl:a/dec:1","author"],["pl:a/dec:1","target"],["pl:a/dec:1","verdict"]],"flags":[],"obligations":[],"release":"sha256:f345d9fe4291803259021ad30ff00afecc1f48af4d4b403860b3ace52315312e","subject":"pl:a","tasks":[{"dueAt":"2026-11-02T00:00:00.000000Z","id":"pl:a#pay.floor-unknown","kind":"pay.floor-unknown","overdue":true,"rule":"MINWAGE"}],"trace":[{"inputs":[2],"key":"","row":3,"rule":"LIFE"},{"inputs":[2,3],"key":"","row":1,"rule":"I9S1"},{"inputs":[2,6],"key":"","row":1,"rule":"I9S2"},{"inputs":[2,3,5],"key":"","row":1,"rule":"EVSUB"},{"inputs":[5],"key":"","row":1,"rule":"EVSTAT"},{"inputs":[4],"key":"","row":2,"rule":"BGC"},{"inputs":[],"key":"","row":0,"rule":"DOCEXP"},{"inputs":[1,2],"key":"","row":3,"rule":"MINWAGE"},{"inputs":[1,2,7],"key":"","row":3,"rule":"OT"},{"inputs":[2],"key":"","row":1,"rule":"PAYCHG"},{"inputs":[6],"key":"","row":0,"rule":"PROP"}],"workItems":[]}
+}

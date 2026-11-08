@@ -1,0 +1,70 @@
+{
+ "id": "P13",
+ "slug": "publish-opaque-payload-tokens",
+ "title": "A07: opaque payload tokens: 1.65e3 is kept as written and differs from 1650; -0 is 0; non-ASCII is escaped",
+ "op": "publish",
+ "checks": [],
+ "notes": [
+  "A07: publish and receive pass payloads through unchecked (4.4 step 1). Canonical form of an opaque payload: an integer token",
+  "as its integer (-0 -> 0), any other number token as its source text (1.65e3), strings with \\uXXXX escapes for non-ASCII.",
+  "Record 1 carries {\"floorCents\":1.65e3,\"note\":<e-acute as raw UTF-8>,\"payRateCents\":-0} and publishes seq 1, written",
+  "{\"floorCents\":1.65e3,\"note\":\"\\u00e9\",\"payRateCents\":0}. Record 2 carries {\"floorCents\":1650,\"note\":\"\\u00e9\",\"payRateCents\":0}:",
+  "the notes and the pay compare equal, but 1.65e3 and 1650 differ as written, so seq 2 is published (8.8 step 2).",
+  "A JSON.parse/JSON.stringify kernel sees 1650 twice and publishes nothing for record 2, and writes the e-acute raw: it must",
+  "keep number tokens and escape non-ASCII, or W0-1.1.2 must make such payloads W0.E_SHAPE instead."
+ ],
+ "input": {
+  "evaluations": [
+   {
+    "basis": {
+     "tx": 20,
+     "validTime": "2026-11-04T12:00:00.000000Z"
+    },
+    "release": "sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031",
+    "subject": "pl:a",
+    "workItems": [
+     {
+      "id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a",
+      "inputs": [
+       1,
+       2
+      ],
+      "key": "",
+      "kind": "notify.pay-below-minimum",
+      "payload": {"floorCents":1.65e3,"note":"é","payRateCents":-0},
+      "rule": "MINWAGE",
+      "version": "wv:71b5c297dadeea07837a4931fbb3bad905789cf81fc30ff0417c71e6fdcda6d7"
+     }
+    ]
+   },
+   {
+    "basis": {
+     "tx": 21,
+     "validTime": "2026-11-04T12:00:00.000000Z"
+    },
+    "release": "sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031",
+    "subject": "pl:a",
+    "workItems": [
+     {
+      "id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a",
+      "inputs": [
+       1,
+       2
+      ],
+      "key": "",
+      "kind": "notify.pay-below-minimum",
+      "payload": {"floorCents":1650,"note":"\u00e9","payRateCents":0},
+      "rule": "MINWAGE",
+      "version": "wv:7c95e9dbf6d138d7fd5ad97f2f00b96d7461a45c8abffeace6c6bbbd33e69825"
+     }
+    ]
+   }
+  ],
+  "state": {
+   "items": [],
+   "pending": [],
+   "subjects": []
+  }
+ },
+ "expected": {"deliveries":[{"id":"wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a","key":"","kind":"notify.pay-below-minimum","payload":{"floorCents":1.65e3,"note":"\u00e9","payRateCents":0},"rule":"MINWAGE","seq":1,"subject":"pl:a","version":"wv:71b5c297dadeea07837a4931fbb3bad905789cf81fc30ff0417c71e6fdcda6d7"},{"id":"wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a","key":"","kind":"notify.pay-below-minimum","payload":{"floorCents":1650,"note":"\u00e9","payRateCents":0},"rule":"MINWAGE","seq":2,"subject":"pl:a","version":"wv:7c95e9dbf6d138d7fd5ad97f2f00b96d7461a45c8abffeace6c6bbbd33e69825"}],"state":{"items":[{"id":"wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a","payload":{"floorCents":1650,"note":"\u00e9","payRateCents":0},"retired":false,"seq":2,"subject":"pl:a"}],"pending":[{"id":"wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a","key":"","kind":"notify.pay-below-minimum","payload":{"floorCents":1.65e3,"note":"\u00e9","payRateCents":0},"rule":"MINWAGE","seq":1,"subject":"pl:a","version":"wv:71b5c297dadeea07837a4931fbb3bad905789cf81fc30ff0417c71e6fdcda6d7"},{"id":"wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a","key":"","kind":"notify.pay-below-minimum","payload":{"floorCents":1650,"note":"\u00e9","payRateCents":0},"rule":"MINWAGE","seq":2,"subject":"pl:a","version":"wv:7c95e9dbf6d138d7fd5ad97f2f00b96d7461a45c8abffeace6c6bbbd33e69825"}],"subjects":[{"basis":{"tx":21,"validTime":"2026-11-04T12:00:00.000000Z"},"subject":"pl:a"}]}}
+}

@@ -1,0 +1,125 @@
+{
+ "id": "P12",
+ "slug": "err-no-release-no-fallback",
+ "title": "A06: the picked activation names an unknown hash: W0.E_NO_RELEASE, no fall back",
+ "op": "reconcile",
+ "checks": [],
+ "notes": [
+  "5.4: both from <= v; the greatest from (11-02) is picked; its well-formed hash is none of R1, R2, R3: step 4",
+  "W0.E_NO_RELEASE. The older R1 activation is not used (A06)."
+ ],
+ "input": {
+  "activations": [
+   {
+    "from": "2026-11-01T00:00:00.000000Z",
+    "release": "sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031",
+    "tx": 8
+   },
+   {
+    "from": "2026-11-02T00:00:00.000000Z",
+    "release": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "tx": 9
+   }
+  ],
+  "basis": {
+   "tx": 10,
+   "validTime": "2026-11-04T12:00:00.000000Z"
+  },
+  "world": {
+   "subject": "pl:a",
+   "facts": [
+    {
+     "e": "loc:nyc",
+     "a": "jurisdiction",
+     "v": "jur:ny",
+     "tx": 1
+    },
+    {
+     "e": "jur:ny",
+     "a": "stateMinWageCents",
+     "v": 1650,
+     "tx": 1
+    },
+    {
+     "e": "pl:a",
+     "a": "startDate",
+     "v": "2026-11-02",
+     "tx": 2
+    },
+    {
+     "e": "pl:a",
+     "a": "payRateCents",
+     "v": 1650,
+     "tx": 2
+    },
+    {
+     "e": "pl:a",
+     "a": "location",
+     "v": "loc:nyc",
+     "tx": 2
+    },
+    {
+     "e": "pl:a",
+     "a": "section1AttestedAt",
+     "v": "2026-10-30T15:00:00.000000Z",
+     "tx": 3
+    },
+    {
+     "e": "pl:a",
+     "a": "ssn",
+     "v": "123456789",
+     "tx": 3
+    },
+    {
+     "e": "pl:a",
+     "a": "bgcStatus",
+     "v": "clear",
+     "tx": 4
+    },
+    {
+     "e": "pl:a",
+     "a": "everifyStatus",
+     "v": "pending",
+     "tx": 5
+    },
+    {
+     "e": "pl:a",
+     "a": "everifyStatusAt",
+     "v": "2026-11-03T10:00:00.000000Z",
+     "tx": 5
+    },
+    {
+     "e": "pl:a",
+     "a": "decisions",
+     "v": "pl:a/dec:1",
+     "tx": 6
+    },
+    {
+     "e": "pl:a/dec:1",
+     "a": "target",
+     "v": "i9.section2",
+     "tx": 6
+    },
+    {
+     "e": "pl:a/dec:1",
+     "a": "verdict",
+     "v": "approve",
+     "tx": 6
+    },
+    {
+     "e": "pl:a/dec:1",
+     "a": "author",
+     "v": "person",
+     "tx": 6
+    },
+    {
+     "e": "pl:a",
+     "a": "weeklyMinutes",
+     "v": 2400,
+     "tx": 7
+    }
+   ]
+  }
+ },
+ "expected": {"error":"W0.E_NO_RELEASE"}
+}

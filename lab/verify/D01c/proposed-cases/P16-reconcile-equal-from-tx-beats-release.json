@@ -1,0 +1,127 @@
+{
+ "id": "P16",
+ "slug": "reconcile-equal-from-tx-beats-release",
+ "title": "Equal from: the greater tx wins even when its release string is smaller (C61 cannot tell the two orders apart)",
+ "op": "reconcile",
+ "checks": [],
+ "identicalTo": "C02",
+ "notes": [
+  "5.4 step 3: equal from, so the greater tx (9, R2) wins. R2's hash sha256:7d2f... is smaller than R1's sha256:fd57...,",
+  "so ordering by release string before tx would pick R1. In C61 the greater tx also has the greater string.",
+  "C01's world and basis under R2: the bytes equal C02's."
+ ],
+ "input": {
+  "activations": [
+   {
+    "from": "2026-11-01T00:00:00.000000Z",
+    "release": "sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031",
+    "tx": 8
+   },
+   {
+    "from": "2026-11-01T00:00:00.000000Z",
+    "release": "sha256:7d2f4008e55f43458ae1288cb65a4cf92f3f04a40a1c6eeafb3fc754435807a9",
+    "tx": 9
+   }
+  ],
+  "basis": {
+   "tx": 10,
+   "validTime": "2026-11-04T12:00:00.000000Z"
+  },
+  "world": {
+   "subject": "pl:a",
+   "facts": [
+    {
+     "e": "loc:nyc",
+     "a": "jurisdiction",
+     "v": "jur:ny",
+     "tx": 1
+    },
+    {
+     "e": "jur:ny",
+     "a": "stateMinWageCents",
+     "v": 1650,
+     "tx": 1
+    },
+    {
+     "e": "pl:a",
+     "a": "startDate",
+     "v": "2026-11-02",
+     "tx": 2
+    },
+    {
+     "e": "pl:a",
+     "a": "payRateCents",
+     "v": 1650,
+     "tx": 2
+    },
+    {
+     "e": "pl:a",
+     "a": "location",
+     "v": "loc:nyc",
+     "tx": 2
+    },
+    {
+     "e": "pl:a",
+     "a": "section1AttestedAt",
+     "v": "2026-10-30T15:00:00.000000Z",
+     "tx": 3
+    },
+    {
+     "e": "pl:a",
+     "a": "ssn",
+     "v": "123456789",
+     "tx": 3
+    },
+    {
+     "e": "pl:a",
+     "a": "bgcStatus",
+     "v": "clear",
+     "tx": 4
+    },
+    {
+     "e": "pl:a",
+     "a": "everifyStatus",
+     "v": "pending",
+     "tx": 5
+    },
+    {
+     "e": "pl:a",
+     "a": "everifyStatusAt",
+     "v": "2026-11-03T10:00:00.000000Z",
+     "tx": 5
+    },
+    {
+     "e": "pl:a",
+     "a": "decisions",
+     "v": "pl:a/dec:1",
+     "tx": 6
+    },
+    {
+     "e": "pl:a/dec:1",
+     "a": "target",
+     "v": "i9.section2",
+     "tx": 6
+    },
+    {
+     "e": "pl:a/dec:1",
+     "a": "verdict",
+     "v": "approve",
+     "tx": 6
+    },
+    {
+     "e": "pl:a/dec:1",
+     "a": "author",
+     "v": "person",
+     "tx": 6
+    },
+    {
+     "e": "pl:a",
+     "a": "weeklyMinutes",
+     "v": 2400,
+     "tx": 7
+    }
+   ]
+  }
+ },
+ "expected": {"basis":{"tx":10,"validTime":"2026-11-04T12:00:00.000000Z"},"dependencies":[["jur:ny","stateMinWageCents"],["loc:nyc","jurisdiction"],["loc:nyc","localMinWageCents"],["pl:a","baselinePayRateCents"],["pl:a","bgcStatus"],["pl:a","decisions"],["pl:a","documents"],["pl:a","everifyStatus"],["pl:a","everifyStatusAt"],["pl:a","everifySubmitResult"],["pl:a","location"],["pl:a","payRateCents"],["pl:a","section1AttestedAt"],["pl:a","ssn"],["pl:a","startDate"],["pl:a","weeklyMinutes"],["pl:a/dec:1","author"],["pl:a/dec:1","target"],["pl:a/dec:1","verdict"]],"flags":[],"obligations":[],"release":"sha256:7d2f4008e55f43458ae1288cb65a4cf92f3f04a40a1c6eeafb3fc754435807a9","subject":"pl:a","tasks":[],"trace":[{"inputs":[2],"key":"","row":3,"rule":"LIFE"},{"inputs":[2,3],"key":"","row":1,"rule":"I9S1"},{"inputs":[2,6],"key":"","row":1,"rule":"I9S2"},{"inputs":[2,3,5],"key":"","row":1,"rule":"EVSUB"},{"inputs":[5],"key":"","row":1,"rule":"EVSTAT"},{"inputs":[4],"key":"","row":2,"rule":"BGC"},{"inputs":[],"key":"","row":0,"rule":"DOCEXP"},{"inputs":[1,2],"key":"","row":4,"rule":"MINWAGE"},{"inputs":[7],"key":"","row":3,"rule":"OT"},{"inputs":[2],"key":"","row":1,"rule":"PAYCHG"},{"inputs":[6],"key":"","row":0,"rule":"PROP"}],"workItems":[]}
+}

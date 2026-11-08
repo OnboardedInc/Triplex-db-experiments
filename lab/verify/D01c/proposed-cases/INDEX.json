@@ -1,0 +1,322 @@
+[
+ {
+  "id": "P01",
+  "file": "P01-err-erased-marker-on-instant.json",
+  "op": "evaluate",
+  "pins": "V-D01c F1",
+  "expectedFrom": "spec",
+  "oDomainAt276a280": "CRASH TypeError"
+ },
+ {
+  "id": "P02",
+  "file": "P02-err-array-on-date.json",
+  "op": "evaluate",
+  "pins": "V-D01c F1",
+  "expectedFrom": "spec",
+  "oDomainAt276a280": "CRASH TypeError"
+ },
+ {
+  "id": "P03",
+  "file": "P03-err-cents-5000-digit-token.json",
+  "op": "evaluate",
+  "pins": "V-D01c F2",
+  "expectedFrom": "spec",
+  "oDomainAt276a280": "CRASH ValueError"
+ },
+ {
+  "id": "P04",
+  "file": "P04-err-bytes-bom.json",
+  "op": "evaluate",
+  "pins": "A01",
+  "expectedFrom": "spec",
+  "oDomainAt276a280": "pass"
+ },
+ {
+  "id": "P05",
+  "file": "P05-err-bytes-not-utf8.json",
+  "op": "evaluate",
+  "pins": "A01",
+  "expectedFrom": "spec",
+  "oDomainAt276a280": "pass"
+ },
+ {
+  "id": "P06",
+  "file": "P06-cents-negative-zero.json",
+  "op": "evaluate",
+  "pins": "A02",
+  "expectedFrom": "oracle, hand-checked",
+  "oDomainAt276a280": "pass"
+ },
+ {
+  "id": "P07",
+  "file": "P07-err-fact-tx-negative-zero.json",
+  "op": "evaluate",
+  "pins": "A02",
+  "expectedFrom": "spec",
+  "oDomainAt276a280": "pass"
+ },
+ {
+  "id": "P08",
+  "file": "P08-err-cardinality-after-unknown.json",
+  "op": "evaluate",
+  "pins": "A03",
+  "expectedFrom": "spec",
+  "oDomainAt276a280": "pass"
+ },
+ {
+  "id": "P09",
+  "file": "P09-err-affected-world-by-world.json",
+  "op": "affected",
+  "pins": "A04",
+  "expectedFrom": "spec",
+  "oDomainAt276a280": "pass"
+ },
+ {
+  "id": "P10",
+  "file": "P10-err-activation-value-before-basis.json",
+  "op": "reconcile",
+  "pins": "A05",
+  "expectedFrom": "spec",
+  "oDomainAt276a280": "pass"
+ },
+ {
+  "id": "P11",
+  "file": "P11-err-world-before-activations.json",
+  "op": "reconcile",
+  "pins": "A05",
+  "expectedFrom": "spec",
+  "oDomainAt276a280": "pass"
+ },
+ {
+  "id": "P12",
+  "file": "P12-err-no-release-no-fallback.json",
+  "op": "reconcile",
+  "pins": "A06",
+  "expectedFrom": "spec",
+  "oDomainAt276a280": "pass"
+ },
+ {
+  "id": "P13",
+  "file": "P13-publish-opaque-payload-tokens.json",
+  "op": "publish",
+  "pins": "A07",
+  "expectedFrom": "oracle, hand-checked",
+  "oDomainAt276a280": "pass"
+ },
+ {
+  "id": "P14",
+  "file": "P14-publish-state-out-of-order-repeats.json",
+  "op": "publish",
+  "pins": "A08",
+  "expectedFrom": "oracle, hand-checked",
+  "oDomainAt276a280": "pass"
+ },
+ {
+  "id": "P15",
+  "file": "P15-publish-duplicate-id-in-record.json",
+  "op": "publish",
+  "pins": "A09",
+  "expectedFrom": "oracle, hand-checked",
+  "oDomainAt276a280": "pass"
+ },
+ {
+  "id": "P16",
+  "file": "P16-reconcile-equal-from-tx-beats-release.json",
+  "op": "reconcile",
+  "pins": "M04",
+  "expectedFrom": "identicalTo C02",
+  "oDomainAt276a280": "pass"
+ },
+ {
+  "id": "P17",
+  "file": "P17-reconcile-equal-tx-release-string.json",
+  "op": "reconcile",
+  "pins": "M05",
+  "expectedFrom": "identicalTo C01",
+  "oDomainAt276a280": "pass"
+ },
+ {
+  "id": "P18",
+  "file": "P18-reconcile-from-equals-valid-time.json",
+  "op": "reconcile",
+  "pins": "M06",
+  "expectedFrom": "identicalTo C01",
+  "oDomainAt276a280": "pass"
+ },
+ {
+  "id": "P19",
+  "file": "P19-reconcile-activation-at-basis-tx.json",
+  "op": "reconcile",
+  "pins": "M07",
+  "expectedFrom": "identicalTo C01",
+  "oDomainAt276a280": "pass"
+ },
+ {
+  "id": "P20",
+  "file": "P20-fact-at-basis-tx.json",
+  "op": "evaluate",
+  "pins": "M08",
+  "expectedFrom": "oracle, hand-checked",
+  "oDomainAt276a280": "pass"
+ },
+ {
+  "id": "P21",
+  "file": "P21-basis-tx-zero.json",
+  "op": "evaluate",
+  "pins": "M09",
+  "expectedFrom": "oracle, hand-checked",
+  "oDomainAt276a280": "pass"
+ },
+ {
+  "id": "P22",
+  "file": "P22-basis-tx-max-safe.json",
+  "op": "evaluate",
+  "pins": "M10",
+  "expectedFrom": "oracle, hand-checked",
+  "oDomainAt276a280": "pass"
+ },
+ {
+  "id": "P23",
+  "file": "P23-err-basis-tx-2pow53.json",
+  "op": "evaluate",
+  "pins": "M10b",
+  "expectedFrom": "spec",
+  "oDomainAt276a280": "pass"
+ },
+ {
+  "id": "P24",
+  "file": "P24-err-fact-tx-2pow53-plus-1.json",
+  "op": "evaluate",
+  "pins": "check 6",
+  "expectedFrom": "spec",
+  "oDomainAt276a280": "pass"
+ },
+ {
+  "id": "P25",
+  "file": "P25-err-value-before-basis-in-one-fact.json",
+  "op": "evaluate",
+  "pins": "M11",
+  "expectedFrom": "spec",
+  "oDomainAt276a280": "pass"
+ },
+ {
+  "id": "P26",
+  "file": "P26-minwage-local-floor-below-state-r2.json",
+  "op": "evaluate",
+  "pins": "M18",
+  "expectedFrom": "oracle, hand-checked",
+  "oDomainAt276a280": "pass"
+ },
+ {
+  "id": "P27",
+  "file": "P27-paychg-position-from-decisions-fact.json",
+  "op": "evaluate",
+  "pins": "M23",
+  "expectedFrom": "oracle, hand-checked",
+  "oDomainAt276a280": "pass"
+ },
+ {
+  "id": "P28",
+  "file": "P28-i9s2-incomplete-record.json",
+  "op": "evaluate",
+  "pins": "M25",
+  "expectedFrom": "oracle, hand-checked",
+  "oDomainAt276a280": "pass"
+ },
+ {
+  "id": "P29",
+  "file": "P29-prop-latest-proposal-counts.json",
+  "op": "evaluate",
+  "pins": "M26",
+  "expectedFrom": "oracle, hand-checked",
+  "oDomainAt276a280": "pass"
+ },
+ {
+  "id": "P30",
+  "file": "P30-docexp-reverified-false.json",
+  "op": "evaluate",
+  "pins": "M28",
+  "expectedFrom": "oracle, hand-checked",
+  "oDomainAt276a280": "pass"
+ },
+ {
+  "id": "P31",
+  "file": "P31-r3-scope-listed-jurisdiction-without-facts.json",
+  "op": "evaluate",
+  "pins": "M35 (V-D01 N1)",
+  "expectedFrom": "oracle, hand-checked",
+  "oDomainAt276a280": "pass"
+ },
+ {
+  "id": "P32",
+  "file": "P32-life-at-start-instant.json",
+  "op": "evaluate",
+  "pins": "M31",
+  "expectedFrom": "oracle, hand-checked",
+  "oDomainAt276a280": "pass"
+ },
+ {
+  "id": "P33",
+  "file": "P33-evsub-dashed-ssn-with-accepted-result.json",
+  "op": "evaluate",
+  "pins": "M37",
+  "expectedFrom": "oracle, hand-checked",
+  "oDomainAt276a280": "pass"
+ },
+ {
+  "id": "P34",
+  "file": "P34-affected-worlds-unsorted.json",
+  "op": "affected",
+  "pins": "M41",
+  "expectedFrom": "identicalTo C34",
+  "oDomainAt276a280": "pass"
+ },
+ {
+  "id": "P35",
+  "file": "P35-publish-equal-tx-earlier-valid-time-skipped.json",
+  "op": "publish",
+  "pins": "M43",
+  "expectedFrom": "oracle, hand-checked",
+  "oDomainAt276a280": "pass"
+ },
+ {
+  "id": "P36",
+  "file": "P36-publish-equal-basis-applied.json",
+  "op": "publish",
+  "pins": "M44",
+  "expectedFrom": "oracle, hand-checked",
+  "oDomainAt276a280": "pass"
+ },
+ {
+  "id": "P37",
+  "file": "P37-publish-retirement-per-subject.json",
+  "op": "publish",
+  "pins": "M45",
+  "expectedFrom": "oracle, hand-checked",
+  "oDomainAt276a280": "pass"
+ },
+ {
+  "id": "P38",
+  "file": "P38-receive-two-waiting-released.json",
+  "op": "receive",
+  "pins": "M47",
+  "expectedFrom": "oracle, hand-checked",
+  "oDomainAt276a280": "pass"
+ },
+ {
+  "id": "P39",
+  "file": "P39-i9s2-saturday-start.json",
+  "op": "evaluate",
+  "pins": "M03",
+  "expectedFrom": "oracle, hand-checked",
+  "oDomainAt276a280": "pass"
+ },
+ {
+  "id": "P40",
+  "file": "P40-facts-reversed-two-documents.json",
+  "op": "evaluate",
+  "pins": "M40",
+  "expectedFrom": "identicalTo C19",
+  "oDomainAt276a280": "pass"
+ }
+]

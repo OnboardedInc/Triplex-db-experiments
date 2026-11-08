@@ -1,0 +1,104 @@
+{
+ "id": "P14",
+ "slug": "publish-state-out-of-order-repeats",
+ "title": "A08: input state out of order with a repeated id and a repeated subject: later entries win, outputs re-sorted",
+ "op": "publish",
+ "checks": [],
+ "notes": [
+  "A08: input states are indexed by id and by subject, a later entry replacing an earlier one; output arrays are re-sorted.",
+  "pl:a's stored basis is tx 7 (the later entry). Record 1 (tx 6) is older: skipped. (First-wins, tx 5, would apply it",
+  "and retire both items.) Record 2 (tx 8) applies: item wi:cba5b54... has payload {\"q\":2} (later entry, seq 3), equal",
+  "to the record's, so nothing is published; item wi:b8e3b0f... is not in the record and is retired (seq 4 stays).",
+  "Output items ascending by id, subjects ascending by subject (pl:a tx 8, pl:b tx 9), deliveries []."
+ ],
+ "input": {
+  "evaluations": [
+   {
+    "basis": {
+     "tx": 6,
+     "validTime": "2026-11-04T12:00:00.000000Z"
+    },
+    "release": "sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031",
+    "subject": "pl:a",
+    "workItems": []
+   },
+   {
+    "basis": {
+     "tx": 8,
+     "validTime": "2026-11-04T12:00:00.000000Z"
+    },
+    "release": "sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031",
+    "subject": "pl:a",
+    "workItems": [
+     {
+      "id": "wi:cba5b5464953390235b5725e51e094246121363834ccb4a2b94b6db3630af60e",
+      "inputs": [
+       1
+      ],
+      "key": "",
+      "kind": "k",
+      "payload": {
+       "q": 2
+      },
+      "rule": "MINWAGE",
+      "version": "wv:x"
+     }
+    ]
+   }
+  ],
+  "state": {
+   "items": [
+    {
+     "id": "wi:cba5b5464953390235b5725e51e094246121363834ccb4a2b94b6db3630af60e",
+     "payload": {
+      "q": 1
+     },
+     "retired": false,
+     "seq": 1,
+     "subject": "pl:a"
+    },
+    {
+     "id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a",
+     "payload": {},
+     "retired": false,
+     "seq": 4,
+     "subject": "pl:a"
+    },
+    {
+     "id": "wi:cba5b5464953390235b5725e51e094246121363834ccb4a2b94b6db3630af60e",
+     "payload": {
+      "q": 2
+     },
+     "retired": false,
+     "seq": 3,
+     "subject": "pl:a"
+    }
+   ],
+   "pending": [],
+   "subjects": [
+    {
+     "basis": {
+      "tx": 9,
+      "validTime": "2026-11-04T12:00:00.000000Z"
+     },
+     "subject": "pl:b"
+    },
+    {
+     "basis": {
+      "tx": 5,
+      "validTime": "2026-11-04T12:00:00.000000Z"
+     },
+     "subject": "pl:a"
+    },
+    {
+     "basis": {
+      "tx": 7,
+      "validTime": "2026-11-04T12:00:00.000000Z"
+     },
+     "subject": "pl:a"
+    }
+   ]
+  }
+ },
+ "expected": {"deliveries":[],"state":{"items":[{"id":"wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a","payload":{},"retired":true,"seq":4,"subject":"pl:a"},{"id":"wi:cba5b5464953390235b5725e51e094246121363834ccb4a2b94b6db3630af60e","payload":{"q":2},"retired":false,"seq":3,"subject":"pl:a"}],"pending":[],"subjects":[{"basis":{"tx":8,"validTime":"2026-11-04T12:00:00.000000Z"},"subject":"pl:a"},{"basis":{"tx":9,"validTime":"2026-11-04T12:00:00.000000Z"},"subject":"pl:b"}]}}
+}

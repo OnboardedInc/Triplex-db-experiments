@@ -1,0 +1,113 @@
+{
+ "id": "P23",
+ "slug": "err-basis-tx-2pow53",
+ "title": "basis.tx 2^53: W0.E_BASIS",
+ "op": "evaluate",
+ "checks": [],
+ "notes": [
+  "4.4 step 2: 9007199254740992 is outside 0 to 2^53 - 1. (JavaScript parses it exactly; Number.isSafeInteger is false.)"
+ ],
+ "input": {
+  "basis": {
+   "tx": 9007199254740992,
+   "validTime": "2026-11-04T12:00:00.000000Z"
+  },
+  "release": "R1",
+  "world": {
+   "subject": "pl:a",
+   "facts": [
+    {
+     "e": "loc:nyc",
+     "a": "jurisdiction",
+     "v": "jur:ny",
+     "tx": 1
+    },
+    {
+     "e": "jur:ny",
+     "a": "stateMinWageCents",
+     "v": 1650,
+     "tx": 1
+    },
+    {
+     "e": "pl:a",
+     "a": "startDate",
+     "v": "2026-11-02",
+     "tx": 2
+    },
+    {
+     "e": "pl:a",
+     "a": "payRateCents",
+     "v": 1650,
+     "tx": 2
+    },
+    {
+     "e": "pl:a",
+     "a": "location",
+     "v": "loc:nyc",
+     "tx": 2
+    },
+    {
+     "e": "pl:a",
+     "a": "section1AttestedAt",
+     "v": "2026-10-30T15:00:00.000000Z",
+     "tx": 3
+    },
+    {
+     "e": "pl:a",
+     "a": "ssn",
+     "v": "123456789",
+     "tx": 3
+    },
+    {
+     "e": "pl:a",
+     "a": "bgcStatus",
+     "v": "clear",
+     "tx": 4
+    },
+    {
+     "e": "pl:a",
+     "a": "everifyStatus",
+     "v": "pending",
+     "tx": 5
+    },
+    {
+     "e": "pl:a",
+     "a": "everifyStatusAt",
+     "v": "2026-11-03T10:00:00.000000Z",
+     "tx": 5
+    },
+    {
+     "e": "pl:a",
+     "a": "decisions",
+     "v": "pl:a/dec:1",
+     "tx": 6
+    },
+    {
+     "e": "pl:a/dec:1",
+     "a": "target",
+     "v": "i9.section2",
+     "tx": 6
+    },
+    {
+     "e": "pl:a/dec:1",
+     "a": "verdict",
+     "v": "approve",
+     "tx": 6
+    },
+    {
+     "e": "pl:a/dec:1",
+     "a": "author",
+     "v": "person",
+     "tx": 6
+    },
+    {
+     "e": "pl:a",
+     "a": "weeklyMinutes",
+     "v": 2400,
+     "tx": 7
+    }
+   ]
+  }
+ },
+ "expected": {"error":"W0.E_BASIS"}
+}

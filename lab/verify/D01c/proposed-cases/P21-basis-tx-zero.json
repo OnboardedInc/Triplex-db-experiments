@@ -1,0 +1,23 @@
+{
+ "id": "P21",
+ "slug": "basis-tx-zero",
+ "title": "basis.tx 0 with an empty world is valid",
+ "op": "evaluate",
+ "checks": [],
+ "notes": [
+  "4.1: basis.tx is 0 to 2^53 - 1. An empty world: LIFE row 1 (start-unknown), I9S1 row 2, I9S2 row 4, EVSUB row 2 with null",
+  "due times, BGC row 1 (bgc.order), MINWAGE row 1, OT row 1, PAYCHG row 1, DOCEXP and PROP row 0. basis echoed with tx 0."
+ ],
+ "input": {
+  "basis": {
+   "tx": 0,
+   "validTime": "2026-11-04T12:00:00.000000Z"
+  },
+  "release": "R1",
+  "world": {
+   "subject": "pl:a",
+   "facts": []
+  }
+ },
+ "expected": {"basis":{"tx":0,"validTime":"2026-11-04T12:00:00.000000Z"},"dependencies":[["pl:a","baselinePayRateCents"],["pl:a","bgcStatus"],["pl:a","decisions"],["pl:a","documents"],["pl:a","everifyStatus"],["pl:a","everifyStatusAt"],["pl:a","everifySubmitResult"],["pl:a","location"],["pl:a","payRateCents"],["pl:a","section1AttestedAt"],["pl:a","ssn"],["pl:a","startDate"],["pl:a","weeklyMinutes"]],"flags":[{"name":"start-unknown","rule":"LIFE"}],"obligations":[],"release":"sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031","subject":"pl:a","tasks":[{"dueAt":null,"id":"pl:a#everify.collect-ssn","kind":"everify.collect-ssn","overdue":false,"rule":"EVSUB"},{"dueAt":null,"id":"pl:a#i9.section1","kind":"i9.section1","overdue":false,"rule":"I9S1"},{"dueAt":null,"id":"pl:a#i9.section2","kind":"i9.section2","overdue":false,"rule":"I9S2"},{"dueAt":null,"id":"pl:a#pay.rate-missing","kind":"pay.rate-missing","overdue":false,"rule":"MINWAGE"}],"trace":[{"inputs":[],"key":"","row":1,"rule":"LIFE"},{"inputs":[],"key":"","row":2,"rule":"I9S1"},{"inputs":[],"key":"","row":4,"rule":"I9S2"},{"inputs":[],"key":"","row":2,"rule":"EVSUB"},{"inputs":[],"key":"","row":1,"rule":"EVSTAT"},{"inputs":[],"key":"","row":1,"rule":"BGC"},{"inputs":[],"key":"","row":0,"rule":"DOCEXP"},{"inputs":[],"key":"","row":1,"rule":"MINWAGE"},{"inputs":[],"key":"","row":1,"rule":"OT"},{"inputs":[],"key":"","row":1,"rule":"PAYCHG"},{"inputs":[],"key":"","row":0,"rule":"PROP"}],"workItems":[{"id":"wi:cba5b5464953390235b5725e51e094246121363834ccb4a2b94b6db3630af60e","inputs":[],"key":"","kind":"bgc.order","payload":{},"rule":"BGC","version":"wv:edc2adc27d37abaf16d093e47ef08bc2235081f482c6c9164fe06a8dd1c92900"}]}
+}

@@ -1,0 +1,42 @@
+{
+ "id": "P08",
+ "slug": "err-cardinality-after-unknown",
+ "title": "A03: a duplicate startDate before an unknown attribute: W0.E_UNKNOWN",
+ "op": "evaluate",
+ "checks": [],
+ "notes": [
+  "4.4 step 3.2 runs over every fact before step 3.3: fact 2 has an attribute outside SPEC 3, W0.E_UNKNOWN, before the",
+  "cardinality clash of facts 0 and 1 is looked at (A03)."
+ ],
+ "input": {
+  "basis": {
+   "tx": 10,
+   "validTime": "2026-11-04T12:00:00.000000Z"
+  },
+  "release": "R1",
+  "world": {
+   "subject": "pl:a",
+   "facts": [
+    {
+     "e": "pl:a",
+     "a": "startDate",
+     "v": "2026-11-02",
+     "tx": 1
+    },
+    {
+     "e": "pl:a",
+     "a": "startDate",
+     "v": "2026-11-03",
+     "tx": 1
+    },
+    {
+     "e": "pl:a",
+     "a": "nickname",
+     "v": "x",
+     "tx": 1
+    }
+   ]
+  }
+ },
+ "expected": {"error":"W0.E_UNKNOWN"}
+}

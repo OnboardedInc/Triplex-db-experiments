@@ -1,0 +1,14 @@
+{
+ "id": "P04",
+ "slug": "err-bytes-bom",
+ "title": "A01: input bytes with a UTF-8 byte order mark before the object: W0.E_SHAPE",
+ "op": "evaluate",
+ "checks": [],
+ "notes": [
+  "A01: bytes that are not one JSON value are W0.E_SHAPE. EF BB BF + C01's input object.",
+  "RFC 8259 8.1 lets a parser ignore a BOM, so SPEC must say it: W0-1.1.2 states the input is one JSON text in UTF-8 with no BOM.",
+  "Needs a bytes form of the case file (here inputBase64), since a JSON case cannot carry a BOM or a non-UTF-8 byte."
+ ],
+ "inputBase64": "77u/eyJiYXNpcyI6eyJ0eCI6MTAsInZhbGlkVGltZSI6IjIwMjYtMTEtMDRUMTI6MDA6MDAuMDAwMDAwWiJ9LCJyZWxlYXNlIjoiUjEiLCJ3b3JsZCI6eyJzdWJqZWN0IjoicGw6YSIsImZhY3RzIjpbeyJlIjoibG9jOm55YyIsImEiOiJqdXJpc2RpY3Rpb24iLCJ2IjoianVyOm55IiwidHgiOjF9LHsiZSI6Imp1cjpueSIsImEiOiJzdGF0ZU1pbldhZ2VDZW50cyIsInYiOjE2NTAsInR4IjoxfSx7ImUiOiJwbDphIiwiYSI6InN0YXJ0RGF0ZSIsInYiOiIyMDI2LTExLTAyIiwidHgiOjJ9LHsiZSI6InBsOmEiLCJhIjoicGF5UmF0ZUNlbnRzIiwidiI6MTY1MCwidHgiOjJ9LHsiZSI6InBsOmEiLCJhIjoibG9jYXRpb24iLCJ2IjoibG9jOm55YyIsInR4IjoyfSx7ImUiOiJwbDphIiwiYSI6InNlY3Rpb24xQXR0ZXN0ZWRBdCIsInYiOiIyMDI2LTEwLTMwVDE1OjAwOjAwLjAwMDAwMFoiLCJ0eCI6M30seyJlIjoicGw6YSIsImEiOiJzc24iLCJ2IjoiMTIzNDU2Nzg5IiwidHgiOjN9LHsiZSI6InBsOmEiLCJhIjoiYmdjU3RhdHVzIiwidiI6ImNsZWFyIiwidHgiOjR9LHsiZSI6InBsOmEiLCJhIjoiZXZlcmlmeVN0YXR1cyIsInYiOiJwZW5kaW5nIiwidHgiOjV9LHsiZSI6InBsOmEiLCJhIjoiZXZlcmlmeVN0YXR1c0F0IiwidiI6IjIwMjYtMTEtMDNUMTA6MDA6MDAuMDAwMDAwWiIsInR4Ijo1fSx7ImUiOiJwbDphIiwiYSI6ImRlY2lzaW9ucyIsInYiOiJwbDphL2RlYzoxIiwidHgiOjZ9LHsiZSI6InBsOmEvZGVjOjEiLCJhIjoidGFyZ2V0IiwidiI6Imk5LnNlY3Rpb24yIiwidHgiOjZ9LHsiZSI6InBsOmEvZGVjOjEiLCJhIjoidmVyZGljdCIsInYiOiJhcHByb3ZlIiwidHgiOjZ9LHsiZSI6InBsOmEvZGVjOjEiLCJhIjoiYXV0aG9yIiwidiI6InBlcnNvbiIsInR4Ijo2fSx7ImUiOiJwbDphIiwiYSI6IndlZWtseU1pbnV0ZXMiLCJ2IjoyNDAwLCJ0eCI6N31dfX0=",
+ "expected": {"error":"W0.E_SHAPE"}
+}

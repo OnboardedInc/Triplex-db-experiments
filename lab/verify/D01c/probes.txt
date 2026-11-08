@@ -1,0 +1,20 @@
+pl:a startDate               v=[]                                               -> <no stdout> rc=1 TypeError: unhashable type: 'list'
+pl:a startDate               v={}                                               -> <no stdout> rc=1 TypeError: unhashable type: 'JObject'
+pl:a startDate               v=["2026-11-02"]                                   -> <no stdout> rc=1 TypeError: unhashable type: 'list'
+pl:a section1AttestedAt      v=[]                                               -> <no stdout> rc=1 TypeError: unhashable type: 'list'
+pl:a section1AttestedAt      v={"erasedAt": "2026-11-01T00:00:00.000000Z"}      -> <no stdout> rc=1 TypeError: unhashable type: 'JObject'
+pl:a/doc:1 expiresOn         v={}                                               -> <no stdout> rc=1 TypeError: unhashable type: 'JObject'
+pl:a everifyStatusAt         v=[1]                                              -> <no stdout> rc=1 TypeError: unhashable type: 'list'
+pl:a payRateCents            v=[]                                               -> {"error":"W0.E_VALUE"}
+pl:a payRateCents            v={}                                               -> {"error":"W0.E_VALUE"}
+pl:a everifyStatus           v=[]                                               -> {"error":"W0.E_VALUE"}
+pl:a ssn                     v=[]                                               -> {"error":"W0.E_VALUE"}
+pl:a location                v={}                                               -> {"error":"W0.E_VALUE"}
+pl:a/doc:1 reverified        v=[]                                               -> {"error":"W0.E_VALUE"}
+erased marker whose erasedAt is an array (ssn)   SPEC: W0.E_VALUE   O-DOMAIN: <crash rc=1: TypeError: unhashable type: 'list'>
+erased marker whose erasedAt is an object (ssn)  SPEC: W0.E_VALUE   O-DOMAIN: <crash rc=1: TypeError: unhashable type: 'JObject'>
+payRateCents as a 5000-digit integer token       SPEC: W0.E_VALUE   O-DOMAIN: <crash rc=1: ValueError: Exceeds the limit (4300 digits) for integer string conversion: value has 5000 digits; us>
+fact tx as a 5000-digit integer token            SPEC: W0.E_BASIS   O-DOMAIN: <crash rc=1: ValueError: Exceeds the limit (4300 digits) for integer string conversion: value has 5000 digits; us>
+basis.tx as a 5000-digit integer token           SPEC: W0.E_BASIS   O-DOMAIN: <crash rc=1: ValueError: Exceeds the limit (4300 digits) for integer string conversion: value has 5000 digits; us>
+fact v nested 600 arrays deep (startDate)        SPEC: W0.E_VALUE   O-DOMAIN: {"error":"W0.E_SHAPE"}
+fact v nested 5000 arrays deep (startDate)       SPEC: W0.E_VALUE   O-DOMAIN: {"error":"W0.E_SHAPE"}

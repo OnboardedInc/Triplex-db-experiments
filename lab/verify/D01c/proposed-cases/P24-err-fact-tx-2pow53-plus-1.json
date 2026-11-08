@@ -1,0 +1,30 @@
+{
+ "id": "P24",
+ "slug": "err-fact-tx-2pow53-plus-1",
+ "title": "A fact tx of 2^53 + 1 (JavaScript parses it as 2^53): W0.E_BASIS",
+ "op": "evaluate",
+ "checks": [],
+ "notes": [
+  "4.4 step 3.2: tx 9007199254740993 > basis.tx 9007199254740991: W0.E_BASIS; a JavaScript reader that rounds it to 2^53",
+  "still fails the same check, so the answer does not depend on rounding."
+ ],
+ "input": {
+  "basis": {
+   "tx": 9007199254740991,
+   "validTime": "2026-11-04T12:00:00.000000Z"
+  },
+  "release": "R1",
+  "world": {
+   "subject": "pl:a",
+   "facts": [
+    {
+     "e": "pl:a",
+     "a": "startDate",
+     "v": "2026-11-02",
+     "tx": 9007199254740993
+    }
+   ]
+  }
+ },
+ "expected": {"error":"W0.E_BASIS"}
+}

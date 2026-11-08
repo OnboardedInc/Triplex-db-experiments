@@ -1,0 +1,60 @@
+{
+ "id": "P15",
+ "slug": "publish-duplicate-id-in-record",
+ "title": "A09: one record carries two work items with one id: processed in input order within the id, the second compared with the first",
+ "op": "publish",
+ "checks": [],
+ "notes": [
+  "A09 (evaluate never produces this): 8.8 step 2 walks the work items in id order; equal ids keep their input order (stable).",
+  "The first publishes seq 1 (floor 1650); the second is compared with the state the first set, differs, and publishes seq 2",
+  "(floor 1700). The item ends at seq 2 with floor 1700."
+ ],
+ "input": {
+  "evaluations": [
+   {
+    "basis": {
+     "tx": 20,
+     "validTime": "2026-11-04T12:00:00.000000Z"
+    },
+    "release": "sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031",
+    "subject": "pl:a",
+    "workItems": [
+     {
+      "id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a",
+      "inputs": [
+       1
+      ],
+      "key": "",
+      "kind": "notify.pay-below-minimum",
+      "payload": {
+       "floorCents": 1650,
+       "payRateCents": 1600
+      },
+      "rule": "MINWAGE",
+      "version": "wv:p1"
+     },
+     {
+      "id": "wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a",
+      "inputs": [
+       1
+      ],
+      "key": "",
+      "kind": "notify.pay-below-minimum",
+      "payload": {
+       "floorCents": 1700,
+       "payRateCents": 1600
+      },
+      "rule": "MINWAGE",
+      "version": "wv:p2"
+     }
+    ]
+   }
+  ],
+  "state": {
+   "items": [],
+   "pending": [],
+   "subjects": []
+  }
+ },
+ "expected": {"deliveries":[{"id":"wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a","key":"","kind":"notify.pay-below-minimum","payload":{"floorCents":1650,"payRateCents":1600},"rule":"MINWAGE","seq":1,"subject":"pl:a","version":"wv:p1"},{"id":"wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a","key":"","kind":"notify.pay-below-minimum","payload":{"floorCents":1700,"payRateCents":1600},"rule":"MINWAGE","seq":2,"subject":"pl:a","version":"wv:p2"}],"state":{"items":[{"id":"wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a","payload":{"floorCents":1700,"payRateCents":1600},"retired":false,"seq":2,"subject":"pl:a"}],"pending":[{"id":"wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a","key":"","kind":"notify.pay-below-minimum","payload":{"floorCents":1650,"payRateCents":1600},"rule":"MINWAGE","seq":1,"subject":"pl:a","version":"wv:p1"},{"id":"wi:b8e3b0fc2956dc232b30c405d6ba8a43d9c3bc76f0fad7b3522da402a10c3a3a","key":"","kind":"notify.pay-below-minimum","payload":{"floorCents":1700,"payRateCents":1600},"rule":"MINWAGE","seq":2,"subject":"pl:a","version":"wv:p2"}],"subjects":[{"basis":{"tx":20,"validTime":"2026-11-04T12:00:00.000000Z"},"subject":"pl:a"}]}}
+}

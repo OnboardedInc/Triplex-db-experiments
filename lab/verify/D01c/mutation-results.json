@@ -1,0 +1,2098 @@
+{
+ "M00": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": false,
+   "differs": [],
+   "how": null,
+   "seconds": 111.6
+  },
+  "seconds": 114.1,
+  "spec": "-",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 0
+  },
+  "what": "control: no mutation"
+ },
+ "M01": {
+  "cases": {
+   "failed": [
+    "C03",
+    "C04",
+    "C06",
+    "C07",
+    "C08",
+    "C10",
+    "C16",
+    "C17",
+    "C26",
+    "C53"
+   ],
+   "summary": "77/87 cases byte-identical; failed: C03 C04 C06 C07 C08 C10 C16 C17 C26 C53"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "block": 0,
+   "caught": true,
+   "how": "block",
+   "seconds": 3.2,
+   "stream": "R1",
+   "worlds": "0-999"
+  },
+  "seconds": 5.4,
+  "spec": "6.1 addBusinessDays",
+  "tests": {
+   "goldenTestsFailed": [
+    "test_C03",
+    "test_C04",
+    "test_C06",
+    "test_C07",
+    "test_C08",
+    "test_C10",
+    "test_C16",
+    "test_C17",
+    "test_C26",
+    "test_C53"
+   ],
+   "otherTestsFailed": [
+    "SpecExamples.test_add_business_days"
+   ],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "addBusinessDays counts the start day d itself (off by one for a weekday start)"
+ },
+ "M02": {
+  "cases": {
+   "failed": [
+    "C10"
+   ],
+   "summary": "86/87 cases byte-identical; failed: C10"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "block": 0,
+   "caught": true,
+   "how": "block",
+   "seconds": 3.5,
+   "stream": "R1",
+   "worlds": "0-999"
+  },
+  "seconds": 5.6,
+  "spec": "6.1 addBusinessDays",
+  "tests": {
+   "goldenTestsFailed": [
+    "test_C10"
+   ],
+   "otherTestsFailed": [
+    "SpecExamples.test_add_business_days"
+   ],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "Saturday counts as a business day"
+ },
+ "M03": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "block": 0,
+   "caught": true,
+   "how": "block",
+   "seconds": 3.3,
+   "stream": "R1",
+   "worlds": "0-999"
+  },
+  "seconds": 5.4,
+  "spec": "6.1 addBusinessDays",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [
+    "SpecExamples.test_add_business_days"
+   ],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "a weekend start first rolls to Monday, which is then not counted (Sat + 3 = Thu, not Wed)"
+ },
+ "M04": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": false,
+   "how": null,
+   "na": "na: population.run never calls resolve_release"
+  },
+  "seconds": 2.2,
+  "spec": "5.4 step 3",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 0
+  },
+  "what": "tie-break swapped: among equal from, greatest release string before greatest tx"
+ },
+ "M05": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": false,
+   "how": null,
+   "na": "na: population.run never calls resolve_release"
+  },
+  "seconds": 2.2,
+  "spec": "5.4 step 3",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [
+    "SpecExamples.test_resolve_release_tie"
+   ],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "third tie-break reversed: among equal tx, the least release string"
+ },
+ "M06": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": false,
+   "how": null,
+   "na": "na: population.run never calls resolve_release"
+  },
+  "seconds": 2.0,
+  "spec": "5.4 step 1",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 0
+  },
+  "what": "an activation with from equal to the basis valid time is not a candidate"
+ },
+ "M07": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": false,
+   "how": null,
+   "na": "na: population.run never calls op_reconcile"
+  },
+  "seconds": 2.1,
+  "spec": "4.4 step 4",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 0
+  },
+  "what": "an activation committed at basis.tx itself is rejected (tx >= basis.tx is E_BASIS)"
+ },
+ "M08": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": true,
+   "differs": [
+    "R1",
+    "R2",
+    "R3"
+   ],
+   "how": "final",
+   "seconds": 92.0
+  },
+  "seconds": 94.0,
+  "spec": "4.4 step 3.2",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [
+    "Population.test_run_small"
+   ],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "a fact committed at basis.tx itself is rejected (tx >= basis.tx is E_BASIS)"
+ },
+ "M09": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": false,
+   "how": null,
+   "na": "na: population.run never calls check_basis (it passes basis.tx directly)"
+  },
+  "seconds": 2.1,
+  "spec": "4.1, 4.4 step 2",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 0
+  },
+  "what": "basis.tx 0 is rejected (range starts at 1)"
+ },
+ "M10": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": false,
+   "how": null,
+   "na": "na: population.run never calls check_basis (it passes basis.tx directly)"
+  },
+  "seconds": 2.0,
+  "spec": "4.1, 4.4 step 2",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 0
+  },
+  "what": "basis.tx 2^53 - 1 is rejected"
+ },
+ "M10b": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": false,
+   "how": null,
+   "na": "na: population.run never calls check_basis (it passes basis.tx directly)"
+  },
+  "seconds": 2.2,
+  "spec": "4.1, 4.4 step 2",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 0
+  },
+  "what": "basis.tx 2^53 is accepted"
+ },
+ "M11": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": false,
+   "differs": [],
+   "how": null,
+   "seconds": 95.8
+  },
+  "seconds": 98.4,
+  "spec": "4.4 step 3.2",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 0
+  },
+  "what": "within one fact, the tx check (E_BASIS) runs before the value check (E_VALUE)"
+ },
+ "M13": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": false,
+   "differs": [],
+   "how": null,
+   "seconds": 98.4
+  },
+  "seconds": 100.7,
+  "spec": "4.4 step 3.3 (A03)",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [
+    "ValidationOrder.test_cardinality_after_every_fact"
+   ],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "a one-cardinality duplicate is reported at once, before later facts pass 3.2"
+ },
+ "M14": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": false,
+   "how": null,
+   "na": "na: population.run never calls op_affected"
+  },
+  "seconds": 2.4,
+  "spec": "4.4 step 3 (A04)",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [
+    "ValidationOrder.test_affected_world_by_world"
+   ],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "affected checks every subject (3.1) across all worlds before any fact"
+ },
+ "M15": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": false,
+   "how": null,
+   "na": "na: population.run never calls op_reconcile"
+  },
+  "seconds": 2.3,
+  "spec": "4.4 step 4 (A05)",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [
+    "ValidationOrder.test_activation_order"
+   ],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "within one activation, E_BASIS (tx) before E_VALUE (release, from)"
+ },
+ "M16": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": false,
+   "how": null,
+   "na": "na: population.run never calls op_reconcile"
+  },
+  "seconds": 2.2,
+  "spec": "4.4 steps 3 and 4 (A05)",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 0
+  },
+  "what": "activations are checked before the world"
+ },
+ "M17": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": false,
+   "how": null,
+   "na": "na: population.run never calls resolve_release"
+  },
+  "seconds": 2.1,
+  "spec": "5.4 step 4 (A06)",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [
+    "SpecExamples.test_resolve_release_tie"
+   ],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "an unknown picked hash falls back to the newest known candidate"
+ },
+ "M18": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": false,
+   "differs": [],
+   "how": null,
+   "seconds": 111.8
+  },
+  "seconds": 115.0,
+  "spec": "7.8 floor",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 0
+  },
+  "what": "under R2 the local floor overrides the state floor (last present, not greatest)"
+ },
+ "M18c": {
+  "cases": {
+   "failed": [
+    "C39"
+   ],
+   "summary": "86/87 cases byte-identical; failed: C39"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": false,
+   "differs": [],
+   "how": null,
+   "seconds": 103.4
+  },
+  "seconds": 106.0,
+  "spec": "2 cents",
+  "tests": {
+   "goldenTestsFailed": [
+    "test_C39"
+   ],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "cents accept 2^53"
+ },
+ "M19": {
+  "cases": {
+   "failed": [
+    "C01",
+    "C02",
+    "C03",
+    "C04",
+    "C05",
+    "C06",
+    "C07",
+    "C08",
+    "C09",
+    "C10",
+    "C11",
+    "C12",
+    "C13",
+    "C14",
+    "C15",
+    "C16",
+    "C17",
+    "C18",
+    "C19",
+    "C20",
+    "C21",
+    "C22",
+    "C23",
+    "C25",
+    "C26",
+    "C27",
+    "C28",
+    "C29",
+    "C30",
+    "C31",
+    "C32",
+    "C34",
+    "C42",
+    "C46",
+    "C47",
+    "C49",
+    "C50",
+    "C51",
+    "C52",
+    "C53",
+    "C54",
+    "C55",
+    "C56",
+    "C58",
+    "C59",
+    "C61",
+    "C86",
+    "C87"
+   ],
+   "summary": "39/87 cases byte-identical; failed: C01 C02 C03 C04 C05 C06 C07 C08 C09 C10 C11 C12 C13 C14 C15 C16 C17 C18 C19 C20 C21 C22 C23 C25 C26 C27 C28 C29 C30 C31 C32 C34 C42 C46 C47 C49 C50 C51 C52 C53 C54 C55 C56 C58 C59 C61 C86 C87"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "block": 0,
+   "caught": true,
+   "how": "block",
+   "seconds": 5.0,
+   "stream": "R1",
+   "worlds": "0-999"
+  },
+  "seconds": 7.6,
+  "spec": "7.8 read set",
+  "tests": {
+   "goldenTestsFailed": [
+    "test_C01",
+    "test_C02",
+    "test_C03",
+    "test_C04",
+    "test_C05",
+    "test_C06",
+    "test_C07",
+    "test_C08",
+    "test_C09",
+    "test_C10",
+    "test_C11",
+    "test_C12",
+    "test_C13",
+    "test_C14",
+    "test_C15",
+    "test_C16",
+    "test_C17",
+    "test_C18",
+    "test_C19",
+    "test_C20",
+    "test_C21",
+    "test_C22",
+    "test_C23",
+    "test_C25",
+    "test_C26",
+    "test_C27",
+    "test_C28",
+    "test_C29",
+    "test_C30",
+    "test_C31",
+    "test_C32",
+    "test_C34",
+    "test_C42",
+    "test_C46",
+    "test_C47",
+    "test_C49",
+    "test_C50",
+    "test_C51",
+    "test_C52",
+    "test_C53",
+    "test_C54",
+    "test_C55",
+    "test_C56",
+    "test_C58",
+    "test_C59",
+    "test_C61",
+    "test_C86",
+    "test_C87"
+   ],
+   "otherTestsFailed": [
+    "CommandLine.test_op_stdin",
+    "CommandLine.test_run_case"
+   ],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "dropped wage-floor hop: (J, stateMinWageCents) read but not a dependency"
+ },
+ "M20": {
+  "cases": {
+   "failed": [
+    "C01",
+    "C02",
+    "C03",
+    "C04",
+    "C05",
+    "C06",
+    "C07",
+    "C08",
+    "C09",
+    "C10",
+    "C11",
+    "C12",
+    "C13",
+    "C14",
+    "C15",
+    "C16",
+    "C17",
+    "C18",
+    "C19",
+    "C20",
+    "C21",
+    "C22",
+    "C23",
+    "C24",
+    "C25",
+    "C26",
+    "C27",
+    "C28",
+    "C29",
+    "C30",
+    "C31",
+    "C32",
+    "C42",
+    "C46",
+    "C47",
+    "C49",
+    "C50",
+    "C51",
+    "C52",
+    "C53",
+    "C56",
+    "C60",
+    "C61"
+   ],
+   "summary": "44/87 cases byte-identical; failed: C01 C02 C03 C04 C05 C06 C07 C08 C09 C10 C11 C12 C13 C14 C15 C16 C17 C18 C19 C20 C21 C22 C23 C24 C25 C26 C27 C28 C29 C30 C31 C32 C42 C46 C47 C49 C50 C51 C52 C53 C56 C60 C61"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "block": 0,
+   "caught": true,
+   "how": "block",
+   "seconds": 5.3,
+   "stream": "R1",
+   "worlds": "0-999"
+  },
+  "seconds": 8.5,
+  "spec": "7.8 read set",
+  "tests": {
+   "goldenTestsFailed": [
+    "test_C01",
+    "test_C02",
+    "test_C03",
+    "test_C04",
+    "test_C05",
+    "test_C06",
+    "test_C07",
+    "test_C08",
+    "test_C09",
+    "test_C10",
+    "test_C11",
+    "test_C12",
+    "test_C13",
+    "test_C14",
+    "test_C15",
+    "test_C16",
+    "test_C17",
+    "test_C18",
+    "test_C19",
+    "test_C20",
+    "test_C21",
+    "test_C22",
+    "test_C23",
+    "test_C24",
+    "test_C25",
+    "test_C26",
+    "test_C27",
+    "test_C28",
+    "test_C29",
+    "test_C30",
+    "test_C31",
+    "test_C32",
+    "test_C42",
+    "test_C46",
+    "test_C47",
+    "test_C49",
+    "test_C50",
+    "test_C51",
+    "test_C52",
+    "test_C53",
+    "test_C56",
+    "test_C60",
+    "test_C61"
+   ],
+   "otherTestsFailed": [
+    "CommandLine.test_run_case"
+   ],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "dropped hop: (L, jurisdiction) not a MINWAGE dependency"
+ },
+ "M21": {
+  "cases": {
+   "failed": [
+    "C01",
+    "C02",
+    "C03",
+    "C04",
+    "C06",
+    "C07",
+    "C08",
+    "C09",
+    "C10",
+    "C11",
+    "C12",
+    "C13",
+    "C14",
+    "C15",
+    "C16",
+    "C17",
+    "C18",
+    "C21",
+    "C22",
+    "C26",
+    "C28",
+    "C29",
+    "C30",
+    "C46",
+    "C47",
+    "C49",
+    "C50",
+    "C51",
+    "C52",
+    "C53",
+    "C54",
+    "C55",
+    "C56",
+    "C61",
+    "C86"
+   ],
+   "summary": "52/87 cases byte-identical; failed: C01 C02 C03 C04 C06 C07 C08 C09 C10 C11 C12 C13 C14 C15 C16 C17 C18 C21 C22 C26 C28 C29 C30 C46 C47 C49 C50 C51 C52 C53 C54 C55 C56 C61 C86"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "block": 0,
+   "caught": true,
+   "how": "block",
+   "seconds": 4.6,
+   "stream": "R1",
+   "worlds": "0-999"
+  },
+  "seconds": 7.5,
+  "spec": "7.8 row 4",
+  "tests": {
+   "goldenTestsFailed": [
+    "test_C01",
+    "test_C02",
+    "test_C03",
+    "test_C04",
+    "test_C06",
+    "test_C07",
+    "test_C08",
+    "test_C09",
+    "test_C10",
+    "test_C11",
+    "test_C12",
+    "test_C13",
+    "test_C14",
+    "test_C15",
+    "test_C16",
+    "test_C17",
+    "test_C18",
+    "test_C21",
+    "test_C22",
+    "test_C26",
+    "test_C28",
+    "test_C29",
+    "test_C30",
+    "test_C46",
+    "test_C47",
+    "test_C49",
+    "test_C50",
+    "test_C51",
+    "test_C52",
+    "test_C53",
+    "test_C54",
+    "test_C55",
+    "test_C56",
+    "test_C61",
+    "test_C86"
+   ],
+   "otherTestsFailed": [
+    "CommandLine.test_run_case"
+   ],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "pay exactly at the floor is below minimum"
+ },
+ "M22": {
+  "cases": {
+   "failed": [
+    "C30"
+   ],
+   "summary": "86/87 cases byte-identical; failed: C30"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": false,
+   "differs": [],
+   "how": null,
+   "seconds": 128.9
+  },
+  "seconds": 132.0,
+  "spec": "7.10 fresh approval",
+  "tests": {
+   "goldenTestsFailed": [
+    "test_C30"
+   ],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "an approval in the same transaction as the pay rate does not count"
+ },
+ "M23": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": false,
+   "differs": [],
+   "how": null,
+   "seconds": 130.4
+  },
+  "seconds": 132.7,
+  "spec": "6.2 item 2",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 0
+  },
+  "what": "pos(D) leaves out the subject's decisions fact"
+ },
+ "M24": {
+  "cases": {
+   "failed": [
+    "C18"
+   ],
+   "summary": "86/87 cases byte-identical; failed: C18"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": false,
+   "differs": [],
+   "how": null,
+   "seconds": 123.3
+  },
+  "seconds": 126.6,
+  "spec": "6.2 item 5",
+  "tests": {
+   "goldenTestsFailed": [
+    "test_C18"
+   ],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "equal-pos tie goes to the least decision id"
+ },
+ "M25": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": false,
+   "differs": [],
+   "how": null,
+   "seconds": 110.1
+  },
+  "seconds": 113.4,
+  "spec": "6.2 item 1",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 0
+  },
+  "what": "an incomplete record missing its verdict counts as an approval"
+ },
+ "M26": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": false,
+   "differs": [],
+   "how": null,
+   "seconds": 112.5
+  },
+  "seconds": 115.4,
+  "spec": "7.11 p",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 0
+  },
+  "what": "PROP's p is the earliest proposal, not the latest"
+ },
+ "M27": {
+  "cases": {
+   "failed": [
+    "C46"
+   ],
+   "summary": "86/87 cases byte-identical; failed: C46"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": false,
+   "differs": [],
+   "how": null,
+   "seconds": 139.5
+  },
+  "seconds": 142.1,
+  "spec": "7.11 row 1",
+  "tests": {
+   "goldenTestsFailed": [
+    "test_C46"
+   ],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "a counting decision at the same position as the latest proposal does not resolve it"
+ },
+ "M28": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": false,
+   "differs": [],
+   "how": null,
+   "seconds": 137.2
+  },
+  "seconds": 140.4,
+  "spec": "7.7 row 2",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 0
+  },
+  "what": "any reverified fact (false too) marks the document reverified"
+ },
+ "M29": {
+  "cases": {
+   "failed": [
+    "C19",
+    "C20",
+    "C31",
+    "C32"
+   ],
+   "summary": "83/87 cases byte-identical; failed: C19 C20 C31 C32"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "block": 0,
+   "caught": true,
+   "how": "block",
+   "seconds": 7.0,
+   "stream": "R1",
+   "worlds": "0-999"
+  },
+  "seconds": 14.6,
+  "spec": "7.7 window",
+  "tests": {
+   "goldenTestsFailed": [
+    "test_C19",
+    "test_C20",
+    "test_C31",
+    "test_C32"
+   ],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "window start off by one day (addDays(expiresOn, -lead))"
+ },
+ "M30": {
+  "cases": {
+   "failed": [
+    "C20",
+    "C21",
+    "C31",
+    "C42",
+    "C51"
+   ],
+   "summary": "82/87 cases byte-identical; failed: C20 C21 C31 C42 C51"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "block": 0,
+   "caught": true,
+   "how": "block",
+   "seconds": 7.2,
+   "stream": "R1",
+   "worlds": "0-999"
+  },
+  "seconds": 12.4,
+  "spec": "7.7 boundary",
+  "tests": {
+   "goldenTestsFailed": [
+    "test_C20",
+    "test_C21",
+    "test_C31",
+    "test_C42",
+    "test_C51"
+   ],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "expiry boundary at the start of the expiry date"
+ },
+ "M31": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": false,
+   "differs": [],
+   "how": null,
+   "seconds": 123.9
+  },
+  "seconds": 128.2,
+  "spec": "7.1 row 2",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [
+    "Invariants.test_boundary_completeness"
+   ],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "pre-start includes the start instant itself (v <= startOf)"
+ },
+ "M32": {
+  "cases": {
+   "failed": [
+    "C06",
+    "C21"
+   ],
+   "summary": "85/87 cases byte-identical; failed: C06 C21"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": false,
+   "differs": [],
+   "how": null,
+   "seconds": 98.5
+  },
+  "seconds": 101.0,
+  "spec": "8.2 overdue",
+  "tests": {
+   "goldenTestsFailed": [
+    "test_C06",
+    "test_C21"
+   ],
+   "otherTestsFailed": [
+    "Invariants.test_boundary_completeness"
+   ],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "overdue only strictly after dueAt"
+ },
+ "M33": {
+  "cases": {
+   "failed": [
+    "C06",
+    "C21"
+   ],
+   "summary": "85/87 cases byte-identical; failed: C06 C21"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": false,
+   "differs": [],
+   "how": null,
+   "seconds": 101.0
+  },
+  "seconds": 103.6,
+  "spec": "8.3 due obligation",
+  "tests": {
+   "goldenTestsFailed": [
+    "test_C06",
+    "test_C21"
+   ],
+   "otherTestsFailed": [
+    "Invariants.test_boundary_completeness"
+   ],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "a due obligation is kept when v equals dueAt"
+ },
+ "M34": {
+  "cases": {
+   "failed": [
+    "C86"
+   ],
+   "summary": "86/87 cases byte-identical; failed: C86"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "block": 0,
+   "caught": true,
+   "how": "block",
+   "seconds": 4.1,
+   "stream": "R3",
+   "worlds": "0-999"
+  },
+  "seconds": 7.0,
+  "spec": "5.1 scope",
+  "tests": {
+   "goldenTestsFailed": [
+    "test_C86"
+   ],
+   "otherTestsFailed": [
+    "Population.test_run_small"
+   ],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "the scoped OT params apply to every subject"
+ },
+ "M35": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": false,
+   "differs": [],
+   "how": null,
+   "seconds": 114.0
+  },
+  "seconds": 116.8,
+  "spec": "5.1 scope (ids only)",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 0
+  },
+  "what": "the scope test needs the jurisdiction's own stateMinWageCents fact"
+ },
+ "M36": {
+  "cases": {
+   "failed": [
+    "C54",
+    "C55",
+    "C86"
+   ],
+   "summary": "84/87 cases byte-identical; failed: C54 C55 C86"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "block": 0,
+   "caught": true,
+   "how": "block",
+   "seconds": 3.6,
+   "stream": "R3",
+   "worlds": "0-999"
+  },
+  "seconds": 5.8,
+  "spec": "6.3, 7.9 scoped inputs",
+  "tests": {
+   "goldenTestsFailed": [
+    "test_C54",
+    "test_C55",
+    "test_C86"
+   ],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "the scoped OT entry leaves the location facts out of its inputs"
+ },
+ "M37": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": false,
+   "differs": [],
+   "how": null,
+   "seconds": 101.4
+  },
+  "seconds": 103.9,
+  "spec": "7.4 row order",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [
+    "Invariants.test_erasure"
+   ],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "EVSUB tests the accepted submit result before the SSN rows"
+ },
+ "M38": {
+  "cases": {
+   "failed": [
+    "C07"
+   ],
+   "summary": "86/87 cases byte-identical; failed: C07"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "block": 0,
+   "caught": true,
+   "how": "block",
+   "seconds": 4.4,
+   "stream": "R1",
+   "worlds": "0-999"
+  },
+  "seconds": 7.6,
+  "spec": "7.2 row 1",
+  "tests": {
+   "goldenTestsFailed": [
+    "test_C07"
+   ],
+   "otherTestsFailed": [
+    "Invariants.test_erasure"
+   ],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "an erased SSN does not count as present for Section 1"
+ },
+ "M39": {
+  "cases": {
+   "failed": [
+    "C10"
+   ],
+   "summary": "86/87 cases byte-identical; failed: C10"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "block": 0,
+   "caught": true,
+   "how": "block",
+   "seconds": 4.1,
+   "stream": "R1",
+   "worlds": "0-999"
+  },
+  "seconds": 6.7,
+  "spec": "7.5 row 2",
+  "tests": {
+   "goldenTestsFailed": [
+    "test_C10"
+   ],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "the tnc due time is the start of the day, not the end"
+ },
+ "M40": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": false,
+   "differs": [],
+   "how": null,
+   "seconds": 104.4
+  },
+  "seconds": 106.6,
+  "spec": "8.7 trace order (DOCEXP keys)",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [
+    "Invariants.test_determinism_under_shuffle"
+   ],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "DOCEXP items in fact order, not ascending by document id"
+ },
+ "M41": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": false,
+   "how": null,
+   "na": "na: population.run never calls op_affected"
+  },
+  "seconds": 3.3,
+  "spec": "10 order",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 0
+  },
+  "what": "affected subjects in world order, not ascending"
+ },
+ "M42": {
+  "cases": {
+   "failed": [
+    "C36"
+   ],
+   "summary": "86/87 cases byte-identical; failed: C36"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": false,
+   "how": null,
+   "na": "na: population.run never calls op_affected"
+  },
+  "seconds": 2.7,
+  "spec": "10 item 5",
+  "tests": {
+   "goldenTestsFailed": [
+    "test_C36"
+   ],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "affected always uses R1 dependencies"
+ },
+ "M43": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": false,
+   "how": null,
+   "na": "na: population.run never calls op_publish"
+  },
+  "seconds": 2.6,
+  "spec": "8.8 step 1",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 0
+  },
+  "what": "basis guard ignores validTime (equal tx, earlier validTime is applied)"
+ },
+ "M44": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": false,
+   "how": null,
+   "na": "na: population.run never calls op_publish"
+  },
+  "seconds": 2.8,
+  "spec": "8.8 step 1",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 0
+  },
+  "what": "an equal-basis record is skipped"
+ },
+ "M45": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": false,
+   "how": null,
+   "na": "na: population.run never calls op_publish"
+  },
+  "seconds": 3.6,
+  "spec": "8.8 step 3",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 0
+  },
+  "what": "retirement also retires other subjects' items"
+ },
+ "M46": {
+  "cases": {
+   "failed": [
+    "C78"
+   ],
+   "summary": "86/87 cases byte-identical; failed: C78"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": false,
+   "how": null,
+   "na": "na: population.run never calls op_publish"
+  },
+  "seconds": 3.3,
+  "spec": "8.8 step 2 (Q40h)",
+  "tests": {
+   "goldenTestsFailed": [
+    "test_C78"
+   ],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "a retired id reappearing with an equal payload publishes nothing"
+ },
+ "M47": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": false,
+   "how": null,
+   "na": "na: population.run never calls op_receive"
+  },
+  "seconds": 3.2,
+  "spec": "8.9 effects",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [
+    "PublishReceive.test_sequences"
+   ],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "a processed delivery releases at most one waiting delivery"
+ },
+ "M48": {
+  "cases": {
+   "failed": [
+    "C83"
+   ],
+   "summary": "86/87 cases byte-identical; failed: C83"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": false,
+   "how": null,
+   "na": "na: population.run never calls op_receive"
+  },
+  "seconds": 3.5,
+  "spec": "8.9 projection",
+  "tests": {
+   "goldenTestsFailed": [
+    "test_C83"
+   ],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "the projection re-applies an equal seq"
+ },
+ "M49": {
+  "cases": {
+   "failed": [
+    "C83"
+   ],
+   "summary": "86/87 cases byte-identical; failed: C83"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": false,
+   "how": null,
+   "na": "na: population.run never calls op_receive"
+  },
+  "seconds": 2.5,
+  "spec": "8.9 effects dedup",
+  "tests": {
+   "goldenTestsFailed": [
+    "test_C83"
+   ],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "a delivery already waiting is queued again"
+ },
+ "M50": {
+  "cases": {
+   "failed": [
+    "C46"
+   ],
+   "summary": "86/87 cases byte-identical; failed: C46"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "block": 0,
+   "caught": true,
+   "how": "block",
+   "seconds": 3.3,
+   "stream": "R1",
+   "worlds": "0-999"
+  },
+  "seconds": 5.5,
+  "spec": "8.7 trace order (PROP keys)",
+  "tests": {
+   "goldenTestsFailed": [
+    "test_C46"
+   ],
+   "otherTestsFailed": [
+    "Invariants.test_determinism_under_shuffle"
+   ],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "PROP items in first-seen order, not ascending by target"
+ },
+ "M51": {
+  "cases": {
+   "failed": [
+    "C38",
+    "C45",
+    "C68",
+    "C71",
+    "C72"
+   ],
+   "summary": "82/87 cases byte-identical; failed: C38 C45 C68 C71 C72"
+  },
+  "file": "jsontok.py",
+  "fingerprint": {
+   "caught": false,
+   "differs": [],
+   "how": null,
+   "seconds": 95.4
+  },
+  "seconds": 97.8,
+  "spec": "2 integer token",
+  "tests": {
+   "goldenTestsFailed": [
+    "test_C38",
+    "test_C45",
+    "test_C68",
+    "test_C71",
+    "test_C72"
+   ],
+   "otherTestsFailed": [
+    "TokenJSON.test_canonical",
+    "TokenJSON.test_number_tokens"
+   ],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "integral non-integer tokens (1650.0, 1.65e3, 3.0) are accepted as integers"
+ },
+ "M52": {
+  "cases": {
+   "failed": [
+    "C66"
+   ],
+   "summary": "86/87 cases byte-identical; failed: C66"
+  },
+  "file": "jsontok.py",
+  "fingerprint": {
+   "caught": false,
+   "differs": [],
+   "how": null,
+   "seconds": 115.4
+  },
+  "seconds": 117.4,
+  "spec": "4.4 step 1 duplicate keys",
+  "tests": {
+   "goldenTestsFailed": [
+    "test_C66"
+   ],
+   "otherTestsFailed": [
+    "TokenJSON.test_duplicate_keys"
+   ],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "a duplicate key is silently last-wins"
+ },
+ "M53": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "jsontok.py",
+  "fingerprint": {
+   "caught": false,
+   "differs": [],
+   "how": null,
+   "seconds": 111.6
+  },
+  "seconds": 114.1,
+  "spec": "2 integer token (A02)",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [
+    "TokenJSON.test_canonical",
+    "TokenJSON.test_number_tokens",
+    "ValidationOrder.test_values"
+   ],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "-0 is not an integer token"
+ },
+ "M54": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "jsontok.py",
+  "fingerprint": {
+   "caught": false,
+   "differs": [],
+   "how": null,
+   "seconds": 117.1
+  },
+  "seconds": 120.2,
+  "spec": "9 (A07)",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 0
+  },
+  "what": "canonical writer leaves non-ASCII characters unescaped"
+ },
+ "M55": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "jsontok.py",
+  "fingerprint": {
+   "caught": false,
+   "how": null,
+   "na": "na: the JNum branch of _canon runs only for opaque publish/receive payloads"
+  },
+  "seconds": 3.1,
+  "spec": "9 (A07)",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [
+    "TokenJSON.test_canonical"
+   ],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "a non-integer number token in an opaque payload is rewritten as its value (JSON.stringify style)"
+ },
+ "M56": {
+  "cases": {
+   "failed": [
+    "C19",
+    "C20",
+    "C23",
+    "C25",
+    "C31",
+    "C32",
+    "C42"
+   ],
+   "summary": "80/87 cases byte-identical; failed: C19 C20 C23 C25 C31 C32 C42"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "block": 0,
+   "caught": true,
+   "how": "block",
+   "seconds": 4.3,
+   "stream": "R1",
+   "worlds": "0-999"
+  },
+  "seconds": 7.2,
+  "spec": "2, 8.4",
+  "tests": {
+   "goldenTestsFailed": [
+    "test_C19",
+    "test_C20",
+    "test_C23",
+    "test_C25",
+    "test_C31",
+    "test_C32",
+    "test_C42"
+   ],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "a float sneaks into canonical JSON (floorCents written 1650.0)"
+ },
+ "M56b": {
+  "cases": {
+   "failed": [
+    "C09",
+    "C10",
+    "C12",
+    "C13",
+    "C19",
+    "C20",
+    "C21",
+    "C23",
+    "C25",
+    "C27",
+    "C28",
+    "C31",
+    "C32",
+    "C42",
+    "C49",
+    "C50"
+   ],
+   "summary": "71/87 cases byte-identical; failed: C09 C10 C12 C13 C19 C20 C21 C23 C25 C27 C28 C31 C32 C42 C49 C50"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "block": 0,
+   "caught": true,
+   "how": "block",
+   "seconds": 6.2,
+   "stream": "R1",
+   "worlds": "0-999"
+  },
+  "seconds": 9.6,
+  "spec": "2, 8.4",
+  "tests": {
+   "goldenTestsFailed": [
+    "test_C09",
+    "test_C10",
+    "test_C12",
+    "test_C13",
+    "test_C19",
+    "test_C20",
+    "test_C21",
+    "test_C23",
+    "test_C25",
+    "test_C27",
+    "test_C28",
+    "test_C31",
+    "test_C32",
+    "test_C42",
+    "test_C49",
+    "test_C50"
+   ],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "a float sneaks into the work item version preimage (inputs as floats)"
+ },
+ "M57": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "w0.py",
+  "fingerprint": {
+   "caught": false,
+   "differs": [],
+   "how": null,
+   "seconds": 119.6
+  },
+  "seconds": 123.4,
+  "spec": "7.10",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 0
+  },
+  "what": "pay-change arithmetic in IEEE doubles (SPEC says exact for 0..2^53-1)"
+ },
+ "M58": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "population.py",
+  "fingerprint": {
+   "block": 0,
+   "caught": true,
+   "how": "block",
+   "seconds": 5.7,
+   "stream": "worlds",
+   "worlds": "0-999"
+  },
+  "seconds": 9.1,
+  "spec": "12.3 Zipf",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 0
+  },
+  "what": "Zipf weight floor(10^12 / isqrt(r)) instead of isqrt(10^24 div r)"
+ },
+ "M59": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "population.py",
+  "fingerprint": {
+   "block": 0,
+   "caught": true,
+   "how": "block",
+   "seconds": 5.0,
+   "stream": "worlds",
+   "worlds": "0-999"
+  },
+  "seconds": 9.3,
+  "spec": "12.3 evres (A10)",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 0
+  },
+  "what": "evres drawn for any present SSN (dashed and erased too)"
+ },
+ "M60": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "population.py",
+  "fingerprint": {
+   "block": 0,
+   "caught": true,
+   "how": "block",
+   "seconds": 4.0,
+   "stream": "worlds",
+   "worlds": "0-999"
+  },
+  "seconds": 6.6,
+  "spec": "12.3 chgdec",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 0
+  },
+  "what": "the stale approval option is generated after the change"
+ },
+ "M61": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "population.py",
+  "fingerprint": {
+   "block": 0,
+   "caught": true,
+   "how": "block",
+   "seconds": 3.8,
+   "stream": "worlds",
+   "worlds": "0-999"
+  },
+  "seconds": 6.4,
+  "spec": "12.3 jurisdictions",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 0
+  },
+  "what": "location rank r maps to jurisdiction (r mod K) + 1"
+ },
+ "M62": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "population.py",
+  "fingerprint": {
+   "block": 0,
+   "caught": true,
+   "how": "block",
+   "seconds": 4.0,
+   "stream": "worlds",
+   "worlds": "0-999"
+  },
+  "seconds": 6.3,
+  "spec": "12.3 reference positions",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 0
+  },
+  "what": "a location's jurisdiction fact gets position K + r - 1"
+ },
+ "M64": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "population.py",
+  "fingerprint": {
+   "block": 0,
+   "caught": true,
+   "how": "block",
+   "seconds": 3.6,
+   "stream": "worlds",
+   "worlds": "0-999"
+  },
+  "seconds": 6.0,
+  "spec": "12.7 world facts order",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 0
+  },
+  "what": "world facts not sorted by canonical bytes"
+ },
+ "M65": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "population.py",
+  "fingerprint": {
+   "block": 0,
+   "caught": true,
+   "how": "block",
+   "seconds": 4.0,
+   "stream": "worlds",
+   "worlds": "0-999"
+  },
+  "seconds": 6.4,
+  "spec": "12.3 weighted choice",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 0
+  },
+  "what": "weighted choice picks the first running total >= x (not > x)"
+ },
+ "M69": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "population.py",
+  "fingerprint": {
+   "block": 0,
+   "caught": true,
+   "how": "block",
+   "seconds": 3.9,
+   "stream": "worlds",
+   "worlds": "0-999"
+  },
+  "seconds": 6.4,
+  "spec": "12.3 pay change",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 0
+  },
+  "what": "baseline = pay + c (sign flipped)"
+ },
+ "M70": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "population.py",
+  "fingerprint": {
+   "block": 0,
+   "caught": true,
+   "how": "block",
+   "seconds": 5.4,
+   "stream": "worlds",
+   "worlds": "0-999"
+  },
+  "seconds": 7.2,
+  "spec": "12.3 ballast",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [
+    "Population.test_worlds"
+   ],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "n = ceil((T - F) / 3)"
+ },
+ "M72": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "population.py",
+  "fingerprint": {
+   "block": 0,
+   "caught": true,
+   "how": "block",
+   "seconds": 4.9,
+   "stream": "worlds",
+   "worlds": "0-999"
+  },
+  "seconds": 8.2,
+  "spec": "12.7 last assertion",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [],
+   "ran": 119,
+   "rc": 0
+  },
+  "what": "a re-asserted one-cardinality pair keeps its first assertion"
+ },
+ "M73": {
+  "cases": {
+   "failed": [],
+   "summary": "87/87 cases byte-identical"
+  },
+  "file": "population.py",
+  "fingerprint": {
+   "block": 0,
+   "caught": true,
+   "how": "block",
+   "seconds": 4.6,
+   "stream": "R1",
+   "worlds": "0-999"
+  },
+  "seconds": 6.6,
+  "spec": "12.3 positions",
+  "tests": {
+   "goldenTestsFailed": [],
+   "otherTestsFailed": [
+    "Population.test_run_small",
+    "Population.test_worlds"
+   ],
+   "ran": 119,
+   "rc": 1
+  },
+  "what": "the scheduled raise takes no position"
+ }
+}
