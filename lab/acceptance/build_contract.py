@@ -23,7 +23,50 @@ import sys
 
 HERE = pathlib.Path(__file__).resolve().parent
 REPO = HERE.parent.parent
-VERSION = "0.3.9"
+VERSION = "0.3.10"
+
+
+def contract_oracle_answer(case_bytes, contract):
+    """RULINGS Q65a: O-CONTRACT's runner. Answers one composition-identity case {"composition": {...}} from the generated contract
+    (obligations.json) as canonical JSON: whether every assignment is bound, the source variant, and whether every image is pinned."""
+    def s_(v):
+        return isinstance(v, str) and v.strip() != ""
+    try:
+        case = json.loads(case_bytes)
+    except ValueError:
+        case = None
+    comp = case.get("composition") if isinstance(case, dict) else None
+    assign = contract["composition"]["assignments"]
+    fields, variants, logf, pins = contract["compositionFields"], contract["sourceVariantFields"], contract["logFields"], contract["imagePins"]
+    unbound = []
+    if not isinstance(comp, dict) or set(comp) != set(assign):
+        unbound = list(assign)
+    else:
+        for k in assign:
+            a = comp[k]
+            extra = []
+            if not isinstance(a, dict):
+                unbound.append(k)
+                continue
+            if k == "source":
+                if a.get("variant") not in variants:
+                    unbound.append(k)
+                    continue
+                extra = ["variant"] + list(variants[a["variant"]])
+            ok = set(a) == set(fields) | set(extra) and all(a[f] for f in fields)
+            if ok and "log" in extra:
+                lg = a["log"]
+                ok = isinstance(lg, dict) and set(lg) == set(logf) and all((isinstance(lg[f], bool) if t == "bool" else (isinstance(lg[f], str) and len(lg[f]) == 64 and all(ch in "0123456789abcdef" for ch in lg[f])) if t == "hex64" else s_(lg[f])) for f, t in logf.items())
+            if not ok:
+                unbound.append(k)
+    pinned = isinstance(comp, dict) and not unbound and all(comp[k]["imageDigest"] == (pins.get(comp[k]["engine"]) or {}).get("imageId") for k in assign)
+    variant = comp.get("source", {}).get("variant") if isinstance(comp, dict) and isinstance(comp.get("source"), dict) else None
+    return json.dumps({"bound": not unbound, "unboundAssignments": unbound, "imagesPinned": bool(pinned), "variant": variant if isinstance(variant, str) else None}, sort_keys=True, separators=(",", ":"))
+
+
+if __name__ == "__main__" and len(sys.argv) == 4 and sys.argv[1] == "--oracle" and sys.argv[2] == "O-CONTRACT":
+    sys.stdout.write(contract_oracle_answer(pathlib.Path(sys.argv[3]).read_bytes(), json.loads((HERE / "obligations.json").read_text())) + "\n")
+    sys.exit(0)
 STATUS = "CANDIDATE-1.0.0: retargeted to Sam's re-scope (SCOPE.md, NORTH-STAR.md, TARGETS.md); freezes as 1.0.0 after orchestrator acceptance and adversarial review"
 DATE = "2026-11-07"
 
@@ -63,7 +106,7 @@ def sha_text(t):
     return hashlib.sha256(t.encode()).hexdigest()
 
 
-SCOPE_SOURCES = ["lab/SCOPE.md", "lab/NORTH-STAR.md", "lab/TARGETS.md", "lab/research/SAM-pasted-numbers-2026-11-07.md", "lab/acceptance/RULINGS.md", "lab/acceptance/RULINGS-PENDING.md", "lab/verify/O02/v-o03/pin_scope.json", "lab/verify/O02/v-o03/hashes.8cc2c26.json", "lab/verify/D01/W0-1.1.1-ada2e90-SHA256SUMS", "lab/verify/O02/v-o04b/results/hashes.a9c1327.json", "lab/verify/O02/BRIEF.md", "lab/verify/D01/BRIEF.md"]
+SCOPE_SOURCES = ["lab/world/W0/SHA256SUMS", "lab/verify/D01/V-D01e/BRIEF.md", "lab/verify/D01c/BRIEF.md", "lab/oracles/domain/receipts/population-100k.json", "lab/SCOPE.md", "lab/NORTH-STAR.md", "lab/TARGETS.md", "lab/research/SAM-pasted-numbers-2026-11-07.md", "lab/acceptance/RULINGS.md", "lab/acceptance/RULINGS-PENDING.md", "lab/verify/O02/v-o03/pin_scope.json", "lab/verify/O02/v-o03/hashes.8cc2c26.json", "lab/verify/D01/W0-1.1.1-ada2e90-SHA256SUMS", "lab/verify/O02/v-o04b/results/hashes.a9c1327.json", "lab/verify/O02/BRIEF.md", "lab/verify/D01/BRIEF.md"]
 
 # ============================================================================ rulings (compiled)
 # Each ruling is compiled into the data below; ruling_checks() verifies each one is reflected.
@@ -784,7 +827,7 @@ ORACLES = {
                "spec": "ACCEPTANCE 6.5", "independence": "tsc on packed public declarations only"},
     "O-HAND": {"status": "TO-AUTHOR", "files": ["lab/acceptance/cases/hand-derivations/"], "comparator": "declared per case",
                "spec": "a frozen hand derivation: the expected answer worked out by hand from the scenario's seeded generator spec, independently reviewed and hash-pinned before any run", "independence": "never derived from a system under test"},
-    "O-DOMAIN": {"status": "TO-BUILD", "files": ["lab/oracles/domain/"], "comparator": "per case (CMP-SET-ROWS for affected subjects and work items, CMP-ORDERED-ROWS for effect traces, CMP-EXACT-VALUE for due times)",
+    "O-DOMAIN": {"status": "BUILT-ACCEPTED", "files": ["lab/oracles/domain/"], "comparator": "per case (CMP-SET-ROWS for affected subjects and work items, CMP-ORDERED-ROWS for effect traces, CMP-EXACT-VALUE for due times)",
                  "spec": "WORLD_W0 (TARGETS 6.1): expected next tasks, obligations with due times, work items, affected-subject sets and effect traces from the same command stream", "independence": "Python stdlib only; imports no Triplex, kernel or engine code; shares only the W0 rule text and the command stream"},
     "O-CONTRACT": {"status": "COMPILED", "files": ["lab/acceptance/obligations.json#evaluatorCounterexamples"], "comparator": "verdict equality",
                    "spec": "the verdict the status algorithm must return for each EVALUATOR_COUNTEREXAMPLES receipt set (OPEN)", "independence": "pinned by this contract"},
@@ -1314,9 +1357,15 @@ QUALIFICATION_RUN = {
 ORACLE_RUNNERS = {
     "O-REPLAY": {"argv": ["python3", "-I", "lab/oracles/replay/cli.py", "{case}"], "files": None,
                  "filesRule": "files are taken from the ORACLE_PINS sha256 map (the pinned per-file hashes), materialised alone in a work directory; files is used only for an oracle without a per-file pin, and no claim depending on such an oracle qualifies (RULINGS Q59e)"},
+    "O-DOMAIN": {"argv": ["python3", "-I", "lab/oracles/domain/cli.py", "run", "{case}"], "files": None,
+                 "decodedInputArgv": ["python3", "-I", "lab/oracles/domain/cli.py", "{op}", "-"],
+                 "decodedInputRule": "O-DOMAIN 5d1fd1a's case loader does not read the inputBase64 form of W0-1.1.2; for a case with inputBase64 (C91, C92 and C128 today) the evaluator decodes it and feeds the decoded bytes on stdin through decodedInputArgv with the case's op; the canonical stdout is the answer (V-D01c cross-check: all three match). The oracle is not edited for this",
+                 "answer": "stdout is canonicalJson of the SPEC output; under run, exit 1 means the oracle's answer differs from the case's frozen expected bytes and is an oracle error, never PASS"},
+    "O-CONTRACT": {"argv": ["python3", "-I", "-B", "lab/acceptance/build_contract.py", "--oracle", "O-CONTRACT", "{case}"], "files": ["lab/acceptance/build_contract.py", "lab/acceptance/obligations.json"],
+                   "answer": "canonical JSON {bound, unboundAssignments, imagesPinned, variant} for one composition-identity case {composition}, run from the authority's files (RULINGS Q59e, Q64c, Q65a)"},
 }
 ORACLE_ANSWER_RULE = "the evaluator runs the runner's argv with {case} replaced by the path of the pinned case input (and {mode} by the mode where the argv names it) in a directory holding only the pinned oracle files; exit 2, or X-NOT-MODELED on stdout or stderr, is a refusal; any other nonzero exit is an oracle error; neither is ever PASS; on exit 0 stdout is one canonical JSON document (UTF-8, key-sorted, the exact bytes of its own canonical form after one trailing newline is removed), and for O-REPLAY the expected answer is the object of the report's commandOutcomes, state and queries members, the report's own identity and verdict fields (format, oracle, caseId, caseSha256, lane, verdict, divergedAtCommand, receiptConsistency, rulesInEffect, reservedNamespaces) not being part of it; a case input given to the oracle carries no expectations of its own (RULINGS Q61c)"
-ANSWER_MEMBERS = {"O-REPLAY": ["commandOutcomes", "state", "queries"]}
+ANSWER_MEMBERS = {"O-REPLAY": ["commandOutcomes", "state", "queries"], "O-DOMAIN": None, "O-CONTRACT": None}  # None: the whole canonical document
 # RULINGS Q61d: the pinned case-manifest format (Q59f: manifests are pinned through contract versions, starting with CS-POSITION and CS-NS).
 CASE_MANIFEST = {
     "format": "triplex-db-2/case-manifest/1",
@@ -1613,13 +1662,28 @@ O_REPLAY_FILES = {
     "lab/oracles/replay/values.py": "67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982",
     "lab/oracles/replay/views.py": "df8dba0ba607c98ccd204ab9adbf5f6192d1a4fe250b103ed458b5dec70ad26a"
 }
+# RULINGS Q48a, Q40g (0.3.10): O-DOMAIN accepted at 5d1fd1a (V-D01c delta check), 7 file hashes from
+# lab/verify/D01c/delta-5d1fd1a/O-DOMAIN-5d1fd1a-SHA256SUMS (verify/D01c 7f05819), checked against the merged tree.
+O_DOMAIN_FILES = {
+    "lab/oracles/domain/README.md": "6e1e970ea9eb80ac25742a5f0f6651fc84e4c0d34cec9ce6f0ec274420f04587",
+    "lab/oracles/domain/cli.py": "fb14ef13bffe12c963a01b76b37f52fbde921476d4482f9616022a3cdbdbb6d8",
+    "lab/oracles/domain/jsontok.py": "c428c5b889bea9f6397eaf1515fc94af2eace3c3ff9a6268dd7f7a069ed903c0",
+    "lab/oracles/domain/population.py": "7c33da567e3530b40210c7fcae3ad850026cf1dd037b5edc0808f78be1d7eb3d",
+    "lab/oracles/domain/receipts/population-100k.json": "9a48033f8482f55be7af6aa00affab33f69b0015ac70f9de61fae5748d147557",
+    "lab/oracles/domain/test_domain.py": "9103d227207999538ddba6e19bb8c6e64397ddfcf6a585bf42890538416b5f08",
+    "lab/oracles/domain/w0.py": "841f7d9d2e175e09474fdf23969bfddda77851995335828ed1c97b34d9167f00",
+}
 ORACLE_PINS = {"O-TDK1": {"files": "lab/oracles/decimal/", "sha256": dict(O_TDK1_FILES), "acceptReceipt": None, "acceptedAfter": "independent review of the oracle and of tdk1-vectors.json", "rule": "file hashes pinned (RULINGS Q37c, Q38e); acceptance null until the independent review, so obligations it would close fail closed"},
                "O-REPLAY": {"files": "lab/oracles/replay/**", "commit": "a9c1327d4e1d6756696db6844e17008671d4a193", "oracleVersion": "0.4.1", "sha256": O_REPLAY_FILES,
                             "acceptReceipt": "V-O04c (lab/verify/O02/VERIFY.md sections V-O04b and V-O04c; verify/O02 fa6c236)", "verifierEntry": "V-O04c", "excludes": [], "excludesWhy": {},
                             "previousPin": {"commit": "8cc2c26f6f17ed627a3ed608f1252fe0e240bb5b", "oracleVersion": "0.3.1", "verifierEntry": "V-O03", "excludes": ["G1.decimal.channel-routing"], "replacedIn": "0.3.8"},
                             "ruledAgainst": "contract 0.3.7 + Q52, Q56",
                             "nextPin": "O-REPLAY 0.4.2 adds the Q52 shapes and the SCHEMA.md note for the id selector (RULINGS Q56f, Q56i); moving the pin to it needs an independent re-check and a contract version bump, and the q52-shapes refusal then shrinks with PIN_SCOPE_EXPECTED_DIFF updated (RULINGS Q45e, Q46d)",
-                            "rule": "accepted with a scoped pin; obligations in excludes, and cases the oracle refuses (ORACLE_REFUSALS), fail closed; moving the pin needs an independent re-check registered in VERIFIER_REGISTRY and a contract version bump (RULINGS Q45a, Q45e, Q55a, Q56i)"}}
+                            "rule": "accepted with a scoped pin; obligations in excludes, and cases the oracle refuses (ORACLE_REFUSALS), fail closed; moving the pin needs an independent re-check registered in VERIFIER_REGISTRY and a contract version bump (RULINGS Q45a, Q45e, Q55a, Q56i)"},
+               "O-DOMAIN": {"files": "lab/oracles/domain/**", "commit": "5d1fd1a3a60c01e5b5fc5d210ea0b3098074e3b9", "oracleVersion": "5d1fd1a (W0-1.1.1 SPEC readings; passes all 136 W0-1.1.2 cases)", "sha256": O_DOMAIN_FILES,
+                            "acceptReceipt": "V-D01c delta check of O-DOMAIN 5d1fd1a (lab/verify/D01c/VERIFY.md, last section; verify/D01c 7f05819)", "verifierEntry": "V-D01c-O-DOMAIN", "excludes": [], "excludesWhy": {},
+                            "notes": "V-D01c D1: two parser mutants survive every case ([1} accepted; a duplicate key after the second member missed) though the shipped parser is right on the verifier's corpus; unit tests for both belong in a later O-DOMAIN version. D2: O-DOMAIN's reading id A11 collides with W0-1.1.2's A11 (documentation only). D3: lifting the digit limit makes huge integers slow, not wrong",
+                            "rule": "accepted; moving the pin needs an independent re-check registered in VERIFIER_REGISTRY and a contract version bump (RULINGS Q55a)"}}
 # RULINGS Q55a: independent verification counts only through this contract-held registry, added by a reviewed contract version.
 VERIFIER_REGISTRY = {
     "briefRule": "every verification and re-check saves its own BRIEF file, so an entry's brief hash identifies the actual instructions (RULINGS Q59c); V-O03 and V-O04c predate this and name the V-O02 brief",
@@ -1633,7 +1697,13 @@ VERIFIER_REGISTRY = {
                    "verdict": "ACCEPT for pinning O-REPLAY 0.4.1 unchanged", "record": "lab/verify/O02/VERIFY.md sections V-O04b (bfc129a, FIX-FIRST narrow) and V-O04c", "status": "current"},
         "V-D01-W0-1.1.1": {"verifier": "V-D01", "subject": {"kind": "world", "id": "W0", "commit": "ada2e90337b7ab210dc302df01c81896fe546bcf", "version": "W0-1.1.1"},
                            "brief": "lab/verify/D01/BRIEF.md", "briefSha256": "8fbdaaf67d2cbc1ae000d780ce7fcc45825ec6ba81edbbc9ed179ce517b5df88", "branch": "verify/D01", "commit": "bee0b2525fa08c9b0131d6971ab3ec0cd9045778",
-                           "verdict": "ACCEPT (delta check of W0-1.1.1)", "record": "lab/verify/D01/VERIFY.md, delta check of W0-1.1.1", "status": "current"},
+                           "verdict": "ACCEPT (delta check of W0-1.1.1)", "record": "lab/verify/D01/VERIFY.md, delta check of W0-1.1.1", "status": "superseded by V-D01e-W0-1.1.2 in 0.3.10"},
+        "V-D01e-W0-1.1.2": {"verifier": "V-D01e (delta review) with the orchestrator's diff check of the fix", "subject": {"kind": "world", "id": "W0", "commit": "fedfcdaee6f3ea188e96d9eec9671cbb0c623f5c", "version": "W0-1.1.2"},
+                            "brief": "lab/verify/D01/V-D01e/BRIEF.md", "briefSha256": "6df85539b0dd6c5a66b524c3c106fff3b8866f6afb3f581737e3a13ddd263dca", "branch": "verify/D01", "commit": "d9021cfc8bf691094be4eafa825d3a10039ad7b6",
+                            "verdict": "ACCEPT at fedfcda (V-D01e FIX-FIRST at 242bb40 for E1 and E2; the fix accepted by the orchestrator's diff check)", "record": "lab/verify/D01/V-D01e/VERIFY.md, last section", "status": "current"},
+        "V-D01c-O-DOMAIN": {"verifier": "V-D01c (delta check of 5d1fd1a, resumed)", "subject": {"kind": "oracle", "id": "O-DOMAIN", "commit": "5d1fd1a3a60c01e5b5fc5d210ea0b3098074e3b9", "version": "5d1fd1a"},
+                            "brief": "lab/verify/D01c/BRIEF.md", "briefSha256": "0384a8d6e4f8f615b9582c4e71664adf7caec54062755df92cf62bbb151150a0", "branch": "verify/D01c", "commit": "7f05819226545a11c898299418b6c4d34b81cd03",
+                            "verdict": "ACCEPT, pin (delta check of O-DOMAIN 5d1fd1a; orchestrator cross-check 136/136 against W0-1.1.2)", "record": "lab/verify/D01c/VERIFY.md, last section; hash table lab/verify/D01c/delta-5d1fd1a/O-DOMAIN-5d1fd1a-SHA256SUMS on verify/D01c", "status": "current"},
     },
 }
 
@@ -1682,6 +1752,36 @@ def selected_pairs(o):
     return out
 
 
+def contract_blockers(o):
+    """Contract-level blockers of one obligation (pins, refusals, the W0 pin): what a contract version must change before the obligation
+    can close. Evaluator-side blockers that apply to every claim (QUALIFICATION_RUN blockers, RULINGS Q67a) are listed separately."""
+    out = []
+    for x in o["oracles"]:
+        pin = ORACLE_PINS.get(x)
+        if pin is not None:
+            if pin.get("acceptReceipt") is None or not registered_acceptance(pin.get("verifierEntry"), "oracle", x, pin.get("commit")):
+                out.append(f"oracle-unaccepted:{x}")
+            elif o["id"] in pin.get("excludes", []):
+                out.append(f"excluded:{x}")
+            out += [f"refused:{x}:{n}" for n, ref in ORACLE_REFUSALS.get(x, {}).items() if refused_by(o, ref)]
+        elif ORACLES[x]["status"] != "COMPILED":
+            out.append(f"oracle-unpinned:{x}")
+    if "O-DOMAIN" in o["oracles"] and (any(v is None for v in W0_PIN["files"].values()) or W0_PIN.get("oDomainFingerprint") is None or not registered_acceptance(W0_PIN.get("verifierEntry"), "world", "W0", W0_PIN.get("commit"))):
+        out.append("w0-pin")
+    return out
+
+
+def closability():
+    rows = {o["id"]: contract_blockers(o) for o in OBL}
+    reasons = {}
+    for b in rows.values():
+        for r in b:
+            reasons[r] = reasons.get(r, 0) + 1
+    return {"rule": "pin-level blockers per obligation (oracle pins, excludes, refusals, the W0 pin); every claim is also blocked by the evaluator-side blockers of QUALIFICATION_RUN until they clear (RULINGS Q67a)",
+            "total": len(rows), "closable": sorted(k for k, v in rows.items() if not v), "blocked": {k: v for k, v in sorted(rows.items()) if v},
+            "counts": {"total": len(rows), "closable": sum(1 for v in rows.values() if not v), "blocked": sum(1 for v in rows.values() if v)}, "blockerCounts": dict(sorted(reasons.items()))}
+
+
 def oracle_scope(oracle):
     """RULINGS Q45a, Q45b: obligations an accepted oracle may close, and those blocked by its excludes or refusals."""
     pin = ORACLE_PINS.get(oracle, {})
@@ -1706,8 +1806,8 @@ GATES["GATE-TDK1-VECTORS"] = {"rule": "G1.decimal.tdk1-differential closes only 
 # lab/verify/D01/W0-1.1.1-ada2e90-SHA256SUMS are pinned. The fingerprint stays a required null input until O-DOMAIN's independent
 # generator reproduces V-D01's final fingerprint (RULINGS Q40g); until then every domain-dependent claim fails closed.
 W0_FILES = {
-    "lab/world/W0/README.md": "891af156079bac5fc3dab7614a6070f76580f0d97d9f8e400d41417c81b93052",
-    "lab/world/W0/SPEC.md": "c93fcbd1f5ef145a0b1ab468482fb74ac6357bc318bc00ce948cd9bfac5d00a0",
+    "lab/world/W0/README.md": "d5d6d17759f2866f867432f63470243108b5ad8851dd6d18425dcef623f1aa9e",
+    "lab/world/W0/SPEC.md": "23ca6eb157e07f352495bdfd9d86ce4dedc490d5795264c8662681722c352807",
     "lab/world/W0/cases/C01-base-r1.json": "3ccb749c222ee47848f3904629fa9a8c07f668f20fb664c7dcde1cc12867e8ee",
     "lab/world/W0/cases/C02-base-r2.json": "c5350dc56365feec4eba7bb4c5df2d5f92849a900d414e287a7a0f9e68f00117",
     "lab/world/W0/cases/C03-new-hire-pre-start-r1.json": "22bb577dbdc60eb04d4214d15f2d9cdea0f3dc187accc40a5f8f317a0c7a2e60",
@@ -1718,9 +1818,46 @@ W0_FILES = {
     "lab/world/W0/cases/C08-ssn-bad-format-r1.json": "7c2b281829c42ebdc947d15a19eb89ae1d2845fc378b38c6cfcdb6ed3fa495c6",
     "lab/world/W0/cases/C09-everify-submit-r1.json": "f50e25678a6e313131541dd087a74cad379cfada036f2202b8c337c069bff4ad",
     "lab/world/W0/cases/C10-everify-tnc-r1.json": "dbc03fc0dc77a04fdfb699156f2a7fdb0328f15b7f6b85df2df8d77b6061d373",
+    "lab/world/W0/cases/C100-publish-opaque-payload-tokens.json": "5cf4cec9fe492c27a1e150afe8a9e4fef0e6dcf2f9eb7c160c41d0f2eba21392",
+    "lab/world/W0/cases/C101-publish-state-out-of-order-repeats.json": "23abef3b181511a795e903f13d24a038d4bb9f74c3e3af31cc3b2e9ff5681471",
+    "lab/world/W0/cases/C102-publish-duplicate-id-in-record.json": "e7a5f2ebd428d7e901ca1edb59c451b1f64ff8636b2608c870a9168e2d96d705",
+    "lab/world/W0/cases/C103-reconcile-equal-from-tx-beats-release.json": "fa38812225878053a5f4e13a602bf65a0975b56311d47a64a388a86b017bcf31",
+    "lab/world/W0/cases/C104-reconcile-equal-tx-release-string.json": "3f43f6ceae22da7ceb2ca53c787f3ec8581ac844483861d8d34f9483a73d7113",
+    "lab/world/W0/cases/C105-reconcile-from-equals-valid-time.json": "f81ec6dd76400b6f903caf30a706f6e4991610f44f077a8034f3bd6b8dd17900",
+    "lab/world/W0/cases/C106-reconcile-activation-at-basis-tx.json": "616b458458f2161dc8abc165a4af8747554db6d0b19590336aba21bb7b9c8669",
+    "lab/world/W0/cases/C107-fact-at-basis-tx.json": "3fe3ac5ca2d9534d6d2a81f6b98f5a00f2b38e39971a9797217a61241dc36538",
+    "lab/world/W0/cases/C108-basis-tx-zero.json": "4a61a2f54827b457f0ccbf4a6144653f968c8e86403cf7dc70cc48fdd687d1d9",
+    "lab/world/W0/cases/C109-basis-tx-max-safe.json": "95b45fce1b1ce1810cf27e245208dbfb44d976f7a62802da3e186f1cda81397c",
     "lab/world/W0/cases/C11-flags-authorized-overtime-r1.json": "b28d2d6146b43e978d7a67235a727831ef6d44c81733f7a05474b6246cc0e10e",
+    "lab/world/W0/cases/C110-err-basis-tx-2pow53.json": "8cca4cc990182fe8d94193e748ab828f38160f67b4094ac229f15efdb840b7e7",
+    "lab/world/W0/cases/C111-err-fact-tx-2pow53-plus-1.json": "5c18c596932792a803f2df27bec712a92b4e97c2fec6b4d930f6a5e4cb9c4aff",
+    "lab/world/W0/cases/C112-err-value-before-basis-in-one-fact.json": "a41e9c69a1e8e38cc22911b737789c6b7163c34ada7038982ff0065392f2c231",
+    "lab/world/W0/cases/C113-minwage-local-floor-below-state-r2.json": "6b71689d53ebd41e946bb3fa33a755f901c0e03aaa20a5f628128debbf3c5180",
+    "lab/world/W0/cases/C114-paychg-position-from-decisions-fact.json": "dfa6a9911bf3b513e069c4f3e9d69f3716cd1f99d1c62858a923e4c0d314c199",
+    "lab/world/W0/cases/C115-i9s2-incomplete-record.json": "ce0bff04d6ee3c4830fc63edcd28d64e506786f11b6f97c283b563803626b6e3",
+    "lab/world/W0/cases/C116-prop-latest-proposal-counts.json": "c5ba9b468c608a401eff38e1a9c41be8e78db30c3acf28e99e04a87e3fe2408c",
+    "lab/world/W0/cases/C117-docexp-reverified-false.json": "128b44634c535004717e2aff2639873eb1b9e926efd1e1f44d98e5cc683731d4",
+    "lab/world/W0/cases/C118-r3-scope-listed-jurisdiction-without-facts.json": "61f6037d71d49bdf46367b60a663d207947a9a5fd9f3088840bc6859ae7f22a6",
+    "lab/world/W0/cases/C119-life-at-start-instant.json": "a45a2063f17a53834870ed6cd0492d8c7096b5dd0dec86a048336ed1f68dc865",
     "lab/world/W0/cases/C12-everify-fnc-bgc-consider-r1.json": "8417a6e9b89ab9d6fa17e257e7bc077d21d1386c3b3a719102c35d73a106abc1",
+    "lab/world/W0/cases/C120-evsub-dashed-ssn-with-accepted-result.json": "ce0e489e72308f37b2cfac68ace68a999f7909bac10dab47f27c9ff635138af9",
+    "lab/world/W0/cases/C121-affected-worlds-unsorted.json": "bfe81b783ef9d452aab621b219f83004c221d0e6df965251230189b4ba141cd0",
+    "lab/world/W0/cases/C122-publish-equal-tx-earlier-valid-time-skipped.json": "4201e3b30695a51ab6e8a70eb99eed7c3383a19b3aa107019c4a01fe19875aac",
+    "lab/world/W0/cases/C123-publish-equal-basis-applied.json": "2d3c90c3f8c37435d9e6ba602cf1d160680893e0340589205de4713daac020bc",
+    "lab/world/W0/cases/C124-publish-retirement-per-subject.json": "8ef07f58a578487f777b7a0f1164ee0ac4a6445c890c29ceb02758a203fd8acd",
+    "lab/world/W0/cases/C125-receive-two-waiting-released.json": "b6f47e1bcc673a3d661d1539d91b3c65a04ba19db079a18d215121c82ccbf9aa",
+    "lab/world/W0/cases/C126-i9s2-saturday-start.json": "e0a86b7d99ad64c390aa2004281caef3dcb2956a04877e28c2633e6eb84843ed",
+    "lab/world/W0/cases/C127-facts-reversed-two-documents.json": "849290281711cc2d49988fff6ef5e270f7fa24f6b09798af830e4c523ab51526",
+    "lab/world/W0/cases/C128-err-cents-nan.json": "667deaad612f8345770824a6b994251d14ca16e13b583514f3eb07cfdf078300",
+    "lab/world/W0/cases/C129-err-basis-tx-5000-digits.json": "db4817cf4e0c382d4a0838483764d06892983d6728431d2b4425b19e774334df",
     "lab/world/W0/cases/C13-bgc-reject-r1.json": "9cd764476b44bfdfe177a1f05d8d2c5cedf9860a2b0dcbe103a2cf9665f83fb2",
+    "lab/world/W0/cases/C130-publish-5000-digit-seq.json": "5f56b41e91f5a8a4ebabcdd71f1f074a6e4cece6a0e2e444f518797dd84fd274",
+    "lab/world/W0/cases/C131-receive-5000-digit-seq.json": "ec1ad299aafd98f67dc46803c0911a87e9e48b936d650e4fb81ee73d296e487a",
+    "lab/world/W0/cases/C132-err-cents-2000-nested-arrays.json": "4a360fa4ac261b5933b27656088b769babf1d9be7b3218a9f45f25dd035b575a",
+    "lab/world/W0/cases/C133-publish-code-point-order.json": "3bebccd6c4e2d55a69869a761709eee7fb88d89f46292771a23942161b5869cc",
+    "lab/world/W0/cases/C134-receive-code-point-order.json": "b577e917d102fb33fa8970e7090bd9903fcf0fde800e8c7057ac2cb664a222fe",
+    "lab/world/W0/cases/C135-receive-inconsistent-snapshot.json": "f3d576348a4ce856218aa16f0dcc69e475932e261b249ee7a12494316efd6887",
+    "lab/world/W0/cases/C136-publish-opaque-string-and-number-writer.json": "d4e01c42661f71194602d0d8ffa1b11c8cc19ad6eb1a20d58a9261a5b2398c03",
     "lab/world/W0/cases/C14-proposal-only-r1.json": "981a5add96447160474160c5fdbcc6c4f97444f9392f9a5412b99e7f50492a5d",
     "lab/world/W0/cases/C15-proposal-then-decision-r1.json": "61206e550163dd8cbd6a6e7df589bddb8112fb3ffb383f0c93cdc6d58fd90ae0",
     "lab/world/W0/cases/C16-agent-decision-record-r1.json": "9c08447c19f28f9d2640d8f038d578bd7719157ee0e24932828a092ca24a09b3",
@@ -1795,27 +1932,43 @@ W0_FILES = {
     "lab/world/W0/cases/C85-err-receive-seq-zero.json": "b6e6df8dfdb169fc4940d70641b60236d5f0ab95227e34ce2507552be92b2af7",
     "lab/world/W0/cases/C86-ot-r3-outside-scope.json": "e37c0c1781f873d8230308f10cb4b30cf847b43b07605b78ca1d730649381ef9",
     "lab/world/W0/cases/C87-affected-r3-scope-reach.json": "78aeafcc5b6018ddaa948b174b76db9988e773c319d3148761f903a5ec10ccec",
+    "lab/world/W0/cases/C88-err-erased-marker-on-instant.json": "fcbca4158aca12ae9e9fe3dd7f74b35e8ad1af0b27b259ed01537550e1c0ca2c",
+    "lab/world/W0/cases/C89-err-array-on-date.json": "c3e75b74afd7ea2164cdd4d14d99174654bf06cd2942ad1f579c2be1c73aa25e",
+    "lab/world/W0/cases/C90-err-cents-5000-digit-token.json": "ced553d48da4b429332de5434962c786292be96fb3985781f66cac0a1b4bb13d",
+    "lab/world/W0/cases/C91-err-bytes-bom.json": "8704c265bf7668e25643bdccae59cdf6d1ebfb159045e13c49e79d3642ac926b",
+    "lab/world/W0/cases/C92-err-bytes-not-utf8.json": "d86f25d7578313b56908251505190c95ebb8568fbe0ce8c8fcc87267ce83568d",
+    "lab/world/W0/cases/C93-cents-negative-zero.json": "7b2514c558f1ff3aa77454f8f3b265523c3d6d4977a896a57e6246132f056aef",
+    "lab/world/W0/cases/C94-err-fact-tx-negative-zero.json": "80f3304ab74fb7e04c077c2452785d1c696822f64bfb5fe267996edab73a26b7",
+    "lab/world/W0/cases/C95-err-cardinality-after-unknown.json": "5cd04325db349edeb119824726d022c5fd74a11a6516019c05dbc12ff0dffa30",
+    "lab/world/W0/cases/C96-err-affected-world-by-world.json": "ac19b12d04731c834ed6be33bf0368ae23830b0793ec745be1426acb47a420cf",
+    "lab/world/W0/cases/C97-err-activation-value-before-basis.json": "9b6ebd057e5f2f1253c0ef51d9c176fed9c307aa89f80d0bab0207f594a33ac8",
+    "lab/world/W0/cases/C98-err-world-before-activations.json": "2b5f9b7b02796f0bbeb3839c7d3396356e27a04b6a9eae85e0e5ba828f899708",
+    "lab/world/W0/cases/C99-err-no-release-no-fallback.json": "13c72dd4dce45325d3c1b420b18462eb24615fba532d36ab8ae6d2f6c4121f07",
+    "lab/world/W0/expected-sha256.json": "dfe90c7d33603c89c9f027b990e430f2a355950db2b559d700281c2b6cc1c988",
+    "lab/world/W0/input-sha256.json": "e5125990bfd85009c38b2d9c3c6c6d17fb089f89a2cc7812b288a41687fe61ce",
     "lab/world/W0/releases/R1.json": "c8c6de6df5068396eef8648a9c984376b56bbeddbd4af88677b5212239f210b7",
     "lab/world/W0/releases/R2.json": "be914f7a9ed8e7799c0fd445fc5564e0a61361c1f58d14263f68e7f95c83a051",
     "lab/world/W0/releases/R3.json": "8f7962e89c1150b6b56bff180e67042ad82c18491f011c406d7ca417d08264fd",
     "lab/world/W0/releases/index.json": "f5e3f8c16a8dd2c64f0de27762368febd2e08aa5b3f5a622a2a57e9b61dc0dfc",
-    "lab/world/W0/schema.json": "9fe277a11ced24a88703bb36e05397c15f30b7d4b0346f37f1599801b966da09",
-    "lab/world/W0/validate.py": "b4e87db8d4bea3177c5528e8e11ce17d3ac6a0139b98d824cdbafef0c7ac20d8"
+    "lab/world/W0/schema.json": "4f9cd22fe6c95e19af6983a4ec622eb20b137789cfe25ab82c9d0a826a5a79b5",
+    "lab/world/W0/validate.py": "ae44e94dcf6e60f98cd7a7208a6f34a3e1e2a43d744a6d503111887fd1b261eb"
 }
 W0_FINGERPRINT_CANDIDATE = {
-    "source": "V-D01 delta check of W0-1.1.1 (lab/verify/D01/VERIFY.md, final fingerprint)", "rung": "100k",
+    "source": "V-D01 delta check of W0-1.1.1 (lab/verify/D01/VERIFY.md, final fingerprint); reproduced by O-DOMAIN 5d1fd1a (lab/oracles/domain/receipts/population-100k.json) and V-D01c, unchanged by W0-1.1.2 (V-D01e)", "rung": "100k",
     "basisTx": 4338757, "facts": 44537987,
     "worldsSha256": "fec1d7cedee2b2f18c77e78210e4e9ed14fffb72e9629545155c7307e969c760",
     "releasesSha256": {"R1": "c1b2d410244121d64b476c2f99c32830ea1b1f536928c9d12b0e886132351a79", "R2": "551bbbc479eecd15d4f5eb13698f61d20c09a900b7f83a2b10858fb2ba13b562", "R3": "a595092272c16343b0dfe9c9db57fbcdd7556fbf8be40afbaed014710fceee2f"},
 }
 W0_PIN = {
-    "rule": "pinned at a contract version bump only (RULINGS Q31i, Q32f); W0-1.1.1 ACCEPTED at ada2e90 with its 95 file hashes (RULINGS Q48a); the population fingerprint is pinned only once O-DOMAIN's independent generator reproduces W0_FINGERPRINT_CANDIDATE with SPEC 12.7's recipe (RULINGS Q40g); a null field fails closed",
-    "reviewedBy": "V-D01", "reviewReceipt": "V-D01 delta check of W0-1.1.1 (lab/verify/D01/VERIFY.md; bee0b25; merged e7c1346)", "verifierEntry": "V-D01-W0-1.1.1",
+    "rule": "pinned at a contract version bump only (RULINGS Q31i, Q32f); W0-1.1.2 ACCEPTED at fedfcda with the 146 file hashes of lab/world/W0/SHA256SUMS, whose own sha256 is pinned (V-D01e N2); the population fingerprint is pinned because O-DOMAIN's independent generator reproduced it (RULINGS Q40g, Q48a; V-D01c); a null field fails closed",
+    "reviewedBy": "V-D01e", "reviewReceipt": "V-D01e delta review of W0-1.1.2 at 242bb40 (FIX-FIRST for E1 and E2) and the orchestrator's diff check of the fix at fedfcda (ACCEPT) (lab/verify/D01/V-D01e/VERIFY.md, last section; verify/D01 d9021cf)", "verifierEntry": "V-D01e-W0-1.1.2",
     "fingerprintOwnership": "the O-DOMAIN fingerprint pin changes only by a reviewed contract version; the evaluator owns the W0 pin it passes to admission and a claim can never supply it (RULINGS Q55e)",
-    "version": "W0-1.1.1", "commit": "ada2e90337b7ab210dc302df01c81896fe546bcf", "hashTable": "lab/verify/D01/W0-1.1.1-ada2e90-SHA256SUMS",
-    "files": W0_FILES,
-    "deltaCheck": "ACCEPT (V-D01, 2026-11-08: 87 cases byte-identical; floors unchanged)", "oDomainFingerprint": None, "fingerprintCandidate": W0_FINGERPRINT_CANDIDATE,
-    "requires": "O-DOMAIN's independent reproduction of the population fingerprint (RULINGS Q40g, Q44a, Q48a); until then oDomainFingerprint is a required null input and every domain-dependent claim fails closed",
+    "version": "W0-1.1.2", "commit": "fedfcdaee6f3ea188e96d9eec9671cbb0c623f5c", "hashTable": "lab/world/W0/SHA256SUMS", "hashTableSha256": "b5941569402865a52149ed0116efa60eb5b489dc9a27d15f8591e2daa51b051c",
+    "files": W0_FILES, "frozenHashes": ["lab/world/W0/expected-sha256.json", "lab/world/W0/input-sha256.json"],
+    "deltaCheck": "ACCEPT (V-D01e: C01-C87, R1-R3 and the fingerprint byte-identical to W0-1.1.1; 49 new cases C88-C136 re-derived; E1 and E2 fixed at fedfcda and accepted by diff check)",
+    "oDomainFingerprint": dict(W0_FINGERPRINT_CANDIDATE, reproducedBy="O-DOMAIN 5d1fd1a receipt lab/oracles/domain/receipts/population-100k.json (match true on all six values), confirmed by V-D01c through heavy.mjs"), "fingerprintCandidate": W0_FINGERPRINT_CANDIDATE,
+    "previousPin": {"version": "W0-1.1.1", "commit": "ada2e90337b7ab210dc302df01c81896fe546bcf", "hashTable": "lab/verify/D01/W0-1.1.1-ada2e90-SHA256SUMS", "files": 95, "verifierEntry": "V-D01-W0-1.1.1", "replacedIn": "0.3.10"},
+    "requires": "nothing further: files, review receipt, delta check and fingerprint are pinned; a change to any needs a contract version bump",
 }
 
 # ============================================================================ composition identity (TARGETS 4.1, RULINGS Q28)
@@ -3491,13 +3644,20 @@ def ruling_checks():
         if "O-DOMAIN" in o["oracles"] and o["id"] != "W0.coverage-floors" and "GATE-W0" not in o["closure"]["params"].get("gates", []):
             e.append(f"Q31i: {o['id']} is domain-dependent but not gated on W0")
     _sums = {ln.split("  ", 1)[1]: ln.split("  ", 1)[0] for ln in (REPO / W0_PIN["hashTable"]).read_text().splitlines() if ln.strip()}
-    if W0_PIN["files"] != _sums or len(W0_PIN["files"]) != 95 or "reviewReceipt" not in W0_PIN:
-        e.append("Q48a: W0_PIN must pin exactly the 95 hashes of W0-1.1.1-ada2e90-SHA256SUMS")
+    if W0_PIN["files"] != _sums or len(W0_PIN["files"]) != 146 or "reviewReceipt" not in W0_PIN or sha_file(W0_PIN["hashTable"]) != W0_PIN["hashTableSha256"] or not all(f in W0_PIN["files"] for f in W0_PIN["frozenHashes"]):
+        e.append("Q57/V-D01e: W0_PIN must pin exactly the 146 hashes of lab/world/W0/SHA256SUMS, the table's own sha256 and the frozen expected and input hashes")
+    if len([f for f in W0_PIN["files"] if f.startswith("lab/world/W0/cases/")]) != 136:
+        e.append("V-D01e: W0-1.1.2 holds 136 cases")
     for need in ("lab/world/W0/SPEC.md", "lab/world/W0/schema.json", "lab/world/W0/releases/R1.json", "lab/world/W0/releases/R2.json", "lab/world/W0/releases/R3.json"):
         if need not in W0_PIN["files"] or not any(f.startswith("lab/world/W0/cases/") for f in W0_PIN["files"]):
             e.append(f"Q46c/Q48a: W0_PIN layout names {need} and the case files")
-    if W0_PIN["oDomainFingerprint"] is not None or W0_PIN["reviewReceipt"] is None or not str(W0_PIN["deltaCheck"]).startswith("ACCEPT") or W0_PIN["commit"][:7] != "ada2e90":
-        e.append("Q48a: W0 accepted at ada2e90 with the fingerprint a required null input until O-DOMAIN reproduces it")
+    _rc = json.loads((REPO / "lab/oracles/domain/receipts/population-100k.json").read_text())
+    _fpd = W0_PIN["oDomainFingerprint"] or {}
+    if W0_PIN["reviewReceipt"] is None or not str(W0_PIN["deltaCheck"]).startswith("ACCEPT") or W0_PIN["commit"][:7] != "fedfcda" or not registered_acceptance(W0_PIN["verifierEntry"], "world", "W0", W0_PIN["commit"]):
+        e.append("Q57/V-D01e: W0-1.1.2 accepted at fedfcda through VERIFIER_REGISTRY")
+    if (_rc.get("fingerprint") != {"basisTx": _fpd.get("basisTx"), "facts": _fpd.get("facts"), "worlds": "sha256:" + str(_fpd.get("worldsSha256")), **{k: "sha256:" + v for k, v in (_fpd.get("releasesSha256") or {}).items()}}
+            or not all(v.get("match") is True for v in _rc.get("expected", {}).values()) or {k: _fpd.get(k) for k in ("basisTx", "facts", "worldsSha256", "releasesSha256")} != {k: W0_FINGERPRINT_CANDIDATE[k] for k in ("basisTx", "facts", "worldsSha256", "releasesSha256")}):
+        e.append("Q40g/Q48a: the pinned fingerprint is O-DOMAIN's reproduced receipt and equals V-D01's final fingerprint")
     _fp = W0_PIN["fingerprintCandidate"]
     _vtxt = (REPO / "lab/verify/D01/VERIFY.md").read_text()
     _vtxt = re.sub(r"\s+", " ", _vtxt[_vtxt.index("Final fingerprint"):])
@@ -3654,6 +3814,8 @@ def ruling_checks():
     if _adm(good) != "QUALIFIED":
         e.append("Q55a: a claim the evaluator's own run passes, with every oracle pinned and accepted, A0 registered and the obligation verified, must be admitted (positive control)")
     dom = dict(good, obligations=["GS.05"])
+    if _adm(dom) != "QUALIFIED":
+        e.append("0.3.10: with W0-1.1.2 and the O-DOMAIN fingerprint pinned, a complete domain-dependent claim qualifies against the contract's own W0 pin (positive control)")
     if _adm(dom, w0=w0_full) != "QUALIFIED":
         e.append("Q55a: a domain-dependent claim with W0 pinned and its fingerprint reproduced must be admitted (positive control)")
     logc = _comp(variant="log-source", log={"implementationSha256": "e" * 64, "fsyncMode": "fsync-per-commit", "fullFsync": True, "device": "apfs-nvme0"})
@@ -3719,8 +3881,9 @@ def ruling_checks():
             (_adm(good, ev=_ev(witness=lambda oid, binary, comp, case, mode, rep: None)), "fault injections without retained witnesses (Q61j)"),
             (_adm(good, ev=_ev(witness=lambda oid, binary, comp, case, mode, rep: dict(_wit(oid, binary, comp, case, mode, rep), faultPointId="OTHER"))), "a fault witness for another fault point (Q61j)"),
             (_adm(dict(good, obligations=["NS.P2", "NS.P9"])), "an unknown obligation id (Q42a)"),
-            (_adm(dom), "a domain-dependent claim while O-DOMAIN has not reproduced the fingerprint (Q48a)"),
-            (_adm(dict(dom, oDomainFingerprint="F", w0={"oDomainFingerprint": "F"})), "a domain-dependent claim supplying its own fingerprint (Q55e)"),
+            (_adm(dom, w0=dict(W0_PIN, oDomainFingerprint=None)), "a domain-dependent claim while the fingerprint pin is null (Q48a)"),
+            (_adm(dict(dom, oDomainFingerprint="F", w0={"oDomainFingerprint": "F"}), w0=dict(W0_PIN, oDomainFingerprint=None)), "a domain-dependent claim supplying its own fingerprint (Q55e)"),
+            (_adm(dom, w0=dict(W0_PIN, verifierEntry="V-D01-W0-1.1.1")), "a W0 pin naming the superseded W0-1.1.1 verification (Q55a)"),
             (_adm(dom, w0=dict(w0_full, verifierEntry="V-O04c")), "a W0 pin whose verifier entry does not accept W0 at its commit (Q55a)"),
             (_adm(dict(good, obligations=["G7.migration.schema-evolution"])), "a CS-MIGRATION claim while the oracle refuses decimal redeclaration (Q47c, Q54a)"),
             (_adm(dict(good, obligations=["G9.erasure.residual-shapes"])), "a claim on the Q52 shapes the pinned oracle refuses (Q56i)")):
@@ -3968,6 +4131,33 @@ def ruling_checks():
             e.append(f"Q56i: {oid} may close on the oracle side at a9c1327 (blocked by {_scope['blocked'][oid]})")
     if _scope["blocked"].get("G9.erasure.residual-shapes") != ["q52-shapes"]:
         e.append("Q56i: G9.erasure.residual-shapes is blocked by the q52-shapes refusal")
+    # 0.3.10: O-DOMAIN pin, O-CONTRACT runner, closability
+    _od = ORACLE_PINS.get("O-DOMAIN", {})
+    if ORACLES["O-DOMAIN"]["status"] != "BUILT-ACCEPTED" or _od.get("commit") != "5d1fd1a3a60c01e5b5fc5d210ea0b3098074e3b9" or not registered_acceptance(_od.get("verifierEntry"), "oracle", "O-DOMAIN", _od.get("commit")) or len(_od.get("sha256", {})) != 7:
+        e.append("V-D01c: O-DOMAIN BUILT-ACCEPTED and pinned at 5d1fd1a with 7 hashes through VERIFIER_REGISTRY")
+    _drift = [f for f, h in _od.get("sha256", {}).items() if not (REPO / f).exists() or sha_file(f) != h]
+    if _drift or set(_od.get("sha256", {})) != {"lab/oracles/domain/" + p.relative_to(REPO / "lab/oracles/domain").as_posix() for p in (REPO / "lab/oracles/domain").rglob("*") if p.is_file() and "__pycache__" not in p.parts}:
+        e.append(f"V-D01c: pinned O-DOMAIN files differ from the tree: {_drift[:3]}")
+    _dom_scope = oracle_scope("O-DOMAIN")
+    if len(_dom_scope["uses"]) != 26 or _dom_scope["blocked"]:
+        e.append(f"0.3.10: the 26 obligations declaring O-DOMAIN are closable on the O-DOMAIN side ({len(_dom_scope['uses'])} uses, {len(_dom_scope['blocked'])} blocked)")
+    if any("w0-pin" in contract_blockers(o) for o in OBL):
+        e.append("0.3.10: the W0 pin is complete")
+    if "decodedInputArgv" not in ORACLE_RUNNERS.get("O-DOMAIN", {}) or "inputBase64" not in ORACLE_RUNNERS["O-DOMAIN"].get("decodedInputRule", "") or "O-CONTRACT" not in ORACLE_RUNNERS:
+        e.append("Q65a/V-D01c: O-DOMAIN and O-CONTRACT runner entries")
+    _cfg = {"composition": COMPOSITION, "compositionFields": list(COMPOSITION_FIELDS), "sourceVariantFields": {k: list(v) for k, v in SOURCE_VARIANT_FIELDS.items()}, "logFields": LOG_FIELDS, "imagePins": IMAGE_PINS}
+    _good = {k: {"engine": "xtdb", "imageDigest": IMAGE_PINS["xtdb"]["imageId"], "configSha256": "bb", "slot": "dev"} for k in COMPOSITION["assignments"]}
+    _good["source"]["variant"] = "engine-source"
+    _probes = [_good, dict(_good, history={"engine": "xtdb", "imageDigest": IMAGE_PINS["xtdb"]["imageId"], "configSha256": "bb"}), dict(_good, current=dict(_good["current"], imageDigest="sha256:" + "9" * 64)),
+               dict(_good, source=dict(_good["source"], variant="log-source", log={"implementationSha256": "e" * 64, "fsyncMode": "full", "fullFsync": True, "device": "nvme"})),
+               dict(_good, source=dict(_good["source"], variant="log-source")), dict(_good, source={k: v for k, v in _good["source"].items() if k != "variant"}), "not a composition"]
+    for pc in _probes:
+        ans_ = json.loads(contract_oracle_answer(json.dumps({"composition": pc}).encode(), json.loads(json.dumps(_cfg))))
+        want_b = composition_ok(pc)
+        want_p = want_b and all(pc[k]["imageDigest"] == IMAGE_PINS[pc[k]["engine"]]["imageId"] for k in pc)
+        if ans_["bound"] != want_b or ans_["imagesPinned"] != want_p:
+            e.append("Q65a: the O-CONTRACT runner agrees with composition_ok and the image pins on every probe")
+            break
     # Q61a-k, Q59a-f
     if ORACLE_RUNNERS["O-REPLAY"]["argv"] != ["python3", "-I", "lab/oracles/replay/cli.py", "{case}"] or "commandOutcomes, state and queries" not in ORACLE_ANSWER_RULE or "exit 2" not in ORACLE_ANSWER_RULE or ANSWER_MEMBERS["O-REPLAY"] != ["commandOutcomes", "state", "queries"]:
         e.append("Q61c: oracleRunners with O-REPLAY's default argv and the answer-extraction rule")
@@ -4067,8 +4257,8 @@ def ruling_checks():
     if "independently of ACK delivery" not in _p3.get("commitTime", "") or "fails the run" not in _p3.get("accounting", "") or "NS-P3-EVERY-POSITION-ACCOUNTED" not in {t for c in obl["NS.P3"]["cases"] for t in c["select"]} or "independently of ACK delivery" not in obl["NS.P3"]["statement"]:
         e.append("Q55d: P3 lag from source publication with every committed position accounted")
     # Q55e
-    if "a claim can never supply it" not in W0_PIN.get("fingerprintOwnership", "") or W0_PIN["oDomainFingerprint"] is not None:
-        e.append("Q55e: the O-DOMAIN fingerprint changes only by a reviewed contract version and stays null")
+    if "a claim can never supply it" not in W0_PIN.get("fingerprintOwnership", ""):
+        e.append("Q55e: the O-DOMAIN fingerprint changes only by a reviewed contract version")
     # Q50a, c, d, e; Q51a, c, d, e, f
     _p2 = build_load_contract()["measurements"]["P2"]
     if "broker-side current-entity index" not in COMPOSITION.get("brokerCurrentIndex", "") or "never a bar" not in _p2.get("storagePerCommit", "") or "27,581" not in _p2.get("storagePerCommit", "") or "persist-updates off" not in build_load_contract()["measurements"].get("runQueue", {}).get("qleverExclusiveFirst", "") or "EXP-J01" not in build_load_contract()["measurements"]["runQueue"].get("xtdb100kRung", ""):
@@ -4994,8 +5184,8 @@ def main():
         "valueKinds": VALUE_KINDS, "decimalRules": DECIMAL_RULES, "decimalOps": DECIMAL_OPS, "decimalConversions": DECIMAL_CONVERSIONS, "decimalScaleEvolution": DECIMAL_SCALE_EVOLUTION, "decimalTests": DECIMAL_TEST_TEXT, "screeningProfiles": SCREENING_PROFILES,
         "temporalRules": TEMPORAL_RULES, "readShapeRules": READ_SHAPE_RULES, "journalRules": JOURNAL_RULES, "ambRulings": AMB_RULINGS, "goldenResolutions": GOLDEN_RESOLUTIONS, "goldenRule": GOLDEN_RULE, "goldenFilesPinned": {f"{GOLDEN_DIR}/{k}": sha_file(f"{GOLDEN_DIR}/{k}") for k in golden_vectors()},
         "erasure": ERASURE, "protectedCopyInventory": PROTECTED_COPY_INVENTORY, "composition": COMPOSITION, "worldW0": WORLD_W0, "goldenFailureSchedules": {f"GS.{k:02d}": [{"case": c, "schedule": w, "expected": x} for c, w, x in v] for k, v in GS_FAILURE_SCHEDULES.items()},
-        "evaluatorCounterexamples": EVALUATOR_COUNTEREXAMPLES, "evaluatorPositiveFixtures": EVALUATOR_POSITIVE_FIXTURES, "position": POSITION, "positionDenseCases": POSITION_DENSE_CASES, "a0Controls": A0_CONTROLS, "a0Registry": A0_REGISTRY, "qualificationRun": QUALIFICATION_RUN, "oracleRunners": ORACLE_RUNNERS, "oracleAnswerRule": ORACLE_ANSWER_RULE, "answerMembers": ANSWER_MEMBERS, "caseManifest": CASE_MANIFEST, "buildSpec": BUILD_SPEC, "imagePins": IMAGE_PINS, "verifierRegistry": VERIFIER_REGISTRY, "sourceVariantFields": SOURCE_VARIANT_FIELDS, "logFields": LOG_FIELDS, "workloadIdentity": WORKLOAD_IDENTITY, "evidenceSchemas": EVIDENCE_SCHEMAS, "outsideBlockMutationFixture": OUTSIDE_BLOCK_MUTATION_FIXTURE, "positionRequiredCases": POSITION_REQUIRED_CASES, "claimAdmission": CLAIM_ADMISSION,
-        "pendingRulings": pending_rulings(), "oraclePins": ORACLE_PINS, "oracleRefusals": ORACLE_REFUSALS, "oracleRefusalRule": ORACLE_REFUSAL_RULE, "oracleScope": {k: oracle_scope(k) for k in ORACLE_PINS}, "pinScopeExpectedDiff": PIN_SCOPE_EXPECTED_DIFF, "q43Rules": Q43_RULES, "receiverCases": RECEIVER_CASES, "atomicUnitCases": ATOMIC_UNIT_CASES, "oTdk1Files": O_TDK1_FILES, "outbox": OUTBOX, "decimalRouting": DECIMAL_ROUTING, "decimalRoutingQ52": DECIMAL_ROUTING_Q52, "rulingsCoverage": rulings_coverage(), "tdk1": TDK1, "tdk1Tests": TDK1_TESTS, "tdk1VectorPin": TDK1_VECTOR_PIN, "q33Rules": Q33_RULES, "q33iCursorReadings": Q33I_CURSOR_READINGS, "q33iQleverRejected": Q33I_QLEVER_REJECTED, "gates": GATES, "wireRules": WIRE_RULES, "w0Pin": W0_PIN, "legacyLaneOutcomes": LEGACY_LANE_OUTCOMES, "legacyRule": LEGACY_RULE, "legacyScan": legacy_out_of_range_scan(), "modeRule": MODE_RULE, "secondaryRule": SECONDARY_RULE, "integerMinRange": INTEGER_MIN_RANGE, "laneIntegerRange": LANE_INTEGER_RANGE, "rangeRule": RANGE_RULE,
+        "evaluatorCounterexamples": EVALUATOR_COUNTEREXAMPLES, "evaluatorPositiveFixtures": EVALUATOR_POSITIVE_FIXTURES, "position": POSITION, "positionDenseCases": POSITION_DENSE_CASES, "a0Controls": A0_CONTROLS, "a0Registry": A0_REGISTRY, "qualificationRun": QUALIFICATION_RUN, "oracleRunners": ORACLE_RUNNERS, "compositionFields": list(COMPOSITION_FIELDS), "oracleAnswerRule": ORACLE_ANSWER_RULE, "answerMembers": ANSWER_MEMBERS, "caseManifest": CASE_MANIFEST, "buildSpec": BUILD_SPEC, "imagePins": IMAGE_PINS, "verifierRegistry": VERIFIER_REGISTRY, "sourceVariantFields": SOURCE_VARIANT_FIELDS, "logFields": LOG_FIELDS, "workloadIdentity": WORKLOAD_IDENTITY, "evidenceSchemas": EVIDENCE_SCHEMAS, "outsideBlockMutationFixture": OUTSIDE_BLOCK_MUTATION_FIXTURE, "positionRequiredCases": POSITION_REQUIRED_CASES, "claimAdmission": CLAIM_ADMISSION,
+        "pendingRulings": pending_rulings(), "closability": closability(), "oraclePins": ORACLE_PINS, "oracleRefusals": ORACLE_REFUSALS, "oracleRefusalRule": ORACLE_REFUSAL_RULE, "oracleScope": {k: oracle_scope(k) for k in ORACLE_PINS}, "pinScopeExpectedDiff": PIN_SCOPE_EXPECTED_DIFF, "q43Rules": Q43_RULES, "receiverCases": RECEIVER_CASES, "atomicUnitCases": ATOMIC_UNIT_CASES, "oTdk1Files": O_TDK1_FILES, "outbox": OUTBOX, "decimalRouting": DECIMAL_ROUTING, "decimalRoutingQ52": DECIMAL_ROUTING_Q52, "rulingsCoverage": rulings_coverage(), "tdk1": TDK1, "tdk1Tests": TDK1_TESTS, "tdk1VectorPin": TDK1_VECTOR_PIN, "q33Rules": Q33_RULES, "q33iCursorReadings": Q33I_CURSOR_READINGS, "q33iQleverRejected": Q33I_QLEVER_REJECTED, "gates": GATES, "wireRules": WIRE_RULES, "w0Pin": W0_PIN, "legacyLaneOutcomes": LEGACY_LANE_OUTCOMES, "legacyRule": LEGACY_RULE, "legacyScan": legacy_out_of_range_scan(), "modeRule": MODE_RULE, "secondaryRule": SECONDARY_RULE, "integerMinRange": INTEGER_MIN_RANGE, "laneIntegerRange": LANE_INTEGER_RANGE, "rangeRule": RANGE_RULE,
         "numericOps": NUMERIC_OPS, "conversionRules": CONVERSION_RULES, "comparisonRules": COMPARISON_RULES, "aggregateRules": AGGREGATE_RULES,
         "cardManyOrder": CARD_MANY_ORDER, "constraintRules": CONSTRAINT_RULES, "errorTable": ERROR_TABLE, "errorComparison": ERROR_COMPARISON,
         "commitOutcomes": COMMIT_OUTCOMES, "cursorTransitions": CURSOR_TRANSITIONS,
