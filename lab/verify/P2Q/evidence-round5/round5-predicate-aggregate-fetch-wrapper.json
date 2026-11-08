@@ -1,0 +1,7 @@
+{
+  "expected": true,
+  "observed": true,
+  "elapsedMs": 0.013666000000000622,
+  "name": "TypeError",
+  "message": "fetch failed"
+}

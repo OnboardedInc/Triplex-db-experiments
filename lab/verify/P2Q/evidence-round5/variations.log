@@ -1,0 +1,60 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../../vitest.workspace-aliases" without a file extension (lab/verify/P2Q/vitest.config.ts:5:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q
+
+ ❯ tests/round5.test.ts (70 tests | 6 failed) 204ms
+   ❯ round5 independent cause-walk variations (70)
+     × predicate type-decode-no-cause 3ms
+     × predicate nested-json-decode 1ms
+     ❯ native answer boundary (23)
+       × type-decode-no-cause 2ms
+       × nested-json-decode 3ms
+     ❯ datalog answer boundary (23)
+       × type-decode-no-cause 2ms
+       × nested-json-decode 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/round5.test.ts > round5 independent cause-walk variations > predicate type-decode-no-cause
+ FAIL  tests/round5.test.ts > round5 independent cause-walk variations > predicate nested-json-decode
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/round5.test.ts:78:22
+     76|     const observed = isUnreachable(cause);
+     77|     writeJson(`round5-predicate-${name}.json`, { expected: unreachable…
+     78|     expect(observed).toBe(unreachable);
+       |                      ^
+     79|   });
+     80|   describe.each(["native", "datalog"])("%s answer boundary", (surface)…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  tests/round5.test.ts > round5 independent cause-walk variations > native answer boundary > type-decode-no-cause
+ FAIL  tests/round5.test.ts > round5 independent cause-walk variations > native answer boundary > nested-json-decode
+ FAIL  tests/round5.test.ts > round5 independent cause-walk variations > datalog answer boundary > type-decode-no-cause
+ FAIL  tests/round5.test.ts > round5 independent cause-walk variations > datalog answer boundary > nested-json-decode
+AssertionError: expected ReadError: QLever replica the QLever repl… { …(6) } to not be an instance of ReplicaUnavailable
+ ❯ tests/round5.test.ts:91:27
+     89|         expect(error.cause).toBe(cause);
+     90|       } else {
+     91|         expect(error).not.toBeInstanceOf(ReplicaUnavailable);
+       |                           ^
+     92|         if (cause instanceof BasisNotAvailable) expect(error).toBe(cau…
+     93|         else expect(error.cause).toBe(cause);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 64 passed (70)
+   Start at  17:50:14
+   Duration  633ms (import 41%, tests 39%, transform 20%)
+

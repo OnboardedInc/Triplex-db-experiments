@@ -1,0 +1,2388 @@
+{
+  "generatedAt": "2026-11-08T22:52:56.921Z",
+  "gates": [
+    {
+      "file": "delta.json",
+      "name": "delta",
+      "code": 1,
+      "target": "5390fe8e8020435cea08480d51278cf8e25be393",
+      "head": "ed5b5b4314b89284d767337a879e21bade97315c",
+      "sourceStillMatches": true
+    },
+    {
+      "file": "http-live.json",
+      "name": "http-live",
+      "code": 0,
+      "target": "5390fe8e8020435cea08480d51278cf8e25be393",
+      "head": "ed5b5b4314b89284d767337a879e21bade97315c",
+      "sourceStillMatches": true
+    },
+    {
+      "file": "http-offline.json",
+      "name": "http-offline",
+      "code": 0,
+      "target": "5390fe8e8020435cea08480d51278cf8e25be393",
+      "head": "ed5b5b4314b89284d767337a879e21bade97315c",
+      "sourceStillMatches": true
+    },
+    {
+      "file": "package-focused.json",
+      "name": "package-focused",
+      "code": 0,
+      "target": "5390fe8e8020435cea08480d51278cf8e25be393",
+      "head": "ed5b5b4314b89284d767337a879e21bade97315c",
+      "sourceStillMatches": true
+    },
+    {
+      "file": "variations.json",
+      "name": "variations",
+      "code": 1,
+      "target": "5390fe8e8020435cea08480d51278cf8e25be393",
+      "head": "ed5b5b4314b89284d767337a879e21bade97315c",
+      "sourceStillMatches": true
+    }
+  ],
+  "outcomes": [
+    {
+      "file": "http-live/round4-live-fresh-datalog-body.json",
+      "kind": "fresh",
+      "surface": "datalog",
+      "timing": "body",
+      "required": 2048,
+      "observed": 4095,
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"v-p2q-round4:d5b0a1f0-655e-476a-a650-17513652b294\",0]",
+      "upstream": "http://127.0.0.1:7070",
+      "events": [
+        "answer-acquired",
+        "headers-flushed",
+        "partial-body-flushed",
+        "socket-destroyed"
+      ],
+      "answers": 1,
+      "forwarded": 1,
+      "ok": false,
+      "error": {
+        "name": "ReadError",
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "required": 2048,
+        "observed": 4095,
+        "replica": "the QLever replica",
+        "surface": "datalog",
+        "code": null,
+        "message": "QLever replica the QLever replica is unreachable for datalog reads: Error: aborted",
+        "cause": {
+          "name": "Error",
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "surface": null,
+          "code": "ECONNRESET",
+          "message": "aborted",
+          "cause": null
+        }
+      }
+    },
+    {
+      "file": "http-live/round4-live-fresh-datalog-connect.json",
+      "kind": "fresh",
+      "surface": "datalog",
+      "timing": "connect",
+      "required": 2048,
+      "observed": 4095,
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"v-p2q-round4:892cdf8e-6f75-4eed-ab6a-e923ec86c6a0\",0]",
+      "upstream": "http://127.0.0.1:7070",
+      "events": [],
+      "answers": 0,
+      "forwarded": 0,
+      "ok": false,
+      "error": {
+        "name": "ReadError",
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "required": 2048,
+        "observed": 4095,
+        "replica": "the QLever replica",
+        "surface": "datalog",
+        "code": null,
+        "message": "QLever replica the QLever replica is unreachable for datalog reads: Error: connect ECONNREFUSED 127.0.0.1:57812",
+        "cause": {
+          "name": "Error",
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "surface": null,
+          "code": "ECONNREFUSED",
+          "message": "connect ECONNREFUSED 127.0.0.1:57812",
+          "cause": null
+        }
+      }
+    },
+    {
+      "file": "http-live/round4-live-fresh-datalog-headers.json",
+      "kind": "fresh",
+      "surface": "datalog",
+      "timing": "headers",
+      "required": 2048,
+      "observed": 4095,
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"v-p2q-round4:03368c01-f6bb-4834-bf17-e17b2dd26a5b\",0]",
+      "upstream": "http://127.0.0.1:7070",
+      "events": [
+        "answer-acquired",
+        "headers-flushed",
+        "socket-destroyed"
+      ],
+      "answers": 1,
+      "forwarded": 1,
+      "ok": false,
+      "error": {
+        "name": "ReadError",
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "required": 2048,
+        "observed": 4095,
+        "replica": "the QLever replica",
+        "surface": "datalog",
+        "code": null,
+        "message": "QLever replica the QLever replica is unreachable for datalog reads: Error: aborted",
+        "cause": {
+          "name": "Error",
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "surface": null,
+          "code": "ECONNRESET",
+          "message": "aborted",
+          "cause": null
+        }
+      }
+    },
+    {
+      "file": "http-live/round4-live-fresh-native-body.json",
+      "kind": "fresh",
+      "surface": "native",
+      "timing": "body",
+      "required": 2048,
+      "observed": 4095,
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"v-p2q-round4:9cf1bd1b-091f-4cc6-91c0-a43a6af7d357\",0]",
+      "upstream": "http://127.0.0.1:7070",
+      "events": [
+        "marker",
+        "answer-acquired",
+        "headers-flushed",
+        "partial-body-flushed",
+        "socket-destroyed"
+      ],
+      "answers": 1,
+      "forwarded": 2,
+      "ok": false,
+      "error": {
+        "name": "ReadError",
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "required": 2048,
+        "observed": 4095,
+        "replica": "the QLever replica",
+        "surface": "native",
+        "code": null,
+        "message": "QLever replica the QLever replica is unreachable for native reads: Error: aborted",
+        "cause": {
+          "name": "Error",
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "surface": null,
+          "code": "ECONNRESET",
+          "message": "aborted",
+          "cause": null
+        }
+      }
+    },
+    {
+      "file": "http-live/round4-live-fresh-native-connect.json",
+      "kind": "fresh",
+      "surface": "native",
+      "timing": "connect",
+      "required": 2048,
+      "observed": 4095,
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"v-p2q-round4:c3c40d94-735a-459f-af0b-8cd312a7ca14\",0]",
+      "upstream": "http://127.0.0.1:7070",
+      "events": [
+        "marker"
+      ],
+      "answers": 0,
+      "forwarded": 1,
+      "ok": false,
+      "error": {
+        "name": "ReadError",
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "required": 2048,
+        "observed": 4095,
+        "replica": "the QLever replica",
+        "surface": "native",
+        "code": null,
+        "message": "QLever replica the QLever replica is unreachable for native reads: Error: connect ECONNREFUSED 127.0.0.1:57520",
+        "cause": {
+          "name": "Error",
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "surface": null,
+          "code": "ECONNREFUSED",
+          "message": "connect ECONNREFUSED 127.0.0.1:57520",
+          "cause": null
+        }
+      }
+    },
+    {
+      "file": "http-live/round4-live-fresh-native-headers.json",
+      "kind": "fresh",
+      "surface": "native",
+      "timing": "headers",
+      "required": 2048,
+      "observed": 4095,
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"v-p2q-round4:f65b9354-54ba-4ce3-845f-04b86265e793\",0]",
+      "upstream": "http://127.0.0.1:7070",
+      "events": [
+        "marker",
+        "answer-acquired",
+        "headers-flushed",
+        "socket-destroyed"
+      ],
+      "answers": 1,
+      "forwarded": 2,
+      "ok": false,
+      "error": {
+        "name": "ReadError",
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "required": 2048,
+        "observed": 4095,
+        "replica": "the QLever replica",
+        "surface": "native",
+        "code": null,
+        "message": "QLever replica the QLever replica is unreachable for native reads: Error: aborted",
+        "cause": {
+          "name": "Error",
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "surface": null,
+          "code": "ECONNRESET",
+          "message": "aborted",
+          "cause": null
+        }
+      }
+    },
+    {
+      "file": "http-live/round4-live-standard-datalog-body.json",
+      "kind": "standard",
+      "surface": "datalog",
+      "timing": "body",
+      "required": 2048,
+      "observed": 4095,
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"v-p2q-round4:6489bfba-9188-4249-ae63-3049662e42ff\",0]",
+      "upstream": "http://127.0.0.1:7070",
+      "events": [
+        "answer-acquired",
+        "headers-flushed",
+        "partial-body-flushed",
+        "socket-destroyed"
+      ],
+      "answers": 1,
+      "forwarded": 1,
+      "ok": false,
+      "error": {
+        "name": "ReadError",
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "required": 2048,
+        "observed": 4095,
+        "replica": "the QLever replica",
+        "surface": "datalog",
+        "code": null,
+        "message": "QLever replica the QLever replica is unreachable for datalog reads: TypeError: terminated",
+        "cause": {
+          "name": "TypeError",
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "surface": null,
+          "code": null,
+          "message": "terminated",
+          "cause": {
+            "name": "SocketError",
+            "reason": null,
+            "required": null,
+            "observed": null,
+            "replica": null,
+            "surface": null,
+            "code": "UND_ERR_SOCKET",
+            "message": "other side closed",
+            "cause": null
+          }
+        }
+      }
+    },
+    {
+      "file": "http-live/round4-live-standard-datalog-connect.json",
+      "kind": "standard",
+      "surface": "datalog",
+      "timing": "connect",
+      "required": 2048,
+      "observed": 4095,
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"v-p2q-round4:85f4efef-7eca-44df-9535-e0e4db08220c\",0]",
+      "upstream": "http://127.0.0.1:7070",
+      "events": [],
+      "answers": 0,
+      "forwarded": 0,
+      "ok": false,
+      "error": {
+        "name": "ReadError",
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "required": 2048,
+        "observed": 4095,
+        "replica": "the QLever replica",
+        "surface": "datalog",
+        "code": null,
+        "message": "QLever replica the QLever replica is unreachable for datalog reads: TypeError: fetch failed",
+        "cause": {
+          "name": "TypeError",
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "surface": null,
+          "code": null,
+          "message": "fetch failed",
+          "cause": {
+            "name": "Error",
+            "reason": null,
+            "required": null,
+            "observed": null,
+            "replica": null,
+            "surface": null,
+            "code": "ECONNREFUSED",
+            "message": "connect ECONNREFUSED 127.0.0.1:56766",
+            "cause": null
+          }
+        }
+      }
+    },
+    {
+      "file": "http-live/round4-live-standard-datalog-headers.json",
+      "kind": "standard",
+      "surface": "datalog",
+      "timing": "headers",
+      "required": 2048,
+      "observed": 4095,
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"v-p2q-round4:fcfc6788-5bf3-4b96-aac1-4d7b98dcefca\",0]",
+      "upstream": "http://127.0.0.1:7070",
+      "events": [
+        "answer-acquired",
+        "headers-flushed",
+        "socket-destroyed"
+      ],
+      "answers": 1,
+      "forwarded": 1,
+      "ok": false,
+      "error": {
+        "name": "ReadError",
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "required": 2048,
+        "observed": 4095,
+        "replica": "the QLever replica",
+        "surface": "datalog",
+        "code": null,
+        "message": "QLever replica the QLever replica is unreachable for datalog reads: TypeError: terminated",
+        "cause": {
+          "name": "TypeError",
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "surface": null,
+          "code": null,
+          "message": "terminated",
+          "cause": {
+            "name": "SocketError",
+            "reason": null,
+            "required": null,
+            "observed": null,
+            "replica": null,
+            "surface": null,
+            "code": "UND_ERR_SOCKET",
+            "message": "other side closed",
+            "cause": null
+          }
+        }
+      }
+    },
+    {
+      "file": "http-live/round4-live-standard-native-body.json",
+      "kind": "standard",
+      "surface": "native",
+      "timing": "body",
+      "required": 2048,
+      "observed": 4095,
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"v-p2q-round4:4defaaf0-1e88-4aad-bb92-0cc4de7a7c9c\",0]",
+      "upstream": "http://127.0.0.1:7070",
+      "events": [
+        "marker",
+        "answer-acquired",
+        "headers-flushed",
+        "partial-body-flushed",
+        "socket-destroyed"
+      ],
+      "answers": 1,
+      "forwarded": 2,
+      "ok": false,
+      "error": {
+        "name": "ReadError",
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "required": 2048,
+        "observed": 4095,
+        "replica": "the QLever replica",
+        "surface": "native",
+        "code": null,
+        "message": "QLever replica the QLever replica is unreachable for native reads: TypeError: terminated",
+        "cause": {
+          "name": "TypeError",
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "surface": null,
+          "code": null,
+          "message": "terminated",
+          "cause": {
+            "name": "SocketError",
+            "reason": null,
+            "required": null,
+            "observed": null,
+            "replica": null,
+            "surface": null,
+            "code": "UND_ERR_SOCKET",
+            "message": "other side closed",
+            "cause": null
+          }
+        }
+      }
+    },
+    {
+      "file": "http-live/round4-live-standard-native-connect.json",
+      "kind": "standard",
+      "surface": "native",
+      "timing": "connect",
+      "required": 2048,
+      "observed": 4095,
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"v-p2q-round4:a2545978-c2cc-46af-b218-52522e3c4b4a\",0]",
+      "upstream": "http://127.0.0.1:7070",
+      "events": [
+        "marker"
+      ],
+      "answers": 0,
+      "forwarded": 1,
+      "ok": false,
+      "error": {
+        "name": "ReadError",
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "required": 2048,
+        "observed": 4095,
+        "replica": "the QLever replica",
+        "surface": "native",
+        "code": null,
+        "message": "QLever replica the QLever replica is unreachable for native reads: TypeError: fetch failed",
+        "cause": {
+          "name": "TypeError",
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "surface": null,
+          "code": null,
+          "message": "fetch failed",
+          "cause": {
+            "name": "Error",
+            "reason": null,
+            "required": null,
+            "observed": null,
+            "replica": null,
+            "surface": null,
+            "code": "ECONNREFUSED",
+            "message": "connect ECONNREFUSED 127.0.0.1:56104",
+            "cause": null
+          }
+        }
+      }
+    },
+    {
+      "file": "http-live/round4-live-standard-native-headers.json",
+      "kind": "standard",
+      "surface": "native",
+      "timing": "headers",
+      "required": 2048,
+      "observed": 4095,
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"v-p2q-round4:ccf71241-af8b-4911-81d2-d2a852fd5c9b\",0]",
+      "upstream": "http://127.0.0.1:7070",
+      "events": [
+        "marker",
+        "answer-acquired",
+        "headers-flushed",
+        "socket-destroyed"
+      ],
+      "answers": 1,
+      "forwarded": 2,
+      "ok": false,
+      "error": {
+        "name": "ReadError",
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "required": 2048,
+        "observed": 4095,
+        "replica": "the QLever replica",
+        "surface": "native",
+        "code": null,
+        "message": "QLever replica the QLever replica is unreachable for native reads: TypeError: terminated",
+        "cause": {
+          "name": "TypeError",
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "surface": null,
+          "code": null,
+          "message": "terminated",
+          "cause": {
+            "name": "SocketError",
+            "reason": null,
+            "required": null,
+            "observed": null,
+            "replica": null,
+            "surface": null,
+            "code": "UND_ERR_SOCKET",
+            "message": "other side closed",
+            "cause": null
+          }
+        }
+      }
+    },
+    {
+      "file": "round4-http-datalog-unmet-basis.json",
+      "ok": false,
+      "answers": 0,
+      "forwarded": 0,
+      "error": {
+        "name": "ReadError",
+        "tag": "ReadError",
+        "reason": "basis-not-reached",
+        "required": 4096,
+        "observed": 2048,
+        "replica": "test",
+        "surface": "datalog",
+        "code": null,
+        "message": "Basis 4096 is not available on test for datalog reads (observed 2048 after 50 ms)",
+        "cause": null
+      }
+    },
+    {
+      "file": "round4-http-fresh-datalog-400.json",
+      "timing": "400",
+      "kind": "fresh",
+      "surface": "datalog",
+      "events": [
+        "answer-acquired"
+      ],
+      "answers": 1,
+      "forwarded": 0,
+      "ok": false,
+      "error": {
+        "name": "ReadError",
+        "tag": "ReadError",
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "surface": null,
+        "code": null,
+        "message": "QLever Datalog execution failed: Error: QLever HTTP 400: \"invalid connection query\"",
+        "cause": {
+          "name": "Error",
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "surface": null,
+          "code": null,
+          "message": "QLever HTTP 400: \"invalid connection query\"",
+          "cause": null
+        }
+      }
+    },
+    {
+      "file": "round4-http-fresh-datalog-503.json",
+      "timing": "503",
+      "kind": "fresh",
+      "surface": "datalog",
+      "events": [
+        "answer-acquired"
+      ],
+      "answers": 1,
+      "forwarded": 0,
+      "ok": false,
+      "error": {
+        "name": "ReadError",
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "required": 1024,
+        "observed": 2048,
+        "replica": "the QLever replica",
+        "surface": "datalog",
+        "code": null,
+        "message": "QLever replica the QLever replica is unreachable for datalog reads: Error: QLever HTTP 503: \"invalid connection query\"",
+        "cause": {
+          "name": "Error",
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "surface": null,
+          "code": null,
+          "message": "QLever HTTP 503: \"invalid connection query\"",
+          "cause": null
+        }
+      }
+    },
+    {
+      "file": "round4-http-fresh-datalog-body.json",
+      "timing": "body",
+      "kind": "fresh",
+      "surface": "datalog",
+      "events": [
+        "answer-acquired",
+        "headers-flushed",
+        "partial-body-flushed",
+        "socket-destroyed"
+      ],
+      "answers": 1,
+      "forwarded": 0,
+      "ok": false,
+      "error": {
+        "name": "ReadError",
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "required": 1024,
+        "observed": 2048,
+        "replica": "the QLever replica",
+        "surface": "datalog",
+        "code": null,
+        "message": "QLever replica the QLever replica is unreachable for datalog reads: Error: aborted",
+        "cause": {
+          "name": "Error",
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "surface": null,
+          "code": "ECONNRESET",
+          "message": "aborted",
+          "cause": null
+        }
+      }
+    },
+    {
+      "file": "round4-http-fresh-datalog-connect.json",
+      "timing": "connect",
+      "kind": "fresh",
+      "surface": "datalog",
+      "events": [],
+      "answers": 0,
+      "forwarded": 0,
+      "ok": false,
+      "error": {
+        "name": "ReadError",
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "required": 1024,
+        "observed": 2048,
+        "replica": "the QLever replica",
+        "surface": "datalog",
+        "code": null,
+        "message": "QLever replica the QLever replica is unreachable for datalog reads: Error: connect ECONNREFUSED 127.0.0.1:56006",
+        "cause": {
+          "name": "Error",
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "surface": null,
+          "code": "ECONNREFUSED",
+          "message": "connect ECONNREFUSED 127.0.0.1:56006",
+          "cause": null
+        }
+      }
+    },
+    {
+      "file": "round4-http-fresh-datalog-headers.json",
+      "timing": "headers",
+      "kind": "fresh",
+      "surface": "datalog",
+      "events": [
+        "answer-acquired",
+        "headers-flushed",
+        "socket-destroyed"
+      ],
+      "answers": 1,
+      "forwarded": 0,
+      "ok": false,
+      "error": {
+        "name": "ReadError",
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "required": 1024,
+        "observed": 2048,
+        "replica": "the QLever replica",
+        "surface": "datalog",
+        "code": null,
+        "message": "QLever replica the QLever replica is unreachable for datalog reads: Error: aborted",
+        "cause": {
+          "name": "Error",
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "surface": null,
+          "code": "ECONNRESET",
+          "message": "aborted",
+          "cause": null
+        }
+      }
+    },
+    {
+      "file": "round4-http-fresh-datalog-malformed.json",
+      "timing": "malformed",
+      "kind": "fresh",
+      "surface": "datalog",
+      "events": [
+        "answer-acquired"
+      ],
+      "answers": 1,
+      "forwarded": 0,
+      "ok": false,
+      "error": {
+        "name": "ReadError",
+        "tag": "ReadError",
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "surface": null,
+        "code": null,
+        "message": "QLever Datalog execution failed: TypeError: QLever did not return a SPARQL SELECT result",
+        "cause": {
+          "name": "TypeError",
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "surface": null,
+          "code": null,
+          "message": "QLever did not return a SPARQL SELECT result",
+          "cause": null
+        }
+      }
+    },
+    {
+      "file": "round4-http-fresh-datalog-success.json",
+      "timing": "success",
+      "kind": "fresh",
+      "surface": "datalog",
+      "events": [
+        "answer-acquired"
+      ],
+      "answers": 1,
+      "forwarded": 0,
+      "ok": true,
+      "error": null
+    },
+    {
+      "file": "round4-http-fresh-native-400.json",
+      "timing": "400",
+      "kind": "fresh",
+      "surface": "native",
+      "events": [
+        "marker",
+        "answer-acquired"
+      ],
+      "answers": 1,
+      "forwarded": 0,
+      "ok": false,
+      "error": {
+        "name": "ReadError",
+        "tag": "ReadError",
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "surface": null,
+        "code": null,
+        "message": "QLever native SELECT failed: Error: QLever HTTP 400: \"invalid connection query\"",
+        "cause": {
+          "name": "Error",
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "surface": null,
+          "code": null,
+          "message": "QLever HTTP 400: \"invalid connection query\"",
+          "cause": null
+        }
+      }
+    },
+    {
+      "file": "round4-http-fresh-native-503.json",
+      "timing": "503",
+      "kind": "fresh",
+      "surface": "native",
+      "events": [
+        "marker",
+        "answer-acquired"
+      ],
+      "answers": 1,
+      "forwarded": 0,
+      "ok": false,
+      "error": {
+        "name": "ReadError",
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "required": 1024,
+        "observed": 2048,
+        "replica": "the QLever replica",
+        "surface": "native",
+        "code": null,
+        "message": "QLever replica the QLever replica is unreachable for native reads: Error: QLever HTTP 503: \"invalid connection query\"",
+        "cause": {
+          "name": "Error",
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "surface": null,
+          "code": null,
+          "message": "QLever HTTP 503: \"invalid connection query\"",
+          "cause": null
+        }
+      }
+    },
+    {
+      "file": "round4-http-fresh-native-body.json",
+      "timing": "body",
+      "kind": "fresh",
+      "surface": "native",
+      "events": [
+        "marker",
+        "answer-acquired",
+        "headers-flushed",
+        "partial-body-flushed",
+        "socket-destroyed"
+      ],
+      "answers": 1,
+      "forwarded": 0,
+      "ok": false,
+      "error": {
+        "name": "ReadError",
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "required": 1024,
+        "observed": 2048,
+        "replica": "the QLever replica",
+        "surface": "native",
+        "code": null,
+        "message": "QLever replica the QLever replica is unreachable for native reads: Error: aborted",
+        "cause": {
+          "name": "Error",
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "surface": null,
+          "code": "ECONNRESET",
+          "message": "aborted",
+          "cause": null
+        }
+      }
+    },
+    {
+      "file": "round4-http-fresh-native-connect.json",
+      "timing": "connect",
+      "kind": "fresh",
+      "surface": "native",
+      "events": [
+        "marker"
+      ],
+      "answers": 0,
+      "forwarded": 0,
+      "ok": false,
+      "error": {
+        "name": "ReadError",
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "required": 1024,
+        "observed": 2048,
+        "replica": "the QLever replica",
+        "surface": "native",
+        "code": null,
+        "message": "QLever replica the QLever replica is unreachable for native reads: Error: connect ECONNREFUSED 127.0.0.1:55976",
+        "cause": {
+          "name": "Error",
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "surface": null,
+          "code": "ECONNREFUSED",
+          "message": "connect ECONNREFUSED 127.0.0.1:55976",
+          "cause": null
+        }
+      }
+    },
+    {
+      "file": "round4-http-fresh-native-headers.json",
+      "timing": "headers",
+      "kind": "fresh",
+      "surface": "native",
+      "events": [
+        "marker",
+        "answer-acquired",
+        "headers-flushed",
+        "socket-destroyed"
+      ],
+      "answers": 1,
+      "forwarded": 0,
+      "ok": false,
+      "error": {
+        "name": "ReadError",
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "required": 1024,
+        "observed": 2048,
+        "replica": "the QLever replica",
+        "surface": "native",
+        "code": null,
+        "message": "QLever replica the QLever replica is unreachable for native reads: Error: aborted",
+        "cause": {
+          "name": "Error",
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "surface": null,
+          "code": "ECONNRESET",
+          "message": "aborted",
+          "cause": null
+        }
+      }
+    },
+    {
+      "file": "round4-http-fresh-native-malformed.json",
+      "timing": "malformed",
+      "kind": "fresh",
+      "surface": "native",
+      "events": [
+        "marker",
+        "answer-acquired"
+      ],
+      "answers": 1,
+      "forwarded": 0,
+      "ok": false,
+      "error": {
+        "name": "ReadError",
+        "tag": "ReadError",
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "surface": null,
+        "code": null,
+        "message": "QLever native SELECT failed: TypeError: QLever did not return a SPARQL SELECT result",
+        "cause": {
+          "name": "TypeError",
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "surface": null,
+          "code": null,
+          "message": "QLever did not return a SPARQL SELECT result",
+          "cause": null
+        }
+      }
+    },
+    {
+      "file": "round4-http-fresh-native-success.json",
+      "timing": "success",
+      "kind": "fresh",
+      "surface": "native",
+      "events": [
+        "marker",
+        "answer-acquired",
+        "marker"
+      ],
+      "answers": 1,
+      "forwarded": 0,
+      "ok": true,
+      "error": null
+    },
+    {
+      "file": "round4-http-native-unmet-basis.json",
+      "ok": false,
+      "answers": 0,
+      "forwarded": 0,
+      "error": {
+        "name": "ReadError",
+        "tag": "ReadError",
+        "reason": "basis-not-reached",
+        "required": 4096,
+        "observed": 2048,
+        "replica": "the QLever replica",
+        "surface": "native",
+        "code": null,
+        "message": "Basis 4096 is not available on the QLever replica for native reads (observed 2048 after 51 ms)",
+        "cause": null
+      }
+    },
+    {
+      "file": "round4-http-standard-datalog-400.json",
+      "timing": "400",
+      "kind": "standard",
+      "surface": "datalog",
+      "events": [
+        "answer-acquired"
+      ],
+      "answers": 1,
+      "forwarded": 0,
+      "ok": false,
+      "error": {
+        "name": "ReadError",
+        "tag": "ReadError",
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "surface": null,
+        "code": null,
+        "message": "QLever Datalog execution failed: Error: QLever HTTP 400: \"invalid connection query\"",
+        "cause": {
+          "name": "Error",
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "surface": null,
+          "code": null,
+          "message": "QLever HTTP 400: \"invalid connection query\"",
+          "cause": null
+        }
+      }
+    },
+    {
+      "file": "round4-http-standard-datalog-503.json",
+      "timing": "503",
+      "kind": "standard",
+      "surface": "datalog",
+      "events": [
+        "answer-acquired"
+      ],
+      "answers": 1,
+      "forwarded": 0,
+      "ok": false,
+      "error": {
+        "name": "ReadError",
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "required": 1024,
+        "observed": 2048,
+        "replica": "the QLever replica",
+        "surface": "datalog",
+        "code": null,
+        "message": "QLever replica the QLever replica is unreachable for datalog reads: Error: QLever HTTP 503: \"invalid connection query\"",
+        "cause": {
+          "name": "Error",
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "surface": null,
+          "code": null,
+          "message": "QLever HTTP 503: \"invalid connection query\"",
+          "cause": null
+        }
+      }
+    },
+    {
+      "file": "round4-http-standard-datalog-body.json",
+      "timing": "body",
+      "kind": "standard",
+      "surface": "datalog",
+      "events": [
+        "answer-acquired",
+        "headers-flushed",
+        "partial-body-flushed",
+        "socket-destroyed"
+      ],
+      "answers": 1,
+      "forwarded": 0,
+      "ok": false,
+      "error": {
+        "name": "ReadError",
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "required": 1024,
+        "observed": 2048,
+        "replica": "the QLever replica",
+        "surface": "datalog",
+        "code": null,
+        "message": "QLever replica the QLever replica is unreachable for datalog reads: TypeError: terminated",
+        "cause": {
+          "name": "TypeError",
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "surface": null,
+          "code": null,
+          "message": "terminated",
+          "cause": {
+            "name": "SocketError",
+            "reason": null,
+            "required": null,
+            "observed": null,
+            "replica": null,
+            "surface": null,
+            "code": "UND_ERR_SOCKET",
+            "message": "other side closed",
+            "cause": null
+          }
+        }
+      }
+    },
+    {
+      "file": "round4-http-standard-datalog-connect.json",
+      "timing": "connect",
+      "kind": "standard",
+      "surface": "datalog",
+      "events": [],
+      "answers": 0,
+      "forwarded": 0,
+      "ok": false,
+      "error": {
+        "name": "ReadError",
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "required": 1024,
+        "observed": 2048,
+        "replica": "the QLever replica",
+        "surface": "datalog",
+        "code": null,
+        "message": "QLever replica the QLever replica is unreachable for datalog reads: TypeError: fetch failed",
+        "cause": {
+          "name": "TypeError",
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "surface": null,
+          "code": null,
+          "message": "fetch failed",
+          "cause": {
+            "name": "Error",
+            "reason": null,
+            "required": null,
+            "observed": null,
+            "replica": null,
+            "surface": null,
+            "code": "ECONNREFUSED",
+            "message": "connect ECONNREFUSED 127.0.0.1:55953",
+            "cause": null
+          }
+        }
+      }
+    },
+    {
+      "file": "round4-http-standard-datalog-headers.json",
+      "timing": "headers",
+      "kind": "standard",
+      "surface": "datalog",
+      "events": [
+        "answer-acquired",
+        "headers-flushed",
+        "socket-destroyed"
+      ],
+      "answers": 1,
+      "forwarded": 0,
+      "ok": false,
+      "error": {
+        "name": "ReadError",
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "required": 1024,
+        "observed": 2048,
+        "replica": "the QLever replica",
+        "surface": "datalog",
+        "code": null,
+        "message": "QLever replica the QLever replica is unreachable for datalog reads: TypeError: terminated",
+        "cause": {
+          "name": "TypeError",
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "surface": null,
+          "code": null,
+          "message": "terminated",
+          "cause": {
+            "name": "SocketError",
+            "reason": null,
+            "required": null,
+            "observed": null,
+            "replica": null,
+            "surface": null,
+            "code": "UND_ERR_SOCKET",
+            "message": "other side closed",
+            "cause": null
+          }
+        }
+      }
+    },
+    {
+      "file": "round4-http-standard-datalog-malformed.json",
+      "timing": "malformed",
+      "kind": "standard",
+      "surface": "datalog",
+      "events": [
+        "answer-acquired"
+      ],
+      "answers": 1,
+      "forwarded": 0,
+      "ok": false,
+      "error": {
+        "name": "ReadError",
+        "tag": "ReadError",
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "surface": null,
+        "code": null,
+        "message": "QLever Datalog execution failed: TypeError: QLever did not return a SPARQL SELECT result",
+        "cause": {
+          "name": "TypeError",
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "surface": null,
+          "code": null,
+          "message": "QLever did not return a SPARQL SELECT result",
+          "cause": null
+        }
+      }
+    },
+    {
+      "file": "round4-http-standard-datalog-success.json",
+      "timing": "success",
+      "kind": "standard",
+      "surface": "datalog",
+      "events": [
+        "answer-acquired"
+      ],
+      "answers": 1,
+      "forwarded": 0,
+      "ok": true,
+      "error": null
+    },
+    {
+      "file": "round4-http-standard-native-400.json",
+      "timing": "400",
+      "kind": "standard",
+      "surface": "native",
+      "events": [
+        "marker",
+        "answer-acquired"
+      ],
+      "answers": 1,
+      "forwarded": 0,
+      "ok": false,
+      "error": {
+        "name": "ReadError",
+        "tag": "ReadError",
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "surface": null,
+        "code": null,
+        "message": "QLever native SELECT failed: Error: QLever HTTP 400: \"invalid connection query\"",
+        "cause": {
+          "name": "Error",
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "surface": null,
+          "code": null,
+          "message": "QLever HTTP 400: \"invalid connection query\"",
+          "cause": null
+        }
+      }
+    },
+    {
+      "file": "round4-http-standard-native-503.json",
+      "timing": "503",
+      "kind": "standard",
+      "surface": "native",
+      "events": [
+        "marker",
+        "answer-acquired"
+      ],
+      "answers": 1,
+      "forwarded": 0,
+      "ok": false,
+      "error": {
+        "name": "ReadError",
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "required": 1024,
+        "observed": 2048,
+        "replica": "the QLever replica",
+        "surface": "native",
+        "code": null,
+        "message": "QLever replica the QLever replica is unreachable for native reads: Error: QLever HTTP 503: \"invalid connection query\"",
+        "cause": {
+          "name": "Error",
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "surface": null,
+          "code": null,
+          "message": "QLever HTTP 503: \"invalid connection query\"",
+          "cause": null
+        }
+      }
+    },
+    {
+      "file": "round4-http-standard-native-body.json",
+      "timing": "body",
+      "kind": "standard",
+      "surface": "native",
+      "events": [
+        "marker",
+        "answer-acquired",
+        "headers-flushed",
+        "partial-body-flushed",
+        "socket-destroyed"
+      ],
+      "answers": 1,
+      "forwarded": 0,
+      "ok": false,
+      "error": {
+        "name": "ReadError",
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "required": 1024,
+        "observed": 2048,
+        "replica": "the QLever replica",
+        "surface": "native",
+        "code": null,
+        "message": "QLever replica the QLever replica is unreachable for native reads: TypeError: terminated",
+        "cause": {
+          "name": "TypeError",
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "surface": null,
+          "code": null,
+          "message": "terminated",
+          "cause": {
+            "name": "SocketError",
+            "reason": null,
+            "required": null,
+            "observed": null,
+            "replica": null,
+            "surface": null,
+            "code": "UND_ERR_SOCKET",
+            "message": "other side closed",
+            "cause": null
+          }
+        }
+      }
+    },
+    {
+      "file": "round4-http-standard-native-connect.json",
+      "timing": "connect",
+      "kind": "standard",
+      "surface": "native",
+      "events": [
+        "marker"
+      ],
+      "answers": 0,
+      "forwarded": 0,
+      "ok": false,
+      "error": {
+        "name": "ReadError",
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "required": 1024,
+        "observed": 2048,
+        "replica": "the QLever replica",
+        "surface": "native",
+        "code": null,
+        "message": "QLever replica the QLever replica is unreachable for native reads: TypeError: fetch failed",
+        "cause": {
+          "name": "TypeError",
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "surface": null,
+          "code": null,
+          "message": "fetch failed",
+          "cause": {
+            "name": "Error",
+            "reason": null,
+            "required": null,
+            "observed": null,
+            "replica": null,
+            "surface": null,
+            "code": "ECONNREFUSED",
+            "message": "connect ECONNREFUSED 127.0.0.1:55923",
+            "cause": null
+          }
+        }
+      }
+    },
+    {
+      "file": "round4-http-standard-native-headers.json",
+      "timing": "headers",
+      "kind": "standard",
+      "surface": "native",
+      "events": [
+        "marker",
+        "answer-acquired",
+        "headers-flushed",
+        "socket-destroyed"
+      ],
+      "answers": 1,
+      "forwarded": 0,
+      "ok": false,
+      "error": {
+        "name": "ReadError",
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "required": 1024,
+        "observed": 2048,
+        "replica": "the QLever replica",
+        "surface": "native",
+        "code": null,
+        "message": "QLever replica the QLever replica is unreachable for native reads: TypeError: terminated",
+        "cause": {
+          "name": "TypeError",
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "surface": null,
+          "code": null,
+          "message": "terminated",
+          "cause": {
+            "name": "SocketError",
+            "reason": null,
+            "required": null,
+            "observed": null,
+            "replica": null,
+            "surface": null,
+            "code": "UND_ERR_SOCKET",
+            "message": "other side closed",
+            "cause": null
+          }
+        }
+      }
+    },
+    {
+      "file": "round4-http-standard-native-malformed.json",
+      "timing": "malformed",
+      "kind": "standard",
+      "surface": "native",
+      "events": [
+        "marker",
+        "answer-acquired"
+      ],
+      "answers": 1,
+      "forwarded": 0,
+      "ok": false,
+      "error": {
+        "name": "ReadError",
+        "tag": "ReadError",
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "surface": null,
+        "code": null,
+        "message": "QLever native SELECT failed: TypeError: QLever did not return a SPARQL SELECT result",
+        "cause": {
+          "name": "TypeError",
+          "reason": null,
+          "required": null,
+          "observed": null,
+          "replica": null,
+          "surface": null,
+          "code": null,
+          "message": "QLever did not return a SPARQL SELECT result",
+          "cause": null
+        }
+      }
+    },
+    {
+      "file": "round4-http-standard-native-success.json",
+      "timing": "success",
+      "kind": "standard",
+      "surface": "native",
+      "events": [
+        "marker",
+        "answer-acquired",
+        "marker"
+      ],
+      "answers": 1,
+      "forwarded": 0,
+      "ok": true,
+      "error": null
+    },
+    {
+      "file": "packages/qlever/src/broker/errors.ts",
+      "baselineRef": "03909d6",
+      "baselineSha256": "360a543529530b2f0b8b2958243f3301429cb1562adda57c2944e9cda43c1112",
+      "nestedDecode": {
+        "baseline": false,
+        "current": true
+      },
+      "plainDecode": {
+        "baseline": true,
+        "current": true
+      }
+    },
+    {
+      "file": "round5-cause-access-bound.json",
+      "reads": 32
+    },
+    {
+      "file": "round5-datalog-abort-default.json",
+      "expectedUnreachable": true,
+      "error": {
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "message": "QLever replica the QLever replica is unreachable for datalog reads: AbortError: This operation was aborted",
+        "required": 1024,
+        "observed": 2048,
+        "replica": "the QLever replica"
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-datalog-abort-nested.json",
+      "expectedUnreachable": true,
+      "error": {
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "message": "QLever replica the QLever replica is unreachable for datalog reads: TypeError: terminated",
+        "required": 1024,
+        "observed": 2048,
+        "replica": "the QLever replica"
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-datalog-aggregate-errors-only.json",
+      "expectedUnreachable": false,
+      "boundary": ".errors is not a cause edge",
+      "error": {
+        "tag": "ReadError",
+        "reason": null,
+        "message": "QLever Datalog execution failed: AggregateError: all candidates failed",
+        "required": null,
+        "observed": null,
+        "replica": null
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-datalog-aggregate-fetch-wrapper.json",
+      "expectedUnreachable": true,
+      "error": {
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "message": "QLever replica the QLever replica is unreachable for datalog reads: TypeError: fetch failed",
+        "required": 1024,
+        "observed": 2048,
+        "replica": "the QLever replica"
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-datalog-aggregate-mixed.json",
+      "expectedUnreachable": false,
+      "boundary": "mixed errors have no unambiguous single transport cause",
+      "error": {
+        "tag": "ReadError",
+        "reason": null,
+        "message": "QLever Datalog execution failed: AggregateError: all candidates failed",
+        "required": null,
+        "observed": null,
+        "replica": null
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-datalog-aggregate-with-cause.json",
+      "expectedUnreachable": true,
+      "error": {
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "message": "QLever replica the QLever replica is unreachable for datalog reads: AggregateError: all candidates failed",
+        "required": 1024,
+        "observed": 2048,
+        "replica": "the QLever replica"
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-datalog-cycle-with-socket.json",
+      "expectedUnreachable": true,
+      "error": {
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "message": "QLever replica the QLever replica is unreachable for datalog reads: TypeError: terminated",
+        "required": 1024,
+        "observed": 2048,
+        "replica": "the QLever replica"
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-datalog-nested-json-decode.json",
+      "expectedUnreachable": false,
+      "error": {
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "message": "QLever replica the QLever replica is unreachable for datalog reads: TypeError: terminated",
+        "required": 1024,
+        "observed": 2048,
+        "replica": "the QLever replica"
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-datalog-node10001-socket.json",
+      "expectedUnreachable": false,
+      "boundary": "beyond documented bound",
+      "error": {
+        "tag": "ReadError",
+        "reason": null,
+        "message": "QLever Datalog execution failed: TypeError: terminated",
+        "required": null,
+        "observed": null,
+        "replica": null
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-datalog-node32-socket.json",
+      "expectedUnreachable": true,
+      "error": {
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "message": "QLever replica the QLever replica is unreachable for datalog reads: TypeError: terminated",
+        "required": 1024,
+        "observed": 2048,
+        "replica": "the QLever replica"
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-datalog-node33-socket.json",
+      "expectedUnreachable": false,
+      "boundary": "beyond documented bound",
+      "error": {
+        "tag": "ReadError",
+        "reason": null,
+        "message": "QLever Datalog execution failed: TypeError: terminated",
+        "required": null,
+        "observed": null,
+        "replica": null
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-datalog-ordinary-json-decode.json",
+      "expectedUnreachable": false,
+      "error": {
+        "tag": "ReadError",
+        "reason": null,
+        "message": "QLever Datalog execution failed: TypeError: terminated",
+        "required": null,
+        "observed": null,
+        "replica": null
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-datalog-select-decode.json",
+      "expectedUnreachable": false,
+      "error": {
+        "tag": "ReadError",
+        "reason": null,
+        "message": "QLever Datalog execution failed: TypeError: QLever did not return a SPARQL SELECT result",
+        "required": null,
+        "observed": null,
+        "replica": null
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-datalog-self-cycle.json",
+      "expectedUnreachable": false,
+      "error": {
+        "tag": "ReadError",
+        "reason": null,
+        "message": "QLever Datalog execution failed: TypeError: terminated",
+        "required": null,
+        "observed": null,
+        "replica": null
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-datalog-timeout-default.json",
+      "expectedUnreachable": true,
+      "error": {
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "message": "QLever replica the QLever replica is unreachable for datalog reads: TimeoutError: The operation was aborted due to timeout",
+        "required": 1024,
+        "observed": 2048,
+        "replica": "the QLever replica"
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-datalog-timeout-structured.json",
+      "expectedUnreachable": true,
+      "error": {
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "message": "QLever replica the QLever replica is unreachable for datalog reads: TypeError: terminated",
+        "required": 1024,
+        "observed": 2048,
+        "replica": "the QLever replica"
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-datalog-two-cycle.json",
+      "expectedUnreachable": false,
+      "error": {
+        "tag": "ReadError",
+        "reason": null,
+        "message": "QLever Datalog execution failed: TypeError: terminated",
+        "required": null,
+        "observed": null,
+        "replica": null
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-datalog-type-decode-no-cause.json",
+      "expectedUnreachable": false,
+      "error": {
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "message": "QLever replica the QLever replica is unreachable for datalog reads: TypeError: Cannot decode the connection field",
+        "required": 1024,
+        "observed": 2048,
+        "replica": "the QLever replica"
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-datalog-type-no-cause.json",
+      "expectedUnreachable": false,
+      "error": {
+        "tag": "ReadError",
+        "reason": null,
+        "message": "QLever Datalog execution failed: TypeError: terminated",
+        "required": null,
+        "observed": null,
+        "replica": null
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-datalog-typed-basis.json",
+      "expectedUnreachable": false,
+      "error": {
+        "tag": "ReadError",
+        "reason": "basis-not-reached",
+        "message": "Basis 4096 is not available on test for native reads (observed 2048 after 1 ms)",
+        "required": 4096,
+        "observed": 2048,
+        "replica": "test"
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-datalog-wrapped-basis.json",
+      "expectedUnreachable": false,
+      "error": {
+        "tag": "ReadError",
+        "reason": null,
+        "message": "QLever Datalog execution failed: TypeError: terminated",
+        "required": null,
+        "observed": null,
+        "replica": null
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-datalog-wrapped-http400.json",
+      "expectedUnreachable": false,
+      "error": {
+        "tag": "ReadError",
+        "reason": null,
+        "message": "QLever Datalog execution failed: TypeError: terminated",
+        "required": null,
+        "observed": null,
+        "replica": null
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-datalog-wrapped-http503.json",
+      "expectedUnreachable": true,
+      "error": {
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "message": "QLever replica the QLever replica is unreachable for datalog reads: TypeError: terminated",
+        "required": 1024,
+        "observed": 2048,
+        "replica": "the QLever replica"
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-native-abort-default.json",
+      "expectedUnreachable": true,
+      "error": {
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "message": "QLever replica the QLever replica is unreachable for native reads: AbortError: This operation was aborted",
+        "required": 1024,
+        "observed": 2048,
+        "replica": "the QLever replica"
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-native-abort-nested.json",
+      "expectedUnreachable": true,
+      "error": {
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "message": "QLever replica the QLever replica is unreachable for native reads: TypeError: terminated",
+        "required": 1024,
+        "observed": 2048,
+        "replica": "the QLever replica"
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-native-aggregate-errors-only.json",
+      "expectedUnreachable": false,
+      "boundary": ".errors is not a cause edge",
+      "error": {
+        "tag": "ReadError",
+        "reason": null,
+        "message": "QLever native SELECT failed: AggregateError: all candidates failed",
+        "required": null,
+        "observed": null,
+        "replica": null
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-native-aggregate-fetch-wrapper.json",
+      "expectedUnreachable": true,
+      "error": {
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "message": "QLever replica the QLever replica is unreachable for native reads: TypeError: fetch failed",
+        "required": 1024,
+        "observed": 2048,
+        "replica": "the QLever replica"
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-native-aggregate-mixed.json",
+      "expectedUnreachable": false,
+      "boundary": "mixed errors have no unambiguous single transport cause",
+      "error": {
+        "tag": "ReadError",
+        "reason": null,
+        "message": "QLever native SELECT failed: AggregateError: all candidates failed",
+        "required": null,
+        "observed": null,
+        "replica": null
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-native-aggregate-with-cause.json",
+      "expectedUnreachable": true,
+      "error": {
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "message": "QLever replica the QLever replica is unreachable for native reads: AggregateError: all candidates failed",
+        "required": 1024,
+        "observed": 2048,
+        "replica": "the QLever replica"
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-native-cycle-with-socket.json",
+      "expectedUnreachable": true,
+      "error": {
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "message": "QLever replica the QLever replica is unreachable for native reads: TypeError: terminated",
+        "required": 1024,
+        "observed": 2048,
+        "replica": "the QLever replica"
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-native-nested-json-decode.json",
+      "expectedUnreachable": false,
+      "error": {
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "message": "QLever replica the QLever replica is unreachable for native reads: TypeError: terminated",
+        "required": 1024,
+        "observed": 2048,
+        "replica": "the QLever replica"
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-native-node10001-socket.json",
+      "expectedUnreachable": false,
+      "boundary": "beyond documented bound",
+      "error": {
+        "tag": "ReadError",
+        "reason": null,
+        "message": "QLever native SELECT failed: TypeError: terminated",
+        "required": null,
+        "observed": null,
+        "replica": null
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-native-node32-socket.json",
+      "expectedUnreachable": true,
+      "error": {
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "message": "QLever replica the QLever replica is unreachable for native reads: TypeError: terminated",
+        "required": 1024,
+        "observed": 2048,
+        "replica": "the QLever replica"
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-native-node33-socket.json",
+      "expectedUnreachable": false,
+      "boundary": "beyond documented bound",
+      "error": {
+        "tag": "ReadError",
+        "reason": null,
+        "message": "QLever native SELECT failed: TypeError: terminated",
+        "required": null,
+        "observed": null,
+        "replica": null
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-native-ordinary-json-decode.json",
+      "expectedUnreachable": false,
+      "error": {
+        "tag": "ReadError",
+        "reason": null,
+        "message": "QLever native SELECT failed: TypeError: terminated",
+        "required": null,
+        "observed": null,
+        "replica": null
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-native-select-decode.json",
+      "expectedUnreachable": false,
+      "error": {
+        "tag": "ReadError",
+        "reason": null,
+        "message": "QLever native SELECT failed: TypeError: QLever did not return a SPARQL SELECT result",
+        "required": null,
+        "observed": null,
+        "replica": null
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-native-self-cycle.json",
+      "expectedUnreachable": false,
+      "error": {
+        "tag": "ReadError",
+        "reason": null,
+        "message": "QLever native SELECT failed: TypeError: terminated",
+        "required": null,
+        "observed": null,
+        "replica": null
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-native-timeout-default.json",
+      "expectedUnreachable": true,
+      "error": {
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "message": "QLever replica the QLever replica is unreachable for native reads: TimeoutError: The operation was aborted due to timeout",
+        "required": 1024,
+        "observed": 2048,
+        "replica": "the QLever replica"
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-native-timeout-structured.json",
+      "expectedUnreachable": true,
+      "error": {
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "message": "QLever replica the QLever replica is unreachable for native reads: TypeError: terminated",
+        "required": 1024,
+        "observed": 2048,
+        "replica": "the QLever replica"
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-native-two-cycle.json",
+      "expectedUnreachable": false,
+      "error": {
+        "tag": "ReadError",
+        "reason": null,
+        "message": "QLever native SELECT failed: TypeError: terminated",
+        "required": null,
+        "observed": null,
+        "replica": null
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-native-type-decode-no-cause.json",
+      "expectedUnreachable": false,
+      "error": {
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "message": "QLever replica the QLever replica is unreachable for native reads: TypeError: Cannot decode the connection field",
+        "required": 1024,
+        "observed": 2048,
+        "replica": "the QLever replica"
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-native-type-no-cause.json",
+      "expectedUnreachable": false,
+      "error": {
+        "tag": "ReadError",
+        "reason": null,
+        "message": "QLever native SELECT failed: TypeError: terminated",
+        "required": null,
+        "observed": null,
+        "replica": null
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-native-typed-basis.json",
+      "expectedUnreachable": false,
+      "error": {
+        "tag": "ReadError",
+        "reason": "basis-not-reached",
+        "message": "Basis 4096 is not available on test for native reads (observed 2048 after 1 ms)",
+        "required": 4096,
+        "observed": 2048,
+        "replica": "test"
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-native-wrapped-basis.json",
+      "expectedUnreachable": false,
+      "error": {
+        "tag": "ReadError",
+        "reason": null,
+        "message": "QLever native SELECT failed: TypeError: terminated",
+        "required": null,
+        "observed": null,
+        "replica": null
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-native-wrapped-http400.json",
+      "expectedUnreachable": false,
+      "error": {
+        "tag": "ReadError",
+        "reason": null,
+        "message": "QLever native SELECT failed: TypeError: terminated",
+        "required": null,
+        "observed": null,
+        "replica": null
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-native-wrapped-http503.json",
+      "expectedUnreachable": true,
+      "error": {
+        "tag": "ReadError",
+        "reason": "replica-unreachable",
+        "message": "QLever replica the QLever replica is unreachable for native reads: TypeError: terminated",
+        "required": 1024,
+        "observed": 2048,
+        "replica": "the QLever replica"
+      },
+      "preservesCause": true
+    },
+    {
+      "file": "round5-predicate-abort-default.json",
+      "expected": true,
+      "observed": true,
+      "elapsedMs": 0.026416999999980817,
+      "name": "AbortError",
+      "message": "This operation was aborted"
+    },
+    {
+      "file": "round5-predicate-abort-nested.json",
+      "expected": true,
+      "observed": true,
+      "elapsedMs": 0.0030409999999960746,
+      "name": "TypeError",
+      "message": "terminated"
+    },
+    {
+      "file": "round5-predicate-aggregate-errors-only.json",
+      "expected": false,
+      "observed": false,
+      "elapsedMs": 0.013833000000033735,
+      "boundary": ".errors is not a cause edge",
+      "name": "AggregateError",
+      "message": "all candidates failed"
+    },
+    {
+      "file": "round5-predicate-aggregate-fetch-wrapper.json",
+      "expected": true,
+      "observed": true,
+      "elapsedMs": 0.013666000000000622,
+      "name": "TypeError",
+      "message": "fetch failed"
+    },
+    {
+      "file": "round5-predicate-aggregate-mixed.json",
+      "expected": false,
+      "observed": false,
+      "elapsedMs": 0.0050420000000030996,
+      "boundary": "mixed errors have no unambiguous single transport cause",
+      "name": "AggregateError",
+      "message": "all candidates failed"
+    },
+    {
+      "file": "round5-predicate-aggregate-with-cause.json",
+      "expected": true,
+      "observed": true,
+      "elapsedMs": 0.00837500000000091,
+      "name": "AggregateError",
+      "message": "all candidates failed"
+    },
+    {
+      "file": "round5-predicate-cycle-with-socket.json",
+      "expected": true,
+      "observed": true,
+      "elapsedMs": 0.12895900000000893,
+      "name": "TypeError",
+      "message": "terminated"
+    },
+    {
+      "file": "round5-predicate-nested-json-decode.json",
+      "expected": false,
+      "observed": true,
+      "elapsedMs": 0.00908300000003237,
+      "name": "TypeError",
+      "message": "terminated"
+    },
+    {
+      "file": "round5-predicate-node10001-socket.json",
+      "expected": false,
+      "observed": false,
+      "elapsedMs": 0.020125000000007276,
+      "boundary": "beyond documented bound",
+      "name": "TypeError",
+      "message": "terminated"
+    },
+    {
+      "file": "round5-predicate-node32-socket.json",
+      "expected": true,
+      "observed": true,
+      "elapsedMs": 0.2504999999999882,
+      "name": "TypeError",
+      "message": "terminated"
+    },
+    {
+      "file": "round5-predicate-node33-socket.json",
+      "expected": false,
+      "observed": false,
+      "elapsedMs": 0.009583000000020547,
+      "boundary": "beyond documented bound",
+      "name": "TypeError",
+      "message": "terminated"
+    },
+    {
+      "file": "round5-predicate-ordinary-json-decode.json",
+      "expected": false,
+      "observed": false,
+      "elapsedMs": 0.005375000000015007,
+      "name": "TypeError",
+      "message": "terminated"
+    },
+    {
+      "file": "round5-predicate-select-decode.json",
+      "expected": false,
+      "observed": false,
+      "elapsedMs": 0.004834000000016658,
+      "name": "TypeError",
+      "message": "QLever did not return a SPARQL SELECT result"
+    },
+    {
+      "file": "round5-predicate-self-cycle.json",
+      "expected": false,
+      "observed": false,
+      "elapsedMs": 0.004666000000042914,
+      "name": "TypeError",
+      "message": "terminated"
+    },
+    {
+      "file": "round5-predicate-timeout-default.json",
+      "expected": true,
+      "observed": true,
+      "elapsedMs": 0.003500000000030923,
+      "name": "TimeoutError",
+      "message": "The operation was aborted due to timeout"
+    },
+    {
+      "file": "round5-predicate-timeout-structured.json",
+      "expected": true,
+      "observed": true,
+      "elapsedMs": 0.004666000000042914,
+      "name": "TypeError",
+      "message": "terminated"
+    },
+    {
+      "file": "round5-predicate-two-cycle.json",
+      "expected": false,
+      "observed": false,
+      "elapsedMs": 0.01379199999996672,
+      "name": "TypeError",
+      "message": "terminated"
+    },
+    {
+      "file": "round5-predicate-type-decode-no-cause.json",
+      "expected": false,
+      "observed": true,
+      "elapsedMs": 0.0019169999999917309,
+      "name": "TypeError",
+      "message": "Cannot decode the connection field"
+    },
+    {
+      "file": "round5-predicate-type-no-cause.json",
+      "expected": false,
+      "observed": false,
+      "elapsedMs": 0.003791000000035183,
+      "name": "TypeError",
+      "message": "terminated"
+    },
+    {
+      "file": "round5-predicate-typed-basis.json",
+      "expected": false,
+      "observed": false,
+      "elapsedMs": 0.0015840000000366672,
+      "name": "ReadError",
+      "message": "Basis 4096 is not available on test for native reads (observed 2048 after 1 ms)"
+    },
+    {
+      "file": "round5-predicate-wrapped-basis.json",
+      "expected": false,
+      "observed": false,
+      "elapsedMs": 0.0024169999999799074,
+      "name": "TypeError",
+      "message": "terminated"
+    },
+    {
+      "file": "round5-predicate-wrapped-http400.json",
+      "expected": false,
+      "observed": false,
+      "elapsedMs": 0.002124999999978172,
+      "name": "TypeError",
+      "message": "terminated"
+    },
+    {
+      "file": "round5-predicate-wrapped-http503.json",
+      "expected": true,
+      "observed": true,
+      "elapsedMs": 0.01316700000000992,
+      "name": "TypeError",
+      "message": "terminated"
+    }
+  ]
+}

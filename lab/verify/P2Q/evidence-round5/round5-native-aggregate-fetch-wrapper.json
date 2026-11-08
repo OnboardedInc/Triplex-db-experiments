@@ -1,0 +1,12 @@
+{
+  "expectedUnreachable": true,
+  "error": {
+    "tag": "ReadError",
+    "reason": "replica-unreachable",
+    "message": "QLever replica the QLever replica is unreachable for native reads: TypeError: fetch failed",
+    "required": 1024,
+    "observed": 2048,
+    "replica": "the QLever replica"
+  },
+  "preservesCause": true
+}

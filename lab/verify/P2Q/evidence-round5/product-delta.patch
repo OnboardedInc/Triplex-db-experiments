@@ -1,0 +1,106 @@
+diff --git a/packages/qlever/src/broker/errors.ts b/packages/qlever/src/broker/errors.ts
+index 1cd041a..3b97e85 100644
+--- a/packages/qlever/src/broker/errors.ts
++++ b/packages/qlever/src/broker/errors.ts
+@@ -72,9 +72,30 @@ export class ReplicaUnavailable extends ReadError {
+  * a request deadline, an aborted request, an HTTP 5xx) rather than a bad query (HTTP 4xx, a decode error).
+  */
+ export const isUnreachable = (error: unknown): boolean => {
+-  if (error instanceof QleverHttpError) return error.status >= 500;
+-  const text = `${(error as { code?: string })?.code ?? ""} ${String((error as Error)?.message ?? error)}`;
+-  return /ECONNREFUSED|ECONNRESET|EPIPE|ETIMEDOUT|EHOSTUNREACH|ENOTFOUND|socket hang up|deadline|aborted|timed? ?out|fetch failed|connect/i.test(
+-    text,
+-  );
++  // [EXP-P2Q] Why: fetch body interruptions wrap UND_ERR_SOCKET in TypeError("terminated").
++  // Rejected: matching "terminated" or all TypeErrors (decode/query failures are not outages).
++  const seen = new Set<unknown>();
++  let current = error;
++  for (let depth = 0; depth < 32 && current != null && !seen.has(current); depth++) {
++    seen.add(current);
++    if (current instanceof BasisNotAvailable) return false;
++    if (current instanceof QleverHttpError) return current.status >= 500;
++    const code = (current as { code?: unknown }).code;
++    if (
++      typeof code === "string" &&
++      /^(UND_ERR_SOCKET|UND_ERR_CONNECT_TIMEOUT|UND_ERR_HEADERS_TIMEOUT|UND_ERR_BODY_TIMEOUT)$/.test(
++        code,
++      )
++    )
++      return true;
++    const text = `${code ?? ""} ${String((current as Error)?.message ?? current)}`;
++    if (
++      /ECONNREFUSED|ECONNRESET|EPIPE|ETIMEDOUT|EHOSTUNREACH|ENOTFOUND|socket hang up|deadline|aborted|timed? ?out|fetch failed|connect/i.test(
++        text,
++      )
++    )
++      return true;
++    current = (current as { cause?: unknown }).cause;
++  }
++  return false;
+ };
+diff --git a/packages/qlever/test/broker-transport-errors.test.ts b/packages/qlever/test/broker-transport-errors.test.ts
+new file mode 100644
+index 0000000..3bc6415
+--- /dev/null
++++ b/packages/qlever/test/broker-transport-errors.test.ts
+@@ -0,0 +1,60 @@
++// [EXP-P2Q] Why: client causes can wrap transport codes or contain cycles and excessive depth.
++// Rejected: recognizing the outer word "terminated" (ordinary type/decode errors can use it).
++import { describe, expect, it } from "vitest";
++import { QleverHttpError } from "../src/QleverClient.js";
++import { BasisNotAvailable, isUnreachable } from "../src/broker/errors.js";
++
++const socket = () => Object.assign(new Error("other side closed"), { code: "UND_ERR_SOCKET" });
++const wrap = (cause: unknown) => new TypeError("terminated", { cause });
++
++describe("broker nested transport classification", () => {
++  it.each([
++    "UND_ERR_SOCKET",
++    "UND_ERR_CONNECT_TIMEOUT",
++    "UND_ERR_HEADERS_TIMEOUT",
++    "UND_ERR_BODY_TIMEOUT",
++    "ECONNRESET",
++  ])("recognizes nested %s without changing the cause", (code) => {
++    const cause = Object.assign(new Error("transport detail"), { code });
++    const error = wrap(wrap(cause));
++    expect(isUnreachable(error)).toBe(true);
++    expect((error.cause as Error).cause).toBe(cause);
++  });
++  it.each([
++    new TypeError("terminated"),
++    new TypeError("arbitrary type error"),
++    new SyntaxError("invalid JSON"),
++    new TypeError("QLever did not return a SPARQL SELECT result"),
++  ])("keeps ordinary errors distinct: %s", (error) => expect(isUnreachable(error)).toBe(false));
++  it("stops at HTTP 4xx and typed basis failures despite transport-like causes", () => {
++    const http = new QleverHttpError(400, "invalid connection query");
++    Object.assign(http, { cause: socket() });
++    const basis = new BasisNotAvailable({
++      required: 4096,
++      observed: 2048,
++      replica: "test",
++      surface: "native",
++      waitedMs: 1,
++      cause: socket(),
++    });
++    expect(isUnreachable(wrap(http))).toBe(false);
++    expect(isUnreachable(wrap(basis))).toBe(false);
++    expect(isUnreachable(wrap(new QleverHttpError(503, "unavailable")))).toBe(true);
++  });
++  it("terminates on cyclic cause chains", () => {
++    const first = wrap(undefined),
++      second = wrap(first);
++    first.cause = second;
++    expect(isUnreachable(first)).toBe(false);
++    const transport = socket();
++    Object.assign(transport, { cause: first });
++    first.cause = transport;
++    expect(isUnreachable(first)).toBe(true);
++  });
++  it("bounds long acyclic chains to 32 nodes", () => {
++    let reachable: unknown = socket();
++    for (let i = 0; i < 31; i++) reachable = wrap(reachable);
++    expect(isUnreachable(reachable)).toBe(true);
++    expect(isUnreachable(wrap(reachable))).toBe(false);
++  });
++});

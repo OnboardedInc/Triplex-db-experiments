@@ -1,0 +1,12 @@
+{
+  "expectedUnreachable": false,
+  "error": {
+    "tag": "ReadError",
+    "reason": "replica-unreachable",
+    "message": "QLever replica the QLever replica is unreachable for native reads: TypeError: Cannot decode the connection field",
+    "required": 1024,
+    "observed": 2048,
+    "replica": "the QLever replica"
+  },
+  "preservesCause": true
+}
