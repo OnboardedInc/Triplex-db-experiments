@@ -34,15 +34,17 @@ export function pairLayout(policy, slots) {
   }
   return { format:'pair-placement/1', design:'duet', candidate:{slot:slots[0],...p.candidate}, A0:{slot:slots[1],...p.A0}, cpuMax:'max', cpuWeight:p.cpuWeight };
 }
+// [EXP-G03] Why: DA01 1f09771 hardcodes loopback in base-uri; retarget the loaded candidate var before -main without editing its read-only source.
+// Rejected: the resident entrypoint (also starts a transactor) or an ignored DATOMIC_URI export.
 export function gatewayPlan(spec, { network, volume, cpuset, sourcePath }) {
   if (!spec || !/^sha256:[0-9a-f]{64}$/.test(spec.imageId ?? '') || !hex(spec.buildInputsSha256)) throw Error('Datomic gateway image is not authority-pinned');
-  if (spec.storage !== 'dev' && spec.storage !== 'sql-readonly-peer') throw Error('unsupported Datomic storage profile');
+  if (spec.storage !== 'dev') throw Error('SQL read-only peer storage is not implemented; durable readback stays refused');
   if (!/^tx2-g03-[a-zA-Z0-9_.-]+$/.test(network ?? '') || !/^tx2-g03-[a-zA-Z0-9_.-]+$/.test(volume ?? '') || !/^\d+$/.test(cpuset ?? '') || sourcePath !== 'packages/datomic/gateway/src') throw Error('unsafe gateway placement/source');
   return { image:spec.imageId, memory:1610612736, cpus:1, pids:256, network, cpuset, unlimitedCpu:true,
     mounts:[{name:volume,target:'/work',rw:false}],
     extra:['--entrypoint','/bin/bash','--network-alias','gateway'],
     env:['DATOMIC_EXT_CLASSPATH=/work/'+sourcePath,'DATOMIC_JAVA_OPTS=-Xms256m -Xmx1g -XX:+ExitOnOutOfMemoryError','DATOMIC_URI=datomic:dev://engine:4334/'],
-    argv:['-c','cd /opt/datomic && exec bin/run -m triplex.gateway.main'], durableReadbackAllowed:spec.storage === 'sql-readonly-peer' };
+    argv:['-c','cd /opt/datomic && exec bin/run "$@"','gateway','-e',"(require 'triplex.gateway.main) (alter-var-root (var triplex.gateway.main/base-uri) (constantly (System/getenv \"DATOMIC_URI\"))) (triplex.gateway.main/-main)"], durableReadbackAllowed:false };
 }
 
 export function cgroupProofScript(candidateId, selfId) {

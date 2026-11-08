@@ -187,6 +187,9 @@ export class BoxExecutor {
     if (actual.Config.Labels?.['tx2.build-inputs-sha256'] !== spec.buildInputsSha256) throw Error('Datomic gateway image/build pin mismatch');
     const name = this.create('gateway-'+instance.n, plan);
     docker(['start',name]);
+    const ready = this.create('gateway-ready-'+instance.n, {network:arm.network,memory:67108864,trusted:true,argv:['node','-e',"(async()=>{for(let i=0;i<30;i++){try{const r=await fetch('http://gateway:8080/health',{signal:AbortSignal.timeout(1000)});if(r.status===200)process.exit(0)}catch{}await new Promise(r=>setTimeout(r,500))}process.exit(2)})()"]});
+    const readiness=this.start(ready,{timeout:60000});this.remove(ready);
+    if(readiness.status!==0)throw Error('Datomic gateway readiness failed');
     this.records.push({ gateway:name, durableReadbackAllowed:plan.durableReadbackAllowed });
     return {name,env:['DATOMIC_GATEWAY_URL=http://gateway:8080'],durableReadbackAllowed:plan.durableReadbackAllowed};
   }
