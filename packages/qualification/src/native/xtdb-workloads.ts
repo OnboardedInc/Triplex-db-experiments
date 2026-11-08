@@ -41,13 +41,7 @@ import type {
   NativeReadResult,
 } from "@triplex-build/triplex/runtime";
 import { checkedInt64, typedSumOverflow } from "./xtdb-native-errors.js";
-import {
-  sqlExactTotal,
-  sqlHigh,
-  sqlLow,
-  xtqlExactTotal,
-  xtqlSplit,
-} from "./xtdb-exact-sum.js";
+import { sqlExactTotal, sqlHigh, sqlLow, xtqlExactTotal, xtqlSplit } from "./xtdb-exact-sum.js";
 import { evaluateXtqlReachability } from "./xtdb-xtql-reach.js";
 
 type RecordValue = Record<string, any>;
@@ -199,10 +193,10 @@ export const evaluateXtdbNativeWorkload = (
   entry: RecordValue,
   positionToLogical: ReadonlyMap<number, number>,
   trace: unknown[],
-  language: XtdbNativeLanguage = "xtql",
+  language?: XtdbNativeLanguage,
 ): Effect.Effect<unknown[][], unknown> =>
   Effect.gen(function* () {
-    if (!xtdbNativeLanguages.includes(language))
+    if (language !== undefined && !xtdbNativeLanguages.includes(language))
       throw new TypeError(`Unknown XTDB native language ${String(language)}`);
     const id = String(workload["id"]),
       p = entry["parameters"];
@@ -246,14 +240,18 @@ export const evaluateXtdbNativeWorkload = (
       resultType: TypeExpr.TypeExpr,
       builders: Builders,
       at = entry,
-    ) =>
-      (language === "xtql" ? native.select : native.selectSql)(
+    ) => {
+      // [EXP-X02-R2] Why: Q79d preserves the pre-switch library: XTQL point reads,
+      // SQL for other tasks and scratch-table recursion. Rejected: default XTQL (D=8
+      // changes previously admitted closures). Explicit profiles remain language-pure.
+      const xtql = language === "xtql" || (language === undefined && name === "state-at");
+      return (xtql ? native.select : native.selectSql)(
         contractOf(name, values, resultType),
         values,
-        (ctx, input) =>
-          (language === "xtql" ? builders.xtql : builders.sql)(ctx, input as RecordValue),
+        (ctx, input) => (xtql ? builders.xtql : builders.sql)(ctx, input as RecordValue),
         { basis: pinned(at), maxRows: 1000 },
       ).pipe(Effect.map(record));
+    };
     // [EXP-X02] interim, replaced by EXP-X03: the SQL path keeps its scratch-table reachability
     // helper (PLAN C8 removes it after R10); the XTQL path uses xtdb-xtql-reach.ts.
     const recursiveSql = (
@@ -387,28 +385,28 @@ export const evaluateXtdbNativeWorkload = (
       const object = p.subject?.value ?? p.entity.value;
       if (entry["operation"] === "accepted_event_count") {
         // R12 4.4
-        const rows = yield* execute(
-          "accepted-events",
-          { object },
-          row({ count: TypeExpr.int64 }),
-          {
-            xtql: (c, i) =>
-              `(-> ${c.facts()} (where (= attribute ${c.attribute(a("webhook_object"))}) (= value_string ${c.bind(i["object"])})) (aggregate {:count (count-distinct entity_id)}))`,
-            sql: (ctx, input) =>
-              `SELECT COUNT(DISTINCT entity_id) AS count FROM ${ctx.facts()} f WHERE attribute = ${ctx.attribute(a("webhook_object"))} AND value_string = ${ctx.bind(input["object"])}`,
-          },
-        );
+        const rows = yield* execute("accepted-events", { object }, row({ count: TypeExpr.int64 }), {
+          xtql: (c, i) =>
+            `(-> ${c.facts()} (where (= attribute ${c.attribute(a("webhook_object"))}) (= value_string ${c.bind(i["object"])})) (aggregate {:count (count-distinct entity_id)}))`,
+          sql: (ctx, input) =>
+            `SELECT COUNT(DISTINCT entity_id) AS count FROM ${ctx.facts()} f WHERE attribute = ${ctx.attribute(a("webhook_object"))} AND value_string = ${ctx.bind(input["object"])}`,
+        });
         return [[rows[0]!["count"]]];
       }
       // R12 4.1, workload 05 (highest revision wins; ties return every status at it)
       const revisions = (c: Context, object: string) =>
         `${F(c, a("webhook_object"), "{:entity_id ev}", `(= value_string ${object})`)} ${F(c, a("revision"), "{:entity_id ev} {:rev rev}", "", withInt("rev"))}`;
-      const rows = yield* execute("highest-source-revision", { object }, row({ status: TypeExpr.text }), {
-        xtql: (c, i) =>
-          `(-> (unify ${revisions(c, c.bind(i["object"]))} ${F(c, a("status"), "{:entity_id ev} {:value_string status}")} (where (= rev (q (-> (unify ${revisions(c, c.bind(i["object"]))}) (aggregate {:m (max rev)})))))) (aggregate status))`,
-        sql: (ctx, input) =>
-          `WITH f AS ${ctx.facts()}, revisions AS (SELECT object.entity_id AS event, ${integerChannel("revision")} AS revision FROM f object JOIN f revision ON object.entity_id = revision.entity_id WHERE object.attribute = ${ctx.attribute(a("webhook_object"))} AND object.value_string = ${ctx.bind(input["object"])} AND revision.attribute = ${ctx.attribute(a("revision"))}) SELECT DISTINCT status.value_string AS status FROM revisions r JOIN f status ON status.entity_id = r.event WHERE status.attribute = ${ctx.attribute(a("status"))} AND r.revision = (SELECT MAX(revision) FROM revisions)`,
-      });
+      const rows = yield* execute(
+        "highest-source-revision",
+        { object },
+        row({ status: TypeExpr.text }),
+        {
+          xtql: (c, i) =>
+            `(-> (unify ${revisions(c, c.bind(i["object"]))} ${F(c, a("status"), "{:entity_id ev} {:value_string status}")} (where (= rev (q (-> (unify ${revisions(c, c.bind(i["object"]))}) (aggregate {:m (max rev)})))))) (aggregate status))`,
+          sql: (ctx, input) =>
+            `WITH f AS ${ctx.facts()}, revisions AS (SELECT object.entity_id AS event, ${integerChannel("revision")} AS revision FROM f object JOIN f revision ON object.entity_id = revision.entity_id WHERE object.attribute = ${ctx.attribute(a("webhook_object"))} AND object.value_string = ${ctx.bind(input["object"])} AND revision.attribute = ${ctx.attribute(a("revision"))}) SELECT DISTINCT status.value_string AS status FROM revisions r JOIN f status ON status.entity_id = r.event WHERE status.attribute = ${ctx.attribute(a("status"))} AND r.revision = (SELECT MAX(revision) FROM revisions)`,
+        },
+      );
       return rows.map((value) => [value["status"]]);
     }
     if (id === "06") {
@@ -453,7 +451,13 @@ export const evaluateXtdbNativeWorkload = (
       trace.push({
         normalization: "subtract final exact ledger totals; no source relation leaves XTDB",
       });
-      return [[integer(physical), integer(reserved), checkedInt64(physical - reserved)]];
+      // [EXP-X02-R2] Why: Q79b requires Fail, so catchTag can recover overflow.
+      // Rejected: throwing inside Effect.gen (becomes Die).
+      const available = yield* Effect.try({
+        try: () => checkedInt64(physical - reserved),
+        catch: (cause) => cause,
+      });
+      return [[integer(physical), integer(reserved), available]];
     }
     if (id === "08") {
       // R12 4.7. The net is recombined once from (captures - refunds) halves, so the result is
@@ -545,7 +549,10 @@ export const evaluateXtdbNativeWorkload = (
         ],
       ];
     }
-    if (["11", "13", "14", "15"].includes(id) || (id === "20" && entry["operation"] === "reachability_closure")) {
+    if (
+      ["11", "13", "14", "15"].includes(id) ||
+      (id === "20" && entry["operation"] === "reachability_closure")
+    ) {
       // [EXP-X02] interim, replaced by EXP-X03 (both branches).
       if (language === "xtql")
         return yield* evaluateXtqlReachability({
@@ -793,7 +800,9 @@ export const evaluateXtdbNativeWorkload = (
                 ]
                   .filter(Boolean)
                   .join(" ");
-                parts.push(F(c, a("_support"), `{:entity_id n${k}} {:value_string n${k + 1}}`, where));
+                parts.push(
+                  F(c, a("_support"), `{:entity_id n${k}} {:value_string n${k + 1}}`, where),
+                );
               }
               const keep = Array.from({ length: length - 1 }, (_, k) => `n${k + 1}`);
               const distinct =

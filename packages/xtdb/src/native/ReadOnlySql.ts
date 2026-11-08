@@ -6,6 +6,7 @@
  */
 export const readOnlyNativeSql = (sql: string): string => {
   const words: string[] = [];
+  const tokens: string[] = [];
   let end: number | undefined;
   for (let index = 0; index < sql.length; ) {
     const char = sql[index]!,
@@ -39,6 +40,7 @@ export const readOnlyNativeSql = (sql: string): string => {
       continue;
     }
     if (char === "'" || char === '"') {
+      tokens.push("<quoted>");
       const quote = char;
       const escaped =
         quote === "'" &&
@@ -67,6 +69,7 @@ export const readOnlyNativeSql = (sql: string): string => {
     if (char === "$") {
       const delimiter = /^\$(?:[A-Za-z_][A-Za-z0-9_]*)?\$/.exec(sql.slice(index))?.[0];
       if (delimiter) {
+        tokens.push("<quoted>");
         const close = sql.indexOf(delimiter, index + delimiter.length);
         if (close < 0) throw new TypeError("Unclosed native SQL dollar-quoted literal");
         index = close + delimiter.length;
@@ -76,19 +79,31 @@ export const readOnlyNativeSql = (sql: string): string => {
     const word = /^[A-Za-z_][A-Za-z0-9_]*/.exec(sql.slice(index))?.[0];
     if (word) {
       words.push(word.toUpperCase());
-      // [EXP-X02] Why: in 2.2.0 `k = ANY($1) AND p` parses as `k = ANY(($1) AND p)` and returns
-      // zero or wrong rows (Sql.g4:753-756 @ c6c1962; R10, R14 H05). Allow a quantified
-      // comparison only over a subquery; write batch membership as
-      // `k IN (SELECT x FROM UNNEST($n) AS u(x))`. `UNION ALL`/`SELECT ALL` take no parenthesis.
-      if (["ANY", "SOME", "ALL"].includes(word.toUpperCase())) {
-        const rest = sql.slice(index + word.length);
-        if (/^\s*\(/.test(rest) && !/^\s*\(\s*(SELECT|VALUES|WITH|FROM)\b/i.test(rest))
-          throw new TypeError(
-            "Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)",
-          );
-      }
+      tokens.push(word.toUpperCase());
       index += word.length;
-    } else index++;
+    } else {
+      tokens.push(char);
+      index++;
+    }
+  }
+  // [EXP-X02-R2] Why: Q79a requires comment-aware operands, including bare arrays.
+  // Rejected: raw-character lookahead (ANY/**/(...) bypasses it). ALL after SELECT
+  // or UNION is a set quantifier; other quantified operands must be subqueries.
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i]!;
+    if (!["ANY", "SOME", "ALL"].includes(token)) continue;
+    // [EXP-X02-R2] Why: quantified comparisons follow a comparison operator.
+    // Rejected: rejecting every ALL (FOR ALL VALID_TIME and aggregate ALL are supported).
+    if (!["=", ">", "<"].includes(tokens[i - 1] ?? "")) continue;
+    if (token === "ALL" && ["SELECT", "UNION", "INTERSECT", "EXCEPT"].includes(tokens[i - 1] ?? ""))
+      continue;
+    if (
+      tokens[i + 1] !== "(" ||
+      !["SELECT", "VALUES", "WITH", "FROM"].includes(tokens[i + 2] ?? "")
+    )
+      throw new TypeError(
+        "Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)",
+      );
   }
   if (!["SELECT", "WITH", "FROM", "VALUES", "XTQL"].includes(words[0] ?? ""))
     throw new TypeError("Native reads require a query expression");

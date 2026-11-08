@@ -1,0 +1,5 @@
+[lab] G0-xtdb-20261108T214545Z-0f4929: raw output runs/G0/G0-xtdb-20261108T214545Z-0f4929
+error: could not write index
+[lab] heavy: waiting for one of 4 slots; held by pid 86364 "G0-datomic-20261108T214521Z-c3e3a3 typecheck", pid 80186 "DA00-G0-D", pid 50657 "CX-VJ01-recovery-frontier", pid 82310 "CX-VC8-2-light-live"
+PASS G0 xtdb scope=full executed=949 pass=949 fail=0 skip=130
+receipt: lab/runs/G0/G0-xtdb-20261108T214545Z-0f4929.json

@@ -1,0 +1,8 @@
+[lab] G0-xtdb-20261108T214444Z-145b50: raw output runs/G0/G0-xtdb-20261108T214444Z-145b50
+error: could not write index
+FAIL G0 xtdb scope=full executed=949 pass=948 fail=1 skip=130
+  reason: build failed (exit 1)
+  reason: typecheck failed (exit 1)
+  reason: 1 unexpected skips (not in lab/config/g0-expected-skips.json)
+  reason: 1 failed tests
+receipt: lab/runs/G0/G0-xtdb-20261108T214444Z-145b50.json

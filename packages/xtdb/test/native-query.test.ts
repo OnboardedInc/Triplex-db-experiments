@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Effect } from "effect";
+import { Cause, Effect, Exit } from "effect";
 import { integer } from "@triplex-build/triplex";
 import { TypeExpr } from "@triplex-build/triplex/config";
 import { DatabaseScope } from "@triplex-build/triplex/runtime";
@@ -61,6 +61,38 @@ describe("XTDB native read provider", () => {
       readOnlyNativeSql("WITH x AS (SELECT 'can''t UPDATE' AS message) SELECT * FROM x"),
     ).toContain("can't".replace("'", "''"));
   });
+  it.each([
+    "ANY/**/(ARRAY[1,2])",
+    "ANY ARRAY[1,2]",
+    "SOME/**/(ARRAY[1,2])",
+    "ALL--comment\r(ARRAY[1,2])",
+    "ANY/**/ ARRAY[1,2]",
+  ])("refuses quantified operand %s in the public error channel", async (operand) => {
+    const { client, calls } = fixture();
+    const exit = await Effect.runPromiseExit(
+      makeXtdbNativeQueries(client, scope).selectSql(
+        contract,
+        { owner: "o" },
+        () => `SELECT 'x' AS v FROM (VALUES (1)) t(k) WHERE k = ${operand} AND 1 = 1`,
+      ),
+    );
+    expect(Exit.isFailure(exit)).toBe(true);
+    if (Exit.isFailure(exit)) {
+      expect(Cause.hasDies(exit.cause)).toBe(false);
+      expect(String(exit.cause)).toContain("non-subquery operand");
+    }
+    expect(calls.some(({ sql }) => sql.includes("ARRAY[1,2]"))).toBe(false);
+  });
+  it.each([
+    "SELECT ALL 1",
+    "SELECT 1 UNION/**/ALL SELECT 2",
+    "SELECT 1 WHERE 1 = ANY/**/(/**/SELECT 1)",
+    "SELECT 1 WHERE 1 = SOME--comment\r(VALUES (1))",
+    "SELECT 'ANY ARRAY[1]' AS literal",
+    'SELECT "ALL" FROM t',
+  ])("preserves supported SQL tokens in %s", (sql) => {
+    expect(readOnlyNativeSql(sql)).toBe(sql);
+  });
   it("executes authored XTQL with typed safe binds and no Datalog request", async () => {
     const { client, calls } = fixture();
     const native = makeXtdbNativeQueries(client, scope);
@@ -117,7 +149,9 @@ describe("XTDB native read provider", () => {
       ),
     );
     expect(result.rows).toEqual([{ message: "literal?" }]);
-    expect(calls[0]!.sql).toBe("SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1");
+    expect(calls[0]!.sql).toBe(
+      "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1",
+    );
     expect(result.trace.steps?.map((step) => step.language)).toEqual(["xtdb-sql", "xtdb-sql"]);
     expect(calls[1]!.sql).toContain("$native$literal?$native$");
     expect(calls[1]!.options?.parameterSyntax).toBe("postgresql");
