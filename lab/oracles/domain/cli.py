@@ -63,7 +63,7 @@ def run_case(case, releases):
     """SPEC 11.1: run op on input; conforming when the bytes equal canonicalJson(expected). Returns (ok, got, want)."""
     out = w0.run_op(case['op'], case['input'], releases)
     got = jsontok.canonical(out)
-    want = jsontok.canonical(jsontok.to_plain(case['expected']))
+    want = jsontok.canonical(case['expected'])  # integer tokens are written as integers; any depth
     return got == want, got, want
 
 
@@ -89,7 +89,13 @@ def cmd_cases(directory, releases, quiet=False):
             sys.stdout.write('ERROR %s\n' % exc)
             failed.append(os.path.basename(path))
             continue
-        ok, got, want = run_case(case, releases)
+        try:
+            ok, got, want = run_case(case, releases)
+        except Exception as exc:  # a crash is a failed case, never the end of the run (V-D01c F1)
+            failed.append(case['id'])
+            sys.stdout.write('FAIL %s (%s) crashed: %s: %s\n'
+                             % (case['id'], os.path.basename(path), type(exc).__name__, exc))
+            continue
         if not ok:
             failed.append(case['id'])
             i = first_difference(got, want)
@@ -99,7 +105,7 @@ def cmd_cases(directory, releases, quiet=False):
         elif not quiet:
             sys.stdout.write('PASS %s %s\n' % (case['id'], case['op']))
     sys.stdout.write('%d/%d cases byte-identical%s\n'
-                     % (len(files) - len(failed), len(files), '' if not failed else '; failed: ' + ' '.join(failed)))
+                     % (len(files) - len(failed), len(files), '' if not failed else '; failed: ' + ' '.join(map(str, failed))))
     return 0 if not failed else 1
 
 

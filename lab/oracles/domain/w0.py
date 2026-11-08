@@ -11,7 +11,8 @@ import hashlib
 import os
 import re
 
-from jsontok import canonical, has_duplicate_key, int_token_value, parse_bytes, to_plain
+from jsontok import (canonical, has_duplicate_key, int_token_value, is_int_token, parse_bytes, ranged_int_token_value,
+                     to_plain)
 
 SPEC_VERSION = 'W0-1.1.1'
 MAX_SAFE = 9007199254740991  # SPEC 2: 2^53 - 1
@@ -43,11 +44,16 @@ _SSN_RE = re.compile(r'[0-9]{9}')      # SPEC 7.4 row 4: exactly 9 characters ea
 _HASH_RE = re.compile(r'sha256:[0-9a-f]{64}')  # SPEC 4.4 step 4
 
 
-@functools.lru_cache(maxsize=65536)
 def is_date(s):
-    """SPEC 2 date: `YYYY-MM-DD`, a real proleptic Gregorian date with year 2000 to 2099."""
-    if type(s) is not str or len(s) != 10:
-        return False
+    """SPEC 2 date: `YYYY-MM-DD`, a real proleptic Gregorian date with year 2000 to 2099.
+
+    The type check runs before the cached call: an array or object is unhashable and is W0.E_VALUE, not a crash (V-D01c F1).
+    """
+    return type(s) is str and len(s) == 10 and _is_date_str(s)
+
+
+@functools.lru_cache(maxsize=65536)
+def _is_date_str(s):
     m = _DATE_RE.fullmatch(s)
     if m is None:
         return False
@@ -61,11 +67,16 @@ def is_date(s):
     return True
 
 
-@functools.lru_cache(maxsize=65536)
 def is_instant(s):
-    """SPEC 2 instant: exactly 27 characters `YYYY-MM-DDTHH:MM:SS.ffffffZ`; date part a `date`; 00-23, 00-59, 00-59."""
-    if type(s) is not str or len(s) != 27:
-        return False
+    """SPEC 2 instant: exactly 27 characters `YYYY-MM-DDTHH:MM:SS.ffffffZ`; date part a `date`; 00-23, 00-59, 00-59.
+
+    The type check runs before the cached call (V-D01c F1), as in is_date.
+    """
+    return type(s) is str and len(s) == 27 and _is_instant_str(s)
+
+
+@functools.lru_cache(maxsize=65536)
+def _is_instant_str(s):
     m = _INSTANT_RE.fullmatch(s)
     if m is None or not is_date(m.group(1)):
         return False
@@ -200,7 +211,7 @@ def check_value(spec, v, e):
     if typ == 'instant':
         return v if is_instant(v) else _BAD
     if typ == 'cents' or typ == 'minutes':
-        n = int_token_value(v)  # SPEC 2: an integer token, never 1650.0, 1.65e3 or "1650"
+        n = ranged_int_token_value(v)  # SPEC 2: an integer token, never 1650.0, 1.65e3 or "1650"; any length (Q57b)
         if n is None:
             return _BAD
         hi = MAX_SAFE if typ == 'cents' else 10080
@@ -225,7 +236,7 @@ def _is_obj(x, keys):
 
 
 def _is_int_token(x):
-    return int_token_value(x) is not None
+    return is_int_token(x)  # the token grammar only; never int() (Q57b)
 
 
 def _shape_basis(b):
@@ -291,7 +302,7 @@ def _shape_input(op, inp):
 
 def check_basis(b):
     """SPEC 4.4 step 2 (W0.E_BASIS). Returns (tx, validTime)."""
-    tx = int_token_value(b['tx'])
+    tx = ranged_int_token_value(b['tx'])
     if not is_instant(b['validTime']) or not 0 <= tx <= MAX_SAFE:
         raise W0Error(E_BASIS)
     return tx, b['validTime']
@@ -332,7 +343,7 @@ def validate_facts(subject, facts, basis_tx):
         v = check_value(spec, raw, e)
         if v is _BAD:
             raise W0Error(E_VALUE)
-        tx = int_token_value(txtok)
+        tx = ranged_int_token_value(txtok)
         if tx < 1 or tx > basis_tx:
             raise W0Error(E_BASIS)
         key = (e, a)
@@ -882,7 +893,7 @@ def op_reconcile(inp, releases):
     for a in inp['activations']:                                        # step 4, in array order
         if type(a['release']) is not str or _HASH_RE.fullmatch(a['release']) is None or not is_instant(a['from']):
             raise W0Error(E_VALUE)
-        tx = int_token_value(a['tx'])
+        tx = ranged_int_token_value(a['tx'])
         if tx < 1 or tx > basis_tx:
             raise W0Error(E_BASIS)
         acts.append((a['from'], tx, a['release']))
