@@ -1100,3 +1100,18 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **P5 design:** pinned basis by holding H, cursor pages from a worker that also runs the kernel, admission on live queue delay, publication in
   64-record frames (Q68c). Estimated 25-35 s for 100k subjects on the host-store design, against the 100 s bar.
 - Dispatched EXP-P4 (read-path arms first; write-path arms after EXP-J01 merges). EXP-P5 waits for the O-DOMAIN pin, P2B and the SQLite store.
+
+## 2026-11-08 01:26Z: W0-1.1.2 accepted; kernel update dispatched; XTDB A0 falls behind the trace with zero readers
+- **W0-1.1.2 accepted at fedfcda** after the orchestrator diff check (lab/verify/D01/V-D01e/VERIFY.md): only SHA256SUMS, SPEC.md,
+  validate.py and the new input-sha256.json changed; every case, release and fingerprint input is byte-identical; validate.py prints 136
+  cases OK from a clean archive; SHA256SUMS 146/146. It merges with the W0 pin move in contract 0.3.10.
+- **Kernel update dispatched as a fresh agent** because the D01b author's worktree was gone and it could not be resumed. The brief
+  (EXP-D01b-w0-kernel/BRIEF-1.1.2.md) makes the harness compare output hashes against the frozen expected-sha256.json, so a bug in the
+  kernel's own JSON writer can no longer cancel out, and asks for three planted faults to prove it.
+- **N01 interim, XTDB A0 at zero readers:** after the 50x burst at 120 s the writer queue reached about 3,500 commands, and the feed
+  checkpoint moved only about 12 positions in four minutes. This matches P2X's A0 arm (0.35 commits/s on the same trace shape, service time
+  growing with history), so it reads as the A0 result for XTDB's default write path rather than a driver fault. Learning: on this node the
+  XTDB A0 baseline cannot keep up with the TARGETS 2.1 writer trace even before any reader is added, so the NS P2 bar for XTDB rests on the
+  broker composition (P2B) and the per-subject queue, not on the engine's own write path.
+- **M01 parked cleanly** (poller, coordinator and its colima ssh agent stopped; nothing left in the VM). It resumes in the Q69a window.
+- N01, C8 and J01 ended their turns while their own runs continue; orchestrator waiters resume each agent when its process exits.
