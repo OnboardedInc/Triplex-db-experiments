@@ -7,6 +7,10 @@
     "diskUsedLimitBytes": 53687091200,
     "note": "Sum of memory caps of every tx2-* reservation plus running tx2-* containers outside the ledger (research probes) plus the new one must stay <= memLimitBytes (11 GiB of 12). VM disk used plus every active reservation's disk forecast plus the new one must stay <= diskUsedLimitBytes (50 GiB of the 60 GiB VM disk, PLAN section 7)."
   },
+  "regimes": {
+    "quota": "default: --cpus <cpus> (CFS quota on all 6 vCPUs); 77% of 100 ms periods throttled on the busiest slot (R22 section 3)",
+    "cpuset": "measurement slots (RULINGS Q60c, EXP-M01): --cpuset-cpus <cpuset> of <cpus> vCPUs and no quota; xtdb s1 0-1 and s3 2-3 are the PAIR duet pair (R22 section 3 partition: arms 0-1 and 2-3, everything else 4-5); quota and cpuset arms are never compared"
+  },
   "forbiddenPorts": [15442, 17019],
   "reservedPortRanges": [{ "from": 5461, "to": 5469, "owner": "research probes" }, { "from": 7061, "to": 7069, "owner": "research probes" }],
   "lanes": {
@@ -34,9 +38,9 @@
   "slots": {
     "xtdb": {
       "dev": { "port": 5470, "memBytes": 3221225472, "cpus": 2, "javaOpts": "-Xmx1500m -XX:MaxDirectMemorySize=1g", "diskForecastBytes": 4294967296, "mode": "resident" },
-      "s1": { "port": 5471, "memBytes": 3758096384, "cpus": 2, "javaOpts": "-Xmx2g -XX:MaxDirectMemorySize=1g", "diskForecastBytes": 8589934592, "mode": "exclusive" },
+      "s1": { "port": 5471, "memBytes": 3758096384, "cpus": 2, "javaOpts": "-Xmx2g -XX:MaxDirectMemorySize=1g", "diskForecastBytes": 8589934592, "mode": "exclusive", "regime": "cpuset", "cpuset": "0-1" },
       "s2": { "port": 5472, "memBytes": 3758096384, "cpus": 2, "javaOpts": "-Xmx2g -XX:MaxDirectMemorySize=1g", "diskForecastBytes": 8589934592, "mode": "exclusive" },
-      "s3": { "port": 5473, "memBytes": 3758096384, "cpus": 2, "javaOpts": "-Xmx2g -XX:MaxDirectMemorySize=1g", "diskForecastBytes": 8589934592, "mode": "exclusive" }
+      "s3": { "port": 5473, "memBytes": 3758096384, "cpus": 2, "javaOpts": "-Xmx2g -XX:MaxDirectMemorySize=1g", "diskForecastBytes": 8589934592, "mode": "exclusive", "regime": "cpuset", "cpuset": "2-3" }
     },
     "qlever": {
       "dev": { "port": 7070, "memBytes": 3758096384, "cpus": 2, "qleverMemory": "2000M", "diskForecastBytes": 4294967296, "mode": "resident", "note": "Raised from 2.5 GiB / 1500M on 2026-11-08: OOM-killed three times (20:57Z, 22:02Z and earlier) under several agents' shared load while its persisted delta grew; recreated with --fresh to drop the delta." },
