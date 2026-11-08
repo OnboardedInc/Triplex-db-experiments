@@ -1,0 +1,40 @@
+[
+  {
+    "task": "G0",
+    "sessionId": 67401,
+    "exitCode": 0,
+    "log": "G0.log"
+  },
+  {
+    "task": "spot",
+    "sessionId": 88713,
+    "exitCode": 0,
+    "log": "spot.log"
+  },
+  {
+    "task": "offline-first-attempt",
+    "exitCode": 1,
+    "log": "check-offline.log",
+    "note": "Wrong cwd prevented tool creation; module resolution failed before queries."
+  },
+  {
+    "task": "offline-corrected-attempt",
+    "sessionId": 84119,
+    "exitCode": 0,
+    "log": "check-offline-r2.log"
+  },
+  {
+    "task": "grammar-review",
+    "sessionId": 86104,
+    "exitCode": 1,
+    "log": "grammar-review.log",
+    "note": "36 supported false refusals, 4 unsafe false admissions, and 3 separately classified boundary controls retained."
+  },
+  {
+    "task": "boundary-confirmation",
+    "sessionId": 29409,
+    "exitCode": 0,
+    "log": "boundary-confirmation.log",
+    "note": "Two real safe public/raw matches; two unsafe variants admitted to mock answer dispatch."
+  }
+]

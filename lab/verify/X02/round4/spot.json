@@ -1,0 +1,362 @@
+{
+  "at": "2026-11-08T22:37:00.596Z",
+  "controls": [
+    {
+      "name": "suffix-order",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY ((SELECT 1 AS k) ORDER BY 1)",
+      "guard": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "prior": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))]))",
+      "defect": false,
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ]
+    },
+    {
+      "name": "suffix-limit",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY ((SELECT 1) LIMIT 1)",
+      "guard": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "prior": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))]))",
+      "defect": false,
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ]
+    },
+    {
+      "name": "suffix-offset",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY ((SELECT 1) OFFSET 0 ROWS)",
+      "guard": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "prior": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))]))",
+      "defect": false,
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ]
+    },
+    {
+      "name": "suffix-fetch",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY ((SELECT 1) FETCH FIRST 1 ROW ONLY)",
+      "guard": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "prior": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))]))",
+      "defect": false,
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ]
+    },
+    {
+      "name": "group-set-suffix",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY ((SELECT 1 UNION ALL SELECT 2) ORDER BY 1 LIMIT 1)",
+      "guard": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "prior": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))]))",
+      "defect": false,
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ]
+    },
+    {
+      "name": "backtick-open",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY (SELECT 1 AS `(`)",
+      "guard": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "prior": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))]))",
+      "defect": false,
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ]
+    },
+    {
+      "name": "backtick-close",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY (SELECT 1 AS `)`)",
+      "guard": {
+        "accepted": true
+      },
+      "prior": {
+        "accepted": true
+      },
+      "exit": "Success({\"rows\":[{\"v\":\"x\"}],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\",\"recordedPosition\":0,\"validAt\":1794177420946},\"trace\":{\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = ANY (SELECT 1 AS `)`)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\",\"recordedPosition\":0,\"validAt\":1794177420946},\"mappingId\":\"triplex-xtdb/assertion-native-basis/1\",\"contractId\":\"sha256-f3ff962c31ddfb11ec64f5d1a35f56f10b569673cb068449ff6737514e53dfed\",\"elapsedMs\":27.049833000000035,\"steps\":[{\"phase\":\"source-cut\",\"language\":\"xtdb-sql\",\"query\":\"SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1\",\"parameters\":[\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\"],\"elapsedMs\":12.79041600000005},{\"phase\":\"answer\",\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = ANY (SELECT 1 AS `)`)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"elapsedMs\":12.850458000000003}]}})",
+      "defect": false,
+      "rows": [
+        {
+          "v": "x"
+        }
+      ],
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ]
+    },
+    {
+      "name": "backtick-union",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY (SELECT 1 AS `UNION`)",
+      "guard": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "prior": {
+        "accepted": true
+      },
+      "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))]))",
+      "defect": false,
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ]
+    },
+    {
+      "name": "backtick-safe",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY (SELECT 1 AS `harmless`)",
+      "guard": {
+        "accepted": true
+      },
+      "prior": {
+        "accepted": true
+      },
+      "exit": "Success({\"rows\":[{\"v\":\"x\"}],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\",\"recordedPosition\":0,\"validAt\":1794177421004},\"trace\":{\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = ANY (SELECT 1 AS `harmless`)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\",\"recordedPosition\":0,\"validAt\":1794177421004},\"mappingId\":\"triplex-xtdb/assertion-native-basis/1\",\"contractId\":\"sha256-f3ff962c31ddfb11ec64f5d1a35f56f10b569673cb068449ff6737514e53dfed\",\"elapsedMs\":18.388207999999963,\"steps\":[{\"phase\":\"source-cut\",\"language\":\"xtdb-sql\",\"query\":\"SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1\",\"parameters\":[\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\"],\"elapsedMs\":10.466625000000022},{\"phase\":\"answer\",\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = ANY (SELECT 1 AS `harmless`)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"elapsedMs\":7.080583999999931}]}})",
+      "defect": false,
+      "rows": [
+        {
+          "v": "x"
+        }
+      ],
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ]
+    },
+    {
+      "name": "nested-comment",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY (SELECT /* a /* b */ c */ 1)",
+      "guard": {
+        "accepted": false,
+        "error": "TypeError: Native SQL requires closed, non-nested block comments"
+      },
+      "prior": {
+        "accepted": false,
+        "error": "TypeError: Native SQL requires closed, non-nested block comments"
+      },
+      "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL requires closed, non-nested block comments (cause: TypeError: Native SQL requires closed, non-nested block comments))]))",
+      "defect": false,
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ]
+    },
+    {
+      "name": "unicode-string",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY (SELECT 1 WHERE 'Σ 雪 😀'='Σ 雪 😀')",
+      "guard": {
+        "accepted": true
+      },
+      "prior": {
+        "accepted": true
+      },
+      "exit": "Success({\"rows\":[{\"v\":\"x\"}],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\",\"recordedPosition\":0,\"validAt\":1794177421050},\"trace\":{\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = ANY (SELECT 1 WHERE 'Σ 雪 😀'='Σ 雪 😀')\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\",\"recordedPosition\":0,\"validAt\":1794177421050},\"mappingId\":\"triplex-xtdb/assertion-native-basis/1\",\"contractId\":\"sha256-f3ff962c31ddfb11ec64f5d1a35f56f10b569673cb068449ff6737514e53dfed\",\"elapsedMs\":73.42616600000008,\"steps\":[{\"phase\":\"source-cut\",\"language\":\"xtdb-sql\",\"query\":\"SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1\",\"parameters\":[\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\"],\"elapsedMs\":11.04633299999989},{\"phase\":\"answer\",\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = ANY (SELECT 1 WHERE 'Σ 雪 😀'='Σ 雪 😀')\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"elapsedMs\":61.75}]}})",
+      "defect": false,
+      "rows": [
+        {
+          "v": "x"
+        }
+      ],
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ]
+    },
+    {
+      "name": "keyword-nonreserved",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY (SELECT 1 AS union)",
+      "guard": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "prior": {
+        "accepted": true
+      },
+      "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))]))",
+      "defect": false,
+      "rawError": "PostgresError: Errors parsing SQL statement:\n  - line 1:43 no viable alternative at input '(SELECT1ASunion'"
+    },
+    {
+      "name": "long-s",
+      "sql": "SELECT 'x' AS v WHERE 1 = ſOME (SELECT 1)",
+      "guard": {
+        "accepted": true
+      },
+      "prior": {
+        "accepted": true
+      },
+      "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: PostgresError: Errors parsing SQL statement:\n  - line 1:41 token recognition error at: 'ſ' (cause: PostgresError: Errors parsing SQL statement:\n  - line 1:41 token recognition error at: 'ſ'))]))",
+      "defect": false,
+      "rawError": "PostgresError: Errors parsing SQL statement:\n  - line 1:26 token recognition error at: 'ſ'"
+    },
+    {
+      "name": "kelvin",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANK (SELECT 1)",
+      "guard": {
+        "accepted": true
+      },
+      "prior": {
+        "accepted": true
+      },
+      "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: PostgresError: Errors parsing SQL statement:\n  - line 1:43 token recognition error at: 'K' (cause: PostgresError: Errors parsing SQL statement:\n  - line 1:43 token recognition error at: 'K'))]))",
+      "defect": false,
+      "rawError": "PostgresError: Errors parsing SQL statement:\n  - line 1:28 token recognition error at: 'K'"
+    },
+    {
+      "name": "mixed",
+      "sql": "SELECT 'x' AS v WHERE 1 = aNy (SELECT 1)",
+      "guard": {
+        "accepted": true
+      },
+      "prior": {
+        "accepted": true
+      },
+      "exit": "Success({\"rows\":[{\"v\":\"x\"}],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\",\"recordedPosition\":0,\"validAt\":1794177421346},\"trace\":{\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = aNy (SELECT 1)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\",\"recordedPosition\":0,\"validAt\":1794177421346},\"mappingId\":\"triplex-xtdb/assertion-native-basis/1\",\"contractId\":\"sha256-f3ff962c31ddfb11ec64f5d1a35f56f10b569673cb068449ff6737514e53dfed\",\"elapsedMs\":66.79354199999989,\"steps\":[{\"phase\":\"source-cut\",\"language\":\"xtdb-sql\",\"query\":\"SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1\",\"parameters\":[\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-spot\\\",0]\"],\"elapsedMs\":50.91929200000004},{\"phase\":\"answer\",\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v WHERE 1 = aNy (SELECT 1)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"elapsedMs\":14.88533399999983}]}})",
+      "defect": false,
+      "rows": [
+        {
+          "v": "x"
+        }
+      ],
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ]
+    },
+    {
+      "name": "nbsp",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY (SELECT 1)",
+      "guard": {
+        "accepted": true
+      },
+      "prior": {
+        "accepted": true
+      },
+      "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: PostgresError: Errors parsing SQL statement:\n  - line 1:44 token recognition error at: ' ' (cause: PostgresError: Errors parsing SQL statement:\n  - line 1:44 token recognition error at: ' '))]))",
+      "defect": false,
+      "rawError": "PostgresError: Errors parsing SQL statement:\n  - line 1:29 token recognition error at: ' '"
+    },
+    {
+      "name": "vt",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY\u000b(SELECT 1)",
+      "guard": {
+        "accepted": true
+      },
+      "prior": {
+        "accepted": true
+      },
+      "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: PostgresError: Errors parsing SQL statement:\n  - line 1:44 token recognition error at: '\u000b' (cause: PostgresError: Errors parsing SQL statement:\n  - line 1:44 token recognition error at: '\u000b'))]))",
+      "defect": false,
+      "rawError": "PostgresError: Errors parsing SQL statement:\n  - line 1:29 token recognition error at: '\u000b'"
+    },
+    {
+      "name": "ff",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY\f(SELECT 1)",
+      "guard": {
+        "accepted": true
+      },
+      "prior": {
+        "accepted": true
+      },
+      "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: PostgresError: Errors parsing SQL statement:\n  - line 1:44 token recognition error at: '\f' (cause: PostgresError: Errors parsing SQL statement:\n  - line 1:44 token recognition error at: '\f'))]))",
+      "defect": false,
+      "rawError": "PostgresError: Errors parsing SQL statement:\n  - line 1:29 token recognition error at: '\f'"
+    },
+    {
+      "name": "bom",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY﻿(SELECT 1)",
+      "guard": {
+        "accepted": true
+      },
+      "prior": {
+        "accepted": true
+      },
+      "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: PostgresError: Errors parsing SQL statement:\n  - line 1:44 token recognition error at: '﻿' (cause: PostgresError: Errors parsing SQL statement:\n  - line 1:44 token recognition error at: '﻿'))]))",
+      "defect": false,
+      "rawError": "PostgresError: Errors parsing SQL statement:\n  - line 1:29 token recognition error at: '﻿'"
+    },
+    {
+      "name": "ls",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY (SELECT 1)",
+      "guard": {
+        "accepted": true
+      },
+      "prior": {
+        "accepted": true
+      },
+      "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: PostgresError: Errors parsing SQL statement:\n  - line 1:44 token recognition error at: ' ' (cause: PostgresError: Errors parsing SQL statement:\n  - line 1:44 token recognition error at: ' '))]))",
+      "defect": false,
+      "rawError": "PostgresError: Errors parsing SQL statement:\n  - line 1:29 token recognition error at: ' '"
+    },
+    {
+      "name": "narrow",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY (SELECT 1)",
+      "guard": {
+        "accepted": true
+      },
+      "prior": {
+        "accepted": true
+      },
+      "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: PostgresError: Errors parsing SQL statement:\n  - line 1:44 token recognition error at: ' ' (cause: PostgresError: Errors parsing SQL statement:\n  - line 1:44 token recognition error at: ' '))]))",
+      "defect": false,
+      "rawError": "PostgresError: Errors parsing SQL statement:\n  - line 1:29 token recognition error at: ' '"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+[
+  {
+    "source": "packages/xtdb/src/native/ReadOnlySql.ts",
+    "matchesBuiltSourceMap": true
+  },
+  {
+    "source": "packages/xtdb/src/native/NativeQueries.ts",
+    "matchesBuiltSourceMap": true
+  }
+]

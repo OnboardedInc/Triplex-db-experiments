@@ -1,0 +1,377 @@
+[
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/G0-raw/build-manifest.json",
+    "matches": true,
+    "sha256": "e6ef674f89d22411add7f03a967b3f86e252605658303d07286644e57fcb03cd"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/G0-raw/build.stderr.txt",
+    "matches": true,
+    "sha256": "b66c47859397a0cbfa695c7d8658ed224fc0fe2130433d1d9168ee010ef97503"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/G0-raw/build.stdout.txt",
+    "matches": true,
+    "sha256": "66f93603493330e708f68633e21b9507bc93e1bde89119b711d3578cff551940"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/G0-raw/node-test-engine-cases.stderr.txt",
+    "matches": true,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/G0-raw/node-test-engine-cases.stdout.txt",
+    "matches": true,
+    "sha256": "91b69be5f152df1bb0a94d70aad89aeb78b9529d0fe1cfae1980571bcbba7457"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/G0-raw/node-test-qualification.stderr.txt",
+    "matches": true,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/G0-raw/node-test-qualification.stdout.txt",
+    "matches": true,
+    "sha256": "5de61e569927f2f8ee993688ae592c5f6ae8aa360c2f3607675e5525e930d1a8"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/G0-raw/observed-skips.json",
+    "matches": true,
+    "sha256": "139560aa91f0e6b189362325787524fa863bfce300e4aa49f5170b146811a3d6"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/G0-raw/oracle-unittest.stderr.txt",
+    "matches": true,
+    "sha256": "29fd06525d687c48f6edd403f9b6302c7701bbd3a496ce5a11c961128c6fbf81"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/G0-raw/oracle-unittest.stdout.txt",
+    "matches": true,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/G0-raw/oracle-validate-workloads.stderr.txt",
+    "matches": true,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/G0-raw/oracle-validate-workloads.stdout.txt",
+    "matches": true,
+    "sha256": "f2a7cd0a3133b70369859ba9a8636acd61a8b951837618be9dd0bbdd70e79ff0"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/G0-raw/pnpm-version.stderr.txt",
+    "matches": true,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/G0-raw/pnpm-version.stdout.txt",
+    "matches": true,
+    "sha256": "029d525e1c271e57d2537627f7699f2a0c64d53900bafd3d7c530961c0306dbb"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/G0-raw/typecheck.stderr.txt",
+    "matches": true,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/G0-raw/typecheck.stdout.txt",
+    "matches": true,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/G0-raw/vitest-core.json",
+    "matches": true,
+    "sha256": "d64397adb2d2571d05619ecad66e3b58381921adbd15c86394cad6548cde7f0e"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/G0-raw/vitest-core.stderr.txt",
+    "matches": true,
+    "sha256": "cd12bf77971ecb29f91c2401b14c7b7ff8320c34d5932f4d9244f76e61f1e56f"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/G0-raw/vitest-core.stdout.txt",
+    "matches": true,
+    "sha256": "043059fc09804a2adedc575ffedf2ae1e7d2ba107710a25da43b0a1b6855b4b3"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/G0-raw/vitest-qualification.json",
+    "matches": true,
+    "sha256": "c4083f1b19a270fde266e10250f6755834a9c131fbdb543d1235ad0f62f8974a"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/G0-raw/vitest-qualification.stderr.txt",
+    "matches": true,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/G0-raw/vitest-qualification.stdout.txt",
+    "matches": true,
+    "sha256": "0d1e04578694e0dfe74d5c466eb6407929e84142c1ba82dc3ec5b47db550634b"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/G0-raw/vitest-testkit.json",
+    "matches": true,
+    "sha256": "899c5ae31c226aeaef2bd31e34b9bbe624fb771669f5387dd08089ebbf2d81b6"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/G0-raw/vitest-testkit.stderr.txt",
+    "matches": true,
+    "sha256": "cd12bf77971ecb29f91c2401b14c7b7ff8320c34d5932f4d9244f76e61f1e56f"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/G0-raw/vitest-testkit.stdout.txt",
+    "matches": true,
+    "sha256": "997938ca76e820c9947ead62feb0f7cd15cef92718b0623c700ec44c2a96c01c"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/G0-raw/vitest-xtdb.json",
+    "matches": true,
+    "sha256": "c2ca2fef58796e9693f4893ebb1b2164f7fbbb78e4db8bd7d08cc8fb64363b5a"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/G0-raw/vitest-xtdb.stderr.txt",
+    "matches": true,
+    "sha256": "cd12bf77971ecb29f91c2401b14c7b7ff8320c34d5932f4d9244f76e61f1e56f"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/G0-raw/vitest-xtdb.stdout.txt",
+    "matches": true,
+    "sha256": "58ec4e4e0f8027e3cb0b63b480e4c687ce8e3d2d61ee83445be5d8321725425e"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/G0-receipt.json",
+    "matches": true,
+    "sha256": "0e96c235c6f331a1977ae4bbd43be4a17630c2f8412fb26e5d4070d02d53478a"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/G0.log",
+    "matches": true,
+    "sha256": "4b85e2e4dd37fbb3c0493635c9b3cf769ea71311afa9e362a2503df7eb95a163"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/baseline-ReadOnlySql.ts",
+    "matches": true,
+    "sha256": "1282184005a63a423c0bce8c8a6964e7bcc4a60f1934724afb0ff042eae90612"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/collect.py",
+    "matches": true,
+    "sha256": "bc70bc77db29ae7d7efffb6c73a861edcda90cf3705c464f965f94bb02b40774"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/delta-live.json",
+    "matches": true,
+    "sha256": "c58f5fa661d03ccbe8a6d8ab1bb8c3125275d7a10776b23f89bc5610b6b3ddcd"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/delta-live.json.jsonl",
+    "matches": true,
+    "sha256": "a501272c6c57f5a97195b17c98424b35d03ba1cf1dd9bccf7c51190cda259ba9"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/delta-live.log",
+    "matches": true,
+    "sha256": "83f2032b2fb0f1232642351de65c91d5fa618a4d9e0c60c77914ad3923515f92"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/delta-live.ts",
+    "matches": true,
+    "sha256": "e5608e0596b87239f829f8d9bebdb37092ced2570bce29fa6b31a0f6810cfdff"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/delta-offline.json",
+    "matches": true,
+    "sha256": "aa878c91f6af57ac04d70ca9616fd9896730bcdc7304952991ffc27c310d7cf4"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/delta-offline.log",
+    "matches": true,
+    "sha256": "f449c788769f01a5bf4fb721edc795417adb1280519a460d9bad4b3051b9af96"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/delta-offline.ts",
+    "matches": true,
+    "sha256": "5d50257cc9e698468b78a74a07ec33841bccee25f5ea045da2b429d02cf8e63d"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/delta-sums.json",
+    "matches": true,
+    "sha256": "765a2b554543f807d01a7d763e37fc19b02c6a734682b3d264a77103da4689ec"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/delta-sums.json.jsonl",
+    "matches": true,
+    "sha256": "c93d414045191f5d6d3e9ac75e9d408d82c41d9c069d7d042830c924acb26061"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/delta-sums.log",
+    "matches": true,
+    "sha256": "67ab69c24ae9e56000b784f2a3eedccccd406c2d83102ba0e7b25ce0147cbd61"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/delta-sums.ts",
+    "matches": true,
+    "sha256": "6f4bb065e2b8f31c69257cba4e03ae8fa8cc90ea9477149c3ef276addbd75a19"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/disk-before.txt",
+    "matches": true,
+    "sha256": "b46605244484bc9416d363987f6077d61359c54b8c778dfc474765521e4c3b4b"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/disk-final.txt",
+    "matches": true,
+    "sha256": "8b7ac90d04807d67e58a1e8d0f543a169cfab968abdc5a0b70f06c896a5b1c84"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/exec-outcomes.json",
+    "matches": true,
+    "sha256": "2a9c6326bc9d313473dba53e1b32afe1f1e9eb45a6e9cca7b4911cec1e4d06f8"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/grammar-live.json",
+    "matches": true,
+    "sha256": "808f599e3cc83b51a5af849a4b894d0b7cf6960f69c1c2ebc6ac367188da9bb8"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/grammar-live.json.jsonl",
+    "matches": true,
+    "sha256": "2fd1c715fcebd74a665c43e5a631454609415a9e426c6cf7f6d5587ea4906ac4"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/grammar-live.log",
+    "matches": true,
+    "sha256": "17027ed2bd5e46fefbe53919654baa66a29c0c3eb271f4af751f9e5d90fb884a"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/grammar-live.ts",
+    "matches": true,
+    "sha256": "8aed451e7fc9599cc07ac1bcacdff21023eef2ae5db9509339b36154294743c5"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/offline-source.json",
+    "matches": true,
+    "sha256": "0a8ea98c2ecea03f6b71951cf95e9d875be6305106f30c7c90adb129e7f5c09c"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/offline-source.log",
+    "matches": true,
+    "sha256": "0a8ea98c2ecea03f6b71951cf95e9d875be6305106f30c7c90adb129e7f5c09c"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/offline-source.ts",
+    "matches": true,
+    "sha256": "f6e550248680518e4373e6c7cae43327d7de1438f5e66eea9866fc2dce9d3653"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/probe-source.log",
+    "matches": true,
+    "sha256": "d6a62c8726a04c2ce5456d5e12f5fa138d55db8fbd0c2a5fe968818021b28ecd"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/probe-source.ts",
+    "matches": true,
+    "sha256": "fcbde6a4d502f5c843cd24923955f98bb636b56a2836487272899650f88211ed"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/probe-sums.log",
+    "matches": true,
+    "sha256": "790c63a5590ae629d8ca0b46d4e229cb194411dfe19e59212243e4a11bd658ed"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/probe-sums.ts",
+    "matches": true,
+    "sha256": "662a64f67e103a7eb0cbdcbddc70e8eb3a8d99741483b62437fdea96cadc42e8"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/probes.log",
+    "matches": true,
+    "sha256": "6a86d06a4af6dda515677e38fa0e9ba9ba3553f0d0d92aee37bb1b6acdff45ee"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/reviewer-union-inputs.json",
+    "matches": true,
+    "sha256": "66bfc36d3143a5d28e83f1f1355d50fbd74e7cabdd5bfa23ce4e19d7f7cad92d"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/ruling-input.txt",
+    "matches": true,
+    "sha256": "f0ccfb10fa97b5267ada6454af2bccc7bf3554cdb9df36ba1bf08abb9caba382"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/run-probes.mjs",
+    "matches": true,
+    "sha256": "8c2c13a9fd37d385f57acc514d714b6657f236ccfda34c246ec79dfb5b8e54d9"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/source-hazards.json",
+    "matches": true,
+    "sha256": "21c8aa35a2f10e10cb8b15f3e38c65d499850372a142198fd3ed11a3375ed1c1"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/source-hazards.json.jsonl",
+    "matches": true,
+    "sha256": "d4a33401628133c94957af22336d82694025a1656e3611701aef7523fc85485f"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/source-sums.json",
+    "matches": true,
+    "sha256": "7c5291aa88600da66020212bb57b154c70fb675015711877d4f5b6b02877f92d"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/source-sums.json.jsonl",
+    "matches": true,
+    "sha256": "cbb49cc29fa4c5af26fa1bce0c2cbf58c5c5c5352ea8261767ba1de559fd197a"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/source.patch",
+    "matches": true,
+    "sha256": "642c202be6ceb200c6d61ee88bf4b1f7c7b7b095adaf70208a261483471ca640"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/subquery-regression.json",
+    "matches": true,
+    "sha256": "210c34d10eefbdf2fbcc61551b7cbae23328d0e191079bf5819b99121180b4c3"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/subquery-regression.log",
+    "matches": true,
+    "sha256": "7f97a88a31b2cffac369f8fdc7d2333c94bd0cc9254efdc7db87dbc7d5355a7f"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/subquery-regression.ts",
+    "matches": true,
+    "sha256": "46d859ec4b3975a1d524978ccb87603de4e1fe7e7ad6e8f39025696b824387c4"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/summary.json",
+    "matches": true,
+    "sha256": "dc1d08a2a999239f406352b0e12c4d73956d53193809aa9cbc2c63ae1665f295"
+  },
+  {
+    "path": "packages/xtdb/src/native/ReadOnlySql.ts",
+    "matches": true,
+    "sha256": "d285ce69ef9d98f235e820b65517e828eadf9b6dc163404a1666c3d5ae3671b5"
+  },
+  {
+    "path": "packages/xtdb/test/native-query.test.ts",
+    "matches": true,
+    "sha256": "f8589f72e70cecd731afa892c2bddd40996ee1f8ef345deff3d77922adc8ea30"
+  },
+  {
+    "path": "packages/xtdb/test/query-expression-corpus.ts",
+    "matches": true,
+    "sha256": "9d432fccbffe2877418a6a3cf422d6dc2c922c4347204a4055c7b15947bdb676"
+  },
+  {
+    "path": "packages/xtdb/dist/native/ReadOnlySql.js",
+    "matches": true,
+    "sha256": "dcd26ad64201ecf4b4f2bd2c3811cbafdf4e1942a0080bd7947dc1a85683082d"
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/round2/bin/pnpm",
+    "matches": true,
+    "sha256": "82b9277168371756785c18546338608b5b4900ddfab52a51255806f971e2d99a"
+  }
+]

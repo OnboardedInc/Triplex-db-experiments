@@ -1,0 +1,45 @@
+{
+  "at": "2026-11-08T22:43:38.600Z",
+  "safe": [
+    {
+      "name": "regular",
+      "sql": "WITH a$tag$ AS (SELECT 1) SELECT 'x' AS v WHERE 1 = ANY/**/(SELECT 1) AND EXISTS(SELECT 1 AS z$tag$b)",
+      "exit": "Success({\"rows\":[{\"v\":\"x\"}],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-boundary-confirm\\\",0]\",\"recordedPosition\":0,\"validAt\":1794177818749},\"trace\":{\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (WITH a$tag$ AS (SELECT 1) SELECT 'x' AS v WHERE 1 = ANY/**/(SELECT 1) AND EXISTS(SELECT 1 AS z$tag$b)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-boundary-confirm\\\",0]\",\"recordedPosition\":0,\"validAt\":1794177818749},\"mappingId\":\"triplex-xtdb/assertion-native-basis/1\",\"contractId\":\"sha256-04549b17d4ba8b129443510ca5cf1432c1f7cbd0ddb7f90d7b9e13334abe16ec\",\"elapsedMs\":193.03374999999983,\"steps\":[{\"phase\":\"source-cut\",\"language\":\"xtdb-sql\",\"query\":\"SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1\",\"parameters\":[\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-boundary-confirm\\\",0]\"],\"elapsedMs\":145.91549999999984},{\"phase\":\"answer\",\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (WITH a$tag$ AS (SELECT 1) SELECT 'x' AS v WHERE 1 = ANY/**/(SELECT 1) AND EXISTS(SELECT 1 AS z$tag$b)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"elapsedMs\":44.197958999999855}]}})",
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ],
+      "pass": true
+    },
+    {
+      "name": "backtick",
+      "sql": "WITH `a$tag$` AS (SELECT 1) SELECT 'x' AS v WHERE 1 = ANY/**/(SELECT 1) AND EXISTS(SELECT 1 AS `$tag$b`)",
+      "exit": "Success({\"rows\":[{\"v\":\"x\"}],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-boundary-confirm\\\",0]\",\"recordedPosition\":0,\"validAt\":1794177818814},\"trace\":{\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (WITH `a$tag$` AS (SELECT 1) SELECT 'x' AS v WHERE 1 = ANY/**/(SELECT 1) AND EXISTS(SELECT 1 AS `$tag$b`)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-boundary-confirm\\\",0]\",\"recordedPosition\":0,\"validAt\":1794177818814},\"mappingId\":\"triplex-xtdb/assertion-native-basis/1\",\"contractId\":\"sha256-04549b17d4ba8b129443510ca5cf1432c1f7cbd0ddb7f90d7b9e13334abe16ec\",\"elapsedMs\":20.85283400000003,\"steps\":[{\"phase\":\"source-cut\",\"language\":\"xtdb-sql\",\"query\":\"SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1\",\"parameters\":[\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-boundary-confirm\\\",0]\"],\"elapsedMs\":11.40825000000018},{\"phase\":\"answer\",\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (WITH `a$tag$` AS (SELECT 1) SELECT 'x' AS v WHERE 1 = ANY/**/(SELECT 1) AND EXISTS(SELECT 1 AS `$tag$b`)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"elapsedMs\":8.570292000000109}]}})",
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ],
+      "pass": true
+    }
+  ],
+  "unsafe": [
+    {
+      "name": "regular",
+      "sql": "WITH a$tag$ AS (SELECT 1) SELECT 'x' AS v WHERE 1 = ANY/**/(ARRAY[1,2]) AND EXISTS(SELECT 1 AS z$tag$b)",
+      "accepted": true,
+      "exit": "Success({\"rows\":[{\"v\":\"x\"}],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-confirm-mock\\\",0]\",\"recordedPosition\":0,\"validAt\":1794177818802},\"trace\":{\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (WITH a$tag$ AS (SELECT 1) SELECT 'x' AS v WHERE 1 = ANY/**/(ARRAY[1,2]) AND EXISTS(SELECT 1 AS z$tag$b)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-confirm-mock\\\",0]\",\"recordedPosition\":0,\"validAt\":1794177818802},\"mappingId\":\"triplex-xtdb/assertion-native-basis/1\",\"contractId\":\"sha256-04549b17d4ba8b129443510ca5cf1432c1f7cbd0ddb7f90d7b9e13334abe16ec\",\"elapsedMs\":0.6735419999999976,\"steps\":[{\"phase\":\"source-cut\",\"language\":\"xtdb-sql\",\"query\":\"SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1\",\"parameters\":[\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-confirm-mock\\\",0]\"],\"elapsedMs\":0.05674999999996544},{\"phase\":\"answer\",\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (WITH a$tag$ AS (SELECT 1) SELECT 'x' AS v WHERE 1 = ANY/**/(ARRAY[1,2]) AND EXISTS(SELECT 1 AS z$tag$b)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"elapsedMs\":0.004624999999805368}]}})",
+      "defect": false,
+      "answerDispatched": true
+    },
+    {
+      "name": "backtick",
+      "sql": "WITH `a$tag$` AS (SELECT 1) SELECT 'x' AS v WHERE 1 = ANY/**/(ARRAY[1,2]) AND EXISTS(SELECT 1 AS `$tag$b`)",
+      "accepted": true,
+      "exit": "Success({\"rows\":[{\"v\":\"x\"}],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-confirm-mock\\\",0]\",\"recordedPosition\":0,\"validAt\":1794177818832},\"trace\":{\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (WITH `a$tag$` AS (SELECT 1) SELECT 'x' AS v WHERE 1 = ANY/**/(ARRAY[1,2]) AND EXISTS(SELECT 1 AS `$tag$b`)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-confirm-mock\\\",0]\",\"recordedPosition\":0,\"validAt\":1794177818832},\"mappingId\":\"triplex-xtdb/assertion-native-basis/1\",\"contractId\":\"sha256-04549b17d4ba8b129443510ca5cf1432c1f7cbd0ddb7f90d7b9e13334abe16ec\",\"elapsedMs\":0.4562499999999545,\"steps\":[{\"phase\":\"source-cut\",\"language\":\"xtdb-sql\",\"query\":\"SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1\",\"parameters\":[\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-confirm-mock\\\",0]\"],\"elapsedMs\":0.014709000000038941},{\"phase\":\"answer\",\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (WITH `a$tag$` AS (SELECT 1) SELECT 'x' AS v WHERE 1 = ANY/**/(ARRAY[1,2]) AND EXISTS(SELECT 1 AS `$tag$b`)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"elapsedMs\":0.0037080000001878943}]}})",
+      "defect": false,
+      "answerDispatched": true
+    }
+  ]
+}

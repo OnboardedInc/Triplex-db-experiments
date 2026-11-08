@@ -1,0 +1,53 @@
+{
+  "at": "2026-11-08T22:38:08.929Z",
+  "controls": [
+    {
+      "name": "backtick-nested-array",
+      "sql": "SELECT 'x' AS v, 0 AS `a$tag$` WHERE 1 = ANY/**/(ARRAY[1,2]) AND EXISTS(SELECT 1 AS `$tag$b`)",
+      "accepted": true,
+      "exit": "Success({\"rows\":[{\"v\":\"x\"}],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-offline\\\",0]\",\"recordedPosition\":0,\"validAt\":1794177488932},\"trace\":{\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v, 0 AS `a$tag$` WHERE 1 = ANY/**/(ARRAY[1,2]) AND EXISTS(SELECT 1 AS `$tag$b`)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-offline\\\",0]\",\"recordedPosition\":0,\"validAt\":1794177488932},\"mappingId\":\"triplex-xtdb/assertion-native-basis/1\",\"contractId\":\"sha256-e6afedfc121d0f51354010a25cd0a1751d95f6e776b334b4ee39005062c12837\",\"elapsedMs\":2.317874999999958,\"steps\":[{\"phase\":\"source-cut\",\"language\":\"xtdb-sql\",\"query\":\"SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1\",\"parameters\":[\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-offline\\\",0]\"],\"elapsedMs\":0.10458300000004783},{\"phase\":\"answer\",\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v, 0 AS `a$tag$` WHERE 1 = ANY/**/(ARRAY[1,2]) AND EXISTS(SELECT 1 AS `$tag$b`)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"elapsedMs\":0.005334000000004835}]}})",
+      "defect": false,
+      "calls": [
+        "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1",
+        "SELECT * FROM (SELECT 'x' AS v, 0 AS `a$tag$` WHERE 1 = ANY/**/(ARRAY[1,2]) AND EXISTS(SELECT 1 AS `$tag$b`)\n) triplex_native_answer LIMIT 1001"
+      ],
+      "answerDispatched": true
+    },
+    {
+      "name": "identifier-nested-array",
+      "sql": "SELECT 'x' AS v, 0 AS a$tag$ WHERE 1 = ANY/**/(ARRAY[1,2]) AND EXISTS(SELECT 1 AS z$tag$b)",
+      "accepted": true,
+      "exit": "Success({\"rows\":[{\"v\":\"x\"}],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-offline\\\",0]\",\"recordedPosition\":0,\"validAt\":1794177488933},\"trace\":{\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v, 0 AS a$tag$ WHERE 1 = ANY/**/(ARRAY[1,2]) AND EXISTS(SELECT 1 AS z$tag$b)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-offline\\\",0]\",\"recordedPosition\":0,\"validAt\":1794177488933},\"mappingId\":\"triplex-xtdb/assertion-native-basis/1\",\"contractId\":\"sha256-e6afedfc121d0f51354010a25cd0a1751d95f6e776b334b4ee39005062c12837\",\"elapsedMs\":0.5641250000000468,\"steps\":[{\"phase\":\"source-cut\",\"language\":\"xtdb-sql\",\"query\":\"SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1\",\"parameters\":[\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-offline\\\",0]\"],\"elapsedMs\":0.016000000000019554},{\"phase\":\"answer\",\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v, 0 AS a$tag$ WHERE 1 = ANY/**/(ARRAY[1,2]) AND EXISTS(SELECT 1 AS z$tag$b)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"elapsedMs\":0.0038749999999936335}]}})",
+      "defect": false,
+      "calls": [
+        "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1",
+        "SELECT * FROM (SELECT 'x' AS v, 0 AS a$tag$ WHERE 1 = ANY/**/(ARRAY[1,2]) AND EXISTS(SELECT 1 AS z$tag$b)\n) triplex_native_answer LIMIT 1001"
+      ],
+      "answerDispatched": true
+    },
+    {
+      "name": "backtick-mutation",
+      "sql": "SELECT 1 AS `a$tag$`; DELETE FROM tx_assertions; SELECT 2 AS `$tag$b`",
+      "accepted": true,
+      "exit": "Success({\"rows\":[{\"v\":\"x\"}],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-offline\\\",0]\",\"recordedPosition\":0,\"validAt\":1794177488934},\"trace\":{\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 1 AS `a$tag$`; DELETE FROM tx_assertions; SELECT 2 AS `$tag$b`\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-offline\\\",0]\",\"recordedPosition\":0,\"validAt\":1794177488934},\"mappingId\":\"triplex-xtdb/assertion-native-basis/1\",\"contractId\":\"sha256-e6afedfc121d0f51354010a25cd0a1751d95f6e776b334b4ee39005062c12837\",\"elapsedMs\":0.4781250000000341,\"steps\":[{\"phase\":\"source-cut\",\"language\":\"xtdb-sql\",\"query\":\"SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1\",\"parameters\":[\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-offline\\\",0]\"],\"elapsedMs\":0.007625000000018645},{\"phase\":\"answer\",\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 1 AS `a$tag$`; DELETE FROM tx_assertions; SELECT 2 AS `$tag$b`\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"elapsedMs\":0.002999999999985903}]}})",
+      "defect": false,
+      "calls": [
+        "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1",
+        "SELECT * FROM (SELECT 1 AS `a$tag$`; DELETE FROM tx_assertions; SELECT 2 AS `$tag$b`\n) triplex_native_answer LIMIT 1001"
+      ],
+      "answerDispatched": true
+    },
+    {
+      "name": "identifier-mutation",
+      "sql": "SELECT 1 AS a$tag$; DELETE FROM tx_assertions; SELECT 2 AS z$tag$b",
+      "accepted": true,
+      "exit": "Success({\"rows\":[{\"v\":\"x\"}],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-offline\\\",0]\",\"recordedPosition\":0,\"validAt\":1794177488934},\"trace\":{\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 1 AS a$tag$; DELETE FROM tx_assertions; SELECT 2 AS z$tag$b\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-offline\\\",0]\",\"recordedPosition\":0,\"validAt\":1794177488934},\"mappingId\":\"triplex-xtdb/assertion-native-basis/1\",\"contractId\":\"sha256-e6afedfc121d0f51354010a25cd0a1751d95f6e776b334b4ee39005062c12837\",\"elapsedMs\":0.2967079999999669,\"steps\":[{\"phase\":\"source-cut\",\"language\":\"xtdb-sql\",\"query\":\"SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1\",\"parameters\":[\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-offline\\\",0]\"],\"elapsedMs\":0.007333000000016909},{\"phase\":\"answer\",\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 1 AS a$tag$; DELETE FROM tx_assertions; SELECT 2 AS z$tag$b\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"elapsedMs\":0.0027079999999841675}]}})",
+      "defect": false,
+      "calls": [
+        "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1",
+        "SELECT * FROM (SELECT 1 AS a$tag$; DELETE FROM tx_assertions; SELECT 2 AS z$tag$b\n) triplex_native_answer LIMIT 1001"
+      ],
+      "answerDispatched": true
+    }
+  ]
+}

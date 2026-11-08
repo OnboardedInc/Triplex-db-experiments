@@ -1,0 +1,18 @@
+{
+  "at": "2026-11-08T22:41:02.179744+00:00",
+  "target": "416d84e6d4870a9902e122f0aa873facf2f0f997",
+  "tools": [
+    {
+      "path": "grammar-review.ts",
+      "sha256": "598099ccf64cc80b476780abd06a1b8db8914d4dc9b9c77be0a19f50efbbd07f"
+    },
+    {
+      "path": "check-offline.ts",
+      "sha256": "b2de33088769155318a11b6347a0d883f8ea3de96e65b5afe3d9a71635ae0df7"
+    },
+    {
+      "path": "spot.ts",
+      "sha256": "1ab7906a9f2a06abe67a391ee2cb3595cd8692a5cbdd69fd546f2e4713cda1b5"
+    }
+  ]
+}

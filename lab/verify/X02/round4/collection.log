@@ -1,0 +1,196 @@
+{
+  "target": "416d84e6d4870a9902e122f0aa873facf2f0f997",
+  "verdict": "FIX-FIRST",
+  "groups": {
+    "author-generator": {
+      "total": 1818,
+      "publicRawMatch": 1818,
+      "supportedFalseRefusals": [],
+      "engineErrors": [],
+      "otherMismatches": []
+    },
+    "boundary-control": {
+      "total": 3,
+      "publicRawMatch": 0,
+      "supportedFalseRefusals": [],
+      "engineErrors": [],
+      "otherMismatches": [
+        {
+          "name": "safe-dollar-id",
+          "exit": "Failure(Cause([Fail(ReadError: Invalid XTDB native query contract or result (cause: SchemaError(Expected \"v\"\n  at [\"a$tag$\"])))]))",
+          "rawRows": [
+            {
+              "v": "x",
+              "a$tag$": "0"
+            }
+          ]
+        },
+        {
+          "name": "safe-dollar-backtick",
+          "exit": "Failure(Cause([Fail(ReadError: Invalid XTDB native query contract or result (cause: SchemaError(Expected \"v\"\n  at [\"a$tag$\"])))]))",
+          "rawRows": [
+            {
+              "v": "x",
+              "a$tag$": "0"
+            }
+          ]
+        },
+        {
+          "name": "safe-three-statements",
+          "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: PostgresError: Errors parsing SQL statement:\n  - line 1:33 no viable alternative at input '(SELECT1ASa$tag$;' (cause: PostgresError: Errors parsing SQL statement:\n  - line 1:33 no viable alternative at input '(SELECT1ASa$tag$;'))]))",
+          "rawRows": [
+            [
+              {
+                "a$tag$": "1"
+              }
+            ],
+            [
+              {
+                "_column_1": "2"
+              }
+            ],
+            [
+              {
+                "z$tag$b": "3"
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    "independent": {
+      "total": 162,
+      "publicRawMatch": 126,
+      "supportedFalseRefusals": [
+        "leaf-ANY-backtick-union",
+        "leaf-ANY-backtick-intersect",
+        "leaf-ANY-backtick-except",
+        "leaf-ANY-backtick-open",
+        "leaf-ANY-backtick-escaped",
+        "leaf-ANY-dollar-identifier",
+        "leaf-ANY-nested-block",
+        "leaf-ANY-suffix-order",
+        "leaf-ANY-suffix-limit",
+        "leaf-ANY-suffix-offset",
+        "leaf-ANY-suffix-fetch",
+        "leaf-ANY-suffix-set",
+        "leaf-SOME-backtick-union",
+        "leaf-SOME-backtick-intersect",
+        "leaf-SOME-backtick-except",
+        "leaf-SOME-backtick-open",
+        "leaf-SOME-backtick-escaped",
+        "leaf-SOME-dollar-identifier",
+        "leaf-SOME-nested-block",
+        "leaf-SOME-suffix-order",
+        "leaf-SOME-suffix-limit",
+        "leaf-SOME-suffix-offset",
+        "leaf-SOME-suffix-fetch",
+        "leaf-SOME-suffix-set",
+        "leaf-ALL-backtick-union",
+        "leaf-ALL-backtick-intersect",
+        "leaf-ALL-backtick-except",
+        "leaf-ALL-backtick-open",
+        "leaf-ALL-backtick-escaped",
+        "leaf-ALL-dollar-identifier",
+        "leaf-ALL-nested-block",
+        "leaf-ALL-suffix-order",
+        "leaf-ALL-suffix-limit",
+        "leaf-ALL-suffix-offset",
+        "leaf-ALL-suffix-fetch",
+        "leaf-ALL-suffix-set"
+      ],
+      "engineErrors": [],
+      "otherMismatches": []
+    },
+    "reviewer-previous": {
+      "total": 12,
+      "publicRawMatch": 12,
+      "supportedFalseRefusals": [],
+      "engineErrors": [],
+      "otherMismatches": []
+    }
+  },
+  "unsafeGroups": {
+    "author-mutation-rerun": {
+      "total": 1818,
+      "typedPredispatchRefusals": 1818,
+      "falseAdmissions": []
+    },
+    "boundary-unsafe": {
+      "total": 4,
+      "typedPredispatchRefusals": 0,
+      "falseAdmissions": [
+        {
+          "origin": "boundary-unsafe",
+          "name": "dollar-id-array",
+          "sql": "SELECT 'x' AS v, 0 AS a$tag$ WHERE 1 = ANY/**/(ARRAY[1,2]) AND EXISTS(SELECT 1 AS z$tag$b)",
+          "guard": {
+            "accepted": true
+          },
+          "prior": {
+            "accepted": true
+          },
+          "exit": "Success",
+          "defect": false,
+          "answerDispatched": true,
+          "pass": false
+        },
+        {
+          "origin": "boundary-unsafe",
+          "name": "backtick-dollar-array",
+          "sql": "SELECT 'x' AS v, 0 AS `a$tag$` WHERE 1 = ANY/**/(ARRAY[1,2]) AND EXISTS(SELECT 1 AS `$tag$b`)",
+          "guard": {
+            "accepted": true
+          },
+          "prior": {
+            "accepted": true
+          },
+          "exit": "Success",
+          "defect": false,
+          "answerDispatched": true,
+          "pass": false
+        },
+        {
+          "origin": "boundary-unsafe",
+          "name": "dollar-id-delete",
+          "sql": "SELECT 1 AS a$tag$; DELETE FROM tx_assertions; SELECT 2 AS z$tag$b",
+          "guard": {
+            "accepted": true
+          },
+          "prior": {
+            "accepted": true
+          },
+          "exit": "Success",
+          "defect": false,
+          "answerDispatched": true,
+          "pass": false
+        },
+        {
+          "origin": "boundary-unsafe",
+          "name": "backtick-dollar-delete",
+          "sql": "SELECT 1 AS `a$tag$`; DELETE FROM tx_assertions; SELECT 2 AS `$tag$b`",
+          "guard": {
+            "accepted": true
+          },
+          "prior": {
+            "accepted": true
+          },
+          "exit": "Success",
+          "defect": false,
+          "answerDispatched": true,
+          "pass": false
+        }
+      ]
+    },
+    "independent": {
+      "total": 468,
+      "typedPredispatchRefusals": 468,
+      "falseAdmissions": []
+    },
+    "mutation": {
+      "total": 72,
+      "typedPredispatchRefusals": 72,
+      "falseAdmissions": []
+    }
+  }
+}

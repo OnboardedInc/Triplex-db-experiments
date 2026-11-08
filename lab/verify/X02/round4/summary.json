@@ -1,0 +1,532 @@
+{
+  "target": "416d84e6d4870a9902e122f0aa873facf2f0f997",
+  "verdict": "FIX-FIRST",
+  "G0": {
+    "id": "G0-xtdb-20261108T223604Z-8609c6",
+    "counts": {
+      "executed": 967,
+      "pass": 967,
+      "fail": 0,
+      "skip": 130,
+      "expectedSkip": 130,
+      "unexpectedSkip": 0
+    },
+    "git": {
+      "head": "416d84e6d4870a9902e122f0aa873facf2f0f997",
+      "headTree": "04de4414bf56c081e4dabdbd1fec391cbc3f7ec7",
+      "branch": "HEAD",
+      "dirty": false,
+      "stashCommit": null,
+      "stashTree": null,
+      "diffScope": [
+        "packages",
+        "qualification",
+        "lab/bin",
+        "lab/config",
+        "vitest.workspace-aliases.ts",
+        "tsconfig.base.json",
+        "tsconfig.node.json",
+        "package.json",
+        "pnpm-workspace.yaml",
+        "pnpm-lock.yaml",
+        "turbo.json"
+      ],
+      "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "diffBytes": 0,
+      "modifiedFiles": [],
+      "untrackedFiles": [],
+      "otherDirtyPaths": [],
+      "sourceTreeId": "e2f116fb52e77ce51aa4ef75f096b0a9639bf0aab2a015ab563e0f14de9f2303"
+    }
+  },
+  "groups": {
+    "author-generator": {
+      "total": 1818,
+      "publicRawMatch": 1818,
+      "supportedFalseRefusals": [],
+      "engineErrors": [],
+      "otherMismatches": []
+    },
+    "boundary-control": {
+      "total": 3,
+      "publicRawMatch": 0,
+      "supportedFalseRefusals": [],
+      "engineErrors": [],
+      "otherMismatches": [
+        {
+          "name": "safe-dollar-id",
+          "exit": "Failure(Cause([Fail(ReadError: Invalid XTDB native query contract or result (cause: SchemaError(Expected \"v\"\n  at [\"a$tag$\"])))]))",
+          "rawRows": [
+            {
+              "v": "x",
+              "a$tag$": "0"
+            }
+          ]
+        },
+        {
+          "name": "safe-dollar-backtick",
+          "exit": "Failure(Cause([Fail(ReadError: Invalid XTDB native query contract or result (cause: SchemaError(Expected \"v\"\n  at [\"a$tag$\"])))]))",
+          "rawRows": [
+            {
+              "v": "x",
+              "a$tag$": "0"
+            }
+          ]
+        },
+        {
+          "name": "safe-three-statements",
+          "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: PostgresError: Errors parsing SQL statement:\n  - line 1:33 no viable alternative at input '(SELECT1ASa$tag$;' (cause: PostgresError: Errors parsing SQL statement:\n  - line 1:33 no viable alternative at input '(SELECT1ASa$tag$;'))]))",
+          "rawRows": [
+            [
+              {
+                "a$tag$": "1"
+              }
+            ],
+            [
+              {
+                "_column_1": "2"
+              }
+            ],
+            [
+              {
+                "z$tag$b": "3"
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    "independent": {
+      "total": 162,
+      "publicRawMatch": 126,
+      "supportedFalseRefusals": [
+        "leaf-ANY-backtick-union",
+        "leaf-ANY-backtick-intersect",
+        "leaf-ANY-backtick-except",
+        "leaf-ANY-backtick-open",
+        "leaf-ANY-backtick-escaped",
+        "leaf-ANY-dollar-identifier",
+        "leaf-ANY-nested-block",
+        "leaf-ANY-suffix-order",
+        "leaf-ANY-suffix-limit",
+        "leaf-ANY-suffix-offset",
+        "leaf-ANY-suffix-fetch",
+        "leaf-ANY-suffix-set",
+        "leaf-SOME-backtick-union",
+        "leaf-SOME-backtick-intersect",
+        "leaf-SOME-backtick-except",
+        "leaf-SOME-backtick-open",
+        "leaf-SOME-backtick-escaped",
+        "leaf-SOME-dollar-identifier",
+        "leaf-SOME-nested-block",
+        "leaf-SOME-suffix-order",
+        "leaf-SOME-suffix-limit",
+        "leaf-SOME-suffix-offset",
+        "leaf-SOME-suffix-fetch",
+        "leaf-SOME-suffix-set",
+        "leaf-ALL-backtick-union",
+        "leaf-ALL-backtick-intersect",
+        "leaf-ALL-backtick-except",
+        "leaf-ALL-backtick-open",
+        "leaf-ALL-backtick-escaped",
+        "leaf-ALL-dollar-identifier",
+        "leaf-ALL-nested-block",
+        "leaf-ALL-suffix-order",
+        "leaf-ALL-suffix-limit",
+        "leaf-ALL-suffix-offset",
+        "leaf-ALL-suffix-fetch",
+        "leaf-ALL-suffix-set"
+      ],
+      "engineErrors": [],
+      "otherMismatches": []
+    },
+    "reviewer-previous": {
+      "total": 12,
+      "publicRawMatch": 12,
+      "supportedFalseRefusals": [],
+      "engineErrors": [],
+      "otherMismatches": []
+    }
+  },
+  "unsafeGroups": {
+    "author-mutation-rerun": {
+      "total": 1818,
+      "typedPredispatchRefusals": 1818,
+      "falseAdmissions": []
+    },
+    "boundary-unsafe": {
+      "total": 4,
+      "typedPredispatchRefusals": 0,
+      "falseAdmissions": [
+        {
+          "origin": "boundary-unsafe",
+          "name": "dollar-id-array",
+          "sql": "SELECT 'x' AS v, 0 AS a$tag$ WHERE 1 = ANY/**/(ARRAY[1,2]) AND EXISTS(SELECT 1 AS z$tag$b)",
+          "guard": {
+            "accepted": true
+          },
+          "prior": {
+            "accepted": true
+          },
+          "exit": "Success",
+          "defect": false,
+          "answerDispatched": true,
+          "pass": false
+        },
+        {
+          "origin": "boundary-unsafe",
+          "name": "backtick-dollar-array",
+          "sql": "SELECT 'x' AS v, 0 AS `a$tag$` WHERE 1 = ANY/**/(ARRAY[1,2]) AND EXISTS(SELECT 1 AS `$tag$b`)",
+          "guard": {
+            "accepted": true
+          },
+          "prior": {
+            "accepted": true
+          },
+          "exit": "Success",
+          "defect": false,
+          "answerDispatched": true,
+          "pass": false
+        },
+        {
+          "origin": "boundary-unsafe",
+          "name": "dollar-id-delete",
+          "sql": "SELECT 1 AS a$tag$; DELETE FROM tx_assertions; SELECT 2 AS z$tag$b",
+          "guard": {
+            "accepted": true
+          },
+          "prior": {
+            "accepted": true
+          },
+          "exit": "Success",
+          "defect": false,
+          "answerDispatched": true,
+          "pass": false
+        },
+        {
+          "origin": "boundary-unsafe",
+          "name": "backtick-dollar-delete",
+          "sql": "SELECT 1 AS `a$tag$`; DELETE FROM tx_assertions; SELECT 2 AS `$tag$b`",
+          "guard": {
+            "accepted": true
+          },
+          "prior": {
+            "accepted": true
+          },
+          "exit": "Success",
+          "defect": false,
+          "answerDispatched": true,
+          "pass": false
+        }
+      ]
+    },
+    "independent": {
+      "total": 468,
+      "typedPredispatchRefusals": 468,
+      "falseAdmissions": []
+    },
+    "mutation": {
+      "total": 72,
+      "typedPredispatchRefusals": 72,
+      "falseAdmissions": []
+    }
+  },
+  "spot": [
+    {
+      "name": "suffix-order",
+      "guard": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ],
+      "rawError": null,
+      "defect": false
+    },
+    {
+      "name": "suffix-limit",
+      "guard": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ],
+      "rawError": null,
+      "defect": false
+    },
+    {
+      "name": "suffix-offset",
+      "guard": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ],
+      "rawError": null,
+      "defect": false
+    },
+    {
+      "name": "suffix-fetch",
+      "guard": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ],
+      "rawError": null,
+      "defect": false
+    },
+    {
+      "name": "group-set-suffix",
+      "guard": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ],
+      "rawError": null,
+      "defect": false
+    },
+    {
+      "name": "backtick-open",
+      "guard": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ],
+      "rawError": null,
+      "defect": false
+    },
+    {
+      "name": "backtick-close",
+      "guard": {
+        "accepted": true
+      },
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ],
+      "rawError": null,
+      "defect": false
+    },
+    {
+      "name": "backtick-union",
+      "guard": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ],
+      "rawError": null,
+      "defect": false
+    },
+    {
+      "name": "backtick-safe",
+      "guard": {
+        "accepted": true
+      },
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ],
+      "rawError": null,
+      "defect": false
+    },
+    {
+      "name": "nested-comment",
+      "guard": {
+        "accepted": false,
+        "error": "TypeError: Native SQL requires closed, non-nested block comments"
+      },
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ],
+      "rawError": null,
+      "defect": false
+    },
+    {
+      "name": "unicode-string",
+      "guard": {
+        "accepted": true
+      },
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ],
+      "rawError": null,
+      "defect": false
+    },
+    {
+      "name": "keyword-nonreserved",
+      "guard": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "rawRows": null,
+      "rawError": "PostgresError: Errors parsing SQL statement:\n  - line 1:43 no viable alternative at input '(SELECT1ASunion'",
+      "defect": false
+    },
+    {
+      "name": "long-s",
+      "guard": {
+        "accepted": true
+      },
+      "rawRows": null,
+      "rawError": "PostgresError: Errors parsing SQL statement:\n  - line 1:26 token recognition error at: '\u017f'",
+      "defect": false
+    },
+    {
+      "name": "kelvin",
+      "guard": {
+        "accepted": true
+      },
+      "rawRows": null,
+      "rawError": "PostgresError: Errors parsing SQL statement:\n  - line 1:28 token recognition error at: '\u212a'",
+      "defect": false
+    },
+    {
+      "name": "mixed",
+      "guard": {
+        "accepted": true
+      },
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ],
+      "rawError": null,
+      "defect": false
+    },
+    {
+      "name": "nbsp",
+      "guard": {
+        "accepted": true
+      },
+      "rawRows": null,
+      "rawError": "PostgresError: Errors parsing SQL statement:\n  - line 1:29 token recognition error at: '\u00a0'",
+      "defect": false
+    },
+    {
+      "name": "vt",
+      "guard": {
+        "accepted": true
+      },
+      "rawRows": null,
+      "rawError": "PostgresError: Errors parsing SQL statement:\n  - line 1:29 token recognition error at: '\u000b'",
+      "defect": false
+    },
+    {
+      "name": "ff",
+      "guard": {
+        "accepted": true
+      },
+      "rawRows": null,
+      "rawError": "PostgresError: Errors parsing SQL statement:\n  - line 1:29 token recognition error at: '\f'",
+      "defect": false
+    },
+    {
+      "name": "bom",
+      "guard": {
+        "accepted": true
+      },
+      "rawRows": null,
+      "rawError": "PostgresError: Errors parsing SQL statement:\n  - line 1:29 token recognition error at: '\ufeff'",
+      "defect": false
+    },
+    {
+      "name": "ls",
+      "guard": {
+        "accepted": true
+      },
+      "rawRows": null,
+      "rawError": "PostgresError: Errors parsing SQL statement:\n  - line 1:29 token recognition error at: '\u2028'",
+      "defect": false
+    },
+    {
+      "name": "narrow",
+      "guard": {
+        "accepted": true
+      },
+      "rawRows": null,
+      "rawError": "PostgresError: Errors parsing SQL statement:\n  - line 1:29 token recognition error at: '\u202f'",
+      "defect": false
+    }
+  ],
+  "offlineBoundaryControls": [
+    {
+      "name": "backtick-nested-array",
+      "sql": "SELECT 'x' AS v, 0 AS `a$tag$` WHERE 1 = ANY/**/(ARRAY[1,2]) AND EXISTS(SELECT 1 AS `$tag$b`)",
+      "accepted": true,
+      "exit": "Success({\"rows\":[{\"v\":\"x\"}],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-offline\\\",0]\",\"recordedPosition\":0,\"validAt\":1794177488932},\"trace\":{\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v, 0 AS `a$tag$` WHERE 1 = ANY/**/(ARRAY[1,2]) AND EXISTS(SELECT 1 AS `$tag$b`)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-offline\\\",0]\",\"recordedPosition\":0,\"validAt\":1794177488932},\"mappingId\":\"triplex-xtdb/assertion-native-basis/1\",\"contractId\":\"sha256-e6afedfc121d0f51354010a25cd0a1751d95f6e776b334b4ee39005062c12837\",\"elapsedMs\":2.317874999999958,\"steps\":[{\"phase\":\"source-cut\",\"language\":\"xtdb-sql\",\"query\":\"SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1\",\"parameters\":[\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-offline\\\",0]\"],\"elapsedMs\":0.10458300000004783},{\"phase\":\"answer\",\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v, 0 AS `a$tag$` WHERE 1 = ANY/**/(ARRAY[1,2]) AND EXISTS(SELECT 1 AS `$tag$b`)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"elapsedMs\":0.005334000000004835}]}})",
+      "defect": false,
+      "calls": [
+        "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1",
+        "SELECT * FROM (SELECT 'x' AS v, 0 AS `a$tag$` WHERE 1 = ANY/**/(ARRAY[1,2]) AND EXISTS(SELECT 1 AS `$tag$b`)\n) triplex_native_answer LIMIT 1001"
+      ],
+      "answerDispatched": true
+    },
+    {
+      "name": "identifier-nested-array",
+      "sql": "SELECT 'x' AS v, 0 AS a$tag$ WHERE 1 = ANY/**/(ARRAY[1,2]) AND EXISTS(SELECT 1 AS z$tag$b)",
+      "accepted": true,
+      "exit": "Success({\"rows\":[{\"v\":\"x\"}],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-offline\\\",0]\",\"recordedPosition\":0,\"validAt\":1794177488933},\"trace\":{\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v, 0 AS a$tag$ WHERE 1 = ANY/**/(ARRAY[1,2]) AND EXISTS(SELECT 1 AS z$tag$b)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-offline\\\",0]\",\"recordedPosition\":0,\"validAt\":1794177488933},\"mappingId\":\"triplex-xtdb/assertion-native-basis/1\",\"contractId\":\"sha256-e6afedfc121d0f51354010a25cd0a1751d95f6e776b334b4ee39005062c12837\",\"elapsedMs\":0.5641250000000468,\"steps\":[{\"phase\":\"source-cut\",\"language\":\"xtdb-sql\",\"query\":\"SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1\",\"parameters\":[\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-offline\\\",0]\"],\"elapsedMs\":0.016000000000019554},{\"phase\":\"answer\",\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 'x' AS v, 0 AS a$tag$ WHERE 1 = ANY/**/(ARRAY[1,2]) AND EXISTS(SELECT 1 AS z$tag$b)\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"elapsedMs\":0.0038749999999936335}]}})",
+      "defect": false,
+      "calls": [
+        "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1",
+        "SELECT * FROM (SELECT 'x' AS v, 0 AS a$tag$ WHERE 1 = ANY/**/(ARRAY[1,2]) AND EXISTS(SELECT 1 AS z$tag$b)\n) triplex_native_answer LIMIT 1001"
+      ],
+      "answerDispatched": true
+    },
+    {
+      "name": "backtick-mutation",
+      "sql": "SELECT 1 AS `a$tag$`; DELETE FROM tx_assertions; SELECT 2 AS `$tag$b`",
+      "accepted": true,
+      "exit": "Success({\"rows\":[{\"v\":\"x\"}],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-offline\\\",0]\",\"recordedPosition\":0,\"validAt\":1794177488934},\"trace\":{\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 1 AS `a$tag$`; DELETE FROM tx_assertions; SELECT 2 AS `$tag$b`\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-offline\\\",0]\",\"recordedPosition\":0,\"validAt\":1794177488934},\"mappingId\":\"triplex-xtdb/assertion-native-basis/1\",\"contractId\":\"sha256-e6afedfc121d0f51354010a25cd0a1751d95f6e776b334b4ee39005062c12837\",\"elapsedMs\":0.4781250000000341,\"steps\":[{\"phase\":\"source-cut\",\"language\":\"xtdb-sql\",\"query\":\"SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1\",\"parameters\":[\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-offline\\\",0]\"],\"elapsedMs\":0.007625000000018645},{\"phase\":\"answer\",\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 1 AS `a$tag$`; DELETE FROM tx_assertions; SELECT 2 AS `$tag$b`\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"elapsedMs\":0.002999999999985903}]}})",
+      "defect": false,
+      "calls": [
+        "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1",
+        "SELECT * FROM (SELECT 1 AS `a$tag$`; DELETE FROM tx_assertions; SELECT 2 AS `$tag$b`\n) triplex_native_answer LIMIT 1001"
+      ],
+      "answerDispatched": true
+    },
+    {
+      "name": "identifier-mutation",
+      "sql": "SELECT 1 AS a$tag$; DELETE FROM tx_assertions; SELECT 2 AS z$tag$b",
+      "accepted": true,
+      "exit": "Success({\"rows\":[{\"v\":\"x\"}],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-offline\\\",0]\",\"recordedPosition\":0,\"validAt\":1794177488934},\"trace\":{\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 1 AS a$tag$; DELETE FROM tx_assertions; SELECT 2 AS z$tag$b\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"basis\":{\"scope\":\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-offline\\\",0]\",\"recordedPosition\":0,\"validAt\":1794177488934},\"mappingId\":\"triplex-xtdb/assertion-native-basis/1\",\"contractId\":\"sha256-e6afedfc121d0f51354010a25cd0a1751d95f6e776b334b4ee39005062c12837\",\"elapsedMs\":0.2967079999999669,\"steps\":[{\"phase\":\"source-cut\",\"language\":\"xtdb-sql\",\"query\":\"SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1\",\"parameters\":[\"[\\\"triplex-scope-v1\\\",\\\"test\\\",\\\"test\\\",\\\"cx-vx02-r4-offline\\\",0]\"],\"elapsedMs\":0.007333000000016909},{\"phase\":\"answer\",\"language\":\"xtdb-sql\",\"query\":\"SELECT * FROM (SELECT 1 AS a$tag$; DELETE FROM tx_assertions; SELECT 2 AS z$tag$b\\n) triplex_native_answer LIMIT 1001\",\"parameters\":[],\"elapsedMs\":0.0027079999999841675}]}})",
+      "defect": false,
+      "calls": [
+        "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1",
+        "SELECT * FROM (SELECT 1 AS a$tag$; DELETE FROM tx_assertions; SELECT 2 AS z$tag$b\n) triplex_native_answer LIMIT 1001"
+      ],
+      "answerDispatched": true
+    }
+  ]
+}
