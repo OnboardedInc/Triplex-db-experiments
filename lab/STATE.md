@@ -47,7 +47,7 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | EXP-C8 reads never write (opus; SQL G2 run) | P1, C8 floor | both lanes |
 | EXP-W01b remaining XTDB scenarios (opus, W01 author resumed) | GS correctness on XTDB | 12 scenarios, GS.04 rerun, GS.12 patch |
 | P2Q fix round 2 (opus, P2Q author a56ab43df1f0e0ef7 resumed; exp/P2Q-qlever-log-broker) | P2, P3 | Q72a lock helper, Q72b/Q67c answer snapshot, Q72c reasons, Q67d P3 timing |
-| V-E01 independent check of claim.mjs at 2796455 (opus, fresh; verify/E01; brief lab/verify/E01/BRIEF.md) | floor for every claim | verdict on merging E01 |
+| EXP-E01 fix round 2 (opus, E01 author resumed): Q75a-j plus the 0.3.10 field names (slot to placement, Q67g) | floor for every claim | then V-E01 delta check (resume a38618f4537a2f419) |
 | V-X02 XTQL lane verification (opus) | XTQL primary lane | verdict on exp/X02-xtql-parity bf1ad4d |
 | EXP-P4 current-value path (opus) | P4 | read-path arms X1, X2, H1, Q1 |
 | V-O04g re-check of O-REPLAY 0.4.7 91ba352 (opus, resumed; brief lab/verify/O02/V-O04g/BRIEF.md) | correctness floor | ACCEPT -> pin 0.4.7 in contract 0.3.11 with Q70 compiled |
@@ -62,7 +62,7 @@ Codex plan-v2 review DONE: NOT READY, 14 findings all accepted (lab/reviews/plan
 0. EXP-O05 O-OBS observation oracle (brief lab/experiments/EXP-O05-observation-oracle/BRIEF.md): dispatch at the next free slot;
    O-OBS blocks 62 of 157 obligations, then V-O05 and a pin. Next after it: O-HAND hand derivations (20 obligations).
 1. DONE: contract 0.3.10 merged 64ab545 (65 of 157 closable; 284/284 regressions); W0 kernel merged a199182.
-1a. E01 adapts claim.mjs to 0.3.10 field names (workload slot moved to placement, Q67g; claim.mjs:894) after V-E01 reports; then a delta check.
+1a. Contract 0.3.11 (A01): pin O-REPLAY 0.4.7 if V-O04g accepts; compile Q70, Q73, Q74, Q75 (Q75c pinned runners in contractBlockers, Q75g comparators inside O-REPLAY answers, Q75i promotion in admit_claim).
 1d. A0 XTDB P1 ladder at an informative rung (`--subjects 500 --probe10-per-s 0`, N01 estimate +-2x) on s1 after V-X02 releases it;
     resume N01 a4d931a315c6b5664. Use R26's clone procedure if it is faithful.
 1e. engine.mjs build-index-from-seed step for QLever (N01's 10k bulk seed at runs/qlever-seed/ns-v2-10k/), then the QLever A0 NS run.
