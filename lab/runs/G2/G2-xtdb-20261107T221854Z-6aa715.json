@@ -1,0 +1,1289 @@
+{
+  "format": "tx2-gate-receipt/1",
+  "gate": "G2",
+  "lane": "xtdb",
+  "slot": "dev",
+  "runId": "G2-xtdb-20261107T221854Z-6aa715",
+  "experiment": "EXP-C8",
+  "note": "C8 smoke: recursive workloads, XTQL, read-only frontier",
+  "previous": null,
+  "startedAt": "2026-11-07T22:18:54.160Z",
+  "endedAt": "2026-11-07T22:31:59.659Z",
+  "durationMs": 785499,
+  "scope": "subset:34/142 (workloads 11,13,14,15,20)",
+  "runKind": "diagnostic",
+  "mutation": null,
+  "contractVersion": "0.3.4",
+  "contract": {
+    "format": "triplex-db-2/acceptance-obligations/3",
+    "version": "0.3.4",
+    "status": "CANDIDATE-1.0.0: retargeted to Sam's re-scope (SCOPE.md, NORTH-STAR.md, TARGETS.md); freezes as 1.0.0 after orchestrator acceptance and adversarial review",
+    "sha256": "8f287cd0aa4eb4d96d6ff102eddfdabf1cdc80d74af576517ad382fbf9d4ef81"
+  },
+  "obligations": [],
+  "engineName": "xtdb",
+  "git": {
+    "head": "d508c289ddf07d449c5d1d6e6f6996e7731b85df",
+    "headTree": "0eec2b2a9dd99037876170c2480275e34ab63943",
+    "branch": "exp/C8-read-only-frontier",
+    "dirty": true,
+    "stashCommit": "072ed607f3bda9aa72252feab7598e1715a02ad9",
+    "stashTree": "c6f31b75be0b16a3bb9aab58ee908d3471857de1",
+    "diffScope": [
+      "packages",
+      "qualification",
+      "lab/bin",
+      "lab/config",
+      "vitest.workspace-aliases.ts",
+      "tsconfig.base.json",
+      "tsconfig.node.json",
+      "package.json",
+      "pnpm-workspace.yaml",
+      "pnpm-lock.yaml",
+      "turbo.json"
+    ],
+    "diffSha256": "3c23b8091d26bc6bacecd7772fbeb696dcb45d99a52ba9ee90187ae9bd1c8ad1",
+    "diffBytes": 5267,
+    "modifiedFiles": [
+      {
+        "path": "lab/bin/gate.mjs",
+        "bytes": 41285,
+        "sha256": "315dd668874aaf8a284313da014ef44f36d4ee22370e793e9501709ae42c5ec3"
+      },
+      {
+        "path": "packages/qualification/src/index.ts",
+        "bytes": 13695,
+        "sha256": "b95e16f17d76c0947b5766e1335000d0b2601f5a362e4dfe903aaecfbdc238a8"
+      },
+      {
+        "path": "packages/qualification/workloads/runner.ts",
+        "bytes": 41055,
+        "sha256": "e13a872ea5bde90a9bcf37f83885036df4f635295ce57ab45261d78928567208"
+      }
+    ],
+    "untrackedFiles": [],
+    "otherDirtyPaths": [],
+    "sourceTreeId": "ec553ddc607bfe4961dee30cb1a54c0f0be787a1938e4996b88b2ed69c7f01f2"
+  },
+  "lockfileSha256": "7a02f735718ecdd29fdbfaf8ec2e2b05c92ad773cdc27d1920a278c5c7f4ba14",
+  "toolchain": {
+    "node": "v22.23.2",
+    "pnpm": "10.11.0",
+    "platform": "darwin-arm64"
+  },
+  "gateScripts": {
+    "lab/bin/gate.mjs": "315dd668874aaf8a284313da014ef44f36d4ee22370e793e9501709ae42c5ec3",
+    "lab/bin/lib.mjs": "199ba832f81bc8e228bf6e29de0fbd2ef872a4b1d15fd40d2523a49be1f28740",
+    "lab/bin/receipt.mjs": "b6511d1eab385fcf453fe628aa4dd5437e3b78c02a2eca84165dcaa246c5abad",
+    "lab/bin/engine.mjs": "2c3bd842205e572a0cd456f2ceaf2a0d1003fd1553b03f446a27874b170ee72e",
+    "lab/bin/heavy-lock.mjs": "88dd2071c8d8c1e3212c9a65dc719b79af46fbe6cc2e6ede8fbe0b61112803fa",
+    "lab/config/slots.json": "36013a8c81758db005c8242f819d12df43c621fd8c9335565976e242a39679c5"
+  },
+  "build": {
+    "manifestSha256": "7d4c78048e7377beace19b28af1e671dbc284b50d5ec367b418a284397021d3d",
+    "manifest": "runs/G2/G2-xtdb-20261107T221854Z-6aa715/build-manifest.json",
+    "packages": {
+      "core": {
+        "files": 416,
+        "bytes": 2664375,
+        "sha256": "5d16f5b3a0d1f4aa6b0a7a0e445a8d53954de683bd6eff2276fd99900eba4fbe"
+      },
+      "testkit": {
+        "files": 4,
+        "bytes": 247745,
+        "sha256": "b30558fbe016aa34202d9f260055ea944877ce3176a7604e2522e53a02c7251f"
+      },
+      "xtdb": {
+        "files": 80,
+        "bytes": 418759,
+        "sha256": "7efc46b28a3a6663dd7bd4ca8dfd8b67d9401814eccbea3904824ff06ef3f0da"
+      },
+      "qualification": {
+        "files": 28,
+        "bytes": 349586,
+        "sha256": "4627c4806af0b6625ba9c3dd48a4ade1fafcdad1fac47dc5971b604b15f588b2"
+      }
+    }
+  },
+  "engine": {
+    "container": "tx2-xtdb-dev",
+    "containerId": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+    "startedAt": "2026-11-07T19:39:01.589983918Z",
+    "imageId": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+    "repoDigests": [
+      "ghcr.io/xtdb/xtdb@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77"
+    ],
+    "configSha256": "034fff1703f2ecebb49b5ddeeaed4ee4e2a197ece368a6bdc93b074355e785ac",
+    "effectiveConfig": {
+      "lane": "xtdb",
+      "slot": "dev",
+      "image": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+      "configYamlSha256": "f6e1248ebb09af8a6959d67d15e0355a0be4c3783d8c3fc97ba97b00c7b3e379",
+      "env": {
+        "JDK_JAVA_OPTIONS": "-Xmx1500m -XX:MaxDirectMemorySize=1g"
+      },
+      "memBytes": 3221225472,
+      "cpus": 2,
+      "publish": "127.0.0.1:5470:5432",
+      "volume": "tx2-xtdb-dev-data:/var/lib/xtdb",
+      "cmd": [
+        "-f",
+        "/etc/xtdb/config.yaml"
+      ],
+      "health": "wget -q -O /dev/null http://127.0.0.1:8080/healthz/alive"
+    },
+    "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5470/xtdb",
+    "port": 5470,
+    "memCapBytes": 3221225472,
+    "nanoCpus": 2000000000,
+    "ownerSha256": "a1ae3fbcd98bb1de559f5ad0d4b18ea159902e58a64c313db391eb771fcec2a6",
+    "holder": "worktree:/Users/sam/projects/triplex-db-2"
+  },
+  "profile": {
+    "name": "default",
+    "env": {}
+  },
+  "queryPath": "xtdb-native",
+  "diskBefore": {
+    "totalBytes": 63088406528,
+    "usedBytes": 17735376896,
+    "availableBytes": 42115133440
+  },
+  "containers": {
+    "tx2-qlever-dev": {
+      "samples": 257,
+      "peakMemBytes": 1165009879,
+      "peakCpuPercent": 210.37,
+      "memLimitBytes": 3758096384
+    },
+    "tx2-xtdb-s1": {
+      "samples": 257,
+      "peakMemBytes": 3711925486,
+      "peakCpuPercent": 207.39,
+      "memLimitBytes": 3758096384
+    },
+    "tx2-xtdb-dev": {
+      "samples": 257,
+      "peakMemBytes": 2830383448,
+      "peakCpuPercent": 251.86,
+      "memLimitBytes": 3221225472
+    },
+    "--": {
+      "samples": 2,
+      "peakMemBytes": 0,
+      "peakCpuPercent": 0,
+      "memLimitBytes": null
+    }
+  },
+  "coRunning": [
+    {
+      "name": "tx2-qlever-dev",
+      "memCapBytes": 3758096384,
+      "nanoCpus": 2000000000,
+      "health": "healthy"
+    },
+    {
+      "name": "tx2-xtdb-s1",
+      "memCapBytes": 3758096384,
+      "nanoCpus": 2000000000,
+      "health": "healthy"
+    },
+    {
+      "name": "tx2-xtdb-dev",
+      "memCapBytes": 3221225472,
+      "nanoCpus": 2000000000,
+      "health": "healthy"
+    }
+  ],
+  "volumeBytes": 2202071040,
+  "diskAfter": {
+    "totalBytes": 63088406528,
+    "usedBytes": 19131879424,
+    "availableBytes": 40718630912
+  },
+  "fixtures": {
+    "qualification/workloads/temporal-workloads.json": "322c773db2049b5a704d36925738859aef4982ca27194d13a659d1b0e9081271",
+    "qualification/workloads/access_cases.mjs": "9de17a852621ac4a69492fed124b54effa4d39f87c9f4576b7e77845e0c9af0f",
+    "qualification/workloads/containment_cases.mjs": "401a4bb5c3b64bf1d518374449592b89cc1629f413c6806d0b34fbdb53a295bd",
+    "qualification/workloads/dependency_cases.mjs": "faaa7ef47c4112ff06d69d1f888b373be48587cbc00f340e8f72cdfb842fe261",
+    "qualification/workloads/engine_cases.mjs": "321672018338d88b75188a489aa296418938651b79c2c48cc3940d813e714d50",
+    "qualification/workloads/funnel_cases.mjs": "ce3bf3ee86bb8db657ed3a643b8515bea309232d6db86dd96e76a18e7cbb2faa",
+    "qualification/workloads/interval_join_cases.mjs": "8155ee3655fa8c8be4d20d90e6523cf1448e47aef4fdae45723833ae93eeed85",
+    "qualification/workloads/recall_cases.mjs": "261247cc646e5eab3bf8c6bcdf84404f4b6b9cda07b885c94ca3d7a3906ac99c",
+    "qualification/workloads/support_cases.mjs": "3114043605a922218ae3fe1feeb4949d280f4dbe5e24d98159a8a691c5cebc02",
+    "qualification/workloads/test_engine_cases.mjs": "7d1d406e659f8a9f917c84a6a9c76517b0262cae07851500b58fa6ead1dd409a",
+    "qualification/workloads/training_cases.mjs": "1474e7fd1ace7d18906d347de2a515149880542086e59feaf8cbcc0ffd1bd076",
+    "qualification/workloads/uptime_cases.mjs": "432a4556422acf4122282c89757a12e926bcdf543551cce497b4c3519c3c4fe9",
+    "qualification/workloads/webhook_cases.mjs": "084549364af26a6efdf472e521e1a1a8fde7c08389e96810816da43d3d151e54",
+    "packages/qualification/workloads/runner.ts": "e13a872ea5bde90a9bcf37f83885036df4f635295ce57ab45261d78928567208"
+  },
+  "packet": {
+    "id": "temporal-workloads/1@sha256:322c773db2049b5a704d36925738859aef4982ca27194d13a659d1b0e9081271",
+    "format": "temporal-workloads/1",
+    "sha256": "322c773db2049b5a704d36925738859aef4982ca27194d13a659d1b0e9081271",
+    "workloads": 20,
+    "cases": 71
+  },
+  "contactedEndpoint": "postgres://xtdb:xtdb@127.0.0.1:5470/xtdb",
+  "readPathEngineWrites": {
+    "method": "wire-proxy/engine-write-counter.ts; native read client only",
+    "lane": "xtdb",
+    "connections": 23,
+    "statements": 200,
+    "writes": 0,
+    "commits": 0,
+    "commands": 0,
+    "unparsed": 0,
+    "samples": []
+  },
+  "counts": {
+    "executed": 34,
+    "expected": 34,
+    "pass": 25,
+    "fail": 9,
+    "skip": 0,
+    "statuses": {
+      "PASS": 25,
+      "FAIL_PUBLIC_API": 9
+    }
+  },
+  "languages": {
+    "answer": {
+      "xtql": 31,
+      "none": 3
+    },
+    "strict": {
+      "xtql": 31,
+      "none": 3
+    },
+    "passByAnswer": {
+      "xtql": 25
+    },
+    "rule": "answer: an execution counts for a language only if every native answer query it ran used that language; mixed = hybrid (counts for neither). strict additionally includes substeps (XTDB source-cut position lookup is always xtdb-sql)."
+  },
+  "cases": [
+    {
+      "caseId": "11/inherited-allow",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "7e03868e03895174f50c24b575ce2976e2b8e6de490268eee91ba203c8b01dc7",
+      "languages": [
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql"
+      ],
+      "answerLanguages": [
+        "xtql"
+      ],
+      "languageClass": {
+        "answer": "xtql",
+        "strict": "xtql"
+      }
+    },
+    {
+      "caseId": "11/expired-membership",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "6d95a57fe80d254f1323245e8cafc6483587d3a48eafe1507b025d363bba1f3b",
+      "languages": [
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql"
+      ],
+      "answerLanguages": [
+        "xtql"
+      ],
+      "languageClass": {
+        "answer": "xtql",
+        "strict": "xtql"
+      }
+    },
+    {
+      "caseId": "11/unknown-user",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "6d95a57fe80d254f1323245e8cafc6483587d3a48eafe1507b025d363bba1f3b",
+      "languages": [
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql"
+      ],
+      "answerLanguages": [
+        "xtql"
+      ],
+      "languageClass": {
+        "answer": "xtql",
+        "strict": "xtql"
+      }
+    },
+    {
+      "caseId": "11/inherited-allow",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "7e03868e03895174f50c24b575ce2976e2b8e6de490268eee91ba203c8b01dc7",
+      "languages": [
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql"
+      ],
+      "answerLanguages": [
+        "xtql"
+      ],
+      "languageClass": {
+        "answer": "xtql",
+        "strict": "xtql"
+      }
+    },
+    {
+      "caseId": "11/expired-membership",
+      "mode": "reopen",
+      "status": "FAIL_PUBLIC_API",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+      "languages": [],
+      "answerLanguages": [],
+      "languageClass": {
+        "answer": "none",
+        "strict": "none"
+      }
+    },
+    {
+      "caseId": "11/unknown-user",
+      "mode": "reopen",
+      "status": "FAIL_PUBLIC_API",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+      "languages": [],
+      "answerLanguages": [],
+      "languageClass": {
+        "answer": "none",
+        "strict": "none"
+      }
+    },
+    {
+      "caseId": "13/nested-items",
+      "mode": "current",
+      "status": "FAIL_PUBLIC_API",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+      "languages": [
+        "xtql",
+        "xtql"
+      ],
+      "answerLanguages": [
+        "xtql"
+      ],
+      "languageClass": {
+        "answer": "xtql",
+        "strict": "xtql"
+      }
+    },
+    {
+      "caseId": "13/move-boundary",
+      "mode": "current",
+      "status": "FAIL_PUBLIC_API",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+      "languages": [
+        "xtql",
+        "xtql"
+      ],
+      "answerLanguages": [
+        "xtql"
+      ],
+      "languageClass": {
+        "answer": "xtql",
+        "strict": "xtql"
+      }
+    },
+    {
+      "caseId": "13/move-not-yet-known",
+      "mode": "current",
+      "status": "FAIL_PUBLIC_API",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+      "languages": [
+        "xtql",
+        "xtql"
+      ],
+      "answerLanguages": [
+        "xtql"
+      ],
+      "languageClass": {
+        "answer": "xtql",
+        "strict": "xtql"
+      }
+    },
+    {
+      "caseId": "13/destination",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "183e8a17801dcc0d72affeb2c02a0b7ba5e402ff1004419152ede015acfff77e",
+      "languages": [
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql"
+      ],
+      "answerLanguages": [
+        "xtql"
+      ],
+      "languageClass": {
+        "answer": "xtql",
+        "strict": "xtql"
+      }
+    },
+    {
+      "caseId": "13/nested-items",
+      "mode": "reopen",
+      "status": "FAIL_PUBLIC_API",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+      "languages": [
+        "xtql",
+        "xtql"
+      ],
+      "answerLanguages": [
+        "xtql"
+      ],
+      "languageClass": {
+        "answer": "xtql",
+        "strict": "xtql"
+      }
+    },
+    {
+      "caseId": "13/move-boundary",
+      "mode": "reopen",
+      "status": "FAIL_PUBLIC_API",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+      "languages": [
+        "xtql",
+        "xtql"
+      ],
+      "answerLanguages": [
+        "xtql"
+      ],
+      "languageClass": {
+        "answer": "xtql",
+        "strict": "xtql"
+      }
+    },
+    {
+      "caseId": "13/move-not-yet-known",
+      "mode": "reopen",
+      "status": "FAIL_PUBLIC_API",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+      "languages": [
+        "xtql",
+        "xtql"
+      ],
+      "answerLanguages": [
+        "xtql"
+      ],
+      "languageClass": {
+        "answer": "xtql",
+        "strict": "xtql"
+      }
+    },
+    {
+      "caseId": "13/destination",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "183e8a17801dcc0d72affeb2c02a0b7ba5e402ff1004419152ede015acfff77e",
+      "languages": [
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql"
+      ],
+      "answerLanguages": [
+        "xtql"
+      ],
+      "languageClass": {
+        "answer": "xtql",
+        "strict": "xtql"
+      }
+    },
+    {
+      "caseId": "14/affected-customer",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "cced14f359635ccef8ae99c42119e3a6cc1bac490aa4bda5c860e8f33545b773",
+      "languages": [
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql"
+      ],
+      "answerLanguages": [
+        "xtql"
+      ],
+      "languageClass": {
+        "answer": "xtql",
+        "strict": "xtql"
+      }
+    },
+    {
+      "caseId": "14/corrected-genealogy",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "languages": [
+        "xtql",
+        "xtql",
+        "xtql"
+      ],
+      "answerLanguages": [
+        "xtql"
+      ],
+      "languageClass": {
+        "answer": "xtql",
+        "strict": "xtql"
+      }
+    },
+    {
+      "caseId": "14/before-shipment",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "languages": [
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql"
+      ],
+      "answerLanguages": [
+        "xtql"
+      ],
+      "languageClass": {
+        "answer": "xtql",
+        "strict": "xtql"
+      }
+    },
+    {
+      "caseId": "14/affected-customer",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "cced14f359635ccef8ae99c42119e3a6cc1bac490aa4bda5c860e8f33545b773",
+      "languages": [
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql"
+      ],
+      "answerLanguages": [
+        "xtql"
+      ],
+      "languageClass": {
+        "answer": "xtql",
+        "strict": "xtql"
+      }
+    },
+    {
+      "caseId": "14/corrected-genealogy",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "languages": [
+        "xtql",
+        "xtql",
+        "xtql"
+      ],
+      "answerLanguages": [
+        "xtql"
+      ],
+      "languageClass": {
+        "answer": "xtql",
+        "strict": "xtql"
+      }
+    },
+    {
+      "caseId": "14/before-shipment",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "languages": [
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql"
+      ],
+      "answerLanguages": [
+        "xtql"
+      ],
+      "languageClass": {
+        "answer": "xtql",
+        "strict": "xtql"
+      }
+    },
+    {
+      "caseId": "15/diamond-cycle",
+      "mode": "current",
+      "status": "FAIL_PUBLIC_API",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+      "languages": [],
+      "answerLanguages": [],
+      "languageClass": {
+        "answer": "none",
+        "strict": "none"
+      }
+    },
+    {
+      "caseId": "15/vulnerability-end",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "languages": [
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql"
+      ],
+      "answerLanguages": [
+        "xtql"
+      ],
+      "languageClass": {
+        "answer": "xtql",
+        "strict": "xtql"
+      }
+    },
+    {
+      "caseId": "15/dependency-set",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "582057b39b587f9ffe0363d2be4b28c9262d9528fe1ffcee21a2d9dd0b5c0685",
+      "languages": [
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql"
+      ],
+      "answerLanguages": [
+        "xtql"
+      ],
+      "languageClass": {
+        "answer": "xtql",
+        "strict": "xtql"
+      }
+    },
+    {
+      "caseId": "15/diamond-cycle",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "e7ef195bcfaada605ce118b8c7584996760b74079932c1cd589fa8cbb72f11d5",
+      "languages": [
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql"
+      ],
+      "answerLanguages": [
+        "xtql"
+      ],
+      "languageClass": {
+        "answer": "xtql",
+        "strict": "xtql"
+      }
+    },
+    {
+      "caseId": "15/vulnerability-end",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "languages": [
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql"
+      ],
+      "answerLanguages": [
+        "xtql"
+      ],
+      "languageClass": {
+        "answer": "xtql",
+        "strict": "xtql"
+      }
+    },
+    {
+      "caseId": "15/dependency-set",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "582057b39b587f9ffe0363d2be4b28c9262d9528fe1ffcee21a2d9dd0b5c0685",
+      "languages": [
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql"
+      ],
+      "answerLanguages": [
+        "xtql"
+      ],
+      "languageClass": {
+        "answer": "xtql",
+        "strict": "xtql"
+      }
+    },
+    {
+      "caseId": "20/two-supports",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "69fca8466d55f80cbac9ce4367df505df6c3b540ced1ddb9760c32dbe638d935",
+      "languages": [
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql"
+      ],
+      "answerLanguages": [
+        "xtql"
+      ],
+      "languageClass": {
+        "answer": "xtql",
+        "strict": "xtql"
+      }
+    },
+    {
+      "caseId": "20/one-support",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "5854a957d856d2a8ca567522f5dbe54ea475ad5b35e13f15c39c0194f849b001",
+      "languages": [
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql"
+      ],
+      "answerLanguages": [
+        "xtql"
+      ],
+      "languageClass": {
+        "answer": "xtql",
+        "strict": "xtql"
+      }
+    },
+    {
+      "caseId": "20/last-support-removed",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "ab7f27edf609e4481ac8625e1cff39ebfa71c3da65b6ad15066d8b7208af10eb",
+      "languages": [
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql"
+      ],
+      "answerLanguages": [
+        "xtql"
+      ],
+      "languageClass": {
+        "answer": "xtql",
+        "strict": "xtql"
+      }
+    },
+    {
+      "caseId": "20/remaining-closure",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "154e1522bca194ecc312d889a9e6e213910634b917b9dde8003bf831b108bc21",
+      "languages": [
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql"
+      ],
+      "answerLanguages": [
+        "xtql"
+      ],
+      "languageClass": {
+        "answer": "xtql",
+        "strict": "xtql"
+      }
+    },
+    {
+      "caseId": "20/two-supports",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "69fca8466d55f80cbac9ce4367df505df6c3b540ced1ddb9760c32dbe638d935",
+      "languages": [
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql"
+      ],
+      "answerLanguages": [
+        "xtql"
+      ],
+      "languageClass": {
+        "answer": "xtql",
+        "strict": "xtql"
+      }
+    },
+    {
+      "caseId": "20/one-support",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "5854a957d856d2a8ca567522f5dbe54ea475ad5b35e13f15c39c0194f849b001",
+      "languages": [
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql"
+      ],
+      "answerLanguages": [
+        "xtql"
+      ],
+      "languageClass": {
+        "answer": "xtql",
+        "strict": "xtql"
+      }
+    },
+    {
+      "caseId": "20/last-support-removed",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "ab7f27edf609e4481ac8625e1cff39ebfa71c3da65b6ad15066d8b7208af10eb",
+      "languages": [
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql"
+      ],
+      "answerLanguages": [
+        "xtql"
+      ],
+      "languageClass": {
+        "answer": "xtql",
+        "strict": "xtql"
+      }
+    },
+    {
+      "caseId": "20/remaining-closure",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "154e1522bca194ecc312d889a9e6e213910634b917b9dde8003bf831b108bc21",
+      "languages": [
+        "xtql",
+        "xtql",
+        "xtql",
+        "xtql"
+      ],
+      "answerLanguages": [
+        "xtql"
+      ],
+      "languageClass": {
+        "answer": "xtql",
+        "strict": "xtql"
+      }
+    }
+  ],
+  "scopes": {
+    "workloads": [
+      "[\"triplex-scope-v1\",\"test\",\"test\",\"xtdb-workload-87ea5bf6-d9e3-4cb2-8d0a-30603cb8b70d-11\",0]",
+      "[\"triplex-scope-v1\",\"test\",\"test\",\"xtdb-workload-87ea5bf6-d9e3-4cb2-8d0a-30603cb8b70d-13\",0]",
+      "[\"triplex-scope-v1\",\"test\",\"test\",\"xtdb-workload-87ea5bf6-d9e3-4cb2-8d0a-30603cb8b70d-14\",0]",
+      "[\"triplex-scope-v1\",\"test\",\"test\",\"xtdb-workload-87ea5bf6-d9e3-4cb2-8d0a-30603cb8b70d-15\",0]",
+      "[\"triplex-scope-v1\",\"test\",\"test\",\"xtdb-workload-87ea5bf6-d9e3-4cb2-8d0a-30603cb8b70d-20\",0]"
+    ],
+    "fresh": true
+  },
+  "timings": {
+    "workloads": [
+      {
+        "id": "11",
+        "status": "FAIL",
+        "ingestMs": 3236.7072909999997,
+        "queryMs": 127809.345793
+      },
+      {
+        "id": "13",
+        "status": "FAIL",
+        "ingestMs": 36683.950209,
+        "queryMs": 276486.470165
+      },
+      {
+        "id": "14",
+        "status": "PASS_FUNCTIONAL_ONLY",
+        "ingestMs": 22196.774916999973,
+        "queryMs": 93741.10516699991
+      },
+      {
+        "id": "15",
+        "status": "FAIL",
+        "ingestMs": 1962.740208000061,
+        "queryMs": 81328.14583400008
+      },
+      {
+        "id": "20",
+        "status": "PASS_FUNCTIONAL_ONLY",
+        "ingestMs": 43990.934750999906,
+        "queryMs": 71827.8593319999
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "pnpm-version",
+      "command": "pnpm --version",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 626,
+      "cwd": ".",
+      "stdout": "runs/G2/G2-xtdb-20261107T221854Z-6aa715/pnpm-version.stdout.txt",
+      "stderr": "runs/G2/G2-xtdb-20261107T221854Z-6aa715/pnpm-version.stderr.txt"
+    },
+    {
+      "name": "build",
+      "command": "pnpm --filter @triplex-build/triplex --filter @triplex-build/triplex-testkit --filter @triplex-build/triplex-xtdb --filter @triplex-build/triplex-qualification build",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 13131,
+      "cwd": ".",
+      "stdout": "runs/G2/G2-xtdb-20261107T221854Z-6aa715/build.stdout.txt",
+      "stderr": "runs/G2/G2-xtdb-20261107T221854Z-6aa715/build.stderr.txt"
+    },
+    {
+      "name": "native-runner",
+      "command": "node packages/qualification/workloads/runner.ts --output /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/runs/G2/G2-xtdb-20261107T221854Z-6aa715/g2-report.json --results-output /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/runs/G2/G2-xtdb-20261107T221854Z-6aa715/g2-results.json --workloads 11,13,14,15,20",
+      "code": 1,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 767060,
+      "cwd": ".",
+      "stdout": "runs/G2/G2-xtdb-20261107T221854Z-6aa715/native-runner.stdout.txt",
+      "stderr": "runs/G2/G2-xtdb-20261107T221854Z-6aa715/native-runner.stderr.txt"
+    }
+  ],
+  "firstFailures": [
+    {
+      "task": "11/expired-membership",
+      "reopen": true,
+      "status": "FAIL_PUBLIC_API",
+      "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])"
+    },
+    {
+      "task": "11/unknown-user",
+      "reopen": true,
+      "status": "FAIL_PUBLIC_API",
+      "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])"
+    },
+    {
+      "task": "13/nested-items",
+      "reopen": false,
+      "status": "FAIL_PUBLIC_API",
+      "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])"
+    },
+    {
+      "task": "13/move-boundary",
+      "reopen": false,
+      "status": "FAIL_PUBLIC_API",
+      "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])"
+    },
+    {
+      "task": "13/move-not-yet-known",
+      "reopen": false,
+      "status": "FAIL_PUBLIC_API",
+      "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])"
+    },
+    {
+      "task": "13/nested-items",
+      "reopen": true,
+      "status": "FAIL_PUBLIC_API",
+      "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])"
+    },
+    {
+      "task": "13/move-boundary",
+      "reopen": true,
+      "status": "FAIL_PUBLIC_API",
+      "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])"
+    },
+    {
+      "task": "13/move-not-yet-known",
+      "reopen": true,
+      "status": "FAIL_PUBLIC_API",
+      "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])"
+    },
+    {
+      "task": "15/diamond-cycle",
+      "reopen": false,
+      "status": "FAIL_PUBLIC_API",
+      "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])"
+    }
+  ],
+  "rawDir": "runs/G2/G2-xtdb-20261107T221854Z-6aa715",
+  "reasons": [
+    "9 failed executions"
+  ],
+  "verdict": "FAIL",
+  "objects": [
+    {
+      "path": "git diff HEAD --binary",
+      "role": "git-diff-head-binary",
+      "bytes": 5267,
+      "sha256": "3c23b8091d26bc6bacecd7772fbeb696dcb45d99a52ba9ee90187ae9bd1c8ad1"
+    },
+    {
+      "path": "lab/bin/gate.mjs",
+      "role": "modified-input",
+      "bytes": 41285,
+      "sha256": "315dd668874aaf8a284313da014ef44f36d4ee22370e793e9501709ae42c5ec3"
+    },
+    {
+      "path": "packages/qualification/src/index.ts",
+      "role": "modified-input",
+      "bytes": 13695,
+      "sha256": "b95e16f17d76c0947b5766e1335000d0b2601f5a362e4dfe903aaecfbdc238a8"
+    },
+    {
+      "path": "packages/qualification/workloads/runner.ts",
+      "role": "modified-input",
+      "bytes": 41055,
+      "sha256": "e13a872ea5bde90a9bcf37f83885036df4f635295ce57ab45261d78928567208"
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "role": "lockfile",
+      "bytes": 289866,
+      "sha256": "7a02f735718ecdd29fdbfaf8ec2e2b05c92ad773cdc27d1920a278c5c7f4ba14"
+    },
+    {
+      "path": "lab/bin/gate.mjs",
+      "role": "gate-script",
+      "bytes": 41285,
+      "sha256": "315dd668874aaf8a284313da014ef44f36d4ee22370e793e9501709ae42c5ec3"
+    },
+    {
+      "path": "lab/bin/lib.mjs",
+      "role": "gate-script",
+      "bytes": 19956,
+      "sha256": "199ba832f81bc8e228bf6e29de0fbd2ef872a4b1d15fd40d2523a49be1f28740"
+    },
+    {
+      "path": "lab/bin/receipt.mjs",
+      "role": "gate-script",
+      "bytes": 5027,
+      "sha256": "b6511d1eab385fcf453fe628aa4dd5437e3b78c02a2eca84165dcaa246c5abad"
+    },
+    {
+      "path": "lab/bin/engine.mjs",
+      "role": "gate-script",
+      "bytes": 17892,
+      "sha256": "2c3bd842205e572a0cd456f2ceaf2a0d1003fd1553b03f446a27874b170ee72e"
+    },
+    {
+      "path": "lab/bin/heavy-lock.mjs",
+      "role": "gate-script",
+      "bytes": 1841,
+      "sha256": "88dd2071c8d8c1e3212c9a65dc719b79af46fbe6cc2e6ede8fbe0b61112803fa"
+    },
+    {
+      "path": "lab/config/slots.json",
+      "role": "gate-script",
+      "bytes": 3434,
+      "sha256": "36013a8c81758db005c8242f819d12df43c621fd8c9335565976e242a39679c5"
+    },
+    {
+      "path": "runs/G2/G2-xtdb-20261107T221854Z-6aa715/build-manifest.json",
+      "role": "build-manifest",
+      "bytes": 105110,
+      "sha256": "7d4c78048e7377beace19b28af1e671dbc284b50d5ec367b418a284397021d3d"
+    },
+    {
+      "path": "xtdb-dev effective config",
+      "role": "engine-effective-config",
+      "bytes": 565,
+      "sha256": "5c4691cd927710c522b1f20e0d2100a994a0383bf5f0190a8fc7abba9f90fe9c"
+    },
+    {
+      "path": "config.yaml",
+      "role": "engine-config-file",
+      "bytes": 198,
+      "sha256": "f6e1248ebb09af8a6959d67d15e0355a0be4c3783d8c3fc97ba97b00c7b3e379"
+    },
+    {
+      "path": "runs/G2/G2-xtdb-20261107T221854Z-6aa715/build-manifest-after.json",
+      "role": "build-manifest",
+      "bytes": 105110,
+      "sha256": "7d4c78048e7377beace19b28af1e671dbc284b50d5ec367b418a284397021d3d"
+    },
+    {
+      "path": "runs/G2/G2-xtdb-20261107T221854Z-6aa715/native-runner.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 457,
+      "sha256": "040950a01365f20190b6d9f97e38203457da3e4abcb666914d69f54120c6bd6d"
+    },
+    {
+      "path": "runs/G2/G2-xtdb-20261107T221854Z-6aa715/native-runner.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "qualification/workloads/temporal-workloads.json",
+      "role": "oracle-fixture",
+      "bytes": 124581,
+      "sha256": "322c773db2049b5a704d36925738859aef4982ca27194d13a659d1b0e9081271"
+    },
+    {
+      "path": "qualification/workloads/access_cases.mjs",
+      "role": "oracle-fixture",
+      "bytes": 7058,
+      "sha256": "9de17a852621ac4a69492fed124b54effa4d39f87c9f4576b7e77845e0c9af0f"
+    },
+    {
+      "path": "qualification/workloads/containment_cases.mjs",
+      "role": "oracle-fixture",
+      "bytes": 3879,
+      "sha256": "401a4bb5c3b64bf1d518374449592b89cc1629f413c6806d0b34fbdb53a295bd"
+    },
+    {
+      "path": "qualification/workloads/dependency_cases.mjs",
+      "role": "oracle-fixture",
+      "bytes": 6386,
+      "sha256": "faaa7ef47c4112ff06d69d1f888b373be48587cbc00f340e8f72cdfb842fe261"
+    },
+    {
+      "path": "qualification/workloads/engine_cases.mjs",
+      "role": "oracle-fixture",
+      "bytes": 17684,
+      "sha256": "321672018338d88b75188a489aa296418938651b79c2c48cc3940d813e714d50"
+    },
+    {
+      "path": "qualification/workloads/funnel_cases.mjs",
+      "role": "oracle-fixture",
+      "bytes": 3276,
+      "sha256": "ce3bf3ee86bb8db657ed3a643b8515bea309232d6db86dd96e76a18e7cbb2faa"
+    },
+    {
+      "path": "qualification/workloads/interval_join_cases.mjs",
+      "role": "oracle-fixture",
+      "bytes": 10394,
+      "sha256": "8155ee3655fa8c8be4d20d90e6523cf1448e47aef4fdae45723833ae93eeed85"
+    },
+    {
+      "path": "qualification/workloads/recall_cases.mjs",
+      "role": "oracle-fixture",
+      "bytes": 6956,
+      "sha256": "261247cc646e5eab3bf8c6bcdf84404f4b6b9cda07b885c94ca3d7a3906ac99c"
+    },
+    {
+      "path": "qualification/workloads/support_cases.mjs",
+      "role": "oracle-fixture",
+      "bytes": 7435,
+      "sha256": "3114043605a922218ae3fe1feeb4949d280f4dbe5e24d98159a8a691c5cebc02"
+    },
+    {
+      "path": "qualification/workloads/test_engine_cases.mjs",
+      "role": "oracle-fixture",
+      "bytes": 16808,
+      "sha256": "7d1d406e659f8a9f917c84a6a9c76517b0262cae07851500b58fa6ead1dd409a"
+    },
+    {
+      "path": "qualification/workloads/training_cases.mjs",
+      "role": "oracle-fixture",
+      "bytes": 7485,
+      "sha256": "1474e7fd1ace7d18906d347de2a515149880542086e59feaf8cbcc0ffd1bd076"
+    },
+    {
+      "path": "qualification/workloads/uptime_cases.mjs",
+      "role": "oracle-fixture",
+      "bytes": 3493,
+      "sha256": "432a4556422acf4122282c89757a12e926bcdf543551cce497b4c3519c3c4fe9"
+    },
+    {
+      "path": "qualification/workloads/webhook_cases.mjs",
+      "role": "oracle-fixture",
+      "bytes": 9378,
+      "sha256": "084549364af26a6efdf472e521e1a1a8fde7c08389e96810816da43d3d151e54"
+    },
+    {
+      "path": "packages/qualification/workloads/runner.ts",
+      "role": "oracle-fixture",
+      "bytes": 41055,
+      "sha256": "e13a872ea5bde90a9bcf37f83885036df4f635295ce57ab45261d78928567208"
+    },
+    {
+      "path": "runs/G2/G2-xtdb-20261107T221854Z-6aa715/g2-report.json",
+      "role": "raw-outcome",
+      "bytes": 546085,
+      "sha256": "89fd2f73018d4835674d058f233d3ab959441bed58572f283401fdb207de33b2"
+    },
+    {
+      "path": "runs/G2/G2-xtdb-20261107T221854Z-6aa715/g2-results.json",
+      "role": "raw-outcome",
+      "bytes": 6423,
+      "sha256": "dabd7243bdbcfd5de556988f112a50385d441d3a304d0fda622543d12f502c05"
+    },
+    {
+      "path": "lab/acceptance/obligations.json",
+      "role": "acceptance-contract",
+      "bytes": 651385,
+      "sha256": "8f287cd0aa4eb4d96d6ff102eddfdabf1cdc80d74af576517ad382fbf9d4ef81"
+    }
+  ]
+}
