@@ -3,6 +3,8 @@
 // it, so waits, regressions, outages and typed failures can be scheduled exactly. Row content is not modelled
 // here (the verifier's ModelReplica does that); answers are checked against the broker's own log.
 import fs from "node:fs";
+import Database from "better-sqlite3";
+import { createRequire } from "node:module";
 import path from "node:path";
 import { spawn, spawnSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
@@ -361,7 +363,10 @@ describe("C3 one writer per stream", () => {
       const b = await HostBroker.open({ dir, scopeKey: scope, minFreeBytes: 0, takeover: true });
       const late = await a.exit(a.triples.transact(ops("s:l", 1, "a2"), { commandId: "a2" }));
       expect(late.ok).toBe(false);
-      expect(late.error.reason).toBe("outcome-unknown");
+      // [EXP-SQL01] Why: the closed store refuses the claim read before a new write is admitted.
+      // Rejected: declaring an uncertain commit when no append was attempted.
+      expect(late.error._tag).toBe("WriteError");
+      await expect((a.broker as any).log.append(4, Buffer.from("late"))).rejects.toThrow(/closed/);
       expect(b.claim("a1")).toBeDefined();
       await b.close();
       const c = await HostBroker.open({ dir, scopeKey: scope, minFreeBytes: 0 });
@@ -380,10 +385,13 @@ describe("C3 one writer per stream", () => {
   const HOLDER = path.resolve(import.meta.dirname, "fixtures/lock-holder.ts");
   const contend = (dir: string) =>
     new Promise<number>((resolve) => {
-      const child = spawn("perl", [
+      const child = spawn(process.execPath, [
         "-e",
-        'use Fcntl qw(:flock); open(F,">>",$ARGV[0]) or exit 2; flock(F,LOCK_EX|LOCK_NB) or exit 3; exit 0;',
-        path.join(dir, "LOCK"),
+        `
+        const D=require(${JSON.stringify(createRequire(import.meta.url).resolve("better-sqlite3"))});
+        let db;try{db=new D(process.argv[1],{timeout:0});db.pragma('fullfsync=ON');db.pragma('checkpoint_fullfsync=ON');db.pragma('locking_mode=EXCLUSIVE');db.exec('BEGIN EXCLUSIVE; COMMIT');db.close();process.exit(0);}catch{db?.close();process.exit(3);}
+      `,
+        path.join(dir, "broker.lock"),
       ]);
       child.on("exit", (code) => resolve(code ?? -1));
     });
@@ -433,10 +441,6 @@ describe("C3 one writer per stream", () => {
       acked: () => events.filter((e) => e.event === "acked"),
     };
   };
-  const helperOf = (pid: number) => {
-    const out = spawnSync("pgrep", ["-P", String(pid), "perl"], { encoding: "utf8" }).stdout.trim();
-    return out ? Number(out.split("\n")[0]) : undefined;
-  };
   /** Reopen the stream here: recovery must succeed and hold every ACKed (tag, lsn) frame. */
   const lostAcked = async (dir: string, acked: readonly { tag: string; lsn: number }[]) => {
     const opened = await HostLog.open(dir, { minFreeBytes: 0 });
@@ -465,38 +469,31 @@ describe("C3 one writer per stream", () => {
     expect(await lostAcked(dir, a.acked())).toEqual([]);
   }, 60_000);
 
-  it("Q72a: SIGKILL of the flock helper fail-stops the holder and lets no second writer in", async () => {
+  it("Q84a: no helper exists; another broker is refused until the owner dies", async () => {
     const dir = freshDir();
     const a = holder(dir, "hold", "A");
-    const opened = await a.until((e) => e.event === "acked");
-    const helper = helperOf(opened.pid)!;
-    expect(helper).toBeGreaterThan(0);
-    process.kill(helper, "SIGKILL");
-    const failed = await a.until((e) => e.event === "append-failed", 5_000);
-    expect(failed?.error).toMatch(/lock lost; fail-stop/);
-    // The lock lives on the holder's own descriptor: the helper's death does not free it.
-    expect(await contend(dir)).toBe(3);
-    const b = holder(dir, "hold", "B");
-    expect((await b.until((e) => e.event === "opened" || e.event === "refused"))?.event).toBe(
-      "refused",
-    );
-    const ackedA = a.acked();
-    a.kill();
-    await a.exited;
-    expect(ackedA.length).toBeGreaterThan(0);
-    expect(await lostAcked(dir, ackedA)).toEqual([]);
+    try {
+      expect(await a.until((e) => e.event === "acked")).toBeDefined();
+      const b = holder(dir, "hold", "B");
+      expect((await b.until((e) => e.event === "refused"))?.event).toBe("refused");
+      await b.exited;
+      expect(await contend(dir)).toBe(3);
+    } finally {
+      a.kill();
+      await a.exited;
+    }
+    expect(await lostAcked(dir, a.acked())).toEqual([]);
   }, 60_000);
 
   it("Q72a: Ctrl-C to the holder's process group while it drains: no second writer until it closes", async () => {
     const dir = freshDir();
     const a = holder(dir, "graceful", "A", true);
     const opened = await a.until((e) => e.event === "acked");
-    const helper = helperOf(opened.pid)!;
     process.kill(-a.child.pid!, "SIGINT"); // a terminal's Ctrl-C: the whole foreground process group
     expect(await a.until((e) => e.event === "sigint", 5_000)).toBeDefined();
     let helperAliveDuringDrain = false;
     try {
-      process.kill(helper, 0);
+      process.kill(opened.pid, 0);
       helperAliveDuringDrain = true;
     } catch {
       /* gone */
@@ -751,65 +748,7 @@ describe("Q72e one in-flight marker probe per replica (V-P2Q N5)", () => {
   });
 });
 
-describe("M1 header damage and a WATERMARK above the valid end", () => {
-  const build = async () => {
-    const dir = freshDir();
-    const scope = `fx:${randomUUID()}`;
-    const rt = await openRt(dir, scope, undefined);
-    for (let i = 0; i < 3; i++)
-      await rt.run(rt.triples.transact(ops(`s:${i}`, 3, `h${i}`), { commandId: `h${i}` }));
-    await rt.dispose();
-    await rt.broker.abandon();
-    return { dir, scope, segment: path.join(dir, "segment-000001.log") };
-  };
-  it("every flipped header bit refuses to start instead of truncating ACKed frames", async () => {
-    const { dir, scope, segment } = await build();
-    const bytes = fs.readFileSync(segment);
-    let refused = 0;
-    for (const [i, bit] of [
-      [8, 0],
-      [12, 3],
-      [16, 1],
-      [24, 0],
-      [30, 4],
-      [31, 7],
-    ] as const) {
-      const flipped = Buffer.from(bytes);
-      flipped[i]! ^= 1 << bit;
-      fs.writeFileSync(segment, flipped);
-      await HostBroker.open({ dir, scopeKey: scope, minFreeBytes: 0 }).then(
-        async (b) => b.close(),
-        (error) => {
-          expect(String(error)).toMatch(/bad-header|refusing to start/);
-          refused++;
-        },
-      );
-      expect(fs.readFileSync(segment).length).toBe(bytes.length); // nothing cut
-    }
-    expect(refused).toBe(6);
-  });
-  it("a damaged or cut last ACKed frame is refused when the WATERMARK names it", async () => {
-    const { dir, scope, segment } = await build();
-    const mark = readWatermark(dir)!;
-    const bytes = fs.readFileSync(segment);
-    const flipped = Buffer.from(bytes);
-    flipped[bytes.length - 20]! ^= 1; // inside the last frame (the EPOCH_BEGIN is not last: the commit is)
-    fs.writeFileSync(segment, flipped);
-    await expect(HostBroker.open({ dir, scopeKey: scope, minFreeBytes: 0 })).rejects.toThrow(
-      /WATERMARK names LSN/,
-    );
-    fs.writeFileSync(segment, bytes.subarray(0, bytes.length - 7)); // cut instead of flipped
-    await expect(HostBroker.open({ dir, scopeKey: scope, minFreeBytes: 0 })).rejects.toThrow(
-      /WATERMARK names LSN/,
-    );
-    expect(fs.readFileSync(segment).length).toBe(bytes.length - 7);
-    expect(mark.lsn).toBeGreaterThan(1);
-    fs.writeFileSync(segment, bytes);
-    const ok = await HostBroker.open({ dir, scopeKey: scope, minFreeBytes: 0 });
-    expect(ok.claim("h2")).toBeDefined();
-    await ok.close();
-  });
-});
+// SQLite corruption/ACKED regressions replace segment-header mutations in sqlite-broker.test.ts (Q84).
 
 describe("M2 a basis beyond the resolved prefix", () => {
   it("waits within the deadline and fails typed, or answers once a frame covers it", async () => {
@@ -921,7 +860,12 @@ describe("M3 an unreachable replica", () => {
 describe("M3 outage answers against an independent replay of the log", () => {
   // Independent oracle: decode the segment, keep the latest version per row id among frames at or below lsn(B).
   const oracle = (segment: string, b: number, subject: string) => {
-    const buf = fs.readFileSync(segment);
+    const db = new Database(segment, { readonly: true });
+    const frames = db.prepare("SELECT lsn,payload FROM frames WHERE kind=1 ORDER BY lsn").all() as {
+      lsn: number;
+      payload: Buffer;
+    }[];
+    db.close();
     const latest = new Map<string, TripleRow>();
     const COLS = [
       "id",
@@ -945,18 +889,15 @@ describe("M3 outage answers against an independent replay of the log", () => {
       "schema_version",
       "tx_id",
     ];
-    for (let off = 32; off + 32 <= buf.length; ) {
-      const len = buf.readUInt32LE(off + 4);
-      const lsn = Number(buf.readBigUInt64LE(off + 8));
-      if (buf.readUInt16LE(off + 24) === 1 && lsn <= lsnOf(b))
-        for (const m of JSON.parse(buf.subarray(off + 32, off + 32 + len).toString()).m)
+    for (const frame of frames) {
+      if (frame.lsn <= lsnOf(b))
+        for (const m of JSON.parse(frame.payload.toString()).m)
           for (const cells of m.r) {
             const row = Object.fromEntries(
               COLS.map((c, i) => [c, cells[i] ?? null]),
             ) as unknown as TripleRow;
             latest.set(row.id, row);
           }
-      off += 32 + len + 4;
     }
     return [...latest.values()]
       .filter(

@@ -93,18 +93,27 @@ interface State {
   priors: Map<string, TripleRow>;
   reads: { entities: Set<string>; scopeWide: boolean };
 }
-const Transactions = Context.Reference<ReadonlyMap<symbol, State>>("triplex/qlever/broker-transactions", {
-  defaultValue: () => new Map(),
-});
+const Transactions = Context.Reference<ReadonlyMap<symbol, State>>(
+  "triplex/qlever/broker-transactions",
+  {
+    defaultValue: () => new Map(),
+  },
+);
 
 /** Same pattern semantics as the A0 adapter's `matches`. */
 const matches = (row: TripleRow, pattern: QueryPattern) =>
-  (pattern.entityId === undefined || isPatternVariable(pattern.entityId) || row.entity_id === pattern.entityId) &&
-  (pattern.attribute === undefined || isPatternVariable(pattern.attribute) || row.attribute === pattern.attribute) &&
+  (pattern.entityId === undefined ||
+    isPatternVariable(pattern.entityId) ||
+    row.entity_id === pattern.entityId) &&
+  (pattern.attribute === undefined ||
+    isPatternVariable(pattern.attribute) ||
+    row.attribute === pattern.attribute) &&
   (pattern.entityType === undefined || row.entity_type === pattern.entityType) &&
   (pattern.value === undefined ||
     isPatternVariable(pattern.value) ||
-    Object.entries(packValue(pattern.value)).every(([key, value]) => row[key as keyof TripleRow] === value));
+    Object.entries(packValue(pattern.value)).every(
+      ([key, value]) => row[key as keyof TripleRow] === value,
+    ));
 
 /**
  * Kernel visibility at position B (A0's `visible` with the recorded position always named). A retraction
@@ -152,8 +161,13 @@ const stagedView = (row: TripleRow): TripleRow => {
     : row;
 };
 /** Bind placeholder positions in a callback's result (P2X `bindPositions`, TransactionResult shape). */
-const bindPositions = (value: unknown, positions: ReadonlyMap<number, number>, depth = 0): unknown => {
-  if (positions.size === 0 || depth > 3 || value === null || typeof value !== "object") return value;
+const bindPositions = (
+  value: unknown,
+  positions: ReadonlyMap<number, number>,
+  depth = 0,
+): unknown => {
+  if (positions.size === 0 || depth > 3 || value === null || typeof value !== "object")
+    return value;
   if (Array.isArray(value)) {
     const bound = value.map((item) => bindPositions(item, positions, depth + 1));
     return bound.some((item, i) => item !== value[i]) ? bound : value;
@@ -176,7 +190,12 @@ export class QleverBrokerConflict extends WriteError {
 
 export interface QleverBrokerStorageAdapterService extends StorageAdapterService {
   readonly sourceView: Effect.Effect<
-    { readonly sourcePosition: number; readonly pendingPosition: number; readonly rows: readonly TripleRow[] } | undefined
+    | {
+        readonly sourcePosition: number;
+        readonly pendingPosition: number;
+        readonly rows: readonly TripleRow[];
+      }
+    | undefined
   >;
   readonly broker: HostBroker;
   /** Basis for queries outside a transaction: waits for the replica (Datalog has no overlay merge). */
@@ -195,6 +214,12 @@ export const makeQleverBrokerStorageAdapter = (
   // Q58a default deadline: 2 s for any read that must wait for a basis.
   const basisWaitMs = options.basisWaitMs ?? options.publicationWaitMs ?? 2_000;
   const routes: Record<BrokerReadRoute, number> = { replica: 0, overlay: 0, log: 0 };
+  const storeRead = <A>(read: () => Promise<A>) =>
+    Effect.tryPromise({
+      try: read,
+      catch: (cause) => new ReadError({ message: "Broker store read failed", cause }),
+    });
+
   const current = Effect.map(Transactions, (states) => states.get(key));
   const required = Effect.flatMap(current, (state) =>
     state === undefined
@@ -217,23 +242,32 @@ export const makeQleverBrokerStorageAdapter = (
           : Math.min(state.sourceK, basis?.recordedPosition ?? state.sourceK);
       if (state) {
         // CAS read set (module comment item 5).
-        if (pattern.entityId !== undefined && !isPatternVariable(pattern.entityId)) state.reads.entities.add(pattern.entityId);
-        else if (entities !== undefined) for (const entity of entities) state.reads.entities.add(entity);
+        if (pattern.entityId !== undefined && !isPatternVariable(pattern.entityId))
+          state.reads.entities.add(pattern.entityId);
+        else if (entities !== undefined)
+          for (const entity of entities) state.reads.entities.add(entity);
         else if (id === undefined) state.reads.scopeWide = true;
       }
       const clauses = [`?subject ${f("_row")} ?row .`];
       if (id !== undefined) clauses.push(`VALUES ?subject { ${assertionIri(id)} }`);
-      const exact = (column: string, value: string) => clauses.push(`?subject ${f(column)} ${lit(value)} .`);
-      if (entities) clauses.push(`VALUES ?entity { ${entities.map(lit).join(" ")} } ?subject ${f("entity_id")} ?entity .`);
-      if (pattern.entityId !== undefined && !isPatternVariable(pattern.entityId)) exact("entity_id", pattern.entityId);
-      if (pattern.attribute !== undefined && !isPatternVariable(pattern.attribute)) exact("attribute", pattern.attribute);
+      const exact = (column: string, value: string) =>
+        clauses.push(`?subject ${f(column)} ${lit(value)} .`);
+      if (entities)
+        clauses.push(
+          `VALUES ?entity { ${entities.map(lit).join(" ")} } ?subject ${f("entity_id")} ?entity .`,
+        );
+      if (pattern.entityId !== undefined && !isPatternVariable(pattern.entityId))
+        exact("entity_id", pattern.entityId);
+      if (pattern.attribute !== undefined && !isPatternVariable(pattern.attribute))
+        exact("attribute", pattern.attribute);
       if (pattern.entityType !== undefined) exact("entity_type", pattern.entityType);
       if (pattern.value !== undefined && !isPatternVariable(pattern.value))
         for (const [column, value] of Object.entries(packValue(pattern.value)))
           if (value !== null)
             exact(
               column === "value_number" || column === "value_datetime" ? `${column}_order` : column,
-              typeof value === "number" && (column === "value_number" || column === "value_datetime")
+              typeof value === "number" &&
+                (column === "value_number" || column === "value_datetime")
                 ? order(value)
                 : String(value),
             );
@@ -242,7 +276,10 @@ export const makeQleverBrokerStorageAdapter = (
       if (state === undefined && b > lastPositionOf(broker.durable().lsn))
         yield* Effect.tryPromise({
           try: () => broker.awaitResolved(b, basisWaitMs, "repository"),
-          catch: (cause) => (cause instanceof ReadError ? cause : new ReadError({ message: "QLever read failed", cause })),
+          catch: (cause) =>
+            cause instanceof ReadError
+              ? cause
+              : new ReadError({ message: "QLever read failed", cause }),
         });
       const selection = { ...(entities ? { entities } : {}), ...(id !== undefined ? { id } : {}) };
       const scoped =
@@ -284,22 +321,38 @@ export const makeQleverBrokerStorageAdapter = (
       const byId = new Map<string, TripleRow>();
       if (replica === undefined) {
         route = "log";
-        for (const row of broker.fromLog(0, scoped, select)) byId.set(row.id, row);
+        const pinned = history
+          ? undefined
+          : yield* Effect.tryPromise({
+              try: () => broker.pullAt(b, scoped),
+              catch: (cause) => new ReadError({ message: "QLever source pull failed", cause }),
+            });
+        const source = pinned?.eligible
+          ? pinned.rows.filter(select)
+          : yield* storeRead(() => broker.fromLogAsync(0, scoped, select));
+        for (const row of source) byId.set(row.id, row);
       } else {
         marker = replica.marker;
         for (const row of replica.rows) byId.set(row.id, row);
         if (marker < b) {
-          let overlay = broker.overlay(marker, scoped, select);
+          let overlay = yield* storeRead(() => broker.overlayAsync(marker, scoped, select));
           route = "overlay";
           if (overlay === undefined) {
-            overlay = broker.fromLog(marker, scoped, select);
+            overlay = yield* storeRead(() => broker.fromLogAsync(marker, scoped, select));
             route = "log";
           }
           for (const row of overlay) byId.set(row.id, row);
         }
       }
       routes[route]++;
-      options.onRead?.({ route, basis: b, replicaPosition: marker, rows: byId.size, ms: performance.now() - t0, staged: state !== undefined });
+      options.onRead?.({
+        route,
+        basis: b,
+        replicaPosition: marker,
+        rows: byId.size,
+        ms: performance.now() - t0,
+        staged: state !== undefined,
+      });
       if (state && id !== undefined) {
         const found = byId.get(id) ?? state.rows.get(id);
         if (found) state.reads.entities.add(found.entity_id);
@@ -319,7 +372,9 @@ export const makeQleverBrokerStorageAdapter = (
           )
             out.set(rowId, row);
         }
-      return [...out.values()].sort((a, b2) => a.recorded_at - b2.recorded_at || a.id.localeCompare(b2.id));
+      return [...out.values()].sort(
+        (a, b2) => a.recorded_at - b2.recorded_at || a.id.localeCompare(b2.id),
+      );
     });
 
   const persist = (state: State, operationId: string, attemptId: string) =>
@@ -374,9 +429,16 @@ export const makeQleverBrokerStorageAdapter = (
               claims: new Map(parent.claims),
               newIds: new Set(parent.newIds),
               priors: new Map(parent.priors),
-              reads: { entities: new Set(parent.reads.entities), scopeWide: parent.reads.scopeWide },
+              reads: {
+                entities: new Set(parent.reads.entities),
+                scopeWide: parent.reads.scopeWide,
+              },
             };
-            const snapshot = { placeholders: parent.placeholders.length, rows: parent.rows, claims: parent.claims };
+            const snapshot = {
+              placeholders: parent.placeholders.length,
+              rows: parent.rows,
+              claims: parent.claims,
+            };
             const context = new Map(states);
             context.set(key, child);
             const result = yield* Effect.provideService(effect, Transactions, context);
@@ -386,7 +448,9 @@ export const makeQleverBrokerStorageAdapter = (
               parent.claims !== snapshot.claims
             )
               return yield* Effect.fail(
-                new QleverBrokerConflict({ message: "Concurrent nested QLever callbacks changed the savepoint" }),
+                new QleverBrokerConflict({
+                  message: "Concurrent nested QLever callbacks changed the savepoint",
+                }),
               );
             parent.placeholders = child.placeholders;
             parent.rows = child.rows;
@@ -409,14 +473,19 @@ export const makeQleverBrokerStorageAdapter = (
           context.set(key, state);
           const result = yield* Effect.provideService(effect, Transactions, context);
           if (!state.rows.size && !state.claims.size) return result;
-          const exit = yield* Effect.exit(Effect.uninterruptible(persist(state, operationId, randomUUID())));
+          const exit = yield* Effect.exit(
+            Effect.uninterruptible(persist(state, operationId, randomUUID())),
+          );
           if (Exit.isSuccess(exit)) return bindPositions(result, exit.value) as A;
           return yield* Effect.failCause(exit.cause).pipe(
             Effect.catch((error) =>
               error instanceof QleverBrokerConflict &&
               transactionOptions?.replaySafe === true &&
               retry < (options.maxRetries ?? 12)
-                ? Effect.andThen(Effect.sleep(`${Math.min(50, retry * 2)} millis`), attempt(retry + 1))
+                ? Effect.andThen(
+                    Effect.sleep(`${Math.min(50, retry * 2)} millis`),
+                    attempt(retry + 1),
+                  )
                 : Effect.fail(error),
             ),
           );
@@ -472,54 +541,70 @@ export const makeQleverBrokerStorageAdapter = (
   const dependencyState: StorageAdapterService["dependencyState"] = (attributes, basis) =>
     attributes.length === 0
       ? Effect.succeed({ sourcePosition: 0 })
-      : Effect.tryPromise({ catch: typed("dependency-state"), try: async (signal) => {
-          const started = performance.now();
-          const b = basis.recordedPosition ?? broker.head();
-          if (b > lastPositionOf(broker.durable().lsn)) await broker.awaitResolved(b, basisWaitMs, "dependency-state");
-          const wanted = new Set(attributes);
-          const noBoundary = "ffffffffffffffff";
-          const time = basis.recordedAt;
-          const filter = `FILTER(?recorded <= ${lit(order(b))}${time === undefined ? "" : ` && ?recordedTime <= ${lit(order(time))}`})`;
-          const visibleRetraction = `BOUND(?retracted) && ?retracted <= ${lit(order(b))}${time === undefined ? "" : ` && ?retractedTime <= ${lit(order(time))}`}`;
-          const aggregate = `SELECT (MAX(?source) AS ?sourcePosition) (MIN(?next) AS ?nextBoundary) WHERE { GRAPH ${graph} { VALUES ?attribute { ${[...wanted].map(lit).join(" ")} } ?s ${f("attribute")} ?attribute ; ${f("recorded_position_order")} ?recorded ; ${f("recorded_position_native")} ?position ; ${f("recorded_at_order")} ?recordedTime ; ${f("valid_from_order")} ?validFrom . OPTIONAL { ?s ${f("retracted_position_order")} ?retracted ; ${f("retracted_position_native")} ?retractedPosition ; ${f("retracted_at_order")} ?retractedTime } OPTIONAL { ?s ${f("valid_to_order")} ?validTo } ${filter} BIND(IF(${visibleRetraction},?retractedPosition,?position) AS ?source) BIND(IF(${visibleRetraction},${lit(noBoundary)},IF(?validFrom > ${lit(order(basis.validAt))},?validFrom,IF(BOUND(?validTo) && ?validTo > ${lit(order(basis.validAt))},?validTo,${lit(noBoundary)}))) AS ?next) } }`;
-          const sparql = `SELECT ?sourcePosition ?nextBoundary ?brokerPosition WHERE { { GRAPH ${graph} { ${metaIri} ${markerFields.position} ?brokerPosition } } UNION { ${aggregate} } }`;
-          // Pacing only (the in-request marker below decides): when the broker already knows the replica is
-          // behind B and a frame after it touches the attributes, wait first instead of computing an answer
-          // that would be discarded.
-          const cached = broker.replicaPosition();
-          if (cached < b) {
-            const touched = broker.overlay(cached, {}, (row) => wanted.has(row.attribute));
-            if (touched === undefined || touched.length > 0) await broker.awaitReplica(b, basisWaitMs, "dependency-state");
-          }
-          for (;;) {
-            const rows = await client.query(sparql, { signal });
-            const markerRow = rows.find((row) => row["brokerPosition"] !== undefined);
-            const observed = Number(markerRow?.["brokerPosition"]?.value ?? 0);
-            const answer = rows.find((row) => row !== markerRow);
-            const exact =
-              observed >= b ||
-              (() => {
-                const touched = broker.overlay(observed, {}, (row) => wanted.has(row.attribute));
-                return touched !== undefined && touched.length === 0;
-              })();
-            if (exact)
-              return {
-                sourcePosition: Number(answer?.["sourcePosition"]?.value ?? 0),
-                ...(answer?.["nextBoundary"] && answer["nextBoundary"].value !== noBoundary
-                  ? { nextTemporalBoundary: numericFromOrderKey(answer["nextBoundary"].value) }
-                  : {}),
-              };
-            const remaining = basisWaitMs - (performance.now() - started);
-            if (remaining <= 0)
-              throw new BasisNotAvailable({ required: b, observed, replica: "the QLever replica", surface: "dependency-state", waitedMs: performance.now() - started });
-            await broker.awaitReplica(b, remaining, "dependency-state");
-          }
-        } });
+      : Effect.tryPromise({
+          catch: typed("dependency-state"),
+          try: async (signal) => {
+            const started = performance.now();
+            const b = basis.recordedPosition ?? broker.head();
+            if (b > lastPositionOf(broker.durable().lsn))
+              await broker.awaitResolved(b, basisWaitMs, "dependency-state");
+            const wanted = new Set(attributes);
+            const noBoundary = "ffffffffffffffff";
+            const time = basis.recordedAt;
+            const filter = `FILTER(?recorded <= ${lit(order(b))}${time === undefined ? "" : ` && ?recordedTime <= ${lit(order(time))}`})`;
+            const visibleRetraction = `BOUND(?retracted) && ?retracted <= ${lit(order(b))}${time === undefined ? "" : ` && ?retractedTime <= ${lit(order(time))}`}`;
+            const aggregate = `SELECT (MAX(?source) AS ?sourcePosition) (MIN(?next) AS ?nextBoundary) WHERE { GRAPH ${graph} { VALUES ?attribute { ${[...wanted].map(lit).join(" ")} } ?s ${f("attribute")} ?attribute ; ${f("recorded_position_order")} ?recorded ; ${f("recorded_position_native")} ?position ; ${f("recorded_at_order")} ?recordedTime ; ${f("valid_from_order")} ?validFrom . OPTIONAL { ?s ${f("retracted_position_order")} ?retracted ; ${f("retracted_position_native")} ?retractedPosition ; ${f("retracted_at_order")} ?retractedTime } OPTIONAL { ?s ${f("valid_to_order")} ?validTo } ${filter} BIND(IF(${visibleRetraction},?retractedPosition,?position) AS ?source) BIND(IF(${visibleRetraction},${lit(noBoundary)},IF(?validFrom > ${lit(order(basis.validAt))},?validFrom,IF(BOUND(?validTo) && ?validTo > ${lit(order(basis.validAt))},?validTo,${lit(noBoundary)}))) AS ?next) } }`;
+            const sparql = `SELECT ?sourcePosition ?nextBoundary ?brokerPosition WHERE { { GRAPH ${graph} { ${metaIri} ${markerFields.position} ?brokerPosition } } UNION { ${aggregate} } }`;
+            // Pacing only (the in-request marker below decides): when the broker already knows the replica is
+            // behind B and a frame after it touches the attributes, wait first instead of computing an answer
+            // that would be discarded.
+            const cached = broker.replicaPosition();
+            if (cached < b) {
+              const touched = await broker.overlayAsync(cached, {}, (row) =>
+                wanted.has(row.attribute),
+              );
+              if (touched === undefined || touched.length > 0)
+                await broker.awaitReplica(b, basisWaitMs, "dependency-state");
+            }
+            for (;;) {
+              const rows = await client.query(sparql, { signal });
+              const markerRow = rows.find((row) => row["brokerPosition"] !== undefined);
+              const observed = Number(markerRow?.["brokerPosition"]?.value ?? 0);
+              const answer = rows.find((row) => row !== markerRow);
+              const exact =
+                observed >= b ||
+                (await (async () => {
+                  const touched = await broker.overlayAsync(observed, {}, (row) =>
+                    wanted.has(row.attribute),
+                  );
+                  return touched !== undefined && touched.length === 0;
+                })());
+              if (exact)
+                return {
+                  sourcePosition: Number(answer?.["sourcePosition"]?.value ?? 0),
+                  ...(answer?.["nextBoundary"] && answer["nextBoundary"].value !== noBoundary
+                    ? { nextTemporalBoundary: numericFromOrderKey(answer["nextBoundary"].value) }
+                    : {}),
+                };
+              const remaining = basisWaitMs - (performance.now() - started);
+              if (remaining <= 0)
+                throw new BasisNotAvailable({
+                  required: b,
+                  observed,
+                  replica: "the QLever replica",
+                  surface: "dependency-state",
+                  waitedMs: performance.now() - started,
+                });
+              await broker.awaitReplica(b, remaining, "dependency-state");
+            }
+          },
+        });
 
   const resolveQueryBasis: BasisGate = Object.assign(
     async (requested: number | undefined) => {
       const b = requested ?? broker.head();
-      if (b > lastPositionOf(broker.durable().lsn)) await broker.awaitResolved(b, basisWaitMs, "datalog");
+      if (b > lastPositionOf(broker.durable().lsn))
+        await broker.awaitResolved(b, basisWaitMs, "datalog");
       return broker.openSnapshot(b, basisWaitMs, "datalog");
     },
     {
@@ -529,7 +614,16 @@ export const makeQleverBrokerStorageAdapter = (
   );
 
   return {
-    supportedValueTypes: ["string", "number", "integer", "boolean", "datetime", "ref", "json", "blob"],
+    supportedValueTypes: [
+      "string",
+      "number",
+      "integer",
+      "boolean",
+      "datetime",
+      "ref",
+      "json",
+      "blob",
+    ],
     broker,
     routes,
     resolveQueryBasis,
@@ -539,7 +633,9 @@ export const makeQleverBrokerStorageAdapter = (
       // so a transaction that used it is guarded scope-wide (any commit after sourceK conflicts).
       state.reads.scopeWide = true;
       // The executor inlines staged rows; give them A0's K+1.. positions so its basis tests behave as on A0.
-      const local = new Map(state.placeholders.map((placeholder, i) => [placeholder, state.sourceK + 1 + i]));
+      const local = new Map(
+        state.placeholders.map((placeholder, i) => [placeholder, state.sourceK + 1 + i]),
+      );
       const pending = state.sourceK + Math.max(1, state.placeholders.length);
       return {
         sourcePosition: state.sourceK,
@@ -548,7 +644,9 @@ export const makeQleverBrokerStorageAdapter = (
           ...row,
           recorded_position: local.get(row.recorded_position) ?? row.recorded_position,
           retracted_position:
-            row.retracted_position === null ? null : (local.get(row.retracted_position) ?? row.retracted_position),
+            row.retracted_position === null
+              ? null
+              : (local.get(row.retracted_position) ?? row.retracted_position),
         })),
       };
     }),
@@ -566,30 +664,42 @@ export const makeQleverBrokerStorageAdapter = (
       Effect.flatMap(current, (state) => Effect.succeed(state ? state.sourceK : broker.head())),
     claimCommand: (id, txId, timestamp) =>
       Effect.flatMap(required, (state) =>
-        Effect.sync(() => {
-          const pending = state.claims.get(id);
-          if (pending) return pending.txId;
-          // Lost-ACK resolution from the broker's own record (C2), not from a QLever claim triple.
-          const claimed = broker.claim(id);
-          if (claimed) return claimed.txId;
-          state.claims.set(id, { txId, timestamp });
-          return null;
+        Effect.tryPromise({
+          try: async () => {
+            const pending = state.claims.get(id);
+            if (pending) return pending.txId;
+            // Lost-ACK resolution from the broker's own record (C2), not from a QLever claim triple.
+            const claimed = await broker.claimAsync(id);
+            if (claimed) return claimed.txId;
+            state.claims.set(id, { txId, timestamp });
+            return null;
+          },
+          catch: (cause) => new WriteError({ message: "Broker claim lookup failed", cause }),
         }),
       ),
     insert,
     batchInsert: (inputs, txId, timestamp, ids, position) =>
       inputs.length !== ids.length
         ? Effect.fail(new WriteError({ message: "Assertion identity count mismatch" }))
-        : Effect.forEach(inputs, (input, index) => insert(input, txId, timestamp, ids[index]!, position)),
+        : Effect.forEach(inputs, (input, index) =>
+            insert(input, txId, timestamp, ids[index]!, position),
+          ),
     retract: (id, timestamp, txId, position) =>
       Effect.gen(function* () {
         const state = yield* required;
         const row = (yield* queryRows({}, undefined, false, id).pipe(
-          Effect.mapError((cause) => new WriteError({ message: "Cannot read retraction target", cause })),
+          Effect.mapError(
+            (cause) => new WriteError({ message: "Cannot read retraction target", cause }),
+          ),
         ))[0];
         if (!row) return false;
         if (!state.rows.has(id)) state.priors.set(id, row);
-        state.rows.set(id, { ...row, retracted_at: timestamp, retracted_position: position, retract_tx_id: txId });
+        state.rows.set(id, {
+          ...row,
+          retracted_at: timestamp,
+          retracted_position: position,
+          retract_tx_id: txId,
+        });
         return true;
       }),
     getById: (id) => Effect.map(queryRows({}, undefined, false, id), (rows) => rows[0] ?? null),
@@ -598,7 +708,10 @@ export const makeQleverBrokerStorageAdapter = (
       ids.length
         ? Effect.map(
             queryRows({}, basis, false, undefined, [...new Set(ids)]),
-            (rows) => new Map([...new Set(ids)].map((id) => [id, rows.filter((row) => row.entity_id === id)])),
+            (rows) =>
+              new Map(
+                [...new Set(ids)].map((id) => [id, rows.filter((row) => row.entity_id === id)]),
+              ),
           )
         : Effect.succeed(new Map()),
     query: (pattern, basis) => queryRows(pattern, basis),
@@ -610,7 +723,12 @@ export const makeQleverBrokerStorageAdapter = (
           await client.query("SELECT ?s WHERE { ?s ?p ?o } LIMIT 1");
         },
         catch: (cause) =>
-          new MigrationError({ version: 1, name: "qlever-native", message: "Cannot access QLever RDF server", cause }),
+          new MigrationError({
+            version: 1,
+            name: "qlever-native",
+            message: "Cannot access QLever RDF server",
+            cause,
+          }),
       }),
     close: () => Effect.void,
   };

@@ -8,6 +8,7 @@
 //    repository-pull SELECT the adapter sends, and can be held, delayed, taken down or rolled back to an
 //    older state (a restart without persisted updates). Every query takes its snapshot when it arrives.
 import fs from "node:fs";
+import { createRequire } from "node:module";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { Effect, Layer, ManagedRuntime } from "effect";
@@ -23,7 +24,10 @@ import {
 import type { QleverClient } from "../../../../packages/qlever/src/QleverClient.js";
 import { makeQleverQueryExecutor } from "../../../../packages/qlever/src/QleverQueryExecutor.js";
 import { makeQleverStorageAdapter } from "../../../../packages/qlever/src/QleverStorageAdapter.js";
-import { HostBroker, type HostBrokerOptions } from "../../../../packages/qlever/src/broker/broker.js";
+import {
+  HostBroker,
+  type HostBrokerOptions,
+} from "../../../../packages/qlever/src/broker/broker.js";
 import type {
   BrokerReadEvent,
   QleverBrokerStorageAdapterService,
@@ -34,7 +38,12 @@ import { crc32c as crc32cRef } from "../../../../packages/qlever/src/broker/crc3
 export const REPO = path.resolve(import.meta.dirname, "../../../..");
 export const RUNS = process.env["V_P2Q_RUNS"] ?? path.join(REPO, "runs/broker/V-P2Q");
 // Evidence for the head under test (the d7c6086 round's evidence is committed in lab/verify/P2Q/evidence/).
-export const OUT = process.env["V_P2Q_OUT"] ?? path.join("/Users/sam/Claude/Projects/triplex-db-2/V-P2Q", process.env["V_P2Q_HEAD"] ?? "f711193");
+export const OUT =
+  process.env["V_P2Q_OUT"] ??
+  path.join(
+    "/Users/sam/Claude/Projects/triplex-db-2/V-P2Q",
+    process.env["V_P2Q_HEAD"] ?? "f711193",
+  );
 fs.mkdirSync(OUT, { recursive: true });
 export const freshDir = (tag: string) => {
   const dir = path.join(RUNS, `${tag}-${randomUUID()}`);
@@ -49,9 +58,26 @@ export const lsnOfP = (p: number) => Math.floor(p / ORD);
 
 // Column order of the commit-group wire format (copied, not imported, so a reordering in the branch shows up).
 const COLUMNS = [
-  "id", "entity_id", "attribute", "value_type", "value_string", "value_number", "value_boolean", "value_datetime",
-  "value_json", "recorded_at", "recorded_position", "valid_from", "valid_to", "created_by", "retracted_at",
-  "retracted_position", "retract_tx_id", "entity_type", "schema_version", "tx_id",
+  "id",
+  "entity_id",
+  "attribute",
+  "value_type",
+  "value_string",
+  "value_number",
+  "value_boolean",
+  "value_datetime",
+  "value_json",
+  "recorded_at",
+  "recorded_position",
+  "valid_from",
+  "valid_to",
+  "created_by",
+  "retracted_at",
+  "retracted_position",
+  "retract_tx_id",
+  "entity_type",
+  "schema_version",
+  "tx_id",
 ] as const;
 export interface RawFrame {
   readonly lsn: number;
@@ -61,6 +87,20 @@ export interface RawFrame {
   readonly payload: Buffer;
 }
 export const readSegment = (segment: string): RawFrame[] => {
+  // [EXP-SQL01] Why: preserve the independent wire-replay oracle while changing only its storage reader.
+  // Rejected: using H1 or recent_rows for expected results (would mirror the implementation under test).
+  const file = segment.endsWith(".db") ? segment : path.join(path.dirname(segment), "broker.db");
+  if (fs.existsSync(file)) {
+    const D = createRequire(new URL("../../../../packages/qlever/package.json", import.meta.url))(
+      "better-sqlite3",
+    );
+    const db = new D(file, { readonly: true });
+    try {
+      return db.prepare("SELECT lsn,epoch,kind,offset,payload FROM frames ORDER BY lsn").all();
+    } finally {
+      db.close();
+    }
+  }
   const buf = fs.readFileSync(segment);
   const frames: RawFrame[] = [];
   let off = 32;
@@ -97,7 +137,10 @@ export const decodeMembers = (frame: RawFrame): OracleMember[] => {
     positions: m.p,
     commandIds: m.c.map((c: any) => c[0]),
     txIds: m.c.map((c: any) => c[1]),
-    rows: m.r.map((cells: unknown[]) => Object.fromEntries(COLUMNS.map((c, i) => [c, cells[i] ?? null])) as TripleRow),
+    rows: m.r.map(
+      (cells: unknown[]) =>
+        Object.fromEntries(COLUMNS.map((c, i) => [c, cells[i] ?? null])) as TripleRow,
+    ),
     subjects: m.s,
   }));
 };
@@ -122,7 +165,9 @@ export const oracleAt = (
   for (const frame of readSegment(segment))
     if (frame.kind === 1 && frame.lsn <= lsnOfP(b))
       for (const m of decodeMembers(frame)) for (const row of m.rows) latest.set(row.id, row);
-  return [...latest.values()].filter((row) => keep(row) && (history ? row.recorded_position <= b : oracleVisible(row, b, validAt)));
+  return [...latest.values()].filter(
+    (row) => keep(row) && (history ? row.recorded_position <= b : oracleVisible(row, b, validAt)),
+  );
 };
 /** Comparable form: immutable fields only (a retraction above B may legitimately show on the latest version, as on A0). */
 export const key = (rows: readonly TripleRow[]) =>
@@ -208,31 +253,49 @@ export class ModelReplica implements QleverClient {
         {
           ...(pos ? { brokerPosition: { type: "literal", value: String(m.position) } } : {}),
           ...(ep ? { brokerEpoch: { type: "literal", value: String(m.epoch) } } : {}),
-          ...((([...this.objects(q, META, BI)][0]) as string | undefined) ? { brokerIncarnation: { type: "literal", value: JSON.parse([...this.objects(q, META, BI)][0]!) } } : {}),
+          ...(([...this.objects(q, META, BI)][0] as string | undefined)
+            ? {
+                brokerIncarnation: {
+                  type: "literal",
+                  value: JSON.parse([...this.objects(q, META, BI)][0]!),
+                },
+              }
+            : {}),
         },
       ];
     }
     // [EXP-P2Q] Why: a combined dependency/marker request on an empty snapshot is valid
     // and must reach the adapter's in-request marker check. Rejected: throwing unsupported
     // (prevents exercising that check). Populated aggregates remain a live-QLever obligation.
-    if (sparql.startsWith("SELECT ?sourcePosition ?nextBoundary ?brokerPosition") && this.rowCount(q) === 0)
+    if (
+      sparql.startsWith("SELECT ?sourcePosition ?nextBoundary ?brokerPosition") &&
+      this.rowCount(q) === 0
+    )
       return [{ brokerPosition: { type: "literal", value: String(this.marker(q).position) } }, {}];
     if (sparql.startsWith("SELECT ?s WHERE { ?s ?p ?o } LIMIT 1")) return [];
     if (sparql.startsWith("SELECT ?row ?brokerPosition WHERE")) {
       const out: any[] = [];
-      for (const pos of this.objects(q, META, BP)) out.push({ brokerPosition: { type: "literal", value: JSON.parse(pos) } });
+      for (const pos of this.objects(q, META, BP))
+        out.push({ brokerPosition: { type: "literal", value: JSON.parse(pos) } });
       const body = sparql.slice(sparql.indexOf("UNION"));
       const idMatch = /VALUES \?subject \{ (<[^>]+>) \}/.exec(body);
       const entMatch = /VALUES \?entity \{ (.*?) \} \?subject/.exec(body);
       const entities = entMatch ? new Set(entMatch[1]!.match(LIT) ?? []) : undefined;
       const exact: [string, string][] = [];
-      for (const m of body.matchAll(/\?subject (<urn:triplex:field:[^>]+>) ("(?:[^"\\]|\\.)*") \./g)) exact.push([m[1]!, m[2]!]);
+      for (const m of body.matchAll(
+        /\?subject (<urn:triplex:field:[^>]+>) ("(?:[^"\\]|\\.)*") \./g,
+      ))
+        exact.push([m[1]!, m[2]!]);
       const subjects = idMatch ? [idMatch[1]!] : [...q.keys()];
       for (const s of subjects) {
         const preds = q.get(s);
         const rows = preds?.get(ROWF);
         if (!rows || rows.size === 0) continue;
-        if (entities && ![...(preds!.get("<urn:triplex:field:entity_id>") ?? [])].some((o) => entities.has(o))) continue;
+        if (
+          entities &&
+          ![...(preds!.get("<urn:triplex:field:entity_id>") ?? [])].some((o) => entities.has(o))
+        )
+          continue;
         if (!exact.every(([p, o]) => preds!.get(p)?.has(o))) continue;
         if (rows.size > 1) this.multiRow++;
         for (const o of rows) out.push({ row: { type: "literal", value: JSON.parse(o) } });
@@ -240,7 +303,9 @@ export class ModelReplica implements QleverClient {
       return out;
     }
     this.unsupported.push({ sparql, markerAtArrival: this.marker(q).position });
-    throw new Error("ModelReplica: unsupported query (only repository pulls and markers are modelled)");
+    throw new Error(
+      "ModelReplica: unsupported query (only repository pulls and markers are modelled)",
+    );
   }
 
   async update(sparql: string): Promise<unknown> {
@@ -256,10 +321,14 @@ export class ModelReplica implements QleverClient {
     const whereStart = ` } } WHERE { `;
     const i1 = sparql.indexOf(insStart);
     const i2 = sparql.indexOf(whereStart);
-    if (!sparql.startsWith(delStart) || i1 < 0 || i2 < 0) throw new Error("ModelReplica: unsupported update");
+    if (!sparql.startsWith(delStart) || i1 < 0 || i2 < 0)
+      throw new Error("ModelReplica: unsupported update");
     const deletes = parseQuads(sparql.slice(delStart.length, i1));
     const inserts = parseQuads(sparql.slice(i1 + insStart.length, i2));
-    const guard = /COALESCE\(\?brokerPosition, "0"\) = ("(?:[^"\\]|\\.)*") && COALESCE\(\?brokerEpoch, "0"\) = ("(?:[^"\\]|\\.)*")/.exec(sparql);
+    const guard =
+      /COALESCE\(\?brokerPosition, "0"\) = ("(?:[^"\\]|\\.)*") && COALESCE\(\?brokerEpoch, "0"\) = ("(?:[^"\\]|\\.)*")/.exec(
+        sparql,
+      );
     if (!guard) throw new Error("ModelReplica: update without the marker guard");
     const q = this.quads;
     const posNow = [...this.objects(q, META, BP)];
@@ -272,7 +341,11 @@ export class ModelReplica implements QleverClient {
     const incNow = [...this.objects(q, META, BI)];
     const okInc = !incGuard || (incNow.length ? incNow : ['""']).includes(incGuard[1]!);
     if (!(okPos && okEp && okInc))
-      return { operations: [{ "delta-triples": { operation: { inserted: 0, deleted: 0 }, after: { total: 0 } } }] };
+      return {
+        operations: [
+          { "delta-triples": { operation: { inserted: 0, deleted: 0 }, after: { total: 0 } } },
+        ],
+      };
     const next: Quads = new Map(q);
     const touch = (s: string) => {
       const preds = new Map(next.get(s) ?? []);
@@ -299,7 +372,11 @@ export class ModelReplica implements QleverClient {
     }
     this.quads = next;
     this.appliedUpdates++;
-    return { operations: [{ "delta-triples": { operation: { inserted, deleted }, after: { total: inserted } } }] };
+    return {
+      operations: [
+        { "delta-triples": { operation: { inserted, deleted }, after: { total: inserted } } },
+      ],
+    };
   }
   async command(): Promise<unknown> {
     return {};
@@ -311,7 +388,8 @@ export class ModelReplica implements QleverClient {
 /** The replica's content decoded to rows (to compare the model's state with the log after a drain). */
 export const replicaRows = (replica: ModelReplica): TripleRow[] => {
   const out: TripleRow[] = [];
-  for (const preds of replica.quads.values()) for (const o of preds.get(ROWF) ?? []) out.push(decodeRow(JSON.parse(o)));
+  for (const preds of replica.quads.values())
+    for (const o of preds.get(ROWF) ?? []) out.push(decodeRow(JSON.parse(o)));
   return out;
 };
 
@@ -391,7 +469,10 @@ export const ops = (subject: string, facts: number, tag: string) =>
     attribute: `:v/f${i}`,
     value: string(`${tag}-${i}`),
   }));
-export const at = (position: number, validAt = Date.now() + 10 ** 9) => ({ validAt, recordedPosition: position });
+export const at = (position: number, validAt = Date.now() + 10 ** 9) => ({
+  validAt,
+  recordedPosition: position,
+});
 
 /** Deterministic PRNG (mulberry32). */
 export const rng = (seed: number) => () => {

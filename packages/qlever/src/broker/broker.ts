@@ -30,13 +30,7 @@ import {
   type FrameMember,
   type MemberClaim,
 } from "./frames.js";
-import {
-  HostLog,
-  readFramesFrom,
-  segmentStart,
-  type EpochBeginPayload,
-  type LogFrame,
-} from "./log.js";
+import { HostLog, type EpochBeginPayload, type LogFrame } from "./log.js";
 import { ORDINALS, lastPositionOf, lsnOf, packPosition } from "./position.js";
 import { buildFence, buildPublication, markerQuery, type ReplicaMarker } from "./sparql.js";
 import { BasisNotAvailable, ReplicaUnavailable, type BasisSurface } from "./errors.js";
@@ -165,14 +159,7 @@ interface Pending {
 }
 interface OverlayFrame {
   readonly lsn: number;
-  readonly members: readonly FrameMember[];
   publishedAt?: number;
-}
-interface IndexEntry {
-  readonly lsn: number;
-  readonly offset: number;
-  readonly crc: number;
-  readonly kind: number;
 }
 interface Receipt {
   readonly lsn: number;
@@ -226,17 +213,11 @@ export interface BrokerStats {
 
 export class HostBroker {
   // The broker's own record, rebuilt from the log at open.
-  private readonly heads = new Map<string, number>();
-  private readonly claims = new Map<string, { txId: string; position: number }>();
-  private readonly operations = new Map<string, Receipt>();
-  private readonly index: IndexEntry[] = [];
   private readonly aborted: number[] = [];
   private headPosition = 0;
   private durableLsn = 0;
   // Overlay of frames not yet known to every reader's replica snapshot.
   private readonly overlayFrames: OverlayFrame[] = [];
-  private readonly versions = new Map<string, { row: TripleRow; lsn: number }>();
-  private readonly byEntity = new Map<string, Set<string>>();
   private evictedThroughLsn = 0;
   // Publication.
   private replicaMarker: ReplicaMarker = { position: 0, epoch: 0, incarnation: "" };
@@ -348,7 +329,6 @@ export class HostBroker {
   }
 
   private replay(frame: LogFrame, replicaLsn: number) {
-    this.index.push({ lsn: frame.lsn, offset: frame.offset, crc: frame.crc, kind: frame.kind });
     if (frame.kind === FrameKind.EPOCH_BEGIN) {
       const begin = JSON.parse(frame.payload.toString("utf8")) as EpochBeginPayload;
       this.aborted.push(...begin.abortedLsns);
@@ -356,17 +336,13 @@ export class HostBroker {
     }
     if (frame.kind !== FrameKind.COMMIT_GROUP) return;
     const payload = decodeCommitGroup(frame.payload);
-    this.record(frame.lsn, frame.epoch, payload.members);
+    this.record(payload.members);
     if (frame.lsn > replicaLsn) this.addOverlay({ lsn: frame.lsn, members: payload.members });
   }
 
-  private record(lsn: number, epoch: number, members: readonly FrameMember[]) {
+  private record(members: readonly FrameMember[]) {
     for (const member of members) {
       const last = member.positions[member.positions.length - 1]!;
-      this.operations.set(member.operationId, { lsn, epoch, positions: member.positions });
-      for (const claim of member.claims)
-        this.claims.set(claim.commandId, { txId: claim.txId, position: last });
-      for (const subject of member.subjects) this.heads.set(subject, last);
       if (last > this.headPosition) this.headPosition = last;
     }
   }
@@ -394,10 +370,10 @@ export class HostBroker {
   }
   /** The broker's claim table (lost-ACK resolution from its own record, never from QLever). */
   claim(commandId: string): { readonly txId: string; readonly position: number } | undefined {
-    return this.claims.get(commandId);
+    return this.log.claim(commandId);
   }
   operation(operationId: string): Receipt | undefined {
-    return this.operations.get(operationId);
+    return this.log.operation(operationId);
   }
   abortedLsns(): readonly number[] {
     return this.aborted;
@@ -463,7 +439,7 @@ export class HostBroker {
         break;
       }
       taken++;
-      const previous = this.operations.get(txn.operationId);
+      const previous = this.log.operation(txn.operationId);
       if (previous || staged.operations.has(txn.operationId)) {
         // Idempotent re-submit of a decided operation: answer with the original receipt (lost ACK).
         if (previous) {
@@ -526,8 +502,7 @@ export class HostBroker {
     // The fsync returned: the decision is irrevocable. Record it, publish the watermark, expose the frame
     // to readers through the overlay, and only then ACK (Q31e: ACK after the source's own publication).
     try {
-      this.index.push({ lsn: frame.lsn, offset: frame.offset, crc: frame.crc, kind: frame.kind });
-      this.record(frame.lsn, epoch, members);
+      this.record(members);
       this.durableLsn = frame.lsn;
       this.counters.frames++;
       this.counters.commits += members.length;
@@ -579,14 +554,14 @@ export class HostBroker {
     staged: { heads: Map<string, number>; claims: Set<string>; head: number },
   ): BrokerDecision | undefined {
     for (const claim of txn.claims)
-      if (this.claims.has(claim.commandId) || staged.claims.has(claim.commandId))
+      if (this.log.claim(claim.commandId) !== undefined || staged.claims.has(claim.commandId))
         return { kind: "conflict", reason: "claim" };
     if (txn.reads.scopeWide && staged.head > txn.sourceK)
       return { kind: "conflict", reason: "scope" };
     const guarded = new Set(txn.reads.entities);
     for (const row of txn.rows) if (!isJournalRow(row)) guarded.add(row.entity_id);
     for (const entity of guarded) {
-      const head = staged.heads.get(entity) ?? this.heads.get(entity) ?? 0;
+      const head = staged.heads.get(entity) ?? this.log.head(entity) ?? 0;
       if (head > txn.sourceK) return { kind: "conflict", reason: "subject", entity };
     }
     return undefined;
@@ -662,15 +637,8 @@ export class HostBroker {
 
   // ------------------------------------------------------------------ overlay
 
-  private addOverlay(frame: OverlayFrame) {
-    this.overlayFrames.push(frame);
-    for (const member of frame.members)
-      for (const row of member.rows) {
-        this.versions.set(row.id, { row, lsn: frame.lsn });
-        let ids = this.byEntity.get(row.entity_id);
-        if (!ids) this.byEntity.set(row.entity_id, (ids = new Set()));
-        ids.add(row.id);
-      }
+  private addOverlay(frame: { readonly lsn: number; readonly members: readonly FrameMember[] }) {
+    this.overlayFrames.push({ lsn: frame.lsn });
   }
 
   private evict(now = performance.now()) {
@@ -680,16 +648,6 @@ export class HostBroker {
       if (frame.publishedAt === undefined || now - frame.publishedAt < retain) break;
       this.overlayFrames.shift();
       this.evictedThroughLsn = frame.lsn;
-      for (const member of frame.members)
-        for (const row of member.rows) {
-          const version = this.versions.get(row.id);
-          if (version && version.lsn === frame.lsn) {
-            this.versions.delete(row.id);
-            const ids = this.byEntity.get(row.entity_id);
-            ids?.delete(row.id);
-            if (ids && ids.size === 0) this.byEntity.delete(row.entity_id);
-          }
-        }
     }
   }
 
@@ -707,55 +665,56 @@ export class HostBroker {
   ): TripleRow[] | undefined {
     this.evict();
     if (this.evictedThroughLsn > lsnOf(replicaPosition)) return undefined;
-    const out: TripleRow[] = [];
-    const take = (id: string) => {
-      const version = this.versions.get(id);
-      if (version && select(version.row)) out.push(version.row);
-    };
-    if (selection.id !== undefined) take(selection.id);
-    else if (selection.entities !== undefined)
-      for (const entity of selection.entities)
-        for (const id of this.byEntity.get(entity) ?? []) take(id);
-    else for (const id of this.versions.keys()) take(id);
-    return out;
+    return this.log.recent(lsnOf(replicaPosition), selection).filter(select);
   }
 
-  /** The same answer from the broker's own record on disk; always complete (Q31d fallback). */
+  // [EXP-SQL01] Why: application reads dispatch asynchronously; synchronous methods remain for old tools.
+  // Rejected: Atomics.wait on the HTTP/read path (would queue new writer requests on the main thread).
+  async overlayAsync(
+    replicaPosition: number,
+    selection: { readonly entities?: readonly string[]; readonly id?: string },
+    select: (row: TripleRow) => boolean,
+  ) {
+    this.evict();
+    if (this.evictedThroughLsn > lsnOf(replicaPosition)) return undefined;
+    return (await this.log.recentAsync(lsnOf(replicaPosition), selection)).filter(select);
+  }
+  async fromLogAsync(
+    replicaPosition: number,
+    selection: { readonly entities?: readonly string[]; readonly id?: string },
+    select: (row: TripleRow) => boolean,
+  ) {
+    return (await this.log.recentAsync(lsnOf(replicaPosition), selection)).filter(select);
+  }
+  claimAsync(id: string) {
+    return this.log.claimAsync(id);
+  }
+  sweepPage(basis: number, entities: readonly string[]) {
+    return this.log.sweepPage(basis, entities);
+  }
+
+  /** Indexed persisted source rows: outage cost depends on selected entities, not frame history. */
   fromLog(
     replicaPosition: number,
     selection: { readonly entities?: readonly string[]; readonly id?: string },
     select: (row: TripleRow) => boolean,
   ): TripleRow[] {
-    const after = lsnOf(replicaPosition);
-    const first = this.index.findIndex((entry) => entry.lsn > after);
-    if (first === -1) return [];
-    const previous = first === 0 ? undefined : this.index[first - 1]!;
-    const start = this.index[first]!;
-    const { frames } = readFramesFrom(
-      this.log.segmentPath,
-      previous
-        ? { offset: start.offset, seed: previous.crc, nextLsn: previous.lsn + 1 }
-        : { offset: start.offset, seed: this.seedOfFirst(), nextLsn: start.lsn },
-      this.durableLsn,
-      Number.MAX_SAFE_INTEGER,
-    );
-    const latest = new Map<string, TripleRow>();
-    const entities = selection.entities ? new Set(selection.entities) : undefined;
-    for (const frame of frames) {
-      if (frame.kind !== FrameKind.COMMIT_GROUP) continue;
-      for (const member of decodeCommitGroup(frame.payload).members)
-        for (const row of member.rows) {
-          if (selection.id !== undefined && row.id !== selection.id) continue;
-          if (entities && !entities.has(row.entity_id)) continue;
-          latest.set(row.id, row);
-        }
-    }
-    return [...latest.values()].filter(select);
+    return this.log.recent(lsnOf(replicaPosition), selection).filter(select);
   }
 
-  private seedOfFirst(): number {
-    // The first frame of the segment chains from the segment header's CRC.
-    return segmentStart(this.log.segmentPath).seed;
+  // [EXP-SQL01] Why: each pull owns one short readonly snapshot; explicit basis survives later commits.
+  // Rejected: retaining a read transaction for a sweep (starves checkpoints, R25 section 2).
+  pullAt(
+    basis: number,
+    selection: { readonly entities?: readonly string[]; readonly id?: string },
+  ) {
+    return this.log.pull(basis, selection);
+  }
+  pinBasis(basis: number, owner: string) {
+    return this.log.pinBasis(basis, owner);
+  }
+  purgeCurrent(horizon: number) {
+    return this.log.purge(horizon);
   }
 
   // ------------------------------------------------------------------ publication
@@ -1015,10 +974,10 @@ export class HostBroker {
    * that LSN, otherwise from the log on disk (after a replica regression the overlay may have evicted
    * frames the replica no longer has).
    */
-  private nextBatch(
+  private async nextBatch(
     afterLsn: number,
     maxApply: number,
-  ): { readonly lsn: number; readonly members: readonly FrameMember[] }[] {
+  ): Promise<{ readonly lsn: number; readonly members: readonly FrameMember[] }[]> {
     const batch: { lsn: number; members: readonly FrameMember[] }[] = [];
     let commands = 0;
     const take = (lsn: number, members: readonly FrameMember[]) => {
@@ -1027,23 +986,9 @@ export class HostBroker {
       commands += members.length;
       return true;
     };
-    if (this.evictedThroughLsn <= afterLsn) {
-      for (const frame of this.overlayFrames)
-        if (frame.lsn > afterLsn && !take(frame.lsn, frame.members)) break;
-      return batch;
-    }
-    const first = this.index.findIndex((entry) => entry.lsn > afterLsn);
-    if (first === -1) return batch;
-    const previous = first === 0 ? undefined : this.index[first - 1]!;
-    const start = this.index[first]!;
-    const { frames } = readFramesFrom(
-      this.log.segmentPath,
-      previous
-        ? { offset: start.offset, seed: previous.crc, nextLsn: previous.lsn + 1 }
-        : { offset: start.offset, seed: this.seedOfFirst(), nextLsn: start.lsn },
-      this.durableLsn,
-      32 * 1024 * 1024,
-    );
+    // [EXP-SQL01] Why: keep only scheduling headers in memory; retained payloads live in SQLite.
+    // Rejected: replaying the complete segment or retaining an unbounded overlay of row objects.
+    const frames = await this.log.framesAfterAsync(afterLsn, maxApply + 2);
     for (const frame of frames)
       if (
         frame.kind === FrameKind.COMMIT_GROUP &&
@@ -1121,7 +1066,7 @@ export class HostBroker {
     const idleProbeMs = this.options.idleProbeMs ?? 500;
     let lastProbe = performance.now();
     while (!this.stopping) {
-      const batch = this.nextBatch(this.publishedLsn, maxApply);
+      const batch = await this.nextBatch(this.publishedLsn, maxApply);
       if (batch.length === 0) {
         await new Promise<void>((resolve) => {
           this.wakeApplier = resolve;

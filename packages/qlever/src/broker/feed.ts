@@ -25,7 +25,13 @@ import path from "node:path";
 import type { TripleRow } from "@triplex-build/triplex/runtime";
 import { FrameKind } from "./frame.js";
 import { decodeCommitGroup } from "./frames.js";
-import { readFramesFrom, readWatermark, segmentStart, type EpochBeginPayload, type Watermark } from "./log.js";
+import {
+  readFramesFrom,
+  readWatermark,
+  segmentStart,
+  type EpochBeginPayload,
+  type Watermark,
+} from "./log.js";
 import { crc32c } from "./crc32c.js";
 
 export interface FeedChange {
@@ -46,8 +52,18 @@ export interface FeedTransact {
   readonly changes: readonly FeedChange[];
 }
 export type FeedResolution =
-  | { readonly kind: "commit"; readonly lsn: number; readonly epoch: number; readonly transacts: readonly FeedTransact[] }
-  | { readonly kind: "epoch"; readonly lsn: number; readonly epoch: number; readonly previousEpoch: number }
+  | {
+      readonly kind: "commit";
+      readonly lsn: number;
+      readonly epoch: number;
+      readonly transacts: readonly FeedTransact[];
+    }
+  | {
+      readonly kind: "epoch";
+      readonly lsn: number;
+      readonly epoch: number;
+      readonly previousEpoch: number;
+    }
   | { readonly kind: "aborted"; readonly lsn: number; readonly epoch: number };
 export interface FeedCursor {
   /** Every LSN at or below this one has been delivered. */
@@ -62,12 +78,13 @@ export interface FeedPage {
   readonly watermark: Watermark | undefined;
 }
 
-const isJournalRow = (row: TripleRow) => row.entity_type === "_Transaction" && row.entity_id === row.tx_id;
+const isJournalRow = (row: TripleRow) =>
+  row.entity_type === "_Transaction" && row.entity_id === row.tx_id;
 
 export class LogFeed {
   readonly segmentPath: string;
   constructor(readonly dir: string) {
-    this.segmentPath = path.join(dir, "segment-000001.log");
+    this.segmentPath = path.join(dir, "broker.db");
   }
   /** A cursor before the first frame. */
   start(): FeedCursor {
@@ -91,8 +108,14 @@ export class LogFeed {
     for (const frame of frames) {
       if (frame.kind === FrameKind.EPOCH_BEGIN) {
         const begin = JSON.parse(frame.payload.toString("utf8")) as EpochBeginPayload;
-        for (const lsn of begin.abortedLsns) resolutions.push({ kind: "aborted", lsn, epoch: begin.previousEpoch });
-        resolutions.push({ kind: "epoch", lsn: frame.lsn, epoch: frame.epoch, previousEpoch: begin.previousEpoch });
+        for (const lsn of begin.abortedLsns)
+          resolutions.push({ kind: "aborted", lsn, epoch: begin.previousEpoch });
+        resolutions.push({
+          kind: "epoch",
+          lsn: frame.lsn,
+          epoch: frame.epoch,
+          previousEpoch: begin.previousEpoch,
+        });
         continue;
       }
       if (frame.kind !== FrameKind.COMMIT_GROUP) continue;
@@ -108,8 +131,14 @@ export class LogFeed {
           for (const row of member.rows) {
             if (row.tx_id !== null && own.has(row.recorded_position)) txIds.add(row.tx_id);
             if (isJournalRow(row)) continue;
-            const base = { entity: row.entity_id, attribute: row.attribute, validFrom: row.valid_from, validTo: row.valid_to };
-            if (own.has(row.recorded_position)) changes.push({ op: "assert", ...base, position: row.recorded_position });
+            const base = {
+              entity: row.entity_id,
+              attribute: row.attribute,
+              validFrom: row.valid_from,
+              validTo: row.valid_to,
+            };
+            if (own.has(row.recorded_position))
+              changes.push({ op: "assert", ...base, position: row.recorded_position });
             if (row.retracted_position !== null && own.has(row.retracted_position))
               changes.push({ op: "retract", ...base, position: row.retracted_position });
           }
@@ -128,7 +157,9 @@ export class LogFeed {
     const last = frames[frames.length - 1];
     return {
       resolutions,
-      cursor: last ? { lsn: last.lsn, offset: next.offset, seed: next.seed, nextLsn: next.nextLsn } : cursor,
+      cursor: last
+        ? { lsn: last.lsn, offset: next.offset, seed: next.seed, nextLsn: next.nextLsn }
+        : cursor,
       watermark,
     };
   }
@@ -198,7 +229,9 @@ export class FeedConsumerStore {
       }
     }
     const records = fs.existsSync(this.journal)
-      ? parseLines<{ c: string; e: [number, string][]; k?: FeedCursor }>(fs.readFileSync(this.journal, "utf8"))
+      ? parseLines<{ c: string; e: [number, string][]; k?: FeedCursor }>(
+          fs.readFileSync(this.journal, "utf8"),
+        )
       : [];
     for (const record of records) {
       for (const [position, subject] of record.e) this.keys.add(`${position}|${subject}`);
@@ -225,9 +258,17 @@ export class FeedConsumerStore {
    * Durably record effects and, in atomic mode, the checkpoint in the same write. `tear` writes only part of
    * the record (a crash mid-write) and returns without fsync; the torn line is ignored on reload.
    */
-  recordEffects(effects: readonly ConsumerEffect[], cursor: FeedCursor, options: { readonly tear?: boolean } = {}): number {
+  recordEffects(
+    effects: readonly ConsumerEffect[],
+    cursor: FeedCursor,
+    options: { readonly tear?: boolean } = {},
+  ): number {
     const fresh = this.filter(effects);
-    const record = { c: this.consumer, e: fresh.map((e) => [e.position, e.subject]), ...(this.mode === "atomic" ? { k: cursor } : {}) };
+    const record = {
+      c: this.consumer,
+      e: fresh.map((e) => [e.position, e.subject]),
+      ...(this.mode === "atomic" ? { k: cursor } : {}),
+    };
     if (this.mode === "split" && fresh.length === 0) return 0;
     const bytes = Buffer.from(line(record));
     if (options.tear) {
