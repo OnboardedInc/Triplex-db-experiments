@@ -1,6 +1,6 @@
 (ns triplex.gateway.main
   (:require [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty]
-            [triplex.gateway.query :as query] [triplex.gateway.storage :as storage] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema])
+            [triplex.gateway.scope :as scope] [triplex.gateway.query :as query] [triplex.gateway.storage :as storage] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema])
   (:gen-class))
 
 ;; [EXP-DA00] Why: own bounded HTTP gateway on official Peer API (R29/Jepsen pattern). Rejected: undocumented peer-server wire protocol.
@@ -9,12 +9,7 @@
 (defn connection [uri] (or (@connections uri) (get (swap! connections #(if (contains? % uri) % (assoc % uri (d/connect uri)))) uri)))
 (defn sync-db [uri] (let [result (deref (d/sync (connection uri)) 2000 ::timeout)]
                      (when (= result ::timeout) (throw (ex-info "Sync deadline exceeded" {:status 503 :code "SyncTimeout"}))) result))
-(defn scope-name [scope]
-  (let [tuple (json/read-str scope)]
-    (when-not (and (vector? tuple) (= 5 (count tuple)) (every? string? (take 4 tuple)) (integer? (nth tuple 4)) (<= 0 (nth tuple 4) 9007199254740991)
-                   (= "triplex-scope-v1" (first tuple)) (= "test" (second tuple)))
-      (codec/invalid "Only test scope tuples may be created or deleted"))
-    (str "s-" (subs (schema/sha256 scope) 0 32))))
+(def scope-name scope/name-for)
 (defn stored-scope [db] (when (d/entid db :triplex.scope/key) (d/q '[:find ?s . :where [_ :triplex.scope/key ?s]] db)))
 (defn assert-scope [db scope]
   (when-let [existing (stored-scope db)]
@@ -50,7 +45,7 @@
       (storage/forget! scope)
       {:db name :deleted deleted})))
 (defn basis [base name]
-  (when-not (re-matches #"s-[0-9a-f]{32}" name) (codec/invalid "Invalid database name"))
+  (when-not (re-matches #"(s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)" name) (codec/invalid "Invalid database name"))
   (let [db (sync-db (str base name)) scope (stored-scope db)]
     (when-not scope (throw (ex-info "Scope not initialized" {:status 409 :code "ScopeUninitialized"})))
     (let [entity (d/entity db [:triplex.scope/key scope])]
@@ -73,9 +68,9 @@
       (response 200 (create-scope! base-uri (get (request-json body) "scope")))
       (and (= :post request-method) (= "/v1/db/delete" uri))
       (response 200 (delete-scope! base-uri (get (request-json body) "scope")))
-      (and (= :get request-method) (re-matches #"/v1/db/s-[0-9a-f]{32}/basis" uri))
+      (and (= :get request-method) (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/basis" uri))
       (response 200 (basis base-uri (nth (clojure.string/split uri #"/") 3)))
-      (re-matches #"/v1/db/s-[0-9a-f]{32}/(snapshot|release|transact|read|q|claim|operation/[^/]+)" uri)
+      (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(snapshot|release|transact|read|q|claim|operation/[^/]+)" uri)
       (let [[_ _ _ name action id] (clojure.string/split uri #"/") db-uri (str base-uri name)
             conn (connection db-uri) db (sync-db db-uri)
             input (when (= request-method :post) (request-json body))]

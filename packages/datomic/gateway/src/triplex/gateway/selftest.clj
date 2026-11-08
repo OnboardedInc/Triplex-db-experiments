@@ -1,6 +1,6 @@
 (ns triplex.gateway.selftest
   (:require [clojure.test :refer :all] [clojure.data.json :as json] [datomic.api :as d]
-            [triplex.gateway.storage :as storage] [triplex.gateway.query :as query] [triplex.gateway.main :as gateway] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema]))
+            [triplex.gateway.scope :as scope] [triplex.gateway.storage :as storage] [triplex.gateway.query :as query] [triplex.gateway.main :as gateway] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema]))
 
 ;; [EXP-DA00] Why: execute actual Peer API and codec offline. Rejected: mocked Datomic (cannot prove schema installation).
 (deftest codec-vectors
@@ -13,6 +13,42 @@
     (is (thrown? Exception (codec/decode-value {"t" "double" "v" x}))))
   (doseq [wire [{"t" "long" "v" "9223372036854775808"} {"t" "long" "v" 1} {"t" "bool" "v" "true"} {"t" "ref" "v" "01"}]]
     (is (thrown? Exception (codec/decode-value wire)))))
+(deftest shared-codec-acceptance
+  (doseq [{:strs [wire expected]} (json/read-str (slurp "/opt/gateway/codec-cases.json"))]
+    (if (= expected "reject")
+      (is (thrown? Exception (codec/decode-value wire)) (str wire))
+      (let [value (codec/decode-value wire) again (codec/decode-value (codec/encode-value (get wire "t") value))]
+        (is (= value again) (str wire))
+        (when (= "bigdec" (get wire "t")) (is (= (.scale value) (.scale again))))))))
+
+;; [EXP-DA01] Why: deterministic reviewer interleaving on actual Peer transactions. Rejected: sequential late-create alone (does not prove both creators overlap).
+(deftest concurrent-initialization
+  (let [base "datomic:mem://" scope "[\"triplex-scope-v1\",\"test\",\"verifier\",\"da01-race\",1]"
+        paused (promise) release (promise) slow-thread (atom nil) transact d/transact]
+    (with-redefs [d/transact (fn [conn tx]
+      (when (and (= @slow-thread (Thread/currentThread)) (some #(and (map? %) (= 0 (:triplex.scope/position %))) tx))
+        (deliver paused true)
+        (when-not (deref release 10000 false) (throw (Exception. "Release timeout"))))
+      (transact conn tx))]
+      (let [slow (future (reset! slow-thread (Thread/currentThread)) (gateway/create-scope! base scope))]
+        (try
+          (is (deref paused 10000 false))
+          (let [fast (gateway/create-scope! base scope) name (:db fast) conn (gateway/connection (str base name))]
+            @(d/transact conn [{:triplex.scope/key scope :triplex.scope/position 7}])
+            (deliver release true)
+            (let [late (deref slow 10000 ::timeout)]
+              (is (not= ::timeout late))
+              (is (= name (:db late))))
+            (is (= {"t" "long" "v" "7"} (:position (gateway/basis base name)))))
+          (finally (deliver release true) (is (:deleted (gateway/delete-scope! base scope)))))))))
+
+(deftest reversible-public-scope-names
+  (doseq [text ["[\"triplex-scope-v1\",\"prod\",\"租户\",\"db/with space\",9007199254740991]"
+                "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vda00\",0]"]]
+    (let [name (gateway/scope-name text)]
+      (is (= text (scope/scope-for name)))
+      (is (= name (:db (gateway/create-scope! "datomic:mem://" text))))
+      (is (:deleted (gateway/delete-scope! "datomic:mem://" text))))))
 (deftest database-lifecycle
   (let [base "datomic:mem://" scope "[\"triplex-scope-v1\",\"test\",\"tenant\",\"da00\",1]"
         result (gateway/create-scope! base scope) name (:db result) db (d/db (gateway/connection (str base name)))]
@@ -30,7 +66,7 @@
     (is (thrown? Exception (gateway/initialize-scope! (str base name) "different-scope")))
     (is (thrown? Exception (gateway/assert-scope db "other")))
     (is (:deleted (gateway/delete-scope! base scope)))
-    (is (thrown? Exception (gateway/scope-name "[\"triplex-scope-v1\",\"prod\",\"t\",\"d\",1]")))))
+    (is (thrown? Exception (gateway/scope-name "[\"triplex-scope-v1\",\"test\",\"t\",\"d\",\"1\"]")))))
 (deftest speculative-fact-store
   (let [base "datomic:mem://" scope "[\"triplex-scope-v1\",\"test\",\"tenant\",\"da01-speculation\",1]"
         name (:db (gateway/create-scope! base scope)) uri (str base name) conn (gateway/connection uri)

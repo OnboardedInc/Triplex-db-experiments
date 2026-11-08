@@ -18,6 +18,7 @@
 // the small read-only config file is bind-mounted.
 // Rejected: docker compose per slot (project labels and a second config source of truth);
 // a daemon (no process to babysit with at most 10 agents).
+import { stageDatomicContext, verifiedTree, verifyDatomicContext } from './datomic-context.mjs';
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import net from 'node:net';
@@ -25,7 +26,7 @@ import path from 'node:path';
 import {
   CONFIG_DIR, ENGINE_DIR, LabError, POOL_FILE, dockerArgs, OWNER_FORMAT, REPO, admission, appendEvent, atomicJson, checkFollowerConfig,
   containersOnVolume, cpusetOverlap, defaultHolder, docker, dockerStats, fail, fmtBytes, inspect, listTx2Containers, loadSlots, main, now,
-  parseArgs, parseCpuset, readJson, readOwner, reconcile, sha256, sleep, slotInfo, vmDisk, volumeBytes, volumeGuard, withPool, treeFiles, sha256File,
+  parseArgs, parseCpuset, readJson, readOwner, reconcile, sha256, sleep, slotInfo, vmDisk, volumeBytes, volumeGuard, withPool, sha256File,
 } from './lib.mjs';
 
 /**
@@ -66,12 +67,14 @@ export function assertSingleWriter(info, eff) {
 
 // [EXP-DA00] Why: source-relative byte manifests bind image and gateway; reject tag drift. Rejected: trusting a mutable local tag.
 export function datomicTree(dir) {
-  return treeFiles(dir).map(f => ({ path: path.relative(dir, path.resolve(REPO, f.path)), bytes: f.bytes, sha256: f.sha256 }));
+  return verifiedTree(dir);
 }
 export function datomicSources() {
   const config = datomicTree(path.join(CONFIG_DIR, 'lab/config/datomic'));
   const gateway = datomicTree(path.join(CONFIG_DIR, 'packages/datomic/gateway'));
-  return { config, gateway, sha256: sha256(JSON.stringify({ config, gateway })) };
+  const codec = { path: 'codec-spec.json', bytes: fs.statSync(path.join(CONFIG_DIR, 'packages/datomic/src/codec-spec.json')).size,
+    sha256: sha256File(path.join(CONFIG_DIR, 'packages/datomic/src/codec-spec.json')) };
+  return { config, gateway, codec, sha256: sha256(JSON.stringify({ config, gateway, codec })) };
 }
 function assertDatomicImage(info) {
   const out = docker(['image', 'inspect', info.laneConf.image], { allowFail: true });
@@ -108,15 +111,21 @@ assert actual==expected, 'Extracted Datomic bytes differ from the pinned ZIP'
   const sources = datomicSources();
   const distribution = datomicTree(dist);
   const buildInputsSha256 = sha256(JSON.stringify({ sources, distribution }));
-  const context = path.join(ENGINE_DIR, 'datomic-build', buildInputsSha256);
-  fs.mkdirSync(context, { recursive: true });
-  fs.cpSync(dist, path.join(context, 'datomic'), { recursive: true });
-  // ZIP mode bits are not restored by Python's safe host extraction.
+  const parent = path.join(ENGINE_DIR, 'datomic-build');
+  fs.mkdirSync(parent, { recursive: true });
+  const context = path.join(parent, `${buildInputsSha256}-${process.pid}-${Date.now()}`);
+  const fileInput = (source, destination, file) => ({ source, destination, manifest: [{ ...file, path: '' }] });
+  const staged = stageDatomicContext(context, [
+    { source: dist, destination: 'datomic', manifest: distribution },
+    { source: path.join(CONFIG_DIR, 'lab/config/datomic'), destination: 'config', manifest: sources.config },
+    { source: path.join(CONFIG_DIR, 'packages/datomic/gateway'), destination: 'gateway', manifest: sources.gateway },
+    fileInput(path.join(CONFIG_DIR, 'packages/datomic/src/codec-spec.json'), 'gateway/codec-spec.json', sources.codec),
+    fileInput(path.join(CONFIG_DIR, 'lab/config/datomic/Dockerfile'), 'Dockerfile', sources.config.find(f => f.path === 'Dockerfile')),
+  ]);
+  // [EXP-DA01] Why: ZIP extraction omits executable mode bits; only verified bin files receive the documented 0755 transform. Rejected: preserving arbitrary host executable bits.
   for (const name of fs.readdirSync(path.join(context, 'datomic/bin')))
     if (fs.statSync(path.join(context, 'datomic/bin', name)).isFile()) fs.chmodSync(path.join(context, 'datomic/bin', name), 0o755);
-  fs.cpSync(path.join(CONFIG_DIR, 'lab/config/datomic'), path.join(context, 'config'), { recursive: true });
-  fs.cpSync(path.join(CONFIG_DIR, 'packages/datomic/gateway'), path.join(context, 'gateway'), { recursive: true });
-  fs.copyFileSync(path.join(context, 'config/Dockerfile'), path.join(context, 'Dockerfile'));
+  verifyDatomicContext(context, staged);
   const dockerConfig = path.join(ENGINE_DIR, 'datomic-docker-config');
   const buildxConfig = path.join(ENGINE_DIR, 'datomic-buildx');
   fs.mkdirSync(dockerConfig, { recursive: true });
@@ -140,7 +149,7 @@ assert actual==expected, 'Extracted Datomic bytes differ from the pinned ZIP'
     text = text.slice(0, start) + section + text.slice(end);
   }
   fs.writeFileSync(slotsFile, text);
-  const receipt = { imageId: image.Id, imageSize: image.Size, buildInputsSha256, sourceInputsSha256: sources.sha256, sources, distribution, verification, gpg: { stdout: gpg.stdout, stderr: gpg.stderr } };
+  const receipt = { imageId: image.Id, imageSize: image.Size, buildInputsSha256, sourceInputsSha256: sources.sha256, context, staged, sources, distribution, verification, gpg: { stdout: gpg.stdout, stderr: gpg.stderr } };
   atomicJson(path.join(context, 'build-receipt.json'), receipt);
   appendEvent({ event: 'datomic-build', imageId: image.Id, buildInputsSha256 });
   console.log(JSON.stringify({ ...config.lanes.datomic, imageSize: image.Size, receipt: path.join(context, 'build-receipt.json') }, null, 2));

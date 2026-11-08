@@ -42,6 +42,53 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")(
         client.close();
       }
     }
+    // [EXP-DA01] Why: use the public constructor's actual canonical bytes, including non-test environments and escaped UTF-16. Rejected: hand-written five-string scopes (V-DA00 F2).
+    it("accepts exactly public constructor scopes with reversible database names", async () => {
+      const client = new DatomicClient(url, 10000);
+      const scopes = [
+        DatabaseScope.test(`public-${randomUUID()}`),
+        DatabaseScope.make({
+          env: "prod",
+          tenant: "租户/😀",
+          database: `quote\" slash/\\ lone\ud800-${randomUUID()}`,
+          generation: Number.MAX_SAFE_INTEGER,
+        }),
+        DatabaseScope.make({
+          env: " staging ",
+          tenant: "\ufeffx",
+          database: `\n${randomUUID()}`,
+          generation: -0,
+        }),
+      ];
+      try {
+        for (const scope of scopes) {
+          const created = await client.create(scope);
+          console.log(JSON.stringify({ kind: "datomic-test-db-created", scope, ...created }));
+          try {
+            expect(Buffer.from(created.db.slice(3), "base64url").toString("utf8")).toBe(scope);
+            expect((await client.create(scope)).created).toBe(false);
+            expect((await client.begin(created.db)).position).toBe(0);
+          } finally {
+            const deleted = await client.delete(scope);
+            console.log(JSON.stringify({ kind: "datomic-test-db-deleted", scope, ...deleted }));
+            expect(deleted.deleted).toBe(true);
+          }
+        }
+        for (const scope of [
+          '["triplex-scope-v1","test","test","x","1"]',
+          '["triplex-scope-v1","test","test","x",-1]',
+          '["triplex-scope-v1","test","test","x",9007199254740992]',
+          '["triplex-scope-v1","test","test","x",0.0]',
+          '["triplex-scope-v1", "test","test","x",0]',
+          '["triplex-scope-v1","test"," ","x",0]',
+          '["triplex-scope-v1","test","test","x",-0]',
+          '["triplex-scope-v2","test","test","x",0]',
+        ])
+          await expect(client.create(scope)).rejects.toThrow();
+      } finally {
+        client.close();
+      }
+    });
     const insert = (
       a: ReturnType<typeof makeDatomicStorageAdapter>,
       id: string,

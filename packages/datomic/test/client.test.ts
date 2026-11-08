@@ -23,6 +23,16 @@ describe("tagged codec", () => {
       expect(result).toEqual(wire);
       expect(Object.is(result.v, wire.v)).toBe(true);
     });
+  const cases = JSON.parse(
+    readFileSync(new URL("../gateway/codec-cases.json", import.meta.url), "utf8"),
+  ) as { wire: unknown; expected: string }[];
+  for (const { wire, expected } of cases)
+    it(`shared acceptance ${JSON.stringify(wire)}`, () => {
+      if (expected === "reject") {
+        expect(() => validateTagged(wire)).toThrow();
+        expect(() => decodeTagged(JSON.stringify(wire))).toThrow();
+      } else expect(() => validateTagged(wire)).not.toThrow();
+    });
   for (const v of [NaN, Infinity, -Infinity])
     it(`rejects ${v}`, () => expect(() => validateTagged({ t: "double", v })).toThrow());
   for (const wire of [

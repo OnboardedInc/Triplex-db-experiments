@@ -1,3 +1,4 @@
+import spec from "./codec-spec.json";
 // [EXP-DA00] Why: preserve exact integer text and decimal scale across JSON. Rejected: Number for longs (rounds above 2^53).
 export type TextTag =
   | "long"
@@ -18,7 +19,9 @@ export class DatomicCodecError extends Error {
 const invalid = (message: string): never => {
   throw new DatomicCodecError(message);
 };
-const integer = /^(0|-?[1-9][0-9]*)$/;
+// [EXP-DA01] Why: both runtimes consume one range and grammar definition. Rejected: mirrored constants (boundary drift in V-DA00 F4).
+const matches = (pattern: string, value: string) =>
+  new RegExp(`^(?:${pattern})$`, "u").exec(value)?.[0] === value;
 export function validateTagged(value: unknown): TaggedValue {
   if (typeof value !== "object" || value === null || !("t" in value) || !("v" in value))
     return invalid("Expected tagged value");
@@ -28,17 +31,29 @@ export function validateTagged(value: unknown): TaggedValue {
     case "ref":
     case "instant":
     case "bigint": {
-      if (typeof v !== "string" || !integer.test(v))
+      if (typeof v !== "string" || !matches(spec.integerPattern, v))
         return invalid("Expected decimal integer text");
       const n = BigInt(v);
-      if (t !== "bigint" && (n < -9223372036854775808n || n > 9223372036854775807n))
+      if (t !== "bigint" && (n < BigInt(spec.longMin) || n > BigInt(spec.longMax)))
         return invalid("Long out of range");
       return { t, v };
     }
-    case "bigdec":
-      if (typeof v !== "string" || !/^-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][+-]?[0-9]+)?$/.test(v))
+    case "bigdec": {
+      if (typeof v !== "string" || !matches(spec.decimalPattern, v))
         return invalid("Invalid bigdec");
+      const [coefficient = "", exponentText = "0"] = v.split(/[eE]/);
+      const exponent = BigInt(exponentText);
+      const fraction = BigInt(coefficient.split(".")[1]?.length ?? 0);
+      const scale = fraction - exponent;
+      if (
+        exponent < BigInt(spec.exponentMin) ||
+        exponent > BigInt(spec.exponentMax) ||
+        scale < BigInt(spec.scaleMin) ||
+        scale > BigInt(spec.scaleMax)
+      )
+        return invalid("Bigdec scale or exponent out of range");
       return { t, v };
+    }
     case "double":
       if (typeof v !== "number" || !Number.isFinite(v)) return invalid("Nonfinite double");
       return { t, v };
@@ -49,9 +64,8 @@ export function validateTagged(value: unknown): TaggedValue {
     case "keyword":
     case "uuid":
       if (typeof v !== "string") return invalid("Expected string");
-      if (t === "keyword" && !/^:[^\s:/]+(\/[^\s:/]+)?$/.test(v)) return invalid("Invalid keyword");
-      if (t === "uuid" && !/^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$/.test(v))
-        return invalid("Invalid UUID");
+      if (t === "keyword" && !matches(spec.keywordPattern, v)) return invalid("Invalid keyword");
+      if (t === "uuid" && !matches(spec.uuidPattern, v)) return invalid("Invalid UUID");
       return { t, v };
     default:
       return invalid("Unknown value tag");
