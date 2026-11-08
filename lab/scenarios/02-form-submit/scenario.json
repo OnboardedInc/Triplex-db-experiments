@@ -1,0 +1,98 @@
+{
+  "format": "tx2-gs-scenario/1",
+  "id": 2,
+  "slug": "form-submit",
+  "title": "Form submit, person waiting",
+  "priorities": [
+    "P2",
+    "P4"
+  ],
+  "status": "runnable",
+  "source": "lab/TARGETS.md section 6 row 2",
+  "story": "A worker submits I-9 Section 1 (10 facts); the reconcile pull runs immediately at the returned tx.",
+  "checked": "The next task is visible on the first pull, every time; commit p99 <= 50 ms under scenario 1's load.",
+  "seed": 20261102,
+  "yearOne": {
+    "submits": "continuous, one per waiting worker",
+    "load": "scenario 1 (Monday rush) with 256 pinned readers"
+  },
+  "params": {
+    "validAts": "NOW"
+  },
+  "rungs": {
+    "10k": {
+      "subjects": 12,
+      "negatives": 5,
+      "liveMs": 25000,
+      "trace": {
+        "subjects": 15,
+        "factsPerSecond": 15
+      }
+    },
+    "smoke": {
+      "subjects": 8,
+      "negatives": 3,
+      "liveMs": 15000,
+      "trace": {
+        "subjects": 5,
+        "factsPerSecond": 15
+      }
+    }
+  },
+  "witnesses": {
+    "positive": "every worker who submits Section 1 (the I-9 changes)",
+    "negative": "onboarded workers who never submit (state stays at the post-setup golden)"
+  },
+  "domain": [
+    "the next task after Section 1 is visible on the first pull (O-DOMAIN; fails closed until EXP-D01)"
+  ],
+  "reads": "Immediately after each Section 1 receipt: pull placement, worker and I-9 at basis {recordedAt: receipt.instant, validAt: NOW}; plus the closed-loop pinned readers over all golden subjects.",
+  "bars": [
+    {
+      "id": "P2.commit.p99",
+      "metric": "commit.byTemplate.section1Submit.p99",
+      "op": "<=",
+      "value": 50,
+      "unit": "ms",
+      "source": "TARGETS section 1 P2 and section 6 row 2"
+    },
+    {
+      "id": "P2.commit.p50",
+      "metric": "commit.byTemplate.section1Submit.p50",
+      "op": "<=",
+      "value": 10,
+      "unit": "ms",
+      "source": "TARGETS section 1 P2"
+    },
+    {
+      "id": "P2.first-pull-visible",
+      "metric": "extra.firstPull.visibleFraction",
+      "op": "==",
+      "value": 1,
+      "unit": "fraction",
+      "source": "TARGETS section 1 P2 read-your-own-write"
+    },
+    {
+      "id": "P4.pull.p99",
+      "metric": "extra.firstPull.p99",
+      "op": "<=",
+      "value": 25,
+      "unit": "ms",
+      "source": "TARGETS section 1 P4"
+    },
+    {
+      "id": "P1.writer.maxWait",
+      "metric": "writer.maxWaitMs",
+      "op": "<=",
+      "value": 2000,
+      "unit": "ms",
+      "source": "TARGETS section 1 P1 / section 6 row 1"
+    }
+  ],
+  "faults": [],
+  "oracle": {
+    "source": "O-REPLAY",
+    "gaps": []
+  },
+  "rungNote": "Sized for a shared 2-CPU dev slot (measured 2026-11-07: about 0.1 to 1 commits/s under pinned readers): the rung is the 10k-subject background world; the live phase runs the fixed trace (15 facts/s, open loop) for 25 s with a scaled scenario overlay. Year-one volumes wait for PLAN section 8 order 6."
+}
