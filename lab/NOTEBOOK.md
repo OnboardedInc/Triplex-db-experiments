@@ -1331,3 +1331,16 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **Learning for P2:** the journal and its identity guards are 47.9% of an XTDB commit's bytes, and change-row JSON plus canonical value
   identity is the biggest single block; even dropping both saves 5,736 bytes, not 3x. Per-commit write cost is set by the journal design,
   so the P2 lever is structural (the broker's log as the journal, P2B; per-subject keys, P2X), not a denser encoding of the same rows.
+
+## 2026-11-08 21:19Z: EXP-P4 (CX-P4): a host-side current store (H1) is about 1,000x faster than the engine path and exact; X1 gains nothing on fresh history
+- Report on exp/P4-current-path 6f061a8 (lab/experiments/EXP-P4-current-path/REPORT.md, MEASUREMENTS.md). 10k XTDB, 200-subject gate block,
+  1,000 matched subjects for history growth; s2 released afterwards (volume retained).
+- **H1** (in-process entity-indexed retained rows, applied from receipts and the feed, served only when H <= B <= W, with fallback):
+  100,097 oracle-checked pulls, 0 wrong; weighted p50 / p99 ms depth 1 0.675 / 10.5, depth 10 0.943 / 18.4; about 10,000 pulls/s per core.
+  Depth-10/depth-1 p99 ratio 1.181x against the 1.1 flatness bar (A0 2.500x, X1 2.344x). Not durable, no erasure yet.
+- **A0 / X1** (current-only temporal bounds): depth 1 p50 627 / 590 ms, depth 10 1,425 / 1,376 ms; X1 is no real gain on fresh history
+  (kept only for the aged-history test). **X2 and Q1** not run (wait for J01's merge). Sample counts below 100k for the engine arms.
+- **Learning for P4:** the fast path to current values is a host-side current store fed by the same frames as the log (R24's H1), not a
+  read-path tweak on the engine; it becomes durable on R25's SQLite design and needs erasure (Q58e) and a flatness fix. Engine copies (X2,
+  Q1) are still worth measuring for native queries.
+- Next: Codex reviewer for J01 now (P2 outranks P4, and X2/Q1 wait for it), then a reviewer for P4.

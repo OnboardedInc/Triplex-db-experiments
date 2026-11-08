@@ -46,7 +46,7 @@ Never use old targets: 256 req/s load bar, 10m/100m as a target, 256/512/1024 lo
 | R29 lane D (Datomic) design | planner, Opus 5.5, high | all five on lane D | /Users/sam/Claude/Projects/triplex-db-2/R29/ report + EXP-DA00-02 briefs |
 | CX-P2Q-R2 broker fix round 2 (exp/P2Q-qlever-log-broker) | builder, Codex medium | P2, P3 | Q72a-g, Q67c/d/h; then a Codex reviewer delta check |
 | CX-VC8 (verify/C8) | reviewer, Codex high | P1 | verdict on C8 d9b2dc8 |
-| CX-P4 (exp/P4-current-path; holds s2) | builder, Codex medium | P4 | arms X1, X2, H1, Q1 |
+| CX-VJ01 (verify/J01) | reviewer, Codex high | P2 | verdict on J01 5cc42fb (compact encoding, default off) |
 | CX-E01-R2 (exp/E01-claim-evaluator) | builder, Codex medium | floor for claims | Q75a-j, 0.3.10 field names; then a reviewer delta check |
 | CX-VO04H (verify/O02) | reviewer, Codex high | correctness floor | verdict on O-REPLAY 0.4.8 3c52a1d |
 | CX-VX02 (verify/X02) | reviewer, Codex high | XTQL lane | verdict on X02 bf1ad4d, minus the exclusive-slot rerun |
