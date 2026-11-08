@@ -55,7 +55,7 @@ worktree's refusal blocks every worktree (move it to the worktree's own git dir)
 | CX-X02-R3 resumed (exp/X02-xtql-parity) | builder, Codex medium | XTQL lane | Q79e grammar-based operand classification with a generated corpus; C8 merges after X02 |
 | CX-A01-0311-R2 (contract/0.3.11) | builder, Codex medium | floor for claims | 0.3.11 fix round: O-REPLAY row results in comparators, Unicode, lane D composition fields, Q76c matrix record |
 | R28 isolation design for EXP-G03 | planner, Opus 5.5, high | floor for claims | /Users/sam/Claude/Projects/triplex-db-2/R28/ |
-| CX-VDA00 (verify/DA00) | reviewer, Codex high | lane D floor | review of lane D bring-up 702643f |
+| (queued) CX-DA01 round 2: Q85a-d (V-DA00 FIX-FIRST) after its current round | builder, Codex medium | lane D floor | then a joint DA00+DA01 review |
 | CX-VO05-2 (verify/O05) | reviewer, Codex high | floor | review of O-OBS round 2 463703d |
 | CX-OBS01 (exp/OBS01-observer) | builder, Codex medium | floor | observer sidecar writing obs-bundle/1 (R27, Q82) |
 | R25 finish: SQLite pinned readers for the broker file and H1 (continuation) | planner, Opus 5.5, high | P1, P2, P4, P5 | /Users/sam/Claude/Projects/triplex-db-2/R25/ |
