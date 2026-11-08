@@ -1565,3 +1565,16 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **For Sam (Q78e):** tenant isolation on Datomic cannot use schemas or row security, because one transactor owns one table; tiered,
   silo-all and pool-all are the options.
 - SQL01 round 2 (4863a8e) fixed F1 and F2; 50 abrupt stops kept all 163 ACKs; review round 2 is checking route equivalence.
+
+## 2026-11-08 23:49Z: R31: record time is stamped before the commit is decided, so a recordedAt pin is not reproducible
+- **Biggest finding (D-C1):** transact stamps record time before it allocates a position (TriplesLive.ts:309 before :326), and every lane
+  stores that client stamp. A commit staged at 1000 can land after one stamped 1001, so a read at recordedAt 1001 can change after it was
+  served. recordedAt is the only pin the public API offers, so this is the P1 floor. **Q89a:** stamp at decision, monotone in position,
+  plus a record-time watermark; R33 (Opus) designs it, since it moves the core receipt instant.
+- **The F1 class is wider than H1:** any store that retires rows by position cannot answer a record-time basis (H1's pull predicate too,
+  R24's planned current store, Datomic's :f/live). **Q89b:** they refuse such a basis until Q89a lands; **Q89c:** refusals are typed errors.
+- **Datomic:** multi-request Datalog re-syncs to the newest db between requests, mixing cuts (Q89d, DA01's next round). Datomic does keep
+  current and history apart at the index level, so R18 line 97 was wrong (Q89e).
+- **Q89f:** EXP-RQ01 builds the route-equivalence harness in packages/testkit (CX-RQ01) as a gate for every read-route change.
+- **For Sam (Q89g):** whether the public TemporalBasis gets a position or snapshot token. R33 will lay out the TypeScript shapes.
+- P2Q round 6: catalog derived from Node and undici sources plus an upgrade guard (763 controls); review round 7 running.

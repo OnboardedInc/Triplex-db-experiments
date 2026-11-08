@@ -153,3 +153,5 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   pinned packages/qualification/src/native/xtdb-workloads.ts. Pinned sources change only with a contract version, so contract 0.3.12
   round 2 merges int/X02-C8-J01 and re-pins it after checking the diff does not change the measured workload. INT-XCJ continues with C8, J01.
 - Queued: EXP-DA04 (lane D on Postgres SQL storage, Q88b) after DA01 round 2 and the joint DA00+DA01 review merge; before DA03.
+- Queued for DA01 round 3: Q89d (pin multi-request Datalog to one db, refuse future positions, seek the position-to-t map, enumerate by
+  subject). Queued for SQL01's next round: Q89b on H1's pull predicate (sqlite-worker.ts:158). Running: CX-RQ01 (harness), R33 (design).
