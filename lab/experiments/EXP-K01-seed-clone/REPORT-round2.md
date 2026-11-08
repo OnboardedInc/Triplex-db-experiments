@@ -1,8 +1,10 @@
 # EXP-K01 round 2: R30 freeze protocol
 
+**Current Q83d continuation:** implemented at `3118e90`, with the retained-source ownership guard at `892ef88`. Focused gates pass (41/41 and final TypeScript exit 0). The fresh live retry waited from 22:26:48Z to 22:42:31Z but could not acquire the required resources. At 22:37:03Z OBS01 explicitly retained the s1 source/canary, so K01 cannot safely use `--fresh` until its owner clears it. No engine or volume was created by this retry. Golden/clone, C1-C8 and T1-T7 were **not rerun**; the earlier live observations below remain historical.
+
 North star: measurement speed for P1-P5 with faithful seed reuse. Scope and targets: `lab/SCOPE.md`, `lab/NORTH-STAR.md`, `lab/TARGETS.md`. Builder CX-K01-R2; implementation source commit `a4b228e`. Independent review is still required.
 
-## Result: G3 refused; no qualified golden or clone
+## Historical result before Q83d: G3 refused; no qualified golden or clone
 
 The 500-subject live check ran on s1 after engine admission. It found two additional assumptions in R30 G3 that do not hold with the specified five-second observations. The gate was not weakened. No golden was published, no clone was certified, and E1 is **not ready**.
 
@@ -57,4 +59,19 @@ Evidence paths in the table are relative to `evidence/round2/` unless already pr
 
 Q83d now permits live trie coverage at any level. The implementation replaces accumulated L0 sightings with current per-table live coverage for the target block. A fast-compaction regression accepts L1/L3 coverage and rejects another block, missing tables, garbage tries and missing levels. The explicit completed/source watermark equalities, upload advancement, idle compactor and stable listing/digest checks remain intact. Three stable readings with the node source watermark irreversibly past the immutable target block now return an explicit refusal rather than spending the rest of the timeout.
 
-The new attempt uses distinct `round2-q83d` evidence and seed paths; no first-failure artifacts are overwritten. T1 is captured before seeded work, and the golden/clone path is attempted before the sacrificial T6 diagnostic. Current focused unit result: 41/41 pass. Typecheck and live qualification are pending admission; final results follow below.
+The new attempt uses distinct `round2-q83d` evidence and seed paths; no first-failure artifacts are overwritten. T1 is captured before seeded work, and the golden/clone path is attempted before the sacrificial T6 diagnostic. Current focused unit result: 41/41 pass. The final TypeScript check passed (exit 0). The live result is the ownership/capacity block below.
+
+
+### Q83d retry outcome and handoff
+
+- `evidence/round2-q83d/unit.tap`: **41/41 PASS**, zero skips, including the requested fast-compaction regression.
+- `evidence/round2-q83d/typecheck-final.log`: **exit 0** through the heavy semaphore, after the Q83d TypeScript source was committed. Engine and runner syntax checks and `git diff --check` passed. The later ownership guard is JavaScript only.
+- `evidence/round2-q83d/live.log`: actual capacity waits, with no heavy token or exclusive slot held. I explicitly stopped only the idle waiter at 22:42:31Z once the retained-source conflict was established, rather than leaving a background job that could wipe another holder's canary.
+- `evidence/round2-q83d/admission-blocker.json`: exact ledger snapshot for the blocker. `tx2-xtdb-s1-data` belongs to **CX-OBS01**, **106,496 bytes**, note **"EXP-OBS01 diagnostic P2/P5; retain source state and canary"**. The resident reservations also leave less than the required 3.5 GiB.
+- `evidence/round2-q83d/final-status.txt`: no K01 holder/reservation. **K01 volumes made or retained by this retry: none, 0 bytes.** The OBS01 retained volume and all residents remain untouched.
+
+The runner now checks the retained-volume ledger before any `--fresh` admission, refuses another holder's retained source, and cleans up only after it has actually acquired its slot. The standalone T1 runner has the same ownership protection. This matters because engine.mjs's reservation alone does not protect a released but explicitly retained volume from `--fresh`.
+
+**Required next action:** the orchestrator/OBS01 owner must arrange s1 source retention or cleanup and free pool capacity. Then run the committed lightweight launcher with a **new** `TX2_K01_ATTEMPT` name (for example `round2-q83d-next`), preserving this attempt's logs. The launcher delegates the real job through heavy.mjs and engine.mjs. No permission to delete OBS01's evidence, park a resident, or change slots was inferred.
+
+The amended live predicate still enforces block/source-gauge equality, as Q83d explicitly requires. Whether that equality survives compaction messages remains a separate **unverified live question**; this continuation did not run an engine and does not establish that the earlier watermark issue is resolved. E1 remains blocked, with no golden/clone timing, C1-C8 verdict or T1-T7 rerun result to report. No merge, push, publication or independent promotion was performed.

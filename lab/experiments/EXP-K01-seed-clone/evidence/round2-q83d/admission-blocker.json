@@ -1,0 +1,41 @@
+{
+  "at": "2026-11-08T22:42:31.245Z",
+  "waiterPid": 9187,
+  "action": "SIGTERM idle waiter; no engine lifecycle action",
+  "reason": "s1 has another holders explicitly retained source/canary, which K01 --fresh must not delete; the resident pool also lacks 3.5 GiB",
+  "retained": [
+    {
+      "volume": "tx2-xtdb-s1-data",
+      "holder": "CX-OBS01",
+      "note": "EXP-OBS01 diagnostic P2/P5; retain source state and canary",
+      "at": "2026-11-08T22:37:03.177Z",
+      "bytes": 106496
+    }
+  ],
+  "reservations": [
+    {
+      "container": "tx2-xtdb-dev",
+      "holder": "EXP-W01",
+      "memBytes": 3221225472,
+      "state": "running"
+    },
+    {
+      "container": "tx2-qlever-dev",
+      "holder": "EXP-000",
+      "memBytes": 3758096384,
+      "state": "running"
+    },
+    {
+      "container": "tx2-datomic-dev",
+      "holder": "EXP-DA01",
+      "memBytes": 2952790016,
+      "state": "running"
+    },
+    {
+      "container": "tx2-qlever-s1",
+      "holder": "CX-OBS01",
+      "memBytes": 1073741824,
+      "state": "running"
+    }
+  ]
+}

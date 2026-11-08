@@ -1,0 +1,8 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 5260 "CX-VP2Q-4-package-live", pid 2977 "CX-VP2Q-4-live-http", pid 3055 "CX-VP2Q-4-live-prior", pid 10096 "DA01-G1"
+[lab] heavy: waiting for one of 4 slots; held by pid 5260 "CX-VP2Q-4-package-live", pid 2977 "CX-VP2Q-4-live-http", pid 3055 "CX-VP2Q-4-live-prior", pid 10096 "DA01-G1"
+[lab] heavy: waiting for one of 4 slots; held by pid 5260 "CX-VP2Q-4-package-live", pid 2977 "CX-VP2Q-4-live-http", pid 3055 "CX-VP2Q-4-live-prior", pid 10096 "DA01-G1"
+[lab] heavy: waiting for one of 4 slots; held by pid 5260 "CX-VP2Q-4-package-live", pid 10109 "G1-datomic-20261108T222718Z-b4f74f build", pid 3055 "CX-VP2Q-4-live-prior", pid 10096 "DA01-G1"
+[lab] heavy: waiting for one of 4 slots; held by pid 11143 "CX-SQL01-core-build", pid 10808 "CX-VO05-2-builder-gates", pid 3055 "CX-VP2Q-4-live-prior", pid 10096 "DA01-G1"
+[lab] heavy: waiting for one of 4 slots; held by pid 12030 "CX-X02-Q79e-G0", pid 10808 "CX-VO05-2-builder-gates", pid 12627 "CX-X02-Q79e-live", pid 13688 "G0-xtdb-20261108T223050Z-fdac21 typecheck"
+[lab] heavy: waiting for one of 4 slots; held by pid 15369 "CX-SQL01-package3", pid 10808 "CX-VO05-2-builder-gates", pid 12627 "CX-X02-Q79e-live", pid 14715 "CX-SQL01-kill80"
+[lab] heavy: waiting for one of 4 slots; held by pid 15464 "CX-SQL01-verifier", pid 15837 "CX-VP2Q-4-native-rewind-retry", pid 12627 "CX-X02-Q79e-live", pid 14715 "CX-SQL01-kill80"

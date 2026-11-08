@@ -1,0 +1,38 @@
+[
+  {
+    "args": [
+      "node",
+      "--check",
+      "lab/bin/engine.mjs"
+    ],
+    "exit": 0,
+    "stderr": ""
+  },
+  {
+    "args": [
+      "node",
+      "--check",
+      "lab/experiments/EXP-K01-seed-clone/round2-live.mjs"
+    ],
+    "exit": 0,
+    "stderr": ""
+  },
+  {
+    "args": [
+      "node",
+      "--check",
+      "lab/experiments/EXP-K01-seed-clone/round2-wait.mjs"
+    ],
+    "exit": 0,
+    "stderr": ""
+  },
+  {
+    "args": [
+      "node",
+      "--check",
+      "lab/experiments/EXP-K01-seed-clone/round2-t1.mjs"
+    ],
+    "exit": 0,
+    "stderr": ""
+  }
+]
