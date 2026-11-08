@@ -1,0 +1,1 @@
+{"protocol":"OBS-SCRATCH","qualification":"screening-only","reasons":["evaluator context, obs-bundle/1 directory and external key required"],"sourceStrength":null,"thresholds":{},"verdict":"REFUSED"}

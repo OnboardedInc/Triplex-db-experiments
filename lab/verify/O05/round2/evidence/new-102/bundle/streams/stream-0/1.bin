@@ -1,0 +1,7 @@
+{"field":"eligibility","value":{"attributes":[{"from":7,"name":"status","to":7}],"erasureApplied":11,"erasurePublished":11,"exactCut":7,"index":"idx-a","mappingGeneration":2,"markerState":"complete","partialOrConflictedReferenced":false,"publishedPositions":[2,5,7],"queriedAttributes":["status"],"queryCut":7,"queryMappingGeneration":2,"queryScope":"tenant-a","reconstructFrom":7,"reconstructTo":7,"recordedTimeBound":null,"resolutions":[{"outcome":"applied","position":2},{"outcome":"aborted","position":5},{"outcome":"applied","position":7}],"scopeOwner":"tenant-a","snapshot":{"after":{"incarnation":"instance-a","marker":7},"answer":{"incarnation":"instance-a","marker":7},"before":{"incarnation":"instance-a","marker":7},"mode":"incarnation-fenced"},"validFrom":10,"validInstant":15,"validTo":20}}
+{"field":"surfaceLanguage","value":"XTQL"}
+{"field":"tReadStart","value":100}
+{"field":"tRouteStart","value":60110}
+{"field":"tRouteEnd","value":60120}
+{"field":"tReadEnd","value":60120}
+{"field":"waitEvents","value":{"end":{"kind":"engine-request","readId":"read-a","t":110},"start":{"kind":"read-start","readId":"read-a","t":100}}}

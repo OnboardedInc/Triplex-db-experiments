@@ -1,0 +1,2 @@
+{"field":"tClose","value":10}
+{"field":"engineConnectionSamples","value":[{"count":3,"label":"reads","t":9},{"count":2,"label":"writes","t":9},{"count":1,"label":"reads","t":5010},{"count":0,"label":"writes","t":5010}]}

@@ -1,0 +1,3 @@
+{"field":"transition","value":"QT5-VERIFIED"}
+{"field":"t","value":30}
+{"field":"durableEvidenceObject","value":{"logIdentity":"source-a","readbackOperationId":"command-a","readbackPosition":7,"record":{"facts":{"accessPaths":{"ave":{"absences":[],"effects":[]},"eav":{"absences":[{"attribute":"status","entity":"subject-a","value":"pending"}],"effects":[{"attribute":"status","entity":"subject-a","value":"approved"}]},"vea":{"absences":[{"attribute":"status","entity":"subject-a","value":"pending"}],"effects":[{"attribute":"status","entity":"subject-a","value":"approved"}]}}},"operationId":"command-a","position":7,"t":30,"transition":"QT5-VERIFIED"},"restartIdentity":"restart-a","sha256":"3743550bda545098963624bbb461b5878d7275ead5e70fc5fe426ca755095845","tReadBack":901}}

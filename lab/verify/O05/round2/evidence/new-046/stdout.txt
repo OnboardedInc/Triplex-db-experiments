@@ -1,0 +1,1 @@
+{"protocol":"OBS-WORK","qualification":"screening-only","reasons":["UNTRUSTED-BUNDLE: missing or external bundle object"],"sourceStrength":null,"thresholds":{},"verdict":"REFUSED"}

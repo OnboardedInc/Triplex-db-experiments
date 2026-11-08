@@ -1,0 +1,1 @@
+{"ackSender":"source-a","commitPosition":7,"source":{"kind":"source-publication-log","records":{"ackSender":"source-a","commitPosition":7,"sourceOfTruth":"source-a","tAck":100,"tSourcePublished":90},"sha256":"219d4a9caa9964a25648661a71b489d48716f5efa5be7fe9cf8978fe34ba9d27"},"sourceOfTruth":"source-a","tAck":100,"tSourcePublished":90}

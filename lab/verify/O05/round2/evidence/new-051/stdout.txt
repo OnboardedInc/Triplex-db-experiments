@@ -1,0 +1,1 @@
+{"protocol":"OBS-WORK","qualification":"screening-only","reasons":["context omitted obligation thresholds"],"sourceStrength":null,"thresholds":{},"verdict":"FAIL"}

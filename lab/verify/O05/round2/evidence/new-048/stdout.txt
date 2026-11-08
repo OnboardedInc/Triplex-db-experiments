@@ -1,0 +1,1 @@
+{"protocol":"OBS-WORK","qualification":"screening-only","reasons":["contract/protocol context mismatch"],"sourceStrength":null,"thresholds":{},"verdict":"FAIL"}

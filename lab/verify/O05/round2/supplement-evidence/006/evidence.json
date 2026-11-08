@@ -1,0 +1,1 @@
+{"corroboration":[{"kind":"TO/qlever/T2","records":{"engineMutationCounterAfter":17,"engineMutationCounterBefore":17},"streamRefs":["stream-1"]}],"counterSource":{"kind":"EI-metric/qlever/Q1","records":{"engineMutationCounterAfter":17,"engineMutationCounterBefore":17},"streamRefs":["stream-0"]},"engineMutationCounterAfter":17,"engineMutationCounterBefore":17}

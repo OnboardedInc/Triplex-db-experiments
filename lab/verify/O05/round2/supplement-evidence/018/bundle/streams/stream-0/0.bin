@@ -1,0 +1,6 @@
+{"field":"requestId","value":"query-a"}
+{"field":"connectionId","value":"conn-a"}
+{"field":"tCancelRequested","value":102}
+{"field":"tCallerSettled","value":110}
+{"field":"callerError","value":"E-CANCELLED"}
+{"field":"expectedError","value":"E-CANCELLED"}

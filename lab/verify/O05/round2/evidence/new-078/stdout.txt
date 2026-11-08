@@ -1,0 +1,1 @@
+{"protocol":"OBS-FAULT-TRANSITIONS","qualification":"screening-only","reasons":["declared transition has no witness"],"sourceStrength":"direct","thresholds":{},"verdict":"FAIL"}

@@ -1,0 +1,7 @@
+{"field":"tDrained","value":2100}
+{"field":"engineActiveSamples","value":[{"activeQueryIds":["query-a"],"t":100},{"activeQueryIds":["query-a"],"t":1100},{"activeQueryIds":[],"t":2100},{"activeQueryIds":[],"t":3100},{"activeQueryIds":[],"t":4100},{"activeQueryIds":[],"t":5100},{"activeQueryIds":[],"t":6100},{"activeQueryIds":[],"t":7100}]}
+{"field":"reuseQueryId","value":"query-b"}
+{"field":"reuseConnectionId","value":"conn-a"}
+{"field":"tReuseOk","value":2200}
+{"field":"reuseResult","value":{"connectionId":"conn-a","outcome":"success","queryId":"query-b","t":2200}}
+{"field":"tDeadline","value":100}

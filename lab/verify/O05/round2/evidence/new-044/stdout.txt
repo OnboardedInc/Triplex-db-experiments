@@ -1,0 +1,1 @@
+{"protocol":"OBS-WORK","qualification":"screening-only","reasons":["UNTRUSTED-BUNDLE: stream policy differs from evaluator context"],"sourceStrength":null,"thresholds":{},"verdict":"REFUSED"}

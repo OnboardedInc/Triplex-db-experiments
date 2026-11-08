@@ -1,0 +1,3 @@
+{"field":"transitions","value":[{"durableEvidenceObject":{"logIdentity":"source-a","readbackOperationId":"command-a","readbackPosition":7,"record":{"facts":{"committed":true,"marker":{"operationId":"command-a","position":7,"visible":true},"operationMarkerPresent":true,"transaction":{"effects":[],"operationId":"command-a","position":7}},"operationId":"command-a","position":7,"t":30,"transition":"XT2-ENGINE-COMMITTED"},"restartIdentity":"restart-a","sha256":"33b13ca834791b0a95bb2a9e4f2d966e397f08be927130ed9691cbdc5ea6954b","tReadBack":901},"t":30,"transition":"XT2-ENGINE-COMMITTED"}]}
+{"field":"tCrash","value":900}
+{"field":"variant","value":"engine-source"}

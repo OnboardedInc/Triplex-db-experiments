@@ -1,0 +1,2 @@
+{"field":"comparison","value":{"engineWorkUnits":{"bytesWritten":0,"rowsScanned":100,"rowsWritten":0,"triplesTouched":40},"operation":"full-recomputation"}}
+{"field":"threshold","value":"T-REUSE-AVOIDED"}

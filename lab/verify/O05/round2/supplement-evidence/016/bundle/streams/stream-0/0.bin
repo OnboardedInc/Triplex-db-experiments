@@ -1,0 +1,7 @@
+{"field":"readId","value":"read-a"}
+{"field":"basisPosition","value":7}
+{"field":"servingIndex","value":"idx-a"}
+{"field":"watermarkAtRead","value":7}
+{"field":"waitMs","value":11}
+{"field":"route","value":"index"}
+{"field":"fallbackIndex","value":null}

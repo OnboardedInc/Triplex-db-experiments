@@ -1,0 +1,1 @@
+{"protocol":"OBS-WATERMARK","qualification":"screening-only","reasons":["wait event identity mismatch"],"sourceStrength":"indirect","thresholds":{},"verdict":"FAIL"}

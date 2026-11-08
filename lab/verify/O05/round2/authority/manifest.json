@@ -1,0 +1,40 @@
+{
+  "readOnlyCapture": true,
+  "files": [
+    {
+      "source": "/Users/sam/projects/triplex-db-2/CLAUDE.md",
+      "retained": "CLAUDE.md",
+      "sha256": "22aee24c573eccdaf5ffe1b8bca1893b59cf27391e4c9921f76121c24ac87aa7"
+    },
+    {
+      "source": "/Users/sam/projects/triplex-db-2/lab/SCOPE.md",
+      "retained": "SCOPE.md",
+      "sha256": "94527879db763dd6f3e7d233470250cd53b86f4fb594c8ade2aedc730cb14f96"
+    },
+    {
+      "source": "/Users/sam/projects/triplex-db-2/lab/NORTH-STAR.md",
+      "retained": "NORTH-STAR.md",
+      "sha256": "0176766d21385a37a0dea3091d7200f249901ce8a4eadd071acd56b2f70eb3e9"
+    },
+    {
+      "source": "/Users/sam/projects/triplex-db-2/lab/TARGETS.md",
+      "retained": "TARGETS.md",
+      "sha256": "cb30ffeb776a7deb0c885be2968872bcebd7dc05cca1b2cfb5913b809a804d95"
+    },
+    {
+      "source": "/Users/sam/projects/triplex-db-2/lab/PROTOCOL.md",
+      "retained": "PROTOCOL.md",
+      "sha256": "38f18746487bdc5ba5e736c57ee3a412a47255f2214fb46efee406a59ad8771d"
+    },
+    {
+      "source": "/Users/sam/projects/triplex-db-2/lab/acceptance/RULINGS-PENDING.md",
+      "retained": "RULINGS-PENDING.md",
+      "sha256": "28dc2cb72bc398e9762046f2d52782214e32956eaf7c0e965a19f43b51d5ceb6"
+    },
+    {
+      "source": "/Users/sam/projects/triplex-db-2/lab/research/R27-obs-evidence-sources.md",
+      "retained": "R27-obs-evidence-sources.md",
+      "sha256": "6c3be386e14c760a69985e3519acdd1df5775b3d01bd0e4d0c41627e8c036cfe"
+    }
+  ]
+}

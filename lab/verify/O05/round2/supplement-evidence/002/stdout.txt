@@ -1,0 +1,1 @@
+{"protocol":"OBS-NO-MUTATION","qualification":"screening-only","reasons":["XTDB requires completed transaction gauge"],"sourceStrength":null,"thresholds":{},"verdict":"FAIL"}

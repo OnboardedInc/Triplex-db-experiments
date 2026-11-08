@@ -1,0 +1,58 @@
+{
+  "start": 1794177020.897758,
+  "end": 1794177023.2940109,
+  "hostDiskFreeBefore": 26738159616,
+  "total": 20,
+  "matched": 19,
+  "discrepancies": [
+    {
+      "code": 0,
+      "result": {
+        "protocol": "OBS-CANCEL",
+        "qualification": "screening-only",
+        "reasons": [],
+        "sourceStrength": "direct",
+        "thresholds": {
+          "T-DEADLINE-GRACE-MS": {
+            "bound": "max",
+            "kind": "observe",
+            "source": "derived from NS-P1-READ-P99-256-MS",
+            "unit": "ms past timeoutMs for the typed timeout to reach the caller",
+            "value": 100
+          },
+          "T-DRAIN-MS": {
+            "bound": "max",
+            "kind": "observe",
+            "source": "derived from NS-P1-WRITER-WAIT-MAX-MS",
+            "unit": "ms from cancel request to the engine no longer listing the statement",
+            "value": 2000
+          }
+        },
+        "verdict": "PASS"
+      },
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "-B",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round2/subject/lab/acceptance/oracle/observe.py",
+        "check",
+        "OBS-CANCEL",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round2/supplement-evidence/019/evidence.json",
+        "--contract",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round2/supplement-evidence/019/contract.json",
+        "--context",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round2/supplement-evidence/019/context.json",
+        "--bundle",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round2/supplement-evidence/019/bundle",
+        "--key-file",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05/lab/verify/O05/round2/supplement-evidence/019/run.key"
+      ],
+      "id": "CANCEL/timeout-uncertain-boundary",
+      "expected": "REJECT",
+      "path": "supplement-evidence/019",
+      "ok": false
+    }
+  ],
+  "sourceStable": true,
+  "sourceSha256": "4d1a128e7c5074139451310a73ee03753c849b9d3a237950b705208d36782bd3"
+}

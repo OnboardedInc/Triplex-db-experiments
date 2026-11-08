@@ -1,0 +1,1 @@
+{"protocol":"OBS-WORK","qualification":"screening-only","reasons":["work threshold differs from evaluator witness kind"],"sourceStrength":null,"thresholds":{},"verdict":"FAIL"}

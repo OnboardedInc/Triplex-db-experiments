@@ -1,0 +1,2 @@
+{"field":"comparison","value":{"engineWorkUnits":{"bytesWritten":0,"rowsScanned":0,"rowsWritten":900719925474099200,"triplesTouched":0},"operation":"first-read-key-a"}}
+{"field":"threshold","value":"T-INCR-WORK"}

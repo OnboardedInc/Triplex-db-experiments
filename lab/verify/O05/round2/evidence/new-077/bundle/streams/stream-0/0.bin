@@ -1,0 +1,3 @@
+{"field":"transition","value":"QT4s-SOURCE-PUBLISHED"}
+{"field":"t","value":30}
+{"field":"durableEvidenceObject","value":{"logIdentity":"source-a","readbackOperationId":"command-a","readbackPosition":7,"record":{"t":30,"transition":"QT4s-SOURCE-PUBLISHED"},"restartIdentity":"restart-a","sha256":"454e2e9bb825fafee988b538ab470767263e311b4639720b7dc84dacc9f37e1c","tReadBack":901}}

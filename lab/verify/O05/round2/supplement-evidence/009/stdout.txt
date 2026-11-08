@@ -1,0 +1,1 @@
+{"protocol":"OBS-PREABORT","qualification":"screening-only","reasons":["Datomic read evidence requires HO plus TO"],"sourceStrength":null,"thresholds":{},"verdict":"FAIL"}

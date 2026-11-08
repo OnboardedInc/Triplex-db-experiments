@@ -1,0 +1,1 @@
+{"events":[{"kind":"start","t":100},{"kind":"end","t":1100}],"kind":"compaction","lagSamples":[{"lagMs":250,"t":100},{"lagMs":250,"t":1100}],"source":{"kind":"engine-maintenance-log","sha256":"0000000000000000000000000000000000000000000000000000000000000000"},"tEnd":1100,"tStart":100,"threshold":"NS-P3-LAG-P99-MS"}
