@@ -25,7 +25,7 @@ import type { QleverDomainPlan } from "./FamilyDomains.js";
 import type { QleverSourcePlan } from "./ScalarSource.js";
 import { materializeQleverRules } from "./recursion.js";
 import { prepareAggregateAnswers } from "./AggregateAnswers.js";
-import { BasisNotAvailable, ReplicaUnavailable } from "./broker/errors.js";
+import { BasisNotAvailable, ReplicaUnavailable, isUnreachable } from "./broker/errors.js";
 import type { ReplicaSnapshot } from "./broker/broker.js";
 
 export interface QleverQueryOptions {
@@ -236,13 +236,38 @@ export const makeQleverQueryExecutor = (
               ? await gate.inTransaction(sourceView.sourcePosition)
               : await gate(basis?.recordedPosition)
             : undefined;
+          // [EXP-P2Q] Why: every answer/materialization SELECT needs the broker outage reason.
+          // Rejected: classifying the whole run (compiler/validation errors are not transport failures).
+          const replicaClient: QleverClient = snapshot
+            ? {
+                update: (...args) => client.update(...args),
+                command: (...args) => client.command(...args),
+                cancel: (...args) => client.cancel(...args),
+                close: () => client.close(),
+                query: async (sparql, requestOptions) => {
+                  try {
+                    return await client.query(sparql, requestOptions);
+                  } catch (cause) {
+                    if (!(cause instanceof ReadError) && isUnreachable(cause))
+                      throw new ReplicaUnavailable({
+                        required: snapshot.basis,
+                        observed: snapshot.marker.position,
+                        replica: "the QLever replica",
+                        surface: "datalog",
+                        cause,
+                      });
+                    throw cause;
+                  }
+                },
+              }
+            : client;
           const position =
             snapshot?.basis ??
             sourceView?.sourcePosition ??
             basis?.recordedPosition ??
             safeCount(
               (
-                await client.query(
+                await replicaClient.query(
                   `SELECT ?position WHERE { GRAPH ${graphIri(scopeKey)} { ${metaIri} ${fieldIri("position")} ?position } }`,
                   { signal, timeoutMs: nativeTimeoutMs, maxResponseBytes },
                 )
@@ -254,7 +279,7 @@ export const makeQleverQueryExecutor = (
             ...(basis?.recordedAt === undefined ? {} : { recordedAt: basis.recordedAt }),
           };
           const runId = logical.rules?.length
-            ? await materializeQleverRules(client, logical, scopeKey, {
+            ? await materializeQleverRules(replicaClient, logical, scopeKey, {
                 basis: resolved,
                 signal,
                 maxRows: maxRecursiveRows,
@@ -287,7 +312,7 @@ export const makeQleverQueryExecutor = (
           for (const check of compiled.checks)
             if (
               (
-                await client.query(check.sparql, {
+                await replicaClient.query(check.sparql, {
                   signal,
                   timeoutMs: nativeTimeoutMs,
                   maxResponseBytes,
@@ -300,7 +325,7 @@ export const makeQleverQueryExecutor = (
               });
           const numericDomains = new Map<string, NumericDomain>();
           if (compiled.familyDomain) {
-            const rows = await client.query(compiled.familyDomain.sparql, {
+            const rows = await replicaClient.query(compiled.familyDomain.sparql, {
               signal,
               timeoutMs: nativeTimeoutMs,
               maxResponseBytes,
@@ -319,7 +344,7 @@ export const makeQleverQueryExecutor = (
           }
 
           for (const probe of compiled.domains) {
-            const rows = await client.query(probe.sparql, {
+            const rows = await replicaClient.query(probe.sparql, {
               signal,
               timeoutMs: nativeTimeoutMs,
               maxResponseBytes,
@@ -360,7 +385,7 @@ export const makeQleverQueryExecutor = (
             }
           }
           compiled = compile({ ...compileOptions, numericDomains });
-          const raw = await client.query(compiled.sparql, {
+          const raw = await replicaClient.query(compiled.sparql, {
             signal,
             timeoutMs: nativeTimeoutMs,
             maxResponseBytes,
@@ -381,7 +406,7 @@ export const makeQleverQueryExecutor = (
           if (compiled.countSparql)
             totalCount = safeCount(
               (
-                await client.query(compiled.countSparql, {
+                await replicaClient.query(compiled.countSparql, {
                   signal,
                   timeoutMs: nativeTimeoutMs,
                   maxResponseBytes,

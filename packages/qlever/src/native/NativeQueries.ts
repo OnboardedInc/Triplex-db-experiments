@@ -147,24 +147,33 @@ export const makeQleverNativeQueries = (
             ? `SELECT ?position ?incarnation WHERE { GRAPH ${graphIri(scope)} { ${metaIri} ${fieldIri("position")} ?position OPTIONAL { ${metaIri} ${fieldIri("broker_incarnation")} ?incarnation } } }`
             : `SELECT ?position WHERE { GRAPH ${graphIri(scope)} { ${metaIri} ${fieldIri("position")} ?position } }`;
           let incarnation = "";
-          const readSource = async () => {
-            let positions;
+          let observed = 0;
+          let required = options.basis?.recordedPosition ?? 0;
+          // [EXP-P2Q] Why: answer/relation requests can fail after a successful basis probe.
+          // Rejected: classifying the whole run (builder/validation errors are not replica outages).
+          const replicaQuery: QleverClient["query"] = async (sparql, requestOptions) => {
             try {
-              positions = await client.query(sourceQuery, request);
+              return await client.query(sparql, requestOptions);
             } catch (cause) {
-              if (gated && isUnreachable(cause))
+              if (gated && !(cause instanceof ReadError) && isUnreachable(cause))
                 throw new ReplicaUnavailable({
+                  required,
+                  observed,
                   replica: "the QLever replica",
                   surface: "native",
                   cause,
                 });
               throw cause;
             }
+          };
+          const readSource = async () => {
+            const positions = await replicaQuery(sourceQuery, request);
             const text = positions[0]?.["position"]?.value ?? "0";
             if (positions.length > 1 || !/^(0|[1-9][0-9]*)$/.test(text))
               throw new TypeError("Invalid native source-position metadata");
             incarnation = positions[0]?.["incarnation"]?.value ?? "";
-            return Number(text);
+            observed = Number(text);
+            return observed;
           };
           const sourceStarted = performance.now();
           let current = await readSource();
@@ -200,9 +209,16 @@ export const makeQleverNativeQueries = (
             currentPosition: current,
             now: Date.now(),
           });
+          required = basis.recordedPosition;
           const working = relations
             ? await materializeQleverNativeRelations(
-                client,
+                {
+                  query: replicaQuery,
+                  update: (...args) => client.update(...args),
+                  command: (...args) => client.command(...args),
+                  cancel: (...args) => client.cancel(...args),
+                  close: () => client.close(),
+                },
                 basis,
                 relations,
                 parameters,
@@ -219,7 +235,7 @@ export const makeQleverNativeQueries = (
             if (typeof query !== "string" || !query.trim())
               throw new TypeError("The native builder must return SPARQL query text");
             const queryStarted = performance.now();
-            const rawRows = await client.query(query, request);
+            const rawRows = await replicaQuery(query, request);
             steps.push({
               phase: "answer",
               language: "sparql-1.1",

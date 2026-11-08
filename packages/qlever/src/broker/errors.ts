@@ -47,13 +47,23 @@ export class ReplicaUnavailable extends ReadError {
   readonly reason = "replica-unreachable" as const;
   readonly replica: string;
   readonly surface: BasisSurface;
-  constructor(input: { readonly replica: string; readonly surface: BasisSurface; readonly cause?: unknown }) {
+  readonly required?: number;
+  readonly observed?: number;
+  constructor(input: {
+    readonly replica: string;
+    readonly surface: BasisSurface;
+    readonly required?: number;
+    readonly observed?: number;
+    readonly cause?: unknown;
+  }) {
     super({
       message: `QLever replica ${input.replica} is unreachable for ${input.surface} reads: ${String(input.cause)}`,
       ...(input.cause === undefined ? {} : { cause: input.cause }),
     });
     this.replica = input.replica;
     this.surface = input.surface;
+    if (input.required !== undefined) this.required = input.required;
+    if (input.observed !== undefined) this.observed = input.observed;
   }
 }
 
