@@ -1204,3 +1204,12 @@ Where each priority stands, from evidence so far (research probes and baselines;
   so every P1, P2 and P4 gain for XTDB has to come from the read-path change (EXP-P4 X1), the keyed scope candidate (P2X) and the broker
   (P2B), not from tuning the engine.
 - **O-REPLAY 0.4.5 (acf9fce)** closes Q70a-e (375/375 unit tests, probe_q52 43 MATCH, 2 OBSERVED); V-O04f is re-checking it.
+
+## 2026-11-08 01:54Z: goal check-in: background work audit
+- **All progressing.** Every active agent wrote within the last two minutes (V-X02, W01b, P4, R25, R26, A01, V-E01, P2Q fix round 2,
+  V-O04f). C8 (XTDB SQL G2) and J01 (XTDB G1 with the option off) are idle by design while their runs advance; both runs wrote output
+  in the last five minutes (C8's G2 is past workload 16). N01 finished and is merged; M01 is parked with nothing running.
+- **Stopped:** one leftover `tail -F` of C8's finished QLever G2 run (running 2 h 04 min, no reader left). Nothing else was stuck.
+- **Pool:** xtdb-dev 2.3 of 3.0 GiB, qlever-dev 1.0 of 3.5, xtdb-s2 1.1 of 3.5 (EXP-P4's slot smoke). With s2 taken, s1 cannot also fit
+  in the 11 GiB pool, so V-X02's exclusive XTQL rerun waits for P4 to release s2; engine.mjs's reservations arbitrate this.
+- **Host:** load 15.9 / 26.2 / 22.4 (the 5-minute peak is the highest yet); disk 9.2 GiB free (rule: no new heavy run below 5 GiB).
