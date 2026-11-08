@@ -1,4 +1,4 @@
-# O-REPLAY case and output schema (v1; oracle 0.4.5)
+# O-REPLAY case and output schema (v1; oracle 0.4.6)
 
 O-REPLAY reads one case file and writes one expected-answer document. Python 3 standard library
 only; it imports nothing from Triplex. Semantic rules are in [RULES.md](RULES.md).
@@ -204,8 +204,11 @@ prefix of the commits in position order (Q66a: none, the first, the first two, .
 otherwise it is the plain `result` or `error`. An `entityPage` with `cursorFrom` is answered from the read it names,
 whether or not that read had commits in flight: per prefix of that read, from that prefix's page, in the same form,
 never with its own `readStart` (Q66b, Q70a). A literal `cursor` token equal to a `nextCursor` that any earlier read of the
-case issued continues that read the same way, the latest such read if several issued it, for the prefixes whose pages
-issued it (Q70b to Q70e); only a token no earlier read issued uses the query's own read view.
+case issued continues that read the same way, for the prefixes whose pages issued it; several issuers with identical
+views continue the latest, and issuers whose views disagree make the entry a typed `X-NOT-MODELED` error, "ambiguous
+literal token" (Q70b to Q70f). A `transactions` call whose `after` equals a `next` an earlier `transactions` page of
+the same journal scope issued continues that read the same way (Q70g). Only a token or `after` no earlier read issued
+uses the query's own read view.
 
 `where` items: `{"prop"|"var": ..., "op": "eq|ne|lt|lte|gt|gte|in|exists|missing", "value": ...}` (`values` for
 `in`); `value` is a typed value object or an untyped bare JSON string/number. `orderBy`:
@@ -217,14 +220,15 @@ example `E-CONFLICTING-VALUES`, `E-INTEGER-OVERFLOW`, `E-MIXED-FAMILY`, `E-INTEG
 conflicted `{entityId, attribute}`). Errors without a 4.7 row use `X-` ids (`X-CYCLE`, `X-NO-POSITION`,
 `X-NOT-MODELED`) with `ruling` naming the RULING-NEEDED item (R-ERR-2). A case the oracle cannot answer
 exactly (decimal scale evolution, TDK1 keys) exits 2 with a message starting `X-NOT-MODELED`; a pattern that could
-select unmodeled transaction envelope facts is a typed `X-NOT-MODELED` answer (R-JNL-6).
+select unmodeled transaction envelope facts (R-JNL-6) and an ambiguous continuation (a literal token or journal `after`
+issued by earlier reads whose views disagree, R-ERA-6 / Q70f) are typed `X-NOT-MODELED` answers.
 
 ## 4. Output document
 
 ```jsonc
 {
   "format": "triplex-db-2/o-replay-expected/1",
-  "oracle": {"id": "O-REPLAY", "version": "0.4.5", "sourceSha256": {"values.py": "..."}},
+  "oracle": {"id": "O-REPLAY", "version": "0.4.6", "sourceSha256": {"values.py": "..."}},
   "caseId": "...", "caseSha256": "<sha256 of the case bytes>",
   "lane": {"name": "qlever", "integerRange": ["-576460752303423488", "576460752303423487"]},
   "verdict": "PASS | FAIL | EXPECTED-ONLY",

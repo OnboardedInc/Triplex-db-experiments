@@ -2200,7 +2200,7 @@ class Erasure(unittest.TestCase):
     def test_Q70c_literal_token_from_a_plain_read(self):
         """Q70c: a literal token issued by any earlier read continues that read, in flight or
         not, so a page with an earlier readStart cannot reopen a value the issuing read saw
-        erased; Q70d: equal tokens follow the latest issuing read in case order."""
+        erased."""
         cmds = erasure_commands()
         cmds[2]["operations"] = [{"op": "erase", "target": "name2"}]
         page = lambda qid, **kw: dict({"id": qid, "kind": "entityPage", "entityType": "Person", "limit": 1}, **kw)
@@ -2211,12 +2211,48 @@ class Erasure(unittest.TestCase):
         self.assertNotIn("acceptable", b)                                   # the plain read's one view
         self.assertEqual(b["pages"][0]["entities"][0]["triples"][0]["value"], marker(300))
         self.assertNotIn('"Bo"', json.dumps(b))
-        in_flight = page("f", cut={"position": 2, "validAt": 1e15}, readStart={"afterCommand": 1})
+
+    def test_Q70f_ambiguous_literal_token(self):
+        """Q70f (V-O04f F9): when the earlier reads that issued a literal token disagree in start,
+        scope or per-prefix answers, the continuation fails closed with a typed X-NOT-MODELED,
+        whichever issued last; Q70d: issuers with identical views continue the latest."""
+        cmds = erasure_commands()
+        cmds[2]["operations"] = [{"op": "erase", "target": "name2"}]
+        page = lambda qid, **kw: dict({"id": qid, "kind": "entityPage", "entityType": "Person", "limit": 1}, **kw)
+        cut = {"position": 2, "validAt": 1e15}
+        plain, in_flight = page("a", cut=cut), page("f", cut=cut, readStart={"afterCommand": 1})
+        token = result(evaluate(case(cmds, [plain], schemas=PERSON_SCHEMA)), "a")["pages"][0]["nextCursor"]
         cont = page("b", cursor=token)
-        latest_plain = evaluate(case(cmds, [in_flight, plain, cont], schemas=PERSON_SCHEMA))
-        latest_in_flight = evaluate(case(cmds, [plain, in_flight, cont], schemas=PERSON_SCHEMA))
-        self.assertNotIn("acceptable", result(latest_plain, "b"))
-        self.assertEqual([alt["erasuresSeen"] for alt in result(latest_in_flight, "b")["acceptable"]], [[], ["tx:2"]])
+        for order in ([in_flight, plain, cont], [plain, in_flight, cont]):
+            node = result(evaluate(case(cmds, order, schemas=PERSON_SCHEMA)), "b")
+            self.assertEqual(node["error"], "X-NOT-MODELED")
+            self.assertIn("ambiguous literal token", node["message"])
+        twice = evaluate(case(cmds, [in_flight, dict(in_flight, id="g"), cont], schemas=PERSON_SCHEMA))
+        self.assertEqual([alt["erasuresSeen"] for alt in result(twice, "b")["acceptable"]], [[], ["tx:2"]])
+        same = evaluate(case(cmds, [plain, dict(plain, id="g"), cont], schemas=PERSON_SCHEMA))
+        self.assertEqual(result(same, "b")["pages"][0]["entities"][0]["triples"][0]["value"], marker(300))
+
+    def test_Q70g_journal_pagination(self):
+        """Q70g (V-O04f F10): a `transactions` call whose `after` equals a `next` an earlier
+        transactions page of the case issued continues that read, one answer per prefix; an
+        `after` no earlier page issued keeps the call's own read view."""
+        cmds = [{"clock": 100, "operations": [assert_op("s1", "p1", ":w/pay", i64(1))]},
+                {"clock": 110, "operations": [assert_op("s2", "p2", ":w/pay", i64(2))]},
+                {"clock": 200, "operations": [{"op": "erase", "entityId": "p1"}, {"op": "erase", "entityId": "p2"}]}]
+        first = {"id": "t1", "kind": "transactions", "after": 0, "limit": 1, "readStart": {"afterCommand": 1}}
+        second = {"id": "t2", "kind": "transactions", "after": 1, "limit": 1}
+
+        def values(node):
+            alts = node["acceptable"] if "acceptable" in node else [{"erasuresSeen": "plain", "result": node}]
+            return [(a["erasuresSeen"], [c["value"] for tx in a["result"]["transactions"] for c in tx["changes"]],
+                     a["result"].get("next")) for a in alts]
+        rep = evaluate(case(cmds, [first, second]))
+        self.assertEqual(values(result(rep, "t1")), [([], [i64(1)], 1), (["tx:2"], [marker(200)], 1)])
+        self.assertEqual(values(result(rep, "t2")), [([], [i64(2)], 2), (["tx:2"], [marker(200)], 2)])
+        own = evaluate(case(cmds, [second]))                                  # no issuing page: its own view
+        self.assertEqual(values(result(own, "t2")), [("plain", [marker(200)], 2)])
+        plain = evaluate(case(cmds, [dict(first, id="t1", readStart=None), dict(second, readStart={"afterCommand": 1})]))
+        self.assertEqual(values(result(plain, "t2")), [("plain", [marker(200)], 2)])     # continues the plain page
 
     def test_erase_receipts(self):
         c = case(erasure_commands(), [match_q("m")], schemas=PERSON_SCHEMA)
