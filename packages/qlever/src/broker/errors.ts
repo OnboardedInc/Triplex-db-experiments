@@ -72,9 +72,30 @@ export class ReplicaUnavailable extends ReadError {
  * a request deadline, an aborted request, an HTTP 5xx) rather than a bad query (HTTP 4xx, a decode error).
  */
 export const isUnreachable = (error: unknown): boolean => {
-  if (error instanceof QleverHttpError) return error.status >= 500;
-  const text = `${(error as { code?: string })?.code ?? ""} ${String((error as Error)?.message ?? error)}`;
-  return /ECONNREFUSED|ECONNRESET|EPIPE|ETIMEDOUT|EHOSTUNREACH|ENOTFOUND|socket hang up|deadline|aborted|timed? ?out|fetch failed|connect/i.test(
-    text,
-  );
+  // [EXP-P2Q] Why: fetch body interruptions wrap UND_ERR_SOCKET in TypeError("terminated").
+  // Rejected: matching "terminated" or all TypeErrors (decode/query failures are not outages).
+  const seen = new Set<unknown>();
+  let current = error;
+  for (let depth = 0; depth < 32 && current != null && !seen.has(current); depth++) {
+    seen.add(current);
+    if (current instanceof BasisNotAvailable) return false;
+    if (current instanceof QleverHttpError) return current.status >= 500;
+    const code = (current as { code?: unknown }).code;
+    if (
+      typeof code === "string" &&
+      /^(UND_ERR_SOCKET|UND_ERR_CONNECT_TIMEOUT|UND_ERR_HEADERS_TIMEOUT|UND_ERR_BODY_TIMEOUT)$/.test(
+        code,
+      )
+    )
+      return true;
+    const text = `${code ?? ""} ${String((current as Error)?.message ?? current)}`;
+    if (
+      /ECONNREFUSED|ECONNRESET|EPIPE|ETIMEDOUT|EHOSTUNREACH|ENOTFOUND|socket hang up|deadline|aborted|timed? ?out|fetch failed|connect/i.test(
+        text,
+      )
+    )
+      return true;
+    current = (current as { cause?: unknown }).cause;
+  }
+  return false;
 };
