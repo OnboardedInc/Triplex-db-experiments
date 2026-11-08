@@ -74,29 +74,19 @@ describe.skipIf(process.env.XTDB_INTEGRATION !== "1")("XTDB computed Triplex bin
             value: integer("9223372036854775807"),
           },
         ]);
-        const next = yield* triples.queryAll({
-          find: ["?next"],
-          where: [["big", ":i", "?i"]],
-          compute: [["+", "?i", integer("1"), "?next"]],
-        });
-        expect(next.results).toEqual([{ "?next": integer("9007199254740994") }]);
-        const divided = yield* triples.queryAll({
-          find: ["?q", "?r"],
-          where: [["negative", ":i", "?i"]],
-          compute: [
-            ["/", "?i", integer("2"), "?q"],
-            ["%", "?i", integer("2"), "?r"],
-          ],
-        });
-        expect(divided.results).toEqual([{ "?q": integer("-2"), "?r": integer("-1") }]);
-        const overflow = yield* triples
-          .queryAll({
-            find: ["?bad"],
-            where: [["max", ":i", "?i"]],
-            compute: [["+", "?i", integer("1"), "?bad"]],
-          })
-          .pipe(Effect.flip);
-        expect(String(overflow)).toMatch(/overflow|range|integer|format/i);
+        // [EXP-X02-R2] Why: Q79c permits typed refusal instead of rounded exact arithmetic.
+        // Rejected: keeping the old success assertion (it accepted a DECIMAL -> BIGINT cast).
+        for (const op of ["+", "-", "*", "/", "%"] as const) {
+          const failure = yield* triples
+            .queryAll({
+              find: ["?next"],
+              where: [["big", ":i", "?i"]],
+              compute: [[op, "?i", integer("1"), "?next"]],
+            })
+            .pipe(Effect.flip);
+          expect(failure._tag).toBe("DatalogValidationError");
+          expect(String(failure)).toContain("Exact integer computation is not qualified");
+        }
         const mixed = yield* triples
           .queryAll({
             find: ["?bad"],

@@ -1,0 +1,29 @@
+#!/usr/bin/env node
+// [EXP-X02-R2] Why: the gate's shorthand commands omit the required owned store.
+// Rejected: pnpm exec --store-dir (pnpm 10 rejects it). No dependency installs occur.
+import { spawnSync } from 'node:child_process';
+import path from 'node:path';
+import fs from 'node:fs';
+const root = path.resolve(import.meta.dirname, '../../../../..');
+const args = process.argv.slice(2);
+const filters = [];
+while (args[0] === '--filter') { args.shift(); filters.push(args.shift()); }
+let result;
+if (args[0] === 'exec') {
+  if (filters.length !== 1 || args[1] !== 'vitest') throw new Error('Only filtered Vitest exec is supported');
+  const dirs = { '@triplex-build/triplex': 'core', '@triplex-build/triplex-testkit': 'testkit', '@triplex-build/triplex-xtdb': 'xtdb', '@triplex-build/triplex-qualification': 'qualification' };
+  if (!dirs[filters[0]]) throw new Error('Unknown package');
+  result = spawnSync(path.join(root, 'node_modules/.bin/vitest'), args.slice(2), { cwd: path.join(root, 'packages', dirs[filters[0]]), stdio: 'inherit' });
+} else if (args[0] === '--version') {
+  result = spawnSync('/opt/homebrew/bin/pnpm', ['--store-dir', '/Users/sam/projects/triplex-db-2/.pnpm-store', '--version'], { stdio: 'inherit' });
+} else {
+  // pnpm's recursive run also rejects store-dir: execute the unchanged declared scripts.
+  if (!['build', 'typecheck'].includes(args[0])) throw new Error('Unexpected command');
+  const packages = ['core', 'testkit', 'xtdb', 'qualification'].map(dir => ({ dir: path.join(root, 'packages', dir), pkg: JSON.parse(fs.readFileSync(path.join(root, 'packages', dir, 'package.json'), 'utf8')) }));
+  for (const {dir, pkg} of packages.filter(({pkg}) => filters.includes(pkg.name))) {
+    result = spawnSync('/bin/sh', ['-c', pkg.scripts[args[0]]], { cwd: dir, stdio: 'inherit', env: {...process.env, PATH: [path.join(dir, 'node_modules/.bin'), path.join(root, 'node_modules/.bin'), process.env.PATH].join(':')} });
+    if (result.error || result.status !== 0) break;
+  }
+}
+if (result.error) throw result.error;
+process.exitCode = result.status ?? 1;

@@ -203,10 +203,10 @@ export const evaluateXtdbNativeWorkload = (
   entry: RecordValue,
   positionToLogical: ReadonlyMap<number, number>,
   trace: unknown[],
-  language: XtdbNativeLanguage = "xtql",
+  language?: XtdbNativeLanguage,
 ): Effect.Effect<unknown[][], unknown> =>
   Effect.gen(function* () {
-    if (!xtdbNativeLanguages.includes(language))
+    if (language !== undefined && !xtdbNativeLanguages.includes(language))
       throw new TypeError(`Unknown XTDB native language ${String(language)}`);
     const id = String(workload["id"]),
       p = entry["parameters"];
@@ -251,14 +251,17 @@ export const evaluateXtdbNativeWorkload = (
       builders: Builders,
       at = entry,
       maxRows = 1000,
-    ) =>
-      (language === "xtql" ? native.select : native.selectSql)(
+    ) => {
+      // [EXP-C8-R3] Why: keep X02's unset routing (XTQL point reads, SQL otherwise)
+      // with C8's read-only closures. Rejected: default XTQL (changes implicit profiles).
+      const xtql = language === "xtql" || (language === undefined && name === "state-at");
+      return (xtql ? native.select : native.selectSql)(
         contractOf(name, values, resultType),
         values,
-        (ctx, input) =>
-          (language === "xtql" ? builders.xtql : builders.sql)(ctx, input as RecordValue),
+        (ctx, input) => (xtql ? builders.xtql : builders.sql)(ctx, input as RecordValue),
         { basis: pinned(at), maxRows },
       ).pipe(Effect.map(record));
+    };
     // [EXP-C8] Why: one read-only closure call per task in the run's language. The relations are
     // computed by the native API's frontier loop (packages/core FrontierClosure.ts via
     // packages/xtdb Reachability.ts): one read per round, no scratch table, no commit (R10 6.4).
@@ -483,7 +486,13 @@ export const evaluateXtdbNativeWorkload = (
       trace.push({
         normalization: "subtract final exact ledger totals; no source relation leaves XTDB",
       });
-      return [[integer(physical), integer(reserved), checkedInt64(physical - reserved)]];
+      // [EXP-X02-R2] Why: Q79b requires Fail, so catchTag can recover overflow.
+      // Rejected: throwing inside Effect.gen (becomes Die).
+      const available = yield* Effect.try({
+        try: () => checkedInt64(physical - reserved),
+        catch: (cause) => cause,
+      });
+      return [[integer(physical), integer(reserved), available]];
     }
     if (id === "08") {
       // R12 4.7. The net is recombined once from (captures - refunds) halves, so the result is

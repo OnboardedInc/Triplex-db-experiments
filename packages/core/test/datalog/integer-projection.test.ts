@@ -18,8 +18,18 @@ describe("explicit exact integer projection capability", () => {
     expect(compiled.valueColumnMap.get("?value")?.orderInteger).toBeUndefined();
   });
   it("narrows only a proved non-integer variable while preserving an unknown integer projection", () => {
-    const compiled = compile({ find: ["?number", "?unknown"], where: [["?e", ":number", "?number"], ["?e", ":other", "?unknown"]] }, dialect, false,
-      { nonIntegerProjectionVariables: ["?number"] });
+    const compiled = compile(
+      {
+        find: ["?number", "?unknown"],
+        where: [
+          ["?e", ":number", "?number"],
+          ["?e", ":other", "?unknown"],
+        ],
+      },
+      dialect,
+      false,
+      { nonIntegerProjectionVariables: ["?number"] },
+    );
     expect(compiled.valueColumnMap.get("?number")?.orderInteger).toBeUndefined();
     expect(compiled.valueColumnMap.get("?unknown")?.orderInteger).toBeDefined();
     expect(compiled.sql).not.toContain("WHEN t0.value_type = 'integer'");
@@ -38,6 +48,16 @@ describe("explicit exact integer projection capability", () => {
     expect(compiled.sql).toContain("opt.value_type = 'integer'");
     expect(compiled.valueColumnMap.get("?value")?.orderInteger).toBeDefined();
     expect(compile(optional, SqliteDialect).sql).not.toContain("opt.value_type = 'integer'");
+  });
+  it("keeps exact compute results out of BIGINT casts for every operator", () => {
+    for (const op of ["+", "-", "*", "/", "%"] as const) {
+      const compiled = compile(
+        { find: ["?r"], where: [["?e", ":i", "?i"]], compute: [[op, "?i", integer("1"), "?r"]] },
+        dialect,
+      );
+      expect(compiled.sql).not.toContain("AS BIGINT");
+      expect(compiled.sql).toContain("integer-overflow");
+    }
   });
   it("keeps arithmetic/comparison evidence separate from projection admission", () => {
     const mixed = { ...query, find: ["?sum"], compute: [["+", "?value", 1, "?sum"]] } as const;

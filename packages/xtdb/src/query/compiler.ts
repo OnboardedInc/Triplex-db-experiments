@@ -18,8 +18,14 @@ export type QueryBasis = {
 };
 
 /** XTDB has PostgreSQL parameter identity and its own (non-recursive) SQL executor. */
-export const XtdbDialect: SqlDialect & { readonly exactIntegers: true } = {
+export const XtdbDialect: SqlDialect & {
+  readonly exactIntegers: true;
+  readonly rejectExactCompute: true;
+} = {
   exactIntegers: true,
+  // [EXP-X02-R2] Why: Q79c forbids rounded exact computations and their downstream uses.
+  // Rejected: permitting only small operands (intermediate results can exceed int64).
+  rejectExactCompute: true,
   name: "sqlite", // Triplex's physical boolean columns are integers, including keyset keys.
   paramPlaceholder: (index) => `$${index + 1}`,
   castAsText: (expression) => `CAST(${expression} AS TEXT)`,

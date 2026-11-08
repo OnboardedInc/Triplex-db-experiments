@@ -351,7 +351,12 @@ export const startXtdbWriteCounter = async (targetUrl: string): Promise<EngineWr
     });
     let broken = false;
     client.on("data", (chunk: Buffer) => {
-      if (broken) return;
+      // [EXP-C8-R3] Why: parser failure is connection state, even across tally resets.
+      // Rejected: skipping later chunks (pipe still forwards their unclassified bytes).
+      if (broken) {
+        opaque("traffic after parser error");
+        return;
+      }
       try {
         parse(chunk);
       } catch (error) {
@@ -409,8 +414,7 @@ const READ_COMMANDS = new Set(
 const SESSION_COMMANDS = new Set(
   "clear-cache clear-cache-complete clear-named-cache load-materialized-view".split(" "),
 );
-// Any other parameter is a runtime setting (query-planning-budget=...), a description or a
-// result pin: server state, not data, so it counts as a command.
+// Metadata alone does not identify an operation. Unknown parameters count conservatively.
 const PROTOCOL_PARAMETERS = new Set([
   "query",
   "update",
@@ -470,24 +474,18 @@ const classifyQleverRequest = (
         (body.length > 0 && !SPARQL_BODIES.has(contentType))))
       ? [`<${method} ${url.pathname} ${contentType || "no content type"}>`]
       : [];
-  // [EXP-C8-R2] Why: multipart is opaque without complete parsing. Rejected: field regexes
-  // and unknown-body exemptions (a cmd field could silently evade accounting).
+  // [EXP-C8-R3] Why: Q81b requires positive operation classification. Metadata, unknown
+  // actions and standalone settings do not prove a read/session operation. Rejected:
+  // params.size exemptions (even access-token alone hid an unknown GET).
+  const query = contentType === "application/sparql-query" || params.has("query");
+  const command = params.has("cmd");
+  const health =
+    ["GET", "HEAD", "OPTIONS"].includes(method) && ["/ping", "/health"].includes(url.pathname);
   const unknown =
     contentType === "multipart/form-data" ||
     (body.length > 0 && !SPARQL_BODIES.has(contentType)) ||
-    (!params.has("query") &&
-      !params.has("update") &&
-      !params.has("cmd") &&
-      params.size === 0 &&
-      contentType !== "application/sparql-query" &&
-      !(
-        ["GET", "HEAD", "OPTIONS"].includes(method) && ["/ping", "/health"].includes(url.pathname)
-      )) ||
-    (method === "POST" &&
-      updates.length === 0 &&
-      !params.has("query") &&
-      !params.has("cmd") &&
-      contentType !== "application/sparql-query");
+    [...params.keys()].some((key) => !PROTOCOL_PARAMETERS.has(key)) ||
+    !(query || updates.length > 0 || command || health);
   const write = [
     ...updates,
     ...writeCommands,
@@ -497,11 +495,8 @@ const classifyQleverRequest = (
   return {
     ...(write === undefined ? {} : { write }),
     update: updates.length > 0,
-    query:
-      contentType === "application/sparql-query" ||
-      params.has("query") ||
-      /name="query"/i.test(multipart),
-    command: params.has("cmd") || [...params.keys()].some((key) => !PROTOCOL_PARAMETERS.has(key)),
+    query: query || /name="query"/i.test(multipart),
+    command,
   };
 };
 

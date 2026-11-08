@@ -1,8 +1,90 @@
 import { describe, expect, it } from "vitest";
+import { Cause, Effect, Exit } from "effect";
+import { makeXtdbQueryExecutor } from "../src/XtdbQueryExecutor.js";
+import type { XtdbClient } from "../src/XtdbClient.js";
+import { integer } from "@triplex-build/triplex";
+import { DatalogValidationError } from "@triplex-build/triplex/runtime";
 import { compileXtdb, lowerSource } from "../src/query/compiler.js";
 import { compileRuleSelection } from "../src/query/recursion.js";
 
 describe("XTDB compiler", () => {
+  it("refuses every exact compute operator before lowering, including downstream uses", () => {
+    for (const value of ["1000000000000000004", "9223372036854775807", "-9223372036854775808"])
+      for (const op of ["+", "-", "*", "/", "%"] as const) {
+        const query = {
+          find: ["?result"],
+          where: [["e", ":i", "?i"]],
+          compute: [[op, "?i", integer(op === "+" || op === "-" ? "0" : "1"), "?result"]],
+        } as const;
+        // Constants and inferred stored integers both go through the same refusal.
+        const constant = {
+          ...query,
+          compute: [[op, integer(value), integer("1"), "?result"]],
+        } as const;
+        expect(() => compileXtdb(query, "scope", { integerVariables: ["?i"] })).toThrow(
+          DatalogValidationError,
+        );
+        expect(() => compileXtdb(constant, "scope")).toThrow(
+          /Exact integer computation is not qualified/,
+        );
+        expect(() =>
+          compileXtdb(
+            { ...query, find: ["?sum"], aggregate: [["sum", "?result", "?sum"]] },
+            "scope",
+          ),
+        ).toThrow(DatalogValidationError);
+        expect(() =>
+          compileXtdb(
+            {
+              inner: { ...query, where: [...query.where, [">", "?result", integer("0")]] },
+              limit: 1,
+            },
+            "scope",
+          ),
+        ).toThrow(DatalogValidationError);
+      }
+    // Overflow is a result too: reject MAX+1 and MIN-1, rather than returning a rounded boundary.
+    for (const [op, value] of [
+      ["+", "9223372036854775807"],
+      ["-", "-9223372036854775808"],
+    ] as const)
+      expect(() =>
+        compileXtdb(
+          {
+            find: ["?r"],
+            where: [["e", ":i", "?i"]],
+            compute: [[op, integer(value), integer("1"), "?r"]],
+          },
+          "scope",
+        ),
+      ).toThrow(DatalogValidationError);
+  });
+  it("returns a recoverable typed refusal from the public executor", async () => {
+    const client = {
+      query: async () => [{ value_type: "integer" }],
+      submit: async () => {
+        throw new Error("unexpected submit");
+      },
+      close: async () => {},
+    } as unknown as XtdbClient;
+    const executor = makeXtdbQueryExecutor(client, "scope");
+    for (const op of ["+", "-", "*", "/", "%"] as const) {
+      const query = {
+        find: ["?r"],
+        where: [["e", ":i", "?i"]],
+        compute: [[op, "?i", integer("1"), "?r"]],
+      } as const;
+      const run = () => executor.execute(query, false, { recordedPosition: 1, validAt: 1 });
+      const exit = await Effect.runPromiseExit(run());
+      expect(Exit.isFailure(exit)).toBe(true);
+      if (Exit.isFailure(exit)) expect(Cause.hasDies(exit.cause)).toBe(false);
+      expect(
+        await Effect.runPromise(
+          run().pipe(Effect.catchTag("DatalogValidationError", () => Effect.succeed("handled"))),
+        ),
+      ).toBe("handled");
+    }
+  });
   it("lowers shared scalar-family, negation and keyset semantics into scoped native SQL", () => {
     const result = compileXtdb(
       {

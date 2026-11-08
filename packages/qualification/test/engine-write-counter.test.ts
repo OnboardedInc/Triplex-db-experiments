@@ -311,6 +311,33 @@ describe("XTDB write counter proxy", () => {
       samples: [],
     });
   });
+  it("counts every forwarded chunk after a parser exception across tally resets", async () => {
+    // [EXP-C8-R3] Why: exercise the proxy exception latch, not the parser's stopped branch.
+    // Rejected: only testing malformed lengths (those never throw from cstring).
+    const upstream = await fakePgServer(Buffer.alloc(0));
+    const counter = started(
+      await startXtdbWriteCounter(`postgres://generic@127.0.0.1:${upstream.port}/db`),
+    );
+    const client = net.connect({ host: "127.0.0.1", port: Number(new URL(counter.url).port) });
+    cleanups.push(async () => {
+      client.destroy();
+    });
+    client.resume();
+    let sent = 0;
+    const send = async (bytes: Buffer) => {
+      sent += bytes.length;
+      client.write(bytes);
+      await until(() => upstream.received().length === sent, "forwarded bytes");
+    };
+    await send(startupMessage());
+    await send(typed("P", Buffer.from("unterminated")));
+    expect(counter.counts()).toMatchObject({ writes: 1, unparsed: 1 });
+    for (const bytes of [query("DELETE FROM t"), typed("S", Buffer.alloc(0)), Buffer.from([1])]) {
+      counter.reset();
+      await send(bytes);
+      expect(counter.counts()).toMatchObject({ writes: 1, unparsed: 1 });
+    }
+  });
   it("counts an unparseable stream as a write and close() ends open connections", async () => {
     const upstream = await fakePgServer(Buffer.alloc(0));
     const counter = await startXtdbWriteCounter(`postgres://u:p@127.0.0.1:${upstream.port}/db`);
@@ -458,8 +485,7 @@ describe("QLever write counter proxy", () => {
     await (await form(`query=${encodeURIComponent("SELECT * {}")}`)).text();
     await (await fetch(`${counter.url}/?cmd=get-settings`)).text();
     await (await fetch(`${counter.url}/?cmd=clear-cache`)).text();
-    await (await fetch(`${counter.url}/?query-planning-budget=1`)).text();
-    expect(counter.counts()).toMatchObject({ statements: 2, writes: 0, commands: 3 });
+    expect(counter.counts()).toMatchObject({ statements: 2, writes: 0, commands: 2 });
     await (await form(`update=${encodeURIComponent("CLEAR ALL")}`)).text();
     await (await form("cmd=clear-delta-triples")).text();
     await (
@@ -487,6 +513,35 @@ describe("QLever write counter proxy", () => {
     await expect(makeQleverClient(`${counter.url}/error`).query("SELEC")).rejects.toBeInstanceOf(
       QleverHttpError,
     );
+  });
+  it("requires a positively classified HTTP operation in every tally window", async () => {
+    // [EXP-C8-R3] Why: metadata and arbitrary settings cannot establish read-only traffic.
+    // Rejected: forwarding nonempty parameter sets with clean tallies.
+    const upstream = await fakeQlever();
+    const counter = started(await startQleverWriteCounter(upstream.url));
+    for (const path of [
+      "/?unexpected-operation=change-data",
+      "/?action=unclassified",
+      "/?access-token=generic",
+      "/?query-planning-budget=1",
+      "/?query=ASK%7B%7D&unexpected-operation=x",
+    ]) {
+      counter.reset();
+      await (await fetch(counter.url + path)).text();
+      expect(upstream.seen.at(-1)?.url).toBe(path);
+      expect(counter.counts()).toMatchObject({ writes: 1, commits: 1 });
+    }
+    for (const path of [
+      "/health",
+      "/ping?msg=generic",
+      "/?query=ASK%7B%7D&access-token=generic",
+      "/?cmd=stats",
+      "/?cmd=clear-cache",
+    ]) {
+      counter.reset();
+      await (await fetch(counter.url + path)).text();
+      expect(counter.counts()).toMatchObject({ writes: 0, commits: 0, unparsed: 0 });
+    }
   });
   it("keeps the target path prefix and aborts upstream when the client aborts", async () => {
     const upstream = await fakeQlever();

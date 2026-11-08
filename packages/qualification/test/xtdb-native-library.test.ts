@@ -7,7 +7,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { Effect, Exit } from "effect";
+import { Cause, Effect, Exit } from "effect";
 import {
   evaluateXtdbNativeWorkload,
   type XtdbNativeLanguage,
@@ -19,6 +19,7 @@ import {
   checkedInt64,
   typedSumOverflow,
 } from "../src/native/xtdb-native-errors.js";
+import { loadQualificationBackend } from "../src/index.js";
 
 const root = path.resolve(import.meta.dirname, "../../..");
 const packet = JSON.parse(
@@ -159,6 +160,64 @@ describe("XTDB native task library: one language and one cut per task (EXP-X02)"
       // [EXP-C8-R2] Why: prove the cut-pinning assertions exercised multi-call tasks.
       // Rejected: a fixed minimum call count (Q76d replaces three WL20 reads with one).
       expect(multiCall).toBeGreaterThan(0);
+    });
+  it("keeps the unset library's XTQL point reads and SQL recursive path", async () => {
+    for (const { workload, entry } of cases) {
+      const { session, calls } = mockSession(entry, canned(entry));
+      const exit = await Effect.runPromiseExit(
+        evaluateXtdbNativeWorkload(session, workload, entry, new Map([[0, 0]]), []),
+      );
+      expect(Exit.isSuccess(exit), `${workload.id}/${entry.id}: ${String(exit)}`).toBe(true);
+      for (const call of calls) {
+        if (call.name === "state-at") expect(call.method).toBe("select");
+        else expect(call.method).not.toBe("select");
+        expect(call.name.startsWith("reach-complete")).toBe(false);
+      }
+      if (entry.operation === "reachability_closure")
+        expect(calls.some((call) => call.method === "selectSqlWithReachability")).toBe(true);
+    }
+  });
+  it("leaves nativeLanguage unset unless explicitly selected", async () => {
+    const previousPath = process.env.TRIPLEX_QUERY_PATH;
+    const previousLanguage = process.env.TRIPLEX_XTDB_NATIVE_LANGUAGE;
+    try {
+      process.env.TRIPLEX_QUERY_PATH = "xtdb-native";
+      delete process.env.TRIPLEX_XTDB_NATIVE_LANGUAGE;
+      expect((await loadQualificationBackend()).nativeLanguage).toBeUndefined();
+      for (const language of ["xtql", "xtdb-sql"]) {
+        process.env.TRIPLEX_XTDB_NATIVE_LANGUAGE = language;
+        expect((await loadQualificationBackend()).nativeLanguage).toBe(language);
+      }
+    } finally {
+      if (previousPath === undefined) delete process.env.TRIPLEX_QUERY_PATH;
+      else process.env.TRIPLEX_QUERY_PATH = previousPath;
+      if (previousLanguage === undefined) delete process.env.TRIPLEX_XTDB_NATIVE_LANGUAGE;
+      else process.env.TRIPLEX_XTDB_NATIVE_LANGUAGE = previousLanguage;
+    }
+  });
+  for (const language of ["xtql", "xtdb-sql"] as const)
+    it(`inventory overflow is Fail and catchTag recovers in ${language}`, async () => {
+      const { workload, entry } = cases.find(({ workload }: any) => workload.id === "07");
+      const run = () => {
+        const { session } = mockSession(entry, () => [
+          { ledger: "physical", total: "9223372036854775807" },
+          { ledger: "reservation", total: "-1" },
+        ]);
+        return evaluateXtdbNativeWorkload(session, workload, entry, new Map(), [], language);
+      };
+      const exit = await Effect.runPromiseExit(run());
+      expect(Exit.isFailure(exit)).toBe(true);
+      if (Exit.isFailure(exit)) {
+        expect(Cause.hasDies(exit.cause)).toBe(false);
+        expect(String(exit.cause)).toContain("NativeIntegerOverflowError");
+      }
+      expect(
+        await Effect.runPromise(
+          run().pipe(
+            Effect.catchTag("NativeIntegerOverflowError" as never, () => Effect.succeed("handled")),
+          ),
+        ),
+      ).toBe("handled");
     });
   it("rejects an unknown language", async () => {
     const { workload, entry } = cases[0];
