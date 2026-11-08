@@ -1,0 +1,592 @@
+{
+  "retainedIndependent": {
+    "mineEqualsPacket": 142,
+    "xtqlEqualsMine": 119,
+    "sqlEqualsMine": 78,
+    "xtqlEqualsSql": 73,
+    "xtqlPure": 127,
+    "sqlPure": 80,
+    "xtqlOneCut": 127,
+    "sqlOneCut": 80,
+    "executions": 142,
+    "xtqlStatus": {
+      "PASS": 119,
+      "FAIL_PUBLIC_API": 23
+    },
+    "sqlStatus": {
+      "PASS": 78,
+      "FAIL_PUBLIC_API": 38,
+      "MISSING": 26
+    },
+    "xtqlTimeouts": [
+      "11/inherited-allow",
+      "11/inherited-allow (reopen)",
+      "12/corrected-block",
+      "12/corrected-block (reopen)",
+      "12/deny-two-allows",
+      "12/exclusive-block-end",
+      "12/exclusive-block-end (reopen)",
+      "12/one-allow-remains",
+      "12/one-allow-remains (reopen)",
+      "13/move-boundary",
+      "13/nested-items",
+      "15/dependency-set",
+      "15/dependency-set (reopen)",
+      "15/diamond-cycle (reopen)",
+      "15/vulnerability-end (reopen)",
+      "18/bridge-known",
+      "18/bridge-known (reopen)",
+      "18/clipped",
+      "18/clipped (reopen)",
+      "18/duplicate-stays10",
+      "18/duplicate-stays10 (reopen)",
+      "18/union10",
+      "18/union10 (reopen)"
+    ],
+    "sqlTimeouts": [
+      "08/net700",
+      "08/net700 (reopen)",
+      "08/no-refunds",
+      "08/no-refunds (reopen)",
+      "08/one-refund",
+      "08/one-refund (reopen)",
+      "11/expired-membership (reopen)",
+      "11/inherited-allow (reopen)",
+      "11/unknown-user",
+      "11/unknown-user (reopen)",
+      "12/corrected-block",
+      "12/corrected-block (reopen)",
+      "12/deny-two-allows",
+      "12/deny-two-allows (reopen)",
+      "12/exclusive-block-end",
+      "12/exclusive-block-end (reopen)",
+      "12/one-allow-remains",
+      "12/one-allow-remains (reopen)",
+      "14/affected-customer",
+      "14/before-shipment (reopen)",
+      "14/corrected-genealogy",
+      "14/corrected-genealogy (reopen)",
+      "15/diamond-cycle",
+      "15/diamond-cycle (reopen)",
+      "15/vulnerability-end",
+      "15/vulnerability-end (reopen)",
+      "16/metadata-added",
+      "16/metadata-added (reopen)",
+      "16/original-lineage",
+      "16/original-lineage (reopen)",
+      "16/unknown-output",
+      "16/unknown-output (reopen)",
+      "17/equal-steps-fail",
+      "17/equal-steps-fail (reopen)",
+      "17/include-exclusive-boundary",
+      "17/include-exclusive-boundary (reopen)",
+      "17/ordered-not-reordered",
+      "17/ordered-not-reordered (reopen)"
+    ],
+    "xtqlWrongNotTimeout": [],
+    "sqlWrongNotTimeout": [],
+    "impure": [],
+    "multiCut": []
+  },
+  "retainedAuthorSql": {
+    "mineEqualsPacket": 142,
+    "xtqlEqualsMine": 119,
+    "sqlEqualsMine": 142,
+    "xtqlEqualsSql": 119,
+    "xtqlPure": 127,
+    "sqlPure": 142,
+    "xtqlOneCut": 127,
+    "sqlOneCut": 142,
+    "executions": 142,
+    "xtqlStatus": {
+      "PASS": 119,
+      "FAIL_PUBLIC_API": 23
+    },
+    "sqlStatus": {
+      "PASS": 142
+    },
+    "xtqlTimeouts": [
+      "11/inherited-allow",
+      "11/inherited-allow (reopen)",
+      "12/corrected-block",
+      "12/corrected-block (reopen)",
+      "12/deny-two-allows",
+      "12/exclusive-block-end",
+      "12/exclusive-block-end (reopen)",
+      "12/one-allow-remains",
+      "12/one-allow-remains (reopen)",
+      "13/move-boundary",
+      "13/nested-items",
+      "15/dependency-set",
+      "15/dependency-set (reopen)",
+      "15/diamond-cycle (reopen)",
+      "15/vulnerability-end (reopen)",
+      "18/bridge-known",
+      "18/bridge-known (reopen)",
+      "18/clipped",
+      "18/clipped (reopen)",
+      "18/duplicate-stays10",
+      "18/duplicate-stays10 (reopen)",
+      "18/union10",
+      "18/union10 (reopen)"
+    ],
+    "sqlTimeouts": [],
+    "xtqlWrongNotTimeout": [],
+    "sqlWrongNotTimeout": [],
+    "impure": [],
+    "multiCut": []
+  },
+  "pairedIndependent": {
+    "executions": 73,
+    "logicalTasks": 39,
+    "builders": [
+      "01",
+      "02",
+      "03",
+      "04",
+      "05",
+      "06",
+      "07",
+      "09",
+      "10",
+      "11",
+      "13",
+      "14"
+    ]
+  },
+  "pairedAuthorSql": {
+    "executions": 119,
+    "logicalTasks": 62,
+    "builders": [
+      "01",
+      "02",
+      "03",
+      "04",
+      "05",
+      "06",
+      "07",
+      "08",
+      "09",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16",
+      "17",
+      "18",
+      "19",
+      "20"
+    ]
+  },
+  "retainedTimeoutOverlap": {
+    "both": [
+      "11/inherited-allow (reopen)",
+      "12/corrected-block",
+      "12/corrected-block (reopen)",
+      "12/deny-two-allows",
+      "12/exclusive-block-end",
+      "12/exclusive-block-end (reopen)",
+      "12/one-allow-remains",
+      "12/one-allow-remains (reopen)",
+      "15/diamond-cycle (reopen)",
+      "15/vulnerability-end (reopen)"
+    ],
+    "xtqlOnly": [
+      "11/inherited-allow",
+      "13/move-boundary",
+      "13/nested-items",
+      "15/dependency-set",
+      "15/dependency-set (reopen)",
+      "18/bridge-known",
+      "18/bridge-known (reopen)",
+      "18/clipped",
+      "18/clipped (reopen)",
+      "18/duplicate-stays10",
+      "18/duplicate-stays10 (reopen)",
+      "18/union10",
+      "18/union10 (reopen)"
+    ],
+    "sqlOnly": [
+      "08/net700",
+      "08/net700 (reopen)",
+      "08/no-refunds",
+      "08/no-refunds (reopen)",
+      "08/one-refund",
+      "08/one-refund (reopen)",
+      "11/expired-membership (reopen)",
+      "11/unknown-user",
+      "11/unknown-user (reopen)",
+      "12/deny-two-allows (reopen)",
+      "14/affected-customer",
+      "14/before-shipment (reopen)",
+      "14/corrected-genealogy",
+      "14/corrected-genealogy (reopen)",
+      "15/diamond-cycle",
+      "15/vulnerability-end",
+      "16/metadata-added",
+      "16/metadata-added (reopen)",
+      "16/original-lineage",
+      "16/original-lineage (reopen)",
+      "16/unknown-output",
+      "16/unknown-output (reopen)",
+      "17/equal-steps-fail",
+      "17/equal-steps-fail (reopen)",
+      "17/include-exclusive-boundary",
+      "17/include-exclusive-boundary (reopen)",
+      "17/ordered-not-reordered",
+      "17/ordered-not-reordered (reopen)"
+    ]
+  },
+  "sourceSums": [
+    {
+      "name": "near1e18",
+      "id": "06",
+      "language": "xtql",
+      "expected": [
+        [
+          "1000000000000000004"
+        ]
+      ],
+      "rows": [
+        [
+          "1000000000000000004"
+        ]
+      ],
+      "error": null,
+      "isDefect": false,
+      "pass": true
+    },
+    {
+      "name": "near1e18",
+      "id": "06",
+      "language": "xtdb-sql",
+      "expected": [
+        [
+          "1000000000000000004"
+        ]
+      ],
+      "rows": [
+        [
+          "1000000000000000004"
+        ]
+      ],
+      "error": null,
+      "isDefect": false,
+      "pass": true
+    },
+    {
+      "name": "max",
+      "id": "06",
+      "language": "xtql",
+      "expected": [
+        [
+          "9223372036854775807"
+        ]
+      ],
+      "rows": [
+        [
+          "9223372036854775807"
+        ]
+      ],
+      "error": null,
+      "isDefect": false,
+      "pass": true
+    },
+    {
+      "name": "max",
+      "id": "06",
+      "language": "xtdb-sql",
+      "expected": [
+        [
+          "9223372036854775807"
+        ]
+      ],
+      "rows": [
+        [
+          "9223372036854775807"
+        ]
+      ],
+      "error": null,
+      "isDefect": false,
+      "pass": true
+    },
+    {
+      "name": "min",
+      "id": "06",
+      "language": "xtql",
+      "expected": [
+        [
+          "-9223372036854775808"
+        ]
+      ],
+      "rows": [
+        [
+          "-9223372036854775808"
+        ]
+      ],
+      "error": null,
+      "isDefect": false,
+      "pass": true
+    },
+    {
+      "name": "min",
+      "id": "06",
+      "language": "xtdb-sql",
+      "expected": [
+        [
+          "-9223372036854775808"
+        ]
+      ],
+      "rows": [
+        [
+          "-9223372036854775808"
+        ]
+      ],
+      "error": null,
+      "isDefect": false,
+      "pass": true
+    },
+    {
+      "name": "maxPlus1",
+      "id": "06",
+      "language": "xtql",
+      "expected": "integer-overflow",
+      "rows": null,
+      "error": "Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])",
+      "isDefect": false,
+      "pass": true
+    },
+    {
+      "name": "maxPlus1",
+      "id": "06",
+      "language": "xtdb-sql",
+      "expected": "integer-overflow",
+      "rows": null,
+      "error": "Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])",
+      "isDefect": false,
+      "pass": true
+    },
+    {
+      "name": "minMinus1",
+      "id": "06",
+      "language": "xtql",
+      "expected": "integer-overflow",
+      "rows": null,
+      "error": "Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])",
+      "isDefect": false,
+      "pass": true
+    },
+    {
+      "name": "minMinus1",
+      "id": "06",
+      "language": "xtdb-sql",
+      "expected": "integer-overflow",
+      "rows": null,
+      "error": "Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])",
+      "isDefect": false,
+      "pass": true
+    },
+    {
+      "name": "three2p62",
+      "id": "06",
+      "language": "xtql",
+      "expected": "integer-overflow",
+      "rows": null,
+      "error": "Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])",
+      "isDefect": false,
+      "pass": true
+    },
+    {
+      "name": "three2p62",
+      "id": "06",
+      "language": "xtdb-sql",
+      "expected": "integer-overflow",
+      "rows": null,
+      "error": "Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])",
+      "isDefect": false,
+      "pass": true
+    },
+    {
+      "name": "cancellation",
+      "id": "06",
+      "language": "xtql",
+      "expected": [
+        [
+          "5"
+        ]
+      ],
+      "rows": [
+        [
+          "5"
+        ]
+      ],
+      "error": null,
+      "isDefect": false,
+      "pass": true
+    },
+    {
+      "name": "cancellation",
+      "id": "06",
+      "language": "xtdb-sql",
+      "expected": [
+        [
+          "5"
+        ]
+      ],
+      "rows": [
+        [
+          "5"
+        ]
+      ],
+      "error": null,
+      "isDefect": false,
+      "pass": true
+    },
+    {
+      "name": "carryCounterexample",
+      "id": "06",
+      "language": "xtql",
+      "expected": [
+        [
+          "9223372032559808513"
+        ]
+      ],
+      "rows": [
+        [
+          "9223372032559808513"
+        ]
+      ],
+      "error": null,
+      "isDefect": false,
+      "pass": true
+    },
+    {
+      "name": "carryCounterexample",
+      "id": "06",
+      "language": "xtdb-sql",
+      "expected": [
+        [
+          "9223372032559808513"
+        ]
+      ],
+      "rows": [
+        [
+          "9223372032559808513"
+        ]
+      ],
+      "error": null,
+      "isDefect": false,
+      "pass": true
+    },
+    {
+      "name": "availableOverflow",
+      "id": "07",
+      "language": "xtql",
+      "expected": "integer-overflow",
+      "rows": null,
+      "error": "Cause([Die(NativeIntegerOverflowError: Native int64 result 9223372036854775808 is outside the signed 64-bit range)])",
+      "isDefect": true,
+      "pass": false
+    },
+    {
+      "name": "availableOverflow",
+      "id": "07",
+      "language": "xtdb-sql",
+      "expected": "integer-overflow",
+      "rows": null,
+      "error": "Cause([Die(NativeIntegerOverflowError: Native int64 result 9223372036854775808 is outside the signed 64-bit range)])",
+      "isDefect": true,
+      "pass": false
+    },
+    {
+      "name": "netCancelsOverflowingSides",
+      "id": "08",
+      "language": "xtql",
+      "expected": [
+        [
+          "5"
+        ]
+      ],
+      "rows": [
+        [
+          "5"
+        ]
+      ],
+      "error": null,
+      "isDefect": false,
+      "pass": true
+    },
+    {
+      "name": "netCancelsOverflowingSides",
+      "id": "08",
+      "language": "xtdb-sql",
+      "expected": [
+        [
+          "5"
+        ]
+      ],
+      "rows": [
+        [
+          "5"
+        ]
+      ],
+      "error": null,
+      "isDefect": false,
+      "pass": true
+    }
+  ],
+  "traceAudits": {
+    "retainedXtql": {
+      "status": "FAIL",
+      "language": "xtql",
+      "statuses": {
+        "PASS": 119,
+        "FAIL_PUBLIC_API": 23
+      },
+      "tracedCalls": 245,
+      "shapeOrCutFailures": []
+    },
+    "retainedSql": {
+      "status": "FAIL",
+      "language": "xtdb-sql",
+      "statuses": {
+        "PASS": 78,
+        "FAIL_PUBLIC_API": 38
+      },
+      "tracedCalls": 105,
+      "shapeOrCutFailures": []
+    },
+    "retainedAuthorSql": {
+      "status": "PASS_FUNCTIONAL_ONLY",
+      "language": "xtdb-sql",
+      "statuses": {
+        "PASS": 142
+      },
+      "tracedCalls": 192,
+      "shapeOrCutFailures": []
+    },
+    "freshShared": {
+      "status": "RUNNING",
+      "language": "xtql",
+      "statuses": {
+        "PASS": 27,
+        "FAIL_PUBLIC_API": 1
+      },
+      "tracedCalls": 36,
+      "shapeOrCutFailures": []
+    }
+  },
+  "writer": {
+    "controls": {
+      "total": 0,
+      "pass": 0
+    },
+    "writerBetween": {
+      "total": 10,
+      "pass": 3
+    }
+  },
+  "runnerChanges": "Copy of original runner; only public export resolution, authorized outputRoot and explanatory header differ."
+}

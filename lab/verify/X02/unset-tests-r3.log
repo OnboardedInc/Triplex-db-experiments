@@ -1,0 +1,18 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 83377 "CX-VO04H-rerun-resume", pid 83228 "GS-xtdb-20261108T211523Z-ea6353 gs-scenarios", pid 84520 "CX-P2Q-R2-verifier-offline", pid 84732 "CX-E01-R2"
+[lab] heavy: waiting for one of 4 slots; held by pid 83377 "CX-VO04H-rerun-resume", pid 83228 "GS-xtdb-20261108T211523Z-ea6353 gs-scenarios", pid 84520 "CX-P2Q-R2-verifier-offline", pid 84732 "CX-E01-R2"
+[lab] heavy: waiting for one of 4 slots; held by pid 83377 "CX-VO04H-rerun-resume", pid 83228 "GS-xtdb-20261108T211523Z-ea6353 gs-scenarios", pid 99387 "CX-P4-final-gates", pid 84732 "CX-E01-R2"
+[lab] heavy: waiting for one of 4 slots; held by pid 83377 "CX-VO04H-rerun-resume", pid 83228 "GS-xtdb-20261108T211523Z-ea6353 gs-scenarios", pid 99387 "CX-P4-final-gates", pid 84732 "CX-E01-R2"
+[lab] heavy: waiting for one of 4 slots; held by pid 83377 "CX-VO04H-rerun-resume", pid 83228 "GS-xtdb-20261108T211523Z-ea6353 gs-scenarios", pid 11262 "CX-E01-R2-reference", pid 4054 "CX-P2Q-R2-verifier-live"
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522
+
+
+ Test Files  9 passed | 9 skipped (18)
+      Tests  42 passed | 130 skipped (172)
+   Start at  16:18:34
+   Duration  5.46s (import 75%, transform 21%, tests 3%, worker 1%)
+
+     Import  157 modules were evaluated 259 times · 3.07s total, 75% of tracked time
+             ~1.21s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+

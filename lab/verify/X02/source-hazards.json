@@ -1,0 +1,334 @@
+{
+  "startedAt": "2026-11-08T21:15:04.608Z",
+  "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5470/xtdb",
+  "head": "636839e293f6550a3d864aeb14a0baabb8f13cc5",
+  "hashes": {
+    "packages/xtdb/src/native/ReadOnlySql.ts": "1282184005a63a423c0bce8c8a6964e7bcc4a60f1934724afb0ff042eae90612",
+    "packages/xtdb/src/native/NativeQueries.ts": "1d015ab3dc75cde4fb355bdb7968ea222d3a4927bd70f6fc142eee250e85264c",
+    "packages/xtdb/src/native/Sources.ts": "0b4e07d94873a74eabdcfa5aead4ab2f30e5614a3455b8fb226f326c1b6b0a77",
+    "packages/xtdb/src/query/compiler.ts": "fd1d8fceb939e0623115ef8072300f9e046f6dabee30d573c3b0c1da56823123",
+    "packages/core/src/datalog/compiler.ts": "68df9285ac5e23ee5c46c3974f870d13be87387925fafbdd1bf89ef52620c0d5",
+    "packages/core/dist/datalog/compiler.js": "f75f35fb93ea576dbb47d99b6e918effc6baef6d0aa1ed2eadfb88249f024483"
+  },
+  "probes": [
+    {
+      "name": "any-control-envelope",
+      "sql": "SELECT 'x' AS v FROM (VALUES (1)) t (k) WHERE k = ANY(ARRAY[1,2]) AND 1 = 1",
+      "accepted": false,
+      "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+    },
+    {
+      "name": "any-control",
+      "sql": "SELECT 'x' AS v FROM (VALUES (1)) t (k) WHERE k = ANY(ARRAY[1,2]) AND 1 = 1",
+      "expected": [
+        {
+          "v": "x"
+        }
+      ],
+      "facade": true,
+      "error": "Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))])",
+      "elapsedMs": 44
+    },
+    {
+      "name": "any-comment-envelope",
+      "sql": "SELECT 'x' AS v FROM (VALUES (1)) t (k) WHERE k = ANY/**/(ARRAY[1,2]) AND 1 = 1",
+      "accepted": true,
+      "error": null
+    },
+    {
+      "name": "any-comment",
+      "sql": "SELECT 'x' AS v FROM (VALUES (1)) t (k) WHERE k = ANY/**/(ARRAY[1,2]) AND 1 = 1",
+      "expected": [
+        {
+          "v": "x"
+        }
+      ],
+      "facade": true,
+      "result": {
+        "rows": [],
+        "basis": {
+          "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-data-free\",0]",
+          "recordedPosition": 0,
+          "validAt": 1794172504678
+        },
+        "trace": {
+          "language": "xtdb-sql",
+          "query": "SELECT * FROM (SELECT 'x' AS v FROM (VALUES (1)) t (k) WHERE k = ANY/**/(ARRAY[1,2]) AND 1 = 1\n) triplex_native_answer LIMIT 1001",
+          "parameters": [],
+          "basis": {
+            "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-data-free\",0]",
+            "recordedPosition": 0,
+            "validAt": 1794172504678
+          },
+          "mappingId": "triplex-xtdb/assertion-native-basis/1",
+          "contractId": "sha256-c218b4456e4ef35e8a3fd586b50d2ee08f3c9a049d6cb1358af79d5ae7096941",
+          "elapsedMs": 27.272541000000047,
+          "steps": [
+            {
+              "phase": "source-cut",
+              "language": "xtdb-sql",
+              "query": "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1",
+              "parameters": [
+                "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-data-free\",0]"
+              ],
+              "elapsedMs": 9.150916999999936
+            },
+            {
+              "phase": "answer",
+              "language": "xtdb-sql",
+              "query": "SELECT * FROM (SELECT 'x' AS v FROM (VALUES (1)) t (k) WHERE k = ANY/**/(ARRAY[1,2]) AND 1 = 1\n) triplex_native_answer LIMIT 1001",
+              "parameters": [],
+              "elapsedMs": 17.392624999999953
+            }
+          ]
+        }
+      },
+      "error": null,
+      "elapsedMs": 27
+    },
+    {
+      "name": "any-bare-envelope",
+      "sql": "SELECT 'x' AS v FROM (VALUES (1)) t (k) WHERE k = ANY ARRAY[1,2] AND 1 = 1",
+      "accepted": true,
+      "error": null
+    },
+    {
+      "name": "any-bare",
+      "sql": "SELECT 'x' AS v FROM (VALUES (1)) t (k) WHERE k = ANY ARRAY[1,2] AND 1 = 1",
+      "expected": [
+        {
+          "v": "x"
+        }
+      ],
+      "facade": true,
+      "result": {
+        "rows": [],
+        "basis": {
+          "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-data-free\",0]",
+          "recordedPosition": 0,
+          "validAt": 1794172504711
+        },
+        "trace": {
+          "language": "xtdb-sql",
+          "query": "SELECT * FROM (SELECT 'x' AS v FROM (VALUES (1)) t (k) WHERE k = ANY ARRAY[1,2] AND 1 = 1\n) triplex_native_answer LIMIT 1001",
+          "parameters": [],
+          "basis": {
+            "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-data-free\",0]",
+            "recordedPosition": 0,
+            "validAt": 1794172504711
+          },
+          "mappingId": "triplex-xtdb/assertion-native-basis/1",
+          "contractId": "sha256-c218b4456e4ef35e8a3fd586b50d2ee08f3c9a049d6cb1358af79d5ae7096941",
+          "elapsedMs": 27.467083000000002,
+          "steps": [
+            {
+              "phase": "source-cut",
+              "language": "xtdb-sql",
+              "query": "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1",
+              "parameters": [
+                "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-data-free\",0]"
+              ],
+              "elapsedMs": 14.794500000000085
+            },
+            {
+              "phase": "answer",
+              "language": "xtdb-sql",
+              "query": "SELECT * FROM (SELECT 'x' AS v FROM (VALUES (1)) t (k) WHERE k = ANY ARRAY[1,2] AND 1 = 1\n) triplex_native_answer LIMIT 1001",
+              "parameters": [],
+              "elapsedMs": 12.247582999999963
+            }
+          ]
+        }
+      },
+      "error": null,
+      "elapsedMs": 28
+    },
+    {
+      "name": "some-comment-envelope",
+      "sql": "SELECT 'x' AS v FROM (VALUES (1)) t (k) WHERE k = SOME/**/(ARRAY[1,2]) AND 1 = 1",
+      "accepted": true,
+      "error": null
+    },
+    {
+      "name": "some-comment",
+      "sql": "SELECT 'x' AS v FROM (VALUES (1)) t (k) WHERE k = SOME/**/(ARRAY[1,2]) AND 1 = 1",
+      "expected": [
+        {
+          "v": "x"
+        }
+      ],
+      "facade": true,
+      "result": {
+        "rows": [],
+        "basis": {
+          "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-data-free\",0]",
+          "recordedPosition": 0,
+          "validAt": 1794172504734
+        },
+        "trace": {
+          "language": "xtdb-sql",
+          "query": "SELECT * FROM (SELECT 'x' AS v FROM (VALUES (1)) t (k) WHERE k = SOME/**/(ARRAY[1,2]) AND 1 = 1\n) triplex_native_answer LIMIT 1001",
+          "parameters": [],
+          "basis": {
+            "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-data-free\",0]",
+            "recordedPosition": 0,
+            "validAt": 1794172504734
+          },
+          "mappingId": "triplex-xtdb/assertion-native-basis/1",
+          "contractId": "sha256-c218b4456e4ef35e8a3fd586b50d2ee08f3c9a049d6cb1358af79d5ae7096941",
+          "elapsedMs": 49.10383300000001,
+          "steps": [
+            {
+              "phase": "source-cut",
+              "language": "xtdb-sql",
+              "query": "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1",
+              "parameters": [
+                "[\"triplex-scope-v1\",\"test\",\"test\",\"cx-vx02-data-free\",0]"
+              ],
+              "elapsedMs": 10.02212499999996
+            },
+            {
+              "phase": "answer",
+              "language": "xtdb-sql",
+              "query": "SELECT * FROM (SELECT 'x' AS v FROM (VALUES (1)) t (k) WHERE k = SOME/**/(ARRAY[1,2]) AND 1 = 1\n) triplex_native_answer LIMIT 1001",
+              "parameters": [],
+              "elapsedMs": 38.64833299999998
+            }
+          ]
+        }
+      },
+      "error": null,
+      "elapsedMs": 49
+    },
+    {
+      "name": "decimal-bigint",
+      "sql": "SELECT CAST(CAST(CAST('1000000000000000004' AS DECIMAL(32,0)) AS BIGINT) AS TEXT) AS v",
+      "expected": [
+        {
+          "v": "1000000000000000004"
+        }
+      ],
+      "facade": false,
+      "result": [
+        {
+          "v": "1000000000000000000"
+        }
+      ],
+      "error": null,
+      "elapsedMs": 8
+    },
+    {
+      "name": "decimal-text",
+      "sql": "SELECT CAST(CAST('1000000000000000004' AS DECIMAL(32,0)) AS TEXT) AS v",
+      "expected": [
+        {
+          "v": "1000000000000000004"
+        }
+      ],
+      "facade": false,
+      "result": [
+        {
+          "v": "1000000000000000004"
+        }
+      ],
+      "error": null,
+      "elapsedMs": 5
+    },
+    {
+      "name": "text-bigint",
+      "sql": "SELECT CAST(CAST('1000000000000000004' AS BIGINT) AS TEXT) AS v",
+      "expected": [
+        {
+          "v": "1000000000000000004"
+        }
+      ],
+      "facade": false,
+      "result": [
+        {
+          "v": "1000000000000000004"
+        }
+      ],
+      "error": null,
+      "elapsedMs": 5
+    },
+    {
+      "name": "compiler-+",
+      "query": {
+        "find": [
+          "?y"
+        ],
+        "where": [
+          [
+            "e",
+            ":x",
+            "?x"
+          ]
+        ],
+        "compute": [
+          [
+            "+",
+            "?x",
+            {
+              "type": "integer",
+              "value": "0"
+            },
+            "?y"
+          ]
+        ]
+      },
+      "originalSql": "SELECT DISTINCT\n  CAST(CAST(CASE WHEN ((CAST(CASE WHEN t0.value_type = 'integer' THEN t0.value_string ELSE NULL END AS DECIMAL(32, 0)) + CAST($1 AS DECIMAL(32, 0)))) < CAST('-9223372036854775808' AS DECIMAL(32, 0)) OR ((CAST(CASE WHEN t0.value_type = 'integer' THEN t0.value_string ELSE NULL END AS DECIMAL(32, 0)) + CAST($2 AS DECIMAL(32, 0)))) > CAST('9223372036854775807' AS DECIMAL(32, 0)) THEN 'integer-overflow' ELSE CAST(CAST(((CAST(CASE WHEN t0.value_type = 'integer' THEN t0.value_string ELSE NULL END AS DECIMAL(32, 0)) + CAST($3 AS DECIMAL(32, 0)))) AS BIGINT) AS TEXT) END AS BIGINT) AS TEXT) AS \"?y\"\nFROM (SELECT * FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = $4) t0\nWHERE t0.retracted_at IS NULL AND t0.entity_id = $5 AND t0.attribute = $6",
+      "sql": "SELECT DISTINCT\n  CAST(CAST(CASE WHEN ((CAST(CASE WHEN t0.value_type = 'integer' THEN t0.value_string ELSE NULL END AS DECIMAL(32, 0)) + CAST($1 AS DECIMAL(32, 0)))) < CAST('-9223372036854775808' AS DECIMAL(32, 0)) OR ((CAST(CASE WHEN t0.value_type = 'integer' THEN t0.value_string ELSE NULL END AS DECIMAL(32, 0)) + CAST($2 AS DECIMAL(32, 0)))) > CAST('9223372036854775807' AS DECIMAL(32, 0)) THEN 'integer-overflow' ELSE CAST(CAST(((CAST(CASE WHEN t0.value_type = 'integer' THEN t0.value_string ELSE NULL END AS DECIMAL(32, 0)) + CAST($3 AS DECIMAL(32, 0)))) AS BIGINT) AS TEXT) END AS BIGINT) AS TEXT) AS \"?y\"\nFROM (SELECT * FROM (SELECT 'e' AS entity_id, ':x' AS attribute, 'integer' AS value_type, '1000000000000000004' AS value_string, 'cx-vx02-virtual' AS scope_key, 0 AS valid_from, NULL AS valid_to, 0 AS recorded_at, 1 AS recorded_position, NULL AS retracted_at, NULL AS retracted_position) WHERE scope_key = $4) t0\nWHERE t0.retracted_at IS NULL AND t0.entity_id = $5 AND t0.attribute = $6",
+      "params": [
+        "0",
+        "0",
+        "0",
+        "cx-vx02-virtual",
+        "e",
+        ":x"
+      ],
+      "error": "PostgresError: Errors planning SQL statement:\n  - Subqueries are not allowed in this context\n  - Column not found: scope_key\n  - Column not found: t0.retracted_at\n  - Column not found: t0.entity_id\n  - Column not found: t0.attribute\n  - Column not found: t0.value_type\n  - Column not found: t0.value_string\n  - Column not found: t0.value_type\n  - Column not found: t0.value_string\n  - Column not found: t0.value_type\n  - Column not found: t0.value_string",
+      "expected": "1000000000000000004",
+      "elapsedMs": 1938
+    },
+    {
+      "name": "compiler-*",
+      "query": {
+        "find": [
+          "?y"
+        ],
+        "where": [
+          [
+            "e",
+            ":x",
+            "?x"
+          ]
+        ],
+        "compute": [
+          [
+            "*",
+            "?x",
+            {
+              "type": "integer",
+              "value": "1"
+            },
+            "?y"
+          ]
+        ]
+      },
+      "originalSql": "SELECT DISTINCT\n  CAST(CAST(CASE WHEN ((CAST(CASE WHEN t0.value_type = 'integer' THEN t0.value_string ELSE NULL END AS DECIMAL(32, 0)) * CAST($1 AS DECIMAL(32, 0)))) < CAST('-9223372036854775808' AS DECIMAL(32, 0)) OR ((CAST(CASE WHEN t0.value_type = 'integer' THEN t0.value_string ELSE NULL END AS DECIMAL(32, 0)) * CAST($2 AS DECIMAL(32, 0)))) > CAST('9223372036854775807' AS DECIMAL(32, 0)) THEN 'integer-overflow' ELSE CAST(CAST(((CAST(CASE WHEN t0.value_type = 'integer' THEN t0.value_string ELSE NULL END AS DECIMAL(32, 0)) * CAST($3 AS DECIMAL(32, 0)))) AS BIGINT) AS TEXT) END AS BIGINT) AS TEXT) AS \"?y\"\nFROM (SELECT * FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = $4) t0\nWHERE t0.retracted_at IS NULL AND t0.entity_id = $5 AND t0.attribute = $6",
+      "sql": "SELECT DISTINCT\n  CAST(CAST(CASE WHEN ((CAST(CASE WHEN t0.value_type = 'integer' THEN t0.value_string ELSE NULL END AS DECIMAL(32, 0)) * CAST($1 AS DECIMAL(32, 0)))) < CAST('-9223372036854775808' AS DECIMAL(32, 0)) OR ((CAST(CASE WHEN t0.value_type = 'integer' THEN t0.value_string ELSE NULL END AS DECIMAL(32, 0)) * CAST($2 AS DECIMAL(32, 0)))) > CAST('9223372036854775807' AS DECIMAL(32, 0)) THEN 'integer-overflow' ELSE CAST(CAST(((CAST(CASE WHEN t0.value_type = 'integer' THEN t0.value_string ELSE NULL END AS DECIMAL(32, 0)) * CAST($3 AS DECIMAL(32, 0)))) AS BIGINT) AS TEXT) END AS BIGINT) AS TEXT) AS \"?y\"\nFROM (SELECT * FROM (SELECT 'e' AS entity_id, ':x' AS attribute, 'integer' AS value_type, '1000000000000000004' AS value_string, 'cx-vx02-virtual' AS scope_key, 0 AS valid_from, NULL AS valid_to, 0 AS recorded_at, 1 AS recorded_position, NULL AS retracted_at, NULL AS retracted_position) WHERE scope_key = $4) t0\nWHERE t0.retracted_at IS NULL AND t0.entity_id = $5 AND t0.attribute = $6",
+      "params": [
+        "1",
+        "1",
+        "1",
+        "cx-vx02-virtual",
+        "e",
+        ":x"
+      ],
+      "error": "PostgresError: Errors planning SQL statement:\n  - Subqueries are not allowed in this context\n  - Column not found: scope_key\n  - Column not found: t0.retracted_at\n  - Column not found: t0.entity_id\n  - Column not found: t0.attribute\n  - Column not found: t0.value_type\n  - Column not found: t0.value_string\n  - Column not found: t0.value_type\n  - Column not found: t0.value_string\n  - Column not found: t0.value_type\n  - Column not found: t0.value_string",
+      "expected": "1000000000000000004",
+      "elapsedMs": 11
+    }
+  ],
+  "endedAt": "2026-11-08T21:15:06.746Z"
+}

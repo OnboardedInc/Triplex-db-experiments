@@ -1,0 +1,106 @@
+{
+  "completed": [
+    {
+      "session": 37469,
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "eeb891",
+        "wall_time_seconds": 8.4e-8,
+        "exit_code": 1,
+        "original_token_count": 0,
+        "output": ""
+      }
+    },
+    {
+      "session": 18058,
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "878ee3",
+        "wall_time_seconds": 0.000001666,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      }
+    },
+    {
+      "session": 78065,
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "9c5588",
+        "wall_time_seconds": 0.000008208,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      }
+    },
+    {
+      "session": 82025,
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "6ebadc",
+        "wall_time_seconds": 4.58e-7,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      }
+    },
+    {
+      "session": 46249,
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "156f89",
+        "wall_time_seconds": 2.09e-7,
+        "exit_code": 1,
+        "original_token_count": 0,
+        "output": ""
+      }
+    },
+    {
+      "session": 97539,
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "a77d76",
+        "wall_time_seconds": 2.08e-7,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      }
+    },
+    {
+      "session": 42523,
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "997ee8",
+        "wall_time_seconds": 1.25e-7,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      }
+    },
+    {
+      "session": 80964,
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "f186a0",
+        "wall_time_seconds": 2.5e-7,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      }
+    }
+  ],
+  "final": [
+    {
+      "session": 22925,
+      "label": "CX-VX02-shared-XTQL-r2",
+      "exit_code": 128,
+      "outcome": "SIGTERM after failed diagnostic; partial report remains unqualified; uncertain engine writes retained"
+    },
+    {
+      "session": 93528,
+      "label": "CX-VX02-writer-between",
+      "exit_code": 0,
+      "outcome": "completed; 3/10 controls pass, 7 incomplete due to timeouts"
+    }
+  ]
+}

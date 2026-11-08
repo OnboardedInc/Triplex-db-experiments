@@ -1,0 +1,639 @@
+{
+ "01/before-first-status": [],
+ "01/earlier-knowledge": [
+  [
+   {
+    "tag": "str",
+    "value": "paid"
+   }
+  ]
+ ],
+ "01/paid-after-shipment-known": [
+  [
+   {
+    "tag": "str",
+    "value": "paid"
+   }
+  ]
+ ],
+ "01/shipment-boundary": [
+  [
+   {
+    "tag": "str",
+    "value": "shipped"
+   }
+  ]
+ ],
+ "02/before-any-knowledge": [],
+ "02/corrected-same-valid-time": [
+  [
+   {
+    "tag": "str",
+    "value": "B"
+   }
+  ]
+ ],
+ "02/original-known-address": [
+  [
+   {
+    "tag": "str",
+    "value": "A"
+   }
+  ]
+ ],
+ "03/at-price-boundary": [
+  [
+   {
+    "tag": "i64",
+    "value": "120"
+   }
+  ]
+ ],
+ "03/before-price-history": [],
+ "03/two-purchases": [
+  [
+   {
+    "tag": "str",
+    "value": "buy49"
+   },
+   {
+    "tag": "i64",
+    "value": "100"
+   }
+  ],
+  [
+   {
+    "tag": "str",
+    "value": "buy50"
+   },
+   {
+    "tag": "i64",
+    "value": "120"
+   }
+  ]
+ ],
+ "04/claim29-corrected": [
+  [
+   {
+    "tag": "bool",
+    "value": false
+   }
+  ]
+ ],
+ "04/claim29-original": [
+  [
+   {
+    "tag": "bool",
+    "value": true
+   }
+  ]
+ ],
+ "04/claim30-exclusive-end": [
+  [
+   {
+    "tag": "bool",
+    "value": false
+   }
+  ]
+ ],
+ "04/corrected-end": [
+  [
+   {
+    "tag": "bool",
+    "value": false
+   }
+  ]
+ ],
+ "05/before-newer": [
+  [
+   {
+    "tag": "str",
+    "value": "paid"
+   }
+  ]
+ ],
+ "05/duplicate-counts-once": [
+  [
+   {
+    "tag": "i64",
+    "value": "3"
+   }
+  ]
+ ],
+ "05/older-revision-fills-history": [
+  [
+   {
+    "tag": "str",
+    "value": "created"
+   }
+  ]
+ ],
+ "05/revision-wins-arrival": [
+  [
+   {
+    "tag": "str",
+    "value": "shipped"
+   }
+  ]
+ ],
+ "06/balance800": [
+  [
+   {
+    "tag": "i64",
+    "value": "800"
+   }
+  ]
+ ],
+ "06/business-reversal": [
+  [
+   {
+    "tag": "i64",
+    "value": "300"
+   }
+  ]
+ ],
+ "06/distinct-equal-postings": [
+  [
+   {
+    "tag": "i64",
+    "value": "1000"
+   }
+  ]
+ ],
+ "06/empty-currency": [
+  [
+   {
+    "tag": "i64",
+    "value": "0"
+   }
+  ]
+ ],
+ "07/available7": [
+  [
+   {
+    "tag": "i64",
+    "value": "10"
+   },
+   {
+    "tag": "i64",
+    "value": "3"
+   },
+   {
+    "tag": "i64",
+    "value": "7"
+   }
+  ]
+ ],
+ "07/before-release": [
+  [
+   {
+    "tag": "i64",
+    "value": "10"
+   },
+   {
+    "tag": "i64",
+    "value": "4"
+   },
+   {
+    "tag": "i64",
+    "value": "6"
+   }
+  ]
+ ],
+ "07/canceled-reservation": [
+  [
+   {
+    "tag": "i64",
+    "value": "10"
+   },
+   {
+    "tag": "i64",
+    "value": "0"
+   },
+   {
+    "tag": "i64",
+    "value": "10"
+   }
+  ]
+ ],
+ "08/net700": [
+  [
+   {
+    "tag": "i64",
+    "value": "700"
+   }
+  ]
+ ],
+ "08/no-refunds": [
+  [
+   {
+    "tag": "i64",
+    "value": "1000"
+   }
+  ]
+ ],
+ "08/one-refund": [
+  [
+   {
+    "tag": "i64",
+    "value": "900"
+   }
+  ]
+ ],
+ "09/before-entitlement-known": [
+  [
+   {
+    "tag": "str",
+    "value": "S"
+   }
+  ]
+ ],
+ "09/entitlement-boundary": [],
+ "09/unprovisioned": [
+  [
+   {
+    "tag": "str",
+    "value": "S"
+   }
+  ]
+ ],
+ "10/complete-source-overdue": [
+  [
+   {
+    "tag": "str",
+    "value": "overdue"
+   }
+  ]
+ ],
+ "10/completed-late": [
+  [
+   {
+    "tag": "str",
+    "value": "completed_late"
+   }
+  ]
+ ],
+ "10/deadline-boundary": [
+  [
+   {
+    "tag": "str",
+    "value": "overdue"
+   }
+  ]
+ ],
+ "10/incomplete-source": [
+  [
+   {
+    "tag": "str",
+    "value": "pending_knowledge"
+   }
+  ]
+ ],
+ "11/expired-membership": [
+  [
+   {
+    "tag": "bool",
+    "value": false
+   }
+  ]
+ ],
+ "11/inherited-allow": [
+  [
+   {
+    "tag": "bool",
+    "value": true
+   }
+  ]
+ ],
+ "11/unknown-user": [
+  [
+   {
+    "tag": "bool",
+    "value": false
+   }
+  ]
+ ],
+ "12/corrected-block": [
+  [
+   {
+    "tag": "bool",
+    "value": true
+   }
+  ]
+ ],
+ "12/deny-two-allows": [
+  [
+   {
+    "tag": "bool",
+    "value": false
+   }
+  ]
+ ],
+ "12/exclusive-block-end": [
+  [
+   {
+    "tag": "bool",
+    "value": true
+   }
+  ]
+ ],
+ "12/one-allow-remains": [
+  [
+   {
+    "tag": "bool",
+    "value": true
+   }
+  ]
+ ],
+ "13/destination": [
+  [
+   {
+    "tag": "str",
+    "value": "B"
+   }
+  ]
+ ],
+ "13/move-boundary": [
+  [
+   {
+    "tag": "str",
+    "value": "A"
+   }
+  ]
+ ],
+ "13/move-not-yet-known": [
+  [
+   {
+    "tag": "str",
+    "value": "A"
+   }
+  ],
+  [
+   {
+    "tag": "str",
+    "value": "B"
+   }
+  ]
+ ],
+ "13/nested-items": [
+  [
+   {
+    "tag": "str",
+    "value": "A"
+   }
+  ],
+  [
+   {
+    "tag": "str",
+    "value": "B"
+   }
+  ]
+ ],
+ "14/affected-customer": [
+  [
+   {
+    "tag": "str",
+    "value": "C"
+   }
+  ]
+ ],
+ "14/before-shipment": [],
+ "14/corrected-genealogy": [],
+ "15/dependency-set": [
+  [
+   {
+    "tag": "str",
+    "value": "W"
+   }
+  ],
+  [
+   {
+    "tag": "str",
+    "value": "Y"
+   }
+  ],
+  [
+   {
+    "tag": "str",
+    "value": "Z"
+   }
+  ]
+ ],
+ "15/diamond-cycle": [
+  [
+   {
+    "tag": "str",
+    "value": "X"
+   }
+  ]
+ ],
+ "15/vulnerability-end": [],
+ "16/metadata-added": [
+  [
+   {
+    "tag": "str",
+    "value": "A"
+   },
+   {
+    "tag": "i64",
+    "value": "7"
+   }
+  ],
+  [
+   {
+    "tag": "str",
+    "value": "B"
+   },
+   {
+    "tag": "i64",
+    "value": "7"
+   }
+  ],
+  [
+   {
+    "tag": "str",
+    "value": "C"
+   },
+   {
+    "tag": "i64",
+    "value": "7"
+   }
+  ]
+ ],
+ "16/original-lineage": [
+  [
+   {
+    "tag": "str",
+    "value": "A"
+   },
+   {
+    "tag": "i64",
+    "value": "7"
+   }
+  ],
+  [
+   {
+    "tag": "str",
+    "value": "B"
+   },
+   {
+    "tag": "i64",
+    "value": "7"
+   }
+  ]
+ ],
+ "16/unknown-output": [],
+ "17/equal-steps-fail": [
+  [
+   {
+    "tag": "bool",
+    "value": false
+   }
+  ]
+ ],
+ "17/include-exclusive-boundary": [
+  [
+   {
+    "tag": "str",
+    "value": "S"
+   }
+  ],
+  [
+   {
+    "tag": "str",
+    "value": "U"
+   }
+  ]
+ ],
+ "17/ordered-not-reordered": [
+  [
+   {
+    "tag": "str",
+    "value": "S"
+   }
+  ]
+ ],
+ "18/bridge-known": [
+  [
+   {
+    "tag": "i64",
+    "value": "12"
+   }
+  ]
+ ],
+ "18/clipped": [
+  [
+   {
+    "tag": "i64",
+    "value": "5"
+   }
+  ]
+ ],
+ "18/duplicate-stays10": [
+  [
+   {
+    "tag": "i64",
+    "value": "10"
+   }
+  ]
+ ],
+ "18/gap": [
+  [
+   {
+    "tag": "i64",
+    "value": "0"
+   }
+  ]
+ ],
+ "18/union10": [
+  [
+   {
+    "tag": "i64",
+    "value": "10"
+   }
+  ]
+ ],
+ "19/future-valid-feature": [
+  [
+   {
+    "tag": "i64",
+    "value": "99"
+   }
+  ]
+ ],
+ "19/historical-training-example": [
+  [
+   {
+    "tag": "str",
+    "value": "P"
+   },
+   {
+    "tag": "i64",
+    "value": "10"
+   },
+   {
+    "tag": "bool",
+    "value": true
+   }
+  ]
+ ],
+ "19/label-not-known": [],
+ "19/restated-feature-separate": [
+  [
+   {
+    "tag": "i64",
+    "value": "20"
+   }
+  ]
+ ],
+ "20/last-support-removed": [
+  [
+   {
+    "tag": "bool",
+    "value": false
+   },
+   {
+    "tag": "i64",
+    "value": "0"
+   }
+  ]
+ ],
+ "20/one-support": [
+  [
+   {
+    "tag": "bool",
+    "value": true
+   },
+   {
+    "tag": "i64",
+    "value": "1"
+   }
+  ]
+ ],
+ "20/remaining-closure": [
+  [
+   {
+    "tag": "str",
+    "value": "B"
+   }
+  ],
+  [
+   {
+    "tag": "str",
+    "value": "C"
+   }
+  ]
+ ],
+ "20/two-supports": [
+  [
+   {
+    "tag": "bool",
+    "value": true
+   },
+   {
+    "tag": "i64",
+    "value": "2"
+   }
+  ]
+ ]
+}

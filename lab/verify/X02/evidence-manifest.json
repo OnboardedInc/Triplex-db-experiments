@@ -1,0 +1,465 @@
+{
+  "at": "2026-11-08T21:38:10.979388+00:00",
+  "files": [
+    {
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/V-X02/R12.md",
+      "bytes": 64119,
+      "sha256": "eb4349c2d68509f003619726b4244ce31c3b1f48bdb361516cdd485e48e1ef34"
+    },
+    {
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/V-X02/author-live.log",
+      "bytes": 1320,
+      "sha256": "7fc77efa0d520af82516756910ab311658e5746b25b81e95c25088d13f3c6522"
+    },
+    {
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/V-X02/author-sql-245d69-report.json",
+      "bytes": 1664476,
+      "sha256": "e0d11e3db769d38a48a571da4abb532e5228a7b2b99231aef2a85818effb823b"
+    },
+    {
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/V-X02/compare-xtql-vs-author-sql.json",
+      "bytes": 133469,
+      "sha256": "098f6d689c2e9dfc3276a9cb728533a47783500cfc504e8989c4549e73e762ff"
+    },
+    {
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/V-X02/compare-xtql-vs-author-sql.txt",
+      "bytes": 11526,
+      "sha256": "f10f8f41e841d1247277b7d44581eadf3d7857c82ccbd5d70b4873a7054aa996"
+    },
+    {
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/V-X02/compare-xtql-vs-my-sql.json",
+      "bytes": 131071,
+      "sha256": "65ca7775a652c5764eb16d968460d2c899a3f09c8a8c7aafb242c3f438bb035f"
+    },
+    {
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/V-X02/compare-xtql-vs-my-sql.txt",
+      "bytes": 13310,
+      "sha256": "283598407bf469001af95e7dabdc76ee63225c0fe8f492bc3e6c79acabc98e56"
+    },
+    {
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/V-X02/expect.json",
+      "bytes": 6945,
+      "sha256": "735a0aa07c3607ce84ae36cb68ee19baf5def5f433fc8584e6c402a5cd37ceb7"
+    },
+    {
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/V-X02/g2-sql-exit.json",
+      "bytes": 113,
+      "sha256": "7b279f9b7416bd5a8039f9a4d5749ec4d7c95bddec22810f141178af4a6359a3"
+    },
+    {
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/V-X02/g2-sql-report.json",
+      "bytes": 882035,
+      "sha256": "61bed7ba7b58c8fe4b64df610b033d0ec49ce850149322660a18e9e5c0f1c465"
+    },
+    {
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/V-X02/g2-sql-results.json",
+      "bytes": 21117,
+      "sha256": "1cfd787cc871d56144ca13271870ce53962f50591f361f9701ce6e6159e5493a"
+    },
+    {
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/V-X02/g2-sql.log",
+      "bytes": 5870,
+      "sha256": "c1442d7d381578452e4501bcf463e55ce46a5cb6cdf6777611e5be43a04607cb"
+    },
+    {
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/V-X02/g2-xtql-exit.json",
+      "bytes": 110,
+      "sha256": "12a7017f75b283992b1e5f20cbe0ec9fc609feed0ef41640b3b16a296859d9e2"
+    },
+    {
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/V-X02/g2-xtql-report.json",
+      "bytes": 3108942,
+      "sha256": "ff7f80a5ef5bad56551ec62a59bc31f8a16ab24e0f2ea73c7ee7035e52ce09a3"
+    },
+    {
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/V-X02/g2-xtql-results.json",
+      "bytes": 29038,
+      "sha256": "edb89fc551a934ecf4489467ede9959bd612db8815ab042235c8d4622bf4d9d2"
+    },
+    {
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/V-X02/g2-xtql.log",
+      "bytes": 1304,
+      "sha256": "d0f72e9f5cffd5eda39ebe20440ce1597a10e81001fbcc5fdcb109d6987e83e2"
+    },
+    {
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/V-X02/unit-tests-branch.log",
+      "bytes": 9280,
+      "sha256": "0b47c40f5b46f3c4760d1ccc0fd0629b35a65578e9b8433d9db0ac6ccbe25881"
+    },
+    {
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/V-X02/verifier-live-1.log",
+      "bytes": 3381,
+      "sha256": "9778b8fff7a271ae94ec4fac58ea5e61ab5ccd1d90700f6111bcfa5db73de537"
+    },
+    {
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/V-X02/verifier-live-2-partial.log",
+      "bytes": 13251,
+      "sha256": "a0bc2249f24c0be0c4c85a06bd9f360219ef327acdb816a822153b38c074cdc3"
+    },
+    {
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/V-X02/verifier-live-2.log",
+      "bytes": 13251,
+      "sha256": "a0bc2249f24c0be0c4c85a06bd9f360219ef327acdb816a822153b38c074cdc3"
+    },
+    {
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/V-X02/verifier-live-3.log",
+      "bytes": 258,
+      "sha256": "bcfc17895e1c46b8001e5ec406d06945f621a2fe791a4dc0a10b99963ce18374"
+    },
+    {
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/V-X02/verifier-live-4.log",
+      "bytes": 2745,
+      "sha256": "4bda1c173177d5ce15172b4319c49da9ffe5605e8f65a16f8513d1b564497a65"
+    },
+    {
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/V-X02/verifier-live-5-depth-partial.log",
+      "bytes": 335,
+      "sha256": "f2b60ded5981ee3963b30457962ff7d3a055d39af37e630f13d269e8426efeb8"
+    },
+    {
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/V-X02/verifier-live-5.log",
+      "bytes": 335,
+      "sha256": "f2b60ded5981ee3963b30457962ff7d3a055d39af37e630f13d269e8426efeb8"
+    },
+    {
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/V-X02/verifier-live-6.log",
+      "bytes": 1488,
+      "sha256": "7b45d304c782de3128988fd97f1ddeef911332778129ab8686260ad2fce94f13"
+    },
+    {
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/V-X02/verifier-live-7.log",
+      "bytes": 4270,
+      "sha256": "a0fb69c6576d8163582422323d858f4a678847054c00b2b4ef519f7fd42f4a4f"
+    },
+    {
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/V-X02/vx02-live-6-budget.json",
+      "bytes": 1844,
+      "sha256": "4b661d054fc10c13a4954633180cd2d7a422e1aac9ba5cc4f8abeb189b46d4c6"
+    },
+    {
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/V-X02/vx02-live-7-hazards.json",
+      "bytes": 2384,
+      "sha256": "c82fbfd03ceb5b7d50d83487e5f77f6491d8c2f0b016bb441f0f45657fc374c1"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/BRIEF.md",
+      "bytes": 3879,
+      "sha256": "b723c3743e8b1fe3d287d1fc86253c0546478c3661f675e63575d80e9626e4d2"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/VERIFY.md",
+      "bytes": 18079,
+      "sha256": "b6762c99b5f27bbf781a11528be711100014085e168282df60f2359b656119b5"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/collect-evidence.py",
+      "bytes": 6285,
+      "sha256": "44fccfbead6a59ef0282ae79fa4b4aa503b9c1d7cc55be308d4728e93539948d"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/compare.py",
+      "bytes": 5689,
+      "sha256": "0871c86ebefbc29c8110721e86ca726b6d6351e8b8405ca699ac845223e38ac2"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/comparison-author-sql.json",
+      "bytes": 133469,
+      "sha256": "098f6d689c2e9dfc3276a9cb728533a47783500cfc504e8989c4549e73e762ff"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/comparison-author-sql.md",
+      "bytes": 11526,
+      "sha256": "f10f8f41e841d1247277b7d44581eadf3d7857c82ccbd5d70b4873a7054aa996"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/comparison-independent.json",
+      "bytes": 131071,
+      "sha256": "65ca7775a652c5764eb16d968460d2c899a3f09c8a8c7aafb242c3f438bb035f"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/comparison-independent.md",
+      "bytes": 13310,
+      "sha256": "283598407bf469001af95e7dabdc76ee63225c0fe8f492bc3e6c79acabc98e56"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/engine-status-final.txt",
+      "bytes": 1634,
+      "sha256": "4ff8025960ed007ba6fec74ae8636572366e0aeacf0595f0655de998ae788d4e"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/engine-status.txt",
+      "bytes": 1634,
+      "sha256": "5a7f1a2a643d916a9a726d33f0c3d631cab66fa384921fc7579e31311fa6755f"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/environment-snapshot.json",
+      "bytes": 10528,
+      "sha256": "e17aea03a243fe68bffd09c5c15138c310e7486824c4c99d89dcf6b47da9a2b0"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/exec-outcomes.json",
+      "bytes": 2361,
+      "sha256": "f8dd71ea884064eacf1f8b16daacd31c03124e455540d52900a202d888296133"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/expect-fresh.json",
+      "bytes": 6945,
+      "sha256": "735a0aa07c3607ce84ae36cb68ee19baf5def5f433fc8584e6c402a5cd37ceb7"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/expect.py",
+      "bytes": 10292,
+      "sha256": "d99bc92bfdfead6fd5ec076e225242240f33bc460fef2a3cf02effe049db29f3"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/g0receipts.py",
+      "bytes": 426,
+      "sha256": "66fe1a8d0e0b79cb6fb81033f0c3e6bcde8302f1c2d0902c373b7de26df7de74"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/offline-source.json",
+      "bytes": 5074,
+      "sha256": "980153d1e6fd2ba9198267afce34afab0c3816949e01a31de6a3d84d13bcdb21"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/offline-source.log",
+      "bytes": 5074,
+      "sha256": "980153d1e6fd2ba9198267afce34afab0c3816949e01a31de6a3d84d13bcdb21"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/offline-source.ts",
+      "bytes": 4645,
+      "sha256": "1c51982edb1f8251fa7aac86671f69e361e8bab0853ac2a8f2053f4879c183e2"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/packet-runner.ts",
+      "bytes": 40458,
+      "sha256": "645ca9b55a6dbc8cb042dbae568311d50bf7ecec1bb8f3547d876df12713403d"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/probe-source.ts",
+      "bytes": 5694,
+      "sha256": "cbe9f264c63d57ad3966157a028f68b62766aa48f0a780b92c0941688c240748"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/probe-sums.ts",
+      "bytes": 5504,
+      "sha256": "d1e4009551fbc7e68763a4de668bfe596e0573fb97fa2ed031fe642ba1a0e932"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/receipt_source.py",
+      "bytes": 284,
+      "sha256": "0ef2e1d6c9c0e5f76544ff67cf647d11b001cd3b4a9e47f253a25a654a58cdb5"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/receipts.py",
+      "bytes": 785,
+      "sha256": "7e5867ec8020df7ac40881a2bb2a07e6dd60fd00db0e4919a7fe91d470f9b3f5"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/run-g2.sh",
+      "bytes": 1298,
+      "sha256": "f9c25cd3baa850194291747d9357541f769a8003380ff9108e442c8e327ccf2e"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/run-live.sh",
+      "bytes": 1082,
+      "sha256": "0bf749461a55011d85cb088493787d833685c294796bed1cc110bc8c8f5a3ffd"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/shared-abort-request.json",
+      "bytes": 412,
+      "sha256": "a8afcbffc9f7eba6663626096057ddc21a277773243a20746b2c29c9e728d333"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/shared-xtql-r2-report.json",
+      "bytes": 240911,
+      "sha256": "24e7550a1c09ffe21edd8a8660453b4e3b0b435bbde010ce78d6f29e3d2eec7e"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/shared-xtql-r2.log",
+      "bytes": 332,
+      "sha256": "329851982d0a2f8ceca833dfc4d697176fbcb6e345b484058e48bd2b272cd4c8"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/shared-xtql.log",
+      "bytes": 1762,
+      "sha256": "30b9c0099f9daa5b3e9a4d042e743f0530513695d96b3d3bbb46b871f2102f3e"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/source-hazards-r2.json",
+      "bytes": 14101,
+      "sha256": "5bdf82c68e88f310e2a1cce3dae9918d45754a345ba03ab46607148fc5a73515"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/source-hazards-r2.json.jsonl",
+      "bytes": 9958,
+      "sha256": "bb35bf006958bc1b69ed360e032767f24383c7d11600ffae350bc537d2f5601a"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/source-hazards-r2.log",
+      "bytes": 4129,
+      "sha256": "dc10b72c162c741fae700bb6acf61642794c328083f70e93aee98b76e328a8ec"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/source-hazards.json",
+      "bytes": 14831,
+      "sha256": "e5b9e839cba3fc798416b2e3f38ef5fec5a79ec1f50de7a36f23c67b348b3600"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/source-hazards.json.jsonl",
+      "bytes": 10778,
+      "sha256": "702d4c81fd8680930e30b096fc45bfddacea98599bd8fd17004c17c02421da06"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/source-hazards.log",
+      "bytes": 4976,
+      "sha256": "ea11e38cb069de880c7bd28efde0efb61fb76956c871db38ddc192f516bebbce"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/source-sums.json",
+      "bytes": 124058,
+      "sha256": "12a1e6b61a8c0f9222a9db7c34c964318894e35bdd7f8ce4d9483eadb8efe0ec"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/source-sums.json.jsonl",
+      "bytes": 111932,
+      "sha256": "dc5cacad8d21e8011396360ab1df4f6fa1c18a537d43bb19fff0d7ab95f52bdf"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/source-sums.log",
+      "bytes": 2914,
+      "sha256": "be9f9e3e76b59f6cad1829ff6ed4d2075508b6de2b969fcd11afd2ae55e3bcfe"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/timings.py",
+      "bytes": 645,
+      "sha256": "25be32414e18e918f1f750f006b735704a4e1105c6b1c24cde88bf39999954b4"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/unset-node-tests.log",
+      "bytes": 4669,
+      "sha256": "61524e858170cf0019b474ab239ca2bd439fe8ff5e076548e40b686b0afaf64f"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/unset-tests-r2.log",
+      "bytes": 146,
+      "sha256": "dcac98dd1ea698c898de8566422941df6ba26d89143e749ac5b38279add2add1"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/unset-tests-r3.log",
+      "bytes": 1567,
+      "sha256": "674a54b0710fb526ce22f994c24b650c7ec841a7ee75cbde791c9d445df317d6"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/unset-tests.log",
+      "bytes": 462,
+      "sha256": "f4be4721bbdc62f7cd4f1cafd29e58a17ca4f7ac281af79b4c90ea75ca94450e"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/verify-live.ts",
+      "bytes": 50049,
+      "sha256": "38b88974dcb335e030aa6a4827f3c847990339e0bcdd12bebdca314a1cd3b009"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/writer-report.json",
+      "bytes": 16134,
+      "sha256": "c14fbedcd0581e37649c402142233eca4d9d04856e07ce8eb79a7ef615f7e0ac"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/writer.log",
+      "bytes": 2814,
+      "sha256": "b4374d8dc4e2c670d20220abe7f4620015b234b35c082ffc5ff92ca2d033c909"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/package.json",
+      "bytes": 3378,
+      "sha256": "e65e8f8be2a05d2b440af87c03a7daf6781e42704e5a17319a14d666fd1c37b5"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/packages/core/package.json",
+      "bytes": 2919,
+      "sha256": "f160b15b436158d6da7aa5c85a17bf6b021f9d308b3f5a2abcb9896fd66ae0b8"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/packages/qualification/package.json",
+      "bytes": 995,
+      "sha256": "c478a5b052c8118df671e8ffc582f75842bb991b50e6fd944c9b25b99858574a"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/packages/xtdb/package.json",
+      "bytes": 1077,
+      "sha256": "dc285f3d026a16daca9fb932182f9b31c817fcb24ef06707db31d7a7f0a982a9"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/pnpm-lock.yaml",
+      "bytes": 289866,
+      "sha256": "7a02f735718ecdd29fdbfaf8ec2e2b05c92ad773cdc27d1920a278c5c7f4ba14"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/qualification/workloads/temporal-workloads.json",
+      "bytes": 124581,
+      "sha256": "322c773db2049b5a704d36925738859aef4982ca27194d13a659d1b0e9081271"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/lab/agents/handoffs/V-X02.md",
+      "bytes": 2365,
+      "sha256": "843df33810cc32031c0142dc701cc0fbcf7f733034e5500ee1338e596e6be1b4"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/lab/config/slots.json",
+      "bytes": 4619,
+      "sha256": "335b42612449b0b3399b8282e1a2bdaf1ecdd1e573335d051aedcfa3f9e109a8"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/lab/experiments/EXP-X02-xtql-parity/REPORT.md",
+      "bytes": 2195,
+      "sha256": "95653c9f22ca590325023d3c40f45e5201ffc844eb208c336d11cd1095eb255f"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/lab/runs/G0/G0-xtdb-20261107T193510Z-12a4a5.json",
+      "bytes": 18694,
+      "sha256": "2eb78721096dfae0e0d0c90e0e8f160e05aa6c6d527d696a097a436a1154df64"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/lab/runs/G1/G1-xtdb-20261107T194910Z-96d758.json",
+      "bytes": 52060,
+      "sha256": "563a9a0a332bfdd6390cc67d3a5fa4d3d71515618a49abd1e43b00b7c6a4aa3b"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/lab/runs/G2/G2-xtdb-20261107T191535Z-6a787d.json",
+      "bytes": 87926,
+      "sha256": "c9d414b0a2f529e94d8ba900c6bb62dc66da3d30ab9d53a9a26f447083bd5221"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/lab/runs/G2/G2-xtdb-20261107T195430Z-b7a17d.json",
+      "bytes": 88529,
+      "sha256": "decb9203bfe4020c69b8b928943a597592530712f5ec0b5b572c1cfea29a037e"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/lab/runs/G2/G2-xtdb-20261107T200907Z-245d69.json",
+      "bytes": 99283,
+      "sha256": "baebcce8abf8b59fce8ffa21ef1b10679ddaf15d0115d71898f5f02718bef28b"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/lab/runs/G2/G2-xtdb-20261107T201247Z-f3ac1c.json",
+      "bytes": 89118,
+      "sha256": "4b14d4047959bed57b4e4a15a4a06d4d02cbe5ccc61d4515fad681b556f54b3c"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/lab/verify/X02/BRIEF.md",
+      "bytes": 3879,
+      "sha256": "b723c3743e8b1fe3d287d1fc86253c0546478c3661f675e63575d80e9626e4d2"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/evidence-summary.json",
+      "bytes": 14247,
+      "sha256": "a3baf24b4e3cb75d5574d3d56e0c0f138695c4a1bad5c83736dbccc4895e05f0"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-ae7172e0630603522/lab/verify/X02/sample-table.md",
+      "bytes": 7614,
+      "sha256": "fbb9a61d8bb72b142ab6026dcc0804f86b767173023aa6e3ef4ad320db7716e2"
+    }
+  ]
+}

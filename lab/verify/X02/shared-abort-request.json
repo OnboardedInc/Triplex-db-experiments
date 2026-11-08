@@ -1,0 +1,12 @@
+{
+  "at": "2026-11-08T21:29:30.767104+00:00",
+  "owner": {
+    "pid": 39561,
+    "label": "CX-VX02-shared-XTQL-r2",
+    "at": "2026-11-08T21:19:22.013Z"
+  },
+  "signal": "SIGTERM",
+  "reason": "Diagnostic already failed read and fixture setup, including an unknown transaction outcome. Preserve partial report and all engine state.",
+  "priorAttempt": "sandbox denied os.kill with EPERM",
+  "signalSent": true
+}

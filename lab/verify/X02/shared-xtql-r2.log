@@ -1,0 +1,6 @@
+{"workload":"01","status":"PASS_FUNCTIONAL_ONLY","cases":8}
+{"workload":"02","status":"PASS_FUNCTIONAL_ONLY","cases":6}
+{"workload":"03","status":"PASS_FUNCTIONAL_ONLY","cases":6}
+{"workload":"04","status":"FAIL","cases":8}
+{"workload":"05","status":"FAIL_INGESTION","cases":0}
+{"workload":"06","status":"FAIL_INGESTION","cases":0}

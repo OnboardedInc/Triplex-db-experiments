@@ -1,0 +1,6266 @@
+{
+ "summary": {
+  "mineEqualsPacket": 142,
+  "xtqlEqualsMine": 119,
+  "sqlEqualsMine": 78,
+  "xtqlEqualsSql": 73,
+  "xtqlPure": 127,
+  "sqlPure": 80,
+  "xtqlOneCut": 127,
+  "sqlOneCut": 80,
+  "executions": 142,
+  "xtqlStatus": {
+   "PASS": 119,
+   "FAIL_PUBLIC_API": 23
+  },
+  "sqlStatus": {
+   "PASS": 78,
+   "FAIL_PUBLIC_API": 38,
+   "MISSING": 26
+  },
+  "xtqlTimeouts": [
+   "11/inherited-allow",
+   "11/inherited-allow (reopen)",
+   "12/corrected-block",
+   "12/corrected-block (reopen)",
+   "12/deny-two-allows",
+   "12/exclusive-block-end",
+   "12/exclusive-block-end (reopen)",
+   "12/one-allow-remains",
+   "12/one-allow-remains (reopen)",
+   "13/move-boundary",
+   "13/nested-items",
+   "15/dependency-set",
+   "15/dependency-set (reopen)",
+   "15/diamond-cycle (reopen)",
+   "15/vulnerability-end (reopen)",
+   "18/bridge-known",
+   "18/bridge-known (reopen)",
+   "18/clipped",
+   "18/clipped (reopen)",
+   "18/duplicate-stays10",
+   "18/duplicate-stays10 (reopen)",
+   "18/union10",
+   "18/union10 (reopen)"
+  ],
+  "sqlTimeouts": [
+   "08/net700",
+   "08/net700 (reopen)",
+   "08/no-refunds",
+   "08/no-refunds (reopen)",
+   "08/one-refund",
+   "08/one-refund (reopen)",
+   "11/expired-membership (reopen)",
+   "11/inherited-allow (reopen)",
+   "11/unknown-user",
+   "11/unknown-user (reopen)",
+   "12/corrected-block",
+   "12/corrected-block (reopen)",
+   "12/deny-two-allows",
+   "12/deny-two-allows (reopen)",
+   "12/exclusive-block-end",
+   "12/exclusive-block-end (reopen)",
+   "12/one-allow-remains",
+   "12/one-allow-remains (reopen)",
+   "14/affected-customer",
+   "14/before-shipment (reopen)",
+   "14/corrected-genealogy",
+   "14/corrected-genealogy (reopen)",
+   "15/diamond-cycle",
+   "15/diamond-cycle (reopen)",
+   "15/vulnerability-end",
+   "15/vulnerability-end (reopen)",
+   "16/metadata-added",
+   "16/metadata-added (reopen)",
+   "16/original-lineage",
+   "16/original-lineage (reopen)",
+   "16/unknown-output",
+   "16/unknown-output (reopen)",
+   "17/equal-steps-fail",
+   "17/equal-steps-fail (reopen)",
+   "17/include-exclusive-boundary",
+   "17/include-exclusive-boundary (reopen)",
+   "17/ordered-not-reordered",
+   "17/ordered-not-reordered (reopen)"
+  ],
+  "xtqlWrongNotTimeout": [],
+  "sqlWrongNotTimeout": [],
+  "impure": [],
+  "multiCut": []
+ },
+ "table": [
+  {
+   "task": "01/before-first-status",
+   "reopen": false,
+   "mine": [],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 1048,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1578
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 3788,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1286
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "01/before-first-status",
+   "reopen": true,
+   "mine": [],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 844,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1578
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 3527,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1286
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "01/earlier-knowledge",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"paid\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"paid\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 992,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1578
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"paid\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 3720,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1286
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "01/earlier-knowledge",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"paid\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"paid\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 1347,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1578
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"paid\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 3266,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1286
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "01/paid-after-shipment-known",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"paid\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"paid\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 1711,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1578
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"paid\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 3598,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1286
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "01/paid-after-shipment-known",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"paid\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"paid\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 887,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1578
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"paid\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 4680,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1286
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "01/shipment-boundary",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"shipped\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"shipped\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 1157,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1578
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"shipped\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 5375,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1286
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "01/shipment-boundary",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"shipped\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"shipped\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 865,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1578
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"shipped\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 8332,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1286
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "02/before-any-knowledge",
+   "reopen": false,
+   "mine": [],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 986,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1578
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 2528,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1286
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "02/before-any-knowledge",
+   "reopen": true,
+   "mine": [],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 1624,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1578
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 2227,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1286
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "02/corrected-same-valid-time",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"B\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"B\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 1113,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1578
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"B\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 2789,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1286
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "02/corrected-same-valid-time",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"B\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"B\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 1530,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1578
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"B\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 2778,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1286
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "02/original-known-address",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"A\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"A\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 1391,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1578
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"A\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 2462,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1286
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "02/original-known-address",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"A\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"A\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 1358,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1578
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"A\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 2394,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1286
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "03/at-price-boundary",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"i64\",\"value\":\"120\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"120\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 526,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1578
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"120\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 2345,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1286
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "03/at-price-boundary",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"i64\",\"value\":\"120\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"120\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 990,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1578
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"120\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 2793,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1286
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "03/before-price-history",
+   "reopen": false,
+   "mine": [],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 588,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1578
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 3171,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1286
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "03/before-price-history",
+   "reopen": true,
+   "mine": [],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 877,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1578
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 2603,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1286
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "03/two-purchases",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"buy49\"},{\"tag\":\"i64\",\"value\":\"100\"}]",
+    "[{\"tag\":\"str\",\"value\":\"buy50\"},{\"tag\":\"i64\",\"value\":\"120\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"buy49\"},{\"tag\":\"i64\",\"value\":\"100\"}]",
+     "[{\"tag\":\"str\",\"value\":\"buy50\"},{\"tag\":\"i64\",\"value\":\"120\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 3,
+    "elapsedMs": 2278,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 3030
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"buy49\"},{\"tag\":\"i64\",\"value\":\"100\"}]",
+     "[{\"tag\":\"str\",\"value\":\"buy50\"},{\"tag\":\"i64\",\"value\":\"120\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 3,
+    "elapsedMs": 16799,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1379
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "03/two-purchases",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"buy49\"},{\"tag\":\"i64\",\"value\":\"100\"}]",
+    "[{\"tag\":\"str\",\"value\":\"buy50\"},{\"tag\":\"i64\",\"value\":\"120\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"buy49\"},{\"tag\":\"i64\",\"value\":\"100\"}]",
+     "[{\"tag\":\"str\",\"value\":\"buy50\"},{\"tag\":\"i64\",\"value\":\"120\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 3,
+    "elapsedMs": 4419,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 3030
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"buy49\"},{\"tag\":\"i64\",\"value\":\"100\"}]",
+     "[{\"tag\":\"str\",\"value\":\"buy50\"},{\"tag\":\"i64\",\"value\":\"120\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 3,
+    "elapsedMs": 13072,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1379
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "04/claim29-corrected",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"bool\",\"value\":false}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"bool\",\"value\":false}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 2,
+    "elapsedMs": 2710,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 3038
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"bool\",\"value\":false}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 2,
+    "elapsedMs": 4704,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1384
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "04/claim29-corrected",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"bool\",\"value\":false}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"bool\",\"value\":false}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 2,
+    "elapsedMs": 3577,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 3038
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"bool\",\"value\":false}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 2,
+    "elapsedMs": 5281,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1384
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "04/claim29-original",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"bool\",\"value\":true}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"bool\",\"value\":true}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 2,
+    "elapsedMs": 2063,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 3038
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"bool\",\"value\":true}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 2,
+    "elapsedMs": 13952,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1384
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "04/claim29-original",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"bool\",\"value\":true}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"bool\",\"value\":true}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 2,
+    "elapsedMs": 1922,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 3038
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"bool\",\"value\":true}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 2,
+    "elapsedMs": 6456,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1384
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "04/claim30-exclusive-end",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"bool\",\"value\":false}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"bool\",\"value\":false}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 2,
+    "elapsedMs": 3160,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 3038
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"bool\",\"value\":false}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 2,
+    "elapsedMs": 7772,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1384
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "04/claim30-exclusive-end",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"bool\",\"value\":false}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"bool\",\"value\":false}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 2,
+    "elapsedMs": 2990,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 3038
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"bool\",\"value\":false}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 2,
+    "elapsedMs": 6915,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1384
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "04/corrected-end",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"bool\",\"value\":false}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"bool\",\"value\":false}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 1020,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1496
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"bool\",\"value\":false}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 2282,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1187
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "04/corrected-end",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"bool\",\"value\":false}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"bool\",\"value\":false}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 1400,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1496
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"bool\",\"value\":false}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 1920,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1187
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "05/before-newer",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"paid\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"paid\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     3
+    ],
+    "calls": 1,
+    "elapsedMs": 6184,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 7437
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"paid\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     3
+    ],
+    "calls": 1,
+    "elapsedMs": 11335,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1604
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "05/before-newer",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"paid\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"paid\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     3
+    ],
+    "calls": 1,
+    "elapsedMs": 5418,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 7437
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"paid\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     3
+    ],
+    "calls": 1,
+    "elapsedMs": 13066,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1604
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "05/duplicate-counts-once",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"i64\",\"value\":\"3\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"3\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     3
+    ],
+    "calls": 1,
+    "elapsedMs": 954,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1492
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"3\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     3
+    ],
+    "calls": 1,
+    "elapsedMs": 2515,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1179
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "05/duplicate-counts-once",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"i64\",\"value\":\"3\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"3\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     3
+    ],
+    "calls": 1,
+    "elapsedMs": 1101,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1492
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"3\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     3
+    ],
+    "calls": 1,
+    "elapsedMs": 2330,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1179
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "05/older-revision-fills-history",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"created\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"created\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     3
+    ],
+    "calls": 1,
+    "elapsedMs": 6227,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 7437
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"created\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     3
+    ],
+    "calls": 1,
+    "elapsedMs": 11340,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1604
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "05/older-revision-fills-history",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"created\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"created\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     3
+    ],
+    "calls": 1,
+    "elapsedMs": 5097,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 7437
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"created\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     3
+    ],
+    "calls": 1,
+    "elapsedMs": 10638,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1604
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "05/revision-wins-arrival",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"shipped\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"shipped\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     3
+    ],
+    "calls": 1,
+    "elapsedMs": 8077,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 7437
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"shipped\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     3
+    ],
+    "calls": 1,
+    "elapsedMs": 11210,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1604
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "05/revision-wins-arrival",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"shipped\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"shipped\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     3
+    ],
+    "calls": 1,
+    "elapsedMs": 4721,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 7437
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"shipped\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     3
+    ],
+    "calls": 1,
+    "elapsedMs": 16235,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1604
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "06/balance800",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"i64\",\"value\":\"800\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"800\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 3887,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 4832
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"800\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 8843,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 2243
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "06/balance800",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"i64\",\"value\":\"800\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"800\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 3199,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 4832
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"800\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 7973,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 2243
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "06/business-reversal",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"i64\",\"value\":\"300\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"300\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 2562,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 4832
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"300\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 6828,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 2243
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "06/business-reversal",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"i64\",\"value\":\"300\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"300\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 2611,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 4832
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"300\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 7123,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 2243
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "06/distinct-equal-postings",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"i64\",\"value\":\"1000\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"1000\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 2820,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 4832
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"1000\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 6855,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 2243
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "06/distinct-equal-postings",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"i64\",\"value\":\"1000\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"1000\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 3179,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 4832
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"1000\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 7300,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 2243
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "06/empty-currency",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"i64\",\"value\":\"0\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"0\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 2656,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 4832
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"0\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 5946,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 2243
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "06/empty-currency",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"i64\",\"value\":\"0\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"0\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 3303,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 4832
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"0\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 11165,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 2243
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "07/available7",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"i64\",\"value\":\"10\"},{\"tag\":\"i64\",\"value\":\"3\"},{\"tag\":\"i64\",\"value\":\"7\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"10\"},{\"tag\":\"i64\",\"value\":\"3\"},{\"tag\":\"i64\",\"value\":\"7\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 5211,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 4817
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"10\"},{\"tag\":\"i64\",\"value\":\"3\"},{\"tag\":\"i64\",\"value\":\"7\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 11225,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 2261
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "07/available7",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"i64\",\"value\":\"10\"},{\"tag\":\"i64\",\"value\":\"3\"},{\"tag\":\"i64\",\"value\":\"7\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"10\"},{\"tag\":\"i64\",\"value\":\"3\"},{\"tag\":\"i64\",\"value\":\"7\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 2698,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 4817
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"10\"},{\"tag\":\"i64\",\"value\":\"3\"},{\"tag\":\"i64\",\"value\":\"7\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 9423,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 2261
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "07/before-release",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"i64\",\"value\":\"10\"},{\"tag\":\"i64\",\"value\":\"4\"},{\"tag\":\"i64\",\"value\":\"6\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"10\"},{\"tag\":\"i64\",\"value\":\"4\"},{\"tag\":\"i64\",\"value\":\"6\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 3166,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 4817
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"10\"},{\"tag\":\"i64\",\"value\":\"4\"},{\"tag\":\"i64\",\"value\":\"6\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 10740,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 2261
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "07/before-release",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"i64\",\"value\":\"10\"},{\"tag\":\"i64\",\"value\":\"4\"},{\"tag\":\"i64\",\"value\":\"6\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"10\"},{\"tag\":\"i64\",\"value\":\"4\"},{\"tag\":\"i64\",\"value\":\"6\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 3819,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 4817
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"10\"},{\"tag\":\"i64\",\"value\":\"4\"},{\"tag\":\"i64\",\"value\":\"6\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 7863,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 2261
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "07/canceled-reservation",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"i64\",\"value\":\"10\"},{\"tag\":\"i64\",\"value\":\"0\"},{\"tag\":\"i64\",\"value\":\"10\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"10\"},{\"tag\":\"i64\",\"value\":\"0\"},{\"tag\":\"i64\",\"value\":\"10\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 2817,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 4817
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"10\"},{\"tag\":\"i64\",\"value\":\"0\"},{\"tag\":\"i64\",\"value\":\"10\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 8132,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 2261
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "07/canceled-reservation",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"i64\",\"value\":\"10\"},{\"tag\":\"i64\",\"value\":\"0\"},{\"tag\":\"i64\",\"value\":\"10\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"10\"},{\"tag\":\"i64\",\"value\":\"0\"},{\"tag\":\"i64\",\"value\":\"10\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 2284,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 4817
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"10\"},{\"tag\":\"i64\",\"value\":\"0\"},{\"tag\":\"i64\",\"value\":\"10\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 9117,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 2261
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "08/net700",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"i64\",\"value\":\"700\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"700\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     3
+    ],
+    "calls": 1,
+    "elapsedMs": 11276,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 13820
+   },
+   "sql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30006,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "08/net700",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"i64\",\"value\":\"700\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"700\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     3
+    ],
+    "calls": 1,
+    "elapsedMs": 8769,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 13820
+   },
+   "sql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30012,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "08/no-refunds",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"i64\",\"value\":\"1000\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"1000\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     3
+    ],
+    "calls": 1,
+    "elapsedMs": 10099,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 13820
+   },
+   "sql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30007,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "08/no-refunds",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"i64\",\"value\":\"1000\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"1000\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     3
+    ],
+    "calls": 1,
+    "elapsedMs": 9421,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 13820
+   },
+   "sql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30018,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "08/one-refund",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"i64\",\"value\":\"900\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"900\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     3
+    ],
+    "calls": 1,
+    "elapsedMs": 9623,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 13820
+   },
+   "sql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30006,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "08/one-refund",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"i64\",\"value\":\"900\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"900\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     3
+    ],
+    "calls": 1,
+    "elapsedMs": 9768,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 13820
+   },
+   "sql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30014,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "09/before-entitlement-known",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"S\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"S\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 3725,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 5792
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"S\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 17479,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1565
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "09/before-entitlement-known",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"S\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"S\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 7905,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 5792
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"S\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 12334,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1565
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "09/entitlement-boundary",
+   "reopen": false,
+   "mine": [],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 3498,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 5792
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 15137,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1565
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "09/entitlement-boundary",
+   "reopen": true,
+   "mine": [],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 6209,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 5792
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 13343,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1565
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "09/unprovisioned",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"S\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"S\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 4456,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 5792
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"S\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 7484,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1565
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "09/unprovisioned",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"S\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"S\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 5554,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 5792
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"S\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 14966,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1565
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "10/complete-source-overdue",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"overdue\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"overdue\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 3,
+    "elapsedMs": 12556,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 4490
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"overdue\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 3,
+    "elapsedMs": 25930,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1493
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "10/complete-source-overdue",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"overdue\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"overdue\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 3,
+    "elapsedMs": 10233,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 4490
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"overdue\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 3,
+    "elapsedMs": 26236,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1493
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "10/completed-late",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"completed_late\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"completed_late\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 2,
+    "elapsedMs": 5889,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 4490
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"completed_late\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 2,
+    "elapsedMs": 22368,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1493
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "10/completed-late",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"completed_late\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"completed_late\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 2,
+    "elapsedMs": 9266,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 4490
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"completed_late\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 2,
+    "elapsedMs": 16041,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1493
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "10/deadline-boundary",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"overdue\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"overdue\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 3,
+    "elapsedMs": 10719,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 4490
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"overdue\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 3,
+    "elapsedMs": 32435,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1493
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "10/deadline-boundary",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"overdue\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"overdue\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 3,
+    "elapsedMs": 10561,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 4490
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"overdue\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 3,
+    "elapsedMs": 25062,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1493
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "10/incomplete-source",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"pending_knowledge\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"pending_knowledge\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 3,
+    "elapsedMs": 13395,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 4490
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"pending_knowledge\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 3,
+    "elapsedMs": 25171,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1493
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "10/incomplete-source",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"pending_knowledge\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"pending_knowledge\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 3,
+    "elapsedMs": 9851,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 4490
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"pending_knowledge\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 3,
+    "elapsedMs": 28857,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1493
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "11/expired-membership",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"bool\",\"value\":false}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"bool\",\"value\":false}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 5,
+    "elapsedMs": 34981,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 7451
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"bool\",\"value\":false}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 25943,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1809
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "11/expired-membership",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"bool\",\"value\":false}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"bool\",\"value\":false}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 5,
+    "elapsedMs": 34824,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 7451
+   },
+   "sql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30662,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "11/inherited-allow",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"bool\",\"value\":true}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 4,
+    "elapsedMs": 47312,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 4538
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"bool\",\"value\":true}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 15311,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1809
+   },
+   "xtqlEqualsMine": false,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "11/inherited-allow",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"bool\",\"value\":true}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 4,
+    "elapsedMs": 53131,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 4538
+   },
+   "sql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 35375,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "xtqlEqualsMine": false,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "11/unknown-user",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"bool\",\"value\":false}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"bool\",\"value\":false}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 5,
+    "elapsedMs": 37764,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 7451
+   },
+   "sql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 33817,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "11/unknown-user",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"bool\",\"value\":false}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"bool\",\"value\":false}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 5,
+    "elapsedMs": 34179,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 7451
+   },
+   "sql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 36033,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "12/corrected-block",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"bool\",\"value\":true}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30009,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "sql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30027,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "xtqlEqualsMine": false,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": false,
+   "sqlPure": false,
+   "xtqlOneCut": false,
+   "sqlOneCut": false
+  },
+  {
+   "task": "12/corrected-block",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"bool\",\"value\":true}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30008,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "sql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30010,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "xtqlEqualsMine": false,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": false,
+   "sqlPure": false,
+   "xtqlOneCut": false,
+   "sqlOneCut": false
+  },
+  {
+   "task": "12/deny-two-allows",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"bool\",\"value\":false}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30006,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "sql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30016,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "xtqlEqualsMine": false,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": false,
+   "sqlPure": false,
+   "xtqlOneCut": false,
+   "sqlOneCut": false
+  },
+  {
+   "task": "12/deny-two-allows",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"bool\",\"value\":false}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"bool\",\"value\":false}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     3
+    ],
+    "calls": 1,
+    "elapsedMs": 24330,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 14540
+   },
+   "sql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30007,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "12/exclusive-block-end",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"bool\",\"value\":true}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30015,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "sql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30025,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "xtqlEqualsMine": false,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": false,
+   "sqlPure": false,
+   "xtqlOneCut": false,
+   "sqlOneCut": false
+  },
+  {
+   "task": "12/exclusive-block-end",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"bool\",\"value\":true}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30011,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "sql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30006,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "xtqlEqualsMine": false,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": false,
+   "sqlPure": false,
+   "xtqlOneCut": false,
+   "sqlOneCut": false
+  },
+  {
+   "task": "12/one-allow-remains",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"bool\",\"value\":true}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30020,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "sql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30010,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "xtqlEqualsMine": false,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": false,
+   "sqlPure": false,
+   "xtqlOneCut": false,
+   "sqlOneCut": false
+  },
+  {
+   "task": "12/one-allow-remains",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"bool\",\"value\":true}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30031,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "sql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30010,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "xtqlEqualsMine": false,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": false,
+   "sqlPure": false,
+   "xtqlOneCut": false,
+   "sqlOneCut": false
+  },
+  {
+   "task": "13/destination",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"B\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"B\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 3,
+    "elapsedMs": 17762,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 4538
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"B\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 22704,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1412
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "13/destination",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"B\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"B\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 3,
+    "elapsedMs": 12643,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 4538
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"B\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 12412,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1412
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "13/move-boundary",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"A\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 3,
+    "elapsedMs": 48501,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 8964
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"A\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 13035,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1412
+   },
+   "xtqlEqualsMine": false,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "13/move-boundary",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"A\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"A\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 4,
+    "elapsedMs": 29474,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 8964
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"A\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 11825,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1412
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "13/move-not-yet-known",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"A\"}]",
+    "[{\"tag\":\"str\",\"value\":\"B\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"A\"}]",
+     "[{\"tag\":\"str\",\"value\":\"B\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 4,
+    "elapsedMs": 65596,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 8964
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"A\"}]",
+     "[{\"tag\":\"str\",\"value\":\"B\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 25964,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1412
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "13/move-not-yet-known",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"A\"}]",
+    "[{\"tag\":\"str\",\"value\":\"B\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"A\"}]",
+     "[{\"tag\":\"str\",\"value\":\"B\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 4,
+    "elapsedMs": 36041,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 8964
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"A\"}]",
+     "[{\"tag\":\"str\",\"value\":\"B\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 11577,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1412
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "13/nested-items",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"A\"}]",
+    "[{\"tag\":\"str\",\"value\":\"B\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 3,
+    "elapsedMs": 64088,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 8964
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"A\"}]",
+     "[{\"tag\":\"str\",\"value\":\"B\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 14392,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1412
+   },
+   "xtqlEqualsMine": false,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "13/nested-items",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"A\"}]",
+    "[{\"tag\":\"str\",\"value\":\"B\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"A\"}]",
+     "[{\"tag\":\"str\",\"value\":\"B\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 4,
+    "elapsedMs": 51009,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 8964
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"A\"}]",
+     "[{\"tag\":\"str\",\"value\":\"B\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 14081,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1412
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "14/affected-customer",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"C\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"C\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 3,
+    "elapsedMs": 10908,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 5912
+   },
+   "sql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 33346,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "14/affected-customer",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"C\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"C\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 3,
+    "elapsedMs": 9375,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 5912
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"C\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 23497,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1606
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "14/before-shipment",
+   "reopen": false,
+   "mine": [],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 3,
+    "elapsedMs": 9329,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 5912
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 27356,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1606
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": true,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "14/before-shipment",
+   "reopen": true,
+   "mine": [],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 3,
+    "elapsedMs": 9922,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 5912
+   },
+   "sql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30414,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "14/corrected-genealogy",
+   "reopen": false,
+   "mine": [],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 3,
+    "elapsedMs": 12551,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 5912
+   },
+   "sql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30230,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "14/corrected-genealogy",
+   "reopen": true,
+   "mine": [],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 3,
+    "elapsedMs": 11797,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 5912
+   },
+   "sql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30688,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "15/dependency-set",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"W\"}]",
+    "[{\"tag\":\"str\",\"value\":\"Y\"}]",
+    "[{\"tag\":\"str\",\"value\":\"Z\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     1
+    ],
+    "calls": 2,
+    "elapsedMs": 40026,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 4538
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"W\"}]",
+     "[{\"tag\":\"str\",\"value\":\"Y\"}]",
+     "[{\"tag\":\"str\",\"value\":\"Z\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     1
+    ],
+    "calls": 1,
+    "elapsedMs": 18898,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 235
+   },
+   "xtqlEqualsMine": false,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "15/dependency-set",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"W\"}]",
+    "[{\"tag\":\"str\",\"value\":\"Y\"}]",
+    "[{\"tag\":\"str\",\"value\":\"Z\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     1
+    ],
+    "calls": 2,
+    "elapsedMs": 44138,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 4538
+   },
+   "sql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"W\"}]",
+     "[{\"tag\":\"str\",\"value\":\"Y\"}]",
+     "[{\"tag\":\"str\",\"value\":\"Z\"}]"
+    ],
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     1
+    ],
+    "calls": 1,
+    "elapsedMs": 21204,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 235
+   },
+   "xtqlEqualsMine": false,
+   "sqlEqualsMine": true,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "15/diamond-cycle",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"X\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"X\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     1
+    ],
+    "calls": 4,
+    "elapsedMs": 52434,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 11776
+   },
+   "sql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 33558,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "15/diamond-cycle",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"X\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     1
+    ],
+    "calls": 2,
+    "elapsedMs": 44414,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 7362
+   },
+   "sql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 32027,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "xtqlEqualsMine": false,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "15/vulnerability-end",
+   "reopen": false,
+   "mine": [],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     1
+    ],
+    "calls": 4,
+    "elapsedMs": 51493,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 11776
+   },
+   "sql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 34037,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "15/vulnerability-end",
+   "reopen": true,
+   "mine": [],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     1
+    ],
+    "calls": 2,
+    "elapsedMs": 48029,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 7362
+   },
+   "sql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30349,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "xtqlEqualsMine": false,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "16/metadata-added",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"A\"},{\"tag\":\"i64\",\"value\":\"7\"}]",
+    "[{\"tag\":\"str\",\"value\":\"B\"},{\"tag\":\"i64\",\"value\":\"7\"}]",
+    "[{\"tag\":\"str\",\"value\":\"C\"},{\"tag\":\"i64\",\"value\":\"7\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"A\"},{\"tag\":\"i64\",\"value\":\"7\"}]",
+     "[{\"tag\":\"str\",\"value\":\"B\"},{\"tag\":\"i64\",\"value\":\"7\"}]",
+     "[{\"tag\":\"str\",\"value\":\"C\"},{\"tag\":\"i64\",\"value\":\"7\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 3,
+    "elapsedMs": 20076,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 7233
+   },
+   "sql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30008,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "16/metadata-added",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"A\"},{\"tag\":\"i64\",\"value\":\"7\"}]",
+    "[{\"tag\":\"str\",\"value\":\"B\"},{\"tag\":\"i64\",\"value\":\"7\"}]",
+    "[{\"tag\":\"str\",\"value\":\"C\"},{\"tag\":\"i64\",\"value\":\"7\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"A\"},{\"tag\":\"i64\",\"value\":\"7\"}]",
+     "[{\"tag\":\"str\",\"value\":\"B\"},{\"tag\":\"i64\",\"value\":\"7\"}]",
+     "[{\"tag\":\"str\",\"value\":\"C\"},{\"tag\":\"i64\",\"value\":\"7\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 3,
+    "elapsedMs": 16300,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 7233
+   },
+   "sql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30004,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "16/original-lineage",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"A\"},{\"tag\":\"i64\",\"value\":\"7\"}]",
+    "[{\"tag\":\"str\",\"value\":\"B\"},{\"tag\":\"i64\",\"value\":\"7\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"A\"},{\"tag\":\"i64\",\"value\":\"7\"}]",
+     "[{\"tag\":\"str\",\"value\":\"B\"},{\"tag\":\"i64\",\"value\":\"7\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 3,
+    "elapsedMs": 21295,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 7233
+   },
+   "sql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 2,
+    "elapsedMs": 73809,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 1407
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "16/original-lineage",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"A\"},{\"tag\":\"i64\",\"value\":\"7\"}]",
+    "[{\"tag\":\"str\",\"value\":\"B\"},{\"tag\":\"i64\",\"value\":\"7\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"A\"},{\"tag\":\"i64\",\"value\":\"7\"}]",
+     "[{\"tag\":\"str\",\"value\":\"B\"},{\"tag\":\"i64\",\"value\":\"7\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 3,
+    "elapsedMs": 24048,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 7233
+   },
+   "sql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30003,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "16/unknown-output",
+   "reopen": false,
+   "mine": [],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 3,
+    "elapsedMs": 22167,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 7233
+   },
+   "sql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [
+     "xtdb-sql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 1,
+    "elapsedMs": 58345,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 1407
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": true,
+   "xtqlOneCut": true,
+   "sqlOneCut": true
+  },
+  {
+   "task": "16/unknown-output",
+   "reopen": true,
+   "mine": [],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     2
+    ],
+    "calls": 3,
+    "elapsedMs": 14763,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 7233
+   },
+   "sql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30009,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "17/equal-steps-fail",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"bool\",\"value\":false}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"bool\",\"value\":false}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     1
+    ],
+    "calls": 1,
+    "elapsedMs": 14015,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 13953
+   },
+   "sql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30004,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "17/equal-steps-fail",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"bool\",\"value\":false}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"bool\",\"value\":false}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     1
+    ],
+    "calls": 1,
+    "elapsedMs": 15487,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 13953
+   },
+   "sql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30021,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "17/include-exclusive-boundary",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"S\"}]",
+    "[{\"tag\":\"str\",\"value\":\"U\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"S\"}]",
+     "[{\"tag\":\"str\",\"value\":\"U\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     1
+    ],
+    "calls": 1,
+    "elapsedMs": 15053,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 13905
+   },
+   "sql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30012,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "17/include-exclusive-boundary",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"S\"}]",
+    "[{\"tag\":\"str\",\"value\":\"U\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"S\"}]",
+     "[{\"tag\":\"str\",\"value\":\"U\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     1
+    ],
+    "calls": 1,
+    "elapsedMs": 16255,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 13905
+   },
+   "sql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30009,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "17/ordered-not-reordered",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"S\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"S\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     1
+    ],
+    "calls": 1,
+    "elapsedMs": 14797,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 13905
+   },
+   "sql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30005,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "17/ordered-not-reordered",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"S\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"S\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     1
+    ],
+    "calls": 1,
+    "elapsedMs": 13697,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 13905
+   },
+   "sql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30007,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "18/bridge-known",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"i64\",\"value\":\"12\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30028,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "sql": null,
+   "xtqlEqualsMine": false,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": false,
+   "sqlPure": false,
+   "xtqlOneCut": false,
+   "sqlOneCut": false
+  },
+  {
+   "task": "18/bridge-known",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"i64\",\"value\":\"12\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30005,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "sql": null,
+   "xtqlEqualsMine": false,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": false,
+   "sqlPure": false,
+   "xtqlOneCut": false,
+   "sqlOneCut": false
+  },
+  {
+   "task": "18/clipped",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"i64\",\"value\":\"5\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30006,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "sql": null,
+   "xtqlEqualsMine": false,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": false,
+   "sqlPure": false,
+   "xtqlOneCut": false,
+   "sqlOneCut": false
+  },
+  {
+   "task": "18/clipped",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"i64\",\"value\":\"5\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30008,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "sql": null,
+   "xtqlEqualsMine": false,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": false,
+   "sqlPure": false,
+   "xtqlOneCut": false,
+   "sqlOneCut": false
+  },
+  {
+   "task": "18/duplicate-stays10",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"i64\",\"value\":\"10\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30006,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "sql": null,
+   "xtqlEqualsMine": false,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": false,
+   "sqlPure": false,
+   "xtqlOneCut": false,
+   "sqlOneCut": false
+  },
+  {
+   "task": "18/duplicate-stays10",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"i64\",\"value\":\"10\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30076,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "sql": null,
+   "xtqlEqualsMine": false,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": false,
+   "sqlPure": false,
+   "xtqlOneCut": false,
+   "sqlOneCut": false
+  },
+  {
+   "task": "18/gap",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"i64\",\"value\":\"0\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"0\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     3
+    ],
+    "calls": 1,
+    "elapsedMs": 4583,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 7253
+   },
+   "sql": null,
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "18/gap",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"i64\",\"value\":\"0\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"0\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     3
+    ],
+    "calls": 1,
+    "elapsedMs": 5689,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 7253
+   },
+   "sql": null,
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "18/union10",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"i64\",\"value\":\"10\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30006,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "sql": null,
+   "xtqlEqualsMine": false,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": false,
+   "sqlPure": false,
+   "xtqlOneCut": false,
+   "sqlOneCut": false
+  },
+  {
+   "task": "18/union10",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"i64\",\"value\":\"10\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "FAIL_PUBLIC_API",
+    "rows": null,
+    "languages": [],
+    "positions": [],
+    "calls": 0,
+    "elapsedMs": 30010,
+    "timeout": true,
+    "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+    "maxQueryChars": 0
+   },
+   "sql": null,
+   "xtqlEqualsMine": false,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": false,
+   "sqlPure": false,
+   "xtqlOneCut": false,
+   "sqlOneCut": false
+  },
+  {
+   "task": "19/future-valid-feature",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"i64\",\"value\":\"99\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"99\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 1546,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1578
+   },
+   "sql": null,
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "19/future-valid-feature",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"i64\",\"value\":\"99\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"99\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 1632,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1578
+   },
+   "sql": null,
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "19/historical-training-example",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"P\"},{\"tag\":\"i64\",\"value\":\"10\"},{\"tag\":\"bool\",\"value\":true}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"P\"},{\"tag\":\"i64\",\"value\":\"10\"},{\"tag\":\"bool\",\"value\":true}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 2,
+    "elapsedMs": 7425,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 5984
+   },
+   "sql": null,
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "19/historical-training-example",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"P\"},{\"tag\":\"i64\",\"value\":\"10\"},{\"tag\":\"bool\",\"value\":true}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"P\"},{\"tag\":\"i64\",\"value\":\"10\"},{\"tag\":\"bool\",\"value\":true}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 2,
+    "elapsedMs": 7695,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 5984
+   },
+   "sql": null,
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "19/label-not-known",
+   "reopen": false,
+   "mine": [],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 6206,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 5984
+   },
+   "sql": null,
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "19/label-not-known",
+   "reopen": true,
+   "mine": [],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 7471,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 5984
+   },
+   "sql": null,
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "19/restated-feature-separate",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"i64\",\"value\":\"20\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"20\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 1723,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1578
+   },
+   "sql": null,
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "19/restated-feature-separate",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"i64\",\"value\":\"20\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"i64\",\"value\":\"20\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     4
+    ],
+    "calls": 1,
+    "elapsedMs": 1487,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 1578
+   },
+   "sql": null,
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "20/last-support-removed",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"bool\",\"value\":false},{\"tag\":\"i64\",\"value\":\"0\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"bool\",\"value\":false},{\"tag\":\"i64\",\"value\":\"0\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     3
+    ],
+    "calls": 3,
+    "elapsedMs": 7979,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 4445
+   },
+   "sql": null,
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "20/last-support-removed",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"bool\",\"value\":false},{\"tag\":\"i64\",\"value\":\"0\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"bool\",\"value\":false},{\"tag\":\"i64\",\"value\":\"0\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     3
+    ],
+    "calls": 3,
+    "elapsedMs": 13012,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 4445
+   },
+   "sql": null,
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "20/one-support",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"bool\",\"value\":true},{\"tag\":\"i64\",\"value\":\"1\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"bool\",\"value\":true},{\"tag\":\"i64\",\"value\":\"1\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     3
+    ],
+    "calls": 3,
+    "elapsedMs": 11215,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 4445
+   },
+   "sql": null,
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "20/one-support",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"bool\",\"value\":true},{\"tag\":\"i64\",\"value\":\"1\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"bool\",\"value\":true},{\"tag\":\"i64\",\"value\":\"1\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     3
+    ],
+    "calls": 3,
+    "elapsedMs": 13359,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 4445
+   },
+   "sql": null,
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "20/remaining-closure",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"B\"}]",
+    "[{\"tag\":\"str\",\"value\":\"C\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"B\"}]",
+     "[{\"tag\":\"str\",\"value\":\"C\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     3
+    ],
+    "calls": 3,
+    "elapsedMs": 7881,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 4538
+   },
+   "sql": null,
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "20/remaining-closure",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"str\",\"value\":\"B\"}]",
+    "[{\"tag\":\"str\",\"value\":\"C\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"str\",\"value\":\"B\"}]",
+     "[{\"tag\":\"str\",\"value\":\"C\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     3
+    ],
+    "calls": 3,
+    "elapsedMs": 8414,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 4538
+   },
+   "sql": null,
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "20/two-supports",
+   "reopen": false,
+   "mine": [
+    "[{\"tag\":\"bool\",\"value\":true},{\"tag\":\"i64\",\"value\":\"2\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"bool\",\"value\":true},{\"tag\":\"i64\",\"value\":\"2\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     3
+    ],
+    "calls": 3,
+    "elapsedMs": 11712,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 4445
+   },
+   "sql": null,
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  },
+  {
+   "task": "20/two-supports",
+   "reopen": true,
+   "mine": [
+    "[{\"tag\":\"bool\",\"value\":true},{\"tag\":\"i64\",\"value\":\"2\"}]"
+   ],
+   "mineEqualsPacket": true,
+   "xtql": {
+    "status": "PASS",
+    "rows": [
+     "[{\"tag\":\"bool\",\"value\":true},{\"tag\":\"i64\",\"value\":\"2\"}]"
+    ],
+    "languages": [
+     "xtql"
+    ],
+    "positions": [
+     3
+    ],
+    "calls": 3,
+    "elapsedMs": 11194,
+    "timeout": false,
+    "error": null,
+    "maxQueryChars": 4445
+   },
+   "sql": null,
+   "xtqlEqualsMine": true,
+   "sqlEqualsMine": false,
+   "xtqlEqualsSql": false,
+   "xtqlPure": true,
+   "sqlPure": false,
+   "xtqlOneCut": true,
+   "sqlOneCut": false
+  }
+ ]
+}

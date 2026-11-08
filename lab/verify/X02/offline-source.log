@@ -1,0 +1,133 @@
+{
+  "at": "2026-11-08T21:17:10.813Z",
+  "inventory": [
+    {
+      "language": "xtql",
+      "typedHandlerRecovered": false,
+      "hasDies": true,
+      "cause": "Cause([Die(NativeIntegerOverflowError: Native int64 result 9223372036854775808 is outside the signed 64-bit range)])"
+    },
+    {
+      "language": "xtdb-sql",
+      "typedHandlerRecovered": false,
+      "hasDies": true,
+      "cause": "Cause([Die(NativeIntegerOverflowError: Native int64 result 9223372036854775808 is outside the signed 64-bit range)])"
+    }
+  ],
+  "guards": [
+    {
+      "count": 100000,
+      "calls": [
+        "reach-edge-count-_support",
+        "reach-complete-_support-1",
+        "reachability-closure"
+      ],
+      "exit": "Success([])",
+      "modelOnly": true
+    },
+    {
+      "count": 100001,
+      "calls": [
+        "reach-edge-count-_support"
+      ],
+      "exit": "Failure(Cause([Fail(NativeEngineHazardError: XTQL reachability over 100001 _support edges exceeds 100000 (XTDB #6345); no answer returned)]))",
+      "modelOnly": true
+    }
+  ],
+  "maps": [
+    {
+      "file": "packages/core/src/datalog/compiler.ts",
+      "sha256": "68df9285ac5e23ee5c46c3974f870d13be87387925fafbdd1bf89ef52620c0d5",
+      "distSha256": "f75f35fb93ea576dbb47d99b6e918effc6baef6d0aa1ed2eadfb88249f024483",
+      "matches": true
+    },
+    {
+      "file": "packages/qualification/src/index.ts",
+      "sha256": "306f5569315ecc97d23ef7e18e8d22456f839cfa46b42d3872253835cc0e4458",
+      "distSha256": "1bf16cc6eeefb82ec30844cf46e51edd83484082ce56f4bd907a74e24b56f359",
+      "matches": true
+    },
+    {
+      "file": "packages/qualification/src/native/xtdb-workloads.ts",
+      "sha256": "9da0c3a685861c40796af6ca1c246de46c5a7000955205bf097ee95a3bb6dc52",
+      "distSha256": "8c9b05219cb8a5d732d336d4aaaf8a7410a962ccd11cca095be9537715d66dd9",
+      "matches": true
+    },
+    {
+      "file": "packages/qualification/src/native/xtdb-exact-sum.ts",
+      "sha256": "0baa801bd36e8cde4b0fdea3b13902a1c3b761fb2a84a93b0d9d85b026289144",
+      "distSha256": "30c45e28e75815977579ebc6f2b6c445631bbfd03daf699d325eb79ed44c5883",
+      "matches": true
+    },
+    {
+      "file": "packages/qualification/src/native/xtdb-xtql-reach.ts",
+      "sha256": "08930291c6d09a61ede5085e4cfe0fe1a3a744a92d6ebfd5e3f0a6bf71528d0f",
+      "distSha256": "e1621633686027888594f0a0d21b3eedf26b3913f93f0325abc33d22caadec79",
+      "matches": true
+    },
+    {
+      "file": "packages/qualification/src/native/xtdb-native-errors.ts",
+      "sha256": "75a9a720cedbba5e5cf1c158e92a80a54a3f11c0164309b974d7b67cc0658dac",
+      "distSha256": "e5158e9910529a00ad135f91fa82b352660b2910d18e5ff4c882284bf13f8b8f",
+      "matches": true
+    },
+    {
+      "file": "packages/xtdb/src/index.ts",
+      "sha256": "5bdb382d4bd424e92ab6098ba0bed9954cae9a256ffe1fde2378c67bf8233de3",
+      "distSha256": "902c0eda6b26883a204c6bb9c03c2ae8866333de781cc123630baf3cb0c94ef8",
+      "matches": true
+    },
+    {
+      "file": "packages/xtdb/src/native/NativeQueries.ts",
+      "sha256": "1d015ab3dc75cde4fb355bdb7968ea222d3a4927bd70f6fc142eee250e85264c",
+      "distSha256": "d27beb1bf22edbca39fd02bcb1ce31fe3ea1758b0685829ec9c3019800adce8a",
+      "matches": true
+    },
+    {
+      "file": "packages/xtdb/src/native/ReadOnlySql.ts",
+      "sha256": "1282184005a63a423c0bce8c8a6964e7bcc4a60f1934724afb0ff042eae90612",
+      "distSha256": "277e0d6e8e2c46636236404f080561ea57c41b4f9087542608bc34cc958879dc",
+      "matches": true
+    },
+    {
+      "file": "packages/xtdb/src/native/Sources.ts",
+      "sha256": "0b4e07d94873a74eabdcfa5aead4ab2f30e5614a3455b8fb226f326c1b6b0a77",
+      "distSha256": "553e9146441d123a962cbc0eef7a4e6cdf05894d4cfcb9a2c84aaf99cf4beabc",
+      "matches": true
+    },
+    {
+      "file": "packages/xtdb/src/native/Reachability.ts",
+      "sha256": "a8d262f4b1faecf85e1d104579de6c3c89ed3b6736c8e00539000907a9bddc94",
+      "distSha256": "75a9db47e0adfe66bca2d7a977ae88c919ca97c7f7cfd701678d4b35cc56e9c1",
+      "matches": true
+    },
+    {
+      "file": "packages/xtdb/src/query/compiler.ts",
+      "sha256": "fd1d8fceb939e0623115ef8072300f9e046f6dabee30d573c3b0c1da56823123",
+      "distSha256": "b36e1851009600d6198260f5ff1edff5332323b3ec2f7769566944a85355e81d",
+      "matches": true
+    },
+    {
+      "file": "packages/xtdb/src/XtdbClient.ts",
+      "sha256": "fa5c31c44c45e9e129d65464ee2f012146911f5b11d433d1ce7d73aadee6c67c",
+      "distSha256": "a2e524da9397d6ad2d3ad95c9cb59847a7632df07221d85a99771b8923b8f205",
+      "matches": true
+    }
+  ],
+  "depth": {
+    "modelOnly": true,
+    "calls": [
+      "reach-edge-count-_support",
+      "reach-complete-_support-1",
+      "reach-complete-_support-2",
+      "reach-complete-_support-3",
+      "reach-complete-_support-4",
+      "reach-complete-_support-5",
+      "reach-complete-_support-6",
+      "reach-complete-_support-7",
+      "reach-complete-_support-8"
+    ],
+    "exit": "Failure(Cause([Fail(NativeRecursionDepthError: XTQL reachability is not at its fixpoint within depth 8; no partial closure returned)]))"
+  },
+  "unsetLanguage": "xtql"
+}

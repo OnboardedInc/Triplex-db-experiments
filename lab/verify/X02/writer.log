@@ -1,0 +1,15 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 83377 "CX-VO04H-rerun-resume", pid 40699 "CX-K01-seed", pid 39561 "CX-VX02-shared-XTQL-r2", pid 25645 "CX-E01-R2-final"
+[lab] heavy: waiting for one of 4 slots; held by pid 83377 "CX-VO04H-rerun-resume", pid 40699 "CX-K01-seed", pid 39561 "CX-VX02-shared-XTQL-r2", pid 25645 "CX-E01-R2-final"
+[lab] heavy: waiting for one of 4 slots; held by pid 83377 "CX-VO04H-rerun-resume", pid 40699 "CX-K01-seed", pid 39561 "CX-VX02-shared-XTQL-r2", pid 25645 "CX-E01-R2-final"
+[lab] heavy: waiting for one of 4 slots; held by pid 40843 "CX-P2Q-R2-verifier-offline", pid 45427 "CX-VJ01-deps", pid 39561 "CX-VX02-shared-XTQL-r2", pid 25645 "CX-E01-R2-final"
+PASS xtql     writer between calls workflow completion appears between calls calls=3 {"pinned":["[{\"tag\":\"str\",\"value\":\"pending_knowledge\"}]"],"positions":[1],"writerPosition":2,"fresh":["[{\"tag\":\"str\",\"value\":\"completed\"}]"]}
+FAIL xtdb-sql writer between calls workflow completion appears between calls calls=3 {"pinned":["[{\"tag\":\"str\",\"value\":\"pending_knowledge\"}]"],"positions":[1],"writerPosition":2,"fresh":null}
+FAIL xtql     writer between calls lineage input_b appears between calls calls=0 {"pinned":null,"positions":[],"fresh":null}
+FAIL xtdb-sql writer between calls lineage input_b appears between calls calls=0 {"pinned":null,"positions":[],"fresh":null}
+FAIL xtql     writer between calls length-2 witness appears between calls calls=0 {"pinned":null,"positions":[],"fresh":null}
+FAIL xtdb-sql writer between calls length-2 witness appears between calls calls=0 {"pinned":null,"positions":[],"fresh":null}
+FAIL xtql     writer between calls overlapping price appears between calls calls=0 {"pinned":null,"positions":[],"fresh":["[{\"tag\":\"str\",\"value\":\"b1\"},{\"tag\":\"i64\",\"value\":\"100\"}]"]}
+PASS xtdb-sql writer between calls overlapping price appears between calls calls=2 {"pinned":["[{\"tag\":\"str\",\"value\":\"b1\"},{\"tag\":\"i64\",\"value\":\"100\"}]"],"positions":[1],"writerPosition":2,"fresh":["[{\"tag\":\"str\",\"value\":\"b1\"},{\"tag\":\"i64\",\"value\":\"100\"}]","[{\"tag\":\"str\",\"value\":\"b1\"},{\"tag\":\"i64\",\"value\":\"999\"}]"]}
+FAIL xtql     writer between calls closure edge appears between XTQL substeps calls=3 {"pinned":null,"positions":[1],"writerPosition":2,"fresh":null}
+PASS xtdb-sql writer between calls closure edge appears between XTQL substeps calls=1 {"pinned":["[{\"tag\":\"str\",\"value\":\"n1\"}]","[{\"tag\":\"str\",\"value\":\"n2\"}]"],"positions":[1],"writerPosition":2,"fresh":["[{\"tag\":\"str\",\"value\":\"n1\"}]","[{\"tag\":\"str\",\"value\":\"n2\"}]","[{\"tag\":\"str\",\"value\":\"n3\"}]"]}
+{"output":"lab/verify/X02/writer-report.json","controls":{"total":0,"pass":0},"writerBetween":{"total":10,"pass":3}}

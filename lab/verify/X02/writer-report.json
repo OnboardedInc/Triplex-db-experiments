@@ -1,0 +1,478 @@
+{
+  "format": "tx2-vx02-live/1",
+  "runId": "vx02-1794172896642",
+  "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5470/xtdb",
+  "startedAt": "2026-11-08T21:21:36.645Z",
+  "controls": [],
+  "writerBetween": [
+    {
+      "workload": "10",
+      "name": "workflow completion appears between calls",
+      "language": "xtql",
+      "pass": true,
+      "multiCall": true,
+      "writerPosition": 2,
+      "pinned": {
+        "rows": [
+          "[{\"tag\":\"str\",\"value\":\"pending_knowledge\"}]"
+        ],
+        "error": null,
+        "errorChannel": null,
+        "errorJson": null,
+        "languages": [
+          "xtql"
+        ],
+        "calls": 3,
+        "positions": [
+          1
+        ],
+        "reportedBasis": {
+          "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"vx02-1794172896642-writer-10-wb10-xtql\",0]",
+          "recordedPosition": 1,
+          "recordedAt": 1002,
+          "validAt": 1000025
+        },
+        "queryChars": [
+          4437,
+          4490,
+          3026
+        ],
+        "elapsedMs": 72627
+      },
+      "fresh": {
+        "rows": [
+          "[{\"tag\":\"str\",\"value\":\"completed\"}]"
+        ],
+        "error": null,
+        "errorChannel": null,
+        "errorJson": null,
+        "languages": [
+          "xtql"
+        ],
+        "calls": 2,
+        "positions": [
+          2
+        ],
+        "reportedBasis": {
+          "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"vx02-1794172896642-writer-10-wb10-xtql\",0]",
+          "recordedPosition": 2,
+          "recordedAt": 1002,
+          "validAt": 1000025
+        },
+        "queryChars": [
+          4437,
+          4490
+        ],
+        "elapsedMs": 54569
+      }
+    },
+    {
+      "workload": "10",
+      "name": "workflow completion appears between calls",
+      "language": "xtdb-sql",
+      "pass": false,
+      "multiCall": true,
+      "writerPosition": 2,
+      "pinned": {
+        "rows": [
+          "[{\"tag\":\"str\",\"value\":\"pending_knowledge\"}]"
+        ],
+        "error": null,
+        "errorChannel": null,
+        "errorJson": null,
+        "languages": [
+          "xtdb-sql"
+        ],
+        "calls": 3,
+        "positions": [
+          1
+        ],
+        "reportedBasis": {
+          "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"vx02-1794172896642-writer-10-wb10-xtdb-sql\",0]",
+          "recordedPosition": 1,
+          "recordedAt": 1002,
+          "validAt": 1000025
+        },
+        "queryChars": [
+          1493,
+          1470,
+          1363
+        ],
+        "elapsedMs": 80444
+      },
+      "fresh": {
+        "rows": null,
+        "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+        "errorChannel": "fail?",
+        "errorJson": "{\"_id\":\"Cause\",\"failures\":[{\"_tag\":\"Fail\",\"error\":{\"message\":\"XTDB native query failed: TimeoutError: The operation was aborted due to timeout\",\"cause\":{},\"_tag\":\"ReadError\"}}]}",
+        "languages": [],
+        "calls": 0,
+        "positions": [],
+        "reportedBasis": null,
+        "queryChars": [],
+        "elapsedMs": 30049
+      }
+    },
+    {
+      "workload": "16",
+      "name": "lineage input_b appears between calls",
+      "language": "xtql",
+      "pass": false,
+      "multiCall": false,
+      "pinned": {
+        "rows": null,
+        "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+        "errorChannel": "fail?",
+        "errorJson": "{\"_id\":\"Cause\",\"failures\":[{\"_tag\":\"Fail\",\"error\":{\"message\":\"XTDB native query failed: TimeoutError: The operation was aborted due to timeout\",\"cause\":{},\"_tag\":\"ReadError\"}}]}",
+        "languages": [],
+        "calls": 0,
+        "positions": [],
+        "reportedBasis": null,
+        "queryChars": [],
+        "elapsedMs": 30008
+      },
+      "fresh": {
+        "rows": null,
+        "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+        "errorChannel": "fail?",
+        "errorJson": "{\"_id\":\"Cause\",\"failures\":[{\"_tag\":\"Fail\",\"error\":{\"message\":\"XTDB native query failed: TimeoutError: The operation was aborted due to timeout\",\"cause\":{},\"_tag\":\"ReadError\"}}]}",
+        "languages": [],
+        "calls": 0,
+        "positions": [],
+        "reportedBasis": null,
+        "queryChars": [],
+        "elapsedMs": 30007
+      }
+    },
+    {
+      "workload": "16",
+      "name": "lineage input_b appears between calls",
+      "language": "xtdb-sql",
+      "pass": false,
+      "multiCall": false,
+      "pinned": {
+        "rows": null,
+        "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+        "errorChannel": "fail?",
+        "errorJson": "{\"_id\":\"Cause\",\"failures\":[{\"_tag\":\"Fail\",\"error\":{\"message\":\"XTDB native query failed: TimeoutError: The operation was aborted due to timeout\",\"cause\":{},\"_tag\":\"ReadError\"}}]}",
+        "languages": [],
+        "calls": 0,
+        "positions": [],
+        "reportedBasis": null,
+        "queryChars": [],
+        "elapsedMs": 30006
+      },
+      "fresh": {
+        "rows": null,
+        "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+        "errorChannel": "fail?",
+        "errorJson": "{\"_id\":\"Cause\",\"failures\":[{\"_tag\":\"Fail\",\"error\":{\"message\":\"XTDB native query failed: TimeoutError: The operation was aborted due to timeout\",\"cause\":{},\"_tag\":\"ReadError\"}}]}",
+        "languages": [],
+        "calls": 0,
+        "positions": [],
+        "reportedBasis": null,
+        "queryChars": [],
+        "elapsedMs": 30007
+      }
+    },
+    {
+      "workload": "20",
+      "name": "length-2 witness appears between calls",
+      "language": "xtql",
+      "pass": false,
+      "multiCall": false,
+      "pinned": {
+        "rows": null,
+        "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+        "errorChannel": "fail?",
+        "errorJson": "{\"_id\":\"Cause\",\"failures\":[{\"_tag\":\"Fail\",\"error\":{\"message\":\"XTDB native query failed: TimeoutError: The operation was aborted due to timeout\",\"cause\":{},\"_tag\":\"ReadError\"}}]}",
+        "languages": [],
+        "calls": 0,
+        "positions": [],
+        "reportedBasis": null,
+        "queryChars": [],
+        "elapsedMs": 30009
+      },
+      "fresh": {
+        "rows": null,
+        "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+        "errorChannel": "fail?",
+        "errorJson": "{\"_id\":\"Cause\",\"failures\":[{\"_tag\":\"Fail\",\"error\":{\"message\":\"XTDB native query failed: TimeoutError: The operation was aborted due to timeout\",\"cause\":{},\"_tag\":\"ReadError\"}}]}",
+        "languages": [],
+        "calls": 0,
+        "positions": [],
+        "reportedBasis": null,
+        "queryChars": [],
+        "elapsedMs": 30011
+      }
+    },
+    {
+      "workload": "20",
+      "name": "length-2 witness appears between calls",
+      "language": "xtdb-sql",
+      "pass": false,
+      "multiCall": false,
+      "pinned": {
+        "rows": null,
+        "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+        "errorChannel": "fail?",
+        "errorJson": "{\"_id\":\"Cause\",\"failures\":[{\"_tag\":\"Fail\",\"error\":{\"message\":\"XTDB native query failed: TimeoutError: The operation was aborted due to timeout\",\"cause\":{},\"_tag\":\"ReadError\"}}]}",
+        "languages": [],
+        "calls": 0,
+        "positions": [],
+        "reportedBasis": null,
+        "queryChars": [],
+        "elapsedMs": 30014
+      },
+      "fresh": {
+        "rows": null,
+        "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+        "errorChannel": "fail?",
+        "errorJson": "{\"_id\":\"Cause\",\"failures\":[{\"_tag\":\"Fail\",\"error\":{\"message\":\"XTDB native query failed: TimeoutError: The operation was aborted due to timeout\",\"cause\":{},\"_tag\":\"ReadError\"}}]}",
+        "languages": [],
+        "calls": 0,
+        "positions": [],
+        "reportedBasis": null,
+        "queryChars": [],
+        "elapsedMs": 30020
+      }
+    },
+    {
+      "workload": "03",
+      "name": "overlapping price appears between calls",
+      "language": "xtql",
+      "pass": false,
+      "multiCall": false,
+      "pinned": {
+        "rows": null,
+        "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+        "errorChannel": "fail?",
+        "errorJson": "{\"_id\":\"Cause\",\"failures\":[{\"_tag\":\"Fail\",\"error\":{\"message\":\"XTDB native query failed: TimeoutError: The operation was aborted due to timeout\",\"cause\":{},\"_tag\":\"ReadError\"}}]}",
+        "languages": [],
+        "calls": 0,
+        "positions": [],
+        "reportedBasis": null,
+        "queryChars": [],
+        "elapsedMs": 30011
+      },
+      "fresh": {
+        "rows": [
+          "[{\"tag\":\"str\",\"value\":\"b1\"},{\"tag\":\"i64\",\"value\":\"100\"}]"
+        ],
+        "error": null,
+        "errorChannel": null,
+        "errorJson": null,
+        "languages": [
+          "xtql"
+        ],
+        "calls": 2,
+        "positions": [
+          1
+        ],
+        "reportedBasis": {
+          "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"vx02-1794172896642-writer-03-wb03-xtql\",0]",
+          "recordedPosition": 1,
+          "recordedAt": 1002,
+          "validAt": 1000060
+        },
+        "queryChars": [
+          3030,
+          1578
+        ],
+        "elapsedMs": 11550
+      }
+    },
+    {
+      "workload": "03",
+      "name": "overlapping price appears between calls",
+      "language": "xtdb-sql",
+      "pass": true,
+      "multiCall": true,
+      "writerPosition": 2,
+      "pinned": {
+        "rows": [
+          "[{\"tag\":\"str\",\"value\":\"b1\"},{\"tag\":\"i64\",\"value\":\"100\"}]"
+        ],
+        "error": null,
+        "errorChannel": null,
+        "errorJson": null,
+        "languages": [
+          "xtdb-sql"
+        ],
+        "calls": 2,
+        "positions": [
+          1
+        ],
+        "reportedBasis": {
+          "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"vx02-1794172896642-writer-03-wb03-xtdb-sql\",0]",
+          "recordedPosition": 1,
+          "recordedAt": 1002,
+          "validAt": 1000060
+        },
+        "queryChars": [
+          1379,
+          1286
+        ],
+        "elapsedMs": 14712
+      },
+      "fresh": {
+        "rows": [
+          "[{\"tag\":\"str\",\"value\":\"b1\"},{\"tag\":\"i64\",\"value\":\"100\"}]",
+          "[{\"tag\":\"str\",\"value\":\"b1\"},{\"tag\":\"i64\",\"value\":\"999\"}]"
+        ],
+        "error": null,
+        "errorChannel": null,
+        "errorJson": null,
+        "languages": [
+          "xtdb-sql"
+        ],
+        "calls": 2,
+        "positions": [
+          2
+        ],
+        "reportedBasis": {
+          "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"vx02-1794172896642-writer-03-wb03-xtdb-sql\",0]",
+          "recordedPosition": 2,
+          "recordedAt": 1002,
+          "validAt": 1000060
+        },
+        "queryChars": [
+          1379,
+          1286
+        ],
+        "elapsedMs": 10238
+      }
+    },
+    {
+      "workload": "20",
+      "name": "closure edge appears between XTQL substeps",
+      "language": "xtql",
+      "pass": false,
+      "multiCall": true,
+      "writerPosition": 2,
+      "pinned": {
+        "rows": null,
+        "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+        "errorChannel": "fail?",
+        "errorJson": "{\"_id\":\"Cause\",\"failures\":[{\"_tag\":\"Fail\",\"error\":{\"message\":\"XTDB native query failed: TimeoutError: The operation was aborted due to timeout\",\"cause\":{},\"_tag\":\"ReadError\"}}]}",
+        "languages": [
+          "xtql"
+        ],
+        "calls": 3,
+        "positions": [
+          1
+        ],
+        "reportedBasis": {
+          "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"vx02-1794172896642-writer-20-wb20c-xtql\",0]",
+          "recordedPosition": 1,
+          "recordedAt": 1002,
+          "validAt": 1000000
+        },
+        "queryChars": [
+          1445,
+          4538,
+          8964
+        ],
+        "elapsedMs": 67739
+      },
+      "fresh": {
+        "rows": null,
+        "error": "Cause([Fail(ReadError: XTDB native query failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])",
+        "errorChannel": "fail?",
+        "errorJson": "{\"_id\":\"Cause\",\"failures\":[{\"_tag\":\"Fail\",\"error\":{\"message\":\"XTDB native query failed: TimeoutError: The operation was aborted due to timeout\",\"cause\":{},\"_tag\":\"ReadError\"}}]}",
+        "languages": [
+          "xtql"
+        ],
+        "calls": 2,
+        "positions": [
+          2
+        ],
+        "reportedBasis": {
+          "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"vx02-1794172896642-writer-20-wb20c-xtql\",0]",
+          "recordedPosition": 2,
+          "recordedAt": 1002,
+          "validAt": 1000000
+        },
+        "queryChars": [
+          1445,
+          4538
+        ],
+        "elapsedMs": 68176
+      }
+    },
+    {
+      "workload": "20",
+      "name": "closure edge appears between XTQL substeps",
+      "language": "xtdb-sql",
+      "pass": true,
+      "multiCall": false,
+      "writerPosition": 2,
+      "pinned": {
+        "rows": [
+          "[{\"tag\":\"str\",\"value\":\"n1\"}]",
+          "[{\"tag\":\"str\",\"value\":\"n2\"}]"
+        ],
+        "error": null,
+        "errorChannel": null,
+        "errorJson": null,
+        "languages": [
+          "xtdb-sql"
+        ],
+        "calls": 1,
+        "positions": [
+          1
+        ],
+        "reportedBasis": {
+          "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"vx02-1794172896642-writer-20-wb20c-xtdb-sql\",0]",
+          "recordedPosition": 1,
+          "recordedAt": 1002,
+          "validAt": 1000000
+        },
+        "queryChars": [
+          225
+        ],
+        "elapsedMs": 18964
+      },
+      "fresh": {
+        "rows": [
+          "[{\"tag\":\"str\",\"value\":\"n1\"}]",
+          "[{\"tag\":\"str\",\"value\":\"n2\"}]",
+          "[{\"tag\":\"str\",\"value\":\"n3\"}]"
+        ],
+        "error": null,
+        "errorChannel": null,
+        "errorJson": null,
+        "languages": [
+          "xtdb-sql"
+        ],
+        "calls": 1,
+        "positions": [
+          2
+        ],
+        "reportedBasis": {
+          "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"vx02-1794172896642-writer-20-wb20c-xtdb-sql\",0]",
+          "recordedPosition": 2,
+          "recordedAt": 1002,
+          "validAt": 1000000
+        },
+        "queryChars": [
+          225
+        ],
+        "elapsedMs": 11848
+      }
+    }
+  ],
+  "hazards": {},
+  "basis": null,
+  "endedAt": "2026-11-08T21:36:15.205Z",
+  "summary": {
+    "controls": {
+      "total": 0,
+      "pass": 0
+    },
+    "writerBetween": {
+      "total": 10,
+      "pass": 3
+    }
+  }
+}
