@@ -1,0 +1,200 @@
+[
+  {
+    "name": "baseline (no fault)",
+    "new": {
+      "total": 139,
+      "passed": 139,
+      "failed": []
+    },
+    "old": {
+      "total": 133,
+      "passed": 133,
+      "failed": []
+    }
+  },
+  {
+    "name": "W1 writer: \\u escapes in uppercase hex",
+    "category": "JSON writer",
+    "file": "src/json.ts",
+    "new": {
+      "total": 139,
+      "passed": 135,
+      "failed": [
+        "C100",
+        "C133",
+        "C134",
+        "C136"
+      ]
+    },
+    "old": {
+      "total": 133,
+      "passed": 133,
+      "failed": []
+    }
+  },
+  {
+    "name": "W2 writer: object keys in UTF-16 code unit order (default sort) instead of code point order",
+    "category": "JSON writer",
+    "file": "src/json.ts",
+    "new": {
+      "total": 139,
+      "passed": 137,
+      "failed": [
+        "C133",
+        "C134"
+      ]
+    },
+    "old": {
+      "total": 133,
+      "passed": 133,
+      "failed": []
+    }
+  },
+  {
+    "name": "D1 decoding: invalid UTF-8 replaced with U+FFFD (fatal: false)",
+    "category": "input decoding",
+    "file": "src/json.ts",
+    "new": {
+      "total": 139,
+      "passed": 138,
+      "failed": [
+        "C92"
+      ]
+    },
+    "old": {
+      "total": 133,
+      "passed": 133,
+      "failed": []
+    }
+  },
+  {
+    "name": "D2 decoding: a leading byte order mark is stripped instead of refused",
+    "category": "input decoding",
+    "file": "src/json.ts",
+    "new": {
+      "total": 139,
+      "passed": 138,
+      "failed": [
+        "C91"
+      ]
+    },
+    "old": {
+      "total": 133,
+      "passed": 133,
+      "failed": []
+    }
+  },
+  {
+    "name": "R1 rule: MINWAGE row 4 needs pay strictly above the floor (>= becomes >)",
+    "category": "rule",
+    "file": "src/kernel.ts",
+    "new": {
+      "total": 139,
+      "passed": 91,
+      "failed": [
+        "C01",
+        "C02",
+        "C03",
+        "C04",
+        "C06",
+        "C07",
+        "C08",
+        "C09",
+        "C10",
+        "C11",
+        "C12",
+        "C13",
+        "C14",
+        "C15",
+        "C16",
+        "C17",
+        "C18",
+        "C21",
+        "C22",
+        "C26",
+        "C28",
+        "C29",
+        "C30",
+        "C46",
+        "C47",
+        "C49",
+        "C50",
+        "C51",
+        "C52",
+        "C53",
+        "C54",
+        "C55",
+        "C56",
+        "C61",
+        "C86",
+        "C103",
+        "C104",
+        "C105",
+        "C106",
+        "C107",
+        "C109",
+        "C114",
+        "C115",
+        "C116",
+        "C117",
+        "C119",
+        "C120",
+        "C126"
+      ]
+    },
+    "old": {
+      "total": 133,
+      "passed": 85,
+      "failed": [
+        "C01",
+        "C02",
+        "C03",
+        "C04",
+        "C06",
+        "C07",
+        "C08",
+        "C09",
+        "C10",
+        "C103",
+        "C104",
+        "C105",
+        "C106",
+        "C107",
+        "C109",
+        "C11",
+        "C114",
+        "C115",
+        "C116",
+        "C117",
+        "C119",
+        "C12",
+        "C120",
+        "C126",
+        "C13",
+        "C14",
+        "C15",
+        "C16",
+        "C17",
+        "C18",
+        "C21",
+        "C22",
+        "C26",
+        "C28",
+        "C29",
+        "C30",
+        "C46",
+        "C47",
+        "C49",
+        "C50",
+        "C51",
+        "C52",
+        "C53",
+        "C54",
+        "C55",
+        "C56",
+        "C61",
+        "C86"
+      ]
+    }
+  }
+]
