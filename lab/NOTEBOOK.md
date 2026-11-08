@@ -1350,3 +1350,25 @@ Where each priority stands, from evidence so far (research probes and baselines;
   evidence used. Twelve contract ambiguities (CA01-CA12, lab/acceptance/oracle/README.md there); the deepest is CA01: the contract names no
   serialized source kinds and no authenticated collector format, so hashes bind content but cannot attest that evidence came from the
   engine. That is R27's question (engine-side evidence sources), which goes next. Codex reviewer CX-VO05 dispatched.
+
+## 2026-11-08 21:27Z: hourly learnings pass (NORTH-STAR reread first; research is Opus high under lab/PROTOCOL.md)
+- **Catch-up:** V-O04h (FIX-FIRST on O-REPLAY 0.4.8: the completeness check matched code patterns instead of executing kinds, F14; the page
+  selector coerced or crashed, F15; ruled Q70n, Q70o; 0.4.9 building) and V-C8 (FIX-FIRST: two budget bypasses, a stack overflow in path
+  counting, two write-counter blind spots; no read path that writes was found; ruled Q77; fix round building). Learning from both: the
+  Codex reviewers keep finding the same class as the Opus ones did, a guarantee checked on the shapes the author thought of; Q70n's
+  "check by execution, not by pattern" is the general cure and applies to the write counter too (Q77c: classify positively, count every
+  unknown).
+- **Host:** load 8.3 / 11.2 / 13.4; disk 33 GiB free (up from 9); only the two dev residents are running; Claude usage 1% of the week.
+- **Where evidence points, by priority:**
+  - **P1:** read paths never write (C8, fix round for budgets and counter); P1 throughput on QLever goes through broker-fed replicas.
+  - **P2:** encoding tweaks are worth 12-33% (J01), not 3x; the journal and its guards are half of each XTDB commit, so the levers are the
+    broker log as the journal (P2B) and per-subject keys (P2X). Broker fix round 2 is building.
+  - **P3:** the broker log and P2X's feed row replace the full-journal feed scan.
+  - **P4:** H1, a host-side current store, is about 1,000x faster than the engine path and exact on 100,097 checked pulls; it needs R25's
+    durable SQLite design, erasure and a flatness fix (1.18x against 1.1). X2 and Q1 wait for J01's review.
+  - **P5:** the domain side is pinned; P5 waits for P2B and the SQLite store.
+  - **Lane D:** R29 (Opus high) is designing it.
+  - **Floor:** O-OBS built and under review (62 obligations); E01 round 2 building; O-REPLAY 0.4.9 building.
+- **Research:** all ten slots are busy, so R27 (evidence sources for O-OBS, now sharper: CA01 says the contract has no authenticated
+  collector format), R28 (isolation for EXP-G03) and the R25 finish wait, in that order, as Opus high planners. No new question beyond those
+  three this hour.
