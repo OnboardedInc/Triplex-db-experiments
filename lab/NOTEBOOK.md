@@ -1408,3 +1408,14 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **Learning:** each delta re-check finds a smaller residue on the same theme (the write counter: multipart, then GET; evaluator inputs:
   before use, then after last use). The rounds converge; the fix that ends them is a positive allowlist with "everything else counts" rather
   than a growing list of recognised bad cases.
+
+## 2026-11-08 21:56Z: R27 landed (Opus high): every O-OBS protocol has a real source; O-OBS round 2 dispatched
+- Saved as lab/research/R27-obs-evidence-sources.md; ruled Q82a-e. Engine-internal or read-back sources cover 10 of 14 protocols on XTDB,
+  9 on QLever, 7 on Datomic; 4 gaps have named instruments. Six source kinds with Triplex-reported evidence rejected; the four P1/P2
+  safety protocols need two agreeing kinds; evidence arrives as obs-bundle/1 from an observer sidecar engine.mjs starts.
+- **Corrections to earlier research:** QLever 0.6.0 has a Prometheus /metrics endpoint (query and update counters, delta_triples,
+  rebuild_in_progress) and a per-query metrics-log.jsonl with client-settable query ids (R24 said no counters beyond CPU); XTDB's EXPLAIN
+  ANALYZE works and returns scan_rows_read / pages / files as JSON (R16's probe printed [object Object], and p4.mjs:29 repeats that bug);
+  XTDB's source-log offset moves on flushes and compaction, so only node.tx.latestCompletedTxId counts mutations.
+- **Learning:** "no counter exists" twice turned out to be a decoding bug or a disabled flag in our own harness; engine-capability
+  claims get a probe before they shape a design.
