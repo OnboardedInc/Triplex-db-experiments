@@ -37,7 +37,7 @@ import { TRACE_DEFAULTS, generateTrace, traceDigest, traceStats, type TraceEvent
 import { BUCKETS, HOP_SHARE, RUNGS, SEED_VALID_FROM, accountsFor, accountOfSubject, hopOf, ids, populationCounts, subjectInCell, worldFactsOf, type Bucket } from "./lib/world.ts";
 import { REPO } from "./lib/triplex.ts";
 import { chooseHistorySample, chooseSamples } from "./lib/samples.ts";
-import { seedFromManifest } from "./lib/bulk.ts";
+import { seedFromManifest, seedPathOf } from "./lib/bulk.ts";
 
 // ---------------------------------------------------------------- arguments
 
@@ -99,6 +99,8 @@ const bulkManifest = config.seedManifest ? JSON.parse(fs.readFileSync(path.resol
 if (bulkManifest && (bulkManifest.subjects !== rungSubjects || bulkManifest.lane !== lane || bulkManifest.seed !== config.seed))
   throw new Error(`--seed-manifest is for ${bulkManifest.lane}/${bulkManifest.subjects} subjects/seed ${bulkManifest.seed}, not ${lane}/${rungSubjects}/${config.seed}`);
 const scopeName = bulkManifest ? bulkManifest.scope : `ns-${lane}-${config.rung.replace(/[^a-z0-9]/gi, "")}-${runTag}`;
+// [EXP-K01] Bound before anything runs: a clone without a PASS readiness verdict for this manifest's golden is refused.
+const seedPath = seedPathOf(bulkManifest, config.seedManifest ? path.resolve(config.seedManifest) : null, process.env["TRIPLEX_LAB_SLOT_OWNER"]);
 const now = () => performance.timeOrigin + performance.now();
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const logLines: string[] = [];
@@ -248,12 +250,12 @@ async function run() {
         comp: writer, subjects: rungSubjects, runTag, batchFacts: config.seedBatchFacts, budgetMs: config.seedBudgetS * 1000,
         recordSubjects: new Set(oracleSubjects), recordAccounts: new Set(oracleSubjects.map((i) => accountOfSubject(i, accounts))), historySubjects: new Set(historySample), log,
       });
-  report.seedPath = bulkManifest ? { kind: "bulk-index", manifest: config.seedManifest, nqSha256: bulkManifest.nq.sha256, quads: bulkManifest.nq.quads } : { kind: "transact" };
+  report.seedPath = seedPath;
   const N = seed.seededSubjects;
   const popN = populationCounts(N, accounts);
   recordedCommands.push(...seed.recorded);
   report.seed = {
-    plannedSubjects: rungSubjects, seededSubjects: N, complete: seed.complete, commands: seed.commands, assertions: seed.assertions,
+    seededBy: seedPath.seededBy, plannedSubjects: rungSubjects, seededSubjects: N, complete: seed.complete, commands: seed.commands, assertions: seed.assertions,
     expectedAssertions: popN.seedAssertions, assertionsMatchClosedForm: popN.seedAssertions === seed.assertions,
     wallS: seed.wallMs / 1000, factsPerS: seed.factsPerS, commitMs: seed.commitMs, failureCount: seed.failures.length, failures: seed.failures.slice(0, 10),
     firstPosition: coordinate(seed.firstPosition), lastPosition: coordinate(seed.lastPosition), lastInstant: seed.lastInstant, population: { planned: pop, seeded: popN },

@@ -270,3 +270,71 @@ test('cpusets parse against the VM and unpinned containers overlap everything', 
   assert.deepEqual(lib.cpusetOverlap('0,1', '1-2', 6), [1]);
   assert.deepEqual(lib.cpusetOverlap('0,1', null, 6), [0, 1]);
 });
+
+// ---------------------------------------------------------------- EXP-K01 seed once, clone faithfully
+
+test('golden key: canonical over its inputs, changes with any seed or engine input, ignores slot placement', async () => {
+  const { goldenKey, systemConfig, canonicalJson, effectiveConfig } = await import('../engine.mjs');
+  const seedInputs = { format: 'tx2-xtdb-seed-inputs/1', adapter: { commit: 'abc', dist: { core: { sha256: '1' } } }, generator: { 'lab/bench/lib/world.ts': 'w' }, options: { subjects: 500, seed: 'ns-v2' } };
+  const reordered = { options: { seed: 'ns-v2', subjects: 500 }, generator: { 'lab/bench/lib/world.ts': 'w' }, adapter: { dist: { core: { sha256: '1' } }, commit: 'abc' }, format: 'tx2-xtdb-seed-inputs/1' };
+  const a = goldenKey({ seedInputs, imageId: 'sha256:img', systemConfigSha256: 'cfg' });
+  assert.equal(a.key, goldenKey({ seedInputs: reordered, imageId: 'sha256:img', systemConfigSha256: 'cfg' }).key);
+  assert.equal(a.key8, a.key.slice(0, 8));
+  assert.notEqual(a.key, goldenKey({ seedInputs: { ...seedInputs, options: { subjects: 501, seed: 'ns-v2' } }, imageId: 'sha256:img', systemConfigSha256: 'cfg' }).key);
+  assert.notEqual(a.key, goldenKey({ seedInputs, imageId: 'sha256:other', systemConfigSha256: 'cfg' }).key);
+  assert.notEqual(a.key, goldenKey({ seedInputs, imageId: 'sha256:img', systemConfigSha256: 'cfg2' }).key);
+  assert.throws(() => goldenKey({ seedInputs: null, imageId: 'x', systemConfigSha256: 'y' }), /needs seedInputs/);
+  assert.equal(canonicalJson({ b: 1, a: [{ d: 1, c: 2 }] }), '{"a":[{"c":2,"d":1}],"b":1}');
+  // s1 and s3 differ only in placement, so one golden serves both; a different heap would not.
+  const s1 = effectiveConfig(config, lib.slotInfo(config, 'xtdb', 's1')).effective;
+  const s3 = effectiveConfig(config, lib.slotInfo(config, 'xtdb', 's3')).effective;
+  assert.notDeepEqual(s1, s3);
+  assert.deepEqual(systemConfig(s1), systemConfig(s3));
+  assert.equal('publish' in systemConfig(s1) || 'volume' in systemConfig(s1) || 'slot' in systemConfig(s1), false);
+  assert.notDeepEqual(systemConfig(s1), systemConfig(effectiveConfig(config, lib.slotInfo(config, 'xtdb', 'dev')).effective));
+});
+
+test('host disk floor: a copy that would leave less than 5 GiB is refused (Q74f)', async () => {
+  const { diskFloorVerdict, HOST_DISK_FLOOR_BYTES } = await import('../engine.mjs');
+  assert.equal(HOST_DISK_FLOOR_BYTES, 5 * GiB);
+  assert.equal(diskFloorVerdict({ freeBytes: 8.7 * GiB, copyBytes: 3.41 * GiB }).ok, true);
+  const no = diskFloorVerdict({ freeBytes: 8.7 * GiB, copyBytes: 3.8 * GiB });
+  assert.equal(no.ok, false);
+  assert.match(no.reason, /Q74f/);
+  assert.equal(diskFloorVerdict({ freeBytes: 5 * GiB, copyBytes: 0 }).ok, true);
+});
+
+test('clean stop needs "Node stopped.", no forced halt, exit 0 or 143', async () => {
+  const { stopVerdict } = await import('../engine.mjs');
+  const good = '2026 INFO xtdb.main - Stopping node...\n2026 INFO xtdb.main - Node stopped.\n';
+  assert.equal(stopVerdict({ log: good, exitCode: 143, oomKilled: false }).ok, true);
+  assert.equal(stopVerdict({ log: good, exitCode: 0, oomKilled: false }).ok, true);
+  assert.deepEqual(stopVerdict({ log: good, exitCode: 137, oomKilled: false }).reasons, ['exit code 137']);
+  assert.equal(stopVerdict({ log: 'Stopping node...\n', exitCode: 143, oomKilled: false }).ok, false);
+  const forced = stopVerdict({ log: 'could not stop node cleanly after 10000 ms, forcing exit\n', exitCode: 1, oomKilled: false });
+  assert.equal(forced.ok, false);
+  assert.equal(forced.reasons.length, 3);
+  assert.equal(stopVerdict({ log: good, exitCode: 143, oomKilled: true }).ok, false);
+});
+
+test('volume listings parse, hash every field, fail closed on truncation, and diff for P-e', async () => {
+  const { parseListing, diffListings, listingScript } = await import('../engine.mjs');
+  const h = c => c.repeat(64);
+  const text = (logSha, extra = '') => `@@stat\n./buffers/v06/blocks/b00.binpb|10|644|20000|20000\n./log/LOG|5|644|20000|20000\n./log/REPLICA_LOG|7|644|20000|20000\n${extra}@@sha\n${h('a')}  ./buffers/v06/blocks/b00.binpb\n${logSha}  ./log/LOG\n${h('c')}  ./log/REPLICA_LOG\n@@end\n`;
+  const a = parseListing(text(h('b')));
+  assert.equal(a.count, 3);
+  assert.equal(a.bytes, 22);
+  assert.deepEqual(a.files.map(f => f.path), ['./buffers/v06/blocks/b00.binpb', './log/LOG', './log/REPLICA_LOG']);
+  assert.equal(a.treeSha256, parseListing(text(h('b'))).treeSha256);
+  assert.notEqual(a.treeSha256, parseListing(text(h('d'))).treeSha256);
+  assert.notEqual(a.treeSha256, parseListing(text(h('b')).replace('./log/LOG|5|644|20000|20000', './log/LOG|5|644|0|0')).treeSha256, 'owner is part of the tree hash');
+  assert.throws(() => parseListing(text(h('b')).replace('@@end\n', '')), /truncated/);
+  assert.throws(() => parseListing(text(h('b')).replace(`${h('a')}  ./buffers/v06/blocks/b00.binpb\n`, '')), /disagree/);
+  const logsOnly = diffListings(a, parseListing(text(h('d'))));
+  assert.deepEqual(logsOnly.changed, ['./log/LOG']);
+  assert.equal(logsOnly.storageImmutable, true);
+  const blockChanged = diffListings(a, parseListing(text(h('b')).replace(`${h('a')}  ./buffers`, `${h('e')}  ./buffers`)));
+  assert.deepEqual(blockChanged.changedOutsideLogs, ['./buffers/v06/blocks/b00.binpb']);
+  assert.equal(blockChanged.storageImmutable, false);
+  assert.match(listingScript('/dst'), /! -path '\*\/\.tmp\/\*'/);
+});

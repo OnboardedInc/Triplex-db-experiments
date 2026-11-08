@@ -241,7 +241,8 @@ async function gateG0(run) {
   const engineCases = await run.step('node-test-engine-cases', 'node', ['--test', '--test-reporter=tap', 'qualification/workloads/test_engine_cases.mjs']);
   tapOutcome(run, 'node-test-engine-cases', path.join(REPO, engineCases.stdout), counts);
   // [EXP-N01] NS driver unit tests: trace determinism and frozen schedule, histogram accuracy, scheduled-time latency, world counts, feed consumer.
-  const bench = await run.step('node-test-ns-bench', 'node', ['--test', '--test-reporter=tap', 'lab/bench/test/bench.test.ts']);
+  // [EXP-K01] clone readiness checks: freeze comparison, probe-plan shape, seed-path binding.
+  const bench = await run.step('node-test-ns-bench', 'node', ['--test', '--test-reporter=tap', 'lab/bench/test/bench.test.ts', 'lab/bench/test/clone.test.ts']);
   tapOutcome(run, 'node-test-ns-bench', path.join(REPO, bench.stdout), counts);
   for (const step of [nodeQual, engineCases, bench]) if (step.code !== 0) run.reason(`${step.name} exited ${step.code}`);
   const validate = await run.step('oracle-validate-workloads', 'python3', ['-B', 'qualification/workloads/validate_workloads.py']);
@@ -534,6 +535,17 @@ async function gateNS(run, config) {
   if (report.seed && !report.seed.complete) invalid.push(`rung not achieved: ${report.seed.seededSubjects} of ${report.seed.plannedSubjects} subjects seeded`);
   if (dev.length) invalid.push(`development overrides: ${dev.join(', ')}`);
   if (baseline === null && !run.options['zero-readers']) invalid.push('no matched zero-reader baseline (--baseline RUN-ID): writer attribution is unmatched');
+  // [EXP-K01] RULINGS Q74a, Q74c: a clone-seeded receipt names its golden (key, record, freeze fingerprint) and does not
+  // count, even for screening, until validation E1 passes; the clone record must name the container this run measured.
+  const sp = report.seedPath ?? {};
+  if (sp.seededBy === 'clone') {
+    invalid.push(`seeded by clone of golden ${String(sp.golden?.key).slice(0, 8)} (${sp.golden?.volume}): RULINGS Q74c, clone-seeded receipts do not count until validation E1 passes`);
+    if (sp.golden?.containerId !== bound.engine.containerId) run.reason(`clone record names container ${String(sp.golden?.containerId).slice(0, 12)}, the run measured ${String(bound.engine.containerId).slice(0, 12)}`);
+    const recordFile = sp.golden?.record ? path.resolve(REPO, sp.golden.record) : null;
+    if (recordFile && fs.existsSync(recordFile)) run.store(recordFile, 'golden-record');
+    else run.reason(`golden record ${sp.golden?.record} is missing`);
+  }
+  if (sp.seededBy === 'unverified') invalid.push('seed manifest without a bound slot owner record: what the slot volume holds is unverified');
   result.scope = dev.length ? `dev:${dev.join(',')}` : `rung:${rung}/profile:${nsProfile}`;
   const engine = result.engine;
   const layer = role => ({ role, lane: run.lane, slot: slotName, container: engine.container, imageId: engine.imageId, repoDigests: engine.repoDigests, configSha256: engine.configSha256, endpoint: engine.endpoint, cpuQuota: engine.nanoCpus / 1e9, memCapBytes: engine.memCapBytes });
@@ -557,7 +569,7 @@ async function gateNS(run, config) {
 }
 function nsBenchFiles() {
   const lib = fs.readdirSync(path.join(REPO, 'lab/bench/lib')).filter(f => f.endsWith('.ts')).sort().map(f => `lab/bench/lib/${f}`);
-  return ['lab/bench/driver.ts', 'lab/bench/reader-worker.ts', ...lib, 'lab/bench/test/bench.test.ts', 'lab/bench/README.md'];
+  return ['lab/bench/driver.ts', 'lab/bench/reader-worker.ts', ...lib, 'lab/bench/test/bench.test.ts', 'lab/bench/README.md', 'lab/bench/xtdb-seed.ts', 'lab/bench/clone-check.ts', 'lab/bench/test/clone.test.ts'];
 }
 function runGit(args, encoding = 'utf8') {
   const out = spawnSync('git', ['-C', REPO, ...args], { maxBuffer: 256 << 20 });

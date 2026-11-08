@@ -34,6 +34,9 @@ stands; each bar has its own pass/miss in `ns.bars`; a missed bar is a fitness r
 | `lib/hist.ts` | Log-linear histogram (0.79% bucket width), JSON round trip, merge. |
 | `lib/oracle.ts` | O-REPLAY sample case builder and comparison. |
 | `lib/evaluate.ts` | P5 seams: `evaluate(world, release)` and outbox `publish`, both fail closed until EXP-D01. |
+| `xtdb-seed.ts` | EXP-K01: seed-only writer for XTDB; writes the seed manifest the driver continues from. |
+| `clone-check.ts`, `lib/clone.ts` | EXP-K01: settle, freeze fingerprint and clone readiness checks C1-C8 (R26 section 4). |
+| `lib/bulk.ts` | Continue from a seed manifest; `seedPathOf` records where the start state came from (`report.seedPath`). |
 
 ## Trace definition (frozen; `lib/trace.ts`)
 
@@ -146,3 +149,27 @@ position). It refuses any query it does not recognize. The driver's `--seed-mani
 equals the manifest's last position before it starts. 10k rung (ns-v2): 384,785 assertions (closed form matches),
 1,031 commands, 24,550,838 quads, 6.74 GB decompressed, 150 MB gzipped. Not yet indexed or read back on a live QLever:
 `-F nq` on QLever 0.6.0 and the first pulls on the indexed scope are the first checks when a QLever slot is free.
+
+## XTDB seed once, clone faithfully (EXP-K01; R26 section 6; RULINGS Q74a-g)
+
+```sh
+node lab/bin/engine.mjs up --lane xtdb --slot s1 --fresh --holder H --exp E        # prints XTDB_URL
+XTDB_URL=... TX2_ENGINE_CONTAINER=tx2-xtdb-s1 node lab/bench/xtdb-seed.ts --rung 10k --out runs/xtdb-seed/ns-v2-10k
+node lab/bin/engine.mjs golden --lane xtdb --slot s1 --holder H --manifest runs/xtdb-seed/ns-v2-10k/manifest.json
+#  settle (finish-block, compactor jobs 0, live index empty), freeze fingerprint C3-C8, docker stop -t 60 with
+#  "Node stopped." proven, copy into tx2-golden-xtdb-<key8> (source mounted read-only, helper on the pinned image),
+#  golden.json + golden-files.json beside the manifest. The slot stays held with its container stopped.
+node lab/bin/engine.mjs clone --lane xtdb --slot s1 --holder H --golden-record runs/xtdb-seed/ns-v2-10k/golden.json
+#  reservation, wipe, copy, C1 (tree hash of every file), docker run, /healthz/started, C2-C8; verdict in owner.json
+node lab/bin/gate.mjs NS --lane xtdb --slot s1 --rung 10k --seed-manifest runs/xtdb-seed/ns-v2-10k/manifest.json ...
+node lab/bin/engine.mjs down --lane xtdb --slot s1 --holder H --remove-volume    # the golden stays
+node lab/bin/engine.mjs golden-rm --golden-record runs/xtdb-seed/ns-v2-10k/golden.json
+```
+
+The golden key (Q74a) is the sha256 of the seed inputs (`manifest.seedInputs`: adapter commit and built dist hashes,
+generator file hashes, seed options with a deterministic scope and run tag) and the engine half (image digest, the
+effective config without slot, port, volume and cpuset). `clone` refuses a slot whose system config or image differs.
+The driver reads the slot owner record: a clone without a PASS readiness verdict for this manifest is refused, and the
+NS gate marks clone-seeded receipts INVALID until validation E1 passes (Q74c). `engine.mjs settle` settles a fresh-seeded
+arm the same way (Q74b); `stop`, `listing --golden-record` and `verify` exist for E1's restart and P-e checks.
+A copy is refused when host free disk after it would fall below 5 GiB (Q74f).
