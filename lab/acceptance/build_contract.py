@@ -4453,7 +4453,8 @@ def ruling_checks():
             e.append("Q61i: lab/config/slots.json lane images must agree with the contract's IMAGE_PINS")
     except (OSError, KeyError, ValueError):
         e.append("Q61i: lab/config/slots.json must name the lane images the contract pins")
-    if "fault-witness/1" not in EVIDENCE_SCHEMAS or "fault-witness/1" not in json.dumps(QUALIFICATION_RUN["steps"]) or "main" not in QUALIFICATION_RUN.get("contractSource", "") or "VERIFIER_REGISTRY entry (kind a0" not in A0_REGISTRY["entryShape"]["measuredBy"]:
+    # [EXP-A01-0312] Why: require the explicit mutable-ref prohibition; the word remains contains main too. Rejected: a substring test that accepts a weakened authority rule.
+    if "fault-witness/1" not in EVIDENCE_SCHEMAS or "fault-witness/1" not in json.dumps(QUALIFICATION_RUN["steps"]) or "never --authority-ref main" not in QUALIFICATION_RUN.get("contractSource", "") or "VERIFIER_REGISTRY entry (kind a0" not in A0_REGISTRY["entryShape"]["measuredBy"]:
         e.append("Q61a/Q61j/Q61k: contract source, retained fault witnesses, A0 verified through measuredBy")
     if "own BRIEF file" not in VERIFIER_REGISTRY.get("briefRule", ""):
         e.append("Q59c: every verification saves its own brief")
