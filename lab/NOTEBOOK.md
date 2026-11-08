@@ -1523,3 +1523,14 @@ Where each priority stands, from evidence so far (research probes and baselines;
   slot time. OBS01 releases s1 to K01 after copying its evidence out; G03 does all its no-slot work and scripts the slot run.
 - **The scale window opens after CX-DA01 finishes with tx2-datomic-dev.** It covers K01 live, G03's slot run, W01b's GS rerun, J01's
   compact-on G1, and the X02 and C8 exclusive reruns.
+
+## 2026-11-08 23:22Z: the 30-of-40 read was real: one basis gave two answers depending on route (SQL01 F1)
+- **V-SQL01 FIX-FIRST.** A deterministic schedule reproduces it: 40 assertions at T1/P1, 10 retracted at T2/P2, read at
+  {recordedAt T1, recordedPosition P2} during an outage. H1 returns 30 because it retires rows by position only; the source returns 40.
+  Not a torn SQLite transaction; a cache whose eligibility check knows less of the basis than the query does. **Learning:** every derived
+  store (H1, current values, replicas) needs a route-equivalence test that asks each basis shape on every route and compares answers.
+- **F2:** the builder put a waiting RESTART checkpoint on the ACK path, against R25's design (separate checkpointer thread), and a pinned
+  reader delayed a commit to 164 ms against 24-29 ms. This is P1's "never block writers" claim, so it goes back too.
+- Durability held: 50 abrupt process stops kept all 163 ACKs; retried commits applied once; the feed had no gaps or repeats.
+- Contract 0.3.11 round 3: 108/108 evaluator tests with fixture changes; in delta review. G03 round 2: 33 fixtures need migration to the
+  contained model. O-OBS round 4: 786 of 786 reviewer cases; in review. P2Q round 5, X02 round 4 and K01 round 3 are in review.
