@@ -43,3 +43,11 @@ These move into RULINGS.md when the contract version that compiles them is built
 | Q65d build-manifest/2 packages | "Each built package" is the parent directory of each `dist/` output. | Q61f |
 | Q65e build spec | E01's proposal (lab/config/build.json on exp/E01-claim-evaluator: `pnpm install --offline --frozen-lockfile --store-dir <repo>/.pnpm-store` then the five package builds in dependency order; outputs the five dist/ directories; run `node packages/qualification/workloads/obl-case.ts --case {case} --mode {mode}`) is pinned in 0.3.10 once `obl-case.ts` exists. | Q64a |
 | Q65f executing OBL gate | The missing piece for any QUALIFIED claim is an executing `gate.mjs OBL` with `obl-case.ts`, a fault injector that writes fault-witness/1 records, and the PAIR-0 paired-rounds runner from EXP-M01. One experiment (EXP-G03) builds it after EXP-M01 lands. | Q55a |
+
+## Q66: EXP-O04b O-REPLAY 0.4.2 limits
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q66a several erasures in flight | Erasure commits become visible in position order, so a read that started before n in-flight erasure commits in its scope sees a prefix of them: the acceptable answers are the n + 1 prefixes (none, the first, the first two, ...), not all 2^n subsets. | Q52e; Q31 positions and the resolved prefix |
+| Q66b cursor over an in-flight read | A continuation cursor carries the erasure prefix its page was computed with, and every later page answers with that same prefix; the oracle answers `cursorFrom` on an in-flight entry per prefix instead of refusing. | Q52e; G10.cursor.stable |
+| Q66c scope | Only erasures in the read's own scope are in flight; erasures in other scopes always apply. Confirmed. | scopes are independent sources |
+| Q66d explicit text conversion | The explicitly converted half of DR-JSON-STRING-TEXT is a lane obligation; the oracle does not model text-to-decimal conversion. Confirmed. | Q49e |
