@@ -35,3 +35,8 @@ lab/verify/E01/ there (v-e01.test.mjs 23 tests, a "GAP" test turns red when fixe
 - Named and holding: setsid escape, TOCTOU (not attacked), runtime re-hashed only between instances, no network isolation. The report's
   "double fork escapes" is wrong: double fork is killed (T2a); only setsid escapes.
 - Rulings: Q75 (pending).
+
+## Delta check of round 2 (CX-VE01-3, Codex reviewer at high) on 422c8d3: FIX-FIRST, one gap (saved by the orchestrator, 2026-11-08 21:49Z)
+F1-F10 checks hold in new variations; 126/126 tests; reference replay 70/70 (13,840 calls). The remaining gap: a case input deleted or
+rewritten after its final use is not detected (both variants end offlineVerdict QUALIFIED with only GATE-NOT-RUN / RUN-NOT-ON-GATE), and
+the documented limitations do not name it. Evidence: verify/E01 9a1f51e (lab/verify/E01/VERIFY-round2.md, round2/attempt3/). Ruled Q81a.

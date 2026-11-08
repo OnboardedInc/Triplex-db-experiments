@@ -47,11 +47,11 @@ isolation; is Datomic dev storage acceptable for the final acceptance run, or mu
 | Agent | Role, model, effort | Priority | Output |
 | --- | --- | --- | --- |
 | CX-DA00 lane D bring-up (exp/DA00-datomic-bringup) | builder, Codex medium | lane D floor | Datomic image, parkable resident, gateway skeleton, G0 |
-| CX-P2Q-R2 broker fix round 2 (exp/P2Q-qlever-log-broker) | builder, Codex medium | P2, P3 | Q72a-g, Q67c/d/h; then a Codex reviewer delta check |
+| CX-VP2Q-3 (verify/P2Q) | reviewer, Codex high | P2, P3 | delta re-check of the broker at 957e3a3 |
 | CX-VC8-2 (verify/C8) | reviewer, Codex high | P1 | delta re-check of C8 0527233 (15/15 probes, 1,004 offline) |
 | CX-VJ01 (verify/J01) | reviewer, Codex high | P2 | verdict on J01 5cc42fb (compact encoding, default off) |
-| CX-VE01-3 (verify/E01; CX-VE01-2 stopped by the Codex content filter) | reviewer, Codex high | floor for claims | delta check of E01 422c8d3 (126/126 tests, replay 70/70) |
-| CX-VO04I (verify/O02) | reviewer, Codex high | correctness floor | verdict on O-REPLAY 0.4.9 f195f30 (385 unit, 90/90 self-check) |
+| CX-E01-R3 (exp/E01-claim-evaluator) | builder, Codex medium | floor for claims | Q81a final input checks (delta check CX-VE01-3: FIX-FIRST, one gap) |
+| CX-A01-0311 (contract/0.3.11) | builder, Codex medium | floor for claims | pin O-REPLAY 0.4.9; compile Q70, Q74-Q77, Q79, Q81; register lane D (blocked until DA00) |
 | CX-X02-R2 (exp/X02-xtql-parity) | builder, Codex medium | XTQL lane, numeric rule | Q79a-d (token guards, typed overflow, no silent rounding, unset unchanged) |
 | R27 evidence sources per O-OBS protocol, three engines (planner, Opus high) | planner, Opus 5.5, high | floor: O-OBS CA01 | /Users/sam/Claude/Projects/triplex-db-2/R27/ |
 | R25 finish: SQLite pinned readers for the broker file and H1 (continuation) | planner, Opus 5.5, high | P1, P2, P4, P5 | /Users/sam/Claude/Projects/triplex-db-2/R25/ |

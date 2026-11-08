@@ -119,3 +119,8 @@ These move into RULINGS.md when the contract version that compiles them is built
 | Q80a trusted context | O-OBS judges evidence only inside an evaluator-owned, contract-bound case and run context (obligation, case, witness kind, threshold ids, run id) and against collector objects the evaluator retained itself; evidence that only hashes itself is REFUSED. The collector and context format comes from R27. | V-O05 F1, F2 |
 | Q80b witnesses prove, labels do not | Each fault transition and each wait bound has a witness schema of source-bound events (start, end, readback) checked against retained objects; a label naming the transition or the duration is never evidence of it. | V-O05 F3, F5 |
 | Q80c exact ratios | Work ratios compare integer counters exactly against rational contract thresholds (cross-multiplication), never binary64. | V-O05 F4 |
+
+## Q81: E01 delta check (round 3)
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q81a final input checks | At the end of a run the evaluator re-checks every case input it handed out (present, same bytes) along with the evidence set; a deleted or rewritten input after its last use refuses the run (INPUT-TAMPERED). The guarantee is kept, not narrowed. | CX-VE01-3 |

@@ -188,3 +188,8 @@ here). Merged to main as 4591715.
 - F15 (medium): `cursorFrom.page` goes through `int(ref.get("page", 0))` and list indexing (views.py:429): "0" and true are coerced, -2
   selects the penultimate page, 0.0 crashes with an uncaught ValueError (exit 1). Predates 0.4.8.
 - Ruled Q70n, Q70o; 0.4.9 by a Codex builder, then a Codex reviewer.
+
+## V-O04i (CX-VO04I, Codex reviewer at high): ACCEPT O-REPLAY 0.4.9 at f195f30 for pinning in contract 0.3.11 (saved by the orchestrator, 2026-11-08 21:49Z)
+385 tests; self-check 90/90; every planted paged kind (computed key, cross-module helper, nested dictionary and the reviewer's own new
+shapes) fails the completeness check; every malformed page selector exits 2; 1,793 seeded differential cases against 3c52a1d show no
+unexplained difference; 29/29 hashes match hashes.0.4.9.txt. Known QLever converter gaps remain (unchanged). Evidence: verify/O02 5f348ca.
