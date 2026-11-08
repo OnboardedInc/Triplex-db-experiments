@@ -2254,6 +2254,26 @@ class Erasure(unittest.TestCase):
         plain = evaluate(case(cmds, [dict(first, id="t1", readStart=None), dict(second, readStart={"afterCommand": 1})]))
         self.assertEqual(values(result(plain, "t2")), [("plain", [marker(200)], 2)])     # continues the plain page
 
+    def test_Q70j_journal_read_scope(self):
+        """Q70j: a `transactions` read decides which erasures are in flight from its own `scope`
+        field: an erasure in flight on scope t gives the t journal read its two prefixes, and an
+        erasure on the default scope does not count for it."""
+        def cmd(ref_, entity, value, clock, scope=None, erase=False):
+            ops = [{"op": "erase", "target": ref_}] if erase else [assert_op(ref_, entity, ":w/pay", i64(value))]
+            return dict({"clock": clock, "operations": ops}, **({"scope": scope} if scope else {}))
+        journal = {"id": "j", "kind": "transactions", "scope": "t", "readStart": {"afterCommand": 1}}
+        both = [cmd("d1", "p1", 1, 100), cmd("t1", "q1", 2, 110, "t"), cmd("t1", None, None, 200, "t", erase=True),
+                cmd("d1", None, None, 210, erase=True)]
+        node = result(evaluate(case(both, [journal])), "j")
+        t_erasure = [r for r in result(evaluate(case(both, [{"id": "all", "kind": "transactions", "scope": "t"}])), "all")
+                     ["transactions"] if r["changes"] and r["changes"][0]["op"] == "erase"][0]["txId"]
+        self.assertEqual([(a["erasuresSeen"], a["result"]["transactions"][0]["changes"][0]["value"]) for a in node["acceptable"]],
+                         [([], i64(2)), ([t_erasure], marker(200))])        # only scope t's erasure is in flight
+        default_only = [cmd("d1", "p1", 1, 100), cmd("t1", "q1", 2, 110, "t"), cmd("d1", None, None, 210, erase=True)]
+        node = result(evaluate(case(default_only, [journal])), "j")
+        self.assertNotIn("acceptable", node)                                # nothing in flight on t
+        self.assertEqual(node["transactions"][0]["changes"][0]["value"], i64(2))
+
     def test_erase_receipts(self):
         c = case(erasure_commands(), [match_q("m")], schemas=PERSON_SCHEMA)
         c["receipts"] = committed_receipts(c)

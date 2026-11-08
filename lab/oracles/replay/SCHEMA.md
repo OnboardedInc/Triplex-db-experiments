@@ -1,4 +1,4 @@
-# O-REPLAY case and output schema (v1; oracle 0.4.6)
+# O-REPLAY case and output schema (v1; oracle 0.4.7)
 
 O-REPLAY reads one case file and writes one expected-answer document. Python 3 standard library
 only; it imports nothing from Triplex. Semantic rules are in [RULES.md](RULES.md).
@@ -197,7 +197,8 @@ Every query has `id`, `kind`, and usually a `cut`:
 
 Any query may carry `"readStart"` (a position, `{"afterCommand": k}` or `{"coordinate": c}`): the last position
 published when the read started; erasure commits of its scope published after it are in flight for it
-(R-ERA-6). Q52e: the read sees each in-flight commit whole, so when the answer depends on them the entry is
+(R-ERA-6). Its scope is the one it reads: the `scope` field of the journal kinds, `assertions`, `cutCatalog` and a
+`history` without a cut, otherwise its cut's scope (Q70j). Q52e: the read sees each in-flight commit whole, so when the answer depends on them the entry is
 `{"id", "kind", "inFlight": {"rule": "ER-INFLIGHT-ALL-OR-NONE ...", "acceptable": [{"erasuresSeen": [], "result":
 ...}, {"erasuresSeen": ["tx:3"], "result": ...}]}}` (each alternative a `result` or an `error`), one alternative per
 prefix of the commits in position order (Q66a: none, the first, the first two, ...), the all-old answer first;
@@ -228,7 +229,7 @@ issued by earlier reads whose views disagree, R-ERA-6 / Q70f) are typed `X-NOT-M
 ```jsonc
 {
   "format": "triplex-db-2/o-replay-expected/1",
-  "oracle": {"id": "O-REPLAY", "version": "0.4.6", "sourceSha256": {"values.py": "..."}},
+  "oracle": {"id": "O-REPLAY", "version": "0.4.7", "sourceSha256": {"values.py": "..."}},
   "caseId": "...", "caseSha256": "<sha256 of the case bytes>",
   "lane": {"name": "qlever", "integerRange": ["-576460752303423488", "576460752303423487"]},
   "verdict": "PASS | FAIL | EXPECTED-ONLY",

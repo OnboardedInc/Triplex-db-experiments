@@ -16,7 +16,7 @@ from . import views as W
 
 CASE_FORMAT = "triplex-db-2/o-replay-case/1"
 OUTPUT_FORMAT = "triplex-db-2/o-replay-expected/1"
-ORACLE_VERSION = "0.4.6"   # EXP-O04b: Q52a-g, Q56f; Q66a-b (V-O04d F5/F6); Q70a-g (V-O04e/f F7-F10); ACCEPTANCE 0.3.9
+ORACLE_VERSION = "0.4.7"   # EXP-O04b: Q52a-g, Q56f; Q66a-b (V-O04d F5/F6); Q70a-j (V-O04e/f F7-F10); ACCEPTANCE 0.3.9
 SOURCE_FILES = ["__init__.py", "__main__.py", "cli.py", "errors.py", "values.py", "exact.py", "replay.py",
                 "constraints.py", "views.py", "entities.py", "scale.py", "run.py", "selfcheck.py"]
 
@@ -560,7 +560,7 @@ class Run:
             except X.TypedError as error:       # Q70f: an ambiguous continuation fails closed
                 source, issued = "refused", error
             if source == "refused":
-                scope = (query.get("cut") or {}).get("scope") or self.engine.default_scope
+                scope = self.read_scope(query)
                 start, answers, in_flight = None, [([], ("error", issued.to_output()))], False
             elif source is not None:
                 # Q66b / Q70a: a continuation cursor carries the erasure prefix its page was computed
@@ -596,7 +596,7 @@ class Run:
                 # whole; Q66a: commits become visible in position order, so it sees a prefix of them.
                 # The acceptable answers are the n + 1 prefixes (none, the first, the first two, ...):
                 # for one commit, exactly the all-old and the all-marker answers.
-                scope = (query.get("cut") or {}).get("scope") or self.engine.default_scope
+                scope = self.read_scope(query)
                 start = self.read_start(query)
                 pending = self.in_flight_erasures(scope, start)
                 answers = [(pending[:k], self.answer_under(kind, query, start, scope, pending[:k]))
@@ -695,13 +695,24 @@ class Run:
                    if a.erasure is not None and a.erasure.position > start}
         return sorted(commits)
 
+    def read_scope(self, query):
+        """Q70j: the scope a read reads, so the scope whose erasure commits are in flight for it
+        and against which its `readStart` resolves. The journal kinds, `assertions`,
+        `cutCatalog` and a `history` without a cut read their own `scope` field; every other
+        read reads its cut's scope (the default scope when neither is given)."""
+        kinds = ("transactions", "transaction", "transactionByCommand", "transactionsForEntity", "journalFacts",
+                 "assertions", "cutCatalog")       # the kinds whose surface takes a `scope` field (views.py)
+        if query.get("kind") in kinds or (query.get("kind") == "history" and query.get("cut") is None):
+            return query.get("scope") or self.engine.default_scope
+        return (query.get("cut") or {}).get("scope") or self.engine.default_scope
+
     def read_start(self, query):
         """R-ERA-6: `readStart` = a position (ordinal), {"afterCommand": k} or {"coordinate": c};
         absent = the read started after the whole command stream published."""
         raw = query.get("readStart")
         if raw is None:
             return None
-        scope = (query.get("cut") or {}).get("scope") or self.engine.default_scope
+        scope = self.read_scope(query)
         if isinstance(raw, V.Obj) and "afterCommand" in raw:
             index = int(raw["afterCommand"])
             if index not in self.command_positions:
