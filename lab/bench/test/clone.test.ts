@@ -5,7 +5,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
-import { canonical, compareFreeze, blockTrieCoverage, digest, planShape, pullDigest, publishedBlockIndices } from "../lib/clone.ts";
+import { canonical, compareFreeze, cloneCertificateHash, blockTrieCoverage, digest, planShape, pullDigest, publishedBlockIndices } from "../lib/clone.ts";
 import { assertSeedInputsCurrent, seedPathOf } from "../lib/bulk.ts";
 
 const freeze = {
@@ -64,7 +64,8 @@ test("seed path: driver, QLever bulk index, XTDB seed-writer, unverified, clone 
   assert.equal(seedPathOf(xtdb, mf, undefined).seededBy, "unverified");
   fs.writeFileSync(owner, JSON.stringify({ holder: "K01" }));
   assert.equal(seedPathOf(xtdb, mf, owner).seededBy, "seed-writer");
-  const content = { kind: "clone", goldenVolume: "tx2-golden-xtdb-abcd1234", key: "k", manifestSha256: sha, containerId: "c", readiness: { verdict: "PASS" }, copy: { copyS: 1, treeSha256: "t", c1: { pass: true } } };
+  const content = { kind: "clone", goldenVolume: "tx2-golden-xtdb-abcd1234", key: "k", manifestSha256: sha, containerId: "c", startedAt: "start", readiness: { verdict: "PASS", certificateSha256: "", verifiedContainerId: "c", verifiedStartedAt: "start" }, copy: { copyS: 1, treeSha256: "t", c1: { pass: true } } };
+  content.readiness.certificateSha256 = cloneCertificateHash(content);
   fs.writeFileSync(owner, JSON.stringify({ holder: "K01", volumeContent: content }));
   const p = seedPathOf(xtdb, mf, owner);
   assert.equal(p.seededBy, "clone");

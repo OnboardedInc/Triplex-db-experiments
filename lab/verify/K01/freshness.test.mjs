@@ -6,7 +6,9 @@ import vm from 'node:vm';
 import { stripTypeScriptTypes } from 'node:module';
 import { after, test } from 'node:test';
 import { createHash } from 'node:crypto';
-import { canonical, digest, blockTrieCoverage } from '../../bench/lib/clone.ts';
+import { canonical, digest, blockTrieCoverage, cloneCertificateHash } from '../../bench/lib/clone.ts';
+import { verifyMaintenanceTail } from '../../bin/xtdb-log.mjs';
+import { maintenanceFixture } from './tail-fixtures.mjs';
 import { seedPathOf } from '../../bench/lib/bulk.ts';
 
 const { stopVerdict } = await import('../../bin/engine.mjs');
@@ -32,16 +34,23 @@ async function reverify(variation) {
     readiness: { verdict: 'PASS', attemptId: 'historical', file: 'old.json' },
   } };
   const receipts = {}, events = [];
-  let reads = 0;
+  let reads = 0, updates = 0;
   const newer = () => { owner.volumeContent.readiness = { verdict: 'ERROR', attemptId: 'newer', file: 'newer.json', error: 'newer verification failed' }; };
   const verify = load(section(engine, 'async function verify(config, info, opts)', '/** List a stopped slot'), 'verify', {
+    cloneCertificateHash,
+    updateOwner: async (_info, update) => {
+      const preimage = JSON.stringify(owner), current = structuredClone(owner);
+      if (variation === 'late-newer' && ++updates === 2) { newer(); events.push('newer ERROR published after final read'); }
+      const next = update(current);
+      if (JSON.stringify(owner) !== preimage) throw new Error('conditional owner update conflicted');
+      if (next !== undefined) { owner = structuredClone(next); events.push(`owner ${owner.volumeContent.readiness.verdict}`); }
+      return structuredClone(owner);
+    },
     Date, Math, path, REPO: root, now: () => new Date().toISOString(),
     requireHeldXtdbSlot: () => {},
     readOwner: () => {
       reads++;
       const observed = structuredClone(owner);
-      // [EXP-K01-VK01-R2] Why: another process can publish after this read and before atomic rename. Rejected: only injecting a newer attempt before readOwner (the builder already tests that earlier boundary).
-      if (variation === 'late-newer' && reads === 2) { newer(); events.push('newer ERROR published after final read'); }
       return observed;
     },
     atomicJson: (_file, value) => { owner = structuredClone(value); events.push(`owner ${owner.volumeContent.readiness.verdict}`); },
@@ -153,7 +162,7 @@ for (const failed of [false, true]) {
     let inspections = 0;
     const stopSlot = load(section(engine, 'async function stopSlot(config, info, opts)', '/**\n * Golden'), 'stopSlot', {
       Date, readOwner: () => ({ holder: 'fixture' }), requireHeldXtdbSlot: () => {},
-      inspect: () => ({ Id: 'container', Config: { Labels: { 'tx2.managed-by': 'lab/bin/engine.mjs' } }, State: { Running: ++inspections === 1, ExitCode: 143, StartedAt: 'start', FinishedAt: 'finish' } }),
+      inspect: () => ({ Id: 'container', Config: { Labels: { 'tx2.managed-by': 'lab/bin/engine.mjs' } }, State: { Running: ++inspections === 1, ExitCode: 143, StartedAt: '2000-01-01T00:00:00Z', FinishedAt: '2000-01-01T00:00:01Z' } }),
       docker: () => '', dockerArgs: args => args,
       spawnSync: () => ({ status: failed ? 1 : 0, stdout: 'Stopping node...\nNode stopped.\n', stderr: failed ? 'log stream failed' : '' }),
       stopVerdict,
@@ -166,23 +175,26 @@ for (const failed of [false, true]) {
   });
 }
 
-test('watermark control: processed maintenance after a block cut explicitly refuses under unchanged Q83d', async () => {
+test('Q83e watermark control: maintenance-only stopped bytes qualify the later M', async () => {
   let now = 0, n = 0;
   const tables = ['tx_assertions', 'tx_attempts', 'tx_claims', 'tx_meta', 'txs'];
   const rows = tables.map(table => [table, 'l01-rc-b00', 1, 'live', 1000, 10]);
+  const fixture = maintenanceFixture();
   const baseline = { jobsAvailable: 0, latestCompletedTxId: 100, latestProcessedMsgId: 200, latestSubmittedMsgId: 200, lagMsgId: 0, lastUploadTime: 1 };
   const settle = load(section(checker, 'const blockNumber =', 'async function startCheck'), 'settle', {
     Number, digest, blockTrieCoverage, num: value => value == null ? null : Number(value), Date: { now: () => now },
-    log: () => {}, opt: (_key, fallback) => fallback, sleep: async ms => { now += ms; }, healthz: () => ({ status: 200 }),
+    log: () => {}, opt: (key, fallback) => key === 'cuts' ? '1' : fallback, sleep: async ms => { now += ms; }, healthz: () => ({ status: 200 }),
     snapshot: async () => ++n === 1 ? { listing: [], blocks: [], gauges: baseline, trie: { rows: [], sha256: digest([]) } } : {
       listing: ['00'], blocks: [{ block_idx: '00', tx_id: 100, latest_processed_msg_id: 201 }],
-      gauges: { ...baseline, latestProcessedMsgId: 202, latestSubmittedMsgId: 202, lastUploadTime: 2 }, trie: { rows, sha256: digest(rows) },
+      gauges: { ...baseline, latestProcessedMsgId: fixture.frontiers.M, latestSubmittedMsgId: fixture.frontiers.M, lastUploadTime: 2 }, trie: { rows, sha256: digest(rows) },
     },
   });
   const result = await settle();
   record('watermark-maintenance', result);
-  assert.equal(result.settled, false);
-  assert.match(result.reason, /permanently behind/);
+  assert.equal(result.settled, true);
+  assert.equal(result.qualified, false);
+  assert.equal(verifyMaintenanceTail(fixture.bytes, result.frontiers).ok, true);
+  assert.throws(() => verifyMaintenanceTail(maintenanceFixture(true).bytes, result.frontiers), /non-maintenance Tx/);
 });
 
 after(() => {

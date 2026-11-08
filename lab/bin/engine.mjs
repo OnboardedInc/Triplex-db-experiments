@@ -23,6 +23,10 @@
 // a daemon (no process to babysit with at most 10 agents).
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
+import { randomUUID } from 'node:crypto';
+import { verifyMaintenanceTail } from './xtdb-log.mjs';
+import { ownerStateLock, updateOwner } from './owner-state.mjs';
+import { cloneCertificateHash } from '../bench/lib/clone.ts';
 import net from 'node:net';
 import path from 'node:path';
 import {
@@ -200,7 +204,7 @@ function exportsFor(info) {
 }
 
 /** Acquire (or confirm) the persistent slot lock. dev is a shared resident; s* are exclusive. */
-function acquireSlot(info, holder, experiment) {
+function acquireSlotUnlocked(info, holder, experiment) {
   fs.mkdirSync(path.dirname(info.lockDir), { recursive: true });
   let created = false;
   try { fs.mkdirSync(info.lockDir); created = true; } catch (error) { if (error.code !== 'EEXIST') throw error; }
@@ -221,9 +225,13 @@ function acquireSlot(info, holder, experiment) {
   return { owner, created: true };
 }
 
-function releaseSlot(info) {
-  fs.rmSync(info.lockDir, { recursive: true, force: true });
-  appendEvent({ event: 'slot-released', slot: `${info.lane}-${info.slot}` });
+async function acquireSlot(info, holder, experiment) { return ownerStateLock(info, () => acquireSlotUnlocked(info, holder, experiment)); }
+
+async function releaseSlot(info) {
+  return ownerStateLock(info, () => {
+    fs.rmSync(info.lockDir, { recursive: true, force: true });
+    appendEvent({ event: 'slot-released', slot: `${info.lane}-${info.slot}` });
+  });
 }
 
 /**
@@ -232,17 +240,19 @@ function releaseSlot(info) {
  */
 async function up(config, info, opts, hooks = {}) {
   const holder = defaultHolder(opts);
-  const slot = acquireSlot(info, holder, opts.exp);
+  const slot = await acquireSlot(info, holder, opts.exp);
   try {
     const eff = effectiveConfig(config, info);
     const existing = inspect(info.container);
     // [EXP-K01] The owner record says what the slot volume holds; a --fresh start wipes it, and a restart makes an
     // earlier readiness verdict stale (the start appends a NoOp to REPLICA_LOG and replays), so it is re-run by `verify`.
     if (slot.owner.volumeContent && (opts.fresh || !existing?.State.Running)) {
-      const owner = readOwner(info);
-      if (opts.fresh) delete owner.volumeContent;
-      else owner.volumeContent.readiness = { verdict: 'STALE', reason: `restarted at ${now()}; run engine.mjs verify` };
-      atomicJson(info.ownerFile, owner);
+      await updateOwner(info, owner => {
+        if (owner.holder !== holder) fail('REFUSED', 'slot holder changed');
+        if (opts.fresh) delete owner.volumeContent;
+        else owner.volumeContent.readiness = { verdict: 'STALE', reason: `restarted at ${now()}; run engine.mjs verify` };
+        return owner;
+      });
     }
     if (existing && !opts.fresh && existing.Config.Labels?.['tx2.config-sha256'] !== eff.sha256)
       fail('REFUSED', `${info.container} runs config ${existing.Config.Labels?.['tx2.config-sha256']?.slice(0, 12)} but slots.json now gives ${eff.sha256.slice(0, 12)}; rerun with --fresh to recreate (wipes the volume)`);
@@ -310,7 +320,7 @@ async function up(config, info, opts, hooks = {}) {
       throw error;
     }
   } catch (error) {
-    if (slot.created && !inspect(info.container)) releaseSlot(info);
+    if (slot.created && !inspect(info.container)) await releaseSlot(info);
     throw error;
   }
 }
@@ -344,7 +354,7 @@ async function down(config, info, opts) {
     if (volumeNote === 'retained')
       ledger.retainedVolumes.push({ volume: info.volume, holder, note: opts.note ?? 'retained by engine down (default)', at: now(), bytes: volumeBytes(config, info.volume) });
   });
-  releaseSlot(info);
+  await releaseSlot(info);
   appendEvent({ event: 'down', container: info.container, volume: volumeNote });
   process.stderr.write(`[lab] ${info.container} removed; volume ${info.volume} ${volumeNote}; reservation and slot lock released\n`);
 }
@@ -536,10 +546,24 @@ done;
 echo @@blocks; find ${dir}/buffers/v06/blocks -maxdepth 1 -type f -name 'b*.binpb' | sed 's|.*/b||;s|.binpb$||' | LC_ALL=C sort; echo @@end`;
 
 function offlineCheck(config, info, expected) {
-  const raw = helper(config, `tx2-clone-offline-${info.slot}`, [`${info.volume}:/src:ro`], offlineScript('/src'));
+  const frontiers = expected.frontiers;
+  if (!frontiers) fail('REFUSED', 'offline freeze requires separate F/M/T frontiers (Q83e)');
+  const offset = frontiers.F % (2 ** 48);
+  if (!Number.isSafeInteger(offset) || offset < 0) fail('REFUSED', 'invalid block-cut offset');
+  const raw = helper(config, `tx2-clone-offline-${info.slot}`, [`${info.volume}:/src:ro`], offlineScript('/src') +
+    `; tail -c +${offset + 1} /src/log/LOG > /tmp/k01-source-tail; test $(stat -c %s /tmp/k01-source-tail) -le 16777216; echo @@sourceTail; base64 /tmp/k01-source-tail; echo @@sourceEnd`);
   const [tails, listing] = sections(raw, '@@blocks');
   const blocks = listing.split('@@end')[0].trim().split('\n').filter(Boolean);
-  return { ok: canonicalJson(blocks) === canonicalJson(expected.listing), tails: tails.trim().split('\n'), blocks, expected: expected.listing, raw };
+  const sourceTailBase64 = sections(sections(raw, '@@sourceTail')[1], '@@sourceEnd')[0].replace(/\s/g, '');
+  let maintenance;
+  try {
+    const bytes = Buffer.from(sourceTailBase64, 'base64');
+    if (bytes.toString('base64') !== sourceTailBase64) throw new Error('noncanonical base64 stopped-tail evidence');
+    maintenance = verifyMaintenanceTail(bytes, frontiers);
+  }
+  catch (error) { maintenance = { ok: false, error: error.message, frontiers }; }
+  return { ok: maintenance.ok && canonicalJson(blocks) === canonicalJson(expected.listing), maintenance, sourceTailBase64, tails: tails.trim().split('\n'), blocks, expected: expected.listing, raw };
+
 }
 
 /** Parse one listingScript output into sorted file records and a tree hash over every field. */
@@ -589,7 +613,7 @@ function cloneCheck(args) {
   const r = spawnSync(process.execPath, [path.join(REPO, 'lab/bench/clone-check.ts'), ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'], maxBuffer: 256 << 20, timeout: 3600_000 });
   let out = null;
   try { out = JSON.parse(r.stdout); } catch {}
-  if (!out || r.status !== 0) fail('ENGINE', `clone-check ${args[0]} exited ${r.status} without a JSON verdict: ${String(r.stdout).slice(-800)}`);
+  if (!out || r.status !== 0 || r.signal || r.error) fail('ENGINE', `clone-check ${args[0]} exited ${r.status} without a JSON verdict: ${String(r.stdout).slice(-800)}`);
   return out;
 }
 
@@ -625,19 +649,30 @@ async function settle(config, info, opts) {
 async function stopSlot(config, info, opts) {
   if (!readOwner(info)) fail('REFUSED', `${info.lane}-${info.slot} has no slot lock`);
   requireHeldXtdbSlot(info, opts);
+  const held = readOwner(info);
+  if (held?.volumeContent?.kind === 'clone') await updateOwner(info, current => {
+    if (!current || current.holder !== held.holder) fail('REFUSED', 'holder changed before stop');
+    current.volumeContent.readiness = { verdict: 'STALE', at: now(), reason: 'stop requested; fresh verification required' };
+    return current;
+  });
   const before = inspect(info.container);
-  if (!before) fail('REFUSED', `${info.container} does not exist`);
+  if (!before) fail('REFUSED', `${info.container} does not exist or current inspect failed`);
+  if (!before.Id || !before.State?.StartedAt || !Number.isFinite(Date.parse(before.State.StartedAt))) fail('REFUSED', 'current stop inspect has no valid start identity');
   if (!before.Config.Labels?.['tx2.managed-by']) fail('REFUSED', `${info.container} was not started by lab/bin/engine.mjs`);
   const t0 = Date.now();
   if (before.State.Running) docker(['stop', '-t', '60', info.container], { allowFail: true });
   const stopMs = Date.now() - t0;
   const after = inspect(info.container);
+  if (!after?.State) fail('ENGINE', 'current stopped-container inspect failed');
+  if (after.Id !== before.Id || after.State.StartedAt !== before.State.StartedAt) fail('REFUSED', 'container start identity changed while stopping');
   if (after?.State.Running) fail('ENGINE', `${info.container} still running after docker stop -t 60`);
   const logs = spawnSync('docker', dockerArgs(['logs', '--since', before.State.StartedAt, info.container]), { encoding: 'utf8', maxBuffer: 256 << 20 });
+  const logRead = { status: logs.status, signal: logs.signal ?? null, error: logs.error?.message ?? null, stdout: logs.stdout ?? '', stderr: logs.stderr ?? '' };
   const verdict = stopVerdict({ log: `${logs.stdout ?? ''}\n${logs.stderr ?? ''}`, exitCode: after.State.ExitCode, oomKilled: after.State.OOMKilled, stopMs: before.State.Running ? stopMs : null });
+  if (logs.status !== 0 || logs.signal || logs.error) { verdict.ok = false; verdict.reasons.push('current stop log read failed'); }
   await withPool(async ledger => { const e = ledger.reservations.find(item => item.container === info.container); if (e) Object.assign(e, { state: 'stopped', stoppedAt: now() }); });
   appendEvent({ event: 'stopped', container: info.container, clean: verdict.ok });
-  const out = { container: info.container, containerId: after.Id, startedAt: before.State.StartedAt, finishedAt: after.State.FinishedAt, stopMs, wasRunning: before.State.Running, verdict };
+  const out = { container: info.container, containerId: after.Id, startedAt: before.State.StartedAt, finishedAt: after.State.FinishedAt, stopMs, wasRunning: before.State.Running, logRead, verdict };
   if (opts.print !== false) process.stdout.write(JSON.stringify(out, null, 2) + '\n');
   return out;
 }
@@ -687,12 +722,22 @@ async function golden(config, info, opts) {
     const offline = offlineCheck(config, info, settled.after);
     Object.assign(attempt, { offline, status: offline.ok ? 'COPYING' : 'REFUSED_OFFLINE' });
     writeJson(attemptFile, attempt);
-    if (!offline.ok) fail('REFUSED', 'offline block listing differs from pre-stop evidence');
+    if (!offline.ok) fail('REFUSED', 'offline tails/frontiers or block listing differ from settled evidence');
+    settled.qualified = true; settled.proofStage = 'STOPPED_TAIL_VERIFIED'; settled.tailProof = offline.maintenance;
     const sourceBytes = volumeBytes(config, info.volume);
     const diskBefore = hostDisk();
     const floor = diskFloorVerdict({ freeBytes: diskBefore.freeBytes, copyBytes: sourceBytes });
     if (!floor.ok) fail('REFUSED', floor.reason);
-    docker(['volume', 'create', '--label', 'tx2.managed-by=lab/bin/engine.mjs', '--label', 'tx2.golden=1', '--label', `tx2.seed-key=${k.key}`, volume]);
+    const creationId = randomUUID();
+    const creationReceiptFile = opts['creation-receipt'] ? path.resolve(opts['creation-receipt']) : path.join(path.dirname(manifestFile), `creation-${creationId}.json`);
+    const creation = { format: 'tx2-golden-creation/1', invocation: String(opts.invocation ?? creationId), creationId, volume, created: false, at: now() };
+    atomicJson(creationReceiptFile, creation, { exclusive: true });
+    Object.assign(attempt, { creation, creationReceiptFile }); writeJson(attemptFile, attempt);
+    docker(['volume', 'create', '--label', 'tx2.managed-by=lab/bin/engine.mjs', '--label', 'tx2.golden=1', '--label', `tx2.seed-key=${k.key}`, '--label', `tx2.creation-id=${creationId}`, volume]);
+    const createdVolume = JSON.parse(docker(['volume', 'inspect', volume]))[0];
+    if (createdVolume.Labels?.['tx2.creation-id'] !== creationId) fail('REFUSED', 'golden creation ownership differs; do not remove it');
+    creation.created = true; writeJson(creationReceiptFile, creation);
+    Object.assign(attempt, { creation }); writeJson(attemptFile, attempt);
     t = Date.now();
     let src, dst;
     try {
@@ -730,6 +775,9 @@ async function golden(config, info, opts) {
       end.snapshot.gauges.latestSubmittedMsgId !== settled.after.gauges.latestSubmittedMsgId ||
       canonicalJson(end.snapshot.listing) !== canonicalJson(settled.after.listing))
       fail('REFUSED', 'reference fingerprint, timer, listing or stop failed; golden is unpublished');
+    const referenceOffline = offlineCheck(config, info, settled.after);
+    Object.assign(attempt, { referenceOffline }); writeJson(attemptFile, attempt);
+    if (!referenceOffline.ok) fail('REFUSED', 'reference stopped tail no longer binds M');
     const goldenBytes = volumeBytes(config, volume);
     const filesFile = path.join(path.dirname(manifestFile), 'golden-files.json');
     writeJson(filesFile, dst.files);
@@ -738,7 +786,7 @@ async function golden(config, info, opts) {
       format: GOLDEN_RECORD_FORMAT, key: k.key, key8: k.key8, keyInputs: k.inputs, volume, createdAt: now(), holder: defaultHolder(opts), experiment: opts.exp ?? null,
       manifest: { path: path.relative(REPO, manifestFile), sha256: sha256File(manifestFile), scope: manifest.scope, subjects: manifest.subjects, lastPosition: manifest.result.lastPosition, seedWallS: manifest.capture?.wallS ?? null },
       source: { slot: info.slot, container: info.container, containerId: c.Id, volume: info.volume, imageId: c.Image, configSha256: eff.sha256, systemConfigSha256, systemConfig: systemConfig(eff.effective) },
-      settle: settled, freeze, stop, offline, referenceStart: start, referenceStop,
+      settle: settled, freeze, stop, offline, referenceStart: start, referenceStop, referenceOffline,
       copy: { sourceBytes, goldenBytes, files: dst.count, fileBytes: dst.bytes, treeSha256: dst.treeSha256, logSha256: pick('./log/LOG'), replicaLogSha256: pick('./log/REPLICA_LOG'), filesFile: path.relative(REPO, filesFile), filesSha256: sha256File(filesFile), sourceMatches: true },
       hostDisk: { before: diskBefore, after: hostDisk(), floor },
       timings,
@@ -819,6 +867,15 @@ async function oneCutProbe(config, info, opts) {
 function loadGolden(file) {
   const recordFile = path.resolve(String(file));
   const record = readJson(recordFile);
+  // [EXP-K01-R4] Why: persisted flags cannot substitute for the stopped bytes or their current frontier binding. Rejected: trusting qualified:true after the tail or snapshot has changed.
+  const frontiers = record.settle?.frontiers, after = record.settle?.after;
+  if (!record.settle?.qualified || !frontiers || canonicalJson(frontiers) !== canonicalJson(after?.frontiers) ||
+    frontiers.M !== after?.gauges?.latestProcessedMsgId || frontiers.M !== after?.gauges?.latestSubmittedMsgId || frontiers.T !== after?.gauges?.latestCompletedTxId)
+    fail('REFUSED', 'golden has no qualified stopped-tail F/M/T evidence');
+  for (const offline of [record.offline, record.referenceOffline]) {
+    const proof = verifyMaintenanceTail(Buffer.from(offline?.sourceTailBase64 ?? '', 'base64'), frontiers);
+    if (!offline?.ok || canonicalJson(proof) !== canonicalJson(offline.maintenance)) fail('REFUSED', 'golden stopped-tail proof changed');
+  }
   if (record.format !== GOLDEN_RECORD_FORMAT) fail('REFUSED', `${recordFile} is not a ${GOLDEN_RECORD_FORMAT} record`);
   const again = goldenKey({ seedInputs: record.keyInputs.seedInputs, imageId: record.keyInputs.engine.imageId, systemConfigSha256: record.keyInputs.engine.systemConfigSha256 });
   if (again.key !== record.key) fail('REFUSED', `${recordFile}: key does not recompute from its inputs`);
@@ -860,7 +917,7 @@ async function clone(config, info, opts) {
         listing = parseListing(helper(config, `tx2-clone-${info.slot}`, [`${record.volume}:/src:ro`, `${info.volume}:/dst`],
           `cp -a /src/. /dst/; chown ${XTDB_UID} /dst; sync; ${listingScript('/dst')}`));
       } catch (error) { docker(['volume', 'rm', info.volume], { allowFail: true }); throw error; }
-      copy = { startedAt: new Date(t).toISOString(), copyS: (Date.now() - t) / 1000, goldenBytes, files: listing.count, fileBytes: listing.bytes, treeSha256: listing.treeSha256, hostDisk: { before: disk, floor } };
+      copy = { creationId: randomUUID(), startedAt: new Date(t).toISOString(), copyS: (Date.now() - t) / 1000, goldenBytes, files: listing.count, fileBytes: listing.bytes, treeSha256: listing.treeSha256, hostDisk: { before: disk, floor } };
       copy.c1 = { pass: listing.treeSha256 === record.copy.treeSha256, expected: record.copy.treeSha256, observed: listing.treeSha256, files: listing.count, expectedFiles: record.copy.files };
       if (!copy.c1.pass) {
         const diff = diffListings({ files: readJson(path.resolve(REPO, record.copy.filesFile)) }, listing);
@@ -877,7 +934,11 @@ async function clone(config, info, opts) {
     copy, timings: { copyS: copy.copyS, runToStartedS: (marks.readyAt - marks.runAt) / 1000, totalToStartedS: (marks.readyAt - marks.begin) / 1000 },
     readiness: { verdict: 'PENDING' },
   };
-  atomicJson(info.ownerFile, owner);
+  await updateOwner(info, latest => {
+    if (!latest || latest.holder !== owner.holder) fail('REFUSED', 'clone holder changed before publication');
+    latest.volumeContent = owner.volumeContent;
+    return latest;
+  });
   appendEvent({ event: 'cloned', container: info.container, golden: record.volume, key: record.key });
   process.stderr.write(`[lab] ${info.container} cloned from ${record.volume}: copy ${copy.copyS.toFixed(1)} s, C1 PASS (${copy.files} files), docker run to /healthz/started ${owner.volumeContent.timings.runToStartedS.toFixed(1)} s\n`);
   if (opts['no-verify']) return;
@@ -895,12 +956,16 @@ async function verify(config, info, opts) {
   const file = path.join(REPO, 'runs/xtdb-clone', `${attemptId}.json`);
   // [EXP-K01-R3] Why: every new verification revokes admission before fallible checks. Rejected: retaining a previous PASS until the new process returns (an exception leaves stale admission usable).
   const previousReadiness = content.readiness;
-  const identity = c => JSON.stringify([c.containerId, c.key, c.manifestSha256, c.goldenRecord, c.goldenRecordSha256, c.copy?.treeSha256]);
+  const identity = cloneCertificateHash;
   content.verificationHistory = [...(content.verificationHistory ?? []), ...(previousReadiness ? [previousReadiness] : [])];
   content.readiness = { verdict: 'PENDING', attemptId, at: now() };
   let result;
   try {
-    atomicJson(info.ownerFile, owner);
+    await updateOwner(info, current => {
+      if (!current || current.holder !== owner.holder || identity(current.volumeContent) !== identity(content) || JSON.stringify(current.volumeContent.readiness) !== JSON.stringify(previousReadiness)) throw new Error('verification superseded before revocation');
+      current.volumeContent = content;
+      return current;
+    });
     writeJson(file, { verdict: 'PENDING', attemptId, at: now() });
     const running = requireRunningSlot(config, info);
     if (running?.c && running.c.Id !== content.containerId) throw new Error('clone container identity changed before verification');
@@ -913,12 +978,13 @@ async function verify(config, info, opts) {
     writeJson(file, { ...verdict, attemptId });
     const receiptSha256 = sha256File(file);
     if (content.goldenRecordSha256 && sha256File(recordFile) !== content.goldenRecordSha256) throw new Error('golden record changed since the clone was copied');
-    const latest = readOwner(info);
-    if (latest?.volumeContent?.readiness?.attemptId !== attemptId) throw new Error('verification superseded by another slot operation');
-    if (identity(latest.volumeContent) !== identity(content)) throw new Error('clone ownership content changed during verification');
-    latest.volumeContent.readiness = { verdict: verdict.verdict, attemptId, at: now(), checksS: (Date.now() - t) / 1000, file: path.relative(REPO, file), sha256: receiptSha256, failed: Object.entries(verdict.checks).filter(([, v]) => !v.pass).map(([k]) => k) };
-    if (fresh?.c) latest.volumeContent.startedAt = fresh.c.State.StartedAt;
-    atomicJson(info.ownerFile, latest);
+    const latest = await updateOwner(info, latest => {
+      if (latest?.holder !== owner.holder || latest?.volumeContent?.readiness?.attemptId !== attemptId) throw new Error('verification superseded by another slot operation');
+      if (identity(latest.volumeContent) !== identity(content)) throw new Error('clone ownership content changed during verification');
+      latest.volumeContent.readiness = { verdict: verdict.verdict, attemptId, at: now(), checksS: (Date.now() - t) / 1000, file: path.relative(REPO, file), sha256: receiptSha256, certificateSha256: identity(content), verifiedContainerId: fresh?.c?.Id, verifiedStartedAt: fresh?.c?.State.StartedAt, failed: Object.entries(verdict.checks).filter(([, v]) => !v.pass).map(([k]) => k) };
+      if (fresh?.c) latest.volumeContent.startedAt = fresh.c.State.StartedAt;
+      return latest;
+    });
     process.stdout.write(JSON.stringify(verdict, null, 2) + '\n');
     process.stderr.write(`[lab] ${info.container} readiness ${verdict.verdict} (${latest.volumeContent.readiness.failed.join(', ') || 'C1-C8 pass'}) in ${latest.volumeContent.readiness.checksS.toFixed(1)} s; ${path.relative(REPO, file)}\n`);
     result = verdict;
@@ -928,13 +994,14 @@ async function verify(config, info, opts) {
     try { writeJson(file, refusal); receipt = { file: path.relative(REPO, file), sha256: sha256File(file) }; }
     catch (receiptError) { receipt = { receiptWriteError: String(receiptError.message ?? receiptError) }; }
     // [EXP-K01-R3] Why: only this attempt may replace its readiness, including a failed PASS publication. Rejected: overwriting a newer attempt or resurrecting the historical PASS after an error.
-    const latest = readOwner(info);
+    await updateOwner(info, latest => {
     const initialRevocationFailed = latest?.volumeContent && identity(latest.volumeContent) === identity(content) && JSON.stringify(latest.volumeContent.readiness) === JSON.stringify(previousReadiness);
-    if (latest?.volumeContent?.readiness?.attemptId === attemptId || initialRevocationFailed) {
+    if (latest?.holder === owner.holder && (latest?.volumeContent?.readiness?.attemptId === attemptId || initialRevocationFailed)) {
       if (initialRevocationFailed) latest.volumeContent.verificationHistory = content.verificationHistory;
       latest.volumeContent.readiness = { ...refusal, ...receipt };
-      atomicJson(info.ownerFile, latest);
+      return latest;
     }
+    });
     throw error;
   }
   if (result.verdict !== 'PASS') fail('ENGINE', `${info.container} is not ready: ${Object.entries(result.checks).filter(([, v]) => !v.pass).map(([k]) => k).join(', ')} failed (Q74d)`);
@@ -963,6 +1030,7 @@ async function goldenRm(config, opts) {
   if (!volume || !/^tx2-golden-xtdb-[0-9a-f]{8}$/.test(volume)) fail('USAGE', 'golden-rm needs --golden-record FILE or --volume tx2-golden-xtdb-<key8>');
   const vol = docker(['volume', 'inspect', volume], { allowFail: true });
   if (vol && JSON.parse(vol)[0].Labels?.['tx2.golden'] !== '1') fail('REFUSED', `${volume} is not labelled tx2.golden=1`);
+  if (vol && opts['creation-id'] && JSON.parse(vol)[0].Labels?.['tx2.creation-id'] !== opts['creation-id']) fail('REFUSED', 'golden does not belong to this creation receipt');
   const users = containersOnVolume(volume);
   if (users.length) fail('REFUSED', `${volume} is mounted by ${users.join(', ')}`);
   if (vol) docker(['volume', 'rm', volume]);

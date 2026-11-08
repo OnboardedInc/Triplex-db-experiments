@@ -1,0 +1,105 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 39926 "CX-P2Q-R6-suites", pid 33691 "CX-VSQL01-r2b-semantic", pid 54104 "CX-OBS01-R2-x06", pid 90885 "DA01-r2-G0-basis"
+{
+  "at": "2026-11-08T23:37:36.583Z",
+  "head": "a13316cf25241159cef49a476b68417e352f3c4f",
+  "offlineOnly": true,
+  "hostDisk": {
+    "type": 25,
+    "bsize": 4096,
+    "blocks": 120699413,
+    "bfree": 3807598,
+    "bavail": 3807598,
+    "files": 163652503,
+    "ffree": 152303920
+  },
+  "node": "v22.23.2",
+  "sources": {
+    "lab/bin/engine.mjs": "82dec127204873d7b655562886fadc3d44f766452ced0d24f0f3395eaf898575",
+    "lab/bin/owner-state.mjs": "ff230829b0ad560cfa8df8ec16f06c4b6ad203e4368ac0f97732c4e0c2cb2a6b",
+    "lab/bin/xtdb-log.mjs": "7d21755f721ffbdea46a8cd4ed7099b4a126ada4564dbe31e18a345850da81fa",
+    "lab/bench/clone-check.ts": "8a0dc147c863d3eea7320f47928e31c1f61a92c57c2854f80b55cd62124feaff",
+    "lab/bench/lib/clone.ts": "b62f5f0f0cb69c3b073f4393b020d28ced626ed186b3bf92d6799b5444154715",
+    "lab/bench/lib/bulk.ts": "4dada29f8fce93803bd399458896999aabcd46f6506929c372387febcac70790",
+    "lab/experiments/EXP-K01-seed-clone/round2-live.mjs": "830aa8b2f579eaa6251dac7c3f69203444bcff28e8ddcce09f190a54f3202c0b",
+    "lab/verify/K01/freshness.test.mjs": "8b88e4144fe8eb112cfd24fcdc11e70369952ed22e2fd7d5702a969c6c7e4648",
+    "lab/verify/K01/round4.test.mjs": "3f3448e65b5c95971a129dcebf0b54c6f2e758188a8313921200a89b35d08176"
+  },
+  "runs": [
+    {
+      "label": "baseline",
+      "args": [
+        "--test",
+        "lab/bin/test/lab.test.mjs",
+        "lab/bench/test/bench.test.ts",
+        "lab/bench/test/clone.test.ts"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 1285,
+      "sha256": "750d2391d06eee974c18cd87d7886bfd7ff87e49725be7fc4c85af1bdda72606"
+    },
+    {
+      "label": "original-21",
+      "args": [
+        "--test",
+        "lab/verify/K01/offline.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 166,
+      "sha256": "a4471c304efaf714b2eb20c8e9ad94413a5f115b8897576b2f77f606d59631e4"
+    },
+    {
+      "label": "round3-23",
+      "args": [
+        "--test",
+        "lab/verify/K01/round3.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 128,
+      "sha256": "676d6cf09ccb83a8c3a526f851508e126eddbe225383c663e70d51c482869a8a"
+    },
+    {
+      "label": "freshness-14",
+      "args": [
+        "--test",
+        "lab/verify/K01/freshness.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 144,
+      "sha256": "07a9bbbc93a87de53ee9e28fa97227e91e4421aa8378adaf881ad7efbae474d3"
+    },
+    {
+      "label": "round4",
+      "args": [
+        "--test",
+        "lab/verify/K01/round4.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 471,
+      "sha256": "fd475df5639ef8f6a771267a281766706e57e91459c9497e5e9a0eb39d834c08"
+    },
+    {
+      "label": "types",
+      "args": [
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "-p",
+        "lab/bench/tsconfig.json"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 1285,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}

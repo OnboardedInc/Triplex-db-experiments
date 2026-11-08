@@ -1,0 +1,121 @@
+{
+  "head": "c6c19623d90c658c15400fb46dc056f3735ed57b",
+  "status": "",
+  "files": {
+    "core/src/main/kotlin/xtdb/indexer/SourceLogProcessor.kt": {
+      "sha256": "8ea7057dc8a049ba8363752bc2cd30b9d7f495403be8bda2a53e0aa0e9af7a8f",
+      "regions": [
+        {
+          "first": 142,
+          "last": 152,
+          "text": "142:             is SourceMessage.FlushBlock -> {\n143:                 val expectedBlockIdx = msg.expectedBlockIdx\n144:                 val cut = expectedBlockIdx != null && expectedBlockIdx == (tableCatalog.currentBlockIndex ?: -1L)\n145: \n146:                 if (cut) blockCutter.cut(msgId, txResolver.resolvedExtToken)\n147:                 // see #5680\n148:                 else replicaAppender.append(ControlItem(ReplicaMessage.NoOp(srcMsgId = msgId, termId = leaderTerm)))\n149: \n150:                 txResolver.advanceSrcMsgId(msgId)\n151:                 cut\n152:             }"
+        },
+        {
+          "first": 199,
+          "last": 213,
+          "text": "199:             is SourceMessage.TriesAdded -> {\n200:                 // Forwarded whatever its storage version: each node guards the add on the way back in,\n201:                 // and this message is also what carries the source watermark forward.\n202:                 replicaAppender.append(\n203:                     ControlItem(\n204:                         TriesAdded(\n205:                             msg.storageVersion, msg.storageEpoch, msg.tries,\n206:                             sourceMsgId = msgId, termId = leaderTerm\n207:                         )\n208:                     )\n209:                 )\n210:                 txResolver.advanceSrcMsgId(msgId)\n211:                 false\n212:             }\n213:         }"
+        }
+      ]
+    },
+    "core/src/main/kotlin/xtdb/indexer/BlockCutter.kt": {
+      "sha256": "5d85297ae6aa79d28e165dce2829b71ed1ded60a750c10b0834b0cd3ca501aee",
+      "regions": [
+        {
+          "first": 152,
+          "last": 156,
+          "text": "152:     suspend fun cut(latestProcessedMsgId: MessageId, extToken: ExternalSourceToken?) {\n153:         val boundary = BlockBoundary(\n154:             (tableCatalog.currentBlockIndex ?: -1) + 1, latestProcessedMsgId, extToken,\n155:             termId = leaderTerm\n156:         )"
+        },
+        {
+          "first": 233,
+          "last": 243,
+          "text": "233: \n234:         val block = tableCatalog.buildBlock(\n235:             blockIdx, liveIndex.latestCompletedTx, latestProcessedMsgId,\n236:             boundaryReplicaMsgId, entries.values, secondaryDatabasesForBlock,\n237:             externalSourceToken,\n238:             boundary.termId, // not leaderTerm - #6059\n239:             boundary.termSeq,\n240:         )\n241: \n242:         bufferPool.putObject(TableCatalog.blockFilePath(blockIdx), ByteBuffer.wrap(block.toByteArray()))\n243:         lastUploadEpochSeconds.set(Instant.now().epochSecond)"
+        },
+        {
+          "first": 275,
+          "last": 303,
+          "text": "275:     fun closeBlock(msg: BlockUploaded, logTimestamp: LogTimestamp): PendingBlock {\n276:         val uploading = blockState as? Uploading\n277:             ?: error(\"[$dbName] BlockUploaded b${msg.blockIndex.asLexHex} arrived with no block in flight\")\n278: \n279:         partitionState.adoptBlock(uploading.block, msg.tries, logTimestamp)\n280: \n281:         // Publish L0 tries to the source log so that all nodes \u2014 including multi-writer nodes running\n282:         // concurrently with a single-writer leader \u2014 see the L0 before any compaction L1C on the source\n283:         // log (see #5395). Once we drop support for multi-writer clusters running concurrently with\n284:         // single-writer, this source-log post is no longer required and can be removed.\n285:         //\n286:         // Both off the persister coroutine, in one launch: this runs on the source log's sole consumer, so\n287:         // appending inline self-deadlocks when the source-log buffer saturates at a block boundary \u2014 the\n288:         // consumer would wait on room only it can make. The launch lets the close return so the persister\n289:         // drains and the append's emit finds room; running signalBlock after it in the same coroutine keeps\n290:         // compaction's L1C strictly behind the L0 without a separate join.\n291:         scope.launch {\n292:             sourceLog.appendMessage(\n293:                 SourceMessage.TriesAdded(Storage.VERSION, bufferPool.epoch, msg.tries)\n294:             )\n295:             compactor.signalBlock()\n296:         }\n297: \n298:         blockState = Filling(0)\n299: \n300:         LOG.debug(\"finished block: 'b${msg.blockIndex.asLexHex}'.\")\n301: \n302:         return uploading.pendingBlock\n303:     }"
+        }
+      ]
+    },
+    "core/src/main/kotlin/xtdb/compactor/Compactor.kt": {
+      "sha256": "dd8ce9f92898e9b7c4bb10a59a0aeb7c573b01ad9a25d366db9a065f7ec387e7",
+      "regions": [
+        {
+          "first": 150,
+          "last": 153,
+          "text": "150:                         override suspend fun publishTries(triesAdded: TriesAdded) {\n151:                             val msgId = log.appendMessage(triesAdded).msgId\n152:                             watchers.awaitSource(msgId)\n153:                         }"
+        }
+      ]
+    },
+    "core/src/main/kotlin/xtdb/indexer/LeaderLogProcessor.kt": {
+      "sha256": "ad6da8578c62e173e6a32e925a9dcab1446da6cb6d21c2ad6c2c5b08bbd7ab14",
+      "regions": [
+        {
+          "first": 196,
+          "last": 204,
+          "text": "196:             is ReplicaMessage.TriesAdded -> {\n197:                 if (msg.storageVersion == Storage.VERSION && msg.storageEpoch == bufferPool.epoch)\n198:                     trieCatalog.addTries(msg.tries, record.logTimestamp)\n199: \n200:                 // Below the guard, not above it: the compactor awaits this watermark and then\n201:                 // recalculates jobs off the catalog, so notifying first would have it re-select the\n202:                 // job it has just published.\n203:                 watchers.notifyApplied(msg.sourceMsgId)\n204:             }"
+        }
+      ]
+    },
+    "core/src/main/kotlin/xtdb/database/Database.kt": {
+      "sha256": "8455da9db9cca14d33952a061154466d8c5972e4385020b437c95e5d6bf0a087",
+      "regions": [
+        {
+          "first": 375,
+          "last": 387,
+          "text": "375:                 listOf(\n376:                     gauge(\"node.tx.latestCompletedTxId\") {\n377:                         (state.liveIndex.latestCompletedTx?.txId ?: -1).toDouble()\n378:                     },\n379:                     gauge(\"node.tx.latestSubmittedMsgId\") {\n380:                         logs.sourceLog.latestSubmittedMsgId().toDouble()\n381:                     },\n382:                     gauge(\"node.tx.latestProcessedMsgId\") {\n383:                         watchers.latestSourceMsgId.toDouble()\n384:                     },\n385:                     gauge(\"node.tx.lag.MsgId\") {\n386:                         maxOf(logs.sourceLog.latestSubmittedMsgId() - watchers.latestSourceMsgId, 0).toDouble()\n387:                     },"
+        }
+      ]
+    },
+    "core/src/main/kotlin/xtdb/indexer/LogProcessor.kt": {
+      "sha256": "f07451f7b672b170a07a9b584e504762af1577a8626e8d74ad398d9ff09d101f",
+      "regions": [
+        {
+          "first": 475,
+          "last": 497,
+          "text": "475:                 }\n476:                 proc\n477:             }\n478: \n479:             val resumeAfterMsgId = watchers.latestSourceMsgId\n480: \n481:             // Unbuffered: the reader waits on each record's own handle, so a buffer would only let it read ahead of a term about to end.\n482:             val replicaMsgs = Channel<ReplicaApply>()\n483: \n484:             val termJob = scope.launch(CoroutineName(\"$dbName-term\")) {\n485:                 try {\n486:                     proc.runTerm(replicaMsgs, resumeAfterMsgId)\n487:                 } catch (t: Throwable) {\n488:                     if (!t.isShutdownSignal) {\n489:                         LOG.error(t) { \"[$dbName] leader term failed\" }\n490:                         watchers.notifyError(t)\n491:                     }\n492:                 }\n493:             }\n494: \n495:             state = Leading(proc, roleScope(termJob), replicaMsgs, termId)\n496: \n497:             LOG.info(\"[$dbName] leader startup complete, resuming after $resumeAfterMsgId\")"
+        }
+      ]
+    },
+    "core/src/main/kotlin/xtdb/api/log/Log.kt": {
+      "sha256": "6689c0c7acfce8aae11a94d3ec25fe6d30d1c339521a83d2e220e22ef1d0f051",
+      "regions": [
+        {
+          "first": 154,
+          "last": 159,
+          "text": "154:     @Throws(MessageTooLargeException::class)\n155:     suspend fun enqueueMessage(message: M, partition: Int = 0): Deferred<MessageMetadata>\n156: \n157:     @Throws(MessageTooLargeException::class)\n158:     suspend fun appendMessage(message: M, partition: Int = 0): MessageMetadata =\n159:         enqueueMessage(message, partition).await()"
+        }
+      ]
+    },
+    "core/src/main/kotlin/xtdb/api/log/SourceMessage.kt": {
+      "sha256": "e4747a78fced0b99bf3fa631a5f07571c122507e8e1ee8cb0b31162283691f97",
+      "regions": [
+        {
+          "first": 139,
+          "last": 148,
+          "text": "139:     data class TriesAdded(\n140:         val storageVersion: Int, val storageEpoch: StorageEpoch, val tries: List<TrieDetails>\n141:     ) : ProtobufMessage() {\n142:         override fun toLogMessage() = sourceLogMessage {\n143:             triesAdded = triesAdded {\n144:                 storageVersion = this@TriesAdded.storageVersion\n145:                 storageEpoch = this@TriesAdded.storageEpoch\n146:                 tries.addAll(this@TriesAdded.tries)\n147:             }\n148:         }"
+        }
+      ]
+    },
+    "core/src/main/clojure/xtdb/block_tables.clj": {
+      "sha256": "4f5844cf067f009dfd711de79d3a782ef33ab1bcf32c8d379fed3dfad0891d77",
+      "regions": [
+        {
+          "first": 110,
+          "last": 120,
+          "text": "110: (defn- block->row [^Block block ^long file-size]\n111:   (let [has-tx? (.hasLatestCompletedTx block)]\n112:     {\"block_idx\" (->lex-hex (.getBlockIndex block))\n113:      \"tx_id\" (when has-tx? (.getTxId (.getLatestCompletedTx block)))\n114:      \"system_time\" (when has-tx? (InstantUtil/fromMicros (.getSystemTime (.getLatestCompletedTx block))))\n115:      \"latest_processed_msg_id\" (.getLatestProcessedMsgId block)\n116:      \"table_names\" (pr-str (vec (.getTableNamesList block)))\n117:      \"boundary_replica_msg_id\" (when (.hasBoundaryReplicaMsgId block) (.getBoundaryReplicaMsgId block))\n118:      \"file_size\" file-size}))\n119: \n120: (defn- try-read-block"
+        }
+      ]
+    },
+    "core/src/main/kotlin/xtdb/catalog/TableCatalog.kt": {
+      "sha256": "beb7717ee35f80a49377651a5a3ad69997764ea0e4043af4ad6923a6a33f6a54",
+      "regions": [
+        {
+          "first": 304,
+          "last": 333,
+          "text": "304:     fun buildBlock(\n305:         blockIndex: BlockIndex,\n306:         latestCompletedTx: TransactionKey?,\n307:         latestProcessedMsgId: MessageId,\n308:         boundaryReplicaMsgId: MessageId?,\n309:         tables: Collection<TableEntry>,\n310:         secondaryDatabases: Map<String, DatabaseConfig>?,\n311:         externalSourceToken: ExternalSourceToken? = null,\n312:         termId: Long,\n313:         boundaryTermSeq: Long?,\n314:     ): Block {\n315:         val currentBlockIndex = this.currentBlockIndex\n316:         check(currentBlockIndex == null || currentBlockIndex < blockIndex) {\n317:             \"Cannot finish block $blockIndex when current block is $currentBlockIndex\"\n318:         }\n319: \n320:         return block {\n321:             this.blockIndex = blockIndex\n322:             latestCompletedTx?.also { tx ->\n323:                 this.latestCompletedTx = txKey {\n324:                     txId = tx.txId\n325:                     systemTime = tx.systemTime.asMicros\n326:                 }\n327:             }\n328:             this.latestProcessedMsgId = latestProcessedMsgId\n329:             boundaryReplicaMsgId?.let { this.boundaryReplicaMsgId = it }\n330:             // table_names is how a reader predating the registry finds the tables, so it keeps being\n331:             // written. See #4037.\n332:             this.tableNames.addAll(tables.map { it.table.sym.toString() })\n333:             this.tables.addAll(tables.map { it.toProto() })"
+        }
+      ]
+    }
+  }
+}

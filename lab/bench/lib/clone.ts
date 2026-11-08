@@ -91,3 +91,8 @@ export function blockTrieCoverage(rows: readonly (readonly unknown[])[], blockIn
     r[3] === "live" && typeof r[1] === "string" && r[1].endsWith(`-b${blockIndex}`) && Number(r[5]) > 0).map(r => String(r[0])))].sort();
   return { covered: requiredTables.every(table => tables.includes(table)), tables, missing: requiredTables.filter(table => !tables.includes(table)) };
 }
+
+// [EXP-K01-R4] Why: readiness certifies the complete immutable clone/copy binding. Rejected: comparing only tree hashes (misses a changed golden or failed C1 proof).
+export function cloneCertificateHash(c: any): string {
+  return digest([c.kind, c.containerId, c.key, c.manifestSha256, c.goldenVolume, c.goldenRecord, c.goldenRecordSha256, c.freezeSha256, c.clonedAt, c.copy]);
+}

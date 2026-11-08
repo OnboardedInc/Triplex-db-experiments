@@ -1,0 +1,10 @@
+{
+  "reviewedHead": "07273099f65200be69dbe6626aa9819be8c504cb",
+  "sources": {
+    "lab/verify/K01/VERIFY-round2.md": "cffb43a29736144193a2f2061fad6024634610649766dbc978b206ebfe1df202",
+    "lab/verify/K01/freshness.test.mjs": "93d04dc20c9731425a2666e5dbef837945b7d1fd8bb719815adfe554ef9312e6",
+    "lab/verify/K01/run-review-round2.mjs": "5d828c7326ca5b8c3735edea77b09984c2f1a89ef6b103588d91f8754e5d175e",
+    "lab/verify/K01/evidence/review-round2/freshness-cases.json": "8e56eb0e841a0293491530ee7ea8878c691140b6df066f475df1fa69b550cafc",
+    "lab/verify/K01/evidence/review-round2/watermark-source.json": "acb4a387e1acd7974f4c8179ba03ce3d7ce4af9f11f4c563cef9946d3f6ab039"
+  }
+}

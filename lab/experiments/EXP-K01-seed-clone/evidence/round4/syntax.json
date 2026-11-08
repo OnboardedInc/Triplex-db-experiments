@@ -1,0 +1,92 @@
+[
+  {
+    "args": [
+      "node",
+      "--check",
+      "lab/bin/engine.mjs"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "node",
+      "--check",
+      "lab/bin/xtdb-log.mjs"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "node",
+      "--check",
+      "lab/bin/owner-state.mjs"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "node",
+      "--check",
+      "lab/experiments/EXP-K01-seed-clone/round2-live.mjs"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "node",
+      "--check",
+      "lab/verify/K01/freshness.test.mjs"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "node",
+      "--check",
+      "lab/verify/K01/round4.test.mjs"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "node",
+      "--check",
+      "lab/verify/K01/run-round4.mjs"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "node",
+      "--check",
+      "lab/verify/K01/tail-fixtures.mjs"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  }
+]

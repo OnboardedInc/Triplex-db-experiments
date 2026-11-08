@@ -6,6 +6,7 @@
 import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { cloneCertificateHash } from "./clone.ts";
 import type { CompositionHandle } from "./composition.ts";
 import type { SeedResult } from "./seed.ts";
 import { SEED_VALID_FROM, seedAddress } from "./world.ts";
@@ -45,8 +46,8 @@ export function seedPathOf(m: any, manifestFile: string | null, ownerFile: strin
   if (c?.kind !== "clone") return { ...base, seededBy: "seed-writer" };
   if (c.manifestSha256 !== manifestSha256)
     throw new Error(`the slot holds a clone of ${c.goldenVolume} made from manifest ${String(c.manifestSha256).slice(0, 12)}, not this manifest ${manifestSha256.slice(0, 12)}`);
-  if (c.readiness?.verdict !== "PASS")
-    throw new Error(`RULINGS Q74d: the clone of ${c.goldenVolume} on this slot has readiness ${c.readiness?.verdict ?? "none"}; run lab/bin/engine.mjs verify`);
+  if (c.readiness?.verdict !== "PASS" || c.copy?.c1?.pass !== true || c.readiness.certificateSha256 !== cloneCertificateHash(c) || c.readiness.verifiedContainerId !== c.containerId || c.readiness.verifiedStartedAt !== c.startedAt)
+    throw new Error(`RULINGS Q74d: the clone of ${c.goldenVolume} on this slot has readiness/copy certificate ${c.readiness?.verdict ?? "none"}; run lab/bin/engine.mjs verify`);
   return {
     ...base, seededBy: "clone",
     golden: { key: c.key, volume: c.goldenVolume, record: c.goldenRecord, recordSha256: c.goldenRecordSha256, freezeSha256: c.freezeSha256, clonedAt: c.clonedAt, containerId: c.containerId, startedAt: c.startedAt, copy: { copyS: c.copy?.copyS, treeSha256: c.copy?.treeSha256, c1: c.copy?.c1?.pass ?? null }, timings: c.timings, readiness: c.readiness },

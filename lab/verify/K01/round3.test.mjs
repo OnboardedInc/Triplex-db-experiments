@@ -5,7 +5,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { stripTypeScriptTypes } from 'node:module';
 import { test } from 'node:test';
-import { canonical, digest, blockTrieCoverage, compareFreeze } from '../../bench/lib/clone.ts';
+import { canonical, digest, blockTrieCoverage, compareFreeze, cloneCertificateHash } from '../../bench/lib/clone.ts';
 const root = path.resolve(import.meta.dirname, '../../..');
 const engine = fs.readFileSync(path.join(root, 'lab/bin/engine.mjs'), 'utf8');
 const checker = fs.readFileSync(path.join(root, 'lab/bench/clone-check.ts'), 'utf8');
@@ -20,6 +20,8 @@ async function reverify(variation) {
   const writes = [], checks = [], receipts = new Map();
   let runningCalls = 0;
   const context = {
+    cloneCertificateHash,
+    updateOwner: async (info, update) => { const next = update(context.readOwner()); if (next !== undefined) context.atomicJson(info.ownerFile, next); return next ?? context.readOwner(); },
     path, REPO: root, Date, now: () => new Date().toISOString(),
     requireHeldXtdbSlot: () => {}, readOwner: () => structuredClone(owner),
     requireRunningSlot: () => {
@@ -115,7 +117,7 @@ test('R3: a current source gauge cannot hide behind an earlier startup log water
     Number, canonical, container: 'fixture', DOCKER_HOST: 'offline', sleep: async () => {}, healthz: () => ({ status: 200 }),
     gauges: async () => ({ jobsAvailable: 0, lagMsgId: 0, latestCompletedTxId: 100, latestProcessedMsgId: 201, latestSubmittedMsgId: 201 }),
     liveRows: async () => ({ total: 0 }), tries: async () => expected.trie, blockListing: () => expected.listing,
-    spawnSync: (_command, args) => ({ stdout: args.includes('inspect') ? 'start' : 'resuming after 200', stderr: '' }),
+    spawnSync: (_command, args) => ({ status: 0, stdout: args.includes('inspect') ? '2000-01-01T00:00:00Z' : 'resuming after 200', stderr: '' }),
   });
   assert.equal((await startCheck(expected)).ok, false);
 });

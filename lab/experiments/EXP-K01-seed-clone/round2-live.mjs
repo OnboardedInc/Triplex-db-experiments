@@ -9,10 +9,11 @@ if (!/^[a-zA-Z0-9-]+$/.test(attemptName)) throw new Error('invalid attempt name'
 const evidence = `lab/experiments/EXP-K01-seed-clone/evidence/${attemptName}`;
 fs.mkdirSync(evidence, { recursive: true });
 const env = { ...process.env, TX2_CONFIG_DIR: root, XTDB_URL: 'postgres://xtdb:xtdb@127.0.0.1:5471/xtdb' };
-const base = ['--lane', 'xtdb', '--slot', 's1', '--holder', 'CX-K01-R2', '--exp', 'EXP-K01'];
+const attemptTag = Date.now() + '-' + Math.random().toString(16).slice(2);
+const holder = `CX-K01-R2-${attemptTag}`;
+const base = ['--lane', 'xtdb', '--slot', 's1', '--holder', holder, '--exp', 'EXP-K01'];
 let n = 0;
-let ownsSlot = false;
-const attemptTag = Date.now();
+let goldenInvoked = false;
 function run(label, args, { optional = false, extraEnv = {}, expectCleanStop = false } = {}) {
   const file = `${evidence}/${attemptTag}-${String(++n).padStart(2, '0')}-${label}`;
   process.stderr.write(`[K01-R2] ${label}\n`);
@@ -28,22 +29,24 @@ function run(label, args, { optional = false, extraEnv = {}, expectCleanStop = f
   }
   fs.writeFileSync(file + '.result.json', JSON.stringify({ args, semanticFailure, exit: r.status, signal: r.signal, error: r.error?.message, elapsedS: (Date.now() - t) / 1000 }, null, 2) + '\n');
   if (semanticFailure) throw new Error(`${label}: ${semanticFailure}`);
-  if (r.status !== 0 && !optional) throw new Error(`${label} failed: ${r.stderr?.slice(-1000)}`);
+  if ((r.status !== 0 || r.signal || r.error) && !optional) throw new Error(`${label} failed: ${r.stderr?.slice(-1000)}`);
   return r;
 }
 const engine = (label, cmd, args = [], options = {}) => run(label, ['lab/bin/engine.mjs', cmd, ...base, ...args], { ...options, expectCleanStop: cmd === 'stop' && !label.startsWith('T2') });
 const check = (label, cmd, args = []) => run(label, ['lab/bench/clone-check.ts', cmd, '--url', env.XTDB_URL, '--container', 'tx2-xtdb-s1', ...args]);
-const seedDir = `runs/xtdb-seed/k01-${attemptName}-golden`;
-const singlecutDir = `runs/xtdb-seed/k01-${attemptName}-singlecut`;
+const seedDir = `runs/xtdb-seed/k01-${attemptName}-${attemptTag}-golden`;
+const creationReceipt = `${seedDir}/creation.json`;
+const singlecutDir = `runs/xtdb-seed/k01-${attemptName}-${attemptTag}-singlecut`;
 try {
   for (;;) {
     const disk = fs.statfsSync(root);
     if (disk.bavail * disk.bsize < 5 * 1024 ** 3) throw new Error('host disk below 5 GiB floor');
     // [EXP-K01-R2] Why: an available reservation does not authorize deleting another holder's retained source/canary. Rejected: --fresh on an unrelated retained volume (destroys evidence).
-    const retained = readJson(POOL_FILE(), {}).retainedVolumes?.find(v => v.volume === 'tx2-xtdb-s1-data' && v.holder !== 'CX-K01-R2');
+    const retained = readJson(POOL_FILE(), {}).retainedVolumes?.find(v => v.volume === 'tx2-xtdb-s1-data' && v.holder !== holder);
     if (retained) throw new Error(`s1 retains ${retained.holder}'s source: ${retained.note}; owner cleanup is required before --fresh`);
+    if (fs.existsSync(seedDir) || fs.existsSync(singlecutDir)) throw new Error('current output directory already exists; use a fresh invocation');
     const admitted = engine('admission', 'up', ['--fresh'], { optional: true });
-    if (admitted.status === 0) { ownsSlot = true; break; }
+    if (admitted.status === 0 && !admitted.signal && !admitted.error) break;
     if (!admitted.stderr.includes('pool refuses')) throw new Error(admitted.stderr);
     process.stderr.write('[K01-R2] waiting 30 s for engine admission; residents untouched\n');
     await new Promise(resolve => setTimeout(resolve, 30000));
@@ -77,7 +80,8 @@ try {
   engine('golden-up', 'up', ['--fresh']);
   run('seed', ['lab/bench/xtdb-seed.ts', '--subjects', '500', '--composition', 'public', '--out', seedDir]);
   check('before-cut-diagnostic', 'diagnostic');
-  engine('golden', 'golden', ['--manifest', `${seedDir}/manifest.json`]);
+  goldenInvoked = true;
+  engine('golden', 'golden', ['--manifest', `${seedDir}/manifest.json`, '--creation-receipt', creationReceipt, '--invocation', String(attemptTag)]);
   engine('reference-logs', 'logs', ['--tail', '5000']);
   engine('source-down', 'down', ['--remove-volume']);
   engine('clone', 'clone', ['--golden-record', `${seedDir}/golden.json`]);
@@ -93,14 +97,14 @@ try {
   engine('singlecut-down', 'down', ['--remove-volume']);
 
 } finally {
-  if (ownsSlot) engine('cleanup-source-clone', 'down', ['--remove-volume'], { optional: true });
-  const record = `${seedDir}/golden.json`;
-  if (fs.existsSync(record)) engine('cleanup-golden', 'golden-rm', ['--golden-record', record], { optional: true });
-  else if (fs.existsSync(seedDir)) {
-    for (const name of fs.readdirSync(seedDir).filter(n => n.startsWith('golden-attempt-'))) {
-      const attempt = JSON.parse(fs.readFileSync(path.join(seedDir, name)));
-      if (attempt.copy) engine('cleanup-unpublished-golden', 'golden-rm', ['--volume', attempt.volume], { optional: true });
-    }
+  const ownerFile = path.join(path.dirname(POOL_FILE()), 'xtdb-s1/owner.json');
+  const currentOwner = fs.existsSync(ownerFile) ? JSON.parse(fs.readFileSync(ownerFile, 'utf8')) : null;
+  if (currentOwner?.holder === holder) engine('cleanup-source-clone', 'down', ['--remove-volume'], { optional: true });
+  // [EXP-K01-R4] Why: only this invocation's exclusive creation receipt authorizes cleanup. Rejected: scanning reused seed directories for historical golden/attempt files (can delete retained earlier state).
+  if (goldenInvoked && fs.existsSync(creationReceipt)) {
+    const created = JSON.parse(fs.readFileSync(creationReceipt, 'utf8'));
+    if (created.format === 'tx2-golden-creation/1' && created.invocation === String(attemptTag) && created.creationId)
+      engine('cleanup-golden', 'golden-rm', ['--volume', created.volume, '--creation-id', created.creationId], { optional: true });
   }
   engine('cleanup-status', 'status', [], { optional: true });
 }

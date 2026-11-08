@@ -4,7 +4,7 @@
 until E1 shows that a measurement on a clone is indistinguishable from the same measurement on a fresh-seeded slot within
 the PAIR-0 hold margins. E1 needs two exclusive XTDB slots at once, so it runs in a measurement window (Q69a).
 
-Q83a-d adopt R30 G0-G12; trie adoption accepts coverage at any live level after fast compaction. Settle twice, close clients, prove the stop and offline tails/empty `.tmp`, then start a fresh JVM on every arm. The golden fingerprint comes from its source reference start after the copy. Never restart before settling. Re-test the checkpoint block and reference start when XTDB 2.2.1 is pinned (R21 E2).
+Q83a-e adopt R30 G0-G12; trie adoption accepts coverage at any live level after fast compaction. Record block-cut F, replay M and application T separately; stable live readings are provisional. G8 must decode the stopped source interval (F,M] as maintenance-only, and both starts resume at M. Settle twice, close clients, prove the stop and offline tails/empty `.tmp`, then start a fresh JVM on every arm. The golden fingerprint comes from its source reference start after the copy. Never restart before settling. Re-test the checkpoint block and reference start when XTDB 2.2.1 is pinned (R21 E2).
 
 ## 1. Question and decision
 

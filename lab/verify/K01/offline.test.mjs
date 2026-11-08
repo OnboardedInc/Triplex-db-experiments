@@ -5,7 +5,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { stripTypeScriptTypes } from 'node:module';
 import { after, test } from 'node:test';
-import { blockTrieCoverage, canonical, compareFreeze, digest, sha256 } from '../../bench/lib/clone.ts';
+import { blockTrieCoverage, cloneCertificateHash, canonical, compareFreeze, digest, sha256 } from '../../bench/lib/clone.ts';
 import { seedPathOf } from '../../bench/lib/bulk.ts';
 import { chooseSamples } from '../../bench/lib/samples.ts';
 
@@ -93,12 +93,13 @@ test('Q83d: busy observations reset the three-reading streak', async () => {
   assert.deepEqual(result.phases[0].polls.map(p => p.streak), [1, 0, 1, 2, 3]);
 });
 
-test('Q83d: a superseded immutable watermark explicitly refuses instead of silently retrying a cut', async () => {
+test('Q83e: a later stable replay watermark is provisional until stopped-tail proof', async () => {
   const { result } = await runSettle(value => { value.gauges.latestProcessedMsgId = value.gauges.latestSubmittedMsgId = 999; });
   record('superseded-source', result);
-  assert.equal(result.settled, false);
-  assert.match(result.reason, /permanently behind/);
-  assert.equal(result.phases.length, 1);
+  assert.equal(result.settled, true);
+  assert.equal(result.qualified, false);
+  assert.equal(result.frontiers.M, 999);
+  assert.ok(result.frontiers.F < result.frontiers.M);
 });
 
 test('settle: a failed block cut reports failure without a silent second attempt', async () => {
@@ -142,7 +143,7 @@ test('R30: reference start rejects live rows, wrong resume, catalog drift, or bu
       liveRows: async () => ({ total: variation === 'live' ? 10 : 0, rows: [] }),
       tries: async () => variation === 'catalog' ? { sha256: 'different' } : expected.trie,
       blockListing: () => expected.listing,
-      spawnSync: (_command, args) => ({ stdout: args.includes('inspect') ? '2026-11-08T00:00:00Z' : `leader startup complete, resuming after ${variation === 'resume' ? 202 : 201}`, stderr: '' }),
+      spawnSync: (_command, args) => ({ status: 0, stdout: args.includes('inspect') ? '2026-11-08T00:00:00Z' : `leader startup complete, resuming after ${variation === 'resume' ? 202 : 201}`, stderr: '' }),
     });
     const result = await startCheck(expected);
     record(`reference-start-${variation}`, result);
@@ -170,7 +171,7 @@ test('clone: an exact copy accepts and a one-byte storage change refuses C1 befo
       loadGolden: () => ({ record: { volume: 'golden-fixture', key: 'key', keyInputs: { engine: { systemConfigSha256: sha256('{}'), imageId: 'pinned-image' } }, manifest: {}, copy: { treeSha256: expected.treeSha256, files: 1, filesFile: 'files.json' }, freeze: {} }, recordFile: 'golden.json' }),
       effectiveConfig: () => ({ effective: {} }), systemConfig: () => ({}), sha256, canonicalJson: canonical,
       containersOnVolume: () => [], volumeBytes: () => 1, hostDisk: () => ({ freeBytes: 30 * 1024 ** 3 }), diskFloorVerdict: () => ({ ok: true }),
-      Date, path, REPO: root, XTDB_UID: '20000:20000',
+      Date, path, REPO: root, randomUUID: () => 'copy-fixture', XTDB_UID: '20000:20000',
       up: async (_config, _info, _opts, hooks) => { await hooks.prepareVolume(); started = true; throw new Error('sentinel: successful pre-start C1'); },
       docker: () => '', helper: () => listing(value), listingScript: () => '', parseListing, diffListings,
       readJson: () => expected.files,
@@ -207,6 +208,8 @@ test('F1: an exceptional re-verification must revoke the previous PASS before th
     requireHeldXtdbSlot: () => {}, readOwner: () => structuredClone(owner), requireRunningSlot: () => {},
     loadGolden: () => ({ recordFile: 'golden.json' }), REPO: root, path, Date, now: () => new Date().toISOString(),
     cloneCheck: () => { throw new Error('start-check query failed: connection closed'); },
+    cloneCertificateHash,
+    updateOwner: async (_info, update) => { const next = update(structuredClone(owner)); if (next !== undefined) owner = structuredClone(next); return structuredClone(owner); },
     atomicJson: (_file, value) => { owner = structuredClone(value); },
     writeJson: () => {}, process: { stdout: { write: () => {} }, stderr: { write: () => {} } },
   });

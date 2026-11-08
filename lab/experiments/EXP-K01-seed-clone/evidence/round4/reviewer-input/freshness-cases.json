@@ -1,0 +1,1187 @@
+{
+  "offlineOnly": true,
+  "mechanism": "Actual reviewed function bodies with injected I/O and deterministic interleavings; no engine, Docker or service calls.",
+  "results": [
+    {
+      "name": "fresh-and-query-error",
+      "observed": {
+        "clean": {
+          "owner": {
+            "holder": "review-fixture",
+            "volumeContent": {
+              "kind": "clone",
+              "containerId": "container",
+              "startedAt": "start",
+              "key": "key",
+              "manifestSha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+              "goldenVolume": "golden",
+              "goldenRecord": "golden.json",
+              "goldenRecordSha256": "golden-hash",
+              "copy": {
+                "treeSha256": "tree",
+                "c1": {
+                  "pass": true,
+                  "expected": "tree",
+                  "observed": "tree"
+                }
+              },
+              "readiness": {
+                "verdict": "PASS",
+                "attemptId": "s1-1794179993732-8d2e4c043b6c2",
+                "at": "2026-11-08T23:19:53.733Z",
+                "checksS": 0.001,
+                "file": "runs/xtdb-clone/s1-1794179993732-8d2e4c043b6c2.json",
+                "sha256": "a09d38624e13a847d1cdc6635096f7a2a2e88b7fb28b663dfefcc057057bd2dd",
+                "failed": []
+              },
+              "verificationHistory": [
+                {
+                  "verdict": "PASS",
+                  "attemptId": "historical",
+                  "file": "old.json"
+                }
+              ]
+            }
+          },
+          "receipts": {
+            "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/runs/xtdb-clone/s1-1794179993732-8d2e4c043b6c2.json": {
+              "format": "tx2-clone-readiness/1",
+              "verdict": "PASS",
+              "container": "container",
+              "checks": {
+                "C1": {
+                  "pass": true
+                },
+                "C2": {
+                  "pass": true
+                },
+                "C3": {
+                  "pass": true
+                },
+                "C4": {
+                  "pass": true
+                },
+                "C5": {
+                  "pass": true
+                },
+                "C6": {
+                  "pass": true
+                },
+                "C7": {
+                  "pass": true
+                },
+                "C8": {
+                  "pass": true
+                }
+              },
+              "attemptId": "s1-1794179993732-8d2e4c043b6c2"
+            }
+          },
+          "events": [
+            "owner PENDING",
+            "owner PASS"
+          ],
+          "reads": 2
+        },
+        "error": {
+          "owner": {
+            "holder": "review-fixture",
+            "volumeContent": {
+              "kind": "clone",
+              "containerId": "container",
+              "startedAt": "start",
+              "key": "key",
+              "manifestSha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+              "goldenVolume": "golden",
+              "goldenRecord": "golden.json",
+              "goldenRecordSha256": "golden-hash",
+              "copy": {
+                "treeSha256": "tree",
+                "c1": {
+                  "pass": true,
+                  "expected": "tree",
+                  "observed": "tree"
+                }
+              },
+              "readiness": {
+                "verdict": "ERROR",
+                "attemptId": "s1-1794179993734-cbbffcca199a8",
+                "at": "2026-11-08T23:19:53.734Z",
+                "error": "current query failed",
+                "file": "runs/xtdb-clone/s1-1794179993734-cbbffcca199a8.json",
+                "sha256": "cabe8f9dc22b9ec8c9a935d83871fd4bccba2bfb5cdb9394788e096a839d1365"
+              },
+              "verificationHistory": [
+                {
+                  "verdict": "PASS",
+                  "attemptId": "historical",
+                  "file": "old.json"
+                }
+              ]
+            }
+          },
+          "receipts": {
+            "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/runs/xtdb-clone/s1-1794179993734-cbbffcca199a8.json": {
+              "verdict": "ERROR",
+              "attemptId": "s1-1794179993734-cbbffcca199a8",
+              "at": "2026-11-08T23:19:53.734Z",
+              "error": "current query failed"
+            }
+          },
+          "events": [
+            "owner PENDING",
+            "owner ERROR"
+          ],
+          "reads": 2,
+          "error": "current query failed"
+        }
+      }
+    },
+    {
+      "name": "early-newer",
+      "observed": {
+        "owner": {
+          "holder": "review-fixture",
+          "volumeContent": {
+            "kind": "clone",
+            "containerId": "container",
+            "startedAt": "start",
+            "key": "key",
+            "manifestSha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+            "goldenVolume": "golden",
+            "goldenRecord": "golden.json",
+            "goldenRecordSha256": "golden-hash",
+            "copy": {
+              "treeSha256": "tree",
+              "c1": {
+                "pass": true,
+                "expected": "tree",
+                "observed": "tree"
+              }
+            },
+            "readiness": {
+              "verdict": "ERROR",
+              "attemptId": "newer",
+              "file": "newer.json",
+              "error": "newer verification failed"
+            },
+            "verificationHistory": [
+              {
+                "verdict": "PASS",
+                "attemptId": "historical",
+                "file": "old.json"
+              }
+            ]
+          }
+        },
+        "receipts": {
+          "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/runs/xtdb-clone/s1-1794179993736-7ba87a7a73d39.json": {
+            "verdict": "ERROR",
+            "attemptId": "s1-1794179993736-7ba87a7a73d39",
+            "at": "2026-11-08T23:19:53.737Z",
+            "error": "verification superseded by another slot operation"
+          }
+        },
+        "events": [
+          "owner PENDING"
+        ],
+        "reads": 3,
+        "error": "verification superseded by another slot operation"
+      }
+    },
+    {
+      "name": "late-newer",
+      "observed": {
+        "owner": {
+          "holder": "review-fixture",
+          "volumeContent": {
+            "kind": "clone",
+            "containerId": "container",
+            "startedAt": "start",
+            "key": "key",
+            "manifestSha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+            "goldenVolume": "golden",
+            "goldenRecord": "golden.json",
+            "goldenRecordSha256": "golden-hash",
+            "copy": {
+              "treeSha256": "tree",
+              "c1": {
+                "pass": true,
+                "expected": "tree",
+                "observed": "tree"
+              }
+            },
+            "readiness": {
+              "verdict": "PASS",
+              "attemptId": "s1-1794179993738-ad13dc3a08053",
+              "at": "2026-11-08T23:19:53.738Z",
+              "checksS": 0,
+              "file": "runs/xtdb-clone/s1-1794179993738-ad13dc3a08053.json",
+              "sha256": "cbdb9a3cf55f23ac730efe112421d0d5fdc8dcb4b9080e0ac5f4c53af541439e",
+              "failed": []
+            },
+            "verificationHistory": [
+              {
+                "verdict": "PASS",
+                "attemptId": "historical",
+                "file": "old.json"
+              }
+            ]
+          }
+        },
+        "receipts": {
+          "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/runs/xtdb-clone/s1-1794179993738-ad13dc3a08053.json": {
+            "format": "tx2-clone-readiness/1",
+            "verdict": "PASS",
+            "container": "container",
+            "checks": {
+              "C1": {
+                "pass": true
+              },
+              "C2": {
+                "pass": true
+              },
+              "C3": {
+                "pass": true
+              },
+              "C4": {
+                "pass": true
+              },
+              "C5": {
+                "pass": true
+              },
+              "C6": {
+                "pass": true
+              },
+              "C7": {
+                "pass": true
+              },
+              "C8": {
+                "pass": true
+              }
+            },
+            "attemptId": "s1-1794179993738-ad13dc3a08053"
+          }
+        },
+        "events": [
+          "owner PENDING",
+          "newer ERROR published after final read",
+          "owner PASS"
+        ],
+        "reads": 2
+      }
+    },
+    {
+      "name": "current-copy-failed",
+      "observed": {
+        "owner": {
+          "holder": "review-fixture",
+          "volumeContent": {
+            "kind": "clone",
+            "containerId": "container",
+            "startedAt": "start",
+            "key": "key",
+            "manifestSha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+            "goldenVolume": "golden",
+            "goldenRecord": "golden.json",
+            "goldenRecordSha256": "golden-hash",
+            "copy": {
+              "treeSha256": "tree",
+              "c1": {
+                "pass": false,
+                "expected": "tree",
+                "observed": "tree"
+              }
+            },
+            "readiness": {
+              "verdict": "PASS",
+              "attemptId": "s1-1794179993739-fdc8d056e63ac",
+              "at": "2026-11-08T23:19:53.739Z",
+              "checksS": 0,
+              "file": "runs/xtdb-clone/s1-1794179993739-fdc8d056e63ac.json",
+              "sha256": "aeb675767224f0f053254b2d2c110aa8aa11e29eb5e3227392cef130f3403264",
+              "failed": []
+            },
+            "verificationHistory": [
+              {
+                "verdict": "PASS",
+                "attemptId": "historical",
+                "file": "old.json"
+              }
+            ]
+          }
+        },
+        "receipts": {
+          "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/runs/xtdb-clone/s1-1794179993739-fdc8d056e63ac.json": {
+            "format": "tx2-clone-readiness/1",
+            "verdict": "PASS",
+            "container": "container",
+            "checks": {
+              "C1": {
+                "pass": true
+              },
+              "C2": {
+                "pass": true
+              },
+              "C3": {
+                "pass": true
+              },
+              "C4": {
+                "pass": true
+              },
+              "C5": {
+                "pass": true
+              },
+              "C6": {
+                "pass": true
+              },
+              "C7": {
+                "pass": true
+              },
+              "C8": {
+                "pass": true
+              }
+            },
+            "attemptId": "s1-1794179993739-fdc8d056e63ac"
+          }
+        },
+        "events": [
+          "owner PENDING",
+          "owner PASS"
+        ],
+        "reads": 2,
+        "driverAccepted": true
+      }
+    },
+    {
+      "name": "current-golden-changed",
+      "observed": {
+        "owner": {
+          "holder": "review-fixture",
+          "volumeContent": {
+            "kind": "clone",
+            "containerId": "container",
+            "startedAt": "start",
+            "key": "key",
+            "manifestSha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+            "goldenVolume": "another-golden",
+            "goldenRecord": "golden.json",
+            "goldenRecordSha256": "golden-hash",
+            "copy": {
+              "treeSha256": "tree",
+              "c1": {
+                "pass": true,
+                "expected": "tree",
+                "observed": "tree"
+              }
+            },
+            "readiness": {
+              "verdict": "PASS",
+              "attemptId": "s1-1794179993742-74dcae480f14e",
+              "at": "2026-11-08T23:19:53.742Z",
+              "checksS": 0,
+              "file": "runs/xtdb-clone/s1-1794179993742-74dcae480f14e.json",
+              "sha256": "3f9e82ef6160b0e5cb5ee6f183743c5b6b1081f9096c806fce4aeb22171c3823",
+              "failed": []
+            },
+            "verificationHistory": [
+              {
+                "verdict": "PASS",
+                "attemptId": "historical",
+                "file": "old.json"
+              }
+            ]
+          }
+        },
+        "receipts": {
+          "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/runs/xtdb-clone/s1-1794179993742-74dcae480f14e.json": {
+            "format": "tx2-clone-readiness/1",
+            "verdict": "PASS",
+            "container": "container",
+            "checks": {
+              "C1": {
+                "pass": true
+              },
+              "C2": {
+                "pass": true
+              },
+              "C3": {
+                "pass": true
+              },
+              "C4": {
+                "pass": true
+              },
+              "C5": {
+                "pass": true
+              },
+              "C6": {
+                "pass": true
+              },
+              "C7": {
+                "pass": true
+              },
+              "C8": {
+                "pass": true
+              }
+            },
+            "attemptId": "s1-1794179993742-74dcae480f14e"
+          }
+        },
+        "events": [
+          "owner PENDING",
+          "owner PASS"
+        ],
+        "reads": 2,
+        "driverAccepted": true
+      }
+    },
+    {
+      "name": "cleanup-published-record",
+      "observed": {
+        "commands": [
+          [
+            "lab/bin/engine.mjs",
+            "golden-rm",
+            "--lane",
+            "xtdb",
+            "--slot",
+            "s1",
+            "--holder",
+            "CX-K01-R2",
+            "--exp",
+            "EXP-K01",
+            "--golden-record",
+            "runs/xtdb-seed/k01-earlier-run-golden/golden.json"
+          ],
+          [
+            "lab/bin/engine.mjs",
+            "status",
+            "--lane",
+            "xtdb",
+            "--slot",
+            "s1",
+            "--holder",
+            "CX-K01-R2",
+            "--exp",
+            "EXP-K01"
+          ]
+        ],
+        "error": "s1 retains another-owner's source: retain; owner cleanup is required before --fresh",
+        "filesWritten": [
+          "lab/experiments/EXP-K01-seed-clone/evidence/earlier-run/1794179993745-01-cleanup-golden.stdout",
+          "lab/experiments/EXP-K01-seed-clone/evidence/earlier-run/1794179993745-01-cleanup-golden.stderr",
+          "lab/experiments/EXP-K01-seed-clone/evidence/earlier-run/1794179993745-01-cleanup-golden.result.json",
+          "lab/experiments/EXP-K01-seed-clone/evidence/earlier-run/1794179993745-02-cleanup-status.stdout",
+          "lab/experiments/EXP-K01-seed-clone/evidence/earlier-run/1794179993745-02-cleanup-status.stderr",
+          "lab/experiments/EXP-K01-seed-clone/evidence/earlier-run/1794179993745-02-cleanup-status.result.json"
+        ]
+      }
+    },
+    {
+      "name": "cleanup-unpublished-attempt",
+      "observed": {
+        "commands": [
+          [
+            "lab/bin/engine.mjs",
+            "golden-rm",
+            "--lane",
+            "xtdb",
+            "--slot",
+            "s1",
+            "--holder",
+            "CX-K01-R2",
+            "--exp",
+            "EXP-K01",
+            "--volume",
+            "tx2-golden-xtdb-12345678"
+          ],
+          [
+            "lab/bin/engine.mjs",
+            "status",
+            "--lane",
+            "xtdb",
+            "--slot",
+            "s1",
+            "--holder",
+            "CX-K01-R2",
+            "--exp",
+            "EXP-K01"
+          ]
+        ],
+        "error": "s1 retains another-owner's source: retain; owner cleanup is required before --fresh",
+        "filesWritten": [
+          "lab/experiments/EXP-K01-seed-clone/evidence/earlier-run/1794179993745-01-cleanup-unpublished-golden.stdout",
+          "lab/experiments/EXP-K01-seed-clone/evidence/earlier-run/1794179993745-01-cleanup-unpublished-golden.stderr",
+          "lab/experiments/EXP-K01-seed-clone/evidence/earlier-run/1794179993745-01-cleanup-unpublished-golden.result.json",
+          "lab/experiments/EXP-K01-seed-clone/evidence/earlier-run/1794179993745-02-cleanup-status.stdout",
+          "lab/experiments/EXP-K01-seed-clone/evidence/earlier-run/1794179993745-02-cleanup-status.stderr",
+          "lab/experiments/EXP-K01-seed-clone/evidence/earlier-run/1794179993745-02-cleanup-status.result.json"
+        ]
+      }
+    },
+    {
+      "name": "cleanup-none",
+      "observed": {
+        "commands": [
+          [
+            "lab/bin/engine.mjs",
+            "status",
+            "--lane",
+            "xtdb",
+            "--slot",
+            "s1",
+            "--holder",
+            "CX-K01-R2",
+            "--exp",
+            "EXP-K01"
+          ]
+        ],
+        "error": "s1 retains another-owner's source: retain; owner cleanup is required before --fresh",
+        "filesWritten": [
+          "lab/experiments/EXP-K01-seed-clone/evidence/earlier-run/1794179993746-01-cleanup-status.stdout",
+          "lab/experiments/EXP-K01-seed-clone/evidence/earlier-run/1794179993746-01-cleanup-status.stderr",
+          "lab/experiments/EXP-K01-seed-clone/evidence/earlier-run/1794179993746-01-cleanup-status.result.json"
+        ]
+      }
+    },
+    {
+      "name": "startup-command-none",
+      "observed": {
+        "ok": true,
+        "started": {
+          "status": 200
+        },
+        "resume": "200",
+        "expectedMsgId": 200,
+        "polls": [
+          {
+            "gauges": {
+              "jobsAvailable": 0,
+              "lagMsgId": 0,
+              "latestCompletedTxId": 100,
+              "latestProcessedMsgId": 200,
+              "latestSubmittedMsgId": 200
+            },
+            "live": {
+              "total": 0
+            },
+            "trie": {
+              "sha256": "trie"
+            },
+            "listing": [
+              "00",
+              "01"
+            ]
+          },
+          {
+            "gauges": {
+              "jobsAvailable": 0,
+              "lagMsgId": 0,
+              "latestCompletedTxId": 100,
+              "latestProcessedMsgId": 200,
+              "latestSubmittedMsgId": 200
+            },
+            "live": {
+              "total": 0
+            },
+            "trie": {
+              "sha256": "trie"
+            },
+            "listing": [
+              "00",
+              "01"
+            ]
+          },
+          {
+            "gauges": {
+              "jobsAvailable": 0,
+              "lagMsgId": 0,
+              "latestCompletedTxId": 100,
+              "latestProcessedMsgId": 200,
+              "latestSubmittedMsgId": 200
+            },
+            "live": {
+              "total": 0
+            },
+            "trie": {
+              "sha256": "trie"
+            },
+            "listing": [
+              "00",
+              "01"
+            ]
+          }
+        ],
+        "startLines": [
+          "leader startup complete, resuming after 200"
+        ]
+      }
+    },
+    {
+      "name": "startup-command-inspect",
+      "observed": {
+        "ok": true,
+        "started": {
+          "status": 200
+        },
+        "resume": "200",
+        "expectedMsgId": 200,
+        "polls": [
+          {
+            "gauges": {
+              "jobsAvailable": 0,
+              "lagMsgId": 0,
+              "latestCompletedTxId": 100,
+              "latestProcessedMsgId": 200,
+              "latestSubmittedMsgId": 200
+            },
+            "live": {
+              "total": 0
+            },
+            "trie": {
+              "sha256": "trie"
+            },
+            "listing": [
+              "00",
+              "01"
+            ]
+          },
+          {
+            "gauges": {
+              "jobsAvailable": 0,
+              "lagMsgId": 0,
+              "latestCompletedTxId": 100,
+              "latestProcessedMsgId": 200,
+              "latestSubmittedMsgId": 200
+            },
+            "live": {
+              "total": 0
+            },
+            "trie": {
+              "sha256": "trie"
+            },
+            "listing": [
+              "00",
+              "01"
+            ]
+          },
+          {
+            "gauges": {
+              "jobsAvailable": 0,
+              "lagMsgId": 0,
+              "latestCompletedTxId": 100,
+              "latestProcessedMsgId": 200,
+              "latestSubmittedMsgId": 200
+            },
+            "live": {
+              "total": 0
+            },
+            "trie": {
+              "sha256": "trie"
+            },
+            "listing": [
+              "00",
+              "01"
+            ]
+          }
+        ],
+        "startLines": [
+          "leader startup complete, resuming after 200"
+        ]
+      }
+    },
+    {
+      "name": "startup-command-logs",
+      "observed": {
+        "ok": true,
+        "started": {
+          "status": 200
+        },
+        "resume": "200",
+        "expectedMsgId": 200,
+        "polls": [
+          {
+            "gauges": {
+              "jobsAvailable": 0,
+              "lagMsgId": 0,
+              "latestCompletedTxId": 100,
+              "latestProcessedMsgId": 200,
+              "latestSubmittedMsgId": 200
+            },
+            "live": {
+              "total": 0
+            },
+            "trie": {
+              "sha256": "trie"
+            },
+            "listing": [
+              "00",
+              "01"
+            ]
+          },
+          {
+            "gauges": {
+              "jobsAvailable": 0,
+              "lagMsgId": 0,
+              "latestCompletedTxId": 100,
+              "latestProcessedMsgId": 200,
+              "latestSubmittedMsgId": 200
+            },
+            "live": {
+              "total": 0
+            },
+            "trie": {
+              "sha256": "trie"
+            },
+            "listing": [
+              "00",
+              "01"
+            ]
+          },
+          {
+            "gauges": {
+              "jobsAvailable": 0,
+              "lagMsgId": 0,
+              "latestCompletedTxId": 100,
+              "latestProcessedMsgId": 200,
+              "latestSubmittedMsgId": 200
+            },
+            "live": {
+              "total": 0
+            },
+            "trie": {
+              "sha256": "trie"
+            },
+            "listing": [
+              "00",
+              "01"
+            ]
+          }
+        ],
+        "startLines": [
+          "leader startup complete, resuming after 200"
+        ]
+      }
+    },
+    {
+      "name": "stop-log-command-false",
+      "observed": {
+        "container": "container",
+        "containerId": "container",
+        "startedAt": "start",
+        "finishedAt": "finish",
+        "stopMs": 0,
+        "wasRunning": true,
+        "verdict": {
+          "ok": true,
+          "componentLines": [],
+          "stoppedLine": "Node stopped.",
+          "exitCode": 143,
+          "oomKilled": false,
+          "reasons": []
+        }
+      }
+    },
+    {
+      "name": "stop-log-command-true",
+      "observed": {
+        "container": "container",
+        "containerId": "container",
+        "startedAt": "start",
+        "finishedAt": "finish",
+        "stopMs": 0,
+        "wasRunning": true,
+        "verdict": {
+          "ok": true,
+          "componentLines": [],
+          "stoppedLine": "Node stopped.",
+          "exitCode": 143,
+          "oomKilled": false,
+          "reasons": []
+        }
+      }
+    },
+    {
+      "name": "watermark-maintenance",
+      "observed": {
+        "settled": false,
+        "reason": "block 00 source watermark 201 is permanently behind node 202; Q83d equality cannot pass",
+        "before": {
+          "listing": [],
+          "blocks": [],
+          "gauges": {
+            "jobsAvailable": 0,
+            "latestCompletedTxId": 100,
+            "latestProcessedMsgId": 200,
+            "latestSubmittedMsgId": 200,
+            "lagMsgId": 0,
+            "lastUploadTime": 1
+          },
+          "trie": {
+            "rows": [],
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          }
+        },
+        "phases": [
+          {
+            "phase": 1,
+            "target": 0,
+            "finishBlock": {
+              "status": 200
+            },
+            "polls": [
+              {
+                "elapsedS": 5,
+                "listing": [
+                  "00"
+                ],
+                "blocks": [
+                  {
+                    "block_idx": "00",
+                    "tx_id": 100,
+                    "latest_processed_msg_id": 201
+                  }
+                ],
+                "gauges": {
+                  "jobsAvailable": 0,
+                  "latestCompletedTxId": 100,
+                  "latestProcessedMsgId": 202,
+                  "latestSubmittedMsgId": 202,
+                  "lagMsgId": 0,
+                  "lastUploadTime": 2
+                },
+                "trie": {
+                  "rows": [
+                    [
+                      "tx_assertions",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      1000,
+                      10
+                    ],
+                    [
+                      "tx_attempts",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      1000,
+                      10
+                    ],
+                    [
+                      "tx_claims",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      1000,
+                      10
+                    ],
+                    [
+                      "tx_meta",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      1000,
+                      10
+                    ],
+                    [
+                      "txs",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      1000,
+                      10
+                    ]
+                  ],
+                  "sha256": "ed4cfe9840e646d2549e69590994f97ff656846bcf5bb850f0db093121bdab4c"
+                },
+                "requiredTables": [
+                  "tx_assertions",
+                  "tx_attempts",
+                  "tx_claims",
+                  "tx_meta",
+                  "txs"
+                ],
+                "coverage": {
+                  "covered": true,
+                  "tables": [
+                    "tx_assertions",
+                    "tx_attempts",
+                    "tx_claims",
+                    "tx_meta",
+                    "txs"
+                  ],
+                  "missing": []
+                },
+                "ok": false,
+                "streak": 0,
+                "supersededStreak": 0
+              },
+              {
+                "elapsedS": 10,
+                "listing": [
+                  "00"
+                ],
+                "blocks": [
+                  {
+                    "block_idx": "00",
+                    "tx_id": 100,
+                    "latest_processed_msg_id": 201
+                  }
+                ],
+                "gauges": {
+                  "jobsAvailable": 0,
+                  "latestCompletedTxId": 100,
+                  "latestProcessedMsgId": 202,
+                  "latestSubmittedMsgId": 202,
+                  "lagMsgId": 0,
+                  "lastUploadTime": 2
+                },
+                "trie": {
+                  "rows": [
+                    [
+                      "tx_assertions",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      1000,
+                      10
+                    ],
+                    [
+                      "tx_attempts",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      1000,
+                      10
+                    ],
+                    [
+                      "tx_claims",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      1000,
+                      10
+                    ],
+                    [
+                      "tx_meta",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      1000,
+                      10
+                    ],
+                    [
+                      "txs",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      1000,
+                      10
+                    ]
+                  ],
+                  "sha256": "ed4cfe9840e646d2549e69590994f97ff656846bcf5bb850f0db093121bdab4c"
+                },
+                "requiredTables": [
+                  "tx_assertions",
+                  "tx_attempts",
+                  "tx_claims",
+                  "tx_meta",
+                  "txs"
+                ],
+                "coverage": {
+                  "covered": true,
+                  "tables": [
+                    "tx_assertions",
+                    "tx_attempts",
+                    "tx_claims",
+                    "tx_meta",
+                    "txs"
+                  ],
+                  "missing": []
+                },
+                "ok": false,
+                "streak": 0,
+                "supersededStreak": 1
+              },
+              {
+                "elapsedS": 15,
+                "listing": [
+                  "00"
+                ],
+                "blocks": [
+                  {
+                    "block_idx": "00",
+                    "tx_id": 100,
+                    "latest_processed_msg_id": 201
+                  }
+                ],
+                "gauges": {
+                  "jobsAvailable": 0,
+                  "latestCompletedTxId": 100,
+                  "latestProcessedMsgId": 202,
+                  "latestSubmittedMsgId": 202,
+                  "lagMsgId": 0,
+                  "lastUploadTime": 2
+                },
+                "trie": {
+                  "rows": [
+                    [
+                      "tx_assertions",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      1000,
+                      10
+                    ],
+                    [
+                      "tx_attempts",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      1000,
+                      10
+                    ],
+                    [
+                      "tx_claims",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      1000,
+                      10
+                    ],
+                    [
+                      "tx_meta",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      1000,
+                      10
+                    ],
+                    [
+                      "txs",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      1000,
+                      10
+                    ]
+                  ],
+                  "sha256": "ed4cfe9840e646d2549e69590994f97ff656846bcf5bb850f0db093121bdab4c"
+                },
+                "requiredTables": [
+                  "tx_assertions",
+                  "tx_attempts",
+                  "tx_claims",
+                  "tx_meta",
+                  "txs"
+                ],
+                "coverage": {
+                  "covered": true,
+                  "tables": [
+                    "tx_assertions",
+                    "tx_attempts",
+                    "tx_claims",
+                    "tx_meta",
+                    "txs"
+                  ],
+                  "missing": []
+                },
+                "ok": false,
+                "streak": 0,
+                "supersededStreak": 2
+              },
+              {
+                "elapsedS": 20,
+                "listing": [
+                  "00"
+                ],
+                "blocks": [
+                  {
+                    "block_idx": "00",
+                    "tx_id": 100,
+                    "latest_processed_msg_id": 201
+                  }
+                ],
+                "gauges": {
+                  "jobsAvailable": 0,
+                  "latestCompletedTxId": 100,
+                  "latestProcessedMsgId": 202,
+                  "latestSubmittedMsgId": 202,
+                  "lagMsgId": 0,
+                  "lastUploadTime": 2
+                },
+                "trie": {
+                  "rows": [
+                    [
+                      "tx_assertions",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      1000,
+                      10
+                    ],
+                    [
+                      "tx_attempts",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      1000,
+                      10
+                    ],
+                    [
+                      "tx_claims",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      1000,
+                      10
+                    ],
+                    [
+                      "tx_meta",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      1000,
+                      10
+                    ],
+                    [
+                      "txs",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      1000,
+                      10
+                    ]
+                  ],
+                  "sha256": "ed4cfe9840e646d2549e69590994f97ff656846bcf5bb850f0db093121bdab4c"
+                },
+                "requiredTables": [
+                  "tx_assertions",
+                  "tx_attempts",
+                  "tx_claims",
+                  "tx_meta",
+                  "txs"
+                ],
+                "coverage": {
+                  "covered": true,
+                  "tables": [
+                    "tx_assertions",
+                    "tx_attempts",
+                    "tx_claims",
+                    "tx_meta",
+                    "txs"
+                  ],
+                  "missing": []
+                },
+                "ok": false,
+                "streak": 0,
+                "supersededStreak": 3
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
