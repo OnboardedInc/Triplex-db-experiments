@@ -304,17 +304,20 @@ test('host disk floor: a copy that would leave less than 5 GiB is refused (Q74f)
   assert.equal(diskFloorVerdict({ freeBytes: 5 * GiB, copyBytes: 0 }).ok, true);
 });
 
-test('clean stop needs "Node stopped.", no forced halt, exit 0 or 143', async () => {
+test('clean stop needs both lines, no forced halt, exit 143 within ten seconds', async () => {
   const { stopVerdict } = await import('../engine.mjs');
   const good = '2026 INFO xtdb.main - Stopping node...\n2026 INFO xtdb.main - Node stopped.\n';
-  assert.equal(stopVerdict({ log: good, exitCode: 143, oomKilled: false }).ok, true);
-  assert.equal(stopVerdict({ log: good, exitCode: 0, oomKilled: false }).ok, true);
-  assert.deepEqual(stopVerdict({ log: good, exitCode: 137, oomKilled: false }).reasons, ['exit code 137']);
-  assert.equal(stopVerdict({ log: 'Stopping node...\n', exitCode: 143, oomKilled: false }).ok, false);
-  const forced = stopVerdict({ log: 'could not stop node cleanly after 10000 ms, forcing exit\n', exitCode: 1, oomKilled: false });
+  assert.equal(stopVerdict({ log: good, exitCode: 143, oomKilled: false, stopMs: 1200 }).ok, true);
+  assert.equal(stopVerdict({ log: good, exitCode: 0, oomKilled: false, stopMs: 1200 }).ok, false);
+  assert.deepEqual(stopVerdict({ log: good, exitCode: 137, oomKilled: false, stopMs: 1200 }).reasons, ['exit code 137']);
+  assert.equal(stopVerdict({ log: 'Stopping node...\n', exitCode: 143, oomKilled: false, stopMs: 1200 }).ok, false);
+  assert.equal(stopVerdict({ log: good, exitCode: 143, stopMs: 10000 }).ok, false);
+  assert.equal(stopVerdict({ log: good, exitCode: 143, stopMs: null }).ok, false);
+  assert.equal(stopVerdict({ log: 'Node stopped.', exitCode: 143, stopMs: 1 }).ok, false);
+  const forced = stopVerdict({ log: 'could not stop node cleanly after 10000 ms, forcing exit\n', exitCode: 1, oomKilled: false, stopMs: 1200 });
   assert.equal(forced.ok, false);
-  assert.equal(forced.reasons.length, 3);
-  assert.equal(stopVerdict({ log: good, exitCode: 143, oomKilled: true }).ok, false);
+  assert.equal(forced.reasons.length, 4);
+  assert.equal(stopVerdict({ log: good, exitCode: 143, oomKilled: true, stopMs: 1200 }).ok, false);
 });
 
 test('volume listings parse, hash every field, fail closed on truncation, and diff for P-e', async () => {

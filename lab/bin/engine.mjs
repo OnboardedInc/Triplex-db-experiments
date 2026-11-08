@@ -441,9 +441,9 @@ async function followerDown(config, info, fol, opts) {
 // rung (EXP-N01 A0 receipt). R26 section 6: seed once on an exclusive slot, settle it, prove a clean stop, copy the
 // stopped volume into a write-once golden volume, and start faithful copies of it on any slot with the same system
 // config (RULINGS Q74a-g). Subcommands (XTDB lane, exclusive slots held by the caller):
-//   settle     POST /system/finish-block, then wait for compactor jobs 0 and an empty live index (Q74b)
+//   settle     two finish-blocks, stable block/trie catalogs and idle gauges (Q83b)
 //   stop       docker stop -t 60 and prove the stop was clean; container, lock and reservation stay
-//   golden     settle, freeze fingerprint (C3-C8), clean stop, copy into tx2-golden-xtdb-<key8>, golden.json beside the manifest
+//   golden     settle twice, clean stop, copy, reference start fingerprint (C3-C8), clean stop; tx2-golden-xtdb-<key8>, golden.json beside the manifest
 //   clone      wipe the slot volume, copy a golden in, start, gate on /healthz/started, then C1-C8 (Q74d)
 //   verify     re-run C2-C8 on a cloned slot (after a restart)
 //   listing    list a stopped slot's volume (path, size, mode, owner, sha256), optionally diffed with a golden (R26 P-e)
@@ -495,24 +495,52 @@ export function hostDisk() {
 /**
  * R26 1.5 item 2: a stop is clean only if the log of this run says `Node stopped.`, never `could not stop node cleanly`
  * (the shutdown hook's halt(1) after 10 s, references/xtdb/main/src/main/clojure/xtdb/main.clj:81-98), and the JVM
- * exited 0 or 143 (SIGTERM). 137 is a SIGKILL after the grace period; 1 is the halt.
+ * exited 143 (SIGTERM) within ten seconds. 137 is a SIGKILL after the grace period; 1 is the halt.
  */
-export function stopVerdict({ log, exitCode, oomKilled }) {
+export function stopVerdict({ log, exitCode, oomKilled, stopMs }) {
   const reasons = [];
   const stoppedLine = String(log).split('\n').reverse().find(line => line.includes('Node stopped.')) ?? null;
   if (!stoppedLine) reasons.push('no "Node stopped." in this run\'s log');
   if (/could not stop node cleanly/.test(log)) reasons.push('log says "could not stop node cleanly"');
-  if (![0, 143].includes(exitCode)) reasons.push(`exit code ${exitCode}`);
+  if (!String(log).includes('Stopping node...')) reasons.push('no "Stopping node..." in this run\'s log');
+  if (!(Number.isFinite(stopMs) && stopMs >= 0 && stopMs < 10000)) reasons.push('stop did not finish within 10 s');
+  if (exitCode !== 143) reasons.push(`exit code ${exitCode}`);
   if (oomKilled) reasons.push('OOM killed');
-  return { ok: reasons.length === 0, stoppedLine: stoppedLine?.trim().slice(0, 300) ?? null, exitCode, oomKilled: !!oomKilled, reasons };
+  const componentLines = String(log).split('\n').filter(line => /Server stopped\.|Flight SQL server stopped|Healthz server stopped\./.test(line));
+  return { ok: reasons.length === 0, componentLines, stoppedLine: stoppedLine?.trim().slice(0, 300) ?? null, exitCode, oomKilled: !!oomKilled, reasons };
 }
 
 /**
  * Helper-container listing of a mounted directory: one stat line and one sha256 line per regular file, `.tmp` upload
- * scratch excluded (R26 1.1: transient, moved into place by rename). BusyBox find/stat/sha256sum/sort (R26 P-g).
+ * scratch refused if nonempty (Q83b). BusyBox find/stat/sha256sum/sort (R26 P-g).
  */
-export const listingScript = dir => `echo @@stat; cd ${dir} && find . -type f ! -path '*/.tmp/*' -exec stat -c '%n|%s|%a|%u|%g' {} + | LC_ALL=C sort; `
+export const listingScript = dir => `${emptyTmpScript(dir)}; echo @@stat; cd ${dir} && find . -type f ! -path '*/.tmp/*' -exec stat -c '%n|%s|%a|%u|%g' {} + | LC_ALL=C sort; `
   + `echo @@sha; cd ${dir} && find . -type f ! -path '*/.tmp/*' -exec sha256sum {} + | LC_ALL=C sort -k 2; echo @@end`;
+
+// [EXP-K01-R2] Why: interrupted uploads are forensic evidence, never disposable copy scratch (Q83b). Rejected: deleting .tmp to manufacture an equal tree.
+export const emptyTmpScript = dir => `tmp=$(find ${dir}/buffers -path '*/.tmp/*' ! -type d -print); test -z "$tmp" || { echo 'non-empty .tmp refused' >&2; exit 1; }`;
+
+// [EXP-K01-R2] Why: reproduce LocalLog.kt:61-93 offline without starting another JVM. Rejected: exit status alone (does not prove durable log tails).
+export const offlineScript = dir => `${emptyTmpScript(dir)};
+be() { od -An -v -tu1 | awk '{for(i=1;i<=NF;i++) n=n*256+$i} END {printf "%.0f",n}'; }
+for name in LOG REPLICA_LOG; do
+ f=${dir}/log/$name; test -f "$f"; bytes=$(stat -c %s "$f");
+ if [ "$bytes" -eq 0 ]; then echo "$name|0|-1|0"; continue; fi;
+ test "$bytes" -ge 21;
+ offset=$(tail -c 8 "$f" | be); test "$offset" -ge 0; test "$offset" -lt "$bytes";
+ sep=$(dd if="$f" bs=1 skip="$offset" count=1 2>/dev/null | be); test "$sep" -eq 30;
+ size=$(dd if="$f" bs=1 skip=$((offset+1)) count=4 2>/dev/null | be);
+ test "$bytes" -eq $((offset+1+4+8+size+8));
+ echo "$name|$bytes|$offset|$size";
+done;
+echo @@blocks; find ${dir}/buffers/v06/blocks -maxdepth 1 -type f -name 'b*.binpb' | sed 's|.*/b||;s|.binpb$||' | LC_ALL=C sort; echo @@end`;
+
+function offlineCheck(config, info, expected) {
+  const raw = helper(config, `tx2-clone-offline-${info.slot}`, [`${info.volume}:/src:ro`], offlineScript('/src'));
+  const [tails, listing] = sections(raw, '@@blocks');
+  const blocks = listing.split('@@end')[0].trim().split('\n').filter(Boolean);
+  return { ok: canonicalJson(blocks) === canonicalJson(expected.listing), tails: tails.trim().split('\n'), blocks, expected: expected.listing, raw };
+}
 
 /** Parse one listingScript output into sorted file records and a tree hash over every field. */
 export function parseListing(text) {
@@ -561,7 +589,7 @@ function cloneCheck(args) {
   const r = spawnSync(process.execPath, [path.join(REPO, 'lab/bench/clone-check.ts'), ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'], maxBuffer: 256 << 20, timeout: 3600_000 });
   let out = null;
   try { out = JSON.parse(r.stdout); } catch {}
-  if (!out) fail('ENGINE', `clone-check ${args[0]} exited ${r.status} without a JSON verdict: ${String(r.stdout).slice(-800)}`);
+  if (!out || r.status !== 0) fail('ENGINE', `clone-check ${args[0]} exited ${r.status} without a JSON verdict: ${String(r.stdout).slice(-800)}`);
   return out;
 }
 
@@ -606,7 +634,7 @@ async function stopSlot(config, info, opts) {
   const after = inspect(info.container);
   if (after?.State.Running) fail('ENGINE', `${info.container} still running after docker stop -t 60`);
   const logs = spawnSync('docker', dockerArgs(['logs', '--since', before.State.StartedAt, info.container]), { encoding: 'utf8', maxBuffer: 256 << 20 });
-  const verdict = stopVerdict({ log: `${logs.stdout ?? ''}\n${logs.stderr ?? ''}`, exitCode: after.State.ExitCode, oomKilled: after.State.OOMKilled });
+  const verdict = stopVerdict({ log: `${logs.stdout ?? ''}\n${logs.stderr ?? ''}`, exitCode: after.State.ExitCode, oomKilled: after.State.OOMKilled, stopMs: before.State.Running ? stopMs : null });
   await withPool(async ledger => { const e = ledger.reservations.find(item => item.container === info.container); if (e) Object.assign(e, { state: 'stopped', stoppedAt: now() }); });
   appendEvent({ event: 'stopped', container: info.container, clean: verdict.ok });
   const out = { container: info.container, containerId: after.Id, startedAt: before.State.StartedAt, finishedAt: after.State.FinishedAt, stopMs, wasRunning: before.State.Running, verdict };
@@ -638,63 +666,145 @@ async function golden(config, info, opts) {
   const attemptFile = path.join(path.dirname(manifestFile), `golden-attempt-${Date.now()}.json`);
   const attempt = { format: 'tx2-xtdb-golden-attempt/1', at: now(), key: k.key, volume, manifestSha256: sha256File(manifestFile), containerId: c.Id, timings, status: 'SETTLING' };
   writeJson(attemptFile, attempt);
-  let t = Date.now();
-  const settled = cloneCheck(['settle', '--url', info.endpoint, '--container', info.container]);
-  timings.settleS = (Date.now() - t) / 1000;
-  Object.assign(attempt, { settled, status: settled.settled ? 'FREEZING' : 'REFUSED_SETTLE' });
-  writeJson(attemptFile, attempt);
-  if (!settled.settled) fail('ENGINE', `${info.container} did not settle: ${settled.reason}`);
-  t = Date.now();
-  const freeze = cloneCheck(['freeze', '--url', info.endpoint, '--container', info.container, '--manifest', manifestFile]);
-  timings.freezeS = (Date.now() - t) / 1000;
-  Object.assign(attempt, { freeze, status: freeze.ok ? 'STOPPING' : 'REFUSED_FREEZE' });
-  writeJson(attemptFile, attempt);
-  if (!freeze.ok) fail('ENGINE', `freeze fingerprint failed: ${JSON.stringify(freeze.errors ?? freeze).slice(0, 600)}`);
-  const stop = await stopSlot(config, info, { ...opts, print: false });
-  timings.stopS = stop.stopMs / 1000;
-  Object.assign(attempt, { stop, status: stop.verdict.ok ? 'COPYING' : 'REFUSED_STOP' });
-  writeJson(attemptFile, attempt);
-  if (!stop.verdict.ok) fail('REFUSED', `${info.container} did not stop cleanly (${stop.verdict.reasons.join('; ')}); no golden made`);
-  const sourceBytes = volumeBytes(config, info.volume);
-  const diskBefore = hostDisk();
-  const floor = diskFloorVerdict({ freeBytes: diskBefore.freeBytes, copyBytes: sourceBytes });
-  if (!floor.ok) fail('REFUSED', floor.reason);
-  docker(['volume', 'create', '--label', 'tx2.managed-by=lab/bin/engine.mjs', '--label', 'tx2.golden=1', '--label', `tx2.seed-key=${k.key}`, volume]);
-  t = Date.now();
-  let src, dst;
   try {
-    const out = helper(config, `tx2-clone-gold-${k.key8}`, [`${info.volume}:/src:ro`, `${volume}:/dst`],
-      `${listingScript('/src')}; echo @@copy; cp -a /src/. /dst/; find /dst -name .tmp -type d -prune -exec rm -rf {} +; chown ${XTDB_UID} /dst; sync; ${listingScript('/dst')}`);
-    const [a, b] = sections(out, '@@copy');
-    src = parseListing(a);
-    dst = parseListing(b);
-  } catch (error) { docker(['volume', 'rm', volume], { allowFail: true }); throw error; }
-  timings.copyS = (Date.now() - t) / 1000;
-  if (src.treeSha256 !== dst.treeSha256) { docker(['volume', 'rm', volume], { allowFail: true }); fail('ENGINE', `golden copy differs from its source (${src.treeSha256.slice(0, 12)} vs ${dst.treeSha256.slice(0, 12)}); golden removed`); }
-  const goldenBytes = volumeBytes(config, volume);
-  const filesFile = path.join(path.dirname(manifestFile), 'golden-files.json');
-  writeJson(filesFile, dst.files);
-  const pick = name => dst.files.find(f => f.path === name)?.sha256 ?? null;
-  const record = {
-    format: GOLDEN_RECORD_FORMAT, key: k.key, key8: k.key8, keyInputs: k.inputs, volume, createdAt: now(), holder: defaultHolder(opts), experiment: opts.exp ?? null,
-    manifest: { path: path.relative(REPO, manifestFile), sha256: sha256File(manifestFile), scope: manifest.scope, subjects: manifest.subjects, lastPosition: manifest.result.lastPosition, seedWallS: manifest.capture?.wallS ?? null },
-    source: { slot: info.slot, container: info.container, containerId: c.Id, volume: info.volume, imageId: c.Image, configSha256: eff.sha256, systemConfigSha256, systemConfig: systemConfig(eff.effective) },
-    settle: settled, freeze, stop,
-    copy: { sourceBytes, goldenBytes, files: dst.count, fileBytes: dst.bytes, treeSha256: dst.treeSha256, logSha256: pick('./log/LOG'), replicaLogSha256: pick('./log/REPLICA_LOG'), filesFile: path.relative(REPO, filesFile), filesSha256: sha256File(filesFile), sourceMatches: true },
-    hostDisk: { before: diskBefore, after: hostDisk(), floor },
-    timings,
-    rule: 'never start an engine on this volume; clone it (engine.mjs clone --golden-record this file)',
-  };
-  writeJson(recordFile, record);
-  Object.assign(attempt, { status: 'GOLDEN_CREATED', record: recordFile });
-  writeJson(attemptFile, attempt);
-  await withPool(async ledger => {
-    ledger.goldens = (ledger.goldens ?? []).filter(g => g.volume !== volume);
-    ledger.goldens.push({ volume, key: k.key, bytes: goldenBytes, holder: defaultHolder(opts), record: recordFile, at: now() });
-  });
-  appendEvent({ event: 'golden-created', volume, key: k.key, bytes: goldenBytes });
-  process.stderr.write(`[lab] golden ${volume} (${fmtBytes(goldenBytes)}, ${dst.count} files, tree ${dst.treeSha256.slice(0, 12)}) from ${info.container}; settle ${timings.settleS.toFixed(1)} s, freeze ${timings.freezeS.toFixed(1)} s, stop ${timings.stopS.toFixed(1)} s, copy ${timings.copyS.toFixed(1)} s\n[lab] record ${recordFile}; ${info.container} is stopped and still held\n`);
-  process.stdout.write(JSON.stringify({ record: recordFile, volume, key: k.key, timings }) + '\n');
+    const settleEvidence = path.join(path.dirname(manifestFile), `settle-${Date.now()}.json`);
+    attempt.settleEvidence = path.relative(REPO, settleEvidence);
+    writeJson(attemptFile, attempt);
+    let t = Date.now();
+    const settled = cloneCheck(['settle', '--url', info.endpoint, '--container', info.container, '--evidence', settleEvidence]);
+    timings.settleS = (Date.now() - t) / 1000;
+    Object.assign(attempt, { settled, status: settled.settled ? 'FREEZING' : 'REFUSED_SETTLE' });
+    writeJson(attemptFile, attempt);
+    if (!settled.settled) fail('ENGINE', `${info.container} did not settle: ${settled.reason}`);
+    // [EXP-K01-R2] Why: clone-check has exited and closed all pools before stop (G6). Rejected: stopping with a held snapshot (can exceed the JVM hook deadline).
+    Object.assign(attempt, { clients: { cloneCheckExited: true }, status: 'STOPPING' });
+    writeJson(attemptFile, attempt);
+    const stop = await stopSlot(config, info, { ...opts, print: false });
+    timings.stopS = stop.stopMs / 1000;
+    Object.assign(attempt, { stop, status: stop.verdict.ok ? 'COPYING' : 'REFUSED_STOP' });
+    writeJson(attemptFile, attempt);
+    if (!stop.verdict.ok) fail('REFUSED', `${info.container} did not stop cleanly (${stop.verdict.reasons.join('; ')}); no golden made`);
+    const offline = offlineCheck(config, info, settled.after);
+    Object.assign(attempt, { offline, status: offline.ok ? 'COPYING' : 'REFUSED_OFFLINE' });
+    writeJson(attemptFile, attempt);
+    if (!offline.ok) fail('REFUSED', 'offline block listing differs from pre-stop evidence');
+    const sourceBytes = volumeBytes(config, info.volume);
+    const diskBefore = hostDisk();
+    const floor = diskFloorVerdict({ freeBytes: diskBefore.freeBytes, copyBytes: sourceBytes });
+    if (!floor.ok) fail('REFUSED', floor.reason);
+    docker(['volume', 'create', '--label', 'tx2.managed-by=lab/bin/engine.mjs', '--label', 'tx2.golden=1', '--label', `tx2.seed-key=${k.key}`, volume]);
+    t = Date.now();
+    let src, dst;
+    try {
+      const out = helper(config, `tx2-clone-gold-${k.key8}`, [`${info.volume}:/src:ro`, `${volume}:/dst`],
+        `${listingScript('/src')}; echo @@copy; cp -a /src/. /dst/; ${emptyTmpScript('/dst')}; chown ${XTDB_UID} /dst; sync; ${listingScript('/dst')}`);
+      const [a, b] = sections(out, '@@copy');
+      src = parseListing(a);
+      dst = parseListing(b);
+    } catch (error) { docker(['volume', 'rm', volume], { allowFail: true }); throw error; }
+    timings.copyS = (Date.now() - t) / 1000;
+    if (src.treeSha256 !== dst.treeSha256) { docker(['volume', 'rm', volume], { allowFail: true }); fail('ENGINE', `golden copy differs from its source (${src.treeSha256.slice(0, 12)} vs ${dst.treeSha256.slice(0, 12)}); golden removed`); }
+    Object.assign(attempt, { copy: { source: src, destination: dst }, status: 'REFERENCE_START' });
+    writeJson(attemptFile, attempt);
+    t = Date.now();
+    await up(config, info, { ...opts, fresh: false });
+    const expectedFile = path.join(path.dirname(manifestFile), 'reference-expected.json');
+    writeJson(expectedFile, settled.after);
+    const start = cloneCheck(['start-check', '--url', info.endpoint, '--container', info.container, '--expected', expectedFile]);
+    Object.assign(attempt, { start, status: start.ok ? 'REFERENCE_FREEZE' : 'REFUSED_REFERENCE_START' });
+    writeJson(attemptFile, attempt);
+    if (!start.ok) fail('REFUSED', 'reference start differs from settled state; golden is unpublished');
+    const freeze = cloneCheck(['freeze', '--url', info.endpoint, '--container', info.container, '--manifest', manifestFile]);
+    timings.freezeS = (Date.now() - t) / 1000;
+    const end = cloneCheck(['diagnostic', '--url', info.endpoint, '--container', info.container]);
+    Object.assign(attempt, { freeze, referenceEnd: end, status: 'REFERENCE_STOP' });
+    writeJson(attemptFile, attempt);
+    const referenceStop = await stopSlot(config, info, { ...opts, print: false });
+    Object.assign(attempt, { referenceStop, status: 'REFERENCE_STOPPED' });
+    writeJson(attemptFile, attempt);
+    if (!freeze.ok || !referenceStop.verdict.ok || timings.freezeS >= 600 || canonicalJson(end.snapshot.listing) !== canonicalJson(settled.after.listing))
+      fail('REFUSED', 'reference fingerprint, timer, listing or stop failed; golden is unpublished');
+    const goldenBytes = volumeBytes(config, volume);
+    const filesFile = path.join(path.dirname(manifestFile), 'golden-files.json');
+    writeJson(filesFile, dst.files);
+    const pick = name => dst.files.find(f => f.path === name)?.sha256 ?? null;
+    const record = {
+      format: GOLDEN_RECORD_FORMAT, key: k.key, key8: k.key8, keyInputs: k.inputs, volume, createdAt: now(), holder: defaultHolder(opts), experiment: opts.exp ?? null,
+      manifest: { path: path.relative(REPO, manifestFile), sha256: sha256File(manifestFile), scope: manifest.scope, subjects: manifest.subjects, lastPosition: manifest.result.lastPosition, seedWallS: manifest.capture?.wallS ?? null },
+      source: { slot: info.slot, container: info.container, containerId: c.Id, volume: info.volume, imageId: c.Image, configSha256: eff.sha256, systemConfigSha256, systemConfig: systemConfig(eff.effective) },
+      settle: settled, freeze, stop, offline, referenceStart: start, referenceStop,
+      copy: { sourceBytes, goldenBytes, files: dst.count, fileBytes: dst.bytes, treeSha256: dst.treeSha256, logSha256: pick('./log/LOG'), replicaLogSha256: pick('./log/REPLICA_LOG'), filesFile: path.relative(REPO, filesFile), filesSha256: sha256File(filesFile), sourceMatches: true },
+      hostDisk: { before: diskBefore, after: hostDisk(), floor },
+      timings,
+      rule: 'never start an engine on this volume; clone it (engine.mjs clone --golden-record this file)',
+    };
+    writeJson(recordFile, record);
+    Object.assign(attempt, { status: 'GOLDEN_CREATED', record: recordFile });
+    writeJson(attemptFile, attempt);
+    await withPool(async ledger => {
+      ledger.goldens = (ledger.goldens ?? []).filter(g => g.volume !== volume);
+      ledger.goldens.push({ volume, key: k.key, bytes: goldenBytes, holder: defaultHolder(opts), record: recordFile, at: now() });
+    });
+    appendEvent({ event: 'golden-created', volume, key: k.key, bytes: goldenBytes });
+    process.stderr.write(`[lab] golden ${volume} (${fmtBytes(goldenBytes)}, ${dst.count} files, tree ${dst.treeSha256.slice(0, 12)}) from ${info.container}; settle ${timings.settleS.toFixed(1)} s, freeze ${timings.freezeS.toFixed(1)} s, stop ${timings.stopS.toFixed(1)} s, copy ${timings.copyS.toFixed(1)} s\n[lab] record ${recordFile}; ${info.container} is stopped and still held\n`);
+    process.stdout.write(JSON.stringify({ record: recordFile, volume, key: k.key, timings }) + '\n');
+  } catch (error) {
+    Object.assign(attempt, { failedAt: now(), error: String(error.message ?? error) });
+    writeJson(attemptFile, attempt);
+    throw error;
+  }
+}
+
+/** One-cut sacrificial copy for R30 T3/T6, never a qualified golden or screening source. */
+async function oneCutProbe(config, info, opts) {
+  requireHeldXtdbSlot(info, opts);
+  requireRunningSlot(config, info);
+  if (!opts.manifest) fail('USAGE', 'one-cut-probe needs --manifest FILE');
+  const file = path.join(path.dirname(path.resolve(opts.manifest)), 'one-cut-probe.json');
+  if (fs.existsSync(file)) fail('REFUSED', 'one-cut-probe evidence already exists');
+  const volume = `tx2-k01-singlecut-${Date.now()}`;
+  const attempt = { format: 'tx2-k01-singlecut-probe/1', volume, at: now(), diagnosticOnly: true };
+  const save = values => { Object.assign(attempt, values); writeJson(file, attempt); };
+  try {
+    save({ before: cloneCheck(['diagnostic', '--url', info.endpoint, '--container', info.container]) });
+    const settled = cloneCheck(['settle', '--cuts', '1', '--url', info.endpoint, '--container', info.container, '--evidence', file + '.settle.json']);
+    save({ settled, afterCut: cloneCheck(['diagnostic', '--url', info.endpoint, '--container', info.container]) });
+    if (!settled.settled) fail('REFUSED', 'single-cut diagnostic did not settle');
+    const stop = await stopSlot(config, info, { ...opts, print: false });
+    save({ stop });
+    if (!stop.verdict.ok) fail('REFUSED', 'single-cut stop refused');
+    const offline = offlineCheck(config, info, settled.after);
+    save({ offline });
+    if (!offline.ok) fail('REFUSED', 'single-cut offline listing differs');
+    const floor = diskFloorVerdict({ freeBytes: hostDisk().freeBytes, copyBytes: volumeBytes(config, info.volume) });
+    if (!floor.ok) fail('REFUSED', floor.reason);
+    docker(['volume', 'create', '--label', 'tx2.managed-by=lab/bin/engine.mjs', '--label', 'tx2.diagnostic=K01-R30-T6', volume]);
+    const copied = helper(config, `tx2-clone-singlecut-${info.slot}`, [`${info.volume}:/src:ro`, `${volume}:/dst`],
+      `${listingScript('/src')}; echo @@copy; cp -a /src/. /dst/; chown ${XTDB_UID} /dst; sync; ${listingScript('/dst')}`);
+    const [a, b] = sections(copied, '@@copy');
+    const src = parseListing(a), dst = parseListing(b);
+    save({ copy: { source: src.treeSha256, destination: dst.treeSha256, bytes: dst.bytes } });
+    if (src.treeSha256 !== dst.treeSha256) fail('REFUSED', 'single-cut snapshot copy differs');
+    // [EXP-K01-R2] Why: T6 must boot copied bytes, then add exactly one diagnostic write. Rejected: mutating the eventual golden seed (changes its transaction lineage).
+    await up(config, info, { ...opts, fresh: true }, { prepareVolume: async () => {
+      docker(['volume', 'create', '--label', 'tx2.managed-by=lab/bin/engine.mjs', info.volume]);
+      const listing = parseListing(helper(config, `tx2-clone-singlecut-${info.slot}`, [`${volume}:/src:ro`, `${info.volume}:/dst`],
+        `cp -a /src/. /dst/; chown ${XTDB_UID} /dst; sync; ${listingScript('/dst')}`));
+      if (listing.treeSha256 !== dst.treeSha256) fail('REFUSED', 'single-cut clone differs');
+      save({ cloneTreeSha256: listing.treeSha256 });
+    } });
+    const args = ['--url', info.endpoint, '--container', info.container, '--manifest', path.resolve(opts.manifest)];
+    save({ beforeWrite: cloneCheck(['freeze', ...args]) });
+    save({ write: cloneCheck(['probe-write', ...args]) });
+    save({ afterWrite: cloneCheck(['freeze', ...args]) });
+    save({ t6PlanChanged: attempt.beforeWrite.c8?.plan?.sha256 !== attempt.afterWrite.c8?.plan?.sha256 });
+  } catch (error) {
+    save({ error: String(error.message ?? error) });
+    throw error;
+  } finally {
+    const removed = docker(['volume', 'rm', volume], { allowFail: true });
+    save({ snapshotRemoved: !docker(['volume', 'inspect', volume], { allowFail: true }), removalOutput: removed });
+  }
 }
 
 /** Read and check a golden record: its key recomputes, its volume exists with that key, its manifest is unchanged. */
@@ -828,6 +938,9 @@ export const TOOLCHECK_EXPECT = {
   'sort-k': out => out.startsWith('a 1'),
   'chown': out => out.includes('20000:20000'),
   'sync': () => true,
+  'offline-valid': out => out.includes('@@end'),
+  'offline-corrupt': out => out.includes('refused'),
+  'offline-tmp': out => out.includes('refused'),
   'wget-post-data': out => /GNU Wget/.test(out) && /post-data=1/.test(out),
   'du-k': out => /^\d+\s/.test(out),
 };
@@ -846,8 +959,18 @@ r wget-post-data sh -c 'readlink -f "$(command -v wget)"; wget --version | head 
 r du-k du -s -k /t`;
 
 /** R26 P-g: run the tools R26's procedure assumes inside the pinned image (no network, no volumes). */
+// [EXP-K01-R2] Why: exercise the exact offline shell checks on the pinned image, including refusal fixtures. Rejected: a second parser that could disagree with production checks.
+const shellQuote = value => "'" + value.replaceAll("'", "'\\''") + "'";
+const offlineFixtures = (() => {
+  const setup = "mkdir -p /t/check/log /t/check/buffers/v06/blocks; printf '\\036' > /t/check/log/LOG; dd if=/dev/zero bs=20 count=1 >> /t/check/log/LOG 2>/dev/null; cp /t/check/log/LOG /t/check/log/REPLICA_LOG; touch /t/check/buffers/v06/blocks/b00.binpb; ";
+  const check = `sh -c ${shellQuote('set -eu; ' + offlineScript('/t/check'))}`;
+  return `; r offline-valid sh -c ${shellQuote(setup + check)}; ` +
+    `r offline-corrupt sh -c ${shellQuote(`printf x >> /t/check/log/LOG; if ${check} >/dev/null 2>&1; then exit 1; else echo refused; fi`)}; ` +
+    `r offline-tmp sh -c ${shellQuote(`cp /t/check/log/REPLICA_LOG /t/check/log/LOG; mkdir -p /t/check/buffers/v06/.tmp; touch /t/check/buffers/v06/.tmp/upload; if ${check} >/dev/null 2>&1; then exit 1; else echo refused; fi`)}`;
+})();
+
 async function toolcheck(config) {
-  const out = docker(['run', '--rm', '--network', 'none', '-u', '0:0', '--memory', '256m', '--memory-swap', '256m', '--entrypoint', 'sh', config.lanes.xtdb.image, '-c', TOOLCHECK_SCRIPT]);
+  const out = docker(['run', '--rm', '--network', 'none', '-u', '0:0', '--memory', '256m', '--memory-swap', '256m', '--entrypoint', 'sh', config.lanes.xtdb.image, '-c', TOOLCHECK_SCRIPT + offlineFixtures]);
   const rows = out.split('\n').filter(Boolean).map(line => { const [name, status, ...rest] = line.split('|'); return { name, status, output: rest.join('|') }; });
   const checks = rows.map(row => ({ ...row, pass: row.status === 'ok' && (TOOLCHECK_EXPECT[row.name]?.(row.output) ?? true) }));
   const missing = Object.keys(TOOLCHECK_EXPECT).filter(name => !rows.some(row => row.name === name));
@@ -905,7 +1028,7 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
   if (command === 'status') return status(config);
   if (command === 'toolcheck') return toolcheck(config);
   if (command === 'golden-rm') return goldenRm(config, options);
-  const K01 = ['settle', 'stop', 'golden', 'clone', 'verify', 'listing'];
+  const K01 = ['one-cut-probe', 'settle', 'stop', 'offline', 'golden', 'clone', 'verify', 'listing'];
   if (!['up', 'down', 'logs', ...K01].includes(command)) fail('USAGE', 'usage: engine.mjs up|down|status|logs --lane xtdb|qlever --slot dev|s1|s2|s3 [--fresh] [--follower] [--cpuset-cpus LIST]\n'
     + '  EXP-K01: settle|stop --lane xtdb --slot S; golden --lane xtdb --slot S --manifest FILE; clone --lane xtdb --slot S --golden-record FILE [--no-verify];\n'
     + '  verify --lane xtdb --slot S; listing --lane xtdb --slot S [--golden-record FILE] [--out FILE]; golden-rm --golden-record FILE|--volume V; toolcheck');
@@ -921,6 +1044,16 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
   if (options['cpuset-cpus']) info.cpusetCpus = parseCpuset(options['cpuset-cpus'], config.vm.cpus).join(',');
   if (command === 'settle') return settle(config, info, options);
   if (command === 'stop') return stopSlot(config, info, options);
+  if (command === 'offline') {
+    requireHeldXtdbSlot(info, options);
+    if (!readOwner(info) || inspect(info.container)?.State.Running) fail('REFUSED', 'offline requires a held, stopped slot');
+    if (!options.expected) fail('USAGE', 'offline needs --expected FILE (settle.after)');
+    const out = offlineCheck(config, info, readJson(path.resolve(options.expected)));
+    process.stdout.write(JSON.stringify(out, null, 2) + '\n');
+    if (!out.ok) fail('REFUSED', 'offline listing differs');
+    return;
+  }
+  if (command === 'one-cut-probe') return oneCutProbe(config, info, options);
   if (command === 'golden') return golden(config, info, options);
   if (command === 'clone') return clone(config, info, options);
   if (command === 'verify') return verify(config, info, options);

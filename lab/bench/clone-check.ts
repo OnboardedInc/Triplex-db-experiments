@@ -8,8 +8,7 @@
  *   node lab/bench/clone-check.ts verify --url URL --container CT --golden-record FILE [--owner FILE]
  *
  * settle  POST /system/finish-block through docker exec (the lab publishes only pgwire), then poll until three readings
- *         5 s apart show compactor.jobs.available 0 and every xt.live_tables row count 0 (and a new block file, unless
- *         the live index was already empty).
+ *         5 s apart prove stable block/trie catalogs and idle gauges after each of two block cuts (Q83b).
  * freeze  the C3-C8 fingerprint of a settled slot: the golden's freeze record.
  * verify  C1 from the clone's copy record (owner.json volumeContent.copy.c1), C2 /healthz/started and /healthz/alive,
  *         C3-C8 compared with the golden's freeze record. verdict PASS only if all eight pass.
@@ -33,7 +32,7 @@ const mode = argv[0];
 const opt = (k: string, d?: string) => (argv.includes(`--${k}`) ? argv[argv.indexOf(`--${k}`) + 1] : d);
 const url = opt("url");
 const container = opt("container");
-if (!["settle", "freeze", "verify"].includes(mode ?? "") || !url || !container) {
+if (!["settle", "freeze", "verify", "start-check", "diagnostic", "probe-write"].includes(mode ?? "") || !url || !container) {
   process.stderr.write("usage: clone-check.ts settle|freeze|verify --url URL --container CT [--manifest FILE | --golden-record FILE [--owner FILE]]\n");
   process.exit(2);
 }
@@ -56,10 +55,10 @@ const q = async (sql: string, params: unknown[] = []): Promise<any[]> => client.
 const num = (v: unknown) => (v === null || v === undefined ? null : Number(v));
 
 async function gauges() {
-  const rows = await q("SELECT name, value FROM xt.metrics_gauges WHERE name IN ('compactor.jobs.available', 'node.tx.latestCompletedTxId', 'node.tx.lag.MsgId')");
+  const rows = await q("SELECT name, value FROM xt.metrics_gauges WHERE name IN ('compactor.jobs.available', 'node.tx.latestCompletedTxId', 'node.tx.lag.MsgId', 'node.tx.latestSubmittedMsgId', 'node.tx.latestProcessedMsgId', 'xtdb.block.last_upload_time')");
   // [EXP-K01] Why: an absent gauge is missing evidence, not an idle compactor. Rejected: reducing an empty set to zero (false settle).
   const sum = (name: string) => { const found = rows.filter((r) => r.name === name); return found.length ? found.reduce((s, r) => s + Number(r.value), 0) : null; };
-  return { jobsAvailable: sum("compactor.jobs.available"), latestCompletedTxId: sum("node.tx.latestCompletedTxId"), lagMsgId: sum("node.tx.lag.MsgId"), rows: rows.length };
+  return { jobsAvailable: sum("compactor.jobs.available"), latestCompletedTxId: sum("node.tx.latestCompletedTxId"), lagMsgId: sum("node.tx.lag.MsgId"), latestSubmittedMsgId: sum("node.tx.latestSubmittedMsgId"), latestProcessedMsgId: sum("node.tx.latestProcessedMsgId"), lastUploadTime: sum("xtdb.block.last_upload_time"), rows: rows.length };
 }
 async function liveRows() {
   const rows = await q("SELECT table_name, row_count FROM xt.live_tables ORDER BY table_name");
@@ -68,41 +67,91 @@ async function liveRows() {
 // [EXP-K01] Why: the pinned node hangs reading a missing block through its memory cache (first live attempt, evidence/settle-engine.log).
 // Rejected: probing dense block numbers until three misses (the very first seed may have no completed block).
 // Enumerate only published block files through a read-only exec, then ask SQL for exactly those rows.
-async function blockFileRows(): Promise<any[]> {
+function blockListing(): string[] {
   const r = spawnSync("docker", ["-H", DOCKER_HOST, "exec", container!, "sh", "-c", "if [ -d /var/lib/xtdb/buffers/v06/blocks ]; then find /var/lib/xtdb/buffers/v06/blocks -maxdepth 1 -type f -name 'b*.binpb'; fi"], { encoding: "utf8", timeout: 30_000 });
   if (r.status !== 0) throw new Error(`block file discovery failed: ${r.stderr}`);
-  const indices = publishedBlockIndices(r.stdout ?? "");
+  return publishedBlockIndices(r.stdout ?? "");
+}
+async function blockFileRows(): Promise<any[]> {
   const rows: any[] = [];
-  for (const index of indices) {
+  for (const index of blockListing()) {
+    // [EXP-K01-R2] Why: GC can remove an old file between discovery and use (Q83c). Rejected: dense ranges or one stale listing (missing-file reads hang).
+    if (!blockListing().includes(index)) continue;
     const found = await q("SELECT block_idx, tx_id, system_time, latest_processed_msg_id, table_names, boundary_replica_msg_id, file_size FROM xt.block_files WHERE block_idx = ?", [index]);
     if (found.length !== 1) throw new Error(`published block ${index} returned ${found.length} rows`);
     rows.push(...found);
   }
   return rows;
 }
-const blockCount = async () => (await blockFileRows()).length;
-
-// ---------------------------------------------------------------- settle (Q74b)
-
+async function tries() {
+  const rows = await q("SELECT table_name, trie_key, level, trie_state, data_file_size, row_count FROM xt.trie_stats ORDER BY table_name, trie_key");
+  const normalized = rows.map(r => [r.table_name, r.trie_key, num(r.level), r.trie_state, num(r.data_file_size), num(r.row_count)]);
+  return { rows: normalized, sha256: digest(normalized) };
+}
+async function snapshot() {
+  return { listing: blockListing(), blocks: await blockFileRows(), gauges: await gauges(), trie: await tries() };
+}
+const blockNumber = (index: string) => parseInt(index.slice(1), 16);
 async function settle() {
-  const timeoutMs = Number(opt("timeout-s", "900")) * 1000;
   const started = Date.now();
-  const before = { blocks: await blockCount(), live: await liveRows(), gauges: await gauges() };
-  log(`settle: ${before.blocks} block files, ${before.live.total} live rows, compactor jobs ${before.gauges.jobsAvailable}; POST /system/finish-block`);
-  const fb = healthz("/system/finish-block", true);
-  if (fb.status !== 200) return { settled: false, reason: `finish-block answered ${fb.status}: ${fb.body}`, before, finishBlock: fb };
-  const polls: any[] = [];
-  let streak = 0;
-  while (Date.now() - started < timeoutMs) {
-    await sleep(5000);
-    const g = await gauges(), live = await liveRows(), blocks = await blockCount();
-    const ok = g.jobsAvailable === 0 && live.total === 0 && (blocks > before.blocks || before.live.total === 0);
-    polls.push({ t: Date.now() - started, jobs: g.jobsAvailable, live: live.total, blocks });
-    streak = ok ? streak + 1 : 0;
-    if (polls.length % 6 === 1 || ok) log(`settle: jobs ${g.jobsAvailable}, live rows ${live.total}, blocks ${blocks}${ok ? ` (settled reading ${streak}/3)` : ""}`);
-    if (streak >= 3) return { settled: true, waitedS: (Date.now() - started) / 1000, before, after: { blocks, live, gauges: g }, finishBlock: fb, polls };
+  const before = await snapshot();
+  const phases: any[] = [];
+  const persist = () => { if (opt("evidence")) fs.writeFileSync(opt("evidence")!, JSON.stringify({ before, phases }, (_k, v) => typeof v === "bigint" ? v.toString() : v, 2) + "\n"); };
+  persist();
+  let previous = before;
+  for (let phase = 1; phase <= Number(opt("cuts", "2")); phase++) {
+    const baseline = previous;
+    const target = baseline.listing.length ? blockNumber(baseline.listing.at(-1)!) + 1 : 0;
+    const finishBlock = healthz("/system/finish-block", true);
+    const evidence: any = { phase, target, finishBlock, polls: [] };
+    phases.push(evidence);
+    persist();
+    if (finishBlock.status !== 200) return { settled: false, reason: `finish-block #${phase} failed`, before, phases };
+    let streak = 0, stable = "";
+    const seenL0Tables = new Set<string>();
+    const requiredTables = ["tx_assertions", "tx_attempts", "tx_claims", "tx_meta", "txs"];
+    const deadline = Date.now() + (phase === 1 ? Number(opt("timeout-s", "900")) : 180) * 1000;
+    while (Date.now() < deadline) {
+      await sleep(5000);
+      const reading = await snapshot(), g = reading.gauges;
+      const block = reading.blocks.find(r => blockNumber(r.block_idx) === target);
+      for (const r of reading.trie.rows) if (r[2] === 0 && block && String(r[1]).endsWith(`-b${block.block_idx}`)) seenL0Tables.add(String(r[0]));
+      const sawL0 = requiredTables.every(table => seenL0Tables.has(table));
+      const signature = digest([reading.listing, reading.trie.sha256]);
+      const ok = !!block && num(block.tx_id) === before.gauges.latestCompletedTxId &&
+        num(block.latest_processed_msg_id) === g.latestProcessedMsgId && g.latestProcessedMsgId === g.latestSubmittedMsgId &&
+        g.lagMsgId === 0 && g.jobsAvailable === 0 && g.lastUploadTime !== null && baseline.gauges.lastUploadTime !== null &&
+        g.lastUploadTime > baseline.gauges.lastUploadTime &&
+        (phase === 1 ? sawL0 : reading.trie.sha256 === baseline.trie.sha256);
+      streak = ok ? (signature === stable ? streak + 1 : 1) : 0;
+      stable = signature;
+      evidence.polls.push({ elapsedS: (Date.now() - started) / 1000, ...reading, requiredTables, seenL0Tables: [...seenL0Tables].sort(), sawL0, ok, streak });
+      persist();
+      log(`finish-block #${phase}: jobs ${g.jobsAvailable}, block ${block?.block_idx ?? "pending"}, stable ${streak}/3`);
+      if (streak >= 3) { previous = reading; evidence.after = reading; break; }
+    }
+    if (!evidence.after) return { settled: false, reason: `finish-block #${phase} evidence did not settle`, before, phases };
   }
-  return { settled: false, reason: `not settled after ${timeoutMs / 1000} s`, before, finishBlock: fb, polls };
+  // [EXP-K01-R2] Why: #6174 leaves live_tables stale; only a fresh JVM proves zero live rows. Rejected: restarting before settling (asymmetric plans).
+  return { settled: true, waitedS: (Date.now() - started) / 1000, before, phases, after: previous };
+}
+async function startCheck(expected: any) {
+  const polls: any[] = [];
+  for (let n = 0; n < 3; n++) {
+    if (n) await sleep(5000);
+    polls.push({ gauges: await gauges(), live: await liveRows(), trie: await tries(), listing: blockListing() });
+  }
+  const logs = spawnSync("docker", ["-H", DOCKER_HOST, "inspect", "--format", "{{.State.StartedAt}}", container!], { encoding: "utf8" });
+  const out = spawnSync("docker", ["-H", DOCKER_HOST, "logs", "--since", logs.stdout.trim(), container!], { encoding: "utf8" });
+  const text = `${out.stdout}\n${out.stderr}`;
+  const resume = [...text.matchAll(/resuming after (\d+)/g)].at(-1)?.[1] ?? null;
+  const expectedMsgId = expected.gauges.latestProcessedMsgId;
+  const started = healthz("/healthz/started");
+  return { ok: started.status === 200 && resume !== null && Number(resume) === expectedMsgId && polls.every(p =>
+    p.live.total === 0 && p.gauges.jobsAvailable === 0 && p.gauges.lagMsgId === 0 &&
+    p.gauges.latestCompletedTxId === expected.gauges.latestCompletedTxId && p.trie.sha256 === expected.trie.sha256 &&
+    canonical(p.listing) === canonical(expected.listing)), started, resume, expectedMsgId, polls,
+    startLines: text.split("\n").filter(l => /starting follower:|resuming after/.test(l)) };
 }
 
 // ---------------------------------------------------------------- fingerprint (C3-C8)
@@ -160,7 +209,7 @@ async function fingerprint(manifest: any) {
         const pr = await comp.pull(ids.placement(i), basis);
         pulls.push({ subject: i, triples: pr.triples.length, entities: pr.entities, roundTrips: pr.roundTrips, digest: pullDigest(pr.triples) });
       }
-    } finally { await comp.close().catch(() => {}); }
+    } finally { await comp.close(); }
     const roots = subjects.map((i) => ids.placement(i));
     const sql = `EXPLAIN ANALYZE SELECT id, entity_id, attribute FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = ? AND entity_id IN (${roots.map(() => "?").join(", ")}) AND recorded_at <= ? AND retracted_at IS NULL AND valid_from <= ? AND (valid_to IS NULL OR valid_to > ?)`;
     const planRows = planShape(await q(sql, [scopeKey, ...roots, basis.recordedAt, basis.validAt, basis.validAt]));
@@ -184,11 +233,14 @@ async function verify() {
   const started = healthz("/healthz/started"), alive = healthz("/healthz/alive");
   checks["C2"] = { pass: started.status === 200 && alive.status === 200, observed: { started, alive }, expected: { started: 200, alive: 200 } };
   const t = Date.now();
+  const start = await startCheck(record.settle.after);
   const obs = await fingerprint(manifest);
   const polls = [obs.c7?.jobsAvailable ?? null];
   for (let k = 1; k < 3; k++) { await sleep(5000); polls.push((await gauges()).jobsAvailable); }
   (obs as any).c7 = { ...(obs.c7 ?? {}), polls };
   Object.assign(checks, compareFreeze(record.freeze, obs, manifest));
+  checks["C2"]!.pass &&= start.ok;
+  checks["C2"]!.observed = { started, alive, start };
   if (!obs.ok) for (const k of ["C3", "C4", "C5", "C6", "C7", "C8"]) if (obs.errors.some((e) => e.startsWith(k.toLowerCase()))) checks[k] = { ...checks[k]!, pass: false, note: `${checks[k]!.note}; error: ${obs.errors.find((e) => e.startsWith(k.toLowerCase()))}` };
   const verdict = Object.values(checks).every((c) => c.pass) ? "PASS" : "FAIL";
   return {
@@ -200,9 +252,12 @@ async function verify() {
 
 try {
   if (mode === "settle") print(await settle());
+  else if (mode === "start-check") print(await startCheck(readJson(opt("expected")!)));
+  else if (mode === "probe-write") print(await client.submit([{ sql: "INSERT INTO k01_r30_probe (_id, v) VALUES ('single-cut', 1)" }]));
+  else if (mode === "diagnostic") print({ snapshot: await snapshot(), live: await liveRows() });
   else if (mode === "freeze") print(await fingerprint(readJson(opt("manifest") ?? "")));
   else print(await verify());
 } finally {
-  await client.close().catch(() => {});
+  await client.close();
 }
 setTimeout(() => process.exit(0), 200).unref();

@@ -4,9 +4,7 @@
 until E1 shows that a measurement on a clone is indistinguishable from the same measurement on a fresh-seeded slot within
 the PAIR-0 hold margins. E1 needs two exclusive XTDB slots at once, so it runs in a measurement window (Q69a).
 
-The CX-K01 continuation did not create a golden: clean-stop log proof was absent. It also observed a stale live-table
-read view after finish-block, cleared by a restart. REPORT records both gaps. Resolve and review those prerequisites
-before executing this plan; the manual restart diagnostic is not an approved change to the canonical freeze protocol.
+Q83a-c adopt R30 G0-G12. Settle twice, close clients, prove the stop and offline tails/empty `.tmp`, then start a fresh JVM on every arm. The golden fingerprint comes from its source reference start after the copy. Never restart before settling. Re-test the checkpoint block and reference start when XTDB 2.2.1 is pinned (R21 E2).
 
 ## 1. Question and decision
 
@@ -27,12 +25,10 @@ before executing this plan; the manual restart diagnostic is not an approved cha
 
 | Arm | Slot | Start state | Seeded by |
 | --- | --- | --- | --- |
-| A (reference) | s3 | `xtdb-seed.ts` on a fresh s3, then `engine.mjs settle` (Q74b), then `clone-check.ts freeze` for P-a; never restarted, so it is what a fresh-seeded run measures today | `seed-writer` |
+| A (reference) | s3 | `xtdb-seed.ts` on a fresh s3, then `engine.mjs settle` (Q74b), then close clients, clean stop, offline checks and reference start; `clone-check.ts freeze` for P-a (R30 fresh-arm protocol) | `seed-writer` |
 | B (candidate) | s1 | `engine.mjs clone` of a golden made from a separate fresh seed G on s1 with the same golden key (same inputs, same system config) | `clone` |
 
-Why two seeds and not "the golden's own source restarted as arm A" (R26 6.9 step 2 starts the stopped s3 volume as it is):
-the decision is whether a clone-seeded receipt can stand in for a fresh-seeded one, and fresh-seeded receipts are never
-restarted. A restarted arm A isolates the copy from the restart, which is the diagnostic to run only if P-d fails (section 4).
+Two independent seeds compare shape across seeds; both start their windows from a fresh JVM over a settled, cleanly stopped volume (Q83b). Begin windows the same number of seconds after `/healthz/started`, because the 15-minute block timer starts with the JVM.
 
 ## 3. Steps
 
@@ -45,7 +41,7 @@ cpuset-regime slot if the regime changes any other field.
    public-queued --out runs/xtdb-seed/e1-G`; `engine.mjs golden --manifest runs/xtdb-seed/e1-G/manifest.json`; `engine.mjs
    down --lane xtdb --slot s1 --remove-volume`. Keep `golden.json`, `golden-files.json` and the manifest.
 2. **Arm A seed (before the window, s3).** `engine.mjs up --lane xtdb --slot s3 --fresh --cpuset-cpus 2-3` (or M01's slot cpuset);
-   `xtdb-seed.ts --out runs/xtdb-seed/e1-A` with the same options; `engine.mjs settle --lane xtdb --slot s3`;
+   `xtdb-seed.ts --out runs/xtdb-seed/e1-A` with the same options; `engine.mjs settle --lane xtdb --slot s3` (two block cuts); close all clients; `engine.mjs stop`; save the settle receipt's `after` as `e1-A-expected.json`; `engine.mjs offline --lane xtdb --slot s3 --expected e1-A-expected.json` checks G8 tails, empty `.tmp` and listing; `engine.mjs up` without `--fresh`; `clone-check.ts start-check --url <s3> --container tx2-xtdb-s3 --expected e1-A-expected.json` must return `ok:true` (G10);
    `clone-check.ts freeze --url <s3> --container tx2-xtdb-s3 --manifest runs/xtdb-seed/e1-A/manifest.json > e1-A-freeze.json`.
    Check that the A manifest's `seedInputs` give the same golden key as G (`goldenKey` in engine.mjs; same system config).
 3. **Window opens (Q69a).** The orchestrator arranges the required capacity and announces the window; K01 does not stop shared residents.
@@ -110,5 +106,5 @@ is usually lower, but the rule stays conservative). Two decisions for the orches
 | Step | Estimate |
 | --- | --- |
 | Golden at 10k: seed 38 to 53 min, settle under 1 min, freeze 1 to 3 min, stop, copy 1 to 2 min | about 45 to 60 min (one slot, before the window) |
-| Arm A at 10k: seed, settle, freeze | about 40 to 55 min (one slot, before the window) |
+| Arm A at 10k: seed, settle twice, stop, offline checks, start, freeze | about 40 to 55 min (one slot, before the window) |
 | Window: clone with C1-C8 (2 to 4 min), checks, duet 8 rounds x 180 s plus warm-up (about 27 min), P-e listing | about 35 to 45 min |

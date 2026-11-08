@@ -40,9 +40,9 @@
   "slots": {
     "xtdb": {
       "dev": { "port": 5470, "memBytes": 3221225472, "cpus": 2, "javaOpts": "-Xmx1500m -XX:MaxDirectMemorySize=1g", "diskForecastBytes": 4294967296, "mode": "resident" },
-      "s1": { "port": 5471, "memBytes": 3758096384, "cpus": 2, "javaOpts": "-Xmx2g -XX:MaxDirectMemorySize=1g", "diskForecastBytes": 8589934592, "mode": "exclusive" },
-      "s2": { "port": 5472, "memBytes": 3758096384, "cpus": 2, "javaOpts": "-Xmx2g -XX:MaxDirectMemorySize=1g", "diskForecastBytes": 8589934592, "mode": "exclusive" },
-      "s3": { "port": 5473, "memBytes": 3758096384, "cpus": 2, "javaOpts": "-Xmx2g -XX:MaxDirectMemorySize=1g", "diskForecastBytes": 8589934592, "mode": "exclusive" }
+      "s1": { "port": 5471, "memBytes": 3758096384, "cpus": 2, "javaOpts": "-Xmx2g -XX:MaxDirectMemorySize=1g -Dlog4j2.shutdownHookEnabled=false", "diskForecastBytes": 8589934592, "mode": "exclusive" },
+      "s2": { "port": 5472, "memBytes": 3758096384, "cpus": 2, "javaOpts": "-Xmx2g -XX:MaxDirectMemorySize=1g -Dlog4j2.shutdownHookEnabled=false", "diskForecastBytes": 8589934592, "mode": "exclusive" },
+      "s3": { "port": 5473, "memBytes": 3758096384, "cpus": 2, "javaOpts": "-Xmx2g -XX:MaxDirectMemorySize=1g -Dlog4j2.shutdownHookEnabled=false", "diskForecastBytes": 8589934592, "mode": "exclusive" }
     },
     "qlever": {
       "dev": { "port": 7070, "memBytes": 3758096384, "cpus": 2, "qleverMemory": "2000M", "diskForecastBytes": 4294967296, "mode": "resident", "note": "Raised from 2.5 GiB / 1500M on 2026-11-08: OOM-killed three times (20:57Z, 22:02Z and earlier) under several agents' shared load while its persisted delta grew; recreated with --fresh to drop the delta." },
