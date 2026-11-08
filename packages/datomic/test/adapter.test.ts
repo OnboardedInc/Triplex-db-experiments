@@ -67,7 +67,12 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")(
           try {
             expect(Buffer.from(created.db.slice(3), "base64url").toString("utf8")).toBe(scope);
             expect((await client.create(scope)).created).toBe(false);
-            expect((await client.begin(created.db)).position).toBe(0);
+            const snapshot = await client.begin(created.db);
+            try {
+              expect(snapshot.position).toBe(0);
+            } finally {
+              await client.release(created.db, snapshot.handle);
+            }
           } finally {
             const deleted = await client.delete(scope);
             console.log(JSON.stringify({ kind: "datomic-test-db-deleted", scope, ...deleted }));
