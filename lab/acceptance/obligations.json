@@ -15,7 +15,7 @@
     "lab/TARGETS.md": "cb30ffeb776a7deb0c885be2968872bcebd7dc05cca1b2cfb5913b809a804d95",
     "lab/research/SAM-pasted-numbers-2026-11-07.md": "f35a223edd83994a0ac2ebcb94f9ec7e7ea8f1a279ef23bbb69390b8c03d89f8",
     "lab/acceptance/RULINGS.md": "b3e059a2408d45035225b4e04a0ed287826cfa70b83bce56e77af4f819c2e0df",
-    "lab/acceptance/RULINGS-PENDING.md": "cfd7c0362ec56e06dfcb7b31b6f7d80d93f9854e7e28dbbda5f7623623425459",
+    "lab/acceptance/RULINGS-PENDING.md": "0b0425cdb2a5d979af27416c807868f9960bef2e9a96f465eb6eccc7d3cabcf8",
     "lab/verify/O02/v-o03/pin_scope.json": "f8897d518cb380ff64de25b02ae82f4846af313e5f2c41bbf147509fe6025a32",
     "lab/verify/O02/v-o03/hashes.8cc2c26.json": "4b221aa280eb6f2aeb1f5252d29dcef99aefc629e0388ac7468c6f1f1353b962",
     "lab/verify/D01/W0-1.1.1-ada2e90-SHA256SUMS": "bad527e280e1769a18fd2d65016e4d6bbfb4969c872dd73069cfb83637bfba4d",
@@ -2973,7 +2973,7 @@
   },
   "pendingRulings": {
     "file": "lab/acceptance/RULINGS-PENDING.md",
-    "sha256": "cfd7c0362ec56e06dfcb7b31b6f7d80d93f9854e7e28dbbda5f7623623425459",
+    "sha256": "0b0425cdb2a5d979af27416c807868f9960bef2e9a96f465eb6eccc7d3cabcf8",
     "ids": [
       "Q51b",
       "Q70a",
@@ -2988,7 +2988,16 @@
       "Q72e",
       "Q72g",
       "Q73a",
-      "Q73b"
+      "Q73b",
+      "Q70f",
+      "Q70g",
+      "Q74a",
+      "Q74b",
+      "Q74c",
+      "Q74d",
+      "Q74e",
+      "Q74f",
+      "Q74g"
     ],
     "authority": "none",
     "rule": "RULINGS-PENDING.md may hold ruling rows; they carry no authority, are never compiled into this contract and never count as compiled RULINGS.md entries; the generator records the file's hash under inputs and lists the pending ids, and their presence never invalidates generation or --verify (RULINGS Q47d)"
@@ -25554,5 +25563,5 @@
       ]
     }
   ],
-  "transitiveContractSha256": "e0220a3f19572eaf20335b6eaee475d66c42148fe1573e5c0e2b948e71b9d557"
+  "transitiveContractSha256": "caf653825ce42e4375cdc221a95ffe670d61d629aeeb282c580c955b47649d0f"
 }

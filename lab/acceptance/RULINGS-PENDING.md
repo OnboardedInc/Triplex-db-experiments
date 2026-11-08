@@ -35,3 +35,20 @@ These move into RULINGS.md when the contract version that compiles them is built
 | --- | --- | --- |
 | Q73a deep writes | A publish or receive payload of any nesting depth is copied and written exactly (A13 applies to the writer as well as the reader). W0-1.1.3 adds a synthetic publish case with a payload of 20,000 nested arrays, delivered and stored unchanged. | EXP-D01b-112 SPEC-AMBIGUITY 1 |
 | Q73b waiting at done + 1 | An inconsistent receiver snapshot with a waiting entry at done + 1 is kept as given (A15); an arriving seq equal to that entry is a duplicate, so the entry is never released. W0-1.1.3 adds a synthetic receive case: state {done 2, waiting [seq 3]}, deliveries [seq 3, seq 5]; projection applies 3 and 5, effects apply nothing, waiting [3, 5]. | EXP-D01b-112 SPEC-AMBIGUITY 2; A15 |
+
+## Q70 additions: V-O04f gaps (O-REPLAY 0.4.6)
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q70f ambiguous literal token | When the earlier reads that issued a literal token disagree in start, scope or per-prefix answers, the continuation fails closed with a typed X-NOT-MODELED "ambiguous literal token" (a fourth listed refusal site). Issuers with identical views continue as Q70d says. | V-O04f F9 |
+| Q70g journal pagination | Q70c extends to the journal: a `transactions` call whose `after` equals a `next` that an earlier transactions page issued in the same case continues that read (its start and prefixes), one answer per prefix; an `after` no earlier page issued uses the call's own read view. | V-O04f F10 |
+
+## Q74: R26 seed once, clone faithfully
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q74a who may clone | Screening and development receipts may be seeded by clone of a golden; the receipt records `seededBy: clone` with the golden key (adapter commit, world and seed-generator hash, driver seed options, image digest, engine config hash) and the golden's freeze fingerprint. Acceptance runs seed fresh (TARGETS 6). | R26 open question 2 |
+| Q74b freeze state | The canonical freeze state is settled: `POST /system/finish-block`, compactor jobs 0, live index empty. A fresh-seeded arm compared with a cloned arm settles the same way before its window. Older unsettled A0 receipts are not compared with settled ones. | R26 open question 1 |
+| Q74c validation first | No clone-seeded receipt counts, even for screening, until validation E1 passes: a fresh-seeded slot against its clone under the PAIR-0 A/A procedure, holding within 1.10 at p50 and 1.15 at p99, with R26 section 6.9's seven predictions checked. | R26 section 6.9 |
+| Q74d readiness | A cloned slot is ready only after `/healthz/started` (read with `docker exec`) and the R26 C1-C8 checks pass, then the same warm-up on every arm. | R26 risk 2 |
+| Q74e maintenance in every window | Runs that measure P1 force one `finish-block` at a fixed trace time in every window, on every arm, so a settled clone still has a maintenance event. | R26 note |
+| Q74f disk | A golden or clone is made only when host free disk after the copy stays at or above 5 GiB; clone volumes are removed after each run. At the 10k rung (3.41 GiB per XTDB volume) that allows one clone at a time today. | R26 risk 4; host 8.7 GiB free |
+| Q74g broker compositions | A broker composition clones the engine volume and the broker directory together, from one stopped moment. | R26 open question 3 |
