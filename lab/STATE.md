@@ -48,11 +48,11 @@ isolation; is Datomic dev storage acceptable for the final acceptance run, or mu
 | --- | --- | --- | --- |
 | CX-DA00 lane D bring-up (exp/DA00-datomic-bringup) | builder, Codex medium | lane D floor | Datomic image, parkable resident, gateway skeleton, G0 |
 | CX-VP2Q-3 (verify/P2Q) | reviewer, Codex high | P2, P3 | delta re-check of the broker at 957e3a3 |
-| CX-VC8-2 (verify/C8) | reviewer, Codex high | P1 | delta re-check of C8 0527233 (15/15 probes, 1,004 offline) |
-| CX-VJ01 (verify/J01) | reviewer, Codex high | P2 | verdict on J01 5cc42fb (compact encoding, default off) |
+| CX-C8-R3 (exp/C8-read-only-frontier) | builder, Codex medium | P1 | Q81b counter gaps; merge X02 fix 6cd68dc |
+| CX-J01-R2 (exp/J01-bytes-per-commit) | builder, Codex medium | P2 | Q81c default-off byte-identical; compact-on G1 waits for an exclusive slot |
 | CX-E01-R3 (exp/E01-claim-evaluator) | builder, Codex medium | floor for claims | Q81a final input checks (delta check CX-VE01-3: FIX-FIRST, one gap) |
 | CX-A01-0311 (contract/0.3.11) | builder, Codex medium | floor for claims | pin O-REPLAY 0.4.9; compile Q70, Q74-Q77, Q79, Q81; register lane D (blocked until DA00) |
-| CX-X02-R2 (exp/X02-xtql-parity) | builder, Codex medium | XTQL lane, numeric rule | Q79a-d (token guards, typed overflow, no silent rounding, unset unchanged) |
+| CX-VX02-2 (verify/X02) | reviewer, Codex high | XTQL lane, numeric rule | delta re-check of X02 6cd68dc |
 | R27 evidence sources per O-OBS protocol, three engines (planner, Opus high) | planner, Opus 5.5, high | floor: O-OBS CA01 | /Users/sam/Claude/Projects/triplex-db-2/R27/ |
 | R25 finish: SQLite pinned readers for the broker file and H1 (continuation) | planner, Opus 5.5, high | P1, P2, P4, P5 | /Users/sam/Claude/Projects/triplex-db-2/R25/ |
 | R30 provable XTDB freeze state (unblocks K01) | planner, Opus 5.5, high | measurement speed | /Users/sam/Claude/Projects/triplex-db-2/R30/ |
