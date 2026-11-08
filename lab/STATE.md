@@ -48,8 +48,8 @@ isolation; is Datomic dev storage acceptable for the final acceptance run, or mu
 | --- | --- | --- | --- |
 | CX-DA00 lane D bring-up (exp/DA00-datomic-bringup) | builder, Codex medium | lane D floor | Datomic image, parkable resident, gateway skeleton, G0 |
 | CX-VP2Q-3 (verify/P2Q) | reviewer, Codex high | P2, P3 | delta re-check of the broker at 957e3a3 |
-| CX-C8-R3 (exp/C8-read-only-frontier) | builder, Codex medium | P1 | Q81b counter gaps; merge X02 fix 6cd68dc |
-| CX-J01-R2 (exp/J01-bytes-per-commit) | builder, Codex medium | P2 | Q81c default-off byte-identical; compact-on G1 waits for an exclusive slot |
+| CX-VC8-3 (verify/C8) | reviewer, Codex high | P1 | delta re-check of C8 514c3b6 (1,024 offline, 25/25 probes) |
+| CX-VJ01-2 (verify/J01) | reviewer, Codex high | P2 | delta re-check of J01 0d9a860 for a default-off merge |
 | CX-E01-R3 (exp/E01-claim-evaluator) | builder, Codex medium | floor for claims | Q81a final input checks (delta check CX-VE01-3: FIX-FIRST, one gap) |
 | CX-A01-0311 (contract/0.3.11) | builder, Codex medium | floor for claims | pin O-REPLAY 0.4.9; compile Q70, Q74-Q77, Q79, Q81; register lane D (blocked until DA00) |
 | CX-VX02-2 (verify/X02) | reviewer, Codex high | XTQL lane, numeric rule | delta re-check of X02 6cd68dc |
