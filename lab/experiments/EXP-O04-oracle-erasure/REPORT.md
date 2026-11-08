@@ -61,3 +61,18 @@
   d25a8991...51bd; errors.py c2260e1e...34df; exact.py 4cfcf2c9...74d2a; examples/entity-mini.expected.json 9d7705a2...bd4ca; replay.py
   bf0a3476...4010; run.py 1f4b0e05...c674b; tests/helpers.py c9189d85...4cd; tests/test_contract_section4.py d4a7a03f...f3d; views.py
   0fc172e4...9eb8072 (full table in /Users/sam/Claude/Projects/triplex-db-2/EXP-O04b-oracle-0.4.2/hashes.3e38a61.txt with all evidence).
+
+## O-REPLAY 0.4.3 (45bfa59, one commit on 3e38a61; saved 2026-11-08 01:20Z)
+- F5 (Q66a): run_queries iterates pending[:k] for k = 0..n (publication order from in_flight_erasures); all-old answer first; a plain result when
+  every prefix agrees; R-ERA-6, SCHEMA.md and comments say "prefixes".
+- F6 (Q66b): every query keeps a read record (start, scope, answer per prefix); `cursorFrom` on a read with commits in flight runs once per prefix
+  using that prefix's page (run.result_of) and that read's start, output in the plain-or-inFlight form with erasuresSeen and page per alternative;
+  continuations chain; a prefix whose page failed or has no next cursor is left out; no prefix left = malformed, as before. Author's choices: the
+  continuation's own readStart is not consulted; a literal `cursor` token carries no prefix and uses the query's own read view (token encoding
+  unchanged).
+- Results: probe_q52 34 MATCH + 1 OBSERVED (3 Q66a rows MATCH; Q66b: `a` lists 2 prefixes, `b` answers plainly with pages p2, p3); 372/372 tests
+  (new test_Q66a_inflight_prefixes_only, test_Q66b_cursor_continues_per_prefix); self-check 61/61; converters 0 of 341 item differences on both
+  lanes; negative control 8/8; probe_delta_033 20/20. Refusals unchanged (run.py:53, views.py:129, entities.py:61).
+- Changed files: RULES.md 72419e34...d94f; SCHEMA.md 17a91b57...6112; entities.py e92308b6...71b3; examples/entity-mini.expected.json
+  0b846699...c71f; replay.py 3dd06dd0...9016; run.py 644a0b83...4893; tests/test_contract_section4.py 73372857...aed; views.py 2885d618...d1d32 (all
+  29 in /Users/sam/Claude/Projects/triplex-db-2/EXP-O04b-oracle-0.4.2/hashes.45bfa59.txt). V-O04e re-check running.
