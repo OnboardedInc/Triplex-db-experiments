@@ -143,3 +143,53 @@ it("applies a concurrently retried operation once and preserves its receipt afte
     out("idempotency", { dir, answers, original, head, retry, rows: firstRows.length, commitFrames: entries.length });
   } finally { await b.close(); }
 });
+
+// [EXP-SQL01] Why: a paused writer proves its lock is acquired before the marker read.
+// Rejected: relying on a random RESTART/read-to-write upgrade race to reproduce SQLITE_BUSY.
+it("reserves the write lock before reading the marker while maintenance runs", async () => {
+  const dir = fresh("write-intent");
+  fs.mkdirSync(dir, { recursive: true });
+  const gateBuffer = new SharedArrayBuffer(12), pauseBuffer = new SharedArrayBuffer(8), state = new Int32Array(pauseBuffer);
+  const needle = "const m=marker(); if(a.lsn";
+  expect(sqliteWorker.split(needle)).toHaveLength(2);
+  const instrumented = sqliteWorker.replace(needle, "const m=marker();if(a.pauseBuffer){const p=new Int32Array(a.pauseBuffer);Atomics.store(p,0,1);Atomics.notify(p,0);Atomics.wait(p,1,0);} if(a.lsn");
+  const writer = new Worker(instrumented, { eval: true, execArgv: [], workerData: { file: path.join(dir, "broker.db"), role: "writer", driver, seed: 0, gateBuffer } });
+  // [EXP-SQL01] Why: a deferred writer is also a reader, so RESTART busy alone cannot prove write intent.
+  // Rejected: asserting only checkpoint busy (passes even with the broken deferred transaction).
+  const probeWorker = sqliteWorker.replace("if(op==='init')return", "if(op==='writeIntentProbe'){try{db.exec('BEGIN IMMEDIATE;ROLLBACK');return {reserved:true};}catch(e){return {reserved:false,code:e.code};}} if(op==='init')return");
+  let checkpointer: Worker | undefined;
+  const request = (worker: Worker, op: string, args?: unknown) => new Promise<any>((resolve, reject) => {
+    const { port1, port2 } = new MessageChannel();
+    const timeout = setTimeout(() => { port1.close(); reject(Error("write-intent timeout")); }, 20_000);
+    port1.once("message", message => { clearTimeout(timeout); port1.close(); message.error ? reject(Error(message.error)) : resolve(message.result); });
+    worker.postMessage({ op, args, response: port2 }, [port2]);
+  });
+  let pending: Promise<any> | undefined;
+  try {
+    await request(writer, "init");
+    checkpointer = new Worker(probeWorker, { eval: true, execArgv: [], workerData: { file: path.join(dir, "broker.db"), role: "checkpointer", driver, seed: 0, gateBuffer } });
+    await request(checkpointer, "init");
+    expect(await request(checkpointer, "writeIntentProbe")).toEqual({ reserved: true });
+    pending = request(writer, "append", { lsn: 1, epoch: 1, kind: 0, prev: 0, crc: 7, length: 64, payload: Buffer.from("epoch-fixture"), members: [], pauseBuffer });
+    const deadline = performance.now() + 10_000;
+    while (Atomics.load(state, 0) !== 1) {
+      if (performance.now() > deadline) throw Error("writer never reached marker");
+      await new Promise(r => setTimeout(r, 1));
+    }
+    const probe = await request(checkpointer, "writeIntentProbe");
+    expect(probe).toEqual({ reserved: false, code: "SQLITE_BUSY" });
+    const held = await request(checkpointer, "checkpoint");
+    expect(held.events.at(-1)?.outcome).toBe("busy");
+    expect(held.events.at(-1)?.busy).toBe(1);
+    Atomics.store(state, 1, 1); Atomics.notify(state, 1);
+    expect((await pending).lsn).toBe(1);
+    const released = await request(checkpointer, "checkpoint");
+    expect(released.events.at(-1)?.outcome).toBe("complete");
+    out("write-intent", { dir, probe, held, released, probeWorkerSha256: hash(probeWorker), originalWorkerSha256: hash(sqliteWorker), instrumentedWorkerSha256: hash(instrumented), instrumentation: needle });
+  } finally {
+    Atomics.store(state, 1, 1); Atomics.notify(state, 1);
+    await pending?.catch(() => {});
+    if (checkpointer) { await request(checkpointer, "close"); await checkpointer.terminate(); }
+    await request(writer, "close"); await writer.terminate();
+  }
+});

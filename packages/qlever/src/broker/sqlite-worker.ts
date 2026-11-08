@@ -115,6 +115,8 @@ const checkpoint = restart => {
 };
 const append = a => {
  try {
+ // [EXP-SQL01] Why: acquire the writer lock before the marker read; maintenance may concurrently RESTART.
+ // Rejected: deferred read-to-write upgrade (SQLITE_BUSY can bypass busy_timeout and fail-stop commits).
  const result=db.transaction(()=>{
   const m=marker(); if(a.lsn!==m.lsn+1 || a.prev!==m.crc)throw Error('Append chain mismatch');
   q('INSERT INTO frames VALUES(?,?,?,?,?,?,?,?,?)').run(a.lsn,a.epoch,a.kind,m.size,m.size+a.length,a.prev,a.crc,Buffer.from(a.payload),Date.now());
@@ -136,7 +138,7 @@ const append = a => {
   }
   q('UPDATE marker SET lsn=?,epoch=?,position=?,crc=?,size=? WHERE id=1').run(a.lsn,a.epoch,position,a.crc,m.size+a.length);
   return {lsn:a.lsn,epoch:a.epoch,kind:a.kind,offset:m.size,end:m.size+a.length,crc:a.crc,payload:Buffer.from(a.payload)};
- })();
+ }).immediate();
  // [EXP-SQL01] Why: ACK only signals maintenance; it never waits for readers or runs a checkpoint.
  // Rejected: synchronous gateCheckpoint after commit (the pinned-reader regression adds 100 ms).
  if(a.lsn%25===0 && walLarge())Atomics.store(gate,2,1);return result;
@@ -197,7 +199,7 @@ const handle = (op,a) => {
   q('UPDATE marker SET h=? WHERE id=1').run(h);
   // [EXP-SQL01] Why: bound purge CPU between commit groups, keep history in recent_rows for source fallback.
   return {h,removed:q('DELETE FROM retired_rows WHERE (entity,rpos,id) IN (SELECT entity,rpos,id FROM retired_rows WHERE rpos<=? LIMIT 2000)').run(h).changes};
- })();
+ }).immediate();
  if(op==='pull')return pull(a);
  throw Error('Unknown SQLite request '+op);
 };
