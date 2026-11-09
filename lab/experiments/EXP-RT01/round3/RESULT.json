@@ -1,0 +1,45 @@
+{
+  "observedAt": "2026-11-09T05:03:58.663Z",
+  "productHead": "4b305bc8886d4bcdd73f36be65b53fda3e1846cd",
+  "sourceAndBuildBytesMatch": true,
+  "tests": {
+    "core": 863,
+    "testkit": 96,
+    "xtdb": 77,
+    "qlever": 38
+  },
+  "summaries": {
+    "matrix": {
+      "observations": 510,
+      "matches": 510
+    },
+    "pending": {
+      "observations": 80,
+      "matches": 80
+    }
+  },
+  "pendingProofs": 4,
+  "pinDrift": [
+    {
+      "location": "/oracleFilesPinned/O-TESTKIT/0",
+      "path": "packages/testkit/src/index.ts",
+      "old": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988",
+      "new": "995bc1ace5ebb9654a74e238b8860cb7e8f012a979c7c4cf86d03388efd935c7"
+    },
+    {
+      "location": "/caseSets/CS-U44/pinnedSourceFiles/0",
+      "path": "packages/testkit/src/index.ts",
+      "old": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988",
+      "new": "995bc1ace5ebb9654a74e238b8860cb7e8f012a979c7c4cf86d03388efd935c7"
+    },
+    {
+      "location": "/caseSourcesPinned/CS-U44/0",
+      "path": "packages/testkit/src/index.ts",
+      "old": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988",
+      "new": "995bc1ace5ebb9654a74e238b8860cb7e8f012a979c7c4cf86d03388efd935c7"
+    }
+  ],
+  "acceptanceAndOracleDelta": "",
+  "independentReview": false,
+  "liveG2G6Qualified": false
+}
