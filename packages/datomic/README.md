@@ -88,3 +88,26 @@ optional projections use pinned history pulls. Native route responses expose the
 chosen `history` or `live` route for qualification assertions. The G1 fixture
 also generates equivalent section layouts, clause orders and variable aliases,
 then checks exact IDs and routes; nested Triplex rules run through the same gate.
+
+The experimental native feed is `GET /v1/db/{db}/log?fromT=0&limit=1000&waitMs=0`.
+`fromT` is an inclusive physical Datomic t; `nextT` is the next inclusive checkpoint.
+Each response binds its database and lists every scanned transaction as `commit`
+or `skipped` (`non-triplex`), including schema and excision transactions. Physical
+transactions may cover several sparse Triplex positions. Report queues only wake
+polls; replay always reads `tx-range`. Limits are 1–1,000 transactions and 0–30,000 ms.
+
+`DatomicClient.log` validates response identities, order, checkpoints and feed
+payloads. Connect it to the host's `datomicChangeFeed(source, { database, stream,
+epoch, read: (t, n) => client.log(database, t, n, waitMs) })`. Bind `source`, `stream`
+and `epoch` to the provisioned database generation; a restored/replaced database
+needs a new source identity. Checkpoint consumer effects through the existing
+host `SqliteConsumerStore`; the source receives no consumer writes.
+
+The feed carries assertion identities and valid intervals, never values, envelopes
+or key identifiers. Value-only excision preserves its bytes. Identity annotations
+must remain available; removing them causes a typed refusal. Stamps use the
+transaction's Triplex `recorded-at` annotation; fractional legacy annotations are
+explicitly `pending-RT01` because the common stamp contract requires an integer.
+The route refuses `:f/erased-in` events pending ER01-D's erasure-sequence annotation.
+Offline qualification and the parked-peer runbook are in
+`lab/experiments/EXP-DF01/`; offline results do not qualify real excision or P3 lag.
