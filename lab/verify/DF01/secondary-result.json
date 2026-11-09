@@ -1,0 +1,101 @@
+{
+  "kind": "offline-secondary-verification",
+  "startedAt": "2026-11-09T08:07:03.426Z",
+  "endedAt": "2026-11-09T08:07:05.401Z",
+  "head": "bc8a5edb1701ee92b42b8249fbe14ce5f17f652d",
+  "slot": null,
+  "inputs": {
+    "pnpm-lock.yaml": "8c138ab3d1972de4660ff5e4e082250a581f13cd091ba358c62eed7521544ab3",
+    "vitest.workspace-aliases.ts": "0e79694cf7c6857eeeae4c5610652a981542594e2548c70d60ea48ff3e810ce4",
+    "packages/host/vitest.config.ts": "06942e6654a9c310c57652f2b67d7a610f1eebdd4b2654d02322258d008ea1a4",
+    "packages/host/src/feed/Adapters.ts": "ed2fc666925617d48613e52dfbe307f3866f27bc0f76f1f27af21025ed16b578",
+    "packages/host/src/feed/ConsumerStore.ts": "5622f27010ec76b32276567bd0078b8a9476f67731042de30dd1d5dbfdc26b12",
+    "packages/core/src/feed/index.ts": "60247c130e2f5a8fbf0e7235c888c594e7d299e0fb411d6bbf88c92d4d4b02f2",
+    "packages/testkit/src/feed/index.ts": "fb05fe8cdead6a161d1540e826dc64efbe8a8c380012f2be317dc0831bab69e9",
+    "packages/host/test/feed/datomic.test.ts": "4926a6720489712d1b827834d0f0b98adb4bfea9dea4e4591671e20a1ce6dd1f",
+    "packages/datomic/test/feed.test.ts": "eda60a614268eacbf9532797644e9cec685868150e4677b2c3df7ab1b6a0f02c",
+    "packages/datomic/src/DatomicClient.ts": "da67e6b05f895ec871f43818f91a133f5baf233ffb151b880b02a46d352c1256",
+    "lab/experiments/EXP-DF01/recorded-page.json": "94a90f55bdde3c5f7576ccde79c0e397983291bf805ac0af2274d2b24f80b8aa",
+    "packages/cli/package.json": "13bf2d08c70ec04e0d0239efea6cc81f3252354963163fd641ce7993c63d24c4",
+    "packages/cli/tsdown.config.ts": "912d9d34182e788d7b355d5716cd2b788b6b5e5d427bba3ccca32f539f0643d1",
+    "lab/verify/DF01/run-secondary.mjs": "4c7cc59d0fd674f670e85d48b3daca494c69fa2714eca482d3e73edf58c3abd9",
+    "lab/verify/DF01/audit-historical.mjs": "ad832ef625c2791eb89d7408ce073b1003a5df4b8804bda12ce11d0ffa8a8179"
+  },
+  "steps": [
+    {
+      "name": "focused-tests",
+      "command": "/Users/sam/.hermes/node/bin/node",
+      "args": [
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--maxWorkers=1",
+        "--no-file-parallelism",
+        "--config",
+        "packages/host/vitest.config.ts",
+        "packages/host/test/feed/datomic.test.ts",
+        "packages/datomic/test/feed.test.ts",
+        "--reporter=json",
+        "--outputFile=/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-df01/lab/verify/DF01/focused-tests.json"
+      ],
+      "startedAt": "2026-11-09T08:07:03.427Z",
+      "endedAt": "2026-11-09T08:07:04.143Z",
+      "code": 0,
+      "signal": null,
+      "error": null
+    },
+    {
+      "name": "historical-audit",
+      "command": "/Users/sam/.hermes/node/bin/node",
+      "args": [
+        "lab/verify/DF01/audit-historical.mjs"
+      ],
+      "startedAt": "2026-11-09T08:07:04.143Z",
+      "endedAt": "2026-11-09T08:07:04.236Z",
+      "code": 0,
+      "signal": null,
+      "error": null
+    },
+    {
+      "name": "cli-pack",
+      "command": "pnpm",
+      "args": [
+        "--config.store-dir=/Users/sam/projects/triplex-db-2/.pnpm-store",
+        "--filter",
+        "@triplex-build/triplex-cli",
+        "pack",
+        "--pack-destination",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VDF01/pack"
+      ],
+      "startedAt": "2026-11-09T08:07:04.236Z",
+      "endedAt": "2026-11-09T08:07:04.727Z",
+      "code": 0,
+      "signal": null,
+      "error": null
+    },
+    {
+      "name": "cli-describe",
+      "command": "/Users/sam/.hermes/node/bin/node",
+      "args": [
+        "packages/cli/dist/cli.js",
+        "describe"
+      ],
+      "startedAt": "2026-11-09T08:07:04.734Z",
+      "endedAt": "2026-11-09T08:07:05.400Z",
+      "code": 0,
+      "signal": null,
+      "error": null
+    }
+  ],
+  "tests": {
+    "passed": 4,
+    "failed": 0,
+    "skipped": 0
+  },
+  "cliTarball": {
+    "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VDF01/pack/triplex-build-triplex-cli-0.1.1.tgz",
+    "bytes": 27322,
+    "sha256": "2279a68abcf8bb67ac49dbcf045e603b27df796545676fe121ecc25924208890",
+    "requiredEntriesPresent": true,
+    "fullRootPackConsumerRun": false
+  }
+}
