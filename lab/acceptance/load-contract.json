@@ -1,6 +1,6 @@
 {
   "format": "triplex-db-2/load-contract/3",
-  "version": "0.3.12",
+  "version": "0.3.13",
   "generatedBy": "lab/acceptance/build_contract.py",
   "status": "provisional bars from lab/TARGETS.md section 1; calibration may tighten, loosening needs Sam",
   "obligations": [
@@ -168,23 +168,18 @@
     },
     "Q74b": {
       "topic": "freeze state",
-      "rule": "The canonical freeze state is settled: `POST /system/finish-block`, compactor jobs 0, live index empty. A fresh-seeded arm compared with a cloned arm settles the same way before its window. Older unsettled A0 receipts are not compared with settled ones.",
-      "basis": "R26 design item 1",
-      "supersededBy": [
-        "Q83b",
-        "Q83d",
-        "Q83e"
-      ]
+      "rule": "becomes the **recipe**: two finish-blocks, jobs-0 waits, `docker stop -t 60`, copy from a stopped container. A timeout refuses; nothing in it grants.",
+      "basis": "Q93; R36 section 6"
     },
     "Q74c": {
       "topic": "validation first",
-      "rule": "No clone-seeded receipt counts, even for screening, until validation E1 passes: a fresh-seeded slot against its clone under the PAIR-0 A/A procedure, holding within 1.10 at p50 and 1.15 at p99, with R26 section 6.9's seven predictions checked.",
-      "basis": "R26 section 6.9"
+      "rule": "No clone-seeded receipt counts, even for screening, until validation E1 passes: a fresh-seeded slot against its clone under the PAIR-0 A/A procedure, holding within 1.10 at p50 and 1.15 at p99, with R26 section 6.9's seven predictions checked. **unchanged**; E1 is rerun when the recipe, the image or the XTDB version changes",
+      "basis": "R26 section 6.9; Q93; R36 section 6"
     },
     "Q74d": {
       "topic": "readiness",
-      "rule": "A cloned slot is ready only after `/healthz/started` (read with `docker exec`) and the R26 C1-C8 checks pass, then the same warm-up on every arm.",
-      "basis": "R26 risk 2"
+      "rule": "**replaced** by Q93a/b: health precondition plus G0 in the driver; `owner.json` holds slot ownership only",
+      "basis": "Q93; R36 section 6"
     },
     "Q74e": {
       "topic": "maintenance in every window",
@@ -203,44 +198,130 @@
     },
     "Q83a": {
       "topic": "log4j flag on slots",
-      "rule": "Slots s1-s3 add `-Dlog4j2.shutdownHookEnabled=false` to javaOpts, so XTDB's shutdown hook can log `Stopping node...`, the three server-stopped lines and `Node stopped.` (Log4j's own hook otherwise drops them). The dev residents are unchanged. This changes the slot config hash and therefore every golden key; receipts before the change name the old hash.",
-      "basis": "R30 Q1, decision D1"
+      "rule": "**kept as a diagnostic aid**; no rule requires the lines",
+      "basis": "Q93; R36 section 6"
     },
     "Q83b": {
       "topic": "canonical freeze state",
-      "rule": "Settled = two finish-blocks (the second records the post-compaction catalog), compactor jobs 0, and snapshot-independent evidence (new block file whose tx_id and latest_processed_msg_id equal the node gauges, block.last_upload_time advanced, xt.trie_stats showing the new tries, file listing and trie digest unchanged over three readings 5 s apart); never `xt.live_tables` (stale shared snapshot, upstream #6174). Clean stop = exit within 10 s with the stop lines and exit 143, well-formed LOG and REPLICA_LOG tails checked offline, empty `buffers/**/.tmp` (refuse, never delete). The freeze fingerprint is taken on a reference start of the source after the copy, and every arm, fresh or cloned, starts the same way. Re-test the second finish-block and the reference start when XTDB 2.2.1 is pinned.",
-      "basis": "R30 Q2, Q3, Q5; decision D2"
+      "rule": "**superseded by Q93a**: the steps stay in the recipe, their readings become diagnostics; `xt.live_tables` is read only on a freshly started node (K3)",
+      "basis": "Q93; R36 section 6"
     },
     "Q83c": {
       "topic": "block listing",
-      "rule": "Never read a block that may not exist (MemoryCache hangs the caller): list `buffers/v06/blocks/b*.binpb` first and query `xt.block_files` only for listed indices, re-listing just before each query; block numbers are not dense (GC keeps the latest 10).",
-      "basis": "R30 Q4"
+      "rule": "kept for diagnostic tools; B never reads `xt.block_files`",
+      "basis": "Q93; R36 section 6"
     },
-    "Q83d": {
-      "topic": "settle evidence after fast compaction",
-      "rule": "Settle evidence does not require observing L0 tries: compaction may merge them before the first poll. Settled means the new block's tx_id and latest_processed_msg_id equal the node gauges, xt.trie_stats covers that block at whatever level it now sits, compactor jobs 0, and the file listing and trie digest are unchanged over three readings 5 s apart.",
-      "basis": "K01 round 2 (G3 blocked by fast compaction)"
+    "Q93a": {
+      "topic": "process evidence refuses, never grants",
+      "rule": "For seed reuse on every lane, the only evidence that grants admission is a content fingerprint (G0) read through the engine by the process that will measure, on the endpoint it measures, before its warm-up, compared with a digest pinned before the freeze began (and with O-DOMAIN where one exists). Every other observation (stop, settle, log tails, frontiers, inspect, stderr, timers, owner state, copy hashes, plan hashes, disk) is refusal-only or a diagnostic, and no decision reads a diagnostic.",
+      "basis": "R36 section 6"
     },
-    "Q83e": {
-      "topic": "three frontiers",
-      "rule": "Settle evidence records three values separately and never equates them: (a) the block-cut frontier F, the immutable block's latest_processed_msg_id; (b) the settled replay frontier M, the processed watcher after maintenance drains (lag 0, jobs 0, tries stable, over the Q83d polls); (c) the stable application transaction T. F < M is accepted only when every source message in (F, M] is read from the stopped log tail and is a maintenance message (TriesAdded, compactor output), never an application transaction; T is unchanged across the window. The final stopped log tails and the reference and clone resume are bound to M. Exact reference/clone equality and the two-start catalog checks stay. This replaces the part of Q83d that refused every F < M.",
-      "basis": "XTDB c6c1962: BlockCutter.kt:235, 280-295; SourceMessage.kt:139-147; Compactor.kt:150-152; SourceLogProcessor.kt:142, 199-211; Database.kt:375-387"
+    "Q93b": {
+      "topic": "G0 for K01",
+      "rule": "Fields, pinning point and counts as in sections 2.1 and 3.2; every read has a deadline; the golden is published only after two starts of a clone each reproduce `D` and the layout digest `L`.",
+      "basis": "R36 section 6"
+    },
+    "Q93c": {
+      "topic": "two digests",
+      "rule": "G0 admits a clone by the full digest D over every stored column (byte-level identity with its golden). E1, which compares a clone with a fresh seed of the same inputs, uses a second digest D' over the same columns with engine-assigned values normalized: engine-generated ids and system timestamps are replaced by their rank in commit order, and every other column is kept as is. A fresh seed must match the golden's D', never its D. The normalization list is part of the G0 module, each entry with a comment naming the engine source that assigns it, and a test fails if a column is normalized without one.",
+      "basis": "CX-K01-R2 round 8"
     }
   },
   "freezeProtocol": {
     "precedence": [
-      "Q83b",
+      "Q93a",
+      "Q93b",
+      "Q93c"
+    ],
+    "grant": "G0 content fingerprint only; read in the measuring process on its measured endpoint before warm-up every run",
+    "pinBefore": "after last seed commit, before first finish-block",
+    "cloneDigest": "D: every stored column, byte-level identity to golden",
+    "freshSeedDigest": "D-prime: same columns; only engine-assigned ids/system timestamps normalized to rank in commit order; every normalization has an engine-source comment and a test",
+    "scope": "all seed-scope assertions (all value/lifetime columns), claims, attempts; tx_meta enumerates every scope",
+    "counts": "independent COUNT(*) equals closed-form manifest counts; tx_meta holds only the seed scope; W0 worlds and R2 outputs equal O-DOMAIN",
+    "deadlines": "every read has a deadline; timeout refuses",
+    "goldenPublication": "two starts of a qualification clone each reproduce D and L before golden publication",
+    "recipe": [
+      "finish-block",
+      "jobs-0 wait",
+      "finish-block",
+      "jobs-0 wait",
+      "docker stop -t 60",
+      "copy from stopped container"
+    ],
+    "refusalOnly": [
+      "current golden key",
+      "copy tree hash",
+      "started-node quiescence: jobs 0 over three readings, live rows 0, layout L, transaction T, lag 0",
+      "Triplex lastPosition",
+      "first warm-up commit lastPosition + 1",
+      "end counts start plus recorded commands",
+      "resource/disk floor"
+    ],
+    "diagnostics": [
+      "stop/log lines",
+      "settle readings",
+      "F",
+      "M",
+      "log tails",
+      "inspect",
+      "stderr",
+      "timers",
+      "owner state",
+      "plan hashes"
+    ],
+    "ownerJson": "slot ownership only; no readiness admission",
+    "blockListing": "diagnostic tools only; B never reads xt.block_files",
+    "e1": "fresh D-prime equals golden D-prime; PAIR-0 A/A p50 <= 1.10 and p99 <= 1.15; rerun on recipe/image/XTDB version changes",
+    "retired": [
       "Q83d",
       "Q83e"
+    ]
+  },
+  "qleverEvidencePolicy": {
+    "performance": [
+      "P1",
+      "P4",
+      "P5",
+      "GS"
     ],
-    "frontiers": {
-      "F": "block-cut latest_processed_msg_id",
-      "M": "settled replay processed watcher",
-      "T": "stable application transaction"
-    },
-    "maintenanceGap": "F < M requires stopped-tail proof that every message in (F, M] is maintenance, with unchanged T",
-    "resumeBoundTo": "M",
-    "legacyRule": "Q74b is historical; never use xt.live_tables or require F == M"
+    "required": [
+      "built base index",
+      "declared rebuild threshold",
+      "base triple count",
+      "delta triple count",
+      "delta in touched blocks"
+    ],
+    "deltaOnly": "DIAGNOSTIC",
+    "freshResetAsDeltaPolicy": false,
+    "phase0": "copy on exclusive slot, never shared resident",
+    "phase1": "10M-triple base; scan/join versus delta, monotonic and spread keys",
+    "phase2": "blue/green generations rebuilt from broker log; leases bind every multi-request read to one generation; Q89i byte identity across every swap",
+    "feed": "log",
+    "perGraphDeltaBound": "rejected: shared server blocks"
+  },
+  "goldenScenarioPolicy": {
+    "before040": "DIAGNOSTIC",
+    "closesObligation": false,
+    "entersComparison": false,
+    "world": "W0-valid; domain claims checked by O-DOMAIN or fail closed; W01 retired",
+    "background": "frozen TARGETS 2.1 trace via W0 mapper; private writerTrace retired",
+    "everyWindow": [
+      "one burst",
+      "one maintenance event"
+    ],
+    "admission": [
+      "per-run G0",
+      "fresh scope or verified clone",
+      "start/end store counts",
+      "QLever Q91a counts"
+    ],
+    "GS04b": "required exactly when a separate current store exists",
+    "GS04": "engine-kill schedule every lane, exclusive only",
+    "outbox": "product atomic outbox for GS.10 and GS.19; harness file only diagnostic P3 checks",
+    "GS10": "round C after A/B race required for closure",
+    "GS03": "W0-1.2 signal-ack pending implementation; superseded outcome flagged for Sam",
+    "acceptanceSize": "Q94a pending; TARGETS unchanged"
   },
   "perSurface": "P1, P4 and P5 run separately in each lane language (xtdb-xtql, xtdb-sql, qlever-sparql, datomic-datalog query and pull); P2 and P3 run per engine; a mixed-language run is a diagnostic only",
   "measurements": {

@@ -1,0 +1,23 @@
+test_amendments_applied (__main__.Contract0313.test_amendments_applied) ... ok
+test_diff_hunk_review (__main__.Contract0313.test_diff_hunk_review) ... ok
+test_evaluator_assertions_unchanged (__main__.Contract0313.test_evaluator_assertions_unchanged) ... ok
+test_every_consumer (__main__.Contract0313.test_every_consumer) ... ok
+test_freeze_load_projection (__main__.Contract0313.test_freeze_load_projection) ... ok
+test_g0_binding_and_freshness (__main__.Contract0313.test_g0_binding_and_freshness) ... ok
+test_gs_never_closes_or_compares (__main__.Contract0313.test_gs_never_closes_or_compares) ... ok
+test_image_slots_and_projection (__main__.Contract0313.test_image_slots_and_projection) ... ok
+test_literal_rulings (__main__.Contract0313.test_literal_rulings) ... ok
+test_oracle_objects_unchanged (__main__.Contract0313.test_oracle_objects_unchanged) ... ok
+test_pending_exact_rows_preserved (__main__.Contract0313.test_pending_exact_rows_preserved) ... ok
+test_q88_unchanged (__main__.Contract0313.test_q88_unchanged) ... ok
+test_qlever_evidence_policy (__main__.Contract0313.test_qlever_evidence_policy) ... ok
+test_retirement (__main__.Contract0313.test_retirement) ... ok
+test_self_checks (__main__.Contract0313.test_self_checks) ... ok
+test_testkit_pin_projections (__main__.Contract0313.test_testkit_pin_projections) ... ok
+test_two_digests (__main__.Contract0313.test_two_digests) ... ok
+test_version (__main__.Contract0313.test_version) ... ok
+
+----------------------------------------------------------------------
+Ran 18 tests in 0.430s
+
+OK

@@ -1,0 +1,4 @@
+[lab] G0-xtdb-20261108T215858Z-977834: raw output runs/G0/G0-xtdb-20261108T215858Z-977834
+[lab] heavy: waiting for one of 4 slots; held by pid 67168 "R25-nosweep-b-r4", pid 35596 "CX-VX02-2-delta-live", pid 50198 "DA00-G0-final-source", pid 54453 "CX-A01-0311-regressions"
+PASS G0 xtdb scope=full executed=1013 pass=1013 fail=0 skip=130
+receipt: lab/runs/G0/G0-xtdb-20261108T215858Z-977834.json

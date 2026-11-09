@@ -1,0 +1,23 @@
+slot         port  cap            state            ready  mem       holder                                           
+xtdb-dev     5470  3.00 GiB/2cpu  running/healthy  READY  2.27 GiB  worktree:/Users/sam/projects/triplex-db-2 EXP-000
+xtdb-s1      5471  3.50 GiB/2cpu  -                -      -         -                                                
+xtdb-s2      5472  3.50 GiB/2cpu  -                -      -         -                                                
+xtdb-s3      5473  3.50 GiB/2cpu  -                -      -         -                                                
+qlever-dev   7070  3.50 GiB/2cpu  running/healthy  READY  1.27 GiB  EXP-000                                          
+qlever-s1    7071  3.50 GiB/2cpu  -                -      -         -                                                
+qlever-s2    7072  3.50 GiB/2cpu  -                -      -         -                                                
+qlever-s3    7073  3.50 GiB/2cpu  -                -      -         -                                                
+datomic-dev  8470  2.75 GiB/2cpu  running/healthy  READY  2.19 GiB  EXP-DA01 EXP-DA01                                
+datomic-s1   8471  3.50 GiB/3cpu  -                -      -         -                                                
+datomic-s2   8472  3.50 GiB/3cpu  -                -      -         -                                                
+datomic-s3   8473  3.50 GiB/3cpu  -                -      -         -                                                
+
+pool: 9.25 GiB of 11.00 GiB reserved; disk 16.96 GiB used + 12.00 GiB forecast of 50.00 GiB
+  reservation tx2-xtdb-dev 3.00 GiB 2cpu state=running holder=EXP-W01
+  reservation tx2-qlever-dev 3.50 GiB 2cpu state=running holder=EXP-000
+  reservation tx2-datomic-dev 2.75 GiB 2cpu state=running holder=EXP-DA01
+  retained volume tx2-qlever-dev-data 0 MiB holder=worktree:/Users/sam/projects/triplex-db-2 note=retained by engine down (default)
+  retained volume tx2-xtdb-s2-data 3.87 GiB holder=EXP-P4 note=CX-P4: inherited 10k measurement completed; retain volume, release exclusive slot
+  retained volume tx2-datomic-dev-data 48 MiB holder=EXP-DA01 note=DA01 transaction annotation fallback and basis map; preserve volume
+  retained volume tx2-qlever-s1-data 0 MiB holder=CX-OBS01 note=EXP-OBS01 revised cancellation probe; retain state and first-failure log
+  retained volume tx2-xtdb-s1-data 0 MiB holder=CX-OBS01 note=EXP-OBS01 final fresh-key source-bound diagnostic; retain state

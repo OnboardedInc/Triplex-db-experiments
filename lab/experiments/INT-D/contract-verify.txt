@@ -1,0 +1,2 @@
+CONTRACT INVALID:
+Q61i: lab/config/slots.json lane images must agree with the contract's IMAGE_PINS

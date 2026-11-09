@@ -62,10 +62,6 @@ These move into RULINGS.md when the contract version that compiles them is built
 ## Q91: the QLever lane reads from a built index (from R35)
 | Q | Ruling | Basis |
 | --- | --- | --- |
-| Q91a built base, bounded delta | QLever-lane performance evidence (P1, P4, P5, GS) counts only from a server whose data sits mostly in a built base index with a delta bounded by a declared rebuild threshold. Every QLever receipt records base triple count, delta triple count and the delta in the blocks the measured scans touched. The lane's design (R2, R8, R13, R17) always assumed this; nothing built or measured it, and qlever-dev's base holds 1 triple. Earlier QLever latency numbers from delta-only servers are DIAGNOSTIC. | R35 sections 1-3 |
-| Q91b stop dropping data with --fresh | qlever-dev is no longer reset with --fresh as a delta policy; delta growth on shared residents is handled by the rebuild loop of Q91c once it is qualified. | R35 3 |
-| Q91c generations from the log | EXP-QG1 (lab/experiments/EXP-QG1-qlever-generations/) builds the rebuild loop: phase 1 on an exclusive slot measures scan and join cost against delta size (monotonic and spread keys) on a 10M-triple base and picks the threshold; phase 2 rebuilds blue/green index generations from the broker log, with reader leases so one multi-request read stays on one generation, and checks Q89i byte identity across every swap. The feed stays the log. Bounding the delta per graph is rejected (all graphs share one server's blocks). | R35 5 |
-| Q91d phase 0 on a copy | The first rebuild-index runs on a copy of qlever-dev's data on an exclusive slot, not on the shared resident, because several reviews read qlever-dev live and upstream bug #3172 can make a rebuild fail. | orchestrator |
 
 ## Q92: release activation sweep (P5, from R34; lab/research/R34-p5-sweep-brief.md section 8)
 | Q | Ruling | Basis |
@@ -83,38 +79,15 @@ These move into RULINGS.md when the contract version that compiles them is built
 | Q92k | The W0 trace mapper drives W0-valid commands on the swept scope from the frozen trace schedule; its source hash is bound; its first use starts a new comparison series (TARGETS 2.1 item 5) | R34 k; moves P5, P1 |
 
 ## Q93: seed reuse is admitted by content, not by process evidence (R36, lab/research/R36-k01-simplification.md section 6)
-The table below is R36 section 6 verbatim (old rule, its status, new text). Q83d and Q83e are retired by Q93a; Q83a stays as a diagnostic aid.
+Q93a-c and the original amendment table are compiled in 0.3.13; Q83d/e retired. Q92c/g remain pending and unchanged.
 
 | Ruling | Today | Proposed |
 |---|---|---|
-| Q93a process evidence refuses, never grants | n/a | For seed reuse on every lane, the only evidence that grants admission is a content fingerprint (G0) read through the engine by the process that will measure, on the endpoint it measures, before its warm-up, compared with a digest pinned before the freeze began (and with O-DOMAIN where one exists). Every other observation (stop, settle, log tails, frontiers, inspect, stderr, timers, owner state, copy hashes, plan hashes, disk) is refusal-only or a diagnostic, and no decision reads a diagnostic. |
-| Q93b G0 for K01 | n/a | Fields, pinning point and counts as in sections 2.1 and 3.2; every read has a deadline; the golden is published only after two starts of a clone each reproduce `D` and the layout digest `L`. |
-| change to Q74a golden key | refuse a stale key | **unchanged** (refusal-only) |
-| change to Q74b canonical freeze state | settled: finish-block, jobs 0, live index empty | becomes the **recipe**: two finish-blocks, jobs-0 waits, `docker stop -t 60`, copy from a stopped container. A timeout refuses; nothing in it grants. |
-| change to Q74c E1 first | no clone receipt counts until E1 passes | **unchanged**; E1 is rerun when the recipe, the image or the XTDB version changes |
-| change to Q74d readiness | `/healthz/started` plus C1-C8 PASS stored in `owner.json` | **replaced** by Q93a/b: health precondition plus G0 in the driver; `owner.json` holds slot ownership only |
-| change to Q74e, Q74f, Q74g | maintenance event in the window; disk floor; broker compositions copy together | unchanged |
-| change to Q83a Log4j flag | required so the stop lines appear | **kept as a diagnostic aid**; no rule requires the lines |
-| change to Q83b settle and clean-stop evidence | gating evidence | **superseded by Q93a**: the steps stay in the recipe, their readings become diagnostics; `xt.live_tables` is read only on a freshly started node (K3) |
-| change to Q83c block listing | never read an unlisted block | kept for diagnostic tools; B never reads `xt.block_files` |
-| change to Q83d settle after fast compaction | gating predicate | **retired** |
-| change to Q83e three frontiers F, M, T | gating, with a stopped-tail proof for (F, M] | **retired**; F and M recorded as diagnostics, T checked on the clone (K3) |
-| change to Q92c, Q92g (P5 fingerprint) | "freshly seeded or fingerprint-verified clone"; G0 after every seed or clone | unchanged; Q93a makes K01 conform to them |
-| `load-contract.json` lines 174-234 | binds Q83b, Q83d, Q83e precedence and the F/M/T schema | replace with the Q93a/b binding in the next contract version |
 
 ## Q94: golden scenarios (from R37, lab/research/R37-golden-scenario-readiness.md section 5)
 | Q | Ruling | Basis |
 | --- | --- | --- |
 | Q94a (waits for Sam) | GS acceptance runs at the largest W0 rung each lane's chosen composition fits on one exclusive slot within the 50 GiB pool disk limit (expected: 100k for broker and QLever `cur` compositions; 10k for XTDB-replica and Datomic compositions unless the forecast is raised per run, Q92i). Year-one volumes are reported as a projection next to the measured rung, never as a pass. This loosens TARGETS 6 rule 3, so it waits for Sam; until he rules, GS stays OPEN at acceptance | R37 a; TARGETS threshold policy; R34 sizes; SCOPE 3.2 (state an engine limit plainly) |
-| Q94b | Every GS stream is W0-valid and every domain claim a scenario names is checked by O-DOMAIN; a scenario whose spec names a domain claim and whose run makes no such check fails closed. The W01 world vocabulary is retired | R37 b; GATE-W0; TARGETS 6 rule 2 |
-| Q94c | The GS background is the frozen TARGETS 2.1 trace through the W0 trace mapper (Q92k); the private writerTrace is retired; every measured window holds one burst and one maintenance event | R37 c; TARGETS 1.1 P1 item 3, 2.1 |
-| Q94d | GS world admission follows Q93a: a G0 content fingerprint per run; a fresh scope or verified clone per run; store counts at start and end; on lane Q the Q91a counts | R37 d; Q93a, Q92c, Q91a |
-| Q94e | Every GS receipt before contract 0.4.0 is DIAGNOSTIC: none closes an obligation or enters a comparison. The GS.12 defect and the W01b harness findings stay as defect reports | R37 e; Q90f, Q91a, Q93a |
-| Q94f | GS.04b applies only to compositions with a separate current store; on those it is required. GS.04's engine-kill schedule is required on every lane and runs only on an exclusive slot | R37 f; TARGETS 4.1 item 6; Q31e |
-| Q94g | GS.19's outbox and GS.10's publications must be the product's atomic outbox; a harness-side outbox file can pass only GS.19's P3 checks, as a diagnostic | R37 g; TARGETS 3 (atomic path to the outbox); Q42c |
-| Q94h | GS.10's race (in-flight reconciles finish on the old release) is scheduled as EXP-P5 round C, right after rounds A and B, and is required for GS.10 to close | R37 h; Q92j; TARGETS 6 row 10 |
-| Q94i (orchestrator; the superseded outcome flagged for Sam) | GS.03's vendor-revision rule goes into W0-1.2 with an O-DOMAIN `signal-ack` operation; the `superseded` outcome stays flagged for Sam | R37 i; TARGETS 6.1; W0 lacks it |
-| Q93c two digests | G0 admits a clone by the full digest D over every stored column (byte-level identity with its golden). E1, which compares a clone with a fresh seed of the same inputs, uses a second digest D' over the same columns with engine-assigned values normalized: engine-generated ids and system timestamps are replaced by their rank in commit order, and every other column is kept as is. A fresh seed must match the golden's D', never its D. The normalization list is part of the G0 module, each entry with a comment naming the engine source that assigns it, and a test fails if a column is normalized without one. | CX-K01-R2 round 8 |
 
 ## Q95: erasure (EXP-ER01, from R38, lab/research/R38-erasure-design.md)
 | Q | Ruling | Basis |

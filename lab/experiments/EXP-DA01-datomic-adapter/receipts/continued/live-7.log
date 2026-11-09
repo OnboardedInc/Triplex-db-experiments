@@ -1,0 +1,9 @@
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/da01
+
+
+ Test Files  3 passed (3)
+      Tests  41 passed (41)
+   Start at  17:44:33
+   Duration  2.81s (tests 72%, import 19%, transform 9%)
+

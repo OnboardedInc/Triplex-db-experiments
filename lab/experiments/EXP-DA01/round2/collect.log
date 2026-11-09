@@ -1,0 +1,195 @@
+{
+  "head": "e622b3b3ab5412f612794c5685b6b18051dff991",
+  "gates": [
+    {
+      "runId": "G0-datomic-20261108T233120Z-f0f378",
+      "head": "f709873a9617fbf18683eba07b86105226baa354",
+      "previous": null,
+      "verdict": "PASS",
+      "counts": {
+        "executed": 1093,
+        "pass": 1093,
+        "fail": 0,
+        "skip": 57,
+        "expectedSkip": 57,
+        "unexpectedSkip": 0
+      },
+      "deletedDatabases": 0
+    },
+    {
+      "runId": "G0-datomic-20261108T233519Z-40e1f0",
+      "head": "339b2058f1d0d3f40fb9f5560fa5ca4fde2ce6cb",
+      "previous": "G0-datomic-20261108T233120Z-f0f378",
+      "verdict": "PASS",
+      "counts": {
+        "executed": 1093,
+        "pass": 1093,
+        "fail": 0,
+        "skip": 57,
+        "expectedSkip": 57,
+        "unexpectedSkip": 0
+      },
+      "deletedDatabases": 0
+    },
+    {
+      "runId": "G0-datomic-20261108T233708Z-08597f",
+      "head": "9a7c837238855fe132b177f5248aba197846efd1",
+      "previous": "G0-datomic-20261108T233519Z-40e1f0",
+      "verdict": "PASS",
+      "counts": {
+        "executed": 1093,
+        "pass": 1093,
+        "fail": 0,
+        "skip": 57,
+        "expectedSkip": 57,
+        "unexpectedSkip": 0
+      },
+      "deletedDatabases": 0
+    },
+    {
+      "runId": "G0-datomic-20261108T234411Z-39ad84",
+      "head": "e622b3b3ab5412f612794c5685b6b18051dff991",
+      "previous": "G0-datomic-20261108T233708Z-08597f",
+      "verdict": "PASS",
+      "counts": {
+        "executed": 1093,
+        "pass": 1093,
+        "fail": 0,
+        "skip": 57,
+        "expectedSkip": 57,
+        "unexpectedSkip": 0
+      },
+      "deletedDatabases": 0
+    },
+    {
+      "runId": "G1-datomic-20261108T233149Z-55311d",
+      "head": "f709873a9617fbf18683eba07b86105226baa354",
+      "previous": null,
+      "verdict": "FAIL",
+      "counts": {
+        "executed": 88,
+        "expected": 88,
+        "pass": 2,
+        "fail": 86,
+        "skip": 0,
+        "suite": "FAIL",
+        "byPhase": {
+          "current": {
+            "pass": 1,
+            "total": 44
+          },
+          "reopen": {
+            "pass": 1,
+            "total": 44
+          }
+        }
+      },
+      "deletedDatabases": 89
+    },
+    {
+      "runId": "G1-datomic-20261108T233453Z-0af668",
+      "head": "339b2058f1d0d3f40fb9f5560fa5ca4fde2ce6cb",
+      "previous": "G1-datomic-20261108T233149Z-55311d",
+      "verdict": "FAIL",
+      "counts": {
+        "executed": 88,
+        "expected": 88,
+        "pass": 26,
+        "fail": 62,
+        "skip": 0,
+        "suite": "FAIL",
+        "byPhase": {
+          "current": {
+            "pass": 13,
+            "total": 44
+          },
+          "reopen": {
+            "pass": 13,
+            "total": 44
+          }
+        }
+      },
+      "deletedDatabases": 89
+    },
+    {
+      "runId": "G1-datomic-20261108T234023Z-80b0be",
+      "head": "9a7c837238855fe132b177f5248aba197846efd1",
+      "previous": "G1-datomic-20261108T233453Z-0af668",
+      "verdict": "PASS",
+      "counts": {
+        "executed": 88,
+        "expected": 88,
+        "pass": 88,
+        "fail": 0,
+        "skip": 0,
+        "suite": "PASS",
+        "byPhase": {
+          "current": {
+            "pass": 44,
+            "total": 44
+          },
+          "reopen": {
+            "pass": 44,
+            "total": 44
+          }
+        }
+      },
+      "deletedDatabases": 89
+    },
+    {
+      "runId": "G1-datomic-20261108T234745Z-c6de65",
+      "head": "e622b3b3ab5412f612794c5685b6b18051dff991",
+      "previous": "G1-datomic-20261108T234023Z-80b0be",
+      "verdict": "PASS",
+      "counts": {
+        "executed": 88,
+        "expected": 88,
+        "pass": 88,
+        "fail": 0,
+        "skip": 0,
+        "suite": "PASS",
+        "byPhase": {
+          "current": {
+            "pass": 44,
+            "total": 44
+          },
+          "reopen": {
+            "pass": 44,
+            "total": 44
+          }
+        }
+      },
+      "deletedDatabases": 89
+    },
+    {
+      "runId": "G1-datomic-20261108T234916Z-200550",
+      "head": "e622b3b3ab5412f612794c5685b6b18051dff991",
+      "previous": "G1-datomic-20261108T234745Z-c6de65",
+      "verdict": "PASS",
+      "counts": {
+        "executed": 88,
+        "expected": 88,
+        "pass": 88,
+        "fail": 0,
+        "skip": 0,
+        "suite": "PASS",
+        "byPhase": {
+          "current": {
+            "pass": 44,
+            "total": 44
+          },
+          "reopen": {
+            "pass": 44,
+            "total": 44
+          }
+        }
+      },
+      "deletedDatabases": 89
+    }
+  ],
+  "imageId": "sha256:1af4d8bcf83ca61459ea9f3beec576d50565da91fbde935ea977e8e217190312",
+  "health": {
+    "datomicVersion": "1.0.7745",
+    "gatewaySourceHash": "d1a6b21cca7171d4a1377cfa634f17f00185140ff17ee9b0929f39ae8649bd98"
+  }
+}

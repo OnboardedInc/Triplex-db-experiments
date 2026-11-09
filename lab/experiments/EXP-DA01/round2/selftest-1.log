@@ -1,0 +1,6 @@
+
+Testing triplex.gateway.selftest
+
+Ran 6 tests containing 135 assertions.
+0 failures, 0 errors.
+{"test":6,"pass":135,"fail":0,"error":0,"type":"summary"}

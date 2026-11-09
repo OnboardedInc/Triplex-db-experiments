@@ -1,0 +1,6 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 21467 "CX-P5A-A0-10k", pid 10108 "CX-P2Q-R8-final", pid 7473 "CX-G03-r3-claim-suites4", pid 4587 "CX-RQ01-round3-a3"
+[lab] heavy: waiting for one of 4 slots; held by pid 21467 "CX-P5A-A0-10k", pid 10108 "CX-P2Q-R8-final", pid 7473 "CX-G03-r3-claim-suites4", pid 4587 "CX-RQ01-round3-a3"
+[lab] G1-datomic-20261109T010729Z-f49dcd: raw output runs/G1/G1-datomic-20261109T010729Z-f49dcd
+PASS G1 datomic/dev scope=full executed=88 pass=88 fail=0 skip=0
+profile: default; planner budget: null
+receipt: lab/runs/G1/G1-datomic-20261109T010729Z-f49dcd.json

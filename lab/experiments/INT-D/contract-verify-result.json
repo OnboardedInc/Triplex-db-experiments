@@ -1,0 +1,10 @@
+{
+  "command": [
+    "python3",
+    "-I",
+    "lab/acceptance/build_contract.py",
+    "--verify"
+  ],
+  "exitCode": 1,
+  "output": "CONTRACT INVALID:\nQ61i: lab/config/slots.json lane images must agree with the contract's IMAGE_PINS\n"
+}

@@ -24,7 +24,7 @@ import { effectiveConfig, probe } from './engine.mjs';
 import { acquireHeavy } from './heavy-lock.mjs';
 import { RUN_KINDS, caseLanguages, contractClaims, tallyLanguages, verdictOf } from './receipt.mjs';
 import {
-  REPO, MAIN, defaultHolder, vmDisk, docker, dockerStats, fail, inspect, listTx2Containers, loadSlots, main, now, parseArgs,
+  REPO, MAIN, LOCKS, defaultHolder, vmDisk, docker, dockerStats, fail, inspect, listTx2Containers, loadSlots, main, now, parseArgs,
   readJson, readOwner, runLogged, withDirLock, sha256, sha256File, slotInfo, sourceIdentity, storeFile, storeObject, treeFiles, volumeBytes,
 } from './lib.mjs';
 
@@ -38,14 +38,17 @@ const PACKAGES = {
   qualification: { filter: '@triplex-build/triplex-qualification', dir: 'packages/qualification' },
 };
 const lanePackages = (lane, gate) => ['core', 'testkit', lane, 'qualification', ...(gate === 'GS' ? ['w0'] : [])];
+// [EXP-A01-0313-R2] Why: dry-run and execution share W02's GS policy and DA01's G0/G1 admission. Rejected: admitting Datomic for unimplemented G2/G4/NS routes or losing its GS lane.
+const gateLanes = gate => gate === 'GS' ? GS_LANES : ['xtdb', 'qlever', ...(['G0', 'G1'].includes(gate) ? ['datomic'] : [])];
 const EXPECTED_SKIPS = path.join(REPO, 'lab/config/g0-expected-skips.json');
 const PACKET = 'qualification/workloads/temporal-workloads.json';
 const FULL_G2_EXECUTIONS = 142;
 const FULL_G1_CASES = 44;
 
 // Environment flags that turn live tests on; G0 removes them so its skip list is deterministic.
-const LIVE_FLAGS = ['XTDB_INTEGRATION', 'QLEVER_INTEGRATION', 'TRIPLEX_INTEGRATION', 'TRIPLEX_CONFORMANCE_CASES', 'XTDB_CONFORMANCE_CASES', 'TRIPLEX_DUCKDB'];
-const ENGINE_ENV = ['XTDB_URL', 'QLEVER_URL', 'QLEVER_ACCESS_TOKEN', 'QLEVER_ACCESS_TOKEN_FILE', 'TRIPLEX_BACKEND', 'TRIPLEX_QUERY_PATH',
+// [EXP-A01-0313-R2] Why: G0 clears both Datomic and W02 broker/live overrides; either parent's environment list alone leaks the other lane's settings. Rejected: choosing one whole conflict side.
+const LIVE_FLAGS = ['DATOMIC_INTEGRATION', 'XTDB_INTEGRATION', 'QLEVER_INTEGRATION', 'TRIPLEX_INTEGRATION', 'TRIPLEX_CONFORMANCE_CASES', 'XTDB_CONFORMANCE_CASES', 'TRIPLEX_DUCKDB'];
+const ENGINE_ENV = ['DATOMIC_URL', 'DATOMIC_GATEWAY_URL', 'XTDB_URL', 'QLEVER_URL', 'QLEVER_ACCESS_TOKEN', 'QLEVER_ACCESS_TOKEN_FILE', 'TRIPLEX_BACKEND', 'TRIPLEX_QUERY_PATH',
   'QLEVER_COMMIT_PATH', 'QLEVER_BROKER_DIR', 'TRIPLEX_RESOURCE_ADMISSION', 'TRIPLEX_RESOURCE_ADMISSION_SHA256', 'TRIPLEX_RUN_ARTIFACTS', 'TRIPLEX_RUN_DIRECTORY', 'TRIPLEX_LAB_SLOT_OWNER'];
 const cleanEnv = extra => {
   const env = { ...process.env };
@@ -76,11 +79,20 @@ class Run {
   async step(name, command, args, { cwd = REPO, env, heavy = false, timeoutMs } = {}) {
     const safe = name.replace(/[^a-z0-9.-]+/gi, '-');
     const stdoutFile = this.raw(`${safe}.stdout.txt`), stderrFile = this.raw(`${safe}.stderr.txt`);
-    const release = heavy ? await acquireHeavy(`${this.runId} ${name}`) : () => {};
+    // [EXP-DA01] Why: the required heavy.mjs wrapper already owns the whole Datomic gate; a second permit can starve its build. Rejected: raising the pool limit.
+    let parentGrant;
+    if (heavy && this.lane === 'datomic') {
+      for (let slot = 1; slot <= 4; slot++) {
+        const file = path.join(LOCKS, 'heavy', String(slot), 'owner.json');
+        const owner = readJson(file, null);
+        if (owner?.pid === process.ppid) { parentGrant = { slot, owner, proof: this.store(file, 'heavy-parent-grant') }; break; }
+      }
+    }
+    const release = heavy && !parentGrant ? await acquireHeavy(`${this.runId} ${name}`) : () => {};
     let result;
     try { result = await runLogged(command, args, { cwd, env: env ?? cleanEnv(), stdoutFile, stderrFile, timeoutMs }); }
     finally { release(); }
-    const record = { name, ...result, cwd: this.rel(cwd) || '.', stdout: this.rel(stdoutFile), stderr: this.rel(stderrFile) };
+    const record = { name, ...(parentGrant ? { parentGrant } : {}), ...result, cwd: this.rel(cwd) || '.', stdout: this.rel(stdoutFile), stderr: this.rel(stderrFile) };
     this.steps.push(record);
     if (result.code !== 0) {
       const tail = (fs.readFileSync(stderrFile, 'utf8') + fs.readFileSync(stdoutFile, 'utf8')).trim().split('\n').slice(-15).join('\n');
@@ -396,10 +408,45 @@ async function gateG1(run, config) {
   if (run.options.cases) args.push('--cases', String(run.options.cases));
   const { result, step, bound } = await engineGate(run, config, { name: 'lab-conformance', queryPath: `${run.lane}-datalog`, args, timeoutMs: 45 * 60_000 });
   if (!bound) return result;
-  result.fixtures = fileHashes(run, ['packages/testkit/src/index.ts', 'packages/qualification/workloads/lab-conformance.ts'], 'oracle-fixture');
+  result.fixtures = fileHashes(run, ['packages/testkit/src/index.ts', 'packages/qualification/workloads/lab-conformance.ts', ...(run.lane === 'datomic' ? ['packages/testkit/src/routeEquivalence.ts', 'packages/testkit/src/routeHistory.ts', 'packages/datomic/test/route-equivalence.test.ts', 'packages/datomic/test/query-route-matrix.ts', 'packages/datomic/test/canonical-query-properties.ts', ...fs.readdirSync(path.join(REPO, 'lab/oracles/replay')).filter(name => name.endsWith('.py')).map(name => `lab/oracles/replay/${name}`)] : [])], 'oracle-fixture');
   const report = readJson(output, null);
   if (!report) { run.reason('no G1 report written'); run.failure({ step: step.name, tail: step.tail }); return result; }
   run.store(output, 'raw-outcome');
+  // [EXP-DA01] Why: each G1 scope owns a separate database and peer resources. Rejected: leaving 89 live databases per run.
+  if (run.lane === 'datomic') {
+    const cleanup = [];
+    for (const scope of new Set([report.suite?.scope, ...(report.executions ?? []).map(e => e.scope)].filter(Boolean))) {
+      try {
+        const response = await fetch(`${bound.info.endpoint}/v1/db/delete`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ scope }), signal: AbortSignal.timeout(5000) });
+        const body = await response.json();
+        cleanup.push({ scope, status: response.status, body });
+        if (!response.ok || body.deleted !== true) run.reason(`Datomic test database cleanup failed: ${scope}`);
+      } catch (error) { cleanup.push({ scope, error: String(error) }); run.reason(`Datomic cleanup transport failure: ${scope}`); }
+    }
+    run.storeBytes(Buffer.from(JSON.stringify(cleanup, null, 2) + '\n'), 'test-database-cleanup', 'datomic G1 cleanup');
+    fs.writeFileSync(run.raw('datomic-cleanup.json'), JSON.stringify(cleanup, null, 2) + '\n');
+  }
+
+  // [EXP-DA01] Why: Q89f requires oracle-backed route equivalence whenever lane D read routes change. Rejected: calling G1's unchanged 44 cases sufficient coverage for physical-route pins.
+  if (run.lane === 'datomic') {
+    const routeOutput = run.raw('route-equivalence.json');
+    const routes = await run.step('route-equivalence', process.execPath,
+      ['node_modules/vitest/vitest.mjs', 'run', 'packages/datomic/test/route-equivalence.test.ts', '--disableConsoleIntercept', '--silent=false', '--reporter=json', '--outputFile', routeOutput],
+      { heavy: true, timeoutMs: 180000, env: cleanEnv({ DATOMIC_INTEGRATION: '1', DATOMIC_GATEWAY_URL: bound.info.endpoint, DATOMIC_ROUTE_EVIDENCE_DIR: run.raw('route-oracle'), TRIPLEX_LAB_SLOT_OWNER: bound.info.ownerFile }) });
+    const qualified = readJson(routeOutput, null);
+    if (routes.code !== 0 || !qualified?.success || qualified.numPassedTests !== 1 || qualified.numFailedTests !== 0 || qualified.numPendingTests !== 0)
+      run.reason('Datomic route-equivalence gate failed or did not execute its one live fixture');
+    if (qualified) run.store(routeOutput, 'route-equivalence-result');
+    const evidence = fileHashes(run, treeFiles(run.raw('route-oracle')).map(f => f.path), 'route-equivalence-oracle');
+    if (Object.keys(evidence).length !== 6) run.reason('Route-equivalence fixture did not retain both oracle runs and route observations');
+    const afterRoutes = hashDist(run, 'route-build-manifest-after.json');
+    for (const [pkg, value] of Object.entries(afterRoutes.packages))
+      if (value.sha256 !== result.build.packages[pkg]?.sha256) run.reason(`${pkg} dist changed during route-equivalence gate`);
+    result.routeEquivalence = { report: run.rel(routeOutput), passed: qualified?.numPassedTests ?? 0, evidence };
+    const still = inspect(bound.info.container);
+    if (still?.Id !== bound.engine.containerId || still?.State.StartedAt !== bound.engine.startedAt) run.reason('Datomic resident changed during route-equivalence gate');
+  }
+
   result.contactedEndpoint = report.endpoint;
   if (report.endpoint !== bound.info.endpoint) run.reason(`G1 contacted ${report.endpoint}, slot is ${bound.info.endpoint}`);
   if (report.caseCount !== FULL_G1_CASES) run.reason(`suite has ${report.caseCount} cases, expected ${FULL_G1_CASES}`);
@@ -693,14 +740,14 @@ main(async () => {
   // qualify would execute, without locks, builds or engines. OBL (run an obligation's pinned case manifest on a slot) exists
   // only as a plan: no executable case manifests are pinned yet, so it never runs.
   if (options['dry-run']) {
-    if (!['G0', 'G1', 'G2', 'G4', 'NS', 'GS', 'OBL'].includes(gate) || !(gate === 'GS' ? GS_LANES : ['xtdb', 'qlever']).includes(options.lane)) fail('USAGE', 'usage: gate.mjs G0|G1|G2|G4|NS|GS|OBL --lane xtdb|qlever --slot S --dry-run [--plan FILE]');
+    if (!['G0', 'G1', 'G2', 'G4', 'NS', 'GS', 'OBL'].includes(gate) || !gateLanes(gate).includes(options.lane)) fail('USAGE', 'usage: gate.mjs G0|G1|G2|G4|NS|GS|OBL --lane xtdb|qlever|datomic --slot S --dry-run [--plan FILE]');
     const info = slotInfo(loadSlots(), options.lane, options.slot ?? 'dev');
     console.log(JSON.stringify({ dryRun: true, gate, lane: options.lane, slot: info.slot, endpoint: info.endpoint, container: info.container, mode: info.mode ?? null,
       plan: options.plan ? readJson(path.resolve(options.plan)) : null, executes: gate !== 'OBL', missing: gate === 'OBL' ? 'the OBL gate (run pinned case manifests on a slot) is not implemented' : null }));
     return;
   }
-  if (!['G0', 'G1', 'G2', 'G4', 'NS', 'GS'].includes(gate) || !(gate === 'GS' ? GS_LANES : ['xtdb', 'qlever']).includes(options.lane))
-    fail('USAGE', 'usage: gate.mjs G0|G1|G2|G4|NS|GS --lane xtdb|qlever [--slot dev] [--exp EXP-NNN] [--note TEXT] [--previous RUN-ID] [--cases N] [--workloads 01,02]\n  NS: --rung 10k|100k|1m|10m [--slot s1] [--ns-profile smoke|screening|acceptance] [--zero-readers [--match-duration-s S]] [--baseline RUN-ID] [--composition public]\n  GS: [--scenario 2,3] [--rung 10k] [--readers 16]');
+  if (!['G0', 'G1', 'G2', 'G4', 'NS', 'GS'].includes(gate) || !gateLanes(gate).includes(options.lane))
+    fail('USAGE', 'usage: gate.mjs G0|G1|G2|G4|NS|GS --lane xtdb|qlever|datomic [--slot dev] [--exp EXP-NNN] [--note TEXT] [--previous RUN-ID] [--cases N] [--workloads 01,02]\n  NS: --rung 10k|100k|1m|10m [--slot s1] [--ns-profile smoke|screening|acceptance] [--zero-readers [--match-duration-s S]] [--baseline RUN-ID] [--composition public]\n  GS: [--scenario 2,3] [--rung 10k] [--readers 16]');
   const config = loadSlots();
   // [EXP-000] runKind defaults to diagnostic so an unlabelled run can never close anything (V12, B7).
   const runKind = options['run-kind'] ?? 'diagnostic';

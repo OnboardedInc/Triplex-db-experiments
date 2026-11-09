@@ -1,0 +1,6 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 77455 "CX-VC8-2-offline-rerun", pid 44149 "CX-VO04I-review", pid 50657 "CX-VJ01-recovery-frontier", pid 77453 "CX-VC8-2-original-rerun"
+[lab] G0-datomic-20261108T214521Z-c3e3a3: raw output runs/G0/G0-datomic-20261108T214521Z-c3e3a3
+error: could not write index
+[lab] heavy: waiting for one of 4 slots; held by pid 86340 "CX-VO04I-supplement", pid 80186 "DA00-G0-D", pid 50657 "CX-VJ01-recovery-frontier", pid 82310 "CX-VC8-2-light-live"
+PASS G0 datomic scope=full executed=1017 pass=1017 fail=0 skip=46
+receipt: lab/runs/G0/G0-datomic-20261108T214521Z-c3e3a3.json

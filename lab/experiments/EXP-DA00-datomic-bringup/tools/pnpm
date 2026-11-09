@@ -1,0 +1,3 @@
+#!/bin/sh
+# [EXP-DA00] Why: pnpm 10 rejects --store-dir for run; --config.store-dir binds the identical owned store for gate subprocesses. Rejected: pnpm config set (rewrites shared config).
+exec /opt/homebrew/bin/pnpm --config.store-dir=/Users/sam/projects/triplex-db-2/.pnpm-store "$@"

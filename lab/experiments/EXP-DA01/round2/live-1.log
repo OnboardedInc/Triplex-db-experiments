@@ -1,0 +1,123 @@
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/da01
+
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"public-78e568d9-9f44-4c61-b249-c4e0fb5bdcf1\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJwdWJsaWMtNzhlNTY4ZDktOWY0NC00YzYxLWIyNDktYzRlMGZiNWJkY2YxIiwwXQ","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"public-78e568d9-9f44-4c61-b249-c4e0fb5bdcf1\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJwdWJsaWMtNzhlNTY4ZDktOWY0NC00YzYxLWIyNDktYzRlMGZiNWJkY2YxIiwwXQ","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"prod\",\"租户/😀\",\"quote\\\" slash/\\\\ lone\\ud800-6db03ca9-3346-4e9c-a31b-4f6e8b354cde\",9007199254740991]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwicHJvZCIsIuenn-aIty_wn5iAIiwicXVvdGVcIiBzbGFzaC9cXCBsb25lXHVkODAwLTZkYjAzY2E5LTMzNDYtNGU5Yy1hMzFiLTRmNmU4YjM1NGNkZSIsOTAwNzE5OTI1NDc0MDk5MV0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"prod\",\"租户/😀\",\"quote\\\" slash/\\\\ lone\\ud800-6db03ca9-3346-4e9c-a31b-4f6e8b354cde\",9007199254740991]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwicHJvZCIsIuenn-aIty_wn5iAIiwicXVvdGVcIiBzbGFzaC9cXCBsb25lXHVkODAwLTZkYjAzY2E5LTMzNDYtNGU5Yy1hMzFiLTRmNmU4YjM1NGNkZSIsOTAwNzE5OTI1NDc0MDk5MV0","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-ccc06c64-5a1a-4ea4-bebe-a979c99003cb\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWNjYzA2YzY0LTVhMWEtNGVhNC1iZWJlLWE5NzljOTkwMDNjYiIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-ccc06c64-5a1a-4ea4-bebe-a979c99003cb\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWNjYzA2YzY0LTVhMWEtNGVhNC1iZWJlLWE5NzljOTkwMDNjYiIsMF0","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\" staging \",\"﻿x\",\"\\n4b62d47c-aca4-408c-9e6e-05099c327d7b\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwiIHN0YWdpbmcgIiwi77u_eCIsIlxuNGI2MmQ0N2MtYWNhNC00MDhjLTllNmUtMDUwOTljMzI3ZDdiIiwwXQ","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-7351d660-45b2-4c2a-9d7f-d1430df7ef71\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLTczNTFkNjYwLTQ1YjItNGMyYS05ZDdmLWQxNDMwZGY3ZWY3MSIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\" staging \",\"﻿x\",\"\\n4b62d47c-aca4-408c-9e6e-05099c327d7b\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwiIHN0YWdpbmcgIiwi77u_eCIsIlxuNGI2MmQ0N2MtYWNhNC00MDhjLTllNmUtMDUwOTljMzI3ZDdiIiwwXQ","deleted":true}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-7351d660-45b2-4c2a-9d7f-d1430df7ef71\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLTczNTFkNjYwLTQ1YjItNGMyYS05ZDdmLWQxNDMwZGY3ZWY3MSIsMF0","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-e1976e93-af33-4bf8-9df9-f7758e1c2c36\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWUxOTc2ZTkzLWFmMzMtNGJmOC05ZGY5LWY3NzU4ZTFjMmMzNiIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-e1976e93-af33-4bf8-9df9-f7758e1c2c36\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWUxOTc2ZTkzLWFmMzMtNGJmOC05ZGY5LWY3NzU4ZTFjMmMzNiIsMF0","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-d1eff5a0-b747-413d-ba09-9cbc25d539aa\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWQxZWZmNWEwLWI3NDctNDEzZC1iYTA5LTljYmMyNWQ1MzlhYSIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-d1eff5a0-b747-413d-ba09-9cbc25d539aa\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWQxZWZmNWEwLWI3NDctNDEzZC1iYTA5LTljYmMyNWQ1MzlhYSIsMF0","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-5c2052d4-4474-4f6b-94b1-24b544038c3c\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLTVjMjA1MmQ0LTQ0NzQtNGY2Yi05NGIxLTI0YjU0NDAzOGMzYyIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-5c2052d4-4474-4f6b-94b1-24b544038c3c\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLTVjMjA1MmQ0LTQ0NzQtNGY2Yi05NGIxLTI0YjU0NDAzOGMzYyIsMF0","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-9ffd4f9e-ce03-4d81-8db3-d22b7cd11cfd\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLTlmZmQ0ZjllLWNlMDMtNGQ4MS04ZGIzLWQyMmI3Y2QxMWNmZCIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-9ffd4f9e-ce03-4d81-8db3-d22b7cd11cfd\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLTlmZmQ0ZjllLWNlMDMtNGQ4MS04ZGIzLWQyMmI3Y2QxMWNmZCIsMF0","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-b7f43cd7-358f-4259-a120-c0964e86eb0a\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWI3ZjQzY2Q3LTM1OGYtNDI1OS1hMTIwLWMwOTY0ZTg2ZWIwYSIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-b7f43cd7-358f-4259-a120-c0964e86eb0a\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWI3ZjQzY2Q3LTM1OGYtNDI1OS1hMTIwLWMwOTY0ZTg2ZWIwYSIsMF0","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-86c405be-1fda-4ed4-9720-1457854bb3c7\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLTg2YzQwNWJlLTFmZGEtNGVkNC05NzIwLTE0NTc4NTRiYjNjNyIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-86c405be-1fda-4ed4-9720-1457854bb3c7\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLTg2YzQwNWJlLTFmZGEtNGVkNC05NzIwLTE0NTc4NTRiYjNjNyIsMF0","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-26a8562e-8a9b-4552-a042-2ca98fc737c4\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLTI2YTg1NjJlLThhOWItNDU1Mi1hMDQyLTJjYTk4ZmM3MzdjNCIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-26a8562e-8a9b-4552-a042-2ca98fc737c4\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLTI2YTg1NjJlLThhOWItNDU1Mi1hMDQyLTJjYTk4ZmM3MzdjNCIsMF0","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-ea1fd90c-7341-47f6-80b3-5b33eabfe8c0\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWVhMWZkOTBjLTczNDEtNDdmNi04MGIzLTViMzNlYWJmZThjMCIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-ea1fd90c-7341-47f6-80b3-5b33eabfe8c0\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWVhMWZkOTBjLTczNDEtNDdmNi04MGIzLTViMzNlYWJmZThjMCIsMF0","deleted":true}
+ ❯ packages/datomic/test/adapter.test.ts (11 tests | 11 failed) 10645ms
+   ❯ Datomic storage transaction boundary (11)
+     × accepts exactly public constructor scopes with reversible database names 5004ms
+     × reads speculative inserts and retractions without publishing them 941ms
+     × rolls back nested failures while preserving the parent 918ms
+     × rejects identity reuse without replacing the original 511ms
+     × resolves an acknowledgement lost after durable submission 514ms
+     × returns an identifiable unknown outcome within the resolution budget 425ms
+     × returns the original transaction id for a duplicate command 623ms
+     × preserves signed zero and int64 bounds and rejects noncanonical integers 624ms
+     × replays one safe callback after a concurrent scope conflict 409ms
+     × queries the speculative delta through native Datalog 357ms
+     × reconstructs intermediate logical cuts and mixed timestamps in one physical commit 318ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > accepts exactly public constructor scopes with reversible database names
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ packages/datomic/test/adapter.test.ts:46:5
+     44|     }
+     45|     // [EXP-DA01] Why: use the public constructor's actual canonical b…
+     46|     it("accepts exactly public constructor scopes with reversible data…
+       |     ^
+     47|       const client = new DatomicClient(url, 10000);
+     48|       const scopes = [
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > reads speculative inserts and retractions without publishing them
+ FAIL  packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > rolls back nested failures while preserving the parent
+ FAIL  packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > rejects identity reuse without replacing the original
+ FAIL  packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > resolves an acknowledgement lost after durable submission
+ FAIL  packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > returns the original transaction id for a duplicate command
+ FAIL  packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > preserves signed zero and int64 bounds and rejects noncanonical integers
+ FAIL  packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > replays one safe callback after a concurrent scope conflict
+ FAIL  packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > queries the speculative delta through native Datalog
+ FAIL  packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > reconstructs intermediate logical cuts and mixed timestamps in one physical commit
+WriteError: Cannot acquire Datomic source cut
+ ❯ packages/datomic/src/DatomicStorageAdapter.ts:224:26
+    222|           const snapshot = yield* read(() => client.begin(db)).pipe(
+    223|             Effect.mapError(
+    224|               (cause) => new WriteError({ message: "Cannot acquire Dat…
+       |                          ^
+    225|             ),
+    226|           );
+ ❯ node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:3378:72
+ ❯ PrimitiveImpl.~effect/Effect/args node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1057:95
+ ❯ PrimitiveImpl.~effect/Effect/evaluate node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:980:22
+ ❯ FiberImpl.runLoop node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:653:41
+ ❯ FiberImpl.evaluate node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:594:23
+ ❯ FiberImpl.evaluate node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:588:27
+ ❯ node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1158:17
+ ❯ node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1121:16
+
+Caused by: ReadError: Datomic read failed
+ ❯ catch packages/datomic/src/DatomicStorageAdapter.ts:43:25
+ ❯ node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:777:40
+ ❯ ~effect/Utils/internal node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Utils.js:71:14
+ ❯ PrimitiveImpl.~effect/Effect/args node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:777:21
+ ❯ PrimitiveImpl.~effect/Effect/evaluate node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:707:22
+ ❯ FiberImpl.runLoop node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97
+ ❯ FiberImpl.evaluate node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:400:23
+ ❯ FiberImpl.evaluate node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:394:27
+ ❯ node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:806:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { _tag: 'ReadError' }
+Caused by: Error: Could not find s-72251788af16c57104961735fea2a17c in catalog
+ ❯ IncomingMessage.<anonymous> packages/datomic/src/DatomicClient.ts:103:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { status: 400, code: 'GatewayError', _tag: 'DatomicHttpError' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > returns an identifiable unknown outcome within the resolution budget
+AssertionError: expected WriteError: Cannot acquire Datomic source… { _tag: '…' } to be an instance of TransactionOutcomeUnknown
+ ❯ packages/datomic/test/adapter.test.ts:165:23
+    163|           a.withTransaction(insert(a, "hang")).pipe(Effect.flip),
+    164|         );
+    165|         expect(error).toBeInstanceOf(TransactionOutcomeUnknown);
+       |                       ^
+    166|         if (error instanceof TransactionOutcomeUnknown) {
+    167|           expect(error.operationId).toBeTruthy();
+ ❯ withStore packages/datomic/test/adapter.test.ts:37:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  11 failed | 100 passed (111)
+   Start at  18:31:38
+   Duration  11.08s (tests 92%, import 6%, transform 3%)
+

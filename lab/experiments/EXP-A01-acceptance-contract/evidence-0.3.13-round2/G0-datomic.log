@@ -1,0 +1,4 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 93141 "CX-VP5A-r2-count-parity", pid 92930 "CX-VER01S-R3-baseline", pid 93212 "CX-P2X2-bare-smoke-r2", pid 92305 "CX-VP5A-r2-page-publisher"
+[lab] G0-datomic-20261109T040114Z-8dc16e: raw output runs/G0/G0-datomic-20261109T040114Z-8dc16e
+PASS G0 datomic scope=full executed=1253 pass=1253 fail=0 skip=66
+receipt: lab/runs/G0/G0-datomic-20261109T040114Z-8dc16e.json

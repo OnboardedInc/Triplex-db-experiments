@@ -145,3 +145,12 @@ retaining every owner in the plan. Engine-only nonretirement events remain pendi
 checks the exact executed plan; it never reconstructs default append horizons.
 Standalone `measureRouteCoverage` without a plan is structural diagnostic data and
 cannot return `complete: true`.
+
+## Datomic route fixture (EXP-DA01)
+
+`makeRouteEquivalenceCases` compares fixture-provided routes at the same named
+basis with an independent oracle, verifies declared refusals, route provenance and
+basis echoes, then repeats after the fixture advances history. Fixtures supply the oracle and advance hook; `makeRouteEquivalenceScenario(seed)`
+supplies a shared bounded history and named bases. The Datomic fixture exercises a
+bounded six-subject, forty-position history against O-REPLAY; broader profiles can
+reuse the runner. It does not replace the unchanged Triples conformance suite.

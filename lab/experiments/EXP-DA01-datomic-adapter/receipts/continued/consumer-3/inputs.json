@@ -1,0 +1,12 @@
+{
+  "scriptSha256": "898fc525b7aad75524c48ec3f2f736799585399f152b30d713ebdc238f7343fa",
+  "core": {
+    "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/da01/runs/pack/DA01/triplex-pack-nBA1J3/tarballs/triplex-build-triplex-0.2.0.tgz",
+    "sha256": "02204a1107762b9374c8c5f6e45783cd4bd39e753ed6b2f479cee2d791529505"
+  },
+  "datomic": {
+    "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/da01/lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/package/triplex-build-triplex-datomic-0.1.0.tgz",
+    "sha256": "e04d8ebd3f7a20fd21d74fcdc0a6f52a56bb74a06e06722baa8287133b14dcb4"
+  },
+  "result": "PASS"
+}

@@ -1,0 +1,95 @@
+{
+  "at": "2026-11-08T22:43:30.973Z",
+  "scriptSha256": "65913c4568f5e466746a084c2f8fa4653124e152cdb1f54199b9bf1715b0467a",
+  "health": {
+    "datomicVersion": "1.0.7745",
+    "gatewaySourceHash": "964c58ead14530e7f687a7a6639fe4a35bb4fdbaf9d37bab9b1b1e1efa9b76e5"
+  },
+  "imageId": "sha256:e17aa3fc258b15b78f0d831ed252db7ae4baac77342b445bbd3c8d3358588f73",
+  "measurements": [
+    {
+      "facts": 5,
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da01\",\"datoms-5-19d9ad09-8dc6-49e3-a0ca-eca02f87b194\",0]",
+      "created": {
+        "db": "s-6547509780b587b30772970954ca0971",
+        "created": true,
+        "schemaHash": "d12389fbc5d53f8b8a1a59acd32db4a6d88145f30d49f6aac5d18f56c393dadd"
+      },
+      "commit": {
+        "t": {
+          "t": "long",
+          "v": "1003"
+        },
+        "position": {
+          "t": "long",
+          "v": "1"
+        },
+        "datoms": 54
+      },
+      "readback": {
+        "count": 5,
+        "exact": true
+      },
+      "deleted": {
+        "db": "s-6547509780b587b30772970954ca0971",
+        "deleted": true
+      }
+    },
+    {
+      "facts": 10,
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da01\",\"datoms-10-20f5a9d4-85f2-4178-8672-45ffc07cf8b5\",0]",
+      "created": {
+        "db": "s-3bea24f927b77f8f5f1d5b94084a1b37",
+        "created": true,
+        "schemaHash": "d12389fbc5d53f8b8a1a59acd32db4a6d88145f30d49f6aac5d18f56c393dadd"
+      },
+      "commit": {
+        "t": {
+          "t": "long",
+          "v": "1003"
+        },
+        "position": {
+          "t": "long",
+          "v": "1"
+        },
+        "datoms": 99
+      },
+      "readback": {
+        "count": 10,
+        "exact": true
+      },
+      "deleted": {
+        "db": "s-3bea24f927b77f8f5f1d5b94084a1b37",
+        "deleted": true
+      }
+    },
+    {
+      "facts": 50,
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da01\",\"datoms-50-f1af6871-6a9b-4ca1-845d-4d6d1af6ed3f\",0]",
+      "created": {
+        "db": "s-c4639f5dd96742a05d15f6828cb6dd60",
+        "created": true,
+        "schemaHash": "d12389fbc5d53f8b8a1a59acd32db4a6d88145f30d49f6aac5d18f56c393dadd"
+      },
+      "commit": {
+        "t": {
+          "t": "long",
+          "v": "1003"
+        },
+        "position": {
+          "t": "long",
+          "v": "1"
+        },
+        "datoms": 459
+      },
+      "readback": {
+        "count": 50,
+        "exact": true
+      },
+      "deleted": {
+        "db": "s-c4639f5dd96742a05d15f6828cb6dd60",
+        "deleted": true
+      }
+    }
+  ]
+}

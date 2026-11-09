@@ -1,0 +1,1 @@
+[lab] REFUSED: pool refuses selftest: memory: 10.75 GiB reserved + 1.50 GiB requested = 12.25 GiB > pool 11.00 GiB

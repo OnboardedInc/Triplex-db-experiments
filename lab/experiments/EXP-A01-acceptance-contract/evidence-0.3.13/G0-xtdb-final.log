@@ -1,0 +1,4 @@
+[lab] G0-xtdb-20261109T031500Z-f3d20d: raw output runs/G0/G0-xtdb-20261109T031500Z-f3d20d
+[lab] heavy: waiting for one of 4 slots; held by pid 87374 "CX-OBS01-ER01S-R2-final", pid 86622 "CX-P2Q-R9-journal-retry", pid 87450 "CX-VGS12F-round2", pid 87857 "CX-A01-0313-G0-xtdb-final"
+PASS G0 xtdb scope=full executed=1218 pass=1218 fail=0 skip=137
+receipt: lab/runs/G0/G0-xtdb-20261109T031500Z-f3d20d.json

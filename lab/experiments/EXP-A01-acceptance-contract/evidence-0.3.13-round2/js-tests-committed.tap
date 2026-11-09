@@ -1,0 +1,52 @@
+TAP version 13
+# Subtest: both admission paths use the merged lane matrix
+ok 1 - both admission paths use the merged lane matrix
+  ---
+  duration_ms: 0.857625
+  type: 'test'
+  ...
+# Subtest: cleanEnv clears both parents live, broker, admission and planner overrides
+ok 2 - cleanEnv clears both parents live, broker, admission and planner overrides
+  ---
+  duration_ms: 0.588125
+  type: 'test'
+  ...
+# Subtest: dry-run admits Datomic G0/G1/GS without an engine, rejects unsupported routes
+ok 3 - dry-run admits Datomic G0/G1/GS without an engine, rejects unsupported routes
+  ---
+  duration_ms: 566.00525
+  type: 'test'
+  ...
+# Subtest: automatic and manual merge retain W02 GS and DA01 parent-grant bodies
+ok 4 - automatic and manual merge retain W02 GS and DA01 parent-grant bodies
+  ---
+  duration_ms: 32.26325
+  type: 'test'
+  ...
+# Subtest: Q94e refuses every GS kind before any engine or build can grant admission
+ok 5 - Q94e refuses every GS kind before any engine or build can grant admission
+  ---
+  duration_ms: 5.225625
+  type: 'test'
+  ...
+# Subtest: Q94e also refuses mixed executing claims, without changing document-only structural checks
+ok 6 - Q94e also refuses mixed executing claims, without changing document-only structural checks
+  ---
+  duration_ms: 0.165375
+  type: 'test'
+  ...
+# Subtest: Q93/Q91 policy projections and Q94 held acceptance size stay explicit
+ok 7 - Q93/Q91 policy projections and Q94 held acceptance size stay explicit
+  ---
+  duration_ms: 0.442792
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 675.435625
