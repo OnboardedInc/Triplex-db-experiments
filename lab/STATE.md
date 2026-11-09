@@ -226,3 +226,11 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - Queued small task (from K01 r13): lab/bin/*.mjs are not semantically type-checked, so an unbound name (sha256File) inside an unexecuted
   branch passed 437 tests. Enable TypeScript checkJs over every lab/bin and lab/bench JavaScript file, triage the diagnostics, and fail
   the lab check on unbound names.
+- 2026-11-09 R43 (critical path to the first PASS) adopted. First PASS candidate: NS.P3 on the broker log source (all-QLever(+log)
+  column; one closure also covers P2B's broker+XTDB column). Longest chain is the qualification machinery: R44 NS-run design, G03 rounds
+  5-7, G03 slot run, M01 A/A, A0 under PAIR-0, contract 0.4.1, calibration, prerequisite claims, three acceptance runs, verifier (about 12
+  rounds, about 16 slot hours). Orchestrator rulings Q99a-e pending; scale window reordered by Q99d: RT01 live (running), G03 slot run,
+  M01 A/A duet, OBS01, P3 screening, A0 under PAIR-0, calibration, acceptance; then K01 live, P5 A1, W02, DA04.
+- **Ask Sam first (both block every NS cell):** Q99-S1 the NS rung (largest W0 rung each composition fits on one slot; year-one reported
+  as a projection; NS.P5 scoped release stays at 100k), asked with Q94a; and the host half of Q60: may acceptance windows of 1 to 3 hours
+  pause his default colima VM (his Onboarded stack) and other heavy host jobs, since absolute bars count only in GREEN windows.
