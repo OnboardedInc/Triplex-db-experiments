@@ -1,0 +1,18 @@
+#!/usr/bin/env bpftrace
+// W0 clock probe (OBS01 round 10, R49). Prints 50 lines at 20 ms spacing, then exits:
+//   CK|<nsecs(monotonic)>|<nsecs(boot)>
+// vm_clockcheck.py stamps the receiving process's CLOCK_MONOTONIC on each line; clockVerdict (lab/bin/sync-witness.mjs) refuses when the
+// nsecs(monotonic) value does not track it. The boot value is recorded only to show how far a bare nsecs would have been off.
+// [EXP-OBS01-R10] Why: a bare nsecs in bpftrace is CLOCK_BOOTTIME; the witness must use nsecs(monotonic) and W0 proves it end to end.
+// Rejected: trusting the bpftrace documentation alone.
+interval:ms:20
+{
+  printf("CK|%llu|%llu\n", nsecs(monotonic), nsecs(boot));
+  @count++;
+  if (@count >= 50) { exit(); }
+}
+
+END
+{
+  clear(@count);
+}

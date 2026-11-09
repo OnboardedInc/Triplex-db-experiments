@@ -82,7 +82,7 @@ test('follower effective config keeps its own JVM settings without observer logg
 
 // ---- OBS01 round 9: sync witness controller pieces (pure; no Docker)
 const goodWitness = (over = {}) => ({
-  Config: { Image: 'quay.io/iovisor/bpftrace@sha256:' + 'b'.repeat(64), Labels: {}, ...over.Config },
+  Config: { Image: 'quay.io/iovisor/bpftrace@sha256:' + 'b'.repeat(64), Labels: {}, Env: ['PATH=/usr/bin', 'BPFTRACE_PERF_RB_PAGES=1024', 'BPFTRACE_MAX_MAP_KEYS=65536'], ...over.Config },
   HostConfig: { CapAdd: ['BPF', 'PERFMON'], CapDrop: ['ALL'], Privileged: false, ReadonlyRootfs: true, NetworkMode: 'none', PidMode: '', IpcMode: 'private',
     SecurityOpt: ['no-new-privileges'], Devices: [], Memory: 268435456, ...over.HostConfig },
   Mounts: over.Mounts ?? [{ Type: 'volume', Name: 'sw-run', Destination: '/witness', RW: true }, { Type: 'bind', Destination: '/sys/kernel/btf', RW: false },
@@ -103,6 +103,9 @@ test('witness profile accepts only CAP_BPF + CAP_PERFMON, private namespaces and
   refused({ HostConfig: { SecurityOpt: [] } }, /no-new-privileges/);
   refused({ HostConfig: { Memory: 0 } }, /256 MiB/);
   refused({ Config: { Image: 'bpftrace:latest' } }, /pinned/);
+  refused({ Config: { Env: ['BPFTRACE_PERF_RB_PAGES=1024'] } }, /BPFTRACE_MAX_MAP_KEYS must be set/);
+  refused({ Config: { Env: ['BPFTRACE_PERF_RB_PAGES=1024', 'BPFTRACE_MAX_MAP_KEYS=4096'] } }, /BPFTRACE_MAX_MAP_KEYS must be set/);
+  refused({ Config: { Env: ['BPFTRACE_MAX_MAP_KEYS=65536'] } }, /PERF_RB_PAGES must be set/);
   refused({ Mounts: [{ Type: 'volume', Name: 'candidate-store', Destination: '/data', RW: true }] }, /unexpected mount/);
   refused({ Mounts: [{ Type: 'volume', Name: 'someone-elses', Destination: '/witness', RW: true }] }, /run volume/);
   refused({ Mounts: [{ Type: 'bind', Destination: '/sys/kernel/btf', RW: true }] }, /read-only/);
@@ -111,7 +114,7 @@ test('witness profile accepts only CAP_BPF + CAP_PERFMON, private namespaces and
 test('witness create arguments carry the exact profile and the pinned program with its directory pair', () => {
   const args = witness.witnessCreateArgs({ name: 'tx2-sw-x', holder: 'h', image: 'sha256:' + 'c'.repeat(64), cpu: 5, volume: 'sw-run', dirs: [[266338305, 77]] });
   const text = args.join(' ');
-  for (const needle of ['--cap-drop ALL', '--cap-add BPF', '--cap-add PERFMON', '--network none', '--read-only', 'no-new-privileges', '--entrypoint bpftrace', '--memory 268435456', '-o /witness/trace.txt', 'vm_syncwitness.bt:/program/vm_syncwitness.bt:ro', '266338305 77 266338305 77'])assert.ok(text.includes(needle), needle);
+  for (const needle of ['-e BPFTRACE_MAX_MAP_KEYS=65536', '--cap-drop ALL', '--cap-add BPF', '--cap-add PERFMON', '--network none', '--read-only', 'no-new-privileges', '--entrypoint bpftrace', '--memory 268435456', '-o /witness/trace.txt', 'vm_syncwitness.bt:/program/vm_syncwitness.bt:ro', '266338305 77 266338305 77'])assert.ok(text.includes(needle), needle);
   assert.equal(args.filter(a => a === '--cap-add').length, 2);
   assert.ok(!args.includes('--privileged') && !args.includes('--pid') && !text.includes('docker.sock'));
   assert.throws(() => witness.witnessCreateArgs({ name: 'n', holder: 'h', image: 'sha256:' + 'c'.repeat(64), cpu: 5, volume: 'v', dirs: [] }));
@@ -134,4 +137,92 @@ test('exclusive slot holders block the witness window and the cost gate uses per
   assert.throws(() => witness.perCommitCost(samples, [5000]), /no commit/);
   assert.equal(witness.nearestRank([5, 1, 3, 2, 4], .99), 5);
 });
+
+// ---- OBS01 round 10: W0 checks from R49 (pure verdicts; the VM steps themselves are not run)
+test('map keys are explicit, bounded, recorded in the create arguments and refused when low', () => {
+  const create = (extra = {}) => witness.witnessCreateArgs({ name: 'tx2-sw-x', holder: 'h', image: 'sha256:' + 'c'.repeat(64), cpu: 5, volume: 'sw-run', dirs: [[266338305, 77]], ...extra });
+  assert.ok(create().join(' ').includes('-e BPFTRACE_MAX_MAP_KEYS=' + witness.MAP_KEYS));
+  assert.ok(create({ mapKeys: 1 << 20 }).join(' ').includes('BPFTRACE_MAX_MAP_KEYS=1048576'));
+  for (const bad of [4096, 16383, 0, -1, 1.5, 4194305, NaN]) assert.throws(() => create({ mapKeys: bad }), /MAX_MAP_KEYS/);
+  assert.deepEqual(witness.mapKeysVerdict({ configured: 65536 }).reasons, []);
+  assert.equal(witness.mapKeysVerdict({ configured: 4096 }).pass, false);
+  assert.equal(witness.mapKeysVerdict({ configured: undefined }).pass, false);
+  assert.equal(witness.envValue({ Config: { Env: ['A=1', 'BPFTRACE_MAX_MAP_KEYS=7=8'] } }, 'BPFTRACE_MAX_MAP_KEYS'), '7=8');
+  assert.equal(witness.envValue({ Config: {} }, 'A'), undefined);
+});
+const samples = (offsetNs, n = 50, hopNs = 2_000_000) => Array.from({ length: n }, (_, i) => { const mono = 100_000_000_000 + i * 20_000_000; return { monotonicNs: mono + offsetNs, bootNs: mono + offsetNs + 3_600_000_000_000, receivedNs: mono + hopNs + 5 * (i % 3) }; });
+test('clock verdict accepts nsecs(monotonic) within the stated tolerance and refuses a boot-clock-sized offset', () => {
+  const ok = witness.clockVerdict(samples(0));
+  assert.equal(ok.pass, true); assert.equal(ok.toleranceNs, witness.CLOCK_TOLERANCE_NS); assert.equal(ok.bootMinusMonotonicNs, 3_600_000_000_000);
+  assert.equal(witness.clockVerdict(samples(0, 50, witness.CLOCK_TOLERANCE_NS)).pass, true);                  // the boundary hop is allowed
+  assert.equal(witness.clockVerdict(samples(0, 50, witness.CLOCK_TOLERANCE_NS + 100)).pass, false);           // witness clock lags the observer by more than the tolerance
+  const bare = witness.clockVerdict(samples(5_000_000_000));                                                  // a bare nsecs after 5 s of VM suspend: value ahead of the receipt
+  assert.equal(bare.pass, false); assert.match(bare.reasons.join(';'), /runs ahead/);
+  const behind = witness.clockVerdict(samples(-5_000_000_000)); assert.equal(behind.pass, false); assert.match(behind.reasons.join(';'), /lags/);
+  assert.equal(witness.clockVerdict(samples(1_000_000, 50, 0)).pass, true);                                    // minimum hop exactly -1 ms: inside the stated slack
+  assert.equal(witness.clockVerdict(samples(1_000_001, 50, 0)).pass, false);                                   // one nanosecond further ahead refuses
+  assert.equal(witness.clockVerdict(samples(0, 19)).pass, false);                                             // too few samples
+  assert.equal(witness.clockVerdict(null).pass, false);
+  assert.equal(witness.clockVerdict([...samples(0, 49), { monotonicNs: -1, bootNs: 0, receivedNs: 0 }]).pass, false);
+  const backwards = samples(0); [backwards[10].monotonicNs, backwards[11].monotonicNs] = [backwards[11].monotonicNs, backwards[10].monotonicNs];
+  assert.match(witness.clockVerdict(backwards).reasons.join(';'), /backwards/);
+});
+test('the clock helper really stamps receipt time and its output passes the verdict (child stands in for the bpftrace container)', async () => {
+  const { spawnSync } = await import('node:child_process');
+  const child = "import time\nfor i in range(30):\n print('CK|%d|%d'%(time.monotonic_ns(),time.monotonic_ns()+9),flush=True);time.sleep(.005)";
+  const out = spawnSync('python3', ['-B', '-c', fs.readFileSync(witness.CLOCK_HELPER, 'utf8'), '--', 'python3', '-c', child], { encoding: 'utf8', timeout: 30000 });
+  assert.equal(out.status, 0, out.stderr);
+  const rows = out.stdout.split('\n').filter(Boolean).map(l => JSON.parse(l));
+  assert.equal(rows.length, 30); assert.equal(witness.clockVerdict(rows).pass, true);
+  const shifted = rows.map(r => ({ ...r, monotonicNs: r.monotonicNs + 10 ** 10, bootNs: r.bootNs + 10 ** 10 }));
+  assert.equal(witness.clockVerdict(shifted).pass, false);
+});
+test('perf_event_paranoid is recorded and a failed attach with only CAP_PERFMON refuses naming the level', () => {
+  assert.deepEqual(witness.perfParanoidVerdict({ paranoid: 4, tracepointAttach: { ok: true } }), { pass: true, paranoid: 4, reasons: [] });
+  assert.equal(witness.perfParanoidVerdict({ paranoid: 2, tracepointAttach: { ok: true } }).pass, true);
+  const refused = witness.perfParanoidVerdict({ paranoid: 4, tracepointAttach: { ok: false, detail: 'perf_event_open: Permission denied' } });
+  assert.equal(refused.pass, false); assert.match(refused.reasons[0], /CAP_PERFMON alone is not enough.*perf_event_paranoid=4.*Permission denied.*CAP_SYS_ADMIN/);
+  assert.equal(witness.perfParanoidVerdict({ paranoid: NaN, tracepointAttach: { ok: true } }).pass, false);
+  assert.equal(witness.perfParanoidVerdict({ paranoid: 4 }).pass, false);
+});
+test('peak witness memory is checked against the 256 MiB cap with stated headroom and OOM kills refuse', () => {
+  const cap = witness.WITNESS_MEMORY;
+  assert.equal(witness.memoryVerdict({ peakBytes: 100 * 2 ** 20, oomKills: 0 }).pass, true);
+  assert.equal(witness.memoryVerdict({ peakBytes: Math.floor(cap * 0.8), oomKills: 0 }).pass, true);
+  assert.equal(witness.memoryVerdict({ peakBytes: Math.floor(cap * 0.8) + 1, oomKills: 0 }).pass, false);
+  assert.match(witness.memoryVerdict({ peakBytes: 1, oomKills: 2 }).reasons.join(';'), /OOM-killed 2/);
+  for (const bad of [{ peakBytes: null, oomKills: 0 }, { peakBytes: -1, oomKills: 0 }, { peakBytes: 1, oomKills: null }]) assert.equal(witness.memoryVerdict(bad).pass, false);
+  assert.equal(witness.oomKillsOf('low 0\nhigh 0\nmax 0\noom 0\noom_kill 3\n'), 3); assert.equal(witness.oomKillsOf('oom 1\n'), null);
+});
+test('ext4 built in: a module BTF file or an unresolved probe refuses', () => {
+  const listing = { 'fexit:vmlinux:ext4_file_write_iter': 'fexit:vmlinux:ext4_file_write_iter\n', 'fentry:vmlinux:ext4_sync_fs': 'fentry:vmlinux:ext4_sync_fs\n' };
+  assert.equal(witness.ext4BuiltinVerdict({ ext4BtfPresent: false, listing }).pass, true);
+  assert.match(witness.ext4BuiltinVerdict({ ext4BtfPresent: true, listing }).reasons.join(';'), /btf\/ext4 must be absent/);
+  assert.match(witness.ext4BuiltinVerdict({ ext4BtfPresent: false, listing: { ...listing, 'fentry:vmlinux:ext4_page_mkwrite': '' } }).reasons.join(';'), /did not resolve fentry:vmlinux:ext4_page_mkwrite/);
+  assert.equal(witness.ext4BuiltinVerdict({ ext4BtfPresent: undefined, listing }).pass, false);
+  assert.equal(witness.ext4BuiltinVerdict({ ext4BtfPresent: false, listing: {} }).pass, false);
+});
+test('W0 passes only when every R49 item is recorded and passing', () => {
+  const good = () => ({ clockSamples: samples(0), paranoid: 4, tracepointAttach: { ok: true }, ext4BtfPresent: false, listing: { 'fexit:vmlinux:ext4_file_write_iter': 'fexit:vmlinux:ext4_file_write_iter' },
+    attach: { pass: true, witnessCgroup: { memoryPeakBytes: 90 * 2 ** 20, oomKills: 0, maxMapKeys: 65536 } } });
+  assert.deepEqual(witness.judgeW0(good()).reasons, []);
+  const mutate = f => { const x = good(); f(x); return witness.judgeW0(x); };
+  assert.match(mutate(x => { x.clockSamples = samples(7e9); }).reasons.join(';'), /^clock:/);
+  assert.match(mutate(x => { x.tracepointAttach = { ok: false, detail: 'EACCES' }; }).reasons.join(';'), /perf:/);
+  assert.match(mutate(x => { x.attach.witnessCgroup.memoryPeakBytes = 250 * 2 ** 20; }).reasons.join(';'), /memory:/);
+  assert.match(mutate(x => { x.ext4BtfPresent = true; }).reasons.join(';'), /ext4:/);
+  assert.match(mutate(x => { x.attach.witnessCgroup.maxMapKeys = 4096; }).reasons.join(';'), /mapKeys:/);
+  assert.match(mutate(x => { x.attach.pass = false; }).reasons.join(';'), /attach:/);
+  assert.equal(mutate(x => { delete x.attach.witnessCgroup; }).pass, false);                       // an unrecorded item is a refusal, not a pass
+  assert.equal(mutate(x => { x.clockSamples = null; }).pass, false);
+});
+test('the trace program and the clock probe use only nsecs(monotonic) and the Dockerfile is pinned (static)', () => {
+  const strip = file => fs.readFileSync(file, 'utf8').split('\n').filter(l => !l.trim().startsWith('//')).join('\n');
+  assert.deepEqual(strip(witness.PROGRAM).match(/\bnsecs\b(?!\(monotonic\))/g) ?? [], []);                  // the witness program: no bare nsecs, no boot clock
+  assert.deepEqual(strip(witness.CLOCK_PROBE).match(/\bnsecs\b(?!\((monotonic|boot)\))/g) ?? [], []);        // the probe names its clock too
+  assert.match(strip(witness.CLOCK_PROBE), /nsecs\(boot\)/);                                          // recorded only to show the bare clock's offset
+  const docker = fs.readFileSync(path.join(path.dirname(witness.PROGRAM), 'bpftrace-image/Dockerfile'), 'utf8');
+  assert.match(docker, /^FROM --platform=linux\/arm64 ubuntu:24\.04@sha256:19cad59657037cffa0ac9a48107019b768900ff1071140965827513ac866bd5e$/m);
+});
+
 test.after(() => fs.rmSync(tmp, { recursive: true }));

@@ -186,6 +186,9 @@ class Regressions(unittest.TestCase):
 
     def test_syncfs_syscall_boundary_must_not_change_r48_D(self):
         # [CX-VOBS7] Why: the production S record encodes syscall boundaries, while R48 names the successful filesystem sync. Rejected: claiming an upper bound is the first durable instant.
+        # [OBS01-R10] Expectation changed ONLY for the orchestrator's F5 decision (interval, not a single instant): D_upper = syscall exit (300) is where
+        # durability is granted; with no recorded ext4_sync_fs entry D_lower = syscall entry (110). The ACK/U at 250 lies in [D_lower, D_upper), so it is
+        # neither proven before durable nor proven after: the required result is DURABILITY-UNPROVEN, not ACK-BEFORE-DURABLE + VISIBLE-BEFORE-DURABLE.
         t = builder.Trace(1)
         t.w(100, 111, 101, 0, 128)
         t.s(110, 300, 111)
@@ -193,8 +196,9 @@ class Regressions(unittest.TestCase):
         retain('syncfs-boundaries', {'trace': t.render(), 'hookTimeline': {
             'writeExit': 100, 'sysEnter': 110, 'ext4SyncEnter': 120, 'ext4SyncExit': 200,
             'ackOtherThread': 250, 'positivePollEnd': 250, 'sysExit': 300}, 'result': v,
-            'expectedR48': {'D': 200, 'codes': []}})
-        self.assertEqual(v['perCommit'][0]['D'], 200, 'syscall return is not the ext4 sync exit required by R48')
+            'expectedR10': {'D': 300, 'Dlower': 110, 'codes': ['DURABILITY-UNPROVEN']}})
+        self.assertEqual(v['perCommit'][0]['codes'], ['DURABILITY-UNPROVEN'], 'ACK/U inside [D_lower, D_upper) is unproven, not a proven violation')
+        self.assertEqual((v['perCommit'][0]['Dlower'], v['perCommit'][0]['D']), (110, 300))
 
 
 if __name__ == '__main__':

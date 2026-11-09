@@ -1319,7 +1319,7 @@ replayed **with kernel traces** in both clock modes: OFF refuses `SYNC-MISSING`,
 1. **`sync-before-write` expectation differs from R48 4.3.** A writer that syncs before each commit's writes still has a real covering sync for commit `i`
    (the next commit's pre-write sync), so the rule gives `ACK-BEFORE-DURABLE` for commits 1..n-1 and `SYNC-MISSING` only for the last. Refused either way;
    `vm_planted_writer.expected` encodes the rule-derived answer and W1 confirms or refutes it with a real kernel.
-2. **`syncfs`.** R48 4.1 lists the entry-only `ext4:ext4_sync_fs` tracepoint, which has no exit time and so cannot give `D`. The program uses the syscall
+2. **`syncfs`** (superseded by round 10 F5: D is now an interval, see "Round 10"; the text below is what round 9 built). R48 4.1 lists the entry-only `ext4:ext4_sync_fs` tracepoint, which has no exit time and so cannot give `D`. The program uses the syscall
    entry as the conservative enter time plus a wait=1 `ext4_sync_fs` fexit with `ret=0` on the witnessed device inside the syscall.
 3. **Latent bug fixed: `vm_verify.py` under `python3 -I`.** `observer-vm-stop` ran `python3 -I -B vm_verify.py`; from Python 3.11 `-I` implies `-P` (no script
    directory on `sys.path`), so its sibling imports fail on this host's Python 3.14. It now runs `-B -E -s` (verified only by the same flag test on a toy module).
@@ -1355,3 +1355,122 @@ No pinned `lab/acceptance` path moved. Changed observer/controller sources (old 
 | `lab/observer/test_syncwitness.py` | new | `515abbe5bbcd5a88c6c0e14e7dfcd5ddd82e90ae9ea08200b4991c99a0b5be8d` |
 | `lab/bin/sync-witness.mjs` | new | `2e3fc0418783d63e88e92ba4d364c924753fb74de1a2c58d076b7711f706fb98` |
 | `lab/experiments/EXP-OBS01/round9/probe_round9.py` | new | `dbaaebf667eb6b716403c4357f9473b9d0d309f82fbccca44dad7d4ad7464151` |
+
+## Round 10: fixes for the round 9 FIX-FIRST review (F1 to F5) and the R49 items
+
+Builder: Claude Sonnet 5.5 (high), offline only. Branch `exp/OBS01-observer`, base `44217f95`. Authority: `VERIFY-round9.md`, R48, R49, and the orchestrator's F5 decision
+(interval, not a single instant). `lab/acceptance` untouched; no pinned acceptance path moved. Semantics are documented in `lab/observer/VM.md`, "Round 10".
+
+### Outcome
+
+| Item | Result |
+| --- | --- |
+| F1 split publication | `PUBLICATION-SPLIT` (new code 3 of 9). Per-transaction atomicity check; every frame-bearing commit bound to its logical position's real `U`; a position's `D` is the latest `D` of all commits carrying a piece of it; `read_state` refuses a marker ahead of an empty frames table. Refuses with and without a witness. |
+| F2 early detach | `TRACE-INCOMPLETE` unless attach <= first poll start and detach >= the last poll end, final readback `atNs` and tailed WAL `atNs`, and detach <= observer end (one clock domain). A final readback with no integer `atNs` refuses. |
+| F3 W1 compare | complete refusal set, primary code, run-level codes and per-commit outcomes; positive modes raise nothing; tables in `vm_planted_writer` (`EXPECTED_CODES`, `GLOBAL_CODES`). |
+| F4 W3 | one state machine (`WitnessScan`) for `parse_witness` and `stream_check`; parity tests over 27 loss and grammar negatives. |
+| F5 syncfs | `D_upper` = syscall exit, `D_lower` = `ext4_sync_fs(wait=1)` entry if recorded else syscall entry; violations only below `D_lower`; new `DURABILITY-UNPROVEN` (code 9) in `[D_lower, D_upper)`; file syncs keep R48's exact first-exit rule. The program records the extra interval (`S` has two more fields). |
+| R49 clock | all 15 timestamps are `nsecs(monotonic)`; W0 clock step (`vm_clockprobe.bt`, `vm_clockcheck.py`, `clockVerdict`, tolerance 100 ms, slack 1 ms) coded, unrun. |
+| R49 W0 checks | `perf_event_paranoid` + CAP_PERFMON-only attach, peak memory vs 256 MiB (refuse above 80% or on OOM), ext4 built in (`/sys/kernel/btf/ext4` absent, exact `bpftrace -l` names), `BPFTRACE_MAX_MAP_KEYS=65536` (profile floor 16384) recorded: all coded and unit-tested as pure verdicts, none run. |
+| R49 image | `lab/observer/bpftrace-image/Dockerfile`, **not built**. |
+
+### Gates
+
+Run through `heavy.mjs` (`--label OBS01-R10`; free disk 9.0 GiB, above the 5 GiB floor). Durable receipt:
+`/Users/sam/Claude/Projects/triplex-db-2/evidence/OBS01-R10/offline01/` (`RESULT.json` status PASS, frozen-source pins unchanged at the end; `SHA256SUMS` sha256
+`5ca00d790f53661785b77cb978863446fa65482b9869fa32b36c5fb297384ef6`) and `reviewer-fixtures.{stdout,stderr}` beside it.
+
+| Suite | Result |
+| --- | --- |
+| `test_vm.py` | 14/14 (unchanged) |
+| `test_syncwitness.py` | 18/18 (unchanged tests; fixture helpers extended: `Trace.s` takes `fsenter/fsexit`, the normalizer fixture stamps final readbacks) |
+| `test_round10.py` (new) | 40/40 |
+| `test_engine.mjs` | 21/21: the 13 earlier plus 8 new (the earlier witness-profile test fixture now carries the two required `Env` entries) |
+| Python total | 72 (32 earlier + 40 new); Node total 21 (13 + 8) |
+| reviewer `review_round9.py` | 11/11: 6 controls + 5 regression fixtures. F1 to F4 pass unchanged; F5 passes with the adjusted expectation (below). Run with a fresh `OUT` so the committed reviewer evidence under `lab/verify/CX-VOBS7/results/` is untouched. |
+
+Mutation spot checks (each made the suite fail, then was reverted byte for byte): violation test against `D_upper` instead of `D_lower`; the F2 detach comparison removed; the
+split check removed; `compare` ignoring run-level codes; the counted-CPU-without-records check removed.
+
+New tests per fix: F1 (marker-first, frame-first, no-witness, standalone `read_state`, atomic/horizon/rewrite controls, `commit_views` binding and ACK ownership, missing-`U` refusal, `D` of a
+split publication), F2 (seven cases including both boundaries), F3 (global refusal for five positive/negative modes x three codes, exact sets for all eleven modes, mismatch kinds, the reviewer's result shape),
+F4 (27 negatives identical on both paths, clean parity, shuffled order, stderr, UTF-8 and CRLF, CLI exit), F5 (interval table, interval over several syncs, eligibility, foreign/failed/no-wait, parser interval
+checks, whole-normalizer refusals in both clock modes), R49 (no bare `nsecs`, `S` format, clock helper end to end with a stand-in child, verdict boundaries, perf, memory, ext4, map keys, whole W0 verdict, Dockerfile pins).
+
+### Divergences from the brief (all of them)
+
+1. **`PUBLICATION-SPLIT` is collected, not raised at the first bad snapshot.** The reviewer's F1 fixture requires a `WitnessError` whose code or `also` contains `VISIBLE-BEFORE-DURABLE`, so `history()` takes a
+   findings list, the join still runs, and the refusal lists `PUBLICATION-SPLIT` with the other codes. Without a list (standalone `snapshot`/`read_state`/`history`) it raises immediately.
+2. **The brief's "read_state must not accept a marker ahead of an empty frames table"** holds for standalone use; with a findings list `read_state` records the finding instead of raising (same reason).
+   The empty-table rule is `marker.lsn != 0`, not a comparison with the seeded marker, because the real broker seeds a nonzero `crc`.
+3. **What counts as a split is a judgement call.** A marker advance is a change of any of `lsn, epoch, position, crc, size` (a horizon-only `h` update, which the real broker does, is not a publication); a changed
+   existing frame row (the fixtures set `committed_at` after the fact) is not a new frame. Both are therefore not splits, and the ACK for a member now binds to the commit that added its frame, not to that later row delta.
+4. **New codes change the primary-code order.** Nine codes: `TRACE-INCOMPLETE, WITNESS-UNBOUND, PUBLICATION-SPLIT, UNWITNESSED-WRITE, CHECKPOINT-UNSYNCED, SYNC-MISSING, ACK-BEFORE-DURABLE,
+   VISIBLE-BEFORE-DURABLE, DURABILITY-UNPROVEN`. Existing primaries are unchanged; the unproven code is last so a proven violation is the headline.
+5. **F2 does more than the brief asks.** Attach must precede the first poll start, detach must follow the last tailed WAL chunk and not exceed the observer end, and every witness run (including the offline-fixture witness mode)
+   needs an integer `atNs` on each `final` readback. `NormalizerCase.build` stamps finals at 590,000,000 ns for that reason.
+6. **F5 eligibility.** The brief fixes `D_upper` and `D_lower` but not which syncfs may cover a commit. I kept the syscall entry >= `W(c)`, so a write between the syscall entry and the ext4 entry is not credited to that
+   syncfs (`SYNC-MISSING`, the conservative side, still a false refusal in that narrow race). Over several eligible syncs a commit's interval is `[min D_lower, min D_upper]`. The ext4 interval is only recorded when the new
+   `fentry:vmlinux:ext4_sync_fs` probe fires; `S` records are validated (`enter <= fsenter <= fsexit <= ts`, or both zero).
+7. **R48's exact `D` for syncfs is not reproduced**: positions' `D` and `durableEndNs` use `D_upper` (the syscall exit), as the decision says. R48 4.2 would give the ext4 exit; round 9's "divergence 2" is annotated as superseded.
+8. **F3 expectation for `mmap` is derived, not observed.** `{UNWITNESSED-WRITE, SYNC-MISSING}` (no write records exist for an mmap writer, so each commit also lacks a covering write); W1 in a real kernel confirms or refutes it.
+9. **The reviewer's F5 test changed** (`review_round9.py`, `test_syncfs_syscall_boundary_must_not_change_r48_D`), only to expect `DURABILITY-UNPROVEN` with `D = 300`, `D_lower = 110` instead of the two violations, as ordered. Nothing else in the reviewer files changed.
+10. **R49 thresholds I chose** (the brief says "a stated tolerance" and "high enough"): clock tolerance 100 ms and slack 1 ms (an offset below 100 ms is undetectable by this step; a boot-clock offset is suspended VM time, far larger);
+    at least 20 clock samples; memory refusal above 80% of 256 MiB or any OOM kill; `BPFTRACE_MAX_MAP_KEYS` 65536 with a profile floor of 16384 and ceiling of 4194304. The memory peak is read before SIGINT, so
+    memory used by the END probe and the dump is not in it.
+11. **W0 CAP_PERFMON check is an attach test, not a table lookup**: a tracepoint attach under only CAP_BPF + CAP_PERFMON, with `perf_event_paranoid` recorded; on failure W0 refuses and the witness never gets CAP_SYS_ADMIN.
+12. **The clock helper runs in the VM host's namespaces** (`colima ssh`), not in the observer container; they share CLOCK_MONOTONIC only because Q100q requires zero time offsets, which W0 does not itself verify.
+13. **Dockerfile gap.** R49 gives `libbsd0` only as "0.12.1 series", so I did not invent a version: the build requires `--build-arg LIBBSD0_VERSION` and fails without it. `libicu74`, `libxml2`, `elfutils` and `libbpf1`/`libedit2` versions are copied from R49
+    without their `.deb` hashes (R49 has hashes for five packages only). Apt sources are limited to component `main`; the suites stay the base image's. A closed package list makes the build fail if apt wants anything else.
+13a. **`verifyWitnessProfile` now also requires** `BPFTRACE_MAX_MAP_KEYS` (within the floor and ceiling) and `BPFTRACE_PERF_RB_PAGES` in the container environment, and `witnessStop` records `maxMapKeys`/`perfRbPages` in the witness meta
+    (the normalizer ignores those keys). That edited one earlier Node test fixture.
+14. **W3 streaming memory** is one `{seq: ts}` map per CPU (about 0.3 GB for a 20-minute 100 commits/s run), not a constant-size scan, because out-of-order lines must stay accepted exactly as in the whole-file parser.
+15. **Not touched although it reads these files:** the retained round 9 probe `round9/probe_round9.py` and its durable evidence were not re-run or edited (it still imports the helpers it used; its receipts describe round 9).
+
+### PASS audit (rule 9a): every site that turns observations into a verdict or receipt
+
+| Site | Content | Freshness | Binding |
+| --- | --- | --- | --- |
+| `WitnessScan.feed/finish` (used by `parse_witness` and `stream_check`) | grammar and numeric ranges per record, per-CPU sequence contiguity equal to the `@n` dump, per-CPU time order, `enter <= ts`, the syncfs interval inside the syscall, stderr lost/error | every record between this trace's start and detach records; events outside them refuse | `SW1` tag; one start and one detach; counts per CPU, including CPUs with no records |
+| `witness_context` F2 | trace attach/detach against this run's first poll start, last poll end, final readback and tailed WAL `atNs`, and the observer `end` | the polls, finals and end of this attempt's stream | witness clock record's boot id equals the meta boot id and the run's (`same_domain`); program hash, kernel release, container id as round 9 |
+| `publication_split`, `marker_advance`, `new_frames`, `read_state` | row deltas of each reconstructed SQL01 commit: marker published fields, new frames, last-frame binding; marker over an empty table | this run's final WAL bytes (replayed commit by commit) | frame `(epoch, lsn, crc)` against the marker; member identity from decoded frames |
+| `commit_views` | position(s) and real `U` per commit from this run's brackets; ACKs per member | this run's brackets and ACK events | `(stream, operation, attempt)` -> the frame's `(epoch, lsn)` -> every commit carrying that position; ambiguous or unknown members refuse `WITNESS-UNBOUND` |
+| `judge_witness` D interval | sync records from the writer's cgroup, `ret == 0`, wait=1, inode or device of the bound WAL; eligibility by syscall/file entry >= last covering write exit | the live WAL generation of this trace | inode, device and cgroup id from the observer's own stat; neighbor, other-inode, failed and no-wait syncs never count (fixtures) |
+| `normalize` annotation | `D = D_upper`, `Dlower`, `durableEndNs = max(U, D)` per logical position (latest over all carrying commits) | this run | `(epoch, lsn)` or the frontier position |
+| `vm_syncwitness.compare` (W1 PASS) | complete code set, primary, run-level codes, every commit outcome against the mode's tables | judged from this session's trace, ops and WAL | the session's writer cgroup and store directory; the expectation tables in `vm_planted_writer` |
+| `vm_syncwitness.stream_check` (W3 PASS) | the same state machine as the normalizer | whole trace after detach | per-CPU dump |
+| `clockVerdict`, `perfParanoidVerdict`, `memoryVerdict`, `ext4BuiltinVerdict`, `mapKeysVerdict`, `judgeW0` (W0 PASS) | samples/values against stated thresholds; an unrecorded value refuses | taken in the same W0 window (not run yet) | clock: the helper's receipt clock in the VM host; memory: the cgroup found by the witness container id; map keys: the container's own `docker inspect` environment; listing: exact probe names |
+| Dockerfile | `.deb` SHA256 for five packages, exact versions elsewhere, closed package list, `bpftrace --version` | build time (not built) | base image digest; apt pins |
+| `run_vm_offline.py` | child exit codes and frozen-source equality; now includes `test_round10.py` and the new sources | `offline01` is a fresh directory | exact source hashes in `RESULT.json` |
+
+Known gaps: the memory peak is read before detach; the clock check cannot see an offset below its tolerance; `D_lower` from the ext4 entry is a lower bound under the orchestrator's decision (data writeback in `sync_inodes_sb` can
+precede it), not a measurement of when durability began.
+
+### Moved source hashes
+
+No `lab/acceptance` path moved. Changed or new sources (old at `44217f95`):
+
+| Path | Old SHA256 | New SHA256 |
+| --- | --- | --- |
+| `lab/bin/sync-witness.mjs` | `2e3fc0418783d63e88e92ba4d364c924753fb74de1a2c58d076b7711f706fb98` | `859e48234deac0daeee03bd519b9e171a5bba935fccc5e554de1eedd97519b8e` |
+| `lab/observer/vm_normalizer.py` | `524eee87e9f5a4d1274265e0894da8374c0da6f37d39e3dcc95e0938098aeba8` | `5850ec4bbc102728f2306a918acd96340eb990888cab8b483db31572caefc983` |
+| `lab/observer/vm_syncwitness.py` | `6c6aff0f154a88cf4b68440a36a5da90b13f8da6d0547566989bb0ca69c2ce3e` | `937d65054c18c82feb7cf7793754661d113542b6cca4ec6edc0b5b8cb6dd7451` |
+| `lab/observer/vm_syncwitness.bt` | `5c9444e91297b200e815f22b3d84426cc9e7a493053f5e46bf33ddd40bd1b4d3` | `e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248` |
+| `lab/observer/vm_planted_writer.py` | `18cf0f766e2b72a38576a7c65038adf6d1bfc3129842d16811f28723a29e784d` | `81bad0e1a9e52b989f446ca0f813226942edc23ecdd8a837e5ae2097bf8c2205` |
+| `lab/observer/test_syncwitness.py` | `515abbe5bbcd5a88c6c0e14e7dfcd5ddd82e90ae9ea08200b4991c99a0b5be8d` | `83b090bac2eac75670bcec1ebce7ebcf94ff8d9b70782b3b689b8f249c0e5efa` |
+| `lab/observer/test_engine.mjs` | `91ae20ed7a8b966428b1ac6d1bd449f732e2db1c43b946694e4f7910a8fe4b80` | `f41050a39668a83f7bad85a49929d015e5d920cb84e2596e9c57f414bf138be0` |
+| `lab/observer/run_vm_offline.py` | `a6872dad66115a386b70b4f613682f4e839ca493b17d9ae7ebe3abdfba081475` | `77f437c7b3ec9ebeed20205d5da1313b862c889aaddeb7d9163c2f4117d9c8da` |
+| `lab/verify/CX-VOBS7/review_round9.py` | `00cf057e23989d73767caec1ca127c3b5ff078e39e43b0d5ca0d0ad939b374f6` | `43d35c27b3f897564d91f6aa0c56c74798c3970dd7c981530787f318917d0191` |
+| `lab/observer/test_round10.py` | new | `235f56eae2ea100c9af950143a8da5a0f04c4f05238e6936ef299142fdb78d72` |
+| `lab/observer/vm_clockcheck.py` | new | `59693c70a9d8584749e20d5c04ed07d0207b138a64d5e31a47e53121963ef896` |
+| `lab/observer/vm_clockprobe.bt` | new | `6090eeac95efb9f93d34b0e4589145e8b6ac3df072b42d39f83d08663a2bd3e9` |
+| `lab/observer/bpftrace-image/Dockerfile` | new | `855bd90334e0737f87d9d94e45689e9b267391114f4d4cbcbdef65f11403ff23` |
+
+### What did not run
+
+- No VM, Docker, colima, engine or network command; no image pull, apt, pip or pnpm. W0, W1, W2, W3 and W4 not run; no real `bpf()` call.
+- `vm_syncwitness.bt` and `vm_clockprobe.bt` have still **never been parsed by a real bpftrace**: `nsecs(monotonic)`, the new `fentry:vmlinux:ext4_sync_fs` probe and the two extra `printf` fields are checked only by text tests.
+- The Dockerfile is **not built**; its `.deb` hashes, version pins and closed package list are unverified against the archive; `libbsd0`'s version is open.
+- The new harness paths in `sync-witness.mjs` (`bpftraceOnce`, `clockStep`, `witnessCgroupFacts`, the session capture, `windowW0`) are syntax-checked only; their pure verdicts are unit-tested.
+- `probe_round9.py` and the round 9 durable evidence were not re-run. B9 (G03 box policy, E12 stream) and CR-NS `claim.mjs` are still not built; no trusted driver emits `driver-ack` events yet.
+- The synthetic traces model what the kernel records; nothing here is VM evidence, and host power loss stays the Q100r premise.

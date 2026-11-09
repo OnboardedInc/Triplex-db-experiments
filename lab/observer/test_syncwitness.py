@@ -18,14 +18,14 @@ from test_vm import DOMAIN,BOOT
 
 def uuid_hex():
     import uuid;return uuid.uuid4().hex
-WRITER=111;NEIGHBOR=999;DIR_INO=7;US=1000
+WRITER=111;NEIGHBOR=999;DIR_INO=7;US=1000;FINAL_NS=590_000_000
 
 class Trace:
     """Collects kernel-shaped events and renders bpftrace text with per-CPU sequence numbers and the @n dump."""
     def __init__(self,dev,dirs=None):self.dev=dev;self.dirs=dirs or [(dev,DIR_INO)];self.events=[]
     def w(self,ts,cg,ino,off,ret,parent=DIR_INO):self.events.append({'k':'W','ts':ts,'cg':cg,'dev':self.dev,'ino':ino,'parent':parent,'off':off,'ret':ret})
     def f(self,enter,ts,cg,ino,ret=0,datasync=1,parent=DIR_INO):self.events.append({'k':'F','enter':enter,'ts':ts,'cg':cg,'dev':self.dev,'ino':ino,'parent':parent,'datasync':datasync,'ret':ret})
-    def s(self,enter,ts,cg,wait=1,ret=0):self.events.append({'k':'S','enter':enter,'ts':ts,'cg':cg,'dev':self.dev,'wait':wait,'ret':ret})
+    def s(self,enter,ts,cg,wait=1,ret=0,fsenter=0,fsexit=0):self.events.append({'k':'S','enter':enter,'ts':ts,'cg':cg,'dev':self.dev,'wait':wait,'ret':ret,'fsenter':fsenter,'fsexit':fsexit})
     def m(self,ts,cg,ino,parent=DIR_INO):self.events.append({'k':'M','ts':ts,'cg':cg,'dev':self.dev,'ino':ino,'parent':parent})
     def t(self,ts,cg,ino,op,off=0,length=0):self.events.append({'k':'T','ts':ts,'cg':cg,'dev':self.dev,'ino':ino,'op':op,'off':off,'len':length})
     def render(self,begin=1,end=None,cpus=3,drop=(),extra=()):
@@ -233,6 +233,8 @@ class NormalizerCase(unittest.TestCase):
         witness={'containerId':'w'*64,'programSha256':'p'*64,'kernelRelease':'6.8.0-test','firstCandidateStartNs':1_000_000,
                  'stores':{sid:{'dir':list(dirs),'cgroupId':cgs[sid]} for sid in cgs}}
         meta={'programSha256':'p'*64,'bootId':BOOT,'kernelRelease':'6.8.0-test','containerId':'w'*64,'bpftraceVersion':'test'}
+        for e in events:
+            if e['event']=='final':e['atNs']=FINAL_NS         # the observer's trusted readback instant (R10 F2); the trace detaches after it
         context={'trace':trace,'witness':witness,'meta':meta,'ack':ack,'events':events,'cgs':cgs,'files':files,'wal':wal,'dirs':dirs}
         for change in tweaks.values():change(context)
         text=context.get('text') or trace.render(begin=context.get('begin',500_000),end=599_000_000,drop=())

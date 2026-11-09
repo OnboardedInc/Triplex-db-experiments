@@ -9,7 +9,17 @@ import {REPO,ENGINE_DIR,LOCKS,atomicJson,defaultHolder,docker,dockerStats,inspec
 import {harden,pinImage,remove,reserve,vmAvailable,waitFile} from './vm-observer.mjs';
 
 export const PROGRAM=path.join(REPO,'lab/observer/vm_syncwitness.bt');
+export const CLOCK_PROBE=path.join(REPO,'lab/observer/vm_clockprobe.bt');
+export const CLOCK_HELPER=path.join(REPO,'lab/observer/vm_clockcheck.py');
 export const WITNESS_MEMORY=268435456;
+// [EXP-OBS01-R10] Why (R49 section 3): bpftrace 0.20.2 keeps BPFTRACE_MAX_MAP_KEYS=4096 by default and a full map silently drops inserts, so the
+// witness sets it explicitly, the profile check refuses anything below the floor, and the value is recorded in the witness meta and W0.json.
+// The maps are @dir/@dev (a few keys), @ino (every inode written in the store directory), the tid-keyed in-flight sync maps and @n[cpu];
+// 65536 keys of eight small maps cost a few MiB of the 256 MiB cap. Rejected: the 4096 default.
+export const MAP_KEYS=65536,MAP_KEYS_FLOOR=16384,MAP_KEYS_CEILING=4194304,PERF_RB_PAGES=1024;
+// W0 thresholds, all stated here so a refusal can be read against them. The clock tolerance bounds how far nsecs(monotonic) may sit from the
+// observer's CLOCK_MONOTONIC as seen through one pipe hop; a CLOCK_BOOTTIME offset is the VM's suspended time (seconds or more), far above it.
+export const CLOCK_TOLERANCE_NS=100_000_000,CLOCK_SLACK_NS=1_000_000,CLOCK_MIN_SAMPLES=20,MEMORY_HEADROOM=0.8;
 const SRC=path.join(REPO,'lab/observer');
 const safe=value=>typeof value==='string'&&/^[a-zA-Z0-9_-]{1,80}$/.test(value);
 
@@ -19,6 +29,8 @@ export function kernelDev(stDev){
  return Number((major<<20n)|minor);
 }
 
+/** Value of an environment variable in a `docker inspect` document (Config.Env is a list of KEY=VALUE). */
+export const envValue=(doc,key)=>{const hit=(doc?.Config?.Env??[]).find(e=>e.startsWith(key+'='));return hit===undefined?undefined:hit.slice(key.length+1);};
 const capName=name=>String(name).toUpperCase().replace(/^CAP_/,'');
 /** Q108a/R48 4.4: the witness holds only CAP_BPF and CAP_PERFMON and mounts nothing of the candidates'. Returns violations. */
 export function verifyWitnessProfile(doc,{volume}={}){
@@ -44,14 +56,18 @@ export function verifyWitnessProfile(doc,{volume}={}){
  }
  if(!/@sha256:[a-f0-9]{64}$|^sha256:[a-f0-9]{64}$/.test(doc?.Config?.Image??''))bad.push('image must be pinned by digest');
  if(doc?.Config?.User&&doc.Config.User!=='0'&&doc.Config.User!=='root')bad.push('witness runs as root inside its container; no other user');
+ const keys=envValue(doc,'BPFTRACE_MAX_MAP_KEYS');
+ if(!/^[0-9]+$/.test(keys??'')||Number(keys)<MAP_KEYS_FLOOR||Number(keys)>MAP_KEYS_CEILING)bad.push('BPFTRACE_MAX_MAP_KEYS must be set between '+MAP_KEYS_FLOOR+' and '+MAP_KEYS_CEILING+' (default 4096 silently drops map inserts): '+keys);
+ if(!/^[0-9]+$/.test(envValue(doc,'BPFTRACE_PERF_RB_PAGES')??''))bad.push('BPFTRACE_PERF_RB_PAGES must be set');
  return bad;
 }
 
 /** Create arguments for the witness (pure). `dirs` are [kernelDev, dirInode] pairs; one pair is repeated when only one directory is witnessed. */
-export function witnessCreateArgs({name,holder,image,cpu,volume,dirs,perfPages=1024}){
+export function witnessCreateArgs({name,holder,image,cpu,volume,dirs,perfPages=PERF_RB_PAGES,mapKeys=MAP_KEYS}){
  if(!Array.isArray(dirs)||!dirs.length||dirs.length>2||dirs.some(d=>d.length!==2||d.some(v=>!Number.isSafeInteger(v)||v<0)))fail('USAGE','one or two [kernel dev, directory inode] pairs required');
+ if(!Number.isSafeInteger(mapKeys)||mapKeys<MAP_KEYS_FLOOR||mapKeys>MAP_KEYS_CEILING)fail('USAGE','BPFTRACE_MAX_MAP_KEYS must be between '+MAP_KEYS_FLOOR+' and '+MAP_KEYS_CEILING);
  const pair=[dirs[0],dirs[1]??dirs[0]];
- return harden(name,holder,image,cpu,['--cap-add','BPF','--cap-add','PERFMON','--entrypoint','bpftrace','-e','BPFTRACE_PERF_RB_PAGES='+perfPages,
+ return harden(name,holder,image,cpu,['--cap-add','BPF','--cap-add','PERFMON','--entrypoint','bpftrace','-e','BPFTRACE_PERF_RB_PAGES='+perfPages,'-e','BPFTRACE_MAX_MAP_KEYS='+mapKeys,
   '-v',volume+':/witness','-v','/sys/kernel/btf:/sys/kernel/btf:ro','-v','/sys/kernel/tracing:/sys/kernel/tracing:ro','-v',PROGRAM+':/program/vm_syncwitness.bt:ro'],
   ['-q','-o','/witness/trace.txt','/program/vm_syncwitness.bt',...pair.flat().map(String)]);
 }
@@ -80,6 +96,70 @@ export function perCommitCost(samples,commitNs){
  return {intervals:rows,p99PerCommitNs:nearestRank(rows.map(r=>r.perCommitNs),.99),maxPerCommitNs:Math.max(...rows.map(r=>r.perCommitNs)),meanPerCommitNs:rows.reduce((s,r)=>s+r.deltaNs,0)/rows.reduce((s,r)=>s+r.commits,0)};
 }
 
+
+// ------------------------------------------------------------------ W0 verdicts (R49 section 6 and 7; pure, unit-tested, not yet run in a VM)
+/** nsecs(monotonic) against the observer's CLOCK_MONOTONIC. samples: [{monotonicNs,bootNs,receivedNs}] from vm_clockcheck.py. Each line is
+ * stamped on receipt, so receivedNs - monotonicNs is one pipe hop (>= 0 when the clocks agree). The smallest hop must lie within
+ * [-CLOCK_SLACK_NS, CLOCK_TOLERANCE_NS] and no sample may be generated after its receipt by more than the slack. bootMinusMonotonicNs is
+ * recorded: nonzero means a bare nsecs would have been the wrong clock. */
+export function clockVerdict(samples,{toleranceNs=CLOCK_TOLERANCE_NS,slackNs=CLOCK_SLACK_NS,minSamples=CLOCK_MIN_SAMPLES}={}){
+ const bad=[];
+ if(!Array.isArray(samples)||samples.length<minSamples)return {pass:false,reasons:['need at least '+minSamples+' clock samples, got '+(samples?.length??0)],toleranceNs};
+ if(samples.some(r=>![r?.monotonicNs,r?.bootNs,r?.receivedNs].every(v=>Number.isSafeInteger(v)&&v>=0)))return {pass:false,reasons:['clock sample with a non-integer or negative field'],toleranceNs};
+ const hops=samples.map(r=>r.receivedNs-r.monotonicNs),minHop=Math.min(...hops),maxHop=Math.max(...hops);
+ const mono=samples.map(r=>r.monotonicNs);
+ if(mono.some((v,i)=>i>0&&v<mono[i-1]))bad.push('nsecs(monotonic) went backwards between samples');
+ if(minHop<-slackNs)bad.push('nsecs(monotonic) runs ahead of the observer clock by '+(-minHop)+' ns (slack '+slackNs+' ns)');
+ if(minHop>toleranceNs)bad.push('nsecs(monotonic) lags the observer clock by at least '+minHop+' ns, beyond the '+toleranceNs+' ns tolerance');
+ const offsets=samples.map(r=>r.bootNs-r.monotonicNs).sort((a,b)=>a-b);
+ return {pass:bad.length===0,reasons:bad,toleranceNs,slackNs,samples:samples.length,minHopNs:minHop,maxHopNs:maxHop,bootMinusMonotonicNs:offsets[Math.floor(offsets.length/2)]};
+}
+
+/** perf_event_paranoid and the attach it governs. tracepointAttach is the result of attaching a tracepoint with ONLY the witness capabilities
+ * (CAP_BPF + CAP_PERFMON): tracepoints go through perf_event_open, where Ubuntu's paranoid level 4 can demand CAP_SYS_ADMIN (R49 section 6 item 5, [E]).
+ * The witness must never be given more capabilities to get around it: a failure is a refusal that names the level. */
+export function perfParanoidVerdict({paranoid,tracepointAttach}){
+ const recorded=Number.isInteger(paranoid)?paranoid:null;
+ if(recorded===null)return {pass:false,paranoid:recorded,reasons:['kernel.perf_event_paranoid not recorded']};
+ if(!tracepointAttach||tracepointAttach.ok!==true)return {pass:false,paranoid:recorded,reasons:['CAP_PERFMON alone is not enough to attach a tracepoint at kernel.perf_event_paranoid='+recorded+' ('+(tracepointAttach?.detail??'no attach result')+'); the witness may not hold CAP_SYS_ADMIN']};
+ return {pass:true,paranoid:recorded,reasons:[]};
+}
+
+/** Peak witness memory (cgroup memory.peak) against the 256 MiB cap: refuse above MEMORY_HEADROOM of the cap or on any OOM kill. */
+export function memoryVerdict({peakBytes,oomKills},capBytes=WITNESS_MEMORY){
+ const bad=[];
+ if(!Number.isSafeInteger(peakBytes)||peakBytes<0)return {pass:false,reasons:['witness memory.peak not recorded'],capBytes};
+ if(!Number.isSafeInteger(oomKills)||oomKills<0)bad.push('witness oom_kill count not recorded');
+ else if(oomKills>0)bad.push('witness container was OOM-killed '+oomKills+' time(s)');
+ if(peakBytes>capBytes*MEMORY_HEADROOM)bad.push('peak '+peakBytes+' B exceeds '+MEMORY_HEADROOM*100+'% of the '+capBytes+' B cap');
+ return {pass:bad.length===0,reasons:bad,peakBytes,oomKills,capBytes,headroomFraction:MEMORY_HEADROOM};
+}
+
+/** ext4 must be built in: a module has its own BTF file (/sys/kernel/btf/ext4) and `vmlinux:` would not resolve; every probe must list by its exact name. */
+export function ext4BuiltinVerdict({ext4BtfPresent,listing}){
+ const bad=[];
+ if(ext4BtfPresent!==false)bad.push('/sys/kernel/btf/ext4 must be absent (ext4 built in), got '+ext4BtfPresent);
+ for(const [probe,out] of Object.entries(listing??{}))if(!String(out??'').split('\n').some(l=>l.trim()===probe))bad.push('bpftrace -l did not resolve '+probe);
+ if(!Object.keys(listing??{}).length)bad.push('no probe listing recorded');
+ return {pass:bad.length===0,reasons:bad};
+}
+
+/** BPFTRACE_MAX_MAP_KEYS the witness actually ran with, recorded and checked against the floor. */
+export function mapKeysVerdict({configured}){
+ const ok=Number.isSafeInteger(configured)&&configured>=MAP_KEYS_FLOOR&&configured<=MAP_KEYS_CEILING;
+ return {pass:ok,configured:configured??null,floor:MAP_KEYS_FLOOR,reasons:ok?[]:['BPFTRACE_MAX_MAP_KEYS '+configured+' outside '+MAP_KEYS_FLOOR+'..'+MAP_KEYS_CEILING]};
+}
+
+/** W0 as a whole: every item recorded and every check passing. facts come from windowW0. */
+export function judgeW0(facts){
+ const checks={clock:clockVerdict(facts.clockSamples),perf:perfParanoidVerdict({paranoid:facts.paranoid,tracepointAttach:facts.tracepointAttach}),
+  memory:memoryVerdict({peakBytes:facts.attach?.witnessCgroup?.memoryPeakBytes,oomKills:facts.attach?.witnessCgroup?.oomKills}),
+  ext4:ext4BuiltinVerdict({ext4BtfPresent:facts.ext4BtfPresent,listing:facts.listing}),mapKeys:mapKeysVerdict({configured:facts.attach?.witnessCgroup?.maxMapKeys}),
+  attach:{pass:Boolean(facts.attach?.pass),reasons:facts.attach?.pass?[]:['witness attach session did not pass']}};
+ const reasons=Object.entries(checks).flatMap(([name,c])=>c.pass?[]:c.reasons.map(r=>name+': '+r));
+ return {pass:reasons.length===0,reasons,checks};
+}
+
 const vm=(args,opts={})=>spawnSync('colima',['ssh','-p','triplex2','--',...args],{encoding:'utf8',maxBuffer:64*1024**2,...opts});
 /** Cgroup id (directory inode) of a container in the triplex2 VM; equals bpf_get_current_cgroup_id() for its tasks (cgroup v2). */
 export function vmCgroupId(containerId){
@@ -88,6 +168,23 @@ export function vmCgroupId(containerId){
  const ids=out.stdout.split('\n').filter(Boolean);
  if(out.status!==0||ids.length!==1||!/^[0-9]+$/.test(ids[0]))fail('REFUSED','container cgroup id not unique/visible: '+out.stderr);
  return Number(ids[0]);
+}
+
+/** Cgroup directory of a container in the triplex2 VM (unique docker-<id>.scope). */
+export function vmCgroupDir(containerId){
+ if(!/^[0-9a-f]{64}$/.test(containerId))fail('USAGE','full container id required');
+ const out=vm(['find','/sys/fs/cgroup','-maxdepth','5','-name','docker-'+containerId+'.scope','-print']);
+ const dirs=out.stdout.split('\n').filter(Boolean);
+ if(out.status!==0||dirs.length!==1)fail('REFUSED','container cgroup directory not unique/visible: '+out.stderr);
+ return dirs[0];
+}
+/** Parse `memory.events` ("oom_kill 0" lines) into a count; null when the line is absent. */
+export const oomKillsOf=text=>{const m=/^oom_kill\s+([0-9]+)$/m.exec(text??'');return m?Number(m[1]):null;};
+/** R49 W0: peak memory and OOM kills of the running witness (cgroup v2 memory.peak / memory.events) and the map-key setting it was created with. */
+export function witnessCgroupFacts(name){
+ const doc=inspect(name),dir=vmCgroupDir(doc.Id),peak=vm(['cat',dir+'/memory.peak']),events=vm(['cat',dir+'/memory.events']);
+ return {cgroupDir:dir,memoryPeakBytes:peak.status===0&&/^[0-9]+$/.test(peak.stdout.trim())?Number(peak.stdout.trim()):null,oomKills:events.status===0?oomKillsOf(events.stdout):null,
+  maxMapKeys:Number(envValue(doc,'BPFTRACE_MAX_MAP_KEYS')),perfRbPages:Number(envValue(doc,'BPFTRACE_PERF_RB_PAGES')),memoryCapBytes:doc.HostConfig?.Memory??null};
 }
 
 async function helper(config,holder,image,cpu,extra,argv){
@@ -127,7 +224,7 @@ export async function witnessStop(config,holder,saved,dir,options){
  for(let i=0;i<600&&inspect(name)?.State.Running;i++)await sleep(100);
  if(inspect(name)?.State.Running)fail('REFUSED','witness did not detach after SIGINT');
  const facts=JSON.parse(await helper(config,holder,pinImage(options.image??saved.image),5,[],['python3','-B','-c',KERNEL_FACTS]));
- const meta={programSha256:sha256(fs.readFileSync(PROGRAM)),bootId:facts.bootId,kernelRelease:facts.kernelRelease,containerId:doc.Id,imageDigest:doc.Image};
+ const meta={programSha256:sha256(fs.readFileSync(PROGRAM)),bootId:facts.bootId,kernelRelease:facts.kernelRelease,containerId:doc.Id,imageDigest:doc.Image,maxMapKeys:Number(envValue(doc,'BPFTRACE_MAX_MAP_KEYS')),perfRbPages:Number(envValue(doc,'BPFTRACE_PERF_RB_PAGES'))};
  const tmp=fs.mkdtempSync(path.join(dir,'witness-files-'));fs.writeFileSync(path.join(tmp,'meta.json'),JSON.stringify(meta));
  const logs=spawnSync('docker',['-H',process.env.TX2_DOCKER_HOST??'unix:///Users/sam/.colima/triplex2/docker.sock','logs',name],{encoding:'utf8'});fs.writeFileSync(path.join(tmp,'stderr.txt'),logs.stderr??'');
  for(const file of ['meta.json','stderr.txt'])docker(['cp',path.join(tmp,file),name+':/witness/'+file]);
@@ -173,6 +270,7 @@ async function witnessSession(ctx,plan){
   if(polling)clearInterval(polling);result.witnessCpuPercent=stats.length?{samples:stats.length,mean:stats.reduce((a,b)=>a+b,0)/stats.length,max:Math.max(...stats)}:null;
   if(sampler)result.cost=await sampler.finish();
   for(const n of [names.writer,...(plan.withNeighbor?[names.neighbor]:[]),...readers])docker(['kill','--signal','KILL',n]);
+  if(plan.captureWitness)result.witnessCgroup=witnessCgroupFacts(names.witness);      // while the witness still runs: memory.peak dies with the cgroup
   docker(['kill','--signal','INT',names.witness]);for(let i=0;i<1200&&inspect(names.witness)?.State.Running;i++)await sleep(100);
   if(inspect(names.witness)?.State.Running)fail('REFUSED','witness did not detach');
   docker(['cp',names.witness+':/witness/trace.txt',path.join(dir,'trace.txt')]);fs.writeFileSync(path.join(dir,'stderr.txt'),run(['docker','-H',SOCK,'logs',names.witness]).stderr??'');
@@ -200,21 +298,51 @@ async function bpfSampler(ctx,witnessName,dir){
  }};
 }
 
+/** One short bpftrace container under the witness profile (or a stated variant); returns stdout, stderr and the exit code. Never pulls. */
+async function bpftraceOnce(ctx,tag,argv,{mounts=[],caps=['BPF','PERFMON']}={}){
+ const name='tx2-sw-w0-'+tag+'-'+randomBytes(4).toString('hex');await reserve(ctx.config,name,ctx.holder,5);
+ try{
+  docker(harden(name,ctx.holder,ctx.bpftrace,5,[...caps.flatMap(c=>['--cap-add',c]),'--entrypoint','bpftrace','-e','BPFTRACE_MAX_MAP_KEYS='+MAP_KEYS,'-e','BPFTRACE_PERF_RB_PAGES='+PERF_RB_PAGES,
+   '-v','/sys/kernel/btf:/sys/kernel/btf:ro','-v','/sys/kernel/tracing:/sys/kernel/tracing:ro',...mounts],argv));
+  const stdout=docker(['start','-a',name],{allowFail:true})??'',doc=inspect(name),logs=run(['docker','-H',SOCK,'logs',name]);
+  return {stdout,stderr:logs.stderr??'',exitCode:doc?.State.ExitCode??null};
+ }finally{await remove(name,ctx.holder);}
+}
+
+/** R49 W0 clock step: the clock probe container streams CK lines through vm_clockcheck.py running in the VM, which stamps its own CLOCK_MONOTONIC on receipt. */
+async function clockStep(ctx){
+ const name='tx2-sw-w0-clock-'+randomBytes(4).toString('hex');await reserve(ctx.config,name,ctx.holder,5);
+ try{
+  docker(harden(name,ctx.holder,ctx.bpftrace,5,['--cap-add','BPF','--cap-add','PERFMON','--entrypoint','bpftrace','-e','BPFTRACE_MAX_MAP_KEYS='+MAP_KEYS,
+   '-v','/sys/kernel/btf:/sys/kernel/btf:ro','-v','/sys/kernel/tracing:/sys/kernel/tracing:ro','-v',CLOCK_PROBE+':/program/vm_clockprobe.bt:ro'],['-q','/program/vm_clockprobe.bt']));
+  const out=vm(['python3','-c',fs.readFileSync(CLOCK_HELPER,'utf8'),'--','docker','start','-a',name]);
+  const samples=out.stdout.split('\n').filter(Boolean).map(l=>{try{return JSON.parse(l);}catch{return null;}});
+  return {status:out.status,stderr:out.stderr,samples:samples.filter(Boolean),unparsed:samples.filter(r=>r===null).length};
+ }finally{await remove(name,ctx.holder);}
+}
+
 async function windowW0(ctx){
  const facts={uname:vm(['uname','-a']).stdout.trim(),btf:vm(['ls','-l','/sys/kernel/btf/vmlinux']).stdout.trim(),lockdown:vm(['cat','/sys/kernel/security/lockdown']).stdout.trim(),
   unprivilegedBpf:vm(['cat','/proc/sys/kernel/unprivileged_bpf_disabled']).stdout.trim(),bpfStats:vm(['cat','/proc/sys/kernel/bpf_stats_enabled']).stdout.trim(),
-  cgroupFs:vm(['stat','-fc','%T','/sys/fs/cgroup']).stdout.trim(),
+  perfEventParanoid:vm(['cat','/proc/sys/kernel/perf_event_paranoid']).stdout.trim(),
+  ext4BtfPresent:vm(['test','-e','/sys/kernel/btf/ext4']).status===0,         // present only when ext4 is a module (then `vmlinux:` would not resolve)
+  cgroupFs:vm(['stat','-fc','%T','/sys/fs/cgroup']).stdout.trim(),maxMapKeys:MAP_KEYS,perfRbPages:PERF_RB_PAGES,
   ext4Tracepoints:['ext4_sync_file_enter','ext4_sync_file_exit','ext4_sync_fs','ext4_truncate_enter','ext4_punch_hole','ext4_zero_range'].map(t=>[t,vm(['test','-d','/sys/kernel/tracing/events/ext4/'+t]).status===0])};
  const listing={};
- for(const probe of ['fexit:vmlinux:ext4_file_write_iter','fentry:vmlinux:ext4_page_mkwrite','fexit:vmlinux:ext4_sync_fs','tracepoint:syscalls:sys_enter_syncfs','tracepoint:syscalls:sys_exit_sync']){
-  const name='tx2-sw-w0-'+randomBytes(5).toString('hex');await reserve(ctx.config,name,ctx.holder,5);
-  try{docker(harden(name,ctx.holder,ctx.bpftrace,5,['--cap-add','BPF','--cap-add','PERFMON','--entrypoint','bpftrace','-v','/sys/kernel/btf:/sys/kernel/btf:ro','-v','/sys/kernel/tracing:/sys/kernel/tracing:ro'],['-l',probe]));
-   listing[probe]=docker(['start','-a',name],{allowFail:true});}finally{await remove(name,ctx.holder);}
+ for(const probe of ['fexit:vmlinux:ext4_file_write_iter','fentry:vmlinux:ext4_page_mkwrite','fentry:vmlinux:ext4_sync_fs','fexit:vmlinux:ext4_sync_fs','tracepoint:syscalls:sys_enter_syncfs','tracepoint:syscalls:sys_exit_sync']){
+  listing[probe]=(await bpftraceOnce(ctx,'list',['-l',probe])).stdout;
  }
+ // R49: CAP_PERFMON alone must be enough to attach a tracepoint (perf_event_open); never widen the capabilities to get around a refusal
+ const attachTry=await bpftraceOnce(ctx,'perf',['-q','-e','tracepoint:ext4:ext4_sync_file_exit { @x = 1; } interval:ms:100 { exit(); }']);
+ const tracepointAttach={ok:attachTry.exitCode===0,detail:(attachTry.stderr||attachTry.stdout).trim().slice(0,300),exitCode:attachTry.exitCode};
+ const clock=await clockStep(ctx);
  // the real program, real caps, default seccomp; its D<ack checks over 200 FULL commits are also the CLOCK_MONOTONIC bracket against the writer's own clock
- const attach=await witnessSession(ctx,{mode:'full',count:200,dirName:'w0-attach'});
- return {window:'W0',facts,listing,attach,pass:Boolean(attach.pass)&&Object.values(listing).every(v=>v),
-  claim:'kernel and capability facts; attach under default seccomp with only CAP_BPF and CAP_PERFMON; D<ack bracket for 200 FULL commits'};
+ const attach=await witnessSession(ctx,{mode:'full',count:200,dirName:'w0-attach',captureWitness:true});
+ const all={facts,listing,tracepointAttach,clock:{status:clock.status,stderr:clock.stderr,unparsed:clock.unparsed},attach,
+  paranoid:Number.parseInt(facts.perfEventParanoid,10),ext4BtfPresent:facts.ext4BtfPresent,clockSamples:clock.status===0&&!clock.unparsed?clock.samples:null};
+ const verdict=judgeW0(all);
+ return {window:'W0',facts,listing,tracepointAttach,clock,attach,verdict,pass:verdict.pass,
+  claim:'kernel and capability facts; attach under default seccomp with only CAP_BPF and CAP_PERFMON; nsecs(monotonic) against CLOCK_MONOTONIC; perf_event_paranoid, peak memory, ext4 built in and map keys recorded; D<ack bracket for 200 FULL commits'};
 }
 async function windowW1(ctx){
  const modes=['full','off','normal','full-then-off','ack-early','sync-before-write','sync-other-file','range-only','syncfs','mmap','neighbor-sync'],rows=[];

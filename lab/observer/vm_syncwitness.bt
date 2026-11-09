@@ -3,7 +3,7 @@
 //   bpftrace -q -o /witness/trace.txt vm_syncwitness.bt <dev1> <dir-ino1> <dev2> <dir-ino2>
 // dev is the kernel dev_t (major<<20|minor) of the store directory's filesystem; dir-ino is the store directory's inode.
 // Pass the same pair twice when only one directory is witnessed. The program is byte-blind: it records inode numbers,
-// offsets, lengths, cgroup ids and CLOCK_MONOTONIC times, never file contents, and never opens a candidate file.
+// offsets, lengths, cgroup ids and CLOCK_MONOTONIC times (nsecs(monotonic) everywhere; a bare nsecs is CLOCK_BOOTTIME in bpftrace, R49), never file contents, and never opens a candidate file.
 // Every recorded event carries a per-CPU sequence number. The parser (vm_normalizer.py parse_witness) treats any gap, duplicate
 // or count mismatch against the final "@n[cpu]" dump as lost events, so loss detection does not depend on bpftrace's stderr.
 // [EXP-OBS01-R9] Why: sync is witnessed at the ext4 entry points every path reaches (fsync, fdatasync, msync, O_SYNC, io_uring).
@@ -17,7 +17,7 @@ BEGIN
   @dir[(uint64)$3, (uint64)$4] = 1;
   @dev[(uint64)$1] = 1;
   @dev[(uint64)$3] = 1;
-  printf("SW1|B|%llu|%llu|%llu|%llu|%llu\n", nsecs, (uint64)$1, (uint64)$2, (uint64)$3, (uint64)$4);
+  printf("SW1|B|%llu|%llu|%llu|%llu|%llu\n", nsecs(monotonic), (uint64)$1, (uint64)$2, (uint64)$3, (uint64)$4);
 }
 
 // W: every buffered, direct, splice and io_uring write to ext4 (offset = ki_pos after the write minus the bytes written)
@@ -30,7 +30,7 @@ fexit:vmlinux:ext4_file_write_iter
   if (retval > 0 && @dir[$dev, (uint64)$parent]) {
     @ino[$dev, (uint64)$inode->i_ino] = 1;
     @n[cpu]++;
-    printf("SW1|W|%d|%llu|%llu|%llu|%llu|%llu|%llu|%llu|%lld\n", cpu, @n[cpu], nsecs, cgroup, $dev, $inode->i_ino, $parent,
+    printf("SW1|W|%d|%llu|%llu|%llu|%llu|%llu|%llu|%llu|%lld\n", cpu, @n[cpu], nsecs(monotonic), cgroup, $dev, $inode->i_ino, $parent,
       args->iocb->ki_pos - retval, retval);
   }
 }
@@ -45,7 +45,7 @@ fentry:vmlinux:ext4_page_mkwrite
   if (@dir[$dev, (uint64)$parent]) {
     @ino[$dev, (uint64)$inode->i_ino] = 1;
     @n[cpu]++;
-    printf("SW1|M|%d|%llu|%llu|%llu|%llu|%llu|%llu\n", cpu, @n[cpu], nsecs, cgroup, $dev, $inode->i_ino, $parent);
+    printf("SW1|M|%d|%llu|%llu|%llu|%llu|%llu|%llu\n", cpu, @n[cpu], nsecs(monotonic), cgroup, $dev, $inode->i_ino, $parent);
   }
 }
 
@@ -53,7 +53,7 @@ fentry:vmlinux:ext4_page_mkwrite
 tracepoint:ext4:ext4_sync_file_enter
 {
   if (@dir[(uint64)args->dev, (uint64)args->parent]) {
-    @fe[tid] = nsecs;
+    @fe[tid] = nsecs(monotonic);
     @fi[tid] = args->ino;
     @fp[tid] = args->parent;
     @fd[tid] = args->datasync;
@@ -66,21 +66,34 @@ tracepoint:ext4:ext4_sync_file_exit
   if (@fe[tid]) {
     @ino[(uint64)@fv[tid], (uint64)@fi[tid]] = 1;
     @n[cpu]++;
-    printf("SW1|F|%d|%llu|%llu|%llu|%llu|%llu|%llu|%llu|%d|%d\n", cpu, @n[cpu], @fe[tid], nsecs, cgroup, @fv[tid], @fi[tid], @fp[tid],
+    printf("SW1|F|%d|%llu|%llu|%llu|%llu|%llu|%llu|%llu|%d|%d\n", cpu, @n[cpu], @fe[tid], nsecs(monotonic), cgroup, @fv[tid], @fi[tid], @fp[tid],
       @fd[tid], args->ret);
     delete(@fe[tid]); delete(@fi[tid]); delete(@fp[tid]); delete(@fd[tid]); delete(@fv[tid]);
   }
 }
 
-// S: syncfs(2) and sync(2) that reached a successful wait=1 ext4_sync_fs on a witnessed device; enter is the syscall entry
-tracepoint:syscalls:sys_enter_syncfs { @se[tid] = nsecs; }
-tracepoint:syscalls:sys_enter_sync { @se[tid] = nsecs; }
+// S: syncfs(2) and sync(2) that reached a successful wait=1 ext4_sync_fs on a witnessed device (OBS01 round 10, F5).
+// Fields: enter/ts are the syscall entry and exit; fsenter/fsexit are the entry and exit of that ext4_sync_fs(wait=1) call
+// (both 0 when the entry probe did not fire). The judge uses ts as D_upper (durability is granted there) and fsenter, else
+// enter, as D_lower (an ACK or publication earlier than D_lower is a proven violation; between the two it is unproven).
+// [EXP-OBS01-R10] Why: R48 4.2 names the successful filesystem sync, not the syscall bounds; an interval keeps the proven
+// ordering violations proven and labels the rest DURABILITY-UNPROVEN. Rejected: one instant (the syscall exit invents
+// violations, the ext4 entry invents durability).
+tracepoint:syscalls:sys_enter_syncfs { @se[tid] = nsecs(monotonic); }
+tracepoint:syscalls:sys_enter_sync { @se[tid] = nsecs(monotonic); }
+
+fentry:vmlinux:ext4_sync_fs
+{
+  if (args->wait == 1 && @se[tid]) {
+    if (@dev[(uint64)args->sb->s_dev]) { @sfe[tid] = nsecs(monotonic); }
+  }
+}
 
 fexit:vmlinux:ext4_sync_fs
 {
   if (args->wait == 1 && retval == 0 && @se[tid]) {
     $dev = (uint64)args->sb->s_dev;
-    if (@dev[$dev]) { @sd[tid] = $dev; }
+    if (@dev[$dev]) { @sd[tid] = $dev; @sfx[tid] = nsecs(monotonic); }
   }
 }
 
@@ -88,18 +101,20 @@ tracepoint:syscalls:sys_exit_syncfs
 {
   if (@sd[tid]) {
     @n[cpu]++;
-    printf("SW1|S|%d|%llu|%llu|%llu|%llu|%llu|1|%d\n", cpu, @n[cpu], @se[tid], nsecs, cgroup, @sd[tid], args->ret);
+    printf("SW1|S|%d|%llu|%llu|%llu|%llu|%llu|1|%d|%llu|%llu\n", cpu, @n[cpu], @se[tid], nsecs(monotonic), cgroup, @sd[tid], args->ret,
+      @sfe[tid], @sfx[tid]);
   }
-  delete(@se[tid]); delete(@sd[tid]);
+  delete(@se[tid]); delete(@sd[tid]); delete(@sfe[tid]); delete(@sfx[tid]);
 }
 
 tracepoint:syscalls:sys_exit_sync
 {
   if (@sd[tid]) {
     @n[cpu]++;
-    printf("SW1|S|%d|%llu|%llu|%llu|%llu|%llu|1|0\n", cpu, @n[cpu], @se[tid], nsecs, cgroup, @sd[tid]);
+    printf("SW1|S|%d|%llu|%llu|%llu|%llu|%llu|1|0|%llu|%llu\n", cpu, @n[cpu], @se[tid], nsecs(monotonic), cgroup, @sd[tid],
+      @sfe[tid], @sfx[tid]);
   }
-  delete(@se[tid]); delete(@sd[tid]);
+  delete(@se[tid]); delete(@sd[tid]); delete(@sfe[tid]); delete(@sfx[tid]);
 }
 
 // T: truncate, hole punch and zero range, only for inodes already seen in a witnessed directory (generation tracking)
@@ -107,7 +122,7 @@ tracepoint:ext4:ext4_truncate_enter
 {
   if (@ino[(uint64)args->dev, (uint64)args->ino]) {
     @n[cpu]++;
-    printf("SW1|T|%d|%llu|%llu|%llu|%llu|%llu|t|0|%llu\n", cpu, @n[cpu], nsecs, cgroup, (uint64)args->dev, (uint64)args->ino, (uint64)args->blocks);
+    printf("SW1|T|%d|%llu|%llu|%llu|%llu|%llu|t|0|%llu\n", cpu, @n[cpu], nsecs(monotonic), cgroup, (uint64)args->dev, (uint64)args->ino, (uint64)args->blocks);
   }
 }
 
@@ -115,7 +130,7 @@ tracepoint:ext4:ext4_punch_hole
 {
   if (@ino[(uint64)args->dev, (uint64)args->ino]) {
     @n[cpu]++;
-    printf("SW1|T|%d|%llu|%llu|%llu|%llu|%llu|p|%llu|%llu\n", cpu, @n[cpu], nsecs, cgroup, (uint64)args->dev, (uint64)args->ino,
+    printf("SW1|T|%d|%llu|%llu|%llu|%llu|%llu|p|%llu|%llu\n", cpu, @n[cpu], nsecs(monotonic), cgroup, (uint64)args->dev, (uint64)args->ino,
       (uint64)args->offset, (uint64)args->len);
   }
 }
@@ -124,7 +139,7 @@ tracepoint:ext4:ext4_zero_range
 {
   if (@ino[(uint64)args->dev, (uint64)args->ino]) {
     @n[cpu]++;
-    printf("SW1|T|%d|%llu|%llu|%llu|%llu|%llu|z|%llu|%llu\n", cpu, @n[cpu], nsecs, cgroup, (uint64)args->dev, (uint64)args->ino,
+    printf("SW1|T|%d|%llu|%llu|%llu|%llu|%llu|z|%llu|%llu\n", cpu, @n[cpu], nsecs(monotonic), cgroup, (uint64)args->dev, (uint64)args->ino,
       (uint64)args->offset, (uint64)args->len);
   }
 }
@@ -132,6 +147,6 @@ tracepoint:ext4:ext4_zero_range
 // Z: detach record, then bpftrace dumps @n[cpu] (the only map left populated) for the loss check
 END
 {
-  printf("SW1|Z|%llu\n", nsecs);
-  clear(@dir); clear(@dev); clear(@ino); clear(@fe); clear(@fi); clear(@fp); clear(@fd); clear(@fv); clear(@se); clear(@sd);
+  printf("SW1|Z|%llu\n", nsecs(monotonic));
+  clear(@dir); clear(@dev); clear(@ino); clear(@fe); clear(@fi); clear(@fp); clear(@fd); clear(@fv); clear(@se); clear(@sd); clear(@sfe); clear(@sfx);
 }

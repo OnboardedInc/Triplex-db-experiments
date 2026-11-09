@@ -15,7 +15,7 @@ import sqlite3
 import tempfile
 import time
 from vm_fixture import seed,commit
-from vm_normalizer import packed
+from vm_normalizer import packed,WITNESS_CODES as WITNESS_ORDER
 
 MODES=('full','off','normal','full-then-off','ack-early','sync-before-write','sync-other-file','range-only','syncfs','mmap','neighbor-sync')
 SWITCH=500
@@ -32,6 +32,25 @@ def expected(mode,index,count):
     if mode=='sync-before-write':return 'ACK-BEFORE-DURABLE' if index<count else 'SYNC-MISSING'
     if mode=='mmap':return 'UNWITNESSED-WRITE'
     raise ValueError('unknown mode')
+
+# [EXP-OBS01-R10] Why (F3): the complete set of refusal codes each planted mode must raise, not just its per-commit code. A mode that raises
+# an extra global code (or misses one) fails W1 even when its per-commit timing rows match. mmap has no write records at all, so every
+# commit also lacks a covering write (SYNC-MISSING) next to the run-level UNWITNESSED-WRITE; W1 confirms or refutes that in a real kernel.
+EXPECTED_CODES={'full':set(),'syncfs':set(),'off':{'SYNC-MISSING'},'normal':{'ACK-BEFORE-DURABLE'},'full-then-off':{'SYNC-MISSING'},
+    'ack-early':{'ACK-BEFORE-DURABLE'},'sync-before-write':{'ACK-BEFORE-DURABLE','SYNC-MISSING'},'sync-other-file':{'SYNC-MISSING'},
+    'range-only':{'SYNC-MISSING'},'neighbor-sync':{'SYNC-MISSING'},'mmap':{'UNWITNESSED-WRITE','SYNC-MISSING'}}
+GLOBAL_CODES={'mmap':{'UNWITNESSED-WRITE'}}
+
+def expected_codes(mode):
+    if mode not in EXPECTED_CODES:raise ValueError('unknown mode')
+    return set(EXPECTED_CODES[mode])
+
+def expected_global(mode):
+    """Codes that are run-level (not per-commit): none for any mode except mmap."""
+    expected_codes(mode);return set(GLOBAL_CODES.get(mode,()))
+
+def expected_primary(mode):
+    codes=expected_codes(mode);return min(codes,key=WITNESS_ORDER.index) if codes else None
 
 def libc():
     lib=ctypes.CDLL(None,use_errno=True)

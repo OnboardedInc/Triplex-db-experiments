@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 import sys
 import vm_normalizer as n
+import vm_planted_writer as planted
 from vm_planted_writer import expected
 
 def judge_run(trace_text,stderr_text,ops,wal,cgroup_id,dir_pair=None,polls=None):
@@ -24,46 +25,44 @@ def judge_run(trace_text,stderr_text,ops,wal,cgroup_id,dir_pair=None,polls=None)
     store={'wal':(n.kernel_dev(ops['wal'][0]),ops['wal'][1]),'main':(n.kernel_dev(ops['main'][0]),ops['main'][1]),'cgroup':cgroup_id,'walLen':len(wal)}
     verdict=n.judge_witness(trace,store,views);problems.extend(verdict['problems'])
     codes=[code for code,_ in problems];primary=min(codes,key=n.WITNESS_CODES.index) if codes else None
-    return {'primary':primary,'codes':sorted(set(codes),key=n.WITNESS_CODES.index),'problems':[a+': '+b for a,b in problems],'perCommit':verdict['perCommit']}
+    return {'primary':primary,'codes':sorted(set(codes),key=n.WITNESS_CODES.index),'problems':[a+': '+b for a,b in problems],'perCommit':verdict['perCommit'],
+        'globalCodes':sorted({c for c,_ in problems}-{c for row in verdict['perCommit'] for c in row['codes']},key=n.WITNESS_CODES.index)}
 
 def compare(mode,result,count):
-    """Check a judged W1 run against vm_planted_writer.expected; returns a list of mismatches (empty means the mode behaved)."""
-    mismatches=[]
-    if mode=='mmap':
-        return [] if result['primary']=='UNWITNESSED-WRITE' else ['mmap run was not refused UNWITNESSED-WRITE: '+str(result['primary'])]
-    rows=result['perCommit']
-    if len(rows)!=count:return ['witnessed commit count '+str(len(rows))+' != '+str(count)]
+    """Check a judged W1 run against vm_planted_writer; returns a list of mismatches (empty means the mode behaved).
+    [EXP-OBS01-R10] Why (F3): the whole refusal is compared, not only the per-commit codes: the complete set of codes the run raised, the
+    primary code, the codes that are not per-commit (global problems: UNWITNESSED-WRITE, WITNESS-UNBOUND, CHECKPOINT-UNSYNCED...) and every
+    commit's outcome. A positive mode must raise nothing at all; a negative mode must raise exactly its own codes.
+    Rejected: judging timing rows only (a FULL-shaped run with a global UNWITNESSED-WRITE compared equal)."""
+    mismatches=[];codes=set(result.get('codes') or [])
+    rows=result.get('perCommit') or []
+    per_commit={c for row in rows for c in row['codes']}
+    want_codes=planted.expected_codes(mode);want_global=planted.expected_global(mode);want_primary=planted.expected_primary(mode)
+    got_primary=min(codes,key=n.WITNESS_CODES.index) if codes else None
+    if result.get('primary')!=got_primary:mismatches.append('reported primary '+str(result.get('primary'))+' is not the primary of the reported codes '+str(got_primary))
+    if got_primary!=want_primary:mismatches.append('primary code '+str(got_primary)+' != expected '+str(want_primary))
+    if codes!=want_codes:mismatches.append('refusal set '+str(sorted(codes))+' != expected '+str(sorted(want_codes)))
+    global_codes=codes-per_commit
+    if global_codes!=want_global:mismatches.append('global (not per-commit) codes '+str(sorted(global_codes))+' != expected '+str(sorted(want_global)))
+    if mode=='mmap':return mismatches[:10]      # no write records exist for an mmap writer: only the run-level refusal is judged
+    if len(rows)!=count:return mismatches+['witnessed commit count '+str(len(rows))+' != '+str(count)]
     for index,row in enumerate(rows,1):
-        want=expected(mode,index,count);got=min(row['codes'],key=n.WITNESS_CODES.index) if row['codes'] else None
+        want=planted.expected(mode,index,count);got=min(row['codes'],key=n.WITNESS_CODES.index) if row['codes'] else None
         if want!=got:mismatches.append('commit '+str(index)+' expected '+str(want)+' got '+str(got))
         if len(mismatches)>=10:break
     return mismatches
 
 def stream_check(trace_path,stderr_text=''):
-    """Loss check for traces too large to parse whole (W3): line by line, same grammar and per-CPU sequence rules as parse_witness."""
-    seen={};counts={};begin=end=None;events=0
-    with open(trace_path,'r',encoding='utf-8') as handle:
-        for line in handle:
-            line=line.rstrip('\n')
-            if not line.strip():continue
-            if line.startswith('@n['):
-                match=n.re.fullmatch(r'@n\[([0-9]{1,5})\]: ([0-9]{1,19})',line)
-                if not match or end is None or int(match[1]) in counts:raise n.WitnessError('TRACE-INCOMPLETE','bad/duplicate per-CPU count')
-                counts[int(match[1])]=int(match[2]);continue
-            parts=line.split('|')
-            if parts[0]!='SW1' or len(parts)<3 or parts[1] not in n.SW_LAYOUT or len(parts)-2!=len(n.SW_LAYOUT[parts[1]].split()):raise n.WitnessError('TRACE-INCOMPLETE','unparseable record')
-            if parts[1]=='B':begin=parts;continue
-            if parts[1]=='Z':end=parts;continue
-            if begin is None or end is not None:raise n.WitnessError('TRACE-INCOMPLETE','record outside attach/detach')
-            names=n.SW_LAYOUT[parts[1]].split();cpu=int(parts[2]);seq=int(parts[3]);bucket=seen.setdefault(cpu,set())
-            if names[:2]!=['cpu','seq'] or seq<1 or seq in bucket:raise n.WitnessError('TRACE-INCOMPLETE','duplicate/invalid sequence')
-            bucket.add(seq);events+=1
-    if begin is None or end is None:raise n.WitnessError('TRACE-INCOMPLETE','missing start/detach record')
-    for cpu,bucket in seen.items():
-        if len(bucket)!=max(bucket) or counts.get(cpu)!=len(bucket):raise n.WitnessError('TRACE-INCOMPLETE','lost events on CPU '+str(cpu))
-    lost=sum(int(m[1]) for m in n.re.finditer(r'\blost\s+([0-9]+)\s+events?\b',stderr_text,n.re.I))
-    if lost:raise n.WitnessError('TRACE-INCOMPLETE','bpftrace reported '+str(lost)+' lost events')
-    return {'events':events,'cpus':len(seen),'lostEvents':0,'attachNs':int(begin[2]),'detachNs':int(end[2])}
+    """Loss check for traces too large to parse whole (W3). Runs the very same validation state machine as parse_witness (F4): any nonzero
+    per-CPU count for a CPU with no records, duplicate or missing B/Z, numeric and timestamp rules, per-CPU sequence/time order and
+    error stderr refuse identically. Only the events themselves are not kept."""
+    scan=n.WitnessScan(False)
+    try:
+        with open(trace_path,'r',encoding='utf-8',newline='\n') as handle:
+            for number,line in enumerate(handle,1):scan.feed(line[:-1] if line.endswith('\n') else line,number)
+    except UnicodeDecodeError:raise n.WitnessError('TRACE-INCOMPLETE','witness output is not UTF-8')
+    summary=scan.finish(stderr_text)
+    return {'events':summary['eventCount'],'cpus':summary['cpus'],'lostEvents':0,'attachNs':summary['begin']['ts'],'detachNs':summary['end']['ts']}
 
 if __name__=='__main__':
     if sys.argv[1]=='stream-check':

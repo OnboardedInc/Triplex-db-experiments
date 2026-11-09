@@ -198,7 +198,7 @@ config and the observer's read-only connection are never evidence. Round 8's "re
 | File | Role |
 | --- | --- |
 | `vm_syncwitness.bt` | the pinned bpftrace program (trusted `sync-witness` container only); records W/M/F/S/T events with per-CPU sequence numbers |
-| `vm_normalizer.py` | strict parser (`parse_witness`), per-commit join (`judge_witness`), the seven codes, the case/event contract below. One file because O-OBS reruns it alone |
+| `vm_normalizer.py` | strict parser (`parse_witness`), per-commit join (`judge_witness`), the codes (nine since round 10), the case/event contract below. One file because O-OBS reruns it alone |
 | `vm_watch.py` | ships the finished trace, stderr and meta into the sealed bundle; binds each source's writer cgroup id; emits the witness clock domain |
 | `vm_planted_writer.py`, `vm_syncwitness.py` | the eleven W1 planted writers and the offline judge/compare used for W1 receipts (and `stream-check` for W3) |
 | `vm_w3_load.py` | W3 broker-shaped writer plus read-only pollers |
@@ -217,6 +217,7 @@ trusted `driver-ack` events (`source, stream, operationId, attemptId, atNs, doma
 For commit `c` at WAL bytes `[o_c, e_c)` of the live generation: `W(c)` = latest exit of a traced write to the WAL inode that starts below
 `e_c`; `D(c)` = earliest exit of a successful `ext4_sync_file` on the WAL inode, or `syncfs`/`sync` with wait on its device, from the writer's
 cgroup, that **entered** at or after `W(c)`. Positions gain `D` and `durableEndNs = max(U, D)` (consumer lag end; lag start stays `L`).
+(Round 10: that exit is exact for file syncs only; for syncfs/sync `D` is the syscall exit and a second bound `D_lower` exists.)
 
 | Code | Raised when |
 | --- | --- |
@@ -228,7 +229,8 @@ cgroup, that **entered** at or after `W(c)`. Positions gain `D` and `durableEndN
 | `ACK-BEFORE-DURABLE` | a driver ACK instant earlier than `D(c)` (strict; no tolerance) |
 | `VISIBLE-BEFORE-DURABLE` | an SQL01 commit with `U(c) < D(c)` |
 
-Several codes can hold at once: the message lists all, the exception's `code` is the first in the table order.
+Round 10 changes this section: `D(c)` is an interval for syncfs/sync, two codes are added, and the codes below are listed in primary-code order
+(see "Round 10"). Several codes can hold at once: the message lists all, the exception's `code` is the first in the order of the Round 10 table.
 
 ### Not covered / limits
 
@@ -256,6 +258,101 @@ node lab/bin/heavy.mjs --label CX-OBS01-R9-w0w3 -- node lab/bin/engine.mjs witne
 
 The command removes its containers and volumes, then runs `colima ssh -p triplex2 -- sudo fstrim -av` and `docker context use default`
 (outputs in `fstrim.json`, `context.json`). W2 sets `kernel.bpf_stats_enabled=1` in the VM for its duration and restores the prior value.
-Per window: W0 facts and attach under default seccomp (`W0.json`); W1 eleven planted writers judged through `vm_syncwitness.py` (`w1-*`);
+Per window: W0 facts and attach under default seccomp (`W0.json`; round 10 adds the R49 checks listed under "Round 10"); W1 eleven planted writers judged through `vm_syncwitness.py` (`w1-*`);
 W2 per-commit added kernel time from `run_time_ns`/`run_cnt` deltas (gate p99 <= 100 us); W3 zero lost events (sequence check) and mean
 witness CPU below 0.1 core. W4 (guest crash) is not implemented and needs orchestrator approval.
+
+## Round 10: split publication, detach coverage, syncfs interval, trace clock (fixes the round 9 review, R49 items)
+
+Builder rules for every item are the round 9 review `lab/experiments/EXP-OBS01/VERIFY-round9.md` (F1 to F5) and research R49
+(`lab/research/R49-bpftrace-source.md`). Nothing here ran in a VM: W0..W3 are still NOT RUN and the bpftrace image is not built.
+
+### The nine codes, in primary-code order
+
+The exception's `code` (and `primary` in W1) is the first code that holds in this order; the rest are listed as `also`.
+
+| # | Code | Raised when | New in round 10 |
+| --- | --- | --- | --- |
+| 1 | `TRACE-INCOMPLETE` | as round 9, plus: the witness attached after the first observation (first poll start); detached before the last trusted final readback, observation or tailed WAL chunk; detached after the observer's `end`; a final readback without an integer `atNs`; a syncfs record whose ext4 interval lies outside its syscall | extended |
+| 2 | `WITNESS-UNBOUND` | as round 9, plus: a publishing SQL01 commit with no bound `U`; a driver ACK whose member appears in more than one published frame | extended |
+| 3 | `PUBLICATION-SPLIT` | a SQL01 marker advance and its frame are not in the same transaction (either order); a marker that does not name its transaction's last frame; a marker ahead of an empty frames table (`read_state`); a marker lagging the last frame | new (F1) |
+| 4 | `UNWITNESSED-WRITE` | as round 9 | |
+| 5 | `CHECKPOINT-UNSYNCED` | as round 9 | |
+| 6 | `SYNC-MISSING` | as round 9 | |
+| 7 | `ACK-BEFORE-DURABLE` | a driver ACK instant earlier than `D_lower(c)` (a proven violation) | redefined (F5) |
+| 8 | `VISIBLE-BEFORE-DURABLE` | an SQL01 commit with `U(c) < D_lower(c)` (a proven violation) | redefined (F5) |
+| 9 | `DURABILITY-UNPROVEN` | an ACK or `U` inside `[D_lower(c), D_upper(c))`: the run is refused, but nothing is proven violated | new (F5) |
+
+`PUBLICATION-SPLIT` refuses even without a witness (the offline-fixture mode): it is a property of the SQL01 history, not of the kernel trace.
+A consumer of the receipts must not count `DURABILITY-UNPROVEN` as an ACK-before-durable or visible-before-durable violation.
+
+### F1: logical publication, split commits (fail closed)
+
+SQL01's contract is atomic: `frames` insert and `marker` update in one transaction. The normalizer now checks it per reconstructed transaction
+(`publication_split`, `marker_advance`, `new_frames`). A marker advance is a change of any of `lsn, epoch, position, crc, size`; a horizon-only
+update (`h`) is not a publication and not a split; rewriting an existing frame row (the fixtures set `committed_at` after the fact) is not a new frame.
+When a split is found the run refuses `PUBLICATION-SPLIT`; the join still runs so the other codes appear next to it (the reviewer's fixture also raises
+`VISIBLE-BEFORE-DURABLE`). The join binds every frame-bearing commit to its frame's logical position `(epoch, lsn)` and that position's real `U`, whether
+or not the commit moved the marker; a marker advance binds to the position it names; no source commit silently loses its `U`. A position's published
+`D` is the latest `D` over every commit that carries a piece of it, so `durableEndNs` cannot precede the payload's durability. A driver ACK for a member
+is checked against every commit of that member's publication (the commit that added the member's frame, found through the frame's decoded members, not
+through a row delta). `read_state` refuses a marker ahead of an empty frames table (`marker.lsn != 0` with no frames).
+
+### F2: witness coverage of the observation interval
+
+`witness_context` now requires, in the observer's CLOCK_MONOTONIC domain (the witness clock record joins the same-boot check): trace `attach <=` the earliest
+poll start; trace `detach >=` the latest of every poll end, every `final` readback `atNs` (each must be an integer: a missing one refuses) and every tailed WAL
+chunk `atNs`; and `detach <=` the observer's `end`. Otherwise `TRACE-INCOMPLETE`. A detach record and gap-free per-CPU sequences prove completeness only inside the
+trace's own interval; this binds that interval to this attempt's observations. The controller already stops the witness after `finals-done`; the judge no longer relies on that order.
+
+### F3: W1 compares the whole refusal
+
+`vm_syncwitness.compare` checks, per mode (tables in `vm_planted_writer.EXPECTED_CODES`, `GLOBAL_CODES`): the complete set of codes the run raised, its primary code,
+the run-level (not per-commit) codes, and every commit's outcome. A positive mode (`full`, `syncfs`) must raise nothing. Expected sets: `off`, `sync-other-file`,
+`range-only`, `neighbor-sync`, `full-then-off`: `{SYNC-MISSING}`; `normal`, `ack-early`: `{ACK-BEFORE-DURABLE}`; `sync-before-write`: `{ACK-BEFORE-DURABLE, SYNC-MISSING}`;
+`mmap`: `{UNWITNESSED-WRITE, SYNC-MISSING}` (no write records exist for an mmap writer, so every commit also lacks a covering write; W1 confirms or refutes this in a real kernel).
+
+### F4: one validation state machine for the whole file and the stream
+
+`vm_normalizer.WitnessScan` holds the sync-witness/1 grammar and loss rules. `parse_witness` feeds it a whole trace; `vm_syncwitness.stream_check` (probe W3)
+feeds it line by line without keeping events. Any nonzero `@n[cpu]` count for a CPU with no records, a duplicate or missing start/detach, numeric and timestamp
+rules, per-CPU sequence and time order, line shape and bpftrace error/lost stderr refuse identically (same messages), and invalid UTF-8 or `\r` refuse.
+Memory of the streaming path is one `{seq: ts}` map per CPU (about 0.3 GB for a 20-minute W3 at 100 commits/s on the host; the whole-file path is unchanged).
+
+### F5: syncfs timing is an interval (orchestrator decision)
+
+| | R48 4.2 (as written) | Round 9 (as built) | Round 10 (this rule) |
+| --- | --- | --- | --- |
+| file sync (`ext4_sync_file`, fsync/fdatasync/msync/O_SYNC/io_uring) | `D` = exit of the first successful sync that entered at or after `W(c)` | same | same: `D_lower = D_upper =` that exit; ACK/`U` strictly earlier than it is a violation |
+| `syncfs(2)` / `sync(2)` | `D` = exit of the successful `ext4_sync_fs(wait=1)` | one instant: the syscall exit, also used as proof of ordering (false violations) | **interval** `[D_lower, D_upper]`, below |
+
+For syncfs/sync the program records the syscall entry and exit and, when the `ext4_sync_fs(wait=1)` entry probe fired, that call's entry and exit
+(`S|cpu|seq|enter|ts|cg|dev|wait|ret|fsenter|fsexit`; `fsenter = fsexit = 0` when not recorded). Then:
+
+- `D_upper` = the **syscall exit**. Durability is granted only at `D_upper` (positions' `D`, `durableEndNs = max(U, D_upper)`, W/D joins).
+- `D_lower` = the `ext4_sync_fs(wait=1)` **entry** if recorded, else the **syscall entry**.
+- `ACK-BEFORE-DURABLE` / `VISIBLE-BEFORE-DURABLE` fire only when the ACK or `U` is **before `D_lower`** (proven violation).
+- An ACK or `U` in `[D_lower, D_upper)` raises `DURABILITY-UNPROVEN` (refuses the run; not a violation). At or after `D_upper` it passes.
+- A commit's interval over several eligible syncs is `[min D_lower, min D_upper]`; the reported `via` is the sync with the earliest `D_upper`.
+- A sync is eligible only when its **syscall entry** is at or after `W(c)` (R48's "entered after the last write"); a write between the syscall entry and the ext4 entry
+  is therefore not credited to that syncfs (`SYNC-MISSING`), the conservative side. Failed (`ret != 0`), `wait=0`, other-cgroup syncs never count.
+- Reviewer fixture `review_round9.py` `test_syncfs_syscall_boundary_must_not_change_r48_D`: expectation changed only for this decision (one `S` with no ext4
+  entry, `U = ACK = 250` inside `[110, 300)` now reports `DURABILITY-UNPROVEN` with `D = 300`, `D_lower = 110`, not the two violations).
+
+### R49: the trace clock, W0 checks and the image recipe (code and runbook; nothing run)
+
+1. **Clock.** Bare `nsecs` in bpftrace is CLOCK_BOOTTIME. Every timestamp in `vm_syncwitness.bt` is now `nsecs(monotonic)` (15 sites).
+2. **W0 clock step.** `vm_clockprobe.bt` prints `CK|nsecs(monotonic)|nsecs(boot)` every 20 ms (50 lines). `vm_clockcheck.py` runs inside the VM
+   (`docker start -a` of the probe container), stamps its own CLOCK_MONOTONIC on receipt of each line, and `clockVerdict` (`lab/bin/sync-witness.mjs`) refuses unless at least 20
+   samples arrived, `nsecs(monotonic)` never runs ahead of the receipt clock by more than 1 ms, and the smallest receipt-minus-value hop is at most **100 ms**. An offset below the
+   tolerance is not detectable by this step (stated limit); a boot-clock offset is the VM's suspended time, which is far larger. `bootNs - monotonicNs` is recorded.
+3. **W0 checks.** (a) `kernel.perf_event_paranoid` is recorded and a tracepoint is attached under only CAP_BPF + CAP_PERFMON; if that fails W0 refuses naming the level and the witness
+   never gets CAP_SYS_ADMIN. (b) the witness cgroup's `memory.peak` and `memory.events` `oom_kill` are read before detach: refuse above **80%** of the 256 MiB cap or on any OOM kill. (c) ext4 built in:
+   `/sys/kernel/btf/ext4` must be absent and every `bpftrace -l` probe (now including `fentry:vmlinux:ext4_sync_fs`) must list by its exact name. (d) `BPFTRACE_MAX_MAP_KEYS` is set explicitly
+   (65536; the profile check refuses anything outside 16384..4194304 and a missing `BPFTRACE_PERF_RB_PAGES`) and the value is recorded in `W0.json` and in the witness meta (`maxMapKeys`).
+4. **Image.** `lab/observer/bpftrace-image/Dockerfile` is the R49 recipe (arm64 `ubuntu:24.04@sha256:19cad596...`, `bpftrace=0.20.2-1ubuntu4.3`, LLVM 18 at `1:18.1.3-1ubuntu1`,
+   `libbpfcc=0.29.1+ds-1ubuntu7`, apt version pins, `.deb` SHA256 check, closed package list). **Not built**: a build downloads about 90 MB and waits for Sam's approval. Open item: R49 gives
+   `libbsd0` only as "0.12.1 series", so the build takes `--build-arg LIBBSD0_VERSION=<exact arm64 version>` from the signed index and fails without it.
+
+W0 runbook additions: the probe container for the clock step and the tracepoint attach test use the same `--bpftrace-image` (the locally built image ID, not a pull); the steps run before the attach session and
+all land in `W0.json` (`verdict.checks.{clock,perf,memory,ext4,mapKeys,attach}`). Preconditions are unchanged (free disk above 10 GiB, no exclusive slot, no G03/NSR/P-TINY container).
