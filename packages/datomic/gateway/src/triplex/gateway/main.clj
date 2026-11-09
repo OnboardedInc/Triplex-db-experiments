@@ -4,7 +4,7 @@
   (:gen-class))
 
 ;; [EXP-DA00] Why: own bounded HTTP gateway on official Peer API (R29/Jepsen pattern). Rejected: undocumented peer-server wire protocol.
-(def base-uri "datomic:dev://127.0.0.1:4334/")
+(def base-uri (or (System/getenv "DATOMIC_BASE_URI") "datomic:dev://127.0.0.1:4334/"))
 (def connections (atom {}))
 (defn connection [uri] (or (@connections uri) (get (swap! connections #(if (contains? % uri) % (assoc % uri (d/connect uri)))) uri)))
 (defn sync-db [uri] (let [result (deref (d/sync (connection uri)) 2000 ::timeout)]
