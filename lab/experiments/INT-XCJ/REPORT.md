@@ -100,3 +100,50 @@ The pin-audit script invokes verification and retains generated comparison diffs
 **Current result:** X02 and C8 are merged on `int/X02-C8-J01`; **J01 `0d9a860` is not merged** because C8 G0 failed. J01's default-off behavior has not been verified on the integrated branch. Source inspection of its accepted commit shows `options.commitEncoding ?? "a0"` with compact explicit/opt-in; this is a preview only, not an integrated gate result. No J01 post-merge pin audit is possible without making the prohibited next merge.
 
 **Open handoff:** resolve the four live-control/expected-skip classifications under the lab's gate policy and rerun C8 G0. Contract 0.3.12 must explicitly review/re-pin both workload files at the hashes above. Once C8 passes its required gates, resume default-off J01 and audit its pins. No main merge, push, live XTDB/QLever parity, G1/G2, performance/golden scenarios, publication or independent verification was performed in this continuation. The first attempt's report and checksums remain unchanged; continuation evidence has its own `SHA256SUMS-continuation`.
+
+## Round 3 — four authorized live skips and one live attempt
+
+The latest dispatch explicitly classifies the four C8 controls as expected offline G0 skips. Commit **`8fad220b88062b6d153b4ffc83915f0af3d5d4f4`** adds exactly these four entries to `lab/config/g0-expected-skips.json`, each with the exact reason **`live control; runs in G1 against the shared dev residents (C8, INT-XCJ)`**. The only accompanying manifest changes are the four-entry `reasons` mapping and qualification count 46 → 50. The script-generated check in `evidence/round3/skip-manifest-change.json` asserts the rest of the JSON is unchanged. This follows the orchestrator's explicit ruling; the separate reviewer still reviews the gate-policy change.
+
+The two QLever positive-control graphs in the test files were fixed names. To meet the dispatch's unique-graphs requirement, their names now include `randomUUID()`. Triplex test scopes and XTDB control IDs already use UUIDs. Only those QLever control identity/query constructions changed; assertions, reader count (8), writer/read windows (8,000 ms), timeouts and native query implementations remain unchanged. No new expected skips were added beyond the four authorized entries.
+
+### One live attempt, four executed controls
+
+**Result: FAIL (exit 1): 4 selected controls executed, 3 passed, 1 failed; no selected control skipped.** All four ran once on shared `tx2-xtdb-dev` at 5470 and `tx2-qlever-dev` at 7070. The name filter excluded 62 other tests in the same files; those exclusions are not attempts or acceptance evidence for the other tests. Retained receipts: `evidence/round3/C8-live.json`, `C8-live.log`, and `C8-live-receipt.json` (source commit/hashes, environment, exact test outcomes). `engine-before.log` and `engine-after-live.log` show both dev residents running/healthy and READY before and after; no lifecycle action or exclusive slot was used.
+
+| Selected control | Fresh result |
+| --- | --- |
+| XTDB standalone write counter | **PASS** — reads count no writes and one submitted positive control counts one commit |
+| QLever standalone write counter | **PASS** — queries count no writes and the unique-graph update counts one write/commit |
+| C8 on XTDB: rule queries, maintained reads, native closures and concurrent writer/read load | **PASS** — initial read window: 63 statements, zero writes/commits/unparsed; loaded window: 470 statements, zero writes/commits/unparsed, eight recursive read iterations |
+| C8 on QLever: rule queries, native closures and concurrent writer/read load | **FAIL** — `ReadError: QLever Datalog execution failed: TimeoutError: The operation was aborted due to timeout`; test duration about 91.16 seconds |
+
+The QLever failure is a real fresh failure, not a skip, and its exact stack is retained. It did not reach the completed-window result log, so this attempt cannot prove that QLever's complete C8 path performed zero writes. The available failure stack identifies the Datalog executor, but not the exact failing logical query or phase. The client/executor defaults are 30-second timeouts; the full test duration includes earlier work. Both engines were healthy after the failure. Shared contention is a possible explanation, **not an established root cause**. I did not retry, reduce readers, shorten windows, increase timeouts, restart a resident or substitute an exclusive-slot run.
+
+The XTDB window's writer made 10 baseline commits (p99 1,037 ms) and three loaded commits (p99 4,066 ms). Those are functional control observations under shared load, not a P1/P2 performance pass; they do not meet the north-star latency bars. Unique fixture/writer scopes are retained according to the existing tests. The standalone positive controls run their existing finally cleanup; the successful XTDB C8 positive control runs its existing cleanup. No broad graph/table cleanup or unknown-state deletion was attempted after failure.
+
+Commands (from `packages/qualification` for the first command, repository root for the others):
+
+```sh
+node ../../lab/bin/heavy.mjs --label CX-INT-XCJ-C8-live-once -- env -u TRIPLEX_COMMIT_ENCODING XTDB_INTEGRATION=1 QLEVER_INTEGRATION=1 XTDB_URL=postgres://xtdb:xtdb@127.0.0.1:5470/xtdb QLEVER_URL=http://127.0.0.1:7070 node ../../node_modules/vitest/vitest.mjs run test/c8-reads-never-write.test.ts test/engine-write-counter.test.ts -t 'C8 on|write counter \(live\)' --reporter=default --reporter=json --outputFile=../../lab/experiments/INT-XCJ/evidence/round3/C8-live.json
+PATH="$PWD/lab/experiments/EXP-X02-xtql-parity/round2/bin:$PATH" node lab/bin/heavy.mjs --label CX-INT-XCJ-C8-fixed-G0 -- env -u XTDB_INTEGRATION -u QLEVER_INTEGRATION -u TRIPLEX_COMMIT_ENCODING node lab/bin/gate.mjs G0 --lane xtdb --exp INT-XCJ-C8-fixed --previous G0-xtdb-20261108T234100Z-b718fc --note 'Authorized exactly four C8 live skips; live attempt retained separately'
+node lab/bin/heavy.mjs --label CX-INT-XCJ-C8-fixed-evaluator -- node --test lab/bin/test/claim.test.mjs lab/bin/test/claim-round2.test.mjs
+python3 -B lab/acceptance/build_contract.py --verify
+python3 -B lab/experiments/INT-XCJ/evidence/audit-pins.py round3/C8-fixed-pins
+```
+
+An initial command setup used the package working directory for root-relative evidence paths and failed before launching heavy.mjs or Vitest. Its setup-error logs were moved into `round3/setup-wrong-cwd-*`; the temporary directories were removed. It did not contact either engine or constitute a live test attempt. The command above is the sole executed live attempt.
+
+### Offline rerun and pin status
+
+| Check | Result | Receipt |
+| --- | --- | --- |
+| G0 XTDB | **PASS, exit 0: 1,163 executed / 1,163 pass / 0 fail; 134 expected skips / 0 unexpected** | `evidence/round3/C8-fixed-G0-receipt.json`, `C8-fixed-G0-raw/`, `C8-fixed-G0.log`; canonical `lab/runs/G0/G0-xtdb-20261108T235816Z-506037.json` |
+| Evaluator | **PASS, exit 0: 108/108, zero failures/skips** | `evidence/round3/C8-fixed-evaluator.log` |
+| Contract verify | **FAIL, exit 1: unchanged two workload pins and transitive hash only; no regeneration** | `evidence/round3/C8-fixed-contract.log`, `C8-fixed-pins/audit.json` |
+
+`g0-expected-skips.json` changes from SHA-256 `48aea6409811b36c59edc8338e84518fc69d152a785221b91f3bbc603b188b7a` to `4cbd2872b261cbc02ae1cab5f03d33f3c3096b75a8abbe6b1ad3f743beb745f2`. **It is not pinned by contract 0.3.11**: the full generated obligations diff is unchanged from the previous C8 audit (two occurrences each of the XTDB/QLever workload hashes, plus transitive hash), and the only other differing generated file is ACCEPTANCE.md's transitive hash. G0 independently binds the changed manifest as a fixture and records its new hash. The two modified test files are likewise not new contract-pin mismatches. No measured logical operations, fixture data, offered schedule or candidate workload implementation changed in this repair; test graph identities and offline skip classification changed.
+
+The source-pin summaries above remain current: XTDB workload `ff39d3f2fcb74ee2a318e8801a12680a4f9f366b4a7f5ed9e20e89d5ccd8a3d0`, QLever workload `9349878403ee468ce6b64922c648d88f598f799b1c65fc42a712aa47598e54da`. Contract 0.3.12 still needs the reviewed repins. No authoritative contract file was edited.
+
+**Current integration boundary:** the unexpected-skip blocker is resolved, but the newly required live QLever C8 control failed. Under the integration's stop-on-failure rule, J01 `0d9a860` remains unmerged; there is no J01 post-merge gate or pin audit to claim. The next authorized round needs to resolve or explicitly rule on the preserved QLever timeout before continuing default-off J01. No full G1/G2 gate, root-wide check, performance/golden-scenario qualification, deployment, publication, main-branch merge or push was performed. Independent reviewer acceptance remains outstanding.
