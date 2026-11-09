@@ -374,8 +374,14 @@ const handle = (op,a) => {
  if(op==='pull')return pull(a);
  throw Error('Unknown SQLite request '+op);
 };
+// [EXP-P4N] Why (step e): a message with `rid` is answered on the channel kept from the `attach` message (shared, never closed);
+// a message without it keeps the one-shot channel of every other op.
+let shared;
 parentPort.on('message',message=>{
- const {op,args,response,signal}=message;
+ const {op,args,response,signal,rid}=message;
+ if(op==='attach'){shared=response;return;}
+ const out=rid===undefined?response:shared;
+ const reply=rid===undefined?x=>x:x=>({rid,...x});
  let result;
  try {
   if(role==='reader') {
@@ -390,8 +396,8 @@ parentPort.on('message',message=>{
    }catch(e){try{db.exec('ROLLBACK');}catch{}throw e;}
    finally{Atomics.sub(gate,1,1);Atomics.notify(gate,1);}
   } else result=handle(op,args);
-  response.postMessage({result});
- }catch(e){response.postMessage({error:String(e)});}
- finally{response.close();if(signal){Atomics.store(new Int32Array(signal),0,1);Atomics.notify(new Int32Array(signal),0);}}
+  out.postMessage(reply({result}));
+ }catch(e){out.postMessage(reply({error:String(e)}));}
+ finally{if(rid===undefined)response.close();if(signal){Atomics.store(new Int32Array(signal),0,1);Atomics.notify(new Int32Array(signal),0);}}
 });
 `;

@@ -5,7 +5,12 @@ import fs from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
 import { randomUUID } from "node:crypto";
-import { Worker, MessageChannel, receiveMessageOnPort } from "node:worker_threads";
+import {
+  Worker,
+  MessageChannel,
+  receiveMessageOnPort,
+  type MessagePort,
+} from "node:worker_threads";
 import type { TripleRow } from "@triplex-build/triplex/runtime";
 import { FrameKind, encodeFrame, encodeSegmentHeader, segmentSeed } from "./frame.js";
 import { decodeCommitGroup } from "./frames.js";
@@ -128,16 +133,66 @@ type Receipt = {
 };
 const seed = segmentSeed(encodeSegmentHeader({ epoch: 0, firstLsn: 1 }));
 const driver = createRequire(import.meta.url).resolve("better-sqlite3");
+// [EXP-P4N] Why (step e): `request` built a MessageChannel, two worker listeners, a timer and a promise per call; the profile showed port
+// setup and event-target work on both sides. `requestOnPort` shares one channel per connection (the worker keeps its end after an
+// `attach` message) and matches replies by request id; the worker answers one request at a time, in order. Used for the pull route only,
+// so writer, checkpointer and maintenance requests keep their one-shot channel and its failure behavior.
+// Rejected: one channel for every op (a stuck maintenance op would then share a reply path with pulls).
+type Pending = {
+  readonly resolve: (v: any) => void;
+  readonly reject: (e: Error) => void;
+  readonly timer: ReturnType<typeof setTimeout>;
+};
 class Connection {
   private dead: string | undefined;
+  private shared: { readonly port: MessagePort; readonly pending: Map<number, Pending>; next: number } | undefined;
   constructor(readonly worker: Worker) {
     worker.on("error", (error) => {
       this.dead = String(error);
+      this.failPending();
     });
     worker.on("exit", (code) => {
       this.dead = `SQLite worker exited ${code}`;
+      this.failPending();
     });
     worker.unref();
+  }
+  private failPending() {
+    if (!this.shared) return;
+    for (const [id, p] of this.shared.pending) {
+      clearTimeout(p.timer);
+      p.reject(new BrokerLogError(`SQLite worker failed; outcome unknown: ${this.dead}`));
+      this.shared.pending.delete(id);
+    }
+  }
+  requestOnPort<T>(op: string, args?: unknown): Promise<T> {
+    if (this.dead) return Promise.reject(new BrokerLogError(this.dead));
+    let shared = this.shared;
+    if (!shared) {
+      const { port1, port2 } = new MessageChannel();
+      shared = this.shared = { port: port1, pending: new Map(), next: 1 };
+      const state = shared;
+      port1.on("message", (data: { rid: number; result?: unknown; error?: string }) => {
+        const p = state.pending.get(data.rid);
+        if (!p) return;
+        state.pending.delete(data.rid);
+        clearTimeout(p.timer);
+        if (data.error) p.reject(workerError(data.error));
+        else p.resolve(data.result);
+      });
+      port1.unref();
+      this.worker.postMessage({ op: "attach", response: port2 }, [port2]);
+    }
+    const state = shared;
+    const rid = state.next++;
+    return new Promise<T>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        state.pending.delete(rid);
+        reject(new BrokerLogError(`SQLite ${op} timed out; outcome unknown`));
+      }, 30_000);
+      state.pending.set(rid, { resolve, reject, timer });
+      this.worker.postMessage({ op, args, rid });
+    });
   }
   sync<T>(op: string, args?: unknown): T {
     if (this.dead) throw new BrokerLogError(this.dead);
@@ -193,6 +248,7 @@ class Connection {
     try {
       await this.request("close");
     } finally {
+      this.shared?.port.close();
       await this.worker.terminate();
     }
   }
@@ -542,7 +598,7 @@ export class HostLog {
   }
   async wholePull(basis: number, roots: readonly string[], bytes = false) {
     if (this.closed) throw new BrokerLogError("Broker log is closed");
-    return this.pool[this.readerIndex++ % this.pool.length]!.request<import("./h1.js").WholePull>(
+    return this.pool[this.readerIndex++ % this.pool.length]!.requestOnPort<import("./h1.js").WholePull>(
       "wholePull",
       { basis, roots, bytes },
     );
