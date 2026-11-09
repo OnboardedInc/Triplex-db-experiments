@@ -5,6 +5,7 @@ import { expect, it, vi } from "vitest";
 import {
   makeQleverClient,
   QleverHttpError,
+  QleverRequestError,
   type QleverConnectionMode,
 } from "../src/QleverClient.js";
 
@@ -62,6 +63,8 @@ const chain = (error: unknown): unknown[] => {
   return result;
 };
 const classify = (error: any) => {
+  // [CX-A01-040] Why: main exposes typed request failures; preserve that contract in both transport modes. Rejected: expecting only the pre-integration raw DOM timeout.
+  if (error instanceof QleverRequestError) return error.kind === "timeout" ? "timeout" : "abort";
   if (error instanceof QleverHttpError) return error.status >= 500 ? "http-server" : "http-client";
   if (error instanceof DOMException && error.name === "TimeoutError") return "timeout";
   if (error instanceof DOMException && error.name === "AbortError") return "abort";
@@ -175,6 +178,10 @@ it.each(cases)("same response path in both modes: %s", async (scenario: Scenario
         expect(value).toEqual(rows(nonce));
         outcomes.push({ outcome: "rows", decodedBytes: JSON.stringify(value) });
       } catch (error) {
+        if (scenario.startsWith("timeout")) {
+          expect(error).toBeInstanceOf(QleverRequestError);
+          expect((error as QleverRequestError).kind).toBe("timeout");
+        }
         outcomes.push({ outcome: "error", classification: classify(error), chain: chain(error) });
       } finally {
         clearTimeout(timer);

@@ -82,3 +82,9 @@ First G0 receipts remain failures:
 - `pack-attempt1.log` records admission waiting only. That queued wrapper was stopped before execution to prevent simultaneous worktree dist rebuilds with G0; no packaging result was produced.
 
 The final G0 attempts run with the permissions needed for the host boot-identity read. They still run offline, through the heavy semaphore, with the explicit owned pnpm-store wrapper. No clock source is mocked and no engine service is contacted.
+
+### QLever parity integration correction
+
+The second QLever G0 attempt, `G0-qlever-20261109T110446Z-a34da8`, retained **1,511 pass, 2 fail, 79 expected skips**. Both failures were the timeout classification assertions in `client-parity.test.ts`: main's integrated client deliberately wraps abort/timeout causes in `QleverRequestError`, while the accepted parity test's helper recognized only raw DOM exceptions. The product client and its default stay unchanged. The test classifier now recognizes `QleverRequestError.kind`, and each timeout scenario explicitly requires that public error class and `kind: "timeout"` in both transport modes. The full parity file passes **26/26** (`parity-fix.log`). This strengthens the public-contract assertion; no assertion is removed and the required 108 evaluator tests are untouched. No pinned source or measured workload changes.
+
+For a uniform final source binding, the required evaluator, packaging and three G0 gates are rerun after committing this test/inventory-only correction. Earlier receipts stay attached to their actual commits.
