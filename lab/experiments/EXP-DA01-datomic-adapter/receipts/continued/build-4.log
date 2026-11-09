@@ -1,0 +1,57 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 3357 "CX-VP2Q-4-package", pid 2977 "CX-VP2Q-4-live-http", pid 3055 "CX-VP2Q-4-live-prior", pid 3323 "CX-VP2Q-4-fuzz60"
+[lab] heavy: waiting for one of 4 slots; held by pid 3357 "CX-VP2Q-4-package", pid 2977 "CX-VP2Q-4-live-http", pid 3055 "CX-VP2Q-4-live-prior", pid 3323 "CX-VP2Q-4-fuzz60"
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+Sending build context to Docker daemon  305.5MB
+Step 1/10 : FROM eclipse-temurin:21.0.13_9-jre-noble@sha256:0eda5830ed7b669abc246a8dc520ea8a23cab06f9a8d4b6964109e2f2394e46f
+ ---> 0eda5830ed7b
+Step 2/10 : RUN command -v taskset && command -v bash && java --list-modules | grep jdk.httpserver
+ ---> Using cache
+ ---> 1ed799f366b1
+Step 3/10 : ARG BUILD_INPUTS_SHA256
+ ---> Using cache
+ ---> 88ebd2a49c75
+Step 4/10 : LABEL tx2.build-inputs-sha256=$BUILD_INPUTS_SHA256
+ ---> Running in 3ba5459580e6
+ ---> Removed intermediate container 3ba5459580e6
+ ---> 9c85fb422a2c
+Step 5/10 : COPY datomic/ /opt/datomic/
+ ---> 3a73650e4059
+Step 6/10 : COPY gateway/ /opt/gateway/
+ ---> 6d2dbad44c14
+Step 7/10 : COPY config/ /config/
+ ---> cce7e9a7aa85
+Step 8/10 : ENV DATOMIC_EXT_CLASSPATH=/opt/gateway/src
+ ---> Running in 77de60bdbfa7
+ ---> Removed intermediate container 77de60bdbfa7
+ ---> 1b96f812125d
+Step 9/10 : WORKDIR /opt/datomic
+ ---> Running in 9e566d41f82b
+ ---> Removed intermediate container 9e566d41f82b
+ ---> c5ff6856ff48
+Step 10/10 : ENTRYPOINT ["/bin/bash", "/config/entrypoint.sh"]
+ ---> Running in 963af195d4ba
+ ---> Removed intermediate container 963af195d4ba
+ ---> 36a38b9e01ec
+Successfully built 36a38b9e01ec
+Successfully tagged tx2-datomic:1.0.7745-da00
+{
+  "image": "tx2-datomic:1.0.7745-da00",
+  "imageId": "sha256:36a38b9e01ec7b5d7ccaacc22f4ecc6711aa88555028c189bfa22961b9f975b2",
+  "buildInputsSha256": "d59b45693917171bd13be3b53c8fb55c4b5572fd120732d01b6766d5e0c91b73",
+  "configSource": [
+    "lab/config/datomic/transactor.properties",
+    "lab/config/datomic/entrypoint.sh"
+  ],
+  "containerPort": 8080,
+  "urlTemplate": "http://127.0.0.1:{port}",
+  "envVar": "DATOMIC_GATEWAY_URL",
+  "integrationEnv": {
+    "DATOMIC_INTEGRATION": "1"
+  },
+  "sourceInputsSha256": "7904ed8256deb4d0504bb58ce1c91bf36b0ea3742bfd81691d83bde998822a35",
+  "imageSize": 371255655,
+  "receipt": "/Users/sam/projects/triplex-db-2/runs/engines/datomic-build/d59b45693917171bd13be3b53c8fb55c4b5572fd120732d01b6766d5e0c91b73/build-receipt.json"
+}

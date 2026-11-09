@@ -1,0 +1,15 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 9148 "CX-RT01-qualified-offline", pid 37623 "CX-P5A-R2-1k-final", pid 44217 "CX-RT01-X-bounded"
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 9148 "CX-RT01-qualified-offline", pid 37623 "CX-P5A-R2-1k-final", pid 44217 "CX-RT01-X-bounded"
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 9148 "CX-RT01-qualified-offline", pid 26193 "CX-OBS01-ER01-S-physical-final", pid 44217 "CX-RT01-X-bounded"
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 9148 "CX-RT01-qualified-offline", pid 72075 "CX-W02-r2-setup", pid 44217 "CX-RT01-X-bounded"
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 9148 "CX-RT01-qualified-offline", pid 51367 "CX-RT01-final-stable", pid 44217 "CX-RT01-X-bounded"
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 88432 "CX-QG1-phase0-start", pid 51367 "CX-RT01-final-stable", pid 44217 "CX-RT01-X-bounded"
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 40585 "CX-INT-D-evaluator", pid 51367 "CX-RT01-final-stable", pid 44217 "CX-RT01-X-bounded"
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 40585 "CX-INT-D-evaluator", pid 51367 "CX-RT01-final-stable", pid 44217 "CX-RT01-X-bounded"
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 87376 "CX-OBS01-ER01-S-frozen-final", pid 3719 "CX-W02-r2-check1", pid 44217 "CX-RT01-X-bounded"
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 75696 "CX-QG1-phase0-probes", pid 3719 "CX-W02-r2-check1", pid 82644 "CX-INT-D-evaluator-committed"
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 95139 "CX-P5A-R2-all-final-tests", pid 3719 "CX-W02-r2-check1", pid 82644 "CX-INT-D-evaluator-committed"
+[lab] G0-datomic-20261109T023429Z-2ea0ed: raw output runs/G0/G0-datomic-20261109T023429Z-2ea0ed
+FAIL G0 datomic scope=full executed=1253 pass=1252 fail=1 skip=66
+  reason: 1 failed tests
+receipt: lab/runs/G0/G0-datomic-20261109T023429Z-2ea0ed.json

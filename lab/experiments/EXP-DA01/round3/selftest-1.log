@@ -1,0 +1,2 @@
+[lab] waiting for pool lock (held by pid 50520)
+[lab] REFUSED: pool refuses selftest: memory: 10.31 GiB reserved + 1.50 GiB requested = 11.81 GiB > pool 11.00 GiB

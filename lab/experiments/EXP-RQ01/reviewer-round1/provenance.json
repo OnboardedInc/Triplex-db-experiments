@@ -1,0 +1,16 @@
+[
+  {
+    "reviewerCommit": "ae6b802",
+    "file": "review.mjs",
+    "sourceSha256": "8973554c3bd846307a54638fec77f6cb3e623f4a43a9fb85febacf9c01bb2c30",
+    "copySha256": "8973554c3bd846307a54638fec77f6cb3e623f4a43a9fb85febacf9c01bb2c30",
+    "identical": true
+  },
+  {
+    "reviewerCommit": "ae6b802",
+    "file": "empty-without-flag.mjs",
+    "sourceSha256": "561dcc97c3e2c29d3c2f0457f37fd0d9397eab5833932eab77b39384729139ea",
+    "copySha256": "561dcc97c3e2c29d3c2f0457f37fd0d9397eab5833932eab77b39384729139ea",
+    "identical": true
+  }
+]

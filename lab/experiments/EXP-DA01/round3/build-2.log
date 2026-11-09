@@ -1,0 +1,58 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 35701 "CX-INT-XCJ-QLever-C8-diagnostic-once", pid 36746 "CX-VA01-0312-evaluator", pid 37317 "CX-G03-r3-claim-suites2", pid 37280 "CX-VA01-0312-mutations"
+[lab] heavy: waiting for one of 4 slots; held by pid 35701 "CX-INT-XCJ-QLever-C8-diagnostic-once", pid 36746 "CX-VA01-0312-evaluator", pid 37317 "CX-G03-r3-claim-suites2", pid 37280 "CX-VA01-0312-mutations"
+[lab] heavy: waiting for one of 4 slots; held by pid 35701 "CX-INT-XCJ-QLever-C8-diagnostic-once", pid 36746 "CX-VA01-0312-evaluator", pid 37317 "CX-G03-r3-claim-suites2", pid 37280 "CX-VA01-0312-mutations"
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+Sending build context to Docker daemon  305.5MB
+Step 1/10 : FROM eclipse-temurin:21.0.13_9-jre-noble@sha256:0eda5830ed7b669abc246a8dc520ea8a23cab06f9a8d4b6964109e2f2394e46f
+ ---> 0eda5830ed7b
+Step 2/10 : RUN command -v taskset && command -v bash && java --list-modules | grep jdk.httpserver
+ ---> Using cache
+ ---> 1ed799f366b1
+Step 3/10 : ARG BUILD_INPUTS_SHA256
+ ---> Using cache
+ ---> 88ebd2a49c75
+Step 4/10 : LABEL tx2.build-inputs-sha256=$BUILD_INPUTS_SHA256
+ ---> Running in 3083b453b42c
+ ---> Removed intermediate container 3083b453b42c
+ ---> 543cdaa29d17
+Step 5/10 : COPY datomic/ /opt/datomic/
+ ---> 79f6eb5047d9
+Step 6/10 : COPY gateway/ /opt/gateway/
+ ---> e5b75f16ca07
+Step 7/10 : COPY config/ /config/
+ ---> 19ce569465de
+Step 8/10 : ENV DATOMIC_EXT_CLASSPATH=/opt/gateway/src
+ ---> Running in f42a081bfeaf
+ ---> Removed intermediate container f42a081bfeaf
+ ---> 149cc67f6bf7
+Step 9/10 : WORKDIR /opt/datomic
+ ---> Running in 45fcc0b79b3d
+ ---> Removed intermediate container 45fcc0b79b3d
+ ---> 3646a04541a5
+Step 10/10 : ENTRYPOINT ["/bin/bash", "/config/entrypoint.sh"]
+ ---> Running in 071c87881fba
+ ---> Removed intermediate container 071c87881fba
+ ---> 9619fb071575
+Successfully built 9619fb071575
+Successfully tagged tx2-datomic:1.0.7745-da00
+{
+  "image": "tx2-datomic:1.0.7745-da00",
+  "imageId": "sha256:9619fb07157511efa7c22e8e86041cb9179ffd473c28bb761344ca57bcc59a30",
+  "buildInputsSha256": "2e8f170abdbea1e926bf313d41ae77edceadd90a39f49929824f29b789b37634",
+  "configSource": [
+    "lab/config/datomic/transactor.properties",
+    "lab/config/datomic/entrypoint.sh"
+  ],
+  "containerPort": 8080,
+  "urlTemplate": "http://127.0.0.1:{port}",
+  "envVar": "DATOMIC_GATEWAY_URL",
+  "integrationEnv": {
+    "DATOMIC_INTEGRATION": "1"
+  },
+  "sourceInputsSha256": "92984ee3875d609aace2c1fd368a61eaaa979c06e99b4b6afe45d6f5b79f9604",
+  "imageSize": 371260970,
+  "receipt": "/Users/sam/projects/triplex-db-2/runs/engines/datomic-build/2e8f170abdbea1e926bf313d41ae77edceadd90a39f49929824f29b789b37634-91529-1794182922206/build-receipt.json"
+}

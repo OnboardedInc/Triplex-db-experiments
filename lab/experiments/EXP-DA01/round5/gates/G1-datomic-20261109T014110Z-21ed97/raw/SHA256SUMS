@@ -1,0 +1,14 @@
+c838b7ee33f08f929db37216fc486730a344f9e1ca3b7bb93134fdacf5a07212  lab/experiments/EXP-DA01/round5/gates/G1-datomic-20261109T014110Z-21ed97/raw/build-manifest-after.json
+c838b7ee33f08f929db37216fc486730a344f9e1ca3b7bb93134fdacf5a07212  lab/experiments/EXP-DA01/round5/gates/G1-datomic-20261109T014110Z-21ed97/raw/build-manifest.json
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  lab/experiments/EXP-DA01/round5/gates/G1-datomic-20261109T014110Z-21ed97/raw/build.stderr.txt
+77db0e3f07333c7c6e2297974a5107211e1c5016910e4384375762b74311799f  lab/experiments/EXP-DA01/round5/gates/G1-datomic-20261109T014110Z-21ed97/raw/build.stdout.txt
+ec265efb39eeecf6241e4c5461762cc47d2db422f0fd5b335950a6c98cdaacdb  lab/experiments/EXP-DA01/round5/gates/G1-datomic-20261109T014110Z-21ed97/raw/datomic-cleanup.json
+e36a6b6c1430607aac01223e6d0ed686478d79b19f9ebeec13f4cce76ae76911  lab/experiments/EXP-DA01/round5/gates/G1-datomic-20261109T014110Z-21ed97/raw/g1-report.json
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  lab/experiments/EXP-DA01/round5/gates/G1-datomic-20261109T014110Z-21ed97/raw/lab-conformance.stderr.txt
+0c86994cc90fdf59e47bd304404b6e383e354586983b73a167cb937984d5ab6f  lab/experiments/EXP-DA01/round5/gates/G1-datomic-20261109T014110Z-21ed97/raw/lab-conformance.stdout.txt
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  lab/experiments/EXP-DA01/round5/gates/G1-datomic-20261109T014110Z-21ed97/raw/pnpm-version.stderr.txt
+029d525e1c271e57d2537627f7699f2a0c64d53900bafd3d7c530961c0306dbb  lab/experiments/EXP-DA01/round5/gates/G1-datomic-20261109T014110Z-21ed97/raw/pnpm-version.stdout.txt
+c838b7ee33f08f929db37216fc486730a344f9e1ca3b7bb93134fdacf5a07212  lab/experiments/EXP-DA01/round5/gates/G1-datomic-20261109T014110Z-21ed97/raw/route-build-manifest-after.json
+68d0279e8d26253226e2d5f3265c1bcfb3307a39f1de86f0ba288f6b6a6074eb  lab/experiments/EXP-DA01/round5/gates/G1-datomic-20261109T014110Z-21ed97/raw/route-equivalence.json
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  lab/experiments/EXP-DA01/round5/gates/G1-datomic-20261109T014110Z-21ed97/raw/route-equivalence.stderr.txt
+2ae17fecd9b4862565482d52b6ac46f4e342bd33bf88f72a7761ccf3b36737cc  lab/experiments/EXP-DA01/round5/gates/G1-datomic-20261109T014110Z-21ed97/raw/route-equivalence.stdout.txt

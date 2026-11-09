@@ -1,0 +1,12 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 23904 "CX-P2Q-R4-suites", pid 26205 "CX-SQL01-kill80", pid 26420 "CX-SQL01-verifier-semantic", pid 26204 "CX-SQL01-unit"
+{"name":"actor due-work ranges preserve numeric aliases, visibility, ordering, and limits","elapsedMs":8338,"status":"PASS"}
+{"name":"Datalog reads are bounded by default and cursors traverse the complete snapshot","elapsedMs":579,"status":"PASS"}
+{"name":"historical cursor pages intersect recorded time and the commit snapshot","elapsedMs":162,"status":"PASS"}
+{"name":"recursive relations support cursor pagination and optional total counts","elapsedMs":566,"status":"PASS"}
+{"name":"assert then get and match return the fact","elapsedMs":27,"status":"PASS"}
+{"name":"same-value facts in one batch keep distinct identities","elapsedMs":23,"status":"PASS"}
+{"name":"datalog query finds asserted facts","elapsedMs":44,"status":"PASS"}
+{"name":"datalog projections preserve scalar types without guessing from text","elapsedMs":194,"status":"PASS"}
+{"name":"datalog deduplicates flattened scalar families before grouping and pagination","elapsedMs":142,"status":"PASS"}
+{"name":"datalog constant projections retain their scalar values through pagination","elapsedMs":72,"status":"PASS"}
+{"name":"datalog pattern constants use flattened scalar identity in filters","elapsedMs":5113,"status":"FAIL","cause":"Cause([Fail(ReadError: Datomic Datalog failed (cause: Error: Gateway deadline exceeded (cause: Error: Gateway deadline exceeded)))])"}

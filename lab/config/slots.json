@@ -35,6 +35,22 @@
       "envVar": "QLEVER_URL",
       "integrationEnv": { "QLEVER_INTEGRATION": "1" },
       "diskForecastNote": "Start conservative: a QLever rebuild keeps previous.* index files next to the new ones (about 2x index bytes) plus delta growth during the rebuild (PLAN section 7)."
+    },
+    "datomic": {
+      "image": "tx2-datomic:1.0.7745-da00",
+      "imageId": "sha256:34fb9db10a278ff5614e7ac59788a2456329c75d098871ce1831465e243f2dcf",
+      "buildInputsSha256": "ff1b91d51131c8860e732fb23cea7acdd24f5356b03c31dab105b4730bedaf34",
+      "configSource": [
+        "lab/config/datomic/transactor.properties",
+        "lab/config/datomic/entrypoint.sh"
+      ],
+      "containerPort": 8080,
+      "urlTemplate": "http://127.0.0.1:{port}",
+      "envVar": "DATOMIC_GATEWAY_URL",
+      "integrationEnv": {
+        "DATOMIC_INTEGRATION": "1"
+      },
+      "sourceInputsSha256": "41e6e2521b666b94e19492637f2a84428c43cc2eef200294cd772ab3688ed163"
     }
   },
   "slots": {
@@ -49,6 +65,57 @@
       "s1": { "port": 7071, "memBytes": 3758096384, "cpus": 2, "qleverMemory": "2500M", "diskForecastBytes": 8589934592, "mode": "exclusive" },
       "s2": { "port": 7072, "memBytes": 3758096384, "cpus": 2, "qleverMemory": "2500M", "diskForecastBytes": 8589934592, "mode": "exclusive" },
       "s3": { "port": 7073, "memBytes": 3758096384, "cpus": 2, "qleverMemory": "2500M", "diskForecastBytes": 8589934592, "mode": "exclusive" }
+    },
+    "datomic": {
+      "dev": {
+        "port": 8470,
+        "mode": "resident",
+        "memBytes": 2952790016,
+        "cpus": 2,
+        "transactorOpts": "-Xms640m -Xmx640m -XX:MaxMetaspaceSize=160m -XX:MaxDirectMemorySize=128m -XX:+ExitOnOutOfMemoryError",
+        "gatewayOpts": "-Xms1g -Xmx1g -Ddatomic.objectCacheMax=320m -XX:MaxMetaspaceSize=160m -XX:MaxDirectMemorySize=128m -XX:+ExitOnOutOfMemoryError",
+        "cpusetCpus": "0,1",
+        "txCpus": "0",
+        "gwCpus": "1",
+        "diskForecastBytes": 4294967296,
+        "parkable": true
+      },
+      "s1": {
+        "port": 8471,
+        "mode": "exclusive",
+        "memBytes": 3758096384,
+        "cpus": 3,
+        "transactorOpts": "-Xms1g -Xmx1g -XX:MaxMetaspaceSize=160m -XX:MaxDirectMemorySize=128m -XX:+ExitOnOutOfMemoryError",
+        "gatewayOpts": "-Xms1792m -Xmx1792m -Ddatomic.objectCacheMax=896m -XX:MaxMetaspaceSize=160m -XX:MaxDirectMemorySize=128m -XX:+ExitOnOutOfMemoryError",
+        "cpusetCpus": "0,1,2",
+        "txCpus": "0",
+        "gwCpus": "1,2",
+        "diskForecastBytes": 8589934592
+      },
+      "s2": {
+        "port": 8472,
+        "mode": "exclusive",
+        "memBytes": 3758096384,
+        "cpus": 3,
+        "transactorOpts": "-Xms1g -Xmx1g -XX:MaxMetaspaceSize=160m -XX:MaxDirectMemorySize=128m -XX:+ExitOnOutOfMemoryError",
+        "gatewayOpts": "-Xms1792m -Xmx1792m -Ddatomic.objectCacheMax=896m -XX:MaxMetaspaceSize=160m -XX:MaxDirectMemorySize=128m -XX:+ExitOnOutOfMemoryError",
+        "cpusetCpus": "0,1,2",
+        "txCpus": "0",
+        "gwCpus": "1,2",
+        "diskForecastBytes": 8589934592
+      },
+      "s3": {
+        "port": 8473,
+        "mode": "exclusive",
+        "memBytes": 3758096384,
+        "cpus": 3,
+        "transactorOpts": "-Xms1g -Xmx1g -XX:MaxMetaspaceSize=160m -XX:MaxDirectMemorySize=128m -XX:+ExitOnOutOfMemoryError",
+        "gatewayOpts": "-Xms1792m -Xmx1792m -Ddatomic.objectCacheMax=896m -XX:MaxMetaspaceSize=160m -XX:MaxDirectMemorySize=128m -XX:+ExitOnOutOfMemoryError",
+        "cpusetCpus": "0,1,2",
+        "txCpus": "0",
+        "gwCpus": "1,2",
+        "diskForecastBytes": 8589934592
+      }
     }
   },
   "box": {

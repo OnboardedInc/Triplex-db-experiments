@@ -1,0 +1,9 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 39926 "CX-P2Q-R6-suites", pid 24500 "CX-INT-XCJ-X02-evaluator", pid 33700 "CX-VSQL01-r2b-live", pid 33682 "CX-VSQL01-r2b-review"
+[lab] heavy: waiting for one of 4 slots; held by pid 39926 "CX-P2Q-R6-suites", pid 24500 "CX-INT-XCJ-X02-evaluator", pid 33700 "CX-VSQL01-r2b-live", pid 33682 "CX-VSQL01-r2b-review"
+[lab] heavy: waiting for one of 4 slots; held by pid 39926 "CX-P2Q-R6-suites", pid 24500 "CX-INT-XCJ-X02-evaluator", pid 33700 "CX-VSQL01-r2b-live", pid 33693 "CX-VSQL01-r2b-kill50"
+[lab] heavy: waiting for one of 4 slots; held by pid 39926 "CX-P2Q-R6-suites", pid 24500 "CX-INT-XCJ-X02-evaluator", pid 33700 "CX-VSQL01-r2b-live", pid 45246 "CX-VSQL01-r2b-storage"
+[lab] waiting for worktree gate lock (held by pid 65243)
+[lab] G0-datomic-20261108T233519Z-40e1f0: raw output runs/G0/G0-datomic-20261108T233519Z-40e1f0
+error: could not write index
+PASS G0 datomic scope=full executed=1093 pass=1093 fail=0 skip=57
+receipt: lab/runs/G0/G0-datomic-20261108T233519Z-40e1f0.json

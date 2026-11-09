@@ -1,0 +1,33 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 35701 "CX-INT-XCJ-QLever-C8-diagnostic-once", pid 36746 "CX-VA01-0312-evaluator", pid 37317 "CX-G03-r3-claim-suites2", pid 37280 "CX-VA01-0312-mutations"
+[lab] heavy: waiting for one of 4 slots; held by pid 35701 "CX-INT-XCJ-QLever-C8-diagnostic-once", pid 36746 "CX-VA01-0312-evaluator", pid 37317 "CX-G03-r3-claim-suites2", pid 37280 "CX-VA01-0312-mutations"
+[lab] heavy: waiting for one of 4 slots; held by pid 35701 "CX-INT-XCJ-QLever-C8-diagnostic-once", pid 36746 "CX-VA01-0312-evaluator", pid 37317 "CX-G03-r3-claim-suites2", pid 37280 "CX-VA01-0312-mutations"
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/da01
+
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"routes-f2a79091-e749-462b-9f29-d31b705f575b\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJyb3V0ZXMtZjJhNzkwOTEtZTc0OS00NjJiLTlmMjktZDMxYjcwNWY1NzViIiwwXQ","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"routes-f2a79091-e749-462b-9f29-d31b705f575b\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJyb3V0ZXMtZjJhNzkwOTEtZTc0OS00NjJiLTlmMjktZDMxYjcwNWY1NzViIiwwXQ","deleted":true}
+ ❯ packages/datomic/test/route-equivalence.test.ts (1 test | 1 failed) 2445ms
+   ❯ Datomic route equivalence (1)
+     × matches O-REPLAY across seeded source, held, staged and guarded live routes 2444ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  packages/datomic/test/route-equivalence.test.ts > Datomic route equivalence > matches O-REPLAY across seeded source, held, staged and guarded live routes
+Error: O-REPLAY failed: 1 
+ ❯ oracle packages/datomic/test/route-equivalence.test.ts:168:15
+    166|       );
+    167|       if (result.status !== 0)
+    168|         throw new Error(`O-REPLAY failed: ${result.status} ${result.st…
+       |               ^
+    169|       const report = JSON.parse(fs.readFileSync(output, "utf8"));
+    170|       expect(report.verdict).toBe("EXPECTED-ONLY");
+ ❯ packages/datomic/test/route-equivalence.test.ts:212:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  19:08:36
+   Duration  3.31s (tests 76%, transform 16%, import 8%)
+

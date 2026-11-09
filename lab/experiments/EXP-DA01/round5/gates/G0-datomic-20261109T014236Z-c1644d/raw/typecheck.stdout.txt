@@ -1,0 +1,9 @@
+Scope: 4 of 25 workspace projects
+packages/core typecheck$ tsc --noEmit && tsc --noEmit -p test/runtime/tsconfig.json && tsc --noEmit -p test/entity/tsconfig.json
+packages/core typecheck: Done
+packages/testkit typecheck$ tsc --noEmit
+packages/testkit typecheck: Done
+packages/datomic typecheck$ tsc --noEmit
+packages/qualification typecheck$ tsc --noEmit
+packages/qualification typecheck: Done
+packages/datomic typecheck: Done

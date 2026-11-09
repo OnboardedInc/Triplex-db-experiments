@@ -36,7 +36,7 @@ assert.equal(triplesConformanceCases.length, 44, "The unchanged upstream suite h
 const ownerFile = process.env["TRIPLEX_LAB_SLOT_OWNER"];
 assert.ok(ownerFile, "TRIPLEX_LAB_SLOT_OWNER is required (lab/bin/gate.mjs sets it)");
 const ownerPath = realpathSync(ownerFile);
-assert.ok(/\/lab\/locks\/(xtdb|qlever)-(dev|s[1-9])\/owner\.json$/.test(ownerPath));
+assert.ok(/\/lab\/locks\/(xtdb|qlever|datomic)-(dev|s[1-9])\/owner\.json$/.test(ownerPath));
 const ownerBytes = readFileSync(ownerPath);
 const owner = JSON.parse(ownerBytes.toString("utf8"));
 assert.equal(owner.format, "tx2-slot-owner/1");

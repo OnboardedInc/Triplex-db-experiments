@@ -1,0 +1,94 @@
+{
+  "format": "tx2-w01b-aborts/1",
+  "attempts": [
+    {
+      "runId": "GS-xtdb-20261108T211523Z-ea6353",
+      "kind": "harness-controller-abort",
+      "reason": "Builder stopped own driver after discovering rejected pnpm build option; stale-dist execution cannot qualify changes.",
+      "driverPid": 83425,
+      "gateStep": {
+        "name": "gs-scenarios",
+        "command": "node lab/scenarios/run.mjs --lane xtdb --rung 10k --output /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-af5dc0c632c7cd817/runs/GS/GS-xtdb-20261108T211523Z-ea6353/gs-report.json --raw-dir /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-af5dc0c632c7cd817/runs/GS/GS-xtdb-20261108T211523Z-ea6353 --scenarios 4,9,12,13 --readers 1",
+        "code": null,
+        "signal": "SIGTERM",
+        "timedOut": false,
+        "elapsedMs": 208306,
+        "cwd": ".",
+        "stdout": "runs/GS/GS-xtdb-20261108T211523Z-ea6353/gs-scenarios.stdout.txt",
+        "stderr": "runs/GS/GS-xtdb-20261108T211523Z-ea6353/gs-scenarios.stderr.txt"
+      },
+      "gateReceipt": "lab/runs/GS/GS-xtdb-20261108T211523Z-ea6353.json",
+      "gateReceiptSha256": "fc7f845a252c0ac887a4e6ca5589b7c8a025da5cd6508c183e1d1755689f55d8",
+      "rawStatus": "RUNNING preserved without adoption",
+      "cleanup": "Verified child and gate-parent exit; heavy token released by gate; no engine lifecycle operation",
+      "logs": [
+        {
+          "path": "lab/experiments/EXP-W01-golden-scenarios/evidence/aborted/GS-xtdb-20261108T211523Z-ea6353/gs-report.json",
+          "sha256": "4890f4d9b357096c657da8b07dfbe76065dcc5ce652e54c493de7b27f0d02ef8"
+        },
+        {
+          "path": "lab/experiments/EXP-W01-golden-scenarios/evidence/aborted/GS-xtdb-20261108T211523Z-ea6353/gs-scenarios.stderr.txt",
+          "sha256": "8ebe94482144f512ee0cc662645e68641cc87f12c88689cc9d4a8d056c4ba68e"
+        },
+        {
+          "path": "lab/experiments/EXP-W01-golden-scenarios/evidence/aborted/GS-xtdb-20261108T211523Z-ea6353/gs-scenarios.stdout.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "lab/experiments/EXP-W01-golden-scenarios/evidence/aborted/GS-xtdb-20261108T211523Z-ea6353/build.stderr.txt",
+          "sha256": "f3929f01dea98065a4f5beb4fd3e3564d887981282255b919bbc23c4fb011cb3"
+        },
+        {
+          "path": "lab/experiments/EXP-W01-golden-scenarios/evidence/aborted/GS-xtdb-20261108T211523Z-ea6353/build.stdout.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    },
+    {
+      "runId": "GS-xtdb-20261108T212031Z-015daa",
+      "kind": "harness-controller-abort",
+      "reason": "Builder stopped shared-engine diagnostic after 310s live phase, 9 total settled attempts (4 setup + 5 live), 57 pending and no feed records. Full restart and semantic checks had not completed; no timeout cause or wrong-answer verdict can be established from progress alone.",
+      "driverPid": 71774,
+      "gateStep": {
+        "name": "gs-scenarios",
+        "command": "node lab/scenarios/run.mjs --lane xtdb --rung 10k --output /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-af5dc0c632c7cd817/runs/GS/GS-xtdb-20261108T212031Z-015daa/gs-report.json --raw-dir /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-af5dc0c632c7cd817/runs/GS/GS-xtdb-20261108T212031Z-015daa --scenarios 4,9,12,13 --readers 1",
+        "code": null,
+        "signal": "SIGTERM",
+        "timedOut": false,
+        "elapsedMs": 425097,
+        "cwd": ".",
+        "stdout": "runs/GS/GS-xtdb-20261108T212031Z-015daa/gs-scenarios.stdout.txt",
+        "stderr": "runs/GS/GS-xtdb-20261108T212031Z-015daa/gs-scenarios.stderr.txt"
+      },
+      "gateReceipt": "lab/runs/GS/GS-xtdb-20261108T212031Z-015daa.json",
+      "gateReceiptSha256": "13ed85dd397863f54e978817f7f59f6f6ecdb96b994399f201dd7172f726c016",
+      "rawStatus": "RUNNING preserved without adoption",
+      "cleanup": "Verified child and gate-parent exit; heavy token released by gate; no engine lifecycle operation",
+      "logs": [
+        {
+          "path": "lab/experiments/EXP-W01-golden-scenarios/evidence/aborted/GS-xtdb-20261108T212031Z-015daa/gs-report.json",
+          "sha256": "9eda80a95684e8f80de1ab45eb3be81f829e2dbf9c16ad91c128d88ddc700c64"
+        },
+        {
+          "path": "lab/experiments/EXP-W01-golden-scenarios/evidence/aborted/GS-xtdb-20261108T212031Z-015daa/gs-scenarios.stderr.txt",
+          "sha256": "8e78981f06fcdfb20c21d2b498f5e7948033dc7d69f3b956d859b0cbb9ba444a"
+        },
+        {
+          "path": "lab/experiments/EXP-W01-golden-scenarios/evidence/aborted/GS-xtdb-20261108T212031Z-015daa/gs-scenarios.stdout.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "lab/experiments/EXP-W01-golden-scenarios/evidence/aborted/GS-xtdb-20261108T212031Z-015daa/build.stderr.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "lab/experiments/EXP-W01-golden-scenarios/evidence/aborted/GS-xtdb-20261108T212031Z-015daa/build.stdout.txt",
+          "sha256": "845ee99f6d9ff702895a2242863477ab7897270dd32a84026eb13d5a6f7a2d0e"
+        }
+      ]
+    }
+  ],
+  "qualified": false,
+  "engineTimeoutClaim": false,
+  "semanticAcceptanceClaim": false
+}

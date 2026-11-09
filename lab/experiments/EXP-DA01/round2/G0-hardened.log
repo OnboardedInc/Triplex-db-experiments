@@ -1,0 +1,6 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 22481 "CX-A01-0312-mutations", pid 54104 "CX-OBS01-R2-x06", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 22481 "CX-A01-0312-mutations", pid 54104 "CX-OBS01-R2-x06", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] G0-datomic-20261108T234411Z-39ad84: raw output runs/G0/G0-datomic-20261108T234411Z-39ad84
+error: could not write index
+PASS G0 datomic scope=full executed=1093 pass=1093 fail=0 skip=57
+receipt: lab/runs/G0/G0-datomic-20261108T234411Z-39ad84.json

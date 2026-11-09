@@ -1,0 +1,5 @@
+[lab] tx2-datomic-dev ready (gateway HTTP 200); cap 2.75 GiB, 2 CPU, config 8de90aaae635
+export DATOMIC_GATEWAY_URL='http://127.0.0.1:8470'
+export DATOMIC_INTEGRATION=1
+export TRIPLEX_LAB_SLOT_OWNER='/Users/sam/projects/triplex-db-2/lab/locks/datomic-dev/owner.json'
+export DOCKER_HOST='unix:///Users/sam/.colima/triplex2/docker.sock'  # only for manual docker calls; never the default context

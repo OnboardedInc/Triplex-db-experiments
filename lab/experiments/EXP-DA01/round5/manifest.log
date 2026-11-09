@@ -1,0 +1,7 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 51742 "CX-GS12F-gates-attempt2", pid 99398 "CX-RT01-evaluator", pid 95503 "CX-P5A-R2-1k-traffic-fixed"
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 64139 "CX-RT01-types2", pid 99398 "CX-RT01-evaluator", pid 95503 "CX-P5A-R2-1k-traffic-fixed"
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 31278 "CX-RT01-offline2", pid 99398 "CX-RT01-evaluator", pid 95503 "CX-P5A-R2-1k-traffic-fixed"
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 31278 "CX-RT01-offline2", pid 99398 "CX-RT01-evaluator", pid 95503 "CX-P5A-R2-1k-traffic-fixed"
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 87415 "CX-P5A-R2-G4-live-1k", pid 99398 "CX-RT01-evaluator", pid 95503 "CX-P5A-R2-1k-traffic-fixed"
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 88310 "CX-P5A-R2-G4-live-10k", pid 99398 "CX-RT01-evaluator", pid 95503 "CX-P5A-R2-1k-traffic-fixed"
+{"validated":true,"files":138,"bytes":29612946}

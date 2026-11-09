@@ -171,3 +171,31 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   (default-off); Q87 gate 108/108 on main after the merge. Next contract: 0.4.0 with RT01, O-REPLAY 0.5.0, Q89-Q92 and G03's pins.
 - O-REPLAY 0.5.0 ACCEPT (exp/O06-oracle-record-time fed510e; verify/O06 fc78350): ready to pin in contract 0.4.0 together with RT01
   (the oracle merge and pin move go in one commit, Q45a). Not merged alone: 0.4.0 needs RT01's product side first.
+- OBS01 round 5 (c55a728): all ten protocols worked; 1 PASS, 9 FAIL, 20 negatives refused, 59 tests. The nine remaining gaps need
+  sources the shared residents cannot give without changes (engine statement logs, read-only engine-config mounts, crash and memory-failure
+  windows, physical-file inventory for erasure scans); round5/SOURCES.md names each change. OBS01 pauses until the scale window, where those
+  protocols run on exclusive slots configured for observation (with G03's containers); no resident is changed.
+- K01 round 8 (6f7e11f): G0 covers all 89 declared columns in 11 tables plus dynamic columns; 167 tests. In review round 7. Queued for
+  K01's next round: Q93c's normalized digest D' for E1 (fresh seed against golden).
+- Queued: ER01-C (erasure core) after RT01 round A merges; then ER01-X and ER01-R; ER01-Q behind SQL01 and QG1 phase 2; ER01-D behind DA04.
+  Running: ER01-S scanners (CX-OBS01). Pending Sam: Q95-S (S1-S4).
+- Scale window OPEN (tx2-datomic-dev parked by the orchestrator, volume tx2-datomic-dev-data kept). Running in it: CX-QG1 on qlever-s1.
+  Unpark for EXP-DA04 after the window.
+- Housekeeping rule: when a branch merges or its verdict is recorded, archive untracked and ignored files of its builder and reviewer
+  worktrees to /Users/sam/Claude/Projects/triplex-db-2/worktree-archive/ and git worktree remove them. Host disk 15 GiB free after 38 removals.
+- Note: agents whose worktree was archived and removed (CX-INT-XCJ, CX-X02-R3, CX-VX02-3, CX-VDA01, CX-VSQL01-2, CX-J01-R2, CX-VJ01-2,
+  CX-VC8-3 and the older ones in worktree-archive/INDEX.txt) cannot be resumed (codex needs its launch cwd); follow-up work on those
+  branches uses a fresh launch with a new worktree. CX-XRUN replaces CX-INT-XCJ for the XTDB exclusive reruns.
+- Scale window queue (one exclusive 3.5 GiB slot at a time; CX-XRUN holds xtdb-s1 now): next K01 live two-start and E1 per
+  .claude/worktrees/k01/lab/experiments/EXP-K01-seed-clone/LIVE-round10.md (K01 r10 e525760, 397 tests; offline review skipped in favor of the
+  live run because the remaining risk is native wire fidelity; an independent reviewer reads the live receipts after); then P5 A1 at 1k;
+  then G03's slot run; then RT01 live G2 conformance and the G6 latency comparison on one slot; then W02 live GS on xtdb; then unpark tx2-datomic-dev for EXP-DA04.
+- Scale window queue update: EXP-P2X2 on xtdb-s1 (running, CX-P2X2); then the K01 live rerun (LIVE-round11; the first live run stopped
+  correctly because XTDB reports a mixed-width integer column as #{:i32 :i64}, not :union); then P5 A1 at 1k; then G03's slot run; then RT01
+  live G2 and G6; then W02 live GS on xtdb; then unpark tx2-datomic-dev for EXP-DA04. P2Q round 10 review stopped by the Codex content filter
+  after writing its verdict (FIX-FIRST, F1 and F2); its report went to the builder as is.
+- GS12F accepted (verify/GS12F f5664a1: every functional check passed; its one blocker, being behind main, closed at 2fdf491: lab/acceptance
+  diff against main empty, 854 core and 55 bounds tests pass). It moves pinned core files, so it merges with contract 0.3.14, which re-pins
+  them (after 0.3.13 lands). Queue for 0.3.14: GS12F; QNODELAY if accepted; any other accepted branch that moves pins.
+- P5 round A ACCEPT-OFFLINE (verify/P5A 85c1b13: 207 suite, 57 await-boundary and 2 late-cleanup tests). Ready for its A1 run at 1k on an
+  exclusive XTDB slot (A1-RUNBOOK.md in .claude/worktrees/p5a), queued after K01's live rerun. Its g0.ts guard commit goes onto K01's branch.

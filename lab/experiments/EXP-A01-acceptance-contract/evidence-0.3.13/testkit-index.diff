@@ -1,0 +1,20 @@
+diff --git a/packages/testkit/src/index.ts b/packages/testkit/src/index.ts
+index d410781a..61345f89 100644
+--- a/packages/testkit/src/index.ts
++++ b/packages/testkit/src/index.ts
+@@ -2885,3 +2885,15 @@ export function runtimeConformance(
+       : runtime.layer({ ...baseOptions, capabilities });
+   return makeTriplesConformanceSuite().pipe(Effect.provide(layer));
+ }
++
++export {
++  makeRouteEquivalenceCases,
++  canonicalRouteValue,
++  type RouteFixture,
++  type RouteRead,
++} from "./routeEquivalence.js";
++export {
++  makeRouteEquivalenceScenario,
++  type RouteHistoryCommand,
++  type RouteHistoryOperation,
++} from "./routeHistory.js";

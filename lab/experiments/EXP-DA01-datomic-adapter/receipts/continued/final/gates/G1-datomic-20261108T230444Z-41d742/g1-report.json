@@ -1,0 +1,693 @@
+{
+  "format": "tx2-lab-conformance/1",
+  "runId": "e63f927d-ea49-4d98-ac4b-3b6d840f1708",
+  "backend": "datomic",
+  "queryPath": "datomic-datalog",
+  "endpoint": "http://127.0.0.1:8470",
+  "artifact": "/Users/sam/projects/triplex-db-2/.claude/worktrees/da01/packages/datomic/dist/index.js",
+  "admission": {
+    "path": "/Users/sam/projects/triplex-db-2/lab/locks/datomic-dev/owner.json",
+    "sha256": "e48f7aab5c0987357db9d5e993db2a0cbc51a41faef235c4da91c05fba308d92"
+  },
+  "caseCount": 44,
+  "caseNames": [
+    "actor due-work ranges preserve numeric aliases, visibility, ordering, and limits",
+    "Datalog reads are bounded by default and cursors traverse the complete snapshot",
+    "historical cursor pages intersect recorded time and the commit snapshot",
+    "recursive relations support cursor pagination and optional total counts",
+    "assert then get and match return the fact",
+    "same-value facts in one batch keep distinct identities",
+    "datalog query finds asserted facts",
+    "datalog projections preserve scalar types without guessing from text",
+    "datalog deduplicates flattened scalar families before grouping and pagination",
+    "datalog constant projections retain their scalar values through pagination",
+    "datalog pattern constants use flattened scalar identity in filters",
+    "datalog value joins compare every scalar family",
+    "datalog equality predicates compare numeric values as numbers",
+    "datalog equality keeps identity bindings string-typed",
+    "ordered Datalog predicates accept only numeric scalar families",
+    "datalog reverse lookup matches an explicitly typed ref constant",
+    "datalog joins a variable bound from a ref in value position",
+    "datalog supports multi-hop joins over ref edges",
+    "datalog recursive rules compute the same transitive closure",
+    "datalog rule patterns unify repeated variables",
+    "datalog aggregations group, filter, and order consistently",
+    "datalog having preserves typed group and aggregate equality",
+    "datalog aggregates preserve duplicate rows and define empty and distinct results",
+    "datalog conjunctions establish bindings independent of clause order",
+    "datalog rejects invalid and unbound queries with backend-neutral typed errors",
+    "wrapped filters preserve scalar types and SQL null semantics",
+    "Datalog ordering and pagination preserve mixed scalar order",
+    "datalog untyped strings match string and ref values while typed refs stay exact",
+    "transact records provenance datoms",
+    "conditional transactions are atomic and journal their changes",
+    "entity transaction history is indexed, complete, and snapshot-stable",
+    "graph constraints reject invalid post-states across valid time",
+    "dependency state is attribute-scoped and schedules temporal edges",
+    "derivation materialization uses indexed dependency freshness",
+    "graph constraints agree across storage backends",
+    "consumer checkpoints advance atomically and remain queryable",
+    "retractByPattern respects entityType",
+    "reserved Triplex namespaces reject ordinary writes atomically",
+    "transaction journals cannot be retracted through ordinary writes",
+    "direct and Datalog reads share one bitemporal basis",
+    "historical corrections preserve what was previously recorded",
+    "batch entity reads preserve association, missing entries, and temporal basis",
+    "retract is coherent across write and datalog paths",
+    "paged queries use deterministic snapshot-stable cursors"
+  ],
+  "selectedCount": 44,
+  "subset": false,
+  "status": "PASS",
+  "startedAt": "2026-11-08T23:04:54.324Z",
+  "suite": {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-suite-9f2148a4-7464-4870-aca6-788df24b7ed0\",0]",
+    "status": "PASS",
+    "elapsedMs": 5536.96775
+  },
+  "executions": [
+    {
+      "name": "actor due-work ranges preserve numeric aliases, visibility, ordering, and limits",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-30c3b352-0bb9-41c4-9803-8c58b4de2e17\",0]",
+      "status": "PASS",
+      "elapsedMs": 503.27708299999995
+    },
+    {
+      "name": "Datalog reads are bounded by default and cursors traverse the complete snapshot",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-b9112f5d-026f-4a98-9645-e6a93044b90a\",0]",
+      "status": "PASS",
+      "elapsedMs": 217.41499999999996
+    },
+    {
+      "name": "historical cursor pages intersect recorded time and the commit snapshot",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-5eee8f71-19e7-496c-ad19-02b67a116208\",0]",
+      "status": "PASS",
+      "elapsedMs": 111.14258299999983
+    },
+    {
+      "name": "recursive relations support cursor pagination and optional total counts",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-8075e262-3c09-474d-9522-38f982cf7911\",0]",
+      "status": "PASS",
+      "elapsedMs": 132.72108300000036
+    },
+    {
+      "name": "assert then get and match return the fact",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-beeb3d47-f982-4f12-b1e3-44692bf5d515\",0]",
+      "status": "PASS",
+      "elapsedMs": 65.43591699999979
+    },
+    {
+      "name": "same-value facts in one batch keep distinct identities",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-5a608b92-b7af-43f2-a75a-1b16360952c1\",0]",
+      "status": "PASS",
+      "elapsedMs": 78.40854200000012
+    },
+    {
+      "name": "datalog query finds asserted facts",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-2e6294e1-e329-4757-83b2-decad12836b7\",0]",
+      "status": "PASS",
+      "elapsedMs": 77.66908300000068
+    },
+    {
+      "name": "datalog projections preserve scalar types without guessing from text",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-b064a570-79fe-4af4-9373-aadd6c5cd306\",0]",
+      "status": "PASS",
+      "elapsedMs": 80.37695799999983
+    },
+    {
+      "name": "datalog deduplicates flattened scalar families before grouping and pagination",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-a0b83da7-125d-46e9-b683-d90da0d35cc0\",0]",
+      "status": "PASS",
+      "elapsedMs": 118.68075000000044
+    },
+    {
+      "name": "datalog constant projections retain their scalar values through pagination",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-8ea130c6-051f-4068-8d2f-a37fbc519713\",0]",
+      "status": "PASS",
+      "elapsedMs": 142.95095800000036
+    },
+    {
+      "name": "datalog pattern constants use flattened scalar identity in filters",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-5543287b-4376-424f-aa0d-60fcbe9e6497\",0]",
+      "status": "PASS",
+      "elapsedMs": 109.2924579999999
+    },
+    {
+      "name": "datalog value joins compare every scalar family",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-0f2388be-736d-48c3-9f56-32e103d9d069\",0]",
+      "status": "PASS",
+      "elapsedMs": 109.86116700000002
+    },
+    {
+      "name": "datalog equality predicates compare numeric values as numbers",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-6cdec4d9-f584-48d5-ac7a-86b4d9c1237a\",0]",
+      "status": "PASS",
+      "elapsedMs": 169.06616699999995
+    },
+    {
+      "name": "datalog equality keeps identity bindings string-typed",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-75b0066a-87fb-4fcc-bc6c-0a81f7bffd4f\",0]",
+      "status": "PASS",
+      "elapsedMs": 141.9083330000003
+    },
+    {
+      "name": "ordered Datalog predicates accept only numeric scalar families",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-396f8e1b-f155-4e6e-b887-2ab70e317781\",0]",
+      "status": "PASS",
+      "elapsedMs": 163.13950000000023
+    },
+    {
+      "name": "datalog reverse lookup matches an explicitly typed ref constant",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-406c9856-f9e0-4e10-8a1b-cfe4ca17553e\",0]",
+      "status": "PASS",
+      "elapsedMs": 74.67783400000008
+    },
+    {
+      "name": "datalog joins a variable bound from a ref in value position",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-4cb64cdf-d801-4f25-8a22-09c982d3790c\",0]",
+      "status": "PASS",
+      "elapsedMs": 84.65691700000025
+    },
+    {
+      "name": "datalog supports multi-hop joins over ref edges",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-9ea5ffbd-384a-4b99-99f4-3615b7de7d52\",0]",
+      "status": "PASS",
+      "elapsedMs": 94.96533300000101
+    },
+    {
+      "name": "datalog recursive rules compute the same transitive closure",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-1922728f-8ec3-43ee-ae40-3799295a5140\",0]",
+      "status": "PASS",
+      "elapsedMs": 191.9954170000001
+    },
+    {
+      "name": "datalog rule patterns unify repeated variables",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-1f39d081-be95-4430-9061-e1af20510f6c\",0]",
+      "status": "PASS",
+      "elapsedMs": 89.06333300000006
+    },
+    {
+      "name": "datalog aggregations group, filter, and order consistently",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-4619354b-4e70-4cea-8378-1a64a68cd7d8\",0]",
+      "status": "PASS",
+      "elapsedMs": 80.84920800000145
+    },
+    {
+      "name": "datalog having preserves typed group and aggregate equality",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-d1220cc0-e2a5-44a8-acd2-c07bc133fa2e\",0]",
+      "status": "PASS",
+      "elapsedMs": 93.03924999999981
+    },
+    {
+      "name": "datalog aggregates preserve duplicate rows and define empty and distinct results",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-f16cc4d0-bf03-41b5-b2f4-e537e6a6569f\",0]",
+      "status": "PASS",
+      "elapsedMs": 90.40629199999967
+    },
+    {
+      "name": "datalog conjunctions establish bindings independent of clause order",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-e4e748ae-ec95-492a-8aa9-31a10faa1cb0\",0]",
+      "status": "PASS",
+      "elapsedMs": 79.9364999999998
+    },
+    {
+      "name": "datalog rejects invalid and unbound queries with backend-neutral typed errors",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-fc771aae-a148-47a0-9ab8-b9380e82a22f\",0]",
+      "status": "PASS",
+      "elapsedMs": 57.920500000000175
+    },
+    {
+      "name": "wrapped filters preserve scalar types and SQL null semantics",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-ce43640a-5871-431a-8d53-df097740c14e\",0]",
+      "status": "PASS",
+      "elapsedMs": 214.32524999999987
+    },
+    {
+      "name": "Datalog ordering and pagination preserve mixed scalar order",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-de6df504-ad76-4701-b404-cc56a53faccb\",0]",
+      "status": "PASS",
+      "elapsedMs": 154.78212499999972
+    },
+    {
+      "name": "datalog untyped strings match string and ref values while typed refs stay exact",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-c76a603f-9c58-4473-a24c-771429f69f25\",0]",
+      "status": "PASS",
+      "elapsedMs": 120.38629200000105
+    },
+    {
+      "name": "transact records provenance datoms",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-5cce1ac6-d1b9-4cb6-8ff8-e835f629b6b4\",0]",
+      "status": "PASS",
+      "elapsedMs": 52.12220800000068
+    },
+    {
+      "name": "conditional transactions are atomic and journal their changes",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-4b1f1b1e-5653-4122-a33e-cfa666e6e828\",0]",
+      "status": "PASS",
+      "elapsedMs": 104.87504099999933
+    },
+    {
+      "name": "entity transaction history is indexed, complete, and snapshot-stable",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-0a49cb44-bc45-42a4-a114-c277ff178e19\",0]",
+      "status": "PASS",
+      "elapsedMs": 131.28912500000115
+    },
+    {
+      "name": "graph constraints reject invalid post-states across valid time",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-75ab5f42-58fc-4e38-8df9-4ad65609b5c1\",0]",
+      "status": "PASS",
+      "elapsedMs": 141.46287500000108
+    },
+    {
+      "name": "dependency state is attribute-scoped and schedules temporal edges",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-79b0dce3-be9b-42c8-8033-5f82ff604597\",0]",
+      "status": "PASS",
+      "elapsedMs": 107.82391599999937
+    },
+    {
+      "name": "derivation materialization uses indexed dependency freshness",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-9823742e-5882-44f2-a45e-aa43e37174f1\",0]",
+      "status": "PASS",
+      "elapsedMs": 165.77258299999994
+    },
+    {
+      "name": "graph constraints agree across storage backends",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-10c8dfbf-cc14-4027-b95b-49f3aee9f621\",0]",
+      "status": "PASS",
+      "elapsedMs": 77.63874999999825
+    },
+    {
+      "name": "consumer checkpoints advance atomically and remain queryable",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-e95c555e-3777-4da2-a64b-cfd4ba27f49b\",0]",
+      "status": "PASS",
+      "elapsedMs": 151.589833
+    },
+    {
+      "name": "retractByPattern respects entityType",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-06af6652-3a02-423c-9941-7951e3ed6243\",0]",
+      "status": "PASS",
+      "elapsedMs": 116.94225000000006
+    },
+    {
+      "name": "reserved Triplex namespaces reject ordinary writes atomically",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-9d2f5d65-91d2-4bcb-abc4-668581a1fe21\",0]",
+      "status": "PASS",
+      "elapsedMs": 86.09770799999933
+    },
+    {
+      "name": "transaction journals cannot be retracted through ordinary writes",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-765b6865-feec-4e63-81fd-78ab9d0c3d78\",0]",
+      "status": "PASS",
+      "elapsedMs": 88.7731670000012
+    },
+    {
+      "name": "direct and Datalog reads share one bitemporal basis",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-113fc525-2a5c-4d08-a6b2-d2e3930eb289\",0]",
+      "status": "PASS",
+      "elapsedMs": 94.6195829999997
+    },
+    {
+      "name": "historical corrections preserve what was previously recorded",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-0cfc752f-28a1-49b8-bb8f-acc8fe37089d\",0]",
+      "status": "PASS",
+      "elapsedMs": 85.71758299999965
+    },
+    {
+      "name": "batch entity reads preserve association, missing entries, and temporal basis",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-922b3fd5-eff9-4b32-8f59-eec70c668f03\",0]",
+      "status": "PASS",
+      "elapsedMs": 58.80658299999959
+    },
+    {
+      "name": "retract is coherent across write and datalog paths",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-0120271d-6e5f-46af-b880-efd1cf411aca\",0]",
+      "status": "PASS",
+      "elapsedMs": 108.65862500000003
+    },
+    {
+      "name": "paged queries use deterministic snapshot-stable cursors",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-6196e97c-a9a9-475a-9c7c-fb0fc94b348f\",0]",
+      "status": "PASS",
+      "elapsedMs": 111.94133399999919
+    },
+    {
+      "name": "actor due-work ranges preserve numeric aliases, visibility, ordering, and limits",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-4d7926ec-8b3a-4d91-b61b-52167af90647\",0]",
+      "status": "PASS",
+      "elapsedMs": 355.43354199999885
+    },
+    {
+      "name": "Datalog reads are bounded by default and cursors traverse the complete snapshot",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-f7067da4-69f2-40a9-aefb-aa3885f751c1\",0]",
+      "status": "PASS",
+      "elapsedMs": 244.36229200000162
+    },
+    {
+      "name": "historical cursor pages intersect recorded time and the commit snapshot",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-53013c13-ba82-4b0d-9842-12e670e82031\",0]",
+      "status": "PASS",
+      "elapsedMs": 130.8680829999994
+    },
+    {
+      "name": "recursive relations support cursor pagination and optional total counts",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-6286dcca-38e6-4a21-b4ab-88718cd92f10\",0]",
+      "status": "PASS",
+      "elapsedMs": 142.19645800000035
+    },
+    {
+      "name": "assert then get and match return the fact",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-3c5d7147-a7db-4db0-85bb-9c3f6ef05d9b\",0]",
+      "status": "PASS",
+      "elapsedMs": 69.97062499999993
+    },
+    {
+      "name": "same-value facts in one batch keep distinct identities",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-ca028bb0-d56c-4804-aa01-0eb0505f436c\",0]",
+      "status": "PASS",
+      "elapsedMs": 68.46420900000157
+    },
+    {
+      "name": "datalog query finds asserted facts",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-1f72620e-c1a6-4fad-b5f2-a0c594e7035c\",0]",
+      "status": "PASS",
+      "elapsedMs": 56.313749999999345
+    },
+    {
+      "name": "datalog projections preserve scalar types without guessing from text",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-16903911-6170-4680-8bfe-bff8a6c08fac\",0]",
+      "status": "PASS",
+      "elapsedMs": 68.51229199999943
+    },
+    {
+      "name": "datalog deduplicates flattened scalar families before grouping and pagination",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-58891305-3098-48c1-9b91-94f9e0de26d3\",0]",
+      "status": "PASS",
+      "elapsedMs": 85.80087500000081
+    },
+    {
+      "name": "datalog constant projections retain their scalar values through pagination",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-7d8b8310-b890-441a-b962-b65bed63527d\",0]",
+      "status": "PASS",
+      "elapsedMs": 80.8351249999996
+    },
+    {
+      "name": "datalog pattern constants use flattened scalar identity in filters",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-6b7076c5-2de2-4af1-a21b-57e474adfbad\",0]",
+      "status": "PASS",
+      "elapsedMs": 116.00745800000004
+    },
+    {
+      "name": "datalog value joins compare every scalar family",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-9973411b-49d7-447d-929e-7969036fb9af\",0]",
+      "status": "PASS",
+      "elapsedMs": 78.91762500000004
+    },
+    {
+      "name": "datalog equality predicates compare numeric values as numbers",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-97b6db2e-bee6-402c-bf6e-6e3c996409da\",0]",
+      "status": "PASS",
+      "elapsedMs": 77.05604200000016
+    },
+    {
+      "name": "datalog equality keeps identity bindings string-typed",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-1ba96420-e063-4405-8e21-0379021c37e2\",0]",
+      "status": "PASS",
+      "elapsedMs": 86.3300419999996
+    },
+    {
+      "name": "ordered Datalog predicates accept only numeric scalar families",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-0fdf7a13-396e-4f5d-83b4-f968971c09db\",0]",
+      "status": "PASS",
+      "elapsedMs": 76.12083300000086
+    },
+    {
+      "name": "datalog reverse lookup matches an explicitly typed ref constant",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-d7e1ffe9-0ea9-43df-9772-085d8747c57a\",0]",
+      "status": "PASS",
+      "elapsedMs": 51.39979099999982
+    },
+    {
+      "name": "datalog joins a variable bound from a ref in value position",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-c3e62891-3228-4e8f-90d4-4c9e737dbc1a\",0]",
+      "status": "PASS",
+      "elapsedMs": 69.38683300000048
+    },
+    {
+      "name": "datalog supports multi-hop joins over ref edges",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-5828a460-6943-43dd-bb6f-1e28bbebc3ec\",0]",
+      "status": "PASS",
+      "elapsedMs": 70.62954200000058
+    },
+    {
+      "name": "datalog recursive rules compute the same transitive closure",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-b046f19b-a415-45c7-a027-ea43edc552ec\",0]",
+      "status": "PASS",
+      "elapsedMs": 184.0177500000009
+    },
+    {
+      "name": "datalog rule patterns unify repeated variables",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-89ccd74d-bb45-4ef7-8e79-31122658ca12\",0]",
+      "status": "PASS",
+      "elapsedMs": 73.79612499999894
+    },
+    {
+      "name": "datalog aggregations group, filter, and order consistently",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-881f15bf-2817-413c-a4de-cbef84dc575d\",0]",
+      "status": "PASS",
+      "elapsedMs": 75.16266600000017
+    },
+    {
+      "name": "datalog having preserves typed group and aggregate equality",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-54395c55-a102-4cc5-aa6c-b7b9f76de768\",0]",
+      "status": "PASS",
+      "elapsedMs": 81.63212500000009
+    },
+    {
+      "name": "datalog aggregates preserve duplicate rows and define empty and distinct results",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-b24360f5-7917-421f-bb51-421760c40248\",0]",
+      "status": "PASS",
+      "elapsedMs": 121.72008300000016
+    },
+    {
+      "name": "datalog conjunctions establish bindings independent of clause order",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-f885c224-719a-4f90-bd72-e2f726e94d1f\",0]",
+      "status": "PASS",
+      "elapsedMs": 90.00112499999886
+    },
+    {
+      "name": "datalog rejects invalid and unbound queries with backend-neutral typed errors",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-77d5caf2-4200-4614-986c-c46d88bf70e3\",0]",
+      "status": "PASS",
+      "elapsedMs": 53.669042000001355
+    },
+    {
+      "name": "wrapped filters preserve scalar types and SQL null semantics",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-e80a26a9-2578-4bd6-a321-9dfa628e0c13\",0]",
+      "status": "PASS",
+      "elapsedMs": 168.0958329999994
+    },
+    {
+      "name": "Datalog ordering and pagination preserve mixed scalar order",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-597607a1-db01-474f-b9bf-85c01a994715\",0]",
+      "status": "PASS",
+      "elapsedMs": 142.24325000000135
+    },
+    {
+      "name": "datalog untyped strings match string and ref values while typed refs stay exact",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-d9940735-f98f-444d-bec7-f583cdc83ffa\",0]",
+      "status": "PASS",
+      "elapsedMs": 77.4557079999995
+    },
+    {
+      "name": "transact records provenance datoms",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-fd105788-d311-4b97-bdf4-89ff87576099\",0]",
+      "status": "PASS",
+      "elapsedMs": 79.08358399999997
+    },
+    {
+      "name": "conditional transactions are atomic and journal their changes",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-1756deb6-be8b-45c6-9853-9086462c0c4e\",0]",
+      "status": "PASS",
+      "elapsedMs": 114.08566599999904
+    },
+    {
+      "name": "entity transaction history is indexed, complete, and snapshot-stable",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-7e9d874e-cccd-4ff3-9631-09d1a9c53254\",0]",
+      "status": "PASS",
+      "elapsedMs": 110.60462499999994
+    },
+    {
+      "name": "graph constraints reject invalid post-states across valid time",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-6272be1f-bf97-43e6-babd-ac20e1509abd\",0]",
+      "status": "PASS",
+      "elapsedMs": 160.4359999999997
+    },
+    {
+      "name": "dependency state is attribute-scoped and schedules temporal edges",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-076ae135-81a3-4c42-a739-7feea0d3028b\",0]",
+      "status": "PASS",
+      "elapsedMs": 136.6369169999998
+    },
+    {
+      "name": "derivation materialization uses indexed dependency freshness",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-4ebad44b-db45-4da1-b26b-5f82739c2794\",0]",
+      "status": "PASS",
+      "elapsedMs": 174.9303749999999
+    },
+    {
+      "name": "graph constraints agree across storage backends",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-fd753e1b-7498-4b5c-aaba-d05bc8b91170\",0]",
+      "status": "PASS",
+      "elapsedMs": 85.8987079999988
+    },
+    {
+      "name": "consumer checkpoints advance atomically and remain queryable",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-deb20e29-19b3-42a4-ac48-02616bd7611a\",0]",
+      "status": "PASS",
+      "elapsedMs": 142.20108299999993
+    },
+    {
+      "name": "retractByPattern respects entityType",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-98355fae-74b3-42ad-97b8-0c722e91eca3\",0]",
+      "status": "PASS",
+      "elapsedMs": 130.74095900000066
+    },
+    {
+      "name": "reserved Triplex namespaces reject ordinary writes atomically",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-89f82310-ff2f-4c58-a584-6fbcbd9867a4\",0]",
+      "status": "PASS",
+      "elapsedMs": 69.80266699999993
+    },
+    {
+      "name": "transaction journals cannot be retracted through ordinary writes",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-43ebb582-fdca-4269-a838-f4a41af76f11\",0]",
+      "status": "PASS",
+      "elapsedMs": 70.2374579999996
+    },
+    {
+      "name": "direct and Datalog reads share one bitemporal basis",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-0ebd6eaa-3f59-47f7-ad07-c1f534831217\",0]",
+      "status": "PASS",
+      "elapsedMs": 70.6815000000006
+    },
+    {
+      "name": "historical corrections preserve what was previously recorded",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-1e9c6ee6-e22d-4af1-a227-c35001923f07\",0]",
+      "status": "PASS",
+      "elapsedMs": 110.02266599999894
+    },
+    {
+      "name": "batch entity reads preserve association, missing entries, and temporal basis",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-2e8f5376-2fe2-4b68-ad92-3a5de02001e3\",0]",
+      "status": "PASS",
+      "elapsedMs": 63.30570799999987
+    },
+    {
+      "name": "retract is coherent across write and datalog paths",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-e8d8b547-fc7e-43a6-9c79-4425ea459fdb\",0]",
+      "status": "PASS",
+      "elapsedMs": 96.63612499999908
+    },
+    {
+      "name": "paged queries use deterministic snapshot-stable cursors",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-5ac9afc4-9a37-424b-9b9f-c5edd925a52c\",0]",
+      "status": "PASS",
+      "elapsedMs": 96.69475000000057
+    }
+  ],
+  "counts": {
+    "expectedExecutions": 88,
+    "executed": 88,
+    "passed": 88,
+    "failed": 0
+  },
+  "endedAt": "2026-11-08T23:05:09.929Z"
+}

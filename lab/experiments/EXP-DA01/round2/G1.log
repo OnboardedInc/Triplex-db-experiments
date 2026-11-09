@@ -1,0 +1,7 @@
+[lab] waiting for worktree gate lock (held by pid 23288)
+[lab] G1-datomic-20261108T233149Z-55311d: raw output runs/G1/G1-datomic-20261108T233149Z-55311d
+FAIL G1 datomic/dev scope=full executed=88 pass=2 fail=86 skip=0
+profile: default; planner budget: null
+  reason: complete unchanged suite failed
+  reason: 86 failed case executions
+receipt: lab/runs/G1/G1-datomic-20261108T233149Z-55311d.json

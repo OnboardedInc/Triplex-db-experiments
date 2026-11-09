@@ -146,3 +146,10 @@ position). It refuses any query it does not recognize. The driver's `--seed-mani
 equals the manifest's last position before it starts. 10k rung (ns-v2): 384,785 assertions (closed form matches),
 1,031 commands, 24,550,838 quads, 6.74 GB decompressed, 150 MB gzipped. Not yet indexed or read back on a live QLever:
 `-F nq` on QLever 0.6.0 and the first pulls on the indexed scope are the first checks when a QLever slot is free.
+
+## Native P3 window
+
+EXP-P3M adds `p3-driver.mjs`, an isolated-consumer NS P3 entry point using FD01 native
+feed adapters and source-enumerated prefixes. See [the provider and receipt contract](../experiments/EXP-P3M/README.md).
+Its offline fixture runs 256 closed loops; it does not enable a real lane provider.
+The original driver remains the A0 journal control.

@@ -1,0 +1,51 @@
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/rq01
+
+ ❯ packages/testkit/test/fixtures.test.ts (0 test)
+ ❯ packages/testkit/test/route-equivalence.test.ts (14 tests | 4 failed) 37734ms
+   ❯ EXP-RQ01 route-equivalence gate (offline only) (14)
+     × xtdb semantic models seed 890: HE-1 through HE-7 5026ms
+     × qlever semantic models seed 1: HE-1 through HE-7 7605ms
+     × qlever semantic models seed 42: HE-1 through HE-7 7575ms
+     × qlever semantic models seed 890: HE-1 through HE-7 7802ms
+
+ Test Files  2 failed (2)
+      Tests  4 failed | 10 passed (14)
+   Start at  18:56:04
+   Duration  37.98s (tests 100%)
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  packages/testkit/test/fixtures.test.ts [ packages/testkit/test/fixtures.test.ts ]
+Error: Cannot find package 'ulidx' imported from /Users/sam/projects/triplex-db-2/.claude/worktrees/rq01/packages/core/src/utils/id.ts
+ ❯ packages/core/src/utils/id.ts:8:1
+      6|  */
+      7|
+      8| import { monotonicFactory } from "ulidx";
+       | ^
+      9| import { TransactionId, TripleId } from "../Branded.js";
+     10|
+ ❯ packages/core/src/store/RuntimeServices.ts:3:1
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  packages/testkit/test/route-equivalence.test.ts > EXP-RQ01 route-equivalence gate (offline only) > xtdb semantic models seed 890: HE-1 through HE-7
+ FAIL  packages/testkit/test/route-equivalence.test.ts > EXP-RQ01 route-equivalence gate (offline only) > qlever semantic models seed 1: HE-1 through HE-7
+ FAIL  packages/testkit/test/route-equivalence.test.ts > EXP-RQ01 route-equivalence gate (offline only) > qlever semantic models seed 42: HE-1 through HE-7
+ FAIL  packages/testkit/test/route-equivalence.test.ts > EXP-RQ01 route-equivalence gate (offline only) > qlever semantic models seed 890: HE-1 through HE-7
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ packages/testkit/test/route-equivalence.test.ts:65:7
+     63|   for (const lane of ["xtdb", "qlever"] as const)
+     64|     for (const seed of [1, 42, 890])
+     65|       it(`${lane} semantic models seed ${seed}: HE-1 through HE-7`, as…
+       |       ^
+     66|         for (const entry of makeRouteEquivalenceCases({
+     67|           fixture: makeOfflineRouteFixture(lane),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+

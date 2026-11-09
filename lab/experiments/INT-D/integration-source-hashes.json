@@ -1,0 +1,22 @@
+[
+  {
+    "path": "lab/config/slots.json",
+    "oldSha256": "335b42612449b0b3399b8282e1a2bdaf1ecdd1e573335d051aedcfa3f9e109a8",
+    "newSha256": "3cd5463b6fda8af3653057e74ae287a34f1ad1478fa173e98f5ceaefc8e5c225"
+  },
+  {
+    "path": "lab/bin/gate.mjs",
+    "oldSha256": "f1cbaa46a08e5a3538ab120aef44257b3e1a8b7471f35d2621f747355a3ca465",
+    "newSha256": "36f204d0659ebcadf494b6e2bf6a515b08c6d4b2793f55d6b081ffa5f0c1f2c2"
+  },
+  {
+    "path": "lab/bin/engine.mjs",
+    "oldSha256": "b2bb06172efd2791ec323285998e560ace543a38e022dff489c601d3c879c608",
+    "newSha256": "3d4f00a04ee044cfe176c24dc1406c3ff7f328383dc0a2e06c0d72cab53957a1"
+  },
+  {
+    "path": "packages/testkit/src/index.ts",
+    "oldSha256": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988",
+    "newSha256": "cb89a55ced5426b8fa0af3523fbbeb73870e61e3622ebb42e8a78c3e67da8d28"
+  }
+]

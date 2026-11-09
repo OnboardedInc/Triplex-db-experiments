@@ -1,0 +1,40 @@
+SAME lab/scenarios/01-monday-rush/expected-10k.json sha256=c1f0ebe1ae20466e
+  scenario 1 10k: 100 commands, 1408 facts, 3 O-REPLAY cases (0 not EXPECTED-ONLY), 1 expected rejections, 300 ms
+SAME lab/scenarios/02-form-submit/expected-10k.json sha256=9304e03fbb4206f9
+  scenario 2 10k: 58 commands, 1041 facts, 2 O-REPLAY cases (0 not EXPECTED-ONLY), 4 expected rejections, 208 ms
+SAME lab/scenarios/03-webhook-storm/expected-10k.json sha256=98f2e13cda97445d
+  scenario 3 10k: 93 commands, 883 facts, 2 O-REPLAY cases (0 not EXPECTED-ONLY), 33 expected rejections, 207 ms
+SAME lab/scenarios/04-lost-ack-restart/expected-10k.json sha256=5e5f34d17966a80c
+  scenario 4 10k: 66 commands, 1077 facts, 2 O-REPLAY cases (0 not EXPECTED-ONLY), 8 expected rejections, 198 ms
+SAME lab/scenarios/05-background-check-burst/expected-10k.json sha256=aa41eec2e7e08bbe
+  scenario 5 10k: 78 commands, 1333 facts, 3 O-REPLAY cases (0 not EXPECTED-ONLY), 1 expected rejections, 244 ms
+SAME lab/scenarios/06-decision-fanout/expected-10k.json sha256=6689c34477137e66
+  scenario 6 10k: 149 commands, 1413 facts, 4 O-REPLAY cases (0 not EXPECTED-ONLY), 0 expected rejections, 241 ms
+SAME lab/scenarios/07-two-reviewers/expected-10k.json sha256=d569083c171b06fc
+  scenario 7 10k: 63 commands, 944 facts, 2 O-REPLAY cases (0 not EXPECTED-ONLY), 15 expected rejections, 514 ms
+SAME lab/scenarios/08-address-since-october/expected-10k.json sha256=b713c6a29953638c
+  scenario 8 10k: 52 commands, 865 facts, 2 O-REPLAY cases (0 not EXPECTED-ONLY), 3 expected rejections, 259 ms
+SAME lab/scenarios/09-start-dates-move/expected-10k.json sha256=3faec96a994e98ba
+  scenario 9 10k: 63 commands, 1015 facts, 3 O-REPLAY cases (0 not EXPECTED-ONLY), 0 expected rejections, 248 ms
+SAME lab/scenarios/10-release-activation/expected-10k.json sha256=3deada9100a4bf96
+  scenario 10 10k: 34 commands, 804 facts, 3 O-REPLAY cases (0 not EXPECTED-ONLY), 0 expected rejections, 164 ms
+SAME lab/scenarios/11-plan-impact-preview/expected-10k.json sha256=d63325ae84063f78
+  scenario 11 10k: 34 commands, 887 facts, 3 O-REPLAY cases (0 not EXPECTED-ONLY), 1 expected rejections, 164 ms
+SAME lab/scenarios/12-audit-march-3/expected-10k.json sha256=6ea84653921fa7be
+  scenario 12 10k: 45 commands, 961 facts, 2 O-REPLAY cases (0 not EXPECTED-ONLY), 3 expected rejections, 246 ms
+SAME lab/scenarios/13-hris-backfill/expected-10k.json sha256=c94563cd092f562a
+  scenario 13 10k: 98 commands, 15604 facts, 21 O-REPLAY cases (0 not EXPECTED-ONLY), 1 expected rejections, 1192 ms
+SAME lab/scenarios/14-account-factory/expected-10k.json sha256=17e9a2407ac2f60c
+  scenario 14 10k: 203 commands, 13714 facts, 52 O-REPLAY cases (0 not EXPECTED-ONLY), 3 expected rejections, 1139 ms
+SAME lab/scenarios/15-tenant-mix/expected-10k.json sha256=640948aaa673a800
+  scenario 15 10k: 118 commands, 13696 facts, 52 O-REPLAY cases (0 not EXPECTED-ONLY), 2 expected rejections, 1231 ms
+SAME lab/scenarios/16-pii-erasure/expected-10k.json sha256=82a7dfd669517469
+  scenario 16 10k: 170 commands, 2578 facts, 8 O-REPLAY cases (0 not EXPECTED-ONLY), 1 expected rejections, 441 ms
+SAME lab/scenarios/17-agent-proposals/expected-10k.json sha256=abb5e6f21bd44381
+  scenario 17 10k: 88 commands, 625 facts, 2 O-REPLAY cases (0 not EXPECTED-ONLY), 1 expected rejections, 219 ms
+SAME lab/scenarios/18-recruiter-dashboards/expected-10k.json sha256=e432c0c1bec50e42
+  scenario 18 10k: 91 commands, 2204 facts, 7 O-REPLAY cases (0 not EXPECTED-ONLY), 1 expected rejections, 338 ms
+SAME lab/scenarios/19-feed-consumer-crash/expected-10k.json sha256=afa59db2ec535413
+  scenario 19 10k: 62 commands, 980 facts, 2 O-REPLAY cases (0 not EXPECTED-ONLY), 1 expected rejections, 203 ms
+SAME lab/scenarios/20-midnight-expiry/expected-10k.json sha256=15b235a9836656aa
+  scenario 20 10k: 88 commands, 1291 facts, 4 O-REPLAY cases (0 not EXPECTED-ONLY), 1 expected rejections, 395 ms

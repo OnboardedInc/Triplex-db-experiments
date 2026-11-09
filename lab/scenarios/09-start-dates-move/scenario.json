@@ -3,24 +3,60 @@
   "id": 9,
   "slug": "start-dates-move",
   "title": "Start dates move",
-  "priorities": ["P1", "P3"],
-  "status": "spec",
+  "priorities": [
+    "P1",
+    "P3"
+  ],
+  "status": "runnable",
   "source": "lab/TARGETS.md section 6 row 9",
   "story": "2,000 placement start dates shift forward and back, moving obligations.",
   "checked": "Next-boundary times recompute; reads at bases on both sides of a boundary are exact.",
   "seed": 20261109,
-  "yearOne": { "moves": 2000 },
+  "yearOne": {
+    "moves": 2000
+  },
   "params": {},
   "rungs": {
-    "10k": { "subjects": 200, "negatives": 20, "liveMs": 90000, "trace": { "subjects": 30, "factsPerSecond": 15 } }
+    "10k": {
+      "subjects": 30,
+      "negatives": 5,
+      "liveMs": 25000,
+      "trace": {
+        "subjects": 15,
+        "factsPerSecond": 15
+      }
+    }
   },
-  "witnesses": { "positive": "moved placements (start date from 2026-11-01 changes)", "negative": "placements never moved" },
-  "domain": ["obligations moved by the new start dates and their next-boundary times (O-DOMAIN; Triplex dependencyState.nextTemporalBoundary is the database-side witness)"],
+  "witnesses": {
+    "positive": "moved placements (start date from 2026-11-01 changes)",
+    "negative": "placements never moved"
+  },
+  "domain": [
+    "obligations moved by the new start dates and their next-boundary times (O-DOMAIN; Triplex dependencyState.nextTemporalBoundary is the database-side witness)"
+  ],
   "reads": "Golden digests at validAt NOW, 2026-11-01 minus 1 ms and 2026-11-01 (both sides of the valid-time boundary).",
   "bars": [
-    { "id": "P1.read.p99", "metric": "read.p99", "op": "<=", "value": 100, "unit": "ms", "source": "TARGETS section 1 P1" },
-    { "id": "P3.feed.lag.p99", "metric": "feed.lag.p99", "op": "<=", "value": 250, "unit": "ms", "source": "TARGETS section 1 P3" }
+    {
+      "id": "P1.read.p99",
+      "metric": "read.p99",
+      "op": "<=",
+      "value": 100,
+      "unit": "ms",
+      "source": "TARGETS section 1 P1"
+    },
+    {
+      "id": "P3.feed.lag.p99",
+      "metric": "feed.lag.p99",
+      "op": "<=",
+      "value": 250,
+      "unit": "ms",
+      "source": "TARGETS section 1 P3"
+    }
   ],
   "faults": [],
-  "oracle": { "source": "O-REPLAY (state on both sides of the boundary); O-DOMAIN (obligations, next boundaries)", "gaps": [] }
+  "oracle": {
+    "source": "O-REPLAY (state on both sides of the boundary); O-DOMAIN (obligations, next boundaries)",
+    "gaps": []
+  },
+  "rungNote": "Sized for a shared 2-CPU dev slot (measured 2026-11-07: about 0.1 to 1 commits/s under pinned readers): the rung is the 10k-subject background world; the live phase runs the fixed trace (15 facts/s, open loop) with a scaled scenario overlay. Year-one volumes wait for PLAN section 8 order 6."
 }

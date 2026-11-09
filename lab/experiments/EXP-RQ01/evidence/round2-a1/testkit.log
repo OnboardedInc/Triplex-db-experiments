@@ -1,0 +1,9 @@
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/rq01
+
+
+ Test Files  3 passed (3)
+      Tests  75 passed (75)
+   Start at  19:27:59
+   Duration  37.08s (tests 97%, import 2%, transform 1%)
+

@@ -1,0 +1,6 @@
+[33m[PLUGIN_TIMINGS] Warning:[0m Your build spent significant time in plugins. Here is a breakdown:
+  - rolldown-plugin-dts:generate (39%)
+  - tsdown:deps (36%)
+  - rolldown-plugin-dts:resolver (20%)
+See https://rolldown.rs/options/checks#plugintimings for more details.
+

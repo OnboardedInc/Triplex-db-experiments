@@ -27,8 +27,9 @@ interface NativeTaskLibrary {
   ) => Effect.Effect<unknown[][], unknown>;
 }
 
-export type QualificationBackendName = "duckdb" | "xtdb" | "qlever";
+export type QualificationBackendName = "duckdb" | "xtdb" | "qlever" | "datomic";
 export type QualificationQueryPath =
+  | "datomic-datalog"
   | "duckdb-datalog"
   | "xtdb-datalog"
   | "qlever-datalog"
@@ -36,6 +37,11 @@ export type QualificationQueryPath =
   | "qlever-native";
 
 export const qualificationQueryPaths = {
+  "datomic-datalog": {
+    backend: "datomic",
+    language: "triplex-datalog",
+    foundationStatus: "implemented",
+  },
   "duckdb-datalog": {
     backend: "duckdb",
     language: "triplex-datalog",
@@ -86,6 +92,15 @@ type RuntimeFactory = (options: {
 }) => RuntimeDefinition<unknown, never, unknown>;
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const registry = {
+  datomic: {
+    package: "@triplex-build/triplex-datomic",
+    directory: "datomic",
+    factory: "makeDatomicRuntime",
+    client: "",
+    temporal: "",
+    native: "",
+    defaultUrl: "http://127.0.0.1:8470",
+  },
   duckdb: {
     package: "@triplex-build/triplex-duckdb",
     directory: "duckdb",
@@ -168,7 +183,9 @@ export const loadQualificationBackend = async (name = qualificationBackendName()
               ? path.join(process.env["TRIPLEX_RUN_DIRECTORY"]!, "scratch/databases")
               : selected.defaultUrl),
         )
-      : (process.env[name === "xtdb" ? "XTDB_URL" : "QLEVER_URL"] ?? selected.defaultUrl);
+      : (process.env[
+          name === "xtdb" ? "XTDB_URL" : name === "datomic" ? "DATOMIC_GATEWAY_URL" : "QLEVER_URL"
+        ] ?? selected.defaultUrl);
   if (name === "duckdb" && !url.startsWith(root + path.sep))
     throw new TypeError(
       "DuckDB qualification databases must remain in the owned bounded workspace",

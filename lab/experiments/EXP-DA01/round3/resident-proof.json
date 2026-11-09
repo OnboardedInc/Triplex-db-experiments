@@ -1,0 +1,40 @@
+{
+  "health": {
+    "datomicVersion": "1.0.7745",
+    "gatewaySourceHash": "92c14a52764a4933376e8efbf4b7164a4d8f0318fe7996d6ac3ac8242e62386f"
+  },
+  "proofs": [
+    {
+      "db": "s-5a377987b021d5401900564fbae6a1ee",
+      "status": 200,
+      "basis": {
+        "t": {
+          "t": "long",
+          "v": "1001"
+        },
+        "position": {
+          "t": "long",
+          "v": "0"
+        },
+        "recordedAt": null,
+        "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+      }
+    },
+    {
+      "db": "s-f43d78e756286da105c6aa52db4e63e5",
+      "status": 200,
+      "basis": {
+        "t": {
+          "t": "long",
+          "v": "1001"
+        },
+        "position": {
+          "t": "long",
+          "v": "0"
+        },
+        "recordedAt": null,
+        "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+      }
+    }
+  ]
+}

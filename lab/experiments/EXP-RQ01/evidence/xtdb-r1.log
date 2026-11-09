@@ -1,0 +1,12 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 72798 "CX-A01-0312-mutations-merged", pid 57973 "CX-OBS01-R2-AA", pid 37317 "CX-G03-r3-claim-suites2", pid 74866 "CX-INT-XCJ-C8-live-once"
+[lab] heavy: waiting for one of 4 slots; held by pid 72798 "CX-A01-0312-mutations-merged", pid 57973 "CX-OBS01-R2-AA", pid 37317 "CX-G03-r3-claim-suites2", pid 74866 "CX-INT-XCJ-C8-live-once"
+[lab] heavy: waiting for one of 4 slots; held by pid 58462 "CX-RQ01-test-r2", pid 57973 "CX-OBS01-R2-AA", pid 37317 "CX-G03-r3-claim-suites2", pid 74866 "CX-INT-XCJ-C8-live-once"
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/rq01
+
+No test files found, exiting with code 1
+
+filter: packages/xtdb/test/route-equivalence.test.ts
+include: test/**/*.test.ts
+exclude:  **/node_modules/**, **/.git/**
+

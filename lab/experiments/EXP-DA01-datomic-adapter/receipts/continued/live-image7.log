@@ -1,0 +1,30 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 36511 "CX-P2Q-R5-suites", pid 14431 "DA01-G1", pid 80950 "CX-G03-r2-store", pid 13056 "DA01-G0"
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/da01
+
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-060c3b8f-eaa1-4be7-92da-f2b0266eb287\",0]","db":"s-5db0dc97d4976445325dbf67b6db6c53","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-060c3b8f-eaa1-4be7-92da-f2b0266eb287\",0]","db":"s-5db0dc97d4976445325dbf67b6db6c53","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-6f24e241-80b4-4a6b-be15-941dec8207bd\",0]","db":"s-d653d7c4f66194aafc66903230319ea2","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-6f24e241-80b4-4a6b-be15-941dec8207bd\",0]","db":"s-d653d7c4f66194aafc66903230319ea2","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-5aa461c8-b13b-42e3-9fa0-1b1f36c2b99a\",0]","db":"s-1bf08d49e3af6b3587d8de6decdb69e6","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-5aa461c8-b13b-42e3-9fa0-1b1f36c2b99a\",0]","db":"s-1bf08d49e3af6b3587d8de6decdb69e6","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-94a5547d-4074-4edd-ae87-0496e8788a75\",0]","db":"s-edc094d3675b1a6c006c0ea63cad0468","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-94a5547d-4074-4edd-ae87-0496e8788a75\",0]","db":"s-edc094d3675b1a6c006c0ea63cad0468","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-8662baed-f9f3-4233-b813-f40040b65cb9\",0]","db":"s-02bfabb2b7907c04b80d5085ee3fe666","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-8662baed-f9f3-4233-b813-f40040b65cb9\",0]","db":"s-02bfabb2b7907c04b80d5085ee3fe666","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-6279fc23-3dd1-48e2-abdc-ba85a2bbf769\",0]","db":"s-52fb13aacf5b4577b251b0208442ee24","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-6279fc23-3dd1-48e2-abdc-ba85a2bbf769\",0]","db":"s-52fb13aacf5b4577b251b0208442ee24","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-49133bd1-a658-43f7-b56f-8b08b5eb2406\",0]","db":"s-2ed4d05a4b974cc862244b22049f4e3a","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-49133bd1-a658-43f7-b56f-8b08b5eb2406\",0]","db":"s-2ed4d05a4b974cc862244b22049f4e3a","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-bdf6b7dc-80a3-407d-9e4d-0e99bf2acc84\",0]","db":"s-f0f35d5311cd05cb1d7d76dbdca2c548","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-bdf6b7dc-80a3-407d-9e4d-0e99bf2acc84\",0]","db":"s-f0f35d5311cd05cb1d7d76dbdca2c548","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-cfbe2f3a-145b-4742-bff7-c3408cb8c42b\",0]","db":"s-92d5881483d11c6062b1c9b1964b4c66","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-cfbe2f3a-145b-4742-bff7-c3408cb8c42b\",0]","db":"s-92d5881483d11c6062b1c9b1964b4c66","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-9223f9b3-32fe-495b-b8a2-3475bf71a954\",0]","db":"s-b78aec40942857e3f2ccaef5e88012bf","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-9223f9b3-32fe-495b-b8a2-3475bf71a954\",0]","db":"s-b78aec40942857e3f2ccaef5e88012bf","deleted":true}
+
+ Test Files  3 passed (3)
+      Tests  41 passed (41)
+   Start at  18:11:08
+   Duration  7.37s (tests 69%, import 19%, transform 11%, worker 1%)
+
