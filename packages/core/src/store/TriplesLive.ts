@@ -13,7 +13,6 @@
 import {
   decodeValueColumns,
   storedValueDomain,
-  ValueDomains,
   type ValueDomain,
 } from "../ValueDomain.js";
 import { withValidAssertValues } from "./validateValues.js";
@@ -117,13 +116,8 @@ export const isTriplesRead = readConstructor.isRead;
 
 const makeTriplesServices = Effect.gen(function* () {
     const adapter = yield* StorageAdapter;
-    const fallbackDomain = adapter.supportedValueTypes?.includes("integer")
-      ? ValueDomains.memory
-      : ValueDomains.sqlite;
-    const valueDomain = adapter.valueDomain ?? {
-      ...fallbackDomain,
-      kinds: adapter.supportedValueTypes ?? fallbackDomain.kinds,
-    };
+    // [CX-A01-0314-R2] Why: the required adapter domain is the write/read authority. Rejected: guessing a domain from supported kinds (range and envelope limits differ).
+    const valueDomain = adapter.valueDomain;
     const rowToTriple = rowDecoder(valueDomain);
     const executor = yield* QueryExecutor;
     const runtime = yield* TripleStoreRuntime;
@@ -195,7 +189,7 @@ const makeTriplesServices = Effect.gen(function* () {
       timestamp: number,
       position: number,
       actor?: string,
-    ): Effect.Effect<Triple[], WriteError> =>
+    ): Effect.Effect<Triple[], WriteError | InvalidTripleError> =>
       Effect.gen(function* () {
         if (assertOps.length === 0) return [];
 

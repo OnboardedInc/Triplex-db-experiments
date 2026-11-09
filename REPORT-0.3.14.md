@@ -61,3 +61,46 @@ Final retained build inventories: 586 XTDB files / 41 object references; 548 Dat
 Contract transitive hash: `266e66f537cd27f462a01f6bf18c9ee7be3f3915bc5bdb61c03554a41d55a718`. All 157 obligations remain open; 40 are only pin-level closable and 117 blocked. Fifty-four pending IDs remain, including every requested hold. No historical PASS is relabeled as fresh qualification, no performance target is loosened, and no obligation is closed here.
 
 Open questions: independent contract review is still required. Existing pending policy/qualification work stays pending; this build resolves none of Q78e, Q86g, Q89, Q90, Q92, Q94a, Q95 or Q98. No other required builder gate remains unrun. Live engine gates, performance/target scale, root check, packing, physical durability, erasure, tenant isolation, external backend integrations, deployment and publishing were not performed.
+
+## Round 2 — broker value domains (CX-A01-0314)
+
+North star: P2 correctness floor — exact values and typed refusal before claims; P1 exact receipt/readback. Authority remains lab/SCOPE.md, lab/NORTH-STAR.md and lab/TARGETS.md. Review `verify/A01-0314` at `7c8f1f99` found F1/F2 despite all round-1 gates passing. This section supersedes round 1's integration-readiness result; fresh round-2 gates are pending at this source commit.
+
+### Fixes and adapter inventory
+
+- F1: broker explicitly declares `ValueDomains.qlever`; public validation uses QLever's signed 60-bit integer range before entering the transaction. The codec also preserves `InvalidTripleError` rather than wrapping it. The insert/batchInsert SPI error union and core batch-flush helper admit that existing public error type.
+- F2: broker packs each row with `storedValueDomain(ValueDomains.qlever, input.attribute)`, exactly as A0 does. User JSON keeps its depth-128 limit; generated `:_tx/` values get the existing journal allowance.
+- Cause: `StorageAdapterService.valueDomain` is required, and TriplesLive no longer guesses from supported kinds. A negative TypeScript fixture requires an adapter with the field omitted to fail assignment. Restoring the optional field produces TS2578 (the expected-error directive becomes unused), proving the actual compiler checks the invariant. The initial runtime fixture typecheck also caught one previously undeclared test adapter; its explicit domain was added.
+
+| Adapter / fixture | Domain and change |
+| --- | --- |
+| QLever broker (`broker/BrokerStorageAdapter.ts`) | Add QLever domain, stored/journal packing domain and typed codec refusal |
+| Datomic (`DatomicStorageAdapter.ts`) | Add explicit named Datomic domain; same signed-64-bit ranges/kinds and limits as its prior memory fallback |
+| QLever A0 (`QleverStorageAdapter.ts`) | Already declares QLever and uses storedValueDomain; no implementation change |
+| XTDB (`XtdbStorageAdapter.ts`) | Already declares XTDB; no implementation change |
+| SQLite (`SqliteAdapter.ts`) | Already declares SQLite; no implementation change |
+| PostgreSQL (`PostgresqlAdapter.ts`) | Already declares PostgreSQL; no implementation change |
+| Cloudflare (`CloudflareAdapter.ts`) | Already declares Cloudflare; no implementation change |
+| DuckDB (`effect-storage.ts`) | Already declares DuckDB; no implementation change |
+| Internal KV transaction adapter (`KvTriplesLive.ts:transactionBackend`) | Already declares the domain passed from its KV composition; no implementation change |
+| Core value-limit mock and runtime initialization-failure mock | Add explicit memory domains; no operation/expectation relaxed |
+
+All implementations of the StorageAdapter SPI now face the required field and the wider typed insert failure union. Physical KvBackendService is a separate interface; its optional configuration is not changed by this task. FoundationDB already supplies its physical value domain and reaches the internal KV path, not a separate StorageAdapter factory.
+
+### Regressions and pins
+
+`packages/qlever/test/broker-value-domain.test.ts` adds 19 real-SQLite broker tests: assert/assertBatch/transact × both exact integer boundaries and both immediate out-of-range values; all three public writes at JSON depth 128 and at 129; direct transactional codec refusal. Positive cases check exact readback plus decoded journal receipt content; transact also checks command lookup. Negative cases require InvalidTripleError, unchanged broker head, no journal and no command receipt. The offline replica has a structured transport identity; no receipt or public write is mocked. Each test opens a fresh UUID scope/database; passing fixtures are closed and removed, failed fixtures are retained with their path in the log.
+
+Preliminary focused tests pass 19/19. The first command used the wrong Vitest working directory and found no tests; its log remains. Initial core typecheck exposed the batch-flush helper's narrower error annotation; widening it to the SPI/public error union resolves it. Initial runtime-fixture typecheck exposed the missing mock declaration described above; corrected typecheck passes. None of these setup/type failures is counted as a semantic pass.
+
+Pin audit: `evidence-0.3.14-round2/pin-audit.json` scans all 247 active referenced paths and follows pinned checksum manifests, plus whole-blob hash searches across active acceptance Python/JSON/Markdown. **No changed round-2 source file has an active source pin; moved-pin list is empty.** The testkit index is unchanged. `lab/acceptance/` is byte-identical to round 1; version stays 0.3.14 and no ruling/hold/image/workload is changed. Thus no new re-pin or old/new pinned pair is required. Exact old/new hashes for each changed existing source path are retained in the audit; no history is relabeled.
+
+### Round-2 PASS audit before source commit
+
+- Broker insert/transaction/public preflight: actual domain/codec checks retain typed failures; fresh transaction state and exact input attribute select the stored domain. No receipt is published for rejected values, and positive receipt bytes/positions remain source-bound to the broker's real SQLite transaction. No new success predicate or performance verdict is added.
+- `broker-value-domain.test.ts`: actual integer/JSON values, typed errors, exact readback, complete journal content, command receipts and positions are compared; fresh UUID SQLite scope per case, with explicit broker construction/current SUT imports. No live engine or slot claim.
+- `runtime.types.ts` and `domain-type-mutation.py`: actual TypeScript assignment and compiler diagnostics, nonzero mutant exit with TS2578 in this fixture, exact original/mutant/restored source hashes and log digest. The source is restored byte-for-byte. The corrected optional-field patch is retained; an initial auxiliary file indexed the original source rather than the one-line mutation and is kept separately. This is a compile-time regression control, not an engine VM qualification.
+- Existing contract --verify/tests/mutations and evaluator: unchanged assertion content and all literal authority/pin guards; fresh executions at the final frozen merged-main head, source/hash-bound logs and nonzero CONTRACT INVALID required for mutation catches. No earlier gate result substitutes for round 2.
+- Existing run0314 collector, heavy admission, G0 controller, round-2 capture and validate scripts: actual exit/log bytes, exact unittest/TAP/mutation/Vitest summaries, source stability, new UUID attempts and timestamps, slot-null offline identity, raw/object/build hashes and capture-before-next-build order. They emit builder execution/byte checks only; independent review remains separate.
+
+Bulk round-2 evidence lives at `/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/round2/` and source-bound `r2-*` execution directories under the parent evidence root. Small indexes/manifests are committed under `lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.14-round2/`. No engine lifecycle, slot, main edit, merge into main, push or publish is authorized or performed.

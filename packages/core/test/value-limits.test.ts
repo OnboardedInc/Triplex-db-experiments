@@ -1,3 +1,4 @@
+import { ValueDomains } from "../src/ValueDomain.js";
 import { describe, expect, it } from "vitest";
 import { Effect, Layer, ManagedRuntime } from "effect";
 import { Triples } from "../src/store/Triples.js";
@@ -15,6 +16,7 @@ describe("GS12F pre-claim value validation", () => {
     let claims = 0;
     let transactions = 0;
     const adapter = {
+      valueDomain: ValueDomains.memory,
       initialize: () => Effect.void,
       supportedValueTypes: ["integer", "string"],
       withTransaction: <A, E, R>(effect: Effect.Effect<A, E, R>) => {

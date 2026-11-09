@@ -28,6 +28,9 @@ import { randomUUID } from "node:crypto";
 import { Context, Effect, Exit } from "effect";
 import { isPatternVariable, type ResolvedTemporalBasis } from "@triplex-build/triplex";
 import {
+  ValueDomains,
+  storedValueDomain,
+  InvalidTripleError,
   ReadError,
   WriteError,
   MigrationError,
@@ -529,7 +532,8 @@ export const makeQleverBrokerStorageAdapter = (
             id,
             entity_id: input.entityId,
             attribute: input.attribute,
-            ...packValue(input.value),
+            // [CX-A01-0314-R2] Why: generated journal envelopes need the same nesting allowance as A0. Rejected: packing every attribute with the user domain (valid depth-128 JSON aborted).
+            ...packValue(input.value, storedValueDomain(ValueDomains.qlever, input.attribute)),
             recorded_at: timestamp,
             recorded_position: position,
             valid_from: input.validFrom ?? timestamp,
@@ -546,7 +550,10 @@ export const makeQleverBrokerStorageAdapter = (
           state.newIds.add(id);
           return row;
         },
-        catch: (cause) => new WriteError({ message: "Invalid QLever assertion", cause }),
+        catch: (cause) =>
+          cause instanceof InvalidTripleError
+            ? cause
+            : new WriteError({ message: "Invalid QLever assertion", cause }),
       }),
     );
 
@@ -727,6 +734,8 @@ export const makeQleverBrokerStorageAdapter = (
   return exactReadService<QleverBrokerStorageAdapterService>()({
     ...reads,
     snapshotReadPolicy,
+    // [CX-A01-0314-R2] Why: broker writes target QLever, so preflight must use its exact integer range. Rejected: a missing domain that widens admission to signed 64-bit.
+    valueDomain: ValueDomains.qlever,
     supportedValueTypes: [
       "string",
       "number",
