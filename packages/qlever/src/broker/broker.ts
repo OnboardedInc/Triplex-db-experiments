@@ -19,6 +19,7 @@
  * Failure (R13 1.3, 6.3 item 5): any write or fsync error fails the broker: every pending command gets an
  * outcome-unknown error (the frame may be on disk), nothing is retried, and recovery re-reads the log.
  */
+import { awaitSnapshotBasis } from "./snapshot.js";
 import { randomUUID } from "node:crypto";
 import type { TripleRow } from "@triplex-build/triplex/runtime";
 import { TxAttributes } from "@triplex-build/triplex/internal";
@@ -930,61 +931,43 @@ export class HostBroker {
     // shares that one probe. Any other re-check takes the paced shared probe (Q72e).
     let notBefore = -Infinity;
     let paced = false;
-    for (;;) {
-      const real = await this.probeReplica(surface, notBefore, paced);
-      if (real.position >= b) return real;
-      const remaining = deadlineMs - (performance.now() - started);
-      if (remaining <= 0)
-        throw new BasisNotAvailable({
-          required: b,
-          observed: real.position,
-          replica: this.replicaName,
-          surface,
-          waitedMs: performance.now() - started,
-        });
-      // Wake on the next publication. When the cached marker is already (wrongly) ahead, the probe above has
-      // woken the applier to fence; re-check at the shared pace.
-      notBefore = performance.now();
-      paced = true;
-      if (
-        this.replicaMarker.position < b &&
-        (await this.waitPublished(b, Math.min(remaining, 100)))
-      ) {
-        notBefore = this.lastPublishedAt;
-        paced = false;
-      }
-    }
+    let real = await this.probeReplica(surface, notBefore, paced);
+    await awaitSnapshotBasis({
+      required: b, observed: real.position, waitMs: deadlineMs, started,
+      replica: this.replicaName, surface,
+      pause: async (remaining) => {
+        notBefore = performance.now();
+        paced = true;
+        if (this.replicaMarker.position < b && await this.waitPublished(b, Math.min(remaining, 100))) {
+          notBefore = this.lastPublishedAt;
+          paced = false;
+        }
+      },
+      refresh: async () => {
+        real = await this.probeReplica(surface, notBefore, paced);
+        return real.position;
+      },
+    });
+    return real;
   }
 
-  /**
-   * V-P2Q M2: a basis is answerable only inside the resolved prefix, that is at or below the last ordinal slot of
-   * the last durable frame. Wait within the deadline for a later frame to cover `b`, then BasisNotAvailable.
-   */
+  /** Wait for the resolved prefix using the same Q89c policy as replica and pinned reads. */
   async awaitResolved(b: number, deadlineMs: number, surface: BasisSurface): Promise<void> {
-    const started = performance.now();
-    while (lastPositionOf(this.durableLsn) < b) {
-      const remaining = deadlineMs - (performance.now() - started);
-      if (remaining <= 0 || this.failed)
-        throw new BasisNotAvailable({
-          required: b,
-          observed: lastPositionOf(this.durableLsn),
-          replica: "the broker's resolved prefix",
-          surface,
-          waitedMs: performance.now() - started,
-        });
-      await new Promise<void>((resolve) => {
+    await awaitSnapshotBasis({
+      required: b, observed: lastPositionOf(this.durableLsn), waitMs: deadlineMs,
+      replica: "the broker's resolved prefix", surface,
+      refuse: () => Boolean(this.failed),
+      refresh: () => lastPositionOf(this.durableLsn),
+      pause: (remaining) => new Promise<void>((resolve) => {
         const waiter = { position: b, resolve };
         this.durableWaiters.push(waiter);
-        setTimeout(
-          () => {
-            const i = this.durableWaiters.indexOf(waiter);
-            if (i !== -1) this.durableWaiters.splice(i, 1);
-            resolve();
-          },
-          Math.min(remaining, 100),
-        );
-      });
-    }
+        setTimeout(() => {
+          const i = this.durableWaiters.indexOf(waiter);
+          if (i !== -1) this.durableWaiters.splice(i, 1);
+          resolve();
+        }, Math.min(remaining, 100));
+      }),
+    });
   }
 
   private notifyDurable() {

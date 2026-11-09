@@ -676,7 +676,16 @@ export const TriplesLive = Layer.effect(
 
     const entityTransactions: TriplesService["transactionsForEntity"] = (entityId, request) =>
       transactionsForEntity(
-        { currentPosition: adapter.currentCommitPosition, query: queryAll, transaction },
+        {
+          currentPosition: adapter.currentCommitPosition,
+          query: queryAll,
+          queryAtPosition: (query, recordedPosition) =>
+            Effect.gen(function* () {
+              const validAt = yield* now;
+              return yield* executor.execute(query, false, { validAt, recordedPosition });
+            }),
+          transaction,
+        },
         entityId,
         request,
       );

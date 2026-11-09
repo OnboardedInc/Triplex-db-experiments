@@ -15,6 +15,10 @@ import type {
 interface EntityTransactionReader {
   readonly currentPosition: () => Effect.Effect<number, ReadError>;
   readonly query: (query: DatalogQuery) => Effect.Effect<QueryResponse, unknown>;
+  readonly queryAtPosition?: (
+    query: DatalogQuery,
+    position: number,
+  ) => Effect.Effect<QueryResponse, unknown>;
   readonly transaction: (
     transactionId: TransactionId,
   ) => Effect.Effect<TransactionRecord | null, ReadError>;
@@ -55,22 +59,26 @@ export const transactionsForEntity = (
         ? []
         : ([["<", "?position", request.beforePosition]] as const)),
     ];
-    const response = yield* reader
-      .query({
-        find: ["?transaction", "?position"],
-        where,
-        orderBy: [{ variable: "?position", direction: "desc" }],
-        limit: limit + 1,
-      })
-      .pipe(
-        Effect.mapError(
-          (cause) =>
-            new ReadError({
+    // [EXP-P2Q] Why: the journal's snapshotPosition is an exact read cut, not only a value predicate.
+    // Rejected: querying latest and echoing the requested position (future snapshots incorrectly succeed).
+    const query = reader.queryAtPosition
+      ? (q: DatalogQuery) => reader.queryAtPosition!(q, snapshotPosition)
+      : reader.query;
+    const response = yield* query({
+      find: ["?transaction", "?position"],
+      where,
+      orderBy: [{ variable: "?position", direction: "desc" }],
+      limit: limit + 1,
+    }).pipe(
+      Effect.mapError((cause) =>
+        cause instanceof ReadError
+          ? cause
+          : new ReadError({
               message: `Failed to query entity transaction index: ${String(cause)}`,
               cause,
             }),
-        ),
-      );
+      ),
+    );
 
     const indexed = yield* Effect.forEach(response.results, (row) =>
       Effect.try({
