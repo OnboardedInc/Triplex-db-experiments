@@ -12,7 +12,7 @@ def compile_normalizer(spec, node_path=None):
     root = Path(__file__).resolve().parent
     # [EXP-ER01-S] Why: Python subprocess parsers are independently replayed by O-OBS.
     # Rejected: importing mutable adjacent code or a case chosen by observed bytes.
-    source = (root / 'fsst.py').read_text() + '\n' + (root / 'scanners.py').read_text()
+    source = (root / 'fsst.py').read_text() + '\n' + (root / 'formats.py').read_text() + '\n' + (root / 'scanners.py').read_text()
     source += '\nDECRYPT_JS = ' + repr((root / 'decrypt.mjs').read_text())
     node = Path(node_path or shutil.which('node')).resolve(strict=True)
     source += '\nNODE_PATH = ' + repr(str(node))

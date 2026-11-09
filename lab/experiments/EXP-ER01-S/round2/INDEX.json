@@ -1,0 +1,393 @@
+{
+  "acceptancePinnedPathsChanged": [],
+  "changedSourcePins": [
+    {
+      "newSha256": "17affaa2e2bf522baf29d638333371ec79eabaf26c3e2e3d0522db29a3b2f7ea",
+      "oldSha256": "a2cb3c5aa11bf9d96d38201370c8139ecd60ae1629349ee302fc78c1c81886e0",
+      "path": "lab/observer/erasure/README.md"
+    },
+    {
+      "newSha256": "a12127437e7afe6ffaabe28b5865178331eea00e9ce9fe01ef35cc788002d3fb",
+      "oldSha256": "6188e80ccadbabc9f45aef83d357fd461dd9545c32f3e6dc2c3730e91cc453a2",
+      "path": "lab/observer/erasure/compile.py"
+    },
+    {
+      "newSha256": "8a8a376186ed65cc0b40e6c4adb8bccbe168dc792fb9c74e42498fb1d6599af3",
+      "oldSha256": "3d88758668421a25503020325be8d939d0c8aad632638e6544a52c9e647ec46b",
+      "path": "lab/observer/erasure/decrypt.mjs"
+    },
+    {
+      "newSha256": "1c159628642d5598c679568648aebb716b614619f89cdb5d8849fb9dc27d7003",
+      "oldSha256": "7d84916b90a25152097af7360c1b7f6af594cf98bafd3b5acd2b75953aa9b945",
+      "path": "lab/observer/erasure/fixtures.py"
+    },
+    {
+      "newSha256": "f906ef710cc4202d80466d5f97570e5345ac06294d3d48b9c987dabc87ccad08",
+      "oldSha256": null,
+      "path": "lab/observer/erasure/formats.py"
+    },
+    {
+      "newSha256": "ea8602e512b7543eb5cc1e61887cd7bde3fdcdf5834d457fba30233eb4a8e904",
+      "oldSha256": null,
+      "path": "lab/observer/erasure/qa_round1/EVIDENCE.json"
+    },
+    {
+      "newSha256": "857c773e31c931f6da997408c7c0d746bebc1c0134306f705111bd34f1140260",
+      "oldSha256": null,
+      "path": "lab/observer/erasure/qa_round1/VERIFY.md"
+    },
+    {
+      "newSha256": "b6d5e8c50c4f6c87184713fceced2da6b294ddef46d2b67f249913c51757518e",
+      "oldSha256": null,
+      "path": "lab/observer/erasure/qa_round1/coverage.py"
+    },
+    {
+      "newSha256": "1389c5993604b86ac5e9253450ff7d00ae4336a15e70a0589c6b96bf2f6ccc63",
+      "oldSha256": null,
+      "path": "lab/observer/erasure/qa_round1/review.py"
+    },
+    {
+      "newSha256": "0a14297ab822b30fc5a774df729661b1f448d850b02ca220a1d1b113db8dd2a9",
+      "oldSha256": null,
+      "path": "lab/observer/erasure/qa_round1/rewrap.mjs"
+    },
+    {
+      "newSha256": "f50841d1fc060faeb2d8e55a722bc97eceda525e26022a41be13b9aa18dee7b7",
+      "oldSha256": null,
+      "path": "lab/observer/erasure/replay_qa_round2.py"
+    },
+    {
+      "newSha256": "c5a8db6ed66ba705938abb37be4a820f64a5fbafbc8883a2e345818a60992fbd",
+      "oldSha256": null,
+      "path": "lab/observer/erasure/run_round2.py"
+    },
+    {
+      "newSha256": "fb3be824eb4629c093ce9e823ebfe932200d491c7c915460f4912fb7c8e94e4b",
+      "oldSha256": "0369ab3031c2dee67f257354cb9d281623f0242ebbbdd6e988e11ca5d8200ea9",
+      "path": "lab/observer/erasure/scanners.py"
+    },
+    {
+      "newSha256": "8364c2a4b3be55bc1e5d4f20df0f76ecc99b3784471e43337581e475df66eedd",
+      "oldSha256": null,
+      "path": "lab/observer/erasure/test_formats.py"
+    },
+    {
+      "newSha256": "016512cc73f61c61933ceb6943ec2c4e1c0e7bbe84a01808b953ec9034efae30",
+      "oldSha256": "3439adfe0622c8bb950a6c7c653176faf33a8557250609a4a84c1fb25457b30e",
+      "path": "lab/observer/erasure/test_scanners.py"
+    }
+  ],
+  "finalRun": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-OBS01/ER01-S-round2/final04",
+  "finalStatus": "PASS",
+  "format": "er01-s-round2-evidence/1",
+  "manifestSha256": "48ea46bb14087111018429148486c768d2076c08484356df356d296e0cec87fa",
+  "parent": "1492d8b8457d62a942328889f651bef1ef707550",
+  "qaAggregates": {
+    "REFUSED": 31
+  },
+  "qaInputs": [
+    {
+      "group": "attempt-01",
+      "inputRunId": "ER01-S-d1f7809e0ed1446fb3a425274c542afa",
+      "name": "baseline",
+      "normalizerSha256": "dd0a1fb0853337af2118c0a6566e89c9f782b8bca41ef6692688b69e60bb88b8",
+      "rawSha256": "73feae9763bc00470ebd427e1bea34d7ad502c40eb06f139745c9260eea075ea",
+      "status": "REFUSED"
+    },
+    {
+      "group": "attempt-01",
+      "inputRunId": "ER01-S-d1f7809e0ed1446fb3a425274c542afa",
+      "name": "plaintext-start",
+      "normalizerSha256": "dd0a1fb0853337af2118c0a6566e89c9f782b8bca41ef6692688b69e60bb88b8",
+      "rawSha256": "80b3e53a32fe9bbefae6e78336a0dd5957320e9cb4b78b106e9472bc7fc6e5c0",
+      "status": "REFUSED"
+    },
+    {
+      "group": "attempt-01",
+      "inputRunId": "ER01-S-d1f7809e0ed1446fb3a425274c542afa",
+      "name": "plaintext-end",
+      "normalizerSha256": "dd0a1fb0853337af2118c0a6566e89c9f782b8bca41ef6692688b69e60bb88b8",
+      "rawSha256": "a979124efeaffaea9a5acf348d7aad2195a414b5010646502ce8e145931f1ab6",
+      "status": "REFUSED"
+    },
+    {
+      "group": "attempt-01",
+      "inputRunId": "ER01-S-d1f7809e0ed1446fb3a425274c542afa",
+      "name": "plaintext-page",
+      "normalizerSha256": "dd0a1fb0853337af2118c0a6566e89c9f782b8bca41ef6692688b69e60bb88b8",
+      "rawSha256": "368840287ea262684d80e917003dbecdfabff2df4b18ce293ebb294a3926fa6a",
+      "status": "REFUSED"
+    },
+    {
+      "group": "attempt-01",
+      "inputRunId": "ER01-S-d1f7809e0ed1446fb3a425274c542afa",
+      "name": "keys-start",
+      "normalizerSha256": "dd0a1fb0853337af2118c0a6566e89c9f782b8bca41ef6692688b69e60bb88b8",
+      "rawSha256": "b6c518271f910999cedadd7bde1d33dd14e8118841e4ecc77c30283ba17573ec",
+      "status": "REFUSED"
+    },
+    {
+      "group": "attempt-01",
+      "inputRunId": "ER01-S-d1f7809e0ed1446fb3a425274c542afa",
+      "name": "keys-end",
+      "normalizerSha256": "dd0a1fb0853337af2118c0a6566e89c9f782b8bca41ef6692688b69e60bb88b8",
+      "rawSha256": "1118722e09cf5394c37ea04d63b484127711e4341c97ca5301918570089c02a4",
+      "status": "REFUSED"
+    },
+    {
+      "group": "attempt-01",
+      "inputRunId": "ER01-S-d1f7809e0ed1446fb3a425274c542afa",
+      "name": "keys-page",
+      "normalizerSha256": "dd0a1fb0853337af2118c0a6566e89c9f782b8bca41ef6692688b69e60bb88b8",
+      "rawSha256": "0ac92f2b9e7ca0d58531f39a2b082199bb7d421f6121a56d3527d5ad067bfc43",
+      "status": "REFUSED"
+    },
+    {
+      "group": "attempt-01",
+      "inputRunId": "ER01-S-d1f7809e0ed1446fb3a425274c542afa",
+      "name": "blind-fsst",
+      "normalizerSha256": "ed538582f6014c2f02d4fc1924828500670f47d3207fc14d2950a30545783d09",
+      "rawSha256": "73feae9763bc00470ebd427e1bea34d7ad502c40eb06f139745c9260eea075ea",
+      "status": "REFUSED"
+    },
+    {
+      "group": "attempt-01",
+      "inputRunId": "ER01-S-d1f7809e0ed1446fb3a425274c542afa",
+      "name": "unknown-d-undocumented-segment",
+      "normalizerSha256": "e4f68954ce276a21d2fb207f8118848358f3613665410927bebd6391e365eedd",
+      "rawSha256": "4651a8cb75695dfe92fa18b0985d39c89fb814634ef5a7bd851bc57ac0bee02f",
+      "status": "REFUSED"
+    },
+    {
+      "group": "attempt-01",
+      "inputRunId": "ER01-S-d1f7809e0ed1446fb3a425274c542afa",
+      "name": "unknown-d-undocumented-wal",
+      "normalizerSha256": "6aea76bf4b5778ae21c6e359d13786432056b548974a1381edbe95eb4fb9de5f",
+      "rawSha256": "92d70434c26a2ff452a9aabef7a2a4eddfe4fcacfee4aa619cf39fdab7673359",
+      "status": "REFUSED"
+    },
+    {
+      "group": "attempt-01",
+      "inputRunId": "ER01-S-d1f7809e0ed1446fb3a425274c542afa",
+      "name": "unknown-jvm-node-heap-lru",
+      "normalizerSha256": "9c7a9f9567da79faf4183249e7fd08f01b430e2f009388c1b9d58ea3e4c72475",
+      "rawSha256": "31740e6c71901babe09046d6d801a2bfd2d91d2256af9956a929b859860944e2",
+      "status": "REFUSED"
+    },
+    {
+      "group": "attempt-01",
+      "inputRunId": "ER01-S-d1f7809e0ed1446fb3a425274c542afa",
+      "name": "unknown-freed-vm-filesystem-blocks",
+      "normalizerSha256": "185dfae6f4f2732646a9fc9540da9ac8f140c677cc7ad02cf6fd554bd594df5c",
+      "rawSha256": "f5c19aba3ff9b1072597b54c7e65cbe501b814f7abc36c15e6915c7617931827",
+      "status": "REFUSED"
+    },
+    {
+      "group": "attempt-01",
+      "inputRunId": "ER01-S-d1f7809e0ed1446fb3a425274c542afa",
+      "name": "unknown-freed-host-apfs-blocks",
+      "normalizerSha256": "bedd42bccfe2710fa5bcab808bb1853e9e29876cf8987eaac7cf7767304a90ec",
+      "rawSha256": "b68dca3cec538abd0722e14c3333c04e865e1aba345c41ea06cd582ca6c5816f",
+      "status": "REFUSED"
+    },
+    {
+      "group": "attempt-01",
+      "inputRunId": "ER01-S-d1f7809e0ed1446fb3a425274c542afa",
+      "name": "sqlite-overflow-plaintext",
+      "normalizerSha256": "dd0a1fb0853337af2118c0a6566e89c9f782b8bca41ef6692688b69e60bb88b8",
+      "rawSha256": "5426c56eebf5788040f9f365bf9247f29651460273bb6103c95cb86fcea66538",
+      "status": "REFUSED"
+    },
+    {
+      "group": "attempt-01",
+      "inputRunId": "ER01-S-d1f7809e0ed1446fb3a425274c542afa",
+      "name": "sqlite-overflow-envelope",
+      "normalizerSha256": "dd0a1fb0853337af2118c0a6566e89c9f782b8bca41ef6692688b69e60bb88b8",
+      "rawSha256": "3ec47d8fdb8fe15ea781f8404c26767f24bf3476b80b800306ae3dd6ec1ed4e2",
+      "status": "REFUSED"
+    },
+    {
+      "group": "attempt-01",
+      "inputRunId": "ER01-S-d1f7809e0ed1446fb3a425274c542afa",
+      "name": "plaintext-gzip",
+      "normalizerSha256": "dd0a1fb0853337af2118c0a6566e89c9f782b8bca41ef6692688b69e60bb88b8",
+      "rawSha256": "5a643659a7c237a84e4471d58f68882a27bd1e9daad30dcd4c0c7380f0a2cdd1",
+      "status": "REFUSED"
+    },
+    {
+      "group": "attempt-01",
+      "inputRunId": "ER01-S-d1f7809e0ed1446fb3a425274c542afa",
+      "name": "plaintext-record-fragments",
+      "normalizerSha256": "dd0a1fb0853337af2118c0a6566e89c9f782b8bca41ef6692688b69e60bb88b8",
+      "rawSha256": "3f53451bbd499b577105b397170ed7df2ffb5385053036293cf83e906a27c01c",
+      "status": "REFUSED"
+    },
+    {
+      "group": "attempt-01",
+      "inputRunId": "ER01-S-d1f7809e0ed1446fb3a425274c542afa",
+      "name": "physical-overflow-key",
+      "normalizerSha256": "cad8694073b7e2f83a355679a4d3de0bc7786dab33efc5bd79e3b0df60005129",
+      "rawSha256": "0792b5ecb2678819b38931e02b3a7ca05724a3312a56ee872a3c935e53e1255e",
+      "status": "REFUSED"
+    },
+    {
+      "group": "attempt-01",
+      "inputRunId": "ER01-S-d1f7809e0ed1446fb3a425274c542afa",
+      "name": "new-wrapper-d-keys-heap",
+      "normalizerSha256": "dd0a1fb0853337af2118c0a6566e89c9f782b8bca41ef6692688b69e60bb88b8",
+      "rawSha256": "ab9425fccd42751d54a9c7037062a7e1af866238688e243c9273a10f408c1d50",
+      "status": "REFUSED"
+    },
+    {
+      "group": "attempt-01",
+      "inputRunId": "ER01-S-d1f7809e0ed1446fb3a425274c542afa",
+      "name": "new-wrapper-d-keys-toast",
+      "normalizerSha256": "dd0a1fb0853337af2118c0a6566e89c9f782b8bca41ef6692688b69e60bb88b8",
+      "rawSha256": "52a358bd4a1735994cd3049211392fd9724b6e573ff0464f19381d9aae320650",
+      "status": "REFUSED"
+    },
+    {
+      "group": "attempt-01",
+      "inputRunId": "ER01-S-d1f7809e0ed1446fb3a425274c542afa",
+      "name": "new-wrapper-d-keys-wal",
+      "normalizerSha256": "dd0a1fb0853337af2118c0a6566e89c9f782b8bca41ef6692688b69e60bb88b8",
+      "rawSha256": "285dfc9403dbae41f977750603bb7368faae158a787f0d5d650cc9e3d8cb5ba8",
+      "status": "REFUSED"
+    },
+    {
+      "group": "attempt-01",
+      "inputRunId": "ER01-S-d1f7809e0ed1446fb3a425274c542afa",
+      "name": "stale-backup",
+      "normalizerSha256": "dd0a1fb0853337af2118c0a6566e89c9f782b8bca41ef6692688b69e60bb88b8",
+      "rawSha256": "427106779dd66d024639f44f833385a5fa71e9cf26e8531e5657d4a409abac1f",
+      "status": "REFUSED"
+    },
+    {
+      "group": "coverage-02",
+      "inputRunId": "ER01-S-d1f7809e0ed1446fb3a425274c542afa",
+      "name": "envelope-start",
+      "normalizerSha256": "dd0a1fb0853337af2118c0a6566e89c9f782b8bca41ef6692688b69e60bb88b8",
+      "rawSha256": "a68c1d40b67c3e9c5d22d62d7dc5997c0a48e70e64aa3b91954ef3db19d360f2",
+      "status": "REFUSED"
+    },
+    {
+      "group": "coverage-02",
+      "inputRunId": "ER01-S-d1f7809e0ed1446fb3a425274c542afa",
+      "name": "envelope-end",
+      "normalizerSha256": "dd0a1fb0853337af2118c0a6566e89c9f782b8bca41ef6692688b69e60bb88b8",
+      "rawSha256": "513673b06f26becff33d52555d308b2ffd36487365a6356803a02d1169fe8ecc",
+      "status": "REFUSED"
+    },
+    {
+      "group": "coverage-02",
+      "inputRunId": "ER01-S-d1f7809e0ed1446fb3a425274c542afa",
+      "name": "envelope-page",
+      "normalizerSha256": "dd0a1fb0853337af2118c0a6566e89c9f782b8bca41ef6692688b69e60bb88b8",
+      "rawSha256": "505975999f349eab989d22492779593cd17e0568cf37c6f096774eafdde36c61",
+      "status": "REFUSED"
+    },
+    {
+      "group": "coverage-02",
+      "inputRunId": "ER01-S-d1f7809e0ed1446fb3a425274c542afa",
+      "name": "new-wrapper-old-wal-UTF-8",
+      "normalizerSha256": "dd0a1fb0853337af2118c0a6566e89c9f782b8bca41ef6692688b69e60bb88b8",
+      "rawSha256": "10a2be40dcde7b36687e18384ef6f0318b6e83000c01e9fd14ed630b21cc8b2c",
+      "status": "REFUSED"
+    },
+    {
+      "group": "coverage-02",
+      "inputRunId": "ER01-S-d1f7809e0ed1446fb3a425274c542afa",
+      "name": "new-wrapper-old-wal-UTF-16le",
+      "normalizerSha256": "dd0a1fb0853337af2118c0a6566e89c9f782b8bca41ef6692688b69e60bb88b8",
+      "rawSha256": "1a9078b3ff70145c985d321bf37908d16915cffce26d95f9237e727e7474ce52",
+      "status": "REFUSED"
+    },
+    {
+      "group": "coverage-02",
+      "inputRunId": "ER01-S-d1f7809e0ed1446fb3a425274c542afa",
+      "name": "envelope-gzip",
+      "normalizerSha256": "dd0a1fb0853337af2118c0a6566e89c9f782b8bca41ef6692688b69e60bb88b8",
+      "rawSha256": "7b7130192410fc604f8d3f4335827bd2edc0f5171d5ddf2e7cb2a6c5f6c69eb3",
+      "status": "REFUSED"
+    },
+    {
+      "group": "coverage-02",
+      "inputRunId": "ER01-S-d1f7809e0ed1446fb3a425274c542afa",
+      "name": "keys-gzip",
+      "normalizerSha256": "dd0a1fb0853337af2118c0a6566e89c9f782b8bca41ef6692688b69e60bb88b8",
+      "rawSha256": "a3fd1fb6c9cf3babd27dc9cf00cc309bdcc35491845357ed769006f7139328c0",
+      "status": "REFUSED"
+    },
+    {
+      "group": "coverage-02",
+      "inputRunId": "ER01-S-d1f7809e0ed1446fb3a425274c542afa",
+      "name": "envelope-fragments",
+      "normalizerSha256": "dd0a1fb0853337af2118c0a6566e89c9f782b8bca41ef6692688b69e60bb88b8",
+      "rawSha256": "2150ad9c8f012fb6a9928b551bc8bf658f737828d600beb753f91e54514dc7ac",
+      "status": "REFUSED"
+    },
+    {
+      "group": "coverage-02",
+      "inputRunId": "ER01-S-d1f7809e0ed1446fb3a425274c542afa",
+      "name": "keys-fragments",
+      "normalizerSha256": "dd0a1fb0853337af2118c0a6566e89c9f782b8bca41ef6692688b69e60bb88b8",
+      "rawSha256": "6f0976c1b491d62c5d800c0499a36d943ad26f787b8345554a82ff5337d6d308",
+      "status": "REFUSED"
+    }
+  ],
+  "qaScenarios": 31,
+  "resultSha256": "65ab71bb5d961189986e7ede5060e46a85bc1dfd11977301e3a1fdeecb2d8a54",
+  "reviewer": "f68d941",
+  "runs": [
+    {
+      "bytes": 200849,
+      "files": 24,
+      "manifestSha256": "0d66f883a22dd330b4cf396b64d60a308d363f60fc75cdfe96160c03ae2eafb9",
+      "name": "diagnostic01",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-OBS01/ER01-S-round2/diagnostic01",
+      "status": "FAILED"
+    },
+    {
+      "bytes": 25701079,
+      "files": 214,
+      "manifestSha256": "a1b2e01210ad9182fde25cbab3ae33f54d113ce43b582d34ecffe194608a2100",
+      "name": "diagnostic02",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-OBS01/ER01-S-round2/diagnostic02",
+      "status": "PASS"
+    },
+    {
+      "bytes": 229357,
+      "files": 24,
+      "manifestSha256": "b5ec689db955ac8cc89db3ac4530c9e36a38b3ec8223f5eb73ec5c3a94235629",
+      "name": "final01",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-OBS01/ER01-S-round2/final01",
+      "status": "FAILED"
+    },
+    {
+      "bytes": 204257,
+      "files": 22,
+      "manifestSha256": "6a90839e66cede1b8bce32384cf7d85ae00a8ca1d1293396aab229322eb3324f",
+      "name": "final02",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-OBS01/ER01-S-round2/final02",
+      "status": "FAILED"
+    },
+    {
+      "bytes": 26650261,
+      "files": 214,
+      "manifestSha256": "ea9b68af99b5542c12e69a26ae6ceb2cc752a1669f20abe97fb00c89357ffde9",
+      "name": "final03",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-OBS01/ER01-S-round2/final03",
+      "status": "PASS"
+    },
+    {
+      "bytes": 26661746,
+      "files": 214,
+      "manifestSha256": "48ea46bb14087111018429148486c768d2076c08484356df356d296e0cec87fa",
+      "name": "final04",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-OBS01/ER01-S-round2/final04",
+      "status": "PASS"
+    }
+  ],
+  "scope": "offline; new executions over exact historical QA observations plus fresh synthetic unit fixtures",
+  "unitTests": 33
+}
