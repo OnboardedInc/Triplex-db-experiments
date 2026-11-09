@@ -466,3 +466,12 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - 2026-11-09 OBS01 ACCEPT-OFFLINE (CX-VOBS7 round 14, 6d31fc70): rounds 9-14 accepted under Q109a (source lexer: 18,100 arrangements and
   270 unterminated forms tested). Round 15 (Sonnet) runs the first live W0-W3 window in the triplex2 VM with the built image 06f62235:
   fixes the 0.20.2 -d flag, stores the real compiled dump as the golden, W1 planted writers, W2/W3 per-commit cost (diagnostic under load).
+- 2026-11-09 EXP-P4N brief (Opus): budget 909 us/pull (758 with the 1.2x margin). Measured: names once per fetch plus no per-row defaults
+  cuts tuple text 80.8 to 45.7 KB (reader SQL 454 to 340 us, JSON.parse 179 to about 95 us, answers equal on 300/300). Estimates: (a) alone
+  800-870/s loaded; (a)+(e) cheap levers (V8 semi-space or single-thread GC, reused reader port) 870-1,020/s; a subject cache is the wrong
+  shape (P4 draws all subjects, P5 pulls each once); binary rows save no CPU; (c') a per-owner document in a separate unsynced current.db,
+  read-through, served only when its pd equals lastChange in the pull's snapshot: 1,350-1,790/s, about +100 B/fact (G9 conflict).
+  Measurement finding: round 3's wall-clock calibration does not track per-pull CPU; next rounds use a thread-CPU reference probe, in-run
+  A/A, >= 5,000 pulls per arm, bootstrap lower bound. Orchestrator decisions: build (a)+(e) now on the QH1 branch; (c') only if (a)+(e)
+  misses 1,320 in a GREEN window; if (c') is needed, current.db is a derived cache and is reported separately from G9's source-store bytes
+  (pending ruling, to put to Sam with the numbers). Two builder rounds maximum.
