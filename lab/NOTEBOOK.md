@@ -2077,3 +2077,9 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **verify/CRNS 93d2af9c:** the original 145 tests pass, but six reviewer regressions fail: P1 accepts an empty read stream (R01); a checkpoint can advance beyond every source position (R02); the affected-set check pools consumer and epoch identities (R03); P4 throughput counts reads outside its window (R04); a loop label stands in for single-client execution (R05); removing every CR event skips the cross-check requirement (R06).
 - **Pattern:** four of six are "absence passes": an empty stream, a missing CR event, an unbounded window. **Lesson:** every bar needs a minimum-evidence floor (non-empty, inside the window, per identity) checked before its arithmetic.
 - **Next:** CX-CRNS round 2 waits for the independent Opus forgery review, still running, so one round fixes both sets.
+
+## 2026-11-09: RT01 live: G2 passes on XTDB; G6 catches a 29% commit regression from the stamp guard
+
+- **6f8170f1:** catalog bootstrap fixed; 1,106 product tests and live G2 pass. G6's A/A window was frozen first at 5.56%; the first fresh ten-fact A0 point measured p50 +29.25%, so the run stopped there.
+- **Likely cause:** the stamp guard adds a MAX(stamp) column to the existing ASSERT, doubling the history rows visited per guard. Avoiding an extra round trip did not avoid extra engine work. Round 6 reads the prior stamp from the marker row in the same CAS (O(1)).
+- **Lesson:** the preregistered A/A band did its job: without it, a 29% regression on the A0 control would have looked like host noise. G6 before merge (Q96b) is worth its slot hour.
