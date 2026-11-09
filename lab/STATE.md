@@ -463,3 +463,6 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   stores the real output as the golden. Next: OBS01 W0-W3 live probe window after the round 14 review.
 - 2026-11-09 QH1 round 3 (7965540b): 677/661 pulls/CPU-s vs 1,100, latency passes; Triples.reach public API moves a pinned hash (re-pin in
   0.4.1). QH1 micro-steps stop (R50). Opus planner writes EXP-P4N; CX-VQH1 (verify/QH1) reviews rounds 2-3 for correctness.
+- 2026-11-09 OBS01 ACCEPT-OFFLINE (CX-VOBS7 round 14, 6d31fc70): rounds 9-14 accepted under Q109a (source lexer: 18,100 arrangements and
+  270 unterminated forms tested). Round 15 (Sonnet) runs the first live W0-W3 window in the triplex2 VM with the built image 06f62235:
+  fixes the 0.20.2 -d flag, stores the real compiled dump as the golden, W1 planted writers, W2/W3 per-commit cost (diagnostic under load).
