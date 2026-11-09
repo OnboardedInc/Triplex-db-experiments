@@ -76,9 +76,22 @@ and references so an entity version travels once per client session, `reach-many
 - Seeding through `Triples.transact`: about 2,400 facts/s, so 10k subjects in about 3 minutes and 100k in about 27 to 35 minutes.
 - Open: P5 in the NS driver is fetch-only (the real activation path is `--world w0`); indexing-job hook; engine bytes read; O-REPLAY root.
 
-### XN-S1 (XTDB floors) partial, still running
+### XN-S1 (XTDB 2.2.0 floors, engine only, one 2-CPU node; `spike/XN-S1` 5d583a42, merged; report `lab/experiments/EXP-XN1/spike-s1/REPORT.md`)
 
-- 95 documents by id in one query on a settled node, 16 clients: about 62 operations per engine CPU-second, p50 166 ms. Bar 1,100.
+| Case | Result | R51 prediction | Bar |
+| --- | --- | --- | --- |
+| One 1,500-byte document by `_id`, settled node | up to 2,459 per engine CPU-s (16 clients); 1,079 with 1 client; p50 1.1 ms single client | 300-800 | 1,100 pulls |
+| One pre-joined 135 KB document by `_id` | up to 1,710 per engine CPU-s; 1,115 with 1 client; p50 1.3 ms | - | 1,100 pulls |
+| 95 small documents in one `IN` query | 54 to 63 per engine CPU-s; p50 18 ms single client | - | 1,100 pulls |
+| Lean atomic commit (2 asserts, 3 documents, head, claim; one socket write), closed loop | p50 3.5 ms, p99 7.1 ms; aged 4.0 / 7.4 | - | 10 / 50 ms |
+| Same, open loop 55/s | p50 9.3 ms, p99 35 ms | - | 10 / 50 ms |
+| Same, 55/s with 16 readers on the node | p50 16.1 ms, p99 90.7 ms, 2.33x the no-reader p99 | misses 1.25x | 1.25x at 256 readers |
+
+Reading: my prediction for point reads was too low. XTDB can clear P4's per-CPU bar only when a pull is one `_id` lookup of a
+pre-joined document (multi-id reads are 20x too slow), and its lean commit clears P2 alone. P1 fails on one node: readers and the
+indexer share the JVM. Passing P1 on native XTDB needs reads on a second node, which XTDB only supports with a Kafka log; no Kafka
+image is on the machine, so that needs Sam's approval to download. Lane X is therefore parked behind that decision; lane D carries
+the goal.
 
 ## Agents running now
 
@@ -86,7 +99,6 @@ and references so an entity version travels once per client session, `reach-many
 | --- | --- | --- | --- |
 | DX-B2 | Gateway loop at engine cost; entity revisions, references and a client cache; `reach-many`; no `d/sync` on writes; index-job hook; warm numbers on Postgres with split gateways | `exp/DX-B2-speed`, `.claude/worktrees/dx-b2` | `.../prompts/DX-B2.md` |
 | DX-H2 | P5 measurable on lane D: W0 activation with evaluation, publication, oracle gates, live traffic, time breakdown | `exp/DX-H2-p5-harness`, `.claude/worktrees/dx-h2` | `.../prompts/DX-H2.md` |
-| XN-S1 | as above | | |
 
 After B2 and H2: merge both; if H2 needs rows with recorded position from the reach path, add it; first full NS run on lane D at the
 10k rung in a quiet VM (stop every other agent first); then P5 at 100k.
