@@ -23,6 +23,7 @@ import {
   WriteError,
   UnsupportedValueTypeError,
   ReadError,
+  toReadError,
   CommandAlreadyCommittedError,
   TransactionConflictError,
   ConstraintViolationError,
@@ -811,7 +812,32 @@ const makeKvTriplesService = Effect.gen(function* () {
     },
 
     transactionsForEntity: (entityId, request) =>
-      transactionsForEntity({ ...service, query: service.queryAll }, entityId, request),
+      transactionsForEntity(
+        {
+          currentPosition: service.currentPosition,
+          query: (q, snapshotPosition) =>
+            Effect.gen(function* () {
+              const result = yield* executeQuery(hexaStore, q, q.rules ?? [], {
+                basis: { validAt: yield* runtime.now, recordedPosition: snapshotPosition },
+              });
+              return { results: result.results as unknown as QueryResult };
+            }),
+          transaction: (txId, snapshotPosition) =>
+            hexaStore.scanCollectAsync({ entity: txId }).pipe(
+              Effect.map((datoms) =>
+                transactionRecordFromTriples(
+                  txId,
+                  datoms
+                    .filter((row) => row.recordedPosition <= snapshotPosition)
+                    .map(datomToTriple),
+                ),
+              ),
+              Effect.mapError((cause) => toReadError(cause, "Failed to read journal envelope")),
+            ),
+        },
+        entityId,
+        request,
+      ),
 
     currentPosition: () => currentKvCommitPosition(kvBackend),
 

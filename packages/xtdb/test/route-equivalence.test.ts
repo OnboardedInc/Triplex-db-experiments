@@ -12,6 +12,7 @@ import {
   routeWatermark,
   RouteRefusal,
   runRouteEquivalence,
+  runNamedTimeSchedule,
   type RouteFixture,
   type RouteHistory,
   type RouteRequest,
@@ -22,7 +23,7 @@ import type { XtdbClient } from "../src/XtdbClient.js";
 
 // [EXP-RQ01] Why: evaluate the actual adapter's emitted predicates against rows offline.
 // Rejected: return replayRouteAnswer from the client (would hide predicate regressions).
-const fixture = (guardFuture = true): RouteFixture => {
+const fixture = (guardFuture = true, pending = false): RouteFixture => {
   let history: RouteHistory = generateRouteHistory(1, 16);
   let rows: readonly TripleRow[] = [],
     taken = "";
@@ -93,7 +94,7 @@ const fixture = (guardFuture = true): RouteFixture => {
                   id: commit.receipt.attemptId,
                   status: "committed" as const,
                   position: commit.position,
-                  stagedAt: commit.instant,
+                  stagedAt: commit.stagedAt ?? commit.instant,
                   stagedOrder: Math.max(...history.attempts.map((a) => a.stagedOrder)) + 1,
                   decidedOrder: Math.max(...history.attempts.map((a) => a.decidedOrder)) + 1,
                 },
@@ -121,10 +122,17 @@ const fixture = (guardFuture = true): RouteFixture => {
             throw routeBasisRefusal(request, history, "X1-adapter");
           const basis = { ...request.basis, validAt: request.basis.validAt ?? history.now };
           const answer = await Effect.runPromise(
-            adapter.query(
-              request.entityId === undefined ? {} : { entityId: request.entityId },
-              basis,
-            ),
+            pending
+              ? adapter.withTransaction(
+                  adapter.query(
+                    request.entityId === undefined ? {} : { entityId: request.entityId },
+                    basis,
+                  ),
+                )
+              : adapter.query(
+                  request.entityId === undefined ? {} : { entityId: request.entityId },
+                  basis,
+                ),
           );
           return {
             rows: answer,
@@ -170,3 +178,15 @@ it("Q89c / R31 D-X1: A0 itself refuses a future position", async () => {
   });
   expect(result.violations).toEqual([]);
 });
+
+it("random named-T schedules keep identical bytes through the actual pending XTDB adapter route", async () => {
+  for (let seed = 1; seed <= 8; seed++) {
+    const result = await runNamedTimeSchedule({
+      fixture: fixture(false, true),
+      history: generateRouteHistory(seed, 16 + seed),
+      seed,
+    });
+    expect(result.violations, `seed ${seed}`).toEqual([]);
+    expect(result.comparisons).toBeGreaterThan(20);
+  }
+}, 30000);

@@ -19,7 +19,7 @@ import {
   type QueryOptions,
   type PagedQueryOptions,
 } from "./Triples.js";
-import { gateRecordedAt, stampOf, type RecordCut } from "../storage/RecordStamp.js";
+import { gateRecordBasis, type RecordCut } from "../storage/RecordStamp.js";
 import { StorageAdapter } from "../storage/StorageAdapter.js";
 import { QueryExecutor } from "../storage/QueryExecutor.js";
 import type {
@@ -158,22 +158,12 @@ export const TriplesLive = Layer.effect(
       return Effect.tryPromise({
         try: async (signal) => {
           const readCut = () => Effect.runPromise(adapter.currentCut!(), { signal });
-          return gateRecordedAt({
-            recordedAt,
+          return gateRecordBasis({
+            basis: { recordedAt },
             readCut,
-            awaitCut: async (required, ms) => {
-              const until = performance.now() + ms;
-              let cut = await readCut();
-              while (stampOf(cut.recordedAt) < required && performance.now() < until) {
-                await Effect.runPromise(Effect.sleep(Math.min(10, until - performance.now())), {
-                  signal,
-                });
-                cut = await readCut();
-              }
-              return cut;
-            },
             deadlineMs: 2000,
             surface: "triples-basis",
+            signal,
           });
         },
         catch: (cause) => toReadError(cause, "Failed to resolve read cut"),
@@ -732,10 +722,27 @@ export const TriplesLive = Layer.effect(
     };
 
     const entityTransactions: TriplesService["transactionsForEntity"] = (entityId, request) =>
-      transactionsForEntity(
-        { currentPosition: adapter.currentCommitPosition, query: queryAll, transaction },
-        entityId,
-        request,
+      Effect.flatMap(now, (validAt) =>
+        transactionsForEntity(
+          {
+            currentPosition: () =>
+              adapter.currentCut
+                ? Effect.map(adapter.currentCut(), (cut) => cut.position)
+                : adapter.currentCommitPosition(),
+            query: (q, snapshotPosition) =>
+              executor.execute(q, false, { validAt, recordedPosition: snapshotPosition }),
+            transaction: (txId, snapshotPosition) =>
+              Effect.gen(function* () {
+                const rows = yield* adapter.query(
+                  { entityId: unsafe.entityId(txId), entityType: "_Transaction" },
+                  { validAt, recordedPosition: snapshotPosition },
+                );
+                return transactionRecordFromTriples(txId, rows.map(rowToTriple));
+              }),
+          },
+          entityId,
+          request,
+        ),
       );
 
     // =========================================================================

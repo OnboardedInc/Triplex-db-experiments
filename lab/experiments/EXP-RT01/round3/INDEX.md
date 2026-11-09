@@ -1,0 +1,13 @@
+# RT01 fix round 3
+
+North star: P1 immutable named recorded-time snapshots and P2 exact journal envelopes. Authority: review verify/RT01 fdbcbb7, Q89a/c, Q90d and R33. Original review reproductions are retained with adapted local imports and output destinations; PROVENANCE.json binds both copies.
+
+## Pre-commit PASS / receipt audit
+
+- `gateRecordBasis` is shared by both lane resolvers, the core page/echo gate, and journal snapshots. It checks the actual P and stamp watermark from this read attempt, waits within one P-then-T budget, and returns the observed cut or the exact typed refusal. Its readCut closure binds the executing scope/client; no old successful cut is imported.
+- Journal reads gate before their index lookup; index and all envelopes receive the same snapshot position. `toReadError` preserves the exact typed object at the availability, index and envelope boundaries. Raw future snapshot, no-answer-before-gate, delayed-publication, empty result, continuation and sentinel tests compare observed content.
+- Named storage and XTDB executor reads deliberately use committed data instead of a callback overlay. They do not answer an unavailable cut from provisional rows. A publication can release a waiting read; timeout returns BasisNotAvailable. Latest read-your-writes retains the pending context. Actual adapter tests check provisional retirement rollback, wait/release and unchanged served bytes.
+- `runNamedTimeSchedule` extends the RQ01 /route harness: real forced snapshot drivers, reference bytes, first-served-byte comparisons for all repeated named requests, declared refusals, grouped physical publication, seed/history and counters. Refusals are not adopted as successful answers. The staged-stamp control must produce HE-5. Model route results remain model evidence; actual adapter routes are separately identified.
+- Package/reproduction controllers record exact source/build/runner/input/output hashes before and after, unique attempts and command exits. Completion alone is not acceptance: matrix rows, pending proofs, property violations and actual unit assertions are checked explicitly. Raw outputs are durable outside Git; local manifests bind their retained bytes. Finalization checks current source/log equality, not historical PASS labels.
+
+No engine, live performance or independent acceptance is claimed by this builder. Live G2/G6 and contract ownership remain separate.

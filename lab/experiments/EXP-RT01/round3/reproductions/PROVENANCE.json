@@ -1,0 +1,23 @@
+[
+  {
+    "reviewCommit": "fdbcbb7",
+    "path": "lab/verify/RT01/round2/read-matrix.ts",
+    "originalSha256": "a8356679811c278ee5c07deb5fd3bf442e3780f43f4d8c1ef68ed8098c3dd7e9",
+    "adaptedSha256": "68fb3bdbc6da0a58569fe0bd0bc2674ee8474af7dbcc9009d617278041fa9a65",
+    "adaptations": "package-relative imports and output destination only"
+  },
+  {
+    "reviewCommit": "fdbcbb7",
+    "path": "lab/verify/RT01/round2/pending-reads.ts",
+    "originalSha256": "1bf6772bf0bf3cf18995c35e0a4c48a1df38cdb36bd371eacd7eba3dfacd6166",
+    "adaptedSha256": "9fdd51b6db70bf1bb83a4b6afa61180ffb6dcc317f2f5d2cab9c84fc1f1b8861",
+    "adaptations": "package-relative imports and output destination only"
+  },
+  {
+    "reviewCommit": "fdbcbb7",
+    "path": "lab/verify/RT01/round2/pending-proof.ts",
+    "originalSha256": "782674705682bdc806b7d1b054dca5000d7ef47421e5a555e302a9bef2cac5f9",
+    "adaptedSha256": "21730a3904da99734a829b67db6d0bfb8475f0f974279273dfc60051f567346a",
+    "adaptations": "package-relative imports and output destination only"
+  }
+]

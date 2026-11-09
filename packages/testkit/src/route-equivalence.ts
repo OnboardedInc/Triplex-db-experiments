@@ -978,3 +978,111 @@ export const makeRouteEquivalenceCases = (options: Parameters<typeof runRouteEqu
     },
   },
 ];
+
+/** Random interleavings: every served named snapshot is immutable across all later reads. */
+export const runNamedTimeSchedule = async (options: {
+  readonly fixture: RouteFixture;
+  readonly history: RouteHistory;
+  readonly seed: number;
+  readonly availableOnly?: boolean;
+}) => {
+  const { fixture } = options;
+  if (!fixture.routes.length || fixture.routes.some((route) => route.contract !== "snapshot"))
+    throw new TypeError("Named-time schedule requires snapshot routes");
+  let randomState = options.seed >>> 0;
+  const random = () => (randomState = (Math.imul(randomState, 1664525) + 1013904223) >>> 0);
+  validateRouteHistory(options.history);
+  const prefix = (count: number): RouteHistory => {
+    const commits = options.history.commits.slice(0, count);
+    const ids = new Set(commits.map((commit) => commit.receipt?.attemptId));
+    return {
+      seed: options.history.seed,
+      now: options.history.now,
+      commits,
+      ...(options.history.attempts
+        ? { attempts: options.history.attempts.filter((attempt) => ids.has(attempt.id)) }
+        : {}),
+    };
+  };
+  let first = 1;
+  while (
+    first < options.history.commits.length &&
+    options.history.commits[0]!.nested !== undefined &&
+    options.history.commits[first]!.nested?.callback ===
+      options.history.commits[0]!.nested!.callback
+  )
+    first++;
+  let history = prefix(first);
+  await fixture.reset(history);
+  const served = new Map<string, string>();
+  const violations: {
+    rule: "HE-1" | "HE-3" | "HE-5";
+    route: string;
+    step: number;
+    request: RouteRequest;
+  }[] = [];
+  let reads = 0,
+    comparisons = 0,
+    refusals = 0;
+  const requests = [...new Set(options.history.commits.map((c) => c.instant))].map(
+    (recordedAt) => ({ basis: { recordedAt, validAt: options.history.now } }),
+  );
+  const read = async (request: RouteRequest, step: number) => {
+    const future = routeFuture(request, history);
+    for (const route of fixture.routes) {
+      await route.force();
+      reads++;
+      try {
+        const answer = await route.read(request);
+        if (future || !route.eligible(request, history) || answer.taken !== route.id)
+          violations.push({ rule: "HE-3", route: route.id, step, request });
+        const bytes = canonicalRouteRows(answer.rows);
+        const expected = canonicalRouteRows(replayRouteAnswer(history, request, route.contract));
+        if (bytes !== expected) violations.push({ rule: "HE-1", route: route.id, step, request });
+        const key = `${route.id}:${canonicalRouteValue(request)}`;
+        // [EXP-RT01] Why: compare with the first served bytes, not just adjacent reads or one append. Rejected: adopting refusals as answers (a future cut may legitimately become available).
+        if (served.has(key)) {
+          comparisons++;
+          if (served.get(key) !== bytes)
+            violations.push({ rule: "HE-5", route: route.id, step, request });
+        } else served.set(key, bytes);
+      } catch (error) {
+        const tag = error instanceof Error && "_tag" in error ? error._tag : undefined;
+        if (
+          (!future && route.eligible(request, history)) ||
+          !route.refusals.includes(tag as RouteRefusalTag)
+        )
+          violations.push({ rule: "HE-3", route: route.id, step, request });
+        refusals++;
+      }
+    }
+  };
+  for (const request of requests.filter((r) => !routeFuture(r, history)))
+    await read(request, first);
+  for (let step = first; step < options.history.commits.length; ) {
+    // Read before and after each physical decision; same-instant ordinals publish as one group.
+    const available = requests.filter((r) => !options.availableOnly || !routeFuture(r, history));
+    for (let n = 0; n < 1 + (random() % 4) && available.length; n++)
+      await read(available[random() % available.length]!, step);
+    const group = [options.history.commits[step++]!];
+    while (
+      step < options.history.commits.length &&
+      group[0]!.nested !== undefined &&
+      options.history.commits[step]!.nested?.callback === group[0]!.nested!.callback
+    )
+      group.push(options.history.commits[step++]!);
+    // [EXP-RT01] Why: RQ01 permits only complete physical groups and nonempty histories. Rejected: publishing ordinals one by one (constructs an invalid intermediate history).
+    const next = prefix(step);
+    if (group.length === 1) await fixture.append(group[0]!);
+    else await fixture.reset(next);
+    history = next;
+    // Re-read all earlier named cuts after arbitrary later commits, as well as a random request.
+    for (const request of requests.filter((r) => !routeFuture(r, history)))
+      await read(request, step);
+  }
+  for (const request of requests) {
+    await read(request, options.history.commits.length);
+    await read(request, options.history.commits.length);
+  }
+  return { seed: options.seed, lane: fixture.lane, reads, comparisons, refusals, violations };
+};
