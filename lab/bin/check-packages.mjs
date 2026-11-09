@@ -9,23 +9,9 @@ import {
   statfsSync,
   writeFileSync,
 } from "node:fs";
-import { join, resolve } from "node:path";
+import { join, relative, resolve } from "node:path";
 
 const root = resolve(import.meta.dirname, "../..");
-const packageNames = [
-  "@triplex-build/triplex",
-  "@triplex-build/triplex-sql",
-  "@triplex-build/triplex-sqlite",
-  "@triplex-build/triplex-postgres",
-  "@triplex-build/triplex-cloudflare",
-  "@triplex-build/triplex-host",
-  "@triplex-build/triplex-foundationdb",
-  "@triplex-build/triplex-testkit",
-  "@triplex-build/triplex-cli",
-  "@triplex-build/triplex-http",
-  "@triplex-build/triplex-xtdb",
-  "@triplex-build/triplex-qlever",
-];
 const publishPackageNames = new Set([
   "@triplex-build/triplex",
   "@triplex-build/triplex-sql",
@@ -56,12 +42,9 @@ mkdirSync(consumerDir);
 // Keep dependency caches inside this owned artifact tree as well.
 writeFileSync(join(consumerDir, ".npmrc"), `cache=${join(workDir, "npm-cache")}\n`);
 
-// [EXP-PACK] Why: keep the upstream checker runnable and its checks visible here, but
-// build fresh lab artifacts first. Rejected: prebuilding the whole workspace (DuckDB
-// belongs to another team and its declaration failure would mask this lab's result).
-process.stdout.write(
-  "DuckDB: OUT-OF-SCOPE (lab/SCOPE.md 4.3); reported TS4023 declaration failures in effect-storage.ts:112 and TypeDomains.ts:17 are unresolved and not tested by this gate.\n",
-);
+// [EXP-PACK] Why: retain the original checker while making every workspace's scope
+// decision explicit. Rejected: a fixed include list (silently omits new packages).
+const exclusionsPath = "lab/config/pack-exclusions.json";
 const store = "/Users/sam/projects/triplex-db-2/.pnpm-store";
 const commands = [];
 const digest = (bytes) => createHash("sha256").update(bytes).digest("hex");
@@ -77,6 +60,7 @@ const run = (command, args, cwd = root) => {
       encoding: "utf8",
       stdio: "pipe",
       maxBuffer: 64 * 1024 * 1024,
+      timeout: command === "node" && args.includes("--eval") ? 30_000 : undefined,
     });
     writeFileSync(log, output);
     record.exit = 0;
@@ -94,40 +78,39 @@ const run = (command, args, cwd = root) => {
     writeFileSync(join(workDir, "commands.json"), JSON.stringify(commands, null, 2));
   }
 };
-const packageDirs = readdirSync(join(root, "packages")).filter((dir) => {
-  try {
-    return packageNames.includes(
-      JSON.parse(readFileSync(join(root, "packages", dir, "package.json"))).name,
-    );
-  } catch {
-    return false;
-  }
-});
-if (packageDirs.length !== packageNames.length) throw new Error("Lab package inventory mismatch");
-const sourcePaths = execFileSync(
-  "git",
-  [
-    "ls-files",
-    "-z",
-    "--",
-    ...packageDirs.map((dir) => `packages/${dir}`),
-    "package.json",
-    "pnpm-lock.yaml",
-    "pnpm-workspace.yaml",
-    "turbo.json",
-    "tsconfig.json",
-    "scripts",
-    "lab/bin/check-packages.mjs",
-  ],
-  { cwd: root, encoding: "utf8" },
-)
-  .split("\0")
-  .filter(Boolean);
-if (!sourcePaths.includes("lab/bin/check-packages.mjs"))
-  sourcePaths.push("lab/bin/check-packages.mjs");
-const snapshot = () =>
-  Object.fromEntries(sourcePaths.map((path) => [path, digest(readFileSync(join(root, path)))]));
-const inputs = snapshot();
+let workspacePaths = [];
+const snapshot = () => {
+  const paths = execFileSync(
+    "git",
+    [
+      "ls-files",
+      "--cached",
+      "--others",
+      "--exclude-standard",
+      "-z",
+      "--",
+      "packages",
+      "examples",
+      "test",
+      ...workspacePaths,
+      "package.json",
+      "pnpm-lock.yaml",
+      "pnpm-workspace.yaml",
+      "turbo.json",
+      "tsconfig.json",
+      "scripts",
+      "lab/bin/check-packages.mjs",
+      exclusionsPath,
+    ],
+    { cwd: root, encoding: "utf8" },
+  )
+    .split("\0")
+    .filter(Boolean);
+  return Object.fromEntries(
+    [...new Set(paths)].sort().map((path) => [path, digest(readFileSync(join(root, path)))]),
+  );
+};
+let inputs = snapshot();
 const receipt = {
   kind: "lab-pack-diagnostic/1",
   startedAt: new Date().toISOString(),
@@ -137,7 +120,9 @@ const receipt = {
   head: execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim(),
   inputs,
   packages: [],
-  duckdb: "OUT-OF-SCOPE: lab/SCOPE.md 4.3; reported TS4023 remains unresolved",
+  workspace: [],
+  exclusions: {},
+  imports: [],
   engines: "none",
   status: "RUNNING",
 };
@@ -145,10 +130,58 @@ writeFileSync(join(workDir, "receipt.json"), JSON.stringify(receipt, null, 2));
 try {
   const disk = statfsSync(root);
   if (disk.bavail * disk.bsize < 5 * 1024 ** 3) throw new Error("Less than 5 GiB host disk free");
+  const exclusions = JSON.parse(readFileSync(join(root, exclusionsPath), "utf8"));
+  const workspace = JSON.parse(
+    run("pnpm", [`--config.store-dir=${store}`, "--recursive", "list", "--depth", "-1", "--json"]),
+  );
+  if (!Array.isArray(workspace) || workspace.length === 0)
+    throw new Error("Empty pnpm workspace inventory");
+  receipt.workspace = workspace;
+  receipt.exclusions = exclusions;
+  const names = new Set();
+  const selected = [];
+  for (const item of workspace) {
+    if (typeof item.name !== "string" || names.has(item.name))
+      throw new Error("Unnamed or duplicate workspace package");
+    names.add(item.name);
+    const dir = relative(root, item.path);
+    if (resolve(root, dir) !== item.path || dir.startsWith("..") || dir.startsWith("/"))
+      throw new Error(`Workspace outside checkout: ${item.path}`);
+    const manifest = JSON.parse(readFileSync(join(item.path, "package.json"), "utf8"));
+    if (manifest.name !== item.name) throw new Error(`Workspace manifest mismatch: ${item.name}`);
+    if (Object.hasOwn(exclusions, item.name)) {
+      const reason = exclusions[item.name];
+      if (typeof reason !== "string" || reason.trim().length === 0)
+        throw new Error(`Exclusion requires a reason: ${item.name}`);
+      process.stdout.write(
+        `${item.name === "@triplex-build/triplex-duckdb" ? "DuckDB" : item.name}: ${item.name === "@triplex-build/triplex-duckdb" ? "" : "EXCLUDED: "}${reason}\n`,
+      );
+    } else {
+      if (
+        !manifest.scripts?.build ||
+        !manifest.exports ||
+        typeof manifest.exports !== "object" ||
+        Array.isArray(manifest.exports) ||
+        !Object.keys(manifest.exports).length
+      )
+        throw new Error(
+          `Unclassified workspace package ${item.name}: requires build and exports, or a reason in ${exclusionsPath}`,
+        );
+      selected.push({ name: item.name, dir });
+    }
+  }
+  for (const name of Object.keys(exclusions))
+    if (!names.has(name)) throw new Error(`Stale workspace exclusion: ${name}`);
+  if (selected.length === 0) throw new Error("No checked workspace packages");
+  workspacePaths = workspace.map((item) => relative(root, item.path)).filter(Boolean);
+  inputs = snapshot();
+  receipt.inputs = inputs;
+  const packageNames = selected.map((item) => item.name);
+  const packageDirs = selected.map((item) => item.dir);
+  writeFileSync(join(workDir, "receipt.json"), JSON.stringify(receipt, null, 2));
   // [EXP-PACK] Why: remove only the selected generated outputs so old dist files
   // cannot satisfy this attempt. Rejected: turbo cache hits (fresh build is the gate).
-  for (const dir of packageDirs)
-    rmSync(join(root, "packages", dir, "dist"), { recursive: true, force: true });
+  for (const dir of packageDirs) rmSync(join(root, dir, "dist"), { recursive: true, force: true });
   run("pnpm", [
     `--config.store-dir=${store}`,
     "--recursive",
@@ -305,6 +338,14 @@ try {
     ),
   );
 
+  for (const manifest of packedManifests) {
+    if (
+      Object.keys(manifest.exports).some(
+        (key) => key !== "." && (!key.startsWith("./") || key.includes("*")),
+      )
+    )
+      throw new Error(`Cannot enumerate public export map for ${manifest.name}`);
+  }
   const specifiers = packedManifests.flatMap((manifest) =>
     Object.keys(manifest.exports).map((key) =>
       key === "." ? manifest.name : manifest.name + key.slice(1),
@@ -321,7 +362,7 @@ try {
   );
   writeFileSync(
     join(consumerDir, "exports.mjs"),
-    specifiers.map((specifier) => `import.meta.resolve(${JSON.stringify(specifier)});`).join("\n"),
+    specifiers.map((specifier) => `await import(${JSON.stringify(specifier)});`).join("\n"),
   );
 
   writeFileSync(
@@ -529,7 +570,16 @@ if (
   // Effect 4 stable's SQLite driver uses node:sqlite for the runtime smoke test.
   run("npm", ["install", "--ignore-scripts", "--no-audit", "--no-fund"], consumerDir);
   run("npx", ["tsc", "--project", "tsconfig.json"], consumerDir);
-  run("node", ["exports.mjs"], consumerDir);
+  // [EXP-PACK] Why: evaluate each installed entry point in a fresh module graph.
+  // Rejected: import.meta.resolve (accepts modules that throw when evaluated).
+  for (const specifier of specifiers) {
+    run(
+      "node",
+      ["--input-type=module", "--eval", `await import(${JSON.stringify(specifier)});`],
+      consumerDir,
+    );
+    receipt.imports.push(specifier);
+  }
   run("node", ["smoke.mjs"], consumerDir);
 
   const cliManifest = packedManifests.find(
