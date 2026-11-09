@@ -5,7 +5,15 @@ import {
   type TripleValue,
   type ResolvedTemporalBasis,
 } from "@triplex-build/triplex";
-import type { QueryPattern, TripleRow } from "@triplex-build/triplex/runtime";
+import {
+  assertValueInDomain,
+  decodeValueColumns,
+  storedValueDomain,
+  ValueDomains,
+  type ValueDomain,
+  type QueryPattern,
+  type TripleRow,
+} from "@triplex-build/triplex/runtime";
 
 export const assertionColumns = [
   "id",
@@ -67,7 +75,9 @@ export const canonicalJson = (value: unknown): string => {
   return encode(value);
 };
 
-export const packValue = (value: TripleValue) => {
+// [CX-A01-0314-R3] Why: enforce the declared Datomic domain at its real row codec. Rejected: public preflight alone (direct SPI and codec callers bypass it).
+export const packValue = (value: TripleValue, domain: ValueDomain = ValueDomains.datomic) => {
+  assertValueInDomain(value, domain);
   const packed = {
     value_type: value.type,
     value_string: null as string | null,
@@ -192,25 +202,5 @@ export const matchesPattern = (row: TripleRow, pattern: QueryPattern): boolean =
   return true;
 };
 
-export const assertionValue = (row: TripleRow): TripleValue => {
-  switch (row.value_type) {
-    case "string":
-      return { type: "string", value: row.value_string! };
-    case "ref":
-      return { type: "ref", value: row.value_string! as never };
-    case "integer":
-      return integer(row.value_string!);
-    case "number":
-      return { type: "number", value: row.value_number! };
-    case "datetime":
-      return { type: "datetime", value: row.value_datetime! };
-    case "boolean":
-      return { type: "boolean", value: row.value_boolean === 1 };
-    case "json":
-      return { type: "json", value: JSON.parse(row.value_json!) };
-    case "blob":
-      return { type: "blob", value: row.value_string!, ...JSON.parse(row.value_json!) };
-    default:
-      throw new TypeError(`Unknown assertion value family ${row.value_type}`);
-  }
-};
+export const assertionValue = (row: TripleRow): TripleValue =>
+  decodeValueColumns(row, storedValueDomain(ValueDomains.datomic, row.attribute));

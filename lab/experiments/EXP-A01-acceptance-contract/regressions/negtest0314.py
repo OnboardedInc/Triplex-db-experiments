@@ -466,6 +466,8 @@ tests['0314 repin stale'] = [('def checks_0314():', 'PIN_CHANGES_0314["packages/
 tests['0314 case pin stale'] = [('def checks_0314():', 'CS["CS-U44"]["pinnedSourceFiles"][0]["sha256"] = "cb89a55ced5426b8fa0af3523fbbeb73870e61e3622ebb42e8a78c3e67da8d28"\n\ndef checks_0314():')]
 tests['0314 review binding absent'] = [('def checks_0314():','RULING_REVIEW_0314["commit"] = "missing"\n\ndef checks_0314():')]
 
+tests['0314 pending Sam id truncated'] = [(r'Q\d+[a-z]?(?:-clarified|-S\d+)?|AMB-', r'Q\d+[a-z]?(?:-clarified)?|AMB-')]
+
 run, caught, missed, retired = 0, 0, [], []
 for name, pairs in tests.items():
     if any(src.count(a) < 1 for a, _ in pairs):

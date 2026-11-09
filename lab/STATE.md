@@ -226,3 +226,22 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - Queued small task (from K01 r13): lab/bin/*.mjs are not semantically type-checked, so an unbound name (sha256File) inside an unexecuted
   branch passed 437 tests. Enable TypeScript checkJs over every lab/bin and lab/bench JavaScript file, triage the diagnostics, and fail
   the lab check on unbound names.
+- 2026-11-09 R43 (critical path to the first PASS) adopted. First PASS candidate: NS.P3 on the broker log source (all-QLever(+log)
+  column; one closure also covers P2B's broker+XTDB column). Longest chain is the qualification machinery: R44 NS-run design, G03 rounds
+  5-7, G03 slot run, M01 A/A, A0 under PAIR-0, contract 0.4.1, calibration, prerequisite claims, three acceptance runs, verifier (about 12
+  rounds, about 16 slot hours). Orchestrator rulings Q99a-e pending; scale window reordered by Q99d: RT01 live (running), G03 slot run,
+  M01 A/A duet, OBS01, P3 screening, A0 under PAIR-0, calibration, acceptance; then K01 live, P5 A1, W02, DA04.
+- **Ask Sam first (both block every NS cell):** Q99-S1 the NS rung (largest W0 rung each composition fits on one slot; year-one reported
+  as a projection; NS.P5 scoped release stays at 100k), asked with Q94a; and the host half of Q60: may acceptance windows of 1 to 3 hours
+  pause his default colima VM (his Onboarded stack) and other heavy host jobs, since absolute bars count only in GREEN windows.
+- 2026-11-09 07:10Z goal check: all 10 agents writing (logs updated within the last minute); usage 8%; disk 29 GiB free. Gap against
+  Sam's goal ("continue all [three lanes] in parallel"): no lane D agent is running, since R43 ranked lane D off the critical path and
+  the Datomic dev slot is parked for pool memory. R43 ranks the queue, but Sam's goal keeps lane D active, so **the next free agent goes
+  to lane D**: EXP-DF01 offline (R41 E6: the gateway route GET /v1/db/{db}/log long-poll over d/tx-range, the position-to-t map per
+  Q89d, the Triplex stamp from the transaction annotation, FD01's host SQLite consumer store, resume across excision, restart resumes
+  from the log alone) built and tested against a fake report queue, with live dev-storage runs when the pool allows.
+- 2026-11-09 QNODELAY ACCEPT (verify/QNODELAY 1f59d223, scoped to R4-F1..F3; replay 120/240 vs 0/240; keep-alive default). Queued for a
+  default-off merge in the next contract after 0.3.14 (0.4.0). P5 round B (CX-P5B) starts on contract/0.3.14 with round A merged: host
+  store screening B0-B2 per R34 6, diagnostic; P5 A1 on native XTDB is demoted per R43.
+- 2026-11-09 EXP-CRNS built (2f299bfa; 145 tests incl. F1-F20 and both evaluator suites); CX-VCRNS reviewing. Queued for the next free
+  agent slot: the Opus review of CRNS's forgery list against R44 4.4, given the code and not R44's conclusions (R44 8.2 row R1).
