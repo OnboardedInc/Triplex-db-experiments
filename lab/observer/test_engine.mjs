@@ -225,6 +225,10 @@ test('ext4 built in: a module BTF file or an unresolved probe refuses', () => {
   assert.match(witness.ext4BuiltinVerdict({ ext4BtfPresent: false, listing: { ...listing, 'fentry:vmlinux:ext4_page_mkwrite': '' } }).reasons.join(';'), /did not resolve fentry:vmlinux:ext4_page_mkwrite/);
   assert.equal(witness.ext4BuiltinVerdict({ ext4BtfPresent: undefined, listing }).pass, false);
   assert.equal(witness.ext4BuiltinVerdict({ ext4BtfPresent: false, listing: {} }).pass, false);
+  // round 15: the 0.20.2 listing spells fentry/fexit as kfunc/kretfunc; only that alias pair is accepted, not another function
+  assert.equal(witness.ext4BuiltinVerdict({ ext4BtfPresent: false, listing: { 'fexit:vmlinux:ext4_sync_fs': 'kretfunc:vmlinux:ext4_sync_fs', 'fentry:vmlinux:ext4_sync_fs': 'kfunc:vmlinux:ext4_sync_fs' } }).pass, true);
+  assert.equal(witness.ext4BuiltinVerdict({ ext4BtfPresent: false, listing: { 'fexit:vmlinux:ext4_sync_fs': 'kretfunc:vmlinux:ext4_sync_file' } }).pass, false);
+  assert.equal(witness.ext4BuiltinVerdict({ ext4BtfPresent: false, listing: { 'fexit:vmlinux:ext4_sync_fs': 'kfunc:vmlinux:ext4_sync_fs' } }).pass, false);
 });
 // ---- OBS01 round 11 (R10-F3): the clock primitive is proven from the compiled program. The "compiled output" samples below are CONSTRUCTED by the builder
 // from the documented shapes of LLVM IR, BPF disassembly and the verifier log (R49 holds no bpftrace debug-output excerpt and no bpftrace ran offline).

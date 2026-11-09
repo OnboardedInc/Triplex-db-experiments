@@ -37,6 +37,11 @@ export function kernelDev(stDev){
 /** Value of an environment variable in a `docker inspect` document (Config.Env is a list of KEY=VALUE). */
 export const envValue=(doc,key)=>{const hit=(doc?.Config?.Env??[]).find(e=>e.startsWith(key+'='));return hit===undefined?undefined:hit.slice(key.length+1);};
 const capName=name=>String(name).toUpperCase().replace(/^CAP_/,'');
+/** [EXP-OBS01-R15] Why (harness bug, found in the first live W0): bpftrace 0.20.2 tries to raise RLIMIT_MEMLOCK to infinity at start and prints `ERROR: ... couldn't set RLIMIT_MEMLOCK` when the
+ * container's hard limit is lower and it lacks CAP_SYS_RESOURCE; the normalizer (correctly) treats any bpftrace `ERROR` line as TRACE-INCOMPLETE. The cause is removed by starting the container with an
+ * unlimited memlock limit (Docker sets it as the container's initial rlimit; bpftrace's setrlimit then changes nothing and needs no capability). No capability is added and no gate changes; the kernel
+ * (6.8) charges BPF memory to the 256 MiB memory cgroup, which is still enforced. Rejected: adding CAP_SYS_RESOURCE (widens the witness profile, R48 4.4); ignoring the ERROR line in the parser (weakens F2). */
+const MEMLOCK_ULIMIT=['--ulimit','memlock=-1:-1'];
 /** Q108a/R48 4.4: the witness holds only CAP_BPF and CAP_PERFMON and mounts nothing of the candidates'. Returns violations. */
 export function verifyWitnessProfile(doc,{volume}={}){
  const bad=[],host=doc?.HostConfig??{},add=(host.CapAdd??[]).map(capName).sort(),drop=(host.CapDrop??[]).map(capName);
@@ -72,7 +77,7 @@ export function witnessCreateArgs({name,holder,image,cpu,volume,dirs,perfPages=P
  if(!Array.isArray(dirs)||!dirs.length||dirs.length>2||dirs.some(d=>d.length!==2||d.some(v=>!Number.isSafeInteger(v)||v<0)))fail('USAGE','one or two [kernel dev, directory inode] pairs required');
  if(!Number.isSafeInteger(mapKeys)||mapKeys<MAP_KEYS_FLOOR||mapKeys>MAP_KEYS_CEILING)fail('USAGE','BPFTRACE_MAX_MAP_KEYS must be between '+MAP_KEYS_FLOOR+' and '+MAP_KEYS_CEILING);
  const pair=[dirs[0],dirs[1]??dirs[0]];
- return harden(name,holder,image,cpu,['--cap-add','BPF','--cap-add','PERFMON','--entrypoint','sh','-e','BPFTRACE_PERF_RB_PAGES='+perfPages,'-e','BPFTRACE_MAX_MAP_KEYS='+mapKeys,
+ return harden(name,holder,image,cpu,['--cap-add','BPF','--cap-add','PERFMON',...MEMLOCK_ULIMIT,'--entrypoint','sh','-e','BPFTRACE_PERF_RB_PAGES='+perfPages,'-e','BPFTRACE_MAX_MAP_KEYS='+mapKeys,
   '-v',volume+':/witness','-v','/sys/kernel/btf:/sys/kernel/btf:ro','-v','/sys/kernel/tracing:/sys/kernel/tracing:ro','-v',PROGRAM+':/program/vm_syncwitness.bt:ro'],
   // [EXP-OBS01-R15] Why (harness bug, found in the first live W0): bpftrace 0.20.2 buffers `-o FILE` output even with `-B none` (checked by hand: the BEGIN record `SW1|B|` stayed unwritten for 28 s
   // and appeared only after SIGINT), so the session's 20 s attach wait on that record refused although the program had attached. Without `-o`, `-B none` does unbuffer stdout, so the same
@@ -164,7 +169,11 @@ export function memoryVerdict({peakBytes,oomKills},capBytes=WITNESS_MEMORY){
 export function ext4BuiltinVerdict({ext4BtfPresent,listing}){
  const bad=[];
  if(ext4BtfPresent!==false)bad.push('/sys/kernel/btf/ext4 must be absent (ext4 built in), got '+ext4BtfPresent);
- for(const [probe,out] of Object.entries(listing??{}))if(!String(out??'').split('\n').some(l=>l.trim()===probe))bad.push('bpftrace -l did not resolve '+probe);
+ // [EXP-OBS01-R15] Why (harness bug, found in the first live W0): bpftrace 0.20.2 `-l` still prints the pre-0.20 spellings `kfunc:`/`kretfunc:` for the probes the program writes as `fentry:`/`fexit:`
+ // (they are the same probes; the program compiled and attached). The listing check accepts the exact name or that one alias pair and nothing else; the probe stays unique and exact otherwise.
+ // Rejected: dropping the listing check (it is what shows that ext4 symbols resolve from vmlinux BTF); accepting any listed line (a different function name would pass).
+ const alias=probe=>probe.replace(/^fentry:/,'kfunc:').replace(/^fexit:/,'kretfunc:');
+ for(const [probe,out] of Object.entries(listing??{}))if(!String(out??'').split('\n').some(l=>l.trim()===probe||l.trim()===alias(probe)))bad.push('bpftrace -l did not resolve '+probe);
  if(!Object.keys(listing??{}).length)bad.push('no probe listing recorded');
  return {pass:bad.length===0,reasons:bad};
 }
@@ -336,7 +345,7 @@ async function bpfSampler(ctx,witnessName,dir){
 async function bpftraceOnce(ctx,tag,argv,{mounts=[],caps=['BPF','PERFMON'],entrypoint='bpftrace',timeoutMs=null}={}){
  const name='tx2-sw-w0-'+tag+'-'+randomBytes(4).toString('hex');await reserve(ctx.config,name,ctx.holder,5);
  try{
-  docker(harden(name,ctx.holder,ctx.bpftrace,5,[...caps.flatMap(c=>['--cap-add',c]),'--entrypoint',entrypoint,'-e','BPFTRACE_MAX_MAP_KEYS='+MAP_KEYS,'-e','BPFTRACE_PERF_RB_PAGES='+PERF_RB_PAGES,
+  docker(harden(name,ctx.holder,ctx.bpftrace,5,[...caps.flatMap(c=>['--cap-add',c]),...MEMLOCK_ULIMIT,'--entrypoint',entrypoint,'-e','BPFTRACE_MAX_MAP_KEYS='+MAP_KEYS,'-e','BPFTRACE_PERF_RB_PAGES='+PERF_RB_PAGES,
    '-v','/sys/kernel/btf:/sys/kernel/btf:ro','-v','/sys/kernel/tracing:/sys/kernel/tracing:ro',...mounts],argv));
   if(timeoutMs===null){
    const stdout=docker(['start','-a',name],{allowFail:true})??'',doc=inspect(name),logs=run(['docker','-H',SOCK,'logs',name]);
@@ -379,7 +388,7 @@ async function clockProgramStep(ctx){
 async function clockStep(ctx){
  const name='tx2-sw-w0-clock-'+randomBytes(4).toString('hex');await reserve(ctx.config,name,ctx.holder,5);
  try{
-  docker(harden(name,ctx.holder,ctx.bpftrace,5,['--cap-add','BPF','--cap-add','PERFMON','--entrypoint','bpftrace','-e','BPFTRACE_MAX_MAP_KEYS='+MAP_KEYS,
+  docker(harden(name,ctx.holder,ctx.bpftrace,5,['--cap-add','BPF','--cap-add','PERFMON',...MEMLOCK_ULIMIT,'--entrypoint','bpftrace','-e','BPFTRACE_MAX_MAP_KEYS='+MAP_KEYS,
    '-v','/sys/kernel/btf:/sys/kernel/btf:ro','-v','/sys/kernel/tracing:/sys/kernel/tracing:ro','-v',CLOCK_PROBE+':/program/vm_clockprobe.bt:ro'],['-q','/program/vm_clockprobe.bt']));
   const out=vm(['python3','-c',fs.readFileSync(CLOCK_HELPER,'utf8'),'--','docker','start','-a',name]);
   const samples=out.stdout.split('\n').filter(Boolean).map(l=>{try{return JSON.parse(l);}catch{return null;}});
