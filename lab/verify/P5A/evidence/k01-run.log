@@ -1,0 +1,21 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 70546 "CX-P2Q-R9-retry", pid 45884 "CX-RT01-final-named-error", pid 67604 "CX-QG1-phase1-attempt3"
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 70546 "CX-P2Q-R9-retry", pid 45884 "CX-RT01-final-named-error", pid 67604 "CX-QG1-phase1-attempt3"
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 70546 "CX-P2Q-R9-retry", pid 45884 "CX-RT01-final-named-error", pid 67604 "CX-QG1-phase1-attempt3"
+{"gate":"reviewer-disk-preflight","availableBytes":6309068800,"minimumBytes":5368709120}
+node:internal/modules/esm/resolve:275
+    throw new ERR_MODULE_NOT_FOUND(
+          ^
+
+Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-p5a/lab/verify/P5A/evidence/k01-1794192859908/g0-values.ts' imported from /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-p5a/lab/verify/P5A/evidence/k01-1794192859908/g0.js
+    at finalizeResolution (node:internal/modules/esm/resolve:275:11)
+    at moduleResolve (node:internal/modules/esm/resolve:861:10)
+    at defaultResolve (node:internal/modules/esm/resolve:985:11)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:747:20)
+    at ModuleLoader.resolve (node:internal/modules/esm/loader:724:38)
+    at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:320:38)
+    at ModuleJob._link (node:internal/modules/esm/module_job:182:49) {
+  code: 'ERR_MODULE_NOT_FOUND',
+  url: 'file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-p5a/lab/verify/P5A/evidence/k01-1794192859908/g0-values.ts'
+}
+
+Node.js v22.23.2

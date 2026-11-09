@@ -1,0 +1,196 @@
+TAP version 13
+# Subtest: trace: same inputs give byte-identical events; a different seed differs
+ok 1 - trace: same inputs give byte-identical events; a different seed differs
+  ---
+  duration_ms: 66.622667
+  type: 'test'
+  ...
+# Subtest: trace: rates, bursts at 120 s + k x 600 s, size and writer mix (TARGETS 2 and 2.1)
+ok 2 - trace: rates, bursts at 120 s + k x 600 s, size and writer mix (TARGETS 2 and 2.1)
+  ---
+  duration_ms: 16.792833
+  type: 'test'
+  ...
+# Subtest: trace: active set is 2% of the rung, 95% of commands hit it with Zipf skew, residency 2,000 s
+ok 3 - trace: active set is 2% of the rung, 95% of commands hit it with Zipf skew, residency 2,000 s
+  ---
+  duration_ms: 16.02075
+  type: 'test'
+  ...
+# Subtest: histogram: percentiles within 1/128 of exact nearest-rank values
+ok 4 - histogram: percentiles within 1/128 of exact nearest-rank values
+  ---
+  duration_ms: 28.049417
+  type: 'test'
+  ...
+# Subtest: scheduler: latency is measured from the scheduled time, including queueing behind the subject
+ok 5 - scheduler: latency is measured from the scheduled time, including queueing behind the subject
+  ---
+  duration_ms: 326.4285
+  type: 'test'
+  ...
+# Subtest: scheduler: parallel across subjects, in-flight cap, deadline expiry, injected overlay jobs join the subject queue
+ok 6 - scheduler: parallel across subjects, in-flight cap, deadline expiry, injected overlay jobs join the subject queue
+  ---
+  duration_ms: 91.684209
+  type: 'test'
+  ...
+# Subtest: world: hop classes, frozen P4 buckets and closed-form counts match materialization
+ok 7 - world: hop classes, frozen P4 buckets and closed-form counts match materialization
+  ---
+  duration_ms: 78.259333
+  type: 'test'
+  ...
+# Subtest: model: valid-time aware digests equal the materialized world at (R, V)
+ok 8 - model: valid-time aware digests equal the materialized world at (R, V)
+  ---
+  duration_ms: 1.1745
+  type: 'test'
+  ...
+# Subtest: feed consumer: durable checkpoints, three crash points, keyed effects never duplicate
+ok 9 - feed consumer: durable checkpoints, three crash points, keyed effects never duplicate
+  ---
+  duration_ms: 86.571708
+  type: 'test'
+  ...
+# Subtest: CPU-bound fingerprint work cannot grant after its elapsed deadline
+ok 10 - CPU-bound fingerprint work cannot grant after its elapsed deadline
+  ---
+  duration_ms: 56.783292
+  type: 'test'
+  ...
+# Subtest: shared G0 reads every subject and refuses altered digest/count/binding/partial/deadline
+ok 11 - shared G0 reads every subject and refuses altered digest/count/binding/partial/deadline
+  ---
+  duration_ms: 1220.264875
+  type: 'test'
+  ...
+# Subtest: COW offline arms preserve source and sibling facts across scalar retirement and insertion
+ok 12 - COW offline arms preserve source and sibling facts across scalar retirement and insertion
+  ---
+  duration_ms: 0.353667
+  type: 'test'
+  ...
+# Subtest: G4 ten actual abrupt controller exits resume a 650-subject sweep without visible duplicates
+ok 13 - G4 ten actual abrupt controller exits resume a 650-subject sweep without visible duplicates
+  ---
+  duration_ms: 5824.930708
+  type: 'test'
+  ...
+# Subtest: controller counts consecutive breaches during hold; stopped limit resumes after guard
+ok 14 - controller counts consecutive breaches during hold; stopped limit resumes after guard
+  ---
+  duration_ms: 0.1825
+  type: 'test'
+  ...
+# Subtest: mapped scalar commands replace atomically and resend resolves the original position
+ok 15 - mapped scalar commands replace atomically and resend resolves the original position
+  ---
+  duration_ms: 0.644209
+  type: 'test'
+  ...
+# Subtest: ratio computation refuses no samples; insufficient command/round evidence stays INCONCLUSIVE
+ok 16 - ratio computation refuses no samples; insufficient command/round evidence stays INCONCLUSIVE
+  ---
+  duration_ms: 2.832625
+  type: 'test'
+  ...
+# Subtest: 64 live readers overlap real mapped writer progress and controller-fed sweep
+ok 17 - 64 live readers overlap real mapped writer progress and controller-fed sweep
+  ---
+  duration_ms: 3725.01
+  type: 'test'
+  ...
+# Subtest: paused workers exit when the admitted worker drains remaining pages
+ok 18 - paused workers exit when the admitted worker drains remaining pages
+  ---
+  duration_ms: 275.718417
+  type: 'test'
+  ...
+# Subtest: fractional offer deadlines are checked against the monotonic clock
+ok 19 - fractional offer deadlines are checked against the monotonic clock
+  ---
+  duration_ms: 0.355166
+  type: 'test'
+  ...
+# Subtest: G4 refuses publication without activation records
+ok 20 - G4 refuses publication without activation records
+  ---
+  duration_ms: 1.708833
+  type: 'test'
+  ...
+# Subtest: steady scheduled commands never record negative offer-to-ACK latency
+ok 21 - steady scheduled commands never record negative offer-to-ACK latency
+  ---
+  duration_ms: 5374.971542
+  type: 'test'
+  ...
+# Subtest: G0/G9 reject missing, altered, foreign-rung fingerprints and mismatched counts
+ok 22 - G0/G9 reject missing, altered, foreign-rung fingerprints and mismatched counts
+  ---
+  duration_ms: 0.716833
+  type: 'test'
+  ...
+# Subtest: integer mapping rejects floats and keeps safe cents exact
+ok 23 - integer mapping rejects floats and keeps safe cents exact
+  ---
+  duration_ms: 0.14025
+  type: 'test'
+  ...
+# Subtest: G7 future/invalid/time-shaped bases refused, including empty page
+ok 24 - G7 future/invalid/time-shaped bases refused, including empty page
+  ---
+  duration_ms: 0.675917
+  type: 'test'
+  ...
+# Subtest: reference seeder preserves every population world and dense command positions; dirty scope refused
+ok 25 - reference seeder preserves every population world and dense command positions; dirty scope refused
+  ---
+  duration_ms: 681.246041
+  type: 'test'
+  ...
+# Subtest: G3 Q89i byte identity after retroactive retirement; latest sees change
+ok 26 - G3 Q89i byte identity after retroactive retirement; latest sees change
+  ---
+  duration_ms: 0.340708
+  type: 'test'
+  ...
+# Subtest: G4 ten publication-before-checkpoint interruptions resume with deduplicated outbox
+ok 27 - G4 ten publication-before-checkpoint interruptions resume with deduplicated outbox
+  ---
+  duration_ms: 6720.678375
+  type: 'test'
+  ...
+# Subtest: G2/G5 independent domain output and outbox; retry returns same delivery bytes
+ok 28 - G2/G5 independent domain output and outbox; retry returns same delivery bytes
+  ---
+  duration_ms: 45.540042
+  type: 'test'
+  ...
+# Subtest: controller bound constants: decrease, half/hold, stop after two breached windows and resume
+ok 29 - controller bound constants: decrease, half/hold, stop after two breached windows and resume
+  ---
+  duration_ms: 0.195583
+  type: 'test'
+  ...
+# Subtest: trace mapper frozen schedule, exact sizes and no shared writes
+ok 30 - trace mapper frozen schedule, exact sizes and no shared writes
+  ---
+  duration_ms: 31.232
+  type: 'test'
+  ...
+# Subtest: W0 seams require actual accepted pins
+ok 31 - W0 seams require actual accepted pins
+  ---
+  duration_ms: 21.027541
+  type: 'test'
+  ...
+1..31
+# tests 31
+# suites 0
+# pass 31
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 16793.799583

@@ -1,0 +1,232 @@
+{
+  "reviewedCommit": "dadb2de0d2fe26a1d938c2937090232a6c41e7b3",
+  "builderIndexedFiles": [
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/p5a/runs/P5/r2-final-1k/receipt.json",
+      "bytes": 8949,
+      "sha256": "7e1297520a9b2a3674d2b40ff57ffc9c36e7a019096f612663cd1190bd2cf86e"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/p5a/runs/P5/r2-final-10k/receipt.json",
+      "bytes": 8977,
+      "sha256": "c77a3b67a8871cd09da01cdbfa3f27761aeb2574c7851b46db07748a39b08f96"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/p5a/runs/P5/r2-1k-03/receipt.json",
+      "bytes": 387686,
+      "sha256": "b59fb54d0876ba9734eaee798bac421b76ecefeb109a32fdf6198c341eedbc6f"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/p5a/runs/P5/r2-1k-03/raw-audit.json",
+      "bytes": 10298,
+      "sha256": "262d6804d4cce8bb8c18e09ecacf63c5ff597b51db53eeb8ad809cae1eda01b8"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/p5a/runs/P5/r2-tests-all-final.tap",
+      "bytes": 7147,
+      "sha256": "583775c1534144ca36de90fdb6460a1115a2b897a9bedf231a00aedaea401b9c"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/p5a/runs/P5/r2-rq01-d5cd32e6-1794190767176/stack.json",
+      "bytes": 2681,
+      "sha256": "e749da0712f32a9e721b4c1acd7bf41a1cf6d9abd4cbac8753ba4277a6a220d3"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/p5a/runs/P5/r2-rq01-d5cd32e6-1794190767176/test.tap",
+      "bytes": 796,
+      "sha256": "a26357fa935d1146d075d66d0c3170829ea59aa3858d7179f2381d34ab5ee7da"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/p5a/runs/P5/r2-preview-retention.json",
+      "bytes": 62469,
+      "sha256": "cc286b474bbcadac313bdf7de8cb541fcb28903d7d0d4a44ea5536bd76659bb2"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/p5a/runs/P5/r2-seed-retention.json",
+      "bytes": 590,
+      "sha256": "62dcd25a68f83bcc79f8ef515965581aff02c1d026e3c06cb5d5101130c0d571"
+    }
+  ],
+  "arithmetic": {
+    "burst": {
+      "read": {
+        "ratios": [
+          1.095465345469895,
+          0.6423890376522118,
+          1.0720801297408475,
+          0.7737019568671798,
+          1.1774652365384954
+        ],
+        "geometricMean": 0.9277461485418724,
+        "matchedWindowsMs": [
+          7228.960875000004,
+          8610.545332999987,
+          7846.913499999966,
+          8031.581750000012,
+          8595.138749999925
+        ],
+        "traceDurationsS": [
+          65,
+          65,
+          65,
+          65,
+          65
+        ],
+        "reportedCI95": [
+          0.741845284407018,
+          1.1227010899425198
+        ],
+        "reportedStatus": "INCONCLUSIVE"
+      },
+      "commit": {
+        "ratios": [
+          1.099811474354628,
+          0.858291741899822,
+          1.417569573964927,
+          1.1131471174635135,
+          1.0442714940345907
+        ],
+        "geometricMean": 1.0923774100282488,
+        "matchedWindowsMs": [
+          7228.960875000004,
+          8610.545332999987,
+          7846.913499999966,
+          8031.581750000012,
+          8595.138749999925
+        ],
+        "traceDurationsS": [
+          65,
+          65,
+          65,
+          65,
+          65
+        ],
+        "reportedCI95": [
+          0.9488920844093568,
+          1.2807192239159533
+        ],
+        "reportedStatus": "INCONCLUSIVE"
+      }
+    },
+    "steady": {
+      "read": {
+        "ratios": [
+          0.9168117307222011,
+          0.9809502789364934
+        ],
+        "geometricMean": 0.948338928328998,
+        "matchedWindowsMs": [
+          6780.838042000076,
+          7443.641583000077
+        ],
+        "traceDurationsS": [
+          65,
+          65
+        ],
+        "reportedCI95": [
+          0.9168117307222011,
+          0.9809502789364934
+        ],
+        "reportedStatus": "INCONCLUSIVE"
+      },
+      "commit": {
+        "ratios": [
+          0.6373735716799984,
+          0.7817602965646772
+        ],
+        "geometricMean": 0.7058848010964983,
+        "matchedWindowsMs": [
+          6780.838042000076,
+          7443.641583000077
+        ],
+        "traceDurationsS": [
+          65,
+          65
+        ],
+        "reportedCI95": [
+          0.6373735716799984,
+          0.7817602965646772
+        ],
+        "reportedStatus": "INCONCLUSIVE"
+      }
+    }
+  },
+  "arithmeticLimit": "Ratios and geometric means recomputed from retained p99 summaries; no fresh full raw-stream percentile/bootstrap replay claimed.",
+  "unmodifiedBuilderSources": {
+    "lab/bench/README.md": "3815722fc58637679685ec61060a9de605be46ed2234082c8fa9ebd4451f44f6",
+    "lab/bench/audit-traffic.ts": "6543b27bb703d9ec4bff598ad79ee8ca34d32521e39f081c77942b29b33d80fb",
+    "lab/bench/driver.ts": "266e4185433169ae7294e6d20acaf46f3ce4add8041fe407d5deb6303ebb66cb",
+    "lab/bench/g4-live.ts": "0502dba271bb911d265333ac539ed5da7dc681caed76b36a8f59e9d43b6d2b74",
+    "lab/bench/lib/bulk.ts": "4acb046a0cd2a6f065a802c635e42ae088904d96f3548370c2ceb34ef755e98f",
+    "lab/bench/lib/commands.ts": "6abe490726b867f0304a525d3963383a71ca75eca5ed65cad106c500e19ffce8",
+    "lab/bench/lib/composition.ts": "26a5d5a457aeb2b45e170e1632f85bd22d02267b7d49681b05bf105ec9f33c26",
+    "lab/bench/lib/evaluate.ts": "e47f87b57042bdc9c712f4a92fefbf0020f581e6ce6b966352fedd7088193d3d",
+    "lab/bench/lib/feed.ts": "935e7ce993c087e5b19f9eceafe71855a705c26161d24ef1d1ef2aa42951b4de",
+    "lab/bench/lib/hist.ts": "dad68c421251334d768dcd8ebfb7817bab5f800190cfcf882f129a3dc0aa5d2a",
+    "lab/bench/lib/memory.ts": "18bd3ffe2a427fb3ab8c14590faf1763cb2a8ad870da89a2928fdae2f932a970",
+    "lab/bench/lib/model.ts": "252a8c1099b999936522b664eb96c7630ab95062d5626c217ebf27c66695a691",
+    "lab/bench/lib/observe.ts": "7a60e6e068ddbbf53d7dd9b1718df5ff25bacf8ea2b72b02cf93ded32a66597e",
+    "lab/bench/lib/oracle.ts": "ff7467e85fe4947e4efbaef2c5fd735ba9379208ca7f28509185b89f45a9d693",
+    "lab/bench/lib/phases.ts": "b2a144d7e95383ace5e1a7d35b0b44580fae671c475371fe83a1436895b75281",
+    "lab/bench/lib/rng.ts": "f9fe6c5d720bc5eff773f4b428874728e1760abb35ea9aa82804b2bf776d8f50",
+    "lab/bench/lib/samples.ts": "7ae23e69d6430e295efe684b19ef576256010c0584e0bf342f4057c75ecdd009",
+    "lab/bench/lib/scheduler.ts": "854bcc74c6cfc037ae5d0389f049fdb59fdedff6d4debceda1ad0e2b36bffe19",
+    "lab/bench/lib/seed.ts": "c1b6ecc5fe2ca157d59253ffb6ad636fe4f2c296a5db6ad5a42849f87b7fdaf5",
+    "lab/bench/lib/sweep-process.ts": "e147f5abe0c5cca1989449d2cfe8ea6f1e97ef81c81254fe77f2db2ffaaae360",
+    "lab/bench/lib/sweep-recovery.ts": "7bd13c88c5b87b31bc57b3c014febe857253b426f0ccd4b9766064c61d739450",
+    "lab/bench/lib/sweep-worker.ts": "30184f5650057cdd3733c758389ff85b53da4cdf5ae02419c12943627514a526",
+    "lab/bench/lib/sweep.ts": "ea8205bb72806c00ad84bc19babf7a851d1dc01a77e2bf283bed290109f43712",
+    "lab/bench/lib/trace.ts": "201f721287b3d3f93e230dc310516369024bcba35cc9151f8c0f3ed3e7f342e4",
+    "lab/bench/lib/triplex.ts": "6a37499ca446a786cfcf4ac230f6b2bea0a297b53fd9678bfb24d75ab2cd275f",
+    "lab/bench/lib/w0-fingerprint.ts": "a14c85637d591e9fe3e622974ec44a1d03bdfc6cb4ec7188e5823e21a7e93f23",
+    "lab/bench/lib/w0-gates.ts": "a55835a785db54881aa5c057ab787451d9cc866e0689d74572c4690aa8447d33",
+    "lab/bench/lib/w0-oracle.py": "bc946b507ebabaf98e844d598cb1f89fa2a66e8100c6629d841ffbf2c72490f7",
+    "lab/bench/lib/w0-outbox.ts": "c5d2b8ad2c5768084b29ac4ba01f548a43f82ac00ea5796b4cf7a51de4913291",
+    "lab/bench/lib/w0-public.ts": "b2ae6d5dd16c4190a366595f111b9ddc322ee607f6951097eabba8c3544b4e68",
+    "lab/bench/lib/w0-rounds.ts": "16c856f806dcf08db5ec996359024408828db25ac97511d079a13663a2e322c2",
+    "lab/bench/lib/w0-seed.ts": "6af3c8866edb3a5f935c54741c1f7021634ce09c660f7c3c43e49a4b6e0e0a8d",
+    "lab/bench/lib/w0-trace.ts": "28ffa1a0b29952058857d2ed117bc5cf62850a7fea3242c6f0133cf23cbcdc1d",
+    "lab/bench/lib/w0-traffic.ts": "fab643619e5e4bce71a10097fb515437fcfbfe89f3a3833c925951d7fe8cdf37",
+    "lab/bench/lib/w0-world.ts": "fbef736a339772693d68d7bd86b48a1c1b778f657e26ddec2b0204936ee5ed5a",
+    "lab/bench/lib/world.ts": "866a7ac5523c6b4567e94c3be25427b665d88138d197635cbb8b20e1533315a3",
+    "lab/bench/qlever-bulk-seed.ts": "cdd8308ba8f88feb836928e9e611d4e6731867d24ab34933eec7d19dbff5dfd2",
+    "lab/bench/reader-worker.ts": "97b3b5439f47301ea9fd758a6edfb7923e1811fafabfcd38c499e0c9f7df057d",
+    "lab/bench/round2.ts": "66ca5520911c56326fbf8d118d7c80ffa2e7e178f83d009d341601d885b70a99",
+    "lab/bench/run-rq01-stack.mjs": "e19b8c0b925ed44e07fcd928f075e9832983262c2dd3a7db8926e5050e97a708",
+    "lab/bench/summarize.mjs": "8085e05aba3e851a87da3e2d53d8882e9e2b920551dbc8f234935c609ea4cd43",
+    "lab/bench/test/bench.test.ts": "56d102078a5f96b4f93c68ec58410f71b90ad2d4af8dcd33124bbf9d1b6a3424",
+    "lab/bench/test/p5-deadline.test.ts": "1d3d89524d3a3a0627740bccfb844829d354839d9b4882f2d87c9f88fdc7e187",
+    "lab/bench/test/p5-g6.stacked.ts": "d6b8746c1ae17043bd2745d9e2d31ec7c0db48d28a09101fce26c1a69c22b942",
+    "lab/bench/test/p5-round2.test.ts": "01db43959291179f284c64be42e7c9ab37f204714a8cf2d7b50a9125e71c732b",
+    "lab/bench/test/p5.test.ts": "67554998f2589f396e90ed8f6fffb65be3043de12fd64b796d59c1302f4e3b9b",
+    "lab/bench/tsconfig.json": "f988ea7fe66ccfce8ce02aa4362760f258a86ad0c6b70f45e3dbfbb85ea4b715",
+    "lab/bench/w0-driver.ts": "462361b9e57d8fb7675a69e71945e276ff81ce0956aa0d5025caa942a01633a5",
+    "lab/bench/wait-slot.mjs": "e91b0f0d7eee84386b8d5cd945ea975cc11d33581285af39e5268731c1cb0ef0"
+  },
+  "currentKernelBuildMatchesFinalBuilderConfirmations": {
+    "population.js": "74fe2fdc1eb4882b456f5580b99e6d67b6c67d4a480a0d868c47ba06805f978e",
+    "affected.js": "08453ba78d848918933a6fb0b9d5ade0543a5bee558c49cb2c969450edbd3eba",
+    "index.js": "85cdffd34468ec563978e0cf618ff6a850759b38d89d50740cabebad84ddbd3c",
+    "kernel.js": "7278c7fd302e714404a1a6bf634281b011fc5c83b6c4272c0e375cfd7ecdb84d",
+    "release.js": "24e27b6514836c3c6620a628e440f3d682f04afbf023d18ef873061ea4635d77",
+    "dates.js": "85e7dd473ea545c4e24a11bf219afbd26d2a5f48d537c68346d830d11ec4c8ac",
+    "schema.js": "8032185f52ac371c4277878644bf768c8b234be043f2bea412a46aee557f4650",
+    "outbox.js": "a55df5f6b4e3ee2ab40f7c3e3e2353de4df41342d7b903d03789a156ca76f272",
+    "json.js": "7e9ec8a9ae2f54cd529ed60905056eceff1d06180be96cb7ce33adc41d0d2066",
+    "ops.js": "61a7c735459a2dde00ed6927b22de6f1b08470f409f20f8be93505d91a5dd668"
+  },
+  "finalGuardedCounts": [
+    {
+      "path": "runs/P5/r2-final-1k/receipt.json",
+      "publications": 16,
+      "retries": 5,
+      "visibleDeliveries": 807
+    },
+    {
+      "path": "runs/P5/r2-final-10k/receipt.json",
+      "publications": 157,
+      "retries": 5,
+      "visibleDeliveries": 7831
+    }
+  ]
+}

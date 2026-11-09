@@ -1,0 +1,92 @@
+{
+  "head": "245a49664d6e6def36877bdee1b0ec2e0e0cc919",
+  "sources": {
+    "lab/bench/lib/g0.ts": "7286d1976c19c71cdbd694fd835eb8d42111ae060fd6d636196a8c8195bdd7be",
+    "lab/bench/lib/g0-schema.ts": "72499249d961a60e604bd1913e3ec8ecb6b41b07576be925725f51e6b1e2b40e",
+    "lab/bench/lib/g0-values.ts": "9cb5a8c63497588f05de78b621ab9307ec55655d6182b1a4ed2a0e8393f35b22",
+    "lab/bench/lib/g0-normalize.ts": "f5da7b79b9f22ddea23cfc756d50662116089ae5af8b2f3b23f6388602927376"
+  },
+  "schemaAdaptation": "Only generated schema module default path redirected to this worktree packages/xtdb/src",
+  "fixture": "Complete declared table fields; N01 gate fixture isolates K01 D sensitivity, not W0 engine qualification",
+  "expected": {
+    "scope": "review-scope",
+    "position": 1,
+    "world": "N01",
+    "counts": {
+      "tx_assertions": 1,
+      "tx_attempts": 1,
+      "tx_claims": 1,
+      "tx_constraint_generations": 0,
+      "tx_constraint_graphs": 0,
+      "tx_meta": 1,
+      "tx_native_relation_attempts": 0,
+      "tx_native_relations": 0,
+      "tx_query_generations": 0,
+      "tx_query_members": 0,
+      "tx_query_relations": 0
+    }
+  },
+  "pin": {
+    "scope": "review-scope",
+    "position": 1,
+    "world": "N01",
+    "counts": {
+      "tx_assertions": 1,
+      "tx_attempts": 1,
+      "tx_claims": 1,
+      "tx_constraint_generations": 0,
+      "tx_constraint_graphs": 0,
+      "tx_meta": 1,
+      "tx_native_relation_attempts": 0,
+      "tx_native_relations": 0,
+      "tx_query_generations": 0,
+      "tx_query_members": 0,
+      "tx_query_relations": 0
+    },
+    "format": "tx2-g0/1",
+    "D": "f27c450e55c2fffa3feea1e85223a6a7ac8879f07b0fabb0158b8c903db641e5"
+  },
+  "results": [
+    {
+      "field": "valid_from",
+      "oldD": "f27c450e55c2fffa3feea1e85223a6a7ac8879f07b0fabb0158b8c903db641e5",
+      "changedD": "4e0a3c3ba77db1f0b5c407ba3de1a701d2c08604549b62628720a5eaa7cd9613",
+      "admission": "REFUSED"
+    },
+    {
+      "field": "retracted_position",
+      "oldD": "f27c450e55c2fffa3feea1e85223a6a7ac8879f07b0fabb0158b8c903db641e5",
+      "changedD": "5c735f7a990b9f6531fdce221d3f86d40817f947430a1074da585a66e104cf41",
+      "admission": "REFUSED"
+    },
+    {
+      "field": "value_string",
+      "oldD": "f27c450e55c2fffa3feea1e85223a6a7ac8879f07b0fabb0158b8c903db641e5",
+      "changedD": "a713cabd3b706998a50239e1af02361b8348f4d8a960e520d3ec1d540ce4aeca",
+      "admission": "REFUSED"
+    }
+  ],
+  "node": "v22.23.2",
+  "compiler": "6.0.2",
+  "schemaSources": {
+    "ConstraintValidation.ts": "b298dfe7841684ea3fda905b283e16f33853a0884af04f13b9913b89d82e9d29",
+    "MaintainedQueries.ts": "a0ec651af8aa68d1c6e63b64109af48996d4c7576930909a50f90306869d8dbd",
+    "Operations.ts": "2fa4dc6fc4c50a42cc088d497f70e49029e2f535399ae84d9c94239125147b66",
+    "TemporalQueries.ts": "df7163a21d18b5d704fdbd8a6dcd065498eb18edd249e0fcad7e4a92dae555a9",
+    "TransactionContext.ts": "f4696c6539db3088e940c305ab484fc514fe32a7d09ea6b6f3397cd9878a43ad",
+    "XtdbClient.ts": "fa5c31c44c45e9e129d65464ee2f012146911f5b11d433d1ce7d73aadee6c67c",
+    "XtdbQueryExecutor.ts": "71fc5d949a8a9f51449cfeb97afb9cd10b6e869647962a2c6ad006a4ccf69c0c",
+    "XtdbStorageAdapter.ts": "204b856f7c3792c04b46a61ebe19b51fa0db053c1594d6f5aaa1149f14179560",
+    "codecs.ts": "f36b8de4af66fddd30b3a055ebf4473ad29c0634d9fd1ea0e45c7fb4e522e8f3",
+    "index.ts": "5bdb382d4bd424e92ab6098ba0bed9954cae9a256ffe1fde2378c67bf8233de3",
+    "native/NativeQueries.ts": "f07285b60d00a661551873ab2ffe3995b88b91caedda7e776784185026ff3b01",
+    "native/Reachability.ts": "3929e03f7ba1b8e20a47d8fa94b71c68f64f0ad021beaf866deb210fa3fba932",
+    "native/ReadOnlySql.ts": "dacd259603497bffcae0000e57ed5b7d63103f1ad0da42419d21d46a52333529",
+    "native/Sources.ts": "a32138e18c1a5a963f37f830beb36ceb87f328ed4c6af96bf1498dd0c2c00e31",
+    "query/compiler.ts": "fd1d8fceb939e0623115ef8072300f9e046f6dabee30d573c3b0c1da56823123",
+    "query/domains.ts": "e51fc80fb211c265725d7def7cf0ab19bf84b51fc8843e1f807385dc413a92af",
+    "query/grouping.ts": "2abd261779d9cd648d53b20485eccaee644f2fe4b5cf86d899d86c552bff4586",
+    "query/overlay.ts": "118b8f8651d69516b64b50cf77c86e43de916a8e7042cdcfe2e3aa1379423491",
+    "query/recursion.ts": "6c24b1157f9c05124ebef268d1d99234364fa3aabb5514c67e40422767296b89"
+  }
+}

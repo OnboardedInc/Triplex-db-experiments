@@ -1,0 +1,10 @@
+{
+  "head": "245a49664d6e6def36877bdee1b0ec2e0e0cc919",
+  "sources": {
+    "lab/bench/lib/g0.ts": "7286d1976c19c71cdbd694fd835eb8d42111ae060fd6d636196a8c8195bdd7be",
+    "lab/bench/lib/g0-schema.ts": "72499249d961a60e604bd1913e3ec8ecb6b41b07576be925725f51e6b1e2b40e",
+    "lab/bench/lib/g0-values.ts": "9cb5a8c63497588f05de78b621ab9307ec55655d6182b1a4ed2a0e8393f35b22",
+    "lab/bench/lib/g0-normalize.ts": "f5da7b79b9f22ddea23cfc756d50662116089ae5af8b2f3b23f6388602927376"
+  },
+  "classification": "STATIC-SOURCE-REVIEW"
+}

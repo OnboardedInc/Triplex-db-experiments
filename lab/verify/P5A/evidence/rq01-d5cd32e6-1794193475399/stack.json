@@ -1,0 +1,38 @@
+{
+  "head": "d5cd32e6829100c0d9968ddb83713525e1510b3a",
+  "sources": {
+    "packages/testkit/src/route-coverage.ts": "9e53f647ec7862c62c4831279a075a09ea5176d78e7e7afe149da837c26261f3",
+    "packages/testkit/src/route-equivalence.ts": "723399315a33500832e215b1a79085d8c449d1ecb99e2254e2e23a33013b6505",
+    "packages/testkit/src/offline-route-fixtures.ts": "e6ca91277f7ef4e70888983f86e68727e02e43fa3046c221fa27f35eaa09d37c",
+    "packages/testkit/src/route-history-grammar.ts": "1db28c3e695f6c827dd814210a8a5f7a882aa1677fff6815c70e0d118baea934"
+  },
+  "routeSources": {
+    "lab/bench/test/p5-g6.stacked.ts": "d6b8746c1ae17043bd2745d9e2d31ec7c0db48d28a09101fce26c1a69c22b942",
+    "lab/bench/lib/memory.ts": "18bd3ffe2a427fb3ab8c14590faf1763cb2a8ad870da89a2928fdae2f932a970",
+    "lab/bench/lib/w0-world.ts": "fbef736a339772693d68d7bd86b48a1c1b778f657e26ddec2b0204936ee5ed5a",
+    "pnpm-lock.yaml": "b2b3e6e8cdfb18df6d235a8724611ee4fe637426c722a5de34326346b3cb6500",
+    "packages/w0/dist/affected.js": "08453ba78d848918933a6fb0b9d5ade0543a5bee558c49cb2c969450edbd3eba",
+    "packages/w0/dist/dates.js": "85e7dd473ea545c4e24a11bf219afbd26d2a5f48d537c68346d830d11ec4c8ac",
+    "packages/w0/dist/index.js": "85cdffd34468ec563978e0cf618ff6a850759b38d89d50740cabebad84ddbd3c",
+    "packages/w0/dist/json.js": "7e9ec8a9ae2f54cd529ed60905056eceff1d06180be96cb7ce33adc41d0d2066",
+    "packages/w0/dist/kernel.js": "7278c7fd302e714404a1a6bf634281b011fc5c83b6c4272c0e375cfd7ecdb84d",
+    "packages/w0/dist/ops.js": "61a7c735459a2dde00ed6927b22de6f1b08470f409f20f8be93505d91a5dd668",
+    "packages/w0/dist/outbox.js": "a55df5f6b4e3ee2ab40f7c3e3e2353de4df41342d7b903d03789a156ca76f272",
+    "packages/w0/dist/population.js": "74fe2fdc1eb4882b456f5580b99e6d67b6c67d4a480a0d868c47ba06805f978e",
+    "packages/w0/dist/release.js": "24e27b6514836c3c6620a628e440f3d682f04afbf023d18ef873061ea4635d77",
+    "packages/w0/dist/schema.js": "8032185f52ac371c4277878644bf768c8b234be043f2bea412a46aee557f4650"
+  },
+  "sourceStable": true,
+  "node": "v22.23.2",
+  "testSourceSha256": "d6b8746c1ae17043bd2745d9e2d31ec7c0db48d28a09101fce26c1a69c22b942",
+  "compilerVersion": "6.0.2",
+  "compiled": {
+    "index.js": "3099ecfe2f3ae695e4924e7eb6aaa06119e114f6a61e719e38701a16dd00fd8d",
+    "offline-route-fixtures.js": "17bf0bcd86170d6d4929e5f980d4a886387960647c56778fa9372d935e2c8394",
+    "route-coverage.js": "9abb26a2594510b546cec8b52660f28969039dfc1a7e38f951f338b5f314abfd",
+    "route-equivalence.js": "53a30dbfba707822f9661855d4b4589b13e9ffdf9380f74df0e061f7c2dec172",
+    "route-history-grammar.js": "6d67b8b014f981f830ec8d837e111155179fc32568bf965d479fd65388137741"
+  },
+  "exit": 0,
+  "signal": null
+}

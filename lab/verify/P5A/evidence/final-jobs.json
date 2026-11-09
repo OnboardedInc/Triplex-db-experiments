@@ -1,0 +1,31 @@
+{
+  "results": [
+    {
+      "file": "adversarial-final.tap",
+      "args": [
+        "--experimental-strip-types",
+        "--test",
+        "lab/verify/P5A/adversarial.test.ts"
+      ],
+      "code": 0,
+      "sha256": "8ebd40029ef8071cf3ef6fa560f7b117acc84535ba9d55108123e5acb6c54d76"
+    },
+    {
+      "file": "g6-final.log",
+      "args": [
+        "lab/verify/P5A/run-rq01.mjs",
+        "d5cd32e6829100c0d9968ddb83713525e1510b3a"
+      ],
+      "code": 0,
+      "sha256": "5b4ecde6dc1cd765d3efcb2dff447c763c70e51bd994890e9e84395f21443ff8"
+    },
+    {
+      "file": "k01-final.log",
+      "args": [
+        "lab/verify/P5A/compare-k01.mjs"
+      ],
+      "code": 0,
+      "sha256": "638690ce2443186c3790dae8cd03216e77325d645d3ca539f76e0490ef6a8bbe"
+    }
+  ]
+}
