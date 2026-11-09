@@ -1,0 +1,25 @@
+[
+  {
+    "label": "q47d",
+    "argv": [
+      "python3",
+      "-I",
+      "-B",
+      "lab/experiments/EXP-A01-acceptance-contract/regressions/q47d_test0311.py"
+    ],
+    "exit": 0,
+    "seconds": 3.7670788764953613
+  },
+  {
+    "label": "verify-after",
+    "argv": [
+      "python3",
+      "-I",
+      "-B",
+      "lab/acceptance/build_contract.py",
+      "--verify"
+    ],
+    "exit": 0,
+    "seconds": 0.5232250690460205
+  }
+]

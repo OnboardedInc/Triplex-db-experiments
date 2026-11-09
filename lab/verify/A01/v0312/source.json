@@ -1,0 +1,13 @@
+{
+  "candidate": "f5e7a413e17948738472d3465bcfdda3b72b2e41",
+  "main": "28c61c72b52255bd98c31ec7ccd372e1fcc4ab96",
+  "merge": "f1f00115f166742381af587bb8435fba21e7d77e",
+  "mergeParents": "f5e7a413e17948738472d3465bcfdda3b72b2e41 28c61c72b52255bd98c31ec7ccd372e1fcc4ab96",
+  "changedFromCandidate": [
+    "lab/NOTEBOOK.md",
+    "lab/STATE.md"
+  ],
+  "freeDiskBeforeBytes": 13924102144,
+  "reviewerHead": "dada913e551a1687289318679137db83755d8225",
+  "network": false
+}

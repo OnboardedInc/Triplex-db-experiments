@@ -1,0 +1,13 @@
+[
+  {
+    "label": "evaluator",
+    "argv": [
+      "node",
+      "--test",
+      "lab/bin/test/claim.test.mjs",
+      "lab/bin/test/claim-round2.test.mjs"
+    ],
+    "exit": 0,
+    "seconds": 163.90613412857056
+  }
+]

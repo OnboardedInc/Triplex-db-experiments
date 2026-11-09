@@ -1,0 +1,57 @@
+[
+  {
+    "label": "verify-before",
+    "argv": [
+      "python3",
+      "-I",
+      "-B",
+      "lab/acceptance/build_contract.py",
+      "--verify"
+    ],
+    "exit": 0,
+    "seconds": 0.6126468181610107
+  },
+  {
+    "label": "contract-tests",
+    "argv": [
+      "python3",
+      "-I",
+      "-B",
+      "lab/experiments/EXP-A01-acceptance-contract/regressions/test0312.py"
+    ],
+    "exit": 0,
+    "seconds": 0.8252689838409424
+  },
+  {
+    "label": "screening-js",
+    "argv": [
+      "node",
+      "--test",
+      "lab/experiments/EXP-A01-acceptance-contract/regressions/screening0312.test.mjs"
+    ],
+    "exit": 0,
+    "seconds": 0.13998913764953613
+  },
+  {
+    "label": "reviewer-35",
+    "argv": [
+      "python3",
+      "-I",
+      "-B",
+      "lab/verify/A01/regressions_review0311.py"
+    ],
+    "exit": 0,
+    "seconds": 0.7257528305053711
+  },
+  {
+    "label": "reviewer-5",
+    "argv": [
+      "python3",
+      "-I",
+      "-B",
+      "lab/verify/A01/regressions_round2.py"
+    ],
+    "exit": 0,
+    "seconds": 0.31853604316711426
+  }
+]

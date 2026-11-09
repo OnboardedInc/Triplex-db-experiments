@@ -1,0 +1,22 @@
+{
+  "merge": "f1f00115f166742381af587bb8435fba21e7d77e",
+  "mainStill": "28c61c72b52255bd98c31ec7ccd372e1fcc4ab96",
+  "trackedStatus": "clean",
+  "sourceHashes": {
+    "lab/acceptance/build_contract.py": "8ea37fba24579e9d0751c480e49eeefb0ee121dc5692c78d5ef48826493efe5d",
+    "lab/acceptance/RULINGS.md": "13a880df8878f3eecec48fa367ade87fe00e22352a4ef61a0799e8aef0634bcd",
+    "lab/acceptance/RULINGS-PENDING.md": "e414c195d51c08f927684ec1dab9cb73eae3df1fb016eec2707f7bb7cafb5e91",
+    "lab/acceptance/obligations.json": "8bb4b393a2b1636eea00a0609d04a28b54adaecdc5d2f9ffd6d582edb2fe935c",
+    "lab/acceptance/oracle-contract.json": "a7ec2fe98f8bb066fe6ea55e89344905f5e9c760b076152f5377c414d18adbd0",
+    "lab/acceptance/load-contract.json": "c54af6122604a7cbe49c4de41ba658f9076cea8701f90cc4e3583f1cad009428",
+    "lab/acceptance/budgets.json": "c09b5257c08d050d9c99d8e1595cd4817b9c8c1337afba291109e7fd0c7a8159",
+    "lab/acceptance/capability-matrix.md": "36fd4485da5d7b25fc4406722645f0d49cf7cddc519493b6d752f6b731c5cf4f",
+    "lab/acceptance/ACCEPTANCE.md": "a0408e79ededa3722e8afe04fb6979dcdbb547911f437efc7626f5e060509309",
+    "lab/bin/claim.mjs": "4069ca82ea877eed39cdddc8e0323b09d392fd013f9a2c8ac8f542a1bed62e2a",
+    "lab/bin/test/claim.test.mjs": "62de70ed333c40f8662da5749179f985f9f8b961a6c10459a0dadfad5bceb476",
+    "lab/bin/test/claim-round2.test.mjs": "6aef70bd2448a6b37dc040d19d9ee219a4e4e5fdf78c8094e1bb66ec45104be9"
+  },
+  "sourceMatchesCandidate": true,
+  "allHeavyJobsCompleted": true,
+  "scratchRemovedAfterChecks": true
+}

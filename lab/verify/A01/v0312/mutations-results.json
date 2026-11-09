@@ -1,0 +1,13 @@
+[
+  {
+    "label": "mutations",
+    "argv": [
+      "python3",
+      "-I",
+      "-B",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-a01-0311/lab/verify/A01/v0312/capture_mutations.py"
+    ],
+    "exit": 0,
+    "seconds": 237.25571393966675
+  }
+]

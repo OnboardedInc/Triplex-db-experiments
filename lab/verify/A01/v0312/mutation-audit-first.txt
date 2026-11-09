@@ -1,0 +1,1 @@
+Audit helper first attempt expected CONTRACT INVALID without its trailing colon. Corrected the read-only assertion to the harness exact header CONTRACT INVALID:. No candidate or mutation expectation changed.

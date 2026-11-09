@@ -1,0 +1,10 @@
+test_datomic_identity_bound_but_image_unpinned (__main__.RealPayloads.test_datomic_identity_bound_but_image_unpinned) ... ok
+test_match_count_and_contract_remain_exact (__main__.RealPayloads.test_match_count_and_contract_remain_exact) ... ok
+test_partial_or_unknown_wrappers_fail_closed (__main__.RealPayloads.test_partial_or_unknown_wrappers_fail_closed) ... ok
+test_real_rows_reorder_and_metadata_stays_exact (__main__.RealPayloads.test_real_rows_reorder_and_metadata_stays_exact) ... ok
+test_unicode_comparators_and_codepoint_distinctions (__main__.RealPayloads.test_unicode_comparators_and_codepoint_distinctions) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.122s
+
+OK

@@ -1,0 +1,1 @@
+Audit helper first attempt: KeyError O-OBS when inspecting pre-pin parent. The prior contract omits the key rather than assigning null. Corrected read-only audit to use .get; no candidate bytes changed.
