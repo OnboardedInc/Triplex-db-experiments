@@ -175,3 +175,5 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   sources the shared residents cannot give without changes (engine statement logs, read-only engine-config mounts, crash and memory-failure
   windows, physical-file inventory for erasure scans); round5/SOURCES.md names each change. OBS01 pauses until the scale window, where those
   protocols run on exclusive slots configured for observation (with G03's containers); no resident is changed.
+- K01 round 8 (6f7e11f): G0 covers all 89 declared columns in 11 tables plus dynamic columns; 167 tests. In review round 7. Queued for
+  K01's next round: Q93c's normalized digest D' for E1 (fresh seed against golden).
