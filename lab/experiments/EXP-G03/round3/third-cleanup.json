@@ -1,0 +1,62 @@
+[
+  {
+    "holder": "CX-G03-r3-claim-2bea5f2f",
+    "before": {
+      "containers": "",
+      "volumes": "{\"Availability\":\"N/A\",\"Driver\":\"local\",\"Group\":\"N/A\",\"Labels\":\"tx2.holder=CX-G03-r3-claim-2bea5f2f,tx2.managed-by=lab/bin/engine.mjs,tx2.run=55100f7ebcabf055\",\"Links\":\"N/A\",\"Mountpoint\":\"/var/lib/docker/volumes/tx2-g03-55100f7ebcabf055-in-25c77b/_data\",\"Name\":\"tx2-g03-55100f7ebcabf055-in-25c77b\",\"Scope\":\"local\",\"Size\":\"N/A\",\"Status\":\"N/A\"}\n{\"Availability\":\"N/A\",\"Driver\":\"local\",\"Group\":\"N/A\",\"Labels\":\"tx2.holder=CX-G03-r3-claim-2bea5f2f,tx2.managed-by=lab/bin/engine.mjs,tx2.run=55100f7ebcabf055\",\"Links\":\"N/A\",\"Mountpoint\":\"/var/lib/docker/volumes/tx2-g03-55100f7ebcabf055-in-70b97e/_data\",\"Name\":\"tx2-g03-55100f7ebcabf055-in-70b97e\",\"Scope\":\"local\",\"Size\":\"N/A\",\"Status\":\"N/A\"}\n{\"Availability\":\"N/A\",\"Driver\":\"local\",\"Group\":\"N/A\",\"Labels\":\"tx2.holder=CX-G03-r3-claim-2bea5f2f,tx2.managed-by=lab/bin/engine.mjs,tx2.run=55100f7ebcabf055\",\"Links\":\"N/A\",\"Mountpoint\":\"/var/lib/docker/volumes/tx2-g03-55100f7ebcabf055-in-75deea/_data\",\"Name\":\"tx2-g03-55100f7ebcabf055-in-75deea\",\"Scope\":\"local\",\"Size\":\"N/A\",\"Status\":\"N/A\"}\n{\"Availability\":\"N/A\",\"Driver\":\"local\",\"Group\":\"N/A\",\"Labels\":\"tx2.holder=CX-G03-r3-claim-2bea5f2f,tx2.managed-by=lab/bin/engine.mjs,tx2.run=55100f7ebcabf055\",\"Links\":\"N/A\",\"Mountpoint\":\"/var/lib/docker/volumes/tx2-g03-55100f7ebcabf055-in-84cb01/_data\",\"Name\":\"tx2-g03-55100f7ebcabf055-in-84cb01\",\"Scope\":\"local\",\"Size\":\"N/A\",\"Status\":\"N/A\"}\n{\"Availability\":\"N/A\",\"Driver\":\"local\",\"Group\":\"N/A\",\"Labels\":\"tx2.holder=CX-G03-r3-claim-2bea5f2f,tx2.managed-by=lab/bin/engine.mjs,tx2.run=55100f7ebcabf055\",\"Links\":\"N/A\",\"Mountpoint\":\"/var/lib/docker/volumes/tx2-g03-55100f7ebcabf055-in-95a47d/_data\",\"Name\":\"tx2-g03-55100f7ebcabf055-in-95a47d\",\"Scope\":\"local\",\"Size\":\"N/A\",\"Status\":\"N/A\"}\n{\"Availability\":\"N/A\",\"Driver\":\"local\",\"Group\":\"N/A\",\"Labels\":\"tx2.holder=CX-G03-r3-claim-2bea5f2f,tx2.managed-by=lab/bin/engine.mjs,tx2.run=55100f7ebcabf055\",\"Links\":\"N/A\",\"Mountpoint\":\"/var/lib/docker/volumes/tx2-g03-55100f7ebcabf055-in-950cff/_data\",\"Name\":\"tx2-g03-55100f7ebcabf055-in-950cff\",\"Scope\":\"local\",\"Size\":\"N/A\",\"Status\":\"N/A\"}\n{\"Availability\":\"N/A\",\"Driver\":\"local\",\"Group\":\"N/A\",\"Labels\":\"tx2.holder=CX-G03-r3-claim-2bea5f2f,tx2.managed-by=lab/bin/engine.mjs,tx2.run=55100f7ebcabf055\",\"Links\":\"N/A\",\"Mountpoint\":\"/var/lib/docker/volumes/tx2-g03-55100f7ebcabf055-in-112503/_data\",\"Name\":\"tx2-g03-55100f7ebcabf055-in-112503\",\"Scope\":\"local\",\"Size\":\"N/A\",\"Status\":\"N/A\"}\n{\"Availability\":\"N/A\",\"Driver\":\"local\",\"Group\":\"N/A\",\"Labels\":\"tx2.holder=CX-G03-r3-claim-2bea5f2f,tx2.managed-by=lab/bin/engine.mjs,tx2.run=55100f7ebcabf055\",\"Links\":\"N/A\",\"Mountpoint\":\"/var/lib/docker/volumes/tx2-g03-55100f7ebcabf055-in-a3dfb9/_data\",\"Name\":\"tx2-g03-55100f7ebcabf055-in-a3dfb9\",\"Scope\":\"local\",\"Size\":\"N/A\",\"Status\":\"N/A\"}\n{\"Availability\":\"N/A\",\"Driver\":\"local\",\"Group\":\"N/A\",\"Labels\":\"tx2.holder=CX-G03-r3-claim-2bea5f2f,tx2.managed-by=lab/bin/engine.mjs,tx2.run=55100f7ebcabf055\",\"Links\":\"N/A\",\"Mountpoint\":\"/var/lib/docker/volumes/tx2-g03-55100f7ebcabf055-in-a7d75d/_data\",\"Name\":\"tx2-g03-55100f7ebcabf055-in-a7d75d\",\"Scope\":\"local\",\"Size\":\"N/A\",\"Status\":\"N/A\"}\n{\"Availability\":\"N/A\",\"Driver\":\"local\",\"Group\":\"N/A\",\"Labels\":\"tx2.holder=CX-G03-r3-claim-2bea5f2f,tx2.managed-by=lab/bin/engine.mjs,tx2.run=55100f7ebcabf055\",\"Links\":\"N/A\",\"Mountpoint\":\"/var/lib/docker/volumes/tx2-g03-55100f7ebcabf055-in-a15754/_data\",\"Name\":\"tx2-g03-55100f7ebcabf055-in-a15754\",\"Scope\":\"local\",\"Size\":\"N/A\",\"Status\":\"N/A\"}\n{\"Availability\":\"N/A\",\"Driver\":\"local\",\"Group\":\"N/A\",\"Labels\":\"tx2.holder=CX-G03-r3-claim-2bea5f2f,tx2.managed-by=lab/bin/engine.mjs,tx2.run=55100f7ebcabf055\",\"Links\":\"N/A\",\"Mountpoint\":\"/var/lib/docker/volumes/tx2-g03-55100f7ebcabf055-inst-94b8f6/_data\",\"Name\":\"tx2-g03-55100f7ebcabf055-inst-94b8f6\",\"Scope\":\"local\",\"Size\":\"N/A\",\"Status\":\"N/A\"}\n{\"Availability\":\"N/A\",\"Driver\":\"local\",\"Group\":\"N/A\",\"Labels\":\"tx2.holder=CX-G03-r3-claim-2bea5f2f,tx2.managed-by=lab/bin/engine.mjs,tx2.run=r3-claim-2bea5f2f\",\"Links\":\"N/A\",\"Mountpoint\":\"/var/lib/docker/volumes/tx2-g03-r3-claim-2bea5f2f-store/_data\",\"Name\":\"tx2-g03-r3-claim-2bea5f2f-store\",\"Scope\":\"local\",\"Size\":\"N/A\",\"Status\":\"N/A\"}",
+      "networks": ""
+    },
+    "actions": [
+      "tx2-g03-55100f7ebcabf055-in-25c77b",
+      "tx2-g03-55100f7ebcabf055-in-70b97e",
+      "tx2-g03-55100f7ebcabf055-in-75deea",
+      "tx2-g03-55100f7ebcabf055-in-84cb01",
+      "tx2-g03-55100f7ebcabf055-in-95a47d",
+      "tx2-g03-55100f7ebcabf055-in-950cff",
+      "tx2-g03-55100f7ebcabf055-in-112503",
+      "tx2-g03-55100f7ebcabf055-in-a3dfb9",
+      "tx2-g03-55100f7ebcabf055-in-a7d75d",
+      "tx2-g03-55100f7ebcabf055-in-a15754",
+      "tx2-g03-55100f7ebcabf055-inst-94b8f6",
+      "tx2-g03-r3-claim-2bea5f2f-store"
+    ],
+    "after": {
+      "containers": "",
+      "volumes": "",
+      "networks": ""
+    },
+    "evaluatorRemoved": true,
+    "sourceRemoved": true
+  },
+  {
+    "holder": "CX-G03-r3-integrity-d0e5c449",
+    "before": {
+      "containers": "{\"Command\":\"\\\"docker-entrypoint.s…\\\"\",\"CreatedAt\":\"2026-11-08 19:32:52 -0500 EST\",\"HealthStatus\":\"none\",\"ID\":\"2fe600aca994\",\"Image\":\"302cbcd48d5b\",\"Labels\":\"tx2.box-build-inputs-sha256=60fc3d78913757014366477ba46259ee71e61d89039676a45986160f4cb02334,tx2.holder=CX-G03-r3-integrity-d0e5c449,tx2.managed-by=lab/bin/engine.mjs,tx2.run=9c3ec420b4c26561\",\"LocalVolumes\":\"2\",\"Mounts\":\"tx2-g03-r3-int…,tx2-g03-9c3ec4…\",\"Names\":\"tx2-g03-9c3ec420b4c26561-build-b276d0\",\"Networks\":\"none\",\"Platform\":{\"architecture\":\"arm64\",\"os\":\"linux\"},\"Ports\":\"\",\"RunningFor\":\"7 minutes ago\",\"Size\":\"4.1kB (virtual 290MB)\",\"State\":\"exited\",\"Status\":\"Exited (0) 7 minutes ago\"}\n{\"Command\":\"\\\"docker-entrypoint.s…\\\"\",\"CreatedAt\":\"2026-11-08 19:32:40 -0500 EST\",\"HealthStatus\":\"none\",\"ID\":\"07ec6f23451b\",\"Image\":\"302cbcd48d5b\",\"Labels\":\"tx2.box-build-inputs-sha256=60fc3d78913757014366477ba46259ee71e61d89039676a45986160f4cb02334,tx2.holder=CX-G03-r3-integrity-d0e5c449,tx2.managed-by=lab/bin/engine.mjs,tx2.run=bd3bb19212b917e5\",\"LocalVolumes\":\"2\",\"Mounts\":\"tx2-g03-bd3bb1…,tx2-g03-bd3bb1…\",\"Names\":\"tx2-g03-bd3bb19212b917e5-case-72a803\",\"Networks\":\"none\",\"Platform\":{\"architecture\":\"arm64\",\"os\":\"linux\"},\"Ports\":\"\",\"RunningFor\":\"7 minutes ago\",\"Size\":\"20.5kB (virtual 290MB)\",\"State\":\"running\",\"Status\":\"Up 7 minutes\"}",
+      "volumes": "{\"Availability\":\"N/A\",\"Driver\":\"local\",\"Group\":\"N/A\",\"Labels\":\"tx2.holder=CX-G03-r3-integrity-d0e5c449,tx2.managed-by=lab/bin/engine.mjs,tx2.run=9c3ec420b4c26561\",\"Links\":\"N/A\",\"Mountpoint\":\"/var/lib/docker/volumes/tx2-g03-9c3ec420b4c26561-inst-c0efba/_data\",\"Name\":\"tx2-g03-9c3ec420b4c26561-inst-c0efba\",\"Scope\":\"local\",\"Size\":\"N/A\",\"Status\":\"N/A\"}\n{\"Availability\":\"N/A\",\"Driver\":\"local\",\"Group\":\"N/A\",\"Labels\":\"tx2.holder=CX-G03-r3-integrity-d0e5c449,tx2.managed-by=lab/bin/engine.mjs,tx2.run=bd3bb19212b917e5\",\"Links\":\"N/A\",\"Mountpoint\":\"/var/lib/docker/volumes/tx2-g03-bd3bb19212b917e5-in-cea5e3/_data\",\"Name\":\"tx2-g03-bd3bb19212b917e5-in-cea5e3\",\"Scope\":\"local\",\"Size\":\"N/A\",\"Status\":\"N/A\"}\n{\"Availability\":\"N/A\",\"Driver\":\"local\",\"Group\":\"N/A\",\"Labels\":\"tx2.holder=CX-G03-r3-integrity-d0e5c449,tx2.managed-by=lab/bin/engine.mjs,tx2.run=bd3bb19212b917e5\",\"Links\":\"N/A\",\"Mountpoint\":\"/var/lib/docker/volumes/tx2-g03-bd3bb19212b917e5-inst-874c72/_data\",\"Name\":\"tx2-g03-bd3bb19212b917e5-inst-874c72\",\"Scope\":\"local\",\"Size\":\"N/A\",\"Status\":\"N/A\"}\n{\"Availability\":\"N/A\",\"Driver\":\"local\",\"Group\":\"N/A\",\"Labels\":\"tx2.holder=CX-G03-r3-integrity-d0e5c449,tx2.managed-by=lab/bin/engine.mjs,tx2.run=r3-integrity-d0e5c449\",\"Links\":\"N/A\",\"Mountpoint\":\"/var/lib/docker/volumes/tx2-g03-r3-integrity-d0e5c449-store/_data\",\"Name\":\"tx2-g03-r3-integrity-d0e5c449-store\",\"Scope\":\"local\",\"Size\":\"N/A\",\"Status\":\"N/A\"}",
+      "networks": ""
+    },
+    "actions": [
+      {
+        "removed": "tx2-g03-9c3ec420b4c26561-build-b276d0",
+        "id": "2fe600aca9940f789cd69d681adbbb6b2a9effb4102f1c211112d054c29d9ecb",
+        "cgroupGone": true
+      },
+      {
+        "removed": "tx2-g03-bd3bb19212b917e5-case-72a803",
+        "id": "07ec6f23451beefb7ddfc3b870df2be2a1c3e21cb8c87eb79b03d55e2850635b",
+        "cgroupGone": true
+      },
+      "tx2-g03-9c3ec420b4c26561-inst-c0efba",
+      "tx2-g03-bd3bb19212b917e5-in-cea5e3",
+      "tx2-g03-bd3bb19212b917e5-inst-874c72",
+      "tx2-g03-r3-integrity-d0e5c449-store"
+    ],
+    "after": {
+      "containers": "",
+      "volumes": "",
+      "networks": ""
+    },
+    "evaluatorRemoved": true,
+    "sourceRemoved": true
+  }
+]

@@ -355,8 +355,9 @@ export function reconcile(ledger, allContainers) {
   const exists = new Set(allContainers.map(c => c.name));
   const dropped = [];
   ledger.reservations = ledger.reservations.filter(entry => {
-    // [EXP-G03] Why: failed cgroup proofs retain capacity even after Docker removed the container. Rejected: treating absence as death.
-    if (entry.cleanupFailed || exists.has(entry.container) || pidAlive(entry.pid)) return true;
+    // [EXP-G03] Why: a Docker-list snapshot can predate creation, and the creator can exit before reconciliation; boxes retain capacity from reservation until explicit cleanup/proof.
+    // Rejected: retaining only failed proofs (the reservation could already be lost before proof starts).
+    if (entry.cleanupRequired || entry.cleanupFailed || exists.has(entry.container) || pidAlive(entry.pid)) return true;
     dropped.push(entry);
     return false;
   });

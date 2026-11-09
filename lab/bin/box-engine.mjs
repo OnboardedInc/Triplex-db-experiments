@@ -3,9 +3,11 @@
 import { cgroupProofScript } from './box-policy.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
-import { REPO, admission, atomicJson, defaultHolder, docker, inspect, listTx2Containers, now, reconcile, sha256, slotInfo, readOwner, vmDisk, withPool, fail } from './lib.mjs';
+import { REPO, admission, appendEvent, atomicJson, defaultHolder, docker, inspect, listTx2Containers, now, reconcile, sha256, slotInfo, readOwner, vmDisk, withPool, fail } from './lib.mjs';
 
 export async function reserveBox(config, name, options, fn, { memory = 268435456, disk = 0 } = {}) {
+  const controller = options['controller-pid'] === undefined ? process.pid : Number(options['controller-pid']);
+  if (!Number.isSafeInteger(controller) || controller < 1 || (options['controller-pid'] !== undefined && controller !== process.ppid)) fail('REFUSED', 'controller pid must be the actual Mac parent process');
   const diskStat = fs.statfsSync(REPO);
   if (diskStat.bavail * diskStat.bsize < 5 * 1024 ** 3) fail('REFUSED', 'host free disk below 5 GiB');
   await withPool(async ledger => {
@@ -14,7 +16,9 @@ export async function reserveBox(config, name, options, fn, { memory = 268435456
     if (ledger.reservations.some(r => r.container === name)) fail('REFUSED', `${name} already reserved`);
     const v = admission({ config, reservations: ledger.reservations, running, request: { container: name, memBytes: memory, diskForecastBytes: disk }, diskUsedBytes: vmDisk(config).usedBytes });
     if (!v.ok) fail('REFUSED', `box pool: ${v.reasons.join('; ')}; holders: ${v.holders.join(', ')}`);
-    ledger.reservations.push({ container: name, memBytes: memory, cpus: 1, diskForecastBytes: disk, holder: defaultHolder(options), state: 'starting', pid: process.pid, reservedAt: now() });
+    // [EXP-G03] Why: the controller lives through cleanup, unlike this short-lived creator; the marker also survives controller death and incomplete Docker snapshots.
+    // Rejected: creator-pid liveness alone (parallel creation lost a live box's reservation before its kill proof).
+    ledger.reservations.push({ container: name, memBytes: memory, cpus: 1, diskForecastBytes: disk, holder: defaultHolder(options), state: 'starting', pid: controller, cleanupRequired: true, reservedAt: now() });
   });
   try { return await fn(); }
   finally {
@@ -60,9 +64,22 @@ export async function boxCommand(config, action, opts, { policy, authorityGit } 
     });
     const image = opts['proof-image'];
     if (image && !/^sha256:[0-9a-f]{64}$/.test(image)) fail('USAGE', 'proof image must be an immutable id');
+    if (opts['recover-reservation'] && (!image || typeof opts.note !== 'string' || !opts.note.trim())) fail('REFUSED', 'cleanup recovery needs a proof image and a note');
     if (image) await withPool(async ledger => {
-      const entry = ledger.reservations.find(r => r.container === name && r.holder === holder);
+      let entry = ledger.reservations.find(r => r.container === name && r.holder === holder);
+      if (!entry && ledger.reservations.some(r => r.container === name)) fail('REFUSED', 'reservation belongs to another holder');
+      // [EXP-G03] Why: an operator can recover a pre-fix lost reservation only from an owned existing container's actual cap, before kill/proof, with ordinary admission.
+      // Rejected: hand-editing the ledger or deleting an orphan without the kernel proof.
+      if (!entry && opts['recover-reservation']) {
+        if (!existing || !opts.note || !Number.isSafeInteger(existing.HostConfig.Memory) || existing.HostConfig.Memory < 67108864) fail('REFUSED', 'recovery needs an owned existing capped container and a note');
+        entry = {container:name,holder,memBytes:existing.HostConfig.Memory,cpus:1,diskForecastBytes:0,pid:process.pid,cleanupRequired:true,cleanupFailed:true,candidateId:id,state:'recovering-kill',reservedAt:now(),recoveryNote:opts.note};
+        const reservations = [...ledger.reservations,entry];
+        const v = admission({config,reservations,running:listTx2Containers({all:true}),request:{container:name,memBytes:entry.memBytes,diskForecastBytes:0},diskUsedBytes:vmDisk(config).usedBytes});
+        if (!v.ok) fail('REFUSED', `cleanup recovery admission: ${v.reasons.join('; ')}`);
+        ledger.reservations.push(entry);appendEvent({event:'box-cleanup-reservation-recovered',entry});
+      }
       if (!entry || entry.memBytes < 67108864) fail('REFUSED', 'kill proof needs the candidate reservation retained');
+      if (opts['recover-reservation']) { if (!opts.note) fail('REFUSED', 'cleanup recovery needs a note'); entry.pid = process.pid; entry.cleanupRequired = true; }
       Object.assign(entry, { cleanupFailed: true, candidateId: id, state: 'proving-kill' });
     });
     if (existing) docker(['rm', '-f', name]);

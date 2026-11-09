@@ -1,0 +1,33 @@
+{
+  "reason": "reservation lost before cgroup proof under concurrent creation",
+  "root": 67892,
+  "stopped": [
+    {
+      "pid": 87879,
+      "ppid": 67905,
+      "cmd": "/Users/sam/.hermes/node/bin/node /Users/sam/.tx2-evaluator/fixtures-g03-r3-claim-2bea5f2f/driver.mjs /Users/sam/.tx2-evaluator/fixtures-g03-r3-claim-2bea5f2f/runs/request-1.json"
+    },
+    {
+      "pid": 67905,
+      "ppid": 67903,
+      "cmd": "/Users/sam/.hermes/node/bin/node --test-concurrency=2 lab/bin/test/claim.test.mjs"
+    },
+    {
+      "pid": 67903,
+      "ppid": 67892,
+      "cmd": "node --test --test-concurrency=2 lab/bin/test/claim.test.mjs lab/bin/test/claim-round2.test.mjs"
+    },
+    {
+      "pid": 67892,
+      "ppid": 82077,
+      "cmd": "node lab/bin/heavy.mjs --label CX-G03-r3-claim-suites3 -- node --test --test-concurrency=2 lab/bin/test/claim.test.mjs lab/bin/test/claim-round2.test.mjs"
+    }
+  ],
+  "allowedToFinish": [
+    {
+      "pid": 82422,
+      "ppid": 87879,
+      "cmd": "/Users/sam/.hermes/node/bin/node /Users/sam/.tx2-evaluator/fixtures-g03-r3-claim-2bea5f2f/lab/bin/engine.mjs box remove-volume --run 55100f7ebcabf055 --holder CX-G03-r3-claim-2bea5f2f --authority f3307503d00b19d473deb0bf25798586fa8a2969 --authority-repo /var/folders/d5/9yczc0fd0ws2w_wl09gwlk8r0000gn/T/tx2-claim-test-AsiCVq/repo-run --name tx2-g03-55100f7ebcabf055-in-53a985"
+    }
+  ]
+}

@@ -95,7 +95,7 @@ export class BoxExecutor {
     if (storeLabel.Labels?.['tx2.managed-by'] !== 'lab/bin/engine.mjs') throw Error('unmanaged Linux store');
   }
   engine(action, extra = []) {
-    const r = spawnSync(process.execPath, [path.join(REPO, 'lab/bin/engine.mjs'), 'box', action, '--run', this.run, '--holder', this.holder, ...(this.authority ? ['--authority', this.authority.commit, '--authority-repo', this.authority.repo] : []), ...extra], { encoding: 'utf8', timeout: 180000, maxBuffer: 4 * 1024 * 1024 });
+    const r = spawnSync(process.execPath, [path.join(REPO, 'lab/bin/engine.mjs'), 'box', action, '--run', this.run, '--holder', this.holder, '--controller-pid', String(process.pid), ...(this.authority ? ['--authority', this.authority.commit, '--authority-repo', this.authority.repo] : []), ...extra], { encoding: 'utf8', timeout: 180000, maxBuffer: 4 * 1024 * 1024 });
     if (r.status !== 0) throw Error(`engine box ${action}: ${r.stderr || r.error || r.stdout}`);
     return JSON.parse(r.stdout);
   }

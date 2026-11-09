@@ -42,3 +42,10 @@ test('a separate clone in a shared writable root is still refused',async()=>{
  assert.ok(evaluatorCloneProblems('/private/tmp/evaluator',source,evaluator,'/private/tmp/evaluator/runs/a').length);
  assert.ok(evaluatorCloneProblems('/Users/sam/.tx2-evaluator/repo',source,{...evaluator,gitDir:()=>'/source/worktrees/g03'},'/Users/sam/.tx2-evaluator/repo/runs/a').length);
 });
+// [EXP-G03] Why: a parallel Docker-list snapshot can omit a just-created box after its creator exits, before proof starts.
+// Rejected: testing only cleanupFailed, which is set too late to protect that interval.
+test('box reservations survive stale Docker snapshots before the kill proof starts',async()=>{
+ const {reconcile}=await import('../lib.mjs');const entry={container:'tx2-g03-new-build',cleanupRequired:true,pid:999999,memBytes:67108864},ledger={reservations:[entry]};
+ assert.deepEqual(reconcile(ledger,[]),[]);assert.deepEqual(ledger.reservations,[entry]);
+ assert.deepEqual(reconcile(ledger,[{name:entry.container,running:false}]),[]);assert.deepEqual(ledger.reservations,[entry]);
+});
