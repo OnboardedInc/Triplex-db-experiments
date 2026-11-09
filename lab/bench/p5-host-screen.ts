@@ -164,6 +164,7 @@ async function activationArm(name: string, W: number) {
       fpBefore = { status: "FINGERPRINT-MATCH-BEFORE-ACTIVATION", wallS: (performance.now() - t) / 1000 };
     }
     await h.broker.appendStats(true);
+    h.frameEvents.length = 0;
     const rawStart: any = await h.broker.storeCounts();
     const t0 = performance.now();
     const act = await comp.transact(
@@ -370,6 +371,13 @@ async function activationArm(name: string, W: number) {
           journalShareOfWriterTotal: sumW("journalMs") / sumW("totalMs"),
           journalShareOfWall: sumW("journalMs") / wallMs,
           perCommitJournalRows: [...new Set(per.map((x) => x[7]))],
+        },
+        frames: {
+          count: h.frameEvents.length,
+          appendMs: h.frameEvents.reduce((a, f) => a + f.appendMs, 0),
+          watermarkMs: h.frameEvents.reduce((a, f) => a + f.watermarkMs, 0),
+          bytes: h.frameEvents.reduce((a, f) => a + f.bytes, 0),
+          watermarkMsMax: h.frameEvents.reduce((a, f) => Math.max(a, f.watermarkMs), 0),
         },
         host: { ...hostSplit, perCommitMs: Object.fromEntries(Object.entries(hostSplit).map(([k, v]) => [k, (v as number) / writerSplit.appends])) },
         eluMainThread: eluMain,

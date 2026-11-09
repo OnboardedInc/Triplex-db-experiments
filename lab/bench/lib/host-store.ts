@@ -89,12 +89,19 @@ export interface MappedHostOptions {
   readonly clockStart?: number;
 }
 export async function openMappedHost(dir: string, scope: string, options: MappedHostOptions = {}) {
+  const frameEvents: { appendMs: number; watermarkMs: number; members: number; bytes: number }[] = [];
   if (options.reopen && !options.idSeed) throw Error("reopen requires a distinct id seed");
   const broker = await q.HostBroker.open({
     dir,
     scopeKey: scope,
     minFreeBytes: 5 * 1024 ** 3,
     frameRetention: options.frameRetention ?? { tailBytes: HOST_FRAME_TAIL_BYTES },
+    // [EXP-P5N-R2] Why: the profile needs the broker's own per-frame split: the append round trip (writer thread, fsync) against the synchronous watermark publication (ack file plus purge) that follows it on the owner thread.
+    // Rejected: inferring the watermark cost from a CPU profile only (a blocking Atomics.wait shows as idle, not as the function that waits).
+    onEvent: (e: any) => {
+      if (e.type === "frame")
+        frameEvents.push({ appendMs: e.appendMs, watermarkMs: e.watermarkAt - e.at, members: e.members, bytes: e.bytes });
+    },
   });
   const detached: any = {
     query: async () => [],
@@ -647,6 +654,7 @@ export async function openMappedHost(dir: string, scope: string, options: Mapped
     broker,
     map,
     hstats,
+    frameEvents,
     // [EXP-P5N] Why: G-JNL reads the journal triples through core's public Triples service (match, transactionsForEntity), not through the broker, so "queryable as ordinary triples" is checked on the product API.
     api: {
       match: (pattern: any) => managed.runPromise(T.match(pattern)) as Promise<any[]>,
