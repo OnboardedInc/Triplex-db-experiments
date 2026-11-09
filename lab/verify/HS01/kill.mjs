@@ -69,7 +69,17 @@ for (let cycle = 0; cycle <= 80; cycle++) {
         const recovered = new Map(x.recovered.map((r) => [r.op, r]));
         for (const [op, pos] of acks) {
           const r = recovered.get(op);
-          const expected = Array.from({ length: 10 }, (_, j) => op + "/" + j).sort();
+          // Same id recipe as kill-child.ts: the generator's integer-coded shape, one text id per op.
+          const [, opCycle, opIndex] = op.split("-").map(Number);
+          const expected = Array.from({ length: 10 }, (_, j) =>
+            j % 10 === 9
+              ? op + "/" + j
+              : "K1LLHEAD" +
+                (opCycle * 1_000_000 + opIndex * 100 + j)
+                  .toString(36)
+                  .toUpperCase()
+                  .padStart(18, "0"),
+          ).sort();
           if (
             !r ||
             r.receipt.positions[0] !== pos ||

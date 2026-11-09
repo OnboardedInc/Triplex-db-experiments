@@ -324,7 +324,9 @@ try {
       .prepare("SELECT typeof(v) kind,count(*) n FROM journal WHERE t=7 GROUP BY kind")
       .all(),
     headSlots = db.prepare("SELECT hid,name FROM hds ORDER BY hid").all(),
-    framesKept = db.prepare("SELECT count(*) n,coalesce(sum(end-offset),0) bytes FROM frames").get(),
+    framesKept = db
+      .prepare("SELECT count(*) n,coalesce(sum(end-offset),0) bytes FROM frames")
+      .get(),
     freelist = db.pragma("freelist_count", { simple: true }),
     fallback = db
       .prepare(

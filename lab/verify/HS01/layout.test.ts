@@ -214,7 +214,9 @@ describe("EXP-HS01", () => {
       storage.exec("DELETE FROM codec");
       insert.run(...fields.map((k) => s[k]));
       const stored = select.get();
-      idClasses[typeof stored.id === "number" ? "integer" : Buffer.isBuffer(stored.id) ? "blob" : "text"]++;
+      idClasses[
+        typeof stored.id === "number" ? "integer" : Buffer.isBuffer(stored.id) ? "blob" : "text"
+      ]++;
       const out = codec.decodeRow(stored, c);
       if (s.x) fallback++;
       if (s.t === 7 && !s.x) derived++;
@@ -499,6 +501,17 @@ describe("EXP-HS01", () => {
     await old.close();
     await expect(HostLog.open(dir, { minFreeBytes: 0 })).rejects.toThrow(BrokerLogError);
     await expect(HostLog.open(dir, { minFreeBytes: 0 })).rejects.toThrow(/Legacy broker layout v1/);
+  });
+  it("refuses a round 1 layout 2 store that has no head dictionary", async () => {
+    // [EXP-HS01] Why: round 1 stored ids without the hds dictionary; adopting them could hide rows from id lookups.
+    // Rejected: CREATE IF NOT EXISTS over the older store (silent adoption).
+    const dir = fresh(),
+      old = new Database(path.join(dir, "broker.db"));
+    old.exec("CREATE TABLE ents(eid INTEGER PRIMARY KEY,name TEXT NOT NULL UNIQUE)");
+    old.close();
+    await expect(HostLog.open(dir, { minFreeBytes: 0 })).rejects.toThrow(
+      /round 1 requires explicit migration/,
+    );
   });
   it("nested command claims bind their own positions", async () => {
     const { log } = await HostLog.open(fresh(), { minFreeBytes: 0 });

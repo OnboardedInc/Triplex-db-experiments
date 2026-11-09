@@ -50,7 +50,10 @@ const retained = (log: HostLog) => {
 };
 // publish=false appends without the automatic purge that publishWatermark runs, so a test sees each purge call itself.
 const hint = async (log: HostLog, frameBytes: number, publish = true) => {
-  const frame = await log.append(FrameKind.APPLIED_HINT, Buffer.alloc(frameBytes - FRAME_OVERHEAD, 7));
+  const frame = await log.append(
+    FrameKind.APPLIED_HINT,
+    Buffer.alloc(frameBytes - FRAME_OVERHEAD, 7),
+  );
   expect(frame.end - frame.offset).toBe(frameBytes);
   if (publish)
     log.publishWatermark({
@@ -102,7 +105,12 @@ const group = (log: HostLog, lsn: number, rows: TripleRow[], op: string) =>
           rows,
           priors: rows
             .filter((r) => r.retracted_position !== null)
-            .map((r) => ({ ...r, retracted_at: null, retracted_position: null, retract_tx_id: null })),
+            .map((r) => ({
+              ...r,
+              retracted_at: null,
+              retracted_position: null,
+              retract_tx_id: null,
+            })),
         },
       ],
     }),
@@ -145,7 +153,11 @@ describe("EXP-HS01 round 2 frame retention", () => {
       // Before the fix every call returned {removed:0, anchor:1} (reviewer's observation at LSN 2).
       expect(anchor).toBeGreaterThanOrEqual(big.lsn);
       expect(retained(log).n).toBe(1);
-      stats.reviewerReproduction = { payloadBytes: payload.length, frameBytes: big.end - big.offset, purges };
+      stats.reviewerReproduction = {
+        payloadBytes: payload.length,
+        frameBytes: big.end - big.offset,
+        purges,
+      };
       writeStats();
     } finally {
       await log.close();
@@ -153,8 +165,17 @@ describe("EXP-HS01 round 2 frame retention", () => {
   });
   it("makes progress at and around the 16 MiB work boundary, header and trailer included", async () => {
     const results: unknown[] = [];
-    for (const size of [16 * MiB - 1, 16 * MiB, 16 * MiB + 1, 16 * MiB + FRAME_OVERHEAD, 17 * MiB]) {
-      const { log } = await HostLog.open(fresh(), {
+    const dirs: string[] = [];
+    for (const size of [
+      16 * MiB - 1,
+      16 * MiB,
+      16 * MiB + 1,
+      16 * MiB + FRAME_OVERHEAD,
+      17 * MiB,
+    ]) {
+      const dir = fresh();
+      dirs.push(dir);
+      const { log } = await HostLog.open(dir, {
         minFreeBytes: 0,
         frameRetention: { tailFrames: 1 },
       });
@@ -165,9 +186,13 @@ describe("EXP-HS01 round 2 frame retention", () => {
         // Every call removes something (drain stops at zero), stays within 16 MiB unless it is one frame, and
         // the big frame (LSN 2, behind only the small opening frame) is gone within two calls.
         expect(calls.length, "size " + size).toBeLessThanOrEqual(3);
-        expect(calls.find((c) => c.anchor >= big.lsn), "size " + size).toBeDefined();
+        expect(
+          calls.find((c) => c.anchor >= big.lsn),
+          "size " + size,
+        ).toBeDefined();
         expect(calls.findIndex((c) => c.anchor >= big.lsn)).toBeLessThanOrEqual(1);
-        for (const c of calls) expect(c.bytes <= 16 * MiB || c.removed === 1, "size " + size).toBe(true);
+        for (const c of calls)
+          expect(c.bytes <= 16 * MiB || c.removed === 1, "size " + size).toBe(true);
         expect(retained(log).n).toBe(1);
         expect(hostLogRecovery(log).marker.base_lsn).toBe(log.nextLsn - 2);
         results.push({ size, calls });
@@ -177,13 +202,17 @@ describe("EXP-HS01 round 2 frame retention", () => {
     }
     stats.boundary = results;
     writeStats();
+    for (const dir of dirs) fs.rmSync(dir, { recursive: true, force: true });
   });
   it("purges and reopens the largest legal frame (256 MiB payload)", async () => {
     const free = fs.statfsSync(root);
     if (free.bavail * free.bsize < 5 * 1024 ** 3 + 1024 ** 3)
       throw Error("RESOURCE-ABORT largest-frame test needs 1 GiB above the 5 GiB floor");
     const dir = fresh();
-    let { log } = await HostLog.open(dir, { minFreeBytes: 5 * 1024 ** 3, frameRetention: { tailFrames: 1 } });
+    let { log } = await HostLog.open(dir, {
+      minFreeBytes: 5 * 1024 ** 3,
+      frameRetention: { tailFrames: 1 },
+    });
     try {
       const appendStart = performance.now();
       const frame = await log.append(FrameKind.APPLIED_HINT, Buffer.alloc(MAX_PAYLOAD, 3));
@@ -208,6 +237,8 @@ describe("EXP-HS01 round 2 frame retention", () => {
       writeStats();
     } finally {
       await log.close();
+      // The file keeps its 270 MB of freed pages; the measurement is recorded, so the store is disposable.
+      fs.rmSync(dir, { recursive: true, force: true });
     }
   }, 300_000);
   it("retains by bytes: the smallest suffix of at least tailBytes, default keeps all, invalid refused", async () => {
@@ -234,7 +265,11 @@ describe("EXP-HS01 round 2 frame retention", () => {
       { options: { tailFrames: 3, tailBytes: 50_000 }, frames: 3 },
       { options: { tailFrames: 3, tailBytes: 450_000 }, frames: 5, minimal: true },
       { options: { tailFrames: Infinity, tailBytes: 1 }, frames: 41 },
-    ] as { options: { tailFrames?: number; tailBytes?: number }; frames: number; minimal?: boolean }[]) {
+    ] as {
+      options: { tailFrames?: number; tailBytes?: number };
+      frames: number;
+      minimal?: boolean;
+    }[]) {
       const { log } = await open(options);
       try {
         for (let i = 0; i < 40; i++) await hint(log, frameBytes);
@@ -256,7 +291,10 @@ describe("EXP-HS01 round 2 frame retention", () => {
     await expect(open({ tailFrames: -1 })).rejects.toThrow(BrokerLogError);
   });
   it("holders and the last frame bound byte retention", async () => {
-    const { log } = await HostLog.open(fresh(), { minFreeBytes: 0, frameRetention: { tailBytes: 0 } });
+    const { log } = await HostLog.open(fresh(), {
+      minFreeBytes: 0,
+      frameRetention: { tailBytes: 0 },
+    });
     try {
       log.retain("consumer", 1);
       for (let i = 0; i < 10; i++) await hint(log, 1000);

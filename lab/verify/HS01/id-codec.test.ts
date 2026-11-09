@@ -20,7 +20,7 @@ const random = (n: number) => {
   let t = rng;
   t = Math.imul(t ^ (t >>> 15), t | 1);
   t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-  return (((t ^ (t >>> 14)) >>> 0) % n);
+  return ((t ^ (t >>> 14)) >>> 0) % n;
 };
 const b36 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const crock = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
@@ -119,7 +119,8 @@ describe("EXP-HS01 id codec", () => {
       if (cls === "blob" && (row.id as Buffer).length !== 16)
         must((row.id as Buffer).length % 2 === 1, "escape blob length", id);
       if (cls === "integer") must(Number.isSafeInteger(row.id), "integer not safe", id);
-      const fingerprint = cls + ":" + (Buffer.isBuffer(row.id) ? row.id.toString("hex") : String(row.id));
+      const fingerprint =
+        cls + ":" + (Buffer.isBuffer(row.id) ? row.id.toString("hex") : String(row.id));
       must(!byStored.has(fingerprint), "two ids share a stored value", id);
       byStored.set(fingerprint, id);
     }
@@ -129,7 +130,11 @@ describe("EXP-HS01 id codec", () => {
     expect(classes.text).toBeGreaterThan(20000);
     // Everything stored in the table decodes back to its text.
     for (const row of db.prepare("SELECT id,text FROM ids").iterate() as Iterable<any>)
-      must(unpackId(row.id, reader) === row.text.toString("utf16le"), "table scan differs", row.text.toString("utf16le"));
+      must(
+        unpackId(row.id, reader) === row.text.toString("utf16le"),
+        "table scan differs",
+        row.text.toString("utf16le"),
+      );
     db.close();
     if (process.env.HS01_RESULT) {
       const dir = path.join(root, randomUUID());

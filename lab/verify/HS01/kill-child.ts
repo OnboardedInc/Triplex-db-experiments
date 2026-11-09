@@ -51,11 +51,14 @@ nativeThreads.Worker = class extends OriginalWorker {
   }
 };
 syncBuiltinESMExports();
+// [EXP-HS01] Why: round 2 retention is by bytes as well as frames; the abrupt-stop schedule must run the byte path.
+// Rejected: leaving the frame-count-only path as the only one crash-tested.
+const retention = { tailFrames: 2, tailBytes: 9000 };
 const b = await HostBroker.open({
   dir,
   scopeKey: "vsql01-kill",
   minFreeBytes: 0,
-  frameRetention: { tailFrames: 2 },
+  frameRetention: retention,
 });
 const emit = (x: unknown) => console.log(JSON.stringify(x));
 emit({ event: "worker-instrumentation", instrumentation });
@@ -122,7 +125,10 @@ log.append = async (...args: any[]) => {
   const result = await pending;
   if (armed && mode === "purge") {
     log.retain("crash-feed", cursor.lsn);
-    await log.writer.request("purgeFrames", 2);
+    await log.writer.request("purgeFrames", {
+      frames: retention.tailFrames,
+      bytes: retention.tailBytes,
+    });
     await new Promise(() => {});
   }
   if (armed && mode === "after-append") await hold(mode);
@@ -151,7 +157,13 @@ for (let i = 0; ; i++) {
   }
   const rows = Array.from({ length: 10 }, (_, j) => ({
     ...Object.fromEntries(columns.map((c) => [c, null])),
-    id: op + "/" + j,
+    // The core generator's shape (8-character head, 18-character counter), so recovery also reads the integer id form;
+    // every tenth id is the former text shape.
+    id:
+      j % 10 === 9
+        ? op + "/" + j
+        : "K1LLHEAD" +
+          (cycle * 1_000_000 + i * 100 + j).toString(36).toUpperCase().padStart(18, "0"),
     entity_id: op,
     attribute: ":a" + j,
     value_type: "string",

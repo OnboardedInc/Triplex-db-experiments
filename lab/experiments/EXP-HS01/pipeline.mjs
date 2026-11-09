@@ -5,7 +5,7 @@ import path from "node:path";
 import { spawn, execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 const base = "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-HS01",
-  attempt = "final-" + randomUUID();
+  attempt = "r2-final-" + randomUUID();
 const stages = [];
 const resultFile = path.join(base, attempt + "-pipeline.json");
 fs.mkdirSync(base, { recursive: true });
