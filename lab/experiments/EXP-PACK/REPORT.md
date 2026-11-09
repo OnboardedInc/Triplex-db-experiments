@@ -25,4 +25,50 @@ pnpm 10.11 rejects bare --store-dir for pack and exec (both observed); the gate 
 
 ## Validation
 
-Attempt 1 (`triplex-pack-O2mgic`) started while the initial implementation was being committed, at source HEAD 0aa97f0f. All 12 builds, packs and tarball checks passed; the clean install passed. The stronger skipLibCheck:false check failed because the consumer fixture lacked @types/node and ESNext.Disposable. Runtime/CLI checks were not reached. Failure and logs are retained unchanged. The fixture now explicitly installs @types/node 25.9.1 (workspace catalog version) and uses Node and disposable library types. The next attempt runs after committing this correction with clean source status. Separate reviewer verification remains outstanding.
+Attempt 1 (`triplex-pack-O2mgic`) started while the initial implementation was being committed, at source HEAD 0aa97f0f. All 12 builds, packs and tarball checks passed; the clean install passed. The stronger skipLibCheck:false check failed because the consumer fixture lacked @types/node and ESNext.Disposable. Runtime/CLI checks were not reached. Failure and logs are retained unchanged. The fixture now explicitly installs @types/node 25.9.1 (workspace catalog version) and uses Node and disposable library types. Attempt 2 below ran after committing this correction with clean source status. Separate reviewer verification remains outstanding.
+
+## Final builder results
+
+Attempt 2: **PASS (packaging diagnostic only)**, `triplex-pack-UMylBa`. Source HEAD `903bd805e00c9369f482c13a825b091a97ae1ec5`; source working tree was clean before launch. The initial worktree had no node_modules or CLI dist; offline frozen install used the explicit shared store and downloaded zero packages. The successful attempt again removed all selected dist outputs and rebuilt without Turbo cache use, so previously built outputs could not satisfy it. Input content hashes matched at completion. Started 2026-11-09T08:07:59.195Z, finished 2026-11-09T08:08:32.137Z.
+
+| Package (scope @triplex-build/) | Version | Fresh build | Tarball/export checks | Strict installed declarations |
+| --- | --- | --- | --- | --- |
+| triplex | 0.2.0 | PASS | PASS | PASS |
+| triplex-cli | 0.1.1 | PASS | PASS | PASS |
+| triplex-cloudflare | 0.1.0 | PASS | PASS | PASS |
+| triplex-foundationdb | 0.1.0 | PASS | PASS | PASS |
+| triplex-host | 0.1.0 | PASS | PASS | PASS |
+| triplex-http | 0.1.1 | PASS | PASS | PASS |
+| triplex-postgres | 0.1.1 | PASS | PASS | PASS |
+| triplex-qlever | 0.1.0 | PASS | PASS | PASS |
+| triplex-sql | 0.2.0 | PASS | PASS | PASS |
+| triplex-sqlite | 0.1.1 | PASS | PASS | PASS |
+| triplex-testkit | 0.2.0 | PASS | PASS | PASS |
+| triplex-xtdb | 0.1.0 | PASS | PASS | PASS |
+
+Additional checks:
+
+- Inventory comparison: exactly the upstream 13-package list minus DuckDB; no other omissions.
+- Consumer npm install with scripts disabled: PASS. FoundationDB native installation deliberately skipped, matching upstream portability policy.
+- Consumer TypeScript 6.0.2, strict and skipLibCheck:false, all 22 declared public entry points (including CLI): PASS.
+- Node resolution of all packed public entry points: PASS.
+- SQLite/Datalog runtime: PASS; expected Alice row, optional basis semantics, valid-time basis/commit metadata, two overlay candidates with hypothetical provenance, current materialization and boundary at 5.
+- Installed CLI --help, --version (0.1.1), SQLite describe (ok:true, command:describe): PASS.
+- node --check, focused oxlint (0 warnings/errors), focused oxfmt --check: PASS.
+- DuckDB: **OUT-OF-SCOPE**, lab/SCOPE.md 4.3; reported effect-storage.ts:112 and TypeDomains.ts:17 TS4023 remain unresolved. No DuckDB builds or edits performed.
+
+The original scripts/check-packages.mjs is byte-for-byte unchanged: SHA256 `44ca4469409aaa3a6998bf1361278a53f93f41c89527c655f1b07acc4d36c1d0` before/after. It was not rerun as a full gate; its all-package build precondition and reported DuckDB failure are not declared fixed. Use the lab companion for the 12-package scope. No publishable package changed, so no Changeset is needed.
+
+## Evidence and contract audit
+
+Durable evidence root: `/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-PACK/`.
+
+- `cli-before-build/triplex-build-triplex-cli-0.1.1.tgz`: original missing-dist reproduction (only 3 files).
+- `inventory-audit.json`: upstream/lab package inventory and upstream checker hash.
+- `attempts/triplex-pack-O2mgic/`: first failure receipt, commands, exact compiler diagnostics, tarballs and generated consumer.
+- `attempts/triplex-pack-UMylBa/`: successful receipt, 44 command records/logs, fresh tarballs, generated consumer sources/tsconfig/package lock and CLI describe JSON output.
+- Committed `SHA256SUMS` covers receipts, command logs, tarballs and consumer inputs/lock. All 129 listed SHA256 checks were reread and passed. Dependency installations and npm caches remain outside git and outside this evidence manifest; consumer lockfiles retain resolved versions/integrity.
+
+No existing pinned file changed: the only additions are the new gate, this report and its evidence manifest. `lab/acceptance/`, packages/duckdb, original checker, lockfile and root package.json are unchanged. There are therefore no old/new pinned hashes to list and no contract re-pin was attempted.
+
+Builder execution is not independent promotion verification. No backend-engine integration, native FoundationDB runtime, real XTDB/QLever connection, Datomic package, full root pnpm check, package publication, push or merge was performed. This gate implements exactly the current upstream inventory less DuckDB; future upstream inventory additions need a corresponding lab inventory update. Independent reviewer validation is the remaining handoff.
