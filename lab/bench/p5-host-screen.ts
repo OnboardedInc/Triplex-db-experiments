@@ -164,6 +164,7 @@ async function activationArm(name: string, W: number) {
       fpBefore = { status: "FINGERPRINT-MATCH-BEFORE-ACTIVATION", wallS: (performance.now() - t) / 1000 };
     }
     await h.broker.appendStats(true);
+    const rawStart: any = await h.broker.storeCounts();
     const t0 = performance.now();
     const act = await comp.transact(
       [{ op: "assert", entityId: "p5:tenant", attribute: "p5/activation", value: { type: "string", value: "R2" }, validFrom: V_W0 }],
@@ -317,10 +318,14 @@ async function activationArm(name: string, W: number) {
         factExpected = 2 * N;
       if (writerSplit.journalRows !== journalExpected || writerSplit.factRows !== factExpected)
         throw Error(`G-JNL writer row counts ${writerSplit.journalRows}/${writerSplit.factRows} != ${journalExpected}/${factExpected}`);
-      const delta = endCounts.assertions - arm.startCounts.assertions;
+      // The store's own counts (SQL count(*) over facts, history and journal), not the writer's row counters.
+      const rawEnd: any = await h.broker.storeCounts();
+      const delta = rawEnd.assertions - rawStart.assertions,
+        domainDelta = rawEnd.domainAssertions - rawStart.domainAssertions;
       const wrote = writerSplit.journalRows + writerSplit.factRows + actSplit.journalRows + actSplit.factRows;
-      if (delta !== wrote) throw Error(`G-JNL store assertion delta ${delta} != rows written ${wrote}`);
-      Object.assign(gJnl, { journalRows: writerSplit.journalRows, journalExpected, factRows: writerSplit.factRows, assertionsDelta: delta, activationCommitRows: { fact: actSplit.factRows, journal: actSplit.journalRows } });
+      if (delta !== wrote || domainDelta !== factExpected + actSplit.factRows)
+        throw Error(`G-JNL store assertion delta ${delta} (domain ${domainDelta}) != rows written ${wrote} (domain ${factExpected + actSplit.factRows})`);
+      Object.assign(gJnl, { journalRows: writerSplit.journalRows, journalExpected, factRows: writerSplit.factRows, assertionsDelta: delta, domainDelta, activationCommitRows: { fact: actSplit.factRows, journal: actSplit.journalRows } });
     }
     // G-FP after: the seed basis still reproduces the O-DOMAIN digests after the activation commits (old-cut exactness, Q89i).
     let fpAfter: any = null;
