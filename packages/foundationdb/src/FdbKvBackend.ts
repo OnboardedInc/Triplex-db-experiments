@@ -1,3 +1,4 @@
+import { ValueDomains } from "@triplex-build/triplex/runtime";
 /**
  * FoundationDB backend for the KvBackend interface.
  *
@@ -218,11 +219,11 @@ type InstrumentableFdbTransaction = Omit<FdbTx, "rawOnError"> & {
 };
 
 const DEFAULT_RANGE_SCAN_PAGE_SIZE = 10_000;
-const DEFAULT_MAX_TRANSACTION_BYTES = 8_000_000;
-const DEFAULT_MAX_VALUE_BYTES = 100_000;
+const DEFAULT_MAX_TRANSACTION_BYTES = ValueDomains.foundationdb.storage!.maxMutationBytes;
+const DEFAULT_MAX_VALUE_BYTES = ValueDomains.foundationdb.storage!.maxValueBytes;
 const DEFAULT_TRANSACTION_TIMEOUT_MS = 4_500;
 const DEFAULT_SLOW_TRANSACTION_MS = 1_000;
-const MUTATION_BYTE_OVERHEAD = 64;
+const MUTATION_BYTE_OVERHEAD = ValueDomains.foundationdb.storage!.mutationOverheadBytes;
 const FDB_TIMED_OUT = 1004;
 const FDB_NOT_COMMITTED = 1020;
 const FDB_COMMIT_UNKNOWN_RESULT = 1021;
@@ -613,6 +614,18 @@ export const makeFdbKvBackendService = (
     // ─── Service implementation ────────────────────────────────────────
 
     const service: KvBackendService = {
+      valueDomain: {
+        ...ValueDomains.foundationdb,
+        storage: {
+          ...ValueDomains.foundationdb.storage!,
+          maxValueBytes: Math.min(maxValueBytes, ValueDomains.foundationdb.storage!.maxValueBytes),
+          maxMutationBytes: Math.min(
+            maxTransactionBytes,
+            ValueDomains.foundationdb.storage!.maxMutationBytes,
+          ),
+          subspaceBytes,
+        },
+      },
       get: (key) =>
         runTransaction("get", async (tx) => tx.snapshot().get(toBuffer(key))).pipe(
           Effect.map((val) => (val === undefined ? null : toUint8Array(val))),

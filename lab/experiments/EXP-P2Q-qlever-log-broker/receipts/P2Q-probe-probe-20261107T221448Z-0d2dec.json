@@ -1,0 +1,275 @@
+{
+  "format": "p2q-receipt/1",
+  "id": "P2Q-probe-probe-20261107T221448Z-0d2dec",
+  "kind": "probe-probe",
+  "writtenAt": "2026-11-07T22:14:48.885Z",
+  "mode": "probe",
+  "slot": "dev",
+  "startedAt": "2026-11-07T22:14:42.686Z",
+  "identity": {
+    "gitHead": "650b18f1215b522ab22957c4c01d0b7e17a5587b",
+    "dirty": true,
+    "diffSha256": "151cd48770e74fd4b87aa289c3e60909cdcb03520bbf3ad9243684711df4a1a8",
+    "engineConfig": {
+      "dir": "/Users/sam/projects/triplex-db-2",
+      "arm": "default (repo qlever-start.sh)",
+      "startScriptSha256": "16c50037e97004e1345b5060b65c5cb3c26d3b4a153cc377a65ccc5e7f304930",
+      "persistUpdates": true
+    },
+    "distSha256": "d4e001abf1c928262f0a50fe7048bb50b66ff966fee380f94d2587d4c0dbf15b",
+    "engineImage": "adfreiburg/qlever:0.6.0@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec",
+    "endpoint": "http://127.0.0.1:7070",
+    "node": "v22.23.2",
+    "host": {
+      "cpus": 12,
+      "loadavg": [
+        11.43,
+        10.79,
+        11.42
+      ],
+      "freeBytes": 14162223104
+    }
+  },
+  "hostLoadAfter": [
+    11.31,
+    10.78,
+    11.41
+  ],
+  "arm": "probe",
+  "scope": "p2q-probe-fbe2244d-8492-4b9d-bcdc-2b55a97639bf",
+  "keepAliveQueryMs": {
+    "n": 35,
+    "p50": 61.6,
+    "p90": 106,
+    "p99": 128.8,
+    "max": 128.8,
+    "mean": 72.1
+  },
+  "freshConnectionQueryMs": {
+    "n": 35,
+    "p50": 57.1,
+    "p90": 67.6,
+    "p99": 93.4,
+    "max": 93.4,
+    "mean": 57.1
+  },
+  "updateResponse": {
+    "operations": [
+      {
+        "delta-triples": {
+          "after": {
+            "deleted": 449,
+            "inserted": 190966,
+            "total": 191415
+          },
+          "before": {
+            "deleted": 449,
+            "inserted": 190965,
+            "total": 191414
+          },
+          "difference": {
+            "deleted": 0,
+            "inserted": 1,
+            "total": 1
+          },
+          "operation": {
+            "deleted": 0,
+            "inserted": 1,
+            "total": 1
+          }
+        },
+        "located-triples": {
+          "OPS": {
+            "blocks-affected": 2,
+            "blocks-total": 1
+          },
+          "OSP": {
+            "blocks-affected": 2,
+            "blocks-total": 1
+          },
+          "POS": {
+            "blocks-affected": 1,
+            "blocks-total": 1
+          },
+          "PSO": {
+            "blocks-affected": 1,
+            "blocks-total": 1
+          },
+          "SOP": {
+            "blocks-affected": 2,
+            "blocks-total": 1
+          },
+          "SPO": {
+            "blocks-affected": 2,
+            "blocks-total": 1
+          }
+        },
+        "runtimeInformation": {
+          "meta": {
+            "time_query_planning": 1
+          },
+          "query_execution_tree": {
+            "cache_status": "computed",
+            "children": [],
+            "column_names": [],
+            "description": "NeutralElement",
+            "details": null,
+            "estimated_column_multiplicities": [],
+            "estimated_operation_cost": 0,
+            "estimated_size": 1,
+            "estimated_total_cost": 0,
+            "operation_time": 0,
+            "original_operation_time": 0,
+            "original_total_time": 0,
+            "result_cols": 0,
+            "result_rows": 1,
+            "status": "fully materialized completed",
+            "total_time": 0
+          }
+        },
+        "status": "OK",
+        "time": {
+          "execution": {
+            "clearCache": 5,
+            "computeIds": {
+              "deduplication": 0,
+              "resultInterpolation": 0,
+              "total": 0,
+              "vocabLookup": 0
+            },
+            "consolidateSortedDeltaTriples": 93,
+            "deleteTriples": 0,
+            "evaluateWhere": 0,
+            "insertTriples": {
+              "externalPermutation": {
+                "locatedAndAdd": {
+                  "OPS": {
+                    "addToLocatedTriples": {
+                      "adding": 0,
+                      "total": 0
+                    },
+                    "locateTriples": 0,
+                    "total": 0
+                  },
+                  "OSP": {
+                    "addToLocatedTriples": {
+                      "adding": 0,
+                      "total": 0
+                    },
+                    "locateTriples": 0,
+                    "total": 0
+                  },
+                  "POS": {
+                    "addToLocatedTriples": {
+                      "adding": 0,
+                      "total": 0
+                    },
+                    "locateTriples": 0,
+                    "total": 0
+                  },
+                  "PSO": {
+                    "addToLocatedTriples": {
+                      "adding": 0,
+                      "total": 0
+                    },
+                    "locateTriples": 0,
+                    "total": 0
+                  },
+                  "SOP": {
+                    "addToLocatedTriples": {
+                      "adding": 0,
+                      "total": 0
+                    },
+                    "locateTriples": 0,
+                    "total": 0
+                  },
+                  "SPO": {
+                    "addToLocatedTriples": {
+                      "adding": 0,
+                      "total": 0
+                    },
+                    "locateTriples": 0,
+                    "total": 0
+                  },
+                  "total": 0
+                },
+                "markTriples": 0,
+                "removeExistingTriples": 0,
+                "removeInverseTriples": 0,
+                "rewriteLocalVocabEntries": 0,
+                "total": 0
+              },
+              "internalPermutation": {
+                "locatedAndAdd": {
+                  "POS": {
+                    "addToLocatedTriples": {
+                      "adding": 0,
+                      "total": 0
+                    },
+                    "locateTriples": 0,
+                    "total": 0
+                  },
+                  "PSO": {
+                    "addToLocatedTriples": {
+                      "adding": 0,
+                      "total": 0
+                    },
+                    "locateTriples": 0,
+                    "total": 0
+                  },
+                  "total": 0
+                },
+                "markTriples": 0,
+                "removeExistingTriples": 0,
+                "removeInverseTriples": 0,
+                "rewriteLocalVocabEntries": 0,
+                "total": 0
+              },
+              "makeInternalTriples": 0,
+              "total": 0
+            },
+            "total": 99
+          },
+          "planning": 0,
+          "total": 99,
+          "updateMetadata": 0
+        },
+        "update": "INSERT DATA { GRAPH <urn:triplex:p2q-probe:cf4890d1-0320-4215-9ccc-716eb00638a8> { <urn:p2q:s> <urn:p2q:p> \"x\" } }",
+        "warnings": [
+          "SPARQL 1.1 Update for QLever is experimental."
+        ]
+      }
+    ],
+    "time": {
+      "total": 345,
+      "parsing": 0,
+      "waitingForUpdateThread": 0,
+      "acquiringDeltaTriplesWriteLock": 0,
+      "operations": 99,
+      "metadataUpdateForSnapshot": 26,
+      "diskWriteback": 71,
+      "snapshotCreation": 147
+    }
+  },
+  "stats": {
+    "git-hash-index": "6c5861a",
+    "git-hash-server": "6c5861a",
+    "name-index": "no index name specified",
+    "name-text-index": "",
+    "num-entity-occurrences": 0,
+    "num-objects-internal": 0,
+    "num-objects-normal": 1,
+    "num-permutations": 6,
+    "num-predicates-internal": 0,
+    "num-predicates-normal": 1,
+    "num-subjects-internal": 0,
+    "num-subjects-normal": 1,
+    "num-text-records": 0,
+    "num-triples-internal": 0,
+    "num-triples-normal": 1,
+    "num-word-occurrences": 0,
+    "version-server": "v0.6.0"
+  },
+  "rawPath": null,
+  "rawSha256": null
+}

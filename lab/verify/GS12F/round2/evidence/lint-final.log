@@ -1,0 +1,22 @@
+
+  ! eslint(no-unused-vars): Identifier 'Effect' is imported but never used.
+   ,-[lab/verify/GS12F/round2/independent.test.ts:3:17]
+ 2 | import { inspect } from "node:util";
+ 3 | import { Cause, Effect, Layer, ManagedRuntime } from "effect";
+   :                 ^^^|^^
+   :                    `-- 'Effect' is imported here
+ 4 | import { expect, it } from "vitest";
+   `----
+  help: Consider removing this import.
+
+  ! eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
+    ,-[lab/verify/GS12F/round2/independent.test.ts:97:20]
+ 96 | const decoratedHole = (key = "4294967295") => {
+ 97 |   const a: any[] = new Array(1);
+    :                    ^^^^^^^^^^^^
+ 98 |   Object.defineProperty(a, key, { value: 7, writable: true, enumerable: true, configurable: true });
+    `----
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
+
+Found 2 warnings and 0 errors.
+Finished in 21ms on 10 files with 93 rules using 12 threads.

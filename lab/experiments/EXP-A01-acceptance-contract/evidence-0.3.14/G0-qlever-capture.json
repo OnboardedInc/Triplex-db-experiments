@@ -1,0 +1,26 @@
+{
+  "runId": "G0-qlever-20261109T060312Z-8895d7",
+  "lane": "qlever",
+  "source": "df4881217056137dfba549359cdc7a5a492b2f77",
+  "verdict": "PASS",
+  "counts": {
+    "executed": 1396,
+    "pass": 1396,
+    "fail": 0,
+    "skip": 79,
+    "expectedSkip": 79,
+    "unexpectedSkip": 0
+  },
+  "previous": null,
+  "capturedAtEpoch": 1794204365.2284439,
+  "durableRoot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/g0/G0-qlever-20261109T060312Z-8895d7",
+  "files": 691,
+  "bytes": 7681895,
+  "builtFiles": 628,
+  "objects": 41,
+  "manifestSha256": "940d20eb0e7760e6c2e2de676e93dc2593f164e9466936e8128c08d4291aef5d",
+  "sourceDiffBytes": 0,
+  "slot": null,
+  "startedAt": "2026-11-09T06:03:12.130Z",
+  "endedAt": "2026-11-09T06:05:20.056Z"
+}

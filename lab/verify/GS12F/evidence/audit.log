@@ -1,0 +1,25 @@
+{
+  "base": "8d09871857a6925eb01c6374f46d75f23d9af6d6",
+  "head": "5610572e01514fd770f3049d5fe1f53ae6096fac",
+  "main": "15927efed3a6dd48d620b19bd0201fe862344b33",
+  "acceptanceEqualsMain": true,
+  "changedPins": [
+    {
+      "path": "lab/acceptance/RULINGS-PENDING.md",
+      "baseSha256": "b86222c537567c78ecd5e53e23f9450f0e48e7d8ff54b7f533d3678243a862c0",
+      "headSha256": "ced5c9496bcd596cce85973f91ec8f32426adc4f0d049e2ecac288a3a224ab37",
+      "pinnedSha256": "ced5c9496bcd596cce85973f91ec8f32426adc4f0d049e2ecac288a3a224ab37",
+      "matchesPublishedPin": true,
+      "mainSha256": "ced5c9496bcd596cce85973f91ec8f32426adc4f0d049e2ecac288a3a224ab37"
+    },
+    {
+      "path": "packages/testkit/src/index.ts",
+      "baseSha256": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988",
+      "headSha256": "432cec5c6aa33150c5c6f6c54091184edcaece3395ee3c809524c5502594a6d6",
+      "pinnedSha256": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988",
+      "matchesPublishedPin": false,
+      "mainSha256": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988"
+    }
+  ],
+  "allChangedPinPathsMentionedInReport": false
+}

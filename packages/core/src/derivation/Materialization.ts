@@ -20,6 +20,7 @@ import type {
   DatalogQueryError,
   ReadError,
   TransactionConflictError,
+  InvalidTripleError,
   WriteError,
 } from "../errors/index.js";
 import { transactSystem } from "../store/systemNamespace.js";
@@ -150,6 +151,7 @@ export class CorruptMaterializationError extends Data.TaggedError(
 export type MaterializationError =
   | ReadError
   | WriteError
+  | InvalidTripleError
   | TransactionConflictError
   | CommandAlreadyCommittedError
   | ConstraintViolationError

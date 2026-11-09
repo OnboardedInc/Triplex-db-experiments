@@ -1,0 +1,1058 @@
+[
+  {
+    "label": "integer:9223372036854775808",
+    "api": "assert",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'integer', value: '9223372036854775808' },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "integer:9223372036854775808",
+    "api": "assertBatch",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'integer', value: '9223372036854775808' },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "integer:9223372036854775808",
+    "api": "transact",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'integer', value: '9223372036854775808' },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "integer:-9223372036854775809",
+    "api": "assert",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'integer', value: '-9223372036854775809' },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "integer:-9223372036854775809",
+    "api": "assertBatch",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'integer', value: '-9223372036854775809' },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "integer:-9223372036854775809",
+    "api": "transact",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'integer', value: '-9223372036854775809' },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "integer:01",
+    "api": "assert",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'integer', value: '01' },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "integer:01",
+    "api": "assertBatch",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'integer', value: '01' },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "integer:01",
+    "api": "transact",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'integer', value: '01' },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "integer:-0",
+    "api": "assert",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'integer', value: '-0' },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "integer:-0",
+    "api": "assertBatch",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'integer', value: '-0' },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "integer:-0",
+    "api": "transact",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'integer', value: '-0' },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "integer:+1",
+    "api": "assert",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'integer', value: '+1' },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "integer:+1",
+    "api": "assertBatch",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'integer', value: '+1' },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "integer:+1",
+    "api": "transact",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'integer', value: '+1' },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "integer:1e3",
+    "api": "assert",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'integer', value: '1e3' },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "integer:1e3",
+    "api": "assertBatch",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'integer', value: '1e3' },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "integer:1e3",
+    "api": "transact",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'integer', value: '1e3' },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "number:NaN",
+    "api": "assert",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'number', value: NaN },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "number:NaN",
+    "api": "assertBatch",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'number', value: NaN },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "number:NaN",
+    "api": "transact",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'number', value: NaN },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "number:Infinity",
+    "api": "assert",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'number', value: Infinity },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "number:Infinity",
+    "api": "assertBatch",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'number', value: Infinity },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "number:Infinity",
+    "api": "transact",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'number', value: Infinity },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "datetime:NaN",
+    "api": "assert",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'datetime', value: NaN },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "datetime:NaN",
+    "api": "assertBatch",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'datetime', value: NaN },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "datetime:NaN",
+    "api": "transact",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'datetime', value: NaN },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "datetime:Infinity",
+    "api": "assert",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'datetime', value: Infinity },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "datetime:Infinity",
+    "api": "assertBatch",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'datetime', value: Infinity },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "datetime:Infinity",
+    "api": "transact",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'datetime', value: Infinity },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "json:nonfinite",
+    "api": "assert",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'json', value: { erasedAt: Infinity } },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "json:nonfinite",
+    "api": "assertBatch",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'json', value: { erasedAt: Infinity } },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "json:nonfinite",
+    "api": "transact",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'json', value: { erasedAt: Infinity } },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "json:undefined",
+    "api": "assert",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'json', value: undefined },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "json:undefined",
+    "api": "assertBatch",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'json', value: undefined },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "json:undefined",
+    "api": "transact",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'json', value: undefined },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "json:cycle",
+    "api": "assert",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'json', value: <ref *1> { self: [Circular *1] } },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "json:cycle",
+    "api": "assertBatch",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'json', value: <ref *1> { self: [Circular *1] } },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "json:cycle",
+    "api": "transact",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'json', value: <ref *1> { self: [Circular *1] } },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "json:bigint",
+    "api": "assert",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'json', value: 1n },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "json:bigint",
+    "api": "assertBatch",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'json', value: 1n },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "json:bigint",
+    "api": "transact",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'json', value: 1n },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "blob:negative-size",
+    "api": "assert",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: {\n            type: 'blob',\n            value: 'h',\n            mimeType: 'text/plain',\n            size: -1\n          },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "blob:negative-size",
+    "api": "assertBatch",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: {\n            type: 'blob',\n            value: 'h',\n            mimeType: 'text/plain',\n            size: -1\n          },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "blob:negative-size",
+    "api": "transact",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: {\n            type: 'blob',\n            value: 'h',\n            mimeType: 'text/plain',\n            size: -1\n          },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "decimal:excess-scale",
+    "api": "assert",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'decimal', value: '16.501' },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "decimal:excess-scale",
+    "api": "assertBatch",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'decimal', value: '16.501' },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "decimal:excess-scale",
+    "api": "transact",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'decimal', value: '16.501' },\n          message: \"Value is outside xtdb's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  }
+]

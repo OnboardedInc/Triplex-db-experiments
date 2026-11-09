@@ -1,0 +1,13 @@
+{
+  "target": "811a42a8adb356320b09128d173f752ccdc348f9",
+  "main": "dfaf78e8ac48b561dbf516a42ca404d00490ca57",
+  "acceptanceEqualsMain": true,
+  "changedPins": [
+    {
+      "path": "packages/testkit/src/index.ts",
+      "old": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988",
+      "new": "432cec5c6aa33150c5c6f6c54091184edcaece3395ee3c809524c5502594a6d6",
+      "published": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988"
+    }
+  ]
+}

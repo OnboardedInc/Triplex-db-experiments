@@ -1,0 +1,33 @@
+{
+  "main": "e4850f801b8a7771a94e1b3394ecc5ddf24efb5f",
+  "target": "f8d1c3da0a871f4c9c724ebae09e380dbb9222a8",
+  "acceptanceEqualsMain": false,
+  "changedFiles": [
+    {
+      "path": "lab/acceptance/ACCEPTANCE.md",
+      "mainSha256": "770e7274ace19ba83d91cbff08de8f692d690ff897478d3b4cb6ffa7bfe33a94",
+      "candidateSha256": "0434a07dffc9bea865aeae51230d228adebdba2759e47828cd5ff15f5685b32b",
+      "candidatePathAbsent": false
+    },
+    {
+      "path": "lab/acceptance/RULINGS-PENDING.md",
+      "mainSha256": "acdee44559d41f966606ef1ab81dc30406c91afbccd1ec2acc82c3c04e685d5f",
+      "candidateSha256": "ced5c9496bcd596cce85973f91ec8f32426adc4f0d049e2ecac288a3a224ab37",
+      "candidatePathAbsent": false
+    },
+    {
+      "path": "lab/acceptance/cases/CS-GS.json",
+      "mainSha256": "097f4b614e4e493b3557bc075259558bb9299177f600c9799b5689ccf73a3322",
+      "candidateSha256": null,
+      "candidatePathAbsent": true
+    },
+    {
+      "path": "lab/acceptance/obligations.json",
+      "mainSha256": "cebb1e1b49da91aefaef50c0b6794428e40ddbaeb7dcb6e380c6c405841e0c6f",
+      "candidateSha256": "26583f136d0a15afb896fc2a49521439d91427a28b7e0b28a011b76b1f9f9ba6",
+      "candidatePathAbsent": false
+    }
+  ],
+  "productionAndExecutedReviewerInputsUnchanged": true,
+  "at": "2026-11-09T04:15:49.438456+00:00"
+}

@@ -14,8 +14,14 @@
  */
 
 import { Effect, Stream } from "effect";
+import { InvalidTripleError } from "../../errors/index.js";
 import type { TripleValue } from "../../Value.js";
-import { UnsupportedValueTypeError } from "../../errors/index.js";
+import {
+  assertValueInDomain,
+  ValueDomains,
+  storedValueDomain,
+  type ValueDomain,
+} from "../../ValueDomain.js";
 import type { KvBackendService } from "../kv/KvBackend.js";
 import type { ResolvedTemporalBasis } from "../../Temporal.js";
 import { unsafe } from "../../Branded.js";
@@ -91,7 +97,7 @@ const asciiToBytes = (s: string): Uint8Array => {
 //   [4 bytes] tripleId length, then [N bytes] tripleId (UTF-8)
 //   [4 bytes] entity length, then [N bytes] entity
 //   [4 bytes] attribute length, then [N bytes] attribute
-//   [1 byte]  value type tag (0=string, 1=number, 2=boolean, 3=datetime, 4=ref, 5=json, 6=blob)
+//   [1 byte]  value type tag (0=string, 1=number, 2=boolean, 3=datetime, 4=ref, 5=json, 6=blob, 7=integer)
 //   [varies]  value payload (see below)
 //   [4 bytes] txId length, then [N bytes] txId
 //   [8 bytes] recordedAt (float64 big-endian)
@@ -125,6 +131,7 @@ const VT_DATETIME = 3;
 const VT_REF = 4;
 const VT_JSON = 5;
 const VT_BLOB = 6;
+const VT_INTEGER = 7;
 
 // Reusable write buffer (4KB, grows if needed). Avoids per-datom allocation.
 let _writeBuf = new Uint8Array(4096);
@@ -179,7 +186,11 @@ const writeNullableStr = (s: string | null, offset: number): number => {
  * Serialize a Datom to bytes for META storage using custom binary format.
  * Uses a reusable write buffer to avoid per-datom allocation.
  */
-const serializeDatom = (datom: Datom): Uint8Array => {
+export const serializeDatom = (
+  datom: Datom,
+  domain: ValueDomain = ValueDomains.memory,
+): Uint8Array => {
+  assertValueInDomain(datom.value, storedValueDomain(domain, datom.attribute));
   let offset = 0;
 
   // Version
@@ -196,7 +207,9 @@ const serializeDatom = (datom: Datom): Uint8Array => {
   ensureCapacity(1, offset);
   switch (v.type) {
     case "integer":
-      throw new UnsupportedValueTypeError("KV encoding", "integer");
+      _writeBuf[offset++] = VT_INTEGER;
+      offset = writeStr(v.value, offset);
+      break;
     case "string":
       _writeBuf[offset++] = VT_STRING;
       offset = writeStr(v.value, offset);
@@ -301,6 +314,13 @@ const serializeDatom = (datom: Datom): Uint8Array => {
     offset += 8;
   }
 
+  if (domain.storage && offset > domain.storage.maxValueBytes)
+    throw new InvalidTripleError({
+      field: "value",
+      value: datom.value,
+      message: "Encoded META exceeds backend value byte limit",
+    });
+
   // Copy out the result (cannot share the reusable buffer)
   const result = new Uint8Array(offset);
   result.set(_writeBuf.subarray(0, offset));
@@ -335,7 +355,10 @@ const readStr = (buf: Uint8Array, offset: number): [string, number] => {
  * Deserialize a Datom from META storage bytes.
  * Decode the current Triplex datom format.
  */
-const deserializeDatom = (bytes: Uint8Array): Datom => {
+export const deserializeDatom = (
+  bytes: Uint8Array,
+  domain: ValueDomain = ValueDomains.memory,
+): Datom => {
   const version = bytes[0];
   if (version !== FORMAT_VERSION) throw new Error(`Unsupported datom format: ${String(version)}`);
 
@@ -355,6 +378,13 @@ const deserializeDatom = (bytes: Uint8Array): Datom => {
   const valueTag = bytes[offset++]!;
   let value: TripleValue;
   switch (valueTag) {
+    case VT_INTEGER: {
+      let integerText: string;
+      [integerText, offset] = readStr(bytes, offset);
+      value = { type: "integer", value: integerText };
+      assertValueInDomain(value, domain);
+      break;
+    }
     case VT_STRING: {
       let sv: string;
       [sv, offset] = readStr(bytes, offset);
@@ -409,6 +439,8 @@ const deserializeDatom = (bytes: Uint8Array): Datom => {
     default:
       throw new Error(`Unknown value type tag: ${valueTag}`);
   }
+
+  assertValueInDomain(value, storedValueDomain(domain, attribute));
 
   let txId: string;
   [txId, offset] = readStr(bytes, offset);
@@ -524,7 +556,7 @@ export class KvTripleStore {
       entries.push([vaetKey(valuePart, attrPart, entityPart, txPart, idPart), tripleIdValue]);
     }
 
-    entries.push([metaKey(datom.tripleId), serializeDatom(datom)]);
+    entries.push([metaKey(datom.tripleId), serializeDatom(datom, this.kv.valueDomain)]);
 
     // TYPE index for entityType queries
     if (datom.entityType !== null) {
@@ -569,7 +601,7 @@ export class KvTripleStore {
         entries.push([vaetKey(valuePart, attrPart, entityPart, txPart, idPart), tripleIdValue]);
       }
 
-      entries.push([metaKey(datom.tripleId), serializeDatom(datom)]);
+      entries.push([metaKey(datom.tripleId), serializeDatom(datom, this.kv.valueDomain)]);
 
       if (datom.entityType !== null) {
         entries.push([typeKey(datom.entityType, datom.tripleId), tripleIdValue]);
@@ -614,7 +646,7 @@ export class KvTripleStore {
         entries[idx++] = [vaetKeyStr(vStr, aStr, eStr, txStr, tripleIdStr), tripleIdValue];
       }
 
-      entries[idx++] = [metaKeyStr(tripleIdStr), serializeDatom(datom)];
+      entries[idx++] = [metaKeyStr(tripleIdStr), serializeDatom(datom, this.kv.valueDomain)];
 
       if (datom.entityType !== null) {
         const etStr = encodeStringStr(datom.entityType);
@@ -647,7 +679,7 @@ export class KvTripleStore {
       if (!datom) {
         const existing = yield* this.kv.get(key);
         if (existing === null) return false;
-        datom = deserializeDatom(existing);
+        datom = deserializeDatom(existing, this.kv.valueDomain);
       }
       if (datom.retractedAt !== null) return false; // Already retracted
 
@@ -658,7 +690,7 @@ export class KvTripleStore {
         retractTxId,
       };
 
-      yield* this.kv.set(key, serializeDatom(updated));
+      yield* this.kv.set(key, serializeDatom(updated, this.kv.valueDomain));
       // Update cache
       this.datomCache.set(tripleId, updated);
       return true;
@@ -676,7 +708,7 @@ export class KvTripleStore {
     return Effect.gen({ self: this }, function* () {
       const bytes = yield* this.kv.get(metaKey(tripleId));
       if (bytes === null) return null;
-      const datom = deserializeDatom(bytes);
+      const datom = deserializeDatom(bytes, this.kv.valueDomain);
       this.datomCache.set(tripleId, datom);
       return datom;
     });
@@ -693,7 +725,7 @@ export class KvTripleStore {
     if (this.kv.getSync) {
       const bytes = this.kv.getSync(metaKey(tripleId));
       if (bytes === null) return null;
-      const datom = deserializeDatom(bytes);
+      const datom = deserializeDatom(bytes, this.kv.valueDomain);
       this.datomCache.set(tripleId, datom);
       return datom;
     }
@@ -808,7 +840,7 @@ export class KvTripleStore {
         const idx = uncachedIndices[j]!;
         const [, value] = fetched[j]!;
         if (value !== null) {
-          const datom = deserializeDatom(value);
+          const datom = deserializeDatom(value, this.kv.valueDomain);
           this.datomCache.set(tripleIds[idx]!, datom);
           results[idx] = datom;
         } else {
@@ -967,7 +999,7 @@ const valuesEqual = (a: TripleValue, b: TripleValue): boolean => {
   if (a.type !== b.type) return false;
   switch (a.type) {
     case "integer":
-      throw new UnsupportedValueTypeError("KV comparison", "integer");
+      return a.value === (b as typeof a).value;
     case "string":
     case "ref":
     case "blob":

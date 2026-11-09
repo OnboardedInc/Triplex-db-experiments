@@ -1,8 +1,8 @@
 {
   "format": "triplex-db-2/acceptance-obligations/3",
-  "version": "0.3.12",
+  "version": "0.3.14",
   "status": "CANDIDATE-1.0.0: retargeted to Sam's re-scope (SCOPE.md, NORTH-STAR.md, TARGETS.md); freezes as 1.0.0 after orchestrator acceptance and adversarial review",
-  "date": "2026-11-08",
+  "date": "2026-11-09",
   "authority": "This file is the only authority an evaluator reads. Goals and targets come from lab/SCOPE.md, lab/NORTH-STAR.md and lab/TARGETS.md; RULINGS.md is compiled into this file by build_contract.py; the other artifacts are generated from the same source.",
   "generatedBy": "lab/acceptance/build_contract.py",
   "inputs": {
@@ -18,8 +18,8 @@
     "lab/NORTH-STAR.md": "0176766d21385a37a0dea3091d7200f249901ce8a4eadd071acd56b2f70eb3e9",
     "lab/TARGETS.md": "cb30ffeb776a7deb0c885be2968872bcebd7dc05cca1b2cfb5913b809a804d95",
     "lab/research/SAM-pasted-numbers-2026-11-07.md": "f35a223edd83994a0ac2ebcb94f9ec7e7ea8f1a279ef23bbb69390b8c03d89f8",
-    "lab/acceptance/RULINGS.md": "b516dcd342a4872e017cbffe21a2e1a69e7b8c228bcb199357ea02a70f08650e",
-    "lab/acceptance/RULINGS-PENDING.md": "741aecb9b2a93ff671303a027301ad326d6e19a7f324c68e09f381b2bb485f88",
+    "lab/acceptance/RULINGS.md": "35e26650b2467850234e0679aaea50335e1e662df3e25c8347462e2b4174d698",
+    "lab/acceptance/RULINGS-PENDING.md": "b38c68514a181caac13c600cc76ffe4a797da72a1316e1d5da732a12c56f1008",
     "lab/verify/O02/v-o03/pin_scope.json": "f8897d518cb380ff64de25b02ae82f4846af313e5f2c41bbf147509fe6025a32",
     "lab/verify/O02/v-o03/hashes.8cc2c26.json": "4b221aa280eb6f2aeb1f5252d29dcef99aefc629e0388ac7468c6f1f1353b962",
     "lab/verify/D01/W0-1.1.1-ada2e90-SHA256SUMS": "bad527e280e1769a18fd2d65016e4d6bbfb4969c872dd73069cfb83637bfba4d",
@@ -34,13 +34,19 @@
     "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.12-round3/workload-hunk-review.json": "86fccbf5ef7a27611f45b44659a37a5bcba8e613953bcfd04a8e326464c77dae",
     "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.12-round3/xtdb-workloads.ts.diff": "b31cae3941b058b72f9cda6e890ab600983fde24c0f4b609d9e161f5ba4d4f1f",
     "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.12-round3/qlever-workloads.ts.diff": "1a40dcce1fb973666abe0385fb2af3f24bf499676b9b595fea4a5aa7c49fb85a",
-    "lab/acceptance/build_contract.py": "914db3d15e91180e8b449fffeeb27b997dc10eb835fff66e10eca6517e985b59"
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13/authority-and-pin-review.json": "b1f7dd9f18527b5f374b80ef2afe161d104781e273fe2d881c376f8ed890a26b",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13/testkit-index.diff": "ff037fd9eb720d2e167d8a6e8452c52d97a73e91f554f43719cce613fddf3d3f",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.14/authority-and-pin-review.json": "cebe85003b3d0cff5bde495b622cef909772bb35ee55367e654946d144a2869e",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.14/pending-authority.md": "42f0ba89780694d876c7cb41d912a31ede858d8ef11a0ef5a916e58872c7339e",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.14/packages__testkit__src__index.ts.diff": "41929c2d3f25f64c0d8980f9b4fd74316c93553de357d1dc1ebc7c8cdf07a2db",
+    "lab/verify/P2X2/VERIFY.md": "462456077e50a4a6a4027deb2f1e55f36361b69751323ff0f37dddee2943a159",
+    "lab/acceptance/build_contract.py": "259b0c2985985fbdf2c79d1ad6379c2adb6d919d45611b63bf7002502d2499e6"
   },
   "artifacts": {
-    "oracle-contract.json": "a7ec2fe98f8bb066fe6ea55e89344905f5e9c760b076152f5377c414d18adbd0",
-    "load-contract.json": "c54af6122604a7cbe49c4de41ba658f9076cea8701f90cc4e3583f1cad009428",
-    "budgets.json": "c09b5257c08d050d9c99d8e1595cd4817b9c8c1337afba291109e7fd0c7a8159",
-    "capability-matrix.md": "36fd4485da5d7b25fc4406722645f0d49cf7cddc519493b6d752f6b731c5cf4f"
+    "oracle-contract.json": "82b3b4e0e774553a38ab4750abb6fc61b2d89431aeb3002f7692d3124fa80fb9",
+    "load-contract.json": "377ef278e6452c30607612de1c5a7920a9d396e8ffbe07d58a66311b8d0e5a34",
+    "budgets.json": "a8de4809bf8ff42a3ad06f5a1dab961c4e6dae74df12fc464edf0d50027abd2a",
+    "capability-matrix.md": "2ead5f52687fd8d749ec5940f65a0af76e1ac235e5ebee16ea60e6928c18ee02"
   },
   "lanes": [
     "xtdb-xtql",
@@ -1290,7 +1296,7 @@
     {
       "id": "Q74b",
       "topic": "freeze state",
-      "ruling": "The canonical freeze state is settled: `POST /system/finish-block`, compactor jobs 0, live index empty. A fresh-seeded arm compared with a cloned arm settles the same way before its window. Older unsettled A0 receipts are not compared with settled ones.",
+      "ruling": "becomes the **recipe**: two finish-blocks, jobs-0 waits, `docker stop -t 60`, copy from a stopped container. A timeout refuses; nothing in it grants.",
       "compiledInto": [
         "seedRules"
       ]
@@ -1298,7 +1304,7 @@
     {
       "id": "Q74c",
       "topic": "validation first",
-      "ruling": "No clone-seeded receipt counts, even for screening, until validation E1 passes: a fresh-seeded slot against its clone under the PAIR-0 A/A procedure, holding within 1.10 at p50 and 1.15 at p99, with R26 section 6.9's seven predictions checked.",
+      "ruling": "No clone-seeded receipt counts, even for screening, until validation E1 passes: a fresh-seeded slot against its clone under the PAIR-0 A/A procedure, holding within 1.10 at p50 and 1.15 at p99, with R26 section 6.9's seven predictions checked. **unchanged**; E1 is rerun when the recipe, the image or the XTDB version changes",
       "compiledInto": [
         "seedRules"
       ]
@@ -1306,7 +1312,7 @@
     {
       "id": "Q74d",
       "topic": "readiness",
-      "ruling": "A cloned slot is ready only after `/healthz/started` (read with `docker exec`) and the R26 C1-C8 checks pass, then the same warm-up on every arm.",
+      "ruling": "**replaced** by Q93a/b: health precondition plus G0 in the driver; `owner.json` holds slot ownership only",
       "compiledInto": [
         "seedRules"
       ]
@@ -1738,7 +1744,7 @@
     {
       "id": "Q83a",
       "topic": "log4j flag on slots",
-      "ruling": "Slots s1-s3 add `-Dlog4j2.shutdownHookEnabled=false` to javaOpts, so XTDB's shutdown hook can log `Stopping node...`, the three server-stopped lines and `Node stopped.` (Log4j's own hook otherwise drops them). The dev residents are unchanged. This changes the slot config hash and therefore every golden key; receipts before the change name the old hash.",
+      "ruling": "**kept as a diagnostic aid**; no rule requires the lines",
       "compiledInto": [
         "seedRules"
       ]
@@ -1746,7 +1752,7 @@
     {
       "id": "Q83b",
       "topic": "canonical freeze state",
-      "ruling": "Settled = two finish-blocks (the second records the post-compaction catalog), compactor jobs 0, and snapshot-independent evidence (new block file whose tx_id and latest_processed_msg_id equal the node gauges, block.last_upload_time advanced, xt.trie_stats showing the new tries, file listing and trie digest unchanged over three readings 5 s apart); never `xt.live_tables` (stale shared snapshot, upstream #6174). Clean stop = exit within 10 s with the stop lines and exit 143, well-formed LOG and REPLICA_LOG tails checked offline, empty `buffers/**/.tmp` (refuse, never delete). The freeze fingerprint is taken on a reference start of the source after the copy, and every arm, fresh or cloned, starts the same way. Re-test the second finish-block and the reference start when XTDB 2.2.1 is pinned.",
+      "ruling": "**superseded by Q93a**: the steps stay in the recipe, their readings become diagnostics; `xt.live_tables` is read only on a freshly started node (K3)",
       "compiledInto": [
         "seedRules"
       ]
@@ -1754,7 +1760,7 @@
     {
       "id": "Q83c",
       "topic": "block listing",
-      "ruling": "Never read a block that may not exist (MemoryCache hangs the caller): list `buffers/v06/blocks/b*.binpb` first and query `xt.block_files` only for listed indices, re-listing just before each query; block numbers are not dense (GC keeps the latest 10).",
+      "ruling": "kept for diagnostic tools; B never reads `xt.block_files`",
       "compiledInto": [
         "seedRules"
       ]
@@ -1797,14 +1803,6 @@
       "ruling": "Lock, open (recovery), PASSIVE (sync adopted frames), bump the epoch, run the marker and ACKED-sidecar cross-checks, then start readers; a mid-WAL corruption that SQLite recovers silently is caught by the ACKED sidecar.",
       "compiledInto": [
         "brokerRules"
-      ]
-    },
-    {
-      "id": "Q83d",
-      "topic": "settle evidence after fast compaction",
-      "ruling": "Settle evidence does not require observing L0 tries: compaction may merge them before the first poll. Settled means the new block's tx_id and latest_processed_msg_id equal the node gauges, xt.trie_stats covers that block at whatever level it now sits, compactor jobs 0, and the file listing and trie digest are unchanged over three readings 5 s apart.",
-      "compiledInto": [
-        "seedRules"
       ]
     },
     {
@@ -1912,14 +1910,6 @@
       ]
     },
     {
-      "id": "Q83e",
-      "topic": "three frontiers",
-      "ruling": "Settle evidence records three values separately and never equates them: (a) the block-cut frontier F, the immutable block's latest_processed_msg_id; (b) the settled replay frontier M, the processed watcher after maintenance drains (lag 0, jobs 0, tries stable, over the Q83d polls); (c) the stable application transaction T. F < M is accepted only when every source message in (F, M] is read from the stopped log tail and is a maintenance message (TriesAdded, compactor output), never an application transaction; T is unchanged across the window. The final stopped log tails and the reference and clone resume are bound to M. Exact reference/clone equality and the two-start catalog checks stay. This replaces the part of Q83d that refused every F < M.",
-      "compiledInto": [
-        "seedRules"
-      ]
-    },
-    {
       "id": "Q88a",
       "topic": "dev storage is development only",
       "ruling": "Lane D evidence from Datomic dev storage is DIAGNOSTIC for every durable-readback, lost-ACK, P2 receipt and final acceptance obligation. Dev storage is H2 inside the transactor with H2's default 500 ms write delay, so an abrupt transactor stop can lose acknowledged transactions, which P2's 100% receipt bar does not allow. Acceptance runs on SQL storage on PostgreSQL (fsync on commit) with peers on a SELECT-only role (closes R28's R5, the peer writing storage). Dev storage stays allowed for development gates. This decides the storage half of Q78e without loosening any of Sam's bars; the other option R32 lists (accept a declared loss window) would loosen P2 and is Sam's alone.",
@@ -1944,6 +1934,182 @@
       "compiledInto": [
         "datomicRules",
         "datomicStoragePolicy"
+      ]
+    },
+    {
+      "id": "Q91a",
+      "topic": "built base, bounded delta",
+      "ruling": "QLever-lane performance evidence (P1, P4, P5, GS) counts only from a server whose data sits mostly in a built base index with a delta bounded by a declared rebuild threshold. Every QLever receipt records base triple count, delta triple count and the delta in the blocks the measured scans touched. The lane's design (R2, R8, R13, R17) always assumed this; nothing built or measured it, and qlever-dev's base holds 1 triple. Earlier QLever latency numbers from delta-only servers are DIAGNOSTIC.",
+      "compiledInto": [
+        "qleverEvidenceRules"
+      ]
+    },
+    {
+      "id": "Q91b",
+      "topic": "stop dropping data with --fresh",
+      "ruling": "qlever-dev is no longer reset with --fresh as a delta policy; delta growth on shared residents is handled by the rebuild loop of Q91c once it is qualified.",
+      "compiledInto": [
+        "qleverEvidenceRules"
+      ]
+    },
+    {
+      "id": "Q91c",
+      "topic": "generations from the log",
+      "ruling": "EXP-QG1 (lab/experiments/EXP-QG1-qlever-generations/) builds the rebuild loop: phase 1 on an exclusive slot measures scan and join cost against delta size (monotonic and spread keys) on a 10M-triple base and picks the threshold; phase 2 rebuilds blue/green index generations from the broker log, with reader leases so one multi-request read stays on one generation, and checks Q89i byte identity across every swap. The feed stays the log. Bounding the delta per graph is rejected (all graphs share one server's blocks).",
+      "compiledInto": [
+        "qleverEvidenceRules"
+      ]
+    },
+    {
+      "id": "Q91d",
+      "topic": "phase 0 on a copy",
+      "ruling": "The first rebuild-index runs on a copy of qlever-dev's data on an exclusive slot, not on the shared resident, because several reviews read qlever-dev live and upstream bug #3172 can make a rebuild fail.",
+      "compiledInto": [
+        "qleverEvidenceRules"
+      ]
+    },
+    {
+      "id": "Q93a",
+      "topic": "process evidence refuses, never grants",
+      "ruling": "For seed reuse on every lane, the only evidence that grants admission is a content fingerprint (G0) read through the engine by the process that will measure, on the endpoint it measures, before its warm-up, compared with a digest pinned before the freeze began (and with O-DOMAIN where one exists). Every other observation (stop, settle, log tails, frontiers, inspect, stderr, timers, owner state, copy hashes, plan hashes, disk) is refusal-only or a diagnostic, and no decision reads a diagnostic.",
+      "compiledInto": [
+        "seedRules"
+      ]
+    },
+    {
+      "id": "Q93b",
+      "topic": "G0 for K01",
+      "ruling": "Fields, pinning point and counts as in sections 2.1 and 3.2; every read has a deadline; the golden is published only after two starts of a clone each reproduce `D` and the layout digest `L`.",
+      "compiledInto": [
+        "seedRules"
+      ]
+    },
+    {
+      "id": "Q94b",
+      "topic": "",
+      "ruling": "Every GS stream is W0-valid and every domain claim a scenario names is checked by O-DOMAIN; a scenario whose spec names a domain claim and whose run makes no such check fails closed. The W01 world vocabulary is retired",
+      "compiledInto": [
+        "goldenScenarioRulings"
+      ]
+    },
+    {
+      "id": "Q94c",
+      "topic": "",
+      "ruling": "The GS background is the frozen TARGETS 2.1 trace through the W0 trace mapper (Q92k); the private writerTrace is retired; every measured window holds one burst and one maintenance event",
+      "compiledInto": [
+        "goldenScenarioRulings"
+      ]
+    },
+    {
+      "id": "Q94d",
+      "topic": "",
+      "ruling": "GS world admission follows Q93a: a G0 content fingerprint per run; a fresh scope or verified clone per run; store counts at start and end; on lane Q the Q91a counts",
+      "compiledInto": [
+        "goldenScenarioRulings"
+      ]
+    },
+    {
+      "id": "Q94e",
+      "topic": "",
+      "ruling": "Every GS receipt before contract 0.4.0 is DIAGNOSTIC: none closes an obligation or enters a comparison. The GS.12 defect and the W01b harness findings stay as defect reports",
+      "compiledInto": [
+        "goldenScenarioRulings"
+      ]
+    },
+    {
+      "id": "Q94f",
+      "topic": "",
+      "ruling": "GS.04b applies only to compositions with a separate current store; on those it is required. GS.04's engine-kill schedule is required on every lane and runs only on an exclusive slot",
+      "compiledInto": [
+        "goldenScenarioRulings"
+      ]
+    },
+    {
+      "id": "Q94g",
+      "topic": "",
+      "ruling": "GS.19's outbox and GS.10's publications must be the product's atomic outbox; a harness-side outbox file can pass only GS.19's P3 checks, as a diagnostic",
+      "compiledInto": [
+        "goldenScenarioRulings"
+      ]
+    },
+    {
+      "id": "Q94h",
+      "topic": "",
+      "ruling": "GS.10's race (in-flight reconciles finish on the old release) is scheduled as EXP-P5 round C, right after rounds A and B, and is required for GS.10 to close",
+      "compiledInto": [
+        "goldenScenarioRulings"
+      ]
+    },
+    {
+      "id": "Q94i",
+      "topic": "(orchestrator; the superseded outcome flagged for Sam)",
+      "ruling": "GS.03's vendor-revision rule goes into W0-1.2 with an O-DOMAIN `signal-ack` operation; the `superseded` outcome stays flagged for Sam",
+      "compiledInto": [
+        "goldenScenarioRulings"
+      ]
+    },
+    {
+      "id": "Q93c",
+      "topic": "two digests",
+      "ruling": "G0 admits a clone by the full digest D over every stored column (byte-level identity with its golden). E1, which compares a clone with a fresh seed of the same inputs, uses a second digest D' over the same columns with engine-assigned values normalized: engine-generated ids and system timestamps are replaced by their rank in commit order, and every other column is kept as is. A fresh seed must match the golden's D', never its D. The normalization list is part of the G0 module, each entry with a comment naming the engine source that assigns it, and a test fails if a column is normalized without one.",
+      "compiledInto": [
+        "seedRules"
+      ]
+    },
+    {
+      "id": "Q96a",
+      "topic": "composition",
+      "ruling": "P2 is measured per subject serially and in parallel across subjects, with the queue inside the candidate (Q51a); A0's single-flight composition stays only as a control arm. Golden scenario commit bars measured on single-flight A0 are DIAGNOSTIC (they measure queueing).",
+      "compiledInto": [
+        "laneXP2Rules"
+      ]
+    },
+    {
+      "id": "Q96b",
+      "topic": "stamps under concurrency",
+      "ruling": "RT01 round A's client stamp is monotone only because A0 serializes every commit; any per-subject concurrent arm uses a decider-side stamp (the engine stamp after probe p9, or the broker's), per Q90c. RT01 round A's added scope-wide scan on A0 is measured on an engine before RT01 merges (G6).",
+      "compiledInto": [
+        "laneXP2Rules"
+      ]
+    },
+    {
+      "id": "Q96c",
+      "topic": "the shortest path and the native check",
+      "ruling": "Lane X's shortest path to P2 is XTDB behind the broker (EXP-P2B, Q51b, Q58b). EXP-P2X2 (lab/experiments/EXP-P2X2/BRIEF.md) runs once on an exclusive xtdb-s1 slot after K01's live run and before P5 A1, to settle whether the native path is closed, with the decision rule written in R39 4.5 before the run (native is closed if F3 p50 > 6 ms, or F5 p50 > 20 ms, or engine resolve > 7 ms per commit). If closed, the lab says so plainly (SCOPE 3.2) and keeps the native arm as a comparison.",
+      "compiledInto": [
+        "laneXP2Rules"
+      ]
+    },
+    {
+      "id": "Q97a",
+      "topic": "current pulls from H1",
+      "ruling": "Lane Q serves current-value pulls from the broker's SQLite H1 store, behind a default-off currentRoute: \"h1\" option; QLever keeps history, native SPARQL and analytics. This is the ruled design (Q68a, Q50a, Q68d), which SQL01 used only as an outage fallback. A route that cannot answer a basis exactly refuses (Q89b, Q89c, Q92h). EXP-QH1 (lab/experiments/EXP-QH1/BRIEF.md) builds it after P2Q and SQL01 merge; its G1 to G7 need no slot, G8 takes one exclusive qlever-s1 run.",
+      "compiledInto": [
+        "laneQP4Rules"
+      ]
+    },
+    {
+      "id": "Q97b",
+      "topic": "the keep-alive stall",
+      "ruling": "Every QLever latency measured from the host through QleverClient so far carries a 41 to 45 ms keep-alive stall on about a third of requests, because QLever never sets TCP_NODELAY and QleverClient keeps connections alive. QLever latency receipts record the connection mode; earlier QLever latency numbers are DIAGNOSTIC on this ground too. The fix is measured first as a connection per request from the host (no custom image), with the engine patch as the fallback.",
+      "compiledInto": [
+        "laneQP4Rules"
+      ]
+    },
+    {
+      "id": "Q97c",
+      "topic": "multi-request pulls",
+      "ruling": "A pull form that needs one request per BFS level cannot meet P4 from the host on QLever (transport alone is 18 to 32 ms per depth-6 pull), so no multi-request QLever pull form is a P4 candidate.",
+      "compiledInto": [
+        "laneQP4Rules"
+      ]
+    },
+    {
+      "id": "Q96d",
+      "topic": "native lane X P2 is closed",
+      "ruling": "EXP-P2X2 (exp/P2X2-commit-floor b9a76c0, one exclusive xtdb-s1 run) met Q96c's preregistered rule: F3 p50 7.68 ms (bar 6) and F5 fresh 33.00 ms (bar 20). The XTDB-native commit path cannot meet P2 in this VM, which the lab states plainly (SCOPE 3.2); lane X's P2 candidate is XTDB behind the broker (EXP-P2B), and the native per-subject arm stays as a comparison. Aged F6, F7 to F9 and strict no-wait checks remain open as diagnostics, and the run awaits an independent review of its receipts.",
+      "compiledInto": [
+        "laneXP2Rules"
       ]
     }
   ],
@@ -3525,23 +3691,18 @@
     },
     "Q74b": {
       "topic": "freeze state",
-      "rule": "The canonical freeze state is settled: `POST /system/finish-block`, compactor jobs 0, live index empty. A fresh-seeded arm compared with a cloned arm settles the same way before its window. Older unsettled A0 receipts are not compared with settled ones.",
-      "basis": "R26 design item 1",
-      "supersededBy": [
-        "Q83b",
-        "Q83d",
-        "Q83e"
-      ]
+      "rule": "becomes the **recipe**: two finish-blocks, jobs-0 waits, `docker stop -t 60`, copy from a stopped container. A timeout refuses; nothing in it grants.",
+      "basis": "Q93; R36 section 6"
     },
     "Q74c": {
       "topic": "validation first",
-      "rule": "No clone-seeded receipt counts, even for screening, until validation E1 passes: a fresh-seeded slot against its clone under the PAIR-0 A/A procedure, holding within 1.10 at p50 and 1.15 at p99, with R26 section 6.9's seven predictions checked.",
-      "basis": "R26 section 6.9"
+      "rule": "No clone-seeded receipt counts, even for screening, until validation E1 passes: a fresh-seeded slot against its clone under the PAIR-0 A/A procedure, holding within 1.10 at p50 and 1.15 at p99, with R26 section 6.9's seven predictions checked. **unchanged**; E1 is rerun when the recipe, the image or the XTDB version changes",
+      "basis": "R26 section 6.9; Q93; R36 section 6"
     },
     "Q74d": {
       "topic": "readiness",
-      "rule": "A cloned slot is ready only after `/healthz/started` (read with `docker exec`) and the R26 C1-C8 checks pass, then the same warm-up on every arm.",
-      "basis": "R26 risk 2"
+      "rule": "**replaced** by Q93a/b: health precondition plus G0 in the driver; `owner.json` holds slot ownership only",
+      "basis": "Q93; R36 section 6"
     },
     "Q74e": {
       "topic": "maintenance in every window",
@@ -3560,28 +3721,33 @@
     },
     "Q83a": {
       "topic": "log4j flag on slots",
-      "rule": "Slots s1-s3 add `-Dlog4j2.shutdownHookEnabled=false` to javaOpts, so XTDB's shutdown hook can log `Stopping node...`, the three server-stopped lines and `Node stopped.` (Log4j's own hook otherwise drops them). The dev residents are unchanged. This changes the slot config hash and therefore every golden key; receipts before the change name the old hash.",
-      "basis": "R30 Q1, decision D1"
+      "rule": "**kept as a diagnostic aid**; no rule requires the lines",
+      "basis": "Q93; R36 section 6"
     },
     "Q83b": {
       "topic": "canonical freeze state",
-      "rule": "Settled = two finish-blocks (the second records the post-compaction catalog), compactor jobs 0, and snapshot-independent evidence (new block file whose tx_id and latest_processed_msg_id equal the node gauges, block.last_upload_time advanced, xt.trie_stats showing the new tries, file listing and trie digest unchanged over three readings 5 s apart); never `xt.live_tables` (stale shared snapshot, upstream #6174). Clean stop = exit within 10 s with the stop lines and exit 143, well-formed LOG and REPLICA_LOG tails checked offline, empty `buffers/**/.tmp` (refuse, never delete). The freeze fingerprint is taken on a reference start of the source after the copy, and every arm, fresh or cloned, starts the same way. Re-test the second finish-block and the reference start when XTDB 2.2.1 is pinned.",
-      "basis": "R30 Q2, Q3, Q5; decision D2"
+      "rule": "**superseded by Q93a**: the steps stay in the recipe, their readings become diagnostics; `xt.live_tables` is read only on a freshly started node (K3)",
+      "basis": "Q93; R36 section 6"
     },
     "Q83c": {
       "topic": "block listing",
-      "rule": "Never read a block that may not exist (MemoryCache hangs the caller): list `buffers/v06/blocks/b*.binpb` first and query `xt.block_files` only for listed indices, re-listing just before each query; block numbers are not dense (GC keeps the latest 10).",
-      "basis": "R30 Q4"
+      "rule": "kept for diagnostic tools; B never reads `xt.block_files`",
+      "basis": "Q93; R36 section 6"
     },
-    "Q83d": {
-      "topic": "settle evidence after fast compaction",
-      "rule": "Settle evidence does not require observing L0 tries: compaction may merge them before the first poll. Settled means the new block's tx_id and latest_processed_msg_id equal the node gauges, xt.trie_stats covers that block at whatever level it now sits, compactor jobs 0, and the file listing and trie digest are unchanged over three readings 5 s apart.",
-      "basis": "K01 round 2 (G3 blocked by fast compaction)"
+    "Q93a": {
+      "topic": "process evidence refuses, never grants",
+      "rule": "For seed reuse on every lane, the only evidence that grants admission is a content fingerprint (G0) read through the engine by the process that will measure, on the endpoint it measures, before its warm-up, compared with a digest pinned before the freeze began (and with O-DOMAIN where one exists). Every other observation (stop, settle, log tails, frontiers, inspect, stderr, timers, owner state, copy hashes, plan hashes, disk) is refusal-only or a diagnostic, and no decision reads a diagnostic.",
+      "basis": "R36 section 6"
     },
-    "Q83e": {
-      "topic": "three frontiers",
-      "rule": "Settle evidence records three values separately and never equates them: (a) the block-cut frontier F, the immutable block's latest_processed_msg_id; (b) the settled replay frontier M, the processed watcher after maintenance drains (lag 0, jobs 0, tries stable, over the Q83d polls); (c) the stable application transaction T. F < M is accepted only when every source message in (F, M] is read from the stopped log tail and is a maintenance message (TriesAdded, compactor output), never an application transaction; T is unchanged across the window. The final stopped log tails and the reference and clone resume are bound to M. Exact reference/clone equality and the two-start catalog checks stay. This replaces the part of Q83d that refused every F < M.",
-      "basis": "XTDB c6c1962: BlockCutter.kt:235, 280-295; SourceMessage.kt:139-147; Compactor.kt:150-152; SourceLogProcessor.kt:142, 199-211; Database.kt:375-387"
+    "Q93b": {
+      "topic": "G0 for K01",
+      "rule": "Fields, pinning point and counts as in sections 2.1 and 3.2; every read has a deadline; the golden is published only after two starts of a clone each reproduce `D` and the layout digest `L`.",
+      "basis": "R36 section 6"
+    },
+    "Q93c": {
+      "topic": "two digests",
+      "rule": "G0 admits a clone by the full digest D over every stored column (byte-level identity with its golden). E1, which compares a clone with a fresh seed of the same inputs, uses a second digest D' over the same columns with engine-assigned values normalized: engine-generated ids and system timestamps are replaced by their rank in commit order, and every other column is kept as is. A fresh seed must match the golden's D', never its D. The normalization list is part of the G0 module, each entry with a comment naming the engine source that assigns it, and a test fails if a column is normalized without one.",
+      "basis": "CX-K01-R2 round 8"
     }
   },
   "recursionRules": {
@@ -3804,8 +3970,8 @@
       ],
       "answer": "canonical JSON {bound, unboundAssignments, imagesPinned, variant} for one composition-identity case {composition}, run from the authority's files (RULINGS Q59e, Q64c, Q65a)",
       "sha256": {
-        "lab/acceptance/build_contract.py": "914db3d15e91180e8b449fffeeb27b997dc10eb835fff66e10eca6517e985b59",
-        "lab/acceptance/oracle-contract.json": "a7ec2fe98f8bb066fe6ea55e89344905f5e9c760b076152f5377c414d18adbd0"
+        "lab/acceptance/build_contract.py": "259b0c2985985fbdf2c79d1ad6379c2adb6d919d45611b63bf7002502d2499e6",
+        "lab/acceptance/oracle-contract.json": "82b3b4e0e774553a38ab4750abb6fc61b2d89431aeb3002f7692d3124fa80fb9"
       }
     },
     "O-OBS": {
@@ -3934,8 +4100,8 @@
   },
   "imagePins": {
     "datomic": {
-      "image": null,
-      "imageId": null
+      "image": "tx2-datomic:1.0.7745-da00",
+      "imageId": "sha256:34fb9db10a278ff5614e7ac59788a2456329c75d098871ce1831465e243f2dcf"
     },
     "xtdb": {
       "image": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
@@ -4442,18 +4608,275 @@
   },
   "freezeProtocol": {
     "precedence": [
-      "Q83b",
+      "Q93a",
+      "Q93b",
+      "Q93c"
+    ],
+    "grant": "G0 content fingerprint only; read in the measuring process on its measured endpoint before warm-up every run",
+    "pinBefore": "after last seed commit, before first finish-block",
+    "cloneDigest": "D: every stored column, byte-level identity to golden",
+    "freshSeedDigest": "D-prime: same columns; only engine-assigned ids/system timestamps normalized to rank in commit order; every normalization has an engine-source comment and a test",
+    "scope": "all seed-scope assertions (all value/lifetime columns), claims, attempts; tx_meta enumerates every scope",
+    "counts": "independent COUNT(*) equals closed-form manifest counts; tx_meta holds only the seed scope; W0 worlds and R2 outputs equal O-DOMAIN",
+    "deadlines": "every read has a deadline; timeout refuses",
+    "goldenPublication": "two starts of a qualification clone each reproduce D and L before golden publication",
+    "recipe": [
+      "finish-block",
+      "jobs-0 wait",
+      "finish-block",
+      "jobs-0 wait",
+      "docker stop -t 60",
+      "copy from stopped container"
+    ],
+    "refusalOnly": [
+      "current golden key",
+      "copy tree hash",
+      "started-node quiescence: jobs 0 over three readings, live rows 0, layout L, transaction T, lag 0",
+      "Triplex lastPosition",
+      "first warm-up commit lastPosition + 1",
+      "end counts start plus recorded commands",
+      "resource/disk floor"
+    ],
+    "diagnostics": [
+      "stop/log lines",
+      "settle readings",
+      "F",
+      "M",
+      "log tails",
+      "inspect",
+      "stderr",
+      "timers",
+      "owner state",
+      "plan hashes"
+    ],
+    "ownerJson": "slot ownership only; no readiness admission",
+    "blockListing": "diagnostic tools only; B never reads xt.block_files",
+    "e1": "fresh D-prime equals golden D-prime; PAIR-0 A/A p50 <= 1.10 and p99 <= 1.15; rerun on recipe/image/XTDB version changes",
+    "retired": [
       "Q83d",
       "Q83e"
-    ],
-    "frontiers": {
-      "F": "block-cut latest_processed_msg_id",
-      "M": "settled replay processed watcher",
-      "T": "stable application transaction"
+    ]
+  },
+  "qleverEvidenceRules": {
+    "Q91a": {
+      "topic": "built base, bounded delta",
+      "rule": "QLever-lane performance evidence (P1, P4, P5, GS) counts only from a server whose data sits mostly in a built base index with a delta bounded by a declared rebuild threshold. Every QLever receipt records base triple count, delta triple count and the delta in the blocks the measured scans touched. The lane's design (R2, R8, R13, R17) always assumed this; nothing built or measured it, and qlever-dev's base holds 1 triple. Earlier QLever latency numbers from delta-only servers are DIAGNOSTIC.",
+      "basis": "R35 sections 1-3"
     },
-    "maintenanceGap": "F < M requires stopped-tail proof that every message in (F, M] is maintenance, with unchanged T",
-    "resumeBoundTo": "M",
-    "legacyRule": "Q74b is historical; never use xt.live_tables or require F == M"
+    "Q91b": {
+      "topic": "stop dropping data with --fresh",
+      "rule": "qlever-dev is no longer reset with --fresh as a delta policy; delta growth on shared residents is handled by the rebuild loop of Q91c once it is qualified.",
+      "basis": "R35 3"
+    },
+    "Q91c": {
+      "topic": "generations from the log",
+      "rule": "EXP-QG1 (lab/experiments/EXP-QG1-qlever-generations/) builds the rebuild loop: phase 1 on an exclusive slot measures scan and join cost against delta size (monotonic and spread keys) on a 10M-triple base and picks the threshold; phase 2 rebuilds blue/green index generations from the broker log, with reader leases so one multi-request read stays on one generation, and checks Q89i byte identity across every swap. The feed stays the log. Bounding the delta per graph is rejected (all graphs share one server's blocks).",
+      "basis": "R35 5"
+    },
+    "Q91d": {
+      "topic": "phase 0 on a copy",
+      "rule": "The first rebuild-index runs on a copy of qlever-dev's data on an exclusive slot, not on the shared resident, because several reviews read qlever-dev live and upstream bug #3172 can make a rebuild fail.",
+      "basis": "orchestrator"
+    }
+  },
+  "qleverEvidencePolicy": {
+    "performance": [
+      "P1",
+      "P4",
+      "P5",
+      "GS"
+    ],
+    "required": [
+      "built base index",
+      "declared rebuild threshold",
+      "base triple count",
+      "delta triple count",
+      "delta in touched blocks"
+    ],
+    "deltaOnly": "DIAGNOSTIC",
+    "freshResetAsDeltaPolicy": false,
+    "phase0": "copy on exclusive slot, never shared resident",
+    "phase1": "10M-triple base; scan/join versus delta, monotonic and spread keys",
+    "phase2": "blue/green generations rebuilt from broker log; leases bind every multi-request read to one generation; Q89i byte identity across every swap",
+    "feed": "log",
+    "perGraphDeltaBound": "rejected: shared server blocks"
+  },
+  "goldenScenarioRulings": {
+    "Q94b": {
+      "topic": "",
+      "rule": "Every GS stream is W0-valid and every domain claim a scenario names is checked by O-DOMAIN; a scenario whose spec names a domain claim and whose run makes no such check fails closed. The W01 world vocabulary is retired",
+      "basis": "R37 b; GATE-W0; TARGETS 6 rule 2"
+    },
+    "Q94c": {
+      "topic": "",
+      "rule": "The GS background is the frozen TARGETS 2.1 trace through the W0 trace mapper (Q92k); the private writerTrace is retired; every measured window holds one burst and one maintenance event",
+      "basis": "R37 c; TARGETS 1.1 P1 item 3, 2.1"
+    },
+    "Q94d": {
+      "topic": "",
+      "rule": "GS world admission follows Q93a: a G0 content fingerprint per run; a fresh scope or verified clone per run; store counts at start and end; on lane Q the Q91a counts",
+      "basis": "R37 d; Q93a, Q92c, Q91a"
+    },
+    "Q94e": {
+      "topic": "",
+      "rule": "Every GS receipt before contract 0.4.0 is DIAGNOSTIC: none closes an obligation or enters a comparison. The GS.12 defect and the W01b harness findings stay as defect reports",
+      "basis": "R37 e; Q90f, Q91a, Q93a"
+    },
+    "Q94f": {
+      "topic": "",
+      "rule": "GS.04b applies only to compositions with a separate current store; on those it is required. GS.04's engine-kill schedule is required on every lane and runs only on an exclusive slot",
+      "basis": "R37 f; TARGETS 4.1 item 6; Q31e"
+    },
+    "Q94g": {
+      "topic": "",
+      "rule": "GS.19's outbox and GS.10's publications must be the product's atomic outbox; a harness-side outbox file can pass only GS.19's P3 checks, as a diagnostic",
+      "basis": "R37 g; TARGETS 3 (atomic path to the outbox); Q42c"
+    },
+    "Q94h": {
+      "topic": "",
+      "rule": "GS.10's race (in-flight reconciles finish on the old release) is scheduled as EXP-P5 round C, right after rounds A and B, and is required for GS.10 to close",
+      "basis": "R37 h; Q92j; TARGETS 6 row 10"
+    },
+    "Q94i": {
+      "topic": "(orchestrator; the superseded outcome flagged for Sam)",
+      "rule": "GS.03's vendor-revision rule goes into W0-1.2 with an O-DOMAIN `signal-ack` operation; the `superseded` outcome stays flagged for Sam",
+      "basis": "R37 i; TARGETS 6.1; W0 lacks it"
+    }
+  },
+  "goldenScenarioPolicy": {
+    "before040": "DIAGNOSTIC",
+    "closesObligation": false,
+    "entersComparison": false,
+    "world": "W0-valid; domain claims checked by O-DOMAIN or fail closed; W01 retired",
+    "background": "frozen TARGETS 2.1 trace via W0 mapper; private writerTrace retired",
+    "everyWindow": [
+      "one burst",
+      "one maintenance event"
+    ],
+    "admission": [
+      "per-run G0",
+      "fresh scope or verified clone",
+      "start/end store counts",
+      "QLever Q91a counts"
+    ],
+    "GS04b": "required exactly when a separate current store exists",
+    "GS04": "engine-kill schedule every lane, exclusive only",
+    "outbox": "product atomic outbox for GS.10 and GS.19; harness file only diagnostic P3 checks",
+    "GS10": "round C after A/B race required for closure",
+    "GS03": "W0-1.2 signal-ack pending implementation; superseded outcome flagged for Sam",
+    "acceptanceSize": "Q94a pending; TARGETS unchanged"
+  },
+  "seedAmendments": {
+    "Q74b": {
+      "topic": "freeze state",
+      "rule": "becomes the **recipe**: two finish-blocks, jobs-0 waits, `docker stop -t 60`, copy from a stopped container. A timeout refuses; nothing in it grants.",
+      "basis": "Q93; R36 section 6"
+    },
+    "Q74d": {
+      "topic": "readiness",
+      "rule": "**replaced** by Q93a/b: health precondition plus G0 in the driver; `owner.json` holds slot ownership only",
+      "basis": "Q93; R36 section 6"
+    },
+    "Q83a": {
+      "topic": "log4j flag on slots",
+      "rule": "**kept as a diagnostic aid**; no rule requires the lines",
+      "basis": "Q93; R36 section 6"
+    },
+    "Q83b": {
+      "topic": "canonical freeze state",
+      "rule": "**superseded by Q93a**: the steps stay in the recipe, their readings become diagnostics; `xt.live_tables` is read only on a freshly started node (K3)",
+      "basis": "Q93; R36 section 6"
+    },
+    "Q83c": {
+      "topic": "block listing",
+      "rule": "kept for diagnostic tools; B never reads `xt.block_files`",
+      "basis": "Q93; R36 section 6"
+    },
+    "Q74c": {
+      "topic": "validation first",
+      "rule": "No clone-seeded receipt counts, even for screening, until validation E1 passes: a fresh-seeded slot against its clone under the PAIR-0 A/A procedure, holding within 1.10 at p50 and 1.15 at p99, with R26 section 6.9's seven predictions checked. **unchanged**; E1 is rerun when the recipe, the image or the XTDB version changes",
+      "basis": "R26 section 6.9; Q93; R36 section 6"
+    }
+  },
+  "retiredSeedRules": {
+    "Q83d": {
+      "topic": "settle evidence after fast compaction",
+      "rule": "Settle evidence does not require observing L0 tries: compaction may merge them before the first poll. Settled means the new block's tx_id and latest_processed_msg_id equal the node gauges, xt.trie_stats covers that block at whatever level it now sits, compactor jobs 0, and the file listing and trie digest are unchanged over three readings 5 s apart.",
+      "basis": "K01 round 2 (G3 blocked by fast compaction)"
+    },
+    "Q83e": {
+      "topic": "three frontiers",
+      "rule": "Settle evidence records three values separately and never equates them: (a) the block-cut frontier F, the immutable block's latest_processed_msg_id; (b) the settled replay frontier M, the processed watcher after maintenance drains (lag 0, jobs 0, tries stable, over the Q83d polls); (c) the stable application transaction T. F < M is accepted only when every source message in (F, M] is read from the stopped log tail and is a maintenance message (TriesAdded, compactor output), never an application transaction; T is unchanged across the window. The final stopped log tails and the reference and clone resume are bound to M. Exact reference/clone equality and the two-start catalog checks stay. This replaces the part of Q83d that refused every F < M.",
+      "basis": "XTDB c6c1962: BlockCutter.kt:235, 280-295; SourceMessage.kt:139-147; Compactor.kt:150-152; SourceLogProcessor.kt:142, 199-211; Database.kt:375-387"
+    }
+  },
+  "pinChanges0313": {
+    "testkit": {
+      "path": "packages/testkit/src/index.ts",
+      "oldSha256": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988",
+      "sha256": "cb89a55ced5426b8fa0af3523fbbeb73870e61e3622ebb42e8a78c3e67da8d28"
+    },
+    "datomic": {
+      "old": {
+        "image": null,
+        "imageId": null
+      },
+      "new": {
+        "image": "tx2-datomic:1.0.7745-da00",
+        "imageId": "sha256:34fb9db10a278ff5614e7ac59788a2456329c75d098871ce1831465e243f2dcf"
+      }
+    }
+  },
+  "pinChanges0314": {
+    "packages/testkit/src/index.ts": {
+      "previousSha256": "cb89a55ced5426b8fa0af3523fbbeb73870e61e3622ebb42e8a78c3e67da8d28",
+      "sha256": "2c26c678577f98a71003588c7c62b9a81ff6d109a033c72c521f295f4cb2ffdd"
+    }
+  },
+  "laneXP2Rules": {
+    "Q96a": {
+      "topic": "composition",
+      "rule": "P2 is measured per subject serially and in parallel across subjects, with the queue inside the candidate (Q51a); A0's single-flight composition stays only as a control arm. Golden scenario commit bars measured on single-flight A0 are DIAGNOSTIC (they measure queueing).",
+      "basis": "R39 3.2; R37 1.2"
+    },
+    "Q96b": {
+      "topic": "stamps under concurrency",
+      "rule": "RT01 round A's client stamp is monotone only because A0 serializes every commit; any per-subject concurrent arm uses a decider-side stamp (the engine stamp after probe p9, or the broker's), per Q90c. RT01 round A's added scope-wide scan on A0 is measured on an engine before RT01 merges (G6).",
+      "basis": "R39 3.3"
+    },
+    "Q96c": {
+      "topic": "the shortest path and the native check",
+      "rule": "Lane X's shortest path to P2 is XTDB behind the broker (EXP-P2B, Q51b, Q58b). EXP-P2X2 (lab/experiments/EXP-P2X2/BRIEF.md) runs once on an exclusive xtdb-s1 slot after K01's live run and before P5 A1, to settle whether the native path is closed, with the decision rule written in R39 4.5 before the run (native is closed if F3 p50 > 6 ms, or F5 p50 > 20 ms, or engine resolve > 7 ms per commit). If closed, the lab says so plainly (SCOPE 3.2) and keeps the native arm as a comparison.",
+      "basis": "R39 2, 4"
+    },
+    "Q96d": {
+      "topic": "native lane X P2 is closed",
+      "rule": "EXP-P2X2 (exp/P2X2-commit-floor b9a76c0, one exclusive xtdb-s1 run) met Q96c's preregistered rule: F3 p50 7.68 ms (bar 6) and F5 fresh 33.00 ms (bar 20). The XTDB-native commit path cannot meet P2 in this VM, which the lab states plainly (SCOPE 3.2); lane X's P2 candidate is XTDB behind the broker (EXP-P2B), and the native per-subject arm stays as a comparison. Aged F6, F7 to F9 and strict no-wait checks remain open as diagnostics, and the run awaits an independent review of its receipts.",
+      "basis": "EXP-P2X2 report"
+    }
+  },
+  "laneQP4Rules": {
+    "Q97a": {
+      "topic": "current pulls from H1",
+      "rule": "Lane Q serves current-value pulls from the broker's SQLite H1 store, behind a default-off currentRoute: \"h1\" option; QLever keeps history, native SPARQL and analytics. This is the ruled design (Q68a, Q50a, Q68d), which SQL01 used only as an outage fallback. A route that cannot answer a basis exactly refuses (Q89b, Q89c, Q92h). EXP-QH1 (lab/experiments/EXP-QH1/BRIEF.md) builds it after P2Q and SQL01 merge; its G1 to G7 need no slot, G8 takes one exclusive qlever-s1 run.",
+      "basis": "R40 2-3"
+    },
+    "Q97b": {
+      "topic": "the keep-alive stall",
+      "rule": "Every QLever latency measured from the host through QleverClient so far carries a 41 to 45 ms keep-alive stall on about a third of requests, because QLever never sets TCP_NODELAY and QleverClient keeps connections alive. QLever latency receipts record the connection mode; earlier QLever latency numbers are DIAGNOSTIC on this ground too. The fix is measured first as a connection per request from the host (no custom image), with the engine patch as the fallback.",
+      "basis": "R40 1, 4.3; R17 0.2"
+    },
+    "Q97c": {
+      "topic": "multi-request pulls",
+      "rule": "A pull form that needs one request per BFS level cannot meet P4 from the host on QLever (transport alone is 18 to 32 ms per depth-6 pull), so no multi-request QLever pull form is a P4 candidate.",
+      "basis": "R40 1"
+    }
+  },
+  "rulingReview0314": {
+    "commit": "4155fda7",
+    "record": "lab/verify/P2X2/VERIFY.md",
+    "sha256": "462456077e50a4a6a4027deb2f1e55f36361b69751323ff0f37dddee2943a159",
+    "verdict": "ACCEPT for D1 under preregistered R39 4.5; native P2 closed on this host/profile only"
   },
   "mergeGates": {
     "Q87": {
@@ -4472,7 +4895,7 @@
   },
   "pendingRulings": {
     "file": "lab/acceptance/RULINGS-PENDING.md",
-    "sha256": "741aecb9b2a93ff671303a027301ad326d6e19a7f324c68e09f381b2bb485f88",
+    "sha256": "b38c68514a181caac13c600cc76ffe4a797da72a1316e1d5da732a12c56f1008",
     "ids": [
       "Q51b",
       "Q73a",
@@ -4497,10 +4920,6 @@
       "Q90e",
       "Q90f",
       "Q90g",
-      "Q91a",
-      "Q91b",
-      "Q91c",
-      "Q91d",
       "Q92a",
       "Q92b",
       "Q92c",
@@ -4511,7 +4930,67 @@
       "Q92h",
       "Q92i",
       "Q92j",
-      "Q92k"
+      "Q92k",
+      "Q94a",
+      "Q95a",
+      "Q95b",
+      "Q95c",
+      "Q95d",
+      "Q95e",
+      "Q95f",
+      "Q95g",
+      "Q95h",
+      "Q95",
+      "Q98a",
+      "Q98b",
+      "Q98c",
+      "Q98d",
+      "Q98e",
+      "Q98f",
+      "Q98g",
+      "Q98h",
+      "Q98i",
+      "Q98j",
+      "Q99a",
+      "Q99b",
+      "Q99c",
+      "Q99d",
+      "Q99e",
+      "Q99-S1",
+      "Q100a",
+      "Q100b",
+      "Q100c",
+      "Q100d",
+      "Q100e",
+      "Q100f",
+      "Q100g",
+      "Q100h",
+      "Q100i",
+      "Q100j",
+      "Q100k",
+      "Q100l",
+      "Q100m",
+      "Q100n",
+      "Q100o",
+      "Q100p",
+      "Q100-S1",
+      "Q101a",
+      "Q100q",
+      "Q100r",
+      "Q102a",
+      "Q102b",
+      "Q102c",
+      "Q102d",
+      "Q102e",
+      "Q103a",
+      "Q103b",
+      "Q103c",
+      "Q104a",
+      "Q103d",
+      "Q103e",
+      "Q105a",
+      "Q105b",
+      "Q100s"
     ],
     "authority": "none",
     "rule": "RULINGS-PENDING.md may hold ruling rows; they carry no authority, are never compiled into this contract and never count as compiled RULINGS.md entries; the generator records the file's hash under inputs and lists the pending ids, and their presence never invalidates generation or --verify (RULINGS Q47d)"
@@ -4817,120 +5296,140 @@
         "oracle-runner-unpinned:O-ERR"
       ],
       "GS.01": [
+        "gs-diagnostic-before-0.4.0:Q94e",
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
         "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "GS.02": [
+        "gs-diagnostic-before-0.4.0:Q94e",
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
         "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "GS.03": [
+        "gs-diagnostic-before-0.4.0:Q94e",
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
         "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "GS.04": [
+        "gs-diagnostic-before-0.4.0:Q94e",
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
         "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "GS.05": [
+        "gs-diagnostic-before-0.4.0:Q94e",
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
         "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "GS.06": [
+        "gs-diagnostic-before-0.4.0:Q94e",
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
         "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "GS.07": [
+        "gs-diagnostic-before-0.4.0:Q94e",
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
         "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "GS.08": [
+        "gs-diagnostic-before-0.4.0:Q94e",
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
         "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "GS.09": [
+        "gs-diagnostic-before-0.4.0:Q94e",
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
         "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "GS.10": [
+        "gs-diagnostic-before-0.4.0:Q94e",
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
         "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "GS.11": [
+        "gs-diagnostic-before-0.4.0:Q94e",
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
         "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "GS.12": [
+        "gs-diagnostic-before-0.4.0:Q94e",
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
         "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "GS.13": [
+        "gs-diagnostic-before-0.4.0:Q94e",
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
         "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "GS.14": [
+        "gs-diagnostic-before-0.4.0:Q94e",
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
         "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "GS.15": [
+        "gs-diagnostic-before-0.4.0:Q94e",
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
         "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "GS.16": [
+        "gs-diagnostic-before-0.4.0:Q94e",
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
         "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "GS.17": [
+        "gs-diagnostic-before-0.4.0:Q94e",
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
         "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "GS.18": [
+        "gs-diagnostic-before-0.4.0:Q94e",
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
         "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "GS.19": [
+        "gs-diagnostic-before-0.4.0:Q94e",
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
         "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "GS.20": [
+        "gs-diagnostic-before-0.4.0:Q94e",
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
         "oracle-screening-only:O-OBS",
@@ -5039,6 +5538,7 @@
       "blocked": 117
     },
     "blockerCounts": {
+      "gs-diagnostic-before-0.4.0:Q94e": 20,
       "oracle-runner-unpinned:O-CFG8": 2,
       "oracle-runner-unpinned:O-COLL": 2,
       "oracle-runner-unpinned:O-ERR": 73,
@@ -5083,8 +5583,8 @@
       },
       "datomic-datalog": {
         "total": 153,
-        "closable": 0,
-        "blocked": 153
+        "closable": 38,
+        "blocked": 115
       }
     },
     "surfaceBlockers": {
@@ -5358,120 +5858,140 @@
           "oracle-screening-only:O-OBS"
         ],
         "GS.01": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.02": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.03": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.04": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.05": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.06": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.07": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.08": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.09": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.10": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.11": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.12": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.13": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.14": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.15": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.16": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.17": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.18": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.19": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.20": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
@@ -5822,120 +6342,140 @@
           "oracle-screening-only:O-OBS"
         ],
         "GS.01": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.02": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.03": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.04": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.05": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.06": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.07": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.08": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.09": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.10": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.11": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.12": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.13": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.14": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.15": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.16": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.17": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.18": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.19": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.20": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
@@ -6290,120 +6830,140 @@
           "oracle-screening-only:O-OBS"
         ],
         "GS.01": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.02": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.03": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.04": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.05": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.06": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.07": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.08": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.09": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.10": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.11": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.12": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.13": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.14": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.15": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.16": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.17": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.18": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.19": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.20": [
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
@@ -6486,379 +7046,241 @@
       },
       "datomic-datalog": {
         "G1.found.unchanged44": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-TESTKIT",
           "oracle-unpinned:O-TESTKIT"
         ],
-        "G1.types.value-kinds-roundtrip": [
-          "image-unpinned:datomic"
-        ],
         "G1.types.out-of-range-rejected": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G1.types.decimal": [
-          "image-unpinned:datomic",
           "refused:O-REPLAY:scale-evolution",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G1.wire.write-guards": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G1.decimal.tdk1-admission": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-TDK1",
           "oracle-unaccepted:O-TDK1"
         ],
         "G1.decimal.tdk1-ranges": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-TDK1",
           "oracle-unaccepted:O-TDK1"
         ],
         "G1.decimal.tdk1-differential": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-TDK1",
           "oracle-unaccepted:O-TDK1"
         ],
         "G1.decimal.tdk1-serialization": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-TDK1",
           "oracle-unaccepted:O-TDK1"
         ],
         "G1.decimal.tdk1-writer-negative": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-TDK1",
           "oracle-unaccepted:O-TDK1",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G1.decimal.channel-routing": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-TDK1",
           "oracle-unaccepted:O-TDK1",
           "oracle-runner-unpinned:O-ERR"
         ],
-        "G7.outbox.publication-sequence": [
-          "image-unpinned:datomic"
-        ],
-        "G7.outbox.receiver-ordering": [
-          "image-unpinned:datomic"
-        ],
-        "G7.outbox.atomic-unit": [
-          "image-unpinned:datomic"
-        ],
         "G1.types.invalid-rejected": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G1.types.storage-widening-safe": [
-          "image-unpinned:datomic",
           "refused:O-REPLAY:scale-evolution"
         ],
-        "G1.types.native-parameters": [
-          "image-unpinned:datomic"
-        ],
         "G1.schema.required": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G1.schema.cardinality": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G1.schema.unique": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G1.schema.reference-target": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G1.schema.release-derived-contracts": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-SPEC",
           "oracle-unpinned:O-SPEC"
         ],
         "PKT.full142": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-EVT",
           "oracle-unpinned:O-EVT"
         ],
         "G2.arith.integer-exact": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G2.arith.binary64": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G2.expr.cross-family-comparison": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G2.errors.typed-taxonomy": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G2.strings.codepoint-supported": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-STR",
           "oracle-unpinned:O-STR",
           "oracle-runner-unpinned:O-COLL",
           "oracle-unpinned:O-COLL"
         ],
         "G3.plan.explain": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-PLAN",
           "oracle-unpinned:O-PLAN"
         ],
         "G3.plan.access-path-at-scale": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-PLAN",
           "oracle-unpinned:O-PLAN"
         ],
         "G3.admission.preconstruction": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-ERR",
           "oracle-screening-only:O-OBS"
         ],
         "G3.cost.budget-honored": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-PLAN",
           "oracle-unpinned:O-PLAN",
           "oracle-runner-unpinned:O-ERR"
         ],
-        "G3.recursion.scalable": [
-          "image-unpinned:datomic"
-        ],
         "G3.recursion.read-only-frontier": [
-          "image-unpinned:datomic",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G4.neg.correlated-not-exists": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-SHAPE",
           "oracle-unpinned:O-SHAPE"
         ],
         "G4.neg.correlated-not-exists-raw": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-SHAPE",
           "oracle-unpinned:O-SHAPE"
         ],
         "G4.cut.task-wide-fixed": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-EVT",
           "oracle-unpinned:O-EVT"
         ],
         "G4.neg.conflict-semantics": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G5.agg.shape-controls": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-SHAPE",
           "oracle-unpinned:O-SHAPE"
         ],
-        "G5.agg.full-support": [
-          "image-unpinned:datomic"
-        ],
-        "G5.agg.typed-groups": [
-          "image-unpinned:datomic"
-        ],
         "G5.agg.projection-sums": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G6.cancel.observed-drain": [
-          "image-unpinned:datomic",
           "oracle-screening-only:O-OBS"
         ],
         "G6.deadline.enforced": [
-          "image-unpinned:datomic",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G6.cancel.preaborted-no-work": [
-          "image-unpinned:datomic",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G6.cleanup.scratch-zero": [
-          "image-unpinned:datomic",
           "oracle-screening-only:O-OBS"
         ],
         "G6.ownership.bounded-connections": [
-          "image-unpinned:datomic",
           "oracle-screening-only:O-OBS"
         ],
         "G6.resource.memory-failure-contained": [
-          "image-unpinned:datomic",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
-        "G7.write.atomic": [
-          "image-unpinned:datomic"
-        ],
         "G7.write.command-idempotency": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G7.write.preconditions-cas": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G7.receipt.journal-complete": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-ERR"
         ],
-        "G7.journal.logical-contract": [
-          "image-unpinned:datomic"
-        ],
         "G7.commit.protocol-transitions": [
-          "image-unpinned:datomic",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G7.composition.overlay-rules": [
-          "image-unpinned:datomic",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G7.broker.promotion-hardening": [
-          "image-unpinned:datomic",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
-        "G7.recovery.backup-restore": [
-          "image-unpinned:datomic"
-        ],
         "G7.migration.schema-evolution": [
-          "image-unpinned:datomic",
           "refused:O-REPLAY:scale-evolution"
         ],
         "G7.migration.valid-writes-never-rejected": [
-          "image-unpinned:datomic",
           "refused:O-REPLAY:scale-evolution"
         ],
         "G8.eligibility.c1-routing": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-PLAN",
           "oracle-unpinned:O-PLAN"
         ],
-        "G8.publish.coherent": [
-          "image-unpinned:datomic"
-        ],
         "G8.publish.basis-honesty": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-ERR"
         ],
-        "G8.publish.valid-boundary": [
-          "image-unpinned:datomic"
-        ],
         "G8.reuse.positive-witness": [
-          "image-unpinned:datomic",
           "oracle-screening-only:O-OBS"
         ],
         "G8.support.incremental-witness": [
-          "image-unpinned:datomic",
           "oracle-screening-only:O-OBS"
         ],
-        "G8.support.alternate-maintained": [
-          "image-unpinned:datomic"
-        ],
         "G9.temporal.half-open-intervals": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-ERR"
         ],
-        "G9.temporal.recorded-cuts": [
-          "image-unpinned:datomic"
-        ],
         "G9.history.raw-lifetime-compat": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-HAM",
           "oracle-unpinned:O-HAM"
         ],
         "G9.history.snapshot-metadata": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-CFG8",
           "oracle-unpinned:O-CFG8",
           "oracle-runner-unpinned:O-HAM",
           "oracle-unpinned:O-HAM"
         ],
-        "G9.corrections.preserve": [
-          "image-unpinned:datomic"
-        ],
-        "G9.lineage.supporting-assertions": [
-          "image-unpinned:datomic"
-        ],
         "G9.presence.explicit": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-CFG8",
           "oracle-unpinned:O-CFG8"
         ],
-        "G9.deletion.entity": [
-          "image-unpinned:datomic"
-        ],
         "G9.cascade.restrict-detach-cascade": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-ERR"
         ],
-        "G10.pkg.clean-consumer-slice": [
-          "image-unpinned:datomic"
-        ],
         "G10.pkg.type-witnesses": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-SPEC",
           "oracle-unpinned:O-SPEC"
         ],
         "G10.scope.ownership-refusal": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-ERR"
         ],
-        "G10.scope.shared-collision": [
-          "image-unpinned:datomic"
-        ],
-        "G10.cursor.stable": [
-          "image-unpinned:datomic"
-        ],
-        "G10.cursor.deep-page-cost": [
-          "image-unpinned:datomic"
-        ],
         "G10.cursor.continuation-transitions": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G10.capabilities.truthful": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G10.lifecycle.open-close": [
-          "image-unpinned:datomic",
           "oracle-screening-only:O-OBS"
         ],
-        "G10.native.entry-checks": [
-          "image-unpinned:datomic"
-        ],
         "G10.native.read-only-and-safe-params": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-ERR",
           "oracle-screening-only:O-OBS"
         ],
-        "R.repo.entity-suite": [
-          "image-unpinned:datomic"
-        ],
         "R.repo.mutation-controls": [
-          "image-unpinned:datomic",
           "refused:O-REPLAY:scale-evolution"
         ],
         "R.raw.parity": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-STR",
           "oracle-unpinned:O-STR"
         ],
         "R.raw.mapped-recipes": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-STR",
           "oracle-unpinned:O-STR",
           "oracle-runner-unpinned:O-COLL",
@@ -6867,313 +7289,242 @@
           "oracle-unpinned:O-SHAPE",
           "oracle-runner-unpinned:O-ERR"
         ],
-        "R.raw.guide-only-authoring": [
-          "image-unpinned:datomic"
-        ],
-        "R.raw.capability-matrix": [
-          "image-unpinned:datomic"
-        ],
         "R.native.fragment-equivalence": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-ERR"
         ],
         "NS.P1": [
-          "image-unpinned:datomic",
           "oracle-screening-only:O-OBS"
         ],
         "NS.P2": [
-          "image-unpinned:datomic",
           "oracle-screening-only:O-OBS"
         ],
         "NS.P3": [
-          "image-unpinned:datomic",
           "oracle-screening-only:O-OBS"
         ],
         "NS.P4": [
-          "image-unpinned:datomic",
           "oracle-screening-only:O-OBS"
         ],
         "NS.P5": [
-          "image-unpinned:datomic",
           "oracle-screening-only:O-OBS"
         ],
         "NS.SEC.bulk-lane": [
-          "image-unpinned:datomic",
           "oracle-screening-only:O-OBS"
         ],
-        "NS.SEC.retro-and-audit": [
-          "image-unpinned:datomic"
-        ],
         "NS.calibration": [
-          "image-unpinned:datomic",
           "oracle-screening-only:O-OBS"
         ],
         "GS.01": [
-          "image-unpinned:datomic",
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.02": [
-          "image-unpinned:datomic",
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.03": [
-          "image-unpinned:datomic",
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.04": [
-          "image-unpinned:datomic",
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.05": [
-          "image-unpinned:datomic",
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.06": [
-          "image-unpinned:datomic",
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.07": [
-          "image-unpinned:datomic",
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.08": [
-          "image-unpinned:datomic",
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.09": [
-          "image-unpinned:datomic",
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.10": [
-          "image-unpinned:datomic",
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.11": [
-          "image-unpinned:datomic",
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.12": [
-          "image-unpinned:datomic",
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.13": [
-          "image-unpinned:datomic",
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.14": [
-          "image-unpinned:datomic",
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.15": [
-          "image-unpinned:datomic",
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.16": [
-          "image-unpinned:datomic",
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.17": [
-          "image-unpinned:datomic",
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.18": [
-          "image-unpinned:datomic",
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.19": [
-          "image-unpinned:datomic",
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.20": [
-          "image-unpinned:datomic",
+          "gs-diagnostic-before-0.4.0:Q94e",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.commit-idempotent": [
-          "image-unpinned:datomic",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.snapshot-reads": [
-          "image-unpinned:datomic",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.change-feed": [
-          "image-unpinned:datomic",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.no-silent-precision-loss": [
-          "image-unpinned:datomic",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.pii-erasure": [
-          "image-unpinned:datomic",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.tenant-isolation": [
-          "image-unpinned:datomic",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.outbox-atomic": [
-          "image-unpinned:datomic",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.read-your-write": [
-          "image-unpinned:datomic",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.sweep-pins-position": [
-          "image-unpinned:datomic",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.retro-corrections": [
-          "image-unpinned:datomic",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
-        "G9.erasure.visibility-boundary": [
-          "image-unpinned:datomic"
-        ],
         "G9.erasure.protected-copies": [
-          "image-unpinned:datomic",
           "oracle-screening-only:O-OBS"
         ],
         "G9.erasure.restore-reapplies": [
-          "image-unpinned:datomic",
           "oracle-screening-only:O-OBS"
         ],
         "G8.composition.watermark-routing": [
-          "image-unpinned:datomic",
           "oracle-screening-only:O-OBS"
         ],
         "G7.composition.ack-and-routed-ryow": [
-          "image-unpinned:datomic",
           "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
-        "G7.position.coordinates": [
-          "image-unpinned:datomic"
-        ],
-        "G7.position.bound-after-publication": [
-          "image-unpinned:datomic"
-        ],
-        "W0.coverage-floors": [
-          "image-unpinned:datomic"
-        ],
         "G9.erasure.commit-semantics": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G9.erasure.query-semantics": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G9.erasure.residual-shapes": [
-          "image-unpinned:datomic",
           "oracle-runner-unpinned:O-ERR"
         ],
-        "G9.erasure.reproduction-modulo": [
-          "image-unpinned:datomic"
-        ],
-        "G10.composition.identity-bound": [
-          "image-unpinned:datomic"
-        ],
-        "R.evaluator.incomplete-receipts": [
-          "image-unpinned:datomic"
-        ],
         "S.population.year-one": [
-          "image-unpinned:datomic",
           "oracle-screening-only:O-OBS"
         ],
-        "S.rungs.ladder": [
-          "image-unpinned:datomic"
-        ],
-        "S.correctness.query-families": [
-          "image-unpinned:datomic"
-        ],
         "S.capacity.admitted": [
-          "image-unpinned:datomic",
           "oracle-screening-only:O-OBS"
         ],
         "S.metrics.reported": [
-          "image-unpinned:datomic",
           "oracle-screening-only:O-OBS"
         ],
-        "S.maintenance.correct-during": [
-          "image-unpinned:datomic"
-        ],
-        "S.restart.at-scale": [
-          "image-unpinned:datomic"
-        ],
         "S.budgets.cumulative": [
-          "image-unpinned:datomic",
           "oracle-screening-only:O-OBS"
         ]
       }
@@ -8422,7 +8773,6 @@
       "Q84c",
       "Q84d",
       "Q84e",
-      "Q83d",
       "Q79e",
       "Q85a",
       "Q85b",
@@ -8436,10 +8786,31 @@
       "Q86f",
       "Q79f",
       "Q87",
-      "Q83e",
       "Q88a",
       "Q88b",
-      "Q88c"
+      "Q88c",
+      "Q91a",
+      "Q91b",
+      "Q91c",
+      "Q91d",
+      "Q93a",
+      "Q93b",
+      "Q93c",
+      "Q94b",
+      "Q94c",
+      "Q94d",
+      "Q94e",
+      "Q94f",
+      "Q94g",
+      "Q94h",
+      "Q94i",
+      "Q96a",
+      "Q96b",
+      "Q96c",
+      "Q97a",
+      "Q97b",
+      "Q97c",
+      "Q96d"
     ],
     "recordedNotCompiled": []
   },
@@ -10684,7 +11055,15 @@
     "Unless a scenario says otherwise it runs on P-YEAR-ONE with the fixed writer trace running and 256 concurrent pinned readers (P-NS).",
     "A scenario fails on any wrong answer, any lost or duplicated commit, any feed gap or order violation, or any missed bar; its receipt records the correctness verdicts and the P1 to P5 measurements together.",
     "All 20 run on every composition being compared, and the final acceptance reruns all 20 fresh.",
-    "Numbers inside the scenarios: pay rates, hours and money use integer cents (the integer kind) or the decimal kind (TDK1 key); the scenarios include the range rules 'pay rate at or above 16.50' and 'hours over 40' (cases GS-NUM-RANGE-1650 and GS-NUM-HOURS-40, selected by GS.18's dashboard filters) and at least one write of a value the lane cannot hold, which must fail with E-VALUE-OUT-OF-RANGE, E-DECIMAL-OVERFLOW or E-DECIMAL-FRACTION (GS-NUM-UNHOLDABLE, selected by GS.02)."
+    "Numbers inside the scenarios: pay rates, hours and money use integer cents (the integer kind) or the decimal kind (TDK1 key); the scenarios include the range rules 'pay rate at or above 16.50' and 'hours over 40' (cases GS-NUM-RANGE-1650 and GS-NUM-HOURS-40, selected by GS.18's dashboard filters) and at least one write of a value the lane cannot hold, which must fail with E-VALUE-OUT-OF-RANGE, E-DECIMAL-OVERFLOW or E-DECIMAL-FRACTION (GS-NUM-UNHOLDABLE, selected by GS.02).",
+    "Every GS stream is W0-valid and every domain claim a scenario names is checked by O-DOMAIN; a scenario whose spec names a domain claim and whose run makes no such check fails closed. The W01 world vocabulary is retired",
+    "The GS background is the frozen TARGETS 2.1 trace through the W0 trace mapper (Q92k); the private writerTrace is retired; every measured window holds one burst and one maintenance event",
+    "GS world admission follows Q93a: a G0 content fingerprint per run; a fresh scope or verified clone per run; store counts at start and end; on lane Q the Q91a counts",
+    "Every GS receipt before contract 0.4.0 is DIAGNOSTIC: none closes an obligation or enters a comparison. The GS.12 defect and the W01b harness findings stay as defect reports",
+    "GS.04b applies only to compositions with a separate current store; on those it is required. GS.04's engine-kill schedule is required on every lane and runs only on an exclusive slot",
+    "GS.19's outbox and GS.10's publications must be the product's atomic outbox; a harness-side outbox file can pass only GS.19's P3 checks, as a diagnostic",
+    "GS.10's race (in-flight reconciles finish on the old release) is scheduled as EXP-P5 round C, right after rounds A and B, and is required for GS.10 to close",
+    "GS.03's vendor-revision rule goes into W0-1.2 with an O-DOMAIN `signal-ack` operation; the `superseded` outcome stays flagged for Sam"
   ],
   "requirements": [
     {
@@ -11001,7 +11380,7 @@
     "O-TESTKIT": [
       {
         "path": "packages/testkit/src/index.ts",
-        "sha256": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988"
+        "sha256": "2c26c678577f98a71003588c7c62b9a81ff6d109a033c72c521f295f4cb2ffdd"
       }
     ],
     "O-KV": []
@@ -15194,7 +15573,7 @@
       "pinnedSourceFiles": [
         {
           "path": "packages/testkit/src/index.ts",
-          "sha256": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988"
+          "sha256": "2c26c678577f98a71003588c7c62b9a81ff6d109a033c72c521f295f4cb2ffdd"
         }
       ],
       "note": null
@@ -16730,7 +17109,7 @@
     "CS-U44": [
       {
         "path": "packages/testkit/src/index.ts",
-        "sha256": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988"
+        "sha256": "2c26c678577f98a71003588c7c62b9a81ff6d109a033c72c521f295f4cb2ffdd"
       }
     ],
     "CS-PKT71": [
@@ -18048,11 +18427,11 @@
   ],
   "budgetsRef": {
     "path": "lab/acceptance/budgets.json",
-    "sha256": "c09b5257c08d050d9c99d8e1595cd4817b9c8c1337afba291109e7fd0c7a8159"
+    "sha256": "a8de4809bf8ff42a3ad06f5a1dab961c4e6dae74df12fc464edf0d50027abd2a"
   },
   "loadContractRef": {
     "path": "lab/acceptance/load-contract.json",
-    "sha256": "c54af6122604a7cbe49c4de41ba658f9076cea8701f90cc4e3583f1cad009428"
+    "sha256": "377ef278e6452c30607612de1c5a7920a9d396e8ffbe07d58a66311b8d0e5a34"
   },
   "obligations": [
     {
@@ -30979,5 +31358,5 @@
       ]
     }
   ],
-  "transitiveContractSha256": "69d412bc5b1978b1b88782cf38af86c87c36fd62caa3fd528125365ca6c41b79"
+  "transitiveContractSha256": "6714d1c67cd30a86490140a503f199392e7cc8669b917a1f23c509cde50f101b"
 }

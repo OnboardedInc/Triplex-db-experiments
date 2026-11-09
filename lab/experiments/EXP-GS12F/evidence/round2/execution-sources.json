@@ -1,0 +1,14 @@
+{
+  "capturedAt": "2026-11-09T02:27:10.295375+00:00",
+  "headBeforeTests": "564d79b3a4d7343685ba2a1022e25491ceae3fd2",
+  "files": {
+    "packages/qlever/test/value-limits-offline.test.ts": "319b1d1a353b41c6ed8dec65c489fa900f21a15f9b8bd83f8b87a24d9aa0143c",
+    "packages/qlever/src/rdf.ts": "829ba773bbbf9455ada8d10f37ed8ae1f327a82a007748a69ea7070a925e5494",
+    "packages/qlever/src/QleverStorageAdapter.ts": "8cefbcc631375c196663232fd726dad147a153cbd1cc72a9c7f2b33ec0df9ab0",
+    "packages/core/src/store/TriplesLive.ts": "14efc06b46f127dca25882cd2deea720cd074f6542b4a01ce092e8c42cf414e1",
+    "packages/core/src/store/validateValues.ts": "56d0efd4e96e5ee279f54faf762327596fec592b44bc8d913c729e344f82fb92",
+    "lab/experiments/EXP-GS12F/capture-round2.py": "363df20681a2ee33fc03221ebcda8fbd8b8eecd551a92d98ef8cffb21ee983e5",
+    "pnpm-lock.yaml": "b2b3e6e8cdfb18df6d235a8724611ee4fe637426c722a5de34326346b3cb6500"
+  },
+  "mode": "offline; no engine, container or slot claim"
+}

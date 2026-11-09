@@ -1,9 +1,15 @@
+import {
+  assertValueInDomain,
+  ValueDomains,
+  type ValueDomain,
+} from "@triplex-build/triplex/runtime";
 import type { TripleValue, ValueType } from "@triplex-build/triplex/internal";
 import { UnsupportedValueTypeError } from "@triplex-build/triplex/runtime";
 
 /** Encode a typed Triplex value into the SQL table's value columns. */
 export const packValue = (
   value: TripleValue,
+  domain: ValueDomain = ValueDomains.sqlite,
 ): {
   value_type: ValueType;
   value_string: string | null;
@@ -12,6 +18,7 @@ export const packValue = (
   value_datetime: number | null;
   value_json: string | null;
 } => {
+  assertValueInDomain(value, domain);
   const base = {
     value_string: null as string | null,
     value_number: null as number | null,
@@ -43,7 +50,7 @@ export const packValue = (
         value_json: JSON.stringify({
           mimeType: value.mimeType,
           size: value.size,
-          ...(value.filename && { filename: value.filename }),
+          ...(value.filename !== undefined && { filename: value.filename }),
         }),
       };
   }

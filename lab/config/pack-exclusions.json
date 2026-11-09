@@ -1,0 +1,15 @@
+{
+  "triplex-monorepo": "Workspace orchestration root, not an installable Triplex API package.",
+  "triplex-compliance-host": "Runnable example host, not an installable Triplex API package.",
+  "triplex-config-explorer": "Runnable example UI, not an installable Triplex API package.",
+  "triplex-demo": "Runnable demonstration, not an installable Triplex API package.",
+  "triplex-http-api-example": "Runnable example server, not an installable Triplex API package.",
+  "triplex-tenant-host-cloudflare": "Deployable example host, not an installable Triplex API package.",
+  "@triplex-build/triplex-dashboard": "Private standalone UI/server application without package exports; validated by its application gates.",
+  "@triplex-build/triplex-datomic": "Experimental gateway package outside the original pack inventory; LICENSE file is not yet configured for the package gate. Packaging remains unqualified pending lane D follow-up.",
+  "@triplex-build/triplex-duckdb": "OUT-OF-SCOPE (lab/SCOPE.md 4.3); reported TS4023 declaration failures in effect-storage.ts:112 and TypeDomains.ts:17 are unresolved and not tested by this gate.",
+  "@triplex-build/triplex-qualification": "Private homebase qualification harness, not an installable Triplex consumer API; has a private Effect runtime dependency.",
+  "@triplex-build/w0": "Private synthetic W0 oracle/reference workload, not an installable Triplex consumer API.",
+  "triplex-integration-tests": "Private integration test runner, not an installable Triplex API package.",
+  "triplex-stress": "Private stress test runner, not an installable Triplex API package."
+}

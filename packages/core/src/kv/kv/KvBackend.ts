@@ -37,6 +37,7 @@ export interface KvTransaction {
 
 /** The KV backend service interface. */
 export interface KvBackendService {
+  readonly valueDomain?: import("../../ValueDomain.js").ValueDomain;
   /** Get a single value by key. Returns null if not found. */
   readonly get: (key: Uint8Array) => Effect.Effect<Uint8Array | null>;
 

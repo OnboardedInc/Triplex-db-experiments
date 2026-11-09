@@ -26,6 +26,7 @@ import type {
 import type { TransactionId } from "../Branded.js";
 import type { Pattern } from "../types/Pattern.js";
 import type {
+  InvalidTripleError,
   WriteError,
   ReadError,
   DatalogQueryError,
@@ -211,10 +212,10 @@ export interface ExplainResult {
 
 export interface TriplesService {
   // --- Writes (append-only semantics) --------------------------------------
-  readonly assert: (input: TripleInput) => Effect.Effect<Triple, WriteError>;
+  readonly assert: (input: TripleInput) => Effect.Effect<Triple, WriteError | InvalidTripleError>;
   readonly assertBatch: (
     inputs: readonly TripleInput[],
-  ) => Effect.Effect<readonly Triple[], WriteError>;
+  ) => Effect.Effect<readonly Triple[], WriteError | InvalidTripleError>;
   readonly retract: (id: TripleId) => Effect.Effect<void, WriteError>;
   readonly retractByPattern: (pattern: Pattern) => Effect.Effect<number, WriteError | ReadError>;
   /** Group operations into a single atomic transaction with metadata. */
@@ -224,6 +225,7 @@ export interface TriplesService {
   ) => Effect.Effect<
     TransactionResult,
     | WriteError
+    | InvalidTripleError
     | ReadError
     | TransactionConflictError
     | CommandAlreadyCommittedError

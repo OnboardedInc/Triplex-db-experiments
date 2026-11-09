@@ -1,0 +1,35 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.workerd.config.ts:3:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/gs12f/packages/cloudflare
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mFailed to write to log file Error: EPERM: operation not permitted, open '/Users/sam/Library/Preferences/.wrangler/logs/wrangler-2026-11-09_01-50-39_317.log'[0m
+
+      at open (node:internal/fs/promises:639:25)
+      at writeFile (node:internal/fs/promises:1222:14)
+      at /Users/sam/projects/triplex-db-2/.claude/worktrees/gs12f/node_modules/.pnpm/wrangler@4.149.0_@cloudflare+workers-types@5.20261012.1_@types+node@25.9.1/node_modules/wrangler/wrangler-dist/cli.js:69657:7
+      at Mutex.runWith (/Users/sam/projects/triplex-db-2/.claude/worktrees/gs12f/node_modules/.pnpm/miniflare@5.20261006.1-alpha_@types+node@25.9.1/node_modules/miniflare/dist/src/index.js:80693:16)
+      at appendToDebugLogFile (/Users/sam/projects/triplex-db-2/.claude/worktrees/gs12f/node_modules/.pnpm/wrangler@4.149.0_@cloudflare+workers-types@5.20261012.1_@types+node@25.9.1/node_modules/wrangler/wrangler-dist/cli.js:69654:3) {
+    errno: -1,
+    code: 'EPERM',
+    syscall: 'open',
+    path: '/Users/sam/Library/Preferences/.wrangler/logs/wrangler-2026-11-09_01-50-39_317.log'
+  }
+
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mWould have written: [0m
+
+  --- 2026-11-09T01:50:39.412Z debug
+  🪵  Writing logs to "/Users/sam/Library/Preferences/.wrangler/logs/wrangler-2026-11-09_01-50-39_317.log"
+  ---
+  
+
+
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  20:50:39
+   Duration  6.60s (transform 81%, import 12%, tests 6%)
+
+🪵  Logs were written to "/Users/sam/Library/Preferences/.wrangler/logs/wrangler-2026-11-09_01-50-39_317.log"

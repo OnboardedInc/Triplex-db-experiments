@@ -1,0 +1,12 @@
+diff --git a/packages/testkit/src/index.ts b/packages/testkit/src/index.ts
+index 61345f89..a567b9bf 100644
+--- a/packages/testkit/src/index.ts
++++ b/packages/testkit/src/index.ts
+@@ -9,6 +9,7 @@
+  * `Triples` service guarantees.
+  */
+ 
++export { exactIntegerLimitCase, valueLimitCases } from "./valueLimits.js";
+ import { Effect } from "effect";
+ import {
+   boolean,

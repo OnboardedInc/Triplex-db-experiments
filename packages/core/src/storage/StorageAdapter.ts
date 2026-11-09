@@ -9,7 +9,7 @@
 import { Context, Effect } from "effect";
 import type { TripleInput, TripleRow, QueryPattern } from "./types.js";
 import type { ResolvedTemporalBasis } from "../Temporal.js";
-import { WriteError, ReadError, MigrationError } from "../errors/index.js";
+import { WriteError, ReadError, MigrationError, InvalidTripleError } from "../errors/index.js";
 import type { DependencyState } from "../store/Triples.js";
 import type { ValueType } from "../Value.js";
 import type { TransactOp } from "../Triple.js";
@@ -19,7 +19,11 @@ import type { Rule as ConstraintRule, ViolationAt } from "../Constraint.js";
  * StorageAdapterService - Backend-agnostic storage primitives
  */
 export interface StorageAdapterService {
-  /** Omitted adapters retain the original seven-family contract. */
+  /** Optional exact-snapshot policy, propagated to public repository reads. */
+  readonly snapshotReadPolicy?: import("./ReadSurface.js").SnapshotReadPolicy;
+  // [CX-A01-0314-R2] Why: missing composition domains must fail compilation. Rejected: optional domains (silently admitted broker values against memory limits).
+  readonly valueDomain: import("../ValueDomain.js").ValueDomain;
+  /** Optional query capability hint; valueDomain owns write admission. */
   readonly supportedValueTypes?: readonly ValueType[];
   /** Optional server-side equivalent of Constraint.newlyViolated. Undefined requests the portable fallback. */
   readonly validateConstraints?: (input: {
@@ -56,14 +60,14 @@ export interface StorageAdapterService {
     timestamp: number,
     id: string,
     position: number,
-  ) => Effect.Effect<TripleRow, WriteError>;
+  ) => Effect.Effect<TripleRow, WriteError | InvalidTripleError>;
   readonly batchInsert: (
     inputs: readonly TripleInput[],
     txId: string,
     timestamp: number,
     ids: readonly string[],
     position: number,
-  ) => Effect.Effect<readonly TripleRow[], WriteError>;
+  ) => Effect.Effect<readonly TripleRow[], WriteError | InvalidTripleError>;
   readonly retract: (
     id: string,
     timestamp: number,

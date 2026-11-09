@@ -1,0 +1,258 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../../vitest.workspace-aliases" without a file extension (lab/verify/GS12F/vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f
+
+ ❯ lab/verify/GS12F/adversarial.test.ts (5 tests | 5 failed) 73ms
+   × xtdb: every unholdable value fails typed before transaction entry 33ms
+   × qlever: every unholdable value fails typed before transaction entry 17ms
+   × memory: canonical integer capability rejection must precede callback and preserve typed error 3ms
+   × QLever: declared 60-bit range is enforced before transaction entry 1ms
+   × memory: nonfinite values and ill-formed strings may not silently convert 18ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  lab/verify/GS12F/adversarial.test.ts > xtdb: every unholdable value fails typed before transaction entry
+AssertionError: expected [ 'number:NaN/assert', …(26) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "number:NaN/assert",
++   "number:NaN/assertBatch",
++   "number:NaN/transact",
++   "number:Infinity/assert",
++   "number:Infinity/assertBatch",
++   "number:Infinity/transact",
++   "datetime:NaN/assert",
++   "datetime:NaN/assertBatch",
++   "datetime:NaN/transact",
++   "datetime:Infinity/assert",
++   "datetime:Infinity/assertBatch",
++   "datetime:Infinity/transact",
++   "json:nonfinite/assert",
++   "json:nonfinite/assertBatch",
++   "json:nonfinite/transact",
++   "json:undefined/assert",
++   "json:undefined/assertBatch",
++   "json:undefined/transact",
++   "json:cycle/assert",
++   "json:cycle/assertBatch",
++   "json:cycle/transact",
++   "json:bigint/assert",
++   "json:bigint/assertBatch",
++   "json:bigint/transact",
++   "blob:negative-size/assert",
++   "blob:negative-size/assertBatch",
++   "blob:negative-size/transact",
++ ]
+
+ ❯ lab/verify/GS12F/adversarial.test.ts:64:148
+     62|     save(lane + "-preflight", observations);
+     63|     // All observations are saved before enforcing the requested claim…
+     64|     expect(observations.filter(r => !r.typed || r.before.tx !== r.afte…
+       |                                                                                                                                                    ^
+     65|   });
+     66| }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  lab/verify/GS12F/adversarial.test.ts > qlever: every unholdable value fails typed before transaction entry
+AssertionError: expected [ 'number:NaN/assert', …(29) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "number:NaN/assert",
++   "number:NaN/assertBatch",
++   "number:NaN/transact",
++   "number:Infinity/assert",
++   "number:Infinity/assertBatch",
++   "number:Infinity/transact",
++   "datetime:NaN/assert",
++   "datetime:NaN/assertBatch",
++   "datetime:NaN/transact",
++   "datetime:Infinity/assert",
++   "datetime:Infinity/assertBatch",
++   "datetime:Infinity/transact",
++   "json:nonfinite/assert",
++   "json:nonfinite/assertBatch",
++   "json:nonfinite/transact",
++   "json:undefined/assert",
++   "json:undefined/assertBatch",
++   "json:undefined/transact",
++   "json:cycle/assert",
++   "json:cycle/assertBatch",
++   "json:cycle/transact",
++   "json:bigint/assert",
++   "json:bigint/assertBatch",
++   "json:bigint/transact",
++   "blob:negative-size/assert",
++   "blob:negative-size/assertBatch",
++   "blob:negative-size/transact",
++   "string:surrogate/assert",
++   "string:surrogate/assertBatch",
++   "string:surrogate/transact",
++ ]
+
+ ❯ lab/verify/GS12F/adversarial.test.ts:64:148
+     62|     save(lane + "-preflight", observations);
+     63|     // All observations are saved before enforcing the requested claim…
+     64|     expect(observations.filter(r => !r.typed || r.before.tx !== r.afte…
+       |                                                                                                                                                    ^
+     65|   });
+     66| }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  lab/verify/GS12F/adversarial.test.ts > memory: canonical integer capability rejection must precede callback and preserve typed error
+AssertionError: expected [ …(4) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "after": 1,
++     "before": 0,
++     "error": "{
++   message: 'KV runtime does not support integer values',
++   _tag: 'WriteError',
++   backend: 'KV runtime',
++   valueType: 'integer',
++   reason: 'unsupported-value-type'
++ }",
++     "invalid": false,
++     "value": "0",
++     "writeError": true,
++   },
++   {
++     "after": 2,
++     "before": 1,
++     "error": "{
++   message: 'KV runtime does not support integer values',
++   _tag: 'WriteError',
++   backend: 'KV runtime',
++   valueType: 'integer',
++   reason: 'unsupported-value-type'
++ }",
++     "invalid": false,
++     "value": "9007199254740992",
++     "writeError": true,
++   },
++   {
++     "after": 3,
++     "before": 2,
++     "error": "{
++   message: 'KV runtime does not support integer values',
++   _tag: 'WriteError',
++   backend: 'KV runtime',
++   valueType: 'integer',
++   reason: 'unsupported-value-type'
++ }",
++     "invalid": false,
++     "value": "9007199254740993",
++     "writeError": true,
++   },
++   {
++     "after": 4,
++     "before": 3,
++     "error": "{
++   message: 'KV runtime does not support integer values',
++   _tag: 'WriteError',
++   backend: 'KV runtime',
++   valueType: 'integer',
++   reason: 'unsupported-value-type'
++ }",
++     "invalid": false,
++     "value": "9223372036854775807",
++     "writeError": true,
++   },
++ ]
+
+ ❯ lab/verify/GS12F/adversarial.test.ts:83:66
+     81|   } finally { await runtime.dispose(); }
+     82|   save("memory-integers", rows);
+     83|   expect(rows.filter(r => r.writeError || r.after !== r.before)).toEqu…
+       |                                                                  ^
+     84| });
+     85|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  lab/verify/GS12F/adversarial.test.ts > QLever: declared 60-bit range is enforced before transaction entry
+AssertionError: expected [ { …(5) }, { …(5) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "after": 1,
++     "before": 0,
++     "error": "{ message: 'review transaction-entry witness', _tag: 'WriteError' }",
++     "typed": false,
++     "value": "576460752303423488",
++   },
++   {
++     "after": 2,
++     "before": 1,
++     "error": "{ message: 'review transaction-entry witness', _tag: 'WriteError' }",
++     "typed": false,
++     "value": "-576460752303423489",
++   },
++ ]
+
+ ❯ lab/verify/GS12F/adversarial.test.ts:104:62
+    102|   } finally { await runtime.dispose(); }
+    103|   save("qlever-declared-range", rows);
+    104|   expect(rows.filter(r => !r.typed || r.before !== r.after)).toEqual([…
+       |                                                              ^
+    105| });
+    106|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  lab/verify/GS12F/adversarial.test.ts > memory: nonfinite values and ill-formed strings may not silently convert
+AssertionError: expected [ 'number:NaN', …(9) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "number:NaN",
++   "number:Infinity",
++   "datetime:NaN",
++   "datetime:Infinity",
++   "json:nonfinite",
++   "json:undefined",
++   "json:cycle",
++   "json:bigint",
++   "blob:negative-size",
++   "string:surrogate",
++ ]
+
+ ❯ lab/verify/GS12F/adversarial.test.ts:120:56
+    118|   }
+    119|   save("memory-values", rows);
+    120|   expect(rows.filter(r => !r.typed).map(r => r.label)).toEqual([]);
+       |                                                        ^
+    121| });
+    122|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  5 failed | 2 passed (7)
+   Start at  21:35:50
+   Duration  1.36s (transform 51%, import 39%, tests 9%)
+

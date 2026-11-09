@@ -75,4 +75,6 @@ Codex refuses prompts its safety filter reads as offensive security work (CX-VE0
 of our own harness: "check that each documented check rejects the inputs it should", "add a regression test for a variation", never
 "attack", "escape" or "break out". A filtered run is relaunched with a new id and the reworded prompt, building on its partial files. CX-VSQL01 was stopped the same way after
 153k tokens by a durability prompt that said "SIGKILL" and "torn read"; durability prompts say "abrupt process stop (the power-loss
-case)" and "a snapshot read must return whole commits". Before relaunching, commit the stopped run's partial files as WIP on its branch.
+case)" and "a snapshot read must return whole commits". Before relaunching, commit the stopped run's partial files as WIP on its branch. Erasure-checker reviews were stopped twice (CX-VER01S rounds 1-3 passed, round 4 stopped) by prompts about "hidden" keys,
+"decrypting" and "recoverable" secrets; those prompts say "planted test markers", "the checker reports every marker" and "REFUSED when it
+cannot read a range". A reviewer whose run was filtered is relaunched under a new id, not resumed, so the flagged context is not carried.

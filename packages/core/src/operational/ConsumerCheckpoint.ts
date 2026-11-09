@@ -15,6 +15,7 @@ import type {
   ConstraintViolationError,
   ReadError,
   TransactionConflictError,
+  InvalidTripleError,
   WriteError,
 } from "../errors/index.js";
 import type { TransactionMeta, TriplesService } from "../store/Triples.js";
@@ -73,6 +74,7 @@ export type ConsumerCheckpointError =
   | CorruptConsumerCheckpointError
   | ReadError
   | WriteError
+  | InvalidTripleError
   | TransactionConflictError
   | CommandAlreadyCommittedError
   | ConstraintViolationError;

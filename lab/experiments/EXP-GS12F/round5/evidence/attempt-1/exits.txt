@@ -1,0 +1,3 @@
+core 0
+bounds 0
+source-stability 0
