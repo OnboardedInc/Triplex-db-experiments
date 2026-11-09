@@ -72,13 +72,14 @@ export function witnessCreateArgs({name,holder,image,cpu,volume,dirs,perfPages=P
  if(!Array.isArray(dirs)||!dirs.length||dirs.length>2||dirs.some(d=>d.length!==2||d.some(v=>!Number.isSafeInteger(v)||v<0)))fail('USAGE','one or two [kernel dev, directory inode] pairs required');
  if(!Number.isSafeInteger(mapKeys)||mapKeys<MAP_KEYS_FLOOR||mapKeys>MAP_KEYS_CEILING)fail('USAGE','BPFTRACE_MAX_MAP_KEYS must be between '+MAP_KEYS_FLOOR+' and '+MAP_KEYS_CEILING);
  const pair=[dirs[0],dirs[1]??dirs[0]];
- return harden(name,holder,image,cpu,['--cap-add','BPF','--cap-add','PERFMON','--entrypoint','bpftrace','-e','BPFTRACE_PERF_RB_PAGES='+perfPages,'-e','BPFTRACE_MAX_MAP_KEYS='+mapKeys,
+ return harden(name,holder,image,cpu,['--cap-add','BPF','--cap-add','PERFMON','--entrypoint','sh','-e','BPFTRACE_PERF_RB_PAGES='+perfPages,'-e','BPFTRACE_MAX_MAP_KEYS='+mapKeys,
   '-v',volume+':/witness','-v','/sys/kernel/btf:/sys/kernel/btf:ro','-v','/sys/kernel/tracing:/sys/kernel/tracing:ro','-v',PROGRAM+':/program/vm_syncwitness.bt:ro'],
-  // [EXP-OBS01-R15] Why (harness bug, found in the first live W0): bpftrace 0.20.2 fully buffers `-o FILE` output, so the BEGIN record `SW1|B|` stayed in the stdio buffer and the
-  // session's attach wait (20 s polling that record) refused although the program had attached (verified by hand: SIGINT flushed `SW1|B|` and `SW1|Z|`). `-B none` writes each record as it is
-  // produced, which also leaves a readable trace if the witness is killed. Rejected: waiting for the END flush (the attach check would then run after the writer); a longer wait (the buffer is
-  // 4 KiB or more, no deadline is right).
-  ['-q','-B','none','-o','/witness/trace.txt','/program/vm_syncwitness.bt',...pair.flat().map(String)]);
+  // [EXP-OBS01-R15] Why (harness bug, found in the first live W0): bpftrace 0.20.2 buffers `-o FILE` output even with `-B none` (checked by hand: the BEGIN record `SW1|B|` stayed unwritten for 28 s
+  // and appeared only after SIGINT), so the session's 20 s attach wait on that record refused although the program had attached. Without `-o`, `-B none` does unbuffer stdout, so the same
+  // bpftrace argv runs under `sh -c 'exec bpftrace ... > /witness/trace.txt'`: `exec` keeps bpftrace as PID 1 (SIGINT still reaches it) and the record is in the file when BEGIN runs.
+  // Rejected: waiting for the END flush (the attach check would run after the writer); a longer wait (the buffer fills only at its own size); reading the container's stdout instead of a file
+  // (the trace must live on the witness volume for the sealed bundle).
+  ['-c','exec bpftrace -q -B none "$@" > /witness/trace.txt','sh','/program/vm_syncwitness.bt',...pair.flat().map(String)]);
 }
 
 /** Q108a start condition: no exclusive slot is held and the pool/disk guard of vmAvailable holds. Pure over a ledger and the running list. */
