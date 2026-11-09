@@ -1,26 +1,7 @@
 // [EXP-K01-R7] Why: Q93 gives admission only to a fresh in-process content read against a pre-freeze pin. Rejected: transported process booleans, diagnostic equality and owner certificates.
 import { createHash } from "node:crypto";
-export const fields = {
-  tx_assertions: [
-    "entity_id",
-    "attribute",
-    "value_type",
-    "value_string",
-    "value_number",
-    "value_boolean",
-    "value_datetime",
-    "value_json",
-    "valid_from",
-    "valid_to",
-    "recorded_position",
-    "retracted_position",
-    "entity_type",
-    "schema_version",
-  ],
-  tx_claims: ["command_id", "position"],
-  tx_attempts: ["position"],
-  tx_meta: ["scope_key", "position"],
-} as const;
+import { storedFields } from "./g0-schema.ts";
+export const fields = storedFields;
 export type Table = keyof typeof fields;
 export type Counts = Record<Table, number>;
 export interface Reader {
@@ -129,24 +110,32 @@ export async function readG0(
     await checkScopes();
     const tables: Record<string, string> = {};
     for (const table of Object.keys(fields) as Table[]) {
-      const want = expected.counts[table];
-      if (!Number.isSafeInteger(want) || want < 1)
-        throw Error("G0 missing/invalid independent count");
       const count = await reader.count(table, expected.scope, signal);
-      if (count !== want) throw Error("G0 count mismatch: " + table);
+      if (!Number.isSafeInteger(count) || count < 0) throw Error("G0 invalid independent count");
+      const want = expected.counts[table];
+      const core = ["tx_assertions", "tx_claims", "tx_attempts", "tx_meta"].includes(table);
+      if (
+        (core || want !== undefined) &&
+        (!Number.isSafeInteger(want) || want < (core ? 1 : 0) || count !== want)
+      )
+        throw Error("G0 count mismatch: " + table);
+      // [EXP-K01-R8] Why: auxiliary tables have no N01 closed form; their independently counted complete contents are pinned in D. Rejected: skipping side tables or deriving core expected counts from the scan.
       // [EXP-K01-R7] Why: sort row hashes, preserving multiplicity, to stream pages without retaining full rows. Rejected: a sum/XOR digest (duplicates cancel) or a subject sample (misses changed history).
       const hashes: string[] = [];
       for await (const row of reader.scan(table, expected.scope, signal)) {
-        if (signal.aborted || hashes.length >= want) throw Error("G0 extra rows or expired read");
-        const values = fields[table].map((field) => {
+        if (signal.aborted || hashes.length >= count) throw Error("G0 extra rows or expired read");
+        for (const field of fields[table]) {
           if (!Object.hasOwn(row, field) || row[field] === undefined)
             throw Error("G0 missing field: " + field);
-          return row[field];
-        });
+        }
+        // [EXP-K01-R8] Why: hash column names and all returned values as well as requiring the declared schema. Rejected: missing schemaless/dynamic side-table bindings that SELECT * returns.
+        const values = Object.keys(row)
+          .sort()
+          .map((field) => [field, row[field]]);
         hashes.push(hash(values));
       }
       if (hashes.length !== count) throw Error("G0 partial/empty scan: " + table);
-      tables[table] = hash(hashes.sort());
+      tables[table] = hash([fields[table], hashes.sort()]);
     }
     await checkScopes();
     let world: W0Fingerprint | undefined;

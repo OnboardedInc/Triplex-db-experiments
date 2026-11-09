@@ -1,0 +1,36 @@
+{
+  "baseHead": "776811666a4cf024d17bdffd94523c73927d5a1f",
+  "runReceiptSha256": "926d6e43e71f137d8b044bc60b99f8938a57dab8b13ae6a48b7a011a286b4d5d",
+  "dependencySources": {
+    "pnpm-lock.yaml": "b2b3e6e8cdfb18df6d235a8724611ee4fe637426c722a5de34326346b3cb6500",
+    "node_modules/typescript/package.json": "bb6ee7e709ae60426e30b8d393df4d939ee61407794b4f053ce6338d6eaa8c63",
+    "node_modules/typescript/lib/typescript.js": "630f808ac32d968a49a392c42cc06fd72abd939aaa7edfe3302810c067934653"
+  },
+  "typescriptVersion": "6.0.2",
+  "syntax": [
+    {
+      "file": "lab/bin/engine.mjs",
+      "status": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "status": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "lab/verify/K01/run-round8.mjs",
+      "status": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "lab/verify/K01/g0-review.test.mjs",
+      "status": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ]
+}

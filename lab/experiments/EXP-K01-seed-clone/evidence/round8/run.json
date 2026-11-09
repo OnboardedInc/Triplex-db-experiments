@@ -1,0 +1,87 @@
+{
+  "head": "776811666a4cf024d17bdffd94523c73927d5a1f",
+  "at": "2026-11-09T01:51:36.593Z",
+  "disk": {
+    "type": 25,
+    "bsize": 4096,
+    "blocks": 120699413,
+    "bfree": 1929380,
+    "bavail": 1929380,
+    "files": 89305915,
+    "ffree": 77175200
+  },
+  "node": "v22.23.2",
+  "sources": {
+    "lab/verify/K01/run-round8.mjs": "6610438e9c0d02c4aaf992e8d012fb062f8b8bc398019266ee3352f0bc46ac2e",
+    "lab/bench/clone-check.ts": "dcab0fecc0d466386e37a196141c7b79e3d312146c67242ba3092964c1995df5",
+    "lab/bin/test/lab.test.mjs": "ec15951a758117fd9fa79ee9a0435ff70088d96cb5e1b69576419cdb9bc88c26",
+    "lab/bench/test/bench.test.ts": "56d102078a5f96b4f93c68ec58410f71b90ad2d4af8dcd33124bbf9d1b6a3424",
+    "lab/bench/lib/g0.ts": "66acc9151fecab9f4d4ca0ba9c9afe8b15b1519083262c97b44fc5406b4620d5",
+    "lab/bench/lib/g0-schema.ts": "72499249d961a60e604bd1913e3ec8ecb6b41b07576be925725f51e6b1e2b40e",
+    "lab/bench/test/g0-schema.test.ts": "e6a215c786cbe0b2b71fa4b62bb9890044a3a073d73c85692e4a676b61af35bf",
+    "lab/verify/K01/g0-review.test.mjs": "c4acb57c2b45aa7c2fe3e3ae46c89f1d70857631b5356b187d83a2caf23ee9f2",
+    "lab/bench/lib/g0-xtdb.ts": "3f8f3e3afaca46cb480102a25dfb527b20931e596f948c5cdd30da329ce189f2",
+    "lab/bench/lib/bulk.ts": "30fb15038aa0c945e631db948308a230034d85f90f188556c5a5f59b1e4cb920",
+    "lab/bench/driver.ts": "2c5ee868e2c1f77e902aed8e8ca471991014f6deea3a1b2333f8662973c60490",
+    "lab/bench/xtdb-seed.ts": "e03d9f3f4017677c200f7ebcc5983cb1cfe9dc75f6302327babe83cc3a2bc6a2",
+    "lab/bin/engine.mjs": "1447cbd2db4a51af353d96e234d17e39c4c0510f6ca7995f569e38780fd697cf",
+    "lab/bin/lib.mjs": "08da34d2f927a64099f2c42c2dbb3ab83e2862b879465e2f4e692c4327efd406",
+    "lab/bench/test/g0.test.ts": "c2b512d014a544b5becb53ce0431df3d3dc4a129c96f4d4df2d5da83e94c68e1",
+    "packages/xtdb/src/ConstraintValidation.ts": "b298dfe7841684ea3fda905b283e16f33853a0884af04f13b9913b89d82e9d29",
+    "packages/xtdb/src/MaintainedQueries.ts": "a0ec651af8aa68d1c6e63b64109af48996d4c7576930909a50f90306869d8dbd",
+    "packages/xtdb/src/Operations.ts": "2fa4dc6fc4c50a42cc088d497f70e49029e2f535399ae84d9c94239125147b66",
+    "packages/xtdb/src/TemporalQueries.ts": "df7163a21d18b5d704fdbd8a6dcd065498eb18edd249e0fcad7e4a92dae555a9",
+    "packages/xtdb/src/TransactionContext.ts": "f4696c6539db3088e940c305ab484fc514fe32a7d09ea6b6f3397cd9878a43ad",
+    "packages/xtdb/src/XtdbClient.ts": "fa5c31c44c45e9e129d65464ee2f012146911f5b11d433d1ce7d73aadee6c67c",
+    "packages/xtdb/src/XtdbQueryExecutor.ts": "71fc5d949a8a9f51449cfeb97afb9cd10b6e869647962a2c6ad006a4ccf69c0c",
+    "packages/xtdb/src/XtdbStorageAdapter.ts": "204b856f7c3792c04b46a61ebe19b51fa0db053c1594d6f5aaa1149f14179560",
+    "packages/xtdb/src/codecs.ts": "f36b8de4af66fddd30b3a055ebf4473ad29c0634d9fd1ea0e45c7fb4e522e8f3",
+    "packages/xtdb/src/index.ts": "5bdb382d4bd424e92ab6098ba0bed9954cae9a256ffe1fde2378c67bf8233de3",
+    "packages/xtdb/src/native/NativeQueries.ts": "f07285b60d00a661551873ab2ffe3995b88b91caedda7e776784185026ff3b01",
+    "packages/xtdb/src/native/Reachability.ts": "3929e03f7ba1b8e20a47d8fa94b71c68f64f0ad021beaf866deb210fa3fba932",
+    "packages/xtdb/src/native/ReadOnlySql.ts": "dacd259603497bffcae0000e57ed5b7d63103f1ad0da42419d21d46a52333529",
+    "packages/xtdb/src/native/Sources.ts": "a32138e18c1a5a963f37f830beb36ceb87f328ed4c6af96bf1498dd0c2c00e31",
+    "packages/xtdb/src/query/compiler.ts": "fd1d8fceb939e0623115ef8072300f9e046f6dabee30d573c3b0c1da56823123",
+    "packages/xtdb/src/query/domains.ts": "e51fc80fb211c265725d7def7cf0ab19bf84b51fc8843e1f807385dc413a92af",
+    "packages/xtdb/src/query/grouping.ts": "2abd261779d9cd648d53b20485eccaee644f2fe4b5cf86d899d86c552bff4586",
+    "packages/xtdb/src/query/overlay.ts": "118b8f8651d69516b64b50cf77c86e43de916a8e7042cdcfe2e3aa1379423491",
+    "packages/xtdb/src/query/recursion.ts": "6c24b1157f9c05124ebef268d1d99234364fa3aabb5514c67e40422767296b89"
+  },
+  "runs": [
+    {
+      "label": "tests",
+      "args": [
+        "--test",
+        "lab/bin/test/lab.test.mjs",
+        "lab/bench/test/bench.test.ts",
+        "lab/bench/test/g0.test.ts",
+        "lab/bench/test/g0-schema.test.ts"
+      ],
+      "status": 0,
+      "signal": null,
+      "sha256": "b36db8343cb5c371e9fa86432fa234a3814c8d448dd511524a2355b50ea23afe"
+    },
+    {
+      "label": "reviewer",
+      "args": [
+        "--test",
+        "lab/verify/K01/g0-review.test.mjs"
+      ],
+      "status": 0,
+      "signal": null,
+      "sha256": "c92611c67a596af465343496bb28e36342396daca0b03eb0d88d4db9e3d0ac10"
+    },
+    {
+      "label": "types",
+      "args": [
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "-p",
+        "lab/bench/tsconfig.json"
+      ],
+      "status": 0,
+      "signal": null,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}

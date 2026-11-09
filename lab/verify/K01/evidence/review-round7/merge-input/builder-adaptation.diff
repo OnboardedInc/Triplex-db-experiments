@@ -1,0 +1,47 @@
+--- original
++++ builder
+@@ -6,8 +6,8 @@
+ import { test, after } from 'node:test';
+ import { admitG0, readG0, fields } from '../../bench/lib/g0.ts';
+ const root = path.resolve(import.meta.dirname, '../../..');
+-const out = path.join(import.meta.dirname, 'evidence/review-round6');
+-const scratch = path.join(import.meta.dirname, 'tmp/g0-review');
++const out = path.join(import.meta.dirname, 'evidence/round8/reviewer');
++const scratch = path.join(import.meta.dirname, 'tmp/g0-review-round8');
+ fs.mkdirSync(scratch, { recursive: true });
+ const observations = [];
+ const expected = { scope: 'fixture-seed', position: 2, world: 'N01', counts: { tx_assertions: 2, tx_claims: 2, tx_attempts: 2, tx_meta: 1 } };
+@@ -17,6 +17,11 @@
+     tx_claims: [{ command_id:'seed-1', position:1 },{ command_id:'seed-2', position:2 }],
+     tx_attempts: [{ position:1 },{ position:2 }], tx_meta:[{ scope_key:expected.scope, position:2 }],
+   };
++  // [EXP-K01-R8] Why: the old fixture omitted stored metadata and auxiliary tables. Rejected: testing the new full schema with incomplete pin inputs.
++  for(const [table,cols] of Object.entries(fields)){
++    tables[table] ??= [];
++    for(const row of tables[table])for(const col of cols)if(!Object.hasOwn(row,col))row[col]=null;
++  }
+   const calls = [];
+   const reader = { endpoint:'measured-fixture-endpoint', async scopes(signal) { calls.push(['scopes',signal.aborted]); return tables.tx_meta; }, async count(table,scope,signal) { calls.push(['count',table,scope,signal.aborted]); return tables[table].length; }, async *scan(table,scope,signal) { calls.push(['scan',table,scope,signal.aborted]); yield* tables[table]; } };
+   return { tables, reader, calls };
+@@ -37,9 +42,9 @@
+   observations.push({kind:'changed-clone',variant,pin,before,after:f.tables,result,error,calls:f.calls, ...(variant==='value-identity'?{constraintWitness:{inferenceOnly:true,basis:{recordedPosition:2,validAt:101},rule:{entityType:'member',attribute:'memberKey',kind:'Unique'},prospectiveAssertion:{entity_id:'subject-new',value_type:'string',value_string:'key-0',value_identity:JSON.stringify({type:'string',value:'key-0'})},explanation:'ConstraintValidation groups existing and overlay rows by stored value_identity. A new key-0 conflicts before corruption and fails to join the changed existing identity afterwards.'}}:{})});
+   assert.ok(error,'changed logical content must be refused by the only granting gate');
+ });
+-test('unchanged content reordered with different random IDs still reads anew and admits',async()=>{
+-  const f=fixture(),pin=await readG0(f.reader,expected);f.calls.length=0;f.tables.tx_assertions.reverse();for(const row of f.tables.tx_assertions)row.id+='-new';
+-  const result=await admitG0(f.reader,pin,expected);assert.equal(result.status,'PASS');assert.equal(result.endpoint,f.reader.endpoint);assert.equal(f.calls.filter(x=>x[0]==='scan').length,4);observations.push({kind:'positive',result,calls:f.calls});
++test('unchanged full stored content reordered still reads anew and admits',async()=>{
++  const f=fixture(),pin=await readG0(f.reader,expected);f.calls.length=0;f.tables.tx_assertions.reverse();
++  const result=await admitG0(f.reader,pin,expected);assert.equal(result.status,'PASS');assert.equal(result.endpoint,f.reader.endpoint);assert.equal(f.calls.filter(x=>x[0]==='scan').length,Object.keys(fields).length);observations.push({kind:'positive',result,calls:f.calls});
+ });
+ for(const kind of ['scopes','count','scan'])test(`G0 deadline covers hung ${kind}`,async()=>{
+  const f=fixture(),pin=await readG0(f.reader,expected);let signal;
+@@ -49,7 +54,7 @@
+  const start=Date.now();await assert.rejects(admitG0(f.reader,pin,expected,undefined,25),/deadline/);assert.equal(signal.aborted,true);observations.push({kind:'deadline',reader:kind,elapsedMs:Date.now()-start,aborted:signal.aborted});
+ });
+ for(const table of Object.keys(fields))test(`independent count cannot stand in for a partial ${table} scan`,async()=>{
+- const f=fixture(),pin=await readG0(f.reader,expected);f.reader.count=async t=>expected.counts[t];f.tables[table].pop();await assert.rejects(admitG0(f.reader,pin,expected,undefined,200));
++ const f=fixture();if(!f.tables[table].length)f.tables[table].push(Object.fromEntries(fields[table].map(c=>[c,null])));const counts=Object.fromEntries(Object.entries(f.tables).map(([t,rows])=>[t,rows.length]));const pin=await readG0(f.reader,expected);f.reader.count=async t=>counts[t];f.tables[table].pop();await assert.rejects(admitG0(f.reader,pin,expected,undefined,200));
+ });
+ const engine=fs.readFileSync(path.join(root,'lab/bin/engine.mjs'),'utf8');
+ const a=engine.indexOf('async function golden(config, info, opts)'),b=engine.indexOf('async function clone(config, info, opts)',a);

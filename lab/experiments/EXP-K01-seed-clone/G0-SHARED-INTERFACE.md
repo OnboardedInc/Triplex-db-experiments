@@ -17,3 +17,15 @@ worktree imports or second equality implementation. `g0-xtdb.ts` is the XTDB pag
 CX-P5A owns the P5 sweep adapter/driver. This branch supplies the shared module and tested interface; it does not edit
 CX-P5A's read-only worktree. After importing this commit, keep its oracle fingerprint format and replace duplicate
 comparison logic. Bind module source and oracle sources in the sweep receipt. No live P5 compatibility is claimed here.
+
+Round 8 coverage: the exported call signatures and W0 hook/Pin shape remain unchanged. `fields` is derived from all
+XTDB adapter CREATE TABLE declarations by `g0-schema.ts`, with no excluded columns. Reader implementations must scan/count
+every listed table, including empty side tables, and return complete stored rows. G0 checks core expected counts against the
+manifest/generator as before; auxiliary counts may be supplied in expected.counts, otherwise D binds their independently
+counted complete contents. SQL SELECT * retains dynamic columns beyond the declarations. The schema parser and reader are
+part of the seed-generator pin; old pins/goldens must be regenerated. This module requires the pinned TypeScript parser.
+
+Stored IDs, receipt metadata and recorded timestamps are covered too: the round-8 request allows exclusion only when no
+read/constraint/validation path reads a column. The old random-ID spelling exemption no longer applies. Consequently D
+is now specific to one seed lineage. Comparing independently reseeded arms by raw D equality requires a separate approved
+normalization policy or deterministic seed metadata; no such qualification or policy change is claimed by this offline fix.

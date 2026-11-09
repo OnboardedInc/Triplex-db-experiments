@@ -1,4 +1,4 @@
-// [EXP-K01-R7] Why: scan actual position-based Triplex columns on the measured endpoint, with deadlines. Rejected: pulls at one basis, wall-clock fields and persisted readiness.
+// [EXP-K01-R8] Why: read complete stored rows on the measured endpoint with deadlines. Rejected: omitting validation, receipt or side-table columns from the content gate.
 import { pathToFileURL } from "node:url";
 import path from "node:path";
 import {
@@ -76,12 +76,12 @@ export async function openG0(endpoint: string) {
       const pageSize = 4096;
       for (let offset = 0; ; offset += pageSize) {
         const rows = await query(
-          `SELECT ${cols.join(", ")} FROM ${table} FOR ALL VALID_TIME WHERE scope_key = ? ORDER BY ${cols.join(", ")} LIMIT ${pageSize} OFFSET ${offset}`,
+          `SELECT * FROM ${table} FOR ALL VALID_TIME WHERE scope_key = ? ORDER BY ${cols.join(", ")} LIMIT ${pageSize} OFFSET ${offset}`,
           [scopeKey(scope)],
           signal,
         );
-        for (const row of rows)
-          yield { ...row, ...(table === "tx_meta" ? { scope_key: scope } : {}) };
+        // [EXP-K01-R8] Why: XTDB sparse SELECT * omits never-stored NULL columns; fill only declared NULLs and retain every returned column. Rejected: a fixed projection that drops dynamic bindings.
+        for (const row of rows) yield { ...Object.fromEntries(cols.map((c) => [c, null])), ...row };
         if (rows.length < pageSize) break;
       }
     },

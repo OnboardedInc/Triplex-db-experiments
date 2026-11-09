@@ -64,7 +64,7 @@ function distTree(pkg: string) {
 const runTag = `seed-${seedLabel}`;
 const scopeName = `ns-xtdb-${opt("subjects") ? `dev${subjects}` : rung}-seed-${seedLabel}-${sha(`${subjects}`).slice(0, 8)}`;
 const ADAPTER_PATHS = ["packages/core", "packages/xtdb", "packages/qualification"];
-const GENERATOR_FILES = ["lab/bench/xtdb-seed.ts", "lab/bench/lib/g0.ts", "lab/bench/lib/g0-xtdb.ts", "lab/bench/lib/world.ts", "lab/bench/lib/commands.ts", "lab/bench/lib/seed.ts", "lab/bench/lib/rng.ts", "lab/bench/lib/samples.ts", "lab/bench/lib/composition.ts", "lab/bench/lib/triplex.ts"];
+const GENERATOR_FILES = ["lab/bench/xtdb-seed.ts", "lab/bench/lib/g0.ts", "lab/bench/lib/g0-schema.ts", "lab/bench/lib/g0-xtdb.ts", "lab/bench/lib/world.ts", "lab/bench/lib/commands.ts", "lab/bench/lib/seed.ts", "lab/bench/lib/rng.ts", "lab/bench/lib/samples.ts", "lab/bench/lib/composition.ts", "lab/bench/lib/triplex.ts"];
 const dirtyAdapter = git(["status", "--porcelain=v1", "--", ...ADAPTER_PATHS.map((p) => `${p}/src`)]);
 const seedInputs = {
   format: "tx2-xtdb-seed-inputs/1",
