@@ -139,6 +139,25 @@
           (is (= 4 (storage/head-position (deref reader 2000 nil))))))
       (finally (is (:deleted (gateway/delete-scope! base scope)))))))
 
+;; [EXP-DA01] Why: classify the native grammar rather than two known attribute bindings; historical eligibility is checked by the shared storage route guard. Rejected: a growing string blacklist.
+(deftest native-route-classification
+  (doseq [q '[[:find ?id :in $ $rules :where [?f :f/subject ?s] [?f :f/id ?id]]
+              [:find ?x :in $ $rules :where [$rules "r" ?s ?x]]
+              [:find ?x :in $ $rules :where (not-join [?x] [?f :f/id ?x])]
+              {:find [?x] :in [$ $rules] :where [[?f :f/id ?x]]}]]
+    (is (= :f/subject (query/query-route q))))
+  (doseq [q '[[:find ?f :in $ $rules :where [?f :f/live _]]
+              [:find ?f :in $ $rules :where [(ground :f/live) ?a] [?f ?a _]]
+              [:find ?f :in $ $rules :where [?a :db/ident :f/live] [?f ?a _]]
+              [:find ?f :in $ $rules :where [$ ?f ?a _]]
+              [:find ?f :in $ $rules :where [?f 123 _]]
+              [:find ?f :in $ $rules :where [?f [:db/ident :f/live] _]]
+              [:find ?f :in $ $rules :where [?f]]
+              [:find ?f :in $ $rules :where (not-join [?f] [?f ?a _])]
+              [:find ?f :in $ $rules :where (or-join [?f] (and [?f ?a _]))]
+              {:find [?f] :in [$ $rules] :where [[(ground :f/live) ?a] [?f ?a _]]}]]
+    (is (= :f/live (query/query-route q)))))
+
 (defn -main [& _]
   (let [{:keys [fail error] :as result} (run-tests 'triplex.gateway.selftest)]
     (println (json/write-str result))

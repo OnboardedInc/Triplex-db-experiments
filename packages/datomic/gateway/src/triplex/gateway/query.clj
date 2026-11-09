@@ -25,16 +25,40 @@
     (when (and (seq? form) (symbol? (first form)) (not (contains? '#{not-join or-join and} (first form)))
                (not (allowed (first form))))
       (codec/invalid "Query function is not allowlisted"))))
+(defn query-section [query section]
+  (if (map? query) (get query section)
+    (take-while (complement keyword?) (rest (drop-while #(not= section %) query)))))
+(defn query-route [query]
+  ;; [EXP-DA01] Why: only proven history attributes may bypass live eligibility; variable, numeric, lookup-ref and omitted attributes can select :f/live indirectly (V-DA01 F1). Rejected: enumerating ground/ident spellings, which leaves equivalent bindings open.
+  (let [where (query-section query :where)
+        safe-clause? (fn safe-clause? [clause]
+                       (cond
+                         (seq? clause) (case (first clause)
+                                         and (every? safe-clause? (rest clause))
+                                         not-join (every? safe-clause? (drop 2 clause))
+                                         or-join (every? safe-clause? (drop 2 clause))
+                                         false)
+                         (vector? clause)
+                         (let [source (first clause)
+                               pattern (if (= source '$) (rest clause) clause)
+                               attribute (second pattern)]
+                           (or (seq? source)
+                               (= source '$rules)
+                               (and (keyword? attribute) (not= attribute :f/live))))
+                         :else false))]
+    (if (every? safe-clause? where) :f/subject :f/live)))
 (defn encode [v]
   (codec/encode-value (cond (integer? v) "long" (number? v) "double" (boolean? v) "bool" :else "string") v))
 (defn run [name current input]
   (let [query (edn/read-string {:readers {} :default (fn [& _] (codec/invalid "Tagged EDN is not allowed"))} (get input "edn"))
-        _ (check-query! query) timeout (long (get input "timeoutMs" 5000))
+        _ (check-query! query)
+        ;; [EXP-DA01] Why: the route proof treats $rules as an in-memory relation, so authored :in must never alias it to the database argument. Rejected: trusting source names while accepting arbitrary binding order.
+        _ (when-not (= '[$ $rules] (vec (query-section query :in)))
+            (codec/invalid "Query inputs must be $ and $rules, in that order"))
+        timeout (long (get input "timeoutMs" 5000))
         _ (when-not (<= 1 timeout 30000) (codec/invalid "Query timeout out of bounds"))
         db (storage/read-db name current input)
-        ;; [EXP-DA01] Why: trusted native EDN can also select the retired-by-position index; its basis eligibility must match pulls (Q89b). Rejected: guarding only the pull route.
-        _ (when (some #(and (vector? %) (= :f/live (second %))) (tree-seq coll? seq query))
-            (storage/assert-subject-route! db (get input "basis") :f/live))
+        _ (storage/assert-subject-route! db (get input "basis") (query-route query))
         result (d/query {:query query :args [db (get input "relations" [])] :timeout timeout})]
     (when (> (count result) 100000) (codec/invalid "Query row budget exceeded"))
     {:rows (mapv #(mapv encode %) result)}))

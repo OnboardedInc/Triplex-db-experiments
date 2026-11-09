@@ -210,7 +210,8 @@
         ids (cond id (if-let [eid (d/entid db [:f/id id])] [eid] [])
                   (some? entities) (mapcat subject-ids (distinct entities))
                   (get pattern "entityId") (subject-ids (get pattern "entityId"))
-                  :else (map :e (d/datoms db :avet (if (= route "live") :f/live :f/id))))
+                  ;; [EXP-DA01] Why: refs have VAET and AEVT but no AVET without an explicit index; whole live scans must enumerate the actual attribute index. Rejected: a shape-dependent attribute-not-indexed failure hidden by subject-only fixtures.
+                  :else (map :e (if (= route "live") (d/datoms db :aevt :f/live) (d/datoms db :avet :f/id))))
         rows (map #(row db %) ids)]
     {:route (cond (= route "live") "live" (get input "staged") "staged" (get input "handle") "held"
                   (and (some? (get basis "recordedPosition")) (< (get basis "recordedPosition") (head-position current))) "as-of" :else "source")

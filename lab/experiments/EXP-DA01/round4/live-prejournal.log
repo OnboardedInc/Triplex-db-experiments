@@ -1,0 +1,72 @@
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/da01
+
+ ✓ packages/testkit/test/routeEquivalence.test.ts (2 tests) 17ms
+ ✓ packages/datomic/test/query.test.ts (6 tests) 7ms
+ ✓ packages/datomic/test/client.test.ts (94 tests) 128ms
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"public-607faa47-58ce-435e-a33f-e0e07a05b34d\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJwdWJsaWMtNjA3ZmFhNDctNThjZS00MzVlLWEzM2YtZTBlMDdhMDViMzRkIiwwXQ","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"routes-e349166a-66f8-4e46-96d7-bb8ffc677dfb\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJyb3V0ZXMtZTM0OTE2NmEtNjZmOC00ZTQ2LTk2ZDctYmI4ZmZjNjc3ZGZiIiwwXQ","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"read-pin-fb1e942e-6505-4d44-b279-2892224ed607\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJyZWFkLXBpbi1mYjFlOTQyZS02NTA1LTRkNDQtYjI3OS0yODkyMjI0ZWQ2MDciLDBd","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"public-607faa47-58ce-435e-a33f-e0e07a05b34d\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJwdWJsaWMtNjA3ZmFhNDctNThjZS00MzVlLWEzM2YtZTBlMDdhMDViMzRkIiwwXQ","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"prod\",\"租户/😀\",\"quote\\\" slash/\\\\ lone\\ud800-6ab944ef-f659-47db-84ae-c41e43727f42\",9007199254740991]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwicHJvZCIsIuenn-aIty_wn5iAIiwicXVvdGVcIiBzbGFzaC9cXCBsb25lXHVkODAwLTZhYjk0NGVmLWY2NTktNDdkYi04NGFlLWM0MWU0MzcyN2Y0MiIsOTAwNzE5OTI1NDc0MDk5MV0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"read-pin-fb1e942e-6505-4d44-b279-2892224ed607\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJyZWFkLXBpbi1mYjFlOTQyZS02NTA1LTRkNDQtYjI3OS0yODkyMjI0ZWQ2MDciLDBd","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"read-pin-bb1d55b3-938e-412c-9e9d-b0585f5afb4e\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJyZWFkLXBpbi1iYjFkNTViMy05MzhlLTQxMmMtOWU5ZC1iMDU4NWY1YWZiNGUiLDBd","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"prod\",\"租户/😀\",\"quote\\\" slash/\\\\ lone\\ud800-6ab944ef-f659-47db-84ae-c41e43727f42\",9007199254740991]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwicHJvZCIsIuenn-aIty_wn5iAIiwicXVvdGVcIiBzbGFzaC9cXCBsb25lXHVkODAwLTZhYjk0NGVmLWY2NTktNDdkYi04NGFlLWM0MWU0MzcyN2Y0MiIsOTAwNzE5OTI1NDc0MDk5MV0","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\" staging \",\"﻿x\",\"\\n30256a6b-a4cf-4a33-9847-71c4ace2db7a\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwiIHN0YWdpbmcgIiwi77u_eCIsIlxuMzAyNTZhNmItYTRjZi00YTMzLTk4NDctNzFjNGFjZTJkYjdhIiwwXQ","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"read-pin-bb1d55b3-938e-412c-9e9d-b0585f5afb4e\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJyZWFkLXBpbi1iYjFkNTViMy05MzhlLTQxMmMtOWU5ZC1iMDU4NWY1YWZiNGUiLDBd","deleted":true}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\" staging \",\"﻿x\",\"\\n30256a6b-a4cf-4a33-9847-71c4ace2db7a\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwiIHN0YWdpbmcgIiwi77u_eCIsIlxuMzAyNTZhNmItYTRjZi00YTMzLTk4NDctNzFjNGFjZTJkYjdhIiwwXQ","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"read-pin-cb05e468-8817-49b3-bff9-c5d84d0fcf7b\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJyZWFkLXBpbi1jYjA1ZTQ2OC04ODE3LTQ5YjMtYmZmOS1jNWQ4NGQwZmNmN2IiLDBd","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-132b25cb-e1be-4a3a-8bae-24cabfe8e984\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLTEzMmIyNWNiLWUxYmUtNGEzYS04YmFlLTI0Y2FiZmU4ZTk4NCIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-132b25cb-e1be-4a3a-8bae-24cabfe8e984\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLTEzMmIyNWNiLWUxYmUtNGEzYS04YmFlLTI0Y2FiZmU4ZTk4NCIsMF0","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-9919a0d7-a375-4c03-9464-6899c83300ed\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLTk5MTlhMGQ3LWEzNzUtNGMwMy05NDY0LTY4OTljODMzMDBlZCIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-9919a0d7-a375-4c03-9464-6899c83300ed\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLTk5MTlhMGQ3LWEzNzUtNGMwMy05NDY0LTY4OTljODMzMDBlZCIsMF0","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-ef95be4e-2735-4f79-9510-3f2073e1543c\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWVmOTViZTRlLTI3MzUtNGY3OS05NTEwLTNmMjA3M2UxNTQzYyIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-ef95be4e-2735-4f79-9510-3f2073e1543c\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWVmOTViZTRlLTI3MzUtNGY3OS05NTEwLTNmMjA3M2UxNTQzYyIsMF0","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-c022c90f-992f-42e1-9b2d-60ff68f89eb1\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWMwMjJjOTBmLTk5MmYtNDJlMS05YjJkLTYwZmY2OGY4OWViMSIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-c022c90f-992f-42e1-9b2d-60ff68f89eb1\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWMwMjJjOTBmLTk5MmYtNDJlMS05YjJkLTYwZmY2OGY4OWViMSIsMF0","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-9b4314ea-4c41-40a6-a390-73953e87b790\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLTliNDMxNGVhLTRjNDEtNDBhNi1hMzkwLTczOTUzZTg3Yjc5MCIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-9b4314ea-4c41-40a6-a390-73953e87b790\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLTliNDMxNGVhLTRjNDEtNDBhNi1hMzkwLTczOTUzZTg3Yjc5MCIsMF0","deleted":true}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"read-pin-cb05e468-8817-49b3-bff9-c5d84d0fcf7b\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJyZWFkLXBpbi1jYjA1ZTQ2OC04ODE3LTQ5YjMtYmZmOS1jNWQ4NGQwZmNmN2IiLDBd","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-c4938a6d-b7bb-4421-870a-d98aca9c72e7\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWM0OTM4YTZkLWI3YmItNDQyMS04NzBhLWQ5OGFjYTljNzJlNyIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"read-pin-124b3af5-2c3c-45d4-9ab5-cd86d4393152\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJyZWFkLXBpbi0xMjRiM2FmNS0yYzNjLTQ1ZDQtOWFiNS1jZDg2ZDQzOTMxNTIiLDBd","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-c4938a6d-b7bb-4421-870a-d98aca9c72e7\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWM0OTM4YTZkLWI3YmItNDQyMS04NzBhLWQ5OGFjYTljNzJlNyIsMF0","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-e0850838-888f-4533-aa03-5477982f5b27\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWUwODUwODM4LTg4OGYtNDUzMy1hYTAzLTU0Nzc5ODJmNWIyNyIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"read-pin-124b3af5-2c3c-45d4-9ab5-cd86d4393152\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJyZWFkLXBpbi0xMjRiM2FmNS0yYzNjLTQ1ZDQtOWFiNS1jZDg2ZDQzOTMxNTIiLDBd","deleted":true}
+ ✓ packages/datomic/test/read-pins.test.ts (4 tests) 8784ms
+   ✓ Datomic read pins (4)
+     ✓ pins optional pulls across a commit between query requests 2570ms
+     ✓ pins rule rounds and the final query across an edge replacement 1354ms
+     ✓ waits then refuses future positions on pulls, batches, dependencies, queries and held reads 3983ms
+     ✓ keeps T and TP on full history while guarded position retirement refuses them 875ms
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-e0850838-888f-4533-aa03-5477982f5b27\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWUwODUwODM4LTg4OGYtNDUzMy1hYTAzLTU0Nzc5ODJmNWIyNyIsMF0","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-829afa43-13ab-4801-8f42-bc548f2e6ca3\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLTgyOWFmYTQzLTEzYWItNDgwMS04ZjQyLWJjNTQ4ZjJlNmNhMyIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-829afa43-13ab-4801-8f42-bc548f2e6ca3\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLTgyOWFmYTQzLTEzYWItNDgwMS04ZjQyLWJjNTQ4ZjJlNmNhMyIsMF0","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-b860ffa5-b101-404f-8c14-b0d8e5695f89\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWI4NjBmZmE1LWIxMDEtNDA0Zi04YzE0LWIwZDhlNTY5NWY4OSIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-b860ffa5-b101-404f-8c14-b0d8e5695f89\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWI4NjBmZmE1LWIxMDEtNDA0Zi04YzE0LWIwZDhlNTY5NWY4OSIsMF0","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-d9c76bfc-7bbc-49df-8c5f-3c1a813c8d71\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWQ5Yzc2YmZjLTdiYmMtNDlkZi04YzVmLTNjMWE4MTNjOGQ3MSIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-d9c76bfc-7bbc-49df-8c5f-3c1a813c8d71\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWQ5Yzc2YmZjLTdiYmMtNDlkZi04YzVmLTNjMWE4MTNjOGQ3MSIsMF0","deleted":true}
+ ✓ packages/datomic/test/adapter.test.ts (11 tests) 10408ms
+   ✓ Datomic storage transaction boundary (11)
+     ✓ accepts exactly public constructor scopes with reversible database names 4443ms
+     ✓ reads speculative inserts and retractions without publishing them 722ms
+     ✓ rolls back nested failures while preserving the parent 622ms
+     ✓ rejects identity reuse without replacing the original 746ms
+     ✓ resolves an acknowledgement lost after durable submission 632ms
+     ✓ returns an identifiable unknown outcome within the resolution budget 661ms
+     ✓ returns the original transaction id for a duplicate command 576ms
+     ✓ preserves signed zero and int64 bounds and rejects noncanonical integers 596ms
+     ✓ replays one safe callback after a concurrent scope conflict 492ms
+     ✓ queries the speculative delta through native Datalog 451ms
+     ✓ reconstructs intermediate logical cuts and mixed timestamps in one physical commit 464ms
+{"kind":"datomic-route-equivalence","seed":29,"bases":11,"oracleBefore":40,"commitsAfter":51,"output":"/Users/sam/projects/triplex-db-2/.claude/worktrees/da01/lab/experiments/EXP-DA01/round4/oracle/seed-29-930a58eb-4714-48fa-addc-ba11e5fc58e1","observations":88}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"routes-e349166a-66f8-4e46-96d7-bb8ffc677dfb\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJyb3V0ZXMtZTM0OTE2NmEtNjZmOC00ZTQ2LTk2ZDctYmI4ZmZjNjc3ZGZiIiwwXQ","deleted":true}
+ ✓ packages/datomic/test/route-equivalence.test.ts (1 test) 36934ms
+   ✓ Datomic route equivalence (1)
+     ✓ matches O-REPLAY across seeded source, held, staged and guarded live routes 36933ms
+
+ Test Files  6 passed (6)
+      Tests  118 passed (118)
+   Start at  19:59:49
+   Duration  37.46s (tests 97%, import 2%, transform 1%)
+
+JSON report written to /Users/sam/projects/triplex-db-2/.claude/worktrees/da01/lab/experiments/EXP-DA01/round4/live-final.json
