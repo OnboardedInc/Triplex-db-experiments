@@ -1,0 +1,189 @@
+{
+  "review": "CX-VG03-56-R7C",
+  "at": "2026-11-09T16:56:23.139Z",
+  "verdict": "FIX-FIRST",
+  "qualification": false,
+  "fullOnly": false,
+  "reviewedCode": "87c86a10",
+  "reviewedReport": "67844167",
+  "testedCommit": "3c78b926977c1edb5b6b6e3d4b3fb2bcd27a2ebe",
+  "currentHead": "3c78b926977c1edb5b6b6e3d4b3fb2bcd27a2ebe",
+  "recoverySequential": true,
+  "completedBeforeReset": [
+    "ns-attempt1",
+    "contract-verify"
+  ],
+  "interruptedAttempts": [
+    "full-attempt1",
+    "evaluator-attempt1"
+  ],
+  "crashEvidence": "crash-review.json",
+  "reviewedSourceUnchanged": true,
+  "checks": [
+    {
+      "name": "full-attempt2",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-VG03-56-R7C-full-recovery",
+        "--",
+        "node",
+        "--test",
+        "lab/bin/test/claim.test.mjs",
+        "lab/bin/test/claim-round2.test.mjs",
+        "lab/bin/test/lab.test.mjs",
+        "lab/bin/test/box.test.mjs",
+        "lab/bin/test/box-policy.test.mjs",
+        "lab/experiments/EXP-G03/ns/offline.test.mjs",
+        "lab/experiments/EXP-G03/ns/fault.test.mjs",
+        "lab/experiments/EXP-G03/ns/round7a.test.mjs",
+        "lab/experiments/EXP-G03/ns/round7c.test.mjs"
+      ],
+      "environment": {
+        "TX2_FIXTURE_TRACE": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VG03-56/round7c/full-attempt2"
+      },
+      "exit": 0,
+      "tests": 285,
+      "pass": 285,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "tapSha256": "c4626a872f7bbfcddf63633edf0fed1fbd52ec3cda50bd709e36407904e639af",
+      "durationMs": 2185189.470166
+    },
+    {
+      "name": "ns-attempt1",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-VG03-56-R7C-ns",
+        "--",
+        "node",
+        "--test",
+        "lab/bin/test/lab.test.mjs",
+        "lab/bin/test/box.test.mjs",
+        "lab/bin/test/box-policy.test.mjs",
+        "lab/experiments/EXP-G03/ns/offline.test.mjs",
+        "lab/experiments/EXP-G03/ns/fault.test.mjs",
+        "lab/experiments/EXP-G03/ns/round7a.test.mjs",
+        "lab/experiments/EXP-G03/ns/round7c.test.mjs"
+      ],
+      "environment": {},
+      "exit": 0,
+      "tests": 177,
+      "pass": 177,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "tapSha256": "c30f06d4b8b6c79c9c0c1935785a09936f23923a289709a5b18bda31182f883b",
+      "durationMs": 1117.363583
+    },
+    {
+      "name": "evaluator-attempt2",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-VG03-56-R7C-evaluator-recovery",
+        "--",
+        "node",
+        "--test",
+        "lab/bin/test/claim.test.mjs",
+        "lab/bin/test/claim-round2.test.mjs"
+      ],
+      "environment": {
+        "TX2_FIXTURE_TRACE": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VG03-56/round7c/evaluator-attempt2"
+      },
+      "exit": 0,
+      "tests": 108,
+      "pass": 108,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "tapSha256": "17102a56fc8b644e6ce746877a245cd20dd164798b4e4a872342e543021e3f98",
+      "durationMs": 2017855.622709
+    }
+  ],
+  "contract": {
+    "exit": 0,
+    "byteIdentical": true
+  },
+  "pins": {
+    "exit": 0,
+    "changedDirectPins": [],
+    "changedEvaluatorClosure": [
+      "lab/bin/box.mjs"
+    ],
+    "driverBundleSha256": "21d3fd1e486f14a2e4bc470e0654973d3b36ae7ec4d3263eab274bf7db00a235"
+  },
+  "traces": [
+    {
+      "run": "full-attempt2",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VG03-56/round7c/full-attempt2",
+      "files": 27,
+      "bytes": 1897764,
+      "manifestSha256": "932e2e84f1ae8b5a5d8d885202864f60a08b3e6e7b0e14641075ff2530260e2e",
+      "expectedTamperNegativeControls": [
+        "r3-integrity-1a1332b5-request-2.json"
+      ],
+      "unmodifiedPositiveControls": [
+        "r3-claim-71c84b4b-request-1.json"
+      ],
+      "unexpectedTamperRefusals": 0
+    },
+    {
+      "run": "evaluator-attempt2",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VG03-56/round7c/evaluator-attempt2",
+      "files": 27,
+      "bytes": 1897764,
+      "manifestSha256": "3d3b005ac4b9f7ef1c74d0e27a4dbfd09946ecbbd2f69d03a8af8ba2f508cf41",
+      "expectedTamperNegativeControls": [
+        "r3-integrity-a06437ed-request-2.json"
+      ],
+      "unmodifiedPositiveControls": [
+        "r3-claim-140cd58d-request-1.json"
+      ],
+      "unexpectedTamperRefusals": 0
+    }
+  ],
+  "inventories": [
+    {
+      "holder": "CX-G03-r3-claim-140cd58d",
+      "run": "r3-claim-140cd58d",
+      "containers": "",
+      "volumes": "",
+      "networks": ""
+    },
+    {
+      "holder": "CX-G03-r3-claim-71c84b4b",
+      "run": "r3-claim-71c84b4b",
+      "containers": "",
+      "volumes": "",
+      "networks": ""
+    },
+    {
+      "holder": "CX-G03-r3-integrity-1a1332b5",
+      "run": "r3-integrity-1a1332b5",
+      "containers": "",
+      "volumes": "",
+      "networks": ""
+    },
+    {
+      "holder": "CX-G03-r3-integrity-a06437ed",
+      "run": "r3-integrity-a06437ed",
+      "containers": "",
+      "volumes": "",
+      "networks": ""
+    }
+  ],
+  "remainingFindings": [
+    "F5 stage-10 append outside retention guard",
+    "F6 null control envelope throws outside rejection path",
+    "F7 partial control streams are UTF-8 reencoded"
+  ]
+}

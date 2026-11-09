@@ -1,0 +1,32 @@
+slot         port  cap            state            ready  mem  holder                                           
+xtdb-dev     5470  3.00 GiB/2cpu  exited/starting  -      -    worktree:/Users/sam/projects/triplex-db-2 EXP-000
+xtdb-s1      5471  3.50 GiB/2cpu  -                -      -    -                                                
+xtdb-s2      5472  3.50 GiB/2cpu  -                -      -    -                                                
+xtdb-s3      5473  3.50 GiB/2cpu  -                -      -    -                                                
+qlever-dev   7070  3.50 GiB/2cpu  exited/starting  -      -    EXP-000                                          
+qlever-s1    7071  3.50 GiB/2cpu  -                -      -    -                                                
+qlever-s2    7072  3.50 GiB/2cpu  -                -      -    -                                                
+qlever-s3    7073  3.50 GiB/2cpu  -                -      -    -                                                
+datomic-dev  8470  2.75 GiB/2cpu  -                -      -    -                                                
+datomic-s1   8471  3.50 GiB/3cpu  -                -      -    -                                                
+datomic-s2   8472  3.50 GiB/3cpu  -                -      -    -                                                
+datomic-s3   8473  3.50 GiB/3cpu  -                -      -    -                                                
+
+pool: 9.06 GiB of 19.00 GiB reserved; disk 26.94 GiB used + 9.25 GiB forecast of 90.00 GiB
+  reservation tx2-xtdb-dev 3.00 GiB 2cpu state=running holder=EXP-W01
+  reservation tx2-qlever-dev 3.50 GiB 2cpu state=running holder=EXP-000
+  reservation tx2-g03-13761194fa353d7d-walk-a97a54 64 MiB 1cpu state=starting holder=CX-G03-r3-integrity-76e5de32
+  reservation tx2-sw-witness-79cc0755-w3 256 MiB 1cpu state=starting holder=worktree:/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01
+  reservation tx2-sw-writer-79cc0755-w3 256 MiB 1cpu state=starting holder=worktree:/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01
+  reservation tx2-sw-reader-79cc0755-w3-0 256 MiB 1cpu state=starting holder=worktree:/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01
+  reservation tx2-sw-reader-79cc0755-w3-1 256 MiB 1cpu state=starting holder=worktree:/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01
+  reservation tx2-sw-reader-79cc0755-w3-2 256 MiB 1cpu state=starting holder=worktree:/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01
+  reservation tx2-sw-reader-79cc0755-w3-3 256 MiB 1cpu state=starting holder=worktree:/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01
+  reservation tx2-sw-reader-79cc0755-w3-4 256 MiB 1cpu state=starting holder=worktree:/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01
+  reservation tx2-sw-reader-79cc0755-w3-5 256 MiB 1cpu state=starting holder=worktree:/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01
+  reservation tx2-sw-reader-79cc0755-w3-6 256 MiB 1cpu state=starting holder=worktree:/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01
+  reservation tx2-sw-reader-79cc0755-w3-7 256 MiB 1cpu state=starting holder=worktree:/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01
+  retained volume tx2-qlever-dev-data 0 MiB holder=worktree:/Users/sam/projects/triplex-db-2 note=retained by engine down (default)
+  retained volume tx2-xtdb-s2-data 3.87 GiB holder=EXP-P4 note=CX-P4: inherited 10k measurement completed; retain volume, release exclusive slot
+  retained volume tx2-g03-r2store-store-b2b3e6e8cdfb ? holder=CX-G03 note=EXP-G03 round 2 immutable Linux qualification store retained for orchestrator scale window; receipt lab/experiments/EXP-G03/round2/store.json; remove through engine.mjs after window
+  retained volume tx2-datomic-dev-data 1.52 GiB holder=CX-DF01-live-002 note=CX-DF01 attempt 002 diagnostic live gates complete; keep volume and attempt 001 scratch DB

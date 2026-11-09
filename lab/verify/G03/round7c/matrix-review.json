@@ -1,0 +1,233 @@
+{
+  "review": "CX-VG03-56-R7C",
+  "sourceCommit": "67844167",
+  "assertedBoundaryAttempts": [
+    {
+      "attempt": "control-baseline",
+      "boundary": "control-baseline",
+      "error": "DRIVER-CONTROL-FAILURE FAULT-POINT-DR-CONTRADICTION",
+      "lastStage": 12,
+      "capturedFiles": 8,
+      "retained": 0,
+      "gapWritten": false,
+      "qualification": false
+    },
+    {
+      "attempt": "stage-10-attempt2",
+      "boundary": "stage-10",
+      "error": "INJECT-stage-10",
+      "lastStage": 9,
+      "capturedFiles": 0,
+      "retained": 0,
+      "gapWritten": false,
+      "qualification": false
+    },
+    {
+      "attempt": "stage-11",
+      "boundary": "stage-11",
+      "error": "INJECT-stage-11",
+      "lastStage": 14,
+      "capturedFiles": 0,
+      "retained": 9,
+      "gapWritten": true,
+      "qualification": false
+    },
+    {
+      "attempt": "stage-12",
+      "boundary": "stage-12",
+      "error": "INJECT-stage-12",
+      "lastStage": 14,
+      "capturedFiles": 0,
+      "retained": 9,
+      "gapWritten": true,
+      "qualification": false
+    },
+    {
+      "attempt": "driver-remove",
+      "boundary": "driver-remove",
+      "error": "INJECT-driver-remove",
+      "lastStage": 14,
+      "capturedFiles": 0,
+      "retained": 9,
+      "gapWritten": true,
+      "qualification": false
+    },
+    {
+      "attempt": "observer-stop",
+      "boundary": "observer-stop",
+      "error": "INJECT-observer-stop",
+      "lastStage": 14,
+      "capturedFiles": 0,
+      "retained": 9,
+      "gapWritten": true,
+      "qualification": false
+    },
+    {
+      "attempt": "observer-seal-attempt2",
+      "boundary": "observer-seal",
+      "error": "observer seal failed",
+      "lastStage": 14,
+      "capturedFiles": 0,
+      "retained": 9,
+      "gapWritten": true,
+      "qualification": false
+    },
+    {
+      "attempt": "broker-remove",
+      "boundary": "broker-remove",
+      "error": "INJECT-broker-remove",
+      "lastStage": 14,
+      "capturedFiles": 0,
+      "retained": 9,
+      "gapWritten": true,
+      "qualification": false
+    },
+    {
+      "attempt": "consumer-remove",
+      "boundary": "consumer-remove",
+      "error": "INJECT-consumer-remove",
+      "lastStage": 14,
+      "capturedFiles": 0,
+      "retained": 9,
+      "gapWritten": true,
+      "qualification": false
+    },
+    {
+      "attempt": "observer-remove",
+      "boundary": "observer-remove",
+      "error": "INJECT-observer-remove",
+      "lastStage": 14,
+      "capturedFiles": 0,
+      "retained": 9,
+      "gapWritten": true,
+      "qualification": false
+    },
+    {
+      "attempt": "walk-output",
+      "boundary": "walk-output",
+      "error": "INJECT-walk-output",
+      "lastStage": 14,
+      "capturedFiles": 0,
+      "retained": 9,
+      "gapWritten": true,
+      "qualification": false
+    },
+    {
+      "attempt": "walk-observer",
+      "boundary": "walk-observer",
+      "error": "INJECT-walk-observer",
+      "lastStage": 14,
+      "capturedFiles": 0,
+      "retained": 9,
+      "gapWritten": true,
+      "qualification": false
+    },
+    {
+      "attempt": "walk-broker",
+      "boundary": "walk-broker",
+      "error": "INJECT-walk-broker",
+      "lastStage": 14,
+      "capturedFiles": 0,
+      "retained": 9,
+      "gapWritten": true,
+      "qualification": false
+    },
+    {
+      "attempt": "walk-consumer",
+      "boundary": "walk-consumer",
+      "error": "INJECT-walk-consumer",
+      "lastStage": 14,
+      "capturedFiles": 0,
+      "retained": 9,
+      "gapWritten": true,
+      "qualification": false
+    },
+    {
+      "attempt": "export-dir",
+      "boundary": "export-dir",
+      "error": "INJECT-export-dir",
+      "lastStage": 14,
+      "capturedFiles": 0,
+      "retained": 9,
+      "gapWritten": true,
+      "qualification": false
+    },
+    {
+      "attempt": "export-key",
+      "boundary": "export-key",
+      "error": "INJECT-export-key",
+      "lastStage": 14,
+      "capturedFiles": 0,
+      "retained": 9,
+      "gapWritten": true,
+      "qualification": false
+    },
+    {
+      "attempt": "export-binding",
+      "boundary": "export-binding",
+      "error": "INJECT-export-binding",
+      "lastStage": 14,
+      "capturedFiles": 0,
+      "retained": 9,
+      "gapWritten": true,
+      "qualification": false
+    },
+    {
+      "attempt": "export-driver",
+      "boundary": "export-driver",
+      "error": "INJECT-export-driver",
+      "lastStage": 14,
+      "capturedFiles": 0,
+      "retained": 9,
+      "gapWritten": true,
+      "qualification": false
+    },
+    {
+      "attempt": "export-control",
+      "boundary": "export-control",
+      "error": "INJECT-export-control",
+      "lastStage": 14,
+      "capturedFiles": 0,
+      "retained": 9,
+      "gapWritten": true,
+      "qualification": false
+    },
+    {
+      "attempt": "capture-terminal",
+      "boundary": "capture-terminal",
+      "error": "INJECT-capture-terminal",
+      "lastStage": 14,
+      "capturedFiles": 0,
+      "retained": 9,
+      "gapWritten": true,
+      "qualification": false
+    },
+    {
+      "attempt": "gap-write",
+      "boundary": "gap-write",
+      "error": "INJECT-gap-write",
+      "lastStage": 12,
+      "capturedFiles": 0,
+      "retained": 9,
+      "gapWritten": false,
+      "qualification": false
+    },
+    {
+      "attempt": "stage-14",
+      "boundary": "stage-14",
+      "error": "INJECT-stage-14",
+      "lastStage": 12,
+      "capturedFiles": 0,
+      "retained": 9,
+      "gapWritten": true,
+      "qualification": false
+    }
+  ],
+  "additionalMalformedEnvelope": {
+    "value": "null\\n",
+    "processExit": 1,
+    "uncaughtTypeError": true,
+    "scope": "trusted-producer fault, no candidate route demonstrated"
+  },
+  "qualification": false
+}

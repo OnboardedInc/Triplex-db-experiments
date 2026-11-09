@@ -1,0 +1,14 @@
+{
+  "ns-attempt1": 0,
+  "contract-verify": 0,
+  "full-attempt1": "INTERRUPTED-HOST-RESET",
+  "evaluator-attempt1": "INTERRUPTED-HOST-RESET",
+  "pin-review": 0,
+  "domain-review": 0,
+  "matrix-review": 0,
+  "original-review": 0,
+  "full-attempt2": 0,
+  "nonutf8-envelope": 0,
+  "stream-review": 0,
+  "evaluator-attempt2": 0
+}

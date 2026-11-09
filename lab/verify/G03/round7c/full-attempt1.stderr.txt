@@ -1,0 +1,3 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 29809 "P5B-R3-B1r2", pid 10173 "OBS01-W", pid 13799 "P4N-R1-baseline", pid 10298 "G0-xtdb-20261109T143549Z-f698e1 vitest-core"
+[lab] heavy: waiting for one of 4 slots; held by pid 29809 "P5B-R3-B1r2", pid 10173 "OBS01-W", pid 13799 "P4N-R1-baseline", pid 10298 "G0-xtdb-20261109T143549Z-f698e1 vitest-core"
+[lab] heavy: waiting for one of 4 slots; held by pid 29809 "P5B-R3-B1r2", pid 10173 "OBS01-W", pid 13799 "P4N-R1-baseline", pid 10298 "G0-xtdb-20261109T143549Z-f698e1 vitest-core"

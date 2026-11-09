@@ -1,0 +1,17 @@
+{
+  "runId": "a7bba903934c456bb99eedaaf466af19",
+  "rawDir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VG03-56/round7c/adversarial/nonutf8-envelope/raw-a7bba903934c456bb99eedaaf466af19",
+  "coordinatorSha256": "aa99c4fae29d72f2558e47fb14e6abcf12748caf7f21fd45a9fbe4e87fcffd82",
+  "boxSha256": "589028dca91ca8c90865994dd483df4694999360f9485520c9c963296b1dc906",
+  "reviewToolSha256": "54c5a1275c5c0e8b887f74099fa3deb7e4e7286142cb7019dd880603e4be35fe",
+  "suppliedHex": "ff0a",
+  "suppliedBytes": 2,
+  "suppliedSha256": "e4688624e5f1ad0629505e6768e3bb36244f2f3e33e751215afa820334a76ed3",
+  "exportedHex": "efbfbd0a",
+  "exportedBytes": 4,
+  "exportedSha256": "8d75cfafa290dea108e554948eae67ba5c418cad73059f9452ff6fc652d5c869",
+  "terminalAndCaptureMatchReencodedBytes": true,
+  "bytesPreserved": false,
+  "scope": "trusted malformed-producer model; exact Box/coordinator; no candidate path or semantic acceptance",
+  "qualification": false
+}

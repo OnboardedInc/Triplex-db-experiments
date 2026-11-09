@@ -1,0 +1,1 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 12103 "QH1-R4", pid 7717 "G0-xtdb-20261109T154231Z-9c614d vitest-testkit", pid 7581 "P4N-R1-sa-abab", pid 9673 "OBS01-W"

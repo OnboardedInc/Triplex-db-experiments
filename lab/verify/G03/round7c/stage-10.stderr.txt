@@ -1,0 +1,13 @@
+node:internal/modules/esm/utils:273
+  throw new ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING();
+        ^
+
+TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:273:9)
+    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-g03-56/lab/experiments/EXP-G03/ns/round7c-harness.mjs:64:114
+    at SourceTextModule.evaluate (node:internal/vm/module:219:26)
+    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-g03-56/lab/verify/G03/round7c/stage-review.mjs:27:14 {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+
+Node.js v22.23.2

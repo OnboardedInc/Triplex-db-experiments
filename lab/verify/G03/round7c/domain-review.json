@@ -1,0 +1,57 @@
+{
+  "runId": "78b09e6e-ee2b-4e55-aff0-83020059a6da",
+  "reviewedCode": "87c86a10",
+  "sourceSha256": "aa99c4fae29d72f2558e47fb14e6abcf12748caf7f21fd45a9fbe4e87fcffd82",
+  "results": [
+    {
+      "name": "fresh constant domain",
+      "accepted": true
+    },
+    {
+      "name": "null first",
+      "refused": true
+    },
+    {
+      "name": "null throughout",
+      "refused": true
+    },
+    {
+      "name": "null middle",
+      "refused": true
+    },
+    {
+      "name": "null final",
+      "refused": true
+    },
+    {
+      "name": "domain changes",
+      "refused": true
+    },
+    {
+      "name": "wrong primitive",
+      "refused": true
+    },
+    {
+      "name": "nonzero offset",
+      "refused": true
+    },
+    {
+      "name": "numeric offsets",
+      "refused": true
+    },
+    {
+      "name": "extra domain key",
+      "refused": true
+    },
+    {
+      "name": "missing offsets",
+      "refused": true
+    },
+    {
+      "name": "undefined domain",
+      "refused": true
+    }
+  ],
+  "scope": "fresh signed synthetic observer data; no candidate key access or live clock proof",
+  "qualification": false
+}

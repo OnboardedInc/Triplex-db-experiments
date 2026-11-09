@@ -1,0 +1,90 @@
+[
+  {
+    "boundary": "control-baseline",
+    "exit": 0
+  },
+  {
+    "boundary": "stage-11",
+    "exit": 0
+  },
+  {
+    "boundary": "stage-12",
+    "exit": 0
+  },
+  {
+    "boundary": "driver-remove",
+    "exit": 0
+  },
+  {
+    "boundary": "observer-stop",
+    "exit": 0
+  },
+  {
+    "boundary": "observer-seal",
+    "exit": 0
+  },
+  {
+    "boundary": "broker-remove",
+    "exit": 0
+  },
+  {
+    "boundary": "consumer-remove",
+    "exit": 0
+  },
+  {
+    "boundary": "observer-remove",
+    "exit": 0
+  },
+  {
+    "boundary": "walk-output",
+    "exit": 0
+  },
+  {
+    "boundary": "walk-observer",
+    "exit": 0
+  },
+  {
+    "boundary": "walk-broker",
+    "exit": 0
+  },
+  {
+    "boundary": "walk-consumer",
+    "exit": 0
+  },
+  {
+    "boundary": "export-dir",
+    "exit": 0
+  },
+  {
+    "boundary": "export-key",
+    "exit": 0
+  },
+  {
+    "boundary": "export-binding",
+    "exit": 0
+  },
+  {
+    "boundary": "export-driver",
+    "exit": 0
+  },
+  {
+    "boundary": "export-control",
+    "exit": 0
+  },
+  {
+    "boundary": "capture-terminal",
+    "exit": 0
+  },
+  {
+    "boundary": "gap-write",
+    "exit": 0
+  },
+  {
+    "boundary": "stage-14",
+    "exit": 0
+  },
+  {
+    "boundary": "null-envelope",
+    "exit": 1
+  }
+]

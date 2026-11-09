@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-09T15:23:45.753Z",
+  "head": "3c78b926977c1edb5b6b6e3d4b3fb2bcd27a2ebe",
+  "branch": "verify/G03-r6",
+  "diskFreeBytes": 50481045504,
+  "dockerHost": "unix:///Users/sam/.colima/triplex2/docker.sock",
+  "configuredDockerContext": "default",
+  "node": "v22.23.2",
+  "reviewedCode": "87c86a10",
+  "reviewedReport": "67844167",
+  "protectedClosureChange": "lab/bin/box.mjs",
+  "qualification": false
+}

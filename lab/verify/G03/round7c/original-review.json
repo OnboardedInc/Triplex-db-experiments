@@ -1,0 +1,11 @@
+{
+  "originalSha256": "4b54cff125e2e25d68f96fd1efd9eb6c0f2b70598eddd9e5cb1b19bbef0524ea",
+  "originalByteIdentical": true,
+  "expectedOriginalAssertionFails": true,
+  "error": "Expected values to be strictly equal:\n\n1 !== 0\n",
+  "rawDir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VG03-56/round7c/original-attempt2/coordinator-fixtures/stream-failure/raw-032c24a527561a93633f9aa626c7da8c",
+  "capturedFiles": 8,
+  "allDigestsMatch": true,
+  "scope": "exact original VM reproduction; trusted lifecycle model; no Docker",
+  "qualification": false
+}

@@ -1,0 +1,108 @@
+{
+  "at": "2026-11-09T15:43:18.971Z",
+  "reportedReset": "2026-11-09 10:34 America/New_York",
+  "head": "3c78b926977c1edb5b6b6e3d4b3fb2bcd27a2ebe",
+  "interrupted": [
+    {
+      "name": "full-attempt1",
+      "pid": 19885,
+      "alive": false,
+      "tapSha256": "6330a8a8f4c3305d384f3052e5c975e115ac4b4fbe81eeb57366c48d3ac6cb6c",
+      "terminalTAP": false,
+      "traces": [
+        {
+          "name": "r3-claim-5ca83928-request-0.json",
+          "sha256": "22cb312eeeea616c5826e33c1a0d444d2f6908c5e5abd34ab6ac6c065f38b6f3"
+        },
+        {
+          "name": "r3-claim-5ca83928-request-1.json",
+          "sha256": "c7df14d9607a0633da5041a2f4bddbdd05f067b174e4849f1a038a37f23e45d7"
+        },
+        {
+          "name": "r3-claim-5ca83928-request-2.json",
+          "sha256": "23e3de1d27034db21921cf55b2be044d40e3798b6506b1441b41a67bd8f04d35"
+        },
+        {
+          "name": "r3-claim-5ca83928-request-3.json",
+          "sha256": "dcf9d1053fe1ae743bcf991c4d027539ca55b543ffa2cee4a078a192d5fa0c7e"
+        },
+        {
+          "name": "r3-integrity-76e5de32-request-0.json",
+          "sha256": "474b9a49e8aaad86be2b0cbe57620e6dc9b0693c30c8c809edaff9ab5528f689"
+        },
+        {
+          "name": "r3-integrity-76e5de32-request-1.json",
+          "sha256": "55ed23770a4f277da7e7cfc930d46c9ef3dee36685d37eb1e0379df21cdf9def"
+        },
+        {
+          "name": "r3-integrity-76e5de32-request-2.json",
+          "sha256": "189b2aecd83990bec116c9fe657f4f237ead4d862e201ed2c32e433059ab9cb1"
+        },
+        {
+          "name": "r3-integrity-76e5de32-request-3.json",
+          "sha256": "727b51405fdfc279e5872a3f12e89c988eb60608dad029e9b6338c2957986453"
+        }
+      ],
+      "completion": "NOT-PROVEN",
+      "qualification": false
+    },
+    {
+      "name": "evaluator-attempt1",
+      "pid": 20504,
+      "alive": false,
+      "tapSha256": "7cb03ab03edf5190a8aa546c78285344395fad3d42d4011cd224f934aef96b3f",
+      "terminalTAP": false,
+      "traces": [],
+      "completion": "NOT-PROVEN",
+      "qualification": false
+    }
+  ],
+  "inventories": [
+    {
+      "run": "r3-claim-5ca83928",
+      "holder": "CX-G03-r3-claim-5ca83928",
+      "file": "crash-inventory-r3-claim-5ca83928.json",
+      "sha256": "0f74a4c7aa096dbeda2b1fc3edd5e0d96a8a130bf996f626a2e1b8eb982daf9f",
+      "containers": 0,
+      "volumes": 32,
+      "networks": 0,
+      "protectedCloneExists": true,
+      "retention": "left untouched after host reset; incomplete-attempt evidence; no cleanup proof"
+    },
+    {
+      "run": "r3-integrity-76e5de32",
+      "holder": "CX-G03-r3-integrity-76e5de32",
+      "file": "crash-inventory-r3-integrity-76e5de32.json",
+      "sha256": "be81c5d8cd104d7768271b60ee58df8ab3c72655ac8b481d030db87369ac49a2",
+      "containers": 1,
+      "volumes": 40,
+      "networks": 0,
+      "protectedCloneExists": true,
+      "retention": "left untouched after host reset; incomplete-attempt evidence; no cleanup proof"
+    },
+    {
+      "run": "r3-claim-e99de591",
+      "holder": "CX-G03-r3-claim-e99de591",
+      "file": "crash-inventory-r3-claim-e99de591.json",
+      "sha256": "bbd590e6bd52f71bd5b0190c1c74a6ad9a2bf174603bc88a42f48f8af0c5e73b",
+      "containers": 0,
+      "volumes": 12,
+      "networks": 0,
+      "protectedCloneExists": true,
+      "retention": "left untouched after host reset; incomplete-attempt evidence; no cleanup proof"
+    },
+    {
+      "run": "r3-integrity-d13f945d",
+      "holder": "CX-G03-r3-integrity-d13f945d",
+      "file": "crash-inventory-r3-integrity-d13f945d.json",
+      "sha256": "32fd6c2a641014dc5d4241f90b496a5104292fef2dc35edfad3ea949e8627d03",
+      "containers": 0,
+      "volumes": 14,
+      "networks": 0,
+      "protectedCloneExists": true,
+      "retention": "left untouched after host reset; incomplete-attempt evidence; no cleanup proof"
+    }
+  ],
+  "retention": "all crash-era traces, resources and evaluator clones left intact; no success inferred",
+  "qualification": false
+}

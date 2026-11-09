@@ -1,0 +1,19 @@
+(node:13189) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+committed-box.mjs:138
+      child.stdout.on('data',b=>{size+=b.length;if(size>max)return fail(Error('FAULT-CONTROL-CAP'));stdout+=b;pending+=b;let at;while((at=pending.indexOf('\n'))>=0){const line=pending.slice(0,at);pending=pending.slice(at+1);let row;try{row=JSON.parse(line)}catch{return fail(Error('FAULT-CONTROL-JSON'))}if(row.schema==='ns-control/1')chain=chain.then(async()=>{const reply=await onControl(row);child.stdin.write(JSON.stringify(reply)+'\n')}).catch(fail);}});
+                                                                                                                                                                                                                                                                                                                       ^
+
+TypeError: Cannot read properties of null (reading 'schema')
+    at PassThrough.<anonymous> (committed-box.mjs:138:312)
+    at PassThrough.emit (node:events:519:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at node:internal/streams/transform:178:12
+    at PassThrough._transform (node:internal/streams/passthrough:46:3)
+    at Transform._write (node:internal/streams/transform:171:8)
+    at writeOrBuffer (node:internal/streams/writable:572:12)
+    at _write (node:internal/streams/writable:501:10)
+
+Node.js v22.23.2

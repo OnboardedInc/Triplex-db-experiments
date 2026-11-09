@@ -1,0 +1,19 @@
+{
+  "verdict": "FIX-FIRST",
+  "qualification": false,
+  "checks": [
+    {
+      "name": "full-attempt2",
+      "exit": 0,
+      "pass": 285
+    }
+  ],
+  "holdersGone": 2,
+  "traces": [
+    {
+      "run": "full-attempt2",
+      "files": 27,
+      "bytes": 1897764
+    }
+  ]
+}
