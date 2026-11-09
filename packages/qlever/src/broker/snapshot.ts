@@ -55,3 +55,45 @@ export const snapshotRows = (
           ? { ...row, retracted_at: null, retracted_position: null, retract_tx_id: null }
           : row;
       });
+
+// [EXP-P2Q] Why: construction applies the common row mask even to empty and nested read results.
+// Rejected: a marker on functions alone (a new operation could return unmasked rows directly).
+export const maskSnapshotResult = <A>(
+  value: A,
+  position: number,
+  basis?: ResolvedTemporalBasis,
+  rawHistory = false,
+): A => {
+  const visit = (item: any): any => {
+    if (Array.isArray(item)) {
+      if (
+        item.every(
+          (row) =>
+            row &&
+            typeof row === "object" &&
+            "recorded_position" in row &&
+            "retracted_position" in row &&
+            "entity_id" in row &&
+            "value_type" in row,
+        )
+      )
+        return snapshotRows(item, position, basis, rawHistory);
+      return item.map(visit);
+    }
+    if (item instanceof Map) return new Map([...item].map(([key, child]) => [key, visit(child)]));
+    if (item && typeof item === "object" && Object.getPrototypeOf(item) === Object.prototype) {
+      if (
+        "recorded_position" in item &&
+        "retracted_position" in item &&
+        "entity_id" in item &&
+        "value_type" in item
+      )
+        return snapshotRows([item], position, basis, rawHistory)[0];
+      // [EXP-P2Q] Why: semantic query objects may contain arbitrary user JSON, including row-shaped values.
+      // Rejected: recursively rewriting every object (would reinterpret user payload as storage metadata).
+      return item;
+    }
+    return item;
+  };
+  return visit(value);
+};
