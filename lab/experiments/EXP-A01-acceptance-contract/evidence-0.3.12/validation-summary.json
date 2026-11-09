@@ -1,0 +1,203 @@
+{
+  "result": "BUILDER-GATES-PASS; independent delta review required",
+  "sourceHead": "aaac166feceb8adc2e447efae5928e35dd1edf0d",
+  "mergedMain": "95db6153c6c1d47172a2ed53e5cb6c0bfcaa7d73",
+  "transitiveContractSha256": "2858ea71c4d4cad1e14ef422269cf6d8bae14ad3b5eb8e5ccc3950c1fb462144",
+  "generatorSha256": "8ea37fba24579e9d0751c480e49eeefb0ee121dc5692c78d5ef48826493efe5d",
+  "evaluator": {
+    "tests": 108,
+    "pass": 108,
+    "fail": 0,
+    "skipped": 0,
+    "todo": 0,
+    "receipt": "evaluator-authority-final.tap"
+  },
+  "mutations": {
+    "catalog": 513,
+    "run": 432,
+    "caught": 432,
+    "missed": [],
+    "retiredAnchors": 81,
+    "newControls": 88,
+    "newRulingLiteralAndConsumerPairs": 37,
+    "receipt": "negtest-authority-final.txt"
+  },
+  "ancillary": {
+    "sourceHead": "aaac166feceb8adc2e447efae5928e35dd1edf0d",
+    "sourceBefore": {
+      "lab/acceptance/build_contract.py": "8ea37fba24579e9d0751c480e49eeefb0ee121dc5692c78d5ef48826493efe5d",
+      "lab/acceptance/RULINGS.md": "13a880df8878f3eecec48fa367ade87fe00e22352a4ef61a0799e8aef0634bcd",
+      "lab/acceptance/RULINGS-PENDING.md": "e414c195d51c08f927684ec1dab9cb73eae3df1fb016eec2707f7bb7cafb5e91",
+      "lab/acceptance/obligations.json": "8bb4b393a2b1636eea00a0609d04a28b54adaecdc5d2f9ffd6d582edb2fe935c",
+      "lab/acceptance/ACCEPTANCE.md": "a0408e79ededa3722e8afe04fb6979dcdbb547911f437efc7626f5e060509309",
+      "lab/bin/claim.mjs": "4069ca82ea877eed39cdddc8e0323b09d392fd013f9a2c8ac8f542a1bed62e2a",
+      "lab/bin/test/claim.test.mjs": "62de70ed333c40f8662da5749179f985f9f8b961a6c10459a0dadfad5bceb476",
+      "lab/bin/test/claim-round2.test.mjs": "6aef70bd2448a6b37dc040d19d9ee219a4e4e5fdf78c8094e1bb66ec45104be9"
+    },
+    "sourceAfter": {
+      "lab/acceptance/build_contract.py": "8ea37fba24579e9d0751c480e49eeefb0ee121dc5692c78d5ef48826493efe5d",
+      "lab/acceptance/RULINGS.md": "13a880df8878f3eecec48fa367ade87fe00e22352a4ef61a0799e8aef0634bcd",
+      "lab/acceptance/RULINGS-PENDING.md": "e414c195d51c08f927684ec1dab9cb73eae3df1fb016eec2707f7bb7cafb5e91",
+      "lab/acceptance/obligations.json": "8bb4b393a2b1636eea00a0609d04a28b54adaecdc5d2f9ffd6d582edb2fe935c",
+      "lab/acceptance/ACCEPTANCE.md": "a0408e79ededa3722e8afe04fb6979dcdbb547911f437efc7626f5e060509309",
+      "lab/bin/claim.mjs": "4069ca82ea877eed39cdddc8e0323b09d392fd013f9a2c8ac8f542a1bed62e2a",
+      "lab/bin/test/claim.test.mjs": "62de70ed333c40f8662da5749179f985f9f8b961a6c10459a0dadfad5bceb476",
+      "lab/bin/test/claim-round2.test.mjs": "6aef70bd2448a6b37dc040d19d9ee219a4e4e5fdf78c8094e1bb66ec45104be9"
+    },
+    "sourceStable": true,
+    "hostDiskFreeBytes": 14958477312,
+    "gates": [
+      {
+        "label": "contract-tests",
+        "argv": [
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
+          "-I",
+          "-B",
+          "lab/experiments/EXP-A01-acceptance-contract/regressions/test0312.py"
+        ],
+        "exit": 0,
+        "started": 1794182210.340726,
+        "ended": 1794182211.0865521
+      },
+      {
+        "label": "screening-js",
+        "argv": [
+          "node",
+          "--test",
+          "lab/experiments/EXP-A01-acceptance-contract/regressions/screening0312.test.mjs"
+        ],
+        "exit": 0,
+        "started": 1794182211.086601,
+        "ended": 1794182211.220593
+      },
+      {
+        "label": "reviewer-regressions",
+        "argv": [
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
+          "-I",
+          "-B",
+          "lab/verify/A01/regressions_review0311.py"
+        ],
+        "exit": 0,
+        "started": 1794182211.2206342,
+        "ended": 1794182211.831533
+      },
+      {
+        "label": "real-payloads",
+        "argv": [
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
+          "-I",
+          "-B",
+          "lab/verify/A01/regressions_round2.py"
+        ],
+        "exit": 0,
+        "started": 1794182211.831562,
+        "ended": 1794182212.120013
+      },
+      {
+        "label": "test_observe",
+        "argv": [
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
+          "-I",
+          "-B",
+          "lab/acceptance/oracle/test_observe.py"
+        ],
+        "exit": 0,
+        "started": 1794182212.12007,
+        "ended": 1794182216.7785668
+      },
+      {
+        "label": "test_cli",
+        "argv": [
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
+          "-I",
+          "-B",
+          "lab/acceptance/oracle/test_cli.py"
+        ],
+        "exit": 0,
+        "started": 1794182216.7786071,
+        "ended": 1794182218.4184582
+      },
+      {
+        "label": "test_round2",
+        "argv": [
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
+          "-I",
+          "-B",
+          "lab/acceptance/oracle/test_round2.py"
+        ],
+        "exit": 0,
+        "started": 1794182218.418504,
+        "ended": 1794182219.689516
+      },
+      {
+        "label": "test_round3",
+        "argv": [
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
+          "-I",
+          "-B",
+          "lab/acceptance/oracle/test_round3.py"
+        ],
+        "exit": 0,
+        "started": 1794182219.689549,
+        "ended": 1794182220.260185
+      },
+      {
+        "label": "test_round4",
+        "argv": [
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
+          "-I",
+          "-B",
+          "lab/acceptance/oracle/test_round4.py"
+        ],
+        "exit": 0,
+        "started": 1794182220.260253,
+        "ended": 1794182223.520873
+      },
+      {
+        "label": "selfcheck",
+        "argv": [
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
+          "-I",
+          "-B",
+          "lab/acceptance/oracle/selfcheck.py"
+        ],
+        "exit": 0,
+        "started": 1794182223.520913,
+        "ended": 1794182295.63713
+      }
+    ]
+  },
+  "q47d": "PASS",
+  "regeneration": "byte-identical",
+  "pendingIds": [
+    "Q51b",
+    "Q73a",
+    "Q73b",
+    "Q78e",
+    "Q81b",
+    "Q81c",
+    "Q86g",
+    "Q88a",
+    "Q88b",
+    "Q88c",
+    "Q89a",
+    "Q89b",
+    "Q89c",
+    "Q89d",
+    "Q89e",
+    "Q89f",
+    "Q89g",
+    "Q89h"
+  ],
+  "notPerformed": [
+    "engine/container lifecycle",
+    "production qualification",
+    "G03 pin promotion",
+    "package installation",
+    "benchmark",
+    "root pnpm check",
+    "push",
+    "merge into main"
+  ]
+}

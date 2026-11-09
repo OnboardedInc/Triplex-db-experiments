@@ -1,13 +1,58 @@
 # Contract 0.3.12 — CX-A01-0312
 
-North star: correctness floor for P1–P5, following `lab/SCOPE.md`, `lab/NORTH-STAR.md` and `lab/TARGETS.md`.
+North star: correctness floor for P1–P5; goals and targets remain `lab/SCOPE.md`, `lab/NORTH-STAR.md` and `lab/TARGETS.md`.
 
-Implementation: 37 literal pending rows compiled (Q72a-e/g, Q79e-f, Q80a-c, Q82a-e, Q83a-e, Q84a-e, Q85a-d, Q86a-f, Q87). Q78e and Q86g remain pending for Sam; Q51b, Q73a-b and Q81b-c also remain pending. The actual before/after row bytes are tested. G03 isolation requirements are compiled, but its execution/build pins remain null for 0.3.13.
+**Builder result: all requested gates PASS. Independent delta acceptance remains required.** Final tested source is `aaac166feceb8adc2e447efae5928e35dd1edf0d` on `contract/0.3.12`, merged with main `95db6153c6c1d47172a2ed53e5cb6c0bfcaa7d73`. The final receipt commit adds only this report and evidence; it does not alter the tested source. No push or merge into main occurred.
 
-O-OBS `23e2273fc6b15b92821b318acd387f5484155d8a` is merged in the same commit as its pin move (Q45a). V-O05 round 4 at `verify/O05` `3e3df9c` accepts it for **screening only**. Its standalone `observe.py` and the 29 files of its subprocess dependency O-REPLAY are all hashed in `lab/acceptance/pins/O-OBS-23e2273-SHA256SUMS`. O-REPLAY retains the independently accepted 0.4.9 `f195f30` pin; its files were not replaced by the older O05 branch's dependency tree. No oracle source was changed. Evaluator-supplied normalizers are independently pinned in the trusted context, not taken from candidate inputs.
+## Compiled rulings and pending authority
 
-The review record is retained verbatim as `lab/acceptance/pins/O-OBS-V-O05-round4.md`. The verifier commit has no separate BRIEF file: the registry transparently uses the existing review record containing its task and scope, with a note; no retrospective verifier brief was fabricated. This provenance limitation remains visible for the independent contract reviewer.
+Moved **37 rows, verbatim**, from pending authority into RULINGS.md and named generated consumers: Q72a-e/g, Q79e-f, Q80a-c, Q82a-e, Q83a-e, Q84a-e, Q85a-d, Q86a-f and Q87. Every row has a literal-preservation control and a consumer-removal mutation. Broker/query regressions are also selected in the existing case sets. Observation protocols name the evaluator-owned context, obs-bundle/1, two-kind safety corroboration, exact rational work comparisons and erasure canaries. The protected-copy inventory adds observer outputs, old generations and freed blocks.
 
-A screening-only pin blocks acceptance in both the Python reference admission model and the JavaScript evaluator. Hypothetical full-admission fixtures have explicit fixture-only authority; all original evaluator assertions are unchanged. The only test-file edits add 8 MiB output buffers to two git-show helpers and explain why; the byte comparison strips only those exact additions to prove the rest is unchanged. Q83b/d/e supersede the old Q74b freeze interpretation: F, M and T are distinct, maintenance-only F < M needs stopped-tail proof, and resume binds to M. Observation protocols now name the trusted context/bundle, two-kind safety corroboration, exact ratios and canary controls; the protected-copy inventory includes observer outputs, old generations and freed blocks.
+Q83b/d/e supersede Q74b's old freeze interpretation. F (block cut), M (settled replay) and T (application transaction) remain distinct. A maintenance-only F < M interval requires stopped-tail evidence and unchanged T; stopped tails and reference/clone resume bind to M. This precedence is explicit in obligations.json and load-contract.json.
 
-Validation is in progress. The evaluator suite passes 108/108 after fixing its two 1 MiB stdout-buffer limits; the initial failed attempt is retained. Ten contract checks, three JavaScript screening controls and the O-OBS round-4 integration controls pass. The first mutation run caught 431/432 and exposed a legacy Q61a mutation that edits a historical source field now overridden by Q86e. The operative immutable-authority rule and its mutation are being checked before the final gate run. These are builder checks, not independent acceptance. No engine/container lifecycle, engine qualification, package installation, benchmark, root pnpm check, push or merge into main was performed.
+Q86a-f are requirements, **not an assertion that isolation is in force**. G03 build/execution pins remain null for 0.3.13. The unprotected R1/R4/D1-D3/L1/N1-N4 list remains explicit. No G03 fixture pin was imported.
+
+The final main merge preserved Q88/Q89 additions and both main Q78e pending records without compiling them. There are **18 unique pending IDs, authority none**: Q51b, Q73a, Q73b, Q78e, Q81b, Q81c, Q86g, Q88a, Q88b, Q88c, Q89a, Q89b, Q89c, Q89d, Q89e, Q89f, Q89g, Q89h. Q78e and Q86g still wait for Sam. The pending-preservation test compares the immutable main parent's actual rows after subtracting only the 37 authorized promotions.
+
+## O-OBS pin and source provenance
+
+The oracle merge and pin move are together in **`4b7b3700`** (Q45a). O-OBS observe.py is byte-identical to `exp/O05-observation-oracle` **`23e2273fc6b15b92821b318acd387f5484155d8a`**. Its verifier is **V-O05 round 4**, `verify/O05` **`3e3df9c`**, accepted for **screening only**.
+
+All **30 runner files** have individual SHA-256 entries in [O-OBS-23e2273-SHA256SUMS](../../acceptance/pins/O-OBS-23e2273-SHA256SUMS) and generated oraclePins/oracleRunners: observe.py plus its O-REPLAY subprocess dependency's 29 files. O-REPLAY retains the independently accepted 0.4.9 `f195f30` pin; it was not replaced with the older O05 branch's replay tree. The manifest explicitly records that dependency revision, and tests compare every file against its exact source commit. No observation-oracle code was edited. Runtime-selected normalizers are trusted evaluator objects pinned independently in each context.
+
+Screening acceptance cannot qualify an acceptance claim: both the Python reference and JavaScript contract blockers enforce that scope. The positive synthetic admission fixtures explicitly use fixture-only full authority; this does not promote the real pin. No database obligation closes from pinning this parser.
+
+The verifier record is retained **verbatim** as [O-OBS-V-O05-round4.md](../../acceptance/pins/O-OBS-V-O05-round4.md). The verifier commit has no separate BRIEF file. The registry transparently points its brief field at the existing review record containing the task/scope, notes that provenance limitation, and does not fabricate a retrospective brief. The independent contract reviewer should assess this registry representation.
+
+## Final gates and evidence
+
+All final gates use source `aaac166feceb8adc2e447efae5928e35dd1edf0d` and the final merged contract. Heavy suites ran through lab/bin/heavy.mjs. Host disk remained above 5 GiB; recorded source receipt free space was 14,038,183,936 bytes.
+
+| Gate | Final result | Receipt |
+| --- | --- | --- |
+| build_contract.py --verify | PASS; all six outputs byte-identical | [verify-authority-final.txt](evidence-0.3.12/verify-authority-final.txt) |
+| Contract mutation suite | **432/432 caught**, zero misses; catalog 513, 81 retired anchors; 88 new controls include all 37 new literal/consumer pairs | [negtest-authority-final.txt](evidence-0.3.12/negtest-authority-final.txt) |
+| Required evaluator suite | **108/108 PASS**, zero failures/skips/cancellations/todo | [evaluator-authority-final.tap](evidence-0.3.12/evaluator-authority-final.tap) |
+| Contract 0.3.12 controls | 10/10 PASS | [contract-tests.stdout.txt / stderr](evidence-0.3.12/contract-tests.stderr.txt) |
+| JavaScript screening controls | 3/3 PASS | [screening-js.stdout.txt](evidence-0.3.12/screening-js.stdout.txt) |
+| Prior independent reviewer regressions, builder rerun | 35/35 PASS | [reviewer-regressions.stdout.txt](evidence-0.3.12/reviewer-regressions.stdout.txt) |
+| Real replay payload controls | 5/5 PASS | [real-payloads.stdout.txt](evidence-0.3.12/real-payloads.stdout.txt) |
+| Pending-authority Q47d controls | PASS; both prohibited mutants detected, six outputs restored | [q47d-authority-final.txt](evidence-0.3.12/q47d-authority-final.txt) |
+| O-OBS integration | 96/96 fixtures; test_cli: 8, test_round2: 29, test_round3: 13, test_round4: 4; selfcheck 14/14 mutants with positive controls and no crash kills | [ancillary-summary.json](evidence-0.3.12/ancillary-summary.json), [selfcheck.stdout.txt](evidence-0.3.12/selfcheck.stdout.txt) |
+
+The ancillary source-before/after hashes match. Complete identities and machine-readable results: [source-and-hashes.json](evidence-0.3.12/source-and-hashes.json), [validation-summary.json](evidence-0.3.12/validation-summary.json). Evidence files have a SHA256SUMS manifest.
+
+Contract hash: **`2858ea71c4d4cad1e14ef422269cf6d8bae14ad3b5eb8e5ccc3950c1fb462144`**. Generator SHA-256: `8ea37fba24579e9d0751c480e49eeefb0ee121dc5692c78d5ef48826493efe5d`.
+
+Pin-level counts remain **157 total / 40 closable / 117 blocked**. Surface total/closable/blocked: XTQL 154/39/115; SQL 154/39/115; SPARQL 155/39/116; Datomic Datalog/pull 153/0/153. These are potential pin-level counts, not achieved closure. Lane D's image remains null.
+
+## Preserved failures and corrections
+
+- [observer-round4.txt](evidence-0.3.12/observer-round4.txt): the first integration attempt failed because the contract used a descriptive inventory category instead of the oracle's exact `observer outputs` category. Corrected the contract label, preserving the oracle and inventory assertion. Its retry and final integration pass.
+- [evaluator-attempt1.tap](evidence-0.3.12/evaluator-attempt1.tap): the expanded contract crossed Node's default 1 MiB git-show output buffer in two test helpers. Both now allow 8 MiB. No assertion changed. The contract regression strips exactly those buffer options/comments and confirms both files otherwise match their original bytes. Subsequent evaluator attempts and the final source each passed 108/108.
+- [negtest-attempt1.txt](evidence-0.3.12/negtest-attempt1.txt) and [negtest-merged-main.txt](evidence-0.3.12/negtest-merged-main.txt): each recorded 431/432. First, Q61a's mutation edited a historical field overridden by Q86e; it was retargeted to the operative field. The retargeted mutation then exposed the validator's coarse `main` substring check matching the word `remains`. The validator now requires the actual `never --authority-ref main` prohibition; the targeted control and all 432 final mutations are caught. No control was dropped or counted as an expected failure.
+- [negtest-interrupted-main-merge.txt](evidence-0.3.12/negtest-interrupted-main-merge.txt): stopped this task's own rerun when main's merge produced temporary conflict markers. It is not counted as passing evidence. Generated conflicts were resolved by regeneration, and newer pending rows preserved. Earlier successful ancillary receipts remain under [ancillary-pre-main](evidence-0.3.12/ancillary-pre-main/).
+
+## Limits and handoff
+
+These are builder gates, not independent delta acceptance, production evidence collection or lane qualification. No engine/container lifecycle, package installation, benchmark, root pnpm check, G03 pin promotion, push, merge into main or Sam-pending VM/tenancy decision was performed. A separate reviewer still adjudicates the contract delta, including the transparently noted missing standalone O05 brief. G03 isolation pins remain work for 0.3.13; Q78e/Q86g remain pending for Sam.
