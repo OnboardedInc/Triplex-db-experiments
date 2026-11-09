@@ -1,3 +1,13 @@
+import {
+  BasisNotAvailable,
+  ReplicaUnavailable,
+  type ReplicaMarker,
+} from "@triplex-build/triplex-broker";
+import {
+  makeXtdbBrokerReplica,
+  isXtdbReplicaUnavailable,
+  XTDB_BROKER_MARKER_SQL,
+} from "../BrokerReplica.js";
 import { Effect } from "effect";
 import { readOnlyXtdbClient } from "../ReadOnlyClient.js";
 import {
@@ -40,7 +50,15 @@ export const XTDB_NATIVE_MAPPING_ID = "triplex-xtdb/assertion-native-basis/1";
  * A trusted authored query receives closed basis relations; arbitrary table reads
  * do not acquire an automatic Triplex temporal or authorization guarantee.
  */
-const nativeQueries = (client: XtdbClient, scope: DatabaseScope) => {
+export interface XtdbBrokerNativeOptions {
+  readonly broker?: boolean;
+  readonly basisWaitMs?: number;
+}
+const nativeQueries = (
+  client: XtdbClient,
+  scope: DatabaseScope,
+  defaults: XtdbBrokerNativeOptions,
+) => {
   const run = (
     language: "xtql" | "xtdb-sql",
     contract: NativeQueryContract,
@@ -77,16 +95,39 @@ const nativeQueries = (client: XtdbClient, scope: DatabaseScope) => {
           // [EXP-C8] Reachability reads are read-only frontier rounds in the call's own language
           // (Reachability.ts), so they no longer force an SQL working-relation shell.
           const cut = sourceCutQuery(language);
-          const current = await client.query<{ position: unknown }>(
-            cut.query,
-            [scope],
-            undefined,
-            { signal, parameterSyntax: "postgresql" },
-          );
+          let brokerMarker: ReplicaMarker | undefined;
+          if (defaults.broker) {
+            // [EXP-P2B] Why: authored native queries cannot merge broker rows into engine aggregates (Q58d).
+            // Rejected: answering at the requested position while the replica marker is behind it.
+            const deadline = Math.min(defaults.basisWaitMs ?? 2000, timeoutMs);
+            const replica = makeXtdbBrokerReplica(client, scope);
+            for (;;) {
+              signal.throwIfAborted();
+              brokerMarker = await replica.marker();
+              const required = options.basis?.recordedPosition ?? brokerMarker.position;
+              if (options.basis?.recordedAt === undefined && brokerMarker.position >= required)
+                break;
+              if (performance.now() - sourceStarted >= deadline)
+                throw new BasisNotAvailable({
+                  required,
+                  observed: brokerMarker.position,
+                  replica: "XTDB native broker replica",
+                  surface: "native",
+                  waitedMs: performance.now() - sourceStarted,
+                });
+              await new Promise((resolve) => setTimeout(resolve, Math.min(25, deadline)));
+            }
+          }
+          const current = brokerMarker
+            ? [{ position: brokerMarker.position }]
+            : await client.query<{ position: unknown }>(cut.query, [scope], undefined, {
+                signal,
+                parameterSyntax: "postgresql",
+              });
           steps.push({
             phase: "source-cut",
-            language: cut.language,
-            query: cut.query,
+            language: brokerMarker ? "xtdb-sql" : cut.language,
+            query: brokerMarker ? XTDB_BROKER_MARKER_SQL : cut.query,
             parameters: [scope],
             elapsedMs: performance.now() - sourceStarted,
           });
@@ -144,11 +185,30 @@ const nativeQueries = (client: XtdbClient, scope: DatabaseScope) => {
               throw new RangeError(
                 `Native query exceeds maxRows=${maxRows}; no partial answer returned`,
               );
+            if (brokerMarker) {
+              const after = await makeXtdbBrokerReplica(client, scope).marker();
+              if (
+                after.position !== brokerMarker.position ||
+                after.epoch !== brokerMarker.epoch ||
+                after.incarnation !== brokerMarker.incarnation
+              )
+                throw new BasisNotAvailable({
+                  required: basis.recordedPosition,
+                  observed: after.position,
+                  replica: "XTDB native replica changed during read",
+                  surface: "native",
+                  waitedMs: performance.now() - sourceStarted,
+                });
+            }
             return { rawRows, basis, query, bindings: native.parameters, steps };
           }
         },
         catch: (cause) =>
-          new ReadError({ message: `XTDB native query failed: ${String(cause)}`, cause }),
+          cause instanceof ReadError
+            ? cause
+            : defaults.broker && isXtdbReplicaUnavailable(cause)
+              ? new ReplicaUnavailable({ replica: "XTDB", surface: "native", cause })
+              : new ReadError({ message: `XTDB native query failed: ${String(cause)}`, cause }),
       });
       const rows = yield* decodeNativeRows(contract, executed.rawRows);
       return {
@@ -229,5 +289,12 @@ export type XtdbNativeQueries = ReturnType<typeof makeXtdbNativeQueries>;
 
 // [EXP-C8] Read entry point: the shared client is handed over as a write-refusing view
 // (ReadOnlyClient.ts), so no read path can reach the engine with a write.
-export const makeXtdbNativeQueries = (client: XtdbClient, scope: DatabaseScope) =>
-  nativeQueries(readOnlyXtdbClient(client), scope);
+export const makeXtdbNativeQueries = (
+  client: XtdbClient,
+  scope: DatabaseScope,
+  options: XtdbBrokerNativeOptions = {},
+) =>
+  nativeQueries(readOnlyXtdbClient(client), scope, {
+    ...options,
+    broker: options.broker ?? process.env["XTDB_COMMIT_PATH"] === "broker",
+  });

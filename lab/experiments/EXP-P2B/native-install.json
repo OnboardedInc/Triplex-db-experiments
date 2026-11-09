@@ -1,0 +1,7 @@
+{
+  "source": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/better-sqlite3@12.10.0/node_modules/better-sqlite3/build/Release/better_sqlite3.node",
+  "destination": "/Users/sam/projects/triplex-db-2/.claude/worktrees/p2b/node_modules/.pnpm/better-sqlite3@12.10.0/node_modules/better-sqlite3/build/Release/better_sqlite3.node",
+  "sha256": "d74ae4ac4261c1266fed01da1e8474e001253493db3ce062cfac03720385999d",
+  "package": "better-sqlite3@12.10.0",
+  "reason": "offline install skipped scripts; reused existing lab-owned pinned-package build; no new dependency version"
+}

@@ -27,19 +27,8 @@ import {
 } from "../rdf.js";
 import type { FrameMember } from "./frames.js";
 
-export interface ReplicaMarker {
-  /** Packed position of the last applied ordinal slot (lastPositionOf(lsn)), 0 when nothing applied. */
-  readonly position: number;
-  readonly epoch: number;
-  /**
-   * The replica incarnation (RULINGS Q67c, Q72b): a fresh random id that every fence writes before any replay,
-   * "" when the graph has none. Publications leave it unchanged and guard on it. A reader that needs several
-   * requests compares it before and after: a replica that was reset and replayed between them has a different
-   * incarnation even when its marker is back at or above the basis (V-P2Q N2). Absent in a `from` marker
-   * means "do not guard on it" (a test that rewinds the marker by hand, as a restart would).
-   */
-  readonly incarnation?: string;
-}
+import type { ReplicaMarker } from "@triplex-build/triplex-broker";
+export type { ReplicaMarker } from "@triplex-build/triplex-broker";
 
 export const markerFields = {
   position: f("broker_position"),
@@ -122,9 +111,13 @@ export const buildPublication = (
 const guard = (graph: string, from: ReplicaMarker) =>
   `OPTIONAL { GRAPH ${graph} { ${metaIri} ${markerFields.position} ?brokerPosition } } ` +
   `OPTIONAL { GRAPH ${graph} { ${metaIri} ${markerFields.epoch} ?brokerEpoch } } ` +
-  (from.incarnation === undefined ? "" : `OPTIONAL { GRAPH ${graph} { ${metaIri} ${markerFields.incarnation} ?brokerIncarnation } } `) +
+  (from.incarnation === undefined
+    ? ""
+    : `OPTIONAL { GRAPH ${graph} { ${metaIri} ${markerFields.incarnation} ?brokerIncarnation } } `) +
   `FILTER(COALESCE(?brokerPosition, "0") = ${lit(String(from.position))} && COALESCE(?brokerEpoch, "0") = ${lit(String(from.epoch))}` +
-  (from.incarnation === undefined ? "" : ` && COALESCE(?brokerIncarnation, "") = ${lit(from.incarnation)}`) +
+  (from.incarnation === undefined
+    ? ""
+    : ` && COALESCE(?brokerIncarnation, "") = ${lit(from.incarnation)}`) +
   `)`;
 
 /**
@@ -133,7 +126,12 @@ const guard = (graph: string, from: ReplicaMarker) =>
  * so a reader sees either the old (epoch, incarnation) or the new one, never a mix. Used at broker startup and
  * after every replica regression, so every fence and every replay starts with a new incarnation.
  */
-export const buildFence = (scopeKey: string, from: ReplicaMarker, epoch: number, incarnation: string): string => {
+export const buildFence = (
+  scopeKey: string,
+  from: ReplicaMarker,
+  epoch: number,
+  incarnation: string,
+): string => {
   const graph = graphIri(scopeKey);
   const old = [quad(metaIri, markerFields.epoch, lit(String(from.epoch)))];
   if (from.incarnation) old.push(quad(metaIri, markerFields.incarnation, lit(from.incarnation)));

@@ -559,8 +559,43 @@ importers:
         specifier: 'catalog:'
         version: 5.0.4(@types/node@25.9.1)(vite@8.2.2(@types/node@25.9.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.19.0)(yaml@2.9.0))
 
+  packages/broker:
+    dependencies:
+      '@triplex-build/triplex':
+        specifier: workspace:^
+        version: link:../core
+      better-sqlite3:
+        specifier: 12.10.0
+        version: 12.10.0
+    devDependencies:
+      '@triplex-build/triplex-testkit':
+        specifier: workspace:^
+        version: link:../testkit
+      '@types/better-sqlite3':
+        specifier: 'catalog:'
+        version: 7.6.13
+      '@types/node':
+        specifier: 'catalog:'
+        version: 25.9.1
+      effect:
+        specifier: 'catalog:'
+        version: 4.0.3
+      tsdown:
+        specifier: 'catalog:'
+        version: 0.21.7(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.3)(typescript@6.0.2)
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.2
+      vitest:
+        specifier: 'catalog:'
+        version: 5.0.4(@types/node@25.9.1)(vite@8.2.2(@types/node@25.9.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.19.0)(yaml@2.9.0))
+
+
   packages/qlever:
     dependencies:
+      '@triplex-build/triplex-broker':
+        specifier: workspace:^
+        version: link:../broker
       '@triplex-build/triplex':
         specifier: workspace:^
         version: link:../core
@@ -689,6 +724,9 @@ importers:
 
   packages/xtdb:
     dependencies:
+      '@triplex-build/triplex-broker':
+        specifier: workspace:^
+        version: link:../broker
       '@triplex-build/triplex':
         specifier: workspace:^
         version: link:../core

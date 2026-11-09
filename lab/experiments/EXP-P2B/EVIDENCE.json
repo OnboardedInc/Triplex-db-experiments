@@ -1,0 +1,51 @@
+[
+  {
+    "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-P2B/CX-P2B-memory-2ba26430-77d9-47b9-be82-29679b6dee55",
+    "reportSha256": "743a942a6da479160228d78806f7c2afcca7615b36439f3301d6c52e4a3f0b4f",
+    "accounting": {
+      "offered": 14,
+      "terminal": 14,
+      "committed": 14,
+      "duplicates": 0,
+      "reads": 194153
+    },
+    "errors": [],
+    "sourceUnchanged": true,
+    "buildUnchanged": true,
+    "status": "final-source diagnostic"
+  },
+  {
+    "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-P2B/CX-P2B-memory-5dfeb649-4740-47a0-a030-5b47e3491026",
+    "reportSha256": "2e619da59a2bd70088599c5c9f2dbfc894924696af307e0764003747e68da3e8",
+    "accounting": {
+      "offered": 14,
+      "terminal": 14,
+      "committed": 14,
+      "duplicates": 0,
+      "reads": 172360
+    },
+    "errors": [
+      {
+        "kind": "feed-publication-clock"
+      }
+    ],
+    "sourceUnchanged": true,
+    "buildUnchanged": true,
+    "status": "retained earlier diagnostic; use its own source/build hashes"
+  },
+  {
+    "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-P2B/CX-P2B-memory-8fb4ed31-3082-4c4e-b312-82f11e01a219",
+    "reportSha256": "549ab935ff8eafee3b40b6601539c0a30f4969051c67efad1386c76d0c0b6322",
+    "accounting": {
+      "offered": 5,
+      "terminal": 5,
+      "committed": 5,
+      "duplicates": 0,
+      "reads": 37974
+    },
+    "errors": [],
+    "sourceUnchanged": true,
+    "buildUnchanged": true,
+    "status": "retained earlier diagnostic; use its own source/build hashes"
+  }
+]

@@ -35,6 +35,11 @@ export interface XtdbClient {
     basis?: XtdbBasis,
     options?: XtdbQueryOptions,
   ): Promise<T[]>;
+  /** EXP-P2B: statements share one engine read-only snapshot and one reserved connection. */
+  readSnapshot?(
+    statements: readonly XtdbStatement[],
+    options?: XtdbQueryOptions,
+  ): Promise<Record<string, unknown>[][]>;
   submit(statements: readonly XtdbStatement[]): Promise<unknown>;
   close(): Promise<void>;
 }
@@ -236,6 +241,48 @@ export const makeXtdbClient = (
           if (timeout !== undefined) clearTimeout(timeout);
           if (abortHandler !== undefined) signal.removeEventListener("abort", abortHandler);
           if (!deferredRelease) connection.release();
+        }
+      }, queryOptions);
+    },
+    async readSnapshot(statements, queryOptions) {
+      // [EXP-P2B] Why: rows and eligibility marker must be from the same XTDB snapshot (R23 4.7).
+      // Rejected: two pool.query calls (a concurrent apply can split marker from rows).
+      return withDeadline(async (signal) => {
+        const connection = await pool.reserve();
+        const run = async (sql: string, params: readonly unknown[] = [], syntax?: "postgresql") => {
+          signal.throwIfAborted();
+          const pending = connection.unsafe(
+            syntax === "postgresql" ? sql : postgresPlaceholders(sql),
+            parameters(params),
+          );
+          const cancel = () => {
+            void Promise.resolve(pending.cancel()).catch(() => {});
+          };
+          signal.addEventListener("abort", cancel, { once: true });
+          try {
+            return Array.from(await pending);
+          } finally {
+            signal.removeEventListener("abort", cancel);
+          }
+        };
+        try {
+          if (latestAwaitToken !== undefined)
+            await run(`SET AWAIT_TOKEN = ${literal(latestAwaitToken)}`);
+          await run("BEGIN READ ONLY");
+          const results: Record<string, unknown>[][] = [];
+          for (const statement of statements)
+            results.push(await run(statement.sql, statement.params, statement.parameterSyntax));
+          await run("COMMIT");
+          return results;
+        } catch (error) {
+          try {
+            await connection.unsafe("ROLLBACK");
+          } catch {
+            /* connection may be gone */
+          }
+          throw error;
+        } finally {
+          connection.release();
         }
       }, queryOptions);
     },

@@ -14,6 +14,7 @@ const packageNames = [
   "@triplex-build/triplex-testkit",
   "@triplex-build/triplex-cli",
   "@triplex-build/triplex-http",
+  "@triplex-build/triplex-broker",
   "@triplex-build/triplex-xtdb",
   "@triplex-build/triplex-qlever",
   "@triplex-build/triplex-duckdb",
@@ -28,6 +29,7 @@ const publishPackageNames = new Set([
   "@triplex-build/triplex-http",
 ]);
 const heldPackageNames = new Set([
+  "@triplex-build/triplex-broker",
   "@triplex-build/triplex-xtdb",
   "@triplex-build/triplex-qlever",
   "@triplex-build/triplex-cloudflare",
@@ -399,7 +401,10 @@ if (
   if (process.env["TRIPLEX_PACK_NATIVE_SMOKE"] === "1") {
     // The private CPP package receives explicitly qualified artifact paths;
     // these are neither copied into tarballs nor located by sibling imports.
-    copyFileSync(join(root, "qualification/devloop/fixtures/native-package-consumer.mjs"), join(consumerDir, "native-smoke.mjs"));
+    copyFileSync(
+      join(root, "qualification/devloop/fixtures/native-package-consumer.mjs"),
+      join(consumerDir, "native-smoke.mjs"),
+    );
     run("node", ["native-smoke.mjs"], consumerDir);
   }
 

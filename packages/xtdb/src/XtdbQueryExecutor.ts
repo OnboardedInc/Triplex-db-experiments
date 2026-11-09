@@ -120,6 +120,10 @@ const emptyMetrics: QueryMetrics = {
 };
 
 export interface XtdbQueryLimits {
+  /** EXP-P2B: internal broker wiring; native A0 does not set these. */
+  readonly sourceView?: import("@triplex-build/triplex-broker").BrokerStorageAdapterService["sourceView"];
+  readonly resolveBasis?: import("@triplex-build/triplex-broker").BasisGate;
+
   readonly timeoutMs?: number;
   readonly maxResultRows?: number;
   readonly maxRecursiveRows?: number;
@@ -147,103 +151,132 @@ const queryExecutor = (
     cursorValues?: readonly PaginationValue[],
   ) =>
     Effect.flatMap(CurrentTransactions, (transactions) =>
-      Effect.tryPromise({
-        try: async (effectSignal) => {
-          const signal = AbortSignal.any([effectSignal, AbortSignal.timeout(timeoutMs)]);
-          const logical = "inner" in input ? input.inner : input;
-          const recursive = Boolean(logical.rules?.length);
-          // Preflight must fail before source reads or working-relation writes.
-          if ("inner" in input) assertWrappedQuery(input);
-          else assertDatalogQuery(input);
-          const state = [...transactions.values()].findLast(
-            (state) => state.client === readPathBase(client) && state.scopeKey === scopeKey,
-          );
-          if (state && state.rows.size > maxResultRows)
-            throw new ReadError({
-              message: `Transaction query overlay exceeds maxResultRows=${maxResultRows}; no partial result returned`,
-            });
-          const source = state ? clientWithOverlay(client, scopeKey, state) : client;
-          let resolved: QueryBasis = basis ?? { validAt: Date.now() };
-          if (state)
-            resolved = {
-              ...resolved,
-              recordedPosition: Math.min(
-                state.position,
-                resolved.recordedPosition ?? state.position,
-              ),
-            };
-          if (resolved.recordedPosition === undefined) {
-            const rows = await client.query<{ position: unknown }>(
-              "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = ?",
-              [scopeKey],
-              undefined,
-              { signal },
+      Effect.flatMap(limits.sourceView ?? Effect.succeed(undefined), (brokerView) =>
+        Effect.tryPromise({
+          try: async (effectSignal) => {
+            const signal = AbortSignal.any([effectSignal, AbortSignal.timeout(timeoutMs)]);
+            const logical = "inner" in input ? input.inner : input;
+            const recursive = Boolean(logical.rules?.length);
+            // Preflight must fail before source reads or working-relation writes.
+            if ("inner" in input) assertWrappedQuery(input);
+            else assertDatalogQuery(input);
+            const nativeState = [...transactions.values()].findLast(
+              (state) => state.client === readPathBase(client) && state.scopeKey === scopeKey,
             );
-            resolved = { ...resolved, recordedPosition: numeric(rows[0]?.position) ?? 0 };
-          }
-          const started = performance.now();
-          // [EXP-C8] Rules are evaluated with reads only (recursion.ts); nothing is written.
-          const ruleRelations = recursive
-            ? await evaluateRules(source, logical, scopeKey, resolved, signal, maxRecursiveRows)
-            : undefined;
-          const nonIntegerProjectionVariables: string[] = [];
-          const integerVariables = await resolveIntegerVariables(
-            source,
-            scopeKey,
-            logical,
-            resolved,
-            { signal, ...(ruleRelations ? { ruleRelations } : {}), onNonIntegerProjection: variable => nonIntegerProjectionVariables.push(variable) },
-          );
-          const compiled = compileXtdb(input, scopeKey, {
-            nonIntegerProjectionVariables,
-            basis: resolved,
-            ...(cursorValues ? { cursorValues } : {}),
-            ...(ruleRelations ? { ruleRelations } : {}),
-            debug,
-            integerVariables,
-          });
-          const requestedLimit = "inner" in input ? input.limit : input.limit;
-          if (requestedLimit === undefined || requestedLimit > maxResultRows)
-            compiled.sql = `SELECT * FROM (${compiled.sql}) bounded_answer LIMIT ${maxResultRows + 1}`;
-          const rows = await source.query(compiled.sql, compiled.params, undefined, { signal });
-          if (rows.length > maxResultRows)
-            throw new ReadError({
-              message: `XTDB query exceeds maxResultRows=${maxResultRows}; no partial answer returned`,
-            });
-          const results = rows.map((row) => decodeQueryRow(row, compiled));
-          let totalCount: number | undefined;
-          let countExecutionTimeMs: number | undefined;
-          if (compiled.countSql) {
-            const countStarted = performance.now();
-            const counts = await source.query<{ total: unknown }>(
-              compiled.countSql,
-              compiled.countParams,
-              undefined,
-              { signal },
-            );
-            totalCount = numeric(counts[0]?.total) ?? 0;
-            countExecutionTimeMs = performance.now() - countStarted;
-          }
-          return {
-            results,
-            ...(totalCount === undefined ? {} : { totalCount }),
-            ...(debug
+            const state = brokerView
               ? {
-                  debug: {
-                    metrics: compiled.metrics ?? emptyMetrics,
-                    executionTimeMs: performance.now() - started,
-                    ...(countExecutionTimeMs === undefined ? {} : { countExecutionTimeMs }),
-                    resultCount: results.length,
-                    generatedSql: compiled.sql,
-                    params: compiled.params,
-                    queryPlan: plan(compiled, recursive),
-                  },
+                  client: readPathBase(client),
+                  scopeKey,
+                  sourceK: brokerView.sourcePosition,
+                  position: brokerView.pendingPosition,
+                  rows: new Map(brokerView.rows.map((row) => [row.id, row])),
+                  claims: new Map(),
+                  newIds: new Set<string>(),
                 }
-              : {}),
-          };
-        },
-        catch: failure,
-      }),
+              : nativeState;
+            const brokerSnapshot = limits.resolveBasis
+              ? await (brokerView
+                  ? limits.resolveBasis.inTransaction(
+                      brokerView.sourcePosition,
+                      basis?.recordedPosition,
+                      basis?.recordedAt,
+                    )
+                  : limits.resolveBasis(basis?.recordedPosition, basis?.recordedAt))
+              : undefined;
+            if (state && state.rows.size > maxResultRows)
+              throw new ReadError({
+                message: `Transaction query overlay exceeds maxResultRows=${maxResultRows}; no partial result returned`,
+              });
+            const source = state ? clientWithOverlay(client, scopeKey, state) : client;
+            let resolved: QueryBasis = basis ?? { validAt: Date.now() };
+            if (state)
+              resolved = {
+                ...resolved,
+                recordedPosition: Math.min(
+                  state.position,
+                  resolved.recordedPosition ?? state.position,
+                ),
+              };
+            if (brokerSnapshot && !state)
+              resolved = { ...resolved, recordedPosition: brokerSnapshot.basis };
+            if (resolved.recordedPosition === undefined) {
+              const rows = await client.query<{ position: unknown }>(
+                "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = ?",
+                [scopeKey],
+                undefined,
+                { signal },
+              );
+              resolved = { ...resolved, recordedPosition: numeric(rows[0]?.position) ?? 0 };
+            }
+            const started = performance.now();
+            // [EXP-C8] Rules are evaluated with reads only (recursion.ts); nothing is written.
+            const ruleRelations = recursive
+              ? await evaluateRules(source, logical, scopeKey, resolved, signal, maxRecursiveRows)
+              : undefined;
+            const nonIntegerProjectionVariables: string[] = [];
+            const integerVariables = await resolveIntegerVariables(
+              source,
+              scopeKey,
+              logical,
+              resolved,
+              {
+                signal,
+                ...(ruleRelations ? { ruleRelations } : {}),
+                onNonIntegerProjection: (variable) => nonIntegerProjectionVariables.push(variable),
+              },
+            );
+            const compiled = compileXtdb(input, scopeKey, {
+              nonIntegerProjectionVariables,
+              basis: resolved,
+              ...(cursorValues ? { cursorValues } : {}),
+              ...(ruleRelations ? { ruleRelations } : {}),
+              debug,
+              integerVariables,
+            });
+            const requestedLimit = "inner" in input ? input.limit : input.limit;
+            if (requestedLimit === undefined || requestedLimit > maxResultRows)
+              compiled.sql = `SELECT * FROM (${compiled.sql}) bounded_answer LIMIT ${maxResultRows + 1}`;
+            const rows = await source.query(compiled.sql, compiled.params, undefined, { signal });
+            if (rows.length > maxResultRows)
+              throw new ReadError({
+                message: `XTDB query exceeds maxResultRows=${maxResultRows}; no partial answer returned`,
+              });
+            const results = rows.map((row) => decodeQueryRow(row, compiled));
+            let totalCount: number | undefined;
+            let countExecutionTimeMs: number | undefined;
+            if (compiled.countSql) {
+              const countStarted = performance.now();
+              const counts = await source.query<{ total: unknown }>(
+                compiled.countSql,
+                compiled.countParams,
+                undefined,
+                { signal },
+              );
+              totalCount = numeric(counts[0]?.total) ?? 0;
+              countExecutionTimeMs = performance.now() - countStarted;
+            }
+            if (brokerSnapshot) await limits.resolveBasis!.after(brokerSnapshot);
+            return {
+              results,
+              ...(totalCount === undefined ? {} : { totalCount }),
+              ...(debug
+                ? {
+                    debug: {
+                      metrics: compiled.metrics ?? emptyMetrics,
+                      executionTimeMs: performance.now() - started,
+                      ...(countExecutionTimeMs === undefined ? {} : { countExecutionTimeMs }),
+                      resultCount: results.length,
+                      generatedSql: compiled.sql,
+                      params: compiled.params,
+                      queryPlan: plan(compiled, recursive),
+                    },
+                  }
+                : {}),
+            };
+          },
+          catch: failure,
+        }),
+      ),
     );
 
   return {

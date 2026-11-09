@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@triplex-build/triplex": "workspace:^",
+    "@triplex-build/triplex-broker": "workspace:^",
     "postgres": "catalog:"
   },
   "devDependencies": {

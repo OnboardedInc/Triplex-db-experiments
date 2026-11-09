@@ -1,3 +1,12 @@
+import {
+  HostBroker,
+  makeBrokerStorageAdapter,
+  type BrokerAdapterOptions,
+  type BrokerStorageAdapterService,
+} from "@triplex-build/triplex-broker";
+import { makeXtdbBrokerReplica } from "./BrokerReplica.js";
+import path from "node:path";
+import { createHash } from "node:crypto";
 import { Context, Effect, Layer } from "effect";
 import {
   Runtime,
@@ -5,7 +14,7 @@ import {
   QueryExecutor,
   TripleStoreRuntime,
   type RuntimeDefinition,
-  type MigrationError,
+  MigrationError,
 } from "@triplex-build/triplex/runtime";
 import { makeXtdbClient, type XtdbClient } from "./XtdbClient.js";
 import { makeXtdbStorageAdapter, type XtdbCommitEncoding } from "./XtdbStorageAdapter.js";
@@ -25,6 +34,12 @@ export interface XtdbRuntimeOptions {
    */
   readonly commitEncoding?: XtdbCommitEncoding;
   readonly queryLimits?: XtdbQueryLimits;
+  /** EXP-P2B default-off: broker log is the source of truth; XTDB is a guarded replica. */
+  readonly broker?: (
+    scopeKey: string,
+    replica: ReturnType<typeof makeXtdbBrokerReplica>,
+  ) => Promise<HostBroker>;
+  readonly brokerOptions?: BrokerAdapterOptions;
 }
 
 /** The commit encoding an option or `TRIPLEX_COMMIT_ENCODING` selects; unknown values fail loudly. */
@@ -36,6 +51,25 @@ export const commitEncodingOf = (requested: string | undefined): XtdbCommitEncod
   return value;
 };
 
+const brokerFromEnvironment = (): XtdbRuntimeOptions["broker"] => {
+  const requested = process.env["XTDB_COMMIT_PATH"];
+  if (!requested || requested === "marker" || requested === "subject") return undefined;
+  if (requested !== "broker") throw new TypeError("Unknown XTDB_COMMIT_PATH");
+  const root = process.env["XTDB_BROKER_DIR"];
+  if (!root || !path.isAbsolute(root))
+    throw new TypeError("XTDB_COMMIT_PATH=broker requires an absolute XTDB_BROKER_DIR");
+  return (scopeKey, replica) =>
+    HostBroker.open({
+      dir: path.join(root, createHash("sha256").update(scopeKey).digest("hex")),
+      scopeKey,
+      replica,
+      decisionStamp: true,
+    });
+};
+class Backend extends Context.Service<
+  Backend,
+  ReturnType<typeof makeXtdbStorageAdapter> | BrokerStorageAdapterService
+>()("triplex/xtdb/Backend") {}
 class Connection extends Context.Service<Connection, XtdbClient>()("triplex/xtdb/Connection") {}
 
 /**
@@ -44,8 +78,10 @@ class Connection extends Context.Service<Connection, XtdbClient>()("triplex/xtdb
  * Connections are acquired once per Effect scope and released by that scope.
  */
 export const makeXtdbRuntime = (
-  options: XtdbRuntimeOptions,
+  input: XtdbRuntimeOptions,
 ): RuntimeDefinition<MigrationError, never, StorageAdapter | QueryExecutor> => {
+  const envBroker = input.broker ? undefined : brokerFromEnvironment();
+  const options = envBroker ? { ...input, broker: envBroker } : input;
   const commitEncoding = commitEncodingOf(options.commitEncoding);
   const connection = Layer.effect(
     Connection,
@@ -54,11 +90,28 @@ export const makeXtdbRuntime = (
       (client) => Effect.promise(() => client.close()).pipe(Effect.ignore),
     ),
   );
-  const storage = Layer.effect(
-    StorageAdapter,
+  const backend = Layer.effect(
+    Backend,
     Effect.gen(function* () {
       const client = yield* Connection;
       const runtime = yield* TripleStoreRuntime;
+      if (options.broker) {
+        const replica = makeXtdbBrokerReplica(client, runtime.scope);
+        const broker = yield* Effect.acquireRelease(
+          Effect.tryPromise({
+            try: () => options.broker!(runtime.scope, replica),
+            catch: (cause) =>
+              new MigrationError({
+                version: 1,
+                name: "xtdb-broker",
+                message: "Cannot open XTDB broker",
+                cause,
+              }),
+          }),
+          (opened) => Effect.promise(() => opened.close()).pipe(Effect.ignore),
+        );
+        return makeBrokerStorageAdapter(replica, runtime.scope, broker, options.brokerOptions);
+      }
       return makeXtdbStorageAdapter(client, runtime.scope, {
         ...(options.maxRetries === undefined ? {} : { maxRetries: options.maxRetries }),
         ...(options.resolutionTimeoutMs === undefined
@@ -72,14 +125,24 @@ export const makeXtdbRuntime = (
       });
     }),
   ).pipe(Layer.provide(connection));
+  const storage = Layer.effect(
+    StorageAdapter,
+    Effect.map(Backend, (service) => service),
+  ).pipe(Layer.provide(backend));
   const queries = Layer.effect(
     QueryExecutor,
     Effect.gen(function* () {
       const client = yield* Connection;
       const runtime = yield* TripleStoreRuntime;
-      return makeXtdbQueryExecutor(client, runtime.scope, options.queryLimits);
+      const storage = yield* Backend;
+      return makeXtdbQueryExecutor(client, runtime.scope, {
+        ...options.queryLimits,
+        ...("broker" in storage
+          ? { sourceView: storage.sourceView, resolveBasis: storage.resolveQueryBasis }
+          : {}),
+      });
     }),
-  ).pipe(Layer.provide(connection));
+  ).pipe(Layer.provide(backend), Layer.provide(connection));
   // Runtime.define binds TripleStoreRuntime before acquiring the backend layers.
   // Its pre-1.0 generic retains that requirement despite supplying it at runtime.
   return Runtime.define({ name: "xtdb", storage, queries }) as RuntimeDefinition<
@@ -112,9 +175,12 @@ export {
   XTDB_NATIVE_MAPPING_ID,
   type XtdbNativeQueries,
   type XtdbNativeBuilder,
+  type XtdbBrokerNativeOptions,
   type XtdbNativeReachabilityContext,
   type XtdbNativeReachabilityOptions,
 } from "./native/NativeQueries.js";
 // [EXP-C8] NativeWorkingOutcomeUnknown is gone with the scratch writes it reported on.
 export { type XtdbNativeReachability } from "./native/Reachability.js";
 export { type XtdbNativeContext } from "./native/Sources.js";
+
+export { makeXtdbBrokerReplica, type XtdbBrokerReplica } from "./BrokerReplica.js";
