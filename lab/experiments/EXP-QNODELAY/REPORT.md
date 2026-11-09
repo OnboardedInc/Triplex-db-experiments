@@ -68,3 +68,59 @@ node lab/bin/heavy.mjs --label CX-QNODELAY-probe -- node_modules/.bin/tsx lab/ex
 ```
 
 Open questions: representative loaded socket/handshake cost; default selection after review; any deployment requiring redirect/proxy compatibility. Independent reviewer should rerun the relevant source-bound checks rather than accept these builder diagnostics as promotion evidence.
+
+## Round 2 — QA F1/F2/F3 fixes
+
+Baseline: builder `08a117761279de9ea0562b4f134b68df08889d6a`; QA `verify/QNODELAY` at `c7b4cc6`. Read the actual reviewer `VERIFY.md`, `transport-result.json`, `receipt-coverage.json`, mode-writer inventory and frozen classifier references. Their paths and byte hashes are recorded in `round2/review-inputs.json`. The original measurements and first-failure evidence above remain historical, unchanged.
+
+North star remains P1 and P4 with transport correctness as the floor; goals/targets remain `lab/SCOPE.md`, `lab/NORTH-STAR.md` and `lab/TARGETS.md`.
+
+### Transport: one response and error path
+
+Removed the separate Node HTTP/IncomingMessage transport. **Both modes now call the same built-in fetch**, consume the same decoded response stream, enforce the same decoded-byte budget, parse the same JSON and construct the same HTTP errors. Keep-alive still uses fetch's existing global dispatcher. Per-request creates a private Undici Agent for that request and destroys it in finally after success, HTTP/decode error, abort, timeout or byte-budget failure. It cannot borrow the global pool's sockets. No global dispatcher changes. Default selection remains **keep-alive**.
+
+A normal keep-alive Agent is intentionally used for the one fresh socket, followed by destroy. An intermediate `pipelining: 0`/Connection:close variant changed a truncated-body cause from UND_ERR_SOCKET to UND_ERR_RES_CONTENT_LENGTH_MISMATCH; it was rejected. With the normal private dispatcher, the complete structured error chains match in the matrix. The common fetch path also restores redirect behavior; the earlier round-1 direct-endpoint limitation is superseded.
+
+Undici **7.29.1**, already present in the lockfile and installed dependency tree, is now a declared catalog-pinned runtime dependency. No version of an existing dependency changed. Offline frozen lockfile validation completed. pnpm reordered unrelated YAML entries during its lockfile-only check; the six-line minimal dependency change was retained, and parsed equality against pnpm's normalized output was verified (`lock-preservation.json`). The normalized file is retained as evidence. No dependencies were downloaded and no shared environment files were edited. A narrow type bridge is needed because Node's ambient Undici dispatcher type has a different unused `compose` overload; runtime use is the tested public dispatch protocol, while fetch itself stays unchanged.
+
+### Receipts: required field and complete mode propagation
+
+`lab/receipts/latency.mjs` and its declaration define required `qleverConnectionMode` fields. QLever-only `QleverLatencyReceipt` requires `keep-alive | per-request`; a multi-engine receipt requires the field too, allowing explicit null for another lane. Constructors validate the field at runtime for JavaScript producers. No mode is silently inferred when reading historical receipts.
+
+All inventoried latency report writers now construct through those types: **41 construction sites in 29 files**, listed in `round2/receipt-writers.json`. This includes the existing gate/NS/P5/current GS/C8/J01/package experiment reports, the previously omitted legacy GS/string-order reports, and QG1's direct-fetch binding, raw request/return, cold/warm observations and cell summaries. Direct-fetch QG1 mode is explicitly keep-alive. The grid records its separate P4 invocation mode; the summary preserves the child's recorded mode separately and refuses missing/unknown modes, absent successful children, mismatched invocation/child modes, and mixed cold/warm metadata. Direct-query fits refuse mixed modes; screening candidates require the same P4 mode as their zero-delta reference. Old mode-less summaries fail closed rather than gaining a guessed label.
+
+`pnpm lab:receipts:check` is included in root `pnpm check`. It inventories the actual source constructor calls, compiles their literal field shapes, and proves that **every one of the 41 shapes stops type-checking when its mode field is removed**. The declaration's negative fixtures also reject omissions, unknown values and null on a QLever-only receipt. The runtime JS implementation is checked separately. The constructor-shape check covers field presence and the shared signature; it does not claim full typechecking of all inherited JS harness bodies or their dynamic payload values. Final output binds exact checker/inventory/writer hashes and rejects source drift. Gate source identity and gate-script preimages now include `lab/receipts`, so receipt validation code is part of the executed-source binding.
+
+### Round 2 validation
+
+- QLever build, declaration generation and package typecheck completed successfully. Root/package manifests and the lockfile keep the existing public exports and private package boundary.
+- Package suite: **64 passed, 21 skipped**. The added **26-case parity matrix** checks exact decoded result bytes, complete structured error chains and classifications in both modes: plain/chunked JSON, gzip and chunked gzip, compressed HTTP 400/500 error bodies, malformed compression/JSON, empty responses, HTTP 400/403/500, connection reset/truncation, header/body timeouts, default/Error/string abort reasons, pre-aborts and cancellation after observing a body chunk. The gzip byte-budget fixture has a highly compressible 4 KiB decoded value, so the decoded size, not compressed size, determines refusal. Existing socket-count and pool-isolation tests still pass.
+- Receipt tests: **10 passed**, covering runtime absence/unknown-mode refusal, distinct direct/P4 summary modes, each missing/mismatched input and the actual source-extracted QG1 request writer with fresh response bytes/hash/status/timing. The grid's mutating workflow was never executed.
+- Required-field gate: **41/41 source-derived shapes typecheck with mode; 41/41 fail without it**; runtime JS and declaration fixtures typecheck. Focused formatting/lint, JavaScript syntax checks and `git diff --check` completed.
+- Packed artifact includes the declared exact Undici dependency and required public files, with no source/tests/node_modules. An extracted consumer imports the built public package and verifies nonce-bound gzip results in both modes.
+- Fresh built-public-package probe `round2/live1` completed 2026-11-09 04:24:46–04:24:54 UTC. **520/520 responses matched**; 40 warmups excluded. Keep-alive: n=240, p50 **13.672 ms**, p99 **49.358 ms**, >=35 ms **120**. Per-request: n=240, p50 **4.347 ms**, p99 **7.761 ms**, >=35 ms **0**. Source/build/lock/slot/helper and selected Undici preimages are retained; resident identity remained unchanged. This remains **DIAGNOSTIC under Q91a**, not P1/P4 acceptance. No workload data or engine lifecycle changes.
+
+Intermediate failures remain visible: `parity-first`/`truncated` exposed the rejected Connection:close variant; `parity2` has a successful test JSON but a nonzero runner exit and is not used as the final gate; `writer-types`/`writer-types2` exposed shorthand-property handling bugs in the new shape extractor, which were fixed without weakening the required-field test; `build.log` records the ambient dispatcher type mismatch before the narrow bridge. Final gates have new filenames, not overwritten failures. The focused decoded-budget rerun and final package rerun bind the strengthened fixture.
+
+### Round 2 PASS / verdict / receipt audit
+
+1. **Client response path:** produces decoded query results or errors, not PASS. Query SELECT shape, full decoded body parsing and byte limits remain common. Mode changes only dispatcher lifetime; cancellation/error results are not promoted to semantic query success.
+2. **Parity/socket tests:** every accepted local result equals fresh nonce-bearing expected bytes. Rejections compare structured identity/cause/status/body and classifications, not message-based routing. Body-cancellation tests prove a decoded stream chunk was read before aborting. Fresh servers/controllers/nonces are used; final source/test preimages and test runner reports bind the execution. No engine-slot or integrated broker claim.
+3. **Receipt constructors and existing writers:** constructors require valid mode metadata before serialization. They do not turn a result into semantic PASS. Existing verdict/content gates are unchanged except QG1's additional mode-comparability refusal. Those harnesses' real engine/write workflows were not run or newly certified here.
+4. **`summary-cell.mjs` and summarizer:** validate explicit current input modes and invocation/child consistency before retaining timing/content samples. They do not infer absent historical mode or promote diagnostic correlations to acceptance. Existing sample content checks remain; the result still says DIAGNOSTIC. The new fixture exercises exact source with fresh in-memory input bytes, without contacting an engine.
+5. **`check-writers.mjs`:** validates every inventoried current constructor field shape, compiles the present/removed-mode variants, checks expected diagnostics and rehashes its own source, declarations, inventory and writer sources. It reports type-contract checks only. The source hashes and copied preimages bind this attempt; no historic typecheck result is adopted.
+6. **Live probe:** retains the prior audit's nonce/content, warmup, exclusive attempt-file and source/slot/container checks, and adds the new helper/dependency preimages. Each timed sample/summary is now a typed receipt with its actual mode. `completed` is still diagnostic collection, never production PASS.
+7. **Packed smoke, manifests and this report:** smoke compares actual fresh gzip payloads from a local fixture through the extracted public package. Archive checks inspect actual entries/dependency version. Checksums bind bytes only; no independent promotion follows. Separate review is still required.
+
+### Round 2 pin audit and remaining boundaries
+
+`lab/acceptance/` remains unchanged. The same one path is pinned at the two CS-ENTRY locations:
+
+- `packages/qlever/experiments/native-entry.ts`
+- prior round-1 SHA-256: `39b11393379e443e17d5c5cd708671e7aa33ee5e16e781eace61081ae2dce74e`
+- contract's still-pinned SHA-256: `c82ce6cfabfcf61ab9f5d76791146d167741420a3be07b92559026f987634b0f`
+- round-2 SHA-256: `0f78b5bfcf5d2198015bd6a0e9111a4c7d98fb6fd9022de468d047d90a8bca8d`
+
+`round2/changed-pins.json` lists both locations; `round2/changed-source-hashes.json` records all modified existing code/config bytes. The contract builder must re-pin in its next version. The full report and receipt inventory do not confer that authority.
+
+Durable round-2 evidence: `/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/round2/`. See `round2/EVIDENCE.md` and `round2/SHA256SUMS`. The round-1 manifest/evidence is preserved unchanged. No default flip, full root check or full multi-backend pack gate, integrated P2Q/broker acceptance, HTTPS/proxy qualification, 10k-descriptor longevity rerun, loaded comparison, merge or push was performed. Independent review and representative admitted P1/P4 measurement remain open.

@@ -1,3 +1,4 @@
+import { qleverLatencyReceipt } from "../../../lab/receipts/latency.mjs";
 import { qleverConnectionModeOf } from "../src/QleverClient.js";
 import { readFile, writeFile } from "node:fs/promises";
 import { Effect } from "effect";
@@ -112,7 +113,7 @@ const sentinelPass =
   recoveredSentinel.position === 1;
 const client = makeQleverClient("http://127.0.0.1:7019"),
   version = await client.command("stats");
-const artifact = {
+const artifact = qleverLatencyReceipt({
   qleverConnectionMode: qleverConnectionModeOf(),
   at: new Date().toISOString(),
   version,
@@ -124,7 +125,7 @@ const artifact = {
   pass: sentinelPass && workloads.every((workload) => workload.pass),
   claim:
     "Acknowledged public command receipts, cuts and typed sentinel facts retained after real4GiBOOM+sameprofile restart; failed operation partial-publication and power-loss atomicity remain unqualified",
-};
+});
 const path = `qualification/evidence/qlever-oom-recovery-${Date.now()}.json`;
 await writeFile(path, JSON.stringify(artifact, null, 2) + "\n");
 console.log(

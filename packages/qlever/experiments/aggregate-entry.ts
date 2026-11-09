@@ -1,3 +1,4 @@
+import { qleverLatencyReceipt } from "../../../lab/receipts/latency.mjs";
 import { qleverConnectionModeOf } from "../src/QleverClient.js";
 /** Public compiled-export regression for the explicit bounded answer profile. */
 import assert from "node:assert/strict";
@@ -15,7 +16,7 @@ const runId = randomUUID();
 const scope = DatabaseScope.test(`aggregate-entry-${runId}`);
 const output = path.join(root, "qualification/evidence", `qlever-aggregate-entry-${runId}.json`);
 const accessToken = labQleverAccessToken();
-const report: Record<string, any> = {
+const report: Record<string, any> = qleverLatencyReceipt({
   qleverConnectionMode: qleverConnectionModeOf(),
   format: "triplex-bounded-aggregate-entry/1",
   runId,
@@ -27,7 +28,7 @@ const report: Record<string, any> = {
     "Small correctness gate; no performance improvement or high-cardinality group claim.",
     "All native groups are consumed before inner LIMIT; source joins/aggregation/HAVING remain in QLever.",
   ],
-};
+});
 writeFileSync(output, JSON.stringify(report, null, 2) + "\n", { flag: "wx" });
 const save = () => writeFileSync(output, JSON.stringify(report, null, 2) + "\n");
 const run = <A>(

@@ -1,44 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { request as httpRequest } from "node:http";
-import { request as httpsRequest } from "node:https";
-import { Readable } from "node:stream";
-
-// [EXP-QNODELAY] Why: agent:false allocates a fresh socket even if another client
-// has idle keep-alive sockets for this origin. Rejected: Connection:close on the
-// shared fetch pool (its first request can still borrow an existing socket).
-const requestFresh = (
-  target: URL,
-  init: { method: string; headers: Record<string, string>; body?: string; signal: AbortSignal },
-): Promise<Response> =>
-  new Promise((resolve, reject) => {
-    const transport = target.protocol === "https:" ? httpsRequest : httpRequest;
-    const req = transport(
-      target,
-      { method: init.method, headers: init.headers, signal: init.signal, agent: false },
-      (res) => {
-        resolve(
-          new Response(
-            [204, 205, 304].includes(res.statusCode ?? 500)
-              ? null
-              : (Readable.toWeb(res) as ReadableStream<Uint8Array>),
-            {
-              status: res.statusCode ?? 500,
-              headers: Object.fromEntries(
-                Object.entries(res.headers)
-                  .filter((entry) => entry[1] !== undefined)
-                  .map(([key, value]) => [
-                    key,
-                    Array.isArray(value) ? value.join(", ") : (value as string),
-                  ]),
-              ),
-            },
-          ),
-        );
-      },
-    );
-    req.on("error", reject);
-    req.end(init.body);
-  });
+import { Agent } from "undici";
 
 export interface SparqlTerm {
   readonly type: string;
@@ -132,21 +93,31 @@ export const makeQleverClient = (
       "Query-Id": queryId,
       Accept: kind === "query" ? "application/sparql-results+json" : "application/json",
     };
-    // [EXP-QNODELAY] Why: R40 section 1.3 identifies delayed ACK stalls on reused
-    // QLever HTTP/1.1 sockets. Rejected: a global fetch dispatcher (changes unrelated clients).
-    if (connectionMode === "per-request") headers["Connection"] = "close";
     if (options.accessToken) headers["Authorization"] = `Bearer ${options.accessToken}`;
     if (kind !== "command") headers["Content-Type"] = `application/sparql-${kind}`;
     const onAbort = () => {
       if (kind === "query") void cancel(queryId).catch(() => {});
     };
     signal.addEventListener("abort", onAbort, { once: true });
+    // [EXP-QNODELAY] Why: both modes must use fetch's decoding and abort identity
+    // (QA F1/F3). A private dispatcher changes socket lifetime only. Rejected:
+    // wrapping IncomingMessage as Response (skips gzip decoding and changes aborts).
+    // A normal keep-alive dispatcher is destroyed after this one response; forcing
+    // pipelining:0/Connection:close changes truncated-body error identities.
+    const dispatcher = connectionMode === "per-request" ? new Agent({ connections: 1 }) : undefined;
+    // [EXP-QNODELAY] Why: Node's ambient Undici types differ only in the unused
+    // compose overload. Fetch consumes dispatch; preserve the built-in fetch path.
+    // Rejected: switching the default to a second fetch implementation for typing.
+    const fetchDispatcher = dispatcher as unknown as
+      | NonNullable<RequestInit["dispatcher"]>
+      | undefined;
     try {
-      const response = await (connectionMode === "per-request" ? requestFresh : fetch)(target, {
+      const response = await fetch(target, {
         method: kind === "command" ? "GET" : "POST",
         headers,
         ...(sparql === undefined ? {} : { body: sparql }),
         signal,
+        ...(fetchDispatcher === undefined ? {} : { dispatcher: fetchDispatcher }),
       });
       const reader = response.body?.getReader();
       const chunks: Uint8Array[] = [];
@@ -174,6 +145,7 @@ export const makeQleverClient = (
       return body;
     } finally {
       signal.removeEventListener("abort", onAbort);
+      await dispatcher?.destroy();
     }
   };
   return {

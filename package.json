@@ -8,8 +8,9 @@
   "scripts": {
     "build": "turbo run build && pnpm docs:build",
     "changeset": "changeset",
+    "lab:receipts:check": "node lab/receipts/check-writers.mjs && tsc --noEmit -p lab/receipts/tsconfig.json",
     "clean": "turbo run clean",
-    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm docs:check && pnpm test && pnpm build",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm lab:receipts:check && pnpm docs:check && pnpm test && pnpm build",
     "dev": "turbo watch build",
     "docs:build": "vitepress build docs && node scripts/check-llms.mjs",
     "docs:check": "node scripts/check-markdown-code.mjs && tsc --noEmit -p docs/snippets/tsconfig.json && pnpm docs:outputs --check",

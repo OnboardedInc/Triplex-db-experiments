@@ -1,0 +1,182 @@
+[
+  {
+    "path": "lab/bench/driver.ts",
+    "oldSha256": "d23ced5c70b03631daf53ac2124c1bf6a3ca227fb42c4ce61d6ac926cf456209",
+    "newSha256": "d4a2f78d422aa719c745ab8537c500f522443938f4f24f63d3fcc75a7fe125e8"
+  },
+  {
+    "path": "lab/bench/w0-driver.ts",
+    "oldSha256": "8db6ee3a7a5e803552f08e4fa1d3724a034fa8852bacb2f3ea8bc57d616df5d0",
+    "newSha256": "aad5759e97a721b2a2d6fcfe3f2390bdfb0268ee40f29afa2f6faed330a0e9da"
+  },
+  {
+    "path": "lab/bin/gate.mjs",
+    "oldSha256": "8b7b233e070dcac2928b62a714582e2d03299ff5fb1a8d011bc09a5b722c2ac4",
+    "newSha256": "dc374e1de7916c27b78b3ec38611a12fd9329db45819607e587b6115ba4e58f8"
+  },
+  {
+    "path": "lab/bin/lib.mjs",
+    "oldSha256": "d3031840141fb5e13597e69e75511c809d5814610fe9d39b838ab52e0561b13e",
+    "newSha256": "815321d9473cecc0229118025bf4286ad4eba02a7107094ce8b4e624ede4c842"
+  },
+  {
+    "path": "lab/experiments/EXP-C8-read-only-frontier/round-timing.mjs",
+    "oldSha256": "29b35dc2cbffaba9e395b8e44455f749a9dae98ba54034eb65147f8b3d54bc2b",
+    "newSha256": "bfb8c560476bca91dd2db9524ad62bd48f2d6b93292a1a2cd3993546441705ff"
+  },
+  {
+    "path": "lab/experiments/EXP-J01-bytes-per-commit/bench/lib.mjs",
+    "oldSha256": "3c8960f9b7228844fbff2ec965ff05f83416bfc5b81cbd59b5edc621407ce3ed",
+    "newSha256": "066427ca08d745ac01bd99f8c0803b45b0225667c5f511cf15a86065e19790d2"
+  },
+  {
+    "path": "lab/experiments/EXP-QG1-qlever-generations/grid.mjs",
+    "oldSha256": "daec1c6d4dbc50c19028935ac38db7a47acdb17c86ab965292f3bd8c4f2ded7e",
+    "newSha256": "d6fa11ccbbd7b286f8668fad256e54e6bf7e4d260513607d9213459947ef5bcb"
+  },
+  {
+    "path": "lab/experiments/EXP-QG1-qlever-generations/p4-sample.ts",
+    "oldSha256": "51cef620ed6a82df160d557497d71fa4144459827f173cd4547bc380d1dbdd8c",
+    "newSha256": "38314a8ee0a49f6eaeb6389709ece7b4efd5b881e23a9d33c8d32c091f9905eb"
+  },
+  {
+    "path": "lab/experiments/EXP-QG1-qlever-generations/probe.mjs",
+    "oldSha256": "0edbddbe949a19e8e6c0924b474006e3b69d72268b18d14a49502cd637d2d14b",
+    "newSha256": "eb50c22fe078471fe63aeafc5e60147116aaf86c88ee1c97ab9ddbae88cf314d"
+  },
+  {
+    "path": "lab/experiments/EXP-QG1-qlever-generations/summarize.mjs",
+    "oldSha256": "141419833dd0a350dbaa64a134bf173e2c6ef7916f3a55ae556ab95b66a9164d",
+    "newSha256": "3a627747588b87f61bee0f44517a48308073e2c5c9246f6c3b9255f9c59ef9a4"
+  },
+  {
+    "path": "lab/experiments/EXP-QNODELAY/probe.ts",
+    "oldSha256": "3e34d0f6c83d69425b2ef3a17d7767e954a1ab2fc11d57038669af0a2892c0df",
+    "newSha256": "beaaa9e6ac1ec3ecfdb0ace1a230e27e6bbc69872077d1e5d21e77c8e4684b86"
+  },
+  {
+    "path": "lab/scenarios/legacy.mjs",
+    "oldSha256": "a6b335b23de88965d79997fe2cb075468a81b815d09b4e0d9db40d8d9c836567",
+    "newSha256": "25bd33228aa2e4a51eed87d65aaa4dafc6e256aa0400b904c08029f77eafb1fb"
+  },
+  {
+    "path": "lab/scenarios/v2/run.ts",
+    "oldSha256": "58289f44646790f4e6f8c8e9ade75a7b72c218f754b8bc4e91ed0102f35d4b50",
+    "newSha256": "03012476b4951fab03dfb062d9b64b9a3084141f7236bb02f3a919d34b633735"
+  },
+  {
+    "path": "package.json",
+    "oldSha256": "e65e8f8be2a05d2b440af87c03a7daf6781e42704e5a17319a14d666fd1c37b5",
+    "newSha256": "42af3d15466d018f882833a254b9dcb6504477c6ae46e4c9701c46d336c2cd2f"
+  },
+  {
+    "path": "packages/qlever/README.md",
+    "oldSha256": "abf556e7523c2ac35cd879f8979a3df186c7da7fa0211c9b8f2fd39c69aa1b85",
+    "newSha256": "8d2fc4d9d7f295ae99688a3d7c35fbefa14ba4bc86db00d038b4d47335868a51"
+  },
+  {
+    "path": "packages/qlever/experiments/aggregate-entry.ts",
+    "oldSha256": "860dea42af51e55e97faf04cba9cffca2c2bb521d35cc9b5f5aea1fe50d67e05",
+    "newSha256": "90a0e16509fd805f38a46aaf330c886c7f3ac1cd865751ad2ea435d52d666459"
+  },
+  {
+    "path": "packages/qlever/experiments/boundary-shapes.ts",
+    "oldSha256": "9e6a82195f9310b31bb84aa21ca507a6eaeeacc5ead94fc748af8be778f10b23",
+    "newSha256": "9d5d94d23b3fe242de63ac7046721e4017ef4c033473ce10753b4157d51fdaeb"
+  },
+  {
+    "path": "packages/qlever/experiments/cancel-restart.ts",
+    "oldSha256": "45af3ae0839c992d4e4bd44d2bdaff1c04c66e915b6ff34fe1044c51242dca1e",
+    "newSha256": "fe0d7569346c4db27635a44fe7541db1efc264505803ab3b721e154a0881ba0d"
+  },
+  {
+    "path": "packages/qlever/experiments/join-shapes.ts",
+    "oldSha256": "6d77e55731d2eea7c5ee970375cc70985dbe0906871ab9476a3491e20f99cf11",
+    "newSha256": "f49c6202273e8b5aa0f56078159aa534b5170f9474c2760e40f97fc31957b063"
+  },
+  {
+    "path": "packages/qlever/experiments/lab-counterexamples.ts",
+    "oldSha256": "a84d078d1402685d46758e82cfb26113edc10b1cab2b79756b60deefcaf545f5",
+    "newSha256": "2b9b318ca53bcdc8ad3eb3970b14d123b87912e3ca114cac2597d34d42f4874f"
+  },
+  {
+    "path": "packages/qlever/experiments/native-capabilities.ts",
+    "oldSha256": "d986d3a45d68861c43761151d4704d4601c1fff7b70b4e332e1fac7de79b759a",
+    "newSha256": "bab52feafbb10102102650a4ab3ddeeadb1249d4bb6ec928a823710bd1fb2836"
+  },
+  {
+    "path": "packages/qlever/experiments/native-entry.ts",
+    "oldSha256": "39b11393379e443e17d5c5cd708671e7aa33ee5e16e781eace61081ae2dce74e",
+    "newSha256": "0f78b5bfcf5d2198015bd6a0e9111a4c7d98fb6fd9022de468d047d90a8bca8d"
+  },
+  {
+    "path": "packages/qlever/experiments/native-query-shapes.ts",
+    "oldSha256": "e7b33f42065951bc52918fa4b8e9fdfd3267ae81a0313db00802383851475575",
+    "newSha256": "05cb0d0fd0c5dc997d1f7b75b284f0998bbf012d3b2a0cd485687761372aaee1"
+  },
+  {
+    "path": "packages/qlever/experiments/oom-recovery.ts",
+    "oldSha256": "836af1a89eff4ea7306273252451435dfdb72a3f36878b68201f0c39a9579561",
+    "newSha256": "27dca5b7f069e60c5c49a435d85728038a2a477251b6eb8b93d42eab93961201"
+  },
+  {
+    "path": "packages/qlever/experiments/persisted-source-entry.ts",
+    "oldSha256": "14d84e9574a25d7d0e05b724940d1f5f372c0427f114fe6c1d063c34d6918903",
+    "newSha256": "9209e697596dcc7122000fdd3cdf9c6c59357a47fd2f045974f3d1e0a25ef12e"
+  },
+  {
+    "path": "packages/qlever/experiments/retirement-pair-entry.ts",
+    "oldSha256": "04a60dcf14e46174d2cba1edab63411d72c26847e15d2838e036add7bc1286ab",
+    "newSha256": "e2488a6536461183fee7bf43efc872578b2bc612bcbed9afd0bb1489d26bfc75"
+  },
+  {
+    "path": "packages/qlever/experiments/scalar-order-entry.ts",
+    "oldSha256": "672d393b9dee9a9b67af0223c34f1282b1a907a5788d3a8cc5c0f863c4f0f23e",
+    "newSha256": "c637df1cd9e767760288cc04d5f5de578b030326946cb5bfbb285bf0a701a38e"
+  },
+  {
+    "path": "packages/qlever/experiments/string-order-probe.ts",
+    "oldSha256": "33695bf500c6bc4f03a652bf4f0985401496f7912515588d712f035944d9a709",
+    "newSha256": "e10500b583c98ce4903f91cc6eb67014aad04684833d7051c1ad745edd1b3d60"
+  },
+  {
+    "path": "packages/qlever/experiments/transaction-admission.ts",
+    "oldSha256": "8de08dc8ca8986a2962cf3acf8eedab71a570a5536157ac54faa371eff428fb6",
+    "newSha256": "14be33566f4982b4f12b4bc1dd39ac16fe8f9d39917262450a0284867fd626e0"
+  },
+  {
+    "path": "packages/qlever/experiments/update-shapes.ts",
+    "oldSha256": "37d10f4fe7e0cfe9a1f2de226468d79f34ddec712df24f74f5040e4a05a2a79f",
+    "newSha256": "988152d16c653cba58c83c1f8d1a1bc58c7af0fa53aee9fa6e497bfd3a530f86"
+  },
+  {
+    "path": "packages/qlever/experiments/upstream44.ts",
+    "oldSha256": "de7fd1468cd63d53aa92ccacc0592c0f26df71880041c5273233ee9988a1bcd1",
+    "newSha256": "4ee9f6dffb76a70825d9808342a9eb33fca2cc7d5b0cbd826d9a6a4e7399ed0a"
+  },
+  {
+    "path": "packages/qlever/package.json",
+    "oldSha256": "e41d91c67b2baf8ad8f2493a2c0dea312750782c1c0d6122e750cee0ebc3ca6f",
+    "newSha256": "fd2c793cc5fbec18595751ec39a69babe991c31270abddf2326a018c8f09329e"
+  },
+  {
+    "path": "packages/qlever/src/QleverClient.ts",
+    "oldSha256": "59834c5427bfd1bfed4df04ebb773aae0e81e406ae577dc2a72829c60b0687b8",
+    "newSha256": "27c6228887c9484c7c9c4ef69e84889431a200b9ef083c4d68952e5e98f17de2"
+  },
+  {
+    "path": "packages/qlever/test/client-connection.test.ts",
+    "oldSha256": "b6b35e378cff9cf886da28e0ef843d34715bdffbdba70e1f2793816127dd4950",
+    "newSha256": "da7bebcfac192d41e402b55aade4fe743d372f407b85b7b9196d9f97a3e741cc"
+  },
+  {
+    "path": "pnpm-lock.yaml",
+    "oldSha256": "b2b3e6e8cdfb18df6d235a8724611ee4fe637426c722a5de34326346b3cb6500",
+    "newSha256": "488f85f72970c9f71c573728fa91a9fff2b83c617ab4f63a6ee1396efb44f1fa"
+  },
+  {
+    "path": "pnpm-workspace.yaml",
+    "oldSha256": "8efe0c32a811745c0b8ad23757c32cc90870f31fabcd543070cdb4746bfbadf0",
+    "newSha256": "aa17aa04980a7b4c4ab6d542267bbc063787b0796ed0134780377f9328f95124"
+  }
+]

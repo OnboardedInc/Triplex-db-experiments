@@ -1,3 +1,4 @@
+import { qleverLatencyReceipt } from "../../../lab/receipts/latency.mjs";
 import { qleverConnectionModeOf } from "../src/QleverClient.js";
 /** Unchanged public testkit cases over compiled public QLever/core exports. */
 import assert from "node:assert/strict";
@@ -23,7 +24,7 @@ const runtime = makeQleverRuntime({
   accessToken,
   queryLimits: { aggregateAnswerPlan: answerPlan },
 });
-const report: Record<string, any> = {
+const report: Record<string, any> = qleverLatencyReceipt({
   qleverConnectionMode: qleverConnectionModeOf(),
   format: "triplex-public-upstream44/1",
   backend: "qlever",
@@ -37,7 +38,7 @@ const report: Record<string, any> = {
     "Small upstream conformance corpus, not256clients, scale, native crash durability or all ten goals.",
     "Unchanged case programs execute through compiled public exports; this runner only records outcomes.",
   ],
-};
+});
 const save = () =>
   writeFileSync(
     path.join(artifacts, "upstream44-report.json"),

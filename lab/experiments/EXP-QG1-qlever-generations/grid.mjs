@@ -1,3 +1,4 @@
+import { qleverLatencyReceipt, requireQleverConnectionMode } from "../../receipts/latency.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import zlib from "node:zlib";
@@ -26,19 +27,20 @@ const owner = JSON.parse(
 );
 if (owner.holder !== "CX-QG1") throw Error("not owned");
 const inspect = JSON.parse(docker(["inspect", "tx2-qlever-s1"]))[0];
-const binding = {
+const binding = qleverLatencyReceipt({
+  qleverConnectionMode: "keep-alive",
   owner,
   containerId: inspect.Id,
   image: inspect.Image,
   config: inspect.Config.Labels["tx2.config-sha256"],
   head: execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
   sources: Object.fromEntries(
-    ["grid.mjs", "delta-count.mjs", "p4-sample.ts"].map((f) => [
+    ["grid.mjs", "delta-count.mjs", "p4-sample.ts", "../../receipts/latency.mjs"].map((f) => [
       f,
       hash(fs.readFileSync(new URL(f, import.meta.url))),
     ]),
   ),
-};
+});
 binding.serializerSha256 = hash(fs.readFileSync("packages/qlever/dist/rdf.js"));
 binding.lockSha256 = hash(fs.readFileSync("pnpm-lock.yaml"));
 binding.nodeVersion = process.version;
@@ -57,13 +59,14 @@ async function req(params, accept = "application/qlever-results+json") {
   });
   const raw = await r.text();
   fs.writeFileSync(path.join(out, `${id}.response`), raw);
-  save(`${id}.request.json`, {
+  save(`${id}.request.json`, qleverLatencyReceipt({
+    qleverConnectionMode: "keep-alive",
     at,
     params,
     ms: performance.now() - t,
     status: r.status,
     sha256: hash(raw),
-  });
+  }));
   let data;
   try {
     data = JSON.parse(raw);
@@ -71,7 +74,7 @@ async function req(params, accept = "application/qlever-results+json") {
     data = null;
   }
   if (r.status !== 200) throw Error(`request ${id} HTTP ${r.status}: ${raw.slice(0, 300)}`);
-  return { id, ms: performance.now() - t, data };
+  return qleverLatencyReceipt({ qleverConnectionMode: "keep-alive", id, ms: performance.now() - t, data });
 }
 const seed = JSON.parse(fs.readFileSync(`${seedDir}/manifest.json`));
 const graph = seed.seedManifest.graphIri;
@@ -160,14 +163,15 @@ async function measure(label) {
     for (const cache of ["cold", "warm"]) {
       if (cache === "cold") await req({ cmd: "clear-cache" });
       const r = await req({ query });
-      results[name].push({
+      results[name].push(qleverLatencyReceipt({
+        qleverConnectionMode: r.qleverConnectionMode,
         cache,
         id: r.id,
         ms: r.ms,
         rows: r.data?.res?.length,
         answerSha256: hash(JSON.stringify(r.data?.res)),
         tree: r.data?.runtimeInformation?.query_execution_tree,
-      });
+      }));
     }
   }
   const env = {
@@ -209,14 +213,15 @@ async function measure(label) {
   );
   fs.writeFileSync(`${out}/${label}-p4.log`, (p4.stdout ?? "") + (p4.stderr ?? ""));
   const after = await state(label + "-after");
-  const summary = {
+  const summary = qleverLatencyReceipt({
+    qleverConnectionMode: "keep-alive",
     label,
     arm,
     binding,
     before,
     after,
     results,
-    p4: { status: p4.status, signal: p4.signal, error: p4.error?.message },
+    p4: qleverLatencyReceipt({ qleverConnectionMode: requireQleverConnectionMode(env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive"), status: p4.status, signal: p4.signal, error: p4.error?.message }),
     c8: {
       status: control.status,
       signal: control.signal,
@@ -229,7 +234,7 @@ async function measure(label) {
       status: "UNAVAILABLE exact counters; runtime estimate gauge retained, includes base rows",
     },
     verdict: "DIAGNOSTIC: no production performance admission or P4/Q89i qualification",
-  };
+  });
   save(`${label}.json`, summary);
   summaries.push(summary);
   save("summary.json", summaries);

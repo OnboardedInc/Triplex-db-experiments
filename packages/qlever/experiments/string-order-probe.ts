@@ -1,3 +1,5 @@
+import { qleverLatencyReceipt } from "../../../lab/receipts/latency.mjs";
+import { qleverConnectionModeOf } from "../src/QleverClient.js";
 /** Bounded public-SDK semantic extension; no operation without exact admission.
  * The common ASCII policy and language-specific Unicode rules are independently
  * frozen in oracle.json/policy.json. Native order is never normalized to pass.
@@ -43,7 +45,7 @@ const Label = Attribute.text(":string-order/label");
 const Subject = EntityType.make("StringOrderProbe", { attributes: { label: Attribute.use(Label, { required: true }) } });
 const fields = (values: Record<string, any>) => TypeExpr.struct(Object.fromEntries(Object.entries(values).map(([key, type]) => [key, TypeExpr.required(type)])));
 const nativeContract = { name: "string-order-v1/schema-label", parameters: fields({ bound: TypeExpr.text }), row: fields({ entity: TypeExpr.text, label: Label.type }) };
-const report: any = { format: "triplex-public-string-extension/1", status: "RUNNING", runId: contract.runId,
+const report: any = qleverLatencyReceipt({ qleverConnectionMode: qleverConnectionModeOf(), format: "triplex-public-string-extension/1", status: "RUNNING", runId: contract.runId,
   scopes: { ascii: asciiScope, unicode: unicodeScope }, paths: ["qlever-datalog", "qlever-native"],
   otherPaths: Object.fromEntries(["duckdb-datalog", "xtdb-datalog", "xtdb-native"].map(name => [name, "UNEXECUTED"])),
   declaration: "Distinct small extension;20families/71tasks/142packets unchanged",
@@ -53,7 +55,7 @@ const report: any = { format: "triplex-public-string-extension/1", status: "RUNN
   fixture: {}, checks: [], basisChecks: [], calls: [], settings: [], cleanup: {},
   limitations: ["No performance, scale, full continuity, recovery or default promotion.",
     "Unique labels do not qualify equal-label ties.", "Datalog Unicode order policy remains unresolved.",
-    "Public SDK deadlines can request cancellation; timeout is not proof of physical cancellation."] };
+    "Public SDK deadlines can request cancellation; timeout is not proof of physical cancellation."] });
 const answers: Record<string, any> = { "qlever-datalog": {}, "qlever-native": {} };
 const invariants = { firstDatalogCursorPresent: false, continuedDatalogTerminal: false, reopenedDatalogTerminal: false,
   greaterRangeDatalogTerminal: false, lesserRangeDatalogTerminal: false, correctedHistoryLineage: false, allCapturedBasisValid: false,
@@ -77,9 +79,9 @@ const api = async (id: string, action: (signal: AbortSignal) => Promise<any>) =>
   pending++; event(id + "-start", { id, timeoutMs: timeout, startedAt: new Date().toISOString() });
   try {
     const value = await action(abort.signal);
-    event(id + "-response", { id, value, elapsedMsClientWall: performance.now() - started, afterDeadline: abort.signal.aborted });
+    event(id + "-response", qleverLatencyReceipt({ qleverConnectionMode: qleverConnectionModeOf(), id, value, elapsedMsClientWall: performance.now() - started, afterDeadline: abort.signal.aborted }));
     assert(!abort.signal.aborted, "SDK_ACK_OR_RESPONSE_AFTER_CALL_DEADLINE");
-    report.calls.push({ id, elapsedMsClientWall: performance.now() - started, status: "RETURNED" }); return value;
+    report.calls.push(qleverLatencyReceipt({ qleverConnectionMode: qleverConnectionModeOf(), id, elapsedMsClientWall: performance.now() - started, status: "RETURNED" })); return value;
   } catch (error) { event(id + "-error", { id, error: safeError(error) }); throw error; }
   finally { clearTimeout(timer); pending--; }
 };

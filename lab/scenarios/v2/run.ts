@@ -1,3 +1,4 @@
+import { latencyReceipt, requireQleverConnectionMode } from "../../receipts/latency.mjs";
 // [EXP-W02] Why: one process seeds, fingerprints and measures the exact same composition and endpoint.
 // Rejected: accepting another process's G0 receipt or running W01's non-W0 stream after a failed admission.
 import { checkedRead } from './read.ts';
@@ -117,10 +118,10 @@ async function main() {
   if (owner.lane !== lane || owner.mode !== 'exclusive') throw Error('GS v2 requires matching exclusive slot owner');
   Object.assign(process.env, brokerEnv(lane, opt('--broker-dir'), path.join(REPO, 'runs')));
   const tag = 'W02-' + randomBytes(12).toString('hex');
-  const report: any = { format: 'tx2-gs-run/2', generator: 'W02/1', classification: 'DIAGNOSTIC', lane, rung, readers: Number(opt('--readers', '256')),
+  const report: any = latencyReceipt({ qleverConnectionMode: lane === 'qlever' ? requireQleverConnectionMode(process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? 'keep-alive') : null, format: 'tx2-gs-run/2', generator: 'W02/1', classification: 'DIAGNOSTIC', lane, rung, readers: Number(opt('--readers', '256')),
     runTag: tag, status: 'RUNNING', slotOwner: owner, profile: { reduced: true, reason: 'v2 product/fault and state-oracle integration incomplete' },
     qlever: lane === 'qlever' ? { connectionMode: process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? 'keep-alive', commitPath: 'broker', brokerDirectory: process.env.QLEVER_BROKER_DIR, baseTriples: null, deltaTriples: null, touchedBlockDelta: null, rebuildThreshold: null } : null,
-    scenarios: [], startedAt: new Date().toISOString() };
+    scenarios: [], startedAt: new Date().toISOString() });
   if (!Number.isSafeInteger(report.readers) || report.readers < 1) throw Error('positive integer readers required');
   fs.mkdirSync(path.dirname(output), { recursive: true });
   const save = () => fs.writeFileSync(output, JSON.stringify(report, null, 1) + '\n'); save();

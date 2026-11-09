@@ -225,9 +225,9 @@ socket for every query, update and command. The default is `"keep-alive"`.
 The lab can explicitly select either mode with `TRIPLEX_QLEVER_CONNECTION_MODE`;
 an explicit factory option takes precedence, and invalid selections throw.
 
-The fresh-socket transport uses Node HTTP/HTTPS with `agent: false`, preserves
-request signals, deadlines, authentication and response byte limits, and targets
-the QLever endpoint directly (redirect responses are HTTP errors). Cancellation
-still uses QLever's separate WebSocket protocol. Closing a client has no pooled
-fresh sockets to dispose. This option addresses the stock server's keep-alive
+Both modes use the same fetch response path for decoding, redirects, aborts and
+HTTP errors. Per-request mode supplies a private Undici dispatcher and destroys
+it after the response or failure; it never changes the global dispatcher. Response
+byte limits apply to decoded bytes, including gzip responses. Cancellation still
+uses QLever's separate WebSocket protocol. This option addresses the stock server's keep-alive
 stall; it is not a server TCP_NODELAY patch or a P1/P4 acceptance claim.

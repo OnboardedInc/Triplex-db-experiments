@@ -1,3 +1,4 @@
+import { qleverLatencyReceipt } from "../../../lab/receipts/latency.mjs";
 import { qleverConnectionModeOf } from "../src/QleverClient.js";
 /** Actual complete/missing canonical-channel admission at one owned scope.
  * Only this UUID fixture's scalar_lexical quad is deliberately removed. The
@@ -25,7 +26,7 @@ const scope = DatabaseScope.test(`persisted-source-admission-${randomUUID()}`),
 const accessToken = labQleverAccessToken();
 const client = makeQleverClient(url, { accessToken }),
   native = makeQleverNativeQueries(client, scope);
-const report: Record<string, any> = {
+const report: Record<string, any> = qleverLatencyReceipt({
   qleverConnectionMode: qleverConnectionModeOf(),
   format: "triplex-persisted-scalar-admission/1",
   scope,
@@ -37,7 +38,7 @@ const report: Record<string, any> = {
     "Admission checks every assertion-id row in this exact scope, including retained history; all-complete absence proof is not a free operation.",
     "LIMIT1 can stop at the first missing row; no scale, performance or durability claim.",
   ],
-};
+});
 const save = () => writeFileSync(output, JSON.stringify(report, null, 2) + "\n");
 save();
 const originalFetch = globalThis.fetch;

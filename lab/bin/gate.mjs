@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { latencyReceipt, requireQleverConnectionMode } from "../receipts/latency.mjs";
 // lab/bin/gate.mjs <G0|G1|G2|G4|GS> --lane xtdb|qlever [--slot dev] [--exp EXP-NNN] [--note TEXT]
 //   [--previous RUN-ID] [--holder NAME] [--cases N (G1 subset)] [--workloads 01,02 (G2 subset)]
 //   [--profile default|bounded|f1 (QLever query-plan profile)] [--planner-budget N (QLever, set+restore)]
@@ -720,7 +721,7 @@ main(async () => {
     git = identity(run);
     tools = await toolchain(run);
     lockfileSha256 = run.store(path.join(REPO, 'pnpm-lock.yaml'), 'lockfile').sha256;
-    gateScripts = Object.fromEntries(['lab/bin/gate.mjs', 'lab/bin/lib.mjs', 'lab/bin/receipt.mjs', 'lab/bin/engine.mjs', 'lab/bin/heavy-lock.mjs', 'lab/config/slots.json']
+    gateScripts = Object.fromEntries(['lab/bin/gate.mjs', 'lab/bin/lib.mjs', 'lab/bin/receipt.mjs', 'lab/bin/engine.mjs', 'lab/bin/heavy-lock.mjs', 'lab/config/slots.json', 'lab/receipts/latency.mjs', 'lab/receipts/latency.d.mts']
       .map(file => [file, run.store(path.join(REPO, file), 'gate-script').sha256]));
     result = gate === 'G0' ? await gateG0(run) : gate === 'G1' ? await gateG1(run, config) : gate === 'G2' ? await gateG2(run, config) : gate === 'NS' ? await gateNS(run, config) : gate === 'GS' ? await gateGS(run, config) : await gateG4(run, config);
   } catch (error) {
@@ -730,17 +731,17 @@ main(async () => {
   const claims = contractClaims({ gate, lane: options.lane, scope: result.scope, contractFile: path.join(REPO, 'lab/acceptance/obligations.json') });
   if (claims.contract) run.store(path.join(REPO, 'lab/acceptance/obligations.json'), 'acceptance-contract');
   for (const reason of claims.reasons) run.reason(reason);
-  const receipt = {
+  const receipt = latencyReceipt({
     format: 'tx2-gate-receipt/1', gate, lane: options.lane, slot: gate === 'G0' ? null : (options.slot ?? (gate === 'NS' ? 's1' : 'dev')), runId: run.runId,
     experiment: options.exp ?? null, note: options.note ?? null, previous: options.previous ?? null,
     startedAt: run.startedAt, endedAt: now(), durationMs: Date.now() - run.t0, scope: result.scope ?? 'unknown',
     runKind, mutation, contractVersion: claims.contract?.version ?? null, contract: claims.contract, obligations: claims.obligations,
     engineName: options.lane,
-    qleverConnectionMode: options.lane === 'qlever' ? (process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? 'keep-alive') : null,
+    qleverConnectionMode: options.lane === 'qlever' ? requireQleverConnectionMode(process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive") : null,
     git, lockfileSha256, toolchain: tools, gateScripts, ...result,
     steps: run.steps.map(({ tail, ...step }) => step), firstFailures: run.firstFailures,
     rawDir: run.rel(run.rawDir), reasons: run.reasons,
-  };
+  });
   if (receipt.git) { receipt.git.modifiedFiles = receipt.git.modifiedFiles.map(({ secretLike, ...f }) => f); receipt.git.untrackedFiles = receipt.git.untrackedFiles.map(({ secretLike, ...f }) => f); }
   const { verdict, reasons } = verdictOf(receipt);
   receipt.verdict = verdict; receipt.reasons = reasons;
