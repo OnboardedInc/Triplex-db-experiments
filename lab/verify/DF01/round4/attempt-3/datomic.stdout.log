@@ -1,0 +1,118 @@
+07:20:49.901 [main] DEBUG org.eclipse.jetty.util.log -- Logging to Logger[org.eclipse.jetty.util.log] via org.eclipse.jetty.util.log.Slf4jLog
+07:20:49.907 [main] INFO org.eclipse.jetty.util.log -- Logging initialized @1446ms to org.eclipse.jetty.util.log.Slf4jLog
+
+Testing round4-verify
+07:20:50.292 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.293 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.837, :phase :end, :pid 22078, :tid 1}
+07:20:50.298 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.298 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0839, :phase :end, :pid 22078, :tid 1}
+07:20:50.313 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.346 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 32.5, :phase :end, :pid 22078, :tid 1}
+07:20:50.349 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.350 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0338, :phase :end, :pid 22078, :tid 1}
+07:20:50.352 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.364 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 12.2, :phase :end, :pid 22078, :tid 1}
+07:20:50.366 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.366 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.024, :phase :end, :pid 22078, :tid 1}
+07:20:50.368 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.368 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0329, :phase :end, :pid 22078, :tid 1}
+07:20:50.370 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.373 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 2.84, :phase :end, :pid 22078, :tid 1}
+07:20:50.384 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.385 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0972, :phase :end, :pid 22078, :tid 1}
+07:20:50.386 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.387 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.071, :phase :end, :pid 22078, :tid 1}
+07:20:50.388 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.388 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.024, :phase :end, :pid 22078, :tid 1}
+07:20:50.389 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.389 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0226, :phase :end, :pid 22078, :tid 1}
+07:20:50.390 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.390 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0595, :phase :end, :pid 22078, :tid 1}
+07:20:50.391 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.391 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0228, :phase :end, :pid 22078, :tid 1}
+07:20:50.392 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.392 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0161, :phase :end, :pid 22078, :tid 1}
+07:20:50.393 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.393 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.016, :phase :end, :pid 22078, :tid 1}
+07:20:50.399 [main] INFO datomic.process-monitor -- {:event :metrics/initializing, :metricsCallback clojure.core/identity, :phase :begin, :pid 22078, :tid 1}
+07:20:50.399 [main] INFO datomic.process-monitor -- {:event :metrics/initializing, :metricsCallback clojure.core/identity, :msec 0.0898, :phase :end, :pid 22078, :tid 1}
+07:20:50.399 [main] INFO datomic.process-monitor -- {:metrics/started clojure.core/identity, :pid 22078, :tid 1}
+07:20:50.401 [clojure-agent-send-off-pool-0] INFO datomic.domain -- {:event :cache/create, :cache-bytes 134217728, :pid 22078, :tid 40}
+07:20:50.405 [clojure-agent-send-off-pool-0] INFO datomic.process-monitor -- {:DbAddFulltextMsec {:lo 0, :hi 32, :sum 46, :count 16}, :AvailableMB 215.0, :ObjectCacheCount 0, :event :metrics, :pid 22078, :tid 40}
+07:20:50.405 [clojure-agent-send-off-pool-0] DEBUG datomic.process-monitor -- {:event :metrics/report, :phase :begin, :pid 22078, :tid 40}
+07:20:50.406 [clojure-agent-send-off-pool-0] DEBUG datomic.process-monitor -- {:event :metrics/report, :msec 0.18, :phase :end, :pid 22078, :tid 40}
+07:20:50.424 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.424 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.229, :phase :end, :pid 22078, :tid 1}
+07:20:50.440 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.440 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0285, :phase :end, :pid 22078, :tid 1}
+07:20:50.451 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.451 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0352, :phase :end, :pid 22078, :tid 1}
+07:20:50.478 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.478 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.123, :phase :end, :pid 22078, :tid 1}
+07:20:50.480 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.481 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.02, :phase :end, :pid 22078, :tid 1}
+07:20:50.487 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.488 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0253, :phase :end, :pid 22078, :tid 1}
+07:20:50.501 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.501 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0444, :phase :end, :pid 22078, :tid 1}
+07:20:50.502 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.503 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0143, :phase :end, :pid 22078, :tid 1}
+07:20:50.508 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.509 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.295, :phase :end, :pid 22078, :tid 1}
+07:20:50.524 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.524 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.038, :phase :end, :pid 22078, :tid 1}
+07:20:50.525 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.525 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0141, :phase :end, :pid 22078, :tid 1}
+07:20:50.528 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.528 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.019, :phase :end, :pid 22078, :tid 1}
+07:20:50.530 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.530 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0151, :phase :end, :pid 22078, :tid 1}
+07:20:50.543 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.543 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.115, :phase :end, :pid 22078, :tid 1}
+07:20:50.547 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.547 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0443, :phase :end, :pid 22078, :tid 1}
+07:20:50.555 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.556 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0496, :phase :end, :pid 22078, :tid 1}
+07:20:50.566 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.566 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0478, :phase :end, :pid 22078, :tid 1}
+07:20:50.568 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.569 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0426, :phase :end, :pid 22078, :tid 1}
+07:20:50.573 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.573 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0565, :phase :end, :pid 22078, :tid 1}
+07:20:50.589 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.590 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0822, :phase :end, :pid 22078, :tid 1}
+07:20:50.594 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.595 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0556, :phase :end, :pid 22078, :tid 1}
+07:20:50.600 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.601 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0181, :phase :end, :pid 22078, :tid 1}
+07:20:50.611 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.611 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0388, :phase :end, :pid 22078, :tid 1}
+07:20:50.613 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.613 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0404, :phase :end, :pid 22078, :tid 1}
+07:20:50.617 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.617 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0228, :phase :end, :pid 22078, :tid 1}
+07:20:50.620 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.620 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0237, :phase :end, :pid 22078, :tid 1}
+07:20:50.632 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.632 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0613, :phase :end, :pid 22078, :tid 1}
+07:20:50.633 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.633 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0236, :phase :end, :pid 22078, :tid 1}
+07:20:50.636 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.636 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0375, :phase :end, :pid 22078, :tid 1}
+07:20:50.639 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.639 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0152, :phase :end, :pid 22078, :tid 1}
+07:20:50.646 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.646 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0297, :phase :end, :pid 22078, :tid 1}
+07:20:50.647 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.647 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.00954, :phase :end, :pid 22078, :tid 1}
+07:20:50.650 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.650 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0253, :phase :end, :pid 22078, :tid 1}
+07:20:50.660 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.660 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.16, :phase :end, :pid 22078, :tid 1}
+07:20:50.662 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.662 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0451, :phase :end, :pid 22078, :tid 1}
+07:20:50.667 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 22078, :tid 1}
+07:20:50.667 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.036, :phase :end, :pid 22078, :tid 1}
+
+Ran 1 tests containing 88 assertions.
+0 failures, 0 errors.

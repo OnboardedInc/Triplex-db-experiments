@@ -1,0 +1,103 @@
+07:20:27.555 [main] DEBUG org.eclipse.jetty.util.log -- Logging to Logger[org.eclipse.jetty.util.log] via org.eclipse.jetty.util.log.Slf4jLog
+07:20:27.561 [main] INFO org.eclipse.jetty.util.log -- Logging initialized @1609ms to org.eclipse.jetty.util.log.Slf4jLog
+
+Testing round4-verify
+07:20:27.965 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 19482, :tid 1}
+07:20:27.966 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.583, :phase :end, :pid 19482, :tid 1}
+07:20:27.969 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 19482, :tid 1}
+07:20:27.969 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.115, :phase :end, :pid 19482, :tid 1}
+07:20:27.985 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 19482, :tid 1}
+07:20:28.020 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 34.7, :phase :end, :pid 19482, :tid 1}
+07:20:28.025 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 19482, :tid 1}
+07:20:28.025 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0397, :phase :end, :pid 19482, :tid 1}
+07:20:28.029 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 19482, :tid 1}
+07:20:28.043 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 14.0, :phase :end, :pid 19482, :tid 1}
+07:20:28.045 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 19482, :tid 1}
+07:20:28.045 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0334, :phase :end, :pid 19482, :tid 1}
+07:20:28.048 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 19482, :tid 1}
+07:20:28.049 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0596, :phase :end, :pid 19482, :tid 1}
+07:20:28.050 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 19482, :tid 1}
+07:20:28.053 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 3.03, :phase :end, :pid 19482, :tid 1}
+07:20:28.062 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 19482, :tid 1}
+07:20:28.062 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0428, :phase :end, :pid 19482, :tid 1}
+07:20:28.063 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 19482, :tid 1}
+07:20:28.063 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0609, :phase :end, :pid 19482, :tid 1}
+07:20:28.064 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 19482, :tid 1}
+07:20:28.064 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0411, :phase :end, :pid 19482, :tid 1}
+07:20:28.065 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 19482, :tid 1}
+07:20:28.065 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0412, :phase :end, :pid 19482, :tid 1}
+07:20:28.066 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 19482, :tid 1}
+07:20:28.066 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.018, :phase :end, :pid 19482, :tid 1}
+07:20:28.067 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 19482, :tid 1}
+07:20:28.067 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0137, :phase :end, :pid 19482, :tid 1}
+07:20:28.067 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 19482, :tid 1}
+07:20:28.068 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0354, :phase :end, :pid 19482, :tid 1}
+07:20:28.068 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 19482, :tid 1}
+07:20:28.069 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0508, :phase :end, :pid 19482, :tid 1}
+07:20:28.075 [main] INFO datomic.process-monitor -- {:event :metrics/initializing, :metricsCallback clojure.core/identity, :phase :begin, :pid 19482, :tid 1}
+07:20:28.076 [main] INFO datomic.process-monitor -- {:event :metrics/initializing, :metricsCallback clojure.core/identity, :msec 0.11, :phase :end, :pid 19482, :tid 1}
+07:20:28.076 [main] INFO datomic.process-monitor -- {:metrics/started clojure.core/identity, :pid 19482, :tid 1}
+07:20:28.077 [clojure-agent-send-off-pool-0] INFO datomic.domain -- {:event :cache/create, :cache-bytes 134217728, :pid 19482, :tid 40}
+07:20:28.080 [clojure-agent-send-off-pool-0] INFO datomic.process-monitor -- {:DbAddFulltextMsec {:lo 0, :hi 34, :sum 51, :count 16}, :AvailableMB 215.0, :ObjectCacheCount 0, :event :metrics, :pid 19482, :tid 40}
+07:20:28.080 [clojure-agent-send-off-pool-0] DEBUG datomic.process-monitor -- {:event :metrics/report, :phase :begin, :pid 19482, :tid 40}
+07:20:28.080 [clojure-agent-send-off-pool-0] DEBUG datomic.process-monitor -- {:event :metrics/report, :msec 0.143, :phase :end, :pid 19482, :tid 40}
+07:20:28.108 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 19482, :tid 1}
+07:20:28.108 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.136, :phase :end, :pid 19482, :tid 1}
+07:20:28.125 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 19482, :tid 1}
+07:20:28.125 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0309, :phase :end, :pid 19482, :tid 1}
+07:20:28.136 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :phase :begin, :pid 19482, :tid 1}
+07:20:28.136 [main] DEBUG datomic.db -- {:event :db/add-fulltext, :msec 0.0388, :phase :end, :pid 19482, :tid 1}
+
+ERROR in (shared-cases) (Numbers.java:1099)
+Uncaught exception, not in assertion.
+expected: nil
+  actual: java.lang.NullPointerException: Cannot invoke "Object.getClass()" because "x" is null
+ at clojure.lang.Numbers.ops (Numbers.java:1099)
+    clojure.lang.Numbers.gt (Numbers.java:261)
+    clojure.lang.Numbers.gt (Numbers.java:3971)
+    triplex.gateway.feed$unsubscribe_BANG_.invokeStatic (feed.clj:87)
+    triplex.gateway.feed$unsubscribe_BANG_.invoke (feed.clj:84)
+    round4_verify$fn__681$fn__686.invoke (round4_verify.clj:55)
+    round4_verify$fn__681.invokeStatic (round4_verify.clj:22)
+    round4_verify/fn (round4_verify.clj:20)
+    clojure.test$test_var$fn__9898.invoke (test.clj:717)
+    clojure.test$test_var.invokeStatic (test.clj:717)
+    clojure.test$test_var.invoke (test.clj:708)
+    clojure.test$test_vars$fn__9924$fn__9929.invoke (test.clj:735)
+    clojure.test$default_fixture.invokeStatic (test.clj:687)
+    clojure.test$default_fixture.invoke (test.clj:683)
+    clojure.test$test_vars$fn__9924.invoke (test.clj:735)
+    clojure.test$default_fixture.invokeStatic (test.clj:687)
+    clojure.test$default_fixture.invoke (test.clj:683)
+    clojure.test$test_vars.invokeStatic (test.clj:731)
+    clojure.test$test_all_vars.invokeStatic (test.clj:737)
+    clojure.test$test_ns.invokeStatic (test.clj:758)
+    clojure.test$test_ns.invoke (test.clj:743)
+    clojure.core$map$fn__5956.invoke (core.clj:2776)
+    clojure.lang.LazySeq.force (LazySeq.java:50)
+    clojure.lang.LazySeq.realize (LazySeq.java:87)
+    clojure.lang.LazySeq.seq (LazySeq.java:104)
+    clojure.lang.Cons.next (Cons.java:41)
+    clojure.lang.RT.boundedLength (RT.java:1810)
+    clojure.lang.RestFn.applyTo (RestFn.java:133)
+    clojure.core$apply.invokeStatic (core.clj:669)
+    clojure.test$run_tests.invokeStatic (test.clj:768)
+    clojure.test$run_tests.doInvoke (test.clj:768)
+    clojure.lang.RestFn.invoke (RestFn.java:411)
+    round4_verify$_main.invokeStatic (round4_verify.clj:57)
+    round4_verify$_main.doInvoke (round4_verify.clj:56)
+    clojure.lang.RestFn.invoke (RestFn.java:400)
+    clojure.lang.AFn.applyToHelper (AFn.java:152)
+    clojure.lang.RestFn.applyTo (RestFn.java:135)
+    clojure.lang.Var.applyTo (Var.java:707)
+    clojure.core$apply.invokeStatic (core.clj:667)
+    clojure.main$main_opt.invokeStatic (main.clj:515)
+    clojure.main$main_opt.invoke (main.clj:511)
+    clojure.main$main.invokeStatic (main.clj:665)
+    clojure.main$main.doInvoke (main.clj:617)
+    clojure.lang.RestFn.applyTo (RestFn.java:140)
+    clojure.lang.Var.applyTo (Var.java:707)
+    clojure.main.main (main.java:40)
+
+Ran 1 tests containing 9 assertions.
+0 failures, 1 errors.

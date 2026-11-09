@@ -1,0 +1,65 @@
+{
+  "startedAt": "2026-11-09T12:20:02.544Z",
+  "reviewerHead": "c98bbff84b691fa8d1c95bcc604ef1f4ad53557a",
+  "sources": [
+    "datomic:302a7a63ca3452052bce5576cea5377c481abbb4",
+    "broker:8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+    "p2x:fb6681a4c5b54bfef63ad5ee670047946a24617c",
+    "rt01:7ee171ea294577b3f5d6aca027b311f27465b802"
+  ],
+  "slot": null,
+  "offline": true,
+  "parentGrant": {
+    "pid": 11129,
+    "label": "CX-VDF01-r4-attempt-1",
+    "at": "2026-11-09T12:20:02.180Z"
+  },
+  "availableDiskBytes": 7951802368,
+  "finishedAt": "2026-11-09T12:20:05.114Z",
+  "results": [
+    {
+      "label": "core",
+      "cmd": "/Users/sam/.hermes/node/bin/node",
+      "args": [
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-df01/node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "packages/host/vitest.config.ts",
+        "lab/verify/DF01/round4-core.test.ts",
+        "--reporter=json",
+        "--outputFile=/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-df01/lab/verify/DF01/round4/attempt-1/core.json"
+      ],
+      "code": 0,
+      "signal": null,
+      "error": null
+    },
+    {
+      "label": "feeds",
+      "cmd": "/Users/sam/.hermes/node/bin/node",
+      "args": [
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-df01/node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "lab/verify/DF01/round4-feeds.config.ts",
+        "lab/verify/DF01/round4-feeds.test.ts",
+        "--reporter=json",
+        "--outputFile=/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-df01/lab/verify/DF01/round4/attempt-1/feeds.json"
+      ],
+      "code": 1,
+      "signal": null,
+      "error": null
+    }
+  ],
+  "outputs": {
+    "core.json": "f8f3d50f1e1cf7bc99694d922d935ed1e0d1f107efb042d76e5e36a4d8f26dc6",
+    "core.stderr.log": "9847f954a966c7b5f0d50141c78e9a5884c97c3980e67b8cfe79c5425cfe8a4b",
+    "core.stdout.log": "eefa440a163c12e5b2e42b3459d0688810665cfe27f842a696f3d8346699b54c",
+    "feeds.json": "59ad5ad05a0c82bc09dffea06693d6ee761cf48cf4db2acd7c398b6583033855",
+    "feeds.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "feeds.stdout.log": "f3e1f821f625cee0f6142d2c87facdb50f51b3f62899e65255bd8193c5281d5e",
+    "inputs.json": "cceae0462bf2a93b0fee900e58177086055fa9f2e21e9e1e4eb81b6ad6fa3e61"
+  },
+  "coreOK": true,
+  "tsOK": false,
+  "cljOK": false
+}

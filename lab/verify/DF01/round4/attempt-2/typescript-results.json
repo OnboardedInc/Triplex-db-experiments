@@ -1,0 +1,1530 @@
+[
+  {
+    "name": "mixed-and-prefixes",
+    "expected": [
+      [
+        "assert",
+        "_tx/00000000000000000000000004",
+        ":_tx/change",
+        100,
+        null,
+        4
+      ],
+      [
+        "assert",
+        "_tx/custom",
+        "_txNote",
+        100,
+        null,
+        4
+      ],
+      [
+        "assert",
+        "order:1",
+        ":status",
+        100,
+        null,
+        4
+      ]
+    ],
+    "broker": {
+      "position": 4,
+      "positions": [
+        4
+      ],
+      "operationId": "mixed-and-prefixes",
+      "txIds": [
+        "_tx/00000000000000000000000004"
+      ],
+      "commandIds": [],
+      "subjects": [],
+      "changes": [
+        {
+          "op": "assert",
+          "entity": "order:1",
+          "attribute": ":status",
+          "validFrom": 100,
+          "validTo": null,
+          "position": 4
+        },
+        {
+          "op": "assert",
+          "entity": "_tx/custom",
+          "attribute": "_txNote",
+          "validFrom": 100,
+          "validTo": null,
+          "position": 4
+        },
+        {
+          "op": "assert",
+          "entity": "_tx/00000000000000000000000004",
+          "attribute": ":_tx/change",
+          "validFrom": 100,
+          "validTo": null,
+          "position": 4
+        }
+      ]
+    },
+    "p2x": {
+      "resolutions": [
+        {
+          "msgId": 100,
+          "epoch": 0,
+          "offset": 100,
+          "status": "committed",
+          "stamp": 1577836800100000,
+          "operationId": "b2f759f8-a70c-4680-8d8f-58c6f77e3f62",
+          "transacts": [
+            {
+              "position": 800000,
+              "ordinal": 0,
+              "subjects": [
+                "_tx/00000000000000000000000004",
+                "_tx/custom",
+                "order:1"
+              ]
+            }
+          ],
+          "attributes": [
+            ":_tx/change",
+            ":status",
+            "_txNote"
+          ],
+          "commandIds": [],
+          "validFrom": 100,
+          "validTo": null,
+          "changes": [
+            {
+              "op": "assert",
+              "entity": "order:1",
+              "attribute": ":status",
+              "validFrom": 100,
+              "validTo": null,
+              "ordinal": 0
+            },
+            {
+              "op": "assert",
+              "entity": "_tx/custom",
+              "attribute": "_txNote",
+              "validFrom": 100,
+              "validTo": null,
+              "ordinal": 0
+            },
+            {
+              "op": "assert",
+              "entity": "_tx/00000000000000000000000004",
+              "attribute": ":_tx/change",
+              "validFrom": 100,
+              "validTo": null,
+              "ordinal": 0
+            }
+          ]
+        }
+      ],
+      "watermark": {
+        "msgId": 100,
+        "processed": true
+      },
+      "skipped": 0,
+      "blocked": false
+    },
+    "carrier": [
+      "[\"r4/mixed-and-prefixes\",\"b2f759f8-a70c-4680-8d8f-58c6f77e3f62\"]",
+      "r4/mixed-and-prefixes",
+      "b2f759f8-a70c-4680-8d8f-58c6f77e3f62",
+      null,
+      0,
+      null,
+      0,
+      1,
+      "[\"_tx/00000000000000000000000004\"]",
+      "[]",
+      "[[\"assert\",\"order:1\",\":status\",100,null,0],[\"assert\",\"_tx/custom\",\"_txNote\",100,null,0],[\"assert\",\"_tx/00000000000000000000000004\",\":_tx/change\",100,null,0]]"
+    ],
+    "queryTrace": [
+      {
+        "sql": "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE _id = ?",
+        "params": [
+          "r4/mixed-and-prefixes"
+        ]
+      },
+      {
+        "sql": "SELECT stamp FROM tx_attempts FOR ALL VALID_TIME WHERE _id = ?",
+        "params": [
+          "[\"r4/mixed-and-prefixes\",\"b2f759f8-a70c-4680-8d8f-58c6f77e3f62\"]"
+        ]
+      },
+      {
+        "sql": "SELECT msg_id, msg_type FROM xt.source_log_msgs WHERE msg_id BETWEEN ? AND ? LIMIT ?",
+        "params": [
+          100,
+          8388708,
+          1001
+        ]
+      },
+      {
+        "sql": "SELECT _id, committed, ((system_time - TIMESTAMP WITH TIME ZONE '1970-01-01T00:00:00Z') / INTERVAL 'PT0.000001S') AS stamp, user_metadata FROM xt.txs WHERE _id IN (?)",
+        "params": [
+          100
+        ]
+      },
+      {
+        "sql": "SELECT _id, changes, command_ids FROM tx_feed FOR ALL VALID_TIME WHERE _id IN (?)",
+        "params": [
+          "[\"r4/mixed-and-prefixes\",\"b2f759f8-a70c-4680-8d8f-58c6f77e3f62\"]"
+        ]
+      }
+    ],
+    "normalized": [
+      [
+        "assert",
+        "_tx/00000000000000000000000004",
+        ":_tx/change",
+        100,
+        null,
+        4
+      ],
+      [
+        "assert",
+        "_tx/custom",
+        "_txNote",
+        100,
+        null,
+        4
+      ],
+      [
+        "assert",
+        "order:1",
+        ":status",
+        100,
+        null,
+        4
+      ]
+    ]
+  },
+  {
+    "name": "different-transaction-subject",
+    "expected": [
+      [
+        "assert",
+        "_tx/00000000000000000000000003",
+        ":_tx/change",
+        100,
+        null,
+        4
+      ]
+    ],
+    "broker": {
+      "position": 4,
+      "positions": [
+        4
+      ],
+      "operationId": "different-transaction-subject",
+      "txIds": [
+        "_tx/00000000000000000000000004"
+      ],
+      "commandIds": [],
+      "subjects": [],
+      "changes": [
+        {
+          "op": "assert",
+          "entity": "_tx/00000000000000000000000003",
+          "attribute": ":_tx/change",
+          "validFrom": 100,
+          "validTo": null,
+          "position": 4
+        }
+      ]
+    },
+    "p2x": {
+      "resolutions": [
+        {
+          "msgId": 100,
+          "epoch": 0,
+          "offset": 100,
+          "status": "committed",
+          "stamp": 1577836800100010,
+          "operationId": "2fd72a20-f168-4b68-9e73-fdda08138588",
+          "transacts": [
+            {
+              "position": 800080,
+              "ordinal": 0,
+              "subjects": [
+                "_tx/00000000000000000000000003"
+              ]
+            }
+          ],
+          "attributes": [
+            ":_tx/change"
+          ],
+          "commandIds": [],
+          "validFrom": 100,
+          "validTo": null,
+          "changes": [
+            {
+              "op": "assert",
+              "entity": "_tx/00000000000000000000000003",
+              "attribute": ":_tx/change",
+              "validFrom": 100,
+              "validTo": null,
+              "ordinal": 0
+            }
+          ]
+        }
+      ],
+      "watermark": {
+        "msgId": 100,
+        "processed": true
+      },
+      "skipped": 0,
+      "blocked": false
+    },
+    "carrier": [
+      "[\"r4/different-transaction-subject\",\"2fd72a20-f168-4b68-9e73-fdda08138588\"]",
+      "r4/different-transaction-subject",
+      "2fd72a20-f168-4b68-9e73-fdda08138588",
+      null,
+      0,
+      null,
+      0,
+      1,
+      "[\"_tx/00000000000000000000000004\"]",
+      "[]",
+      "[[\"assert\",\"_tx/00000000000000000000000003\",\":_tx/change\",100,null,0]]"
+    ],
+    "queryTrace": [
+      {
+        "sql": "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE _id = ?",
+        "params": [
+          "r4/different-transaction-subject"
+        ]
+      },
+      {
+        "sql": "SELECT stamp FROM tx_attempts FOR ALL VALID_TIME WHERE _id = ?",
+        "params": [
+          "[\"r4/different-transaction-subject\",\"2fd72a20-f168-4b68-9e73-fdda08138588\"]"
+        ]
+      },
+      {
+        "sql": "SELECT msg_id, msg_type FROM xt.source_log_msgs WHERE msg_id BETWEEN ? AND ? LIMIT ?",
+        "params": [
+          100,
+          8388708,
+          1001
+        ]
+      },
+      {
+        "sql": "SELECT _id, committed, ((system_time - TIMESTAMP WITH TIME ZONE '1970-01-01T00:00:00Z') / INTERVAL 'PT0.000001S') AS stamp, user_metadata FROM xt.txs WHERE _id IN (?)",
+        "params": [
+          100
+        ]
+      },
+      {
+        "sql": "SELECT _id, changes, command_ids FROM tx_feed FOR ALL VALID_TIME WHERE _id IN (?)",
+        "params": [
+          "[\"r4/different-transaction-subject\",\"2fd72a20-f168-4b68-9e73-fdda08138588\"]"
+        ]
+      }
+    ],
+    "normalized": [
+      [
+        "assert",
+        "_tx/00000000000000000000000003",
+        ":_tx/change",
+        100,
+        null,
+        4
+      ]
+    ]
+  },
+  {
+    "name": "missing-row-type",
+    "expected": [
+      [
+        "assert",
+        "_tx/00000000000000000000000004",
+        ":_tx/change",
+        100,
+        null,
+        4
+      ]
+    ],
+    "broker": {
+      "position": 4,
+      "positions": [
+        4
+      ],
+      "operationId": "missing-row-type",
+      "txIds": [
+        "_tx/00000000000000000000000004"
+      ],
+      "commandIds": [],
+      "subjects": [],
+      "changes": [
+        {
+          "op": "assert",
+          "entity": "_tx/00000000000000000000000004",
+          "attribute": ":_tx/change",
+          "validFrom": 100,
+          "validTo": null,
+          "position": 4
+        }
+      ]
+    },
+    "p2x": {
+      "resolutions": [
+        {
+          "msgId": 100,
+          "epoch": 0,
+          "offset": 100,
+          "status": "committed",
+          "stamp": 1577836800100020,
+          "operationId": "6cb898ac-2738-44e7-897b-b282796c373d",
+          "transacts": [
+            {
+              "position": 800160,
+              "ordinal": 0,
+              "subjects": [
+                "_tx/00000000000000000000000004"
+              ]
+            }
+          ],
+          "attributes": [
+            ":_tx/change"
+          ],
+          "commandIds": [],
+          "validFrom": 100,
+          "validTo": null,
+          "changes": [
+            {
+              "op": "assert",
+              "entity": "_tx/00000000000000000000000004",
+              "attribute": ":_tx/change",
+              "validFrom": 100,
+              "validTo": null,
+              "ordinal": 0
+            }
+          ]
+        }
+      ],
+      "watermark": {
+        "msgId": 100,
+        "processed": true
+      },
+      "skipped": 0,
+      "blocked": false
+    },
+    "carrier": [
+      "[\"r4/missing-row-type\",\"6cb898ac-2738-44e7-897b-b282796c373d\"]",
+      "r4/missing-row-type",
+      "6cb898ac-2738-44e7-897b-b282796c373d",
+      null,
+      0,
+      null,
+      0,
+      1,
+      "[\"_tx/00000000000000000000000004\"]",
+      "[]",
+      "[[\"assert\",\"_tx/00000000000000000000000004\",\":_tx/change\",100,null,0]]"
+    ],
+    "queryTrace": [
+      {
+        "sql": "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE _id = ?",
+        "params": [
+          "r4/missing-row-type"
+        ]
+      },
+      {
+        "sql": "SELECT stamp FROM tx_attempts FOR ALL VALID_TIME WHERE _id = ?",
+        "params": [
+          "[\"r4/missing-row-type\",\"6cb898ac-2738-44e7-897b-b282796c373d\"]"
+        ]
+      },
+      {
+        "sql": "SELECT msg_id, msg_type FROM xt.source_log_msgs WHERE msg_id BETWEEN ? AND ? LIMIT ?",
+        "params": [
+          100,
+          8388708,
+          1001
+        ]
+      },
+      {
+        "sql": "SELECT _id, committed, ((system_time - TIMESTAMP WITH TIME ZONE '1970-01-01T00:00:00Z') / INTERVAL 'PT0.000001S') AS stamp, user_metadata FROM xt.txs WHERE _id IN (?)",
+        "params": [
+          100
+        ]
+      },
+      {
+        "sql": "SELECT _id, changes, command_ids FROM tx_feed FOR ALL VALID_TIME WHERE _id IN (?)",
+        "params": [
+          "[\"r4/missing-row-type\",\"6cb898ac-2738-44e7-897b-b282796c373d\"]"
+        ]
+      }
+    ],
+    "normalized": [
+      [
+        "assert",
+        "_tx/00000000000000000000000004",
+        ":_tx/change",
+        100,
+        null,
+        4
+      ]
+    ]
+  },
+  {
+    "name": "before-schema-type-existed",
+    "expected": [
+      [
+        "assert",
+        "_tx/00000000000000000000000004",
+        ":_tx/position",
+        100,
+        null,
+        4
+      ],
+      [
+        "assert",
+        "order:1",
+        ":status",
+        100,
+        null,
+        4
+      ]
+    ],
+    "broker": {
+      "position": 4,
+      "positions": [
+        4
+      ],
+      "operationId": "before-schema-type-existed",
+      "txIds": [
+        "_tx/00000000000000000000000004"
+      ],
+      "commandIds": [],
+      "subjects": [],
+      "changes": [
+        {
+          "op": "assert",
+          "entity": "_tx/00000000000000000000000004",
+          "attribute": ":_tx/position",
+          "validFrom": 100,
+          "validTo": null,
+          "position": 4
+        },
+        {
+          "op": "assert",
+          "entity": "order:1",
+          "attribute": ":status",
+          "validFrom": 100,
+          "validTo": null,
+          "position": 4
+        }
+      ]
+    },
+    "p2x": {
+      "resolutions": [
+        {
+          "msgId": 100,
+          "epoch": 0,
+          "offset": 100,
+          "status": "committed",
+          "stamp": 1577836800100030,
+          "operationId": "bee6d459-c83e-4019-a0e1-79574b2f3280",
+          "transacts": [
+            {
+              "position": 800240,
+              "ordinal": 0,
+              "subjects": [
+                "_tx/00000000000000000000000004",
+                "order:1"
+              ]
+            }
+          ],
+          "attributes": [
+            ":_tx/position",
+            ":status"
+          ],
+          "commandIds": [],
+          "validFrom": 100,
+          "validTo": null,
+          "changes": [
+            {
+              "op": "assert",
+              "entity": "_tx/00000000000000000000000004",
+              "attribute": ":_tx/position",
+              "validFrom": 100,
+              "validTo": null,
+              "ordinal": 0
+            },
+            {
+              "op": "assert",
+              "entity": "order:1",
+              "attribute": ":status",
+              "validFrom": 100,
+              "validTo": null,
+              "ordinal": 0
+            }
+          ]
+        }
+      ],
+      "watermark": {
+        "msgId": 100,
+        "processed": true
+      },
+      "skipped": 0,
+      "blocked": false
+    },
+    "carrier": [
+      "[\"r4/before-schema-type-existed\",\"bee6d459-c83e-4019-a0e1-79574b2f3280\"]",
+      "r4/before-schema-type-existed",
+      "bee6d459-c83e-4019-a0e1-79574b2f3280",
+      null,
+      0,
+      null,
+      0,
+      1,
+      "[\"_tx/00000000000000000000000004\"]",
+      "[]",
+      "[[\"assert\",\"_tx/00000000000000000000000004\",\":_tx/position\",100,null,0],[\"assert\",\"order:1\",\":status\",100,null,0]]"
+    ],
+    "queryTrace": [
+      {
+        "sql": "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE _id = ?",
+        "params": [
+          "r4/before-schema-type-existed"
+        ]
+      },
+      {
+        "sql": "SELECT stamp FROM tx_attempts FOR ALL VALID_TIME WHERE _id = ?",
+        "params": [
+          "[\"r4/before-schema-type-existed\",\"bee6d459-c83e-4019-a0e1-79574b2f3280\"]"
+        ]
+      },
+      {
+        "sql": "SELECT msg_id, msg_type FROM xt.source_log_msgs WHERE msg_id BETWEEN ? AND ? LIMIT ?",
+        "params": [
+          100,
+          8388708,
+          1001
+        ]
+      },
+      {
+        "sql": "SELECT _id, committed, ((system_time - TIMESTAMP WITH TIME ZONE '1970-01-01T00:00:00Z') / INTERVAL 'PT0.000001S') AS stamp, user_metadata FROM xt.txs WHERE _id IN (?)",
+        "params": [
+          100
+        ]
+      },
+      {
+        "sql": "SELECT _id, changes, command_ids FROM tx_feed FOR ALL VALID_TIME WHERE _id IN (?)",
+        "params": [
+          "[\"r4/before-schema-type-existed\",\"bee6d459-c83e-4019-a0e1-79574b2f3280\"]"
+        ]
+      }
+    ],
+    "normalized": [
+      [
+        "assert",
+        "_tx/00000000000000000000000004",
+        ":_tx/position",
+        100,
+        null,
+        4
+      ],
+      [
+        "assert",
+        "order:1",
+        ":status",
+        100,
+        null,
+        4
+      ]
+    ]
+  },
+  {
+    "name": "null-assertion-transaction",
+    "expected": [
+      [
+        "assert",
+        "_tx/00000000000000000000000004",
+        ":status",
+        100,
+        null,
+        4
+      ]
+    ],
+    "broker": {
+      "position": 4,
+      "positions": [
+        4
+      ],
+      "operationId": "null-assertion-transaction",
+      "txIds": [
+        "_tx/00000000000000000000000004"
+      ],
+      "commandIds": [],
+      "subjects": [],
+      "changes": [
+        {
+          "op": "assert",
+          "entity": "_tx/00000000000000000000000004",
+          "attribute": ":status",
+          "validFrom": 100,
+          "validTo": null,
+          "position": 4
+        }
+      ]
+    },
+    "p2x": {
+      "resolutions": [
+        {
+          "msgId": 100,
+          "epoch": 0,
+          "offset": 100,
+          "status": "committed",
+          "stamp": 1577836800100040,
+          "operationId": "6ed07115-4007-42f2-86fb-ad4b4b6afa42",
+          "transacts": [
+            {
+              "position": 800320,
+              "ordinal": 0,
+              "subjects": [
+                "_tx/00000000000000000000000004"
+              ]
+            }
+          ],
+          "attributes": [
+            ":status"
+          ],
+          "commandIds": [],
+          "validFrom": 100,
+          "validTo": null,
+          "changes": [
+            {
+              "op": "assert",
+              "entity": "_tx/00000000000000000000000004",
+              "attribute": ":status",
+              "validFrom": 100,
+              "validTo": null,
+              "ordinal": 0
+            }
+          ]
+        }
+      ],
+      "watermark": {
+        "msgId": 100,
+        "processed": true
+      },
+      "skipped": 0,
+      "blocked": false
+    },
+    "carrier": [
+      "[\"r4/null-assertion-transaction\",\"6ed07115-4007-42f2-86fb-ad4b4b6afa42\"]",
+      "r4/null-assertion-transaction",
+      "6ed07115-4007-42f2-86fb-ad4b4b6afa42",
+      null,
+      0,
+      null,
+      0,
+      1,
+      "[\"_tx/00000000000000000000000004\"]",
+      "[]",
+      "[[\"assert\",\"_tx/00000000000000000000000004\",\":status\",100,null,0]]"
+    ],
+    "queryTrace": [
+      {
+        "sql": "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE _id = ?",
+        "params": [
+          "r4/null-assertion-transaction"
+        ]
+      },
+      {
+        "sql": "SELECT stamp FROM tx_attempts FOR ALL VALID_TIME WHERE _id = ?",
+        "params": [
+          "[\"r4/null-assertion-transaction\",\"6ed07115-4007-42f2-86fb-ad4b4b6afa42\"]"
+        ]
+      },
+      {
+        "sql": "SELECT msg_id, msg_type FROM xt.source_log_msgs WHERE msg_id BETWEEN ? AND ? LIMIT ?",
+        "params": [
+          100,
+          8388708,
+          1001
+        ]
+      },
+      {
+        "sql": "SELECT _id, committed, ((system_time - TIMESTAMP WITH TIME ZONE '1970-01-01T00:00:00Z') / INTERVAL 'PT0.000001S') AS stamp, user_metadata FROM xt.txs WHERE _id IN (?)",
+        "params": [
+          100
+        ]
+      },
+      {
+        "sql": "SELECT _id, changes, command_ids FROM tx_feed FOR ALL VALID_TIME WHERE _id IN (?)",
+        "params": [
+          "[\"r4/null-assertion-transaction\",\"6ed07115-4007-42f2-86fb-ad4b4b6afa42\"]"
+        ]
+      }
+    ],
+    "normalized": [
+      [
+        "assert",
+        "_tx/00000000000000000000000004",
+        ":status",
+        100,
+        null,
+        4
+      ]
+    ]
+  },
+  {
+    "name": "earlier-journal-member",
+    "expected": [
+      [
+        "assert",
+        "order:1",
+        ":status",
+        100,
+        null,
+        4
+      ]
+    ],
+    "broker": {
+      "position": 3,
+      "positions": [
+        3,
+        4
+      ],
+      "operationId": "earlier-journal-member",
+      "txIds": [
+        "_tx/00000000000000000000000004",
+        "_tx/00000000000000000000000003"
+      ],
+      "commandIds": [],
+      "subjects": [],
+      "changes": [
+        {
+          "op": "assert",
+          "entity": "order:1",
+          "attribute": ":status",
+          "validFrom": 100,
+          "validTo": null,
+          "position": 4
+        }
+      ]
+    },
+    "p2x": {
+      "resolutions": [
+        {
+          "msgId": 100,
+          "epoch": 0,
+          "offset": 100,
+          "status": "committed",
+          "stamp": 1577836800100050,
+          "operationId": "89b35075-3d97-4248-8be4-523dea02c3cf",
+          "transacts": [
+            {
+              "position": 800400,
+              "ordinal": 0,
+              "subjects": []
+            },
+            {
+              "position": 800401,
+              "ordinal": 1,
+              "subjects": [
+                "order:1"
+              ]
+            }
+          ],
+          "attributes": [
+            ":status"
+          ],
+          "commandIds": [],
+          "validFrom": 100,
+          "validTo": null,
+          "changes": [
+            {
+              "op": "assert",
+              "entity": "order:1",
+              "attribute": ":status",
+              "validFrom": 100,
+              "validTo": null,
+              "ordinal": 1
+            }
+          ]
+        }
+      ],
+      "watermark": {
+        "msgId": 100,
+        "processed": true
+      },
+      "skipped": 0,
+      "blocked": false
+    },
+    "carrier": [
+      "[\"r4/earlier-journal-member\",\"89b35075-3d97-4248-8be4-523dea02c3cf\"]",
+      "r4/earlier-journal-member",
+      "89b35075-3d97-4248-8be4-523dea02c3cf",
+      null,
+      1,
+      null,
+      1,
+      2,
+      "[\"_tx/00000000000000000000000004\",\"_tx/00000000000000000000000003\"]",
+      "[]",
+      "[[\"assert\",\"order:1\",\":status\",100,null,1]]"
+    ],
+    "queryTrace": [
+      {
+        "sql": "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE _id = ?",
+        "params": [
+          "r4/earlier-journal-member"
+        ]
+      },
+      {
+        "sql": "SELECT stamp FROM tx_attempts FOR ALL VALID_TIME WHERE _id = ?",
+        "params": [
+          "[\"r4/earlier-journal-member\",\"89b35075-3d97-4248-8be4-523dea02c3cf\"]"
+        ]
+      },
+      {
+        "sql": "SELECT msg_id, msg_type FROM xt.source_log_msgs WHERE msg_id BETWEEN ? AND ? LIMIT ?",
+        "params": [
+          100,
+          8388708,
+          1001
+        ]
+      },
+      {
+        "sql": "SELECT _id, committed, ((system_time - TIMESTAMP WITH TIME ZONE '1970-01-01T00:00:00Z') / INTERVAL 'PT0.000001S') AS stamp, user_metadata FROM xt.txs WHERE _id IN (?)",
+        "params": [
+          100
+        ]
+      },
+      {
+        "sql": "SELECT _id, changes, command_ids FROM tx_feed FOR ALL VALID_TIME WHERE _id IN (?)",
+        "params": [
+          "[\"r4/earlier-journal-member\",\"89b35075-3d97-4248-8be4-523dea02c3cf\"]"
+        ]
+      }
+    ],
+    "normalized": [
+      [
+        "assert",
+        "order:1",
+        ":status",
+        100,
+        null,
+        4
+      ]
+    ]
+  },
+  {
+    "name": "journal-only",
+    "expected": [],
+    "broker": {
+      "position": 4,
+      "positions": [
+        4
+      ],
+      "operationId": "journal-only",
+      "txIds": [
+        "_tx/00000000000000000000000004"
+      ],
+      "commandIds": [],
+      "subjects": [],
+      "changes": []
+    },
+    "p2x": {
+      "resolutions": [
+        {
+          "msgId": 100,
+          "epoch": 0,
+          "offset": 100,
+          "status": "committed",
+          "stamp": 1577836800100060,
+          "operationId": "6f0ab8bb-4667-415a-9e15-acc4aaa94bd7",
+          "transacts": [
+            {
+              "position": 800480,
+              "ordinal": 0,
+              "subjects": []
+            }
+          ],
+          "attributes": [],
+          "commandIds": [],
+          "changes": []
+        }
+      ],
+      "watermark": {
+        "msgId": 100,
+        "processed": true
+      },
+      "skipped": 0,
+      "blocked": false
+    },
+    "carrier": [
+      "[\"r4/journal-only\",\"6f0ab8bb-4667-415a-9e15-acc4aaa94bd7\"]",
+      "r4/journal-only",
+      "6f0ab8bb-4667-415a-9e15-acc4aaa94bd7",
+      null,
+      0,
+      null,
+      0,
+      1,
+      "[\"_tx/00000000000000000000000004\"]",
+      "[]",
+      "[]"
+    ],
+    "queryTrace": [
+      {
+        "sql": "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE _id = ?",
+        "params": [
+          "r4/journal-only"
+        ]
+      },
+      {
+        "sql": "SELECT stamp FROM tx_attempts FOR ALL VALID_TIME WHERE _id = ?",
+        "params": [
+          "[\"r4/journal-only\",\"6f0ab8bb-4667-415a-9e15-acc4aaa94bd7\"]"
+        ]
+      },
+      {
+        "sql": "SELECT msg_id, msg_type FROM xt.source_log_msgs WHERE msg_id BETWEEN ? AND ? LIMIT ?",
+        "params": [
+          100,
+          8388708,
+          1001
+        ]
+      },
+      {
+        "sql": "SELECT _id, committed, ((system_time - TIMESTAMP WITH TIME ZONE '1970-01-01T00:00:00Z') / INTERVAL 'PT0.000001S') AS stamp, user_metadata FROM xt.txs WHERE _id IN (?)",
+        "params": [
+          100
+        ]
+      },
+      {
+        "sql": "SELECT _id, changes, command_ids FROM tx_feed FOR ALL VALID_TIME WHERE _id IN (?)",
+        "params": [
+          "[\"r4/journal-only\",\"6f0ab8bb-4667-415a-9e15-acc4aaa94bd7\"]"
+        ]
+      }
+    ],
+    "normalized": []
+  },
+  {
+    "name": "retract-only-application",
+    "expected": [
+      [
+        "retract",
+        "order:1",
+        ":status",
+        100,
+        null,
+        4
+      ]
+    ],
+    "broker": {
+      "position": 4,
+      "positions": [
+        4
+      ],
+      "operationId": "retract-only-application",
+      "txIds": [
+        "_tx/00000000000000000000000004"
+      ],
+      "commandIds": [],
+      "subjects": [],
+      "changes": [
+        {
+          "op": "retract",
+          "entity": "order:1",
+          "attribute": ":status",
+          "validFrom": 100,
+          "validTo": null,
+          "position": 4
+        }
+      ]
+    },
+    "p2x": {
+      "resolutions": [
+        {
+          "msgId": 100,
+          "epoch": 0,
+          "offset": 100,
+          "status": "committed",
+          "stamp": 1577836800100070,
+          "operationId": "05fe06c1-ff4d-4786-a775-d1879da75117",
+          "transacts": [
+            {
+              "position": 800560,
+              "ordinal": 0,
+              "subjects": [
+                "order:1"
+              ]
+            }
+          ],
+          "attributes": [
+            ":status"
+          ],
+          "commandIds": [],
+          "validFrom": 100,
+          "validTo": null,
+          "changes": [
+            {
+              "op": "retract",
+              "entity": "order:1",
+              "attribute": ":status",
+              "validFrom": 100,
+              "validTo": null,
+              "ordinal": 0
+            }
+          ]
+        }
+      ],
+      "watermark": {
+        "msgId": 100,
+        "processed": true
+      },
+      "skipped": 0,
+      "blocked": false
+    },
+    "carrier": [
+      "[\"r4/retract-only-application\",\"05fe06c1-ff4d-4786-a775-d1879da75117\"]",
+      "r4/retract-only-application",
+      "05fe06c1-ff4d-4786-a775-d1879da75117",
+      null,
+      0,
+      null,
+      0,
+      1,
+      "[\"_tx/00000000000000000000000004\"]",
+      "[]",
+      "[[\"retract\",\"order:1\",\":status\",100,null,0]]"
+    ],
+    "queryTrace": [
+      {
+        "sql": "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE _id = ?",
+        "params": [
+          "r4/retract-only-application"
+        ]
+      },
+      {
+        "sql": "SELECT id, entity_id, attribute, value_type, value_string, value_number, value_boolean, value_datetime, value_json, recorded_at, recorded_position, valid_from, valid_to, created_by, retracted_at, retracted_position, retract_tx_id, entity_type, schema_version, tx_id FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = ? AND id = ? AND recorded_position <= ? AND (retracted_at IS NULL OR retracted_position > ?)",
+        "params": [
+          "r4/retract-only-application",
+          "f17",
+          2,
+          2
+        ]
+      },
+      {
+        "sql": "SELECT stamp FROM tx_attempts FOR ALL VALID_TIME WHERE _id = ?",
+        "params": [
+          "[\"r4/retract-only-application\",\"05fe06c1-ff4d-4786-a775-d1879da75117\"]"
+        ]
+      },
+      {
+        "sql": "SELECT msg_id, msg_type FROM xt.source_log_msgs WHERE msg_id BETWEEN ? AND ? LIMIT ?",
+        "params": [
+          100,
+          8388708,
+          1001
+        ]
+      },
+      {
+        "sql": "SELECT _id, committed, ((system_time - TIMESTAMP WITH TIME ZONE '1970-01-01T00:00:00Z') / INTERVAL 'PT0.000001S') AS stamp, user_metadata FROM xt.txs WHERE _id IN (?)",
+        "params": [
+          100
+        ]
+      },
+      {
+        "sql": "SELECT _id, changes, command_ids FROM tx_feed FOR ALL VALID_TIME WHERE _id IN (?)",
+        "params": [
+          "[\"r4/retract-only-application\",\"05fe06c1-ff4d-4786-a775-d1879da75117\"]"
+        ]
+      }
+    ],
+    "normalized": [
+      [
+        "retract",
+        "order:1",
+        ":status",
+        100,
+        null,
+        4
+      ]
+    ]
+  },
+  {
+    "name": "retract-old-journal",
+    "expected": [],
+    "broker": {
+      "position": 4,
+      "positions": [
+        4
+      ],
+      "operationId": "retract-old-journal",
+      "txIds": [
+        "_tx/00000000000000000000000004"
+      ],
+      "commandIds": [],
+      "subjects": [],
+      "changes": []
+    },
+    "p2x": {
+      "resolutions": [
+        {
+          "msgId": 100,
+          "epoch": 0,
+          "offset": 100,
+          "status": "committed",
+          "stamp": 1577836800100080,
+          "operationId": "fee3d77b-f20e-4db6-8940-b3895013cc2e",
+          "transacts": [
+            {
+              "position": 800640,
+              "ordinal": 0,
+              "subjects": []
+            }
+          ],
+          "attributes": [],
+          "commandIds": [],
+          "changes": []
+        }
+      ],
+      "watermark": {
+        "msgId": 100,
+        "processed": true
+      },
+      "skipped": 0,
+      "blocked": false
+    },
+    "carrier": [
+      "[\"r4/retract-old-journal\",\"fee3d77b-f20e-4db6-8940-b3895013cc2e\"]",
+      "r4/retract-old-journal",
+      "fee3d77b-f20e-4db6-8940-b3895013cc2e",
+      null,
+      0,
+      null,
+      0,
+      1,
+      "[\"_tx/00000000000000000000000004\"]",
+      "[]",
+      "[]"
+    ],
+    "queryTrace": [
+      {
+        "sql": "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE _id = ?",
+        "params": [
+          "r4/retract-old-journal"
+        ]
+      },
+      {
+        "sql": "SELECT id, entity_id, attribute, value_type, value_string, value_number, value_boolean, value_datetime, value_json, recorded_at, recorded_position, valid_from, valid_to, created_by, retracted_at, retracted_position, retract_tx_id, entity_type, schema_version, tx_id FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = ? AND id = ? AND recorded_position <= ? AND (retracted_at IS NULL OR retracted_position > ?)",
+        "params": [
+          "r4/retract-old-journal",
+          "f19",
+          2,
+          2
+        ]
+      },
+      {
+        "sql": "SELECT stamp FROM tx_attempts FOR ALL VALID_TIME WHERE _id = ?",
+        "params": [
+          "[\"r4/retract-old-journal\",\"fee3d77b-f20e-4db6-8940-b3895013cc2e\"]"
+        ]
+      },
+      {
+        "sql": "SELECT msg_id, msg_type FROM xt.source_log_msgs WHERE msg_id BETWEEN ? AND ? LIMIT ?",
+        "params": [
+          100,
+          8388708,
+          1001
+        ]
+      },
+      {
+        "sql": "SELECT _id, committed, ((system_time - TIMESTAMP WITH TIME ZONE '1970-01-01T00:00:00Z') / INTERVAL 'PT0.000001S') AS stamp, user_metadata FROM xt.txs WHERE _id IN (?)",
+        "params": [
+          100
+        ]
+      },
+      {
+        "sql": "SELECT _id, changes, command_ids FROM tx_feed FOR ALL VALID_TIME WHERE _id IN (?)",
+        "params": [
+          "[\"r4/retract-old-journal\",\"fee3d77b-f20e-4db6-8940-b3895013cc2e\"]"
+        ]
+      }
+    ],
+    "normalized": []
+  },
+  {
+    "name": "actual-v1-journal-encoder",
+    "expected": [
+      [
+        "assert",
+        "order:1",
+        ":status",
+        100,
+        null,
+        4
+      ]
+    ],
+    "broker": {
+      "position": 4,
+      "positions": [
+        4
+      ],
+      "operationId": "actual-v1-journal-encoder",
+      "txIds": [
+        "_tx/00000000000000000000000004"
+      ],
+      "commandIds": [],
+      "subjects": [],
+      "changes": [
+        {
+          "op": "assert",
+          "entity": "order:1",
+          "attribute": ":status",
+          "validFrom": 100,
+          "validTo": null,
+          "position": 4
+        }
+      ]
+    },
+    "p2x": {
+      "resolutions": [
+        {
+          "msgId": 100,
+          "epoch": 0,
+          "offset": 100,
+          "status": "committed",
+          "stamp": 1577836800100090,
+          "operationId": "807793ec-5ef3-456f-b734-65ad5e7a1fae",
+          "transacts": [
+            {
+              "position": 800720,
+              "ordinal": 0,
+              "subjects": [
+                "order:1"
+              ]
+            }
+          ],
+          "attributes": [
+            ":status"
+          ],
+          "commandIds": [],
+          "validFrom": 100,
+          "validTo": null,
+          "changes": [
+            {
+              "op": "assert",
+              "entity": "order:1",
+              "attribute": ":status",
+              "validFrom": 100,
+              "validTo": null,
+              "ordinal": 0
+            }
+          ]
+        }
+      ],
+      "watermark": {
+        "msgId": 100,
+        "processed": true
+      },
+      "skipped": 0,
+      "blocked": false
+    },
+    "carrier": [
+      "[\"r4/actual-v1-journal-encoder\",\"807793ec-5ef3-456f-b734-65ad5e7a1fae\"]",
+      "r4/actual-v1-journal-encoder",
+      "807793ec-5ef3-456f-b734-65ad5e7a1fae",
+      null,
+      0,
+      null,
+      0,
+      1,
+      "[\"_tx/00000000000000000000000004\"]",
+      "[]",
+      "[[\"assert\",\"order:1\",\":status\",100,null,0]]"
+    ],
+    "queryTrace": [
+      {
+        "sql": "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE _id = ?",
+        "params": [
+          "r4/actual-v1-journal-encoder"
+        ]
+      },
+      {
+        "sql": "SELECT stamp FROM tx_attempts FOR ALL VALID_TIME WHERE _id = ?",
+        "params": [
+          "[\"r4/actual-v1-journal-encoder\",\"807793ec-5ef3-456f-b734-65ad5e7a1fae\"]"
+        ]
+      },
+      {
+        "sql": "SELECT msg_id, msg_type FROM xt.source_log_msgs WHERE msg_id BETWEEN ? AND ? LIMIT ?",
+        "params": [
+          100,
+          8388708,
+          1001
+        ]
+      },
+      {
+        "sql": "SELECT _id, committed, ((system_time - TIMESTAMP WITH TIME ZONE '1970-01-01T00:00:00Z') / INTERVAL 'PT0.000001S') AS stamp, user_metadata FROM xt.txs WHERE _id IN (?)",
+        "params": [
+          100
+        ]
+      },
+      {
+        "sql": "SELECT _id, changes, command_ids FROM tx_feed FOR ALL VALID_TIME WHERE _id IN (?)",
+        "params": [
+          "[\"r4/actual-v1-journal-encoder\",\"807793ec-5ef3-456f-b734-65ad5e7a1fae\"]"
+        ]
+      }
+    ],
+    "normalized": [
+      [
+        "assert",
+        "order:1",
+        ":status",
+        100,
+        null,
+        4
+      ]
+    ]
+  },
+  {
+    "name": "actual-v2-journal-encoder",
+    "expected": [
+      [
+        "assert",
+        "order:1",
+        ":status",
+        100,
+        null,
+        4
+      ]
+    ],
+    "broker": {
+      "position": 4,
+      "positions": [
+        4
+      ],
+      "operationId": "actual-v2-journal-encoder",
+      "txIds": [
+        "_tx/00000000000000000000000004"
+      ],
+      "commandIds": [],
+      "subjects": [],
+      "changes": [
+        {
+          "op": "assert",
+          "entity": "order:1",
+          "attribute": ":status",
+          "validFrom": 100,
+          "validTo": null,
+          "position": 4
+        }
+      ]
+    },
+    "p2x": {
+      "resolutions": [
+        {
+          "msgId": 100,
+          "epoch": 0,
+          "offset": 100,
+          "status": "committed",
+          "stamp": 1577836800100100,
+          "operationId": "0798e009-1101-47f4-ad0a-b5ff4a9e544e",
+          "transacts": [
+            {
+              "position": 800800,
+              "ordinal": 0,
+              "subjects": [
+                "order:1"
+              ]
+            }
+          ],
+          "attributes": [
+            ":status"
+          ],
+          "commandIds": [],
+          "validFrom": 100,
+          "validTo": null,
+          "changes": [
+            {
+              "op": "assert",
+              "entity": "order:1",
+              "attribute": ":status",
+              "validFrom": 100,
+              "validTo": null,
+              "ordinal": 0
+            }
+          ]
+        }
+      ],
+      "watermark": {
+        "msgId": 100,
+        "processed": true
+      },
+      "skipped": 0,
+      "blocked": false
+    },
+    "carrier": [
+      "[\"r4/actual-v2-journal-encoder\",\"0798e009-1101-47f4-ad0a-b5ff4a9e544e\"]",
+      "r4/actual-v2-journal-encoder",
+      "0798e009-1101-47f4-ad0a-b5ff4a9e544e",
+      null,
+      0,
+      null,
+      0,
+      1,
+      "[\"_tx/00000000000000000000000004\"]",
+      "[]",
+      "[[\"assert\",\"order:1\",\":status\",100,null,0]]"
+    ],
+    "queryTrace": [
+      {
+        "sql": "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE _id = ?",
+        "params": [
+          "r4/actual-v2-journal-encoder"
+        ]
+      },
+      {
+        "sql": "SELECT stamp FROM tx_attempts FOR ALL VALID_TIME WHERE _id = ?",
+        "params": [
+          "[\"r4/actual-v2-journal-encoder\",\"0798e009-1101-47f4-ad0a-b5ff4a9e544e\"]"
+        ]
+      },
+      {
+        "sql": "SELECT msg_id, msg_type FROM xt.source_log_msgs WHERE msg_id BETWEEN ? AND ? LIMIT ?",
+        "params": [
+          100,
+          8388708,
+          1001
+        ]
+      },
+      {
+        "sql": "SELECT _id, committed, ((system_time - TIMESTAMP WITH TIME ZONE '1970-01-01T00:00:00Z') / INTERVAL 'PT0.000001S') AS stamp, user_metadata FROM xt.txs WHERE _id IN (?)",
+        "params": [
+          100
+        ]
+      },
+      {
+        "sql": "SELECT _id, changes, command_ids FROM tx_feed FOR ALL VALID_TIME WHERE _id IN (?)",
+        "params": [
+          "[\"r4/actual-v2-journal-encoder\",\"0798e009-1101-47f4-ad0a-b5ff4a9e544e\"]"
+        ]
+      }
+    ],
+    "normalized": [
+      [
+        "assert",
+        "order:1",
+        ":status",
+        100,
+        null,
+        4
+      ]
+    ]
+  }
+]

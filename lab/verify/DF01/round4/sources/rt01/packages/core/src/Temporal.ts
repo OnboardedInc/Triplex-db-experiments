@@ -1,0 +1,64 @@
+import { Schema } from "effect";
+
+/**
+ * The two independent axes used to read bitemporal facts.
+ *
+ * `recordedAt` asks what the database knew at an instant. When omitted, reads
+ * use the latest recorded state. `validAt` asks what was true in business
+ * time. Public read APIs resolve an omitted value to their clock's current
+ * instant before reaching a backend.
+ */
+export const TemporalBasis = Schema.Struct({
+  recordedAt: Schema.optional(Schema.Number),
+  validAt: Schema.optional(Schema.Number),
+});
+export type TemporalBasis = typeof TemporalBasis.Type;
+
+/** A basis whose business-time instant has been resolved by the caller. */
+export interface ResolvedTemporalBasis {
+  readonly recordedAt?: number;
+  /** Internal exact commit cut used by snapshot-stable pagination. */
+  readonly recordedPosition?: number;
+  /** Internal journal reads omit business-time predicates, retaining the record cut. */
+  readonly allValidTime?: true;
+  readonly validAt: number;
+}
+
+/** Effective read cut. Public runtimes supply their validated database scope;
+ * legacy low-level layers retain their existing opaque string scope. A basis
+ * is not a database selector and does not serialize a pending overlay.
+ * See qualification/evidence/read-basis-scope-brand-noemit-failure-v1.json. */
+export interface ReadBasis extends ResolvedTemporalBasis {
+  readonly scope: string;
+  readonly recordedPosition: number;
+}
+
+export const validateTemporalInstant = (name: string, value: number): void => {
+  if (!Number.isFinite(value) || value < 0) {
+    throw new Error(`${name} must be a non-negative finite epoch-millisecond instant`);
+  }
+};
+
+export const resolveTemporalBasis = (
+  basis: TemporalBasis | undefined,
+  now: number,
+): ResolvedTemporalBasis => {
+  validateTemporalInstant("current time", now);
+  if (basis?.recordedAt !== undefined) {
+    validateTemporalInstant("recordedAt", basis.recordedAt);
+  }
+  if (basis?.validAt !== undefined) {
+    validateTemporalInstant("validAt", basis.validAt);
+  }
+  return {
+    ...(basis?.recordedAt !== undefined ? { recordedAt: basis.recordedAt } : {}),
+    validAt: basis?.validAt ?? now,
+  };
+};
+
+// [EXP-RT01] Why: journal metadata is an immutable record log even when stagedAt is ahead of the reader. Rejected: a sentinel clock (still a valid-time predicate).
+export const journalBasis = (recordedPosition: number): ResolvedTemporalBasis => ({
+  allValidTime: true,
+  validAt: 0,
+  recordedPosition,
+});

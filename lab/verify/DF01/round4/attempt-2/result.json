@@ -1,0 +1,86 @@
+{
+  "startedAt": "2026-11-09T12:20:22.169Z",
+  "reviewerHead": "c98bbff84b691fa8d1c95bcc604ef1f4ad53557a",
+  "sources": [
+    "datomic:302a7a63ca3452052bce5576cea5377c481abbb4",
+    "broker:8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+    "p2x:fb6681a4c5b54bfef63ad5ee670047946a24617c",
+    "rt01:7ee171ea294577b3f5d6aca027b311f27465b802"
+  ],
+  "slot": null,
+  "offline": true,
+  "parentGrant": {
+    "pid": 17731,
+    "label": "CX-VDF01-r4-attempt-2",
+    "at": "2026-11-09T12:20:21.866Z"
+  },
+  "availableDiskBytes": 8555339776,
+  "finishedAt": "2026-11-09T12:20:28.275Z",
+  "results": [
+    {
+      "label": "core",
+      "cmd": "/Users/sam/.hermes/node/bin/node",
+      "args": [
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-df01/node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "packages/host/vitest.config.ts",
+        "lab/verify/DF01/round4-core.test.ts",
+        "--reporter=json",
+        "--outputFile=/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-df01/lab/verify/DF01/round4/attempt-2/core.json"
+      ],
+      "code": 0,
+      "signal": null,
+      "error": null
+    },
+    {
+      "label": "feeds",
+      "cmd": "/Users/sam/.hermes/node/bin/node",
+      "args": [
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-df01/node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "lab/verify/DF01/round4-feeds.config.ts",
+        "lab/verify/DF01/round4-feeds.test.ts",
+        "--reporter=json",
+        "--outputFile=/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-df01/lab/verify/DF01/round4/attempt-2/feeds.json"
+      ],
+      "code": 0,
+      "signal": null,
+      "error": null
+    },
+    {
+      "label": "datomic",
+      "cmd": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-DF01/jdk-21.0.13+9-jre/Contents/Home/bin/java",
+      "args": [
+        "-Xmx256m",
+        "-Dtriplex.codec.spec=/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-df01/lab/verify/DF01/round4/sources/datomic/packages/datomic/src/codec-spec.json",
+        "-cp",
+        "/Users/sam/Claude/Projects/triplex-db-2/downloads/datomic-pro-1.0.7745/extracted/datomic-pro-1.0.7745/*:/Users/sam/Claude/Projects/triplex-db-2/downloads/datomic-pro-1.0.7745/extracted/datomic-pro-1.0.7745/lib/*:/Users/sam/Claude/Projects/triplex-db-2/downloads/datomic-pro-1.0.7745/extracted/datomic-pro-1.0.7745/resources:/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-df01/lab/verify/DF01/round4/sources/datomic/packages/datomic/gateway/src:/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-df01/lab/verify/DF01",
+        "clojure.main",
+        "-m",
+        "round4-verify"
+      ],
+      "code": 1,
+      "signal": null,
+      "error": null
+    }
+  ],
+  "outputs": {
+    "core.json": "ad59cbae8a82bd60618cea5f0ff6530d82adfa0bbd996f4b2df35a152c441061",
+    "core.stderr.log": "798943d89f80094c396a29caf5ec3dfb811bbbd722a096ac3ad78721a80b259a",
+    "core.stdout.log": "7c4e6d773772d32126e42ecf09857d3d84bb5bca601a7d3767b35ca8ee3e430d",
+    "datomic-results.json": "a58c754916de66c03584fa18a9471ea2462de26bc7c6508f07840eaf9addc380",
+    "datomic.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "datomic.stdout.log": "3990dc24b3ec3277a0d7659475c7ebb60eb693ab55847de167cf35ee2c82269f",
+    "feeds.json": "4a8e4f0be32a58ef974a9fb8dfab4903d4ea9631c8df4f5dd5eed25627eaa4bb",
+    "feeds.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "feeds.stdout.log": "b6adf2aad6dbed3c4b4acd5474b3e2161f8f86810deec0e48dd2e76f79f62123",
+    "fixture.json": "f33dc9f18efc7cdf078145cb288c53ec19d4a875acbad96cc375edbe5878cd53",
+    "inputs.json": "9098daaf6ee3889231594d2b6faf926e413f63ae1ceb4f0c50eb8c26ce74b30c",
+    "typescript-results.json": "7cc77d95c7700a77cc0f8b78640af4a16b3ab2179c786cb7d54e008806e6acf5"
+  },
+  "coreOK": true,
+  "tsOK": true,
+  "cljOK": false
+}

@@ -1,0 +1,113 @@
+{
+  "name": "@triplex-build/triplex",
+  "version": "0.2.0",
+  "description": "The database that remembers why: an embedded, bitemporal fact database for TypeScript back-office systems, built on Effect.",
+  "keywords": [
+    "configuration",
+    "content-addressed",
+    "database",
+    "datalog",
+    "effect",
+    "sha-256",
+    "triplestore"
+  ],
+  "homepage": "https://github.com/bjacobso/triplex#readme",
+  "bugs": {
+    "url": "https://github.com/bjacobso/triplex/issues"
+  },
+  "license": "MIT",
+  "author": "Ben Jacobson",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bjacobso/triplex.git",
+    "directory": "packages/core"
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./datalog": {
+      "types": "./dist/datalog/index.d.ts",
+      "import": "./dist/datalog/index.js",
+      "default": "./dist/datalog/index.js"
+    },
+    "./subscriptions": {
+      "types": "./dist/subscriptions/index.d.ts",
+      "import": "./dist/subscriptions/index.js",
+      "default": "./dist/subscriptions/index.js"
+    },
+    "./config": {
+      "types": "./dist/config/index.d.ts",
+      "import": "./dist/config/index.js",
+      "default": "./dist/config/index.js"
+    },
+    "./content": {
+      "types": "./dist/content/index.d.ts",
+      "import": "./dist/content/index.js",
+      "default": "./dist/content/index.js"
+    },
+    "./derivation": {
+      "types": "./dist/derivation/index.d.ts",
+      "import": "./dist/derivation/index.js",
+      "default": "./dist/derivation/index.js"
+    },
+    "./operational": {
+      "types": "./dist/operational/index.d.ts",
+      "import": "./dist/operational/index.js",
+      "default": "./dist/operational/index.js"
+    },
+    "./entity": {
+      "types": "./dist/entity/index.d.ts",
+      "import": "./dist/entity/index.js",
+      "default": "./dist/entity/index.js"
+    },
+    "./runtime": {
+      "types": "./dist/runtime/index.d.ts",
+      "import": "./dist/runtime/index.js",
+      "default": "./dist/runtime/index.js"
+    },
+    "./internal": {
+      "types": "./dist/internal.d.ts",
+      "import": "./dist/internal.js",
+      "default": "./dist/internal.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "test": "vitest --run",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p test/runtime/tsconfig.json && tsc --noEmit -p test/entity/tsconfig.json",
+    "clean": "rm -rf dist",
+    "bench:config": "node bench/config/scale.mjs",
+    "bench:config:typecheck": "node bench/config/typecheck-budget.mjs"
+  },
+  "dependencies": {
+    "ulidx": "catalog:"
+  },
+  "devDependencies": {
+    "@effect/vitest": "catalog:",
+    "@types/node": "catalog:",
+    "effect": "catalog:",
+    "vitest": "catalog:"
+  },
+  "peerDependencies": {
+    "effect": "catalog:"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "kind": "initial-manifest-failure",
+  "mismatches": [
+    {
+      "file": "lab/verify/DF01/index-round4.mjs",
+      "expected": "04d9c45232e4a558e8c32ef38bbe231ee0ce3a5fa73545ed69c5f6316cdd9454",
+      "actual": "8dc1b2494fca6df616c2635f04de43007eb4033cfa28fd4c634816e762339d78"
+    },
+    {
+      "file": "lab/verify/DF01/round4/index.log",
+      "expected": "80a6b8d5124556761a960b15a4feda02a9d93c4f337d38a5a4897a40b0e558d1",
+      "actual": "3fae5faac160451719e657f5a2825aba99deba8cd1e6547acea78d49d3f1398f"
+    }
+  ],
+  "testedSourceOrOutputMismatch": false,
+  "initialIndexerSha256": "04d9c45232e4a558e8c32ef38bbe231ee0ce3a5fa73545ed69c5f6316cdd9454"
+}

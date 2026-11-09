@@ -1,0 +1,2515 @@
+{
+  "bindings": [
+    {
+      "label": "datomic",
+      "commit": "302a7a63ca3452052bce5576cea5377c481abbb4",
+      "file": "packages/datomic/gateway/src/triplex/gateway/canonical.clj",
+      "copy": "round4/sources/datomic/packages/datomic/gateway/src/triplex/gateway/canonical.clj",
+      "sha256": "66873b85d284aeda3464678c4b23cf6e723601f2e74931ae10f0ea8f3ad65faf",
+      "blob": "c77e12936852f51fdd4d6cb4755478c1e32a0a79"
+    },
+    {
+      "label": "datomic",
+      "commit": "302a7a63ca3452052bce5576cea5377c481abbb4",
+      "file": "packages/datomic/gateway/src/triplex/gateway/codec.clj",
+      "copy": "round4/sources/datomic/packages/datomic/gateway/src/triplex/gateway/codec.clj",
+      "sha256": "98fc351ab48b2cf9d8ce839a1a43f889b7ad2d3d39a48f27eaec56060046eca5",
+      "blob": "8310d227e9c054bf200d5680066f9910d8be62a5"
+    },
+    {
+      "label": "datomic",
+      "commit": "302a7a63ca3452052bce5576cea5377c481abbb4",
+      "file": "packages/datomic/gateway/src/triplex/gateway/feed.clj",
+      "copy": "round4/sources/datomic/packages/datomic/gateway/src/triplex/gateway/feed.clj",
+      "sha256": "43ca48e7ac854f7d360a59353d9922b4a37b37a675b0baebd248c6e08fab3bc1",
+      "blob": "277ffef55068916439e51c2979db98b6ce4474df"
+    },
+    {
+      "label": "datomic",
+      "commit": "302a7a63ca3452052bce5576cea5377c481abbb4",
+      "file": "packages/datomic/gateway/src/triplex/gateway/feed_live.clj",
+      "copy": "round4/sources/datomic/packages/datomic/gateway/src/triplex/gateway/feed_live.clj",
+      "sha256": "2cd71993391b34817e6d505bb2e28ce372003ec84518e2130401776e58a65213",
+      "blob": "8bafd261dad574508e1e3b66bf2af59b69e5c2f8"
+    },
+    {
+      "label": "datomic",
+      "commit": "302a7a63ca3452052bce5576cea5377c481abbb4",
+      "file": "packages/datomic/gateway/src/triplex/gateway/feed_test.clj",
+      "copy": "round4/sources/datomic/packages/datomic/gateway/src/triplex/gateway/feed_test.clj",
+      "sha256": "174e33e4d54e3fe6a16efb189a8fc43d6ae986aee44252517c6a4ea5384b1a9d",
+      "blob": "e15bc2bfdb16fe077c964f0d8310fabfd8464a09"
+    },
+    {
+      "label": "datomic",
+      "commit": "302a7a63ca3452052bce5576cea5377c481abbb4",
+      "file": "packages/datomic/gateway/src/triplex/gateway/main.clj",
+      "copy": "round4/sources/datomic/packages/datomic/gateway/src/triplex/gateway/main.clj",
+      "sha256": "5d070016255c2a38afce92f1dd55deb0b8da51925db46fbf73e2e630d699f4c3",
+      "blob": "1e33a76c44d7e3f06d580f03496d594c82dd3365"
+    },
+    {
+      "label": "datomic",
+      "commit": "302a7a63ca3452052bce5576cea5377c481abbb4",
+      "file": "packages/datomic/gateway/src/triplex/gateway/query.clj",
+      "copy": "round4/sources/datomic/packages/datomic/gateway/src/triplex/gateway/query.clj",
+      "sha256": "b33de776b4b7bf94e07a54048a8d5d83907f52b3c345b67b48d44a16d102a7fc",
+      "blob": "42280f8d5b7797dda24e755b2a40e475fdf76d7a"
+    },
+    {
+      "label": "datomic",
+      "commit": "302a7a63ca3452052bce5576cea5377c481abbb4",
+      "file": "packages/datomic/gateway/src/triplex/gateway/schema.clj",
+      "copy": "round4/sources/datomic/packages/datomic/gateway/src/triplex/gateway/schema.clj",
+      "sha256": "636254617e969cbaa4ec4c9bd25d29be0b3b636fb2d81394e69cf9b8cfa4f2e9",
+      "blob": "32e83f6588677732863e51055fb21cfbab67b629"
+    },
+    {
+      "label": "datomic",
+      "commit": "302a7a63ca3452052bce5576cea5377c481abbb4",
+      "file": "packages/datomic/gateway/src/triplex/gateway/scope.clj",
+      "copy": "round4/sources/datomic/packages/datomic/gateway/src/triplex/gateway/scope.clj",
+      "sha256": "d0e5bd26d578fd60375b522a01c39e174ea4f1e438f7fcb32e95c8615697be12",
+      "blob": "890cb77f072a995abef7b1d8044890594bb044f8"
+    },
+    {
+      "label": "datomic",
+      "commit": "302a7a63ca3452052bce5576cea5377c481abbb4",
+      "file": "packages/datomic/gateway/src/triplex/gateway/selftest.clj",
+      "copy": "round4/sources/datomic/packages/datomic/gateway/src/triplex/gateway/selftest.clj",
+      "sha256": "5060884fd018d0e2d5e585d9d89b0f9d3d160dccf426122a447973c6b4720c34",
+      "blob": "8a3c30b893bb85c2eb54799fe4819ecb23b50f9c"
+    },
+    {
+      "label": "datomic",
+      "commit": "302a7a63ca3452052bce5576cea5377c481abbb4",
+      "file": "packages/datomic/gateway/src/triplex/gateway/storage.clj",
+      "copy": "round4/sources/datomic/packages/datomic/gateway/src/triplex/gateway/storage.clj",
+      "sha256": "a300bd5339d40f63b1a9ed8ad5df8a3f19d67b76f0805595fbfaa3d68f0f2424",
+      "blob": "2d8af543fb99d83fb48f342a4778fb9e57dd5cad"
+    },
+    {
+      "label": "datomic",
+      "commit": "302a7a63ca3452052bce5576cea5377c481abbb4",
+      "file": "packages/datomic/src/codec-spec.json",
+      "copy": "round4/sources/datomic/packages/datomic/src/codec-spec.json",
+      "sha256": "ae2bf463e0f51afcb4eb1d294ea3915a9d31e1ab0d5a005e254e7d7d2a003f7c",
+      "blob": "224ff87757780822f29f5330a71c39886626fa60"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/package.json",
+      "copy": "round4/sources/broker/packages/core/package.json",
+      "sha256": "80dbec4b6dfd6489ae0765147cdac2fc3414f995a0c98bdf45056fe3711c7170",
+      "blob": "da7023f878d0d966a58dcd1aa2bbb5bb9fa41446"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/Branded.ts",
+      "copy": "round4/sources/broker/packages/core/src/Branded.ts",
+      "sha256": "4e2fed82db1de67f77bac91248d98ee86a7f5bccf8038631fe1fae4b64c3a82c",
+      "blob": "3a936cec2eff6ce5b48960ebe21376701f70d24f"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/Constraint.ts",
+      "copy": "round4/sources/broker/packages/core/src/Constraint.ts",
+      "sha256": "8af934e31a17660911c29ccbcd9c84c2f144f3c78103f04726289f9722d34c64",
+      "blob": "51007a46bb48fa4a76bd06b1692846217978150b"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/EntityPage.ts",
+      "copy": "round4/sources/broker/packages/core/src/EntityPage.ts",
+      "sha256": "e4b8ce0842eff6b9a279159ef10ff13828c426dd1e5e7ffc6d1674db1c650eac",
+      "blob": "2dd9d9de8d425a4416b94a38e594ae6512ce1a1b"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/Error.ts",
+      "copy": "round4/sources/broker/packages/core/src/Error.ts",
+      "sha256": "e3a6f29d0c3def8df213dee1fcb97eb47c31510cccd67faacfafb25c119ad720",
+      "blob": "411de5220a76dfaedbccdf2345daef6a05e60354"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/Pagination.ts",
+      "copy": "round4/sources/broker/packages/core/src/Pagination.ts",
+      "sha256": "a2a7d3a1eed1982b823edd969f296ee6029ce68084e641994785609a0da63d8f",
+      "blob": "977ee24fa09c94bc8915f877479b996b0cf801bd"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/Temporal.ts",
+      "copy": "round4/sources/broker/packages/core/src/Temporal.ts",
+      "sha256": "1b10b1b56b12c02d1b8f2ceb9ba2de9d4616ca402dfa0e8496907bf60bf87f99",
+      "blob": "5c9da09b8304debdd89a9bff82a4d83697dd9106"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/Triple.ts",
+      "copy": "round4/sources/broker/packages/core/src/Triple.ts",
+      "sha256": "60dbe67b340285915098ecf5e9d7498d606b86cb9b04100d4316704d31857fd0",
+      "blob": "aa3d33cebb5dcc7de4d8dc236e599f70354b0538"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/Value.ts",
+      "copy": "round4/sources/broker/packages/core/src/Value.ts",
+      "sha256": "aff90122347b3536aed8b1fa3a105d9973f9b98d9bc73ab4534cb2a7fc789222",
+      "blob": "8c76eacbf30f17aae8e5b9ec4302ad8073929191"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/ValueDomain.ts",
+      "copy": "round4/sources/broker/packages/core/src/ValueDomain.ts",
+      "sha256": "5ffd4e9e828cbd2e11db246f9af065e891dc9a4d2e0056574fa15a2c64c63f85",
+      "blob": "bd62fa92ee39883875d4708c492cbf0897b61d3e"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/config/Attribute.ts",
+      "copy": "round4/sources/broker/packages/core/src/config/Attribute.ts",
+      "sha256": "c93109a543142aad1833726b278de3fcc56bb506dcac505fbb8f069fd75ba79e",
+      "blob": "294c7f442f24293f5b7dfe3af74beaf60f5b974d"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/config/BoolExpr.ts",
+      "copy": "round4/sources/broker/packages/core/src/config/BoolExpr.ts",
+      "sha256": "daad9d805487072df9c6ba6380a64770d0507abea2fcae2d4daa55f853d25209",
+      "blob": "b47ee74f4163507bd7a1cb42245890ee1eef6b88"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/config/Catalog.ts",
+      "copy": "round4/sources/broker/packages/core/src/config/Catalog.ts",
+      "sha256": "87359fae2e5467b3cc456f1c4bb0d04891579df4081e4bf6b3d3b4a6ac37b7fd",
+      "blob": "8b0e7a1d721d469a6d4a48d375f5046f77af2321"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/config/ConfigNode.ts",
+      "copy": "round4/sources/broker/packages/core/src/config/ConfigNode.ts",
+      "sha256": "84efa0881aafb44580f44c7cd6bc731be866044c81f9722f2d7fc01872851c80",
+      "blob": "2000f9c53b856a84dcdd9c9ff8037fce77f6bb77"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/config/ConfigRuntime.ts",
+      "copy": "round4/sources/broker/packages/core/src/config/ConfigRuntime.ts",
+      "sha256": "bab7bdb29c23eb9a46c58215ba57b2d5df0970a41ee5dff6219a4303a4dd7137",
+      "blob": "1023fcd610ef9c5a77180836fa038f367c5de627"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/config/ConfigStore.ts",
+      "copy": "round4/sources/broker/packages/core/src/config/ConfigStore.ts",
+      "sha256": "0593471fd68ef24e3ddab77e74c4037892f07cdb5de62b8cad99de75fd423f24",
+      "blob": "0b60aa9328bb0127dca2464b4e934c4b5986bff7"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/config/Entity.ts",
+      "copy": "round4/sources/broker/packages/core/src/config/Entity.ts",
+      "sha256": "1436b3be3ff40f6417086e199577d3ce54bdf458238c35f91a2f4f1e65f650e8",
+      "blob": "e8c3ec6d6dc31e7d08b18beff979452c2162d7a4"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/config/EntityType.ts",
+      "copy": "round4/sources/broker/packages/core/src/config/EntityType.ts",
+      "sha256": "184d4ebf8f0383dbd3925ff5e8fa107a6c6e9c244668bb0c8bbc729f8c6d868d",
+      "blob": "2d691b41a09f6a71842faed3f8c782cb16abd8ff"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/config/EntityValidation.ts",
+      "copy": "round4/sources/broker/packages/core/src/config/EntityValidation.ts",
+      "sha256": "8adb3638b8092475887fd0880ece5813c5b4d3baf136bfe3905c67fe07d0e5d3",
+      "blob": "adb87aa2dfea694a3c18444c5da42d06c87fd2c1"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/config/Evaluate.ts",
+      "copy": "round4/sources/broker/packages/core/src/config/Evaluate.ts",
+      "sha256": "f7c3615068b3a280438fc3ea892bccbd649922a6e6e2060378b133a4b6843eb2",
+      "blob": "b2c74a3487b80637044057e86ac83bcf456ee8ff"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/config/GraphConstraint.ts",
+      "copy": "round4/sources/broker/packages/core/src/config/GraphConstraint.ts",
+      "sha256": "46f9f800fe35617792abab7403d9f0e908f781463937823b3852bebcfd325929",
+      "blob": "e354590f38d201f4ada8ac35b3bc2f699a11eb16"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/config/InMemoryConfigStore.ts",
+      "copy": "round4/sources/broker/packages/core/src/config/InMemoryConfigStore.ts",
+      "sha256": "1c64c7f7efa40a374ed5d425a6f979ac28a131d99a72b1882bda5c011c962d4d",
+      "blob": "ba21046e3e273456e688f0e7f161242d70e88afa"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/config/Reactor.ts",
+      "copy": "round4/sources/broker/packages/core/src/config/Reactor.ts",
+      "sha256": "d2392c3679f01208c4eb5cd888606adba3a581f9363b21dbc697cbb35a95f71f",
+      "blob": "5fc2e79d9c4ff70d1093d6e85cde5005fb5a6c30"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/config/TypeExpr.ts",
+      "copy": "round4/sources/broker/packages/core/src/config/TypeExpr.ts",
+      "sha256": "2ee16543676eb73494ca1138136b452da0e5250d6eca1389bdc5eb3dffcfd74d",
+      "blob": "90ebb59c20e24b216a71e595f7709f16c1f97baa"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/config/TypeSchema.ts",
+      "copy": "round4/sources/broker/packages/core/src/config/TypeSchema.ts",
+      "sha256": "05f69095535128e9a3fc83907a45a95ea5f6fd46f2f159dcac471c39a3b046c9",
+      "blob": "dabb8bec4d9bafa063cf28cebde619086caa9622"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/config/TypeSubsumption.ts",
+      "copy": "round4/sources/broker/packages/core/src/config/TypeSubsumption.ts",
+      "sha256": "7b814d6d7cb8d1ad29befd96dbad27fda822baca699bc8a16a3246c4e7240bb4",
+      "blob": "218204b34acb1e292333cbd7aa8c6d7514a11277"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/config/World.ts",
+      "copy": "round4/sources/broker/packages/core/src/config/World.ts",
+      "sha256": "0508c0cf1ca08522556d4aca73d5f87a5c15ca7935653cb7feae4c6581a6a4fd",
+      "blob": "0fb0765c5a1050fd065d2c2a7874221c62e30954"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/config/index.ts",
+      "copy": "round4/sources/broker/packages/core/src/config/index.ts",
+      "sha256": "a246d76fcd973a0434f09d9e8c657d19163b6eac687a3cf71d79fd8cf2ea78f6",
+      "blob": "019961e6f0d95919cc21eb9efbf8fa9bc51b04f7"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/content/CanonicalJson.ts",
+      "copy": "round4/sources/broker/packages/core/src/content/CanonicalJson.ts",
+      "sha256": "16475d1c66f329c0d13ea8d065734b3ef4b0bf546f848d753fe627f24edb5727",
+      "blob": "133cbcdf0ecebfeca5edebb55172c20bf9f1b9e0"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/content/ContentId.ts",
+      "copy": "round4/sources/broker/packages/core/src/content/ContentId.ts",
+      "sha256": "0687a9194722546a584e46da5ba2fd3e21f01e48a69b228862833c20e951d7db",
+      "blob": "cb5717c05596d10a187a8acb1b72458023a668db"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/content/Sha256.ts",
+      "copy": "round4/sources/broker/packages/core/src/content/Sha256.ts",
+      "sha256": "0e0f2ba6549d2ddb89113ba0ffdbcdeb2437d8c046982b9c97ee070985f8b92a",
+      "blob": "a4be66ef4909151d068a4c384727c84f6b6732ab"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/content/index.ts",
+      "copy": "round4/sources/broker/packages/core/src/content/index.ts",
+      "sha256": "3840a84c2c71164e717d87f17b84cecf275f7e39d08c5eda483500bbc90bd3d0",
+      "blob": "852e087451fecfe5ea13b65b3bb84b6b4aaa84ee"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/datalog/compiler.ts",
+      "copy": "round4/sources/broker/packages/core/src/datalog/compiler.ts",
+      "sha256": "549f685706fc0de023dd36913216b921591b89ab6fe4fadb1dff58775229ec67",
+      "blob": "58b7d036a8d194d2d351ec6be4ce8b66de3197af"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/datalog/index.ts",
+      "copy": "round4/sources/broker/packages/core/src/datalog/index.ts",
+      "sha256": "26f16835b8150e6b3ec584e773b16b946ac68f641db2e1ef084b0bcc65226663",
+      "blob": "ef3cc581178e5396fb8051881f435f56d52bf046"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/datalog/schema.ts",
+      "copy": "round4/sources/broker/packages/core/src/datalog/schema.ts",
+      "sha256": "6000a11b2635a9a915f3a6b41504ce07631e62d6673fdd76c070cf1a8ce639bf",
+      "blob": "2136ee069857ce2d95a01a973031b7cfe7c57e2c"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/datalog/types.ts",
+      "copy": "round4/sources/broker/packages/core/src/datalog/types.ts",
+      "sha256": "0a74df375fbaca0eaf388af5799d0612c2763de4d58f7fa00813268537d5d913",
+      "blob": "e86234e303efb385b891146a8eec3146693e26e4"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/datalog/validation.ts",
+      "copy": "round4/sources/broker/packages/core/src/datalog/validation.ts",
+      "sha256": "a433f5e20d8c03502cd222975de79d7cda97aedef850919a17fc59b0312d0ae8",
+      "blob": "286bc68f31e081a074b7e32034e5666a00eb8d09"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/datalog/wrapper.ts",
+      "copy": "round4/sources/broker/packages/core/src/datalog/wrapper.ts",
+      "sha256": "9a24a60bb57dd1d89a4c89601c56dc8153fb9f93f587b8780f236eb97f992b87",
+      "blob": "60b0504d50a5e75fa282ad853c865bdb5dcb6e34"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/derivation/Derivation.ts",
+      "copy": "round4/sources/broker/packages/core/src/derivation/Derivation.ts",
+      "sha256": "2d0d52d4ca3b0f687ebbe4bc4a7499dc2e7ef8df87f8a2341341a51139682304",
+      "blob": "9c3af0fb46a53b57cd0aac79c2a7f52c3a0557d3"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/derivation/Materialization.ts",
+      "copy": "round4/sources/broker/packages/core/src/derivation/Materialization.ts",
+      "sha256": "d62e9cb8b1e97333f701fb8eb5398349a35ed7af6b39a9a0f1539c3b572ef71e",
+      "blob": "9f1aab23f4901fea1b9f3fbe69de268dfc6af2fe"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/derivation/Overlay.ts",
+      "copy": "round4/sources/broker/packages/core/src/derivation/Overlay.ts",
+      "sha256": "a8ff445cf775896a49fb79f95ece30eb629e18fad42eceeae65633a4d3046fae",
+      "blob": "8e40c068429381a1d61711d937d6ac307a0e0ed7"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/derivation/index.ts",
+      "copy": "round4/sources/broker/packages/core/src/derivation/index.ts",
+      "sha256": "eab9634be27e2e8d725f25b58b4b3adecc53bcf7996fef866ccd04efeab6259d",
+      "blob": "e60ead57b561fbd2ea09ccdfe940e1cf7efa10d0"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/dialects/index.ts",
+      "copy": "round4/sources/broker/packages/core/src/dialects/index.ts",
+      "sha256": "b8772aef8c8e0688c52ff3b612b3131ead8b1d2a61945d53d0334d5424ad1418",
+      "blob": "412e23dd481e48e94d776684fedbffa400f3d416"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/dialects/postgresql.ts",
+      "copy": "round4/sources/broker/packages/core/src/dialects/postgresql.ts",
+      "sha256": "13b8f11a0c8cd84d080887a31210d9dafaf1e49e30fd3474926efb5578a646b4",
+      "blob": "85e98a369c337574608d5422f2c1ca85cd4bc830"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/dialects/sqlite.ts",
+      "copy": "round4/sources/broker/packages/core/src/dialects/sqlite.ts",
+      "sha256": "33d5d40c8594df6ff0fb572dd4237685eaff95b7fab38efcaf9983f34a4b7b13",
+      "blob": "a00e6e8e7f2b87533e2be708f440b6e68620af40"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/dialects/types.ts",
+      "copy": "round4/sources/broker/packages/core/src/dialects/types.ts",
+      "sha256": "b32e672f81018bc16fb78a310bfdfd868fde3c6914e10a8b1d9059180ef1f800",
+      "blob": "63fdf7de0bbcedb913e0551e6f26464ecc599321"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/entity/Descriptors.ts",
+      "copy": "round4/sources/broker/packages/core/src/entity/Descriptors.ts",
+      "sha256": "b93f0d2cd5a29bf63649945399e037281af6ebb9c79c3a23314699d40e7ab655",
+      "blob": "ce6a6d719756ca627d2de4800862b78789660428"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/entity/EntityCodec.ts",
+      "copy": "round4/sources/broker/packages/core/src/entity/EntityCodec.ts",
+      "sha256": "0ffc72c0182f50345d5ccac56d16a7a55930584575a330609382dc08d8fb211a",
+      "blob": "bf8055ad5ccdac77f0a4fb64cdb50c090366a8f1"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/entity/Errors.ts",
+      "copy": "round4/sources/broker/packages/core/src/entity/Errors.ts",
+      "sha256": "f8ac929dffd8b1776f29fd0129f6d7a769ec35de9febb0e19e4f622aabbad44c",
+      "blob": "e38d615da3c98e7d545d3079b8ee5a7a2035d7c9"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/entity/Model.ts",
+      "copy": "round4/sources/broker/packages/core/src/entity/Model.ts",
+      "sha256": "ea5b1c9a9532b75a178d2604155f5d2a53853e71b6bdd61fee331c97ce5f128b",
+      "blob": "fc72a69d22ae6b5ec9ca795cac2e438b30f5b93f"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/entity/PhysicalNames.ts",
+      "copy": "round4/sources/broker/packages/core/src/entity/PhysicalNames.ts",
+      "sha256": "74bd98b59cb2b92010970cad8f0bbecee6787e6f75987b857cac280b1132dc74",
+      "blob": "19e5574a03cb38bdfb87a7e2692244b48202cddd"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/entity/Plan.ts",
+      "copy": "round4/sources/broker/packages/core/src/entity/Plan.ts",
+      "sha256": "72a7540486ae550c73044f51e3ffc204ff284398f32800317f1fdc9a2a8610c2",
+      "blob": "6882f4ff8ad4131526a32be59d66696da0acb874"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/entity/ProjectionSpec.ts",
+      "copy": "round4/sources/broker/packages/core/src/entity/ProjectionSpec.ts",
+      "sha256": "6945dd2100052fbe3f2d68b6177b454c72631e6f0ea41ad0f4d8c9a663510c63",
+      "blob": "8a77ac065e1a2ee959c96e4b0e3f47cb6932285d"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/entity/Repository.ts",
+      "copy": "round4/sources/broker/packages/core/src/entity/Repository.ts",
+      "sha256": "02785261cbebff292ff6163c6bdebef0e256c31765ae7165b449b094d44e8f73",
+      "blob": "4e3698dad2bb16f3ee3265ad3dbc1a0d2927ad18"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/entity/index.ts",
+      "copy": "round4/sources/broker/packages/core/src/entity/index.ts",
+      "sha256": "1fb0fe444e9878a442025f9498f47a1b2c589590396c26943139e16af682982b",
+      "blob": "bbbcbcb54cdc135510ebfb9bc88b9d84186c7715"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/errors/index.ts",
+      "copy": "round4/sources/broker/packages/core/src/errors/index.ts",
+      "sha256": "c8bc3dd73d5ded0747af741a1bfaf220dce05829e2e06e79c208e590506b868f",
+      "blob": "771dd27c2d4bdc9317e06371c8f785c7739d277b"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/index.ts",
+      "copy": "round4/sources/broker/packages/core/src/index.ts",
+      "sha256": "34f85c695a10ed8ad1ea4bda1e44da96de836bfa0f4e8a2f5c99e23fb7bb4887",
+      "blob": "b6c095400e28a2cdfdd5e3475f1fb905aff242a8"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/internal.ts",
+      "copy": "round4/sources/broker/packages/core/src/internal.ts",
+      "sha256": "4c304d5efd8fcdee14838638029b0950babff2b5fe00d37b57a7bb327eb9882b",
+      "blob": "9f24aa4f3fcae7fcdc32bda5cdf84c40c07ff699"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/kv/datalog/executor.ts",
+      "copy": "round4/sources/broker/packages/core/src/kv/datalog/executor.ts",
+      "sha256": "87770b124f41b99c89bf615925c290f8b176c7c1a5fdeb90dc3f3da91b5a7f1e",
+      "blob": "3f09a70d552ec5a2137a66ab1d768196c3fd95c7"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/kv/datalog/index.ts",
+      "copy": "round4/sources/broker/packages/core/src/kv/datalog/index.ts",
+      "sha256": "da88f8a0c4fc5c3c490b81fb79f7a117554b10e3921a634be3f3677542ac1a35",
+      "blob": "56903715d48068061b86cc46db32bbde061a830a"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/kv/datalog/pattern.ts",
+      "copy": "round4/sources/broker/packages/core/src/kv/datalog/pattern.ts",
+      "sha256": "9276ea3346cd3ba7b0543ce93c481384c5e2542ea3832933a55d5e4fa40f3b06",
+      "blob": "987e426dbdd6ef481915ef42e667b01d49f241d7"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/kv/datalog/predicate.ts",
+      "copy": "round4/sources/broker/packages/core/src/kv/datalog/predicate.ts",
+      "sha256": "fee33c520c074ac693a2b0078de949c291b30229d9ae20709a64813adf0f31ea",
+      "blob": "86f8151df41dc483013f841e79f03d8cb81879a5"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/kv/datalog/types.ts",
+      "copy": "round4/sources/broker/packages/core/src/kv/datalog/types.ts",
+      "sha256": "f52b4b0a7bc97f1e61a2cc6fce81f1841201327f68eaf34862dc37643d032ea2",
+      "blob": "f660b2f12dae500ee1449767cafa03bad5059a70"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/kv/hexastore/KvTripleStore.ts",
+      "copy": "round4/sources/broker/packages/core/src/kv/hexastore/KvTripleStore.ts",
+      "sha256": "3c98bb221e8c8916c8ffc0a91de74c4cbc804137b9471d052f5e51f698d48d04",
+      "blob": "b55d97ecdac8c7cf87d3db6ff79df63a575c4df9"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/kv/hexastore/index.ts",
+      "copy": "round4/sources/broker/packages/core/src/kv/hexastore/index.ts",
+      "sha256": "d6dd0f04c212fcffe85f893c708b55e8c188a719c5fbe9c227cecee0f38369bc",
+      "blob": "60e0fbe896f763194a78cbc217050995c10f5e37"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/kv/hexastore/indexes.ts",
+      "copy": "round4/sources/broker/packages/core/src/kv/hexastore/indexes.ts",
+      "sha256": "bb3787b6aa678388de18bf915cdddad7fcc9c250cf912c572f93866f4c310d1b",
+      "blob": "77337a75fa981286c5d863d40470d35d7f146b73"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/kv/hexastore/scan.ts",
+      "copy": "round4/sources/broker/packages/core/src/kv/hexastore/scan.ts",
+      "sha256": "162f1694a96792361daf44f40bbf4998270d06fc638c0c01b6ce9e29b45df39e",
+      "blob": "c6da06461bd534c1f8d6604cc013116d2b070806"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/kv/hexastore/tuple.ts",
+      "copy": "round4/sources/broker/packages/core/src/kv/hexastore/tuple.ts",
+      "sha256": "191e26a88d39ba45f27b15ee2d1840e02a323ff39a22b0bfbfe8c0d3a6732099",
+      "blob": "50c52dad192cbedabfcdee14a0300212c51e0f16"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/kv/index.ts",
+      "copy": "round4/sources/broker/packages/core/src/kv/index.ts",
+      "sha256": "8a2ce977379674189225a65983b96509501ee399170ea16d6ba2c2165a7196aa",
+      "blob": "f1ae64ffba51ca4bcf88132f3f5cad3a61682e94"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/kv/kv/InMemoryKvBackend.ts",
+      "copy": "round4/sources/broker/packages/core/src/kv/kv/InMemoryKvBackend.ts",
+      "sha256": "0b012115beec5316dcd2e45af70195fe507dfa60b99f4bc65fc0ae048d7fe1e5",
+      "blob": "6c4e8fd097359ad922d67c3fd800efb39f8aff74"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/kv/kv/KvBackend.ts",
+      "copy": "round4/sources/broker/packages/core/src/kv/kv/KvBackend.ts",
+      "sha256": "48e4ef3fd2045d5ddeb6654a14ca3d092896a808ead2c5ac24f790cf78410427",
+      "blob": "c58e5a1a64e8670eb153d5d3fce146842f4fc6f6"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/kv/kv/encoding.ts",
+      "copy": "round4/sources/broker/packages/core/src/kv/kv/encoding.ts",
+      "sha256": "bac79b9a3fb1fd9d2b30fdd69389468f52193beea12cb4e752f1c1cdd18f7636",
+      "blob": "99c0285088960700d22ea86bd4b7a140189163bc"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/kv/kv/index.ts",
+      "copy": "round4/sources/broker/packages/core/src/kv/kv/index.ts",
+      "sha256": "d008ea80f1d64aeb9acf603ec671e9cc03e770aa9f80cbc918efa74a044c9533",
+      "blob": "c69f85dab58cbc8700d33732783f615c4502889a"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/kv/layers/KvTriplesLive.ts",
+      "copy": "round4/sources/broker/packages/core/src/kv/layers/KvTriplesLive.ts",
+      "sha256": "44fb68b94810f2d0b662f2a2f409c19f1a0ee0500c7cb9f1b01d29b4433b2e6d",
+      "blob": "d07dabf5d6185f029d18cafac63a1b0c2fdebe55"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/kv/layers/index.ts",
+      "copy": "round4/sources/broker/packages/core/src/kv/layers/index.ts",
+      "sha256": "a6bf8d195081acf47809f4a181afb5067eb1650bd43f3a185cba0bfdebb6eb94",
+      "blob": "c3f2efa66480eb919fdd975d026e5830f219895d"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/kv/layers/valueAdmission.ts",
+      "copy": "round4/sources/broker/packages/core/src/kv/layers/valueAdmission.ts",
+      "sha256": "edd58b922f132c98bbf1c387a0a62e437ffbb3aec4c202d7e9ac936d348a5c45",
+      "blob": "a48f2e469d6b55deea14225d1068440e018f3cf4"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/native/FrontierClosure.ts",
+      "copy": "round4/sources/broker/packages/core/src/native/FrontierClosure.ts",
+      "sha256": "664108e81e1104b7cc04e7e5d25f410e38cede5ce11ad32566897a81f10563b2",
+      "blob": "e019ba90ba56566e11fba4149fce4896a180c312"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/native/NativeQuery.ts",
+      "copy": "round4/sources/broker/packages/core/src/native/NativeQuery.ts",
+      "sha256": "c5f3ef36ba3578c46e9f845bb4afb752f1617416feee1fdbf534b4c72fea9470",
+      "blob": "fde39a640f4ce4da8bbec27d0a85ed77c62cdee3"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/operational/ConsumerCheckpoint.ts",
+      "copy": "round4/sources/broker/packages/core/src/operational/ConsumerCheckpoint.ts",
+      "sha256": "08b5eeff172963d73f035592e7897f8b48ccb896a1969cc8bb7d7704b8cc145e",
+      "blob": "db958f48e4512c146131d97704314e445331ef1e"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/operational/index.ts",
+      "copy": "round4/sources/broker/packages/core/src/operational/index.ts",
+      "sha256": "bf587a8dfe9ea8424347050441a007ac86d7a94470344effcbed49c3a3e17755",
+      "blob": "736c0b384ab42c499e2ae90527ad2d52fde9bd6f"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/params.ts",
+      "copy": "round4/sources/broker/packages/core/src/params.ts",
+      "sha256": "12c4b74c9e4a69bb3feb530f18bf91d4eb5ad09dbf9302ff88392323d10786d9",
+      "blob": "03a1b74ec24d7db24cfea07c5ae5bd898303a1f1"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/runtime/Capabilities.ts",
+      "copy": "round4/sources/broker/packages/core/src/runtime/Capabilities.ts",
+      "sha256": "a429ba009da5554c2b3b608ecf8eba1a47b194fac6abf6d0fd2314fec6e17df6",
+      "blob": "abf4fcf9949d12078cbed2b9526988583f533ce2"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/runtime/DatabaseScope.ts",
+      "copy": "round4/sources/broker/packages/core/src/runtime/DatabaseScope.ts",
+      "sha256": "15a7a8f031c31b8348fd31f44dd0c6c9b4a418229d08721feaa13d1a8a765ddc",
+      "blob": "52543077e932e0fcf3d72194d5e7d73762098817"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/runtime/Runtime.ts",
+      "copy": "round4/sources/broker/packages/core/src/runtime/Runtime.ts",
+      "sha256": "834bd1aff33ed7ac7116ea8a0290130e98fb85860bf6f1a894ecae97037f943c",
+      "blob": "05d0dc5103425c88534f3d32f427ffc59239a109"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/runtime/index.ts",
+      "copy": "round4/sources/broker/packages/core/src/runtime/index.ts",
+      "sha256": "d9cf4bd3ec8fc8e523deacfcd6eb3b72aa77b90faa47155f00f55d0d4d128b3d",
+      "blob": "e8b3712165b0197e7197789f304ad5617e9eb1b3"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/snapshots/EntitySnapshotsCapability.ts",
+      "copy": "round4/sources/broker/packages/core/src/snapshots/EntitySnapshotsCapability.ts",
+      "sha256": "82e5f03c2e5a5acdb0913af54c8727e40da7ac4ed1757085c23a6fb5c16fef44",
+      "blob": "3c5691daab4883e2bd435814f4bac58a1210934c"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/snapshots/SnapshotService.ts",
+      "copy": "round4/sources/broker/packages/core/src/snapshots/SnapshotService.ts",
+      "sha256": "babf48a5e48f7bfa0ea4b2cca3ecaa58c12f79e80a8f0dc01642f581e7d01aab",
+      "blob": "2508ba124d640e9c38fc9b8942e46ae5b300fbd8"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/snapshots/SnapshotServiceLive.ts",
+      "copy": "round4/sources/broker/packages/core/src/snapshots/SnapshotServiceLive.ts",
+      "sha256": "1271fb2ce0873a3d3b4a6d87b2b6c468abcefa1de8469ef0aad1e40adcf8eaa8",
+      "blob": "4388d29b9b43837f86f536734d1159887aab9431"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/snapshots/canonical.ts",
+      "copy": "round4/sources/broker/packages/core/src/snapshots/canonical.ts",
+      "sha256": "a9d0198cb45465d3b1a07eadd98093461698f3a4720c595a384a22ca67655a18",
+      "blob": "248f1512b247cabcce66884d8a09b5d89bf2a70d"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/snapshots/index.ts",
+      "copy": "round4/sources/broker/packages/core/src/snapshots/index.ts",
+      "sha256": "de709354889696990b5a13b9ea5995c8460b1e13b611748878185201f60ec9a6",
+      "blob": "8677ee7cfd2e0c96c34c78fa92919a80dcd3d68c"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/storage/QueryExecutor.ts",
+      "copy": "round4/sources/broker/packages/core/src/storage/QueryExecutor.ts",
+      "sha256": "16c37f620cc25d6b2883722726689c516d501dfa679de6b85bf04ef6273c4f98",
+      "blob": "a0ecc855ac3d9358597651bc41e4b973a126f6e9"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/storage/ReadSurface.ts",
+      "copy": "round4/sources/broker/packages/core/src/storage/ReadSurface.ts",
+      "sha256": "bb2ac28a0f479bb370179cbb155ee1ad0a5848b56fb23116584d9b9d14c23982",
+      "blob": "520f248b5cddb82770e803c6b73faedf2586f7df"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/storage/StorageAdapter.ts",
+      "copy": "round4/sources/broker/packages/core/src/storage/StorageAdapter.ts",
+      "sha256": "14a289f0f94b0f2411d982c011ff1472dd305d1e26fd0a2cf954affde92ae564",
+      "blob": "95c3e683ae3182a84a096424ae734f0643a29849"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/storage/types.ts",
+      "copy": "round4/sources/broker/packages/core/src/storage/types.ts",
+      "sha256": "3a1f65839def9e04437ac531c8b6b2f055d407300178efdb8838ffc41e190aff",
+      "blob": "934cae7890af562bbd75f560beaf52121e9b20bc"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/store/ChangeEmissionCapability.ts",
+      "copy": "round4/sources/broker/packages/core/src/store/ChangeEmissionCapability.ts",
+      "sha256": "1163d54a9620dd1ee6e67971ac4d587c72be964cab2583eb54501d75e0e13dab",
+      "blob": "091c31910cb9fb42bab63bc541ceb1e1fd48f461"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/store/ChangeEmitter.ts",
+      "copy": "round4/sources/broker/packages/core/src/store/ChangeEmitter.ts",
+      "sha256": "07a02e4c57078bded41b305a725c84422809e3a4da8dfe0fd17bbaffbdabcb57",
+      "blob": "37f5a311199b7ae40dc9d5ff49d27561d97b1a9c"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/store/DatabaseManager.ts",
+      "copy": "round4/sources/broker/packages/core/src/store/DatabaseManager.ts",
+      "sha256": "111aa80ee7dc4c628deb13d840c2f7bbc948d53b0931645cc8d4ae1134ad8942",
+      "blob": "a10c8d4d566e55de254a5e218ef3b389af594b7b"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/store/DatabaseRegistry.ts",
+      "copy": "round4/sources/broker/packages/core/src/store/DatabaseRegistry.ts",
+      "sha256": "3b454b47e2903517ca1bd8635ac3bcf27f8452927fc6bc7447563d3b14ef7354",
+      "blob": "08339bf3c6cd2b17cf3687dcbe534c5af1213b65"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/store/RuntimeServices.ts",
+      "copy": "round4/sources/broker/packages/core/src/store/RuntimeServices.ts",
+      "sha256": "9c00c258174ed2ea528899c5becc0ec32704eb4185821c638179f02a94054af3",
+      "blob": "23d0c7e76baf446c796c8c8677d9741313d2b55f"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/store/StoreCapability.ts",
+      "copy": "round4/sources/broker/packages/core/src/store/StoreCapability.ts",
+      "sha256": "b9a44cbc7422d61c907c754d611e71eb946d45ff6be34353ba185e1fdb52a2b7",
+      "blob": "aa432e4de2fc4524458e2e238bb59bff5854ef14"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/store/TripleStoreRuntime.ts",
+      "copy": "round4/sources/broker/packages/core/src/store/TripleStoreRuntime.ts",
+      "sha256": "aa147c299efc23b94d1cc5d8f1c5a77893b63203929bea9d6287d6b60fcb96ec",
+      "blob": "85b96c997704577ab92b50f6b600ca68eaa7dde8"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/store/Triples.ts",
+      "copy": "round4/sources/broker/packages/core/src/store/Triples.ts",
+      "sha256": "7e5bd8c3e83e0d468912be4f01719d6bdd4f54c84c9bbc08ee0f10cdf05159c0",
+      "blob": "fc4182db08aeefea61ec3473ba47d43246ed97d1"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/store/TriplesLive.ts",
+      "copy": "round4/sources/broker/packages/core/src/store/TriplesLive.ts",
+      "sha256": "9b9ce6ed7964dd8edfd5c9e71aa31b34c50c8aa2f86805adc0400f4d2f51bdb8",
+      "blob": "9add2ccc44b3841e61e982dcb2db9cfbcc0ed5e7"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/store/entityTransactionHistory.ts",
+      "copy": "round4/sources/broker/packages/core/src/store/entityTransactionHistory.ts",
+      "sha256": "235c91610c80b3196e6fca0f924c516a83935033f8ed99452d23c3028be5ee86",
+      "blob": "9cdc47eec09d613ff4923ab8e940b759ea421e5b"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/store/systemNamespace.ts",
+      "copy": "round4/sources/broker/packages/core/src/store/systemNamespace.ts",
+      "sha256": "909bcc5e8d92c4545b90d2a9dd65c3484412be880a2586519d4e7876bf693d6b",
+      "blob": "dd92b4ff48b26deb57fee7bf8b2e4cebabf547fa"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/store/transactionMetadata.ts",
+      "copy": "round4/sources/broker/packages/core/src/store/transactionMetadata.ts",
+      "sha256": "f47e28bb7e5683a1348b8689471fc84de3ebcb8986ed1f6d65198399179055fa",
+      "blob": "7b1b94006490c806a03f8c3b3c76f15143329da6"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/store/validateValues.ts",
+      "copy": "round4/sources/broker/packages/core/src/store/validateValues.ts",
+      "sha256": "616d7f4478dc0cb2e09dd46265dc06ee7b7b6cca3001fb1c7d55eefc34c8454e",
+      "blob": "7b7f2dc3db374572e9129a54c60b68137183b8b9"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/store/writeEventUtils.ts",
+      "copy": "round4/sources/broker/packages/core/src/store/writeEventUtils.ts",
+      "sha256": "970487601900dc43cad3e20ce903c991fd939c96c9461567ed1dfa27f3d5e984",
+      "blob": "7ad0b346952c710ee99b12a8555019b15af9bcf1"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/subscriptions/SubscriptionManager.ts",
+      "copy": "round4/sources/broker/packages/core/src/subscriptions/SubscriptionManager.ts",
+      "sha256": "ce287a9077fb5b38eee76857ca37367b2a7920e28b67166d0af064e0d25fea8e",
+      "blob": "14190bd417d0594e7eda35cb0b527b40ab71a27a"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/subscriptions/SyncHub.ts",
+      "copy": "round4/sources/broker/packages/core/src/subscriptions/SyncHub.ts",
+      "sha256": "56cb393a0b821eb854b1fa6c8c4a45037b65595fec8f98babc4189bad28d9ffe",
+      "blob": "8732431cb9e8e0507fe27689d0c5258c2dc0ae8e"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/subscriptions/TopicTree.ts",
+      "copy": "round4/sources/broker/packages/core/src/subscriptions/TopicTree.ts",
+      "sha256": "f587b1d7626847cbda6305b6f618b72b0c9e1b0d31ab39881d61254d3021da87",
+      "blob": "7903b005b04bd1a7435f19cfae89df06eff0ce10"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/subscriptions/extract-dependencies.ts",
+      "copy": "round4/sources/broker/packages/core/src/subscriptions/extract-dependencies.ts",
+      "sha256": "3106dc2061f2d21705a978e8838c6936f3e97f535b80f9e12da4751d1cde587f",
+      "blob": "3fc4b8ec7ed800d155939ed72778d3740c465bee"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/subscriptions/index.ts",
+      "copy": "round4/sources/broker/packages/core/src/subscriptions/index.ts",
+      "sha256": "8da063980711ab7c36565fec9cd25029e68f83c1e5cdbb7ba8e020c77b7d6aba",
+      "blob": "2ecb4e46aee6a7d4eed6c69f4316828ced3e3d10"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/subscriptions/invalidation.ts",
+      "copy": "round4/sources/broker/packages/core/src/subscriptions/invalidation.ts",
+      "sha256": "de5c94111e1be72d22678fa5c951693b4d7187e1738ecc1c380b1bbe10df615f",
+      "blob": "a8881a0a414ed47a77f37b646fd386018f5ee1fa"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/subscriptions/query-hash.ts",
+      "copy": "round4/sources/broker/packages/core/src/subscriptions/query-hash.ts",
+      "sha256": "01c8ac1e2e12c5f892a34702f1ca6f5783bdd410f2ac5f85e405c9cdd594d0ef",
+      "blob": "1b487cd00d7f0cd2dd4ea5872695aa1c2b610a08"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/subscriptions/types.ts",
+      "copy": "round4/sources/broker/packages/core/src/subscriptions/types.ts",
+      "sha256": "83ca64126ce3a7c1516de90cb59e5b5e33ae90a3094251eae442ef864549ab8b",
+      "blob": "acd143f936d71a8bb062066a6faa4c0c31fcc872"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/types/Pattern.ts",
+      "copy": "round4/sources/broker/packages/core/src/types/Pattern.ts",
+      "sha256": "a1c776e0b67409f1e7c10b3cb6a3cbc7fce7c5c7da0e2708be0bde0f5628ea9b",
+      "blob": "4f2504a4232dcfacfdf6480f81a67d9562bcb04c"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/core/src/utils/id.ts",
+      "copy": "round4/sources/broker/packages/core/src/utils/id.ts",
+      "sha256": "d044a50f014b2f4330b9d7e11340e71a74cbfc7c55dba684b5c04579e72d13de",
+      "blob": "599e55c1b1ba4167ceb61f1fcdd225199a951d6f"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/qlever/src/AggregateAnswers.ts",
+      "copy": "round4/sources/broker/packages/qlever/src/AggregateAnswers.ts",
+      "sha256": "ff11d796be17ffbd7b9ad8d0d79e12a32550c63eb296cef580bd4ed10ca4b7de",
+      "blob": "328f5a568ba1062ba40fd25e7e7da9e1ebdcd6b9"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/qlever/src/FamilyDomainDistinct.ts",
+      "copy": "round4/sources/broker/packages/qlever/src/FamilyDomainDistinct.ts",
+      "sha256": "2c1d8a34f98721675afd69d4a82778b9338f7aec8bdd715a5b3b6b45ca69ea22",
+      "blob": "9290fe89594b9548e2a7144a6e933381c2ccd1e7"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/qlever/src/FamilyDomainMask.ts",
+      "copy": "round4/sources/broker/packages/qlever/src/FamilyDomainMask.ts",
+      "sha256": "65988dc4e689dd5e54eda0a90d60db0869914b38040011eaa4b2bcf4c8a47095",
+      "blob": "6661575b247e96c4e040d0c8b002de65a8d82729"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/qlever/src/FamilyDomains.ts",
+      "copy": "round4/sources/broker/packages/qlever/src/FamilyDomains.ts",
+      "sha256": "2bc0fd77c940dc0b0ad8b7c6b2ac9cf3f20d6e62e6476b5f718ef01f096cc0cc",
+      "blob": "e35bf9789081b751529c8cc98c71453ccfb5acf5"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/qlever/src/Operations.ts",
+      "copy": "round4/sources/broker/packages/qlever/src/Operations.ts",
+      "sha256": "c3851be7457eec8af340c79621aa2152662389d33ee6e9752f20fc7fcb69170e",
+      "blob": "7a6f0c94ccc3367ac5b0adcd3d7ceb2f2164fd95"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/qlever/src/PersistedScalarSource.ts",
+      "copy": "round4/sources/broker/packages/qlever/src/PersistedScalarSource.ts",
+      "sha256": "467c9ca94941e71377b4fe321c7dedf27795b6938c6661d63a79c49ebfb23919",
+      "blob": "f4947f372bfc0e4a80657f810fb4099e51c4ab2c"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/qlever/src/QleverClient.ts",
+      "copy": "round4/sources/broker/packages/qlever/src/QleverClient.ts",
+      "sha256": "eb5e1f134ada57f99f7fd3c30af63f65add603920aed5f85180c372e32e4f2ee",
+      "blob": "740f589486181f1956ab9b3e6c55c3550c54c954"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/qlever/src/QleverQueryExecutor.ts",
+      "copy": "round4/sources/broker/packages/qlever/src/QleverQueryExecutor.ts",
+      "sha256": "0e3bdbeae0a40e624b4c02175c2ff12a04f9be435247f3cd58f81e90c83000fe",
+      "blob": "2dc438378af804efa17639bcbee1c59e6de0ff05"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/qlever/src/QleverStorageAdapter.ts",
+      "copy": "round4/sources/broker/packages/qlever/src/QleverStorageAdapter.ts",
+      "sha256": "99cee6e3036e640f56742f44b5e04c0efc1ee5da090e5a1b1c2d461d58029525",
+      "blob": "35add0d87136b626a727ade6b1f53b6397f69f83"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/qlever/src/ReadOnlyClient.ts",
+      "copy": "round4/sources/broker/packages/qlever/src/ReadOnlyClient.ts",
+      "sha256": "74f922964fd5c40fb191008b85e4c13eba219527fcc29ec410eb365b94751924",
+      "blob": "d705b724456fc1681d6c55455d261bf1db346547"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/qlever/src/ScalarSource.ts",
+      "copy": "round4/sources/broker/packages/qlever/src/ScalarSource.ts",
+      "sha256": "72a8ba70dd0beced8e42c5d6a0656d44249a063e38d150ea054b07fd9ba6a3df",
+      "blob": "b5868446fa93881128c4c4dab3420de6bf0fba16"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/qlever/src/TemporalQueries.ts",
+      "copy": "round4/sources/broker/packages/qlever/src/TemporalQueries.ts",
+      "sha256": "986ba49d9c7af25f6a5ec4cf4f2bda97746e1fc4f232dbe9c9b00f9eeeb5bb3f",
+      "blob": "9e78a0c0502dfb52b2d58df71cf2dca5a192583a"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/qlever/src/broker/BrokerStorageAdapter.ts",
+      "copy": "round4/sources/broker/packages/qlever/src/broker/BrokerStorageAdapter.ts",
+      "sha256": "cc8450d00a171de6ca5528fc039f8d6452d98217cdbf521016aea83b579e871c",
+      "blob": "6e24d5f4bf74b0a298bc9186edbd890547a01daa"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/qlever/src/broker/broker.ts",
+      "copy": "round4/sources/broker/packages/qlever/src/broker/broker.ts",
+      "sha256": "4f766c4ff1ea9a7cd1a66cb1084c12d73e9480a32e3d525ea3ef89c2f6dbe940",
+      "blob": "d2b5bca38a969eb08af9765e425fdbd1d034580d"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/qlever/src/broker/crc32c.ts",
+      "copy": "round4/sources/broker/packages/qlever/src/broker/crc32c.ts",
+      "sha256": "5faa36d348e141cedf92ed9ab986196dcad71568174847d7bceabaf895d7c439",
+      "blob": "12d2b23c94b30a58e34177934f0cccc7ac038bc7"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/qlever/src/broker/errors.ts",
+      "copy": "round4/sources/broker/packages/qlever/src/broker/errors.ts",
+      "sha256": "71424ae70c78edb107f924beb6fe1fc683b7fa0c589d911b0f7f9ca5362f6f82",
+      "blob": "ce9060d543c7b6f6d4df19bdb1c7a89917f88d0b"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/qlever/src/broker/feed.ts",
+      "copy": "round4/sources/broker/packages/qlever/src/broker/feed.ts",
+      "sha256": "bcd5e6fc2af33a471aad517ea7949dbae03f65562fdaab11c2418b144d4755fd",
+      "blob": "30dbdb14920dd11fc2c11f58f471363b669a71d0"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/qlever/src/broker/frame.ts",
+      "copy": "round4/sources/broker/packages/qlever/src/broker/frame.ts",
+      "sha256": "286ce32edcb17406a4be59f35f306f0219b3979f00b079eb63669f2b248007b2",
+      "blob": "a1e27bd4e7a069958e5c6a73f526d84950619028"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/qlever/src/broker/frames.ts",
+      "copy": "round4/sources/broker/packages/qlever/src/broker/frames.ts",
+      "sha256": "19f2870d356ac68cf150cd2caac1b26680fb0e4777a46a4c6c18a2f4d5556050",
+      "blob": "363c9d62179e9f82be78952c39d70a129c950ec5"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/qlever/src/broker/http.ts",
+      "copy": "round4/sources/broker/packages/qlever/src/broker/http.ts",
+      "sha256": "a6c3bbc405734e4d9b4dbb855a23ec9efe5c432f11195ed6833e28f1f7ae33f0",
+      "blob": "480c628c7ccfacf9851ed66b0acb80c3d62e9ea3"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/qlever/src/broker/log.ts",
+      "copy": "round4/sources/broker/packages/qlever/src/broker/log.ts",
+      "sha256": "b23e00606097baca1e05494fa4db724084296d25bbd994c415af93e2154d198e",
+      "blob": "f81d89fb2997ba2d732011511126fb12721adf9f"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/qlever/src/broker/position.ts",
+      "copy": "round4/sources/broker/packages/qlever/src/broker/position.ts",
+      "sha256": "3a3aede9c73ed120987352137c0746b254b0d973dbc3a489b16633ba02616ae5",
+      "blob": "a392db8c9b8598c5020169390a7a940ace7d7fed"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/qlever/src/broker/snapshot.ts",
+      "copy": "round4/sources/broker/packages/qlever/src/broker/snapshot.ts",
+      "sha256": "3fd19e1346cf5cfb44a718d630f9bbb4683ef0bbe30a619372c762db72699b5e",
+      "blob": "6d7db4a7539a8e7e422607b6f856271840233a24"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/qlever/src/broker/sparql.ts",
+      "copy": "round4/sources/broker/packages/qlever/src/broker/sparql.ts",
+      "sha256": "9e29cce94f0b623a009fa304f67f300beb6b9462da4d97c943cc295ac047ffcc",
+      "blob": "5addbcc2118d30076abc7b06766794adb0577648"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/qlever/src/broker/sqlite-worker.ts",
+      "copy": "round4/sources/broker/packages/qlever/src/broker/sqlite-worker.ts",
+      "sha256": "0b5d3ef3c77303d975ce336e0ac12fdd1620f73b8c0829aee46d9bed2340e736",
+      "blob": "ffaae9ee399723bfd56fcf8097ff224c908b5468"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/qlever/src/broker/transport-codes.ts",
+      "copy": "round4/sources/broker/packages/qlever/src/broker/transport-codes.ts",
+      "sha256": "64dce7e7f77381a12f918e6ca67cf8086e4a7d442763b63140194a1d71f37727",
+      "blob": "6d71a16ac15925b6cfe42fc06de540d94163afc7"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/qlever/src/compiler.ts",
+      "copy": "round4/sources/broker/packages/qlever/src/compiler.ts",
+      "sha256": "a41494f5b85a14ec1f0f6a137a6e51216d1ec26d81372fa986cc97e62f51d9b0",
+      "blob": "076c9ec6e54d8e002dd19de8fd12df1d91404cce"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/qlever/src/index.ts",
+      "copy": "round4/sources/broker/packages/qlever/src/index.ts",
+      "sha256": "d1653f633626467bfc9cb74145bed50e69be7f0473681b0b6c375c5fc0187af3",
+      "blob": "b1d4b99f30968d69ec6d7e1ef81bc8689877fcea"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/qlever/src/native/BasisRelations.ts",
+      "copy": "round4/sources/broker/packages/qlever/src/native/BasisRelations.ts",
+      "sha256": "a4651692d16c68e79e65253a4f389fb579078295814a62eec052b4f75b9f8826",
+      "blob": "4692f3869f8b358c5270cf4766813b586fef43ee"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/qlever/src/native/NativeContext.ts",
+      "copy": "round4/sources/broker/packages/qlever/src/native/NativeContext.ts",
+      "sha256": "9dfefa7313ec6acda922a493219077be9f72768a6f169594c3a6e0a86f06f8c8",
+      "blob": "052c5bc2a2093dea4446299a8ea0faac33747ded"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/qlever/src/native/NativeQueries.ts",
+      "copy": "round4/sources/broker/packages/qlever/src/native/NativeQueries.ts",
+      "sha256": "e8b97a374b2e387ac5bd65149fcef4a7afa5c394191144970c7cd29586195a41",
+      "blob": "758398fd51c6bfe2d8035cd81a312c027be9976a"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/qlever/src/rdf.ts",
+      "copy": "round4/sources/broker/packages/qlever/src/rdf.ts",
+      "sha256": "b04f44241e03f2a54e90e360c9d4333e2794aa2e5e3568d5b4f07cf364d5ab63",
+      "blob": "a60e3b1f9bd0d99feb02c04a3b17ea5712056f46"
+    },
+    {
+      "label": "broker",
+      "commit": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+      "file": "packages/qlever/src/recursion.ts",
+      "copy": "round4/sources/broker/packages/qlever/src/recursion.ts",
+      "sha256": "4c9747745f3a317326d0c8bfb0a34a859a4c93a2bcc0472459014fe99d48c88e",
+      "blob": "48d91f115a36b8a1a76f082b0e626199bd4f5d40"
+    },
+    {
+      "label": "p2x",
+      "commit": "fb6681a4c5b54bfef63ad5ee670047946a24617c",
+      "file": "packages/xtdb/src/CommitFeed.ts",
+      "copy": "round4/sources/p2x/packages/xtdb/src/CommitFeed.ts",
+      "sha256": "4fefcac5128bd5a3a41bf730278d471a76684dfa17168ce88c059064a13043f1",
+      "blob": "01540506e044db43ce4f3d45e6741333bd8a9d96"
+    },
+    {
+      "label": "p2x",
+      "commit": "fb6681a4c5b54bfef63ad5ee670047946a24617c",
+      "file": "packages/xtdb/src/ConstraintValidation.ts",
+      "copy": "round4/sources/p2x/packages/xtdb/src/ConstraintValidation.ts",
+      "sha256": "b298dfe7841684ea3fda905b283e16f33853a0884af04f13b9913b89d82e9d29",
+      "blob": "a5a48918997a97d339d0b60f448f1a5964f9d2b9"
+    },
+    {
+      "label": "p2x",
+      "commit": "fb6681a4c5b54bfef63ad5ee670047946a24617c",
+      "file": "packages/xtdb/src/MaintainedQueries.ts",
+      "copy": "round4/sources/p2x/packages/xtdb/src/MaintainedQueries.ts",
+      "sha256": "a0ec651af8aa68d1c6e63b64109af48996d4c7576930909a50f90306869d8dbd",
+      "blob": "7ea6078783a56f8febcb7472af70d8413aa0d3e9"
+    },
+    {
+      "label": "p2x",
+      "commit": "fb6681a4c5b54bfef63ad5ee670047946a24617c",
+      "file": "packages/xtdb/src/Operations.ts",
+      "copy": "round4/sources/p2x/packages/xtdb/src/Operations.ts",
+      "sha256": "2fa4dc6fc4c50a42cc088d497f70e49029e2f535399ae84d9c94239125147b66",
+      "blob": "625977df14e5908ef41e314b5b0c9447c36cedef"
+    },
+    {
+      "label": "p2x",
+      "commit": "fb6681a4c5b54bfef63ad5ee670047946a24617c",
+      "file": "packages/xtdb/src/TemporalQueries.ts",
+      "copy": "round4/sources/p2x/packages/xtdb/src/TemporalQueries.ts",
+      "sha256": "df7163a21d18b5d704fdbd8a6dcd065498eb18edd249e0fcad7e4a92dae555a9",
+      "blob": "334f6d965162c82b737b2bd273117fa41c457932"
+    },
+    {
+      "label": "p2x",
+      "commit": "fb6681a4c5b54bfef63ad5ee670047946a24617c",
+      "file": "packages/xtdb/src/TransactionContext.ts",
+      "copy": "round4/sources/p2x/packages/xtdb/src/TransactionContext.ts",
+      "sha256": "77ce8af1d9b90a21d6b9d48aa11ab4e85f85c454f773e3339580d2ed26abc693",
+      "blob": "53529e515b7ceec37afd3ee850c45b624f83947b"
+    },
+    {
+      "label": "p2x",
+      "commit": "fb6681a4c5b54bfef63ad5ee670047946a24617c",
+      "file": "packages/xtdb/src/XtdbClient.ts",
+      "copy": "round4/sources/p2x/packages/xtdb/src/XtdbClient.ts",
+      "sha256": "c75a7091158e530b9069ab8830cef60b109ca5c74b94a2d8a903321b4a2e578b",
+      "blob": "5f913801dcfa665ab9a941254f17cf4df57d7878"
+    },
+    {
+      "label": "p2x",
+      "commit": "fb6681a4c5b54bfef63ad5ee670047946a24617c",
+      "file": "packages/xtdb/src/XtdbQueryExecutor.ts",
+      "copy": "round4/sources/p2x/packages/xtdb/src/XtdbQueryExecutor.ts",
+      "sha256": "71fc5d949a8a9f51449cfeb97afb9cd10b6e869647962a2c6ad006a4ccf69c0c",
+      "blob": "a68f85951d9d25a91725d414adef02aeba72ad39"
+    },
+    {
+      "label": "p2x",
+      "commit": "fb6681a4c5b54bfef63ad5ee670047946a24617c",
+      "file": "packages/xtdb/src/XtdbStorageAdapter.ts",
+      "copy": "round4/sources/p2x/packages/xtdb/src/XtdbStorageAdapter.ts",
+      "sha256": "4161484a876562ee6af53f8e543572fae873c6fcca970513724bf1edb94c7d4d",
+      "blob": "10e34d018a362f9297adaa971bbadb8360cdbd1e"
+    },
+    {
+      "label": "p2x",
+      "commit": "fb6681a4c5b54bfef63ad5ee670047946a24617c",
+      "file": "packages/xtdb/src/codecs.ts",
+      "copy": "round4/sources/p2x/packages/xtdb/src/codecs.ts",
+      "sha256": "f36b8de4af66fddd30b3a055ebf4473ad29c0634d9fd1ea0e45c7fb4e522e8f3",
+      "blob": "60c3a85aaf00c898d83f68619b7d51204939160d"
+    },
+    {
+      "label": "p2x",
+      "commit": "fb6681a4c5b54bfef63ad5ee670047946a24617c",
+      "file": "packages/xtdb/src/index.ts",
+      "copy": "round4/sources/p2x/packages/xtdb/src/index.ts",
+      "sha256": "ab4f976626b20562e6cbc10cae87f4709a58383f200bf040db97a9c34269a6dd",
+      "blob": "89d3d2989375f58a69f19d23b5feaaa5fe085090"
+    },
+    {
+      "label": "p2x",
+      "commit": "fb6681a4c5b54bfef63ad5ee670047946a24617c",
+      "file": "packages/xtdb/src/native/NativeQueries.ts",
+      "copy": "round4/sources/p2x/packages/xtdb/src/native/NativeQueries.ts",
+      "sha256": "f07285b60d00a661551873ab2ffe3995b88b91caedda7e776784185026ff3b01",
+      "blob": "a2eb25c2f5e7b7357b858daf691b228f8465517d"
+    },
+    {
+      "label": "p2x",
+      "commit": "fb6681a4c5b54bfef63ad5ee670047946a24617c",
+      "file": "packages/xtdb/src/native/Reachability.ts",
+      "copy": "round4/sources/p2x/packages/xtdb/src/native/Reachability.ts",
+      "sha256": "3929e03f7ba1b8e20a47d8fa94b71c68f64f0ad021beaf866deb210fa3fba932",
+      "blob": "e4421876325201929cfd464cb8851465e244e16a"
+    },
+    {
+      "label": "p2x",
+      "commit": "fb6681a4c5b54bfef63ad5ee670047946a24617c",
+      "file": "packages/xtdb/src/native/ReadOnlySql.ts",
+      "copy": "round4/sources/p2x/packages/xtdb/src/native/ReadOnlySql.ts",
+      "sha256": "dacd259603497bffcae0000e57ed5b7d63103f1ad0da42419d21d46a52333529",
+      "blob": "d98464b610d2db84ff6f926bcd628aa6ba222fc6"
+    },
+    {
+      "label": "p2x",
+      "commit": "fb6681a4c5b54bfef63ad5ee670047946a24617c",
+      "file": "packages/xtdb/src/native/Sources.ts",
+      "copy": "round4/sources/p2x/packages/xtdb/src/native/Sources.ts",
+      "sha256": "a32138e18c1a5a963f37f830beb36ceb87f328ed4c6af96bf1498dd0c2c00e31",
+      "blob": "54712f708d595d5d412915e54bd582bf756c85d5"
+    },
+    {
+      "label": "p2x",
+      "commit": "fb6681a4c5b54bfef63ad5ee670047946a24617c",
+      "file": "packages/xtdb/src/query/compiler.ts",
+      "copy": "round4/sources/p2x/packages/xtdb/src/query/compiler.ts",
+      "sha256": "fd1d8fceb939e0623115ef8072300f9e046f6dabee30d573c3b0c1da56823123",
+      "blob": "8e1e5c945f05720575ebd95ea8a9f5a0652a74ad"
+    },
+    {
+      "label": "p2x",
+      "commit": "fb6681a4c5b54bfef63ad5ee670047946a24617c",
+      "file": "packages/xtdb/src/query/domains.ts",
+      "copy": "round4/sources/p2x/packages/xtdb/src/query/domains.ts",
+      "sha256": "e51fc80fb211c265725d7def7cf0ab19bf84b51fc8843e1f807385dc413a92af",
+      "blob": "00d6250bdcd8ad7210bde687f8d8ed67a481ef3e"
+    },
+    {
+      "label": "p2x",
+      "commit": "fb6681a4c5b54bfef63ad5ee670047946a24617c",
+      "file": "packages/xtdb/src/query/grouping.ts",
+      "copy": "round4/sources/p2x/packages/xtdb/src/query/grouping.ts",
+      "sha256": "2abd261779d9cd648d53b20485eccaee644f2fe4b5cf86d899d86c552bff4586",
+      "blob": "e88404e71611490244c2bc23d2ce8825983375da"
+    },
+    {
+      "label": "p2x",
+      "commit": "fb6681a4c5b54bfef63ad5ee670047946a24617c",
+      "file": "packages/xtdb/src/query/overlay.ts",
+      "copy": "round4/sources/p2x/packages/xtdb/src/query/overlay.ts",
+      "sha256": "118b8f8651d69516b64b50cf77c86e43de916a8e7042cdcfe2e3aa1379423491",
+      "blob": "116f306bb905a8e3a8b5b541fb7ac7d15974f21c"
+    },
+    {
+      "label": "p2x",
+      "commit": "fb6681a4c5b54bfef63ad5ee670047946a24617c",
+      "file": "packages/xtdb/src/query/recursion.ts",
+      "copy": "round4/sources/p2x/packages/xtdb/src/query/recursion.ts",
+      "sha256": "6c24b1157f9c05124ebef268d1d99234364fa3aabb5514c67e40422767296b89",
+      "blob": "9ed9fb222395ce1e3803e95b7478b3fb791cd08c"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/Branded.ts",
+      "copy": "round4/sources/rt01/packages/core/src/Branded.ts",
+      "sha256": "4e2fed82db1de67f77bac91248d98ee86a7f5bccf8038631fe1fae4b64c3a82c",
+      "blob": "3a936cec2eff6ce5b48960ebe21376701f70d24f"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/Constraint.ts",
+      "copy": "round4/sources/rt01/packages/core/src/Constraint.ts",
+      "sha256": "8af934e31a17660911c29ccbcd9c84c2f144f3c78103f04726289f9722d34c64",
+      "blob": "51007a46bb48fa4a76bd06b1692846217978150b"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/EntityPage.ts",
+      "copy": "round4/sources/rt01/packages/core/src/EntityPage.ts",
+      "sha256": "e0edc4b5ae06d6f08b0bd9d54af252d6c4d2226b98a5992b6c3f0ad4fad914b1",
+      "blob": "839779796f84f40f2510c906129b3e0c83530510"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/Error.ts",
+      "copy": "round4/sources/rt01/packages/core/src/Error.ts",
+      "sha256": "e3a6f29d0c3def8df213dee1fcb97eb47c31510cccd67faacfafb25c119ad720",
+      "blob": "411de5220a76dfaedbccdf2345daef6a05e60354"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/Pagination.ts",
+      "copy": "round4/sources/rt01/packages/core/src/Pagination.ts",
+      "sha256": "60b63c0bba24de72f9c7a1b05bc7e31924960f7ae2bd6670dd3610008c0c16e4",
+      "blob": "390742cc01e3ab81d5a3692807de869ed600dccb"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/Temporal.ts",
+      "copy": "round4/sources/rt01/packages/core/src/Temporal.ts",
+      "sha256": "71556ef2c2570a8e52096602d52f834dbbb73d02dc4d11f5969fe431ca3be881",
+      "blob": "376e8c11d16a6cbae49daee6fa40392aa08b8f12"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/Triple.ts",
+      "copy": "round4/sources/rt01/packages/core/src/Triple.ts",
+      "sha256": "60dbe67b340285915098ecf5e9d7498d606b86cb9b04100d4316704d31857fd0",
+      "blob": "aa3d33cebb5dcc7de4d8dc236e599f70354b0538"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/Value.ts",
+      "copy": "round4/sources/rt01/packages/core/src/Value.ts",
+      "sha256": "aff90122347b3536aed8b1fa3a105d9973f9b98d9bc73ab4534cb2a7fc789222",
+      "blob": "8c76eacbf30f17aae8e5b9ec4302ad8073929191"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/config/Attribute.ts",
+      "copy": "round4/sources/rt01/packages/core/src/config/Attribute.ts",
+      "sha256": "c93109a543142aad1833726b278de3fcc56bb506dcac505fbb8f069fd75ba79e",
+      "blob": "294c7f442f24293f5b7dfe3af74beaf60f5b974d"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/config/BoolExpr.ts",
+      "copy": "round4/sources/rt01/packages/core/src/config/BoolExpr.ts",
+      "sha256": "daad9d805487072df9c6ba6380a64770d0507abea2fcae2d4daa55f853d25209",
+      "blob": "b47ee74f4163507bd7a1cb42245890ee1eef6b88"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/config/Catalog.ts",
+      "copy": "round4/sources/rt01/packages/core/src/config/Catalog.ts",
+      "sha256": "87359fae2e5467b3cc456f1c4bb0d04891579df4081e4bf6b3d3b4a6ac37b7fd",
+      "blob": "8b0e7a1d721d469a6d4a48d375f5046f77af2321"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/config/ConfigNode.ts",
+      "copy": "round4/sources/rt01/packages/core/src/config/ConfigNode.ts",
+      "sha256": "84efa0881aafb44580f44c7cd6bc731be866044c81f9722f2d7fc01872851c80",
+      "blob": "2000f9c53b856a84dcdd9c9ff8037fce77f6bb77"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/config/ConfigRuntime.ts",
+      "copy": "round4/sources/rt01/packages/core/src/config/ConfigRuntime.ts",
+      "sha256": "bab7bdb29c23eb9a46c58215ba57b2d5df0970a41ee5dff6219a4303a4dd7137",
+      "blob": "1023fcd610ef9c5a77180836fa038f367c5de627"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/config/ConfigStore.ts",
+      "copy": "round4/sources/rt01/packages/core/src/config/ConfigStore.ts",
+      "sha256": "7a3c946532e6af30fe89d3bdaffd4cc691a95ff3ba3243a397d43534d2a37053",
+      "blob": "40b75ead933ec54403d1fe47ee757148f7404418"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/config/Entity.ts",
+      "copy": "round4/sources/rt01/packages/core/src/config/Entity.ts",
+      "sha256": "1436b3be3ff40f6417086e199577d3ce54bdf458238c35f91a2f4f1e65f650e8",
+      "blob": "e8c3ec6d6dc31e7d08b18beff979452c2162d7a4"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/config/EntityType.ts",
+      "copy": "round4/sources/rt01/packages/core/src/config/EntityType.ts",
+      "sha256": "184d4ebf8f0383dbd3925ff5e8fa107a6c6e9c244668bb0c8bbc729f8c6d868d",
+      "blob": "2d691b41a09f6a71842faed3f8c782cb16abd8ff"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/config/EntityValidation.ts",
+      "copy": "round4/sources/rt01/packages/core/src/config/EntityValidation.ts",
+      "sha256": "3ccaf08b621517aa3955a6eb4a3113edb617f71d79ce835a5f0c601d3efa18f4",
+      "blob": "6aa154a3807936cea9835cf3191ba88b5806d656"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/config/Evaluate.ts",
+      "copy": "round4/sources/rt01/packages/core/src/config/Evaluate.ts",
+      "sha256": "f7c3615068b3a280438fc3ea892bccbd649922a6e6e2060378b133a4b6843eb2",
+      "blob": "b2c74a3487b80637044057e86ac83bcf456ee8ff"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/config/GraphConstraint.ts",
+      "copy": "round4/sources/rt01/packages/core/src/config/GraphConstraint.ts",
+      "sha256": "46f9f800fe35617792abab7403d9f0e908f781463937823b3852bebcfd325929",
+      "blob": "e354590f38d201f4ada8ac35b3bc2f699a11eb16"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/config/InMemoryConfigStore.ts",
+      "copy": "round4/sources/rt01/packages/core/src/config/InMemoryConfigStore.ts",
+      "sha256": "1c64c7f7efa40a374ed5d425a6f979ac28a131d99a72b1882bda5c011c962d4d",
+      "blob": "ba21046e3e273456e688f0e7f161242d70e88afa"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/config/Reactor.ts",
+      "copy": "round4/sources/rt01/packages/core/src/config/Reactor.ts",
+      "sha256": "d2392c3679f01208c4eb5cd888606adba3a581f9363b21dbc697cbb35a95f71f",
+      "blob": "5fc2e79d9c4ff70d1093d6e85cde5005fb5a6c30"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/config/TypeExpr.ts",
+      "copy": "round4/sources/rt01/packages/core/src/config/TypeExpr.ts",
+      "sha256": "2ee16543676eb73494ca1138136b452da0e5250d6eca1389bdc5eb3dffcfd74d",
+      "blob": "90ebb59c20e24b216a71e595f7709f16c1f97baa"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/config/TypeSchema.ts",
+      "copy": "round4/sources/rt01/packages/core/src/config/TypeSchema.ts",
+      "sha256": "05f69095535128e9a3fc83907a45a95ea5f6fd46f2f159dcac471c39a3b046c9",
+      "blob": "dabb8bec4d9bafa063cf28cebde619086caa9622"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/config/TypeSubsumption.ts",
+      "copy": "round4/sources/rt01/packages/core/src/config/TypeSubsumption.ts",
+      "sha256": "7b814d6d7cb8d1ad29befd96dbad27fda822baca699bc8a16a3246c4e7240bb4",
+      "blob": "218204b34acb1e292333cbd7aa8c6d7514a11277"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/config/World.ts",
+      "copy": "round4/sources/rt01/packages/core/src/config/World.ts",
+      "sha256": "0508c0cf1ca08522556d4aca73d5f87a5c15ca7935653cb7feae4c6581a6a4fd",
+      "blob": "0fb0765c5a1050fd065d2c2a7874221c62e30954"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/config/index.ts",
+      "copy": "round4/sources/rt01/packages/core/src/config/index.ts",
+      "sha256": "a246d76fcd973a0434f09d9e8c657d19163b6eac687a3cf71d79fd8cf2ea78f6",
+      "blob": "019961e6f0d95919cc21eb9efbf8fa9bc51b04f7"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/content/CanonicalJson.ts",
+      "copy": "round4/sources/rt01/packages/core/src/content/CanonicalJson.ts",
+      "sha256": "16475d1c66f329c0d13ea8d065734b3ef4b0bf546f848d753fe627f24edb5727",
+      "blob": "133cbcdf0ecebfeca5edebb55172c20bf9f1b9e0"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/content/ContentId.ts",
+      "copy": "round4/sources/rt01/packages/core/src/content/ContentId.ts",
+      "sha256": "0687a9194722546a584e46da5ba2fd3e21f01e48a69b228862833c20e951d7db",
+      "blob": "cb5717c05596d10a187a8acb1b72458023a668db"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/content/Sha256.ts",
+      "copy": "round4/sources/rt01/packages/core/src/content/Sha256.ts",
+      "sha256": "0e0f2ba6549d2ddb89113ba0ffdbcdeb2437d8c046982b9c97ee070985f8b92a",
+      "blob": "a4be66ef4909151d068a4c384727c84f6b6732ab"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/content/index.ts",
+      "copy": "round4/sources/rt01/packages/core/src/content/index.ts",
+      "sha256": "3840a84c2c71164e717d87f17b84cecf275f7e39d08c5eda483500bbc90bd3d0",
+      "blob": "852e087451fecfe5ea13b65b3bb84b6b4aaa84ee"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/datalog/compiler.ts",
+      "copy": "round4/sources/rt01/packages/core/src/datalog/compiler.ts",
+      "sha256": "aa0d1e880c7c52c5019126a22d959b69d3867ded6766368d9af7450c2d40328e",
+      "blob": "d4a0bf2008ee8382c1268d208e82f09a79e39df3"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/datalog/index.ts",
+      "copy": "round4/sources/rt01/packages/core/src/datalog/index.ts",
+      "sha256": "26f16835b8150e6b3ec584e773b16b946ac68f641db2e1ef084b0bcc65226663",
+      "blob": "ef3cc581178e5396fb8051881f435f56d52bf046"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/datalog/schema.ts",
+      "copy": "round4/sources/rt01/packages/core/src/datalog/schema.ts",
+      "sha256": "6000a11b2635a9a915f3a6b41504ce07631e62d6673fdd76c070cf1a8ce639bf",
+      "blob": "2136ee069857ce2d95a01a973031b7cfe7c57e2c"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/datalog/types.ts",
+      "copy": "round4/sources/rt01/packages/core/src/datalog/types.ts",
+      "sha256": "0a74df375fbaca0eaf388af5799d0612c2763de4d58f7fa00813268537d5d913",
+      "blob": "e86234e303efb385b891146a8eec3146693e26e4"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/datalog/validation.ts",
+      "copy": "round4/sources/rt01/packages/core/src/datalog/validation.ts",
+      "sha256": "a433f5e20d8c03502cd222975de79d7cda97aedef850919a17fc59b0312d0ae8",
+      "blob": "286bc68f31e081a074b7e32034e5666a00eb8d09"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/datalog/wrapper.ts",
+      "copy": "round4/sources/rt01/packages/core/src/datalog/wrapper.ts",
+      "sha256": "9a24a60bb57dd1d89a4c89601c56dc8153fb9f93f587b8780f236eb97f992b87",
+      "blob": "60b0504d50a5e75fa282ad853c865bdb5dcb6e34"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/derivation/Derivation.ts",
+      "copy": "round4/sources/rt01/packages/core/src/derivation/Derivation.ts",
+      "sha256": "2d0d52d4ca3b0f687ebbe4bc4a7499dc2e7ef8df87f8a2341341a51139682304",
+      "blob": "9c3af0fb46a53b57cd0aac79c2a7f52c3a0557d3"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/derivation/Materialization.ts",
+      "copy": "round4/sources/rt01/packages/core/src/derivation/Materialization.ts",
+      "sha256": "4b7a15073ce98216bfb2e73eb6e111e34891ad77342ef5a65d1538298a89cba5",
+      "blob": "bd55753d52e4fce60c91c0a337ad9602f1ab1362"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/derivation/Overlay.ts",
+      "copy": "round4/sources/rt01/packages/core/src/derivation/Overlay.ts",
+      "sha256": "1f1625339214a66fdb5876d25d109fd74c78d56a26e7a0a56b04b9f4d223b50b",
+      "blob": "5df2a26a301ce4558e34706bec30a662a07d1c44"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/derivation/index.ts",
+      "copy": "round4/sources/rt01/packages/core/src/derivation/index.ts",
+      "sha256": "eab9634be27e2e8d725f25b58b4b3adecc53bcf7996fef866ccd04efeab6259d",
+      "blob": "e60ead57b561fbd2ea09ccdfe940e1cf7efa10d0"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/dialects/index.ts",
+      "copy": "round4/sources/rt01/packages/core/src/dialects/index.ts",
+      "sha256": "b8772aef8c8e0688c52ff3b612b3131ead8b1d2a61945d53d0334d5424ad1418",
+      "blob": "412e23dd481e48e94d776684fedbffa400f3d416"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/dialects/postgresql.ts",
+      "copy": "round4/sources/rt01/packages/core/src/dialects/postgresql.ts",
+      "sha256": "13b8f11a0c8cd84d080887a31210d9dafaf1e49e30fd3474926efb5578a646b4",
+      "blob": "85e98a369c337574608d5422f2c1ca85cd4bc830"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/dialects/sqlite.ts",
+      "copy": "round4/sources/rt01/packages/core/src/dialects/sqlite.ts",
+      "sha256": "33d5d40c8594df6ff0fb572dd4237685eaff95b7fab38efcaf9983f34a4b7b13",
+      "blob": "a00e6e8e7f2b87533e2be708f440b6e68620af40"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/dialects/types.ts",
+      "copy": "round4/sources/rt01/packages/core/src/dialects/types.ts",
+      "sha256": "b32e672f81018bc16fb78a310bfdfd868fde3c6914e10a8b1d9059180ef1f800",
+      "blob": "63fdf7de0bbcedb913e0551e6f26464ecc599321"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/entity/Descriptors.ts",
+      "copy": "round4/sources/rt01/packages/core/src/entity/Descriptors.ts",
+      "sha256": "b93f0d2cd5a29bf63649945399e037281af6ebb9c79c3a23314699d40e7ab655",
+      "blob": "ce6a6d719756ca627d2de4800862b78789660428"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/entity/EntityCodec.ts",
+      "copy": "round4/sources/rt01/packages/core/src/entity/EntityCodec.ts",
+      "sha256": "0ffc72c0182f50345d5ccac56d16a7a55930584575a330609382dc08d8fb211a",
+      "blob": "bf8055ad5ccdac77f0a4fb64cdb50c090366a8f1"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/entity/Errors.ts",
+      "copy": "round4/sources/rt01/packages/core/src/entity/Errors.ts",
+      "sha256": "f8ac929dffd8b1776f29fd0129f6d7a769ec35de9febb0e19e4f622aabbad44c",
+      "blob": "e38d615da3c98e7d545d3079b8ee5a7a2035d7c9"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/entity/Model.ts",
+      "copy": "round4/sources/rt01/packages/core/src/entity/Model.ts",
+      "sha256": "ea5b1c9a9532b75a178d2604155f5d2a53853e71b6bdd61fee331c97ce5f128b",
+      "blob": "fc72a69d22ae6b5ec9ca795cac2e438b30f5b93f"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/entity/PhysicalNames.ts",
+      "copy": "round4/sources/rt01/packages/core/src/entity/PhysicalNames.ts",
+      "sha256": "74bd98b59cb2b92010970cad8f0bbecee6787e6f75987b857cac280b1132dc74",
+      "blob": "19e5574a03cb38bdfb87a7e2692244b48202cddd"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/entity/Plan.ts",
+      "copy": "round4/sources/rt01/packages/core/src/entity/Plan.ts",
+      "sha256": "72a7540486ae550c73044f51e3ffc204ff284398f32800317f1fdc9a2a8610c2",
+      "blob": "6882f4ff8ad4131526a32be59d66696da0acb874"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/entity/ProjectionSpec.ts",
+      "copy": "round4/sources/rt01/packages/core/src/entity/ProjectionSpec.ts",
+      "sha256": "6945dd2100052fbe3f2d68b6177b454c72631e6f0ea41ad0f4d8c9a663510c63",
+      "blob": "8a77ac065e1a2ee959c96e4b0e3f47cb6932285d"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/entity/Repository.ts",
+      "copy": "round4/sources/rt01/packages/core/src/entity/Repository.ts",
+      "sha256": "02785261cbebff292ff6163c6bdebef0e256c31765ae7165b449b094d44e8f73",
+      "blob": "4e3698dad2bb16f3ee3265ad3dbc1a0d2927ad18"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/entity/index.ts",
+      "copy": "round4/sources/rt01/packages/core/src/entity/index.ts",
+      "sha256": "1fb0fe444e9878a442025f9498f47a1b2c589590396c26943139e16af682982b",
+      "blob": "bbbcbcb54cdc135510ebfb9bc88b9d84186c7715"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/errors/index.ts",
+      "copy": "round4/sources/rt01/packages/core/src/errors/index.ts",
+      "sha256": "85efa03706c7690e63fcbd54838c88bf2b472760f848797a9f0cd51dce6d40b6",
+      "blob": "c0aa1b73e10dff142fb631e8ab5c0536d4260a12"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/index.ts",
+      "copy": "round4/sources/rt01/packages/core/src/index.ts",
+      "sha256": "4b0b1fbb8f701f122cfed69dd2f80f217829b719335f86bf31449befe455d5c3",
+      "blob": "236521b2036e7adad7b1e3d80fee150605fc230b"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/internal.ts",
+      "copy": "round4/sources/rt01/packages/core/src/internal.ts",
+      "sha256": "a4bfd0f676c4ee9d968590b87cc06d968cf3bf49a816aa8e65fa36db59128f19",
+      "blob": "f4dbe6992a76300d722f6c33ba9e07412dd568a4"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/kv/datalog/executor.ts",
+      "copy": "round4/sources/rt01/packages/core/src/kv/datalog/executor.ts",
+      "sha256": "87770b124f41b99c89bf615925c290f8b176c7c1a5fdeb90dc3f3da91b5a7f1e",
+      "blob": "3f09a70d552ec5a2137a66ab1d768196c3fd95c7"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/kv/datalog/index.ts",
+      "copy": "round4/sources/rt01/packages/core/src/kv/datalog/index.ts",
+      "sha256": "da88f8a0c4fc5c3c490b81fb79f7a117554b10e3921a634be3f3677542ac1a35",
+      "blob": "56903715d48068061b86cc46db32bbde061a830a"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/kv/datalog/pattern.ts",
+      "copy": "round4/sources/rt01/packages/core/src/kv/datalog/pattern.ts",
+      "sha256": "9276ea3346cd3ba7b0543ce93c481384c5e2542ea3832933a55d5e4fa40f3b06",
+      "blob": "987e426dbdd6ef481915ef42e667b01d49f241d7"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/kv/datalog/predicate.ts",
+      "copy": "round4/sources/rt01/packages/core/src/kv/datalog/predicate.ts",
+      "sha256": "fee33c520c074ac693a2b0078de949c291b30229d9ae20709a64813adf0f31ea",
+      "blob": "86f8151df41dc483013f841e79f03d8cb81879a5"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/kv/datalog/types.ts",
+      "copy": "round4/sources/rt01/packages/core/src/kv/datalog/types.ts",
+      "sha256": "f52b4b0a7bc97f1e61a2cc6fce81f1841201327f68eaf34862dc37643d032ea2",
+      "blob": "f660b2f12dae500ee1449767cafa03bad5059a70"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/kv/hexastore/KvTripleStore.ts",
+      "copy": "round4/sources/rt01/packages/core/src/kv/hexastore/KvTripleStore.ts",
+      "sha256": "2fcb1afa175dc435a52b16b397027581eba37655b633c99483d7aa84c7fa63ff",
+      "blob": "d4a91d5360eb57d68cfc52a2135977a85aa57515"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/kv/hexastore/index.ts",
+      "copy": "round4/sources/rt01/packages/core/src/kv/hexastore/index.ts",
+      "sha256": "d6dd0f04c212fcffe85f893c708b55e8c188a719c5fbe9c227cecee0f38369bc",
+      "blob": "60e0fbe896f763194a78cbc217050995c10f5e37"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/kv/hexastore/indexes.ts",
+      "copy": "round4/sources/rt01/packages/core/src/kv/hexastore/indexes.ts",
+      "sha256": "bb3787b6aa678388de18bf915cdddad7fcc9c250cf912c572f93866f4c310d1b",
+      "blob": "77337a75fa981286c5d863d40470d35d7f146b73"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/kv/hexastore/scan.ts",
+      "copy": "round4/sources/rt01/packages/core/src/kv/hexastore/scan.ts",
+      "sha256": "523afb07ad10d33d18d54f82435d88f3219d86d3a08ef494b56685b8ba45beee",
+      "blob": "0be675f51d40c91704b2d36a9f99240ecbd8add5"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/kv/hexastore/tuple.ts",
+      "copy": "round4/sources/rt01/packages/core/src/kv/hexastore/tuple.ts",
+      "sha256": "b04adabfb3614e5ae23d92a177face2532eb812b6032ca9d51a83731d5b60963",
+      "blob": "a160949ba9327a515e53c11e2fb5693736eff088"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/kv/index.ts",
+      "copy": "round4/sources/rt01/packages/core/src/kv/index.ts",
+      "sha256": "8a2ce977379674189225a65983b96509501ee399170ea16d6ba2c2165a7196aa",
+      "blob": "f1ae64ffba51ca4bcf88132f3f5cad3a61682e94"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/kv/kv/InMemoryKvBackend.ts",
+      "copy": "round4/sources/rt01/packages/core/src/kv/kv/InMemoryKvBackend.ts",
+      "sha256": "0b012115beec5316dcd2e45af70195fe507dfa60b99f4bc65fc0ae048d7fe1e5",
+      "blob": "6c4e8fd097359ad922d67c3fd800efb39f8aff74"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/kv/kv/KvBackend.ts",
+      "copy": "round4/sources/rt01/packages/core/src/kv/kv/KvBackend.ts",
+      "sha256": "af3d550c9b98b5839dcff62ff1054632e86f299c6e56110a9e4fc4b19d994644",
+      "blob": "0be83d7e9106a16c9cb8c6150b8bd56e71839986"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/kv/kv/encoding.ts",
+      "copy": "round4/sources/rt01/packages/core/src/kv/kv/encoding.ts",
+      "sha256": "bac79b9a3fb1fd9d2b30fdd69389468f52193beea12cb4e752f1c1cdd18f7636",
+      "blob": "99c0285088960700d22ea86bd4b7a140189163bc"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/kv/kv/index.ts",
+      "copy": "round4/sources/rt01/packages/core/src/kv/kv/index.ts",
+      "sha256": "d008ea80f1d64aeb9acf603ec671e9cc03e770aa9f80cbc918efa74a044c9533",
+      "blob": "c69f85dab58cbc8700d33732783f615c4502889a"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/kv/layers/KvTriplesLive.ts",
+      "copy": "round4/sources/rt01/packages/core/src/kv/layers/KvTriplesLive.ts",
+      "sha256": "7ad976a27c5bf6b073863c9b23bef2fa54c57c16f897799fda662839b1f31ae9",
+      "blob": "a487d98c1f7ac65e57bbf73ef8b5475eabcc4f35"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/kv/layers/index.ts",
+      "copy": "round4/sources/rt01/packages/core/src/kv/layers/index.ts",
+      "sha256": "a6bf8d195081acf47809f4a181afb5067eb1650bd43f3a185cba0bfdebb6eb94",
+      "blob": "c3f2efa66480eb919fdd975d026e5830f219895d"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/native/FrontierClosure.ts",
+      "copy": "round4/sources/rt01/packages/core/src/native/FrontierClosure.ts",
+      "sha256": "664108e81e1104b7cc04e7e5d25f410e38cede5ce11ad32566897a81f10563b2",
+      "blob": "e019ba90ba56566e11fba4149fce4896a180c312"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/native/NativeQuery.ts",
+      "copy": "round4/sources/rt01/packages/core/src/native/NativeQuery.ts",
+      "sha256": "c5f3ef36ba3578c46e9f845bb4afb752f1617416feee1fdbf534b4c72fea9470",
+      "blob": "fde39a640f4ce4da8bbec27d0a85ed77c62cdee3"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/operational/ConsumerCheckpoint.ts",
+      "copy": "round4/sources/rt01/packages/core/src/operational/ConsumerCheckpoint.ts",
+      "sha256": "9130fd037ccbc5f845cd8db17f684f9893f57c9b5896bbc1bce33ef855203718",
+      "blob": "d1936bca019062f3101a7d3a8a105be213322d0f"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/operational/index.ts",
+      "copy": "round4/sources/rt01/packages/core/src/operational/index.ts",
+      "sha256": "bf587a8dfe9ea8424347050441a007ac86d7a94470344effcbed49c3a3e17755",
+      "blob": "736c0b384ab42c499e2ae90527ad2d52fde9bd6f"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/params.ts",
+      "copy": "round4/sources/rt01/packages/core/src/params.ts",
+      "sha256": "12c4b74c9e4a69bb3feb530f18bf91d4eb5ad09dbf9302ff88392323d10786d9",
+      "blob": "03a1b74ec24d7db24cfea07c5ae5bd898303a1f1"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/runtime/Capabilities.ts",
+      "copy": "round4/sources/rt01/packages/core/src/runtime/Capabilities.ts",
+      "sha256": "a429ba009da5554c2b3b608ecf8eba1a47b194fac6abf6d0fd2314fec6e17df6",
+      "blob": "abf4fcf9949d12078cbed2b9526988583f533ce2"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/runtime/DatabaseScope.ts",
+      "copy": "round4/sources/rt01/packages/core/src/runtime/DatabaseScope.ts",
+      "sha256": "15a7a8f031c31b8348fd31f44dd0c6c9b4a418229d08721feaa13d1a8a765ddc",
+      "blob": "52543077e932e0fcf3d72194d5e7d73762098817"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/runtime/Runtime.ts",
+      "copy": "round4/sources/rt01/packages/core/src/runtime/Runtime.ts",
+      "sha256": "834bd1aff33ed7ac7116ea8a0290130e98fb85860bf6f1a894ecae97037f943c",
+      "blob": "05d0dc5103425c88534f3d32f427ffc59239a109"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/runtime/index.ts",
+      "copy": "round4/sources/rt01/packages/core/src/runtime/index.ts",
+      "sha256": "2aaebe8007e7f6f527b6ef50d91e2b0fee920e9fcd316c2390961b625a5aabc1",
+      "blob": "c79a6269933c3bab21648020568bbeb343da71fa"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/snapshots/EntitySnapshotsCapability.ts",
+      "copy": "round4/sources/rt01/packages/core/src/snapshots/EntitySnapshotsCapability.ts",
+      "sha256": "053dc9f17acf9ae656da6a7ecbe4c09c8f64f0afc705199588c0688c4b736bff",
+      "blob": "182652e9029fdcfae2f567aadd17a9fce8cbe388"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/snapshots/SnapshotService.ts",
+      "copy": "round4/sources/rt01/packages/core/src/snapshots/SnapshotService.ts",
+      "sha256": "babf48a5e48f7bfa0ea4b2cca3ecaa58c12f79e80a8f0dc01642f581e7d01aab",
+      "blob": "2508ba124d640e9c38fc9b8942e46ae5b300fbd8"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/snapshots/SnapshotServiceLive.ts",
+      "copy": "round4/sources/rt01/packages/core/src/snapshots/SnapshotServiceLive.ts",
+      "sha256": "1271fb2ce0873a3d3b4a6d87b2b6c468abcefa1de8469ef0aad1e40adcf8eaa8",
+      "blob": "4388d29b9b43837f86f536734d1159887aab9431"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/snapshots/canonical.ts",
+      "copy": "round4/sources/rt01/packages/core/src/snapshots/canonical.ts",
+      "sha256": "a9d0198cb45465d3b1a07eadd98093461698f3a4720c595a384a22ca67655a18",
+      "blob": "248f1512b247cabcce66884d8a09b5d89bf2a70d"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/snapshots/index.ts",
+      "copy": "round4/sources/rt01/packages/core/src/snapshots/index.ts",
+      "sha256": "de709354889696990b5a13b9ea5995c8460b1e13b611748878185201f60ec9a6",
+      "blob": "8677ee7cfd2e0c96c34c78fa92919a80dcd3d68c"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/storage/QueryExecutor.ts",
+      "copy": "round4/sources/rt01/packages/core/src/storage/QueryExecutor.ts",
+      "sha256": "16c37f620cc25d6b2883722726689c516d501dfa679de6b85bf04ef6273c4f98",
+      "blob": "a0ecc855ac3d9358597651bc41e4b973a126f6e9"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/storage/RecordStamp.ts",
+      "copy": "round4/sources/rt01/packages/core/src/storage/RecordStamp.ts",
+      "sha256": "2d1cc0e9a84aeea7bed6ba526267d4940ceb39b2c6431fa032958eb5cc1aa701",
+      "blob": "ab72d2a1f04e431ed1fdace6573dfb72afb19bfa"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/storage/StorageAdapter.ts",
+      "copy": "round4/sources/rt01/packages/core/src/storage/StorageAdapter.ts",
+      "sha256": "e07c923f454de0694f7da41fc1ccd84ced46bfb6ff88fecffcd7abdaa2d882c0",
+      "blob": "ec7145d6d97af678ddbc7fb0c6251d524acc98ee"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/storage/types.ts",
+      "copy": "round4/sources/rt01/packages/core/src/storage/types.ts",
+      "sha256": "3a1f65839def9e04437ac531c8b6b2f055d407300178efdb8838ffc41e190aff",
+      "blob": "934cae7890af562bbd75f560beaf52121e9b20bc"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/store/ChangeEmissionCapability.ts",
+      "copy": "round4/sources/rt01/packages/core/src/store/ChangeEmissionCapability.ts",
+      "sha256": "1163d54a9620dd1ee6e67971ac4d587c72be964cab2583eb54501d75e0e13dab",
+      "blob": "091c31910cb9fb42bab63bc541ceb1e1fd48f461"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/store/ChangeEmitter.ts",
+      "copy": "round4/sources/rt01/packages/core/src/store/ChangeEmitter.ts",
+      "sha256": "07a02e4c57078bded41b305a725c84422809e3a4da8dfe0fd17bbaffbdabcb57",
+      "blob": "37f5a311199b7ae40dc9d5ff49d27561d97b1a9c"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/store/DatabaseManager.ts",
+      "copy": "round4/sources/rt01/packages/core/src/store/DatabaseManager.ts",
+      "sha256": "111aa80ee7dc4c628deb13d840c2f7bbc948d53b0931645cc8d4ae1134ad8942",
+      "blob": "a10c8d4d566e55de254a5e218ef3b389af594b7b"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/store/DatabaseRegistry.ts",
+      "copy": "round4/sources/rt01/packages/core/src/store/DatabaseRegistry.ts",
+      "sha256": "3b454b47e2903517ca1bd8635ac3bcf27f8452927fc6bc7447563d3b14ef7354",
+      "blob": "08339bf3c6cd2b17cf3687dcbe534c5af1213b65"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/store/RuntimeServices.ts",
+      "copy": "round4/sources/rt01/packages/core/src/store/RuntimeServices.ts",
+      "sha256": "9c00c258174ed2ea528899c5becc0ec32704eb4185821c638179f02a94054af3",
+      "blob": "23d0c7e76baf446c796c8c8677d9741313d2b55f"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/store/StoreCapability.ts",
+      "copy": "round4/sources/rt01/packages/core/src/store/StoreCapability.ts",
+      "sha256": "b9a44cbc7422d61c907c754d611e71eb946d45ff6be34353ba185e1fdb52a2b7",
+      "blob": "aa432e4de2fc4524458e2e238bb59bff5854ef14"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/store/TripleStoreRuntime.ts",
+      "copy": "round4/sources/rt01/packages/core/src/store/TripleStoreRuntime.ts",
+      "sha256": "aa147c299efc23b94d1cc5d8f1c5a77893b63203929bea9d6287d6b60fcb96ec",
+      "blob": "85b96c997704577ab92b50f6b600ca68eaa7dde8"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/store/Triples.ts",
+      "copy": "round4/sources/rt01/packages/core/src/store/Triples.ts",
+      "sha256": "a355ae16f7073a8855910e5761a1ca9a23d4e408a6b1ac238777197bfc2d8c88",
+      "blob": "90bf6b7188cf406269828b440e6184b742cc116d"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/store/TriplesLive.ts",
+      "copy": "round4/sources/rt01/packages/core/src/store/TriplesLive.ts",
+      "sha256": "c3fd9e4497b165d6ccc30e191ba0625ae7980fcc050422d7b3c463215a6590b0",
+      "blob": "22af43edfb6a0155dd6d620d6c2acd7bb5a31a4c"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/store/entityTransactionHistory.ts",
+      "copy": "round4/sources/rt01/packages/core/src/store/entityTransactionHistory.ts",
+      "sha256": "42e11e53c31103bd0479d799d98d0e2b051283ceadff358bf87c2e712333da06",
+      "blob": "24b0e37d53b42aa3b1c537d6f461d2ddd2950198"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/store/systemNamespace.ts",
+      "copy": "round4/sources/rt01/packages/core/src/store/systemNamespace.ts",
+      "sha256": "909bcc5e8d92c4545b90d2a9dd65c3484412be880a2586519d4e7876bf693d6b",
+      "blob": "dd92b4ff48b26deb57fee7bf8b2e4cebabf547fa"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/store/transactionMetadata.ts",
+      "copy": "round4/sources/rt01/packages/core/src/store/transactionMetadata.ts",
+      "sha256": "ca52701914e74e0504495c520e0e15a59812c1f55a55dd6e34aa38d468905a9d",
+      "blob": "35e35f8e56eb4f2692d68101eb99e55bdd04e243"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/store/writeEventUtils.ts",
+      "copy": "round4/sources/rt01/packages/core/src/store/writeEventUtils.ts",
+      "sha256": "970487601900dc43cad3e20ce903c991fd939c96c9461567ed1dfa27f3d5e984",
+      "blob": "7ad0b346952c710ee99b12a8555019b15af9bcf1"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/subscriptions/SubscriptionManager.ts",
+      "copy": "round4/sources/rt01/packages/core/src/subscriptions/SubscriptionManager.ts",
+      "sha256": "ce287a9077fb5b38eee76857ca37367b2a7920e28b67166d0af064e0d25fea8e",
+      "blob": "14190bd417d0594e7eda35cb0b527b40ab71a27a"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/subscriptions/SyncHub.ts",
+      "copy": "round4/sources/rt01/packages/core/src/subscriptions/SyncHub.ts",
+      "sha256": "56cb393a0b821eb854b1fa6c8c4a45037b65595fec8f98babc4189bad28d9ffe",
+      "blob": "8732431cb9e8e0507fe27689d0c5258c2dc0ae8e"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/subscriptions/TopicTree.ts",
+      "copy": "round4/sources/rt01/packages/core/src/subscriptions/TopicTree.ts",
+      "sha256": "f587b1d7626847cbda6305b6f618b72b0c9e1b0d31ab39881d61254d3021da87",
+      "blob": "7903b005b04bd1a7435f19cfae89df06eff0ce10"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/subscriptions/extract-dependencies.ts",
+      "copy": "round4/sources/rt01/packages/core/src/subscriptions/extract-dependencies.ts",
+      "sha256": "3106dc2061f2d21705a978e8838c6936f3e97f535b80f9e12da4751d1cde587f",
+      "blob": "3fc4b8ec7ed800d155939ed72778d3740c465bee"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/subscriptions/index.ts",
+      "copy": "round4/sources/rt01/packages/core/src/subscriptions/index.ts",
+      "sha256": "8da063980711ab7c36565fec9cd25029e68f83c1e5cdbb7ba8e020c77b7d6aba",
+      "blob": "2ecb4e46aee6a7d4eed6c69f4316828ced3e3d10"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/subscriptions/invalidation.ts",
+      "copy": "round4/sources/rt01/packages/core/src/subscriptions/invalidation.ts",
+      "sha256": "de5c94111e1be72d22678fa5c951693b4d7187e1738ecc1c380b1bbe10df615f",
+      "blob": "a8881a0a414ed47a77f37b646fd386018f5ee1fa"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/subscriptions/query-hash.ts",
+      "copy": "round4/sources/rt01/packages/core/src/subscriptions/query-hash.ts",
+      "sha256": "01c8ac1e2e12c5f892a34702f1ca6f5783bdd410f2ac5f85e405c9cdd594d0ef",
+      "blob": "1b487cd00d7f0cd2dd4ea5872695aa1c2b610a08"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/subscriptions/types.ts",
+      "copy": "round4/sources/rt01/packages/core/src/subscriptions/types.ts",
+      "sha256": "83ca64126ce3a7c1516de90cb59e5b5e33ae90a3094251eae442ef864549ab8b",
+      "blob": "acd143f936d71a8bb062066a6faa4c0c31fcc872"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/types/Pattern.ts",
+      "copy": "round4/sources/rt01/packages/core/src/types/Pattern.ts",
+      "sha256": "a1c776e0b67409f1e7c10b3cb6a3cbc7fce7c5c7da0e2708be0bde0f5628ea9b",
+      "blob": "4f2504a4232dcfacfdf6480f81a67d9562bcb04c"
+    },
+    {
+      "label": "rt01",
+      "commit": "7ee171ea294577b3f5d6aca027b311f27465b802",
+      "file": "packages/core/src/utils/id.ts",
+      "copy": "round4/sources/rt01/packages/core/src/utils/id.ts",
+      "sha256": "d044a50f014b2f4330b9d7e11340e71a74cbfc7c55dba684b5c04579e72d13de",
+      "blob": "599e55c1b1ba4167ceb61f1fcdd225199a951d6f"
+    }
+  ],
+  "coreInputs": {
+    "packages/core/src/Branded.ts": "4e2fed82db1de67f77bac91248d98ee86a7f5bccf8038631fe1fae4b64c3a82c",
+    "packages/core/src/Constraint.ts": "8af934e31a17660911c29ccbcd9c84c2f144f3c78103f04726289f9722d34c64",
+    "packages/core/src/EntityPage.ts": "e4b8ce0842eff6b9a279159ef10ff13828c426dd1e5e7ffc6d1674db1c650eac",
+    "packages/core/src/Error.ts": "e3a6f29d0c3def8df213dee1fcb97eb47c31510cccd67faacfafb25c119ad720",
+    "packages/core/src/Pagination.ts": "a2a7d3a1eed1982b823edd969f296ee6029ce68084e641994785609a0da63d8f",
+    "packages/core/src/Temporal.ts": "1b10b1b56b12c02d1b8f2ceb9ba2de9d4616ca402dfa0e8496907bf60bf87f99",
+    "packages/core/src/Triple.ts": "60dbe67b340285915098ecf5e9d7498d606b86cb9b04100d4316704d31857fd0",
+    "packages/core/src/Value.ts": "aff90122347b3536aed8b1fa3a105d9973f9b98d9bc73ab4534cb2a7fc789222",
+    "packages/core/src/config/Attribute.ts": "c93109a543142aad1833726b278de3fcc56bb506dcac505fbb8f069fd75ba79e",
+    "packages/core/src/config/BoolExpr.ts": "daad9d805487072df9c6ba6380a64770d0507abea2fcae2d4daa55f853d25209",
+    "packages/core/src/config/Catalog.ts": "87359fae2e5467b3cc456f1c4bb0d04891579df4081e4bf6b3d3b4a6ac37b7fd",
+    "packages/core/src/config/ConfigNode.ts": "84efa0881aafb44580f44c7cd6bc731be866044c81f9722f2d7fc01872851c80",
+    "packages/core/src/config/ConfigRuntime.ts": "bab7bdb29c23eb9a46c58215ba57b2d5df0970a41ee5dff6219a4303a4dd7137",
+    "packages/core/src/config/ConfigStore.ts": "7a3c946532e6af30fe89d3bdaffd4cc691a95ff3ba3243a397d43534d2a37053",
+    "packages/core/src/config/Entity.ts": "1436b3be3ff40f6417086e199577d3ce54bdf458238c35f91a2f4f1e65f650e8",
+    "packages/core/src/config/EntityType.ts": "184d4ebf8f0383dbd3925ff5e8fa107a6c6e9c244668bb0c8bbc729f8c6d868d",
+    "packages/core/src/config/EntityValidation.ts": "3ccaf08b621517aa3955a6eb4a3113edb617f71d79ce835a5f0c601d3efa18f4",
+    "packages/core/src/config/Evaluate.ts": "f7c3615068b3a280438fc3ea892bccbd649922a6e6e2060378b133a4b6843eb2",
+    "packages/core/src/config/GraphConstraint.ts": "46f9f800fe35617792abab7403d9f0e908f781463937823b3852bebcfd325929",
+    "packages/core/src/config/InMemoryConfigStore.ts": "1c64c7f7efa40a374ed5d425a6f979ac28a131d99a72b1882bda5c011c962d4d",
+    "packages/core/src/config/Reactor.ts": "d2392c3679f01208c4eb5cd888606adba3a581f9363b21dbc697cbb35a95f71f",
+    "packages/core/src/config/TypeExpr.ts": "2ee16543676eb73494ca1138136b452da0e5250d6eca1389bdc5eb3dffcfd74d",
+    "packages/core/src/config/TypeSchema.ts": "05f69095535128e9a3fc83907a45a95ea5f6fd46f2f159dcac471c39a3b046c9",
+    "packages/core/src/config/TypeSubsumption.ts": "7b814d6d7cb8d1ad29befd96dbad27fda822baca699bc8a16a3246c4e7240bb4",
+    "packages/core/src/config/World.ts": "0508c0cf1ca08522556d4aca73d5f87a5c15ca7935653cb7feae4c6581a6a4fd",
+    "packages/core/src/config/index.ts": "a246d76fcd973a0434f09d9e8c657d19163b6eac687a3cf71d79fd8cf2ea78f6",
+    "packages/core/src/content/CanonicalJson.ts": "16475d1c66f329c0d13ea8d065734b3ef4b0bf546f848d753fe627f24edb5727",
+    "packages/core/src/content/ContentId.ts": "0687a9194722546a584e46da5ba2fd3e21f01e48a69b228862833c20e951d7db",
+    "packages/core/src/content/Sha256.ts": "0e0f2ba6549d2ddb89113ba0ffdbcdeb2437d8c046982b9c97ee070985f8b92a",
+    "packages/core/src/content/index.ts": "3840a84c2c71164e717d87f17b84cecf275f7e39d08c5eda483500bbc90bd3d0",
+    "packages/core/src/datalog/compiler.ts": "549f685706fc0de023dd36913216b921591b89ab6fe4fadb1dff58775229ec67",
+    "packages/core/src/datalog/index.ts": "26f16835b8150e6b3ec584e773b16b946ac68f641db2e1ef084b0bcc65226663",
+    "packages/core/src/datalog/schema.ts": "6000a11b2635a9a915f3a6b41504ce07631e62d6673fdd76c070cf1a8ce639bf",
+    "packages/core/src/datalog/types.ts": "0a74df375fbaca0eaf388af5799d0612c2763de4d58f7fa00813268537d5d913",
+    "packages/core/src/datalog/validation.ts": "a433f5e20d8c03502cd222975de79d7cda97aedef850919a17fc59b0312d0ae8",
+    "packages/core/src/datalog/wrapper.ts": "9a24a60bb57dd1d89a4c89601c56dc8153fb9f93f587b8780f236eb97f992b87",
+    "packages/core/src/derivation/Derivation.ts": "2d0d52d4ca3b0f687ebbe4bc4a7499dc2e7ef8df87f8a2341341a51139682304",
+    "packages/core/src/derivation/Materialization.ts": "4b7a15073ce98216bfb2e73eb6e111e34891ad77342ef5a65d1538298a89cba5",
+    "packages/core/src/derivation/Overlay.ts": "1f1625339214a66fdb5876d25d109fd74c78d56a26e7a0a56b04b9f4d223b50b",
+    "packages/core/src/derivation/index.ts": "eab9634be27e2e8d725f25b58b4b3adecc53bcf7996fef866ccd04efeab6259d",
+    "packages/core/src/dialects/index.ts": "b8772aef8c8e0688c52ff3b612b3131ead8b1d2a61945d53d0334d5424ad1418",
+    "packages/core/src/dialects/postgresql.ts": "13b8f11a0c8cd84d080887a31210d9dafaf1e49e30fd3474926efb5578a646b4",
+    "packages/core/src/dialects/sqlite.ts": "33d5d40c8594df6ff0fb572dd4237685eaff95b7fab38efcaf9983f34a4b7b13",
+    "packages/core/src/dialects/types.ts": "b32e672f81018bc16fb78a310bfdfd868fde3c6914e10a8b1d9059180ef1f800",
+    "packages/core/src/entity/Descriptors.ts": "b93f0d2cd5a29bf63649945399e037281af6ebb9c79c3a23314699d40e7ab655",
+    "packages/core/src/entity/EntityCodec.ts": "0ffc72c0182f50345d5ccac56d16a7a55930584575a330609382dc08d8fb211a",
+    "packages/core/src/entity/Errors.ts": "f8ac929dffd8b1776f29fd0129f6d7a769ec35de9febb0e19e4f622aabbad44c",
+    "packages/core/src/entity/Model.ts": "ea5b1c9a9532b75a178d2604155f5d2a53853e71b6bdd61fee331c97ce5f128b",
+    "packages/core/src/entity/PhysicalNames.ts": "74bd98b59cb2b92010970cad8f0bbecee6787e6f75987b857cac280b1132dc74",
+    "packages/core/src/entity/Plan.ts": "72a7540486ae550c73044f51e3ffc204ff284398f32800317f1fdc9a2a8610c2",
+    "packages/core/src/entity/ProjectionSpec.ts": "6945dd2100052fbe3f2d68b6177b454c72631e6f0ea41ad0f4d8c9a663510c63",
+    "packages/core/src/entity/Repository.ts": "02785261cbebff292ff6163c6bdebef0e256c31765ae7165b449b094d44e8f73",
+    "packages/core/src/entity/index.ts": "1fb0fe444e9878a442025f9498f47a1b2c589590396c26943139e16af682982b",
+    "packages/core/src/errors/index.ts": "c8bc3dd73d5ded0747af741a1bfaf220dce05829e2e06e79c208e590506b868f",
+    "packages/core/src/feed/index.ts": "60247c130e2f5a8fbf0e7235c888c594e7d299e0fb411d6bbf88c92d4d4b02f2",
+    "packages/core/src/index.ts": "34f85c695a10ed8ad1ea4bda1e44da96de836bfa0f4e8a2f5c99e23fb7bb4887",
+    "packages/core/src/internal.ts": "4c304d5efd8fcdee14838638029b0950babff2b5fe00d37b57a7bb327eb9882b",
+    "packages/core/src/kv/datalog/executor.ts": "87770b124f41b99c89bf615925c290f8b176c7c1a5fdeb90dc3f3da91b5a7f1e",
+    "packages/core/src/kv/datalog/index.ts": "da88f8a0c4fc5c3c490b81fb79f7a117554b10e3921a634be3f3677542ac1a35",
+    "packages/core/src/kv/datalog/pattern.ts": "9276ea3346cd3ba7b0543ce93c481384c5e2542ea3832933a55d5e4fa40f3b06",
+    "packages/core/src/kv/datalog/predicate.ts": "fee33c520c074ac693a2b0078de949c291b30229d9ae20709a64813adf0f31ea",
+    "packages/core/src/kv/datalog/types.ts": "f52b4b0a7bc97f1e61a2cc6fce81f1841201327f68eaf34862dc37643d032ea2",
+    "packages/core/src/kv/hexastore/KvTripleStore.ts": "0d4e96309facb7720c29a152c1307e8dac7b9e660a2c815b261477341bfb74b3",
+    "packages/core/src/kv/hexastore/index.ts": "d6dd0f04c212fcffe85f893c708b55e8c188a719c5fbe9c227cecee0f38369bc",
+    "packages/core/src/kv/hexastore/indexes.ts": "bb3787b6aa678388de18bf915cdddad7fcc9c250cf912c572f93866f4c310d1b",
+    "packages/core/src/kv/hexastore/scan.ts": "523afb07ad10d33d18d54f82435d88f3219d86d3a08ef494b56685b8ba45beee",
+    "packages/core/src/kv/hexastore/tuple.ts": "b04adabfb3614e5ae23d92a177face2532eb812b6032ca9d51a83731d5b60963",
+    "packages/core/src/kv/index.ts": "8a2ce977379674189225a65983b96509501ee399170ea16d6ba2c2165a7196aa",
+    "packages/core/src/kv/kv/InMemoryKvBackend.ts": "0b012115beec5316dcd2e45af70195fe507dfa60b99f4bc65fc0ae048d7fe1e5",
+    "packages/core/src/kv/kv/KvBackend.ts": "af3d550c9b98b5839dcff62ff1054632e86f299c6e56110a9e4fc4b19d994644",
+    "packages/core/src/kv/kv/encoding.ts": "bac79b9a3fb1fd9d2b30fdd69389468f52193beea12cb4e752f1c1cdd18f7636",
+    "packages/core/src/kv/kv/index.ts": "d008ea80f1d64aeb9acf603ec671e9cc03e770aa9f80cbc918efa74a044c9533",
+    "packages/core/src/kv/layers/KvTriplesLive.ts": "d97c302ee63e068cd3b475e2f41707210b1d5ace2a965e18c9ad19b211cde7bd",
+    "packages/core/src/kv/layers/index.ts": "a6bf8d195081acf47809f4a181afb5067eb1650bd43f3a185cba0bfdebb6eb94",
+    "packages/core/src/native/FrontierClosure.ts": "664108e81e1104b7cc04e7e5d25f410e38cede5ce11ad32566897a81f10563b2",
+    "packages/core/src/native/NativeQuery.ts": "c5f3ef36ba3578c46e9f845bb4afb752f1617416feee1fdbf534b4c72fea9470",
+    "packages/core/src/operational/ConsumerCheckpoint.ts": "9130fd037ccbc5f845cd8db17f684f9893f57c9b5896bbc1bce33ef855203718",
+    "packages/core/src/operational/index.ts": "bf587a8dfe9ea8424347050441a007ac86d7a94470344effcbed49c3a3e17755",
+    "packages/core/src/params.ts": "12c4b74c9e4a69bb3feb530f18bf91d4eb5ad09dbf9302ff88392323d10786d9",
+    "packages/core/src/runtime/Capabilities.ts": "a429ba009da5554c2b3b608ecf8eba1a47b194fac6abf6d0fd2314fec6e17df6",
+    "packages/core/src/runtime/DatabaseScope.ts": "15a7a8f031c31b8348fd31f44dd0c6c9b4a418229d08721feaa13d1a8a765ddc",
+    "packages/core/src/runtime/Runtime.ts": "834bd1aff33ed7ac7116ea8a0290130e98fb85860bf6f1a894ecae97037f943c",
+    "packages/core/src/runtime/index.ts": "1e887d771e6359355d252a527b49a20401ff8db610b6c4ecaab94ec5e4e39375",
+    "packages/core/src/snapshots/EntitySnapshotsCapability.ts": "82e5f03c2e5a5acdb0913af54c8727e40da7ac4ed1757085c23a6fb5c16fef44",
+    "packages/core/src/snapshots/SnapshotService.ts": "babf48a5e48f7bfa0ea4b2cca3ecaa58c12f79e80a8f0dc01642f581e7d01aab",
+    "packages/core/src/snapshots/SnapshotServiceLive.ts": "1271fb2ce0873a3d3b4a6d87b2b6c468abcefa1de8469ef0aad1e40adcf8eaa8",
+    "packages/core/src/snapshots/canonical.ts": "a9d0198cb45465d3b1a07eadd98093461698f3a4720c595a384a22ca67655a18",
+    "packages/core/src/snapshots/index.ts": "de709354889696990b5a13b9ea5995c8460b1e13b611748878185201f60ec9a6",
+    "packages/core/src/storage/QueryExecutor.ts": "16c37f620cc25d6b2883722726689c516d501dfa679de6b85bf04ef6273c4f98",
+    "packages/core/src/storage/StorageAdapter.ts": "36c9ca889cc75ab87a58a92deb3ab67f227f6c16b8eabfe73149e03058dbb683",
+    "packages/core/src/storage/types.ts": "3a1f65839def9e04437ac531c8b6b2f055d407300178efdb8838ffc41e190aff",
+    "packages/core/src/store/ChangeEmissionCapability.ts": "1163d54a9620dd1ee6e67971ac4d587c72be964cab2583eb54501d75e0e13dab",
+    "packages/core/src/store/ChangeEmitter.ts": "07a02e4c57078bded41b305a725c84422809e3a4da8dfe0fd17bbaffbdabcb57",
+    "packages/core/src/store/DatabaseManager.ts": "111aa80ee7dc4c628deb13d840c2f7bbc948d53b0931645cc8d4ae1134ad8942",
+    "packages/core/src/store/DatabaseRegistry.ts": "3b454b47e2903517ca1bd8635ac3bcf27f8452927fc6bc7447563d3b14ef7354",
+    "packages/core/src/store/RuntimeServices.ts": "9c00c258174ed2ea528899c5becc0ec32704eb4185821c638179f02a94054af3",
+    "packages/core/src/store/StoreCapability.ts": "b9a44cbc7422d61c907c754d611e71eb946d45ff6be34353ba185e1fdb52a2b7",
+    "packages/core/src/store/TripleStoreRuntime.ts": "aa147c299efc23b94d1cc5d8f1c5a77893b63203929bea9d6287d6b60fcb96ec",
+    "packages/core/src/store/Triples.ts": "f8c0d35c1308c96796843ef15da8047ae9acfb0d08064f4f5cb60fe7d8e8b62a",
+    "packages/core/src/store/TriplesLive.ts": "1fc030c442179a937f544b865983b45b577c124aa3b338528823f93dc828a36c",
+    "packages/core/src/store/entityTransactionHistory.ts": "2781d69e456b1916529e640276b352c86d0c1afa26fee16a8620acd1d1f18a32",
+    "packages/core/src/store/systemNamespace.ts": "909bcc5e8d92c4545b90d2a9dd65c3484412be880a2586519d4e7876bf693d6b",
+    "packages/core/src/store/transactionMetadata.ts": "f47e28bb7e5683a1348b8689471fc84de3ebcb8986ed1f6d65198399179055fa",
+    "packages/core/src/store/writeEventUtils.ts": "970487601900dc43cad3e20ce903c991fd939c96c9461567ed1dfa27f3d5e984",
+    "packages/core/src/subscriptions/SubscriptionManager.ts": "ce287a9077fb5b38eee76857ca37367b2a7920e28b67166d0af064e0d25fea8e",
+    "packages/core/src/subscriptions/SyncHub.ts": "56cb393a0b821eb854b1fa6c8c4a45037b65595fec8f98babc4189bad28d9ffe",
+    "packages/core/src/subscriptions/TopicTree.ts": "f587b1d7626847cbda6305b6f618b72b0c9e1b0d31ab39881d61254d3021da87",
+    "packages/core/src/subscriptions/extract-dependencies.ts": "3106dc2061f2d21705a978e8838c6936f3e97f535b80f9e12da4751d1cde587f",
+    "packages/core/src/subscriptions/index.ts": "8da063980711ab7c36565fec9cd25029e68f83c1e5cdbb7ba8e020c77b7d6aba",
+    "packages/core/src/subscriptions/invalidation.ts": "de5c94111e1be72d22678fa5c951693b4d7187e1738ecc1c380b1bbe10df615f",
+    "packages/core/src/subscriptions/query-hash.ts": "01c8ac1e2e12c5f892a34702f1ca6f5783bdd410f2ac5f85e405c9cdd594d0ef",
+    "packages/core/src/subscriptions/types.ts": "83ca64126ce3a7c1516de90cb59e5b5e33ae90a3094251eae442ef864549ab8b",
+    "packages/core/src/types/Pattern.ts": "a1c776e0b67409f1e7c10b3cb6a3cbc7fce7c5c7da0e2708be0bde0f5628ea9b",
+    "packages/core/src/utils/id.ts": "d044a50f014b2f4330b9d7e11340e71a74cbfc7c55dba684b5c04579e72d13de",
+    "packages/sql/src/DatabaseManagerLayer.ts": "ee539cb30d7e9c54d6d9cce3c52b82859cfa122f42bf7c0a91ac0b011242d5b8",
+    "packages/sql/src/DatabaseRegistryLayer.ts": "274d5b9a9ac5bdbdf41bc72b2d09415959e1a7c6949d60fccd4b0dd5786b2691",
+    "packages/sql/src/SqlQueryExecutor.ts": "7436c6a27363c0927fafb0b7aad70112495ec1a8d60cd563645cb65d36ab2f5f",
+    "packages/sql/src/SqlSnapshots.ts": "36818a1fe65f8ba8fdea3c70fd679a54fad29d55b4aed64df3cb5edb641553ae",
+    "packages/sql/src/StorageBackend.ts": "14d7841ad822384c83f6a0de2c0baf6f25f8af174c0b46846cbdf4d9728827f9",
+    "packages/sql/src/index.ts": "6b5d02d354239fb3030ff2f64c1b2ee159058a09dcf5a4b0953dc59362a3cd22",
+    "packages/sql/src/migrations.ts": "22c2a1836d35506f651625b614fa4759217f78dcf0ceb8d05edb3c5bbe6949f3",
+    "packages/sql/src/queries.ts": "a5f085c74875ef467fcff844ac16c4f5fb4906b338f905083e1c018be0329a4d",
+    "packages/sql/src/schema.ts": "380240a83daa971fe8c4a8286d9ac1be5801e0c59f806eb180409be5beb39a04",
+    "packages/sqlite/src/SqliteAdapter.ts": "f70dc5ea3c971d22f618407ea4ae398cbe669c914647654e7f07b97a2146ef3b",
+    "packages/sqlite/src/SqliteBackend.ts": "1abab0395073f12cc3623d1ac3a21f3df25a8c06f6e3631a39640eb32645be04",
+    "packages/sqlite/src/SqliteLayer.ts": "550accbb71358789a32cf3a3a0c781ce76e45fa1973d6ef8f8af710e33270ff0",
+    "packages/sqlite/src/SqliteTriples.ts": "66654781de2301efb98e38ab8841246b1f088980d8e89b7a22c248ce6375f196",
+    "packages/sqlite/src/dialect.ts": "2b6ae49829d9e282f24fa6f2bc491d15871c958dfe2f94bfeb775896b12e1fc4",
+    "packages/sqlite/src/index.ts": "1798b78d8fd87bdb523fe68d6b3afdc11e3f207184f9378691adcbc6cf352a9e"
+  },
+  "nativeAddon": {
+    "file": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-df01/node_modules/.pnpm/better-sqlite3@12.10.0/node_modules/better-sqlite3/build/Release/better_sqlite3.node",
+    "sha256": "d74ae4ac4261c1266fed01da1e8474e001253493db3ce062cfac03720385999d"
+  }
+}
