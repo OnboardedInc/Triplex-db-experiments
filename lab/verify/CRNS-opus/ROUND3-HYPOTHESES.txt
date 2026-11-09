@@ -1,0 +1,22 @@
+Round 3 fix-introduced attack hypotheses, written from REPORT round 3 and the SCHEMA round 3 section only, before reading the
+claim.mjs round 3 diff (2026-11-09).
+M1 Reader load (High 1 fix): answers are now oracle-checked, but nothing in a P3-only or P2-only run bounds read latency or
+   per-loop completion rate. A candidate that answers correctly but slowly (one read per loop per second) keeps 256 loops
+   "active" every second while the store carries almost no read load.
+M2 Crash witness (High 2 fix): resume is proven only in the companion attempt. A candidate that can tell the attempts apart
+   (planned injections, attempt id, plan inputs) can run a safe, slow checkpoint mode there and a fast mode in the primary.
+   Only the primary's WAL shape could reveal the difference.
+M3 Publish before offer (High 3 fix): a refusal on L < first send cannot see work done before the offer and revealed at send. A
+   candidate that pre-computes the frozen trace and flips visibility at send time gets near-zero latency. This is trace secrecy,
+   not a bracket check.
+M4 Invalid commit (High 4 fix): if validity is computed on the pre-offer visible prefix (entries with U <= scheduled), the
+   candidate controls U. Delaying the visibility of an earlier conflicting commit makes an oracle-invalid command look valid,
+   so committing it passes. The correct prefix for validity of a committed command is the source prefix before its position.
+M5 Lag population from frozen trace: the same visibility trick can turn a valid command into a justified rejection and remove
+   it from the lag population.
+M6 Calibration authority: if the calibration record is a prior run of the same candidate, the candidate inflates both runs.
+   It is only sound when the authority is A0 or another system the candidate does not control.
+M7 Frozen trace in trusted: a trace preimage with scheduled times and content is exactly what a candidate needs for M3; its
+   secrecy from the candidate is not stated.
+M8 Companion equality "including functions by reference": a fixture that shares function objects passes; a production
+   integration that wraps the same oracle twice fails closed. Not a forgery.

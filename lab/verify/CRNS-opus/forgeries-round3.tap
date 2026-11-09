@@ -1,0 +1,172 @@
+TAP version 13
+# Subtest: D0 round 3 baseline: P3 and P3+P2 RECOMPUTED with met
+ok 1 - D0 round 3 baseline: P3 and P3+P2 RECOMPUTED with met
+  ---
+  duration_ms: 27.223875
+  type: 'test'
+  ...
+# Subtest: W-H1 P3: 4 loops that each complete one correct read per second, 900 ms per read, count as "readers running"
+not ok 2 - W-H1 P3: 4 loops that each complete one correct read per second, 900 ms per read, count as "readers running" # TODO accepted: answers are checked, but read latency and per-loop rate are only barred when P1 is requested
+  ---
+  duration_ms: 9.367916
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round3.test.mjs:133:50'
+  failureType: 'testCodeFailure'
+  error: |-
+    readers throttled to about 1 read per loop per second; RECOMPUTED with bars {"sourcePrefixEnumerated":true,"everyPositionAccounted":true,"counts":true,"lag":true,"resume":true,"met":true}
+    + actual - expected
+    
+    + 'RECOMPUTED'
+    - 'REFUSED'
+         ^
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'REFUSED'
+  actual: 'RECOMPUTED'
+  operator: 'strictEqual'
+  stack: |-
+    recomputedMet (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round3.test.mjs:126:42)
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round3.test.mjs:137:3)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: W-H1 P3+P2: 4 loops that each complete one correct read per second, 900 ms per read, count as "readers running"
+not ok 3 - W-H1 P3+P2: 4 loops that each complete one correct read per second, 900 ms per read, count as "readers running" # TODO accepted: answers are checked, but read latency and per-loop rate are only barred when P1 is requested
+  ---
+  duration_ms: 8.133375
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round3.test.mjs:133:50'
+  failureType: 'testCodeFailure'
+  error: |-
+    readers throttled to about 1 read per loop per second; RECOMPUTED with bars {"sourcePrefixEnumerated":true,"everyPositionAccounted":true,"counts":true,"lag":true,"resume":true,"met":true}
+    + actual - expected
+    
+    + 'RECOMPUTED'
+    - 'REFUSED'
+         ^
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'REFUSED'
+  actual: 'RECOMPUTED'
+  operator: 'strictEqual'
+  stack: |-
+    recomputedMet (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round3.test.mjs:126:42)
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round3.test.mjs:137:3)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: W-H2 a planned crash injection whose witness is absent (e.g. recovery failed) is refused
+not ok 4 - W-H2 a planned crash injection whose witness is absent (e.g. recovery failed) is refused # TODO accepted: witnesses must be planned, but not every planned injection must have a witness
+  ---
+  duration_ms: 10.204209
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round3.test.mjs:141:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    injection-9 planned, never witnessed; RECOMPUTED with bars {"sourcePrefixEnumerated":true,"everyPositionAccounted":true,"counts":true,"lag":true,"resume":true,"met":true}
+    + actual - expected
+    
+    + 'RECOMPUTED'
+    - 'REFUSED'
+         ^
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'REFUSED'
+  actual: 'RECOMPUTED'
+  operator: 'strictEqual'
+  stack: |-
+    recomputedMet (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round3.test.mjs:126:42)
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round3.test.mjs:152:3)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: W-H3 RESIDUAL: publication revealed exactly at send (L = sentAtNs) with 0.2 ms ACK passes; only trace secrecy prevents pre-application
+not ok 5 - W-H3 RESIDUAL: publication revealed exactly at send (L = sentAtNs) with 0.2 ms ACK passes; only trace secrecy prevents pre-application # TODO residual: indistinguishable from a fast engine by brackets; requires the frozen trace to be unreadable by the candidate
+  ---
+  duration_ms: 5.927916
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round3.test.mjs:156:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    pre-applied command revealed at send; RECOMPUTED with bars {"sourcePrefixEnumerated":true,"everyPositionAccounted":true,"counts":true,"lag":true,"resume":true,"met":true}
+    + actual - expected
+    
+    + 'RECOMPUTED'
+    - 'REFUSED'
+         ^
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'REFUSED'
+  actual: 'RECOMPUTED'
+  operator: 'strictEqual'
+  stack: |-
+    recomputedMet (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round3.test.mjs:126:42)
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round3.test.mjs:163:3)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: W-H4 control: c0 visible before c1 is offered, c1 committed anyway: INVALID-COMMAND-PUBLISHED
+ok 6 - W-H4 control: c0 visible before c1 is offered, c1 committed anyway: INVALID-COMMAND-PUBLISHED
+  ---
+  duration_ms: 8.309417
+  type: 'test'
+  ...
+# Subtest: W-H4 c0 committed first in source order but its visibility held until 3 ms after c1 is offered: the invalid c1 commit passes
+not ok 7 - W-H4 c0 committed first in source order but its visibility held until 3 ms after c1 is offered: the invalid c1 commit passes # TODO accepted: validity uses the pre-offer visible prefix (U <= scheduled), which the candidate controls; it is not the source prefix before c1's position
+  ---
+  duration_ms: 7.983333
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round3.test.mjs:179:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    c0 hidden from polls across c1's offer time; RECOMPUTED with bars {"sourcePrefixEnumerated":true,"everyPositionAccounted":true,"counts":true,"lag":true,"resume":true,"met":true}
+    + actual - expected
+    
+    + 'RECOMPUTED'
+    - 'REFUSED'
+         ^
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'REFUSED'
+  actual: 'RECOMPUTED'
+  operator: 'strictEqual'
+  stack: |-
+    recomputedMet (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round3.test.mjs:126:42)
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round3.test.mjs:183:3)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 5
+# duration_ms 157.734875
