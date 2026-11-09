@@ -350,3 +350,6 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   path. Open edge: facts written before :f/entity-type existed are not classified as journal facts. Orchestrator decision: lab stores are
   always created with the full schema, so 0.4.1 states "fresh stores only" under Q107c rather than adding a legacy-journal rule. DF01
   joins contract 0.4.1 at 302a7a63 with the verify branch.
+- 2026-11-09 R49 (bpftrace source) committed. Recommendation: local image from ubuntu:24.04 arm64 digest plus pinned bpftrace 0.20.2 and
+  LLVM 18 .debs (about 90 MB, Ubuntu-signed). Asked Sam to approve that download. OBS01 round 10 (after CX-VOBS7): nsecs -> nsecs(monotonic),
+  the four W0 checks from R49, and a W0 clock comparison against the observer's CLOCK_MONOTONIC.

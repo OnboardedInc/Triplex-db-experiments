@@ -2256,3 +2256,18 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **Lesson:** an offline witness proves the judging logic, not that the probes fire. Until W0-W3 run, the kernel cost per commit and the
   probe attach points are predictions.
 - **Disk:** 11 GiB free after compression. Still well short of the 60 GiB needed for a 100k run.
+
+## 2026-11-09: R49: bpftrace from the Ubuntu archive; the witness clock was wrong
+
+- **Source:** one local image, built from ubuntu:24.04 (arm64 digest 19cad596...) plus bpftrace 0.20.2-1ubuntu4.3 and LLVM 18
+  1:18.1.3-1ubuntu1, every package version and .deb SHA256 pinned (about 90 MB in total; signed by the Ubuntu archive key, the same root
+  of trust as the VM kernel). The upstream AppImage (196 MB, unsigned, needs FUSE and a user namespace) and quay.io/iovisor/bpftrace
+  (unmaintained since 2023, Ubuntu 20.04) are rejected. LLVM must be pinned too: a newer LLVM 18 build broke 0.20.2 (LP #2097317).
+- **Bug found:** bare `nsecs` is CLOCK_BOOTTIME since bpftrace 0.12, not CLOCK_MONOTONIC. vm_syncwitness.bt must use
+  `nsecs(monotonic)` (0.19+), or every witness time is on a different clock from ACK and the observer bracket (Q100q). Fix in OBS01
+  round 10, after CX-VOBS7 reports.
+- **W0 must also check:** perf_event_paranoid (Ubuntu sets 4; whether CAP_PERFMON alone suffices is unverified), peak memory against the
+  256 MiB cap, ext4 built in rather than a module, BPFTRACE_MAX_MAP_KEYS (4096 default). The per-CPU sequence check cannot see probes the
+  kernel skips for recursion protection (low risk for ext4 events).
+- **Lesson:** the offline tests could not catch the clock bug, because the fixtures were written in the clock the normalizer expects. A
+  clock-domain claim needs a check against the running kernel (W0 should compare nsecs(monotonic) with the observer's CLOCK_MONOTONIC).
