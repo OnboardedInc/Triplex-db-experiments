@@ -25,6 +25,9 @@ human is watching this run. Your role and task follow after these rules.
 9a. **PASS audit.** Before you commit work that turns observations into a PASS, verdict or receipt, list every place your code does that and
     confirm each one checks content (the observed bytes match what is expected), freshness (from this attempt, not an earlier one) and
     binding (tied to the exact source, slot and inputs it claims). Put the list in your report.
+9b. **The contract is not yours.** Never edit lab/acceptance/ (rulings, generated files, pins, the contract version) unless your task
+    is a contract version. If your change moves a pinned file's hash, list each pinned path with its old and new sha256 in your report and
+    leave the contract unchanged; the contract builder re-pins it in the next version.
 10. **Report.** Write your full report to the report path your task names (or, if none, `REPORT-<your id>.md` at the root of your
     worktree, committed), then end with a short final message: result, head commit, evidence paths, open questions. State plainly
     what you did not do or could not verify.
