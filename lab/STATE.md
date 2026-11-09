@@ -177,3 +177,5 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   protocols run on exclusive slots configured for observation (with G03's containers); no resident is changed.
 - K01 round 8 (6f7e11f): G0 covers all 89 declared columns in 11 tables plus dynamic columns; 167 tests. In review round 7. Queued for
   K01's next round: Q93c's normalized digest D' for E1 (fresh seed against golden).
+- Queued: ER01-C (erasure core) after RT01 round A merges; then ER01-X and ER01-R; ER01-Q behind SQL01 and QG1 phase 2; ER01-D behind DA04.
+  Running: ER01-S scanners (CX-OBS01). Pending Sam: Q95-S (S1-S4).

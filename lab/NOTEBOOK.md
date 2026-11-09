@@ -1726,3 +1726,18 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **RQ01 merged** (59e07af) through a testkit /route subpath so the pinned index did not move; evaluator 108/108. **RT01 round A started.**
 - **K01's redesign converges:** round 6 review passed 22 of 23 controls with one finding (G0 omitted value_identity). Before the redesign each
   round found 3 or 4. Round 8 derives G0's columns from the schema with a test for new columns.
+
+## 2026-11-09 01:58Z: R38 designs erasure for all three lanes; plaintext PII reaches every engine today
+- **Today:** no erase, no ErasedValue, no protected-attribute flag. Plaintext reaches the journal, XTDB value_identity and its constraint
+  and cache tables, QLever literals and broker frames. Evaluation closures keep unkeyed sha256 digests, which an attacker can reverse for an
+  SSN by trying all values.
+- **Design (ruled Q95a-h):** one random key per protected assertion from a durable pre-issued pool (no extra fsync per commit), wrapped by
+  per-tenant epoch keys whose rotation makes stale copies useless; values sealed in the TypeScript core so no engine sees plaintext; every
+  erasure recorded twice (data and ledger), the key store forward-only so a restore cannot bring a value back. Lane X writes ciphertext and a
+  tx_erasures table (XTDB ERASE unused); lane Q seals frames, H1 and the replica and drops erased envelopes in new generations; lane D seals
+  :f.v/string and adds excision as the second layer.
+- **For Sam (Q95-S):** S1 what a reader pinned before an erasure sees after it (recommended: the marker, with an erasure sequence so no
+  change is silent; amends Q89i); S2 about 20 minutes to unrecoverable and the key-store trade; S3 protected attributes are kernel-only for
+  comparison and Unique; S4 erase only declared-protected attributes. Counsel should confirm crypto-shredding against GDPR Article 17.
+- **Order:** ER01-S scanners now (CX-OBS01, evaluator-owned); ER01-C core after RT01 round A merges; then X and rotation; Q behind the
+  SQLite move and QLever generations; D behind DA04.

@@ -115,3 +115,16 @@ The table below is R36 section 6 verbatim (old rule, its status, new text). Q83d
 | Q94h | GS.10's race (in-flight reconciles finish on the old release) is scheduled as EXP-P5 round C, right after rounds A and B, and is required for GS.10 to close | R37 h; Q92j; TARGETS 6 row 10 |
 | Q94i (orchestrator; the superseded outcome flagged for Sam) | GS.03's vendor-revision rule goes into W0-1.2 with an O-DOMAIN `signal-ack` operation; the `superseded` outcome stays flagged for Sam | R37 i; TARGETS 6.1; W0 lacks it |
 | Q93c two digests | G0 admits a clone by the full digest D over every stored column (byte-level identity with its golden). E1, which compares a clone with a fresh seed of the same inputs, uses a second digest D' over the same columns with engine-assigned values normalized: engine-generated ids and system timestamps are replaced by their rank in commit order, and every other column is kept as is. A fresh seed must match the golden's D', never its D. The normalization list is part of the G0 module, each entry with a comment naming the engine source that assigns it, and a test fails if a column is normalized without one. | CX-K01-R2 round 8 |
+
+## Q95: erasure (EXP-ER01, from R38, lab/research/R38-erasure-design.md)
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q95a | Keys are per protected assertion, random, from a durable pre-issued pool; this refines Q58e's "per subject" | R38 6.9 a |
+| Q95b | Protected values are sealed in the TypeScript core before any adapter or engine; one `unseal` decodes every route; engines never see plaintext | R38 6.9 b |
+| Q95c (waits for Sam, S3) | Protected attributes are refused for engine-side predicates, order, Unique, grouping and aggregates (`E-PROTECTED-NOT-INDEXABLE`); kernel-side semantics stay as Q49c, Q52 and Q56 | R38 6.9 c |
+| Q95d | Native results return `SealedValue` or `ErasedValue` for protected cells; they decrypt only when the row's assertion id is projected | R38 6.9 d |
+| Q95e | Two copies of every erasure record (data and ledger); the key store and ledger are never restored from an older copy; restore and key-store restore repair each other (3.6) | R38 6.9 e |
+| Q95f | The frontier is the per-tenant ledger `seq`, read from the source's head row at each request's start; answers carry `erasure: {seq}` | R38 6.9 f |
+| Q95g | Q82d under encryption is read as the four scans of 4.1, each with its own positive control | R38 6.9 g |
+| Q95h | XTDB `ERASE` is not used; Datomic excision removes value datoms only; QLever generations drop erased envelopes; evaluation closures record assertion ids for protected observations | R38 6.9 h |
+| Q95-S (Sam) | Waiting for Sam: R38 section 7, S1 (what a reader pinned before an erasure sees afterwards; amends Q89i), S2 (time to unrecoverable, about 20 minutes, and the key-store trade), S3 (protected attributes are kernel-only for comparison, order, Unique and range rules), S4 (erase only declared-protected attributes). R38 recommends S1 A, S2 accept with R = 15 min, S3 A, S4 A. Also stated: whether crypto-shredding meets GDPR Article 17 is contested, so counsel should confirm before Triplex calls it compliant. | R38 7 |
