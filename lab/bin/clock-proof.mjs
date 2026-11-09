@@ -91,23 +91,51 @@ export function forbiddenClockTokens(text){
  return hits;
 }
 
-/** Source text without comments and the `#!` line. */
-export function stripBtComments(source){
- return String(source).replace(/\/\*[\s\S]*?\*\//g,'').split('\n').filter(l=>!l.trim().startsWith('//')&&!l.trim().startsWith('#')).map(l=>l.replace(/\/\/.*$/,'')).join('\n');
+// [EXP-OBS01-R14] Why (R13-F1): comments and string literals are lexed together. The round 13 regexes removed `/* ... */` and `//` text without knowing whether the delimiter sat inside a string,
+// so `printf("https://clock"); @x = nsecs(boot);` and `printf("/*"); @x = nsecs(boot); printf("*/");` hid a real time read from the source check. This lexer walks the text once and tracks
+// string literals (with backslash escapes), char literals and both comment forms; only a real comment is removed and string contents are blanked to "". It is fail closed: an unterminated string
+// (a newline or end of text before the closing quote), char literal or block comment is reported in `errors`, and sourceTimeSites turns each into a refusal. A `#` line (the `#!` line, preprocessor lines) is
+// dropped only where a line starts outside any string or comment. Rejected: refusing every `//` or `/*` inside a string (simpler, but it would reject a harmless URL in a printf); keeping the regexes.
+/** Returns {code, errors}: the source without comments, string and char literal contents emptied (`""`, `''`), newlines kept. */
+export function lexBt(source){
+ const t=String(source),out=[],errors=[];let i=0,line=1,atLineStart=true;
+ while(i<t.length){
+  const c=t[i],n=t[i+1];
+  if(c==='\n'){out.push(c);i+=1;line+=1;atLineStart=true;continue;}
+  if(atLineStart&&c==='#'){while(i<t.length&&t[i]!=='\n')i+=1;continue;}
+  if(c===' '||c==='\t'||c==='\r'){out.push(c);i+=1;continue;}
+  atLineStart=false;
+  if(c==='/'&&n==='/'){while(i<t.length&&t[i]!=='\n')i+=1;continue;}
+  if(c==='/'&&n==='*'){
+   const start=line;i+=2;let closed=false;
+   while(i<t.length){if(t[i]==='*'&&t[i+1]==='/'){i+=2;closed=true;break;}if(t[i]==='\n'){out.push('\n');line+=1;atLineStart=true;}i+=1;}
+   if(!closed)errors.push('unterminated block comment starting at line '+start);
+   else out.push(' ');
+   continue;
+  }
+  if(c==='"'||c==="'"){
+   const start=line;i+=1;let closed=false;
+   while(i<t.length&&t[i]!=='\n'){if(t[i]==='\\'){i+=2;continue;}if(t[i]===c){i+=1;closed=true;break;}i+=1;}
+   if(!closed)errors.push('unterminated '+(c==='"'?'string':'character')+' literal starting at line '+start);
+   out.push(c+c);continue;
+  }
+  out.push(c);i+=1;
+ }
+ return {code:out.join(''),errors};
 }
-const stripStrings=code=>code.replace(/"(?:[^"\\]|\\.)*"/g,'""');
 
 /** Time reads in the .bt source: nsecs(monotonic) sites, and anything else that reads a clock (bare nsecs, nsecs(boot|tai), jiffies, elapsed, strftime, time). */
 export function sourceTimeSites(source){
- const code=stripStrings(stripBtComments(source));
+ const {code,errors}=lexBt(source);
  const monotonic=(code.match(/\bnsecs\s*\(\s*monotonic\s*\)/g)??[]).length;
  const other=(code.match(/\bnsecs\b(?!\s*\(\s*monotonic\s*\))|\bnsecs_\w+|\bjiffies\w*|\belapsed\b|\bstrftime\b|\btime\s*\(|\bktime\w*|\buptime\b/g)??[]);
+ other.push(...errors);   // [EXP-OBS01-R14] a source this lexer cannot read to the end is refused, never partly checked
  return {monotonic,other};
 }
 
 /** Probe headers of the .bt source (text before each top-level `{`). A comma list of attach points refuses: this reader does not map one block to several programs. */
 export function sourceProbes(source){
- const code=stripStrings(stripBtComments(source)),probes=[];let depth=0,head='';
+ const code=lexBt(source).code,probes=[];let depth=0,head='';
  for(const ch of code){
   if(ch==='{'){if(depth===0)probes.push(head.trim());depth+=1;head='';continue;}
   if(ch==='}'){depth-=1;continue;}
@@ -118,7 +146,7 @@ export function sourceProbes(source){
 
 /** Helpers the source can need, from its constructs; `unmodeled` lists constructs that would call a helper this derivation does not model (the proof then refuses). */
 export function sourceHelperNeeds(source){
- const code=stripStrings(stripBtComments(source)),needs=new Set();
+ const code=lexBt(source).code,needs=new Set();
  if(/\bnsecs\s*\(\s*monotonic\s*\)/.test(code))needs.add('bpf_ktime_get_ns');
  if(/@\w+\s*\[/.test(code)||/@\w+\s*(?:=|\+\+)/.test(code)){needs.add('bpf_map_lookup_elem');needs.add('bpf_map_update_elem');}
  if(/\bdelete\s*\(/.test(code))needs.add('bpf_map_delete_elem');
@@ -251,7 +279,7 @@ export function clockPrimitiveVerdict(facts,{version=BPFTRACE_VERSION}={}){
  // ---- gate (1): static source check ----
  const sites=sourceTimeSites(facts?.sourceText??''),probes=sourceProbes(facts?.sourceText??''),needs=sourceHelperNeeds(facts?.sourceText??'');
  if(sites.monotonic<1)bad.push('pinned source has no nsecs(monotonic) read');
- if(sites.other.length)bad.push('pinned source reads a clock other than nsecs(monotonic): '+sites.other.slice(0,5).join(', '));
+ if(sites.other.length)bad.push('pinned source reads a clock other than nsecs(monotonic) (or cannot be lexed): '+sites.other.slice(0,5).join(', '));
  // ---- gate (3): the dump, recorded in full with its hash, scanned for forbidden clock helper name tokens ----
  const compiled=facts?.compiled??{};
  const text=[compiled.stdout,compiled.stderr].filter(s=>typeof s==='string'&&s.length).join('\n');

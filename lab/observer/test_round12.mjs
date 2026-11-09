@@ -277,3 +277,21 @@ test('R13 harness wiring (static): the dump file and its hash are recorded by th
   const text = fs.readFileSync(witness.PROGRAM.replace('lab/observer/vm_syncwitness.bt', 'lab/bin/sync-witness.mjs'), 'utf8');
   for (const piece of ['dumpFileSha256', "'w0-compiled-program.txt'", 'fs.writeFileSync(dumpPath,dumpFile)']) assert.ok(text.includes(piece), piece);
 });
+
+// ---------------- [EXP-OBS01-R14] R13-F1: the source check lexes strings and comments together ----------------
+test('R14 R13-F1: comment delimiters inside string literals cannot hide a time read; unterminated strings and comments refuse (proof and W0)', () => {
+  const src = pinned.toString('utf8'), at = s => src.replace('BEGIN\n{', 'BEGIN\n{\n  ' + s + '\n');
+  const bad = ['printf("https://clock"); @c = nsecs(boot);', 'printf("/*"); @c = nsecs(boot); printf("*/");', 'printf("//"); @c = nsecs;', 'printf("\\"//"); @c = jiffies;', 'printf("/*"); @c = elapsed; printf("*/"); @d = 1;',
+    "printf('\"'); @c = nsecs(tai);", 'printf("x"); /* "y */ @c = nsecs(boot);', '@c = nsecs(boot); // "unbalanced', '@c = 1; /* never closed @d = nsecs(monotonic);', 'printf("never closed); @c = nsecs(monotonic);',
+    'printf("ends with backslash\\', "printf('x); @c = nsecs(monotonic);", '@c = nsecs(monotonic); "'];
+  for (const stmt of bad) {const text = at(stmt), v = verdict(undefined, srcOver(text)); assert.equal(v.pass, false, stmt); assert.match(v.reasons.join(';'), /reads a clock other than nsecs\(monotonic\)/, stmt); assert.equal(w0(facts(undefined, srcOver(text))).pass, false, stmt);}
+  assert.match(proof.sourceTimeSites(at('@c = 1; /* never closed')).other.join(';'), /unterminated block comment starting at line \d+/);
+  assert.match(proof.sourceTimeSites(at('printf("never closed);')).other.join(';'), /unterminated string literal starting at line \d+/);
+  assert.match(proof.sourceTimeSites(at("printf('x);")).other.join(';'), /unterminated character literal/);
+  // harmless and real comments still work, so the pinned source and ordinary code are not refused
+  for (const ok of ['printf("https://clock %s", "/* */");', 'printf("\\"//"); @c = nsecs(monotonic);', '// @c = nsecs(boot);', '/* @c = nsecs(boot); */ @c = 1;', '/* a // b */ @c = nsecs(monotonic); // "', 'printf("a\\\\"); @c = 1;', "printf('\"');"]) {
+    const sites = proof.sourceTimeSites(at(ok)); assert.deepEqual(sites.other, [], ok); assert.equal(verdict(undefined, srcOver(at(ok))).pass, true, ok);
+  }
+  assert.deepEqual(proof.sourceTimeSites(src), {monotonic: 15, other: []});
+  assert.equal(proof.lexBt('a // b\n"c//d" /* e\nf */ g').code, 'a \n"" \n  g');
+});

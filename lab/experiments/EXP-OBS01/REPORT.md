@@ -1747,3 +1747,21 @@ No `lab/acceptance` path is pinned to any file changed here (`lab/acceptance/RUL
 - No VM, Docker, colima, engine or network command; no image pull, apt, pip or pnpm. W0 to W4 not run; no real bpftrace, real dump or real kernel BTF. `clockProgramStep`'s `dumpFileSha256` is covered by a static wiring test only.
 - `lab/verify/CX-VOBS7/run_round12.py` and the reviewer capture runners were not run (they create fresh evidence directories); the edited reviewer fixtures were run directly with redirected output.
 - Not run: other repository suites, the Dockerfile build, B9 and CR-NS `claim.mjs`, earlier durable evidence.
+
+## Round 14: the source check lexes strings and comments together (fixes R13-F1 in `VERIFY-round13.md`)
+
+Builder Claude Sonnet 5.5, from `exp/OBS01-observer` at `6785096a`. Offline only; heavy runs through `lab/bin/heavy.mjs --label OBS01-R14`.
+
+- **Fix.** `lab/bin/clock-proof.mjs`: the regex comment stripping is replaced by `lexBt`, a one-pass lexer that tracks string literals (backslash escapes), char literals and both comment forms. Only real comments are removed; string contents become `""`. It is fail closed: an unterminated string, char literal or block comment is reported and `sourceTimeSites` adds it to `other`, so the gate refuses (proof and `judgeW0`). A `#` line is dropped only where a line starts outside any string or comment. I chose the lexer over refusing every `//` or `/*` in a string (that would reject a harmless URL in a printf); the pinned `.bt` passes either way (`{monotonic:15,other:[]}`). `sourceProbes` and `sourceHelperNeeds` use the same lexer. Gate wording is now "reads a clock other than nsecs(monotonic) (or cannot be lexed)".
+- **Reviewer fixtures.** The two R13-F1 fixtures in `review_round13.mjs` now pass with no edit to that file; round 9 to 13 reviewer fixtures all pass, no expectation changed this round.
+- **New test** (`test_round12.mjs`, 1 test): 13 refusing sources through proof and W0 (both reviewer shapes, an escaped quote, a char-literal quote, a `//` and `/*` inside a string and after a comment, unterminated string, unterminated character literal, unterminated block comment, trailing backslash, a lone `"`), explicit unterminated-string and unterminated-comment messages, and 7 harmless sources that still pass (URL and `/* */` in strings, real comments containing clock builtins, escaped backslash).
+- **Counts.** `test_vm.py` 14/14, `test_syncwitness.py` 18/18, `test_round10.py` 40/40, `test_round11.py` 20/20, `test_engine.mjs` 25/25, `test_round12.mjs` 25/25, reviewer rounds 9, 10, 11, 12, 13: 11, 4, 5, 8, 5 (output redirected, retained evidence untouched).
+- **Rule 9a audit.** The only verdict site touched is gate (1): content = the lexed code (comments removed, strings emptied) has at least one `nsecs(monotonic)` and no other clock builtin, and the whole text lexed to its end; freshness = the source text read in this W0 step; binding = the text hashes to the pinned hash the image also computed (unchanged). No acceptance file moved.
+- **Moved hashes** (old at `6785096a`):
+
+| Path | Old SHA256 | New SHA256 |
+| --- | --- | --- |
+| `lab/bin/clock-proof.mjs` | `00fd0de2206464c8c00b13b59bf9d6a07c57e9d0a3f18fc879712834f8cc1183` | `2d91d6fdb354527a6ea386dc4a4977bb5ae4f3220510baa6f817629e989f7a39` |
+| `lab/observer/test_round12.mjs` | `4b0ea66e822cc8cb27d99b547def1edad78618c6840dd628cd2874b17815dc16` | `8a487c5edf8ae6ef99dcdcdb2f1b60943778c0ed999d191cccf79313f88f65f9` |
+
+- **Not run:** no VM, Docker, network or real bpftrace; the `.bt` grammar is lexed by this file's own rules (bpftrace's real lexer is not consulted), so an exotic literal form could still be misread, but any case the lexer cannot close refuses.
