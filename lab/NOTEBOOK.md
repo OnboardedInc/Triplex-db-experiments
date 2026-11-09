@@ -1964,3 +1964,9 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **Confirmed live (3d334592):** tx_assertions COUNT = 61,384 on the engine, captured before cleanup, matching the source-derived expectation exactly.
 - **Next failure:** G0 queried tx_native_relation_attempts, which the adapter declares but XTDB 2 creates only on first insert; this seed never writes it.
 - **Lesson:** each full live run has found exactly one new G0 assumption about the engine (union integer type, journal rows, lazy table creation). Round 13 runs a small diagnostic smoke run that records every failure in order instead of stopping at the first, then fixes them all offline, before the next full run. Absence of a table is checked through the catalog, never by catching a planning error.
+
+## 2026-11-09: EXP-P2B round 1: in-memory commit latency misses P2 with no engine involved
+
+- **5d1ee8f9:** 140 tests pass; a 10-second in-memory diagnostic with 256 readers checked 194,153 reads with no content, receipt, feed-order, resume or clock errors. Read p99 9.80 ms; feed lag p99 35.23 ms.
+- **But** offer-to-ACK for 5-10 facts was p50 45.94 / p99 82.45 ms (9 commits), against p50 <= 10 / p99 <= 50 ms. P2Q measured p50 5.9 ms offline on lane Q.
+- **Hypothesis:** 256 readers sharing the broker's event loop. Round 2 splits latency by stage on one clock, varies reader count and placement, and raises the sample to 200 commits per band before any live XTDB run.
