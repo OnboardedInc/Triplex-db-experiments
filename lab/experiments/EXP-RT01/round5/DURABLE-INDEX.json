@@ -1,0 +1,10 @@
+{
+  "root": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-RT01/round5",
+  "files": 9,
+  "bytes": 419873,
+  "attempts": [
+    "test1",
+    "pins1"
+  ],
+  "retention": "All raw outputs retained outside Git; targeted tests and read-only immutable-main pin inventory"
+}

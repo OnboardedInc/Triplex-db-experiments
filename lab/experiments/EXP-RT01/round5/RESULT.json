@@ -1,0 +1,46 @@
+{
+  "observedAt": "2026-11-09T06:33:09.708Z",
+  "head": "472c2c2439922b52e33206510b6cecb0812206ed",
+  "context": "offline-no-engine",
+  "tests": 2,
+  "sourceUnchanged": true,
+  "main": "3e403d80ce3e667fb2fb3e2a211accb484da6b23",
+  "mainContractVersion": "0.3.13",
+  "directPinEntries": 302,
+  "expandedPinEntries": 602,
+  "pinnedPaths": 243,
+  "RT01PinChanges": [
+    {
+      "path": "packages/testkit/src/index.ts",
+      "mainSha256": "cb89a55ced5426b8fa0af3523fbbeb73870e61e3622ebb42e8a78c3e67da8d28",
+      "branchSha256": "995bc1ace5ebb9654a74e238b8860cb7e8f012a979c7c4cf86d03388efd935c7",
+      "forkSha256": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988",
+      "classification": "RT01-change",
+      "pins": [
+        {
+          "path": "packages/testkit/src/index.ts",
+          "sha256": "cb89a55ced5426b8fa0af3523fbbeb73870e61e3622ebb42e8a78c3e67da8d28",
+          "location": "/pinChanges0313/testkit"
+        },
+        {
+          "path": "packages/testkit/src/index.ts",
+          "sha256": "cb89a55ced5426b8fa0af3523fbbeb73870e61e3622ebb42e8a78c3e67da8d28",
+          "location": "/oracleFilesPinned/O-TESTKIT/0"
+        },
+        {
+          "path": "packages/testkit/src/index.ts",
+          "sha256": "cb89a55ced5426b8fa0af3523fbbeb73870e61e3622ebb42e8a78c3e67da8d28",
+          "location": "/caseSets/CS-U44/pinnedSourceFiles/0"
+        },
+        {
+          "path": "packages/testkit/src/index.ts",
+          "sha256": "cb89a55ced5426b8fa0af3523fbbeb73870e61e3622ebb42e8a78c3e67da8d28",
+          "location": "/caseSourcesPinned/CS-U44/0"
+        }
+      ]
+    }
+  ],
+  "upstreamOnlyPinDifferences": 8,
+  "liveQualified": false,
+  "contractChanged": false
+}

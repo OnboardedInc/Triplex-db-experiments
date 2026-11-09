@@ -24,7 +24,15 @@ for (const commitEncoding of ["a0", "compact"] as const) {
           const subject = EntityId.make("subject");
           suite.clock.set(1000);
           const receipt = yield* t.transact(
-            [{ op: "assert", entityId: subject, attribute: ":value", value: string("first") }],
+            [
+              {
+                op: "assert",
+                entityId: subject,
+                attribute: ":value",
+                value: string("first"),
+                validTo: 2000,
+              },
+            ],
             { commandId: "first" },
           );
           const request = { snapshotPosition: receipt.position };
@@ -36,8 +44,15 @@ for (const commitEncoding of ["a0", "compact"] as const) {
           expect(yield* t.transaction(receipt.txId)).toEqual(before.transactions[0]);
           expect(yield* t.transactionByCommand("first")).toEqual(before.transactions[0]);
           expect((yield* t.transactions()).transactions).toEqual(before.transactions);
-          // Ordinary business-time reads must still exclude the future-valid fact.
-          expect(yield* t.entity(subject, { basis: { validAt: 900 } })).toEqual([]);
+          // [EXP-RT01] Why: explicit V must control both edges of [1000, 2000) independently of runtime 800. Rejected: a nested basis at the current clock (silently tests the default instead).
+          suite.clock.set(800);
+          expect(yield* t.entity(subject)).toEqual([]);
+          for (const validAt of [999, 1000, 1999, 2000, 2001]) {
+            const rows = yield* t.entity(subject, { validAt });
+            expect(rows, `explicit validAt=${validAt}, runtime=800`).toEqual(
+              validAt >= 1000 && validAt < 2000 ? receipt.triples : [],
+            );
+          }
           suite.clock.set(5000);
           const ahead = yield* t.transact([
             { op: "assert", entityId: subject, attribute: ":value", value: string("ahead") },
