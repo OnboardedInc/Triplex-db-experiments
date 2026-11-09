@@ -374,7 +374,7 @@ const handle = (op,a) => {
  if(op==='pull')return pull(a);
  throw Error('Unknown SQLite request '+op);
 };
-// [EXP-P4N] Why (step e): a message with `rid` is answered on the channel kept from the `attach` message (shared, never closed);
+// [EXP-P4N] Why (step e): a message with rid is answered on the channel kept from the attach message (shared, never closed);
 // a message without it keeps the one-shot channel of every other op.
 let shared;
 parentPort.on('message',message=>{
