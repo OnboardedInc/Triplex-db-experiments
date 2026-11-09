@@ -1,0 +1,12 @@
+{
+  "X4-native": {
+    "missing": [],
+    "derivedFields": [
+      "countAfter",
+      "countBefore",
+      "relation",
+      "resolutionReceipts",
+      "unknownOutcomes"
+    ]
+  }
+}

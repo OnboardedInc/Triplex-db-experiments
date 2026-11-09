@@ -11,6 +11,10 @@ repo=Path(__file__).resolve().parents[2];id=sys.argv[1];out=Path(sys.argv[2]);ke
 def load(name,path):
  s=importlib.util.spec_from_file_location(name,path);m=importlib.util.module_from_spec(s);s.loader.exec_module(m);return m
 oracle=load('oracle',repo/'runs/OBS01/r3-oracle/observe.py');run=Path('/Users/sam/projects/triplex-db-2/runs/engines/observers')/id;root=run/'output/bundle';retention=json.loads((run/'retention.json').read_bytes());case=json.loads((run/'case.json').read_bytes());contract=json.loads((repo/'lab/experiments/EXP-OBS01/round3/contract.json').read_bytes());protocol=case['protocol'];p=protocol.removeprefix('OBS-')
+pins=json.loads((repo/'lab/experiments/EXP-OBS01/round3/pins.json').read_bytes())
+assert hashlib.sha256((repo/'runs/OBS01/r3-oracle/observe.py').read_bytes()).hexdigest()==pins['oracleSha256']
+assert hashlib.sha256((repo/'lab/experiments/EXP-OBS01/round3/contract.json').read_bytes()).hexdigest()==pins['contractFileSha256']
+assert case['runId']==id==retention['runId']
 obligation=next(o for o in contract['obligations'] if o['id']==case['obligation'])
 assert 'O-OBS' in obligation['oracles'] and protocol in contract['obsProtocols']
 ctx={**retention,'format':'obs-context/1','protocol':protocol,'obligation':case['obligation'],'case':id,'witnessKind':p,'thresholdIds':list(obligation['thresholds']),'contractSha256':oracle.digest(contract),'bindings':{}}
@@ -47,5 +51,5 @@ result,status=oracle.check(protocol,e,contract,ctx,root,key)
 negative=copy.deepcopy(ctx);negative['obligation']=next(o['id'] for o in contract['obligations'] if 'O-OBS' not in o['oracles']);negative_result,_=oracle.check(protocol,e,contract,negative,root,key)
 assert negative_result['verdict']=='REFUSED' and 'CONTEXT-CONTRADICTION' in negative_result['reasons'][0]
 for name,value in [('context',ctx),('evidence',e),('verdict',result),('derivation',diagnostics),('undelegated-negative',negative_result)]:
- (out/(name+'.json')).write_text(json.dumps(value,indent=2)+'\n')
+ with (out/(name+'.json')).open('x') as file:file.write(json.dumps(value,indent=2)+'\n')
 print(json.dumps({'protocol':protocol,**result,'missingSources':diagnostics},sort_keys=True))

@@ -1,0 +1,7 @@
+{
+  "source": "/Users/sam/projects/triplex-db-2/lab/acceptance/RULINGS-PENDING.md",
+  "sourceSha256": "741aecb9b2a93ff671303a027301ad326d6e19a7f324c68e09f381b2bb485f88",
+  "text": "| Q91a built base, bounded delta | QLever-lane performance evidence (P1, P4, P5, GS) counts only from a server whose data sits mostly in a built base index with a delta bounded by a declared rebuild threshold. Every QLever receipt records base triple count, delta triple count and the delta in the blocks the measured scans touched. The lane's design (R2, R8, R13, R17) always assumed this; nothing built or measured it, and qlever-dev's base holds 1 triple. Earlier QLever latency numbers from delta-only servers are DIAGNOSTIC. | R35 sections 1-3 |",
+  "newQLeverBundles": 0,
+  "implementationStatus": "Future exclusive observer plans require a mandatory Q2 index-state stream, exact base/delta counts, and DIAGNOSTIC timing when touched-block/threshold evidence is absent; unit tested only. No resident config was changed."
+}

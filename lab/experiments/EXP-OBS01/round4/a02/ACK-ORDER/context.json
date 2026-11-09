@@ -1,0 +1,114 @@
+{
+  "runId": "obs01-r4-a02-ack-order",
+  "receiptId": "obs01-r4-a02-ack-order",
+  "keyId": "obs01-r4-a02-ack-order-key",
+  "engine": "xtdb",
+  "bundleSha256": "c64d17252abb3fc9cb0fdac65acdcf8b7f2c0d610768570f540b2de136f4e5a9",
+  "bridgeSha256": "16462d1556897973bfa8eb352c07d7d2e38ad96b1327423a96521f50d6f5509e",
+  "clockMaxUncertaintyMs": 6.368426002562046,
+  "streams": [
+    {
+      "cadenceMs": 100,
+      "endpoint": "resident:d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "kind": "DR/any/H6",
+      "method": "capture",
+      "normalizer": {
+        "id": "obs01-resident-protocol",
+        "sha256": "602d4ca6c4fd134f8c8f9e0ee5fa24bcea53d73f84f2dfba693564c1f4d767c1",
+        "version": "3"
+      },
+      "normalizerFile": "H6-files.normalize.py",
+      "reader": "resident",
+      "sourceId": "H6",
+      "streamId": "H6-files",
+      "normalizerPath": "/Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-r4-a02-ack-order/code/H6-files.normalize.py",
+      "chunks": [
+        {
+          "header": "streams/H6-files/chunks/00000000.hdr.json",
+          "headerSha256": "54cc4f69592b17114cc2e30e6d18488bee01f9d940ff4e4734badf91ed9abbe2",
+          "raw": "streams/H6-files/chunks/00000000-a06edbc8d007adb117430e9333aa5007de2657002a7aedccc530b2b38185167c.bin"
+        },
+        {
+          "header": "streams/H6-files/chunks/00000001.hdr.json",
+          "headerSha256": "2401518f141094502f6eb512d7f95a80f272a79ef24671fe6c4beef584ce59ff",
+          "raw": "streams/H6-files/chunks/00000001-19bc5776661b2dd87f0ebd71bdde4defb5838d75bc552051d6732709a30e4a02.bin"
+        },
+        {
+          "header": "streams/H6-files/chunks/00000002.hdr.json",
+          "headerSha256": "7c27270279976079ad1d9f9f9ea9da9f54c594886bca73c0686821d032de7b5a",
+          "raw": "streams/H6-files/chunks/00000002-878e87980d1de902cc2e9126d715ba32ff8fb1d3545429a4be79c48e3ac54101.bin"
+        },
+        {
+          "header": "streams/H6-files/chunks/00000003.hdr.json",
+          "headerSha256": "f724299ad0428ef0d7eea357900eb1de1d97e757fdc78cab9a0ec215eecc65d9",
+          "raw": "streams/H6-files/chunks/00000003-9e4159cfb847d96e5e142ad42b104ca59299792d229015f812d56e56505c292a.bin"
+        }
+      ]
+    },
+    {
+      "cadenceMs": 100,
+      "endpoint": "resident:d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "kind": "HR/any/HR",
+      "method": "capture",
+      "normalizer": {
+        "id": "obs01-resident-protocol",
+        "sha256": "3f781c3d56812ca826a7c63f8a8aa7726d72e94bd4d1891204b30037473b7dd2",
+        "version": "3"
+      },
+      "normalizerFile": "HR-probes.normalize.py",
+      "reader": "resident",
+      "sourceId": "HR",
+      "streamId": "HR-probes",
+      "normalizerPath": "/Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-r4-a02-ack-order/code/HR-probes.normalize.py",
+      "chunks": [
+        {
+          "header": "streams/HR-probes/chunks/00000000.hdr.json",
+          "headerSha256": "3f614d1a4a30edc0248a1f73e5c28628910710be36d804af7d644fd32d800151",
+          "raw": "streams/HR-probes/chunks/00000000-ab5244760a2df7f0b322570835a16c9d3cc8a0627f5e940d7113fafb971698b9.bin"
+        },
+        {
+          "header": "streams/HR-probes/chunks/00000001.hdr.json",
+          "headerSha256": "65f1ddb62d892bf0a7c7e1af4f352d92e3611cb1f0f12427666e89d830793d4e",
+          "raw": "streams/HR-probes/chunks/00000001-bbca7ffa008f758a81ff676b6e1e1b7e1594893bd993f6a5e0a5e089550a0693.bin"
+        },
+        {
+          "header": "streams/HR-probes/chunks/00000002.hdr.json",
+          "headerSha256": "39493e6de8dec6cfa07b3bc39706004cf420ab2ea10f08aa9a1608de232c650f",
+          "raw": "streams/HR-probes/chunks/00000002-d71a2c8dc501e606f9587092842a372dab10064b442157d7dc6f477d21b93b1c.bin"
+        },
+        {
+          "header": "streams/HR-probes/chunks/00000003.hdr.json",
+          "headerSha256": "0bc6e2d24ec1f0206f88589cb089414a5d1b64e6bd5ef0d521a52367e5e3831b",
+          "raw": "streams/HR-probes/chunks/00000003-ee79a09c05f8524c53b53c7550700081c32d4828a19aae861e23de9f574621a1.bin"
+        }
+      ]
+    }
+  ],
+  "witnessHeads": [
+    {
+      "runId": "obs01-r4-a02-ack-order",
+      "streamId": "H6-files",
+      "seq": 3,
+      "headSha256": "f724299ad0428ef0d7eea357900eb1de1d97e757fdc78cab9a0ec215eecc65d9",
+      "tMono": 123750464.900896
+    },
+    {
+      "runId": "obs01-r4-a02-ack-order",
+      "streamId": "HR-probes",
+      "seq": 3,
+      "headSha256": "0bc6e2d24ec1f0206f88589cb089414a5d1b64e6bd5ef0d521a52367e5e3831b",
+      "tMono": 123750471.716367
+    }
+  ],
+  "format": "obs-context/1",
+  "protocol": "OBS-ACK-ORDER",
+  "obligation": "G7.composition.ack-and-routed-ryow",
+  "case": "obs01-r4-a02-ack-order",
+  "witnessKind": "ACK-ORDER",
+  "thresholdIds": [],
+  "contractSha256": "fe730f89a779c44201f02b8987e0079aa0f713c3fbca35761c321546c682e4fb",
+  "bindings": {
+    "sourceOfTruth": "xtdb-dev",
+    "commitPosition": null
+  }
+}

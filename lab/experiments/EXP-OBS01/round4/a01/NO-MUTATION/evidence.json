@@ -1,0 +1,23 @@
+{
+  "engineMutationCounterAfter": 0,
+  "engineMutationCounterBefore": 0,
+  "counterSource": {
+    "kind": "EI-metric/xtdb/X1.node.tx.latestCompletedTxId",
+    "streamRefs": [
+      "X1-metrics"
+    ],
+    "records": {
+      "engineMutationCounterAfter": 0,
+      "engineMutationCounterBefore": 0
+    }
+  },
+  "corroboration": [
+    {
+      "kind": "TO/xtdb/T1",
+      "streamRefs": [
+        "T1-wire"
+      ],
+      "records": {}
+    }
+  ]
+}

@@ -64,6 +64,21 @@ class CollectorTests(unittest.TestCase):
         self.assertEqual((self.root / 'objects' / (collector.sha(b'100\n') + '.bin')).read_bytes(), b'100\n')
         self.assertNotIn(self.key.hex(), (self.root / 'bundle.json').read_text())
 
+    def test_host_integrity_before_witness(self):
+        verifier=module('verify_seal',HERE/'verify_seal.py')
+        config=Path(self.tmp.name)/'config.json';config.write_bytes(collector.canonical(self.bundle.config))
+        result=verifier.verify(self.root,self.keyfile,config,HERE)
+        self.assertEqual(result['runId'],'test')
+        normalized=self.root/'normalized/sources/memory.json';normalized.write_text('{}\n')
+        with self.assertRaisesRegex(ValueError,'recomputation mismatch'):verifier.verify(self.root,self.keyfile,config,HERE)
+
+    def test_host_integrity_refuses_wrong_engine_and_unsealed(self):
+        verifier=module('verify_seal',HERE/'verify_seal.py')
+        config=Path(self.tmp.name)/'config.json';wrong=copy.deepcopy(self.bundle.config);wrong['sut']['engineContainerId']='other';config.write_bytes(collector.canonical(wrong))
+        with self.assertRaisesRegex(ValueError,'binding mismatch'):verifier.verify(self.root,self.keyfile,config,HERE)
+        (self.root/'seal.json').unlink()
+        with self.assertRaises(FileNotFoundError):verifier.verify(self.root,self.keyfile,config,HERE)
+
     def test_corrupted_raw_rejected(self):
         (self.root / self.bundle.entries['memory'][0]['raw']).write_bytes(b'changed')
         with self.assertRaises(Exception): self.authenticate()

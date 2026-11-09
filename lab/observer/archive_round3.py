@@ -6,7 +6,10 @@ import json
 import os
 from pathlib import Path
 import shutil
-repo=Path(__file__).resolve().parents[2];base=repo/'lab/experiments/EXP-OBS01/round3';source=Path('/Users/sam/projects/triplex-db-2/runs/engines/observers');target=Path('/Users/sam/Claude/Projects/triplex-db-2/evidence/OBS01/round3-host')
+round_id=os.environ.get('OBS01_ROUND','3')
+if round_id not in ('3','4'):raise ValueError('unknown report round')
+repo=Path(__file__).resolve().parents[2];base=repo/('lab/experiments/EXP-OBS01/round'+round_id);source=Path('/Users/sam/projects/triplex-db-2/runs/engines/observers');target=Path('/Users/sam/Claude/Projects/triplex-db-2/evidence/OBS01')/('round'+round_id+'-host')
+prefix='obs01-r'+round_id+'-'
 cleanup=json.loads((base/'cleanup-final.json').read_bytes())
 if cleanup['ownReservations'] or cleanup['ownContainers']:raise ValueError('owned resident observers still active')
 target.mkdir(mode=0o700,exist_ok=False);pairs=[]
@@ -14,10 +17,10 @@ def copy_tree(src,dst):
  shutil.copytree(src,dst,symlinks=True,ignore=shutil.ignore_patterns('archive.log'))
  for p in src.rglob('*'):
   if p.is_file() and not p.is_symlink() and p.name!='archive.log':pairs.append((p,dst/p.relative_to(src)))
-for p in sorted(source.glob('obs01-r3-*')):
+for p in sorted(source.glob(prefix+'*')):
  if p.is_dir():copy_tree(p,target/'observer-runs'/p.name)
 keys=target/'keys';keys.mkdir(mode=0o700)
-for p in (repo/'runs/OBS01').glob('obs01-r3*.key'):
+for p in (repo/'runs/OBS01').glob(prefix+'*.key'):
  dst=keys/p.name;shutil.copy2(p,dst);dst.chmod(0o600);pairs.append((p,dst))
 copy_tree(repo/'lab/observer',target/'source/lab/observer');copy_tree(base,target/'evidence')
 for name in ['engine.mjs','resident-observer.mjs','observer.mjs','observer-clock.mjs','archive-volume.mjs','lib.mjs']:
@@ -26,9 +29,9 @@ lines=[]
 for line in (source/'witness.jsonl').read_bytes().splitlines(keepends=True):
  try:record=json.loads(line)
  except json.JSONDecodeError:
-  if b'obs01-r3-' in line:raise ValueError('incomplete own witness line')
+  if prefix.encode() in line:raise ValueError('incomplete own witness line')
   continue
- if record['runId'].startswith('obs01-r3-'):lines.append(line)
+ if record['runId'].startswith(prefix):lines.append(line)
 (target/'witness.jsonl').write_bytes(b''.join(lines))
 for src,dst in pairs:
  with src.open('rb') as f:a=hashlib.file_digest(f,'sha256').hexdigest()

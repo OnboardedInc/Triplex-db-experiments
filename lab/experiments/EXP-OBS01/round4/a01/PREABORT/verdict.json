@@ -1,0 +1,10 @@
+{
+  "protocol": "OBS-PREABORT",
+  "verdict": "FAIL",
+  "reasons": [
+    "missing required field: engineStatementLog"
+  ],
+  "thresholds": {},
+  "sourceStrength": null,
+  "qualification": "screening-only"
+}

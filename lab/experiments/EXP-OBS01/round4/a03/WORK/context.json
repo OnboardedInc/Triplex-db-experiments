@@ -1,0 +1,76 @@
+{
+  "runId": "obs01-r4-a03-work",
+  "receiptId": "obs01-r4-a03-work",
+  "keyId": "obs01-r4-a03-work-key",
+  "engine": "xtdb",
+  "bundleSha256": "590b73d47a50698c27ba000bcde23490defc895f8d6f27b116abb87ef74d8305",
+  "bridgeSha256": "c8c65226108425fae8147b3dca70c65fc0a0c2afc50345586e5e2e9f09666534",
+  "clockMaxUncertaintyMs": 5.196644999086857,
+  "streams": [
+    {
+      "cadenceMs": 100,
+      "endpoint": "resident:d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "kind": "EI-query/xtdb/X8",
+      "method": "capture",
+      "normalizer": {
+        "id": "obs01-resident-protocol",
+        "sha256": "8e955cf0abafebc5d5a2ef6ae720bc65eaa94369aa360b9e079fcad3d9f4ac32",
+        "version": "3"
+      },
+      "normalizerFile": "X8-profile.normalize.py",
+      "reader": "resident",
+      "sourceId": "X8",
+      "streamId": "X8-profile",
+      "normalizerPath": "/Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-r4-a03-work/code/X8-profile.normalize.py",
+      "chunks": [
+        {
+          "header": "streams/X8-profile/chunks/00000000.hdr.json",
+          "headerSha256": "00311149e464a5a69edae2dd66e6d46fec7fa84c66c067a9d32721fbd1c9a2a4",
+          "raw": "streams/X8-profile/chunks/00000000-02c75e3b32e69116508f3764d138ff355aa1bbc2f0f38c58639e41a25b22c4e4.bin"
+        },
+        {
+          "header": "streams/X8-profile/chunks/00000001.hdr.json",
+          "headerSha256": "223cb8b61154f5daa024476bba9accf9cd1938ff043a9d9d687745491aeb48bd",
+          "raw": "streams/X8-profile/chunks/00000001-83ea221ab276772332c435c1543ef3b5ca4fc1b917771c845c06371fdc659d77.bin"
+        },
+        {
+          "header": "streams/X8-profile/chunks/00000002.hdr.json",
+          "headerSha256": "1c2f3e9fdec912c85a97edd17a2d91c1815a6158aed4677e4ccfb5ef3e3780ce",
+          "raw": "streams/X8-profile/chunks/00000002-9802b1529607e264eb443e0e6d74514b853a1be8dcfc81c189164e6f1d9bb6a9.bin"
+        },
+        {
+          "header": "streams/X8-profile/chunks/00000003.hdr.json",
+          "headerSha256": "a20a0d977824fdfd3f5afb2133167721cb037f3a8875fe18b5142cd8a22c7af2",
+          "raw": "streams/X8-profile/chunks/00000003-01849df9f5c71bd4de67dd8836e0894f9911f5fd0d86daab8c8f350d8f2cb8a3.bin"
+        },
+        {
+          "header": "streams/X8-profile/chunks/00000004.hdr.json",
+          "headerSha256": "229fa065fbe05b50429e4d8323f691d2b0e6b4f4cbb75e5de11581264f17cd1d",
+          "raw": "streams/X8-profile/chunks/00000004-b122e9662e69c9c3d4d360c978ded7565e0be9f58eff638dde1ea338da2230d8.bin"
+        }
+      ]
+    }
+  ],
+  "witnessHeads": [
+    {
+      "runId": "obs01-r4-a03-work",
+      "streamId": "X8-profile",
+      "seq": 4,
+      "headSha256": "229fa065fbe05b50429e4d8323f691d2b0e6b4f4cbb75e5de11581264f17cd1d",
+      "tMono": 123907948.740887
+    }
+  ],
+  "format": "obs-context/1",
+  "protocol": "OBS-WORK",
+  "obligation": "G8.reuse.positive-witness",
+  "case": "obs01-r4-a03-work",
+  "witnessKind": "reuse",
+  "thresholdIds": [
+    "T-REUSE-AVOIDED"
+  ],
+  "contractSha256": "fe730f89a779c44201f02b8987e0079aa0f713c3fbca35761c321546c682e4fb",
+  "bindings": {
+    "operation": "native-projection"
+  },
+  "selectedThreshold": "T-REUSE-AVOIDED"
+}

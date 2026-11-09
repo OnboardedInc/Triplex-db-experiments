@@ -1,0 +1,74 @@
+{
+  "baseline": {
+    "resident-pgwire": 0
+  },
+  "engineConnectionSamples": [
+    {
+      "count": 0,
+      "label": "resident-pgwire",
+      "t": 123905985.934447
+    },
+    {
+      "count": 1,
+      "label": "resident-pgwire",
+      "t": 123906099.941934
+    },
+    {
+      "count": 0,
+      "label": "resident-pgwire",
+      "t": 123906206.642947
+    },
+    {
+      "count": 0,
+      "label": "resident-pgwire",
+      "t": 123906312.740997
+    }
+  ],
+  "poolDeclarations": [
+    {
+      "label": "resident-pgwire",
+      "max": 100000
+    }
+  ],
+  "tClose": 123906101.832949,
+  "source": {
+    "kind": "HO/any/H4",
+    "streamRefs": [
+      "H4-sockets"
+    ],
+    "records": {
+      "baseline": {
+        "resident-pgwire": 0
+      },
+      "engineConnectionSamples": [
+        {
+          "count": 0,
+          "label": "resident-pgwire",
+          "t": 123905985.934447
+        },
+        {
+          "count": 1,
+          "label": "resident-pgwire",
+          "t": 123906099.941934
+        },
+        {
+          "count": 0,
+          "label": "resident-pgwire",
+          "t": 123906206.642947
+        },
+        {
+          "count": 0,
+          "label": "resident-pgwire",
+          "t": 123906312.740997
+        }
+      ],
+      "poolDeclarations": [
+        {
+          "label": "resident-pgwire",
+          "max": 100000
+        }
+      ],
+      "tClose": 123906101.832949
+    }
+  }
+}

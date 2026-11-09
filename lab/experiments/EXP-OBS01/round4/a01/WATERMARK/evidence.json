@@ -1,0 +1,12 @@
+{
+  "source": {
+    "kind": "TO/xtdb/T1",
+    "streamRefs": [
+      "T1-wire"
+    ],
+    "records": {}
+  },
+  "basisPosition": null,
+  "tReadStart": null,
+  "readId": "obs01-r4-a01-watermark-read"
+}

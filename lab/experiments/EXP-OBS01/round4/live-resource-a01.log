@@ -1,0 +1,1 @@
+{"protocol":"RESOURCE","screenExit":0,"summary":"{\"missingSources\": {\"H1-resource\": {\"derivedFields\": [\"envelope\", \"forecast\", \"obligation\", \"peaks\"], \"missing\": []}}, \"protocol\": \"OBS-RESOURCE\", \"qualification\": \"screening-only\", \"reasons\": [], \"sourceStrength\": \"indirect\", \"thresholds\": {}, \"verdict\": \"PASS\"}"}

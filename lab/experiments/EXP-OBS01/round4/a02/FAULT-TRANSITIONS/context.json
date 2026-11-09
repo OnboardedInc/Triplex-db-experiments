@@ -1,0 +1,78 @@
+{
+  "runId": "obs01-r4-a02-fault-transitions",
+  "receiptId": "obs01-r4-a02-fault-transitions",
+  "keyId": "obs01-r4-a02-fault-transitions-key",
+  "engine": "xtdb",
+  "bundleSha256": "e162d07fd4377fb1def11ac4eed552ec86457e173ce06c60c7b0462cbb5c173d",
+  "bridgeSha256": "7ae618688c842bd65e9cb0618daa860783df41e49241ba6019e3fb66363442d7",
+  "clockMaxUncertaintyMs": 7.653477996587753,
+  "streams": [
+    {
+      "cadenceMs": 100,
+      "endpoint": "resident:d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "kind": "EI-query/xtdb/X4",
+      "method": "capture",
+      "normalizer": {
+        "id": "obs01-resident-protocol",
+        "sha256": "3428ff0a5b0867fb9181d71b68a93dd060edfdf083bfa51b48078493c6ca56cb",
+        "version": "3"
+      },
+      "normalizerFile": "X4-native.normalize.py",
+      "reader": "resident",
+      "sourceId": "X4",
+      "streamId": "X4-native",
+      "normalizerPath": "/Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-r4-a02-fault-transitions/code/X4-native.normalize.py",
+      "chunks": [
+        {
+          "header": "streams/X4-native/chunks/00000000.hdr.json",
+          "headerSha256": "95181c346c7f2a5e8f4692952d0c59a0a74553bfb5b213f66eaf2a409f512915",
+          "raw": "streams/X4-native/chunks/00000000-f3855e11407c2af4ba6dc51c916b2e69f81c19883c21c28aae8e8f2ae2a2e0f7.bin"
+        },
+        {
+          "header": "streams/X4-native/chunks/00000001.hdr.json",
+          "headerSha256": "17e4cd415fe4f9d9368ec9467d2e640f3b40b585ca249913adf082eb773d0ef4",
+          "raw": "streams/X4-native/chunks/00000001-1f285d2d135e79ddba2a16d9a7c9ab662bd2746b64f714018b945ab1fda7404b.bin"
+        },
+        {
+          "header": "streams/X4-native/chunks/00000002.hdr.json",
+          "headerSha256": "a1ebba61b417365c58cfcdab40767fe12506bb1e0891644725e7c71af28edd93",
+          "raw": "streams/X4-native/chunks/00000002-9f5556516bd5d478c5d80571ba4521d4fb617878498295047b895e8e6e76d109.bin"
+        },
+        {
+          "header": "streams/X4-native/chunks/00000003.hdr.json",
+          "headerSha256": "9595ec9a5075b46776f152966735043b0f944bc9e119b46bfeb72069466aec0f",
+          "raw": "streams/X4-native/chunks/00000003-445a88525f5cadb4023fa08245acb66f89fba1ec102405f2d38c3daa22b45dc6.bin"
+        },
+        {
+          "header": "streams/X4-native/chunks/00000004.hdr.json",
+          "headerSha256": "714ef012959723d6c9c268e53a635297521114d5e4fc1ce28810b75ef348e972",
+          "raw": "streams/X4-native/chunks/00000004-c5b978857fc5324b98e11365ae4892ec0de4acc80b8de46d9e763d08c25a3ab9.bin"
+        }
+      ]
+    }
+  ],
+  "witnessHeads": [
+    {
+      "runId": "obs01-r4-a02-fault-transitions",
+      "streamId": "X4-native",
+      "seq": 4,
+      "headSha256": "714ef012959723d6c9c268e53a635297521114d5e4fc1ce28810b75ef348e972",
+      "tMono": 123753359.593815
+    }
+  ],
+  "format": "obs-context/1",
+  "protocol": "OBS-FAULT-TRANSITIONS",
+  "obligation": "G7.commit.protocol-transitions",
+  "case": "obs01-r4-a02-fault-transitions",
+  "witnessKind": "FAULT-TRANSITIONS",
+  "thresholdIds": [
+    "T-FAULT-REPS"
+  ],
+  "contractSha256": "fe730f89a779c44201f02b8987e0079aa0f713c3fbca35761c321546c682e4fb",
+  "bindings": {
+    "tCrash": 123753179.646419,
+    "variant": "engine-source"
+  },
+  "variant": "engine-source",
+  "transitionExpectations": {}
+}

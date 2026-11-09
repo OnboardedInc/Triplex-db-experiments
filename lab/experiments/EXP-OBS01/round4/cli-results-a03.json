@@ -1,0 +1,590 @@
+[
+  {
+    "protocol": "OBS-CANCEL",
+    "attempt": "a01",
+    "runId": "obs01-r4-a01-cancel",
+    "mode": "selected",
+    "exit": 1,
+    "qualification": "screening-only",
+    "reasons": [
+      "missing required field: tCallerSettled"
+    ],
+    "sourceStrength": null,
+    "thresholds": {},
+    "verdict": "FAIL"
+  },
+  {
+    "protocol": "OBS-CANCEL",
+    "attempt": "a01",
+    "runId": "obs01-r4-a01-cancel",
+    "mode": "undelegated",
+    "exit": 2,
+    "qualification": "screening-only",
+    "reasons": [
+      "CONTEXT-CONTRADICTION: obligation does not select O-OBS with the matching registered protocol"
+    ],
+    "sourceStrength": null,
+    "thresholds": {},
+    "verdict": "REFUSED"
+  },
+  {
+    "protocol": "OBS-CANCEL",
+    "attempt": "a01",
+    "runId": "obs01-r4-a01-cancel",
+    "mode": "mismatched-protocol",
+    "exit": 2,
+    "qualification": "screening-only",
+    "reasons": [
+      "CONTEXT-CONTRADICTION: obligation does not select O-OBS with the matching registered protocol"
+    ],
+    "sourceStrength": null,
+    "thresholds": {},
+    "verdict": "REFUSED"
+  },
+  {
+    "protocol": "OBS-PREABORT",
+    "attempt": "a01",
+    "runId": "obs01-r4-a01-preabort",
+    "mode": "selected",
+    "exit": 1,
+    "qualification": "screening-only",
+    "reasons": [
+      "missing required field: engineStatementLog"
+    ],
+    "sourceStrength": null,
+    "thresholds": {},
+    "verdict": "FAIL"
+  },
+  {
+    "protocol": "OBS-PREABORT",
+    "attempt": "a01",
+    "runId": "obs01-r4-a01-preabort",
+    "mode": "undelegated",
+    "exit": 2,
+    "qualification": "screening-only",
+    "reasons": [
+      "CONTEXT-CONTRADICTION: obligation does not select O-OBS with the matching registered protocol"
+    ],
+    "sourceStrength": null,
+    "thresholds": {},
+    "verdict": "REFUSED"
+  },
+  {
+    "protocol": "OBS-PREABORT",
+    "attempt": "a01",
+    "runId": "obs01-r4-a01-preabort",
+    "mode": "mismatched-protocol",
+    "exit": 2,
+    "qualification": "screening-only",
+    "reasons": [
+      "CONTEXT-CONTRADICTION: obligation does not select O-OBS with the matching registered protocol"
+    ],
+    "sourceStrength": null,
+    "thresholds": {},
+    "verdict": "REFUSED"
+  },
+  {
+    "protocol": "OBS-CONNECTIONS",
+    "attempt": "a03",
+    "runId": "obs01-r4-a03-connections",
+    "mode": "selected",
+    "exit": 0,
+    "qualification": "screening-only",
+    "reasons": [],
+    "sourceStrength": "indirect",
+    "thresholds": {
+      "T-CONN-RELEASE-MS": {
+        "bound": "max",
+        "kind": "observe",
+        "source": "derived",
+        "unit": "ms after close for the engine-side connection count to return to baseline",
+        "value": 5000
+      }
+    },
+    "verdict": "PASS"
+  },
+  {
+    "protocol": "OBS-CONNECTIONS",
+    "attempt": "a03",
+    "runId": "obs01-r4-a03-connections",
+    "mode": "undelegated",
+    "exit": 2,
+    "qualification": "screening-only",
+    "reasons": [
+      "CONTEXT-CONTRADICTION: obligation does not select O-OBS with the matching registered protocol"
+    ],
+    "sourceStrength": null,
+    "thresholds": {},
+    "verdict": "REFUSED"
+  },
+  {
+    "protocol": "OBS-CONNECTIONS",
+    "attempt": "a03",
+    "runId": "obs01-r4-a03-connections",
+    "mode": "mismatched-protocol",
+    "exit": 2,
+    "qualification": "screening-only",
+    "reasons": [
+      "CONTEXT-CONTRADICTION: obligation does not select O-OBS with the matching registered protocol"
+    ],
+    "sourceStrength": null,
+    "thresholds": {},
+    "verdict": "REFUSED"
+  },
+  {
+    "protocol": "OBS-SCRATCH",
+    "attempt": "a01",
+    "runId": "obs01-r4-a01-scratch",
+    "mode": "selected",
+    "exit": 0,
+    "qualification": "screening-only",
+    "reasons": [],
+    "sourceStrength": "direct",
+    "thresholds": {},
+    "verdict": "PASS"
+  },
+  {
+    "protocol": "OBS-SCRATCH",
+    "attempt": "a01",
+    "runId": "obs01-r4-a01-scratch",
+    "mode": "undelegated",
+    "exit": 2,
+    "qualification": "screening-only",
+    "reasons": [
+      "CONTEXT-CONTRADICTION: obligation does not select O-OBS with the matching registered protocol"
+    ],
+    "sourceStrength": null,
+    "thresholds": {},
+    "verdict": "REFUSED"
+  },
+  {
+    "protocol": "OBS-SCRATCH",
+    "attempt": "a01",
+    "runId": "obs01-r4-a01-scratch",
+    "mode": "mismatched-protocol",
+    "exit": 2,
+    "qualification": "screening-only",
+    "reasons": [
+      "CONTEXT-CONTRADICTION: obligation does not select O-OBS with the matching registered protocol"
+    ],
+    "sourceStrength": null,
+    "thresholds": {},
+    "verdict": "REFUSED"
+  },
+  {
+    "protocol": "OBS-NO-MUTATION",
+    "attempt": "a01",
+    "runId": "obs01-r4-a01-no-mutation",
+    "mode": "selected",
+    "exit": 1,
+    "qualification": "screening-only",
+    "reasons": [
+      "two independent agreeing kinds required"
+    ],
+    "sourceStrength": null,
+    "thresholds": {},
+    "verdict": "FAIL"
+  },
+  {
+    "protocol": "OBS-NO-MUTATION",
+    "attempt": "a01",
+    "runId": "obs01-r4-a01-no-mutation",
+    "mode": "undelegated",
+    "exit": 2,
+    "qualification": "screening-only",
+    "reasons": [
+      "CONTEXT-CONTRADICTION: obligation does not select O-OBS with the matching registered protocol"
+    ],
+    "sourceStrength": null,
+    "thresholds": {},
+    "verdict": "REFUSED"
+  },
+  {
+    "protocol": "OBS-NO-MUTATION",
+    "attempt": "a01",
+    "runId": "obs01-r4-a01-no-mutation",
+    "mode": "mismatched-protocol",
+    "exit": 2,
+    "qualification": "screening-only",
+    "reasons": [
+      "CONTEXT-CONTRADICTION: obligation does not select O-OBS with the matching registered protocol"
+    ],
+    "sourceStrength": null,
+    "thresholds": {},
+    "verdict": "REFUSED"
+  },
+  {
+    "protocol": "OBS-RESOURCE",
+    "attempt": "a04",
+    "runId": "obs01-r4-a04-resource",
+    "mode": "selected",
+    "exit": 0,
+    "qualification": "screening-only",
+    "reasons": [],
+    "sourceStrength": "indirect",
+    "thresholds": {},
+    "verdict": "PASS"
+  },
+  {
+    "protocol": "OBS-RESOURCE",
+    "attempt": "a04",
+    "runId": "obs01-r4-a04-resource",
+    "mode": "undelegated",
+    "exit": 2,
+    "qualification": "screening-only",
+    "reasons": [
+      "CONTEXT-CONTRADICTION: obligation does not select O-OBS with the matching registered protocol"
+    ],
+    "sourceStrength": null,
+    "thresholds": {},
+    "verdict": "REFUSED"
+  },
+  {
+    "protocol": "OBS-RESOURCE",
+    "attempt": "a04",
+    "runId": "obs01-r4-a04-resource",
+    "mode": "mismatched-protocol",
+    "exit": 2,
+    "qualification": "screening-only",
+    "reasons": [
+      "CONTEXT-CONTRADICTION: obligation does not select O-OBS with the matching registered protocol"
+    ],
+    "sourceStrength": null,
+    "thresholds": {},
+    "verdict": "REFUSED"
+  },
+  {
+    "protocol": "OBS-AVAILABILITY",
+    "attempt": "a01",
+    "runId": "obs01-r4-a01-availability",
+    "mode": "selected",
+    "exit": 1,
+    "qualification": "screening-only",
+    "reasons": [
+      "required fields not recomputed from raw bytes"
+    ],
+    "sourceStrength": null,
+    "thresholds": {},
+    "verdict": "FAIL"
+  },
+  {
+    "protocol": "OBS-AVAILABILITY",
+    "attempt": "a01",
+    "runId": "obs01-r4-a01-availability",
+    "mode": "undelegated",
+    "exit": 2,
+    "qualification": "screening-only",
+    "reasons": [
+      "CONTEXT-CONTRADICTION: obligation does not select O-OBS with the matching registered protocol"
+    ],
+    "sourceStrength": null,
+    "thresholds": {},
+    "verdict": "REFUSED"
+  },
+  {
+    "protocol": "OBS-AVAILABILITY",
+    "attempt": "a01",
+    "runId": "obs01-r4-a01-availability",
+    "mode": "mismatched-protocol",
+    "exit": 2,
+    "qualification": "screening-only",
+    "reasons": [
+      "CONTEXT-CONTRADICTION: obligation does not select O-OBS with the matching registered protocol"
+    ],
+    "sourceStrength": null,
+    "thresholds": {},
+    "verdict": "REFUSED"
+  },
+  {
+    "protocol": "OBS-SCALE-COUNT",
+    "attempt": "a01",
+    "runId": "obs01-r4-a01-scale-count",
+    "mode": "selected",
+    "exit": 0,
+    "qualification": "screening-only",
+    "reasons": [],
+    "sourceStrength": "direct",
+    "thresholds": {},
+    "verdict": "PASS"
+  },
+  {
+    "protocol": "OBS-SCALE-COUNT",
+    "attempt": "a01",
+    "runId": "obs01-r4-a01-scale-count",
+    "mode": "undelegated",
+    "exit": 2,
+    "qualification": "screening-only",
+    "reasons": [
+      "CONTEXT-CONTRADICTION: obligation does not select O-OBS with the matching registered protocol"
+    ],
+    "sourceStrength": null,
+    "thresholds": {},
+    "verdict": "REFUSED"
+  },
+  {
+    "protocol": "OBS-SCALE-COUNT",
+    "attempt": "a01",
+    "runId": "obs01-r4-a01-scale-count",
+    "mode": "mismatched-protocol",
+    "exit": 2,
+    "qualification": "screening-only",
+    "reasons": [
+      "CONTEXT-CONTRADICTION: obligation does not select O-OBS with the matching registered protocol"
+    ],
+    "sourceStrength": null,
+    "thresholds": {},
+    "verdict": "REFUSED"
+  },
+  {
+    "protocol": "OBS-WORK",
+    "attempt": "a03",
+    "runId": "obs01-r4-a03-work",
+    "mode": "selected",
+    "exit": 1,
+    "qualification": "screening-only",
+    "reasons": [
+      "missing required field: rowsWritten"
+    ],
+    "sourceStrength": "direct",
+    "thresholds": {},
+    "verdict": "FAIL"
+  },
+  {
+    "protocol": "OBS-WORK",
+    "attempt": "a03",
+    "runId": "obs01-r4-a03-work",
+    "mode": "undelegated",
+    "exit": 2,
+    "qualification": "screening-only",
+    "reasons": [
+      "CONTEXT-CONTRADICTION: obligation does not select O-OBS with the matching registered protocol"
+    ],
+    "sourceStrength": null,
+    "thresholds": {},
+    "verdict": "REFUSED"
+  },
+  {
+    "protocol": "OBS-WORK",
+    "attempt": "a03",
+    "runId": "obs01-r4-a03-work",
+    "mode": "mismatched-protocol",
+    "exit": 2,
+    "qualification": "screening-only",
+    "reasons": [
+      "CONTEXT-CONTRADICTION: obligation does not select O-OBS with the matching registered protocol"
+    ],
+    "sourceStrength": null,
+    "thresholds": {},
+    "verdict": "REFUSED"
+  },
+  {
+    "protocol": "OBS-MAINTENANCE",
+    "attempt": "a01",
+    "runId": "obs01-r4-a01-maintenance",
+    "mode": "selected",
+    "exit": 1,
+    "qualification": "screening-only",
+    "reasons": [
+      "missing required field: tStart"
+    ],
+    "sourceStrength": null,
+    "thresholds": {},
+    "verdict": "FAIL"
+  },
+  {
+    "protocol": "OBS-MAINTENANCE",
+    "attempt": "a01",
+    "runId": "obs01-r4-a01-maintenance",
+    "mode": "undelegated",
+    "exit": 2,
+    "qualification": "screening-only",
+    "reasons": [
+      "CONTEXT-CONTRADICTION: obligation does not select O-OBS with the matching registered protocol"
+    ],
+    "sourceStrength": null,
+    "thresholds": {},
+    "verdict": "REFUSED"
+  },
+  {
+    "protocol": "OBS-MAINTENANCE",
+    "attempt": "a01",
+    "runId": "obs01-r4-a01-maintenance",
+    "mode": "mismatched-protocol",
+    "exit": 2,
+    "qualification": "screening-only",
+    "reasons": [
+      "CONTEXT-CONTRADICTION: obligation does not select O-OBS with the matching registered protocol"
+    ],
+    "sourceStrength": null,
+    "thresholds": {},
+    "verdict": "REFUSED"
+  },
+  {
+    "protocol": "OBS-ERASURE-SCAN",
+    "attempt": "a01",
+    "runId": "obs01-r4-a01-erasure-scan",
+    "mode": "selected",
+    "exit": 1,
+    "qualification": "screening-only",
+    "reasons": [
+      "missing required field: inventoryEntry"
+    ],
+    "sourceStrength": null,
+    "thresholds": {},
+    "verdict": "FAIL"
+  },
+  {
+    "protocol": "OBS-ERASURE-SCAN",
+    "attempt": "a01",
+    "runId": "obs01-r4-a01-erasure-scan",
+    "mode": "undelegated",
+    "exit": 2,
+    "qualification": "screening-only",
+    "reasons": [
+      "CONTEXT-CONTRADICTION: obligation does not select O-OBS with the matching registered protocol"
+    ],
+    "sourceStrength": null,
+    "thresholds": {},
+    "verdict": "REFUSED"
+  },
+  {
+    "protocol": "OBS-ERASURE-SCAN",
+    "attempt": "a01",
+    "runId": "obs01-r4-a01-erasure-scan",
+    "mode": "mismatched-protocol",
+    "exit": 2,
+    "qualification": "screening-only",
+    "reasons": [
+      "CONTEXT-CONTRADICTION: obligation does not select O-OBS with the matching registered protocol"
+    ],
+    "sourceStrength": null,
+    "thresholds": {},
+    "verdict": "REFUSED"
+  },
+  {
+    "protocol": "OBS-WATERMARK",
+    "attempt": "a01",
+    "runId": "obs01-r4-a01-watermark",
+    "mode": "selected",
+    "exit": 1,
+    "qualification": "screening-only",
+    "reasons": [
+      "missing required field: servingIndex"
+    ],
+    "sourceStrength": null,
+    "thresholds": {},
+    "verdict": "FAIL"
+  },
+  {
+    "protocol": "OBS-WATERMARK",
+    "attempt": "a01",
+    "runId": "obs01-r4-a01-watermark",
+    "mode": "undelegated",
+    "exit": 2,
+    "qualification": "screening-only",
+    "reasons": [
+      "CONTEXT-CONTRADICTION: obligation does not select O-OBS with the matching registered protocol"
+    ],
+    "sourceStrength": null,
+    "thresholds": {},
+    "verdict": "REFUSED"
+  },
+  {
+    "protocol": "OBS-WATERMARK",
+    "attempt": "a01",
+    "runId": "obs01-r4-a01-watermark",
+    "mode": "mismatched-protocol",
+    "exit": 2,
+    "qualification": "screening-only",
+    "reasons": [
+      "CONTEXT-CONTRADICTION: obligation does not select O-OBS with the matching registered protocol"
+    ],
+    "sourceStrength": null,
+    "thresholds": {},
+    "verdict": "REFUSED"
+  },
+  {
+    "protocol": "OBS-ACK-ORDER",
+    "attempt": "a02",
+    "runId": "obs01-r4-a02-ack-order",
+    "mode": "selected",
+    "exit": 1,
+    "qualification": "screening-only",
+    "reasons": [
+      "missing required field: tSourcePublished"
+    ],
+    "sourceStrength": null,
+    "thresholds": {},
+    "verdict": "FAIL"
+  },
+  {
+    "protocol": "OBS-ACK-ORDER",
+    "attempt": "a02",
+    "runId": "obs01-r4-a02-ack-order",
+    "mode": "undelegated",
+    "exit": 2,
+    "qualification": "screening-only",
+    "reasons": [
+      "CONTEXT-CONTRADICTION: obligation does not select O-OBS with the matching registered protocol"
+    ],
+    "sourceStrength": null,
+    "thresholds": {},
+    "verdict": "REFUSED"
+  },
+  {
+    "protocol": "OBS-ACK-ORDER",
+    "attempt": "a02",
+    "runId": "obs01-r4-a02-ack-order",
+    "mode": "mismatched-protocol",
+    "exit": 2,
+    "qualification": "screening-only",
+    "reasons": [
+      "CONTEXT-CONTRADICTION: obligation does not select O-OBS with the matching registered protocol"
+    ],
+    "sourceStrength": null,
+    "thresholds": {},
+    "verdict": "REFUSED"
+  },
+  {
+    "protocol": "OBS-FAULT-TRANSITIONS",
+    "attempt": "a02",
+    "runId": "obs01-r4-a02-fault-transitions",
+    "mode": "selected",
+    "exit": 1,
+    "qualification": "screening-only",
+    "reasons": [
+      "missing required field: transition"
+    ],
+    "sourceStrength": null,
+    "thresholds": {},
+    "verdict": "FAIL"
+  },
+  {
+    "protocol": "OBS-FAULT-TRANSITIONS",
+    "attempt": "a02",
+    "runId": "obs01-r4-a02-fault-transitions",
+    "mode": "undelegated",
+    "exit": 2,
+    "qualification": "screening-only",
+    "reasons": [
+      "CONTEXT-CONTRADICTION: obligation does not select O-OBS with the matching registered protocol"
+    ],
+    "sourceStrength": null,
+    "thresholds": {},
+    "verdict": "REFUSED"
+  },
+  {
+    "protocol": "OBS-FAULT-TRANSITIONS",
+    "attempt": "a02",
+    "runId": "obs01-r4-a02-fault-transitions",
+    "mode": "mismatched-protocol",
+    "exit": 2,
+    "qualification": "screening-only",
+    "reasons": [
+      "CONTEXT-CONTRADICTION: obligation does not select O-OBS with the matching registered protocol"
+    ],
+    "sourceStrength": null,
+    "thresholds": {},
+    "verdict": "REFUSED"
+  }
+]

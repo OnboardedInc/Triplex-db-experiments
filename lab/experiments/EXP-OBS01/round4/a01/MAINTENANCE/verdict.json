@@ -1,0 +1,10 @@
+{
+  "protocol": "OBS-MAINTENANCE",
+  "verdict": "FAIL",
+  "reasons": [
+    "missing required field: tStart"
+  ],
+  "thresholds": {},
+  "sourceStrength": null,
+  "qualification": "screening-only"
+}

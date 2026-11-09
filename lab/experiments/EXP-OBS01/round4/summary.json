@@ -1,0 +1,365 @@
+{
+  "qualification": "screening-only; ten original source gaps remain unresolved",
+  "cliInput": "cli-results-a03.json",
+  "selectedCounts": {
+    "PASS": 4,
+    "FAIL": 10,
+    "REFUSED": 0
+  },
+  "guardNegatives": 28,
+  "guardRefusals": 28,
+  "ownReservations": [],
+  "ownContainers": [],
+  "attempts": [
+    {
+      "runId": "obs01-r4-a01-ack-order",
+      "sealFilePresent": true,
+      "retentionPublished": false,
+      "identityUnchanged": true,
+      "observerRemovalObserved": true,
+      "integrityFileSha256": "36aefe725e011d55ec88244f9eafe6a003e60f9908c83e352687cc67f5266945"
+    },
+    {
+      "runId": "obs01-r4-a01-availability",
+      "sealFilePresent": true,
+      "retentionPublished": true,
+      "identityUnchanged": true,
+      "observerRemovalObserved": true,
+      "integrityFileSha256": "b8bcb641a426477e72adbffe5a3148ecddddec1a058df64935c0b6bf16a94058"
+    },
+    {
+      "runId": "obs01-r4-a01-cancel",
+      "sealFilePresent": true,
+      "retentionPublished": true,
+      "identityUnchanged": true,
+      "observerRemovalObserved": true,
+      "integrityFileSha256": "00ad51eb2c69387f4759b7b16d21d51161bc3bec417ac416e97f96bcdd8b2c59"
+    },
+    {
+      "runId": "obs01-r4-a01-connections",
+      "sealFilePresent": true,
+      "retentionPublished": true,
+      "identityUnchanged": true,
+      "observerRemovalObserved": true,
+      "integrityFileSha256": "e2868aae66271b2ee4059111ddf56383632024cd4b25432a1fcd536d24295a84"
+    },
+    {
+      "runId": "obs01-r4-a01-erasure-scan",
+      "sealFilePresent": true,
+      "retentionPublished": true,
+      "identityUnchanged": true,
+      "observerRemovalObserved": true,
+      "integrityFileSha256": "392685be481cce115b1100c407544641e0f46fea67792313d30c98124296b74b"
+    },
+    {
+      "runId": "obs01-r4-a01-fault-transitions",
+      "sealFilePresent": true,
+      "retentionPublished": false,
+      "identityUnchanged": true,
+      "observerRemovalObserved": true,
+      "integrityFileSha256": "f3e2dafc8b93e27db26a8233eaa75b285628030c03bea9a66d04f80122df4fa2"
+    },
+    {
+      "runId": "obs01-r4-a01-maintenance",
+      "sealFilePresent": true,
+      "retentionPublished": true,
+      "identityUnchanged": true,
+      "observerRemovalObserved": true,
+      "integrityFileSha256": "ecb12c1bf9f39903e722b576f9de18c02a9cdba263051a3fffb33d9407a5a902"
+    },
+    {
+      "runId": "obs01-r4-a01-no-mutation",
+      "sealFilePresent": true,
+      "retentionPublished": true,
+      "identityUnchanged": true,
+      "observerRemovalObserved": true,
+      "integrityFileSha256": "cc83fa55f1e8460e40a1497d732edf9b6c366a1f20d738b32463b6b04c0a3a81"
+    },
+    {
+      "runId": "obs01-r4-a01-preabort",
+      "sealFilePresent": true,
+      "retentionPublished": true,
+      "identityUnchanged": true,
+      "observerRemovalObserved": true,
+      "integrityFileSha256": "e9c4c43bfafc44b46fd472f191998481da06008c743fd69e9f4e24cd5f247477"
+    },
+    {
+      "runId": "obs01-r4-a01-resource",
+      "sealFilePresent": true,
+      "retentionPublished": true,
+      "identityUnchanged": true,
+      "observerRemovalObserved": true,
+      "integrityFileSha256": "9871f6fe5e89a995d32c24449032a425dc08e81dfbbcd4632398e984855f5b23"
+    },
+    {
+      "runId": "obs01-r4-a01-scale-count",
+      "sealFilePresent": true,
+      "retentionPublished": true,
+      "identityUnchanged": true,
+      "observerRemovalObserved": true,
+      "integrityFileSha256": "f24f4e1ad857b79ae7aa5a42b4b78fdbbf8bd6dcff0ca1b1c993a43a7660cd41"
+    },
+    {
+      "runId": "obs01-r4-a01-scratch",
+      "sealFilePresent": true,
+      "retentionPublished": true,
+      "identityUnchanged": true,
+      "observerRemovalObserved": true,
+      "integrityFileSha256": "b0e5376cdca6b2b6ff3b39708678534f3a50920c7045faae72ad5697e8a49555"
+    },
+    {
+      "runId": "obs01-r4-a01-watermark",
+      "sealFilePresent": true,
+      "retentionPublished": true,
+      "identityUnchanged": true,
+      "observerRemovalObserved": true,
+      "integrityFileSha256": "08f573f8bca254be22c3a050aed67e348c3103b3153ed22056d8029da929867f"
+    },
+    {
+      "runId": "obs01-r4-a01-work",
+      "sealFilePresent": true,
+      "retentionPublished": false,
+      "identityUnchanged": true,
+      "observerRemovalObserved": true,
+      "integrityFileSha256": "958a7a0e710faf14537eaf496078096403dcdcc26c9d0099835526bb8dec8617"
+    },
+    {
+      "runId": "obs01-r4-a02-ack-order",
+      "sealFilePresent": true,
+      "retentionPublished": true,
+      "identityUnchanged": true,
+      "observerRemovalObserved": true,
+      "integrityFileSha256": "2c33af80daaf5af93d6126bb21b3fae0f6e5f98b00aa49f1cba843b844840c7f"
+    },
+    {
+      "runId": "obs01-r4-a02-fault-transitions",
+      "sealFilePresent": true,
+      "retentionPublished": true,
+      "identityUnchanged": true,
+      "observerRemovalObserved": true,
+      "integrityFileSha256": "d305d46f53d385bd8588c7c7afd41d29ef01cf1a384e482da630d6a6c6dafd06"
+    },
+    {
+      "runId": "obs01-r4-a03-connections",
+      "sealFilePresent": true,
+      "retentionPublished": true,
+      "identityUnchanged": true,
+      "observerRemovalObserved": true,
+      "integrityFileSha256": "936f3578f3e28f06819f8ef559fd48f6d33053f044442649f28d1d763cc98fb6"
+    },
+    {
+      "runId": "obs01-r4-a03-work",
+      "sealFilePresent": true,
+      "retentionPublished": true,
+      "identityUnchanged": true,
+      "observerRemovalObserved": true,
+      "integrityFileSha256": "f8575f9f9be5f846a35da2121493b10eb3610fd957ca61a771b2b7aea1d40b1a"
+    },
+    {
+      "runId": "obs01-r4-a04-resource",
+      "sealFilePresent": true,
+      "retentionPublished": true,
+      "identityUnchanged": true,
+      "observerRemovalObserved": true,
+      "integrityFileSha256": "fcbbea1bd2b53de51e35a41b5a15fb4e063290a85ef46bef2f4789cc69a9fe90"
+    }
+  ],
+  "protocols": [
+    {
+      "protocol": "OBS-CANCEL",
+      "attempt": "a01",
+      "runId": "obs01-r4-a01-cancel",
+      "mode": "selected",
+      "exit": 1,
+      "qualification": "screening-only",
+      "reasons": [
+        "missing required field: tCallerSettled"
+      ],
+      "sourceStrength": null,
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    {
+      "protocol": "OBS-PREABORT",
+      "attempt": "a01",
+      "runId": "obs01-r4-a01-preabort",
+      "mode": "selected",
+      "exit": 1,
+      "qualification": "screening-only",
+      "reasons": [
+        "missing required field: engineStatementLog"
+      ],
+      "sourceStrength": null,
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    {
+      "protocol": "OBS-CONNECTIONS",
+      "attempt": "a03",
+      "runId": "obs01-r4-a03-connections",
+      "mode": "selected",
+      "exit": 0,
+      "qualification": "screening-only",
+      "reasons": [],
+      "sourceStrength": "indirect",
+      "thresholds": {
+        "T-CONN-RELEASE-MS": {
+          "bound": "max",
+          "kind": "observe",
+          "source": "derived",
+          "unit": "ms after close for the engine-side connection count to return to baseline",
+          "value": 5000
+        }
+      },
+      "verdict": "PASS"
+    },
+    {
+      "protocol": "OBS-SCRATCH",
+      "attempt": "a01",
+      "runId": "obs01-r4-a01-scratch",
+      "mode": "selected",
+      "exit": 0,
+      "qualification": "screening-only",
+      "reasons": [],
+      "sourceStrength": "direct",
+      "thresholds": {},
+      "verdict": "PASS"
+    },
+    {
+      "protocol": "OBS-NO-MUTATION",
+      "attempt": "a01",
+      "runId": "obs01-r4-a01-no-mutation",
+      "mode": "selected",
+      "exit": 1,
+      "qualification": "screening-only",
+      "reasons": [
+        "two independent agreeing kinds required"
+      ],
+      "sourceStrength": null,
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    {
+      "protocol": "OBS-RESOURCE",
+      "attempt": "a04",
+      "runId": "obs01-r4-a04-resource",
+      "mode": "selected",
+      "exit": 0,
+      "qualification": "screening-only",
+      "reasons": [],
+      "sourceStrength": "indirect",
+      "thresholds": {},
+      "verdict": "PASS"
+    },
+    {
+      "protocol": "OBS-AVAILABILITY",
+      "attempt": "a01",
+      "runId": "obs01-r4-a01-availability",
+      "mode": "selected",
+      "exit": 1,
+      "qualification": "screening-only",
+      "reasons": [
+        "required fields not recomputed from raw bytes"
+      ],
+      "sourceStrength": null,
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    {
+      "protocol": "OBS-SCALE-COUNT",
+      "attempt": "a01",
+      "runId": "obs01-r4-a01-scale-count",
+      "mode": "selected",
+      "exit": 0,
+      "qualification": "screening-only",
+      "reasons": [],
+      "sourceStrength": "direct",
+      "thresholds": {},
+      "verdict": "PASS"
+    },
+    {
+      "protocol": "OBS-WORK",
+      "attempt": "a03",
+      "runId": "obs01-r4-a03-work",
+      "mode": "selected",
+      "exit": 1,
+      "qualification": "screening-only",
+      "reasons": [
+        "missing required field: rowsWritten"
+      ],
+      "sourceStrength": "direct",
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    {
+      "protocol": "OBS-MAINTENANCE",
+      "attempt": "a01",
+      "runId": "obs01-r4-a01-maintenance",
+      "mode": "selected",
+      "exit": 1,
+      "qualification": "screening-only",
+      "reasons": [
+        "missing required field: tStart"
+      ],
+      "sourceStrength": null,
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    {
+      "protocol": "OBS-ERASURE-SCAN",
+      "attempt": "a01",
+      "runId": "obs01-r4-a01-erasure-scan",
+      "mode": "selected",
+      "exit": 1,
+      "qualification": "screening-only",
+      "reasons": [
+        "missing required field: inventoryEntry"
+      ],
+      "sourceStrength": null,
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    {
+      "protocol": "OBS-WATERMARK",
+      "attempt": "a01",
+      "runId": "obs01-r4-a01-watermark",
+      "mode": "selected",
+      "exit": 1,
+      "qualification": "screening-only",
+      "reasons": [
+        "missing required field: servingIndex"
+      ],
+      "sourceStrength": null,
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    {
+      "protocol": "OBS-ACK-ORDER",
+      "attempt": "a02",
+      "runId": "obs01-r4-a02-ack-order",
+      "mode": "selected",
+      "exit": 1,
+      "qualification": "screening-only",
+      "reasons": [
+        "missing required field: tSourcePublished"
+      ],
+      "sourceStrength": null,
+      "thresholds": {},
+      "verdict": "FAIL"
+    },
+    {
+      "protocol": "OBS-FAULT-TRANSITIONS",
+      "attempt": "a02",
+      "runId": "obs01-r4-a02-fault-transitions",
+      "mode": "selected",
+      "exit": 1,
+      "qualification": "screening-only",
+      "reasons": [
+        "missing required field: transition"
+      ],
+      "sourceStrength": null,
+      "thresholds": {},
+      "verdict": "FAIL"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "protocol": "OBS-CONNECTIONS",
+  "verdict": "FAIL",
+  "reasons": [
+    "uncertain sample time order"
+  ],
+  "thresholds": {
+    "T-CONN-RELEASE-MS": {
+      "kind": "observe",
+      "value": 5000,
+      "unit": "ms after close for the engine-side connection count to return to baseline",
+      "bound": "max",
+      "source": "derived"
+    }
+  },
+  "sourceStrength": "indirect",
+  "qualification": "screening-only"
+}

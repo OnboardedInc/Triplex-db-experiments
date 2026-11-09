@@ -70,10 +70,14 @@ try:
  if protocol=='NO-MUTATION':metric();time.sleep(.05);session('read-control','SELECT 1 AS n');time.sleep(.05);metric()
  elif protocol=='PREABORT':session('read-control','SELECT 1 AS n')
  elif protocol=='CONNECTIONS':
-  sockets();p=pg.Pg(5432);sockets();p.close();append('H4',{'event':'pool-close','tMono':c.mono()});time.sleep(.1);sockets();time.sleep(.1);sockets()
+  # [EXP-OBS01] Why: adjacent observations need measured clock margin, even when a connection opens quickly.
+  # Rejected: reducing uncertainty or sorting overlapping intervals to manufacture a definite order.
+  gap=max(.1,(2*uncertainty+10)/1000)
+  sockets();p=pg.Pg(5432);time.sleep(gap);sockets();p.close();append('H4',{'event':'pool-close','tMono':c.mono()});time.sleep(gap);sockets();time.sleep(gap);sockets()
  elif protocol=='RESOURCE':
   cg=next(x[3:] for x in Path('/proc/1/cgroup').read_text().splitlines() if x.startswith('0::'))
-  source={'reader':'resource','endpoint':'/sys/fs/cgroup'+cg,'owner':config['sut']['engineContainerId']};append('H1',c.read_source(source))
+  source={'reader':'resource','endpoint':'/sys/fs/cgroup'+cg,'owner':config['sut']['engineContainerId']}
+  for _ in range(3):append('H1',c.read_source(source));time.sleep(.05)
  elif protocol=='AVAILABILITY':
   session('availability-failure',"SELECT CAST('not-a-number' AS BIGINT) AS n")
   time.sleep(.1);session('availability-write',"INSERT INTO "+relation+" (_id,n) VALUES ('availability',1)");time.sleep(.1);session('availability-read','SELECT COUNT(*) AS n FROM '+relation)

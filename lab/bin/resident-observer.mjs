@@ -3,10 +3,18 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
+import {isDeepStrictEqual} from 'node:util';
 import {ENGINE_DIR,REPO,POOL_FILE,admission,atomicJson,defaultHolder,docker,dockerArgs,fail,cpusetOverlap,inspect,listTx2Containers,readJson,reconcile,sha256,vmDisk,withPool} from './lib.mjs';
+export function sameResident(a,b){
+ // [EXP-OBS01] Why: Docker mount-list order is nondeterministic; mount identity and settings still must match exactly.
+ // Rejected: ignoring mounts entirely or treating a reordered array as a changed volume.
+ const identity=x=>({id:x?.Id,config:x?.Config,host:x?.HostConfig,mounts:x?.Mounts?.toSorted((u,v)=>u.Destination.localeCompare(v.Destination)),startedAt:x?.State?.StartedAt});
+ return Boolean(b?.State?.Running)&&isDeepStrictEqual(identity(a),identity(b));
+}
 export async function residentObserver(config,info,opts){
  if(info.mode!=='resident'||info.lane!=='xtdb')fail('REFUSED','resident native diagnostic profile currently requires XTDB dev');
  const engine=inspect(info.container);if(!engine?.State.Running)fail('REFUSED','resident is not running');
+ if(!engine.Mounts.some(m=>m.Type==='volume'&&m.Name===info.volume&&m.Destination==='/var/lib/xtdb'))fail('REFUSED','resident data volume does not match the slot');
  const id=opts['run-id'];if(!/^[A-Za-z0-9_-]{1,80}$/.test(id??''))fail('USAGE','safe run id required');
  if(!/@sha256:[a-f0-9]{64}$/.test(opts.image??''))fail('USAGE','digest-pinned Python image required');
  const key=fs.realpathSync(opts['key-file']);if(fs.readFileSync(key).length!==32)fail('USAGE','32 byte evaluator key required');
@@ -27,7 +35,9 @@ export async function residentObserver(config,info,opts){
  try{
   fs.mkdirSync(dir,{mode:0o700});const code=path.join(dir,'code');fs.mkdirSync(code);fs.mkdirSync(path.join(dir,'output'));
   const spec=JSON.parse(fs.readFileSync(opts.spec,'utf8'));if(!spec.resident||!Array.isArray(spec.sources))fail('USAGE','resident case/source specification required');
-  if(!/^obs01r3_[a-z0-9_]+$/.test(spec.relation)||!Number.isSafeInteger(spec.population?.n)||spec.population.n<1||spec.population.n>64||spec.population.width!==1)fail('REFUSED','resident probes require an owned relation and tiny width-1 population');
+  if(spec.runId!==id)fail('REFUSED','case must name this fresh run');
+  spec.engineContainerId=engine.Id;
+  if(!/^obs01r[34]_[a-z0-9_]+$/.test(spec.relation)||!Number.isSafeInteger(spec.population?.n)||spec.population.n<1||spec.population.n>64||spec.population.width!==1)fail('REFUSED','resident probes require an owned relation and tiny width-1 population');
   if(spec.sources.some(([sid,kind])=>!/^[-A-Za-z0-9_]+$/.test(sid)||!/^[-A-Za-z0-9]+\/(xtdb|any)\/[A-Za-z0-9_.]+$/.test(kind)))fail('REFUSED','unsafe stream metadata');
   atomicJson(path.join(dir,'case.json'),spec);
   for(const file of fs.readdirSync(path.join(REPO,'lab/observer')).filter(n=>n.endsWith('.py')))fs.copyFileSync(path.join(REPO,'lab/observer',file),path.join(code,file));
@@ -49,6 +59,11 @@ export async function residentObserver(config,info,opts){
    '-v',`${info.volume}:/engine:ro`,'-v','/sys/fs/cgroup:/sys/fs/cgroup:ro','-v',`${code}:/collector:ro`,'-v',`${dir}/config.json:/config.json:ro`,'-v',`${key}:/run/key:ro`,'-v',`${dir}/output:/obs`,
    '--entrypoint','python3',opts.image,'-I','-B','/collector/resident_collect.py']);
   const root=path.join(dir,'output/bundle'),envelope=readJson(path.join(root,'bundle.json')),index=readJson(path.join(root,'index.json'));
+  const integrity=spawnSync('python3',['-I','-B',path.join(code,'verify_seal.py'),root,key,path.join(dir,'config.json'),code],{encoding:'utf8',timeout:60000});
+  fs.writeFileSync(path.join(dir,'integrity.stdout.json'),integrity.stdout??'');fs.writeFileSync(path.join(dir,'integrity.stderr.txt'),integrity.stderr??'');
+  if(integrity.status!==0)fail('REFUSED','host integrity check failed; no witness/retention publication');
+  const after=inspect(info.container);
+  if(!sameResident(engine,after))fail('REFUSED','resident identity/configuration changed during collection');
   const witnesses=envelope.streams.map(s=>{const chunks=index[s.streamId],last=chunks.at(-1),h=readJson(path.join(root,last.header));return {runId:id,streamId:s.streamId,seq:chunks.length-1,headSha256:last.headerSha256,tMono:h.tEndMono};});
   // This host witness is emitted by engine tooling, outside every observer mount.
   const witnessFile=fs.openSync(path.join(ENGINE_DIR,'observers/witness.jsonl'),'a');

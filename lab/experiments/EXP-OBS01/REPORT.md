@@ -498,3 +498,178 @@ per-attempt copies continue to represent the actual collection bytes rather than
 Original retained runs remain available for direct CLI replay. When restoring only the archive, relocate only the
 trusted context's external normalizer paths, preserving exact parser bytes, raw chunks, HMACs and witness heads.
 No merge or push was performed.
+
+## Round 4 — 2026-11-09 UTC, continuation of 7edb91d
+
+### Result: partial delivery, ten source gaps remain
+
+The eleven original failures all classify as **(a)**: missing or misinterpreted observer evidence, including
+cases that never exercised the required event. None establishes **(b)** prohibited engine behavior. I found
+no **(c)** oracle error and did not change the oracle. The requested instruction to fix **every** (a) is
+**not complete**. RESOURCE is corrected and re-screened; ten original gaps remain. Several require sources
+disabled on the unchanged residents, actual composition-specific inputs, or a fault/maintenance/physical
+exercise outside this round's shared-resident permission. Additional observer implementation is still needed
+for WORK and position-bound FAULT-TRANSITIONS; those are not presented as externally solved blockers.
+
+The final selected cohort has **4 screening PASS, 10 FAIL, 0 REFUSED** across fourteen real XTDB bundles.
+All **28** delegation/protocol negatives are **REFUSED**. Selected passes are CONNECTIONS, SCRATCH,
+SCALE-COUNT and RESOURCE. These are narrow diagnostic cases, not acceptance of the corresponding obligations,
+the <=1 ms clock floor, application-wide ownership, P1–P5, or year-one scale. The count fixture remains eight
+entities, the socket declaration remains a diagnostic native pool maximum, and RESOURCE samples the engine
+owner only. A source gap is not evidence of a forbidden engine action.
+
+Evidence: `round4/classification.json`, `round4/cli-results-a03.json`, `round4/summary.json` and per-protocol
+`case.json`, `context.json`, `evidence.json`, `derivation.json`, `verdict.json`, `cli-a03/`.
+The oracle remains **23e2273fc6b15b92821b318acd387f5484155d8a**, SHA256
+`668136f3c99e09b5332363bb6beaac7f177d07ef7718eb59b2b801faeedcb2cb`. The contract remains the exact round-3
+0.3.12 snapshot from f5e7a41, file SHA256 `8bb4b393a2b1636eea00a0609d04a28b54adaecdc5d2f9ffd6d582edb2fe935c`.
+Both helper and actual CLI screening check these file pins. Moving review-branch bytes were not substituted.
+
+### Classification of every original FAIL
+
+Each original run and exact original/current reason is retained in `round4/classification.json`. The source
+requirements below come from R27 sections 5–6 and its protocol/source tables, and the pinned O-OBS field/source
+checks. No protocol-text contradiction was found that would justify classifying a failure as (c).
+
+| Original FAIL | Class | Observed cause and round-4 disposition |
+| --- | --- | --- |
+| CANCEL | a | The bounded query completed before CancelRequest; it did not produce E-CANCELLED. No complete independent active/drain/transport-ACK witness exists. Fresh a01 still FAILs on `tCallerSettled`. This does not show the engine ignoring an active cancel. A safely cancellable workload and X6/X7 plus T1, or qualified Q3/Q4/T2, remain needed. |
+| PREABORT | a | Own client traffic is not a complete resident statement log. X6 DEBUG logging is disabled and ingress is not forced through the observer. Fresh a01 FAILs on `engineStatementLog`; absence was never inferred from the observer's own SELECT. |
+| NO-MUTATION | a | The X1 completed-ID delta is available, but the T1 recording covers only observer requests. Fresh a01 FAILs for lack of two independent agreeing kinds. Complete ingress capture/classification and an independent engine inventory remain needed; relabeling one capture as a second kind would be invalid. |
+| RESOURCE | a, fixed for sampled profile | Lifetime cgroup `memory.peak` was labeled RSS. Its 131,072-byte excess above the 3 GiB forecast is not proof of process RSS exceeding that forecast. Fresh a04 obtains actual engine-process RSS and PASSes screening; limitations below apply. |
+| AVAILABILITY | a | The probe generated an invalid-cast error, not the declared memory failure. HR probe outcomes exist; stable H8 PID/OOM counters cannot establish a failure time. Fresh a01 FAILs raw-field recomputation. No resident OOM or restart was induced. A safely contained memory-failure case with X1/X2 progress corroboration remains needed. |
+| WORK | a | Actual EXPLAIN scan-row counters exist; `rowsWritten`, `triplesTouched` and `bytesWritten` do not. Fresh a03 FAILs on `rowsWritten`. Attributed X3/X7 and H1/H3 unit collection is still unimplemented here; global shared I/O and SQL spelling cannot be substituted or zero-filled. |
+| MAINTENANCE | a | No native maintenance start/end or durable publication/checkpoint consumer lag was observed. Fresh a01 FAILs on `tStart`. Needs actual X3/X6 event boundaries and a real consumer interval. No shared rebuild was attempted. |
+| ERASURE-SCAN | a | A truncated log prefix has neither complete protected-copy inventory nor observed erasure publication and per-location positive controls. Fresh a01 FAILs on `inventoryEntry`. Encoding-aware/freed-block coverage remains deferred; a prefix scan cannot establish physical erasure. |
+| WATERMARK | a | A native SELECT 1 supplies no serving-index, atomic eligibility/marker, wait or routing facts. Fresh a01 FAILs on `servingIndex`. The actual composition routed-read surface and same-snapshot witness remain absent; inventing a metadata row would not fix this. |
+| ACK-ORDER | a | The native control is not a commit. Publication time, ack boundary, routed RYOW and independent non-HR corroboration are absent. Fresh a02 FAILs on `tSourcePublished`. Needs the actual composition source/ack/read exercise and durable publication witness. |
+| FAULT-TRANSITIONS | a | A disposable observer client really committed a marker, exited, and had that marker read back. No native transaction position binds that marker to a durable transition. Fresh a02 FAILs on `transition`. Position-bound xt.txs/marker collection remains unimplemented; only the observer child was killed, not the resident. |
+
+All first failures and raw bundles remain available. **No category (b) finding is claimed** from these cases;
+therefore there is no engine violation worked around. **No category (c) finding is claimed**; the oracle was
+neither patched nor weakened. Missing implementation, missing experimental inputs, and disabled sources are
+kept explicit rather than converted into a claim that the engine passed or failed the substantive obligation.
+
+### Corrections and integrity changes
+
+RESOURCE now records raw `/proc/<pid>/status`, `stat` before/after, cgroup membership before/after, and the
+engine's cgroup PID inventory before/after. The decoder rejects missing RSS, process-set churn, PID reuse,
+cgroup migration, wrong owner and incomplete coverage. It sums **VmRSS**, excluding the observer's separate
+cgroup. Lifetime `memory.current`, `memory.peak` and `memory.max` remain raw context and never become RSS.
+Both resident and ordinary protocol normalizers refuse resource samples lacking actual process RSS. The
+older round-2 RESOURCE result must not be cited as a process-RSS qualification under the corrected meaning;
+its original bytes and historical verdict remain retained.
+
+The selected a04 resource observations each report **2,300,252,160 RSS bytes** and **4,830,924,800 allocated
+disk bytes**, under the declared 3,221,225,472 / 20,000,000,000-byte forecasts. These are three sampled
+snapshots, not a continuously observed high-water mark. RSS may double-count shared pages across processes,
+and disk sampling can miss transient files. Application clients, broker and other owners are outside this
+diagnostic envelope. Its measured clock uncertainty is **5.546773 ms**, not <=1 ms qualification.
+
+Every new sample frame carries run, stream, source, engine-container and canonical case-digest bindings.
+Resident pinned decoders reject mismatches, inconsistent run anchors, or embedded events before this attempt
+or after their containing sample. A fresh HMAC alone is not treated as proof that an embedded wire event is
+fresh. Metric/procfs bytes without embedded times rely on the observer's actual read path and private output
+boundary; the SUT has no mount for that output, key or configuration.
+
+New `verify_seal.py` checks exact configuration/envelope binding, HMACs, chunk byte lengths/digests, dense
+chains, start/order bounds, final heads, decoder hashes and normalized-byte recomputation. The resident host
+controller runs it **before** writing host witness heads or retention. Ordinary future `observer-retain` also
+runs it; old runs without the retained verifier cannot be re-issued as newly verified retention, and retain
+their historical contexts. A new resident volume check binds the read-only volume to the inspected engine's
+slot. Before/after resident checks cover ID, start time, configuration, host configuration and mount set.
+
+Two implementation errors were caught and retained during this work:
+
+- a01 WORK, ACK-ORDER and FAULT-TRANSITIONS sealed but were refused before host witness/retention because
+  the controller compared Docker's mount arrays in incidental order. The mount **set** was unchanged. The
+  corrected deep comparison sorts by destination and still rejects changed mounts/settings, restart or
+  configuration. WORK a03 and ACK/FAULT a02 are new attempts with fresh keys, not adopted old contexts.
+- CONNECTIONS a01 FAILed `uncertain sample time order`: its first two samples were too close for the actual
+  bridge uncertainty. Sampling now waits at least `max(100 ms, 2 * measured uncertainty + 10 ms)` between
+  stages. a03 PASSes. Uncertainty was not reduced and observations were not reordered. This is an observer
+  sampling-margin defect, not evidence of a pool leak or a bad clock correlation.
+
+### Q91a and boundaries
+
+`round4/q91a.json` pins the exact read-only ruling text and source-file hash. **No QLever bundle was newly
+collected in round 4**; all selected real bundles are XTDB. Historical QLever timings are not retroactively
+qualified. Future ordinary QLever observer plans now include mandatory `Q2-index-state`, even when the
+caller selects only a transport stream. The collector retains actual stats and metrics HTTP bytes; the
+decoder obtains exact base triple count from `num-triples-normal` and delta count from `qlever_delta_triples`.
+Missing/invalid counts refuse normalization instead of becoming zero. A final scrape brackets shutdown.
+
+That metadata explicitly records `touchedBlockDelta: null`, `rebuildThreshold: null` and
+`timingQualification: DIAGNOSTIC`: a global delta count does not establish the delta in blocks a measured
+scan touched or a bounded rebuild policy. This future-profile addition is **unit tested only**, not live
+qualified this round. No resident script, metrics configuration, base index or delta was changed. Q91b/d
+remain respected: no --fresh, shared rebuild, or exclusive slot was used. A live Q91a performance claim
+still needs the QG1 threshold and touched-block sampler on the qualified built-base profile.
+
+Live Datomic verification, NS-scale clock/overhead qualification and complete physical erasure coverage
+were not run. The exact deferred driver/clock/overhead/erasure commands remain in
+`lab/observer/DEFERRED.md`; no microtrace is substituted for those exercises.
+
+### PASS audit required by preamble 9a
+
+The audited production-tooling surface is `lab/observer/` plus observer-related functions in
+`lab/bin/{observer,resident-observer,observer-clock,archive-volume}.mjs`. Test assertions are fixture checks,
+not live acceptance. Each row states the content, freshness and binding checks and the exact claim boundary.
+
+| Code path producing a verdict, receipt or success-shaped observation | Content | Freshness | Binding / permitted claim |
+| --- | --- | --- | --- |
+| `collector.py:Bundle.append/seal` | Lossless payload hashes, signed dense chains; seal requires successful pinned decoder execution for every stream. | New output directory, byte budget, live source reads; append rejects writes after seal. | External per-run key; envelope pins run/source/engine/config/code. Seal means integrity/recomputability, **not semantic PASS**. |
+| `normalize_base.py`, `protocol.py`, `protocol_extra.py`, generated/compiled decoders | Decode actual procfs, socket, metric, native reply, log, span and wire bytes; validate required shapes, exact counters and supported sources; missing values stay absent/refuse. RSS correction and no-zero-fill regressions exercised. | Resident `resident_normalize` checks per-frame attempt anchor and embedded event bounds; ordinary protocols require their evaluator window and retain source-clock mapping. | Resident run/source/stream/engine/case digest; protocol/source allowlists and pinned decoder bytes. Case inputs declare expectations; they do not supply observed engine facts. Incomplete mappings cannot claim complete source coverage. |
+| `verify_seal.py:verify` | HMAC, bytes, chains, seal inventory and exact decoder rerun equality. Negative tests change normalized output, engine and seal. | Chunk starts cannot predate the envelope's attempt; current configuration and retained parser are read on invocation. Resident parser additionally checks embedded freshness. | Exact run/receipt/key/SUT/stream/config digest; reports **integrity only**, not semantic acceptance. |
+| `resident-observer.mjs:residentObserver` witness/retention | New host integrity gate must succeed before publication; inspected slot volume must match. | Fresh run/key registry, unique output, current resident before/after; no adoption of failed a01 retention. | Actual engine ID/config/start/mounts/host config, evaluator key, copied code/parser digests and final heads; private output and host-only witness. |
+| `observer.mjs:observerWitness` / watcher | Authenticates the witnessed header, stream, sequence and head digest. | Current managed state/holder under witness lock, fresh registered run/key; timestamp records actual host observation. | Witness attests **seeing an authenticated head**, not parsing content or semantic acceptance. Later retention/authentication checks the full bytes. |
+| `observer.mjs:observerRetain` | Seal/head HMAC and independent final witness plus new full integrity/decoder gate. | Requires original stopped/removed observer and original holder; historical runs lacking the new verifier refuse new retention. | Retained run/key/source/parser/chunk/bridge digests, exact config and final witness heads. Retention is not PASS. |
+| `observer-clock.mjs`, `observer.mjs:observerBridge` | Nonce-matched actual peer reply, bounded measured bracket; rejected samples retained. | Each exchange is live; run/stopping state rechecked before append. | Exact current observer/port/run and bridge bytes. Resident separate-process bracket declares its actual larger uncertainty; no zero fill or NS claim. |
+| `check_round3.py` / legacy `check_protocols.py` | Delegate semantic checking to the unmodified O-OBS consumer after authentication and raw recomputation; never use helper exit zero as PASS. | Round-4 driver creates new run/key; case/context name that exact run. Historical helper replay describes its original run, **not fresh collection**. | Current helper checks exact consumer/contract file pins, actual O-OBS delegation, complete case bindings and thresholds. Legacy helper is not used to issue this round's results; its old broad contexts cannot substitute for current context selection. |
+| `screen_cli_round3.mjs` | Runs actual pinned CLI; parses saved stdout; verifies exit 0/1/2 matches PASS/FAIL/REFUSED; negative results must be context contradictions. | Explicit attempt selection; outputs created exclusively under a new screen ID; no overwrite/adoption. | Exact bundle/key/context/evidence paths and consumer/contract file hashes. Result is the consumer's **screening-only** verdict. |
+| `verify_retained.py` | Calls consumer authentication over retained bytes; emits `semanticAcceptance: false`. | Replay authenticates the original named run; it is not evidence of a new workload. | External retention/parser/key/witness anchors; its historical hardcoded consumer label is not an authority for round-4 pins. Not used for round-4 semantic results. |
+| `summarize*.py`, `summarize_round4.mjs` | Diagnostic/count aggregation only. Round-4 summary matches each saved CLI stdout/exit and fourteen/twenty-eight denominators; checks all before/after resident identities and terminal removal receipts. | Reads final named screen cohort and performs live owned-reservation/container inspection. | Explicit attempt/run paths. Historical `sealed` booleans mean file presence only; round-4 names this `sealFilePresent` and never derives PASS from it. |
+| `archive_volume.py` / `archive-volume.mjs` | Full archive member/readback hashes and unchanged source scan, no semantic assertion. | Host requires stopped/unattached owned volume; a new exclusive archive is created. | Exact volume/holder/source archive path; source and archive manifests. Not invoked round 4; no resident volume was archived or removed. |
+| `archive_round2_host.py`, `archive_round3.py` | Source/copy hashes and complete destination manifest; copies raw sources, parsers, keys and own witness lines. | Round-4 path requires final no-owned-container/reservation receipt and a new archive directory; owned attempts are stopped before copying. | Selected round/run prefix and source/copy paths. `allMatched` is copy integrity, not semantic qualification. Original sources retained. |
+| `test_resident_failure.mjs`, gate/tests | Assertions check actual returned error/content, inspected owner removal and unchanged resident ID/start time (live helper); unit tests use explicitly synthetic fixture bytes. | Live helper uses a fresh key/run; unit fixture directories are new. | Success means the stated cleanup/test assertion only. Live negative helper was updated for the required run binding but was **not rerun** round 4; fifty final gate assertions ran. |
+| `run_*.mjs`, `final_probe.mjs`, `aa_round2.mjs`, probe scripts, `run_frozen_driver.mjs` | Retain actual commands/results/errors; frozen NS driver checks input hashes/scale/argv and private Docker endpoint. | New named attempts / supplied frozen manifest; collection status is not semantic PASS. | Exact command/run/fixture/driver/engine inputs. Historical drivers are not newly qualified by editing them. Resource admission is a grant check against the current ledger/config, not an observation-protocol verdict. |
+
+The audit confirms the new RESOURCE PASS is based on content (raw VmRSS decoded again), freshness (new a04
+process reads and attempt-bound signed frames) and binding (actual engine cgroup/PID incarnations, slot volume,
+case, key, decoder and pinned contract/oracle). It does **not** confirm complete source coverage for the ten
+remaining protocols, lifetime RSS peaks, full application ownership or NS precision. Those claims are not made.
+
+### Gates, retries and cleanup
+
+Final source gate: **40 Python + 10 Node tests pass**, including RSS/cache separation, missing RSS/process
+churn/wrong cgroup, stale/misbound events, Q91 exact counts/diagnostic status, normalized-byte/engine/seal
+tampering, and mount-order/restart/configuration checks. `round4/gate-final-source.log` retains the actual
+heavy-wrapper execution. Earlier gate/screen cohorts and failures are preserved separately. No pnpm/root
+package check was run because this change is lab observer tooling, not a package or public API change.
+
+Reproduction of the final screen (use a new screen ID on replay; outputs intentionally refuse overwrite):
+
+```sh
+node lab/bin/heavy.mjs --label CX-OBS01-R4-gate -- node lab/observer/gate.mjs
+OBS01_ROUND=4 OBS01_SCREEN_ID=review01 node lab/bin/heavy.mjs --label CX-OBS01-R4-review -- node lab/observer/screen_cli_round3.mjs a01,a02,a03,a04
+```
+
+Selected attempts: a01 for CANCEL/PREABORT/SCRATCH/NO-MUTATION/AVAILABILITY/SCALE-COUNT/MAINTENANCE/
+ERASURE-SCAN/WATERMARK, a02 for ACK-ORDER/FAULT-TRANSITIONS, a03 for CONNECTIONS/WORK, a04 for RESOURCE.
+There are **19 retained attempt directories**: sixteen published contexts and three sealed-but-unpublished
+mount-order refusals. The first CLI cohort has only thirteen selected cases because WORK had not yet been
+retried; final `cli-results-a03.json` has the full fourteen selected plus twenty-eight negatives.
+
+`round4/cleanup-final.json` verifies all nineteen before/after resident identities, configurations, host
+configurations, mount sets and start times unchanged, every owned sidecar removed, and **zero** CX-OBS01-R4
+containers/reservations. No exclusive slot, volume, resident restart, shared rebuild or resident configuration
+change occurred. Private keys remain outside bundles and Git. Own tiny `obs01r4_*` diagnostic tables remain;
+no unrelated data was deleted. No live Datomic or NS-scale/physical-erasure acceptance was performed.
+
+All nineteen attempts, actual per-attempt parsers/controllers, private keys, final/earlier CLI contexts and
+own host witness lines were copied to `/Users/sam/Claude/Projects/triplex-db-2/evidence/OBS01/round4-host/`.
+The archive compared **2,014 source/copied files**, all matched, with **2,015 manifest entries**;
+`SHA256SUMS.json` SHA256 is **973ff31d0078d40d6796342798b13e5dd2fb398c6af0c253e001c09e30015c68**.
+`round4/archive.log` retains the heavy-wrapper copy verification. Original run directories remain retained.
+The report and archive receipt are committed after this archival snapshot; the archive contains the actual
+collection code and evidence, not a retroactively invented pre-run Git anchor. No merge or push was performed.

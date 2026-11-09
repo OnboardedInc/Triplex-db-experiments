@@ -1,0 +1,8 @@
+{
+  "protocol": "OBS-RESOURCE",
+  "verdict": "PASS",
+  "reasons": [],
+  "thresholds": {},
+  "sourceStrength": "indirect",
+  "qualification": "screening-only"
+}

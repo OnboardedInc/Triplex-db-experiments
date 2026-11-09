@@ -84,7 +84,8 @@ class Bundle:
                 write_new(obj, payload)
             start = max(start, self.ends.get(sid, start))
             end = mono(); self.ends[sid] = end
-            frame = canonical({'tStartMono': start, 'tEndMono': end, 'tStartReal': real, 'sourceMono': source_mono, 'runStartedMono': self.envelope['collector']['startedAtMono'], 'rawSha256': digest,
+            stream = next(s for s in self.config['streams'] if s['streamId']==sid)
+            frame = canonical({'runId':self.config['runId'],'streamId':sid,'sourceId':stream['sourceId'],'engineContainerId':self.config['sut']['engineContainerId'],'caseSha256':sha(canonical(self.config.get('case',{}))), 'tStartMono': start, 'tEndMono': end, 'tStartReal': real, 'sourceMono': source_mono, 'runStartedMono': self.envelope['collector']['startedAtMono'], 'rawSha256': digest,
                                'rawBase64': base64.b64encode(payload).decode()}) + b'\n'
             raw_path = f'streams/{sid}/chunks/{seq:08d}-{sha(frame)}.bin'
             hdr_path = f'streams/{sid}/chunks/{seq:08d}.hdr.json'
@@ -163,6 +164,9 @@ def http_raw(endpoint):
 
 def read_source(source):
     kind = source['reader']
+    if kind == 'qlever-state':
+        endpoint=source['endpoint'].rstrip('/')
+        return canonical({'event':'qlever-index-state','statsHttp':base64.b64encode(http_raw(endpoint+'/?cmd=stats')).decode(),'metricsHttp':base64.b64encode(http_raw(endpoint+'/metrics')).decode()})
     if kind == 'http':
         return http_raw(source['endpoint'])
     if kind == 'file':
@@ -182,7 +186,19 @@ def read_source(source):
             st=p.lstat();key=(st.st_dev,st.st_ino)
             if key in seen:continue
             seen.add(key);disk.append({'path':str(p),'blocks':st.st_blocks,'inode':st.st_ino})
-        return canonical({'event':'resource','files':files,'diskFiles':disk,'owner':source['owner']})
+        # [EXP-OBS01] Why: cgroup lifetime peak includes cache and earlier attempts; RSS is a procfs observation.
+        # Rejected: relabeling memory.peak as attempt RSS, or including observer processes sharing only the PID namespace.
+        members=lambda: sorted(int(x) for x in Path(cg,'cgroup.procs').read_text().split())
+        before=members();rss=[]
+        for pid in before:
+            p=Path('/proc',str(pid));stat=(p/'stat').read_bytes();membership=(p/'cgroup').read_bytes()
+            status=(p/'status').read_bytes()
+            latest=(p/'stat').read_bytes();latest_cg=(p/'cgroup').read_bytes()
+            if stat[stat.rfind(b')')+2:].split()[19]!=latest[latest.rfind(b')')+2:].split()[19]:raise ValueError('resource PID reused')
+            if membership!=latest_cg:raise ValueError('resource cgroup migration')
+            rss.append({'pid':pid,'stat':base64.b64encode(stat).decode(),'statAfter':base64.b64encode(latest).decode(),'cgroup':base64.b64encode(membership).decode(),'cgroupAfter':base64.b64encode(latest_cg).decode(),'status':base64.b64encode(status).decode()})
+        if before!=members():raise ValueError('resource process set changed; sample not complete')
+        return canonical({'event':'resource','files':files,'diskFiles':disk,'owner':source['owner'],'cgroupPath':cg.removeprefix('/sys/fs/cgroup'),'processes':rss,'pidsBefore':before,'pidsAfter':members()})
     if kind == 'threads':
         # [EXP-OBS01] Why: CPU comes from procfs, never a gateway counter; names are only labels.
         # Rejected: gateway-reported drain (gateway is the system under test).
@@ -289,6 +305,8 @@ def run(config_path, key_path, output):
         write_new(bundle.root / 'failure.json', canonical({'error': str(error), 'tMono': mono()}) + b'\n')
         raise
     else:
+        for stream in config['streams']:
+            if stream['reader']=='qlever-state':bundle.append(stream['streamId'],read_source(stream),mono(),time.time_ns()/1e6)
         bundle.seal()
     finally:
         for service in servers: service.shutdown(); service.server_close()

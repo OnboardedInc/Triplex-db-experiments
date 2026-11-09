@@ -6,6 +6,7 @@ import path from 'node:path';
 import { test } from 'node:test';
 process.env.TX2_ENGINE_DIR ??= path.resolve('runs/OBS01/test-engines');
 const { observerPlan } = await import('../bin/observer.mjs');
+const { sameResident } = await import('../bin/resident-observer.mjs');
 const { effectiveConfig } = await import('../bin/engine.mjs');
 const { loadSlots, slotInfo } = await import('../bin/lib.mjs');
 const config = loadSlots();
@@ -14,6 +15,13 @@ const tmp = fs.mkdtempSync(path.resolve('runs/OBS01/node-test-'));
 const key = path.join(tmp, 'external.key'); fs.writeFileSync(key, Buffer.alloc(32, 7));
 const engine = { Id: 'e'.repeat(64), Image: 'sha256:engine', HostConfig: { CpusetCpus: '0,1' }, Config: { Labels: { 'tx2.config-sha256': 'config' } }, Mounts: [{ Name: info.volume }] };
 const opts = { 'observer-cpus': '5', image: `python@sha256:${'a'.repeat(64)}`, 'key-file': key, 'run-id': 'test', 'receipt-id': 'receipt', 'key-id': 'key' };
+test('resident binding ignores mount order but refuses restart, config or mount changes',()=>{
+ const a={...engine,Mounts:[{Destination:'/a',Name:'a'},{Destination:'/b',Name:'b'}],State:{Running:true,StartedAt:'one'}};
+ assert.equal(sameResident(a,{...a,Mounts:a.Mounts.toReversed()}),true);
+ assert.equal(sameResident(a,{...a,State:{Running:true,StartedAt:'two'}}),false);
+ assert.equal(sameResident(a,{...a,Mounts:[{Destination:'/a',Name:'wrong'}]}),false);
+ assert.equal(sameResident(a,{...a,Config:{Labels:{changed:true}}}),false);
+});
 test('requires disjoint CPU pinning', () => {
   assert.throws(() => observerPlan(config, info, engine, { ...opts, 'observer-cpus': '1' }));
   assert.throws(() => observerPlan(config, info, { ...engine, HostConfig: { CpusetCpus: '' } }, opts));
@@ -51,6 +59,9 @@ test('QLever profile is opt-in and resident script remains unchanged', () => {
   const q = slotInfo(config, 'qlever', 's3');
   const plain = effectiveConfig(config, q);
   const original = fs.readFileSync(plain.files.startScript, 'utf8');
+  const qEngine={...engine,Mounts:[{Name:q.volume}]};
+  const p=observerPlan(config,q,qEngine,{...opts,'observer-streams':'T2-wire'});
+  assert.deepEqual(p.plan.streams.map(s=>s.streamId),['T2-wire','Q2-index-state']);
   const observed = effectiveConfig(config, { ...q, observationSources: true, cpusetCpus: '0' });
   const script = fs.readFileSync(observed.files.startScript, 'utf8');
   assert.match(original, /--no-metrics-log/);

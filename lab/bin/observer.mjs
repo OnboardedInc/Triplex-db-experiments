@@ -92,6 +92,9 @@ export function observerPlan(config, info, engine, opts) {
   const selected = opts['observer-streams'] ? String(opts['observer-streams']).split(',') : null;
   const enabledStreams=streams.filter(s=>!(s.sourceId==='X6' && !['all','logs'].includes(features)) && !(s.sourceId==='X7' && !['all','spans'].includes(features)) && !(s.sourceId==='Q3' && !['all','logs'].includes(features)) && (!selected || selected.includes(s.streamId)));
   if (selected && (enabledStreams.length!==selected.length || !selected.length)) fail('REFUSED','unknown/disabled observer stream selection');
+  // [EXP-OBS01] Why: Q91a requires base and delta context even for a narrowly selected timing stream.
+  // Rejected: delta-only latency with no index-state witness, or inventing touched-block coverage from a global gauge.
+  if(info.lane==='qlever')enabledStreams.push(source('Q2.index-state','EI-query/qlever/Q2','http://127.0.0.1:7019','query','qlever-state',{cadenceMs:1000}));
   if (!enabledStreams.length) fail('REFUSED','empty observer stream inventory');
   const collectorSource = fs.readFileSync(path.join(SOURCE, 'collector.py'));
   const plan = { runId, receiptId, keyId, streams:enabledStreams, maxUncertaintyMs: 1, clockPort: 18080, maxBundleBytes,
@@ -133,7 +136,7 @@ export async function observerUp(config, info, opts) {
   try {
     fs.mkdirSync(plan.dir, { recursive: true, mode: 0o700 });
     const codeDir = path.join(plan.dir, 'code'); fs.mkdirSync(codeDir);
-    for (const name of ['collector.py', 'normalize.py', 'capture.py', 'commands.py', 'pgclient.py']) fs.copyFileSync(path.join(SOURCE, name), path.join(codeDir, name));
+    for (const name of ['collector.py', 'normalize.py', 'capture.py', 'commands.py', 'pgclient.py', 'verify_seal.py']) fs.copyFileSync(path.join(SOURCE, name), path.join(codeDir, name));
     // [EXP-OBS01] Why: preserve controller bytes as well as sampler bytes for independent replay.
     // Rejected: reconstructing an old attempt from a later working tree.
     if (opts['protocol-spec']) {
@@ -292,6 +295,10 @@ export function observerRetain(opts) {
   const witnesses = fs.readFileSync(path.join(ROOT, 'witness.jsonl'), 'utf8').trim().split('\n').filter(Boolean).map(JSON.parse).filter(w => w.runId === runId);
   const seal = readJson(path.join(root, 'seal.json'));
   const key = fs.readFileSync(state.key);
+  const verifier=path.join(dir,'code/verify_seal.py');
+  if(!fs.existsSync(verifier))fail('REFUSED','historical run lacks integrity verifier; retain its original context');
+  const integrity=spawnSync('python3',['-I','-B',verifier,root,state.key,path.join(dir,'config.json'),path.join(dir,'code')],{encoding:'utf8',timeout:60000});
+  if(integrity.status!==0)fail('REFUSED','retention integrity check failed: '+integrity.stderr);
   const unsigned = { runId: seal.runId, heads: seal.heads };
   if (createHmac('sha256', key).update(canonical(unsigned)).digest('hex') !== seal.hmac) fail('REFUSED', 'invalid seal');
   for (const [sid, entries] of Object.entries(index)) {

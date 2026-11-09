@@ -99,7 +99,7 @@ def protocol_normalize(data,spec,source_id):
     if protocol=='RESOURCE' and root=='H1':
         samples=[s for s in parsed['samples'] if 'resource' in s]
         if not samples or spec['envelope']['owners']!=[samples[0]['resource']['owner']]:raise ValueError('resource source does not cover every declared owner')
-        peaks=[{'owner':s['resource']['owner'],'rss':s['resource']['memory']['memory.peak'],'disk':s['resource']['disk'],'t':s['tEndMono']} for s in samples]
-        if any(s['resource']['memory']['memory.peak']>s['resource']['memory']['memory.max'] for s in samples):raise ValueError('invalid cgroup cap')
+        if any('rss' not in s['resource'] for s in samples):raise ValueError('attempt process RSS unavailable; lifetime cgroup peak is not RSS')
+        peaks=[{'owner':s['resource']['owner'],'rss':s['resource']['rss'],'disk':s['resource']['disk'],'t':s['tEndMono']} for s in samples]
         return {'forecast':spec['forecast'],'peaks':peaks,'envelope':spec['envelope'],'obligation':spec['obligation']}
     raise ValueError('protocol lacks complete facts in this source: '+protocol+'/'+source_id)

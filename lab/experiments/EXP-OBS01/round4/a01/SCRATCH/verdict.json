@@ -1,0 +1,8 @@
+{
+  "protocol": "OBS-SCRATCH",
+  "verdict": "PASS",
+  "reasons": [],
+  "thresholds": {},
+  "sourceStrength": "direct",
+  "qualification": "screening-only"
+}

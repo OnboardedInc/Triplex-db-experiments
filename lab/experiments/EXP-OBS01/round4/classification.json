@@ -1,0 +1,186 @@
+{
+  "complete": false,
+  "categories": {
+    "a": 11,
+    "b": 0,
+    "c": 0
+  },
+  "resolvedOriginalFailures": 1,
+  "remainingOriginalFailures": 10,
+  "rows": [
+    {
+      "protocol": "OBS-CANCEL",
+      "category": "a",
+      "cause": "The bounded native query completed before CancelRequest. Settlement with E-CANCELLED, independent active/drain samples and transport ACK are absent.",
+      "disposition": "Needs a safely cancellable case plus X6/X7 and complete T1 or a qualified QLever Q3/Q4/T2 profile; no shared-resident logger/tracer change or disruptive workload was made.",
+      "originalRunId": "obs01-r3-a07-cancel",
+      "originalReasons": [
+        "missing required field: tCallerSettled"
+      ],
+      "currentRunId": "obs01-r4-a01-cancel",
+      "currentVerdict": "FAIL",
+      "currentReasons": [
+        "missing required field: tCallerSettled"
+      ],
+      "resolved": false
+    },
+    {
+      "protocol": "OBS-PREABORT",
+      "category": "a",
+      "cause": "Only observer-issued traffic was captured; there is no complete engine statement inventory or second agreeing kind.",
+      "disposition": "Requires X6 DEBUG plus transport coverage. Unchanged XTDB resident has INFO logging and no forced observer transport path.",
+      "originalRunId": "obs01-r3-a03-preabort",
+      "originalReasons": [
+        "missing required field: engineStatementLog"
+      ],
+      "currentRunId": "obs01-r4-a01-preabort",
+      "currentVerdict": "FAIL",
+      "currentReasons": [
+        "missing required field: engineStatementLog"
+      ],
+      "resolved": false
+    },
+    {
+      "protocol": "OBS-NO-MUTATION",
+      "category": "a",
+      "cause": "X1 completed-ID delta is available; T1 covers only observer traffic, so it cannot establish complete absence of writes.",
+      "disposition": "Complete resident ingress capture/classification and an independent engine witness remain unimplemented; no resident proxy/reconfiguration was allowed.",
+      "originalRunId": "obs01-r3-a03-no-mutation",
+      "originalReasons": [
+        "two independent agreeing kinds required"
+      ],
+      "currentRunId": "obs01-r4-a01-no-mutation",
+      "currentVerdict": "FAIL",
+      "currentReasons": [
+        "two independent agreeing kinds required"
+      ],
+      "resolved": false
+    },
+    {
+      "protocol": "OBS-RESOURCE",
+      "category": "a",
+      "cause": "Lifetime cgroup memory.peak was mislabeled as attempt RSS, including prior history/cache; its 131072-byte excess is not a process-RSS violation.",
+      "disposition": "Fixed: /proc engine-process RSS, stable PID starttime and cgroup checks, three fresh snapshots; sampled diagnostic scope only.",
+      "originalRunId": "obs01-r3-a03-resource",
+      "originalReasons": [
+        "observed total exceeds forecast"
+      ],
+      "currentRunId": "obs01-r4-a04-resource",
+      "currentVerdict": "PASS",
+      "currentReasons": [],
+      "resolved": true
+    },
+    {
+      "protocol": "OBS-AVAILABILITY",
+      "category": "a",
+      "cause": "The case generated an invalid-cast error, not a memory failure. No native failure-time witness exists; unchanged lifecycle counters do not create one.",
+      "disposition": "A safely contained memory failure and X1/X2 progress corroboration remain absent; no OOM/restart of the shared resident was attempted.",
+      "originalRunId": "obs01-r3-a03-availability",
+      "originalReasons": [
+        "required fields not recomputed from raw bytes"
+      ],
+      "currentRunId": "obs01-r4-a01-availability",
+      "currentVerdict": "FAIL",
+      "currentReasons": [
+        "required fields not recomputed from raw bytes"
+      ],
+      "resolved": false
+    },
+    {
+      "protocol": "OBS-WORK",
+      "category": "a",
+      "cause": "Actual EXPLAIN scan-row counters exist, but rowsWritten, triplesTouched and bytesWritten are absent.",
+      "disposition": "Attributed X3/X7 and H1/H3 work-unit collection is not implemented for this resident profile. Global I/O or SQL spelling cannot be substituted for missing units.",
+      "originalRunId": "obs01-r3-a03-work",
+      "originalReasons": [
+        "missing required field: rowsWritten"
+      ],
+      "currentRunId": "obs01-r4-a03-work",
+      "currentVerdict": "FAIL",
+      "currentReasons": [
+        "missing required field: rowsWritten"
+      ],
+      "resolved": false
+    },
+    {
+      "protocol": "OBS-MAINTENANCE",
+      "category": "a",
+      "cause": "No native maintenance interval or durable consumer checkpoint lag was collected.",
+      "disposition": "Needs X3/X6 event boundaries plus an actual publication/checkpoint consumer; no shared rebuild or fixture pretending to be a durable consumer was used.",
+      "originalRunId": "obs01-r3-a03-maintenance",
+      "originalReasons": [
+        "missing required field: tStart"
+      ],
+      "currentRunId": "obs01-r4-a01-maintenance",
+      "currentVerdict": "FAIL",
+      "currentReasons": [
+        "missing required field: tStart"
+      ],
+      "resolved": false
+    },
+    {
+      "protocol": "OBS-ERASURE-SCAN",
+      "category": "a",
+      "cause": "Only an explicitly truncated log prefix exists; no complete inventory, observed publication or per-location positive controls.",
+      "disposition": "Physical encoding/freed-block coverage and inventory remain deferred to the scale window; no complete physical erasure claim is possible from this prefix.",
+      "originalRunId": "obs01-r3-a04-erasure-scan",
+      "originalReasons": [
+        "missing required field: inventoryEntry"
+      ],
+      "currentRunId": "obs01-r4-a01-erasure-scan",
+      "currentVerdict": "FAIL",
+      "currentReasons": [
+        "missing required field: inventoryEntry"
+      ],
+      "resolved": false
+    },
+    {
+      "protocol": "OBS-WATERMARK",
+      "category": "a",
+      "cause": "SELECT 1 has no serving-index, atomic eligibility/marker or routing/wait facts.",
+      "disposition": "Needs the actual composition routed-read surface, index incarnation and same-snapshot marker/eligibility witness. This adapter path was not supplied or implemented.",
+      "originalRunId": "obs01-r3-a03-watermark",
+      "originalReasons": [
+        "missing required field: servingIndex"
+      ],
+      "currentRunId": "obs01-r4-a01-watermark",
+      "currentVerdict": "FAIL",
+      "currentReasons": [
+        "missing required field: servingIndex"
+      ],
+      "resolved": false
+    },
+    {
+      "protocol": "OBS-ACK-ORDER",
+      "category": "a",
+      "cause": "The native control is not a commit. Source publication, routed RYOW and second non-HR witness are missing.",
+      "disposition": "Needs actual composition source/ack/read boundaries and independent durable publication witness; no synthetic marker metadata was substituted.",
+      "originalRunId": "obs01-r3-a04-ack-order",
+      "originalReasons": [
+        "missing required field: tSourcePublished"
+      ],
+      "currentRunId": "obs01-r4-a02-ack-order",
+      "currentVerdict": "FAIL",
+      "currentReasons": [
+        "missing required field: tSourcePublished"
+      ],
+      "resolved": false
+    },
+    {
+      "protocol": "OBS-FAULT-TRANSITIONS",
+      "category": "a",
+      "cause": "An observer client really exited and its own operation marker was read back, but no native transaction position binds the marker to a durable transition.",
+      "disposition": "Position-bound xt.txs/marker readback and the declared fault-transition exercise remain unimplemented; only the disposable observer client was killed.",
+      "originalRunId": "obs01-r3-a03-fault-transitions",
+      "originalReasons": [
+        "missing required field: transition"
+      ],
+      "currentRunId": "obs01-r4-a02-fault-transitions",
+      "currentVerdict": "FAIL",
+      "currentReasons": [
+        "missing required field: transition"
+      ],
+      "resolved": false
+    }
+  ]
+}

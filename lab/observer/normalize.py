@@ -70,13 +70,38 @@ def decode(raw):
     if text.lstrip().startswith('{'):
         # Raw thread or log-tail snapshots: validate payload encodings, preserving exact bytes.
         value = json.loads(text)
+        if value.get('event') == 'qlever-index-state':
+            stats=json.loads(http_body(base64.b64decode(value['statsHttp'],validate=True)))
+            metrics=prometheus(http_body(base64.b64decode(value['metricsHttp'],validate=True)))
+            base=stats['num-triples-normal'];delta=[m for m in metrics if m['name']=='qlever_delta_triples' and m['labels']=='{}']
+            if type(base) is not int or base<0 or len(delta)!=1:raise ValueError('Q91a base/delta counts unavailable')
+            count=Decimal(delta[0]['value'])
+            if not count.is_finite() or count<0 or count!=count.to_integral_value():raise ValueError('Q91a delta must be an exact count')
+            return {'qleverIndexState':{'baseTripleCount':base,'deltaTripleCount':int(count),'touchedBlockDelta':None,'rebuildThreshold':None,'timingQualification':'DIAGNOSTIC','reason':'Q91a: per-scan touched-block delta and declared rebuild threshold are not collected; global counts do not establish bounded delta'}}
         if value.get('event') == 'sockets':
             sockets=[]
             for content in value['files'].values():sockets.extend(decode(base64.b64decode(content,validate=True))['sockets'])
             return {'sockets':sockets}
         if value.get('event') == 'resource':
             fields={k:int(base64.b64decode(v,validate=True).strip()) for k,v in value['files'].items()}
-            return {'resource':{'memory':fields,'disk':sum(f['blocks']*512 for f in value['diskFiles']),'owner':value['owner']}}
+            resource={'memory':fields,'disk':sum(f['blocks']*512 for f in value['diskFiles']),'owner':value['owner']}
+            if 'processes' in value:
+                cg=value['cgroupPath'];pids=value['pidsBefore'];rows=value['processes'];total=0
+                if not pids or pids!=value['pidsAfter'] or sorted(r['pid'] for r in rows)!=pids or len(set(pids))!=len(pids):raise ValueError('incomplete RSS process inventory')
+                if not cg.endswith('/'+value['owner']) and not cg.endswith('/docker-'+value['owner']+'.scope'):raise ValueError('RSS owner not bound to cgroup')
+                for row in rows:
+                    membership=base64.b64decode(row['cgroup'],validate=True).decode().splitlines()
+                    if '0::'+cg not in membership:raise ValueError('RSS process outside engine cgroup')
+                    stat=base64.b64decode(row['stat'],validate=True).decode()
+                    if int(stat.split(' ',1)[0])!=row['pid'] or int(stat[stat.rfind(')')+2:].split()[19])<=0:raise ValueError('RSS process identity invalid')
+                    latest=base64.b64decode(row['statAfter'],validate=True).decode()
+                    if stat[stat.rfind(')')+2:].split()[19]!=latest[latest.rfind(')')+2:].split()[19] or int(latest.split(' ',1)[0])!=row['pid'] or row['cgroupAfter']!=row['cgroup']:raise ValueError('RSS PID reused or cgroup migrated')
+                    status=base64.b64decode(row['status'],validate=True).decode()
+                    match=re.findall(r'^VmRSS:\s+(\d+) kB$',status,re.M)
+                    if len(match)!=1:raise ValueError('RSS missing from process status')
+                    total+=int(match[0])*1024
+                resource['rss']=total
+            return {'resource':resource}
         if value.get('event') == 'query':
             events=[{'event':'open','connectionId':'observer-query','tMono':0,'enginePort':5432,'upstreamPort':0},
                     {'event':'data','connectionId':'observer-query','direction':'client','tMono':0,'data':value['client']},

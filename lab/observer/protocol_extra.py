@@ -2,6 +2,22 @@
 # Rejected: passing a JSON protocol record through the collector as purported vendor evidence.
 EXTRA_PROTOCOLS={'CANCEL','AVAILABILITY','SCALE-COUNT','WORK','MAINTENANCE','ERASURE-SCAN','WATERMARK','ACK-ORDER','FAULT-TRANSITIONS'}
 
+def resident_normalize(data,spec,source_id):
+    # [EXP-OBS01] Why: an authenticated old event is still stale; the pinned parser binds each sample to this case and engine.
+    # Rejected: trusting phase labels or a fresh HMAC as proof that embedded wire events occurred in this attempt.
+    anchor=None
+    for frame,raw in frames(data):
+        expected={'runId':spec['runId'],'engineContainerId':spec['engineContainerId'],'sourceId':source_id,'caseSha256':hashlib.sha256(json.dumps(spec,sort_keys=True,separators=(',',':'),ensure_ascii=True).encode()).hexdigest()}
+        if any(frame.get(k)!=v for k,v in expected.items()):raise ValueError('resident sample binding mismatch')
+        if frame.get('streamId') not in [sid for sid,kind in spec['sources'] if kind.split('/')[-1]==source_id]:raise ValueError('resident stream binding mismatch')
+        if anchor is None:anchor=frame['runStartedMono']
+        if frame['runStartedMono']!=anchor or not anchor<=frame['tStartMono']<=frame['tEndMono']:raise ValueError('resident sample predates attempt')
+        try:event=json.loads(raw)
+        except (ValueError,UnicodeDecodeError):continue
+        for e in [event]+event.get('wire',[]):
+            if 'tMono' in e and not anchor<=e['tMono']<=frame['tEndMono']:raise ValueError('embedded event predates attempt or lies in future')
+    return derive_resident(normalize(data),spec,source_id.split('.')[0])[0]
+
 def native_sessions(parsed):
     sessions=[]
     for sample in parsed['samples']:
@@ -247,5 +263,7 @@ def derive_resident(parsed,spec,root):
     if protocol=='RESOURCE':
         samples=[s for s in parsed['samples'] if 'resource' in s]
         if not samples:return {},['engine cgroup and allocated-file snapshot absent']
-        return {'forecast':spec['forecast'],'envelope':spec['envelope'],'obligation':spec['obligation'],'peaks':[{'owner':s['resource']['owner'],'rss':s['resource']['memory']['memory.peak'],'disk':s['resource']['disk'],'t':s['tEndMono']} for s in samples]},[]
+        if any('rss' not in s['resource'] for s in samples):raise ValueError('attempt process RSS unavailable; lifetime cgroup peak is not RSS')
+        if any(spec['envelope']['owners']!=[s['resource']['owner']] for s in samples):raise ValueError('RSS owner coverage mismatch')
+        return {'forecast':spec['forecast'],'envelope':spec['envelope'],'obligation':spec['obligation'],'peaks':[{'owner':s['resource']['owner'],'rss':s['resource']['rss'],'disk':s['resource']['disk'],'t':s['tEndMono']} for s in samples]},[]
     raise ValueError('unsupported resident protocol')

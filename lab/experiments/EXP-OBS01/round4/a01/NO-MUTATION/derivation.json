@@ -1,0 +1,15 @@
+{
+  "X1-metrics": {
+    "missing": [],
+    "derivedFields": [
+      "engineMutationCounterAfter",
+      "engineMutationCounterBefore"
+    ]
+  },
+  "T1-wire": {
+    "missing": [
+      "observer-only resident traffic cannot prove complete transport write inventory"
+    ],
+    "derivedFields": []
+  }
+}
