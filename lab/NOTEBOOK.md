@@ -2200,3 +2200,10 @@ Where each priority stands, from evidence so far (research probes and baselines;
 ## 2026-11-09: RT01 G6 stopped on disk again; live windows need the heavy writers quiet
 
 - **7ee171ea:** recorder fixed (non-setuid counters), G2 passes, G6 stopped on its own disk forecast after 500 control commits. Three G6 attempts in a row stopped before judging (sandbox denial, then disk twice), each correctly. **Lesson:** a live window competes with every agent writing evidence on the same disk; schedule live windows when the heavy writers (here P2B and DI01) are idle, not only when the slot is free.
+
+## 2026-11-09: P2B round 3: R42's design delivered; P2's p99 still unmet on a shared Mac
+
+- **ba10ebb9:** 81 cells, 243,000 commits, 24.1M concurrent read checks, 153 tests. Eight reader workers with their own read-only connections; feed consumer off the broker thread; asynchronous RPCs; full fsync by default. Root-thread CPU 54.61 s to 18.67 s; durable-to-host p99 57.04 to 13.33 ms; main-thread read RPCs zero.
+- **P2 at 256 readers, ten facts:** p50/p99 13.80/92.88, 11.34/100.52, 8.92/81.62 ms across three repeats (bars 10/50). The tail is scheduling and host contention on a Mac running about nine agents; maintenance changes moved scheduling p99 from 34.87 to 14.90 ms.
+- **Decision:** stop tuning P2 on the shared Mac. R44 puts P2 acceptance in the VM, single-arm, in a GREEN window, with a different durability class (Q100r: VM commit 1.06/4.43 ms idle). P2B's next measurement runs through G03's NS runner. CX-VP2B reviews rounds 1-3 for correctness now (pinned reads in workers, watermark, durability default, pin/purge ordering, lost-ACK, WAL growth).
+- **Lesson:** a latency bar measured on a host that is also running the lab's agents mostly measures the agents. Absolute bars need the quiet window (Q60/Q100-S1, still waiting for Sam).
