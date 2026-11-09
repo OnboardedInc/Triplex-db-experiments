@@ -381,7 +381,7 @@ Orchestrator decision: observation cannot prove which clock a timestamp used (eq
 
 1. **Bind.** The harness hashes the pinned `vm_syncwitness.bt` (read before and after the step, must be equal); the same bpftrace image computes `sha256sum` of the mounted file; both must match.
    `bpftrace --version` of that image must print exactly `bpftrace v0.20.2`.
-2. **Emit.** The same image runs `bpftrace -d all /program/vm_syncwitness.bt 1 2 3 4` (placeholder positional arguments, which change only constants) with a 120 s kill.
+2. **Emit.** (Round 15: the flag is `-d`, see "Round 15" at the end; `-d all` below was wrong for 0.20.2.) The same image runs `bpftrace -d all /program/vm_syncwitness.bt 1 2 3 4` (placeholder positional arguments, which change only constants) with a 120 s kill.
    **Flag relied on: `-d all`** (the `-d STAGE` debug option of the 0.20 series, which prints the AST, the LLVM IR before and after optimisation, and the BPF disassembly without running the program).
    **This is not verified:** R49 does not document bpftrace's debug options, and no bpftrace or network was available offline. The flag is the single constant `COMPILE_FLAGS`.
    If 0.20.2 rejects it the output is empty and W0 refuses (fail closed). The dump is written to `<W0 out>/w0-compiled-program.txt` (it can exceed 1 MB: durable evidence, not git).
@@ -430,3 +430,14 @@ It supersedes the Round 12 list above as to what GATES. The W0 clock step (`cloc
 **DIAGNOSTIC, not gating.** The round 12 structured parser (per-probe sections, allow-list, UNPARSED-CALL, helper ids from the kernel BTF `enum bpf_func_id`, per-site count) still runs and its result is in the verdict as
 `diagnostic: {pass, reasons, adopted}` (and the existing `sections`, `helperCalls`, `forbidden`, `unparsedCalls`, `helperIds`). It never changes `pass`. A later round may make it gating once a real W0 dump is stored as a golden file and reviewed.
 A numeric helper call without a name token (for example `call 125`) therefore does not block W0; the diagnostic reports it. The first W0 run's dump and diagnostic are what the reviewer reads to decide that promotion.
+
+## Round 15: first live W0..W3 (triplex2 VM; results in `lab/experiments/EXP-OBS01/REPORT.md` "Round 15: live W0-W3")
+
+- **Compile flag.** bpftrace 0.20.2 `-d` and `-dd` take no argument; `COMPILE_FLAGS=['-d']`. `-d` prints the AST after five passes and then the one LLVM IR module that is loaded (the same text as `-dd`'s "After optimization");
+  there is no BPF disassembly in this version. The real dump is stored as `lab/observer/golden/` (see its `MANIFEST.json` for the hash, exact command and the structured parser's diagnostic verdict).
+- **Harness fixes found live** (none changes a gate): the witness runs `sh -c 'exec bpftrace -q -B none "$@" > /witness/trace.txt'` (bpftrace buffers `-o FILE` output even with `-B none`, so the `SW1|B|` attach record never appeared);
+  the witness and the one-shot bpftrace containers start with `--ulimit memlock=-1:-1` (removes the `ERROR ... RLIMIT_MEMLOCK` line the normalizer rightly treats as TRACE-INCOMPLETE; no capability added);
+  the writer cgroup is found under the VM's cgroupfs driver (`/sys/fs/cgroup/docker/<id>`) as well as `docker-<id>.scope`; the ext4 listing check accepts bpftrace 0.20.2's `kfunc:`/`kretfunc:` spelling of `fentry:`/`fexit:`;
+  a refused window keeps its partial facts (`W0-partial.json`) and the next window still runs.
+- **Probe command** (one window per invocation keeps each result file small and lets a refusal stop only its own window):
+  `node lab/bin/heavy.mjs --label OBS01-W -- node lab/bin/engine.mjs witness-vm-probe --out <new dir> --image sha256:e48f59cdba69a3cbd9ed2cf0f348d90d45a8d350d98134cf1070bc106ee9ed90 --bpftrace-image sha256:06f6223590f518a903c90d7dec383a2ee9fa669f80000013b5a004d2a2efbf25 --windows W0` (then W1, W2, `W3 --minutes 20 --readers 256`), with `DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock` and `DOCKER_CONFIG` set to the image evidence's docker-config; images are given by local image ID (no pull).

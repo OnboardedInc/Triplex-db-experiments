@@ -1,0 +1,50 @@
+{
+ "what": "real output of bpftrace v0.20.2 -d for the pinned vm_syncwitness.bt, captured by the first passing live W0 (round 15, triplex2 VM, kernel 6.8.0-117-generic aarch64)",
+ "command": "docker create --cap-drop ALL --cap-add BPF --cap-add PERFMON --ulimit memlock=-1:-1 --entrypoint bpftrace -e BPFTRACE_MAX_MAP_KEYS=65536 -v /sys/kernel/btf:/sys/kernel/btf:ro -v /sys/kernel/tracing:/sys/kernel/tracing:ro -v lab/observer/vm_syncwitness.bt:/program/vm_syncwitness.bt:ro sha256:06f6223590f518a903c90d7dec383a2ee9fa669f80000013b5a004d2a2efbf25 -d /program/vm_syncwitness.bt 1 2 3 4   (plus the read-only/no-network hardening of lab/bin/vm-observer.mjs harden(); then docker start -a, 120 s kill)",
+ "harness": "lab/bin/sync-witness.mjs clockProgramStep (COMPILE_FLAGS=[-d], COMPILE_PLACEHOLDER_ARGS=[1,2,3,4])",
+ "dumpFile": "vm_syncwitness.bpftrace-0.20.2-d.dump.txt",
+ "dumpFileSha256": "b35312b41cb000e625dfcd15c748a7a4e9db98a0226e26d1f67dd67621a94309",
+ "dumpFileBytes": 229093,
+ "dumpFileLayout": "\"--- stdout ---\\n\" + stdout + \"\\n--- stderr ---\\n\" + stderr + \"\\n\", exactly as the harness wrote and hashed it (dumpFileSha256 in W0.json)",
+ "stdoutSha256": "eb8a358396d41018094ffcb000c3cc6bd42f9c5f3d1e0dc6e91505da2889e7b4",
+ "compiledSha256_scanned_by_verdict": "73c9cb2b647070cf788be0dea42851372901fac5b63a8075ae122c86285cf1b3",
+ "pinnedProgramSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+ "bpftraceVersion": "bpftrace v0.20.2",
+ "image": "sha256:06f6223590f518a903c90d7dec383a2ee9fa669f80000013b5a004d2a2efbf25",
+ "content": "AST after each of five passes (parser, ConfigAnalyser, Semantic, NodeCounter, ResourceAnalyser) then ONE LLVM IR module (the optimised module that is loaded; identical to the \"After optimization\" module of -dd). No BPF disassembly and no \"Disassembly of section\" marker exists in 0.20.2 -d output.",
+ "stderr": "only [DEBUG] libbpf BTF lines and \"WARNING: BTF: failed to iterate modules BTF objects\" (twice); no ERROR line once the container has memlock unlimited",
+ "helperIdsInIR": {
+  "1 bpf_map_lookup_elem": 66,
+  "2 bpf_map_update_elem": 25,
+  "3 bpf_map_delete_elem": 13,
+  "5 bpf_ktime_get_ns": 15,
+  "8 bpf_get_smp_processor_id": 24,
+  "14 bpf_get_current_pid_tgid": 43,
+  "80 bpf_get_current_cgroup_id": 8,
+  "113 bpf_probe_read_kernel": 18,
+  "130 bpf_ringbuf_output": 22
+ },
+ "irProbeFunctions": 15,
+ "bpf_ktime_get_ns_sites_in_IR": 15,
+ "forbiddenIdsPresent": [],
+ "kernelEnumNames": {
+  "5": "bpf_ktime_get_ns",
+  "118": "bpf_jiffies64",
+  "125": "bpf_ktime_get_boot_ns",
+  "160": "bpf_ktime_get_coarse_ns",
+  "208": "bpf_ktime_get_tai_ns"
+ },
+ "enumFile": "bpf-func-id-enum.kernel-6.8.0-117.json",
+ "enumFileSha256": "feed90ef25c4b6afaa7b61e3b28d28bf351a07cd010c72cee4ffb44866619d19",
+ "btfSha256": "70d2c194ac86837df6584464f3d890a1ff7fbf6dd786daed508546f0447cff87",
+ "structuredParserDiagnostic": {
+  "pass": false,
+  "reasonCount": 745,
+  "firstReasons": [
+   "compiled program section not found: no \"Disassembly of section\" start marker in the dump",
+   "UNPARSED-CALL outside a chosen section at dump line 30: call-like line with no recognised helper form: call: printf :: type[none, ctx: 0]",
+   "UNPARSED-CALL outside a chosen section at dump line 32: call-like line with no recognised helper form: call: nsecs :: type[none, ctx: 0]"
+  ],
+  "summary": "sections [], helperCalls {}, monotonicCalls 0: the round 12 parser looks for \"Disassembly of section\" BPF text, which 0.20.2 -d does not print, and reads each AST line \"call: printf/nsecs/delete ::\" as an UNPARSED-CALL; it never reached the IR calls. Gating verdict (Q109a) is unaffected: it passed on source check, identity, clean exits and zero forbidden name tokens."
+ }
+}
