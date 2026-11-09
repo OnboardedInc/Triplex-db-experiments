@@ -194,16 +194,19 @@ const vm=(args,opts={})=>spawnSync('colima',['ssh','-p','triplex2','--',...args]
 /** Cgroup id (directory inode) of a container in the triplex2 VM; equals bpf_get_current_cgroup_id() for its tasks (cgroup v2). */
 export function vmCgroupId(containerId){
  if(!/^[0-9a-f]{64}$/.test(containerId))fail('USAGE','full container id required');
- const out=vm(['find','/sys/fs/cgroup','-maxdepth','5','-name','docker-'+containerId+'.scope','-printf','%i\\n']);
+ // [EXP-OBS01-R15] Why (harness bug, found in the first live W0): the triplex2 VM's Docker uses the cgroupfs driver (docker info: CgroupDriver cgroupfs, v2), whose container cgroup is
+ // /sys/fs/cgroup/docker/<id>, not the systemd `docker-<id>.scope`; the id was never found and W0 refused before the writer could start. Both spellings are accepted and the match must still be unique.
+ // Rejected: assuming one driver; searching by prefix (a unique full 64-hex name only).
+ const out=vm(['find','/sys/fs/cgroup','-maxdepth','5','(','-name','docker-'+containerId+'.scope','-o','-name',containerId,')','-printf','%i\\n']);
  const ids=out.stdout.split('\n').filter(Boolean);
  if(out.status!==0||ids.length!==1||!/^[0-9]+$/.test(ids[0]))fail('REFUSED','container cgroup id not unique/visible: '+out.stderr);
  return Number(ids[0]);
 }
 
-/** Cgroup directory of a container in the triplex2 VM (unique docker-<id>.scope). */
+/** Cgroup directory of a container in the triplex2 VM (unique docker-<id>.scope or, with the cgroupfs driver, <id>). */
 export function vmCgroupDir(containerId){
  if(!/^[0-9a-f]{64}$/.test(containerId))fail('USAGE','full container id required');
- const out=vm(['find','/sys/fs/cgroup','-maxdepth','5','-name','docker-'+containerId+'.scope','-print']);
+ const out=vm(['find','/sys/fs/cgroup','-maxdepth','5','(','-name','docker-'+containerId+'.scope','-o','-name',containerId,')','-print']);
  const dirs=out.stdout.split('\n').filter(Boolean);
  if(out.status!==0||dirs.length!==1)fail('REFUSED','container cgroup directory not unique/visible: '+out.stderr);
  return dirs[0];
