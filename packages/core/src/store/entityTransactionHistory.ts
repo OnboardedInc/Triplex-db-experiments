@@ -2,7 +2,8 @@ import { Effect } from "effect";
 
 import { TransactionId, type EntityId } from "../Branded.js";
 import type { DatalogQuery } from "../datalog/types.js";
-import { ReadError } from "../errors/index.js";
+import { gateRecordBasis } from "../storage/RecordStamp.js";
+import { ReadError, toReadError } from "../errors/index.js";
 import { ref } from "../Value.js";
 import { TxAttributes } from "../utils/id.js";
 import type {
@@ -14,9 +15,13 @@ import type {
 
 interface EntityTransactionReader {
   readonly currentPosition: () => Effect.Effect<number, ReadError>;
-  readonly query: (query: DatalogQuery) => Effect.Effect<QueryResponse, unknown>;
+  readonly query: (
+    query: DatalogQuery,
+    snapshotPosition: number,
+  ) => Effect.Effect<QueryResponse, unknown>;
   readonly transaction: (
     transactionId: TransactionId,
+    snapshotPosition: number,
   ) => Effect.Effect<TransactionRecord | null, ReadError>;
 }
 
@@ -46,7 +51,25 @@ export const transactionsForEntity = (
   }
 
   return Effect.gen(function* () {
-    const snapshotPosition = request.snapshotPosition ?? (yield* reader.currentPosition());
+    // [EXP-RT01] Why: the journal snapshot is a real committed basis, not just a predicate. Rejected: issuing the index query before proving availability.
+    const cut = yield* Effect.tryPromise({
+      try: (signal) =>
+        gateRecordBasis({
+          basis:
+            request.snapshotPosition === undefined
+              ? {}
+              : { recordedPosition: request.snapshotPosition },
+          readCut: async () => ({
+            position: await Effect.runPromise(reader.currentPosition(), { signal }),
+            recordedAt: 0,
+          }),
+          deadlineMs: 2000,
+          surface: "entity-journal",
+          signal,
+        }),
+      catch: (cause) => toReadError(cause, "Failed to resolve entity journal snapshot"),
+    });
+    const snapshotPosition = request.snapshotPosition ?? cut.position;
     const where: DatalogQuery["where"] = [
       ["?transaction", TxAttributes.CHANGED_ENTITY, ref(entityId)],
       ["?transaction", TxAttributes.POSITION, "?position"],
@@ -56,19 +79,18 @@ export const transactionsForEntity = (
         : ([["<", "?position", request.beforePosition]] as const)),
     ];
     const response = yield* reader
-      .query({
-        find: ["?transaction", "?position"],
-        where,
-        orderBy: [{ variable: "?position", direction: "desc" }],
-        limit: limit + 1,
-      })
+      .query(
+        {
+          find: ["?transaction", "?position"],
+          where,
+          orderBy: [{ variable: "?position", direction: "desc" }],
+          limit: limit + 1,
+        },
+        snapshotPosition,
+      )
       .pipe(
-        Effect.mapError(
-          (cause) =>
-            new ReadError({
-              message: `Failed to query entity transaction index: ${String(cause)}`,
-              cause,
-            }),
+        Effect.mapError((cause) =>
+          toReadError(cause, `Failed to query entity transaction index: ${String(cause)}`),
         ),
       );
 
@@ -87,13 +109,12 @@ export const transactionsForEntity = (
           }
           return { transactionId: TransactionId.make(transaction), position };
         },
-        catch: (cause) =>
-          new ReadError({ message: "Corrupt entity transaction journal index", cause }),
+        catch: (cause) => toReadError(cause, "Corrupt entity transaction journal index"),
       }),
     );
     const selected = indexed.slice(0, limit);
     const records = yield* Effect.forEach(selected, ({ transactionId, position }) =>
-      reader.transaction(transactionId).pipe(
+      reader.transaction(transactionId, snapshotPosition).pipe(
         Effect.flatMap((record) =>
           record !== null && record.position === position
             ? Effect.succeed(record)

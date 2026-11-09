@@ -157,9 +157,14 @@ const queryExecutor = (
           // Preflight must fail before source reads or working-relation writes.
           if ("inner" in input) assertWrappedQuery(input);
           else assertDatalogQuery(input);
-          const state = [...transactions.values()].findLast(
+          const pending = [...transactions.values()].findLast(
             (state) => state.client === readPathBase(client) && state.scopeKey === scopeKey,
           );
+          // [EXP-RT01] Why: named reads use the committed client and shared gate; latest reads retain read-your-writes. Rejected: clamping a provisional overlay to an unavailable T.
+          const state =
+            basis?.recordedAt !== undefined || basis?.recordedPosition !== undefined
+              ? undefined
+              : pending;
           if (state && state.rows.size > maxResultRows)
             throw new ReadError({
               message: `Transaction query overlay exceeds maxResultRows=${maxResultRows}; no partial result returned`,

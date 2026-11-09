@@ -87,3 +87,52 @@ export const bindCommit = <A>(
   };
   return visit(value, 0) as A;
 };
+
+/** Availability for all named coordinates, before an index, batch or overlay read. */
+export const gateRecordBasis = async (input: {
+  readonly basis: { readonly recordedAt?: number; readonly recordedPosition?: number };
+  readonly readCut: () => Promise<RecordCut>;
+  readonly deadlineMs: number;
+  readonly surface: string;
+  readonly signal?: AbortSignal;
+}): Promise<RecordCut> => {
+  const start = performance.now();
+  let cut = await input.readCut();
+  const wait = async (reached: (value: RecordCut) => boolean, ms: number) => {
+    const until = performance.now() + ms;
+    while (!reached(cut) && performance.now() < until) {
+      input.signal?.throwIfAborted();
+      await new Promise((resolve) =>
+        setTimeout(resolve, Math.min(10, Math.max(0, until - performance.now()))),
+      );
+      cut = await input.readCut();
+    }
+    input.signal?.throwIfAborted();
+    return cut;
+  };
+  const position = input.basis.recordedPosition;
+  if (position !== undefined) {
+    if (!Number.isSafeInteger(position) || position < 0)
+      throw new RangeError("Invalid record position");
+    await wait((value) => value.position >= position, input.deadlineMs);
+    if (position > cut.position)
+      throw new BasisNotAvailable({
+        axis: "recordedPosition",
+        required: position,
+        observed: cut.position,
+        waitedMs: performance.now() - start,
+        surface: input.surface,
+        message: "Position not reached",
+      });
+  }
+  // [EXP-RT01] Why: journal and ordinary routes share one P-then-T deadline and refusal policy. Rejected: independent journal predicates (they echo unavailable positions).
+  if (input.basis.recordedAt !== undefined)
+    cut = await gateRecordedAt({
+      recordedAt: input.basis.recordedAt,
+      readCut: async () => cut,
+      awaitCut: (stamp, ms) => wait((value) => stampOf(value.recordedAt) >= stamp, ms),
+      deadlineMs: Math.max(0, input.deadlineMs - (performance.now() - start)),
+      surface: input.surface,
+    });
+  return cut;
+};

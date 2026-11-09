@@ -112,3 +112,77 @@ for (const commitEncoding of ["a0", "compact"] as const)
       }).pipe(Effect.provide(suite.layer)),
     );
   });
+
+for (const commitEncoding of ["a0", "compact"] as const)
+  it(`named reads wait for publication and never expose provisional retirements (${commitEncoding})`, async () => {
+    const { Triples, EntityId, string } = await import("@triplex-build/triplex");
+    const { Fiber } = await import("effect");
+    const adapter = makeXtdbStorageAdapter(makeRecordTimeClient(), "pending-r3", {
+      commitEncoding,
+    });
+    const suite = makeA0RecordTimeSuite(adapter, {} as QueryExecutorService, "pending-r3", {
+      loseNextAck: () => {},
+    });
+    await Effect.runPromise(
+      Effect.gen(function* () {
+        const t = yield* Triples;
+        const entity = EntityId.make("stable");
+        const seed = yield* t.transact([
+          { op: "assert", entityId: entity, attribute: ":value", value: string("seed") },
+        ]);
+        const basis = { validAt: seed.stagedAt, recordedAt: seed.instant };
+        const before = yield* t.entity(entity, basis);
+        const abort = yield* adapter
+          .withTransaction(
+            Effect.gen(function* () {
+              yield* t.transact([{ op: "retract", id: seed.triples[0]!.id }]);
+              expect(yield* t.entity(entity)).toEqual([]);
+              expect(yield* t.entity(entity, basis)).toEqual(before);
+              return yield* Effect.fail("rollback-control");
+            }),
+          )
+          .pipe(Effect.flip);
+        expect(abort).toBe("rollback-control");
+        expect(yield* t.entity(entity, basis)).toEqual(before);
+        const publication = yield* adapter.withTransaction(
+          Effect.gen(function* () {
+            const receipt = yield* t.transact([
+              {
+                op: "assert",
+                entityId: EntityId.make("published"),
+                attribute: ":value",
+                value: string("final"),
+              },
+            ]);
+            let returned = false;
+            const pending = yield* Effect.forkChild(
+              t
+                .entity(EntityId.make("published"), {
+                  validAt: receipt.stagedAt,
+                  recordedAt: receipt.instant,
+                })
+                .pipe(
+                  Effect.tap(() =>
+                    Effect.sync(() => {
+                      returned = true;
+                    }),
+                  ),
+                ),
+            );
+            yield* Effect.sleep(30);
+            expect(returned).toBe(false);
+            return { receipt, pending };
+          }),
+        );
+        const served = yield* Fiber.join(publication.pending);
+        expect(served).toHaveLength(1);
+        expect(served[0]!.recordedAt).toBe(publication.receipt.instant);
+        expect(
+          yield* t.entity(EntityId.make("published"), {
+            validAt: publication.receipt.stagedAt,
+            recordedAt: publication.receipt.instant,
+          }),
+        ).toEqual(served);
+      }).pipe(Effect.provide(suite.layer)),
+    );
+  });

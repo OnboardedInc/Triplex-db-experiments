@@ -117,7 +117,12 @@ export const makeQleverStorageAdapter = (
     entities?: readonly string[],
   ): Effect.Effect<readonly TripleRow[], ReadError> =>
     Effect.gen(function* () {
-      const state = yield* current;
+      const pending = yield* current;
+      // [EXP-RT01] Why: a named committed cut cannot observe provisional overlay rows or retirements. Rejected: exempting an open transaction (serves D-C1's mutable early answer).
+      const state =
+        basis?.recordedAt !== undefined || basis?.recordedPosition !== undefined
+          ? undefined
+          : pending;
       if (!state && basis)
         basis = yield* read((signal) => resolveQleverBasis(client, scopeKey, basis!, signal));
       // [EXP-RT01] Why: an empty batch still names a cut. Rejected: returning before resolveQleverBasis (silently answers unavailable T).
