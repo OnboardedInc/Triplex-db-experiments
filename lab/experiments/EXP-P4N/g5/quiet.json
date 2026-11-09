@@ -1,0 +1,53 @@
+{
+  "kind": "quiet-reference",
+  "chosen": "/Users/sam/Claude/Projects/triplex-db-2/evidence/P4N-R2/quiet/attempt-1.json",
+  "quietUs": 566.9,
+  "rule": "lowest 5th percentile of >= 3 attempts, fixed before round 2 grading",
+  "attempts": [
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/P4N-R2/quiet/attempt-1.json",
+      "at": "2026-11-09T18:56:00.512Z",
+      "p05Us": 566.9,
+      "medianUs": 584.575,
+      "minUs": 558.15,
+      "loadRange": [
+        6.3759765625,
+        7.73828125
+      ],
+      "heavyHoldersRange": [
+        2,
+        2
+      ]
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/P4N-R2/quiet/attempt-2.json",
+      "at": "2026-11-09T19:04:18.676Z",
+      "p05Us": 649.125,
+      "medianUs": 858.75,
+      "minUs": 627.825,
+      "loadRange": [
+        8.32373046875,
+        11.4267578125
+      ],
+      "heavyHoldersRange": [
+        2,
+        3
+      ]
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/P4N-R2/quiet/attempt-3.json",
+      "at": "2026-11-09T19:05:49.049Z",
+      "p05Us": 620.275,
+      "medianUs": 704.725,
+      "minUs": 598.75,
+      "loadRange": [
+        7.96484375,
+        10.1689453125
+      ],
+      "heavyHoldersRange": [
+        2,
+        3
+      ]
+    }
+  ]
+}
