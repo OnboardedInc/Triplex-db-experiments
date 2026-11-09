@@ -1675,3 +1675,15 @@ Where each priority stands, from evidence so far (research probes and baselines;
   **R36 (Opus high)** tests that: what process evidence protects that a fingerprint does not, the minimal check set, and keep, simplify or
   drop K01 (re-seed per run, costed from R34's population sizes). K01 waits for R36 instead of another fix round.
 - **Learning:** when a review loop's findings stay the same size across rounds, change the design, not the code.
+
+## 2026-11-09 01:08Z: R36: K01 simplified: only a content fingerprint grants admission (Q93)
+- **Diagnosis:** about 27 process booleans could each grant a golden or clone its PASS, so every review found new ways one could be
+  wrong. Five rounds found 3, 4, 3, 3 and 4 issues; tests grew from 41 to 262; no live golden exists yet.
+- **Rule (Q93a):** for seed reuse on every lane, only G0 grants admission: a content digest read through the engine by the measuring
+  process, on its endpoint, before warm-up, against a digest pinned before the freeze. Everything else refuses or diagnoses. **Q93b:**
+  the golden is published after two clean starts reproduce D and the layout digest L. Q83d and Q83e are retired; Q74d replaced.
+- **Effect (R36 estimate):** of 17 review findings, 7 go away with deleted code, 7 become harmless, 3 are ordinary bugs; 1,200 to 1,400 of
+  K01's 1,957 added lines are deleted. G0 is shared with EXP-P5's fingerprint sweep.
+- **Why not re-seed every run:** XTDB at 10k costs about 38 to 53 minutes per arm against 6 to 20 with clones.
+- **Learning:** when a grant can come from many places, make one check grant and let the rest only refuse. Apply this wherever a gate
+  has more than a handful of PASS-producing paths (G03's evaluator and O-OBS are the next candidates to check).
