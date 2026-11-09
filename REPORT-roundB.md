@@ -203,3 +203,154 @@ The revised standalone preflight completed with `PREFLIGHT-MAPPED-ONLY`: referen
 A separate final-source **N=50 smoke** completed 2,242 reference commands in 36 native frames, logical basis **2,242** → native **37,889**. Seed wall was **4.874 s**. Its complete map/seed hash is `1acfe029ff5881d1de18badf3bf91491d08aab8e041a10a85220b4614a78e450`. Fresh G0 read **24,494 world facts**, matched both independent digests and the block digests, and completed in **0.465 s** with **0.545 CPU s** for the whole G0 phase. Worlds digest: `sha256:91cad54dbcd60208545f80cc930c5cd9173abe3ab0bd0912a86fc38798e9e72e`; R2: `sha256:28d743e8102c9304fbbd3d73c0b3003ad137b8e1014a25d6210f990d0b4519ea`. Source hashes remained unchanged and the owner closed. These are **50-subject regression measurements**, not evidence for R34's 10k predictions or B1 per-stage CPU. Generic full-content admission remains explicitly NOT-CLAIMED.
 
 Final artifacts: `round2/mapped-preflight-01/`, `round2/g0-smoke-50-01/`, `round2/checks-02/`, and `round2/b0-10k-01/` (original raw receipt, resource decision/terminal record, native store, intent, source preimages, unsealed prefix and audit). The SHA256 manifest covers the retained bytes after all owned writers and readonly diagnostics have closed. No source, store, first failure or unrelated data was deleted to make another rung fit.
+
+# Round 3 — HS01 layout, 10k seed, B0 and B1 screening, 100k forecast
+
+**North star:** P5 (100k subjects activated in at most 100 s with live read and commit p99 at most 1.5x baseline); authority `lab/SCOPE.md`, `lab/NORTH-STAR.md`, `lab/TARGETS.md`; design R34 section 6 B0 to B2. **Everything here is DIAGNOSTIC, acceptance false.** Predictions were committed before any measurement (`roundB/round3/PREDICTIONS.json`, commit `a3b35ae2`, sha256 bound in the B0 receipt). 100k was not run; B2 is a forecast only.
+
+## Result
+
+| Item | Result |
+| --- | --- |
+| 10k store on the HS01 layout | **969,842,688 bytes, 217.05 B per asserted fact** (HS01 measured 217.06); 4,468,284 assertions; 1k is 352.92 B/fact (HS01 352.91). Frame retention budget: **`tailBytes` = 64 MiB, no frame-count tail**; 110 frames, 68.1 MB, 15.25 B/fact retained at 10k |
+| 10k seed | 797 s (1k: 56 s); G0 fingerprint equal to a fresh O-DOMAIN (worlds, R2, every 1000-world block) at 1k and 10k; G0 read 104 s at 10k |
+| Activation at 10k, idle host, controller off | **W=1: 92.7 s (108 subjects/s); W=4: 33.9 s (295 subjects/s)**; 10,000 subjects covered once; G2 equal on 200 sampled subjects; G5 deliveries equal O-DOMAIN on all 157 pages |
+| Live ratios, sweep on vs off (4 pairs, back-to-back activations at W=4, 60 s window) | commit p99 **3.37x** (2,572 vs 764 ms), commit p50 8.3x; live read p99 **2.57x** (57.2 vs 22.3 ms), p50 1.43x. A/A pair commit p99 ratio 0.52 |
+| Old-cut exactness | after the traffic arm's commits retired rows, the seed basis still reproduced the O-DOMAIN fingerprint (85 s) |
+| 100k forecast | store **9.1 to 9.7 GB**; activation **230 to 340 s at W=4, 810 to 930 s at W=1** (bar 100 s: missed 2.3 to 3.4x); seed 2.2 to 3.2 h; free disk needed **about 17.8 GiB** (gzipped intent) |
+
+## Which receipts are cited (completeness check after the 10:34 host crash)
+
+| Receipt (under `/Users/sam/Claude/Projects/triplex-db-2/evidence/P5B-R3/`) | Status | Used for |
+| --- | --- | --- |
+| `b0-1k-02`, `b0-10k` | `B0-COMPLETE-DIAGNOSTIC`, source stable, store closed | bytes, seed time, G0 |
+| `b1-1k-02` (activation only) | `B1-COMPLETE-DIAGNOSTIC`, source stable | 1k activation, extrapolation |
+| `b1-1k-03` (activation only, final worker source `9949f8cc`) | `B1-COMPLETE-DIAGNOSTIC`, source stable | 1k repeat on final source: W=1 11.2 s, W=4 3.47 s (b1-1k-02: 10.7 s, 4.9 s) |
+| `b1-10k` | status `ERROR`, but only from its last step: the pooled summary overflowed the stack (`Math.max(...100k samples)`, fixed in `2c15a87d`) after all 5 rounds, both activation arms and the old-cut check had been saved; finished 14:53Z, before the crash. `pooled.json` is recomputed from the saved raw samples by `lab/bench/p5-screen-pool.mjs` (reads files only). Its source hashes are in its `screen.json`; it predates `2c15a87d` and `9949f8cc` (below) | 10k activation, live ratios |
+| `extrapolation-100k.json` | complete; inputs `b0-1k-02`, `b1-1k-02`, `b0-10k`, `b1-10k` | 100k forecast |
+| **`b1-10k-02`** | **VOID**: `RUNNING`, cut short by the crash at the A/A pair (its activation arms had finished at W=1 96.6 s and W=4 36.8 s, consistent with `b1-10k`, but the receipt has no end-of-run source check) | nothing cited; its first rounds also show host contention (baseline commit p99 up to 10.6 s, load average 12 to 19) |
+| `b0-1k`, `b1-1k`, `b1-1k-dbg*` | first failures and debugging runs (worker execArgv; compressed seed store; O(store) `transactionByCommand`) retained, not cited | |
+
+One source caveat decides how to read the 10k numbers: `b1-10k` ran before commit `9949f8cc`, which adds a `journal` table probe per BFS hop to the sweep route (an empty indexed lookup for subject worlds). The 10k run on that source (`b1-10k-02`) was lost to the crash, so **the 10k timings were not re-measured on the final worker**. `b1-1k-03` on the final source is within the run-to-run spread of `b1-1k-02`.
+
+## Merge and product fixes
+
+**Merge commit `9c1efe5a`** (parents: round 2 head `3ffc1fff`, main `2406843b` with contract 0.4.0 at `e09c2ff4`, `exp/HS01-host-store-layout` `a9ebe759`; one commit, no re-pins). Two content conflicts from the HS01 table split:
+
+| File | Resolution |
+| --- | --- |
+| `packages/qlever/src/broker/log.ts` | HS01 retention fields and `workerError` kept; the typed `BasisNotAvailable` (with the observed marker head) moves into `workerError`; the sweep connection pool and shared checkpoint gate stay |
+| `packages/qlever/src/broker/sqlite-worker.ts` | HS01 layout kept. Sweep BFS reads `facts`, `journal` (added in `9949f8cc`) and `history`; `counts` is `assertions = facts + history + journal`, `retired = history`, `domainAssertions = facts + history`; `readbackClaims`, pin lease column, `renew`, expiry-aware purge and per-claim own positions stay |
+
+The lockfile needed `pnpm install --offline --frozen-lockfile` (main added `undici`); no download. `build_contract.py --verify` ran as its own step after the merge and after later commits (transitive hash `145db399...`, second regeneration byte-identical). All 6 pin files match the tree; no changed path appears under `lab/acceptance`; **changed pinned-path old/new SHA256 list: empty**.
+
+Defects found while running:
+
+1. **`transactionByCommand` is O(store) on an H1 store.** Core implements it as a pattern query on the command-id attribute; no H1 index serves it, so each miss scanned every journal row (12 s per call at 1k; one call per outbox page and per trace event; 4.8 GB RSS growth). The mapped host now resolves a command through the broker claim table (primary-key lookup, the lost-ACK authority) and reads that transaction by id. Harness change; but an ordinary product caller of core's `transactionByCommand` gets the scan. Finding for P2.
+2. **The merged sweep route had dropped journal rows** (`host-map.test.ts` "host grouped seed maps sparse receipts" failed on the position value channel). Fixed in `9949f8cc`.
+3. **The W0 kernel refuses valid times that are not whole seconds** (`W0.E_BASIS`); the screen floors activation instants.
+
+Also: the seed intent is written gzipped (2.4 GB raw at 10k, 149 MB gzipped; about 24 GB raw projected at 100k); `openMappedHost` reopens a sealed seed clone under a new id seed (core's deterministic generator restarts at counter 1); `livePage` (four pooled readers, one H1 pull per hop) sits beside `sweepPage` (dedicated sweep workers); each screening arm runs on an APFS clone of the sealed store (clone cost 4 to 24 KB). The orchestrator's `compress-evidence.sh` compressed my 1k seed store (and later the 10k one) while screening was running; I restored a hash-verified copy into `/Users/sam/Claude/Projects/triplex-db-2/work-P5B-R3/` (outside the compression root) for the runs. Those work copies are CoW clones and can be deleted.
+
+**Checks.** On `9c38970d`: QLever package 294 passed / 29 skipped; HS01 layout and id-codec 11/11 on the merged worker; evaluator `claim.test.mjs` + `claim-round2.test.mjs` **108/108** on the committed tree; bench harness 59/60 (the failure was the journal defect above). On `9949f8cc`: QLever build and typecheck clean, QLever package 294 passed / 29 skipped, `host-map` and `position-map` suites 5/5. **Not rerun on `9949f8cc` (no new heavy runs after the crash): the full bench harness suites and the evaluator**; the change touches only the worker sweep query. `tsc -p lab/bench/tsconfig.json` errors are confined to `audit-traffic.ts`, `round2.ts` (main's typed receipt parser) and `hs01-seed.ts` (HS01); no file changed by this round.
+
+## B0: bytes and seed
+
+| Measure | 1k | 10k |
+| --- | ---: | ---: |
+| Asserted facts | 442,410 | 4,468,284 |
+| Logical bytes (`page_count x page_size`, closed store, 0 free pages at 10k) | 156,135,424 | 969,842,688 |
+| B per fact | 352.92 | 217.05 |
+| Seed wall | 56.0 s | 797 s |
+| G0 wall / CPU | 7.6 / 9.5 s | 104.0 / 103.4 s |
+| Seed intent / position map | 237 MB raw / 3.5 MB | 149 MB gz / 36.3 MB |
+
+10k per object: journal 315.3 MB, facts 186.6, journal id index 120.5, frames 68.1, facts id index 66.5, entity dictionary 125.5 (table plus unique index), heads 47.6, claims 25.8. Host free stayed above 5 GiB (lowest observed 6.0 GiB, other jobs' writes included). G0 fingerprint at 10k: 4,488,231 world facts, worlds `sha256:7b4c2923...`, R2 `sha256:79fd11ed...`.
+
+## B1: activation and live ratios (10k, `b1-10k`)
+
+| | W=1 | W=4 |
+| --- | ---: | ---: |
+| Wall | 92.7 s | 33.9 s |
+| Subjects/s | 108 | 295 |
+| Page transaction p50 / max | 173 / 298 ms | 211 / 373 ms |
+| Worker CPU: read / decode (world assembly) / kernel | 2.9 / 39.9 / 1.9 s | 3.4 / 44.4 / 2.5 s |
+| Publication (157 frames; 10,000 outbox pulls) | 5.3 s total | pulls wait 17.8 s cumulative on the main thread |
+| WAL max | 6.8 MB | 30.9 MB |
+
+Wall minus worker CPU and publication leaves about 40 s at W=1 that is not instrumented; it is main-thread row mapping, transfer and sync (an inference from the remainder, not a measured stage). Decode is R34 risk 4: world assembly costs about 4 ms per subject against 0.2 ms for the kernel. With the sweep also under live load, one W=4 activation took 71.5, 76.9, 77.2 and 74.8 s in the four arms.
+
+| Pooled live ratios (4 pairs) | sweep | base | ratio |
+| --- | ---: | ---: | ---: |
+| Commit p50 / p99 (6,715 commits each) | 347 / 2,572 ms | 42 / 764 ms | 8.3 / 3.37 |
+| Live read p50 / p99 (86,778 vs 143,713 reads) | 7.7 / 57.2 ms | 5.4 / 22.3 ms | 1.43 / 2.57 |
+
+Per pair commit p99 ratios 0.99, 9.07, 3.83, 1.22 (A/A 0.52); read p99 ratios 2.82, 2.55, 2.87, 2.09. The commit baseline is itself near saturation: the mapped writer commits about 55 commands/s (one frame per command, an fsync each) and the frozen burst offers about 55/s, so I used a named series that stretches the offer schedule 2x (`--dilate 2`). Even so the base arm's commit p99 is 0.3 to 1 s and the pair-to-pair spread is a factor of 2 to 9 on a host with load average 11 to 19. The read ratio is stable; the commit ratio is not a usable number. Sweep arms ran activations back to back (about 100% duty), which loads the store more than one activation.
+
+## 100k forecast (`extrapolation-100k.json`)
+
+Rule: two-point fits through 1k and 10k, linear and power law, plus per-subject cost at 10k times 100k. Not a measurement.
+
+| Quantity at 100k | Linear | Power law | 10k per-unit |
+| --- | ---: | ---: | ---: |
+| Activation W=4, idle | 324 s | 234 s | 339 s |
+| Activation W=1, idle | 913 s | 806 s | 927 s |
+| Store bytes | 9.11 GB | 6.02 GB (frame cap distorts) | 9.70 GB |
+| Seed | 8,212 s | 11,350 s | 7,974 s |
+| G0 | 1,067 s | 1,415 s | 1,040 s |
+
+Bytes: 201.8 B per non-frame fact times about 44.7M facts plus the 64 MiB frame tail is 9.1 GB; ids above 2^25 widen by about 13 B/fact, so I forecast **9.1 to 9.7 GB (up to about 10.2 GB with wider ids)**; with ULID-shaped ids HS01's 308 B/fact gives about 13.8 GB. **A 100k run would need about 17.8 GiB free**: 9.7 GB store, 1.5 GB gzipped intent, 0.36 GB position map, 2 GB arm allowance (arms are APFS clones; a plain copy per arm adds a store each), plus the 5 GiB floor; about 40 GiB if the intent were left raw. The activation bar is missed by 2.3 to 3.4x at W=4 on an idle host, and by more under live load. What moves it: the 40 s main-thread path (row mapping, transfer, outbox pulls on the owner thread) and decode (4 ms per subject). R34's separate sweep process with its own read-only connections (4.3 item 2) was not screened and is the next thing to measure.
+
+## Predictions against measurements
+
+| Prediction (committed first) | Measured | Verdict |
+| --- | --- | --- |
+| 10k B/fact 217 (212 to 224); bytes 970 MB (950 to 1,000 MB) | 217.05; 969.84 MB | hit |
+| 1k B/fact 353 (345 to 362); bytes 156 MB (152 to 160) | 352.92; 156.14 MB | hit |
+| 10k seed 1,150 s (700 to 1,800) | 797 s | hit, 31% under center |
+| 1k seed 130 s (80 to 250) | 56 s | **miss, under range** |
+| 10k G0 90 s (45 to 200); digests equal O-DOMAIN | 104 s; equal | hit |
+| Disk above 5 GiB through the 10k seed | lowest 6.0 GiB | hit |
+| R34: W=4 at 10k 1.5 to 5 s | 33.9 s | **miss, 6.8x above** |
+| R34: W=1 600 to 2,100 subjects/s | 108 | **miss, 5.6x below** |
+| R34: longest page transaction at most 50 ms | 298 / 373 ms | **miss, 6 to 7x** |
+| R34: WAL at most 64 MiB | 30.9 MB | hit |
+| R3: W=1 wall 40 s (25 to 70) | 92.7 s | **miss, above range** |
+| R3: W=4 wall 24 s (14 to 40) | 33.9 s | hit in range, above center |
+| R3: W1/W4 1.7 (1.4 to 2.6) | 2.73 | **miss, slightly above** |
+| R3: longest page 150 ms (80 to 300) | 298 (W=1), 373 (W=4) | W=1 in range, W=4 miss |
+| R3: commit p99 ratio 1.8 (1.1 to 6) | 3.37 pooled | in range, noisy |
+| R3: read p99 ratio 2.5 (1.2 to 8) | 2.57 | hit |
+| R34: read at most 1.2, commit at most 1.25; P5 bar 1.5 | 2.57, 3.37 | **miss** |
+| R34: RSS growth at most 300 MB | 1.4 to 1.8 GB parent RSS growth (retains the page log and samples; coarse) | miss, not a clean measure |
+| 100k at W=4 misses 100 s (70% confidence) | forecast 230 to 340 s | consistent |
+| 100k bytes 9.2 to 10.3 GB (center 9.65) | forecast 9.1 to 9.7 GB | consistent |
+| 100k free disk about 19 GiB gzipped intent, 40 GiB raw | 17.8 GiB gzipped | consistent |
+
+**Divergences.** The R34 activation numbers assumed read 0.3 ms and kernel 0.16 ms per subject with decode unknown; decode is 4 ms per subject and a serial main-thread path costs about 9 ms per subject at W=1. My own W=1 prediction missed for the same reason, and W=4 only reaches 2.7x because that main-thread path is serial. The seed was faster than predicted because the HS01 layout encodes cheaply and my estimate carried round 2's slower verification.
+
+## Rule 9a PASS audit
+
+| Location | Content | Freshness | Binding / limit |
+| --- | --- | --- | --- |
+| `p5-host-round2.ts` `B0-COMPLETE-DIAGNOSTIC` | `requireFingerprint` (worlds, R2, facts) and every 1000-world block digest equal a fresh O-DOMAIN run; bytes read from the closed store | oracle subprocess and store reads in this attempt; source hashes before and after | requested N, map hash, predictions file hash; no generic full-content admission claimed |
+| `openMappedHost` reopen | position map reloaded against its externally bound hash; head must equal the map's last native position; seed-file stat guard | each arm opens its own clone | map hash from the B0 receipt; ids from a distinct seed |
+| `openArm` clone check | start counts (position, assertions, retired, claims) equal the seed's | read at arm open | seed receipt counts; refuses a clone that consumed more than 256 MB (not copy-on-write) |
+| Activation G4 coverage | the 10,000 subjects each appear exactly once | this arm | subject list hash in the sweep binding |
+| Activation G2 | kernel output bytes equal O-DOMAIN `reconcile` on 1-in-50 subjects (200) | fresh oracle calls after the timed sweep | the oracle receives the sweep's own world, so this checks the kernel, not the read; sampled, not all 10k |
+| Activation G5 | deliveries of every published page equal O-DOMAIN `publish` folded in publication order | per page | page evaluations |
+| Old-cut check (first sweep arm) | seed-basis fingerprint equals the B0 O-DOMAIN fingerprint after the arm's commits | after the arm's traffic | seed basis and valid time; one arm, `b1-10k` round 0 |
+| Transaction by command (claim first) | lost-ACK resolution compares the recovered position with the receipt (`applyW0Trace`) | per event | claim table key |
+| Latency and ratio numbers | none: measurements, no verdict; `B1-COMPLETE-DIAGNOSTIC` means the script finished with stable source | | no PASS issued |
+| `p5-screen-pool.mjs`, `p5-extrapolate.mjs` | pure recomputation from saved files | read now | forecast, not a result |
+
+**Not verified by content:** live reads in the latency arms were timed but not compared with an oracle or with the sweep route.
+
+## What did not run
+
+- **B2 (100k)** and any 100k seed; the forecast above is arithmetic.
+- The 10k run on the final worker (`b1-10k-02` lost to the crash); 10k kill-and-resume (ten abrupt controller stops); throttled variant over a purge or RESTART gate (G8); G6 route registration; pre-capture trace through O-REPLAY.
+- Controller on (S1), W=2, page sizes 32 and 128; a separate sweep process; the M01 duet and a bootstrap interval (4 pairs and 1 A/A only; the frozen trace and 25,000 commands per arm were not used).
+- ULID-shaped ids at 10k; power-loss and erasure qualification; full bench suites and evaluator on `9949f8cc`.
+
+Evidence manifest: `roundB/round3/SHA256SUMS` (126 files; large stores appear as the orchestrator's `.zst` with the original hash in `ORIGINAL-SHA256SUMS.txt`) and `roundB/round3/index.json`.

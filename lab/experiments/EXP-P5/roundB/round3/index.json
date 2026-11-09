@@ -1,0 +1,22 @@
+{
+  "format": "EXP-P5B-round3-evidence/1",
+  "classification": "DIAGNOSTIC",
+  "acceptance": false,
+  "durableRoot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/P5B-R3",
+  "manifest": "SHA256SUMS",
+  "branchHead": "9949f8cc",
+  "predictions": "PREDICTIONS.json",
+  "cited": {
+    "b0-1k-02": "B0-COMPLETE-DIAGNOSTIC",
+    "b0-10k": "B0-COMPLETE-DIAGNOSTIC",
+    "b1-1k-02": "B1-COMPLETE-DIAGNOSTIC (activation only)",
+    "b1-1k-03": "B1-COMPLETE-DIAGNOSTIC (activation only, final worker source)",
+    "b1-10k": "all rounds saved; status ERROR from a pooling-step stack overflow (fixed 2c15a87d); pooled.json recomputed from raw samples",
+    "extrapolation-100k.json": "complete"
+  },
+  "void": {
+    "b1-10k-02": "cut short by the 10:34 host crash (status RUNNING); not cited"
+  },
+  "retainedNotCited": ["b0-1k", "b1-1k", "b1-1k-dbg", "b1-1k-dbg2", "b1-1k-dbg3", "b1-1k-dbg4"],
+  "note": "stores were compressed in place by lab/bin/compress-evidence.sh; originals' hashes are in each ORIGINAL-SHA256SUMS.txt. Per-arm clone directories are not manifested."
+}
