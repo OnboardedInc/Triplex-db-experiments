@@ -1741,3 +1741,14 @@ Where each priority stands, from evidence so far (research probes and baselines;
   comparison and Unique; S4 erase only declared-protected attributes. Counsel should confirm crypto-shredding against GDPR Article 17.
 - **Order:** ER01-S scanners now (CX-OBS01, evaluator-owned); ER01-C core after RT01 round A merges; then X and rotation; Q behind the
   SQLite move and QLever generations; D behind DA04.
+
+## 2026-11-09 02:29Z: lane D adapter accepted; scale window open; two process fixes in the preamble
+- **V-DA01 round 3 ACCEPT** (131 tests, the 916-observation matrix, 814 generated surface variants, pagination, full conformance). Merging is
+  an integration round (CX-INT-D): DA01 carries about 1.6M lines of oracle and gate evidence, and it changes the pinned lane D image.
+- **Preamble 9b:** builders never edit the contract; they list pin changes and the contract builder re-pins (GS12F had bumped the contract to
+  0.4.0 itself; reverted). **9c:** evidence files over 1 MB go to the durable folder with a hash manifest in git.
+- **Scale window opened:** tx2-datomic-dev parked (volume kept), pool 6.56 of 11 GiB, one 3.5 GiB exclusive slot at a time. First:
+  EXP-QG1 phases 0 and 1 on qlever-s1 (rebuild-index on a copy of qlever-dev's data, then the delta-cost sweep on a 10M-triple base),
+  because whether QLever can serve reads from a built index decides the lane. Next in the window: K01 live, G03's slot run, X02 and C8
+  exclusive reruns, J01 compact-on, P5 A1.
+- GS12F (typed rejection of unholdable values) is in review; RT01 round A, W02, P5 round A, ER01-S and P2Q's review are running.

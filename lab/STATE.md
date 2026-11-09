@@ -179,3 +179,5 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   K01's next round: Q93c's normalized digest D' for E1 (fresh seed against golden).
 - Queued: ER01-C (erasure core) after RT01 round A merges; then ER01-X and ER01-R; ER01-Q behind SQL01 and QG1 phase 2; ER01-D behind DA04.
   Running: ER01-S scanners (CX-OBS01). Pending Sam: Q95-S (S1-S4).
+- Scale window OPEN (tx2-datomic-dev parked by the orchestrator, volume tx2-datomic-dev-data kept). Running in it: CX-QG1 on qlever-s1.
+  Unpark for EXP-DA04 after the window.
