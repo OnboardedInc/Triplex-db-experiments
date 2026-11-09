@@ -1,0 +1,88 @@
+profile /Users/sam/Claude/Projects/triplex-db-2/evidence/P5N-R2/prof-w1-cpu/CPU.20261109.144001.39109.0.001.cpuprofile: total sampled 153806.5 ms over 157 pages (idle included: 140105.8 ms)
+--- top self time
+ 140105.8 ms   892.39 ms/page  (idle) :0
+   2973.7 ms    18.94 ms/page  sync worktrees/p5b/packages/qlever/dist/broker/log.js:66
+   2142.9 ms    13.65 ms/page  (garbage collector) :0
+   1998.2 ms    12.73 ms/page  canonicalPlain worktrees/p5b/packages/w0/dist/json.js:411
+    661.8 ms     4.21 ms/page  activationArm worktrees/p5b/lab/bench/p5-host-screen.ts:149
+    543.8 ms     3.46 ms/page  handleWriteReq node:internal/stream_base_commons:46
+    462.2 ms     2.94 ms/page  quote worktrees/p5b/packages/w0/dist/json.js:325
+    374.5 ms     2.39 ms/page  (program) :0
+    291.3 ms     1.86 ms/page  (anon) worktrees/p5b/packages/w0/dist/json.js:431
+    247.4 ms     1.58 ms/page  RegExp: \r?\n|\r(?!\n) :0
+    222.0 ms     1.41 ms/page  writeFileSync node:fs:2410
+    178.2 ms     1.14 ms/page  crc32c worktrees/p5b/packages/qlever/dist/broker/crc32c.js:23
+    171.9 ms     1.09 ms/page  (anon) worktrees/p5b/lab/bench/lib/sweep.ts:146
+    158.0 ms     1.01 ms/page  appendDigest worktrees/p5b/lab/bench/lib/position-map.ts:31
+    122.9 ms     0.78 ms/page  encode node:internal/encoding:351
+    107.1 ms     0.68 ms/page  RegExp: ^[a-f0-9]{64}$ :0
+    106.9 ms     0.68 ms/page  readSync node:fs:695
+     93.2 ms     0.59 ms/page  update node:internal/crypto/hash:132
+     89.1 ms     0.57 ms/page  rowFromArray worktrees/p5b/packages/qlever/dist/broker/frames.js:4
+     87.0 ms     0.55 ms/page  postMessage node:internal/worker:380
+     86.1 ms     0.55 ms/page  detectModuleFormat node:internal/modules/esm/get_format:36
+     79.9 ms     0.51 ms/page  Hash node:internal/crypto/hash:88
+     78.3 ms     0.50 ms/page  invalidValue worktrees/p5b/packages/core/dist/ValueDomain.js:102
+     72.7 ms     0.46 ms/page  parseSource node:internal/deps/cjs-module-lexer/lexer:85
+     72.4 ms     0.46 ms/page  compileForInternalLoader node:internal/bootstrap/realm:385
+     72.3 ms     0.46 ms/page  cmpCodePoints worktrees/p5b/packages/w0/dist/json.js:295
+     64.2 ms     0.41 ms/page  statSync node:fs:1745
+     63.7 ms     0.41 ms/page  compileSourceTextModule node:internal/modules/esm/utils:344
+     63.7 ms     0.41 ms/page  decodeCommitGroup worktrees/p5b/packages/qlever/dist/broker/frames.js:24
+     61.4 ms     0.39 ms/page  load worktrees/p5b/lab/bench/lib/position-map.ts:100
+--- inclusive time, selected functions
+   3076.3 ms    19.59 ms/page  sync worktrees/p5b/packages/qlever/dist/broker/log.js:66
+   2821.5 ms    17.97 ms/page  canonicalPlain worktrees/p5b/packages/w0/dist/json.js:411
+   2422.3 ms    15.43 ms/page  commitGroup worktrees/p5b/packages/qlever/dist/broker/broker.js:211
+   2038.3 ms    12.98 ms/page  lookup worktrees/p5b/packages/qlever/dist/broker/log.js:439
+   1411.1 ms     8.99 ms/page  publishWatermark worktrees/p5b/packages/qlever/dist/broker/log.js:443
+   1011.2 ms     6.44 ms/page  submit worktrees/p5b/packages/qlever/dist/broker/broker.js:188
+    969.9 ms     6.18 ms/page  purgeFrames worktrees/p5b/packages/qlever/dist/broker/log.js:515
+    438.0 ms     2.79 ms/page  check worktrees/p5b/packages/qlever/dist/broker/broker.js:356
+    345.4 ms     2.20 ms/page  verifyGroup worktrees/p5b/lab/bench/lib/host-store.ts:175
+    319.5 ms     2.04 ms/page  append worktrees/p5b/lab/bench/lib/position-map.ts:25
+    245.3 ms     1.56 ms/page  append worktrees/p5b/packages/qlever/dist/broker/log.js:351
+    159.6 ms     1.02 ms/page  decodeCommitGroup worktrees/p5b/packages/qlever/dist/broker/frames.js:24
+    118.3 ms     0.75 ms/page  encodeCommitGroup worktrees/p5b/packages/qlever/dist/broker/frames.js:5
+    107.6 ms     0.69 ms/page  publishRecords worktrees/p5b/lab/bench/lib/w0-outbox.ts:3
+     17.2 ms     0.11 ms/page  finalize worktrees/p5b/packages/qlever/dist/broker/broker.js:374
+     14.5 ms     0.09 ms/page  transactionByCommand worktrees/p5b/lab/bench/lib/host-store.ts:367
+      8.0 ms     0.05 ms/page  parse node:internal/url:832
+      7.5 ms     0.05 ms/page  pullMany worktrees/p5b/lab/bench/lib/host-store.ts:454
+      6.8 ms     0.04 ms/page  readback worktrees/p5b/packages/qlever/dist/broker/log.js:406
+      6.8 ms     0.04 ms/page  readback worktrees/p5b/packages/qlever/dist/broker/broker.js:456
+      6.5 ms     0.04 ms/page  pullMany worktrees/p5b/lab/bench/p5-host-screen.ts:196
+      5.7 ms     0.04 ms/page  transactionByCommand worktrees/p5b/lab/bench/p5-host-screen.ts:214
+      3.5 ms     0.02 ms/page  commandWitness worktrees/p5b/lab/bench/lib/host-store.ts:29
+      2.2 ms     0.01 ms/page  transact worktrees/p5b/lab/bench/p5-host-screen.ts:205
+      2.2 ms     0.01 ms/page  stringify node:internal/modules/helpers:425
+      2.0 ms     0.01 ms/page  transact worktrees/p5b/packages/core/dist/store/TriplesLive.js:113
+      1.3 ms     0.01 ms/page  record worktrees/p5b/packages/qlever/dist/broker/broker.js:149
+      1.2 ms     0.01 ms/page  readbackClaims worktrees/p5b/packages/qlever/dist/broker/log.js:412
+      1.2 ms     0.01 ms/page  readbackClaims worktrees/p5b/packages/qlever/dist/broker/broker.js:465
+      1.1 ms     0.01 ms/page  record node_modules/effect/dist/SchemaAST.js:2620
+      1.1 ms     0.01 ms/page  transact worktrees/p5b/lab/bench/lib/host-store.ts:339
+--- callers of sync
+   1040.7 ms    6.63 ms/page  open@log.js:195 <- (root)@(root) :0
+    969.9 ms    6.18 ms/page  lookup@log.js:439 <- purgeFrames@log.js:515 <- publishWatermark@log.js:443
+    441.2 ms    2.81 ms/page  lookup@log.js:439 <- publishWatermark@log.js:443 <- commitGroup@broker.js:211
+    409.3 ms    2.61 ms/page  lookup@log.js:439 <- head@log.js:453 <- check@broker.js:356
+    183.8 ms    1.17 ms/page  lookup@log.js:439 <- operation@log.js:450 <- commitGroup@broker.js:211
+     20.9 ms    0.13 ms/page  lookup@log.js:439 <- claim@log.js:447 <- check@broker.js:356
+      5.0 ms    0.03 ms/page  lookup@log.js:439 <- pinBasis@log.js:478 <- pinBasis@broker.js:487
+      4.9 ms    0.03 ms/page  lookup@log.js:439 <- release@log.js:497 <- release@host-store.ts:431
+      0.5 ms    0.00 ms/page  hostLogRecovery@log.js:540 <- start@broker.js:111 <- open@broker.js:97
+--- callers of canonicalPlain
+   2265.0 ms   14.43 ms/page  (anon)@w0-gates.ts:50 <- call@w0-gates.ts:48 <- activationArm@p5-host-screen.ts:149
+    296.6 ms    1.89 ms/page  append@position-map.ts:25 <- verifyGroup@host-store.ts:175 <- (root)@(root) :0
+    159.7 ms    1.02 ms/page  appendDigest@position-map.ts:31 <- load@position-map.ts:100 <- openMappedHost@host-store.ts:91
+     55.5 ms    0.35 ms/page  publishRecords@w0-outbox.ts:3 <- (root)@(root) :0
+     19.8 ms    0.13 ms/page  activationArm@p5-host-screen.ts:149 <- processTicksAndRejections@task_queues:71 <- (root)@(root) :0
+     15.0 ms    0.10 ms/page  publishRecords@w0-outbox.ts:3 <- onPage@p5-host-screen.ts:244 <- (anon)@sweep.ts:242
+      5.0 ms    0.03 ms/page  (anon)@sweep.ts:146 <- (root)@(root) :0
+      1.3 ms    0.01 ms/page  appendDigest@position-map.ts:31 <- append@position-map.ts:25 <- verifyGroup@host-store.ts:175
+      1.3 ms    0.01 ms/page  (anon)@sweep.ts:242 <- (root)@(root) :0
+      1.3 ms    0.01 ms/page  runW0Sweep@sweep.ts:81 <- activationArm@p5-host-screen.ts:149 <- (root)@(root) :0
+      1.1 ms    0.01 ms/page  subjectHash@sweep.ts:56 <- runW0Sweep@sweep.ts:81 <- activationArm@p5-host-screen.ts:149
+--- broker per-frame split (screen.json instrument.frames), W1 10k, profiled run, 158 frames, 34.7 MB of frame payload
+append round trip ms/page 16.19  watermark (ack + purge) ms/page 8.93  watermark max ms 52.3
