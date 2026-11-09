@@ -297,6 +297,7 @@ try {
           ...dependencies,
           effect: effectVersion,
           typescript: "6.0.2",
+          "@types/node": "25.9.1",
         },
       },
       null,
@@ -429,6 +430,8 @@ void HttpAuthorizationAllowAll;
       {
         compilerOptions: {
           target: "ES2022",
+          lib: ["ES2022", "ESNext.Disposable"],
+          types: ["node"],
           module: "ESNext",
           moduleResolution: "bundler",
           strict: true,

@@ -25,4 +25,4 @@ pnpm 10.11 rejects bare --store-dir for pack and exec (both observed); the gate 
 
 ## Validation
 
-Initial implementation committed before the fresh gate run. Results, evidence manifest and moved-pin audit will be appended after execution. Separate reviewer verification remains outstanding.
+Attempt 1 (`triplex-pack-O2mgic`) started while the initial implementation was being committed, at source HEAD 0aa97f0f. All 12 builds, packs and tarball checks passed; the clean install passed. The stronger skipLibCheck:false check failed because the consumer fixture lacked @types/node and ESNext.Disposable. Runtime/CLI checks were not reached. Failure and logs are retained unchanged. The fixture now explicitly installs @types/node 25.9.1 (workspace catalog version) and uses Node and disposable library types. The next attempt runs after committing this correction with clean source status. Separate reviewer verification remains outstanding.
