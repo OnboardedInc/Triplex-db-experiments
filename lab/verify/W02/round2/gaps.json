@@ -1,0 +1,149 @@
+{
+ "classification": "OPEN-WORK; NOT PASSED",
+ "casesPerLane": 26,
+ "distinctClaimSlots": 11,
+ "scenarios": [
+  {
+   "scenario": 3,
+   "spec": "lab/scenarios/03-webhook-storm/scenario.json",
+   "claims": [
+    {
+     "index": 0,
+     "text": "a revision older than the applied one is acknowledged as superseded (W0 rule; O-DOMAIN, fails closed until EXP-D01; provisional, flagged for Sam in TARGETS 6.1)"
+    }
+   ],
+   "failedMembersPerLane": [
+    "GS-03",
+    "GS-03-WITNESS-POS",
+    "GS-03-WITNESS-NEG"
+   ],
+   "note": "Missing complete executed scenario evidence; some narrower O-DOMAIN comparisons already exist. See VERIFY-round2.md for implementation work."
+  },
+  {
+   "scenario": 8,
+   "spec": "lab/scenarios/08-address-since-october/scenario.json",
+   "claims": [
+    {
+     "index": 0,
+     "text": "derived state of each corrected subject is re-run (O-DOMAIN affected set; fails closed until EXP-D01)"
+    }
+   ],
+   "failedMembersPerLane": [
+    "GS-08",
+    "GS-08-WITNESS-POS",
+    "GS-08-WITNESS-NEG"
+   ],
+   "note": "Missing complete executed scenario evidence; some narrower O-DOMAIN comparisons already exist. See VERIFY-round2.md for implementation work."
+  },
+  {
+   "scenario": 10,
+   "spec": "lab/scenarios/10-release-activation/scenario.json",
+   "claims": [
+    {
+     "index": 0,
+     "text": "R2 evaluated for every in-scope subject at R_act and published as work items through the outbox (O-DOMAIN)"
+    },
+    {
+     "index": 1,
+     "text": "in-flight reconciles evaluate R1 (O-DOMAIN)"
+    },
+    {
+     "index": 2,
+     "text": "rollback R1 -> R2 -> R1 publishes three deliveries for a changed notice (O-DOMAIN payloads; delivery identity per Q38f)"
+    }
+   ],
+   "failedMembersPerLane": [
+    "GS-10",
+    "GS-10-11-COMMON-BASIS",
+    "GS-10-WITNESS-POS",
+    "GS-10-WITNESS-NEG"
+   ],
+   "note": "Missing complete executed scenario evidence; some narrower O-DOMAIN comparisons already exist. See VERIFY-round2.md for implementation work."
+  },
+  {
+   "scenario": 11,
+   "spec": "lab/scenarios/11-plan-impact-preview/scenario.json",
+   "claims": [
+    {
+     "index": 0,
+     "text": "the preview of R2 at GS.10's R_act equals GS.10's sweep output at R_act (O-DOMAIN)"
+    }
+   ],
+   "failedMembersPerLane": [
+    "GS-11",
+    "GS-11-WITNESS-POS",
+    "GS-11-WITNESS-NEG"
+   ],
+   "note": "Missing complete executed scenario evidence; some narrower O-DOMAIN comparisons already exist. See VERIFY-round2.md for implementation work."
+  },
+  {
+   "scenario": 12,
+   "spec": "lab/scenarios/12-audit-march-3/scenario.json",
+   "claims": [
+    {
+     "index": 0,
+     "text": "the explanation (obligations and why) at (R_past, 2026-03-03) (O-DOMAIN)"
+    }
+   ],
+   "failedMembersPerLane": [
+    "GS-12",
+    "GS-12-WITNESS-POS",
+    "GS-12-WITNESS-NEG"
+   ],
+   "note": "Missing complete executed scenario evidence; some narrower O-DOMAIN comparisons already exist. See VERIFY-round2.md for implementation work."
+  },
+  {
+   "scenario": 14,
+   "spec": "lab/scenarios/14-account-factory/scenario.json",
+   "claims": [
+    {
+     "index": 0,
+     "text": "the new tenant's first release activation evaluates its subjects (O-DOMAIN)"
+    }
+   ],
+   "failedMembersPerLane": [
+    "GS-14",
+    "GS-14-WITNESS-POS",
+    "GS-14-WITNESS-NEG"
+   ],
+   "note": "Missing complete executed scenario evidence; some narrower O-DOMAIN comparisons already exist. See VERIFY-round2.md for implementation work."
+  },
+  {
+   "scenario": 19,
+   "spec": "lab/scenarios/19-feed-consumer-crash/scenario.json",
+   "claims": [
+    {
+     "index": 0,
+     "text": "the dependency-index affected-subject set including subjects reached through referenced entities (O-DOMAIN)"
+    },
+    {
+     "index": 1,
+     "text": "work-item payloads and their publication sequences under W0 (O-DOMAIN); the harness payload is the asserted (attribute, value) set per subject"
+    }
+   ],
+   "failedMembersPerLane": [
+    "GS-19",
+    "GS-19B-OUTBOX-CRASH",
+    "GS-19-WITNESS-POS",
+    "GS-19-WITNESS-NEG"
+   ],
+   "note": "Missing complete executed scenario evidence; some narrower O-DOMAIN comparisons already exist. See VERIFY-round2.md for implementation work."
+  },
+  {
+   "scenario": 20,
+   "spec": "lab/scenarios/20-midnight-expiry/scenario.json",
+   "claims": [
+    {
+     "index": 0,
+     "text": "every expiring subject is re-run at the boundary and gains the re-verification obligation (O-DOMAIN)"
+    }
+   ],
+   "failedMembersPerLane": [
+    "GS-20",
+    "GS-20-WITNESS-POS",
+    "GS-20-WITNESS-NEG"
+   ],
+   "note": "Missing complete executed scenario evidence; some narrower O-DOMAIN comparisons already exist. See VERIFY-round2.md for implementation work."
+  }
+ ]
+}

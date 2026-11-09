@@ -1,0 +1,131 @@
+{
+ "raw": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VW02/round2-controller-2026-11-09T03-19-16-651Z-760683",
+ "campaignRaw": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VW02/round2-2026-11-09T03-19-28-590Z-c0bfb7",
+ "receiptSha256": "9152526ef7f90fd00f3a53251f2dc186cb15ffc3fc5f541271425df3df3605da",
+ "commands": [
+  {
+   "name": "types",
+   "argv": [
+    "node",
+    "node_modules/typescript/bin/tsc",
+    "--noEmit",
+    "-p",
+    "lab/scenarios/v2/tsconfig.json"
+   ],
+   "startedAt": "2026-11-09T03:19:16.811Z",
+   "endedAt": "2026-11-09T03:19:18.058Z",
+   "status": 0,
+   "signal": null,
+   "error": "",
+   "content": true,
+   "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "name": "unit",
+   "argv": [
+    "node",
+    "--experimental-strip-types",
+    "--test",
+    "lab/bin/test/lab.test.mjs",
+    "lab/scenarios/lib/runner.test.mjs",
+    "lab/scenarios/v2/offline.test.ts",
+    "lab/scenarios/v2/claims.test.ts",
+    "lab/scenarios/v2/lanes.test.ts",
+    "lab/scenarios/v2/faults.test.ts",
+    "lab/scenarios/v2/coverage.test.ts"
+   ],
+   "startedAt": "2026-11-09T03:19:18.060Z",
+   "endedAt": "2026-11-09T03:19:21.460Z",
+   "status": 0,
+   "signal": null,
+   "error": "",
+   "content": true,
+   "stdoutSha256": "383762a8a121165d24ec34d1586b55d260c0f11af7d66a354ea2366924ad4b47",
+   "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "name": "admission",
+   "argv": [
+    "node",
+    "--experimental-strip-types",
+    "--test",
+    "lab/scenarios/v2/admission.test.ts"
+   ],
+   "startedAt": "2026-11-09T03:19:21.460Z",
+   "endedAt": "2026-11-09T03:19:22.722Z",
+   "status": 0,
+   "signal": null,
+   "error": "",
+   "content": true,
+   "stdoutSha256": "e39a8346f1bfde0d94db88a601b02ebe3668015fc13918a4575ee7e16da50d87",
+   "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "name": "goldens",
+   "argv": [
+    "node",
+    "--experimental-strip-types",
+    "lab/scenarios/v2/expect.ts",
+    "--check"
+   ],
+   "startedAt": "2026-11-09T03:19:22.722Z",
+   "endedAt": "2026-11-09T03:19:28.369Z",
+   "status": 0,
+   "signal": null,
+   "error": "",
+   "content": true,
+   "stdoutSha256": "2365727f22f769339e9df82b6afba6062ed214aac8775fcdd7438647fe45bda7",
+   "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "name": "manifest",
+   "argv": [
+    "node",
+    "lab/scenarios/v2/cases.mjs",
+    "--check"
+   ],
+   "startedAt": "2026-11-09T03:19:28.370Z",
+   "endedAt": "2026-11-09T03:19:28.408Z",
+   "status": 0,
+   "signal": null,
+   "error": "",
+   "content": true,
+   "stdoutSha256": "e3535223449088a75abc8188b65c50c2d6bb851e3af203380a0cbc69ae9ae07a",
+   "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "name": "mutations",
+   "argv": [
+    "node",
+    "--experimental-strip-types",
+    "lab/verify/W02/review-round2.ts"
+   ],
+   "startedAt": "2026-11-09T03:19:28.408Z",
+   "endedAt": "2026-11-09T03:21:08.714Z",
+   "status": 0,
+   "signal": null,
+   "error": "",
+   "content": true,
+   "stdoutSha256": "ee2df90dc0384dc302dd57b1ba4d85679eb9778f60e9dc4f19714f513d1ea31a",
+   "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "name": "extra",
+   "argv": [
+    "node",
+    "--experimental-strip-types",
+    "lab/verify/W02/extra-round2.ts"
+   ],
+   "startedAt": "2026-11-09T03:21:08.715Z",
+   "endedAt": "2026-11-09T03:21:15.707Z",
+   "status": 0,
+   "signal": null,
+   "error": "",
+   "content": true,
+   "stdoutSha256": "0429349b7d4e20efe2c3190c9646568c0866d5d2f93ffde818b9ebf39a745a66",
+   "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+ ],
+ "sourcesAndBuildsUnchanged": true
+}

@@ -1,0 +1,8 @@
+types: exit=0, content=true
+unit: exit=0, content=true
+admission: exit=0, content=true
+goldens: exit=0, content=true
+manifest: exit=0, content=true
+mutations: exit=0, content=true
+extra: exit=0, content=true
+{"raw":"/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VW02/round2-controller-2026-11-09T03-19-16-651Z-760683","campaignRaw":"/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VW02/round2-2026-11-09T03-19-28-590Z-c0bfb7","unchanged":true}
