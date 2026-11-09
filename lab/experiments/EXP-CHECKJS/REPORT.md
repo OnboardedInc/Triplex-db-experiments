@@ -6,7 +6,7 @@ North star: correctness floor for P1-P5 evidence-producing tools. Scope and targ
 
 Added `lab/tsconfig.checkjs.json`: recursive `.js`, `.mjs`, and `.cjs` coverage of all lab/bin, lab/bench, and qualification files, allowJs/checkJs/noEmit, strict checking, NodeNext resolution. No project-wide diagnostic suppression or strictness relaxation. The new `lab/bin/checkjs.mjs` runs the complete project diagnostics, then a second semantic pass that removes TypeScript suppression directives from parsed JavaScript comments and rejects unresolved bindings (TS2304, TS2552, TS18004, missing exports/namespaces, and related binding codes). Strings, templates, and coordinates are preserved. Consequently even a legacy per-file ts-nocheck cannot hide an unbound name in a dormant branch.
 
-`pnpm --store-dir /Users/sam/projects/triplex-db-2/.pnpm-store lab:check` obtains a heavy token. Root typecheck invokes it; G0 invokes the same checker as its own resource-granted step and records a failure reason on nonzero exit. Package-only checks previously missed these scripts. No engine lifecycle changes.
+`pnpm --store-dir /Users/sam/projects/triplex-db-2/.pnpm-store lab:check` obtains a heavy token. Root typecheck invokes the checker directly under the caller's heavy grant (avoiding nested-token deadlock); G0 invokes the same checker as its own resource-granted step and records a failure reason on nonzero exit. Package-only checks previously missed these scripts. No engine lifecycle changes.
 
 ## Diagnostic triage
 
@@ -24,11 +24,11 @@ One small file uses narrow string-parameter JSDoc (lab/bench/wait-slot.mjs). The
 - New checker: 110 JavaScript roots checked, zero diagnostics and zero suppressed binding errors.
 - Plain `tsc -p lab/tsconfig.checkjs.json --pretty false`: exit 0.
 - New regression tests: 4/4, zero failures/skips. Tests assert TS2304/TS2552/TS18004/TS2305 rejection, ordinary wrong-arity rejection, valid runtime strings/templates, and recursive project coverage.
-- Executable-source comparison: TypeScript parser/printer with comments removed produces identical output for **104 existing JavaScript files**. gate.mjs intentionally adds the checker invocation. No existing application/oracle executable statements changed. `changed-files.json` records old/new source hashes and the toolchain version.
+- Executable-source comparison: TypeScript parser/printer with comments removed produces identical output for **104 existing JavaScript files**. gate.mjs intentionally adds the checker invocation. No existing application/oracle executable statements changed. `changed-files.json` retains the first attempt; `changed-files-committed.json` binds the final source bytes, old/new hashes and toolchain version. The latter includes the root-script adjustment that avoids nested heavy-token admission.
 - First broader lab suite: **131 tests, 99 pass, 32 fail** (`lab-tests.txt`). The evaluator integrity checks see modified working-tree evaluator files differing from HEAD and reject with EVALUATOR-TAMPERED, causing downstream assertions to fail. `verification.txt` retains the failing exit and assertion. Commit source, then rerun; do not adopt the first attempt as a pass.
-- Committed-source rerun: pending when this implementation commit was written; a follow-up report/evidence commit records its actual result.
+- Committed-evaluator rerun after implementation commit `a0c86a55`: **131/131 lab tests passed, zero failures/skips**, plus **4/4 new regression tests**, zero diagnostics in both checker and plain tsc. `verification-committed.txt` records actual exits and confirms source hashes unchanged after validation. All logs have the `-committed` suffix. The root package script adjustment was included in the source hashes during this attempt; evaluator bytes matched committed HEAD. No earlier failure was replaced or adopted as a pass.
 
-All heavy runs use lab/bin/heavy.mjs. Host free disk was about 37 GiB before final verification. Existing installed dependencies were read through an uncommitted worktree node_modules symlink to this project's main node_modules; no install, dependency/lock changes, global cache writes, or engine reservations were made.
+All heavy runs use lab/bin/heavy.mjs. Host free disk was about 37 GiB before final verification. Existing installed dependencies were read through an uncommitted worktree node_modules symlink to this project's main node_modules; no install, dependency/lock changes, global cache writes, or engine reservations were made. The temporary symlink was removed after validation.
 
 ## PASS / receipt audit
 
@@ -166,4 +166,4 @@ The following is the complete source/config inventory (pinned paths marked). All
 - `lab/tsconfig.checkjs.json`
 - `lab/experiments/EXP-CHECKJS/verify.mjs`
 
-Experiment evidence/report files: `REPORT.md`, `verify.mjs` (also listed above), `initial.txt`, `triage.jsonl`, `check-attempt1.txt`, `verification.txt`, `changed-files.json`, `checkjs-final.txt`, `tsc-final.txt`, `tests-final.txt`, `lab-tests.txt`. Committed-source follow-up files will be named by attempt in the follow-up report. No evidence file exceeds 1 MB and the experiment evidence is below 5 MB.
+Experiment evidence/report files: `REPORT.md`, `verify.mjs` (also listed above), `initial.txt`, `triage.jsonl`, `check-attempt1.txt`, `verification.txt`, `changed-files.json`, `checkjs-final.txt`, `tsc-final.txt`, `tests-final.txt`, `lab-tests.txt`. Final added evidence files: `changed-files-committed.json`, `checkjs-final-committed.txt`, `tsc-final-committed.txt`, `tests-final-committed.txt`, `lab-tests-committed.txt`, and `verification-committed.txt`. Raw first-failure logs deliberately retain the runner's original trailing whitespace; source/config diff whitespace checks are clean. No evidence file exceeds 1 MB and the experiment evidence is below 5 MB.
