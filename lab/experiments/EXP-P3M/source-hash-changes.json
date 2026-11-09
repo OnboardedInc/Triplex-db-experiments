@@ -1,0 +1,12 @@
+[
+  {
+    "path": "lab/bench/README.md",
+    "oldSha256": "3815722fc58637679685ec61060a9de605be46ed2234082c8fa9ebd4451f44f6",
+    "newSha256": "d55b0c116a872b6818dec92a902e7e1e871207b99a06d80998a3eb317ac0ae2d"
+  },
+  {
+    "path": "lab/bin/gate.mjs",
+    "oldSha256": "ee8c40b95ac6dba2dc3a75ae3c5891b6818489cd5bf2caaaedddf61d31eef2a6",
+    "newSha256": "6d03f008a65e217e10d7e4fa3aa074eb854232ad9848fd7895390b6e70bdf2f8"
+  }
+]
