@@ -1,0 +1,14 @@
+nominal: PASS
+base64-of-json-escaped-plaintext: PASS UNSAFE
+base64-json-escaped-native-sqlite: PASS UNSAFE
+base64-json-escaped-envelope: FAIL UNSAFE
+hex-inside-url-encoded-string: FAIL
+hex-of-url-encoded-string: PASS UNSAFE
+base64-json-escaped-usable-key: PASS UNSAFE
+url-encoded-hex-usable-key: FAIL
+plaintext-split-across-wal-frames: FAIL
+plaintext-superseded-split-frames: FAIL
+usable-key-envelope-superseded-commit: FAIL
+usable-key-envelope-superseded-frame: FAIL
+removed-key-envelope-superseded-frame: PASS
+{"output": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VER01S/round3/probe-01", "scenarios": 13, "unsafe": ["base64-of-json-escaped-plaintext", "base64-json-escaped-native-sqlite", "base64-json-escaped-envelope", "hex-of-url-encoded-string", "base64-json-escaped-usable-key"], "manifestSha256": "27eae5d02113a5b02f002df81954e6ec97473a90fc7c94a4e4296c3ab75e308a"}
