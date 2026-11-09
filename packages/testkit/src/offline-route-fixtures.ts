@@ -1,6 +1,7 @@
 import type { TripleRow } from "@triplex-build/triplex/runtime";
 import {
   foldRouteHistory,
+  routeFuture,
   snapshotRouteRows,
   routeHead,
   routeRetentionHorizons,
@@ -75,7 +76,7 @@ export const makeOfflineRouteFixture = (
                   id: commit.receipt.attemptId,
                   status: "committed" as const,
                   position: commit.position,
-                  stagedAt: commit.instant,
+                  stagedAt: commit.stagedAt ?? commit.instant,
                   stagedOrder: Math.max(...history.attempts.map((a) => a.stagedOrder)) + 1,
                   decidedOrder: Math.max(...history.attempts.map((a) => a.decidedOrder)) + 1,
                 },
@@ -115,7 +116,7 @@ export const makeOfflineRouteFixture = (
           ];
         },
       },
-      eligible: (request, current) => (request.basis.recordedPosition ?? 0) <= routeHead(current),
+      eligible: (request, current) => !routeFuture(request, current),
       refusals: ["BasisNotAvailable"],
       force: () => {
         forced = id;
@@ -125,7 +126,7 @@ export const makeOfflineRouteFixture = (
       },
       read: async (request) => {
         const position = request.basis.recordedPosition ?? routeHead(history);
-        if (position > routeHead(history))
+        if (routeFuture(request, history))
           throw new RouteRefusal("BasisNotAvailable", "Future position");
         let candidates = source;
         if (forced === "Q1-replica") candidates = replica;
@@ -149,7 +150,10 @@ export const makeOfflineRouteFixture = (
         return {
           rows: snapshotRouteRows(rows, request, routeHead(history)),
           taken: forced,
-          basis: request.basis,
+          basis: {
+            ...request.basis,
+            ...(request.basis.recordedAt !== undefined ? { recordedPosition: position } : {}),
+          },
         };
       },
     })),

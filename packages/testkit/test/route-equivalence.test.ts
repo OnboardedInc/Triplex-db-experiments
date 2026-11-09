@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  decideRouteCommit,
   canonicalRouteRows,
   canonicalRouteValue,
   foldRouteHistory,
@@ -57,7 +58,7 @@ describe("EXP-RQ01 route-equivalence gate (offline only)", () => {
     expect(new Set(generateRouteBases(history).map(routeShape))).toEqual(
       new Set(["L", "V", "P", "T", "TP", "H"]),
     );
-    expect(history.commits[0]!.instant).toBe(history.commits[1]!.instant);
+    expect(history.commits[0]!.instant).toBeLessThan(history.commits[1]!.instant);
     expect(
       foldRouteHistory(history).some((r) => r.retracted_position === r.recorded_position),
     ).toBe(true);
@@ -114,33 +115,40 @@ describe("EXP-RQ01 route-equivalence gate (offline only)", () => {
     await fixture.event("purge");
     expect((await route.read(f1Request)).rows).toHaveLength(40);
   });
-  it("known-failing Q89a / R31 D-C1: the same T answer changes after a late staged commit", async () => {
-    const history: RouteHistory = {
-      seed: 891,
-      now: 2000,
-      commits: [
-        { position: 1024, instant: 1001, writes: [{ op: "assert", row: routeRow("B", "Y", "B") }] },
-      ],
-    };
-    const result = await runRouteEquivalence({
-      fixture: makeOfflineRouteFixture("qlever"),
-      history,
-      scope: { shapes: ["T"] },
-      requests: [{ entityId: "X", basis: { validAt: 2000, recordedAt: 1001 } }],
-      extension: {
-        position: 2048,
-        instant: 1000,
-        writes: [{ op: "assert", row: routeRow("A", "X", "A") }],
-      },
+  for (const mode of ["decided", "staged-stamps"] as const)
+    it(`D-C1 decision order ${mode}: immutable T cut with a negative control`, async () => {
+      const first = decideRouteCommit(
+        {
+          position: 1024,
+          stagedAt: 1001,
+          writes: [{ op: "assert", row: routeRow("B", "Y", "B") }],
+        },
+        undefined,
+        mode,
+      );
+      const history: RouteHistory = { seed: 891, now: 2000, commits: [first] };
+      const extension = decideRouteCommit(
+        {
+          position: 2048,
+          stagedAt: 1000,
+          writes: [{ op: "assert", row: routeRow("A", "X", "A") }],
+        },
+        first,
+        mode,
+      );
+      const result = await runRouteEquivalence({
+        fixture: makeOfflineRouteFixture("qlever"),
+        history,
+        scope: { shapes: ["T"] },
+        requests: [{ entityId: "X", basis: { validAt: 2000, recordedAt: 1001 } }],
+        extension,
+      });
+      if (mode === "decided") expect(result.violations).toEqual([]);
+      else {
+        expect(result.violations.some((v) => v.rule === "HE-5")).toBe(true);
+        expect(result.violations.some((v) => v.rule === "HE-8")).toBe(true);
+      }
     });
-    // [EXP-RQ01] Why: assert the defect is observed until Q89a; unexpected repair requires review.
-    // Rejected: it.skip/it.fails (could hide harness failure or unrelated exceptions).
-    expect(result.violations.length).toBeGreaterThan(0);
-    expect(result.violations.every((v) => v.rule === "HE-5")).toBe(true);
-    expect(new Set(result.violations.map((v) => v.route))).toEqual(
-      new Set(makeOfflineRouteFixture("qlever").routes.map((r) => r.id)),
-    );
-  });
   it("canonicalizes all columns without losing exact strings, -0, duplicates or key order", () => {
     const row = routeRow("a", "s", "9007199254740993");
     expect(canonicalRouteRows([row])).toBe(canonicalRouteRows([{ ...row }]));

@@ -1,3 +1,4 @@
+import { instantOf, nextStamp, stampOf } from "@triplex-build/triplex";
 import { validateRouteHistory } from "./route-history-grammar.js";
 import { requireRouteCoverage } from "./route-coverage.js";
 import { Sha256 } from "@triplex-build/triplex/content";
@@ -34,6 +35,7 @@ export interface RouteAttempt {
   };
 }
 export interface RouteCommit {
+  readonly stagedAt?: number;
   readonly position: number;
   readonly instant: number;
   readonly writes: readonly RouteWrite[];
@@ -45,6 +47,37 @@ export interface RouteCommit {
   readonly nested?: { readonly callback: string; readonly ordinal: number; readonly size: number };
   readonly claims?: readonly string[];
 }
+export type RouteCommitInput = Omit<RouteCommit, "instant"> & {
+  readonly instant?: number;
+  readonly stagedAt: number;
+};
+/** Offline decisions only; live fixtures bind the receipt's instant instead. */
+export const decideRouteCommit = (
+  input: RouteCommitInput,
+  previous: RouteCommit | undefined,
+  mode: "decided" | "staged-stamps" = "decided",
+): RouteCommit => {
+  const sameTransaction =
+    input.nested !== undefined && input.nested.callback === previous?.nested?.callback;
+  const instant =
+    input.instant ??
+    (mode === "staged-stamps"
+      ? input.stagedAt
+      : sameTransaction
+        ? previous!.instant
+        : instantOf(nextStamp(previous ? stampOf(previous.instant) : 0, input.stagedAt)));
+  return {
+    ...input,
+    instant,
+    ...(input.receipt ? { receipt: { ...input.receipt, instant } } : {}),
+  };
+};
+export const routeWatermark = (history: RouteHistory): number =>
+  history.commits.at(-1)?.instant ?? 0;
+export const routeFuture = (request: RouteRequest, history: RouteHistory): boolean =>
+  (request.basis.recordedPosition ?? 0) > routeHead(history) ||
+  (request.basis.recordedAt ?? 0) > routeWatermark(history);
+
 export interface RouteHistory {
   readonly seed: number;
   readonly now: number;
@@ -280,20 +313,25 @@ export const generateRouteHistory = (seed = 1, count = 40): RouteHistory => {
   const attempts: RouteAttempt[] = [];
   const add = (writes: RouteWrite[], index: number, extra: Partial<RouteCommit> = {}) => {
     const position = index % 16 === 9 ? index * 1024 + 1 : (index + 1) * 1024;
-    const instant =
+    const stagedAt =
       1000 + Math.floor(index / 2) - (index % 16 === 14 ? 2 : index % 16 === 15 ? 3 : 0);
+    const instant =
+      extra.nested?.callback === commits.at(-1)?.nested?.callback && extra.nested
+        ? commits.at(-1)!.instant
+        : instantOf(nextStamp(commits.length ? stampOf(commits.at(-1)!.instant) : 0, stagedAt));
     const id = `attempt:${index}`;
     const stagedOrder = index % 16 === 13 ? index + 1 : index % 16 === 14 ? index - 1 : index;
     attempts.push({
       id,
       status: "committed",
       position,
-      stagedAt: instant,
+      stagedAt,
       stagedOrder,
       decidedOrder: index,
     });
     commits.push({
       position,
+      stagedAt,
       instant,
       writes,
       receipt: { attemptId: id, position, instant },
@@ -499,7 +537,7 @@ export const generateRouteBases = (
 };
 
 export interface RouteViolation {
-  readonly rule: "HE-1" | "HE-2" | "HE-3" | "HE-4" | "HE-5" | "HE-6" | "HE-7" | "forcing";
+  readonly rule: "HE-1" | "HE-2" | "HE-3" | "HE-4" | "HE-5" | "HE-6" | "HE-7" | "HE-8" | "forcing";
   readonly route: string;
   readonly request: RouteRequest;
   readonly phase: string;
@@ -595,7 +633,7 @@ export const makeRouteExecutionPlan = (options: RouteEquivalenceOptions): RouteE
       id: attemptId,
       status: "committed",
       position: extension.position,
-      stagedAt: extension.instant,
+      stagedAt: extension.stagedAt ?? extension.instant,
       stagedOrder: Math.max(...history.attempts.map((a) => a.stagedOrder)) + 1,
       decidedOrder: Math.max(...history.attempts.map((a) => a.decidedOrder)) + 1,
     };
@@ -690,10 +728,24 @@ export const runRouteEquivalence = async (
     }
     return value;
   };
+  const ordered = [...history.commits, extension];
+  for (let i = 1; i < ordered.length; i++) {
+    const a = ordered[i - 1]!,
+      b = ordered[i]!;
+    const nested = b.nested !== undefined && b.nested.callback === a.nested?.callback;
+    if (nested ? b.instant !== a.instant : b.instant <= a.instant)
+      violations.push({
+        rule: "HE-8",
+        detail: "Decided instants do not follow transaction order",
+        route: "decider",
+        request: { basis: {} },
+        phase: "decision",
+      });
+  }
   await fixture.reset(history);
   const phase = async (name: string, repeat: boolean) => {
     for (const request of requests) {
-      const future = (request.basis.recordedPosition ?? 0) > routeHead(history);
+      const future = routeFuture(request, history);
       const expected = new Map<RouteResultContract, string>();
       if (!future)
         for (const contract of new Set(fixture.routes.map((r) => r.contract)))
@@ -720,7 +772,13 @@ export const runRouteEquivalence = async (
             fail("HE-1", "Answer differs from offline replay");
           if (
             answer.basis !== undefined &&
-            canonicalRouteValue(answer.basis) !== canonicalRouteValue(request.basis)
+            canonicalRouteValue(answer.basis) !==
+              canonicalRouteValue({
+                ...request.basis,
+                ...(request.basis.recordedAt !== undefined
+                  ? { recordedPosition: request.basis.recordedPosition ?? routeHead(history) }
+                  : {}),
+              })
           )
             fail("HE-7", "Basis echo differs from request");
           const group = answers.get(route.contract) ?? [];

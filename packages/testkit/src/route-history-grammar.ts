@@ -59,7 +59,12 @@ export const validateRouteHistory = (history: RouteHistory, requireReceipts = fa
         fail("receipt binding");
       receiptIds.add(r.attemptId);
       const a = history.attempts?.find((a) => a.id === r.attemptId);
-      if (!a || a.status !== "committed" || a.position !== r.position || a.stagedAt !== r.instant)
+      if (
+        !a ||
+        a.status !== "committed" ||
+        a.position !== r.position ||
+        a.stagedAt !== (commit.stagedAt ?? r.instant)
+      )
         fail("attempt/receipt binding");
     }
     if (commit.nested) {
