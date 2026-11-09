@@ -248,3 +248,8 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - 2026-11-09 CHECKJS round 2 (f72cd5ad): coverage inverted (371 checked roots, 78 justified exclusions, 116 generated outputs); one suite
   test fails only because a comment-annotated pinned oracle helper needs re-pinning in the next contract. Queued: CX-VCHECKJS round 2
   when a slot frees (off the critical path). Running now in its slot: the Opus forgery review of CRNS (lab/verify/CRNS-opus/).
+- 2026-11-09 M01 rebase ACCEPT (verify/M01-rebase 3a354133: 52/52, 216 paired comparisons unchanged, single-arm hard rule RED). Merges
+  default-off through contract 0.4.0. **Contract 0.4.0 queue:** RT01 round A (after live G2/G6), O-REPLAY 0.5.0, FD01, QNODELAY, M01
+  rebase, CHECKJS re-pins (three oracle helpers, comment-only), P3M when NSR lands, G03's isolation pins; compile Q89 (minus g), Q90,
+  Q92, Q95 (minus S), Q98a-i. Q99, Q100, Q101 stay pending until R43's 0.4.1. CX-G03 builds the V1-V7 VM probes now and runs them when
+  the exclusive slot frees.
