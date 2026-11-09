@@ -1,0 +1,208 @@
+probes 0
+unit-final 0
+fixtures 0
+selfcheck 0
+core-baseline-legacy 0
+core-final-legacy 0
+core-final-updated 0
+qlever-baseline-legacy 0
+qlever-final-legacy 0
+qlever-final-updated 0
+{
+  "sourceInputsUnchanged": true,
+  "comparisons": [
+    {
+      "lane": "core",
+      "legacyItems": 341,
+      "legacyEqual": true,
+      "otherItems": 331,
+      "otherEqual": true,
+      "replacement": [
+        {
+          "vector": "G9-CUT-02b",
+          "item": "Q1",
+          "verdict": "AGREE",
+          "rawContractAgrees": true,
+          "snapshotContractAgrees": false
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "Q2",
+          "verdict": "AGREE",
+          "oracle": [],
+          "golden": []
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "Q3",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "Q4",
+          "verdict": "AGREE",
+          "oracle": {
+            "values": [
+              "y"
+            ],
+            "cut": {
+              "scope": "fresh",
+              "position": 2,
+              "recordedAt": 500.001,
+              "validAt": 10
+            }
+          },
+          "golden": {
+            "results": [
+              {
+                "?v": "y"
+              }
+            ],
+            "basis": {
+              "scope": "<fresh scope>",
+              "recordedPosition": "$pos:D2",
+              "recordedAt": 500.001,
+              "validAt": 10
+            }
+          }
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "N1",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "N2",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "F1",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "F2",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "cmd:D1",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "cmd:D2",
+          "verdict": "AGREE"
+        }
+      ],
+      "legacyCounts": {
+        "AGREE": 317,
+        "NOT-MODELED": 3,
+        "AGREE-RULED": 19,
+        "VECTOR-BUG": 2
+      }
+    },
+    {
+      "lane": "qlever",
+      "legacyItems": 341,
+      "legacyEqual": true,
+      "otherItems": 331,
+      "otherEqual": true,
+      "replacement": [
+        {
+          "vector": "G9-CUT-02b",
+          "item": "Q1",
+          "verdict": "AGREE",
+          "rawContractAgrees": true,
+          "snapshotContractAgrees": false
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "Q2",
+          "verdict": "AGREE",
+          "oracle": [],
+          "golden": []
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "Q3",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "Q4",
+          "verdict": "AGREE",
+          "oracle": {
+            "values": [
+              "y"
+            ],
+            "cut": {
+              "scope": "fresh",
+              "position": 2,
+              "recordedAt": 500.001,
+              "validAt": 10
+            }
+          },
+          "golden": {
+            "results": [
+              {
+                "?v": "y"
+              }
+            ],
+            "basis": {
+              "scope": "<fresh scope>",
+              "recordedPosition": "$pos:D2",
+              "recordedAt": 500.001,
+              "validAt": 10
+            }
+          }
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "N1",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "N2",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "F1",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "F2",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "cmd:D1",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "cmd:D2",
+          "verdict": "AGREE"
+        }
+      ],
+      "legacyCounts": {
+        "AGREE": 298,
+        "NOT-MODELED": 3,
+        "AGREE-RULED": 18,
+        "CONVERTER-ERROR": 1,
+        "DISAGREE": 19,
+        "VECTOR-BUG": 2
+      }
+    }
+  ],
+  "probeSpecMismatches": [],
+  "unitFailureHeaders": [],
+  "unitSummary": [
+    "Ran 403 tests in 16.502s"
+  ]
+}

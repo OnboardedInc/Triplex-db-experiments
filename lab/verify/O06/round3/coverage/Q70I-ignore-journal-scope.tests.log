@@ -1,0 +1,30 @@
+................................................................................................................................................................................................................................................................................F..................................................................................................................................
+======================================================================
+FAIL: test_Q70I_journal_ambiguity_and_scope (lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70I_journal_ambiguity_and_scope)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o06/lab/oracles/replay/tests/test_q70_coverage.py", line 68, in test_Q70I_journal_ambiguity_and_scope
+    self.assertEqual(journal_values(result(report,'c')),[([], [i64(2)]),(['tx:5'],[mark()])])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [('plain', [{'_tag': 'ErasedValue', 'erasedAt': 200}])] != [([], [{'type': 'integer', 'value': '2'}]),[51 chars]0}])]
+
+First differing element 0:
+('plain', [{'_tag': 'ErasedValue', 'erasedAt': 200}])
+([], [{'type': 'integer', 'value': '2'}])
+
+Second list contains 1 additional elements.
+First extra element 1:
+(['tx:5'], [{'_tag': 'ErasedValue', 'erasedAt': 200}])
+
++ [([], [{'type': 'integer', 'value': '2'}]),
+- [('plain', [{'_tag': 'ErasedValue', 'erasedAt': 200}])]
+?  - ^^^^^
+
++  (['tx:5'], [{'_tag': 'ErasedValue', 'erasedAt': 200}])]
+? ++  ^^^^ +
+
+
+----------------------------------------------------------------------
+Ran 403 tests in 16.765s
+
+FAILED (failures=1)

@@ -1,0 +1,14 @@
+...............................................................................................................................................................................................................................................................................F...................................................................................................................................
+======================================================================
+FAIL: test_Q70H_equal_view_different_bodies (lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70H_equal_view_different_bodies)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o06/lab/oracles/replay/tests/test_q70_coverage.py", line 52, in test_Q70H_equal_view_different_bodies
+    self.assertNotIn('error',c)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^
+AssertionError: 'error' unexpectedly found in {'error': 'X-NOT-MODELED', '_tag': None, 'reason': None, 'phase': None, 'ruling': 'CX-VO06 wrong body comparison', 'message': 'ambiguous journal after'}
+
+----------------------------------------------------------------------
+Ran 403 tests in 17.475s
+
+FAILED (failures=1)

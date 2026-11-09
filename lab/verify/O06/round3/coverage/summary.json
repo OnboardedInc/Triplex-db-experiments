@@ -1,0 +1,80 @@
+{
+  "scope": "diagnostic in-memory wrong implementations; never production source changes",
+  "sourceUnchanged": true,
+  "baseline": {
+    "mutation": "baseline",
+    "run": 403,
+    "failures": [],
+    "errors": [],
+    "witnessChanged": false
+  },
+  "mutations": [
+    {
+      "mutation": "Q70E-unfiltered-prefixes",
+      "run": 403,
+      "failures": [
+        "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70E_only_issuing_prefixes"
+      ],
+      "errors": [],
+      "witnessChanged": true,
+      "sameSuiteFailuresAsBaseline": false
+    },
+    {
+      "mutation": "Q70H-compare-page-bodies",
+      "run": 403,
+      "failures": [
+        "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70H_equal_view_different_bodies"
+      ],
+      "errors": [],
+      "witnessChanged": true,
+      "sameSuiteFailuresAsBaseline": false
+    },
+    {
+      "mutation": "Q70I-choose-ambiguous-journal",
+      "run": 403,
+      "failures": [
+        "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70I_journal_ambiguity_and_scope"
+      ],
+      "errors": [],
+      "witnessChanged": true,
+      "sameSuiteFailuresAsBaseline": false
+    },
+    {
+      "mutation": "Q70I-ignore-journal-scope",
+      "run": 403,
+      "failures": [
+        "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70I_journal_ambiguity_and_scope"
+      ],
+      "errors": [],
+      "witnessChanged": false,
+      "sameSuiteFailuresAsBaseline": false
+    },
+    {
+      "mutation": "Q70K-default-nonjournal-scope",
+      "run": 403,
+      "failures": [
+        "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70K_scope_on_every_scope_surface (kind='transaction', defaultErasure=True)",
+        "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70K_scope_on_every_scope_surface (kind='transactionByCommand', defaultErasure=True)",
+        "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70K_scope_on_every_scope_surface (kind='transactionsForEntity', defaultErasure=True)",
+        "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70K_scope_on_every_scope_surface (kind='journalFacts', defaultErasure=True)",
+        "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70K_scope_on_every_scope_surface (kind='assertions', defaultErasure=True)",
+        "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70K_scope_on_every_scope_surface (kind='history', defaultErasure=True)",
+        "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70K_scope_on_every_scope_surface",
+        "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70L_entity_and_scope_key"
+      ],
+      "errors": [],
+      "witnessChanged": true,
+      "sameSuiteFailuresAsBaseline": false
+    },
+    {
+      "mutation": "Q70L-ignore-entity-scope-key",
+      "run": 403,
+      "failures": [
+        "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70L_entity_and_scope_key"
+      ],
+      "errors": [],
+      "witnessChanged": true,
+      "sameSuiteFailuresAsBaseline": false
+    }
+  ]
+}

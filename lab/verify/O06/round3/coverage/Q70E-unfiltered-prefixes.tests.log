@@ -1,0 +1,21 @@
+..............................................................................................................................................................................................................................................................................F....................................................................................................................................
+======================================================================
+FAIL: test_Q70E_only_issuing_prefixes (lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70E_only_issuing_prefixes)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o06/lab/oracles/replay/tests/test_q70_coverage.py", line 44, in test_Q70E_only_issuing_prefixes
+    self.assertEqual([predicate(a) for a in answers],f['expectedIssuing'])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [True, True, True] != [True, False, False]
+
+First differing element 1:
+True
+False
+
+- [True, True, True]
++ [True, False, False]
+
+----------------------------------------------------------------------
+Ran 403 tests in 17.196s
+
+FAILED (failures=1)

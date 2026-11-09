@@ -1,0 +1,566 @@
+{
+  "finished": "2026-11-09T01:17:22.850625+00:00",
+  "head": "23be548803500b72fde6751cca7e359bf9f1e590",
+  "builderHead": "fed510ecf5137873d5dab1ad192f0e54f8ed0955",
+  "scope": "independent offline O-REPLAY pin review only; no engine or product qualification",
+  "status": "PASS",
+  "checks": {
+    "unmodifiedSuiteGreen": true,
+    "mutationBaselineGreen": true,
+    "allSixWrongVariantsCaught": true,
+    "fiveSemanticGapsMapped": true,
+    "allMappingsDiscovered": true,
+    "legacyErrorCompatibilityExact": true,
+    "probes22Exact": true,
+    "legacy341PerLaneUnchanged": true,
+    "goldenOutputs522Bound": true,
+    "commandLogsBound": true,
+    "allSourceAndFixtureInputsStillUnchanged": true,
+    "oracleFilesMatchBuilderHead": true,
+    "builderManifestMatches": true,
+    "wrongSubstitutionsSameAsRound2": true
+  },
+  "mappingAudit": [
+    {
+      "contractId": "CONTRACT-Q70A",
+      "nonempty": true,
+      "targets": [
+        {
+          "target": "lab.oracles.replay.tests.test_contract_section4.Erasure.test_Q70a_continuation_answers_from_the_source_read",
+          "discovered": true,
+          "callable": true,
+          "file": "lab/oracles/replay/tests/test_contract_section4.py",
+          "line": 2178
+        }
+      ]
+    },
+    {
+      "contractId": "CONTRACT-Q70B",
+      "nonempty": true,
+      "targets": [
+        {
+          "target": "lab.oracles.replay.tests.test_contract_section4.Erasure.test_Q70b_literal_token_from_an_in_flight_read",
+          "discovered": true,
+          "callable": true,
+          "file": "lab/oracles/replay/tests/test_contract_section4.py",
+          "line": 2194
+        }
+      ]
+    },
+    {
+      "contractId": "CONTRACT-Q70C",
+      "nonempty": true,
+      "targets": [
+        {
+          "target": "lab.oracles.replay.tests.test_contract_section4.Erasure.test_Q70c_literal_token_from_a_plain_read",
+          "discovered": true,
+          "callable": true,
+          "file": "lab/oracles/replay/tests/test_contract_section4.py",
+          "line": 2221
+        }
+      ]
+    },
+    {
+      "contractId": "CONTRACT-Q70D",
+      "nonempty": true,
+      "targets": [
+        {
+          "target": "lab.oracles.replay.tests.test_contract_section4.Erasure.test_Q70f_ambiguous_literal_token",
+          "discovered": true,
+          "callable": true,
+          "file": "lab/oracles/replay/tests/test_contract_section4.py",
+          "line": 2236
+        }
+      ]
+    },
+    {
+      "contractId": "CONTRACT-Q70E",
+      "nonempty": true,
+      "targets": [
+        {
+          "target": "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70E_only_issuing_prefixes",
+          "discovered": true,
+          "callable": true,
+          "file": "lab/oracles/replay/tests/test_q70_coverage.py",
+          "line": 35
+        }
+      ]
+    },
+    {
+      "contractId": "CONTRACT-Q70F",
+      "nonempty": true,
+      "targets": [
+        {
+          "target": "lab.oracles.replay.tests.test_contract_section4.Erasure.test_Q70f_ambiguous_literal_token",
+          "discovered": true,
+          "callable": true,
+          "file": "lab/oracles/replay/tests/test_contract_section4.py",
+          "line": 2236
+        }
+      ]
+    },
+    {
+      "contractId": "CONTRACT-Q70G",
+      "nonempty": true,
+      "targets": [
+        {
+          "target": "lab.oracles.replay.tests.test_contract_section4.Erasure.test_Q70g_journal_pagination",
+          "discovered": true,
+          "callable": true,
+          "file": "lab/oracles/replay/tests/test_contract_section4.py",
+          "line": 2256
+        }
+      ]
+    },
+    {
+      "contractId": "CONTRACT-Q70H",
+      "nonempty": true,
+      "targets": [
+        {
+          "target": "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70H_equal_view_different_bodies",
+          "discovered": true,
+          "callable": true,
+          "file": "lab/oracles/replay/tests/test_q70_coverage.py",
+          "line": 47
+        }
+      ]
+    },
+    {
+      "contractId": "CONTRACT-Q70I",
+      "nonempty": true,
+      "targets": [
+        {
+          "target": "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70I_journal_ambiguity_and_scope",
+          "discovered": true,
+          "callable": true,
+          "file": "lab/oracles/replay/tests/test_q70_coverage.py",
+          "line": 57
+        }
+      ]
+    },
+    {
+      "contractId": "CONTRACT-Q70J",
+      "nonempty": true,
+      "targets": [
+        {
+          "target": "lab.oracles.replay.tests.test_contract_section4.Erasure.test_Q70j_journal_read_scope",
+          "discovered": true,
+          "callable": true,
+          "file": "lab/oracles/replay/tests/test_contract_section4.py",
+          "line": 2278
+        }
+      ]
+    },
+    {
+      "contractId": "CONTRACT-Q70K",
+      "nonempty": true,
+      "targets": [
+        {
+          "target": "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70K_scope_on_every_scope_surface",
+          "discovered": true,
+          "callable": true,
+          "file": "lab/oracles/replay/tests/test_q70_coverage.py",
+          "line": 70
+        }
+      ]
+    },
+    {
+      "contractId": "CONTRACT-Q70L",
+      "nonempty": true,
+      "targets": [
+        {
+          "target": "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70L_entity_and_scope_key",
+          "discovered": true,
+          "callable": true,
+          "file": "lab/oracles/replay/tests/test_q70_coverage.py",
+          "line": 100
+        },
+        {
+          "target": "lab.oracles.replay.tests.test_contract_section4.Erasure.test_Q70l_entity_journal_pages",
+          "discovered": true,
+          "callable": true,
+          "file": "lab/oracles/replay/tests/test_contract_section4.py",
+          "line": 2298
+        }
+      ]
+    },
+    {
+      "contractId": "CONTRACT-Q70M",
+      "nonempty": true,
+      "targets": [
+        {
+          "target": "lab.oracles.replay.tests.test_contract_section4.Erasure.test_Q70m_typed_continuation_values",
+          "discovered": true,
+          "callable": true,
+          "file": "lab/oracles/replay/tests/test_contract_section4.py",
+          "line": 2321
+        }
+      ]
+    },
+    {
+      "contractId": "CONTRACT-Q70N",
+      "nonempty": true,
+      "targets": [
+        {
+          "target": "lab.oracles.replay.tests.test_scale_and_selfcheck.SelfChecks.test_continuation_table_check_detects_a_missing_paged_kind",
+          "discovered": true,
+          "callable": true,
+          "file": "lab/oracles/replay/tests/test_scale_and_selfcheck.py",
+          "line": 80
+        },
+        {
+          "target": "lab.oracles.replay.tests.test_scale_and_selfcheck.SelfChecks.test_execution_detects_computed_cross_module_and_nested_plants",
+          "discovered": true,
+          "callable": true,
+          "file": "lab/oracles/replay/tests/test_scale_and_selfcheck.py",
+          "line": 91
+        },
+        {
+          "target": "lab.oracles.replay.tests.test_scale_and_selfcheck.SelfChecks.test_unexercisable_kind_fails_closed",
+          "discovered": true,
+          "callable": true,
+          "file": "lab/oracles/replay/tests/test_scale_and_selfcheck.py",
+          "line": 113
+        }
+      ]
+    },
+    {
+      "contractId": "CONTRACT-Q70O",
+      "nonempty": true,
+      "targets": [
+        {
+          "target": "lab.oracles.replay.tests.test_views.ReferencePageInput.test_reference_page_malformed_inputs_exit_two",
+          "discovered": true,
+          "callable": true,
+          "file": "lab/oracles/replay/tests/test_views.py",
+          "line": 167
+        },
+        {
+          "target": "lab.oracles.replay.tests.test_views.ReferencePageInput.test_reference_page_valid_indices_and_terminal_page",
+          "discovered": true,
+          "callable": true,
+          "file": "lab/oracles/replay/tests/test_views.py",
+          "line": 192
+        }
+      ]
+    },
+    {
+      "contractId": "ER-CURSOR-ERASURE-PREFIX",
+      "nonempty": true,
+      "targets": [
+        {
+          "target": "lab.oracles.replay.tests.test_contract_section4.Erasure.test_Q66b_cursor_continues_per_prefix",
+          "discovered": true,
+          "callable": true,
+          "file": "lab/oracles/replay/tests/test_contract_section4.py",
+          "line": 2151
+        }
+      ]
+    },
+    {
+      "contractId": "ER-INFLIGHT-PREFIXES",
+      "nonempty": true,
+      "targets": [
+        {
+          "target": "lab.oracles.replay.tests.test_contract_section4.Erasure.test_Q66a_inflight_prefixes_only",
+          "discovered": true,
+          "callable": true,
+          "file": "lab/oracles/replay/tests/test_contract_section4.py",
+          "line": 2133
+        }
+      ]
+    }
+  ],
+  "mutationAudit": [
+    {
+      "variant": "Q70E-unfiltered-prefixes",
+      "testsRun": 403,
+      "errors": [],
+      "failureIdentities": [
+        "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70E_only_issuing_prefixes"
+      ],
+      "requiredTargetCaught": true,
+      "noUnrelatedFailures": true,
+      "resultSha256": "e3369ffe5b26eb2674e41febcddb93b406f5b045716a01370ad76231140bbc64",
+      "logSha256": "2a35504fe736a3d2373af0c1fbb6cd8e38d328f21d42bd60effcc56ba61a0806"
+    },
+    {
+      "variant": "Q70H-compare-page-bodies",
+      "testsRun": 403,
+      "errors": [],
+      "failureIdentities": [
+        "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70H_equal_view_different_bodies"
+      ],
+      "requiredTargetCaught": true,
+      "noUnrelatedFailures": true,
+      "resultSha256": "6faa040816f9562fc3f68af11a5d126155085a0a8542099db346ab58e42a2a52",
+      "logSha256": "dbf33caaac15ca2bfa3a4a783adba65668dd9fc04d99efea9b630a40ca3f0545"
+    },
+    {
+      "variant": "Q70I-choose-ambiguous-journal",
+      "testsRun": 403,
+      "errors": [],
+      "failureIdentities": [
+        "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70I_journal_ambiguity_and_scope"
+      ],
+      "requiredTargetCaught": true,
+      "noUnrelatedFailures": true,
+      "resultSha256": "2778beb36bc0207dea593671e23f20fc46b981b409b3ebe1163c43acdc3f1526",
+      "logSha256": "925d22157305b36fbac34787a498b2764a3339501aee36588e9b54b6c6e3a76c"
+    },
+    {
+      "variant": "Q70I-ignore-journal-scope",
+      "testsRun": 403,
+      "errors": [],
+      "failureIdentities": [
+        "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70I_journal_ambiguity_and_scope"
+      ],
+      "requiredTargetCaught": true,
+      "noUnrelatedFailures": true,
+      "resultSha256": "d18b934e9d36bf9b7350c67097253abe5c23aaf212fc59bb81f37768839cc808",
+      "logSha256": "e53e2a073802bce11a9bff82ed1c66c4a4b7b457fbaff4401674015800c72128"
+    },
+    {
+      "variant": "Q70K-default-nonjournal-scope",
+      "testsRun": 403,
+      "errors": [],
+      "failureIdentities": [
+        "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70K_scope_on_every_scope_surface (kind='transaction', defaultErasure=True)",
+        "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70K_scope_on_every_scope_surface (kind='transactionByCommand', defaultErasure=True)",
+        "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70K_scope_on_every_scope_surface (kind='transactionsForEntity', defaultErasure=True)",
+        "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70K_scope_on_every_scope_surface (kind='journalFacts', defaultErasure=True)",
+        "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70K_scope_on_every_scope_surface (kind='assertions', defaultErasure=True)",
+        "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70K_scope_on_every_scope_surface (kind='history', defaultErasure=True)",
+        "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70K_scope_on_every_scope_surface",
+        "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70L_entity_and_scope_key"
+      ],
+      "requiredTargetCaught": true,
+      "noUnrelatedFailures": true,
+      "resultSha256": "8a9e36603e6c7eaa713c758bf5aa80df72b360c5622d8f9221a3f9fcd995068d",
+      "logSha256": "dc6c47bc7db71d7411f4217adf38f577b54729fb4bc80ea8974186822f18d73e"
+    },
+    {
+      "variant": "Q70L-ignore-entity-scope-key",
+      "testsRun": 403,
+      "errors": [],
+      "failureIdentities": [
+        "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70L_entity_and_scope_key"
+      ],
+      "requiredTargetCaught": true,
+      "noUnrelatedFailures": true,
+      "resultSha256": "ac8da72ccad9aacdac5d8245f50c5796a9195c437094f6c93ef96f30505bffee",
+      "logSha256": "828da5dd9e829479d8efe36abe2b16929a9ef4464e70ade103ea974a36816ab0"
+    }
+  ],
+  "manifestCheck": [
+    {
+      "path": "lab/oracles/replay/__init__.py",
+      "expected": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
+      "actual": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0"
+    },
+    {
+      "path": "lab/oracles/replay/__main__.py",
+      "expected": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
+      "actual": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d"
+    },
+    {
+      "path": "lab/oracles/replay/cli.py",
+      "expected": "1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5",
+      "actual": "1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5"
+    },
+    {
+      "path": "lab/oracles/replay/constraints.py",
+      "expected": "9e1e9d7b1ca8046ca67520bbc4905b03ad3bd663c260a4ed0d2b6ca024a91a1d",
+      "actual": "9e1e9d7b1ca8046ca67520bbc4905b03ad3bd663c260a4ed0d2b6ca024a91a1d"
+    },
+    {
+      "path": "lab/oracles/replay/entities.py",
+      "expected": "e92308b6df7a0996a26fe129b9df07e058d8b0c84cff54f2690cd7c76fc871b3",
+      "actual": "e92308b6df7a0996a26fe129b9df07e058d8b0c84cff54f2690cd7c76fc871b3"
+    },
+    {
+      "path": "lab/oracles/replay/errors.py",
+      "expected": "c2260e1e06af38b2ce97246d5f9ff5626484dd0dfaf4afe409ddfcd6eee634df",
+      "actual": "c2260e1e06af38b2ce97246d5f9ff5626484dd0dfaf4afe409ddfcd6eee634df"
+    },
+    {
+      "path": "lab/oracles/replay/exact.py",
+      "expected": "4cfcf2c9af4b4ddf36f2218308685aff99d91416ac7f0d1dec053fb7a6e74d2a",
+      "actual": "4cfcf2c9af4b4ddf36f2218308685aff99d91416ac7f0d1dec053fb7a6e74d2a"
+    },
+    {
+      "path": "lab/oracles/replay/replay.py",
+      "expected": "e80ecf94423c6985090fd5af2f7be1d768f22c2a30dbbee2a15a75b32a71c85c",
+      "actual": "e80ecf94423c6985090fd5af2f7be1d768f22c2a30dbbee2a15a75b32a71c85c"
+    },
+    {
+      "path": "lab/oracles/replay/run.py",
+      "expected": "5a533a3f1944f2c483e2cf0e5bfa26f4334c5fd8a04aa03828c8c053d4a2b02f",
+      "actual": "5a533a3f1944f2c483e2cf0e5bfa26f4334c5fd8a04aa03828c8c053d4a2b02f"
+    },
+    {
+      "path": "lab/oracles/replay/scale.py",
+      "expected": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
+      "actual": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe"
+    },
+    {
+      "path": "lab/oracles/replay/selfcheck.py",
+      "expected": "5a298c577b50204dddf5dce6577207d0dd1e90b339b3ee3d9c3bbf2b431ed8fd",
+      "actual": "5a298c577b50204dddf5dce6577207d0dd1e90b339b3ee3d9c3bbf2b431ed8fd"
+    },
+    {
+      "path": "lab/oracles/replay/stamps.py",
+      "expected": "3a5c37aae37b44f5c41b0e0fccba3eee658985ca3a18dc55d147e8b6ece8526d",
+      "actual": "3a5c37aae37b44f5c41b0e0fccba3eee658985ca3a18dc55d147e8b6ece8526d"
+    },
+    {
+      "path": "lab/oracles/replay/tests/__init__.py",
+      "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "actual": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "lab/oracles/replay/tests/helpers.py",
+      "expected": "005be879fb88580f578f8befc73d22218006cd38504a88226fedb91b3ede3703",
+      "actual": "005be879fb88580f578f8befc73d22218006cd38504a88226fedb91b3ede3703"
+    },
+    {
+      "path": "lab/oracles/replay/tests/test_contract_section4.py",
+      "expected": "6c2c0de9a4568f8f9b6c79f502dab042acf7246e1bb33041f3b86e60910220b2",
+      "actual": "6c2c0de9a4568f8f9b6c79f502dab042acf7246e1bb33041f3b86e60910220b2"
+    },
+    {
+      "path": "lab/oracles/replay/tests/test_entities.py",
+      "expected": "562feac4b58c11e8fabb8e30fff85c41cd9562cbd05a94df3d8c3d8f19caffe6",
+      "actual": "562feac4b58c11e8fabb8e30fff85c41cd9562cbd05a94df3d8c3d8f19caffe6"
+    },
+    {
+      "path": "lab/oracles/replay/tests/test_exact.py",
+      "expected": "35aaf8384af0178e1fc929b94fe0e11a43aa64dbbe567bf50067658821b619b1",
+      "actual": "35aaf8384af0178e1fc929b94fe0e11a43aa64dbbe567bf50067658821b619b1"
+    },
+    {
+      "path": "lab/oracles/replay/tests/test_q70_coverage.py",
+      "expected": "07e8afab10424e3ab97da2b15420b57e1ab7c08c6526444b118861efb4e790ef",
+      "actual": "07e8afab10424e3ab97da2b15420b57e1ab7c08c6526444b118861efb4e790ef"
+    },
+    {
+      "path": "lab/oracles/replay/tests/test_record_time.py",
+      "expected": "ce4bf46f6fb08b9d57e580c071879f405e8f77795d0155978dbebeeb7014ab35",
+      "actual": "ce4bf46f6fb08b9d57e580c071879f405e8f77795d0155978dbebeeb7014ab35"
+    },
+    {
+      "path": "lab/oracles/replay/tests/test_replay.py",
+      "expected": "6900d4fc9710e3248c476c036aba84565c53b4265b231867778d776668feb7b9",
+      "actual": "6900d4fc9710e3248c476c036aba84565c53b4265b231867778d776668feb7b9"
+    },
+    {
+      "path": "lab/oracles/replay/tests/test_rulings.py",
+      "expected": "3997f66b01be8f697977911ec1fdf5209223d5310206657f7ed65c7ea106aea4",
+      "actual": "3997f66b01be8f697977911ec1fdf5209223d5310206657f7ed65c7ea106aea4"
+    },
+    {
+      "path": "lab/oracles/replay/tests/test_scale_and_selfcheck.py",
+      "expected": "3b78a5adc8e665730c2b53799de7fbfbc04b99cae343404f630fc856f4b255f4",
+      "actual": "3b78a5adc8e665730c2b53799de7fbfbc04b99cae343404f630fc856f4b255f4"
+    },
+    {
+      "path": "lab/oracles/replay/tests/test_values.py",
+      "expected": "1070395875907bca8a46ab9b88fee0758a1b73aafe94b5b610b2117e2740d375",
+      "actual": "1070395875907bca8a46ab9b88fee0758a1b73aafe94b5b610b2117e2740d375"
+    },
+    {
+      "path": "lab/oracles/replay/tests/test_views.py",
+      "expected": "d79f5bab47c842aa443ffe814df88ff65bf153777c95ff39a32e5501e16c1584",
+      "actual": "d79f5bab47c842aa443ffe814df88ff65bf153777c95ff39a32e5501e16c1584"
+    },
+    {
+      "path": "lab/oracles/replay/values.py",
+      "expected": "67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982",
+      "actual": "67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982"
+    },
+    {
+      "path": "lab/oracles/replay/views.py",
+      "expected": "2ab52f5aaf2742b9e6832ff1b80fc94f5e9dad54bebb0e2d6393f1c2fc483a8e",
+      "actual": "2ab52f5aaf2742b9e6832ff1b80fc94f5e9dad54bebb0e2d6393f1c2fc483a8e"
+    },
+    {
+      "path": "lab/oracles/replay/selfcheck_fixtures/freeze-ham-reference.mjs",
+      "expected": "c533122597c940d69c8a101a1a175ba5e9d6ab62f1efdb2d5526c9f65a86a206",
+      "actual": "c533122597c940d69c8a101a1a175ba5e9d6ab62f1efdb2d5526c9f65a86a206"
+    },
+    {
+      "path": "lab/experiments/EXP-O06/final_gates.py",
+      "expected": "b5ab631488352a778245157a77afa581bf89dc998c0ac0fbce428a157fc73bbc",
+      "actual": "b5ab631488352a778245157a77afa581bf89dc998c0ac0fbce428a157fc73bbc"
+    },
+    {
+      "path": "lab/experiments/EXP-O06/fixture_runner.py",
+      "expected": "303126bed52c815fce0873e695188ad8abc64c55d098f27127d18ed6ad8751e8",
+      "actual": "303126bed52c815fce0873e695188ad8abc64c55d098f27127d18ed6ad8751e8"
+    },
+    {
+      "path": "lab/experiments/EXP-O06/gates.py",
+      "expected": "891ca164bb0f3355c55f4ebdbc8f333e90fcee4b7280d963cfed057e40015605",
+      "actual": "891ca164bb0f3355c55f4ebdbc8f333e90fcee4b7280d963cfed057e40015605"
+    },
+    {
+      "path": "lab/experiments/EXP-O06/golden_runner.py",
+      "expected": "cc08d4821a8ee1712373b9c3dfafb0186499a57de239657d6c8c3043df1194ec",
+      "actual": "cc08d4821a8ee1712373b9c3dfafb0186499a57de239657d6c8c3043df1194ec"
+    },
+    {
+      "path": "lab/experiments/EXP-O06/proof.py",
+      "expected": "7f1125aeec4470a88526a63b37479af0dd24544c7968d5e024bcefcc395a585a",
+      "actual": "7f1125aeec4470a88526a63b37479af0dd24544c7968d5e024bcefcc395a585a"
+    },
+    {
+      "path": "lab/experiments/EXP-O06/round3/finalize.py",
+      "expected": "94c338beab27424736a3e41f141905ec0c05b2f1219c57dc72e2d4b1b04441ba",
+      "actual": "94c338beab27424736a3e41f141905ec0c05b2f1219c57dc72e2d4b1b04441ba"
+    },
+    {
+      "path": "lab/experiments/EXP-O06/round3/gates.py",
+      "expected": "ef0e43b3f91507509224abd38ccc21aefc0925b501dbed4ed7264e96ce457bb1",
+      "actual": "ef0e43b3f91507509224abd38ccc21aefc0925b501dbed4ed7264e96ce457bb1"
+    },
+    {
+      "path": "lab/experiments/EXP-O06/round3/mutations.py",
+      "expected": "7171ca9d1d8eca4dd87bfd0d66f6872802a31b13cc9b19fab1c426c9ee723430",
+      "actual": "7171ca9d1d8eca4dd87bfd0d66f6872802a31b13cc9b19fab1c426c9ee723430"
+    },
+    {
+      "path": "lab/experiments/EXP-O06/round3/seal.py",
+      "expected": "ae928d5b7f7019efa7516ba113f99c0fd1a4ac28f815c9d7bda67e41dafb305c",
+      "actual": "ae928d5b7f7019efa7516ba113f99c0fd1a4ac28f815c9d7bda67e41dafb305c"
+    },
+    {
+      "path": "lab/experiments/EXP-O06/round2/gates.py",
+      "expected": "6a29352d2e9d378479861ec12e6ae39c2533aa1f3ffb3e78e3160adb73c04155",
+      "actual": "6a29352d2e9d378479861ec12e6ae39c2533aa1f3ffb3e78e3160adb73c04155"
+    },
+    {
+      "path": "lab/experiments/EXP-O06/round2/probes.py",
+      "expected": "99fd7c9c3a799e62fda25e60d3c70de729f06c3b062b6d275250c8de74d3ffab",
+      "actual": "99fd7c9c3a799e62fda25e60d3c70de729f06c3b062b6d275250c8de74d3ffab"
+    },
+    {
+      "path": "lab/experiments/EXP-O06/round2/seal.py",
+      "expected": "025923427506e45502227c181c20d03c637bf32872edecab4abada0df889dfa0",
+      "actual": "025923427506e45502227c181c20d03c637bf32872edecab4abada0df889dfa0"
+    },
+    {
+      "path": "lab/experiments/EXP-O06/round3/reviewer/coverage.original.py",
+      "expected": "c23a1cb522232a082bac099c0d0496038ce915c55a1f7dc03852e35cfc13b893",
+      "actual": "c23a1cb522232a082bac099c0d0496038ce915c55a1f7dc03852e35cfc13b893"
+    }
+  ],
+  "normalAuditSha256": "bbb0e70380f139aa36e3fddcb55aaf68e80b36c64218c09d81199cdda4dee44c",
+  "coverageSummarySha256": "e52f5f9e5e93e2cf591dc8ff290daf5d75fbb07a36e98f891ef9e28b2be72c27",
+  "inputsSha256": "69c2a0e24dbf51eec02438742614a6d8b6021b64864bac716c70ed02bda92b13",
+  "mutationInputsSha256": "6ca4663b087b3b29bffae35d7478c87dc06323b86fce1ce544ff2bd55c3e89b1",
+  "reviewScripts": {
+    "round3_run.py": "8032bfe3392e6450a3b925cb1846e142393ca3d282a5c827ea352c40e50dac49",
+    "round3_coverage.py": "74d3cfef8fa5426e597fabbb0ebdc98485f0233aa5c67d20086ecc4ece59f6c9",
+    "round3_seal.py": "e4b5b50e7ca7d16a80b0dd822e26fed695c1827f8813c3ec42a68a3937286916"
+  }
+}

@@ -1,0 +1,1 @@
+{"mutation": "Q70L-ignore-entity-scope-key", "run": 403, "failures": ["lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70L_entity_and_scope_key"], "errors": [], "witnessChanged": true}

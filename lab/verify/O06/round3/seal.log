@@ -1,0 +1,100 @@
+{
+  "status": "PASS",
+  "checks": {
+    "unmodifiedSuiteGreen": true,
+    "mutationBaselineGreen": true,
+    "allSixWrongVariantsCaught": true,
+    "fiveSemanticGapsMapped": true,
+    "allMappingsDiscovered": true,
+    "legacyErrorCompatibilityExact": true,
+    "probes22Exact": true,
+    "legacy341PerLaneUnchanged": true,
+    "goldenOutputs522Bound": true,
+    "commandLogsBound": true,
+    "allSourceAndFixtureInputsStillUnchanged": true,
+    "oracleFilesMatchBuilderHead": true,
+    "builderManifestMatches": true,
+    "wrongSubstitutionsSameAsRound2": true
+  },
+  "mutations": [
+    {
+      "variant": "Q70E-unfiltered-prefixes",
+      "testsRun": 403,
+      "errors": [],
+      "failureIdentities": [
+        "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70E_only_issuing_prefixes"
+      ],
+      "requiredTargetCaught": true,
+      "noUnrelatedFailures": true,
+      "resultSha256": "e3369ffe5b26eb2674e41febcddb93b406f5b045716a01370ad76231140bbc64",
+      "logSha256": "2a35504fe736a3d2373af0c1fbb6cd8e38d328f21d42bd60effcc56ba61a0806"
+    },
+    {
+      "variant": "Q70H-compare-page-bodies",
+      "testsRun": 403,
+      "errors": [],
+      "failureIdentities": [
+        "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70H_equal_view_different_bodies"
+      ],
+      "requiredTargetCaught": true,
+      "noUnrelatedFailures": true,
+      "resultSha256": "6faa040816f9562fc3f68af11a5d126155085a0a8542099db346ab58e42a2a52",
+      "logSha256": "dbf33caaac15ca2bfa3a4a783adba65668dd9fc04d99efea9b630a40ca3f0545"
+    },
+    {
+      "variant": "Q70I-choose-ambiguous-journal",
+      "testsRun": 403,
+      "errors": [],
+      "failureIdentities": [
+        "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70I_journal_ambiguity_and_scope"
+      ],
+      "requiredTargetCaught": true,
+      "noUnrelatedFailures": true,
+      "resultSha256": "2778beb36bc0207dea593671e23f20fc46b981b409b3ebe1163c43acdc3f1526",
+      "logSha256": "925d22157305b36fbac34787a498b2764a3339501aee36588e9b54b6c6e3a76c"
+    },
+    {
+      "variant": "Q70I-ignore-journal-scope",
+      "testsRun": 403,
+      "errors": [],
+      "failureIdentities": [
+        "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70I_journal_ambiguity_and_scope"
+      ],
+      "requiredTargetCaught": true,
+      "noUnrelatedFailures": true,
+      "resultSha256": "d18b934e9d36bf9b7350c67097253abe5c23aaf212fc59bb81f37768839cc808",
+      "logSha256": "e53e2a073802bce11a9bff82ed1c66c4a4b7b457fbaff4401674015800c72128"
+    },
+    {
+      "variant": "Q70K-default-nonjournal-scope",
+      "testsRun": 403,
+      "errors": [],
+      "failureIdentities": [
+        "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70K_scope_on_every_scope_surface (kind='transaction', defaultErasure=True)",
+        "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70K_scope_on_every_scope_surface (kind='transactionByCommand', defaultErasure=True)",
+        "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70K_scope_on_every_scope_surface (kind='transactionsForEntity', defaultErasure=True)",
+        "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70K_scope_on_every_scope_surface (kind='journalFacts', defaultErasure=True)",
+        "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70K_scope_on_every_scope_surface (kind='assertions', defaultErasure=True)",
+        "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70K_scope_on_every_scope_surface (kind='history', defaultErasure=True)",
+        "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70K_scope_on_every_scope_surface",
+        "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70L_entity_and_scope_key"
+      ],
+      "requiredTargetCaught": true,
+      "noUnrelatedFailures": true,
+      "resultSha256": "8a9e36603e6c7eaa713c758bf5aa80df72b360c5622d8f9221a3f9fcd995068d",
+      "logSha256": "dc6c47bc7db71d7411f4217adf38f577b54729fb4bc80ea8974186822f18d73e"
+    },
+    {
+      "variant": "Q70L-ignore-entity-scope-key",
+      "testsRun": 403,
+      "errors": [],
+      "failureIdentities": [
+        "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70L_entity_and_scope_key"
+      ],
+      "requiredTargetCaught": true,
+      "noUnrelatedFailures": true,
+      "resultSha256": "ac8da72ccad9aacdac5d8245f50c5796a9195c437094f6c93ef96f30505bffee",
+      "logSha256": "828da5dd9e829479d8efe36abe2b16929a9ef4464e70ade103ea974a36816ab0"
+    }
+  ]
+}

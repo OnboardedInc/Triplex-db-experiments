@@ -1,0 +1,28 @@
+..................................................................................................................................................................................................................................................................................F................................................................................................................................
+======================================================================
+FAIL: test_Q70L_entity_and_scope_key (lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70L_entity_and_scope_key)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o06/lab/oracles/replay/tests/test_q70_coverage.py", line 102, in test_Q70L_entity_and_scope_key
+    self.assertEqual(journal_values(c),[('plain',[mark(),mark()])])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [([], [{'type': 'integer', 'value': '1'}, {[128 chars]0}])] != [('plain', [{'_tag': 'ErasedValue', 'erased[49 chars]0}])]
+
+First differing element 0:
+([], [{'type': 'integer', 'value': '1'}, {[29 chars]3'}])
+('plain', [{'_tag': 'ErasedValue', 'erased[48 chars]00}])
+
+First list contains 1 additional elements.
+First extra element 1:
+(['tx:2'], [{'_tag': 'ErasedValue', 'erasedAt': 200}, {'_tag': 'ErasedValue', 'erasedAt': 200}])
+
++ [('plain',
+- [([], [{'type': 'integer', 'value': '1'}, {'type': 'integer', 'value': '3'}]),
+-  (['tx:2'],
+    [{'_tag': 'ErasedValue', 'erasedAt': 200},
+     {'_tag': 'ErasedValue', 'erasedAt': 200}])]
+
+----------------------------------------------------------------------
+Ran 403 tests in 16.315s
+
+FAILED (failures=1)
