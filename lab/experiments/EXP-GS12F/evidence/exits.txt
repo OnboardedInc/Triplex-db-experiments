@@ -1,0 +1,12 @@
+build 0
+typecheck-core 0
+unit-core 0
+unit-lanes 0
+typecheck 0
+integration-values 0
+cloudflare 0
+sqlite 0
+xtdb-live 0
+qlever-live 1
+other-adapters 0
+pack 0

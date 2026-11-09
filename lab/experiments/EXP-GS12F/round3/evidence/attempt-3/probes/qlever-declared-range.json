@@ -1,0 +1,16 @@
+[
+  {
+    "value": "576460752303423488",
+    "before": 0,
+    "after": 0,
+    "typed": true,
+    "error": "{\n  field: 'value',\n  value: { type: 'integer', value: '576460752303423488' },\n  message: \"Value is outside qlever's exact storage domain\",\n  _tag: 'InvalidTripleError'\n}"
+  },
+  {
+    "value": "-576460752303423489",
+    "before": 0,
+    "after": 0,
+    "typed": true,
+    "error": "{\n  field: 'value',\n  value: { type: 'integer', value: '-576460752303423489' },\n  message: \"Value is outside qlever's exact storage domain\",\n  _tag: 'InvalidTripleError'\n}"
+  }
+]

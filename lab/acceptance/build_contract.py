@@ -23,7 +23,7 @@ import sys
 
 HERE = pathlib.Path(__file__).resolve().parent
 REPO = HERE.parent.parent
-VERSION = "0.3.13"
+VERSION = "0.3.14"
 
 
 def contract_oracle_answer(case_bytes, contract):
@@ -3404,7 +3404,7 @@ def build_load_contract():
         "obligations": [o["id"] for o in OBL if o["id"].startswith(("NS.", "GS."))],
         "population": "SCALE_POPULATION year-one (obligations.json scalePopulation), on one identified profile and composition",
         "writerTrace": WRITER_TRACE,
-        "seedRules": SEED_RULES, "freezeProtocol": FREEZE_PROTOCOL, "qleverEvidencePolicy": QLEVER_EVIDENCE_POLICY, "goldenScenarioPolicy": GOLDEN_SCENARIO_POLICY,
+        "seedRules": SEED_RULES, "freezeProtocol": FREEZE_PROTOCOL, "qleverEvidencePolicy": QLEVER_EVIDENCE_POLICY, "goldenScenarioPolicy": GOLDEN_SCENARIO_POLICY, "laneXP2Rules": LANE_X_P2_RULES, "laneQP4Rules": LANE_Q_P4_RULES,
         "perSurface": "P1, P4 and P5 run separately in each lane language (xtdb-xtql, xtdb-sql, qlever-sparql, datomic-datalog query and pull); P2 and P3 run per engine; a mixed-language run is a diagnostic only",
         "measurements": {
             "P1": {"readers": "closed-loop, zero think time, each reader a distinct client id", "levels": [0, 1, 4, 16, 64, 256], "stress": 1024, "zeroReaderBaseline": "level 0 = writer trace alone, same trace segment and burst phase",
@@ -3505,7 +3505,7 @@ EXPECTED_RECORDED_NOT_COMPILED = []
 def ruling_row_ids(text):
     ids = []
     for line in text.splitlines():
-        m = re.match(r"^\| (Q\d+[a-z]?(?:-clarified)?|AMB-\d\d)\b", line)
+        m = re.match(r"^\| (Q\d+[a-z]?(?:-clarified|-S\d+)?|AMB-\d\d)\b", line)
         if m and m.group(1) not in ids:
             ids.append(m.group(1))
     return ids
@@ -6271,12 +6271,63 @@ def checks_0313():
         IMAGE_PINS["datomic"] = saved_image
     if PIN_CHANGES_0313 != audit["pins"] or IMAGE_PINS.get("datomic") != audit["pins"]["datomic"]["new"]:
         errors.append("Q45a/Q61i: reviewed Datomic image repin required")
-    p = audit["pins"]["testkit"]
+    p = dict(audit["pins"]["testkit"], sha256=PIN_CHANGES_0314.get("packages/testkit/src/index.ts", {}).get("sha256"))
     if sha_file(p["path"]) != p["sha256"] or [{"path": f, "sha256": sha_file(f)} for f in ORACLES["O-TESTKIT"]["files"] if ORACLES["O-TESTKIT"]["status"] == "EXISTS"] != [{"path": p["path"], "sha256": p["sha256"]}] or CS["CS-U44"]["pinnedSourceFiles"] != [{"path": p["path"], "sha256": p["sha256"]}]:
         errors.append("Q45a: all reviewed testkit source pin projections required")
     held = {"Q78e", "Q86g", "Q94a"} | {k for k in pending_ruling_ids() if k.startswith(("Q89", "Q90", "Q92", "Q95"))}
     if not held <= set(pending_ruling_ids()) or held & {v["id"] for v in RULINGS}:
         errors.append("0.3.13: Sam/RT01/ER01 rulings remain pending")
+    return errors
+
+
+
+# [CX-A01-0314] Why: literal authority and source pins move atomically with accepted integrations (Q45a). Rejected: treating pending rulings or historical receipts as execution authority.
+AUTHORITY_0314 = {'path': 'lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.14/authority-and-pin-review.json', 'sha256': 'cebe85003b3d0cff5bde495b622cef909772bb35ee55367e654946d144a2869e', 'originalPending': 'lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.14/pending-authority.md'}
+RULES_0314 = {'Q96a': {'topic': 'composition', 'rule': "P2 is measured per subject serially and in parallel across subjects, with the queue inside the candidate (Q51a); A0's single-flight composition stays only as a control arm. Golden scenario commit bars measured on single-flight A0 are DIAGNOSTIC (they measure queueing).", 'basis': 'R39 3.2; R37 1.2'}, 'Q96b': {'topic': 'stamps under concurrency', 'rule': "RT01 round A's client stamp is monotone only because A0 serializes every commit; any per-subject concurrent arm uses a decider-side stamp (the engine stamp after probe p9, or the broker's), per Q90c. RT01 round A's added scope-wide scan on A0 is measured on an engine before RT01 merges (G6).", 'basis': 'R39 3.3'}, 'Q96c': {'topic': 'the shortest path and the native check', 'rule': "Lane X's shortest path to P2 is XTDB behind the broker (EXP-P2B, Q51b, Q58b). EXP-P2X2 (lab/experiments/EXP-P2X2/BRIEF.md) runs once on an exclusive xtdb-s1 slot after K01's live run and before P5 A1, to settle whether the native path is closed, with the decision rule written in R39 4.5 before the run (native is closed if F3 p50 > 6 ms, or F5 p50 > 20 ms, or engine resolve > 7 ms per commit). If closed, the lab says so plainly (SCOPE 3.2) and keeps the native arm as a comparison.", 'basis': 'R39 2, 4'}, 'Q97a': {'topic': 'current pulls from H1', 'rule': 'Lane Q serves current-value pulls from the broker\'s SQLite H1 store, behind a default-off currentRoute: "h1" option; QLever keeps history, native SPARQL and analytics. This is the ruled design (Q68a, Q50a, Q68d), which SQL01 used only as an outage fallback. A route that cannot answer a basis exactly refuses (Q89b, Q89c, Q92h). EXP-QH1 (lab/experiments/EXP-QH1/BRIEF.md) builds it after P2Q and SQL01 merge; its G1 to G7 need no slot, G8 takes one exclusive qlever-s1 run.', 'basis': 'R40 2-3'}, 'Q97b': {'topic': 'the keep-alive stall', 'rule': 'Every QLever latency measured from the host through QleverClient so far carries a 41 to 45 ms keep-alive stall on about a third of requests, because QLever never sets TCP_NODELAY and QleverClient keeps connections alive. QLever latency receipts record the connection mode; earlier QLever latency numbers are DIAGNOSTIC on this ground too. The fix is measured first as a connection per request from the host (no custom image), with the engine patch as the fallback.', 'basis': 'R40 1, 4.3; R17 0.2'}, 'Q97c': {'topic': 'multi-request pulls', 'rule': 'A pull form that needs one request per BFS level cannot meet P4 from the host on QLever (transport alone is 18 to 32 ms per depth-6 pull), so no multi-request QLever pull form is a P4 candidate.', 'basis': 'R40 1'}, 'Q96d': {'topic': 'native lane X P2 is closed', 'rule': "EXP-P2X2 (exp/P2X2-commit-floor b9a76c0, one exclusive xtdb-s1 run) met Q96c's preregistered rule: F3 p50 7.68 ms (bar 6) and F5 fresh 33.00 ms (bar 20). The XTDB-native commit path cannot meet P2 in this VM, which the lab states plainly (SCOPE 3.2); lane X's P2 candidate is XTDB behind the broker (EXP-P2B), and the native per-subject arm stays as a comparison. Aged F6, F7 to F9 and strict no-wait checks remain open as diagnostics, and the run awaits an independent review of its receipts.", 'basis': 'EXP-P2X2 report'}}
+PIN_CHANGES_0314 = {'packages/testkit/src/index.ts': {'previousSha256': 'cb89a55ced5426b8fa0af3523fbbeb73870e61e3622ebb42e8a78c3e67da8d28', 'sha256': '2c26c678577f98a71003588c7c62b9a81ff6d109a033c72c521f295f4cb2ffdd'}}
+LANE_X_P2_RULES = {k: dict(v) for k, v in RULES_0314.items() if k.startswith("Q96")}
+LANE_Q_P4_RULES = {k: dict(v) for k, v in RULES_0314.items() if k.startswith("Q97")}
+RULING_REVIEW_0314 = {'commit': '4155fda7', 'record': 'lab/verify/P2X2/VERIFY.md', 'sha256': '462456077e50a4a6a4027deb2f1e55f36361b69751323ff0f37dddee2943a159', 'verdict': 'ACCEPT for D1 under preregistered R39 4.5; native P2 closed on this host/profile only'}
+for _rid, _v in RULES_0314.items():
+    RULINGS.append({"id": _rid, "topic": _v["topic"], "ruling": _v["rule"], "compiledInto": ["laneXP2Rules" if _rid.startswith("Q96") else "laneQP4Rules"]})
+CS["CS-U44"]["pinnedSourceFiles"] = [{"path": "packages/testkit/src/index.ts", "sha256": '2c26c678577f98a71003588c7c62b9a81ff6d109a033c72c521f295f4cb2ffdd'}]
+SCOPE_SOURCES += [AUTHORITY_0314["path"], AUTHORITY_0314["originalPending"], "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.14/packages__testkit__src__index.ts.diff", RULING_REVIEW_0314["record"]]
+
+
+def checks_0314():
+    errors = []
+    # [CX-A01-0314-R3] Why: list pending Sam ids exactly without granting authority. Rejected: truncating Q99-S1 to Q99 (loses pending identity).
+    if pending_ruling_ids("| Q99-S1 (waits for Sam) | x | y |\n| Q100-S1 | x | y |") != ["Q99-S1", "Q100-S1"]:
+        errors.append("0.3.14: exact pending Sam ids required")
+    audit = json.loads((REPO / AUTHORITY_0314["path"]).read_text())
+    if sha_file(AUTHORITY_0314["path"]) != AUTHORITY_0314["sha256"]:
+        errors.append("0.3.14: immutable authority/pin review changed")
+    authority = {}
+    for line in (REPO / AUTHORITY_0314["originalPending"]).read_text().splitlines():
+        m = re.match(r"^\| (Q96[a-d]|Q97[a-c])\b([^|]*)\| (.*?) \| (.*?) \|$", line)
+        if m:
+            authority[m[1]] = {"topic": m[2].strip(), "rule": m[3], "basis": m[4]}
+    expected = {"Q96" + c for c in "abcd"} | {"Q97" + c for c in "abc"}
+    if set(RULES_0314) != expected or RULES_0314 != authority or RULES_0314 != audit["rules"]:
+        errors.append("0.3.14: seven exact literal rulings required")
+    md = (HERE / "RULINGS.md").read_text()
+    for rid, v in authority.items():
+        dest = LANE_X_P2_RULES if rid.startswith("Q96") else LANE_Q_P4_RULES
+        if dest.get(rid) != v or not any(r["id"] == rid and r["ruling"] == v["rule"] for r in RULINGS) or v["rule"] not in md:
+            errors.append(rid + ": literal rule and consumer required")
+    if expected & set(pending_ruling_ids()):
+        errors.append("0.3.14: compiled rulings cannot remain pending")
+    held = {"Q78e", "Q86g", "Q94a"} | {r for r in ruling_row_ids((REPO / AUTHORITY_0314["originalPending"]).read_text()) if r.startswith(("Q89", "Q90", "Q92", "Q95", "Q98"))}
+    if not held <= set(pending_ruling_ids()) or held & {r["id"] for r in RULINGS}:
+        errors.append("0.3.14: requested holds must remain pending")
+    if PIN_CHANGES_0314 != {p["path"]: {"previousSha256": p["baseSha256"], "sha256": p["sha256"]} for p in audit["pinChanges"]}:
+        errors.append("Q45a: reviewed repins required")
+    for path, pin in PIN_CHANGES_0314.items():
+        want = [{"path": path, "sha256": pin["sha256"]}]
+        if sha_file(path) != pin["sha256"] or CS["CS-U44"]["pinnedSourceFiles"] != want or ORACLES["O-TESTKIT"]["files"] != [path]:
+            errors.append("Q45a: current source and every pin projection must agree")
+    if RULING_REVIEW_0314 != audit["nativeReview"] or sha_file(RULING_REVIEW_0314["record"]) != RULING_REVIEW_0314["sha256"]:
+        errors.append("Q96d: completed independent review binding required")
     return errors
 
 
@@ -6286,6 +6337,7 @@ def main():
     errs += checks_0312()
     errs += checks_0312_round3()
     errs += checks_0313()
+    errs += checks_0314()
     for o in OBL:
         o["verifierMode"] = verifier_mode(o)
         o["definitionSha256"] = obligation_hash(o)
@@ -6310,7 +6362,7 @@ def main():
         "temporalRules": TEMPORAL_RULES, "readShapeRules": READ_SHAPE_RULES, "journalRules": JOURNAL_RULES, "ambRulings": AMB_RULINGS, "goldenResolutions": GOLDEN_RESOLUTIONS, "goldenRule": GOLDEN_RULE, "goldenFilesPinned": {f"{GOLDEN_DIR}/{k}": sha_file(f"{GOLDEN_DIR}/{k}") for k in golden_vectors()},
         "erasure": ERASURE, "protectedCopyInventory": PROTECTED_COPY_INVENTORY, "composition": COMPOSITION, "worldW0": WORLD_W0, "goldenFailureSchedules": {f"GS.{k:02d}": [{"case": c, "schedule": w, "expected": x} for c, w, x in v] for k, v in GS_FAILURE_SCHEDULES.items()},
         "evaluatorCounterexamples": EVALUATOR_COUNTEREXAMPLES, "evaluatorPositiveFixtures": EVALUATOR_POSITIVE_FIXTURES, "position": POSITION, "positionDenseCases": POSITION_DENSE_CASES, "a0Controls": A0_CONTROLS, "a0Registry": A0_REGISTRY, "qualificationRun": dict(QUALIFICATION_RUN, integrity=EVALUATOR_INTEGRITY, unprotected=["in-run edit and restore", "setsid", "TOCTOU", "no filesystem isolation", "no network isolation"] + ISOLATION_ADMISSION["unprotected"], protectedProcessCleanup="double-fork descendants are killed; setsid remains unprotected (Q75j)"), "continuationRules": CONTINUATION_RULES, "seedRules": SEED_RULES, "recursionRules": RECURSION_RULES, "datomicRules": DATOMIC_RULES, "exactQueryRules": EXACT_QUERY_RULES, "oracleRunners": ORACLE_RUNNERS, "compositionFields": list(COMPOSITION_FIELDS), "oracleAnswerRule": ORACLE_ANSWER_RULE, "answerMembers": ANSWER_MEMBERS, "caseManifest": CASE_MANIFEST, "buildSpec": BUILD_SPEC, "imagePins": IMAGE_PINS, "verifierRegistry": VERIFIER_REGISTRY, "verifierBriefSources": VERIFIER_BRIEF_SOURCES, "sourceVariantFields": SOURCE_VARIANT_FIELDS, "logFields": LOG_FIELDS, "workloadIdentity": WORKLOAD_IDENTITY, "workloadRepins": WORKLOAD_REPINS_0312, "workloadRepinReview": WORKLOAD_REPIN_REVIEW, "datomicStoragePolicy": DATOMIC_STORAGE_POLICY, "evidenceSchemas": EVIDENCE_SCHEMAS, "outsideBlockMutationFixture": OUTSIDE_BLOCK_MUTATION_FIXTURE, "positionRequiredCases": POSITION_REQUIRED_CASES, "claimAdmission": CLAIM_ADMISSION,
-        "brokerRules": BROKER_RULES, "observationRules": OBSERVATION_RULES, "isolationRules": ISOLATION_RULES, "isolationAdmission": ISOLATION_ADMISSION, "freezeProtocol": FREEZE_PROTOCOL, "qleverEvidenceRules": QLEVER_EVIDENCE_RULES, "qleverEvidencePolicy": QLEVER_EVIDENCE_POLICY, "goldenScenarioRulings": GOLDEN_SCENARIO_RULES, "goldenScenarioPolicy": GOLDEN_SCENARIO_POLICY, "seedAmendments": SEED_AMENDMENTS_0313, "retiredSeedRules": RETIRED_RULES_0313, "pinChanges0313": PIN_CHANGES_0313, "mergeGates": MERGE_GATES, "pendingRulings": pending_rulings(), "closability": closability(), "oraclePins": ORACLE_PINS, "oracleRefusals": ORACLE_REFUSALS, "oracleRefusalRule": ORACLE_REFUSAL_RULE, "oracleScope": {k: oracle_scope(k) for k in ORACLE_PINS}, "pinScopeExpectedDiff": PIN_SCOPE_EXPECTED_DIFF, "q43Rules": Q43_RULES, "receiverCases": RECEIVER_CASES, "atomicUnitCases": ATOMIC_UNIT_CASES, "oTdk1Files": O_TDK1_FILES, "outbox": OUTBOX, "decimalRouting": DECIMAL_ROUTING, "decimalRoutingQ52": DECIMAL_ROUTING_Q52, "rulingsCoverage": rulings_coverage(), "tdk1": TDK1, "tdk1Tests": TDK1_TESTS, "tdk1VectorPin": TDK1_VECTOR_PIN, "q33Rules": Q33_RULES, "q33iCursorReadings": Q33I_CURSOR_READINGS, "q33iQleverRejected": Q33I_QLEVER_REJECTED, "gates": GATES, "wireRules": WIRE_RULES, "w0Pin": W0_PIN, "legacyLaneOutcomes": LEGACY_LANE_OUTCOMES, "legacyRule": LEGACY_RULE, "legacyScan": legacy_out_of_range_scan(), "modeRule": MODE_RULE, "secondaryRule": SECONDARY_RULE, "integerMinRange": INTEGER_MIN_RANGE, "laneIntegerRange": LANE_INTEGER_RANGE, "rangeRule": RANGE_RULE,
+        "brokerRules": BROKER_RULES, "observationRules": OBSERVATION_RULES, "isolationRules": ISOLATION_RULES, "isolationAdmission": ISOLATION_ADMISSION, "freezeProtocol": FREEZE_PROTOCOL, "qleverEvidenceRules": QLEVER_EVIDENCE_RULES, "qleverEvidencePolicy": QLEVER_EVIDENCE_POLICY, "goldenScenarioRulings": GOLDEN_SCENARIO_RULES, "goldenScenarioPolicy": GOLDEN_SCENARIO_POLICY, "seedAmendments": SEED_AMENDMENTS_0313, "retiredSeedRules": RETIRED_RULES_0313, "pinChanges0313": PIN_CHANGES_0313, "pinChanges0314": PIN_CHANGES_0314, "laneXP2Rules": LANE_X_P2_RULES, "laneQP4Rules": LANE_Q_P4_RULES, "rulingReview0314": RULING_REVIEW_0314, "mergeGates": MERGE_GATES, "pendingRulings": pending_rulings(), "closability": closability(), "oraclePins": ORACLE_PINS, "oracleRefusals": ORACLE_REFUSALS, "oracleRefusalRule": ORACLE_REFUSAL_RULE, "oracleScope": {k: oracle_scope(k) for k in ORACLE_PINS}, "pinScopeExpectedDiff": PIN_SCOPE_EXPECTED_DIFF, "q43Rules": Q43_RULES, "receiverCases": RECEIVER_CASES, "atomicUnitCases": ATOMIC_UNIT_CASES, "oTdk1Files": O_TDK1_FILES, "outbox": OUTBOX, "decimalRouting": DECIMAL_ROUTING, "decimalRoutingQ52": DECIMAL_ROUTING_Q52, "rulingsCoverage": rulings_coverage(), "tdk1": TDK1, "tdk1Tests": TDK1_TESTS, "tdk1VectorPin": TDK1_VECTOR_PIN, "q33Rules": Q33_RULES, "q33iCursorReadings": Q33I_CURSOR_READINGS, "q33iQleverRejected": Q33I_QLEVER_REJECTED, "gates": GATES, "wireRules": WIRE_RULES, "w0Pin": W0_PIN, "legacyLaneOutcomes": LEGACY_LANE_OUTCOMES, "legacyRule": LEGACY_RULE, "legacyScan": legacy_out_of_range_scan(), "modeRule": MODE_RULE, "secondaryRule": SECONDARY_RULE, "integerMinRange": INTEGER_MIN_RANGE, "laneIntegerRange": LANE_INTEGER_RANGE, "rangeRule": RANGE_RULE,
         "numericOps": NUMERIC_OPS, "conversionRules": CONVERSION_RULES, "comparisonRules": COMPARISON_RULES, "aggregateRules": AGGREGATE_RULES,
         "cardManyOrder": CARD_MANY_ORDER, "constraintRules": CONSTRAINT_RULES, "errorTable": ERROR_TABLE, "retiredErrors": RETIRED_ERRORS, "errorRepresentation": ERROR_REPRESENTATION, "errorComparison": ERROR_COMPARISON,
         "commitOutcomes": COMMIT_OUTCOMES, "cursorTransitions": CURSOR_TRANSITIONS,

@@ -1,0 +1,80 @@
+[
+  {
+    "ref": "main",
+    "commit": "3450617bb7d4c7d109d7fc00a1e9bd213cdf714b",
+    "actual": "cb89a55ced5426b8fa0af3523fbbeb73870e61e3622ebb42e8a78c3e67da8d28",
+    "projections": [
+      [
+        {
+          "path": "packages/testkit/src/index.ts",
+          "sha256": "cb89a55ced5426b8fa0af3523fbbeb73870e61e3622ebb42e8a78c3e67da8d28"
+        }
+      ],
+      [
+        {
+          "path": "packages/testkit/src/index.ts",
+          "sha256": "cb89a55ced5426b8fa0af3523fbbeb73870e61e3622ebb42e8a78c3e67da8d28"
+        }
+      ],
+      [
+        {
+          "path": "packages/testkit/src/index.ts",
+          "sha256": "cb89a55ced5426b8fa0af3523fbbeb73870e61e3622ebb42e8a78c3e67da8d28"
+        }
+      ]
+    ],
+    "stale": false
+  },
+  {
+    "ref": "exp/RT01-record-time",
+    "commit": "26772e42d12e05b7041eb705b8540ab066335821",
+    "actual": "995bc1ace5ebb9654a74e238b8860cb7e8f012a979c7c4cf86d03388efd935c7",
+    "projections": [
+      [
+        {
+          "path": "packages/testkit/src/index.ts",
+          "sha256": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988"
+        }
+      ],
+      [
+        {
+          "path": "packages/testkit/src/index.ts",
+          "sha256": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988"
+        }
+      ],
+      [
+        {
+          "path": "packages/testkit/src/index.ts",
+          "sha256": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988"
+        }
+      ]
+    ],
+    "stale": true
+  },
+  {
+    "ref": "verify/RT01",
+    "commit": "dad9d9be27574cb97290857394bc9cf4c8175aef",
+    "actual": "995bc1ace5ebb9654a74e238b8860cb7e8f012a979c7c4cf86d03388efd935c7",
+    "projections": [
+      [
+        {
+          "path": "packages/testkit/src/index.ts",
+          "sha256": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988"
+        }
+      ],
+      [
+        {
+          "path": "packages/testkit/src/index.ts",
+          "sha256": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988"
+        }
+      ],
+      [
+        {
+          "path": "packages/testkit/src/index.ts",
+          "sha256": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988"
+        }
+      ]
+    ],
+    "stale": true
+  }
+]

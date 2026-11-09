@@ -1,0 +1,151 @@
+{
+  "node": "v22.23.2",
+  "bundledUndici": "6.28.0",
+  "records": [
+    {
+      "file": "bundled-undici-errors.js.txt",
+      "sha256": "f434760a2e87dbcd596d02a936535c927e403b1945b8e4ba4c406cb4ffd3a658",
+      "bytes": 15520
+    },
+    {
+      "file": "dns.json",
+      "sha256": "8ce26513dedf0b055cd50e5716e4c29a15e3e5942e8f29af1ce9153ff9916bf8",
+      "bytes": 121025,
+      "url": "https://nodejs.org/download/release/v22.23.2/docs/api/dns.json"
+    },
+    {
+      "file": "dns.md",
+      "sha256": "d31b66570f5c1dae19a14f6beffeccf835100f91bea533db490f70a85ab240ce",
+      "bytes": 60755,
+      "url": "https://raw.githubusercontent.com/nodejs/node/v22.23.2/doc/api/dns.md"
+    },
+    {
+      "file": "errors.json",
+      "sha256": "db86847e2e80731d3cfd30590c7a3d5fc90e25ee78a2c3a5fa36714d6ba5981d",
+      "bytes": 281723,
+      "url": "https://nodejs.org/download/release/v22.23.2/docs/api/errors.json"
+    },
+    {
+      "file": "errors.md",
+      "sha256": "e2b21b592d00c2d7082792ff5f5029128d71c2ceac25df9ec1dcc383b76367df",
+      "bytes": 115680,
+      "url": "https://raw.githubusercontent.com/nodejs/node/v22.23.2/doc/api/errors.md"
+    },
+    {
+      "file": "libuv-errno.txt",
+      "sha256": "4242edf790e4569ef349026ab4c6e31093334ee5fc02b16ed7a0d9fbacdffd16",
+      "bytes": 11216
+    },
+    {
+      "file": "libuv-errors.txt",
+      "sha256": "e937e4e485c793bfb1f59c6bcc6e95937f8cf86bd7b8c835b632c94c70dae810",
+      "bytes": 6557
+    },
+    {
+      "file": "libuv-tcp.txt",
+      "sha256": "a2715f89ba19f923181283232115061b28bde07ecde1b94fab14c929b65f562b",
+      "bytes": 7461
+    },
+    {
+      "file": "net.json",
+      "sha256": "f92fb5752c6a158284a98e6f9410b10bb6e4eff6bbb7aa63b12f6c3bc52c8cc8",
+      "bytes": 146805,
+      "url": "https://nodejs.org/download/release/v22.23.2/docs/api/net.json"
+    },
+    {
+      "file": "net.md",
+      "sha256": "f6c212d15d96da71a7ce192589efd80e6e89d6bcd3937b34e96d1bbb0f974270",
+      "bytes": 61869,
+      "url": "https://raw.githubusercontent.com/nodejs/node/v22.23.2/doc/api/net.md"
+    },
+    {
+      "file": "node-LICENSE.txt",
+      "sha256": "c738ae413cf561f174e34f6961f8ca458aae2369a73640dda6234c629b98bcc4",
+      "bytes": 145485
+    },
+    {
+      "file": "node-lib-dns.js.txt",
+      "sha256": "e11c4df597d62025f86d2b0a50a5c01e15fee2c52817c068fb6cfb285d60655c",
+      "bytes": 9360
+    },
+    {
+      "file": "node-lib-internal-errors.js.txt",
+      "sha256": "a03b0a92d4b62655d1fe8f05b039251ff63a1d826743c6354ca5a2920b7c1751",
+      "bytes": 69419
+    },
+    {
+      "file": "node-lib-net.js.txt",
+      "sha256": "af270f7c3c0046111df357f7369d25701de892f220e62ab3f1d06cf2f458f3a4",
+      "bytes": 70940
+    },
+    {
+      "file": "node-uv-h.txt",
+      "sha256": "fddec8c096616675b4578d85222663c8624dce3ee67f5be1c33ba83eb02a827c",
+      "bytes": 72810
+    },
+    {
+      "file": "node-uv-unix.txt",
+      "sha256": "1f7aea48a4c4b8ae005af27188a9f08c63122493c812c54582c9b4a9e1771da7",
+      "bytes": 17999
+    },
+    {
+      "file": "node-uv-win.txt",
+      "sha256": "c804f3da1436393d1170688cb9d0210638174c0f1af03013360a7d0a7eb945a8",
+      "bytes": 8817
+    },
+    {
+      "file": "undici-7.29.0-LICENSE.txt",
+      "sha256": "a6db8096b2707bc0102d256917d4d33f298ba36d8c3f25de067a2b5bb379db27",
+      "bytes": 1090,
+      "source": "installed node_modules/.pnpm/undici@7.29.0/node_modules/undici/"
+    },
+    {
+      "file": "undici-7.29.0-docs-docs-api-Errors.md.txt",
+      "sha256": "2ce5a5d33c4960b94f441e62bc313fd30c8427afcf87c5fcd057c78d35eec9ea",
+      "bytes": 3991,
+      "source": "installed node_modules/.pnpm/undici@7.29.0/node_modules/undici/"
+    },
+    {
+      "file": "undici-7.29.0-lib-core-errors.js.txt",
+      "sha256": "c69b7a060b711e4cd97f3ff05eb18cf4ec7a08ce5d618c54a567baf6f1a47481",
+      "bytes": 12802,
+      "source": "installed node_modules/.pnpm/undici@7.29.0/node_modules/undici/"
+    },
+    {
+      "file": "undici-7.29.1-LICENSE.txt",
+      "sha256": "a6db8096b2707bc0102d256917d4d33f298ba36d8c3f25de067a2b5bb379db27",
+      "bytes": 1090,
+      "source": "installed node_modules/.pnpm/undici@7.29.1/node_modules/undici/"
+    },
+    {
+      "file": "undici-7.29.1-docs-docs-api-Errors.md.txt",
+      "sha256": "2ce5a5d33c4960b94f441e62bc313fd30c8427afcf87c5fcd057c78d35eec9ea",
+      "bytes": 3991,
+      "source": "installed node_modules/.pnpm/undici@7.29.1/node_modules/undici/"
+    },
+    {
+      "file": "undici-7.29.1-lib-core-errors.js.txt",
+      "sha256": "c69b7a060b711e4cd97f3ff05eb18cf4ec7a08ce5d618c54a567baf6f1a47481",
+      "bytes": 12802,
+      "source": "installed node_modules/.pnpm/undici@7.29.1/node_modules/undici/"
+    },
+    {
+      "file": "undici-8.11.2-LICENSE.txt",
+      "sha256": "a6db8096b2707bc0102d256917d4d33f298ba36d8c3f25de067a2b5bb379db27",
+      "bytes": 1090,
+      "source": "installed node_modules/.pnpm/undici@8.11.2/node_modules/undici/"
+    },
+    {
+      "file": "undici-8.11.2-docs-docs-api-Errors.md.txt",
+      "sha256": "0421b5c6ddbf89f14130966ed7f146320de7d4daf3e6df57d0fc45d601ed7fd3",
+      "bytes": 14600,
+      "source": "installed node_modules/.pnpm/undici@8.11.2/node_modules/undici/"
+    },
+    {
+      "file": "undici-8.11.2-lib-core-errors.js.txt",
+      "sha256": "47c1e438402a802f5132da4a2084e1294ad3fd1496f8f7b47117292165c17fd9",
+      "bytes": 13384,
+      "source": "installed node_modules/.pnpm/undici@8.11.2/node_modules/undici/"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+Checking formatting...
+
+lab/verify/GS12F/VERIFY.md (151ms)
+lab/verify/GS12F/adversarial.test.ts (0ms)
+lab/verify/GS12F/controls.test.ts (2ms)
+
+Format issues found in above 3 files. Run without `--check` to fix.
+Finished in 186ms on 11 files using 12 threads.
+No config found, using defaults. Please add a config file or try `oxfmt --init` if needed.

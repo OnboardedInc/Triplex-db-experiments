@@ -1,0 +1,41 @@
+[
+  {
+    "api": "assert",
+    "before": {
+      "callbacks": 0,
+      "claims": 0
+    },
+    "after": {
+      "callbacks": 0,
+      "claims": 0
+    },
+    "typed": true,
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'json', value: [ <1 empty item>, '4294967295': 7 ] },\n          message: \"Value is outside qlever's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}"
+  },
+  {
+    "api": "assertBatch",
+    "before": {
+      "callbacks": 0,
+      "claims": 0
+    },
+    "after": {
+      "callbacks": 0,
+      "claims": 0
+    },
+    "typed": true,
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'json', value: [ <1 empty item>, '4294967295': 7 ] },\n          message: \"Value is outside qlever's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}"
+  },
+  {
+    "api": "transact",
+    "before": {
+      "callbacks": 0,
+      "claims": 0
+    },
+    "after": {
+      "callbacks": 0,
+      "claims": 0
+    },
+    "typed": true,
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'json', value: [ <1 empty item>, '4294967295': 7 ] },\n          message: \"Value is outside qlever's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}"
+  }
+]

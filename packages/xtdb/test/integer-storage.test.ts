@@ -10,7 +10,7 @@ import {
   blob,
   integer,
   string,
-  WriteError,
+  InvalidTripleError,
 } from "@triplex-build/triplex";
 import { Capabilities, DatabaseScope } from "@triplex-build/triplex/runtime";
 import {
@@ -139,7 +139,7 @@ describe.skipIf(!enabled)("Exact integer public Triplex storage", () => {
               value: { type: "integer", value },
             })
             .pipe(Effect.flip);
-          expect(error).toBeInstanceOf(WriteError);
+          expect(error).toBeInstanceOf(InvalidTripleError);
           expect(yield* triples.currentPosition()).toBe(before);
         }
         const descriptor = blob("sha256:descriptor", "text/plain", 0, "");

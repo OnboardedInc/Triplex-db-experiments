@@ -47,7 +47,7 @@ import {
   PostgresqlDialect,
   type PostgresqlConfig,
 } from "@triplex-build/triplex-postgres";
-import { makeTriplesConformanceSuite } from "@triplex-build/triplex-testkit";
+import { makeTriplesConformanceSuite, valueLimitCases } from "@triplex-build/triplex-testkit";
 import {
   PgConnectionInfo,
   PgContainerLayer,
@@ -150,6 +150,10 @@ describe("PostgreSQL Integration", () => {
       await runWithPostgres(makeTriplesConformanceSuite());
     },
   );
+
+  for (const test of valueLimitCases) {
+    it.skipIf(!DOCKER_AVAILABLE)(test.name, { timeout: 120_000 }, () => runWithPostgres(test.run));
+  }
 
   describe("host-owned SqlClient composition", () => {
     it.skipIf(!DOCKER_AVAILABLE)(

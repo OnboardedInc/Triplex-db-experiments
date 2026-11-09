@@ -1,0 +1,13 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 1056 "CX-RT01-G2", pid 37623 "CX-P5A-R2-1k-final", pid 44217 "CX-RT01-X-bounded"
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/gs12f/packages/qlever
+
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  21:24:59
+   Duration  433ms (import 62%, transform 32%, tests 5%, worker 1%)
+

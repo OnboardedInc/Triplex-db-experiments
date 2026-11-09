@@ -1,0 +1,11 @@
+packages/core/src/kv/hexastore/KvTripleStore.ts(17,1): error TS6133: 'InvalidTripleError' is declared but its value is never read.
+packages/core/src/kv/layers/valueAdmission.ts(76,47): error TS2375: Type 'Effect<unknown, unknown, unknown>' is not assignable to type 'Effect<A, InvalidTripleError | E, never>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Type 'unknown' is not assignable to type 'A'.
+    'A' could be instantiated with an arbitrary type which could be unrelated to 'unknown'.
+packages/core/src/kv/layers/valueAdmission.ts(89,85): error TS2345: Argument of type '(cause: Cause<E>) => Effect<never, InvalidTripleError, never> | Effect<never, E, never>' is not assignable to parameter of type '(cause: Cause<E>) => Effect<never, InvalidTripleError, never>'.
+  Type 'Effect<never, InvalidTripleError, never> | Effect<never, E, never>' is not assignable to type 'Effect<never, InvalidTripleError, never>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Type 'Effect<never, E, never>' is not assignable to type 'Effect<never, InvalidTripleError, never>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+      Type 'E' is not assignable to type 'InvalidTripleError'.
+packages/core/src/kv/layers/valueAdmission.ts(98,36): error TS2345: Argument of type '(tx: KvTransaction) => Effect<unknown, unknown, unknown>' is not assignable to parameter of type '(tx: KvTransaction) => Effect<unknown, unknown, never>'.
+  Type 'Effect<unknown, unknown, unknown>' is not assignable to type 'Effect<unknown, unknown, never>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Type 'unknown' is not assignable to type 'never'.

@@ -32,7 +32,7 @@ describe.skipIf(process.env["QLEVER_INTEGRATION"] !== "1")(
                   {
                     entityId: EntityId.make("delayed:e"),
                     attribute: ":value",
-                    value: integer("9223372036854775807"),
+                    value: integer("576460752303423487"),
                     validFrom: 0,
                   },
                   "delayed:tx",
@@ -56,7 +56,7 @@ describe.skipIf(process.env["QLEVER_INTEGRATION"] !== "1")(
           await Effect.runPromise(resolveQleverOperation(real, scope, outcome.operationId)),
         ).toMatchObject({ status: "committed", operationId: outcome.operationId, position: 1 });
         expect((await Effect.runPromise(adapter.getById("delayed:assertion")))?.value_string).toBe(
-          "9223372036854775807",
+          "576460752303423487",
         );
       } finally {
         await real.close();

@@ -1,0 +1,16 @@
+[
+  {
+    "value": "576460752303423488",
+    "before": 0,
+    "after": 1,
+    "typed": false,
+    "error": "{ message: 'review transaction-entry witness', _tag: 'WriteError' }"
+  },
+  {
+    "value": "-576460752303423489",
+    "before": 1,
+    "after": 2,
+    "typed": false,
+    "error": "{ message: 'review transaction-entry witness', _tag: 'WriteError' }"
+  }
+]

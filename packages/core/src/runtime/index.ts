@@ -80,3 +80,22 @@ export {
   type RuleTail,
   countSimplePaths,
 } from "../native/FrontierClosure.js";
+
+export {
+  constructSnapshotReads,
+  constructReadDispatch,
+  constructReadSurface,
+  createReadConstructor,
+  exactReadService,
+  type SnapshotReadPolicy,
+} from "../storage/ReadSurface.js";
+
+export { isTriplesRead } from "../store/TriplesLive.js";
+export {
+  decodeValueColumns,
+  ValueDomains,
+  invalidValue,
+  assertValueInDomain,
+  storedValueDomain,
+  type ValueDomain,
+} from "../ValueDomain.js";

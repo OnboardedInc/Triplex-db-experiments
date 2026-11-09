@@ -1,0 +1,12 @@
+{
+  "capturedAt": 1794189899.032379,
+  "files": {
+    "packages/core/src/store/validateValues.ts": "56d0efd4e96e5ee279f54faf762327596fec592b44bc8d913c729e344f82fb92",
+    "packages/core/src/store/TriplesLive.ts": "14efc06b46f127dca25882cd2deea720cd074f6542b4a01ce092e8c42cf414e1",
+    "packages/core/src/kv/layers/KvTriplesLive.ts": "f6bb46d1bd96bf42eccec562c1a794b2de23a0b1f578ad29e347f73c7c8ed3ae",
+    "packages/testkit/src/valueLimits.ts": "4a4c5f4aace5c3a8938ebe463c61707d9009a2173fe8f997d731227c810ed99e",
+    "packages/qlever/test/value-limits.test.ts": "37c2bbc6d9ce9d1e2143da79f234e2ddac202bfe5f25a996c12d6f452e9a0ca8"
+  },
+  "command": "QLEVER_INTEGRATION=1 QLEVER_URL=http://127.0.0.1:7070 vitest run test/value-limits.test.ts",
+  "note": "120 second per-test wrapper; other semantic checks unchanged from attempt3"
+}

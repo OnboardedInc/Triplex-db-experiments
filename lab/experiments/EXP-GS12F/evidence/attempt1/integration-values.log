@@ -1,0 +1,62 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/gs12f/test/integration
+
+(node:95521) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ test/value-limits.test.ts (4 tests | 2 failed) 39ms
+   ❯ GS12F KV (2)
+     × GS12F invalid wire values fail typed before claims on every write entry point 5ms
+   ❯ GS12F SQLite (2)
+     × GS12F invalid wire values fail typed before claims on every write entry point 8ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/value-limits.test.ts > GS12F KV > GS12F invalid wire values fail typed before claims on every write entry point
+Error: invalid 0: expected InvalidTripleError, got WriteError: Transact failed: InvalidTripleError: Invalid triple value for :gs12f/invalid on gs12f:invalid
+ ❯ verify ../../packages/testkit/src/valueLimits.ts:15:41
+     13|
+     14| const verify = (condition: boolean, message: string) =>
+     15|   condition ? Effect.void : Effect.fail(new Error(message));
+       |                                         ^
+     16|
+     17| // [EXP-GS12F] Why: exercise public writes and their atomic boundary o…
+ ❯ ../../packages/testkit/src/valueLimits.ts:57:18
+ ❯ IteratorImpl.~effect/Effect/successCont ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1421:28
+ ❯ ExitPrimitive.~effect/Effect/evaluate ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/core.ts:565:30
+ ❯ FiberImpl.runLoop ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:653:41
+ ❯ FiberImpl.evaluate ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:594:23
+ ❯ ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:5683:9
+ ❯ ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:5761:19
+ ❯ Module.<anonymous> ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:5780:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  test/value-limits.test.ts > GS12F SQLite > GS12F invalid wire values fail typed before claims on every write entry point
+Error: invalid 0: expected InvalidTripleError, got WriteError: Transaction failed: InvalidTripleError: Invalid triple value for :gs12f/invalid on gs12f:invalid
+ ❯ verify ../../packages/testkit/src/valueLimits.ts:15:41
+     13|
+     14| const verify = (condition: boolean, message: string) =>
+     15|   condition ? Effect.void : Effect.fail(new Error(message));
+       |                                         ^
+     16|
+     17| // [EXP-GS12F] Why: exercise public writes and their atomic boundary o…
+ ❯ ../../packages/testkit/src/valueLimits.ts:57:18
+ ❯ IteratorImpl.~effect/Effect/successCont ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1421:28
+ ❯ ExitPrimitive.~effect/Effect/evaluate ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/core.ts:565:30
+ ❯ FiberImpl.runLoop ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:653:41
+ ❯ FiberImpl.evaluate ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:594:23
+ ❯ ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:5683:9
+ ❯ ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:5761:19
+ ❯ Module.<anonymous> ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:5780:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  20:50:37
+   Duration  869ms (transform 64%, import 30%, tests 5%)
+
