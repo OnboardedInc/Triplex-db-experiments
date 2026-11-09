@@ -7,6 +7,8 @@ import {spawn,spawnSync} from 'node:child_process';
 import {randomBytes} from 'node:crypto';
 import {REPO,ENGINE_DIR,LOCKS,atomicJson,defaultHolder,docker,dockerStats,inspect,listTx2Containers,readJson,sha256,fail,sleep,POOL_FILE} from './lib.mjs';
 import {harden,pinImage,remove,reserve,vmAvailable,waitFile} from './vm-observer.mjs';
+import {BPFTRACE_VERSION,COMPILE_FLAGS,COMPILE_PLACEHOLDER_ARGS,clockPrimitiveVerdict,sha256Hex} from './clock-proof.mjs';
+export {BPFTRACE_VERSION,COMPILE_FLAGS,clockPrimitiveVerdict,parseCompiledHelpers,sourceTimeSites} from './clock-proof.mjs';
 
 export const PROGRAM=path.join(REPO,'lab/observer/vm_syncwitness.bt');
 export const CLOCK_PROBE=path.join(REPO,'lab/observer/vm_clockprobe.bt');
@@ -17,8 +19,9 @@ export const WITNESS_MEMORY=268435456;
 // The maps are @dir/@dev (a few keys), @ino (every inode written in the store directory), the tid-keyed in-flight sync maps and @n[cpu];
 // 65536 keys of eight small maps cost a few MiB of the 256 MiB cap. Rejected: the 4096 default.
 export const MAP_KEYS=65536,MAP_KEYS_FLOOR=16384,MAP_KEYS_CEILING=4194304,PERF_RB_PAGES=1024;
-// W0 thresholds, all stated here so a refusal can be read against them. The clock tolerance bounds how far nsecs(monotonic) may sit from the
-// observer's CLOCK_MONOTONIC as seen through one pipe hop; a CLOCK_BOOTTIME offset is the VM's suspended time (seconds or more), far above it.
+// W0 thresholds, all stated here so a refusal can be read against them. [EXP-OBS01-R11] The clock tolerance is the stated upper bound on one transport
+// hop (probe line to its receipt) and the slack the allowed read skew; they are used only by the transport sanity check (clockVerdict). The clock PRIMITIVE
+// is proven from the compiled program (clock-proof.mjs), never from these.
 export const CLOCK_TOLERANCE_NS=100_000_000,CLOCK_SLACK_NS=1_000_000,CLOCK_MIN_SAMPLES=20,MEMORY_HEADROOM=0.8;
 const SRC=path.join(REPO,'lab/observer');
 const safe=value=>typeof value==='string'&&/^[a-zA-Z0-9_-]{1,80}$/.test(value);
@@ -98,21 +101,36 @@ export function perCommitCost(samples,commitNs){
 
 
 // ------------------------------------------------------------------ W0 verdicts (R49 section 6 and 7; pure, unit-tested, not yet run in a VM)
-/** nsecs(monotonic) against the observer's CLOCK_MONOTONIC. samples: [{monotonicNs,bootNs,receivedNs}] from vm_clockcheck.py. Each line is
- * stamped on receipt, so receivedNs - monotonicNs is one pipe hop (>= 0 when the clocks agree). The smallest hop must lie within
- * [-CLOCK_SLACK_NS, CLOCK_TOLERANCE_NS] and no sample may be generated after its receipt by more than the slack. bootMinusMonotonicNs is
- * recorded: nonzero means a bare nsecs would have been the wrong clock. */
+/**
+ * TRANSPORT SANITY CHECK of the probe's `nsecs(monotonic)` against independent local references. It does NOT prove which clock the probe read, and W0
+ * does not pass its clock step on it (that is clockPrimitiveVerdict, from the compiled program). samples: [{monotonicNs,bootNs,receivedNs,
+ * receivedBootNs,receivedAfterNs}] from vm_clockcheck.py, where receivedNs/receivedAfterNs are the local CLOCK_MONOTONIC reads before/after the local
+ * CLOCK_BOOTTIME read receivedBootNs. Writing hop = receivedNs - monotonicNs (transport delay L >= 0 when the value is monotonic):
+ *  - INCONSISTENT: the value cannot be a CLOCK_MONOTONIC reading taken before its receipt (it runs ahead of the receipt by more than the slack, goes
+ *    backwards, lags by more than the tolerance) or the record is malformed/missing.
+ *  - CONSISTENT: the data fit monotonic AND exclude a CLOCK_BOOTTIME reading: a boot-valued sample would have hop = L - separation <= tolerance -
+ *    separation, so the measured minimum hop plus the lower bound of the local separation must exceed tolerance + slack. Needs independent references.
+ *  - INCONCLUSIVE: anything else, in particular a separation (boot minus monotonic, the guest's suspended time, often zero) not larger than the
+ *    uncertainty (the transport tolerance plus the slack, less the measured minimum hop). Never a pass.
+ */
 export function clockVerdict(samples,{toleranceNs=CLOCK_TOLERANCE_NS,slackNs=CLOCK_SLACK_NS,minSamples=CLOCK_MIN_SAMPLES}={}){
- const bad=[];
- if(!Array.isArray(samples)||samples.length<minSamples)return {pass:false,reasons:['need at least '+minSamples+' clock samples, got '+(samples?.length??0)],toleranceNs};
- if(samples.some(r=>![r?.monotonicNs,r?.bootNs,r?.receivedNs].every(v=>Number.isSafeInteger(v)&&v>=0)))return {pass:false,reasons:['clock sample with a non-integer or negative field'],toleranceNs};
- const hops=samples.map(r=>r.receivedNs-r.monotonicNs),minHop=Math.min(...hops),maxHop=Math.max(...hops);
- const mono=samples.map(r=>r.monotonicNs);
+ const out=(status,reasons,extra={})=>({status,pass:status==='CONSISTENT',reasons,toleranceNs,slackNs,...extra});
+ if(!Array.isArray(samples)||samples.length<minSamples)return out('INCONSISTENT',['need at least '+minSamples+' clock samples, got '+(samples?.length??0)]);
+ const integer=v=>Number.isSafeInteger(v)&&v>=0,optional=v=>v===undefined||v===null||integer(v);
+ if(samples.some(r=>![r?.monotonicNs,r?.bootNs,r?.receivedNs].every(integer)||!optional(r?.receivedBootNs)||!optional(r?.receivedAfterNs)))return out('INCONSISTENT',['clock sample with a non-integer or negative field']);
+ const withRefs=samples.every(r=>integer(r.receivedBootNs)&&integer(r.receivedAfterNs)),partialRefs=!withRefs&&samples.some(r=>r.receivedBootNs!=null||r.receivedAfterNs!=null);
+ if(partialRefs||(withRefs&&samples.some(r=>r.receivedAfterNs<r.receivedNs)))return out('INCONSISTENT',['independent clock references are partial or out of order']);
+ const bad=[],hops=samples.map(r=>r.receivedNs-r.monotonicNs),minHop=Math.min(...hops),maxHop=Math.max(...hops),mono=samples.map(r=>r.monotonicNs);
  if(mono.some((v,i)=>i>0&&v<mono[i-1]))bad.push('nsecs(monotonic) went backwards between samples');
- if(minHop<-slackNs)bad.push('nsecs(monotonic) runs ahead of the observer clock by '+(-minHop)+' ns (slack '+slackNs+' ns)');
- if(minHop>toleranceNs)bad.push('nsecs(monotonic) lags the observer clock by at least '+minHop+' ns, beyond the '+toleranceNs+' ns tolerance');
- const offsets=samples.map(r=>r.bootNs-r.monotonicNs).sort((a,b)=>a-b);
- return {pass:bad.length===0,reasons:bad,toleranceNs,slackNs,samples:samples.length,minHopNs:minHop,maxHopNs:maxHop,bootMinusMonotonicNs:offsets[Math.floor(offsets.length/2)]};
+ if(minHop<-slackNs)bad.push('nsecs(monotonic) runs ahead of the independent CLOCK_MONOTONIC reference by '+(-minHop)+' ns (slack '+slackNs+' ns)');
+ if(minHop>toleranceNs)bad.push('nsecs(monotonic) lags the independent CLOCK_MONOTONIC reference by at least '+minHop+' ns, beyond the '+toleranceNs+' ns tolerance');
+ const probeOffsets=samples.map(r=>r.bootNs-r.monotonicNs).sort((a,b)=>a-b),base={samples:samples.length,minHopNs:minHop,maxHopNs:maxHop,probeBootMinusMonotonicNs:probeOffsets[Math.floor(probeOffsets.length/2)]};
+ if(bad.length)return out('INCONSISTENT',bad,base);
+ if(!withRefs)return out('INCONCLUSIVE',['no independent local CLOCK_BOOTTIME reference was recorded; the observation cannot separate the two clocks'],base);
+ const separationNs=Math.min(...samples.map(r=>r.receivedBootNs-r.receivedAfterNs)),uncertaintyNs=toleranceNs+slackNs-minHop,readBracketNs=Math.max(...samples.map(r=>r.receivedAfterNs-r.receivedNs));
+ const facts={...base,separationNs,uncertaintyNs,readBracketNs};
+ if(separationNs>uncertaintyNs)return out('CONSISTENT',[],facts);
+ return out('INCONCLUSIVE',['clock identity not established by observation: separation of CLOCK_BOOTTIME from CLOCK_MONOTONIC ('+separationNs+' ns) is not larger than the measured uncertainty ('+uncertaintyNs+' ns)'],facts);
 }
 
 /** perf_event_paranoid and the attach it governs. tracepointAttach is the result of attaching a tracepoint with ONLY the witness capabilities
@@ -150,14 +168,18 @@ export function mapKeysVerdict({configured}){
  return {pass:ok,configured:configured??null,floor:MAP_KEYS_FLOOR,reasons:ok?[]:['BPFTRACE_MAX_MAP_KEYS '+configured+' outside '+MAP_KEYS_FLOOR+'..'+MAP_KEYS_CEILING]};
 }
 
-/** W0 as a whole: every item recorded and every check passing. facts come from windowW0. */
+/** W0 as a whole: every item recorded and every check passing. facts come from windowW0. [EXP-OBS01-R11] The clock step passes on the program proof
+ * (clockPrimitiveVerdict) only; the observational transport check is recorded and blocks W0 only when it is INCONSISTENT (a contradiction), never when
+ * INCONCLUSIVE, and never substitutes for the proof. */
 export function judgeW0(facts){
- const checks={clock:clockVerdict(facts.clockSamples),perf:perfParanoidVerdict({paranoid:facts.paranoid,tracepointAttach:facts.tracepointAttach}),
+ const transport=clockVerdict(facts.clockSamples),checks={clock:clockPrimitiveVerdict(facts.clockProgram),
+  clockTransport:{pass:transport.status!=='INCONSISTENT',status:transport.status,reasons:transport.status==='INCONSISTENT'?transport.reasons:[],detail:transport},
+  perf:perfParanoidVerdict({paranoid:facts.paranoid,tracepointAttach:facts.tracepointAttach}),
   memory:memoryVerdict({peakBytes:facts.attach?.witnessCgroup?.memoryPeakBytes,oomKills:facts.attach?.witnessCgroup?.oomKills}),
   ext4:ext4BuiltinVerdict({ext4BtfPresent:facts.ext4BtfPresent,listing:facts.listing}),mapKeys:mapKeysVerdict({configured:facts.attach?.witnessCgroup?.maxMapKeys}),
   attach:{pass:Boolean(facts.attach?.pass),reasons:facts.attach?.pass?[]:['witness attach session did not pass']}};
  const reasons=Object.entries(checks).flatMap(([name,c])=>c.pass?[]:c.reasons.map(r=>name+': '+r));
- return {pass:reasons.length===0,reasons,checks};
+ return {pass:reasons.length===0,reasons,checks,clockIdentity:{provenBy:'compiled program',program:checks.clock.pass,observational:transport.status}};
 }
 
 const vm=(args,opts={})=>spawnSync('colima',['ssh','-p','triplex2','--',...args],{encoding:'utf8',maxBuffer:64*1024**2,...opts});
@@ -298,15 +320,37 @@ async function bpfSampler(ctx,witnessName,dir){
  }};
 }
 
-/** One short bpftrace container under the witness profile (or a stated variant); returns stdout, stderr and the exit code. Never pulls. */
-async function bpftraceOnce(ctx,tag,argv,{mounts=[],caps=['BPF','PERFMON']}={}){
+/** One short bpftrace container under the witness profile (or a stated variant); returns stdout, stderr and the exit code. Never pulls.
+ * entrypoint overrides the entrypoint (the same image's sha256sum); timeoutMs kills a container that does not finish (reported as timedOut). */
+async function bpftraceOnce(ctx,tag,argv,{mounts=[],caps=['BPF','PERFMON'],entrypoint='bpftrace',timeoutMs=null}={}){
  const name='tx2-sw-w0-'+tag+'-'+randomBytes(4).toString('hex');await reserve(ctx.config,name,ctx.holder,5);
  try{
-  docker(harden(name,ctx.holder,ctx.bpftrace,5,[...caps.flatMap(c=>['--cap-add',c]),'--entrypoint','bpftrace','-e','BPFTRACE_MAX_MAP_KEYS='+MAP_KEYS,'-e','BPFTRACE_PERF_RB_PAGES='+PERF_RB_PAGES,
+  docker(harden(name,ctx.holder,ctx.bpftrace,5,[...caps.flatMap(c=>['--cap-add',c]),'--entrypoint',entrypoint,'-e','BPFTRACE_MAX_MAP_KEYS='+MAP_KEYS,'-e','BPFTRACE_PERF_RB_PAGES='+PERF_RB_PAGES,
    '-v','/sys/kernel/btf:/sys/kernel/btf:ro','-v','/sys/kernel/tracing:/sys/kernel/tracing:ro',...mounts],argv));
-  const stdout=docker(['start','-a',name],{allowFail:true})??'',doc=inspect(name),logs=run(['docker','-H',SOCK,'logs',name]);
-  return {stdout,stderr:logs.stderr??'',exitCode:doc?.State.ExitCode??null};
+  if(timeoutMs===null){
+   const stdout=docker(['start','-a',name],{allowFail:true})??'',doc=inspect(name),logs=run(['docker','-H',SOCK,'logs',name]);
+   return {stdout,stderr:logs.stderr??'',exitCode:doc?.State.ExitCode??null,timedOut:false};
+  }
+  const done=run(['docker','-H',SOCK,'start','-a',name],{timeout:timeoutMs,killSignal:'SIGKILL'});
+  return {stdout:done.stdout??'',stderr:done.stderr??'',exitCode:done.error?.code==='ETIMEDOUT'?null:done.status,timedOut:done.error?.code==='ETIMEDOUT'};
  }finally{await remove(name,ctx.holder);}
+}
+
+/**
+ * R49/R10-F3 W0 clock primitive step (a): bind the pinned program and the bpftrace version, ask that same bpftrace image for its compiled program, record
+ * it. The sha256 is computed by the same image on the mounted file (not by the harness on its own copy), and compared with the harness's hash of the
+ * pinned file read before and after. The dump uses placeholder positional arguments (only constants differ). Output goes to <out>/w0-compiled-program.txt
+ * (can exceed 1 MB: durable evidence, not git, rule 9c).
+ */
+async function clockProgramStep(ctx){
+ const bind=['-v',PROGRAM+':/program/vm_syncwitness.bt:ro'],before=fs.readFileSync(PROGRAM),expected=sha256Hex(before);
+ const version=await bpftraceOnce(ctx,'version',['--version']);
+ const hashed=await bpftraceOnce(ctx,'sha',['/program/vm_syncwitness.bt'],{mounts:bind,entrypoint:'sha256sum'});
+ const compiled=await bpftraceOnce(ctx,'compile',[...COMPILE_FLAGS,'/program/vm_syncwitness.bt',...COMPILE_PLACEHOLDER_ARGS],{mounts:bind,timeoutMs:120000});
+ const after=fs.readFileSync(PROGRAM);
+ const dumpPath=path.join(ctx.out,'w0-compiled-program.txt');fs.writeFileSync(dumpPath,'--- stdout ---\n'+compiled.stdout+'\n--- stderr ---\n'+compiled.stderr+'\n');
+ return {facts:{expectedSourceSha256:sha256Hex(after)===expected?expected:null,mountedSourceSha256:(/^([0-9a-f]{64})\s/.exec(hashed.stdout)??[])[1]??null,sourceText:before.toString('utf8'),versionOutput:version.stdout,compiled},
+  image:ctx.bpftrace,dumpPath,exitCodes:{version:version.exitCode,sha:hashed.exitCode,compile:compiled.exitCode},versionStderr:version.stderr};
 }
 
 /** R49 W0 clock step: the clock probe container streams CK lines through vm_clockcheck.py running in the VM, which stamps its own CLOCK_MONOTONIC on receipt. */
@@ -336,13 +380,14 @@ async function windowW0(ctx){
  const attachTry=await bpftraceOnce(ctx,'perf',['-q','-e','tracepoint:ext4:ext4_sync_file_exit { @x = 1; } interval:ms:100 { exit(); }']);
  const tracepointAttach={ok:attachTry.exitCode===0,detail:(attachTry.stderr||attachTry.stdout).trim().slice(0,300),exitCode:attachTry.exitCode};
  const clock=await clockStep(ctx);
+ const program=await clockProgramStep(ctx);
  // the real program, real caps, default seccomp; its D<ack checks over 200 FULL commits are also the CLOCK_MONOTONIC bracket against the writer's own clock
  const attach=await witnessSession(ctx,{mode:'full',count:200,dirName:'w0-attach',captureWitness:true});
- const all={facts,listing,tracepointAttach,clock:{status:clock.status,stderr:clock.stderr,unparsed:clock.unparsed},attach,
+ const all={facts,listing,tracepointAttach,clock:{status:clock.status,stderr:clock.stderr,unparsed:clock.unparsed},clockProgram:program.facts,attach,
   paranoid:Number.parseInt(facts.perfEventParanoid,10),ext4BtfPresent:facts.ext4BtfPresent,clockSamples:clock.status===0&&!clock.unparsed?clock.samples:null};
  const verdict=judgeW0(all);
- return {window:'W0',facts,listing,tracepointAttach,clock,attach,verdict,pass:verdict.pass,
-  claim:'kernel and capability facts; attach under default seccomp with only CAP_BPF and CAP_PERFMON; nsecs(monotonic) against CLOCK_MONOTONIC; perf_event_paranoid, peak memory, ext4 built in and map keys recorded; D<ack bracket for 200 FULL commits'};
+ return {window:'W0',facts,listing,tracepointAttach,clock,clockProgram:{image:program.image,dumpPath:program.dumpPath,exitCodes:program.exitCodes,versionStderr:program.versionStderr,verdict:verdict.checks.clock},attach,verdict,pass:verdict.pass,
+  claim:'kernel and capability facts; attach under default seccomp with only CAP_BPF and CAP_PERFMON; clock primitive proven from the pinned program hash, bpftrace version and compiled helper calls (nsecs(monotonic) only), with an observational transport check against local CLOCK_MONOTONIC/CLOCK_BOOTTIME references recorded as consistent, inconclusive or inconsistent; perf_event_paranoid, peak memory, ext4 built in and map keys recorded; D<ack bracket for 200 FULL commits'};
 }
 async function windowW1(ctx){
  const modes=['full','off','normal','full-then-off','ack-early','sync-before-write','sync-other-file','range-only','syncfs','mmap','neighbor-sync'],rows=[];

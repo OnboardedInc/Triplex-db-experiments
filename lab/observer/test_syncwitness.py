@@ -18,7 +18,7 @@ from test_vm import DOMAIN,BOOT
 
 def uuid_hex():
     import uuid;return uuid.uuid4().hex
-WRITER=111;NEIGHBOR=999;DIR_INO=7;US=1000;FINAL_NS=590_000_000
+WRITER=111;NEIGHBOR=999;DIR_INO=7;US=1000;FINAL_NS=590_000_000;TAIL_NS=580_000_000
 
 class Trace:
     """Collects kernel-shaped events and renders bpftrace text with per-CPU sequence numbers and the @n dump."""
@@ -235,6 +235,7 @@ class NormalizerCase(unittest.TestCase):
         meta={'programSha256':'p'*64,'bootId':BOOT,'kernelRelease':'6.8.0-test','containerId':'w'*64,'bpftraceVersion':'test'}
         for e in events:
             if e['event']=='final':e['atNs']=FINAL_NS         # the observer's trusted readback instant (R10 F2); the trace detaches after it
+            if e['event']=='wal':e['atNs']=TAIL_NS            # [OBS01-R11] the collector stamps every tailed chunk (vm_watch.py); R10-F1 requires it, so the fixture must too
         context={'trace':trace,'witness':witness,'meta':meta,'ack':ack,'events':events,'cgs':cgs,'files':files,'wal':wal,'dirs':dirs}
         for change in tweaks.values():change(context)
         text=context.get('text') or trace.render(begin=context.get('begin',500_000),end=599_000_000,drop=())

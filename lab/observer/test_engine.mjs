@@ -1,6 +1,7 @@
 // [EXP-OBS01] Why: check admission preconditions without starting or modifying residents.
 // Rejected: mock Docker successes as engine qualification.
 import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
@@ -150,32 +151,53 @@ test('map keys are explicit, bounded, recorded in the create arguments and refus
   assert.equal(witness.envValue({ Config: { Env: ['A=1', 'BPFTRACE_MAX_MAP_KEYS=7=8'] } }, 'BPFTRACE_MAX_MAP_KEYS'), '7=8');
   assert.equal(witness.envValue({ Config: {} }, 'A'), undefined);
 });
-const samples = (offsetNs, n = 50, hopNs = 2_000_000) => Array.from({ length: n }, (_, i) => { const mono = 100_000_000_000 + i * 20_000_000; return { monotonicNs: mono + offsetNs, bootNs: mono + offsetNs + 3_600_000_000_000, receivedNs: mono + hopNs + 5 * (i % 3) }; });
-test('clock verdict accepts nsecs(monotonic) within the stated tolerance and refuses a boot-clock-sized offset', () => {
+// [OBS01-R11] samples carry the independent local references of vm_clockcheck.py: receivedNs/receivedAfterNs are CLOCK_MONOTONIC reads bracketing the CLOCK_BOOTTIME read receivedBootNs.
+// sepNs is the local boot-minus-monotonic separation (suspended time); the bracket is 200 ns wide, so the lower bound of the separation is sepNs - 100.
+const samples = (offsetNs, n = 50, hopNs = 2_000_000, sepNs = 3_600_000_000_000) => Array.from({ length: n }, (_, i) => { const mono = 100_000_000_000 + i * 20_000_000; const received = mono + hopNs + 5 * (i % 3); return { monotonicNs: mono + offsetNs, bootNs: mono + offsetNs + sepNs, receivedNs: received, receivedBootNs: received + 100 + sepNs, receivedAfterNs: received + 200 }; });
+test('clock transport check: CONSISTENT only when monotonic fits and boot is excluded; INCONSISTENT on a contradiction; otherwise INCONCLUSIVE (never a pass)', () => {
   const ok = witness.clockVerdict(samples(0));
-  assert.equal(ok.pass, true); assert.equal(ok.toleranceNs, witness.CLOCK_TOLERANCE_NS); assert.equal(ok.bootMinusMonotonicNs, 3_600_000_000_000);
-  assert.equal(witness.clockVerdict(samples(0, 50, witness.CLOCK_TOLERANCE_NS)).pass, true);                  // the boundary hop is allowed
-  assert.equal(witness.clockVerdict(samples(0, 50, witness.CLOCK_TOLERANCE_NS + 100)).pass, false);           // witness clock lags the observer by more than the tolerance
-  const bare = witness.clockVerdict(samples(5_000_000_000));                                                  // a bare nsecs after 5 s of VM suspend: value ahead of the receipt
-  assert.equal(bare.pass, false); assert.match(bare.reasons.join(';'), /runs ahead/);
-  const behind = witness.clockVerdict(samples(-5_000_000_000)); assert.equal(behind.pass, false); assert.match(behind.reasons.join(';'), /lags/);
-  assert.equal(witness.clockVerdict(samples(1_000_000, 50, 0)).pass, true);                                    // minimum hop exactly -1 ms: inside the stated slack
-  assert.equal(witness.clockVerdict(samples(1_000_001, 50, 0)).pass, false);                                   // one nanosecond further ahead refuses
-  assert.equal(witness.clockVerdict(samples(0, 19)).pass, false);                                             // too few samples
+  assert.equal(ok.status, 'CONSISTENT'); assert.equal(ok.pass, true); assert.equal(ok.toleranceNs, witness.CLOCK_TOLERANCE_NS); assert.equal(ok.probeBootMinusMonotonicNs, 3_600_000_000_000);
+  assert.equal(witness.clockVerdict(samples(0, 50, witness.CLOCK_TOLERANCE_NS)).status, 'CONSISTENT');          // the boundary hop is allowed
+  assert.equal(witness.clockVerdict(samples(0, 50, witness.CLOCK_TOLERANCE_NS + 100)).status, 'INCONSISTENT');   // lags the reference by more than the tolerance
+  const bare = witness.clockVerdict(samples(5_000_000_000));                                                    // a bare nsecs after 5 s of VM suspend: value ahead of the receipt
+  assert.equal(bare.status, 'INCONSISTENT'); assert.match(bare.reasons.join(';'), /runs ahead/);
+  const behind = witness.clockVerdict(samples(-5_000_000_000)); assert.equal(behind.status, 'INCONSISTENT'); assert.match(behind.reasons.join(';'), /lags/);
+  assert.equal(witness.clockVerdict(samples(1_000_000, 50, 0)).status, 'CONSISTENT');                            // minimum hop exactly -1 ms: inside the stated slack
+  assert.equal(witness.clockVerdict(samples(1_000_001, 50, 0)).status, 'INCONSISTENT');                          // one nanosecond further ahead refuses
+  assert.equal(witness.clockVerdict(samples(0, 19)).pass, false);                                               // too few samples
   assert.equal(witness.clockVerdict(null).pass, false);
-  assert.equal(witness.clockVerdict([...samples(0, 49), { monotonicNs: -1, bootNs: 0, receivedNs: 0 }]).pass, false);
+  assert.equal(witness.clockVerdict([...samples(0, 49), { monotonicNs: -1, bootNs: 0, receivedNs: 0 }]).status, 'INCONSISTENT');
   const backwards = samples(0); [backwards[10].monotonicNs, backwards[11].monotonicNs] = [backwards[11].monotonicNs, backwards[10].monotonicNs];
   assert.match(witness.clockVerdict(backwards).reasons.join(';'), /backwards/);
 });
-test('the clock helper really stamps receipt time and its output passes the verdict (child stands in for the bpftrace container)', async () => {
+test('clock transport check: a separation not larger than the uncertainty is INCONCLUSIVE, including a boot substitution (R10-F3 shapes)', () => {
+  const edge = 99_000_000 + 100;                                                                                // uncertainty = tolerance + slack - min hop (2 ms) = 99 ms; the separation lower bound is sepNs - 100
+  for (const [sep, want] of [[0, 'INCONCLUSIVE'], [500_000, 'INCONCLUSIVE'], [edge, 'INCONCLUSIVE'], [edge + 1, 'CONSISTENT'], [3_600_000_000_000, 'CONSISTENT']]) assert.equal(witness.clockVerdict(samples(0, 50, 2_000_000, sep)).status, want, 'sep ' + sep);
+  const inconclusive = witness.clockVerdict(samples(0, 50, 2_000_000, 0));
+  assert.equal(inconclusive.pass, false); assert.match(inconclusive.reasons.join(';'), /not larger than the measured uncertainty/); assert.equal(typeof inconclusive.separationNs, 'number');
+  // the wrong primitive (a boot value in the monotonic field) with small separation or large transport delay is not refuted by observation: INCONCLUSIVE, not PASS
+  const aliased = (sep, delay) => samples(0, 50, delay, sep).map(r => ({ ...r, monotonicNs: r.monotonicNs + sep }));  // boot reading: value is `sep` ahead
+  assert.notEqual(witness.clockVerdict(aliased(500_000, 100_000)).status, 'CONSISTENT');
+  assert.notEqual(witness.clockVerdict(aliased(10_000_000, 20_000_000)).status, 'CONSISTENT');
+  assert.notEqual(witness.clockVerdict(aliased(0, 100_000)).status, 'CONSISTENT');
+  // no independent references at all (the pre-round-11 sample shape): inconclusive; partial references: inconsistent
+  assert.equal(witness.clockVerdict(samples(0).map(({ receivedBootNs, receivedAfterNs, ...r }) => r)).status, 'INCONCLUSIVE');
+  assert.equal(witness.clockVerdict(samples(0).map((r, i) => i === 3 ? { ...r, receivedBootNs: null } : r)).status, 'INCONSISTENT');
+  assert.equal(witness.clockVerdict(samples(0).map(r => ({ ...r, receivedAfterNs: r.receivedNs - 1 }))).status, 'INCONSISTENT');
+});
+test('the clock helper really stamps receipt time and its output feeds the transport check (child stands in for the bpftrace container)', async () => {
   const { spawnSync } = await import('node:child_process');
   const child = "import time\nfor i in range(30):\n print('CK|%d|%d'%(time.monotonic_ns(),time.monotonic_ns()+9),flush=True);time.sleep(.005)";
   const out = spawnSync('python3', ['-B', '-c', fs.readFileSync(witness.CLOCK_HELPER, 'utf8'), '--', 'python3', '-c', child], { encoding: 'utf8', timeout: 30000 });
   assert.equal(out.status, 0, out.stderr);
   const rows = out.stdout.split('\n').filter(Boolean).map(l => JSON.parse(l));
-  assert.equal(rows.length, 30); assert.equal(witness.clockVerdict(rows).pass, true);
+  assert.equal(rows.length, 30);
+  const linux = process.platform === 'linux';
+  for (const r of rows) { assert.deepEqual(Object.keys(r).sort(), ['bootNs', 'monotonicNs', 'receivedAfterNs', 'receivedBootNs', 'receivedNs']); assert.equal(r.receivedBootNs === null, !linux); assert.equal(r.receivedAfterNs === null, !linux); if (linux) assert.ok(r.receivedAfterNs >= r.receivedNs && r.receivedBootNs >= r.receivedNs); }
+  // the stand-in child reads the receiving process's own clock, so it is monotonic-consistent: never INCONSISTENT; INCONCLUSIVE here because a local suspend separation is ~0
+  assert.notEqual(witness.clockVerdict(rows).status, 'INCONSISTENT');
   const shifted = rows.map(r => ({ ...r, monotonicNs: r.monotonicNs + 10 ** 10, bootNs: r.bootNs + 10 ** 10 }));
-  assert.equal(witness.clockVerdict(shifted).pass, false);
+  assert.equal(witness.clockVerdict(shifted).status, 'INCONSISTENT');
 });
 test('perf_event_paranoid is recorded and a failed attach with only CAP_PERFMON refuses naming the level', () => {
   assert.deepEqual(witness.perfParanoidVerdict({ paranoid: 4, tracepointAttach: { ok: true } }), { pass: true, paranoid: 4, reasons: [] });
@@ -202,19 +224,73 @@ test('ext4 built in: a module BTF file or an unresolved probe refuses', () => {
   assert.equal(witness.ext4BuiltinVerdict({ ext4BtfPresent: undefined, listing }).pass, false);
   assert.equal(witness.ext4BuiltinVerdict({ ext4BtfPresent: false, listing: {} }).pass, false);
 });
-test('W0 passes only when every R49 item is recorded and passing', () => {
-  const good = () => ({ clockSamples: samples(0), paranoid: 4, tracepointAttach: { ok: true }, ext4BtfPresent: false, listing: { 'fexit:vmlinux:ext4_file_write_iter': 'fexit:vmlinux:ext4_file_write_iter' },
+// ---- OBS01 round 11 (R10-F3): the clock primitive is proven from the compiled program. The "compiled output" samples below are CONSTRUCTED by the builder
+// from the documented shapes of LLVM IR, BPF disassembly and the verifier log (R49 holds no bpftrace debug-output excerpt and no bpftrace ran offline).
+// They are NOT recordings. W0 is the first place a real dump is captured (<out>/w0-compiled-program.txt); replace or add a recorded sample then.
+const ir = id => `  %x = call i64 inttoptr (i64 ${id} to i64 ()*)()`;
+const ir18 = id => `  %x = tail call i64 inttoptr (i64 ${id} to ptr)()`;
+const dis = id => `      12:\t85 00 00 00 ${id.toString(16).padStart(2, '0')} 00 00 00\tcall ${id}`;
+const ver = (name, id) => `12: (85) call ${name}#${id}`;
+const pinned = fs.readFileSync(witness.PROGRAM);
+const goodProof = (compiledText, over = {}) => ({ expectedSourceSha256: sha(pinned), mountedSourceSha256: sha(pinned), sourceText: pinned.toString('utf8'), versionOutput: 'bpftrace v0.20.2\n',
+  compiled: { stdout: compiledText ?? Array.from({ length: 15 }, () => ir(5)).join('\n'), stderr: '', exitCode: 0, timedOut: false }, ...over });
+function sha(b) { return crypto.createHash('sha256').update(b).digest('hex'); }
+test('compiled-program parser reads helper calls in the IR (old and opaque-pointer forms), disassembly and verifier forms [constructed samples]', () => {
+  const p = witness.parseCompiledHelpers([ir(5), ir18(5), ir(125), '  %y = call i32 @llvm.bpf.pseudo(i64 1, i64 2)', '  %z = load i64, ptr inttoptr (i64 0 to ptr)', dis(5), dis(125), '      13:\t85 10 00 00 7d 00 00 00\tcall 0x7d', ver('bpf_ktime_get_ns', 5), ver('bpf_get_current_pid_tgid', 14)].join('\n'));
+  assert.deepEqual(p.ir, { 5: 2, 125: 1 }); assert.deepEqual(p.asm, { 5: 1, 125: 2 }); assert.deepEqual(p.named, { 5: 1, 14: 1 }); assert.deepEqual(p.problems, []);
+  assert.deepEqual(witness.parseCompiledHelpers('').ir, {}); assert.deepEqual(witness.parseCompiledHelpers(undefined).asm, {});
+});
+test('clock primitive step passes only on the pinned program, exact bpftrace version and monotonic-only compiled time reads [constructed samples]', () => {
+  const run = (compiled, over) => witness.clockPrimitiveVerdict(goodProof(compiled, over));
+  const good = run(); assert.deepEqual(good.reasons, []); assert.equal(good.pass, true); assert.equal(good.sourceMonotonicSites, 15); assert.equal(good.monotonicCalls.ir, 15); assert.deepEqual(good.flags, witness.COMPILE_FLAGS);
+  assert.equal(run([...Array.from({ length: 15 }, () => dis(5)), ir(8), ir(14)].join('\n')).pass, true);                           // other helpers (cpu id, pid_tgid) are fine, in the other format
+  assert.equal(run([...Array.from({ length: 15 }, () => ver('bpf_ktime_get_ns', 5))].join('\n')).pass, true);
+  assert.equal(run(Array.from({ length: 45 }, () => ir(5)).join('\n')).pass, true);                                              // all stages printed: more calls than sites is fine
+  const refuse = (compiled, over, pattern) => { const v = run(compiled, over); assert.equal(v.pass, false); assert.match(v.reasons.join(';'), pattern); return v; };
+  const fifteen = id => Array.from({ length: 15 }, () => ir(id)).join('\n');
+  refuse(fifteen(5) + '\n' + ir(125), undefined, /another clock: ir:bpf_ktime_get_boot_ns#125 x1/);                                // one boot read among monotonic ones
+  refuse(fifteen(125), undefined, /boot_ns/);                                                                                      // the bare-nsecs shape: every read is boot
+  for (const [id, name] of [[118, 'jiffies64'], [160, 'coarse_ns'], [208, 'tai_ns']]) refuse(fifteen(5) + '\n' + dis(id), undefined, new RegExp('asm:.*' + name));
+  refuse(fifteen(5) + '\n' + ver('bpf_ktime_get_boot_ns', 125), undefined, /named:bpf_ktime_get_boot_ns/);
+  refuse(fifteen(5) + '\n' + ver('bpf_ktime_get_ns', 125), undefined, /listed with id 125/);                                       // name and id disagree
+  refuse(fifteen(5) + '\n' + ver('bpf_ktime_get_boot_ns', 5), undefined, /listed with id 5/);
+  refuse(fifteen(5) + '\n' + ver('bpf_ktime_get_new_ns', 300), undefined, /unrecognised clock-reading helper/);
+  refuse(fifteen(5) + '\n; mentions bpf_ktime_get_tai_ns in a comment', undefined, /forbidden clock helper named/);
+  refuse(Array.from({ length: 14 }, () => ir(5)).join('\n'), undefined, /fewer bpf_ktime_get_ns calls \(14.*15 nsecs\(monotonic\) sites/);
+  refuse('', undefined, /compile dump is empty/); refuse('error: unknown option -d', undefined, /no recognisable helper calls/);
+  refuse(undefined, { compiled: { stdout: fifteen(5), stderr: '', exitCode: null, timedOut: true } }, /did not terminate/);
+  refuse(undefined, { versionOutput: 'bpftrace v0.20.1\n' }, /not exactly v0\.20\.2/); refuse(undefined, { versionOutput: 'bpftrace v0.20.2-dirty\n' }, /not exactly/); refuse(undefined, { versionOutput: '' }, /not exactly/);
+  refuse(undefined, { mountedSourceSha256: '0'.repeat(64) }, /different program than the pinned source/);
+  refuse(undefined, { mountedSourceSha256: null }, /hash not recorded/); refuse(undefined, { expectedSourceSha256: null }, /hash not recorded/);
+  refuse(undefined, { sourceText: pinned.toString('utf8') + '\n' }, /source text analysed is not the pinned source/);
+  const withBare = Buffer.from(pinned.toString('utf8') + '\nEND { printf("%llu", nsecs); }\n'); refuse(undefined, { sourceText: withBare.toString('utf8'), expectedSourceSha256: sha(withBare), mountedSourceSha256: sha(withBare) }, /reads a clock other than nsecs\(monotonic\)/);
+  refuse(undefined, { sourceText: '', expectedSourceSha256: sha(Buffer.from('')), mountedSourceSha256: sha(Buffer.from('')) }, /no nsecs\(monotonic\) read/);
+  assert.equal(witness.clockPrimitiveVerdict(undefined).pass, false);
+  assert.equal(run().compiledSha256, sha(Buffer.from(Array.from({ length: 15 }, () => ir(5)).join('\n'))));                         // the receipt binds the exact compiled text it judged
+});
+test('the real program sources pass or fail the source-side check as designed', () => {
+  assert.equal(witness.sourceTimeSites(fs.readFileSync(witness.PROGRAM, 'utf8')).monotonic, 15); assert.deepEqual(witness.sourceTimeSites(fs.readFileSync(witness.PROGRAM, 'utf8')).other, []);
+  assert.ok(witness.sourceTimeSites(fs.readFileSync(witness.CLOCK_PROBE, 'utf8')).other.length > 0);                                // the probe's nsecs(boot) is exactly what the proof would refuse in the witness
+});
+test('W0 passes its clock step only on the program proof; an observational result never substitutes and only a contradiction blocks', () => {
+  const good = () => ({ clockSamples: samples(0), clockProgram: goodProof(), paranoid: 4, tracepointAttach: { ok: true }, ext4BtfPresent: false, listing: { 'fexit:vmlinux:ext4_file_write_iter': 'fexit:vmlinux:ext4_file_write_iter' },
     attach: { pass: true, witnessCgroup: { memoryPeakBytes: 90 * 2 ** 20, oomKills: 0, maxMapKeys: 65536 } } });
   assert.deepEqual(witness.judgeW0(good()).reasons, []);
   const mutate = f => { const x = good(); f(x); return witness.judgeW0(x); };
-  assert.match(mutate(x => { x.clockSamples = samples(7e9); }).reasons.join(';'), /^clock:/);
+  assert.equal(mutate(x => { x.clockSamples = samples(0, 50, 2_000_000, 0); }).pass, true);                                     // INCONCLUSIVE observation: W0 still passes on the proof
+  assert.equal(mutate(x => { x.clockSamples = samples(0, 50, 2_000_000, 0); }).clockIdentity.observational, 'INCONCLUSIVE');
+  assert.equal(mutate(x => { x.clockSamples = samples(0, 50, 2_000_000, 0); }).clockIdentity.provenBy, 'compiled program');
+  assert.match(mutate(x => { x.clockProgram = goodProof(Array.from({ length: 15 }, () => ir(125)).join('\n')); }).reasons.join(';'), /^clock: compiled program reads another clock/);
+  assert.equal(mutate(x => { x.clockProgram = goodProof(Array.from({ length: 15 }, () => ir(125)).join('\n')); x.clockSamples = samples(0); }).pass, false);   // a CONSISTENT observation cannot rescue a failed proof
+  assert.equal(mutate(x => { x.clockProgram = undefined; }).pass, false);                                                         // proof not recorded
+  assert.match(mutate(x => { x.clockSamples = samples(7e9); }).reasons.join(';'), /^clockTransport:/);                              // a contradiction still blocks
+  assert.equal(mutate(x => { x.clockSamples = null; }).pass, false);                                                              // an unrecorded transport check is a refusal
   assert.match(mutate(x => { x.tracepointAttach = { ok: false, detail: 'EACCES' }; }).reasons.join(';'), /perf:/);
   assert.match(mutate(x => { x.attach.witnessCgroup.memoryPeakBytes = 250 * 2 ** 20; }).reasons.join(';'), /memory:/);
   assert.match(mutate(x => { x.ext4BtfPresent = true; }).reasons.join(';'), /ext4:/);
   assert.match(mutate(x => { x.attach.witnessCgroup.maxMapKeys = 4096; }).reasons.join(';'), /mapKeys:/);
   assert.match(mutate(x => { x.attach.pass = false; }).reasons.join(';'), /attach:/);
   assert.equal(mutate(x => { delete x.attach.witnessCgroup; }).pass, false);                       // an unrecorded item is a refusal, not a pass
-  assert.equal(mutate(x => { x.clockSamples = null; }).pass, false);
 });
 test('the trace program and the clock probe use only nsecs(monotonic) and the Dockerfile is pinned (static)', () => {
   const strip = file => fs.readFileSync(file, 'utf8').split('\n').filter(l => !l.trim().startsWith('//')).join('\n');

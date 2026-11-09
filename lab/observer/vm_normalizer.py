@@ -434,9 +434,11 @@ def judge_witness(trace,store,commits):
             if commit.get('visible') and commit.get('U') is not None:
                 if commit['U']<lower:row['codes'].append('VISIBLE-BEFORE-DURABLE')
                 elif commit['U']<upper:unproven=True
+            # [EXP-OBS01-R11] Why (R10-F2): classify every ACK on its own. A proven-early ACK adds ACK-BEFORE-DURABLE (primary) and any other ACK inside
+            # [D_lower, D_upper) still adds DURABILITY-UNPROVEN, once per commit. Rejected: an elif that stopped testing the uncertain ACKs after one proven early one.
             acks=commit.get('acks',[])
             if any(at<lower for at in acks):row['codes'].append('ACK-BEFORE-DURABLE')
-            elif any(at<upper for at in acks):unproven=True
+            if any(lower<=at<upper for at in acks):unproven=True
             if unproven:row['codes'].append('DURABILITY-UNPROVEN')
         for code in row['codes']:counts[code]=counts.get(code,0)+1
         rows.append(row)
@@ -449,7 +451,7 @@ def raise_problems(problems):
     codes=[code for code,_ in problems];primary=min(codes,key=WITNESS_CODES.index)
     raise WitnessError(primary,'; '.join(sorted({code+' '+detail for code,detail in problems},key=lambda s:WITNESS_CODES.index(s.split(' ',1)[0]))),codes)
 
-def witness_context(case,events,clocks,mode):
+def witness_context(case,events,clocks,mode,lower=None,upper=None):
     """None only for the offline synthetic fixture mode without a witness; every VM use needs a complete sync-witness/1."""
     config=case.get('witness')
     if config is None:
@@ -480,7 +482,17 @@ def witness_context(case,events,clocks,mode):
     # tailed WAL chunk), all in the observer's CLOCK_MONOTONIC domain (same_domain is checked in normalize) and within this attempt's
     # observer end. Rejected: accepting any well-formed trace whose detach precedes the final readbacks (mmap, foreign or checkpoint
     # activity after detach would be invisible).
-    polls=[e for e in events if e['event']=='poll'];finals=[e for e in events if e['event']=='final'];tails=[e['atNs'] for e in events if e['event']=='wal' and type(e.get('atNs')) is int]
+    polls=[e for e in events if e['event']=='poll'];finals=[e for e in events if e['event']=='final']
+    # [EXP-OBS01-R11] Why (R10-F1): every tailed WAL chunk must carry a trusted timestamp (nonnegative integer; a bool, string or missing value is not one)
+    # inside this attempt's clock interval, and every chunk then counts toward the coverage bound. Rejected: counting only chunks whose atNs happens to
+    # be an integer (an untimed late tail was silently excluded from the detach check).
+    tails=[]
+    for e in events:
+        if e['event']!='wal':continue
+        at=e.get('atNs')
+        if type(at) is not int or at<0:_bad('WAL tail chunk at offset '+str(e.get('offset'))+' lacks a trusted timestamp (nonnegative integer atNs)')
+        if (lower is not None and at<lower) or (upper is not None and at>upper):_bad('WAL tail chunk timestamp '+str(at)+' outside this attempt\'s clock interval')
+        tails.append(at)
     if not polls or not finals:_bad('no poll or final readback for the witness to cover')
     if any(type(e.get('atNs')) is not int or e['atNs']<0 for e in finals):_bad('final readback lacks a trusted timestamp')
     first_seen=min(e['startNs'] for e in polls);last_seen=max([e['endNs'] for e in polls]+[e['atNs'] for e in finals]+tails)
@@ -575,7 +587,7 @@ def normalize(raw):
         raise ValueError('missing/duplicate process clock record')
     same_domain([e['domain'] for e in clocks])
     if any(e['event']=='error' for e in events):raise ValueError('collector error; NOT_ESTIMABLE')
-    witness=witness_context(case['case'],events,clocks,mode)
+    witness=witness_context(case['case'],events,clocks,mode,lower,upper)
     ids=[s['id'] for s in case['case']['sources']]
     if len(ids)!=len(set(ids)) or any(e.get('source') is not None and e['source'] not in ids for e in events):raise ValueError('source inventory binding')
     problems=[]

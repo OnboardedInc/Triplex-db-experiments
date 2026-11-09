@@ -273,7 +273,7 @@ The exception's `code` (and `primary` in W1) is the first code that holds in thi
 
 | # | Code | Raised when | New in round 10 |
 | --- | --- | --- | --- |
-| 1 | `TRACE-INCOMPLETE` | as round 9, plus: the witness attached after the first observation (first poll start); detached before the last trusted final readback, observation or tailed WAL chunk; detached after the observer's `end`; a final readback without an integer `atNs`; a syncfs record whose ext4 interval lies outside its syscall | extended |
+| 1 | `TRACE-INCOMPLETE` | as round 9 and round 11 (see below), plus: the witness attached after the first observation (first poll start); detached before the last trusted final readback, observation or tailed WAL chunk; detached after the observer's `end`; a final readback without an integer `atNs`; a syncfs record whose ext4 interval lies outside its syscall | extended |
 | 2 | `WITNESS-UNBOUND` | as round 9, plus: a publishing SQL01 commit with no bound `U`; a driver ACK whose member appears in more than one published frame | extended |
 | 3 | `PUBLICATION-SPLIT` | a SQL01 marker advance and its frame are not in the same transaction (either order); a marker that does not name its transaction's last frame; a marker ahead of an empty frames table (`read_state`); a marker lagging the last frame | new (F1) |
 | 4 | `UNWITNESSED-WRITE` | as round 9 | |
@@ -342,10 +342,9 @@ For syncfs/sync the program records the syscall entry and exit and, when the `ex
 ### R49: the trace clock, W0 checks and the image recipe (code and runbook; nothing run)
 
 1. **Clock.** Bare `nsecs` in bpftrace is CLOCK_BOOTTIME. Every timestamp in `vm_syncwitness.bt` is now `nsecs(monotonic)` (15 sites).
-2. **W0 clock step.** `vm_clockprobe.bt` prints `CK|nsecs(monotonic)|nsecs(boot)` every 20 ms (50 lines). `vm_clockcheck.py` runs inside the VM
-   (`docker start -a` of the probe container), stamps its own CLOCK_MONOTONIC on receipt of each line, and `clockVerdict` (`lab/bin/sync-witness.mjs`) refuses unless at least 20
-   samples arrived, `nsecs(monotonic)` never runs ahead of the receipt clock by more than 1 ms, and the smallest receipt-minus-value hop is at most **100 ms**. An offset below the
-   tolerance is not detectable by this step (stated limit); a boot-clock offset is the VM's suspended time, which is far larger. `bootNs - monotonicNs` is recorded.
+2. **W0 clock step.** Superseded by round 11 (below): the observational comparison described here (50 lines at 20 ms, tolerance 100 ms, slack 1 ms) is now only a transport
+   sanity check. The statement that "a boot-clock offset is the VM's suspended time, which is far larger" was wrong: the offset is the guest's accumulated suspend time, which is
+   zero or tiny on a fresh unsuspended VM, so an observation cannot always tell the clocks apart. The clock primitive is now proven from the compiled program.
 3. **W0 checks.** (a) `kernel.perf_event_paranoid` is recorded and a tracepoint is attached under only CAP_BPF + CAP_PERFMON; if that fails W0 refuses naming the level and the witness
    never gets CAP_SYS_ADMIN. (b) the witness cgroup's `memory.peak` and `memory.events` `oom_kill` are read before detach: refuse above **80%** of the 256 MiB cap or on any OOM kill. (c) ext4 built in:
    `/sys/kernel/btf/ext4` must be absent and every `bpftrace -l` probe (now including `fentry:vmlinux:ext4_sync_fs`) must list by its exact name. (d) `BPFTRACE_MAX_MAP_KEYS` is set explicitly
@@ -355,4 +354,43 @@ For syncfs/sync the program records the syscall entry and exit and, when the `ex
    `libbsd0` only as "0.12.1 series", so the build takes `--build-arg LIBBSD0_VERSION=<exact arm64 version>` from the signed index and fails without it.
 
 W0 runbook additions: the probe container for the clock step and the tracepoint attach test use the same `--bpftrace-image` (the locally built image ID, not a pull); the steps run before the attach session and
-all land in `W0.json` (`verdict.checks.{clock,perf,memory,ext4,mapKeys,attach}`). Preconditions are unchanged (free disk above 10 GiB, no exclusive slot, no G03/NSR/P-TINY container).
+all land in `W0.json` (`verdict.checks.{clock,clockTransport,perf,memory,ext4,mapKeys,attach}`). Preconditions are unchanged (free disk above 10 GiB, no exclusive slot, no G03/NSR/P-TINY container).
+
+## Round 11: tail timing, per-ACK classification, clock proof from the program (fixes the round 10 review R10-F1 to F3)
+
+Nothing here ran in a VM; W0..W4 are still NOT RUN and the bpftrace image is not built.
+
+### R10-F1: every WAL tail is timed or the run refuses
+
+In a witnessed run (VM and offline-synthetic witness mode) every `wal` event must carry `atNs` as a nonnegative `int` (a bool, string, float, null, list or missing
+value is not one) inside this attempt's clock interval: at or after `lower` (the case `startedNs`, and in VM mode the run start) and at or before `upper` (the observer `end`).
+Every chunk then counts toward the detach coverage bound (`last_seen`). Failure is `TRACE-INCOMPLETE` ("WAL tail chunk ... lacks a trusted timestamp" or "outside this attempt's
+clock interval"). Nothing is dropped from the coverage set any more. The offline fixture without a witness is unchanged (it has no kernel trace to cover).
+
+### R10-F2: each ACK is classified on its own
+
+Per commit, with `[D_lower, D_upper)` from the sync records: if any ACK is `< D_lower` the commit gets `ACK-BEFORE-DURABLE`; if any ACK is in `[D_lower, D_upper)` the commit
+also gets `DURABILITY-UNPROVEN`, once, whether or not another ACK was proven early. ACK order and duplicates do not matter. Primary stays `ACK-BEFORE-DURABLE`; `DURABILITY-UNPROVEN` is listed in `also`.
+A commit has exactly one publication bound `U` (`commit_views` binds the commit to one logical position's real `U`), so there are no multiple `U` values per commit to classify; the
+`U` test was already independent of the ACK tests. Several commits of one publication are each classified on their own (run-level counts are per commit).
+
+### R10-F3: the clock primitive is proven from the program
+
+Orchestrator decision: observation cannot prove which clock a timestamp used (equal clocks, or separation smaller than the transport delay), so W0's clock step passes only on
+`clockPrimitiveVerdict` (`lab/bin/clock-proof.mjs`, pure, unit-tested):
+
+1. **Bind.** The harness hashes the pinned `vm_syncwitness.bt` (read before and after the step, must be equal); the same bpftrace image computes `sha256sum` of the mounted file; both must match.
+   `bpftrace --version` of that image must print exactly `bpftrace v0.20.2`.
+2. **Emit.** The same image runs `bpftrace -d all /program/vm_syncwitness.bt 1 2 3 4` (placeholder positional arguments, which change only constants) with a 120 s kill.
+   **Flag relied on: `-d all`** (the `-d STAGE` debug option of the 0.20 series, which prints the AST, the LLVM IR before and after optimisation, and the BPF disassembly without running the program).
+   **This is not verified:** R49 does not document bpftrace's debug options, and no bpftrace or network was available offline. The flag is the single constant `COMPILE_FLAGS`.
+   If 0.20.2 rejects it the output is empty and W0 refuses (fail closed). The dump is written to `<W0 out>/w0-compiled-program.txt` (it can exceed 1 MB: durable evidence, not git).
+3. **Parse and assert.** `parseCompiledHelpers` reads helper calls in three formats: LLVM IR `call ... inttoptr (i64 <id> to ...)(...)`, BPF disassembly `call <id>` and verifier-log
+   `call bpf_name#<id>`. Every `bpf_ktime_get_ns` (id 5) is allowed; `bpf_ktime_get_boot_ns` (125), `bpf_ktime_get_coarse_ns` (160), `bpf_ktime_get_tai_ns` (208) and `bpf_jiffies64` (118), by id or by name in any
+   stage, refuse; a helper name that disagrees with its id refuses; an unrecognised `bpf_ktime_get_*`/`bpf_jiffies*` name refuses; an empty dump, a dump with no helper calls, a dump that did not terminate, or fewer
+   `bpf_ktime_get_ns` calls than the `nsecs(monotonic)` sites in the source (15) refuses. The source must contain only `nsecs(monotonic)` time reads. Helper ids are from the Linux uapi header, written from memory (not verifiable offline).
+   The parser tests use samples **constructed** from those formats, labeled as such in `test_engine.mjs`; replace or add a recorded sample when W0 captures a real dump.
+4. **Observational check = transport sanity only** (`clockVerdict`, `vm_clockcheck.py`). The helper now stamps each line with local CLOCK_MONOTONIC (before and after) bracketing a local CLOCK_BOOTTIME read.
+   The verdict is `INCONSISTENT` (value ahead of the receipt by more than 1 ms, backwards, lagging more than 100 ms, malformed or missing), `CONSISTENT` (fits monotonic and the local separation, lower bound
+   `boot - after`, exceeds `tolerance + slack - minimum hop`, so a boot reading is excluded) or `INCONCLUSIVE` (everything else, in particular a separation not larger than the measured uncertainty; also no CLOCK_BOOTTIME
+   reference). `INCONCLUSIVE` is never a pass. `judgeW0` records it as `clockTransport` and blocks W0 only on `INCONSISTENT`; `checks.clock` is the program proof alone; `clockIdentity` in the verdict says which proved what.

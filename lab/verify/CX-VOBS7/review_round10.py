@@ -89,7 +89,12 @@ process.stdout.write(JSON.stringify([
         self.assertEqual(child.returncode, 0, child.stderr)
         cases = json.loads(child.stdout)
         retain('clock-discrimination', cases)
-        self.assertTrue(cases[0]['result']['pass'])
+        # [OBS01-R11] Expectation changed ONLY for the orchestrator's R10-F3 decision: the observational comparison no longer claims to identify the clock.
+        # Its samples have no independent CLOCK_BOOTTIME reference and tiny separations, so every case (honest included) is INCONCLUSIVE rather than a pass,
+        # and none of them is reported as a pass for a boot-clock substitution. W0's clock step depends on the compiled-program proof (lab/bin/clock-proof.mjs).
+        for case in cases:
+            self.assertEqual(case['result']['status'], 'INCONCLUSIVE', case['name'])
+            self.assertFalse(case['result']['pass'], case['name'] + ': observation alone must not pass W0\'s clock step')
         self.assertFalse(cases[1]['result']['pass'], 'W0 declares a 500us boot-clock substitution acceptable')
 
 

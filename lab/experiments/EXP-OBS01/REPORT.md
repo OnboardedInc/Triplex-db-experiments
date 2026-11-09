@@ -1474,3 +1474,88 @@ No `lab/acceptance` path moved. Changed or new sources (old at `44217f95`):
 - The new harness paths in `sync-witness.mjs` (`bpftraceOnce`, `clockStep`, `witnessCgroupFacts`, the session capture, `windowW0`) are syntax-checked only; their pure verdicts are unit-tested.
 - `probe_round9.py` and the round 9 durable evidence were not re-run. B9 (G03 box policy, E12 stream) and CR-NS `claim.mjs` are still not built; no trusted driver emits `driver-ack` events yet.
 - The synthetic traces model what the kernel records; nothing here is VM evidence, and host power loss stays the Q100r premise.
+
+## Round 11: fixes for the round 10 FIX-FIRST review (R10-F1 to R10-F3)
+
+Builder: Claude Sonnet 5.5 (high), offline only. Branch `exp/OBS01-observer`, base `e696c828`. Authority: `VERIFY-round10.md` and the orchestrator's R10-F3 decision (clock primitive proven from the program).
+`lab/acceptance` untouched; no pinned acceptance path moved (none of the changed files is referenced under `lab/acceptance`). Semantics are in `lab/observer/VM.md`, "Round 11".
+
+### Outcome
+
+| Item | Result |
+| --- | --- |
+| R10-F1 | `witness_context` takes the attempt's clock interval. Every `wal` event in a witnessed run needs a nonnegative `int` `atNs` (bool, string, float, null, list, missing and negative refuse) at or after the attempt start and at or before the observer end, and every chunk is in the coverage bound. Refusal is `TRACE-INCOMPLETE`. |
+| R10-F2 | Each ACK is classified independently: any ACK below `D_lower` gives `ACK-BEFORE-DURABLE` (primary); any ACK in `[D_lower, D_upper)` also gives `DURABILITY-UNPROVEN`, once per commit; order and duplicates do not matter. A commit has one `U` (`commit_views` binds one position), so there are no multiple-`U` cases; the `U` branch was already independent. |
+| R10-F3 (a) | `lab/bin/clock-proof.mjs` (new, pure): `clockPrimitiveVerdict` binds the pinned `.bt` hash (harness hash before and after, `sha256sum` by the same bpftrace image on the mounted file) and the exact `bpftrace v0.20.2`, takes the compiled program from `bpftrace -d all` and requires every time read to be `bpf_ktime_get_ns` (id 5) with at least one call per `nsecs(monotonic)` source site (15); ids 118, 125, 160, 208 or those names refuse. `parseCompiledHelpers` reads IR, disassembly and verifier-log forms. W0 `checks.clock` is this proof alone. |
+| R10-F3 (b) | `clockVerdict` is a transport sanity check against independent local CLOCK_MONOTONIC and CLOCK_BOOTTIME reads (`vm_clockcheck.py` now stamps both, bracketed). Status `CONSISTENT` / `INCONCLUSIVE` / `INCONSISTENT`; `pass` is true only for `CONSISTENT`. `INCONCLUSIVE` when the separation is not larger than the measured uncertainty (`tolerance + slack - min hop`) or there is no boot reference. `judgeW0` records it as `clockTransport` and blocks only on `INCONSISTENT`. VM.md no longer claims the offset is always large. |
+
+### Gates
+
+Run through `heavy.mjs` (`--label OBS01-R11`; free disk 15 GiB, above the 5 GiB floor). Durable receipt: `/Users/sam/Claude/Projects/triplex-db-2/evidence/OBS01-R11/offline01/` (`RESULT.json`, `SHA256SUMS`) and
+`reviewer-round9.{stdout,stderr}`, `reviewer-round10.{stdout,stderr}` beside it. `RESULT.json` status PASS, frozen-source pins unchanged at the end; `SHA256SUMS` sha256 `b19e7b53dab56b56e882437ae9b03e0b639982aa7b405809c0bbed634a491bdf`.
+
+| Suite | Result |
+| --- | --- |
+| `test_vm.py` | 14/14 (unchanged) |
+| `test_syncwitness.py` | 18/18 (unchanged tests; the normalizer fixture now stamps `atNs` on tailed WAL chunks) |
+| `test_round10.py` | 40/40 (unchanged) |
+| `test_round11.py` (new) | 20/20: R10-F1 (control, missing, one of two missing, string/bool/negative/float/null/list, after end, before start, endpoints, late-vs-untimed) and R10-F2 (permutations of early/unproven/safe ACKs, duplicates, boundaries, `U` independence, file-sync point, multi-member publication through `commit_views` in all six ACK orders, two commits) |
+| `node --test lab/observer/test_engine.mjs` | 25/25: the 21 earlier (the clock verdict and W0 tests rewritten for the new semantics) plus 4 new (parser on constructed samples, proof verdict, source-side check, observational INCONCLUSIVE shapes) |
+| Python total | 92 (72 earlier + 20 new); Node total 25 |
+| reviewer `review_round9.py` | 11/11 (fresh `OUT`) |
+| reviewer `review_round10.py` | 4/4 (fresh `OUT`): the three round 10 regression fixtures plus the interval control now pass; the F3 expectation changed as in divergence 8 |
+
+Mutation spot checks (each made the new tests fail, then was reverted byte for byte): the F2 `elif` restored; the WAL tail type check removed.
+
+### Divergences from the brief (all of them)
+
+1. **The bpftrace flag is not verified.** The brief says to check the 0.20.2 documentation in R49. R49 (`lab/research/R49-bpftrace-source.md`) does not document bpftrace's debug or dry-run options (it covers `nsecs`, `-l`, map keys and the image). With no bpftrace and no network offline I could not confirm any option. I rely on `-d all`
+   (`COMPILE_FLAGS` in `clock-proof.mjs`), from my knowledge of the 0.20 series `-d STAGE` option (all, ast, codegen, codegen-opt, dis, libbpf, verifier). I did not use `--dry-run`: I could not confirm it exists in 0.20.2. Failure mode if wrong: empty or unparseable output, so W0 refuses (tested); the first W0 run must record the real output (`w0-compiled-program.txt`). A 120 s kill guards against the flag not being a dry run.
+2. **The parser tests use constructed samples**, as the brief allows: LLVM IR (old `i64 ()*` and opaque `ptr` forms), BPF disassembly (`call 5`, `call 0x7d`) and verifier-log (`call bpf_ktime_get_ns#5`) lines written from my knowledge of those formats, labeled CONSTRUCTED in `test_engine.mjs`. None is a recording.
+3. **BPF helper ids are from memory** of `include/uapi/linux/bpf.h` (5 ktime_get_ns, 118 jiffies64, 125 ktime_get_boot_ns, 160 ktime_get_coarse_ns, 208 ktime_get_tai_ns); not checkable offline. The parser also cross-checks names against ids when the output carries both, and refuses on any forbidden clock helper name, so one wrong id would be caught only where a name is printed.
+4. **The compiled-call count rule is `>=`, not `==`.** `-d all` prints several stages, so the same call may appear in each; the rule is at least one `bpf_ktime_get_ns` call per `nsecs(monotonic)` source site (15) in the best-represented format. A site that vanished from every stage but one would not be caught; a boot read in any stage is.
+5. **The dump uses placeholder positional arguments** (`1 2 3 4`) instead of the real store directory pair, which is not known until the later attach session. They change constants only. The binding to the exact program is by the source hash, not by the dump.
+6. **Observational check semantics.** The brief says to report INCONCLUSIVE when the separation is not larger than the measured uncertainty. My uncertainty is `tolerance (100 ms, the stated transport bound) + slack (1 ms) - minimum measured hop`, because transport latency has no measured upper bound; with the guest usually unsuspended (separation about zero) the real W0 will report `INCONCLUSIVE` almost always, by design. `INCONSISTENT` also covers missing samples, partial references and a null sample set (an unrecorded transport check refuses W0, as before).
+7. **`vm_clockcheck.py` returns null for the CLOCK_BOOTTIME fields on a platform without it** (the macOS host that runs the unit tests) rather than substituting another clock; the verdict then reports INCONCLUSIVE. The Node helper test asserts both behaviours by platform; a Linux run was not possible here.
+8. **The R10-F3 reviewer fixture's expectation changed** (`lab/verify/CX-VOBS7/review_round10.py`, `test_w0_wrong_clock_can_pass_with_small_offset_or_transport_delay`), only because of the decision above: its sample shape has no independent references and tiny separations, so every case including the honest one is `INCONCLUSIVE` (none passes) instead of the honest case passing. The two assertions of the other three fixtures are unchanged.
+9. **The shared normalizer fixture now stamps `atNs` on tailed WAL chunks** (`test_syncwitness.py`, `TAIL_NS = 580,000,000`). The round 10 fixture builder never gave WAL events an `atNs`, which is why the reviewer's R10-F1 fixture removed nothing from them and why the old code accepted the run; the real collector (`vm_watch.py`) stamps every chunk. All earlier tests pass with the stamped fixture.
+10. **`judgeW0` result shape** gained `checks.clockTransport` and `clockIdentity` (who proved what); `windowW0` now records `clockProgram` (image, dump path, exit codes) next to the older `clock` entry. `witnessCreateArgs` and the witness session are untouched.
+11. **`bpftraceOnce` gained an entrypoint override and a kill timeout** (the proof runs `sha256sum` and the dump with the same image). The other W0 callers behave as before.
+
+### PASS audit (rule 9a): every site that turns observations into a verdict or receipt
+
+Round 10's table still applies to its unchanged sites. New or changed in round 11:
+
+| Site | Content | Freshness | Binding |
+| --- | --- | --- | --- |
+| `witness_context` WAL tail timing | each tailed chunk's `atNs` is a nonnegative `int` in `[lower, upper]`, then folded into the detach bound | events of this attempt's stream; `lower`/`upper` are this run's case start and observer end | the chunks are the ones joined to the final WAL bytes (`captured == wal` in `normalize`); one clock domain (`same_domain`) |
+| `judge_witness` ACK/`U` classification | each ACK tested against `D_lower` and `[D_lower, D_upper)` separately; `U` tested once | this run's trace, ACK events and brackets | ACK to member via the frame's decoded identity, then to every commit of that publication (`commit_views`, unchanged) |
+| `clockPrimitiveVerdict` (W0 `checks.clock` PASS) | source hash by a second party (the image's `sha256sum`), exact version string, helper ids and names parsed from the compiled program, count against source sites | taken in the same W0 window, run by that W0's containers; pinned file read before and after must be equal | the hash is of the file mounted into the image that ran the dump; the receipt records the image, the version output, `compiledSha256` of the judged text and the dump path. Not bound to the witness session's actual program run except through the same pinned file hash (`programSha256` in the witness meta is the same file) |
+| `clockVerdict` (transport check, never a W0 PASS by itself) | min hop, monotonicity, separation of the independent references vs uncertainty | same window; references read on each receipt | local references read by the receiving helper in the VM; says nothing about which primitive the probe used |
+| `judgeW0` | proof AND recorded transport not `INCONSISTENT` AND the R10 items | as above | as above |
+
+Known gaps: the real dump format and the `-d all` flag are unverified until W0 runs; helper ids are from memory; the compiled count rule is `>=`; `programSha256` binds the source file, not the compiled bytes of the later attach session (a different bpftrace build with the same version string would compile the same text differently, and
+only the pinned image digest guards that); the observational check will usually be `INCONCLUSIVE` in a real VM.
+
+### Moved source hashes
+
+No `lab/acceptance` path moved. Changed or new sources (old at `e696c828`):
+
+| Path | Old SHA256 | New SHA256 |
+| --- | --- | --- |
+| `lab/bin/sync-witness.mjs` | `859e48234deac0daeee03bd519b9e171a5bba935fccc5e554de1eedd97519b8e` | `f07003dd43f04728073c27887c4d01b74478d3e1170561e03180e33f22c88e10` |
+| `lab/observer/vm_normalizer.py` | `5850ec4bbc102728f2306a918acd96340eb990888cab8b483db31572caefc983` | `222dbe1455b2da1ca1346c3152b9411ff97452a9658a7da5aa68586d7eef3b46` |
+| `lab/observer/vm_clockcheck.py` | `59693c70a9d8584749e20d5c04ed07d0207b138a64d5e31a47e53121963ef896` | `fe576d8d013a6f16774d86b9c06fe5c1e881c916129f45fea575e3f0174caa19` |
+| `lab/observer/test_engine.mjs` | `f41050a39668a83f7bad85a49929d015e5d920cb84e2596e9c57f414bf138be0` | `312ed665595847125e213e1c68b442c86bbde4fe8f735189238dae660d036bca` |
+| `lab/observer/test_syncwitness.py` | `83b090bac2eac75670bcec1ebce7ebcf94ff8d9b70782b3b689b8f249c0e5efa` | `ad8a8b882c478af003081e54382848cd541b65d59b94c259bddb322e326132a1` |
+| `lab/observer/run_vm_offline.py` | `77f437c7b3ec9ebeed20205d5da1313b862c889aaddeb7d9163c2f4117d9c8da` | `276f58166358f96ab9ace17a9c901f3dff0104abc70778a9e870c7de375a66e3` |
+| `lab/verify/CX-VOBS7/review_round10.py` | `a2e7d5c215ac56cfc5fdb4f8583c47054f778ab165e3c99751492112cf6b4401` | `65c7026bc6465f432c6c53159905f90f73e07685775c26b7e459a48e6abdb6c9` |
+| `lab/bin/clock-proof.mjs` | new | `bb661980c8e1e72a4e35dab1e395fd5fef8cd09f9d99c15ed0f14e9c48c3cf3e` |
+| `lab/observer/test_round11.py` | new | `791c44b66e696142cb28e3980ded60f210f2327ad45ae917a1e6eaa34770de2e` |
+
+### What did not run
+
+- No VM, Docker, colima, engine or network command; no image pull, apt, pip or pnpm. W0, W1, W2, W3 and W4 not run; no real `bpf()` call and no real bpftrace of any kind, so `bpftrace -d all`, `--version`, and the compiled-program format are all unobserved.
+- `clockProgramStep`, the new `bpftraceOnce` options (entrypoint, timeout) and the updated `windowW0` wiring are syntax-checked only; their pure verdicts and the parser are unit-tested on constructed samples.
+- The Dockerfile is still not built (libbsd0 version open); B9 and CR-NS `claim.mjs` still not built.
+- `probe_round9.py` and earlier durable evidence were not re-run. The helper's real CLOCK_BOOTTIME path (Linux) was not exercised on this macOS host.
