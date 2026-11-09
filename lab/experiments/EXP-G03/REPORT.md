@@ -611,3 +611,74 @@ Rule 9b: `lab/acceptance` untouched. Pinned-file hashes (none is an acceptance i
 The driver bundle hash changes with driver.mjs; the next contract builder must re-pin it. Rule 9c: all round-7a evidence is under 1 MB; durable copies and SHA256SUMS are in `/Users/sam/Claude/Projects/triplex-db-2/evidence/G03-R7/`. Index: `round7a/INDEX.json`, `round7a/SHA256SUMS`.
 
 Not done: R48 sync-witness integration (round 7b), any live boxed or VM run, CR-NS ingestion, production normalizers.
+
+
+## Round 7c: reviewer's F3 (medium) and F4 (low)
+
+Source: `lab/verify/G03/VERIFY-round7a.md` (FIX-FIRST, reviewed `ef1a9216`/`9c4b68aa`). Offline only; no engine, slot, VM or Docker lifecycle use; Docker context stayed `default`. Base `9c4b68aa`, code commit `87c86a10`, rule 10 fix `733daf5c`. No QUALIFIED or PASS grant is added; everything stays DIAGNOSTIC.
+
+### F3: a rejected control session now exports, digests and refuses (or retains the volumes)
+
+- `runBoxedNS` catches a rejected `execControl` (failed onControl/handshake, malformed or truncated JSON, timeout, output cap, FAULT-POINT-DR-CONTRADICTION). The terminal is a coordinator-owned `ns-terminal/1` with `driverExit:null` and `controlFailure:{ok:false,error,partial:{stdout/stderr bytes and sha256}}`.
+- Safe stop: the driver is removed with kill proof first (killing the `docker exec` client does not stop the container process), then the observer is sealed, then every candidate container is removed with proof, then raw export and capture hashing run. The partial streams are exported as `raw-<run>/control/stdout` and `control/stderr` and are digested in `capture`. Then `requireCleanTerminal` refuses with `DRIVER-CONTROL-FAILURE <cause>`. No result is returned, so no semantic grant follows.
+- Retention: any throw from stop, teardown or export (this covers the old nonzero-exit path too) before the export completes moves the run's per-run volumes (broker, consumer, output, observer, trace, key, bundle, observerCode, control) out of `box.resources`, so `box.close()` cannot delete them. They are listed in `box.retained` and in `ns-<run>-retained.json` (`export:"NOT-PROVEN-SAFE"`, reason, volume names, terminal), with stage 14. The thrown error carries `rawDir`, `terminal`, `retained`, `candidateLogs` and `runId`.
+- `box.mjs` `execControl` attaches `error.partial` to every rejection. This is the only box.mjs change.
+- `smoke.mjs` and `exclusive.mjs` record `rawDir`, `terminal`, `retained` and the logs captured before removal on failure. Retained volumes are not in `box.resources`, so `close()` leaves them; they appear in `terminal.json`/`receipt.json` as `retainedVolumes`.
+- `exclusive.mjs`: removed the obsolete `docker context use colima` step (rule 10); the context stays `default`.
+
+### F4: every observer record's clock domain is validated
+
+`verifyObserver` tracks initialization (`domainSeen`) apart from the value and requires every record's `domain` to be exactly `{bootId (36 chars), primitive:'CLOCK_MONOTONIC', offsets:{monotonic:['0','0'],boottime:['0','0']}}`, else `observer domain invalid`. A non-null change still gives `observer domain changed`.
+
+### Regressions (`ns/round7c.test.mjs`, 17 tests, `ns/round7c-harness.mjs`)
+
+- The harness runs the exact committed `ns-run.mjs` and the exact `box.mjs` `execControl` bytes (vm-loaded, real `FaultInjector`) against a trusted Box model, one subprocess per mode.
+- Rejected hook (DR contradiction), control timeout, truncated control output, malformed control JSON and output cap each assert: `DRIVER-CONTROL-FAILURE` plus the cause; the terminal fields; 8 exported files with every digest recomputed from the on-disk bytes; partial streams exported and digest-bound to the terminal; ordering (driver removed, then observer sealed, then walks, then `close()`); no volume deleted before the export; no result returned.
+- Unprovable walk and unprovable teardown assert the exact retained volume names, the retained.json gap, that `close()` left the volumes, and that no `raw-*` directory is presented as an export.
+- Baselines (status 7, null status, finish failure) still export six digested files. A `requireCleanTerminal` control covers `controlFailure`.
+- F4 controls: constant valid accepted; null first; null in all records; null middle or final; non-null change; malformed constant domains.
+- Liveness: against the `9c4b68aa` `ns-run.mjs` and `box.mjs`, 12 of the 17 fail and 5 pass (baselines, F4 accept control, domain change). No round 7a assertion was changed.
+
+### Divergences from the review's proposal
+
+- The reviewer's `coordinator-review.mjs` was a standalone harness. Here it became a committed test plus harness. The model's `walk` and `close` were extended so retention can be asserted.
+- Retention keeps all per-run volumes; it does not try to guess which are "forensic". Input volumes `ns-in-*` and the ping volume are not retained.
+- On a control failure the driver is removed before the observer is sealed; on a resolved exec result the original order (observer first) is unchanged.
+- `box.mjs` is changed even though it is in the protected evaluator closure (orchestrator decision: carrying partial streams is the right behavior). See pins.
+
+### Gates
+
+- Full committed-tree suite at `87c86a10`: **285/285**, zero fail/cancel/skip/todo, exit 0 (`round7c/committed-suites.tap`): 108 evaluator fixtures plus 177 NS components (was 268; +17).
+- NS components at `87c86a10`: **177/177** (`round7c/ns-suites.tap`); rerun at `733daf5c` after the exclusive.mjs change: **177/177** (`round7c/ns-suites-final.tap`).
+- Evaluator fixtures run separately: **108/108**, no EVALUATOR-TAMPERED output (`round7c/evaluator.tap`).
+- `python3 lab/acceptance/build_contract.py --verify` as its own step: exit 0, byte-identical regeneration (`round7c/contract-verify.txt`). `lab/acceptance` has no diff against `9c4b68aa`.
+- All suites ran through `heavy.mjs --label G03-R7C`. The full and evaluator runs were at `87c86a10`; the only later change is the exclusive.mjs line, which no suite imports.
+
+### PASS / receipt audit (rule 9a)
+
+- `trustedTerminal` / `requireCleanTerminal` (driver completion): content = exact exit 0, `faultFinish.ok` and no `controlFailure` key (a forged `driverExit:0` cannot hide it); freshness = built from this run's exec result or rejection; binding = `runId` equal to the run binding and `source:'coordinator-exec'`. The partial-stream digests are computed from the bytes exported this attempt.
+- Capture digests: now include `control/stdout` and `control/stderr` on a rejected session; taken at export before any verification; bound by path under the run's raw directory.
+- `verifyObserver`: content = HMAC over each record plus the full clock-domain object check on every record and equality with the seal copy; freshness = per-run key and `runId`; binding = constant domain across the chain.
+- Retention record (`ns-retained/1`): makes no PASS claim; it records which volumes were kept and why; `qualification:false`.
+- `checkSmoke`, `verifyHr`: unchanged.
+- Tests: positive assertions follow refusal assertions; Box and transport are trusted models (disclosed in the harness header); digests are recomputed from files on disk, not read back from the code under test.
+
+### Pins moved (rule 9b; `lab/acceptance` untouched; none is a contract input pin; `round7c/pin-changes.json`)
+
+| Path | Old sha256 (9c4b68aa) | New sha256 |
+| --- | --- | --- |
+| lab/bin/box.mjs (PROTECTED EVALUATOR CLOSURE, in claim.mjs EVALUATOR_FILES) | 96b9d9cc9485ef2fcfd13362a69a5e126a0cbf36bb93cdf978402908d89411c1 | 589028dca91ca8c90865994dd483df4694999360f9485520c9c963296b1dc906 |
+| lab/bin/ns-run.mjs | 93f2267c8e9682bfc9f922be332b288f1be5be94a17bdbf8400c72f17f897ef4 | aa99c4fae29d72f2558e47fb14e6abcf12748caf7f21fd45a9fbe4e87fcffd82 |
+| lab/experiments/EXP-G03/ns/smoke.mjs | 7ac90c5d7fe4cb6056308bba41ea9344f307363afdd72d0b17a181584816bd7b | a5d8cecd5fd48b3abd1b1fcdd4d71c75a177dfc83bacb067b51c58f83b86aaa5 |
+| lab/experiments/EXP-G03/ns/exclusive.mjs | 4290c09a8a66cb36782e0572e717e131974567bae978912e414486874cfad71e | cef7f4672a9e78198f1b4dc0890d748ee62bdd1c6c8c7c71724b01c861359d4f |
+
+`box.mjs` moves the protected evaluator closure: contract 0.4.1 must re-pin it together with the round 7a driver bundle. `lab/bench/ns-driver/**` and `observer.py` are byte-identical to `9c4b68aa`, so the driver bundle hash is unchanged by this round (the round 7a change, `5eb71216...` to `21d3fd1e...`, still awaits re-pin). The evaluator run raised no tamper refusal.
+
+### What did not run / not verified
+
+- No live boxed or VM run, no pause/kill/restart, no CR-NS ingestion, no production normalizers, no P1-P5 qualification.
+- Real Docker behavior is model-only: `docker rm -f` on a paused or killed consumer, the engine's kill proof after the exec client is killed, and the walker against a stopped run. `smoke.mjs` and `exclusive.mjs` were only syntax-checked.
+- Retained volumes stay in the lab VM until someone removes them; the smoke exits 2 and lists them.
+- Separate reviewer acceptance of this round is outstanding.
+
+Evidence index: `round7c/INDEX.json`; checksums: `round7c/SHA256SUMS`; durable copy at `/Users/sam/Claude/Projects/triplex-db-2/evidence/G03-R7/round7c/` (all files under 1 MB).

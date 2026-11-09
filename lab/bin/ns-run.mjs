@@ -17,14 +17,17 @@ export function verifyHr(files,key,binding){
 }
 // [EXP-G03-R7a] Why: the observer's final readbacks, clock domain and measured periods are one authenticated record at the end of the same HMAC chain; seal.json is only a copy and must equal it exactly, so any post-capture edit to a consumed field fails here. Rejected: trusting seal.final/periodNs because seal.head matches the poll chain (F1: HMAC covered the polls only).
 const SEAL_KEYS=['chunks','domain','final','head','periodNs','runId','schema'];
+// [EXP-G03-R7c] Why: initialization is tracked apart from the domain value, and every record's domain must itself be the boot/zero-offset clock object, so null can never stand for "not yet seen" (F4: a null first domain skipped the constancy check and was dropped from the result). Rejected: using null as the uninitialized sentinel; checking only that consecutive non-null domains are equal.
+const clockDomainOk=d=>d!==null&&typeof d==='object'&&!Array.isArray(d)&&Object.keys(d).sort().join()==='bootId,offsets,primitive'&&typeof d.bootId==='string'&&/^[0-9a-f-]{36}$/.test(d.bootId)&&d.primitive==='CLOCK_MONOTONIC'&&isDeepStrictEqual(d.offsets,{monotonic:['0','0'],boottime:['0','0']});
 const storeShape=v=>v&&typeof v==='object'&&Number.isSafeInteger(v.marker)&&Array.isArray(v.subjects)&&Array.isArray(v.entries)&&Object.keys(v).sort().join()==='entries,marker,subjects';
 export function verifyObserver(files,key,runId){
- const seal=JSON.parse(files.get('seal.json')),lines=files.get('polls.ndjson').toString().trim().split('\n');let head='0'.repeat(64),seq=0,last=null,domain=null;const polls=[];
+ const seal=JSON.parse(files.get('seal.json')),lines=files.get('polls.ndjson').toString().trim().split('\n');let head='0'.repeat(64),seq=0,last=null,domain,domainSeen=false;const polls=[];
  for(const line of lines){
   if(last)throw Error('observer records after final');
   const row=JSON.parse(line);if(Object.keys(row).sort().join()!=='hmac,raw')throw Error('observer row shape');const body=JSON.parse(row.raw);
   if(body.schema!=='ns-observer/1'||body.runId!==runId||body.sequence!==seq++||body.previous!==head||createHmac('sha256',key).update(row.raw).digest('hex')!==row.hmac)throw Error('observer content/binding');
-  if(domain!==null&&!isDeepStrictEqual(body.domain,domain))throw Error('observer domain changed');domain=body.domain;head=row.hmac;
+  if(!clockDomainOk(body.domain))throw Error('observer domain invalid');
+  if(domainSeen&&!isDeepStrictEqual(body.domain,domain))throw Error('observer domain changed');domain=body.domain;domainSeen=true;head=row.hmac;
   if('final'in body||'periodNs'in body)last=body;else polls.push(...body.polls);
  }
  if(!last||seq<2)throw Error('observer final record missing');
@@ -34,11 +37,15 @@ export function verifyObserver(files,key,runId){
  return {seal:{...seal,final:last.final,periodNs:last.periodNs,domain},polls};
 }
 // [EXP-G03-R7a] Why: the exit status and fault-stream outcome come from the coordinator's own exec, not from the driver's events; replay refuses before reading any event when the driver did not exit 0 or the hook stream did not finish. Rejected: trusting a clean end event (F2: a throw after the last handshake still sealed error:null).
-export function trustedTerminal({runId,exec,faultError=null}){
- return {schema:'ns-terminal/1',runId,source:'coordinator-exec',driverExit:exec.status,faultFinish:faultError?{ok:false,error:String(faultError.message??faultError)}:{ok:true}};
+// [EXP-G03-R7c] Why: a rejected control session (failed hook/handshake, malformed or truncated JSON, timeout, output cap, a refused DR contradiction) is also a coordinator-owned failed terminal; it carries the cause and digests of the partial streams, and has no exit status. Rejected: letting the rejection skip terminal construction, stop and export (F3).
+export function trustedTerminal({runId,exec,faultError=null,controlError=null}){
+ const terminal={schema:'ns-terminal/1',runId,source:'coordinator-exec',driverExit:exec.status,faultFinish:faultError?{ok:false,error:String(faultError.message??faultError)}:{ok:true}};
+ if(controlError){const out=Buffer.from(exec.stdout??''),err=Buffer.from(exec.stderr??'');terminal.controlFailure={ok:false,error:String(controlError.message??controlError),partial:{stdoutBytes:out.length,stdoutSha256:sha256(out),stderrBytes:err.length,stderrSha256:sha256(err)}}}
+ return terminal;
 }
 export function requireCleanTerminal(terminal,binding){
  if(!terminal||terminal.schema!=='ns-terminal/1'||terminal.source!=='coordinator-exec'||terminal.runId!==binding?.runId)throw Error('DRIVER-TERMINAL-MISSING');
+ if('controlFailure'in terminal)throw Error('DRIVER-CONTROL-FAILURE '+(terminal.controlFailure?.error??'unreported'));
  if(terminal.driverExit!==0)throw Error('DRIVER-EXIT-NONZERO status='+terminal.driverExit);
  if(terminal.faultFinish?.ok!==true)throw Error('DRIVER-HOOK-FAILURE '+(terminal.faultFinish?.error??'unreported'));
  return terminal;
@@ -138,26 +145,50 @@ export async function runBoxedNS(box,{instance,bundleFiles,observerFiles,sourceC
   }
  });
  const injector=new FaultInjector({binding,target:targetOf(consumer),transport,caseIds:faults?.caseIds,pageBounds:faults?.pageBounds,decide:faults?.decide??(()=>false),retain:async bytes=>box.put(bytes)});
- const result=await box.execControl(drv.name,drv.launchArgv,row=>injector.handshake(row),{timeout:90000});
+ // [EXP-G03-R7c] Why: a rejected execControl (failed onControl/handshake, malformed or truncated JSON, timeout, output cap, FAULT-POINT-DR-CONTRADICTION) must take the same safe stop, teardown, export and capture hashing as a nonzero exit, with a coordinator-owned failed terminal. Rejected: awaiting outside any catch (F3: the rejection skipped terminal, observer stop, export and digests, and box.close() then deleted the volumes).
+ let result,controlError=null;
+ try{result=await box.execControl(drv.name,drv.launchArgv,row=>injector.handshake(row),{timeout:90000})}
+ catch(e){controlError=e;const p=e?.partial??{};result={status:null,stdout:p.stdout??Buffer.alloc(0),stderr:p.stderr??Buffer.alloc(0)}}
  // [EXP-G03-R7a] Why: a nonzero driver exit or failed fault stream must still stop and export every retained byte, then refuse before replay. Rejected: throwing here (loses failed-attempt evidence) or recording the exit and continuing (F2).
  let faultSummary=null,faultError=null;try{faultSummary=injector.finish({requireInjections:faults?.requireInjections??false})}catch(e){faultError=e}
- const terminal=trustedTerminal({runId,exec:result,faultError});stage(10,{driverExit:result.status,terminal,faultSummary});
- // Stop the observer via a private evaluator-only control volume, never candidate RPC.
- helper('stop-observer',['node','-e',"require('fs').writeFileSync('/control/stop','stop')"],{mounts:[{name:volumes.control,target:'/control',rw:true}],net:'none'});
- for(let i=0;i<100&&inspect(obs).State.Running;i++)await new Promise(r=>setTimeout(r,20));if(inspect(obs).State.Running||inspect(obs).State.ExitCode!==0)throw Error('observer seal failed');stage(11,{sealed:true});
- const candidateLogs=Object.fromEntries(names.map(n=>[n,docker(['logs',n],{allowFail:true})]));for(const name of names)box.remove(name);box.remove(drv.name);box.remove(obs);stage(12,{candidateCgroupsGone:true});
- const output=filesOf(box.walk(volumes.output,['events/'])),observed=filesOf(box.walk(volumes.observer,['seal.json','polls.ndjson','ready.json']));
- const stateExports={source:box.walk(volumes.broker,['broker.db','broker.db-wal','broker.db-shm']),consumer:box.walk(volumes.consumer,['consumer.db','consumer.db-wal','consumer.db-shm'])};
- // [EXP-G03-R5] Why: semantic refusal must retain the exact raw bytes and key for independent replay. Rejected: judging in memory before saving failed-attempt evidence.
- const rawDir=path.join(box.workDir,'raw-'+runId);fs.mkdirSync(rawDir,{mode:0o700});
- fs.writeFileSync(path.join(rawDir,'key'),key,{flag:'wx',mode:0o600});fs.writeFileSync(path.join(rawDir,'binding.json'),JSON.stringify(binding),{flag:'wx',mode:0o600});
- for(const [kind,files]of [['driver',output],['observer',observed],['source',filesOf(stateExports.source)],['consumer',filesOf(stateExports.consumer)]]){
-  for(const [relative,bytes]of files){if(relative.split('/').some(p=>!p||p==='.'||p==='..')||relative.startsWith('/'))throw Error('unsafe walker export path');const destination=path.join(rawDir,kind,relative);fs.mkdirSync(path.dirname(destination),{recursive:true,mode:0o700});fs.writeFileSync(destination,bytes,{flag:'wx',mode:0o600})}
+ const terminal=trustedTerminal({runId,exec:result,faultError,controlError});stage(10,{driverExit:result.status,terminal,faultSummary});
+ // [EXP-G03-R7c] Why: if the stop, teardown or export cannot be proven, the run's volumes are the only copy of the evidence; they leave box.resources so close() cannot delete them, and the gap is written down. Rejected: letting close() remove volumes after a failed export, or omitting the gap from the record.
+ const forensicVolumes=new Set(Object.values(volumes).filter(v=>v!==network));
+ let candidateLogs={},output,observed,stateExports,rawDir,capture,exported=false;
+ const owned=n=>box.resources.some(([kind,r])=>kind==='container'&&r===n);
+ try{
+  // A rejected control session may leave the driver alive in its container (killing the docker exec client does not stop it): remove it, with kill proof, before the observer is sealed.
+  if(controlError&&owned(drv.name))box.remove(drv.name);
+  // Stop the observer via a private evaluator-only control volume, never candidate RPC.
+  helper('stop-observer',['node','-e',"require('fs').writeFileSync('/control/stop','stop')"],{mounts:[{name:volumes.control,target:'/control',rw:true}],net:'none'});
+  for(let i=0;i<100&&inspect(obs).State.Running;i++)await new Promise(r=>setTimeout(r,20));if(inspect(obs).State.Running||inspect(obs).State.ExitCode!==0)throw Error('observer seal failed');stage(11,{sealed:true});
+  candidateLogs=Object.fromEntries(names.filter(n=>!controlError||owned(n)).map(n=>[n,docker(['logs',n],{allowFail:true})]));for(const name of names)if(!controlError||owned(name))box.remove(name);if(!controlError)box.remove(drv.name);box.remove(obs);stage(12,{candidateCgroupsGone:true});
+  output=filesOf(box.walk(volumes.output,['events/']));observed=filesOf(box.walk(volumes.observer,['seal.json','polls.ndjson','ready.json']));
+  stateExports={source:box.walk(volumes.broker,['broker.db','broker.db-wal','broker.db-shm']),consumer:box.walk(volumes.consumer,['consumer.db','consumer.db-wal','consumer.db-shm'])};
+  const exportSets=[['driver',output],['observer',observed],['source',filesOf(stateExports.source)],['consumer',filesOf(stateExports.consumer)],...(controlError?[['control',new Map([['stdout',result.stdout],['stderr',result.stderr]])]]:[])];
+  // [EXP-G03-R5] Why: semantic refusal must retain the exact raw bytes and key for independent replay. Rejected: judging in memory before saving failed-attempt evidence.
+  rawDir=path.join(box.workDir,'raw-'+runId);fs.mkdirSync(rawDir,{mode:0o700});
+  fs.writeFileSync(path.join(rawDir,'key'),key,{flag:'wx',mode:0o600});fs.writeFileSync(path.join(rawDir,'binding.json'),JSON.stringify(binding),{flag:'wx',mode:0o600});
+  for(const [kind,files]of exportSets){
+   for(const [relative,bytes]of files){if(relative.split('/').some(p=>!p||p==='.'||p==='..')||relative.startsWith('/'))throw Error('unsafe walker export path');const destination=path.join(rawDir,kind,relative);fs.mkdirSync(path.dirname(destination),{recursive:true,mode:0o700});fs.writeFileSync(destination,bytes,{flag:'wx',mode:0o600})}
+  }
+  // [EXP-G03-R7a] Why: digests taken at capture, before any verification, let a later CR-NS ingestion detect any change to the exported bytes. Rejected: re-deriving them from files after replay.
+  capture={};for(const [kind,files]of exportSets)for(const [relative,bytes]of files)capture[kind+'/'+relative]=sha256(bytes);
+  fs.writeFileSync(path.join(rawDir,'terminal.json'),JSON.stringify({terminal,capture}),{flag:'wx',mode:0o600});exported=true;
+ }catch(e){
+  if(!exported){
+   const kept=box.resources.filter(([kind,n])=>kind==='volume'&&forensicVolumes.has(n)).map(([,n])=>n);
+   box.resources=box.resources.filter(([kind,n])=>!(kind==='volume'&&forensicVolumes.has(n)));
+   box.retained=[...(box.retained??[]),...kept.map(name=>({kind:'volume',name,runId}))];
+   const gap={schema:'ns-retained/1',runId,binding,reason:String(e?.message??e),export:'NOT-PROVEN-SAFE',partialRawDir:rawDir??null,volumes:kept,terminal,qualification:false};
+   fs.writeFileSync(path.join(box.workDir,'ns-'+runId+'-retained.json'),JSON.stringify(gap),{flag:'wx',mode:0o600});stage(14,{retainedVolumes:kept,reason:gap.reason});
+   Object.assign(e,{retained:kept,terminal});
+  }
+  Object.assign(e,{candidateLogs,runId});throw e;
  }
- // [EXP-G03-R7a] Why: digests taken at capture, before any verification, let a later CR-NS ingestion detect any change to the exported bytes. Rejected: re-deriving them from files after replay.
- const capture={};for(const [kind,files]of [['driver',output],['observer',observed],['source',filesOf(stateExports.source)],['consumer',filesOf(stateExports.consumer)]])for(const [relative,bytes]of files)capture[kind+'/'+relative]=sha256(bytes);
- fs.writeFileSync(path.join(rawDir,'terminal.json'),JSON.stringify({terminal,capture}),{flag:'wx',mode:0o600});
- requireCleanTerminal(terminal,binding);
- const events=verifyHr(output,key,binding),observer=verifyObserver(observed,key,runId),semantic=checkSmoke(events,observer,trace,population,binding,terminal);stage(13,{rawExportOnly:true,CRNSAdmission:false,captureSha256:sha256(Buffer.from(JSON.stringify(capture)))});
- return {semantic,terminal,capture,faultSummary,rawDir,candidateLogs,stateExports:{source:stateExports.source.entries,consumer:stateExports.consumer.entries},keyBase64:key.toString('base64'),binding,stages,events,observer,output:[...output].map(([p,b])=>[p,b.toString()]),observerOutput:[...observed].map(([p,b])=>[p,b.toString()]),driverStdout:result.stdout.toString(),driverStderr:result.stderr.toString(),records:box.records};
+ try{
+  requireCleanTerminal(terminal,binding);
+  const events=verifyHr(output,key,binding),observer=verifyObserver(observed,key,runId),semantic=checkSmoke(events,observer,trace,population,binding,terminal);stage(13,{rawExportOnly:true,CRNSAdmission:false,captureSha256:sha256(Buffer.from(JSON.stringify(capture)))});
+  return {semantic,terminal,capture,faultSummary,rawDir,candidateLogs,stateExports:{source:stateExports.source.entries,consumer:stateExports.consumer.entries},keyBase64:key.toString('base64'),binding,stages,events,observer,output:[...output].map(([p,b])=>[p,b.toString()]),observerOutput:[...observed].map(([p,b])=>[p,b.toString()]),driverStdout:result.stdout.toString(),driverStderr:result.stderr.toString(),records:box.records};
+ }catch(e){Object.assign(e,{rawDir,capture,terminal,candidateLogs,runId});throw e}
 }

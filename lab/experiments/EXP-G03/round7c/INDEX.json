@@ -1,0 +1,52 @@
+{
+ "experiment": "EXP-G03",
+ "round": "7c",
+ "status": "DIAGNOSTIC; no qualification grant",
+ "base": "9c4b68aa",
+ "codeCommit": "87c86a10",
+ "ruleTenFixCommit": "733daf5c",
+ "results": {
+  "fullCommittedSuite": {
+   "receipt": "committed-suites.tap",
+   "testedCommit": "87c86a10",
+   "passed": 285,
+   "failed": 0,
+   "skipped": 0,
+   "cancelled": 0,
+   "evaluatorFixtures": 108,
+   "nsComponents": 177
+  },
+  "evaluatorSeparate": {
+   "receipt": "evaluator.tap",
+   "testedCommit": "87c86a10",
+   "passed": 108,
+   "failed": 0,
+   "skipped": 0,
+   "cancelled": 0,
+   "evaluatorTamperedOutput": false
+  },
+  "nsComponents": {
+   "receipt": "ns-suites.tap",
+   "testedCommit": "87c86a10",
+   "passed": 177,
+   "failed": 0,
+   "skipped": 0
+  },
+  "nsComponentsAfterRuleTenFix": {
+   "receipt": "ns-suites-final.tap",
+   "testedCommit": "733daf5c",
+   "passed": 177,
+   "failed": 0,
+   "skipped": 0
+  },
+  "contractVerify": {
+   "receipt": "contract-verify.txt",
+   "testedCommit": "87c86a10",
+   "exit": 0,
+   "byteIdenticalRegeneration": true
+  }
+ },
+ "pinChanges": "pin-changes.json",
+ "evidenceDurable": "/Users/sam/Claude/Projects/triplex-db-2/evidence/G03-R7/round7c/",
+ "bulkyEvidence": "none; all files below 1 MB"
+}
