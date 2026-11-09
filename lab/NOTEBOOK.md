@@ -1982,3 +1982,15 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **FD01 ACCEPT-OFFLINE (verify/FD01 c20526eb):** 14 host tests, 11 bench tests, 900 crash observations; forged origins, reboot identity, worker threads, ACK substitution and wrong-position records are all refused. FD01 moves lab/bench/driver.ts and lab/bin/gate.mjs, so it merges through a contract (0.4.0, with Q98a-i; Q98j waits for Sam). Open: native publication-event integration, live P3.
 - **Started from R41:** EXP-P3M (CX-P3M, brief lab/experiments/EXP-P3M/BRIEF.md) on FD01; EXP-DI01 design check by an Opus planner before its builder.
 - **Contract 0.3.14 review (verify/A01-0314 7c8f1f99) FIX-FIRST:** every gate passed, but two broker regressions came from the merge: GS12F's optional valueDomain field was left out by INT-Q's broker adapter, so it silently used the fallback domain (integer range error mistyped; valid depth-128 JSON refused). **Lesson:** an optional field on a shared adapter interface turns a missing implementation into silent fallback behavior that no gate sees; required fields make the compiler find the gap. Round 2 makes it required.
+
+## 2026-11-09 06:28Z: hourly pass (NORTH-STAR reread first): usage 7%; the scorecard is still all OPEN; two researchers
+
+- **Learnings since 05:27Z:**
+  - **Accepted:** P2X2 (merged; native lane X P2 closed), INT-Q (50 process stops, zero acknowledged commits lost), K01's G0 count fix (confirmed live at 61,384), RT01 round A (F7 fixed), FD01 (atomicity and an origin-bound lag clock).
+  - **Live runs keep finding one engine assumption each.** K01 hit three in a row: the union integer type, journal rows in the count, and lazily created tables. Round 13 switches to a diagnostic smoke run that records every failure.
+  - **Merges create silent fallbacks.** Contract 0.3.14's gates all passed, but INT-Q's broker adapter left out GS12F's optional valueDomain field, so two typed refusals changed. A required field would have failed to compile.
+  - **A label is not a proof:** FD01's equal clock labels hid different clock origins (402 ms read as 122 ms); QNODELAY's per-event mode did not bind a run's mode. Both fixes bind the property to its source.
+  - **P2 is the priority with no passing number anywhere.** Native XTDB is closed (fresh p50 33 ms); P2B's broker in memory gave p50 46 ms with 256 readers, with no engine involved, which points at placement or the Node event loop.
+  - **The disk guard stopped P5 A1** below 5 GiB; housekeeping restored 9.8 GiB.
+- **Scorecard:** every P1-P5 cell is still OPEN. Each accepted result is offline or diagnostic; promotion waits on contract 0.4.0, G03's executing gate and live windows. That ordering needs a written critical path.
+- **Dispatched (Opus 5.5 high):** R42, P2 commit latency for a Node broker under 256 readers (placement, event-loop contention, SQLite fsync durability and cost on macOS and Linux); R43, the critical path from today's accepted work to the first PASS cell on the scorecard.
