@@ -32,6 +32,7 @@ test(
   "Datomic W0 reader equals portable on every 200-subject page at past and head positions",
   { skip: !process.env.DATOMIC_URL },
   async () => {
+    process.env.TX2_W0_POINT_JOURNAL = "1";
     const scope = "dxh2-reader-" + randomUUID(),
       comp = await openComposition("reach", "datomic", scope);
     const h = await openTriples("datomic", scope);
@@ -67,10 +68,42 @@ test(
           assert.deepEqual(a.reportedBasis, b);
         }
       }
+    } catch (e) {
+      console.error(inspect(e, { depth: 12, customInspect: false, showHidden: true }));
+      throw e;
     } finally {
       await comp.close();
       await h.close();
       // Seed is small test evidence, retained by the caller's run log if the gate fails.
+    }
+  },
+);
+
+test(
+  "point-read W0 journal equals public Triples.transactions on every 50-subject seed page",
+  { skip: !process.env.DATOMIC_URL },
+  async () => {
+    process.env.TX2_W0_POINT_JOURNAL = "1";
+    const scope = "dxh2-journal-" + randomUUID(),
+      comp = await openComposition("reach", "datomic", scope);
+    const h = await openTriples("datomic", scope);
+    const dir = fs.mkdtempSync(
+      path.join(process.env.DXH2_TEST_DIR ?? os.tmpdir(), "dxh2-journal-"),
+    );
+    try {
+      const seed = await seedW0(comp, 50, path.join(dir, "seed.ndjson"));
+      for (let after = 0; after < seed.basis.tx; ) {
+        const point = await comp.feedPage(after, 1000);
+        const legacy: any = await h.run(h.triples.transactions({ after, limit: 1000 }));
+        assert.equal(canonical(point), canonical(legacy));
+        after = point.transactions.at(-1).position;
+      }
+    } catch (e) {
+      console.error(inspect(e, { depth: 12, customInspect: false }));
+      throw e;
+    } finally {
+      await comp.close();
+      await h.close();
     }
   },
 );

@@ -74,6 +74,7 @@ export async function runW0Driver(argv: string[]) {
     "lab/bench/lib/memory.ts",
     "lab/bench/lib/w0-public.ts",
     "lab/bench/lib/w0-datomic-reader.ts",
+    "lab/bench/lib/w0-journal.ts",
     "lab/bench/lib/w0-live.ts",
     "lab/bench/lib/w0-live-worker.ts",
     "lab/bench/lib/w0-lease.ts",
@@ -97,6 +98,7 @@ export async function runW0Driver(argv: string[]) {
   const save = () => fs.writeFileSync(output, JSON.stringify(report, null, 2) + "\n");
   save();
   process.env["TX2_P5_CLOCK_START"] = String(V_W0);
+  if (lane === "datomic") process.env.TX2_W0_POINT_JOURNAL = "1";
   report.pins = await loadW0Pins();
   const lease = await measurementLease();
   let traffic: Awaited<ReturnType<typeof startW0Live>> | undefined;

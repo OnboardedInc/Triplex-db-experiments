@@ -6,8 +6,13 @@ import {
   type WorldRow,
 } from "./w0-world.ts";
 
-export async function publicSweep(lane: Lane, handle: TriplesHandle) {
-  if (lane === "datomic") return (await import("./w0-datomic-reader.ts")).datomicW0Sweep(handle);
+export async function publicSweep(
+  lane: Lane,
+  handle: TriplesHandle,
+  feedPage?: (after: number, limit: number) => Promise<{ transactions: readonly any[] }>,
+) {
+  if (lane === "datomic")
+    return (await import("./w0-datomic-reader.ts")).datomicW0Sweep(handle, feedPage);
   if (lane !== "xtdb") return portableSweep(handle);
   const api = await import("../../../packages/xtdb/dist/index.js");
   const client = api.makeXtdbClient(handle.backend.url);
@@ -116,7 +121,10 @@ function decode(r: any) {
 }
 
 // [EXP-W02-R2] Why: the D/Q adapters already expose exact recordedPosition reads through their public StorageAdapter service. Rejected: sending an internal position to Triples.entities, whose public TemporalBasis only accepts instants.
-export function portableSweep(handle: TriplesHandle) {
+export function portableSweep(
+  handle: TriplesHandle,
+  feedPage?: (after: number, limit: number) => Promise<{ transactions: readonly any[] }>,
+) {
   const storage = handle.storage;
   if (!storage) throw Error("lane does not expose its public storage service");
   return {
@@ -178,12 +186,14 @@ export function portableSweep(handle: TriplesHandle) {
       // [DX-H2] Why: bounded Datomic feed responses fit its transport budget; still enumerate the entire journal.
       // Rejected: accepting a partial feed or increasing the read timeout in a package.
       while (after < position) {
-        const page: any = await handle.run(
-          handle.triples.transactions({
-            after,
-            limit: handle.backend.name === "datomic" ? 100 : 1000,
-          }),
-        );
+        const page: any = feedPage
+          ? await feedPage(after, 1000)
+          : await handle.run(
+              handle.triples.transactions({
+                after,
+                limit: handle.backend.name === "datomic" ? 100 : 1000,
+              }),
+            );
         const txs = page.transactions.filter((t: any) => t.position <= position);
         if (!txs.length) throw Error("store count enumeration has a feed gap");
         for (const tx of txs) for (const c of tx.changes) entities.add(c.entityId);
