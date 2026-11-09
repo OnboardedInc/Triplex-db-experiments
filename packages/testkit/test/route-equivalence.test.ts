@@ -70,13 +70,26 @@ describe("EXP-RQ01 route-equivalence gate (offline only)", () => {
           const result = await entry.run();
           expect(result.violations).toEqual([]);
           expect(new Set(result.observations.map((o) => o.phase))).toEqual(
-            new Set(["initial", "append", "purge", "catch-up", "cold-cache"]),
+            new Set([
+              "initial",
+              "append",
+              "purge-pinned",
+              "purge",
+              "evict-overlay",
+              "catch-up",
+              "cold-cache",
+            ]),
           );
         }
       }, 30_000);
   it("reproduces SQL01 F1: 30 before purge, 40 after, identical TP request", async () => {
     const fixture = makeOfflineRouteFixture("qlever", { preFixH1: true });
-    const result = await runRouteEquivalence({ fixture, history: f1, requests: [f1Request] });
+    const result = await runRouteEquivalence({
+      fixture,
+      history: f1,
+      scope: { shapes: ["TP"] },
+      requests: [f1Request],
+    });
     expect(replayRouteAnswer(f1, f1Request)).toHaveLength(40);
     expect(result.violations).toEqual(
       expect.arrayContaining([
@@ -104,6 +117,7 @@ describe("EXP-RQ01 route-equivalence gate (offline only)", () => {
     const result = await runRouteEquivalence({
       fixture: makeOfflineRouteFixture("qlever"),
       history,
+      scope: { shapes: ["T"] },
       requests: [{ entityId: "X", basis: { validAt: 2000, recordedAt: 1001 } }],
       extension: {
         position: 2048,
@@ -138,6 +152,7 @@ describe("EXP-RQ01 route-equivalence gate (offline only)", () => {
     const result = await runRouteEquivalence({
       fixture: broken,
       history: f1,
+      scope: { shapes: ["TP"] },
       requests: [f1Request],
     });
     for (const rule of ["HE-1", "HE-6", "HE-7", "forcing"])
@@ -147,14 +162,24 @@ describe("EXP-RQ01 route-equivalence gate (offline only)", () => {
     const fixture = mutate(makeOfflineRouteFixture("qlever"), async () => {
       throw new Error("offline");
     });
-    const result = await runRouteEquivalence({ fixture, history: f1, requests: [f1Request] });
+    const result = await runRouteEquivalence({
+      fixture,
+      history: f1,
+      scope: { shapes: ["TP"] },
+      requests: [f1Request],
+    });
     expect(new Set(result.violations.map((v) => v.rule))).toEqual(new Set(["HE-3", "HE-4"]));
   });
   it("rejects future-position answers even if every route agrees", async () => {
     const fixture = makeOfflineRouteFixture("xtdb");
     const request: RouteRequest = { basis: { validAt: 3000, recordedPosition: 99999 } };
     const broken = mutate(fixture, async () => ({ rows: [], taken: "X1-all-valid-time" }));
-    const result = await runRouteEquivalence({ fixture: broken, history: f1, requests: [request] });
+    const result = await runRouteEquivalence({
+      fixture: broken,
+      history: f1,
+      scope: { shapes: ["P"] },
+      requests: [request],
+    });
     expect(result.violations.some((v) => v.rule === "HE-3")).toBe(true);
   });
   it("keeps the unmerged SQL01 H1 and lane D adapters explicitly unimplemented", () => {
