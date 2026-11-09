@@ -169,3 +169,5 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - Scale window adds: (7) EXP-P5 A1 at 1k on an exclusive XTDB slot (CX-P5A writes the commands).
 - Main now has contract 0.3.12 (O-OBS pinned for screening, Q72/Q79e-f/Q80/Q82-Q88 compiled, workload re-pins) plus X02, C8 and J01
   (default-off); Q87 gate 108/108 on main after the merge. Next contract: 0.4.0 with RT01, O-REPLAY 0.5.0, Q89-Q92 and G03's pins.
+- O-REPLAY 0.5.0 ACCEPT (exp/O06-oracle-record-time fed510e; verify/O06 fc78350): ready to pin in contract 0.4.0 together with RT01
+  (the oracle merge and pin move go in one commit, Q45a). Not merged alone: 0.4.0 needs RT01's product side first.

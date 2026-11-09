@@ -1687,3 +1687,8 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **Why not re-seed every run:** XTDB at 10k costs about 38 to 53 minutes per arm against 6 to 20 with clones.
 - **Learning:** when a grant can come from many places, make one check grant and let the rest only refuse. Apply this wherever a gate
   has more than a handful of PASS-producing paths (G03's evaluator and O-OBS are the next candidates to check).
+
+## 2026-11-09 01:20Z: O-REPLAY 0.5.0 accepted after three independent review rounds
+- 403 tests, zero failures; 22 probes; 341 legacy verdicts unchanged per lane; every surviving wrong variant (staging-time stamps,
+  ties, non-monotone stamps, journal instants, answers above the watermark, Q70E/H/I/K/L) is caught. Built from R33 section 4.3 alone, so the
+  oracle never saw the product change it will judge. It waits to be pinned with RT01 in contract 0.4.0.
