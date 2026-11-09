@@ -19,7 +19,7 @@ import {
   FeedRetentionExpired,
 } from "../../../packages/qlever/src/broker/log.js";
 import { LogFeed } from "../../../packages/qlever/src/broker/feed.js";
-import { FrameKind } from "../../../packages/qlever/src/broker/frame.js";
+import { FrameKind, encodeFrame } from "../../../packages/qlever/src/broker/frame.js";
 import { encodeCommitGroup } from "../../../packages/qlever/src/broker/frames.js";
 import { columns } from "../../../packages/qlever/src/rdf.js";
 import type { TripleRow } from "@triplex-build/triplex/runtime";
@@ -192,8 +192,9 @@ describe("EXP-HS01", () => {
     const old = await client(v1),
       now = await client(v2);
     const timings: number[][] = [[], []];
-    let crc = 123;
-    const retired = new Set<number>();
+    let crc = 123,
+      offset = 32;
+    const cursors = new Map<number, { offset: number; seed: number; nextLsn: number }>();
     let calls = 0;
     try {
       for (let lsn = 1; lsn <= 40; lsn++) {
@@ -202,13 +203,14 @@ describe("EXP-HS01", () => {
         for (let j = 0; j < 8; j++) {
           const r = row(lsn * 10 + j, pos);
           r.valid_from = 100 + (j % 3) * 100;
+          if (j === 0) r.entity_id = "replacement";
           rs.push(r);
         }
-        if (lsn > 1) {
+        if (lsn > 2 && lsn !== 21 && lsn !== 22) {
           const id = (lsn - 1) * 10;
-          retired.add(id);
           rs.push({
             ...row(id, (lsn - 1) * 1024),
+            entity_id: "replacement",
             retracted_at: 100,
             retracted_position: pos,
             retract_tx_id: "tx:" + pos,
@@ -227,9 +229,10 @@ describe("EXP-HS01", () => {
         for (const [index, target] of rs
           .filter((r) => r.entity_type !== "_Transaction")
           .entries()) {
+          const own = target.retracted_position ?? target.recorded_position;
           const journal = {
-            ...row(900000 + lsn * 100 + index, pos),
-            entity_id: "tx:" + pos,
+            ...row(900000 + lsn * 100 + index, own),
+            entity_id: "tx:" + own,
             entity_type: "_Transaction",
             attribute: ":_tx/change",
             value_type: "json",
@@ -239,25 +242,57 @@ describe("EXP-HS01", () => {
           journal.value_json = codec.deriveChange(journal, target);
           rs.push(journal);
         }
+        const epoch = lsn < 21 ? 1 : 2,
+          kind = lsn === 1 || lsn === 21 ? 2 : 1;
+        const members =
+          kind === 2
+            ? []
+            : [
+                {
+                  operationId: "op" + lsn,
+                  attemptId: "attempt" + lsn,
+                  positions: lsn === 20 ? [pos, pos + 1] : [pos],
+                  claims:
+                    lsn === 20
+                      ? []
+                      : [{ commandId: "cmd" + lsn, txId: "tx:" + pos, timestamp: 100 }],
+                  subjects: ["s:" + (lsn % 19)],
+                  rows: rs,
+                  priors: rs
+                    .filter((r) => r.retracted_position !== null)
+                    .map((r) => ({
+                      ...r,
+                      retracted_at: null,
+                      retracted_position: null,
+                      retract_tx_id: null,
+                    })),
+                },
+              ];
+        const payload =
+          kind === 2
+            ? Buffer.from(
+                JSON.stringify({
+                  v: 1,
+                  epoch,
+                  previousEpoch: epoch - 1,
+                  lastValidLsn: lsn - 1,
+                  abortedLsns: [],
+                  tornBytes: 0,
+                  at: 100,
+                }),
+              )
+            : encodeCommitGroup({ v: 1, stream: "hs01-equivalence", lsn, epoch, members });
+        const encoded = encodeFrame({ lsn, epoch, kind, payload, prevCrc: crc });
+        cursors.set(lsn, { offset, seed: crc, nextLsn: lsn });
         const a = {
           lsn,
-          epoch: lsn < 21 ? 1 : 2,
-          kind: lsn === 21 ? 2 : 1,
+          epoch,
+          kind,
           prev: crc,
-          crc: crc + 1,
-          length: 40,
-          payload: Buffer.from(
-            lsn === 21 ? JSON.stringify({ epoch: 2, previousEpoch: 1, abortedLsns: [] }) : "x",
-          ),
-          members: [
-            {
-              operationId: "op" + lsn,
-              positions: lsn === 20 ? [pos, pos + 1] : [pos],
-              claims: lsn === 20 ? [] : [{ commandId: "cmd" + lsn, txId: "tx:" + pos }],
-              subjects: ["s:" + (lsn % 19)],
-              rows: rs,
-            },
-          ],
+          crc: encoded.crc,
+          length: encoded.bytes.length,
+          payload,
+          members,
         };
         for (const [index, c] of (lsn % 2
           ? [
@@ -272,7 +307,8 @@ describe("EXP-HS01", () => {
           await c.call("append", a);
           timings[index]!.push(performance.now() - start);
         }
-        crc++;
+        crc = encoded.crc;
+        offset += encoded.bytes.length;
       }
       const selections = [
         {},
@@ -293,7 +329,7 @@ describe("EXP-HS01", () => {
           [
             "frames",
             {
-              from: { offset: 32 + (n - 1) * 40, seed: 123 + n - 1, nextLsn: n },
+              from: cursors.get(n),
               upto: 40,
               maxBytes: 80 + (random() % 200),
             },
@@ -389,7 +425,11 @@ describe("EXP-HS01", () => {
       expect(written - retained.bytes).toBeGreaterThan(1000000000);
       expect(retained.n).toBe(2);
       await log.close();
+      const rssBefore = process.memoryUsage().rss;
       ({ log } = await HostLog.open(dir, { minFreeBytes: 0, frameRetention: { tailFrames: 2 } }));
+      // [EXP-HS01] Why: a restart must not materialize the purged gigabyte. Rejected: recording RSS without a bound.
+      expect((log as any).openVerification.peakRss - rssBefore).toBeLessThan(128 * 1024 ** 2);
+      expect((log as any).openVerification.maxPageBytes).toBeLessThanOrEqual(8 * 1024 ** 2);
       expect((log as any).openVerification.bytes).toBe(retained.bytes);
       expect((log as any).openVerification.frames).toBe(2);
       expect(hostLogRecovery(log).marker.base_lsn).toBe(before.base_lsn);
@@ -398,6 +438,8 @@ describe("EXP-HS01", () => {
         purged: written - retained.bytes,
         retained,
         verification: (log as any).openVerification,
+        rssBefore,
+        rssGrowth: (log as any).openVerification.peakRss - rssBefore,
       };
       writeStats();
     } finally {

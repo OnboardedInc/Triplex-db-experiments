@@ -14,8 +14,33 @@ import { createRequire } from "node:module";
 const Database = createRequire(new URL("../../packages/qlever/package.json", import.meta.url))(
   "better-sqlite3",
 );
-import { seedCommands, seedOperations, type W0Command } from "./lib/w0-seed.ts";
-import { many, W0, V_W0, canonical } from "./lib/w0-world.ts";
+import { seedCommands, type W0Command } from "./lib/w0-seed.ts";
+import { many, W0, V_W0, canonical, triplexValue } from "./lib/w0-world.ts";
+// [EXP-HS01] Why: vendor P5B R2's seedOperations helper; main still embeds it in the dense-position seeder.
+// Rejected: importing a sibling worktree or calling main's seeder (would reject packed native positions).
+function seedOperations(
+  c: W0Command,
+  latest: Map<string, string>,
+  Rseed: ReturnType<typeof W0.rung>,
+) {
+  const operations: any[] = [];
+  for (const [e, a, v] of c.rows) {
+    const key = e + "\0" + a;
+    if (!many.has(a) && c.validFrom <= V_W0 && latest.has(key))
+      operations.push({ op: "retract", id: latest.get(key) });
+    operations.push({
+      op: "assert",
+      entityId: e,
+      attribute: a,
+      value: triplexValue(a, v),
+      validFrom: c.validFrom,
+      ...(a === "payRateCents" && c.validFrom <= V_W0 && W0.plan(Rseed, Number(e.slice(4))).raise
+        ? { validTo: Date.parse("2026-11-16T00:00:00Z") }
+        : {}),
+    });
+  }
+  return operations;
+}
 const artifactHashes = () =>
   Object.fromEntries(
     ["core", "qlever", "w0"].flatMap((p) => {
