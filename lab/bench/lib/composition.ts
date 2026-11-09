@@ -118,15 +118,15 @@ function failureOf(exit: any): StoreFailure {
   return { ok: false, tag: String(tag ?? "Unknown"), error };
 }
 
-async function publicComposition(lane: Lane, scope: string, variant: "public" | "public-queued" = "public"): Promise<CompositionHandle> {
-  const h: TriplesHandle = await openTriples(lane, scope, variant === "public-queued" ? { admissionQueue: true } : undefined);
+async function publicComposition(lane: Lane, scope: string, variant: "public" | "public-queued" | "broker-h1" = "public"): Promise<CompositionHandle> {
+  const h: TriplesHandle = variant === "broker-h1" ? await (await import("./broker-h1.ts")).openBrokerH1(scope) : await openTriples(lane, scope, variant === "public-queued" ? { admissionQueue: true } : undefined);
   const T = h.triples;
   const E = (id: string) => core.EntityId.make(id);
   const outcome = async <A>(effect: any): Promise<Outcome<A>> => {
     const exit = await h.runExit(effect);
     return exit._tag === "Success" ? { ok: true, value: exit.value as A } : failureOf(exit);
   };
-  const pull = async (root: string, basis: Basis, between?: () => Promise<void>): Promise<PullResult> => {
+  const pullBody = async (root: string, basis: Basis, between?: () => Promise<void>): Promise<PullResult> => {
     const seen = new Set<string>([root]);
     let frontier = [root];
     const triples: PulledTriple[] = [];
@@ -148,8 +148,9 @@ async function publicComposition(lane: Lane, scope: string, variant: "public" | 
     }
     // One-engine composition: the source of truth's own query surface is the only index, eligible for
     // every basis it has published, so no wait and no fallback are possible here.
-    return { triples, entities: seen.size, roundTrips, depth: roundTrips - 1, route: "source", language, waitedMs: 0 };
+    return { triples, entities: seen.size, roundTrips, depth: roundTrips - 1, route: variant === "broker-h1" ? "host:h1" : "source", language, waitedMs: 0 };
   };
+  const pull = (root: string, basis: Basis, between?: () => Promise<void>) => variant === "broker-h1" ? (h.storage as any).withCurrentPull(root, () => pullBody(root,basis,between)) : pullBody(root,basis,between);
   const one = { lane, role: `triplex public Triples service on one engine slot${variant === "public-queued" && lane === "xtdb" ? " (XTDB adapter admissionQueue: true)" : ""}` };
   const language = lane === "xtdb" ? "triplex-entities(xtdb-sql)" : lane === "datomic" ? "triplex-entities(datomic-datalog)" : "triplex-entities(sparql)";
   const sweep = await (await import("./w0-public.ts")).publicSweep(lane, h);
@@ -160,7 +161,7 @@ async function publicComposition(lane: Lane, scope: string, variant: "public" | 
     publishOutbox: (records) =>
       import("./w0-outbox.ts").then((m) => m.publishRecords(handle, records)),
     name: variant,
-    assignments: { source: one, current: one, history: one, analytics: one, replicationEdges: [] },
+    assignments: { source: one, current: variant === "broker-h1" ? {lane,role:"host H1 current store"} : one, history: one, analytics: one, replicationEdges: [] },
     watermarks: async () => ({ source: await h.run(T.currentPosition()) }),
     // Triplex exposes one dense position per scope; every transact is its own engine transaction, so
     // offset = position and ordinal = 0. Epoch 0: the scope has had no epoch change.
@@ -180,6 +181,7 @@ async function publicComposition(lane: Lane, scope: string, variant: "public" | 
 export const COMPOSITIONS: Record<string, (lane: Lane, scope: string) => Promise<CompositionHandle>> = {
   /** In-process reference store (lib/memory.ts): diagnostic only, readers run in-thread. */
   memory: async (lane, scope) => (await import("./memory.ts")).memoryComposition(lane, scope, Number(process.env["TX2_MEMORY_SERVICE_MS"] ?? "1")),
+  "broker-h1": (lane, scope) => { if(lane!=="qlever")throw Error("broker-h1 is lane Q only"); return publicComposition(lane,scope,"broker-h1"); },
   public: (lane, scope) => publicComposition(lane, scope, "public"),
   /** Same surfaces; on XTDB the adapter queues writes in process (admissionQueue) instead of racing the scope position CAS. */
   "public-queued": (lane, scope) => publicComposition(lane, scope, "public-queued"),

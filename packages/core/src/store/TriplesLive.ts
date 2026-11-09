@@ -536,6 +536,8 @@ const makeTriplesServices = Effect.gen(function* () {
     const entity: TriplesService["entity"] = (entityId, basis) =>
       Effect.gen(function* () {
         const resolved = resolveTemporalBasis(basis, yield* now);
+        const decoded = yield* (adapter.getEntityTriples?.([entityId], resolved) ?? Effect.succeed(undefined));
+        if (decoded) return decoded.get(entityId) ?? [];
         const rows = yield* adapter.getByEntity(entityId, resolved);
         return rows.map(rowToTriple);
       });
@@ -543,6 +545,8 @@ const makeTriplesServices = Effect.gen(function* () {
     const entities: TriplesService["entities"] = (entityIds, basis) =>
       Effect.gen(function* () {
         const resolved = resolveTemporalBasis(basis, yield* now);
+        const decoded = yield* (adapter.getEntityTriples?.(entityIds, resolved) ?? Effect.succeed(undefined));
+        if (decoded) return entityIds.map((id) => decoded.get(id) ?? []);
         const rows = yield* adapter.getByEntities(entityIds, resolved);
         return entityIds.map((id) => (rows.get(id) ?? []).map(rowToTriple));
       });

@@ -711,6 +711,9 @@ export class HostBroker {
   ) {
     return this.log.pull(basis, selection);
   }
+  wholePullAt(basis: number, roots: readonly string[]) {
+    return this.log.wholePull(basis, roots);
+  }
   checkpoint() {
     return this.log.checkpoint();
   }

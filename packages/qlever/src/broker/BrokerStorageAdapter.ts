@@ -24,6 +24,9 @@ import {
  * 5. The CAS read set is recorded per transaction (P2X, R18 3.1 item 1): reads confined to known entities
  *    are guarded per subject; any other read escalates the commit to the scope-wide guard.
  */
+import { AsyncLocalStorage } from "node:async_hooks";
+import { h1Rows, type H1Tuple } from "./h1.js";
+import { H1SnapshotExpired } from "./log.js";
 import { randomUUID } from "node:crypto";
 import { Context, Effect, Exit } from "effect";
 import { isPatternVariable, type ResolvedTemporalBasis } from "@triplex-build/triplex";
@@ -59,7 +62,7 @@ import { ReplicaUnavailable, isUnreachable, type BasisSurface } from "./errors.j
 const readConstructor = createReadConstructor();
 export const isQleverBrokerRead = readConstructor.isRead;
 
-export type BrokerReadRoute = "replica" | "overlay" | "log";
+export type BrokerReadRoute = "replica" | "overlay" | "log" | "h1";
 export interface BrokerReadEvent {
   readonly route: BrokerReadRoute;
   readonly basis: number;
@@ -69,6 +72,8 @@ export interface BrokerReadEvent {
   readonly staged: boolean;
 }
 export interface BrokerAdapterOptions {
+  readonly currentRoute?: "h1";
+  readonly onPull?: (event: import("./h1.js").WholePull["counters"]) => void;
   readonly maxRetries?: number;
   /**
    * Deadline for any read that must wait for its basis: the replica for Datalog, dependencyState and native
@@ -201,6 +206,7 @@ export class QleverBrokerConflict extends WriteError {
 }
 
 export interface QleverBrokerStorageAdapterService extends StorageAdapterService {
+  readonly withCurrentPull: <A>(root: string, body: () => Promise<A>, basis?: number) => Promise<A>;
   readonly sourceView: Effect.Effect<
     | {
         readonly sourcePosition: number;
@@ -225,13 +231,23 @@ export const makeQleverBrokerStorageAdapter = (
   const key = Symbol(scopeKey);
   // Q58a default deadline: 2 s for any read that must wait for a basis.
   const basisWaitMs = options.basisWaitMs ?? options.publicationWaitMs ?? 2_000;
-  const routes: Record<BrokerReadRoute, number> = { replica: 0, overlay: 0, log: 0 };
+  const routes: Record<BrokerReadRoute, number> = { replica: 0, overlay: 0, log: 0, h1: 0 };
   const storeRead = <A>(read: () => Promise<A>) =>
     Effect.tryPromise({
       try: read,
       catch: (cause) => new ReadError({ message: "Broker store read failed", cause }),
     });
 
+  // [EXP-QH1] Why: each invocation owns its cache, even overlapping pulls at identical cuts.
+  // Rejected: a process/global LRU (can cross scope, basis or pull lifetime).
+  type Prefetch = { readonly rows: Map<string, H1Tuple[]>; readonly known: Set<string> };
+  const pullContext = new AsyncLocalStorage<{
+    root: string;
+    basis?: number;
+    cache: Map<number, Promise<Prefetch>>;
+  }>();
+  const withCurrentPull = <A>(root: string, body: () => Promise<A>, basis?: number) =>
+    pullContext.run({ root, ...(basis === undefined ? {} : { basis }), cache: new Map() }, body);
   const current = Effect.map(Transactions, (states) => states.get(key));
   const required = Effect.flatMap(current, (state) =>
     state === undefined
@@ -246,7 +262,9 @@ export const makeQleverBrokerStorageAdapter = (
     requested: number | undefined,
     surface: BasisSurface,
   ) => {
-    const b = requested ?? sourceK ?? broker.head();
+    const context = sourceK === undefined ? pullContext.getStore() : undefined;
+    const b = requested ?? sourceK ?? context?.basis ?? broker.head();
+    if (context && context.basis === undefined) context.basis = b;
     if (sourceK === undefined) await broker.awaitResolved(b, basisWaitMs, surface);
     else
       await awaitSnapshotBasis({
@@ -318,6 +336,32 @@ export const makeQleverBrokerStorageAdapter = (
         (entities === undefined || entities.includes(row.entity_id)) &&
         matches(row, pattern);
       const t0 = performance.now();
+      if (
+        options.currentRoute === "h1" &&
+        !state &&
+        !history &&
+        basis?.recordedAt === undefined &&
+        scoped.entities !== undefined
+      ) {
+        const pinned = yield* storeRead(() => broker.pullAt(b, scoped));
+        if (pinned.eligible) {
+          const rows = snapshotRows(
+            pinned.rows.filter((row) => select(row) && visibleAt(row, b, basis)),
+            b,
+            basis,
+          ).toSorted((a, z) => a.recorded_at - z.recorded_at || a.id.localeCompare(z.id));
+          routes.h1++;
+          options.onRead?.({
+            route: "h1",
+            basis: b,
+            replicaPosition: 0,
+            rows: rows.length,
+            ms: performance.now() - t0,
+            staged: false,
+          });
+          return rows;
+        }
+      }
       const replica = yield* Effect.tryPromise({
         try: async (signal) => {
           const bindings = await client.query(
@@ -675,6 +719,72 @@ export const makeQleverBrokerStorageAdapter = (
   const explicit = (_first: unknown, basis?: ResolvedTemporalBasis) => basis;
   const reads = readConstructor.snapshot(
     {
+      getEntityTriples: {
+        run: (ids: readonly string[], basis: ResolvedTemporalBasis) =>
+          Effect.gen(function* () {
+            if (options.currentRoute !== "h1" || basis.recordedAt !== undefined || (yield* current))
+              return undefined;
+            const b = yield* storeRead(() =>
+              readBasis(undefined, basis.recordedPosition, "repository"),
+            );
+            const context = pullContext.getStore();
+            const started = performance.now();
+            const load = async (roots: readonly string[]): Promise<Prefetch> => {
+              const answer = await broker.wholePullAt(b, roots);
+              options.onPull?.(answer.counters);
+              const rows = new Map<string, H1Tuple[]>();
+              for (const tuple of JSON.parse(answer.text) as H1Tuple[]) {
+                const entity = tuple[14]?.row.entity_id ?? tuple[2];
+                const bucket = rows.get(entity) ?? [];
+                bucket.push(tuple);
+                rows.set(entity, bucket);
+              }
+              return { rows, known: new Set(answer.entities) };
+            };
+            const answer = yield* Effect.tryPromise({
+              try: async () => {
+                let pending = context?.cache.get(b);
+                if (!pending) {
+                  pending = load(context ? [context.root] : ids);
+                  context?.cache.set(b, pending);
+                }
+                const all = await pending;
+                const missing = ids.filter((id) => !all.rows.has(id) && !all.known.has(id));
+                // Unexpected non-BFS callers still get exact rows, in a new same-cut fetch.
+                if (missing.length) {
+                  const extra = await load(missing);
+                  for (const [id, rows] of extra.rows) all.rows.set(id, rows);
+                  for (const id of extra.known) all.known.add(id);
+                }
+                const selected = [...new Set(ids)].flatMap((id) => all.rows.get(id) ?? []);
+                const decoded = h1Rows(selected, basis);
+                return new Map(ids.map((id) => [id, decoded.get(id) ?? []]));
+              },
+              catch: (cause) =>
+                cause instanceof H1SnapshotExpired
+                  ? cause
+                  : new ReadError({ message: "H1 pull failed", cause }),
+            }).pipe(
+              Effect.catch((error) =>
+                error instanceof H1SnapshotExpired ? Effect.succeed(undefined) : Effect.fail(error),
+              ),
+            );
+            if (answer) {
+              routes.h1++;
+              options.onRead?.({
+                route: "h1",
+                basis: b,
+                replicaPosition: 0,
+                rows: [...answer.values()].reduce((n, a) => n + a.length, 0),
+                ms: performance.now() - started,
+                staged: false,
+              });
+            }
+            return answer;
+          }),
+        basis: explicit,
+        rawHistory: false,
+      },
       getById: {
         run: (id: string) =>
           Effect.map(queryRows({}, undefined, false, id), (rows) => rows[0] ?? null),
@@ -688,13 +798,11 @@ export const makeQleverBrokerStorageAdapter = (
       },
       getByEntities: {
         run: (ids: readonly string[], basis?: ResolvedTemporalBasis) =>
-          Effect.map(
-            queryRows({}, basis, false, undefined, [...new Set(ids)]),
-            (rows) =>
-              new Map(
-                [...new Set(ids)].map((id) => [id, rows.filter((row) => row.entity_id === id)]),
-              ),
-          ),
+          Effect.map(queryRows({}, basis, false, undefined, [...new Set(ids)]), (rows) => {
+            const buckets = new Map([...new Set(ids)].map((id) => [id, [] as TripleRow[]]));
+            for (const row of rows) buckets.get(row.entity_id)?.push(row);
+            return buckets;
+          }),
         basis: explicit,
         rawHistory: false,
       },
@@ -714,6 +822,7 @@ export const makeQleverBrokerStorageAdapter = (
   );
   reads satisfies Omit<
     QleverBrokerStorageAdapterService,
+    | "withCurrentPull"
     | "broker"
     | "routes"
     | "resolveQueryBasis"
@@ -735,6 +844,7 @@ export const makeQleverBrokerStorageAdapter = (
   >;
   return exactReadService<QleverBrokerStorageAdapterService>()({
     ...reads,
+    withCurrentPull,
     snapshotReadPolicy,
     // [CX-A01-0314-R2] Why: broker writes target QLever, so preflight must use its exact integer range. Rejected: a missing domain that widens admission to signed 64-bit.
     valueDomain: ValueDomains.qlever,
@@ -829,6 +939,9 @@ export const makeQleverBrokerStorageAdapter = (
     initialize: () =>
       Effect.tryPromise({
         try: async () => {
+          // [EXP-QH1] Why: the broker opened and verified H1 already; a detached current store needs no replica health check.
+          // Rejected: requiring a live replica to initialize the default-off host current route.
+          if (options.currentRoute === "h1") return;
           await client.query("SELECT ?s WHERE { ?s ?p ?o } LIMIT 1");
         },
         catch: (cause) =>

@@ -52,6 +52,7 @@ try {
  const version=db.prepare('SELECT sqlite_version() v').get().v.split('.').map(Number);
  if(version[0]<3 || (version[0]===3 && (version[1]<51 || (version[1]===51 && version[2]<3)))) throw Error('SQLite >= 3.51.3 required');
  db.pragma('fullfsync=ON'); db.pragma('checkpoint_fullfsync=ON');
+ if(role==='reader')db.pragma('mmap_size=268435456');
  if(role!=='reader') {
   durablePragmas(db); db.pragma('journal_mode=WAL');
   calibrationMs=calibrate();
@@ -60,6 +61,7 @@ try {
  if(role==='writer') {
   // [EXP-HS01] Why: v1 has different semantics; reject rather than silently adopt or migrate. Rejected: CREATE IF NOT EXISTS over legacy tables.
   if(q("SELECT 1 FROM sqlite_master WHERE name='live_rows'").get())throw Error('Legacy broker layout v1 requires explicit migration');
+  if(q("SELECT 1 FROM sqlite_master WHERE name='facts'").get()&&!q('PRAGMA table_info(facts)').all().some(c=>c.name==='o'))throw Error('Broker layout v2 without owner key requires explicit migration');
   db.exec('CREATE TABLE IF NOT EXISTS frames(lsn INTEGER PRIMARY KEY,epoch INT NOT NULL,kind INT NOT NULL,offset INT NOT NULL,end INT NOT NULL,prev_crc INT NOT NULL,crc INT NOT NULL,payload BLOB NOT NULL,committed_at INT NOT NULL);'+
   'CREATE INDEX IF NOT EXISTS frames_commits ON frames(lsn) WHERE kind=1;'+
   'CREATE TABLE IF NOT EXISTS marker(id INTEGER PRIMARY KEY CHECK(id=1),lsn INT NOT NULL,epoch INT NOT NULL,h INT NOT NULL,position INT NOT NULL,crc INT NOT NULL,size INT NOT NULL,base_lsn INT NOT NULL,base_crc INT NOT NULL,base_end INT NOT NULL);'+
@@ -70,7 +72,7 @@ try {
   'CREATE TABLE IF NOT EXISTS attrs(aid INTEGER PRIMARY KEY,name TEXT NOT NULL UNIQUE);'+
   'CREATE TABLE IF NOT EXISTS strs(sid INTEGER PRIMARY KEY,s TEXT NOT NULL UNIQUE);'+
   'CREATE TABLE IF NOT EXISTS txs(pos INTEGER PRIMARY KEY,tx INT NOT NULL,at INT NOT NULL);'+
-  ['facts','history','journal'].map(t=>'CREATE TABLE IF NOT EXISTS '+t+'(e INT NOT NULL,'+(t==='history'?'rpos INT NOT NULL,':'')+'id BLOB NOT NULL,a INT NOT NULL,pos INT NOT NULL,t INT NOT NULL,v,vf INT,vto INT,c INT,y INT,sv INT,x BLOB,PRIMARY KEY(e,'+(t==='history'?'rpos,':'')+'id)) WITHOUT ROWID;CREATE '+(t==='history'?'':'UNIQUE ')+'INDEX IF NOT EXISTS '+t+'_id ON '+t+'(id);').join('')+
+  ['facts','history','journal'].map(t=>'CREATE TABLE IF NOT EXISTS '+t+'(o INT NOT NULL,e INT NOT NULL,'+(t==='history'?'rpos INT NOT NULL,':'')+'id BLOB NOT NULL,a INT NOT NULL,pos INT NOT NULL,t INT NOT NULL,v,vf INT,vto INT,c INT,y INT,sv INT,x BLOB,PRIMARY KEY(o,e,'+(t==='history'?'rpos,':'')+'id)) WITHOUT ROWID;CREATE '+(t==='history'?'':'UNIQUE ')+'INDEX IF NOT EXISTS '+t+'_id ON '+t+'(id);').join('')+
   'CREATE TABLE IF NOT EXISTS retention(holder TEXT PRIMARY KEY,lsn INT NOT NULL,expires INT) WITHOUT ROWID;'+
   'CREATE TABLE IF NOT EXISTS epochs(epoch INTEGER PRIMARY KEY,begin_lsn INT NOT NULL,previous_epoch INT NOT NULL,aborted TEXT NOT NULL);'+
   'CREATE TABLE IF NOT EXISTS pins(token TEXT PRIMARY KEY,basis INT NOT NULL,owner TEXT NOT NULL) WITHOUT ROWID;');
@@ -125,17 +127,20 @@ const checkpoint = restart => {
 const textKey=s=>Buffer.from(s,'utf8').toString('utf8')===s?s:Buffer.from(JSON.stringify(s));
 const dictCol=t=>t==='strs'?'s':'name';
 const dictId=t=>t==='ents'?'eid':t==='attrs'?'aid':'sid';
+// [EXP-QH1] Why: owner is only a clustering hint; misses are fetched by exact entity. Rejected: assuming naming implies reachability (R46 3.5).
+const owner=s=>s.split('/')[0];
 const names=new Map(), writerIds=new Map();
 const name=(t,id)=>{const key=t+':'+id;if(names.has(key))return names.get(key);let v=q('SELECT '+dictCol(t)+' v FROM '+t+' WHERE '+dictId(t)+'=?').get(id)?.v;if(Buffer.isBuffer(v))v=JSON.parse(v.toString());if(v===undefined)throw Error('Missing dictionary entry');names.set(key,v);return v;};
 const storedRow=id=>{for(const t of ['facts','history','journal']){const s=q('SELECT * FROM '+t+' WHERE id=?').get(packId(id));if(s)return decodeRow(s,readCodec);}return undefined;};
 const readCodec={name,tx:pos=>q('SELECT tx,at FROM txs WHERE pos=?').get(pos),row:storedRow};
+db?.function('qh_fallback',id=>verbatim(storedRow(unpackId(id))).toString());
 const prepare=a=>{
  const additions=[],local=new Map(),pendingNames=new Map(),next={},transactions=new Map(),inputRows=new Map();
  for(const t of ['ents','attrs','strs'])next[t]=q('SELECT coalesce(max('+dictId(t)+'),0)+1 n FROM '+t).get().n;
  const intern=(t,v)=>{const key=t+':'+JSON.stringify(v);if(local.has(key))return local.get(key);if(writerIds.has(key))return writerIds.get(key);const old=q('SELECT '+dictId(t)+' id FROM '+t+' WHERE '+dictCol(t)+'=?').get(textKey(v));const id=old?.id??next[t]++;local.set(key,id);pendingNames.set(t+':'+id,v);if(!old)additions.push([t,id,v]);return id;};
  for(const member of a.members)for(const r of member.rows){inputRows.set(r.id,r);if(!transactions.has(r.recorded_position)&&!readCodec.tx(r.recorded_position))transactions.set(r.recorded_position,{tx:intern('ents',r.tx_id??''),at:r.recorded_at});if(r.retracted_position!=null&&!transactions.has(r.retracted_position)&&!readCodec.tx(r.retracted_position))transactions.set(r.retracted_position,{tx:intern('ents',r.retract_tx_id??''),at:r.retracted_at});}
  const c={intern,name:(t,id)=>pendingNames.get(t+':'+id)??name(t,id),tx:pos=>transactions.get(pos)??readCodec.tx(pos),row:id=>inputRows.get(id)??storedRow(id)};
- return {additions,transactions,rows:a.members.map(member=>member.rows.map(r=>({r,s:encodeRow(r,c)})))};
+ return {additions,transactions,rows:a.members.map(member=>member.rows.map(r=>({r,s:{...encodeRow(r,c),o:intern('ents',owner(r.entity_id))}})))};
 };
 const append = a => {
  try {
@@ -159,7 +164,7 @@ const append = a => {
     const retired=r.retracted_position!=null,t=retired?'history':isJournalRow(r)?'journal':'facts';
     // [EXP-HS01] Why: preserve one latest version per id, including journal retirements. Rejected: a second recent_rows copy.
     for(const other of ['facts','history','journal'])q('DELETE FROM '+other+' WHERE id=?').run(s.id);
-    const keys=['e',...(retired?['rpos']:[]),'id','a','pos','t','v','vf','vto','c','y','sv','x'];
+    const keys=['o','e',...(retired?['rpos']:[]),'id','a','pos','t','v','vf','vto','c','y','sv','x'];
     q('INSERT INTO '+t+'('+keys.join(',')+') VALUES('+keys.map(()=>'?').join(',')+')').run(...keys.map(k=>s[k]));
    }
   }
@@ -176,7 +181,7 @@ const append = a => {
 const rows = (table,selection,extra='',args=[]) => {
  const where=[], vals=[];
  if(selection.id!==undefined){where.push('id=?');vals.push(packId(selection.id));}
- if(selection.entities!==undefined){if(!selection.entities.length)return [];where.push('e IN (SELECT eid FROM ents WHERE name IN ('+selection.entities.map(()=>'?').join(',')+'))');vals.push(...selection.entities.map(textKey));}
+ if(selection.entities!==undefined){if(!selection.entities.length)return [];where.push('o IN (SELECT eid FROM ents WHERE name IN ('+selection.entities.map(()=>'?').join(',')+')) AND e IN (SELECT eid FROM ents WHERE name IN ('+selection.entities.map(()=>'?').join(',')+'))');vals.push(...selection.entities.map(e=>textKey(owner(e))),...selection.entities.map(textKey));}
  if(extra){where.push(extra);vals.push(...args);}
  return q('SELECT * FROM '+table+(where.length?' WHERE '+where.join(' AND '):'')).all(...vals).map(r=>decodeRow(r,readCodec));
 };
@@ -190,6 +195,48 @@ const pull = a => {
  const out=rows('facts',a.selection,'pos<=?',[b]).concat(rows('journal',a.selection,'pos<=?',[b]),rows('history',a.selection,'rpos>? AND pos<=?',[b,b]));
  return {snapshot:publicMarker(m),basis:b,eligible:true,rows:out};
 };
+// [EXP-QH1] Why: one transaction owns the whole reach; SQL emits one text, including exact REAL lexemes.
+// Rejected: per-hop RPC and json_array(REAL) (R46/Q105b: silent rounding).
+const wholePull = a => {
+ if(a.recordedAt!==undefined)throw Error('H1_RECORD_TIME_UNSUPPORTED');
+ const m=marker(),b=a.basis;
+ if(!Number.isSafeInteger(b)||b<0)throw Error('Invalid basis');
+ if(b<m.h)throw Error('H1_SNAPSHOT_EXPIRED');
+ if(b>m.position)throw Error('H1_BASIS_NOT_AVAILABLE');
+ const chunks=[],seen=new Set(),owners=new Set();let frontier=a.roots,hops=0,examined=0,bytes=0,statements=0;
+ const eid=s=>q('SELECT eid FROM ents WHERE name=?').get(textKey(s))?.eid;
+ // All refs are followed as a superset, even expired refs: valid-time filtering stays in the adapter.
+ // A visited set bounds cycles; unknown/misnamed/cross-owner refs use the same transaction.
+ const fetch=(column,ids)=>{
+  if(!ids.length)return [];
+  const refs=[];
+  for(const table of ['facts','journal','history']){
+   const cut=table==='history'?' AND f.rpos>?':'';
+   const where='f.'+column+' IN (SELECT value FROM json_each(?)) AND f.pos<=?'+cut;
+   const args=[JSON.stringify(ids),b,...(table==='history'?[b]:[])];
+   const joins=' FROM '+table+' f JOIN ents e ON e.eid=f.e JOIN attrs a ON a.aid=f.a JOIN txs tx ON tx.pos=f.pos JOIN ents te ON te.eid=tx.tx LEFT JOIN strs c ON c.sid=f.c LEFT JOIN strs y ON y.sid=f.y LEFT JOIN ents ref ON f.t=5 AND ref.eid=f.v';
+   // Stored fallback envelopes already contain exact lexical numbers and scalar exception tags.
+   const sql="SELECT json_group_array(json_array(typeof(f.id)='blob',CASE WHEN typeof(f.id)='blob' THEN hex(f.id) ELSE f.id END,CASE WHEN typeof(e.name)='blob' THEN NULL ELSE e.name END,CASE WHEN typeof(a.name)='blob' THEN NULL ELSE a.name END,f.t,CASE WHEN f.t IN (1,3) THEN printf('%!.17g',f.v) WHEN f.t=5 THEN CASE WHEN typeof(ref.name)='blob' THEN NULL ELSE ref.name END WHEN f.t=7 THEN NULL ELSE f.v END,printf('%!.17g',tx.at),f.pos,printf('%!.17g',tx.at+f.vf),CASE WHEN f.vto IS NULL THEN NULL ELSE printf('%!.17g',f.vto) END,CASE WHEN typeof(c.s)='blob' THEN NULL ELSE c.s END,CASE WHEN typeof(y.s)='blob' THEN NULL ELSE y.s END,printf('%!.17g',coalesce(f.sv,1)),CASE WHEN typeof(te.name)='blob' THEN NULL ELSE te.name END,json(CASE WHEN f.x IS NOT NULL THEN CAST(f.x AS TEXT) WHEN f.t=7 OR (f.t IN (1,3) AND typeof(f.v) NOT IN ('real','integer')) THEN qh_fallback(f.id) ELSE NULL END))) text,count(*) n"+joins+' WHERE '+where;
+   const part=q(sql).get(...args);statements++;
+   chunks.push(part.text.slice(1,-1));examined+=part.n;bytes+=Buffer.byteLength(part.text);
+   // Exact external ref misses, including refs from verbatim rows, cannot depend on the owner rule.
+   const rr=q('SELECT f.t,f.v,f.x FROM '+table+' f WHERE '+where+" AND (f.t=5 OR f.x IS NOT NULL)").all(...args);statements++;
+   for(const r of rr){const target=r.x!==null?unverb(r.x):null;if(target?.value_type==='ref')refs.push(target.value_string);else if(!target&&r.t===5)refs.push(name('ents',r.v));}
+  }
+  return refs;
+ };
+ while(frontier.length){
+  hops++;const next=[];
+  for(const entity of frontier){
+   if(seen.has(entity))continue;seen.add(entity);
+   const o=eid(owner(entity)),e=eid(entity);
+   if(o!==undefined&&!owners.has(o)){owners.add(o);next.push(...fetch('o',[o]));}
+   else if(o===undefined&&e!==undefined)next.push(...fetch('e',[e]));
+  }
+  frontier=next.filter(e=>!seen.has(e));
+ }
+ return {snapshot:publicMarker(m),basis:b,entities:[...seen],text:'['+chunks.filter(Boolean).join(',')+']',counters:{hops,rows:examined,bytes,statements}};
+};
 const handle = (op,a) => {
  if(op==='close'){clearInterval(timer);clearInterval(passiveTimer);db?.close();lock?.close();return;}
  if(fatal)throw Error(fatal);
@@ -197,6 +244,7 @@ const handle = (op,a) => {
   if(role!=='checkpointer')throw Error('Maintenance requires checkpointer connection');
   return op==='checkpoint'?checkpoint(true):checkpointStatus();
  }
+ if(op==='threadCpu')return process.threadCpuUsage();
  if(op==='init')return {marker:marker(),calibrationMs};
  if(op==='append')return append(a);
  if(op==='ack'){
@@ -257,6 +305,7 @@ const handle = (op,a) => {
   // [EXP-HS01] Why: H limits eligibility, not durable history. Rejected: deleting the only retired version.
   return {h,removed:0};
  }).immediate();
+ if(op==='wholePull')return wholePull(a);
  if(op==='pull')return pull(a);
  throw Error('Unknown SQLite request '+op);
 };

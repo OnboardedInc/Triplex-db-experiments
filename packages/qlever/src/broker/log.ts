@@ -22,6 +22,12 @@ export class H1BasisUnsupported extends ReadError {
   }
 }
 
+export class H1SnapshotExpired extends ReadError {
+  readonly reason = "h1-snapshot-expired";
+}
+export class H1BasisNotAvailable extends ReadError {
+  readonly reason = "h1-basis-not-available";
+}
 export class BrokerLogError extends Error {
   readonly _tag = "BrokerLogError";
 }
@@ -43,6 +49,8 @@ const workerError = (error: string): Error => {
     const detail = JSON.parse(error.slice(at + prefix.length));
     return new FeedRetentionExpired(detail.requested, detail.retainedFrom);
   }
+  if (error.includes("H1_SNAPSHOT_EXPIRED")) return new H1SnapshotExpired({ message: error });
+  if (error.includes("H1_BASIS_NOT_AVAILABLE")) return new H1BasisNotAvailable({ message: error });
   return error.includes("H1_RECORD_TIME_UNSUPPORTED")
     ? new H1BasisUnsupported()
     : new BrokerLogError(error);
@@ -512,6 +520,27 @@ export class HostLog {
   }
   recent(after: number, selection: Selection) {
     return this.pool[0]!.sync<TripleRow[]>("recent", { after, selection });
+  }
+  // [EXP-QH1] Why: thread counters are a breakdown only; process.cpuUsage remains the denominator.
+  // Rejected: summing these counters into process CPU (Q105a double counts the workers).
+  async threadCpu() {
+    const connections = [this.writer, this.checkpointer, ...this.pool];
+    const labels = ["writer", "checkpointer", ...this.pool.map((_, i) => `reader-${i}`)];
+    return Object.fromEntries(
+      await Promise.all(
+        connections.map(async (connection, i) => [
+          labels[i],
+          await connection.request<{ user: number; system: number }>("threadCpu"),
+        ]),
+      ),
+    );
+  }
+  async wholePull(basis: number, roots: readonly string[]) {
+    if (this.closed) throw new BrokerLogError("Broker log is closed");
+    return this.pool[this.readerIndex++ % this.pool.length]!.request<import("./h1.js").WholePull>(
+      "wholePull",
+      { basis, roots },
+    );
   }
   async pull(basis: H1Basis, selection: Selection): Promise<PinnedPull> {
     // [CX-INT-Q] Why: Q89b requires refusal before position retirement drops rows needed at T.

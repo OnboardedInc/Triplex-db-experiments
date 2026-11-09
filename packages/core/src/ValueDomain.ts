@@ -258,6 +258,72 @@ export function assertValueInDomain(
   if (error) throw error;
 }
 
+// [EXP-QH1] Why: the decoder constructs this exact plain two-field object; avoid descriptor/schema
+// work for primitive channels while preserving all admission checks. Rejected: trusting persisted values.
+export const decodedPrimitiveValue = (
+  type: string,
+  payload: unknown,
+  d: ValueDomain,
+): TripleValue => {
+  const value = { type, value: payload };
+  let valid = d.kinds.includes(type as ValueType);
+  switch (type) {
+    case "string":
+    case "ref":
+      valid &&=
+        typeof payload === "string" &&
+        (type !== "ref" || payload.length > 0) &&
+        payload.isWellFormed() &&
+        (d.string.allowNul || !payload.includes("\0")) &&
+        (3 * payload.length <= d.string.maxUtf8Bytes ||
+          encoder.encode(payload).length <= d.string.maxUtf8Bytes);
+      break;
+    case "number":
+      valid &&=
+        typeof payload === "number" &&
+        Number.isFinite(payload) &&
+        payload >= d.number.min &&
+        payload <= d.number.max &&
+        (d.number.negativeZero || !Object.is(payload, -0));
+      break;
+    case "datetime":
+      valid &&=
+        typeof payload === "number" &&
+        Number.isFinite(payload) &&
+        !Object.is(payload, -0) &&
+        payload >= d.datetime.min &&
+        payload <= d.datetime.max &&
+        (!d.datetime.integerMilliseconds || Number.isInteger(payload));
+      break;
+    case "boolean":
+      valid &&= typeof payload === "boolean";
+      break;
+    case "integer":
+      valid &&=
+        typeof payload === "string" &&
+        /^(?:0|-[1-9]\d*|[1-9]\d*)$/.test(payload) &&
+        payload.length <= 20 &&
+        BigInt(payload) >= MIN_INTEGER &&
+        BigInt(payload) <= MAX_INTEGER &&
+        d.integer !== null &&
+        BigInt(payload) >= BigInt(d.integer.min) &&
+        BigInt(payload) <= BigInt(d.integer.max);
+      break;
+    default:
+      assertValueInDomain(value, d);
+      return value;
+  }
+  // At most six ASCII bytes per UTF-16 unit in escaped JSON; 64 covers the envelope and type.
+  if (
+    !valid ||
+    (d.storage &&
+      (typeof payload === "string" ? 6 * payload.length + 64 : 128) > d.storage.maxValueBytes)
+  ) {
+    assertValueInDomain(value, d);
+  }
+  return value as TripleValue;
+};
+
 // [EXP-GS12F-R3] Why: journal envelopes add fixed nesting around a validated user JSON value.
 // Rejected: rejecting a valid max-depth value late while encoding its generated change envelope.
 export const storedValueDomain = (domain: ValueDomain, attribute: string): ValueDomain =>
@@ -310,6 +376,10 @@ export const decodeValueColumns = (
       break;
     default:
       value = { type: row.value_type };
+  }
+  if (row.value_type !== "blob" && row.value_type !== "json") {
+    const primitive = value as { type: string; value: unknown };
+    return decodedPrimitiveValue(primitive.type, primitive.value, domain);
   }
   assertValueInDomain(value, domain);
   return value;

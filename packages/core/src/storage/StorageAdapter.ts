@@ -19,6 +19,15 @@ import type { Rule as ConstraintRule, ViolationAt } from "../Constraint.js";
  * StorageAdapterService - Backend-agnostic storage primitives
  */
 export interface StorageAdapterService {
+  // [EXP-QH1] Why: a columnar store can decode directly to Triples without a second row materialization.
+  // Rejected: a new public pull API; undefined retains the normal read path, including transactions/history.
+  readonly getEntityTriples?: (
+    entityIds: readonly string[],
+    basis: ResolvedTemporalBasis,
+  ) => Effect.Effect<
+    ReadonlyMap<string, readonly import("../Triple.js").Triple[]> | undefined,
+    ReadError
+  >;
   /** Optional exact-snapshot policy, propagated to public repository reads. */
   readonly snapshotReadPolicy?: import("./ReadSurface.js").SnapshotReadPolicy;
   // [CX-A01-0314-R2] Why: missing composition domains must fail compilation. Rejected: optional domains (silently admitted broker values against memory limits).
