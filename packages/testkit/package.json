@@ -37,6 +37,11 @@
       "types": "./dist/route.d.ts",
       "import": "./dist/route.js",
       "default": "./dist/route.js"
+    },
+    "./feed": {
+      "types": "./dist/feed/index.d.ts",
+      "import": "./dist/feed/index.js",
+      "default": "./dist/feed/index.js"
     }
   },
   "publishConfig": {

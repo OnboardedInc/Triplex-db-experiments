@@ -81,6 +81,11 @@
       "types": "./dist/internal.d.ts",
       "import": "./dist/internal.js",
       "default": "./dist/internal.js"
+    },
+    "./feed": {
+      "types": "./dist/feed/index.d.ts",
+      "import": "./dist/feed/index.js",
+      "default": "./dist/feed/index.js"
     }
   },
   "publishConfig": {

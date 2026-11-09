@@ -29,6 +29,7 @@ import {
 } from './lib.mjs';
 
 const PACKAGES = {
+  host: { dir: 'packages/host', filter: '@triplex-build/triplex-host' },
   w0: { filter: '@triplex-build/w0', dir: 'packages/w0' },
   datomic: { filter: '@triplex-build/triplex-datomic', dir: 'packages/datomic' },
   core: { filter: '@triplex-build/triplex', dir: 'packages/core' },
@@ -37,7 +38,9 @@ const PACKAGES = {
   qlever: { filter: '@triplex-build/triplex-qlever', dir: 'packages/qlever' },
   qualification: { filter: '@triplex-build/triplex-qualification', dir: 'packages/qualification' },
 };
-const lanePackages = (lane, gate) => ['core', 'testkit', lane, 'qualification', ...(gate === 'GS' ? ['w0'] : [])];
+// [EXP-FD01] Why: the NS A0 consumer now loads the host SQLite store, and G0 must build/hash/test it.
+// Rejected: an unbuilt or unhashed host dependency in a gate.
+const lanePackages = (lane, gate) => ['core', 'host', 'testkit', lane, 'qualification', ...(gate === 'GS' ? ['w0'] : [])];
 // [EXP-A01-0313-R2] Why: dry-run and execution share W02's GS policy and DA01's G0/G1 admission. Rejected: admitting Datomic for unimplemented G2/G4/NS routes or losing its GS lane.
 const gateLanes = gate => gate === 'GS' ? GS_LANES : ['xtdb', 'qlever', ...(['G0', 'G1'].includes(gate) ? ['datomic'] : [])];
 const EXPECTED_SKIPS = path.join(REPO, 'lab/config/g0-expected-skips.json');

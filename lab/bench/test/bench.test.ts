@@ -204,7 +204,7 @@ test("model: valid-time aware digests equal the materialized world at (R, V)", (
 
 test("feed consumer: durable checkpoints, three crash points, keyed effects never duplicate", async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ns-feed-"));
-  const txs = Array.from({ length: 30 }, (_, k) => ({ position: k + 1, txId: `tx${k + 1}`, changes: [{ op: "assert", entityId: `pl:${String(k % 5).padStart(8, "0")}`, attribute: ":placement/stamp", value: { type: "integer", value: String(Math.floor(k / 5) + 1) }, validFrom: 1 }] }));
+  const txs = Array.from({ length: 30 }, (_, k) => ({ position: k + 1, txId: `tx${k + 1}`, changes: [{ op: "assert", tripleId: `assertion-${k + 1}`, entityId: `pl:${String(k % 5).padStart(8, "0")}`, attribute: ":placement/stamp", value: { type: "integer", value: String(Math.floor(k / 5) + 1) }, validFrom: 1 }] }));
   let t = 0;
   const handle: any = { feedPage: async (after: number, limit: number) => { const page = txs.filter((x) => x.position > after).slice(0, Math.min(limit, 4)); return { transactions: page, next: page.at(-1)?.position }; }, close: async () => {} };
   const consumer = new FeedConsumer({
@@ -225,5 +225,6 @@ test("feed consumer: durable checkpoints, three crash points, keyed effects neve
   assert.equal(consumer.counts.entries, 30);
   const replay = await consumer.replayCheck(handle, 0);
   assert.equal(replay.exact, true);
+  consumer.close();
   fs.rmSync(dir, { recursive: true, force: true });
 });

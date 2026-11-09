@@ -34,6 +34,11 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
+    },
+    "./feed": {
+      "types": "./dist/feed/index.d.ts",
+      "import": "./dist/feed/index.js",
+      "default": "./dist/feed/index.js"
     }
   },
   "scripts": {
@@ -48,6 +53,7 @@
   },
   "devDependencies": {
     "@triplex-build/triplex-sqlite": "workspace:^",
+    "@triplex-build/triplex-testkit": "workspace:^",
     "@types/node": "catalog:",
     "effect": "catalog:",
     "vitest": "catalog:"
