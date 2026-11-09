@@ -477,6 +477,12 @@ export const makeQleverStorageAdapter = (
       ),
     currentCommitPosition: () =>
       Effect.flatMap(current, (state) => (state ? Effect.succeed(state.position) : position())),
+    // [EXP-QH1-R5] Why: this non-broker adapter issues one SPARQL request per level; without a position each reads the then-current
+    // graph. One read of the source position at the pull's start is added to every level's basis (queryRows turns it into
+    // `recorded_position_order <= k` and the retraction bound). In a transaction reads already use min(sourceK, ...) and see the staged
+    // rows, so no position is offered. Rejected: currentCommitPosition (state.position includes staged positions); a lock (P1).
+    pullPosition: () =>
+      Effect.flatMap(current, (state) => (state ? Effect.succeed(undefined) : position())),
     claimCommand: (id, txId, timestamp) =>
       Effect.gen(function* () {
         const state = yield* required;

@@ -340,6 +340,17 @@ export const makeDatomicStorageAdapter = (
       Effect.flatMap(current, (state) =>
         state === undefined ? committedPosition() : Effect.succeed(state.position),
       ),
+    // [EXP-QH1-R5] Why: outside a transaction the gateway syncs a fresh database value for each request that carries no handle, so a
+    // multi-level pull would read each level from a different value. One basis read at the pull's start gives the logical commit
+    // position; every level then sends it as basis.recordedPosition and the gateway answers from `at-position` (d/as-of the first
+    // physical transaction covering it), an exact cut, on a request-time db that is never behind it (`await-position`). Inside a
+    // transaction the held handle already fixes the value and staged rows must stay visible, so no position is offered.
+    // Rejected: holding a gateway snapshot handle for the whole pull (a handle pins gateway state and must be released on every
+    // failure path; the position is stateless); currentCommitPosition (names the staged position in a transaction); a lock (P1).
+    pullPosition: () =>
+      Effect.flatMap(current, (state) =>
+        state === undefined ? committedPosition() : Effect.succeed(undefined),
+      ),
     claimCommand: (commandId, txId, timestamp) =>
       Effect.gen(function* () {
         const state = yield* requireTransaction;
