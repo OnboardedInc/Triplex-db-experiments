@@ -130,13 +130,17 @@ it("round8 every executable public read reaches the shared basis check; row read
     const native = makeQleverNativeQueries(nativeClient, scope, { awaitBasisMs: 40 });
     expect(Object.keys(native).sort()).toEqual(["select", "selectWithRelations"]);
     const contract = { name: "policy", parameters: TypeExpr.any, row: TypeExpr.any };
+    const future = committed.position + 4096;
+    let explicit = true;
+    const basis = () => (explicit ? at(future) : undefined);
     const calls: Record<string, () => any> = {
       "StorageAdapterService.getById": () => a.getById(row.id),
-      "StorageAdapterService.getByEntity": () => a.getByEntity("s:policy"),
-      "StorageAdapterService.getByEntities": () => a.getByEntities(["s:policy"]),
-      "StorageAdapterService.query": () => a.query({ entityId: "s:policy" }),
+      "StorageAdapterService.getByEntity": () => a.getByEntity("s:policy", basis()),
+      "StorageAdapterService.getByEntities": () => a.getByEntities(["s:policy"], basis()),
+      "StorageAdapterService.query": () => a.query({ entityId: "s:policy" }, basis()),
       "StorageAdapterService.history": () => a.history("s:policy"),
-      "StorageAdapterService.dependencyState": () => a.dependencyState([], at(committed.position)),
+      "StorageAdapterService.dependencyState": () =>
+        a.dependencyState([], basis() ?? at(committed.position)),
       "TriplesService.get": () => t.get(row.id),
       "TriplesService.entity": () => t.entity("s:policy"),
       "TriplesService.entities": () => t.entities(["s:policy"]),
@@ -147,20 +151,22 @@ it("round8 every executable public read reaches the shared basis check; row read
       "TriplesService.transactionByCommand": () => t.transactionByCommand("round8-policy"),
       "TriplesService.transactions": () => t.transactions(),
       "TriplesService.transactionsForEntity": () =>
-        t.transactionsForEntity("s:policy", { snapshotPosition: committed.position }),
+        t.transactionsForEntity("s:policy", {
+          snapshotPosition: explicit ? future : committed.position,
+        }),
       "TriplesService.dependencyState": () => t.dependencyState([]),
       "TriplesService.queryAll": () => t.queryAll(logical),
       "TriplesService.query": () => t.query(logical),
       "TriplesService.queryPage": () => t.queryPage({ inner: logical }),
-      "QueryExecutorService.execute": () => e.execute(logical),
-      "QueryExecutorService.executePage": () => e.executePage(logical),
+      "QueryExecutorService.execute": () => e.execute(logical, false, basis()),
+      "QueryExecutorService.executePage": () => e.executePage(logical, false, basis()),
       "native.select": () =>
         native.select(contract, {}, () => "SELECT ?s WHERE { ?s ?p ?o }", {
-          basis: { recordedPosition: committed.position },
+          basis: { recordedPosition: explicit ? future : committed.position },
         }),
       "native.selectWithRelations": () =>
         native.selectWithRelations(contract, {}, [], () => "SELECT ?s WHERE { ?s ?p ?o }", {
-          basis: { recordedPosition: committed.position },
+          basis: { recordedPosition: explicit ? future : committed.position },
         }),
     };
     const expected = Object.entries(contracts)
@@ -183,8 +189,26 @@ it("round8 every executable public read reaches the shared basis check; row read
           check.mockClear();
           const effect = call();
           const outcome = await attempt(rt, transaction ? a.withTransaction(effect) : effect);
+          const expectedRequired = [
+            "StorageAdapterService.getByEntity",
+            "StorageAdapterService.getByEntities",
+            "StorageAdapterService.query",
+            "StorageAdapterService.dependencyState",
+            "TriplesService.transactionsForEntity",
+            "QueryExecutorService.execute",
+            "QueryExecutorService.executePage",
+            "native.select",
+            "native.selectWithRelations",
+          ].includes(name)
+            ? future
+            : committed.position;
+          expect(check.mock.calls[0]?.[0].required, `${name} silently substituted its basis`).toBe(
+            expectedRequired,
+          );
           recorded.push({
             name,
+            checkedRequired: check.mock.calls[0]?.[0].required,
+            expectedRequired,
             transaction,
             checkCalls: check.mock.calls.length,
             error: outcome.error,
@@ -197,6 +221,7 @@ it("round8 every executable public read reaches the shared basis check; row read
     } finally {
       check.mockRestore();
     }
+    explicit = false;
     const mask = vi.spyOn(policy, "snapshotRows");
     try {
       for (const name of Object.entries(contracts).flatMap(([service, group]) =>

@@ -19,6 +19,10 @@ interface EntityTransactionReader {
     query: DatalogQuery,
     position: number,
   ) => Effect.Effect<QueryResponse, unknown>;
+  readonly transactionAtPosition?: (
+    transactionId: TransactionId,
+    position: number,
+  ) => Effect.Effect<TransactionRecord | null, ReadError>;
   readonly transaction: (
     transactionId: TransactionId,
   ) => Effect.Effect<TransactionRecord | null, ReadError>;
@@ -101,7 +105,10 @@ export const transactionsForEntity = (
     );
     const selected = indexed.slice(0, limit);
     const records = yield* Effect.forEach(selected, ({ transactionId, position }) =>
-      reader.transaction(transactionId).pipe(
+      (reader.transactionAtPosition
+        ? reader.transactionAtPosition(transactionId, snapshotPosition)
+        : reader.transaction(transactionId)
+      ).pipe(
         Effect.flatMap((record) =>
           record !== null && record.position === position
             ? Effect.succeed(record)

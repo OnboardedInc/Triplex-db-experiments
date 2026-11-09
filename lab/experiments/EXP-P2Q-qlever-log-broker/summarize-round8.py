@@ -12,6 +12,7 @@ for label in labels:
     head=head or r['head']; attempt=attempt or r['attemptId']; slot=slot or r['heavySlot']
     assert r['head']==head and r['attemptId']==attempt and r['heavySlot']==slot
     assert r['env']['P2Q_ATTEMPT_ID']==attempt and r['env']['V_P2Q_OUT']==str(out/label)
+    assert r['hostFreeBytesBefore']>=5*1024**3
     assert r['startedAt']<r['finishedAt'] and r['exitCode']==0 and r['accepted'] is True
     assert r['sourceStillMatches'] and r['heavySlotStillMatches'] and r['resultFresh'] and r['contentMatches']
     assert sha(out/(label+'.log'))==r['logSha256']
@@ -65,7 +66,8 @@ for kind in ['standard','fresh']:
     journal=load('new-live',f'round8-{kind}-journal-immutable.json')
     same(journal); assert journal['before']==journal['transaction']
     assert [tx['position'] for tx in json.loads(journal['before'])['transactions']]==[journal['first']]
-    counts['liveSnapshotByteComparisons']+=2
+    assert journal['before']==journal['afterMetadata']==journal['transactionAfterMetadata']
+    counts['liveSnapshotByteComparisons']+=4
 for gate,kind,n in [('new-offline','offline',6),('new-live','standard',10),('new-live','fresh',10)]:
     rows=load(gate,f'round8-{kind}-public-future.json');assert len(rows)==n
     assert len({(r['route'],r['transaction']) for r in rows})==n
@@ -82,9 +84,18 @@ for row in rows:
     assert (error['reason'],error['required'],error['observed'])==('basis-not-reached',6144,2048 if row['transaction'] else 3071)
     assert error['replica']==('the transaction snapshot' if row['transaction'] else "the broker's resolved prefix")
     assert error['waitedMs']>=39
+journal_control=load('new-offline','round8-journal-stable-page.json')
+same(journal_control)
+assert journal_control['queried']==journal_control['loaded']==[2048,2048]
+cut_control=load('new-offline','round8-journal-cut-binding.json')
+assert cut_control['calledPosition']==cut_control['error']['required']==6144
+assert cut_control['error']['reason']=='basis-not-reached' and cut_control['error']['replica']=='test pin'
+staged=load('new-offline','round8-policy-staged-mask.json')
+assert staged['bytes']==staged['after'] and staged['history'][0]['retract_tx_id']=='pending'
 coverage=load('new-offline','round8-policy-coverage.json');assert len(coverage)==48
 assert len({(r['name'],r['transaction']) for r in coverage})==48
 for row in coverage:
+    assert row['checkedRequired']==row['expectedRequired']
     assert row['checkCalls']>0 and row['error']['replica']=='policy sentinel' and row['error']['reason']=='basis-not-reached'
 counts['policyRouteChecks']=len(coverage)
 for path in sorted((out/'earlier-live').glob('round4-live-*.json')):

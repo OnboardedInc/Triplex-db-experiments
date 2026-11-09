@@ -42,6 +42,7 @@ it("round8 journal query receives the exact snapshot and preserves the refusal i
 it("round8 journal responses at the same snapshot exclude later indexed transactions", async () => {
   const positions: number[] = [];
   const queried: number[] = [];
+  const loaded: number[] = [];
   const reader = {
     currentPosition: () => Effect.succeed(2048),
     query: () => Effect.die("unbound query must not run"),
@@ -50,11 +51,14 @@ it("round8 journal responses at the same snapshot exclude later indexed transact
       return Effect.succeed({
         results: positions
           .filter((p) => p <= position)
-          .map((p) => ({ "?transaction": `tx:${p}`, "?position": p })),
+          .map((p) => ({ "?transaction": `_tx/${String(p).padStart(26, "0")}`, "?position": p })),
       });
     },
-    transaction: (id: any) =>
-      Effect.succeed({ txId: id, position: Number(id.split(":")[1]), instant: 1, changes: [] }),
+    transaction: () => Effect.die("unbound envelope must not run"),
+    transactionAtPosition: (id: any, position: number) => {
+      loaded.push(position);
+      return Effect.succeed({ txId: id, position: Number(id.slice(4)), instant: 1, changes: [] });
+    },
   };
   positions.push(2048);
   const read = () =>
@@ -65,8 +69,9 @@ it("round8 journal responses at the same snapshot exclude later indexed transact
   positions.push(3072);
   const after = JSON.stringify(await read());
   expect(queried).toEqual([2048, 2048]);
+  expect(loaded).toEqual([2048, 2048]);
   expect(after).toBe(before);
-  writeJson("round8-journal-stable-page.json", { before, after, queried });
+  writeJson("round8-journal-stable-page.json", { before, after, queried, loaded });
 });
 
 describe.skipIf(process.env["V_P2Q_LIVE"] !== "1")("round8 live journal snapshot payload", () => {
@@ -102,15 +107,45 @@ describe.skipIf(process.env["V_P2Q_LIVE"] !== "1")("round8 live journal snapshot
         expect(await rt.broker.drain(60_000)).toBe(true);
         const after = JSON.stringify(await rt.run(read()));
         const transaction = JSON.stringify(await rt.run(rt.adapter.withTransaction(read())));
+        // [EXP-P2Q] Why: a journal envelope must also mask retirement after its named cut.
+        // Rejected: relying only on normal journal immutability (misses internal metadata retirement).
+        const positionRow = (await rt.run(rt.adapter.getByEntity(first.txId))).find(
+          (row) => row.attribute === ":_tx/position",
+        )!;
+        expect(positionRow).toBeDefined();
+        await rt.run(
+          rt.adapter.withTransaction(
+            Effect.gen(function* () {
+              const position = yield* rt.adapter.nextCommitPosition();
+              expect(
+                yield* rt.adapter.retract(
+                  positionRow.id,
+                  Date.now(),
+                  "internal-fixture-retirement",
+                  position,
+                ),
+              ).toBe(true);
+            }),
+          ),
+        );
+        expect(await rt.broker.drain(60_000)).toBe(true);
+        const afterMetadata = JSON.stringify(await rt.run(read()));
+        const transactionAfterMetadata = JSON.stringify(
+          await rt.run(rt.adapter.withTransaction(read())),
+        );
         writeJson(`round8-${kind}-journal-immutable.json`, {
           scope,
           first: first.position,
           before,
           after,
           transaction,
+          afterMetadata,
+          transactionAfterMetadata,
         });
         expect(after).toBe(before);
         expect(transaction).toBe(before);
+        expect(afterMetadata).toBe(before);
+        expect(transactionAfterMetadata).toBe(before);
       } finally {
         await rt.dispose();
         await rt.broker.close();
