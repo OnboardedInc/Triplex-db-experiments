@@ -63,3 +63,9 @@ node lab/bin/heavy.mjs --label CX-P5A-R2-audit -- node --experimental-strip-type
 ```
 
 Use fresh output directories and check >=5 GiB host free before each heavy admission. The restore supports `seed.ndjson.gz` when the original has been losslessly retained with a verified decompression manifest. Restoring bytes, their hash, or the prior receipt status never grants admission: each measuring copy must pass the fresh shared W0 content gate.
+
+## Round-3 admission correction
+
+The earlier standalone A1 G0 command is historical and is **not sufficient for admission**. A snapshot-only W0 fingerprint no longer grants. The measuring process must use K01's full-content pre-freeze `Pin` through `g0.ts`, with the W0 callback underneath it. The compatibility W0 entry accepts `--g0-pin`, but its fresh-scope seeding flow is not a completed K01 clone/resume CLI; do not treat it as a runnable clone qualification recipe. K01 must supply and bind the existing cloned scope/endpoint and full D before an A1 run. No native run was performed in round 3.
+
+Offline round 3 adds independent O-REPLAY world checks for every live answer and sweep record, O-DOMAIN reconcile/publish comparison, 1% positive output-changing retroactive witnesses, receipt-folded G9 counts, and matched-window burst containment. Its G6 runner supplies an explicit accepted O-REPLAY reference; the older default-reference warning above describes the previous round. Full native traffic, maintenance, per-stage resource attribution, bytes per fact and production acceptance remain outstanding.

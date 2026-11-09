@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import { randomUUID } from "node:crypto";
-import { forkMemoryScope, dropMemoryScope } from "./memory.ts";
+import { forkMemoryScope, dropMemoryScope, memoryComposition } from "./memory.ts";
 import { trafficArm, ratioSummary, matchSweepWindow } from "./w0-traffic.ts";
-import { fingerprintSweep, type FingerprintInput } from "./w0-fingerprint.ts";
+import { freezeMemoryG0, fingerprintSweep, type FingerprintInput } from "./w0-fingerprint.ts";
 import { Rng, seedOf } from "./rng.ts";
 import { sha256 } from "./w0-world.ts";
 export async function runMemoryRounds(o: {
@@ -21,19 +21,19 @@ export async function runMemoryRounds(o: {
   fs.mkdirSync(o.dir, { recursive: true });
   const rng = new Rng(seedOf(o.seed));
   const rounds: any[] = [];
-  const sourceFiles = [
-    "w0-rounds.ts",
-    "w0-traffic.ts",
-    "sweep.ts",
-    "sweep-worker.ts",
-    "w0-trace.ts",
-    "trace.ts",
-    "memory.ts",
-    "w0-fingerprint.ts",
-  ];
+  const sourceFiles = fs
+    .readdirSync(new URL("./", import.meta.url))
+    .filter((f) => /\.(ts|py)$/.test(f));
   const sources = Object.fromEntries(
     sourceFiles.map((f) => [f, sha256(fs.readFileSync(new URL(f, import.meta.url)))]),
   );
+  const pin = await freezeMemoryG0(memoryComposition("xtdb", o.scope), {
+    endpoint: `memory://${o.scope}`,
+    scope: o.scope,
+    basis: o.basis,
+    expected: o.expected,
+    counts: o.counts,
+  });
   const n = o.rounds ?? 12;
   if (!Number.isInteger(n) || n < 1 || n > 24) throw new Error("round count");
   for (let i = 0; i < n; i++) {
@@ -84,6 +84,7 @@ export async function runMemoryRounds(o: {
             basis: o.basis,
             expected: o.expected,
             counts: o.counts,
+            pin,
           },
           async () => ({ endpoint: `memory://${scope}`, scope, comp, close: async () => {} }),
         );

@@ -57,7 +57,13 @@ export async function publishRecords(
   // [EXP-P5] Why: state, per-item sequence and deliveries commit in the same frame with command-id deduplication. Rejected: updating an in-memory outbox before ACK (loses work on resume).
   const r = await comp.transact(operations, { commandId, actor: "p5-publisher", preconditions });
   if (!r.ok) throw new Error("outbox publication failed: " + r.tag);
-  return { deliveries, retry: false };
+  return {
+    deliveries,
+    retry: false,
+    receipt: r.value,
+    operations,
+    meta: { commandId, actor: "p5-publisher", preconditions },
+  };
 }
 const V_PUBLIC = Date.parse("2026-11-04T12:00:00Z");
 function reviveState(s: any): W0.OutboxState {

@@ -1,17 +1,25 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import os from "node:os";
 import { randomUUID } from "node:crypto";
 import { test } from "node:test";
 import { memoryComposition, forkMemoryScope, dropMemoryScope } from "../lib/memory.ts";
 import { W0, V_W0, triplexValue, worldOf } from "../lib/w0-world.ts";
 import { seedW0 } from "../lib/w0-seed.ts";
-import { readW0Fingerprint, fingerprintSweep, FingerprintRefusal } from "../lib/w0-fingerprint.ts";
+import {
+  freezeMemoryG0,
+  readW0Fingerprint,
+  fingerprintSweep,
+  FingerprintRefusal,
+} from "../lib/w0-fingerprint.ts";
 import { recoverSweep } from "../lib/sweep-recovery.ts";
 import { subjectList, Controller, runW0Sweep } from "../lib/sweep.ts";
 import { applyW0Trace, trafficArm, ratioSummary, waitUntil } from "../lib/w0-traffic.ts";
-const dir = () => fs.mkdtempSync(path.join(os.tmpdir(), "p5-r2-"));
+const dir = () => {
+  const root = "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-P5A/round3-fixtures";
+  fs.mkdirSync(root, { recursive: true });
+  return fs.mkdtempSync(path.join(root, "p5-r3-"));
+};
 test("shared G0 reads every subject and refuses altered digest/count/binding/partial/deadline", async () => {
   const scope = randomUUID(),
     comp = memoryComposition("xtdb", scope),
@@ -21,7 +29,20 @@ test("shared G0 reads every subject and refuses altered digest/count/binding/par
     ...(await readW0Fingerprint(comp, 50, basis, new AbortController().signal)),
     N: 50,
   };
-  const input = { endpoint: `memory://${scope}`, scope, basis, expected, counts: seed.counts };
+  const input = {
+    endpoint: `memory://${scope}`,
+    scope,
+    basis,
+    expected,
+    counts: seed.counts,
+    pin: await freezeMemoryG0(comp, {
+      endpoint: `memory://${scope}`,
+      scope,
+      basis,
+      expected,
+      counts: seed.counts,
+    }),
+  };
   assert.equal((await fingerprintSweep(input)).status, "complete-and-matching");
   await assert.rejects(
     fingerprintSweep({ ...input, expected: { ...expected, worlds: "sha256:" + "0".repeat(64) } }),
@@ -39,6 +60,18 @@ test("shared G0 reads every subject and refuses altered digest/count/binding/par
       close: async () => {},
     })),
     /binding/,
+  );
+  await assert.rejects(
+    fingerprintSweep(input, async () => ({
+      endpoint: input.endpoint,
+      scope,
+      close: async () => {},
+      comp: {
+        ...comp,
+        g0Reader: (logical) => ({ ...comp.g0Reader!(logical), endpoint: "memory://other" }),
+      },
+    })),
+    /endpoint binding/,
   );
   await assert.rejects(
     fingerprintSweep(input, async () => ({
@@ -194,7 +227,8 @@ test("ratio computation refuses no samples; insufficient command/round evidence 
   const arm = {
     read: { p99: 10 },
     commit: { p99: 20, count: 10 },
-    trace: { durationS: 100 },
+    trace: { durationS: 100, offsetS: 120 },
+    matchedWindowMs: 60000,
     windowValid: true,
     sweepWallMs: 50,
   };
@@ -236,6 +270,11 @@ test("64 live readers overlap real mapped writer progress and controller-fed swe
   assert.equal(result.trace.committed, result.trace.offered);
   assert.ok(result.trace.committed > 0);
   assert.equal(result.sweepComplete, true);
+  assert.deepEqual(result.semantic.counts.end, result.semantic.counts.expected);
+  assert.equal(result.semantic.witnesses.length, 1);
+  assert.equal(result.semantic.negativeWitnesses.length, 1);
+  assert.equal(result.semantic.outputs, 50);
+  assert.ok(result.semantic.worlds >= 64);
   assert.ok(result.controller.windows.length > 0);
 });
 

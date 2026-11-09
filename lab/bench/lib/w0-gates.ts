@@ -14,28 +14,20 @@ export function requireCounts(observed: Record<string, number>, expected: Record
   )
     throw new Error("G9 store counts mismatch or absent");
 }
-export function requireFingerprint(observed: any, oracle: any, N: number) {
-  if (
-    oracle.rung?.N !== N ||
-    oracle.seed !== "W0-pop-1" ||
-    !Object.keys(oracle.sources ?? {}).length ||
-    oracle.invalidWorlds?.length !== 0
-  )
-    throw new Error("G0 oracle binding invalid");
-  for (const k of ["basisTx", "facts", "worlds", "R2"])
-    if (observed[k] === undefined || observed[k] !== oracle.fingerprint?.[k])
-      throw new Error("G0 fingerprint mismatch: " + k);
-}
+export { requireW0Fingerprint as requireFingerprint } from "./g0.ts";
 export class DomainOracle {
-  child = spawn("python3", ["-I", new URL("./w0-oracle.py", import.meta.url).pathname], {
-    stdio: ["pipe", "pipe", "pipe"],
-  });
+  child: ReturnType<typeof spawn>;
   queue: { resolve: (s: string) => void; reject: (e: any) => void }[] = [];
   error: Error | undefined;
-  constructor() {
+  encode: (input: unknown) => string;
+  constructor(script = "./w0-oracle.py", encode: (input: unknown) => string = canonical) {
+    this.encode = encode;
+    this.child = spawn("python3", ["-I", new URL(script, import.meta.url).pathname], {
+      stdio: ["pipe", "pipe", "pipe"],
+    });
     let stderr = "";
-    this.child.stderr.on("data", (d) => (stderr += d));
-    createInterface({ input: this.child.stdout }).on("line", (line) => {
+    this.child.stderr!.on("data", (d) => (stderr += d));
+    createInterface({ input: this.child.stdout! }).on("line", (line) => {
       const p = this.queue.shift();
       if (!p) {
         this.fail(new Error("unsolicited oracle result"));
@@ -57,11 +49,11 @@ export class DomainOracle {
     if (this.error) return Promise.reject(this.error);
     return new Promise((resolve, reject) => {
       this.queue.push({ resolve, reject });
-      this.child.stdin.write(canonical({ op, input }) + "\n");
+      this.child.stdin!.write(this.encode({ op, input }) + "\n");
     });
   }
   close() {
-    this.child.stdin.end();
+    this.child.stdin!.end();
   }
 }
 export function wireRecord(r: any) {

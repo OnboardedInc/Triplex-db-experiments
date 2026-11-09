@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { test } from "node:test";
@@ -19,7 +18,11 @@ import {
 } from "../lib/w0-gates.ts";
 import { generateTrace } from "../lib/trace.ts";
 import { mapW0Trace } from "../lib/w0-trace.ts";
-const directory = () => fs.mkdtempSync(path.join(os.tmpdir(), "p5-test-"));
+const directory = () => {
+  const root = "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-P5A/round3-fixtures";
+  fs.mkdirSync(root, { recursive: true });
+  return fs.mkdtempSync(path.join(root, "p5-test-"));
+};
 test("G0/G9 reject missing, altered, foreign-rung fingerprints and mismatched counts", () => {
   const fp = { basisTx: 4, facts: 10, worlds: "sha256:a", R2: "sha256:b" };
   const oracle = {

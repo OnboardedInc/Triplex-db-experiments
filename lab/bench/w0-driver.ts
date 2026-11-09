@@ -6,7 +6,7 @@ import { promisify } from "node:util";
 import { openComposition } from "./lib/composition.ts";
 import { loadW0Pins } from "./lib/evaluate.ts";
 import { seedW0 } from "./lib/w0-seed.ts";
-import { fingerprintSweep } from "./lib/w0-fingerprint.ts";
+import { freezeMemoryG0, fingerprintSweep } from "./lib/w0-fingerprint.ts";
 import { runW0Sweep, subjectList } from "./lib/sweep.ts";
 import { W0, V_W0, canonical, sha256, triplexValue, worldOf } from "./lib/w0-world.ts";
 import {
@@ -115,24 +115,26 @@ export async function runW0Driver(argv: string[]) {
     };
     const b0 = { position: report.seed.basis.tx, validAt: V_W0 };
     console.error("[P5] G0 preview sweep");
-    const gate = await fingerprintSweep(
-      {
-        endpoint: comp.backend.url,
-        scope,
-        basis: b0,
-        expected: { ...expected.fingerprint, N },
-        counts: report.seed.counts,
-      },
-      async () => ({
-        endpoint: comp.backend.url,
-        scope,
-        comp,
-        close: async () => {},
-        observePage: (records, page) =>
-          fs.writeFileSync(path.join(dir, `preview-${page}.json`), canonical(records)),
-      }),
-    );
-    const fingerprint = gate.observed,
+    const inputG0 = {
+      endpoint: comp.backend.url,
+      scope,
+      basis: b0,
+      expected: { ...expected.fingerprint, N },
+      counts: report.seed.counts,
+    };
+    const pinFile = opt("g0-pin");
+    const pin = pinFile
+      ? JSON.parse(fs.readFileSync(pinFile, "utf8"))
+      : await freezeMemoryG0(comp, inputG0);
+    const gate = await fingerprintSweep({ ...inputG0, pin }, async () => ({
+      endpoint: comp.backend.url,
+      scope,
+      comp,
+      close: async () => {},
+      observePage: (records, page) =>
+        fs.writeFileSync(path.join(dir, `preview-${page}.json`), canonical(records)),
+    }));
+    const fingerprint = gate.observed!,
       count = N;
     report.preview = { ...gate, metrics: [], cpuScope: "fingerprint-controller-process" };
     requireFingerprint(fingerprint, expected, N);

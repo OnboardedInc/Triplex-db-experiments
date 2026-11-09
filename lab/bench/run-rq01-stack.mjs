@@ -7,8 +7,16 @@ import { pathToFileURL } from "node:url";
 import ts from "typescript";
 const ref = process.argv[2] ?? "exp/RQ01-route-equivalence";
 const head = execFileSync("git", ["rev-parse", ref], { encoding: "utf8" }).trim();
-const dir = path.resolve("runs/P5/r2-rq01-" + head.slice(0, 8) + "-" + Date.now());
+const dir = path.resolve(
+  "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-P5A/round3/rq01-" +
+    head.slice(0, 8) +
+    "-" +
+    Date.now(),
+);
 fs.mkdirSync(dir, { recursive: true });
+fs.writeFileSync(path.join(dir, "package.json"), JSON.stringify({ type: "module" }));
+fs.mkdirSync(path.join(dir, "node_modules"), { recursive: true });
+fs.symlinkSync(path.resolve("node_modules/effect"), path.join(dir, "node_modules/effect"), "dir");
 const sources = {};
 const queue = ["route-coverage", "route-equivalence", "offline-route-fixtures"],
   seen = new Set();
@@ -40,6 +48,15 @@ const routeSources = Object.fromEntries(
     "lab/bench/test/p5-g6.stacked.ts",
     "lab/bench/lib/memory.ts",
     "lab/bench/lib/w0-world.ts",
+    "lab/bench/lib/w0-replay.py",
+    ...fs
+      .readdirSync("lab/bench/lib")
+      .filter((f) => /\.(ts|py)$/.test(f))
+      .map((f) => "lab/bench/lib/" + f),
+    ...fs
+      .readdirSync("lab/oracles/replay")
+      .filter((f) => f.endsWith(".py"))
+      .map((f) => "lab/oracles/replay/" + f),
     "pnpm-lock.yaml",
     ...fs
       .readdirSync("packages/w0/dist")

@@ -1,0 +1,249 @@
+{
+  "format": "triplex-db-2/p5-round3-summary/1",
+  "status": "OFFLINE-CHECKS-COMPLETE",
+  "classification": "DIAGNOSTIC",
+  "acceptance": false,
+  "baselineCommit": "dadb2de0",
+  "reviewCommit": "2568cbc",
+  "K01SourceCommit": "245a49664d6e6def36877bdee1b0ec2e0e0cc919",
+  "K01SourceHistory": [
+    "77681166",
+    "6f7e11f7",
+    "245a4966"
+  ],
+  "integration": "Selected-file source integration of the K01 shared G0 subsystem; unrelated K01 lifecycle changes were not merged.",
+  "sharedAdmission": "lab/bench/lib/g0.ts",
+  "subordinateW0Reader": "lab/bench/lib/w0-fingerprint.ts#readW0Fingerprint",
+  "sourceInventory": {
+    "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-P5A/round3/final-03/execution.json",
+    "files": 238,
+    "unchanged": true
+  },
+  "tests": {
+    "passed": 183,
+    "failed": 0,
+    "skipped": 0
+  },
+  "G6": {
+    "head": "d5cd32e6829100c0d9968ddb83713525e1510b3a",
+    "stack": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-P5A/round3/rq01-d5cd32e6-1794195807669/stack.json",
+    "passed": 5,
+    "sourceStable": true,
+    "reference": "accepted O-REPLAY Engine/plan/apply + views"
+  },
+  "integrationRung": 50,
+  "rounds": [
+    {
+      "round": 0,
+      "release": "R2",
+      "controllerOn": false,
+      "arms": {
+        "baseline": {
+          "D": "b414c372233bf555cda7e905eb294af16f9a461412b2e26722b7b467f029175d",
+          "worlds": 103,
+          "outputs": 0,
+          "publications": 0,
+          "positiveWitnesses": 1,
+          "negativeWitnesses": 1,
+          "counts": {
+            "start": {
+              "position": 2242,
+              "assertions": 24407,
+              "retired": 6,
+              "frames": 2242
+            },
+            "expected": {
+              "position": 2421,
+              "assertions": 26779,
+              "retired": 156,
+              "frames": 2421
+            },
+            "end": {
+              "position": 2421,
+              "assertions": 26779,
+              "retired": 156,
+              "frames": 2421
+            },
+            "transactions": 179
+          },
+          "sweepWallMs": 0,
+          "readers": 64,
+          "offered": 113,
+          "committed": 113
+        },
+        "sweep": {
+          "D": "b414c372233bf555cda7e905eb294af16f9a461412b2e26722b7b467f029175d",
+          "worlds": 95,
+          "outputs": 50,
+          "publications": 1,
+          "positiveWitnesses": 1,
+          "negativeWitnesses": 1,
+          "counts": {
+            "start": {
+              "position": 2242,
+              "assertions": 24407,
+              "retired": 6,
+              "frames": 2242
+            },
+            "expected": {
+              "position": 2422,
+              "assertions": 26879,
+              "retired": 156,
+              "frames": 2422
+            },
+            "end": {
+              "position": 2422,
+              "assertions": 26879,
+              "retired": 156,
+              "frames": 2422
+            },
+            "transactions": 180
+          },
+          "sweepWallMs": 12043.068957999996,
+          "readers": 64,
+          "offered": 113,
+          "committed": 113
+        }
+      }
+    },
+    {
+      "round": 1,
+      "release": "R1",
+      "controllerOn": true,
+      "arms": {
+        "baseline": {
+          "D": "b414c372233bf555cda7e905eb294af16f9a461412b2e26722b7b467f029175d",
+          "worlds": 98,
+          "outputs": 0,
+          "publications": 0,
+          "positiveWitnesses": 1,
+          "negativeWitnesses": 1,
+          "counts": {
+            "start": {
+              "position": 2242,
+              "assertions": 24407,
+              "retired": 6,
+              "frames": 2242
+            },
+            "expected": {
+              "position": 2417,
+              "assertions": 26696,
+              "retired": 153,
+              "frames": 2417
+            },
+            "end": {
+              "position": 2417,
+              "assertions": 26696,
+              "retired": 153,
+              "frames": 2417
+            },
+            "transactions": 175
+          },
+          "sweepWallMs": 0,
+          "readers": 64,
+          "offered": 110,
+          "committed": 110
+        },
+        "sweep": {
+          "D": "b414c372233bf555cda7e905eb294af16f9a461412b2e26722b7b467f029175d",
+          "worlds": 93,
+          "outputs": 50,
+          "publications": 1,
+          "positiveWitnesses": 1,
+          "negativeWitnesses": 1,
+          "counts": {
+            "start": {
+              "position": 2242,
+              "assertions": 24407,
+              "retired": 6,
+              "frames": 2242
+            },
+            "expected": {
+              "position": 2418,
+              "assertions": 26796,
+              "retired": 153,
+              "frames": 2418
+            },
+            "end": {
+              "position": 2418,
+              "assertions": 26796,
+              "retired": 153,
+              "frames": 2418
+            },
+            "transactions": 176
+          },
+          "sweepWallMs": 12871.128790999996,
+          "readers": 64,
+          "offered": 110,
+          "committed": 110
+        }
+      }
+    }
+  ],
+  "ratios": {
+    "classification": "DIAGNOSTIC",
+    "acceptance": false,
+    "groups": {
+      "steady": {
+        "status": "INCONCLUSIVE",
+        "reason": "no rounds"
+      },
+      "burst": {
+        "read": {
+          "ratios": [
+            1.1902612757871942,
+            0.6654876223744839
+          ],
+          "geometricMean": 0.8900023294509064,
+          "ci95": [
+            0.6654876223744839,
+            1.1902612757871942
+          ],
+          "commands": 223,
+          "rounds": 2,
+          "status": "INCONCLUSIVE"
+        },
+        "commit": {
+          "ratios": [
+            1.18776292339537,
+            0.6937579319272766
+          ],
+          "geometricMean": 0.9077554457862911,
+          "ci95": [
+            0.6937579319272766,
+            1.18776292339537
+          ],
+          "commands": 223,
+          "rounds": 2,
+          "status": "INCONCLUSIVE"
+        }
+      }
+    },
+    "wall": {
+      "maxMs": 12871.128790999996,
+      "barMs": 100000
+    },
+    "aa": []
+  },
+  "evidence": {
+    "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-P5A/round3/final-03/execution.json": "81cb8dd4b4b714675cf5f1493dcaf90972c504e95e86e8ca4d33cdbad7fcaec6",
+    "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-P5A/round3/final-03/tests.log": "9807646bb97ab4e045117d5fbe250c8268559ff3b5faf2cb46875d47e5273efa",
+    "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-P5A/round3/final-03/g6.log": "0c17d9b1ba6f7939d36612acec7147e08fa685a8eb2975ac8761468667a1c7e3",
+    "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-P5A/round3/final-03/integration/receipt.json": "c604f8997b27e2d6eba753bc243a8005ba450578aa463e163decc80ef534015d",
+    "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-P5A/round3/final-03/raw-audit.json": "59e85fcec43ccb6d5c594bccbcd2a6851d004d19785d343b462ddcf769c7f57d",
+    "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-P5A/round3/rq01-d5cd32e6-1794195807669/stack.json": "8945e9143ac8a61a743294b672b825714d611a775c66880110d8b4be08ec093d",
+    "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-P5A/round3/source-preimages/provenance.json": "ac0c5b79e8b71c3ba0db7c9b8584b103ec0c51188472754f3322752520f764ee"
+  },
+  "durableManifest": {
+    "path": "lab/experiments/EXP-P5/round3/SHA256SUMS",
+    "sha256": "1e07bbc68c1d25213e0afb5cadd3ba23792be44011b43130b0ec1df636bfae5c"
+  },
+  "changedPinnedPaths": [],
+  "limitations": [
+    "Offline memory only; fresh integration N=50 and G4 regression N=650, no corrected 1k/10k rerun",
+    "No engine/A1/K01 physical clone or native E1/maintenance qualification",
+    "All performance verdicts INCONCLUSIVE; inline oracle checks alter diagnostic cadence",
+    "No XTDB bytes per fact or full-traffic per-stage CPU",
+    "No root/package/engine suite, main merge or push"
+  ]
+}
