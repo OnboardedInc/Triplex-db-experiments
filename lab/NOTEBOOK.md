@@ -2163,3 +2163,9 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **The band was unsound:** it came from one A/A pair, and a nearest-rank p99 at n=150 is the second-highest sample. The receipt stays FAILED under its frozen rule. Ruling Q104a (pending): no-regression gates use M01's PAIR-0 grading over at least three A/A rounds, p99 only at n >= 1,000 or with a bootstrap interval, the rule fixed before B. RT01 round 7 builds that rule and diagnoses the compact path offline; the rerun follows DF01's live window.
 - **Lesson:** preregistering a rule protects against widening it after the fact, but not against a rule that is wrong. A noise band needs repeated A/A rounds, and tail percentiles need samples sized for the tail.
 - **Lane D:** CX-DF01 has the pool for its live window on datomic-dev (diagnostic on dev storage, Q88a).
+
+## 2026-11-09: DF01's first live Datomic attempt stops on a fixture bug; NSR reviewer filtered and relaunched
+
+- **DF01 live attempt 001 (1b110023), DIAGNOSTIC-FAIL:** the fixture supplied a null schema version and the first write failed before feed conformance ran. No retries; Datomic parked with its volume. Attempt 002 fixes the fixture and adds an offline check of the fixture against the peer's schema-version rule. **Lesson:** offline fakes must apply the same input checks as the real peer, or the first live write finds what the fake let through.
+- **CX-VNSR round 4 stopped on the Codex content filter** (escape-style wording about links and descriptors). Its partial files were committed as WIP (1c3185f8) and the review relaunched as CX-VNSR-5 with neutral QA wording (file inventory, link resolution, environment paths), per PROTOCOL 6.
+- **CRNS:** Codex ACCEPT round 3 (3183681b); round 4 fixes the Opus reviewer's three remaining highs.
