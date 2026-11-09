@@ -74,7 +74,25 @@ const fixture = (guardFuture = true): RouteFixture => {
       rows = foldRouteHistory(history);
     },
     append: (commit) => {
-      history = { ...history, commits: [...history.commits, commit] };
+      history = {
+        ...history,
+        commits: [...history.commits, commit],
+        ...(history.attempts && commit.receipt
+          ? {
+              attempts: [
+                ...history.attempts,
+                {
+                  id: commit.receipt.attemptId,
+                  status: "committed" as const,
+                  position: commit.position,
+                  stagedAt: commit.instant,
+                  stagedOrder: Math.max(...history.attempts.map((a) => a.stagedOrder)) + 1,
+                  decidedOrder: Math.max(...history.attempts.map((a) => a.decidedOrder)) + 1,
+                },
+              ],
+            }
+          : {}),
+      };
       rows = foldRouteHistory(history);
     },
     event: () => {},
@@ -82,6 +100,7 @@ const fixture = (guardFuture = true): RouteFixture => {
       {
         id: "X1-adapter",
         contract: "raw-lifetime",
+        retention: { kind: "complete", plan: () => [] },
         refusals: ["BasisNotAvailable"],
         eligible: (request, current) => (request.basis.recordedPosition ?? 0) <= routeHead(current),
         force: () => {

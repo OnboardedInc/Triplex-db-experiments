@@ -1,6 +1,8 @@
 // [EXP-RQ01] Why: bind measured R31 denominators and actual nonzero reads to the gate receipt.
 // Rejected: storing only seed labels (the original labels missed semantic operation families).
 import fs from "node:fs";
+import * as api from "../../../packages/testkit/dist/index.js";
+import { retentionProbe } from "./retention-probe.mjs";
 import {
   generateRouteHistory,
   makeOfflineRouteFixture,
@@ -13,12 +15,13 @@ if (!output || fs.existsSync(output)) throw new Error("Provide a new coverage ou
 const records = [];
 for (const seed of [1, 42, 890, 89, 891]) {
   const history = generateRouteHistory(seed);
-  const structural = requireRouteCoverage(history);
+
   const fixture = makeOfflineRouteFixture("xtdb");
   const result = await runRouteEquivalence({
     fixture: { ...fixture, routes: fixture.routes.slice(0, 1) },
     history,
   });
+  const structural = requireRouteCoverage(result.plan.history, result.plan.requests, result.plan);
   if (result.violations.length || !result.observations.length)
     throw new Error(`Coverage reads failed for ${seed}`);
   const observations = Object.fromEntries(
@@ -48,7 +51,17 @@ for (const seed of [1, 42, 890, 89, 891]) {
 }
 fs.writeFileSync(
   output,
-  JSON.stringify({ experiment: "EXP-RQ01-round2", records, passed: true }, null, 2) + "\n",
+  JSON.stringify(
+    {
+      experiment: "EXP-RQ01-round3",
+      attemptToken: process.env.EXP_RQ01_ATTEMPT_TOKEN,
+      records,
+      retentionProbe: await retentionProbe(api),
+      passed: true,
+    },
+    null,
+    2,
+  ) + "\n",
 );
 console.log(
   `coverage: ${records.length} seeds, all required offline R31 families/cuts and answering shapes witnessed`,

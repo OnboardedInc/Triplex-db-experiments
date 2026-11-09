@@ -117,3 +117,31 @@ no-op callback cannot qualify them. Overlay eviction, catch-up and cold-cache
 transitions remain semantic model checks. The XTDB offline client driver names
 its physical result as `raw-lifetime`; it does not claim the product adapter
 already supplies the Q89i snapshot view.
+
+Round 3 validates the history grammar before generation returns and before planning,
+folding, basis generation or coverage measurement uses it. Integer nested members
+must form a complete declared `size`, have ordinals 1..size, consecutive receipt
+positions and contiguous stream membership. Attempted histories require every
+committed receipt to match its unique attempt; assertion/retraction lifetimes and
+CAS-abort declarations are checked as well. A requested count that truncates a
+nested group (for example 25) throws instead of emitting an invalid history.
+
+Every driver declares `retention: { kind, plan(history, extension) }`. A complete
+store may declare no cuts. A `position-retired` store must declare at least one
+cut with a unique ID, event (`purge` or `purge-pinned`), horizon and pin mode.
+`makeRouteExecutionPlan` copies and freezes the history, append, policies and
+requests and gives them a canonical SHA-256 digest. Bare appends to an attempted
+history receive an explicit logical attempt/receipt in that plan; these are offline
+model identities, not native engine receipts. Default request generation includes
+every declared h/h-1; explicit request lists missing a boundary reject before reset.
+Complete-store maintenance cuts are omitted only in explicitly narrowed diagnostic
+scopes; position-retired stores' cuts remain mandatory in those scopes.
+
+The runner executes those exact cut events with owning route IDs. An event must
+confirm its actual `retirement: { horizon, pinned }`; pending or mismatched
+retirement events cannot qualify. Equal declared cuts can share one event while
+retaining every owner in the plan. Engine-only nonretirement events remain pending.
+`requireRouteCoverage(result.plan.history, result.plan.requests, result.plan)`
+checks the exact executed plan; it never reconstructs default append horizons.
+Standalone `measureRouteCoverage` without a plan is structural diagnostic data and
+cannot return `complete: true`.

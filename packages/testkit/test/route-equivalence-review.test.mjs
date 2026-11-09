@@ -16,6 +16,7 @@ import {
   replayRouteAnswer,
   makeOfflineRouteFixture,
   requireRouteCoverage,
+  makeRouteExecutionPlan,
 } from "../src/index.js";
 const modelRows = (history, request, mode = "", contract = "snapshot") => {
   const ledger = new Map();
@@ -88,6 +89,7 @@ const modelFixture = (mode = "", contract = "snapshot") => {
     routes: ["control", "injected"].map((id) => ({
       id,
       contract,
+      retention: { kind: "complete", plan: () => [] },
       eligible: (r, h) => (r.basis.recordedPosition ?? 0) <= routeHead(h),
       refusals: ["BasisNotAvailable"],
       force: () => {},
@@ -197,7 +199,8 @@ for (const [mode, history, request, required] of faultCases) {
 for (const seed of [1, 42, 890, 89, 891]) {
   it(`CX-VRQ01 F1/F2 seed ${seed}: actual semantic witnesses and all R31 cuts`, () => {
     const history = generateRouteHistory(seed);
-    const coverage = requireRouteCoverage(history);
+    const plan = makeRouteExecutionPlan({ history, fixture: makeOfflineRouteFixture("xtdb") });
+    const coverage = requireRouteCoverage(history, plan.requests, plan);
     expect(coverage.missing).toEqual([]);
     const seen = new Map();
     let bounded = 0,
@@ -403,11 +406,16 @@ it("CX-VRQ01 empty-without-flag: a bare empty answer for a future cut fails", as
 });
 it("F2 coverage gate rejects missing receipt/abort identities and missing retention cuts", () => {
   const history = generateRouteHistory(42);
-  expect(() => requireRouteCoverage({ ...history, attempts: [] })).toThrow(/Missing R31 coverage/);
+  const fixture = makeOfflineRouteFixture("xtdb");
+  expect(() => makeRouteExecutionPlan({ fixture, history: { ...history, attempts: [] } })).toThrow(
+    /Invalid route history/,
+  );
   const requests = generateRouteBases(history).filter(
     (r) => r.basis.recordedPosition !== routeHead(history) + 2048,
   );
-  expect(() => requireRouteCoverage(history, requests)).toThrow(/unpinnedHorizon/);
+  expect(() => makeRouteExecutionPlan({ fixture, history, requests })).toThrow(
+    /retention boundary/,
+  );
 });
 it("Q89i rejects a driver that does not name its result contract", async () => {
   const fixture = modelFixture();
