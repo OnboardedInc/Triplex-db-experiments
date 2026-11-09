@@ -353,3 +353,9 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - 2026-11-09 R49 (bpftrace source) committed. Recommendation: local image from ubuntu:24.04 arm64 digest plus pinned bpftrace 0.20.2 and
   LLVM 18 .debs (about 90 MB, Ubuntu-signed). Asked Sam to approve that download. OBS01 round 10 (after CX-VOBS7): nsecs -> nsecs(monotonic),
   the four W0 checks from R49, and a W0 clock comparison against the observer's CLOCK_MONOTONIC.
+- 2026-11-09 OBS01 round 9 review FIX-FIRST (CX-VOBS7, 44217f95 on the branch): F1 split marker/frame publication skips U >= D and
+  labels the position with the wrong D; F2 an early witness detach is accepted; F3 W1 ignores global refusals; F4 W3 misses a whole
+  CPU's lost records; F5 syncfs uses syscall bounds as an exact D. Orchestrator decision on F5: syncfs uses an interval [D_lower,
+  D_upper]; durability is granted at D_upper; violations only below D_lower; in between is a new refusal DURABILITY-UNPROVEN. File
+  syncs keep R48's exact rule. OBS01 round 10 (Sonnet) fixes F1-F5, the R49 nsecs(monotonic) clock bug, R49's W0 checks, and adds the
+  image Dockerfile unbuilt (pull waits for Sam).
