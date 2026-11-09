@@ -35,7 +35,7 @@ def bound(relative):
 cases, case_binding = bound('final-r4/cases')
 crash, crash_binding = bound('final-r4/crash')
 lag, lag_binding = bound('final-r8/lag')
-trace, trace_binding = bound('final-r11/trace')
+trace, trace_binding = bound('final-r12/trace')
 runtime_prefixes = ('packages/host/', 'packages/core/', 'packages/testkit/', 'packages/w0/', 'lab/oracles/domain/', 'lab/world/W0/')
 for binding in [case_binding, crash_binding, lag_binding]:
     for path, digest in trace_binding.items():
@@ -44,7 +44,7 @@ for binding in [case_binding, crash_binding, lag_binding]:
 for path, digest in trace_binding.items():
     assert sha((REPO / path).read_bytes()) == digest, ('current final trace source moved', path)
 
-g0 = load(REPO / 'lab/runs/G0/G0-datomic-20261109T071437Z-c6e724.json')
+g0 = load(ROOT / 'g0/G0-datomic-20261109T071437Z-c6e724/receipt.json')
 assert g0['verdict'] == 'PASS' and g0['slot'] is None
 assert g0['counts']['fail'] == 0 and g0['counts']['unexpectedSkip'] == 0
 assert g0['counts']['pass'] == 1275 and g0['counts']['expectedSkip'] == 66
@@ -52,6 +52,30 @@ for row in g0['objects']:
     if row.get('path') in trace_binding and row.get('role') in ['modified-input', 'untracked-input']:
         assert row['sha256'] == trace_binding[row['path']]
 assert len(cases['cases']) == 9 and cases['notApplicable'] == ['C67', 'C96']
+# [EXP-DI01] Why: verify the fresh GS and oracle-transport controls by their observed/expected bytes. Rejected: assigning gate four from the fanout count alone.
+lo = pathlib.Path(trace['binding']['path']).stat().st_mtime
+hi = datetime.datetime.fromisoformat(trace['started'].replace('Z', '+00:00')).timestamp()
+def fresh_control(pattern):
+    files = [p for p in ROOT.glob(pattern) if lo <= p.stat().st_mtime <= hi]
+    assert len(files) == 1, (pattern, files)
+    return files[0], load(files[0])
+gs_path, gs = fresh_control('GS06-*/result.json')
+assert gs['status'] == 'MATCH' and gs['affected'] == ['pl:a']
+checks = {c['id']: c for c in gs['checks']}
+for c in gs['checks']:
+    assert c['observed'] == c['expected'] and c['attempt'] == gs['attempt']
+    assert c['sourceSha256'] == gs['sourceSha256'] and c['endpoint'].startswith('memory://DI01-GS06-')
+assert json.loads(checks['GS-06:affected-subjects']['observed']) == {'affected': ['pl:a']}
+record = json.loads(checks['GS-06:durable-affected-checkpoint']['observed'])
+assert record['affected'] == record['rerun'] == ['pl:a'] and record['checkpoint'] == record['position']
+assert 'GS-06:rerun-exactly-once' in checks
+control_path, control = fresh_control('oracle-control-*/result.json')
+assert control['status'] == 'MATCH' and len(control['rows']) == 11
+for row in control['rows']:
+    fixture = REPO / 'lab/world/W0/cases' / row['name']
+    assert sha(fixture.read_bytes()) == row['sha256']
+    assert row['observed'] == row['expected'] == load(fixture)['expected']
+
 for case in cases['cases']:
     fixture = REPO / 'lab/world/W0/cases' / case['name']
     assert sha(fixture.read_bytes()) == case['sha256']
@@ -119,7 +143,7 @@ for(const event of events){if(event.resend)continue;const mapped=mapW0Trace(even
 while(o<result.overlaySchedule.length){const r=result.overlaySchedule[o++];append(r.rows,Date.parse(W0.POPULATION_VALID_TIME),r.retract??[]);overlayPositions[position]=r.label;}
 console.log(JSON.stringify({seedEnd,positions:position,subjects:seen.size,initialShared:R.K+R.L,fullCounts,ranges,overlayPositions,traceDigest:traceDigest(events),commandLogSha256:hash.digest('hex'),raises:[...seen].filter(s=>W0.plan(R,Number(s.slice(4))).raise).sort()}));
 '''.replace('REPO_SEED', json.dumps((REPO / 'lab/bench/lib/w0-seed.ts').as_uri())).replace('REPO_TRACE', json.dumps((REPO / 'lab/bench/lib/trace.ts').as_uri())).replace('REPO_MAPPER', json.dumps((REPO / 'lab/bench/lib/w0-trace.ts').as_uri())).replace('REPO_WORLD', json.dumps((REPO / 'lab/bench/lib/w0-world.ts').as_uri())))
-meta = json.loads(subprocess.check_output([str(REPO / 'node_modules/.bin/tsx'), str(meta_script), str(ROOT / 'final-r11/trace/result.json')], text=True))
+meta = json.loads(subprocess.check_output([str(REPO / 'node_modules/.bin/tsx'), str(meta_script), str(ROOT / 'final-r12/trace/result.json')], text=True))
 (AUDIT / 'meta.json').write_text(json.dumps(meta, separators=(',', ':')) + '\n')
 assert meta['subjects'] == 10000 == trace['traceResult']['subjects']
 assert meta['seedEnd'] == trace['traceResult']['seedEnd']
@@ -129,10 +153,25 @@ assert meta['commandLogSha256'] == trace['traceResult']['commandLogSha256']
 assert trace['traceResult']['crosscheckPositions'] == 101
 assert sha(canon({'seed': trace['overlaySeed'], 'schedule': trace['overlaySchedule']}).encode()) == trace['overlaySha256']
 
-trace_dir = ROOT / 'final-r11/trace'
+trace_dir = ROOT / 'final-r12/trace'
 # [EXP-DI01] Why: the optimization must preserve actual input/result bytes, not just affected-set cardinality. Rejected: claiming an earlier partial attempt as a complete gate.
-with (ROOT / 'final-r9/trace/checks.jsonl').open() as old, (trace_dir / 'checks.jsonl').open() as new:
-    for _ in range(10000): assert next(old) == next(new)
+old_dir = ROOT / 'final-r9/trace'
+old_path = old_dir / 'checks.jsonl'
+if old_path.exists():
+    with old_path.open() as old, (trace_dir / 'checks.jsonl').open() as new:
+        for _ in range(10000): assert next(old) == next(new)
+else:
+    # [EXP-DI01] Why: compare actual losslessly retained bytes and verify the whole original hash. Rejected: dropping the prefix control because its plain file was archived.
+    expected_hash = dict((line.split()[1], line.split()[0]) for line in (old_dir / 'ORIGINAL-SHA256SUMS.txt').read_text().splitlines())['checks.jsonl']
+    child = subprocess.Popen(['/opt/homebrew/bin/zstd', '-dc', str(old_path) + '.zst'], stdout=subprocess.PIPE)
+    observed_hash = hashlib.sha256()
+    with (trace_dir / 'checks.jsonl').open('rb') as new:
+        count = 0
+        for line in child.stdout:
+            observed_hash.update(line)
+            if count < 10000: assert line == next(new)
+            count += 1
+    assert count >= 10000 and child.wait() == 0 and observed_hash.hexdigest() == expected_hash
 
 db = sqlite3.connect(f'file:{trace_dir / "trace.db"}?mode=ro', uri=True)
 assert db.execute('SELECT source,token FROM checkpoints WHERE consumer=?', ('c',)).fetchone() == ('DI01/offline/replay', str(meta['positions']))
@@ -225,7 +264,7 @@ for arm, oracle in zip(lag['results'], raw_oracle):
     assert sha(canon(oracle['affected']).encode()) == arm['affectedSha256']
 assert lag['crosscheckSubjects'] == lag['worlds'] == 100000
 assert self_hash == sha(SELF.read_bytes())
-result = dict(kind='builder-only-content-readback', independentPromotion=False, status='PASS', started=started, finished=datetime.datetime.now(datetime.timezone.utc).isoformat(), auditSourceSha256=self_hash, auditAttempt=str(AUDIT), gates=8, tracePositions=position, differentFromDirect=different, fullWorldPositions=full, oracleWorkerRequests=worker_ordinals, crashReadbacks=counts, controlDuplicateEffects=duplicates, raises=len(raise_subjects), lag=[dict(label=a['label'],fanout=a['fanout'],addedP99=a['addedP99']) for a in lag['results']])
+result = dict(kind='builder-only-content-readback', independentPromotion=False, status='PASS', started=started, finished=datetime.datetime.now(datetime.timezone.utc).isoformat(), auditSourceSha256=self_hash, auditAttempt=str(AUDIT), gates=8, gsEvidence=str(gs_path), oracleControl=str(control_path), tracePositions=position, differentFromDirect=different, fullWorldPositions=full, oracleWorkerRequests=worker_ordinals, crashReadbacks=counts, controlDuplicateEffects=duplicates, raises=len(raise_subjects), lag=[dict(label=a['label'],fanout=a['fanout'],addedP99=a['addedP99']) for a in lag['results']])
 (AUDIT / 'result.json').write_text(json.dumps(result, indent=2)+'\n')
 (ROOT / 'BUILDER-CHECKS.json').write_text(json.dumps(result, indent=2)+'\n')
 print(json.dumps(result, indent=2))

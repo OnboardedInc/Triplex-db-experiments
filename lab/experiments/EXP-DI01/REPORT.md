@@ -4,7 +4,7 @@ Builder: CX-DI01. Branch: `exp/DI01-dependency-index`, based on accepted FD01 `7
 
 North star: P3, ordered resumable delivery telling the runtime which subjects to rerun. Scope and targets are those in `lab/SCOPE.md`, `lab/NORTH-STAR.md`, `lab/TARGETS.md`, and the copied DI01 brief. This is an offline builder experiment, not an independent promotion or a live-lane qualification.
 
-**Status:** implementation, G0, named cases, GS.06 fixture, 100k fanout, crash matrix, and lag probes completed. Full 10k seed/trace and sampled dependency cross-check are running; final evidence summary will replace this status before commit.
+**Status:** all eight offline builder gates passed, and the additional raw readback audit passed. Independent promotion/review remains outstanding. Implementation commit: `96b9a259`; this final report/evidence commit completes the builder handoff.
 
 ## Implementation
 
@@ -27,11 +27,11 @@ The first 100k probe exposed reverse-lookup cost. A covering `(consumer, attribu
 | --- | --- |
 | 1 — G0 + unchanged FD01 | PASS: `G0-datomic-20261109T071437Z-c6e724`, 1,275 passed, 0 failed, 66 reviewed expected skips. Offline; slot null. XTDB was built first for the qualification loader. Existing clock tests used the actual permitted macOS boot ID. |
 | 2 — named cases | MATCH: C34, C35, C36, C57, C58, C59, C60, C87, C121, zero misses/extras. C67/C96 N/A. |
-| 3 — 10k seed + mapper + overlay | Pending final trace result. Zero differences observed in the completed prefix; that prefix is not a completed gate. |
+| 3 — 10k seed + mapper + overlay | MATCH: 434,768 seed positions and 3,372 mapper/overlay positions (438,140 total), zero misses/extras; 662 full-world positions. 379,108 positions differ from directly written subjects, so this gate is non-void. |
 | 4 — GS.06b | W02 v2 `affectedClaim` ran with DI01 replacing the kernel affected call; positive/negative witnesses and durable rerun/checkpoint passed. At 100k, local wage and jurisdiction re-point each reached 1,100 workers; state wage reached 1,901; all equaled O-DOMAIN and were rerun once. |
-| 5 — dependency cross-check | All 100,000 reference-projection subjects matched the kernel exactly, with no permitted extra pairs. The 100 sampled 10k positions plus final position are pending trace completion. |
+| 5 — dependency cross-check | All 100,000 reference-projection subjects matched the kernel exactly, with no permitted extra pairs. At 100 sampled post-seed positions plus the final position, every dependency set for all 10,000 subjects matched exactly. |
 | 6 — crash/resume | MATCH: 500 keyed atomic stops over five points; 300 unkeyed split controls; 100 keyed split controls, all rejected before replay. Actual reopened state was audited before recovery; all recovered tables matched the no-crash baseline. 100 duplicate unkeyed effects (the fixture has one affected subject). |
-| 7 — boundaries | C19/C20 obligations matched O-DOMAIN and were returned by `due`; a newer empty result resisted an older replay. No rule boundary entered effects/affected. The complete seed pay-raise edge check is pending trace completion. |
+| 7 — boundaries | C19/C20 obligations matched O-DOMAIN and were returned by `due`; a newer empty result resisted an older replay. No rule boundary entered effects/affected. The complete 10k seed produced exactly the 180 expected future-pay-raise subjects, with identical subject-set SHA256. |
 | 8 — added lag | All four 1,000-sample predictions met, including full prepare cost; see below. Diagnostic: 0 readers, offline, shared host. |
 
 Nearest-rank p99, milliseconds. “Added” is the p99 of paired sample differences, not subtraction of the two arm p99s.
@@ -51,13 +51,15 @@ Durable root: `/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-DI01/`.
 
 - Final runtime/case/crash binding and preimages: `final-r4/binding.json`, `final-r4/preimages/`, `final-r4/cases/`, `final-r4/crash/`.
 - Complete apply-path timing and rerun hashes: `final-r8/lag/result.json`, `samples.jsonl`, `oracle.jsonl`, `reruns.jsonl`; binding and preimages in `final-r8/`.
-- Final expected-world cache and trace: `final-r11/`; source/build preimages and all raw output retained.
+- Final expected-world cache and trace: `final-r12/trace/result.json`: attempt `9f6c9377-4e4b-487d-ada3-1c17942174c7`, completed 2026-11-09T13:25:23.176Z. Source/build preimages and all raw output retained; binding SHA256 `e0a28db24e55bb2855259740e9e346611758c7d48e33fbfcb7fcc8afbf6fa14b`.
 - The stage bindings differ in the explicitly retained harness revisions: complete prepare/read timing, actual alternating jurisdiction targets, expected-world canonicalization, and oracle transport throughput. The final trace also checks the transport against all eleven affected cases and preserves raw bytes per oracle process. Consumer, kernel, and oracle runtime bytes remain identical across the qualified stage bindings.
 - Trace V is fixed at `2026-12-01T00:00:00Z`; the separate seed-edge run and 100k probe use `2026-11-04T12:00:00.000000Z`. Named cases use their own recorded basis V.
 
-Earlier attempts are retained. They include the unsupported pnpm `--store-dir` spelling for `exec` (corrected to its config form), initial unbatched/stopped traces, a timing serializer rejecting fractional milliseconds (replaced by JSON serialization for measurements), a real configuration-byte mismatch after JSON key reordering (fixed with a normalized representation), and a source-binding rejection when an overlapping G0 rebuild changed declaration-file byte order. The early noncovering-index timings and transaction-only timing definition are not the final latency gate. G0's first complete run failed on the sandbox boot-ID read and an unbuilt XTDB dependency; neither was hidden or skipped. Subsequent G0 ran with the dependency built and the real local read permitted. Long expected-side trace canonicalization was addressed by the assertion-ID cache; partial prefixes were not adopted as completed trace gates.
+Earlier attempts are retained. They include the unsupported pnpm `--store-dir` spelling for `exec` (corrected to its config form), initial unbatched/stopped traces, a timing serializer rejecting fractional milliseconds (replaced by JSON serialization for measurements), a real configuration-byte mismatch after JSON key reordering (fixed with a normalized representation), and a source-binding rejection when an overlapping G0 rebuild changed declaration-file byte order. The early noncovering-index timings and transaction-only timing definition are not the final latency gate. G0's first complete run failed on the sandbox boot-ID read and an unbuilt XTDB dependency; neither was hidden or skipped. Subsequent G0 ran with the dependency built and the real local read permitted. Attempt r11 completed 438,140 position comparisons and all sampled checks but exhausted Node's default 4 GiB heap during the separate boundary replay; it emitted no final receipt and is not qualified. Its log and FAILURE.json remain retained. Successor r12 uses unchanged source with an explicit 8 GiB Node heap. Long expected-side trace canonicalization was addressed by the assertion-ID cache; partial prefixes were not adopted as completed trace gates.
 
-`pack:check` was attempted offline and failed because the CLI tarball's unrelated dist entry was not built. It is not passed. No network fallback, publish, merge, engine, Docker lifecycle, or live integration run occurred.
+Evidence retention: stopped-attempt WALs and r11 raw JSONL are retained losslessly as `.zst`. `compression-r12-readmission.jsonl` and `compression-r12-stopped.jsonl` record exact original paths, sizes and SHA256, verified decompressed SHA256, and no-open-owner checks before/after. Restore with `zstd -d`; SQLite family siblings remain. A broad compression request was initially rejected by automatic approval review over an active-r11 concern. Read-only checks proved r11 had exited 134, the active grant was r12, and the exact proposed files had no owners; the narrowed request was approved. No active r12 file was changed.
+
+`pack:check` first failed because the CLI tarball's unrelated dist entry was not built. After building the seven missing package outputs without rebuilding the trace runtime, all 13 tarball/layout checks completed; the offline clean-consumer install failed with ERESOLVE / `effect@undefined`. Binding checks before and after those builds passed. `pack:check` is not passed. No network fallback, publish, merge, engine, Docker lifecycle, or live integration run occurred.
 
 ## PASS audit
 
@@ -76,20 +78,44 @@ These are builder checks, not an independent promotion verdict. Only bound, comp
 | `di01-lag.ts` | Every durable fanout equals independent O-DOMAIN; every one of 100k dependency sets equals kernel pairs; actual per-subject kernel reruns and output hashes; p99 recomputed from actual alternating samples | 1,000 samples each; exact pages/positions; preparation and actual reader timers; explicit fixture/rung/V; unchanged source/build binding through run |
 | W02 `affectedClaim` seam and GS test | DI01's persisted set replaces the kernel set and equals the independent oracle; existing claim compares stored checkpoint/reruns; positive and negative MINWAGE witnesses | Fresh Probe attempt, command log, reads, oracle input/output identity and source hash; tested compiled DI01 under the corresponding bound source snapshot |
 | Focused Node tests | Invalid derived rows roll back all index state; failed reads leave state untouched; stale CAS precedes derivation; prepared-page changes reject; replay/multiposition/retraction, reader and cache cut controls check concrete values | Fresh owned test files and exact source/build preimages; raw TAP output; no substituted oracle or timing booleans |
+| Lossless stopped-evidence retention | Decompressed bytes hash exactly equals the original SHA256; original size/mtime remains unchanged during verification | Exact stopped paths only, r11 exit134 and no r11 active grant, no open owners before/after; unique retained receipts; no semantic PASS follows from compression |
 | Existing G0 and package checker | Existing source-bound test/result/skip checks remain unchanged; package checker examines actual tarball entries and fails on missing build output | Fresh G0 build/test receipts and raw files, toolchain/lock hashes; package failure retained; no new acceptance-contract ruling or pin manufactured |
 
-The additional builder readback audit (`audit.py`) requires non-null completed bindings, verifies preimages and unchanged runtime bytes, independently reads all 900 final SQLite files, streams actual trace rows against raw per-worker oracle output, recomputes the complete generator denominator/command hash, checks full-world coverage and the direct-subject counter, and recomputes lag p99 from raw alternating samples. Its source hash and fresh audit-attempt path are recorded in `BUILDER-CHECKS.json`. It does not change the acceptance contract or replace independent review.
+The additional builder readback audit (`audit.py`) requires non-null completed bindings, verifies preimages and unchanged runtime bytes, independently reads all 900 final SQLite files, streams actual trace rows against raw per-worker oracle output, recomputes the complete generator denominator/command hash, checks full-world coverage and the direct-subject counter, and recomputes lag p99 from raw alternating samples. It passed at `audit-28504077-510a-4168-9a53-9f87ed9fb00a/result.json` (2026-11-09T13:30:17.833835Z); its source SHA256 is `e6ef4c63e71de9796ba4b5c4913490a7cfb70d945c6b1b93f337b26647a701c5`. `BUILDER-CHECKS.json` records the raw readback counts and fresh audit path. The first audit attempt stopped on an archived comparison prefix; the successor verified its complete decompressed original SHA256 and compared the first 10,000 records byte-for-byte. It does not change the acceptance contract or replace independent review.
 
 ## Open questions answered by the code
 
 1. **Valid-time-varying references:** unsupported here. A reference/activation with later `validFrom` or finite `validTo` is rejected. There is no union-over-all-V index and no claim for GS.08/GS.09 reference variation.
 2. **Erase:** DI01 treats erase as a write of the erased pair. A narrow test verifies `(S, ssn)` affects S; erase also retires that assertion's fact-edge rows. This is a documented policy choice, not an O-DOMAIN erase qualification; no W0 affected erase case exists.
-3. **Direct subjects versus O-DOMAIN:** the consumer gates on O-DOMAIN alone, as the brief decides. Ballast and unlinked owned writes may affect nobody. The completed trace receipt must count the disagreements with direct subjects; no acceptance text was edited.
+3. **Direct subjects versus O-DOMAIN:** the consumer gates on O-DOMAIN alone, as the brief decides. Ballast and unlinked owned writes may affect nobody. The completed trace receipt counts 379,108 disagreements with direct subjects; no acceptance text was edited.
 4. **Bootstrap:** the experiment replays from source position 0. Snapshot bootstrap is not implemented or qualified.
 5. **NS bench:** the existing account/stamp A0 bench remains separate. DI01 is not wired into the P3M/live NS path, and this experiment does not close that integration obligation.
+
+## Reproduction and inventory
+
+Run every gate/fingerprint through `node lab/bin/heavy.mjs --label <unique-reviewer-id> -- <command>` after confirming at least 5 GiB host free. These are offline commands; no engine slot or Docker is needed. Use Node 22.23.2 and the checked-in dependencies with the owned pnpm store.
+
+1. Create a fresh evidence directory with `node --import tsx lab/bench/lib/di01-evidence.ts --create-binding <new-dir>`, then export `DI01_BINDING=<new-dir>/binding.json` for that stage. This copies actual source/build/oracle preimages and rejects moved bytes.
+2. Run `node --import tsx --test lab/bench/di01*.test.ts`, then the CLI stages: `lab/bench/di01.ts cases <new-dir>/cases`, `lab/bench/di01-crash.ts <new-dir>/crash`, `lab/bench/di01-lag.ts <new-dir>/lag`, and `lab/bench/di01.ts trace <new-dir>/trace`, all with `node --import tsx`. For the complete trace **set `NODE_OPTIONS=--max-old-space-size=8192`**: it includes a second full seed replay for boundaries. Never reuse attempt directories. G0 uses the existing lab gate and reviewed skip contract, as in its retained receipt.
+3. `audit.py` is the builder readback recipe for the exact retained stages named in the script; adapt only its attempt paths when reviewing fresh stages. It does not adopt a failed attempt or qualify a live lane.
+
+`inventory.py` generated `inventory-23e104cc-0491-44cb-bb31-70259ca739be/SHA256SUMS`: 16,708 files, 1,508,629,120 retained bytes; manifest SHA256 `1307b7b7b70e97614567c7b0fa6672eabda4ad3e367b9bd31a812de8fb5f4789`. Its result and generated-receipt retention receipt are alongside it. The inventory excludes its own current directory to avoid recursion; the committed small [SHA256SUMS](SHA256SUMS) binds those metadata files separately. Completed source-worktree G0 receipt copies were removed only after matching the durable copy hashes. No raw evidence is committed.
+
+| Inventory observation | Content | Freshness / binding |
+| --- | --- | --- |
+| `inventory.py` | SHA256 for every retained file; stable size/mtime around each read; generated receipt bytes equal durable copies before redundant source copies are removed | Runs after trace/readback writers exit; unique inventory path; source-controller hash and count/byte denominator retained. This is a byte inventory, not semantic acceptance |
 
 ## Contract and limits
 
 `lab/acceptance/` is unchanged. `changed-path-hashes.json` records the old/new SHA256 of every modified tracked path for the contract builder; no pinned oracle, mapper, world definition or acceptance file was changed. A testkit Changeset accompanies its public optional snapshot field; host remains private. No dependency or lockfile change was required.
+
+Hash changes retained for contract-builder review (no acceptance file was edited):
+
+| Path | Old SHA256 | New SHA256 |
+| --- | --- | --- |
+| `lab/scenarios/v2/claims.ts` | `a27a192be53b46873c9e1da970010ae3c6d8eee88c016efe782373b2860bcbca` | `050474e7d1316468831216bb1efcbc73a72e979fdbfeb870741d0f9c4ce067a1` |
+| `packages/host/src/feed/ConsumerStore.ts` | `5622f27010ec76b32276567bd0078b8a9476f67731042de30dd1d5dbfdc26b12` | `e1f5e23c23e6970e63c697905acdeb3dd1ad1d4b8d790da43320a794fdd30f46` |
+| `packages/host/src/feed/index.ts` | `8eee255a2349a63f026c470aea66c385a69a196eb0031d434756d8085176a224` | `ccd26e7c3841cb630a646d7db4a9829b40dd0de89ae6a9620dc004f55ea14c60` |
+| `packages/testkit/src/feed/index.ts` | `fb05fe8cdead6a161d1540e826dc64efbe8a8c380012f2be317dc0831bab69e9` | `5ba6d668e9db21cee853a090f187dd5bcf3c5cd9609356b16bcae9ffe1639368` |
 
 Not verified: live X/Q/D reference reads or feed delivery; production durability/resource/reader-load performance; valid-time-varying references; snapshot bootstrap; full persisted 100k history; native erasure lifecycle; NS/P3M integration; package clean-consumer installation; independent adversarial review. No promotion is self-certified.
