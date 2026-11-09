@@ -1,0 +1,254 @@
+[
+  {
+    "args": [
+      "lab/bin/gate.mjs",
+      "G0",
+      "--lane",
+      "xtdb",
+      "--dry-run"
+    ],
+    "code": 0,
+    "stdout": "{\"dryRun\":true,\"gate\":\"G0\",\"lane\":\"xtdb\",\"slot\":\"dev\",\"endpoint\":\"postgres://xtdb:xtdb@127.0.0.1:5470/xtdb\",\"container\":\"tx2-xtdb-dev\",\"mode\":\"resident\",\"plan\":null,\"executes\":true,\"missing\":null}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "lab/bin/gate.mjs",
+      "G0",
+      "--lane",
+      "qlever",
+      "--dry-run"
+    ],
+    "code": 0,
+    "stdout": "{\"dryRun\":true,\"gate\":\"G0\",\"lane\":\"qlever\",\"slot\":\"dev\",\"endpoint\":\"http://127.0.0.1:7070\",\"container\":\"tx2-qlever-dev\",\"mode\":\"resident\",\"plan\":null,\"executes\":true,\"missing\":null}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "lab/bin/gate.mjs",
+      "G0",
+      "--lane",
+      "datomic",
+      "--dry-run"
+    ],
+    "code": 0,
+    "stdout": "{\"dryRun\":true,\"gate\":\"G0\",\"lane\":\"datomic\",\"slot\":\"dev\",\"endpoint\":\"http://127.0.0.1:8470\",\"container\":\"tx2-datomic-dev\",\"mode\":\"resident\",\"plan\":null,\"executes\":true,\"missing\":null}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "lab/bin/gate.mjs",
+      "G1",
+      "--lane",
+      "xtdb",
+      "--dry-run"
+    ],
+    "code": 0,
+    "stdout": "{\"dryRun\":true,\"gate\":\"G1\",\"lane\":\"xtdb\",\"slot\":\"dev\",\"endpoint\":\"postgres://xtdb:xtdb@127.0.0.1:5470/xtdb\",\"container\":\"tx2-xtdb-dev\",\"mode\":\"resident\",\"plan\":null,\"executes\":true,\"missing\":null}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "lab/bin/gate.mjs",
+      "G1",
+      "--lane",
+      "qlever",
+      "--dry-run"
+    ],
+    "code": 0,
+    "stdout": "{\"dryRun\":true,\"gate\":\"G1\",\"lane\":\"qlever\",\"slot\":\"dev\",\"endpoint\":\"http://127.0.0.1:7070\",\"container\":\"tx2-qlever-dev\",\"mode\":\"resident\",\"plan\":null,\"executes\":true,\"missing\":null}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "lab/bin/gate.mjs",
+      "G1",
+      "--lane",
+      "datomic",
+      "--dry-run"
+    ],
+    "code": 0,
+    "stdout": "{\"dryRun\":true,\"gate\":\"G1\",\"lane\":\"datomic\",\"slot\":\"dev\",\"endpoint\":\"http://127.0.0.1:8470\",\"container\":\"tx2-datomic-dev\",\"mode\":\"resident\",\"plan\":null,\"executes\":true,\"missing\":null}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "lab/bin/gate.mjs",
+      "G2",
+      "--lane",
+      "xtdb",
+      "--dry-run"
+    ],
+    "code": 0,
+    "stdout": "{\"dryRun\":true,\"gate\":\"G2\",\"lane\":\"xtdb\",\"slot\":\"dev\",\"endpoint\":\"postgres://xtdb:xtdb@127.0.0.1:5470/xtdb\",\"container\":\"tx2-xtdb-dev\",\"mode\":\"resident\",\"plan\":null,\"executes\":true,\"missing\":null}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "lab/bin/gate.mjs",
+      "G2",
+      "--lane",
+      "qlever",
+      "--dry-run"
+    ],
+    "code": 0,
+    "stdout": "{\"dryRun\":true,\"gate\":\"G2\",\"lane\":\"qlever\",\"slot\":\"dev\",\"endpoint\":\"http://127.0.0.1:7070\",\"container\":\"tx2-qlever-dev\",\"mode\":\"resident\",\"plan\":null,\"executes\":true,\"missing\":null}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "lab/bin/gate.mjs",
+      "G2",
+      "--lane",
+      "datomic",
+      "--dry-run"
+    ],
+    "code": 1,
+    "stdout": "",
+    "stderr": "[lab] USAGE: usage: gate.mjs G0|G1|G2|G4|NS|PAIR|GS|OBL --lane xtdb|qlever|datomic --slot S --dry-run [--plan FILE]\n"
+  },
+  {
+    "args": [
+      "lab/bin/gate.mjs",
+      "G4",
+      "--lane",
+      "xtdb",
+      "--dry-run"
+    ],
+    "code": 0,
+    "stdout": "{\"dryRun\":true,\"gate\":\"G4\",\"lane\":\"xtdb\",\"slot\":\"dev\",\"endpoint\":\"postgres://xtdb:xtdb@127.0.0.1:5470/xtdb\",\"container\":\"tx2-xtdb-dev\",\"mode\":\"resident\",\"plan\":null,\"executes\":true,\"missing\":null}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "lab/bin/gate.mjs",
+      "G4",
+      "--lane",
+      "qlever",
+      "--dry-run"
+    ],
+    "code": 0,
+    "stdout": "{\"dryRun\":true,\"gate\":\"G4\",\"lane\":\"qlever\",\"slot\":\"dev\",\"endpoint\":\"http://127.0.0.1:7070\",\"container\":\"tx2-qlever-dev\",\"mode\":\"resident\",\"plan\":null,\"executes\":true,\"missing\":null}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "lab/bin/gate.mjs",
+      "G4",
+      "--lane",
+      "datomic",
+      "--dry-run"
+    ],
+    "code": 1,
+    "stdout": "",
+    "stderr": "[lab] USAGE: usage: gate.mjs G0|G1|G2|G4|NS|PAIR|GS|OBL --lane xtdb|qlever|datomic --slot S --dry-run [--plan FILE]\n"
+  },
+  {
+    "args": [
+      "lab/bin/gate.mjs",
+      "NS",
+      "--lane",
+      "xtdb",
+      "--dry-run"
+    ],
+    "code": 0,
+    "stdout": "{\"dryRun\":true,\"gate\":\"NS\",\"lane\":\"xtdb\",\"slot\":\"dev\",\"endpoint\":\"postgres://xtdb:xtdb@127.0.0.1:5470/xtdb\",\"container\":\"tx2-xtdb-dev\",\"mode\":\"resident\",\"plan\":null,\"executes\":true,\"missing\":null}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "lab/bin/gate.mjs",
+      "NS",
+      "--lane",
+      "qlever",
+      "--dry-run"
+    ],
+    "code": 0,
+    "stdout": "{\"dryRun\":true,\"gate\":\"NS\",\"lane\":\"qlever\",\"slot\":\"dev\",\"endpoint\":\"http://127.0.0.1:7070\",\"container\":\"tx2-qlever-dev\",\"mode\":\"resident\",\"plan\":null,\"executes\":true,\"missing\":null}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "lab/bin/gate.mjs",
+      "NS",
+      "--lane",
+      "datomic",
+      "--dry-run"
+    ],
+    "code": 1,
+    "stdout": "",
+    "stderr": "[lab] USAGE: usage: gate.mjs G0|G1|G2|G4|NS|PAIR|GS|OBL --lane xtdb|qlever|datomic --slot S --dry-run [--plan FILE]\n"
+  },
+  {
+    "args": [
+      "lab/bin/gate.mjs",
+      "GS",
+      "--lane",
+      "xtdb",
+      "--dry-run"
+    ],
+    "code": 0,
+    "stdout": "{\"dryRun\":true,\"gate\":\"GS\",\"lane\":\"xtdb\",\"slot\":\"dev\",\"endpoint\":\"postgres://xtdb:xtdb@127.0.0.1:5470/xtdb\",\"container\":\"tx2-xtdb-dev\",\"mode\":\"resident\",\"plan\":null,\"executes\":true,\"missing\":null}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "lab/bin/gate.mjs",
+      "GS",
+      "--lane",
+      "qlever",
+      "--dry-run"
+    ],
+    "code": 0,
+    "stdout": "{\"dryRun\":true,\"gate\":\"GS\",\"lane\":\"qlever\",\"slot\":\"dev\",\"endpoint\":\"http://127.0.0.1:7070\",\"container\":\"tx2-qlever-dev\",\"mode\":\"resident\",\"plan\":null,\"executes\":true,\"missing\":null}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "lab/bin/gate.mjs",
+      "GS",
+      "--lane",
+      "datomic",
+      "--dry-run"
+    ],
+    "code": 0,
+    "stdout": "{\"dryRun\":true,\"gate\":\"GS\",\"lane\":\"datomic\",\"slot\":\"dev\",\"endpoint\":\"http://127.0.0.1:8470\",\"container\":\"tx2-datomic-dev\",\"mode\":\"resident\",\"plan\":null,\"executes\":true,\"missing\":null}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "lab/bin/gate.mjs",
+      "OBL",
+      "--lane",
+      "xtdb",
+      "--dry-run"
+    ],
+    "code": 0,
+    "stdout": "{\"dryRun\":true,\"gate\":\"OBL\",\"lane\":\"xtdb\",\"slot\":\"dev\",\"endpoint\":\"postgres://xtdb:xtdb@127.0.0.1:5470/xtdb\",\"container\":\"tx2-xtdb-dev\",\"mode\":\"resident\",\"plan\":null,\"executes\":false,\"missing\":\"the OBL gate (run pinned case manifests on a slot) is not implemented\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "lab/bin/gate.mjs",
+      "OBL",
+      "--lane",
+      "qlever",
+      "--dry-run"
+    ],
+    "code": 0,
+    "stdout": "{\"dryRun\":true,\"gate\":\"OBL\",\"lane\":\"qlever\",\"slot\":\"dev\",\"endpoint\":\"http://127.0.0.1:7070\",\"container\":\"tx2-qlever-dev\",\"mode\":\"resident\",\"plan\":null,\"executes\":false,\"missing\":\"the OBL gate (run pinned case manifests on a slot) is not implemented\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "lab/bin/gate.mjs",
+      "OBL",
+      "--lane",
+      "datomic",
+      "--dry-run"
+    ],
+    "code": 1,
+    "stdout": "",
+    "stderr": "[lab] USAGE: usage: gate.mjs G0|G1|G2|G4|NS|PAIR|GS|OBL --lane xtdb|qlever|datomic --slot S --dry-run [--plan FILE]\n"
+  }
+]

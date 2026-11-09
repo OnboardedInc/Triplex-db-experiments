@@ -19,7 +19,7 @@
 // Rejected: docker compose per slot (project labels and a second config source of truth);
 // a daemon (no process to babysit with at most 10 agents).
 import { stageDatomicContext, verifiedTree, verifyDatomicContext } from './datomic-context.mjs';
-import { spawnSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import net from 'node:net';
 import path from 'node:path';
@@ -28,6 +28,30 @@ import {
   containersOnVolume, cpusetOverlap, defaultHolder, docker, dockerStats, fail, fmtBytes, inspect, listTx2Containers, loadSlots, main, now,
   parseArgs, parseCpuset, readJson, readOwner, reconcile, sha256, sleep, slotInfo, vmDisk, volumeBytes, volumeGuard, withPool, sha256File,
 } from './lib.mjs';
+import { readMeasureLease } from './heavy-lock.mjs';
+
+// [EXP-M01] Why (R22 section 3; RULINGS Q60c): a `--cpus 2` quota is itself a noise source on this host (the busiest
+// slot used 1.9 cores while 77% of its 100 ms CFS periods were throttled). A slot with "regime": "cpuset" gets a
+// cpuset of `cpus` vCPUs and no CFS quota (`--cpuset-cpus`, set at creation because a running JVM does not re-read
+// its CPU count). Quota slots keep their exact effective config, so their config hash and running containers are
+// untouched. Rejected: `docker update --cpuset-cpus` on running containers (the JVM keeps its old CPU count) and
+// a smaller `--cpu-period` (mitigation only).
+export const cpuList = text => {
+  const out = new Set();
+  for (const part of String(text ?? '').split(',').map(x => x.trim()).filter(Boolean)) {
+    const [a, b] = part.split('-').map(Number);
+    for (let c = a; c <= (b ?? a); c++) out.add(c);
+  }
+  return out;
+};
+export const regimeOf = info => info.regime ?? 'quota';
+
+// [EXP-M01R] Why: main added follower and Datomic reservations after M01; every admission must honor the same lease. Rejected: guarding only writer up (allows new neighbors during a duet).
+export function assertMeasureAdmission(holder) {
+  const lease = readMeasureLease();
+  if (lease && !lease.stale && lease.holder !== holder)
+    throw new LabError('REFUSED', `pool admission is frozen by the measurement lease of "${lease.holder}" (${lease.label}) since ${lease.at}`);
+}
 
 /**
  * The read-only follower of an XTDB slot (EXP-X05): its own container, port and memory cap; the slot's
@@ -44,7 +68,7 @@ export function followerInfo(config, info, opts = {}) {
   if (config.forbiddenPorts.includes(port)) fail('CONFIG', `Port ${port} is forbidden`);
   for (const range of config.reservedPortRanges) if (port >= range.from && port <= range.to) fail('CONFIG', `Port ${port} belongs to ${range.owner}`);
   return {
-    ...info, role: 'follower', writer: info.container, container: `${info.container}-ro`, port,
+    ...info, regime: 'quota', cpuset: undefined, role: 'follower', writer: info.container, container: `${info.container}-ro`, port,
     endpoint: info.laneConf.urlTemplate.replace('{port}', String(port)), memBytes: profile.memBytes ?? conf.memBytes, cpus: conf.cpus,
     javaOpts: profile.javaOpts ?? conf.javaOpts, profile: profileName,
     volumeMode: conf.volumeMode, configFile: path.join(CONFIG_DIR, profile.configFile ?? conf.configFile), configSource: profile.configFile ?? conf.configFile, diskForecastBytes: 0,
@@ -162,6 +186,7 @@ async function selftestDatomic(config, opts) {
   const holder = defaultHolder(opts);
   // [EXP-DA00] Why: ephemeral tests consume real pool capacity. Rejected: unaccounted docker run --rm.
   await withPool(async ledger => {
+    assertMeasureAdmission(holder);
     const all = listTx2Containers({ all: true });
     reconcile(ledger, all);
     if (ledger.reservations.some(e => e.container === name) || inspect(name)) fail('REFUSED', 'Datomic selftest already owned/running');
@@ -211,6 +236,7 @@ export function effectiveConfig(config, info) {
       env: { JDK_JAVA_OPTIONS: info.javaOpts }, memBytes: info.memBytes, cpus: info.cpus, ...pin,
       publish: `127.0.0.1:${info.port}:5432`, volume: `${info.volume}:/var/lib/xtdb`, cmd: ['-f', '/etc/xtdb/config.yaml'],
       health: 'wget -q -O /dev/null http://127.0.0.1:8080/healthz/alive',
+      ...cpusetFields(info),
     };
     return { effective, sha256: sha256(JSON.stringify(effective)), files: { config: file } };
   }
@@ -277,19 +303,31 @@ fi
     sourceStartScriptSha256: sha256(original), qleverMemory: info.qleverMemory, memBytes: info.memBytes, cpus: info.cpus,
     publish: `127.0.0.1:${info.port}:7019`, volume: `${info.volume}:/data`, volumeInit: 'marker /data/.tx2-volume, chown -R 999:999 /data (image user qlever); no -w (start.sh does cd /data)', entrypoint: ['/bin/bash', '/config/start.sh'],
     health: "curl -fsS -o /dev/null 'http://127.0.0.1:7019/?query=SELECT%20*%20WHERE%20%7B%20%3Fs%20%3Fp%20%3Fo%20%7D%20LIMIT%201'",
+    ...cpusetFields(info),
   };
   return { effective, sha256: sha256(JSON.stringify(effective)), files: { startScript: file } };
 }
 
-function runArgs(info, eff, holder) {
+/** Only cpuset slots carry these keys, so a quota slot's effective config (and its sha256) is byte-identical to before. */
+function cpusetFields(info) {
+  if (regimeOf(info) === 'quota') return {};
+  if (regimeOf(info) !== 'cpuset') fail('CONFIG', `${info.lane}-${info.slot}: unknown regime ${info.regime}`);
+  const cpus = parseCpuset(info.cpuset, loadSlots().vm.cpus);
+  if (info.cpusetCpus && cpusetOverlap(info.cpuset, info.cpusetCpus, loadSlots().vm.cpus).length !== cpus.length) fail('CONFIG', 'measurement and explicit cpusets disagree');
+  if (cpus.length !== info.cpus) fail('CONFIG', `${info.lane}-${info.slot}: cpuset "${info.cpuset}" has ${cpuList(info.cpuset).size} vCPUs, cpus is ${info.cpus}`);
+  return { regime: 'cpuset', cpuset: info.cpuset };
+}
+
+export function runArgs(info, eff, holder) {
   const e = eff.effective;
+  const cpu = regimeOf(info) === 'cpuset' ? ['--cpuset-cpus', info.cpuset] : ['--cpus', String(info.cpus)];
   const common = [
     'run', '-d', '--name', info.container, '--restart', 'no',
     '--label', `tx2.lane=${info.lane}`, '--label', `tx2.slot=${info.slot}`, '--label', `tx2.config-sha256=${eff.sha256}`,
     '--label', `tx2.holder=${holder}`, '--label', 'tx2.managed-by=lab/bin/engine.mjs',
     ...(info.role === 'follower' ? ['--label', 'tx2.role=follower', '--label', `tx2.follows=${info.writer}`, '--label', `tx2.follower-profile=${info.profile ?? 'default'}`] : []),
-    '--memory', String(info.memBytes), '--memory-swap', String(info.memBytes), '--cpus', String(info.cpus),
-    ...(e.cpusetCpus ? ['--cpuset-cpus', e.cpusetCpus] : []),
+    '--memory', String(info.memBytes), '--memory-swap', String(info.memBytes), ...cpu,
+    ...(regimeOf(info) !== 'cpuset' && e.cpusetCpus ? ['--cpuset-cpus', e.cpusetCpus] : []),
     '-p', e.publish, '-v', e.volume,
     '--health-cmd', e.health, '--health-interval', '5s', '--health-timeout', '3s', '--health-start-period', '20s', '--health-retries', '3',
   ];
@@ -347,6 +385,40 @@ async function waitReady(info, timeoutMs = 240_000) {
   fail('ENGINE', `${info.container} not ready after ${timeoutMs / 1000}s (${last?.why})`);
 }
 
+/**
+ * Effective cgroup v2 values as the container sees them (its own cgroup namespace): what Q60c binds into
+ * owner.json and PAIR receipts, read back rather than assumed from the docker flags.
+ */
+export function parseCgroup(text) {
+  const [cpuMax, cpuset, cpuWeight, ...rest] = String(text ?? '').split('\n');
+  if (!cpuMax || cpuset === undefined) return null;
+  const stat = Object.fromEntries(rest.map(line => line.trim().split(/\s+/)).filter(f => f.length === 2 && /^\d+$/.test(f[1])).map(([k, v]) => [k, Number(v)]));
+  const out = { cpuMax: cpuMax.trim(), cpuset: cpuset.trim(), cpuWeight: Number(cpuWeight) };
+  if (stat.nr_periods !== undefined) Object.assign(out, { usageUsec: stat.usage_usec, nrPeriods: stat.nr_periods, nrThrottled: stat.nr_throttled, throttledUsec: stat.throttled_usec,
+    throttledShare: stat.nr_periods ? stat.nr_throttled / stat.nr_periods : 0 });
+  return out;
+}
+export function cgroupOf(container) {
+  try {
+    return parseCgroup(execFileSync('docker', dockerArgs(['exec', container, 'cat', '/sys/fs/cgroup/cpu.max', '/sys/fs/cgroup/cpuset.cpus.effective', '/sys/fs/cgroup/cpu.weight', '/sys/fs/cgroup/cpu.stat']),
+      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 15_000 }));
+  } catch { return null; }
+}
+/** VM-wide PSI cpu line, read inside any running container (/proc/pressure is not namespaced). */
+function vmPsi(container) {
+  try { return execFileSync('docker', dockerArgs(['exec', container, 'cat', '/proc/pressure/cpu']), { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 15_000 }).split('\n')[0].trim(); }
+  catch { return null; }
+}
+/** After ready: bind the effective cgroup values into owner.json; warn when a cpuset slot is not what slots.json says. */
+function recordCgroup(info) {
+  const cgroup = cgroupOf(info.container);
+  const owner = readOwner(info);
+  if (owner) atomicJson(info.ownerFile, { ...owner, regime: regimeOf(info), cgroup, cgroupAt: now() });
+  if (regimeOf(info) === 'cpuset' && (!cgroup || !cgroup.cpuMax.startsWith('max') || cgroup.cpuset !== info.cpuset))
+    process.stderr.write(`[lab] WARNING ${info.container}: effective cgroup ${JSON.stringify(cgroup)} is not cpuset ${info.cpuset} without quota\n`);
+  return cgroup;
+}
+
 function exportsFor(info) {
   if (info.role === 'follower') return `export XTDB_FOLLOWER_URL='${info.endpoint}'\nexport TX2_FOLLOWER_CONTAINER='${info.container}'`;
   const lines = [
@@ -397,6 +469,7 @@ async function up(config, info, opts) {
       fail('REFUSED', `${info.container} runs config ${existing.Config.Labels?.['tx2.config-sha256']?.slice(0, 12)} but slots.json now gives ${eff.sha256.slice(0, 12)}; rerun with --fresh to recreate (wipes the volume)`);
     if (existing?.State.Running && !opts.fresh) {
       const ready = await waitReady(info, 60_000);
+      recordCgroup(info);
       process.stderr.write(`[lab] ${info.container} already running (${ready.why})\n`);
       process.stdout.write(exportsFor(info) + '\n');
       return;
@@ -406,6 +479,8 @@ async function up(config, info, opts) {
     assertSingleWriter(info, eff);
     // Reserve atomically before any docker run/start.
     await withPool(async ledger => {
+      // [EXP-M01] Q60h: a measurement window freezes pool admission for everyone but the lease holder.
+      assertMeasureAdmission(holder);
       const all = listTx2Containers({ all: true });
       reconcile(ledger, all);
       const disk = vmDisk(config);
@@ -442,11 +517,12 @@ async function up(config, info, opts) {
         docker(runArgs(info, eff, holder));
       }
       const ready = await waitReady(info);
+      const cgroup = recordCgroup(info);
       await withPool(async ledger => {
         const entry = ledger.reservations.find(item => item.container === info.container);
-        if (entry) Object.assign(entry, { state: 'running', pid: null, configSha256: eff.sha256, readyAt: now() });
+        if (entry) Object.assign(entry, { state: 'running', pid: null, configSha256: eff.sha256, readyAt: now(), regime: regimeOf(info), cpuset: cgroup?.cpuset ?? null });
       });
-      process.stderr.write(`[lab] ${info.container} ready (${ready.why}); cap ${fmtBytes(info.memBytes)}, ${info.cpus} CPU, config ${eff.sha256.slice(0, 12)}\n`);
+      process.stderr.write(`[lab] ${info.container} ready (${ready.why}); cap ${fmtBytes(info.memBytes)}, ${regimeOf(info) === 'cpuset' ? `cpuset ${info.cpuset} (no quota)` : `${info.cpus} CPU quota`}, cgroup cpu.max ${cgroup?.cpuMax ?? '?'}, config ${eff.sha256.slice(0, 12)}\n`);
       process.stdout.write(exportsFor(info) + '\n');
     } catch (error) {
       // Keep the reservation while a container exists (it may hold memory); drop it otherwise.
@@ -531,6 +607,7 @@ async function followerUp(config, info, fol, opts) {
   }
   assertSingleWriter(fol, eff);
   await withPool(async ledger => {
+    assertMeasureAdmission(holder);
     const all = listTx2Containers({ all: true });
     reconcile(ledger, all);
     const request = { container: fol.container, memBytes: fol.memBytes, diskForecastBytes: 0 };
@@ -590,9 +667,14 @@ async function status(config) {
     const c = all.find(item => item.name === info.container);
     const owner = readOwner(info);
     const ready = c?.running ? await probe(info) : null;
+    // [EXP-M01] regime and lifetime throttled share (nr_throttled / nr_periods) per running container (R22 section 3).
+    const cg = c?.running ? cgroupOf(info.container) : null;
     rows.push({
       slot: `${lane}-${slot}`, port: info.port, cap: `${fmtBytes(info.memBytes)}/${info.cpus}cpu`,
+      // The configured regime; "!" marks a running container whose effective cgroup does not match it (made under other config).
+      regime: `${regimeOf(info) === 'cpuset' ? `cpuset:${info.cpuset}` : 'quota'}${cg && (regimeOf(info) === 'cpuset') !== cg.cpuMax.startsWith('max') ? '!' : ''}`,
       state: c ? `${c.status}${c.health ? '/' + c.health : ''}` : '-', ready: ready ? (ready.ok ? 'READY' : 'NOT-READY ' + ready.why) : '-',
+      throttled: cg ? `${(100 * (cg.throttledShare ?? 0)).toFixed(0)}%${cg.cpuMax.startsWith('max') ? '(noquota)' : ''}` : '-',
       mem: stats[info.container] ? fmtBytes(stats[info.container].memBytes) : '-', holder: owner ? `${owner.holder}${owner.experiment ? ' ' + owner.experiment : ''}` : '-',
     });
     // [EXP-X05] A follower shows as its own row under its slot when its container exists.
@@ -618,6 +700,11 @@ async function status(config) {
   for (const entry of ledger.reservations) console.log(`  reservation ${entry.container} ${fmtBytes(entry.memBytes)} ${entry.cpus}cpu state=${entry.state} holder=${entry.holder}`);
   for (const entry of verdict.external) console.log(`  external    ${entry.container} ${fmtBytes(entry.memBytes)} ${entry.nanoCpus ? entry.nanoCpus / 1e9 + 'cpu' : 'uncapped-cpu'}${entry.uncapped ? ' UNCAPPED (counts as whole VM)' : ''}`);
   for (const entry of ledger.retainedVolumes ?? []) console.log(`  retained volume ${entry.volume} ${fmtBytes(entry.bytes)} holder=${entry.holder} note=${entry.note}`);
+  const anyRunning = all.find(c => c.running);
+  const psi = anyRunning ? vmPsi(anyRunning.name) : null;
+  if (psi) console.log(`vm psi cpu: ${psi}`);
+  const lease = readMeasureLease();
+  if (lease) console.log(`measurement lease: ${lease.stale ? 'STALE ' : ''}held by "${lease.holder}" (${lease.label}) since ${lease.at}; pool admission frozen for others`);
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) main(async () => {

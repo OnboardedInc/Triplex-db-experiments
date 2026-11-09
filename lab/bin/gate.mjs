@@ -4,6 +4,8 @@ import { latencyReceipt, requireQleverConnectionMode } from "../receipts/latency
 // lab/bin/gate.mjs <G0|G1|G2|G4|GS> --lane xtdb|qlever [--slot dev] [--exp EXP-NNN] [--note TEXT]
 //   [--previous RUN-ID] [--holder NAME] [--cases N (G1 subset)] [--workloads 01,02 (G2 subset)]
 //   [--profile default|bounded|f1 (QLever query-plan profile)] [--planner-budget N (QLever, set+restore)]
+// lab/bin/gate.mjs PAIR --lane xtdb --slots s1,s3 --mode aa|ab --rounds 8 [--series screening-b180] [--rung 10k]
+//   [--composition public] [--claim superiority:1.25|hold:1.10] [--probe-per-s 20] [--raw-archive DIR] (EXP-M01, PAIR-0)
 //
 // Writes an append-only receipt lab/runs/<gate>/<run-id>.json and raw output under
 // runs/<gate>/<run-id>/ (gitignored). Preimages go to the content-addressed store runs/objects/.
@@ -22,11 +24,11 @@ import { spawnSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { effectiveConfig, probe } from './engine.mjs';
-import { acquireHeavy } from './heavy-lock.mjs';
-import { RUN_KINDS, caseLanguages, contractClaims, tallyLanguages, verdictOf } from './receipt.mjs';
+import { cgroupOf, cpuList, effectiveConfig, probe, regimeOf } from './engine.mjs';
+import { acquireHeavy, acquireMeasureLease } from './heavy-lock.mjs';
+import { PAIR_LOOKS, RUN_KINDS, caseLanguages, contractClaims, pairVerdictOf, placementProblems, tallyLanguages, verdictOf } from './receipt.mjs';
 import {
-  REPO, MAIN, LOCKS, defaultHolder, vmDisk, docker, dockerStats, fail, inspect, listTx2Containers, loadSlots, main, now, parseArgs,
+  REPO, MAIN, LOCKS, SLOTS_FILE, defaultHolder, vmDisk, docker, dockerStats, fail, inspect, listTx2Containers, loadSlots, main, now, parseArgs,
   readJson, readOwner, runLogged, withDirLock, sha256, sha256File, slotInfo, sourceIdentity, storeFile, storeObject, treeFiles, volumeBytes,
 } from './lib.mjs';
 
@@ -40,9 +42,8 @@ const PACKAGES = {
   qlever: { filter: '@triplex-build/triplex-qlever', dir: 'packages/qlever' },
   qualification: { filter: '@triplex-build/triplex-qualification', dir: 'packages/qualification' },
 };
-// [EXP-FD01] Why: the NS A0 consumer now loads the host SQLite store, and G0 must build/hash/test it.
-// Rejected: an unbuilt or unhashed host dependency in a gate.
-const lanePackages = (lane, gate) => ['core', 'host', 'testkit', lane, 'qualification', ...(gate === 'GS' ? ['w0'] : [])];
+// [CX-A01-040] Why: NS/PAIR need W0 and FD01 needs host in every lane. Rejected: discarding either accepted dependency binding.
+const lanePackages = (lane, gate) => ['core', 'host', 'testkit', lane, 'qualification', ...(['NS', 'PAIR', 'GS'].includes(gate) ? ['w0'] : [])];
 // [EXP-A01-0313-R2] Why: dry-run and execution share W02's GS policy and DA01's G0/G1 admission. Rejected: admitting Datomic for unimplemented G2/G4/NS routes or losing its GS lane.
 const gateLanes = gate => gate === 'GS' ? GS_LANES : ['xtdb', 'qlever', ...(['G0', 'G1'].includes(gate) ? ['datomic'] : [])];
 const EXPECTED_SKIPS = path.join(REPO, 'lab/config/g0-expected-skips.json');
@@ -84,9 +85,9 @@ class Run {
   async step(name, command, args, { cwd = REPO, env, heavy = false, timeoutMs } = {}) {
     const safe = name.replace(/[^a-z0-9.-]+/gi, '-');
     const stdoutFile = this.raw(`${safe}.stdout.txt`), stderrFile = this.raw(`${safe}.stderr.txt`);
-    // [EXP-DA01] Why: the required heavy.mjs wrapper already owns the whole Datomic gate; a second permit can starve its build. Rejected: raising the pool limit.
+    // [EXP-M01R] Why: the required heavy.mjs wrapper already owns this gate; a second permit can starve its build. Rejected: raising the pool limit.
     let parentGrant;
-    if (heavy && this.lane === 'datomic') {
+    if (heavy) {
       for (let slot = 1; slot <= 4; slot++) {
         const file = path.join(LOCKS, 'heavy', String(slot), 'owner.json');
         const owner = readJson(file, null);
@@ -158,8 +159,8 @@ function fileHashes(run, files, role) {
 
 // ---------------------------------------------------------------- engine binding
 
-function engineBinding(run, config) {
-  const info = slotInfo(config, run.lane, run.options.slot ?? 'dev');
+function engineBinding(run, config, slotName = run.options.slot ?? 'dev') {
+  const info = slotInfo(config, run.lane, slotName);
   const owner = readOwner(info);
   if (!owner) { run.reason(`slot ${info.lane}-${info.slot} has no lock owner; run lab/bin/engine.mjs up first`); return { info }; }
   if (info.mode === 'exclusive' && owner.holder !== defaultHolder(run.options))
@@ -261,7 +262,7 @@ async function gateG0(run) {
   const engineCases = await run.step('node-test-engine-cases', 'node', ['--test', '--test-reporter=tap', 'qualification/workloads/test_engine_cases.mjs']);
   tapOutcome(run, 'node-test-engine-cases', path.join(REPO, engineCases.stdout), counts);
   // [EXP-N01] NS driver unit tests: trace determinism and frozen schedule, histogram accuracy, scheduled-time latency, world counts, feed consumer.
-  const bench = await run.step('node-test-ns-bench', 'node', ['--test', '--test-reporter=tap', 'lab/bench/test/bench.test.ts', 'lab/bench/test/p3.test.mjs', 'lab/bench/test/nsr.test.mjs']);
+  const bench = await run.step('node-test-ns-bench', 'node', ['--test', '--test-reporter=tap', 'lab/bench/test/bench.test.ts', 'lab/bench/test/p3.test.mjs', 'lab/bench/test/nsr.test.mjs', 'lab/bench/test/paired.test.ts', 'lab/bench/test/noise.test.ts']);
   tapOutcome(run, 'node-test-ns-bench', path.join(REPO, bench.stdout), counts);
   for (const step of [nodeQual, engineCases, bench]) if (step.code !== 0) run.reason(`${step.name} exited ${step.code}`);
   const validate = await run.step('oracle-validate-workloads', 'python3', ['-B', 'qualification/workloads/validate_workloads.py']);
@@ -634,6 +635,186 @@ function runGit(args, encoding = 'utf8') {
   return encoding === 'buffer' ? out.stdout : out.stdout.toString('utf8');
 }
 
+// ---------------------------------------------------------------- PAIR (paired rounds, EXP-M01)
+
+// [EXP-M01] Why (R22 sections 1, 3, 6.2, 7; RULINGS Q60a-i): on this host a single run never decides a bar, so a
+// comparison is a duet: A0 (arm A) and the candidate (arm B) replay the same trace window at the same instant on two
+// identically configured slots in the cpuset regime, inside a measurement lease (every heavy token, pool admission
+// frozen). lab/bench/duet.ts runs both drivers, the noise recorder and the analysis; this gate binds what ran: both
+// slots' image, effective config and effective cgroup values (read back, not assumed), the round plan and noise rules
+// by hash, every number with the input to recompute it, and the lease.
+// Verdicts: FAIL (harness, identity, correctness, a container restarted or changed); INVALID (protocol departure:
+// development overrides, arms not both in the cpuset regime, overlapping or unequal cpusets, no lease);
+// INVALID_NOISE (window RED, or more than a third of rounds excluded); PAIRED_DECIDED / PAIRED_INCONCLUSIVE on the
+// primary claim (commit p50 over every offered command, Q60d).
+// Rejected: treating `--composition memory` as a measurement (offline pipeline checks only: no engine identity, so
+// the identity rules FAIL it by design); building inside the lease (a build is a heavy step).
+const PAIR_DEV_FLAGS = ['subjects', 'round', 'trace-param', 'warmup-periods', 'env-a', 'env-b', 'no-lease', 'no-vm'];
+const PAIR_SLOT_FIELDS = ['slot', 'publish', 'volume', 'cpuset'];
+async function gatePAIR(run, config, argv) {
+  const slotNames = String(run.options.slots ?? 's1,s3').split(',');
+  if (slotNames.length !== 2 || slotNames[0] === slotNames[1]) fail('USAGE', '--slots needs two different slots, e.g. s1,s3');
+  const composition = String(run.options.composition ?? 'public');
+  const memory = composition === 'memory';
+  const mode = String(run.options.mode ?? 'aa');
+  if (!['aa', 'ab'].includes(mode)) fail('USAGE', '--mode aa|ab');
+  const departures = [];
+  const result = { scope: `pair:${mode}/${run.options.series ?? 'screening-b180'}` };
+  result.build = await build(run);
+  result.slotConfiguration = run.store(SLOTS_FILE, 'slot-configuration');
+  // Q67g: each arm = the system under test (composition, image, config without placement fields) plus its placement
+  // (slot, container, regime, effective cpuset / cpu.max / cpu.weight, memory cap, cores). The workload is shared and
+  // bound once (result.pair.workload). Under cpusets the per-core denominator is the cpuset size, not a quota.
+  const arms = {};
+  const bindings = {};
+  if (memory) run.reason('offline memory composition: no engine, not a measurement (pipeline check only)');
+  else {
+    for (const [arm, slot] of [['A', slotNames[0]], ['B', slotNames[1]]]) {
+      const bound = engineBinding(run, config, slot);
+      if (!bound.engine) { arms[arm] = { placement: { slot } }; continue; }
+      const eff = effectiveConfig(config, bound.info);
+      const cgroup = cgroupOf(bound.info.container);
+      if (!cgroup) run.reason(`${bound.info.container}: could not read its effective cgroup values`);
+      const regime = regimeOf(bound.info);
+      const system = Object.fromEntries(Object.entries(eff.effective).filter(([k]) => !PAIR_SLOT_FIELDS.includes(k)));
+      const cpusetSize = cpuList(cgroup?.cpuset).size;
+      arms[arm] = {
+        system: { composition, imageId: bound.engine.imageId, repoDigests: bound.engine.repoDigests, configSha256: sha256(JSON.stringify(system)), effectiveConfig: system },
+        placement: {
+          slot, container: bound.engine.container, containerId: bound.engine.containerId, startedAt: bound.engine.startedAt, endpoint: bound.engine.endpoint, holder: bound.engine.holder,
+          slotConfigSha256: bound.engine.configSha256, regime, slotCpuset: bound.info.cpuset ?? null, cpuset: cgroup?.cpuset ?? null, cpusetSize, cpuMax: cgroup?.cpuMax ?? null,
+          cpuWeight: cgroup?.cpuWeight ?? null, memCapBytes: bound.engine.memCapBytes, nanoCpus: bound.engine.nanoCpus || null,
+          cores: regime === 'cpuset' ? cpusetSize : bound.engine.nanoCpus / 1e9, perCoreDenominator: regime === 'cpuset' ? 'cpuset size' : 'CFS quota (nanoCpus)',
+          throttledShareAtStart: cgroup?.throttledShare ?? null,
+        },
+      };
+      bindings[arm] = bound.info;
+      if (regime === 'cpuset' && cgroup && cgroup.cpuset !== bound.info.cpuset) run.reason(`${bound.info.container}: effective cpuset ${cgroup.cpuset} is not the slot's ${bound.info.cpuset}`);
+    }
+    const [A, B] = [arms.A, arms.B];
+    if (A?.system && B?.system) {
+      // Q60a "two identically configured slots": in A/A both arms run the same system; in A/B the candidate may differ
+      // (that is the comparison), but the image must still be pinned per arm.
+      if (mode === 'aa' && A.system.configSha256 !== B.system.configSha256) run.reason('A/A arms run different systems (effective configs differ beyond slot, port, volume and cpuset)');
+      if (mode === 'aa' && A.system.imageId !== B.system.imageId) run.reason(`A/A arm images differ: ${A.system.imageId} vs ${B.system.imageId}`);
+    }
+    departures.push(...placementProblems(A?.placement, B?.placement));
+  }
+  const dev = PAIR_DEV_FLAGS.filter(f => argv.includes(`--${f}`));
+  if (dev.length) departures.push(`development overrides: ${dev.join(', ')}`);
+  const roundsWanted = Number(run.options.rounds ?? (mode === 'aa' ? 8 : 24));
+  if (!PAIR_LOOKS.includes(roundsWanted)) departures.push(`--rounds ${roundsWanted} is not a registered look (${PAIR_LOOKS.join(', ')}; Q67f)`);
+  // Lease (Q60h) after the build: the build is itself a heavy step.
+  let lease = null;
+  const leaseStarted = Date.now();
+  if (run.options['no-lease']) { if (!memory) fail('USAGE', '--no-lease is only for --composition memory (offline)'); departures.push('no measurement lease'); }
+  else {
+    lease = await acquireMeasureLease(`${run.runId} PAIR`, { holder: defaultHolder(run.options) });
+    process.stderr.write(`[lab] ${run.runId}: measurement lease held (${lease.tokens} heavy tokens, pool admission frozen) after ${(lease.waitedMs / 1000).toFixed(0)} s\n`);
+  }
+  result.lease = lease ? { holder: lease.owner?.holder ?? null, label: lease.owner?.label ?? null, waitedMs: lease.waitedMs, tokens: lease.tokens, at: lease.owner?.at ?? null } : null;
+  const out = run.raw('duet');
+  fs.mkdirSync(out, { recursive: true });
+  const placementFile = path.join(out, 'placement.json');
+  fs.writeFileSync(placementFile, JSON.stringify(memory ? null : { A: arms.A?.placement ?? null, B: arms.B?.placement ?? null }) + '\n');
+  const pass = ['series', 'rung', 'seed', 'readers', 'probe-per-s', 'claim', 'seed-budget-s', 'subjects', 'warmup-periods', 'cpus'];
+  const regime = arms.A?.placement?.regime && arms.A.placement.regime === arms.B?.placement?.regime ? arms.A.placement.regime : memory ? 'none' : 'quota';
+  const args = ['lab/bench/duet.ts', 'run', '--out', out, '--lane', run.lane, '--mode', mode, '--rounds', String(roundsWanted), '--composition', composition, '--regime', regime, '--placement', placementFile];
+  for (const k of pass) if (run.options[k] !== undefined) args.push(`--${k}`, String(run.options[k]));
+  for (const k of ['round', 'trace-param', 'env-a', 'env-b']) argv.forEach((a, i) => { if (a === `--${k}`) args.push(a, argv[i + 1]); });
+  if (run.options['no-vm']) args.push('--no-vm');
+  // Q67g: the drivers' per-core denominator (TX2_ENGINE_CPUS) is the arm's cores: the cpuset size under cpusets.
+  if (run.options.cpus === undefined && arms.A?.placement?.cores > 0) args.push('--cpus', String(arms.A.placement.cores));
+  for (const [arm, k] of [['A', 'a'], ['B', 'b']]) if (bindings[arm]) args.push(`--url-${k}`, bindings[arm].endpoint, `--container-${k}`, arms[arm].placement.container, `--cpuset-${k}`, String(arms[arm].placement.cpuset ?? ''));
+  // No docker stats sampler here (unlike NS): it costs the daemon about a second per call on vCPUs the arms share,
+  // and the duet's VM agent already reads every container's cgroup counters per round (R22 section 6).
+  let step;
+  try { step = await run.step('duet', 'node', args, { env: cleanEnv(), timeoutMs: 6 * 3600_000 }); }
+  finally { lease?.release(); }
+  result.lease && (result.lease.heldMs = Date.now() - leaseStarted);
+  const reportFile = path.join(out, 'pair-report.json');
+  const report = readJson(reportFile, null);
+  if (!report) { run.reason('no pair report written'); run.failure({ step: 'duet', tail: step.tail }); return result; }
+  run.store(reportFile, 'raw-outcome');
+  for (const f of ['round-plan.json', 'placement.json', 'noise-samples.jsonl.gz', 'A/ns-report.json', 'B/ns-report.json', 'A/ns-writes.jsonl', 'B/ns-writes.jsonl', 'A/driver.log', 'B/driver.log'])
+    if (fs.existsSync(path.join(out, f))) run.store(path.join(out, f), 'raw-outcome');
+  if (report.status !== 'DONE') { run.reason(`duet status ${report.status}: ${String(report.error ?? '').slice(0, 400)}`); run.failure({ step: 'duet', tail: step.tail, error: report.error }); }
+  // Containers must be the same ones, unrestarted, with the same cgroup values, at the end.
+  for (const [arm, x] of Object.entries(arms)) {
+    const p = x.placement;
+    if (!p?.container) continue;
+    const still = inspect(p.container);
+    if (still?.Id !== p.containerId || still?.State.StartedAt !== p.startedAt) run.reason(`arm ${arm} ${p.container} restarted or was replaced during the run`);
+    const cg = cgroupOf(p.container);
+    // [EXP-M01R] Why: absent final readback cannot bind an unchanged placement. Rejected: silently accepting an unreadable end cgroup.
+    if (!cg) run.reason(`arm ${arm} ${p.container}: could not read effective cgroup values at end`);
+    if (cg && (cg.cpuMax !== p.cpuMax || cg.cpuset !== p.cpuset)) run.reason(`arm ${arm} ${p.container} cgroup changed during the run (${p.cpuMax}/${p.cpuset} -> ${cg.cpuMax}/${cg.cpuset})`);
+    p.throttledShareAtEnd = cg?.throttledShare ?? null;
+  }
+  for (const arm of ['A', 'B']) {
+    arms[arm] ??= {};
+    arms[arm].contactedEndpoint = report.arms?.[arm]?.backend?.url ?? null;
+    if (arms[arm].placement?.endpoint && arms[arm].contactedEndpoint !== arms[arm].placement.endpoint) run.reason(`arm ${arm} contacted ${arms[arm].contactedEndpoint}, slot is ${arms[arm].placement.endpoint}`);
+    const c = report.arms?.[arm]?.correctness;
+    if (!c) run.reason(`arm ${arm}: no correctness record`);
+    else if (c.violations > 0) run.reason(`arm ${arm}: ${c.violations} correctness violations (${JSON.stringify(c.violationKinds)})`);
+    if (report.arms?.[arm]?.seedComplete === false) departures.push(`arm ${arm}: rung not fully seeded`);
+  }
+  if (report.trace && report.trace.digest !== report.trace.digestB) run.reason('the two arms replayed different traces');
+  // Q67f: a correct receipt cannot carry broken accounting or calibration signals that do not follow from their samples.
+  for (const p of report.checks?.accounting?.problems ?? []) run.reason(`accounting: ${p}`);
+  for (const p of report.checks?.calibration?.problems ?? []) run.reason(`calibration: ${p}`);
+  if (report.checks && !report.checks.rounds.isRegisteredLook) departures.push(`${report.checks.rounds.count} rounds run is not a registered look (Q67f)`);
+  result.fixtures = fileHashes(run, [...nsBenchFiles(), 'lab/bench/duet.ts', 'lab/bench/test/paired.test.ts', 'lab/bench/test/noise.test.ts', 'lab/config/noise.json'], 'bench-source');
+  const plan = readJson(path.join(out, 'round-plan.json'), null);
+  const accounting = report.evidence ? JSON.parse(report.evidence.accounting.json) : {};
+  result.pair = {
+    format: 'tx2-pair-receipt/1', mode, series: report.series, rounds: report.roundsRun ?? 0, roundsPlanned: report.roundsPlanned, registeredLooks: PAIR_LOOKS, claim: report.claim,
+    planSha256: report.planSha256, noiseConfigSha256: report.noiseConfigSha256, composition, regime,
+    // Q67g: the shared workload, bound once for both arms.
+    workload: {
+      trace: { digest: report.trace?.digest ?? null, seed: report.seed ?? null, params: report.trace?.params ?? null, generatorSha256: report.trace?.generatorSha256 ?? null },
+      rung: run.options.rung ?? '10k', seededSubjects: report.arms?.A?.seededSubjects ?? null, series: report.series,
+      schedule: plan ? { traceStartAbsMs: report.traceStartAbsMs ?? null, warmupS: plan.warmupS, durationS: plan.durationS, rounds: plan.rounds } : null,
+      offered: { perRound: Object.fromEntries(Object.entries(accounting).map(([id, x]) => [id, x.A?.offered ?? null])), note: 'per round: commands and probes offered (seq:offset lists, sha256); identical in both arms (checks.accounting)' },
+      probe: plan?.probe ?? null,
+    },
+    trace: { digest: report.trace?.digest ?? null, seed: report.seed ?? null }, generator: { traceSha256: report.trace?.generatorSha256 ?? null },
+    arms, looks: report.looks ?? [], stoppedAfter: report.stoppedAfter ?? null, devOverrides: dev,
+    samples: report.samples ?? null, vmAgent: report.vmAgent ?? null,
+    driverArms: Object.fromEntries(['A', 'B'].map(arm => [arm, { status: report.arms?.[arm]?.status, scope: report.arms?.[arm]?.scope, seededSubjects: report.arms?.[arm]?.seededSubjects, composition: report.arms?.[arm]?.compositionName, assignments: report.arms?.[arm]?.assignments, writer: report.arms?.[arm]?.writer, probe: report.arms?.[arm]?.probe, correctness: report.arms?.[arm]?.correctness, client: report.arms?.[arm]?.client }])),
+    report: { path: run.rel(reportFile), sha256: sha256File(reportFile) },
+    // Q67f: the retained evidence, each item one JSON string with its sha256 (see lab/bench/duet.ts EVIDENCE_KEYS).
+    evidence: report.evidence ?? null,
+    recompute: 'node lab/bench/duet.ts recompute --receipt <this receipt>',
+  };
+  result.stats = report.stats ?? null;
+  result.noise = report.noise ?? null;
+  result.checks = report.checks ?? null;
+  // R22 section 6.2 `isolation`: what the arms shared with everything else during the window.
+  const noiseRounds = report.noiseRounds ?? [];
+  result.isolation = {
+    regime, cpusets: { A: arms.A?.placement?.cpuset ?? null, B: arms.B?.placement?.cpuset ?? null }, partitioned: report.noise?.partitioned ?? null, lease: result.lease,
+    perRound: noiseRounds.map(n => ({ id: n.id, partitioned: n.partitioned, neighborsMaxCoresOnArmCpus: n.signals?.['neighbors.maxCoresOnArmCpus'] ?? null, neighborsTotalCores: n.signals?.['neighbors.totalCores'] ?? null, throttledShare: { A: n.arms?.A?.throttledShare ?? null, B: n.arms?.B?.throttledShare ?? null } })),
+    note: 'dev residents and other holders keep their cpusets (never changed without Sam), so a duet on s1 0-1 / s3 2-3 shares vCPUs with them unless they are idle',
+  };
+  const rounds = report.roundsRun ?? 0, excluded = report.noise?.counts?.excluded ?? 0;
+  const reads = ['A', 'B'].reduce((s, arm) => s + (report.arms?.[arm]?.correctness?.reads ?? 0), 0);
+  const violations = ['A', 'B'].reduce((s, arm) => s + (report.arms?.[arm]?.correctness?.violations ?? 0), 0);
+  result.counts = { executed: rounds, pass: rounds - excluded, fail: violations, skip: 0, rounds, usableRounds: rounds - excluded, excludedRounds: excluded, reads, violations };
+  const pv = pairVerdictOf({ grade: report.noise?.windowGrade?.grade, decision: report.stats?.primary?.decision, departures });
+  result.pairVerdict = pv.verdict;
+  result.pairVerdictReasons = pv.reasons;
+  if (run.options['raw-archive']) {
+    const dir = path.resolve(String(run.options['raw-archive']));
+    fs.mkdirSync(dir, { recursive: true });
+    const tarFile = path.join(dir, `${run.runId}.tar.gz`);
+    const tar = spawnSync('tar', ['-czf', tarFile, '-C', path.dirname(run.rawDir), path.basename(run.rawDir)]);
+    result.rawArchive = tar.status === 0 ? { path: tarFile, sha256: sha256File(tarFile), bytes: fs.statSync(tarFile).size } : { error: String(tar.stderr).slice(0, 300) };
+  }
+  return result;
+}
+
 // ---------------------------------------------------------------- GS (EXP-W01)
 
 // [EXP-W01] Why: the 20 golden scenarios (TARGETS section 6) run through lab/scenarios/run.mjs against the held
@@ -751,14 +932,14 @@ main(async () => {
   // qualify would execute, without locks, builds or engines. OBL (run an obligation's pinned case manifest on a slot) exists
   // only as a plan: no executable case manifests are pinned yet, so it never runs.
   if (options['dry-run']) {
-    if (!['G0', 'G1', 'G2', 'G4', 'NS', 'GS', 'OBL'].includes(gate) || !gateLanes(gate).includes(options.lane)) fail('USAGE', 'usage: gate.mjs G0|G1|G2|G4|NS|GS|OBL --lane xtdb|qlever|datomic --slot S --dry-run [--plan FILE]');
+    if (!['G0', 'G1', 'G2', 'G4', 'NS', 'PAIR', 'GS', 'OBL'].includes(gate) || !gateLanes(gate).includes(options.lane)) fail('USAGE', 'usage: gate.mjs G0|G1|G2|G4|NS|PAIR|GS|OBL --lane xtdb|qlever|datomic --slot S --dry-run [--plan FILE]');
     const info = slotInfo(loadSlots(), options.lane, options.slot ?? 'dev');
     console.log(JSON.stringify({ dryRun: true, gate, lane: options.lane, slot: info.slot, endpoint: info.endpoint, container: info.container, mode: info.mode ?? null,
       plan: options.plan ? readJson(path.resolve(options.plan)) : null, executes: gate !== 'OBL', missing: gate === 'OBL' ? 'the OBL gate (run pinned case manifests on a slot) is not implemented' : null }));
     return;
   }
-  if (!['G0', 'G1', 'G2', 'G4', 'NS', 'GS'].includes(gate) || !gateLanes(gate).includes(options.lane))
-    fail('USAGE', 'usage: gate.mjs G0|G1|G2|G4|NS|GS --lane xtdb|qlever|datomic [--slot dev] [--exp EXP-NNN] [--note TEXT] [--previous RUN-ID] [--cases N] [--workloads 01,02]\n  NS: --rung 10k|100k|1m|10m [--slot s1] [--ns-profile smoke|screening|acceptance] [--zero-readers [--match-duration-s S]] [--baseline RUN-ID] [--composition public]\n  GS: [--scenario 2,3] [--rung 10k] [--readers 16]');
+  if (!['G0', 'G1', 'G2', 'G4', 'NS', 'PAIR', 'GS'].includes(gate) || !gateLanes(gate).includes(options.lane))
+    fail('USAGE', 'usage: gate.mjs G0|G1|G2|G4|NS|PAIR|GS --lane xtdb|qlever|datomic [--slot dev] [--exp EXP-NNN] [--note TEXT] [--previous RUN-ID] [--cases N] [--workloads 01,02]\n  NS: --rung 10k|100k|1m|10m [--slot s1] [--ns-profile smoke|screening|acceptance] [--zero-readers [--match-duration-s S]] [--baseline RUN-ID] [--composition public]\n  GS: [--scenario 2,3] [--rung 10k] [--readers 16]');
   const config = loadSlots();
   // [EXP-000] runKind defaults to diagnostic so an unlabelled run can never close anything (V12, B7).
   const runKind = options['run-kind'] ?? 'diagnostic';
@@ -780,7 +961,7 @@ main(async () => {
     lockfileSha256 = run.store(path.join(REPO, 'pnpm-lock.yaml'), 'lockfile').sha256;
     gateScripts = Object.fromEntries(['lab/bin/gate.mjs', 'lab/bin/lib.mjs', 'lab/bin/receipt.mjs', 'lab/bin/engine.mjs', 'lab/bin/heavy-lock.mjs', 'lab/config/slots.json', 'lab/receipts/latency.mjs', 'lab/receipts/latency.d.mts', 'lab/receipts/parse.ts']
       .map(file => [file, run.store(path.join(REPO, file), 'gate-script').sha256]));
-    result = gate === 'G0' ? await gateG0(run) : gate === 'G1' ? await gateG1(run, config) : gate === 'G2' ? await gateG2(run, config) : gate === 'NS' ? await gateNS(run, config) : gate === 'GS' ? await gateGS(run, config) : await gateG4(run, config);
+    result = gate === 'G0' ? await gateG0(run) : gate === 'G1' ? await gateG1(run, config) : gate === 'G2' ? await gateG2(run, config) : gate === 'NS' ? await gateNS(run, config) : gate === 'PAIR' ? await gatePAIR(run, config, process.argv.slice(2)) : gate === 'GS' ? await gateGS(run, config) : await gateG4(run, config);
   } catch (error) {
     run.reason(`harness error: ${error.message}`);
     run.failure({ harnessError: String(error.stack ?? error).slice(0, 3000) });
@@ -789,7 +970,7 @@ main(async () => {
   if (claims.contract) run.store(path.join(REPO, 'lab/acceptance/obligations.json'), 'acceptance-contract');
   for (const reason of claims.reasons) run.reason(reason);
   const receipt = latencyReceipt({
-    format: 'tx2-gate-receipt/1', gate, lane: options.lane, slot: gate === 'G0' ? null : (options.slot ?? (gate === 'NS' ? 's1' : 'dev')), runId: run.runId,
+    format: 'tx2-gate-receipt/1', gate, lane: options.lane, slot: gate === 'G0' ? null : gate === 'PAIR' ? String(options.slots ?? 's1,s3') : (options.slot ?? (gate === 'NS' ? 's1' : 'dev')), runId: run.runId,
     experiment: options.exp ?? null, note: options.note ?? null, previous: options.previous ?? null,
     startedAt: run.startedAt, endedAt: now(), durationMs: Date.now() - run.t0, scope: result.scope ?? 'unknown',
     runKind, mutation, contractVersion: claims.contract?.version ?? null, contract: claims.contract, obligations: claims.obligations,
@@ -803,6 +984,7 @@ main(async () => {
   const { verdict, reasons } = verdictOf(receipt);
   receipt.verdict = verdict; receipt.reasons = reasons;
   if (gate === 'NS' && verdict !== 'FAIL') receipt.verdict = result.nsVerdict ?? 'INVALID';
+  if (gate === 'PAIR' && verdict !== 'FAIL') { receipt.verdict = result.pairVerdict ?? 'INVALID'; receipt.pairVerdictReasons = result.pairVerdictReasons ?? []; }
   receipt.objects = run.objects;
   const fd = fs.openSync((fs.mkdirSync(path.dirname(run.receiptPath), { recursive: true }), run.receiptPath), 'wx', 0o444);
   fs.writeSync(fd, JSON.stringify(receipt, null, 2) + '\n'); fs.fsyncSync(fd); fs.closeSync(fd);
@@ -817,6 +999,13 @@ main(async () => {
   if (gate === 'NS' && result.ns) {
     console.log(`NS ${receipt.verdict}${result.ns.invalid?.length ? ` (${result.ns.invalid.join('; ')})` : ''}`);
     for (const [p, bars] of Object.entries(result.ns.bars)) for (const b of bars) console.log(`  ${p} ${b.pass === true ? 'PASS' : b.pass === false ? 'MISS' : 'n/a '} ${b.id}: ${JSON.stringify(b.value)} (bar ${b.bar})`);
+  }
+  if (gate === 'PAIR' && result.noise) {
+    const s = result.stats ?? {}, n = result.noise;
+    console.log(`PAIR ${receipt.verdict} mode ${result.pair?.mode} rounds ${result.counts?.rounds} (usable ${result.counts?.usableRounds}); window ${n.windowGrade?.grade} (${(n.windowGrade?.reasons ?? []).join('; ')})`);
+    console.log(`  A/A s_d log p50 ${n.aa?.sdLogP50 ?? '-'} p99 ${n.aa?.sdLogP99 ?? '-'}; slot bias p50 ${n.aa?.slotBiasP50?.ratio ?? '-'} [${n.aa?.slotBiasP50?.ratioLo ?? '-'}, ${n.aa?.slotBiasP50?.ratioHi ?? '-'}]`);
+    console.log(`  commitAll p50 A/B ${s.p50?.ratio ?? '-'} [${s.p50?.lo ?? '-'}, ${s.p50?.hi ?? '-'}] p99 ${s.p99?.ratio ?? '-'} [${s.p99?.lo ?? '-'}, ${s.p99?.hi ?? '-'}]; decision ${s.primary?.decision}`);
+    console.log(`  exclusions ${JSON.stringify(n.exclusions)}`);
   }
   if (verdict === 'FAIL') process.exitCode = 1;
 });

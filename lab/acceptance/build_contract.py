@@ -6347,8 +6347,20 @@ def checks_pin_QNODELAY():
     return errors
 
 
+# [CX-A01-040] Why: pin accepted M01 source and reviewed hunks in the merge commit (Q45a). Rejected: a later pin repair.
+PIN_STAGE_M01 = []
+SCOPE_SOURCES += ['lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/M01-repin-review.json']
+def checks_pin_M01():
+    errors = []
+    for pin in PIN_STAGE_M01:
+        if sha_file(pin["path"]) != pin["sha256"] or sha_file(pin["diff"]) != pin["diffSha256"]:
+            errors.append("Q45a: M01 accepted source/diff pin drift: " + pin["path"])
+    return errors
+
+
 def main():
     errs = validate()
+    errs += checks_pin_M01()
     errs += checks_pin_QNODELAY()
     errs += checks_0311()
     errs += checks_0312()

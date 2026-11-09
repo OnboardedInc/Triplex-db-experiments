@@ -1,0 +1,19 @@
+{
+  "match": true,
+  "verdict": "INVALID",
+  "primary": {
+    "metric": "commitAll",
+    "quantile": 0.5,
+    "claim": {
+      "kind": "superiority",
+      "target": 1.25
+    },
+    "decision": "INCONCLUSIVE_NEED_MORE_ROUNDS",
+    "decisive": false
+  },
+  "grade": "INVALID",
+  "problems": [
+    "placement missing for an arm"
+  ],
+  "diffs": []
+}

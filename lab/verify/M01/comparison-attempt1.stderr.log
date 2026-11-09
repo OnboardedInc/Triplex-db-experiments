@@ -1,0 +1,215 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
++ actual - expected
+... Skipped lines
+
+  [
+    {
+      burst: false,
+      facts: 6,
++     offsetMs: 736.137939453125,
+-     offsetMs: 727.93017578125,
+      outcome: 'committed',
+      resend: false,
+      seq: 5000000001,
+      stream: 'p5-mutation'
+    },
+...
+      facts: 6,
++     offsetMs: 736.48486328125,
+-     offsetMs: 728.279052734375,
+      outcome: 'committed',
+      resend: false,
+      seq: 5000000002,
+      stream: 'p5-mutation'
+    },
+...
+      facts: 6,
++     offsetMs: 736.582275390625,
+-     offsetMs: 728.3818359375,
+      outcome: 'committed',
+      resend: false,
+      seq: 5000000003,
+      stream: 'p5-mutation'
+    },
+...
+      facts: 6,
++     offsetMs: 736.6064453125,
+-     offsetMs: 728.41015625,
+      outcome: 'committed',
+      resend: false,
+      seq: 5000000004,
+      stream: 'p5-mutation'
+    },
+...
+      facts: 6,
++     offsetMs: 736.6279296875,
+-     offsetMs: 728.43212890625,
+      outcome: 'committed',
+      resend: false,
+      seq: 5000000005,
+      stream: 'p5-mutation'
+    },
+...
+      facts: 6,
++     offsetMs: 736.6484375,
+-     offsetMs: 728.453369140625,
+      outcome: 'committed',
+      resend: false,
+      seq: 5000000006,
+      stream: 'p5-mutation'
+    },
+...
+      facts: 6,
++     offsetMs: 736.74560546875,
+-     offsetMs: 728.55419921875,
+      outcome: 'committed',
+      resend: false,
+      seq: 5000000007,
+      stream: 'p5-mutation'
+    }
+
+    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-m01r/lab/verify/M01/compare.mjs:39:55
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: [
+    {
+      stream: 'p5-mutation',
+      seq: 5000000001,
+      resend: false,
+      offsetMs: 736.137939453125,
+      facts: 6,
+      burst: false,
+      outcome: 'committed'
+    },
+    {
+      stream: 'p5-mutation',
+      seq: 5000000002,
+      resend: false,
+      offsetMs: 736.48486328125,
+      facts: 6,
+      burst: false,
+      outcome: 'committed'
+    },
+    {
+      stream: 'p5-mutation',
+      seq: 5000000003,
+      resend: false,
+      offsetMs: 736.582275390625,
+      facts: 6,
+      burst: false,
+      outcome: 'committed'
+    },
+    {
+      stream: 'p5-mutation',
+      seq: 5000000004,
+      resend: false,
+      offsetMs: 736.6064453125,
+      facts: 6,
+      burst: false,
+      outcome: 'committed'
+    },
+    {
+      stream: 'p5-mutation',
+      seq: 5000000005,
+      resend: false,
+      offsetMs: 736.6279296875,
+      facts: 6,
+      burst: false,
+      outcome: 'committed'
+    },
+    {
+      stream: 'p5-mutation',
+      seq: 5000000006,
+      resend: false,
+      offsetMs: 736.6484375,
+      facts: 6,
+      burst: false,
+      outcome: 'committed'
+    },
+    {
+      stream: 'p5-mutation',
+      seq: 5000000007,
+      resend: false,
+      offsetMs: 736.74560546875,
+      facts: 6,
+      burst: false,
+      outcome: 'committed'
+    }
+  ],
+  expected: [
+    {
+      stream: 'p5-mutation',
+      seq: 5000000001,
+      resend: false,
+      offsetMs: 727.93017578125,
+      facts: 6,
+      burst: false,
+      outcome: 'committed'
+    },
+    {
+      stream: 'p5-mutation',
+      seq: 5000000002,
+      resend: false,
+      offsetMs: 728.279052734375,
+      facts: 6,
+      burst: false,
+      outcome: 'committed'
+    },
+    {
+      stream: 'p5-mutation',
+      seq: 5000000003,
+      resend: false,
+      offsetMs: 728.3818359375,
+      facts: 6,
+      burst: false,
+      outcome: 'committed'
+    },
+    {
+      stream: 'p5-mutation',
+      seq: 5000000004,
+      resend: false,
+      offsetMs: 728.41015625,
+      facts: 6,
+      burst: false,
+      outcome: 'committed'
+    },
+    {
+      stream: 'p5-mutation',
+      seq: 5000000005,
+      resend: false,
+      offsetMs: 728.43212890625,
+      facts: 6,
+      burst: false,
+      outcome: 'committed'
+    },
+    {
+      stream: 'p5-mutation',
+      seq: 5000000006,
+      resend: false,
+      offsetMs: 728.453369140625,
+      facts: 6,
+      burst: false,
+      outcome: 'committed'
+    },
+    {
+      stream: 'p5-mutation',
+      seq: 5000000007,
+      resend: false,
+      offsetMs: 728.55419921875,
+      facts: 6,
+      burst: false,
+      outcome: 'committed'
+    }
+  ],
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.23.2

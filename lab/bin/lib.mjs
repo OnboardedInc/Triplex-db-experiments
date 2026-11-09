@@ -27,7 +27,8 @@ export const OBJECTS = path.join(REPO, 'runs/objects');
 // Other worktrees then see a config-hash mismatch on the slot and fail closed, which is intended.
 // Rejected: always reading the worktree (each worktree would recreate the shared residents).
 export const CONFIG_DIR = process.env.TX2_CONFIG_DIR ? path.resolve(process.env.TX2_CONFIG_DIR) : MAIN;
-export const SLOTS_FILE = path.join(CONFIG_DIR, 'lab/config/slots.json');
+// [EXP-M01R] Why: paired CPU placement is opt-in; default slot hashes stay unchanged. Rejected: changing shared s1/s3 defaults.
+export const SLOTS_FILE = process.env.TX2_SLOTS_FILE ? path.resolve(process.env.TX2_SLOTS_FILE) : path.join(CONFIG_DIR, 'lab/config/slots.json');
 
 export const now = () => new Date().toISOString();
 export const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');

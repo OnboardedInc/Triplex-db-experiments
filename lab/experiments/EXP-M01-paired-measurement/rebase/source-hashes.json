@@ -1,0 +1,97 @@
+[
+  {
+    "path": "lab/bench/README.md",
+    "mainSha256": "3815722fc58637679685ec61060a9de605be46ed2234082c8fa9ebd4451f44f6",
+    "rebasedSha256": "6a895bca395d47cc63171c6122f698a038f0d71fbc89f16d7400e9377366751a"
+  },
+  {
+    "path": "lab/bench/driver.ts",
+    "mainSha256": "266e4185433169ae7294e6d20acaf46f3ce4add8041fe407d5deb6303ebb66cb",
+    "rebasedSha256": "f5059d5838cc4b6ab208709685eeb3be3fd45e150418ed6777b2a83f503c8119"
+  },
+  {
+    "path": "lab/bench/duet.ts",
+    "mainSha256": null,
+    "rebasedSha256": "61675cf875567e33fe42757709505275f98707a81858bb379e80f932682d939f"
+  },
+  {
+    "path": "lab/bench/lib/hist.ts",
+    "mainSha256": "dad68c421251334d768dcd8ebfb7817bab5f800190cfcf882f129a3dc0aa5d2a",
+    "rebasedSha256": "983e89c62b6b73ec6730c2e8b0a3325d5528897a786e59ed02fb4e6814754aed"
+  },
+  {
+    "path": "lab/bench/lib/noise.ts",
+    "mainSha256": null,
+    "rebasedSha256": "88308c7478fa63398a653098c4afaba3b69f307880ad32b3e4d5923e3ea87f3e"
+  },
+  {
+    "path": "lab/bench/lib/pair-analysis.ts",
+    "mainSha256": null,
+    "rebasedSha256": "e54174c3a4c4090af81c82c1afc597312a7ae64b7a80b0fb125c9951da30b76d"
+  },
+  {
+    "path": "lab/bench/lib/paired.ts",
+    "mainSha256": null,
+    "rebasedSha256": "2c68e427574173c5caaefcaed8322e761b718b2a32d79cf22297440167e8c70e"
+  },
+  {
+    "path": "lab/bench/lib/rounds.ts",
+    "mainSha256": null,
+    "rebasedSha256": "9be0cbe8ef79aa61b3fe78f7373ca958d0f7ff696049c02dcb53a777256e9da0"
+  },
+  {
+    "path": "lab/bench/test/noise.test.ts",
+    "mainSha256": null,
+    "rebasedSha256": "bae2d046271c1b7c8d7b4b48049c371a6c4dabd421c6e5ecbb1c35b5ea97e646"
+  },
+  {
+    "path": "lab/bench/test/paired.test.ts",
+    "mainSha256": null,
+    "rebasedSha256": "d44dce9dc408613533a3e26a94d9427da15ef63eef3e0c3c1c6353c8cacce155"
+  },
+  {
+    "path": "lab/bench/wait-slot.mjs",
+    "mainSha256": "e91b0f0d7eee84386b8d5cd945ea975cc11d33581285af39e5268731c1cb0ef0",
+    "rebasedSha256": "7e1cc535cce4d79447207a6a770ce67883ced7a159f066454aa1b3cf4732cfa4"
+  },
+  {
+    "path": "lab/bin/engine.mjs",
+    "mainSha256": "78f1a6b9a2a8fba62ff35be34b426e723c39587a2104e69ff4b9b05889589a1f",
+    "rebasedSha256": "a326547c1c3d08a8edaf4fdb6ba109a89206d7f87cae290c478d5ac5cd22526a"
+  },
+  {
+    "path": "lab/bin/gate.mjs",
+    "mainSha256": "f5fa85691c324def748a967e2c7a891784e2a50970a87d9534a1e414b397be2f",
+    "rebasedSha256": "0e96694a914f1b113dd6d9262bd3b4ade1fc7b94761597984a94396b5619186a"
+  },
+  {
+    "path": "lab/bin/heavy-lock.mjs",
+    "mainSha256": "88dd2071c8d8c1e3212c9a65dc719b79af46fbe6cc2e6ede8fbe0b61112803fa",
+    "rebasedSha256": "073dfb8998487d06f8072028a97a09b001a9217a3a98c629a9c96e115ee6ec2a"
+  },
+  {
+    "path": "lab/bin/lib.mjs",
+    "mainSha256": "d3031840141fb5e13597e69e75511c809d5814610fe9d39b838ab52e0561b13e",
+    "rebasedSha256": "d981607b4ddb47e26dc52443d93af6c7da262e79ee4d30ed75711e05d18948b1"
+  },
+  {
+    "path": "lab/bin/receipt.mjs",
+    "mainSha256": "ebdcfb60284d6efe378923c0f42eb4eb7ad9a260141ceb46958e86752d0d2d2c",
+    "rebasedSha256": "312ea948e9f4f437950f9c0386e4d061aa79aedfe6fc2326def9bed41104d787"
+  },
+  {
+    "path": "lab/bin/test/lab.test.mjs",
+    "mainSha256": "c6970e197add4e865211662bcf80adb75b9c345a1aea0d3c341fc219ec4c005c",
+    "rebasedSha256": "35c8ce6c618b0f05ecbc97fc7794377e02135588c232c520cf0f2a09e318de74"
+  },
+  {
+    "path": "lab/config/noise.json",
+    "mainSha256": null,
+    "rebasedSha256": "6f00fb518c71a95a2b25661efe7affcb9ed9838c4e36b6cb79a2231460fc8190"
+  },
+  {
+    "path": "lab/config/slots-pair.json",
+    "mainSha256": null,
+    "rebasedSha256": "553f816e6c35244c5e47f0e0233776e6d5d280a4e631875b847262d48163542f"
+  }
+]

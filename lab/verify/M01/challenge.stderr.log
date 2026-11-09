@@ -1,0 +1,20 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 1645 "CX-P2B-R3-step2-source-40", pid 20311 "CX-P2B-R3-build4b", pid 94690 "CX-DI01-G0-r4", pid 19566 "CX-RT01-live2-G2"
+[lab] heavy: waiting for one of 4 slots; held by pid 1645 "CX-P2B-R3-step2-source-40", pid 20311 "CX-P2B-R3-build4b", pid 94690 "CX-DI01-G0-r4", pid 19566 "CX-RT01-live2-G2"
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+false !== true
+
+    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-m01r/lab/verify/M01/challenge.ts:50:55 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.23.2
