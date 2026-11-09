@@ -71,8 +71,12 @@ export function worldOf(subject: string, rows: readonly WorldRow[]): W0.World {
     v: factValue(r.value),
     tx: r.position,
   }));
-  facts.sort((a, b) => Buffer.compare(Buffer.from(canonical(a)), Buffer.from(canonical(b))));
-  return { subject, facts };
+  // [EXP-P5N] Why: the comparator canonicalized both facts on every comparison (about 8,000 canonical calls and Buffer allocations for a 445-fact world, 4.0 ms of 9.1 ms per subject).
+  // Each fact's canonical bytes are computed once and the same Buffer.compare orders them, so the order is identical by construction.
+  // Rejected: comparing canonical strings (JS compares UTF-16 units, which differs from UTF-8 bytes for some code points).
+  const keys = facts.map((f) => Buffer.from(canonical(f)));
+  const order = facts.map((_, i) => i).sort((i, j) => Buffer.compare(keys[i]!, keys[j]!));
+  return { subject, facts: order.map((i) => facts[i]!) };
 }
 export function reachableRows(
   subjects: readonly string[],
