@@ -56,3 +56,15 @@ Pin-level counts remain **157 total / 40 closable / 117 blocked**. Surface total
 ## Limits and handoff
 
 These are builder gates, not independent delta acceptance, production evidence collection or lane qualification. No engine/container lifecycle, package installation, benchmark, root pnpm check, G03 pin promotion, push, merge into main or Sam-pending VM/tenancy decision was performed. A separate reviewer still adjudicates the contract delta, including the transparently noted missing standalone O05 brief. G03 isolation pins remain work for 0.3.13; Q78e/Q86g remain pending for Sam.
+
+## Round 2 — original instruction provenance (CX-VA01-0311 F1)
+
+North star: correctness floor for P1–P5. Reviewer `4c9077e` returned FIX-FIRST for the report-as-brief substitution. This section supersedes the round-1 missing-brief handoff above; round-1 source, findings and receipts remain unchanged.
+
+Recovered the exact original O05 round-4 launch dispatch from the reviewer’s immutable recovery artifacts and compared it with the still-present launcher original. It is saved as `lab/acceptance/pins/O-OBS-V-O05-round4-BRIEF.md`, SHA-256 `4207182cbbda61f04e9647e1dcde291bdc345dc30f49926abeed6e157e2c1baa`. The registry now hashes those original instructions; `record` still names the unchanged review report. The original recovery JSON, matched launch/exit ledger rows and matching reviewer last message are retained separately; no retrospective instruction summary was authored.
+
+Audited all **five oracle registry entries**, plus both world entries. O-OBS was the sole report-for-instruction substitution. V-O04i's saved instruction bytes match its actual launcher prompt; V-O03 and V-O04c retain their explicitly documented pre-Q59c V-O02 instruction-brief exception; O-DOMAIN references its saved instruction document. All declared instruction hashes match their preimages. This checks the reported substitution class; it does not claim to recover new dispatches for the two documented legacy exceptions.
+
+Added a separately frozen instruction-preimage map for all seven entries and validation against it. A report substituted with its own correct digest now rejects at Q59c, rather than passing the existing existence/hash checks. Seven new mutations cover that substitution once per registry entry, and two additional contract tests check the exact recovered source and every audited instruction preimage. The targeted F1 regression rejects at the intended Q59c guard. Main `a27b100b` was merged into this branch before the fix gates; its delta is notebook/state only. No new ruling, runner, pin scope or evaluator assertion changed.
+
+Full round-2 gates are in progress. Final source-bound results will be appended below. Receipts are separate under `evidence-0.3.12-round2/`; round-1 files are preserved.

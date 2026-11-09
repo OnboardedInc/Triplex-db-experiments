@@ -8,7 +8,12 @@ import sys
 import time
 
 REPO = Path(__file__).resolve().parents[4]
-OUT = REPO / 'lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.12'
+# [EXP-A01-0312-R2] Why: each round retains separate raw receipts. Rejected: overwriting the previous round's evidence.
+EXPERIMENT = REPO / 'lab/experiments/EXP-A01-acceptance-contract'
+OUT = EXPERIMENT / (sys.argv[1] if len(sys.argv) > 1 else 'evidence-0.3.12')
+if OUT.parent != EXPERIMENT or not OUT.name.startswith('evidence-0.3.12'):
+    raise ValueError('evidence output must be a direct experiment child for contract 0.3.12')
+OUT.mkdir(exist_ok=True)
 TESTS = 'lab/experiments/EXP-A01-acceptance-contract/regressions/'
 ORACLE = 'lab/acceptance/oracle/'
 COMMANDS = [

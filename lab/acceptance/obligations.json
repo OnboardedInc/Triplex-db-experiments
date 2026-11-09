@@ -28,7 +28,10 @@
     "lab/verify/D01/BRIEF.md": "8fbdaaf67d2cbc1ae000d780ce7fcc45825ec6ba81edbbc9ed179ce517b5df88",
     "lab/acceptance/pins/O-OBS-V-O05-round4.md": "aa275c634384c42977b6ed294be9cb527423a9ad824b9101556017b065bb12dc",
     "lab/acceptance/pins/O-OBS-23e2273-SHA256SUMS": "486a4209d38fcc70a9ccb64d7c7ed9e0dfe25eef405ca21b097fee67d2697300",
-    "lab/acceptance/build_contract.py": "8ea37fba24579e9d0751c480e49eeefb0ee121dc5692c78d5ef48826493efe5d"
+    "lab/acceptance/pins/O-OBS-V-O05-round4-BRIEF.md": "4207182cbbda61f04e9647e1dcde291bdc345dc30f49926abeed6e157e2c1baa",
+    "lab/acceptance/pins/O-OBS-V-O05-round4-brief-provenance.json": "50fe4ca21c0e0769136b1a77d9f2ab71afff0f4e454668e4654acc0030f19fdd",
+    "lab/acceptance/pins/O-OBS-V-O05-round4-last.md": "5956dfd269b4f18b13bda84a0bfa840b164d0d783c6f34dda9ff29ad706bcf7c",
+    "lab/acceptance/build_contract.py": "c7f9e62e716416722b26c14f786e94d0bd3beda62472f04a0874813777429eb3"
   },
   "artifacts": {
     "oracle-contract.json": "a7ec2fe98f8bb066fe6ea55e89344905f5e9c760b076152f5377c414d18adbd0",
@@ -3756,7 +3759,7 @@
       ],
       "answer": "canonical JSON {bound, unboundAssignments, imagesPinned, variant} for one composition-identity case {composition}, run from the authority's files (RULINGS Q59e, Q64c, Q65a)",
       "sha256": {
-        "lab/acceptance/build_contract.py": "8ea37fba24579e9d0751c480e49eeefb0ee121dc5692c78d5ef48826493efe5d",
+        "lab/acceptance/build_contract.py": "c7f9e62e716416722b26c14f786e94d0bd3beda62472f04a0874813777429eb3",
         "lab/acceptance/oracle-contract.json": "a7ec2fe98f8bb066fe6ea55e89344905f5e9c760b076152f5377c414d18adbd0"
       }
     },
@@ -4006,15 +4009,52 @@
           "commit": "23e2273fc6b15b92821b318acd387f5484155d8a",
           "version": "O05-round4"
         },
-        "brief": "lab/acceptance/pins/O-OBS-V-O05-round4.md",
-        "briefSha256": "aa275c634384c42977b6ed294be9cb527423a9ad824b9101556017b065bb12dc",
-        "briefNote": "No separate BRIEF exists at the verifier commit; the retained round-4 review records its instructions and scope. This is not a newly authored verifier brief.",
+        "brief": "lab/acceptance/pins/O-OBS-V-O05-round4-BRIEF.md",
+        "briefSha256": "4207182cbbda61f04e9647e1dcde291bdc345dc30f49926abeed6e157e2c1baa",
+        "briefNote": "Recovered original round-4 dispatch, byte-identical to the launcher prompt and independent reviewer copy; record remains the unchanged review report.",
         "branch": "verify/O05",
         "commit": "3e3df9cb98a91b3b50192b79af1a0b908343cbcc",
         "verdict": "ACCEPT for screening only",
         "record": "lab/acceptance/pins/O-OBS-V-O05-round4.md",
-        "status": "current"
+        "status": "current",
+        "briefProvenance": {
+          "record": "lab/acceptance/pins/O-OBS-V-O05-round4-brief-provenance.json",
+          "recordSha256": "50fe4ca21c0e0769136b1a77d9f2ab71afff0f4e454668e4654acc0030f19fdd",
+          "recoveryCommit": "4c9077ecb00b2d000d338911b41692aa8ce1b7aa",
+          "lastMessage": "lab/acceptance/pins/O-OBS-V-O05-round4-last.md",
+          "lastMessageSha256": "5956dfd269b4f18b13bda84a0bfa840b164d0d783c6f34dda9ff29ad706bcf7c"
+        }
       }
+    }
+  },
+  "verifierBriefSources": {
+    "V-O04i": {
+      "path": "lab/verify/O02/V-O04i/BRIEF.md",
+      "sha256": "67c5de230614092d3a648458ecf046a1f7a262db52ae4c47e6252f8a5996bc85"
+    },
+    "V-O03": {
+      "path": "lab/verify/O02/BRIEF.md",
+      "sha256": "38d3c81f99da26438ff09ba0e6b6a88e75c5f402c4362a7d28d9b8df387376c4"
+    },
+    "V-O04c": {
+      "path": "lab/verify/O02/BRIEF.md",
+      "sha256": "38d3c81f99da26438ff09ba0e6b6a88e75c5f402c4362a7d28d9b8df387376c4"
+    },
+    "V-D01-W0-1.1.1": {
+      "path": "lab/verify/D01/BRIEF.md",
+      "sha256": "8fbdaaf67d2cbc1ae000d780ce7fcc45825ec6ba81edbbc9ed179ce517b5df88"
+    },
+    "V-D01e-W0-1.1.2": {
+      "path": "lab/verify/D01/V-D01e/BRIEF.md",
+      "sha256": "6df85539b0dd6c5a66b524c3c106fff3b8866f6afb3f581737e3a13ddd263dca"
+    },
+    "V-D01c-O-DOMAIN": {
+      "path": "lab/verify/D01c/BRIEF.md",
+      "sha256": "0384a8d6e4f8f615b9582c4e71664adf7caec54062755df92cf62bbb151150a0"
+    },
+    "V-O05-round4": {
+      "path": "lab/acceptance/pins/O-OBS-V-O05-round4-BRIEF.md",
+      "sha256": "4207182cbbda61f04e9647e1dcde291bdc345dc30f49926abeed6e157e2c1baa"
     }
   },
   "sourceVariantFields": {
@@ -30837,5 +30877,5 @@
       ]
     }
   ],
-  "transitiveContractSha256": "2858ea71c4d4cad1e14ef422269cf6d8bae14ad3b5eb8e5ccc3950c1fb462144"
+  "transitiveContractSha256": "11986ad73d09946ce13271958d6b968deb240614a40d24100f430d015ae6c1a3"
 }

@@ -1578,3 +1578,22 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **Q89f:** EXP-RQ01 builds the route-equivalence harness in packages/testkit (CX-RQ01) as a gate for every read-route change.
 - **For Sam (Q89g):** whether the public TemporalBasis gets a position or snapshot token. R33 will lay out the TypeScript shapes.
 - P2Q round 6: catalog derived from Node and undici sources plus an upgrade guard (763 controls); review round 7 running.
+
+## 2026-11-09 00:03Z: SQL01 accepted default-off; contract 0.3.12 built; P2Q down to one typed-refusal finding
+- **V-SQL01 round 2 ACCEPT (default-off):** 38,808 route pairs matched between H1 and the source; commits completed while reader and
+  maintenance barriers were held (F2 fixed); 50 abrupt stops kept all 161 ACKs. Still open: the original assertion-only 30/40 (F1 is the
+  likely cause but not proven) and true power loss. **Merge order:** SQL01 sits on an older P2Q base, so it merges after P2Q is accepted,
+  in one integration round with the P2Q head.
+- **Contract 0.3.12 built (f5e7a41):** 432/432 mutations, evaluator 108/108; in review.
+- **V-P2Q round 7 FIX-FIRST:** the derived transport catalog and upgrade guard pass; a transactional read silently replaced a future
+  position 6144 with 2048 and returned []. That is exactly what Q89c forbids, found the first round after the ruling.
+
+## 2026-11-09 00:16Z: all three XTDB-lane branches integrated; a QLever closure is 3x slower than when C8 was accepted
+- **INT-XCJ:** X02, C8 and J01 (default-off) are merged on int/X02-C8-J01 (ec1a815); evaluator 108/108; J01's three live tests need the
+  same expected-skip handling as C8's. Two workload pins changed (XTDB and QLever workload files); contract 0.3.12 re-pins them.
+- **C8's QLever "reads never write" control timed out twice**, localized to the Datalog ancestor closure from c8:a: 10.3 s with no load,
+  over 30.5 s with eight readers. It passed in C8's own review. Leading guess: qlever-dev has accumulated other lanes' test graphs for 25 hours
+  and the closure is not graph-scoped. If so, it is a P1 read-cost bug that shows only on a resident with realistic data volume. CX-C8-R4
+  investigates. **Learning:** shared residents drift in size; live controls need the resident's triple count in every receipt.
+- **Contract 0.3.12 FIX-FIRST:** O-OBS's registry hashed its review report instead of the original brief (Q59c). Everything else passed.
+- **K01 round 5:** 209 offline tests pass, plus a PASS audit listing every observation-to-PASS path; review round 4 audits that list.

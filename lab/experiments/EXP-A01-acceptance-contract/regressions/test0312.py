@@ -95,6 +95,29 @@ class Contract0312(unittest.TestCase):
         self.assertGreaterEqual(DOC['mergeGates']['minimumTests'], 108)
         self.assertFalse(DOC['mergeGates']['weakenAssertions'])
 
+    def test_original_o05_instructions_recovered_verbatim(self):
+        entry = DOC['verifierRegistry']['entries']['V-O05-round4']
+        actual = (REPO / entry['brief']).read_bytes()
+        self.assertEqual(actual, original('lab/verify/A01/v0312/O05-round4-launch-instructions.md', '4c9077e'))
+        self.assertEqual(hashlib.sha256(actual).hexdigest(), '4207182cbbda61f04e9647e1dcde291bdc345dc30f49926abeed6e157e2c1baa')
+        self.assertNotEqual(entry['brief'], entry['record'])
+        self.assertEqual(entry['briefSha256'], hashlib.sha256(actual).hexdigest())
+        provenance = entry['briefProvenance']
+        self.assertEqual((REPO / provenance['record']).read_bytes(), original('lab/verify/A01/v0312/O05-brief-provenance.json', '4c9077e'))
+        self.assertEqual(hashlib.sha256((REPO / provenance['record']).read_bytes()).hexdigest(), provenance['recordSha256'])
+        self.assertEqual((REPO / provenance['lastMessage']).read_bytes(), original('lab/verify/A01/v0312/O05-round4-last.md', '4c9077e'))
+
+    def test_every_verifier_entry_has_its_audited_instruction_preimage(self):
+        entries = DOC['verifierRegistry']['entries']
+        self.assertEqual(set(entries), set(DOC['verifierBriefSources']))
+        self.assertEqual(set(D['verifier_brief_checks']()), set())
+        for vid, entry in entries.items():
+            expected = DOC['verifierBriefSources'][vid]
+            self.assertEqual(entry['brief'], expected['path'], vid)
+            self.assertEqual(entry['briefSha256'], expected['sha256'], vid)
+            self.assertEqual(hashlib.sha256((REPO / entry['brief']).read_bytes()).hexdigest(), expected['sha256'], vid)
+            self.assertNotEqual(entry['brief'], entry['record'], vid)
+
     def test_verifier_record_is_original(self):
         entry = DOC['verifierRegistry']['entries']['V-O05-round4']
         self.assertEqual((REPO / entry['record']).read_bytes(), original('lab/verify/O05/VERIFY-round4.md', '3e3df9c'))
