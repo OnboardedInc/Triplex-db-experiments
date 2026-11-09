@@ -171,3 +171,7 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   (default-off); Q87 gate 108/108 on main after the merge. Next contract: 0.4.0 with RT01, O-REPLAY 0.5.0, Q89-Q92 and G03's pins.
 - O-REPLAY 0.5.0 ACCEPT (exp/O06-oracle-record-time fed510e; verify/O06 fc78350): ready to pin in contract 0.4.0 together with RT01
   (the oracle merge and pin move go in one commit, Q45a). Not merged alone: 0.4.0 needs RT01's product side first.
+- OBS01 round 5 (c55a728): all ten protocols worked; 1 PASS, 9 FAIL, 20 negatives refused, 59 tests. The nine remaining gaps need
+  sources the shared residents cannot give without changes (engine statement logs, read-only engine-config mounts, crash and memory-failure
+  windows, physical-file inventory for erasure scans); round5/SOURCES.md names each change. OBS01 pauses until the scale window, where those
+  protocols run on exclusive slots configured for observation (with G03's containers); no resident is changed.
