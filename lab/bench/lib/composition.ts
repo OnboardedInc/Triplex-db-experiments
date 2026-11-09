@@ -98,7 +98,7 @@ export interface CompositionHandle {
   }>;
   g0Reader?(logicalScope?: string): import("./g0.ts").Reader;
   commandLog?(): readonly any[];
-  storeCounts(): Promise<Record<string, number>>;
+  storeCounts(signal?: AbortSignal): Promise<Record<string, number>>;
 
   readonly name: string;
   readonly assignments: Assignments;

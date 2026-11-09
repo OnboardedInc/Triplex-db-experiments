@@ -1,0 +1,50 @@
+{
+  "format": "triplex-db-2/p5-round4-summary/1",
+  "status": "OFFLINE-CHECKS-COMPLETE",
+  "classification": "DIAGNOSTIC",
+  "acceptance": false,
+  "reviewCommit": "52896ea",
+  "baseP5Commit": "7e34c387",
+  "guardBackport": "f52b1ee41df1fd5d0be6fd536c72da9bcdab1fd2",
+  "guardBackportPaths": [
+    "lab/bench/lib/g0.ts"
+  ],
+  "applicationCheck": {
+    "kind": "backport-application-check-only",
+    "acceptance": false,
+    "commit": "f52b1ee41df1fd5d0be6fd536c72da9bcdab1fd2",
+    "paths": [
+      "lab/bench/lib/g0.ts"
+    ],
+    "targetK01Head": "b9d1be7952bb4b1f5890588e693ebe764ec33360",
+    "gitApplyCheckExit": 0,
+    "patchSha256": "a08382c8ce17f8dc31fddc9e69e65c7523d0f29bd6c56af7c86964c4c700fa5a",
+    "beforeSha256": "d2995b912bbe0460b3eb1c53a728f2242046676de73f43a401f26d6b4ad6f195",
+    "afterSha256": "57d6cd896f8227b30080c76a4c7941db38226c9b666aa2078921e65fea1464e6",
+    "E1MarkerUnchanged": [
+      "      Dprime: hash([\"tx2-e1/2\", normalization, expected, normalized, second.w0 ?? null]),"
+    ],
+    "P5GuardBytesUnchangedFromReviewedHead": true
+  },
+  "tests": {
+    "passed": 205,
+    "failed": 0,
+    "skipped": 0
+  },
+  "unchangedSourcePaths": 239,
+  "evidence": {
+    "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-P5A/round4/final-01/execution.json": "020694411ee8b972baa8f41c27f063298bcc1dbf1ead90be8d0fd6b776801671",
+    "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-P5A/round4/final-01/tests.log": "21de2ee7bf31e7301f42c464dd03c6f70ec0658173c03b155735a06b0b96f6e6",
+    "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-P5A/round4/freshness-e7371305-6b6f-4639-bcfa-f092ffb62e69/observations.json": "59a2ff1e34dab9bc4870feea8ddb4726e48ee9ffca2a15c7307ad59798d7c9d9",
+    "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-P5A/round4/backport-check.json": "7cf14be83ac34d55fad237f65af3c22e5a85bd1402fe08d7f10ec04a3cce728e",
+    "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-P5A/round4/g0-backport.patch": "a08382c8ce17f8dc31fddc9e69e65c7523d0f29bd6c56af7c86964c4c700fa5a",
+    "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-P5A/round4/reviewer-freshness.test.ts": "bb3d173c516334bde19302a2154d74e3592435be52097a1af11878a1cfb613b6"
+  },
+  "manifestSha256": "d72813f77e4753a55b78988b7822a1c13a40e34b4cd13e3a0b7e52fa6eeed69c",
+  "changedPinnedPaths": [],
+  "limits": [
+    "Offline memory only; no native cancellation/cleanup or A1/K01 clone qualification",
+    "No corrected 1k/10k rerun or root suite",
+    "No performance promotion"
+  ]
+}

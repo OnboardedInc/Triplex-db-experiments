@@ -86,11 +86,15 @@ export async function publicSweep(lane: Lane, handle: TriplesHandle) {
         requested = undefined;
       }
     },
-    counts: async () => {
+    counts: async (signal?: AbortSignal) => {
+      signal?.throwIfAborted();
       const r = await client.query(
         "SELECT (SELECT COALESCE(MAX(position), 0) FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = ?) AS position, COUNT(*) AS assertions, COUNT(retracted_position) AS retired FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = ?",
         [handle.scope, handle.scope],
+        undefined,
+        { signal },
       );
+      signal?.throwIfAborted();
       return {
         position: Number(r[0]?.position),
         assertions: Number(r[0]?.assertions),
