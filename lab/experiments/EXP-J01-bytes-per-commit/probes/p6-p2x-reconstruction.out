@@ -1,0 +1,60 @@
+{
+ "receipt": "p2x-reconstruction-20261108T002151Z-0c437a",
+ "scopeKeyLength": 43,
+ "a0RecordBytes": 27581,
+ "p2xReported": {
+  "a0": 27581,
+  "candidate": 95364
+ },
+ "increments": [
+  {
+   "name": "candidate rows and bookkeeping as plain INSERT ... VALUES (put-docs), no ASSERTs, no heads/feed/METADATA",
+   "recordBytes": 21069,
+   "statements": 4,
+   "params": 567,
+   "sqlChars": 3681,
+   "bytes": 21069
+  },
+  {
+   "name": "+ the two merged ASSERTs (_id point lookups)",
+   "recordBytes": 27893,
+   "statements": 6,
+   "params": 595,
+   "sqlChars": 4134,
+   "bytes": 6824
+  },
+  {
+   "name": "+ tx_heads and tx_feed rows (plain)",
+   "recordBytes": 30877,
+   "statements": 8,
+   "params": 608,
+   "sqlChars": 4478,
+   "bytes": 2984
+  },
+  {
+   "name": "+ METADATA on BEGIN",
+   "recordBytes": 32740,
+   "statements": 8,
+   "params": 608,
+   "sqlChars": 4478,
+   "bytes": 1863
+  },
+  {
+   "name": "+ stamped bookkeeping inserts (INSERT ... SELECT)",
+   "recordBytes": 35172,
+   "statements": 8,
+   "params": 615,
+   "sqlChars": 5854,
+   "bytes": 2432
+  },
+  {
+   "name": "+ stamped tx_assertions insert (INSERT ... SELECT) = the candidate",
+   "recordBytes": 95364,
+   "statements": 8,
+   "params": 687,
+   "sqlChars": 5715,
+   "bytes": 60192
+  }
+ ],
+ "reconstructedCandidate": 95364
+}

@@ -1,0 +1,108 @@
+{
+  "format": "j01-receipt/1",
+  "id": "journal-equivalence-xtdb-20261108T010145Z-8a8030",
+  "kind": "journal-equivalence-xtdb",
+  "writtenAt": "2026-11-08T01:01:45.385Z",
+  "identity": {
+    "gitHead": "aeace418ce87a72e4ec769cfe48302bc4f90b6fb",
+    "dirty": true,
+    "diffSha256": "15f5516389ecadc81c4a29ece68c76268c3e8a1f69ac6f25a864cefe03957f74",
+    "distSha256": "5315e5ffbb95b0d32f7d4788685412a1e6daab53a8b4a34919ecd80f932620b9",
+    "engines": {
+      "xtdb": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+      "qlever": "adfreiburg/qlever:0.6.0@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec"
+    },
+    "endpoints": {
+      "xtdb": "postgres://xtdb:xtdb@127.0.0.1:5470/xtdb",
+      "qlever": "http://127.0.0.1:7070"
+    },
+    "node": "v22.23.2",
+    "host": {
+      "cpus": 12,
+      "loadavg": [
+        14.14,
+        12.46,
+        11.95
+      ]
+    }
+  },
+  "lane": "xtdb",
+  "deterministic": {
+    "startTime": 1762560000000,
+    "seed": "j01-journal-equivalence"
+  },
+  "identical": false,
+  "differingSurfaces": [
+    "datalogChange",
+    "datalogIndex",
+    "datalogEnvelope",
+    "datalogData"
+  ],
+  "surfaces": {
+    "results": "702f4e7f6d1fabc8",
+    "transactions": "993f0f4eaecb3e4a",
+    "transaction": "a5e5d29fe8dd7e26",
+    "byCommand": "92591563d89c83a2",
+    "forEntity": "88a8d23456822fa6",
+    "forEntityPaged": "0da6a0286d379cc6",
+    "matchTransactions": "e8ca6262e8361ec0",
+    "matchChange": "4db28028d4bb1761",
+    "matchChangedEntity": "bd78b408f974fc97",
+    "matchTxEntity": "10d796e72794763a",
+    "datalogChange": "c8d478d40739a7e7",
+    "datalogIndex": "9239a6fdba7fcc9f",
+    "datalogEnvelope": "2d0d5de64ab90cc2",
+    "entityNow": "2865fb5946c4f101",
+    "history": "4c1237dab478ad6f",
+    "entityAtValidTime": "b4ee037c57cdfacf",
+    "entityBeforeAnyRecord": "4f53cda18c2baa0c",
+    "datalogData": "c748e9b93c8f14ce",
+    "datalogValidTime": "9774242688e8bdfb",
+    "datalogWithBasis": "e6d8bbe420f9689a",
+    "dependency": "47d784b35f995e0f"
+  },
+  "arms": [
+    {
+      "encoding": "a0",
+      "readsSha256": "7ee9939eafdd4564e328886ff6ab70a8fb51dd3e6ef3a8a301025a8a8721d0d3",
+      "readsBytes": 161765,
+      "physicalSha256": "620e39743a158c280acf465023cfb776b6e9ede454c35d00c2ae7cbe80b4c15b",
+      "physicalRows": 46,
+      "transactions": 5,
+      "journalFacts": 46,
+      "changes": 23
+    },
+    {
+      "encoding": "compact",
+      "readsSha256": "0b85314bedd4669c144048cd349473a8fb8048e6b5c68112d8416c04e333f7d0",
+      "readsBytes": 161765,
+      "physicalSha256": "620e39743a158c280acf465023cfb776b6e9ede454c35d00c2ae7cbe80b4c15b",
+      "physicalRows": 46,
+      "transactions": 5,
+      "journalFacts": 46,
+      "changes": 23
+    },
+    {
+      "encoding": "a0",
+      "readsSha256": "009119398e21aa978704d33efe29a90d5072e7b17172bec6e26bdec4322c1bdd",
+      "readsBytes": 161765,
+      "physicalSha256": "620e39743a158c280acf465023cfb776b6e9ede454c35d00c2ae7cbe80b4c15b",
+      "physicalRows": 46,
+      "transactions": 5,
+      "journalFacts": 46,
+      "changes": 23
+    },
+    {
+      "encoding": "compact",
+      "readsSha256": "2f34dae07000a0a5fa398773ba452d3f8a5219bb3b5eea62b671e417d9c35c49",
+      "readsBytes": 161765,
+      "physicalSha256": "620e39743a158c280acf465023cfb776b6e9ede454c35d00c2ae7cbe80b4c15b",
+      "physicalRows": 46,
+      "transactions": 5,
+      "journalFacts": 46,
+      "changes": 23
+    }
+  ],
+  "rawPath": "/Users/sam/Claude/Projects/triplex-db-2/EXP-J01/journal-equivalence-xtdb-20261108T010145Z-8a8030.raw.json",
+  "rawSha256": "8388b115495d2a5e10bffb38e582f871e5a639754dc45b8b468b75e683a7d807"
+}

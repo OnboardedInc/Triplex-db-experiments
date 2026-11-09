@@ -11,7 +11,12 @@ import {
   MigrationError,
   TransactionOutcomeUnknown,
 } from "@triplex-build/triplex/runtime";
-import { type XtdbClient, type XtdbStatement, XtdbTransactionRejected } from "./XtdbClient.js";
+import {
+  compactTextArray,
+  type XtdbClient,
+  type XtdbStatement,
+  XtdbTransactionRejected,
+} from "./XtdbClient.js";
 import {
   assertionColumns,
   assertionValue,
@@ -69,6 +74,64 @@ const cutConditions = (
   return conditions;
 };
 
+/**
+ * How a commit is written (EXP-J01). `a0` is the unchanged default. `compact` writes the same rows
+ * and the same logical journal; only the commit guards change (see `compactGuards`).
+ */
+export type XtdbCommitEncoding = "a0" | "compact";
+
+/**
+ * [EXP-J01] Compact commit guards: the A0 conditions in two ASSERT statements instead of four.
+ *
+ * Why: XTDB logs every parameter of a `:sql` operation (ASSERT included) as its own Arrow column in
+ * the operation's argument batch, about 130 to 155 bytes per parameter before its value, while an
+ * `INSERT ... VALUES` of literals or parameters becomes a `put-docs` operation whose rows cost only
+ * their values. A0's four guards carry 31 parameters for a 10-fact command (the scope key four
+ * times, one parameter per new assertion id), 7,624 of its 30,061 source-log bytes (EXP-J01
+ * xtdb-attribution, probe p3). Here:
+ *   1. The failure classes stay A0's: `triplex-cas-conflict` (scope CAS or a claimed command:
+ *      `XtdbSerializationConflict`, which the core may replay) and `triplex-identity-conflict`
+ *      (operation already recorded or an assertion id already used: a definite `WriteError`).
+ *      A0 spells the latter `triplex-operation-duplicate` and `triplex-assertion-identity-conflict`;
+ *      both map to the same error, so only the message text differs.
+ *   2. The scope key is bound once per statement (`$1`, reused), not once per subquery.
+ *   3. Each id list is one `text[]` parameter compared with `= ANY($n)`: one list column instead of
+ *      one column per id, and SQL text that is constant across commits.
+ * The old p5 JSON probe double-encoded a string; it does not reject JSON arrays as an alternative.
+ * Measured (probe p7, same command): 26,397 bytes against 30,061.
+ * Rejected: SQL string literals (XTDB 2.2's lexer refuses a raw newline inside a literal, probe p4,
+ * so caller-supplied command ids cannot be inlined, and per-commit SQL text defeats plan reuse);
+ * one merged ASSERT (it would erase the retryable/definite distinction for 144 more bytes).
+ */
+export const compactGuards = (
+  scopeKey: string,
+  sourceK: number,
+  operationId: string,
+  commandIds: readonly string[],
+  newIds: readonly string[],
+): XtdbStatement[] => [
+  {
+    sql:
+      "ASSERT (SELECT COALESCE(MAX(position), 0) FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1) = $2" +
+      (commandIds.length > 0
+        ? " AND NOT EXISTS (SELECT 1 FROM tx_claims FOR ALL VALID_TIME WHERE scope_key = $1 AND command_id = ANY($3))"
+        : "") +
+      ", 'triplex-cas-conflict'",
+    params: [scopeKey, sourceK, ...(commandIds.length > 0 ? [compactTextArray(commandIds)] : [])],
+    parameterSyntax: "postgresql",
+  },
+  {
+    sql:
+      "ASSERT NOT EXISTS (SELECT 1 FROM tx_attempts FOR ALL VALID_TIME WHERE scope_key = $1 AND operation_id = $2)" +
+      (newIds.length > 0
+        ? " AND NOT EXISTS (SELECT 1 FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = $1 AND id = ANY($3))"
+        : "") +
+      ", 'triplex-identity-conflict'",
+    params: [scopeKey, operationId, ...(newIds.length > 0 ? [compactTextArray(newIds)] : [])],
+    parameterSyntax: "postgresql",
+  },
+];
+
 export const makeXtdbStorageAdapter = (
   client: XtdbClient,
   scopeKey: string,
@@ -77,8 +140,13 @@ export const makeXtdbStorageAdapter = (
     readonly resolutionTimeoutMs?: number;
     readonly admissionQueue?: boolean;
     readonly constraintStrategy?: "portable" | "inline" | "projection";
+    /** EXP-J01: default `a0`. */
+    readonly commitEncoding?: XtdbCommitEncoding;
   } = {},
 ): StorageAdapterService => {
+  const commitEncoding = options.commitEncoding ?? "a0";
+  if (commitEncoding !== "a0" && commitEncoding !== "compact")
+    throw new TypeError("Unknown XTDB commit encoding; choose a0 or compact");
   const key = Symbol(scopeKey);
   const maxRetries = options.maxRetries ?? 12;
   const resolutionTimeoutMs = options.resolutionTimeoutMs ?? 30_000;
@@ -190,27 +258,38 @@ export const makeXtdbStorageAdapter = (
     operationId: string,
     attemptId: string,
   ): Effect.Effect<void, WriteError> => {
-    const statements: XtdbStatement[] = [
-      {
-        sql: "ASSERT (SELECT COALESCE(MAX(position), 0) FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = ?) = ?, 'triplex-cas-conflict'",
-        params: [scopeKey, state.sourceK],
-      },
-      {
-        sql: "ASSERT NOT EXISTS (SELECT 1 FROM tx_attempts FOR ALL VALID_TIME WHERE scope_key = ? AND operation_id = ?), 'triplex-operation-duplicate'",
-        params: [scopeKey, operationId],
-      },
-    ];
-    for (const claim of state.claims.values()) {
-      statements.push({
-        sql: "ASSERT NOT EXISTS (SELECT 1 FROM tx_claims FOR ALL VALID_TIME WHERE scope_key = ? AND command_id = ?), 'triplex-command-conflict'",
-        params: [scopeKey, claim.commandId],
-      });
+    const statements: XtdbStatement[] =
+      commitEncoding === "compact"
+        ? compactGuards(
+            scopeKey,
+            state.sourceK,
+            operationId,
+            [...state.claims.values()].map((claim) => claim.commandId),
+            [...state.newIds],
+          )
+        : [
+            {
+              sql: "ASSERT (SELECT COALESCE(MAX(position), 0) FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = ?) = ?, 'triplex-cas-conflict'",
+              params: [scopeKey, state.sourceK],
+            },
+            {
+              sql: "ASSERT NOT EXISTS (SELECT 1 FROM tx_attempts FOR ALL VALID_TIME WHERE scope_key = ? AND operation_id = ?), 'triplex-operation-duplicate'",
+              params: [scopeKey, operationId],
+            },
+          ];
+    if (commitEncoding === "a0") {
+      for (const claim of state.claims.values()) {
+        statements.push({
+          sql: "ASSERT NOT EXISTS (SELECT 1 FROM tx_claims FOR ALL VALID_TIME WHERE scope_key = ? AND command_id = ?), 'triplex-command-conflict'",
+          params: [scopeKey, claim.commandId],
+        });
+      }
+      if (state.newIds.size > 0)
+        statements.push({
+          sql: `ASSERT NOT EXISTS (SELECT 1 FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = ? AND id IN (${[...state.newIds].map(() => "?").join(", ")})), 'triplex-assertion-identity-conflict'`,
+          params: [scopeKey, ...state.newIds],
+        });
     }
-    if (state.newIds.size > 0)
-      statements.push({
-        sql: `ASSERT NOT EXISTS (SELECT 1 FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = ? AND id IN (${[...state.newIds].map(() => "?").join(", ")})), 'triplex-assertion-identity-conflict'`,
-        params: [scopeKey, ...state.newIds],
-      });
     const rows = [...state.rows.values()];
     for (let i = 0; i < rows.length; i += 200) {
       statements.push(

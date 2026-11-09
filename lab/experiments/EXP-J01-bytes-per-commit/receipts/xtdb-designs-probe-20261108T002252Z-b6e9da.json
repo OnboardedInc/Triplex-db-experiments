@@ -1,0 +1,64 @@
+{
+  "format": "j01-receipt/1",
+  "id": "xtdb-designs-probe-20261108T002252Z-b6e9da",
+  "kind": "xtdb-designs-probe",
+  "writtenAt": "2026-11-08T00:22:52.915Z",
+  "identity": {
+    "gitHead": "83b384334610043bd29ccc7f2b5f0ba0384361bc",
+    "dirty": true,
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "distSha256": "47569e384fbf164b4e8dc32abfb1a06bee2f1fe275d31c12d3fbe24edf8b9fc1",
+    "engines": {
+      "xtdb": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+      "qlever": "adfreiburg/qlever:0.6.0@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec"
+    },
+    "endpoints": {
+      "xtdb": "postgres://xtdb:xtdb@127.0.0.1:5470/xtdb",
+      "qlever": "http://127.0.0.1:7070"
+    },
+    "node": "v22.23.2",
+    "host": {
+      "cpus": 12,
+      "loadavg": [
+        7.94,
+        8.56,
+        10.81
+      ]
+    }
+  },
+  "a0RealRecordBytes": 30061,
+  "layouts": {
+    "A0": {
+      "recordBytes": 30061,
+      "ratioVsA0": 1,
+      "statements": 8,
+      "params": 597
+    },
+    "C1": {
+      "recordBytes": 26397,
+      "ratioVsA0": 1.14,
+      "statements": 6,
+      "params": 572
+    },
+    "H2": {
+      "recordBytes": 15355,
+      "ratioVsA0": 1.96,
+      "statements": 6,
+      "params": 273
+    },
+    "H3": {
+      "recordBytes": 12459,
+      "ratioVsA0": 2.41,
+      "statements": 4,
+      "params": 260
+    },
+    "H4": {
+      "recordBytes": 10795,
+      "ratioVsA0": 2.78,
+      "statements": 4,
+      "params": 260
+    }
+  },
+  "rawPath": null,
+  "rawSha256": null
+}

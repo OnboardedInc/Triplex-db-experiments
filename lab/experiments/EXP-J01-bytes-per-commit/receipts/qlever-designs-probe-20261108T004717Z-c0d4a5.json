@@ -1,0 +1,67 @@
+{
+  "format": "j01-receipt/1",
+  "id": "qlever-designs-probe-20261108T004717Z-c0d4a5",
+  "kind": "qlever-designs-probe",
+  "writtenAt": "2026-11-08T00:47:17.485Z",
+  "identity": {
+    "gitHead": "aeace418ce87a72e4ec769cfe48302bc4f90b6fb",
+    "dirty": true,
+    "diffSha256": "15f5516389ecadc81c4a29ece68c76268c3e8a1f69ac6f25a864cefe03957f74",
+    "distSha256": "5315e5ffbb95b0d32f7d4788685412a1e6daab53a8b4a34919ecd80f932620b9",
+    "engines": {
+      "xtdb": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+      "qlever": "adfreiburg/qlever:0.6.0@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec"
+    },
+    "endpoints": {
+      "xtdb": "postgres://xtdb:xtdb@127.0.0.1:5470/xtdb",
+      "qlever": "http://127.0.0.1:7070"
+    },
+    "node": "v22.23.2",
+    "host": {
+      "cpus": 12,
+      "loadavg": [
+        9.81,
+        10.86,
+        10.98
+      ]
+    }
+  },
+  "perFact": {
+    "a0": {
+      "string": 27,
+      "number": 30
+    },
+    "compact": {
+      "string": 18,
+      "number": 21
+    }
+  },
+  "layouts": {
+    "A0": {
+      "triples": 663,
+      "ratioVsA0": 1
+    },
+    "compact (built)": {
+      "triples": 447,
+      "ratioVsA0": 1.48
+    },
+    "bound: A0 channels, no journal at all": {
+      "triples": 279,
+      "ratioVsA0": 2.38
+    },
+    "H2: compact + journal as one record subject (read-path work)": {
+      "triples": 207,
+      "ratioVsA0": 3.2
+    },
+    "H3: H2 + claim and operation on the record subject (+2 channels)": {
+      "triples": 202,
+      "ratioVsA0": 3.28
+    },
+    "bound: compact channels, no journal at all": {
+      "triples": 189,
+      "ratioVsA0": 3.51
+    }
+  },
+  "rawPath": null,
+  "rawSha256": null
+}

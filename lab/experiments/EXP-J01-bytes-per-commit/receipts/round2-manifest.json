@@ -1,0 +1,396 @@
+{
+  "format": "j01-round2-evidence/1",
+  "baseCommit": "5cc42fb",
+  "branch": "exp/J01-bytes-per-commit",
+  "checks": {
+    "initialFocusedTests": {
+      "exitCode": 0,
+      "passed": 12,
+      "skipped": 3
+    },
+    "finalTypecheckAndFocusedTests": {
+      "exitCode": 0,
+      "passed": 12,
+      "skipped": 3
+    },
+    "jsonArrayProbe": {
+      "exitCode": 0,
+      "cases": 16,
+      "correctArrayCases": 8,
+      "correctArrayMatches": 8
+    },
+    "xtdbBuildAndDeclarations": {
+      "exitCode": 0
+    },
+    "lint": {
+      "exitCode": 0,
+      "errors": 0,
+      "existingWarnings": 2
+    },
+    "format": {
+      "exitCode": 0
+    }
+  },
+  "files": [
+    {
+      "path": "lab/experiments/EXP-J01-bytes-per-commit/probes/p12-json-array.mjs",
+      "bytes": 3506,
+      "sha256": "0de31fac1a3309086008bd2d79a1a6df775bb16fe543cb63a3905357e5d7d6c0"
+    },
+    {
+      "path": "lab/experiments/EXP-J01-bytes-per-commit/probes/p5-array-param.mjs",
+      "bytes": 3311,
+      "sha256": "972e941ae564c1ee047f714a8b5561830f10d271c652205969c1352eaf6763a5"
+    },
+    {
+      "path": "lab/experiments/EXP-J01-bytes-per-commit/probes/p5-array-param.out",
+      "bytes": 700,
+      "sha256": "40948da6a42ef48083054c771ccdfd0148bc132d29ec891943d3d10cb29e2777"
+    },
+    {
+      "path": "lab/experiments/EXP-J01-bytes-per-commit/receipts/round2-build.log",
+      "bytes": 3427,
+      "sha256": "2e7171b0d749c14df6ec297bdac1506cfc969883bb633e4b6f72af297a6a2ce7"
+    },
+    {
+      "path": "lab/experiments/EXP-J01-bytes-per-commit/receipts/round2-check.log",
+      "bytes": 920,
+      "sha256": "eaa932876982f0ec9837ffe5392e37272e24c8dc045dcdc30f3b93962ea9b179"
+    },
+    {
+      "path": "lab/experiments/EXP-J01-bytes-per-commit/receipts/round2-format.log",
+      "bytes": 203,
+      "sha256": "5473e2d30e93683ca5bc71c2b3e53f9ee1c3b41c6a57988a66e66dc0e7ac8a68"
+    },
+    {
+      "path": "lab/experiments/EXP-J01-bytes-per-commit/receipts/round2-json-array.json",
+      "bytes": 25603,
+      "sha256": "5334cd6f0a65bfda77f41c160a68635b26b64476ec6f2827a9271846793760be"
+    },
+    {
+      "path": "lab/experiments/EXP-J01-bytes-per-commit/receipts/round2-json-array.log",
+      "bytes": 860,
+      "sha256": "73d11da5dffa087e085f5c821b82d762feb4e6c614b3636ce014cb09d68eafb7"
+    },
+    {
+      "path": "lab/experiments/EXP-J01-bytes-per-commit/receipts/round2-lint.log",
+      "bytes": 1028,
+      "sha256": "3bc12cbcde1035217a437d80c38e8be449604c0d5f0f633685e66f5d73b9924d"
+    },
+    {
+      "path": "lab/experiments/EXP-J01-bytes-per-commit/receipts/round2-unit.log",
+      "bytes": 432,
+      "sha256": "5023454cce7f919eeade6c7b65c8cfea9e1db78fa5d5c8d7316248115f84a115"
+    },
+    {
+      "path": "packages/xtdb/dist/ConstraintValidation.d.ts",
+      "bytes": 794,
+      "sha256": "714b990a734932570261a3f49616d222e1cb273e72d8b646fdc417acde5a67c4"
+    },
+    {
+      "path": "packages/xtdb/dist/ConstraintValidation.js",
+      "bytes": 12617,
+      "sha256": "bc29a3a993e61fc04e8991efa92bf2ff79e2024ffb0c0befac8e0d4fc8c8dfc8"
+    },
+    {
+      "path": "packages/xtdb/dist/MaintainedQueries.d.ts",
+      "bytes": 1262,
+      "sha256": "1c731bbdca07563f5b74bdb541a2beb933222800ecd642a2902b1ea64b9069b7"
+    },
+    {
+      "path": "packages/xtdb/dist/MaintainedQueries.js",
+      "bytes": 7973,
+      "sha256": "1ba35fa64503a9cec011199ba323c52108cf53d8e9d39e5414817614579aed71"
+    },
+    {
+      "path": "packages/xtdb/dist/Operations.d.ts",
+      "bytes": 825,
+      "sha256": "b8c0a9fd45e4b924177bf878d6d58d702d88441b40224b332fd786755aa6f14a"
+    },
+    {
+      "path": "packages/xtdb/dist/Operations.js",
+      "bytes": 1371,
+      "sha256": "1ad642a54729e3efb6d144992ab09271e96e78c6bb11c3860ca4316b50132706"
+    },
+    {
+      "path": "packages/xtdb/dist/TemporalQueries.d.ts",
+      "bytes": 1177,
+      "sha256": "23df3658fb6bb6eb48071f01cc36f137e579ae766ab8356e0b47831a3a026b67"
+    },
+    {
+      "path": "packages/xtdb/dist/TemporalQueries.js",
+      "bytes": 7842,
+      "sha256": "6c711e616bb1ae6d4c526f92fe2620aed0ce4668939730733bd3fee2840d90ce"
+    },
+    {
+      "path": "packages/xtdb/dist/TransactionContext.d.ts",
+      "bytes": 669,
+      "sha256": "df55ec2bf183aa14ccd1a67cde23964ff963f68d3da72e9e1e090bbd21c01d01"
+    },
+    {
+      "path": "packages/xtdb/dist/TransactionContext.js",
+      "bytes": 289,
+      "sha256": "de1eb405204105793956af6f045a05449f3def0f54fb80c9870abfe4d8c4b68e"
+    },
+    {
+      "path": "packages/xtdb/dist/XtdbClient.d.ts",
+      "bytes": 1644,
+      "sha256": "7611df9aee647e68c3843695bbc8158f4b37d89f01713fa8a2d776d445cc0df0"
+    },
+    {
+      "path": "packages/xtdb/dist/XtdbClient.js",
+      "bytes": 7174,
+      "sha256": "e70adb5742fd79eb14f61bda6f9f2cf826b6d475e2c72ddc1ac49dfb0ee6bd37"
+    },
+    {
+      "path": "packages/xtdb/dist/XtdbQueryExecutor.d.ts",
+      "bytes": 908,
+      "sha256": "42ed029db11d6a47044128d40e5af9f5f100bfd04a6cc8301c81498d1a011b2c"
+    },
+    {
+      "path": "packages/xtdb/dist/XtdbQueryExecutor.js",
+      "bytes": 8138,
+      "sha256": "a9ec2b6aa0fee6777dde189006487d031d720358a9c5aeed327aa1536ad84672"
+    },
+    {
+      "path": "packages/xtdb/dist/XtdbStorageAdapter.d.ts",
+      "bytes": 2953,
+      "sha256": "95bb3b3ee467fd5212c276199ef99b9230a228be16fcc48df737b25a268328bb"
+    },
+    {
+      "path": "packages/xtdb/dist/XtdbStorageAdapter.js",
+      "bytes": 22298,
+      "sha256": "b4546e0b973bbe59f344e7866ed270a090667f8a6019a5fea356f19727bc1ce3"
+    },
+    {
+      "path": "packages/xtdb/dist/codecs.d.ts",
+      "bytes": 1491,
+      "sha256": "26165c9629de0e2969e3a4509cebf3dcb23e22f2b032ad0920a1c022ccd3cc26"
+    },
+    {
+      "path": "packages/xtdb/dist/codecs.js",
+      "bytes": 7561,
+      "sha256": "c510234bef573e267b963032f32a2ba0f56b0174139b8141ce99976fd6206f25"
+    },
+    {
+      "path": "packages/xtdb/dist/index.d.ts",
+      "bytes": 2561,
+      "sha256": "e0a48b0f9293a728ab87fb5d9a7f7d87c4d50b457fd0bd508c384af6be04898a"
+    },
+    {
+      "path": "packages/xtdb/dist/index.js",
+      "bytes": 2997,
+      "sha256": "8f7fd0c21867258a02952c445c85a7f69612750c0ad625d240d3e220ff7155bb"
+    },
+    {
+      "path": "packages/xtdb/dist/native/NativeQueries.d.ts",
+      "bytes": 1916,
+      "sha256": "6ef0ab1a5a499c6aab8b2dc279b0c97b1e85bb8094c45aea7959f225ce56a4e3"
+    },
+    {
+      "path": "packages/xtdb/dist/native/NativeQueries.js",
+      "bytes": 5144,
+      "sha256": "72b3bfcccba204b3c5bb4b8323e819a7cd6cae08383c72b2be1cb2f10be4fecc"
+    },
+    {
+      "path": "packages/xtdb/dist/native/Reachability.d.ts",
+      "bytes": 1381,
+      "sha256": "5a23c91e14cb9a2bd697198f5a73783850f63b3df6b1e5d72b55258c266106e5"
+    },
+    {
+      "path": "packages/xtdb/dist/native/Reachability.js",
+      "bytes": 8987,
+      "sha256": "ea6a74e4fa99ea98f6ce26213a73fc8d810d46007489e2b81eacfd3c6f0ef60a"
+    },
+    {
+      "path": "packages/xtdb/dist/native/ReadOnlySql.d.ts",
+      "bytes": 434,
+      "sha256": "10166371764ee240338858871c0110f9f01273afced7a4a296c27a77d1c06b74"
+    },
+    {
+      "path": "packages/xtdb/dist/native/ReadOnlySql.js",
+      "bytes": 3026,
+      "sha256": "4ead3ed5eb3b7e14b6182ba133d97fe8b14f8e4613166dc38dc14b841b7c109c"
+    },
+    {
+      "path": "packages/xtdb/dist/native/Sources.d.ts",
+      "bytes": 1237,
+      "sha256": "c7ff7f7304a213405f28cb845842a465e5a1a57487e30eaab382413f4e0ac7f5"
+    },
+    {
+      "path": "packages/xtdb/dist/native/Sources.js",
+      "bytes": 4550,
+      "sha256": "e4399b6ad074750ec2bda91cf564895c6e27ef31736fc7391cb20fadecfa9b31"
+    },
+    {
+      "path": "packages/xtdb/dist/query/compiler.d.ts",
+      "bytes": 1584,
+      "sha256": "73ce4425e8ae1f98ff8173538c6c7b1eef20466ad643d97a22f41c1346f07010"
+    },
+    {
+      "path": "packages/xtdb/dist/query/compiler.js",
+      "bytes": 5353,
+      "sha256": "b36e1851009600d6198260f5ff1edff5332323b3ec2f7769566944a85355e81d"
+    },
+    {
+      "path": "packages/xtdb/dist/query/domains.d.ts",
+      "bytes": 904,
+      "sha256": "ab886276efa216efc9d33ece1743c9c62826d3166bfdc6f32024dca9dd209826"
+    },
+    {
+      "path": "packages/xtdb/dist/query/domains.js",
+      "bytes": 6408,
+      "sha256": "63d5fc51c12dc5d509116d68c456d6568ce22fd8ad7c4f1968882f40b6719e92"
+    },
+    {
+      "path": "packages/xtdb/dist/query/grouping.d.ts",
+      "bytes": 577,
+      "sha256": "9732bce734d6f116fac5cf4c8e39594e6898895af51d920ca6c94aad26a03262"
+    },
+    {
+      "path": "packages/xtdb/dist/query/grouping.js",
+      "bytes": 4613,
+      "sha256": "d4c8b2f8216218a60c97b66221cfce388752d851404abae11a2d7b9126125a5b"
+    },
+    {
+      "path": "packages/xtdb/dist/query/overlay.d.ts",
+      "bytes": 361,
+      "sha256": "7875bbf0ab128609c6888839273eee7341f189958cf51a05a09dac430f21ba1f"
+    },
+    {
+      "path": "packages/xtdb/dist/query/overlay.js",
+      "bytes": 2276,
+      "sha256": "8a1d977d9674ea4b49928f124094df86a0ad6decabd63fe36df20b8ed293b446"
+    },
+    {
+      "path": "packages/xtdb/dist/query/recursion.d.ts",
+      "bytes": 739,
+      "sha256": "92419a6ca110b12dea83c94280866be0bbdeeb09d2a2444aa741bc344d3b1820"
+    },
+    {
+      "path": "packages/xtdb/dist/query/recursion.js",
+      "bytes": 6029,
+      "sha256": "cbce120e4105f552bb8119e8b4d0e3240aaefd2d4954bb45dae0cf9cdafec88b"
+    },
+    {
+      "path": "packages/xtdb/node_modules/postgres/src/types.js",
+      "bytes": 10935,
+      "sha256": "1883bd4536eab1c94b9e708d325b13708b0f18ec80020e3a825f34a72f603b81"
+    },
+    {
+      "path": "packages/xtdb/src/ConstraintValidation.ts",
+      "bytes": 15048,
+      "sha256": "b298dfe7841684ea3fda905b283e16f33853a0884af04f13b9913b89d82e9d29"
+    },
+    {
+      "path": "packages/xtdb/src/MaintainedQueries.ts",
+      "bytes": 11052,
+      "sha256": "a0ec651af8aa68d1c6e63b64109af48996d4c7576930909a50f90306869d8dbd"
+    },
+    {
+      "path": "packages/xtdb/src/Operations.ts",
+      "bytes": 1829,
+      "sha256": "2fa4dc6fc4c50a42cc088d497f70e49029e2f535399ae84d9c94239125147b66"
+    },
+    {
+      "path": "packages/xtdb/src/TemporalQueries.ts",
+      "bytes": 10103,
+      "sha256": "df7163a21d18b5d704fdbd8a6dcd065498eb18edd249e0fcad7e4a92dae555a9"
+    },
+    {
+      "path": "packages/xtdb/src/TransactionContext.ts",
+      "bytes": 666,
+      "sha256": "f4696c6539db3088e940c305ab484fc514fe32a7d09ea6b6f3397cd9878a43ad"
+    },
+    {
+      "path": "packages/xtdb/src/XtdbClient.ts",
+      "bytes": 11326,
+      "sha256": "b581b97b0d5eb449465655336b0fa7be76b8e82d1f07ea1c62a4b07d9ddbac9d"
+    },
+    {
+      "path": "packages/xtdb/src/XtdbQueryExecutor.ts",
+      "bytes": 10564,
+      "sha256": "71fc5d949a8a9f51449cfeb97afb9cd10b6e869647962a2c6ad006a4ccf69c0c"
+    },
+    {
+      "path": "packages/xtdb/src/XtdbStorageAdapter.ts",
+      "bytes": 28778,
+      "sha256": "cab61499308619709ea8740894501127d998dd819198e665872c3508c5249ed4"
+    },
+    {
+      "path": "packages/xtdb/src/codecs.ts",
+      "bytes": 8780,
+      "sha256": "f36b8de4af66fddd30b3a055ebf4473ad29c0634d9fd1ea0e45c7fb4e522e8f3"
+    },
+    {
+      "path": "packages/xtdb/src/index.ts",
+      "bytes": 4826,
+      "sha256": "efc6dd72c5041c907f511e31dcb5847a52e07cf749d681820c402da6c4fdbcf7"
+    },
+    {
+      "path": "packages/xtdb/src/native/NativeQueries.ts",
+      "bytes": 7584,
+      "sha256": "f07285b60d00a661551873ab2ffe3995b88b91caedda7e776784185026ff3b01"
+    },
+    {
+      "path": "packages/xtdb/src/native/Reachability.ts",
+      "bytes": 10624,
+      "sha256": "3929e03f7ba1b8e20a47d8fa94b71c68f64f0ad021beaf866deb210fa3fba932"
+    },
+    {
+      "path": "packages/xtdb/src/native/ReadOnlySql.ts",
+      "bytes": 3662,
+      "sha256": "dacd259603497bffcae0000e57ed5b7d63103f1ad0da42419d21d46a52333529"
+    },
+    {
+      "path": "packages/xtdb/src/native/Sources.ts",
+      "bytes": 6366,
+      "sha256": "a32138e18c1a5a963f37f830beb36ceb87f328ed4c6af96bf1498dd0c2c00e31"
+    },
+    {
+      "path": "packages/xtdb/src/query/compiler.ts",
+      "bytes": 7431,
+      "sha256": "fd1d8fceb939e0623115ef8072300f9e046f6dabee30d573c3b0c1da56823123"
+    },
+    {
+      "path": "packages/xtdb/src/query/domains.ts",
+      "bytes": 8567,
+      "sha256": "e51fc80fb211c265725d7def7cf0ab19bf84b51fc8843e1f807385dc413a92af"
+    },
+    {
+      "path": "packages/xtdb/src/query/grouping.ts",
+      "bytes": 4974,
+      "sha256": "2abd261779d9cd648d53b20485eccaee644f2fe4b5cf86d899d86c552bff4586"
+    },
+    {
+      "path": "packages/xtdb/src/query/overlay.ts",
+      "bytes": 2655,
+      "sha256": "118b8f8651d69516b64b50cf77c86e43de916a8e7042cdcfe2e3aa1379423491"
+    },
+    {
+      "path": "packages/xtdb/src/query/recursion.ts",
+      "bytes": 7187,
+      "sha256": "6c24b1157f9c05124ebef268d1d99234364fa3aabb5514c67e40422767296b89"
+    },
+    {
+      "path": "packages/xtdb/test/client-parameters.test.ts",
+      "bytes": 6122,
+      "sha256": "7d7df45b3e8def490cddcef08e4f86c43d8c3143ece0a5192f5dff7fa709486c"
+    },
+    {
+      "path": "packages/xtdb/test/commit-encoding.test.ts",
+      "bytes": 8390,
+      "sha256": "01d879bf95089510567e0cdcac4c29adbb32e2c877a1262d44251aafa6a50fe0"
+    },
+    {
+      "path": "packages/xtdb/test/fixtures/client-before-j01.ts",
+      "bytes": 10615,
+      "sha256": "fa5c31c44c45e9e129d65464ee2f012146911f5b11d433d1ce7d73aadee6c67c"
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "bytes": 290287,
+      "sha256": "b2b3e6e8cdfb18df6d235a8724611ee4fe637426c722a5de34326346b3cb6500"
+    }
+  ]
+}

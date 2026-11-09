@@ -9,6 +9,7 @@ import {
 } from "@triplex-build/triplex/runtime";
 import { makeQleverClient, type QleverClient } from "./QleverClient.js";
 import { makeQleverStorageAdapter } from "./QleverStorageAdapter.js";
+import type { QleverCommitEncoding } from "./rdf.js";
 import { makeQleverQueryExecutor, type QleverQueryOptions } from "./QleverQueryExecutor.js";
 
 export interface QleverRuntimeOptions {
@@ -17,8 +18,25 @@ export interface QleverRuntimeOptions {
   readonly maxRetries?: number;
   readonly resolutionTimeoutMs?: number;
   readonly admissionQueue?: boolean;
+  /**
+   * Experimental (EXP-J01). Default `a0`. When omitted, `TRIPLEX_COMMIT_ENCODING` may select
+   * `compact`, so the unchanged lab gates (which build the runtime from this public factory) can run
+   * the candidate; the gate note must record it.
+   */
+  readonly commitEncoding?: QleverCommitEncoding;
   readonly queryLimits?: Omit<QleverQueryOptions, "sourceView">;
 }
+
+/** The commit encoding an option or `TRIPLEX_COMMIT_ENCODING` selects; unknown values fail loudly. */
+export const commitEncodingOf = (
+  requested: string | undefined,
+): QleverCommitEncoding | undefined => {
+  const value = requested ?? process.env["TRIPLEX_COMMIT_ENCODING"];
+  if (value === undefined || value === "") return undefined;
+  if (value !== "a0" && value !== "compact")
+    throw new TypeError("Unknown TRIPLEX_COMMIT_ENCODING; choose a0 or compact");
+  return value;
+};
 class Connection extends Context.Service<Connection, QleverClient>()("triplex/qlever/Connection") {}
 class Backend extends Context.Service<Backend, ReturnType<typeof makeQleverStorageAdapter>>()(
   "triplex/qlever/Backend",
@@ -26,6 +44,7 @@ class Backend extends Context.Service<Backend, ReturnType<typeof makeQleverStora
 export const makeQleverRuntime = (
   options: QleverRuntimeOptions,
 ): RuntimeDefinition<MigrationError, never, StorageAdapter | QueryExecutor> => {
+  const commitEncoding = commitEncodingOf(options.commitEncoding);
   const connection = Layer.effect(
     Connection,
     Effect.acquireRelease(
@@ -43,7 +62,10 @@ export const makeQleverRuntime = (
     Effect.gen(function* () {
       const client = yield* Connection;
       const runtime = yield* TripleStoreRuntime;
-      return makeQleverStorageAdapter(client, runtime.scope, options);
+      return makeQleverStorageAdapter(client, runtime.scope, {
+        ...options,
+        ...(commitEncoding === undefined ? {} : { commitEncoding }),
+      });
     }),
   ).pipe(Layer.provide(connection));
   const storage = Layer.effect(
@@ -76,6 +98,7 @@ export {
   type QleverRequestOptions,
   QleverHttpError,
 } from "./QleverClient.js";
+export { encodedRowFields, UNREAD_CHANNELS, type QleverCommitEncoding } from "./rdf.js";
 export {
   makeQleverStorageAdapter,
   type QleverSourceView,
