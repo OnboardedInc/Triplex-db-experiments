@@ -1,0 +1,51 @@
+{
+  "observedAt": "2026-11-09T05:54:21.767Z",
+  "sourceParent": "26772e42d12e05b7041eb705b8540ab066335821",
+  "context": "offline-no-engine",
+  "packageSourceAndBuildBytesMatch": true,
+  "reproductionExistingInputBytesUnchanged": true,
+  "reproductionFullInventoryUnchanged": false,
+  "inventoryDelta": [
+    "lab/experiments/EXP-RT01/round4/run-pack.mjs"
+  ],
+  "closureRunnerSha256": "f2c9d45881e1cca13f62d850738dca31b5ab4c107357314435819fcce21fa4bf",
+  "tests": {
+    "core": 864,
+    "testkit": 96,
+    "xtdb": 79,
+    "qlever": 39,
+    "sqlite": 6,
+    "postgres": 2,
+    "cloudflare": 10
+  },
+  "journalClockEncodings": [
+    "a0",
+    "compact"
+  ],
+  "matrix": 510,
+  "pending": 80,
+  "pendingProofs": 4,
+  "pinDrift": [
+    {
+      "location": "/oracleFilesPinned/O-TESTKIT/0",
+      "path": "packages/testkit/src/index.ts",
+      "old": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988",
+      "new": "995bc1ace5ebb9654a74e238b8860cb7e8f012a979c7c4cf86d03388efd935c7"
+    },
+    {
+      "location": "/caseSets/CS-U44/pinnedSourceFiles/0",
+      "path": "packages/testkit/src/index.ts",
+      "old": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988",
+      "new": "995bc1ace5ebb9654a74e238b8860cb7e8f012a979c7c4cf86d03388efd935c7"
+    },
+    {
+      "location": "/caseSourcesPinned/CS-U44/0",
+      "path": "packages/testkit/src/index.ts",
+      "old": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988",
+      "new": "995bc1ace5ebb9654a74e238b8860cb7e8f012a979c7c4cf86d03388efd935c7"
+    }
+  ],
+  "acceptanceAndOracleDelta": "",
+  "liveG2G6Qualified": false,
+  "independentReview": false
+}

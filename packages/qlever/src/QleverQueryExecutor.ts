@@ -146,7 +146,12 @@ const queryExecutor = (
   const run = (
     input: DatalogQuery | WrappedQuery,
     debug: boolean,
-    basis?: { validAt: number; recordedAt?: number; recordedPosition?: number },
+    basis?: {
+      validAt: number;
+      allValidTime?: true;
+      recordedAt?: number;
+      recordedPosition?: number;
+    },
     cursorValues?: readonly PaginationValue[],
   ) =>
     Effect.gen(function* () {
@@ -211,7 +216,11 @@ const queryExecutor = (
                 "QLever historical Datalog inside a pending transaction is not yet qualified",
             });
           const resolved: QleverBasis = sourceView
-            ? { validAt: basis?.validAt ?? Date.now(), recordedPosition: sourceView.sourcePosition }
+            ? {
+                ...basis,
+                validAt: basis?.validAt ?? Date.now(),
+                recordedPosition: sourceView.sourcePosition,
+              }
             : await resolveQleverBasis(client, scopeKey, basis ?? { validAt: Date.now() }, signal);
           // [EXP-C8] Rules are evaluated with SPARQL reads only (recursion.ts); no update.
           const ruleRelations = logical.rules?.length

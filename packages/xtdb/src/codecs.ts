@@ -180,7 +180,7 @@ export const temporalSql = (
       `(${col("retracted_at")} IS NULL OR ${col("retracted_at")} > ?)`,
     );
   } else conditions.push(`${col("retracted_at")} IS NULL`);
-  if (basis !== undefined) {
+  if (basis !== undefined && !basis.allValidTime) {
     params.push(basis.validAt, basis.validAt);
     conditions.push(
       `${col("valid_from")} <= ?`,
@@ -202,6 +202,7 @@ export const visibleAt = (row: TripleRow, basis?: ResolvedTemporalBasis): boolea
   if (retractVisible) return false;
   return (
     basis === undefined ||
+    basis.allValidTime ||
     (row.valid_from <= basis.validAt && (row.valid_to === null || row.valid_to > basis.validAt))
   );
 };

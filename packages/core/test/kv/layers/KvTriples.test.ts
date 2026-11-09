@@ -426,3 +426,70 @@ describe("KvTriples (merged service)", () => {
     expect(ancestors).toEqual(["b", "c", "d"]);
   });
 });
+
+// [EXP-RT01] Why: KV's index and envelope must use the same clock-free journal basis. Rejected: testing only the SQL analogue.
+it("KV journal snapshots and feeds survive backward and future-staged clocks", async () => {
+  let clock = 1000;
+  let id = 0;
+  const layer = KvTriplesLive.pipe(
+    Layer.provide(Layer.succeed(KvBackend, makeTestKvBackend())),
+    Layer.provide(
+      Layer.succeed(TripleStoreRuntime, {
+        scope: "test:journal-clock",
+        now: Effect.sync(() => clock),
+        nextTxId: Effect.sync(() => `_tx/${String(++id).padStart(26, "0")}`),
+        nextTripleId: Effect.sync(() => String(++id).padStart(26, "0") as TripleId),
+      }),
+    ),
+  );
+  await Effect.runPromise(
+    Effect.gen(function* () {
+      const t = yield* Triples;
+      const receipt = yield* t.transact(
+        [
+          {
+            op: "assert",
+            entityId: "subject",
+            attribute: ":value",
+            value: { type: "string", value: "first" },
+          },
+        ],
+        { commandId: "first" },
+      );
+      const request = { snapshotPosition: receipt.position };
+      const before = yield* t.transactionsForEntity("subject", request);
+      expect(before.transactions).toHaveLength(1);
+      clock = 900;
+      expect(yield* t.transactionsForEntity("subject", request)).toEqual(before);
+      expect(yield* t.transaction(receipt.txId)).toEqual(before.transactions[0]);
+      expect(yield* t.transactionByCommand("first")).toEqual(before.transactions[0]);
+      expect((yield* t.transactions()).transactions).toEqual(before.transactions);
+      clock = 5000;
+      const ahead = yield* t.transact([
+        {
+          op: "assert",
+          entityId: "subject",
+          attribute: ":value",
+          value: { type: "string", value: "ahead" },
+        },
+      ]);
+      const page = yield* t.transactionsForEntity("subject", {
+        snapshotPosition: ahead.position,
+        limit: 1,
+      });
+      clock = 800;
+      expect(
+        yield* t.transactionsForEntity("subject", { snapshotPosition: ahead.position, limit: 1 }),
+      ).toEqual(page);
+      expect(page.transactions[0]?.txId).toBe(ahead.txId);
+      expect(
+        (yield* t.transactionsForEntity("subject", {
+          snapshotPosition: ahead.position,
+          beforePosition: page.nextBeforePosition,
+          limit: 1,
+        })).transactions,
+      ).toEqual(before.transactions);
+      expect(yield* t.transactionsForEntity("subject", request)).toEqual(before);
+    }).pipe(Effect.provide(layer)),
+  );
+});

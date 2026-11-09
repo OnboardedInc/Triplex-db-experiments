@@ -30,6 +30,7 @@ import { compileFamilyDomainMask } from "./FamilyDomainMask.js";
 import type { QleverDomainPlan, QleverFamilyDomainQuery } from "./FamilyDomains.js";
 
 export type QleverBasis = {
+  readonly allValidTime?: true;
   readonly validAt: number;
   readonly recordedAt?: number;
   readonly recordedPosition: number;
@@ -369,8 +370,12 @@ export const compileQlever = (
       options.validAtOrderExpression ?? literal(numericOrderKey(options.basis.validAt));
     const sourceCut = literal(numericOrderKey(options.basis.recordedPosition));
     const visibility = (pending: boolean) => [
-      `${v("valid_from_order")} <= ${visibleAt}`,
-      `(!BOUND(${v("valid_to_order")}) || ${v("valid_to_order")} > ${visibleAt})`,
+      ...(options.basis.allValidTime
+        ? []
+        : [
+            `${v("valid_from_order")} <= ${visibleAt}`,
+            `(!BOUND(${v("valid_to_order")}) || ${v("valid_to_order")} > ${visibleAt})`,
+          ]),
       pending
         ? `(${v("recorded_position_order")} <= ${sourceCut} || BOUND(${v("pending")}))`
         : `${v("recorded_position_order")} <= ${sourceCut}`,

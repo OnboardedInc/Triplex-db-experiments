@@ -45,10 +45,12 @@ const temporal = (alias: string, basis: QueryBasis, params: unknown[]): string =
     params.push(value);
     return `$${params.length}`;
   };
-  const conditions = [
-    `${alias}.valid_from <= ${parameter(basis.validAt)}`,
-    `(${alias}.valid_to IS NULL OR ${alias}.valid_to > ${parameter(basis.validAt)})`,
-  ];
+  const conditions = basis.allValidTime
+    ? []
+    : [
+        `${alias}.valid_from <= ${parameter(basis.validAt)}`,
+        `(${alias}.valid_to IS NULL OR ${alias}.valid_to > ${parameter(basis.validAt)})`,
+      ];
   if (basis.recordedPosition !== undefined) {
     conditions.push(`${alias}.recorded_position <= ${parameter(basis.recordedPosition)}`);
     conditions.push(

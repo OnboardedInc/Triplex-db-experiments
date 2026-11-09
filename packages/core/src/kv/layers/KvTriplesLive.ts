@@ -59,7 +59,7 @@ import {
   reservedAssertError,
   reservedWriteError,
 } from "../../store/systemNamespace.js";
-import { resolveTemporalBasis, type ResolvedTemporalBasis } from "../../Temporal.js";
+import { journalBasis, resolveTemporalBasis, type ResolvedTemporalBasis } from "../../Temporal.js";
 import { TxAttributes } from "../../utils/id.js";
 import { finishPagination, preparePagination, wrapDatalogQuery } from "../../Pagination.js";
 import * as ContentIds from "../../content/ContentId.js";
@@ -335,6 +335,15 @@ const makeKvTriplesService = Effect.gen(function* () {
         Effect.fail(new ReadError({ message: `Query failed: ${String(e)}`, cause: e })),
       ),
     );
+
+  // [EXP-RT01] Why: all journal consumers share a committed, clock-free scan. Rejected: ordinary match with a runtime business-time basis.
+  const journalScan = (pattern: ScanPattern & { entityType?: string }, position?: number) =>
+    Effect.gen(function* () {
+      const cut = position ?? (yield* currentKvCommitPosition(kvBackend));
+      return yield* pattern.entityType === undefined
+        ? hexaStore.scanCollectTemporalAsync(pattern, journalBasis(cut))
+        : hexaStore.getByEntityTypeAsync(pattern.entityType, journalBasis(cut));
+    }).pipe(Effect.mapError((cause) => toReadError(cause, "Failed to read journal")));
 
   let transactService: TriplesService["transact"];
 
@@ -753,36 +762,24 @@ const makeKvTriplesService = Effect.gen(function* () {
 
     transaction: (txId) =>
       Effect.gen(function* () {
-        const datoms = yield* hexaStore.scanCollectAsync({ entity: txId });
+        const datoms = yield* journalScan({ entity: txId });
         return transactionRecordFromTriples(txId, datoms.map(datomToTriple));
-      }).pipe(
-        Effect.catch((e) =>
-          Effect.fail(
-            new ReadError({ message: `Transaction read failed: ${String(e)}`, cause: e }),
-          ),
-        ),
-      ),
+      }).pipe(Effect.mapError((cause) => toReadError(cause, "Transaction read failed"))),
 
     transactionByCommand: (commandId) =>
       Effect.gen(function* () {
-        const commandFacts = yield* match({
+        const commandFacts = (yield* journalScan({
           attribute: TxAttributes.COMMAND_ID,
           value: { type: "string", value: commandId },
-        });
+        })).map(datomToTriple);
         const fact = commandFacts[0];
         if (fact === undefined) return null;
-        const datoms = yield* hexaStore.scanCollectAsync({ entity: fact.entityId });
+        const datoms = yield* journalScan({ entity: fact.entityId });
         return transactionRecordFromTriples(
           unsafe.transactionId(fact.entityId),
           datoms.map(datomToTriple),
         );
-      }).pipe(
-        Effect.catch((e) =>
-          Effect.fail(
-            new ReadError({ message: `Command transaction lookup failed: ${String(e)}`, cause: e }),
-          ),
-        ),
-      ),
+      }).pipe(Effect.mapError((cause) => toReadError(cause, "Command transaction lookup failed"))),
 
     transactions: (request = {}) => {
       const after = request.after ?? 0;
@@ -797,7 +794,8 @@ const makeKvTriplesService = Effect.gen(function* () {
           new ReadError({ message: "Transaction page limit must be between 1 and 1000" }),
         );
       }
-      return match({ entityType: "_Transaction" }).pipe(
+      return journalScan({ entityType: "_Transaction" }).pipe(
+        Effect.map((datoms) => datoms.map(datomToTriple)),
         Effect.map((triples) => {
           const page = transactionRecordsFromTriples(triples)
             .filter((record) => record.position > after)
@@ -818,20 +816,13 @@ const makeKvTriplesService = Effect.gen(function* () {
           query: (q, snapshotPosition) =>
             Effect.gen(function* () {
               const result = yield* executeQuery(hexaStore, q, q.rules ?? [], {
-                basis: { validAt: yield* runtime.now, recordedPosition: snapshotPosition },
+                basis: journalBasis(snapshotPosition),
               });
               return { results: result.results as unknown as QueryResult };
             }),
           transaction: (txId, snapshotPosition) =>
-            hexaStore.scanCollectAsync({ entity: txId }).pipe(
-              Effect.map((datoms) =>
-                transactionRecordFromTriples(
-                  txId,
-                  datoms
-                    .filter((row) => row.recordedPosition <= snapshotPosition)
-                    .map(datomToTriple),
-                ),
-              ),
+            journalScan({ entity: txId }, snapshotPosition).pipe(
+              Effect.map((datoms) => transactionRecordFromTriples(txId, datoms.map(datomToTriple))),
               Effect.mapError((cause) => toReadError(cause, "Failed to read journal envelope")),
             ),
         },

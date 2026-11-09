@@ -876,7 +876,7 @@ export class KvTripleStore {
    * Async version of getByEntityType using batched META fetches.
    * Scans the TYPE index, then batch-fetches all META records in one call.
    */
-  getByEntityTypeAsync(entityType: string): Effect.Effect<Datom[]> {
+  getByEntityTypeAsync(entityType: string, basis?: ResolvedTemporalBasis): Effect.Effect<Datom[]> {
     const { start, end } = typePrefixRange(entityType);
 
     return Effect.gen({ self: this }, function* () {
@@ -893,7 +893,7 @@ export class KvTripleStore {
       const results: Datom[] = [];
       for (const datom of datoms) {
         if (datom === null) continue;
-        if (datom.retractedAt !== null) continue;
+        if (basis === undefined ? datom.retractedAt !== null : !visibleAt(datom, basis)) continue;
         results.push(datom);
       }
       return results;
@@ -955,8 +955,9 @@ const visibleAt = (datom: Datom, basis: ResolvedTemporalBasis): boolean => {
           (datom.retractedAt === null || datom.retractedAt > basis.recordedAt);
   return (
     recordedVisible &&
-    datom.validFrom <= basis.validAt &&
-    (datom.validTo === null || datom.validTo > basis.validAt)
+    (basis.allValidTime ||
+      (datom.validFrom <= basis.validAt &&
+        (datom.validTo === null || datom.validTo > basis.validAt)))
   );
 };
 

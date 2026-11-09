@@ -77,6 +77,7 @@ const visible = (row: TripleRow, basis?: ResolvedTemporalBasis) =>
       (row.retracted_position !== null && row.retracted_position <= basis.recordedPosition))
   ) &&
   (basis === undefined ||
+    basis.allValidTime ||
     (row.valid_from <= basis.validAt && (row.valid_to === null || row.valid_to > basis.validAt)));
 
 export const makeQleverStorageAdapter = (
@@ -169,7 +170,7 @@ export const makeQleverStorageAdapter = (
         clauses.push(
           `FILTER(!BOUND(?retractedTime)${k === undefined ? "" : ` || ?retractedOrder > ${lit(order(k))}`}${basis?.recordedAt === undefined ? "" : ` || ?retractedTime > ${lit(order(basis.recordedAt))}`})`,
         );
-        if (basis)
+        if (basis && !basis.allValidTime)
           clauses.push(
             `?subject ${f("valid_from_order")} ?validFrom . OPTIONAL { ?subject ${f("valid_to_order")} ?validTo } FILTER(?validFrom <= ${lit(order(basis.validAt))} && (!BOUND(?validTo) || ?validTo > ${lit(order(basis.validAt))}))`,
           );

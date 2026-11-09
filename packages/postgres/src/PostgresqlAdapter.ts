@@ -423,6 +423,7 @@ export const makePostgresqlAdapter = (config: PostgresqlAdapterConfig = {}) =>
           | {
               readonly recordedAt?: number;
               readonly recordedPosition?: number;
+              readonly allValidTime?: true;
               readonly validAt: number;
             }
           | undefined,
@@ -446,7 +447,7 @@ export const makePostgresqlAdapter = (config: PostgresqlAdapterConfig = {}) =>
                   `recorded_at <= ${collector.add(basis.recordedAt)}`,
                   `(retracted_at IS NULL OR retracted_at > ${collector.add(basis.recordedAt)})`,
                 ];
-        if (basis !== undefined) {
+        if (basis !== undefined && !basis.allValidTime) {
           conditions.push(
             `valid_from <= ${collector.add(basis.validAt)}`,
             `(valid_to IS NULL OR valid_to > ${collector.add(basis.validAt)})`,

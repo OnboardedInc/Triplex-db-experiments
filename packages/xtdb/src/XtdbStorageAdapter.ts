@@ -234,7 +234,7 @@ export const makeXtdbStorageAdapter = (
         }
       }
       conditions.push(...cutConditions(position, basis?.recordedAt, params, history));
-      if (!history && basis !== undefined) {
+      if (!history && basis !== undefined && !basis.allValidTime) {
         conditions.push("valid_from <= ?", "(valid_to IS NULL OR valid_to > ?)");
         params.push(basis.validAt, basis.validAt);
       }

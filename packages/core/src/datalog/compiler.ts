@@ -187,6 +187,7 @@ export interface CompileOptions {
   readonly basis?: {
     readonly recordedAt?: number;
     readonly recordedPosition?: number;
+    readonly allValidTime?: true;
     readonly validAt: number;
   };
 }
@@ -231,6 +232,7 @@ const applyTemporalBasis = (sql: string, basis: CompileOptions["basis"]): string
           : basis.recordedAt === undefined
             ? `${alias}.retracted_at IS NULL`
             : `${alias}.recorded_at <= ${basis.recordedAt} AND (${alias}.retracted_at IS NULL OR ${alias}.retracted_at > ${basis.recordedAt})`;
+      if (basis.allValidTime) return recorded;
       return `${recorded} AND ${alias}.valid_from <= ${validAt} AND (${alias}.valid_to IS NULL OR ${alias}.valid_to > ${validAt})`;
     },
   );
