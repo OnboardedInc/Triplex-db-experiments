@@ -3505,7 +3505,7 @@ EXPECTED_RECORDED_NOT_COMPILED = []
 def ruling_row_ids(text):
     ids = []
     for line in text.splitlines():
-        m = re.match(r"^\| (Q\d+[a-z]?(?:-clarified)?|AMB-\d\d)\b", line)
+        m = re.match(r"^\| (Q\d+[a-z]?(?:-clarified|-S\d+)?|AMB-\d\d)\b", line)
         if m and m.group(1) not in ids:
             ids.append(m.group(1))
     return ids
@@ -6296,6 +6296,9 @@ SCOPE_SOURCES += [AUTHORITY_0314["path"], AUTHORITY_0314["originalPending"], "la
 
 def checks_0314():
     errors = []
+    # [CX-A01-0314-R3] Why: list pending Sam ids exactly without granting authority. Rejected: truncating Q99-S1 to Q99 (loses pending identity).
+    if pending_ruling_ids("| Q99-S1 (waits for Sam) | x | y |\n| Q100-S1 | x | y |") != ["Q99-S1", "Q100-S1"]:
+        errors.append("0.3.14: exact pending Sam ids required")
     audit = json.loads((REPO / AUTHORITY_0314["path"]).read_text())
     if sha_file(AUTHORITY_0314["path"]) != AUTHORITY_0314["sha256"]:
         errors.append("0.3.14: immutable authority/pin review changed")

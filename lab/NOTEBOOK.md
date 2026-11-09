@@ -2020,3 +2020,54 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **verify/K01 88bce4f0:** ACCEPT-OFFLINE, 511 tests, five retained smoke captures reproduce D and D'. The smoke ledger is diagnostic only and grants nothing.
 - **Why the import was missed:** the tests imported engine.mjs to test its exported helpers but never ran the private golden, fresh and loadGolden branches; importing a module or syntax-checking it does not resolve names inside function bodies that never run, and tsc did not semantically check that JavaScript file. Now an allowJs/checkJs test fails on unbound names, with a negative control.
 - **Lesson:** our own JavaScript tools need the same type checking as the product. Queued: checkJs over every lab/bin and lab/bench file.
+
+## 2026-11-09: R43: no cell can PASS yet because qualification machinery is missing, not because engines are slow
+
+- **Finding:** every NS obligation needs machinery no accepted work supplies yet: a ruled NS rung (year-one fits no lane on this host), an NS runner and fault injector in G03, PAIR-0 (M01, parked since 2026-11-07), a CR-NS recompute in claim.mjs (gateNS stops at MEASURED), a trusted broker publication instant (R27 gap G3), and the qualification pins (frozen trace, CS-NS manifest, BUILD_SPEC, A0 registry).
+- **First PASS candidate:** NS.P3 on the broker log source, with lag p99 13.7-24.9 ms against 250 ms and 0 gaps, 0 order violations, 0 keyed duplicates in diagnostics. About 12 rounds and 16 slot hours on the longest chain, 1-2 days after Sam answers.
+- **Acted:** Q99a-e recorded as pending orchestrator rulings (contract 0.4.1 for qualification pins; absolute bars in GREEN windows where A0 cannot hold the rung; H1 reads count for the composition's repository surfaces; queue reordered; acceptance only after screening shows margin). Scorecard P2 is GAP for the XTDB-source columns (Q96d). Dispatched R44 (NS-run execution design, Opus) and CX-M01R (PAIR-0 rebase onto main). K01 live, P5 A1, W02 live and DA04 move below the critical windows.
+- **Ask Sam:** Q99-S1 (the NS rung) with Q94a, and Q60's host half (pausing his default colima VM for 1-3 hour acceptance windows).
+- **Lesson:** a loop that optimizes experiments one at a time can run for days without moving a scorecard cell. The critical path to the first PASS should be written early and checked each hourly pass.
+
+## 2026-11-09: RT01 live window: fresh XTDB init reads tx_meta before creating it
+
+- **d7f8def2:** G2 completed no cases and G6 did not run; the earlier timeout's cause is still unknown. Slot released, volumes removed, VM trimmed.
+- **Same class as K01 round 12:** a declared table that a fresh XTDB 2 engine has not created yet. **Lesson:** "XTDB creates tables on first insert" is a lab-wide fact, not a K01 detail; every path that reads a table it may not have written must check the catalog. RT01 live round 2 reuses K01's typed catalog check, then runs a diagnostic smoke pass before G2 and G6.
+
+## 2026-11-09: R44 designs the NS run: every candidate role in its own VM container; trusted P3 instants from the observer
+
+- **Placement (Q100a, Q100d):** broker, reader service and feed consumer each run in a hardened candidate container in the triplex2 VM; the NS driver is trusted evaluator code in its own container and imports nothing under packages/. Nothing measured stays on the Mac.
+- **Consequence for P2:** F_FULLFSYNC does not exist in the VM. Durability becomes guest fdatasync plus a virtio flush plus Lima's disk sync mode (unverified). Mac-placed P2 and P3 numbers, including P2B rounds 1-3 and R42's probes, become a separate comparison series; seven measurements (M1-M7) must be redone in the VM. P2B round 3's main-thread findings still carry over; its fsync numbers do not.
+- **P3 lag start (Q100e):** the observer brackets each position's publication [L, U] by polling broker.db's marker read-only, woken by inotify; lag is U_consumer minus L_source, which can only overstate lag. The broker's own watermarkAt and FD01's clock become cross-checks.
+- **One clock (Q100f):** all containers share the VM's CLOCK_MONOTONIC, so the Mac clock bridge (5.55 ms uncertainty) leaves the timing path; FD01's clock domain must drop the hostname.
+- **Single arm (Q100l):** one arm needs 6 CPUs and about 7 GiB, so a 256-reader duet does not fit; NS runs are single-arm and park two dev residents.
+- **Dispatched:** CX-CRNS (claim.mjs recompute, B5), CX-NSR (bench split plus FD01 clock and durable-flush fixes, B1+B7), CX-VM01R (M01 rebase review), CX-VA01-0314 round 2 (0.3.14 fixed F1/F2; value domains now mandatory). Q100a-p pending; Q100-S1 restates Q60's host half for Sam. Next: V1-V7 VM probes (one slot hour), then G03 round 5 once NSR lands.
+- **Lesson:** a design question deferred long enough (R28 open decision 2, driver placement) silently decides how every earlier measurement will be read. P2 work tuned on the Mac now needs a VM rerun.
+
+## 2026-11-09: P3M accepted offline; lane D resumes with EXP-DF01
+
+- **verify/P3M 9df9aaf9 ACCEPT-OFFLINE:** independent G0 1,246 passed, 0 failed; fresh probes passed. Native timing waits for R44's trusted publication instants (the observer bracket) and native prefix enumeration needs its own qualification. CX-NSR builds on P3M.
+- **Lane D:** no Datomic agent had run since DA01 merged, against Sam's goal of three lanes in parallel. CX-DF01 builds lane D's feed route offline (brief lab/experiments/EXP-DF01/BRIEF.md), with FD01's conformance suite on a Datomic adapter.
+
+## 2026-11-09 07:35Z: hourly pass (NORTH-STAR reread first): usage 8%; R42-R44 changed the plan; VM durability class found
+
+- **Learnings since 06:28Z:**
+  - **R43:** no cell can PASS yet because qualification machinery is missing, not because engines are slow. First PASS candidate: NS.P3 on the broker log; second: P5 on the host store. Q99a-e pending; queue reordered.
+  - **R44:** every measured role runs in its own VM container (Q100a-p pending). Mac-measured P2 and P3 numbers become a separate series.
+  - **R42 and P2B round 2:** moving readers off the broker's thread took commit p50 from 226 to 7.32 ms at 256 readers; the remaining tail is main-thread work (round 3 in progress).
+  - **Accepted offline:** K01 r13 (smoke run found two bugs in one pass), RT01 r5, FD01, P3M, QNODELAY (scoped). RT01 live hit the same lazy-table class as K01.
+  - **Coverage by enumeration failed twice more:** checkJs listed three directories and missed the GS launcher; 0.3.14's optional field let an adapter skip it. Both fixes invert the rule (everything is covered unless excluded with a reason; the field is required).
+  - **Codex service errors:** CX-CRNS stopped on "Selected model is at capacity" with its tests passing; resumed in the same session. Treat capacity errors as resumable, not as failures.
+- **New fact for Q100b (VM durability):** Lima's vz driver hardcodes `DiskImageSynchronizationModeFsync` and `DiskImageCachingModeCached` for the root and data disks, with no lima.yaml option (lima master, pkg/driver/vz/vm_darwin.go). A guest flush therefore becomes a host fsync of the disk image, and on macOS plain fsync does not flush the drive's write cache (R42). So the VM's durability class is weaker than the Mac's F_FULLFSYNC: data survives a guest or VM crash and a host process crash, but not necessarily host power loss. Apple's per-mode text was not readable by fetch; probe V1 should confirm. Receipts must bind this class (Q100b).
+- **Research this hour:** one web check (above). All 10 agent slots are busy with builders and reviewers on the critical path, so no Opus researcher was started.
+
+## 2026-11-09: contract 0.3.14 round 2: the required field found a lane D gap; main moved under the contract branch
+
+- **verify/A01-0314 aa24b4ef FIX-FIRST:** F1/F2 fixed, and omitting valueDomain now fails to compile. That requirement immediately surfaced F3: the Datomic domain has no integration codec entry (three test failures, TS2741). This is the required field doing its job.
+- **B1:** the Q99 and Q100 pending rows committed on main conflict with the contract branch, so the merged-main Q87 check could not run. **Rule:** while a contract branch is open, new pending rulings still go on main, but the contract builder's final round merges main as a named step, and the orchestrator lists the rows added since the branch point in that prompt.
+
+## 2026-11-09: P5 round B blocked on positions; ruling Q101a maps reference to native positions
+
+- **3d23d208:** round A merged (21 conflicts listed), sweep workers and retention leases added, 10 SQLite and 33 harness tests pass. The preflight stopped correctly: W0's first reference position is 1, and the broker's first commit is 2048 (LSN * 1024 + ordinal; LSN 1 is the epoch frame). First-command ACK took 7.133 ms.
+- **Ruling Q101a (pending):** positions need not be equal; the seed manifest binds an order-preserving map from reference to native positions, and every consumer translates through it. Lane D's position-to-t map (Q89d) is the same idea.
+- **Lesson:** "receipt position equals reference position" held on XTDB by accident of dense numbering. Any assumption that one engine's identifiers equal the oracle's needs an explicit map.

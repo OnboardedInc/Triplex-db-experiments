@@ -27,6 +27,11 @@ import { valueToTuplePart } from "../../../packages/core/src/kv/hexastore/scan.j
 import { encodeTuple, decodeTuple } from "../../../packages/core/src/kv/hexastore/tuple.js";
 import { packValue as xtdb, decodeAssertionRow } from "../../../packages/xtdb/src/codecs.js";
 import { packValue as qlever, encodeRow, decodeRow } from "../../../packages/qlever/src/rdf.js";
+import { packValue as datomic } from "../../../packages/datomic/src/rows.js";
+import {
+  encodeRow as encodeDatomicRow,
+  decodeRow as decodeDatomicRow,
+} from "../../../packages/datomic/src/protocol.js";
 import { packValue as sql } from "../../../packages/sql/src/queries.js";
 import { packValue as cloudflare } from "../../../packages/cloudflare/src/adapter-support.js";
 import { buildRow } from "../../../packages/duckdb/src/public-backend.mjs";
@@ -189,6 +194,8 @@ const codecs: Record<keyof typeof ValueDomains, (v: TripleValue) => TripleValue>
   foundationdb: (v) =>
     deserializeDatom(serializeDatom(datom(v), ValueDomains.foundationdb), ValueDomains.foundationdb)
       .value,
+  datomic: (v) =>
+    decodeValueColumns(decodeDatomicRow(encodeDatomicRow(row(v, datomic))), ValueDomains.datomic),
   xtdb: (v) => decodeValueColumns(decodeAssertionRow(row(v, xtdb)), ValueDomains.xtdb),
   qlever: (v) => decodeValueColumns(decodeRow(encodeRow(row(v, qlever))), ValueDomains.qlever),
   sqlite: (v) =>
@@ -365,8 +372,18 @@ for (const key of Object.keys(ValueDomains) as (keyof typeof ValueDomains)[]) {
         return deserializeDatom(serializeDatom({ ...datom(v), attribute: ":_tx/change" }, d), d)
           .value;
       const pack =
-        key === "xtdb" ? xtdb : key === "qlever" ? qlever : key === "cloudflare" ? cloudflare : sql;
+        key === "datomic"
+          ? datomic
+          : key === "xtdb"
+            ? xtdb
+            : key === "qlever"
+              ? qlever
+              : key === "cloudflare"
+                ? cloudflare
+                : sql;
       const r = { ...row(v, (x) => pack(x, stored)), attribute: ":_tx/change" };
+      if (key === "datomic")
+        return decodeValueColumns(decodeDatomicRow(encodeDatomicRow(r)), stored);
       if (key === "xtdb") return decodeValueColumns(decodeAssertionRow(r), stored);
       if (key === "qlever") return decodeValueColumns(decodeRow(encodeRow(r)), stored);
       if (key === "duckdb")
