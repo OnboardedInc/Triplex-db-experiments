@@ -1,0 +1,637 @@
+(node:16744) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:16744) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "head": "731e10e4075715c65c10f2ce720de2d3dcee9b1a",
+  "base": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VFD01/round3-30e5e9a4-fa9e-4baa-9ed9-42897738d375",
+  "engines": false,
+  "slot": null,
+  "checks": [
+    {
+      "name": "same host/new simulated boot versus original record",
+      "rejected": true,
+      "error": "Error: Publication clock origin mismatch"
+    },
+    {
+      "name": "forged plain clock with real origin fields",
+      "rejected": true,
+      "error": "Error: Unbound feed clock; use shared host capture primitive"
+    },
+    {
+      "name": "forged origin on observation",
+      "rejected": true,
+      "error": "Error: Publication clock origin mismatch"
+    },
+    {
+      "name": "ACK capture has valid origin but differs from publication record",
+      "rejected": true,
+      "error": "Error: Publication differs from producer record"
+    },
+    {
+      "name": "producer record belongs to another position",
+      "rejected": true,
+      "error": "Error: Publication differs from producer record"
+    },
+    {
+      "name": "publicationId replaced with ACK identity",
+      "rejected": true,
+      "error": "Error: Publication differs from producer record"
+    },
+    {
+      "name": "unbound fabricated producer reader",
+      "rejected": true,
+      "error": "Error: Unbound producer publication reader"
+    },
+    {
+      "name": "wrong 1ms claim for fixed 300ms interval",
+      "rejected": true,
+      "error": "Error: Lag differs from source publication interval"
+    },
+    {
+      "name": "wrong 200ms claim for fixed 300ms interval",
+      "rejected": true,
+      "error": "Error: Lag differs from source publication interval"
+    },
+    {
+      "name": "wrong 260ms claim for fixed 300ms interval",
+      "rejected": true,
+      "error": "Error: Lag differs from source publication interval"
+    }
+  ],
+  "atomic": [
+    {
+      "mode": "atomic",
+      "point": "after-commit",
+      "exit": 77,
+      "snapshot": {
+        "effects": [
+          {
+            "epoch": "1",
+            "position": "1",
+            "subject": "subject"
+          }
+        ],
+        "affected": [
+          {
+            "epoch": "1",
+            "position": "1",
+            "subject": "subject"
+          }
+        ],
+        "checkpoint": {
+          "source": "generic/source",
+          "token": "1"
+        }
+      }
+    },
+    {
+      "mode": "atomic",
+      "point": "before-commit",
+      "exit": 77,
+      "snapshot": {
+        "effects": [],
+        "affected": [],
+        "checkpoint": null
+      }
+    },
+    {
+      "mode": "atomic",
+      "point": "before-effect",
+      "exit": 77,
+      "snapshot": {
+        "effects": [],
+        "affected": [],
+        "checkpoint": null
+      }
+    },
+    {
+      "mode": "atomic",
+      "point": "after-effect",
+      "exit": 77,
+      "snapshot": {
+        "effects": [],
+        "affected": [],
+        "checkpoint": null
+      }
+    },
+    {
+      "mode": "atomic",
+      "point": "after-checkpoint",
+      "exit": 77,
+      "snapshot": {
+        "effects": [
+          {
+            "epoch": "1",
+            "position": "1",
+            "subject": "subject"
+          }
+        ],
+        "affected": [
+          {
+            "epoch": "1",
+            "position": "1",
+            "subject": "subject"
+          }
+        ],
+        "checkpoint": {
+          "source": "generic/source",
+          "token": "1"
+        }
+      }
+    },
+    {
+      "mode": "checkpoint-first-atomic",
+      "point": "after-commit",
+      "exit": 77,
+      "snapshot": {
+        "effects": [
+          {
+            "epoch": "1",
+            "position": "1",
+            "subject": "subject"
+          }
+        ],
+        "affected": [
+          {
+            "epoch": "1",
+            "position": "1",
+            "subject": "subject"
+          }
+        ],
+        "checkpoint": {
+          "source": "generic/source",
+          "token": "1"
+        }
+      }
+    },
+    {
+      "mode": "checkpoint-first-atomic",
+      "point": "before-commit",
+      "exit": 77,
+      "snapshot": {
+        "effects": [],
+        "affected": [],
+        "checkpoint": null
+      }
+    },
+    {
+      "mode": "checkpoint-first-atomic",
+      "point": "before-effect",
+      "exit": 77,
+      "snapshot": {
+        "effects": [],
+        "affected": [],
+        "checkpoint": null
+      }
+    },
+    {
+      "mode": "checkpoint-first-atomic",
+      "point": "after-effect",
+      "exit": 77,
+      "snapshot": {
+        "effects": [],
+        "affected": [],
+        "checkpoint": null
+      }
+    },
+    {
+      "mode": "checkpoint-first-atomic",
+      "point": "after-checkpoint",
+      "exit": 77,
+      "snapshot": {
+        "effects": [
+          {
+            "epoch": "1",
+            "position": "1",
+            "subject": "subject"
+          }
+        ],
+        "affected": [
+          {
+            "epoch": "1",
+            "position": "1",
+            "subject": "subject"
+          }
+        ],
+        "checkpoint": {
+          "source": "generic/source",
+          "token": "1"
+        }
+      }
+    },
+    {
+      "mode": "two-connections",
+      "point": "after-commit",
+      "exit": 77,
+      "snapshot": {
+        "effects": [
+          {
+            "epoch": "1",
+            "position": "1",
+            "subject": "subject"
+          }
+        ],
+        "affected": [
+          {
+            "epoch": "1",
+            "position": "1",
+            "subject": "subject"
+          }
+        ],
+        "checkpoint": {
+          "source": "generic/source",
+          "token": "1"
+        }
+      }
+    },
+    {
+      "mode": "two-connections",
+      "point": "before-commit",
+      "exit": 77,
+      "snapshot": {
+        "effects": [],
+        "affected": [],
+        "checkpoint": {
+          "source": "generic/source",
+          "token": "1"
+        }
+      },
+      "error": "Error: Nonatomic consumer state before replay: before-commit"
+    },
+    {
+      "mode": "two-connections",
+      "point": "before-effect",
+      "exit": 77,
+      "snapshot": {
+        "effects": [],
+        "affected": [],
+        "checkpoint": null
+      }
+    },
+    {
+      "mode": "two-connections",
+      "point": "after-effect",
+      "exit": 77,
+      "snapshot": {
+        "effects": [],
+        "affected": [],
+        "checkpoint": {
+          "source": "generic/source",
+          "token": "1"
+        }
+      },
+      "error": "Error: Nonatomic consumer state before replay: after-effect"
+    },
+    {
+      "mode": "two-connections",
+      "point": "after-checkpoint",
+      "exit": 77,
+      "snapshot": {
+        "effects": [
+          {
+            "epoch": "1",
+            "position": "1",
+            "subject": "subject"
+          }
+        ],
+        "affected": [
+          {
+            "epoch": "1",
+            "position": "1",
+            "subject": "subject"
+          }
+        ],
+        "checkpoint": {
+          "source": "generic/source",
+          "token": "1"
+        }
+      }
+    },
+    {
+      "mode": "checkpoint-first-split",
+      "point": "after-commit",
+      "exit": 77,
+      "snapshot": {
+        "effects": [],
+        "affected": [],
+        "checkpoint": {
+          "source": "generic/source",
+          "token": "1"
+        }
+      },
+      "error": "Error: Nonatomic consumer state before replay: after-commit"
+    },
+    {
+      "mode": "checkpoint-first-split",
+      "point": "before-commit",
+      "exit": 77,
+      "snapshot": {
+        "effects": [],
+        "affected": [],
+        "checkpoint": null
+      }
+    },
+    {
+      "mode": "checkpoint-first-split",
+      "point": "before-effect",
+      "exit": 77,
+      "snapshot": {
+        "effects": [],
+        "affected": [],
+        "checkpoint": null
+      }
+    },
+    {
+      "mode": "checkpoint-first-split",
+      "point": "after-effect",
+      "exit": 77,
+      "snapshot": {
+        "effects": [],
+        "affected": [],
+        "checkpoint": {
+          "source": "generic/source",
+          "token": "1"
+        }
+      },
+      "error": "Error: Nonatomic consumer state before replay: after-effect"
+    },
+    {
+      "mode": "checkpoint-first-split",
+      "point": "after-checkpoint",
+      "exit": 77,
+      "snapshot": {
+        "effects": [
+          {
+            "epoch": "1",
+            "position": "1",
+            "subject": "subject"
+          }
+        ],
+        "affected": [
+          {
+            "epoch": "1",
+            "position": "1",
+            "subject": "subject"
+          }
+        ],
+        "checkpoint": {
+          "source": "generic/source",
+          "token": "1"
+        }
+      }
+    },
+    {
+      "mode": "checkpoint-deferred",
+      "point": "after-commit",
+      "exit": 77,
+      "snapshot": {
+        "effects": [
+          {
+            "epoch": "1",
+            "position": "1",
+            "subject": "subject"
+          }
+        ],
+        "affected": [
+          {
+            "epoch": "1",
+            "position": "1",
+            "subject": "subject"
+          }
+        ],
+        "checkpoint": {
+          "source": "generic/source",
+          "token": "0"
+        }
+      },
+      "error": "Error: Nonatomic consumer state before replay: after-commit"
+    },
+    {
+      "mode": "checkpoint-deferred",
+      "point": "before-commit",
+      "exit": 77,
+      "snapshot": {
+        "effects": [],
+        "affected": [],
+        "checkpoint": null
+      }
+    },
+    {
+      "mode": "checkpoint-deferred",
+      "point": "before-effect",
+      "exit": 77,
+      "snapshot": {
+        "effects": [],
+        "affected": [],
+        "checkpoint": null
+      }
+    },
+    {
+      "mode": "checkpoint-deferred",
+      "point": "after-effect",
+      "exit": 77,
+      "snapshot": {
+        "effects": [],
+        "affected": [],
+        "checkpoint": null
+      }
+    },
+    {
+      "mode": "checkpoint-deferred",
+      "point": "after-checkpoint",
+      "exit": 77,
+      "snapshot": {
+        "effects": [
+          {
+            "epoch": "1",
+            "position": "1",
+            "subject": "subject"
+          }
+        ],
+        "affected": [
+          {
+            "epoch": "1",
+            "position": "1",
+            "subject": "subject"
+          }
+        ],
+        "checkpoint": {
+          "source": "generic/source",
+          "token": "0"
+        }
+      },
+      "error": "Error: Nonatomic consumer state before replay: after-checkpoint"
+    }
+  ],
+  "consumers": [
+    {
+      "mode": "ACK-observation",
+      "error": "Error: Publication differs from producer record",
+      "checkpoint": 0,
+      "lags": [],
+      "publicationId": "native-pub-1"
+    },
+    {
+      "mode": "different-position",
+      "error": "Error: Publication differs from producer record",
+      "checkpoint": 0,
+      "lags": [],
+      "publicationId": "native-pub-1"
+    },
+    {
+      "mode": "forged-clock",
+      "error": "Error: Unbound feed clock; use shared host capture primitive",
+      "checkpoint": 0,
+      "lags": [],
+      "publicationId": "native-pub-1"
+    },
+    {
+      "mode": "correct-skewed-now",
+      "checkpoint": 1,
+      "lags": [
+        {
+          "at": 835571923.848208,
+          "position": 1,
+          "lagMs": 76.82125,
+          "lagFromAckMs": 0
+        }
+      ],
+      "publicationId": "native-pub-1"
+    },
+    {
+      "mode": "producer-called-at-ACK",
+      "checkpoint": 1,
+      "lags": [
+        {
+          "at": 835572016.709916,
+          "position": 1,
+          "lagMs": 100.195834,
+          "lagFromAckMs": 0
+        }
+      ],
+      "publicationId": "ACK-rather-than-source-publication"
+    }
+  ],
+  "crossProcess": {
+    "published": {
+      "role": "producer",
+      "publication": {
+        "source": "generic/source",
+        "stream": "s",
+        "epoch": "1",
+        "position": "1",
+        "domain": {
+          "primitive": "node-hrtime-v1",
+          "host": "7c1de8817c9e69fb4498e239c42be8352e6b9d98f7454e2ef65646dcf69f6de8",
+          "boot": "f530bb3fe0ac548a512fe08cec9a945d80c9cc62b528c233e47004d74660d294",
+          "origin": "host-boot"
+        },
+        "atNs": "835569864941625",
+        "publicationId": "native-publication-1",
+        "recordId": "b69f5c807dadaa631a8b91790d0f8d105b82a7740b57c34f65fd1296de79139a"
+      },
+      "known": {
+        "source": "generic/source",
+        "stream": "s",
+        "epoch": "1",
+        "position": "1",
+        "domain": {
+          "primitive": "node-hrtime-v1",
+          "host": "7c1de8817c9e69fb4498e239c42be8352e6b9d98f7454e2ef65646dcf69f6de8",
+          "boot": "f530bb3fe0ac548a512fe08cec9a945d80c9cc62b528c233e47004d74660d294",
+          "origin": "host-boot"
+        },
+        "atNs": "835569869900125"
+      },
+      "relativeMs": 390.29125,
+      "originMs": 1794205239435.03,
+      "simulatedReboot": false
+    },
+    "known": {
+      "role": "consumer",
+      "known": {
+        "source": "generic/source",
+        "stream": "s",
+        "epoch": "1",
+        "position": "1",
+        "domain": {
+          "primitive": "node-hrtime-v1",
+          "host": "7c1de8817c9e69fb4498e239c42be8352e6b9d98f7454e2ef65646dcf69f6de8",
+          "boot": "f530bb3fe0ac548a512fe08cec9a945d80c9cc62b528c233e47004d74660d294",
+          "origin": "host-boot"
+        },
+        "atNs": "835570273972125"
+      },
+      "relativeMs": 465.481875,
+      "originMs": 1794205239763.792,
+      "simulatedReboot": false
+    },
+    "lagMs": 409.0305,
+    "legacyRelativeLagMs": 75.19062500000001
+  },
+  "reboot": {
+    "role": "reboot",
+    "publication": {
+      "source": "generic/source",
+      "stream": "s",
+      "epoch": "1",
+      "position": "1",
+      "domain": {
+        "primitive": "node-hrtime-v1",
+        "host": "7c1de8817c9e69fb4498e239c42be8352e6b9d98f7454e2ef65646dcf69f6de8",
+        "boot": "f530bb3fe0ac548a512fe08cec9a945d80c9cc62b528c233e47004d74660d294",
+        "origin": "host-boot"
+      },
+      "atNs": "835569864941625",
+      "publicationId": "native-publication-1",
+      "recordId": "b69f5c807dadaa631a8b91790d0f8d105b82a7740b57c34f65fd1296de79139a"
+    },
+    "known": {
+      "source": "generic/source",
+      "stream": "s",
+      "epoch": "1",
+      "position": "1",
+      "domain": {
+        "primitive": "node-hrtime-v1",
+        "host": "7c1de8817c9e69fb4498e239c42be8352e6b9d98f7454e2ef65646dcf69f6de8",
+        "boot": "93bacd5f4eaa6da6ffd3c301cf2354dcd1ad79811ac6a60004b95e23ad0d99ea",
+        "origin": "host-boot"
+      },
+      "atNs": "835570342029375"
+    },
+    "relativeMs": 54.566042,
+    "originMs": 1794205240242.714,
+    "simulatedReboot": true
+  },
+  "worker": {
+    "known": {
+      "source": "generic/source",
+      "stream": "s",
+      "epoch": "1",
+      "position": "1",
+      "domain": {
+        "primitive": "node-hrtime-v1",
+        "host": "7c1de8817c9e69fb4498e239c42be8352e6b9d98f7454e2ef65646dcf69f6de8",
+        "boot": "f530bb3fe0ac548a512fe08cec9a945d80c9cc62b528c233e47004d74660d294",
+        "origin": "host-boot"
+      },
+      "atNs": "835570386235625"
+    },
+    "clonedClockError": "Error: Unbound feed clock; use shared host capture primitive",
+    "lagMs": 521.294
+  },
+  "boundary": {
+    "input": [
+      249,
+      250,
+      251
+    ],
+    "actual": [
+      true,
+      true,
+      false
+    ]
+  },
+  "sourceUnchanged": true
+}
