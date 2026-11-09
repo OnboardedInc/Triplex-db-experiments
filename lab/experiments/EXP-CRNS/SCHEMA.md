@@ -89,3 +89,70 @@ lag sample yield TIMING-UNJUDGED with nullable lag bar and retained count result
 lag and a gap; consumers must not serialize JavaScript infinity as a finite value (plain JSON.stringify renders it null).
 Quantile export is exact nearest rank; timestamp differences remain BigInt until final milliseconds conversion. No histogram or
 candidate summary is consulted. P3M's historical helper explicitly returns DIAGNOSTIC and LAG-START-CR.
+
+## Round 2: mandatory evidence floors (supersedes conflicting round 1 text above)
+
+The normalized format remains experimental; these are deliberately incompatible strengthening changes. The evaluator still
+never grants acceptance. A primary lag arithmetic run needs a separately authenticated crash companion before `bars.P3.met` can
+be true. Missing data is a refusal, not an adapter promise or a null quantile compared numerically with a threshold.
+
+Required evaluator context now includes:
+
+- `sourceStorage`, `sourceStream`, `initialFrontier`, `consumerId`, and `epochs` (canonical position JSON -> pinned epoch).
+  Every observed row uses this consumer and the mapped source epoch; identities cannot be pooled. Every checkpoint names a
+  resolved source position and the final checkpoint equals the source's exact terminal frontier. Noncommit markers use
+  `resolveFrontier(entry)` from evaluator code; sparse/ordinal coordinates remain coordinates, not a numeric offset shortcut.
+- `normalizeSource(source,binding) -> {entries,commandDigests}` and `verifySource(source) -> true`, **for all storage kinds,
+  including broker-frame/2**. The decoder reconstructs entries and full command digests from retained source command bytes;
+  a source-written digest column alone is insufficient. CRC verification is an additional check, not a decoder or an identity pin.
+- `normalizeWal(consumer,binding) -> {transactions,effects,affected,deliveries}` reconstructs rows from the retained bytes for
+  this exact attempt. Its result is compared with every supplied normalized row. A boolean walComplete or hex-prefix match is
+  insufficient. The production SQLite/OBS01 decoders remain integration work; fixture JSON codecs are explicitly synthetic.
+- `commands[commandId] = {commandSha256,changesSha256,...}` from the frozen trace. Full command digest is separate from the
+  identity-only projected change digest; feed entries still carry no value. `source.commandDigests` contains the decoder's full
+  command digests. Each offer carries its frozen `commandSha256`. Each source transaction's canonical identity change content
+  (excluding the source-assigned position) hashes to `changesSha256`; its full retained command hashes to `commandSha256`.
+- `roles[]`; `events.clockDomains` is now `[{role,domain}]` with exactly one record per pinned participating role.
+- `minimumSamples = {lag, bands:{"5-10", "11-25", "26-50"}}` with positive integer minima derived from the frozen schedule,
+  and `maxBracketWidthNs`. These are evaluator inputs, not measured or claimant-selected fields. Missing minima refuse; any
+  undecided receipt ACK (`L <= ack < U`) refuses ACK-order qualification and reports its share.
+- `p4LargestBucketP99Ms` is a positive evaluator-pinned bar. It has no implicit default or authority to set a new target; until
+  the applicable provisional bar is confirmed/pinned, requested P4 recompute refuses `P4-BUCKET-BAR-UNBOUND`.
+
+Offers now require unique `eventId` and `kind` (`normal`, `duplicate`, `lost-ACK`, `lost-ACK retry`, `correction`, `invalid`). A
+command may commit only once. A typed error/conflict on a published command is refused. A retry of a published command must
+return the original receipt. An original `lost-ACK` attempt may remain without a receipt: a later attempt for the same command,
+with a receipt and later send/ACK timestamps, resolves it. The original sample ends at that retry's ACK (queueing is retained),
+not its earlier censor time; its missing original ACK is not UNACCOUNTED. No receipt is copied backward into E1. A lost ACK
+without a resolving receipt remains unaccounted. Accounting, valid-command progress and publication/ACK checks run for P3-only too.
+
+Every read has a unique `readId`. Main measured reads must complete inside the measured interval; an out-of-window or
+boundary-spanning read refuses the run rather than disappearing from its denominator. E8 loops are independently re-derived from
+E2 completion timestamps for each measured second and compared exactly to declared loop sets, plus relay agreement. Ladder windows
+have unique `id`, their own `readers[]` and full E2 sample, and explicit recoveryOf. The main P1 segment is selected by
+`events.mainSegmentId` and has identical times and read events. At least half of P1 reads must target a subject written in the
+preceding 60 seconds; at least 10% belong to same-subject/same-basis split groups straddling an E1 command ACK. The zero-reader
+writer baseline must meet the absolute 50 ms p99 floor before a ratio can pass. Request memoization includes all query parameters
+(including hops); timing, answer, observation ids and scheduling metadata are excluded. Oracles receive prefixes clipped to the
+current position/requested basis, and command validity receives the pre-offer visible prefix.
+
+P4's single loop is also sequential: overlapping intervals or duplicate ids refuse. History pulls require requested/echoed basis,
+shape, unique readId and answerSha256, checked by replayRead. `historyResources[]` has one observer phase per depth with
+`depth,startNs,endNs,ioReadStartBytes,ioReadEndBytes`; IO comparisons use those deltas, not pull-reported bytes. Depth-1 absolute
+p50/p99 must meet P4 before flatness ratios count.
+
+P5 additionally needs `activationCommandId`, `releaseSha256`, the matching release pin on that frozen command, and
+`verifySweepDurability`. Its activation receipt basis must equal the committed activation position. `sweep.durableBracket.U` is
+exactly sweep.endNs; the evaluator verifies durable outputs at that observer bracket. Live segments need measured 64-loop
+completions and answer verification. Baseline lies outside the sweep; during-sweep lies inside. Baseline read p99 <=100ms and
+writer p99 <=50ms are required before the 1.5x ratios.
+
+Crash witnesses require `checkpointOffset,recoveryOffset,beforeTransaction,recoveryTransaction`. The checkpoint and recovered
+frontier match those committed WAL transaction anchors (beforeTransaction=-1 is the pinned initial frontier). `checkpointOffset`
+may be null only for the sentinel before the first source offset. Replay equals the complete ordered interval of both source
+entries and actual recovered WAL deliveries: no missing/extra/repeated entries. All crash-run count checks apply. At least three
+unique witnesses per point remain required. Crash runs can return RECOMPUTED for counts/resume with `lag:null`; this is not a
+whole-P3 grant. `trusted.crashRun={bundle,trusted}` is re-evaluated, never a supplied result; it has a different attempt id, matching
+source/slot/input identities, and no recursive companion. A primary result's `bars.P3.resume` requires that companion to recompute
+cleanly. `bars.P3.met` additionally needs the primary GREEN lag bar and all source/content/evidence checks. Bare faults:[] with
+no independently recomputed companion cannot grant P3.

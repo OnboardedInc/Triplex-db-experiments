@@ -77,3 +77,116 @@ Final verification on the committed evaluator completed:
 - Every evidence file is below 1 MB and the whole evidence directory below 5 MB; no bulky raw evidence was added to git. `SHA256SUMS` covers the retained evidence, schema and report; `evidence/verification.json` binds the successful command, exit status, test counts and committed evaluator hash.
 
 Result: B5 offline implementation and requested offline gates completed. No NS acceptance cell is closed. Pending-contract integration and independent review remain as described above; the branch is ready for the separately dispatched reviewer.
+
+# Round 2: independent-review fixes (CX-CRNS)
+
+North star: trustworthy P1–P5 arithmetic, with no vacuous or identity-pooled bar. Scope remains the current SCOPE/NORTH-STAR/TARGETS.
+No acceptance file, engine, slot, package dependency or public API was changed. Original Opus review files were committed **unchanged
+first** at `255bf136`; their historical TAP is retained, not relabelled as a fixed run. The source review was Codex `verify/CRNS`
+`93d2af9c` plus the independent Opus review preserved in that commit.
+
+## Findings, fixes and required tests
+
+The six Codex assertions were copied with their fixture to `lab/verify/CRNS/`. Assertions still require refusal; fixture upgrades
+supply newly mandatory evidence. Positive controls that intentionally change source/WAL bytes now update those retained bytes too,
+and the R01 diagnostic message tolerates absent metrics on an earlier refusal. The Opus TODO tests are all required: no todo/skip
+flags remain. Contradictory historical-observation preconditions (for example O8 asserting both presence and absence of a code)
+were removed. Positive ladders now have actual loop completions; O11 explicitly removes those to plant its forgery. Each original
+review is recoverable byte-for-byte from its review commit.
+
+| Finding | Fix | Required regression/control |
+| --- | --- | --- |
+| R01 | Nonempty in-window main E2; re-derived E8; exact main/ladder segment binding | copied R01; round2 positive P1 and removal tests |
+| R02 | Each checkpoint names a resolved source prefix, final frontier exactly terminal; pinned initial frontier | copied R02; round2 resolved seal control |
+| R03 | Pin consumer and per-position epoch; no cross-identity pooling | copied R03; O26 |
+| R04 | Main reads entirely within measurement interval; boundary-spanning evidence refuses explicitly | copied R04; sequential in-window C16 |
+| R05 | Unique read id and no overlapping requests in single-client P4 | copied R05; C16 |
+| R06 | Exact source/consumer CR role coverage per committed position, known enum, unique keys | copied R06; O20 |
+| O1 | One commandId in only one committed source transaction | required Opus O1 (DUPLICATE-COMMIT) |
+| O2 | Refuse typed error/conflict on a committed command; valid rejection gets infinite latency | required Opus O2 (ERROR-BUT-COMMITTED) |
+| O3 | Restore E1 kind; published duplicate/retry must return original receipt | required Opus O3; lost-ACK regression |
+| O4 | Pin consumer and source epoch before counting/sets; invalid labels never grant a count bar | both required Opus O4 variants; R03/O26 |
+| O5 | Source offset order and position order agree; coordinate stream/epoch/offset checked | required Opus O5 and O5b; resolved frontier control |
+| O6 | Always execute accounting/progress/ACK source preconditions, including P3-only | required Opus O6a/O6b |
+| O7 | Explicit resume bar, independently recomputed crash companion, aggregate P3 met requires it | required Opus O7; builder crash control |
+| O8 | Exact checkpoint-to-recovery replay equals both source interval and anchored committed WAL deliveries | required Opus O8; crash companion controls |
+| O9 | Consumer bracket required through drain for every committed position, including outside lag window | required Opus O9 |
+| O10 | Expected-answer memo uses full semantic request, including hops; basis-clipped prefix | required Opus O10 |
+| O11 | Ladder levels checked against per-second actual E2/E8 completions, not level labels | required Opus O11 |
+| O12 | Main E8 derived from distinct completed E2 loops; declarations reconciled exactly | required Opus O12; F13/R01 |
+| O13 | History answers oracle-checked; IO comes from observer phase deltas | required Opus O13; round2 wrong-answer regression |
+| O14 | Sweep traffic inside sweep, baseline outside; measured 64 loops and correct answers | required Opus O14; upgraded P5 positive control |
+| O15 | Activation position/source command/release pin; durable end bracket and evaluator verification | round2 O15 three variants; upgraded 100k control |
+| O16 | Oracle prefixes clipped by position/basis/pre-offer visibility; real O-DOMAIN world derived from prefix | required Opus O16; real-child state-prefix assertions [1,1750],[2,1800] |
+| O17 | Full trace command digest and separate identity change digest compared with decoded source content | required Opus O17; round2 coherent rewrite and full-value digest variants |
+| O18 | Source normalization required for broker too, in addition to CRC | required Opus O18/O25; round2 source decoder check |
+| O19 | Required evaluator WAL decode must reproduce every transaction and final row | round2 O19; synthetic decoder positive controls |
+| O20 | Mandatory E11 coverage for source and consumer | round2 O20/R06 |
+| O21 | Positive pinned schedule-derived lag and band minima, missing/short sample refuses | round2 O21 variants |
+| O22 | Undecided ACK share reported and refused; pinned max bracket width | required Opus O22 |
+| O23 | Unique E1 eventId/E2 readId, including P3-only and auxiliary windows | round2 O23 variants |
+| O24 | Unique nonempty window ids and explicit recoveryOf | required Opus O24 |
+| O25 | Storage kind pinned by evaluator, never selects a less strict verifier | required Opus O18/O25; round2 storage pin variant |
+| O26 | Expected consumer/epoch checked before affected set can count | round2 O26; R03 |
+| O27 | Hot-set and split-straddle evidence; largest bucket bar must be evaluator-pinned | round2 positive P1/removal variants and P4 bucket regression |
+| O28 | Exactly one domain per pinned participating role | round2 O28 variants |
+| O29 | Absolute baseline floors beside P1 writer, P4 depth-1 and P5 live ratios | required Opus O29a; round2 P4/P5 variants |
+| Lost ACK also-noted | Resolve original censored lost-ACK attempt through later receipt, preserving original E1 bytes; latency ends at resolving ACK | round2 lost-ACK positive and typed-duplicate negative |
+
+## Design/ruling amendments for the contract builder
+
+- **R44 4.3/Q100p (O10):** replace `(subject,shape,basis)` memo identity with the complete semantic request, explicitly including
+  hops and every projection/query parameter. Observation/scheduling identifiers do not change the query.
+- **R44 4.2/Q98f (O1/O3/O17):** one logical command commits once. E1 includes unique event id, kind and a full frozen command hash;
+  source decoder recomputes that hash from actual retained command bytes. A separate canonical identity-change digest binds the
+  value-free feed. Lost ACKs resolve against retry receipts without inventing an original ACK.
+- **R44 4.2/Q100j (O7/O8):** distinguish crash count/resume recomputation from primary timing judgment. Primary P3 requires a fresh,
+  separately authenticated crash companion with the same build/source/slot/input identity. Crash-only results cannot grant lag or
+  whole P3. Complete recovery intervals are anchored to committed WAL checkpoints, not arbitrary listed entries.
+- **Q100e/k/m (O11/O12/O20/O21/O22/O28):** pin sample minima from the frozen plan, max bracket width, participant roles, complete CR
+  coverage and per-window actual completion identities. Undecided ACK order cannot be an order pass. Main boundary-spanning reads
+  refuse rather than disappear; collector scheduling/censor rules must account for them explicitly.
+- **P4/O27:** no new implicit target is introduced. The largest-bucket threshold is required as an evaluator pin; Sam/contract
+  authority must confirm its value. Tests pin 50ms only as a synthetic fixture choice. Until pinned, P4 refuses the missing bar.
+- **O13/O14/O15/O18/O19/O25/O29:** mandatory production decoder, resource-phase, activation, durability and baseline inputs replace
+  the round 1 adapter promises. They must be reviewed/pinned before integration; synthetic JSON decoder fixtures are not SQLite
+  decoder qualification. Absolute baseline floors must accompany ratios.
+
+`SCHEMA.md` round 2 section supersedes conflicting optional-input statements in the original schema. These amendments are listed
+here only; `lab/acceptance/` is untouched, and neither pending authority nor arithmetic results can qualify an acceptance claim.
+
+## Round 2 PASS/verdict audit (before implementation commit)
+
+All new/changed observation-to-decision sites, including standalone helpers:
+
+1. `recomputeNS` envelope/source/storage/command/coordinate/frontier/identity/CR floors: checks actual authenticated bytes,
+   decoded source commands and rows against pinned trace/config. Exact witnessed head and attempt bind freshness; expected source,
+   slot, inputs, driver, encoding, storage/stream/consumer/epoch/roles bind scope. A missing capability is a refusal.
+2. `nsOtherPriorities` unconditional source preconditions: checks per-attempt kind, content hash, oracle validity and matched
+   receipt; errors on committed commands refuse, no censored valid command disappears. Prefix is pre-offer/captured basis.
+   Freshness and identity inherit the authenticated attempt. P2 samples require schedule minima before arithmetic is accepted.
+3. `nsReaderEvidence`, `nsReadSample`, `nsSegment`, `nsP1Ladder`: check nonempty, unique, in-window raw events and actual per-second
+   loop identities, complete semantic query answers, main/auxiliary membership, explicit recovery and absolute baseline. Helpers
+   alone are arithmetic on caller data; under recompute they inherit the exact authenticated input/attempt binding.
+4. `nsP4History` and P4 branch: answer hashes match evaluator oracle at the bounded basis, history subject sets match, IO is
+   observer phase counters, baseline absolute bars hold, and single-client requests are sequential/in-window. Resource evidence
+   has the same attempt envelope; missing resource/oracle inputs refuse, never supply a default value.
+5. P5 branch and `nsP5Traffic`: activation belongs to the trace command at the committed position and release pin; durable end
+   verified by evaluator, every output/outbox compared at that basis; traffic is inside/outside the sweep and has 64 measured
+   loops, correct answers and baseline absolute bars. Raw times and source input are freshly envelope-bound.
+6. `bars.P3.resume`/`met`: re-executes the sealed companion, never accepts an inline verdict. Different exact attempt, identical
+   build/source/slot/input identity; no companion chain. Witness hashes are unique, actual source/WAL recovery intervals equal,
+   whole crash counts clean. Invalid primary evidence cannot yield a true aggregate bar. A crash RECOMPUTED only judges counts
+   and resume, with lag null; primary whole-P3 requires GREEN lag and valid companion.
+7. Existing `nsConsumerCounts`/CRC and historical P3M helper: still no standalone acceptance authority. Caller-bound decoding
+   is now mandatory; P3M remains historical DIAGNOSTIC. No past receipt or test result is adopted as fresh execution.
+8. Required reviewer/builder assertions and TAP: compare actual results, exact codes and positive controls from this attempt;
+   all TODO flags removed. Preserved historical reviewer TAP remains historical. Passing builder tests is not independent review.
+
+The original admission/reference verdict sites remain unchanged. No source/SQLite decoder, OS proof collector or production oracle
+adapter was implemented in this pure-function round; they are now **mandatory checked dependencies**, not optional exemptions
+that produce a successful recomputation without their output. No live engine/durability/acceptance run was performed.
+
+Round 2 final validation and changed evaluator hash will be recorded after committing the implementation (Q75a requires that).
+
+Round 2 changed evaluator path: `lab/bin/claim.mjs`, old SHA256 `6806dcd852657e15d8b83c9138c42bc25d48afd46f3f51f884ebb04f787d9a30`, new SHA256 `0ac41f01b4e2dbdd04db64654eb47310ea07346aaf90aada65a7ae829299f892`. No old evaluator content-hash pin occurs in the current obligations/load-contract; no acceptance file was edited. The contract builder must pin the reviewed final evaluator and mandatory adapters before use.
