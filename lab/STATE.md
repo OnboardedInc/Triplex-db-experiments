@@ -201,3 +201,7 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   exclusive XTDB slot (A1-RUNBOOK.md in .claude/worktrees/p5a), queued after K01's live rerun. Its g0.ts guard commit goes onto K01's branch.
 - ER01-S accepted for offline fixtures (verify/ER01-S b81e102); merges with the observer branch when ER01-C lands. Open: CPU/time bounds on
   large base64 inputs.
+- 2026-11-09 queue update: xtdb-s1 held by CX-P5A (P5 A1 at 1k). Next: K01 live rerun per LIVE-round12.md (K01 aec5a715, offline ACCEPT
+  verify/K01 12a30d8: the G0 expected count now includes journal rows, 61,384 for the round 11 seed); then G03's slot run; then RT01 live
+  G2/G6 after round 4; then W02 live GS on xtdb; then unpark tx2-datomic-dev for EXP-DA04. Contract 0.3.14 (CX-A01-0314) building with
+  INT-Q (accepted, verify/INT-Q c14cdfc9) and GS12F, compiling Q96 and Q97.
