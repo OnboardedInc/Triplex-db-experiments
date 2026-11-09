@@ -42,11 +42,12 @@ export function seedPathOf(m: any, manifestFile: string | null, ownerFile: strin
   const base = { kind: "seed-manifest", manifest: manifestFile, manifestSha256, scope: m.scope, seedWallS: m.capture?.wallS ?? null, seedStartedAt: m.capture?.startedAt ?? null };
   const owner = ownerFile && fs.existsSync(ownerFile) ? JSON.parse(fs.readFileSync(ownerFile, "utf8")) : null;
   if (!owner) return { ...base, seededBy: "unverified", note: "no slot owner record (TRIPLEX_LAB_SLOT_OWNER): what the slot volume holds is not bound" };
+  if (owner.lifecycle && owner.lifecycle.state !== "RUNNING") throw new Error("Q74d: slot lifecycle revoked current seed receipts");
   const c = owner.volumeContent;
   if (c?.kind !== "clone") return { ...base, seededBy: "seed-writer" };
   if (c.manifestSha256 !== manifestSha256)
     throw new Error(`the slot holds a clone of ${c.goldenVolume} made from manifest ${String(c.manifestSha256).slice(0, 12)}, not this manifest ${manifestSha256.slice(0, 12)}`);
-  if (c.readiness?.verdict !== "PASS" || c.copy?.c1?.pass !== true || c.readiness.certificateSha256 !== cloneCertificateHash(c) || c.readiness.verifiedContainerId !== c.containerId || c.readiness.verifiedStartedAt !== c.startedAt)
+  if (c.readiness?.verdict !== "PASS" || c.copy?.c1?.pass !== true || !/^[0-9a-f]{64}$/.test(c.copy?.treeSha256 ?? "") || c.copy.c1.expected !== c.copy.treeSha256 || c.copy.c1.observed !== c.copy.treeSha256 || !c.copy.creationId || c.readiness.certificateSha256 !== cloneCertificateHash(c) || c.readiness.verifiedContainerId !== c.containerId || c.readiness.verifiedStartedAt !== c.startedAt)
     throw new Error(`RULINGS Q74d: the clone of ${c.goldenVolume} on this slot has readiness/copy certificate ${c.readiness?.verdict ?? "none"}; run lab/bin/engine.mjs verify`);
   return {
     ...base, seededBy: "clone",

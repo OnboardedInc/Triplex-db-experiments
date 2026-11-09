@@ -171,11 +171,11 @@ test('R3: clone verification uses fresh post-fingerprint gauges and a final star
   const freeze = { c3: { tx: 100 }, c4: { position: 42 }, c5: { n: 10 }, c6: { sha256: 'layout', liveTables: { rows: [] } }, c7: { jobsAvailable: 0 }, c8: { resultSha256: 'results', plan: { sha256: 'plan' } } };
   for (const variation of ['clean', 'busy', 'end-changed']) {
     let gaugeCalls = 0, startCalls = 0;
-    const record = { manifest: { path: 'manifest.json' }, volume: 'golden', settle: { after: {} }, freeze };
+    const record = { key:'key', copy:{treeSha256:'a'.repeat(64)}, manifest: { path: 'manifest.json' }, volume: 'golden', settle: { after: {} }, freeze };
     const { verify } = vm.runInNewContext(stripTypeScriptTypes(section(checker, 'async function verify()', '\ntry {\n  if (mode')) + ';({verify})', {
       path, REPO: root, url: 'offline', container: 'fixture', Date, compareFreeze,
       opt: name => name === 'golden-record' ? 'golden.json' : name === 'owner' ? 'owner.json' : undefined,
-      readJson: file => file.includes('manifest') ? { result: { lastPosition: 42 } } : file.includes('owner') ? { volumeContent: { goldenVolume: 'golden', copy: { c1: { pass: true } } } } : record,
+      readJson: file => file.includes('manifest') ? { result: { lastPosition: 42 } } : file.includes('owner') ? { volumeContent: { kind:'clone', key:'key', goldenVolume: 'golden', copy: { creationId:'copy', treeSha256:'a'.repeat(64), c1: { pass: true, expected:'a'.repeat(64), observed:'a'.repeat(64) } } } } : record,
       healthz: () => ({ status: 200 }), sleep: async () => {},
       fingerprint: async () => ({ ...structuredClone(freeze), ok: true, errors: [], timingsMs: {} }),
       gauges: async () => ({ jobsAvailable: variation === 'busy' && ++gaugeCalls === 1 ? 1 : 0 }),

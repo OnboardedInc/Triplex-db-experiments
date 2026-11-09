@@ -5,7 +5,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { stripTypeScriptTypes } from 'node:module';
 import { after, test } from 'node:test';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { canonical, digest, blockTrieCoverage, cloneCertificateHash } from '../../bench/lib/clone.ts';
 import { verifyMaintenanceTail } from '../../bin/xtdb-log.mjs';
 import { maintenanceFixture } from './tail-fixtures.mjs';
@@ -160,8 +160,9 @@ for (const failed of ['none', 'inspect', 'logs']) {
 for (const failed of [false, true]) {
   test(`${failed ? 'R2-F4' : 'control'}: clean-stop proof rejects a failed current log command (${failed})`, async () => {
     let inspections = 0;
+    const stopOwner = {holder:'fixture'};
     const stopSlot = load(section(engine, 'async function stopSlot(config, info, opts)', '/**\n * Golden'), 'stopSlot', {
-      Date, readOwner: () => ({ holder: 'fixture' }), requireHeldXtdbSlot: () => {},
+      Date, randomUUID, readOwner: () => ({ holder: 'fixture' }), updateOwner: async (_info, action) => action(stopOwner), requireHeldXtdbSlot: () => {},
       inspect: () => ({ Id: 'container', Config: { Labels: { 'tx2.managed-by': 'lab/bin/engine.mjs' } }, State: { Running: ++inspections === 1, ExitCode: 143, StartedAt: '2000-01-01T00:00:00Z', FinishedAt: '2000-01-01T00:00:01Z' } }),
       docker: () => '', dockerArgs: args => args,
       spawnSync: () => ({ status: failed ? 1 : 0, stdout: 'Stopping node...\nNode stopped.\n', stderr: failed ? 'log stream failed' : '' }),

@@ -150,7 +150,7 @@ const tcpOpen = port => new Promise(resolve => {
  */
 export function healthz(container, route, { post = false } = {}) {
   const r = spawnSync('docker', dockerArgs(['exec', container, 'wget', '-q', '-S', '--content-on-error', '-O', '-', ...(post ? ['--post-data='] : []), `http://127.0.0.1:8080${route}`]), { encoding: 'utf8', timeout: 30_000 });
-  const status = Number((/HTTP\/[\d.]+ (\d{3})/.exec(r.stderr ?? '') ?? [])[1]) || null;
+  const status = r.status === 0 && !r.signal && !r.error ? Number((/HTTP\/[\d.]+ (\d{3})/.exec(r.stderr ?? '') ?? [])[1]) || null : null;
   return { status, body: (r.stdout ?? '').trim(), exit: r.status };
 }
 
@@ -214,11 +214,12 @@ function acquireSlotUnlocked(info, holder, experiment) {
     if (!owner) fail('REFUSED', `${info.lockDir} exists without owner.json; inspect and remove it by hand if abandoned`);
     if (owner.holder !== holder && info.mode !== 'resident')
       fail('REFUSED', `${info.lane}-${info.slot} is held by "${owner.holder}" (${owner.experiment ?? 'no experiment'}) since ${owner.createdAt}`);
+    if (['REMOVING', 'STOPPING', 'STARTING'].includes(owner.lifecycle?.state)) fail('REFUSED', 'slot teardown is in progress');
     return { owner, created: false };
   }
   const owner = {
     format: OWNER_FORMAT, lane: info.lane, slot: info.slot, mode: info.mode, container: info.container, volume: info.volume,
-    endpoint: info.endpoint, port: info.port, holder, experiment: experiment ?? null, pid: process.pid, worktree: REPO, createdAt: now(),
+    endpoint: info.endpoint, port: info.port, generation: randomUUID(), holder, experiment: experiment ?? null, pid: process.pid, worktree: REPO, createdAt: now(),
   };
   atomicJson(info.ownerFile, owner);
   appendEvent({ event: 'slot-acquired', slot: `${info.lane}-${info.slot}`, holder });
@@ -227,8 +228,13 @@ function acquireSlotUnlocked(info, holder, experiment) {
 
 async function acquireSlot(info, holder, experiment) { return ownerStateLock(info, () => acquireSlotUnlocked(info, holder, experiment)); }
 
-async function releaseSlot(info) {
+async function releaseSlot(info, expectedOwner) {
   return ownerStateLock(info, () => {
+    // [EXP-K01-R5] Why: teardown may wait on pool accounting while a newer owner appears. Rejected: unconditional directory removal (erases the newer generation and receipts).
+    const current = readOwner(info);
+    if (!current && !expectedOwner) return;
+    if (!current || !expectedOwner || current.generation !== expectedOwner.generation || current.holder !== expectedOwner.holder || current.createdAt !== expectedOwner.createdAt || current.lifecycle?.token !== expectedOwner.lifecycle?.token)
+      fail('REFUSED', 'slot generation changed before release');
     fs.rmSync(info.lockDir, { recursive: true, force: true });
     appendEvent({ event: 'slot-released', slot: `${info.lane}-${info.slot}` });
   });
@@ -246,11 +252,12 @@ async function up(config, info, opts, hooks = {}) {
     const existing = inspect(info.container);
     // [EXP-K01] The owner record says what the slot volume holds; a --fresh start wipes it, and a restart makes an
     // earlier readiness verdict stale (the start appends a NoOp to REPLICA_LOG and replays), so it is re-run by `verify`.
-    if (slot.owner.volumeContent && (opts.fresh || !existing?.State.Running)) {
-      await updateOwner(info, owner => {
-        if (owner.holder !== holder) fail('REFUSED', 'slot holder changed');
+    if (opts.fresh || !existing?.State.Running) {
+      slot.owner = await updateOwner(info, owner => {
+        if (!owner || owner.generation !== slot.owner.generation || owner.holder !== holder || owner.createdAt !== slot.owner.createdAt || owner.lifecycle?.token !== slot.owner.lifecycle?.token) fail('REFUSED', 'slot generation changed before start');
+        owner.lifecycle = { state: 'STARTING', token: randomUUID(), at: now() };
         if (opts.fresh) delete owner.volumeContent;
-        else owner.volumeContent.readiness = { verdict: 'STALE', reason: `restarted at ${now()}; run engine.mjs verify` };
+        else if (owner.volumeContent) owner.volumeContent.readiness = { verdict: 'STALE', reason: `restarted at ${now()}; run engine.mjs verify` };
         return owner;
       });
     }
@@ -311,6 +318,11 @@ async function up(config, info, opts, hooks = {}) {
         const entry = ledger.reservations.find(item => item.container === info.container);
         if (entry) Object.assign(entry, { state: 'running', pid: null, configSha256: eff.sha256, readyAt: now() });
       });
+      await updateOwner(info, owner => {
+        if (!owner || owner.generation !== slot.owner.generation || owner.holder !== holder || owner.lifecycle?.token !== slot.owner.lifecycle?.token) fail('REFUSED', 'slot lifecycle changed during start');
+        if (owner.lifecycle) owner.lifecycle.state = 'RUNNING';
+        return owner;
+      });
       process.stderr.write(`[lab] ${info.container} ready (${ready.why}); cap ${fmtBytes(info.memBytes)}, ${info.cpus} CPU, config ${eff.sha256.slice(0, 12)}\n`);
       process.stdout.write(exportsFor(info) + '\n');
     } catch (error) {
@@ -320,7 +332,7 @@ async function up(config, info, opts, hooks = {}) {
       throw error;
     }
   } catch (error) {
-    if (slot.created && !inspect(info.container)) await releaseSlot(info);
+    if (slot.created && !inspect(info.container)) await releaseSlot(info, slot.owner);
     throw error;
   }
 }
@@ -328,12 +340,24 @@ async function up(config, info, opts, hooks = {}) {
 async function down(config, info, opts) {
   const holder = defaultHolder(opts);
   const owner = readOwner(info);
+  if (!owner) fail('REFUSED', 'no slot owner; refusing teardown without a current generation');
   if (owner && owner.holder !== holder && !opts.force)
     fail('REFUSED', `${info.lane}-${info.slot} is held by "${owner.holder}"; pass --force only if you own it`);
   // [EXP-X05] A follower outliving its writer would block the next writer start (volumeGuard) and keep
   // its pool reservation; take it down first, explicitly.
   if (info.lane === 'xtdb' && config.lanes.xtdb.follower && inspect(`${info.container}-ro`))
     fail('REFUSED', `${info.container}-ro still exists; run: node lab/bin/engine.mjs down --lane xtdb --slot ${info.slot} --follower`);
+  // [EXP-K01-R5] Why: revocation must precede physical teardown, including its pool-lock wait. Rejected: releasing only after removal (an in-flight verifier can publish PASS for the gone container).
+  const removing = await updateOwner(info, current => {
+    if (!current && !owner) return;
+    if (!current || !owner || current.generation !== owner.generation || current.holder !== owner.holder || current.createdAt !== owner.createdAt) fail('REFUSED', 'slot generation changed before teardown');
+    current.lifecycle = { state: 'REMOVING', token: randomUUID(), at: now() };
+    if (current.volumeContent) {
+      current.volumeContent.verificationHistory = [...(current.volumeContent.verificationHistory ?? []), current.volumeContent.readiness].filter(Boolean);
+      current.volumeContent.readiness = { verdict: 'STALE', reason: 'down requested; current receipt revoked', at: now() };
+    }
+    return current;
+  });
   const existing = inspect(info.container);
   if (existing) {
     if (!existing.Config.Labels?.['tx2.managed-by']) fail('REFUSED', `${info.container} was not started by lab/bin/engine.mjs; not stopping it`);
@@ -341,20 +365,20 @@ async function down(config, info, opts) {
     docker(['rm', '-f', info.container]);
   }
   // Prove cleanup before releasing anything.
-  if (inspect(info.container)) fail('ENGINE', `${info.container} still exists; reservation kept`);
+  if (docker(['ps', '-a', '--filter', `name=^${info.container}$`, '--format', '{{.ID}}'])) fail('ENGINE', `${info.container} still exists; reservation kept`);
   let volumeNote;
   if (opts['remove-volume']) {
     docker(['volume', 'rm', info.volume], { allowFail: true });
-    if (docker(['volume', 'inspect', info.volume], { allowFail: true })) fail('ENGINE', `volume ${info.volume} still exists; reservation kept`);
+    if (docker(['volume', 'ls', '--filter', `name=^${info.volume}$`, '--format', '{{.Name}}'])) fail('ENGINE', `volume ${info.volume} still exists; reservation kept`);
     volumeNote = 'removed';
-  } else volumeNote = docker(['volume', 'inspect', info.volume], { allowFail: true }) ? 'retained' : 'absent';
+  } else volumeNote = docker(['volume', 'ls', '--filter', `name=^${info.volume}$`, '--format', '{{.Name}}']) ? 'retained' : 'absent';
   await withPool(async ledger => {
     ledger.reservations = ledger.reservations.filter(entry => entry.container !== info.container);
     ledger.retainedVolumes = (ledger.retainedVolumes ?? []).filter(entry => entry.volume !== info.volume);
     if (volumeNote === 'retained')
       ledger.retainedVolumes.push({ volume: info.volume, holder, note: opts.note ?? 'retained by engine down (default)', at: now(), bytes: volumeBytes(config, info.volume) });
   });
-  await releaseSlot(info);
+  await releaseSlot(info, removing);
   appendEvent({ event: 'down', container: info.container, volume: volumeNote });
   process.stderr.write(`[lab] ${info.container} removed; volume ${info.volume} ${volumeNote}; reservation and slot lock released\n`);
 }
@@ -494,8 +518,10 @@ export function goldenKey({ seedInputs, imageId, systemConfigSha256 }) {
 /** Q74f: refuse a copy that would leave the host below the floor. The VM disk is a sparse file, so a copy can grow it by its size. */
 export function diskFloorVerdict({ freeBytes, copyBytes, floorBytes = HOST_DISK_FLOOR_BYTES }) {
   const afterBytes = freeBytes - copyBytes;
-  return { ok: afterBytes >= floorBytes, freeBytes, copyBytes, afterBytes, floorBytes,
-    reason: afterBytes >= floorBytes ? null : `host free disk ${fmtBytes(freeBytes)} - copy ${fmtBytes(copyBytes)} = ${fmtBytes(afterBytes)} < floor ${fmtBytes(floorBytes)} (Q74f)` };
+  // [EXP-K01-R5] Why: invalid observations cannot imply sufficient disk. Rejected: arithmetic comparison alone (Infinity or a negative copy size can pass).
+  const valid = [freeBytes, copyBytes, floorBytes].every(n => Number.isFinite(n) && n >= 0 && n <= Number.MAX_SAFE_INTEGER);
+  return { ok: valid && afterBytes >= floorBytes, freeBytes, copyBytes, afterBytes, floorBytes,
+    reason: valid && afterBytes >= floorBytes ? null : `host free disk ${fmtBytes(freeBytes)} - copy ${fmtBytes(copyBytes)} = ${fmtBytes(afterBytes)} < floor ${fmtBytes(floorBytes)} (Q74f)` };
 }
 export function hostDisk() {
   const s = fs.statfsSync(HOST_DISK_PATH);
@@ -548,6 +574,7 @@ echo @@blocks; find ${dir}/buffers/v06/blocks -maxdepth 1 -type f -name 'b*.binp
 function offlineCheck(config, info, expected) {
   const frontiers = expected.frontiers;
   if (!frontiers) fail('REFUSED', 'offline freeze requires separate F/M/T frontiers (Q83e)');
+  if (!Number.isSafeInteger(expected.cutIndex) || expected.cutIndex < 0) fail('REFUSED', 'offline freeze requires intended cut index');
   const offset = frontiers.F % (2 ** 48);
   if (!Number.isSafeInteger(offset) || offset < 0) fail('REFUSED', 'invalid block-cut offset');
   const raw = helper(config, `tx2-clone-offline-${info.slot}`, [`${info.volume}:/src:ro`], offlineScript('/src') +
@@ -559,7 +586,7 @@ function offlineCheck(config, info, expected) {
   try {
     const bytes = Buffer.from(sourceTailBase64, 'base64');
     if (bytes.toString('base64') !== sourceTailBase64) throw new Error('noncanonical base64 stopped-tail evidence');
-    maintenance = verifyMaintenanceTail(bytes, frontiers);
+    maintenance = verifyMaintenanceTail(bytes, frontiers, expected.cutIndex);
   }
   catch (error) { maintenance = { ok: false, error: error.message, frontiers }; }
   return { ok: maintenance.ok && canonicalJson(blocks) === canonicalJson(expected.listing), maintenance, sourceTailBase64, tails: tails.trim().split('\n'), blocks, expected: expected.listing, raw };
@@ -568,17 +595,20 @@ function offlineCheck(config, info, expected) {
 
 /** Parse one listingScript output into sorted file records and a tree hash over every field. */
 export function parseListing(text) {
-  const stat = [], sha = new Map();
+  const stat = [], sha = new Map(), seen = new Set();
   let section = null;
   for (const line of String(text).split('\n')) {
     if (line.startsWith('@@')) { section = line.slice(2).trim(); continue; }
     if (!line.trim()) continue;
     if (section === 'stat') {
-      const [p, bytes, mode, uid, gid] = line.split('|');
+      const [p, bytes, mode, uid, gid, extra] = line.split('|');
+      if (extra !== undefined || !p?.startsWith('./') || seen.has(p) || !/^(0|[1-9][0-9]*)$/.test(bytes) || !Number.isSafeInteger(Number(bytes)) || !/^[0-7]{3,4}$/.test(mode) || !/^[0-9]+$/.test(uid) || !/^[0-9]+$/.test(gid)) fail('ENGINE', 'invalid or duplicate file stat in tree preimage');
+      seen.add(p);
       stat.push({ path: p, bytes: Number(bytes), mode, uid, gid });
     } else if (section === 'sha') {
       const m = /^([0-9a-f]{64})\s+(.+)$/.exec(line);
       if (!m) fail('ENGINE', `bad sha256sum line ${JSON.stringify(line)}`);
+      if (sha.has(m[2])) fail('ENGINE', 'duplicate file hash in tree preimage');
       sha.set(m[2], m[1]);
     }
   }
@@ -650,9 +680,13 @@ async function stopSlot(config, info, opts) {
   if (!readOwner(info)) fail('REFUSED', `${info.lane}-${info.slot} has no slot lock`);
   requireHeldXtdbSlot(info, opts);
   const held = readOwner(info);
-  if (held?.volumeContent?.kind === 'clone') await updateOwner(info, current => {
-    if (!current || current.holder !== held.holder) fail('REFUSED', 'holder changed before stop');
-    current.volumeContent.readiness = { verdict: 'STALE', at: now(), reason: 'stop requested; fresh verification required' };
+  const stopping = await updateOwner(info, current => {
+    if (!current || current.holder !== held.holder || current.generation !== held.generation || current.createdAt !== held.createdAt || current.lifecycle?.token !== held.lifecycle?.token || current.lifecycle?.state === 'REMOVING') fail('REFUSED', 'slot generation changed before stop');
+    current.lifecycle = { state: 'STOPPING', token: randomUUID(), at: now() };
+    if (current.volumeContent) {
+      current.volumeContent.verificationHistory = [...(current.volumeContent.verificationHistory ?? []), current.volumeContent.readiness].filter(Boolean);
+      current.volumeContent.readiness = { verdict: 'STALE', at: now(), reason: 'stop requested; fresh verification required' };
+    }
     return current;
   });
   const before = inspect(info.container);
@@ -671,6 +705,11 @@ async function stopSlot(config, info, opts) {
   const verdict = stopVerdict({ log: `${logs.stdout ?? ''}\n${logs.stderr ?? ''}`, exitCode: after.State.ExitCode, oomKilled: after.State.OOMKilled, stopMs: before.State.Running ? stopMs : null });
   if (logs.status !== 0 || logs.signal || logs.error) { verdict.ok = false; verdict.reasons.push('current stop log read failed'); }
   await withPool(async ledger => { const e = ledger.reservations.find(item => item.container === info.container); if (e) Object.assign(e, { state: 'stopped', stoppedAt: now() }); });
+  await updateOwner(info, current => {
+    if (!current || current.generation !== stopping.generation || current.holder !== stopping.holder || current.lifecycle?.token !== stopping.lifecycle.token) fail('REFUSED', 'slot lifecycle changed during stop');
+    current.lifecycle.state = 'STOPPED';
+    return current;
+  });
   appendEvent({ event: 'stopped', container: info.container, clean: verdict.ok });
   const out = { container: info.container, containerId: after.Id, startedAt: before.State.StartedAt, finishedAt: after.State.FinishedAt, stopMs, wasRunning: before.State.Running, logRead, verdict };
   if (opts.print !== false) process.stdout.write(JSON.stringify(out, null, 2) + '\n');
@@ -786,7 +825,7 @@ async function golden(config, info, opts) {
       format: GOLDEN_RECORD_FORMAT, key: k.key, key8: k.key8, keyInputs: k.inputs, volume, createdAt: now(), holder: defaultHolder(opts), experiment: opts.exp ?? null,
       manifest: { path: path.relative(REPO, manifestFile), sha256: sha256File(manifestFile), scope: manifest.scope, subjects: manifest.subjects, lastPosition: manifest.result.lastPosition, seedWallS: manifest.capture?.wallS ?? null },
       source: { slot: info.slot, container: info.container, containerId: c.Id, volume: info.volume, imageId: c.Image, configSha256: eff.sha256, systemConfigSha256, systemConfig: systemConfig(eff.effective) },
-      settle: settled, freeze, stop, offline, referenceStart: start, referenceStop, referenceOffline,
+      creation, settle: settled, freeze, stop, offline, referenceStart: start, referenceStop, referenceOffline,
       copy: { sourceBytes, goldenBytes, files: dst.count, fileBytes: dst.bytes, treeSha256: dst.treeSha256, logSha256: pick('./log/LOG'), replicaLogSha256: pick('./log/REPLICA_LOG'), filesFile: path.relative(REPO, filesFile), filesSha256: sha256File(filesFile), sourceMatches: true },
       hostDisk: { before: diskBefore, after: hostDisk(), floor },
       timings,
@@ -872,8 +911,9 @@ function loadGolden(file) {
   if (!record.settle?.qualified || !frontiers || canonicalJson(frontiers) !== canonicalJson(after?.frontiers) ||
     frontiers.M !== after?.gauges?.latestProcessedMsgId || frontiers.M !== after?.gauges?.latestSubmittedMsgId || frontiers.T !== after?.gauges?.latestCompletedTxId)
     fail('REFUSED', 'golden has no qualified stopped-tail F/M/T evidence');
+  if (!Number.isSafeInteger(after.cutIndex) || after.cutIndex < 0 || !after.blocks?.some(b => Number(b.latest_processed_msg_id) === frontiers.F && Number(b.tx_id) === frontiers.T && parseInt(b.block_idx.slice(1), 16) === after.cutIndex)) fail('REFUSED', 'golden cut is not bound to its checkpoint block');
   for (const offline of [record.offline, record.referenceOffline]) {
-    const proof = verifyMaintenanceTail(Buffer.from(offline?.sourceTailBase64 ?? '', 'base64'), frontiers);
+    const proof = verifyMaintenanceTail(Buffer.from(offline?.sourceTailBase64 ?? '', 'base64'), frontiers, after.cutIndex);
     if (!offline?.ok || canonicalJson(proof) !== canonicalJson(offline.maintenance)) fail('REFUSED', 'golden stopped-tail proof changed');
   }
   if (record.format !== GOLDEN_RECORD_FORMAT) fail('REFUSED', `${recordFile} is not a ${GOLDEN_RECORD_FORMAT} record`);
@@ -881,6 +921,7 @@ function loadGolden(file) {
   if (again.key !== record.key) fail('REFUSED', `${recordFile}: key does not recompute from its inputs`);
   const vol = docker(['volume', 'inspect', record.volume], { allowFail: true });
   if (!vol) fail('REFUSED', `golden volume ${record.volume} does not exist`);
+  if (!record.creation?.creationId || JSON.parse(vol)[0].Labels?.['tx2.creation-id'] !== record.creation.creationId) fail('REFUSED', 'golden volume generation differs from its creation receipt');
   if (JSON.parse(vol)[0].Labels?.['tx2.seed-key'] !== record.key) fail('REFUSED', `${record.volume} is labelled with another key`);
   const manifestFile = path.resolve(REPO, record.manifest.path);
   if (!fs.existsSync(manifestFile) || sha256File(manifestFile) !== record.manifest.sha256) fail('REFUSED', `seed manifest ${record.manifest.path} is missing or changed since the golden was made`);
@@ -935,7 +976,7 @@ async function clone(config, info, opts) {
     readiness: { verdict: 'PENDING' },
   };
   await updateOwner(info, latest => {
-    if (!latest || latest.holder !== owner.holder) fail('REFUSED', 'clone holder changed before publication');
+    if (!latest || latest.generation !== owner.generation || latest.holder !== owner.holder || latest.lifecycle && latest.lifecycle.state !== 'RUNNING') fail('REFUSED', 'clone lifecycle changed before publication');
     latest.volumeContent = owner.volumeContent;
     return latest;
   });
@@ -950,6 +991,7 @@ async function verify(config, info, opts) {
   requireHeldXtdbSlot(info, opts);
   const owner = readOwner(info);
   const content = owner?.volumeContent;
+  if (owner?.lifecycle && owner.lifecycle.state !== 'RUNNING') fail('REFUSED', 'slot lifecycle is not running; current receipts are revoked');
   if (content?.kind !== 'clone') fail('REFUSED', `${info.lane}-${info.slot} holds no clone (owner.json volumeContent)`);
   const t = Date.now();
   const attemptId = `${info.slot}-${t}-${Math.random().toString(16).slice(2)}`;
@@ -962,7 +1004,7 @@ async function verify(config, info, opts) {
   let result;
   try {
     await updateOwner(info, current => {
-      if (!current || current.holder !== owner.holder || identity(current.volumeContent) !== identity(content) || JSON.stringify(current.volumeContent.readiness) !== JSON.stringify(previousReadiness)) throw new Error('verification superseded before revocation');
+      if (!current || current.lifecycle && current.lifecycle.state !== 'RUNNING' || current.generation !== owner.generation || current.holder !== owner.holder || identity(current.volumeContent) !== identity(content) || JSON.stringify(current.volumeContent.readiness) !== JSON.stringify(previousReadiness)) throw new Error('verification superseded before revocation');
       current.volumeContent = content;
       return current;
     });
@@ -979,7 +1021,7 @@ async function verify(config, info, opts) {
     const receiptSha256 = sha256File(file);
     if (content.goldenRecordSha256 && sha256File(recordFile) !== content.goldenRecordSha256) throw new Error('golden record changed since the clone was copied');
     const latest = await updateOwner(info, latest => {
-      if (latest?.holder !== owner.holder || latest?.volumeContent?.readiness?.attemptId !== attemptId) throw new Error('verification superseded by another slot operation');
+      if (latest?.lifecycle && latest.lifecycle.state !== 'RUNNING' || latest?.generation !== owner.generation || latest?.holder !== owner.holder || latest?.volumeContent?.readiness?.attemptId !== attemptId) throw new Error('verification superseded by another slot operation');
       if (identity(latest.volumeContent) !== identity(content)) throw new Error('clone ownership content changed during verification');
       latest.volumeContent.readiness = { verdict: verdict.verdict, attemptId, at: now(), checksS: (Date.now() - t) / 1000, file: path.relative(REPO, file), sha256: receiptSha256, certificateSha256: identity(content), verifiedContainerId: fresh?.c?.Id, verifiedStartedAt: fresh?.c?.State.StartedAt, failed: Object.entries(verdict.checks).filter(([, v]) => !v.pass).map(([k]) => k) };
       if (fresh?.c) latest.volumeContent.startedAt = fresh.c.State.StartedAt;
@@ -995,12 +1037,12 @@ async function verify(config, info, opts) {
     catch (receiptError) { receipt = { receiptWriteError: String(receiptError.message ?? receiptError) }; }
     // [EXP-K01-R3] Why: only this attempt may replace its readiness, including a failed PASS publication. Rejected: overwriting a newer attempt or resurrecting the historical PASS after an error.
     await updateOwner(info, latest => {
-    const initialRevocationFailed = latest?.volumeContent && identity(latest.volumeContent) === identity(content) && JSON.stringify(latest.volumeContent.readiness) === JSON.stringify(previousReadiness);
-    if (latest?.holder === owner.holder && (latest?.volumeContent?.readiness?.attemptId === attemptId || initialRevocationFailed)) {
-      if (initialRevocationFailed) latest.volumeContent.verificationHistory = content.verificationHistory;
-      latest.volumeContent.readiness = { ...refusal, ...receipt };
-      return latest;
-    }
+      const initialRevocationFailed = latest?.volumeContent && identity(latest.volumeContent) === identity(content) && JSON.stringify(latest.volumeContent.readiness) === JSON.stringify(previousReadiness);
+      if ((!latest?.lifecycle || latest.lifecycle.state === 'RUNNING') && latest?.generation === owner.generation && latest?.holder === owner.holder && (latest?.volumeContent?.readiness?.attemptId === attemptId || initialRevocationFailed)) {
+        if (initialRevocationFailed) latest.volumeContent.verificationHistory = content.verificationHistory;
+        latest.volumeContent.readiness = { ...refusal, ...receipt };
+        return latest;
+      }
     });
     throw error;
   }
@@ -1034,7 +1076,7 @@ async function goldenRm(config, opts) {
   const users = containersOnVolume(volume);
   if (users.length) fail('REFUSED', `${volume} is mounted by ${users.join(', ')}`);
   if (vol) docker(['volume', 'rm', volume]);
-  if (docker(['volume', 'inspect', volume], { allowFail: true })) fail('ENGINE', `${volume} still exists`);
+  if (docker(['volume', 'ls', '--filter', `name=^${volume}$`, '--format', '{{.Name}}'])) fail('ENGINE', `${volume} still exists`);
   await withPool(async ledger => { ledger.goldens = (ledger.goldens ?? []).filter(g => g.volume !== volume); });
   appendEvent({ event: 'golden-removed', volume });
   process.stderr.write(`[lab] golden ${volume} ${vol ? 'removed' : 'was already absent'}\n`);

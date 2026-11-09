@@ -132,7 +132,7 @@ async function settle() {
       // [EXP-K01-R3] Why: a current transaction change invalidates the frozen seed even if its old block still matches. Rejected: treating the initial gauge as fresh evidence for later polls.
       if (!Number.isSafeInteger(g.latestCompletedTxId) || g.latestCompletedTxId !== before.gauges.latestCompletedTxId)
         return { settled: false, reason: `current completed transaction ${g.latestCompletedTxId} differs from frozen seed ${before.gauges.latestCompletedTxId} or is invalid`, before, phases };
-      if (streak >= 3) { previous = reading; evidence.after = reading; (reading as any).frontiers = { F: num(block.latest_processed_msg_id), M: g.latestProcessedMsgId, T: g.latestCompletedTxId }; persist(); break; }
+      if (streak >= 3) { previous = reading; evidence.after = reading; (reading as any).cutIndex = target; (reading as any).frontiers = { F: num(block.latest_processed_msg_id), M: g.latestProcessedMsgId, T: g.latestCompletedTxId }; persist(); break; }
     }
     if (!evidence.after) return { settled: false, reason: `finish-block #${phase} evidence did not settle`, before, phases };
   }
@@ -240,10 +240,16 @@ async function verify() {
   const manifest = readJson(path.resolve(REPO, record.manifest.path));
   const owner = opt("owner") ? readJson(opt("owner")!) : null;
   const checks: Record<string, Check> = {};
-  const c1 = owner?.volumeContent?.copy?.c1;
-  checks["C1"] = c1 && owner.volumeContent.goldenVolume === record.volume
-    ? { pass: !!c1.pass, expected: c1.expected, observed: c1.observed, note: `copy of ${record.volume}: every file's path, size, mode, owner and sha256 (tree hash), checked in the helper before the first start` }
-    : { pass: false, note: "no copy record for this golden in owner.json volumeContent" };
+  const content = owner?.volumeContent, copy = content?.copy, c1 = copy?.c1;
+  // [EXP-K01-R5] Why: a current certificate can still contain contradictory hashes. Rejected: recertifying the old C1 PASS bit without comparing its exact pre-start tree evidence.
+  const hashes = [record.copy?.treeSha256, copy?.treeSha256, c1?.expected, c1?.observed];
+  checks["C1"] = {
+    pass: content?.kind === "clone" && content.goldenVolume === record.volume && content.key === record.key &&
+      typeof copy?.creationId === "string" && copy.creationId.length > 0 && c1?.pass === true &&
+      hashes.every(h => typeof h === "string" && /^[0-9a-f]{64}$/.test(h) && h === record.copy.treeSha256),
+    expected: record.copy?.treeSha256, observed: { treeSha256: copy?.treeSha256, c1 },
+    note: "the golden and this copy's immutable pre-start path/size/mode/owner/content tree SHA-256 must equal both C1 hashes; live appended logs are not rehashed",
+  };
   const started = healthz("/healthz/started"), alive = healthz("/healthz/alive");
   checks["C2"] = { pass: started.status === 200 && alive.status === 200, observed: { started, alive }, expected: { started: 200, alive: 200 } };
   const t = Date.now();
