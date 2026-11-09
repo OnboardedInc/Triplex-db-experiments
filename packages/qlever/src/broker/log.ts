@@ -10,6 +10,7 @@ import type { TripleRow } from "@triplex-build/triplex/runtime";
 import { FrameKind, encodeFrame, encodeSegmentHeader, segmentSeed } from "./frame.js";
 import { decodeCommitGroup } from "./frames.js";
 import { sqliteWorker } from "./sqlite-worker.js";
+import { BasisNotAvailable } from "./errors.js";
 import { ReadError } from "@triplex-build/triplex/runtime";
 
 export type H1Basis = number | { readonly recordedPosition: number; readonly recordedAt?: number };
@@ -146,13 +147,22 @@ class Connection {
       }, 30_000);
       this.worker.once("error", onError);
       this.worker.once("exit", onExit);
-      port1.once("message", (data: { result: T; error?: string }) => {
+      port1.once("message", (data: { result: T; error?: string; observed?: number }) => {
         cleanup();
         if (data.error)
           reject(
             data.error.includes("H1_RECORD_TIME_UNSUPPORTED")
               ? new H1BasisUnsupported()
-              : new BrokerLogError(data.error),
+              : data.error.includes("H1_BASIS_NOT_AVAILABLE")
+                ? new BasisNotAvailable({
+                    required: (args as any).basis,
+                    observed: data.observed ?? -1,
+                    replica: "broker-h1",
+                    surface: "repository",
+                    waitedMs: 0,
+                    cause: data.error,
+                  })
+                : new BrokerLogError(data.error),
           );
         else resolve(data.result);
       });
@@ -211,6 +221,7 @@ export class HostLog {
   private writing = false;
   private failed: Error | undefined;
   private readerIndex = 0;
+  private readonly sweepPool = new Map<number, Connection>();
   private constructor(
     readonly dir: string,
     private readonly writer: Connection,
@@ -219,6 +230,7 @@ export class HostLog {
     public epoch: number,
     public nextLsn: number,
     private prevCrc: number,
+    private readonly gate: SharedArrayBuffer,
   ) {}
   static async open(
     dir: string,
@@ -325,6 +337,7 @@ export class HostLog {
         epoch,
         init.marker.lsn + 2,
         encoded.crc,
+        gate,
       );
       streams.set(dir, log);
       streamReaders.set(file, pool[0]!);
@@ -425,9 +438,37 @@ export class HostLog {
       { txId: string; position: number } | undefined
     >("claim", id);
   }
-  async sweepPage(basis: number, entities: readonly string[]) {
-    if (entities.length > 64) throw new BrokerLogError("Sweep pages are limited to 64 subjects");
-    return this.pull(basis, { entities });
+  async sweepPage(
+    basis: H1Basis,
+    entities: readonly string[],
+    options: { worker?: number; validAt?: number } = {},
+  ) {
+    if (this.closed) throw new BrokerLogError("Broker log is closed");
+    const worker = options.worker ?? 0;
+    if (!Number.isInteger(worker) || worker < 0 || worker > 3 || entities.length > 64)
+      throw new BrokerLogError("Sweep requires worker 0..3 and at most 64 subjects");
+    if (options.validAt !== undefined && !Number.isFinite(options.validAt))
+      throw new BrokerLogError("Sweep validAt must be finite");
+    // [EXP-P5B] Why: R34/Q92h isolates page BFS from four live readers and shares the maintenance gate.
+    // Rejected: pull() per hop (different snapshots, and sweep pages queue live traffic).
+    let connection = this.sweepPool.get(worker);
+    if (!connection) {
+      connection = connect(this.segmentPath, "reader", this.gate);
+      this.sweepPool.set(worker, connection);
+    }
+    return connection.request<
+      PinnedPull & {
+        transactionMs: number;
+        cpuMicros: number;
+        cpuScope: string;
+        roundTrips: number;
+      }
+    >("sweep", {
+      basis: typeof basis === "number" ? basis : basis.recordedPosition,
+      recordedAt: typeof basis === "number" ? undefined : basis.recordedAt,
+      entities,
+      validAt: options.validAt,
+    });
   }
   private lookup<T>(op: string, args?: unknown): T {
     if (this.closed) throw new BrokerLogError("Broker log is closed");
@@ -466,12 +507,25 @@ export class HostLog {
   checkpointStatus() {
     return this.checkpointer.request<CheckpointStatus>("checkpointStatus");
   }
-  pinBasis(basis: number, owner: string) {
+  pinBasis(basis: number, owner: string, lease?: { ttlMs: number; maxLagPositions: number }) {
+    if (
+      lease &&
+      (!Number.isSafeInteger(lease.ttlMs) ||
+        lease.ttlMs < 1 ||
+        lease.ttlMs > 300_000 ||
+        !Number.isSafeInteger(lease.maxLagPositions) ||
+        lease.maxLagPositions < 0)
+    )
+      throw new BrokerLogError("Invalid pin lease");
     const token = randomUUID();
-    this.lookup("pin", { token, basis, owner });
+    this.lookup("pin", { token, basis, owner, lease });
     let released = false;
     return {
       basis,
+      renew: () => {
+        if (released || !lease) throw new BrokerLogError("No active lease to renew");
+        this.lookup("renew", { token, ttlMs: lease.ttlMs });
+      },
       release: () => {
         if (!released) {
           this.lookup("unpin", token);
@@ -488,7 +542,7 @@ export class HostLog {
     this.closed = true;
     streams.delete(this.dir);
     streamReaders.delete(this.segmentPath);
-    await Promise.all(this.pool.map((c) => c.close()));
+    await Promise.all([...this.pool, ...this.sweepPool.values()].map((c) => c.close()));
     await this.checkpointer.close();
     await this.writer.close();
     const external = readers.get(this.segmentPath);

@@ -90,20 +90,29 @@ export function memoryComposition(
       });
     // [EXP-W02-R2] Why: reject invalid operations before allocating a position or changing any row. Rejected: validating while applying (leaves a partial command after a bad tail operation).
     for (const op of operations) {
-      if (op.op === "retract") { if (!st.facts.has(op.id)) return fail("InvalidTripleError"); }
-      else if (op.op !== "assert") return fail("InvalidTripleError");
+      if (op.op === "retract") {
+        if (!st.facts.has(op.id)) return fail("InvalidTripleError");
+      } else if (op.op !== "assert") return fail("InvalidTripleError");
       else if (op.value?.type === "integer") {
         try {
-          if (!/^(?:0|-[1-9][0-9]*|[1-9][0-9]*)$/.test(op.value.value)) return fail("InvalidTripleError");
-          const n = BigInt(op.value.value), bits = 63n;
-          if (n < -(1n << bits) || n >= (1n << bits)) return fail("InvalidTripleError");
-        } catch { return fail("InvalidTripleError"); }
+          if (!/^(?:0|-[1-9][0-9]*|[1-9][0-9]*)$/.test(op.value.value))
+            return fail("InvalidTripleError");
+          const n = BigInt(op.value.value),
+            bits = 63n;
+          if (n < -(1n << bits) || n >= 1n << bits) return fail("InvalidTripleError");
+        } catch {
+          return fail("InvalidTripleError");
+        }
       }
     }
     for (const p of meta?.preconditions ?? []) {
       if (p._tag === "EntityState") {
-        const live = (st.byEntity.get(p.entityId) ?? []).filter(f => f.retractedPosition === undefined).map(f => f.id).sort();
-        if (JSON.stringify(live) !== JSON.stringify([...(p.tripleIds ?? [])].sort())) return fail("TransactionConflictError");
+        const live = (st.byEntity.get(p.entityId) ?? [])
+          .filter((f) => f.retractedPosition === undefined)
+          .map((f) => f.id)
+          .sort();
+        if (JSON.stringify(live) !== JSON.stringify([...(p.tripleIds ?? [])].sort()))
+          return fail("TransactionConflictError");
       }
       const f = st.facts.get(p.id);
       if (p._tag === "TripleLive" && (!f || f.retractedAt !== undefined))
@@ -303,7 +312,13 @@ export function memoryComposition(
           }
         frontier = next;
       }
-      return { rows, reportedBasis: { ...basis }, position: head, epoch: `memory:${scope}`, roundTrips };
+      return {
+        rows,
+        reportedBasis: { ...basis },
+        position: head,
+        epoch: `memory:${scope}`,
+        roundTrips,
+      };
     },
     storeCounts: async () => ({
       position: st.position,

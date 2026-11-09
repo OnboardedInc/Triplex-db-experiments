@@ -1,0 +1,171 @@
+{
+  "format": "EXP-P5B-evidence/1",
+  "classification": "DIAGNOSTIC",
+  "acceptance": false,
+  "status": "BLOCKED-REFERENCE-POSITION-MISMATCH",
+  "durableRoot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-P5B",
+  "finalAttempt": "final-04",
+  "preflightAttempt": "a8bf47cf-d6ce-4541-9a07-42d74bfb850d",
+  "mergeCommit": "40be0207",
+  "sourceStable": true,
+  "positionComparison": {
+    "expected": 1,
+    "observed": 2048,
+    "equal": false
+  },
+  "stages": [
+    {
+      "name": "harness-dependencies",
+      "command": "pnpm",
+      "args": [
+        "--config.store-dir=/Users/sam/projects/triplex-db-2/.pnpm-store",
+        "exec",
+        "turbo",
+        "run",
+        "build",
+        "--filter=@triplex-build/triplex-xtdb...",
+        "--filter=@triplex-build/triplex-qualification..."
+      ],
+      "startedAt": "2026-11-09T07:40:43.114Z",
+      "finishedAt": "2026-11-09T07:40:50.056Z",
+      "wallMs": 6938.301458,
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "logSha256": "7c6d9b96926cfa4f037e58935f809c932ae0ade578982c90fefdde5b120acb46"
+    },
+    {
+      "name": "qlever-build",
+      "command": "pnpm",
+      "args": [
+        "--config.store-dir=/Users/sam/projects/triplex-db-2/.pnpm-store",
+        "--filter",
+        "@triplex-build/triplex-qlever",
+        "build"
+      ],
+      "startedAt": "2026-11-09T07:40:50.057Z",
+      "finishedAt": "2026-11-09T07:40:52.463Z",
+      "wallMs": 2406.1486250000007,
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "logSha256": "29138fa8bd1d5a442c874abf8e1f80caf69805fc147b6d353a34a77bef262b62"
+    },
+    {
+      "name": "qlever-types",
+      "command": "pnpm",
+      "args": [
+        "--config.store-dir=/Users/sam/projects/triplex-db-2/.pnpm-store",
+        "--filter",
+        "@triplex-build/triplex-qlever",
+        "exec",
+        "tsc",
+        "--noEmit"
+      ],
+      "startedAt": "2026-11-09T07:40:52.463Z",
+      "finishedAt": "2026-11-09T07:40:54.585Z",
+      "wallMs": 2121.3408340000005,
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "store-tests",
+      "command": "pnpm",
+      "args": [
+        "--config.store-dir=/Users/sam/projects/triplex-db-2/.pnpm-store",
+        "--filter",
+        "@triplex-build/triplex-qlever",
+        "exec",
+        "vitest",
+        "run",
+        "test/p5-host-store.test.ts",
+        "test/sqlite-broker.test.ts",
+        "--maxWorkers=1",
+        "--no-file-parallelism"
+      ],
+      "startedAt": "2026-11-09T07:40:54.585Z",
+      "finishedAt": "2026-11-09T07:41:05.347Z",
+      "wallMs": 10762.991333,
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "logSha256": "71cf8aaae67fda779807219b265e142fd21c6087d06d13dbb13248a9dd36d67a"
+    },
+    {
+      "name": "harness-types",
+      "command": "pnpm",
+      "args": [
+        "--config.store-dir=/Users/sam/projects/triplex-db-2/.pnpm-store",
+        "exec",
+        "tsc",
+        "-p",
+        "lab/bench/tsconfig.json",
+        "--noEmit"
+      ],
+      "startedAt": "2026-11-09T07:41:05.348Z",
+      "finishedAt": "2026-11-09T07:41:07.340Z",
+      "wallMs": 1992.5845840000002,
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "merged-harness-tests",
+      "command": "/Users/sam/.hermes/node/bin/node",
+      "args": [
+        "--experimental-strip-types",
+        "--test",
+        "lab/bench/test/bench.test.ts",
+        "lab/bench/test/p5.test.ts",
+        "lab/bench/test/p5-g0-guards.test.ts",
+        "lab/bench/test/p5-freshness.test.ts",
+        "lab/bench/test/p5-deadline.test.ts"
+      ],
+      "startedAt": "2026-11-09T07:41:07.341Z",
+      "finishedAt": "2026-11-09T07:41:26.448Z",
+      "wallMs": 19108.431916,
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "logSha256": "84f90c5a075429653667a20290238b79be76e533bf4bf3493f030b573aa95f24"
+    },
+    {
+      "name": "preflight",
+      "command": "/Users/sam/.hermes/node/bin/node",
+      "args": [
+        "--experimental-strip-types",
+        "lab/bench/p5-host-preflight.ts",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-P5B/final-04/preflight"
+      ],
+      "startedAt": "2026-11-09T07:41:26.449Z",
+      "finishedAt": "2026-11-09T07:41:27.203Z",
+      "wallMs": 754.1658749999988,
+      "exit": 2,
+      "signal": null,
+      "error": null,
+      "logSha256": "5e1fdcf8cd68ef4788ced96e8d68a96183f83c99bffd24eb43c517ceb5a42f0e"
+    }
+  ],
+  "priorAttempts": {
+    "final-01": "harness typecheck failed; raw refusal retained",
+    "final-02": "outer source changed; unqualified",
+    "final-03": "32/33 harness tests; missing qualification build"
+  },
+  "gates": {
+    "G0": "NOT-RUN",
+    "G1": "NOT-RUN",
+    "G2": "NOT-RUN",
+    "G3": "NOT-RUN",
+    "G4": "NOT-RUN",
+    "G5": "NOT-RUN",
+    "G6": "NOT-RUN",
+    "G7": "NOT-RUN",
+    "G8": "NOT-RUN"
+  },
+  "fileCount": 828,
+  "manifestSha256": "9ba79509c09cb34bbf7e8036d6354ca78ec063adec73e68aa7b16ddfdcbf1136",
+  "explicitChangedContractPins": []
+}

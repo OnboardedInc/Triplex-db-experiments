@@ -68,6 +68,7 @@ try {
   'CREATE INDEX IF NOT EXISTS retired_id ON retired_rows(id);'+
   'CREATE INDEX IF NOT EXISTS retired_rpos ON retired_rows(rpos);'+
   'CREATE TABLE IF NOT EXISTS pins(token TEXT PRIMARY KEY,basis INT NOT NULL,owner TEXT NOT NULL) WITHOUT ROWID;');
+  if(!db.pragma('table_info(pins)').some(c=>c.name==='expires'))db.exec('ALTER TABLE pins ADD COLUMN expires INT');
   q('INSERT OR IGNORE INTO marker VALUES(1,0,0,0,0,?,32)').run(seed);
   // [EXP-SQL01] Why: sync WAL frames adopted by recovery before any reader exists (R25 1.3).
   db.pragma('wal_checkpoint(PASSIVE)'); ackRead();
@@ -192,17 +193,48 @@ const handle = (op,a) => {
  if(op==='head')return q('SELECT pos FROM heads WHERE subject=?').get(a)?.pos??0;
  if(op==='recent')return rows('recent_rows',a.selection,'lsn>?',[a.after]);
  if(op==='pin') {
-  const m=marker();if(!Number.isSafeInteger(a.basis)||a.basis<m.h||a.basis>m.lsn*1024+1023)throw Error('Cannot pin unavailable basis');
-  q('INSERT INTO pins VALUES(?,?,?)').run(a.token,a.basis,a.owner);return;
+  const m=marker();if(!Number.isSafeInteger(a.basis)||a.basis<m.h||a.basis>m.position)throw Error('Cannot pin unavailable basis');
+  if(a.lease && m.position-a.basis>a.lease.maxLagPositions)throw Error('Pin exceeds maximum lag');
+  q('INSERT INTO pins(token,basis,owner,expires) VALUES(?,?,?,?)').run(a.token,a.basis,a.owner,a.lease?Date.now()+a.lease.ttlMs:null);return;
+ }
+ if(op==='renew') {
+  // [EXP-P5B] Why: an expired lease cannot be revived after a purge has become eligible. Rejected: renewing by token alone (may claim lost history).
+  const now=Date.now();if(q('UPDATE pins SET expires=? WHERE token=? AND expires>?').run(now+a.ttlMs,a.token,now).changes!==1)throw Error('Pin lease expired');return;
  }
  if(op==='unpin'){q('DELETE FROM pins WHERE token=?').run(a);return;}
  if(op==='purge')return db.transaction(()=>{
   const m=marker();if(!Number.isSafeInteger(a)||a<m.h||a>m.lsn*1024+1023)throw Error('Invalid horizon');
+  q('DELETE FROM pins WHERE expires IS NOT NULL AND expires<=?').run(Date.now());
   const min=q('SELECT min(basis) b FROM pins').get().b;const h=Math.min(a,min??a);
   q('UPDATE marker SET h=? WHERE id=1').run(h);
   // [EXP-SQL01] Why: bound purge CPU between commit groups, keep history in recent_rows for source fallback.
   return {h,removed:q('DELETE FROM retired_rows WHERE (entity,rpos,id) IN (SELECT entity,rpos,id FROM retired_rows WHERE rpos<=? LIMIT 2000)').run(h).changes};
  }).immediate();
+ if(op==='sweep') {
+  const start=performance.now(),threadCpu=typeof process.threadCpuUsage==='function',cpu=threadCpu?process.threadCpuUsage():process.cpuUsage();
+  if(a.recordedAt!==undefined)throw Error('H1_RECORD_TIME_UNSUPPORTED');
+  const m=marker(),b=a.basis;
+  if(!Number.isSafeInteger(b)||b<m.h||b>m.position)throw Object.assign(Error('H1_BASIS_NOT_AVAILABLE'),{observed:m.position});
+  const seen=new Set(a.entities),out=[];let frontier=[...seen],roundTrips=0;
+  while(frontier.length) {
+   roundTrips++;const next=[];
+   // [EXP-P5B] Why: SQLite limits bind variables; W0 ballast BFS frontiers exceed 32k at 64 subjects.
+   // Rejected: one unbounded IN list (fails the largest W0 bucket).
+   for(let offset=0;offset<frontier.length;offset+=500) {
+    const selection={entities:frontier.slice(offset,offset+500)};
+    const level=rows('live_rows',selection,'pos<=?',[b]).concat(rows('retired_rows',selection,'rpos>? AND pos<=?',[b,b]));
+    for(const row of level) {
+     if(a.validAt!==undefined && !(row.valid_from<=a.validAt && (row.valid_to===null || row.valid_to>a.validAt)))continue;
+     // [EXP-P5B] Why: Q89i requires the exact old-cut row bytes after later retirement. Rejected: leaking future retraction fields.
+     const r={...row,retracted_position:null,retracted_at:null,retract_tx_id:null};out.push(r);
+     if(r.value_type==='ref' && !seen.has(r.value_string)){seen.add(r.value_string);next.push(r.value_string);}
+    }
+   }
+   frontier=next;
+  }
+  const delta=threadCpu?process.threadCpuUsage(cpu):process.cpuUsage(cpu);
+  return {snapshot:m,basis:b,eligible:true,rows:out,roundTrips,readMs:performance.now()-start,cpuMicros:delta.user+delta.system,cpuScope:threadCpu?'thread':'process-overlapping'};
+ }
  if(op==='pull')return pull(a);
  throw Error('Unknown SQLite request '+op);
 };
@@ -218,12 +250,14 @@ parentPort.on('message',message=>{
    if(Atomics.load(gate,0)===1){Atomics.sub(gate,1,1);while(Atomics.load(gate,0)===1)Atomics.wait(gate,0,1,100);Atomics.add(gate,1,1);}
    try {
     if(fatal)throw Error(fatal);
+    const transactionStart=performance.now();
     db.exec('BEGIN');marker();result=handle(op,args);if(op!=='close')db.exec('COMMIT');
+    if(op==='sweep')result.transactionMs=performance.now()-transactionStart;
    }catch(e){try{db.exec('ROLLBACK');}catch{}throw e;}
    finally{Atomics.sub(gate,1,1);Atomics.notify(gate,1);}
   } else result=handle(op,args);
   response.postMessage({result});
- }catch(e){response.postMessage({error:String(e)});}
+ }catch(e){response.postMessage({error:String(e),observed:e.observed});}
  finally{response.close();if(signal){Atomics.store(new Int32Array(signal),0,1);Atomics.notify(new Int32Array(signal),0);}}
 });
 `;

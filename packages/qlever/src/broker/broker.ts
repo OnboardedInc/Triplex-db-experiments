@@ -690,8 +690,13 @@ export class HostBroker {
   claimAsync(id: string) {
     return this.log.claimAsync(id);
   }
-  sweepPage(basis: number, entities: readonly string[]) {
-    return this.log.sweepPage(basis, entities);
+  // [EXP-P5B] Why: expose dedicated worker selection and the valid cut through the owner. Rejected: a bench opening a second writer or reaching into private log state.
+  sweepPage(
+    basis: import("./log.js").H1Basis,
+    entities: readonly string[],
+    options?: { worker?: number; validAt?: number },
+  ) {
+    return this.log.sweepPage(basis, entities, options);
   }
 
   /** Indexed persisted source rows: outage cost depends on selected entities, not frame history. */
@@ -717,8 +722,8 @@ export class HostBroker {
   checkpointStatus() {
     return this.log.checkpointStatus();
   }
-  pinBasis(basis: number, owner: string) {
-    return this.log.pinBasis(basis, owner);
+  pinBasis(basis: number, owner: string, lease?: { ttlMs: number; maxLagPositions: number }) {
+    return this.log.pinBasis(basis, owner, lease);
   }
   purgeCurrent(horizon: number) {
     return this.log.purge(horizon);
