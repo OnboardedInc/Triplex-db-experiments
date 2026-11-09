@@ -454,3 +454,10 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - 2026-11-09 disk: archived eight settled evidence folders as verified .tar.zst (file counts match; hashes in
   evidence/ARCHIVES-SHA256SUMS.txt) and removed 11 finished worktrees (verify-obs6's one dirty file saved to evidence/worktree-leftovers/).
   Free 9.8 -> 20.2 GiB. Nine agent-* worktrees are locked by a Claude process from 2026-11-07 (pid 27791) and were left alone.
+- 2026-11-09 bpftrace image BUILT in the triplex2 VM after Sam's approval (decisions file c3e2795d): tx2-sync-witness-bpftrace:r49,
+  image ID sha256:06f6223590f518a903c90d7dec383a2ee9fa669f80000013b5a004d2a2efbf25 (arm64, 117,548,569 bytes unpacked). All five pinned
+  .deb SHA256s OK, closed package list held, `bpftrace --version` = v0.20.2; libbsd0 0.12.1-1build1.1 (the VM's installed noble version).
+  Attempt 1 failed only on --progress (the VM uses the legacy builder). Evidence: evidence/OBS01-IMAGE/ (build logs, Dockerfile used,
+  image-id, SHA256SUMS). Finding for the probe round: bpftrace 0.20.2's `-d` / `-dd` are argument-less dry-run debug flags, so the
+  clock-proof's `-d all` is wrong for this version (W0 would refuse); the probe round uses `-d` (or `-dd`) with the program file and
+  stores the real output as the golden. Next: OBS01 W0-W3 live probe window after the round 14 review.
