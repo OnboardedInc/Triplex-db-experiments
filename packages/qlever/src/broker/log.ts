@@ -86,6 +86,21 @@ export interface EpochBeginPayload {
 export interface FrameRetention {
   readonly tailFrames?: number;
   readonly tailBytes?: number;
+  /**
+   * [EXP-P5N-R2] Why: purging after every commit is a second write transaction (DELETE of old frames, COMMIT, fsync) on the owner's critical path, 6.2 of 44 ms per activation page in the round 2 profile.
+   * With either bound given, the purge runs once at least that many frames or bytes were appended since the last one; retention stays "at least" the tail and may exceed it by that slack.
+   * Default: purge after every commit, unchanged. Rejected: purging on the checkpointer (a second writer connection).
+   */
+  readonly purgeEveryFrames?: number;
+  readonly purgeEveryBytes?: number;
+}
+/** [EXP-P5N-R2] Checkpoint gate tuning; default is the earlier behavior (RESTART only when the WAL passes 64 MiB, checked every 25th frame). */
+export interface CheckpointTuning {
+  /** WAL size above which the writer asks for a RESTART (checked every 4th frame when set). */
+  readonly walRestartBytes?: number;
+  /** Also attempt a RESTART at this interval whenever the WAL is above restartMinBytes. */
+  readonly restartEveryMs?: number;
+  readonly restartMinBytes?: number;
 }
 export interface OpenedLog {
   readonly log: HostLog;
@@ -216,6 +231,7 @@ const connect = (
   role: string,
   gateBuffer: SharedArrayBuffer,
   requireFullFsync = false,
+  tuning: CheckpointTuning = {},
 ) =>
   new Connection(
     new Worker(sqliteWorker, {
@@ -228,7 +244,7 @@ const connect = (
           !arg.startsWith("--input-type=") &&
           args[i - 1] !== "--input-type",
       ),
-      workerData: { file, role, seed, driver, gateBuffer, requireFullFsync },
+      workerData: { file, role, seed, driver, gateBuffer, requireFullFsync, ...tuning },
     }),
   );
 // [EXP-P5N] Why: D3. A sweep worker thread opens its own readonly connection on the owner's gate so page reads never pass through the owner's main thread; the gate counter still includes it,
@@ -236,9 +252,18 @@ const connect = (
 export function openSweepReader(file: string, gate: SharedArrayBuffer) {
   const c = connect(file, "reader", gate);
   return {
-    sweep: (args: { basis: number; entities: readonly string[]; validAt?: number }) =>
+    /** `split`: entities per read transaction (each at exactly `basis`); omitted keeps one transaction per page. */
+    sweep: (args: { basis: number; entities: readonly string[]; validAt?: number; split?: number }) =>
       c.request<
-        PinnedPull & { transactionMs: number; cpuMicros: number; cpuScope: string; roundTrips: number }
+        PinnedPull & {
+          transactionMs: number;
+          cpuMicros: number;
+          cpuScope: string;
+          roundTrips: number;
+          transactions?: number;
+          txMsMax?: number;
+          gateWaitMs?: number;
+        }
       >("sweep", args),
     close: () => c.close(),
   };
@@ -269,6 +294,8 @@ export class HostLog {
   private failed: Error | undefined;
   private readerIndex = 0;
   private readonly sweepPool = new Map<number, Connection>();
+  purgeSlack: { frames: number; bytes: number } | undefined;
+  private sincePurge = { frames: 0, bytes: 0 };
   private readonly openVerification = { frames: 0, bytes: 0, maxPageBytes: 0, peakRss: 0 };
   private constructor(
     readonly dir: string,
@@ -291,6 +318,7 @@ export class HostLog {
       readonly requireFullFsync?: boolean;
       readonly takeover?: boolean;
       readonly frameRetention?: FrameRetention;
+      readonly checkpoint?: CheckpointTuning;
     } = {},
   ): Promise<OpenedLog> {
     const requested = options.frameRetention ?? {};
@@ -319,7 +347,7 @@ export class HostLog {
       throw new BrokerLogError("Broker log volume below free-space floor");
     const file = path.join(dir, "broker.db"),
       gate = new SharedArrayBuffer(12),
-      writer = connect(file, "writer", gate, options.requireFullFsync);
+      writer = connect(file, "writer", gate, options.requireFullFsync, options.checkpoint);
     const connections = [writer];
     try {
       const init = await writer.request<{ marker: AnchoredSnapshot; calibrationMs: number }>(
@@ -397,7 +425,7 @@ export class HostLog {
         length: encoded.bytes.length,
         members: [],
       });
-      const checkpointer = connect(file, "checkpointer", gate, options.requireFullFsync);
+      const checkpointer = connect(file, "checkpointer", gate, options.requireFullFsync, options.checkpoint);
       connections.push(checkpointer);
       await checkpointer.request("init");
       const pool = [];
@@ -418,6 +446,10 @@ export class HostLog {
         gate,
         retention,
       );
+      log.purgeSlack =
+        requested.purgeEveryFrames !== undefined || requested.purgeEveryBytes !== undefined
+          ? { frames: requested.purgeEveryFrames ?? Infinity, bytes: requested.purgeEveryBytes ?? Infinity }
+          : undefined;
       hostStores.set(log, writer);
       Object.assign(log.openVerification, verified);
       streams.set(dir, log);
@@ -497,6 +529,8 @@ export class HostLog {
       );
       this.nextLsn = lsn + 1;
       this.prevCrc = frame.crc;
+      this.sincePurge.frames++;
+      this.sincePurge.bytes += encoded.bytes.length;
       return frame;
     } catch (error) {
       this.failed = new BrokerLogError(`Broker write failed; outcome unknown: ${String(error)}`);
@@ -595,7 +629,17 @@ export class HostLog {
   }
   publishWatermark(mark: Watermark) {
     this.lookup("ack", mark);
-    this.purgeFrames();
+    // [EXP-P5N-R2] Why: with no retention bound the purge removes nothing, so its synchronous round trip per commit is skipped; with a slack it runs once per slack of appended frames or bytes.
+    // The worker removes at most 16 frames per call, so a slack larger than 16 frames repeats the call until a call removes fewer (bounded), keeping the tail from growing.
+    if (this.retention.frames === Infinity && this.retention.bytes === Infinity) return;
+    if (
+      this.purgeSlack &&
+      this.sincePurge.frames < this.purgeSlack.frames &&
+      this.sincePurge.bytes < this.purgeSlack.bytes
+    )
+      return;
+    this.sincePurge = { frames: 0, bytes: 0 };
+    for (let i = 0; i < 16; i++) if (this.purgeFrames().removed < 16) break;
   }
   claim(id: string) {
     return this.lookup<{ txId: string; position: number } | undefined>("claim", id);
@@ -605,6 +649,10 @@ export class HostLog {
   }
   head(entity: string) {
     return this.lookup<number>("head", entity);
+  }
+  /** [EXP-P5N-R2] One synchronous round trip for many subject heads (the broker's compare-and-set looked each one up separately: 64 per activation page). Absent subjects are absent from the result. */
+  heads(entities: readonly string[]) {
+    return this.lookup<Record<string, number>>("heads", entities);
   }
   recent(after: number, selection: Selection) {
     return this.pool[0]!.sync<TripleRow[]>("recent", { after, selection });

@@ -11,7 +11,7 @@ const path = require('node:path');
 const D = require(workerData.driver);
 const { file, role, seed, gateBuffer } = workerData;
 const gate = new Int32Array(gateBuffer);
-let db, lock, fatal, timer, passiveTimer;
+let db, lock, fatal, timer, passiveTimer, restartTimer;
 const checkpointEvents=[], checkpointCounts={};
 const checkpointStatus=()=>({counts:{...checkpointCounts},events:[...checkpointEvents]});
 const recordCheckpoint=(mode,outcome,start,result={})=>{
@@ -90,6 +90,8 @@ try {
   db.pragma('busy_timeout=0');
   timer=setInterval(()=>{if(Atomics.exchange(gate,2,0))checkpoint(true);},100);
   passiveTimer=setInterval(()=>checkpoint(walLarge()),4000);
+  // [EXP-P5N-R2] Why: a time-based RESTART attempt so one completes at least every few seconds while readers run (the gate parks new readers and waits up to 20 ms for the running short transactions to end). Rejected: size-only triggers (a small WAL could stay held by readers for the whole sweep).
+  if(workerData.restartEveryMs)restartTimer=setInterval(()=>{if(walSize()>(workerData.restartMinBytes??1048576))checkpoint(true);},workerData.restartEveryMs);
  }
 } catch(e) { fatal=String(e); }
 const frames = (from,upto,maxBytes,maxFrames=Number.MAX_SAFE_INTEGER) => {
@@ -103,7 +105,11 @@ const frames = (from,upto,maxBytes,maxFrames=Number.MAX_SAFE_INTEGER) => {
  }
  return {frames:out,next:{offset,seed:prev,nextLsn:next}};
 };
-const walLarge = () => fs.existsSync(file+'-wal') && fs.statSync(file+'-wal').size>64*1024*1024;
+// [EXP-P5N-R2] Why: RESTART was only asked for once the WAL passed 64 MiB, so the WAL max could never stay under the 64 MiB bar. workerData.walRestartBytes lowers the threshold and makes the writer check every 4th frame.
+// Rejected: lowering the default for every store (live workloads rely on the old cadence).
+const walSize = () => fs.existsSync(file+'-wal') ? fs.statSync(file+'-wal').size : 0;
+const walRestartBytes = workerData.walRestartBytes ?? 64*1024*1024;
+const walLarge = () => walSize()>walRestartBytes;
 const checkpoint = restart => {
  const start=performance.now(), mode=restart?'RESTART':'PASSIVE';
  try {
@@ -204,7 +210,7 @@ const append = a => {
  for(const [t,id,v]of prepared.additions)writerIds.set(t+':'+JSON.stringify(v),id);
  // [EXP-SQL01] Why: ACK only signals maintenance; it never waits for readers or runs a checkpoint.
  // Rejected: synchronous gateCheckpoint after commit (the pinned-reader regression adds 100 ms).
- if(a.lsn%25===0 && walLarge())Atomics.store(gate,2,1);return result;
+ if(a.lsn%(workerData.walRestartBytes?4:25)===0 && walLarge())Atomics.store(gate,2,1);return result;
  }catch(e){fatal='Write failed; fail-stop: '+String(e);throw e;}
 };
 const rows = (table,selection,extra='',args=[]) => {
@@ -224,8 +230,52 @@ const pull = a => {
  const out=rows('facts',a.selection,'pos<=?',[b]).concat(rows('journal',a.selection,'pos<=?',[b]),rows('history',a.selection,'rpos>? AND pos<=?',[b,b]));
  return {snapshot:publicMarker(m),basis:b,eligible:true,rows:out};
 };
+// [EXP-P5N-R2] Why: a page's BFS held one read transaction for 100 to 250 ms, longer than the 20 ms the checkpoint gate waits for readers to drain, so RESTART never completed during a sweep (R1: 3 readers-busy, 0 complete) and the WAL passed 64 MiB.
+// The split sweep reads one chunk of at most split entities per short read transaction, every one at exactly the same basis b: rows at or below b are immutable (a later retirement only moves the row to history with rpos > b, which the history leg still returns),
+// the marker check (h <= b <= position) and the epoch are re-verified in every transaction, and the gate is entered and left per transaction so the checkpointer finds gaps. Row order can differ from the single-transaction page; the set of rows is the same.
+// Rejected: one transaction per page (starves RESTART) and reading at "latest" per chunk (a different basis).
+const inReaderTx = (fn) => {
+ let waited=performance.now();
+ while(Atomics.load(gate,0)===1)Atomics.wait(gate,0,1,100);
+ Atomics.add(gate,1,1);
+ if(Atomics.load(gate,0)===1){Atomics.sub(gate,1,1);while(Atomics.load(gate,0)===1)Atomics.wait(gate,0,1,100);Atomics.add(gate,1,1);}
+ const entered=performance.now();
+ try{db.exec('BEGIN');const r=fn(marker());db.exec('COMMIT');return {r,ms:performance.now()-entered,gateMs:entered-waited};}
+ catch(e){try{db.exec('ROLLBACK');}catch{}throw e;}
+ finally{Atomics.sub(gate,1,1);Atomics.notify(gate,1);}
+};
+const sweepSplit = a => {
+ const start=performance.now(),threadCpu=typeof process.threadCpuUsage==='function',cpu=threadCpu?process.threadCpuUsage():process.cpuUsage();
+ if(a.recordedAt!==undefined)throw Error('H1_RECORD_TIME_UNSUPPORTED');
+ const b=a.basis,per=a.split;
+ if(!Number.isSafeInteger(per)||per<1)throw Error('Invalid sweep split');
+ let first,txCount=0,txMs=0,txMax=0,gateWaitMs=0,roundTrips=0;
+ const seen=new Set(a.entities),out=[];let frontier=[...seen];
+ while(frontier.length) {
+  roundTrips++;const next=[];
+  for(let offset=0;offset<frontier.length;offset+=per) {
+   const chunk=frontier.slice(offset,offset+per);
+   const {r:level,ms,gateMs}=inReaderTx(m=>{
+    if(!Number.isSafeInteger(b)||b<m.h||b>m.position)throw Object.assign(Error('H1_BASIS_NOT_AVAILABLE'),{observed:m.position});
+    if(first===undefined)first=m;else if(m.epoch!==first.epoch)throw Error('H1_EPOCH_CHANGED');
+    const selection={entities:chunk};
+    const txEntities=chunk.filter(e=>e.startsWith('_tx/'));
+    return rows('facts',selection,'pos<=?',[b]).concat(txEntities.length?rows('journal',{entities:txEntities},'pos<=?',[b]):[],rows('history',selection,'rpos>? AND pos<=?',[b,b]));
+   });
+   txCount++;txMs+=ms;gateWaitMs+=gateMs;if(ms>txMax)txMax=ms;
+   for(const row of level) {
+    if(a.validAt!==undefined && !(row.valid_from<=a.validAt && (row.valid_to===null || row.valid_to>a.validAt)))continue;
+    const r={...row,retracted_position:null,retracted_at:null,retract_tx_id:null};out.push(r);
+    if(r.value_type==='ref' && !seen.has(r.value_string)){seen.add(r.value_string);next.push(r.value_string);}
+   }
+  }
+  frontier=next;
+ }
+ const delta=threadCpu?process.threadCpuUsage(cpu):process.cpuUsage(cpu);
+ return {snapshot:publicMarker(first),basis:b,eligible:true,rows:out,roundTrips,readMs:performance.now()-start,transactionMs:txMs,transactions:txCount,txMsMax:txMax,gateWaitMs,cpuMicros:delta.user+delta.system,cpuScope:threadCpu?'thread':'process-overlapping'};
+};
 const handle = (op,a) => {
- if(op==='close'){clearInterval(timer);clearInterval(passiveTimer);db?.close();lock?.close();return;}
+ if(op==='close'){clearInterval(timer);clearInterval(passiveTimer);clearInterval(restartTimer);db?.close();lock?.close();return;}
  if(fatal)throw Error(fatal);
  if(op==='checkpoint' || op==='checkpointStatus'){
   if(role!=='checkpointer')throw Error('Maintenance requires checkpointer connection');
@@ -294,6 +344,7 @@ const handle = (op,a) => {
  if(op==='operation'){const r=q('SELECT receipt FROM operations WHERE op=?').get(a);return r?JSON.parse(r.receipt):undefined;}
  if(op==='claim')return q('SELECT txId,position FROM claims WHERE command=?').get(a);
  if(op==='head')return q('SELECT pos FROM heads WHERE subject=?').get(a)?.pos??0;
+ if(op==='heads'){const out={};for(let i=0;i<a.length;i+=500){const ids=a.slice(i,i+500);for(const r of q('SELECT subject,pos FROM heads WHERE subject IN ('+ids.map(()=>'?').join(',')+')').all(...ids))out[r.subject]=r.pos;}return out;}
  if(op==='readback')return a.map(storedRow).filter(Boolean);
  if(op==='recent')return rows('facts',a.selection,'pos>=?',[(a.after+1)*1024]).concat(rows('journal',a.selection,'pos>=?',[(a.after+1)*1024]),rows('history',a.selection,'rpos>=?',[(a.after+1)*1024]));
  if(op==='pin') {
@@ -314,6 +365,7 @@ const handle = (op,a) => {
   // [EXP-HS01] Why: H limits eligibility, not durable history. Rejected: deleting the only retired version.
   return {h,removed:0};
  }).immediate();
+ if(op==='sweep'&&a.split)return sweepSplit(a);
  if(op==='sweep') {
   const start=performance.now(),threadCpu=typeof process.threadCpuUsage==='function',cpu=threadCpu?process.threadCpuUsage():process.cpuUsage();
   if(a.recordedAt!==undefined)throw Error('H1_RECORD_TIME_UNSUPPORTED');
@@ -350,7 +402,10 @@ parentPort.on('message',message=>{
  const {op,args,response,signal}=message;
  let result;
  try {
-  if(role==='reader') {
+  if(role==='reader'&&op==='sweep'&&args&&args.split){
+   if(fatal)throw Error(fatal);
+   result=handle(op,args);
+  } else if(role==='reader') {
    while(Atomics.load(gate,0)===1)Atomics.wait(gate,0,1,100);
    Atomics.add(gate,1,1);
    // [EXP-SQL01] Why: recheck entry so maintenance cannot miss a reader at the gate boundary.

@@ -32,3 +32,19 @@ for (const e of [...selfByKey].sort((a, b) => b[1] - a[1]).slice(0, top)) consol
 console.log("--- inclusive time, selected functions");
 const want = /^(transact|commitGroup|check|finalize|encodeCommitGroup|verifyGroup|publishRecords|sync|publishWatermark|purgeFrames|lookup|commandWitness|append|readback|readbackClaims|pullMany|transactionByCommand|canonicalPlain|canonical|decodeCommitGroup|addOverlay|record|submit|withTransaction|buildTransaction|metadataInputs|writeGroup|JSON\.parse|parse|stringify) /;
 for (const e of [...inclByKey].filter(([k]) => want.test(k)).sort((a, b) => b[1] - a[1]).slice(0, 40)) console.log(row(e));
+// callers of a function (optional 4th argument): inclusive time of the named function attributed to the nearest non-recursive caller chain (3 frames up)
+const target = process.argv[5];
+if (target) {
+  const callers = new Map();
+  for (const [id, t] of self) {
+    const chain = [];
+    for (let c = id; c !== undefined; c = parent.get(c)) chain.push(key(byId.get(c)));
+    const at = chain.findIndex((k) => k.startsWith(target + " "));
+    if (at < 0) continue;
+    const rest = chain.slice(at + 1).filter((k) => !k.includes("/w0/dist/json.js"));
+    const up = rest.slice(0, 3).map((k) => k.split(" ")[0] + "@" + k.split("/").pop()).join(" <- ");
+    callers.set(up, (callers.get(up) ?? 0) + t);
+  }
+  console.log(`--- callers of ${target}`);
+  for (const [k, t] of [...callers].sort((a, b) => b[1] - a[1]).slice(0, 12)) console.log(`${ms(t).padStart(9)} ms ${(t / 1000 / pages).toFixed(2).padStart(7)} ms/page  ${k}`);
+}

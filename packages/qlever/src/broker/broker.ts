@@ -142,6 +142,8 @@ export interface HostBrokerOptions {
   readonly applyTimeoutMs?: number;
   readonly minFreeBytes?: number;
   readonly frameRetention?: FrameRetention;
+  /** [EXP-P5N-R2] Checkpoint gate tuning (WAL threshold and a time-based RESTART attempt); default unchanged. */
+  readonly checkpoint?: import("./log.js").CheckpointTuning;
   readonly requireFullFsync?: boolean;
   /** Start the applier on open (default true when a replica is given). */
   readonly autoApply?: boolean;
@@ -269,6 +271,7 @@ export class HostBroker {
         ? {}
         : { requireFullFsync: options.requireFullFsync }),
       ...(options.frameRetention === undefined ? {} : { frameRetention: options.frameRetention }),
+      ...(options.checkpoint === undefined ? {} : { checkpoint: options.checkpoint }),
       ...(options.takeover === undefined ? {} : { takeover: options.takeover }),
     });
     try {
@@ -561,8 +564,12 @@ export class HostBroker {
       return { kind: "conflict", reason: "scope" };
     const guarded = new Set(txn.reads.entities);
     for (const row of txn.rows) if (!isJournalRow(row)) guarded.add(row.entity_id);
+    // [EXP-P5N-R2] Why: one synchronous round trip for every guarded subject not already staged by this group, instead of one per subject (64 per activation page, 2.7 ms of the page's critical path).
+    // The decision is unchanged: the same entities in the same order against the same stored heads.
+    const unstaged = [...guarded].filter((entity) => !staged.heads.has(entity));
+    const stored = unstaged.length > 0 ? this.log.heads(unstaged) : {};
     for (const entity of guarded) {
-      const head = staged.heads.get(entity) ?? this.log.head(entity) ?? 0;
+      const head = staged.heads.get(entity) ?? stored[entity] ?? 0;
       if (head > txn.sourceK) return { kind: "conflict", reason: "subject", entity };
     }
     return undefined;
