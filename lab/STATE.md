@@ -344,3 +344,9 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   pending ids kept. --verify byte-identical, contract tests 16/16, mutations 41/41, evaluator 108/108, pack PASS, G0 xtdb 1289, datomic
   1344, qlever 1513. Q45a: the re-pin landed in a853fe42, not the earlier DF01 merge f3ed6211. Orchestrator decision: do not rewrite
   history; the reviewer confirms nothing relied on was produced in between, and the gap is recorded as a defect. In review (CX-VA01-040 r2).
+- 2026-11-09 DF01 round 4 ACCEPT-OFFLINE (verify/DF01 66033e57, CX-VDF01): the lane D feed excludes typed journal facts by their own
+  assertion tx id and keeps all facts for positions and tx ids. 11 shared fixtures pass on broker (real HostLog), P2X (real writer and
+  decoder, fake SQL client) and real Datomic 1.0.7745 mem (88 assertions); core refuses user writes of type _Transaction on every write
+  path. Open edge: facts written before :f/entity-type existed are not classified as journal facts. Orchestrator decision: lab stores are
+  always created with the full schema, so 0.4.1 states "fresh stores only" under Q107c rather than adding a legacy-journal rule. DF01
+  joins contract 0.4.1 at 302a7a63 with the verify branch.
