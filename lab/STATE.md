@@ -162,3 +162,7 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - INT-XCJ complete at b916d5d: X02, C8, J01 (default-off) integrated; G0 1,168/1,168, evaluator 108/108, C8 and J01 live tests proven
   (except the QLever C8 closure timeout, under CX-C8-R4). Main gets it in one step after contract 0.3.12 re-pins the two workload files
   (0.3.12 round 3 merges int/X02-C8-J01) and C8-R4 reports.
+- Scale window plan (park tx2-datomic-dev once CX-VDA01 finishes; pool then 6.5 of 11 GiB, one 3.5 GiB exclusive slot at a time, run in
+  this order): (1) EXP-QG1 phase 0 and 1 on qlever-s1 (a copy of qlever-dev's data, then the delta sweep; R35, Q91); (2) K01 live on
+  xtdb-s1 once its offline review accepts; (3) G03 slot run per its SLOT-RUN.md once its fixture migration lands; (4) X02 and C8 exclusive
+  G1/G2 reruns; (5) W01b GS rerun; (6) J01 compact-on G1. Unpark tx2-datomic-dev for EXP-DA04 after the window.

@@ -1634,3 +1634,17 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **Learning:** a review's load profile is part of what it proves. C8's one-reader PASS said nothing about eight readers. Reviews now name
   the load they ran, and integration runs the default profile.
 - **Decision:** the integration merges with this recorded as a known QLever-lane read-cost item, since C8's code is unchanged by it.
+
+## 2026-11-09 00:42Z: R35: the QLever lane has never read from a built index; QLever has a rebuild, the lane never used it
+- **Mechanism (QLever 0.6.0 source):** a scan decompresses each block it touches, merges every delta triple in that block, then filters
+  and de-duplicates the whole block before narrowing to its range. qlever-dev has one base block, so about 895k delta triples sit in one SPO
+  block and every scan pays for all of them: 160 to 530 ms for 1 to 3 rows. The planner cannot see the delta (estimates 1 row for a full
+  scan). Delta-only ids compare by ICU collation, not as integers. OPTIONAL itself costs nothing; its child scan is the cost.
+- **QLever has online rebuild-index (and an automatic strategy); the lane never ran it.** qlever-start.sh boots a 1-triple index, the
+  delta policy was recreate with --fresh (dropping data), R13's rebuild-from-log was never run, P2Q's rebuildAtDeltaTriples is unrun.
+  The research assumed a built base with a bounded delta and R17's numbers came from a 69M-triple built base.
+- **Rulings Q91a-d:** QLever performance evidence counts only with a built base and a bounded delta, with both sizes in every receipt;
+  no more --fresh resets; EXP-QG1 builds blue/green generations from the broker log with reader leases and Q89i checks across swaps; the
+  first rebuild runs on a copy on an exclusive slot (bug #3172 can fail a rebuild, and reviews read qlever-dev live).
+- **Learning:** an assumption shared by five research documents was never built. The research index should mark each assumption as
+  built, measured or assumed; that is now part of every planner brief.
