@@ -189,4 +189,4 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - Scale window queue (one exclusive 3.5 GiB slot at a time; CX-XRUN holds xtdb-s1 now): next K01 live two-start and E1 per
   .claude/worktrees/k01/lab/experiments/EXP-K01-seed-clone/LIVE-round10.md (K01 r10 e525760, 397 tests; offline review skipped in favor of the
   live run because the remaining risk is native wire fidelity; an independent reviewer reads the live receipts after); then P5 A1 at 1k;
-  then G03's slot run; then W02 live GS on xtdb; then unpark tx2-datomic-dev for EXP-DA04.
+  then G03's slot run; then RT01 live G2 conformance and the G6 latency comparison on one slot; then W02 live GS on xtdb; then unpark tx2-datomic-dev for EXP-DA04.
