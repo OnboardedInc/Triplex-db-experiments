@@ -200,7 +200,7 @@ Paired R22 GREEN can survive hard-rule exclusions; it never substitutes for Q100
 Use the already-local images; no pulls or installs are performed by the stack scripts:
 
 ```sh
-bash lab/experiments/EXP-DX1/stack/up.sh tx2-dxh1-example
+node lab/bin/heavy.mjs --label DX-H1-stack -- bash lab/experiments/EXP-DX1/stack/up.sh tx2-dxh1-example
 TX2_ENGINE_CONTAINER=tx2-dxh1-example-pg,tx2-dxh1-example-tx,tx2-dxh1-example-gw-w,tx2-dxh1-example-gw-r \
   TX2_ENGINE_CPUS=2 bash lab/experiments/EXP-DX1/h1/run.sh public
 TX2_ENGINE_CONTAINER=tx2-dxh1-example-pg,tx2-dxh1-example-tx,tx2-dxh1-example-gw-w,tx2-dxh1-example-gw-r \

@@ -7,6 +7,7 @@
  * Rejected: adding lab/bench to the pnpm workspace (lockfile change); importing packages' src (unbuilt bytes).
  */
 import path from "node:path";
+import { installDatomicPublication } from "./datomic-publication.ts";
 import fs from "node:fs";
 import { isMainThread, workerData } from "node:worker_threads";
 import { pathToFileURL } from "node:url";
@@ -53,6 +54,7 @@ export async function openTriples(
       : process.env["DATOMIC_URL"];
     if (!url) throw new Error("DATOMIC_URL is required for the Datomic GS lane");
     const api = await import(dist("datomic", "index.js"));
+    installDatomicPublication(api);
     if (typeof api.makeDatomicRuntime !== "function") throw Error("Datomic public runtime unavailable");
     return { name: lane, url, queryPath: "datomic-datalog", makeRuntime: () => api.makeDatomicRuntime({ url, ...(xtdbOptions && fs.readFileSync(path.join(REPO, "packages/datomic/dist/index.d.ts"), "utf8").includes("admissionQueue") ? xtdbOptions : {}) }) };
   })() : await qualification.loadQualificationBackend(lane);

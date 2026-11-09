@@ -331,7 +331,9 @@ export class FeedConsumer {
         this.durableKnown.add(position);
         const info = this.commitOf(position);
         this.lags.push({
-          at: Number(BigInt(publications.get(position)!.atNs)) / 1e6,
+          // [DX-H1] Why: phases use epoch wall time; latency itself stays on the bound monotonic clock.
+          // Rejected: classifying host-boot hrtime as epoch time (silently empties every phase histogram).
+          at: durableAt,
           position,
           lagMs: publicationLagMs(
             publications.get(position),
