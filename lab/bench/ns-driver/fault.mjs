@@ -16,7 +16,7 @@ export async function hookedPage({call,events,control,relay,page=0,timeoutMs=100
   const event={...h,nonce:randomUUID()};const waiting=control.next(timeoutMs);relay(events,event);
   const release=await waiting;
   if(release.schema!=='ns-release/1'||release.runId!==events.binding.runId||release.nonce!==event.nonce||typeof release.restart!=='boolean')throw Error('FAULT-CONTROL-BINDING');
-  // The endpoint is evaluator input only; no schedule or kill decision crosses candidate RPC.
+  // [EXP-G03-R6] Why: replacement endpoints are private evaluator input. Rejected: forwarding a schedule or kill decision to candidate RPC.
   if(release.restart){if(!release.endpoint)throw Error('FAULT-RESTART-ENDPOINT');endpointByRole[role]=release.endpoint;nextPoint=0;response=await invoke(method,{action:'step',data:{page}});}
   else {nextPoint++;response=await invoke(method,{action:'release',data:{page,point:h.point}});}
  }

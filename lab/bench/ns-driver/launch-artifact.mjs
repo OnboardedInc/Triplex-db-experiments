@@ -196,7 +196,7 @@ export function launchArtifact(bundle, configFile, { timeoutMs = 60000 } = {}) {
 if (process.argv[1] && path.resolve(process.argv[1]) === import.meta.filename)
   launchArtifact(process.argv[2], process.argv[3])
     .then((r) => {
-      // stdout was streamed while the child executed.
+      // [EXP-G03-R6] Why: stdout already streamed during execution. Rejected: emitting a duplicate control stream at exit.
       process.stderr.write(r.stderr);
       process.exitCode = r.code ?? 1;
     })

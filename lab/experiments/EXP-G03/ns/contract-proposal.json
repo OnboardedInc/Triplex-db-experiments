@@ -98,6 +98,7 @@
       "production observer WAL checksum/sync provenance",
       "registered-slot integration and independent review"
     ],
-    "walSnapshot": "raw WAL bytes and structural frame metadata; not a sync assertion"
+    "walSnapshot": "raw WAL bytes and structural frame metadata; not a sync assertion",
+    "caseIds": "evaluator reads the point-to-case-ID map from the explicit pinned manifest; case and faultPointId both use that ID; no main-name lookup or candidate input"
   }
 }

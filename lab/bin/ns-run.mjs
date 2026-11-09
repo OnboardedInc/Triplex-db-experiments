@@ -112,7 +112,7 @@ export async function runBoxedNS(box,{instance,bundleFiles,observerFiles,sourceC
    return faults.recover({box,observer:obs,consumer,context});
   }
  });
- const injector=new FaultInjector({binding,target:targetOf(consumer),transport,pageBounds:faults?.pageBounds,decide:faults?.decide??(()=>false),retain:async bytes=>box.put(bytes)});
+ const injector=new FaultInjector({binding,target:targetOf(consumer),transport,caseIds:faults?.caseIds,pageBounds:faults?.pageBounds,decide:faults?.decide??(()=>false),retain:async bytes=>box.put(bytes)});
  const result=await box.execControl(drv.name,drv.launchArgv,row=>injector.handshake(row),{timeout:90000});
  const faultSummary=injector.finish({requireInjections:faults?.requireInjections??false});stage(10,{driverExit:result.status,faultSummary});
  // Stop the observer via a private evaluator-only control volume, never candidate RPC.

@@ -7,13 +7,13 @@ const refuse=code=>{throw Error(code)};
 const id=s=>typeof s==='string'&&/^[0-9a-f]{64}$/.test(s);
 export function targetOk(t,role){return t?.role===role&&id(t.id)&&typeof t.name==='string'&&!!t.name&&typeof t.volume==='string'&&!!t.volume;}
 export class FaultInjector {
- constructor({binding,target,obligation='NS.P3',caseId='NS-P3-CRASH',mode='normal',transport,decide=()=>false,retain,points=FAULT_POINTS,pageBounds,clock=()=>process.hrtime.bigint()}){
+ constructor({binding,target,obligation='NS.P3',caseIds,mode='normal',transport,decide=()=>false,retain,points=FAULT_POINTS,pageBounds,clock=()=>process.hrtime.bigint()}){
   if(!binding?.runId||!id(binding.sourceSha256)||!id(binding.inputsSha256)||!binding.slot||!/^[a-f0-9]{40}$/.test(binding.sourceCommit??'')||!/^[a-f0-9]{40}$/.test(binding.evaluatorCommit??''))refuse('FAULT-BINDING-MISSING');
   const role=obligation==='NS.P3'?'consumer':obligation==='C2'?'broker':null;
   if(!role||!targetOk(target,role)||!retain)refuse('CRASH-TARGET-MISMATCH');
   if(!Array.isArray(points)||!points.length||new Set(points).size!==points.length||points.some(p=>typeof p!=='string'||!p))refuse('FAULT-POINTS-MISSING');
   if(role==='consumer'&&!equal(points,FAULT_POINTS))refuse('CRASH-TARGET-MISMATCH');
-  this.points=[...points];this.pageBounds=pageBounds;this.binding=structuredClone(binding);this.target=structuredClone(target);this.role=role;this.transport=transport;this.decide=decide;this.retain=retain;this.clock=clock;this.obligation=obligation;this.caseId=caseId;this.mode=mode;this.seen=new Set();this.witnesses=[];this.counts=Object.fromEntries(this.points.map(p=>[p,0]));this.busy=false;this.failed=false;this.handshakes=0;
+  this.points=[...points];this.pageBounds=pageBounds;this.binding=structuredClone(binding);this.target=structuredClone(target);this.role=role;this.transport=transport;this.decide=decide;this.retain=retain;this.clock=clock;this.obligation=obligation;this.caseIds=caseIds===undefined?null:structuredClone(caseIds);this.mode=mode;this.seen=new Set();this.witnesses=[];this.counts=Object.fromEntries(this.points.map(p=>[p,0]));this.busy=false;this.failed=false;this.handshakes=0;
  }
  async handshake(message){
   if(this.busy||this.failed)refuse('FAULT-SESSION-NOT-READY');this.busy=true;
@@ -25,6 +25,8 @@ export class FaultInjector {
   const inject=await this.decide(structuredClone(event));
   if(typeof inject!=='boolean')refuse('FAULT-DECISION-INVALID');
   if(!inject)return {schema:'ns-release/1',runId:binding.runId,nonce:event.nonce,restart:false};
+  if(!this.caseIds||typeof this.caseIds!=='object'||Object.keys(this.caseIds).length!==this.points.length||this.points.some(p=>!Object.hasOwn(this.caseIds,p)||typeof this.caseIds[p]!=='string'||!this.caseIds[p])||new Set(Object.values(this.caseIds)).size!==this.points.length)refuse('FAULT-CASE-PIN-MISSING');
+  const caseId=this.caseIds[event.point];
   const target=structuredClone(this.target),attempt=randomUUID(),started=this.clock();
   const context={binding:this.binding,target,attempt,hook:event};
   const paused=await this.transport.pause(context);
@@ -52,9 +54,9 @@ export class FaultInjector {
   if(BigInt(after.observation.observedAtNs)<BigInt(kill.observedAtNs))refuse('FAULT-CLOCK-INVALID');
   if(!recovery||!id(recovery.expectedReplaySha256)||!id(recovery.actualReplaySha256)||!Array.isArray(recovery.caseResults)||!Number.isSafeInteger(recovery.retries)||recovery.retries<1||recovery.checkpoint!==after.observation.checkpoint||recovery.actualReplaySha256!==hash(Buffer.from(JSON.stringify(after.observation.effects))))refuse('FAULT-RECOVERY-MISSING');
   const transitionEvents=[{transition:this.role+'-paused',t:before.observation.observedAtNs,durableEvidenceObject:before.sha256},{transition:'cgroup-gone',t:kill.observedAtNs,proof:kill},{transition:'recovered',t:after.observation.observedAtNs,durableEvidenceObject:after.sha256,restarted}];
-  const detail={schema:'ns-fault-events/1',binding:this.binding,attempt,target,hook:event,transitionEvents,callerOutcome:'connection-lost',retries:recovery.retries,postRecoveryCaseResults:recovery.caseResults,replay:{expectedSha256:recovery.expectedReplaySha256,actualSha256:recovery.actualReplaySha256,equal:recovery.expectedReplaySha256===recovery.actualReplaySha256},qualification:false};
+  const detail={schema:'ns-fault-events/1',binding:this.binding,attempt,target,caseId,hook:event,transitionEvents,callerOutcome:'hook-acknowledged; target-killed-before-release',retries:recovery.retries,postRecoveryCaseResults:recovery.caseResults,replay:{expectedSha256:recovery.expectedReplaySha256,actualSha256:recovery.actualReplaySha256,equal:recovery.expectedReplaySha256===recovery.actualReplaySha256},qualification:false};
   const raw=Buffer.from(JSON.stringify(detail)),eventsSha256=hash(raw);if(await this.retain(raw)!==eventsSha256)refuse('FAULT-RETAIN-MISMATCH');
-  const witness={schema:'fault-witness/1',obligation:this.obligation,case:this.caseId,mode:this.mode,rep:++this.counts[event.point],faultPointId:event.point,injectedAt:Number(before.observation.observedAtNs),lastWitnessedTransition:'recovered',eventsSha256};
+  const witness={schema:'fault-witness/1',obligation:this.obligation,case:caseId,mode:this.mode,rep:++this.counts[event.point],faultPointId:caseId,injectedAt:Number(before.observation.observedAtNs),lastWitnessedTransition:'recovered',eventsSha256};
   if(!Number.isSafeInteger(witness.injectedAt)||this.clock()<started)refuse('FAULT-CLOCK-INVALID');
   const wraw=Buffer.from(JSON.stringify(witness));if(await this.retain(wraw)!==hash(wraw))refuse('FAULT-RETAIN-MISMATCH');this.witnesses.push(witness);
   return {schema:'ns-release/1',runId:binding.runId,nonce:event.nonce,restart:true,endpoint:restarted.endpoint};
