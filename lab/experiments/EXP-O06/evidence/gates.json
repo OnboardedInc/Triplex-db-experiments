@@ -1,0 +1,86 @@
+[
+  {
+    "label": "unit",
+    "command": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "lab/oracles/replay/cli.py",
+      "--test"
+    ],
+    "environment": {},
+    "exit": 1
+  },
+  {
+    "label": "selfcheck",
+    "command": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "lab/oracles/replay/cli.py",
+      "--self-check"
+    ],
+    "environment": {},
+    "exit": 0
+  },
+  {
+    "label": "fixtures",
+    "command": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "lab/experiments/EXP-O06/fixture_runner.py"
+    ],
+    "environment": {},
+    "exit": 0
+  },
+  {
+    "label": "baseline-core-gate",
+    "command": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "lab/experiments/EXP-O06/golden_runner.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/experiments/EXP-O06/evidence/baseline-core-gate"
+    ],
+    "environment": {
+      "O02_LANE": "core"
+    },
+    "exit": 0
+  },
+  {
+    "label": "final-core-gate",
+    "command": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "lab/experiments/EXP-O06/golden_runner.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/experiments/EXP-O06/evidence/final-core-gate"
+    ],
+    "environment": {
+      "O02_LANE": "core"
+    },
+    "exit": 0
+  },
+  {
+    "label": "baseline-qlever-gate",
+    "command": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "lab/experiments/EXP-O06/golden_runner.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/experiments/EXP-O06/evidence/baseline-qlever-gate"
+    ],
+    "environment": {
+      "O02_LANE": "qlever"
+    },
+    "exit": 0
+  },
+  {
+    "label": "final-qlever-gate",
+    "command": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "lab/experiments/EXP-O06/golden_runner.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/experiments/EXP-O06/evidence/final-qlever-gate"
+    ],
+    "environment": {
+      "O02_LANE": "qlever"
+    },
+    "exit": 0
+  }
+]

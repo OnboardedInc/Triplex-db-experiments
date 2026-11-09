@@ -1,0 +1,4 @@
+# Retain raw local runs and the frozen baseline; commit summaries, logs and byte inventories.
+baseline-source/
+*/cases/
+*/runs/

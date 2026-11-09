@@ -1,0 +1,104 @@
+{
+  "id": "negative-reference-stamp",
+  "rule": "R-RCP-7",
+  "wanted": "FAIL",
+  "case": {
+    "format": "triplex-db-2/o-replay-case/1",
+    "caseId": "negative-reference-stamp",
+    "defaultScope": "s",
+    "adapter": {
+      "recordTime": "decided",
+      "clockDriven": true
+    },
+    "commands": [
+      {
+        "clock": 500,
+        "operations": [
+          {
+            "op": "assert",
+            "ref": "a",
+            "entityId": "e",
+            "attribute": ":v",
+            "value": {
+              "type": "string",
+              "value": "x"
+            }
+          }
+        ]
+      },
+      {
+        "clock": 500,
+        "operations": [
+          {
+            "op": "retract",
+            "target": "a"
+          },
+          {
+            "op": "assert",
+            "ref": "b",
+            "entityId": "e",
+            "attribute": ":v",
+            "value": {
+              "type": "string",
+              "value": "y"
+            }
+          }
+        ]
+      }
+    ],
+    "receipts": [
+      {
+        "command": 0,
+        "outcome": "committed",
+        "txId": "t0",
+        "position": 1,
+        "instant": 500,
+        "stagedAt": 500,
+        "assertionIds": [
+          "A"
+        ]
+      },
+      {
+        "command": 1,
+        "outcome": "committed",
+        "txId": "t1",
+        "position": 2,
+        "instant": 501,
+        "stagedAt": 500,
+        "assertionIds": [
+          null,
+          "B"
+        ]
+      }
+    ],
+    "queries": [
+      {
+        "id": "at-first",
+        "kind": "match",
+        "cut": {
+          "recordedAt": 500,
+          "validAt": 500
+        },
+        "pattern": {
+          "entityId": "e"
+        }
+      },
+      {
+        "id": "at-second",
+        "kind": "match",
+        "cut": {
+          "recordedAt": 500.001,
+          "validAt": 500
+        },
+        "pattern": {
+          "entityId": "e"
+        }
+      },
+      {
+        "id": "journal",
+        "kind": "journalFacts"
+      }
+    ]
+  },
+  "observedQueries": {}
+}

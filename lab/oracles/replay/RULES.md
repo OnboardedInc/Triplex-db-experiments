@@ -1,4 +1,4 @@
-# O-REPLAY rules (0.4.9, conforms to ACCEPTANCE 0.3.9, RULINGS through Q59 and the pending Q66a-c, Q70a-o)
+# O-REPLAY rules (0.5.0, conforms to ACCEPTANCE 0.3.9, RULINGS through Q59 and the pending Q66a-c, Q70a-o)
 
 Every semantic rule the oracle applies, with where it comes from. Status:
 
@@ -104,7 +104,7 @@ The two implementation lines read for O-REPLAY 0.1 (OC-4: compiler.ts near 1397,
 | R-CMD-0 | The oracle decides validity from command intent, order, preconditions and rules. Receipts bind txId, position, instant and assertion ids only. | SOURCED: OC-3; ACC 6.1 Outcomes |
 | R-CMD-1 | A command whose `commandId` was committed earlier in the scope fails with E-COMMAND-COMMITTED carrying the original txId and allocates no position. | SOURCED: docs/operational-primitives.md "Causal transaction envelopes" |
 | R-CMD-2 | `TripleLive` needs a matching explicit retract (else E-INVALID-VALUE); a non-live target is E-TX-CONFLICT. `EntityState` compares the recorded-live ids regardless of valid time; a mismatch is E-TX-CONFLICT. | SOURCED: operational-primitives "Compare-and-retract". Valid-time independence: Q21-DEFAULT |
-| R-CMD-3 | Omitted `validFrom` = the transaction instant; omitted `validTo` = open; omitted `createdBy` = null. | Q21-DEFAULT (TK-JOURNAL assertion.validFrom === committed.instant) |
+| R-CMD-3 | On decided lanes, omitted `validFrom` = receipt `stagedAt` (or declared command `clock`); legacy = transaction instant; omitted `validTo` = open; omitted `createdBy` = null. | SOURCED: R33 4.3, Q90a/e/f; legacy Q21-DEFAULT |
 | R-CMD-4 | `validTo <= validFrom` is E-INVALID-VALUE. | SOURCED: Q21 AMB-12 (B) |
 | R-CMD-5 | An explicit retract of a no-longer-live assertion is E-TX-CONFLICT [`retractNonLive`]; an unknown id, or the same id twice in one command, is E-INVALID-VALUE. | Q21-DEFAULT (operational-primitives "Retraction is the atomic comparison") |
 | R-CMD-6 | Reserved namespaces are E-RESERVED (WriteError / reserved-namespace) for assert, retract (of an existing assertion or a journal fact) and retract-pattern: entity ids starting `_triplex/`; attributes starting `:triplex/` or `:_tx/`; entity types starting `triplex.` or equal to `_Transaction` [`reservedNamespaces`]. Other leading-underscore names are ordinary. | SOURCED: brief fact 2; V-O01 R-CMD-6 (TK-RESERVED); operational-primitives `_Transaction` / `:_tx/*`; Q21 AMB-14 |
@@ -139,7 +139,8 @@ The two implementation lines read for O-REPLAY 0.1 (OC-4: compiler.ts near 1397,
 | R-RCP-4 | `assertionIds` align with operations; unbindable ids become `unbound:<command>:<op>` and the case is marked diverged. | DERIVED |
 | R-RCP-5 | Committed members of one physical group hold consecutive positions: consecutive integers, or for coordinates one (stream, epoch, offset) with consecutive ordinal components. | SOURCED: POSITION nested (Q31c); DERIVED from OC-2 for integers |
 | R-RCP-6 | `unknown` outcomes must carry `resolvedOutcome`. | SOURCED: CR-FAULT |
-| R-RCP-7 | A declared deterministic `clock` must equal the receipt instant; instants need not be non-decreasing. | SOURCED: OC-1; ACC 6.1 Clocks |
+| R-RCP-7 | On decided lanes a declared `clock` equals receipt `stagedAt`; if `adapter.clockDriven: true`, instant equals the R33 2.1 reference stamp in position order. Legacy clock equals instant and instants may decrease. | SOURCED: OC-1; ACC 6.1 Clocks |
+| R-RCP-9 | Decided receipts have valid integer-microsecond stamps strictly increasing per scope in position order for distinct transactions; `physicalGroup` interior ordinals share one stamp. Receipt `replays` preserve the original instant. | SOURCED: R33 4.3, Q90a/f |
 | R-RCP-8 | The oracle sorts committed positions per scope and uses its own dense ordinals for cuts: integer positions are their own ordinals (gaps allowed); coordinates get ordinals initialPositions + 1, + 2, ... in coordinate order. Aborted positions take no ordinal. `cutCatalog` shows each record's ordinal as `position` and its receipt `coordinate`; `receiptConsistency.positions` reports per scope the position kind, density (integers) and the aborted positions whenever they say something (dense integer receipts keep the 0.2.0 output shape). | SOURCED: Q31c, ACC POSITION oracle; positionDenseCases. **O03** |
 
 ## Cuts and history (R-CUT, R-HIST)
@@ -151,6 +152,7 @@ The two implementation lines read for O-REPLAY 0.1 (OC-4: compiler.ts near 1397,
 | R-CUT-3 | P beyond the latest committed position is E-UNAVAILABLE-CUT; a negative P, R or V is E-INVALID-VALUE (InvalidTripleError / invalid-value). | SOURCED: ACC 4.7 E-UNAVAILABLE-CUT; Q33h (R-CUT-3). **O03** |
 | R-CUT-4 | A read basis (R or V) given as -0 is E-NEGATIVE-ZERO-INSTANT (`detail: "no-negative-zero"`), consistent with Q30b. | SOURCED: Q43h (overrides 0.3.0's X-NOT-MODELED) |
 | R-CUT-5 | A cut may name its position as `{"coordinate": c}`: it resolves to the ordinal of the greatest committed position at or below c, so a cut inside an abort gap equals the cut just before the gap (FX-ABORT-GAP), and a cut at an interior ordinal of one engine transaction sees exactly the members up to it (FX-NESTED-CUTS). | SOURCED: Q31c (watermark = fully resolved prefix). **O03** |
+| R-CUT-6 | On decided lanes a record cut must be covered by the published watermark at read start. If any command with instant <= R publishes after `readStart`, refuse with E-BASIS-NOT-AVAILABLE, axis recordedAt, even if an explicit P hides it. Without `readStart`, publication is complete. No clock waiting is simulated. | SOURCED: R33 4.3 and 3.1, Q90d/f |
 | R-HIST-1 | Raw lifetime: every assertion whose arrival is known at the cut, with complete retirement fields even when the retirement is after the cut. Ordinary `match`, `entityTriples` and `entityPage` answer in this contract (`raw`; `contract` names it). | SOURCED: Q21 AMB-01 (A) |
 | R-HIST-2 | As-of snapshot: same membership, retirement fields null unless retractedPosition <= P and (R unbound or retractedAt <= R). `history.asOfSnapshot` and `match.snapshot` give it for repository as-of reads and native history helpers. | SOURCED: ACC 6.1 Outputs; OC-1 |
 | R-HIST-3 | `assertionSnapshot` (O-HAM SnapshotAssertion, the native V-filtered helper): `live-at-valid` = visible rows; `known-at-valid` = arrival known and valid at V; `knownRetirement` = `{retractedAt, retractTxId, retractedPosition}` when known. | SOURCED: Q21 AMB-02, AMB-03 |
@@ -163,7 +165,7 @@ The two implementation lines read for O-REPLAY 0.1 (OC-4: compiler.ts near 1397,
 | R-JNL-2 | Changes are in operation order with retract-pattern matches expanded in creation order (recordedPosition, op index) [`journalChangeOrder`]. | SOURCED: Q21 AMB-07 |
 | R-JNL-3 | `transactions({after, limit})`: positions > after ascending, limit 1..1000 default 100, `next` = last returned position. `transactionsForEntity`: newest first, `snapshotPosition` on the first page, `beforePosition` exclusive. Internal writes appear as opaque records unless `journaled: false`. | SOURCED: operational-primitives |
 | R-JNL-4 | The journal value of a binary64 -0.0 change is bit-exact -0.0. | SOURCED: Q21 AMB-04 (B) |
-| R-JNL-5 | Journal facts are queryable like ordinary facts: the `_Transaction` entity (id = txId) of each journaled commit has one `:_tx/changed-entity` ref per changed application entity and one `:_tx/change` json fact per change, recorded at the commit's position and instant and valid from the commit instant. `match` / `entityTriples` / `valueSupports` include them when the pattern names the journal (a `:_tx/` attribute, the `_Transaction` type or a transaction entity id); `journalFacts` lists them; `assertions` is the application relation only. Journal fact ids are synthetic (compare by entityId, attribute, value); `:_tx/change` carries the logical change content; retracting one is E-RESERVED. | SOURCED: brief fact 4; ACC 6.1 Outputs; operational-primitives; Q33g (R-JNL-5) |
+| R-JNL-5 | Journal facts are queryable like ordinary facts: the `_Transaction` entity (id = txId) of each journaled commit has one `:_tx/changed-entity` ref per changed application entity and one `:_tx/change` json fact per change, recorded at the commit's position and instant and valid from `stagedAt` on decided lanes (commit instant on legacy lanes). Raw change JSON v2 omits the transaction's own instants: assertion recordedAt, retraction retractedAt, and recordedAt for an assertion created in that same transaction. Historical assertion recordedAt on later retractions remains; hydrated transaction changes retain R-JNL-1 fields. `match` / `entityTriples` / `valueSupports` include them when the pattern names the journal (a `:_tx/` attribute, the `_Transaction` type or a transaction entity id); `journalFacts` lists them; `assertions` is the application relation only. Journal fact ids are synthetic (compare by entityId, attribute, value); `:_tx/change` carries the logical change content; retracting one is E-RESERVED. | SOURCED: brief fact 4; ACC 6.1 Outputs; operational-primitives; Q33g (R-JNL-5) |
 | R-JNL-6 | The other envelope facts (`:_tx/position`, `:_tx/instant`, `:_tx/actor`, `:_tx/command-id`, `:_tx/correlation-id`, `:_tx/causation-id`, `:_tx/config-snapshot`) are not modeled: a pattern that could select them returns X-NOT-MODELED instead of a partial answer. | SOURCED: Q33g (R-JNL-6) |
 | R-JNL-7 | An invalid `transactions` / `transactionsForEntity` limit (outside 1..1000, including 0) is E-CURSOR, PaginationCursorError / malformed, the same as `entityPage`. | SOURCED: Q33g (R-JNL-7). **O03** |
 
@@ -228,3 +230,12 @@ The two implementation lines read for O-REPLAY 0.1 (OC-4: compiler.ts near 1397,
 
 `tests/test_contract_section4.py` has one test per row of every table above (and per decimalRules key) and fails
 when the contract gains a row without one, or when the oracle's error table keeps an id the contract dropped.
+
+## EXP-O06 independence and version boundary
+
+0.5.0 uses only R33 section 4.3 and definitions 2.1/3.1, plus Q90a/d/e/f, for new
+semantics. No product, adapter or RT01 source was read. New obligations require
+`adapter.recordTime: "decided"` (S7). Legacy cases keep 0.4.9 behavior.
+`:_tx/instant` remains X-NOT-MODELED under R-JNL-6; the oracle does not invent envelope rows.
+The new comparison series replaces G9-CUT-02 with G9-CUT-02b. A physical group
+identifies one top-level transaction; without one, each command is a separate transaction.

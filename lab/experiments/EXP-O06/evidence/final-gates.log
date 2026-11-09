@@ -1,0 +1,9 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 57843 "CX-VP2Q-4-R8-foundation", pid 59984 "CX-VP2Q-4-R8-live", pid 37317 "CX-G03-r3-claim-suites2", pid 30950 "CX-VP2Q-4-R8-new-live"
+baseline-unit 1
+unit-final 1
+selfcheck-final 0
+fixtures-final 0
+final-core-bound 0
+updated-core-bound 0
+final-qlever-bound 0
+updated-qlever-bound 0

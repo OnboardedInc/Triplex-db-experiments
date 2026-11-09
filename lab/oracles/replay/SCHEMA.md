@@ -237,7 +237,7 @@ earlier reads whose views disagree, R-ERA-6 / Q70f, Q70l) are typed `X-NOT-MODEL
 ```jsonc
 {
   "format": "triplex-db-2/o-replay-expected/1",
-  "oracle": {"id": "O-REPLAY", "version": "0.4.9", "sourceSha256": {"values.py": "..."}},
+  "oracle": {"id": "O-REPLAY", "version": "0.5.0", "sourceSha256": {"values.py": "..."}},
   "caseId": "...", "caseSha256": "<sha256 of the case bytes>",
   "lane": {"name": "qlever", "integerRange": ["-576460752303423488", "576460752303423487"]},
   "verdict": "PASS | FAIL | EXPECTED-ONLY",
@@ -278,3 +278,38 @@ cross-module-helper and nested-object plants are retained as failing controls.
 Q70o: `cursorFrom` must be an object naming a query. `page` defaults to 0 when
 omitted and otherwise must be a JSON integer from 0 through the last source page
 index. Malformed reference shapes, types and ranges are input errors (exit 2).
+
+## 0.5.0 decided record-time cases (EXP-O06; R33 4.3, Q90a/d/e/f)
+
+Declare `"adapter": {"recordTime": "decided", "clockDriven": true}` to enforce the
+reference clock-driven stamp. Omit clockDriven or set false for engine-stamped
+receipts: strict integer-microsecond order still applies. Adapters without
+recordTime decided retain the legacy contract (R33 S7).
+
+Committed decided receipts add required `stagedAt`; a declared command `clock`
+must equal it. Omitted assertion validFrom and constraint time use stagedAt.
+Expected-only cases use command clock for stagedAt and compute integer-microsecond
+stamps as max(previous + 1, stampCut(clock)), divided by 1000 for public instants.
+Commands in one physicalGroup share a stamp, including interior ordinals.
+The reference starts at stamp 0 in each fresh scope; a case with an earlier
+nonzero initial position must include its stamp-setting history as commands.
+
+A resolved lost-ACK receipt can add `"replays": [{"instant": 500.001}]`, one
+observation per replay of that same transaction. Replays allocate no positions
+and must retain the original instant. This does not change duplicate-command
+rejection or the requirement that txIds and assertion ids be unique.
+
+For a read with recordedAt, readStart supplies the published head at start.
+If a command with instant <= recordedAt has not yet published, the oracle returns
+E-BASIS-NOT-AVAILABLE with axis recordedAt (R-CUT-6). It also refuses a cut above
+the published record-time watermark. The oracle models the resulting refusal,
+not elapsed waiting; publication/timeout scheduling remains the harness's job.
+
+Journal facts are valid from stagedAt and raw :_tx/change JSON v2 excludes the
+transaction's own record instants. Hydrated transaction changes retain their
+public recordedAt/retractedAt fields. `:_tx/instant` queries remain X-NOT-MODELED.
+
+`lab/experiments/EXP-O06/fixture_runner.py` runs authored observations against
+the oracle. Fixtures marked wanted FAIL are negative controls, including stale
+valid-time, journal, and early-read answers that receipts alone cannot observe.
+A successful fixture suite requires every negative control to fail comparison.

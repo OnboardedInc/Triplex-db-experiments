@@ -1,0 +1,4192 @@
+{
+ "format": "triplex-db-2/v-o01-golden-vs-oracle/1",
+ "vectors": 49,
+ "itemCounts": {
+  "AGREE": 317,
+  "NOT-MODELED": 3,
+  "AGREE-RULED": 19,
+  "VECTOR-BUG": 2
+ },
+ "vectorCounts": {
+  "AGREE": 46,
+  "AGREE+NOT-MODELED": 2,
+  "AGREE+VECTOR-BUG": 1
+ },
+ "vectorVerdicts": {
+  "C5-01": "AGREE",
+  "C5-02": "AGREE",
+  "C5-03": "AGREE+NOT-MODELED",
+  "C5-04": "AGREE",
+  "C5-05": "AGREE",
+  "C5-06": "AGREE",
+  "C5-07": "AGREE",
+  "C5-08": "AGREE",
+  "C5-09": "AGREE",
+  "C6-01": "AGREE",
+  "C6-02": "AGREE",
+  "C6-03": "AGREE",
+  "C6-04": "AGREE",
+  "C6-05": "AGREE+NOT-MODELED",
+  "C6-06": "AGREE",
+  "G1-I64-01": "AGREE",
+  "G1-I64-02": "AGREE",
+  "G10-CUR-01": "AGREE+VECTOR-BUG",
+  "G5-SUM-01": "AGREE",
+  "G5-SUM-02": "AGREE",
+  "G5-SUM-03": "AGREE",
+  "G5-SUM-04": "AGREE",
+  "G5-SUM-05": "AGREE",
+  "G5-SUM-06": "AGREE",
+  "G5-SUM-07": "AGREE",
+  "G5-SUM-08": "AGREE",
+  "G5-SUM-09": "AGREE",
+  "G5-SUM-10": "AGREE",
+  "G5-SUM-11": "AGREE",
+  "G5-SUM-12": "AGREE",
+  "G5-SUM-13": "AGREE",
+  "G9-HO-01": "AGREE",
+  "G9-HO-02": "AGREE",
+  "G9-HO-03": "AGREE",
+  "G9-CUT-01": "AGREE",
+  "G9-CUT-02b": "AGREE",
+  "G9-V4-01": "AGREE",
+  "G9-V4-02": "AGREE",
+  "G9-V4-03": "AGREE",
+  "G9-V4-04": "AGREE",
+  "G9-V4-05": "AGREE",
+  "G9-V4-06": "AGREE",
+  "G9-V4-07": "AGREE",
+  "G9-V4-08": "AGREE",
+  "Q8F-01": "AGREE",
+  "Q8F-02": "AGREE",
+  "Q8F-03": "AGREE",
+  "Q8F-04": "AGREE",
+  "Q8F-05": "AGREE"
+ },
+ "assumptions": [
+  "Expected-only mode: assertion ids = golden labels, txIds = tx:<command index>, positions = oracle's dense positions; $id/$tx/$pos symbols are mapped through a first-pass cutCatalog.",
+  "Golden reads without validAt use V = 1e15 (reader clock 'now', after every fixture instant).",
+  "The implicit ConfigStore release C0 of EP-REPO vectors is omitted (positions are symbolic in those vectors).",
+  "tiny-v4: config releases C1/C4 are internal commands (positions 1 and 4); every domain command enforces Required(:capacity/label) for CapacityEntity (the vector gives only 'all persisted rules of that release'); the repository schema is derived from the fixture's value families.",
+  "Golden 'native history relation' = oracle history.asOfSnapshot (known-at-cut); 'native facts relation' = oracle match.snapshot (live-at-valid); repository timeline = oracle assertionSnapshot known-at-valid.",
+  "Repository count(...) = oracle find total; find items = find pages[*].entities rendered as golden documents.",
+  "Journal facts (:_tx/change, :_tx/changed-entity) have no oracle query; Q11-Q13 of C6-01 are compared against the oracle's transaction record (changes, changedEntities) and labelled AGREE-DERIVED.",
+  "Number values are compared by IEEE binary64 bit pattern; int64 by decimal text; strings by codepoints."
+ ],
+ "items": [
+  {
+   "vector": "C5-01",
+   "item": "Q1",
+   "verdict": "AGREE",
+   "oracle": [
+    "A1",
+    "A2"
+   ],
+   "golden": [
+    "A1",
+    "A2"
+   ]
+  },
+  {
+   "vector": "C5-01",
+   "item": "Q2",
+   "verdict": "AGREE",
+   "oracle": {
+    "$id": "item:1",
+    "color": "red",
+    "name": "one"
+   },
+   "golden": {
+    "$id": "item:1",
+    "color": "red",
+    "name": "one"
+   }
+  },
+  {
+   "vector": "C5-01",
+   "item": "Q3",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C5-01",
+   "item": "Q4",
+   "verdict": "AGREE",
+   "oracle": 1,
+   "golden": 1
+  },
+  {
+   "vector": "C5-01",
+   "item": "Q5",
+   "verdict": "AGREE",
+   "oracle": {
+    "items": [
+     {
+      "$id": "item:1",
+      "color": "red",
+      "name": "one"
+     }
+    ],
+    "nextCursor": "absent"
+   },
+   "golden": {
+    "items": [
+     {
+      "$id": "item:1",
+      "color": "red",
+      "name": "one"
+     }
+    ],
+    "nextCursor": "absent"
+   }
+  },
+  {
+   "vector": "C5-01",
+   "item": "cmd:C1",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C5-02",
+   "item": "Q1",
+   "verdict": "AGREE",
+   "oracle": {
+    "$id": "item:2",
+    "color": "red",
+    "name": "two"
+   },
+   "golden": {
+    "$id": "item:2",
+    "color": "red",
+    "name": "two"
+   }
+  },
+  {
+   "vector": "C5-02",
+   "item": "Q2",
+   "verdict": "AGREE",
+   "oracle": {
+    "$id": "item:2",
+    "color": "red",
+    "name": "two"
+   },
+   "golden": {
+    "$id": "item:2",
+    "color": "red",
+    "name": "two"
+   }
+  },
+  {
+   "vector": "C5-02",
+   "item": "Q3",
+   "verdict": "AGREE",
+   "oracle": {
+    "$id": "item:2",
+    "name": "two"
+   },
+   "golden": {
+    "$id": "item:2",
+    "name": "two"
+   }
+  },
+  {
+   "vector": "C5-02",
+   "item": "Q4",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C5-02",
+   "item": "Q5",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C5-02",
+   "item": "Q6",
+   "verdict": "AGREE",
+   "oracle": [
+    "A2",
+    "A3"
+   ],
+   "golden": [
+    "A2",
+    "A3"
+   ]
+  },
+  {
+   "vector": "C5-02",
+   "item": "Q7",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C5-02",
+   "item": "cmd:C1",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C5-02",
+   "item": "cmd:C2",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C5-02",
+   "item": "cmd:C3",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C5-03",
+   "item": "Q10",
+   "verdict": "NOT-MODELED",
+   "call": "raw convenience projection for Item"
+  },
+  {
+   "vector": "C5-03",
+   "item": "Q1",
+   "verdict": "AGREE",
+   "oracle": {
+    "error": "ConflictingValuesError",
+    "conflicts": [
+     [
+      "item:3",
+      ":item/color"
+     ]
+    ]
+   },
+   "golden": {
+    "error": "ConflictingValuesError",
+    "conflicts": [
+     [
+      "item:3",
+      ":item/color"
+     ]
+    ]
+   },
+   "ambiguity": "AMB-13"
+  },
+  {
+   "vector": "C5-03",
+   "item": "Q2",
+   "verdict": "AGREE",
+   "oracle": {
+    "error": "ConflictingValuesError",
+    "conflicts": [
+     [
+      "item:3",
+      ":item/color"
+     ]
+    ]
+   },
+   "golden": {
+    "error": "ConflictingValuesError",
+    "conflicts": [
+     [
+      "item:3",
+      ":item/color"
+     ]
+    ]
+   },
+   "ambiguity": "AMB-13"
+  },
+  {
+   "vector": "C5-03",
+   "item": "Q3",
+   "verdict": "AGREE",
+   "oracle": {
+    "$id": "item:4",
+    "color": "red",
+    "name": "four"
+   },
+   "golden": {
+    "$id": "item:4",
+    "color": "red",
+    "name": "four"
+   }
+  },
+  {
+   "vector": "C5-03",
+   "item": "Q4",
+   "verdict": "AGREE",
+   "oracle": {
+    "error": "ConflictingValuesError",
+    "conflicts": [
+     [
+      "item:3",
+      ":item/color"
+     ]
+    ]
+   },
+   "golden": {
+    "error": "ConflictingValuesError",
+    "conflicts": [
+     [
+      "item:3",
+      ":item/color"
+     ]
+    ]
+   }
+  },
+  {
+   "vector": "C5-03",
+   "item": "Q5",
+   "verdict": "AGREE",
+   "oracle": {
+    "error": "ConflictingValuesError",
+    "conflicts": [
+     [
+      "item:3",
+      ":item/color"
+     ]
+    ]
+   },
+   "golden": {
+    "error": "ConflictingValuesError",
+    "conflicts": [
+     [
+      "item:3",
+      ":item/color"
+     ]
+    ]
+   }
+  },
+  {
+   "vector": "C5-03",
+   "item": "Q6",
+   "verdict": "AGREE",
+   "oracle": {
+    "error": "ConflictingValuesError",
+    "conflicts": [
+     [
+      "item:3",
+      ":item/color"
+     ]
+    ]
+   },
+   "golden": {
+    "error": "ConflictingValuesError",
+    "conflicts": [
+     [
+      "item:3",
+      ":item/color"
+     ]
+    ]
+   }
+  },
+  {
+   "vector": "C5-03",
+   "item": "Q7",
+   "verdict": "AGREE",
+   "oracle": 1,
+   "golden": 1
+  },
+  {
+   "vector": "C5-03",
+   "item": "Q8",
+   "verdict": "AGREE-RULED",
+   "ambiguity": "AMB-17",
+   "oracle": {
+    "error": "ConflictingValuesError",
+    "conflicts": [
+     [
+      "item:3",
+      ":item/color"
+     ]
+    ]
+   },
+   "readingsMatched": {
+    "A-document-references-all-attributes": true,
+    "B-filter-only-reference": "not machine-comparable: no defined document shape: color has no single value and null is banned (R01 D5)"
+   },
+   "ruling": "Q21 AMB-17 A (find fails on a conflicted document attribute)",
+   "ruledReadingMatched": true
+  },
+  {
+   "vector": "C5-03",
+   "item": "Q9",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C5-03",
+   "item": "Q11",
+   "verdict": "AGREE",
+   "oracle": [
+    "A1",
+    "A2",
+    "A3"
+   ],
+   "golden": [
+    "A1",
+    "A2",
+    "A3"
+   ]
+  },
+  {
+   "vector": "C5-03",
+   "item": "cmd:C1",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C5-04",
+   "item": "V5",
+   "verdict": "AGREE",
+   "oracle": {
+    "$id": "item:5",
+    "color": "red",
+    "name": "five"
+   },
+   "golden": {
+    "$id": "item:5",
+    "color": "red",
+    "name": "five"
+   }
+  },
+  {
+   "vector": "C5-04",
+   "item": "V9.999999999999998",
+   "verdict": "AGREE",
+   "oracle": {
+    "$id": "item:5",
+    "color": "red",
+    "name": "five"
+   },
+   "golden": {
+    "$id": "item:5",
+    "color": "red",
+    "name": "five"
+   }
+  },
+  {
+   "vector": "C5-04",
+   "item": "V10",
+   "verdict": "AGREE",
+   "oracle": {
+    "error": "ConflictingValuesError",
+    "conflicts": [
+     [
+      "item:5",
+      ":item/color"
+     ]
+    ]
+   },
+   "golden": {
+    "error": "ConflictingValuesError",
+    "conflicts": [
+     [
+      "item:5",
+      ":item/color"
+     ]
+    ]
+   }
+  },
+  {
+   "vector": "C5-04",
+   "item": "V19.999999999999996",
+   "verdict": "AGREE",
+   "oracle": {
+    "error": "ConflictingValuesError",
+    "conflicts": [
+     [
+      "item:5",
+      ":item/color"
+     ]
+    ]
+   },
+   "golden": {
+    "error": "ConflictingValuesError",
+    "conflicts": [
+     [
+      "item:5",
+      ":item/color"
+     ]
+    ]
+   }
+  },
+  {
+   "vector": "C5-04",
+   "item": "V20",
+   "verdict": "AGREE",
+   "oracle": {
+    "$id": "item:5",
+    "color": "blue",
+    "name": "five"
+   },
+   "golden": {
+    "$id": "item:5",
+    "color": "blue",
+    "name": "five"
+   }
+  },
+  {
+   "vector": "C5-04",
+   "item": "V29.999999999999996",
+   "verdict": "AGREE",
+   "oracle": {
+    "$id": "item:5",
+    "color": "blue",
+    "name": "five"
+   },
+   "golden": {
+    "$id": "item:5",
+    "color": "blue",
+    "name": "five"
+   }
+  },
+  {
+   "vector": "C5-04",
+   "item": "V30",
+   "verdict": "AGREE",
+   "oracle": {
+    "$id": "item:5",
+    "name": "five"
+   },
+   "golden": {
+    "$id": "item:5",
+    "name": "five"
+   }
+  },
+  {
+   "vector": "C5-04",
+   "item": "N15",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C5-04",
+   "item": "cmd:C1",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C5-05",
+   "item": "G15",
+   "verdict": "AGREE",
+   "oracle": {
+    "$id": "item:6",
+    "color": "red",
+    "name": "six"
+   },
+   "golden": {
+    "$id": "item:6",
+    "color": "red",
+    "name": "six"
+   }
+  },
+  {
+   "vector": "C5-05",
+   "item": "N5",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C5-05",
+   "item": "N10",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C5-05",
+   "item": "N19.999999999999996",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C5-05",
+   "item": "N20",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C5-05",
+   "item": "N30",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C5-05",
+   "item": "G30",
+   "verdict": "AGREE",
+   "oracle": {
+    "$id": "item:6",
+    "name": "six"
+   },
+   "golden": {
+    "$id": "item:6",
+    "name": "six"
+   }
+  },
+  {
+   "vector": "C5-05",
+   "item": "cmd:C1",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C5-06",
+   "item": "Q1",
+   "verdict": "AGREE",
+   "oracle": [
+    "A1"
+   ],
+   "golden": [
+    "A1"
+   ]
+  },
+  {
+   "vector": "C5-06",
+   "item": "Q2",
+   "verdict": "AGREE",
+   "oracle": {
+    "$id": "item:7",
+    "color": "red"
+   },
+   "golden": {
+    "$id": "item:7",
+    "color": "red"
+   }
+  },
+  {
+   "vector": "C5-06",
+   "item": "Q3",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C5-06",
+   "item": "cmd:C1",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C5-06",
+   "item": "cmd:C2",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C5-06",
+   "item": "cmd:C3",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C5-07",
+   "item": "Q1",
+   "verdict": "AGREE",
+   "oracle": {
+    "error": "ConflictingValuesError",
+    "conflicts": [
+     [
+      "item:8",
+      ":item/color"
+     ]
+    ]
+   },
+   "golden": {
+    "error": "ConflictingValuesError",
+    "conflicts": [
+     [
+      "item:8",
+      ":item/color"
+     ]
+    ]
+   }
+  },
+  {
+   "vector": "C5-07",
+   "item": "Q2",
+   "verdict": "AGREE",
+   "oracle": {
+    "error": "ConflictingValuesError",
+    "conflicts": [
+     [
+      "item:8",
+      ":item/color"
+     ]
+    ]
+   },
+   "golden": {
+    "error": "ConflictingValuesError",
+    "conflicts": [
+     [
+      "item:8",
+      ":item/color"
+     ]
+    ]
+   }
+  },
+  {
+   "vector": "C5-07",
+   "item": "Q3",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C5-07",
+   "item": "Q4",
+   "verdict": "AGREE",
+   "oracle": {
+    "$id": "item:8",
+    "color": "blue",
+    "name": "eight"
+   },
+   "golden": {
+    "$id": "item:8",
+    "color": "blue",
+    "name": "eight"
+   }
+  },
+  {
+   "vector": "C5-07",
+   "item": "Q5",
+   "verdict": "AGREE",
+   "diffs": []
+  },
+  {
+   "vector": "C5-07",
+   "item": "cmd:C1",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C5-07",
+   "item": "cmd:C2",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C5-07",
+   "item": "cmd:C3",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C5-07",
+   "item": "cmd:C4",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C5-07",
+   "item": "cmd:C5",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C5-07",
+   "item": "cmd:C6",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C5-08",
+   "item": "Q1",
+   "verdict": "AGREE",
+   "oracle": {
+    "$id": "item:9",
+    "color": "red"
+   },
+   "golden": {
+    "$id": "item:9",
+    "color": "red"
+   }
+  },
+  {
+   "vector": "C5-08",
+   "item": "Q2",
+   "verdict": "AGREE",
+   "oracle": {
+    "error": "ConflictingValuesError",
+    "conflicts": [
+     [
+      "item:9",
+      ":item/color"
+     ]
+    ]
+   },
+   "golden": {
+    "error": "ConflictingValuesError",
+    "conflicts": [
+     [
+      "item:9",
+      ":item/color"
+     ]
+    ]
+   }
+  },
+  {
+   "vector": "C5-08",
+   "item": "Q3",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C5-08",
+   "item": "Q4",
+   "verdict": "AGREE",
+   "diff": null,
+   "ambiguity": "AMB-05"
+  },
+  {
+   "vector": "C5-08",
+   "item": "cmd:C1",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C5-08",
+   "item": "cmd:C2",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C5-09",
+   "item": "Q1",
+   "verdict": "AGREE",
+   "oracle": {
+    "error": "ConflictingValuesError",
+    "conflicts": [
+     [
+      "item:10",
+      ":item/color"
+     ]
+    ]
+   },
+   "golden": {
+    "error": "ConflictingValuesError",
+    "conflicts": [
+     [
+      "item:10",
+      ":item/color"
+     ]
+    ]
+   }
+  },
+  {
+   "vector": "C5-09",
+   "item": "Q2",
+   "verdict": "AGREE",
+   "oracle": {
+    "$id": "item:10",
+    "color": "blue",
+    "name": "ten"
+   },
+   "golden": {
+    "$id": "item:10",
+    "color": "blue",
+    "name": "ten"
+   }
+  },
+  {
+   "vector": "C5-09",
+   "item": "Q3",
+   "verdict": "AGREE",
+   "oracle": {
+    "$id": "item:10",
+    "name": "ten"
+   },
+   "golden": {
+    "$id": "item:10",
+    "name": "ten"
+   }
+  },
+  {
+   "vector": "C5-09",
+   "item": "Q4",
+   "verdict": "AGREE",
+   "oracle": {
+    "items": [
+     {
+      "$id": "item:10",
+      "name": "ten"
+     }
+    ],
+    "nextCursor": "absent"
+   },
+   "golden": {
+    "items": [
+     {
+      "$id": "item:10",
+      "name": "ten"
+     }
+    ],
+    "nextCursor": "absent"
+   }
+  },
+  {
+   "vector": "C5-09",
+   "item": "Q5",
+   "verdict": "AGREE",
+   "oracle": {
+    "error": "ConflictingValuesError",
+    "conflicts": [
+     [
+      "item:10",
+      ":item/color"
+     ]
+    ]
+   },
+   "golden": {
+    "error": "ConflictingValuesError",
+    "conflicts": [
+     [
+      "item:10",
+      ":item/color"
+     ]
+    ]
+   }
+  },
+  {
+   "vector": "C5-09",
+   "item": "cmd:C1",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C5-09",
+   "item": "cmd:C2",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C5-09",
+   "item": "cmd:C3",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C6-01",
+   "item": "Q1",
+   "verdict": "AGREE",
+   "diff": null,
+   "ambiguity": "AMB-05"
+  },
+  {
+   "vector": "C6-01",
+   "item": "Q2",
+   "verdict": "AGREE",
+   "diff": null,
+   "ambiguity": "AMB-05"
+  },
+  {
+   "vector": "C6-01",
+   "item": "Q3",
+   "verdict": "AGREE",
+   "diffs": [],
+   "next": [
+    1,
+    1
+   ],
+   "count": [
+    1,
+    1
+   ]
+  },
+  {
+   "vector": "C6-01",
+   "item": "Q4",
+   "verdict": "AGREE",
+   "diffs": [],
+   "next": [
+    2,
+    2
+   ],
+   "count": [
+    1,
+    1
+   ]
+  },
+  {
+   "vector": "C6-01",
+   "item": "Q5",
+   "verdict": "AGREE",
+   "diffs": [],
+   "next": [
+    null,
+    "absent"
+   ],
+   "count": [
+    0,
+    0
+   ]
+  },
+  {
+   "vector": "C6-01",
+   "item": "Q6",
+   "verdict": "AGREE",
+   "diffs": [],
+   "paging": {
+    "oracle": [
+     2,
+     2
+    ],
+    "golden": [
+     2,
+     2
+    ]
+   }
+  },
+  {
+   "vector": "C6-01",
+   "item": "Q7",
+   "verdict": "AGREE",
+   "diffs": [],
+   "paging": {
+    "oracle": [
+     2,
+     null
+    ],
+    "golden": [
+     2,
+     "absent"
+    ]
+   }
+  },
+  {
+   "vector": "C6-01",
+   "item": "Q8",
+   "verdict": "AGREE",
+   "diffs": [],
+   "paging": {
+    "oracle": [
+     2,
+     null
+    ],
+    "golden": [
+     2,
+     "absent"
+    ]
+   }
+  },
+  {
+   "vector": "C6-01",
+   "item": "Q9",
+   "verdict": "AGREE",
+   "diffs": []
+  },
+  {
+   "vector": "C6-01",
+   "item": "Q10",
+   "verdict": "AGREE",
+   "oracle": [],
+   "golden": []
+  },
+  {
+   "vector": "C6-01",
+   "item": "Q11",
+   "verdict": "AGREE",
+   "oracle": [
+    "j:1",
+    "j:2"
+   ],
+   "golden": [
+    "j:1",
+    "j:2"
+   ]
+  },
+  {
+   "vector": "C6-01",
+   "item": "Q12",
+   "verdict": "AGREE",
+   "oracle": {
+    "count": 4
+   },
+   "golden": {
+    "count": 4
+   }
+  },
+  {
+   "vector": "C6-01",
+   "item": "Q13",
+   "verdict": "AGREE",
+   "oracle": {
+    "count": 2
+   },
+   "golden": {
+    "count": 2
+   }
+  },
+  {
+   "vector": "C6-01",
+   "item": "cmd:C1",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C6-01",
+   "item": "cmd:C2",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C6-01",
+   "item": "cmd:C3",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C6-02",
+   "item": "Q1",
+   "verdict": "AGREE",
+   "oracle": {
+    "type": "number",
+    "value": 0,
+    "bits": "0x8000000000000000"
+   },
+   "golden": {
+    "type": "number",
+    "value": -0.0,
+    "bits": "8000000000000000"
+   }
+  },
+  {
+   "vector": "C6-02",
+   "item": "Q2",
+   "verdict": "AGREE-RULED",
+   "ambiguity": "AMB-04",
+   "oracle": {
+    "type": "number",
+    "value": 0,
+    "bits": "0x8000000000000000"
+   },
+   "readingsMatched": {
+    "A-legacy-journal-bytes": false,
+    "B-exact-value-domain": true
+   },
+   "ruling": "Q21 AMB-04 B (bit-exact -0)",
+   "ruledReadingMatched": true
+  },
+  {
+   "vector": "C6-02",
+   "item": "cmd:C1",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C6-03",
+   "item": "Q1",
+   "verdict": "AGREE-RULED",
+   "ambiguity": "AMB-06",
+   "oracle": {
+    "match": [],
+    "changes": [
+     {
+      "op": "assert",
+      "tripleId": "A1"
+     },
+     {
+      "op": "retract",
+      "tripleId": "A1"
+     }
+    ]
+   },
+   "readingsMatched": {
+    "A-pattern-sees-staged-rows": true,
+    "B-pattern-sees-pre-state-only": false
+   },
+   "ruling": "Q21 AMB-06 A (pattern sees staged rows)",
+   "ruledReadingMatched": true
+  },
+  {
+   "vector": "C6-03",
+   "item": "cmd:C1",
+   "verdict": "AGREE-RULED",
+   "ambiguity": "AMB-06",
+   "oracle": {
+    "outcome": "committed"
+   },
+   "ruling": "Q21 AMB-06 A (command commits)",
+   "ruledReadingMatched": true
+  },
+  {
+   "vector": "C6-04",
+   "item": "Q1",
+   "verdict": "AGREE",
+   "ambiguity": "AMB-07",
+   "diff": null,
+   "oracleOrder": [
+    "A1",
+    "A2"
+   ],
+   "note": "compared as a set; order is AMB-07"
+  },
+  {
+   "vector": "C6-04",
+   "item": "Q2",
+   "verdict": "AGREE",
+   "oracle": [],
+   "golden": []
+  },
+  {
+   "vector": "C6-04",
+   "item": "cmd:C1",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C6-04",
+   "item": "cmd:C2",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C6-05",
+   "item": "cmd:C2",
+   "verdict": "NOT-MODELED",
+   "call": "Triples.retract(<id of the ':_tx/instant' fact of entity $tx:C1>)",
+   "note": "the oracle does not model journal fact ids, so this retract cannot be expressed"
+  },
+  {
+   "vector": "C6-05",
+   "item": "Q1",
+   "verdict": "NOT-MODELED",
+   "call": "Triples.match({ entityId: $tx:C1 }) count, before C2 and after C4  [journal facts of $tx:C1 are not an oracle query]"
+  },
+  {
+   "vector": "C6-05",
+   "item": "Q2",
+   "verdict": "AGREE",
+   "oracle": [],
+   "golden": []
+  },
+  {
+   "vector": "C6-05",
+   "item": "Q3",
+   "verdict": "AGREE",
+   "oracle": 1,
+   "golden": 1
+  },
+  {
+   "vector": "C6-05",
+   "item": "cmd:C1",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C6-05",
+   "item": "cmd:C3",
+   "verdict": "AGREE",
+   "tagNotCompared": {
+    "golden": "reserved Triplex system namespace",
+    "oracleCategory": null,
+    "oracleErrorTag": "WriteError"
+   }
+  },
+  {
+   "vector": "C6-05",
+   "item": "cmd:C4",
+   "verdict": "AGREE",
+   "tagNotCompared": {
+    "golden": "reserved Triplex system namespace",
+    "oracleCategory": null,
+    "oracleErrorTag": "WriteError"
+   }
+  },
+  {
+   "vector": "C6-06",
+   "item": "Q1",
+   "verdict": "AGREE",
+   "diffs": [],
+   "next": [
+    null,
+    "absent"
+   ],
+   "count": [
+    0,
+    0
+   ]
+  },
+  {
+   "vector": "C6-06",
+   "item": "Q2",
+   "verdict": "AGREE",
+   "oracle": [
+    "A1",
+    "A2"
+   ],
+   "golden": [
+    "A1",
+    "A2"
+   ]
+  },
+  {
+   "vector": "C6-06",
+   "item": "Q3",
+   "verdict": "AGREE",
+   "diffs": []
+  },
+  {
+   "vector": "C6-06",
+   "item": "cmd:C1",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "C6-06",
+   "item": "cmd:C2",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G1-I64-01",
+   "item": "Q1",
+   "verdict": "AGREE",
+   "oracle": "{'MAX': ('integer', '9223372036854775807'), 'MIN': ('integer', '-9223372036854775808'), 'NMAX': ('integer', '-9223372036854775807'), 'P59': ('integer', '576460752303423488'), 'P59M1': ('integer', '576460752303423487'), 'M59': ('integer', '-576460752303423488'), 'M59M1': ('integer', '-576460752303423489'), 'P53': ('integer', '9007199254740992'), 'P53P1': ('integer', '9007199254740993'), 'ZERO': ('integer', '0'), 'F53': ('number', 4845873199050653696)}",
+   "golden": "{'MAX': ('integer', '9223372036854775807'), 'MIN': ('integer', '-9223372036854775808'), 'NMAX': ('integer', '-9223372036854775807'), 'P59': ('integer', '576460752303423488'), 'P59M1': ('integer', '576460752303423487'), 'M59': ('integer', '-576460752303423488'), 'M59M1': ('integer', '-576460752303423489'), 'P53': ('integer', '9007199254740992'), 'P53P1': ('integer', '9007199254740993'), 'ZERO': ('integer', '0'), 'F53': ('number', 4845873199050653696)}"
+  },
+  {
+   "vector": "G1-I64-01",
+   "item": "Q2",
+   "verdict": "AGREE",
+   "oracle": {
+    "n:max": {
+     "$id": "n:max",
+     "v": [
+      "int64",
+      "9223372036854775807"
+     ]
+    },
+    "n:min": {
+     "$id": "n:min",
+     "v": [
+      "int64",
+      "-9223372036854775808"
+     ]
+    },
+    "n:p53p1": {
+     "$id": "n:p53p1",
+     "v": [
+      "int64",
+      "9007199254740993"
+     ]
+    },
+    "n:f53": {
+     "$id": "n:f53",
+     "f": [
+      "num",
+      4845873199050653696
+     ]
+    }
+   },
+   "golden": {
+    "n:max": {
+     "$id": "n:max",
+     "v": [
+      "int64",
+      "9223372036854775807"
+     ]
+    },
+    "n:min": {
+     "$id": "n:min",
+     "v": [
+      "int64",
+      "-9223372036854775808"
+     ]
+    },
+    "n:p53p1": {
+     "$id": "n:p53p1",
+     "v": [
+      "int64",
+      "9007199254740993"
+     ]
+    },
+    "n:f53": {
+     "$id": "n:f53",
+     "f": [
+      "num",
+      4845873199050653696
+     ]
+    }
+   }
+  },
+  {
+   "vector": "G1-I64-01",
+   "item": "Q3",
+   "verdict": "AGREE",
+   "oracle": [
+    "P53P1"
+   ],
+   "golden": [
+    "P53P1"
+   ]
+  },
+  {
+   "vector": "G1-I64-01",
+   "item": "Q4",
+   "verdict": "AGREE",
+   "oracle": [
+    "P53"
+   ],
+   "golden": [
+    "P53"
+   ]
+  },
+  {
+   "vector": "G1-I64-01",
+   "item": "Q5",
+   "verdict": "AGREE",
+   "oracle": [
+    "n:p59"
+   ],
+   "golden": [
+    "n:p59"
+   ]
+  },
+  {
+   "vector": "G1-I64-01",
+   "item": "Q6",
+   "verdict": "AGREE",
+   "oracle": [
+    "n:min",
+    "n:negmax",
+    "n:m59m1",
+    "n:m59",
+    "n:zero",
+    "n:p53",
+    "n:p53p1",
+    "n:p59m1",
+    "n:p59",
+    "n:max"
+   ],
+   "golden": [
+    "n:min",
+    "n:negmax",
+    "n:m59m1",
+    "n:m59",
+    "n:zero",
+    "n:p53",
+    "n:p53p1",
+    "n:p59m1",
+    "n:p59",
+    "n:max"
+   ]
+  },
+  {
+   "vector": "G1-I64-01",
+   "item": "Q7",
+   "verdict": "AGREE-RULED",
+   "ambiguity": "AMB-16",
+   "oracle": {
+    "items": [
+     {
+      "$id": "n:max",
+      "v": [
+       "int64",
+       "9223372036854775807"
+      ]
+     },
+     {
+      "$id": "n:p59",
+      "v": [
+       "int64",
+       "576460752303423488"
+      ]
+     }
+    ],
+    "nextCursor": "absent"
+   },
+   "readingsMatched": {
+    "A-range-on-int64-supported": true,
+    "B-not-offered": "not machine-comparable: type error: R3 Predicate offers gt/gte/lt/lte only when the model value is a JS number; int64 model values are IntegerValue objects"
+   },
+   "ruling": "Q21 AMB-16 A (integer range predicates)",
+   "ruledReadingMatched": true
+  },
+  {
+   "vector": "G1-I64-01",
+   "item": "cmd:C1",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G1-I64-02",
+   "item": "post:above-max:ok",
+   "verdict": "AGREE",
+   "oracle": [],
+   "golden": []
+  },
+  {
+   "vector": "G1-I64-02",
+   "item": "post:above-max:bad",
+   "verdict": "AGREE",
+   "oracle": [],
+   "golden": []
+  },
+  {
+   "vector": "G1-I64-02",
+   "item": "post:below-min:ok",
+   "verdict": "AGREE",
+   "oracle": [],
+   "golden": []
+  },
+  {
+   "vector": "G1-I64-02",
+   "item": "post:below-min:bad",
+   "verdict": "AGREE",
+   "oracle": [],
+   "golden": []
+  },
+  {
+   "vector": "G1-I64-02",
+   "item": "post:leading-zero:ok",
+   "verdict": "AGREE",
+   "oracle": [],
+   "golden": []
+  },
+  {
+   "vector": "G1-I64-02",
+   "item": "post:leading-zero:bad",
+   "verdict": "AGREE",
+   "oracle": [],
+   "golden": []
+  },
+  {
+   "vector": "G1-I64-02",
+   "item": "post:plus-sign:ok",
+   "verdict": "AGREE",
+   "oracle": [],
+   "golden": []
+  },
+  {
+   "vector": "G1-I64-02",
+   "item": "post:plus-sign:bad",
+   "verdict": "AGREE",
+   "oracle": [],
+   "golden": []
+  },
+  {
+   "vector": "G1-I64-02",
+   "item": "post:decimal-point:ok",
+   "verdict": "AGREE",
+   "oracle": [],
+   "golden": []
+  },
+  {
+   "vector": "G1-I64-02",
+   "item": "post:decimal-point:bad",
+   "verdict": "AGREE",
+   "oracle": [],
+   "golden": []
+  },
+  {
+   "vector": "G1-I64-02",
+   "item": "post:negative-zero-text:ok",
+   "verdict": "AGREE",
+   "oracle": [],
+   "golden": []
+  },
+  {
+   "vector": "G1-I64-02",
+   "item": "post:negative-zero-text:bad",
+   "verdict": "AGREE",
+   "oracle": [],
+   "golden": []
+  },
+  {
+   "vector": "G1-I64-02",
+   "item": "post:empty:ok",
+   "verdict": "AGREE",
+   "oracle": [],
+   "golden": []
+  },
+  {
+   "vector": "G1-I64-02",
+   "item": "post:empty:bad",
+   "verdict": "AGREE",
+   "oracle": [],
+   "golden": []
+  },
+  {
+   "vector": "G1-I64-02",
+   "item": "post:min-exact:ok",
+   "verdict": "AGREE",
+   "oracle": [
+    "OK-min-exact"
+   ],
+   "golden": [
+    "OK-min-exact"
+   ]
+  },
+  {
+   "vector": "G1-I64-02",
+   "item": "post:min-exact:bad",
+   "verdict": "AGREE",
+   "oracle": [
+    "BAD-min-exact"
+   ],
+   "golden": [
+    "BAD-min-exact"
+   ]
+  },
+  {
+   "vector": "G1-I64-02",
+   "item": "cmd:above-max",
+   "verdict": "AGREE",
+   "tagNotCompared": {
+    "golden": "UNSPECIFIED (O-ERR TO-AUTHOR, AMB-14)",
+    "oracleCategory": null,
+    "oracleErrorTag": "InvalidTripleError"
+   }
+  },
+  {
+   "vector": "G1-I64-02",
+   "item": "cmd:below-min",
+   "verdict": "AGREE",
+   "tagNotCompared": {
+    "golden": "UNSPECIFIED (O-ERR TO-AUTHOR, AMB-14)",
+    "oracleCategory": null,
+    "oracleErrorTag": "InvalidTripleError"
+   }
+  },
+  {
+   "vector": "G1-I64-02",
+   "item": "cmd:leading-zero",
+   "verdict": "AGREE",
+   "tagNotCompared": {
+    "golden": "UNSPECIFIED (O-ERR TO-AUTHOR, AMB-14)",
+    "oracleCategory": null,
+    "oracleErrorTag": "InvalidTripleError"
+   }
+  },
+  {
+   "vector": "G1-I64-02",
+   "item": "cmd:plus-sign",
+   "verdict": "AGREE",
+   "tagNotCompared": {
+    "golden": "UNSPECIFIED (O-ERR TO-AUTHOR, AMB-14)",
+    "oracleCategory": null,
+    "oracleErrorTag": "InvalidTripleError"
+   }
+  },
+  {
+   "vector": "G1-I64-02",
+   "item": "cmd:decimal-point",
+   "verdict": "AGREE",
+   "tagNotCompared": {
+    "golden": "UNSPECIFIED (O-ERR TO-AUTHOR, AMB-14)",
+    "oracleCategory": null,
+    "oracleErrorTag": "InvalidTripleError"
+   }
+  },
+  {
+   "vector": "G1-I64-02",
+   "item": "cmd:negative-zero-text",
+   "verdict": "AGREE",
+   "tagNotCompared": {
+    "golden": "UNSPECIFIED (O-ERR TO-AUTHOR, AMB-14)",
+    "oracleCategory": null,
+    "oracleErrorTag": "InvalidTripleError"
+   }
+  },
+  {
+   "vector": "G1-I64-02",
+   "item": "cmd:empty",
+   "verdict": "AGREE",
+   "tagNotCompared": {
+    "golden": "UNSPECIFIED (O-ERR TO-AUTHOR, AMB-14)",
+    "oracleCategory": null,
+    "oracleErrorTag": "InvalidTripleError"
+   }
+  },
+  {
+   "vector": "G1-I64-02",
+   "item": "cmd:min-exact",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G10-CUR-01",
+   "item": "S1",
+   "verdict": "AGREE",
+   "note": "cursor tokens not modeled: the pinned cut (P, R = reader clock 1000 or 150, V = 50) was given explicitly"
+  },
+  {
+   "vector": "G10-CUR-01",
+   "item": "S2",
+   "verdict": "AGREE",
+   "note": "page:d retirement fields are AMB-01 and not compared (oracle entityPage bodies use the raw lifetime); cursor tokens not modeled: the pinned cut (P, R = reader clock 1000 or 150, V = 50) was given explicitly"
+  },
+  {
+   "vector": "G10-CUR-01",
+   "item": "S3",
+   "verdict": "AGREE",
+   "note": "cursor tokens not modeled: the pinned cut (P, R = reader clock 1000 or 150, V = 50) was given explicitly"
+  },
+  {
+   "vector": "G10-CUR-01",
+   "item": "F1",
+   "verdict": "AGREE",
+   "note": "cursor tokens not modeled: the pinned cut (P, R = reader clock 1000 or 150, V = 50) was given explicitly"
+  },
+  {
+   "vector": "G10-CUR-01",
+   "item": "H1",
+   "verdict": "AGREE",
+   "note": "page:d retirement fields are AMB-01 and not compared (oracle entityPage bodies use the raw lifetime); cursor tokens not modeled: the pinned cut (P, R = reader clock 1000 or 150, V = 50) was given explicitly"
+  },
+  {
+   "vector": "G10-CUR-01",
+   "item": "E1",
+   "verdict": "VECTOR-BUG",
+   "oracle": {
+    "error": "E-CURSOR",
+    "_tag": "PaginationCursorError",
+    "reason": "other-query",
+    "phase": "preflight",
+    "message": "the request's validAt differs from the cursor's pinned basis (CE-OTHER-QUERY)"
+   },
+   "golden": {
+    "_tag": "PaginationCursorError",
+    "reason": "basis_mismatch"
+   },
+   "note": "ACC 4.7 E-CURSOR reasons are malformed|other-scope|other-query (CURSOR_TRANSITIONS); the golden reason is not one of them, so the contract wins (EXP-O02 brief)"
+  },
+  {
+   "vector": "G10-CUR-01",
+   "item": "E2",
+   "verdict": "VECTOR-BUG",
+   "oracle": {
+    "error": "E-CURSOR",
+    "_tag": "PaginationCursorError",
+    "reason": "other-query",
+    "phase": "preflight",
+    "message": "the cursor belongs to another query (CE-OTHER-QUERY)"
+   },
+   "golden": {
+    "_tag": "PaginationCursorError",
+    "reason": "query_mismatch"
+   },
+   "note": "ACC 4.7 E-CURSOR reasons are malformed|other-scope|other-query (CURSOR_TRANSITIONS); the golden reason is not one of them, so the contract wins (EXP-O02 brief)"
+  },
+  {
+   "vector": "G10-CUR-01",
+   "item": "E3",
+   "verdict": "AGREE",
+   "oracle": {
+    "limit0": {
+     "error": "E-CURSOR",
+     "_tag": "PaginationCursorError",
+     "reason": "malformed",
+     "phase": "preflight",
+     "message": "entityPage limit must be an integer 1..200"
+    },
+    "limit201": {
+     "error": "E-CURSOR",
+     "_tag": "PaginationCursorError",
+     "reason": "malformed",
+     "phase": "preflight",
+     "message": "entityPage limit must be an integer 1..200"
+    }
+   },
+   "golden": {
+    "_tag": "PaginationCursorError",
+    "reason": "malformed"
+   }
+  },
+  {
+   "vector": "G10-CUR-01",
+   "item": "cmd:C1",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G10-CUR-01",
+   "item": "cmd:C2",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G5-SUM-01",
+   "item": "Q",
+   "verdict": "AGREE",
+   "oracle": [
+    "E-INTEGER-OVERFLOW",
+    "QueryError",
+    "integer-overflow"
+   ],
+   "golden": {
+    "code": "integer-overflow",
+    "partialRows": "none"
+   }
+  },
+  {
+   "vector": "G5-SUM-02",
+   "item": "Q",
+   "verdict": "AGREE",
+   "oracle": [
+    {
+     "?total": [
+      "integer",
+      "4611686018427387904"
+     ]
+    }
+   ],
+   "golden": [
+    {
+     "?total": [
+      "integer",
+      "4611686018427387904"
+     ]
+    }
+   ]
+  },
+  {
+   "vector": "G5-SUM-03",
+   "item": "Q",
+   "verdict": "AGREE",
+   "oracle": [
+    {
+     "?total": [
+      "integer",
+      "864691128455135232"
+     ]
+    }
+   ],
+   "golden": [
+    {
+     "?total": [
+      "integer",
+      "864691128455135232"
+     ]
+    }
+   ]
+  },
+  {
+   "vector": "G5-SUM-04",
+   "item": "Q",
+   "verdict": "AGREE",
+   "oracle": [
+    {
+     "?total": [
+      "integer",
+      "9223372036854775807"
+     ]
+    }
+   ],
+   "golden": [
+    {
+     "?total": [
+      "integer",
+      "9223372036854775807"
+     ]
+    }
+   ]
+  },
+  {
+   "vector": "G5-SUM-05",
+   "item": "Q",
+   "verdict": "AGREE",
+   "oracle": [
+    "E-INTEGER-OVERFLOW",
+    "QueryError",
+    "integer-overflow"
+   ],
+   "golden": {
+    "code": "integer-overflow",
+    "partialRows": "none"
+   }
+  },
+  {
+   "vector": "G5-SUM-06",
+   "item": "Q",
+   "verdict": "AGREE",
+   "oracle": [
+    {
+     "?total": [
+      "integer",
+      "-1"
+     ]
+    }
+   ],
+   "golden": [
+    {
+     "?total": [
+      "integer",
+      "-1"
+     ]
+    }
+   ]
+  },
+  {
+   "vector": "G5-SUM-07",
+   "item": "Q",
+   "verdict": "AGREE",
+   "oracle": [
+    {
+     "?total": [
+      "integer",
+      "9007199254740994"
+     ]
+    }
+   ],
+   "golden": [
+    {
+     "?total": [
+      "integer",
+      "9007199254740994"
+     ]
+    }
+   ]
+  },
+  {
+   "vector": "G5-SUM-08",
+   "item": "Q",
+   "verdict": "AGREE",
+   "oracle": [
+    "E-INTEGER-OVERFLOW",
+    "QueryError",
+    "integer-overflow"
+   ],
+   "golden": {
+    "code": "integer-overflow",
+    "partialRows": "none"
+   }
+  },
+  {
+   "vector": "G5-SUM-09",
+   "item": "Q1",
+   "verdict": "AGREE",
+   "oracle": [
+    {
+     "?total": null,
+     "?count": [
+      "integer",
+      "0"
+     ]
+    }
+   ],
+   "golden": [
+    {
+     "?total": null,
+     "?count": [
+      "integer",
+      "0"
+     ]
+    }
+   ],
+   "note": "?count is compared as int64 0 (the oracle's count family); AMB-10 representation not compared"
+  },
+  {
+   "vector": "G5-SUM-09",
+   "item": "Q2",
+   "verdict": "AGREE",
+   "oracle": [],
+   "golden": [],
+   "note": "?count is compared as int64 0 (the oracle's count family); AMB-10 representation not compared"
+  },
+  {
+   "vector": "G5-SUM-10",
+   "item": "Q",
+   "verdict": "AGREE",
+   "oracle": [
+    "E-INTEGER-AVG",
+    "DatalogValidationError",
+    "integer-avg-requires-conversion"
+   ],
+   "golden": {
+    "phase": "preflight (before any backend runs)",
+    "_tag": "DatalogValidationError",
+    "tagGrounding": "derived: docs/datalog.md says unsupported programs fail with typed DatalogValidationError during preflight; Q8b says typed preflight error"
+   }
+  },
+  {
+   "vector": "G5-SUM-11",
+   "item": "Q-case1",
+   "verdict": "AGREE",
+   "oracle": [
+    {
+     "?avg": [
+      "number",
+      4845873199050653697
+     ]
+    }
+   ],
+   "golden": {
+    "value": 9007199254740994.0,
+    "bits": "4340000000000001"
+   },
+   "note": "conversion syntax is AMB-11; the oracle's integerAvg=convert switch was used"
+  },
+  {
+   "vector": "G5-SUM-11",
+   "item": "Q-case2",
+   "verdict": "AGREE",
+   "oracle": [
+    {
+     "?avg": [
+      "number",
+      4886405595696988160
+     ]
+    }
+   ],
+   "golden": {
+    "value": 4.611686018427388e+18,
+    "bits": "43d0000000000000"
+   },
+   "note": "conversion syntax is AMB-11; the oracle's integerAvg=convert switch was used"
+  },
+  {
+   "vector": "G5-SUM-11",
+   "item": "Q-case3",
+   "verdict": "AGREE",
+   "oracle": [
+    {
+     "?avg": [
+      "number",
+      4609434218613702656
+     ]
+    }
+   ],
+   "golden": {
+    "value": 1.5,
+    "bits": "3ff8000000000000"
+   },
+   "note": "conversion syntax is AMB-11; the oracle's integerAvg=convert switch was used"
+  },
+  {
+   "vector": "G5-SUM-12",
+   "item": "Q",
+   "verdict": "AGREE",
+   "oracle": [
+    {
+     "?sum": [
+      "number",
+      4626322717216342016
+     ],
+     "?count": [
+      "integer",
+      "1"
+     ]
+    }
+   ],
+   "golden": [
+    {
+     "?sum": [
+      "number",
+      4626322717216342016
+     ],
+     "?count": [
+      "integer",
+      "1"
+     ]
+    }
+   ]
+  },
+  {
+   "vector": "G5-SUM-13",
+   "item": "Q",
+   "verdict": "AGREE-RULED",
+   "ambiguity": "AMB-09",
+   "oracle": [
+    {
+     "?sum": [
+      "number",
+      4621819117588971520
+     ],
+     "?count": [
+      "integer",
+      "1"
+     ]
+    }
+   ],
+   "readingsMatched": {
+    "A-supports": false,
+    "B-binding-set": true
+   },
+   "ruling": "Q21 AMB-09 B (one binding row: SUM 10, COUNT 1)",
+   "ruledReadingMatched": true
+  },
+  {
+   "vector": "G9-HO-01",
+   "item": "V0",
+   "verdict": "AGREE",
+   "oracle": [
+    "A3"
+   ],
+   "golden": [
+    "A3"
+   ]
+  },
+  {
+   "vector": "G9-HO-01",
+   "item": "V5e-324",
+   "verdict": "AGREE",
+   "oracle": [],
+   "golden": []
+  },
+  {
+   "vector": "G9-HO-01",
+   "item": "V10.124999999999998",
+   "verdict": "AGREE",
+   "oracle": [],
+   "golden": []
+  },
+  {
+   "vector": "G9-HO-01",
+   "item": "V10.125",
+   "verdict": "AGREE",
+   "oracle": [
+    "A1",
+    "A2"
+   ],
+   "golden": [
+    "A1",
+    "A2"
+   ]
+  },
+  {
+   "vector": "G9-HO-01",
+   "item": "V20.25",
+   "verdict": "AGREE",
+   "oracle": [
+    "A1",
+    "A2"
+   ],
+   "golden": [
+    "A1",
+    "A2"
+   ]
+  },
+  {
+   "vector": "G9-HO-01",
+   "item": "V30.499999999999996",
+   "verdict": "AGREE",
+   "oracle": [
+    "A1",
+    "A2"
+   ],
+   "golden": [
+    "A1",
+    "A2"
+   ]
+  },
+  {
+   "vector": "G9-HO-01",
+   "item": "V30.5",
+   "verdict": "AGREE",
+   "oracle": [
+    "A2"
+   ],
+   "golden": [
+    "A2"
+   ]
+  },
+  {
+   "vector": "G9-HO-01",
+   "item": "V1e15",
+   "verdict": "AGREE",
+   "oracle": [
+    "A2"
+   ],
+   "golden": [
+    "A2"
+   ]
+  },
+  {
+   "vector": "G9-HO-01",
+   "item": "cmd:C1",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-HO-02",
+   "item": "Q1",
+   "verdict": "AGREE",
+   "oracle": {
+    "validFrom": 1000,
+    "validTo": null,
+    "recordedAt": 1000
+   },
+   "golden": {
+    "validFrom": 1000,
+    "validTo": null,
+    "recordedAt": 1000
+   }
+  },
+  {
+   "vector": "G9-HO-02",
+   "item": "Q2",
+   "verdict": "AGREE",
+   "oracle": [],
+   "golden": []
+  },
+  {
+   "vector": "G9-HO-02",
+   "item": "Q3",
+   "verdict": "AGREE",
+   "oracle": [
+    "A1"
+   ],
+   "golden": [
+    "A1"
+   ]
+  },
+  {
+   "vector": "G9-HO-02",
+   "item": "cmd:C1",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-HO-03",
+   "item": "Q1",
+   "verdict": "AGREE-RULED",
+   "ambiguity": "AMB-12",
+   "oracle": {
+    "C1": "rejected",
+    "match": []
+   },
+   "readingsMatched": {
+    "A-accept-never-visible": false,
+    "B-reject-invalid-interval": true
+   },
+   "ruling": "Q21 AMB-12 B (reject the empty interval)",
+   "ruledReadingMatched": true
+  },
+  {
+   "vector": "G9-HO-03",
+   "item": "cmd:C1",
+   "verdict": "AGREE-RULED",
+   "ambiguity": "AMB-12",
+   "oracle": {
+    "outcome": "rejected",
+    "error": "E-INVALID-VALUE",
+    "errorTag": "InvalidTripleError",
+    "reason": "invalid-value",
+    "phase": "preflight",
+    "message": "validTo must be after validFrom"
+   },
+   "ruling": "Q21 AMB-12 B (E-INVALID-VALUE)",
+   "ruledReadingMatched": true
+  },
+  {
+   "vector": "G9-CUT-01",
+   "item": "Q1",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-CUT-01",
+   "item": "Q2",
+   "verdict": "AGREE-RULED",
+   "ambiguity": "AMB-01",
+   "oracle": {
+    "membershipAgrees": true,
+    "A-raw-lifetime": {
+     "matchesRawContract": true,
+     "matchesSnapshotContract": false
+    },
+    "B-snapshot-on-ordinary-match": {
+     "matchesRawContract": false,
+     "matchesSnapshotContract": true
+    }
+   },
+   "ruling": "Q21 AMB-01 A (match keeps the raw lifetime)",
+   "ruledReadingMatched": true
+  },
+  {
+   "vector": "G9-CUT-01",
+   "item": "Q3",
+   "verdict": "AGREE-RULED",
+   "ambiguity": "AMB-01",
+   "oracle": {
+    "membershipAgrees": true,
+    "A-raw-lifetime": {
+     "matchesRawContract": true,
+     "matchesSnapshotContract": false
+    },
+    "B-snapshot-on-ordinary-match": {
+     "matchesRawContract": false,
+     "matchesSnapshotContract": true
+    }
+   },
+   "ruling": "Q21 AMB-01 A (match keeps the raw lifetime)",
+   "ruledReadingMatched": true
+  },
+  {
+   "vector": "G9-CUT-01",
+   "item": "Q4",
+   "verdict": "AGREE",
+   "rawContractAgrees": true,
+   "snapshotContractAgrees": true
+  },
+  {
+   "vector": "G9-CUT-01",
+   "item": "Q5",
+   "verdict": "AGREE",
+   "rawContractAgrees": true,
+   "snapshotContractAgrees": true
+  },
+  {
+   "vector": "G9-CUT-01",
+   "item": "Q6",
+   "verdict": "AGREE",
+   "rawContractAgrees": true,
+   "snapshotContractAgrees": true
+  },
+  {
+   "vector": "G9-CUT-01",
+   "item": "Q7",
+   "verdict": "AGREE-RULED",
+   "ambiguity": "AMB-01",
+   "oracle": {
+    "membershipAgrees": true,
+    "A-raw-lifetime": {
+     "matchesRawContract": true,
+     "matchesSnapshotContract": false
+    },
+    "B-snapshot-on-ordinary-match": {
+     "matchesRawContract": false,
+     "matchesSnapshotContract": true
+    }
+   },
+   "ruling": "Q21 AMB-01 A (match keeps the raw lifetime)",
+   "ruledReadingMatched": true
+  },
+  {
+   "vector": "G9-CUT-01",
+   "item": "N1",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-CUT-01",
+   "item": "N2",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-CUT-01",
+   "item": "N3",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-CUT-01",
+   "item": "N4",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-CUT-01",
+   "item": "N5",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-CUT-01",
+   "item": "N6",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-CUT-01",
+   "item": "N7",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-CUT-01",
+   "item": "N8",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-CUT-01",
+   "item": "F1",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-CUT-01",
+   "item": "F2",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-CUT-01",
+   "item": "F3",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-CUT-01",
+   "item": "F4",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-CUT-01",
+   "item": "F5",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-CUT-01",
+   "item": "T1",
+   "verdict": "AGREE",
+   "ambiguity": "AMB-02",
+   "note": "AMB-02 shape: compared on logical content (identity, value, recordedAt, knownRetirement)"
+  },
+  {
+   "vector": "G9-CUT-01",
+   "item": "T2",
+   "verdict": "AGREE",
+   "ambiguity": "AMB-02",
+   "note": "AMB-02 shape: compared on logical content (identity, value, recordedAt, knownRetirement)"
+  },
+  {
+   "vector": "G9-CUT-01",
+   "item": "T3",
+   "verdict": "AGREE",
+   "ambiguity": "AMB-02",
+   "note": "AMB-02 shape: compared on logical content (identity, value, recordedAt, knownRetirement)"
+  },
+  {
+   "vector": "G9-CUT-01",
+   "item": "G1",
+   "verdict": "AGREE",
+   "oracle": {
+    "$id": "h:1",
+    "status": "open"
+   },
+   "golden": {
+    "$id": "h:1",
+    "status": "open"
+   }
+  },
+  {
+   "vector": "G9-CUT-01",
+   "item": "G2",
+   "verdict": "AGREE",
+   "oracle": {
+    "$id": "h:1",
+    "status": "closed"
+   },
+   "golden": {
+    "$id": "h:1",
+    "status": "closed"
+   }
+  },
+  {
+   "vector": "G9-CUT-01",
+   "item": "G3",
+   "verdict": "AGREE",
+   "oracle": {
+    "$id": "h:1",
+    "status": "closed"
+   },
+   "golden": {
+    "$id": "h:1",
+    "status": "closed"
+   }
+  },
+  {
+   "vector": "G9-CUT-01",
+   "item": "cmd:C1",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-CUT-01",
+   "item": "cmd:C2",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-CUT-01",
+   "item": "cmd:C3",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-CUT-02b",
+   "item": "Q1",
+   "verdict": "AGREE",
+   "rawContractAgrees": true,
+   "snapshotContractAgrees": false
+  },
+  {
+   "vector": "G9-CUT-02b",
+   "item": "Q2",
+   "verdict": "AGREE",
+   "oracle": [],
+   "golden": []
+  },
+  {
+   "vector": "G9-CUT-02b",
+   "item": "Q3",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-CUT-02b",
+   "item": "Q4",
+   "verdict": "AGREE",
+   "oracle": {
+    "values": [
+     "y"
+    ],
+    "cut": {
+     "scope": "fresh",
+     "position": 2,
+     "recordedAt": 500.001,
+     "validAt": 10
+    }
+   },
+   "golden": {
+    "results": [
+     {
+      "?v": "y"
+     }
+    ],
+    "basis": {
+     "scope": "<fresh scope>",
+     "recordedPosition": "$pos:D2",
+     "recordedAt": 500.001,
+     "validAt": 10
+    }
+   }
+  },
+  {
+   "vector": "G9-CUT-02b",
+   "item": "N1",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-CUT-02b",
+   "item": "N2",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-CUT-02b",
+   "item": "F1",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-CUT-02b",
+   "item": "F2",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-CUT-02b",
+   "item": "cmd:D1",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-CUT-02b",
+   "item": "cmd:D2",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-01",
+   "item": "G9-V4-01-Q1",
+   "verdict": "AGREE-RULED",
+   "ambiguity": "AMB-01",
+   "oracle": {
+    "membershipAgrees": true,
+    "A-raw-lifetime": {
+     "matchesRawContract": true,
+     "matchesSnapshotContract": false
+    },
+    "B-original-target": {
+     "matchesRawContract": false,
+     "matchesSnapshotContract": true
+    }
+   },
+   "ruling": "Q21 AMB-01 A (match keeps the raw lifetime)",
+   "ruledReadingMatched": true
+  },
+  {
+   "vector": "G9-V4-01",
+   "item": "G9-V4-01-Q2",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-01",
+   "item": "G9-V4-01-Q3",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-01",
+   "item": "G9-V4-01-Q4",
+   "verdict": "AGREE",
+   "ambiguity": "AMB-02",
+   "note": "AMB-02 shape: compared on logical content (identity, value, recordedAt, knownRetirement)"
+  },
+  {
+   "vector": "G9-V4-01",
+   "item": "G9-V4-01-Q5",
+   "verdict": "AGREE",
+   "oracle": {
+    "$id": "capacity:e00000000",
+    "present": true,
+    "typeVersion": [
+     "num",
+     4607182418800017408
+    ],
+    "label": "entity-00000000"
+   },
+   "golden": {
+    "$id": "capacity:e00000000",
+    "present": true,
+    "typeVersion": [
+     "num",
+     4607182418800017408
+    ],
+    "label": "entity-00000000"
+   }
+  },
+  {
+   "vector": "G9-V4-01",
+   "item": "G9-V4-01-Q6",
+   "verdict": "AGREE",
+   "oracle": {
+    "values": [
+     "capacity:e00000000",
+     "capacity:e00000001",
+     "capacity:e00000002",
+     "capacity:e00000003",
+     "capacity:e00000004",
+     "capacity:e00000005",
+     "capacity:e00000006",
+     "capacity:e00000007"
+    ],
+    "cut": {
+     "scope": "fresh",
+     "position": 7,
+     "recordedAt": 1001.25,
+     "validAt": 20.25
+    }
+   },
+   "golden": {
+    "results": [
+     {
+      "?entity": "capacity:e00000000"
+     },
+     {
+      "?entity": "capacity:e00000001"
+     },
+     {
+      "?entity": "capacity:e00000002"
+     },
+     {
+      "?entity": "capacity:e00000003"
+     },
+     {
+      "?entity": "capacity:e00000004"
+     },
+     {
+      "?entity": "capacity:e00000005"
+     },
+     {
+      "?entity": "capacity:e00000006"
+     },
+     {
+      "?entity": "capacity:e00000007"
+     }
+    ],
+    "basis": {
+     "scope": "<fresh scope>",
+     "recordedPosition": 7,
+     "recordedAt": 1001.25,
+     "validAt": 20.25
+    }
+   }
+  },
+  {
+   "vector": "G9-V4-01",
+   "item": "G9-V4-01-Q7",
+   "verdict": "AGREE",
+   "oracle": [],
+   "golden": []
+  },
+  {
+   "vector": "G9-V4-01",
+   "item": "cmd:C2",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-01",
+   "item": "cmd:C3",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-01",
+   "item": "cmd:C3x",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-01",
+   "item": "cmd:C5",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-01",
+   "item": "cmd:C6",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-01",
+   "item": "cmd:C7",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-02",
+   "item": "G9-V4-02-Q1",
+   "verdict": "AGREE-RULED",
+   "ambiguity": "AMB-01",
+   "oracle": {
+    "membershipAgrees": true,
+    "A-raw-lifetime": {
+     "matchesRawContract": true,
+     "matchesSnapshotContract": false
+    },
+    "B-original-target": {
+     "matchesRawContract": false,
+     "matchesSnapshotContract": true
+    }
+   },
+   "ruling": "Q21 AMB-01 A (match keeps the raw lifetime)",
+   "ruledReadingMatched": true
+  },
+  {
+   "vector": "G9-V4-02",
+   "item": "G9-V4-02-Q2",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-02",
+   "item": "G9-V4-02-Q3",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-02",
+   "item": "G9-V4-02-Q4",
+   "verdict": "AGREE",
+   "ambiguity": "AMB-02",
+   "note": "AMB-02 shape: compared on logical content (identity, value, recordedAt, knownRetirement)"
+  },
+  {
+   "vector": "G9-V4-02",
+   "item": "G9-V4-02-Q5",
+   "verdict": "AGREE",
+   "oracle": {
+    "$id": "capacity:e00000000",
+    "present": true,
+    "typeVersion": [
+     "num",
+     4607182418800017408
+    ],
+    "label": "entity-00000000",
+    "score": [
+     "num",
+     4593671619917905920
+    ],
+    "exact": [
+     "int64",
+     "9007199254740993"
+    ],
+    "flag": true,
+    "group": "capacity:e00000000",
+    "category": "category-0",
+    "amount": [
+     "num",
+     4589168020290535424
+    ],
+    "instant": [
+     "num",
+     4789786004267466752
+    ],
+    "date": "2024-01-01",
+    "rank": [
+     "num",
+     0
+    ]
+   },
+   "golden": {
+    "$id": "capacity:e00000000",
+    "present": true,
+    "typeVersion": [
+     "num",
+     4607182418800017408
+    ],
+    "label": "entity-00000000",
+    "score": [
+     "num",
+     4593671619917905920
+    ],
+    "exact": [
+     "int64",
+     "9007199254740993"
+    ],
+    "flag": true,
+    "group": "capacity:e00000000",
+    "category": "category-0",
+    "amount": [
+     "num",
+     4589168020290535424
+    ],
+    "instant": [
+     "num",
+     4789786004267466752
+    ],
+    "date": "2024-01-01",
+    "rank": [
+     "num",
+     0
+    ]
+   }
+  },
+  {
+   "vector": "G9-V4-02",
+   "item": "G9-V4-02-Q6",
+   "verdict": "AGREE",
+   "oracle": {
+    "values": [
+     "capacity:e00000000",
+     "capacity:e00000001",
+     "capacity:e00000002",
+     "capacity:e00000003",
+     "capacity:e00000004",
+     "capacity:e00000005",
+     "capacity:e00000006",
+     "capacity:e00000007"
+    ],
+    "cut": {
+     "scope": "fresh",
+     "position": 7,
+     "recordedAt": 1002.25,
+     "validAt": 20.25
+    }
+   },
+   "golden": {
+    "results": [
+     {
+      "?entity": "capacity:e00000000"
+     },
+     {
+      "?entity": "capacity:e00000001"
+     },
+     {
+      "?entity": "capacity:e00000002"
+     },
+     {
+      "?entity": "capacity:e00000003"
+     },
+     {
+      "?entity": "capacity:e00000004"
+     },
+     {
+      "?entity": "capacity:e00000005"
+     },
+     {
+      "?entity": "capacity:e00000006"
+     },
+     {
+      "?entity": "capacity:e00000007"
+     }
+    ],
+    "basis": {
+     "scope": "<fresh scope>",
+     "recordedPosition": 7,
+     "recordedAt": 1002.25,
+     "validAt": 20.25
+    }
+   }
+  },
+  {
+   "vector": "G9-V4-02",
+   "item": "G9-V4-02-Q7",
+   "verdict": "AGREE",
+   "oracle": [],
+   "golden": []
+  },
+  {
+   "vector": "G9-V4-02",
+   "item": "cmd:C2",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-02",
+   "item": "cmd:C3",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-02",
+   "item": "cmd:C3x",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-02",
+   "item": "cmd:C5",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-02",
+   "item": "cmd:C6",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-02",
+   "item": "cmd:C7",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-03",
+   "item": "G9-V4-03-Q1",
+   "verdict": "AGREE-RULED",
+   "ambiguity": "AMB-01",
+   "oracle": {
+    "membershipAgrees": true,
+    "A-raw-lifetime": {
+     "matchesRawContract": true,
+     "matchesSnapshotContract": false
+    },
+    "B-original-target": {
+     "matchesRawContract": false,
+     "matchesSnapshotContract": true
+    }
+   },
+   "ruling": "Q21 AMB-01 A (match keeps the raw lifetime)",
+   "ruledReadingMatched": true
+  },
+  {
+   "vector": "G9-V4-03",
+   "item": "G9-V4-03-Q2",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-03",
+   "item": "G9-V4-03-Q3",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-03",
+   "item": "G9-V4-03-Q4",
+   "verdict": "AGREE",
+   "ambiguity": "AMB-02",
+   "note": "AMB-02 shape: compared on logical content (identity, value, recordedAt, knownRetirement)"
+  },
+  {
+   "vector": "G9-V4-03",
+   "item": "G9-V4-03-Q5",
+   "verdict": "AGREE",
+   "oracle": {
+    "$id": "capacity:e00000000",
+    "present": true,
+    "typeVersion": [
+     "num",
+     4611686018427387904
+    ],
+    "label": "entity-00000000-v2",
+    "score": [
+     "num",
+     4593671619917905920
+    ],
+    "exact": [
+     "int64",
+     "9007199254740993"
+    ],
+    "flag": true,
+    "group": "capacity:e00000000",
+    "category": "category-0",
+    "amount": [
+     "num",
+     4589168020290535424
+    ],
+    "instant": [
+     "num",
+     4789786004267466752
+    ],
+    "date": "2024-01-01",
+    "rank": [
+     "num",
+     0
+    ]
+   },
+   "golden": {
+    "$id": "capacity:e00000000",
+    "present": true,
+    "typeVersion": [
+     "num",
+     4611686018427387904
+    ],
+    "label": "entity-00000000-v2",
+    "score": [
+     "num",
+     4593671619917905920
+    ],
+    "exact": [
+     "int64",
+     "9007199254740993"
+    ],
+    "flag": true,
+    "group": "capacity:e00000000",
+    "category": "category-0",
+    "amount": [
+     "num",
+     4589168020290535424
+    ],
+    "instant": [
+     "num",
+     4789786004267466752
+    ],
+    "date": "2024-01-01",
+    "rank": [
+     "num",
+     0
+    ]
+   }
+  },
+  {
+   "vector": "G9-V4-03",
+   "item": "G9-V4-03-Q6",
+   "verdict": "AGREE",
+   "oracle": {
+    "values": [
+     "capacity:e00000000",
+     "capacity:e00000001",
+     "capacity:e00000002",
+     "capacity:e00000003",
+     "capacity:e00000004",
+     "capacity:e00000005",
+     "capacity:e00000006",
+     "capacity:e00000007"
+    ],
+    "cut": {
+     "scope": "fresh",
+     "position": 7,
+     "recordedAt": 1004.25,
+     "validAt": 20.25
+    }
+   },
+   "golden": {
+    "results": [
+     {
+      "?entity": "capacity:e00000000"
+     },
+     {
+      "?entity": "capacity:e00000001"
+     },
+     {
+      "?entity": "capacity:e00000002"
+     },
+     {
+      "?entity": "capacity:e00000003"
+     },
+     {
+      "?entity": "capacity:e00000004"
+     },
+     {
+      "?entity": "capacity:e00000005"
+     },
+     {
+      "?entity": "capacity:e00000006"
+     },
+     {
+      "?entity": "capacity:e00000007"
+     }
+    ],
+    "basis": {
+     "scope": "<fresh scope>",
+     "recordedPosition": 7,
+     "recordedAt": 1004.25,
+     "validAt": 20.25
+    }
+   }
+  },
+  {
+   "vector": "G9-V4-03",
+   "item": "G9-V4-03-Q7",
+   "verdict": "AGREE",
+   "oracle": [],
+   "golden": []
+  },
+  {
+   "vector": "G9-V4-03",
+   "item": "cmd:C2",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-03",
+   "item": "cmd:C3",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-03",
+   "item": "cmd:C3x",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-03",
+   "item": "cmd:C5",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-03",
+   "item": "cmd:C6",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-03",
+   "item": "cmd:C7",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-04",
+   "item": "G9-V4-04-Q1",
+   "verdict": "AGREE-RULED",
+   "ambiguity": "AMB-01",
+   "oracle": {
+    "membershipAgrees": true,
+    "A-raw-lifetime": {
+     "matchesRawContract": true,
+     "matchesSnapshotContract": false
+    },
+    "B-original-target": {
+     "matchesRawContract": false,
+     "matchesSnapshotContract": true
+    }
+   },
+   "ruling": "Q21 AMB-01 A (match keeps the raw lifetime)",
+   "ruledReadingMatched": true
+  },
+  {
+   "vector": "G9-V4-04",
+   "item": "G9-V4-04-Q2",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-04",
+   "item": "G9-V4-04-Q3",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-04",
+   "item": "G9-V4-04-Q4",
+   "verdict": "AGREE",
+   "ambiguity": "AMB-02",
+   "note": "AMB-02 shape: compared on logical content (identity, value, recordedAt, knownRetirement)"
+  },
+  {
+   "vector": "G9-V4-04",
+   "item": "G9-V4-04-Q5",
+   "verdict": "AGREE",
+   "oracle": {
+    "$id": "capacity:e00000000",
+    "present": false,
+    "typeVersion": [
+     "num",
+     4611686018427387904
+    ],
+    "label": "entity-00000000-v2",
+    "score": [
+     "num",
+     4593671619917905920
+    ],
+    "exact": [
+     "int64",
+     "9007199254740993"
+    ],
+    "flag": true,
+    "group": "capacity:e00000000",
+    "category": "category-0",
+    "amount": [
+     "num",
+     4589168020290535424
+    ],
+    "instant": [
+     "num",
+     4789786004267466752
+    ],
+    "date": "2024-01-01",
+    "rank": [
+     "num",
+     0
+    ]
+   },
+   "golden": {
+    "$id": "capacity:e00000000",
+    "present": false,
+    "typeVersion": [
+     "num",
+     4611686018427387904
+    ],
+    "label": "entity-00000000-v2",
+    "score": [
+     "num",
+     4593671619917905920
+    ],
+    "exact": [
+     "int64",
+     "9007199254740993"
+    ],
+    "flag": true,
+    "group": "capacity:e00000000",
+    "category": "category-0",
+    "amount": [
+     "num",
+     4589168020290535424
+    ],
+    "instant": [
+     "num",
+     4789786004267466752
+    ],
+    "date": "2024-01-01",
+    "rank": [
+     "num",
+     0
+    ]
+   }
+  },
+  {
+   "vector": "G9-V4-04",
+   "item": "G9-V4-04-Q6",
+   "verdict": "AGREE",
+   "oracle": {
+    "values": [
+     "capacity:e00000001",
+     "capacity:e00000002",
+     "capacity:e00000003",
+     "capacity:e00000004",
+     "capacity:e00000005",
+     "capacity:e00000006",
+     "capacity:e00000007"
+    ],
+    "cut": {
+     "scope": "fresh",
+     "position": 7,
+     "recordedAt": 1005.25,
+     "validAt": 20.25
+    }
+   },
+   "golden": {
+    "results": [
+     {
+      "?entity": "capacity:e00000001"
+     },
+     {
+      "?entity": "capacity:e00000002"
+     },
+     {
+      "?entity": "capacity:e00000003"
+     },
+     {
+      "?entity": "capacity:e00000004"
+     },
+     {
+      "?entity": "capacity:e00000005"
+     },
+     {
+      "?entity": "capacity:e00000006"
+     },
+     {
+      "?entity": "capacity:e00000007"
+     }
+    ],
+    "basis": {
+     "scope": "<fresh scope>",
+     "recordedPosition": 7,
+     "recordedAt": 1005.25,
+     "validAt": 20.25
+    }
+   }
+  },
+  {
+   "vector": "G9-V4-04",
+   "item": "G9-V4-04-Q7",
+   "verdict": "AGREE",
+   "oracle": [],
+   "golden": []
+  },
+  {
+   "vector": "G9-V4-04",
+   "item": "cmd:C2",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-04",
+   "item": "cmd:C3",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-04",
+   "item": "cmd:C3x",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-04",
+   "item": "cmd:C5",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-04",
+   "item": "cmd:C6",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-04",
+   "item": "cmd:C7",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-05",
+   "item": "G9-V4-05-Q1",
+   "verdict": "AGREE-RULED",
+   "ambiguity": "AMB-01",
+   "oracle": {
+    "membershipAgrees": true,
+    "A-raw-lifetime": {
+     "matchesRawContract": true,
+     "matchesSnapshotContract": false
+    },
+    "B-original-target": {
+     "matchesRawContract": false,
+     "matchesSnapshotContract": true
+    }
+   },
+   "ruling": "Q21 AMB-01 A (match keeps the raw lifetime)",
+   "ruledReadingMatched": true
+  },
+  {
+   "vector": "G9-V4-05",
+   "item": "G9-V4-05-Q2",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-05",
+   "item": "G9-V4-05-Q3",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-05",
+   "item": "G9-V4-05-Q4",
+   "verdict": "AGREE",
+   "ambiguity": "AMB-02",
+   "note": "AMB-02 shape: compared on logical content (identity, value, recordedAt, knownRetirement)"
+  },
+  {
+   "vector": "G9-V4-05",
+   "item": "G9-V4-05-Q5",
+   "verdict": "AGREE",
+   "oracle": {
+    "$id": "capacity:e00000000",
+    "present": true,
+    "typeVersion": [
+     "num",
+     4607182418800017408
+    ],
+    "label": "entity-00000000",
+    "score": [
+     "num",
+     4593671619917905920
+    ],
+    "exact": [
+     "int64",
+     "9007199254740993"
+    ],
+    "flag": true,
+    "group": "capacity:e00000000",
+    "category": "category-0",
+    "amount": [
+     "num",
+     4589168020290535424
+    ],
+    "instant": [
+     "num",
+     4789786004267466752
+    ],
+    "date": "2024-01-01",
+    "rank": [
+     "num",
+     0
+    ]
+   },
+   "golden": {
+    "$id": "capacity:e00000000",
+    "present": true,
+    "typeVersion": [
+     "num",
+     4607182418800017408
+    ],
+    "label": "entity-00000000",
+    "score": [
+     "num",
+     4593671619917905920
+    ],
+    "exact": [
+     "int64",
+     "9007199254740993"
+    ],
+    "flag": true,
+    "group": "capacity:e00000000",
+    "category": "category-0",
+    "amount": [
+     "num",
+     4589168020290535424
+    ],
+    "instant": [
+     "num",
+     4789786004267466752
+    ],
+    "date": "2024-01-01",
+    "rank": [
+     "num",
+     0
+    ]
+   }
+  },
+  {
+   "vector": "G9-V4-05",
+   "item": "G9-V4-05-Q6",
+   "verdict": "AGREE",
+   "oracle": {
+    "values": [
+     "capacity:e00000000",
+     "capacity:e00000001",
+     "capacity:e00000002",
+     "capacity:e00000003",
+     "capacity:e00000004",
+     "capacity:e00000005",
+     "capacity:e00000006",
+     "capacity:e00000007"
+    ],
+    "cut": {
+     "scope": "fresh",
+     "position": 7,
+     "recordedAt": 1002.25,
+     "validAt": 20.25
+    }
+   },
+   "golden": {
+    "results": [
+     {
+      "?entity": "capacity:e00000000"
+     },
+     {
+      "?entity": "capacity:e00000001"
+     },
+     {
+      "?entity": "capacity:e00000002"
+     },
+     {
+      "?entity": "capacity:e00000003"
+     },
+     {
+      "?entity": "capacity:e00000004"
+     },
+     {
+      "?entity": "capacity:e00000005"
+     },
+     {
+      "?entity": "capacity:e00000006"
+     },
+     {
+      "?entity": "capacity:e00000007"
+     }
+    ],
+    "basis": {
+     "scope": "<fresh scope>",
+     "recordedPosition": 7,
+     "recordedAt": 1002.25,
+     "validAt": 20.25
+    }
+   }
+  },
+  {
+   "vector": "G9-V4-05",
+   "item": "G9-V4-05-Q7",
+   "verdict": "AGREE",
+   "oracle": [],
+   "golden": []
+  },
+  {
+   "vector": "G9-V4-05",
+   "item": "cmd:C2",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-05",
+   "item": "cmd:C3",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-05",
+   "item": "cmd:C3x",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-05",
+   "item": "cmd:C5",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-05",
+   "item": "cmd:C6",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-05",
+   "item": "cmd:C7",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-06",
+   "item": "G9-V4-06-Q1",
+   "verdict": "AGREE-RULED",
+   "ambiguity": "AMB-01",
+   "oracle": {
+    "membershipAgrees": true,
+    "A-raw-lifetime": {
+     "matchesRawContract": true,
+     "matchesSnapshotContract": true
+    },
+    "B-original-target": {
+     "matchesRawContract": true,
+     "matchesSnapshotContract": true
+    }
+   },
+   "ruling": "Q21 AMB-01 A (match keeps the raw lifetime)",
+   "ruledReadingMatched": true
+  },
+  {
+   "vector": "G9-V4-06",
+   "item": "G9-V4-06-Q2",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-06",
+   "item": "G9-V4-06-Q3",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-06",
+   "item": "G9-V4-06-Q4",
+   "verdict": "AGREE",
+   "ambiguity": "AMB-02",
+   "note": "AMB-02 shape: compared on logical content (identity, value, recordedAt, knownRetirement)"
+  },
+  {
+   "vector": "G9-V4-06",
+   "item": "G9-V4-06-Q5",
+   "verdict": "AGREE",
+   "oracle": {
+    "$id": "capacity:e00000000",
+    "present": true,
+    "typeVersion": [
+     "num",
+     4611686018427387904
+    ],
+    "label": "entity-00000000-v2",
+    "score": [
+     "num",
+     4593671619917905920
+    ],
+    "exact": [
+     "int64",
+     "9007199254740993"
+    ],
+    "flag": true,
+    "group": "capacity:e00000000",
+    "category": "category-0",
+    "amount": [
+     "num",
+     4589168020290535424
+    ],
+    "instant": [
+     "num",
+     4789786004267466752
+    ],
+    "date": "2024-01-01",
+    "rank": [
+     "num",
+     0
+    ]
+   },
+   "golden": {
+    "$id": "capacity:e00000000",
+    "present": true,
+    "typeVersion": [
+     "num",
+     4611686018427387904
+    ],
+    "label": "entity-00000000-v2",
+    "score": [
+     "num",
+     4593671619917905920
+    ],
+    "exact": [
+     "int64",
+     "9007199254740993"
+    ],
+    "flag": true,
+    "group": "capacity:e00000000",
+    "category": "category-0",
+    "amount": [
+     "num",
+     4589168020290535424
+    ],
+    "instant": [
+     "num",
+     4789786004267466752
+    ],
+    "date": "2024-01-01",
+    "rank": [
+     "num",
+     0
+    ]
+   }
+  },
+  {
+   "vector": "G9-V4-06",
+   "item": "G9-V4-06-Q6",
+   "verdict": "AGREE",
+   "oracle": {
+    "values": [
+     "capacity:e00000000",
+     "capacity:e00000001",
+     "capacity:e00000002",
+     "capacity:e00000003",
+     "capacity:e00000004",
+     "capacity:e00000005",
+     "capacity:e00000006",
+     "capacity:e00000007"
+    ],
+    "cut": {
+     "scope": "fresh",
+     "position": 7,
+     "recordedAt": 1006.25,
+     "validAt": 20.25
+    }
+   },
+   "golden": {
+    "results": [
+     {
+      "?entity": "capacity:e00000000"
+     },
+     {
+      "?entity": "capacity:e00000001"
+     },
+     {
+      "?entity": "capacity:e00000002"
+     },
+     {
+      "?entity": "capacity:e00000003"
+     },
+     {
+      "?entity": "capacity:e00000004"
+     },
+     {
+      "?entity": "capacity:e00000005"
+     },
+     {
+      "?entity": "capacity:e00000006"
+     },
+     {
+      "?entity": "capacity:e00000007"
+     }
+    ],
+    "basis": {
+     "scope": "<fresh scope>",
+     "recordedPosition": 7,
+     "recordedAt": 1006.25,
+     "validAt": 20.25
+    }
+   }
+  },
+  {
+   "vector": "G9-V4-06",
+   "item": "G9-V4-06-Q7",
+   "verdict": "AGREE",
+   "oracle": [],
+   "golden": []
+  },
+  {
+   "vector": "G9-V4-06",
+   "item": "cmd:C2",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-06",
+   "item": "cmd:C3",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-06",
+   "item": "cmd:C3x",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-06",
+   "item": "cmd:C5",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-06",
+   "item": "cmd:C6",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-06",
+   "item": "cmd:C7",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-07",
+   "item": "G9-V4-07-Q1",
+   "verdict": "AGREE",
+   "rows": [
+    100,
+    100
+   ]
+  },
+  {
+   "vector": "G9-V4-07",
+   "item": "cmd:C2",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-07",
+   "item": "cmd:C3",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-07",
+   "item": "cmd:C3x",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-07",
+   "item": "cmd:C5",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-07",
+   "item": "cmd:C6",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-07",
+   "item": "cmd:C7",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-07",
+   "item": "fixture-table(100 rows)",
+   "verdict": "AGREE",
+   "mismatched": [],
+   "oracleRows": 100
+  },
+  {
+   "vector": "G9-V4-08",
+   "item": "G9-V4-08-Q1",
+   "verdict": "AGREE-RULED",
+   "ambiguity": "AMB-01",
+   "oracle": {
+    "A-raw-lifetime": {
+     "matchesRawContract": true,
+     "matchesSnapshotContract": false
+    },
+    "B-original-target": {
+     "matchesRawContract": false,
+     "matchesSnapshotContract": true
+    }
+   },
+   "ruling": "Q21 AMB-01 A (match keeps the raw lifetime)",
+   "ruledReadingMatched": true
+  },
+  {
+   "vector": "G9-V4-08",
+   "item": "G9-V4-08-Q2",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-08",
+   "item": "G9-V4-08-Q3",
+   "verdict": "AGREE",
+   "ambiguity": "AMB-02",
+   "note": "AMB-02 shape: compared on logical content (identity, value, recordedAt, knownRetirement)"
+  },
+  {
+   "vector": "G9-V4-08",
+   "item": "cmd:C2",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-08",
+   "item": "cmd:C3",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-08",
+   "item": "cmd:C3x",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-08",
+   "item": "cmd:C5",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-08",
+   "item": "cmd:C6",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "G9-V4-08",
+   "item": "cmd:C7",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "Q8F-01",
+   "item": "Q1",
+   "verdict": "AGREE",
+   "oracle": {
+    "$id": "card:1",
+    "name": "one",
+    "tags": [
+     "",
+     "B",
+     "a",
+     "b",
+     "e\u0301",
+     "\u00e9",
+     "\ue000",
+     "\ud800\udc00"
+    ],
+    "ints": [],
+    "nums": []
+   },
+   "golden": {
+    "$id": "card:1",
+    "name": "one",
+    "tags": [
+     "",
+     "B",
+     "a",
+     "b",
+     "e\u0301",
+     "\u00e9",
+     "\ue000",
+     "\ud800\udc00"
+    ],
+    "ints": [],
+    "nums": []
+   }
+  },
+  {
+   "vector": "Q8F-01",
+   "item": "Q2",
+   "verdict": "AGREE",
+   "oracle": [
+    "N1",
+    "T1",
+    "T2",
+    "T3",
+    "T4",
+    "T5",
+    "T6",
+    "T7",
+    "T8",
+    "T9"
+   ],
+   "golden": [
+    "N1",
+    "T1",
+    "T2",
+    "T3",
+    "T4",
+    "T5",
+    "T6",
+    "T7",
+    "T8",
+    "T9"
+   ]
+  },
+  {
+   "vector": "Q8F-01",
+   "item": "Q3",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "Q8F-01",
+   "item": "cmd:C1",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "Q8F-02",
+   "item": "Q1",
+   "verdict": "AGREE",
+   "oracle": {
+    "$id": "card:2",
+    "tags": [],
+    "ints": [
+     [
+      "int64",
+      "-9223372036854775808"
+     ],
+     [
+      "int64",
+      "-1"
+     ],
+     [
+      "int64",
+      "9"
+     ],
+     [
+      "int64",
+      "10"
+     ],
+     [
+      "int64",
+      "9007199254740992"
+     ],
+     [
+      "int64",
+      "9007199254740993"
+     ],
+     [
+      "int64",
+      "9223372036854775807"
+     ]
+    ],
+    "nums": []
+   },
+   "golden": {
+    "$id": "card:2",
+    "tags": [],
+    "ints": [
+     [
+      "int64",
+      "-9223372036854775808"
+     ],
+     [
+      "int64",
+      "-1"
+     ],
+     [
+      "int64",
+      "9"
+     ],
+     [
+      "int64",
+      "10"
+     ],
+     [
+      "int64",
+      "9007199254740992"
+     ],
+     [
+      "int64",
+      "9007199254740993"
+     ],
+     [
+      "int64",
+      "9223372036854775807"
+     ]
+    ],
+    "nums": []
+   }
+  },
+  {
+   "vector": "Q8F-02",
+   "item": "cmd:C1",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "Q8F-03",
+   "item": "Q1",
+   "verdict": "AGREE",
+   "oracle": {
+    "$id": "card:3",
+    "tags": [],
+    "ints": [],
+    "nums": [
+     [
+      "num",
+      13835058055282163712
+     ],
+     [
+      "num",
+      1
+     ],
+     [
+      "num",
+      4591870180066957722
+     ],
+     [
+      "num",
+      4599075939470750515
+     ],
+     [
+      "num",
+      4599075939470750516
+     ],
+     [
+      "num",
+      4609434218613702656
+     ],
+     [
+      "num",
+      9094988921128908188
+     ]
+    ]
+   },
+   "golden": {
+    "$id": "card:3",
+    "tags": [],
+    "ints": [],
+    "nums": [
+     [
+      "num",
+      13835058055282163712
+     ],
+     [
+      "num",
+      1
+     ],
+     [
+      "num",
+      4591870180066957722
+     ],
+     [
+      "num",
+      4599075939470750515
+     ],
+     [
+      "num",
+      4599075939470750516
+     ],
+     [
+      "num",
+      4609434218613702656
+     ],
+     [
+      "num",
+      9094988921128908188
+     ]
+    ]
+   }
+  },
+  {
+   "vector": "Q8F-03",
+   "item": "cmd:C1",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "Q8F-04",
+   "item": "Q1",
+   "verdict": "AGREE",
+   "oracle": {
+    "$id": "card:4",
+    "name": "four",
+    "tags": [
+     "x",
+     "y"
+    ],
+    "ints": [],
+    "nums": []
+   },
+   "golden": {
+    "$id": "card:4",
+    "name": "four",
+    "tags": [
+     "x",
+     "y"
+    ],
+    "ints": [],
+    "nums": []
+   }
+  },
+  {
+   "vector": "Q8F-04",
+   "item": "Q2",
+   "verdict": "AGREE",
+   "oracle": {
+    "$id": "card:4",
+    "name": "four",
+    "tags": [
+     "x",
+     "y"
+    ],
+    "ints": [],
+    "nums": []
+   },
+   "golden": {
+    "$id": "card:4",
+    "name": "four",
+    "tags": [
+     "x",
+     "y"
+    ],
+    "ints": [],
+    "nums": []
+   }
+  },
+  {
+   "vector": "Q8F-04",
+   "item": "Q3",
+   "verdict": "AGREE",
+   "oracle": {
+    "$id": "card:4",
+    "name": "four",
+    "tags": [
+     "y"
+    ],
+    "ints": [],
+    "nums": []
+   },
+   "golden": {
+    "$id": "card:4",
+    "name": "four",
+    "tags": [
+     "y"
+    ],
+    "ints": [],
+    "nums": []
+   }
+  },
+  {
+   "vector": "Q8F-04",
+   "item": "Q4",
+   "verdict": "AGREE",
+   "oracle": {
+    "$id": "card:4",
+    "name": "four",
+    "tags": [],
+    "ints": [],
+    "nums": []
+   },
+   "golden": {
+    "$id": "card:4",
+    "name": "four",
+    "tags": [],
+    "ints": [],
+    "nums": []
+   }
+  },
+  {
+   "vector": "Q8F-04",
+   "item": "Q5",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "Q8F-04",
+   "item": "cmd:C1",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "Q8F-04",
+   "item": "cmd:C2",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "Q8F-04",
+   "item": "cmd:C3",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "Q8F-04",
+   "item": "cmd:C4",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "Q8F-05",
+   "item": "Q1",
+   "verdict": "AGREE-RULED",
+   "ambiguity": "AMB-08",
+   "oracle": {
+    "$id": "card:5",
+    "tags": [],
+    "ints": [],
+    "nums": [
+     [
+      "num",
+      9223372036854775808
+     ]
+    ]
+   },
+   "readingsMatched": {
+    "A-bit-identity": false,
+    "B-ieee-equality": false
+   },
+   "ruling": "Q21 AMB-08 / Q14b (one value; representative = lowest (recordedPosition, op index) = Z1 -0.0)",
+   "ruledReadingMatched": true
+  },
+  {
+   "vector": "Q8F-05",
+   "item": "Q2",
+   "verdict": "AGREE",
+   "oracle": {
+    "$id": "card:6",
+    "tags": [],
+    "ints": [],
+    "nums": [
+     [
+      "num",
+      9223372036854775808
+     ]
+    ]
+   },
+   "golden": {
+    "$id": "card:6",
+    "tags": [],
+    "ints": [],
+    "nums": [
+     [
+      "num",
+      9223372036854775808
+     ]
+    ]
+   }
+  },
+  {
+   "vector": "Q8F-05",
+   "item": "cmd:C1",
+   "verdict": "AGREE"
+  },
+  {
+   "vector": "Q8F-05",
+   "item": "cmd:C2",
+   "verdict": "AGREE"
+  }
+ ]
+}

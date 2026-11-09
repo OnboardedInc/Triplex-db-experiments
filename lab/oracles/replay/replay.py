@@ -212,7 +212,7 @@ def read_value(a):
         kind, target, record = a.about
         if not erased(target):
             return a.value
-        doc = V.JsonDoc(_json_node(change_output(kind, target, record)))
+        doc = V.JsonDoc(_json_node(change_output(kind, target, record, raw=True)))
         return V.Value("json", doc.canonical, doc)
     return ErasedValue(a) if erased(a) else a.value
 
@@ -678,6 +678,7 @@ class Engine:
         record = TxRecord(txId=tx_id, position=position, instant=instant, meta=meta, changes=changes,
                           scope=state.name, internal=False, command=command["_index"],
                           group=command.get("physicalGroup"), coordinate=identity.get("coordinate"),
+                          stagedAt=identity.get("stagedAt", instant), decided=identity.get("decided", False),
                           erasure=erasure, erased=[a.id for a in newly])
         self._append_record(state, record)
         state.journal.extend(journal_facts(record))
@@ -687,7 +688,8 @@ class Engine:
         record = TxRecord(txId=identity["txId"], position=identity["position"], instant=identity["instant"],
                           meta={}, changes=[], scope=state.name, internal=True, command=command["_index"],
                           group=command.get("physicalGroup"), journaled=command.get("journaled", True),
-                          coordinate=identity.get("coordinate"))
+                          coordinate=identity.get("coordinate"),
+                          stagedAt=identity.get("stagedAt", identity["instant"]), decided=identity.get("decided", False))
         self._append_record(state, record)
         return record
 
@@ -734,7 +736,7 @@ def resolve_lane(lane, lane_ranges=None):
     return name, ranges[engine]
 
 
-def change_output(kind, a: Assertion, record):
+def change_output(kind, a: Assertion, record, *, raw=False):
     """R-JNL-1 / AMB-05: TransactionChange documented fields plus the testkit-pinned ones
     (assert: value, validFrom, assertionTxId; retract: value, recordedAt, retractedAt,
     retractionTxId, plus assertionTxId of the original assertion). An erasure change (Q49a)
@@ -751,10 +753,12 @@ def change_output(kind, a: Assertion, record):
     out.append(("validFrom", _num(a.validFrom)))
     if a.validTo is not None:
         out.append(("validTo", _num(a.validTo)))
-    out.append(("recordedAt", _num(a.recordedAt)))
+    if not (raw and getattr(record, "decided", False) and a.txId == record.txId):
+        out.append(("recordedAt", _num(a.recordedAt)))
     out.append(("assertionTxId", a.txId))
     if kind == "retract":
-        out.append(("retractedAt", _num(record.instant)))
+        if not (raw and getattr(record, "decided", False)):
+            out.append(("retractedAt", _num(record.instant)))
         out.append(("retractionTxId", record.txId))
     return V.OrderedOut(out)
 
@@ -801,13 +805,14 @@ def journal_facts(record):
     the `_Transaction` entity of a journaled commit carries one `:_tx/changed-entity` ref
     per changed application entity and one `:_tx/change` json fact per change, queryable
     like ordinary facts. Identity: entity id = txId, entity type `_Transaction`, recorded
-    at the commit's position and instant. RULING-NEEDED: valid time (taken as
-    [commit instant, open), like a write without validFrom, R-CMD-3), fact ids (system
+    at the commit's position and instant. On decided lanes valid time starts at
+    stagedAt and raw JSON v2 omits own record instants (R33 4.3). Legacy valid time
+    starts at the commit instant. RULING-NEEDED: fact ids (system
     generated; synthetic here) and the exact json content of `:_tx/change` (the logical
     change content here; compare count and membership). The other envelope facts
     (`:_tx/position`, `:_tx/instant`, `:_tx/actor`, ...) are not modeled (R-JNL-6)."""
     tx = str(record.txId)
-    base = dict(scope=record.scope, entityId=tx, entityType=JOURNAL_ENTITY_TYPE, validFrom=record.instant,
+    base = dict(scope=record.scope, entityId=tx, entityType=JOURNAL_ENTITY_TYPE, validFrom=record.stagedAt if getattr(record, "decided", False) else record.instant,
                 validTo=None, recordedAt=record.instant, recordedPosition=record.position, txId=tx,
                 createdBy=None, schemaVersion=None, journal=True, seq=0)
     out = []
@@ -815,7 +820,7 @@ def journal_facts(record):
         out.append(Assertion(id=f"journal:{tx}:changed-entity:{k}", attribute=":_tx/changed-entity",
                              value=V.ref(entity), **base))
     for k, (kind, a) in enumerate(record.changes):
-        doc = V.JsonDoc(_json_node(change_output(kind, a, record)))
+        doc = V.JsonDoc(_json_node(change_output(kind, a, record, raw=True)))
         # `about` links an assert / retract change fact to the assertion it describes, so a read
         # after that value's erasure re-renders the content with the marker (Q49a, read_value)
         about = None if kind == "erase" else (kind, a, record)

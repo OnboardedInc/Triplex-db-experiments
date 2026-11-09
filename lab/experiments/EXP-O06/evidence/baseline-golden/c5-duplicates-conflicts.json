@@ -1,0 +1,295 @@
+{
+ "format": "triplex-db-2/golden-vectors/1",
+ "file": "c5-duplicates-conflicts.json",
+ "status": "DRAFT-UNREVIEWED (EXP-G01)",
+ "derivation": "Hand-derived from PLAN v1.1 C5, RULINGS Q8e/Q12, Constraint.ts (named by G1.schema.cardinality as the counting rule) and testkit O-TESTKIT cases. No Triplex, KV, engine or oracle was run. Conventions: README.md.",
+ "sharedSchema": {
+  "id": "S-ITEM",
+  "note": "Repository queries need a release: prepend a ConfigStore release command C0 with EntityType Item. No constraint is enforced unless a command lists meta.enforce.",
+  "entityTypes": [{"key": "Item", "attributes": [
+    {"key": ":item/color", "name": "color", "type": "text", "cardinality": "one", "required": false},
+    {"key": ":item/name", "name": "name", "type": "text", "cardinality": "one", "required": false}]}],
+  "rules": {"R-CARD-COLOR": {"_tag": "Cardinality", "v": 1, "entityType": "Item", "attribute": ":item/color", "max": 1}}
+ },
+ "vectors": [
+  {
+   "id": "C5-01",
+   "title": "Equal duplicates in one command: one value with two supports, two distinct assertion identities",
+   "contracts": ["G4.neg.conflict-not-false-absence", "G5.agg.full-support", "R.repo.entity-suite", "R.repo.mutation-controls"],
+   "planContracts": ["C5.1", "C5.5"], "rulings": ["Q8e"],
+   "killsMutants": ["M-IDENTITY-COLLAPSE"],
+   "lanes": ["xtdb-xtql", "xtdb-sql", "qlever-sparql"], "scope": "fresh", "schema": "S-ITEM", "enforcement": "off",
+   "commands": [
+    {"id": "C1", "instant": 100, "meta": {"actor": "golden", "commandId": "c5-01:C1"}, "ops": [
+      {"op": "assert", "label": "A1", "entityId": "item:1", "entityType": "Item", "attribute": ":item/color", "value": {"type": "string", "value": "red"}, "validFrom": 0},
+      {"op": "assert", "label": "A2", "entityId": "item:1", "entityType": "Item", "attribute": ":item/color", "value": {"type": "string", "value": "red"}, "validFrom": 0},
+      {"op": "assert", "label": "A3", "entityId": "item:1", "entityType": "Item", "attribute": ":item/name", "value": {"type": "string", "value": "one"}, "validFrom": 0}],
+     "expect": {"outcome": "committed", "assertedCount": 3, "distinctIds": ["$id:A1", "$id:A2", "$id:A3"]}}
+   ],
+   "queries": [
+    {"id": "Q1", "surface": "EP-TRIPLES", "call": "Triples.match({ entityId: 'item:1', attribute: ':item/color', value: { type: 'string', value: 'red' } }, { validAt: 10 })",
+     "compare": "multiset-by-id (ids only)", "expected": ["$id:A1", "$id:A2"], "citations": ["TK-IDENTITY", "C5.1"]},
+    {"id": "Q2", "surface": "EP-REPO", "call": "Repository<Item>.at({ validAt: 10 }).get('item:1')", "compare": "exact",
+     "expected": {"$id": "item:1", "color": "red", "name": "one"}, "citations": ["C5.1", "Q8e", "R3-SKETCH-DOC"]},
+    {"id": "Q3", "surface": "EP-NATIVE", "call": "values(':item/color') relation at basis", "basis": {"P": "$pos:C1", "validAt": 10},
+     "compare": "multiset of rows; assertionIds as a set",
+     "expected": [{"entityId": "item:1", "value": {"type": "string", "value": "red"}, "assertionIds": ["$id:A1", "$id:A2"], "supports": 2}],
+     "citations": ["C5.5", "C5.1"]},
+    {"id": "Q4", "surface": "EP-REPO", "call": "Repository<Item>.at({ validAt: 10 }).count({ color: 'red' })", "compare": "exact", "expected": 1,
+     "citations": ["C5.1", "R3-SKETCH-COUNT"], "note": "count counts entities (repository documents), not supports."},
+    {"id": "Q5", "surface": "EP-REPO", "call": "Repository<Item>.at({ validAt: 10 }).find({ where: { color: 'red' } })", "compare": "items exact, order by $id",
+     "expected": {"items": [{"$id": "item:1", "color": "red", "name": "one"}], "nextCursor": "absent"}, "citations": ["C5.1", "C5.3", "R3-SKETCH-FIND"]}
+   ]
+  },
+  {
+   "id": "C5-02",
+   "title": "Retracting one of two equal supports keeps the value; retracting the second removes it",
+   "contracts": ["G4.neg.conflict-not-false-absence", "G5.agg.full-support", "R.repo.entity-suite", "R.repo.mutation-controls"],
+   "planContracts": ["C5.1", "C5.5"], "rulings": ["Q8e"],
+   "killsMutants": ["M-DROPPED-SUPPORT"],
+   "lanes": ["xtdb-xtql", "xtdb-sql", "qlever-sparql"], "scope": "fresh", "schema": "S-ITEM", "enforcement": "off",
+   "commands": [
+    {"id": "C1", "instant": 100, "meta": {"actor": "golden", "commandId": "c5-02:C1"}, "ops": [
+      {"op": "assert", "label": "A1", "entityId": "item:2", "entityType": "Item", "attribute": ":item/color", "value": {"type": "string", "value": "red"}, "validFrom": 0},
+      {"op": "assert", "label": "A2", "entityId": "item:2", "entityType": "Item", "attribute": ":item/color", "value": {"type": "string", "value": "red"}, "validFrom": 0},
+      {"op": "assert", "label": "A3", "entityId": "item:2", "entityType": "Item", "attribute": ":item/name", "value": {"type": "string", "value": "two"}, "validFrom": 0}],
+     "expect": {"outcome": "committed"}},
+    {"id": "C2", "instant": 200, "meta": {"actor": "golden", "commandId": "c5-02:C2"}, "ops": [{"op": "retract", "id": "$id:A1"}], "expect": {"outcome": "committed", "retracted": 1}},
+    {"id": "C3", "instant": 300, "meta": {"actor": "golden", "commandId": "c5-02:C3"}, "ops": [{"op": "retract", "id": "$id:A2"}], "expect": {"outcome": "committed", "retracted": 1}}
+   ],
+   "queries": [
+    {"id": "Q1", "surface": "EP-REPO", "call": "Repository<Item>.at(basis).get('item:2')", "basis": {"recordedAt": 150, "validAt": 10}, "compare": "exact", "expected": {"$id": "item:2", "color": "red", "name": "two"}, "citations": ["C5.1"]},
+    {"id": "Q2", "surface": "EP-REPO", "call": "Repository<Item>.at(basis).get('item:2')", "basis": {"recordedAt": 200, "validAt": 10}, "compare": "exact", "expected": {"$id": "item:2", "color": "red", "name": "two"}, "citations": ["C5.1", "PLANNER-SUPPORTS"]},
+    {"id": "Q3", "surface": "EP-REPO", "call": "Repository<Item>.at(basis).get('item:2')", "basis": {"recordedAt": 300, "validAt": 10}, "compare": "exact", "expected": {"$id": "item:2", "name": "two"},
+     "citations": ["C5.1", "R3-SKETCH-DOC"], "note": "absent optional attribute is a missing property, never null (R01 brief, decision D5)."},
+    {"id": "Q4", "surface": "EP-NATIVE", "call": "values(':item/color') relation", "basis": {"P": "$pos:C2", "validAt": 10}, "compare": "multiset of rows",
+     "expected": [{"entityId": "item:2", "value": {"type": "string", "value": "red"}, "assertionIds": ["$id:A2"], "supports": 1}], "citations": ["C5.5"]},
+    {"id": "Q5", "surface": "EP-NATIVE", "call": "values(':item/color') relation", "basis": {"P": "$pos:C3", "validAt": 10}, "compare": "exact", "expected": [], "citations": ["C5.5"]},
+    {"id": "Q6", "surface": "EP-TRIPLES", "call": "Triples.entity('item:2', basis)", "basis": {"recordedAt": 200, "validAt": 10}, "compare": "multiset-by-id (ids only)", "expected": ["$id:A2", "$id:A3"], "citations": ["ACC-4.2.5", "DOCS-AGENTS-HIST"]},
+    {"id": "Q7", "surface": "EP-TRIPLES", "call": "Triples.history('item:2')", "historyContract": "raw-lifetime", "compare": "multiset-by-id; fields id, retractedAt, retractTxId",
+     "columns": ["id", "retractedAt", "retractTxId"], "expected": [["$id:A1", 200, "$tx:C2"], ["$id:A2", 300, "$tx:C3"], ["$id:A3", null, null]], "citations": ["TRIPLES-TS-HISTORY", "ACC-G9-RAW"]}
+   ]
+  },
+  {
+   "id": "C5-03",
+   "title": "Card-one conflict with enforcement off: repository reads fail with ConflictingValuesError; unreferenced attributes do not",
+   "contracts": ["G4.neg.conflict-not-false-absence", "R.repo.entity-suite", "R.native.fragment-equivalence", "R.repo.mutation-controls"],
+   "planContracts": ["C5.2", "C5.3", "C5.4", "C5.5"], "rulings": ["Q12"],
+   "killsMutants": ["M-CONFLICT-PICK"],
+   "lanes": ["xtdb-xtql", "xtdb-sql", "qlever-sparql"], "scope": "fresh", "schema": "S-ITEM", "enforcement": "off",
+   "commands": [
+    {"id": "C1", "instant": 100, "meta": {"actor": "golden", "commandId": "c5-03:C1"}, "ops": [
+      {"op": "assert", "label": "A1", "entityId": "item:3", "entityType": "Item", "attribute": ":item/color", "value": {"type": "string", "value": "red"}, "validFrom": 0},
+      {"op": "assert", "label": "A2", "entityId": "item:3", "entityType": "Item", "attribute": ":item/color", "value": {"type": "string", "value": "blue"}, "validFrom": 0},
+      {"op": "assert", "label": "A3", "entityId": "item:3", "entityType": "Item", "attribute": ":item/name", "value": {"type": "string", "value": "three"}, "validFrom": 0},
+      {"op": "assert", "label": "A4", "entityId": "item:4", "entityType": "Item", "attribute": ":item/name", "value": {"type": "string", "value": "four"}, "validFrom": 0},
+      {"op": "assert", "label": "A5", "entityId": "item:4", "entityType": "Item", "attribute": ":item/color", "value": {"type": "string", "value": "red"}, "validFrom": 0}],
+     "expect": {"outcome": "committed"}}
+   ],
+   "conflictErrorShape": "Compare _tag and the set of {entityId, attribute} pairs; field names are fixed by EXP-R01 (AMB-13).",
+   "queries": [
+    {"id": "Q1", "surface": "EP-REPO", "call": "Repository<Item>.at({ validAt: 10 }).get('item:3')",
+     "expectedError": {"_tag": "ConflictingValuesError", "conflicts": [{"entityId": "item:3", "attribute": ":item/color"}]}, "citations": ["C5.2", "C5.3", "Q12"], "ambiguity": "AMB-13"},
+    {"id": "Q2", "surface": "EP-REPO", "call": "Repository<Item>.at({ validAt: 10 }).getMany(['item:4', 'item:3', 'item:404'])",
+     "expectedError": {"_tag": "ConflictingValuesError", "conflicts": [{"entityId": "item:3", "attribute": ":item/color"}]}, "citations": ["C5.3"], "ambiguity": "AMB-13"},
+    {"id": "Q3", "surface": "EP-REPO", "call": "Repository<Item>.at({ validAt: 10 }).get('item:4')", "compare": "exact", "expected": {"$id": "item:4", "color": "red", "name": "four"}, "citations": ["C5.3"]},
+    {"id": "Q4", "surface": "EP-REPO", "call": "Repository<Item>.at({ validAt: 10 }).find({ where: { color: 'red' } })",
+     "expectedError": {"_tag": "ConflictingValuesError", "conflicts": [{"entityId": "item:3", "attribute": ":item/color"}]}, "citations": ["C5.3", "Q12"],
+     "note": "item:3 is a candidate and the filter references color; returning only item:4 would be a false absence for item:3."},
+    {"id": "Q5", "surface": "EP-REPO", "call": "Repository<Item>.at({ validAt: 10 }).find({ where: { color: { exists: false } } })",
+     "expectedError": {"_tag": "ConflictingValuesError", "conflicts": [{"entityId": "item:3", "attribute": ":item/color"}]}, "citations": ["C5.3", "ACC-G4-CONFLICT"]},
+    {"id": "Q6", "surface": "EP-REPO", "call": "Repository<Item>.at({ validAt: 10 }).count({ color: 'red' })",
+     "expectedError": {"_tag": "ConflictingValuesError", "conflicts": [{"entityId": "item:3", "attribute": ":item/color"}]}, "citations": ["C5.3"]},
+    {"id": "Q7", "surface": "EP-REPO", "call": "Repository<Item>.at({ validAt: 10 }).count({ name: 'three' })", "compare": "exact", "expected": 1,
+     "citations": ["C5.3"], "note": "the query references only name; C5.3: attributes the query does not reference do not affect it."},
+    {"id": "Q8", "surface": "EP-REPO", "call": "Repository<Item>.at({ validAt: 10 }).find({ where: { name: 'three' } })", "expected": "AMBIGUOUS", "ambiguity": "AMB-17",
+     "readings": [
+      {"id": "A-document-references-all-attributes", "expectedError": {"_tag": "ConflictingValuesError", "conflicts": [{"entityId": "item:3", "attribute": ":item/color"}]}, "sources": ["C5.3 (get fails because the document decodes every attribute)"]},
+      {"id": "B-filter-only-reference", "expected": "no defined document shape: color has no single value and null is banned (R01 D5)", "sources": ["C5.3 (attributes the query does not reference do not affect it)"]}]},
+    {"id": "Q9", "surface": "EP-NATIVE", "call": "values(':item/color') relation", "basis": {"P": "$pos:C1", "validAt": 10}, "compare": "multiset of rows",
+     "expected": [
+      {"entityId": "item:3", "value": {"type": "string", "value": "red"}, "assertionIds": ["$id:A1"], "supports": 1},
+      {"entityId": "item:3", "value": {"type": "string", "value": "blue"}, "assertionIds": ["$id:A2"], "supports": 1},
+      {"entityId": "item:4", "value": {"type": "string", "value": "red"}, "assertionIds": ["$id:A5"], "supports": 1}], "citations": ["C5.5"]},
+    {"id": "Q10", "surface": "EP-RAW-HATCH / EP-RAW-WIRE", "call": "raw convenience projection for Item", "basis": {"P": "$pos:C1", "validAt": 10},
+     "compare": "semantic",
+     "expected": {"item:3": {"plainColorValue": "absent (XTDB: column NULL; QLever: no plain triple)", "conflictIndicator": "present (XTDB: row in _triplex_conflicts for (item:3, :item/color); QLever: conflict marker triple)"},
+                  "item:4": {"plainColorValue": {"type": "string", "value": "red"}, "conflictIndicator": "absent"}},
+     "citations": ["C5.4"], "note": "Documented as not equivalent to the repository for conflicted attributes; physical spelling of the indicator is not fixed by C5."},
+    {"id": "Q11", "surface": "EP-TRIPLES", "call": "Triples.entity('item:3', { validAt: 10 })", "compare": "multiset-by-id (ids only)", "expected": ["$id:A1", "$id:A2", "$id:A3"],
+     "citations": ["DOCS-AGENTS-HIST"], "note": "the ledger surface returns every live assertion; it never picks."}
+   ]
+  },
+  {
+   "id": "C5-04",
+   "title": "Overlapping card-one intervals with distinct values conflict only on the overlap; half-open ends",
+   "contracts": ["G4.neg.conflict-not-false-absence", "G9.temporal.half-open-intervals", "R.repo.entity-suite"],
+   "planContracts": ["C5.2", "C5.3"], "killsMutants": ["M-CONFLICT-PICK", "M-HALF-OPEN"],
+   "lanes": ["xtdb-xtql", "xtdb-sql", "qlever-sparql"], "scope": "fresh", "schema": "S-ITEM", "enforcement": "off",
+   "commands": [
+    {"id": "C1", "instant": 100, "meta": {"actor": "golden", "commandId": "c5-04:C1"}, "ops": [
+      {"op": "assert", "label": "A1", "entityId": "item:5", "entityType": "Item", "attribute": ":item/color", "value": {"type": "string", "value": "red"}, "validFrom": 0, "validTo": 20},
+      {"op": "assert", "label": "A2", "entityId": "item:5", "entityType": "Item", "attribute": ":item/color", "value": {"type": "string", "value": "blue"}, "validFrom": 10, "validTo": 30},
+      {"op": "assert", "label": "A3", "entityId": "item:5", "entityType": "Item", "attribute": ":item/name", "value": {"type": "string", "value": "five"}, "validFrom": 0}],
+     "expect": {"outcome": "committed"}}
+   ],
+   "queries": [
+    {"id": "V5", "surface": "EP-REPO", "call": "Repository<Item>.at({ validAt: 5 }).get('item:5')", "compare": "exact", "expected": {"$id": "item:5", "color": "red", "name": "five"}, "citations": ["C5.2", "ACC-4.2.5"]},
+    {"id": "V9.999999999999998", "surface": "EP-REPO", "call": "Repository<Item>.at({ validAt: 9.999999999999998 }).get('item:5')", "compare": "exact", "expected": {"$id": "item:5", "color": "red", "name": "five"}, "citations": ["ACC-4.2.5"]},
+    {"id": "V10", "surface": "EP-REPO", "call": "Repository<Item>.at({ validAt: 10 }).get('item:5')", "expectedError": {"_tag": "ConflictingValuesError", "conflicts": [{"entityId": "item:5", "attribute": ":item/color"}]}, "citations": ["C5.2", "C5.3", "ACC-4.2.5"]},
+    {"id": "V19.999999999999996", "surface": "EP-REPO", "call": "Repository<Item>.at({ validAt: 19.999999999999996 }).get('item:5')", "expectedError": {"_tag": "ConflictingValuesError", "conflicts": [{"entityId": "item:5", "attribute": ":item/color"}]}, "citations": ["C5.2", "ACC-4.2.5"]},
+    {"id": "V20", "surface": "EP-REPO", "call": "Repository<Item>.at({ validAt: 20 }).get('item:5')", "compare": "exact", "expected": {"$id": "item:5", "color": "blue", "name": "five"}, "citations": ["ACC-4.2.5", "CONSTRAINT-VISIBLE"]},
+    {"id": "V29.999999999999996", "surface": "EP-REPO", "call": "Repository<Item>.at({ validAt: 29.999999999999996 }).get('item:5')", "compare": "exact", "expected": {"$id": "item:5", "color": "blue", "name": "five"}, "citations": ["ACC-4.2.5"]},
+    {"id": "V30", "surface": "EP-REPO", "call": "Repository<Item>.at({ validAt: 30 }).get('item:5')", "compare": "exact", "expected": {"$id": "item:5", "name": "five"}, "citations": ["ACC-4.2.5", "R3-SKETCH-DOC"]},
+    {"id": "N15", "surface": "EP-NATIVE", "call": "values(':item/color') relation", "basis": {"P": "$pos:C1", "validAt": 15}, "compare": "multiset of rows",
+     "expected": [{"entityId": "item:5", "value": {"type": "string", "value": "red"}, "assertionIds": ["$id:A1"], "supports": 1},
+                  {"entityId": "item:5", "value": {"type": "string", "value": "blue"}, "assertionIds": ["$id:A2"], "supports": 1}], "citations": ["C5.5"]}
+   ]
+  },
+  {
+   "id": "C5-05",
+   "title": "Equal-valued card-one assertions with different intervals: never a conflict, supports vary by V",
+   "contracts": ["G4.neg.conflict-not-false-absence", "G5.agg.full-support", "G9.temporal.half-open-intervals", "R.repo.entity-suite"],
+   "planContracts": ["C5.1", "C5.5"], "rulings": ["Q8e"], "killsMutants": ["M-DROPPED-SUPPORT", "M-HALF-OPEN"],
+   "lanes": ["xtdb-xtql", "xtdb-sql", "qlever-sparql"], "scope": "fresh", "schema": "S-ITEM", "enforcement": "off",
+   "commands": [
+    {"id": "C1", "instant": 100, "meta": {"actor": "golden", "commandId": "c5-05:C1"}, "ops": [
+      {"op": "assert", "label": "A1", "entityId": "item:6", "entityType": "Item", "attribute": ":item/color", "value": {"type": "string", "value": "red"}, "validFrom": 0, "validTo": 20},
+      {"op": "assert", "label": "A2", "entityId": "item:6", "entityType": "Item", "attribute": ":item/color", "value": {"type": "string", "value": "red"}, "validFrom": 10, "validTo": 30},
+      {"op": "assert", "label": "A3", "entityId": "item:6", "entityType": "Item", "attribute": ":item/name", "value": {"type": "string", "value": "six"}, "validFrom": 0}],
+     "expect": {"outcome": "committed"}}
+   ],
+   "queries": [
+    {"id": "G15", "surface": "EP-REPO", "call": "Repository<Item>.at({ validAt: 15 }).get('item:6')", "compare": "exact", "expected": {"$id": "item:6", "color": "red", "name": "six"}, "citations": ["C5.1", "Q8e"]},
+    {"id": "N5", "surface": "EP-NATIVE", "call": "values(':item/color')", "basis": {"P": "$pos:C1", "validAt": 5}, "compare": "multiset of rows", "expected": [{"entityId": "item:6", "value": {"type": "string", "value": "red"}, "assertionIds": ["$id:A1"], "supports": 1}], "citations": ["C5.5", "ACC-4.2.5"]},
+    {"id": "N10", "surface": "EP-NATIVE", "call": "values(':item/color')", "basis": {"P": "$pos:C1", "validAt": 10}, "compare": "multiset of rows", "expected": [{"entityId": "item:6", "value": {"type": "string", "value": "red"}, "assertionIds": ["$id:A1", "$id:A2"], "supports": 2}], "citations": ["C5.5", "ACC-4.2.5"]},
+    {"id": "N19.999999999999996", "surface": "EP-NATIVE", "call": "values(':item/color')", "basis": {"P": "$pos:C1", "validAt": 19.999999999999996}, "compare": "multiset of rows", "expected": [{"entityId": "item:6", "value": {"type": "string", "value": "red"}, "assertionIds": ["$id:A1", "$id:A2"], "supports": 2}], "citations": ["C5.5"]},
+    {"id": "N20", "surface": "EP-NATIVE", "call": "values(':item/color')", "basis": {"P": "$pos:C1", "validAt": 20}, "compare": "multiset of rows", "expected": [{"entityId": "item:6", "value": {"type": "string", "value": "red"}, "assertionIds": ["$id:A2"], "supports": 1}], "citations": ["C5.5", "CONSTRAINT-VISIBLE"]},
+    {"id": "N30", "surface": "EP-NATIVE", "call": "values(':item/color')", "basis": {"P": "$pos:C1", "validAt": 30}, "compare": "exact", "expected": [], "citations": ["C5.5", "ACC-4.2.5"]},
+    {"id": "G30", "surface": "EP-REPO", "call": "Repository<Item>.at({ validAt: 30 }).get('item:6')", "compare": "exact", "expected": {"$id": "item:6", "name": "six"}, "citations": ["ACC-4.2.5", "R3-SKETCH-DOC"]}
+   ]
+  },
+  {
+   "id": "C5-06",
+   "title": "Write-time cardinality counts assertions: an equal duplicate is rejected under enforcement but reads as one value when written without it",
+   "contracts": ["G1.schema.cardinality", "G7.write.atomic", "R.repo.entity-suite"],
+   "planContracts": ["C5.1"], "rulings": ["Q8e"], "killsMutants": ["M-IDENTITY-COLLAPSE"],
+   "lanes": ["xtdb-xtql", "xtdb-sql", "qlever-sparql"], "scope": "fresh", "schema": "S-ITEM",
+   "commands": [
+    {"id": "C1", "instant": 100, "meta": {"actor": "golden", "commandId": "c5-06:C1", "enforce": {"constraints": ["@R-CARD-COLOR"]}}, "ops": [
+      {"op": "assert", "label": "A1", "entityId": "item:7", "entityType": "Item", "attribute": ":item/color", "value": {"type": "string", "value": "red"}, "validFrom": 0}],
+     "expect": {"outcome": "committed"}},
+    {"id": "C2", "instant": 200, "meta": {"actor": "golden", "commandId": "c5-06:C2", "enforce": {"constraints": ["@R-CARD-COLOR"]}}, "ops": [
+      {"op": "assert", "label": "A2", "entityId": "item:7", "entityType": "Item", "attribute": ":item/color", "value": {"type": "string", "value": "red"}, "validFrom": 0}],
+     "expect": {"outcome": "rejected",
+                "error": {"_tag": "ConstraintViolationError", "violations": [{"constraintKey": "Item::item/color:cardinality-1", "code": "cardinality", "subject": "item:7", "entityType": "Item", "attribute": ":item/color", "path": "$[\":item/color\"]", "actual": 2, "validAt": 0}]},
+                "compare": "violations as a set; message ignored",
+                "positionAfter": "$pos:C1", "transactionByCommand": null},
+     "citations": ["CONSTRAINT-193", "CONSTRAINT-NEWLY", "C5.1", "ACC-G1-CARD"]},
+    {"id": "C3", "instant": 300, "meta": {"actor": "golden", "commandId": "c5-06:C3"}, "ops": [
+      {"op": "assert", "label": "A3", "entityId": "item:7", "entityType": "Item", "attribute": ":item/color", "value": {"type": "string", "value": "red"}, "validFrom": 0}],
+     "expect": {"outcome": "committed"}, "note": "same write without enforcement commits"}
+   ],
+   "queries": [
+    {"id": "Q1", "surface": "EP-TRIPLES", "call": "Triples.match({ entityId: 'item:7', attribute: ':item/color' }, { recordedAt: 250, validAt: 10 })", "compare": "multiset-by-id (ids only)", "expected": ["$id:A1"], "citations": ["G7-ATOMIC"]},
+    {"id": "Q2", "surface": "EP-REPO", "call": "Repository<Item>.at({ validAt: 10 }).get('item:7')", "compare": "exact", "expected": {"$id": "item:7", "color": "red"}, "citations": ["C5.1", "Q8e"],
+     "note": "after C3 there are two live equal assertions; reads decode one value"},
+    {"id": "Q3", "surface": "EP-NATIVE", "call": "values(':item/color')", "basis": {"P": "$pos:C3", "validAt": 10}, "compare": "multiset of rows", "expected": [{"entityId": "item:7", "value": {"type": "string", "value": "red"}, "assertionIds": ["$id:A1", "$id:A3"], "supports": 2}], "citations": ["C5.5"]}
+   ]
+  },
+  {
+   "id": "C5-07",
+   "title": "Pre-existing conflict under enforcement: only new or worsened violations are rejected",
+   "contracts": ["G1.schema.cardinality", "G4.neg.conflict-not-false-absence", "R.repo.entity-suite"],
+   "planContracts": ["C5.2", "C5.3"], "killsMutants": ["M-CONFLICT-PICK"],
+   "lanes": ["xtdb-xtql", "xtdb-sql", "qlever-sparql"], "scope": "fresh", "schema": "S-ITEM",
+   "commands": [
+    {"id": "C1", "instant": 100, "meta": {"actor": "golden", "commandId": "c5-07:C1"}, "ops": [
+      {"op": "assert", "label": "A1", "entityId": "item:8", "entityType": "Item", "attribute": ":item/color", "value": {"type": "string", "value": "red"}, "validFrom": 0},
+      {"op": "assert", "label": "A2", "entityId": "item:8", "entityType": "Item", "attribute": ":item/color", "value": {"type": "string", "value": "blue"}, "validFrom": 0}],
+     "expect": {"outcome": "committed"}, "note": "enforcement off: conflict created"},
+    {"id": "C2", "instant": 200, "meta": {"actor": "golden", "commandId": "c5-07:C2", "enforce": {"constraints": ["@R-CARD-COLOR"]}}, "ops": [
+      {"op": "assert", "label": "A3", "entityId": "item:8", "entityType": "Item", "attribute": ":item/name", "value": {"type": "string", "value": "eight"}, "validFrom": 0}],
+     "expect": {"outcome": "committed"}, "why": "before and after both have the cardinality violation with actual 2; not new, not worsened", "citations": ["CONSTRAINT-NEWLY", "C5.2"]},
+    {"id": "C3", "instant": 300, "meta": {"actor": "golden", "commandId": "c5-07:C3", "enforce": {"constraints": ["@R-CARD-COLOR"]}}, "ops": [
+      {"op": "assert", "label": "A4", "entityId": "item:8", "entityType": "Item", "attribute": ":item/color", "value": {"type": "string", "value": "green"}, "validFrom": 0}],
+     "expect": {"outcome": "rejected", "error": {"_tag": "ConstraintViolationError", "violations": [{"constraintKey": "Item::item/color:cardinality-1", "code": "cardinality", "subject": "item:8", "entityType": "Item", "attribute": ":item/color", "path": "$[\":item/color\"]", "actual": 3, "validAt": 0}]},
+                "compare": "violations as a set; message ignored", "positionAfter": "$pos:C2", "transactionByCommand": null},
+     "why": "worsened: actual 3 > 2", "citations": ["CONSTRAINT-NEWLY", "CONSTRAINT-193", "C5.2"]},
+    {"id": "C4", "instant": 400, "meta": {"actor": "golden", "commandId": "c5-07:C4", "enforce": {"constraints": ["@R-CARD-COLOR"]}}, "ops": [
+      {"op": "assert", "label": "A5", "entityId": "item:8", "entityType": "Item", "attribute": ":item/color", "value": {"type": "string", "value": "blue"}, "validFrom": 0}],
+     "expect": {"outcome": "rejected", "error": {"_tag": "ConstraintViolationError", "violations": [{"constraintKey": "Item::item/color:cardinality-1", "code": "cardinality", "subject": "item:8", "entityType": "Item", "attribute": ":item/color", "path": "$[\":item/color\"]", "actual": 3, "validAt": 0}]},
+                "compare": "violations as a set; message ignored", "positionAfter": "$pos:C2", "transactionByCommand": null},
+     "why": "an equal-valued duplicate still counts as an assertion (Constraint.ts counts facts, C5.1 keeps that rule)", "citations": ["CONSTRAINT-193", "C5.1"]},
+    {"id": "C5", "instant": 500, "meta": {"actor": "golden", "commandId": "c5-07:C5", "enforce": {"constraints": ["@R-CARD-COLOR"]}}, "ops": [
+      {"op": "retract", "id": "$id:A1"},
+      {"op": "assert", "label": "A6", "entityId": "item:8", "entityType": "Item", "attribute": ":item/color", "value": {"type": "string", "value": "green"}, "validFrom": 0}],
+     "expect": {"outcome": "committed"}, "why": "actual stays 2 (same violation identity, not worsened); the conflict persists with a different value set", "citations": ["CONSTRAINT-NEWLY"]},
+    {"id": "C6", "instant": 600, "meta": {"actor": "golden", "commandId": "c5-07:C6", "enforce": {"constraints": ["@R-CARD-COLOR"]}}, "ops": [{"op": "retract", "id": "$id:A6"}],
+     "expect": {"outcome": "committed"}, "why": "repair: actual 1, no violation", "citations": ["CONSTRAINT-NEWLY"]}
+   ],
+   "queries": [
+    {"id": "Q1", "surface": "EP-REPO", "call": "Repository<Item>.at({ recordedAt: 200, validAt: 10 }).get('item:8')", "expectedError": {"_tag": "ConflictingValuesError", "conflicts": [{"entityId": "item:8", "attribute": ":item/color"}]}, "citations": ["C5.2", "C5.3"]},
+    {"id": "Q2", "surface": "EP-REPO", "call": "Repository<Item>.at({ recordedAt: 500, validAt: 10 }).get('item:8')", "expectedError": {"_tag": "ConflictingValuesError", "conflicts": [{"entityId": "item:8", "attribute": ":item/color"}]}, "citations": ["C5.2", "C5.3"]},
+    {"id": "Q3", "surface": "EP-NATIVE", "call": "values(':item/color')", "basis": {"P": "$pos:C5", "validAt": 10}, "compare": "multiset of rows",
+     "expected": [{"entityId": "item:8", "value": {"type": "string", "value": "blue"}, "assertionIds": ["$id:A2"], "supports": 1}, {"entityId": "item:8", "value": {"type": "string", "value": "green"}, "assertionIds": ["$id:A6"], "supports": 1}], "citations": ["C5.5"]},
+    {"id": "Q4", "surface": "EP-REPO", "call": "Repository<Item>.at({ validAt: 10 }).get('item:8')", "compare": "exact", "expected": {"$id": "item:8", "color": "blue", "name": "eight"}, "citations": ["C5.3"]},
+    {"id": "Q5", "surface": "EP-TRIPLES", "call": "Triples.transactionByCommand('c5-07:C3') and ('c5-07:C4')", "compare": "exact", "expected": [null, null], "citations": ["G7-ATOMIC", "TINY-V4-CONTRACT"]}
+   ]
+  },
+  {
+   "id": "C5-08",
+   "title": "Correction of one of two equal duplicates in one transaction turns the attribute into a conflict",
+   "contracts": ["G4.neg.conflict-not-false-absence", "G7.receipt.journal-complete", "R.repo.entity-suite"],
+   "planContracts": ["C5.1", "C5.2", "C6"], "killsMutants": ["M-DROPPED-SUPPORT", "M-CONFLICT-PICK", "M-JOURNAL-ORDER"],
+   "lanes": ["xtdb-xtql", "xtdb-sql", "qlever-sparql"], "scope": "fresh", "schema": "S-ITEM", "enforcement": "off",
+   "commands": [
+    {"id": "C1", "instant": 100, "meta": {"actor": "golden", "commandId": "c5-08:C1"}, "ops": [
+      {"op": "assert", "label": "A1", "entityId": "item:9", "entityType": "Item", "attribute": ":item/color", "value": {"type": "string", "value": "red"}, "validFrom": 0},
+      {"op": "assert", "label": "A2", "entityId": "item:9", "entityType": "Item", "attribute": ":item/color", "value": {"type": "string", "value": "red"}, "validFrom": 0}],
+     "expect": {"outcome": "committed"}},
+    {"id": "C2", "instant": 200, "meta": {"actor": "golden", "commandId": "c5-08:C2"}, "ops": [
+      {"op": "retract", "id": "$id:A1"},
+      {"op": "assert", "label": "A3", "entityId": "item:9", "entityType": "Item", "attribute": ":item/color", "value": {"type": "string", "value": "blue"}, "validFrom": 0}],
+     "expect": {"outcome": "committed", "retracted": 1}}
+   ],
+   "queries": [
+    {"id": "Q1", "surface": "EP-REPO", "call": "Repository<Item>.at({ recordedAt: 100, validAt: 10 }).get('item:9')", "compare": "exact", "expected": {"$id": "item:9", "color": "red"}, "citations": ["C5.1"]},
+    {"id": "Q2", "surface": "EP-REPO", "call": "Repository<Item>.at({ validAt: 10 }).get('item:9')", "expectedError": {"_tag": "ConflictingValuesError", "conflicts": [{"entityId": "item:9", "attribute": ":item/color"}]}, "citations": ["C5.2", "C5.3"],
+     "note": "A2 still supports red; A3 asserts blue. A planner that drops red after retracting A1 returns blue (M-DROPPED-SUPPORT)."},
+    {"id": "Q3", "surface": "EP-NATIVE", "call": "values(':item/color')", "basis": {"P": "$pos:C2", "validAt": 10}, "compare": "multiset of rows",
+     "expected": [{"entityId": "item:9", "value": {"type": "string", "value": "red"}, "assertionIds": ["$id:A2"], "supports": 1}, {"entityId": "item:9", "value": {"type": "string", "value": "blue"}, "assertionIds": ["$id:A3"], "supports": 1}], "citations": ["C5.5"]},
+    {"id": "Q4", "surface": "EP-TRIPLES", "call": "Triples.transaction($tx:C2).changes (ordered; documented fields)", "compare": "ordered; per-change documented fields (AMB-05)",
+     "expected": [{"op": "retract", "tripleId": "$id:A1", "entityId": "item:9", "attribute": ":item/color", "value": {"type": "string", "value": "red"}, "recordedAt": 100, "retractedAt": 200, "assertionTxId": "$tx:C1", "retractionTxId": "$tx:C2"},
+                  {"op": "assert", "tripleId": "$id:A3", "entityId": "item:9", "attribute": ":item/color", "value": {"type": "string", "value": "blue"}, "validFrom": 0, "assertionTxId": "$tx:C2"}],
+     "citations": ["ACC-4.2.8", "C6", "DOCS-HOST-JOURNAL", "TK-JOURNAL", "TRIPLES-TS-CHANGE"], "ambiguity": "AMB-05"}
+   ]
+  },
+  {
+   "id": "C5-09",
+   "title": "Partial repair and retirement of the last remaining support of a conflicted attribute",
+   "contracts": ["G4.neg.conflict-not-false-absence", "R.repo.entity-suite"],
+   "planContracts": ["C5.2", "C5.3"], "killsMutants": ["M-CONFLICT-PICK", "M-DROPPED-SUPPORT"],
+   "lanes": ["xtdb-xtql", "xtdb-sql", "qlever-sparql"], "scope": "fresh", "schema": "S-ITEM", "enforcement": "off",
+   "commands": [
+    {"id": "C1", "instant": 100, "meta": {"actor": "golden", "commandId": "c5-09:C1"}, "ops": [
+      {"op": "assert", "label": "A1", "entityId": "item:10", "entityType": "Item", "attribute": ":item/color", "value": {"type": "string", "value": "red"}, "validFrom": 0},
+      {"op": "assert", "label": "A2", "entityId": "item:10", "entityType": "Item", "attribute": ":item/color", "value": {"type": "string", "value": "blue"}, "validFrom": 0},
+      {"op": "assert", "label": "A3", "entityId": "item:10", "entityType": "Item", "attribute": ":item/name", "value": {"type": "string", "value": "ten"}, "validFrom": 0}],
+     "expect": {"outcome": "committed"}},
+    {"id": "C2", "instant": 200, "meta": {"actor": "golden", "commandId": "c5-09:C2"}, "ops": [{"op": "retract", "id": "$id:A1"}], "expect": {"outcome": "committed"}},
+    {"id": "C3", "instant": 300, "meta": {"actor": "golden", "commandId": "c5-09:C3"}, "ops": [{"op": "retract", "id": "$id:A2"}], "expect": {"outcome": "committed"}}
+   ],
+   "queries": [
+    {"id": "Q1", "surface": "EP-REPO", "call": "Repository<Item>.at({ recordedAt: 100, validAt: 10 }).get('item:10')", "expectedError": {"_tag": "ConflictingValuesError", "conflicts": [{"entityId": "item:10", "attribute": ":item/color"}]}, "citations": ["C5.3"]},
+    {"id": "Q2", "surface": "EP-REPO", "call": "Repository<Item>.at({ recordedAt: 200, validAt: 10 }).get('item:10')", "compare": "exact", "expected": {"$id": "item:10", "color": "blue", "name": "ten"}, "citations": ["C5.2"]},
+    {"id": "Q3", "surface": "EP-REPO", "call": "Repository<Item>.at({ recordedAt: 300, validAt: 10 }).get('item:10')", "compare": "exact", "expected": {"$id": "item:10", "name": "ten"}, "citations": ["R3-SKETCH-DOC"]},
+    {"id": "Q4", "surface": "EP-REPO", "call": "Repository<Item>.at({ recordedAt: 300, validAt: 10 }).find({ where: { color: { exists: false } } })", "compare": "items exact",
+     "expected": {"items": [{"$id": "item:10", "name": "ten"}], "nextCursor": "absent"}, "citations": ["R3-SKETCH-FIND", "C5.3"],
+     "note": "after the last support is retired the absence is definite"},
+    {"id": "Q5", "surface": "EP-REPO", "call": "Repository<Item>.at({ recordedAt: 100, validAt: 10 }).find({ where: { color: { exists: false } } })",
+     "expectedError": {"_tag": "ConflictingValuesError", "conflicts": [{"entityId": "item:10", "attribute": ":item/color"}]}, "citations": ["C5.3", "ACC-G4-CONFLICT"]}
+   ]
+  }
+ ]
+}

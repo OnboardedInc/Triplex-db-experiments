@@ -11,6 +11,7 @@ import json
 from . import exact as X
 from . import replay as RP
 from . import values as V
+from . import stamps as ST
 from .replay import ErasedValue, _num, assertion_output, erased, read_value, record_output, value_matches
 
 
@@ -77,6 +78,18 @@ def resolve_cut(run, raw, *, need_valid=True):
                 # R-CUT-4 (RULINGS Q43h, consistent with Q30b): a read basis given as -0 is
                 # E-NEGATIVE-ZERO-INSTANT, never the instant 0
                 raise X.TypedError("E-NEGATIVE-ZERO-INSTANT", f"{name} given as -0", detail="no-negative-zero")
+    if run.decided and R is not None:
+        # [EXP-O06] Why: a later decision cannot enter a served record cut (R-CUT-6).
+        # Rejected: filtering only by P (misses a delayed publication whose instant is <= R).
+        start = RP.READ.get("start") if RP.READ.get("scope") == scope else None
+        published = [r for r in state.records if start is None or r.position <= start]
+        watermark = max((ST.stamp_of(r.instant) for r in published), default=0)
+        pending = any(r.instant.frac <= R and start is not None and r.position > start for r in state.records)
+        if pending or ST.stamp_cut(numbers["recordedAt"]) > watermark:
+            raise X.TypedError("E-BASIS-NOT-AVAILABLE", "record cut was not published at read start",
+                               axis="recordedAt", rule="R-CUT-6")
+        if raw.get("position", "latest") == "latest" and start is not None:
+            P = min(P, start)
     return Cut(scope, P, R, Vf, R_raw, V_raw)
 
 

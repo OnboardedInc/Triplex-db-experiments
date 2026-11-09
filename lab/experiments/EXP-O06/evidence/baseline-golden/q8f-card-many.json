@@ -1,0 +1,168 @@
+{
+ "format": "triplex-db-2/golden-vectors/1",
+ "file": "q8f-card-many.json",
+ "status": "DRAFT-UNREVIEWED (EXP-G01)",
+ "derivation": "Hand-derived from RULINGS Q8f, PLAN C5, ACCEPTANCE 4.2 item 11, the R01 brief decision D5 and testkit O-TESTKIT. No Triplex, KV, engine or oracle was run. Conventions: README.md.",
+ "sharedSchema": {
+  "id": "S-CARD",
+  "note": "prepend a ConfigStore release command C0 with EntityType Card",
+  "entityTypes": [{"key": "Card", "attributes": [
+    {"key": ":card/name", "name": "name", "type": "text", "cardinality": "one", "required": false},
+    {"key": ":card/tags", "name": "tags", "type": "text", "cardinality": "many", "required": false},
+    {"key": ":card/ints", "name": "ints", "type": "int64", "cardinality": "many", "required": false},
+    {"key": ":card/nums", "name": "nums", "type": "number", "cardinality": "many", "required": false}]}]
+ },
+ "vectors": [
+  {
+   "id": "Q8F-01",
+   "title": "Card-many text: duplicates collapse, codepoint order (not UTF-16, not locale)",
+   "contracts": ["G1.schema.cardinality", "R.repo.entity-suite", "R.repo.mutation-controls", "G2.strings.codepoint-supported"],
+   "rulings": ["Q8f"], "killsMutants": ["M-ICU-ORDER", "M-CARD-MANY-DROP", "M-IDENTITY-COLLAPSE"],
+   "lanes": ["xtdb-xtql", "xtdb-sql", "qlever-sparql"], "scope": "fresh", "schema": "S-CARD",
+   "commands": [
+    {"id": "C1", "instant": 100, "meta": {"actor": "golden", "commandId": "q8f-01:C1"}, "ops": [
+      {"op": "assert", "label": "T1", "entityId": "card:1", "entityType": "Card", "attribute": ":card/tags", "value": {"type": "string", "value": "b"}, "validFrom": 0},
+      {"op": "assert", "label": "T2", "entityId": "card:1", "entityType": "Card", "attribute": ":card/tags", "value": {"type": "string", "value": "a"}, "validFrom": 0},
+      {"op": "assert", "label": "T3", "entityId": "card:1", "entityType": "Card", "attribute": ":card/tags", "value": {"type": "string", "value": "B"}, "validFrom": 0},
+      {"op": "assert", "label": "T4", "entityId": "card:1", "entityType": "Card", "attribute": ":card/tags", "value": {"type": "string", "value": "é", "codepoints": ["U+00E9"]}, "validFrom": 0},
+      {"op": "assert", "label": "T5", "entityId": "card:1", "entityType": "Card", "attribute": ":card/tags", "value": {"type": "string", "value": "é", "codepoints": ["U+0065", "U+0301"]}, "validFrom": 0},
+      {"op": "assert", "label": "T6", "entityId": "card:1", "entityType": "Card", "attribute": ":card/tags", "value": {"type": "string", "value": "a"}, "validFrom": 0},
+      {"op": "assert", "label": "T7", "entityId": "card:1", "entityType": "Card", "attribute": ":card/tags", "value": {"type": "string", "value": "", "codepoints": ["U+E000"]}, "validFrom": 0},
+      {"op": "assert", "label": "T8", "entityId": "card:1", "entityType": "Card", "attribute": ":card/tags", "value": {"type": "string", "value": "𐀀", "codepoints": ["U+10000"]}, "validFrom": 0},
+      {"op": "assert", "label": "T9", "entityId": "card:1", "entityType": "Card", "attribute": ":card/tags", "value": {"type": "string", "value": ""}, "validFrom": 0},
+      {"op": "assert", "label": "N1", "entityId": "card:1", "entityType": "Card", "attribute": ":card/name", "value": {"type": "string", "value": "one"}, "validFrom": 0}],
+     "expect": {"outcome": "committed", "assertedCount": 10}}
+   ],
+   "queries": [
+    {"id": "Q1", "surface": "EP-REPO", "call": "Repository<Card>.at({ validAt: 10 }).get('card:1')", "compare": "exact (array order significant)",
+     "expected": {"$id": "card:1", "name": "one", "tags": ["", "B", "a", "b", "é", "é", "", "𐀀"], "ints": [], "nums": []},
+     "expectedTagsCodepoints": [[], ["U+0042"], ["U+0061"], ["U+0062"], ["U+0065", "U+0301"], ["U+00E9"], ["U+E000"], ["U+10000"]],
+     "citations": ["Q8f", "ACC-4.2.11", "R3-SKETCH-DOC", "R01-D5"],
+     "note": "8 distinct values from 9 assertions. NFC U+00E9 and NFD e+U+0301 stay distinct (ACC 6.1). UTF-16 code-unit order would put U+10000 (D800 DC00) before U+E000; locale collation would interleave case. Empty card-many attributes are [] (always an array)."},
+    {"id": "Q2", "surface": "EP-TRIPLES", "call": "Triples.entity('card:1', { validAt: 10 })", "compare": "multiset-by-id (ids only)",
+     "expected": ["$id:T1", "$id:T2", "$id:T3", "$id:T4", "$id:T5", "$id:T6", "$id:T7", "$id:T8", "$id:T9", "$id:N1"], "citations": ["TK-IDENTITY", "ACC-G1-CARD"],
+     "note": "the ledger surface keeps every assertion, including both 'a' assertions with distinct ids"},
+    {"id": "Q3", "surface": "EP-NATIVE", "call": "values(':card/tags')", "basis": {"P": "$pos:C1", "validAt": 10}, "compare": "multiset of rows",
+     "expected": [
+      {"entityId": "card:1", "value": {"type": "string", "value": ""}, "assertionIds": ["$id:T9"], "supports": 1},
+      {"entityId": "card:1", "value": {"type": "string", "value": "B"}, "assertionIds": ["$id:T3"], "supports": 1},
+      {"entityId": "card:1", "value": {"type": "string", "value": "a"}, "assertionIds": ["$id:T2", "$id:T6"], "supports": 2},
+      {"entityId": "card:1", "value": {"type": "string", "value": "b"}, "assertionIds": ["$id:T1"], "supports": 1},
+      {"entityId": "card:1", "value": {"type": "string", "value": "é"}, "assertionIds": ["$id:T5"], "supports": 1},
+      {"entityId": "card:1", "value": {"type": "string", "value": "é"}, "assertionIds": ["$id:T4"], "supports": 1},
+      {"entityId": "card:1", "value": {"type": "string", "value": ""}, "assertionIds": ["$id:T7"], "supports": 1},
+      {"entityId": "card:1", "value": {"type": "string", "value": "𐀀"}, "assertionIds": ["$id:T8"], "supports": 1}],
+     "citations": ["C5.5"]}
+   ]
+  },
+  {
+   "id": "Q8F-02",
+   "title": "Card-many int64: numeric order (not decimal-text order), duplicates collapse, 2^53 and 2^53+1 stay distinct",
+   "contracts": ["G1.types.eight-type-roundtrip", "R.repo.entity-suite"],
+   "rulings": ["Q8f"], "killsMutants": ["M-INT64-ROUND", "M-CARD-MANY-DROP"],
+   "lanes": ["xtdb-xtql", "xtdb-sql", "qlever-sparql"], "scope": "fresh", "schema": "S-CARD",
+   "commands": [
+    {"id": "C1", "instant": 100, "meta": {"actor": "golden", "commandId": "q8f-02:C1"}, "ops": [
+      {"op": "assert", "label": "I1", "entityId": "card:2", "entityType": "Card", "attribute": ":card/ints", "value": {"type": "integer", "value": "10"}, "validFrom": 0},
+      {"op": "assert", "label": "I2", "entityId": "card:2", "entityType": "Card", "attribute": ":card/ints", "value": {"type": "integer", "value": "9"}, "validFrom": 0},
+      {"op": "assert", "label": "I3", "entityId": "card:2", "entityType": "Card", "attribute": ":card/ints", "value": {"type": "integer", "value": "-1"}, "validFrom": 0},
+      {"op": "assert", "label": "I4", "entityId": "card:2", "entityType": "Card", "attribute": ":card/ints", "value": {"type": "integer", "value": "9007199254740993"}, "validFrom": 0},
+      {"op": "assert", "label": "I5", "entityId": "card:2", "entityType": "Card", "attribute": ":card/ints", "value": {"type": "integer", "value": "9007199254740992"}, "validFrom": 0},
+      {"op": "assert", "label": "I6", "entityId": "card:2", "entityType": "Card", "attribute": ":card/ints", "value": {"type": "integer", "value": "9"}, "validFrom": 0},
+      {"op": "assert", "label": "I7", "entityId": "card:2", "entityType": "Card", "attribute": ":card/ints", "value": {"type": "integer", "value": "-9223372036854775808"}, "validFrom": 0},
+      {"op": "assert", "label": "I8", "entityId": "card:2", "entityType": "Card", "attribute": ":card/ints", "value": {"type": "integer", "value": "9223372036854775807"}, "validFrom": 0}],
+     "expect": {"outcome": "committed"}}
+   ],
+   "queries": [
+    {"id": "Q1", "surface": "EP-REPO", "call": "Repository<Card>.at({ validAt: 10 }).get('card:2')", "compare": "exact (array order significant)",
+     "expected": {"$id": "card:2", "tags": [], "ints": [
+       {"type": "integer", "value": "-9223372036854775808"}, {"type": "integer", "value": "-1"}, {"type": "integer", "value": "9"}, {"type": "integer", "value": "10"},
+       {"type": "integer", "value": "9007199254740992"}, {"type": "integer", "value": "9007199254740993"}, {"type": "integer", "value": "9223372036854775807"}], "nums": []},
+     "citations": ["Q8f", "ATTR-INT64", "VALUE-TS", "ACC-4.2.11"],
+     "note": "7 distinct values from 8 assertions. Decimal-text order would be -1, -9223372036854775808, 10, 9, ...; binary64 conversion would merge ...992 and ...993."}
+   ]
+  },
+  {
+   "id": "Q8F-03",
+   "title": "Card-many binary64: numeric order, duplicates collapse, bit-distinct neighbours stay distinct",
+   "contracts": ["G1.types.eight-type-roundtrip", "R.repo.entity-suite"],
+   "rulings": ["Q8f"], "killsMutants": ["M-CARD-MANY-DROP"],
+   "lanes": ["xtdb-xtql", "xtdb-sql", "qlever-sparql"], "scope": "fresh", "schema": "S-CARD",
+   "commands": [
+    {"id": "C1", "instant": 100, "meta": {"actor": "golden", "commandId": "q8f-03:C1"}, "ops": [
+      {"op": "assert", "label": "F1", "entityId": "card:3", "entityType": "Card", "attribute": ":card/nums", "value": {"type": "number", "value": 1.5, "bits": "3ff8000000000000"}, "validFrom": 0},
+      {"op": "assert", "label": "F2", "entityId": "card:3", "entityType": "Card", "attribute": ":card/nums", "value": {"type": "number", "value": -2.0, "bits": "c000000000000000"}, "validFrom": 0},
+      {"op": "assert", "label": "F3", "entityId": "card:3", "entityType": "Card", "attribute": ":card/nums", "value": {"type": "number", "value": 0.1, "bits": "3fb999999999999a"}, "validFrom": 0},
+      {"op": "assert", "label": "F4", "entityId": "card:3", "entityType": "Card", "attribute": ":card/nums", "value": {"type": "number", "value": 1e300, "bits": "7e37e43c8800759c"}, "validFrom": 0},
+      {"op": "assert", "label": "F5", "entityId": "card:3", "entityType": "Card", "attribute": ":card/nums", "value": {"type": "number", "value": 5e-324, "bits": "0000000000000001"}, "validFrom": 0},
+      {"op": "assert", "label": "F6", "entityId": "card:3", "entityType": "Card", "attribute": ":card/nums", "value": {"type": "number", "value": 1.5, "bits": "3ff8000000000000"}, "validFrom": 0},
+      {"op": "assert", "label": "F7", "entityId": "card:3", "entityType": "Card", "attribute": ":card/nums", "value": {"type": "number", "value": 0.30000000000000004, "bits": "3fd3333333333334"}, "validFrom": 0},
+      {"op": "assert", "label": "F8", "entityId": "card:3", "entityType": "Card", "attribute": ":card/nums", "value": {"type": "number", "value": 0.3, "bits": "3fd3333333333333"}, "validFrom": 0}],
+     "expect": {"outcome": "committed"}}
+   ],
+   "queries": [
+    {"id": "Q1", "surface": "EP-REPO", "call": "Repository<Card>.at({ validAt: 10 }).get('card:3')", "compare": "exact (array order significant; bits authoritative)",
+     "expected": {"$id": "card:3", "tags": [], "ints": [], "nums": [
+       {"value": -2.0, "bits": "c000000000000000"}, {"value": 5e-324, "bits": "0000000000000001"}, {"value": 0.1, "bits": "3fb999999999999a"},
+       {"value": 0.3, "bits": "3fd3333333333333"}, {"value": 0.30000000000000004, "bits": "3fd3333333333334"}, {"value": 1.5, "bits": "3ff8000000000000"},
+       {"value": 1e300, "bits": "7e37e43c8800759c"}]},
+     "modelValueNote": "Model values of a number attribute are plain JS numbers; the {value, bits} wrapper is a vector annotation stripped after the bit check (README).",
+     "citations": ["Q8f", "ACC-4.2.11", "ACC-6.1"],
+     "note": "QLever stores decimals with 49 mantissa bits (R2 4.1), so 0.3 and 0.30000000000000004 must come from an exact channel."}
+   ]
+  },
+  {
+   "id": "Q8F-04",
+   "title": "Card-many supports: retracting one of two equal values keeps it; retracting all values leaves an empty array",
+   "contracts": ["G1.schema.cardinality", "R.repo.entity-suite", "R.repo.mutation-controls"],
+   "rulings": ["Q8f"], "planContracts": ["C5.1"], "killsMutants": ["M-DROPPED-SUPPORT", "M-CARD-MANY-DROP"],
+   "lanes": ["xtdb-xtql", "xtdb-sql", "qlever-sparql"], "scope": "fresh", "schema": "S-CARD",
+   "commands": [
+    {"id": "C1", "instant": 100, "meta": {"actor": "golden", "commandId": "q8f-04:C1"}, "ops": [
+      {"op": "assert", "label": "X1", "entityId": "card:4", "entityType": "Card", "attribute": ":card/tags", "value": {"type": "string", "value": "x"}, "validFrom": 0},
+      {"op": "assert", "label": "X2", "entityId": "card:4", "entityType": "Card", "attribute": ":card/tags", "value": {"type": "string", "value": "x"}, "validFrom": 0},
+      {"op": "assert", "label": "Y1", "entityId": "card:4", "entityType": "Card", "attribute": ":card/tags", "value": {"type": "string", "value": "y"}, "validFrom": 0},
+      {"op": "assert", "label": "N1", "entityId": "card:4", "entityType": "Card", "attribute": ":card/name", "value": {"type": "string", "value": "four"}, "validFrom": 0}],
+     "expect": {"outcome": "committed"}},
+    {"id": "C2", "instant": 200, "meta": {"actor": "golden", "commandId": "q8f-04:C2"}, "ops": [{"op": "retract", "id": "$id:X1"}], "expect": {"outcome": "committed"}},
+    {"id": "C3", "instant": 300, "meta": {"actor": "golden", "commandId": "q8f-04:C3"}, "ops": [{"op": "retract", "id": "$id:X2"}], "expect": {"outcome": "committed"}},
+    {"id": "C4", "instant": 400, "meta": {"actor": "golden", "commandId": "q8f-04:C4"}, "ops": [{"op": "retract", "id": "$id:Y1"}], "expect": {"outcome": "committed"}}
+   ],
+   "queries": [
+    {"id": "Q1", "surface": "EP-REPO", "call": "Repository<Card>.at({ recordedAt: 100, validAt: 10 }).get('card:4')", "compare": "exact", "expected": {"$id": "card:4", "name": "four", "tags": ["x", "y"], "ints": [], "nums": []}, "citations": ["Q8f"]},
+    {"id": "Q2", "surface": "EP-REPO", "call": "Repository<Card>.at({ recordedAt: 200, validAt: 10 }).get('card:4')", "compare": "exact", "expected": {"$id": "card:4", "name": "four", "tags": ["x", "y"], "ints": [], "nums": []}, "citations": ["Q8f", "C5.1", "PLANNER-SUPPORTS"]},
+    {"id": "Q3", "surface": "EP-REPO", "call": "Repository<Card>.at({ recordedAt: 300, validAt: 10 }).get('card:4')", "compare": "exact", "expected": {"$id": "card:4", "name": "four", "tags": ["y"], "ints": [], "nums": []}, "citations": ["Q8f"]},
+    {"id": "Q4", "surface": "EP-REPO", "call": "Repository<Card>.at({ recordedAt: 400, validAt: 10 }).get('card:4')", "compare": "exact", "expected": {"$id": "card:4", "name": "four", "tags": [], "ints": [], "nums": []}, "citations": ["R01-D5", "R3-SKETCH-DOC"]},
+    {"id": "Q5", "surface": "EP-NATIVE", "call": "values(':card/tags')", "basis": {"P": "$pos:C2", "validAt": 10}, "compare": "multiset of rows",
+     "expected": [{"entityId": "card:4", "value": {"type": "string", "value": "x"}, "assertionIds": ["$id:X2"], "supports": 1}, {"entityId": "card:4", "value": {"type": "string", "value": "y"}, "assertionIds": ["$id:Y1"], "supports": 1}], "citations": ["C5.5"]}
+   ]
+  },
+  {
+   "id": "Q8F-05",
+   "title": "Card-many binary64 -0.0 and +0.0: same value or two values?",
+   "contracts": ["G1.types.eight-type-roundtrip", "R.repo.entity-suite"],
+   "rulings": ["Q8f", "Q8d"], "killsMutants": ["M-NEGZERO"],
+   "lanes": ["xtdb-xtql", "xtdb-sql", "qlever-sparql"], "scope": "fresh", "schema": "S-CARD",
+   "commands": [
+    {"id": "C1", "instant": 100, "meta": {"actor": "golden", "commandId": "q8f-05:C1"}, "ops": [
+      {"op": "assert", "label": "Z1", "entityId": "card:5", "entityType": "Card", "attribute": ":card/nums", "value": {"type": "number", "value": -0.0, "bits": "8000000000000000"}, "validFrom": 0},
+      {"op": "assert", "label": "Z2", "entityId": "card:5", "entityType": "Card", "attribute": ":card/nums", "value": {"type": "number", "value": 0.0, "bits": "0000000000000000"}, "validFrom": 0}],
+     "expect": {"outcome": "committed"}},
+    {"id": "C2", "instant": 200, "meta": {"actor": "golden", "commandId": "q8f-05:C2"}, "ops": [
+      {"op": "assert", "label": "Z3", "entityId": "card:6", "entityType": "Card", "attribute": ":card/nums", "value": {"type": "number", "value": -0.0, "bits": "8000000000000000"}, "validFrom": 0}],
+     "expect": {"outcome": "committed"}}
+   ],
+   "queries": [
+    {"id": "Q1", "surface": "EP-REPO", "call": "Repository<Card>.at({ validAt: 10 }).get('card:5')", "expected": "AMBIGUOUS", "ambiguity": "AMB-08",
+     "readings": [
+      {"id": "A-bit-identity", "expected": {"$id": "card:5", "tags": [], "ints": [], "nums": [{"value": -0.0, "bits": "8000000000000000"}, {"value": 0.0, "bits": "0000000000000000"}]},
+       "sources": ["ACC-G1-TYPES (bit-exact)", "ACC-4.3 M-NEGZERO", "Q8d (exact typing)"], "note": "order -0 before +0 assumes IEEE totalOrder; Q8f says only 'numeric', under which they tie"},
+      {"id": "B-ieee-equality", "expected": {"$id": "card:5", "tags": [], "ints": [], "nums": ["one zero; which sign survives is undecided"]},
+       "sources": ["Q8f (numeric order, duplicates collapsed)", "Constraint.ts sameMutationValue uses === so -0 and 0 match the same retract-pattern"]}]},
+    {"id": "Q2", "surface": "EP-REPO", "call": "Repository<Card>.at({ validAt: 10 }).get('card:6')", "compare": "exact (bits authoritative)",
+     "expected": {"$id": "card:6", "tags": [], "ints": [], "nums": [{"value": -0.0, "bits": "8000000000000000"}]}, "citations": ["ACC-G1-TYPES", "ACC-6.1", "ACC-4.3"],
+     "note": "a lone -0.0 must keep its sign (M-NEGZERO)"}
+   ]
+  }
+ ]
+}

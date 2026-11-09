@@ -11,20 +11,21 @@ from . import entities as E
 from . import exact as X
 from . import replay as R
 from . import scale as S
+from . import stamps as ST
 from . import values as V
 from . import views as W
 
 CASE_FORMAT = "triplex-db-2/o-replay-case/1"
 OUTPUT_FORMAT = "triplex-db-2/o-replay-expected/1"
-ORACLE_VERSION = "0.4.9"   # EXP-O04b: Q52a-g, Q56f; Q66a-b; Q70a-o (V-O04e-h F7-F15); ACCEPTANCE 0.3.9
+ORACLE_VERSION = "0.5.0"   # EXP-O06: R33 4.3; Q90a, Q90d-f
 SOURCE_FILES = ["__init__.py", "__main__.py", "cli.py", "errors.py", "values.py", "exact.py", "replay.py",
-                "constraints.py", "views.py", "entities.py", "scale.py", "run.py", "selfcheck.py"]
+                "constraints.py", "views.py", "entities.py", "scale.py", "run.py", "selfcheck.py", "stamps.py"]
 
 
 def source_hashes():
     here = Path(__file__).parent
     return V.OrderedOut((name, hashlib.sha256((here / name).read_bytes()).hexdigest())
-                        for name in SOURCE_FILES if (here / name).exists())
+                        for name in SOURCE_FILES)
 
 
 QUERIES = {
@@ -156,6 +157,8 @@ class Run:
                                case.get("defaultScope", "default"), lane=lane or case.get("lane"),
                                lane_ranges=case.get("laneIntegerRanges"),
                                declarations=E.decimal_declarations(self.schemas, case.get("attributeDeclarations")))
+        self.decided = (case.get("adapter") or {}).get("recordTime") == "decided"
+        self.clock_driven = (case.get("adapter") or {}).get("clockDriven", False)
         self.results = {}
         # Q66b / Q70: every query's read record: the read start and scope, its answers per erasure
         # prefix ([(seen [(position, txId)], (key, value))]) and whether commits were in flight, so
@@ -243,8 +246,25 @@ class Run:
             return V.Num.parse(command["clock"], "command clock")
         return None
 
+    def _staged(self, command, rec):
+        # [EXP-O06] Why: valid time is fixed at staging. Rejected: decision instant (R-CMD-3).
+        if self.decided:
+            raw = rec.get("stagedAt") if rec and rec.get("outcome") == "committed" else None
+            if raw is not None:
+                return V.Num.parse(raw, "receipt stagedAt")
+            if command.get("clock") is not None:
+                return V.Num.parse(command["clock"], "command clock")
+            raise V.OracleInputError(f"decided command {command['_index']} needs stagedAt or clock")
+        return self._instant(command, rec)
+
     def _identity(self, state, command, rec, instant):
         ops = command.get("operations") or []
+        staged = self._staged(command, rec)
+        if self.decided and not (rec and rec.get("outcome") == "committed"):
+            group = command.get("physicalGroup")
+            members = [r for r in state.records if group is not None and r.group == group]
+            previous = ST.stamp_of(state.records[-1].instant) if state.records else 0
+            instant = members[0].instant if members else ST.instant_of(ST.next_stamp(previous, staged))
         if rec is not None and rec.get("outcome") == "committed" and rec.get("position") is not None:
             ids = list(rec.get("assertionIds") or [])
             usable = len(ids) == len(ops)
@@ -259,6 +279,7 @@ class Run:
                        for i, op in enumerate(ops)]
                 self._diverge(command["_index"])
             return {"txId": rec.get("txId"), "position": self.ordinals[command["_index"]], "instant": instant,
+                    "stagedAt": staged, "decided": self.decided,
                     "assertionIds": ids, "fromReceipt": True, "coordinate": coordinate_output(rec["position"])}
         position = max(state.last_position, self.next_synth.get(state.name, 0)) + 1
         self.next_synth[state.name] = position
@@ -266,6 +287,7 @@ class Run:
                for i, op in enumerate(ops)]
         return {"txId": f"tx:{command['_index']}", "position": position,
                 "instant": instant if instant is not None else V.Num(float(position)),
+                "stagedAt": staged, "decided": self.decided,
                 "assertionIds": ids, "fromReceipt": False}
 
     # ------------------------------------------------------------------ processing
@@ -307,7 +329,7 @@ class Run:
             return
         instant = self._instant(command, rec)
         try:
-            plan = self._expect(state, command, instant)
+            plan = self._expect(state, command, self._staged(command, rec))
         except R.Rejected as rejection:
             self._record(index, rejection.to_output(), rec)
             return
@@ -336,7 +358,7 @@ class Run:
             rec = recs[m["_index"]]
             instant = self._instant(m, rec)
             try:
-                plan = self._expect(state, m, instant)
+                plan = self._expect(state, m, self._staged(m, rec))
             except R.Rejected as rejection:
                 if not self.receipt_mode:
                     others.append(m)
@@ -362,7 +384,7 @@ class Run:
                 saved = self.engine.sym_ids
                 self.engine.sym_ids = dict(syms)
                 try:
-                    self._expect(probe, m, self._instant(m, rec) or V.Num(0.0))
+                    self._expect(probe, m, self._staged(m, rec) or V.Num(0.0))
                     possible.append(None)
                 except R.Rejected as rejection:
                     possible.append(rejection)
@@ -444,7 +466,7 @@ class Run:
         """Spec item 2 as corrected by the orchestrator and RULINGS Q31c: positions unique
         and increasing in stream order per scope (not necessarily dense), ids unique,
         rejected commands hold no position, no committed receipt on an aborted position.
-        Instants are NOT required to be non-decreasing (runtimes supply their own clocks)."""
+        Legacy instants may decrease; decided lanes follow R-RCP-9 (Q90a)."""
         if not self.receipt_mode:
             return V.OrderedOut([("status", "NOT-APPLICABLE"), ("reason", "no receipts supplied")])
         problems = list(self.violations)
@@ -458,7 +480,8 @@ class Run:
             outcome = rec.get("outcome") if rec.get("outcome") != "unknown" else rec.get("resolvedOutcome")
             scope = command.get("scope") or self.engine.default_scope
             if outcome == "committed":
-                for field in ("txId", "position", "instant"):
+                for field in (("txId", "position", "instant", "stagedAt") if self.decided else
+                              ("txId", "position", "instant")):
                     if rec.get(field) is None:
                         problems.append({"rule": "R-RCP-1", "command": index, "problem": f"committed receipt lacks {field}"})
                 if rec.get("position") is not None:
@@ -486,16 +509,19 @@ class Run:
                                                      "problem": f"assertion id {aid} reused",
                                                      "other": assertion_ids[key]})
                                 assertion_ids[key] = index
-                if command.get("clock") is not None and rec.get("instant") is not None:
-                    if V.Num.parse(command["clock"]) != V.Num.parse(rec["instant"]):
+                clock_field = "stagedAt" if self.decided else "instant"
+                if command.get("clock") is not None and rec.get(clock_field) is not None:
+                    if V.Num.parse(command["clock"]) != V.Num.parse(rec[clock_field]):
                         problems.append({"rule": "R-RCP-7", "command": index,
-                                         "problem": "receipt instant differs from the declared deterministic clock"})
+                                         "problem": f"receipt {clock_field} differs from the declared deterministic clock"})
             elif outcome == "rejected":
                 for field in ("position", "txId"):
                     if rec.get(field) is not None:
                         problems.append({"rule": "R-RCP-2", "command": index, "problem": f"rejected receipt holds {field}"})
                 if any(x is not None for x in rec.get("assertionIds") or []):
                     problems.append({"rule": "R-RCP-2", "command": index, "problem": "rejected receipt holds assertion ids"})
+        if self.decided:
+            problems.extend(self.stamp_consistency(by_scope))
         initial = self.case.get("initialPositions") or {}
         aborted_raw = self.case.get("abortedPositions") or {}
         scopes_out = []
@@ -560,6 +586,47 @@ class Run:
         if scopes_out:
             out.append(("positions", scopes_out))
         return V.OrderedOut(out)
+
+    def stamp_consistency(self, by_scope):
+        problems = []
+        for scope, rows in by_scope.items():
+            previous = reference = 0
+            groups = {}
+            for index, _, command in sorted(rows, key=lambda row: row[1]):
+                rec = self.receipts[index]
+                if rec.get("instant") is None:
+                    continue
+                instant = V.Num.parse(rec["instant"])
+                group = command.get("physicalGroup")
+                unit = ("group", group) if group is not None else ("command", index)
+                try:
+                    stamp = ST.stamp_of(instant)
+                except V.OracleInputError as error:
+                    problems.append({"rule": "R-RCP-9", "command": index, "problem": str(error)})
+                    continue
+                if unit in groups:
+                    original, expected = groups[unit]
+                    if stamp != original:
+                        problems.append({"rule": "R-RCP-9", "command": index,
+                                         "problem": "interior ordinals do not share one stamp"})
+                else:
+                    if stamp <= previous:
+                        problems.append({"rule": "R-RCP-9", "command": index,
+                                         "problem": "distinct transactions are not strictly increasing"})
+                    staged = self._staged(command, rec)
+                    expected = ST.next_stamp(reference, staged)
+                    groups[unit] = (stamp, expected)
+                    previous, reference = stamp, expected
+                if self.clock_driven and stamp != expected:
+                    problems.append({"rule": "R-RCP-7", "command": index,
+                                     "problem": "receipt instant differs from reference decision stamp"})
+                # [EXP-O06] Why: resolution observations reuse one receipt, not another write.
+                # Rejected: relaxing duplicate-command rules (would change R-CMD-7).
+                for replay in rec.get("replays") or []:
+                    if replay.get("instant") is None or V.Num.parse(replay["instant"]) != instant:
+                        problems.append({"rule": "R-RCP-9", "command": index,
+                                         "problem": "lost-ACK replay changed the original instant"})
+        return problems
 
     # ------------------------------------------------------------------ queries
 

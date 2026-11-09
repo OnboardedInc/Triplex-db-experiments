@@ -1,0 +1,69 @@
+{
+ "format": "triplex-db-2/golden-vectors/1",
+ "file": "g10-cursor.json",
+ "status": "DRAFT-UNREVIEWED (EXP-G01)",
+ "derivation": "Hand-derived from Triples.ts (entityPage: complete entity bodies, ordered by entity identity, all read from one exact commit cut), EntityPage.ts (request and snapshot types, limit 1..200 default 50, PaginationCursorError reasons), docs/datalog.md (snapshot-stable pagination) and testkit cursor cases. No Triplex, KV, engine or oracle was run. Conventions: README.md.",
+ "vectors": [
+  {
+   "id": "G10-CUR-01",
+   "title": "One entityPage sequence at a fixed basis survives a concurrent insert and retraction between pages",
+   "contracts": ["G10.cursor.stable", "G9.temporal.recorded-cuts", "R.repo.mutation-controls"],
+   "killsMutants": ["M-CUT-OFF-BY-ONE", "M-STALE-PROJECTION"],
+   "lanes": ["xtdb-xtql", "xtdb-sql", "qlever-sparql"], "scope": "fresh",
+   "readerClock": "every read runs on a reader runtime with deterministic startTime 1000",
+   "commands": [
+    {"id": "C1", "instant": 100, "meta": {"actor": "golden", "commandId": "g10cur01:C1"}, "ops": [
+      {"op": "assert", "label": "Pa", "entityId": "page:a", "entityType": "Page", "attribute": ":page/label", "value": {"type": "string", "value": "A"}, "validFrom": 0},
+      {"op": "assert", "label": "Pb", "entityId": "page:b", "entityType": "Page", "attribute": ":page/label", "value": {"type": "string", "value": "B"}, "validFrom": 0},
+      {"op": "assert", "label": "Pc", "entityId": "page:c", "entityType": "Page", "attribute": ":page/label", "value": {"type": "string", "value": "C"}, "validFrom": 0},
+      {"op": "assert", "label": "Pd", "entityId": "page:d", "entityType": "Page", "attribute": ":page/label", "value": {"type": "string", "value": "D"}, "validFrom": 0},
+      {"op": "assert", "label": "Pe", "entityId": "page:e", "entityType": "Page", "attribute": ":page/label", "value": {"type": "string", "value": "E"}, "validFrom": 0}],
+     "expect": {"outcome": "committed"}},
+    {"id": "C2", "instant": 200, "between": "after page 1 (S1) and before page 2 (S2)", "meta": {"actor": "golden", "commandId": "g10cur01:C2"}, "ops": [
+      {"op": "assert", "label": "Pbb", "entityId": "page:bb", "entityType": "Page", "attribute": ":page/label", "value": {"type": "string", "value": "BB"}, "validFrom": 0},
+      {"op": "retract", "id": "$id:Pd"}],
+     "expect": {"outcome": "committed"},
+     "note": "C2's instant (200) is earlier than the page-1 reader clock (1000), so a recordedAt filter alone cannot keep C2 out of later pages; only the pinned position can."}
+   ],
+   "bodies": {
+    "a": [{"id": "$id:Pa", "entityId": "page:a", "attribute": ":page/label", "value": {"type": "string", "value": "A"}, "recordedAt": 100, "validFrom": 0, "validTo": null, "createdBy": null, "retractedAt": null, "entityType": "Page", "txId": "$tx:C1", "retractTxId": null}],
+    "b": [{"id": "$id:Pb", "entityId": "page:b", "attribute": ":page/label", "value": {"type": "string", "value": "B"}, "recordedAt": 100, "validFrom": 0, "validTo": null, "createdBy": null, "retractedAt": null, "entityType": "Page", "txId": "$tx:C1", "retractTxId": null}],
+    "bb": [{"id": "$id:Pbb", "entityId": "page:bb", "attribute": ":page/label", "value": {"type": "string", "value": "BB"}, "recordedAt": 200, "validFrom": 0, "validTo": null, "createdBy": null, "retractedAt": null, "entityType": "Page", "txId": "$tx:C2", "retractTxId": null}],
+    "c": [{"id": "$id:Pc", "entityId": "page:c", "attribute": ":page/label", "value": {"type": "string", "value": "C"}, "recordedAt": 100, "validFrom": 0, "validTo": null, "createdBy": null, "retractedAt": null, "entityType": "Page", "txId": "$tx:C1", "retractTxId": null}],
+    "d.at-C1": [{"id": "$id:Pd", "entityId": "page:d", "attribute": ":page/label", "value": {"type": "string", "value": "D"}, "recordedAt": 100, "validFrom": 0, "validTo": null, "createdBy": null, "retractedAt": "AMB-01 (null under the snapshot reading, 200 under the raw-lifetime reading)", "entityType": "Page", "txId": "$tx:C1", "retractTxId": "AMB-01 (null or $tx:C2)"}],
+    "e": [{"id": "$id:Pe", "entityId": "page:e", "attribute": ":page/label", "value": {"type": "string", "value": "E"}, "recordedAt": 100, "validFrom": 0, "validTo": null, "createdBy": null, "retractedAt": null, "entityType": "Page", "txId": "$tx:C1", "retractTxId": null}]
+   },
+   "queries": [
+    {"id": "S1", "surface": "EP-TRIPLES", "call": "Triples.entityPage({ entityType: 'Page', limit: 2, basis: { validAt: 50 } })", "runs": "after C1, before C2",
+     "compare": "entities ordered; each body multiset-by-id; schemaVersion ignored; nextCursor presence only",
+     "expected": {"entities": ["@bodies.a", "@bodies.b"], "snapshot": {"recordedAt": 1000, "recordedPosition": "$pos:C1", "validAt": 50}, "nextCursor": "present"},
+     "citations": ["TRIPLES-TS-ENTITYPAGE-DOC", "ENTITYPAGE-TS"], "grounding": "snapshot.recordedAt = reader clock when the request omits recordedAt is derived from EntityPage.ts prepareEntityPage"},
+    {"id": "S2", "surface": "EP-TRIPLES", "call": "Triples.entityPage({ entityType: 'Page', limit: 2, cursor: S1.nextCursor })", "runs": "after C2",
+     "compare": "as S1",
+     "expected": {"entities": ["@bodies.c", "@bodies.d.at-C1"], "snapshot": {"recordedAt": 1000, "recordedPosition": "$pos:C1", "validAt": 50}, "nextCursor": "present"},
+     "citations": ["TRIPLES-TS-ENTITYPAGE-DOC (one exact commit cut)", "DOCS-DATALOG-PAGINATION (later assertions and retractions cannot move rows between pages)", "ACC-G10-CURSOR"],
+     "note": "page:bb (C2) does not appear and page:d (retracted by C2) still appears. page:d's retirement fields at this cut follow AMB-01, because entityPage returns ordinary Triple bodies."},
+    {"id": "S3", "surface": "EP-TRIPLES", "call": "Triples.entityPage({ entityType: 'Page', limit: 2, cursor: S2.nextCursor })",
+     "compare": "as S1", "expected": {"entities": ["@bodies.e"], "snapshot": {"recordedAt": 1000, "recordedPosition": "$pos:C1", "validAt": 50}, "nextCursor": "absent"},
+     "citations": ["TRIPLES-TS-ENTITYPAGE-DOC"], "note": "a short last page ends the sequence; whether a full last page also omits nextCursor is not exercised"},
+    {"id": "F1", "surface": "EP-TRIPLES", "call": "fresh sequence after C2: Triples.entityPage({ entityType: 'Page', limit: 2, basis: { validAt: 50 } }) and its continuations",
+     "compare": "as S1 per page",
+     "expected": [{"entities": ["@bodies.a", "@bodies.b"], "nextCursor": "present"}, {"entities": ["@bodies.bb", "@bodies.c"], "nextCursor": "present"}, {"entities": ["@bodies.e"], "nextCursor": "absent"}],
+     "expectedSnapshot": {"recordedAt": 1000, "recordedPosition": "$pos:C2", "validAt": 50},
+     "citations": ["TRIPLES-TS-ENTITYPAGE-DOC"], "note": "ASCII ids: codepoint, UTF-16 and byte order agree; page:bb sorts between page:b and page:c"},
+    {"id": "H1", "surface": "EP-TRIPLES", "call": "historical sequence after C2: Triples.entityPage({ entityType: 'Page', limit: 2, basis: { recordedAt: 150, validAt: 50 } }) and its continuations",
+     "compare": "as S1 per page",
+     "expected": [{"entities": ["@bodies.a", "@bodies.b"], "nextCursor": "present"}, {"entities": ["@bodies.c", "@bodies.d.at-C1"], "nextCursor": "present"}, {"entities": ["@bodies.e"], "nextCursor": "absent"}],
+     "expectedSnapshot": {"recordedAt": 150, "recordedPosition": "$pos:C2", "validAt": 50},
+     "citations": ["TK-HIST-CURSOR (historical cursor pages intersect recorded time and the commit snapshot)", "ACC-4.2.5"],
+     "note": "recordedAt 150 excludes C2's assertion and C2's retraction even though the captured position includes C2"},
+    {"id": "E1", "surface": "EP-TRIPLES", "call": "Triples.entityPage({ entityType: 'Page', limit: 2, cursor: S1.nextCursor, basis: { validAt: 51 } })",
+     "expectedError": {"_tag": "PaginationCursorError", "reason": "basis_mismatch"}, "citations": ["ENTITYPAGE-TS", "DOCS-DATALOG-PAGINATION"]},
+    {"id": "E2", "surface": "EP-TRIPLES", "call": "Triples.entityPage({ entityType: 'Other', limit: 2, cursor: S1.nextCursor })",
+     "expectedError": {"_tag": "PaginationCursorError", "reason": "query_mismatch"}, "citations": ["ENTITYPAGE-TS"]},
+    {"id": "E3", "surface": "EP-TRIPLES", "call": "Triples.entityPage({ entityType: 'Page', limit: 0 }) and ({ ..., limit: 201 })",
+     "expectedError": {"_tag": "PaginationCursorError", "reason": "malformed"}, "citations": ["ENTITYPAGE-TS (limit must be between 1 and 200)"]}
+   ]
+  }
+ ]
+}

@@ -1,0 +1,107 @@
+[
+  {
+    "label": "baseline-unit",
+    "command": [
+      "python3",
+      "-I",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/experiments/EXP-O06/evidence/baseline-source/lab/oracles/replay/cli.py",
+      "--test"
+    ],
+    "environment": {},
+    "exit": 1,
+    "expectedExit": 1
+  },
+  {
+    "label": "unit-final",
+    "command": [
+      "python3",
+      "-I",
+      "lab/oracles/replay/cli.py",
+      "--test"
+    ],
+    "environment": {},
+    "exit": 1,
+    "expectedExit": 1
+  },
+  {
+    "label": "selfcheck-final",
+    "command": [
+      "python3",
+      "-I",
+      "lab/oracles/replay/cli.py",
+      "--self-check"
+    ],
+    "environment": {},
+    "exit": 0,
+    "expectedExit": 0
+  },
+  {
+    "label": "fixtures-final",
+    "command": [
+      "python3",
+      "-I",
+      "lab/experiments/EXP-O06/fixture_runner.py"
+    ],
+    "environment": {},
+    "exit": 0,
+    "expectedExit": 0
+  },
+  {
+    "label": "final-core-bound",
+    "command": [
+      "python3",
+      "-I",
+      "lab/experiments/EXP-O06/golden_runner.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/experiments/EXP-O06/evidence/final-core-bound"
+    ],
+    "environment": {
+      "O02_LANE": "core"
+    },
+    "exit": 0,
+    "expectedExit": 0
+  },
+  {
+    "label": "updated-core-bound",
+    "command": [
+      "python3",
+      "-I",
+      "lab/experiments/EXP-O06/golden_runner.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/experiments/EXP-O06/evidence/updated-core-bound"
+    ],
+    "environment": {
+      "O02_LANE": "core",
+      "O06_GOLD": "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/acceptance/golden"
+    },
+    "exit": 0,
+    "expectedExit": 0
+  },
+  {
+    "label": "final-qlever-bound",
+    "command": [
+      "python3",
+      "-I",
+      "lab/experiments/EXP-O06/golden_runner.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/experiments/EXP-O06/evidence/final-qlever-bound"
+    ],
+    "environment": {
+      "O02_LANE": "qlever"
+    },
+    "exit": 0,
+    "expectedExit": 0
+  },
+  {
+    "label": "updated-qlever-bound",
+    "command": [
+      "python3",
+      "-I",
+      "lab/experiments/EXP-O06/golden_runner.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/experiments/EXP-O06/evidence/updated-qlever-bound"
+    ],
+    "environment": {
+      "O02_LANE": "qlever",
+      "O06_GOLD": "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/acceptance/golden"
+    },
+    "exit": 0,
+    "expectedExit": 0
+  }
+]

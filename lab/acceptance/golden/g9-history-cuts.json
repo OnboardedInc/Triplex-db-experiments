@@ -108,43 +108,44 @@
    ]
   },
   {
-   "id": "G9-CUT-02",
-   "title": "Same-R control: two distinct commits share one recorded instant; P separates them, R cannot",
+   "id": "G9-CUT-02b",
+   "title": "Equal staging clocks, distinct decision stamps; R pins either transaction exactly",
    "contracts": ["G9.temporal.recorded-cuts", "G9.history.snapshot-metadata", "G9.history.raw-lifetime-compat"],
    "killsMutants": ["M-CUT-OFF-BY-ONE", "M-FUTURE-RETIREMENT"],
    "lanes": ["xtdb-xtql", "xtdb-sql", "qlever-sparql"],
    "scope": "fresh",
+   "adapter": {"recordTime": "decided", "clockDriven": true},
    "commands": [
-    {"id": "D1", "instant": 500, "meta": {"actor": "golden", "commandId": "g9cut02:D1"},
+    {"id": "D1", "stagedAt": 500, "instant": 500, "meta": {"actor": "golden", "commandId": "g9cut02:D1"},
      "ops": [{"op": "assert", "label": "B1", "entityId": "s:1", "entityType": "SameR", "attribute": ":s/v", "value": {"type": "string", "value": "x"}, "validFrom": 0}],
      "expect": {"outcome": "committed", "instant": 500}},
-    {"id": "D2", "instant": 500, "meta": {"actor": "golden", "commandId": "g9cut02:D2"},
+    {"id": "D2", "stagedAt": 500, "instant": 500.001, "meta": {"actor": "golden", "commandId": "g9cut02:D2"},
      "ops": [{"op": "retract", "id": "$id:B1"},
              {"op": "assert", "label": "B2", "entityId": "s:1", "entityType": "SameR", "attribute": ":s/v", "value": {"type": "string", "value": "y"}, "validFrom": 0}],
-     "expect": {"outcome": "committed", "instant": 500, "positionGreaterThan": "$pos:D1"}}
+     "expect": {"outcome": "committed", "instant": 500.001, "positionGreaterThan": "$pos:D1"}}
    ],
    "renderings": {
-    "B1.raw": {"id": "$id:B1", "entityId": "s:1", "attribute": ":s/v", "value": {"type": "string", "value": "x"}, "recordedAt": 500, "validFrom": 0, "validTo": null, "createdBy": null, "retractedAt": 500, "entityType": "SameR", "txId": "$tx:D1", "retractTxId": "$tx:D2"},
-    "B2": {"id": "$id:B2", "entityId": "s:1", "attribute": ":s/v", "value": {"type": "string", "value": "y"}, "recordedAt": 500, "validFrom": 0, "validTo": null, "createdBy": null, "retractedAt": null, "entityType": "SameR", "txId": "$tx:D2", "retractTxId": null}
+    "B1.raw": {"id": "$id:B1", "entityId": "s:1", "attribute": ":s/v", "value": {"type": "string", "value": "x"}, "recordedAt": 500, "validFrom": 0, "validTo": null, "createdBy": null, "retractedAt": 500.001, "entityType": "SameR", "txId": "$tx:D1", "retractTxId": "$tx:D2"},
+    "B2": {"id": "$id:B2", "entityId": "s:1", "attribute": ":s/v", "value": {"type": "string", "value": "y"}, "recordedAt": 500.001, "validFrom": 0, "validTo": null, "createdBy": null, "retractedAt": null, "entityType": "SameR", "txId": "$tx:D2", "retractTxId": null}
    },
    "queries": [
-    {"id": "Q1", "surface": "EP-TRIPLES", "call": "Triples.match({ entityId: 's:1' }, basis)", "basis": {"recordedAt": 500, "validAt": 10}, "compare": "multiset-by-id", "expected": ["@B2"],
-     "citations": ["ACC-4.2.5", "HAM-V2-INCL", "HAM-SAME-R"]},
+    {"id": "Q1", "surface": "EP-TRIPLES", "call": "Triples.match({ entityId: 's:1' }, basis)", "basis": {"recordedAt": 500, "validAt": 10}, "compare": "multiset-by-id", "expected": ["@B1.raw"],
+     "citations": ["ACC-4.2.5", "HAM-V2-INCL", "R33-4.3 / Q90f"]},
     {"id": "Q2", "surface": "EP-TRIPLES", "call": "Triples.match({ entityId: 's:1' }, basis)", "basis": {"recordedAt": 499.99999999999994, "validAt": 10}, "compare": "exact", "expected": [], "citations": ["ACC-4.2.5"]},
     {"id": "Q3", "surface": "EP-TRIPLES", "call": "Triples.history('s:1')", "basis": null, "historyContract": "raw-lifetime", "compare": "multiset-by-id", "expected": ["@B1.raw", "@B2"], "citations": ["TRIPLES-TS-HISTORY", "ACC-G9-RAW"]},
-    {"id": "Q4", "surface": "EP-TRIPLES", "call": "Triples.queryAll({ find: ['?v'], where: [['s:1', ':s/v', '?v']] }, { basis, includeBasis: true })", "basis": {"recordedAt": 500, "validAt": 10},
-     "compare": "results as set; basis exact", "expected": {"results": [{"?v": "y"}], "basis": {"scope": "<fresh scope>", "recordedPosition": "$pos:D2", "recordedAt": 500, "validAt": 10}},
+    {"id": "Q4", "surface": "EP-TRIPLES", "call": "Triples.queryAll({ find: ['?v'], where: [['s:1', ':s/v', '?v']] }, { basis, includeBasis: true })", "basis": {"recordedAt": 500.001, "validAt": 10},
+     "compare": "results as set; basis exact", "expected": {"results": [{"?v": "y"}], "basis": {"scope": "<fresh scope>", "recordedPosition": "$pos:D2", "recordedAt": 500.001, "validAt": 10}},
      "citations": ["TEMPORAL-TS", "DOCS-DATALOG-BASIS", "V4-REVIEW-P"]},
     {"id": "N1", "surface": "EP-NATIVE", "call": "native history relation, entity_id = 's:1'", "basis": {"P": "$pos:D1", "recordedAt": 500, "validAt": 10}, "historyContract": "as-of-snapshot (known-at-cut)",
      "compare": "multiset-by-identity", "columns": ["identity", "retractedAt", "retractedPosition", "retractTxId"], "expected": [["B1", null, null, null]],
-     "citations": ["R6-3.1", "HAM-SAME-R", "XTDB-README-HIST"],
-     "note": "The interior cut P=$pos:D1 at the shared instant shows the old value and no retirement, although retractedAt (500) <= R."},
-    {"id": "N2", "surface": "EP-NATIVE", "call": "native history relation, entity_id = 's:1'", "basis": {"P": "$pos:D2", "recordedAt": 500, "validAt": 10}, "historyContract": "as-of-snapshot (known-at-cut)",
-     "compare": "multiset-by-identity", "columns": ["identity", "retractedAt", "retractedPosition", "retractTxId"], "expected": [["B1", 500, "$pos:D2", "$tx:D2"], ["B2", null, null, null]], "citations": ["R6-3.1", "HAM-SAME-R"]},
+     "citations": ["R6-3.1", "R33-4.3 / Q90f", "XTDB-README-HIST"],
+     "note": "P and R pin D1; D2 has a strictly greater decision instant."},
+    {"id": "N2", "surface": "EP-NATIVE", "call": "native history relation, entity_id = 's:1'", "basis": {"P": "$pos:D2", "recordedAt": 500.001, "validAt": 10}, "historyContract": "as-of-snapshot (known-at-cut)",
+     "compare": "multiset-by-identity", "columns": ["identity", "retractedAt", "retractedPosition", "retractTxId"], "expected": [["B1", 500.001, "$pos:D2", "$tx:D2"], ["B2", null, null, null]], "citations": ["R6-3.1", "R33-4.3 / Q90f"]},
     {"id": "F1", "surface": "EP-NATIVE", "call": "native facts relation, entity_id = 's:1'", "basis": {"P": "$pos:D1", "recordedAt": 500, "validAt": 10}, "historyContract": "as-of-snapshot (live-at-valid)",
-     "compare": "multiset-by-identity", "columns": ["identity", "retractedAt", "retractedPosition", "retractTxId"], "expected": [["B1", null, null, null]], "citations": ["HAM-SAME-R", "ACC-4.2.5"]},
-    {"id": "F2", "surface": "EP-NATIVE", "call": "native facts relation, entity_id = 's:1'", "basis": {"P": "$pos:D2", "recordedAt": 500, "validAt": 10}, "historyContract": "as-of-snapshot (live-at-valid)",
-     "compare": "multiset-by-identity", "columns": ["identity", "retractedAt", "retractedPosition", "retractTxId"], "expected": [["B2", null, null, null]], "citations": ["HAM-SAME-R", "ACC-4.2.5"]}
+     "compare": "multiset-by-identity", "columns": ["identity", "retractedAt", "retractedPosition", "retractTxId"], "expected": [["B1", null, null, null]], "citations": ["R33-4.3 / Q90f", "ACC-4.2.5"]},
+    {"id": "F2", "surface": "EP-NATIVE", "call": "native facts relation, entity_id = 's:1'", "basis": {"P": "$pos:D2", "recordedAt": 500.001, "validAt": 10}, "historyContract": "as-of-snapshot (live-at-valid)",
+     "compare": "multiset-by-identity", "columns": ["identity", "retractedAt", "retractedPosition", "retractTxId"], "expected": [["B2", null, null, null]], "citations": ["R33-4.3 / Q90f", "ACC-4.2.5"]}
    ]
   }
  ]
