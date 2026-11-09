@@ -1,0 +1,148 @@
+TAP version 13
+# Subtest: golden and fresh helper binding reproduces both captured failures and current engine has no unbound names
+not ok 1 - golden and fresh helper binding reproduces both captured failures and current engine has no unbound names
+  ---
+  duration_ms: 1039.262166
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/k01/lab/bench/test/engine-binding.test.ts:31:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    3 !== 2
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 2
+  actual: 3
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/k01/lab/bench/test/engine-binding.test.ts:41:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: captured failure bytes bind this absent-table fixture
+ok 2 - captured failure bytes bind this absent-table fixture
+  ---
+  duration_ms: 1.471584
+  type: 'test'
+  ...
+# Subtest: all declared tables and columns have explicit seed policies; catalog-certified absence pins
+ok 3 - all declared tables and columns have explicit seed policies; catalog-certified absence pins
+  ---
+  duration_ms: 7.5245
+  type: 'test'
+  ...
+# Subtest: catalog/table policy refuses wrong content: tx_assertions
+ok 4 - catalog/table policy refuses wrong content: tx_assertions
+  ---
+  duration_ms: 0.326292
+  type: 'test'
+  ...
+# Subtest: catalog/table policy refuses wrong content: tx_attempts
+ok 5 - catalog/table policy refuses wrong content: tx_attempts
+  ---
+  duration_ms: 0.274375
+  type: 'test'
+  ...
+# Subtest: catalog/table policy refuses wrong content: tx_claims
+ok 6 - catalog/table policy refuses wrong content: tx_claims
+  ---
+  duration_ms: 0.346959
+  type: 'test'
+  ...
+# Subtest: catalog/table policy refuses wrong content: tx_constraint_generations
+ok 7 - catalog/table policy refuses wrong content: tx_constraint_generations
+  ---
+  duration_ms: 0.312
+  type: 'test'
+  ...
+# Subtest: catalog/table policy refuses wrong content: tx_constraint_graphs
+ok 8 - catalog/table policy refuses wrong content: tx_constraint_graphs
+  ---
+  duration_ms: 0.38225
+  type: 'test'
+  ...
+# Subtest: catalog/table policy refuses wrong content: tx_meta
+ok 9 - catalog/table policy refuses wrong content: tx_meta
+  ---
+  duration_ms: 0.339583
+  type: 'test'
+  ...
+# Subtest: catalog/table policy refuses wrong content: tx_native_relation_attempts
+ok 10 - catalog/table policy refuses wrong content: tx_native_relation_attempts
+  ---
+  duration_ms: 0.691166
+  type: 'test'
+  ...
+# Subtest: catalog/table policy refuses wrong content: tx_native_relations
+ok 11 - catalog/table policy refuses wrong content: tx_native_relations
+  ---
+  duration_ms: 0.657584
+  type: 'test'
+  ...
+# Subtest: catalog/table policy refuses wrong content: tx_query_generations
+ok 12 - catalog/table policy refuses wrong content: tx_query_generations
+  ---
+  duration_ms: 0.522959
+  type: 'test'
+  ...
+# Subtest: catalog/table policy refuses wrong content: tx_query_members
+ok 13 - catalog/table policy refuses wrong content: tx_query_members
+  ---
+  duration_ms: 0.744125
+  type: 'test'
+  ...
+# Subtest: catalog/table policy refuses wrong content: tx_query_relations
+ok 14 - catalog/table policy refuses wrong content: tx_query_relations
+  ---
+  duration_ms: 0.910792
+  type: 'test'
+  ...
+# Subtest: absent nullable column and present NULL column agree; non-NULL refuses
+ok 15 - absent nullable column and present NULL column agree; non-NULL refuses
+  ---
+  duration_ms: 2.032625
+  type: 'test'
+  ...
+# Subtest: every required column requires catalog presence and an observed non-NULL value
+ok 16 - every required column requires catalog presence and an observed non-NULL value
+  ---
+  duration_ms: 10.459
+  type: 'test'
+  ...
+# Subtest: catalog mutation, incomplete policy and unavailable inventory refuse
+ok 17 - catalog mutation, incomplete policy and unavailable inventory refuse
+  ---
+  duration_ms: 1.0625
+  type: 'test'
+  ...
+# Subtest: typed catalog rejects malformed/partial/duplicate/contradictory observations
+ok 18 - typed catalog rejects malformed/partial/duplicate/contradictory observations
+  ---
+  duration_ms: 0.18525
+  type: 'test'
+  ...
+# Subtest: production SQL reader does not plan a query for any catalog-absent table
+ok 19 - production SQL reader does not plan a query for any catalog-absent table
+  ---
+  duration_ms: 27.433417
+  type: 'test'
+  ...
+# Subtest: every declared NULL-only seed column refuses a non-NULL value
+ok 20 - every declared NULL-only seed column refuses a non-NULL value
+  ---
+  duration_ms: 0.685625
+  type: 'test'
+  ...
+1..20
+# tests 20
+# suites 0
+# pass 19
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1306.264875

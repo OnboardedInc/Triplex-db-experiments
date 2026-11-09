@@ -1,0 +1,736 @@
+TAP version 13
+# Subtest: captured command inputs reproduce the old count refusal, corrected count pins real public journal rows
+ok 1 - captured command inputs reproduce the old count refusal, corrected count pins real public journal rows
+  ---
+  duration_ms: 2497.431666
+  type: 'test'
+  ...
+# Subtest: retract/assert in one transaction retains the old physical row and journals both changes
+ok 2 - retract/assert in one transaction retains the old physical row and journals both changes
+  ---
+  duration_ms: 0.931792
+  type: 'test'
+  ...
+# Subtest: input partition count agrees with actual seed writer (1, 400)
+ok 3 - input partition count agrees with actual seed writer (1, 400)
+  ---
+  duration_ms: 36.547542
+  type: 'test'
+  ...
+# Subtest: input partition count agrees with actual seed writer (23, 400)
+ok 4 - input partition count agrees with actual seed writer (23, 400)
+  ---
+  duration_ms: 37.1105
+  type: 'test'
+  ...
+# Subtest: input partition count agrees with actual seed writer (21, 7)
+ok 5 - input partition count agrees with actual seed writer (21, 7)
+  ---
+  duration_ms: 62.220958
+  type: 'test'
+  ...
+# Subtest: count oracle rejects missing or invalid partition inputs
+ok 6 - count oracle rejects missing or invalid partition inputs
+  ---
+  duration_ms: 0.166125
+  type: 'test'
+  ...
+# Subtest: same content in another physical order grants only on fresh read
+ok 7 - same content in another physical order grants only on fresh read
+  ---
+  duration_ms: 8.800542
+  type: 'test'
+  ...
+# Subtest: G0 refuses changed
+ok 8 - G0 refuses changed
+  ---
+  duration_ms: 1.240375
+  type: 'test'
+  ...
+# Subtest: G0 refuses dropped
+ok 9 - G0 refuses dropped
+  ---
+  duration_ms: 0.600417
+  type: 'test'
+  ...
+# Subtest: G0 refuses missing-subject
+ok 10 - G0 refuses missing-subject
+  ---
+  duration_ms: 0.605958
+  type: 'test'
+  ...
+# Subtest: G0 refuses empty
+ok 11 - G0 refuses empty
+  ---
+  duration_ms: 0.730084
+  type: 'test'
+  ...
+# Subtest: G0 refuses missing-field
+ok 12 - G0 refuses missing-field
+  ---
+  duration_ms: 0.571584
+  type: 'test'
+  ...
+# Subtest: G0 refuses historical-position
+ok 13 - G0 refuses historical-position
+  ---
+  duration_ms: 1.053666
+  type: 'test'
+  ...
+# Subtest: G0 refuses retracted-position
+ok 14 - G0 refuses retracted-position
+  ---
+  duration_ms: 0.93825
+  type: 'test'
+  ...
+# Subtest: G0 refuses value
+ok 15 - G0 refuses value
+  ---
+  duration_ms: 1.229541
+  type: 'test'
+  ...
+# Subtest: G0 refuses extra
+ok 16 - G0 refuses extra
+  ---
+  duration_ms: 0.786166
+  type: 'test'
+  ...
+# Subtest: G0 binding/acquisition refuses foreign
+ok 17 - G0 binding/acquisition refuses foreign
+  ---
+  duration_ms: 0.603084
+  type: 'test'
+  ...
+# Subtest: G0 binding/acquisition refuses wrong-position
+ok 18 - G0 binding/acquisition refuses wrong-position
+  ---
+  duration_ms: 0.490375
+  type: 'test'
+  ...
+# Subtest: G0 binding/acquisition refuses wrong-count
+ok 19 - G0 binding/acquisition refuses wrong-count
+  ---
+  duration_ms: 0.443958
+  type: 'test'
+  ...
+# Subtest: G0 binding/acquisition refuses partial-count
+ok 20 - G0 binding/acquisition refuses partial-count
+  ---
+  duration_ms: 0.4785
+  type: 'test'
+  ...
+# Subtest: G0 binding/acquisition refuses wrong-scope
+ok 21 - G0 binding/acquisition refuses wrong-scope
+  ---
+  duration_ms: 0.455833
+  type: 'test'
+  ...
+# Subtest: G0 binding/acquisition refuses wrong-pin
+ok 22 - G0 binding/acquisition refuses wrong-pin
+  ---
+  duration_ms: 0.866583
+  type: 'test'
+  ...
+# Subtest: G0 binding/acquisition refuses missing-pin
+ok 23 - G0 binding/acquisition refuses missing-pin
+  ---
+  duration_ms: 0.630916
+  type: 'test'
+  ...
+# Subtest: G0 binding/acquisition refuses late
+ok 24 - G0 binding/acquisition refuses late
+  ---
+  duration_ms: 27.246917
+  type: 'test'
+  ...
+# Subtest: G0 binding/acquisition refuses failed
+ok 25 - G0 binding/acquisition refuses failed
+  ---
+  duration_ms: 0.787583
+  type: 'test'
+  ...
+# Subtest: G0 never grants from diagnostics or a cached external PASS
+ok 26 - G0 never grants from diagnostics or a cached external PASS
+  ---
+  duration_ms: 0.869417
+  type: 'test'
+  ...
+# Subtest: W0 requires the independent oracle and checks every digest
+ok 27 - W0 requires the independent oracle and checks every digest
+  ---
+  duration_ms: 0.65875
+  type: 'test'
+  ...
+# Subtest: wiring: driver reads G0 on its writer endpoint before worker/warm-up creation
+ok 28 - wiring: driver reads G0 on its writer endpoint before worker/warm-up creation
+  ---
+  duration_ms: 0.874709
+  type: 'test'
+  ...
+# Subtest: seed identity: refuse changed generators and stale or expanded adapter builds
+ok 29 - seed identity: refuse changed generators and stale or expanded adapter builds
+  ---
+  duration_ms: 9.743959
+  type: 'test'
+  ...
+# Subtest: W0 admission reads the measured fingerprint anew and refuses oracle drift
+ok 30 - W0 admission reads the measured fingerprint anew and refuses oracle drift
+  ---
+  duration_ms: 1.477625
+  type: 'test'
+  ...
+# Subtest: wiring: the source pins D before any freeze and unprepared XTDB runs refuse
+ok 31 - wiring: the source pins D before any freeze and unprepared XTDB runs refuse
+  ---
+  duration_ms: 0.472375
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions._id
+ok 32 - full schema refuses changed tx_assertions._id
+  ---
+  duration_ms: 1.007375
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.scope_key
+ok 33 - full schema refuses changed tx_assertions.scope_key
+  ---
+  duration_ms: 1.1105
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.id
+ok 34 - full schema refuses changed tx_assertions.id
+  ---
+  duration_ms: 2.8625
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.entity_id
+ok 35 - full schema refuses changed tx_assertions.entity_id
+  ---
+  duration_ms: 0.602667
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.attribute
+ok 36 - full schema refuses changed tx_assertions.attribute
+  ---
+  duration_ms: 0.48875
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.value_type
+ok 37 - full schema refuses changed tx_assertions.value_type
+  ---
+  duration_ms: 0.501125
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.value_string
+ok 38 - full schema refuses changed tx_assertions.value_string
+  ---
+  duration_ms: 0.473375
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.value_number
+ok 39 - full schema refuses changed tx_assertions.value_number
+  ---
+  duration_ms: 0.471166
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.value_boolean
+ok 40 - full schema refuses changed tx_assertions.value_boolean
+  ---
+  duration_ms: 0.627917
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.value_datetime
+ok 41 - full schema refuses changed tx_assertions.value_datetime
+  ---
+  duration_ms: 0.548792
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.value_json
+ok 42 - full schema refuses changed tx_assertions.value_json
+  ---
+  duration_ms: 0.47675
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.recorded_at
+ok 43 - full schema refuses changed tx_assertions.recorded_at
+  ---
+  duration_ms: 0.452417
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.recorded_position
+ok 44 - full schema refuses changed tx_assertions.recorded_position
+  ---
+  duration_ms: 0.465667
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.valid_from
+ok 45 - full schema refuses changed tx_assertions.valid_from
+  ---
+  duration_ms: 0.441209
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.valid_to
+ok 46 - full schema refuses changed tx_assertions.valid_to
+  ---
+  duration_ms: 0.476875
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.created_by
+ok 47 - full schema refuses changed tx_assertions.created_by
+  ---
+  duration_ms: 0.559541
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.retracted_at
+ok 48 - full schema refuses changed tx_assertions.retracted_at
+  ---
+  duration_ms: 0.500125
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.retracted_position
+ok 49 - full schema refuses changed tx_assertions.retracted_position
+  ---
+  duration_ms: 0.494917
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.retract_tx_id
+ok 50 - full schema refuses changed tx_assertions.retract_tx_id
+  ---
+  duration_ms: 0.5115
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.entity_type
+ok 51 - full schema refuses changed tx_assertions.entity_type
+  ---
+  duration_ms: 0.509916
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.schema_version
+ok 52 - full schema refuses changed tx_assertions.schema_version
+  ---
+  duration_ms: 0.529959
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.tx_id
+ok 53 - full schema refuses changed tx_assertions.tx_id
+  ---
+  duration_ms: 0.542083
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.value_identity
+ok 54 - full schema refuses changed tx_assertions.value_identity
+  ---
+  duration_ms: 0.517291
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_attempts._id
+ok 55 - full schema refuses changed tx_attempts._id
+  ---
+  duration_ms: 0.517792
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_attempts.scope_key
+ok 56 - full schema refuses changed tx_attempts.scope_key
+  ---
+  duration_ms: 0.516
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_attempts.operation_id
+ok 57 - full schema refuses changed tx_attempts.operation_id
+  ---
+  duration_ms: 0.529792
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_attempts.attempt_id
+ok 58 - full schema refuses changed tx_attempts.attempt_id
+  ---
+  duration_ms: 1.667208
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_attempts.position
+ok 59 - full schema refuses changed tx_attempts.position
+  ---
+  duration_ms: 0.460167
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_claims._id
+ok 60 - full schema refuses changed tx_claims._id
+  ---
+  duration_ms: 0.453292
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_claims.scope_key
+ok 61 - full schema refuses changed tx_claims.scope_key
+  ---
+  duration_ms: 0.457041
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_claims.command_id
+ok 62 - full schema refuses changed tx_claims.command_id
+  ---
+  duration_ms: 0.450416
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_claims.tx_id
+ok 63 - full schema refuses changed tx_claims.tx_id
+  ---
+  duration_ms: 0.441458
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_claims.recorded_at
+ok 64 - full schema refuses changed tx_claims.recorded_at
+  ---
+  duration_ms: 0.438083
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_claims.position
+ok 65 - full schema refuses changed tx_claims.position
+  ---
+  duration_ms: 0.446791
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_generations._id
+ok 66 - full schema refuses changed tx_constraint_generations._id
+  ---
+  duration_ms: 0.492167
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_generations.scope_key
+ok 67 - full schema refuses changed tx_constraint_generations.scope_key
+  ---
+  duration_ms: 0.703209
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_generations.run_id
+ok 68 - full schema refuses changed tx_constraint_generations.run_id
+  ---
+  duration_ms: 0.44
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_generations.source_k
+ok 69 - full schema refuses changed tx_constraint_generations.source_k
+  ---
+  duration_ms: 0.435209
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_graphs._id
+ok 70 - full schema refuses changed tx_constraint_graphs._id
+  ---
+  duration_ms: 0.497708
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_graphs.scope_key
+ok 71 - full schema refuses changed tx_constraint_graphs.scope_key
+  ---
+  duration_ms: 0.5135
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_graphs.run_id
+ok 72 - full schema refuses changed tx_constraint_graphs.run_id
+  ---
+  duration_ms: 0.509208
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_graphs.phase
+ok 73 - full schema refuses changed tx_constraint_graphs.phase
+  ---
+  duration_ms: 0.486875
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_graphs.id
+ok 74 - full schema refuses changed tx_constraint_graphs.id
+  ---
+  duration_ms: 0.497667
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_graphs.entity_id
+ok 75 - full schema refuses changed tx_constraint_graphs.entity_id
+  ---
+  duration_ms: 0.494666
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_graphs.attribute
+ok 76 - full schema refuses changed tx_constraint_graphs.attribute
+  ---
+  duration_ms: 0.508584
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_graphs.entity_type
+ok 77 - full schema refuses changed tx_constraint_graphs.entity_type
+  ---
+  duration_ms: 0.493084
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_graphs.valid_from
+ok 78 - full schema refuses changed tx_constraint_graphs.valid_from
+  ---
+  duration_ms: 0.490875
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_graphs.valid_to
+ok 79 - full schema refuses changed tx_constraint_graphs.valid_to
+  ---
+  duration_ms: 0.513
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_graphs.value_type
+ok 80 - full schema refuses changed tx_constraint_graphs.value_type
+  ---
+  duration_ms: 4.100708
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_graphs.value_string
+ok 81 - full schema refuses changed tx_constraint_graphs.value_string
+  ---
+  duration_ms: 0.548
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_graphs.value_number
+ok 82 - full schema refuses changed tx_constraint_graphs.value_number
+  ---
+  duration_ms: 0.492208
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_graphs.value_boolean
+ok 83 - full schema refuses changed tx_constraint_graphs.value_boolean
+  ---
+  duration_ms: 0.470625
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_graphs.value_datetime
+ok 84 - full schema refuses changed tx_constraint_graphs.value_datetime
+  ---
+  duration_ms: 0.460167
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_graphs.value_json
+ok 85 - full schema refuses changed tx_constraint_graphs.value_json
+  ---
+  duration_ms: 0.473875
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_graphs.value_identity
+ok 86 - full schema refuses changed tx_constraint_graphs.value_identity
+  ---
+  duration_ms: 0.479666
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_meta._id
+ok 87 - full schema refuses changed tx_meta._id
+  ---
+  duration_ms: 0.424292
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_meta.scope_key
+ok 88 - full schema refuses changed tx_meta.scope_key
+  ---
+  duration_ms: 0.423792
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_meta.position
+ok 89 - full schema refuses changed tx_meta.position
+  ---
+  duration_ms: 0.426792
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_native_relation_attempts._id
+ok 90 - full schema refuses changed tx_native_relation_attempts._id
+  ---
+  duration_ms: 0.476084
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_native_relation_attempts.scope_key
+ok 91 - full schema refuses changed tx_native_relation_attempts.scope_key
+  ---
+  duration_ms: 0.477833
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_native_relation_attempts.run_id
+ok 92 - full schema refuses changed tx_native_relation_attempts.run_id
+  ---
+  duration_ms: 0.4555
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_native_relation_attempts.attempt_id
+ok 93 - full schema refuses changed tx_native_relation_attempts.attempt_id
+  ---
+  duration_ms: 0.501583
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_native_relation_attempts.phase
+ok 94 - full schema refuses changed tx_native_relation_attempts.phase
+  ---
+  duration_ms: 0.537833
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_native_relations._id
+ok 95 - full schema refuses changed tx_native_relations._id
+  ---
+  duration_ms: 0.480125
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_native_relations.scope_key
+ok 96 - full schema refuses changed tx_native_relations.scope_key
+  ---
+  duration_ms: 0.449375
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_native_relations.run_id
+ok 97 - full schema refuses changed tx_native_relations.run_id
+  ---
+  duration_ms: 0.461708
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_native_relations.relation_name
+ok 98 - full schema refuses changed tx_native_relations.relation_name
+  ---
+  duration_ms: 0.509833
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_native_relations.source
+ok 99 - full schema refuses changed tx_native_relations.source
+  ---
+  duration_ms: 0.5165
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_native_relations.target
+ok 100 - full schema refuses changed tx_native_relations.target
+  ---
+  duration_ms: 0.487542
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_native_relations.depth
+ok 101 - full schema refuses changed tx_native_relations.depth
+  ---
+  duration_ms: 0.465416
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_query_generations._id
+ok 102 - full schema refuses changed tx_query_generations._id
+  ---
+  duration_ms: 0.446125
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_query_generations.scope_key
+ok 103 - full schema refuses changed tx_query_generations.scope_key
+  ---
+  duration_ms: 1.688959
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_query_generations.generation
+ok 104 - full schema refuses changed tx_query_generations.generation
+  ---
+  duration_ms: 0.490417
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_query_generations.source_position
+ok 105 - full schema refuses changed tx_query_generations.source_position
+  ---
+  duration_ms: 0.452542
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_query_generations.row_count
+ok 106 - full schema refuses changed tx_query_generations.row_count
+  ---
+  duration_ms: 0.455375
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_query_generations.valid_at
+ok 107 - full schema refuses changed tx_query_generations.valid_at
+  ---
+  duration_ms: 0.43275
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_query_generations.recorded_at
+ok 108 - full schema refuses changed tx_query_generations.recorded_at
+  ---
+  duration_ms: 0.5795
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_query_generations.strategy
+ok 109 - full schema refuses changed tx_query_generations.strategy
+  ---
+  duration_ms: 0.417584
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_query_members._id
+ok 110 - full schema refuses changed tx_query_members._id
+  ---
+  duration_ms: 0.419042
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_query_members.scope_key
+ok 111 - full schema refuses changed tx_query_members.scope_key
+  ---
+  duration_ms: 0.412125
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_query_members.generation
+ok 112 - full schema refuses changed tx_query_members.generation
+  ---
+  duration_ms: 0.412792
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_query_members.ordinal
+ok 113 - full schema refuses changed tx_query_members.ordinal
+  ---
+  duration_ms: 0.875
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_query_relations._id
+ok 114 - full schema refuses changed tx_query_relations._id
+  ---
+  duration_ms: 1.111917
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_query_relations.scope_key
+ok 115 - full schema refuses changed tx_query_relations.scope_key
+  ---
+  duration_ms: 1.065833
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_query_relations.run_id
+ok 116 - full schema refuses changed tx_query_relations.run_id
+  ---
+  duration_ms: 0.910292
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_query_relations.rule_name
+ok 117 - full schema refuses changed tx_query_relations.rule_name
+  ---
+  duration_ms: 0.510083
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_query_relations.arg1
+ok 118 - full schema refuses changed tx_query_relations.arg1
+  ---
+  duration_ms: 0.50875
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_query_relations.arg2
+ok 119 - full schema refuses changed tx_query_relations.arg2
+  ---
+  duration_ms: 0.45425
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_query_relations.depth
+ok 120 - full schema refuses changed tx_query_relations.depth
+  ---
+  duration_ms: 0.458416
+  type: 'test'
+  ...
+# Subtest: G0 covers dynamic stored columns not present in CREATE TABLE
+ok 121 - G0 covers dynamic stored columns not present in CREATE TABLE
+  ---
+  duration_ms: 0.5435
+  type: 'test'
+  ...
+1..121
+# tests 121
+# suites 0
+# pass 121
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3181.429334

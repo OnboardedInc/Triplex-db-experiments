@@ -9,6 +9,7 @@ export function n01SeedCounts(subjects: number, batchFacts: number) {
   )
     throw Error("G0 invalid N01 seed inputs");
   const accounts = accountsFor(subjects);
+  const valueKinds = new Set<string>(["number", "datetime", "string", "ref", "json"]);
   let commands = 0,
     business = 0,
     journal = 0;
@@ -16,6 +17,7 @@ export function n01SeedCounts(subjects: number, batchFacts: number) {
     if (!facts.length) return;
     commands++;
     business += facts.length;
+    for (const f of facts) valueKinds.add(f.v.type);
     // [EXP-K01-R12] Why: seed.ts commit always supplies actor+commandId; metadataInputs emits position/instant, those two fields, unique changed entities and every change. Rejected: one changed-entity row per fact or one per entity across the whole seed (batch boundaries matter).
     journal += 4 + new Set(facts.map((f) => f.e)).size + facts.length;
   };
@@ -44,5 +46,6 @@ export function n01SeedCounts(subjects: number, batchFacts: number) {
     business,
     journal,
     storedAssertions: business + journal,
+    valueKinds: [...valueKinds].sort(),
   };
 }

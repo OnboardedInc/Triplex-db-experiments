@@ -23,10 +23,11 @@ import fs from 'node:fs';
 import { checkXtdb, quietXtdb, healthXtdb } from '../bench/lib/g0-xtdb.ts';
 import net from 'node:net';
 import path from 'node:path';
+// [EXP-K01-R13] Why: both golden and fresh-state records hash their manifest after the stopped-copy/restart steps. Rejected: an unbound sha256File helper that fails only after creating owned storage.
 import {
   CONFIG_DIR, ENGINE_DIR, LabError, POOL_FILE, dockerArgs, OWNER_FORMAT, REPO, admission, appendEvent, atomicJson, checkFollowerConfig,
   containersOnVolume, cpusetOverlap, defaultHolder, docker, dockerStats, fail, fmtBytes, inspect, listTx2Containers, loadSlots, main, now,
-  parseArgs, parseCpuset, readJson, readOwner, reconcile, sha256, sleep, slotInfo, vmDisk, volumeBytes, volumeGuard, withPool,
+  parseArgs, parseCpuset, readJson, readOwner, reconcile, sha256, sha256File, sleep, slotInfo, vmDisk, volumeBytes, volumeGuard, withPool,
 } from './lib.mjs';
 
 /**

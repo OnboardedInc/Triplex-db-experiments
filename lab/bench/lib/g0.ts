@@ -2,12 +2,14 @@
 import { createHash } from "node:crypto";
 import { storedFields } from "./g0-schema.ts";
 export const fields = storedFields;
+import type { Catalog } from "./g0-catalog.ts";
 export type Table = keyof typeof fields;
 export type Counts = Record<Table, number>;
 export interface Reader {
   endpoint: string;
   scan(table: Table, scope: string, signal: AbortSignal): AsyncIterable<Record<string, unknown>>;
-  count(table: Table, scope: string, signal: AbortSignal): Promise<number>;
+  count(table: Table, scope: string, signal: AbortSignal, allScopes?: boolean): Promise<number>;
+  catalog?(signal: AbortSignal): Promise<Catalog>;
   scopes(signal: AbortSignal): Promise<readonly { scope_key: string; position: number }[]>;
 }
 export interface Expected {
@@ -15,6 +17,7 @@ export interface Expected {
   position: number;
   counts: Counts;
   world: "N01" | "W0";
+  tables?: Record<string, { written: boolean; columns: Record<string, boolean> }>;
 }
 export interface W0Fingerprint {
   basisTx: number;
@@ -96,10 +99,39 @@ async function readContent(
       )
         throw Error("G0 foreign scope or wrong position");
     };
+    const catalog = reader.catalog ? await reader.catalog(signal) : undefined;
+    // [EXP-K01-R13] Why: freeze the observed catalog bytes immediately, even if a Reader reuses a mutable object. Rejected: comparing an earlier reference after it has been changed in place.
+    const catalogDigest = catalog === undefined ? undefined : canonical(catalog);
+    if (expected.tables && !catalog) throw Error("G0 seed policy requires catalog");
+    if (
+      expected.tables &&
+      Object.keys(expected.tables).sort().join() !== Object.keys(fields).sort().join()
+    )
+      throw Error("G0 incomplete seed table policy");
     await checkScopes();
     const tables: Record<string, string> = {};
     for (const table of Object.keys(fields) as Table[]) {
-      const count = await reader.count(table, expected.scope, signal);
+      const policy = expected.tables?.[table];
+      if (
+        policy &&
+        (typeof policy.written !== "boolean" ||
+          Object.keys(policy.columns).sort().join() !== [...fields[table]].sort().join() ||
+          Object.values(policy.columns).some((v) => typeof v !== "boolean"))
+      )
+        throw Error("G0 incomplete seed column policy");
+      if (policy && policy.written !== expected.counts[table] > 0)
+        throw Error("G0 seed write/count policy differs");
+      if (policy?.written && !catalog![table]) throw Error("G0 missing written table: " + table);
+      if (policy && catalog?.[table])
+        for (const [c, written] of Object.entries(policy.columns))
+          if (
+            written &&
+            (!Object.hasOwn(catalog[table], c) ||
+              catalog[table][c] === ":null" ||
+              catalog[table][c] === ":nothing")
+          )
+            throw Error("G0 missing written column: " + table + "." + c);
+      const count = await reader.count(table, expected.scope, signal, policy?.written === false);
       if (!Number.isSafeInteger(count) || count < 0) throw Error("G0 invalid independent count");
       const want = expected.counts[table];
       const core = ["tx_assertions", "tx_claims", "tx_attempts", "tx_meta"].includes(table);
@@ -114,6 +146,7 @@ async function readContent(
       // [EXP-K01-R8] Why: auxiliary tables have no N01 closed form; their independently counted complete contents are pinned in D. Rejected: skipping side tables or deriving core expected counts from the scan.
       // [EXP-K01-R7] Why: sort row hashes, preserving multiplicity, to stream pages without retaining full rows. Rejected: a sum/XOR digest (duplicates cancel) or a subject sample (misses changed history).
       const hashes: string[] = [];
+      const nonNull = new Set<string>();
       for await (const row of reader.scan(table, expected.scope, signal)) {
         if (signal.aborted || hashes.length >= count) throw Error("G0 extra rows or expired read");
         for (const field of fields[table]) {
@@ -121,6 +154,13 @@ async function readContent(
             throw Error("G0 missing field: " + field);
         }
         // [EXP-K01-R8] Why: hash column names and all returned values as well as requiring the declared schema. Rejected: missing schemaless/dynamic side-table bindings that SELECT * returns.
+        if (policy)
+          for (const [c, written] of Object.entries(policy.columns)) {
+            if (row[c] !== null) {
+              if (!written) throw Error("G0 unexpected seed column value: " + table + "." + c);
+              nonNull.add(c);
+            }
+          }
         const values = Object.keys(row)
           .sort()
           .map((field) => [field, row[field]]);
@@ -128,9 +168,15 @@ async function readContent(
         rowRead?.(table, row);
       }
       if (hashes.length !== count) throw Error("G0 partial/empty scan: " + table);
+      if (policy)
+        for (const [c, written] of Object.entries(policy.columns))
+          if (written && !nonNull.has(c))
+            throw Error("G0 unobserved written column: " + table + "." + c);
       tables[table] = hash([fields[table], hashes.sort()]);
     }
     await checkScopes();
+    if (catalog && catalogDigest !== canonical(await reader.catalog!(signal)))
+      throw Error("G0 catalog changed during read");
     let world: W0Fingerprint | undefined;
     if (expected.world === "W0") {
       if (!w0) throw Error("G0 W0 requires O-DOMAIN");
@@ -190,7 +236,13 @@ export async function admitG0(
     pin?.format !== "tx2-g0/1" ||
     !/^[0-9a-f]{64}$/.test(pin.D) ||
     canonical(expected) !==
-      canonical({ scope: pin.scope, position: pin.position, counts: pin.counts, world: pin.world })
+      canonical({
+        scope: pin.scope,
+        position: pin.position,
+        counts: pin.counts,
+        world: pin.world,
+        ...(pin.tables ? { tables: pin.tables } : {}),
+      })
   )
     throw Error("G0 pin binding differs from manifest");
   const current = await readG0(reader, expected, w0, ms);
