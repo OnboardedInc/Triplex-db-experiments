@@ -27,6 +27,34 @@ Sam, 2026-11-08, verbatim:
    jobs that are not needed, never Claude or Codex processes, and announces each window in STATE.
 4. **Disk:** runs may be made smaller or sequential when space requires it.
 
+## 0b. Change of 2026-11-09 night: fast-forward mode (Sam, verbatim in lab/research/SAM-decisions-2026-11-09.md, "night")
+
+> We don't have to do small iterations. If you can see how to obviously jump ahead on stuff, we aren't forced to stick to the workflow
+> of the protocol. ... Don't use Sonnet or Opus for your background agents. Just use Codex 6.1 Sol on medium.
+
+This section overrides sections 0 to 4 where they differ, until Sam says otherwise.
+
+1. **Every background agent is Codex `gpt-6.1-sol` at medium** (`node lab/bin/agent.mjs launch --role builder`). No Sonnet, Opus or
+   Fable subagents, no forks. The orchestrator does the planning and the reviewing of results itself.
+2. **Lanes:** lane Q (broker and QLever) is paused. Lane D (Datomic on Postgres storage) and lane X (native XTDB) are active. The goal is
+   all of P1 to P5 at their TARGETS bars on one of them.
+3. **Spikes come first and skip the brief, review and contract cycle.** A spike is a time-boxed measurement or prototype that answers
+   named questions with numbers. It needs no planner brief, no adversarial review, no rulings row and no contract pin. Its report says
+   what was measured, how, and what was not checked.
+4. **The orchestrator may jump:** when the evidence already shows that a step will work or that a better path exists, it skips the
+   intermediate rounds and builds the target design directly. It records the reason in `lab/research/` or STATE in a few lines.
+5. **Correctness is still the floor.** A fast path counts only when an equivalence test shows it returns exactly what the existing slow
+   path returns (or declines), at every basis the test generates. Acknowledged commits must be durable. No silent precision loss.
+6. **Receipts, pins and one independent review happen once, at the end,** on the design that meets the bars, before any PASS is
+   claimed in the scorecard. Diagnostic numbers are labelled diagnostic until then.
+7. **Docker for spikes:** an agent whose task says so may run `docker` directly against
+   `DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock` for containers, networks and volumes whose names start with the prefix
+   its task gives it. It never touches a container it did not create, never pulls or downloads anything, and removes what it created.
+   Everything else in the preamble stands (never `/Users/sam/projects/triplex-db`, never ports 15442 or 17019, pnpm store, privacy).
+8. **Measured windows do not overlap.** Before a timed run, an agent takes the lock
+   `mkdir /Users/sam/Claude/Projects/triplex-db-2/locks/measure` (retry every 5 s), holds it at most 15 minutes, and removes it in an
+   exit trap.
+
 ## 1. Roles
 
 | Role | Model and effort | What it does | How it is launched |

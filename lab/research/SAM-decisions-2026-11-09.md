@@ -78,3 +78,29 @@ Sam, verbatim:
 | Lane X = XTDB native | Iterate on XTDB's built-in commit path (fresh commit p50 33 ms vs 10 ms bar), its native feed lag (2.9 s vs 250 ms) and native P4/P5. Aim to meet the bars; if a number lands slightly above a bar, report it plainly with the gap so Sam can judge. The broker remains available to bring to lane X later. |
 | Lane D = Datomic on Postgres storage | Move off dev storage (can lose acknowledged commits, R32) to Postgres storage, then the first lane D P1-P5 measurements. |
 | Capacity | Six agents at a time: two per lane (broker/Q, Datomic, XTDB native). The lock-up was attributed to other activity on the Mac. |
+
+## 2026-11-09, night: fast-forward lanes X and D, pause lane Q, Codex medium for all background work
+
+Sam, verbatim (the `/goal` he set after upgrading the CLI and switching the orchestrator to Fable 5.2):
+
+> Okay I want you to think: you're a new model. I was using Opus but now you're like Fable 5.2. I want you to think about what we're trying to get done with the lanes that we're doing.
+>
+> Before we go and build anything next, before we do our next round of experiments, I would like you to do some thought experiments and think about what we're doing wrong already to try to hit the priorities that we've listed.
+>
+> Specifically for Datomic and XTDB I think we can get rid of the Q lever lane for now or just pause our work on it. Focus on XTDB, the native one, and Datomic. What are we doing wrong? Can you see a way to jump to what we need, approaching it by thinking about super high performance and super high levels of efficiency to get to all of our performance goals as fast as possible? What did we miss and what's the way to actually do it?
+>
+> Can you propose using sauna agents on medium effort to run spikes for you if you need, or Codex 6.1 Sol agents? On medium, actually, that's what we actually use to build stuff. Don't use Sonnet or Opus for your background agents. Just use Codex 6.1 Sol on medium to do what you're saying.
+>
+> Again they're much less intelligent than you are so you have to make sure that you really set the commander's intent, the constraints, and the objectives for what you want (so that they really do the thing that you're asking them to do). You should be extremely clever and have a lot of foresight and I want you to use that to get XTDB native and the kind of Datomic lane as fast-forwarded as possible.
+>
+> We don't have to do small iterations. If you can see how to obviously jump ahead on stuff, we aren't forced to stick to the workflow of the protocol. You should make that more flexible I guess. That says: if you can see a way to jump ahead or not have to check something (because you're sure that it's going to work or that you found a better path based on the evidence), then you should go and do that.
+>
+> Yeah pick back up where you were but do what I'm saying and really think about how you can jump ahead.  Your goal is complete when we get to all the priorities done for either Datomic or XTDB. If I said IDV I meant XTDB.
+
+| Decision | What the lab does |
+|---|---|
+| Lane Q paused | No new work on the broker or QLever. P4N round 2 (`f090925b`) and P5N round 2 (`c3a0be40`) stay checkpointed with their `ROUND2-STATUS.md` files. G03 round 7d review, contract 0.4.1 and the W4 window wait. |
+| Focus: lane D (Datomic) and lane X (native XTDB) | Done means every one of P1 to P5 meets its bar on one of the two. |
+| Background agents | Codex `gpt-6.1-sol` at medium only (`agent.mjs --role builder`). No Sonnet or Opus subagents. |
+| Protocol | Fast-forward mode: `lab/PROTOCOL.md` section 0b. |
+| Diagnosis and jump design | `lab/research/R51-fast-forward-diagnosis.md`. |
