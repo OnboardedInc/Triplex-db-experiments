@@ -1,0 +1,23 @@
+{
+  "reviewer": "CX-VP4N",
+  "verdict": "FIX-FIRST",
+  "reviewedHead": "04b896fddfb361a0fe9ead75b9a6198ea655e7f7",
+  "evidenceRoot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VP4N",
+  "builderEvidenceRoot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/P4N-R1",
+  "manifest": "lab/verify/P4N/SHA256SUMS",
+  "attempts": {
+    "units": "23 QH1 unit tests; fresh Python 100k replay and 100k persisted codec comparisons",
+    "route": "2 route tests, separate execution",
+    "mutants": "4 required semantic rejections, no timing",
+    "contract-verify": "standalone --verify, unchanged contract",
+    "evaluator": "108 unchanged evaluator assertions on reviewed committed product tree",
+    "audit": "742 builder hashes; retained build hashes; 100k retained replay lines; seven exact regenerated summaries; P2 arithmetic and pins",
+    "p2-real": "fresh diagnostic; test passes while resolvable=false",
+    "final-tools": "8 final reviewer assertions, including synthetic guard counterexample",
+    "adversarial, adversarial-final, p2-inadequacy, summary-unit": "earlier retained reviewer checks"
+  },
+  "q104aAuthority": "q104a-authority.json (read-only current main ruling excerpt with source hash)",
+  "historicalP2BootstrapRecomputed": false,
+  "freshLargeStoreReplay": false,
+  "liveEngineAcceptance": false
+}
