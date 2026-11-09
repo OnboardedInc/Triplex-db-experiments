@@ -5,10 +5,11 @@ import {
   readFileSync,
   realpathSync,
   statfsSync,
+  lstatSync,
   unlinkSync,
   writeSync,
 } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, basename } from "node:path";
 import { platform } from "node:os";
 import { randomUUID } from "node:crypto";
 
@@ -23,9 +24,34 @@ export function assertDurableFlush(file: string) {
   if (!file || file === ":memory:") throw new DurableFlushRefused("durable file required");
   if (platform() !== "linux") return { platform: platform(), class: "host-fullfsync-unqualified" };
   const parent = realpathSync(dirname(file));
-  const type = Number(statfsSync(parent).type);
+  const requested = join(parent, basename(file));
+  const resolveExisting = (name: string): string | undefined => {
+    try {
+      lstatSync(name);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") return;
+      throw error;
+    }
+    try {
+      return realpathSync(name);
+    } catch {
+      throw new DurableFlushRefused("dangling database or sidecar link");
+    }
+  };
+  // [EXP-NSR-R2] Why: the DB inode can be on tmpfs despite an ext4 parent (F3). Rejected: classifying only dirname(file) and an unrelated calibration file.
+  const target = resolveExisting(requested);
+  const inspected = target ?? parent;
+  const type = Number(statfsSync(inspected).type);
   if (![0xef53, 0x58465342, 0x9123683e].includes(type))
     throw new DurableFlushRefused(`filesystem 0x${type.toString(16)} (tmpfs/overlay/unverified)`);
+  if (target && target !== requested) throw new DurableFlushRefused("database symlink refused");
+  // SQLite sidecars are separate files; a durable main DB cannot make volatile sidecars durable.
+  for (const suffix of ["-wal", "-shm", "-journal", ".lock"]) {
+    const sidecar = requested + suffix;
+    const resolved = resolveExisting(sidecar);
+    if (resolved && (resolved !== sidecar || Number(statfsSync(resolved).type) !== type))
+      throw new DurableFlushRefused("sidecar filesystem/link mismatch");
+  }
   const decode = (s: string) =>
     s.replace(/\\([0-7]{3})/g, (_, oct: string) => String.fromCharCode(parseInt(oct, 8)));
   const mount = readFileSync("/proc/self/mountinfo", "utf8")
@@ -34,7 +60,7 @@ export function assertDurableFlush(file: string) {
     .map((line) => line.split(" "))
     .filter((parts) => {
       const at = decode(parts[4]!);
-      return parent === at || parent.startsWith(at === "/" ? "/" : at + "/");
+      return inspected === at || inspected.startsWith(at === "/" ? "/" : at + "/");
     })
     .sort((a, b) => b[4]!.length - a[4]!.length)[0];
   if (!mount || mount.some((x) => /(^|,)(nobarrier|barrier=0)(,|$)/.test(x)))
@@ -75,6 +101,7 @@ export function assertDurableFlush(file: string) {
     device,
     cache,
     filesystem: type,
+    targetPath: target ?? requested,
     calibrationMedianMs: times.sort((a, b) => a - b)[2],
   };
 }

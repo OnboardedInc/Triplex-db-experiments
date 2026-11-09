@@ -57,12 +57,9 @@ for (const kind of ["worker", "aliased-require"]) {
       : `import { createRequire as cr } from 'node:module'; const load = cr(import.meta.url); load('./packages/candidate.cjs');`;
   const entry = path.join(fixture, "entry.mjs");
   fs.writeFileSync(entry, code);
-  const accepted = checkImports(entry, fixture);
-  const execution = spawnSync(process.execPath, [entry], { encoding: "utf8" });
-  assert.equal(execution.status, 0, execution.stderr);
-  assert.equal(fs.readFileSync(marker, "utf8"), "candidate executed");
-  assert.deepEqual(Object.keys(accepted.files), ["entry.mjs"]);
-  record("import check false negative", { kind, accepted, candidateExecuted: true });
+  assert.throws(() => checkImports(entry, fixture), /runtime loader|dynamic execution/);
+  assert.equal(fs.existsSync(marker), false);
+  record("runtime loader refused", { kind, candidateExecuted: false });
 }
 const control = path.join(output, "control.mjs");
 fs.mkdirSync(path.join(output, "packages"));
@@ -73,13 +70,25 @@ for (const code of [
   "export * from './packages/candidate.mjs';",
   "import(process.argv[2]);",
   "const x = require('./packages/candidate.cjs');",
+  "const load = require; load('./packages/candidate.cjs');",
+  "import * as workers from 'node:worker_threads'; new workers.Worker('./packages/candidate.cjs');",
+  "import { fork as launch } from 'node:child_process'; launch('./packages/candidate.cjs');",
+  "import vm from 'node:vm'; vm.runInThisContext('1');",
+  "const load = process.getBuiltinModule('module').createRequire(import.meta.url);",
+  "import load = require('./packages/candidate.cjs');",
   "import type { X } from './packages/candidate.ts';",
 ]) {
-  const file = code.includes("import type") ? control.replace(".mjs", ".ts") : control;
+  const file =
+    code.includes("import type") || code.includes("import load =")
+      ? control.replace(".mjs", ".ts")
+      : control;
   fs.writeFileSync(file, code);
-  assert.throws(() => checkImports(file, output), /candidate\/outside|dynamic execution\/import/);
+  assert.throws(
+    () => checkImports(file, output),
+    /candidate\/outside|dynamic execution\/import|runtime loader/,
+  );
 }
-record("direct import controls", { rejected: 5 });
+record("direct import controls", { rejected: 11 });
 
 const domain = {
   primitive: "CLOCK_MONOTONIC",
@@ -130,7 +139,7 @@ record("reader controls", { missingLoopRefused: true, wrongRelayRefused: true })
 async function runCandidate(mutant) {
   const runId = randomUUID();
   const captured = [];
-  let ordinal = 0;
+  let loopOneOrdinal = 0;
   const spoof = {
     atNs: "1",
     receivedAtNs: "1",
@@ -147,7 +156,14 @@ async function runCandidate(mutant) {
         let result;
         if (request.method === "read" || request.method === "pull") {
           result = {
-            rows: [{ value: mutant && ordinal++ === 1 ? "WRONG" : "expected" }],
+            rows: [
+              {
+                value:
+                  mutant && request.params.request.loopTag === 1 && loopOneOrdinal++ === 1
+                    ? "WRONG"
+                    : "expected",
+              },
+            ],
             ...spoof,
           };
         } else if (request.method === "commit") {
@@ -187,7 +203,15 @@ async function runCandidate(mutant) {
       keyFile,
       output: eventDir,
       endpoints: { readers: endpoint, broker: endpoint, consumer: endpoint },
-      readRequests: [{ subject: "subject-1", basis: "0" }],
+      readRequests: [0, 1].map((loopTag) => ({
+        subject: "subject-1",
+        shape: { kind: "subgraph", hops: loopTag + 3 },
+        basis: { epoch: "0", position: "0" },
+        route: "fixture-readers",
+        loopTag,
+        extra: { tenant: "fixture" },
+      })),
+      answerSampleEvery: 16,
       trace: [{ atMs: 20, command: { subject: "subject-1", commandId: "cmd-1" } }],
       pulls: [{ subject: "subject-1", basis: "1" }],
       sweep: { basis: "1", release: "r", subjects: ["subject-1"] },
@@ -200,8 +224,18 @@ async function runCandidate(mutant) {
     .filter((x) => /^\d+\.json$/.test(x))
     .flatMap((x) => JSON.parse(fs.readFileSync(path.join(eventDir, x))).events);
   const reads = events.filter((e) => e.kind === "read");
+  assert.deepEqual(events.find((e) => e.kind === "answer-policy").data.sampling, {
+    schema: "answer-sampling/1",
+    every: 16,
+    firstPerLoop: true,
+    nonLoopReads: "all",
+  });
+  for (const row of reads) {
+    assert.equal(row.data.sampled, row.data.sequence === 0 || row.data.sequence % 16 === 0);
+    if (row.data.sampled) assert.equal(sha(row.data.answerCanonical), row.data.answerSha256);
+  }
   for (const read of reads) {
-    const response = captured.find((c) => sha(c.raw) === read.data.answerSha256);
+    const response = captured.find((c) => sha(c.raw) === read.data.rawWireSha256);
     assert.ok(response);
     assert.notEqual(read.data.sentAtNs, "1");
     assert.notEqual(read.data.receivedAtNs, "1");
@@ -211,15 +245,55 @@ async function runCandidate(mutant) {
   assert.ok(unsampled.length >= 2);
   const fixed = unsampled.filter(
     (e) =>
-      captured.find((c) => sha(c.raw) === e.data.answerSha256).result.rows[0].value === "expected",
+      captured.find((c) => sha(c.raw) === e.data.rawWireSha256).result.rows[0].value === "expected",
   );
   assert.ok(fixed.length >= 2);
-  assert.notEqual(fixed[0].data.answerSha256, fixed[1].data.answerSha256);
-  assert.equal(fixed[0].data.responseBytes, undefined);
+  assert.equal(fixed[0].data.answerSha256, fixed[1].data.answerSha256);
+  assert.notEqual(fixed[0].data.rawWireSha256, fixed[1].data.rawWireSha256);
+  // [EXP-NSR-R2] Why: this independent encoding/oracle uses retained full requests, not candidate captures or the driver's canonicalizer. Rejected: trusting a summary boolean to certify changed-answer detection.
+  const canonical = (v) =>
+    v === null || typeof v !== "object"
+      ? JSON.stringify(v)
+      : Array.isArray(v)
+        ? "[" + v.map(canonical).join(",") + "]"
+        : "{" +
+          Object.keys(v)
+            .sort()
+            .map((k) => JSON.stringify(k) + ":" + canonical(v[k]))
+            .join(",") +
+          "}";
+  const recompute = () => {
+    for (const row of reads) {
+      assert.equal(row.data.requestKey, canonical(row.data.request));
+      assert.deepEqual(
+        Object.keys(row.data.request).sort(),
+        ["subject", "shape", "basis", "route", "loopTag", "extra"].sort(),
+      );
+      assert.equal(row.data.answerEncoding, "answer-canonical/1");
+      const expected = { rows: [{ value: "expected" }], ...spoof };
+      assert.equal(
+        row.data.answerSha256,
+        sha(canonical(expected)),
+        `Oracle answer mismatch in loop ${row.data.loop}`,
+      );
+    }
+  };
+  if (mutant) assert.throws(recompute, /Oracle answer mismatch in loop 1/);
+  else recompute();
+  assert.ok(unsampled.some((e) => e.data.sampled === true && e.data.answer));
+  const noBytes = unsampled.find((e) => !e.data.sampled);
+  assert.ok(noBytes);
+  assert.equal(noBytes.data.answer, undefined);
+
   assert.equal(fixed[0].data.id, undefined);
-  assert.equal(fixed[0].data.answer, undefined);
+
   const wrong = captured.filter((c) => c.result.rows?.[0].value === "WRONG");
   assert.equal(wrong.length, mutant ? 1 : 0);
+  if (mutant) {
+    const wrongRow = reads.find((e) => e.data.rawWireSha256 === sha(wrong[0].raw));
+    assert.equal(wrongRow.data.loop, 1);
+    assert.equal(wrongRow.data.sampled, false);
+  }
   fs.writeFileSync(
     path.join(output, `${runId}-review-capture.json`),
     JSON.stringify({ captured, result }, null, 2),
@@ -228,10 +302,10 @@ async function runCandidate(mutant) {
     mutant,
     status: result.status,
     reads: reads.length,
-    identicalAnswerHashesDiffer: true,
-    unsampledIdAndBytesMissing: true,
+    canonicalAnswersCompareEqual: true,
+    rawWireDigestSeparate: true,
     changedResponseCount: wrong.length,
-    driverRejectedChangedResponse: false,
+    independentRecomputeRejectedChangedResponse: mutant,
     candidateTimesAndReaderCountsIgnored: true,
     eventDir,
   };
@@ -240,6 +314,10 @@ record("baseline RPC capture", await runCandidate(false));
 record("single changed candidate answer", await runCandidate(true));
 fs.writeFileSync(
   path.join(output, "summary.json"),
-  JSON.stringify({ source: "05c26355dfc653520067bfb1006e07475187c813", findings }, null, 2),
+  JSON.stringify(
+    { source: "NSR-round2-working-tree; bound by graph and retained source hashes", findings },
+    null,
+    2,
+  ),
 );
 console.log("Evidence: " + output);

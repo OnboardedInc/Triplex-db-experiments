@@ -320,3 +320,44 @@ test("NSR: split candidate processes match P3M source trace, lost-ACK accounting
     for (const s of services.reverse()) await s.close();
   }
 });
+
+// [EXP-NSR-R2] Why: canonical answer identity must survive transport/key-order differences while retaining full request identity. Rejected: wire hashes as oracle evidence (F1).
+test("NSR round2: canonical answer encoding and request keys", async () => {
+  const { canonicalAnswer, answerDigest, readEvidence } = await import("../ns-driver/answer.mjs");
+  assert.equal(
+    canonicalAnswer({ 2: 2, 10: 10, a: [-0, null, true] }),
+    '{"10":10,"2":2,"a":[0,null,true]}',
+  );
+  assert.equal(answerDigest({ b: 2, a: 1 }), answerDigest(JSON.parse('{"a":1, "b":2}')));
+  assert.notEqual(answerDigest([1, 2]), answerDigest([2, 1]));
+  const request = {
+    subject: "s",
+    shape: { kind: "graph", hops: 6 },
+    basis: { epoch: "0", position: "7" },
+    route: "history",
+    extra: { tenant: "t" },
+  };
+  const a = readEvidence(request, { rows: [1] }, Buffer.from('{"id":"a"}\n'), {
+    loop: 1,
+    sequence: 1,
+    every: 16,
+  });
+  const b = readEvidence(request, { rows: [1] }, Buffer.from('{"id":"b"}\n'), {
+    loop: 1,
+    sequence: 2,
+    every: 16,
+  });
+  assert.equal(a.answerSha256, b.answerSha256);
+  assert.notEqual(a.rawWireSha256, b.rawWireSha256);
+  assert.equal(a.requestKey, canonicalAnswer(request));
+  assert.equal(a.answer, undefined);
+  assert.notEqual(
+    a.requestKey,
+    canonicalAnswer({ ...request, shape: { ...request.shape, hops: 3 } }),
+  );
+  assert.notEqual(a.requestKey, canonicalAnswer({ ...request, route: "current" }));
+  assert.ok(
+    readEvidence(request, { rows: [1] }, Buffer.from("{}"), { loop: 7, sequence: 0, every: 16 })
+      .sampled,
+  );
+});

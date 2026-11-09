@@ -3,12 +3,11 @@ export { auditP3, lagSample, distribution } from "./p3.mjs";
 // [EXP-NSR] Why: all offers and closed loops live on the trusted side of RPC; candidate code can only return bytes. Rejected: candidate provider imports or worker callbacks in the driver.
 import fs from "node:fs";
 import path from "node:path";
-import { createHash } from "node:crypto";
+import { canonicalAnswer, readEvidence } from "./answer.mjs";
 import { monitorEventLoopDelay } from "node:perf_hooks";
 import { rpc } from "./rpc.mjs";
 import { now } from "./clock.mjs";
 import { Events } from "./events.mjs";
-const hash = (v) => createHash("sha256").update(v).digest("hex");
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 export function readerLevel(events, startNs, endNs, level = 256, relay) {
   const start = BigInt(startNs),
@@ -39,9 +38,35 @@ export async function runNS(c) {
     (c.readers ?? 256) > 1024
   )
     throw Error("Invalid readers");
+  const sampleEvery = c.answerSampleEvery ?? 16;
+  if (!Number.isSafeInteger(sampleEvery) || sampleEvery < 1 || sampleEvery > 10000)
+    throw Error("Invalid answer sampling interval");
   const events = new Events(c.output, fs.readFileSync(c.keyFile), c.binding);
   const call = (role, method, params, observe) =>
     rpc(c.endpoints[role], c.binding.runId, method, params, c.timeoutMs ?? 10000, observe);
+  events.write("answer-policy", {
+    encoding: "answer-canonical/1",
+    sampling: {
+      schema: "answer-sampling/1",
+      every: sampleEvery,
+      firstPerLoop: true,
+      nonLoopReads: "all",
+    },
+  });
+  async function captureRead(method, input, loop, sequence) {
+    const request = JSON.parse(canonicalAnswer(input));
+    const sentAtNs = now();
+    let wire;
+    const answer = await call("readers", method, { request }, (raw) => {
+      wire = raw;
+    });
+    return {
+      rpcMethod: method,
+      sentAtNs,
+      receivedAtNs: now(),
+      ...readEvidence(request, answer, wire, { loop, sequence, every: sampleEvery }),
+    };
+  }
   let stopping = false,
     failed;
   const completions = new Map(),
@@ -60,23 +85,13 @@ export async function runNS(c) {
   let result;
   const loops = Array.from({ length: c.readers ?? 256 }, (_, loop) =>
     (async () => {
+      let sequence = 0;
       while (!stopping) {
         const request = c.readRequests[loop % c.readRequests.length];
-        const sentAtNs = now();
-        let responseBytes;
-        const answer = await call("readers", "read", { request }, (raw) => {
-          responseBytes = raw;
-        });
-        const atNs = now();
+        const observed = await captureRead("read", request, loop, sequence++);
+        const atNs = observed.receivedAtNs;
         completions.set(`${BigInt(atNs) / 1000000000n}/${loop}`, { loop, atNs });
-        events.write("read", {
-          loop,
-          request,
-          sentAtNs,
-          receivedAtNs: atNs,
-          answerSha256: hash(responseBytes),
-          ...(loop === 0 ? { answer, responseBytes: responseBytes.toString("utf8") } : {}),
-        });
+        events.write("read", observed);
         readiness[loop].resolve();
         await sleep(0);
       }
@@ -107,9 +122,9 @@ export async function runNS(c) {
       });
       if (response.receipt) {
         const request = { subject: offer.command.subject, basis: response.receipt.position };
-        const answer = await call("readers", "pull", { request });
-        events.write("ryow", { request, answer });
-        answers.push(answer);
+        const observed = await captureRead("pull", request);
+        events.write("ryow", observed);
+        answers.push(observed.answer);
       }
     }
     // [EXP-NSR] Why: send on the frozen schedule even while an earlier commit waits. Rejected: awaiting ACK before offering the next command (closed-loop writes).
@@ -133,10 +148,9 @@ export async function runNS(c) {
     events.write("consumer-cross-check", consumed);
     if (consumed.hook) controlEvent(events, consumed.hook);
     for (const request of c.pulls ?? []) {
-      const sentAtNs = now(),
-        answer = await call("readers", "pull", { request });
-      events.write("p4", { request, sentAtNs, receivedAtNs: now(), answer });
-      answers.push(answer);
+      const observed = await captureRead("pull", request);
+      events.write("p4", observed);
+      answers.push(observed.answer);
     }
     if (c.sweep) {
       const seen = new Set();
@@ -144,8 +158,8 @@ export async function runNS(c) {
         if (seen.has(subject)) throw Error("Duplicate sweep subject");
         seen.add(subject);
         const request = { subject, basis: c.sweep.basis, release: c.sweep.release };
-        const answer = await call("readers", "pull", { request });
-        events.write("sweep", { request, answer });
+        const observed = await captureRead("pull", request);
+        events.write("sweep", observed);
       }
     }
     const consumer = await call("consumer", "consumerControl", { action: "stop", data: null });
