@@ -413,3 +413,11 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - 2026-11-09 DI01 round 2 (Sonnet, c4aeb4cb): main merged (13949e3a, same resolution as the reviewer's aa34513a), F1 fixed with a tagged
   BasisNotAvailable on all four guard paths; refuse, reopen, retry leaves state unchanged (5 new tests). DI01 suites 16/16, lab PACK PASS,
   --verify, evaluator 108. retentionFloor declared but unpopulated (no interface exposes it). In review (CX-VDI01 round 2).
+- 2026-11-09 OBS01 round 12 (Sonnet, 806d40b7): A1 (dump adopted only on clean exits of compile, version, hash and BTF read) and A2
+  (per-probe disassembly only, complete sections, UNPARSED-CALL, helper allow-list derived from the .bt) fixed; helper ids derived at W0
+  from the kernel's BTF by a strict parser (lab/bin/btf-helpers.mjs). All suites and reviewer fixtures pass. The dis format is the
+  proof's own constructed convention until W0. In review (CX-VOBS7 round 4).
+- 2026-11-09 G03 round 7c (Sonnet, code 87c86a10): F3 (rejected execControl becomes a coordinator-owned failed terminal; stop, export,
+  hashing, or retained volumes if export is unprovable) and F4 (every record's clock domain validated) fixed; NS 177/177, --verify.
+  Full suite and evaluator still running. Orchestrator decisions: keep the 2-line box.mjs change (moves the protected evaluator closure;
+  re-pin in 0.4.1 with the driver bundle); fix the exclusive.mjs `docker context use colima` rule 10 violation in this round.
