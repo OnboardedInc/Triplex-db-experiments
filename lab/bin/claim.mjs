@@ -393,6 +393,8 @@ export function contractBlockers(claimed, prereq, domain, ctx) {
     if (!oracleRunnerPinned(x, ctx)) out.push({ code: 'ORACLE-RUNNER-UNPINNED', detail: `oracle ${x} lacks a SHA-256 for every declared runner file or argv file (Q75c)` });
     if (has(ctx.pins, x)) {
       const pin = isObj(ctx.pins[x]) ? ctx.pins[x] : {}, h = own(pin, 'sha256');
+      // [EXP-A01-0312] Why: V-O05 accepted screening only; acceptance needs verifier recollection. Rejected: treating a pinned parser as production collection proof.
+      if (own(pin, 'acceptanceLevel') === 'screening') out.push({ code: 'ORACLE-SCREENING-ONLY', detail: `oracle ${x} is accepted for screening only; verifier recollection is required (Q82c)` });
       if (own(pin, 'acceptReceipt') == null || h == null || (isObj(h) && Object.values(h).some(v => v == null)) || !registeredAcceptance(own(pin, 'verifierEntry'), 'oracle', x, own(pin, 'commit'), ctx.verifiers))
         out.push({ code: 'ORACLE-UNPINNED', detail: `oracle ${x} has no pin accepted through VERIFIER_REGISTRY at its commit (RULINGS Q37b, Q55a)` });
       else for (const o of claimed) if ((own(pin, 'excludes') ?? []).includes(o.id)) out.push({ code: 'ORACLE-EXCLUDED', detail: `${o.id} is excluded from oracle ${x}'s pin (RULINGS Q45a)` });

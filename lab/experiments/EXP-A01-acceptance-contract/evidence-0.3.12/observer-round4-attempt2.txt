@@ -1,0 +1,12 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 47171 "CX-P2Q-R6-final-suites", pid 54104 "CX-OBS01-R2-x06", pid 91289 "CX-INT-XCJ-C8-evaluator"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 47171 "CX-P2Q-R6-final-suites", pid 54104 "CX-OBS01-R2-x06", pid 90928 "DA01-r2-G1-basis"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 47171 "CX-P2Q-R6-final-suites", pid 54104 "CX-OBS01-R2-x06", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 47171 "CX-P2Q-R6-final-suites", pid 54104 "CX-OBS01-R2-x06", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 47171 "CX-P2Q-R6-final-suites", pid 54104 "CX-OBS01-R2-x06", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 13198 "CX-K01-R4-offline", pid 54104 "CX-OBS01-R2-x06", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 91531 "CX-A01-0312-evaluator", pid 54104 "CX-OBS01-R2-x06", pid 91250 "CX-INT-XCJ-C8-G0"
+....
+----------------------------------------------------------------------
+Ran 4 tests in 2.865s
+
+OK

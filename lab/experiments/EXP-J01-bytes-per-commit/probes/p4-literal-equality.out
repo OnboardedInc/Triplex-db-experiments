@@ -1,0 +1,119 @@
+{
+ "ok": false,
+ "results": [
+  {
+   "value": "\"plain\"",
+   "exactMatchAssert": "rejected",
+   "nearMissAssert": "passed",
+   "readBack": true
+  },
+  {
+   "value": "\"it's\"",
+   "exactMatchAssert": "rejected",
+   "nearMissAssert": "passed",
+   "readBack": true
+  },
+  {
+   "value": "\"''\"",
+   "exactMatchAssert": "rejected",
+   "nearMissAssert": "passed",
+   "readBack": true
+  },
+  {
+   "value": "\"back\\\\slash\"",
+   "exactMatchAssert": "rejected",
+   "nearMissAssert": "passed",
+   "readBack": true
+  },
+  {
+   "value": "\"\\\\'\"",
+   "exactMatchAssert": "rejected",
+   "nearMissAssert": "passed",
+   "readBack": true
+  },
+  {
+   "value": "\"new\\nline\"",
+   "exactMatchAssert": "error: Errors parsing SQL statement:\n  - line 1:117 token recognition error at: ''new\\n'",
+   "nearMissAssert": "error: Errors parsing SQL statement:\n  - line 1:117 token recognition error at: ''new\\n'",
+   "readBack": "error: Errors parsing SQL statement:\n  - line 1:98 token recognition error at: ''new\\n'"
+  },
+  {
+   "value": "\"tab\\tchar\"",
+   "exactMatchAssert": "rejected",
+   "nearMissAssert": "passed",
+   "readBack": true
+  },
+  {
+   "value": "\"?\"",
+   "exactMatchAssert": "rejected",
+   "nearMissAssert": "passed",
+   "readBack": true
+  },
+  {
+   "value": "\"$1\"",
+   "exactMatchAssert": "rejected",
+   "nearMissAssert": "passed",
+   "readBack": true
+  },
+  {
+   "value": "\"-- comment\"",
+   "exactMatchAssert": "rejected",
+   "nearMissAssert": "passed",
+   "readBack": true
+  },
+  {
+   "value": "\"/* block */\"",
+   "exactMatchAssert": "rejected",
+   "nearMissAssert": "passed",
+   "readBack": true
+  },
+  {
+   "value": "\"\\\"double\\\"\"",
+   "exactMatchAssert": "rejected",
+   "nearMissAssert": "passed",
+   "readBack": true
+  },
+  {
+   "value": "\"ünïcødé ✓ 𝄞\"",
+   "exactMatchAssert": "rejected",
+   "nearMissAssert": "passed",
+   "readBack": true
+  },
+  {
+   "value": "\"  \"",
+   "exactMatchAssert": "rejected",
+   "nearMissAssert": "passed",
+   "readBack": true
+  },
+  {
+   "value": "\"E'x'\"",
+   "exactMatchAssert": "rejected",
+   "nearMissAssert": "passed",
+   "readBack": true
+  },
+  {
+   "value": "\"%_\"",
+   "exactMatchAssert": "rejected",
+   "nearMissAssert": "passed",
+   "readBack": true
+  },
+  {
+   "value": "\";\"",
+   "exactMatchAssert": "rejected",
+   "nearMissAssert": "passed",
+   "readBack": true
+  },
+  {
+   "value": "aaaaaaaaaaaaaaaaaaaa... (1024 chars)",
+   "exactMatchAssert": "rejected",
+   "nearMissAssert": "passed",
+   "readBack": true
+  },
+  {
+   "value": "[\"triplex-scope-v1\",... (42 chars)",
+   "exactMatchAssert": "rejected",
+   "nearMissAssert": "passed",
+   "readBack": true
+  }
+ ]
+}

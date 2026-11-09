@@ -1,0 +1,3441 @@
+{
+  "format": "tx2-gate-receipt/1",
+  "gate": "G2",
+  "lane": "qlever",
+  "slot": "dev",
+  "runId": "G2-qlever-20261107T234008Z-471d0f",
+  "experiment": "EXP-C8",
+  "note": "C8 read-only native relations (0147c88); write counter on native reads",
+  "previous": null,
+  "startedAt": "2026-11-07T23:40:08.084Z",
+  "endedAt": "2026-11-07T23:59:59.535Z",
+  "durationMs": 1191451,
+  "scope": "full",
+  "runKind": "diagnostic",
+  "mutation": null,
+  "contractVersion": "0.3.4",
+  "contract": {
+    "format": "triplex-db-2/acceptance-obligations/3",
+    "version": "0.3.4",
+    "status": "CANDIDATE-1.0.0: retargeted to Sam's re-scope (SCOPE.md, NORTH-STAR.md, TARGETS.md); freezes as 1.0.0 after orchestrator acceptance and adversarial review",
+    "sha256": "8f287cd0aa4eb4d96d6ff102eddfdabf1cdc80d74af576517ad382fbf9d4ef81"
+  },
+  "obligations": [
+    {
+      "id": "PKT.full142",
+      "definitionSha256": "fbfe0d1e7f4b33bed698a2423c8d1215a2a33daa5a5c380baa40b6fa485e5748",
+      "receiptScope": "lane",
+      "lanes": [
+        "qlever-sparql"
+      ]
+    }
+  ],
+  "engineName": "qlever",
+  "git": {
+    "head": "6727da4cbc298427cb03954147c074b53df05660",
+    "headTree": "03b258853fe7c7fa6d0c7de9c46492d963e6e4cd",
+    "branch": "exp/C8-read-only-frontier",
+    "dirty": true,
+    "stashCommit": null,
+    "stashTree": null,
+    "diffScope": [
+      "packages",
+      "qualification",
+      "lab/bin",
+      "lab/config",
+      "vitest.workspace-aliases.ts",
+      "tsconfig.base.json",
+      "tsconfig.node.json",
+      "package.json",
+      "pnpm-workspace.yaml",
+      "pnpm-lock.yaml",
+      "turbo.json"
+    ],
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diffBytes": 0,
+    "modifiedFiles": [],
+    "untrackedFiles": [],
+    "otherDirtyPaths": [
+      "lab/runs/G1/G1-qlever-20261107T230659Z-119525.json",
+      "lab/runs/G2/G2-xtdb-20261107T221854Z-6aa715.json"
+    ],
+    "sourceTreeId": "dad2d78ddea1dd360103cce0cbf2217ad651a593932806b7feb418cedc2d3a55"
+  },
+  "lockfileSha256": "7a02f735718ecdd29fdbfaf8ec2e2b05c92ad773cdc27d1920a278c5c7f4ba14",
+  "toolchain": {
+    "node": "v22.23.2",
+    "pnpm": "10.11.0",
+    "platform": "darwin-arm64"
+  },
+  "gateScripts": {
+    "lab/bin/gate.mjs": "315dd668874aaf8a284313da014ef44f36d4ee22370e793e9501709ae42c5ec3",
+    "lab/bin/lib.mjs": "199ba832f81bc8e228bf6e29de0fbd2ef872a4b1d15fd40d2523a49be1f28740",
+    "lab/bin/receipt.mjs": "b6511d1eab385fcf453fe628aa4dd5437e3b78c02a2eca84165dcaa246c5abad",
+    "lab/bin/engine.mjs": "2c3bd842205e572a0cd456f2ceaf2a0d1003fd1553b03f446a27874b170ee72e",
+    "lab/bin/heavy-lock.mjs": "88dd2071c8d8c1e3212c9a65dc719b79af46fbe6cc2e6ede8fbe0b61112803fa",
+    "lab/config/slots.json": "36013a8c81758db005c8242f819d12df43c621fd8c9335565976e242a39679c5"
+  },
+  "build": {
+    "manifestSha256": "e0c28d23bb38f7e51112634e5071f232db3e85cd1574451ae2a976e51dcd32c0",
+    "manifest": "runs/G2/G2-qlever-20261107T234008Z-471d0f/build-manifest.json",
+    "packages": {
+      "core": {
+        "files": 416,
+        "bytes": 2676794,
+        "sha256": "942435857c82fa81ac5f085293687b32426cc688aa712b79e02b354973c2a172"
+      },
+      "testkit": {
+        "files": 4,
+        "bytes": 247745,
+        "sha256": "b30558fbe016aa34202d9f260055ea944877ce3176a7604e2522e53a02c7251f"
+      },
+      "qlever": {
+        "files": 74,
+        "bytes": 418251,
+        "sha256": "a52a829b854a1dfa25399ce32fe129d55f2c5c408e33cfd60deb016eb725c5a7"
+      },
+      "qualification": {
+        "files": 28,
+        "bytes": 349586,
+        "sha256": "4627c4806af0b6625ba9c3dd48a4ade1fafcdad1fac47dc5971b604b15f588b2"
+      }
+    }
+  },
+  "engine": {
+    "container": "tx2-qlever-dev",
+    "containerId": "a809fb6cb3ba858da2984c65fcea810bce9833627c930c7070e33e6e39a3f826",
+    "startedAt": "2026-11-07T22:06:14.751906646Z",
+    "imageId": "sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec",
+    "repoDigests": [
+      "adfreiburg/qlever@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec"
+    ],
+    "configSha256": "c10589d0cdd0e69b45bed28702540377efa735a7f511dbedd82b4de42bd342e6",
+    "effectiveConfig": {
+      "lane": "qlever",
+      "slot": "dev",
+      "image": "adfreiburg/qlever:0.6.0@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec",
+      "startScriptSha256": "13a4f9102323c8c31fc0c093b3fe64e068691afd5cead0018e936075e3422736",
+      "sourceStartScriptSha256": "16c50037e97004e1345b5060b65c5cb3c26d3b4a153cc377a65ccc5e7f304930",
+      "qleverMemory": "2000M",
+      "memBytes": 3758096384,
+      "cpus": 2,
+      "publish": "127.0.0.1:7070:7019",
+      "volume": "tx2-qlever-dev-data:/data",
+      "volumeInit": "marker /data/.tx2-volume, chown -R 999:999 /data (image user qlever); no -w (start.sh does cd /data)",
+      "entrypoint": [
+        "/bin/bash",
+        "/config/start.sh"
+      ],
+      "health": "curl -fsS -o /dev/null 'http://127.0.0.1:7019/?query=SELECT%20*%20WHERE%20%7B%20%3Fs%20%3Fp%20%3Fo%20%7D%20LIMIT%201'"
+    },
+    "endpoint": "http://127.0.0.1:7070",
+    "port": 7070,
+    "memCapBytes": 3758096384,
+    "nanoCpus": 2000000000,
+    "ownerSha256": "bf702d8316d2c7871fa163f3208fa41adfe7281df9f87c6ed2ddfd2c31824137",
+    "holder": "EXP-000"
+  },
+  "profile": {
+    "name": "default",
+    "env": {}
+  },
+  "queryPath": "qlever-native",
+  "diskBefore": {
+    "totalBytes": 63088406528,
+    "usedBytes": 10275028992,
+    "availableBytes": 49575481344
+  },
+  "planner": {
+    "requested": null,
+    "before": "1",
+    "effective": "1",
+    "after": "1"
+  },
+  "containers": {
+    "tx2-xtdb-s2-ro": {
+      "samples": 383,
+      "peakMemBytes": 553018982,
+      "peakCpuPercent": 203.68,
+      "memLimitBytes": 1073741824
+    },
+    "tx2-xtdb-s2": {
+      "samples": 393,
+      "peakMemBytes": 2547989348,
+      "peakCpuPercent": 199.49,
+      "memLimitBytes": 3758096384
+    },
+    "tx2-qlever-dev": {
+      "samples": 394,
+      "peakMemBytes": 1737314271,
+      "peakCpuPercent": 245.77,
+      "memLimitBytes": 3758096384
+    },
+    "tx2-xtdb-dev": {
+      "samples": 394,
+      "peakMemBytes": 2940978856,
+      "peakCpuPercent": 247.56,
+      "memLimitBytes": 3221225472
+    },
+    "--": {
+      "samples": 1,
+      "peakMemBytes": 0,
+      "peakCpuPercent": 0,
+      "memLimitBytes": null
+    }
+  },
+  "coRunning": [
+    {
+      "name": "tx2-xtdb-s2-ro",
+      "memCapBytes": 1073741824,
+      "nanoCpus": 2000000000,
+      "health": "healthy"
+    },
+    {
+      "name": "tx2-xtdb-s2",
+      "memCapBytes": 3758096384,
+      "nanoCpus": 2000000000,
+      "health": "healthy"
+    },
+    {
+      "name": "tx2-qlever-dev",
+      "memCapBytes": 3758096384,
+      "nanoCpus": 2000000000,
+      "health": "healthy"
+    },
+    {
+      "name": "tx2-xtdb-dev",
+      "memCapBytes": 3221225472,
+      "nanoCpus": 2000000000,
+      "health": "healthy"
+    }
+  ],
+  "volumeBytes": 73744384,
+  "diskAfter": {
+    "totalBytes": 63088406528,
+    "usedBytes": 11217580032,
+    "availableBytes": 48632930304
+  },
+  "fixtures": {
+    "qualification/workloads/temporal-workloads.json": "322c773db2049b5a704d36925738859aef4982ca27194d13a659d1b0e9081271",
+    "qualification/workloads/access_cases.mjs": "9de17a852621ac4a69492fed124b54effa4d39f87c9f4576b7e77845e0c9af0f",
+    "qualification/workloads/containment_cases.mjs": "401a4bb5c3b64bf1d518374449592b89cc1629f413c6806d0b34fbdb53a295bd",
+    "qualification/workloads/dependency_cases.mjs": "faaa7ef47c4112ff06d69d1f888b373be48587cbc00f340e8f72cdfb842fe261",
+    "qualification/workloads/engine_cases.mjs": "321672018338d88b75188a489aa296418938651b79c2c48cc3940d813e714d50",
+    "qualification/workloads/funnel_cases.mjs": "ce3bf3ee86bb8db657ed3a643b8515bea309232d6db86dd96e76a18e7cbb2faa",
+    "qualification/workloads/interval_join_cases.mjs": "8155ee3655fa8c8be4d20d90e6523cf1448e47aef4fdae45723833ae93eeed85",
+    "qualification/workloads/recall_cases.mjs": "261247cc646e5eab3bf8c6bcdf84404f4b6b9cda07b885c94ca3d7a3906ac99c",
+    "qualification/workloads/support_cases.mjs": "3114043605a922218ae3fe1feeb4949d280f4dbe5e24d98159a8a691c5cebc02",
+    "qualification/workloads/test_engine_cases.mjs": "7d1d406e659f8a9f917c84a6a9c76517b0262cae07851500b58fa6ead1dd409a",
+    "qualification/workloads/training_cases.mjs": "1474e7fd1ace7d18906d347de2a515149880542086e59feaf8cbcc0ffd1bd076",
+    "qualification/workloads/uptime_cases.mjs": "432a4556422acf4122282c89757a12e926bcdf543551cce497b4c3519c3c4fe9",
+    "qualification/workloads/webhook_cases.mjs": "084549364af26a6efdf472e521e1a1a8fde7c08389e96810816da43d3d151e54",
+    "packages/qualification/workloads/runner.ts": "e13a872ea5bde90a9bcf37f83885036df4f635295ce57ab45261d78928567208"
+  },
+  "packet": {
+    "id": "temporal-workloads/1@sha256:322c773db2049b5a704d36925738859aef4982ca27194d13a659d1b0e9081271",
+    "format": "temporal-workloads/1",
+    "sha256": "322c773db2049b5a704d36925738859aef4982ca27194d13a659d1b0e9081271",
+    "workloads": 20,
+    "cases": 71
+  },
+  "contactedEndpoint": "http://127.0.0.1:7070",
+  "readPathEngineWrites": {
+    "method": "wire-proxy/engine-write-counter.ts; native read client only",
+    "lane": "qlever",
+    "connections": 504,
+    "statements": 502,
+    "writes": 0,
+    "commits": 0,
+    "commands": 2,
+    "unparsed": 0,
+    "samples": []
+  },
+  "counts": {
+    "executed": 142,
+    "expected": 142,
+    "pass": 140,
+    "fail": 2,
+    "skip": 0,
+    "statuses": {
+      "PASS": 140,
+      "FAIL_PUBLIC_API": 2
+    }
+  },
+  "languages": {
+    "answer": {
+      "sparql-1.1": 140,
+      "none": 2
+    },
+    "strict": {
+      "sparql-1.1": 140,
+      "none": 2
+    },
+    "passByAnswer": {
+      "sparql-1.1": 140
+    },
+    "rule": "answer: an execution counts for a language only if every native answer query it ran used that language; mixed = hybrid (counts for neither). strict additionally includes substeps (XTDB source-cut position lookup is always xtdb-sql)."
+  },
+  "cases": [
+    {
+      "caseId": "01/paid-after-shipment-known",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "6421161a2919ce1632aa2b2ce988b3fa4fcea53328beea476ae2d0e7a8a39f94",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "01/shipment-boundary",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "35170a2cfdd702e68c72749759f9c7b3bd7f1377833851041bcdfa6c42ff1ab0",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "01/earlier-knowledge",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "6421161a2919ce1632aa2b2ce988b3fa4fcea53328beea476ae2d0e7a8a39f94",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "01/before-first-status",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "01/paid-after-shipment-known",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "6421161a2919ce1632aa2b2ce988b3fa4fcea53328beea476ae2d0e7a8a39f94",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "01/shipment-boundary",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "35170a2cfdd702e68c72749759f9c7b3bd7f1377833851041bcdfa6c42ff1ab0",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "01/earlier-knowledge",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "6421161a2919ce1632aa2b2ce988b3fa4fcea53328beea476ae2d0e7a8a39f94",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "01/before-first-status",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "02/original-known-address",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "4e0297e1af8bcbf9386d7dc7be4e6ba3fbe298d4c0cec941538b1d30ebda66d8",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "02/corrected-same-valid-time",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "183e8a17801dcc0d72affeb2c02a0b7ba5e402ff1004419152ede015acfff77e",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "02/before-any-knowledge",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "02/original-known-address",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "4e0297e1af8bcbf9386d7dc7be4e6ba3fbe298d4c0cec941538b1d30ebda66d8",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "02/corrected-same-valid-time",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "183e8a17801dcc0d72affeb2c02a0b7ba5e402ff1004419152ede015acfff77e",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "02/before-any-knowledge",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "03/two-purchases",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "f082fecac0767f9f1c89755927c09831b6602327b79b90255db02e747bea6f65",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "03/at-price-boundary",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "75bc8c3c7a2c9b3ded170bd1cd715c90a907dc072aa15963f6a75d0722b59162",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "03/before-price-history",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "03/two-purchases",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "f082fecac0767f9f1c89755927c09831b6602327b79b90255db02e747bea6f65",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "03/at-price-boundary",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "75bc8c3c7a2c9b3ded170bd1cd715c90a907dc072aa15963f6a75d0722b59162",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "03/before-price-history",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "04/claim29-original",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "7e03868e03895174f50c24b575ce2976e2b8e6de490268eee91ba203c8b01dc7",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "04/claim30-exclusive-end",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "6d95a57fe80d254f1323245e8cafc6483587d3a48eafe1507b025d363bba1f3b",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "04/claim29-corrected",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "6d95a57fe80d254f1323245e8cafc6483587d3a48eafe1507b025d363bba1f3b",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "04/corrected-end",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "6d95a57fe80d254f1323245e8cafc6483587d3a48eafe1507b025d363bba1f3b",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "04/claim29-original",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "7e03868e03895174f50c24b575ce2976e2b8e6de490268eee91ba203c8b01dc7",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "04/claim30-exclusive-end",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "6d95a57fe80d254f1323245e8cafc6483587d3a48eafe1507b025d363bba1f3b",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "04/claim29-corrected",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "6d95a57fe80d254f1323245e8cafc6483587d3a48eafe1507b025d363bba1f3b",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "04/corrected-end",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "6d95a57fe80d254f1323245e8cafc6483587d3a48eafe1507b025d363bba1f3b",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "05/duplicate-counts-once",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "a6a382f415e3d6d3167ec24a79a2afdfaf58054723a78469b25c90781fbef3a1",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "05/revision-wins-arrival",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "35170a2cfdd702e68c72749759f9c7b3bd7f1377833851041bcdfa6c42ff1ab0",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "05/before-newer",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "6421161a2919ce1632aa2b2ce988b3fa4fcea53328beea476ae2d0e7a8a39f94",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "05/older-revision-fills-history",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "ba618082be6a0cfc5fdad89b4fb44f9f50ce2eed05d427d8510fba7cbcb94f1e",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "05/duplicate-counts-once",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "a6a382f415e3d6d3167ec24a79a2afdfaf58054723a78469b25c90781fbef3a1",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "05/revision-wins-arrival",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "35170a2cfdd702e68c72749759f9c7b3bd7f1377833851041bcdfa6c42ff1ab0",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "05/before-newer",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "6421161a2919ce1632aa2b2ce988b3fa4fcea53328beea476ae2d0e7a8a39f94",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "05/older-revision-fills-history",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "ba618082be6a0cfc5fdad89b4fb44f9f50ce2eed05d427d8510fba7cbcb94f1e",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "06/balance800",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "3300ed08e0c32338630c67daf76027a369581e3be5834a6f596d1ac98ef222cc",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "06/distinct-equal-postings",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "7dc1ef50d22edc74661b0d094c6a4f26ab165f21d5cb675995db761d58aaef9c",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "06/business-reversal",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "f0ba35a3320d6088583bc24446f0f1d1600cc43f38f5413b8ab66ace8af7bb16",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "06/empty-currency",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "039b4e4b0b071a67d7e55515dc40e860bb6516dad70cd2a16bcdbd59969c9692",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "06/balance800",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "3300ed08e0c32338630c67daf76027a369581e3be5834a6f596d1ac98ef222cc",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "06/distinct-equal-postings",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "7dc1ef50d22edc74661b0d094c6a4f26ab165f21d5cb675995db761d58aaef9c",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "06/business-reversal",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "f0ba35a3320d6088583bc24446f0f1d1600cc43f38f5413b8ab66ace8af7bb16",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "06/empty-currency",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "039b4e4b0b071a67d7e55515dc40e860bb6516dad70cd2a16bcdbd59969c9692",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "07/available7",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "3370e663aafbbc4f7cc8b0b5b70fa97a724403a2a4ac8a9c735aa1c480d18059",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "07/before-release",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "8fecb21d6a8d72a5c697e6dfec631b120024427ca5c0ac1a387d0b0f71fe7271",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "07/canceled-reservation",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "cb676e311a8988320d7e54327b9985dd35c561de9be9919a9649c8c644743a81",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "07/available7",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "3370e663aafbbc4f7cc8b0b5b70fa97a724403a2a4ac8a9c735aa1c480d18059",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "07/before-release",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "8fecb21d6a8d72a5c697e6dfec631b120024427ca5c0ac1a387d0b0f71fe7271",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "07/canceled-reservation",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "cb676e311a8988320d7e54327b9985dd35c561de9be9919a9649c8c644743a81",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "08/net700",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "9e803793a379cd1f0982922eb75f78a700f6c9f39fe31fddf2834c1dd069c159",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "08/one-refund",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "a379703dc156e92179974f990807c174e7ab39c763a22ec21fec39d8ef8a1b9c",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "08/no-refunds",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "7dc1ef50d22edc74661b0d094c6a4f26ab165f21d5cb675995db761d58aaef9c",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "08/net700",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "9e803793a379cd1f0982922eb75f78a700f6c9f39fe31fddf2834c1dd069c159",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "08/one-refund",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "a379703dc156e92179974f990807c174e7ab39c763a22ec21fec39d8ef8a1b9c",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "08/no-refunds",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "7dc1ef50d22edc74661b0d094c6a4f26ab165f21d5cb675995db761d58aaef9c",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "09/unprovisioned",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "5b78916bb7d5da399d676a0298057f064f15538e11306d40985d59317d6756f7",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "09/entitlement-boundary",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "09/before-entitlement-known",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "5b78916bb7d5da399d676a0298057f064f15538e11306d40985d59317d6756f7",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "09/unprovisioned",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "5b78916bb7d5da399d676a0298057f064f15538e11306d40985d59317d6756f7",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "09/entitlement-boundary",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "09/before-entitlement-known",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "5b78916bb7d5da399d676a0298057f064f15538e11306d40985d59317d6756f7",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "10/incomplete-source",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "6174f61326f8e001d0fe214db3d4502fd4e6fd2b40e42449323a822356d7d192",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "10/complete-source-overdue",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "a1143f07134b537bcc2e8c01d449d0b85632cccda4ea9e8ba6cca81102e5cb47",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "10/deadline-boundary",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "a1143f07134b537bcc2e8c01d449d0b85632cccda4ea9e8ba6cca81102e5cb47",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "10/completed-late",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "d18e83d69f2446fd22f29426afc3d74755d7127ee51ce22780a77a9e7441dca7",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "10/incomplete-source",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "6174f61326f8e001d0fe214db3d4502fd4e6fd2b40e42449323a822356d7d192",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "10/complete-source-overdue",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "a1143f07134b537bcc2e8c01d449d0b85632cccda4ea9e8ba6cca81102e5cb47",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "10/deadline-boundary",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "a1143f07134b537bcc2e8c01d449d0b85632cccda4ea9e8ba6cca81102e5cb47",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "10/completed-late",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "d18e83d69f2446fd22f29426afc3d74755d7127ee51ce22780a77a9e7441dca7",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "11/inherited-allow",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "7e03868e03895174f50c24b575ce2976e2b8e6de490268eee91ba203c8b01dc7",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "11/expired-membership",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "6d95a57fe80d254f1323245e8cafc6483587d3a48eafe1507b025d363bba1f3b",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "11/unknown-user",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "6d95a57fe80d254f1323245e8cafc6483587d3a48eafe1507b025d363bba1f3b",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "11/inherited-allow",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "7e03868e03895174f50c24b575ce2976e2b8e6de490268eee91ba203c8b01dc7",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "11/expired-membership",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "6d95a57fe80d254f1323245e8cafc6483587d3a48eafe1507b025d363bba1f3b",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "11/unknown-user",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "6d95a57fe80d254f1323245e8cafc6483587d3a48eafe1507b025d363bba1f3b",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "12/deny-two-allows",
+      "mode": "current",
+      "status": "FAIL_PUBLIC_API",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+      "languages": [],
+      "answerLanguages": [],
+      "languageClass": {
+        "answer": "none",
+        "strict": "none"
+      }
+    },
+    {
+      "caseId": "12/corrected-block",
+      "mode": "current",
+      "status": "FAIL_PUBLIC_API",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+      "languages": [],
+      "answerLanguages": [],
+      "languageClass": {
+        "answer": "none",
+        "strict": "none"
+      }
+    },
+    {
+      "caseId": "12/exclusive-block-end",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "7e03868e03895174f50c24b575ce2976e2b8e6de490268eee91ba203c8b01dc7",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "12/one-allow-remains",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "7e03868e03895174f50c24b575ce2976e2b8e6de490268eee91ba203c8b01dc7",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "12/deny-two-allows",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "6d95a57fe80d254f1323245e8cafc6483587d3a48eafe1507b025d363bba1f3b",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "12/corrected-block",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "7e03868e03895174f50c24b575ce2976e2b8e6de490268eee91ba203c8b01dc7",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "12/exclusive-block-end",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "7e03868e03895174f50c24b575ce2976e2b8e6de490268eee91ba203c8b01dc7",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "12/one-allow-remains",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "7e03868e03895174f50c24b575ce2976e2b8e6de490268eee91ba203c8b01dc7",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "13/nested-items",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "6d2a1caf23b7b7a169a2bea8fa835545147f6f3213bd134ada351314b8ff6fc9",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "13/move-boundary",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "4e0297e1af8bcbf9386d7dc7be4e6ba3fbe298d4c0cec941538b1d30ebda66d8",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "13/move-not-yet-known",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "6d2a1caf23b7b7a169a2bea8fa835545147f6f3213bd134ada351314b8ff6fc9",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "13/destination",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "183e8a17801dcc0d72affeb2c02a0b7ba5e402ff1004419152ede015acfff77e",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "13/nested-items",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "6d2a1caf23b7b7a169a2bea8fa835545147f6f3213bd134ada351314b8ff6fc9",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "13/move-boundary",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "4e0297e1af8bcbf9386d7dc7be4e6ba3fbe298d4c0cec941538b1d30ebda66d8",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "13/move-not-yet-known",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "6d2a1caf23b7b7a169a2bea8fa835545147f6f3213bd134ada351314b8ff6fc9",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "13/destination",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "183e8a17801dcc0d72affeb2c02a0b7ba5e402ff1004419152ede015acfff77e",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "14/affected-customer",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "cced14f359635ccef8ae99c42119e3a6cc1bac490aa4bda5c860e8f33545b773",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "14/corrected-genealogy",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "14/before-shipment",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "14/affected-customer",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "cced14f359635ccef8ae99c42119e3a6cc1bac490aa4bda5c860e8f33545b773",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "14/corrected-genealogy",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "14/before-shipment",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "15/diamond-cycle",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "e7ef195bcfaada605ce118b8c7584996760b74079932c1cd589fa8cbb72f11d5",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "15/vulnerability-end",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "15/dependency-set",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "582057b39b587f9ffe0363d2be4b28c9262d9528fe1ffcee21a2d9dd0b5c0685",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "15/diamond-cycle",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "e7ef195bcfaada605ce118b8c7584996760b74079932c1cd589fa8cbb72f11d5",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "15/vulnerability-end",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "15/dependency-set",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "582057b39b587f9ffe0363d2be4b28c9262d9528fe1ffcee21a2d9dd0b5c0685",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "16/original-lineage",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "b95f6fb3e25a63b21cb9c74588e2bce955d94277a3e6b1856cc0b4407d30e042",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "16/metadata-added",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "172561404e998b3190efe76fbf5b5fda486da4be912762e4fbe72d3139ff9a20",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "16/unknown-output",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "16/original-lineage",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "b95f6fb3e25a63b21cb9c74588e2bce955d94277a3e6b1856cc0b4407d30e042",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "16/metadata-added",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "172561404e998b3190efe76fbf5b5fda486da4be912762e4fbe72d3139ff9a20",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "16/unknown-output",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "17/ordered-not-reordered",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "5b78916bb7d5da399d676a0298057f064f15538e11306d40985d59317d6756f7",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "17/include-exclusive-boundary",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "384a542c6e0bc6c40da988c391f4c699d8f72cff6f1238c688a068dd76cb82e1",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "17/equal-steps-fail",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "6d95a57fe80d254f1323245e8cafc6483587d3a48eafe1507b025d363bba1f3b",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "17/ordered-not-reordered",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "5b78916bb7d5da399d676a0298057f064f15538e11306d40985d59317d6756f7",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "17/include-exclusive-boundary",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "384a542c6e0bc6c40da988c391f4c699d8f72cff6f1238c688a068dd76cb82e1",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "17/equal-steps-fail",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "6d95a57fe80d254f1323245e8cafc6483587d3a48eafe1507b025d363bba1f3b",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "18/union10",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "f455f9a87a718e3e181d3a165866c78966fb8578fd73c40f8d06fbae888e2359",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "18/duplicate-stays10",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "f455f9a87a718e3e181d3a165866c78966fb8578fd73c40f8d06fbae888e2359",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "18/clipped",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "7796a11412752dee25ed1e421db60ed372143b88886e213da364f8840ec78367",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "18/gap",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "039b4e4b0b071a67d7e55515dc40e860bb6516dad70cd2a16bcdbd59969c9692",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "18/bridge-known",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "9cdbad1b227332f3e91b2a82b871613e0c5dead606280693611424ddc99c1578",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "18/union10",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "f455f9a87a718e3e181d3a165866c78966fb8578fd73c40f8d06fbae888e2359",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "18/duplicate-stays10",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "f455f9a87a718e3e181d3a165866c78966fb8578fd73c40f8d06fbae888e2359",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "18/clipped",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "7796a11412752dee25ed1e421db60ed372143b88886e213da364f8840ec78367",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "18/gap",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "039b4e4b0b071a67d7e55515dc40e860bb6516dad70cd2a16bcdbd59969c9692",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "18/bridge-known",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "9cdbad1b227332f3e91b2a82b871613e0c5dead606280693611424ddc99c1578",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "19/historical-training-example",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "cb0535da086c95b52a011d635fa75add87456169a9406d3237c3b51c0869d386",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "19/label-not-known",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "19/restated-feature-separate",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "7c8ef9c07ce9149fb5f71bf8d816d0fac43b2fbef282be3b9d8dd9a5684c225d",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "19/future-valid-feature",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "73450d9c6a94794ee7afbcd7b5d6b836bddad57f86a9454a131a9f957f13d746",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "19/historical-training-example",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "cb0535da086c95b52a011d635fa75add87456169a9406d3237c3b51c0869d386",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "19/label-not-known",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "19/restated-feature-separate",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "7c8ef9c07ce9149fb5f71bf8d816d0fac43b2fbef282be3b9d8dd9a5684c225d",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "19/future-valid-feature",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "73450d9c6a94794ee7afbcd7b5d6b836bddad57f86a9454a131a9f957f13d746",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "20/two-supports",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "69fca8466d55f80cbac9ce4367df505df6c3b540ced1ddb9760c32dbe638d935",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "20/one-support",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "5854a957d856d2a8ca567522f5dbe54ea475ad5b35e13f15c39c0194f849b001",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "20/last-support-removed",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "ab7f27edf609e4481ac8625e1cff39ebfa71c3da65b6ad15066d8b7208af10eb",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "20/remaining-closure",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "154e1522bca194ecc312d889a9e6e213910634b917b9dde8003bf831b108bc21",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "20/two-supports",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "69fca8466d55f80cbac9ce4367df505df6c3b540ced1ddb9760c32dbe638d935",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "20/one-support",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "5854a957d856d2a8ca567522f5dbe54ea475ad5b35e13f15c39c0194f849b001",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "20/last-support-removed",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "ab7f27edf609e4481ac8625e1cff39ebfa71c3da65b6ad15066d8b7208af10eb",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    },
+    {
+      "caseId": "20/remaining-closure",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-EVT",
+      "rawResultSha256": "154e1522bca194ecc312d889a9e6e213910634b917b9dde8003bf831b108bc21",
+      "languages": [
+        "sparql-1.1",
+        "sparql-1.1",
+        "sparql-1.1"
+      ],
+      "answerLanguages": [
+        "sparql-1.1"
+      ],
+      "languageClass": {
+        "answer": "sparql-1.1",
+        "strict": "sparql-1.1"
+      }
+    }
+  ],
+  "scopes": {
+    "workloads": [
+      "[\"triplex-scope-v1\",\"test\",\"test\",\"qlever-workload-67d51fb9-4460-4c3a-9826-65a033fabb85-01\",0]",
+      "[\"triplex-scope-v1\",\"test\",\"test\",\"qlever-workload-67d51fb9-4460-4c3a-9826-65a033fabb85-02\",0]",
+      "[\"triplex-scope-v1\",\"test\",\"test\",\"qlever-workload-67d51fb9-4460-4c3a-9826-65a033fabb85-03\",0]",
+      "[\"triplex-scope-v1\",\"test\",\"test\",\"qlever-workload-67d51fb9-4460-4c3a-9826-65a033fabb85-04\",0]",
+      "[\"triplex-scope-v1\",\"test\",\"test\",\"qlever-workload-67d51fb9-4460-4c3a-9826-65a033fabb85-05\",0]",
+      "[\"triplex-scope-v1\",\"test\",\"test\",\"qlever-workload-67d51fb9-4460-4c3a-9826-65a033fabb85-06\",0]",
+      "[\"triplex-scope-v1\",\"test\",\"test\",\"qlever-workload-67d51fb9-4460-4c3a-9826-65a033fabb85-07\",0]",
+      "[\"triplex-scope-v1\",\"test\",\"test\",\"qlever-workload-67d51fb9-4460-4c3a-9826-65a033fabb85-08\",0]",
+      "[\"triplex-scope-v1\",\"test\",\"test\",\"qlever-workload-67d51fb9-4460-4c3a-9826-65a033fabb85-09\",0]",
+      "[\"triplex-scope-v1\",\"test\",\"test\",\"qlever-workload-67d51fb9-4460-4c3a-9826-65a033fabb85-10\",0]",
+      "[\"triplex-scope-v1\",\"test\",\"test\",\"qlever-workload-67d51fb9-4460-4c3a-9826-65a033fabb85-11\",0]",
+      "[\"triplex-scope-v1\",\"test\",\"test\",\"qlever-workload-67d51fb9-4460-4c3a-9826-65a033fabb85-12\",0]",
+      "[\"triplex-scope-v1\",\"test\",\"test\",\"qlever-workload-67d51fb9-4460-4c3a-9826-65a033fabb85-13\",0]",
+      "[\"triplex-scope-v1\",\"test\",\"test\",\"qlever-workload-67d51fb9-4460-4c3a-9826-65a033fabb85-14\",0]",
+      "[\"triplex-scope-v1\",\"test\",\"test\",\"qlever-workload-67d51fb9-4460-4c3a-9826-65a033fabb85-15\",0]",
+      "[\"triplex-scope-v1\",\"test\",\"test\",\"qlever-workload-67d51fb9-4460-4c3a-9826-65a033fabb85-16\",0]",
+      "[\"triplex-scope-v1\",\"test\",\"test\",\"qlever-workload-67d51fb9-4460-4c3a-9826-65a033fabb85-17\",0]",
+      "[\"triplex-scope-v1\",\"test\",\"test\",\"qlever-workload-67d51fb9-4460-4c3a-9826-65a033fabb85-18\",0]",
+      "[\"triplex-scope-v1\",\"test\",\"test\",\"qlever-workload-67d51fb9-4460-4c3a-9826-65a033fabb85-19\",0]",
+      "[\"triplex-scope-v1\",\"test\",\"test\",\"qlever-workload-67d51fb9-4460-4c3a-9826-65a033fabb85-20\",0]"
+    ],
+    "fresh": true
+  },
+  "timings": {
+    "workloads": [
+      {
+        "id": "01",
+        "status": "PASS_FUNCTIONAL_ONLY",
+        "ingestMs": 9522.465166,
+        "queryMs": 7341.0898750000015
+      },
+      {
+        "id": "02",
+        "status": "PASS_FUNCTIONAL_ONLY",
+        "ingestMs": 11333.949792,
+        "queryMs": 13645.384667000002
+      },
+      {
+        "id": "03",
+        "status": "PASS_FUNCTIONAL_ONLY",
+        "ingestMs": 17966.242749999998,
+        "queryMs": 54377.345501
+      },
+      {
+        "id": "04",
+        "status": "PASS_FUNCTIONAL_ONLY",
+        "ingestMs": 19473.503624999983,
+        "queryMs": 31131.502083999978
+      },
+      {
+        "id": "05",
+        "status": "PASS_FUNCTIONAL_ONLY",
+        "ingestMs": 21267.336208000022,
+        "queryMs": 25033.53758299994
+      },
+      {
+        "id": "06",
+        "status": "PASS_FUNCTIONAL_ONLY",
+        "ingestMs": 20782.114292000013,
+        "queryMs": 27778.366917000036
+      },
+      {
+        "id": "07",
+        "status": "PASS_FUNCTIONAL_ONLY",
+        "ingestMs": 19928.467417999986,
+        "queryMs": 31243.981624999957
+      },
+      {
+        "id": "08",
+        "status": "PASS_FUNCTIONAL_ONLY",
+        "ingestMs": 59061.23929099995,
+        "queryMs": 145438.050584
+      },
+      {
+        "id": "09",
+        "status": "PASS_FUNCTIONAL_ONLY",
+        "ingestMs": 9777.29925000004,
+        "queryMs": 31838.636501000146
+      },
+      {
+        "id": "10",
+        "status": "PASS_FUNCTIONAL_ONLY",
+        "ingestMs": 22223.846375000197,
+        "queryMs": 143687.75774999976
+      },
+      {
+        "id": "11",
+        "status": "PASS_FUNCTIONAL_ONLY",
+        "ingestMs": 8213.47041700012,
+        "queryMs": 29836.719499999774
+      },
+      {
+        "id": "12",
+        "status": "FAIL",
+        "ingestMs": 32218.728292000014,
+        "queryMs": 81543.464668
+      },
+      {
+        "id": "13",
+        "status": "PASS_FUNCTIONAL_ONLY",
+        "ingestMs": 13383.829499999876,
+        "queryMs": 12820.331167999888
+      },
+      {
+        "id": "14",
+        "status": "PASS_FUNCTIONAL_ONLY",
+        "ingestMs": 9534.829666000092,
+        "queryMs": 13878.861832999974
+      },
+      {
+        "id": "15",
+        "status": "PASS_FUNCTIONAL_ONLY",
+        "ingestMs": 3715.102291999967,
+        "queryMs": 19985.32483300008
+      },
+      {
+        "id": "16",
+        "status": "PASS_FUNCTIONAL_ONLY",
+        "ingestMs": 6945.25787500001,
+        "queryMs": 31639.487291999976
+      },
+      {
+        "id": "17",
+        "status": "PASS_FUNCTIONAL_ONLY",
+        "ingestMs": 4242.941915999982,
+        "queryMs": 23138.767542000045
+      },
+      {
+        "id": "18",
+        "status": "PASS_FUNCTIONAL_ONLY",
+        "ingestMs": 9241.155458000023,
+        "queryMs": 29138.4030830001
+      },
+      {
+        "id": "19",
+        "status": "PASS_FUNCTIONAL_ONLY",
+        "ingestMs": 23299.548251000466,
+        "queryMs": 17075.71362499986
+      },
+      {
+        "id": "20",
+        "status": "PASS_FUNCTIONAL_ONLY",
+        "ingestMs": 22988.42891700007,
+        "queryMs": 22979.391250000102
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "pnpm-version",
+      "command": "pnpm --version",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 631,
+      "cwd": ".",
+      "stdout": "runs/G2/G2-qlever-20261107T234008Z-471d0f/pnpm-version.stdout.txt",
+      "stderr": "runs/G2/G2-qlever-20261107T234008Z-471d0f/pnpm-version.stderr.txt"
+    },
+    {
+      "name": "build",
+      "command": "pnpm --filter @triplex-build/triplex --filter @triplex-build/triplex-testkit --filter @triplex-build/triplex-qlever --filter @triplex-build/triplex-qualification build",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 8437,
+      "cwd": ".",
+      "stdout": "runs/G2/G2-qlever-20261107T234008Z-471d0f/build.stdout.txt",
+      "stderr": "runs/G2/G2-qlever-20261107T234008Z-471d0f/build.stderr.txt"
+    },
+    {
+      "name": "native-runner",
+      "command": "node packages/qualification/workloads/runner.ts --output /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/runs/G2/G2-qlever-20261107T234008Z-471d0f/g2-report.json --results-output /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/runs/G2/G2-qlever-20261107T234008Z-471d0f/g2-results.json",
+      "code": 1,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 1177711,
+      "cwd": ".",
+      "stdout": "runs/G2/G2-qlever-20261107T234008Z-471d0f/native-runner.stdout.txt",
+      "stderr": "runs/G2/G2-qlever-20261107T234008Z-471d0f/native-runner.stderr.txt"
+    }
+  ],
+  "firstFailures": [
+    {
+      "task": "12/deny-two-allows",
+      "reopen": false,
+      "status": "FAIL_PUBLIC_API",
+      "error": "Cause([Fail(ReadError: QLever native SELECT failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])"
+    },
+    {
+      "task": "12/corrected-block",
+      "reopen": false,
+      "status": "FAIL_PUBLIC_API",
+      "error": "Cause([Fail(ReadError: QLever native SELECT failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])"
+    }
+  ],
+  "rawDir": "runs/G2/G2-qlever-20261107T234008Z-471d0f",
+  "reasons": [
+    "2 failed executions"
+  ],
+  "verdict": "FAIL",
+  "objects": [
+    {
+      "path": "pnpm-lock.yaml",
+      "role": "lockfile",
+      "bytes": 289866,
+      "sha256": "7a02f735718ecdd29fdbfaf8ec2e2b05c92ad773cdc27d1920a278c5c7f4ba14"
+    },
+    {
+      "path": "lab/bin/gate.mjs",
+      "role": "gate-script",
+      "bytes": 41285,
+      "sha256": "315dd668874aaf8a284313da014ef44f36d4ee22370e793e9501709ae42c5ec3"
+    },
+    {
+      "path": "lab/bin/lib.mjs",
+      "role": "gate-script",
+      "bytes": 19956,
+      "sha256": "199ba832f81bc8e228bf6e29de0fbd2ef872a4b1d15fd40d2523a49be1f28740"
+    },
+    {
+      "path": "lab/bin/receipt.mjs",
+      "role": "gate-script",
+      "bytes": 5027,
+      "sha256": "b6511d1eab385fcf453fe628aa4dd5437e3b78c02a2eca84165dcaa246c5abad"
+    },
+    {
+      "path": "lab/bin/engine.mjs",
+      "role": "gate-script",
+      "bytes": 17892,
+      "sha256": "2c3bd842205e572a0cd456f2ceaf2a0d1003fd1553b03f446a27874b170ee72e"
+    },
+    {
+      "path": "lab/bin/heavy-lock.mjs",
+      "role": "gate-script",
+      "bytes": 1841,
+      "sha256": "88dd2071c8d8c1e3212c9a65dc719b79af46fbe6cc2e6ede8fbe0b61112803fa"
+    },
+    {
+      "path": "lab/config/slots.json",
+      "role": "gate-script",
+      "bytes": 3434,
+      "sha256": "36013a8c81758db005c8242f819d12df43c621fd8c9335565976e242a39679c5"
+    },
+    {
+      "path": "runs/G2/G2-qlever-20261107T234008Z-471d0f/build-manifest.json",
+      "role": "build-manifest",
+      "bytes": 104090,
+      "sha256": "e0c28d23bb38f7e51112634e5071f232db3e85cd1574451ae2a976e51dcd32c0"
+    },
+    {
+      "path": "qlever-dev effective config",
+      "role": "engine-effective-config",
+      "bytes": 797,
+      "sha256": "e6262cb510315f66d4637b84aae8034435b6c520995e34879f2ce96626a8c81b"
+    },
+    {
+      "path": "start.sh",
+      "role": "engine-config-file",
+      "bytes": 941,
+      "sha256": "13a4f9102323c8c31fc0c093b3fe64e068691afd5cead0018e936075e3422736"
+    },
+    {
+      "path": "qlever get-settings before",
+      "role": "engine-settings-before",
+      "bytes": 1809,
+      "sha256": "cfb30997cfb683c368eb063d9cf8c24cd3ad4d6a684e993b7ff0e7160d6f2059"
+    },
+    {
+      "path": "qlever get-settings after",
+      "role": "engine-settings-after",
+      "bytes": 1809,
+      "sha256": "cfb30997cfb683c368eb063d9cf8c24cd3ad4d6a684e993b7ff0e7160d6f2059"
+    },
+    {
+      "path": "runs/G2/G2-qlever-20261107T234008Z-471d0f/build-manifest-after.json",
+      "role": "build-manifest",
+      "bytes": 104090,
+      "sha256": "e0c28d23bb38f7e51112634e5071f232db3e85cd1574451ae2a976e51dcd32c0"
+    },
+    {
+      "path": "runs/G2/G2-qlever-20261107T234008Z-471d0f/native-runner.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 1394,
+      "sha256": "1ba6e157525bdda2dee688d85e0d605f8b0d25dd2e52a0918578f10d67842270"
+    },
+    {
+      "path": "runs/G2/G2-qlever-20261107T234008Z-471d0f/native-runner.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "qualification/workloads/temporal-workloads.json",
+      "role": "oracle-fixture",
+      "bytes": 124581,
+      "sha256": "322c773db2049b5a704d36925738859aef4982ca27194d13a659d1b0e9081271"
+    },
+    {
+      "path": "qualification/workloads/access_cases.mjs",
+      "role": "oracle-fixture",
+      "bytes": 7058,
+      "sha256": "9de17a852621ac4a69492fed124b54effa4d39f87c9f4576b7e77845e0c9af0f"
+    },
+    {
+      "path": "qualification/workloads/containment_cases.mjs",
+      "role": "oracle-fixture",
+      "bytes": 3879,
+      "sha256": "401a4bb5c3b64bf1d518374449592b89cc1629f413c6806d0b34fbdb53a295bd"
+    },
+    {
+      "path": "qualification/workloads/dependency_cases.mjs",
+      "role": "oracle-fixture",
+      "bytes": 6386,
+      "sha256": "faaa7ef47c4112ff06d69d1f888b373be48587cbc00f340e8f72cdfb842fe261"
+    },
+    {
+      "path": "qualification/workloads/engine_cases.mjs",
+      "role": "oracle-fixture",
+      "bytes": 17684,
+      "sha256": "321672018338d88b75188a489aa296418938651b79c2c48cc3940d813e714d50"
+    },
+    {
+      "path": "qualification/workloads/funnel_cases.mjs",
+      "role": "oracle-fixture",
+      "bytes": 3276,
+      "sha256": "ce3bf3ee86bb8db657ed3a643b8515bea309232d6db86dd96e76a18e7cbb2faa"
+    },
+    {
+      "path": "qualification/workloads/interval_join_cases.mjs",
+      "role": "oracle-fixture",
+      "bytes": 10394,
+      "sha256": "8155ee3655fa8c8be4d20d90e6523cf1448e47aef4fdae45723833ae93eeed85"
+    },
+    {
+      "path": "qualification/workloads/recall_cases.mjs",
+      "role": "oracle-fixture",
+      "bytes": 6956,
+      "sha256": "261247cc646e5eab3bf8c6bcdf84404f4b6b9cda07b885c94ca3d7a3906ac99c"
+    },
+    {
+      "path": "qualification/workloads/support_cases.mjs",
+      "role": "oracle-fixture",
+      "bytes": 7435,
+      "sha256": "3114043605a922218ae3fe1feeb4949d280f4dbe5e24d98159a8a691c5cebc02"
+    },
+    {
+      "path": "qualification/workloads/test_engine_cases.mjs",
+      "role": "oracle-fixture",
+      "bytes": 16808,
+      "sha256": "7d1d406e659f8a9f917c84a6a9c76517b0262cae07851500b58fa6ead1dd409a"
+    },
+    {
+      "path": "qualification/workloads/training_cases.mjs",
+      "role": "oracle-fixture",
+      "bytes": 7485,
+      "sha256": "1474e7fd1ace7d18906d347de2a515149880542086e59feaf8cbcc0ffd1bd076"
+    },
+    {
+      "path": "qualification/workloads/uptime_cases.mjs",
+      "role": "oracle-fixture",
+      "bytes": 3493,
+      "sha256": "432a4556422acf4122282c89757a12e926bcdf543551cce497b4c3519c3c4fe9"
+    },
+    {
+      "path": "qualification/workloads/webhook_cases.mjs",
+      "role": "oracle-fixture",
+      "bytes": 9378,
+      "sha256": "084549364af26a6efdf472e521e1a1a8fde7c08389e96810816da43d3d151e54"
+    },
+    {
+      "path": "packages/qualification/workloads/runner.ts",
+      "role": "oracle-fixture",
+      "bytes": 41055,
+      "sha256": "e13a872ea5bde90a9bcf37f83885036df4f635295ce57ab45261d78928567208"
+    },
+    {
+      "path": "runs/G2/G2-qlever-20261107T234008Z-471d0f/g2-report.json",
+      "role": "raw-outcome",
+      "bytes": 2649771,
+      "sha256": "69848e317c4f5fb0fdb05df8efe32409bffac429361a8136a4b49cbc7da62e94"
+    },
+    {
+      "path": "runs/G2/G2-qlever-20261107T234008Z-471d0f/g2-results.json",
+      "role": "raw-outcome",
+      "bytes": 31538,
+      "sha256": "548e65509f584e9c3e48f45c706cd3fdce8ad501e5b0aa2fb1bcf4862a2c1beb"
+    },
+    {
+      "path": "lab/acceptance/obligations.json",
+      "role": "acceptance-contract",
+      "bytes": 651385,
+      "sha256": "8f287cd0aa4eb4d96d6ff102eddfdabf1cdc80d74af576517ad382fbf9d4ef81"
+    }
+  ]
+}

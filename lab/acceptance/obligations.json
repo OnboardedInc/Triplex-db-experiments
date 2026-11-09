@@ -1,6 +1,6 @@
 {
   "format": "triplex-db-2/acceptance-obligations/3",
-  "version": "0.3.11",
+  "version": "0.3.12",
   "status": "CANDIDATE-1.0.0: retargeted to Sam's re-scope (SCOPE.md, NORTH-STAR.md, TARGETS.md); freezes as 1.0.0 after orchestrator acceptance and adversarial review",
   "date": "2026-11-08",
   "authority": "This file is the only authority an evaluator reads. Goals and targets come from lab/SCOPE.md, lab/NORTH-STAR.md and lab/TARGETS.md; RULINGS.md is compiled into this file by build_contract.py; the other artifacts are generated from the same source.",
@@ -18,21 +18,29 @@
     "lab/NORTH-STAR.md": "0176766d21385a37a0dea3091d7200f249901ce8a4eadd071acd56b2f70eb3e9",
     "lab/TARGETS.md": "cb30ffeb776a7deb0c885be2968872bcebd7dc05cca1b2cfb5913b809a804d95",
     "lab/research/SAM-pasted-numbers-2026-11-07.md": "f35a223edd83994a0ac2ebcb94f9ec7e7ea8f1a279ef23bbb69390b8c03d89f8",
-    "lab/acceptance/RULINGS.md": "b34fd401df7692023efa6a4ceeba5d7212aceaf32b7c77143c933557b6b75891",
-    "lab/acceptance/RULINGS-PENDING.md": "8dec81913c52e843c29d6679d66a68fc524c93f20674eb9106b68ee3c52a85ce",
+    "lab/acceptance/RULINGS.md": "b516dcd342a4872e017cbffe21a2e1a69e7b8c228bcb199357ea02a70f08650e",
+    "lab/acceptance/RULINGS-PENDING.md": "b86222c537567c78ecd5e53e23f9450f0e48e7d8ff54b7f533d3678243a862c0",
     "lab/verify/O02/v-o03/pin_scope.json": "f8897d518cb380ff64de25b02ae82f4846af313e5f2c41bbf147509fe6025a32",
     "lab/verify/O02/v-o03/hashes.8cc2c26.json": "4b221aa280eb6f2aeb1f5252d29dcef99aefc629e0388ac7468c6f1f1353b962",
     "lab/verify/D01/W0-1.1.1-ada2e90-SHA256SUMS": "bad527e280e1769a18fd2d65016e4d6bbfb4969c872dd73069cfb83637bfba4d",
     "lab/verify/O02/v-o04b/results/hashes.a9c1327.json": "256465151a1018faf17432f3706aa34650448b587e52d256b80972de7d9df1f1",
     "lab/verify/O02/BRIEF.md": "38d3c81f99da26438ff09ba0e6b6a88e75c5f402c4362a7d28d9b8df387376c4",
     "lab/verify/D01/BRIEF.md": "8fbdaaf67d2cbc1ae000d780ce7fcc45825ec6ba81edbbc9ed179ce517b5df88",
-    "lab/acceptance/build_contract.py": "60055e9f236733365c4e558412368b0a2934df8cb1d5e9479d45758971940ccf"
+    "lab/acceptance/pins/O-OBS-V-O05-round4.md": "aa275c634384c42977b6ed294be9cb527423a9ad824b9101556017b065bb12dc",
+    "lab/acceptance/pins/O-OBS-23e2273-SHA256SUMS": "486a4209d38fcc70a9ccb64d7c7ed9e0dfe25eef405ca21b097fee67d2697300",
+    "lab/acceptance/pins/O-OBS-V-O05-round4-BRIEF.md": "4207182cbbda61f04e9647e1dcde291bdc345dc30f49926abeed6e157e2c1baa",
+    "lab/acceptance/pins/O-OBS-V-O05-round4-brief-provenance.json": "50fe4ca21c0e0769136b1a77d9f2ab71afff0f4e454668e4654acc0030f19fdd",
+    "lab/acceptance/pins/O-OBS-V-O05-round4-last.md": "5956dfd269b4f18b13bda84a0bfa840b164d0d783c6f34dda9ff29ad706bcf7c",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.12-round3/workload-hunk-review.json": "86fccbf5ef7a27611f45b44659a37a5bcba8e613953bcfd04a8e326464c77dae",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.12-round3/xtdb-workloads.ts.diff": "b31cae3941b058b72f9cda6e890ab600983fde24c0f4b609d9e161f5ba4d4f1f",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.12-round3/qlever-workloads.ts.diff": "1a40dcce1fb973666abe0385fb2af3f24bf499676b9b595fea4a5aa7c49fb85a",
+    "lab/acceptance/build_contract.py": "914db3d15e91180e8b449fffeeb27b997dc10eb835fff66e10eca6517e985b59"
   },
   "artifacts": {
     "oracle-contract.json": "a7ec2fe98f8bb066fe6ea55e89344905f5e9c760b076152f5377c414d18adbd0",
-    "load-contract.json": "00169eedc83df0d7541f12c188aaec72f94c11f8ba70992e0411a4999d2adced",
-    "budgets.json": "91a85c688b876f767c25afa73d4a3080eb2831bc21ed1daaf48e7b5a701bda00",
-    "capability-matrix.md": "544acb56083db7c37ecfdcbe5f8e140b9999d368ee84632acd103b3b5069ac40"
+    "load-contract.json": "c54af6122604a7cbe49c4de41ba658f9076cea8701f90cc4e3583f1cad009428",
+    "budgets.json": "c09b5257c08d050d9c99d8e1595cd4817b9c8c1337afba291109e7fd0c7a8159",
+    "capability-matrix.md": "36fd4485da5d7b25fc4406722645f0d49cf7cddc519493b6d752f6b731c5cf4f"
   },
   "lanes": [
     "xtdb-xtql",
@@ -1614,6 +1622,329 @@
       "compiledInto": [
         "qualificationRun.integrity"
       ]
+    },
+    {
+      "id": "Q72a",
+      "topic": "lock helper",
+      "ruling": "The flock helper runs detached in its own process group, ignores INT, TERM and HUP, and exits only on stdin EOF; when it exits for any reason the log fail-stops (every later append throws), and each append checks the helper is alive. A test kills the helper and Ctrl-Cs the holder's group and shows no second writer.",
+      "compiledInto": [
+        "brokerRules"
+      ]
+    },
+    {
+      "id": "Q72b",
+      "topic": "answer snapshot",
+      "ruling": "Q67c applies to every broker read surface: a surface that answers in one request reads the marker in that request (a UNION with the marker triple, as pulls do); a surface that needs several requests (Datalog executor, dependencyState, native with awaitBasisMs) compares (incarnation, marker) before and after, and every fence and replay writes a new incarnation first. V-P2Q's live residual test (zero-downtime rewind between the probes) is a regression case.",
+      "compiledInto": [
+        "brokerRules"
+      ]
+    },
+    {
+      "id": "Q72c",
+      "topic": "reasons",
+      "ruling": "Rename reasons to the contract's strings now (`basis-not-reached`, `replica-unreachable`). Core tagged errors (Q67h) are required before the broker becomes a default, not for the default-off merge; until then no claim may close an obligation pinned to E-BASIS-NOT-AVAILABLE or E-REPLICA-UNAVAILABLE.",
+      "compiledInto": [
+        "brokerRules"
+      ]
+    },
+    {
+      "id": "Q72d",
+      "topic": "A0 guard",
+      "ruling": "The A0 change with the option off is a correctness fix (main answers a basis above the published position) and stays. The frozen A0 control (Q46b) is re-frozen at the P2Q merge, and every matched comparison names the change.",
+      "compiledInto": [
+        "brokerRules"
+      ]
+    },
+    {
+      "id": "Q72e",
+      "topic": "outage replay",
+      "ruling": "The synchronous whole-log replay per outage pull is a blocker for default, not for default-off; it is replaced by the Q58c store (recent_rows or a current index, on R25's design). Probes are coalesced into one in-flight probe per replica in this round. Tests import src through tsx, never dist.",
+      "compiledInto": [
+        "brokerRules"
+      ]
+    },
+    {
+      "id": "Q72g",
+      "topic": "native in broker mode",
+      "ruling": "Every broker-mode wiring passes `awaitBasisMs: 2000` (the Q58a default) until the core native facade exists; receipts are measured at the claimed head.",
+      "compiledInto": [
+        "brokerRules"
+      ]
+    },
+    {
+      "id": "Q80a",
+      "topic": "trusted context",
+      "ruling": "O-OBS judges evidence only inside an evaluator-owned, contract-bound case and run context (obligation, case, witness kind, threshold ids, run id) and against collector objects the evaluator retained itself; evidence that only hashes itself is REFUSED. The collector and context format comes from R27.",
+      "compiledInto": [
+        "observationRules"
+      ]
+    },
+    {
+      "id": "Q80b",
+      "topic": "witnesses prove, labels do not",
+      "ruling": "Each fault transition and each wait bound has a witness schema of source-bound events (start, end, readback) checked against retained objects; a label naming the transition or the duration is never evidence of it.",
+      "compiledInto": [
+        "observationRules"
+      ]
+    },
+    {
+      "id": "Q80c",
+      "topic": "exact ratios",
+      "ruling": "Work ratios compare integer counters exactly against rational contract thresholds (cross-multiplication), never binary64.",
+      "compiledInto": [
+        "observationRules"
+      ]
+    },
+    {
+      "id": "Q82a",
+      "topic": "source kinds",
+      "ruling": "O-OBS enforces six kinds in trust order: EI engine-internal, TO transport-observed (a wire proxy in a separate process), HO host-observed (cgroup, /proc, sockets, file scans), DR durable read-back, HR harness-observed (caller-side fields only), CR reported by Triplex code (rejected; includes the Datomic gateway, the broker's own timestamps, and a counter inside the client process). `source.kind` is `<code>/<engine>/<sourceId>`.",
+      "compiledInto": [
+        "observationRules"
+      ]
+    },
+    {
+      "id": "Q82b",
+      "topic": "two agreeing sources for safety",
+      "ruling": "OBS-NO-MUTATION, OBS-PREABORT, OBS-CANCEL and OBS-ACK-ORDER pass only when two sources of different kinds agree.",
+      "compiledInto": [
+        "observationRules"
+      ]
+    },
+    {
+      "id": "Q82c",
+      "topic": "obs-bundle/1",
+      "ruling": "Evidence arrives as an obs-bundle/1 written by an observer sidecar per engine container that engine.mjs starts (never builder code): content-addressed raw chunks, a hash chain per stream, HMAC-SHA256 chunk headers under a per-run key the SUT never sees, a witness log of chain heads written only by orchestrator tooling, a clock bridge with stated uncertainty, and hash-pinned normalizer scripts that O-OBS reruns; records are recomputed from raw bytes, never accepted as given. Because every agent runs as one macOS user, acceptance additionally repeats the collection by the verifier (ACCEPTANCE 5.8); the bundle alone suffices only for screening.",
+      "compiledInto": [
+        "observationRules"
+      ]
+    },
+    {
+      "id": "Q82d",
+      "topic": "erasure scans need positive controls",
+      "ruling": "Every erasure-scan location first finds a canary written before the erasure with the same scanner, or the verdict is REFUSED (QLever's FSST-compressed vocabulary defeats plain grep). Observer outputs (QLever metrics log, XTDB DEBUG logs and spans, proxy captures, docker logs), old index generations and freed blocks join PROTECTED_COPY_INVENTORY.",
+      "compiledInto": [
+        "observationRules"
+      ]
+    },
+    {
+      "id": "Q82e",
+      "topic": "engine facts",
+      "ruling": "XTDB mutation evidence is the gauge node.tx.latestCompletedTxId, never source-log offsets (flushes and compaction append to the log); XTDB EXPLAIN ANALYZE attributes are JSON (scan_rows_read, scan_pages_used, scan_files_used), and the P4 harness's decoding (p4.mjs:29) is fixed to read them; QLever runs with --enable-metrics and its per-query metrics log on. Lane D CANCEL and PREABORT use host-observed per-thread /proc series of the gateway JVM plus the proxy (HO + TO).",
+      "compiledInto": [
+        "observationRules"
+      ]
+    },
+    {
+      "id": "Q83a",
+      "topic": "log4j flag on slots",
+      "ruling": "Slots s1-s3 add `-Dlog4j2.shutdownHookEnabled=false` to javaOpts, so XTDB's shutdown hook can log `Stopping node...`, the three server-stopped lines and `Node stopped.` (Log4j's own hook otherwise drops them). The dev residents are unchanged. This changes the slot config hash and therefore every golden key; receipts before the change name the old hash.",
+      "compiledInto": [
+        "seedRules"
+      ]
+    },
+    {
+      "id": "Q83b",
+      "topic": "canonical freeze state",
+      "ruling": "Settled = two finish-blocks (the second records the post-compaction catalog), compactor jobs 0, and snapshot-independent evidence (new block file whose tx_id and latest_processed_msg_id equal the node gauges, block.last_upload_time advanced, xt.trie_stats showing the new tries, file listing and trie digest unchanged over three readings 5 s apart); never `xt.live_tables` (stale shared snapshot, upstream #6174). Clean stop = exit within 10 s with the stop lines and exit 143, well-formed LOG and REPLICA_LOG tails checked offline, empty `buffers/**/.tmp` (refuse, never delete). The freeze fingerprint is taken on a reference start of the source after the copy, and every arm, fresh or cloned, starts the same way. Re-test the second finish-block and the reference start when XTDB 2.2.1 is pinned.",
+      "compiledInto": [
+        "seedRules"
+      ]
+    },
+    {
+      "id": "Q83c",
+      "topic": "block listing",
+      "ruling": "Never read a block that may not exist (MemoryCache hangs the caller): list `buffers/v06/blocks/b*.binpb` first and query `xt.block_files` only for listed indices, re-listing just before each query; block numbers are not dense (GC keeps the latest 10).",
+      "compiledInto": [
+        "seedRules"
+      ]
+    },
+    {
+      "id": "Q84a",
+      "topic": "pragmas and lock",
+      "ruling": "WAL, synchronous=FULL, fullfsync=ON on every non-readonly connection, checkpoint_fullfsync=ON, wal_autocheckpoint=0, journal_size_limit=16 MiB, locking NORMAL (not EXCLUSIVE); the single writer holds a SQLite exclusive lock on a separate broker.lock file for the life of the process (replaces the perl flock helper); assert SQLite >= 3.51.3 at open.",
+      "compiledInto": [
+        "brokerRules"
+      ]
+    },
+    {
+      "id": "Q84b",
+      "topic": "threads",
+      "ruling": "One writer worker thread owns the read-write commit connection; one checkpointer thread runs wal_checkpoint(PASSIVE) every 4 s on its own connection; four reader threads with readonly connections fed over MessagePort; the main thread never touches broker.db. Backstop: above 64 MiB of WAL the writer closes a gate, readers park between transactions, the writer runs RESTART.",
+      "compiledInto": [
+        "brokerRules"
+      ]
+    },
+    {
+      "id": "Q84c",
+      "topic": "pinned reads",
+      "ruling": "Every read transaction starts with `SELECT lsn, epoch, h FROM marker` and is served only when h <= B <= lsn, else routed to the source; one unit of work per transaction (one pull or one 64-subject page). Long work keeps its basis through a retention pin (pinBasis holds H <= B), never an open read transaction.",
+      "compiledInto": [
+        "brokerRules"
+      ]
+    },
+    {
+      "id": "Q84d",
+      "topic": "H1 in the same file",
+      "ruling": "H1's current rows live in broker.db as live_rows and retired_rows clustered by entity, written in the commit's own transaction, so W is always the snapshot's marker.",
+      "compiledInto": [
+        "brokerRules"
+      ]
+    },
+    {
+      "id": "Q84e",
+      "topic": "start-up",
+      "ruling": "Lock, open (recovery), PASSIVE (sync adopted frames), bump the epoch, run the marker and ACKED-sidecar cross-checks, then start readers; a mid-WAL corruption that SQLite recovers silently is caught by the ACKED sidecar.",
+      "compiledInto": [
+        "brokerRules"
+      ]
+    },
+    {
+      "id": "Q83d",
+      "topic": "settle evidence after fast compaction",
+      "ruling": "Settle evidence does not require observing L0 tries: compaction may merge them before the first poll. Settled means the new block's tx_id and latest_processed_msg_id equal the node gauges, xt.trie_stats covers that block at whatever level it now sits, compactor jobs 0, and the file listing and trie digest are unchanged over three readings 5 s apart.",
+      "compiledInto": [
+        "seedRules"
+      ]
+    },
+    {
+      "id": "Q79e",
+      "topic": "operand classification by grammar",
+      "ruling": "The quantified-comparison guard classifies the operand by a small grammar, not by listed shapes: any parenthesized query expression (SELECT, VALUES, and set operations UNION / INTERSECT / EXCEPT with or without ALL, at any nesting of parentheses, with comments anywhere) is a subquery and is admitted if it contains no nested unsafe comparison; anything else is refused. Tests are generated from the grammar's combinations (each form at depths 1-3, with and without comments) and each generated query is checked against XTDB's own answer, next to the round-2 rejections.",
+      "compiledInto": [
+        "exactQueryRules"
+      ]
+    },
+    {
+      "id": "Q85a",
+      "topic": "create is idempotent and monotonic",
+      "ruling": "Database creation for a scope is idempotent and never resets or lowers an existing scope position; concurrent creates converge on one database with its position intact.",
+      "compiledInto": [
+        "datomicRules"
+      ]
+    },
+    {
+      "id": "Q85b",
+      "topic": "public scopes",
+      "ruling": "The gateway accepts every scope name the public Triplex constructor can produce (mapped to a Datomic database name by a documented, reversible encoding) and nothing else.",
+      "compiledInto": [
+        "datomicRules"
+      ]
+    },
+    {
+      "id": "Q85c",
+      "topic": "hermetic image builds",
+      "ruling": "Every image build starts from a fresh context that contains only verified inputs listed in the input hash; a reused or dirty context refuses the build.",
+      "compiledInto": [
+        "datomicRules"
+      ]
+    },
+    {
+      "id": "Q85d",
+      "topic": "one codec definition",
+      "ruling": "The TypeScript and JVM codecs share one specification of each value kind's range and representation, with a shared test vector set; a value either codec cannot represent is refused by both.",
+      "compiledInto": [
+        "datomicRules"
+      ]
+    },
+    {
+      "id": "Q86a",
+      "topic": "containers in the VM",
+      "ruling": "Every candidate process (builds, case runners, lane D gateways, A0) runs in a hardened container in the triplex2 VM and none on the Mac: uid 10001, --cap-drop ALL, no-new-privileges, --read-only with tmpfs, memory = memory-swap, --pids-limit, --oom-score-adj 500, no Docker socket, no Mac bind mounts. Inputs enter as a tar of the contract's `boxInputs` (built packages, workspace manifests, lockfile; never lab/) plus a read-only Linux pnpm store volume filled by orchestrator tooling; outputs leave only through per-case `docker exec` stdout (capped, timed, hashed on receipt) and a trusted walker container.",
+      "compiledInto": [
+        "isolationRules"
+      ]
+    },
+    {
+      "id": "Q86b",
+      "topic": "kill proven by the kernel",
+      "ruling": "Each container has its own PID namespace; after every case `docker top` must show only the runner's processes and at teardown the container cgroup must be gone (read by the R27 observer), else the run fails closed.",
+      "compiledInto": [
+        "isolationRules"
+      ]
+    },
+    {
+      "id": "Q86c",
+      "topic": "network per arm",
+      "ruling": "One internal network per arm with no gateway, whose only other member is a trusted relay to that arm's slot engine (R27's TO proxy in its own container); builds and offline cases use --network none; a preflight check runs every time and any failure marks the run ISOLATION-NOT-IN-FORCE (DIAGNOSTIC).",
+      "compiledInto": [
+        "isolationRules"
+      ]
+    },
+    {
+      "id": "Q86d",
+      "topic": "execution-identity/2",
+      "ruling": "Adds the image id and build-input hash, the toolchain read inside the image, the store volume listing hash, a canonical isolation-profile hash checked against docker inspect, and daemon, containerd, runc and kernel versions; container names, cpusets and slot stay placement (Q67g).",
+      "compiledInto": [
+        "isolationRules"
+      ]
+    },
+    {
+      "id": "Q86e",
+      "topic": "no oracle in the candidate's reach",
+      "ruling": "Oracle files never enter a candidate container and the candidate image has no python3 (closes oracle laundering, L1). The evaluator works from its own clone with commit ids passed explicitly, never `--authority-ref main` (closes D3, a builder moving main).",
+      "compiledInto": [
+        "isolationRules"
+      ]
+    },
+    {
+      "id": "Q86f",
+      "topic": "placement and lane D",
+      "ruling": "Paired arms put each arm's SUT, relay and observer on one shared core; lane D's candidate gateway leaves the engine container for its own container, and lane D durable-readback evidence is not accepted until SQL storage replaces dev storage (the H2 password lets the gateway write storage directly).",
+      "compiledInto": [
+        "isolationRules"
+      ]
+    },
+    {
+      "id": "Q79f",
+      "topic": "comments follow the pinned lexer",
+      "ruling": "The X02 guard treats comments exactly as the pinned XTDB lexer does (SqlLexer.g4:12 defines BLOCK_COMMENT recursively): balanced nested block comments are consumed at any depth, an unterminated comment is an error, and the guard's tokenizer must agree with the lexer on every identifier boundary, including dollar-bearing, quoted and Unicode identifiers. Where the guard and the lexer disagree, the query is refused, never passed.",
+      "compiledInto": [
+        "exactQueryRules"
+      ]
+    },
+    {
+      "id": "Q87",
+      "topic": "contract merges need the evaluator suite",
+      "ruling": "A contract version merges into main only when lab/bin/test/claim.test.mjs and claim-round2.test.mjs pass on the contract branch merged with main, in addition to build_contract.py --verify and the contract's own tests. Contract 0.3.11 at 3b46c8a passed its review but fails 8 of 108 evaluator tests; its merge into main (e074baf) was undone before anything built on it.",
+      "compiledInto": [
+        "mergeGates"
+      ]
+    },
+    {
+      "id": "Q83e",
+      "topic": "three frontiers",
+      "ruling": "Settle evidence records three values separately and never equates them: (a) the block-cut frontier F, the immutable block's latest_processed_msg_id; (b) the settled replay frontier M, the processed watcher after maintenance drains (lag 0, jobs 0, tries stable, over the Q83d polls); (c) the stable application transaction T. F < M is accepted only when every source message in (F, M] is read from the stopped log tail and is a maintenance message (TriesAdded, compactor output), never an application transaction; T is unchanged across the window. The final stopped log tails and the reference and clone resume are bound to M. Exact reference/clone equality and the two-start catalog checks stay. This replaces the part of Q83d that refused every F < M.",
+      "compiledInto": [
+        "seedRules"
+      ]
+    },
+    {
+      "id": "Q88a",
+      "topic": "dev storage is development only",
+      "ruling": "Lane D evidence from Datomic dev storage is DIAGNOSTIC for every durable-readback, lost-ACK, P2 receipt and final acceptance obligation. Dev storage is H2 inside the transactor with H2's default 500 ms write delay, so an abrupt transactor stop can lose acknowledged transactions, which P2's 100% receipt bar does not allow. Acceptance runs on SQL storage on PostgreSQL (fsync on commit) with peers on a SELECT-only role (closes R28's R5, the peer writing storage). Dev storage stays allowed for development gates. This decides the storage half of Q78e without loosening any of Sam's bars; the other option R32 lists (accept a declared loss window) would loosen P2 and is Sam's alone.",
+      "compiledInto": [
+        "datomicRules",
+        "datomicStoragePolicy"
+      ]
+    },
+    {
+      "id": "Q88b",
+      "topic": "EXP-DA04 before DA03",
+      "ruling": "Lane D moves to SQL storage in EXP-DA04 (brief lab/experiments/EXP-DA04-sql-storage/BRIEF.md) before the DA03 NS smoke: resident pair Postgres 0.5 GiB plus Datomic 2.25 GiB in the existing 2.75 GiB budget (fallback 3.0 GiB if G1 runs short), exclusive lane D slot 4.0 GiB with the resident pair parked. Gates: G1 88/88 with --previous; durability probes D1 (abrupt transactor stop) and D2 (abrupt Postgres stop) with zero lost ACKs, D0 the same on dev storage as the control; tenancy probe; erasure inventory smoke.",
+      "compiledInto": [
+        "datomicRules",
+        "datomicStoragePolicy"
+      ]
+    },
+    {
+      "id": "Q88c",
+      "topic": "erasure on lane D",
+      "ruling": "Crypto-shredding is the primary PII erasure on every lane D storage; Datomic excision in batches of about 2,000 to 3,000 datoms is the second layer; keys live in their own Postgres schema so key deletion can be shown by scanning table files and WAL.",
+      "compiledInto": [
+        "datomicRules",
+        "datomicStoragePolicy"
+      ]
     }
   ],
   "languageRules": {
@@ -2212,7 +2543,10 @@
     "current-value copies (broker current store, XTDB tx_current, QLever cur graph)",
     "caches",
     "checkpoints",
-    "backups"
+    "backups",
+    "observer outputs",
+    "old index generations",
+    "freed blocks"
   ],
   "composition": {
     "assignments": [
@@ -2968,7 +3302,7 @@
   },
   "qualificationRun": {
     "executor": "lab/bin/claim.mjs (EXP-E01); qualification_run and admit_claim in this generator are its reference model",
-    "contractSource": "the evaluator reads the contract (obligations.json and load-contract.json) from the authority ref (main), never from the claimed commit (RULINGS Q61a); it reads VERIFIER_REGISTRY as written (RULINGS Q61b)",
+    "contractSource": "the evaluator reads obligations.json and load-contract.json from its own clone at an explicitly supplied immutable authority commit, never --authority-ref main (Q86e supersedes Q61a lookup); never from the claimed commit; VERIFIER_REGISTRY is read as written (Q61b). Executing isolation integration remains deferred to G03.",
     "blockers": {
       "rule": "every blocker stays until EXP-G03's executing gate exists; manifests, runners, the build spec, the frozen trace and A0 controls are pinned only through contract versions (RULINGS Q67a, Q65f)",
       "list": [
@@ -3092,7 +3426,17 @@
       "setsid",
       "TOCTOU",
       "no filesystem isolation",
-      "no network isolation"
+      "no network isolation",
+      "R1",
+      "R4",
+      "D1",
+      "D2",
+      "D3",
+      "L1",
+      "N1",
+      "N2",
+      "N3",
+      "N4"
     ],
     "protectedProcessCleanup": "double-fork descendants are killed; setsid remains unprotected (Q75j)"
   },
@@ -3182,7 +3526,12 @@
     "Q74b": {
       "topic": "freeze state",
       "rule": "The canonical freeze state is settled: `POST /system/finish-block`, compactor jobs 0, live index empty. A fresh-seeded arm compared with a cloned arm settles the same way before its window. Older unsettled A0 receipts are not compared with settled ones.",
-      "basis": "R26 design item 1"
+      "basis": "R26 design item 1",
+      "supersededBy": [
+        "Q83b",
+        "Q83d",
+        "Q83e"
+      ]
     },
     "Q74c": {
       "topic": "validation first",
@@ -3208,6 +3557,31 @@
       "topic": "broker compositions",
       "rule": "A broker composition clones the engine volume and the broker directory together, from one stopped moment.",
       "basis": "R26 design item 3"
+    },
+    "Q83a": {
+      "topic": "log4j flag on slots",
+      "rule": "Slots s1-s3 add `-Dlog4j2.shutdownHookEnabled=false` to javaOpts, so XTDB's shutdown hook can log `Stopping node...`, the three server-stopped lines and `Node stopped.` (Log4j's own hook otherwise drops them). The dev residents are unchanged. This changes the slot config hash and therefore every golden key; receipts before the change name the old hash.",
+      "basis": "R30 Q1, decision D1"
+    },
+    "Q83b": {
+      "topic": "canonical freeze state",
+      "rule": "Settled = two finish-blocks (the second records the post-compaction catalog), compactor jobs 0, and snapshot-independent evidence (new block file whose tx_id and latest_processed_msg_id equal the node gauges, block.last_upload_time advanced, xt.trie_stats showing the new tries, file listing and trie digest unchanged over three readings 5 s apart); never `xt.live_tables` (stale shared snapshot, upstream #6174). Clean stop = exit within 10 s with the stop lines and exit 143, well-formed LOG and REPLICA_LOG tails checked offline, empty `buffers/**/.tmp` (refuse, never delete). The freeze fingerprint is taken on a reference start of the source after the copy, and every arm, fresh or cloned, starts the same way. Re-test the second finish-block and the reference start when XTDB 2.2.1 is pinned.",
+      "basis": "R30 Q2, Q3, Q5; decision D2"
+    },
+    "Q83c": {
+      "topic": "block listing",
+      "rule": "Never read a block that may not exist (MemoryCache hangs the caller): list `buffers/v06/blocks/b*.binpb` first and query `xt.block_files` only for listed indices, re-listing just before each query; block numbers are not dense (GC keeps the latest 10).",
+      "basis": "R30 Q4"
+    },
+    "Q83d": {
+      "topic": "settle evidence after fast compaction",
+      "rule": "Settle evidence does not require observing L0 tries: compaction may merge them before the first poll. Settled means the new block's tx_id and latest_processed_msg_id equal the node gauges, xt.trie_stats covers that block at whatever level it now sits, compactor jobs 0, and the file listing and trie digest are unchanged over three readings 5 s apart.",
+      "basis": "K01 round 2 (G3 blocked by fast compaction)"
+    },
+    "Q83e": {
+      "topic": "three frontiers",
+      "rule": "Settle evidence records three values separately and never equates them: (a) the block-cut frontier F, the immutable block's latest_processed_msg_id; (b) the settled replay frontier M, the processed watcher after maintenance drains (lag 0, jobs 0, tries stable, over the Q83d polls); (c) the stable application transaction T. F < M is accepted only when every source message in (F, M] is read from the stopped log tail and is a maintenance message (TriesAdded, compactor output), never an application transaction; T is unchanged across the window. The final stopped log tails and the reference and clone resume are bound to M. Exact reference/clone equality and the two-start catalog checks stay. This replaces the part of Q83d that refused every F < M.",
+      "basis": "XTDB c6c1962: BlockCutter.kt:235, 280-295; SourceMessage.kt:139-147; Compactor.kt:150-152; SourceLogProcessor.kt:142, 199-211; Database.kt:375-387"
     }
   },
   "recursionRules": {
@@ -3277,6 +3651,41 @@
       "topic": "mapping",
       "rule": "One Datomic database per Triplex scope; each assertion is a fact entity (`:f/id`, `:f/subject`, `:f/live`, `:f/attr`, one typed value attribute, valid-time bounds); commit metadata on the transaction entity; retraction retracts `:f/live`; a latest-basis read uses the current db, a past basis `as-of`, reads in a transaction `d/with`. One `:db/cas` per entity per transaction (Jepsen: operations inside one transaction apply as if concurrent).",
       "basis": "R29 section 4"
+    },
+    "Q85a": {
+      "topic": "create is idempotent and monotonic",
+      "rule": "Database creation for a scope is idempotent and never resets or lowers an existing scope position; concurrent creates converge on one database with its position intact.",
+      "basis": "V-DA00 F1"
+    },
+    "Q85b": {
+      "topic": "public scopes",
+      "rule": "The gateway accepts every scope name the public Triplex constructor can produce (mapped to a Datomic database name by a documented, reversible encoding) and nothing else.",
+      "basis": "V-DA00 F2"
+    },
+    "Q85c": {
+      "topic": "hermetic image builds",
+      "rule": "Every image build starts from a fresh context that contains only verified inputs listed in the input hash; a reused or dirty context refuses the build.",
+      "basis": "V-DA00 F3"
+    },
+    "Q85d": {
+      "topic": "one codec definition",
+      "rule": "The TypeScript and JVM codecs share one specification of each value kind's range and representation, with a shared test vector set; a value either codec cannot represent is refused by both.",
+      "basis": "V-DA00 F4"
+    },
+    "Q88a": {
+      "topic": "dev storage is development only",
+      "rule": "Lane D evidence from Datomic dev storage is DIAGNOSTIC for every durable-readback, lost-ACK, P2 receipt and final acceptance obligation. Dev storage is H2 inside the transactor with H2's default 500 ms write delay, so an abrupt transactor stop can lose acknowledged transactions, which P2's 100% receipt bar does not allow. Acceptance runs on SQL storage on PostgreSQL (fsync on commit) with peers on a SELECT-only role (closes R28's R5, the peer writing storage). Dev storage stays allowed for development gates. This decides the storage half of Q78e without loosening any of Sam's bars; the other option R32 lists (accept a declared loss window) would loosen P2 and is Sam's alone.",
+      "basis": "R32 sections 1, 6"
+    },
+    "Q88b": {
+      "topic": "EXP-DA04 before DA03",
+      "rule": "Lane D moves to SQL storage in EXP-DA04 (brief lab/experiments/EXP-DA04-sql-storage/BRIEF.md) before the DA03 NS smoke: resident pair Postgres 0.5 GiB plus Datomic 2.25 GiB in the existing 2.75 GiB budget (fallback 3.0 GiB if G1 runs short), exclusive lane D slot 4.0 GiB with the resident pair parked. Gates: G1 88/88 with --previous; durability probes D1 (abrupt transactor stop) and D2 (abrupt Postgres stop) with zero lost ACKs, D0 the same on dev storage as the control; tenancy probe; erasure inventory smoke.",
+      "basis": "R32 sections 2, 5"
+    },
+    "Q88c": {
+      "topic": "erasure on lane D",
+      "rule": "Crypto-shredding is the primary PII erasure on every lane D storage; Datomic excision in batches of about 2,000 to 3,000 datoms is the second layer; keys live in their own Postgres schema so key deletion can be shown by scanning table files and WAL.",
+      "basis": "R32 section 4"
     }
   },
   "exactQueryRules": {
@@ -3299,6 +3708,16 @@
       "topic": "unset means unchanged",
       "rule": "With the language switch unset, behaviour is main's; changing the default needs its own qualification and a ruling.",
       "basis": "V-X02 F4"
+    },
+    "Q79e": {
+      "topic": "operand classification by grammar",
+      "rule": "The quantified-comparison guard classifies the operand by a small grammar, not by listed shapes: any parenthesized query expression (SELECT, VALUES, and set operations UNION / INTERSECT / EXCEPT with or without ALL, at any nesting of parentheses, with comments anywhere) is a subquery and is admitted if it contains no nested unsafe comparison; anything else is refused. Tests are generated from the grammar's combinations (each form at depths 1-3, with and without comments) and each generated query is checked against XTDB's own answer, next to the round-2 rejections.",
+      "basis": "CX-VX02-3: six parenthesized UNION ALL forms refused after round 3"
+    },
+    "Q79f": {
+      "topic": "comments follow the pinned lexer",
+      "rule": "The X02 guard treats comments exactly as the pinned XTDB lexer does (SqlLexer.g4:12 defines BLOCK_COMMENT recursively): balanced nested block comments are consumed at any depth, an unterminated comment is an error, and the guard's tokenizer must agree with the lexer on every identifier boundary, including dollar-bearing, quoted and Unicode identifiers. Where the guard and the lexer disagree, the query is refused, never passed.",
+      "basis": "V-X02 round 4 F1-R4, F3-R4"
     }
   },
   "oracleRunners": {
@@ -3385,9 +3804,61 @@
       ],
       "answer": "canonical JSON {bound, unboundAssignments, imagesPinned, variant} for one composition-identity case {composition}, run from the authority's files (RULINGS Q59e, Q64c, Q65a)",
       "sha256": {
-        "lab/acceptance/build_contract.py": "60055e9f236733365c4e558412368b0a2934df8cb1d5e9479d45758971940ccf",
+        "lab/acceptance/build_contract.py": "914db3d15e91180e8b449fffeeb27b997dc10eb835fff66e10eca6517e985b59",
         "lab/acceptance/oracle-contract.json": "a7ec2fe98f8bb066fe6ea55e89344905f5e9c760b076152f5377c414d18adbd0"
       }
+    },
+    "O-OBS": {
+      "argv": [
+        "python3",
+        "-I",
+        "-B",
+        "lab/acceptance/oracle/observe.py",
+        "check",
+        "{protocol}",
+        "{case}",
+        "--contract",
+        "{contract}",
+        "--context",
+        "{context}",
+        "--bundle",
+        "{bundle}",
+        "--key-file",
+        "{key}"
+      ],
+      "files": [
+        "lab/oracles/replay/RULES.md",
+        "lab/oracles/replay/SCHEMA.md",
+        "lab/oracles/replay/__init__.py",
+        "lab/oracles/replay/__main__.py",
+        "lab/oracles/replay/cli.py",
+        "lab/oracles/replay/constraints.py",
+        "lab/oracles/replay/entities.py",
+        "lab/oracles/replay/errors.py",
+        "lab/oracles/replay/exact.py",
+        "lab/oracles/replay/examples/entity-mini.case.json",
+        "lab/oracles/replay/examples/entity-mini.expected.json",
+        "lab/oracles/replay/replay.py",
+        "lab/oracles/replay/run.py",
+        "lab/oracles/replay/scale.py",
+        "lab/oracles/replay/selfcheck.py",
+        "lab/oracles/replay/selfcheck_fixtures/freeze-ham-reference.mjs",
+        "lab/oracles/replay/selfcheck_fixtures/ham-v2-reference.json",
+        "lab/oracles/replay/tests/__init__.py",
+        "lab/oracles/replay/tests/helpers.py",
+        "lab/oracles/replay/tests/test_contract_section4.py",
+        "lab/oracles/replay/tests/test_entities.py",
+        "lab/oracles/replay/tests/test_exact.py",
+        "lab/oracles/replay/tests/test_replay.py",
+        "lab/oracles/replay/tests/test_rulings.py",
+        "lab/oracles/replay/tests/test_scale_and_selfcheck.py",
+        "lab/oracles/replay/tests/test_values.py",
+        "lab/oracles/replay/tests/test_views.py",
+        "lab/oracles/replay/values.py",
+        "lab/oracles/replay/views.py",
+        "lab/acceptance/oracle/observe.py"
+      ],
+      "answer": "canonical JSON verdict PASS/0, FAIL/1, REFUSED/2; screening only; context, bundle, key and normalizer bytes must be evaluator-retained; generic gate integration remains unpinned"
     }
   },
   "compositionFields": [
@@ -3404,7 +3875,8 @@
       "queries"
     ],
     "O-DOMAIN": null,
-    "O-CONTRACT": null
+    "O-CONTRACT": null,
+    "O-OBS": null
   },
   "caseManifest": {
     "format": "triplex-db-2/case-manifest/1",
@@ -3573,7 +4045,61 @@
         "verdict": "ACCEPT, pin (delta check of O-DOMAIN 5d1fd1a; orchestrator cross-check 136/136 against W0-1.1.2)",
         "record": "lab/verify/D01c/VERIFY.md, last section; hash table lab/verify/D01c/delta-5d1fd1a/O-DOMAIN-5d1fd1a-SHA256SUMS on verify/D01c",
         "status": "current"
+      },
+      "V-O05-round4": {
+        "verifier": "CX-VO05-2 (independent Codex reviewer, high)",
+        "subject": {
+          "kind": "oracle",
+          "id": "O-OBS",
+          "commit": "23e2273fc6b15b92821b318acd387f5484155d8a",
+          "version": "O05-round4"
+        },
+        "brief": "lab/acceptance/pins/O-OBS-V-O05-round4-BRIEF.md",
+        "briefSha256": "4207182cbbda61f04e9647e1dcde291bdc345dc30f49926abeed6e157e2c1baa",
+        "briefNote": "Recovered original round-4 dispatch, byte-identical to the launcher prompt and independent reviewer copy; record remains the unchanged review report.",
+        "branch": "verify/O05",
+        "commit": "3e3df9cb98a91b3b50192b79af1a0b908343cbcc",
+        "verdict": "ACCEPT for screening only",
+        "record": "lab/acceptance/pins/O-OBS-V-O05-round4.md",
+        "status": "current",
+        "briefProvenance": {
+          "record": "lab/acceptance/pins/O-OBS-V-O05-round4-brief-provenance.json",
+          "recordSha256": "50fe4ca21c0e0769136b1a77d9f2ab71afff0f4e454668e4654acc0030f19fdd",
+          "recoveryCommit": "4c9077ecb00b2d000d338911b41692aa8ce1b7aa",
+          "lastMessage": "lab/acceptance/pins/O-OBS-V-O05-round4-last.md",
+          "lastMessageSha256": "5956dfd269b4f18b13bda84a0bfa840b164d0d783c6f34dda9ff29ad706bcf7c"
+        }
       }
+    }
+  },
+  "verifierBriefSources": {
+    "V-O04i": {
+      "path": "lab/verify/O02/V-O04i/BRIEF.md",
+      "sha256": "67c5de230614092d3a648458ecf046a1f7a262db52ae4c47e6252f8a5996bc85"
+    },
+    "V-O03": {
+      "path": "lab/verify/O02/BRIEF.md",
+      "sha256": "38d3c81f99da26438ff09ba0e6b6a88e75c5f402c4362a7d28d9b8df387376c4"
+    },
+    "V-O04c": {
+      "path": "lab/verify/O02/BRIEF.md",
+      "sha256": "38d3c81f99da26438ff09ba0e6b6a88e75c5f402c4362a7d28d9b8df387376c4"
+    },
+    "V-D01-W0-1.1.1": {
+      "path": "lab/verify/D01/BRIEF.md",
+      "sha256": "8fbdaaf67d2cbc1ae000d780ce7fcc45825ec6ba81edbbc9ed179ce517b5df88"
+    },
+    "V-D01e-W0-1.1.2": {
+      "path": "lab/verify/D01/V-D01e/BRIEF.md",
+      "sha256": "6df85539b0dd6c5a66b524c3c106fff3b8866f6afb3f581737e3a13ddd263dca"
+    },
+    "V-D01c-O-DOMAIN": {
+      "path": "lab/verify/D01c/BRIEF.md",
+      "sha256": "0384a8d6e4f8f615b9582c4e71664adf7caec54062755df92cf62bbb151150a0"
+    },
+    "V-O05-round4": {
+      "path": "lab/acceptance/pins/O-OBS-V-O05-round4-BRIEF.md",
+      "sha256": "4207182cbbda61f04e9647e1dcde291bdc345dc30f49926abeed6e157e2c1baa"
     }
   },
   "sourceVariantFields": {
@@ -3598,6 +4124,40 @@
     "placement": "each arm's placement {slot, cpuset, cpus} is separate from the shared workload identity; slots are per arm; a duet needs equal capacity, equal regime and disjoint cpusets; under cpusets the per-core denominator is the cpuset size (RULINGS Q67g)",
     "appliesTo": "obligations whose closure rules include CR-NS or CR-GS only; correctness obligations carry no workload identity (RULINGS Q61g)",
     "rule": "every measurement and control receipt carries workload {generatorSourceSha256 (trace generator hash), seed, offerScheduleSha256, window [from, to] with 0 <= from < to, slot (the source assignment's slot)}, every field present, typed and nonempty; a control matches a measurement only when the two workload identities are equal field by field; a missing field never matches a missing field (RULINGS Q47b)"
+  },
+  "workloadRepins": {
+    "packages/qualification/src/native/xtdb-workloads.ts": {
+      "previousSha256": "22d785b034e440ca896b3fce7fe2df94e643586cb802fddd940fea84aff31fc3",
+      "sha256": "ff39d3f2fcb74ee2a318e8801a12680a4f9f366b4a7f5ed9e20e89d5ccd8a3d0",
+      "baseCommit": "f483fb644744da4cc7a7f9296214668e7d55bbf4",
+      "sourceCommit": "b916d5dc809ffc07c57b53a38f1d1deb6bdeeb89",
+      "diffSha256": "b31cae3941b058b72f9cda6e890ab600983fde24c0f4b609d9e161f5ba4d4f1f"
+    },
+    "packages/qualification/src/native/qlever-workloads.ts": {
+      "previousSha256": "410963c62f46be95525643f5eb78bf4069dee27d986b251f2aca33d05e48d2b3",
+      "sha256": "9349878403ee468ce6b64922c648d88f598f799b1c65fc42a712aa47598e54da",
+      "baseCommit": "f483fb644744da4cc7a7f9296214668e7d55bbf4",
+      "sourceCommit": "b916d5dc809ffc07c57b53a38f1d1deb6bdeeb89",
+      "diffSha256": "1a40dcce1fb973666abe0385fb2af3f24bf499676b9b595fea4a5aa7c49fb85a"
+    }
+  },
+  "workloadRepinReview": {
+    "path": "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.12-round3/workload-hunk-review.json",
+    "sha256": "86fccbf5ef7a27611f45b44659a37a5bcba8e613953bcfd04a8e326464c77dae"
+  },
+  "datomicStoragePolicy": {
+    "developmentStorage": "dev",
+    "developmentEvidence": "DIAGNOSTIC",
+    "acceptanceStorage": "postgresql-sql",
+    "fsyncOnCommit": true,
+    "peerRole": "SELECT-only",
+    "sequencing": [
+      "EXP-DA04",
+      "EXP-DA03"
+    ],
+    "primaryPiiErasure": "crypto-shredding",
+    "secondaryPiiErasure": "batched-excision",
+    "keysSchema": "separate PostgreSQL schema"
   },
   "evidenceSchemas": {
     "build-manifest/1": {
@@ -3722,57 +4282,205 @@
       "DIAGNOSTIC"
     ]
   },
-  "pendingRulings": {
-    "file": "lab/acceptance/RULINGS-PENDING.md",
-    "sha256": "8dec81913c52e843c29d6679d66a68fc524c93f20674eb9106b68ee3c52a85ce",
-    "ids": [
-      "Q51b",
-      "Q72a",
-      "Q72b",
-      "Q72c",
-      "Q72d",
-      "Q72e",
-      "Q72g",
-      "Q73a",
-      "Q73b",
-      "Q78e",
-      "Q80a",
-      "Q80b",
-      "Q80c",
-      "Q81b",
-      "Q81c",
-      "Q82a",
-      "Q82b",
-      "Q82c",
-      "Q82d",
-      "Q82e",
-      "Q83a",
-      "Q83b",
-      "Q83c",
-      "Q84a",
-      "Q84b",
-      "Q84c",
-      "Q84d",
-      "Q84e",
-      "Q83d",
-      "Q79e",
-      "Q85a",
-      "Q85b",
-      "Q85c",
-      "Q85d",
+  "brokerRules": {
+    "Q72a": {
+      "topic": "lock helper",
+      "rule": "The flock helper runs detached in its own process group, ignores INT, TERM and HUP, and exits only on stdin EOF; when it exits for any reason the log fail-stops (every later append throws), and each append checks the helper is alive. A test kills the helper and Ctrl-Cs the holder's group and shows no second writer.",
+      "basis": "V-P2Q N1"
+    },
+    "Q72b": {
+      "topic": "answer snapshot",
+      "rule": "Q67c applies to every broker read surface: a surface that answers in one request reads the marker in that request (a UNION with the marker triple, as pulls do); a surface that needs several requests (Datalog executor, dependencyState, native with awaitBasisMs) compares (incarnation, marker) before and after, and every fence and replay writes a new incarnation first. V-P2Q's live residual test (zero-downtime rewind between the probes) is a regression case.",
+      "basis": "V-P2Q N2; Q67c"
+    },
+    "Q72c": {
+      "topic": "reasons",
+      "rule": "Rename reasons to the contract's strings now (`basis-not-reached`, `replica-unreachable`). Core tagged errors (Q67h) are required before the broker becomes a default, not for the default-off merge; until then no claim may close an obligation pinned to E-BASIS-NOT-AVAILABLE or E-REPLICA-UNAVAILABLE.",
+      "basis": "V-P2Q question 5; Q67h"
+    },
+    "Q72d": {
+      "topic": "A0 guard",
+      "rule": "The A0 change with the option off is a correctness fix (main answers a basis above the published position) and stays. The frozen A0 control (Q46b) is re-frozen at the P2Q merge, and every matched comparison names the change.",
+      "basis": "V-P2Q N3; Q62a"
+    },
+    "Q72e": {
+      "topic": "outage replay",
+      "rule": "The synchronous whole-log replay per outage pull is a blocker for default, not for default-off; it is replaced by the Q58c store (recent_rows or a current index, on R25's design). Probes are coalesced into one in-flight probe per replica in this round. Tests import src through tsx, never dist.",
+      "basis": "V-P2Q N4, N5, N8"
+    },
+    "Q72g": {
+      "topic": "native in broker mode",
+      "rule": "Every broker-mode wiring passes `awaitBasisMs: 2000` (the Q58a default) until the core native facade exists; receipts are measured at the claimed head.",
+      "basis": "V-P2Q N7, m3"
+    },
+    "Q84a": {
+      "topic": "pragmas and lock",
+      "rule": "WAL, synchronous=FULL, fullfsync=ON on every non-readonly connection, checkpoint_fullfsync=ON, wal_autocheckpoint=0, journal_size_limit=16 MiB, locking NORMAL (not EXCLUSIVE); the single writer holds a SQLite exclusive lock on a separate broker.lock file for the life of the process (replaces the perl flock helper); assert SQLite >= 3.51.3 at open.",
+      "basis": "R25 design; 80 writer SIGKILLs, 0 acked commits lost; two unlocked writers both acknowledged"
+    },
+    "Q84b": {
+      "topic": "threads",
+      "rule": "One writer worker thread owns the read-write commit connection; one checkpointer thread runs wal_checkpoint(PASSIVE) every 4 s on its own connection; four reader threads with readonly connections fed over MessagePort; the main thread never touches broker.db. Backstop: above 64 MiB of WAL the writer closes a gate, readers park between transactions, the writer runs RESTART.",
+      "basis": "R25: PASSIVE on the writer thread starved (WAL 714 MB); the checkpointer held 16-38 MB; four readers ~20k reads/s against ~7.6k for one owner thread"
+    },
+    "Q84c": {
+      "topic": "pinned reads",
+      "rule": "Every read transaction starts with `SELECT lsn, epoch, h FROM marker` and is served only when h <= B <= lsn, else routed to the source; one unit of work per transaction (one pull or one 64-subject page). Long work keeps its basis through a retention pin (pinBasis holds H <= B), never an open read transaction.",
+      "basis": "R25: 30 s sweep transactions grew the WAL to 504 MB; per-page transactions held 16 MB"
+    },
+    "Q84d": {
+      "topic": "H1 in the same file",
+      "rule": "H1's current rows live in broker.db as live_rows and retired_rows clustered by entity, written in the commit's own transaction, so W is always the snapshot's marker.",
+      "basis": "R25: 3-hop pulls 0.10 ms p50; rows examined flat across history depth; +0.06-0.07 ms per commit; 20,000-subject pinned sweep 2.09 s with 0 mismatches"
+    },
+    "Q84e": {
+      "topic": "start-up",
+      "rule": "Lock, open (recovery), PASSIVE (sync adopted frames), bump the epoch, run the marker and ACKED-sidecar cross-checks, then start readers; a mid-WAL corruption that SQLite recovers silently is caught by the ACKED sidecar.",
+      "basis": "R25 durability section"
+    }
+  },
+  "observationRules": {
+    "Q80a": {
+      "topic": "trusted context",
+      "rule": "O-OBS judges evidence only inside an evaluator-owned, contract-bound case and run context (obligation, case, witness kind, threshold ids, run id) and against collector objects the evaluator retained itself; evidence that only hashes itself is REFUSED. The collector and context format comes from R27.",
+      "basis": "V-O05 F1, F2"
+    },
+    "Q80b": {
+      "topic": "witnesses prove, labels do not",
+      "rule": "Each fault transition and each wait bound has a witness schema of source-bound events (start, end, readback) checked against retained objects; a label naming the transition or the duration is never evidence of it.",
+      "basis": "V-O05 F3, F5"
+    },
+    "Q80c": {
+      "topic": "exact ratios",
+      "rule": "Work ratios compare integer counters exactly against rational contract thresholds (cross-multiplication), never binary64.",
+      "basis": "V-O05 F4"
+    },
+    "Q82a": {
+      "topic": "source kinds",
+      "rule": "O-OBS enforces six kinds in trust order: EI engine-internal, TO transport-observed (a wire proxy in a separate process), HO host-observed (cgroup, /proc, sockets, file scans), DR durable read-back, HR harness-observed (caller-side fields only), CR reported by Triplex code (rejected; includes the Datomic gateway, the broker's own timestamps, and a counter inside the client process). `source.kind` is `<code>/<engine>/<sourceId>`.",
+      "basis": "R27 section 3"
+    },
+    "Q82b": {
+      "topic": "two agreeing sources for safety",
+      "rule": "OBS-NO-MUTATION, OBS-PREABORT, OBS-CANCEL and OBS-ACK-ORDER pass only when two sources of different kinds agree.",
+      "basis": "R27"
+    },
+    "Q82c": {
+      "topic": "obs-bundle/1",
+      "rule": "Evidence arrives as an obs-bundle/1 written by an observer sidecar per engine container that engine.mjs starts (never builder code): content-addressed raw chunks, a hash chain per stream, HMAC-SHA256 chunk headers under a per-run key the SUT never sees, a witness log of chain heads written only by orchestrator tooling, a clock bridge with stated uncertainty, and hash-pinned normalizer scripts that O-OBS reruns; records are recomputed from raw bytes, never accepted as given. Because every agent runs as one macOS user, acceptance additionally repeats the collection by the verifier (ACCEPTANCE 5.8); the bundle alone suffices only for screening.",
+      "basis": "R27 section 6; CA01"
+    },
+    "Q82d": {
+      "topic": "erasure scans need positive controls",
+      "rule": "Every erasure-scan location first finds a canary written before the erasure with the same scanner, or the verdict is REFUSED (QLever's FSST-compressed vocabulary defeats plain grep). Observer outputs (QLever metrics log, XTDB DEBUG logs and spans, proxy captures, docker logs), old index generations and freed blocks join PROTECTED_COPY_INVENTORY.",
+      "basis": "R27 section 8"
+    },
+    "Q82e": {
+      "topic": "engine facts",
+      "rule": "XTDB mutation evidence is the gauge node.tx.latestCompletedTxId, never source-log offsets (flushes and compaction append to the log); XTDB EXPLAIN ANALYZE attributes are JSON (scan_rows_read, scan_pages_used, scan_files_used), and the P4 harness's decoding (p4.mjs:29) is fixed to read them; QLever runs with --enable-metrics and its per-query metrics log on. Lane D CANCEL and PREABORT use host-observed per-thread /proc series of the gateway JVM plus the proxy (HO + TO).",
+      "basis": "R27 sections 4-5"
+    }
+  },
+  "isolationRules": {
+    "Q86a": {
+      "topic": "containers in the VM",
+      "rule": "Every candidate process (builds, case runners, lane D gateways, A0) runs in a hardened container in the triplex2 VM and none on the Mac: uid 10001, --cap-drop ALL, no-new-privileges, --read-only with tmpfs, memory = memory-swap, --pids-limit, --oom-score-adj 500, no Docker socket, no Mac bind mounts. Inputs enter as a tar of the contract's `boxInputs` (built packages, workspace manifests, lockfile; never lab/) plus a read-only Linux pnpm store volume filled by orchestrator tooling; outputs leave only through per-case `docker exec` stdout (capped, timed, hashed on receipt) and a trusted walker container.",
+      "basis": "R28 sections 4-5"
+    },
+    "Q86b": {
+      "topic": "kill proven by the kernel",
+      "rule": "Each container has its own PID namespace; after every case `docker top` must show only the runner's processes and at teardown the container cgroup must be gone (read by the R27 observer), else the run fails closed.",
+      "basis": "R28; closes the setsid escape"
+    },
+    "Q86c": {
+      "topic": "network per arm",
+      "rule": "One internal network per arm with no gateway, whose only other member is a trusted relay to that arm's slot engine (R27's TO proxy in its own container); builds and offline cases use --network none; a preflight check runs every time and any failure marks the run ISOLATION-NOT-IN-FORCE (DIAGNOSTIC).",
+      "basis": "R28; N4"
+    },
+    "Q86d": {
+      "topic": "execution-identity/2",
+      "rule": "Adds the image id and build-input hash, the toolchain read inside the image, the store volume listing hash, a canonical isolation-profile hash checked against docker inspect, and daemon, containerd, runc and kernel versions; container names, cpusets and slot stay placement (Q67g).",
+      "basis": "R28"
+    },
+    "Q86e": {
+      "topic": "no oracle in the candidate's reach",
+      "rule": "Oracle files never enter a candidate container and the candidate image has no python3 (closes oracle laundering, L1). The evaluator works from its own clone with commit ids passed explicitly, never `--authority-ref main` (closes D3, a builder moving main).",
+      "basis": "R28 L1, D3"
+    },
+    "Q86f": {
+      "topic": "placement and lane D",
+      "rule": "Paired arms put each arm's SUT, relay and observer on one shared core; lane D's candidate gateway leaves the engine container for its own container, and lane D durable-readback evidence is not accepted until SQL storage replaces dev storage (the H2 password lets the gateway write storage directly).",
+      "basis": "R28 decisions 3, 5"
+    }
+  },
+  "isolationAdmission": {
+    "requiredBy": [
       "Q86a",
       "Q86b",
       "Q86c",
       "Q86d",
       "Q86e",
-      "Q86f",
+      "Q86f"
+    ],
+    "inForce": false,
+    "pins": null,
+    "pinVersion": "0.3.13 (G03 fixture migration)",
+    "failureVerdict": "ISOLATION-NOT-IN-FORCE (DIAGNOSTIC)",
+    "unprotected": [
+      "R1",
+      "R4",
+      "D1",
+      "D2",
+      "D3",
+      "L1",
+      "N1",
+      "N2",
+      "N3",
+      "N4"
+    ],
+    "vmHardeningPending": "Q86g (Sam)"
+  },
+  "freezeProtocol": {
+    "precedence": [
+      "Q83b",
+      "Q83d",
+      "Q83e"
+    ],
+    "frontiers": {
+      "F": "block-cut latest_processed_msg_id",
+      "M": "settled replay processed watcher",
+      "T": "stable application transaction"
+    },
+    "maintenanceGap": "F < M requires stopped-tail proof that every message in (F, M] is maintenance, with unchanged T",
+    "resumeBoundTo": "M",
+    "legacyRule": "Q74b is historical; never use xt.live_tables or require F == M"
+  },
+  "mergeGates": {
+    "Q87": {
+      "topic": "contract merges need the evaluator suite",
+      "rule": "A contract version merges into main only when lab/bin/test/claim.test.mjs and claim-round2.test.mjs pass on the contract branch merged with main, in addition to build_contract.py --verify and the contract's own tests. Contract 0.3.11 at 3b46c8a passed its review but fails 8 of 108 evaluator tests; its merge into main (e074baf) was undone before anything built on it.",
+      "basis": "orchestrator, 2026-11-08"
+    },
+    "evaluatorArgv": [
+      "node",
+      "--test",
+      "lab/bin/test/claim.test.mjs",
+      "lab/bin/test/claim-round2.test.mjs"
+    ],
+    "minimumTests": 108,
+    "weakenAssertions": false
+  },
+  "pendingRulings": {
+    "file": "lab/acceptance/RULINGS-PENDING.md",
+    "sha256": "b86222c537567c78ecd5e53e23f9450f0e48e7d8ff54b7f533d3678243a862c0",
+    "ids": [
+      "Q51b",
+      "Q73a",
+      "Q73b",
+      "Q78e",
+      "Q81b",
+      "Q81c",
       "Q86g",
-      "Q79f",
-      "Q87",
-      "Q83e",
-      "Q88a",
-      "Q88b",
-      "Q88c",
       "Q89a",
       "Q89b",
       "Q89c",
@@ -3780,7 +4488,32 @@
       "Q89e",
       "Q89f",
       "Q89g",
-      "Q89h"
+      "Q89h",
+      "Q89i",
+      "Q90a",
+      "Q90b",
+      "Q90c",
+      "Q90d",
+      "Q90e",
+      "Q90f",
+      "Q90g",
+      "Q91a",
+      "Q91b",
+      "Q91c",
+      "Q91d",
+      "Q92a",
+      "Q92b",
+      "Q92c",
+      "Q92d",
+      "Q92e",
+      "Q92f",
+      "Q92g",
+      "Q92h",
+      "Q92i",
+      "Q92j",
+      "Q92k",
+      "Q93a",
+      "Q93b"
     ],
     "authority": "none",
     "rule": "RULINGS-PENDING.md may hold ruling rows; they carry no authority, are never compiled into this contract and never count as compiled RULINGS.md entries; the generator records the file's hash under inputs and lists the pending ids, and their presence never invalidates generation or --verify (RULINGS Q47d)"
@@ -3900,13 +4633,11 @@
         "oracle-runner-unpinned:O-ERR"
       ],
       "G10.lifecycle.open-close": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS"
+        "oracle-screening-only:O-OBS"
       ],
       "G10.native.read-only-and-safe-params": [
         "oracle-runner-unpinned:O-ERR",
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS"
+        "oracle-screening-only:O-OBS"
       ],
       "G10.pkg.type-witnesses": [
         "oracle-runner-unpinned:O-SPEC",
@@ -3935,8 +4666,7 @@
       ],
       "G3.admission.preconstruction": [
         "oracle-runner-unpinned:O-ERR",
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS"
+        "oracle-screening-only:O-OBS"
       ],
       "G3.cost.budget-honored": [
         "oracle-runner-unpinned:O-PLAN",
@@ -3952,8 +4682,7 @@
         "oracle-unpinned:O-PLAN"
       ],
       "G3.recursion.read-only-frontier": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "G4.cut.task-wide-fixed": [
@@ -3979,55 +4708,44 @@
         "oracle-unpinned:O-SHAPE"
       ],
       "G6.cancel.observed-drain": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS"
+        "oracle-screening-only:O-OBS"
       ],
       "G6.cancel.preaborted-no-work": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "G6.cleanup.scratch-zero": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS"
+        "oracle-screening-only:O-OBS"
       ],
       "G6.deadline.enforced": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "G6.ownership.bounded-connections": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS"
+        "oracle-screening-only:O-OBS"
       ],
       "G6.resource.memory-failure-contained": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "G7.broker.fence-and-epochs": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "G7.broker.promotion-hardening": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "G7.commit.protocol-transitions": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "G7.composition.ack-and-routed-ryow": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "G7.composition.overlay-rules": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "G7.migration.schema-evolution": [
@@ -4046,28 +4764,24 @@
         "oracle-runner-unpinned:O-ERR"
       ],
       "G8.composition.watermark-routing": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS"
+        "oracle-screening-only:O-OBS"
       ],
       "G8.eligibility.c1-routing": [
         "oracle-runner-unpinned:O-PLAN",
         "oracle-unpinned:O-PLAN"
       ],
       "G8.maintenance.bounded-boundaries": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "G8.publish.basis-honesty": [
         "oracle-runner-unpinned:O-ERR"
       ],
       "G8.reuse.positive-witness": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS"
+        "oracle-screening-only:O-OBS"
       ],
       "G8.support.incremental-witness": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS"
+        "oracle-screening-only:O-OBS"
       ],
       "G9.cascade.restrict-detach-cascade": [
         "oracle-runner-unpinned:O-ERR"
@@ -4076,8 +4790,7 @@
         "oracle-runner-unpinned:O-ERR"
       ],
       "G9.erasure.protected-copies": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS"
+        "oracle-screening-only:O-OBS"
       ],
       "G9.erasure.query-semantics": [
         "oracle-runner-unpinned:O-ERR"
@@ -4086,8 +4799,7 @@
         "oracle-runner-unpinned:O-ERR"
       ],
       "G9.erasure.restore-reapplies": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS"
+        "oracle-screening-only:O-OBS"
       ],
       "G9.history.raw-lifetime-compat": [
         "oracle-runner-unpinned:O-HAM",
@@ -4109,170 +4821,143 @@
       "GS.01": [
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "GS.02": [
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "GS.03": [
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "GS.04": [
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "GS.05": [
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "GS.06": [
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "GS.07": [
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "GS.08": [
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "GS.09": [
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "GS.10": [
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "GS.11": [
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "GS.12": [
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "GS.13": [
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "GS.14": [
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "GS.15": [
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "GS.16": [
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "GS.17": [
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "GS.18": [
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "GS.19": [
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "GS.20": [
         "oracle-runner-unpinned:O-HAND",
         "oracle-unpinned:O-HAND",
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "NS.P1": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS"
+        "oracle-screening-only:O-OBS"
       ],
       "NS.P2": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS"
+        "oracle-screening-only:O-OBS"
       ],
       "NS.P3": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS"
+        "oracle-screening-only:O-OBS"
       ],
       "NS.P4": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS"
+        "oracle-screening-only:O-OBS"
       ],
       "NS.P5": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS"
+        "oracle-screening-only:O-OBS"
       ],
       "NS.SEC.bulk-lane": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS"
+        "oracle-screening-only:O-OBS"
       ],
       "NS.calibration": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS"
+        "oracle-screening-only:O-OBS"
       ],
       "PKT.full142": [
         "oracle-runner-unpinned:O-EVT",
@@ -4298,70 +4983,56 @@
         "refused:O-REPLAY:scale-evolution"
       ],
       "REQ.change-feed": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "REQ.commit-idempotent": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "REQ.no-silent-precision-loss": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "REQ.outbox-atomic": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "REQ.pii-erasure": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "REQ.read-your-write": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "REQ.retro-corrections": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "REQ.snapshot-reads": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "REQ.sweep-pins-position": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "REQ.tenant-isolation": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS",
+        "oracle-screening-only:O-OBS",
         "oracle-runner-unpinned:O-ERR"
       ],
       "S.budgets.cumulative": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS"
+        "oracle-screening-only:O-OBS"
       ],
       "S.capacity.admitted": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS"
+        "oracle-screening-only:O-OBS"
       ],
       "S.metrics.reported": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS"
+        "oracle-screening-only:O-OBS"
       ],
       "S.population.year-one": [
-        "oracle-runner-unpinned:O-OBS",
-        "oracle-unpinned:O-OBS"
+        "oracle-screening-only:O-OBS"
       ]
     },
     "counts": {
@@ -4376,20 +5047,19 @@
       "oracle-runner-unpinned:O-EVT": 2,
       "oracle-runner-unpinned:O-HAM": 2,
       "oracle-runner-unpinned:O-HAND": 20,
-      "oracle-runner-unpinned:O-OBS": 62,
       "oracle-runner-unpinned:O-PLAN": 4,
       "oracle-runner-unpinned:O-SHAPE": 4,
       "oracle-runner-unpinned:O-SPEC": 2,
       "oracle-runner-unpinned:O-STR": 3,
       "oracle-runner-unpinned:O-TDK1": 6,
       "oracle-runner-unpinned:O-TESTKIT": 1,
+      "oracle-screening-only:O-OBS": 62,
       "oracle-unaccepted:O-TDK1": 6,
       "oracle-unpinned:O-CFG8": 2,
       "oracle-unpinned:O-COLL": 2,
       "oracle-unpinned:O-EVT": 2,
       "oracle-unpinned:O-HAM": 2,
       "oracle-unpinned:O-HAND": 20,
-      "oracle-unpinned:O-OBS": 62,
       "oracle-unpinned:O-PLAN": 4,
       "oracle-unpinned:O-SHAPE": 4,
       "oracle-unpinned:O-SPEC": 2,
@@ -4515,8 +5185,7 @@
         ],
         "G3.admission.preconstruction": [
           "oracle-runner-unpinned:O-ERR",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G3.cost.budget-honored": [
           "oracle-runner-unpinned:O-PLAN",
@@ -4524,8 +5193,7 @@
           "oracle-runner-unpinned:O-ERR"
         ],
         "G3.recursion.read-only-frontier": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G4.neg.correlated-not-exists": [
@@ -4551,30 +5219,24 @@
           "oracle-runner-unpinned:O-ERR"
         ],
         "G6.cancel.observed-drain": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G6.deadline.enforced": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G6.cancel.preaborted-no-work": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G6.cleanup.scratch-zero": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G6.ownership.bounded-connections": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G6.resource.memory-failure-contained": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G7.write.command-idempotency": [
@@ -4587,18 +5249,15 @@
           "oracle-runner-unpinned:O-ERR"
         ],
         "G7.commit.protocol-transitions": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G7.composition.overlay-rules": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G7.broker.promotion-hardening": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G7.migration.schema-evolution": [
@@ -4615,12 +5274,10 @@
           "oracle-runner-unpinned:O-ERR"
         ],
         "G8.reuse.positive-witness": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G8.support.incremental-witness": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G9.temporal.half-open-intervals": [
           "oracle-runner-unpinned:O-ERR"
@@ -4656,13 +5313,11 @@
           "oracle-runner-unpinned:O-ERR"
         ],
         "G10.lifecycle.open-close": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G10.native.read-only-and-safe-params": [
           "oracle-runner-unpinned:O-ERR",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "R.repo.mutation-controls": [
           "refused:O-REPLAY:scale-evolution"
@@ -4684,238 +5339,197 @@
           "oracle-runner-unpinned:O-ERR"
         ],
         "NS.P1": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "NS.P2": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "NS.P3": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "NS.P4": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "NS.P5": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "NS.SEC.bulk-lane": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "NS.calibration": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "GS.01": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.02": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.03": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.04": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.05": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.06": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.07": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.08": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.09": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.10": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.11": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.12": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.13": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.14": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.15": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.16": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.17": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.18": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.19": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.20": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.commit-idempotent": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.snapshot-reads": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.change-feed": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.no-silent-precision-loss": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.pii-erasure": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.tenant-isolation": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.outbox-atomic": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.read-your-write": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.sweep-pins-position": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.retro-corrections": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G9.erasure.protected-copies": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G9.erasure.restore-reapplies": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G8.composition.watermark-routing": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G7.composition.ack-and-routed-ryow": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G9.erasure.commit-semantics": [
@@ -4928,20 +5542,16 @@
           "oracle-runner-unpinned:O-ERR"
         ],
         "S.population.year-one": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "S.capacity.admitted": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "S.metrics.reported": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "S.budgets.cumulative": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ]
       },
       "xtdb-sql": {
@@ -5039,8 +5649,7 @@
         ],
         "G3.admission.preconstruction": [
           "oracle-runner-unpinned:O-ERR",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G3.cost.budget-honored": [
           "oracle-runner-unpinned:O-PLAN",
@@ -5048,8 +5657,7 @@
           "oracle-runner-unpinned:O-ERR"
         ],
         "G3.recursion.read-only-frontier": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G4.neg.correlated-not-exists": [
@@ -5075,30 +5683,24 @@
           "oracle-runner-unpinned:O-ERR"
         ],
         "G6.cancel.observed-drain": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G6.deadline.enforced": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G6.cancel.preaborted-no-work": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G6.cleanup.scratch-zero": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G6.ownership.bounded-connections": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G6.resource.memory-failure-contained": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G7.write.command-idempotency": [
@@ -5111,18 +5713,15 @@
           "oracle-runner-unpinned:O-ERR"
         ],
         "G7.commit.protocol-transitions": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G7.composition.overlay-rules": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G7.broker.promotion-hardening": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G7.migration.schema-evolution": [
@@ -5139,12 +5738,10 @@
           "oracle-runner-unpinned:O-ERR"
         ],
         "G8.reuse.positive-witness": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G8.support.incremental-witness": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G9.temporal.half-open-intervals": [
           "oracle-runner-unpinned:O-ERR"
@@ -5180,13 +5777,11 @@
           "oracle-runner-unpinned:O-ERR"
         ],
         "G10.lifecycle.open-close": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G10.native.read-only-and-safe-params": [
           "oracle-runner-unpinned:O-ERR",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "R.repo.mutation-controls": [
           "refused:O-REPLAY:scale-evolution"
@@ -5208,238 +5803,197 @@
           "oracle-runner-unpinned:O-ERR"
         ],
         "NS.P1": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "NS.P2": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "NS.P3": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "NS.P4": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "NS.P5": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "NS.SEC.bulk-lane": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "NS.calibration": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "GS.01": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.02": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.03": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.04": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.05": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.06": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.07": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.08": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.09": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.10": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.11": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.12": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.13": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.14": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.15": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.16": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.17": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.18": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.19": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.20": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.commit-idempotent": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.snapshot-reads": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.change-feed": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.no-silent-precision-loss": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.pii-erasure": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.tenant-isolation": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.outbox-atomic": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.read-your-write": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.sweep-pins-position": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.retro-corrections": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G9.erasure.protected-copies": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G9.erasure.restore-reapplies": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G8.composition.watermark-routing": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G7.composition.ack-and-routed-ryow": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G9.erasure.commit-semantics": [
@@ -5452,20 +6006,16 @@
           "oracle-runner-unpinned:O-ERR"
         ],
         "S.population.year-one": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "S.capacity.admitted": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "S.metrics.reported": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "S.budgets.cumulative": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ]
       },
       "qlever-sparql": {
@@ -5563,8 +6113,7 @@
         ],
         "G3.admission.preconstruction": [
           "oracle-runner-unpinned:O-ERR",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G3.cost.budget-honored": [
           "oracle-runner-unpinned:O-PLAN",
@@ -5572,8 +6121,7 @@
           "oracle-runner-unpinned:O-ERR"
         ],
         "G3.recursion.read-only-frontier": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G4.neg.correlated-not-exists": [
@@ -5595,30 +6143,24 @@
           "oracle-runner-unpinned:O-ERR"
         ],
         "G6.cancel.observed-drain": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G6.deadline.enforced": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G6.cancel.preaborted-no-work": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G6.cleanup.scratch-zero": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G6.ownership.bounded-connections": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G6.resource.memory-failure-contained": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G7.write.command-idempotency": [
@@ -5631,23 +6173,19 @@
           "oracle-runner-unpinned:O-ERR"
         ],
         "G7.commit.protocol-transitions": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G7.broker.fence-and-epochs": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G7.composition.overlay-rules": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G7.broker.promotion-hardening": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G7.migration.schema-evolution": [
@@ -5664,17 +6202,14 @@
           "oracle-runner-unpinned:O-ERR"
         ],
         "G8.maintenance.bounded-boundaries": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G8.reuse.positive-witness": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G8.support.incremental-witness": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G9.temporal.half-open-intervals": [
           "oracle-runner-unpinned:O-ERR"
@@ -5710,13 +6245,11 @@
           "oracle-runner-unpinned:O-ERR"
         ],
         "G10.lifecycle.open-close": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G10.native.read-only-and-safe-params": [
           "oracle-runner-unpinned:O-ERR",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "R.repo.mutation-controls": [
           "refused:O-REPLAY:scale-evolution"
@@ -5738,238 +6271,197 @@
           "oracle-runner-unpinned:O-ERR"
         ],
         "NS.P1": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "NS.P2": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "NS.P3": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "NS.P4": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "NS.P5": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "NS.SEC.bulk-lane": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "NS.calibration": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "GS.01": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.02": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.03": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.04": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.05": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.06": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.07": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.08": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.09": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.10": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.11": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.12": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.13": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.14": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.15": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.16": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.17": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.18": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.19": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.20": [
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.commit-idempotent": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.snapshot-reads": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.change-feed": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.no-silent-precision-loss": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.pii-erasure": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.tenant-isolation": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.outbox-atomic": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.read-your-write": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.sweep-pins-position": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.retro-corrections": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G9.erasure.protected-copies": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G9.erasure.restore-reapplies": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G8.composition.watermark-routing": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G7.composition.ack-and-routed-ryow": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G9.erasure.commit-semantics": [
@@ -5982,20 +6474,16 @@
           "oracle-runner-unpinned:O-ERR"
         ],
         "S.population.year-one": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "S.capacity.admitted": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "S.metrics.reported": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "S.budgets.cumulative": [
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ]
       },
       "datomic-datalog": {
@@ -6134,8 +6622,7 @@
         "G3.admission.preconstruction": [
           "image-unpinned:datomic",
           "oracle-runner-unpinned:O-ERR",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G3.cost.budget-honored": [
           "image-unpinned:datomic",
@@ -6148,8 +6635,7 @@
         ],
         "G3.recursion.read-only-frontier": [
           "image-unpinned:datomic",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G4.neg.correlated-not-exists": [
@@ -6188,35 +6674,29 @@
         ],
         "G6.cancel.observed-drain": [
           "image-unpinned:datomic",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G6.deadline.enforced": [
           "image-unpinned:datomic",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G6.cancel.preaborted-no-work": [
           "image-unpinned:datomic",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G6.cleanup.scratch-zero": [
           "image-unpinned:datomic",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G6.ownership.bounded-connections": [
           "image-unpinned:datomic",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G6.resource.memory-failure-contained": [
           "image-unpinned:datomic",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G7.write.atomic": [
@@ -6239,20 +6719,17 @@
         ],
         "G7.commit.protocol-transitions": [
           "image-unpinned:datomic",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G7.composition.overlay-rules": [
           "image-unpinned:datomic",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G7.broker.promotion-hardening": [
           "image-unpinned:datomic",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G7.recovery.backup-restore": [
@@ -6283,13 +6760,11 @@
         ],
         "G8.reuse.positive-witness": [
           "image-unpinned:datomic",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G8.support.incremental-witness": [
           "image-unpinned:datomic",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G8.support.alternate-maintained": [
           "image-unpinned:datomic"
@@ -6362,8 +6837,7 @@
         ],
         "G10.lifecycle.open-close": [
           "image-unpinned:datomic",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G10.native.entry-checks": [
           "image-unpinned:datomic"
@@ -6371,8 +6845,7 @@
         "G10.native.read-only-and-safe-params": [
           "image-unpinned:datomic",
           "oracle-runner-unpinned:O-ERR",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "R.repo.entity-suite": [
           "image-unpinned:datomic"
@@ -6408,260 +6881,223 @@
         ],
         "NS.P1": [
           "image-unpinned:datomic",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "NS.P2": [
           "image-unpinned:datomic",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "NS.P3": [
           "image-unpinned:datomic",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "NS.P4": [
           "image-unpinned:datomic",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "NS.P5": [
           "image-unpinned:datomic",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "NS.SEC.bulk-lane": [
           "image-unpinned:datomic",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "NS.SEC.retro-and-audit": [
           "image-unpinned:datomic"
         ],
         "NS.calibration": [
           "image-unpinned:datomic",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "GS.01": [
           "image-unpinned:datomic",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.02": [
           "image-unpinned:datomic",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.03": [
           "image-unpinned:datomic",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.04": [
           "image-unpinned:datomic",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.05": [
           "image-unpinned:datomic",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.06": [
           "image-unpinned:datomic",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.07": [
           "image-unpinned:datomic",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.08": [
           "image-unpinned:datomic",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.09": [
           "image-unpinned:datomic",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.10": [
           "image-unpinned:datomic",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.11": [
           "image-unpinned:datomic",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.12": [
           "image-unpinned:datomic",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.13": [
           "image-unpinned:datomic",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.14": [
           "image-unpinned:datomic",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.15": [
           "image-unpinned:datomic",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.16": [
           "image-unpinned:datomic",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.17": [
           "image-unpinned:datomic",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.18": [
           "image-unpinned:datomic",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.19": [
           "image-unpinned:datomic",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "GS.20": [
           "image-unpinned:datomic",
           "oracle-runner-unpinned:O-HAND",
           "oracle-unpinned:O-HAND",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.commit-idempotent": [
           "image-unpinned:datomic",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.snapshot-reads": [
           "image-unpinned:datomic",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.change-feed": [
           "image-unpinned:datomic",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.no-silent-precision-loss": [
           "image-unpinned:datomic",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.pii-erasure": [
           "image-unpinned:datomic",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.tenant-isolation": [
           "image-unpinned:datomic",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.outbox-atomic": [
           "image-unpinned:datomic",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.read-your-write": [
           "image-unpinned:datomic",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.sweep-pins-position": [
           "image-unpinned:datomic",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "REQ.retro-corrections": [
           "image-unpinned:datomic",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G9.erasure.visibility-boundary": [
@@ -6669,23 +7105,19 @@
         ],
         "G9.erasure.protected-copies": [
           "image-unpinned:datomic",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G9.erasure.restore-reapplies": [
           "image-unpinned:datomic",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G8.composition.watermark-routing": [
           "image-unpinned:datomic",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "G7.composition.ack-and-routed-ryow": [
           "image-unpinned:datomic",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS",
+          "oracle-screening-only:O-OBS",
           "oracle-runner-unpinned:O-ERR"
         ],
         "G7.position.coordinates": [
@@ -6720,8 +7152,7 @@
         ],
         "S.population.year-one": [
           "image-unpinned:datomic",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "S.rungs.ladder": [
           "image-unpinned:datomic"
@@ -6731,13 +7162,11 @@
         ],
         "S.capacity.admitted": [
           "image-unpinned:datomic",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "S.metrics.reported": [
           "image-unpinned:datomic",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ],
         "S.maintenance.correct-during": [
           "image-unpinned:datomic"
@@ -6747,8 +7176,7 @@
         ],
         "S.budgets.cumulative": [
           "image-unpinned:datomic",
-          "oracle-runner-unpinned:O-OBS",
-          "oracle-unpinned:O-OBS"
+          "oracle-screening-only:O-OBS"
         ]
       }
     }
@@ -6833,6 +7261,53 @@
       "excludesWhy": {},
       "notes": "V-D01c D1: two parser mutants survive every case ([1} accepted; a duplicate key after the second member missed) though the shipped parser is right on the verifier's corpus; unit tests for both belong in a later O-DOMAIN version. D2: O-DOMAIN's reading id A11 collides with W0-1.1.2's A11 (documentation only). D3: lifting the digit limit makes huge integers slow, not wrong",
       "rule": "accepted; moving the pin needs an independent re-check registered in VERIFIER_REGISTRY and a contract version bump (RULINGS Q55a)"
+    },
+    "O-OBS": {
+      "files": "lab/acceptance/oracle/observe.py",
+      "commit": "23e2273fc6b15b92821b318acd387f5484155d8a",
+      "oracleVersion": "O05-round4",
+      "dependencies": {
+        "O-REPLAY": "f195f30af618d3f9b0525a864e913824a315cc8c"
+      },
+      "sha256": {
+        "lab/oracles/replay/RULES.md": "5e9de540e26e0c370c10a904a625a96ba67f279172aa5000aea043b73cfa4241",
+        "lab/oracles/replay/SCHEMA.md": "baf2c949c6c59538914340dd0b2da5d3556b150f6908be68b2a6741138f459d3",
+        "lab/oracles/replay/__init__.py": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
+        "lab/oracles/replay/__main__.py": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
+        "lab/oracles/replay/cli.py": "1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5",
+        "lab/oracles/replay/constraints.py": "9e1e9d7b1ca8046ca67520bbc4905b03ad3bd663c260a4ed0d2b6ca024a91a1d",
+        "lab/oracles/replay/entities.py": "e92308b6df7a0996a26fe129b9df07e058d8b0c84cff54f2690cd7c76fc871b3",
+        "lab/oracles/replay/errors.py": "c2260e1e06af38b2ce97246d5f9ff5626484dd0dfaf4afe409ddfcd6eee634df",
+        "lab/oracles/replay/exact.py": "4cfcf2c9af4b4ddf36f2218308685aff99d91416ac7f0d1dec053fb7a6e74d2a",
+        "lab/oracles/replay/examples/entity-mini.case.json": "7549f07299668500a311e9a5fc3eb80904731d0b5a7d626090a7657f53a8d667",
+        "lab/oracles/replay/examples/entity-mini.expected.json": "d4e7aff8188ffaa902f1014d9527e63c92d6e0dd6925fef446cceb820c6d8b0f",
+        "lab/oracles/replay/replay.py": "3dd06dd0c30930e00ce1665ae7e9f40afcf7e06fa8a37759a8c5e65345fe9016",
+        "lab/oracles/replay/run.py": "c967ad2d6d811f006da6f5766a0ca7aa7ef0c4c220ad239f7a55b7b994a4f856",
+        "lab/oracles/replay/scale.py": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
+        "lab/oracles/replay/selfcheck.py": "5a298c577b50204dddf5dce6577207d0dd1e90b339b3ee3d9c3bbf2b431ed8fd",
+        "lab/oracles/replay/selfcheck_fixtures/freeze-ham-reference.mjs": "c533122597c940d69c8a101a1a175ba5e9d6ab62f1efdb2d5526c9f65a86a206",
+        "lab/oracles/replay/selfcheck_fixtures/ham-v2-reference.json": "d69c14f1abb236c3e1532ff95f1aba81b088fc5937ba82f9647e2e6a4e0407f2",
+        "lab/oracles/replay/tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "lab/oracles/replay/tests/helpers.py": "005be879fb88580f578f8befc73d22218006cd38504a88226fedb91b3ede3703",
+        "lab/oracles/replay/tests/test_contract_section4.py": "99273adb536a3835b62f49c7be7fddf690e871e5f7dccce5b73d9e1f3a44982e",
+        "lab/oracles/replay/tests/test_entities.py": "562feac4b58c11e8fabb8e30fff85c41cd9562cbd05a94df3d8c3d8f19caffe6",
+        "lab/oracles/replay/tests/test_exact.py": "35aaf8384af0178e1fc929b94fe0e11a43aa64dbbe567bf50067658821b619b1",
+        "lab/oracles/replay/tests/test_replay.py": "6900d4fc9710e3248c476c036aba84565c53b4265b231867778d776668feb7b9",
+        "lab/oracles/replay/tests/test_rulings.py": "3997f66b01be8f697977911ec1fdf5209223d5310206657f7ed65c7ea106aea4",
+        "lab/oracles/replay/tests/test_scale_and_selfcheck.py": "3b78a5adc8e665730c2b53799de7fbfbc04b99cae343404f630fc856f4b255f4",
+        "lab/oracles/replay/tests/test_values.py": "1070395875907bca8a46ab9b88fee0758a1b73aafe94b5b610b2117e2740d375",
+        "lab/oracles/replay/tests/test_views.py": "d79f5bab47c842aa443ffe814df88ff65bf153777c95ff39a32e5501e16c1584",
+        "lab/oracles/replay/values.py": "67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982",
+        "lab/oracles/replay/views.py": "bbfb8989e054ba7ed4998f466478bdef92ede643e9554c313672f7db2a865901",
+        "lab/acceptance/oracle/observe.py": "668136f3c99e09b5332363bb6beaac7f177d07ef7718eb59b2b801faeedcb2cb"
+      },
+      "acceptReceipt": "V-O05 round 4, verify/O05 3e3df9c",
+      "verifierEntry": "V-O05-round4",
+      "excludes": [],
+      "excludesWhy": {},
+      "acceptanceLevel": "screening",
+      "acceptanceRequires": "verifier repeats collection (Q82c); no production observer or engine obligation qualification",
+      "rule": "oracle merge and pin move together (Q45a); every runner file hash listed (Q75c); normalizers and retained objects are evaluator-owned, pinned per context"
     }
   },
   "oracleRefusals": {
@@ -7255,6 +7730,137 @@
         "GS.19",
         "GS.20",
         "W0.coverage-floors"
+      ],
+      "blocked": {}
+    },
+    "O-OBS": {
+      "uses": [
+        "G3.admission.preconstruction",
+        "G3.recursion.read-only-frontier",
+        "G6.cancel.observed-drain",
+        "G6.deadline.enforced",
+        "G6.cancel.preaborted-no-work",
+        "G6.cleanup.scratch-zero",
+        "G6.ownership.bounded-connections",
+        "G6.resource.memory-failure-contained",
+        "G7.commit.protocol-transitions",
+        "G7.broker.fence-and-epochs",
+        "G7.composition.overlay-rules",
+        "G7.broker.promotion-hardening",
+        "G8.maintenance.bounded-boundaries",
+        "G8.reuse.positive-witness",
+        "G8.support.incremental-witness",
+        "G10.lifecycle.open-close",
+        "G10.native.read-only-and-safe-params",
+        "NS.P1",
+        "NS.P2",
+        "NS.P3",
+        "NS.P4",
+        "NS.P5",
+        "NS.SEC.bulk-lane",
+        "NS.calibration",
+        "GS.01",
+        "GS.02",
+        "GS.03",
+        "GS.04",
+        "GS.05",
+        "GS.06",
+        "GS.07",
+        "GS.08",
+        "GS.09",
+        "GS.10",
+        "GS.11",
+        "GS.12",
+        "GS.13",
+        "GS.14",
+        "GS.15",
+        "GS.16",
+        "GS.17",
+        "GS.18",
+        "GS.19",
+        "GS.20",
+        "REQ.commit-idempotent",
+        "REQ.snapshot-reads",
+        "REQ.change-feed",
+        "REQ.no-silent-precision-loss",
+        "REQ.pii-erasure",
+        "REQ.tenant-isolation",
+        "REQ.outbox-atomic",
+        "REQ.read-your-write",
+        "REQ.sweep-pins-position",
+        "REQ.retro-corrections",
+        "G9.erasure.protected-copies",
+        "G9.erasure.restore-reapplies",
+        "G8.composition.watermark-routing",
+        "G7.composition.ack-and-routed-ryow",
+        "S.population.year-one",
+        "S.capacity.admitted",
+        "S.metrics.reported",
+        "S.budgets.cumulative"
+      ],
+      "mayClose": [
+        "G3.admission.preconstruction",
+        "G3.recursion.read-only-frontier",
+        "G6.cancel.observed-drain",
+        "G6.deadline.enforced",
+        "G6.cancel.preaborted-no-work",
+        "G6.cleanup.scratch-zero",
+        "G6.ownership.bounded-connections",
+        "G6.resource.memory-failure-contained",
+        "G7.commit.protocol-transitions",
+        "G7.broker.fence-and-epochs",
+        "G7.composition.overlay-rules",
+        "G7.broker.promotion-hardening",
+        "G8.maintenance.bounded-boundaries",
+        "G8.reuse.positive-witness",
+        "G8.support.incremental-witness",
+        "G10.lifecycle.open-close",
+        "G10.native.read-only-and-safe-params",
+        "NS.P1",
+        "NS.P2",
+        "NS.P3",
+        "NS.P4",
+        "NS.P5",
+        "NS.SEC.bulk-lane",
+        "NS.calibration",
+        "GS.01",
+        "GS.02",
+        "GS.03",
+        "GS.04",
+        "GS.05",
+        "GS.06",
+        "GS.07",
+        "GS.08",
+        "GS.09",
+        "GS.10",
+        "GS.11",
+        "GS.12",
+        "GS.13",
+        "GS.14",
+        "GS.15",
+        "GS.16",
+        "GS.17",
+        "GS.18",
+        "GS.19",
+        "GS.20",
+        "REQ.commit-idempotent",
+        "REQ.snapshot-reads",
+        "REQ.change-feed",
+        "REQ.no-silent-precision-loss",
+        "REQ.pii-erasure",
+        "REQ.tenant-isolation",
+        "REQ.outbox-atomic",
+        "REQ.read-your-write",
+        "REQ.sweep-pins-position",
+        "REQ.retro-corrections",
+        "G9.erasure.protected-copies",
+        "G9.erasure.restore-reapplies",
+        "G8.composition.watermark-routing",
+        "G7.composition.ack-and-routed-ryow",
+        "S.population.year-one",
+        "S.capacity.admitted",
+        "S.metrics.reported",
+        "S.budgets.cumulative"
       ],
       "blocked": {}
     }
@@ -7795,7 +8401,47 @@
       "Q79b",
       "Q79c",
       "Q79d",
-      "Q81a"
+      "Q81a",
+      "Q72a",
+      "Q72b",
+      "Q72c",
+      "Q72d",
+      "Q72e",
+      "Q72g",
+      "Q80a",
+      "Q80b",
+      "Q80c",
+      "Q82a",
+      "Q82b",
+      "Q82c",
+      "Q82d",
+      "Q82e",
+      "Q83a",
+      "Q83b",
+      "Q83c",
+      "Q84a",
+      "Q84b",
+      "Q84c",
+      "Q84d",
+      "Q84e",
+      "Q83d",
+      "Q79e",
+      "Q85a",
+      "Q85b",
+      "Q85c",
+      "Q85d",
+      "Q86a",
+      "Q86b",
+      "Q86c",
+      "Q86d",
+      "Q86e",
+      "Q86f",
+      "Q79f",
+      "Q87",
+      "Q83e",
+      "Q88a",
+      "Q88b",
+      "Q88c"
     ],
     "recordedNotCompiled": []
   },
@@ -10218,13 +10864,14 @@
       "independence": "pinned by this contract"
     },
     "O-OBS": {
-      "status": "TO-BUILD",
+      "status": "BUILT-ACCEPTED",
       "files": [
         "lab/acceptance/oracle/observe.py"
       ],
       "comparator": "verdict per protocol",
       "spec": "ACCEPTANCE 6.3 (protocols OBS-*)",
-      "independence": "evaluates engine-side evidence, never the client's own counters"
+      "independence": "evaluates engine-side evidence, never the client's own counters",
+      "acceptanceLevel": "screening"
     },
     "O-PLAN": {
       "status": "TO-BUILD",
@@ -14570,11 +15217,11 @@
         },
         {
           "path": "packages/qualification/src/native/xtdb-workloads.ts",
-          "sha256": "22d785b034e440ca896b3fce7fe2df94e643586cb802fddd940fea84aff31fc3"
+          "sha256": "ff39d3f2fcb74ee2a318e8801a12680a4f9f366b4a7f5ed9e20e89d5ccd8a3d0"
         },
         {
           "path": "packages/qualification/src/native/qlever-workloads.ts",
-          "sha256": "410963c62f46be95525643f5eb78bf4069dee27d986b251f2aca33d05e48d2b3"
+          "sha256": "9349878403ee468ce6b64922c648d88f598f799b1c65fc42a712aa47598e54da"
         }
       ],
       "note": null
@@ -14604,7 +15251,9 @@
         "CONTRACT-Q79A",
         "CONTRACT-Q79B",
         "CONTRACT-Q79C",
-        "CONTRACT-Q79D"
+        "CONTRACT-Q79D",
+        "CONTRACT-Q79E",
+        "CONTRACT-Q79F"
       ],
       "manifest": "lab/acceptance/cases/CS-ENTRY.json",
       "manifestSha256": null,
@@ -15225,7 +15874,12 @@
         "BR-EPOCH-ROW",
         "BR-MARKER-CHECKPOINT-CROSSCHECK",
         "BR-RECENT-ROWS-PERSISTED",
-        "BR-LOG-CRYPTO-SHRED"
+        "BR-LOG-CRYPTO-SHRED",
+        "CONTRACT-Q84A",
+        "CONTRACT-Q84B",
+        "CONTRACT-Q84C",
+        "CONTRACT-Q84D",
+        "CONTRACT-Q84E"
       ],
       "manifest": "lab/acceptance/cases/CS-BROKER.json",
       "manifestSha256": null,
@@ -15902,7 +16556,13 @@
         "CO-OUTAGE-PULL-FALLBACK",
         "CO-OUTAGE-RETRACTION-TARGET-FALLBACK",
         "CO-RESET-DURING-QUERY",
-        "CO-TYPED-ERROR-SHAPE"
+        "CO-TYPED-ERROR-SHAPE",
+        "CONTRACT-Q72A",
+        "CONTRACT-Q72B",
+        "CONTRACT-Q72C",
+        "CONTRACT-Q72D",
+        "CONTRACT-Q72E",
+        "CONTRACT-Q72G"
       ],
       "manifest": "lab/acceptance/cases/CS-COMPOSITION.json",
       "manifestSha256": null,
@@ -16082,11 +16742,11 @@
       },
       {
         "path": "packages/qualification/src/native/xtdb-workloads.ts",
-        "sha256": "22d785b034e440ca896b3fce7fe2df94e643586cb802fddd940fea84aff31fc3"
+        "sha256": "ff39d3f2fcb74ee2a318e8801a12680a4f9f366b4a7f5ed9e20e89d5ccd8a3d0"
       },
       {
         "path": "packages/qualification/src/native/qlever-workloads.ts",
-        "sha256": "410963c62f46be95525643f5eb78bf4069dee27d986b251f2aca33d05e48d2b3"
+        "sha256": "9349878403ee468ce6b64922c648d88f598f799b1c65fc42a712aa47598e54da"
       }
     ],
     "CS-ENTRY": [
@@ -17007,7 +17667,21 @@
         "reuseQueryId",
         "tReuseOk"
       ],
-      "verdict": "PASS iff callerError matches E-CANCELLED or E-TIMEOUT as the case pins, transportAck observed, the request id absent from every engine sample after tDrained with tDrained - tCancelRequested <= T-DRAIN-MS, sample gaps <= 1000 ms over [tCancelRequested, tDrained + 5000 ms], and the reuse query on the same connection succeeds"
+      "verdict": "PASS iff callerError matches E-CANCELLED or E-TIMEOUT as the case pins, transportAck observed, the request id absent from every engine sample after tDrained with tDrained - tCancelRequested <= T-DRAIN-MS, sample gaps <= 1000 ms over [tCancelRequested, tDrained + 5000 ms], and the reuse query on the same connection succeeds",
+      "evidenceFormat": "obs-bundle/1",
+      "contextFormat": "obs-context/1 (evaluator-owned and contract-bound)",
+      "sourceRules": [
+        "Q80a",
+        "Q80b",
+        "Q80c",
+        "Q82a",
+        "Q82b",
+        "Q82c",
+        "Q82d",
+        "Q82e"
+      ],
+      "acceptance": "screening only; verifier recollection required (Q82c)",
+      "independentSourceKinds": 2
     },
     "OBS-PREABORT": {
       "fields": [
@@ -17015,7 +17689,21 @@
         "engineStatementLog [{t, tag}]",
         "coverage"
       ],
-      "verdict": "PASS iff zero engine statements carry the request id over the full coverage window"
+      "verdict": "PASS iff zero engine statements carry the request id over the full coverage window",
+      "evidenceFormat": "obs-bundle/1",
+      "contextFormat": "obs-context/1 (evaluator-owned and contract-bound)",
+      "sourceRules": [
+        "Q80a",
+        "Q80b",
+        "Q80c",
+        "Q82a",
+        "Q82b",
+        "Q82c",
+        "Q82d",
+        "Q82e"
+      ],
+      "acceptance": "screening only; verifier recollection required (Q82c)",
+      "independentSourceKinds": 2
     },
     "OBS-CONNECTIONS": {
       "fields": [
@@ -17024,7 +17712,21 @@
         "baseline",
         "tClose"
       ],
-      "verdict": "PASS iff every sample <= declared max and the count equals baseline within T-CONN-RELEASE-MS after tClose"
+      "verdict": "PASS iff every sample <= declared max and the count equals baseline within T-CONN-RELEASE-MS after tClose",
+      "evidenceFormat": "obs-bundle/1",
+      "contextFormat": "obs-context/1 (evaluator-owned and contract-bound)",
+      "sourceRules": [
+        "Q80a",
+        "Q80b",
+        "Q80c",
+        "Q82a",
+        "Q82b",
+        "Q82c",
+        "Q82d",
+        "Q82e"
+      ],
+      "acceptance": "screening only; verifier recollection required (Q82c)",
+      "independentSourceKinds": 1
     },
     "OBS-SCRATCH": {
       "fields": [
@@ -17033,7 +17735,21 @@
         "countAfter",
         "resolutionReceipts"
       ],
-      "verdict": "PASS iff countAfter = countBefore for every scratch relation and every unknown working outcome is resolved"
+      "verdict": "PASS iff countAfter = countBefore for every scratch relation and every unknown working outcome is resolved",
+      "evidenceFormat": "obs-bundle/1",
+      "contextFormat": "obs-context/1 (evaluator-owned and contract-bound)",
+      "sourceRules": [
+        "Q80a",
+        "Q80b",
+        "Q80c",
+        "Q82a",
+        "Q82b",
+        "Q82c",
+        "Q82d",
+        "Q82e"
+      ],
+      "acceptance": "screening only; verifier recollection required (Q82c)",
+      "independentSourceKinds": 1
     },
     "OBS-NO-MUTATION": {
       "fields": [
@@ -17041,7 +17757,21 @@
         "engineMutationCounterAfter",
         "counterSource"
       ],
-      "verdict": "PASS iff the engine's committed-transaction or update counter is unchanged across the read"
+      "verdict": "PASS iff the engine's committed-transaction or update counter is unchanged across the read",
+      "evidenceFormat": "obs-bundle/1",
+      "contextFormat": "obs-context/1 (evaluator-owned and contract-bound)",
+      "sourceRules": [
+        "Q80a",
+        "Q80b",
+        "Q80c",
+        "Q82a",
+        "Q82b",
+        "Q82c",
+        "Q82d",
+        "Q82e"
+      ],
+      "acceptance": "screening only; verifier recollection required (Q82c)",
+      "independentSourceKinds": 2
     },
     "OBS-RESOURCE": {
       "fields": [
@@ -17049,14 +17779,42 @@
         "peaks [{owner, rss, disk, t}]",
         "envelope"
       ],
-      "verdict": "PASS iff every peak <= forecast <= envelope (and <= T-PLANNER-MEM-BYTES where named)"
+      "verdict": "PASS iff every peak <= forecast <= envelope (and <= T-PLANNER-MEM-BYTES where named)",
+      "evidenceFormat": "obs-bundle/1",
+      "contextFormat": "obs-context/1 (evaluator-owned and contract-bound)",
+      "sourceRules": [
+        "Q80a",
+        "Q80b",
+        "Q80c",
+        "Q82a",
+        "Q82b",
+        "Q82c",
+        "Q82d",
+        "Q82e"
+      ],
+      "acceptance": "screening only; verifier recollection required (Q82c)",
+      "independentSourceKinds": 1
     },
     "OBS-AVAILABILITY": {
       "fields": [
         "tFailure",
         "probes [{t, kind: write|read, outcome}]"
       ],
-      "verdict": "PASS iff a write and a read both succeed at some t <= tFailure + T-AVAIL-WINDOW-MS with no manual restart event"
+      "verdict": "PASS iff a write and a read both succeed at some t <= tFailure + T-AVAIL-WINDOW-MS with no manual restart event",
+      "evidenceFormat": "obs-bundle/1",
+      "contextFormat": "obs-context/1 (evaluator-owned and contract-bound)",
+      "sourceRules": [
+        "Q80a",
+        "Q80b",
+        "Q80c",
+        "Q82a",
+        "Q82b",
+        "Q82c",
+        "Q82d",
+        "Q82e"
+      ],
+      "acceptance": "screening only; verifier recollection required (Q82c)",
+      "independentSourceKinds": 1
     },
     "OBS-SCALE-COUNT": {
       "fields": [
@@ -17064,7 +17822,21 @@
         "countQueryCaseResult",
         "analyticCount"
       ],
-      "verdict": "PASS iff the count query's answer equals O-REPLAY's analytic count"
+      "verdict": "PASS iff the count query's answer equals O-REPLAY's analytic count",
+      "evidenceFormat": "obs-bundle/1",
+      "contextFormat": "obs-context/1 (evaluator-owned and contract-bound)",
+      "sourceRules": [
+        "Q80a",
+        "Q80b",
+        "Q80c",
+        "Q82a",
+        "Q82b",
+        "Q82c",
+        "Q82d",
+        "Q82e"
+      ],
+      "acceptance": "screening only; verifier recollection required (Q82c)",
+      "independentSourceKinds": 1
     },
     "OBS-WORK": {
       "fields": [
@@ -17072,7 +17844,22 @@
         "engineWorkUnits {rowsScanned, rowsWritten, triplesTouched, bytesWritten}",
         "source"
       ],
-      "verdict": "ratio of work units between the compared operations, evaluated against the named witness threshold"
+      "verdict": "ratio of work units between the compared operations, evaluated against the named witness threshold",
+      "evidenceFormat": "obs-bundle/1",
+      "contextFormat": "obs-context/1 (evaluator-owned and contract-bound)",
+      "sourceRules": [
+        "Q80a",
+        "Q80b",
+        "Q80c",
+        "Q82a",
+        "Q82b",
+        "Q82c",
+        "Q82d",
+        "Q82e"
+      ],
+      "acceptance": "screening only; verifier recollection required (Q82c)",
+      "independentSourceKinds": 1,
+      "ratioArithmetic": "integer cross-multiplication against rational contract thresholds (Q80c)"
     },
     "OBS-MAINTENANCE": {
       "fields": [
@@ -17081,7 +17868,21 @@
         "tEnd",
         "lagSamples"
       ],
-      "verdict": "events present; lag statistics against the named threshold"
+      "verdict": "events present; lag statistics against the named threshold",
+      "evidenceFormat": "obs-bundle/1",
+      "contextFormat": "obs-context/1 (evaluator-owned and contract-bound)",
+      "sourceRules": [
+        "Q80a",
+        "Q80b",
+        "Q80c",
+        "Q82a",
+        "Q82b",
+        "Q82c",
+        "Q82d",
+        "Q82e"
+      ],
+      "acceptance": "screening only; verifier recollection required (Q82c)",
+      "independentSourceKinds": 1
     },
     "OBS-ERASURE-SCAN": {
       "fields": [
@@ -17093,7 +17894,22 @@
         "keyDestroyedEvidence",
         "tScan"
       ],
-      "verdict": "PASS iff every PROTECTED_COPY_INVENTORY location of the lane is scanned after the erasure published and shows zero plaintext and zero derived-channel hits, or every surviving copy there is shown to be encrypted only under the destroyed per-subject key (key exclusivity, RULINGS Q31f)"
+      "verdict": "PASS iff every PROTECTED_COPY_INVENTORY location of the lane is scanned after the erasure published and shows zero plaintext and zero derived-channel hits, or every surviving copy there is shown to be encrypted only under the destroyed per-subject key (key exclusivity, RULINGS Q31f)",
+      "evidenceFormat": "obs-bundle/1",
+      "contextFormat": "obs-context/1 (evaluator-owned and contract-bound)",
+      "sourceRules": [
+        "Q80a",
+        "Q80b",
+        "Q80c",
+        "Q82a",
+        "Q82b",
+        "Q82c",
+        "Q82d",
+        "Q82e"
+      ],
+      "acceptance": "screening only; verifier recollection required (Q82c)",
+      "independentSourceKinds": 1,
+      "positiveControl": "every physical location must find a pre-erasure canary with the same scanner, else REFUSED (Q82d)"
     },
     "OBS-WATERMARK": {
       "fields": [
@@ -17105,7 +17921,21 @@
         "route",
         "fallbackIndex"
       ],
-      "verdict": "PASS iff no read was answered by an index that was not eligible (COMPOSITION eligibility: watermark in the basis epoch, C1, reconstructability, erasure frontier), every wait before routing is within T-WATERMARK-WAIT-MS, every route and its surface language is recorded, and the fallback latency is inside the read's measured latency"
+      "verdict": "PASS iff no read was answered by an index that was not eligible (COMPOSITION eligibility: watermark in the basis epoch, C1, reconstructability, erasure frontier), every wait before routing is within T-WATERMARK-WAIT-MS, every route and its surface language is recorded, and the fallback latency is inside the read's measured latency",
+      "evidenceFormat": "obs-bundle/1",
+      "contextFormat": "obs-context/1 (evaluator-owned and contract-bound)",
+      "sourceRules": [
+        "Q80a",
+        "Q80b",
+        "Q80c",
+        "Q82a",
+        "Q82b",
+        "Q82c",
+        "Q82d",
+        "Q82e"
+      ],
+      "acceptance": "screening only; verifier recollection required (Q82c)",
+      "independentSourceKinds": 1
     },
     "OBS-ACK-ORDER": {
       "fields": [
@@ -17115,7 +17945,21 @@
         "ackSender",
         "ryowPullRoute"
       ],
-      "verdict": "PASS iff the source of truth sent every ACK, tAck >= tSourcePublished for every commit, and every pull at a returned position was served by an eligible index or the fallback"
+      "verdict": "PASS iff the source of truth sent every ACK, tAck >= tSourcePublished for every commit, and every pull at a returned position was served by an eligible index or the fallback",
+      "evidenceFormat": "obs-bundle/1",
+      "contextFormat": "obs-context/1 (evaluator-owned and contract-bound)",
+      "sourceRules": [
+        "Q80a",
+        "Q80b",
+        "Q80c",
+        "Q82a",
+        "Q82b",
+        "Q82c",
+        "Q82d",
+        "Q82e"
+      ],
+      "acceptance": "screening only; verifier recollection required (Q82c)",
+      "independentSourceKinds": 2
     },
     "OBS-FAULT-TRANSITIONS": {
       "fields": [
@@ -17123,7 +17967,21 @@
         "t",
         "durableEvidenceObject"
       ],
-      "verdict": "the last witnessed transition is the last one whose durable evidence is present after the crash"
+      "verdict": "the last witnessed transition is the last one whose durable evidence is present after the crash",
+      "evidenceFormat": "obs-bundle/1",
+      "contextFormat": "obs-context/1 (evaluator-owned and contract-bound)",
+      "sourceRules": [
+        "Q80a",
+        "Q80b",
+        "Q80c",
+        "Q82a",
+        "Q82b",
+        "Q82c",
+        "Q82d",
+        "Q82e"
+      ],
+      "acceptance": "screening only; verifier recollection required (Q82c)",
+      "independentSourceKinds": 1
     }
   },
   "planProtocols": {
@@ -17192,11 +18050,11 @@
   ],
   "budgetsRef": {
     "path": "lab/acceptance/budgets.json",
-    "sha256": "91a85c688b876f767c25afa73d4a3080eb2831bc21ed1daaf48e7b5a701bda00"
+    "sha256": "c09b5257c08d050d9c99d8e1595cd4817b9c8c1337afba291109e7fd0c7a8159"
   },
   "loadContractRef": {
     "path": "lab/acceptance/load-contract.json",
-    "sha256": "00169eedc83df0d7541f12c188aaec72f94c11f8ba70992e0411a4999d2adced"
+    "sha256": "c54af6122604a7cbe49c4de41ba658f9076cea8701f90cc4e3583f1cad009428"
   },
   "obligations": [
     {
@@ -21749,6 +22607,36 @@
             "BR-RECENT-ROWS-PERSISTED",
             "BR-LOG-CRYPTO-SHRED"
           ]
+        },
+        {
+          "set": "CS-BROKER",
+          "select": [
+            "CONTRACT-Q84A"
+          ]
+        },
+        {
+          "set": "CS-BROKER",
+          "select": [
+            "CONTRACT-Q84B"
+          ]
+        },
+        {
+          "set": "CS-BROKER",
+          "select": [
+            "CONTRACT-Q84C"
+          ]
+        },
+        {
+          "set": "CS-BROKER",
+          "select": [
+            "CONTRACT-Q84D"
+          ]
+        },
+        {
+          "set": "CS-BROKER",
+          "select": [
+            "CONTRACT-Q84E"
+          ]
         }
       ],
       "oracles": [
@@ -21788,7 +22676,7 @@
       "notes": null,
       "layer": "source",
       "verifierMode": "rerun",
-      "definitionSha256": "7e7b58d415d3cf0a0933676963f0eb266ee2ef6cc960117739ecd31b9e86efc8",
+      "definitionSha256": "51b693d180ba48ca0cc449f49047c921f0fd5a0854e26ebc2bc996d5c9d290b4",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -24104,6 +24992,18 @@
           "select": [
             "CONTRACT-Q79D"
           ]
+        },
+        {
+          "set": "CS-ENTRY",
+          "select": [
+            "CONTRACT-Q79E"
+          ]
+        },
+        {
+          "set": "CS-ENTRY",
+          "select": [
+            "CONTRACT-Q79F"
+          ]
         }
       ],
       "oracles": [
@@ -24140,7 +25040,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "7ffb62294ac41ad08429247185d0423668e325997a3c963811400e0f7113f1d6",
+      "definitionSha256": "bdf20bafb1ce233c6cfea58afbdc5e931af084be356d4d89e920581d50d2e40d",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -28625,6 +29525,42 @@
             "CO-RESET-DURING-QUERY",
             "CO-TYPED-ERROR-SHAPE"
           ]
+        },
+        {
+          "set": "CS-COMPOSITION",
+          "select": [
+            "CONTRACT-Q72A"
+          ]
+        },
+        {
+          "set": "CS-COMPOSITION",
+          "select": [
+            "CONTRACT-Q72B"
+          ]
+        },
+        {
+          "set": "CS-COMPOSITION",
+          "select": [
+            "CONTRACT-Q72C"
+          ]
+        },
+        {
+          "set": "CS-COMPOSITION",
+          "select": [
+            "CONTRACT-Q72D"
+          ]
+        },
+        {
+          "set": "CS-COMPOSITION",
+          "select": [
+            "CONTRACT-Q72E"
+          ]
+        },
+        {
+          "set": "CS-COMPOSITION",
+          "select": [
+            "CONTRACT-Q72G"
+          ]
         }
       ],
       "oracles": [
@@ -28672,7 +29608,7 @@
       "notes": null,
       "layer": null,
       "verifierMode": "rerun",
-      "definitionSha256": "469a15695f014c9ddfe46d6dd9d4fef40bc745ea36b82042e090048d35ec8b28",
+      "definitionSha256": "f10aa3af9c6b4c61b57e816da972d2b2f9b2ad490c6d07695666794bffe0be92",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -30045,5 +30981,5 @@
       ]
     }
   ],
-  "transitiveContractSha256": "c11ddb309719ce3d778357611419f35c1574280142180cff5da39273de167faf"
+  "transitiveContractSha256": "9907cb15f0c2d7dd4fdf74d1e5d9c2eb78d9a25fac1febbcd701ccfb5a0a112c"
 }

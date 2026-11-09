@@ -17,7 +17,7 @@ import {
   makeOfflineRouteFixture,
   requireRouteCoverage,
   makeRouteExecutionPlan,
-} from "../src/index.js";
+} from "@triplex-build/triplex-testkit/route";
 const modelRows = (history, request, mode = "", contract = "snapshot") => {
   const ledger = new Map();
   for (const commit of history.commits) {

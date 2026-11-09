@@ -1,0 +1,22 @@
+
+  ! eslint(no-unassigned-vars): 'timeout' is always 'undefined' because it's never assigned.
+     ,-[packages/xtdb/src/XtdbClient.ts:196:13]
+ 195 |         let deferredRelease = false;
+ 196 |         let timeout: ReturnType<typeof setTimeout> | undefined;
+     :             ^^^^^^^
+ 197 |         let abortHandler: (() => void) | undefined;
+     `----
+  help: Variable declared without assignment. Either assign a value or remove the declaration.
+
+  ! eslint(no-constant-condition): Unexpected constant condition
+     ,-[packages/xtdb/src/XtdbStorageAdapter.ts:397:18]
+ 396 |           await new Promise((resolve) => setTimeout(resolve, 25));
+ 397 |         } while (true);
+     :                  ^^|^
+     :                    `-- this expression will always evaluate to the same value
+ 398 |         throw new TransactionOutcomeUnknown({
+     `----
+  help: Update the condition to not be constant, or remove the condition entirely
+
+Found 2 warnings and 0 errors.
+Finished in 24ms on 4 files with 93 rules using 12 threads.

@@ -13,8 +13,11 @@ import {
   type RouteFixture,
   type RouteHistory,
   type RouteRequest,
-} from "../src/route-equivalence.js";
-import { makeOfflineRouteFixture, pendingRouteAdapters } from "../src/offline-route-fixtures.js";
+} from "@triplex-build/triplex-testkit/route";
+import {
+  makeOfflineRouteFixture,
+  pendingRouteAdapters,
+} from "@triplex-build/triplex-testkit/route";
 
 const f1: RouteHistory = {
   seed: 89,

@@ -1,0 +1,3059 @@
+{
+  "at": "2026-11-08T21:53:55.084Z",
+  "node": "v22.23.2",
+  "implementation": "b5a995a37343c1be6f36f4c2253c8b9bc58b3262",
+  "parents": [
+    "0527233c21c0073280c5eaf56bf6077e101c2cf2",
+    "6cd68dcad31039ceeaec943f0258e1c63a853d48"
+  ],
+  "sources": [
+    {
+      "path": "package.json",
+      "sha256": "e65e8f8be2a05d2b440af87c03a7daf6781e42704e5a17319a14d666fd1c37b5",
+      "committedSha256": "e65e8f8be2a05d2b440af87c03a7daf6781e42704e5a17319a14d666fd1c37b5",
+      "unchanged": true
+    },
+    {
+      "path": "packages/cli/package.json",
+      "sha256": "13bf2d08c70ec04e0d0239efea6cc81f3252354963163fd641ce7993c63d24c4",
+      "committedSha256": "13bf2d08c70ec04e0d0239efea6cc81f3252354963163fd641ce7993c63d24c4",
+      "unchanged": true
+    },
+    {
+      "path": "packages/cli/src/cli.ts",
+      "sha256": "8125c8310b61414162b814be01c006a3e37065fa15be250d4bcafc23acb9f2fd",
+      "committedSha256": "8125c8310b61414162b814be01c006a3e37065fa15be250d4bcafc23acb9f2fd",
+      "unchanged": true
+    },
+    {
+      "path": "packages/cli/src/index.ts",
+      "sha256": "cf7be8bb152045deb8efd3bf6b0d8aafd8f50804396495ed06c72afd0a8f75f3",
+      "committedSha256": "cf7be8bb152045deb8efd3bf6b0d8aafd8f50804396495ed06c72afd0a8f75f3",
+      "unchanged": true
+    },
+    {
+      "path": "packages/cli/src/operations.ts",
+      "sha256": "2aca79dd51cff6672c0c94c6f69b204c6d3d7f7aaa0c416c20f945c345c9a8c8",
+      "committedSha256": "2aca79dd51cff6672c0c94c6f69b204c6d3d7f7aaa0c416c20f945c345c9a8c8",
+      "unchanged": true
+    },
+    {
+      "path": "packages/cli/src/program.ts",
+      "sha256": "b2a17e6f45ee1d76a1c14ed325d11b33cb63e0739e2835081c0bcb124c929323",
+      "committedSha256": "b2a17e6f45ee1d76a1c14ed325d11b33cb63e0739e2835081c0bcb124c929323",
+      "unchanged": true
+    },
+    {
+      "path": "packages/cli/test/database-operations.test.ts",
+      "sha256": "a26d4403125f2aaeca9cfb7b5135013b5e21ca87e969e470cb446f6f469250a3",
+      "committedSha256": "a26d4403125f2aaeca9cfb7b5135013b5e21ca87e969e470cb446f6f469250a3",
+      "unchanged": true
+    },
+    {
+      "path": "packages/cli/test/operations.test.ts",
+      "sha256": "f201726d009f30fc5f84234a37304c6825b31727564acc76192ee7ae6d669b10",
+      "committedSha256": "f201726d009f30fc5f84234a37304c6825b31727564acc76192ee7ae6d669b10",
+      "unchanged": true
+    },
+    {
+      "path": "packages/cli/tsconfig.json",
+      "sha256": "9f151764a1fce874852317f96f179ae45811a4446870edc2b2185cd1a7368e59",
+      "committedSha256": "9f151764a1fce874852317f96f179ae45811a4446870edc2b2185cd1a7368e59",
+      "unchanged": true
+    },
+    {
+      "path": "packages/cli/tsdown.config.ts",
+      "sha256": "912d9d34182e788d7b355d5716cd2b788b6b5e5d427bba3ccca32f539f0643d1",
+      "committedSha256": "912d9d34182e788d7b355d5716cd2b788b6b5e5d427bba3ccca32f539f0643d1",
+      "unchanged": true
+    },
+    {
+      "path": "packages/cloudflare/package.json",
+      "sha256": "a59d393527734787559c76cf23746e278679d404f6b241f0d6118a92f473fa5a",
+      "committedSha256": "a59d393527734787559c76cf23746e278679d404f6b241f0d6118a92f473fa5a",
+      "unchanged": true
+    },
+    {
+      "path": "packages/cloudflare/src/CloudflareTriples.ts",
+      "sha256": "9ead815b7a21adff38ae53cc06e8faf38c7ee64310f2923a2bea09b5e6f452f9",
+      "committedSha256": "9ead815b7a21adff38ae53cc06e8faf38c7ee64310f2923a2bea09b5e6f452f9",
+      "unchanged": true
+    },
+    {
+      "path": "packages/cloudflare/src/adapter-support.ts",
+      "sha256": "6a7629040dc827fd9b99ced9ddb054e94c55138d3fdb2abd21e9bfa88c84f360",
+      "committedSha256": "6a7629040dc827fd9b99ced9ddb054e94c55138d3fdb2abd21e9bfa88c84f360",
+      "unchanged": true
+    },
+    {
+      "path": "packages/cloudflare/src/index.ts",
+      "sha256": "881a727eac2d8ca2dd639a310d195c173973d145b71e8e3696f052b25c870d31",
+      "committedSha256": "881a727eac2d8ca2dd639a310d195c173973d145b71e8e3696f052b25c870d31",
+      "unchanged": true
+    },
+    {
+      "path": "packages/cloudflare/src/migrations.ts",
+      "sha256": "c966218cdeac6bb51eb53065379e757194fd1fd218c0e98897cafa31bc53d907",
+      "committedSha256": "c966218cdeac6bb51eb53065379e757194fd1fd218c0e98897cafa31bc53d907",
+      "unchanged": true
+    },
+    {
+      "path": "packages/cloudflare/src/schema.ts",
+      "sha256": "227ed24adafc230e795383dde493515fcd7d0f20a221fd91f409f7a4c69ca776",
+      "committedSha256": "227ed24adafc230e795383dde493515fcd7d0f20a221fd91f409f7a4c69ca776",
+      "unchanged": true
+    },
+    {
+      "path": "packages/cloudflare/src/services/CloudflareDatabaseManager.ts",
+      "sha256": "6b8c617afa7eba79fa6716d2fc6918fa25f805c1da2bdc11d3c0d9865d92facb",
+      "committedSha256": "6b8c617afa7eba79fa6716d2fc6918fa25f805c1da2bdc11d3c0d9865d92facb",
+      "unchanged": true
+    },
+    {
+      "path": "packages/cloudflare/src/services/index.ts",
+      "sha256": "dbe9a17d959c21a5c1ee00ca95d0ffdb040178e10c2d3847a5b10b2edf7927dc",
+      "committedSha256": "dbe9a17d959c21a5c1ee00ca95d0ffdb040178e10c2d3847a5b10b2edf7927dc",
+      "unchanged": true
+    },
+    {
+      "path": "packages/cloudflare/src/storage/CloudflareAdapter.ts",
+      "sha256": "27b698a2baf645e976c58f9186c9d92d955cc9c26ae834a862c2dad5b711f59d",
+      "committedSha256": "27b698a2baf645e976c58f9186c9d92d955cc9c26ae834a862c2dad5b711f59d",
+      "unchanged": true
+    },
+    {
+      "path": "packages/cloudflare/src/storage/index.ts",
+      "sha256": "c04bb7c49a25793bffb42bcba361e70f54491629e18ecd2da5af6fb0ba521b1a",
+      "committedSha256": "c04bb7c49a25793bffb42bcba361e70f54491629e18ecd2da5af6fb0ba521b1a",
+      "unchanged": true
+    },
+    {
+      "path": "packages/cloudflare/test/conformance.test.ts",
+      "sha256": "ffa3269890159464b2903cbaa6df9cb600fb39895b5c99a75423a3ec1f9e3d7f",
+      "committedSha256": "ffa3269890159464b2903cbaa6df9cb600fb39895b5c99a75423a3ec1f9e3d7f",
+      "unchanged": true
+    },
+    {
+      "path": "packages/cloudflare/test/conformance.workerd.test.ts",
+      "sha256": "c2d5ec8a2f903208f997482adc6285e6a25c9dde18605e9dad4cc7221e990e83",
+      "committedSha256": "c2d5ec8a2f903208f997482adc6285e6a25c9dde18605e9dad4cc7221e990e83",
+      "unchanged": true
+    },
+    {
+      "path": "packages/cloudflare/test/exports.test.ts",
+      "sha256": "734a5cc2f9c0dd2ebe991dbf8d10bd41258b4d39234774bac89ad000a31c3d58",
+      "committedSha256": "734a5cc2f9c0dd2ebe991dbf8d10bd41258b4d39234774bac89ad000a31c3d58",
+      "unchanged": true
+    },
+    {
+      "path": "packages/cloudflare/test/fixtures/MockDOState.ts",
+      "sha256": "5b2eb05a3d9d86b48d2394b7ecc267de77d5771b4b77ff3433f531b39526e1ff",
+      "committedSha256": "5b2eb05a3d9d86b48d2394b7ecc267de77d5771b4b77ff3433f531b39526e1ff",
+      "unchanged": true
+    },
+    {
+      "path": "packages/cloudflare/test/fixtures/WorkerdHarness.ts",
+      "sha256": "7326936d5ebf8f6a4b568c9584ca0bdd4af95dd873f9333e6a51ebc337672996",
+      "committedSha256": "7326936d5ebf8f6a4b568c9584ca0bdd4af95dd873f9333e6a51ebc337672996",
+      "unchanged": true
+    },
+    {
+      "path": "packages/cloudflare/test/runtime.test.ts",
+      "sha256": "88d347f725aafcd201080dac7753a56874c085fee6fddda6dfaf708b9dc5cda0",
+      "committedSha256": "88d347f725aafcd201080dac7753a56874c085fee6fddda6dfaf708b9dc5cda0",
+      "unchanged": true
+    },
+    {
+      "path": "packages/cloudflare/test/workerd-env.d.ts",
+      "sha256": "717c63c749307767d60f6b680682cf76cadb7f261e1ed51f9a1638f95fcf4bc0",
+      "committedSha256": "717c63c749307767d60f6b680682cf76cadb7f261e1ed51f9a1638f95fcf4bc0",
+      "unchanged": true
+    },
+    {
+      "path": "packages/cloudflare/tsconfig.json",
+      "sha256": "9f151764a1fce874852317f96f179ae45811a4446870edc2b2185cd1a7368e59",
+      "committedSha256": "9f151764a1fce874852317f96f179ae45811a4446870edc2b2185cd1a7368e59",
+      "unchanged": true
+    },
+    {
+      "path": "packages/cloudflare/tsdown.config.ts",
+      "sha256": "edbff64ab679cf849914ace809cafa6364821901faff88cfec9874346fd54504",
+      "committedSha256": "edbff64ab679cf849914ace809cafa6364821901faff88cfec9874346fd54504",
+      "unchanged": true
+    },
+    {
+      "path": "packages/cloudflare/vitest.config.ts",
+      "sha256": "b862fe809a967b78d07686a7fe02726c2f4a2299c5ad0c13cf74ab909ceb3e7b",
+      "committedSha256": "b862fe809a967b78d07686a7fe02726c2f4a2299c5ad0c13cf74ab909ceb3e7b",
+      "unchanged": true
+    },
+    {
+      "path": "packages/cloudflare/vitest.workerd.config.ts",
+      "sha256": "342b0e9b0fe083566cde5c7f3700e171014040e19f09576ef626fb94449b0246",
+      "committedSha256": "342b0e9b0fe083566cde5c7f3700e171014040e19f09576ef626fb94449b0246",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/package.json",
+      "sha256": "80dbec4b6dfd6489ae0765147cdac2fc3414f995a0c98bdf45056fe3711c7170",
+      "committedSha256": "80dbec4b6dfd6489ae0765147cdac2fc3414f995a0c98bdf45056fe3711c7170",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/Branded.ts",
+      "sha256": "4e2fed82db1de67f77bac91248d98ee86a7f5bccf8038631fe1fae4b64c3a82c",
+      "committedSha256": "4e2fed82db1de67f77bac91248d98ee86a7f5bccf8038631fe1fae4b64c3a82c",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/Constraint.ts",
+      "sha256": "8af934e31a17660911c29ccbcd9c84c2f144f3c78103f04726289f9722d34c64",
+      "committedSha256": "8af934e31a17660911c29ccbcd9c84c2f144f3c78103f04726289f9722d34c64",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/EntityPage.ts",
+      "sha256": "e4b8ce0842eff6b9a279159ef10ff13828c426dd1e5e7ffc6d1674db1c650eac",
+      "committedSha256": "e4b8ce0842eff6b9a279159ef10ff13828c426dd1e5e7ffc6d1674db1c650eac",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/Error.ts",
+      "sha256": "e3a6f29d0c3def8df213dee1fcb97eb47c31510cccd67faacfafb25c119ad720",
+      "committedSha256": "e3a6f29d0c3def8df213dee1fcb97eb47c31510cccd67faacfafb25c119ad720",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/Pagination.ts",
+      "sha256": "a2a7d3a1eed1982b823edd969f296ee6029ce68084e641994785609a0da63d8f",
+      "committedSha256": "a2a7d3a1eed1982b823edd969f296ee6029ce68084e641994785609a0da63d8f",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/Temporal.ts",
+      "sha256": "1b10b1b56b12c02d1b8f2ceb9ba2de9d4616ca402dfa0e8496907bf60bf87f99",
+      "committedSha256": "1b10b1b56b12c02d1b8f2ceb9ba2de9d4616ca402dfa0e8496907bf60bf87f99",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/Triple.ts",
+      "sha256": "60dbe67b340285915098ecf5e9d7498d606b86cb9b04100d4316704d31857fd0",
+      "committedSha256": "60dbe67b340285915098ecf5e9d7498d606b86cb9b04100d4316704d31857fd0",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/Value.ts",
+      "sha256": "aff90122347b3536aed8b1fa3a105d9973f9b98d9bc73ab4534cb2a7fc789222",
+      "committedSha256": "aff90122347b3536aed8b1fa3a105d9973f9b98d9bc73ab4534cb2a7fc789222",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/config/Attribute.ts",
+      "sha256": "c93109a543142aad1833726b278de3fcc56bb506dcac505fbb8f069fd75ba79e",
+      "committedSha256": "c93109a543142aad1833726b278de3fcc56bb506dcac505fbb8f069fd75ba79e",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/config/BoolExpr.ts",
+      "sha256": "daad9d805487072df9c6ba6380a64770d0507abea2fcae2d4daa55f853d25209",
+      "committedSha256": "daad9d805487072df9c6ba6380a64770d0507abea2fcae2d4daa55f853d25209",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/config/Catalog.ts",
+      "sha256": "87359fae2e5467b3cc456f1c4bb0d04891579df4081e4bf6b3d3b4a6ac37b7fd",
+      "committedSha256": "87359fae2e5467b3cc456f1c4bb0d04891579df4081e4bf6b3d3b4a6ac37b7fd",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/config/ConfigNode.ts",
+      "sha256": "84efa0881aafb44580f44c7cd6bc731be866044c81f9722f2d7fc01872851c80",
+      "committedSha256": "84efa0881aafb44580f44c7cd6bc731be866044c81f9722f2d7fc01872851c80",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/config/ConfigRuntime.ts",
+      "sha256": "bab7bdb29c23eb9a46c58215ba57b2d5df0970a41ee5dff6219a4303a4dd7137",
+      "committedSha256": "bab7bdb29c23eb9a46c58215ba57b2d5df0970a41ee5dff6219a4303a4dd7137",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/config/ConfigStore.ts",
+      "sha256": "7a3c946532e6af30fe89d3bdaffd4cc691a95ff3ba3243a397d43534d2a37053",
+      "committedSha256": "7a3c946532e6af30fe89d3bdaffd4cc691a95ff3ba3243a397d43534d2a37053",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/config/Entity.ts",
+      "sha256": "1436b3be3ff40f6417086e199577d3ce54bdf458238c35f91a2f4f1e65f650e8",
+      "committedSha256": "1436b3be3ff40f6417086e199577d3ce54bdf458238c35f91a2f4f1e65f650e8",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/config/EntityType.ts",
+      "sha256": "184d4ebf8f0383dbd3925ff5e8fa107a6c6e9c244668bb0c8bbc729f8c6d868d",
+      "committedSha256": "184d4ebf8f0383dbd3925ff5e8fa107a6c6e9c244668bb0c8bbc729f8c6d868d",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/config/EntityValidation.ts",
+      "sha256": "3ccaf08b621517aa3955a6eb4a3113edb617f71d79ce835a5f0c601d3efa18f4",
+      "committedSha256": "3ccaf08b621517aa3955a6eb4a3113edb617f71d79ce835a5f0c601d3efa18f4",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/config/Evaluate.ts",
+      "sha256": "f7c3615068b3a280438fc3ea892bccbd649922a6e6e2060378b133a4b6843eb2",
+      "committedSha256": "f7c3615068b3a280438fc3ea892bccbd649922a6e6e2060378b133a4b6843eb2",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/config/GraphConstraint.ts",
+      "sha256": "46f9f800fe35617792abab7403d9f0e908f781463937823b3852bebcfd325929",
+      "committedSha256": "46f9f800fe35617792abab7403d9f0e908f781463937823b3852bebcfd325929",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/config/InMemoryConfigStore.ts",
+      "sha256": "1c64c7f7efa40a374ed5d425a6f979ac28a131d99a72b1882bda5c011c962d4d",
+      "committedSha256": "1c64c7f7efa40a374ed5d425a6f979ac28a131d99a72b1882bda5c011c962d4d",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/config/Reactor.ts",
+      "sha256": "d2392c3679f01208c4eb5cd888606adba3a581f9363b21dbc697cbb35a95f71f",
+      "committedSha256": "d2392c3679f01208c4eb5cd888606adba3a581f9363b21dbc697cbb35a95f71f",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/config/TypeExpr.ts",
+      "sha256": "2ee16543676eb73494ca1138136b452da0e5250d6eca1389bdc5eb3dffcfd74d",
+      "committedSha256": "2ee16543676eb73494ca1138136b452da0e5250d6eca1389bdc5eb3dffcfd74d",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/config/TypeSchema.ts",
+      "sha256": "05f69095535128e9a3fc83907a45a95ea5f6fd46f2f159dcac471c39a3b046c9",
+      "committedSha256": "05f69095535128e9a3fc83907a45a95ea5f6fd46f2f159dcac471c39a3b046c9",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/config/TypeSubsumption.ts",
+      "sha256": "7b814d6d7cb8d1ad29befd96dbad27fda822baca699bc8a16a3246c4e7240bb4",
+      "committedSha256": "7b814d6d7cb8d1ad29befd96dbad27fda822baca699bc8a16a3246c4e7240bb4",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/config/World.ts",
+      "sha256": "0508c0cf1ca08522556d4aca73d5f87a5c15ca7935653cb7feae4c6581a6a4fd",
+      "committedSha256": "0508c0cf1ca08522556d4aca73d5f87a5c15ca7935653cb7feae4c6581a6a4fd",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/config/index.ts",
+      "sha256": "a246d76fcd973a0434f09d9e8c657d19163b6eac687a3cf71d79fd8cf2ea78f6",
+      "committedSha256": "a246d76fcd973a0434f09d9e8c657d19163b6eac687a3cf71d79fd8cf2ea78f6",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/content/CanonicalJson.ts",
+      "sha256": "16475d1c66f329c0d13ea8d065734b3ef4b0bf546f848d753fe627f24edb5727",
+      "committedSha256": "16475d1c66f329c0d13ea8d065734b3ef4b0bf546f848d753fe627f24edb5727",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/content/ContentId.ts",
+      "sha256": "0687a9194722546a584e46da5ba2fd3e21f01e48a69b228862833c20e951d7db",
+      "committedSha256": "0687a9194722546a584e46da5ba2fd3e21f01e48a69b228862833c20e951d7db",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/content/Sha256.ts",
+      "sha256": "0e0f2ba6549d2ddb89113ba0ffdbcdeb2437d8c046982b9c97ee070985f8b92a",
+      "committedSha256": "0e0f2ba6549d2ddb89113ba0ffdbcdeb2437d8c046982b9c97ee070985f8b92a",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/content/index.ts",
+      "sha256": "3840a84c2c71164e717d87f17b84cecf275f7e39d08c5eda483500bbc90bd3d0",
+      "committedSha256": "3840a84c2c71164e717d87f17b84cecf275f7e39d08c5eda483500bbc90bd3d0",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/datalog/compiler.ts",
+      "sha256": "549f685706fc0de023dd36913216b921591b89ab6fe4fadb1dff58775229ec67",
+      "committedSha256": "549f685706fc0de023dd36913216b921591b89ab6fe4fadb1dff58775229ec67",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/datalog/index.ts",
+      "sha256": "26f16835b8150e6b3ec584e773b16b946ac68f641db2e1ef084b0bcc65226663",
+      "committedSha256": "26f16835b8150e6b3ec584e773b16b946ac68f641db2e1ef084b0bcc65226663",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/datalog/schema.ts",
+      "sha256": "6000a11b2635a9a915f3a6b41504ce07631e62d6673fdd76c070cf1a8ce639bf",
+      "committedSha256": "6000a11b2635a9a915f3a6b41504ce07631e62d6673fdd76c070cf1a8ce639bf",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/datalog/types.ts",
+      "sha256": "0a74df375fbaca0eaf388af5799d0612c2763de4d58f7fa00813268537d5d913",
+      "committedSha256": "0a74df375fbaca0eaf388af5799d0612c2763de4d58f7fa00813268537d5d913",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/datalog/validation.ts",
+      "sha256": "a433f5e20d8c03502cd222975de79d7cda97aedef850919a17fc59b0312d0ae8",
+      "committedSha256": "a433f5e20d8c03502cd222975de79d7cda97aedef850919a17fc59b0312d0ae8",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/datalog/wrapper.ts",
+      "sha256": "9a24a60bb57dd1d89a4c89601c56dc8153fb9f93f587b8780f236eb97f992b87",
+      "committedSha256": "9a24a60bb57dd1d89a4c89601c56dc8153fb9f93f587b8780f236eb97f992b87",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/derivation/Derivation.ts",
+      "sha256": "2d0d52d4ca3b0f687ebbe4bc4a7499dc2e7ef8df87f8a2341341a51139682304",
+      "committedSha256": "2d0d52d4ca3b0f687ebbe4bc4a7499dc2e7ef8df87f8a2341341a51139682304",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/derivation/Materialization.ts",
+      "sha256": "4b7a15073ce98216bfb2e73eb6e111e34891ad77342ef5a65d1538298a89cba5",
+      "committedSha256": "4b7a15073ce98216bfb2e73eb6e111e34891ad77342ef5a65d1538298a89cba5",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/derivation/Overlay.ts",
+      "sha256": "1f1625339214a66fdb5876d25d109fd74c78d56a26e7a0a56b04b9f4d223b50b",
+      "committedSha256": "1f1625339214a66fdb5876d25d109fd74c78d56a26e7a0a56b04b9f4d223b50b",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/derivation/index.ts",
+      "sha256": "eab9634be27e2e8d725f25b58b4b3adecc53bcf7996fef866ccd04efeab6259d",
+      "committedSha256": "eab9634be27e2e8d725f25b58b4b3adecc53bcf7996fef866ccd04efeab6259d",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/dialects/index.ts",
+      "sha256": "b8772aef8c8e0688c52ff3b612b3131ead8b1d2a61945d53d0334d5424ad1418",
+      "committedSha256": "b8772aef8c8e0688c52ff3b612b3131ead8b1d2a61945d53d0334d5424ad1418",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/dialects/postgresql.ts",
+      "sha256": "13b8f11a0c8cd84d080887a31210d9dafaf1e49e30fd3474926efb5578a646b4",
+      "committedSha256": "13b8f11a0c8cd84d080887a31210d9dafaf1e49e30fd3474926efb5578a646b4",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/dialects/sqlite.ts",
+      "sha256": "33d5d40c8594df6ff0fb572dd4237685eaff95b7fab38efcaf9983f34a4b7b13",
+      "committedSha256": "33d5d40c8594df6ff0fb572dd4237685eaff95b7fab38efcaf9983f34a4b7b13",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/dialects/types.ts",
+      "sha256": "b32e672f81018bc16fb78a310bfdfd868fde3c6914e10a8b1d9059180ef1f800",
+      "committedSha256": "b32e672f81018bc16fb78a310bfdfd868fde3c6914e10a8b1d9059180ef1f800",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/entity/Descriptors.ts",
+      "sha256": "b93f0d2cd5a29bf63649945399e037281af6ebb9c79c3a23314699d40e7ab655",
+      "committedSha256": "b93f0d2cd5a29bf63649945399e037281af6ebb9c79c3a23314699d40e7ab655",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/entity/EntityCodec.ts",
+      "sha256": "0ffc72c0182f50345d5ccac56d16a7a55930584575a330609382dc08d8fb211a",
+      "committedSha256": "0ffc72c0182f50345d5ccac56d16a7a55930584575a330609382dc08d8fb211a",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/entity/Errors.ts",
+      "sha256": "f8ac929dffd8b1776f29fd0129f6d7a769ec35de9febb0e19e4f622aabbad44c",
+      "committedSha256": "f8ac929dffd8b1776f29fd0129f6d7a769ec35de9febb0e19e4f622aabbad44c",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/entity/Model.ts",
+      "sha256": "ea5b1c9a9532b75a178d2604155f5d2a53853e71b6bdd61fee331c97ce5f128b",
+      "committedSha256": "ea5b1c9a9532b75a178d2604155f5d2a53853e71b6bdd61fee331c97ce5f128b",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/entity/PhysicalNames.ts",
+      "sha256": "74bd98b59cb2b92010970cad8f0bbecee6787e6f75987b857cac280b1132dc74",
+      "committedSha256": "74bd98b59cb2b92010970cad8f0bbecee6787e6f75987b857cac280b1132dc74",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/entity/Plan.ts",
+      "sha256": "72a7540486ae550c73044f51e3ffc204ff284398f32800317f1fdc9a2a8610c2",
+      "committedSha256": "72a7540486ae550c73044f51e3ffc204ff284398f32800317f1fdc9a2a8610c2",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/entity/ProjectionSpec.ts",
+      "sha256": "6945dd2100052fbe3f2d68b6177b454c72631e6f0ea41ad0f4d8c9a663510c63",
+      "committedSha256": "6945dd2100052fbe3f2d68b6177b454c72631e6f0ea41ad0f4d8c9a663510c63",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/entity/Repository.ts",
+      "sha256": "02785261cbebff292ff6163c6bdebef0e256c31765ae7165b449b094d44e8f73",
+      "committedSha256": "02785261cbebff292ff6163c6bdebef0e256c31765ae7165b449b094d44e8f73",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/entity/index.ts",
+      "sha256": "1fb0fe444e9878a442025f9498f47a1b2c589590396c26943139e16af682982b",
+      "committedSha256": "1fb0fe444e9878a442025f9498f47a1b2c589590396c26943139e16af682982b",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/errors/index.ts",
+      "sha256": "c8bc3dd73d5ded0747af741a1bfaf220dce05829e2e06e79c208e590506b868f",
+      "committedSha256": "c8bc3dd73d5ded0747af741a1bfaf220dce05829e2e06e79c208e590506b868f",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/index.ts",
+      "sha256": "34f85c695a10ed8ad1ea4bda1e44da96de836bfa0f4e8a2f5c99e23fb7bb4887",
+      "committedSha256": "34f85c695a10ed8ad1ea4bda1e44da96de836bfa0f4e8a2f5c99e23fb7bb4887",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/internal.ts",
+      "sha256": "4c304d5efd8fcdee14838638029b0950babff2b5fe00d37b57a7bb327eb9882b",
+      "committedSha256": "4c304d5efd8fcdee14838638029b0950babff2b5fe00d37b57a7bb327eb9882b",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/kv/datalog/executor.ts",
+      "sha256": "87770b124f41b99c89bf615925c290f8b176c7c1a5fdeb90dc3f3da91b5a7f1e",
+      "committedSha256": "87770b124f41b99c89bf615925c290f8b176c7c1a5fdeb90dc3f3da91b5a7f1e",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/kv/datalog/index.ts",
+      "sha256": "da88f8a0c4fc5c3c490b81fb79f7a117554b10e3921a634be3f3677542ac1a35",
+      "committedSha256": "da88f8a0c4fc5c3c490b81fb79f7a117554b10e3921a634be3f3677542ac1a35",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/kv/datalog/pattern.ts",
+      "sha256": "9276ea3346cd3ba7b0543ce93c481384c5e2542ea3832933a55d5e4fa40f3b06",
+      "committedSha256": "9276ea3346cd3ba7b0543ce93c481384c5e2542ea3832933a55d5e4fa40f3b06",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/kv/datalog/predicate.ts",
+      "sha256": "fee33c520c074ac693a2b0078de949c291b30229d9ae20709a64813adf0f31ea",
+      "committedSha256": "fee33c520c074ac693a2b0078de949c291b30229d9ae20709a64813adf0f31ea",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/kv/datalog/types.ts",
+      "sha256": "f52b4b0a7bc97f1e61a2cc6fce81f1841201327f68eaf34862dc37643d032ea2",
+      "committedSha256": "f52b4b0a7bc97f1e61a2cc6fce81f1841201327f68eaf34862dc37643d032ea2",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/kv/hexastore/KvTripleStore.ts",
+      "sha256": "0d4e96309facb7720c29a152c1307e8dac7b9e660a2c815b261477341bfb74b3",
+      "committedSha256": "0d4e96309facb7720c29a152c1307e8dac7b9e660a2c815b261477341bfb74b3",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/kv/hexastore/index.ts",
+      "sha256": "d6dd0f04c212fcffe85f893c708b55e8c188a719c5fbe9c227cecee0f38369bc",
+      "committedSha256": "d6dd0f04c212fcffe85f893c708b55e8c188a719c5fbe9c227cecee0f38369bc",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/kv/hexastore/indexes.ts",
+      "sha256": "bb3787b6aa678388de18bf915cdddad7fcc9c250cf912c572f93866f4c310d1b",
+      "committedSha256": "bb3787b6aa678388de18bf915cdddad7fcc9c250cf912c572f93866f4c310d1b",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/kv/hexastore/scan.ts",
+      "sha256": "523afb07ad10d33d18d54f82435d88f3219d86d3a08ef494b56685b8ba45beee",
+      "committedSha256": "523afb07ad10d33d18d54f82435d88f3219d86d3a08ef494b56685b8ba45beee",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/kv/hexastore/tuple.ts",
+      "sha256": "b04adabfb3614e5ae23d92a177face2532eb812b6032ca9d51a83731d5b60963",
+      "committedSha256": "b04adabfb3614e5ae23d92a177face2532eb812b6032ca9d51a83731d5b60963",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/kv/index.ts",
+      "sha256": "8a2ce977379674189225a65983b96509501ee399170ea16d6ba2c2165a7196aa",
+      "committedSha256": "8a2ce977379674189225a65983b96509501ee399170ea16d6ba2c2165a7196aa",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/kv/kv/InMemoryKvBackend.ts",
+      "sha256": "0b012115beec5316dcd2e45af70195fe507dfa60b99f4bc65fc0ae048d7fe1e5",
+      "committedSha256": "0b012115beec5316dcd2e45af70195fe507dfa60b99f4bc65fc0ae048d7fe1e5",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/kv/kv/KvBackend.ts",
+      "sha256": "af3d550c9b98b5839dcff62ff1054632e86f299c6e56110a9e4fc4b19d994644",
+      "committedSha256": "af3d550c9b98b5839dcff62ff1054632e86f299c6e56110a9e4fc4b19d994644",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/kv/kv/encoding.ts",
+      "sha256": "bac79b9a3fb1fd9d2b30fdd69389468f52193beea12cb4e752f1c1cdd18f7636",
+      "committedSha256": "bac79b9a3fb1fd9d2b30fdd69389468f52193beea12cb4e752f1c1cdd18f7636",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/kv/kv/index.ts",
+      "sha256": "d008ea80f1d64aeb9acf603ec671e9cc03e770aa9f80cbc918efa74a044c9533",
+      "committedSha256": "d008ea80f1d64aeb9acf603ec671e9cc03e770aa9f80cbc918efa74a044c9533",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/kv/layers/KvTriplesLive.ts",
+      "sha256": "d97c302ee63e068cd3b475e2f41707210b1d5ace2a965e18c9ad19b211cde7bd",
+      "committedSha256": "d97c302ee63e068cd3b475e2f41707210b1d5ace2a965e18c9ad19b211cde7bd",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/kv/layers/index.ts",
+      "sha256": "a6bf8d195081acf47809f4a181afb5067eb1650bd43f3a185cba0bfdebb6eb94",
+      "committedSha256": "a6bf8d195081acf47809f4a181afb5067eb1650bd43f3a185cba0bfdebb6eb94",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/native/FrontierClosure.ts",
+      "sha256": "664108e81e1104b7cc04e7e5d25f410e38cede5ce11ad32566897a81f10563b2",
+      "committedSha256": "664108e81e1104b7cc04e7e5d25f410e38cede5ce11ad32566897a81f10563b2",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/native/NativeQuery.ts",
+      "sha256": "c5f3ef36ba3578c46e9f845bb4afb752f1617416feee1fdbf534b4c72fea9470",
+      "committedSha256": "c5f3ef36ba3578c46e9f845bb4afb752f1617416feee1fdbf534b4c72fea9470",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/operational/ConsumerCheckpoint.ts",
+      "sha256": "9130fd037ccbc5f845cd8db17f684f9893f57c9b5896bbc1bce33ef855203718",
+      "committedSha256": "9130fd037ccbc5f845cd8db17f684f9893f57c9b5896bbc1bce33ef855203718",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/operational/index.ts",
+      "sha256": "bf587a8dfe9ea8424347050441a007ac86d7a94470344effcbed49c3a3e17755",
+      "committedSha256": "bf587a8dfe9ea8424347050441a007ac86d7a94470344effcbed49c3a3e17755",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/params.ts",
+      "sha256": "12c4b74c9e4a69bb3feb530f18bf91d4eb5ad09dbf9302ff88392323d10786d9",
+      "committedSha256": "12c4b74c9e4a69bb3feb530f18bf91d4eb5ad09dbf9302ff88392323d10786d9",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/runtime/Capabilities.ts",
+      "sha256": "a429ba009da5554c2b3b608ecf8eba1a47b194fac6abf6d0fd2314fec6e17df6",
+      "committedSha256": "a429ba009da5554c2b3b608ecf8eba1a47b194fac6abf6d0fd2314fec6e17df6",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/runtime/DatabaseScope.ts",
+      "sha256": "15a7a8f031c31b8348fd31f44dd0c6c9b4a418229d08721feaa13d1a8a765ddc",
+      "committedSha256": "15a7a8f031c31b8348fd31f44dd0c6c9b4a418229d08721feaa13d1a8a765ddc",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/runtime/Runtime.ts",
+      "sha256": "834bd1aff33ed7ac7116ea8a0290130e98fb85860bf6f1a894ecae97037f943c",
+      "committedSha256": "834bd1aff33ed7ac7116ea8a0290130e98fb85860bf6f1a894ecae97037f943c",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/runtime/index.ts",
+      "sha256": "1e887d771e6359355d252a527b49a20401ff8db610b6c4ecaab94ec5e4e39375",
+      "committedSha256": "1e887d771e6359355d252a527b49a20401ff8db610b6c4ecaab94ec5e4e39375",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/snapshots/EntitySnapshotsCapability.ts",
+      "sha256": "82e5f03c2e5a5acdb0913af54c8727e40da7ac4ed1757085c23a6fb5c16fef44",
+      "committedSha256": "82e5f03c2e5a5acdb0913af54c8727e40da7ac4ed1757085c23a6fb5c16fef44",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/snapshots/SnapshotService.ts",
+      "sha256": "babf48a5e48f7bfa0ea4b2cca3ecaa58c12f79e80a8f0dc01642f581e7d01aab",
+      "committedSha256": "babf48a5e48f7bfa0ea4b2cca3ecaa58c12f79e80a8f0dc01642f581e7d01aab",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/snapshots/SnapshotServiceLive.ts",
+      "sha256": "1271fb2ce0873a3d3b4a6d87b2b6c468abcefa1de8469ef0aad1e40adcf8eaa8",
+      "committedSha256": "1271fb2ce0873a3d3b4a6d87b2b6c468abcefa1de8469ef0aad1e40adcf8eaa8",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/snapshots/canonical.ts",
+      "sha256": "a9d0198cb45465d3b1a07eadd98093461698f3a4720c595a384a22ca67655a18",
+      "committedSha256": "a9d0198cb45465d3b1a07eadd98093461698f3a4720c595a384a22ca67655a18",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/snapshots/index.ts",
+      "sha256": "de709354889696990b5a13b9ea5995c8460b1e13b611748878185201f60ec9a6",
+      "committedSha256": "de709354889696990b5a13b9ea5995c8460b1e13b611748878185201f60ec9a6",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/storage/QueryExecutor.ts",
+      "sha256": "16c37f620cc25d6b2883722726689c516d501dfa679de6b85bf04ef6273c4f98",
+      "committedSha256": "16c37f620cc25d6b2883722726689c516d501dfa679de6b85bf04ef6273c4f98",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/storage/StorageAdapter.ts",
+      "sha256": "36c9ca889cc75ab87a58a92deb3ab67f227f6c16b8eabfe73149e03058dbb683",
+      "committedSha256": "36c9ca889cc75ab87a58a92deb3ab67f227f6c16b8eabfe73149e03058dbb683",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/storage/types.ts",
+      "sha256": "3a1f65839def9e04437ac531c8b6b2f055d407300178efdb8838ffc41e190aff",
+      "committedSha256": "3a1f65839def9e04437ac531c8b6b2f055d407300178efdb8838ffc41e190aff",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/store/ChangeEmissionCapability.ts",
+      "sha256": "1163d54a9620dd1ee6e67971ac4d587c72be964cab2583eb54501d75e0e13dab",
+      "committedSha256": "1163d54a9620dd1ee6e67971ac4d587c72be964cab2583eb54501d75e0e13dab",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/store/ChangeEmitter.ts",
+      "sha256": "07a02e4c57078bded41b305a725c84422809e3a4da8dfe0fd17bbaffbdabcb57",
+      "committedSha256": "07a02e4c57078bded41b305a725c84422809e3a4da8dfe0fd17bbaffbdabcb57",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/store/DatabaseManager.ts",
+      "sha256": "111aa80ee7dc4c628deb13d840c2f7bbc948d53b0931645cc8d4ae1134ad8942",
+      "committedSha256": "111aa80ee7dc4c628deb13d840c2f7bbc948d53b0931645cc8d4ae1134ad8942",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/store/DatabaseRegistry.ts",
+      "sha256": "3b454b47e2903517ca1bd8635ac3bcf27f8452927fc6bc7447563d3b14ef7354",
+      "committedSha256": "3b454b47e2903517ca1bd8635ac3bcf27f8452927fc6bc7447563d3b14ef7354",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/store/RuntimeServices.ts",
+      "sha256": "9c00c258174ed2ea528899c5becc0ec32704eb4185821c638179f02a94054af3",
+      "committedSha256": "9c00c258174ed2ea528899c5becc0ec32704eb4185821c638179f02a94054af3",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/store/StoreCapability.ts",
+      "sha256": "b9a44cbc7422d61c907c754d611e71eb946d45ff6be34353ba185e1fdb52a2b7",
+      "committedSha256": "b9a44cbc7422d61c907c754d611e71eb946d45ff6be34353ba185e1fdb52a2b7",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/store/TripleStoreRuntime.ts",
+      "sha256": "aa147c299efc23b94d1cc5d8f1c5a77893b63203929bea9d6287d6b60fcb96ec",
+      "committedSha256": "aa147c299efc23b94d1cc5d8f1c5a77893b63203929bea9d6287d6b60fcb96ec",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/store/Triples.ts",
+      "sha256": "f8c0d35c1308c96796843ef15da8047ae9acfb0d08064f4f5cb60fe7d8e8b62a",
+      "committedSha256": "f8c0d35c1308c96796843ef15da8047ae9acfb0d08064f4f5cb60fe7d8e8b62a",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/store/TriplesLive.ts",
+      "sha256": "1fc030c442179a937f544b865983b45b577c124aa3b338528823f93dc828a36c",
+      "committedSha256": "1fc030c442179a937f544b865983b45b577c124aa3b338528823f93dc828a36c",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/store/entityTransactionHistory.ts",
+      "sha256": "2781d69e456b1916529e640276b352c86d0c1afa26fee16a8620acd1d1f18a32",
+      "committedSha256": "2781d69e456b1916529e640276b352c86d0c1afa26fee16a8620acd1d1f18a32",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/store/systemNamespace.ts",
+      "sha256": "909bcc5e8d92c4545b90d2a9dd65c3484412be880a2586519d4e7876bf693d6b",
+      "committedSha256": "909bcc5e8d92c4545b90d2a9dd65c3484412be880a2586519d4e7876bf693d6b",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/store/transactionMetadata.ts",
+      "sha256": "f47e28bb7e5683a1348b8689471fc84de3ebcb8986ed1f6d65198399179055fa",
+      "committedSha256": "f47e28bb7e5683a1348b8689471fc84de3ebcb8986ed1f6d65198399179055fa",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/store/writeEventUtils.ts",
+      "sha256": "970487601900dc43cad3e20ce903c991fd939c96c9461567ed1dfa27f3d5e984",
+      "committedSha256": "970487601900dc43cad3e20ce903c991fd939c96c9461567ed1dfa27f3d5e984",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/subscriptions/SubscriptionManager.ts",
+      "sha256": "ce287a9077fb5b38eee76857ca37367b2a7920e28b67166d0af064e0d25fea8e",
+      "committedSha256": "ce287a9077fb5b38eee76857ca37367b2a7920e28b67166d0af064e0d25fea8e",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/subscriptions/SyncHub.ts",
+      "sha256": "56cb393a0b821eb854b1fa6c8c4a45037b65595fec8f98babc4189bad28d9ffe",
+      "committedSha256": "56cb393a0b821eb854b1fa6c8c4a45037b65595fec8f98babc4189bad28d9ffe",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/subscriptions/TopicTree.ts",
+      "sha256": "f587b1d7626847cbda6305b6f618b72b0c9e1b0d31ab39881d61254d3021da87",
+      "committedSha256": "f587b1d7626847cbda6305b6f618b72b0c9e1b0d31ab39881d61254d3021da87",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/subscriptions/extract-dependencies.ts",
+      "sha256": "3106dc2061f2d21705a978e8838c6936f3e97f535b80f9e12da4751d1cde587f",
+      "committedSha256": "3106dc2061f2d21705a978e8838c6936f3e97f535b80f9e12da4751d1cde587f",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/subscriptions/index.ts",
+      "sha256": "8da063980711ab7c36565fec9cd25029e68f83c1e5cdbb7ba8e020c77b7d6aba",
+      "committedSha256": "8da063980711ab7c36565fec9cd25029e68f83c1e5cdbb7ba8e020c77b7d6aba",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/subscriptions/invalidation.ts",
+      "sha256": "de5c94111e1be72d22678fa5c951693b4d7187e1738ecc1c380b1bbe10df615f",
+      "committedSha256": "de5c94111e1be72d22678fa5c951693b4d7187e1738ecc1c380b1bbe10df615f",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/subscriptions/query-hash.ts",
+      "sha256": "01c8ac1e2e12c5f892a34702f1ca6f5783bdd410f2ac5f85e405c9cdd594d0ef",
+      "committedSha256": "01c8ac1e2e12c5f892a34702f1ca6f5783bdd410f2ac5f85e405c9cdd594d0ef",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/subscriptions/types.ts",
+      "sha256": "83ca64126ce3a7c1516de90cb59e5b5e33ae90a3094251eae442ef864549ab8b",
+      "committedSha256": "83ca64126ce3a7c1516de90cb59e5b5e33ae90a3094251eae442ef864549ab8b",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/types/Pattern.ts",
+      "sha256": "a1c776e0b67409f1e7c10b3cb6a3cbc7fce7c5c7da0e2708be0bde0f5628ea9b",
+      "committedSha256": "a1c776e0b67409f1e7c10b3cb6a3cbc7fce7c5c7da0e2708be0bde0f5628ea9b",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/src/utils/id.ts",
+      "sha256": "d044a50f014b2f4330b9d7e11340e71a74cbfc7c55dba684b5c04579e72d13de",
+      "committedSha256": "d044a50f014b2f4330b9d7e11340e71a74cbfc7c55dba684b5c04579e72d13de",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/Branded.test.ts",
+      "sha256": "82956601bd4b0fe27b89c58f994f946ff2a3fc3d8e45938c61be0be1bac5e303",
+      "committedSha256": "82956601bd4b0fe27b89c58f994f946ff2a3fc3d8e45938c61be0be1bac5e303",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/Constraint.test.ts",
+      "sha256": "8439f2e8756d205faa0361a0e5e5afdab8f137b077c76905e10efde13a04bd7e",
+      "committedSha256": "8439f2e8756d205faa0361a0e5e5afdab8f137b077c76905e10efde13a04bd7e",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/Pagination.test.ts",
+      "sha256": "1e14f6e0e15ac8723bba3057f6d5b2387a62f8494bf09f92d650ef403a0b0466",
+      "committedSha256": "1e14f6e0e15ac8723bba3057f6d5b2387a62f8494bf09f92d650ef403a0b0466",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/change-emission-capability.test.ts",
+      "sha256": "6da1759056a3c5dc95d8380f0ead3705902a350e47736dafa2fff01f31ee1ae1",
+      "committedSha256": "6da1759056a3c5dc95d8380f0ead3705902a350e47736dafa2fff01f31ee1ae1",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/config/Catalog.test.ts",
+      "sha256": "7d62dcb760383708f37e457f361208f4e11177f1e5221a5b438e7bdedd490edb",
+      "committedSha256": "7d62dcb760383708f37e457f361208f4e11177f1e5221a5b438e7bdedd490edb",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/config/ConfigNode.test.ts",
+      "sha256": "df617aba5b487215e24e4a7c6e06307657bbbd1f219cb5be84e9efaf235bc978",
+      "committedSha256": "df617aba5b487215e24e4a7c6e06307657bbbd1f219cb5be84e9efaf235bc978",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/config/Entity.test.ts",
+      "sha256": "31329969fd89089a7c695455f570cf14182eae1931493767ef54654edc3515d0",
+      "committedSha256": "31329969fd89089a7c695455f570cf14182eae1931493767ef54654edc3515d0",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/config/EntityValidation.e2e.test.ts",
+      "sha256": "6fa76babddbfa95bef423320d2fe22e822a0770238bfa7c0dbddff8d2972d0bc",
+      "committedSha256": "6fa76babddbfa95bef423320d2fe22e822a0770238bfa7c0dbddff8d2972d0bc",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/config/Evaluate.test.ts",
+      "sha256": "c5e7f051d15a4b0c5f41e897ba8cfa83059f78b091a5013f2797e8533d6a1db6",
+      "committedSha256": "c5e7f051d15a4b0c5f41e897ba8cfa83059f78b091a5013f2797e8533d6a1db6",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/config/InMemoryConfigStore.test.ts",
+      "sha256": "4e13586f0051f52ac3f584ca8a38a2c4808284d51d7d800076a774572f843f55",
+      "committedSha256": "4e13586f0051f52ac3f584ca8a38a2c4808284d51d7d800076a774572f843f55",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/config/Lifecycle.e2e.test.ts",
+      "sha256": "567bbccd0480815cb61ac16c137e8e470e38a54c41606581705c1df169521418",
+      "committedSha256": "567bbccd0480815cb61ac16c137e8e470e38a54c41606581705c1df169521418",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/config/OntologyDsl.test.ts",
+      "sha256": "a17caaf7d3aed00413187cb2262be2d13cb7edc0f4c7fc0c671ae73f8f453435",
+      "committedSha256": "a17caaf7d3aed00413187cb2262be2d13cb7edc0f4c7fc0c671ae73f8f453435",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/config/Proof.test.ts",
+      "sha256": "8a3d43798f1bb8a770bd21e5ef4c9109a679af9e5d07bf18029a612048af97df",
+      "committedSha256": "8a3d43798f1bb8a770bd21e5ef4c9109a679af9e5d07bf18029a612048af97df",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/config/Reactor.test.ts",
+      "sha256": "01d4ddbcf3a889ee7f16b31fd6ee5d5b8ea0a1df65dad5031d16432ac5f645ce",
+      "committedSha256": "01d4ddbcf3a889ee7f16b31fd6ee5d5b8ea0a1df65dad5031d16432ac5f645ce",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/config/Releases.test.ts",
+      "sha256": "34d7b4ddf9d8e3c8a5ee0ebf8f10c6b49b9d033c297fc609f2467c066b7f570a",
+      "committedSha256": "34d7b4ddf9d8e3c8a5ee0ebf8f10c6b49b9d033c297fc609f2467c066b7f570a",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/config/TriplesConfigStore.e2e.test.ts",
+      "sha256": "9dd94f750cf371a9783a6dd5bb689e3ef753f93618c72408b62d2bc0b92628bf",
+      "committedSha256": "9dd94f750cf371a9783a6dd5bb689e3ef753f93618c72408b62d2bc0b92628bf",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/config/TypeExpr.test.ts",
+      "sha256": "b56a4d400719701ac572c66783eaea9a8194791ee0af9953ea7d0235b3fe5f5f",
+      "committedSha256": "b56a4d400719701ac572c66783eaea9a8194791ee0af9953ea7d0235b3fe5f5f",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/config/fixtures/OnboardingConfig.ts",
+      "sha256": "5b15aadcaf4c63a788b343ff592240a5793dce1a77735796c80d2c8c5dc3c1a9",
+      "committedSha256": "5b15aadcaf4c63a788b343ff592240a5793dce1a77735796c80d2c8c5dc3c1a9",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/content/CanonicalJson.test.ts",
+      "sha256": "44308f7e2f9a3d3871fbdd4048e12ed0cb2f6245089ddc3158e83d3bc498b46e",
+      "committedSha256": "44308f7e2f9a3d3871fbdd4048e12ed0cb2f6245089ddc3158e83d3bc498b46e",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/content/ContentId.test.ts",
+      "sha256": "df15766a02fa1dd8d47c6481ccf3a7b904b29c1e7381f0785c26bd3fb0ec7efb",
+      "committedSha256": "df15766a02fa1dd8d47c6481ccf3a7b904b29c1e7381f0785c26bd3fb0ec7efb",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/content/Sha256.test.ts",
+      "sha256": "79256f3b5819d8a7e452ed7b9fcc4ea6e8c7ae3ef1d81bf33a79bcb3f014f586",
+      "committedSha256": "79256f3b5819d8a7e452ed7b9fcc4ea6e8c7ae3ef1d81bf33a79bcb3f014f586",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/datalog/compiler.test.ts",
+      "sha256": "6b2259a3e2e62380cd13ab5edc80e6d3816258a954bb556f32cd86176cb00532",
+      "committedSha256": "6b2259a3e2e62380cd13ab5edc80e6d3816258a954bb556f32cd86176cb00532",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/datalog/integer-projection.test.ts",
+      "sha256": "e90a2bb9db42e36cefb45502456e6d3311366be19ec7d0af9ecb1b581c1895af",
+      "committedSha256": "e90a2bb9db42e36cefb45502456e6d3311366be19ec7d0af9ecb1b581c1895af",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/datalog/recursive-execution.test.ts",
+      "sha256": "37fb5be58f6ebc175755f45fdbccf0d8a75c94374e2c01fc63250bed5c2ed739",
+      "committedSha256": "37fb5be58f6ebc175755f45fdbccf0d8a75c94374e2c01fc63250bed5c2ed739",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/datalog/schema.test.ts",
+      "sha256": "a250f7fb183abf6eebe0dd4c57e0d0fbe6b2280afd56d667c522573725187e8f",
+      "committedSha256": "a250f7fb183abf6eebe0dd4c57e0d0fbe6b2280afd56d667c522573725187e8f",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/datalog/validation.test.ts",
+      "sha256": "686bdab6718151e1ffa489bce6862a747365bd7f03ceecb959cdc8e0feb075af",
+      "committedSha256": "686bdab6718151e1ffa489bce6862a747365bd7f03ceecb959cdc8e0feb075af",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/datalog/wrapper.test.ts",
+      "sha256": "42cd644c22f77481918af696c7812b40cd70f4f76ddd9f03b2ca7cf7978db1d1",
+      "committedSha256": "42cd644c22f77481918af696c7812b40cd70f4f76ddd9f03b2ca7cf7978db1d1",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/derivation/Derivation.e2e.test.ts",
+      "sha256": "eb557de24950a1f59ce1b6f976424d8413d75ea0b464b3b4a6bfff459fa8b818",
+      "committedSha256": "eb557de24950a1f59ce1b6f976424d8413d75ea0b464b3b4a6bfff459fa8b818",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/entity/Descriptors.test.ts",
+      "sha256": "1c7d73e86aeeb0a8d376067df90b0f9f50d2be5b52b266dfe76ab3951484dc51",
+      "committedSha256": "1c7d73e86aeeb0a8d376067df90b0f9f50d2be5b52b266dfe76ab3951484dc51",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/entity/PhysicalNames.test.ts",
+      "sha256": "6872bde11777299e1149ec149ac0b44d1996c1fd5597d7aa8d33ed811b214cae",
+      "committedSha256": "6872bde11777299e1149ec149ac0b44d1996c1fd5597d7aa8d33ed811b214cae",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/entity/ProjectionSpec.fixes.test.ts",
+      "sha256": "8adfe6928fcc551a2d3589d1dfca168c9e8aa15904e13879a8e62baa0fccef6f",
+      "committedSha256": "8adfe6928fcc551a2d3589d1dfca168c9e8aa15904e13879a8e62baa0fccef6f",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/entity/ProjectionSpec.test.ts",
+      "sha256": "b0a37ae0b657bfea147575017808b37be428f601439ed66d126fe89aa60d8c66",
+      "committedSha256": "b0a37ae0b657bfea147575017808b37be428f601439ed66d126fe89aa60d8c66",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/entity/model.types.ts",
+      "sha256": "b5c20eda51104ebd136e7b74e562c4ad0ced37a14fa6a3aa6d9244374ec1390a",
+      "committedSha256": "b5c20eda51104ebd136e7b74e562c4ad0ced37a14fa6a3aa6d9244374ec1390a",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/entity/stubs.test.ts",
+      "sha256": "78aa540c93cbc8809e66d37aefd584f514a5f8771afbc62f087d77cd0256b27b",
+      "committedSha256": "78aa540c93cbc8809e66d37aefd584f514a5f8771afbc62f087d77cd0256b27b",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/entity/tsconfig.json",
+      "sha256": "75cb3f48992a5b2e25e526b55f9b20a7e5daaebcae6a2de1732b81540fad5b2c",
+      "committedSha256": "75cb3f48992a5b2e25e526b55f9b20a7e5daaebcae6a2de1732b81540fad5b2c",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/exports.test.ts",
+      "sha256": "8eb381fec23735f955eb9d4048e95ab94ada19d30f0f4ba70a2ad2680f30e673",
+      "committedSha256": "8eb381fec23735f955eb9d4048e95ab94ada19d30f0f4ba70a2ad2680f30e673",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/integer.test.ts",
+      "sha256": "84727db728fffcd99df53a7020343161d6366f130a259ae5bd6ee199bf6cb6f8",
+      "committedSha256": "84727db728fffcd99df53a7020343161d6366f130a259ae5bd6ee199bf6cb6f8",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/kv/datalog/executor.test.ts",
+      "sha256": "8623470d5456db173ff7a50e80297817e8a04e9cb9a1089127c729f347f14e44",
+      "committedSha256": "8623470d5456db173ff7a50e80297817e8a04e9cb9a1089127c729f347f14e44",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/kv/hexastore/KvTripleStore.test.ts",
+      "sha256": "c397cb03b7e0f12981fff5d713b2da142e54d6f74b7a9eccbf555525ac6d49fd",
+      "committedSha256": "c397cb03b7e0f12981fff5d713b2da142e54d6f74b7a9eccbf555525ac6d49fd",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/kv/hexastore/indexes.test.ts",
+      "sha256": "f024ba4653ada705a55fa99d444e1d48c91cfc46d29d616dfcb64fcbb6d62a2c",
+      "committedSha256": "f024ba4653ada705a55fa99d444e1d48c91cfc46d29d616dfcb64fcbb6d62a2c",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/kv/hexastore/tuple.test.ts",
+      "sha256": "51cb8e77187ecdf5a12794a0ef7c26c6c14e15a81af6d018625567d86f79974b",
+      "committedSha256": "51cb8e77187ecdf5a12794a0ef7c26c6c14e15a81af6d018625567d86f79974b",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/kv/integration/triples-coherence.test.ts",
+      "sha256": "ede307ffcb20211c8af459cc7d619516cbb37b97334c62323d71257e65041083",
+      "committedSha256": "ede307ffcb20211c8af459cc7d619516cbb37b97334c62323d71257e65041083",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/kv/kv/InMemoryKvBackend.test.ts",
+      "sha256": "014603dee670b09c712faad552ec08a670372764d0d321e3c2feac33e24da8e3",
+      "committedSha256": "014603dee670b09c712faad552ec08a670372764d0d321e3c2feac33e24da8e3",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/kv/kv/encoding.test.ts",
+      "sha256": "c491195e9efd43ff6f29076bf8a4252ded678d49dfa85ff43cb7c5ef7e0c457f",
+      "committedSha256": "c491195e9efd43ff6f29076bf8a4252ded678d49dfa85ff43cb7c5ef7e0c457f",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/kv/layers/KvTriples.query.test.ts",
+      "sha256": "7f41c17db3395510a164a237f9fc127ba701ced0ed9e3b6de5edc9b91d58272a",
+      "committedSha256": "7f41c17db3395510a164a237f9fc127ba701ced0ed9e3b6de5edc9b91d58272a",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/kv/layers/KvTriples.store.test.ts",
+      "sha256": "8704fc029b9885dd1ae6ec5febb36b66b6834ac6b1997a06272ab4296c00b253",
+      "committedSha256": "8704fc029b9885dd1ae6ec5febb36b66b6834ac6b1997a06272ab4296c00b253",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/kv/layers/KvTriples.test.ts",
+      "sha256": "a185494ea67481e2e673ca6c9bd2981e072cd97c843fc900346932e57407444a",
+      "committedSha256": "a185494ea67481e2e673ca6c9bd2981e072cd97c843fc900346932e57407444a",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/native-query.test.ts",
+      "sha256": "4bf6d56ca3d09128a46ff1b01dcfc771f310dd1a03134983773554d2381ca299",
+      "committedSha256": "4bf6d56ca3d09128a46ff1b01dcfc771f310dd1a03134983773554d2381ca299",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/native/frontier-closure.test.ts",
+      "sha256": "91eeb7951876f0e7a73d55628ffd27a006b68fbff288cc36a622057975668161",
+      "committedSha256": "91eeb7951876f0e7a73d55628ffd27a006b68fbff288cc36a622057975668161",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/runtime/read-basis-scope.types.ts",
+      "sha256": "78be1146b7113e08d64bfa8a6046d9fdc1d0ffa8eeace1a77d794a63629e6171",
+      "committedSha256": "78be1146b7113e08d64bfa8a6046d9fdc1d0ffa8eeace1a77d794a63629e6171",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/runtime/read-basis.test.ts",
+      "sha256": "ee2a99f332835e2acbf8ba14c03b4b449a77f8247d38b33bddcb93914f5e19ba",
+      "committedSha256": "ee2a99f332835e2acbf8ba14c03b4b449a77f8247d38b33bddcb93914f5e19ba",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/runtime/runtime.test.ts",
+      "sha256": "2f8885d6fe0ba577b5cc6d30d2e7897b7da0d407dc0425d07295ac200ffb3a5f",
+      "committedSha256": "2f8885d6fe0ba577b5cc6d30d2e7897b7da0d407dc0425d07295ac200ffb3a5f",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/runtime/runtime.types.ts",
+      "sha256": "fc08ec44777d6587933b6898b9f2c014435db471e72dcae066695363a099a7e8",
+      "committedSha256": "fc08ec44777d6587933b6898b9f2c014435db471e72dcae066695363a099a7e8",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/runtime/tsconfig.json",
+      "sha256": "5d27b7c5f4cf2927b93569d6dc30ce88a34bad4bd9e34939e6d743f2351700ef",
+      "committedSha256": "5d27b7c5f4cf2927b93569d6dc30ce88a34bad4bd9e34939e6d743f2351700ef",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/sql/params.test.ts",
+      "sha256": "b803968ffd2fd166374faf57867822645ac44a8b5e0c50edf973c43673e71713",
+      "committedSha256": "b803968ffd2fd166374faf57867822645ac44a8b5e0c50edf973c43673e71713",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/subscriptions/extract-dependencies.test.ts",
+      "sha256": "3575e49249bc6c2403da9f6c5d61f07cad48806804aa152e932dafbd7535b4a6",
+      "committedSha256": "3575e49249bc6c2403da9f6c5d61f07cad48806804aa152e932dafbd7535b4a6",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/subscriptions/invalidation.test.ts",
+      "sha256": "aa62a429ab8a34eed7b2278c169226702b220a2e08f84e71c940330cc0e512ac",
+      "committedSha256": "aa62a429ab8a34eed7b2278c169226702b220a2e08f84e71c940330cc0e512ac",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/subscriptions/query-hash.test.ts",
+      "sha256": "9e5c1618435a71b6f66552c83315076fc9753701152724c0bf8cace262f371a4",
+      "committedSha256": "9e5c1618435a71b6f66552c83315076fc9753701152724c0bf8cace262f371a4",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/subscriptions/subscription-manager.test.ts",
+      "sha256": "d4ecea784536e78b28b1374bc6b3d28532e64998b6ff4ea561ba63ff05c0cb60",
+      "committedSha256": "d4ecea784536e78b28b1374bc6b3d28532e64998b6ff4ea561ba63ff05c0cb60",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/subscriptions/sync-hub.test.ts",
+      "sha256": "a8cdc86e0e9b1536e9f2d3af66f136de685fcfb8655eac24ee187ee43b3d5bd3",
+      "committedSha256": "a8cdc86e0e9b1536e9f2d3af66f136de685fcfb8655eac24ee187ee43b3d5bd3",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/subscriptions/topic-tree.test.ts",
+      "sha256": "503a43576481663b193ef92f248b5d1c3051e7a10cdbbc104cb8bd0dd6ca4b60",
+      "committedSha256": "503a43576481663b193ef92f248b5d1c3051e7a10cdbbc104cb8bd0dd6ca4b60",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/unit/security/sql-injection.test.ts",
+      "sha256": "727fb375df4cae8cf9cc01ca904fb6f894e7913833c55b779e594a1ae3c51095",
+      "committedSha256": "727fb375df4cae8cf9cc01ca904fb6f894e7913833c55b779e594a1ae3c51095",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/test/utils/id.test.ts",
+      "sha256": "dd079023855bde5c34e9d3a515ddba166ef445f2455647ae1a15a5e70f973e10",
+      "committedSha256": "dd079023855bde5c34e9d3a515ddba166ef445f2455647ae1a15a5e70f973e10",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/tsconfig.json",
+      "sha256": "9f151764a1fce874852317f96f179ae45811a4446870edc2b2185cd1a7368e59",
+      "committedSha256": "9f151764a1fce874852317f96f179ae45811a4446870edc2b2185cd1a7368e59",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/tsdown.config.ts",
+      "sha256": "ba70ffaca4fd8d5a2087a1e987bb63554f616f4a1865133b611533123fe99246",
+      "committedSha256": "ba70ffaca4fd8d5a2087a1e987bb63554f616f4a1865133b611533123fe99246",
+      "unchanged": true
+    },
+    {
+      "path": "packages/core/vitest.config.ts",
+      "sha256": "1212e19207c38df30170a91ad2b13a53399e7bda5593d80d38d1f9ee11e5cfed",
+      "committedSha256": "1212e19207c38df30170a91ad2b13a53399e7bda5593d80d38d1f9ee11e5cfed",
+      "unchanged": true
+    },
+    {
+      "path": "packages/dashboard/package.json",
+      "sha256": "1f96966da190a414ee19abb485aea5d23610acc15ab955c8445ccc83d3b8c514",
+      "committedSha256": "1f96966da190a414ee19abb485aea5d23610acc15ab955c8445ccc83d3b8c514",
+      "unchanged": true
+    },
+    {
+      "path": "packages/dashboard/src/api.ts",
+      "sha256": "a7170d80cdcd9930e30300134a5a6ef1d95b8d6da1d93bd714803a6eeefaa9a4",
+      "committedSha256": "a7170d80cdcd9930e30300134a5a6ef1d95b8d6da1d93bd714803a6eeefaa9a4",
+      "unchanged": true
+    },
+    {
+      "path": "packages/dashboard/src/commands.ts",
+      "sha256": "c7264bbeaf80b2c129551cfb368eb598de4e1aa3c3e39d8a32dfc363ce97e34a",
+      "committedSha256": "c7264bbeaf80b2c129551cfb368eb598de4e1aa3c3e39d8a32dfc363ce97e34a",
+      "unchanged": true
+    },
+    {
+      "path": "packages/dashboard/src/data.ts",
+      "sha256": "45554ef6f9d55408e0d5270985ceddcc2d5af12c3fb72c552b9c36404f59bbc7",
+      "committedSha256": "45554ef6f9d55408e0d5270985ceddcc2d5af12c3fb72c552b9c36404f59bbc7",
+      "unchanged": true
+    },
+    {
+      "path": "packages/dashboard/src/demo/layer.ts",
+      "sha256": "48f69a1e3624708712370cc8d35dc96b2cdee0c1296f7ed32d30ad19be46d0cf",
+      "committedSha256": "48f69a1e3624708712370cc8d35dc96b2cdee0c1296f7ed32d30ad19be46d0cf",
+      "unchanged": true
+    },
+    {
+      "path": "packages/dashboard/src/demo/learning.ts",
+      "sha256": "2a3bbfb0adf0a9598c58e30f817ae10d38827442c624f375c45191fa95a895d5",
+      "committedSha256": "2a3bbfb0adf0a9598c58e30f817ae10d38827442c624f375c45191fa95a895d5",
+      "unchanged": true
+    },
+    {
+      "path": "packages/dashboard/src/entry.ts",
+      "sha256": "01b83e89fd0189a4a8543fa491cf8b20e2522bfc10b9f036f42dac0cacb3452c",
+      "committedSha256": "01b83e89fd0189a4a8543fa491cf8b20e2522bfc10b9f036f42dac0cacb3452c",
+      "unchanged": true
+    },
+    {
+      "path": "packages/dashboard/src/main.test.ts",
+      "sha256": "f65b3a316d1530e5eb973521d134fc8bca3df249d949abe0db3ba737ac16dde1",
+      "committedSha256": "f65b3a316d1530e5eb973521d134fc8bca3df249d949abe0db3ba737ac16dde1",
+      "unchanged": true
+    },
+    {
+      "path": "packages/dashboard/src/main.ts",
+      "sha256": "81672d0c0f5a76f905f7f07285d36e12af790c3189961e0e2d7b42a264767e5b",
+      "committedSha256": "81672d0c0f5a76f905f7f07285d36e12af790c3189961e0e2d7b42a264767e5b",
+      "unchanged": true
+    },
+    {
+      "path": "packages/dashboard/src/messages.ts",
+      "sha256": "61d42bf8d7c351c4205514b889ed25c32e268be72a2aa2d24afbaba57b0dd045",
+      "committedSha256": "61d42bf8d7c351c4205514b889ed25c32e268be72a2aa2d24afbaba57b0dd045",
+      "unchanged": true
+    },
+    {
+      "path": "packages/dashboard/src/model.ts",
+      "sha256": "18a9e5b1124cb6a9548280726e04f1fd3f527992b196305b010187e42d9ac310",
+      "committedSha256": "18a9e5b1124cb6a9548280726e04f1fd3f527992b196305b010187e42d9ac310",
+      "unchanged": true
+    },
+    {
+      "path": "packages/dashboard/src/server-security.test.ts",
+      "sha256": "4d3b5a2f644517abd8b3b4c5e8fa5c2230713fab35c5d7165da72454fe97909e",
+      "committedSha256": "4d3b5a2f644517abd8b3b4c5e8fa5c2230713fab35c5d7165da72454fe97909e",
+      "unchanged": true
+    },
+    {
+      "path": "packages/dashboard/src/server-security.ts",
+      "sha256": "c15c7fc38cf84847b36a227c3ef710ee63ac670925c7af72bc2f0b2cbe5e3241",
+      "committedSha256": "c15c7fc38cf84847b36a227c3ef710ee63ac670925c7af72bc2f0b2cbe5e3241",
+      "unchanged": true
+    },
+    {
+      "path": "packages/dashboard/src/server.ts",
+      "sha256": "18e47165393521668f431de137a3dd94acd58487dab4214c7ae82bb14758b4e5",
+      "committedSha256": "18e47165393521668f431de137a3dd94acd58487dab4214c7ae82bb14758b4e5",
+      "unchanged": true
+    },
+    {
+      "path": "packages/dashboard/tsconfig.json",
+      "sha256": "06f3ce28e39b84f9ffbafe43fa0488881e3372d069605df7c3d30cc54612c9fe",
+      "committedSha256": "06f3ce28e39b84f9ffbafe43fa0488881e3372d069605df7c3d30cc54612c9fe",
+      "unchanged": true
+    },
+    {
+      "path": "packages/dashboard/vite.config.ts",
+      "sha256": "c41b6c63f164d7e3fb2978264865e28c242abe69b1e9a929507d000435bb12a1",
+      "committedSha256": "c41b6c63f164d7e3fb2978264865e28c242abe69b1e9a929507d000435bb12a1",
+      "unchanged": true
+    },
+    {
+      "path": "packages/dashboard/vitest.config.ts",
+      "sha256": "aa7858f05b2261348f1502fa076550b0930672e0df3f054a22e8a8d9b68fb32e",
+      "committedSha256": "aa7858f05b2261348f1502fa076550b0930672e0df3f054a22e8a8d9b68fb32e",
+      "unchanged": true
+    },
+    {
+      "path": "packages/duckdb/SOURCE-ADAPTATION.json",
+      "sha256": "d2d447348cb63cbbbfe1834ece5dbbb598ca18914e66d8142837255028c589b1",
+      "committedSha256": "d2d447348cb63cbbbfe1834ece5dbbb598ca18914e66d8142837255028c589b1",
+      "unchanged": true
+    },
+    {
+      "path": "packages/duckdb/experiments/build-core.expected.json",
+      "sha256": "1472fdd2487db5146d1d3bad7a180bc1c1799a7dcfcd35fd935b87bf66976323",
+      "committedSha256": "1472fdd2487db5146d1d3bad7a180bc1c1799a7dcfcd35fd935b87bf66976323",
+      "unchanged": true
+    },
+    {
+      "path": "packages/duckdb/experiments/build-owner.expected.json",
+      "sha256": "932e22f5522ffdee711f579ccd8d39c07af173fdc2a4070c117ba9d1121f5f7a",
+      "committedSha256": "932e22f5522ffdee711f579ccd8d39c07af173fdc2a4070c117ba9d1121f5f7a",
+      "unchanged": true
+    },
+    {
+      "path": "packages/duckdb/experiments/recursion-entry.expected.json",
+      "sha256": "4c972bfcf73dba36eb8a42a8e499c8eba50641fe2099609d7a957fd584c5768f",
+      "committedSha256": "4c972bfcf73dba36eb8a42a8e499c8eba50641fe2099609d7a957fd584c5768f",
+      "unchanged": true
+    },
+    {
+      "path": "packages/duckdb/experiments/recursion-entry.ts",
+      "sha256": "69846aca87740490f2f2270a2cce94b41adaefa3a1036d102543318f196b0fc1",
+      "committedSha256": "69846aca87740490f2f2270a2cce94b41adaefa3a1036d102543318f196b0fc1",
+      "unchanged": true
+    },
+    {
+      "path": "packages/duckdb/experiments/resource-entry.expected.json",
+      "sha256": "5b73e51513fb7b5a890ada5c03d6e6fdcfda9c9466219981aa12cb1437c8304e",
+      "committedSha256": "5b73e51513fb7b5a890ada5c03d6e6fdcfda9c9466219981aa12cb1437c8304e",
+      "unchanged": true
+    },
+    {
+      "path": "packages/duckdb/experiments/resource-entry.ts",
+      "sha256": "63bbe17a561cde09cd2357568243114e670895f6258d61b782c0c2a56857bb1a",
+      "committedSha256": "63bbe17a561cde09cd2357568243114e670895f6258d61b782c0c2a56857bb1a",
+      "unchanged": true
+    },
+    {
+      "path": "packages/duckdb/experiments/sdk-entry.expected.json",
+      "sha256": "40bd1f7b9e1c2a37f152bd9a6bd84b10e95f20e1b34ce402c2a1203b3743c485",
+      "committedSha256": "40bd1f7b9e1c2a37f152bd9a6bd84b10e95f20e1b34ce402c2a1203b3743c485",
+      "unchanged": true
+    },
+    {
+      "path": "packages/duckdb/experiments/sdk-entry.ts",
+      "sha256": "609516d0e71dc270b4a2a7a2ac2c528048a24710a4c1a11805e9325667e3ff90",
+      "committedSha256": "609516d0e71dc270b4a2a7a2ac2c528048a24710a4c1a11805e9325667e3ff90",
+      "unchanged": true
+    },
+    {
+      "path": "packages/duckdb/experiments/temporal-entry.expected.json",
+      "sha256": "9820c2e20ed7e76798491cd0ddf6172579a0ccc4f483d754155d77538b3c4e26",
+      "committedSha256": "9820c2e20ed7e76798491cd0ddf6172579a0ccc4f483d754155d77538b3c4e26",
+      "unchanged": true
+    },
+    {
+      "path": "packages/duckdb/experiments/temporal-entry.ts",
+      "sha256": "8a1fdff4340b351ddd1e5b265f9a37b7872ef3038e93928e5b8b44e1e426db11",
+      "committedSha256": "8a1fdff4340b351ddd1e5b265f9a37b7872ef3038e93928e5b8b44e1e426db11",
+      "unchanged": true
+    },
+    {
+      "path": "packages/duckdb/package.json",
+      "sha256": "d94ae8bceb049c033155ecdb80887153a59c2fe51d0dcdd0defecb5436a8036a",
+      "committedSha256": "d94ae8bceb049c033155ecdb80887153a59c2fe51d0dcdd0defecb5436a8036a",
+      "unchanged": true
+    },
+    {
+      "path": "packages/duckdb/src/DuckDBClient.ts",
+      "sha256": "ac09511d4c74e61ae768e37687993771ed2bff787cc4b5950c1d18fd2e3e0b2d",
+      "committedSha256": "ac09511d4c74e61ae768e37687993771ed2bff787cc4b5950c1d18fd2e3e0b2d",
+      "unchanged": true
+    },
+    {
+      "path": "packages/duckdb/src/SqlStrategy.ts",
+      "sha256": "5fa6a3c65044d60cced6adc4cd3cf3d834774225a531de1461cafdf57dec63a4",
+      "committedSha256": "5fa6a3c65044d60cced6adc4cd3cf3d834774225a531de1461cafdf57dec63a4",
+      "unchanged": true
+    },
+    {
+      "path": "packages/duckdb/src/TemporalQueries.ts",
+      "sha256": "d9165104a562c0a8a6dfda5a9cae299d4616c331c25ae7cbf6d99809efdbcd94",
+      "committedSha256": "d9165104a562c0a8a6dfda5a9cae299d4616c331c25ae7cbf6d99809efdbcd94",
+      "unchanged": true
+    },
+    {
+      "path": "packages/duckdb/src/TypeDomains.ts",
+      "sha256": "1cc25219358366aab3b38a316090bd79bd50018cdf1a862e84ffe1ca68aa9d10",
+      "committedSha256": "1cc25219358366aab3b38a316090bd79bd50018cdf1a862e84ffe1ca68aa9d10",
+      "unchanged": true
+    },
+    {
+      "path": "packages/duckdb/src/effect-storage.ts",
+      "sha256": "ffbc6d6b500b69bc22f795a60285afb1d8bea41c8c3a7b100abd832fc0e25962",
+      "committedSha256": "ffbc6d6b500b69bc22f795a60285afb1d8bea41c8c3a7b100abd832fc0e25962",
+      "unchanged": true
+    },
+    {
+      "path": "packages/duckdb/src/index.ts",
+      "sha256": "0050e121ea27e8bff03f164e2c5e25a1c52df4497c2d0fb946a62a8899663bfd",
+      "committedSha256": "0050e121ea27e8bff03f164e2c5e25a1c52df4497c2d0fb946a62a8899663bfd",
+      "unchanged": true
+    },
+    {
+      "path": "packages/duckdb/src/query-executor-adapter.ts",
+      "sha256": "1231a70b04b48f40902c1ad738c0a905c8f976b1ee4f310756c3b3267e4f126d",
+      "committedSha256": "1231a70b04b48f40902c1ad738c0a905c8f976b1ee4f310756c3b3267e4f126d",
+      "unchanged": true
+    },
+    {
+      "path": "packages/duckdb/tsconfig.json",
+      "sha256": "6a658111c4ef318f1f44864094f279c7d2fc7ec78c9091d8c1d1153f70112e07",
+      "committedSha256": "6a658111c4ef318f1f44864094f279c7d2fc7ec78c9091d8c1d1153f70112e07",
+      "unchanged": true
+    },
+    {
+      "path": "packages/duckdb/tsdown.config.ts",
+      "sha256": "7282ee2d19c60d9eabc0c33a9df0d3bbc31b6ef15fbca081ed84907deffd719e",
+      "committedSha256": "7282ee2d19c60d9eabc0c33a9df0d3bbc31b6ef15fbca081ed84907deffd719e",
+      "unchanged": true
+    },
+    {
+      "path": "packages/foundationdb/package.json",
+      "sha256": "0d440624b3f85b3451901f394e2b62387a7c308e7460e6a0efa6eef3110aa359",
+      "committedSha256": "0d440624b3f85b3451901f394e2b62387a7c308e7460e6a0efa6eef3110aa359",
+      "unchanged": true
+    },
+    {
+      "path": "packages/foundationdb/src/FdbKvBackend.ts",
+      "sha256": "8a85a430e988f3dfa198f0cef7a2dbd09aadb54b9953060d61b193aff8339026",
+      "committedSha256": "8a85a430e988f3dfa198f0cef7a2dbd09aadb54b9953060d61b193aff8339026",
+      "unchanged": true
+    },
+    {
+      "path": "packages/foundationdb/src/FdbSubscriptions.ts",
+      "sha256": "d7c8700f0f8a1fee250d38337e2537d171630c0c37b598fc105f4375709fe3b0",
+      "committedSha256": "d7c8700f0f8a1fee250d38337e2537d171630c0c37b598fc105f4375709fe3b0",
+      "unchanged": true
+    },
+    {
+      "path": "packages/foundationdb/src/FdbTriples.ts",
+      "sha256": "c167649137b858e71a166b447b1fa23d168e9e11fc7c820424a57561c5263685",
+      "committedSha256": "c167649137b858e71a166b447b1fa23d168e9e11fc7c820424a57561c5263685",
+      "unchanged": true
+    },
+    {
+      "path": "packages/foundationdb/src/index.ts",
+      "sha256": "cea825a931e992da3904f6563ba1b4aa58f35043788b0edb84e8fce69bcdafd2",
+      "committedSha256": "cea825a931e992da3904f6563ba1b4aa58f35043788b0edb84e8fce69bcdafd2",
+      "unchanged": true
+    },
+    {
+      "path": "packages/foundationdb/test/FdbKvBackend.errors.test.ts",
+      "sha256": "1b427bd81734875797444d6ffbcf655834d95df32fd3f068e698a9d64be46c71",
+      "committedSha256": "1b427bd81734875797444d6ffbcf655834d95df32fd3f068e698a9d64be46c71",
+      "unchanged": true
+    },
+    {
+      "path": "packages/foundationdb/test/FdbKvBackend.test.ts",
+      "sha256": "f8f5ca03ab39058f6bc1aaa960de25b87061976518b66c7a2ba0c5385cd9e080",
+      "committedSha256": "f8f5ca03ab39058f6bc1aaa960de25b87061976518b66c7a2ba0c5385cd9e080",
+      "unchanged": true
+    },
+    {
+      "path": "packages/foundationdb/test/FdbSubscriptions.keys.test.ts",
+      "sha256": "82165569cec738e42161b6789fd3736160aba28437390fe86cc7bbbc58611b31",
+      "committedSha256": "82165569cec738e42161b6789fd3736160aba28437390fe86cc7bbbc58611b31",
+      "unchanged": true
+    },
+    {
+      "path": "packages/foundationdb/test/FdbSubscriptions.test.ts",
+      "sha256": "0a801a8139b29f5b4f93bbfc45efed4f7424514ae286f41dd326f4102b2caef3",
+      "committedSha256": "0a801a8139b29f5b4f93bbfc45efed4f7424514ae286f41dd326f4102b2caef3",
+      "unchanged": true
+    },
+    {
+      "path": "packages/foundationdb/test/exports.test.ts",
+      "sha256": "237892c1b5abdc8eea3660d8fdc0e4cfc30c04425b919bffa5e9514c904376da",
+      "committedSha256": "237892c1b5abdc8eea3660d8fdc0e4cfc30c04425b919bffa5e9514c904376da",
+      "unchanged": true
+    },
+    {
+      "path": "packages/foundationdb/test/fdb-triples.test.ts",
+      "sha256": "3e2b4ec16fb25d61f74d3cf62fda1059b0a7bcb83a46ac6edbbd3381a8782a6d",
+      "committedSha256": "3e2b4ec16fb25d61f74d3cf62fda1059b0a7bcb83a46ac6edbbd3381a8782a6d",
+      "unchanged": true
+    },
+    {
+      "path": "packages/foundationdb/test/fixtures/FdbTestLayer.ts",
+      "sha256": "eedc0a3babbae22dc70a7ced1de8b6ade760eccb43fd0344ff329e6e04b322e1",
+      "committedSha256": "eedc0a3babbae22dc70a7ced1de8b6ade760eccb43fd0344ff329e6e04b322e1",
+      "unchanged": true
+    },
+    {
+      "path": "packages/foundationdb/tsconfig.json",
+      "sha256": "9f151764a1fce874852317f96f179ae45811a4446870edc2b2185cd1a7368e59",
+      "committedSha256": "9f151764a1fce874852317f96f179ae45811a4446870edc2b2185cd1a7368e59",
+      "unchanged": true
+    },
+    {
+      "path": "packages/foundationdb/tsdown.config.ts",
+      "sha256": "edbff64ab679cf849914ace809cafa6364821901faff88cfec9874346fd54504",
+      "committedSha256": "edbff64ab679cf849914ace809cafa6364821901faff88cfec9874346fd54504",
+      "unchanged": true
+    },
+    {
+      "path": "packages/foundationdb/vitest.config.ts",
+      "sha256": "951ada711e5926c4cddca0ffcbd9198e40fa11b9cdb20a6b937230b6270d9229",
+      "committedSha256": "951ada711e5926c4cddca0ffcbd9198e40fa11b9cdb20a6b937230b6270d9229",
+      "unchanged": true
+    },
+    {
+      "path": "packages/host/package.json",
+      "sha256": "c5ba3ae96ed4ebb0f7805f32cf4a841b4975a6357e58a363923277d1ad4169f0",
+      "committedSha256": "c5ba3ae96ed4ebb0f7805f32cf4a841b4975a6357e58a363923277d1ad4169f0",
+      "unchanged": true
+    },
+    {
+      "path": "packages/host/src/Identity.ts",
+      "sha256": "3dafb47b5e7879b0cbf7f8eb4d2318256d62fd292829b2d1fe9ce724aa39f974",
+      "committedSha256": "3dafb47b5e7879b0cbf7f8eb4d2318256d62fd292829b2d1fe9ce724aa39f974",
+      "unchanged": true
+    },
+    {
+      "path": "packages/host/src/InMemoryTenantRegistry.ts",
+      "sha256": "3376cc169a86f2aeb53435f685e19c5f552e9e267e423dc00fae2e6faf2051a1",
+      "committedSha256": "3376cc169a86f2aeb53435f685e19c5f552e9e267e423dc00fae2e6faf2051a1",
+      "unchanged": true
+    },
+    {
+      "path": "packages/host/src/Lifecycle.ts",
+      "sha256": "a7c0d45e554e27b73a74239fcc1257a75c804e0316a03b487a6a03a0e8dc40be",
+      "committedSha256": "a7c0d45e554e27b73a74239fcc1257a75c804e0316a03b487a6a03a0e8dc40be",
+      "unchanged": true
+    },
+    {
+      "path": "packages/host/src/Protocol.ts",
+      "sha256": "c5bf380d3cd7106a9f379d4d287e83f242fc56c4bbe75669428e07a0ebf2256e",
+      "committedSha256": "c5bf380d3cd7106a9f379d4d287e83f242fc56c4bbe75669428e07a0ebf2256e",
+      "unchanged": true
+    },
+    {
+      "path": "packages/host/src/Routing.ts",
+      "sha256": "d5a732a0dc7e6dcb70f6f60d87a380a39b5361fa70618c09b5ff5c96f6aecb48",
+      "committedSha256": "d5a732a0dc7e6dcb70f6f60d87a380a39b5361fa70618c09b5ff5c96f6aecb48",
+      "unchanged": true
+    },
+    {
+      "path": "packages/host/src/Services.ts",
+      "sha256": "be14021d51bce5bd2e49b249f370831d830bab2231de5c54c8c6db923a13dde6",
+      "committedSha256": "be14021d51bce5bd2e49b249f370831d830bab2231de5c54c8c6db923a13dde6",
+      "unchanged": true
+    },
+    {
+      "path": "packages/host/src/index.ts",
+      "sha256": "4e822bc0b1a41fba1490da708bcd256b718c8bd3e4a5815867f3b4b5b3cc2234",
+      "committedSha256": "4e822bc0b1a41fba1490da708bcd256b718c8bd3e4a5815867f3b4b5b3cc2234",
+      "unchanged": true
+    },
+    {
+      "path": "packages/host/test/host.test.ts",
+      "sha256": "67ecde3585fa6490d097ea6aa7944947b6b0339862c2f43208d8125abf6eeb5c",
+      "committedSha256": "67ecde3585fa6490d097ea6aa7944947b6b0339862c2f43208d8125abf6eeb5c",
+      "unchanged": true
+    },
+    {
+      "path": "packages/host/tsconfig.json",
+      "sha256": "9f151764a1fce874852317f96f179ae45811a4446870edc2b2185cd1a7368e59",
+      "committedSha256": "9f151764a1fce874852317f96f179ae45811a4446870edc2b2185cd1a7368e59",
+      "unchanged": true
+    },
+    {
+      "path": "packages/host/tsdown.config.ts",
+      "sha256": "edbff64ab679cf849914ace809cafa6364821901faff88cfec9874346fd54504",
+      "committedSha256": "edbff64ab679cf849914ace809cafa6364821901faff88cfec9874346fd54504",
+      "unchanged": true
+    },
+    {
+      "path": "packages/host/vitest.config.ts",
+      "sha256": "fc4e93b5022fa88d6eb0ae274c7a63b2f04f35ba3505eea223c74dd2ca4450c4",
+      "committedSha256": "fc4e93b5022fa88d6eb0ae274c7a63b2f04f35ba3505eea223c74dd2ca4450c4",
+      "unchanged": true
+    },
+    {
+      "path": "packages/http/package.json",
+      "sha256": "8a5944de2da8dbf8b4591d7eae7eb90aaed134b9f1b88cd28c54cd58d57677cc",
+      "committedSha256": "8a5944de2da8dbf8b4591d7eae7eb90aaed134b9f1b88cd28c54cd58d57677cc",
+      "unchanged": true
+    },
+    {
+      "path": "packages/http/src/Authorization.ts",
+      "sha256": "fd3b957ece5e0289c57cd1761f44f19a741b4d8589c902f2f5c5d7fe0374dbd5",
+      "committedSha256": "fd3b957ece5e0289c57cd1761f44f19a741b4d8589c902f2f5c5d7fe0374dbd5",
+      "unchanged": true
+    },
+    {
+      "path": "packages/http/src/ConfigApi.ts",
+      "sha256": "7c1a5b142fe0590604647a64ad537e9c66c2e88ce10d23b93741cf2c2dcd21d1",
+      "committedSha256": "7c1a5b142fe0590604647a64ad537e9c66c2e88ce10d23b93741cf2c2dcd21d1",
+      "unchanged": true
+    },
+    {
+      "path": "packages/http/src/EntityCodec.ts",
+      "sha256": "f7af8da8ecb4a2ae9fd0491fff80809f255c1066041e27dd334ec4f9c603693c",
+      "committedSha256": "f7af8da8ecb4a2ae9fd0491fff80809f255c1066041e27dd334ec4f9c603693c",
+      "unchanged": true
+    },
+    {
+      "path": "packages/http/src/EntityHttp.ts",
+      "sha256": "d2fc3d448813f5ce42f76445eeb22d8821524407a8e2400b000ceb7130d4b4c5",
+      "committedSha256": "d2fc3d448813f5ce42f76445eeb22d8821524407a8e2400b000ceb7130d4b4c5",
+      "unchanged": true
+    },
+    {
+      "path": "packages/http/src/EntityHttpApi.ts",
+      "sha256": "960359c8b0deddf17a2727be4693b23b5f84968e2759479fff760a9b558a5ab8",
+      "committedSha256": "960359c8b0deddf17a2727be4693b23b5f84968e2759479fff760a9b558a5ab8",
+      "unchanged": true
+    },
+    {
+      "path": "packages/http/src/EntityHttpHandlers.ts",
+      "sha256": "48f560a2eca32236891abec8ff77169c5e87dffead4c8c3f602749fe1f6644b7",
+      "committedSha256": "48f560a2eca32236891abec8ff77169c5e87dffead4c8c3f602749fe1f6644b7",
+      "unchanged": true
+    },
+    {
+      "path": "packages/http/src/EntityStore.ts",
+      "sha256": "692059fd6cab76eccb518e0e1be6e6df393ac33a771b89d9aa08eebe190b075f",
+      "committedSha256": "692059fd6cab76eccb518e0e1be6e6df393ac33a771b89d9aa08eebe190b075f",
+      "unchanged": true
+    },
+    {
+      "path": "packages/http/src/Errors.ts",
+      "sha256": "a98a8af4453666d4a029bafbefc5e3188d74a610f1e7b2db85238b7198b8e7a2",
+      "committedSha256": "a98a8af4453666d4a029bafbefc5e3188d74a610f1e7b2db85238b7198b8e7a2",
+      "unchanged": true
+    },
+    {
+      "path": "packages/http/src/HandlerCache.ts",
+      "sha256": "65af31a927b3f47c51472a1149f50b50d58ff231af50ba7ae50fad0100facd6e",
+      "committedSha256": "65af31a927b3f47c51472a1149f50b50d58ff231af50ba7ae50fad0100facd6e",
+      "unchanged": true
+    },
+    {
+      "path": "packages/http/src/VersionResolver.ts",
+      "sha256": "9824b0a92b409e63807da48e96cff741afb1cc87de3150cb4385eb8f71df1364",
+      "committedSha256": "9824b0a92b409e63807da48e96cff741afb1cc87de3150cb4385eb8f71df1364",
+      "unchanged": true
+    },
+    {
+      "path": "packages/http/src/index.ts",
+      "sha256": "284773646db5f0e8f56a2f42e592b5a8c1c862767fe37f5ae3ede1feea1013df",
+      "committedSha256": "284773646db5f0e8f56a2f42e592b5a8c1c862767fe37f5ae3ede1feea1013df",
+      "unchanged": true
+    },
+    {
+      "path": "packages/http/test/config-api.test.ts",
+      "sha256": "a601f9b2d01f1964866f771334c0e924a57ba908dbc9e88bc84c35195bd21665",
+      "committedSha256": "a601f9b2d01f1964866f771334c0e924a57ba908dbc9e88bc84c35195bd21665",
+      "unchanged": true
+    },
+    {
+      "path": "packages/http/test/descriptor-move.test.ts",
+      "sha256": "59599719746991f6c3d062e691ddb16c626cd337be34e333560169c9667533d9",
+      "committedSha256": "59599719746991f6c3d062e691ddb16c626cd337be34e333560169c9667533d9",
+      "unchanged": true
+    },
+    {
+      "path": "packages/http/test/integer-codec.test.ts",
+      "sha256": "c815912c42a7db5e780daf8325a9ecdd99bd9272ff2f0c0f0db2915d7d7a3ca9",
+      "committedSha256": "c815912c42a7db5e780daf8325a9ecdd99bd9272ff2f0c0f0db2915d7d7a3ca9",
+      "unchanged": true
+    },
+    {
+      "path": "packages/http/tsconfig.json",
+      "sha256": "7f5109fba83cfaae0bbc7d00f39d6b03e4c3ee8e1c905219cdb4cafb4ab7a7ed",
+      "committedSha256": "7f5109fba83cfaae0bbc7d00f39d6b03e4c3ee8e1c905219cdb4cafb4ab7a7ed",
+      "unchanged": true
+    },
+    {
+      "path": "packages/http/tsdown.config.ts",
+      "sha256": "edbff64ab679cf849914ace809cafa6364821901faff88cfec9874346fd54504",
+      "committedSha256": "edbff64ab679cf849914ace809cafa6364821901faff88cfec9874346fd54504",
+      "unchanged": true
+    },
+    {
+      "path": "packages/http/vitest.config.ts",
+      "sha256": "f1bf89dc6264df366234e997f70f695f02c94247640fec2f4883465796e99fd7",
+      "committedSha256": "f1bf89dc6264df366234e997f70f695f02c94247640fec2f4883465796e99fd7",
+      "unchanged": true
+    },
+    {
+      "path": "packages/postgres/package.json",
+      "sha256": "214d324b5f3e8e22de03b2be5cd51f56963c004f2906dc0ba2e5919881d730c8",
+      "committedSha256": "214d324b5f3e8e22de03b2be5cd51f56963c004f2906dc0ba2e5919881d730c8",
+      "unchanged": true
+    },
+    {
+      "path": "packages/postgres/src/PgTriples.ts",
+      "sha256": "77cb19137b57f8b555f924fb111e03f9ff08bc7e2ecdb37840a85e76409ffb1b",
+      "committedSha256": "77cb19137b57f8b555f924fb111e03f9ff08bc7e2ecdb37840a85e76409ffb1b",
+      "unchanged": true
+    },
+    {
+      "path": "packages/postgres/src/PostgresqlAdapter.ts",
+      "sha256": "dfabe4e405922f56b8ac4755bf02e40d8d006a3424d1e9ca01188646a6aba90e",
+      "committedSha256": "dfabe4e405922f56b8ac4755bf02e40d8d006a3424d1e9ca01188646a6aba90e",
+      "unchanged": true
+    },
+    {
+      "path": "packages/postgres/src/PostgresqlBackend.ts",
+      "sha256": "c71b30f3d1a719605cb253001f4687aa0ba0ba335e79efb5cc0db016939f0baf",
+      "committedSha256": "c71b30f3d1a719605cb253001f4687aa0ba0ba335e79efb5cc0db016939f0baf",
+      "unchanged": true
+    },
+    {
+      "path": "packages/postgres/src/PostgresqlLayer.ts",
+      "sha256": "a14e87f1aba6b87a70a60a1af61823192d04347c70762c20570789a2db627f48",
+      "committedSha256": "a14e87f1aba6b87a70a60a1af61823192d04347c70762c20570789a2db627f48",
+      "unchanged": true
+    },
+    {
+      "path": "packages/postgres/src/dialect.ts",
+      "sha256": "cfc6af333bd91911e79ba84d385032d605567acd0239889ddbfa6808355d61b8",
+      "committedSha256": "cfc6af333bd91911e79ba84d385032d605567acd0239889ddbfa6808355d61b8",
+      "unchanged": true
+    },
+    {
+      "path": "packages/postgres/src/index.ts",
+      "sha256": "1aeaf7ef206b316fb83e09f44f8d819e133c38f0f0db34e2751e310b92c40eb1",
+      "committedSha256": "1aeaf7ef206b316fb83e09f44f8d819e133c38f0f0db34e2751e310b92c40eb1",
+      "unchanged": true
+    },
+    {
+      "path": "packages/postgres/test/exports.test.ts",
+      "sha256": "8b28c07eb8a79a1ed9b81657ee10ad592bd4fa2f2349b4b52fbb133683b7d2d3",
+      "committedSha256": "8b28c07eb8a79a1ed9b81657ee10ad592bd4fa2f2349b4b52fbb133683b7d2d3",
+      "unchanged": true
+    },
+    {
+      "path": "packages/postgres/test/fixtures/PgTestLayer.ts",
+      "sha256": "6f4ffaeccde3b917cbc6f607d4346d07e8e3ab5f066703c0f24e3638793d748f",
+      "committedSha256": "6f4ffaeccde3b917cbc6f607d4346d07e8e3ab5f066703c0f24e3638793d748f",
+      "unchanged": true
+    },
+    {
+      "path": "packages/postgres/test/integration/postgresql.test.ts",
+      "sha256": "40b7ceb90d6c911a158bd3aaff93cea12d116205709b7891134382f31d37dc35",
+      "committedSha256": "40b7ceb90d6c911a158bd3aaff93cea12d116205709b7891134382f31d37dc35",
+      "unchanged": true
+    },
+    {
+      "path": "packages/postgres/tsconfig.json",
+      "sha256": "9f151764a1fce874852317f96f179ae45811a4446870edc2b2185cd1a7368e59",
+      "committedSha256": "9f151764a1fce874852317f96f179ae45811a4446870edc2b2185cd1a7368e59",
+      "unchanged": true
+    },
+    {
+      "path": "packages/postgres/tsdown.config.ts",
+      "sha256": "edbff64ab679cf849914ace809cafa6364821901faff88cfec9874346fd54504",
+      "committedSha256": "edbff64ab679cf849914ace809cafa6364821901faff88cfec9874346fd54504",
+      "unchanged": true
+    },
+    {
+      "path": "packages/postgres/vitest.config.ts",
+      "sha256": "cb79732ce90a1ecdd622e4d8f08a5a176b9b56f34e001e5d1f5ea5011bbf35c9",
+      "committedSha256": "cb79732ce90a1ecdd622e4d8f08a5a176b9b56f34e001e5d1f5ea5011bbf35c9",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/experiments/aggregate-entry.ts",
+      "sha256": "282d62f2d4491e8dad3ed057a971c4e8815210ca429e4e158aef916ba6f208ee",
+      "committedSha256": "282d62f2d4491e8dad3ed057a971c4e8815210ca429e4e158aef916ba6f208ee",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/experiments/boundary-shapes.ts",
+      "sha256": "fc0180be2af19a6d6e7a46ac50657c4314f2b8d2f602fa70f6bf05512c4f380d",
+      "committedSha256": "fc0180be2af19a6d6e7a46ac50657c4314f2b8d2f602fa70f6bf05512c4f380d",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/experiments/cancel-restart.ts",
+      "sha256": "0eadf7419c618fa31900f5b7df6710f5bd6cc31e6b05441a638281d295541b64",
+      "committedSha256": "0eadf7419c618fa31900f5b7df6710f5bd6cc31e6b05441a638281d295541b64",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/experiments/join-shapes-1793975982152.json",
+      "sha256": "3ca0449c109a3e7e04fc2ee08274e16a7111225856b68a0e9944a6829b72b5ab",
+      "committedSha256": "3ca0449c109a3e7e04fc2ee08274e16a7111225856b68a0e9944a6829b72b5ab",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/experiments/join-shapes.ts",
+      "sha256": "a9d31cef40b8da2accc0e68bddcb2abf6710c33d29ffe92211f115c06e91072e",
+      "committedSha256": "a9d31cef40b8da2accc0e68bddcb2abf6710c33d29ffe92211f115c06e91072e",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/experiments/lab-counterexamples.ts",
+      "sha256": "dbdd9b76742f9179e989af04637b3be289eca4c08848eab297d9255945eefd88",
+      "committedSha256": "dbdd9b76742f9179e989af04637b3be289eca4c08848eab297d9255945eefd88",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/experiments/lab-endpoint.ts",
+      "sha256": "3324649d13d3ab13d4567b4ab07c4e755b9e64323630b16a92f62463d0f7405d",
+      "committedSha256": "3324649d13d3ab13d4567b4ab07c4e755b9e64323630b16a92f62463d0f7405d",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/experiments/native-capabilities.ts",
+      "sha256": "360fe19f36223ae54b7a28abe9eb00c8c927e194d8318322890bcf7efb89cbc2",
+      "committedSha256": "360fe19f36223ae54b7a28abe9eb00c8c927e194d8318322890bcf7efb89cbc2",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/experiments/native-entry.ts",
+      "sha256": "c82ce6cfabfcf61ab9f5d76791146d167741420a3be07b92559026f987634b0f",
+      "committedSha256": "c82ce6cfabfcf61ab9f5d76791146d167741420a3be07b92559026f987634b0f",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/experiments/native-query-shapes.ts",
+      "sha256": "4de10a416263cf5717033d9cd92dde00b665c66db6ed46c74b4260bbb2f21367",
+      "committedSha256": "4de10a416263cf5717033d9cd92dde00b665c66db6ed46c74b4260bbb2f21367",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/experiments/oom-recovery.ts",
+      "sha256": "dbf976b427d00eb0b95f4cfdac7b4ca3f6b2c1a2e7821f5f3ebe84ed01d4e9c2",
+      "committedSha256": "dbf976b427d00eb0b95f4cfdac7b4ca3f6b2c1a2e7821f5f3ebe84ed01d4e9c2",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/experiments/persisted-source-entry.ts",
+      "sha256": "bc2e148f747b1d649a0d3be39e18a5d674be8d19b382b9d90bb3bbfd4442daae",
+      "committedSha256": "bc2e148f747b1d649a0d3be39e18a5d674be8d19b382b9d90bb3bbfd4442daae",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/experiments/retirement-pair-entry.ts",
+      "sha256": "92c5587198c1ce6861b2a91727bf0d1a79659e702ac15f435bf4c26ef9559311",
+      "committedSha256": "92c5587198c1ce6861b2a91727bf0d1a79659e702ac15f435bf4c26ef9559311",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/experiments/scalar-order-entry.ts",
+      "sha256": "3b7376bdea270343cc600cd36b337cbb9b0bc7eceba2462b2167f7ee0abdbda2",
+      "committedSha256": "3b7376bdea270343cc600cd36b337cbb9b0bc7eceba2462b2167f7ee0abdbda2",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/experiments/string-order-probe.ts",
+      "sha256": "33695bf500c6bc4f03a652bf4f0985401496f7912515588d712f035944d9a709",
+      "committedSha256": "33695bf500c6bc4f03a652bf4f0985401496f7912515588d712f035944d9a709",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/experiments/transaction-admission.ts",
+      "sha256": "5db201083852d7c204ddcee9b87cdaaf40c46a25b5077885d56c8145d31c8614",
+      "committedSha256": "5db201083852d7c204ddcee9b87cdaaf40c46a25b5077885d56c8145d31c8614",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/experiments/update-shapes.ts",
+      "sha256": "4680b14a3d67a66ff6d9e4114c2fae5eb3d6f7c0d829ea17f7cf1b8812cfe9bb",
+      "committedSha256": "4680b14a3d67a66ff6d9e4114c2fae5eb3d6f7c0d829ea17f7cf1b8812cfe9bb",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/experiments/upstream44.ts",
+      "sha256": "2bf7ce8222a0a647f9daa8d348cb4bf02b7b63c222ab65831847b0de92555aec",
+      "committedSha256": "2bf7ce8222a0a647f9daa8d348cb4bf02b7b63c222ab65831847b0de92555aec",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/experiments/verify-xtdb-entry.ts",
+      "sha256": "4c1ab37b826424eb7d2d13e1e4f020ad428e1da7d68cdf51249994333912891e",
+      "committedSha256": "4c1ab37b826424eb7d2d13e1e4f020ad428e1da7d68cdf51249994333912891e",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/package.json",
+      "sha256": "e41d91c67b2baf8ad8f2493a2c0dea312750782c1c0d6122e750cee0ebc3ca6f",
+      "committedSha256": "e41d91c67b2baf8ad8f2493a2c0dea312750782c1c0d6122e750cee0ebc3ca6f",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/src/AggregateAnswers.ts",
+      "sha256": "ff11d796be17ffbd7b9ad8d0d79e12a32550c63eb296cef580bd4ed10ca4b7de",
+      "committedSha256": "ff11d796be17ffbd7b9ad8d0d79e12a32550c63eb296cef580bd4ed10ca4b7de",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/src/FamilyDomainDistinct.ts",
+      "sha256": "2c1d8a34f98721675afd69d4a82778b9338f7aec8bdd715a5b3b6b45ca69ea22",
+      "committedSha256": "2c1d8a34f98721675afd69d4a82778b9338f7aec8bdd715a5b3b6b45ca69ea22",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/src/FamilyDomainMask.ts",
+      "sha256": "65988dc4e689dd5e54eda0a90d60db0869914b38040011eaa4b2bcf4c8a47095",
+      "committedSha256": "65988dc4e689dd5e54eda0a90d60db0869914b38040011eaa4b2bcf4c8a47095",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/src/FamilyDomains.ts",
+      "sha256": "2bc0fd77c940dc0b0ad8b7c6b2ac9cf3f20d6e62e6476b5f718ef01f096cc0cc",
+      "committedSha256": "2bc0fd77c940dc0b0ad8b7c6b2ac9cf3f20d6e62e6476b5f718ef01f096cc0cc",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/src/Operations.ts",
+      "sha256": "c3851be7457eec8af340c79621aa2152662389d33ee6e9752f20fc7fcb69170e",
+      "committedSha256": "c3851be7457eec8af340c79621aa2152662389d33ee6e9752f20fc7fcb69170e",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/src/PersistedScalarSource.ts",
+      "sha256": "467c9ca94941e71377b4fe321c7dedf27795b6938c6661d63a79c49ebfb23919",
+      "committedSha256": "467c9ca94941e71377b4fe321c7dedf27795b6938c6661d63a79c49ebfb23919",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/src/QleverClient.ts",
+      "sha256": "d199d25f49f3ee68e1db5035814d1d8f1722a4904f6711d8f2f2d5c063a1e10d",
+      "committedSha256": "d199d25f49f3ee68e1db5035814d1d8f1722a4904f6711d8f2f2d5c063a1e10d",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/src/QleverQueryExecutor.ts",
+      "sha256": "433080bc14b2c7922d91e0bfa2e36b4ac2e92823968ecaa6c81cff96ad77bde5",
+      "committedSha256": "433080bc14b2c7922d91e0bfa2e36b4ac2e92823968ecaa6c81cff96ad77bde5",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/src/QleverStorageAdapter.ts",
+      "sha256": "d3539b541f69c18c470a7dc9ab43dc554734b77f9a9c8bd74242009403fc952b",
+      "committedSha256": "d3539b541f69c18c470a7dc9ab43dc554734b77f9a9c8bd74242009403fc952b",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/src/ReadOnlyClient.ts",
+      "sha256": "74f922964fd5c40fb191008b85e4c13eba219527fcc29ec410eb365b94751924",
+      "committedSha256": "74f922964fd5c40fb191008b85e4c13eba219527fcc29ec410eb365b94751924",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/src/ScalarSource.ts",
+      "sha256": "72a8ba70dd0beced8e42c5d6a0656d44249a063e38d150ea054b07fd9ba6a3df",
+      "committedSha256": "72a8ba70dd0beced8e42c5d6a0656d44249a063e38d150ea054b07fd9ba6a3df",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/src/TemporalQueries.ts",
+      "sha256": "986ba49d9c7af25f6a5ec4cf4f2bda97746e1fc4f232dbe9c9b00f9eeeb5bb3f",
+      "committedSha256": "986ba49d9c7af25f6a5ec4cf4f2bda97746e1fc4f232dbe9c9b00f9eeeb5bb3f",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/src/compiler.ts",
+      "sha256": "a41494f5b85a14ec1f0f6a137a6e51216d1ec26d81372fa986cc97e62f51d9b0",
+      "committedSha256": "a41494f5b85a14ec1f0f6a137a6e51216d1ec26d81372fa986cc97e62f51d9b0",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/src/index.ts",
+      "sha256": "83c5013a074d75892aa2124e4ebe7ae7cb73d026f688c494157b64c4827afc92",
+      "committedSha256": "83c5013a074d75892aa2124e4ebe7ae7cb73d026f688c494157b64c4827afc92",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/src/native/BasisRelations.ts",
+      "sha256": "a4651692d16c68e79e65253a4f389fb579078295814a62eec052b4f75b9f8826",
+      "committedSha256": "a4651692d16c68e79e65253a4f389fb579078295814a62eec052b4f75b9f8826",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/src/native/NativeContext.ts",
+      "sha256": "9dfefa7313ec6acda922a493219077be9f72768a6f169594c3a6e0a86f06f8c8",
+      "committedSha256": "9dfefa7313ec6acda922a493219077be9f72768a6f169594c3a6e0a86f06f8c8",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/src/native/NativeQueries.ts",
+      "sha256": "a05f98b30825370d967b646cb9df31e07e8e71d696909e62c472b7ab5f6bff3c",
+      "committedSha256": "a05f98b30825370d967b646cb9df31e07e8e71d696909e62c472b7ab5f6bff3c",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/src/rdf.ts",
+      "sha256": "0af2da3a021f56e9155a61e887038961bfb09c0b2b6767c50b4903740338285b",
+      "committedSha256": "0af2da3a021f56e9155a61e887038961bfb09c0b2b6767c50b4903740338285b",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/src/recursion.ts",
+      "sha256": "4c9747745f3a317326d0c8bfb0a34a859a4c93a2bcc0472459014fe99d48c88e",
+      "committedSha256": "4c9747745f3a317326d0c8bfb0a34a859a4c93a2bcc0472459014fe99d48c88e",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/test/aggregate-answers.test.ts",
+      "sha256": "3462069653e4be8ea50570f5db12e44a106b7cb785e54c9a65bb2718008e935a",
+      "committedSha256": "3462069653e4be8ea50570f5db12e44a106b7cb785e54c9a65bb2718008e935a",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/test/intervals.test.ts",
+      "sha256": "066aec13586735689e7c7a24e8a14262cfee72647c0a8c2c991aac47d26caf81",
+      "committedSha256": "066aec13586735689e7c7a24e8a14262cfee72647c0a8c2c991aac47d26caf81",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/test/native-relations.test.ts",
+      "sha256": "ccde3b93566d8678c376ddbd74dbbdaa53b93ca12c7c8d5d35e16331c1b51a1c",
+      "committedSha256": "ccde3b93566d8678c376ddbd74dbbdaa53b93ca12c7c8d5d35e16331c1b51a1c",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/test/native.test.ts",
+      "sha256": "6a3f9f5b28112053c4b5d3ac822ccde3b9fee5c6346aebf044239c0bfbc0a01b",
+      "committedSha256": "6a3f9f5b28112053c4b5d3ac822ccde3b9fee5c6346aebf044239c0bfbc0a01b",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/test/negation.test.ts",
+      "sha256": "be005e46312f7a57b8afc5cfd1c494e20b87646dfb398e10885d9187a96c33ff",
+      "committedSha256": "be005e46312f7a57b8afc5cfd1c494e20b87646dfb398e10885d9187a96c33ff",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/test/outcomes.test.ts",
+      "sha256": "fd1a3c5251496d7bf211c5237cbdc1c8382abd46527cd4b43d71b71b13ad94f8",
+      "committedSha256": "fd1a3c5251496d7bf211c5237cbdc1c8382abd46527cd4b43d71b71b13ad94f8",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/test/query.test.ts",
+      "sha256": "1e160f73db4c1db1cdf1367470cbd3b35f22015a83281b8a1e308e111a11d7f7",
+      "committedSha256": "1e160f73db4c1db1cdf1367470cbd3b35f22015a83281b8a1e308e111a11d7f7",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/test/storage.test.ts",
+      "sha256": "b37569ac18da9d4a7251cb6ca3840fdbb7e8bb1ec1bc1cec2b1bc9f3ec5196e6",
+      "committedSha256": "b37569ac18da9d4a7251cb6ca3840fdbb7e8bb1ec1bc1cec2b1bc9f3ec5196e6",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/test/temporal-profile.test.ts",
+      "sha256": "62263fb03a964c9eebbd82b4a611d997f229efda2e34d07cf67745a74e42352b",
+      "committedSha256": "62263fb03a964c9eebbd82b4a611d997f229efda2e34d07cf67745a74e42352b",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/test/unicode.test.ts",
+      "sha256": "2105e98c93200cf516cd23da55d81287880516b82333741a8321caa04745483c",
+      "committedSha256": "2105e98c93200cf516cd23da55d81287880516b82333741a8321caa04745483c",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/tsconfig.json",
+      "sha256": "7f5109fba83cfaae0bbc7d00f39d6b03e4c3ee8e1c905219cdb4cafb4ab7a7ed",
+      "committedSha256": "7f5109fba83cfaae0bbc7d00f39d6b03e4c3ee8e1c905219cdb4cafb4ab7a7ed",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/tsdown.config.ts",
+      "sha256": "7282ee2d19c60d9eabc0c33a9df0d3bbc31b6ef15fbca081ed84907deffd719e",
+      "committedSha256": "7282ee2d19c60d9eabc0c33a9df0d3bbc31b6ef15fbca081ed84907deffd719e",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qlever/vitest.config.ts",
+      "sha256": "885f9e0e9e5c0b8355a5062040982839960a6824cc33fcbed954cf1dc8124415",
+      "committedSha256": "885f9e0e9e5c0b8355a5062040982839960a6824cc33fcbed954cf1dc8124415",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/experiments/qlever-foundation-budget.ts",
+      "sha256": "96418db501adc26eb1b2d446cfc63d5e4fadfdf822f2c914d2da91caf0a84a3a",
+      "committedSha256": "96418db501adc26eb1b2d446cfc63d5e4fadfdf822f2c914d2da91caf0a84a3a",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/experiments/qlever-load-datalog-budget.ts",
+      "sha256": "9bb0b30e771dbb97f1f8200cd7769808279bbd1a0dad1cf65905e73434672839",
+      "committedSha256": "9bb0b30e771dbb97f1f8200cd7769808279bbd1a0dad1cf65905e73434672839",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/experiments/qlever-load-native-baseline.ts",
+      "sha256": "a4b0e61f3f715d765a790990341985a22cfb45ad72f1f83adaf9c8824595f220",
+      "committedSha256": "a4b0e61f3f715d765a790990341985a22cfb45ad72f1f83adaf9c8824595f220",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/experiments/qlever-load-native-strict-baseline.ts",
+      "sha256": "cf6c10e6286ca7b63d82fae020f7fd22205a47697243c9585663b81a6a57f66c",
+      "committedSha256": "cf6c10e6286ca7b63d82fae020f7fd22205a47697243c9585663b81a6a57f66c",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/experiments/qlever-native-baseline.ts",
+      "sha256": "46697dbde93a0c3f97e3d2992ea2ec4c6e27e0705ef33223cad08aeede079ebc",
+      "committedSha256": "46697dbde93a0c3f97e3d2992ea2ec4c6e27e0705ef33223cad08aeede079ebc",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/experiments/qlever-native-entry-baseline.ts",
+      "sha256": "6498c68c235b73e176713378bfa37a0dcf3b46e521700d610f39c1e75d410b71",
+      "committedSha256": "6498c68c235b73e176713378bfa37a0dcf3b46e521700d610f39c1e75d410b71",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/experiments/qlever-native-instance-preflight.ts",
+      "sha256": "e7a7b065597c4433919d82dde0b9d9f08ba8d6880053cfb41dc5a1d65304024c",
+      "committedSha256": "e7a7b065597c4433919d82dde0b9d9f08ba8d6880053cfb41dc5a1d65304024c",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/experiments/qlever-native-preflight-baseline.ts",
+      "sha256": "b780c11db11d9f66182565a133ac9c019999aa772d6b043265b1ea6c9a453d18",
+      "committedSha256": "b780c11db11d9f66182565a133ac9c019999aa772d6b043265b1ea6c9a453d18",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/experiments/qlever-planner-budget.ts",
+      "sha256": "6b859bcdf18c4f44de73d272be526cbbbcbfcfdb9da42119fba02605fd3a2dee",
+      "committedSha256": "6b859bcdf18c4f44de73d272be526cbbbcbfcfdb9da42119fba02605fd3a2dee",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/experiments/qlever-task-basis.ts",
+      "sha256": "e73a8d54cda92d6722ef7216e4b6dfdf56342371c66f778e627ee67480b6a5ff",
+      "committedSha256": "e73a8d54cda92d6722ef7216e4b6dfdf56342371c66f778e627ee67480b6a5ff",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/experiments/verify-feasibility-contract.ts",
+      "sha256": "932fde7c5691dac798dbcc1f8a287b7fad44252059b100ab954c7577bab27cf9",
+      "committedSha256": "932fde7c5691dac798dbcc1f8a287b7fad44252059b100ab954c7577bab27cf9",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/load/dispatch.test.ts",
+      "sha256": "f45cc64cfedae4775c46584597978d32ea282cb3b689e2e8d73e78b15633613b",
+      "committedSha256": "f45cc64cfedae4775c46584597978d32ea282cb3b689e2e8d73e78b15633613b",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/load/dispatch.ts",
+      "sha256": "a37577301b8a494583e491bb9a036604eecb8a0dae7aebcb45530a6a8823c87a",
+      "committedSha256": "a37577301b8a494583e491bb9a036604eecb8a0dae7aebcb45530a6a8823c87a",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/load/model.test.ts",
+      "sha256": "9619a091e6ff454f3dc4ab56467e973597df14fdf7dac65907c9369145a6947e",
+      "committedSha256": "9619a091e6ff454f3dc4ab56467e973597df14fdf7dac65907c9369145a6947e",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/load/model.ts",
+      "sha256": "c975528695a66e965b9bc63429db7cb172b1dcd4929b3bb0d82968e02e356764",
+      "committedSha256": "c975528695a66e965b9bc63429db7cb172b1dcd4929b3bb0d82968e02e356764",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/load/runner.ts",
+      "sha256": "2aa3febdccdaba14afb63b3339272364859e0f93de10e2abc784257ada9f4cc2",
+      "committedSha256": "2aa3febdccdaba14afb63b3339272364859e0f93de10e2abc784257ada9f4cc2",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/load/schema.ts",
+      "sha256": "906a976c85824d3258f2de513013e4ec6e89507707f7b0d5e426463a6a32cad3",
+      "committedSha256": "906a976c85824d3258f2de513013e4ec6e89507707f7b0d5e426463a6a32cad3",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/load/tsconfig.json",
+      "sha256": "b5752c1f120b2c2320c251bc03bcaec830709386b154c8180c479a3f0ea37b7f",
+      "committedSha256": "b5752c1f120b2c2320c251bc03bcaec830709386b154c8180c479a3f0ea37b7f",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/package.json",
+      "sha256": "c478a5b052c8118df671e8ffc582f75842bb991b50e6fd944c9b25b99858574a",
+      "committedSha256": "c478a5b052c8118df671e8ffc582f75842bb991b50e6fd944c9b25b99858574a",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/src/engine-write-counter.ts",
+      "sha256": "9622048b2860ccd51bf61a5060dd580b91442c4a49306cf7ed8daac62978f499",
+      "committedSha256": "9622048b2860ccd51bf61a5060dd580b91442c4a49306cf7ed8daac62978f499",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/src/index.ts",
+      "sha256": "f99159831abd52dd96147719c9cb393cb2483aee3ce6eb742c0debfc4f288653",
+      "committedSha256": "f99159831abd52dd96147719c9cb393cb2483aee3ce6eb742c0debfc4f288653",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/src/native/qlever-recursion.ts",
+      "sha256": "0d2f26abe38e35da65d75c82a23280dd62174bd7a1081fcde48673a73218f058",
+      "committedSha256": "0d2f26abe38e35da65d75c82a23280dd62174bd7a1081fcde48673a73218f058",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/src/native/qlever-workloads.ts",
+      "sha256": "9349878403ee468ce6b64922c648d88f598f799b1c65fc42a712aa47598e54da",
+      "committedSha256": "9349878403ee468ce6b64922c648d88f598f799b1c65fc42a712aa47598e54da",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/src/native/support-paths.ts",
+      "sha256": "1ec48a273db59be302324e44d9e33030d06358560846c64386c85bb4990124ba",
+      "committedSha256": "1ec48a273db59be302324e44d9e33030d06358560846c64386c85bb4990124ba",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/src/native/xtdb-exact-sum.ts",
+      "sha256": "0baa801bd36e8cde4b0fdea3b13902a1c3b761fb2a84a93b0d9d85b026289144",
+      "committedSha256": "0baa801bd36e8cde4b0fdea3b13902a1c3b761fb2a84a93b0d9d85b026289144",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/src/native/xtdb-native-errors.ts",
+      "sha256": "9482600cf9c146c33e59aecfaa2592001779479fcf12aecb9e6be59d22abd74e",
+      "committedSha256": "9482600cf9c146c33e59aecfaa2592001779479fcf12aecb9e6be59d22abd74e",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/src/native/xtdb-workloads.ts",
+      "sha256": "ff39d3f2fcb74ee2a318e8801a12680a4f9f366b4a7f5ed9e20e89d5ccd8a3d0",
+      "committedSha256": "ff39d3f2fcb74ee2a318e8801a12680a4f9f366b4a7f5ed9e20e89d5ccd8a3d0",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/test/c8-reads-never-write.test.ts",
+      "sha256": "7fb67ccfc4688725983003c380070f2fbb7c2977a5289cefc946cdae4b118882",
+      "committedSha256": "7fb67ccfc4688725983003c380070f2fbb7c2977a5289cefc946cdae4b118882",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/test/c8-support-paths.test.ts",
+      "sha256": "35f782c45b1e82660846de1cd9f6996b0a246b8250af0e8434014f314707282f",
+      "committedSha256": "35f782c45b1e82660846de1cd9f6996b0a246b8250af0e8434014f314707282f",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/test/engine-write-counter.test.ts",
+      "sha256": "ca3a34eb79e41fe91c52d94dd0b010dcd377d942480e5a5d990e50dd3ffc33f1",
+      "committedSha256": "ca3a34eb79e41fe91c52d94dd0b010dcd377d942480e5a5d990e50dd3ffc33f1",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/test/query-paths.test.ts",
+      "sha256": "3efad7e2cbcef1a1207fcb20ce6b2a237d4797b04228eb5f01e7ba60882cde2d",
+      "committedSha256": "3efad7e2cbcef1a1207fcb20ce6b2a237d4797b04228eb5f01e7ba60882cde2d",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/test/runtime-conformance.test.ts",
+      "sha256": "b01ac61355aaf25ac0e5823a3907b4d906b68898b9b2f1864597c6a80d717834",
+      "committedSha256": "b01ac61355aaf25ac0e5823a3907b4d906b68898b9b2f1864597c6a80d717834",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/test/xtdb-native-library.test.ts",
+      "sha256": "a8cab1a9ee32948e94e5debbbadfd6e517733177ea5cbf86f33fa2385c786d3d",
+      "committedSha256": "a8cab1a9ee32948e94e5debbbadfd6e517733177ea5cbf86f33fa2385c786d3d",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/tsconfig.json",
+      "sha256": "17221ae3d19e6020f8a00b5e4bb3842ca6cde6f60385b1a49009aa31d3638ee7",
+      "committedSha256": "17221ae3d19e6020f8a00b5e4bb3842ca6cde6f60385b1a49009aa31d3638ee7",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/tsdown.config.ts",
+      "sha256": "4e06c3472291263688f7449f63b7dcdf0e3e41dd4639ce1b895612ade13b6133",
+      "committedSha256": "4e06c3472291263688f7449f63b7dcdf0e3e41dd4639ce1b895612ade13b6133",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/vitest.config.ts",
+      "sha256": "c7d7594f44c11ad53020f143cd650dd58f4146a1b3c82265273d43f8cf893c62",
+      "committedSha256": "c7d7594f44c11ad53020f143cd650dd58f4146a1b3c82265273d43f8cf893c62",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/workloads/foundation-entry.ts",
+      "sha256": "f106e266670300d06c04336ac3a11f5ebff621997f6955ade9a88a0e1b9c7576",
+      "committedSha256": "f106e266670300d06c04336ac3a11f5ebff621997f6955ade9a88a0e1b9c7576",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/workloads/lab-conformance.ts",
+      "sha256": "fb0898e349fef7102663443fa240d9ae2995f6309fd2ab264c1c91ad9a05f397",
+      "committedSha256": "fb0898e349fef7102663443fa240d9ae2995f6309fd2ab264c1c91ad9a05f397",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/workloads/public-pilot.ts",
+      "sha256": "336a8d24c37c99ad8c36a3f4cc4ebb119c79b44023554aa9a4e35f723e361cad",
+      "committedSha256": "336a8d24c37c99ad8c36a3f4cc4ebb119c79b44023554aa9a4e35f723e361cad",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/workloads/runner.ts",
+      "sha256": "e13a872ea5bde90a9bcf37f83885036df4f635295ce57ab45261d78928567208",
+      "committedSha256": "e13a872ea5bde90a9bcf37f83885036df4f635295ce57ab45261d78928567208",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/workloads/scale-loader.ts",
+      "sha256": "5ae2ad8c321f7ca697483a1d4c240ae5ee6e395e55a546a7c8dd1f4b86576486",
+      "committedSha256": "5ae2ad8c321f7ca697483a1d4c240ae5ee6e395e55a546a7c8dd1f4b86576486",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/workloads/verify-qlever-recovery.ts",
+      "sha256": "6cc2355eca3f49e4cedafef04875c6f9e6ff20d0152791e12ef3d8ac9a279eca",
+      "committedSha256": "6cc2355eca3f49e4cedafef04875c6f9e6ff20d0152791e12ef3d8ac9a279eca",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/workloads/verify-scale.ts",
+      "sha256": "fe02b3271014c1ea0c7aa69b7c64dec07d01be6bce113a3d41bc901351b820e5",
+      "committedSha256": "fe02b3271014c1ea0c7aa69b7c64dec07d01be6bce113a3d41bc901351b820e5",
+      "unchanged": true
+    },
+    {
+      "path": "packages/qualification/workloads/xtdb-native-x02.ts",
+      "sha256": "01130a6e2fcc63bf6718df70241dcbea6e636c0176b8f181636bb96a16de6d84",
+      "committedSha256": "01130a6e2fcc63bf6718df70241dcbea6e636c0176b8f181636bb96a16de6d84",
+      "unchanged": true
+    },
+    {
+      "path": "packages/sql/package.json",
+      "sha256": "ac415047d06a5118b70a56d7381c6f9a430500ad0560bd7c034645e61fbdab92",
+      "committedSha256": "ac415047d06a5118b70a56d7381c6f9a430500ad0560bd7c034645e61fbdab92",
+      "unchanged": true
+    },
+    {
+      "path": "packages/sql/src/DatabaseManagerLayer.ts",
+      "sha256": "ee539cb30d7e9c54d6d9cce3c52b82859cfa122f42bf7c0a91ac0b011242d5b8",
+      "committedSha256": "ee539cb30d7e9c54d6d9cce3c52b82859cfa122f42bf7c0a91ac0b011242d5b8",
+      "unchanged": true
+    },
+    {
+      "path": "packages/sql/src/DatabaseRegistryLayer.ts",
+      "sha256": "274d5b9a9ac5bdbdf41bc72b2d09415959e1a7c6949d60fccd4b0dd5786b2691",
+      "committedSha256": "274d5b9a9ac5bdbdf41bc72b2d09415959e1a7c6949d60fccd4b0dd5786b2691",
+      "unchanged": true
+    },
+    {
+      "path": "packages/sql/src/SqlQueryExecutor.ts",
+      "sha256": "7436c6a27363c0927fafb0b7aad70112495ec1a8d60cd563645cb65d36ab2f5f",
+      "committedSha256": "7436c6a27363c0927fafb0b7aad70112495ec1a8d60cd563645cb65d36ab2f5f",
+      "unchanged": true
+    },
+    {
+      "path": "packages/sql/src/SqlSnapshots.ts",
+      "sha256": "36818a1fe65f8ba8fdea3c70fd679a54fad29d55b4aed64df3cb5edb641553ae",
+      "committedSha256": "36818a1fe65f8ba8fdea3c70fd679a54fad29d55b4aed64df3cb5edb641553ae",
+      "unchanged": true
+    },
+    {
+      "path": "packages/sql/src/StorageBackend.ts",
+      "sha256": "14d7841ad822384c83f6a0de2c0baf6f25f8af174c0b46846cbdf4d9728827f9",
+      "committedSha256": "14d7841ad822384c83f6a0de2c0baf6f25f8af174c0b46846cbdf4d9728827f9",
+      "unchanged": true
+    },
+    {
+      "path": "packages/sql/src/index.ts",
+      "sha256": "6b5d02d354239fb3030ff2f64c1b2ee159058a09dcf5a4b0953dc59362a3cd22",
+      "committedSha256": "6b5d02d354239fb3030ff2f64c1b2ee159058a09dcf5a4b0953dc59362a3cd22",
+      "unchanged": true
+    },
+    {
+      "path": "packages/sql/src/migrations.ts",
+      "sha256": "22c2a1836d35506f651625b614fa4759217f78dcf0ceb8d05edb3c5bbe6949f3",
+      "committedSha256": "22c2a1836d35506f651625b614fa4759217f78dcf0ceb8d05edb3c5bbe6949f3",
+      "unchanged": true
+    },
+    {
+      "path": "packages/sql/src/queries.ts",
+      "sha256": "a5f085c74875ef467fcff844ac16c4f5fb4906b338f905083e1c018be0329a4d",
+      "committedSha256": "a5f085c74875ef467fcff844ac16c4f5fb4906b338f905083e1c018be0329a4d",
+      "unchanged": true
+    },
+    {
+      "path": "packages/sql/src/schema.ts",
+      "sha256": "380240a83daa971fe8c4a8286d9ac1be5801e0c59f806eb180409be5beb39a04",
+      "committedSha256": "380240a83daa971fe8c4a8286d9ac1be5801e0c59f806eb180409be5beb39a04",
+      "unchanged": true
+    },
+    {
+      "path": "packages/sql/test/exact-integer-results.test.ts",
+      "sha256": "e466be6ef78f1cc91a2c230afdb5ee63524e6f0efc7055815d8dde99884e2bbd",
+      "committedSha256": "e466be6ef78f1cc91a2c230afdb5ee63524e6f0efc7055815d8dde99884e2bbd",
+      "unchanged": true
+    },
+    {
+      "path": "packages/sql/test/sql-contract.test.ts",
+      "sha256": "014aea948000bd76c211585498683491261fea8ce0ea1e0112df79090edc364e",
+      "committedSha256": "014aea948000bd76c211585498683491261fea8ce0ea1e0112df79090edc364e",
+      "unchanged": true
+    },
+    {
+      "path": "packages/sql/tsconfig.json",
+      "sha256": "9f151764a1fce874852317f96f179ae45811a4446870edc2b2185cd1a7368e59",
+      "committedSha256": "9f151764a1fce874852317f96f179ae45811a4446870edc2b2185cd1a7368e59",
+      "unchanged": true
+    },
+    {
+      "path": "packages/sql/tsdown.config.ts",
+      "sha256": "edbff64ab679cf849914ace809cafa6364821901faff88cfec9874346fd54504",
+      "committedSha256": "edbff64ab679cf849914ace809cafa6364821901faff88cfec9874346fd54504",
+      "unchanged": true
+    },
+    {
+      "path": "packages/sql/vitest.config.ts",
+      "sha256": "951ada711e5926c4cddca0ffcbd9198e40fa11b9cdb20a6b937230b6270d9229",
+      "committedSha256": "951ada711e5926c4cddca0ffcbd9198e40fa11b9cdb20a6b937230b6270d9229",
+      "unchanged": true
+    },
+    {
+      "path": "packages/sqlite/package.json",
+      "sha256": "b8fe0754cd4113d14e4a0710a6c73e3932717fdddd50d9b35680ac24cc3a045c",
+      "committedSha256": "b8fe0754cd4113d14e4a0710a6c73e3932717fdddd50d9b35680ac24cc3a045c",
+      "unchanged": true
+    },
+    {
+      "path": "packages/sqlite/src/SqliteAdapter.ts",
+      "sha256": "f70dc5ea3c971d22f618407ea4ae398cbe669c914647654e7f07b97a2146ef3b",
+      "committedSha256": "f70dc5ea3c971d22f618407ea4ae398cbe669c914647654e7f07b97a2146ef3b",
+      "unchanged": true
+    },
+    {
+      "path": "packages/sqlite/src/SqliteBackend.ts",
+      "sha256": "1abab0395073f12cc3623d1ac3a21f3df25a8c06f6e3631a39640eb32645be04",
+      "committedSha256": "1abab0395073f12cc3623d1ac3a21f3df25a8c06f6e3631a39640eb32645be04",
+      "unchanged": true
+    },
+    {
+      "path": "packages/sqlite/src/SqliteLayer.ts",
+      "sha256": "550accbb71358789a32cf3a3a0c781ce76e45fa1973d6ef8f8af710e33270ff0",
+      "committedSha256": "550accbb71358789a32cf3a3a0c781ce76e45fa1973d6ef8f8af710e33270ff0",
+      "unchanged": true
+    },
+    {
+      "path": "packages/sqlite/src/SqliteTriples.ts",
+      "sha256": "66654781de2301efb98e38ab8841246b1f088980d8e89b7a22c248ce6375f196",
+      "committedSha256": "66654781de2301efb98e38ab8841246b1f088980d8e89b7a22c248ce6375f196",
+      "unchanged": true
+    },
+    {
+      "path": "packages/sqlite/src/dialect.ts",
+      "sha256": "2b6ae49829d9e282f24fa6f2bc491d15871c958dfe2f94bfeb775896b12e1fc4",
+      "committedSha256": "2b6ae49829d9e282f24fa6f2bc491d15871c958dfe2f94bfeb775896b12e1fc4",
+      "unchanged": true
+    },
+    {
+      "path": "packages/sqlite/src/index.ts",
+      "sha256": "1798b78d8fd87bdb523fe68d6b3afdc11e3f207184f9378691adcbc6cf352a9e",
+      "committedSha256": "1798b78d8fd87bdb523fe68d6b3afdc11e3f207184f9378691adcbc6cf352a9e",
+      "unchanged": true
+    },
+    {
+      "path": "packages/sqlite/test/conformance.test.ts",
+      "sha256": "ce6aad225f950b4f371759d6cf415b3d1601f35c22a52a2e92602886e2b858b9",
+      "committedSha256": "ce6aad225f950b4f371759d6cf415b3d1601f35c22a52a2e92602886e2b858b9",
+      "unchanged": true
+    },
+    {
+      "path": "packages/sqlite/test/durability.test.ts",
+      "sha256": "a5e3ba11f02dda7684f0ab4bbe278e5bb0f9503418d249b214e1618e9e8f6bcd",
+      "committedSha256": "a5e3ba11f02dda7684f0ab4bbe278e5bb0f9503418d249b214e1618e9e8f6bcd",
+      "unchanged": true
+    },
+    {
+      "path": "packages/sqlite/test/exports.test.ts",
+      "sha256": "8500a94add5113ef72d287ab65eda872fa95f040dd5a84d66374d6875ab70833",
+      "committedSha256": "8500a94add5113ef72d287ab65eda872fa95f040dd5a84d66374d6875ab70833",
+      "unchanged": true
+    },
+    {
+      "path": "packages/sqlite/test/migrations.test.ts",
+      "sha256": "8a322dd32d448808f184e97ddbf87294b41e7adc2df913f0dd28fbebfe1450d1",
+      "committedSha256": "8a322dd32d448808f184e97ddbf87294b41e7adc2df913f0dd28fbebfe1450d1",
+      "unchanged": true
+    },
+    {
+      "path": "packages/sqlite/test/numeric-index.test.ts",
+      "sha256": "40e1583d486943e6e5e40cb24394ed3e1b0551e6508f44b318f30f09048507c6",
+      "committedSha256": "40e1583d486943e6e5e40cb24394ed3e1b0551e6508f44b318f30f09048507c6",
+      "unchanged": true
+    },
+    {
+      "path": "packages/sqlite/tsconfig.json",
+      "sha256": "9f151764a1fce874852317f96f179ae45811a4446870edc2b2185cd1a7368e59",
+      "committedSha256": "9f151764a1fce874852317f96f179ae45811a4446870edc2b2185cd1a7368e59",
+      "unchanged": true
+    },
+    {
+      "path": "packages/sqlite/tsdown.config.ts",
+      "sha256": "edbff64ab679cf849914ace809cafa6364821901faff88cfec9874346fd54504",
+      "committedSha256": "edbff64ab679cf849914ace809cafa6364821901faff88cfec9874346fd54504",
+      "unchanged": true
+    },
+    {
+      "path": "packages/sqlite/vitest.config.ts",
+      "sha256": "951ada711e5926c4cddca0ffcbd9198e40fa11b9cdb20a6b937230b6270d9229",
+      "committedSha256": "951ada711e5926c4cddca0ffcbd9198e40fa11b9cdb20a6b937230b6270d9229",
+      "unchanged": true
+    },
+    {
+      "path": "packages/testkit/package.json",
+      "sha256": "e8e1bc9ec919cd0686ca8d88b42b556b3d77936a863b6f011a939f62ca1cc4fd",
+      "committedSha256": "e8e1bc9ec919cd0686ca8d88b42b556b3d77936a863b6f011a939f62ca1cc4fd",
+      "unchanged": true
+    },
+    {
+      "path": "packages/testkit/src/index.ts",
+      "sha256": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988",
+      "committedSha256": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988",
+      "unchanged": true
+    },
+    {
+      "path": "packages/testkit/test/fixtures.test.ts",
+      "sha256": "e363aa179d6d27fffb0e5c5cdf8df03e1d1dce491dd6d02f2cf8fe5a61b32061",
+      "committedSha256": "e363aa179d6d27fffb0e5c5cdf8df03e1d1dce491dd6d02f2cf8fe5a61b32061",
+      "unchanged": true
+    },
+    {
+      "path": "packages/testkit/tsconfig.json",
+      "sha256": "9f151764a1fce874852317f96f179ae45811a4446870edc2b2185cd1a7368e59",
+      "committedSha256": "9f151764a1fce874852317f96f179ae45811a4446870edc2b2185cd1a7368e59",
+      "unchanged": true
+    },
+    {
+      "path": "packages/testkit/tsdown.config.ts",
+      "sha256": "ba70ffaca4fd8d5a2087a1e987bb63554f616f4a1865133b611533123fe99246",
+      "committedSha256": "ba70ffaca4fd8d5a2087a1e987bb63554f616f4a1865133b611533123fe99246",
+      "unchanged": true
+    },
+    {
+      "path": "packages/testkit/vitest.config.ts",
+      "sha256": "951ada711e5926c4cddca0ffcbd9198e40fa11b9cdb20a6b937230b6270d9229",
+      "committedSha256": "951ada711e5926c4cddca0ffcbd9198e40fa11b9cdb20a6b937230b6270d9229",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/experiments/concurrent-readers.ts",
+      "sha256": "cad34522107b0c87b890ca58a399db5b354354d677b69f25b25cd730a9bb9ca4",
+      "committedSha256": "cad34522107b0c87b890ca58a399db5b354354d677b69f25b25cd730a9bb9ca4",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/experiments/constraint-shapes.ts",
+      "sha256": "059c6eddf0ea08b0958d024a1fe2d803c42b7e8057ca62e481b79f9d9d848feb",
+      "committedSha256": "059c6eddf0ea08b0958d024a1fe2d803c42b7e8057ca62e481b79f9d9d848feb",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/experiments/native-entry.ts",
+      "sha256": "ade743681636055b7e5e18fcb105f8da59b579e8de61b65452596b05027872a4",
+      "committedSha256": "ade743681636055b7e5e18fcb105f8da59b579e8de61b65452596b05027872a4",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/experiments/native-f64-parameters.ts",
+      "sha256": "7626ff8b580b6e8da44c12c1ebc31f0dd172586e0f535d77daf2531f9e280504",
+      "committedSha256": "7626ff8b580b6e8da44c12c1ebc31f0dd172586e0f535d77daf2531f9e280504",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/experiments/optional-shapes.ts",
+      "sha256": "a872636b6b1be9ec73237b7c2a7e847beb59b596af53ced021b15c426cc8a506",
+      "committedSha256": "a872636b6b1be9ec73237b7c2a7e847beb59b596af53ced021b15c426cc8a506",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/experiments/query/evidence-03e67d57-9e8a-4c31-abb1-e2da1e9d5891.json",
+      "sha256": "bab075ec6f8d238f207c085fd4ff6a2b6d076622515e1ad6b850fc13f1163955",
+      "committedSha256": "bab075ec6f8d238f207c085fd4ff6a2b6d076622515e1ad6b850fc13f1163955",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/experiments/query/group-evidence-1793971844886.json",
+      "sha256": "ef2719e9b62831ac3e6ccd6fceb81526def9347f24fa00b3daa56207e584286c",
+      "committedSha256": "ef2719e9b62831ac3e6ccd6fceb81526def9347f24fa00b3daa56207e584286c",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/experiments/query/group-evidence-1793971963962.json",
+      "sha256": "0c7c6336fa79b02dab0668f245f47114758a167193b05d702b08d0d718c5c3f4",
+      "committedSha256": "0c7c6336fa79b02dab0668f245f47114758a167193b05d702b08d0d718c5c3f4",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/experiments/query/group-shapes.ts",
+      "sha256": "a8877ff153174f0e9b454841859cbe0b6304d5e8d0899b8e8b6ef1a67d5ddd52",
+      "committedSha256": "a8877ff153174f0e9b454841859cbe0b6304d5e8d0899b8e8b6ef1a67d5ddd52",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/experiments/query/integer-casts-1793972584315.json",
+      "sha256": "561ae42344615d003f6fc0300b509b1c82c32a111681484678908711006c0d6f",
+      "committedSha256": "561ae42344615d003f6fc0300b509b1c82c32a111681484678908711006c0d6f",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/experiments/query/integer-casts.ts",
+      "sha256": "200f08066dbaee6a992c3049cf4fa05142fe78d0e1bc16e1a589931abb35cfc8",
+      "committedSha256": "200f08066dbaee6a992c3049cf4fa05142fe78d0e1bc16e1a589931abb35cfc8",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/experiments/query/integer-extrema-1793974552733.json",
+      "sha256": "1c9fdf7475cc564d2657d12315ddc7f2d2139d95d60b55617c20048124b355ac",
+      "committedSha256": "1c9fdf7475cc564d2657d12315ddc7f2d2139d95d60b55617c20048124b355ac",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/experiments/query/integer-extrema.ts",
+      "sha256": "7a0d18a57254342d08715571c4565ad04da7047431c75437301d674e7843c38a",
+      "committedSha256": "7a0d18a57254342d08715571c4565ad04da7047431c75437301d674e7843c38a",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/experiments/query/native-shapes.ts",
+      "sha256": "383850ee9dd2d0965bc482f4bcf421fce2a055a7bd97304a3b7bb61b9d18385f",
+      "committedSha256": "383850ee9dd2d0965bc482f4bcf421fce2a055a7bd97304a3b7bb61b9d18385f",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/experiments/transaction-admission.ts",
+      "sha256": "97a71cebea8e9ef7a0cced6433ec9e73ecb9edfe114f2fad46e6af663045cbab",
+      "committedSha256": "97a71cebea8e9ef7a0cced6433ec9e73ecb9edfe114f2fad46e6af663045cbab",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/package.json",
+      "sha256": "dc285f3d026a16daca9fb932182f9b31c817fcb24ef06707db31d7a7f0a982a9",
+      "committedSha256": "dc285f3d026a16daca9fb932182f9b31c817fcb24ef06707db31d7a7f0a982a9",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/qualification/public-pilot.ts",
+      "sha256": "02362088bc006150e46a190c325cfcdc169e6e83a6b75b8c37524b45eaeffd93",
+      "committedSha256": "02362088bc006150e46a190c325cfcdc169e6e83a6b75b8c37524b45eaeffd93",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/qualification/scale-loader.ts",
+      "sha256": "f0cfe258854aa585cc83fa193089a4ee344e35240800780c6d349c0f0fe853ea",
+      "committedSha256": "f0cfe258854aa585cc83fa193089a4ee344e35240800780c6d349c0f0fe853ea",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/src/ConstraintValidation.ts",
+      "sha256": "b298dfe7841684ea3fda905b283e16f33853a0884af04f13b9913b89d82e9d29",
+      "committedSha256": "b298dfe7841684ea3fda905b283e16f33853a0884af04f13b9913b89d82e9d29",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/src/MaintainedQueries.ts",
+      "sha256": "2e8618e3e27e3cc7d60b237aebc17922b6a5e12389ffbb31d4adaf922317dabe",
+      "committedSha256": "2e8618e3e27e3cc7d60b237aebc17922b6a5e12389ffbb31d4adaf922317dabe",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/src/Operations.ts",
+      "sha256": "2fa4dc6fc4c50a42cc088d497f70e49029e2f535399ae84d9c94239125147b66",
+      "committedSha256": "2fa4dc6fc4c50a42cc088d497f70e49029e2f535399ae84d9c94239125147b66",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/src/ReadOnlyClient.ts",
+      "sha256": "279ce5833b5f123f8f3a326defca0fbb60d1d369738dd91a203ddf70b37fdfac",
+      "committedSha256": "279ce5833b5f123f8f3a326defca0fbb60d1d369738dd91a203ddf70b37fdfac",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/src/TemporalQueries.ts",
+      "sha256": "5b2223281e10d076498fe6c1c1676643a9e70591cca337998eebd9f19fbcfc14",
+      "committedSha256": "5b2223281e10d076498fe6c1c1676643a9e70591cca337998eebd9f19fbcfc14",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/src/TransactionContext.ts",
+      "sha256": "f4696c6539db3088e940c305ab484fc514fe32a7d09ea6b6f3397cd9878a43ad",
+      "committedSha256": "f4696c6539db3088e940c305ab484fc514fe32a7d09ea6b6f3397cd9878a43ad",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/src/XtdbClient.ts",
+      "sha256": "fa5c31c44c45e9e129d65464ee2f012146911f5b11d433d1ce7d73aadee6c67c",
+      "committedSha256": "fa5c31c44c45e9e129d65464ee2f012146911f5b11d433d1ce7d73aadee6c67c",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/src/XtdbQueryExecutor.ts",
+      "sha256": "5e219a2c6c4aef5ad187d140653f46b8260731f5dc2019535017bb1d4cf79c7d",
+      "committedSha256": "5e219a2c6c4aef5ad187d140653f46b8260731f5dc2019535017bb1d4cf79c7d",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/src/XtdbStorageAdapter.ts",
+      "sha256": "334c7193f2658e9c01fbee78febb4772587e5c9c522530d861dfe9c23400547d",
+      "committedSha256": "334c7193f2658e9c01fbee78febb4772587e5c9c522530d861dfe9c23400547d",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/src/codecs.ts",
+      "sha256": "f36b8de4af66fddd30b3a055ebf4473ad29c0634d9fd1ea0e45c7fb4e522e8f3",
+      "committedSha256": "f36b8de4af66fddd30b3a055ebf4473ad29c0634d9fd1ea0e45c7fb4e522e8f3",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/src/index.ts",
+      "sha256": "85baf1532e9e5c5d37e33686f95b16c6c2adafe951234ae773ff1cd5db1699db",
+      "committedSha256": "85baf1532e9e5c5d37e33686f95b16c6c2adafe951234ae773ff1cd5db1699db",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/src/native/NativeQueries.ts",
+      "sha256": "ff9b1eecad9294bb67bb8764ef2c2224882127ba2a7b8c608d81cf8de9ca7cee",
+      "committedSha256": "ff9b1eecad9294bb67bb8764ef2c2224882127ba2a7b8c608d81cf8de9ca7cee",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/src/native/Reachability.ts",
+      "sha256": "d404e84931d4cecb339b5f935a4791b0035afb4e7999c7010fdec90f26680e91",
+      "committedSha256": "d404e84931d4cecb339b5f935a4791b0035afb4e7999c7010fdec90f26680e91",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/src/native/ReadOnlySql.ts",
+      "sha256": "0e41c42404c3ee92a7257d7b4913a33d0f6f52f22aff23232fbc733fcda21599",
+      "committedSha256": "0e41c42404c3ee92a7257d7b4913a33d0f6f52f22aff23232fbc733fcda21599",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/src/native/Sources.ts",
+      "sha256": "0b4e07d94873a74eabdcfa5aead4ab2f30e5614a3455b8fb226f326c1b6b0a77",
+      "committedSha256": "0b4e07d94873a74eabdcfa5aead4ab2f30e5614a3455b8fb226f326c1b6b0a77",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/src/query/compiler.ts",
+      "sha256": "5f532c15896d6939169e0fc14ead76d4841028039d06fd28d3260d97f70b104d",
+      "committedSha256": "5f532c15896d6939169e0fc14ead76d4841028039d06fd28d3260d97f70b104d",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/src/query/domains.ts",
+      "sha256": "6e9369d2005f63e54b52afd0a6d90c9ffe1ad463612d90e2a0f4f607db20819a",
+      "committedSha256": "6e9369d2005f63e54b52afd0a6d90c9ffe1ad463612d90e2a0f4f607db20819a",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/src/query/grouping.ts",
+      "sha256": "2abd261779d9cd648d53b20485eccaee644f2fe4b5cf86d899d86c552bff4586",
+      "committedSha256": "2abd261779d9cd648d53b20485eccaee644f2fe4b5cf86d899d86c552bff4586",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/src/query/overlay.ts",
+      "sha256": "118b8f8651d69516b64b50cf77c86e43de916a8e7042cdcfe2e3aa1379423491",
+      "committedSha256": "118b8f8651d69516b64b50cf77c86e43de916a8e7042cdcfe2e3aa1379423491",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/src/query/recursion.ts",
+      "sha256": "6796b505545ad47a3f60cfc69823f20256b4856953a5f68cfb7b17f9b2d7c5be",
+      "committedSha256": "6796b505545ad47a3f60cfc69823f20256b4856953a5f68cfb7b17f9b2d7c5be",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/test/adapter.test.ts",
+      "sha256": "083947cc74626aa6ecd012c7de737fe4db641e768e6699f8bd4f01c30a6c1fee",
+      "committedSha256": "083947cc74626aa6ecd012c7de737fe4db641e768e6699f8bd4f01c30a6c1fee",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/test/client-parameters.test.ts",
+      "sha256": "4803e89defd6cf311059b8ea9b5de5f4236c9148617f959ce5c8cbe7c6f1976f",
+      "committedSha256": "4803e89defd6cf311059b8ea9b5de5f4236c9148617f959ce5c8cbe7c6f1976f",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/test/computed-query.test.ts",
+      "sha256": "d7e2f82b4a59fde3f8298ca1ef34fb860f2f7167a1a56bdf5094c85890ece9f7",
+      "committedSha256": "d7e2f82b4a59fde3f8298ca1ef34fb860f2f7167a1a56bdf5094c85890ece9f7",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/test/conformance.test.ts",
+      "sha256": "98e0bd49eeaac19ae072929589e2870df1c7e9d9d8e9f7042d700a2f2d8ba921",
+      "committedSha256": "98e0bd49eeaac19ae072929589e2870df1c7e9d9d8e9f7042d700a2f2d8ba921",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/test/constraints.test.ts",
+      "sha256": "9ce5678c8098b80ddacd176dbe78e9b6a4616cdbecfceed3accaf5ea1cfb0552",
+      "committedSha256": "9ce5678c8098b80ddacd176dbe78e9b6a4616cdbecfceed3accaf5ea1cfb0552",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/test/integer-query.test.ts",
+      "sha256": "65d238e925e10dd8457dc37207f1282af5129d480a034ed3246f0570056ec751",
+      "committedSha256": "65d238e925e10dd8457dc37207f1282af5129d480a034ed3246f0570056ec751",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/test/integer-storage.test.ts",
+      "sha256": "38879ac5c2147c55db2f38793ee825f0171ea763d95aad6fb19151c97ba09efc",
+      "committedSha256": "38879ac5c2147c55db2f38793ee825f0171ea763d95aad6fb19151c97ba09efc",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/test/intervals.test.ts",
+      "sha256": "11576e6dc8c9ab1f3501646fa7da5e18840e9bb0b595a65e9559c891bf66baad",
+      "committedSha256": "11576e6dc8c9ab1f3501646fa7da5e18840e9bb0b595a65e9559c891bf66baad",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/test/json-compatibility.test.ts",
+      "sha256": "3536b4deb402db2e782b19eddcb987de72333cd2b5c41745ff75e9d172a1f3e1",
+      "committedSha256": "3536b4deb402db2e782b19eddcb987de72333cd2b5c41745ff75e9d172a1f3e1",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/test/maintained.test.ts",
+      "sha256": "d66b05953d859e285653bc42ccdb72412e365e1e4fdeec8932cfbb7e91e39e61",
+      "committedSha256": "d66b05953d859e285653bc42ccdb72412e365e1e4fdeec8932cfbb7e91e39e61",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/test/native-query.test.ts",
+      "sha256": "9fe37d6484537d5b41763407b060896cc7d2dae0db4da853a0d3b5c7cf62e26d",
+      "committedSha256": "9fe37d6484537d5b41763407b060896cc7d2dae0db4da853a0d3b5c7cf62e26d",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/test/native-reachability.test.ts",
+      "sha256": "2c2c7a26bc41074910319861b4b473744ddb16187a189a52022f31cb504d50a6",
+      "committedSha256": "2c2c7a26bc41074910319861b4b473744ddb16187a189a52022f31cb504d50a6",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/test/native-sql-envelope.test.ts",
+      "sha256": "d42834dc78c47863c920c163e5813ea038ef0e02f3277dfdeee223b708e84723",
+      "committedSha256": "d42834dc78c47863c920c163e5813ea038ef0e02f3277dfdeee223b708e84723",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/test/query-compiler.test.ts",
+      "sha256": "6df99f7e60d6ae612d130f40aa3a409c47aaf5839d3b9c79528230eec971f9c1",
+      "committedSha256": "6df99f7e60d6ae612d130f40aa3a409c47aaf5839d3b9c79528230eec971f9c1",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/test/query-integration.test.ts",
+      "sha256": "37ffb5163eefd653d87bba5aafb8fc090530a50dd7f2aa1c26e15d7f19507592",
+      "committedSha256": "37ffb5163eefd653d87bba5aafb8fc090530a50dd7f2aa1c26e15d7f19507592",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/tsconfig.json",
+      "sha256": "7f5109fba83cfaae0bbc7d00f39d6b03e4c3ee8e1c905219cdb4cafb4ab7a7ed",
+      "committedSha256": "7f5109fba83cfaae0bbc7d00f39d6b03e4c3ee8e1c905219cdb4cafb4ab7a7ed",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/tsdown.config.ts",
+      "sha256": "7282ee2d19c60d9eabc0c33a9df0d3bbc31b6ef15fbca081ed84907deffd719e",
+      "committedSha256": "7282ee2d19c60d9eabc0c33a9df0d3bbc31b6ef15fbca081ed84907deffd719e",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/vitest.config.ts",
+      "sha256": "abc07cc5d87988fe366bca2eebf5d62f7f7996bedb5dcc13adea43c7a7b6d592",
+      "committedSha256": "abc07cc5d87988fe366bca2eebf5d62f7f7996bedb5dcc13adea43c7a7b6d592",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/workloads/calibrate-capacity.ts",
+      "sha256": "a0c56c4b0dd39ccda2847b871a9a5a51588468d979c1df0263efb4c6a07fa454",
+      "committedSha256": "a0c56c4b0dd39ccda2847b871a9a5a51588468d979c1df0263efb4c6a07fa454",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/workloads/capacity-experiments.ts",
+      "sha256": "c17f8c2d45bdd65111e1c3a92598055b9dc478997cbd9586efaf085290440432",
+      "committedSha256": "c17f8c2d45bdd65111e1c3a92598055b9dc478997cbd9586efaf085290440432",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/workloads/runner.ts",
+      "sha256": "c74b2e9509c9b18887f7ab412d96fed55044bbccf26c6966cf2a3f8d8ea6c969",
+      "committedSha256": "c74b2e9509c9b18887f7ab412d96fed55044bbccf26c6966cf2a3f8d8ea6c969",
+      "unchanged": true
+    },
+    {
+      "path": "packages/xtdb/workloads/verify-scale.ts",
+      "sha256": "ce4247046a0b1a0c0f60f19ef7652214d1102dfd49b3f790a45f417fe3a9c568",
+      "committedSha256": "ce4247046a0b1a0c0f60f19ef7652214d1102dfd49b3f790a45f417fe3a9c568",
+      "unchanged": true
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "sha256": "7a02f735718ecdd29fdbfaf8ec2e2b05c92ad773cdc27d1920a278c5c7f4ba14",
+      "committedSha256": "7a02f735718ecdd29fdbfaf8ec2e2b05c92ad773cdc27d1920a278c5c7f4ba14",
+      "unchanged": true
+    },
+    {
+      "path": "pnpm-workspace.yaml",
+      "sha256": "8efe0c32a811745c0b8ad23757c32cc90870f31fabcd543070cdb4746bfbadf0",
+      "committedSha256": "8efe0c32a811745c0b8ad23757c32cc90870f31fabcd543070cdb4746bfbadf0",
+      "unchanged": true
+    },
+    {
+      "path": "tsconfig.alchemy.json",
+      "sha256": "d3b563b19ffd4516a115b43d246cfda285ca10a527cff4a1361a742c377fd7c6",
+      "committedSha256": "d3b563b19ffd4516a115b43d246cfda285ca10a527cff4a1361a742c377fd7c6",
+      "unchanged": true
+    },
+    {
+      "path": "tsconfig.base.json",
+      "sha256": "34aef906b37804de27a64f76fdfe4731265ade36435164b94be60687db19e281",
+      "committedSha256": "34aef906b37804de27a64f76fdfe4731265ade36435164b94be60687db19e281",
+      "unchanged": true
+    },
+    {
+      "path": "tsconfig.node.json",
+      "sha256": "d2db45efa424a2d677e3d72f50e774d18d24b31cbf3724a6e0abe52dfcbff9a1",
+      "committedSha256": "d2db45efa424a2d677e3d72f50e774d18d24b31cbf3724a6e0abe52dfcbff9a1",
+      "unchanged": true
+    },
+    {
+      "path": "vitest.workspace-aliases.ts",
+      "sha256": "0e79694cf7c6857eeeae4c5610652a981542594e2548c70d60ea48ff3e810ce4",
+      "committedSha256": "0e79694cf7c6857eeeae4c5610652a981542594e2548c70d60ea48ff3e810ce4",
+      "unchanged": true
+    }
+  ],
+  "probes": [
+    {
+      "path": "lab/verify/C8/adversarial.test.ts",
+      "revision": "74e5627",
+      "original": "lab/verify/C8/adversarial.test.ts",
+      "sha256": "00d856d747e0394c012923290e2e2942f75532aab9ff36862221872dc02b42d8",
+      "reviewerSha256": "00d856d747e0394c012923290e2e2942f75532aab9ff36862221872dc02b42d8",
+      "unchanged": true
+    },
+    {
+      "path": "lab/verify/C8/round3-delta.test.ts",
+      "revision": "029f9d3",
+      "original": "lab/verify/C8/round2/delta.test.ts",
+      "sha256": "23ba09266beff803484c3e1321017c6f6e90c5f12e7ff4c7a740b3c889f28873",
+      "reviewerSha256": "23ba09266beff803484c3e1321017c6f6e90c5f12e7ff4c7a740b3c889f28873",
+      "unchanged": true
+    }
+  ]
+}

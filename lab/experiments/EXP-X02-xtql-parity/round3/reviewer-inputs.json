@@ -1,0 +1,127 @@
+{
+  "at": "2026-11-08T22:01:36.884Z",
+  "baseline": "bf1ad4d",
+  "target": "6cd68dc",
+  "controls": [
+    {
+      "quantifier": "ANY",
+      "gap": "/**/",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY/**/((SELECT 1))",
+      "baseline": {
+        "accepted": true
+      },
+      "target": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "publicExit": "Failure(Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))]))",
+      "isDefect": false,
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ],
+      "confirmedRegression": true
+    },
+    {
+      "quantifier": "ANY",
+      "gap": " /* subquery */ ",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY /* subquery */ ((SELECT 1))",
+      "baseline": {
+        "accepted": true
+      },
+      "target": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "publicExit": "Failure(Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))]))",
+      "isDefect": false,
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ],
+      "confirmedRegression": true
+    },
+    {
+      "quantifier": "SOME",
+      "gap": "/**/",
+      "sql": "SELECT 'x' AS v WHERE 1 = SOME/**/((SELECT 1))",
+      "baseline": {
+        "accepted": true
+      },
+      "target": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "publicExit": "Failure(Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))]))",
+      "isDefect": false,
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ],
+      "confirmedRegression": true
+    },
+    {
+      "quantifier": "SOME",
+      "gap": " /* subquery */ ",
+      "sql": "SELECT 'x' AS v WHERE 1 = SOME /* subquery */ ((SELECT 1))",
+      "baseline": {
+        "accepted": true
+      },
+      "target": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "publicExit": "Failure(Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))]))",
+      "isDefect": false,
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ],
+      "confirmedRegression": true
+    },
+    {
+      "quantifier": "ALL",
+      "gap": "/**/",
+      "sql": "SELECT 'x' AS v WHERE 1 = ALL/**/((SELECT 1))",
+      "baseline": {
+        "accepted": true
+      },
+      "target": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "publicExit": "Failure(Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))]))",
+      "isDefect": false,
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ],
+      "confirmedRegression": true
+    },
+    {
+      "quantifier": "ALL",
+      "gap": " /* subquery */ ",
+      "sql": "SELECT 'x' AS v WHERE 1 = ALL /* subquery */ ((SELECT 1))",
+      "baseline": {
+        "accepted": true
+      },
+      "target": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "publicExit": "Failure(Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))]))",
+      "isDefect": false,
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ],
+      "confirmedRegression": true
+    }
+  ]
+}

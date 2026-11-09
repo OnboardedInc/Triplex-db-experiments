@@ -1,7 +1,16 @@
+/**
+ * [EXP-C8] Read-only native reachability: frontier rounds are reads, never writes.
+ * The fake client fails any submit, so a write anywhere in the path fails the test.
+ */
 import { describe, expect, it } from "vitest";
-import { DatabaseScope, type NativeQueryStep } from "@triplex-build/triplex/runtime";
-import { XtdbTransactionRejected, type XtdbClient, type XtdbStatement } from "../src/XtdbClient.js";
-import { materializeNativeReachability } from "../src/native/Reachability.js";
+import {
+  DatabaseScope,
+  RecursionBudgetExceeded,
+  type NativeQueryStep,
+} from "@triplex-build/triplex/runtime";
+import type { XtdbClient } from "../src/XtdbClient.js";
+import { resolveNativeReachability } from "../src/native/Reachability.js";
+import { makeNativeContext } from "../src/native/Sources.js";
 
 const basis = {
   scope: DatabaseScope.test("native-rounds"),
@@ -9,95 +18,209 @@ const basis = {
   recordedAt: 10.5,
   validAt: 2.25,
 };
-const definitions = [{ name: "links", edges: () => "SELECT 'a' AS source, 'b' AS target" }];
+// WL15 dependency-set: cycle Y<->Z plus a diamond (R10 3.2).
+const graph: Record<string, string[]> = { X: ["Y", "W"], W: ["Z"], Y: ["Z"], Z: ["Y"] };
 
-describe("native server working relations", () => {
-  it("reconciles a lost round acknowledgement before continuing and erases only its owned run", async () => {
-    const writes: readonly XtdbStatement[][] = [];
-    const retained = writes as XtdbStatement[][];
-    const counts = [1, 2, 2];
-    let acknowledgementLost = false;
-    const client: XtdbClient = {
-      submit: async (statements) => {
-        retained.push([...statements]);
-        const phase = statements.at(-1)?.params?.at(-1);
-        if (phase === "working-round" && !acknowledgementLost) {
-          acknowledgementLost = true;
-          throw new Error("transport lost after an atomic commit");
-        }
-      },
-      query: async <T extends Record<string, unknown>>(sql: string) =>
-        (sql.startsWith("SELECT COUNT")
-          ? [{ count: counts.shift() }]
-          : [{ attempt_id: "committed" }]) as unknown as T[],
-      close: async () => {},
-    };
+/** A fake engine: answers frontier rounds from `graph`, refuses every write. */
+const engine = () => {
+  const queries: { sql: string; params: readonly unknown[] }[] = [];
+  const client: XtdbClient = {
+    submit: async () => {
+      throw new Error("C8: a read path attempted a write");
+    },
+    query: async <T extends Record<string, unknown>>(sql: string, params: readonly unknown[] = []) => {
+      queries.push({ sql, params });
+      const batch = params.find((value) => Array.isArray(value)) as unknown[] | undefined;
+      if (sql.includes("AS seed") || sql.includes("(aggregate seed)")) return [{ seed: "X" }] as unknown as T[];
+      const sources = batch
+        ? batch.map((value) => (typeof value === "string" ? value : (value as { source: string }).source))
+        : Object.keys(graph);
+      return sources.flatMap((source) =>
+        (graph[source] ?? []).map((target) => ({ source, target })),
+      ) as unknown as T[];
+    },
+    close: async () => {},
+  };
+  return { client, queries };
+};
+const sqlEdges = [{ name: "deps", edges: () => "SELECT source, target FROM edges_at_basis", seeds: () => ["X"] }];
+
+describe("read-only native reachability (EXP-C8)", () => {
+  it("SQL: one read per round, frontier as one UNNEST array parameter, never = ANY", async () => {
+    const { client, queries } = engine();
     const steps: NativeQueryStep[] = [];
-    const working = await materializeNativeReachability(
+    const working = await resolveNativeReachability(
       client,
+      "xtdb-sql",
       basis,
-      definitions,
+      sqlEdges,
       {},
       new AbortController().signal,
       steps,
-      2,
-      3,
+      { strategy: "rounds" },
     );
-    expect(writes.filter((batch) => batch.at(-1)?.params?.at(-1) === "working-round")).toHaveLength(
-      2,
-    );
-    expect(acknowledgementLost).toBe(true);
-    const bindings: unknown[] = [];
-    const relation = working.relation("links", {
-      basis,
-      bind: (value) => {
-        bindings.push(value);
-        return `$${bindings.length}`;
-      },
-      attribute: () => "",
-      identifier: () => "",
-      facts: () => "",
-      recordedFacts: () => "",
-      history: () => "",
-    });
-    expect(relation).toContain("scope_key = $1 AND run_id = $2 AND relation_name = $3");
-    expect(bindings[0]).toBe(basis.scope);
-    expect(bindings[2]).toBe("links");
-    expect(() => working.relation("undeclared", {} as never)).toThrow();
-    await working.cleanup();
-    const cleanup = writes.at(-1)!;
-    expect(cleanup.filter((statement) => statement.sql.startsWith("ERASE"))).toHaveLength(2);
-    expect(cleanup.every((statement) => !statement.sql.includes("tx_assertions"))).toBe(true);
-    expect(steps.some((step) => step.phase === "working-cleanup")).toBe(true);
+    expect(queries.map((query) => query.params.at(-1))).toEqual([["X"], ["W", "Y"], ["Z"]]);
+    for (const { sql } of queries) {
+      expect(sql).toContain("e.source IN (SELECT x FROM UNNEST($1) AS u(x))");
+      expect(sql).not.toMatch(/\bANY\s*\(/i);
+      expect(sql).toMatch(/LIMIT \d+$/);
+    }
+    expect(steps.map((step) => [step.phase, step.language])).toEqual([
+      ["frontier-round", "xtdb-sql"],
+      ["frontier-round", "xtdb-sql"],
+      ["frontier-round", "xtdb-sql"],
+    ]);
+    const native = makeNativeContext("xtdb-sql", basis);
+    const relation = working.relation("deps", native.context);
+    expect(relation).toBe("(SELECT p[1] AS source, p[2] AS target FROM UNNEST($1) AS u(p))");
+    expect(native.parameters).toEqual([
+      [
+        ["X", "W"],
+        ["X", "Y"],
+        ["X", "Z"],
+      ],
+    ]);
+    expect(() => working.relation("undeclared", native.context)).toThrow();
   });
 
-  it("returns no partial answer after a definitive row guard failure and still cleans its working run", async () => {
-    const writes: XtdbStatement[][] = [];
-    const client: XtdbClient = {
-      submit: async (statements) => {
-        writes.push([...statements]);
-        if (statements.at(-1)?.params?.at(-1) === "working-seed")
-          throw new XtdbTransactionRejected(new Error("triplex-native-reachability-limit"));
-      },
-      query: async () => [],
-      close: async () => {},
-    };
+  it("XTQL: rounds and the answer relation are XTQL with one rel parameter", async () => {
+    const { client, queries } = engine();
+    const working = await resolveNativeReachability(
+      client,
+      "xtql",
+      basis,
+      [
+        {
+          name: "deps",
+          edges: () => "(-> (rel [] [source target]))",
+          seeds: () => ({ query: "(-> (rel [{:seed \"X\"}] [seed]))" }),
+        },
+      ],
+      {},
+      new AbortController().signal,
+      [],
+      { strategy: "rounds" },
+    );
+    expect(queries[0]!.sql).toContain("(aggregate seed)");
+    for (const { sql } of queries) {
+      expect(sql.startsWith("XTQL ('(fn [")).toBe(true);
+      expect(sql).toContain("(limit ");
+    }
+    expect(queries[1]!.sql).toContain("(unify (rel triplex_param_1 [source])");
+    expect(queries[1]!.params[0]).toEqual([{ source: "X" }]);
+    const native = makeNativeContext("xtql", basis);
+    expect(working.relation("deps", native.context)).toBe("(rel triplex_param_1 [source target])");
+    expect(native.parameters[0]).toEqual([
+      { source: "X", target: "W" },
+      { source: "X", target: "Y" },
+      { source: "X", target: "Z" },
+    ]);
+  });
+
+  it("an empty XTQL closure is a typed empty relation, not an untyped empty rel", async () => {
+    const { client } = engine();
+    const working = await resolveNativeReachability(
+      client,
+      "xtql",
+      basis,
+      [{ name: "deps", edges: () => "(rel [] [source target])", seeds: () => ["nobody"] }],
+      {},
+      new AbortController().signal,
+      [],
+    );
+    const native = makeNativeContext("xtql", basis);
+    expect(working.relation("deps", native.context)).toBe(
+      '(-> (rel [{:source "" :target ""}] [source target]) (where false))',
+    );
+  });
+
+  it("single-read (default): one bounded read of the edge relation, closure from the seeds in memory", async () => {
+    const { client, queries } = engine();
+    const steps: NativeQueryStep[] = [];
+    const working = await resolveNativeReachability(
+      client,
+      "xtdb-sql",
+      basis,
+      sqlEdges,
+      {},
+      new AbortController().signal,
+      steps,
+    );
+    expect(queries).toHaveLength(1);
+    expect(queries[0]!.sql).not.toContain("UNNEST");
+    expect(steps.map((step) => step.phase)).toEqual(["frontier-edges"]);
+    const native = makeNativeContext("xtdb-sql", basis);
+    working.relation("deps", native.context);
+    expect(native.parameters[0]).toEqual([
+      ["X", "W"],
+      ["X", "Y"],
+      ["X", "Z"],
+    ]);
+  });
+
+  it("without seeds, reads the edge relation once and closes every source in memory", async () => {
+    const { client, queries } = engine();
+    const working = await resolveNativeReachability(
+      client,
+      "xtdb-sql",
+      basis,
+      [{ name: "deps", edges: () => "SELECT source, target FROM edges_at_basis" }],
+      {},
+      new AbortController().signal,
+      [],
+    );
+    expect(queries).toHaveLength(1);
+    const native = makeNativeContext("xtdb-sql", basis);
+    working.relation("deps", native.context);
+    expect((native.parameters[0] as unknown[]).length).toBe(9); // X:W,Y,Z; W:Y,Z; Y:Y,Z; Z:Y,Z
+  });
+
+  it("fails typed on a budget and returns no partial relation", async () => {
+    const { client } = engine();
     await expect(
-      materializeNativeReachability(
+      resolveNativeReachability(
         client,
+        "xtdb-sql",
         basis,
-        definitions,
+        sqlEdges,
         {},
         new AbortController().signal,
         [],
-        1,
-        3,
+        { maxRecursiveRows: 2, strategy: "rounds" },
       ),
-    ).rejects.toThrow();
-    expect(
-      writes
-        .at(-1)
-        ?.some((statement) => statement.sql.startsWith("ERASE FROM tx_native_relations")),
-    ).toBe(true);
+    ).rejects.toBeInstanceOf(RecursionBudgetExceeded);
+    await expect(
+      resolveNativeReachability(
+        client,
+        "xtdb-sql",
+        basis,
+        sqlEdges,
+        {},
+        new AbortController().signal,
+        [],
+        // Depth 2 (X->Y->Z) completes within maxRounds 2; maxRounds 1 does not.
+        { maxRounds: 1, strategy: "rounds" },
+      ),
+    ).rejects.toMatchObject({ kind: "rounds" });
+  });
+
+  it("rejects mutating or ANY-shaped edge definitions before any read", async () => {
+    const { client, queries } = engine();
+    for (const edges of [
+      "SELECT 1; INSERT INTO t VALUES (1)",
+      "SELECT source, target FROM e WHERE source = ANY($1) AND x = 1",
+    ])
+      await expect(
+        resolveNativeReachability(
+          client,
+          "xtdb-sql",
+          basis,
+          [{ name: "bad", edges: () => edges, seeds: () => ["X"] }],
+          {},
+          new AbortController().signal,
+          [],
+        ),
+      ).rejects.toThrow();
+    expect(queries).toHaveLength(0);
   });
 });

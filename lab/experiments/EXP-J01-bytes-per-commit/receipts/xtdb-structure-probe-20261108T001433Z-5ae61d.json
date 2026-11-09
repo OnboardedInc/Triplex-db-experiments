@@ -1,0 +1,82 @@
+{
+  "format": "j01-receipt/1",
+  "id": "xtdb-structure-probe-20261108T001433Z-5ae61d",
+  "kind": "xtdb-structure-probe",
+  "writtenAt": "2026-11-08T00:14:33.361Z",
+  "identity": {
+    "gitHead": "83b384334610043bd29ccc7f2b5f0ba0384361bc",
+    "dirty": true,
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "distSha256": "47569e384fbf164b4e8dc32abfb1a06bee2f1fe275d31c12d3fbe24edf8b9fc1",
+    "engines": {
+      "xtdb": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+      "qlever": "adfreiburg/qlever:0.6.0@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec"
+    },
+    "endpoints": {
+      "xtdb": "postgres://xtdb:xtdb@127.0.0.1:5470/xtdb",
+      "qlever": "http://127.0.0.1:7070"
+    },
+    "node": "v22.23.2",
+    "host": {
+      "cpus": 12,
+      "loadavg": [
+        7.4,
+        10.58,
+        12.96
+      ]
+    }
+  },
+  "realRecordBytes": 30061,
+  "variants": [
+    {
+      "variant": "A0 as captured",
+      "recordBytes": 30061,
+      "vsA0": 0,
+      "ratio": 1
+    },
+    {
+      "variant": "ASSERTs with SQL literals instead of parameters",
+      "recordBytes": 25317,
+      "vsA0": -4744,
+      "ratio": 1.19
+    },
+    {
+      "variant": "one merged ASSERT with SQL literals",
+      "recordBytes": 25173,
+      "vsA0": -4888,
+      "ratio": 1.19
+    },
+    {
+      "variant": "no ASSERTs (bound)",
+      "recordBytes": 23277,
+      "vsA0": -6784,
+      "ratio": 1.29
+    },
+    {
+      "variant": "no bookkeeping inserts: claims, meta, attempts (bound)",
+      "recordBytes": 26805,
+      "vsA0": -3256,
+      "ratio": 1.12
+    },
+    {
+      "variant": "journal rows with a 50-character value_identity digest",
+      "recordBytes": 27685,
+      "vsA0": -2376,
+      "ratio": 1.09
+    },
+    {
+      "variant": "no journal rows and no journal ids in the guard (bound of any journal encoding)",
+      "recordBytes": 15667,
+      "vsA0": -14394,
+      "ratio": 1.92
+    },
+    {
+      "variant": "one merged literal ASSERT and no journal rows (bound)",
+      "recordBytes": 12619,
+      "vsA0": -17442,
+      "ratio": 2.38
+    }
+  ],
+  "rawPath": null,
+  "rawSha256": null
+}

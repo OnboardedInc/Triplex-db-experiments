@@ -1,0 +1,192 @@
+{
+  "result": "BUILDER-GATES-PASS; independent delta review required",
+  "sourceHead": "72a1a164e1bbc7844b74c5157d4f1f67b374e3fc",
+  "sourceParents": [
+    "f5e7a413e17948738472d3465bcfdda3b72b2e41",
+    "a27b100b8d331c0ccc31ded7f507e7dd06cd1045"
+  ],
+  "mergedMain": "a27b100b8d331c0ccc31ded7f507e7dd06cd1045",
+  "reviewFindingCommit": "4c9077ecb00b2d000d338911b41692aa8ce1b7aa",
+  "transitiveContractSha256": "11986ad73d09946ce13271958d6b968deb240614a40d24100f430d015ae6c1a3",
+  "generatorSha256": "c7f9e62e716416722b26c14f786e94d0bd3beda62472f04a0874813777429eb3",
+  "evaluator": {
+    "tests": 108,
+    "passed": 108,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "todo": 0
+  },
+  "mutations": {
+    "catalog": 520,
+    "run": 439,
+    "caught": 439,
+    "missed": [],
+    "retiredAnchors": 81,
+    "newReportAsBriefControls": 7
+  },
+  "contractTests": 12,
+  "screeningTests": 3,
+  "originalReviewerRegressionTests": 35,
+  "realPayloadTests": 5,
+  "q47d": "PASS",
+  "regeneration": "byte-identical",
+  "instructionAudit": {
+    "oracleEntries": 5,
+    "oraclePass": 5,
+    "totalEntries": 7,
+    "allPass": true
+  },
+  "unchangedOraclePins": true,
+  "unchangedFixedOracleRunners": true,
+  "unchangedRulings": true,
+  "unchangedPendingAuthority": true,
+  "unchangedEvaluatorAssertionFiles": true,
+  "ancillary": {
+    "sourceHead": "72a1a164e1bbc7844b74c5157d4f1f67b374e3fc",
+    "sourceBefore": {
+      "lab/acceptance/build_contract.py": "c7f9e62e716416722b26c14f786e94d0bd3beda62472f04a0874813777429eb3",
+      "lab/acceptance/RULINGS.md": "13a880df8878f3eecec48fa367ade87fe00e22352a4ef61a0799e8aef0634bcd",
+      "lab/acceptance/RULINGS-PENDING.md": "e414c195d51c08f927684ec1dab9cb73eae3df1fb016eec2707f7bb7cafb5e91",
+      "lab/acceptance/obligations.json": "854b007c0b87f194d48303ddd7fa9ed10b20bf855bd65381cdbcaa50b1bf5d85",
+      "lab/acceptance/ACCEPTANCE.md": "949ff156bee1f81928808cb4ea8d6956f49638659898c4b5bcf57c4f3ea329b0",
+      "lab/bin/claim.mjs": "4069ca82ea877eed39cdddc8e0323b09d392fd013f9a2c8ac8f542a1bed62e2a",
+      "lab/bin/test/claim.test.mjs": "62de70ed333c40f8662da5749179f985f9f8b961a6c10459a0dadfad5bceb476",
+      "lab/bin/test/claim-round2.test.mjs": "6aef70bd2448a6b37dc040d19d9ee219a4e4e5fdf78c8094e1bb66ec45104be9"
+    },
+    "sourceAfter": {
+      "lab/acceptance/build_contract.py": "c7f9e62e716416722b26c14f786e94d0bd3beda62472f04a0874813777429eb3",
+      "lab/acceptance/RULINGS.md": "13a880df8878f3eecec48fa367ade87fe00e22352a4ef61a0799e8aef0634bcd",
+      "lab/acceptance/RULINGS-PENDING.md": "e414c195d51c08f927684ec1dab9cb73eae3df1fb016eec2707f7bb7cafb5e91",
+      "lab/acceptance/obligations.json": "854b007c0b87f194d48303ddd7fa9ed10b20bf855bd65381cdbcaa50b1bf5d85",
+      "lab/acceptance/ACCEPTANCE.md": "949ff156bee1f81928808cb4ea8d6956f49638659898c4b5bcf57c4f3ea329b0",
+      "lab/bin/claim.mjs": "4069ca82ea877eed39cdddc8e0323b09d392fd013f9a2c8ac8f542a1bed62e2a",
+      "lab/bin/test/claim.test.mjs": "62de70ed333c40f8662da5749179f985f9f8b961a6c10459a0dadfad5bceb476",
+      "lab/bin/test/claim-round2.test.mjs": "6aef70bd2448a6b37dc040d19d9ee219a4e4e5fdf78c8094e1bb66ec45104be9"
+    },
+    "sourceStable": true,
+    "hostDiskFreeBytes": 13203648512,
+    "gates": [
+      {
+        "label": "contract-tests",
+        "argv": [
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
+          "-I",
+          "-B",
+          "lab/experiments/EXP-A01-acceptance-contract/regressions/test0312.py"
+        ],
+        "exit": 0,
+        "started": 1794183652.077882,
+        "ended": 1794183653.143174
+      },
+      {
+        "label": "screening-js",
+        "argv": [
+          "node",
+          "--test",
+          "lab/experiments/EXP-A01-acceptance-contract/regressions/screening0312.test.mjs"
+        ],
+        "exit": 0,
+        "started": 1794183653.143251,
+        "ended": 1794183653.283236
+      },
+      {
+        "label": "reviewer-regressions",
+        "argv": [
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
+          "-I",
+          "-B",
+          "lab/verify/A01/regressions_review0311.py"
+        ],
+        "exit": 0,
+        "started": 1794183653.283283,
+        "ended": 1794183654.0708458
+      },
+      {
+        "label": "real-payloads",
+        "argv": [
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
+          "-I",
+          "-B",
+          "lab/verify/A01/regressions_round2.py"
+        ],
+        "exit": 0,
+        "started": 1794183654.070884,
+        "ended": 1794183654.375956
+      },
+      {
+        "label": "test_observe",
+        "argv": [
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
+          "-I",
+          "-B",
+          "lab/acceptance/oracle/test_observe.py"
+        ],
+        "exit": 0,
+        "started": 1794183654.375991,
+        "ended": 1794183658.925761
+      },
+      {
+        "label": "test_cli",
+        "argv": [
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
+          "-I",
+          "-B",
+          "lab/acceptance/oracle/test_cli.py"
+        ],
+        "exit": 0,
+        "started": 1794183658.9258099,
+        "ended": 1794183660.6314309
+      },
+      {
+        "label": "test_round2",
+        "argv": [
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
+          "-I",
+          "-B",
+          "lab/acceptance/oracle/test_round2.py"
+        ],
+        "exit": 0,
+        "started": 1794183660.632069,
+        "ended": 1794183661.8668559
+      },
+      {
+        "label": "test_round3",
+        "argv": [
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
+          "-I",
+          "-B",
+          "lab/acceptance/oracle/test_round3.py"
+        ],
+        "exit": 0,
+        "started": 1794183661.866893,
+        "ended": 1794183662.3360431
+      },
+      {
+        "label": "test_round4",
+        "argv": [
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
+          "-I",
+          "-B",
+          "lab/acceptance/oracle/test_round4.py"
+        ],
+        "exit": 0,
+        "started": 1794183662.336085,
+        "ended": 1794183665.402812
+      },
+      {
+        "label": "selfcheck",
+        "argv": [
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
+          "-I",
+          "-B",
+          "lab/acceptance/oracle/selfcheck.py"
+        ],
+        "exit": 0,
+        "started": 1794183665.4028668,
+        "ended": 1794183734.71631
+      }
+    ]
+  },
+  "scope": "Original instruction provenance fix only; oracle screening scope unchanged; no engine qualification"
+}

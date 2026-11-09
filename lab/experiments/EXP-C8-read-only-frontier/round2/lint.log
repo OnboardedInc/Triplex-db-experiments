@@ -1,0 +1,13 @@
+
+  ! eslint(no-constant-condition): Unexpected constant condition
+     ,-[packages/xtdb/src/XtdbStorageAdapter.ts:318:18]
+ 317 |           await new Promise((resolve) => setTimeout(resolve, 25));
+ 318 |         } while (true);
+     :                  ^^|^
+     :                    `-- this expression will always evaluate to the same value
+ 319 |         throw new TransactionOutcomeUnknown({
+     `----
+  help: Update the condition to not be constant, or remove the condition entirely
+
+Found 1 warning and 0 errors.
+Finished in 21ms on 8 files with 93 rules using 12 threads.

@@ -34,7 +34,7 @@ import {
   generateRouteHistory,
   makeOfflineRouteFixture,
   makeRouteEquivalenceCases,
-} from "@triplex-build/triplex-testkit";
+} from "@triplex-build/triplex-testkit/route";
 
 for (const test of makeRouteEquivalenceCases({
   history: generateRouteHistory(42),

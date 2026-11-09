@@ -1,0 +1,27 @@
+{
+  "started": "2026-11-09T00:06:58.317Z",
+  "ended": "2026-11-09T00:08:32.570Z",
+  "argv": [
+    "/Users/sam/.hermes/node/bin/node",
+    "/Users/sam/projects/triplex-db-2/.claude/worktrees/int-xcj/node_modules/vitest/vitest.mjs",
+    "run",
+    "test/c8-reads-never-write.test.ts",
+    "-t",
+    "C8 on QLever",
+    "--reporter=default",
+    "--reporter=json",
+    "--outputFile=/Users/sam/projects/triplex-db-2/.claude/worktrees/int-xcj/lab/experiments/INT-XCJ/evidence/round4/QLever-C8-live.json"
+  ],
+  "cwd": "packages/qualification",
+  "exit": 1,
+  "signal": null,
+  "engineStatusExit": 0,
+  "environment": {
+    "QLEVER_INTEGRATION": "1",
+    "XTDB_INTEGRATION": "0",
+    "QLEVER_URL": "http://127.0.0.1:7070",
+    "TRIPLEX_COMMIT_ENCODING": null,
+    "C8_READERS": null,
+    "C8_LOAD_MS": null
+  }
+}

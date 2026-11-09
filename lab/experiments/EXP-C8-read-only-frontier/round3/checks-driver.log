@@ -1,0 +1,49 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 89476 "R25-ckthread-r8", pid 4427 "CX-VX02-2-G0", pid 1980 "DA00-G0-final", pid 5185 "G0-xtdb-20261108T215157Z-138fc7 vitest-core"
+typecheck-core 0 
+typecheck-xtdb 0 
+typecheck-qlever 0 
+typecheck-qualification 0 
+lint 0 
+  ! eslint(no-constant-condition): Unexpected constant condition
+     ,-[packages/xtdb/src/XtdbStorageAdapter.ts:318:18]
+ 317 |           await new Promise((resolve) => setTimeout(resolve, 25));
+ 318 |         } while (true);
+     :                  ^^|^
+     :                    `-- this expression will always evaluate to the same value
+ 319 |         throw new TransactionOutcomeUnknown({
+     `----
+  help: Update the condition to not be constant, or remove the condition entirely
+
+Found 1 warning and 0 errors.
+Finished in 24ms on 8 files with 93 rules using 12 threads.
+
+qlever-light 0 
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  16:52:47
+   Duration  2.25s (tests 71%, transform 15%, import 14%)
+
+
+counter-live 0 
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/packages/qualification
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 63 skipped (64)
+   Start at  16:52:50
+   Duration  11.05s (tests 95%, transform 3%, import 2%)
+
+
+c8-live 0 
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/packages/qualification
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 1 skipped (2)
+   Start at  16:53:01
+   Duration  141.94s (tests 100%)
+
+

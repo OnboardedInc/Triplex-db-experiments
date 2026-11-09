@@ -1,0 +1,37 @@
+--- committed/obligations.json
++++ generated/obligations.json
+@@ -14559,11 +14559,11 @@
+         },
+         {
+           "path": "packages/qualification/src/native/xtdb-workloads.ts",
+-          "sha256": "22d785b034e440ca896b3fce7fe2df94e643586cb802fddd940fea84aff31fc3"
++          "sha256": "ff39d3f2fcb74ee2a318e8801a12680a4f9f366b4a7f5ed9e20e89d5ccd8a3d0"
+         },
+         {
+           "path": "packages/qualification/src/native/qlever-workloads.ts",
+-          "sha256": "410963c62f46be95525643f5eb78bf4069dee27d986b251f2aca33d05e48d2b3"
++          "sha256": "9349878403ee468ce6b64922c648d88f598f799b1c65fc42a712aa47598e54da"
+         }
+       ],
+       "note": null
+@@ -16071,11 +16071,11 @@
+       },
+       {
+         "path": "packages/qualification/src/native/xtdb-workloads.ts",
+-        "sha256": "22d785b034e440ca896b3fce7fe2df94e643586cb802fddd940fea84aff31fc3"
++        "sha256": "ff39d3f2fcb74ee2a318e8801a12680a4f9f366b4a7f5ed9e20e89d5ccd8a3d0"
+       },
+       {
+         "path": "packages/qualification/src/native/qlever-workloads.ts",
+-        "sha256": "410963c62f46be95525643f5eb78bf4069dee27d986b251f2aca33d05e48d2b3"
++        "sha256": "9349878403ee468ce6b64922c648d88f598f799b1c65fc42a712aa47598e54da"
+       }
+     ],
+     "CS-ENTRY": [
+@@ -30034,5 +30034,5 @@
+       ]
+     }
+   ],
+-  "transitiveContractSha256": "68788295dcc8dbc0cc4f2879a01f76c8bcb01608b287894a9aa5c11ef7827bef"
++  "transitiveContractSha256": "e88e4a0aee04539c5fb14d6a9b34360640765e7adcbbf8cc753facf29fd843f4"
+ }

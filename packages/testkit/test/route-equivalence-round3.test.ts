@@ -14,7 +14,7 @@ import {
   runRouteEquivalence,
   type RouteHistory,
   type RouteFixture,
-} from "../src/index.js";
+} from "@triplex-build/triplex-testkit/route";
 
 // [EXP-RQ01] Why: adapt CX-VRQ01 14722ac probe.mjs/boundary.mjs into failing-closed regressions.
 // Rejected: retaining only structural booleans (the reviewer demonstrated a real missed wrong answer).

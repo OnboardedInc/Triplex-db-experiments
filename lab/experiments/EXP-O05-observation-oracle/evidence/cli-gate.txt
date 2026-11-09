@@ -1,0 +1,8 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 83377 "CX-VO04H-rerun-resume", pid 40699 "CX-K01-seed", pid 39561 "CX-VX02-shared-XTQL-r2", pid 25645 "CX-E01-R2-final"
+[lab] heavy: waiting for one of 4 slots; held by pid 83377 "CX-VO04H-rerun-resume", pid 40699 "CX-K01-seed", pid 39561 "CX-VX02-shared-XTQL-r2", pid 25645 "CX-E01-R2-final"
+[lab] heavy: waiting for one of 4 slots; held by pid 40843 "CX-P2Q-R2-verifier-offline", pid 45427 "CX-VJ01-deps", pid 39561 "CX-VX02-shared-XTQL-r2", pid 25645 "CX-E01-R2-final"
+........
+----------------------------------------------------------------------
+Ran 8 tests in 1.188s
+
+OK

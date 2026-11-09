@@ -1,0 +1,116 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 39561 "CX-VX02-shared-XTQL-r2", pid 62671 "CX-E01-R2-final-reference"
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 39561 "CX-VX02-shared-XTQL-r2", pid 66560 "CX-P2Q-R2-broker-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 39561 "CX-VX02-shared-XTQL-r2", pid 66560 "CX-P2Q-R2-broker-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 81081 "CX-OREPLAY-049-unit", pid 3529 "CX-VO05-review"
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 3529 "CX-VO05-review"
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 3529 "CX-VO05-review"
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 3529 "CX-VO05-review"
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 3529 "CX-VO05-review"
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 3529 "CX-VO05-review"
+[lab] heavy: waiting for one of 4 slots; held by pid 6260 "CX-C8-R2-light-checks", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 5642 "CX-VJ01-build-r2"
+[lab] heavy: waiting for one of 4 slots; held by pid 6260 "CX-C8-R2-light-checks", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 6062 "CX-VE01-2-prior"
+[lab] heavy: waiting for one of 4 slots; held by pid 6260 "CX-C8-R2-light-checks", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 6062 "CX-VE01-2-prior"
+[lab] heavy: waiting for one of 4 slots; held by pid 6260 "CX-C8-R2-light-checks", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 12504 "CX-VJ01-checks-r3"
+[lab] heavy: waiting for one of 4 slots; held by pid 5586 "CX-OREPLAY-049-unit-final", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 12504 "CX-VJ01-checks-r3"
+[lab] heavy: waiting for one of 4 slots; held by pid 12842 "CX-VO05-final", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 12504 "CX-VJ01-checks-r3"
+[lab] heavy: waiting for one of 4 slots; held by pid 12842 "CX-VO05-final", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 12504 "CX-VJ01-checks-r3"
+core 0 
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/packages/core
+
+
+ Test Files  57 passed (57)
+      Tests  848 passed (848)
+   Start at  16:36:15
+   Duration  15.48s (import 67%, tests 28%, transform 3%, worker 2%)
+
+     Import  155 modules were evaluated 243 times · 7.44s total, 67% of tracked time
+             ~2.70s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+xtdb 0 
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/packages/xtdb
+
+
+ Test Files  7 passed | 8 skipped (15)
+      Tests  25 passed | 84 skipped (109)
+   Start at  16:36:31
+   Duration  4.48s (import 88%, transform 8%, tests 3%, worker 1%)
+
+    Isolate  15 workers spawned · ~76ms startup each (spawn + environment, per file)
+             at least ~1.06s faster with isolate: false — reuses workers across files instead of one per file
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+qlever 0 
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/packages/qlever
+
+
+ Test Files  7 passed | 3 skipped (10)
+      Tests  27 passed | 21 skipped (48)
+   Start at  16:36:35
+   Duration  2.99s (import 88%, transform 8%, tests 3%, worker 1%)
+
+    Isolate  10 workers spawned · ~71ms startup each (spawn + environment, per file)
+             at least ~638ms faster with isolate: false — reuses workers across files instead of one per file
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+qualification 1 t.ts (21 tests | 1 failed) 38ms
+   ❯ XTDB native task library: one language and one cut per task (EXP-X02) (6)
+     × runs every task and substep in xtql and pins later calls to the first cut 12ms
+
+ Test Files  1 failed | 3 passed | 2 skipped (6)
+      Tests  1 failed | 85 passed | 50 skipped (136)
+   Start at  16:36:39
+   Duration  2.25s (import 64%, tests 23%, transform 12%, worker 1%)
+
+    Isolate  6 workers spawned · ~75ms startup each (spawn + environment, per file)
+             at least ~375ms faster with isolate: false — reuses workers across files instead of one per file
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/xtdb-native-library.test.ts > XTDB native task library: one language and one cut per task (EXP-X02) > runs every task and substep in xtql and pins later calls to the first cut
+AssertionError: expected 17 to be greater than or equal to 20
+ ❯ test/xtdb-native-library.test.ts:160:25
+    158|       // [EXP-C8] XTQL closure tasks are now one call each (the depth-…
+    159|       // checks are gone), so fewer XTQL tasks are multi-call than und…
+    160|       expect(multiCall).toBeGreaterThanOrEqual(language === "xtql" ? 2…
+       |                         ^
+    161|     });
+    162|   it("rejects an unknown language", async () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+qualification-node 0 
+# Subtest: cold probes span the declared distinct-entity population and never change under hot corrections
+ok 17 - cold probes span the declared distinct-entity population and never change under hot corrections
+  ---
+  duration_ms: 7.209584
+  type: 'test'
+  ...
+# Subtest: oracle refuses changed recipe, wrong seed commit count and an excessive catalog
+ok 18 - oracle refuses changed recipe, wrong seed commit count and an excessive catalog
+  ---
+  duration_ms: 0.818667
+  type: 'test'
+  ...
+1..18
+# tests 18
+# suites 0
+# pass 18
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 173.560292
+

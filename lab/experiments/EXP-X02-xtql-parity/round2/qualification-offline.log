@@ -1,0 +1,10 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 16329 "CX-P2Q-R2-final-round", pid 44149 "CX-VO04I-review", pid 67198 "CX-VE01-3-fallback-routes", pid 12504 "CX-VJ01-checks-r3"
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aa4da7e88fb9a6b0f/packages/qualification
+
+
+ Test Files  2 passed | 1 skipped (3)
+      Tests  26 passed | 46 skipped (72)
+   Start at  16:43:25
+   Duration  1.75s (import 58%, tests 27%, transform 15%, worker 1%)
+

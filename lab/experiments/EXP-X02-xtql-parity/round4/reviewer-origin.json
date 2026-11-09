@@ -1,0 +1,9 @@
+{
+  "head": "fe12d1c0043da09a0f6acebd414af5b744d1e8a9",
+  "files": {
+    "grammar-review.json": "a33e0d4da812a9016d3eb42709f1a2d5778320464e363bf9e0b672e2d3b1a371",
+    "spot.json": "3d491900d776702404e32b5c8de6994c706cd99f63222121ccb8b1c95c2cc6cd",
+    "SqlLexer.g4": "3d7f01c3d638fea7765279da259112a805ca8061e374ec952ab253a8b1fd9c0a",
+    "Sql.g4": "46ac30b2a5b2cd94b60d4dba7f3e0e89e0bacdc05ab86f7d6367aed2d891840e"
+  }
+}

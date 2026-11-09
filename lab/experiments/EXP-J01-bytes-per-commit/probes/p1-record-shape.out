@@ -1,0 +1,29 @@
+[
+ {
+  "label": "one row, 3 text params",
+  "txId": 609230403,
+  "recordBytes": 1779,
+  "between": 0,
+  "ops": [],
+  "opsSum": 0,
+  "overhead": 1779
+ },
+ {
+  "label": "one row, 3 text params, 1000-char value",
+  "txId": 609233769,
+  "recordBytes": 2763,
+  "between": 0,
+  "ops": [],
+  "opsSum": 0,
+  "overhead": 2763
+ },
+ {
+  "label": "20 rows x 5 params (2 NULL per row)",
+  "txId": 609238119,
+  "recordBytes": 3987,
+  "between": 0,
+  "ops": [],
+  "opsSum": 0,
+  "overhead": 3987
+ }
+]

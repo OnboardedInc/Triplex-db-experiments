@@ -11,7 +11,7 @@ import {
   type RouteFixture,
   type RouteHistory,
   type RouteRequest,
-} from "@triplex-build/triplex-testkit";
+} from "@triplex-build/triplex-testkit/route";
 import type { TripleRow } from "@triplex-build/triplex/runtime";
 import { makeXtdbStorageAdapter } from "../src/XtdbStorageAdapter.js";
 import type { XtdbClient } from "../src/XtdbClient.js";

@@ -3,7 +3,7 @@ import {
   generateRouteHistory,
   makeOfflineRouteFixture,
   runRouteEquivalence,
-} from "@triplex-build/triplex-testkit";
+} from "@triplex-build/triplex-testkit/route";
 
 // [EXP-RQ01] Why: main at 908ebada has no broker directory; expose the model gate
 // from the lane now. Rejected: importing unmerged SQL01 source across worktrees

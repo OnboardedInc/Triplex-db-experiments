@@ -1,0 +1,984 @@
+{
+  "format": "tx2-gate-receipt/1",
+  "gate": "G1",
+  "lane": "xtdb",
+  "slot": "dev",
+  "runId": "G1-xtdb-20261108T013218Z-7e7e23",
+  "experiment": "EXP-J01",
+  "note": "EXP-J01 option OFF (TRIPLEX_COMMIT_ENCODING empty = a0) at 41517f9",
+  "previous": null,
+  "startedAt": "2026-11-08T01:32:18.423Z",
+  "endedAt": "2026-11-08T02:18:16.636Z",
+  "durationMs": 2758213,
+  "scope": "full",
+  "runKind": "diagnostic",
+  "mutation": null,
+  "contractVersion": "0.3.7",
+  "contract": {
+    "format": "triplex-db-2/acceptance-obligations/3",
+    "version": "0.3.7",
+    "status": "CANDIDATE-1.0.0: retargeted to Sam's re-scope (SCOPE.md, NORTH-STAR.md, TARGETS.md); freezes as 1.0.0 after orchestrator acceptance and adversarial review",
+    "sha256": "00416e216824ff0f065a4a01c134984fed58b0171c8909007b6efba7951c9f3b"
+  },
+  "obligations": [
+    {
+      "id": "G1.found.unchanged44",
+      "definitionSha256": "ca4bc28547d905ddb9ae7e30b1310665d8b74501575ff69d4096b6ed140d2415",
+      "receiptScope": "engine",
+      "lanes": [
+        "xtdb-xtql",
+        "xtdb-sql"
+      ]
+    }
+  ],
+  "engineName": "xtdb",
+  "git": {
+    "head": "41517f903a8f71555795b9b515ef4c8a926e65b1",
+    "headTree": "58d6ac9257297cfa1321f43bc262b1b769154665",
+    "branch": "exp/J01-bytes-per-commit",
+    "dirty": true,
+    "stashCommit": null,
+    "stashTree": null,
+    "diffScope": [
+      "packages",
+      "qualification",
+      "lab/bin",
+      "lab/config",
+      "vitest.workspace-aliases.ts",
+      "tsconfig.base.json",
+      "tsconfig.node.json",
+      "package.json",
+      "pnpm-workspace.yaml",
+      "pnpm-lock.yaml",
+      "turbo.json"
+    ],
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diffBytes": 0,
+    "modifiedFiles": [],
+    "untrackedFiles": [],
+    "otherDirtyPaths": [
+      "lab/experiments/EXP-J01-bytes-per-commit/receipts/service-qlever-fresh-scope-20261108T013148Z-6ca7a2.json",
+      "lab/experiments/EXP-J01-bytes-per-commit/receipts/service-xtdb-fresh-scope-20261108T013134Z-49520f.json"
+    ],
+    "sourceTreeId": "1b88eebe5cfaf55b3913b8992b269f76800e261bdf9b97d7d171824c42eee11f"
+  },
+  "lockfileSha256": "b2b3e6e8cdfb18df6d235a8724611ee4fe637426c722a5de34326346b3cb6500",
+  "toolchain": {
+    "node": "v22.23.2",
+    "pnpm": "10.11.0",
+    "platform": "darwin-arm64"
+  },
+  "gateScripts": {
+    "lab/bin/gate.mjs": "5c30a717277afa2a182ed2dff98284fadc73937c2dd190bfe3b5db6d4d8978fa",
+    "lab/bin/lib.mjs": "199ba832f81bc8e228bf6e29de0fbd2ef872a4b1d15fd40d2523a49be1f28740",
+    "lab/bin/receipt.mjs": "ebdcfb60284d6efe378923c0f42eb4eb7ad9a260141ceb46958e86752d0d2d2c",
+    "lab/bin/engine.mjs": "2c3bd842205e572a0cd456f2ceaf2a0d1003fd1553b03f446a27874b170ee72e",
+    "lab/bin/heavy-lock.mjs": "88dd2071c8d8c1e3212c9a65dc719b79af46fbe6cc2e6ede8fbe0b61112803fa",
+    "lab/config/slots.json": "24af2a4d0e7c04a085731335e9d9490b69b7477ab70fae452f32971098e841b5"
+  },
+  "build": {
+    "manifestSha256": "83c1aa7ed4aaa6adea18815ed13da5820adefd0141542be0c95a1a31ca756006",
+    "manifest": "runs/G1/G1-xtdb-20261108T013218Z-7e7e23/build-manifest.json",
+    "packages": {
+      "core": {
+        "files": 412,
+        "bytes": 2619654,
+        "sha256": "4e7d0dd0333d24402a5310f1c3592c3ffc0d1cd68201619f5589b63c15329652"
+      },
+      "testkit": {
+        "files": 4,
+        "bytes": 247745,
+        "sha256": "b30558fbe016aa34202d9f260055ea944877ce3176a7604e2522e53a02c7251f"
+      },
+      "xtdb": {
+        "files": 76,
+        "bytes": 401722,
+        "sha256": "0a34e0539374d979fc7172831d9774ded2b97e61d59688f16fbbd8ff57aaf2b1"
+      },
+      "qualification": {
+        "files": 16,
+        "bytes": 212702,
+        "sha256": "19c1dd683a7e04a53b87902c6c2c2a304771a1000db8caff989778035de4da5c"
+      }
+    }
+  },
+  "engine": {
+    "container": "tx2-xtdb-dev",
+    "containerId": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+    "startedAt": "2026-11-07T19:39:01.589983918Z",
+    "imageId": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+    "repoDigests": [
+      "ghcr.io/xtdb/xtdb@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77"
+    ],
+    "configSha256": "034fff1703f2ecebb49b5ddeeaed4ee4e2a197ece368a6bdc93b074355e785ac",
+    "effectiveConfig": {
+      "lane": "xtdb",
+      "slot": "dev",
+      "image": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+      "configYamlSha256": "f6e1248ebb09af8a6959d67d15e0355a0be4c3783d8c3fc97ba97b00c7b3e379",
+      "env": {
+        "JDK_JAVA_OPTIONS": "-Xmx1500m -XX:MaxDirectMemorySize=1g"
+      },
+      "memBytes": 3221225472,
+      "cpus": 2,
+      "publish": "127.0.0.1:5470:5432",
+      "volume": "tx2-xtdb-dev-data:/var/lib/xtdb",
+      "cmd": [
+        "-f",
+        "/etc/xtdb/config.yaml"
+      ],
+      "health": "wget -q -O /dev/null http://127.0.0.1:8080/healthz/alive"
+    },
+    "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5470/xtdb",
+    "port": 5470,
+    "memCapBytes": 3221225472,
+    "nanoCpus": 2000000000,
+    "ownerSha256": "a1ae3fbcd98bb1de559f5ad0d4b18ea159902e58a64c313db391eb771fcec2a6",
+    "holder": "worktree:/Users/sam/projects/triplex-db-2"
+  },
+  "profile": {
+    "name": "default",
+    "env": {}
+  },
+  "queryPath": "xtdb-datalog",
+  "diskBefore": {
+    "totalBytes": 63088406528,
+    "usedBytes": 13987295232,
+    "availableBytes": 45863215104
+  },
+  "containers": {
+    "tx2-xtdb-s1": {
+      "samples": 318,
+      "peakMemBytes": 2113123910,
+      "peakCpuPercent": 200.57,
+      "memLimitBytes": 3758096384
+    },
+    "tx2-qlever-dev": {
+      "samples": 901,
+      "peakMemBytes": 1551556936,
+      "peakCpuPercent": 204.95,
+      "memLimitBytes": 3758096384
+    },
+    "tx2-xtdb-dev": {
+      "samples": 901,
+      "peakMemBytes": 2924872729,
+      "peakCpuPercent": 344.19,
+      "memLimitBytes": 3221225472
+    },
+    "tx2-xtdb-s2": {
+      "samples": 542,
+      "peakMemBytes": 1261646643,
+      "peakCpuPercent": 269.48,
+      "memLimitBytes": 3758096384
+    }
+  },
+  "coRunning": [
+    {
+      "name": "tx2-xtdb-s2",
+      "memCapBytes": 3758096384,
+      "nanoCpus": 2000000000,
+      "health": "healthy"
+    },
+    {
+      "name": "tx2-qlever-dev",
+      "memCapBytes": 3758096384,
+      "nanoCpus": 2000000000,
+      "health": "healthy"
+    },
+    {
+      "name": "tx2-xtdb-dev",
+      "memCapBytes": 3221225472,
+      "nanoCpus": 2000000000,
+      "health": "healthy"
+    }
+  ],
+  "volumeBytes": 3098234880,
+  "diskAfter": {
+    "totalBytes": 63088406528,
+    "usedBytes": 6259945472,
+    "availableBytes": 53590564864
+  },
+  "fixtures": {
+    "packages/testkit/src/index.ts": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988",
+    "packages/qualification/workloads/lab-conformance.ts": "fb0898e349fef7102663443fa240d9ae2995f6309fd2ab264c1c91ad9a05f397"
+  },
+  "contactedEndpoint": "postgres://xtdb:xtdb@127.0.0.1:5470/xtdb",
+  "counts": {
+    "executed": 50,
+    "expected": 88,
+    "pass": 25,
+    "fail": 25,
+    "skip": 38,
+    "suite": "FAIL",
+    "byPhase": {
+      "current": {
+        "pass": 23,
+        "total": 44
+      },
+      "reopen": {
+        "pass": 2,
+        "total": 6
+      }
+    }
+  },
+  "timings": {
+    "suiteMs": 109597.257292,
+    "casesMs": 2556706.0215410003
+  },
+  "cases": [
+    {
+      "caseId": "actor due-work ranges preserve numeric aliases, visibility, ordering, and limits",
+      "mode": "current",
+      "status": "FAIL",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-1627c148-7363-48b2-a229-f063ec48e79e\",0]",
+      "rawResultSha256": "2a3815ac7a18f79f90569d956fa5df5d889dc9ea9a43001773d203a59a62f076",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "Datalog reads are bounded by default and cursors traverse the complete snapshot",
+      "mode": "current",
+      "status": "FAIL",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-c889d8b5-f873-402e-8731-a370ecf33837\",0]",
+      "rawResultSha256": "7d4b2817fc639bfc483e82ba52b02dfccf2a1d7303464c74424adcb834fad696",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "historical cursor pages intersect recorded time and the commit snapshot",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-b899e689-eb52-4d54-a558-1ec0baa36ad3\",0]",
+      "rawResultSha256": "e2afad59875409d0ad6c64e7c01f636a4ac869087f2ddc2f68fb28a3153aead2",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "recursive relations support cursor pagination and optional total counts",
+      "mode": "current",
+      "status": "FAIL",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-68573c43-161a-4eeb-bb5d-78d616e61d4e\",0]",
+      "rawResultSha256": "a71e7db0ef7b68ca493a3d75491af62676bc40cd3a4c99478e12bc6bec8b9e8d",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "assert then get and match return the fact",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-bc7b65d4-b005-4469-9328-7824066fa275\",0]",
+      "rawResultSha256": "5dc44bcaf4bf6d6851bd6ec589920aeb5cc6d028024314dd30dd8e01c0355efe",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "same-value facts in one batch keep distinct identities",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-9d0f54ea-a7df-4076-bed7-d47e7d940abb\",0]",
+      "rawResultSha256": "5878783b10ae15336b8de7e08b39e6612913432f7d8839000aacdc0cdf6accc7",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog query finds asserted facts",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-2b457743-3f87-4bb9-bffe-e572e08fe2c5\",0]",
+      "rawResultSha256": "0e9a08cff02e2effd2c6bd75be03130a2085a8b15bb8ecd1b6c4c3ba93edb0c8",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog projections preserve scalar types without guessing from text",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-3c40ff2d-2ebb-486a-b869-78f770456526\",0]",
+      "rawResultSha256": "c55432a720158cd9ead02d76720a1bd5ff14d05d0a88f364e4687b1948356784",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog deduplicates flattened scalar families before grouping and pagination",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-297b0ee3-58b6-4685-82f3-c85b8d3cb7fc\",0]",
+      "rawResultSha256": "7133f43b445d48bef594c3ce39d7ddc3d331cf980be83ca189f172c60c70dc11",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog constant projections retain their scalar values through pagination",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-bf0e15a1-eb59-4d9b-8c66-e9c9b4644181\",0]",
+      "rawResultSha256": "cad5bba5912cc2b143cdd32dfec6bf21d288bf14e10a710ff0809dc1ece769f5",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog pattern constants use flattened scalar identity in filters",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-21b2d074-d870-4e7f-9197-b0b87f5b6ee7\",0]",
+      "rawResultSha256": "915245148022a3f64d0f2c15902eec8c20e885597b16443464ffb4b50984e866",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog value joins compare every scalar family",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-101e108e-818c-4967-8554-a254df8c49fc\",0]",
+      "rawResultSha256": "8aa382c3c3007d4aa59bf487c02c9b8d658d51a3b8d1b79be6b6f8a7c7133be0",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog equality predicates compare numeric values as numbers",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-3c508de9-8851-4aaf-bb68-0f93b3900801\",0]",
+      "rawResultSha256": "7241f3ef5a7046c107a604c44d84a8fadb40aa789590b1518a79b2ea17eae901",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog equality keeps identity bindings string-typed",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-48a55401-1bcf-46a1-a49f-e2a85f0b8557\",0]",
+      "rawResultSha256": "a058b9143a056ba3079ea07c0350fe1e87b51949d303217434422b8bd64a21ed",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "ordered Datalog predicates accept only numeric scalar families",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-d47b937c-8c0f-43e1-9e3f-362bc5b482cd\",0]",
+      "rawResultSha256": "59b66c6c99eddd3860a17fd70f7d9d2ed795e476ae6e9b69fe4a2b5c90703c71",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog reverse lookup matches an explicitly typed ref constant",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-4ae7aa9f-3fea-48b0-bb32-42ee6f83ebe5\",0]",
+      "rawResultSha256": "286d596d3d5dc483d42499a11188d8913f4b7f720ea6af98d242f41dedc8d504",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog joins a variable bound from a ref in value position",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-39574d9b-bbb1-4de6-a181-637c9a629298\",0]",
+      "rawResultSha256": "feada672594cd877405679f9fe9d51b3050329d10094ea1c8e5338dc562ce616",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog supports multi-hop joins over ref edges",
+      "mode": "current",
+      "status": "FAIL",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-f1245531-741b-4281-8411-e945b2b12577\",0]",
+      "rawResultSha256": "0451f27b05e233c0ad08000ff5128136b0f5efe5a37695a879b3fc9ab3d313e4",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog recursive rules compute the same transitive closure",
+      "mode": "current",
+      "status": "FAIL",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-5563596a-8d31-47ee-bcfa-7c78ea06f438\",0]",
+      "rawResultSha256": "82611ca178941900e6ca09cae5da94c748ff3381913188ea9e5bab15f57f027b",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog rule patterns unify repeated variables",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-675b7f4a-b973-474f-89cb-28d4e967f94b\",0]",
+      "rawResultSha256": "1c15d8a92ebf5d8de542ecbe08343bdf0774da36d16393c043c2fe936b0715af",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog aggregations group, filter, and order consistently",
+      "mode": "current",
+      "status": "FAIL",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-2f580ee9-1f06-4ced-b010-8bc664fcdf18\",0]",
+      "rawResultSha256": "978a4238334415ad53bf43286b72eed4dcd6b65012828d05b9db0906153d5d02",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog having preserves typed group and aggregate equality",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-caec5b6e-b3fb-4244-8762-86c84350ed54\",0]",
+      "rawResultSha256": "06a931cbab3bcaad26049fda7e03954f227e10b9d1f66a4df2ba8274fdf002dd",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog aggregates preserve duplicate rows and define empty and distinct results",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-d00528d0-a018-4251-bde4-7fd26774a924\",0]",
+      "rawResultSha256": "381939c4cc6b40f92cf5cf90d6de22d9e14d60f1d71d2649a0715eb0c268b5eb",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog conjunctions establish bindings independent of clause order",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-c76c3c42-3d5d-412a-a131-4d8d1a0a2a60\",0]",
+      "rawResultSha256": "1d37a353af0ad965a78b1ed000d91bb20cb8a57ef141a97120d7dfbd830fb5fc",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog rejects invalid and unbound queries with backend-neutral typed errors",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-b746b7b0-81c1-4c19-bd90-bcc3021339e3\",0]",
+      "rawResultSha256": "a9fcdafe7797c18f4300037ce0b8c4d0d260001ef22500afebd87405b664a960",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "wrapped filters preserve scalar types and SQL null semantics",
+      "mode": "current",
+      "status": "FAIL",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-e3af2c70-5d24-459a-ad53-50e446c6188c\",0]",
+      "rawResultSha256": "4c6d1173378e0841ac764c21302bbcae354b08f6932dab4c3444887bc0f0e649",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "Datalog ordering and pagination preserve mixed scalar order",
+      "mode": "current",
+      "status": "FAIL",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-71c32566-4676-4439-904e-a0849e5df7b5\",0]",
+      "rawResultSha256": "880f9f7d220c2a79f4cc1815afbdb4618b2dd612d1e7f15bfcce7712d1187d6e",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "datalog untyped strings match string and ref values while typed refs stay exact",
+      "mode": "current",
+      "status": "FAIL",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-c5cc9251-446e-4e7b-ae78-0579acf675b6\",0]",
+      "rawResultSha256": "701aa53dfe532f9f35efd77c1f20dbc585dc3d768fa625801ebb039b4501f9fb",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "transact records provenance datoms",
+      "mode": "current",
+      "status": "FAIL",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-da722732-80ea-4e23-9284-e1db0c441f03\",0]",
+      "rawResultSha256": "479e2ad6ef5fbc2bd1011dff69f1f79ad2c3f124c9fb0b7826071ac2c5ef6a3f",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "conditional transactions are atomic and journal their changes",
+      "mode": "current",
+      "status": "FAIL",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-1c074173-1055-4343-b74f-737cc6758edb\",0]",
+      "rawResultSha256": "707e8fe6e9ffe48897f4e540946b14e9cc1242a50e95c84e5618d5a4bd97d602",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "entity transaction history is indexed, complete, and snapshot-stable",
+      "mode": "current",
+      "status": "FAIL",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-740f866b-2d0b-4ac4-9397-003680b1742e\",0]",
+      "rawResultSha256": "b0151044268d0c73c99b6234d92dd741197e30b30cc1828138e45f2910ee12bf",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "graph constraints reject invalid post-states across valid time",
+      "mode": "current",
+      "status": "FAIL",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-62b8c296-f5a4-4806-9cb9-77c1db176b07\",0]",
+      "rawResultSha256": "97d91a643e43bc0bfc8a68961f787a1729159315e6da33bcdc08399ef89ffe94",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "dependency state is attribute-scoped and schedules temporal edges",
+      "mode": "current",
+      "status": "FAIL",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-a5b5bf72-200d-4805-8517-fa666aef4143\",0]",
+      "rawResultSha256": "d0af3754861fb4ad9f1e8682ce9d7dc6d3e5b20d775f3ca94d13d5366ef11c59",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "derivation materialization uses indexed dependency freshness",
+      "mode": "current",
+      "status": "FAIL",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-7469a2ee-6980-4ed1-92dc-f2c6c74d8f94\",0]",
+      "rawResultSha256": "3cb4b03eff2af5ee6221d127b43936e20ec9930f1fa34b1b6a788577e7b2fc18",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "graph constraints agree across storage backends",
+      "mode": "current",
+      "status": "FAIL",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-20b14a22-cd1b-49ca-ad50-e8f912074b7e\",0]",
+      "rawResultSha256": "d1d371034f8458976a257527d5f0f1bef4cf63fa1c2386883442f8d1de3c875b",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "consumer checkpoints advance atomically and remain queryable",
+      "mode": "current",
+      "status": "FAIL",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-d1ee8d79-331e-4c39-af45-6796378c178d\",0]",
+      "rawResultSha256": "267718d21c04ebb474259568cbed9cec6f12d359a134ca1ce70fa22655e1c325",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "retractByPattern respects entityType",
+      "mode": "current",
+      "status": "FAIL",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-10034d41-ef2f-4866-bf8d-30c80ca79903\",0]",
+      "rawResultSha256": "56080c4d3c77df9097dd84184d8cebfd2f892f9301ff06ca5fa4199074a5d0dc",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "reserved Triplex namespaces reject ordinary writes atomically",
+      "mode": "current",
+      "status": "FAIL",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-508ffd4d-4b52-4a5b-84ce-fc8dbaaf4269\",0]",
+      "rawResultSha256": "66a77bf1e23521fc467ccc3041680e131903d5a6d63d450520519b334b675860",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "transaction journals cannot be retracted through ordinary writes",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-33c8709d-d892-490d-a0a6-175cfa62ec6e\",0]",
+      "rawResultSha256": "d58c3cd45e93823a714ba3e29396d2d36868534a54b7fd45c048ccf9fadfc80c",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "direct and Datalog reads share one bitemporal basis",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-944772da-65d6-435f-8e1b-71521411df3b\",0]",
+      "rawResultSha256": "b7f9401e863bfeafab79e687658c987f5d9008113677518b9e382f243ec91264",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "historical corrections preserve what was previously recorded",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-2c699392-e025-4fc6-ba3e-b275e9a683e4\",0]",
+      "rawResultSha256": "4d674eff762b4d086310cb6e0dfaa0e702582ad35a43f294dde3013bcca4b027",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "batch entity reads preserve association, missing entries, and temporal basis",
+      "mode": "current",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-b8c4903b-ebc7-47bb-8d4f-92f70becc991\",0]",
+      "rawResultSha256": "98e0a2ece79aadec39af0ede6e9b3977b70c98d96a3186c61ae3d5d26c1a6319",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "retract is coherent across write and datalog paths",
+      "mode": "current",
+      "status": "FAIL",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-dda036e9-cc1d-4b8d-81e6-675e2ae78efe\",0]",
+      "rawResultSha256": "2806a99f8d727d73bb704b3b094b77c6179a1786c74e482d46426077752db4df",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "paged queries use deterministic snapshot-stable cursors",
+      "mode": "current",
+      "status": "FAIL",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-current-7b5773fe-1756-4831-ba90-cb12babe91e2\",0]",
+      "rawResultSha256": "d312095026e11275371e480af2ccce066b58b63ba1c1a2214891a065bfaa4b88",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "actor due-work ranges preserve numeric aliases, visibility, ordering, and limits",
+      "mode": "reopen",
+      "status": "FAIL",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-reopen-292038be-54a5-4e85-b0fb-3c0b4361563a\",0]",
+      "rawResultSha256": "2d91cd304f401c172288a8aef2df83b30a88375c3f87178f54c9948dbd74fd90",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "Datalog reads are bounded by default and cursors traverse the complete snapshot",
+      "mode": "reopen",
+      "status": "FAIL",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-reopen-451ef468-45dd-48c5-9742-5756c9adacf0\",0]",
+      "rawResultSha256": "ee4d1a5aae9dddb4e59d88646bd50665258d680075f2be0e54d0997399d56073",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "historical cursor pages intersect recorded time and the commit snapshot",
+      "mode": "reopen",
+      "status": "FAIL",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-reopen-609f3740-4509-41d4-94cb-2baabda872d9\",0]",
+      "rawResultSha256": "56f9739cbd98343c31d06db9f2319060e0b485535e9fa88993819fd54a79c926",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "recursive relations support cursor pagination and optional total counts",
+      "mode": "reopen",
+      "status": "FAIL",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-reopen-5d9bbcf7-e45f-4422-a007-53cbca380662\",0]",
+      "rawResultSha256": "ad6f3b06203aa44fc6dc99da6962c53c5f229fc662148bea9f586ac469245a92",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "assert then get and match return the fact",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-reopen-c574a0e6-7cd3-4550-9717-25d9ad7e163f\",0]",
+      "rawResultSha256": "d143a6f9c3f9497722e9abe878fefb28d508e1e44db96abe23042ea02086e3fc",
+      "languages": [
+        "triplex-datalog"
+      ]
+    },
+    {
+      "caseId": "same-value facts in one batch keep distinct identities",
+      "mode": "reopen",
+      "status": "PASS",
+      "oracleId": "O-TESTKIT",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-reopen-35b41363-683f-4deb-9fbb-8dd94729aae7\",0]",
+      "rawResultSha256": "af967be0816b0ccc15dbd8513eea795d6076b7df7e40776daa71e34ff2ed174c",
+      "languages": [
+        "triplex-datalog"
+      ]
+    }
+  ],
+  "scopes": {
+    "suite": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-xtdb-suite-62bc5622-eb2d-425c-a6e4-1f01a42eddcc\",0]",
+    "fresh": true
+  },
+  "steps": [
+    {
+      "name": "pnpm-version",
+      "command": "pnpm --version",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 731,
+      "cwd": ".",
+      "stdout": "runs/G1/G1-xtdb-20261108T013218Z-7e7e23/pnpm-version.stdout.txt",
+      "stderr": "runs/G1/G1-xtdb-20261108T013218Z-7e7e23/pnpm-version.stderr.txt"
+    },
+    {
+      "name": "build",
+      "command": "pnpm --filter @triplex-build/triplex --filter @triplex-build/triplex-testkit --filter @triplex-build/triplex-xtdb --filter @triplex-build/triplex-qualification build",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 15297,
+      "cwd": ".",
+      "stdout": "runs/G1/G1-xtdb-20261108T013218Z-7e7e23/build.stdout.txt",
+      "stderr": "runs/G1/G1-xtdb-20261108T013218Z-7e7e23/build.stderr.txt"
+    },
+    {
+      "name": "lab-conformance",
+      "command": "node packages/qualification/workloads/lab-conformance.ts --output /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a673708af43c1e677/runs/G1/G1-xtdb-20261108T013218Z-7e7e23/g1-report.json",
+      "code": null,
+      "signal": "SIGTERM",
+      "timedOut": true,
+      "elapsedMs": 2701014,
+      "cwd": ".",
+      "stdout": "runs/G1/G1-xtdb-20261108T013218Z-7e7e23/lab-conformance.stdout.txt",
+      "stderr": "runs/G1/G1-xtdb-20261108T013218Z-7e7e23/lab-conformance.stderr.txt"
+    }
+  ],
+  "firstFailures": [
+    {
+      "case": "actor due-work ranges preserve numeric aliases, visibility, ordering, and limits",
+      "phase": "current",
+      "error": "Cause([Fail(TimeoutError: Operation timed out after '1m 50s')])"
+    },
+    {
+      "case": "Datalog reads are bounded by default and cursors traverse the complete snapshot",
+      "phase": "current",
+      "error": "Cause([Fail(TimeoutError: Operation timed out after '1m 50s')])"
+    },
+    {
+      "case": "recursive relations support cursor pagination and optional total counts",
+      "phase": "current",
+      "error": "Cause([Fail(ReadError: XTDB Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])"
+    },
+    {
+      "case": "datalog supports multi-hop joins over ref edges",
+      "phase": "current",
+      "error": "Cause([Fail(ReadError: XTDB Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])"
+    },
+    {
+      "case": "datalog recursive rules compute the same transitive closure",
+      "phase": "current",
+      "error": "Cause([Fail(ReadError: XTDB Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])"
+    },
+    {
+      "case": "datalog aggregations group, filter, and order consistently",
+      "phase": "current",
+      "error": "Cause([Fail(ReadError: XTDB Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])"
+    },
+    {
+      "case": "wrapped filters preserve scalar types and SQL null semantics",
+      "phase": "current",
+      "error": "Cause([Fail(ReadError: XTDB Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])"
+    },
+    {
+      "case": "Datalog ordering and pagination preserve mixed scalar order",
+      "phase": "current",
+      "error": "Cause([Fail(ReadError: XTDB Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])"
+    },
+    {
+      "case": "datalog untyped strings match string and ref values while typed refs stay exact",
+      "phase": "current",
+      "error": "Cause([Fail(ReadError: XTDB Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])"
+    },
+    {
+      "case": "transact records provenance datoms",
+      "phase": "current",
+      "error": "Cause([Fail(ReadError: XTDB read failed (cause: Error: XTDB operation deadline exceeded))])"
+    }
+  ],
+  "rawDir": "runs/G1/G1-xtdb-20261108T013218Z-7e7e23",
+  "reasons": [
+    "lab-conformance timed out after 2700s",
+    "complete unchanged suite failed",
+    "38 of 88 case executions did not run",
+    "25 failed case executions",
+    "38 skipped executions"
+  ],
+  "verdict": "FAIL",
+  "objects": [
+    {
+      "path": "pnpm-lock.yaml",
+      "role": "lockfile",
+      "bytes": 290287,
+      "sha256": "b2b3e6e8cdfb18df6d235a8724611ee4fe637426c722a5de34326346b3cb6500"
+    },
+    {
+      "path": "lab/bin/gate.mjs",
+      "role": "gate-script",
+      "bytes": 49846,
+      "sha256": "5c30a717277afa2a182ed2dff98284fadc73937c2dd190bfe3b5db6d4d8978fa"
+    },
+    {
+      "path": "lab/bin/lib.mjs",
+      "role": "gate-script",
+      "bytes": 19956,
+      "sha256": "199ba832f81bc8e228bf6e29de0fbd2ef872a4b1d15fd40d2523a49be1f28740"
+    },
+    {
+      "path": "lab/bin/receipt.mjs",
+      "role": "gate-script",
+      "bytes": 5363,
+      "sha256": "ebdcfb60284d6efe378923c0f42eb4eb7ad9a260141ceb46958e86752d0d2d2c"
+    },
+    {
+      "path": "lab/bin/engine.mjs",
+      "role": "gate-script",
+      "bytes": 17892,
+      "sha256": "2c3bd842205e572a0cd456f2ceaf2a0d1003fd1553b03f446a27874b170ee72e"
+    },
+    {
+      "path": "lab/bin/heavy-lock.mjs",
+      "role": "gate-script",
+      "bytes": 1841,
+      "sha256": "88dd2071c8d8c1e3212c9a65dc719b79af46fbe6cc2e6ede8fbe0b61112803fa"
+    },
+    {
+      "path": "lab/config/slots.json",
+      "role": "gate-script",
+      "bytes": 3648,
+      "sha256": "24af2a4d0e7c04a085731335e9d9490b69b7477ab70fae452f32971098e841b5"
+    },
+    {
+      "path": "runs/G1/G1-xtdb-20261108T013218Z-7e7e23/build-manifest.json",
+      "role": "build-manifest",
+      "bytes": 100990,
+      "sha256": "83c1aa7ed4aaa6adea18815ed13da5820adefd0141542be0c95a1a31ca756006"
+    },
+    {
+      "path": "xtdb-dev effective config",
+      "role": "engine-effective-config",
+      "bytes": 565,
+      "sha256": "5c4691cd927710c522b1f20e0d2100a994a0383bf5f0190a8fc7abba9f90fe9c"
+    },
+    {
+      "path": "config.yaml",
+      "role": "engine-config-file",
+      "bytes": 198,
+      "sha256": "f6e1248ebb09af8a6959d67d15e0355a0be4c3783d8c3fc97ba97b00c7b3e379"
+    },
+    {
+      "path": "runs/G1/G1-xtdb-20261108T013218Z-7e7e23/build-manifest-after.json",
+      "role": "build-manifest",
+      "bytes": 100990,
+      "sha256": "83c1aa7ed4aaa6adea18815ed13da5820adefd0141542be0c95a1a31ca756006"
+    },
+    {
+      "path": "runs/G1/G1-xtdb-20261108T013218Z-7e7e23/lab-conformance.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/G1/G1-xtdb-20261108T013218Z-7e7e23/lab-conformance.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "packages/testkit/src/index.ts",
+      "role": "oracle-fixture",
+      "bytes": 102757,
+      "sha256": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988"
+    },
+    {
+      "path": "packages/qualification/workloads/lab-conformance.ts",
+      "role": "oracle-fixture",
+      "bytes": 6349,
+      "sha256": "fb0898e349fef7102663443fa240d9ae2995f6309fd2ab264c1c91ad9a05f397"
+    },
+    {
+      "path": "runs/G1/G1-xtdb-20261108T013218Z-7e7e23/g1-report.json",
+      "role": "raw-outcome",
+      "bytes": 22841,
+      "sha256": "cf03f0a61a3dd035af10f8bb6c9a3a938e1bddd940e8687d8f2d1f1147c422c4"
+    },
+    {
+      "path": "lab/acceptance/obligations.json",
+      "role": "acceptance-contract",
+      "bytes": 746804,
+      "sha256": "00416e216824ff0f065a4a01c134984fed58b0171c8909007b6efba7951c9f3b"
+    }
+  ]
+}

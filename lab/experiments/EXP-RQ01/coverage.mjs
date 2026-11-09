@@ -1,7 +1,7 @@
 // [EXP-RQ01] Why: bind measured R31 denominators and actual nonzero reads to the gate receipt.
 // Rejected: storing only seed labels (the original labels missed semantic operation families).
 import fs from "node:fs";
-import * as api from "../../../packages/testkit/dist/index.js";
+import * as api from "../../../packages/testkit/dist/route.js";
 import { retentionProbe } from "./retention-probe.mjs";
 import {
   generateRouteHistory,
@@ -9,7 +9,7 @@ import {
   requireRouteCoverage,
   runRouteEquivalence,
   routeShape,
-} from "../../../packages/testkit/dist/index.js";
+} from "../../../packages/testkit/dist/route.js";
 const output = process.argv[2];
 if (!output || fs.existsSync(output)) throw new Error("Provide a new coverage output path");
 const records = [];

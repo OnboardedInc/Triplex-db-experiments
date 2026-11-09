@@ -65,6 +65,8 @@ const entries = list.stdout.trim().split("\n");
 for (const required of [
   "package/dist/index.js",
   "package/dist/index.d.ts",
+  "package/dist/route.js",
+  "package/dist/route.d.ts",
   "package/dist/route-equivalence.js",
   "package/dist/route-equivalence.d.ts",
   "package/dist/offline-route-fixtures.js",
@@ -96,7 +98,7 @@ fs.symlinkSync(
 fs.writeFileSync(
   path.join(consumer, "smoke.mjs"),
   `import fs from "node:fs";
-import { generateRouteHistory, makeOfflineRouteFixture, runRouteEquivalence, replayRouteAnswer } from '@triplex-build/triplex-testkit';
+import { generateRouteHistory, makeOfflineRouteFixture, runRouteEquivalence, replayRouteAnswer } from '@triplex-build/triplex-testkit/route';
 const result = await runRouteEquivalence({history: generateRouteHistory(89, 16), fixture: makeOfflineRouteFixture('qlever')});
 if (result.violations.length) throw new Error(JSON.stringify(result.violations));
 const known = replayRouteAnswer(generateRouteHistory(89,16), { basis: { validAt: 2000, recordedPosition: 1024 } });

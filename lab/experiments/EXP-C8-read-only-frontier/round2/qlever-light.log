@@ -1,0 +1,9 @@
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  16:32:33
+   Duration  2.08s (tests 55%, transform 30%, import 15%)
+
