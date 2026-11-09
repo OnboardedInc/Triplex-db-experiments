@@ -1,3 +1,4 @@
+import { ValueDomains } from "@triplex-build/triplex/runtime";
 import { randomUUID } from "node:crypto";
 import { Effect, Exit, Semaphore } from "effect";
 import { isPatternVariable, type ResolvedTemporalBasis } from "@triplex-build/triplex";
@@ -537,6 +538,7 @@ export const makeXtdbStorageAdapter = (
     });
 
   const adapter: StorageAdapterService = {
+    valueDomain: ValueDomains.xtdb,
     supportedValueTypes: [
       "string",
       "number",

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { InvalidTripleError } from '@triplex-build/triplex';
 import { buildRow } from '../src/public-backend.mjs';
 import { ownExecuteResult } from '../src/query-result-boundary.mjs';
 
@@ -14,7 +15,7 @@ test('public ownership keeps adjacent int64 values and fractional bounds exact',
 
 test('public integer boundary refuses unsafe Number, noncanonical text and overflow before a write', () => {
   for (const value of [9007199254740993,'01','-0','9223372036854775808','-9223372036854775809']) {
-    assert.throws(()=>buildRow({entityId:'e',attribute:':i',value:{type:'integer',value}},'tx',1,'id',1),/canonical signed int64/);
+    assert.throws(()=>buildRow({entityId:'e',attribute:':i',value:{type:'integer',value}},'tx',1,'id',1),InvalidTripleError);
     assert.throws(()=>ownExecuteResult({results:[{'?i':{type:'integer',value}}]},'duckdb'),/Unexpected public query scalar/);
   }
 });

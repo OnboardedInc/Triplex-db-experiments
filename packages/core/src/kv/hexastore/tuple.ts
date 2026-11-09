@@ -10,6 +10,7 @@
  * - Null-byte escaping allows variable-length strings without length prefixes
  */
 
+import { assertValueInDomain, ValueDomains } from "../../ValueDomain.js";
 import { concat } from "../kv/encoding.js";
 
 // ─── Type Tags ─────────────────────────────────────────────────────────────
@@ -39,6 +40,9 @@ export const TAG_JSON = 0x06;
 /** Blob hash -- SHA-256 bytes. */
 export const TAG_BLOB = 0x07;
 
+// [EXP-GS12F-R3] Why: add a distinct tag without renumbering persisted legacy tags. Rejected: number tag (precision collisions).
+export const TAG_INTEGER = 0x08;
+
 /** Max sentinel -- sorts after all real values. Used as upper bound. */
 export const TAG_MAX = 0xff;
 
@@ -47,6 +51,7 @@ export const TAG_MAX = 0xff;
 export type TuplePart =
   | { readonly type: "null" }
   | { readonly type: "boolean"; readonly value: boolean }
+  | { readonly type: "integer"; readonly value: string }
   | { readonly type: "number"; readonly value: number }
   | { readonly type: "string"; readonly value: string }
   | { readonly type: "ref"; readonly value: string }
@@ -54,6 +59,8 @@ export type TuplePart =
   | { readonly type: "json"; readonly value: unknown }
   | { readonly type: "blob"; readonly value: string }
   | { readonly type: "max" };
+
+export const tInteger = (value: string): TuplePart => ({ type: "integer", value });
 
 // Convenience constructors
 export const tNull = (): TuplePart => ({ type: "null" });
@@ -177,6 +184,15 @@ const encodePart = (part: TuplePart): Uint8Array => {
     case "boolean":
       return new Uint8Array([TAG_BOOLEAN, part.value ? 0x01 : 0x00]);
 
+    // [EXP-GS12F-R3] Why: bias signed int64 into an unsigned sortable 8-byte key; keep text in META.
+    // Rejected: Number(value) (integers above 2^53 would collide).
+    case "integer": {
+      assertValueInDomain(part, ValueDomains.memory);
+      const bytes = new Uint8Array(9);
+      bytes[0] = TAG_INTEGER;
+      new DataView(bytes.buffer).setBigUint64(1, BigInt(part.value) + (1n << 63n), false);
+      return bytes;
+    }
     case "number":
       return concat(new Uint8Array([TAG_NUMBER]), encodeNumber(part.value));
 
@@ -225,6 +241,12 @@ const decodePart = (bytes: Uint8Array, offset: number): [TuplePart, number] => {
     case TAG_BOOLEAN:
       return [{ type: "boolean", value: bytes[offset + 1]! !== 0 }, 2];
 
+    case TAG_INTEGER: {
+      const value =
+        new DataView(bytes.buffer, bytes.byteOffset + offset + 1, 8).getBigUint64(0, false) -
+        (1n << 63n);
+      return [{ type: "integer", value: value.toString() }, 9];
+    }
     case TAG_NUMBER:
       return [{ type: "number", value: decodeNumber(bytes, offset + 1) }, 9];
 
@@ -353,6 +375,8 @@ export const encodePartStr = (part: TuplePart): string => {
     case "boolean":
       return String.fromCharCode(TAG_BOOLEAN) + String.fromCharCode(part.value ? 0x01 : 0x00);
 
+    case "integer":
+      return String.fromCharCode(...encodePart(part));
     case "number":
       return encodeNumberStr(part.value);
 

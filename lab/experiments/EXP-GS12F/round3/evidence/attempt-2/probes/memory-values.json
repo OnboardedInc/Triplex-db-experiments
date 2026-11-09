@@ -1,0 +1,79 @@
+[
+  {
+    "label": "number:NaN",
+    "input": "{ type: 'number', value: NaN }",
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: [Object],\n          message: \"Value is outside memory/kv's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "stored": "undefined",
+    "typed": true
+  },
+  {
+    "label": "number:Infinity",
+    "input": "{ type: 'number', value: Infinity }",
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: [Object],\n          message: \"Value is outside memory/kv's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "stored": "undefined",
+    "typed": true
+  },
+  {
+    "label": "datetime:NaN",
+    "input": "{ type: 'datetime', value: NaN }",
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: [Object],\n          message: \"Value is outside memory/kv's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "stored": "undefined",
+    "typed": true
+  },
+  {
+    "label": "datetime:Infinity",
+    "input": "{ type: 'datetime', value: Infinity }",
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: [Object],\n          message: \"Value is outside memory/kv's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "stored": "undefined",
+    "typed": true
+  },
+  {
+    "label": "json:nonfinite",
+    "input": "{ type: 'json', value: { erasedAt: Infinity } }",
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: [Object],\n          message: \"Value is outside memory/kv's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "stored": "undefined",
+    "typed": true
+  },
+  {
+    "label": "json:undefined",
+    "input": "{ type: 'json', value: undefined }",
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: [Object],\n          message: \"Value is outside memory/kv's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "stored": "undefined",
+    "typed": true
+  },
+  {
+    "label": "json:cycle",
+    "input": "{ type: 'json', value: <ref *1> { self: [Circular *1] } }",
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: [Object],\n          message: \"Value is outside memory/kv's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "stored": "undefined",
+    "typed": true
+  },
+  {
+    "label": "json:bigint",
+    "input": "{ type: 'json', value: 1n }",
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: [Object],\n          message: \"Value is outside memory/kv's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "stored": "undefined",
+    "typed": true
+  },
+  {
+    "label": "blob:negative-size",
+    "input": "{ type: 'blob', value: 'h', mimeType: 'text/plain', size: -1 }",
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: [Object],\n          message: \"Value is outside memory/kv's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "stored": "undefined",
+    "typed": true
+  },
+  {
+    "label": "string:surrogate",
+    "input": "{ type: 'string', value: '\\ud800' }",
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: [Object],\n          message: \"Value is outside memory/kv's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "stored": "undefined",
+    "typed": true
+  },
+  {
+    "label": "decimal:excess-scale",
+    "input": "{ type: 'decimal', value: '16.501' }",
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: [Object],\n          message: \"Value is outside memory/kv's exact storage domain\",\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "stored": "undefined",
+    "typed": true
+  }
+]

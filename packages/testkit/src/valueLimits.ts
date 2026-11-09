@@ -1,4 +1,5 @@
 import { Effect } from "effect";
+import { StorageAdapter, ValueDomains } from "@triplex-build/triplex/runtime";
 import {
   Triples,
   EntityId,
@@ -35,6 +36,20 @@ export const valueLimitCases = [
         { type: "number", value: "1" },
         { type: "blob", value: "hash" },
         { type: "unknown", value: "x" },
+        ...[NaN, Infinity, -Infinity, -0].map((value) => ({ type: "number", value })),
+        ...[NaN, Infinity, -0, -8640000000000001, 8640000000000001].map((value) => ({
+          type: "datetime",
+          value,
+        })),
+        ...["\ud800", "\0", "x".repeat(ValueDomains.memory.string.maxUtf8Bytes + 1)].map(
+          (value) => ({ type: "string", value }),
+        ),
+        ...[undefined, { lost: undefined }, { lost: Infinity }, { lost: -0 }].map((value) => ({
+          type: "json",
+          value,
+        })),
+        { type: "blob", value: "h", mimeType: "text/plain", size: -1 },
+        { type: "decimal", value: "16.50" },
         null,
       ];
       for (const [index, raw] of values.entries()) {
@@ -57,9 +72,7 @@ export const valueLimitCases = [
         for (const write of writes) {
           const error = yield* write.pipe(Effect.flip);
           yield* verify(
-            error instanceof InvalidTripleError &&
-              error.field === "value" &&
-              JSON.stringify(error.value) === JSON.stringify(raw),
+            error instanceof InvalidTripleError && error.field === "value" && error.value === raw,
             `invalid ${index}: expected InvalidTripleError, got ${String(error)}`,
           );
         }
@@ -142,6 +155,9 @@ export const exactIntegerLimitCase = {
   name: "GS12F exact integer boundaries round trip with receipt and historical binding",
   run: Effect.gen(function* () {
     const triples = yield* Triples;
+    const adapter = yield* Effect.serviceOption(StorageAdapter);
+    const bounds =
+      adapter._tag === "Some" ? adapter.value.valueDomain?.integer : ValueDomains.memory.integer;
     const entityId = EntityId.make("gs12f:integer");
     const values = [
       -1n,
@@ -166,6 +182,27 @@ export const exactIntegerLimitCase = {
     ];
     for (const [index, raw] of values.entries()) {
       const value = integer(raw);
+      if (bounds && (raw < BigInt(bounds.min) || raw > BigInt(bounds.max))) {
+        const before = yield* triples.currentPosition();
+        const error = yield* triples
+          .transact([{ op: "assert", entityId, attribute: ":gs12f/outside", value }], {
+            commandId: `gs12f:outside:${index}`,
+          })
+          .pipe(Effect.flip);
+        yield* verify(
+          error instanceof InvalidTripleError,
+          "outside adapter range did not reject typed",
+        );
+        yield* verify(
+          (yield* triples.currentPosition()) === before,
+          "outside adapter range claimed a position",
+        );
+        yield* verify(
+          (yield* triples.transactionByCommand(`gs12f:outside:${index}`)) === null,
+          "outside adapter range claimed a receipt",
+        );
+        continue;
+      }
       const commandId = `gs12f:exact:${index}`;
       const result = yield* triples.transact(
         [{ op: "assert", entityId, attribute: `:gs12f/i${index}`, value, validFrom: 0 }],

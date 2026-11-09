@@ -23,7 +23,6 @@ import type { DatalogQuery, WrappedQuery } from "../datalog/types.js";
 import {
   InvalidTripleError,
   WriteError,
-  UnsupportedValueTypeError,
   ReadError,
   CommandAlreadyCommittedError,
   TransactionConflictError,
@@ -427,13 +426,6 @@ const makeKvTriplesService = Effect.gen(function* () {
         .transact((tx) => {
           const transactionStore = createKvTripleStore(transactionBackend(tx));
           return Effect.gen(function* () {
-            if (
-              operations.some(
-                (operation) => operation.op === "assert" && operation.value.type === "integer",
-              )
-            ) {
-              return yield* Effect.fail(new UnsupportedValueTypeError("KV runtime", "integer"));
-            }
             if (!isSystemWriteAuthorized(meta)) {
               const reserved = reservedAssertError(operations);
               if (reserved) return yield* Effect.fail(reserved);

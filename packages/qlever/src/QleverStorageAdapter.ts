@@ -1,3 +1,4 @@
+import { ValueDomains, storedValueDomain } from "@triplex-build/triplex/runtime";
 import { randomUUID } from "node:crypto";
 import { Context, Effect, Exit, Semaphore } from "effect";
 import { isPatternVariable, type ResolvedTemporalBasis } from "@triplex-build/triplex";
@@ -378,7 +379,7 @@ export const makeQleverStorageAdapter = (
             id,
             entity_id: input.entityId,
             attribute: input.attribute,
-            ...packValue(input.value),
+            ...packValue(input.value, storedValueDomain(ValueDomains.qlever, input.attribute)),
             recorded_at: timestamp,
             recorded_position: position,
             valid_from: input.validFrom ?? timestamp,
@@ -399,6 +400,7 @@ export const makeQleverStorageAdapter = (
       }),
     );
   return {
+    valueDomain: ValueDomains.qlever,
     supportedValueTypes: [
       "string",
       "number",

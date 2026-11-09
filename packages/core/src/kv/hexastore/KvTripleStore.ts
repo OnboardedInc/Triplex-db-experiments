@@ -15,7 +15,7 @@
 
 import { Effect, Stream } from "effect";
 import type { TripleValue } from "../../Value.js";
-import { UnsupportedValueTypeError } from "../../errors/index.js";
+import { assertValueInDomain, ValueDomains, storedValueDomain } from "../../ValueDomain.js";
 import type { KvBackendService } from "../kv/KvBackend.js";
 import type { ResolvedTemporalBasis } from "../../Temporal.js";
 import { unsafe } from "../../Branded.js";
@@ -91,7 +91,7 @@ const asciiToBytes = (s: string): Uint8Array => {
 //   [4 bytes] tripleId length, then [N bytes] tripleId (UTF-8)
 //   [4 bytes] entity length, then [N bytes] entity
 //   [4 bytes] attribute length, then [N bytes] attribute
-//   [1 byte]  value type tag (0=string, 1=number, 2=boolean, 3=datetime, 4=ref, 5=json, 6=blob)
+//   [1 byte]  value type tag (0=string, 1=number, 2=boolean, 3=datetime, 4=ref, 5=json, 6=blob, 7=integer)
 //   [varies]  value payload (see below)
 //   [4 bytes] txId length, then [N bytes] txId
 //   [8 bytes] recordedAt (float64 big-endian)
@@ -125,6 +125,7 @@ const VT_DATETIME = 3;
 const VT_REF = 4;
 const VT_JSON = 5;
 const VT_BLOB = 6;
+const VT_INTEGER = 7;
 
 // Reusable write buffer (4KB, grows if needed). Avoids per-datom allocation.
 let _writeBuf = new Uint8Array(4096);
@@ -179,7 +180,8 @@ const writeNullableStr = (s: string | null, offset: number): number => {
  * Serialize a Datom to bytes for META storage using custom binary format.
  * Uses a reusable write buffer to avoid per-datom allocation.
  */
-const serializeDatom = (datom: Datom): Uint8Array => {
+export const serializeDatom = (datom: Datom): Uint8Array => {
+  assertValueInDomain(datom.value, storedValueDomain(ValueDomains.memory, datom.attribute));
   let offset = 0;
 
   // Version
@@ -196,7 +198,9 @@ const serializeDatom = (datom: Datom): Uint8Array => {
   ensureCapacity(1, offset);
   switch (v.type) {
     case "integer":
-      throw new UnsupportedValueTypeError("KV encoding", "integer");
+      _writeBuf[offset++] = VT_INTEGER;
+      offset = writeStr(v.value, offset);
+      break;
     case "string":
       _writeBuf[offset++] = VT_STRING;
       offset = writeStr(v.value, offset);
@@ -335,7 +339,7 @@ const readStr = (buf: Uint8Array, offset: number): [string, number] => {
  * Deserialize a Datom from META storage bytes.
  * Decode the current Triplex datom format.
  */
-const deserializeDatom = (bytes: Uint8Array): Datom => {
+export const deserializeDatom = (bytes: Uint8Array): Datom => {
   const version = bytes[0];
   if (version !== FORMAT_VERSION) throw new Error(`Unsupported datom format: ${String(version)}`);
 
@@ -355,6 +359,13 @@ const deserializeDatom = (bytes: Uint8Array): Datom => {
   const valueTag = bytes[offset++]!;
   let value: TripleValue;
   switch (valueTag) {
+    case VT_INTEGER: {
+      let integerText: string;
+      [integerText, offset] = readStr(bytes, offset);
+      value = { type: "integer", value: integerText };
+      assertValueInDomain(value, ValueDomains.memory);
+      break;
+    }
     case VT_STRING: {
       let sv: string;
       [sv, offset] = readStr(bytes, offset);
@@ -409,6 +420,8 @@ const deserializeDatom = (bytes: Uint8Array): Datom => {
     default:
       throw new Error(`Unknown value type tag: ${valueTag}`);
   }
+
+  assertValueInDomain(value, storedValueDomain(ValueDomains.memory, attribute));
 
   let txId: string;
   [txId, offset] = readStr(bytes, offset);
@@ -967,7 +980,7 @@ const valuesEqual = (a: TripleValue, b: TripleValue): boolean => {
   if (a.type !== b.type) return false;
   switch (a.type) {
     case "integer":
-      throw new UnsupportedValueTypeError("KV comparison", "integer");
+      return a.value === (b as typeof a).value;
     case "string":
     case "ref":
     case "blob":

@@ -105,3 +105,82 @@ Final round 2 results: **3/3 targeted offline cases**, **34 passed / 24 skipped*
 ### Remaining boundaries
 
 No Datomic integration, full GS.12, durable QLever commit/history validation, engine performance claim, promotion, push, or merge. The contract builder must repin the implementation path above in its next version. Independent review remains required. Round 1's remaining external/native-adapter and nonfinite/JSON transport limits remain unchanged.
+
+## Round 3: one exact value-domain catalog and canonical KV integers
+
+This section supersedes round 1/2's limited JSON/nonfinite coverage and acceptance of QLever integers outside its declared range. Review `verify/GS12F` at `6bab84e` identified real defects: shape checks admitted lossy JSON and nonfinite values, canonical KV integers failed inside a backend callback, and the QLever range declaration was unenforced. The review probes are retained byte-for-byte in [round3](round3/README.md), with runnable local copies. The memory-integer probe now requires a successful callback, commit and exact readback because rejecting canonical values was the defect. No review observation is retroactively changed.
+
+### Implementation and explicit bounds
+
+`packages/core/src/ValueDomain.ts` defines the sole adapter codec-admission catalog. `StorageAdapter.valueDomain`, public pre-claim validation and adapter packing/decoding use it. The core row decoder also uses the selected adapter's domain; adapters without the new property retain a compatibility domain honoring their existing supported-kind list. KV compositions use the memory domain. FoundationDB uses the same KV logical codec; its native service and physical key/transaction constraints are not qualified here.
+
+| Codec profile | Exact integer admission | Decimal precision/scale |
+| --- | --- | --- |
+| Memory/KV, FoundationDB/KV, XTDB, DuckDB | canonical decimal text, [-9223372036854775808, 9223372036854775807] | unsupported (`null`) |
+| QLever | canonical decimal text, [-576460752303423488, 576460752303423487] | unsupported (`null`) |
+| SQLite, PostgreSQL, Cloudflare SQL | integer kind unsupported by their current schemas | unsupported (`null`) |
+
+All profiles declare finite binary64 numbers in [-Number.MAX_VALUE, Number.MAX_VALUE], rejecting negative zero; datetime values use finite binary64 milliseconds in [-8640000000000000, 8640000000000000], including fractional milliseconds and rejecting negative zero. Strings, refs and blob text fields admit well-formed Unicode up to **1,048,576 UTF-8 bytes**, excluding NUL. This is an explicit portable codec-admission cap, not a measurement of an engine's largest physical string. Blob sizes admit safe nonnegative integers [0, 9007199254740991], excluding negative zero. Boolean values remain exact booleans. No new decimal wire kind is introduced: tagged decimal values, including `16.50` and `16.501`, reject typed rather than pretending to preserve decimal precision.
+
+JSON admits ordinary object/array data to depth 128, finite numbers other than -0, and the same text constraints recursively. Undefined, bigint, functions, symbols, accessors, hidden properties, custom prototypes/toJSON, malformed Unicode, sparse/decorated arrays and cycles reject typed. Tagged value envelopes must be ordinary data with the expected fields. The generated reserved transaction journal permits 16 additional nesting levels around already-validated user JSON; public preflight always uses the base depth. This prevents an admitted depth-128 value failing late when its journal envelope is encoded. Empty blob filenames are preserved by the SQL codecs.
+
+KV META records add integer tag 7 without renumbering existing tags. Integer index keys add tag 8 with an unsigned, biased big-endian int64 payload, preserving order and adjacent values above 2^53. No Number conversion is used. Existing META records remain readable. The callback-path integer prohibition is removed, so canonical integers now commit instead of producing a late WriteError. This change does not add KV integer Datalog arithmetic/query support.
+
+### Regression coverage and observed failures
+
+The persistent [integration boundary suite](../../../test/integration/test/value-domains.test.ts) exercises all eight catalog entries through real codecs. It compares decoded values to the **original inputs**, including signed integer endpoints, adjacent unsafe integers, binary64 endpoints/subnormals, date endpoints/fractions, UTF-8 text limits (ASCII and astral Unicode), booleans, JSON depth, and blob size/text/empty-filename bounds. One past each declared boundary, unsupported integer/decimal families and lossy representations must throw InvalidTripleError. Every invalid vector is also sent through assert, mixed assertBatch and mixed transact against the selected domain: the exact original error value and zero callback/claim counters are required. Memory additionally commits its accepted endpoints and checks get, journal receipt/transaction identity and a historical read. The integration package runs this suite during ordinary checks; the dedicated round3 configuration also runs the copied QA probes.
+
+The shared testkit invalid-value cases now cover nonfinite numbers/dates, -0, malformed/oversized text, lossy JSON, invalid blob sizes and unsupported decimal values. Its exact-integer lane case consults the selected domain: out-of-range QLever values must reject typed without a position or receipt; supported values must retain exact get/receipt/history representations. Historical QLever storage/query/outcome fixtures are adjusted to the admitted 60-bit endpoints, without changing the separate aggregate-result int64 tests.
+
+Intermediate [attempt-1](round3/evidence/attempt-1/exits.txt) passed probes, offline XTDB/QLever, KV/SQLite integration and Cloudflare conformance, but **failed** the core large-string regression under the initial 64 KiB cap and TypeScript checks in the new integration test. Both failures are retained. The cap is now 1 MiB, preserving the existing >64 KiB test, and the harness uses correctly branded entity IDs and an explicitly widened effect list. An earlier `integer-2.log` is an incorrect Vitest cwd invocation, not semantic evidence. Initial targeted probe results are historical intermediate observations; final results below bind the final source.
+
+No files under `lab/acceptance/` are changed in round 3. Contract construction and repinning remain the contract builder's responsibility. Earlier QLever live timeouts remain **DIAGNOSTIC** under Q91a/R35; no live QLever retry, engine reservation or container lifecycle action is performed.
+
+### Final round 3 results
+
+**Stable attempt 3 completed with every recorded command exit 0.** [Exit record](round3/evidence/attempt-3/exits.txt), [source manifest](round3/evidence/attempt-3/sources.json) and [end-of-attempt source check](round3/evidence/attempt-3/source-stability.json) bind the run to base `5610572e` plus the exact changed/new source bytes. The captured source files were unchanged at attempt end. The manifest also checks the immutable review-probe preimages at `6bab84e` and verifies no acceptance changes since round 2. These are offline builder checks, not a physical-slot-bound acceptance receipt.
+
+| Gate | Fresh result | Evidence |
+| --- | --- | --- |
+| Copied QA probes + all-profile boundary suite | 34/34 | [probes.log](round3/evidence/attempt-3/probes.log), [raw probe observations](round3/evidence/attempt-3/probes/) |
+| Core unit suite | 850/850 | [core.log](round3/evidence/attempt-3/core.log) |
+| XTDB offline suite | 62 passed; 90 live/optional skipped | [xtdb.log](round3/evidence/attempt-3/xtdb.log) |
+| QLever offline suite | 34 passed; 24 live skipped | [qlever.log](round3/evidence/attempt-3/qlever.log) |
+| KV/SQLite public value-limit integrations | 4/4 | [integration.log](round3/evidence/attempt-3/integration.log) |
+| SQLite conformance wrapper | 1/1 | [sqlite.log](round3/evidence/attempt-3/sqlite.log) |
+| Cloudflare workerd conformance/value-limit wrappers | 3/3 | [cloudflare.log](round3/evidence/attempt-3/cloudflare.log) |
+| DuckDB direct codec regressions | 2/2 | [duckdb-codec.log](round3/evidence/attempt-3/duckdb-codec.log) |
+| Changed package/dependency builds | 9 tasks successful | [build.log](round3/evidence/attempt-3/build.log) |
+| Workspace TypeScript checks and prerequisite builds | 32 tasks successful | [typecheck.log](round3/evidence/attempt-3/typecheck.log) |
+| Package consumer check | 13 tarballs and clean consumer verified | [pack.log](round3/evidence/attempt-3/pack.log) |
+
+Attempt 2 passed the semantic/build/type/package gates but its source-stability check correctly failed: final cleanup edits changed the shared wire-limit import, KV format comment and DuckDB duplicate range check during execution. It is retained as **intermediate**, not the final source-bound result. Attempt 3 repeats all gates after freezing those source files and reports no source drift. A previously refused attempt did not execute gates while disk free was below 5 GiB. [Owned-cache cleanup](round3/evidence/cache-cleanup.json) retained historical tarballs and raw logs while removing regenerable consumer trees/download cache; the earlier report's statement that those consumer trees remain present is historical. Final pack artifacts are in `.cache/gs12f-pack/triplex-pack-wtZ0tT`.
+
+### Updated pin inventory (no repin)
+
+The published contract's direct implementation-pin drift is still the original testkit barrel export; round 3 does not edit that barrel. Current published pins remain untouched:
+
+| Pinned path | Published old SHA-256 | Candidate new SHA-256 |
+| --- | --- | --- |
+| `packages/testkit/src/index.ts` | `6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988` | `432cec5c6aa33150c5c6f6c54091184edcaece3395ee3c809524c5502594a6d6` |
+
+For completeness, round 2's restoration also advanced this administrative pin from the original experiment base to then-main; this is **restored main content**, not a new round 3 edit or requested implementation repin:
+
+| Restored administrative path | Original base SHA-256 | Restored main SHA-256 |
+| --- | --- | --- |
+| `lab/acceptance/RULINGS-PENDING.md` | `b86222c537567c78ecd5e53e23f9450f0e48e7d8ff54b7f533d3678243a862c0` | `ced5c9496bcd596cce85973f91ec8f32426adc4f0d049e2ecac288a3a224ab37` |
+
+The [final source manifest](round3/evidence/attempt-3/sources.json) lists **every changed/new implementation and test path**, including the core files, with its old SHA-256 from original base `8d098718` and current SHA-256 (`null` old hash means a new file). `publishedPinDrift` separately extracts exact published path/hash entries from the unchanged obligations; it finds only the testkit barrel above. XTDB's whole-file source changes are inventoried there even though its published outside-block mutation fixture pins specific unchanged code blocks rather than a whole-file hash. This is an inventory for the contract builder, not generated acceptance metadata.
+
+### Round 3 PASS audit
+
+1. **`test/integration/test/value-domains.test.ts` codec/boundary assertions.** Content: compare the original tagged input to decoded actual codec output with strict deep equality; require InvalidTripleError for every outside value, including one past numeric/text/date/depth/blob/integer bounds. Independent literal vectors retain unsafe adjacent integers, finite/subnormal values and unsupported decimal kinds. Freshness: each encode/decode is executed in this invocation; counters/runtimes are newly created per profile. Binding: the profile and actual encoder/decoder are selected together from this checkout; the source manifest pins the catalog, test and codec edits. No engine, native FoundationDB key-limit or durable QLever claim is made.
+2. **The same suite's pre-claim and memory transaction assertions.** Content: check exact error class and identity of the original error value plus zero transaction/claim counts for all three write APIs. Accepted memory controls must return the original value from get, receipt changes and historical reads; receipts must have the returned transaction ID. Integer tuple bytes must order signed endpoints and distinguish adjacent unsafe integers. Freshness: new runtimes/backends and literal commands per test; binding: one selected domain/runtime, returned fact IDs, transaction ID and historical basis. Stubbed pre-claim tests never claim successful adapter durability.
+3. **Runnable copied QA probes/controls.** Content: require typed failures and unchanged actual XTDB/QLever transaction/claim counters; QLever's literal outside-60-bit cases reject; memory unsafe integers must commit through the real instrumented callback and read back exactly. The controls execute shared testkit effects. Freshness: clients, runtimes, counters and observations are created by the current test; binding: actual adapters/codec source, literal inputs and fresh per-attempt observation directory. Immutable original probe copies are checked against `6bab84e`, and deliberate import/output/memory-probe changes are documented. Initial observation files are not substituted for final attempt outputs.
+4. **`packages/testkit/src/valueLimits.ts`, modified core integer and adapter regression tests, and wrappers.** Content: the shared checks require the exact error class/field/original value, unchanged position/facts, no command receipt, reusable corrected command identity and exact supported get/receipt/history values. The lane-specific integer case reads the selected adapter domain and requires typed refusal outside it. Core's positive KV regression requires exact committed int64 readback. Updated QLever/DuckDB direct-codec tests require the new typed class; QLever decode also rejects outside its declared bound. Freshness: effects execute in fresh test layers/scopes, no historical output adoption. Binding: returned IDs/positions/receipts and the injected adapter; skipped live tests are reported skipped. No separate int64 aggregate-result admission is weakened.
+5. **`round3/gates.sh`, `capture.py` and source-stability check.** Command exits are retained individually and any nonzero exit fails the runner; they are not semantic acceptance verdicts. Capture hashes the changed/new source bytes at attempt start, binds the Git base/review preimages, inventories published pin drift, and asserts the acceptance diff is empty. End checking compares current bytes to that exact manifest and fails on drift (demonstrated by attempt 2). Freshness: a new attempt directory and timestamp; binding: local source paths and offline inputs only, explicitly no physical slot. Build/typecheck/package-consumer successes mean those checks succeeded, not that GS.12 or a lane qualified.
+6. **Cleanup record.** This is an operational record, not a semantic PASS. The deletion scope is asserted to lie under this worktree's `.cache`; only terminal generated consumers and the npm download cache were removed. Free-space values were read around the operation, and tarballs/logs were retained. No engine state, source, unknown evidence or shared dependency store was removed.
+
+### Remaining limits
+
+No acceptance edit, version bump, repin, merge, push, publish or promotion. No live XTDB/QLever/Datomic, PostgreSQL service, native DuckDB or native FoundationDB run in round 3. There is no Datomic public adapter in this branch; no Datomic result is fabricated. Codec checks and FoundationDB's shared KV logical encoding do not establish physical native engine limits. No full root `pnpm check`, browser suite, full G1 or full GS.12 `outcomes-match-golden` execution is claimed. KV integer Datalog support and decimal wire/precision support remain outside this fix. The deliberate finite portable string/date/depth admission limits may reject previously attempted inputs beyond them; such writes now fail typed before claims. Independent adversarial review and the contract builder's next repin remain required.

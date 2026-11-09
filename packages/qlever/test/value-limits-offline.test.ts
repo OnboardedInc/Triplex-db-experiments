@@ -26,7 +26,16 @@ import type { QleverClient } from "../src/QleverClient.js";
 import { makeQleverStorageAdapter } from "../src/QleverStorageAdapter.js";
 import { decodeRow, encodeRow, packValue } from "../src/rdf.js";
 
-const invalidIntegers = ["9223372036854775808", "-9223372036854775809", "01", "-0", "+1", "1e3"];
+const invalidIntegers = [
+  "-576460752303423489",
+  "576460752303423488",
+  "9223372036854775808",
+  "-9223372036854775809",
+  "01",
+  "-0",
+  "+1",
+  "1e3",
+];
 const rowFor = (value: TripleValue): TripleRow => ({
   id: "offline:assertion",
   entity_id: "offline:entity",
@@ -124,27 +133,20 @@ describe("GS12F QLever offline value limits", () => {
 
   it("refuses invalid integer payloads directly at the codec boundary", () => {
     for (const value of invalidIntegers) {
-      expect(() => packValue({ type: "integer", value })).toThrow(
-        value.includes("922337203685477580") ? RangeError : TypeError,
-      );
+      expect(() => packValue({ type: "integer", value })).toThrow(InvalidTripleError);
     }
     for (const value of invalidIntegers.slice(0, 2)) {
       const encoded = JSON.parse(encodeRow(rowFor(integer(0n))));
       encoded.value_string = value;
-      expect(() => decodeRow(JSON.stringify(encoded))).toThrow(RangeError);
+      expect(() => decodeRow(JSON.stringify(encoded))).toThrow(InvalidTripleError);
     }
   });
 
   it("round trips W0 wire kinds and integer boundaries through QLever pack/encode/decode", () => {
     const integers = [
-      -9223372036854775808n,
-      9223372036854775807n,
-      -(1n << 59n) - 1n,
       -(1n << 59n),
       -(1n << 59n) + 1n,
       (1n << 59n) - 1n,
-      1n << 59n,
-      (1n << 59n) + 1n,
       -(1n << 53n) - 1n,
       -(1n << 53n),
       -1n,
