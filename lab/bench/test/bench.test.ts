@@ -12,7 +12,8 @@ import { ActiveSet, TRACE_DEFAULTS, generateTrace, meanCommandFacts, segments, t
 import { BUCKETS, HOP_SHARE, accountOfSubject, accountsFor, hopOf, memberOf, ownFacts, populationCounts, sharedFacts, subjectInCell, worldFactsOf, OWN_FACTS, type Bucket } from "../lib/world.ts";
 import { buildTraceCommand } from "../lib/commands.ts";
 import { Model, partsOf } from "../lib/model.ts";
-import { FeedConsumer } from "../lib/feed.ts";
+import { feedLagWithinBar } from "../lib/feed-lag.ts";
+import { FeedConsumer, openHostFeedClock, openPublicationWriter, openPublicationReader } from "../lib/feed.ts";
 
 test("trace: same inputs give byte-identical events; a different seed differs", () => {
   const a = generateTrace({ seed: "ns-v2", subjects: 10_000, durationS: 900 });
@@ -204,15 +205,55 @@ test("model: valid-time aware digests equal the materialized world at (R, V)", (
 
 test("feed consumer: durable checkpoints, three crash points, keyed effects never duplicate", async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ns-feed-"));
-  const txs = Array.from({ length: 30 }, (_, k) => ({ position: k + 1, txId: `tx${k + 1}`, changes: [{ op: "assert", tripleId: `assertion-${k + 1}`, entityId: `pl:${String(k % 5).padStart(8, "0")}`, attribute: ":placement/stamp", value: { type: "integer", value: String(Math.floor(k / 5) + 1) }, validFrom: 1 }] }));
+  const txs = Array.from({ length: 30 }, (_, k) => ({
+    position: k + 1,
+    txId: `tx${k + 1}`,
+    changes: [
+      {
+        op: "assert",
+        tripleId: `assertion-${k + 1}`,
+        entityId: `pl:${String(k % 5).padStart(8, "0")}`,
+        attribute: ":placement/stamp",
+        value: { type: "integer", value: String(Math.floor(k / 5) + 1) },
+        validFrom: 1,
+      },
+    ],
+  }));
   let t = 0;
-  const handle: any = { feedPage: async (after: number, limit: number) => { const page = txs.filter((x) => x.position > after).slice(0, Math.min(limit, 4)); return { transactions: page, next: page.at(-1)?.position }; }, close: async () => {} };
+  const clock = openHostFeedClock();
+  const source = JSON.stringify({ route: "A0-control", dir, epoch: "e0" });
+  const writer = openPublicationWriter(path.join(dir, "publication.db"), source, source, clock);
+  const records = openPublicationReader(path.join(dir, "publication.db"));
+  const handle: any = {
+    feedPage: async (after: number, limit: number) => {
+      const page = txs.filter((x) => x.position > after).slice(0, Math.min(limit, 4));
+      for (const tx of page) writer.publish(consumer.publicationKey(tx.position), tx.txId);
+      return { transactions: page, next: page.at(-1)?.position };
+    },
+    close: async () => {},
+  };
   const consumer = new FeedConsumer({
-    dir, epoch: "e0", startAfter: 0, now: () => (t += 1),
-    publicationOf: (key) => ({ ...key, clock: "host-monotonic", atMonoMs: 0 }),
-    commitOf: (p) => ({ instant: 0, ackAt: 0, subject: (p - 1) % 5, subjects: [(p - 1) % 5], stamp: Math.floor((p - 1) / 5) + 1, correction: false, correctionValidFrom: null }),
-    open: async () => handle, log: () => {},
-    crashes: [{ at: 5, point: "before-effect" }, { at: 15, point: "after-effect" }, { at: 30, point: "after-checkpoint" }],
+    dir,
+    epoch: "e0",
+    startAfter: 0,
+    now: () => (t += 1),
+    measurement: { clock, records },
+    commitOf: (p) => ({
+      instant: 0,
+      ackAt: 0,
+      subject: (p - 1) % 5,
+      subjects: [(p - 1) % 5],
+      stamp: Math.floor((p - 1) / 5) + 1,
+      correction: false,
+      correctionValidFrom: null,
+    }),
+    open: async () => handle,
+    log: () => {},
+    crashes: [
+      { at: 5, point: "before-effect" },
+      { at: 15, point: "after-effect" },
+      { at: 30, point: "after-checkpoint" },
+    ],
   });
   consumer.recoverDelayMs = 0;
   const run = consumer.run();
@@ -221,38 +262,102 @@ test("feed consumer: durable checkpoints, three crash points, keyed effects neve
   await run;
   assert.equal(consumer.crashReport().filter((c) => c.fired).length, 3);
   assert.equal(consumer.visibleDuplicateEffects(), 0);
-  assert.ok(consumer.counts.replayAttempts > 0, "the after-effect crash replays effects as attempts");
+  assert.ok(
+    consumer.counts.replayAttempts > 0,
+    "the after-effect crash replays effects as attempts",
+  );
   assert.equal(consumer.counts.redeliveryMismatches, 0);
   assert.equal(consumer.counts.entries, 30);
   const replay = await consumer.replayCheck(handle, 0);
   assert.equal(replay.exact, true);
   consumer.close();
+  records.close();
+  writer.close();
   fs.rmSync(dir, { recursive: true, force: true });
 });
 
-test("feed lag uses source publication 100 to durable knowledge 400, never record stamp 399", async () => {
-  for (const missing of [false, true]) {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "fd01-r2-clock-"));
+test("NS driver p99 boundary is inclusive at 250 ms", () => {
+  assert.deepEqual([249, 250, 251].map(feedLagWithinBar), [true, true, false]);
+  assert.equal(feedLagWithinBar(null), null);
+  assert.equal(feedLagWithinBar(NaN), null);
+});
+
+test("feed lag binds producer record and ignores skewed durable now callback", async () => {
+  for (const mode of ["correct", "late-map", "missing", "unbound", "skewed-durable"] as const) {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "fd01-r3-clock-"));
+    const clock = openHostFeedClock();
+    const source = JSON.stringify({ route: "A0-control", dir, epoch: "1" });
+    const writer = openPublicationWriter(path.join(dir, "publication.db"), source, source, clock);
+    const records = openPublicationReader(path.join(dir, "publication.db"));
+    const key = { source, stream: source, epoch: "0", position: "1" };
+    const published = mode === "missing" ? undefined : writer.publish(key, "source-publication-1");
+    await new Promise((r) => setTimeout(r, 300));
     let consumer: FeedConsumer;
-    const handle: any = { feedPage: async () => {
-      consumer.stop();
-      return { next: 1, transactions: [{ position: 1, txId: "tx1", changes: [{ op: "assert", tripleId: "a1", entityId: "pl:00000000", attribute: ":a", validFrom: 0 }] }] };
-    }, close: async () => {} };
-    consumer = new FeedConsumer({ dir, epoch: "1", startAfter: 0, now: () => 400,
-      publicationOf: (key) => missing ? undefined : { ...key, clock: "host-monotonic", atMonoMs: 100 },
-      commitOf: () => ({ instant: 399, ackAt: 101, subject: 0, subjects: [0], stamp: 399000, correction: false, correctionValidFrom: null }),
-      open: async () => handle, log: () => {}, crashes: [],
+    const handle: any = {
+      feedPage: async () => {
+        consumer.stop();
+        return {
+          next: 1,
+          transactions: [
+            {
+              position: 1,
+              txId: "tx1",
+              changes: [
+                {
+                  op: "assert",
+                  tripleId: "a1",
+                  entityId: "pl:00000000",
+                  attribute: ":a",
+                  validFrom: 0,
+                },
+              ],
+            },
+          ],
+        };
+      },
+      close: async () => {},
+    };
+    consumer = new FeedConsumer({
+      dir,
+      epoch: "1",
+      startAfter: 0,
+      now: () => (mode === "skewed-durable" ? 1 : 400),
+      measurement: mode === "unbound" ? undefined : { clock, records },
+      publicationOf: () =>
+        mode === "late-map"
+          ? { ...published!, atNs: String(BigInt(published!.atNs) + 100000000n) }
+          : published,
+      commitOf: () => ({
+        instant: 399,
+        ackAt: 101,
+        subject: 0,
+        subjects: [0],
+        stamp: 399000,
+        correction: false,
+        correctionValidFrom: null,
+      }),
+      open: async () => handle,
+      log: () => {},
+      crashes: [],
     });
     try {
-      if (missing) {
-        await assert.rejects(consumer.run(), /Missing source publication instant/);
+      if (["missing", "late-map", "unbound"].includes(mode)) {
+        await assert.rejects(
+          consumer.run(),
+          /Missing source publication|producer record|Missing bound/,
+        );
         assert.equal(consumer.lags.length, 0);
         assert.equal(consumer.checkpoint, 0);
       } else {
         await consumer.run();
-        assert.equal(consumer.lags[0]?.lagMs, 300);
-        assert.notEqual(consumer.lags[0]?.lagMs, 1);
+        assert.ok(consumer.lags[0]!.lagMs >= 300);
+        assert.equal(consumer.checkpoint, 1);
       }
-    } finally { consumer.close(); fs.rmSync(dir, { recursive: true, force: true }); }
+    } finally {
+      consumer.close();
+      records.close();
+      writer.close();
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
   }
 });

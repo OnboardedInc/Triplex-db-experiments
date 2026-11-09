@@ -52,8 +52,8 @@ node lab/bin/heavy.mjs --label CX-FD01 -- node lab/experiments/EXP-FD01/verify.m
 ```
 
 The script retains attempt-specific source hashes and raw outputs in the durable CX-FD01 evidence directory.
-It builds public exports, checks types and runs the host feed suite, including 600 abrupt child-process exits
-(100 per hook for each arm). O-REPLAY runs fresh on `oracle.case.json`; source fixtures are independently
+It builds public exports, checks types and runs the host feed suite, including 900 abrupt child-process exits
+(500 keyed, 300 unkeyed split controls, 100 keyed split controls). O-REPLAY runs fresh on `oracle.case.json`; source fixtures are independently
 written, not copied from oracle output. Fixture adapters are not a qualification of unmerged lane engines.
 `runFeedCrashConformance` is reusable with a lane-specific stop/reopen driver; `auditFeed` requires an independently
 enumerated final source prefix and O-REPLAY identities, never expectations inferred from the delivered stream.
@@ -91,3 +91,39 @@ relative paths assume `lab/verify/FD01`; the adapted `round2/source-hook.mjs`, `
 `check-mutant.mjs` and `clock-probe.mjs` run here. The original mutator is imported verbatim by the crash
 child and the adapted mutation runner. The runner requires the specific before-replay atomicity failure;
 an import error or arbitrary nonzero test exit cannot count as rejecting the mutation.
+
+## Round 3: origin-bound clock and producer record
+
+The round 2 clock-label seam is superseded. Use host `openHostFeedClock()` in each process;
+`captureFeedInstant(clock, fullPosition)` captures `process.hrtime.bigint()` with hashed host and OS
+boot-session identity. Process-relative performance clocks and arbitrary callback clocks are unsupported.
+The producer opens `openPublicationWriter(file, source, stream, clock)` and calls
+`publish(fullPosition, nativePublicationRecordId)` at the actual source publication event, independently
+of ACK delivery. The first timestamp is immutable on retry. The writer captures before its SQLite lock
+and durable append so that sidecar overhead cannot disappear from the interval. Use a producer-owned
+file with Q84a pragmas, never a polling-created map. The source must bind this call to its broker
+watermark update, XTDB COMMIT SYNC completion or Datomic transact-result event. No lane observer is wired yet.
+
+The consumer opens `openPublicationReader(file)` and passes `measurement: {clock, records}` to the
+NS A0 consumer. Its `now` callback only schedules work and records ACK diagnostics; durable-known time
+uses the capture primitive directly. Optional `publicationOf` observations must match independent
+producer bytes, including full coordinates, origin, publication ID, digest and original timestamp.
+Missing binding refuses lag samples/progress. The source-file owner is trusted; SHA256 detects changed
+bytes, not a malicious producer replacing records and recomputing digests.
+
+`publicationLagMs(publication, known, producerRecord)` rejects missing or incompatible origins; there
+is no implicit conversion. `auditFeedLag(pages, publications, known, producerRecords)` needs separately
+sourced producer records for every position. Core arithmetic does not itself authenticate caller bytes.
+Future NS windows must use the same host-boot origin; process-relative scheduling windows cannot be
+mixed with publication buckets. The legacy driver remains unqualified without that integration.
+
+Run the two-process QA adaptation after building packages:
+
+```sh
+node lab/bin/heavy.mjs --label CX-FD01-R3-cross -- node lab/experiments/EXP-FD01/round3/cross-process.mjs
+```
+
+macOS requires permission to read `kern.bootsessionuuid`; Linux reads the OS boot ID. Unavailable
+identity refuses measurement. The probe retains the legacy false-under-bar comparison beside the
+new host-bound interval. The original QA probe is retained verbatim under `round3/reviewer-probes/`;
+it documents the old API and is not a current gate. Round 2 deterministic clock scripts are historical.

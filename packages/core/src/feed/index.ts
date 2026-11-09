@@ -176,10 +176,29 @@ export interface FeedPosition {
   readonly epoch: string;
   readonly position: string;
 }
-/** Source publication and durable knowledge must use the same host monotonic clock domain. */
+/** Explicit common-host numerical origin; process-relative clocks are not interchangeable. */
+export interface FeedClockDomain {
+  readonly primitive: "node-hrtime-v1";
+  readonly host: string;
+  readonly boot: string;
+  readonly origin: "host-boot";
+}
 export interface FeedInstant extends FeedPosition {
-  readonly clock: string;
-  readonly atMonoMs: number;
+  readonly domain: FeedClockDomain;
+  readonly atNs: string;
+}
+export interface FeedPublication extends FeedInstant {
+  /** Source publication receipt/log identity, independent of ACK or polling. */
+  readonly publicationId: string;
+  readonly recordId: string;
+}
+export function sameFeedClock(a: FeedClockDomain, b: FeedClockDomain): boolean {
+  const valid = (d: FeedClockDomain) =>
+    d?.primitive === "node-hrtime-v1" &&
+    d.origin === "host-boot" &&
+    /^[a-f0-9]{64}$/.test(d.host) &&
+    /^[a-f0-9]{64}$/.test(d.boot);
+  return valid(a) && valid(b) && a.host === b.host && a.boot === b.boot && a.origin === b.origin;
 }
 export function feedPositionKey(p: FeedPosition): string {
   identity(p.source);
@@ -188,23 +207,32 @@ export function feedPositionKey(p: FeedPosition): string {
   natural(p.position);
   return JSON.stringify([p.source, p.stream, p.epoch, p.position]);
 }
-// [EXP-FD01-R2] Why: Q98c/d starts lag at publication, never at decided record time or ACK.
-// Rejected: accepting a caller's lag number without its source-bound publication observation (QA F2).
-export function publicationLagMs(publication: FeedInstant | undefined, known: FeedInstant): number {
+// [EXP-FD01-R3] Why: equal labels do not establish origins; the independent producer record fixes publication time.
+// Rejected: performance.now from different processes, or a late map/ACK timestamp renamed as publication (R2-F1).
+export function publicationLagMs(
+  publication: FeedPublication | undefined,
+  known: FeedInstant,
+  producerRecord: FeedPublication | undefined,
+): number {
   if (!publication) throw new Error("Missing source publication instant");
+  if (!sameFeedClock(publication.domain, known.domain))
+    throw new Error("Publication clock origin mismatch");
+  if (!producerRecord) throw new Error("Missing producer publication record");
   if (
     feedPositionKey(publication) !== feedPositionKey(known) ||
-    typeof publication.clock !== "string" ||
-    !publication.clock ||
-    publication.clock !== known.clock
+    feedPositionKey(publication) !== feedPositionKey(producerRecord) ||
+    !publication.publicationId ||
+    !publication.recordId ||
+    publication.publicationId !== producerRecord.publicationId ||
+    publication.recordId !== producerRecord.recordId ||
+    publication.atNs !== producerRecord.atNs ||
+    !sameFeedClock(publication.domain, producerRecord.domain)
   )
-    throw new Error("Publication clock/source/position mismatch");
-  if (
-    !Number.isFinite(publication.atMonoMs) ||
-    !Number.isFinite(known.atMonoMs) ||
-    publication.atMonoMs < 0 ||
-    known.atMonoMs < publication.atMonoMs
-  )
+    throw new Error("Publication differs from producer record");
+  natural(publication.atNs);
+  natural(known.atNs);
+  const elapsed = BigInt(known.atNs) - BigInt(publication.atNs);
+  if (elapsed < 0n || elapsed > BigInt(Number.MAX_SAFE_INTEGER))
     throw new Error("Invalid publication interval");
-  return known.atMonoMs - publication.atMonoMs;
+  return Number(elapsed) / 1e6;
 }

@@ -1,0 +1,6 @@
+{
+  "commit": "0fcaa911b76f49c3f646431bc2742f86f2e90841",
+  "path": "lab/verify/FD01/round2/cross-process.mjs",
+  "sha256": "b815f359f9d2481be16b2b60ae647b26ed9d5b52144af980fa334b6dcba01568",
+  "usage": "Original retained verbatim; cross-process.mjs one directory up adapts the protocol to origin-bound capture and durable source records."
+}

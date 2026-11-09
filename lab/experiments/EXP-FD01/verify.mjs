@@ -52,7 +52,7 @@ const steps = [
     "../../node_modules/.bin/vitest",
     [
       "run",
-      "test/feed/feed.test.ts",
+      "test/feed/",
       "--reporter=json",
       `--outputFile=${path.join(attempt, "vitest.json")}`,
     ],

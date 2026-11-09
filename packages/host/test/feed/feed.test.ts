@@ -487,20 +487,34 @@ describe("FD01 identity-only feed", () => {
       stream: "s",
       epoch: "1",
       position: "1",
-      clock: "host-monotonic",
     };
-    const published = { ...position, atMonoMs: 100 };
-    const known = { ...position, atMonoMs: 400, lagMs: 300 };
-    expect(auditFeedLag([page], [published], [known])).toEqual([300]);
-    expect(() => auditFeedLag([page], [published], [{ ...known, lagMs: 1 }])).toThrow(
-      "Lag differs",
+    const domain = {
+      primitive: "node-hrtime-v1",
+      host: "a".repeat(64),
+      boot: "b".repeat(64),
+      origin: "host-boot",
+    } as const;
+    const published = {
+      ...position,
+      domain,
+      atNs: "100000000",
+      publicationId: "source-log-1",
+      recordId: "fixture-1",
+    };
+    const known = { ...position, domain, atNs: "400000000", lagMs: 300 };
+    const audit = (pub = published, observation = known) =>
+      auditFeedLag([page], [pub], [observation], [published]);
+    expect(audit()).toEqual([300]);
+    expect(() => audit(published, { ...known, lagMs: 1 })).toThrow("Lag differs");
+    expect(() => auditFeedLag([page], [], [known], [published])).toThrow(
+      "Missing source publication",
     );
-    expect(() => auditFeedLag([page], [], [known])).toThrow("Missing source publication");
-    expect(() => auditFeedLag([page], [{ ...published, source: "other" }], [known])).toThrow(
-      "foreign",
-    );
-    expect(() => auditFeedLag([page], [published], [{ ...known, clock: "record-clock" }])).toThrow(
-      "clock/source/position",
+    expect(() => audit({ ...published, source: "other" })).toThrow("foreign");
+    expect(() =>
+      audit(published, { ...known, domain: { ...domain, boot: "c".repeat(64) } }),
+    ).toThrow("clock origin");
+    expect(() => audit({ ...published, atNs: "200000000" }, { ...known, lagMs: 200 })).toThrow(
+      "producer record",
     );
   });
   it("recovers 100 actual process stops at each hook for keyed atomic and unkeyed split arms", async () => {

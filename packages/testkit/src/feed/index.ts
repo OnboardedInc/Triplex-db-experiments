@@ -3,6 +3,7 @@ import {
   feedPositionKey,
   publicationLagMs,
   type FeedInstant,
+  type FeedPublication,
   type FeedCursor,
   type AffectedSubject,
   type FeedEntry,
@@ -221,8 +222,9 @@ export async function runFeedCrashConformance(
 /** Compare every committed position's reported lag with independent source publication and durable-known observations. */
 export function auditFeedLag(
   pages: readonly FeedPage[],
-  publications: readonly FeedInstant[],
+  publications: readonly FeedPublication[],
   known: readonly (FeedInstant & { readonly lagMs: number })[],
+  producerRecords: readonly FeedPublication[],
 ): readonly number[] {
   const positions = new Set(
     pages.flatMap((p) =>
@@ -255,10 +257,15 @@ export function auditFeedLag(
   };
   const published = index(publications);
   const completed = index(known);
+  const records = index(producerRecords);
   if (completed.size !== positions.size) throw new Error("Missing durable-known observation");
   return [...positions].map((key) => {
     const observation = completed.get(key)! as FeedInstant & { readonly lagMs: number };
-    const lag = publicationLagMs(published.get(key), observation);
+    const lag = publicationLagMs(
+      published.get(key) as FeedPublication | undefined,
+      observation,
+      records.get(key) as FeedPublication | undefined,
+    );
     if (!Number.isFinite(observation.lagMs) || observation.lagMs !== lag)
       throw new Error("Lag differs from source publication interval");
     return lag;

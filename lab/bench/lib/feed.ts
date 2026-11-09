@@ -20,8 +20,22 @@ interface FeedPosition {
   position: string;
 }
 interface FeedInstant extends FeedPosition {
-  clock: string;
-  atMonoMs: number;
+  domain: { primitive: "node-hrtime-v1"; host: string; boot: string; origin: "host-boot" };
+  atNs: string;
+}
+interface FeedPublication extends FeedInstant {
+  publicationId: string;
+  recordId: string;
+}
+export const { openHostFeedClock, openPublicationWriter, openPublicationReader } = hostRequire(
+  "@triplex-build/triplex-host/feed",
+);
+const { captureFeedInstant, readProducerPublication } = hostRequire(
+  "@triplex-build/triplex-host/feed",
+);
+interface Measurement {
+  clock: ReturnType<typeof openHostFeedClock>;
+  records: ReturnType<typeof openPublicationReader>;
 }
 const { SqliteConsumerStore, journalChangeFeed } = hostRequire("@triplex-build/triplex-host/feed");
 
@@ -63,8 +77,8 @@ export class FeedConsumer {
   private readonly source: string;
   private store: InstanceType<typeof SqliteConsumerStore>;
   private readonly now: () => number;
-  private readonly publicationOf: (key: FeedPosition) => FeedInstant | undefined;
-  private readonly clock: string;
+  private readonly publicationOf?: (key: FeedPosition) => FeedPublication | undefined;
+  private readonly measurement?: Measurement;
   private readonly commitOf: (position: number) => CommitInfo | undefined;
   private readonly open: () => Promise<CompositionHandle>;
   private readonly log: (line: string) => void;
@@ -110,8 +124,8 @@ export class FeedConsumer {
     epoch: string;
     startAfter: number;
     now: () => number;
-    publicationOf?: (key: FeedPosition) => FeedInstant | undefined;
-    clock?: string;
+    publicationOf?: (key: FeedPosition) => FeedPublication | undefined;
+    measurement?: Measurement;
     commitOf: (p: number) => CommitInfo | undefined;
     open: () => Promise<CompositionHandle>;
     log: (l: string) => void;
@@ -121,8 +135,8 @@ export class FeedConsumer {
     this.epoch = opts.epoch;
     this.now = opts.now;
     this.commitOf = opts.commitOf;
-    this.publicationOf = opts.publicationOf ?? (() => undefined);
-    this.clock = opts.clock ?? "host-monotonic";
+    this.publicationOf = opts.publicationOf;
+    this.measurement = opts.measurement;
     this.open = opts.open;
     this.log = opts.log;
     this.crashes = opts.crashes.map((c) => ({ ...c, done: false }));
@@ -285,14 +299,16 @@ export class FeedConsumer {
       const adapter = journalChangeFeed(this.source, this.source, "0", async () => page);
       const previous = this.store.checkpoint(this.name);
       const delivery = await adapter.poll(previous);
-      // [EXP-FD01-R2] Why: the source observer must supply a publication instant for EVERY position.
-      // Rejected: using receipt.instant, decided stamp or ACK arrival when publication is absent (QA F2).
-      const publications = new Map<number, FeedInstant>();
+      // [EXP-FD01-R3] Why: producer bytes and a bound capture primitive establish publication and origin.
+      // Rejected: trusting an arbitrary now callback, a late map entry or a default clock label (R2-F1).
+      if (!this.measurement) throw new Error("Missing bound publication measurement");
+      const publications = new Map<number, FeedPublication>();
       for (const [position] of affected) {
         const key = this.publicationKey(position);
-        const publication = this.publicationOf(key);
-        publicationLagMs(publication, { ...key, clock: this.clock, atMonoMs: this.now() });
-        publications.set(position, publication!);
+        const record = readProducerPublication(this.measurement.records, key);
+        const observation = this.publicationOf ? this.publicationOf(key) : record;
+        publicationLagMs(observation, captureFeedInstant(this.measurement.clock, key), record);
+        publications.set(position, record!);
       }
       this.store.apply(
         this.name,
@@ -315,13 +331,13 @@ export class FeedConsumer {
         this.durableKnown.add(position);
         const info = this.commitOf(position);
         this.lags.push({
-          at: publications.get(position)!.atMonoMs,
+          at: Number(BigInt(publications.get(position)!.atNs)) / 1e6,
           position,
-          lagMs: publicationLagMs(publications.get(position), {
-            ...this.publicationKey(position),
-            clock: this.clock,
-            atMonoMs: durableAt,
-          }),
+          lagMs: publicationLagMs(
+            publications.get(position),
+            captureFeedInstant(this.measurement.clock, this.publicationKey(position)),
+            readProducerPublication(this.measurement.records, this.publicationKey(position)),
+          ),
           lagFromAckMs: info ? Math.max(0, durableAt - info.ackAt) : null,
         });
         if (!info) {
