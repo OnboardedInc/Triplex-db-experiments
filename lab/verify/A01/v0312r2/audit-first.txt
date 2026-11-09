@@ -1,0 +1,1 @@
+Independent audit first attempt over-constrained oracleRunners as wholly unchanged. The only changed runner member is the COMPILED O-CONTRACT generator SHA, refreshed to the changed generator bytes; pins and external runner objects are unchanged. Narrowed the expectation to that exact source-bound change. No candidate bytes changed.

@@ -1,0 +1,479 @@
+{
+  "attemptSource": {
+    "candidate": "4eb352b8a1dbc42c9696a61688e55e4698fa63c5",
+    "main": "28a27d48fd9cebab3ae530afdf7e5296d943bf67",
+    "merge": "13922ce91c8b98c8cf9dec20e076b322b00fab1b",
+    "mergeParents": "4eb352b8a1dbc42c9696a61688e55e4698fa63c5 28a27d48fd9cebab3ae530afdf7e5296d943bf67",
+    "changedFromCandidate": [
+      "lab/NOTEBOOK.md",
+      "lab/agents/CODEX-PREAMBLE.md"
+    ],
+    "freeDiskBeforeBytes": 11999612928,
+    "reviewerHead": "4c9077ecb00b2d000d338911b41692aa8ce1b7aa",
+    "network": false
+  },
+  "auditTime": 1794185132.629398,
+  "originalBriefSha256": "4207182cbbda61f04e9647e1dcde291bdc345dc30f49926abeed6e157e2c1baa",
+  "briefVariations": [
+    {
+      "entry": "V-O04i",
+      "kind": "review",
+      "path": "lab/acceptance/pins/O-OBS-V-O05-round4.md",
+      "errors": [
+        "Q59c: V-O04i must hash the original instruction brief, never its review report"
+      ]
+    },
+    {
+      "entry": "V-O04i",
+      "kind": "unrelated instructions",
+      "path": "lab/verify/O02/BRIEF.md",
+      "errors": [
+        "Q59c: V-O04i must hash the original instruction brief, never its review report"
+      ]
+    },
+    {
+      "entry": "V-O03",
+      "kind": "review",
+      "path": "lab/acceptance/pins/O-OBS-V-O05-round4.md",
+      "errors": [
+        "Q59c: V-O03 must hash the original instruction brief, never its review report"
+      ]
+    },
+    {
+      "entry": "V-O04c",
+      "kind": "review",
+      "path": "lab/acceptance/pins/O-OBS-V-O05-round4.md",
+      "errors": [
+        "Q59c: V-O04c must hash the original instruction brief, never its review report"
+      ]
+    },
+    {
+      "entry": "V-D01-W0-1.1.1",
+      "kind": "review",
+      "path": "lab/acceptance/pins/O-OBS-V-O05-round4.md",
+      "errors": [
+        "Q59c: V-D01-W0-1.1.1 must hash the original instruction brief, never its review report"
+      ]
+    },
+    {
+      "entry": "V-D01-W0-1.1.1",
+      "kind": "unrelated instructions",
+      "path": "lab/verify/O02/BRIEF.md",
+      "errors": [
+        "Q59c: V-D01-W0-1.1.1 must hash the original instruction brief, never its review report"
+      ]
+    },
+    {
+      "entry": "V-D01e-W0-1.1.2",
+      "kind": "review",
+      "path": "lab/acceptance/pins/O-OBS-V-O05-round4.md",
+      "errors": [
+        "Q59c: V-D01e-W0-1.1.2 must hash the original instruction brief, never its review report"
+      ]
+    },
+    {
+      "entry": "V-D01e-W0-1.1.2",
+      "kind": "unrelated instructions",
+      "path": "lab/verify/O02/BRIEF.md",
+      "errors": [
+        "Q59c: V-D01e-W0-1.1.2 must hash the original instruction brief, never its review report"
+      ]
+    },
+    {
+      "entry": "V-D01c-O-DOMAIN",
+      "kind": "review",
+      "path": "lab/acceptance/pins/O-OBS-V-O05-round4.md",
+      "errors": [
+        "Q59c: V-D01c-O-DOMAIN must hash the original instruction brief, never its review report"
+      ]
+    },
+    {
+      "entry": "V-D01c-O-DOMAIN",
+      "kind": "unrelated instructions",
+      "path": "lab/verify/O02/BRIEF.md",
+      "errors": [
+        "Q59c: V-D01c-O-DOMAIN must hash the original instruction brief, never its review report"
+      ]
+    },
+    {
+      "entry": "V-O05-round4",
+      "kind": "review",
+      "path": "lab/acceptance/pins/O-OBS-V-O05-round4.md",
+      "errors": [
+        "Q59c: V-O05-round4 must hash the original instruction brief, never its review report"
+      ]
+    },
+    {
+      "entry": "V-O05-round4",
+      "kind": "unrelated instructions",
+      "path": "lab/verify/O02/BRIEF.md",
+      "errors": [
+        "Q59c: V-O05-round4 must hash the original instruction brief, never its review report"
+      ]
+    }
+  ],
+  "q88": [
+    {
+      "id": "Q88a",
+      "sourceRow": "| Q88a dev storage is development only | Lane D evidence from Datomic dev storage is DIAGNOSTIC for every durable-readback, lost-ACK, P2 receipt and final acceptance obligation. Dev storage is H2 inside the transactor with H2's default 500 ms write delay, so an abrupt transactor stop can lose acknowledged transactions, which P2's 100% receipt bar does not allow. Acceptance runs on SQL storage on PostgreSQL (fsync on commit) with peers on a SELECT-only role (closes R28's R5, the peer writing storage). Dev storage stays allowed for development gates. This decides the storage half of Q78e without loosening any of Sam's bars; the other option R32 lists (accept a declared loss window) would loosen P2 and is Sam's alone. | R32 sections 1, 6 |",
+      "consumer": "datomicRules.Q88a"
+    },
+    {
+      "id": "Q88b",
+      "sourceRow": "| Q88b EXP-DA04 before DA03 | Lane D moves to SQL storage in EXP-DA04 (brief lab/experiments/EXP-DA04-sql-storage/BRIEF.md) before the DA03 NS smoke: resident pair Postgres 0.5 GiB plus Datomic 2.25 GiB in the existing 2.75 GiB budget (fallback 3.0 GiB if G1 runs short), exclusive lane D slot 4.0 GiB with the resident pair parked. Gates: G1 88/88 with --previous; durability probes D1 (abrupt transactor stop) and D2 (abrupt Postgres stop) with zero lost ACKs, D0 the same on dev storage as the control; tenancy probe; erasure inventory smoke. | R32 sections 2, 5 |",
+      "consumer": "datomicRules.Q88b"
+    },
+    {
+      "id": "Q88c",
+      "sourceRow": "| Q88c erasure on lane D | Crypto-shredding is the primary PII erasure on every lane D storage; Datomic excision in batches of about 2,000 to 3,000 datoms is the second layer; keys live in their own Postgres schema so key deletion can be shown by scanning table files and WAL. | R32 section 4 |",
+      "consumer": "datomicRules.Q88c"
+    }
+  ],
+  "pendingRows": [
+    [
+      "Q51b",
+      "| Q51b feed lag on XTDB | The next XTDB P2/P3 experiment puts XTDB behind the same host log and broker as EXP-P2Q (EXP-P2B: XTDB as the replica, current and history layer), since that composition measured feed lag p99 12.8-24.5 ms and an ACK independent of the engine. The subject-stamp path stays the XTDB-native arm (A1) to compare against; a separate consumer database through ATTACH is not pursued unless P2B fails. | both engines stay candidates for every layer; fewer moving parts |"
+    ],
+    [
+      "Q73a",
+      "| Q73a deep writes | A publish or receive payload of any nesting depth is copied and written exactly (A13 applies to the writer as well as the reader). W0-1.1.3 adds a synthetic publish case with a payload of 20,000 nested arrays, delivered and stored unchanged. | EXP-D01b-112 SPEC-AMBIGUITY 1 |"
+    ],
+    [
+      "Q73b",
+      "| Q73b waiting at done + 1 | An inconsistent receiver snapshot with a waiting entry at done + 1 is kept as given (A15); an arriving seq equal to that entry is a duplicate, so the entry is never released. W0-1.1.3 adds a synthetic receive case: state {done 2, waiting [seq 3]}, deliveries [seq 3, seq 5]; projection applies 3 and 5, effects apply nothing, waiting [3, 5]. | EXP-D01b-112 SPEC-AMBIGUITY 2; A15 |"
+    ],
+    [
+      "Q78e",
+      "| Q78e erasure and tenancy | Erasure is crypto-shredding first and excision of ciphertext second (batched, since excision is heavy); tenant isolation is one database per tenant. Whether a shared dev storage file satisfies storage-layer isolation, and whether dev storage is acceptable for final acceptance, are Sam's calls (pending). | R29 open questions |"
+    ],
+    [
+      "Q81b",
+      "| Q81b counter, every request kind | Q77c applies to every request kind: an HTTP GET (or any method) the QLever counter does not positively classify as a read counts as a write; after a pgwire parser exception the connection's remaining traffic is counted as writes (or the connection refused) and survives tally resets. | CX-VC8-2 |"
+    ],
+    [
+      "Q81c",
+      "| Q81c default-off is byte-identical | An option that is off by default leaves every public client contract unchanged: J01's text-array binding becomes an explicit parameter descriptor used only by compact guards; untagged arrays keep their existing JSON handling; a differential public-client test with the option off proves it. The compact-on qualification (G1 off and on, each lane, receipts binding the encoding) runs on an exclusive slot before compact-on is used anywhere. | CX-VJ01 F1, F2 |"
+    ],
+    [
+      "Q86g",
+      "| Q86g VM hardening (Sam) | Narrowing the triplex2 VM's mounts (H1: today colima mounts $HOME writable, so every Docker socket holder can write anywhere in Sam's home) and blocking outbound traffic from tx2 containers (H2; today the VM reaches every Mac 127.0.0.1 service including ports 15442 and 17019) change the VM's security settings and wait for Sam. Until then R1, R4, D1, D2, D3, L1 and N1-N4 stay on the named unprotected list. | R28 decision 1 |"
+    ],
+    [
+      "Q78e",
+      "| Q78e tenant isolation (Sam) | Still waiting for Sam: one Datomic transactor owns one storage table, so schemas or row security cannot split one system. Options: tiered (small tenants pooled per cell with per-tenant envelope keys, large tenants with their own schema, roles and transactor; R32's recommendation, matches R19), silo every tenant (one transactor each; proves storage isolation literally, infeasible at 1,000 tenants), or pool every tenant (isolation enforced at the gateway, not storage). | R32 section 3 |"
+    ],
+    [
+      "Q89a",
+      "| Q89a record time at decision (design first) | Record time is to be stamped when the commit is decided, monotone in position, on every lane (broker writer lock, XTDB engine stamp, Datomic transactor value), with a record-time watermark that gates a named T like a future position. Today `transact` stamps before allocating a position (TriplesLive.ts:309 before :326), so a recordedAt cut is not a log prefix and an answer at a named T can change after it was served (R31 D-C1). Because this changes the core receipt `instant`, a planner designs it (R33) and it lands with a contract version. | R31 5.1 |"
+    ],
+    [
+      "Q89b",
+      "| Q89b refuse what a route cannot answer | Until Q89a lands, every store that retires rows by position refuses any basis naming a record time: H1 (including its pull predicate, sqlite-worker.ts:158), R24's planned current store, and Datomic's `:f/live` path. | R31 5.3, 5.4 |"
+    ],
+    [
+      "Q89c",
+      "| Q89c typed refusal | A route that cannot answer a basis exactly fails with a typed error, never an empty result with a flag; every route waits then refuses for a future position (and, after Q89a, a future record time). | R31 5.5 |"
+    ],
+    [
+      "Q89d",
+      "| Q89d DA01 read pins | DA01's next round pins multi-request Datalog (rule rounds, final query, optional pulls) to one position or held db (D-D1), refuses future positions (D-D3), seeks the position-to-t map (D-D4) and enumerates by subject for getByEntities (D-D5). | R31 5.2, 5.5 |"
+    ],
+    [
+      "Q89e",
+      "| Q89e Datomic current/history | Datomic separates current from history at the index level; R18 line 97 is superseded. DA03's P4 path reads `:f/live` for latest and position shapes and falls back to `:f/subject` for record-time shapes (Q89b). | R31 2, 3 |"
+    ],
+    [
+      "Q89f",
+      "| Q89f route-equivalence gate | The harness of R31 section 4 lives in packages/testkit and is a required gate for every branch that adds or changes a read route (SQL01, EXP-P4, P2X, DA01, DA03, R24's current store). | R31 4 |"
+    ],
+    [
+      "Q89g",
+      "| Q89g public position token (Sam) | Waiting for Sam with Q89a: add a position or opaque snapshot token to the public TemporalBasis so callers can pin \"the latest committed tx (named exactly)\". It changes the public TypeScript API (goal 10). | R31 R31-g |"
+    ],
+    [
+      "Q89h",
+      "| Q89h P4 arm X1 guard | Before any promotion of P4 arm X1, an initialization probe refuses default bounds when any row in tx_assertions has native valid time (D-X2). | R31 5.6 |"
+    ],
+    [
+      "Q89i",
+      "| Q89i a pinned read is an immutable snapshot | Every read at a named basis returns the snapshot as known at that basis: a retirement (retraction, deletion) recorded after the cut is invisible, including its metadata, so repeating the request after later commits returns identical bytes (HE-5). Raw-lifetime rows (a row with its whole later history, O-REPLAY AMB-01 A) are a separate history API with its own result contract and are compared separately; the route-equivalence harness names which contract each driver serves and never compares one against the other. | V-RQ01 F3; P1 |"
+    ],
+    [
+      "Q90a",
+      "| Q90a stamps | R33 S1-S7 (section 2.1): one integer-microsecond stamp per transaction, `max(previous + 1, clock)` in decision order, strictly increasing with position; public value `stamp / 1000` (epoch ms, no type change); clock-lead refusal; legacy adapters exempt until they declare `recordTime: \"decided\"`. | R33 2.1-2.2 |"
+    ],
+    [
+      "Q90b",
+      "| Q90b stagedAt | Omitted validFrom and the constraint instant use `stagedAt`; TransactionResult gains `stagedAt` (additive). | R33 2.3 |"
+    ],
+    [
+      "Q90c",
+      "| Q90c per lane | QLever broker stamps in commitGroup under the writer lock (frames v2; lost-ACK replays return the original stamp); QLever A0 and XTDB A0 stamp on the client under their existing scope CAS (refines Q89a's \"A0 CURRENT_TIMESTAMP\"); XTDB P2X uses the engine stamp after probe p9, else integer microseconds on both XTDB arms; Datomic stamps on the peer under :db/cas, validated by the gateway (not :db/txInstant). | R33 2.5-2.8 |"
+    ],
+    [
+      "Q90d",
+      "| Q90d watermark | The record-time watermark is the latest decided stamp; a read at T above it waits up to 2 s, then fails with typed BasisNotAvailable { axis: \"recordedAt\" } on every route; seals follow in round 2. | R33 3 |"
+    ],
+    [
+      "Q90e",
+      "| Q90e journal | Journal values never hold the transaction's own record instant: no `:_tx/instant`, change JSON v2. | R33 2.10 |"
+    ],
+    [
+      "Q90f",
+      "| Q90f oracle and contract | O-REPLAY 0.5.0 (R33 4.3) is built by a separate builder from section 4.3 only, then reviewed independently before its pin; G9-CUT-02b replaces G9-CUT-02; contract 0.4.0 starts a new comparison series and re-freezes both A0 controls. | R33 4.3-4.4, 6.5 |"
+    ],
+    [
+      "Q90g",
+      "| Q90g order | RT01 rounds A (core, testkit, harness, XTDB A0, QLever A0) start from main after RQ01 merges; round B lands on each lane branch (broker on SQL01's successor, P2X, DA01) after it merges main; Q89b is lifted per store only with RQ01 evidence for T and TP shapes (round 2). | R33 6.1, R33-h |"
+    ],
+    [
+      "Q89g",
+      "| Q89g options (Sam) | R33 section 5: (A) no new field; (B) a raw position in TemporalBasis; (C) an opaque scope-checked snapshot token (R33 recommends C). After Q90a, `recordedAt: receipt.instant` alone already pins one commit exactly. | R33 5 |"
+    ]
+  ],
+  "skipAdditions": {
+    "core": [],
+    "testkit": [],
+    "xtdb": [
+      "packages/xtdb/test/commit-encoding.test.ts :: XTDB compact commit guards against the engine (EXP-J01) lets exactly one of two racing commands with the same id commit, for every tricky id",
+      "packages/xtdb/test/commit-encoding.test.ts :: XTDB compact commit guards against the engine (EXP-J01) rejects an existing assertion id and an existing operation as a definite identity conflict",
+      "packages/xtdb/test/commit-encoding.test.ts :: XTDB compact commit guards against the engine (EXP-J01) refuses a stale source cut as a serialization conflict"
+    ],
+    "qlever": [],
+    "qualification": [
+      "packages/qualification/test/c8-reads-never-write.test.ts :: C8 on XTDB: reads never write (engine boundary) counts zero writes across rule queries, maintained reads, native closures and a load run",
+      "packages/qualification/test/c8-reads-never-write.test.ts :: C8 on QLever: reads never write (engine boundary) counts zero updates across rule queries, native closures and a load run",
+      "packages/qualification/test/engine-write-counter.test.ts :: XTDB write counter (live) reads count zero writes; one submit counts one commit",
+      "packages/qualification/test/engine-write-counter.test.ts :: QLever write counter (live) queries count zero writes; one update counts one write"
+    ]
+  },
+  "skipReasons": {
+    "packages/qualification/test/c8-reads-never-write.test.ts :: C8 on XTDB: reads never write (engine boundary) counts zero writes across rule queries, maintained reads, native closures and a load run": "live control; runs in G1 against the shared dev residents (C8, INT-XCJ)",
+    "packages/qualification/test/c8-reads-never-write.test.ts :: C8 on QLever: reads never write (engine boundary) counts zero updates across rule queries, native closures and a load run": "live control; runs in G1 against the shared dev residents (C8, INT-XCJ)",
+    "packages/qualification/test/engine-write-counter.test.ts :: XTDB write counter (live) reads count zero writes; one submit counts one commit": "live control; runs in G1 against the shared dev residents (C8, INT-XCJ)",
+    "packages/qualification/test/engine-write-counter.test.ts :: QLever write counter (live) queries count zero writes; one update counts one write": "live control; runs in G1 against the shared dev residents (C8, INT-XCJ)",
+    "packages/xtdb/test/commit-encoding.test.ts :: XTDB compact commit guards against the engine (EXP-J01) lets exactly one of two racing commands with the same id commit, for every tricky id": "live test; runs in G1 against the shared dev residents (J01, INT-XCJ)",
+    "packages/xtdb/test/commit-encoding.test.ts :: XTDB compact commit guards against the engine (EXP-J01) rejects an existing assertion id and an existing operation as a definite identity conflict": "live test; runs in G1 against the shared dev residents (J01, INT-XCJ)",
+    "packages/xtdb/test/commit-encoding.test.ts :: XTDB compact commit guards against the engine (EXP-J01) refuses a stale source cut as a serialization conflict": "live test; runs in G1 against the shared dev residents (J01, INT-XCJ)"
+  },
+  "atomicRepins": [
+    {
+      "path": "packages/qualification/src/native/xtdb-workloads.ts",
+      "parentsThenMerge": [
+        {
+          "commit": "ba282b0fa0d6f3e5091c42100e3ece1a2eec21a1",
+          "actual": "22d785b034e440ca896b3fce7fe2df94e643586cb802fddd940fea84aff31fc3",
+          "pin": "22d785b034e440ca896b3fce7fe2df94e643586cb802fddd940fea84aff31fc3"
+        },
+        {
+          "commit": "b916d5dc809ffc07c57b53a38f1d1deb6bdeeb89",
+          "actual": "ff39d3f2fcb74ee2a318e8801a12680a4f9f366b4a7f5ed9e20e89d5ccd8a3d0",
+          "pin": "22d785b034e440ca896b3fce7fe2df94e643586cb802fddd940fea84aff31fc3"
+        },
+        {
+          "commit": "3de54ac5f5ebc6c2c6d12ed902a6cb1ea360d590",
+          "actual": "ff39d3f2fcb74ee2a318e8801a12680a4f9f366b4a7f5ed9e20e89d5ccd8a3d0",
+          "pin": "ff39d3f2fcb74ee2a318e8801a12680a4f9f366b4a7f5ed9e20e89d5ccd8a3d0"
+        }
+      ],
+      "reviewedDiffSha256": "b31cae3941b058b72f9cda6e890ab600983fde24c0f4b609d9e161f5ba4d4f1f"
+    },
+    {
+      "path": "packages/qualification/src/native/qlever-workloads.ts",
+      "parentsThenMerge": [
+        {
+          "commit": "ba282b0fa0d6f3e5091c42100e3ece1a2eec21a1",
+          "actual": "410963c62f46be95525643f5eb78bf4069dee27d986b251f2aca33d05e48d2b3",
+          "pin": "410963c62f46be95525643f5eb78bf4069dee27d986b251f2aca33d05e48d2b3"
+        },
+        {
+          "commit": "b916d5dc809ffc07c57b53a38f1d1deb6bdeeb89",
+          "actual": "9349878403ee468ce6b64922c648d88f598f799b1c65fc42a712aa47598e54da",
+          "pin": "410963c62f46be95525643f5eb78bf4069dee27d986b251f2aca33d05e48d2b3"
+        },
+        {
+          "commit": "3de54ac5f5ebc6c2c6d12ed902a6cb1ea360d590",
+          "actual": "9349878403ee468ce6b64922c648d88f598f799b1c65fc42a712aa47598e54da",
+          "pin": "9349878403ee468ce6b64922c648d88f598f799b1c65fc42a712aa47598e54da"
+        }
+      ],
+      "reviewedDiffSha256": "1a40dcce1fb973666abe0385fb2af3f24bf499676b9b595fea4a5aa7c49fb85a"
+    }
+  ],
+  "hunks": [
+    {
+      "file": "packages/qualification/src/native/xtdb-workloads.ts",
+      "index": 1,
+      "header": "@@ -2,16 +2,50 @@",
+      "sha256": "ef2d25a66b8c707d4a3bef0b82c7b78358dfcd9d5dd8cf7a63ad476c1c477d95",
+      "changesOperations": false,
+      "changesData": false,
+      "changesSchedule": false,
+      "manualAssessment": "Comments and imports document native implementations, exact arithmetic, guards and path counting."
+    },
+    {
+      "file": "packages/qualification/src/native/xtdb-workloads.ts",
+      "index": 2,
+      "header": "@@ -29,7 +63,21 @@ interface ReachabilityContext extends Context {",
+      "sha256": "77daced9cae16d74a746ed265c57924c43a07d40ae509528aac56f789e7f73d2",
+      "changesOperations": false,
+      "changesData": false,
+      "changesSchedule": false,
+      "manualAssessment": "Reachability interface adds explicit seed source and selector type."
+    },
+    {
+      "file": "packages/qualification/src/native/xtdb-workloads.ts",
+      "index": 3,
+      "header": "@@ -39,17 +87,12 @@ type Select = (",
+      "sha256": "4cf63b39eacb9ce721c3f7b45682f6b63eca7d56d905ecda3c57262d374a6be3",
+      "changesOperations": false,
+      "changesData": false,
+      "changesSchedule": false,
+      "manualAssessment": "Session exposes explicit XTQL/SQL read-only closure implementations; no operation descriptor changes."
+    },
+    {
+      "file": "packages/qualification/src/native/xtdb-workloads.ts",
+      "index": 4,
+      "header": "@@ -109,6 +152,23 @@ const integerChannel = (alias: string) => {",
+      "sha256": "16b15b25f5c8e563dc9454a2af72a9c02e69541c4740805552e779f3bff1e431",
+      "changesOperations": false,
+      "changesData": false,
+      "changesSchedule": false,
+      "manualAssessment": "XTQL typed integer/fact helpers translate existing attribute filters."
+    },
+    {
+      "file": "packages/qualification/src/native/xtdb-workloads.ts",
+      "index": 5,
+      "header": "@@ -131,108 +191,160 @@ const valueOf = (value: RecordValue): unknown => {",
+      "sha256": "ae68b0cf128b0c37d8b922a2ccedb24e4a2831e94d720e2ba3acea276d4cb593",
+      "changesOperations": false,
+      "changesData": false,
+      "changesSchedule": false,
+      "manualAssessment": "Native task dispatch, common captured position and seeded frontier traversal implement the same task/cuts; no writes/data/schedule changes."
+    },
+    {
+      "file": "packages/qualification/src/native/xtdb-workloads.ts",
+      "index": 6,
+      "header": "@@ -240,12 +352,17 @@ export const evaluateXtdbNativeWorkload = (",
+      "sha256": "96bf9f3b6842ddc9678dc85b0a282d83cd7c67fcc67ded02d7138a2ed365aaff",
+      "changesOperations": false,
+      "changesData": false,
+      "changesSchedule": false,
+      "manualAssessment": "Workload 03 keeps purchase-time and at-purchase price operands and adds XTQL equivalent."
+    },
+    {
+      "file": "packages/qualification/src/native/xtdb-workloads.ts",
+      "index": 7,
+      "header": "@@ -264,28 +381,37 @@ export const evaluateXtdbNativeWorkload = (",
+      "sha256": "78cec06f0ad5829c4b5685dd4f32969c709871eb9984005cf0ff28addb98ac06",
+      "changesOperations": false,
+      "changesData": false,
+      "changesSchedule": false,
+      "manualAssessment": "Workload 04 keeps claim coordinate, coverage, policy and event-derived valid cut."
+    },
+    {
+      "file": "packages/qualification/src/native/xtdb-workloads.ts",
+      "index": 8,
+      "header": "@@ -293,41 +419,66 @@ export const evaluateXtdbNativeWorkload = (",
+      "sha256": "bc9a3f6d99ec7d1bf6ce1fbf6006993812d9f353cf4dfdf96509474643ae4518",
+      "changesOperations": false,
+      "changesData": false,
+      "changesSchedule": false,
+      "manualAssessment": "Workload 05 event count and winning revision unchanged; 06/07 use exact rather than wrapping sums over unchanged operands."
+    },
+    {
+      "file": "packages/qualification/src/native/xtdb-workloads.ts",
+      "index": 9,
+      "header": "@@ -335,54 +486,91 @@ export const evaluateXtdbNativeWorkload = (",
+      "sha256": "3f20567099a94180480e2a016dd4c1dda512d46df5196d86cc7261cd1c759b52",
+      "changesOperations": false,
+      "changesData": false,
+      "changesSchedule": false,
+      "manualAssessment": "Workloads 07-10 preserve inventory subtraction, capture-minus-refund, missing entitlement and deadline/watermark operations; exact errors and SQL null guard repair implementation."
+    },
+    {
+      "file": "packages/qualification/src/native/xtdb-workloads.ts",
+      "index": 10,
+      "header": "@@ -396,98 +584,191 @@ export const evaluateXtdbNativeWorkload = (",
+      "sha256": "3603c8597108470c2813a9c2309e8b5dae556fdc10075b2e861fd30a01aa25d1",
+      "changesOperations": false,
+      "changesData": false,
+      "changesSchedule": false,
+      "manualAssessment": "Closure tasks 11/13/14/15/20 move to seeded read-only execution; 12 null fix, 16 lineage and 17 ordered conversion retained with XTQL equivalents."
+    },
+    {
+      "file": "packages/qualification/src/native/xtdb-workloads.ts",
+      "index": 11,
+      "header": "@@ -513,28 +794,40 @@ export const evaluateXtdbNativeWorkload = (",
+      "sha256": "69646c293b29efe63a68c0db6299cf05ee7d3c9e0198caf939a89913919162ad",
+      "changesOperations": false,
+      "changesData": false,
+      "changesSchedule": false,
+      "manualAssessment": "Close unchanged 17 assembly; 18 union-duration endpoint segmentation and null guard; 19 shared task execution."
+    },
+    {
+      "file": "packages/qualification/src/native/xtdb-workloads.ts",
+      "index": 12,
+      "header": "@@ -543,8 +836,12 @@ export const evaluateXtdbNativeWorkload = (",
+      "sha256": "45dbf91e2389a39f1c818ee749f61cc0e3c211b2f9eea594261a591bbd5b1278",
+      "changesOperations": false,
+      "changesData": false,
+      "changesSchedule": false,
+      "manualAssessment": "Workload 19 prediction/customer/feature-known-at/fraud operands and historical subcuts remain the same."
+    },
+    {
+      "file": "packages/qualification/src/native/xtdb-workloads.ts",
+      "index": 13,
+      "header": "@@ -560,49 +857,24 @@ export const evaluateXtdbNativeWorkload = (",
+      "sha256": "530a39df99e655e0cfdd82a6ce46067df0741ca9c5bdc096fdcc6d18a137ff75",
+      "changesOperations": false,
+      "changesData": false,
+      "changesSchedule": false,
+      "manualAssessment": "Workload 20 closure relocates above; supports replace length-1..3 approximation with general counting over unchanged edges/from/to/cut."
+    },
+    {
+      "file": "packages/qualification/src/native/qlever-workloads.ts",
+      "index": 1,
+      "header": "@@ -5,6 +5,7 @@",
+      "sha256": "0a12ee40f002ce59d60cd5189ab875515973f4d093f24bf73494508d0e3ad1d8",
+      "changesOperations": false,
+      "changesData": false,
+      "changesSchedule": false,
+      "manualAssessment": "Import bounded support-path execution helper; no task descriptor or data change."
+    },
+    {
+      "file": "packages/qualification/src/native/qlever-workloads.ts",
+      "index": 2,
+      "header": "@@ -197,6 +198,7 @@ export const evaluateQleverNativeWorkload = (",
+      "sha256": "58ed94c6989d8ec5f1f3284baaa89b0f8789e056a64d8e74aad7640481652766",
+      "changesOperations": false,
+      "changesData": false,
+      "changesSchedule": false,
+      "manualAssessment": "Optional native row cap retains 1000 default; completeness witness for support edges only."
+    },
+    {
+      "file": "packages/qualification/src/native/qlever-workloads.ts",
+      "index": 3,
+      "header": "@@ -219,7 +221,7 @@ export const evaluateQleverNativeWorkload = (",
+      "sha256": "12bfa3041586abf2be00977a48b65cc99ef9a4aabe98de49dc627ed685d980bc",
+      "changesOperations": false,
+      "changesData": false,
+      "changesSchedule": false,
+      "manualAssessment": "Forward chosen cap without changing logical parameters or offered schedule."
+    },
+    {
+      "file": "packages/qualification/src/native/qlever-workloads.ts",
+      "index": 4,
+      "header": "@@ -577,31 +579,22 @@ export const evaluateQleverNativeWorkload = (",
+      "sha256": "75a2a3736114c09a6e640f05dae09cf3af6605eada5571ab84518e1328f4a8ef",
+      "changesOperations": false,
+      "changesData": false,
+      "changesSchedule": false,
+      "manualAssessment": "Support operation remains distinct node-sequence paths; replace three fixed-depth queries with complete edge extraction and general counting."
+    }
+  ],
+  "packetSha256": "322c773db2049b5a704d36925738859aef4982ca27194d13a659d1b0e9081271",
+  "oraclePinsAndExternalRunnersUnchanged": true,
+  "oContractGeneratorHashRefreshed": true,
+  "evaluatorAndAssertionFilesUnchanged": true
+}

@@ -1,0 +1,27 @@
+{
+  "head": "13922ce91c8b98c8cf9dec20e076b322b00fab1b",
+  "argv": [
+    "node",
+    "lab/bin/gate.mjs",
+    "G0",
+    "--lane",
+    "xtdb",
+    "--exp",
+    "CX-VA01-0312R2",
+    "--previous",
+    "G0-xtdb-20261109T003626Z-7069fe",
+    "--note",
+    "Independent contract rounds 2-3 delta; fresh offline G0; seven exact live skips audited separately"
+  ],
+  "exit": 0,
+  "start": 1794185018.8262558,
+  "end": 1794185065.2578409,
+  "receipt": "lab/runs/G0/G0-xtdb-20261109T004338Z-399b99.json",
+  "runId": "G0-xtdb-20261109T004338Z-399b99",
+  "unsetFlags": [
+    "XTDB_INTEGRATION",
+    "QLEVER_INTEGRATION",
+    "TRIPLEX_COMMIT_ENCODING"
+  ],
+  "shim": "unchanged lab/experiments/EXP-X02-xtql-parity/round2/bin/pnpm"
+}

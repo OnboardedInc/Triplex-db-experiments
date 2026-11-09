@@ -1,0 +1,1 @@
+Read-only G0 audit initially prefixed build paths twice; manifest item paths already include packages/<name>/dist. Corrected path resolution to repository-relative paths; no receipt, build or tested source bytes changed.

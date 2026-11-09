@@ -1,0 +1,4923 @@
+{
+  "run": 451,
+  "intendedGuardMatches": 451,
+  "crashKills": 0,
+  "newControls": 107,
+  "rulingCoverage": {
+    "Q72a": [
+      "Q72a literal weakened",
+      "Q72a consumer dropped"
+    ],
+    "Q72b": [
+      "Q72b literal weakened",
+      "Q72b consumer dropped"
+    ],
+    "Q72c": [
+      "Q72c literal weakened",
+      "Q72c consumer dropped"
+    ],
+    "Q72d": [
+      "Q72d literal weakened",
+      "Q72d consumer dropped"
+    ],
+    "Q72e": [
+      "Q72e literal weakened",
+      "Q72e consumer dropped"
+    ],
+    "Q72g": [
+      "Q72g literal weakened",
+      "Q72g consumer dropped"
+    ],
+    "Q80a": [
+      "Q80a literal weakened",
+      "Q80a consumer dropped"
+    ],
+    "Q80b": [
+      "Q80b literal weakened",
+      "Q80b consumer dropped"
+    ],
+    "Q80c": [
+      "Q80c literal weakened",
+      "Q80c consumer dropped"
+    ],
+    "Q82a": [
+      "Q82a literal weakened",
+      "Q82a consumer dropped"
+    ],
+    "Q82b": [
+      "Q82b literal weakened",
+      "Q82b consumer dropped"
+    ],
+    "Q82c": [
+      "Q82c literal weakened",
+      "Q82c consumer dropped"
+    ],
+    "Q82d": [
+      "Q82d literal weakened",
+      "Q82d consumer dropped"
+    ],
+    "Q82e": [
+      "Q82e literal weakened",
+      "Q82e consumer dropped"
+    ],
+    "Q83a": [
+      "Q83a literal weakened",
+      "Q83a consumer dropped"
+    ],
+    "Q83b": [
+      "Q83b literal weakened",
+      "Q83b consumer dropped"
+    ],
+    "Q83c": [
+      "Q83c literal weakened",
+      "Q83c consumer dropped"
+    ],
+    "Q84a": [
+      "Q84a literal weakened",
+      "Q84a consumer dropped"
+    ],
+    "Q84b": [
+      "Q84b literal weakened",
+      "Q84b consumer dropped"
+    ],
+    "Q84c": [
+      "Q84c literal weakened",
+      "Q84c consumer dropped"
+    ],
+    "Q84d": [
+      "Q84d literal weakened",
+      "Q84d consumer dropped"
+    ],
+    "Q84e": [
+      "Q84e literal weakened",
+      "Q84e consumer dropped"
+    ],
+    "Q83d": [
+      "Q83d literal weakened",
+      "Q83d consumer dropped"
+    ],
+    "Q79e": [
+      "Q79e literal weakened",
+      "Q79e consumer dropped"
+    ],
+    "Q85a": [
+      "Q85a literal weakened",
+      "Q85a consumer dropped"
+    ],
+    "Q85b": [
+      "Q85b literal weakened",
+      "Q85b consumer dropped"
+    ],
+    "Q85c": [
+      "Q85c literal weakened",
+      "Q85c consumer dropped"
+    ],
+    "Q85d": [
+      "Q85d literal weakened",
+      "Q85d consumer dropped"
+    ],
+    "Q86a": [
+      "Q86a literal weakened",
+      "Q86a consumer dropped"
+    ],
+    "Q86b": [
+      "Q86b literal weakened",
+      "Q86b consumer dropped"
+    ],
+    "Q86c": [
+      "Q86c literal weakened",
+      "Q86c consumer dropped"
+    ],
+    "Q86d": [
+      "Q86d literal weakened",
+      "Q86d consumer dropped"
+    ],
+    "Q86e": [
+      "Q86e literal weakened",
+      "Q86e consumer dropped"
+    ],
+    "Q86f": [
+      "Q86f literal weakened",
+      "Q86f consumer dropped"
+    ],
+    "Q79f": [
+      "Q79f literal weakened",
+      "Q79f consumer dropped"
+    ],
+    "Q87": [
+      "Q87 literal weakened",
+      "Q87 consumer dropped"
+    ],
+    "Q83e": [
+      "Q83e literal weakened",
+      "Q83e consumer dropped"
+    ]
+  },
+  "records": [
+    {
+      "index": 0,
+      "name": "Q31a queue bound 5",
+      "expectedGuardPattern": "Q31a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q31a: NS-P2-QUEUE-MAX-S = 2 on NS.P2"
+      ]
+    },
+    {
+      "index": 1,
+      "name": "Q31a progress text",
+      "expectedGuardPattern": "Q31a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q31a: P2 progress rule"
+      ]
+    },
+    {
+      "index": 2,
+      "name": "Q31b driver writes",
+      "expectedGuardPattern": "Q31b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q31b: split reads straddle trace commands; no driver writes"
+      ]
+    },
+    {
+      "index": 3,
+      "name": "Q31c falsifier dropped",
+      "expectedGuardPattern": "Q31c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q31c/Q38a: falsifier FX-RESUME-AT-ABORT-GAP not selected"
+      ]
+    },
+    {
+      "index": 4,
+      "name": "Q31c oracle text",
+      "expectedGuardPattern": "Q31c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q31c: O-REPLAY position text"
+      ]
+    },
+    {
+      "index": 5,
+      "name": "Q31c gate removed",
+      "expectedGuardPattern": "Q31c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q31c: GS.01 lacks GATE-POSITION",
+        "Q31c: GS.02 lacks GATE-POSITION",
+        "Q31c: GS.03 lacks GATE-POSITION",
+        "Q31c: GS.04 lacks GATE-POSITION",
+        "Q31c: GS.05 lacks GATE-POSITION",
+        "Q31c: GS.06 lacks GATE-POSITION",
+        "Q31c: GS.07 lacks GATE-POSITION",
+        "Q31c: GS.08 lacks GATE-POSITION",
+        "Q31c: GS.09 lacks GATE-POSITION",
+        "Q31c: GS.10 lacks GATE-POSITION",
+        "Q31c: GS.11 lacks GATE-POSITION",
+        "Q31c: GS.12 lacks GATE-POSITION",
+        "Q31c: GS.13 lacks GATE-POSITION",
+        "Q31c: GS.14 lacks GATE-POSITION",
+        "Q31c: GS.15 lacks GATE-POSITION",
+        "Q31c: GS.16 lacks GATE-POSITION",
+        "Q31c: GS.17 lacks GATE-POSITION",
+        "Q31c: GS.18 lacks GATE-POSITION",
+        "Q31c: GS.19 lacks GATE-POSITION",
+        "Q31c: GS.20 lacks GATE-POSITION",
+        "Q31c: NS.P1 lacks GATE-POSITION",
+        "Q31c: NS.P2 lacks GATE-POSITION",
+        "Q31c: NS.P3 lacks GATE-POSITION",
+        "Q31c: NS.P4 lacks GATE-POSITION",
+        "Q31c: NS.P5 lacks GATE-POSITION",
+        "Q31c: NS.SEC.bulk-lane lacks GATE-POSITION",
+        "Q31c: NS.SEC.retro-and-audit lacks GATE-POSITION"
+      ]
+    },
+    {
+      "index": 6,
+      "name": "Q31d wait 250",
+      "expectedGuardPattern": "Q31d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q31d: T-WATERMARK-WAIT-MS = 10"
+      ]
+    },
+    {
+      "index": 7,
+      "name": "Q31d reconstruct dropped",
+      "expectedGuardPattern": "Q31d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "CS-COMPOSITION: required case CO-RECONSTRUCT-OUTSIDE-VALIDITY not traced",
+        "Q31d: CO-RECONSTRUCT-OUTSIDE-VALIDITY not selected"
+      ]
+    },
+    {
+      "index": 8,
+      "name": "Q31e old ack",
+      "expectedGuardPattern": "Q31e",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "ACCEPTANCE.md: banned text 'ACKs only after the current index' (superseded ACK clause (RULINGS Q31e)) near: 'orded (RULINGS Q34b) |\\n| ackOwnership | the source of truth ACKs only after the current index reached the commit; read-your-own-write'",
+        "Q31e: ACK after source publication with routed read-your-own-write",
+        "obligations.json: banned text 'ACKs only after the current index' (superseded ACK clause (RULINGS Q31e)) near: 'd (RULINGS Q34b)\",\\n    \"ackOwnership\": \"the source of truth ACKs only after the current index reached the commit; read-your-own-write'",
+        "oracle-contract.json: banned text 'ACKs only after the current index' (superseded ACK clause (RULINGS Q31e)) near: '  \"composition\": {\\n    \"ackOwnership\": \"the source of truth ACKs only after the current index reached the commit; read-your-own-write'"
+      ]
+    },
+    {
+      "index": 9,
+      "name": "Q31e GS04b",
+      "expectedGuardPattern": "Q31e",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q31e: GS.04b outage semantics"
+      ]
+    },
+    {
+      "index": 10,
+      "name": "Q31f key evidence",
+      "expectedGuardPattern": "Q31f",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q31f: erasure frontier, cache, reproduction scope, key evidence"
+      ]
+    },
+    {
+      "index": 11,
+      "name": "Q31h GS19",
+      "expectedGuardPattern": "Q31h",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "ACCEPTANCE.md: banned text 'no duplicate processing' (superseded GS.19 wording (RULINGS Q31h)) near: ' from its checkpoint. Checked beyond exact answers: no gap, no duplicate processing; zero duplicate externally visible effe'",
+        "Q31h: GS.19 wording",
+        "obligations.json: banned text 'no duplicate processing' (superseded GS.19 wording (RULINGS Q31h)) near: ' from its checkpoint. Checked beyond exact answers: no gap, no duplicate processing; zero duplicate externally visible effe'"
+      ]
+    },
+    {
+      "index": 12,
+      "name": "Q31i floor",
+      "expectedGuardPattern": "Q31i",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q31i: W0-R2-CHANGED-SHARE = 0.2"
+      ]
+    },
+    {
+      "index": 13,
+      "name": "Q31i gate",
+      "expectedGuardPattern": "Q31i",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q31i: G7.outbox.atomic-unit is domain-dependent but not gated on W0",
+        "Q31i: G7.outbox.publication-sequence is domain-dependent but not gated on W0",
+        "Q31i: G7.outbox.receiver-ordering is domain-dependent but not gated on W0",
+        "Q31i: GS.01 is domain-dependent but not gated on W0",
+        "Q31i: GS.02 is domain-dependent but not gated on W0",
+        "Q31i: GS.03 is domain-dependent but not gated on W0",
+        "Q31i: GS.04 is domain-dependent but not gated on W0",
+        "Q31i: GS.05 is domain-dependent but not gated on W0",
+        "Q31i: GS.06 is domain-dependent but not gated on W0",
+        "Q31i: GS.07 is domain-dependent but not gated on W0",
+        "Q31i: GS.08 is domain-dependent but not gated on W0",
+        "Q31i: GS.09 is domain-dependent but not gated on W0",
+        "Q31i: GS.10 is domain-dependent but not gated on W0",
+        "Q31i: GS.11 is domain-dependent but not gated on W0",
+        "Q31i: GS.12 is domain-dependent but not gated on W0",
+        "Q31i: GS.13 is domain-dependent but not gated on W0",
+        "Q31i: GS.14 is domain-dependent but not gated on W0",
+        "Q31i: GS.15 is domain-dependent but not gated on W0",
+        "Q31i: GS.16 is domain-dependent but not gated on W0",
+        "Q31i: GS.17 is domain-dependent but not gated on W0",
+        "Q31i: GS.18 is domain-dependent but not gated on W0",
+        "Q31i: GS.19 is domain-dependent but not gated on W0",
+        "Q31i: GS.20 is domain-dependent but not gated on W0",
+        "Q31i: NS.P3 is domain-dependent but not gated on W0",
+        "Q31i: NS.P5 is domain-dependent but not gated on W0"
+      ]
+    },
+    {
+      "index": 14,
+      "name": "Q31j legacy dropped",
+      "expectedGuardPattern": "Q31j",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q31j: legacy outcomes differ from the golden scan: missing ['G5-SUM-08'], extra []",
+        "Q33i: lists differ; only in Q33i: ['G5-SUM-08']; only in Q31j: []"
+      ]
+    },
+    {
+      "index": 15,
+      "name": "Q31j qlever commits",
+      "expectedGuardPattern": "Q31j",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q31j: G5-SUM-01 lane outcomes",
+        "Q31j: G5-SUM-02 lane outcomes",
+        "Q31j: G5-SUM-04 lane outcomes",
+        "Q31j: G5-SUM-05 lane outcomes",
+        "Q31j: G5-SUM-06 lane outcomes",
+        "Q31j: G5-SUM-11#case2 lane outcomes"
+      ]
+    },
+    {
+      "index": 16,
+      "name": "Q31k positive dropped",
+      "expectedGuardPattern": "Q31k",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q31k: closure rules without a positive fixture: ['CR-W0-COVERAGE']"
+      ]
+    },
+    {
+      "index": 17,
+      "name": "Q29b agreement",
+      "expectedGuardPattern": "Q29a/b:\\ golden\\ files\\ unchanged",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q29a/b: golden files unchanged and Q8F-05 agreement rule"
+      ]
+    },
+    {
+      "index": 18,
+      "name": "Q29a golden rule",
+      "expectedGuardPattern": "Q29a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q29a/b: golden files unchanged and Q8F-05 agreement rule"
+      ]
+    },
+    {
+      "index": 19,
+      "name": "Q30a guard after canonical",
+      "expectedGuardPattern": "Q30a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q30a: JSON guard rule"
+      ]
+    },
+    {
+      "index": 20,
+      "name": "Q30a nested dropped",
+      "expectedGuardPattern": "Q30a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q30a: JSON guard rule"
+      ]
+    },
+    {
+      "index": 21,
+      "name": "Q30b instant",
+      "expectedGuardPattern": "Q30b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q30b: instant -0"
+      ]
+    },
+    {
+      "index": 22,
+      "name": "Q30c encoding",
+      "expectedGuardPattern": "Q30c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q30c: XTDB pinned encodings"
+      ]
+    },
+    {
+      "index": 23,
+      "name": "Q30d shadow",
+      "expectedGuardPattern": "Q30d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q30d: QLever shadow rule"
+      ]
+    },
+    {
+      "index": 24,
+      "name": "Q32b EXP-G02 dropped",
+      "expectedGuardPattern": "Q32b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q32b: EXP-G02 follow-up recorded"
+      ]
+    },
+    {
+      "index": 25,
+      "name": "Q32c share",
+      "expectedGuardPattern": "Q32c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q32c: 0.1% marked invalid trace commands"
+      ]
+    },
+    {
+      "index": 26,
+      "name": "Q33a readback",
+      "expectedGuardPattern": "Q33a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q33a: read-back-as-written refines Q30a"
+      ]
+    },
+    {
+      "index": 27,
+      "name": "Q33d never false",
+      "expectedGuardPattern": "Q33d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q33d: ordered cross-family comparison is E-MIXED-FAMILY"
+      ]
+    },
+    {
+      "index": 28,
+      "name": "Q33h other-query",
+      "expectedGuardPattern": "pagination\\ reasons",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q33g/h: pagination reasons"
+      ]
+    },
+    {
+      "index": 29,
+      "name": "Q33i list",
+      "expectedGuardPattern": "Q33i",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q33i: lists differ; only in Q33i: []; only in Q31j: ['G1-I64-02#min-exact']"
+      ]
+    },
+    {
+      "index": 30,
+      "name": "Q33 rule dropped",
+      "expectedGuardPattern": "Q33",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q33: R-CMD-12 missing"
+      ]
+    },
+    {
+      "index": 31,
+      "name": "Q34b native dropped",
+      "expectedGuardPattern": "Q34b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q34b: outage RYOW on every serving surface with stale-fallback rejection and recipe identity"
+      ]
+    },
+    {
+      "index": 32,
+      "name": "Q34c pair dropped",
+      "expectedGuardPattern": "Q34c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "G7.journal.logical-contract: selector tag WIRE-JOURNAL-NUMBER-NEGZERO-ROUNDTRIP not in CS-WIRE requiredTags",
+        "Q34c: guard on user JSON only, with the paired test",
+        "mutant M-JSON-GUARD-ON-JOURNAL: target CS-WIRE:WIRE-JOURNAL-NUMBER-NEGZERO-ROUNDTRIP unresolvable"
+      ]
+    },
+    {
+      "index": 33,
+      "name": "Q35 example wrong",
+      "expectedGuardPattern": "Q35",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q35a: TDK1 16.50 encodes to p02165, not p021650"
+      ]
+    },
+    {
+      "index": 34,
+      "name": "Q35 no terminator",
+      "expectedGuardPattern": "Q35",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q35a: TDK1 -0.01 encodes to n9998, not n9998z",
+        "Q35a: TDK1 -0.5 encodes to n994, not n994z",
+        "Q35a: TDK1 -0.55 encodes to n9944, not n9944z",
+        "Q35a: TDK1 -12 encodes to n9787, not n9787z",
+        "Q35a: TDK1 -12.5 encodes to n97874, not n97874z",
+        "Q35a: TDK1 -125 encodes to n96874, not n96874z",
+        "Q35a: TDK1 -16.50 encodes to n97834, not n97834z",
+        "Q35a: TDK1 -99999999999999999999.99 encodes to n790000000000000000000000, not n790000000000000000000000z",
+        "Q35a: TDK1 -99999999999999999999999999999999999999 encodes to n6100000000000000000000000000000000000000, not n6100000000000000000000000000000000000000z",
+        "Q35a: TDK1 key order must equal numeric order over the alphabet [0-9nopz]"
+      ]
+    },
+    {
+      "index": 35,
+      "name": "Q35 old wording",
+      "expectedGuardPattern": "Q35",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "ACCEPTANCE.md: banned text 'fixed-width, sign-aware' (superseded decimal key wording (RULINGS Q35a)) near: 'ving-decimal-encodings.md section 6; RULINGS Q35a. summary: fixed-width, sign-aware (TDK1): zero o; positive p LL I F (LL t'",
+        "obligations.json: banned text 'fixed-width, sign-aware' (superseded decimal key wording (RULINGS Q35a)) near: 'imal-encodings.md section 6; RULINGS Q35a\",\\n    \"summary\": \"fixed-width, sign-aware (TDK1): zero o; positive p LL I F (LL t'"
+      ]
+    },
+    {
+      "index": 36,
+      "name": "Q35 old error",
+      "expectedGuardPattern": "Q35",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "ACCEPTANCE.md: banned text 'E-DECIMAL-UNREPRESENTABLE' (superseded error name (RULINGS Q35e)) near: 'imal to integer with a non-zero fraction and no round() |\\n| E-DECIMAL-UNREPRESENTABLE | InvalidTripleError | x | preflight | '",
+        "Q35e: decimal error names",
+        "obligations.json: banned text 'E-DECIMAL-UNREPRESENTABLE' (superseded error name (RULINGS Q35e)) near: 'non-zero fraction and no round()\"\\n    },\\n    {\\n      \"id\": \"E-DECIMAL-UNREPRESENTABLE\",\\n      \"tag\": \"InvalidTripleError\",\\n  '"
+      ]
+    },
+    {
+      "index": 37,
+      "name": "Q35 prefix allowed",
+      "expectedGuardPattern": "Q35",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q35c/d: channel name and use constraints"
+      ]
+    },
+    {
+      "index": 38,
+      "name": "Q35 V5 ungated",
+      "expectedGuardPattern": "Q35",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q35: V5 vector pin gate"
+      ]
+    },
+    {
+      "index": 39,
+      "name": "Q36 zipf 1.0",
+      "expectedGuardPattern": "Q36",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q31i: W0-LOCATION-ZIPF-S = 0.5",
+        "Q36g: location fanout Zipf s = 0.5"
+      ]
+    },
+    {
+      "index": 40,
+      "name": "Q36e affected",
+      "expectedGuardPattern": "Q36e",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q36e: expected affected set"
+      ]
+    },
+    {
+      "index": 41,
+      "name": "C2 contrast ignored",
+      "expectedGuardPattern": "V-O02 C2",
+      "method": "legacy contrast enumeration guard",
+      "matched": true,
+      "diagnostics": [
+        "Q31j: legacy outcomes differ from the golden scan: missing [], extra ['G1-I64-02#min-exact']",
+        "V-O02 C2: G1-I64-02 min-exact missing from the legacy outcomes",
+        "V-O02 C2: the legacy scan must read contrastCase and commandTemplate cases"
+      ]
+    },
+    {
+      "index": 42,
+      "name": "Q31g/Q35b widen",
+      "expectedGuardPattern": "Q31g|Q35b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q31g (as superseded by Q35b): DS-WIDEN and DS-WIDEN-MIGRATE",
+        "Q35b: widening that admits every value is metadata-only"
+      ]
+    },
+    {
+      "index": 43,
+      "name": "Q30 write route dropped v2",
+      "expectedGuardPattern": "Q30",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q30: G1.wire.write-guards"
+      ]
+    },
+    {
+      "index": 44,
+      "name": "Q38a A0 exempt",
+      "expectedGuardPattern": "Q38a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q38a: A0-QLEVER must run the four falsifiers",
+        "Q38a: A0-XTDB must run the four falsifiers"
+      ]
+    },
+    {
+      "index": 45,
+      "name": "Q38a declared density",
+      "expectedGuardPattern": "Q38a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q38a: declared density or matching block hashes must never skip the falsifiers"
+      ]
+    },
+    {
+      "index": 46,
+      "name": "Q38a static dense",
+      "expectedGuardPattern": "Q38a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "CS-POSITION: required case FX-ABORT-GAP not traced",
+        "CS-POSITION: required case FX-CRASH-APPEND-RESOLUTION not traced",
+        "CS-POSITION: required case FX-NESTED-CUTS not traced",
+        "CS-POSITION: required case FX-RESUME-AT-ABORT-GAP not traced",
+        "CS-POSITION: required case PO-ABORTED-LISTED not traced",
+        "Q31c/Q38a: falsifier FX-ABORT-GAP not selected",
+        "Q31c/Q38a: falsifier FX-CRASH-APPEND-RESOLUTION not selected",
+        "Q31c/Q38a: falsifier FX-NESTED-CUTS not selected",
+        "Q31c/Q38a: falsifier FX-RESUME-AT-ABORT-GAP not selected",
+        "Q38a: G7.position.coordinates selects all required cases unconditionally",
+        "Q55a/Q47: a claimant selection or case list (ignored; the evaluator resolves every case) (Q55a) must be a diagnostic",
+        "Q55a/Q47: a selection that resolves to no case in the pinned manifest (Q55a) must be a diagnostic",
+        "Q55a/Q47: an oracle refusal on one resolved case (Q45b, Q55a) must be a diagnostic",
+        "Q55a/Q47: supplied PASS records while the evaluator's own run fails a case (Q55a) must be a diagnostic"
+      ]
+    },
+    {
+      "index": 47,
+      "name": "Q38a mutant dropped",
+      "expectedGuardPattern": "Q38a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q38a: the outside-block mutation must be a mutant the falsifiers kill",
+        "mutant M-WITHTRANSACTION-REBIND attached only to the catalog obligation"
+      ]
+    },
+    {
+      "index": 48,
+      "name": "Q38a allowlist back",
+      "expectedGuardPattern": "Q38a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q38a: the allowlist must be gone and GATE-POSITION must cover A0"
+      ]
+    },
+    {
+      "index": 49,
+      "name": "Q38c ruling uncompiled",
+      "expectedGuardPattern": "Q38c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q38c: RULINGS.md entries not compiled and not listed as recorded-not-compiled: ['Q39a', 'Q39b']; listed but compiled or absent: []"
+      ]
+    },
+    {
+      "index": 50,
+      "name": "Q38d mutant dropped",
+      "expectedGuardPattern": "Q38d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q38d: channel routing on repository, native and raw surfaces with the lexical-order mutant",
+        "mutant M-DECIMAL-LEXICAL-ORDER attached only to the catalog obligation"
+      ]
+    },
+    {
+      "index": 51,
+      "name": "Q38d SUM encode",
+      "expectedGuardPattern": "Q38d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q38d: SUM decode-compute-encode, key arithmetic invalid, JSON conversion validates"
+      ]
+    },
+    {
+      "index": 52,
+      "name": "Q38e status",
+      "expectedGuardPattern": "Q38e",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q38e: O-TDK1 BUILT with gen_vectors.py pinned"
+      ]
+    },
+    {
+      "index": 53,
+      "name": "Q38e reference hash",
+      "expectedGuardPattern": "Q38e",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q38e: pinned O-TDK1 file lab/oracles/decimal/tdk1_reference.py does not match",
+        "Q56i: with the pin at a9c1327, G9.erasure.query-semantics and G1.decimal.channel-routing can qualify (positive controls)"
+      ]
+    },
+    {
+      "index": 54,
+      "name": "Q38e vector pinned unreviewed",
+      "expectedGuardPattern": "Q38e",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q38e: the vector pin may be set only with an independent review receipt"
+      ]
+    },
+    {
+      "index": 55,
+      "name": "Q38e candidate wrong",
+      "expectedGuardPattern": "Q38e",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q38e: the candidate vector file under review changed"
+      ]
+    },
+    {
+      "index": 56,
+      "name": "Q38f version key",
+      "expectedGuardPattern": "Q38f",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q38f: outbox delivery identity, rollback example, atomic state, crash replay"
+      ]
+    },
+    {
+      "index": 57,
+      "name": "Q38f GS19b",
+      "expectedGuardPattern": "Q38f",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q36a/Q38f: GS-19B must use the delivery key (id, publication sequence)",
+        "Q36a/Q38f: GS.19 must use the delivery key (id, publication sequence)",
+        "Q38f: (id, version) remains in the load contract, W0 or GS.19b",
+        "Q38f: GS.19 still uses (id, version)"
+      ]
+    },
+    {
+      "index": 58,
+      "name": "Q39a hazard",
+      "expectedGuardPattern": "Q39a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q39a: XTDB DECIMAL sums read as text, with hazard and mutant"
+      ]
+    },
+    {
+      "index": 59,
+      "name": "Q39a cast",
+      "expectedGuardPattern": "Q39a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q39a: XTDB DECIMAL sums read as text, with hazard and mutant"
+      ]
+    },
+    {
+      "index": 60,
+      "name": "C1 gate dropped v2",
+      "expectedGuardPattern": "V-O02 C1",
+      "method": "replay delegation guard",
+      "matched": true,
+      "diagnostics": [
+        "V-O02 C1: G1.types.value-kinds-roundtrip uses O-REPLAY but is not gated on its pin"
+      ]
+    },
+    {
+      "index": 61,
+      "name": "Q38e O-TDK1 unpinned",
+      "expectedGuardPattern": "Q38e",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q38e: O-TDK1 pinned in ORACLE_PINS, accepted only after review"
+      ]
+    },
+    {
+      "index": 62,
+      "name": "Q45a status",
+      "expectedGuardPattern": "V\\-O04i:\\ O\\-REPLAY\\ is\\ BUILT\\-ACCEPTED",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "V-O04i: O-REPLAY is BUILT-ACCEPTED at lab/oracles/replay/ with receipt V-O04i"
+      ]
+    },
+    {
+      "index": 63,
+      "name": "Q45b rule",
+      "expectedGuardPattern": "Q45b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q45b: refusal handling"
+      ]
+    },
+    {
+      "index": 64,
+      "name": "Q45c key bytes back",
+      "expectedGuardPattern": "Q45c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q45c: key-byte cases belong to the O-TDK1 obligations, not G1.types.decimal"
+      ]
+    },
+    {
+      "index": 65,
+      "name": "Q45d round",
+      "expectedGuardPattern": "Q45d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q45d: DO-ROUND precision for a larger scale"
+      ]
+    },
+    {
+      "index": 66,
+      "name": "Q43 avg id",
+      "expectedGuardPattern": "Q43",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q43: R-DEC-14 must be E-DECIMAL-AVG"
+      ]
+    },
+    {
+      "index": 67,
+      "name": "Q43 round refused",
+      "expectedGuardPattern": "Q43",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q43: rounding, literal type and expression limit"
+      ]
+    },
+    {
+      "index": 68,
+      "name": "Q43 toInteger",
+      "expectedGuardPattern": "Q43",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q43: R-DEC-12 must be E-INTEGER-OVERFLOW"
+      ]
+    },
+    {
+      "index": 69,
+      "name": "Q43 negzero basis",
+      "expectedGuardPattern": "Q43",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q43: R-CUT-4 must be E-NEGATIVE-ZERO-INSTANT"
+      ]
+    },
+    {
+      "index": 70,
+      "name": "Q40 retirement",
+      "expectedGuardPattern": "Q40",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q40/Q42/Q44: OUTBOX retirement"
+      ]
+    },
+    {
+      "index": 71,
+      "name": "Q40 basis order",
+      "expectedGuardPattern": "Q40",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q40/Q42/Q44: OUTBOX basisOrder"
+      ]
+    },
+    {
+      "index": 72,
+      "name": "Q40 two hop",
+      "expectedGuardPattern": "Q40",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q40/Q44: WORLD_W0 twoHopFloor"
+      ]
+    },
+    {
+      "index": 73,
+      "name": "Q44 live only",
+      "expectedGuardPattern": "Q44",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q40/Q42/Q44: OUTBOX liveOnly"
+      ]
+    },
+    {
+      "index": 74,
+      "name": "Q42a hashes not opened",
+      "expectedGuardPattern": "retained\\ records\\ are\\ opened,\\ schema\\-checked\\ and\\ re\\-judged",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q47a/Q54e: retained records are opened, schema-checked and re-judged (a refusal is never PASS)"
+      ]
+    },
+    {
+      "index": 75,
+      "name": "Q42a unknown dropped",
+      "expectedGuardPattern": "Q42a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a/Q47: an unknown obligation id (Q42a) must be a diagnostic"
+      ]
+    },
+    {
+      "index": 76,
+      "name": "Q42b regress mutant",
+      "expectedGuardPattern": "M\\-RECEIVER\\-REGRESS\\ attached\\ only",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "mutant M-RECEIVER-REGRESS attached only to the catalog obligation"
+      ]
+    },
+    {
+      "index": 77,
+      "name": "Q42b receivers rule",
+      "expectedGuardPattern": "OUTBOX\\ receivers",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q40/Q42/Q44: OUTBOX receivers"
+      ]
+    },
+    {
+      "index": 78,
+      "name": "Q42c pair dropped",
+      "expectedGuardPattern": "Q42c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q42c: a crash case between every pair of the five transitions",
+        "Q46a: crash cases cover all 10 pairs of the five transitions"
+      ]
+    },
+    {
+      "index": 79,
+      "name": "Q42c receiver uses replay",
+      "expectedGuardPattern": "pin\\ scope\\ differs\\ from\\ pin_scope\\.json",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q45a: pin scope differs from pin_scope.json beyond the recorded differences: {'onlyGeneratorBlocked': ['G1.types.storage-widening-safe', 'G7.migration.schema-evolution', 'G7.migration.valid-writes-never-rejected'], 'onlyVerifierBlocked': ['G1.decimal.channel-routing', 'G10.cursor.stable', 'G7.journal.logical-contract', 'G8.composition.watermark-routing', 'G9.erasure.protected-copies', 'G9.erasure.reproduction-modulo', 'G9.erasure.restore-reapplies', 'G9.erasure.visibility-boundary', 'GS.16', 'NS.SEC.retro-and-audit', 'REQ.pii-erasure'], 'onlyGeneratorUses': ['G7.composition.overlay-rules', 'G7.outbox.receiver-ordering', 'G7.position.bound-after-publication', 'G9.erasure.commit-semantics', 'G9.erasure.query-semantics', 'G9.erasure.residual-shapes'], 'onlyVerifierUses': []}",
+        "Q45b: outbox steps are never O-REPLAY ops"
+      ]
+    },
+    {
+      "index": 80,
+      "name": "Q38b pins ignored v2",
+      "expectedGuardPattern": "claim\\ depending\\ on\\ an\\ unpinned\\ oracle",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a/Q47: a claim depending on an unpinned EXISTS oracle (Q59e) must be a diagnostic",
+        "Q55a/Q47: a claim depending on an unpinned oracle (Q59e) must be a diagnostic",
+        "Q55a/Q47: a claim on an obligation in the pin's excludes (Q45a) must be a diagnostic",
+        "Q55a/Q47: a claim while O-REPLAY's pin is null (Q37b) must be a diagnostic",
+        "Q55a/Q47: an accepted oracle with only its entrypoint hashed (Q75c) must be a diagnostic",
+        "Q55a/Q47: an accepted oracle without runner hashes (Q75c) must be a diagnostic",
+        "Q55a/Q47: an oracle pin naming the superseded verification (Q55a) must be a diagnostic",
+        "Q55a/Q47: an oracle pin whose commit no VERIFIER_REGISTRY entry accepts (Q55a) must be a diagnostic",
+        "Q55a/Q47: screening-only oracle cannot qualify acceptance (Q82c) must be a diagnostic"
+      ]
+    },
+    {
+      "index": 81,
+      "name": "Q38f GS10 v2",
+      "expectedGuardPattern": "Q38f",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q38f: GS.10 must use (id, publication sequence)"
+      ]
+    },
+    {
+      "index": 82,
+      "name": "Q38f mutant dropped v2",
+      "expectedGuardPattern": "Q38f",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q38f: outbox cases and the version-dedup mutant",
+        "mutant M-OUTBOX-VERSION-DEDUP attached only to the catalog obligation"
+      ]
+    },
+    {
+      "index": 83,
+      "name": "Q38c uncompiled Q45",
+      "expectedGuardPattern": "Q38c|Q45",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q38c: RULINGS.md entries not compiled and not listed as recorded-not-compiled: ['Q45a', 'Q45b', 'Q45c', 'Q45d', 'Q45e']; listed but compiled or absent: []"
+      ]
+    },
+    {
+      "index": 84,
+      "name": "Q39b language key",
+      "expectedGuardPattern": "Q39b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q39b: G1.decimal.tdk1-admission could share XTQL and SQL results",
+        "Q39b: G1.decimal.tdk1-serialization could share XTQL and SQL results",
+        "Q39b: G1.wire.xtdb-encodings could share XTQL and SQL results",
+        "Q39b: G7.commit.protocol-transitions could share XTQL and SQL results",
+        "Q39b: G7.migration.valid-writes-never-rejected could share XTQL and SQL results",
+        "Q39b: G7.recovery.backup-restore could share XTQL and SQL results",
+        "Q39b: G7.write.atomic could share XTQL and SQL results",
+        "Q39b: G9.erasure.protected-copies could share XTQL and SQL results",
+        "Q39b: REQ.change-feed could share XTQL and SQL results",
+        "Q39b: REQ.commit-idempotent could share XTQL and SQL results",
+        "Q39b: REQ.no-silent-precision-loss could share XTQL and SQL results",
+        "Q39b: REQ.outbox-atomic could share XTQL and SQL results",
+        "Q39b: REQ.pii-erasure could share XTQL and SQL results",
+        "Q39b: REQ.read-your-write could share XTQL and SQL results",
+        "Q39b: REQ.retro-corrections could share XTQL and SQL results",
+        "Q39b: REQ.tenant-isolation could share XTQL and SQL results",
+        "Q39b: S.maintenance.correct-during could share XTQL and SQL results",
+        "Q39b: S.population.year-one could share XTQL and SQL results",
+        "Q39b: S.restart.at-scale could share XTQL and SQL results"
+      ]
+    },
+    {
+      "index": 85,
+      "name": "Q31f journal modulo v2",
+      "expectedGuardPattern": "Q31f",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q31f: modulo erasure on C6, raw and native, SDK"
+      ]
+    },
+    {
+      "index": 86,
+      "name": "Q32f no bump v2",
+      "expectedGuardPattern": "Q32f",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q32f: pinning needs a contract version bump"
+      ]
+    },
+    {
+      "index": 87,
+      "name": "Q38d JSON convert v2",
+      "expectedGuardPattern": "Q38d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q38d: SUM decode-compute-encode, key arithmetic invalid, JSON conversion validates"
+      ]
+    },
+    {
+      "index": 88,
+      "name": "Q45a scope diff unrecorded v2",
+      "expectedGuardPattern": "Q45a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q45a: pin scope differs from pin_scope.json beyond the recorded differences: {'onlyGeneratorBlocked': ['G1.types.storage-widening-safe', 'G7.migration.schema-evolution', 'G7.migration.valid-writes-never-rejected'], 'onlyVerifierBlocked': ['G1.decimal.channel-routing', 'G10.cursor.stable', 'G7.journal.logical-contract', 'G8.composition.watermark-routing', 'G9.erasure.protected-copies', 'G9.erasure.reproduction-modulo', 'G9.erasure.restore-reapplies', 'G9.erasure.visibility-boundary', 'GS.16', 'NS.SEC.retro-and-audit', 'REQ.pii-erasure'], 'onlyGeneratorUses': ['G7.composition.overlay-rules', 'G7.position.bound-after-publication', 'G9.erasure.commit-semantics', 'G9.erasure.query-semantics', 'G9.erasure.residual-shapes'], 'onlyVerifierUses': []}"
+      ]
+    },
+    {
+      "index": 89,
+      "name": "Q47d pending ids ignored",
+      "expectedGuardPattern": "Q47d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "0.3.12 round 3: Sam and RT01 rulings stay pending",
+        "Q47d: a pending row is listed by id and gains no authority",
+        "Sam's Q78e and Q86g remain pending"
+      ]
+    },
+    {
+      "index": 90,
+      "name": "Q47d pending gains authority",
+      "expectedGuardPattern": "Q47d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q47d: a pending row is listed by id and gains no authority"
+      ]
+    },
+    {
+      "index": 91,
+      "name": "Q47d pending not hashed",
+      "expectedGuardPattern": "Q47d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q47d: the pending file is hashed as an input and its rows carry no authority"
+      ]
+    },
+    {
+      "index": 92,
+      "name": "Q47a schema ignored",
+      "expectedGuardPattern": "Q47a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q47a/Q54e: retained records are opened, schema-checked and re-judged (a refusal is never PASS)",
+        "Q61e: case-result/2 adds mode, rep, comparator and inputSha256; a record without them fails closed"
+      ]
+    },
+    {
+      "index": 93,
+      "name": "Q47a refusal counts",
+      "expectedGuardPattern": "Q47a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q47a/Q54e: retained records are opened, schema-checked and re-judged (a refusal is never PASS)",
+        "Q61e: case-result/2 adds mode, rep, comparator and inputSha256; a record without them fails closed"
+      ]
+    },
+    {
+      "index": 94,
+      "name": "Q47a observation unchecked",
+      "expectedGuardPattern": "Q47a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q47a/Q54e: retained records are opened, schema-checked and re-judged (a refusal is never PASS)",
+        "Q67i/Q71c: case-result/2 verdicts use the declared comparator ([1,2] against [2,1] passes CMP-BAG-ROWS, fails CMP-ORDERED-ROWS); case-result/1 keeps hash equality"
+      ]
+    },
+    {
+      "index": 95,
+      "name": "Q47c reach dropped",
+      "expectedGuardPattern": "pin\\ scope\\ differs\\ from\\ pin_scope\\.json",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q45a: pin scope differs from pin_scope.json beyond the recorded differences: {'onlyGeneratorBlocked': [], 'onlyVerifierBlocked': ['G1.decimal.channel-routing', 'G10.cursor.stable', 'G7.journal.logical-contract', 'G8.composition.watermark-routing', 'G9.erasure.protected-copies', 'G9.erasure.reproduction-modulo', 'G9.erasure.restore-reapplies', 'G9.erasure.visibility-boundary', 'GS.16', 'NS.SEC.retro-and-audit', 'REQ.pii-erasure'], 'onlyGeneratorUses': ['G7.composition.overlay-rules', 'G7.position.bound-after-publication', 'G9.erasure.commit-semantics', 'G9.erasure.query-semantics', 'G9.erasure.residual-shapes'], 'onlyVerifierUses': []}",
+        "Q54a/Q54b: valid-writes stays blocked by the CS-MIGRATION reach; CS-REQ and CS-TYPES8 get no reach",
+        "Q55a/Q47: a CS-MIGRATION claim while the oracle refuses decimal redeclaration (Q47c, Q54a) must be a diagnostic"
+      ]
+    },
+    {
+      "index": 96,
+      "name": "Q47c reach ignored",
+      "expectedGuardPattern": "pin\\ scope\\ differs\\ from\\ pin_scope\\.json",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q45a: pin scope differs from pin_scope.json beyond the recorded differences: {'onlyGeneratorBlocked': [], 'onlyVerifierBlocked': ['G1.decimal.channel-routing', 'G10.cursor.stable', 'G7.journal.logical-contract', 'G8.composition.watermark-routing', 'G9.erasure.protected-copies', 'G9.erasure.reproduction-modulo', 'G9.erasure.restore-reapplies', 'G9.erasure.visibility-boundary', 'GS.16', 'NS.SEC.retro-and-audit', 'REQ.pii-erasure'], 'onlyGeneratorUses': ['G7.composition.overlay-rules', 'G7.position.bound-after-publication', 'G9.erasure.commit-semantics', 'G9.erasure.query-semantics', 'G9.erasure.residual-shapes'], 'onlyVerifierUses': []}",
+        "Q54a/Q54b: valid-writes stays blocked by the CS-MIGRATION reach; CS-REQ and CS-TYPES8 get no reach",
+        "Q55a/Q47: a CS-MIGRATION claim while the oracle refuses decimal redeclaration (Q47c, Q54a) must be a diagnostic"
+      ]
+    },
+    {
+      "index": 97,
+      "name": "Q47 CX dropped",
+      "expectedGuardPattern": "Q47",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a/Q47: counterexample CX-R6-UNOPENED-MEANING is recorded"
+      ]
+    },
+    {
+      "index": 98,
+      "name": "Q48a fingerprint wrong",
+      "expectedGuardPattern": "Q48a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q40g/Q48a: the pinned fingerprint is O-DOMAIN's reproduced receipt and equals V-D01's final fingerprint",
+        "Q48a: the fingerprint candidate must be V-D01's final fingerprint"
+      ]
+    },
+    {
+      "index": 99,
+      "name": "Q48b rung",
+      "expectedGuardPattern": "Q48b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q48b: the scoped-release P5 measurement runs at 100k and binds the reached-subject list and its hash"
+      ]
+    },
+    {
+      "index": 100,
+      "name": "Q48b statement",
+      "expectedGuardPattern": "Q48b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q48b: the scoped-release P5 measurement runs at 100k and binds the reached-subject list and its hash"
+      ]
+    },
+    {
+      "index": 101,
+      "name": "Q49a identities",
+      "expectedGuardPattern": "changes\\ list\\ only\\ identities",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q49: ERASURE journalCommit must say: changes list only identities"
+      ]
+    },
+    {
+      "index": 102,
+      "name": "Q49a journal case dropped",
+      "expectedGuardPattern": "G7\\.journal\\.logical\\-contract\\ selects",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q49: G7.journal.logical-contract selects ['ER-COMMIT-JOURNAL-IDENTITY-ONLY', 'ER-EARLIER-CHANGE-MARKER', 'ER-JOURNAL-MODULO']"
+      ]
+    },
+    {
+      "index": 103,
+      "name": "Q49b empty commit",
+      "expectedGuardPattern": "empty\\ change\\ list",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q49: ERASURE idempotence must say: empty change list"
+      ]
+    },
+    {
+      "index": 104,
+      "name": "Q49c count",
+      "expectedGuardPattern": "COUNT\\ of\\ assertions\\ counts\\ it",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q49: ERASURE queries must say: COUNT of assertions counts it"
+      ]
+    },
+    {
+      "index": 105,
+      "name": "Q49c case dropped",
+      "expectedGuardPattern": "erasure\\ commit\\ and\\ query\\ cases",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q49: the erasure commit and query cases are named one per rule"
+      ]
+    },
+    {
+      "index": 106,
+      "name": "Q49e as written",
+      "expectedGuardPattern": "Q49e",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q49e: JSON number to decimal from its as-written reading; decimal text in a JSON string is E-INVALID-VALUE"
+      ]
+    },
+    {
+      "index": 107,
+      "name": "Q49e string row",
+      "expectedGuardPattern": "Q49e",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q49e: JSON number to decimal from its as-written reading; decimal text in a JSON string is E-INVALID-VALUE",
+        "Q66: prefix semantics, cursor prefixes and scope, residual cases, the explicit conversion as a lane obligation"
+      ]
+    },
+    {
+      "index": 108,
+      "name": "Q38b booleans v2",
+      "expectedGuardPattern": "Q38b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a/Q47: supplied case names or Booleans with no evaluator run (Q38b) must be a diagnostic"
+      ]
+    },
+    {
+      "index": 109,
+      "name": "Q56i commit back",
+      "expectedGuardPattern": "O\\-REPLAY\\ pin\\ and\\ its\\ predecessor\\ are\\ each\\ accepted",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a: the O-REPLAY pin and its predecessor are each accepted by a VERIFIER_REGISTRY entry for that commit"
+      ]
+    },
+    {
+      "index": 110,
+      "name": "Q56i unregistered receipt",
+      "expectedGuardPattern": "O\\-REPLAY\\ pin\\ and\\ its\\ predecessor\\ are\\ each\\ accepted",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a: the O-REPLAY pin and its predecessor are each accepted by a VERIFIER_REGISTRY entry for that commit"
+      ]
+    },
+    {
+      "index": 111,
+      "name": "Q56i tdk1 refusal dropped",
+      "expectedGuardPattern": "residual\\ refusals\\ are\\ ambiguity,\\ TDK1\\ keys",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "V-O04i: residual refusals are ambiguity, TDK1 keys, envelope facts and scale evolution"
+      ]
+    },
+    {
+      "index": 112,
+      "name": "Q56i scope diff unrecorded",
+      "expectedGuardPattern": "pin\\ scope\\ differs\\ from\\ pin_scope\\.json",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q45a: pin scope differs from pin_scope.json beyond the recorded differences: {'onlyGeneratorBlocked': ['G1.types.storage-widening-safe', 'G7.migration.schema-evolution', 'G7.migration.valid-writes-never-rejected'], 'onlyVerifierBlocked': ['G1.decimal.channel-routing', 'G10.cursor.stable', 'G7.journal.logical-contract', 'G8.composition.watermark-routing', 'G9.erasure.protected-copies', 'G9.erasure.reproduction-modulo', 'G9.erasure.restore-reapplies', 'G9.erasure.visibility-boundary', 'GS.16', 'NS.SEC.retro-and-audit', 'REQ.pii-erasure'], 'onlyGeneratorUses': ['G7.composition.overlay-rules', 'G7.position.bound-after-publication', 'G9.erasure.commit-semantics', 'G9.erasure.query-semantics', 'G9.erasure.residual-shapes'], 'onlyVerifierUses': []}"
+      ]
+    },
+    {
+      "index": 113,
+      "name": "Q55a brief hash wrong",
+      "expectedGuardPattern": "Q55a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a: VERIFIER_REGISTRY V-D01-W0-1.1.1 names a brief with its hash, a verify/ branch, a full commit, a subject commit and a verdict",
+        "Q59c: V-D01-W0-1.1.1 must hash the original instruction brief, never its review report"
+      ]
+    },
+    {
+      "index": 114,
+      "name": "Q55a verdict not accept",
+      "expectedGuardPattern": "Q55a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a: the O-REPLAY pin and its predecessor are each accepted by a VERIFIER_REGISTRY entry for that commit"
+      ]
+    },
+    {
+      "index": 115,
+      "name": "Q55a subject commit wrong",
+      "expectedGuardPattern": "Q55a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a: the O-REPLAY pin and its predecessor are each accepted by a VERIFIER_REGISTRY entry for that commit"
+      ]
+    },
+    {
+      "index": 116,
+      "name": "Q55a records qualify",
+      "expectedGuardPattern": "Q55a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a/Q47: invented, schema-valid records with no evaluator run (CX-R7-INVENTED-EVIDENCE) must be a diagnostic",
+        "Q55a/Q47: supplied case names or Booleans with no evaluator run (Q38b) must be a diagnostic"
+      ]
+    },
+    {
+      "index": 117,
+      "name": "Q55a manifest unchecked",
+      "expectedGuardPattern": "Q55a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a/Q47: a manifest that does not hash to the pinned one (CX-R7-SELECTION-OVERREACH) must be a diagnostic"
+      ]
+    },
+    {
+      "index": 118,
+      "name": "Q55a unpinned manifest used",
+      "expectedGuardPattern": "Q55a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a/Q47: case sets with no pinned manifest, as in the contract today (Q55a) must be a diagnostic"
+      ]
+    },
+    {
+      "index": 119,
+      "name": "Q55a empty selection ok",
+      "expectedGuardPattern": "Q55a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a/Q47: a selection that resolves to no case in the pinned manifest (Q55a) must be a diagnostic"
+      ]
+    },
+    {
+      "index": 120,
+      "name": "Q55a refusal accepted",
+      "expectedGuardPattern": "Q55a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a/Q47: an oracle refusal on one resolved case (Q45b, Q55a) must be a diagnostic"
+      ]
+    },
+    {
+      "index": 121,
+      "name": "Q55a comparator ignored",
+      "expectedGuardPattern": "Q55a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a/Q47: a claimant selection or case list (ignored; the evaluator resolves every case) (Q55a) must be a diagnostic",
+        "Q55a/Q47: supplied PASS records while the evaluator's own run fails a case (Q55a) must be a diagnostic",
+        "Q55a/Q47: the declared comparator rejecting the observation (Q55a) must be a diagnostic"
+      ]
+    },
+    {
+      "index": 122,
+      "name": "Q55a A0 rebuild trusted",
+      "expectedGuardPattern": "Q55a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a/Q47: a control whose rebuild does not reproduce the registry's binarySha256 (CX-R7-RELABELLED-CONTROL) must be a diagnostic",
+        "Q55a/Q47: a registry entry whose binary is not the rebuild of its tree (Q55a) must be a diagnostic"
+      ]
+    },
+    {
+      "index": 123,
+      "name": "Q55a slot unchecked",
+      "expectedGuardPattern": "Q55a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a/Q47: an unregistered slot (Q55a) must be a diagnostic"
+      ]
+    },
+    {
+      "index": 124,
+      "name": "Q55a claim verification ignored",
+      "expectedGuardPattern": "Q55a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a/Q47: a claim whose obligation has no VERIFIER_REGISTRY verification (Q55a) must be a diagnostic",
+        "Q55a/Q47: a verifier record carried in the claim (Q55a) must be a diagnostic"
+      ]
+    },
+    {
+      "index": 125,
+      "name": "Q55a pin verification ignored",
+      "expectedGuardPattern": "Q55a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a/Q47: an oracle pin naming the superseded verification (Q55a) must be a diagnostic",
+        "Q55a/Q47: an oracle pin whose commit no VERIFIER_REGISTRY entry accepts (Q55a) must be a diagnostic"
+      ]
+    },
+    {
+      "index": 126,
+      "name": "Q55a W0 verification ignored",
+      "expectedGuardPattern": "Q55a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a/Q47: a W0 pin naming the superseded W0-1.1.1 verification (Q55a) must be a diagnostic",
+        "Q55a/Q47: a W0 pin whose verifier entry does not accept W0 at its commit (Q55a) must be a diagnostic"
+      ]
+    },
+    {
+      "index": 127,
+      "name": "Q55a CX dropped",
+      "expectedGuardPattern": "Q55a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a/Q47: counterexample CX-R7-RELABELLED-CONTROL is recorded"
+      ]
+    },
+    {
+      "index": 128,
+      "name": "Q55b QT4 merged",
+      "expectedGuardPattern": "Q55b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55b: QT4 splits into QT4s (source durable and readable) and QT4r (replica applied); success only after QT4s"
+      ]
+    },
+    {
+      "index": 129,
+      "name": "Q55b success after replica",
+      "expectedGuardPattern": "Q55b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55b: QT4 splits into QT4s (source durable and readable) and QT4r (replica applied); success only after QT4s"
+      ]
+    },
+    {
+      "index": 130,
+      "name": "Q55b old table kept",
+      "expectedGuardPattern": "Q55b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55b: one witnessed transition table per protocol variant (log-source, engine-source)"
+      ]
+    },
+    {
+      "index": 131,
+      "name": "Q55b variant optional",
+      "expectedGuardPattern": "Q55b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a/Q47: a composition that does not declare its source variant (Q55b) must be a diagnostic",
+        "Q65a: the O-CONTRACT runner agrees with composition_ok and the image pins on every probe"
+      ]
+    },
+    {
+      "index": 132,
+      "name": "Q55b durability unchecked",
+      "expectedGuardPattern": "Q55b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a/Q47: a log source with an empty fsync mode (Q55b) must be a diagnostic",
+        "Q65a: the O-CONTRACT runner agrees with composition_ok and the image pins on every probe"
+      ]
+    },
+    {
+      "index": 133,
+      "name": "Q55b fault case dropped",
+      "expectedGuardPattern": "FAULT_Q55_CASES\\ names\\ one\\ case\\ per\\ rule",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q50d/Q51/Q52/Q55: FAULT_Q55_CASES names one case per rule"
+      ]
+    },
+    {
+      "index": 134,
+      "name": "Q55b receipt binding",
+      "expectedGuardPattern": "Q55b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55b: compositions declare their source; receipts bind the log identity and durability configuration"
+      ]
+    },
+    {
+      "index": 135,
+      "name": "Q55b statement",
+      "expectedGuardPattern": "Q55b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55b/Q51f: G7.commit.protocol-transitions selects its table by variant and covers the new fault points"
+      ]
+    },
+    {
+      "index": 136,
+      "name": "Q55c NS.P2 stand-in",
+      "expectedGuardPattern": "Q55c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55c: NS.P2 and G7.composition.ack-and-routed-ryow test each surface against its own guarantee"
+      ]
+    },
+    {
+      "index": 137,
+      "name": "Q55c error dropped",
+      "expectedGuardPattern": "Q55c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "G7.composition.ack-and-routed-ryow: unknown error E-REPLICA-UNAVAILABLE",
+        "Q55c/Q50d/Q51: E-REPLICA-UNAVAILABLE is a typed error"
+      ]
+    },
+    {
+      "index": 138,
+      "name": "Q55c replica-down fallback",
+      "expectedGuardPattern": "Q55c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55c: per-surface read guarantees, provisional, superseding Q50b"
+      ]
+    },
+    {
+      "index": 139,
+      "name": "Q55d ack clock",
+      "expectedGuardPattern": "Q55d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55d: P3 lag from source publication with every committed position accounted"
+      ]
+    },
+    {
+      "index": 140,
+      "name": "Q55d accounting",
+      "expectedGuardPattern": "Q55d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55d: P3 lag from source publication with every committed position accounted"
+      ]
+    },
+    {
+      "index": 141,
+      "name": "Q55e claim fingerprint honoured",
+      "expectedGuardPattern": "Q55e",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a/Q47: a domain-dependent claim supplying its own fingerprint (Q55e) must be a diagnostic"
+      ]
+    },
+    {
+      "index": 142,
+      "name": "Q55e ownership text",
+      "expectedGuardPattern": "Q55e",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55e: the O-DOMAIN fingerprint changes only by a reviewed contract version"
+      ]
+    },
+    {
+      "index": 143,
+      "name": "Q52e per value back",
+      "expectedGuardPattern": "Q52e",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q52e: the per-value in-flight text is replaced"
+      ]
+    },
+    {
+      "index": 144,
+      "name": "Q52 residual leaks into queries",
+      "expectedGuardPattern": "Q49:\\ the\\ erasure\\ commit\\ and\\ query\\ cases",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q49: the erasure commit and query cases are named one per rule"
+      ]
+    },
+    {
+      "index": 145,
+      "name": "Q52f routing reaches rounding",
+      "expectedGuardPattern": "Q52f",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q52f: channel-routing never reaches the refused rounding form"
+      ]
+    },
+    {
+      "index": 146,
+      "name": "Q52c earliest",
+      "expectedGuardPattern": "earliest\\ erasedAt",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q52/Q56: ERASURE queriesResidual must say: earliest erasedAt"
+      ]
+    },
+    {
+      "index": 147,
+      "name": "Q56a unknown target commits",
+      "expectedGuardPattern": "unknown\\ id\\ is\\ E\\-INVALID\\-VALUE",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q52/Q56: ERASURE selectors must say: unknown id is E-INVALID-VALUE"
+      ]
+    },
+    {
+      "index": 148,
+      "name": "Q56b no conflict",
+      "expectedGuardPattern": "E\\-CONFLICTING\\-VALUES",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q52/Q56: ERASURE presence must say: E-CONFLICTING-VALUES"
+      ]
+    },
+    {
+      "index": 149,
+      "name": "Q56 case dropped",
+      "expectedGuardPattern": "Q56",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q52/Q56: one named case per ruling"
+      ]
+    },
+    {
+      "index": 150,
+      "name": "Q56h synthetic",
+      "expectedGuardPattern": "synthetic\\ values\\ only",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q52/Q56: ERASURE syntheticData must say: synthetic values only"
+      ]
+    },
+    {
+      "index": 151,
+      "name": "Q50d gate dropped",
+      "expectedGuardPattern": "Q50d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q50d: broker promotion hardening obligation and gate",
+        "Q58c/Q62b: hardening amended (SQLite substrate replaces rotation and lock) and the default-off merge needs only Q62a"
+      ]
+    },
+    {
+      "index": 152,
+      "name": "Q50d case dropped",
+      "expectedGuardPattern": "Q50d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q50d/Q51/Q52/Q55: BROKER_HARDENING_CASES names one case per rule"
+      ]
+    },
+    {
+      "index": 153,
+      "name": "Q50a index note",
+      "expectedGuardPattern": "Q50a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q50a/Q50c/Q50e/Q51d/Q51e: broker index candidate, storage per commit reported, run queue and deferred rung recorded"
+      ]
+    },
+    {
+      "index": 154,
+      "name": "Q50e run queue",
+      "expectedGuardPattern": "Q50e",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q50a/Q50c/Q50e/Q51d/Q51e: broker index candidate, storage per commit reported, run queue and deferred rung recorded"
+      ]
+    },
+    {
+      "index": 155,
+      "name": "Q51a driver queue",
+      "expectedGuardPattern": "Q51a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q51a: per-subject queue with typed Overloaded and same-subject group commit"
+      ]
+    },
+    {
+      "index": 156,
+      "name": "Q51a case dropped",
+      "expectedGuardPattern": "Q51a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q51a: per-subject queue with typed Overloaded and same-subject group commit"
+      ]
+    },
+    {
+      "index": 157,
+      "name": "Q51c in gate",
+      "expectedGuardPattern": "Q51c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q51c: positions opaque, totally ordered and bound after publication (outside the GATE-POSITION falsifier set)"
+      ]
+    },
+    {
+      "index": 158,
+      "name": "Q51c binding text",
+      "expectedGuardPattern": "Q51c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q51c: positions opaque, totally ordered and bound after publication (outside the GATE-POSITION falsifier set)"
+      ]
+    },
+    {
+      "index": 159,
+      "name": "Q51d storage bar",
+      "expectedGuardPattern": "Q51d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q50a/Q50c/Q50e/Q51d/Q51e: broker index candidate, storage per commit reported, run queue and deferred rung recorded"
+      ]
+    },
+    {
+      "index": 160,
+      "name": "Q51e rung",
+      "expectedGuardPattern": "Q51e",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q50a/Q50c/Q50e/Q51d/Q51e: broker index candidate, storage per commit reported, run queue and deferred rung recorded"
+      ]
+    },
+    {
+      "index": 161,
+      "name": "Q51f error dropped",
+      "expectedGuardPattern": "E\\-DUAL\\-COMMIT\\-PATH\\ is\\ a\\ typed\\ error",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "G7.commit.protocol-transitions: unknown error E-DUAL-COMMIT-PATH",
+        "Q55c/Q50d/Q51: E-DUAL-COMMIT-PATH is a typed error"
+      ]
+    },
+    {
+      "index": 162,
+      "name": "Q54b reach added",
+      "expectedGuardPattern": "pin\\ scope\\ differs\\ from\\ pin_scope\\.json",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q45a: pin scope differs from pin_scope.json beyond the recorded differences: {'onlyGeneratorBlocked': ['G1.types.storage-widening-safe', 'G7.migration.schema-evolution', 'G7.migration.valid-writes-never-rejected', 'REQ.no-silent-precision-loss'], 'onlyVerifierBlocked': ['G1.decimal.channel-routing', 'G10.cursor.stable', 'G7.journal.logical-contract', 'G8.composition.watermark-routing', 'G9.erasure.protected-copies', 'G9.erasure.reproduction-modulo', 'G9.erasure.restore-reapplies', 'G9.erasure.visibility-boundary', 'GS.16', 'NS.SEC.retro-and-audit', 'REQ.pii-erasure'], 'onlyGeneratorUses': ['G7.composition.overlay-rules', 'G7.position.bound-after-publication', 'G9.erasure.commit-semantics', 'G9.erasure.query-semantics', 'G9.erasure.residual-shapes'], 'onlyVerifierUses': []}",
+        "Q54a/Q54b: valid-writes stays blocked by the CS-MIGRATION reach; CS-REQ and CS-TYPES8 get no reach"
+      ]
+    },
+    {
+      "index": 163,
+      "name": "Q58a facade dropped",
+      "expectedGuardPattern": "Q58a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q58a: readGuarantees native must say: engine ports are not a public surface"
+      ]
+    },
+    {
+      "index": 164,
+      "name": "Q58a at token dropped",
+      "expectedGuardPattern": "Q58a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q58a: readGuarantees native must say: E-BASIS-NOT-RECONSTRUCTIBLE",
+        "Q58a: readGuarantees native must say: at: position"
+      ]
+    },
+    {
+      "index": 165,
+      "name": "Q58a no basis range",
+      "expectedGuardPattern": "Q58a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q58a: readGuarantees native must say: {basis: {low, high}, route}"
+      ]
+    },
+    {
+      "index": 166,
+      "name": "Q58a deadline",
+      "expectedGuardPattern": "Q58a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q58a/Q62a: 2 s default deadline, E-BASIS-NOT-RECONSTRUCTIBLE, and the token and V-P2Q read cases selected"
+      ]
+    },
+    {
+      "index": 167,
+      "name": "Q58a error dropped",
+      "expectedGuardPattern": "Q58a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "G7.composition.ack-and-routed-ryow: unknown error E-BASIS-NOT-RECONSTRUCTIBLE",
+        "Q58a/Q62a: 2 s default deadline, E-BASIS-NOT-RECONSTRUCTIBLE, and the token and V-P2Q read cases selected"
+      ]
+    },
+    {
+      "index": 168,
+      "name": "Q58a case dropped",
+      "expectedGuardPattern": "NATIVE_TOKEN_CASES\\ names\\ one\\ case\\ per\\ rule",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q58/Q62: NATIVE_TOKEN_CASES names one case per rule"
+      ]
+    },
+    {
+      "index": 169,
+      "name": "Q58a not provisional",
+      "expectedGuardPattern": "Q58a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q58a: readGuarantees native must say: PROVISIONAL"
+      ]
+    },
+    {
+      "index": 170,
+      "name": "Q58b direction",
+      "expectedGuardPattern": "Q58b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q58b: EXP-P2B direction recorded"
+      ]
+    },
+    {
+      "index": 171,
+      "name": "Q58c pragma",
+      "expectedGuardPattern": "Q58c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q58c: the SQLite substrate direction is recorded"
+      ]
+    },
+    {
+      "index": 172,
+      "name": "Q58c flock back",
+      "expectedGuardPattern": "Q58c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q50d/Q51/Q52/Q55: BROKER_HARDENING_CASES names one case per rule",
+        "Q58c/Q62b: hardening amended (SQLite substrate replaces rotation and lock) and the default-off merge needs only Q62a"
+      ]
+    },
+    {
+      "index": 173,
+      "name": "Q58c crc dropped",
+      "expectedGuardPattern": "BROKER_HARDENING_CASES\\ names\\ one\\ case\\ per\\ rule",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q50d/Q51/Q52/Q55: BROKER_HARDENING_CASES names one case per rule"
+      ]
+    },
+    {
+      "index": 174,
+      "name": "Q58c statement",
+      "expectedGuardPattern": "Q58c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q58c/Q62b: hardening amended (SQLite substrate replaces rotation and lock) and the default-off merge needs only Q62a"
+      ]
+    },
+    {
+      "index": 175,
+      "name": "Q58d overlay merges all",
+      "expectedGuardPattern": "Q58d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q58d: overlay rules"
+      ]
+    },
+    {
+      "index": 176,
+      "name": "Q58d obligation dropped",
+      "expectedGuardPattern": "pin\\ scope\\ differs\\ from\\ pin_scope\\.json",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q45a: pin scope differs from pin_scope.json beyond the recorded differences: {'onlyGeneratorBlocked': ['G1.types.storage-widening-safe', 'G7.migration.schema-evolution', 'G7.migration.valid-writes-never-rejected'], 'onlyVerifierBlocked': ['G1.decimal.channel-routing', 'G10.cursor.stable', 'G7.journal.logical-contract', 'G8.composition.watermark-routing', 'G9.erasure.protected-copies', 'G9.erasure.reproduction-modulo', 'G9.erasure.restore-reapplies', 'G9.erasure.visibility-boundary', 'GS.16', 'NS.SEC.retro-and-audit', 'REQ.pii-erasure'], 'onlyGeneratorUses': ['G7.composition.overlay-rulez', 'G7.position.bound-after-publication', 'G9.erasure.commit-semantics', 'G9.erasure.query-semantics', 'G9.erasure.residual-shapes'], 'onlyVerifierUses': []}",
+        "Q58d: overlay rules"
+      ]
+    },
+    {
+      "index": 177,
+      "name": "Q58d tombstones",
+      "expectedGuardPattern": "Q58d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q58d: overlay rules"
+      ]
+    },
+    {
+      "index": 178,
+      "name": "Q58e log erasure",
+      "expectedGuardPattern": "Q58e",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q58e: erasure reaches the log through crypto-shredding"
+      ]
+    },
+    {
+      "index": 179,
+      "name": "Q58e case unselected",
+      "expectedGuardPattern": "Q58e",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "CS-ERASURE: required case ER-LOG-CRYPTO-SHRED not traced",
+        "Q58e: erasure reaches the log through crypto-shredding"
+      ]
+    },
+    {
+      "index": 180,
+      "name": "Q62a case dropped",
+      "expectedGuardPattern": "P2Q_READ_CASES\\ names\\ one\\ case\\ per\\ rule",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q58/Q62: P2Q_READ_CASES names one case per rule"
+      ]
+    },
+    {
+      "index": 181,
+      "name": "Q62a two brokers unselected",
+      "expectedGuardPattern": "Q62a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "CS-FAULT: required case C2-TWO-BROKERS-ONE-PROCESS not traced",
+        "Q62a: two brokers in one process is a fault point"
+      ]
+    },
+    {
+      "index": 182,
+      "name": "Q62b default-off",
+      "expectedGuardPattern": "Q62b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q58c/Q62b: hardening amended (SQLite substrate replaces rotation and lock) and the default-off merge needs only Q62a"
+      ]
+    },
+    {
+      "index": 183,
+      "name": "Q62c 750 back",
+      "expectedGuardPattern": "Q62c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q62c: the measured 653-triple baseline replaces about 750"
+      ]
+    },
+    {
+      "index": 184,
+      "name": "Q60a rounds",
+      "expectedGuardPattern": "Q60a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q60a: paired rounds (8 to 24, looks at 8, 12, 18, 24 at 98.2%), never a single run"
+      ]
+    },
+    {
+      "index": 185,
+      "name": "Q60a single run ok",
+      "expectedGuardPattern": "Q60a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q60a: paired rounds (8 to 24, looks at 8, 12, 18, 24 at 98.2%), never a single run"
+      ]
+    },
+    {
+      "index": 186,
+      "name": "Q60b margin",
+      "expectedGuardPattern": "Q60b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q60b: margins 1.25, 1.10 and 1.15, provisional"
+      ]
+    },
+    {
+      "index": 187,
+      "name": "Q60b hold p99",
+      "expectedGuardPattern": "Q60b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q60b: margins 1.25, 1.10 and 1.15, provisional"
+      ]
+    },
+    {
+      "index": 188,
+      "name": "Q60c regime unrecorded",
+      "expectedGuardPattern": "Q60c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q60c: slot regime recorded in receipts; quota and cpuset arms never compared"
+      ]
+    },
+    {
+      "index": 189,
+      "name": "Q60d committed only",
+      "expectedGuardPattern": "Q60d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q60d/e/g/h/i: censored accounting, GREEN windows, screening series, lease and single-run A0 diagnostic"
+      ]
+    },
+    {
+      "index": 190,
+      "name": "Q60e windows",
+      "expectedGuardPattern": "GREEN\\ windows",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q60d/e/g/h/i: censored accounting, GREEN windows, screening series, lease and single-run A0 diagnostic"
+      ]
+    },
+    {
+      "index": 191,
+      "name": "Q60f modes",
+      "expectedGuardPattern": "Q60f",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q60f: NS obligations gain paired-rounds next to single-execution"
+      ]
+    },
+    {
+      "index": 192,
+      "name": "Q60f CR-NS",
+      "expectedGuardPattern": "Q60f",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q60f: CR-NS and MODE_RULE carry PAIR_0"
+      ]
+    },
+    {
+      "index": 193,
+      "name": "Q60h lease",
+      "expectedGuardPattern": "lease\\ and\\ single\\-run\\ A0\\ diagnostic",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q60d/e/g/h/i: censored accounting, GREEN windows, screening series, lease and single-run A0 diagnostic"
+      ]
+    },
+    {
+      "index": 194,
+      "name": "Q60i A0 single run",
+      "expectedGuardPattern": "single\\-run\\ A0\\ diagnostic",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q60d/e/g/h/i: censored accounting, GREEN windows, screening series, lease and single-run A0 diagnostic"
+      ]
+    },
+    {
+      "index": 195,
+      "name": "Q60 CX dropped",
+      "expectedGuardPattern": "Q60",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q60: counterexample CX-PAIR0-REGIME-MISMATCH is recorded"
+      ]
+    },
+    {
+      "index": 196,
+      "name": "Q61c argv",
+      "expectedGuardPattern": "Q61c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q61c: oracleRunners with O-REPLAY's default argv and the answer-extraction rule"
+      ]
+    },
+    {
+      "index": 197,
+      "name": "Q61c runner ignored",
+      "expectedGuardPattern": "Q61c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q61c: qualification_run refuses a missing oracle runner before invoking it"
+      ]
+    },
+    {
+      "index": 198,
+      "name": "Q61d field unpinned",
+      "expectedGuardPattern": "Q61d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q61d: case-manifest fields pinned"
+      ]
+    },
+    {
+      "index": 199,
+      "name": "Q61d input hash unchecked",
+      "expectedGuardPattern": "Q61d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a/Q47: a case input that does not hash to its contentSha256 (Q61d) must be a diagnostic"
+      ]
+    },
+    {
+      "index": 200,
+      "name": "Q61e mode dropped",
+      "expectedGuardPattern": "Q61e",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q61e: case-result/2 adds mode, rep, comparator and inputSha256; a record without them fails closed",
+        "Q67i/Q71c: case-result/2 verdicts use the declared comparator ([1,2] against [2,1] passes CMP-BAG-ROWS, fails CMP-ORDERED-ROWS); case-result/1 keeps hash equality"
+      ]
+    },
+    {
+      "index": 201,
+      "name": "Q61f spec filled",
+      "expectedGuardPattern": "Q61f",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q61f: the build spec is a contract input (null until specified) and build-manifest/2 carries the build inputs",
+        "Q65e: the build spec is pinned exactly when obl-case.ts exists",
+        "Q86: G03 pins deferred, isolation is not yet in force"
+      ]
+    },
+    {
+      "index": 202,
+      "name": "Q61f spec unchecked",
+      "expectedGuardPattern": "Q61f",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a/Q47: a run while the contract's build spec is null, as today (Q61f) must be a diagnostic"
+      ]
+    },
+    {
+      "index": 203,
+      "name": "Q61g workload everywhere",
+      "expectedGuardPattern": "Q61g",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q61g: a correctness claim needs no workload identity or paired measurement (positive control)"
+      ]
+    },
+    {
+      "index": 204,
+      "name": "Q61h frozen filled",
+      "expectedGuardPattern": "Q61h",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q61h: writerTrace.generator.frozen {sha256, seed, offerScheduleSha256}, a required null input"
+      ]
+    },
+    {
+      "index": 205,
+      "name": "Q61h frozen unchecked",
+      "expectedGuardPattern": "Q61h",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a/Q47: a workload that is not the frozen trace (Q61h) must be a diagnostic"
+      ]
+    },
+    {
+      "index": 206,
+      "name": "Q61i image unchecked",
+      "expectedGuardPattern": "Q61i",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a/Q47: an assignment whose image is not the contract's pin (Q61i) must be a diagnostic"
+      ]
+    },
+    {
+      "index": 207,
+      "name": "Q61i image wrong",
+      "expectedGuardPattern": "Q61i",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q61i: lab/config/slots.json lane images must agree with the contract's IMAGE_PINS"
+      ]
+    },
+    {
+      "index": 208,
+      "name": "Q61j witness unchecked",
+      "expectedGuardPattern": "Q61j",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a/Q47: a fault witness for another fault point (Q61j) must be a diagnostic",
+        "Q55a/Q47: fault injections without retained witnesses (Q61j) must be a diagnostic"
+      ]
+    },
+    {
+      "index": 209,
+      "name": "Q61j witness point unchecked",
+      "expectedGuardPattern": "Q61j",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a/Q47: a fault witness for another fault point (Q61j) must be a diagnostic"
+      ]
+    },
+    {
+      "index": 210,
+      "name": "Q61k measuredBy unchecked",
+      "expectedGuardPattern": "Q61k",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a/Q47: an A0 entry whose measurement is not verified through the registry (Q61k) must be a diagnostic"
+      ]
+    },
+    {
+      "index": 211,
+      "name": "Q61a source",
+      "expectedGuardPattern": "contract\\ source,\\ retained\\ fault\\ witnesses",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q61a/Q61j/Q61k: contract source, retained fault witnesses, A0 verified through measuredBy"
+      ]
+    },
+    {
+      "index": 212,
+      "name": "Q59c brief rule",
+      "expectedGuardPattern": "Q59c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q59c: every verification saves its own brief"
+      ]
+    },
+    {
+      "index": 213,
+      "name": "W0 hash wrong",
+      "expectedGuardPattern": "W0|V-D01e",
+      "method": "W0 pin or fingerprint guard",
+      "matched": true,
+      "diagnostics": [
+        "Q31i/Q48a: W0_PIN lab/world/W0/SPEC.md does not match the file",
+        "Q57/V-D01e: W0_PIN must pin exactly the 146 hashes of lab/world/W0/SHA256SUMS, the table's own sha256 and the frozen expected and input hashes"
+      ]
+    },
+    {
+      "index": 214,
+      "name": "W0 table digest wrong",
+      "expectedGuardPattern": "W0|V-D01e",
+      "method": "W0 pin or fingerprint guard",
+      "matched": true,
+      "diagnostics": [
+        "Q57/V-D01e: W0_PIN must pin exactly the 146 hashes of lab/world/W0/SHA256SUMS, the table's own sha256 and the frozen expected and input hashes"
+      ]
+    },
+    {
+      "index": 215,
+      "name": "W0 commit back",
+      "expectedGuardPattern": "W0|V-D01e",
+      "method": "W0 pin or fingerprint guard",
+      "matched": true,
+      "diagnostics": [
+        "0.3.10: the W0 pin is complete",
+        "0.3.10: with W0-1.1.2 and the O-DOMAIN fingerprint pinned, a complete domain-dependent claim qualifies against the contract's own W0 pin (positive control)",
+        "Q55a/Q47: a W0 pin naming the superseded W0-1.1.1 verification (Q55a) must be a diagnostic",
+        "Q55a: a domain-dependent claim with W0 pinned and its fingerprint reproduced must be admitted (positive control)",
+        "Q57/V-D01e: W0-1.1.2 accepted at fedfcda through VERIFIER_REGISTRY"
+      ]
+    },
+    {
+      "index": 216,
+      "name": "W0 verifier old",
+      "expectedGuardPattern": "W0|V-D01e",
+      "method": "W0 pin or fingerprint guard",
+      "matched": true,
+      "diagnostics": [
+        "0.3.10: the W0 pin is complete",
+        "0.3.10: with W0-1.1.2 and the O-DOMAIN fingerprint pinned, a complete domain-dependent claim qualifies against the contract's own W0 pin (positive control)",
+        "Q55a: a domain-dependent claim with W0 pinned and its fingerprint reproduced must be admitted (positive control)",
+        "Q57/V-D01e: W0-1.1.2 accepted at fedfcda through VERIFIER_REGISTRY"
+      ]
+    },
+    {
+      "index": 217,
+      "name": "W0 frozen dropped",
+      "expectedGuardPattern": "W0|V-D01e",
+      "method": "W0 pin or fingerprint guard",
+      "matched": true,
+      "diagnostics": [
+        "Q57/V-D01e: W0_PIN must pin exactly the 146 hashes of lab/world/W0/SHA256SUMS, the table's own sha256 and the frozen expected and input hashes"
+      ]
+    },
+    {
+      "index": 218,
+      "name": "W0 registry brief",
+      "expectedGuardPattern": "W0|V-D01e",
+      "method": "W0 pin or fingerprint guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a: VERIFIER_REGISTRY V-D01e-W0-1.1.2 names a brief with its hash, a verify/ branch, a full commit, a subject commit and a verdict",
+        "Q59c: V-D01e-W0-1.1.2 must hash the original instruction brief, never its review report"
+      ]
+    },
+    {
+      "index": 219,
+      "name": "W0 fingerprint dropped",
+      "expectedGuardPattern": "W0|V-D01e",
+      "method": "W0 pin or fingerprint guard",
+      "matched": true,
+      "diagnostics": [
+        "0.3.10: the W0 pin is complete",
+        "0.3.10: with W0-1.1.2 and the O-DOMAIN fingerprint pinned, a complete domain-dependent claim qualifies against the contract's own W0 pin (positive control)",
+        "Q40g/Q48a: the pinned fingerprint is O-DOMAIN's reproduced receipt and equals V-D01's final fingerprint"
+      ]
+    },
+    {
+      "index": 220,
+      "name": "W0 fingerprint wrong",
+      "expectedGuardPattern": "fingerprint\\ candidate\\ must\\ be\\ V\\-D01's\\ final\\ fingerprint",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q40g/Q48a: the pinned fingerprint is O-DOMAIN's reproduced receipt and equals V-D01's final fingerprint",
+        "Q48a: the fingerprint candidate must be V-D01's final fingerprint"
+      ]
+    },
+    {
+      "index": 221,
+      "name": "OD hash wrong",
+      "expectedGuardPattern": "O-DOMAIN|V-D01c",
+      "method": "O-DOMAIN pin or runner guard",
+      "matched": true,
+      "diagnostics": [
+        "0.3.10: with W0-1.1.2 and the O-DOMAIN fingerprint pinned, a complete domain-dependent claim qualifies against the contract's own W0 pin (positive control)",
+        "Q55a: a domain-dependent claim with W0 pinned and its fingerprint reproduced must be admitted (positive control)",
+        "V-D01c: pinned O-DOMAIN files differ from the tree: ['lab/oracles/domain/w0.py']"
+      ]
+    },
+    {
+      "index": 222,
+      "name": "OD file dropped",
+      "expectedGuardPattern": "O-DOMAIN|V-D01c",
+      "method": "O-DOMAIN pin or runner guard",
+      "matched": true,
+      "diagnostics": [
+        "V-D01c: O-DOMAIN BUILT-ACCEPTED and pinned at 5d1fd1a with 7 hashes through VERIFIER_REGISTRY",
+        "V-D01c: pinned O-DOMAIN files differ from the tree: []"
+      ]
+    },
+    {
+      "index": 223,
+      "name": "OD commit wrong",
+      "expectedGuardPattern": "O-DOMAIN|V-D01c",
+      "method": "O-DOMAIN pin or runner guard",
+      "matched": true,
+      "diagnostics": [
+        "V-D01c: O-DOMAIN BUILT-ACCEPTED and pinned at 5d1fd1a with 7 hashes through VERIFIER_REGISTRY"
+      ]
+    },
+    {
+      "index": 224,
+      "name": "OD unregistered",
+      "expectedGuardPattern": "O-DOMAIN|V-D01c",
+      "method": "O-DOMAIN pin or runner guard",
+      "matched": true,
+      "diagnostics": [
+        "V-D01c: O-DOMAIN BUILT-ACCEPTED and pinned at 5d1fd1a with 7 hashes through VERIFIER_REGISTRY"
+      ]
+    },
+    {
+      "index": 225,
+      "name": "OD status",
+      "expectedGuardPattern": "O-DOMAIN|V-D01c",
+      "method": "O-DOMAIN pin or runner guard",
+      "matched": true,
+      "diagnostics": [
+        "V-D01c: O-DOMAIN BUILT-ACCEPTED and pinned at 5d1fd1a with 7 hashes through VERIFIER_REGISTRY"
+      ]
+    },
+    {
+      "index": 226,
+      "name": "OD runner note",
+      "expectedGuardPattern": "O-DOMAIN|V-D01c",
+      "method": "O-DOMAIN pin or runner guard",
+      "matched": true,
+      "diagnostics": [
+        "Q65a/V-D01c: O-DOMAIN and O-CONTRACT runner entries"
+      ]
+    },
+    {
+      "index": 227,
+      "name": "Q65a runner disagrees",
+      "expectedGuardPattern": "Q65a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q65a: the O-CONTRACT runner agrees with composition_ok and the image pins on every probe"
+      ]
+    },
+    {
+      "index": 228,
+      "name": "Q65a log unchecked",
+      "expectedGuardPattern": "Q65a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q65a: the O-CONTRACT runner agrees with composition_ok and the image pins on every probe"
+      ]
+    },
+    {
+      "index": 229,
+      "name": "Q65a runner dropped",
+      "expectedGuardPattern": "Q65a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q65a/V-D01c: O-DOMAIN and O-CONTRACT runner entries",
+        "Q75c: O-CONTRACT runner retains both source and generated projection",
+        "Q75c: full runner hashes required, including COMPILED oracles"
+      ]
+    },
+    {
+      "index": 230,
+      "name": "Q57 reading dropped",
+      "expectedGuardPattern": "Q57",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q53/Q57: SPEC 1.1.2 readings A01 to A15 recorded with V-D01e N1; no W0 edit pending"
+      ]
+    },
+    {
+      "index": 231,
+      "name": "Q57 N1 dropped",
+      "expectedGuardPattern": "Q57",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q53/Q57: SPEC 1.1.2 readings A01 to A15 recorded with V-D01e N1; no W0 edit pending"
+      ]
+    },
+    {
+      "index": 232,
+      "name": "Q63d sql",
+      "expectedGuardPattern": "parameterised\\ SQL",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q63a/c/d: follower rejected, upstream filing for Sam, parameterised SQL"
+      ]
+    },
+    {
+      "index": 233,
+      "name": "Q63a follower",
+      "expectedGuardPattern": "Q63a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q63a/c/d: follower rejected, upstream filing for Sam, parameterised SQL"
+      ]
+    },
+    {
+      "index": 234,
+      "name": "Q63b direction",
+      "expectedGuardPattern": "Q63b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q63b: P1 through broker-fed replicas"
+      ]
+    },
+    {
+      "index": 235,
+      "name": "Q64f clash unchecked",
+      "expectedGuardPattern": "Q64f",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q64f: the pending-row clash check finds a row both pending and in RULINGS.md"
+      ]
+    },
+    {
+      "index": 236,
+      "name": "Q64b series dropped",
+      "expectedGuardPattern": "PAIR\\-0\\ decisions\\ and\\ frozen\\ screening\\ series",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q69, Q64b: PAIR-0 decisions and frozen screening series"
+      ]
+    },
+    {
+      "index": 237,
+      "name": "Q65b spec hash",
+      "expectedGuardPattern": "Q65b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q65b/c/d: buildSpecSha256, case-result/2 selection and built packages"
+      ]
+    },
+    {
+      "index": 238,
+      "name": "Q65c selection",
+      "expectedGuardPattern": "case\\-result/2\\ selection\\ and\\ built\\ packages",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q65b/c/d: buildSpecSha256, case-result/2 selection and built packages"
+      ]
+    },
+    {
+      "index": 239,
+      "name": "Q65e pinned early",
+      "expectedGuardPattern": "Q65e",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q61f: the build spec is a contract input (null until specified) and build-manifest/2 carries the build inputs",
+        "Q65e: the build spec is pinned exactly when obl-case.ts exists",
+        "Q86: G03 pins deferred, isolation is not yet in force"
+      ]
+    },
+    {
+      "index": 240,
+      "name": "Q65f blockers",
+      "expectedGuardPattern": "Q65f",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q65f/Q67a: the blockers stay until EXP-G03's executing gate"
+      ]
+    },
+    {
+      "index": 241,
+      "name": "Q66a prefixes",
+      "expectedGuardPattern": "prefix\\ semantics,\\ cursor\\ prefixes\\ and\\ scope",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q66: prefix semantics, cursor prefixes and scope, residual cases, the explicit conversion as a lane obligation"
+      ]
+    },
+    {
+      "index": 242,
+      "name": "Q66 case dropped",
+      "expectedGuardPattern": "Q66",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q66: prefix semantics, cursor prefixes and scope, residual cases, the explicit conversion as a lane obligation"
+      ]
+    },
+    {
+      "index": 243,
+      "name": "Q66d lane",
+      "expectedGuardPattern": "explicit\\ conversion\\ as\\ a\\ lane\\ obligation",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q66: prefix semantics, cursor prefixes and scope, residual cases, the explicit conversion as a lane obligation"
+      ]
+    },
+    {
+      "index": 244,
+      "name": "Q67b identity",
+      "expectedGuardPattern": "Q67b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q67b/e/j, Q71b: execution identity, toolchain, isolation and claim kinds"
+      ]
+    },
+    {
+      "index": 245,
+      "name": "Q67c fencing",
+      "expectedGuardPattern": "Q67c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q67c/d: incarnation fencing and P3 source-prefix enumeration"
+      ]
+    },
+    {
+      "index": 246,
+      "name": "Q67c case dropped",
+      "expectedGuardPattern": "Q67c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q67c/d: incarnation fencing and P3 source-prefix enumeration"
+      ]
+    },
+    {
+      "index": 247,
+      "name": "Q67d enumeration",
+      "expectedGuardPattern": "incarnation\\ fencing\\ and\\ P3\\ source\\-prefix\\ enumeration",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q67c/d: incarnation fencing and P3 source-prefix enumeration"
+      ]
+    },
+    {
+      "index": 248,
+      "name": "Q67e isolation",
+      "expectedGuardPattern": "execution\\ identity,\\ toolchain,\\ isolation\\ and\\ claim\\ kinds",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q67b/e/j, Q71b: execution identity, toolchain, isolation and claim kinds"
+      ]
+    },
+    {
+      "index": 249,
+      "name": "Q67f any rounds",
+      "expectedGuardPattern": "Q67f",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a/Q47: a round count that is not a registered look (Q67f) must be a diagnostic"
+      ]
+    },
+    {
+      "index": 250,
+      "name": "Q67f per-round unchecked",
+      "expectedGuardPattern": "Q67f",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a/Q47: fewer retained rounds than claimed (Q67f) must be a diagnostic"
+      ]
+    },
+    {
+      "index": 251,
+      "name": "Q67f RED admitted",
+      "expectedGuardPattern": "Q67f",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a/Q47: a comparison judged in a RED window (CX-PAIR0-UNJUDGED-WINDOW, Q67f) must be a diagnostic"
+      ]
+    },
+    {
+      "index": 252,
+      "name": "Q67f committed-only admitted",
+      "expectedGuardPattern": "Q67f",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a/Q47: committed-only accounting (CX-PAIR0-COMMITTED-ONLY, Q67f) must be a diagnostic"
+      ]
+    },
+    {
+      "index": 253,
+      "name": "Q67g overlap allowed",
+      "expectedGuardPattern": "Q67g",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a/Q47: a duet whose cpusets overlap (Q67g) must be a diagnostic"
+      ]
+    },
+    {
+      "index": 254,
+      "name": "Q67g capacity unchecked",
+      "expectedGuardPattern": "Q67g",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a/Q47: a duet with unequal capacity (Q67g) must be a diagnostic"
+      ]
+    },
+    {
+      "index": 255,
+      "name": "Q67g denominator unchecked",
+      "expectedGuardPattern": "Q67g",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a/Q47: a per-core denominator that is not the cpuset size (Q67g) must be a diagnostic"
+      ]
+    },
+    {
+      "index": 256,
+      "name": "Q67g arm slot unchecked",
+      "expectedGuardPattern": "Q67g",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a/Q47: a candidate arm placed on another slot than its composition (Q67g) must be a diagnostic"
+      ]
+    },
+    {
+      "index": 257,
+      "name": "Q67g slot back",
+      "expectedGuardPattern": "Q67g",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "0.3.10: with W0-1.1.2 and the O-DOMAIN fingerprint pinned, a complete domain-dependent claim qualifies against the contract's own W0 pin (positive control)",
+        "Q47/Q55a: workload identity fields, evidence schemas and qualification-run steps",
+        "Q55a/Q47: a workload identity carrying a placement field (Q67g) must be a diagnostic",
+        "Q55a: a claim the evaluator's own run passes, with every oracle pinned and accepted, A0 registered and the obligation verified, must be admitted (positive control)",
+        "Q55a: a domain-dependent claim with W0 pinned and its fingerprint reproduced must be admitted (positive control)",
+        "Q55b: a log-source composition binding its log identity and durability configuration must be admitted (positive control)"
+      ]
+    },
+    {
+      "index": 258,
+      "name": "Q67h shape dropped",
+      "expectedGuardPattern": "Q67h",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q67h: one error representation"
+      ]
+    },
+    {
+      "index": 259,
+      "name": "Q67i hash equality",
+      "expectedGuardPattern": "Q67i",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q67i/Q71c: case-result/2 verdicts use the declared comparator ([1,2] against [2,1] passes CMP-BAG-ROWS, fails CMP-ORDERED-ROWS); case-result/1 keeps hash equality"
+      ]
+    },
+    {
+      "index": 260,
+      "name": "Q67i bag as ordered",
+      "expectedGuardPattern": "Q67i",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "F1: result row projection preserves ordering policy and exact cut metadata",
+        "Q67i/Q71c: case-result/2 verdicts use the declared comparator ([1,2] against [2,1] passes CMP-BAG-ROWS, fails CMP-ORDERED-ROWS); case-result/1 keeps hash equality",
+        "Q75g: replay comparator applies inside each query result, preserving multiplicity"
+      ]
+    },
+    {
+      "index": 261,
+      "name": "Q67j promotion admitted",
+      "expectedGuardPattern": "promotion\\ claim,\\ rejected\\ explicitly",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a/Q47: a promotion claim, rejected explicitly until supported (Q67j) must be a diagnostic"
+      ]
+    },
+    {
+      "index": 262,
+      "name": "Q68b horizon",
+      "expectedGuardPattern": "current\\ path,\\ horizon,\\ sweep\\ frames,\\ host\\-served\\ reads\\ and\\ current\\-copy\\ erasure",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q68: current path, horizon, sweep frames, host-served reads and current-copy erasure"
+      ]
+    },
+    {
+      "index": 263,
+      "name": "Q68c frame size",
+      "expectedGuardPattern": "current\\ path,\\ horizon,\\ sweep\\ frames,\\ host\\-served\\ reads\\ and\\ current\\-copy\\ erasure",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q68: current path, horizon, sweep frames, host-served reads and current-copy erasure"
+      ]
+    },
+    {
+      "index": 264,
+      "name": "Q68d host reads",
+      "expectedGuardPattern": "current\\ path,\\ horizon,\\ sweep\\ frames,\\ host\\-served\\ reads\\ and\\ current\\-copy\\ erasure",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q68: current path, horizon, sweep frames, host-served reads and current-copy erasure"
+      ]
+    },
+    {
+      "index": 265,
+      "name": "Q68f current copies",
+      "expectedGuardPattern": "current\\ path,\\ horizon,\\ sweep\\ frames,\\ host\\-served\\ reads\\ and\\ current\\-copy\\ erasure",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q68: current path, horizon, sweep frames, host-served reads and current-copy erasure"
+      ]
+    },
+    {
+      "index": 266,
+      "name": "Q69e live composition",
+      "expectedGuardPattern": "PAIR\\-0\\ decisions\\ and\\ frozen\\ screening\\ series",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q69, Q64b: PAIR-0 decisions and frozen screening series"
+      ]
+    },
+    {
+      "index": 267,
+      "name": "Q69f fallback",
+      "expectedGuardPattern": "PAIR\\-0\\ decisions\\ and\\ frozen\\ screening\\ series",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q69, Q64b: PAIR-0 decisions and frozen screening series"
+      ]
+    },
+    {
+      "index": 268,
+      "name": "Q69 window dropped",
+      "expectedGuardPattern": "Q69",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q69, Q64b: PAIR-0 decisions and frozen screening series"
+      ]
+    },
+    {
+      "index": 269,
+      "name": "Q71a list filled",
+      "expectedGuardPattern": "Q71a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q71a: the install-metadata exclusion list is a contract-owned rule, null until two clean installs are diffed"
+      ]
+    },
+    {
+      "index": 270,
+      "name": "Q71b toolchain",
+      "expectedGuardPattern": "execution\\ identity,\\ toolchain,\\ isolation\\ and\\ claim\\ kinds",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q67b/e/j, Q71b: execution identity, toolchain, isolation and claim kinds"
+      ]
+    },
+    {
+      "index": 271,
+      "name": "Q71b invocation schema",
+      "expectedGuardPattern": "workload\\ identity\\ fields,\\ evidence\\ schemas\\ and\\ qualification\\-run\\ steps",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q47/Q55a: workload identity fields, evidence schemas and qualification-run steps"
+      ]
+    },
+    {
+      "index": 272,
+      "name": "Q72f error back",
+      "expectedGuardPattern": "Q72f",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q72f: E-UNAVAILABLE-CUT retired; E-BASIS-NOT-AVAILABLE is the only id"
+      ]
+    },
+    {
+      "index": 273,
+      "name": "Q72f retired dropped",
+      "expectedGuardPattern": "Q72f",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q72f: E-UNAVAILABLE-CUT retired; E-BASIS-NOT-AVAILABLE is the only id"
+      ]
+    },
+    {
+      "index": 274,
+      "name": "Q70a rule weakened",
+      "expectedGuardPattern": "Q70a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q70a: compiled rule must match authoritative ruling",
+        "Q70a: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 275,
+      "name": "Q70b rule weakened",
+      "expectedGuardPattern": "Q70b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q70b: compiled rule must match authoritative ruling",
+        "Q70b: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 276,
+      "name": "Q70c rule weakened",
+      "expectedGuardPattern": "Q70c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q70c: compiled rule must match authoritative ruling",
+        "Q70c: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 277,
+      "name": "Q70d rule weakened",
+      "expectedGuardPattern": "Q70d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q70d: compiled rule must match authoritative ruling",
+        "Q70d: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 278,
+      "name": "Q70e rule weakened",
+      "expectedGuardPattern": "Q70e",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q70e: compiled rule must match authoritative ruling",
+        "Q70e: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 279,
+      "name": "Q70f rule weakened",
+      "expectedGuardPattern": "Q70f",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q70f: compiled rule must match authoritative ruling",
+        "Q70f: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 280,
+      "name": "Q70g rule weakened",
+      "expectedGuardPattern": "Q70g",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q70g: compiled rule must match authoritative ruling",
+        "Q70g: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 281,
+      "name": "Q74a rule weakened",
+      "expectedGuardPattern": "Q74a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q74a: compiled rule must match authoritative ruling",
+        "Q74a: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 282,
+      "name": "Q74b rule weakened",
+      "expectedGuardPattern": "Q74b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q74b: compiled rule must match authoritative ruling",
+        "Q74b: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 283,
+      "name": "Q74c rule weakened",
+      "expectedGuardPattern": "Q74c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q74c: compiled rule must match authoritative ruling",
+        "Q74c: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 284,
+      "name": "Q74d rule weakened",
+      "expectedGuardPattern": "Q74d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q74d: compiled rule must match authoritative ruling",
+        "Q74d: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 285,
+      "name": "Q74e rule weakened",
+      "expectedGuardPattern": "Q74e",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q74e: compiled rule must match authoritative ruling",
+        "Q74e: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 286,
+      "name": "Q74f rule weakened",
+      "expectedGuardPattern": "Q74f",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q74f: compiled rule must match authoritative ruling",
+        "Q74f: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 287,
+      "name": "Q74g rule weakened",
+      "expectedGuardPattern": "Q74g",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q74g: compiled rule must match authoritative ruling",
+        "Q74g: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 288,
+      "name": "Q70h rule weakened",
+      "expectedGuardPattern": "Q70h",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q70h: compiled rule must match authoritative ruling",
+        "Q70h: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 289,
+      "name": "Q70i rule weakened",
+      "expectedGuardPattern": "Q70i",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q70i: compiled rule must match authoritative ruling",
+        "Q70i: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 290,
+      "name": "Q70j rule weakened",
+      "expectedGuardPattern": "Q70j",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q70j: compiled rule must match authoritative ruling",
+        "Q70j: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 291,
+      "name": "Q70k rule weakened",
+      "expectedGuardPattern": "Q70k",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q70k: compiled rule must match authoritative ruling",
+        "Q70k: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 292,
+      "name": "Q75a rule weakened",
+      "expectedGuardPattern": "Q75a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q75a: compiled rule must match authoritative ruling",
+        "Q75a: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 293,
+      "name": "Q75b rule weakened",
+      "expectedGuardPattern": "Q75b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q75b: compiled rule must match authoritative ruling",
+        "Q75b: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 294,
+      "name": "Q75c rule weakened",
+      "expectedGuardPattern": "Q75c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q75c: compiled rule must match authoritative ruling",
+        "Q75c: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 295,
+      "name": "Q75d rule weakened",
+      "expectedGuardPattern": "Q75d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q75d: compiled rule must match authoritative ruling",
+        "Q75d: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 296,
+      "name": "Q75e rule weakened",
+      "expectedGuardPattern": "Q75e",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q75e: compiled rule must match authoritative ruling",
+        "Q75e: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 297,
+      "name": "Q75f rule weakened",
+      "expectedGuardPattern": "Q75f",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q75f: compiled rule must match authoritative ruling",
+        "Q75f: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 298,
+      "name": "Q75g rule weakened",
+      "expectedGuardPattern": "Q75g",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q75g: compiled rule must match authoritative ruling",
+        "Q75g: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 299,
+      "name": "Q75h rule weakened",
+      "expectedGuardPattern": "Q75h",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q75h: compiled rule must match authoritative ruling",
+        "Q75h: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 300,
+      "name": "Q75i rule weakened",
+      "expectedGuardPattern": "Q75i",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q75i: compiled rule must match authoritative ruling",
+        "Q75i: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 301,
+      "name": "Q75j rule weakened",
+      "expectedGuardPattern": "Q75j",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q75j: compiled rule must match authoritative ruling",
+        "Q75j: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 302,
+      "name": "Q70l rule weakened",
+      "expectedGuardPattern": "Q70l",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q70l: compiled rule must match authoritative ruling",
+        "Q70l: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 303,
+      "name": "Q70m rule weakened",
+      "expectedGuardPattern": "Q70m",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q70m: compiled rule must match authoritative ruling",
+        "Q70m: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 304,
+      "name": "Q76a rule weakened",
+      "expectedGuardPattern": "Q76a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q76a: compiled rule must match authoritative ruling",
+        "Q76a: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 305,
+      "name": "Q76b rule weakened",
+      "expectedGuardPattern": "Q76b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q76b: compiled rule must match authoritative ruling",
+        "Q76b: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 306,
+      "name": "Q76c rule weakened",
+      "expectedGuardPattern": "Q76c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q76c: compiled rule must match authoritative ruling",
+        "Q76c: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 307,
+      "name": "Q76d rule weakened",
+      "expectedGuardPattern": "Q76d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q76d: compiled rule must match authoritative ruling",
+        "Q76d: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 308,
+      "name": "Q76e rule weakened",
+      "expectedGuardPattern": "Q76e",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q76e: compiled rule must match authoritative ruling",
+        "Q76e: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 309,
+      "name": "Q76f rule weakened",
+      "expectedGuardPattern": "Q76f",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q76f: compiled rule must match authoritative ruling",
+        "Q76f: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 310,
+      "name": "Q70n rule weakened",
+      "expectedGuardPattern": "Q70n",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q70n: compiled rule must match authoritative ruling",
+        "Q70n: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 311,
+      "name": "Q70o rule weakened",
+      "expectedGuardPattern": "Q70o",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q70o: compiled rule must match authoritative ruling",
+        "Q70o: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 312,
+      "name": "Q77a rule weakened",
+      "expectedGuardPattern": "Q77a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q77a: compiled rule must match authoritative ruling",
+        "Q77a: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 313,
+      "name": "Q77b rule weakened",
+      "expectedGuardPattern": "Q77b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q77b: compiled rule must match authoritative ruling",
+        "Q77b: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 314,
+      "name": "Q77c rule weakened",
+      "expectedGuardPattern": "Q77c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q77c: compiled rule must match authoritative ruling",
+        "Q77c: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 315,
+      "name": "Q78a rule weakened",
+      "expectedGuardPattern": "Q78a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q78a: compiled rule must match authoritative ruling",
+        "Q78a: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 316,
+      "name": "Q78b rule weakened",
+      "expectedGuardPattern": "Q78b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q78b: compiled rule must match authoritative ruling",
+        "Q78b: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 317,
+      "name": "Q78c rule weakened",
+      "expectedGuardPattern": "Q78c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q78c: compiled rule must match authoritative ruling",
+        "Q78c: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 318,
+      "name": "Q78d rule weakened",
+      "expectedGuardPattern": "Q78d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q78d: compiled rule must match authoritative ruling",
+        "Q78d: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 319,
+      "name": "Q79a rule weakened",
+      "expectedGuardPattern": "Q79a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q79a: compiled rule must match authoritative ruling",
+        "Q79a: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 320,
+      "name": "Q79b rule weakened",
+      "expectedGuardPattern": "Q79b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q79b: compiled rule must match authoritative ruling",
+        "Q79b: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 321,
+      "name": "Q79c rule weakened",
+      "expectedGuardPattern": "Q79c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q79c: compiled rule must match authoritative ruling",
+        "Q79c: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 322,
+      "name": "Q79d rule weakened",
+      "expectedGuardPattern": "Q79d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q79d: compiled rule must match authoritative ruling",
+        "Q79d: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 323,
+      "name": "Q81a rule weakened",
+      "expectedGuardPattern": "Q81a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q81a: compiled rule must match authoritative ruling",
+        "Q81a: required consumer rule missing"
+      ]
+    },
+    {
+      "index": 324,
+      "name": "Q75c blocker bypass",
+      "expectedGuardPattern": "Q75c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q75c: contractBlockers must enforce runner pins"
+      ]
+    },
+    {
+      "index": 325,
+      "name": "Q75c admission bypass",
+      "expectedGuardPattern": "Q75c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a/Q47: an accepted oracle with only its entrypoint hashed (Q75c) must be a diagnostic"
+      ]
+    },
+    {
+      "index": 326,
+      "name": "Q75c COMPILED exemption",
+      "expectedGuardPattern": "Q75c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q75c: absent and incomplete runner hash maps cannot pin O-CONTRACT",
+        "Q75c: contractBlockers must enforce runner pins",
+        "Q75c: full runner hashes required, including COMPILED oracles"
+      ]
+    },
+    {
+      "index": 327,
+      "name": "Q75g full replay compared as rows",
+      "expectedGuardPattern": "Q75g",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "F1/F2: real replay result objects and Unicode must compare equal to themselves",
+        "F1: result row projection preserves ordering policy and exact cut metadata",
+        "Q75g: replay comparator applies inside each query result, preserving multiplicity"
+      ]
+    },
+    {
+      "index": 328,
+      "name": "Q75g state unchecked",
+      "expectedGuardPattern": "Q75g",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q75g: state stays exact"
+      ]
+    },
+    {
+      "index": 329,
+      "name": "Q75g outcomes unchecked",
+      "expectedGuardPattern": "Q75g",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q75g: command outcomes stay exact"
+      ]
+    },
+    {
+      "index": 330,
+      "name": "Q75h cause unchecked",
+      "expectedGuardPattern": "cause\\ optional,\\ structured\\ when\\ present",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q75h: cause optional, structured when present"
+      ]
+    },
+    {
+      "index": 331,
+      "name": "Q78 null image bypass",
+      "expectedGuardPattern": "Q78",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q78: every lane D obligation must stay blocked by its null image"
+      ]
+    },
+    {
+      "index": 332,
+      "name": "Q78 D unregistered",
+      "expectedGuardPattern": "Q78",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "G4.neg.correlated-not-exists-raw: lane datomic-datalog",
+        "Q78: every lane D obligation must stay blocked by its null image",
+        "Q78: lane D surface registered with a null image pending EXP-DA00"
+      ]
+    },
+    {
+      "index": 333,
+      "name": "Q78 D image prematurely pinned",
+      "expectedGuardPattern": "Q78",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q61i: lab/config/slots.json lane images must agree with the contract's IMAGE_PINS",
+        "Q78: every lane D obligation must stay blocked by its null image",
+        "Q78: lane D surface registered with a null image pending EXP-DA00"
+      ]
+    },
+    {
+      "index": 334,
+      "name": "V-O04i hash table corrupt",
+      "expectedGuardPattern": "V-O04i|pinned O-REPLAY",
+      "method": "O-REPLAY exact pin guard",
+      "matched": true,
+      "diagnostics": [
+        "Q45a: pinned O-REPLAY files differ from the tree: ['lab/oracles/replay/run.py']",
+        "Q75c: every O-OBS runner file matches the retained hash table",
+        "V-O04i: O-REPLAY pin must equal 29 reviewed 0.4.9 hashes at f195f30"
+      ]
+    },
+    {
+      "index": 335,
+      "name": "V-O04i wrong version",
+      "expectedGuardPattern": "V-O04i|pinned O-REPLAY",
+      "method": "O-REPLAY exact pin guard",
+      "matched": true,
+      "diagnostics": [
+        "V-O04i: O-REPLAY pin must equal 29 reviewed 0.4.9 hashes at f195f30"
+      ]
+    },
+    {
+      "index": 336,
+      "name": "Q78 D raw obligation omitted",
+      "expectedGuardPattern": "Q78",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q78: every lane D obligation must stay blocked by its null image"
+      ]
+    },
+    {
+      "index": 337,
+      "name": "Q75c O-CONTRACT projection omitted",
+      "expectedGuardPattern": "Q75c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q75c: O-CONTRACT runner retains both source and generated projection"
+      ]
+    },
+    {
+      "index": 338,
+      "name": "R2 F1 payload projection disabled",
+      "expectedGuardPattern": "F[1-4]:",
+      "method": "previous finding semantic regression guard",
+      "matched": true,
+      "diagnostics": [
+        "F1/F2: real replay result objects and Unicode must compare equal to themselves",
+        "F1: result row projection preserves ordering policy and exact cut metadata"
+      ]
+    },
+    {
+      "index": 339,
+      "name": "R2 F1 cut metadata ignored",
+      "expectedGuardPattern": "F[1-4]:",
+      "method": "previous finding semantic regression guard",
+      "matched": true,
+      "diagnostics": [
+        "F1: result row projection preserves ordering policy and exact cut metadata"
+      ]
+    },
+    {
+      "index": 340,
+      "name": "R2 F2 Unicode recursion escaped",
+      "expectedGuardPattern": "F[1-4]:",
+      "method": "previous finding semantic regression guard",
+      "matched": true,
+      "diagnostics": [
+        "F1/F2: real replay result objects and Unicode must compare equal to themselves",
+        "F1: result row projection preserves ordering policy and exact cut metadata"
+      ]
+    },
+    {
+      "index": 341,
+      "name": "R2 F3 composition excludes D",
+      "expectedGuardPattern": "F[1-4]:",
+      "method": "previous finding semantic regression guard",
+      "matched": true,
+      "diagnostics": [
+        "F3: authoritative composition and receipt engine declarations include Datomic"
+      ]
+    },
+    {
+      "index": 342,
+      "name": "R2 F3 receipt excludes D",
+      "expectedGuardPattern": "F[1-4]:",
+      "method": "previous finding semantic regression guard",
+      "matched": true,
+      "diagnostics": [
+        "F3: authoritative composition and receipt engine declarations include Datomic"
+      ]
+    },
+    {
+      "index": 343,
+      "name": "R2 F4 compiler defect omitted",
+      "expectedGuardPattern": "F[1-4]:",
+      "method": "previous finding semantic regression guard",
+      "matched": true,
+      "diagnostics": [
+        "F4: Q76c compiler tail-constraint defect recorded in matrix and scoped known limit"
+      ]
+    },
+    {
+      "index": 344,
+      "name": "Q72a literal weakened",
+      "expectedGuardPattern": "Q72a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q72a: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 345,
+      "name": "Q72a consumer dropped",
+      "expectedGuardPattern": "Q72a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q72a: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 346,
+      "name": "Q72b literal weakened",
+      "expectedGuardPattern": "Q72b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q72b: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 347,
+      "name": "Q72b consumer dropped",
+      "expectedGuardPattern": "Q72b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q72b: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 348,
+      "name": "Q72c literal weakened",
+      "expectedGuardPattern": "Q72c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q72c: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 349,
+      "name": "Q72c consumer dropped",
+      "expectedGuardPattern": "Q72c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q72c: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 350,
+      "name": "Q72d literal weakened",
+      "expectedGuardPattern": "Q72d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q72d: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 351,
+      "name": "Q72d consumer dropped",
+      "expectedGuardPattern": "Q72d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q72d: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 352,
+      "name": "Q72e literal weakened",
+      "expectedGuardPattern": "Q72e",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q72e: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 353,
+      "name": "Q72e consumer dropped",
+      "expectedGuardPattern": "Q72e",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q72e: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 354,
+      "name": "Q72g literal weakened",
+      "expectedGuardPattern": "Q72g",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q72g: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 355,
+      "name": "Q72g consumer dropped",
+      "expectedGuardPattern": "Q72g",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q72g: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 356,
+      "name": "Q80a literal weakened",
+      "expectedGuardPattern": "Q80a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q80a: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 357,
+      "name": "Q80a consumer dropped",
+      "expectedGuardPattern": "Q80a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q80a: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 358,
+      "name": "Q80b literal weakened",
+      "expectedGuardPattern": "Q80b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q80b: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 359,
+      "name": "Q80b consumer dropped",
+      "expectedGuardPattern": "Q80b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q80b: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 360,
+      "name": "Q80c literal weakened",
+      "expectedGuardPattern": "Q80c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q80c: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 361,
+      "name": "Q80c consumer dropped",
+      "expectedGuardPattern": "Q80c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q80c: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 362,
+      "name": "Q82a literal weakened",
+      "expectedGuardPattern": "Q82a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q82a: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 363,
+      "name": "Q82a consumer dropped",
+      "expectedGuardPattern": "Q82a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q82a: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 364,
+      "name": "Q82b literal weakened",
+      "expectedGuardPattern": "Q82b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q82b: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 365,
+      "name": "Q82b consumer dropped",
+      "expectedGuardPattern": "Q82b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q82b: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 366,
+      "name": "Q82c literal weakened",
+      "expectedGuardPattern": "Q82c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q82c: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 367,
+      "name": "Q82c consumer dropped",
+      "expectedGuardPattern": "Q82c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q82c: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 368,
+      "name": "Q82d literal weakened",
+      "expectedGuardPattern": "Q82d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q82d: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 369,
+      "name": "Q82d consumer dropped",
+      "expectedGuardPattern": "Q82d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q82d: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 370,
+      "name": "Q82e literal weakened",
+      "expectedGuardPattern": "Q82e",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q82e: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 371,
+      "name": "Q82e consumer dropped",
+      "expectedGuardPattern": "Q82e",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q82e: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 372,
+      "name": "Q83a literal weakened",
+      "expectedGuardPattern": "Q83a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q83a: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 373,
+      "name": "Q83a consumer dropped",
+      "expectedGuardPattern": "Q83a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q83a: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 374,
+      "name": "Q83b literal weakened",
+      "expectedGuardPattern": "Q83b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q83b: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 375,
+      "name": "Q83b consumer dropped",
+      "expectedGuardPattern": "Q83b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q83b: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 376,
+      "name": "Q83c literal weakened",
+      "expectedGuardPattern": "Q83c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q83c: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 377,
+      "name": "Q83c consumer dropped",
+      "expectedGuardPattern": "Q83c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q83c: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 378,
+      "name": "Q84a literal weakened",
+      "expectedGuardPattern": "Q84a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q84a: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 379,
+      "name": "Q84a consumer dropped",
+      "expectedGuardPattern": "Q84a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q84a: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 380,
+      "name": "Q84b literal weakened",
+      "expectedGuardPattern": "Q84b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q84b: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 381,
+      "name": "Q84b consumer dropped",
+      "expectedGuardPattern": "Q84b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q84b: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 382,
+      "name": "Q84c literal weakened",
+      "expectedGuardPattern": "Q84c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q84c: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 383,
+      "name": "Q84c consumer dropped",
+      "expectedGuardPattern": "Q84c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q84c: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 384,
+      "name": "Q84d literal weakened",
+      "expectedGuardPattern": "Q84d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q84d: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 385,
+      "name": "Q84d consumer dropped",
+      "expectedGuardPattern": "Q84d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q84d: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 386,
+      "name": "Q84e literal weakened",
+      "expectedGuardPattern": "Q84e",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q84e: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 387,
+      "name": "Q84e consumer dropped",
+      "expectedGuardPattern": "Q84e",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q84e: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 388,
+      "name": "Q83d literal weakened",
+      "expectedGuardPattern": "Q83d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q83d: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 389,
+      "name": "Q83d consumer dropped",
+      "expectedGuardPattern": "Q83d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q83d: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 390,
+      "name": "Q79e literal weakened",
+      "expectedGuardPattern": "Q79e",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q79e: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 391,
+      "name": "Q79e consumer dropped",
+      "expectedGuardPattern": "Q79e",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q79e: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 392,
+      "name": "Q85a literal weakened",
+      "expectedGuardPattern": "Q85a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q85a: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 393,
+      "name": "Q85a consumer dropped",
+      "expectedGuardPattern": "Q85a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q85a: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 394,
+      "name": "Q85b literal weakened",
+      "expectedGuardPattern": "Q85b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q85b: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 395,
+      "name": "Q85b consumer dropped",
+      "expectedGuardPattern": "Q85b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q85b: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 396,
+      "name": "Q85c literal weakened",
+      "expectedGuardPattern": "Q85c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q85c: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 397,
+      "name": "Q85c consumer dropped",
+      "expectedGuardPattern": "Q85c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q85c: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 398,
+      "name": "Q85d literal weakened",
+      "expectedGuardPattern": "Q85d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q85d: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 399,
+      "name": "Q85d consumer dropped",
+      "expectedGuardPattern": "Q85d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q85d: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 400,
+      "name": "Q86a literal weakened",
+      "expectedGuardPattern": "Q86a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q86a: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 401,
+      "name": "Q86a consumer dropped",
+      "expectedGuardPattern": "Q86a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q86a: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 402,
+      "name": "Q86b literal weakened",
+      "expectedGuardPattern": "Q86b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q86b: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 403,
+      "name": "Q86b consumer dropped",
+      "expectedGuardPattern": "Q86b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q86b: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 404,
+      "name": "Q86c literal weakened",
+      "expectedGuardPattern": "Q86c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q86c: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 405,
+      "name": "Q86c consumer dropped",
+      "expectedGuardPattern": "Q86c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q86c: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 406,
+      "name": "Q86d literal weakened",
+      "expectedGuardPattern": "Q86d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q86d: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 407,
+      "name": "Q86d consumer dropped",
+      "expectedGuardPattern": "Q86d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q86d: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 408,
+      "name": "Q86e literal weakened",
+      "expectedGuardPattern": "Q86e",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q86e: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 409,
+      "name": "Q86e consumer dropped",
+      "expectedGuardPattern": "Q86e",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q86e: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 410,
+      "name": "Q86f literal weakened",
+      "expectedGuardPattern": "Q86f",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q86f: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 411,
+      "name": "Q86f consumer dropped",
+      "expectedGuardPattern": "Q86f",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q86f: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 412,
+      "name": "Q79f literal weakened",
+      "expectedGuardPattern": "Q79f",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q79f: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 413,
+      "name": "Q79f consumer dropped",
+      "expectedGuardPattern": "Q79f",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q79f: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 414,
+      "name": "Q87 literal weakened",
+      "expectedGuardPattern": "Q87",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q87: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 415,
+      "name": "Q87 consumer dropped",
+      "expectedGuardPattern": "Q87",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q87: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 416,
+      "name": "Q83e literal weakened",
+      "expectedGuardPattern": "Q83e",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q83e: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 417,
+      "name": "Q83e consumer dropped",
+      "expectedGuardPattern": "Q83e",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q83e: literal ruling and consumer must match authority"
+      ]
+    },
+    {
+      "index": 418,
+      "name": "O-OBS screening scope promoted",
+      "expectedGuardPattern": "O-OBS|Q75c",
+      "method": "O-OBS pin or hash closure guard",
+      "matched": true,
+      "diagnostics": [
+        "O-OBS: reviewed screening pin required",
+        "Q82c: screening pin cannot close acceptance obligations"
+      ]
+    },
+    {
+      "index": 419,
+      "name": "O-OBS commit replaced",
+      "expectedGuardPattern": "O-OBS|Q75c",
+      "method": "O-OBS pin or hash closure guard",
+      "matched": true,
+      "diagnostics": [
+        "O-OBS: reviewed screening pin required"
+      ]
+    },
+    {
+      "index": 420,
+      "name": "O-OBS transitive runner omitted",
+      "expectedGuardPattern": "O-OBS|Q75c",
+      "method": "O-OBS pin or hash closure guard",
+      "matched": true,
+      "diagnostics": [
+        "Q75c: every O-OBS runner file matches the retained hash table"
+      ]
+    },
+    {
+      "index": 421,
+      "name": "O-OBS pin hash altered",
+      "expectedGuardPattern": "O-OBS|Q75c",
+      "method": "O-OBS pin or hash closure guard",
+      "matched": true,
+      "diagnostics": [
+        "Q75c: every O-OBS runner file matches the retained hash table"
+      ]
+    },
+    {
+      "index": 422,
+      "name": "O-OBS verifier removed",
+      "expectedGuardPattern": "O-OBS|Q75c",
+      "method": "O-OBS pin or hash closure guard",
+      "matched": true,
+      "diagnostics": [
+        "O-OBS: reviewed screening pin required",
+        "Q59c: V-O05-round4 must hash the original instruction brief, never its review report",
+        "Q59c: every registry entry needs an audited instruction preimage"
+      ]
+    },
+    {
+      "index": 423,
+      "name": "Q82c screening admission bypass",
+      "expectedGuardPattern": "Q82c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q55a/Q47: screening-only oracle cannot qualify acceptance (Q82c) must be a diagnostic"
+      ]
+    },
+    {
+      "index": 424,
+      "name": "Q82c screening blocker bypass",
+      "expectedGuardPattern": "Q82c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q82c: screening pin cannot close acceptance obligations"
+      ]
+    },
+    {
+      "index": 425,
+      "name": "Q82b single source safety",
+      "expectedGuardPattern": "Q82b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q82b: two agreeing independent source kinds required"
+      ]
+    },
+    {
+      "index": 426,
+      "name": "Q82d observer outputs omitted",
+      "expectedGuardPattern": "Q82d",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q82d: complete protected physical-copy inventory required"
+      ]
+    },
+    {
+      "index": 427,
+      "name": "Q83e resume bound to F",
+      "expectedGuardPattern": "three\\ frontiers\\ replace\\ the\\ old\\ freeze\\ interpretation",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q83: three frontiers replace the old freeze interpretation"
+      ]
+    },
+    {
+      "index": 428,
+      "name": "Q83b supersession removed",
+      "expectedGuardPattern": "three\\ frontiers\\ replace\\ the\\ old\\ freeze\\ interpretation",
+      "method": "explicit reviewed equivalent guard",
+      "matched": true,
+      "diagnostics": [
+        "Q83: three frontiers replace the old freeze interpretation"
+      ]
+    },
+    {
+      "index": 429,
+      "name": "Q86 isolation prematurely in force",
+      "expectedGuardPattern": "Q86",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q86: G03 pins deferred, isolation is not yet in force"
+      ]
+    },
+    {
+      "index": 430,
+      "name": "Q87 tests reduced",
+      "expectedGuardPattern": "Q87",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q87: mandatory evaluator merge gate"
+      ]
+    },
+    {
+      "index": 431,
+      "name": "Q87 weakening assertions allowed",
+      "expectedGuardPattern": "Q87",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q87: mandatory evaluator merge gate"
+      ]
+    },
+    {
+      "index": 432,
+      "name": "Q59c V-O04i report substituted with matching hash",
+      "expectedGuardPattern": "Q59c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q59c: V-O04i must hash the original instruction brief, never its review report"
+      ]
+    },
+    {
+      "index": 433,
+      "name": "Q59c V-O03 report substituted with matching hash",
+      "expectedGuardPattern": "Q59c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q59c: V-O03 must hash the original instruction brief, never its review report"
+      ]
+    },
+    {
+      "index": 434,
+      "name": "Q59c V-O04c report substituted with matching hash",
+      "expectedGuardPattern": "Q59c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q59c: V-O04c must hash the original instruction brief, never its review report"
+      ]
+    },
+    {
+      "index": 435,
+      "name": "Q59c V-D01-W0-1.1.1 report substituted with matching hash",
+      "expectedGuardPattern": "Q59c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q59c: V-D01-W0-1.1.1 must hash the original instruction brief, never its review report"
+      ]
+    },
+    {
+      "index": 436,
+      "name": "Q59c V-D01e-W0-1.1.2 report substituted with matching hash",
+      "expectedGuardPattern": "Q59c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q59c: V-D01e-W0-1.1.2 must hash the original instruction brief, never its review report"
+      ]
+    },
+    {
+      "index": 437,
+      "name": "Q59c V-D01c-O-DOMAIN report substituted with matching hash",
+      "expectedGuardPattern": "Q59c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q59c: V-D01c-O-DOMAIN must hash the original instruction brief, never its review report"
+      ]
+    },
+    {
+      "index": 438,
+      "name": "Q59c V-O05-round4 report substituted with matching hash",
+      "expectedGuardPattern": "Q59c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q59c: V-O05-round4 must hash the original instruction brief, never its review report"
+      ]
+    },
+    {
+      "index": 439,
+      "name": "Q88a literal weakened",
+      "expectedGuardPattern": "Q88a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q88a: literal ruling and storage consumer must match authority"
+      ]
+    },
+    {
+      "index": 440,
+      "name": "Q88a consumer dropped",
+      "expectedGuardPattern": "Q88a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q88a: literal ruling and storage consumer must match authority"
+      ]
+    },
+    {
+      "index": 441,
+      "name": "Q88b literal weakened",
+      "expectedGuardPattern": "Q88b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q88b: literal ruling and storage consumer must match authority"
+      ]
+    },
+    {
+      "index": 442,
+      "name": "Q88b consumer dropped",
+      "expectedGuardPattern": "Q88b",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q88b: literal ruling and storage consumer must match authority"
+      ]
+    },
+    {
+      "index": 443,
+      "name": "Q88c literal weakened",
+      "expectedGuardPattern": "Q88c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q88c: literal ruling and storage consumer must match authority"
+      ]
+    },
+    {
+      "index": 444,
+      "name": "Q88c consumer dropped",
+      "expectedGuardPattern": "Q88c",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q88c: literal ruling and storage consumer must match authority"
+      ]
+    },
+    {
+      "index": 445,
+      "name": "Q45a xtdb-workloads.ts repin reverted",
+      "expectedGuardPattern": "Q45a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q45a: reviewed workload repin mismatch: packages/qualification/src/native/xtdb-workloads.ts"
+      ]
+    },
+    {
+      "index": 446,
+      "name": "Q45a xtdb-workloads.ts repin omitted",
+      "expectedGuardPattern": "Q45a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q45a: both reviewed workload repins required"
+      ]
+    },
+    {
+      "index": 447,
+      "name": "Q45a qlever-workloads.ts repin reverted",
+      "expectedGuardPattern": "Q45a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q45a: reviewed workload repin mismatch: packages/qualification/src/native/qlever-workloads.ts"
+      ]
+    },
+    {
+      "index": 448,
+      "name": "Q45a qlever-workloads.ts repin omitted",
+      "expectedGuardPattern": "Q45a",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q45a: both reviewed workload repins required"
+      ]
+    },
+    {
+      "index": 449,
+      "name": "Q88 dev evidence promoted",
+      "expectedGuardPattern": "Q88",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q88: dev evidence stays diagnostic, SQL storage and erasure requirements preserved"
+      ]
+    },
+    {
+      "index": 450,
+      "name": "Q88 unsafe peer role",
+      "expectedGuardPattern": "Q88",
+      "method": "named ruling guard",
+      "matched": true,
+      "diagnostics": [
+        "Q88: dev evidence stays diagnostic, SQL storage and erasure requirements preserved"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "testedMain": "28a27d48fd9cebab3ae530afdf7e5296d943bf67",
+  "mainAfterRun": "d03b7ad45ae97b31e2cdf827c063b5f30d1e5031",
+  "newMainChangedPaths": [
+    "lab/NOTEBOOK.md",
+    "lab/STATE.md",
+    "lab/acceptance/ACCEPTANCE.md",
+    "lab/acceptance/RULINGS-PENDING.md",
+    "lab/acceptance/obligations.json",
+    "lab/experiments/EXP-P5-release-sweep/BRIEF-roundA.md",
+    "lab/experiments/EXP-QG1-qlever-generations/BRIEF-from-R35.md",
+    "lab/research/R34-p5-sweep-brief.md",
+    "lab/research/R35-probes/base-point.json",
+    "lab/research/R35-probes/base-point.time",
+    "lab/research/R35-probes/delta-optional.json",
+    "lab/research/R35-probes/delta-optional.time",
+    "lab/research/R35-probes/delta-point.json",
+    "lab/research/R35-probes/delta-point.time",
+    "lab/research/R35-probes/delta-pred.json",
+    "lab/research/R35-probes/delta-pred.time",
+    "lab/research/R35-probes/discover.json",
+    "lab/research/R35-probes/prof.py",
+    "lab/research/R35-probes/stats.json",
+    "lab/research/R35-qlever-delta-cost.md"
+  ],
+  "scope": "Q91 arrived after review started; outside the immutable dispatched candidate and this delta verdict."
+}
