@@ -1,0 +1,9 @@
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/rq01/packages/xtdb
+
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  19:30:45
+   Duration  784ms (tests 58%, import 28%, transform 14%)
+

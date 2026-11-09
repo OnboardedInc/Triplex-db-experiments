@@ -1,0 +1,30 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 49341 "CX-RQ01-bound-gate-r4", pid 12080 "CX-A01-0312-mutations-final2", pid 37317 "CX-G03-r3-claim-suites2", pid 50880 "CX-INT-XCJ-C8-fixed-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 73825 "G0-xtdb-20261108T235816Z-506037 build", pid 12080 "CX-A01-0312-mutations-final2", pid 37317 "CX-G03-r3-claim-suites2", pid 50880 "CX-INT-XCJ-C8-fixed-G0"
+Package verification artifacts retained at /Users/sam/projects/triplex-db-2/.claude/worktrees/rq01/.experiments/pack/triplex-pack-qgCl0Z
+node:internal/errors:983
+  const err = new Error(message);
+              ^
+
+Error: Command failed: pnpm --filter @triplex-build/triplex-sql pack --pack-destination /Users/sam/projects/triplex-db-2/.claude/worktrees/rq01/.experiments/pack/triplex-pack-qgCl0Z/tarballs
+    at genericNodeError (node:internal/errors:983:15)
+    at wrappedFn (node:internal/errors:537:14)
+    at checkExecSyncError (node:child_process:916:11)
+    at execFileSync (node:child_process:952:15)
+    at run (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/rq01/scripts/check-packages.mjs:53:3)
+    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/rq01/scripts/check-packages.mjs:57:5
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {
+  status: 1,
+  signal: null,
+  output: [
+    null,
+    ' ERR_PNPM_CANNOT_RESOLVE_WORKSPACE_PROTOCOL  Cannot resolve workspace protocol of dependency "@triplex-build/triplex" because this dependency is not installed. Try running "pnpm install".\n',
+    ''
+  ],
+  pid: 41096,
+  stdout: ' ERR_PNPM_CANNOT_RESOLVE_WORKSPACE_PROTOCOL  Cannot resolve workspace protocol of dependency "@triplex-build/triplex" because this dependency is not installed. Try running "pnpm install".\n',
+  stderr: ''
+}
+
+Node.js v22.23.2
