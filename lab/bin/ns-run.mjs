@@ -1,5 +1,5 @@
 // [EXP-G03-R5] Why: stage each NS role separately and export bytes only after proven removal. Rejected: a monolithic Mac bench, shared writable state or acceptance from self-reported metrics.
-import fs from 'node:fs';import path from 'node:path';import {spawnSync} from 'node:child_process';import {randomBytes,createHmac} from 'node:crypto';
+import fs from 'node:fs';import path from 'node:path';import {spawnSync} from 'node:child_process';import {randomBytes,createHmac} from 'node:crypto';import {isDeepStrictEqual} from 'node:util';
 import {docker,dockerArgs,inspect,sha256} from './lib.mjs';import {canonicalAnswer} from '../bench/ns-driver/answer.mjs';
 import {FaultInjector} from './ns-fault.mjs';
 import {boxedFaultTransport,snapshotScript} from './ns-fault-box.mjs';
@@ -15,9 +15,33 @@ export function verifyHr(files,key,binding){
  if(head!==seal.head||events.filter(e=>e.kind==='end').length!==1||events.at(-1).kind!=='end'||events.at(-1).data.error!==null)throw Error('driver end/seal');
  return events;
 }
-export function verifyObserver(files,key,runId){const seal=JSON.parse(files.get('seal.json'));let head='0'.repeat(64),seq=0;const polls=[];
- for(const line of files.get('polls.ndjson').toString().trim().split('\n')){const row=JSON.parse(line),body=JSON.parse(row.raw);if(body.schema!=='ns-observer/1'||body.runId!==runId||body.sequence!==seq++||body.previous!==head||createHmac('sha256',key).update(row.raw).digest('hex')!==row.hmac)throw Error('observer content/binding');head=row.hmac;polls.push(...body.polls)}
- if(seal.runId!==runId||seq<1||seal.chunks!==seq||seal.head!==head)throw Error('observer seal');return {seal,polls};
+// [EXP-G03-R7a] Why: the observer's final readbacks, clock domain and measured periods are one authenticated record at the end of the same HMAC chain; seal.json is only a copy and must equal it exactly, so any post-capture edit to a consumed field fails here. Rejected: trusting seal.final/periodNs because seal.head matches the poll chain (F1: HMAC covered the polls only).
+const SEAL_KEYS=['chunks','domain','final','head','periodNs','runId','schema'];
+const storeShape=v=>v&&typeof v==='object'&&Number.isSafeInteger(v.marker)&&Array.isArray(v.subjects)&&Array.isArray(v.entries)&&Object.keys(v).sort().join()==='entries,marker,subjects';
+export function verifyObserver(files,key,runId){
+ const seal=JSON.parse(files.get('seal.json')),lines=files.get('polls.ndjson').toString().trim().split('\n');let head='0'.repeat(64),seq=0,last=null,domain=null;const polls=[];
+ for(const line of lines){
+  if(last)throw Error('observer records after final');
+  const row=JSON.parse(line);if(Object.keys(row).sort().join()!=='hmac,raw')throw Error('observer row shape');const body=JSON.parse(row.raw);
+  if(body.schema!=='ns-observer/1'||body.runId!==runId||body.sequence!==seq++||body.previous!==head||createHmac('sha256',key).update(row.raw).digest('hex')!==row.hmac)throw Error('observer content/binding');
+  if(domain!==null&&!isDeepStrictEqual(body.domain,domain))throw Error('observer domain changed');domain=body.domain;head=row.hmac;
+  if('final'in body||'periodNs'in body)last=body;else polls.push(...body.polls);
+ }
+ if(!last||seq<2)throw Error('observer final record missing');
+ if(last.polls.length||!storeShape(last.final.source)||!storeShape(last.final.consumer)||Object.keys(last.final).sort().join()!=='consumer,source'||!Array.isArray(last.periodNs)||last.periodNs.some(n=>!Number.isSafeInteger(n)||n<0))throw Error('observer final record shape');
+ if(Object.keys(seal).sort().join()!==SEAL_KEYS.join()||seal.schema!=='ns-observer-seal/1'||seal.runId!==runId||seal.chunks!==seq||seal.head!==head||!isDeepStrictEqual(seal.final,last.final)||!isDeepStrictEqual(seal.periodNs,last.periodNs)||!isDeepStrictEqual(seal.domain,domain))throw Error('observer seal');
+ // The returned seal is rebuilt from authenticated values only.
+ return {seal:{...seal,final:last.final,periodNs:last.periodNs,domain},polls};
+}
+// [EXP-G03-R7a] Why: the exit status and fault-stream outcome come from the coordinator's own exec, not from the driver's events; replay refuses before reading any event when the driver did not exit 0 or the hook stream did not finish. Rejected: trusting a clean end event (F2: a throw after the last handshake still sealed error:null).
+export function trustedTerminal({runId,exec,faultError=null}){
+ return {schema:'ns-terminal/1',runId,source:'coordinator-exec',driverExit:exec.status,faultFinish:faultError?{ok:false,error:String(faultError.message??faultError)}:{ok:true}};
+}
+export function requireCleanTerminal(terminal,binding){
+ if(!terminal||terminal.schema!=='ns-terminal/1'||terminal.source!=='coordinator-exec'||terminal.runId!==binding?.runId)throw Error('DRIVER-TERMINAL-MISSING');
+ if(terminal.driverExit!==0)throw Error('DRIVER-EXIT-NONZERO status='+terminal.driverExit);
+ if(terminal.faultFinish?.ok!==true)throw Error('DRIVER-HOOK-FAILURE '+(terminal.faultFinish?.error??'unreported'));
+ return terminal;
 }
 // [EXP-G03-R5] Why: ACK completion order is not offer order in an open-loop driver. Rejected: positional zipping (rejects correct concurrent replies) or ignoring duplicate/missing IDs.
 export function matchOffers(offers,trace){
@@ -25,7 +49,8 @@ export function matchOffers(offers,trace){
  const byId=new Map(offers.map(o=>[o.command.id,o]));if(byId.size!==trace.length)throw Error('duplicate offer identity');
  return trace.map((expected,i)=>{const o=byId.get(expected.command.id);if(!o||JSON.stringify(o.command)!==JSON.stringify(expected.command)||o.response.commandId!==expected.command.id||o.response.status!=='committed'||o.response.receipt.position!==String(i+1))throw Error('offer bytes/receipt');return o});
 }
-export function checkSmoke(events,observer,trace,population,binding){
+export function checkSmoke(events,observer,trace,population,binding,terminal){
+ requireCleanTerminal(terminal,binding);
  const offers=matchOffers(events.filter(e=>e.kind==='offer').map(e=>e.data),trace);
  if(events.filter(e=>e.kind==='driver-runtime').length!==1||events.some(e=>e.kind==='driver-runtime'&&(!e.data.permissionModel||e.data.childPermission||e.data.workerPermission||e.data.bundleSha256!==binding.driverBundleSha256)))throw Error('driver permissions');
  const reads=events.filter(e=>['read','ryow','p4','sweep'].includes(e.kind));if(!reads.length)throw Error('no read observations');
@@ -114,7 +139,9 @@ export async function runBoxedNS(box,{instance,bundleFiles,observerFiles,sourceC
  });
  const injector=new FaultInjector({binding,target:targetOf(consumer),transport,caseIds:faults?.caseIds,pageBounds:faults?.pageBounds,decide:faults?.decide??(()=>false),retain:async bytes=>box.put(bytes)});
  const result=await box.execControl(drv.name,drv.launchArgv,row=>injector.handshake(row),{timeout:90000});
- const faultSummary=injector.finish({requireInjections:faults?.requireInjections??false});stage(10,{driverExit:result.status,faultSummary});
+ // [EXP-G03-R7a] Why: a nonzero driver exit or failed fault stream must still stop and export every retained byte, then refuse before replay. Rejected: throwing here (loses failed-attempt evidence) or recording the exit and continuing (F2).
+ let faultSummary=null,faultError=null;try{faultSummary=injector.finish({requireInjections:faults?.requireInjections??false})}catch(e){faultError=e}
+ const terminal=trustedTerminal({runId,exec:result,faultError});stage(10,{driverExit:result.status,terminal,faultSummary});
  // Stop the observer via a private evaluator-only control volume, never candidate RPC.
  helper('stop-observer',['node','-e',"require('fs').writeFileSync('/control/stop','stop')"],{mounts:[{name:volumes.control,target:'/control',rw:true}],net:'none'});
  for(let i=0;i<100&&inspect(obs).State.Running;i++)await new Promise(r=>setTimeout(r,20));if(inspect(obs).State.Running||inspect(obs).State.ExitCode!==0)throw Error('observer seal failed');stage(11,{sealed:true});
@@ -127,6 +154,10 @@ export async function runBoxedNS(box,{instance,bundleFiles,observerFiles,sourceC
  for(const [kind,files]of [['driver',output],['observer',observed],['source',filesOf(stateExports.source)],['consumer',filesOf(stateExports.consumer)]]){
   for(const [relative,bytes]of files){if(relative.split('/').some(p=>!p||p==='.'||p==='..')||relative.startsWith('/'))throw Error('unsafe walker export path');const destination=path.join(rawDir,kind,relative);fs.mkdirSync(path.dirname(destination),{recursive:true,mode:0o700});fs.writeFileSync(destination,bytes,{flag:'wx',mode:0o600})}
  }
- const events=verifyHr(output,key,binding),observer=verifyObserver(observed,key,runId),semantic=checkSmoke(events,observer,trace,population,binding);stage(13,{rawExportOnly:true,CRNSAdmission:false});
- return {semantic,faultSummary,rawDir,candidateLogs,stateExports:{source:stateExports.source.entries,consumer:stateExports.consumer.entries},keyBase64:key.toString('base64'),binding,stages,events,observer,output:[...output].map(([p,b])=>[p,b.toString()]),observerOutput:[...observed].map(([p,b])=>[p,b.toString()]),driverStdout:result.stdout.toString(),driverStderr:result.stderr.toString(),records:box.records};
+ // [EXP-G03-R7a] Why: digests taken at capture, before any verification, let a later CR-NS ingestion detect any change to the exported bytes. Rejected: re-deriving them from files after replay.
+ const capture={};for(const [kind,files]of [['driver',output],['observer',observed],['source',filesOf(stateExports.source)],['consumer',filesOf(stateExports.consumer)]])for(const [relative,bytes]of files)capture[kind+'/'+relative]=sha256(bytes);
+ fs.writeFileSync(path.join(rawDir,'terminal.json'),JSON.stringify({terminal,capture}),{flag:'wx',mode:0o600});
+ requireCleanTerminal(terminal,binding);
+ const events=verifyHr(output,key,binding),observer=verifyObserver(observed,key,runId),semantic=checkSmoke(events,observer,trace,population,binding,terminal);stage(13,{rawExportOnly:true,CRNSAdmission:false,captureSha256:sha256(Buffer.from(JSON.stringify(capture)))});
+ return {semantic,terminal,capture,faultSummary,rawDir,candidateLogs,stateExports:{source:stateExports.source.entries,consumer:stateExports.consumer.entries},keyBase64:key.toString('base64'),binding,stages,events,observer,output:[...output].map(([p,b])=>[p,b.toString()]),observerOutput:[...observed].map(([p,b])=>[p,b.toString()]),driverStdout:result.stdout.toString(),driverStderr:result.stderr.toString(),records:box.records};
 }
