@@ -167,3 +167,5 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   xtdb-s1 once its offline review accepts; (3) G03 slot run per its SLOT-RUN.md once its fixture migration lands; (4) X02 and C8 exclusive
   G1/G2 reruns; (5) W01b GS rerun; (6) J01 compact-on G1. Unpark tx2-datomic-dev for EXP-DA04 after the window.
 - Scale window adds: (7) EXP-P5 A1 at 1k on an exclusive XTDB slot (CX-P5A writes the commands).
+- Main now has contract 0.3.12 (O-OBS pinned for screening, Q72/Q79e-f/Q80/Q82-Q88 compiled, workload re-pins) plus X02, C8 and J01
+  (default-off); Q87 gate 108/108 on main after the merge. Next contract: 0.4.0 with RT01, O-REPLAY 0.5.0, Q89-Q92 and G03's pins.
