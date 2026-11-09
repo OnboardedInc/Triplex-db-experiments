@@ -507,3 +507,12 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - 2026-11-09 compress-evidence.sh bug: it compressed P5B's stores while a run still read them (read-only opens do not update mtime).
   Fixed: skip files any process has open (lsof), and skip SQLite files unless their directory has a .settled marker.
 - 2026-11-09 ~11:00 Sam: let the in-flight agents finish, launch no more; orchestration moves to the Claude Code CLI. Hourly loop cron cancelled. Handoff: lab/HANDOFF-2026-11-09.md.
+- 2026-11-09 OBS01 round 15 LIVE (Sonnet, cd56cd9c): W0, W1, W2, W3 all PASS against the real witness in the triplex2 VM. W0 (attempt 6,
+  re-checked after the resize): Q109a gate passes; perf_event_paranoid 4 and CAP_BPF+CAP_PERFMON alone attach; ext4 built in; memory peak
+  140.5 MB; kernel BTF ids 5/118/125/160/208 equal the reference; compiled IR has 15 bpf_ktime_get_ns sites and no other clock helper.
+  W1 11/11 planted modes as expected (mmap -> UNWITNESSED-WRITE + SYNC-MISSING confirmed in a real kernel). W2 per-commit cost 20.9-33.8 us
+  mean, worst 20 ms interval 28-81 us (gate 100 us; diagnostic under load). W3 256 readers, 20 min: 0 lost events of about 930k, witness
+  CPU mean 1.7-2.5%. Golden dump lab/observer/golden/ (b35312b4...). Findings: bpftrace 0.20.2 -d prints AST plus the optimized LLVM IR,
+  no BPF disassembly, so the diagnostic parser (which looks for disassembly) must be rewritten to read IR against the golden before it can
+  gate; five harness bugs fixed live (output buffering, memlock ulimit, cgroupfs path, kfunc alias, partial-window facts). Not run: W4,
+  writer-p99 ABBA, W1 on the resized VM. Needs review (CX-VOBS7) in the CLI session.
