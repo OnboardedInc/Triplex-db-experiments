@@ -538,9 +538,14 @@ export const makeXtdbStorageAdapter = (
 
   const ensureStamp = (state: TransactionState, timestamp: number): void => {
     // [EXP-RT01] Why: low-level callers share the stamp invariant too. Rejected: silently accepting a mismatched row stamp (receipt and watermark would disagree).
+    if (state.stamp !== undefined) {
+      if (timestamp !== state.stamp / 1000)
+        throw new TypeError("Row record instant differs from the transaction's decided stamp");
+      return;
+    }
     const stamp = stampOf(timestamp);
-    if (stamp <= state.sourceStamp || (state.stamp !== undefined && state.stamp !== stamp))
-      throw new TypeError("Row record instant differs from the transaction's decided stamp");
+    if (stamp <= state.sourceStamp)
+      throw new TypeError("Row record instant is not above the source stamp");
     state.stamp = stamp;
   };
   const insert: StorageAdapterService["insert"] = (input, txId, timestamp, id, position) =>

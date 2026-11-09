@@ -19,10 +19,11 @@ const check = (stamp: number): number => {
 export const instantOf = (stamp: number): number => check(stamp) / 1000;
 export const stampOf = (instant: number): number => {
   const nearest = Math.round(instant * 1000);
-  for (const stamp of [nearest, nearest - 1, nearest + 1]) {
-    if (Number.isSafeInteger(stamp) && stamp >= 0 && stamp < LIMIT && stamp / 1000 === instant)
-      return stamp;
-  }
+  const matches = (stamp: number) =>
+    Number.isSafeInteger(stamp) && stamp >= 0 && stamp < LIMIT && stamp / 1000 === instant;
+  if (matches(nearest)) return nearest;
+  if (matches(nearest - 1)) return nearest - 1;
+  if (matches(nearest + 1)) return nearest + 1;
   throw new RangeError("Instant is not an exact record stamp");
 };
 export const stampCut = (instant: number): number => {
