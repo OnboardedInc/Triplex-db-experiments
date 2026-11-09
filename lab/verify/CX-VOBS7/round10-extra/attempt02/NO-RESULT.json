@@ -1,0 +1,35 @@
+{
+  "label": "CX-VOBS7-round10-extra-receipt",
+  "observedAtUnixNs": 1794230575621914000,
+  "observedExit": 1,
+  "reason": "Optional repeat subprocess timed out after 300 seconds; no usable test output was produced. Last observed heavy slots belonged to other jobs. Not a test PASS or a semantic failure.",
+  "retention": "First successful extra controls are retained in the parent directory. This repeat is unqualified.",
+  "slotOwnersAfterTimeout": [
+    {
+      "at": "2026-11-09T11:24:47.681Z",
+      "label": "CX-DI01-trace-r12",
+      "pid": 99804
+    },
+    {
+      "at": "2026-11-09T13:07:57.827Z",
+      "label": "CX-HS01-r2-ulid-diag10k",
+      "pid": 66115
+    },
+    {
+      "at": "2026-11-09T13:21:02.675Z",
+      "label": "QH1-R3",
+      "pid": 66519
+    },
+    {
+      "at": "2026-11-09T13:08:11.446Z",
+      "label": "CX-VG03-56-R7A-full",
+      "pid": 66313
+    }
+  ],
+  "sourceSha256AfterTimeout": {
+    "lab/observer/bpftrace-image/Dockerfile": "855bd90334e0737f87d9d94e45689e9b267391114f4d4cbcbdef65f11403ff23",
+    "lab/observer/vm_normalizer.py": "5850ec4bbc102728f2306a918acd96340eb990888cab8b483db31572caefc983",
+    "lab/verify/CX-VOBS7/extra_round10.py": "75850e6fbe0a6a580d03083103dd174b5fd5435800ba733c5cd04215bcc085c7"
+  },
+  "status": "NO-RESULT"
+}

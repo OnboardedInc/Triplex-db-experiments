@@ -1,0 +1,95 @@
+{
+  "claim": "offline review only; regression failures are retained; no engine slot or VM claim",
+  "commands": [
+    {
+      "argv": [
+        "python3",
+        "-B",
+        "lab/observer/test_vm.py"
+      ],
+      "exit": 0,
+      "name": "python-vm",
+      "stderrSha256": "66de1b07fc31311a4fb18b5217129a303bb9a6b0f586b61e8b833c7ddba74353",
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "python3",
+        "-B",
+        "lab/observer/test_syncwitness.py"
+      ],
+      "exit": 0,
+      "name": "python-syncwitness",
+      "stderrSha256": "210b559ff563568a96d1b91e6235624dd45e0cc9d0652b8e4b10262886d54bb7",
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "python3",
+        "-B",
+        "lab/observer/test_round10.py"
+      ],
+      "exit": 0,
+      "name": "python-round10",
+      "stderrSha256": "d2112711d1a7947863535d4b475a054bd1a602adaf4b3065a4f2e23dcd5952a5",
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "node",
+        "--test",
+        "lab/observer/test_engine.mjs"
+      ],
+      "exit": 0,
+      "name": "node-engine",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutSha256": "b550f5aa1ddc865bbb59cc5e4111741038830aa9da656c0218f6827a266328e0"
+    },
+    {
+      "argv": [
+        "python3",
+        "-B",
+        "-c",
+        "import sys,unittest;from pathlib import Path;sys.path.insert(0,\"lab/verify/CX-VOBS7\");import review_round9 as r;r.OUT=Path(\"lab/verify/CX-VOBS7/round10/prior-fixtures\");unittest.main(module=r,verbosity=2)"
+      ],
+      "exit": 0,
+      "name": "review-round9",
+      "stderrSha256": "cf4691470c08cfbb59d9d1fd31a983e7b4f4075084fdec257dd1d0193fa55ce0",
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "python3",
+        "-B",
+        "lab/verify/CX-VOBS7/review_round10.py"
+      ],
+      "exit": 1,
+      "name": "review-round10",
+      "stderrSha256": "7cc3340823e4232b89bed1b5102adbb823539d6de22fbac2ad3e62b9c0f639a1",
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "finishedNs": 1794230051765897000,
+  "head": "1f7d412b309f9970b24cca64f7b4e8b08240f24f",
+  "hostFreeBytes": 11517046784,
+  "sourceSha256": {
+    "lab/bin/sync-witness.mjs": "859e48234deac0daeee03bd519b9e171a5bba935fccc5e554de1eedd97519b8e",
+    "lab/observer/bpftrace-image/Dockerfile": "855bd90334e0737f87d9d94e45689e9b267391114f4d4cbcbdef65f11403ff23",
+    "lab/observer/test_engine.mjs": "f41050a39668a83f7bad85a49929d015e5d920cb84e2596e9c57f414bf138be0",
+    "lab/observer/test_round10.py": "235f56eae2ea100c9af950143a8da5a0f04c4f05238e6936ef299142fdb78d72",
+    "lab/observer/test_syncwitness.py": "83b090bac2eac75670bcec1ebce7ebcf94ff8d9b70782b3b689b8f249c0e5efa",
+    "lab/observer/test_vm.py": "9c128c47999fcb00e46088a5cf22771f332be01711f4d8817956a4a5c603b531",
+    "lab/observer/vm_clockcheck.py": "59693c70a9d8584749e20d5c04ed07d0207b138a64d5e31a47e53121963ef896",
+    "lab/observer/vm_clockprobe.bt": "6090eeac95efb9f93d34b0e4589145e8b6ac3df072b42d39f83d08663a2bd3e9",
+    "lab/observer/vm_fixture.py": "785bf49d536290505c1a204caeb7f0d36b9d374874a1253943ef120318691578",
+    "lab/observer/vm_normalizer.py": "5850ec4bbc102728f2306a918acd96340eb990888cab8b483db31572caefc983",
+    "lab/observer/vm_planted_writer.py": "81bad0e1a9e52b989f446ca0f813226942edc23ecdd8a837e5ae2097bf8c2205",
+    "lab/observer/vm_syncwitness.bt": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+    "lab/observer/vm_syncwitness.py": "937d65054c18c82feb7cf7793754661d113542b6cca4ec6edc0b5b8cb6dd7451",
+    "lab/verify/CX-VOBS7/review_round10.py": "a2e7d5c215ac56cfc5fdb4f8583c47054f778ab165e3c99751492112cf6b4401",
+    "lab/verify/CX-VOBS7/review_round9.py": "43d35c27b3f897564d91f6aa0c56c74798c3970dd7c981530787f318917d0191",
+    "lab/verify/CX-VOBS7/run_round10.py": "a639085062648882fe68d5fccc2ae4e9e86b7fafe83b9c7d43ec460ecab29678"
+  },
+  "sourceUnchanged": true,
+  "startedNs": 1794230030115559000
+}

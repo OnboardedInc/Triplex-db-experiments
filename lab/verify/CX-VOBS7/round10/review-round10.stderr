@@ -1,0 +1,39 @@
+test_file_sync_exactness_and_interval_boundaries (__main__.Independent.test_file_sync_exactness_and_interval_boundaries) ... ok
+test_multiple_acks_keep_both_proven_and_unproven_codes (__main__.Independent.test_multiple_acks_keep_both_proven_and_unproven_codes) ... FAIL
+test_w0_wrong_clock_can_pass_with_small_offset_or_transport_delay (__main__.Independent.test_w0_wrong_clock_can_pass_with_small_offset_or_transport_delay) ... FAIL
+test_wal_tail_without_timestamp_must_not_be_silently_excluded (__main__.Independent.test_wal_tail_without_timestamp_must_not_be_silently_excluded) ... FAIL
+
+======================================================================
+FAIL: test_multiple_acks_keep_both_proven_and_unproven_codes (__main__.Independent.test_multiple_acks_keep_both_proven_and_unproven_codes)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/review_round10.py", line 32, in test_multiple_acks_keep_both_proven_and_unproven_codes
+    self.assertEqual(set(result['perCommit'][0]['codes']),
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        {'ACK-BEFORE-DURABLE', 'DURABILITY-UNPROVEN'})
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Items in the second set but not the first:
+'DURABILITY-UNPROVEN'
+
+======================================================================
+FAIL: test_w0_wrong_clock_can_pass_with_small_offset_or_transport_delay (__main__.Independent.test_w0_wrong_clock_can_pass_with_small_offset_or_transport_delay)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/review_round10.py", line 93, in test_w0_wrong_clock_can_pass_with_small_offset_or_transport_delay
+    self.assertFalse(cases[1]['result']['pass'], 'W0 declares a 500us boot-clock substitution acceptable')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: True is not false : W0 declares a 500us boot-clock substitution acceptable
+
+======================================================================
+FAIL: test_wal_tail_without_timestamp_must_not_be_silently_excluded (__main__.Independent.test_wal_tail_without_timestamp_must_not_be_silently_excluded)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/review_round10.py", line 52, in test_wal_tail_without_timestamp_must_not_be_silently_excluded
+    self.fail('normalizer accepts un-timestamped WAL tails in a witnessed VM run')
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: normalizer accepts un-timestamped WAL tails in a witnessed VM run
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.100s
+
+FAILED (failures=3)
