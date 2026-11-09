@@ -133,7 +133,9 @@ class W4Refusals(unittest.TestCase):
         self.assertTrue(r['pass'],r);self.assertTrue(r['walAbsentConfirmed']);self.assertEqual(r['unwitnessedLostCount'],20)
         # the receipt says absent but a WAL arrived anyway, or the receipt lists a WAL nobody copied: both refuse
         self.assertEqual(self.judge(trace,wal=wal,mode='off',collection=absent)['refusal'],'COPY-INCOMPLETE')
-        self.assertEqual(self.judge(trace,wal=b'',mode='off',collection=collection_for(db,wal))['refusal'],'COPY-FAILED')
+        listed=collection_for(db,wal)
+        self.assertEqual(j.judge_trial('off',trace,stream_text(ends,dev,wino,mino,dino,partial=False),db,None,CG,listed)['refusal'],'COPY-FAILED')   # no local file
+        self.assertEqual(self.judge(trace,wal=b'',mode='off',collection=listed)['refusal'],'COPY-INCOMPLETE')                                      # an empty file where the volume has bytes
     def test_missing_main_database_and_malformed_records_refuse(self):
         db,wal,ends,dev,wino,mino,dino=self.parts();trace=trace_text(ends,dev,wino,mino,dino,0,partial=False);stream=stream_text(ends,dev,wino,mino,dino,partial=False)
         self.assertEqual(j.judge_trial('off',trace,stream,None,wal,CG,collection_for(db,wal))['refusal'],'COPY-FAILED')
@@ -141,5 +143,31 @@ class W4Refusals(unittest.TestCase):
             self.assertIn(j.judge_trial('off',trace,stream,db,wal,CG,bad)['refusal'],('COPY-FAILED','COLLECTION-RECEIPT-INVALID'))
         row=collection_for(db,wal);row['receipt']['listing']=['broker.db'];self.assertEqual(j.judge_trial('off',trace,stream,db,wal,CG,row)['refusal'],'COLLECTION-RECEIPT-INVALID')
 
+
+    # ---- round 18 ----
+    def end_trace(self,synced=20,drop_last=0,z=None,counts=None):
+        lines=self.trace(synced).splitlines()
+        if drop_last:lines=lines[:-drop_last]
+        zt=z if z is not None else 100+21*10+50
+        return '\n'.join(lines)+'\nSW1|Z|%d\n'%zt+''.join('@n[%d]: %d\n'%(c,v) for c,v in (counts if counts is not None else {0:self.total(synced)}).items())
+    def total(self,synced):return 20+synced   # one W per commit plus one F per synced commit, all on CPU 0
+    def test_R17_F1_received_end_counters_are_reconciled(self):
+        ok=self.judge(self.end_trace());self.assertTrue(ok['pass'],ok);self.assertTrue(ok['traceDetached'])
+        # the reviewer's case: the last sync is missing but the final count still says 40
+        lost=self.judge(self.end_trace(drop_last=1,counts={0:40}));self.assertEqual(lost['refusal'],'TRACE-INCOMPLETE');self.assertIn('final count 40 != 39',' '.join(lost['problems']));self.assertNotIn('witnessedLostCount',lost)
+        self.assertEqual(self.judge(self.end_trace(counts={0:41}))['refusal'],'TRACE-INCOMPLETE')
+        self.assertIn('count 3 but no records',' '.join(self.judge(self.end_trace(counts={0:40,5:3}))['problems']))
+        self.assertTrue(self.judge(self.end_trace(counts={0:40,5:0}))['pass'])
+        self.assertIn('final count None != 40',' '.join(self.judge(self.end_trace(counts={}))['problems']))
+    def test_R17_F1_detach_timestamp_must_not_precede_events(self):
+        r=self.judge(self.end_trace(z=1));self.assertEqual(r['refusal'],'TRACE-INCOMPLETE');self.assertIn('event after detach',' '.join(r['problems']))
+    def test_a_trace_without_an_end_record_is_still_judged_on_its_prefix(self):
+        self.assertTrue(self.judge(self.trace(15))['pass']);self.assertFalse(self.judge(self.trace(15))['traceDetached'])
+    def test_R17_F2_a_receipted_zero_byte_wal_is_present_and_empty(self):
+        db,wal,ends,dev,wino,mino,dino=self.parts();trace=trace_text(ends,dev,wino,mino,dino,0,partial=False);empty=collection_for(db,b'')
+        r=self.judge(trace,wal=b'',mode='off',collection=empty);self.assertTrue(r['pass'],r);self.assertFalse(r['walAbsentConfirmed']);self.assertEqual(r['unwitnessedLostCount'],20)
+        self.assertEqual(j.verify_collection(empty,{'broker.db':db,'broker.db-wal':b''}),(True,None,None,False))
+        self.assertEqual(j.verify_collection(empty,{'broker.db':db,'broker.db-wal':None})[1],'COPY-FAILED')           # None is a missing local file, b'' is an empty one
+        self.assertEqual(j.verify_collection(empty,{'broker.db':db,'broker.db-wal':b'x'})[1],'COPY-INCOMPLETE')
 
 if __name__=='__main__':unittest.main()

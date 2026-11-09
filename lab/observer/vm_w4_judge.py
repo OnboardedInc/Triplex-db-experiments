@@ -49,6 +49,17 @@ def prefix_problems(scan,stderr=''):
         ordered=[bucket[seq] for seq in sorted(bucket)]
         if any(x>y for x,y in zip(ordered,ordered[1:])):problems.append('CPU '+str(cpu)+' time regressed within its sequence')
     if scan.low is not None and scan.begin is not None and scan.low<scan.begin['ts']:problems.append('event before attach')
+    # [EXP-OBS01-R18] Why (R17-F1): "no END after a crash" is an absent suffix, but an END that DID arrive is evidence and must be consistent with what was received. The detach record must not precede any event, and every
+    # received final per-CPU count must equal the number of records received for that CPU (a count for a CPU with no records must be zero; a CPU with records and no count line refuses: a half-received END is not an END).
+    # Without a detach record only the observed prefix counts. Rejected: ignoring Z/@n when present (a final count of 40 with 39 events received concealed a lost covering sync and a witnessed loss).
+    if scan.end is not None:
+        if scan.high is not None and scan.end['ts']<scan.high:problems.append('event after detach (detach timestamp precedes a received event)')
+        if scan.begin is not None and scan.end['ts']<scan.begin['ts']:problems.append('detach before attach')
+        for cpu,bucket in sorted(scan.cpus.items()):
+            got=scan.counts.get(cpu)
+            if got!=len(bucket):problems.append('lost events: CPU '+str(cpu)+' final count '+str(got)+' != '+str(len(bucket))+' records received')
+        for cpu,count in sorted(scan.counts.items()):
+            if count!=0 and cpu not in scan.cpus:problems.append('lost events: CPU '+str(cpu)+' final count '+str(count)+' but no records received')
     for line in str(stderr).splitlines():
         found=re.search(r'\blost\s+([0-9]+)\s+events?\b',line,re.I)
         if found and int(found[1])>0:problems.append('bpftrace reported lost events: '+line[:80])
@@ -56,7 +67,7 @@ def prefix_problems(scan,stderr=''):
     return problems
 
 def read_trace(text,stderr=''):
-    """Complete lines of a partial sync-witness/1 trace through the same WitnessScan state machine, then the prefix rules above (no finish(): a crash leaves no Z record and no @n counts)."""
+    """Complete lines of a partial sync-witness/1 trace through the same WitnessScan state machine, then the prefix rules above (no finish(): a crash normally leaves no Z record and no @n counts; if they did arrive they are reconciled, see prefix_problems)."""
     scan=n.WitnessScan(True);lines=text.split('\n')[:-1]
     for number,line in enumerate(lines,1):scan.feed(line,number)
     if scan.begin is None:raise n.WitnessError('TRACE-INCOMPLETE','no start record in the received trace')
@@ -111,7 +122,7 @@ def judge_trial(mode,trace_text,stream_text,db_bytes,wal_bytes,cgroup_id,collect
     def refuse(code,detail):
         problems.append(code+': '+detail);out.update({'pass':False,'refusal':code});return out
     if collection is not None:
-        ok,code,detail,wal_absent=verify_collection(collection,{'broker.db':db_bytes or None,'broker.db-wal':wal_bytes or None})
+        ok,code,detail,wal_absent=verify_collection(collection,{'broker.db':db_bytes,'broker.db-wal':wal_bytes})   # [EXP-OBS01-R18] b'' (a present empty file) and None (no local file) stay different (R17-F2)
         if not ok:return refuse(code,detail)
         out['collection']='verified';out['walAbsentConfirmed']=wal_absent
     elif not wal_bytes:return refuse('WAL-ABSENCE-UNPROVEN','no WAL bytes and no collection receipt showing the WAL absent on the recovered volume')
