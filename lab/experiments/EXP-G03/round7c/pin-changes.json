@@ -1,0 +1,37 @@
+{
+ "base": "9c4b68aa",
+ "acceptanceChanged": false,
+ "driverBundleChanged": false,
+ "driverBundleNote": "lab/bench/ns-driver/** and observer.py are byte-identical to 9c4b68aa, so the esbuild driver bundle hash is unchanged by this round (the round 7a change still awaits re-pin)",
+ "changes": [
+  {
+   "path": "lab/bin/box.mjs",
+   "oldSha256": "96b9d9cc9485ef2fcfd13362a69a5e126a0cbf36bb93cdf978402908d89411c1",
+   "newSha256": "589028dca91ca8c90865994dd483df4694999360f9485520c9c963296b1dc906",
+   "contractInputPin": null,
+   "protectedEvaluatorClosure": true
+  },
+  {
+   "path": "lab/bin/ns-run.mjs",
+   "oldSha256": "93f2267c8e9682bfc9f922be332b288f1be5be94a17bdbf8400c72f17f897ef4",
+   "newSha256": "aa99c4fae29d72f2558e47fb14e6abcf12748caf7f21fd45a9fbe4e87fcffd82",
+   "contractInputPin": null,
+   "protectedEvaluatorClosure": false
+  },
+  {
+   "path": "lab/experiments/EXP-G03/ns/smoke.mjs",
+   "oldSha256": "7ac90c5d7fe4cb6056308bba41ea9344f307363afdd72d0b17a181584816bd7b",
+   "newSha256": "a5d8cecd5fd48b3abd1b1fcdd4d71c75a177dfc83bacb067b51c58f83b86aaa5",
+   "contractInputPin": null,
+   "protectedEvaluatorClosure": false
+  },
+  {
+   "path": "lab/experiments/EXP-G03/ns/exclusive.mjs",
+   "oldSha256": "4290c09a8a66cb36782e0572e717e131974567bae978912e414486874cfad71e",
+   "newSha256": "cef7f4672a9e78198f1b4dc0890d748ee62bdd1c6c8c7c71724b01c861359d4f",
+   "contractInputPin": null,
+   "protectedEvaluatorClosure": false
+  }
+ ],
+ "note": "exclusive.mjs new hash is at 733daf5c (rule 10 fix); the full and evaluator suites ran at 87c86a10 where exclusive.mjs differed only by that line. box.mjs is in claim.mjs EVALUATOR_FILES: contract 0.4.1 must re-pin it together with the round 7a driver bundle."
+}
