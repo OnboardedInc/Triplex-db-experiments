@@ -194,3 +194,6 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   correctly because XTDB reports a mixed-width integer column as #{:i32 :i64}, not :union); then P5 A1 at 1k; then G03's slot run; then RT01
   live G2 and G6; then W02 live GS on xtdb; then unpark tx2-datomic-dev for EXP-DA04. P2Q round 10 review stopped by the Codex content filter
   after writing its verdict (FIX-FIRST, F1 and F2); its report went to the builder as is.
+- GS12F accepted (verify/GS12F f5664a1: every functional check passed; its one blocker, being behind main, closed at 2fdf491: lab/acceptance
+  diff against main empty, 854 core and 55 bounds tests pass). It moves pinned core files, so it merges with contract 0.3.14, which re-pins
+  them (after 0.3.13 lands). Queue for 0.3.14: GS12F; QNODELAY if accepted; any other accepted branch that moves pins.
