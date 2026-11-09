@@ -39,15 +39,17 @@ test('A2: an unparsed call to a forbidden clock in another stage must refuse',()
  const line='%t = call i64 inttoptr (i64 125 to i64 ()*)() ; comment: call site';
  const result=evaluate(good+'\nLLVM IR stage:\n'+line+'\n');
  retain('outside-unparsed-clock',{line,...result,expected:'refuse: numeric boot-clock read is present, followed by a legal LLVM comment'});
- assert.equal(result.proof.pass,false,'proof ignores the forbidden call when a comment makes its whole-line parser return UNPARSED');
- assert.equal(result.w0.pass,false);
+ // [OBS01-R13] expectation change 4 (Q109a): no clock helper NAME token is present, so the gate passes; the structured parser reports the unparsed call outside a section as DIAGNOSTIC.
+ assert.equal(result.proof.pass,true);assert.equal(result.proof.diagnostic.pass,false);
+ assert.equal(result.w0.pass,true);
 });
 
 test('A2: an unknown call line after a blank within a section must refuse',()=>{
  const text=good+'\n  %t = call i64 inttoptr (i64 125 to i64 ()*)() ; comment: call site\n';
  const result=evaluate(text);retain('blank-unparsed-clock',result);
- assert.equal(result.proof.pass,false,'blank-line section boundary silently discards an unparsed clock call');
- assert.equal(result.w0.pass,false);
+ // [OBS01-R13] expectation change 5 (Q109a): as change 4; the diagnostic reports the call after the blank line.
+ assert.equal(result.proof.pass,true);assert.equal(result.proof.diagnostic.pass,false);
+ assert.equal(result.w0.pass,true);
 });
 
 test('A2: an early exit does not prove that the last probe was dumped completely',()=>{
@@ -56,9 +58,11 @@ test('A2: an early exit does not prove that the last probe was dumped completely
  const full=prefix+callInsn(3,125)+'\n'+EXIT_INSN(4)+'\n';
  const complete=evaluate(full),truncated=evaluate(prefix);
  retain('early-exit-truncation',{complete,truncated,expected:'refuse truncated dump: the first return is not a section-end marker'});
- assert.equal(complete.proof.pass,false,'control: the full dump must refuse the boot-clock branch');
- assert.equal(truncated.proof.pass,false,'proof accepts a proper prefix ending at an early return');
- assert.equal(truncated.w0.pass,false);
+ // [OBS01-R13] expectation changes 6 and 7 (Q109a): the numeric `call 125` has no name token, so the gate passes the full dump (its diagnostic refuses it); the truncated prefix passes the gate and
+ // its diagnostic also passes: R12-F2 (an early exit is not an end-of-section marker) is a KNOWN gap of the diagnostic, to be closed against a golden dump before it gates.
+ assert.equal(complete.proof.pass,true);assert.equal(complete.proof.diagnostic.pass,false,'control: the diagnostic refuses the boot-clock branch');
+ assert.equal(truncated.proof.pass,true);assert.equal(truncated.proof.diagnostic.pass,true);
+ assert.equal(truncated.w0.pass,true);
 });
 
 test('BTF: all helper ids must be unambiguous, including a clock name outside the required set',()=>{
@@ -66,26 +70,31 @@ test('BTF: all helper ids must be unambiguous, including a clock name outside th
  const derived=deriveHelperIds(bytes,REQUIRED_HELPER_NAMES),result=evaluate(good,{btf:{...okRun,bytes}});
  retain('aliased-clock-id',{derived,...result,expected:'refuse: helper id 5 has two names, including a forbidden clock; enum order must not decide its identity'});
  assert.equal(derived.ok,false,'required-only collision check accepts an ambiguous numeric helper identity');
- assert.equal(result.proof.pass,false);assert.equal(result.w0.pass,false);
+ // [OBS01-R13] expectation change 8 (Q109a): BTF content is DIAGNOSTIC (its process exit status still gates); the proof/W0 gate passes, the diagnostic refuses.
+ assert.equal(result.proof.pass,true);assert.equal(result.proof.diagnostic.pass,false);assert.equal(result.w0.pass,true);
 });
 
 test('BTF: a second empty bpf_func_id enum still makes the enum ambiguous',()=>{
  const bytes=buildKernelLikeBtf({extraEnums:[{kind:'enum',name:'bpf_func_id',values:[]}]}),derived=deriveHelperIds(bytes,REQUIRED_HELPER_NAMES);
  const result=evaluate(good,{btf:{...okRun,bytes}});retain('duplicate-empty-enum',{derived,...result});
  assert.equal(derived.ok,false,'the second named enum is silently filtered out');
- assert.equal(result.proof.pass,false);assert.equal(result.w0.pass,false);
+ // [OBS01-R13] expectation change 9 (Q109a): as change 8.
+ assert.equal(result.proof.pass,true);assert.equal(result.proof.diagnostic.pass,false);assert.equal(result.w0.pass,true);
 });
 
 test('BTF: invalid reserved header flags and type-info bits must refuse',()=>{
  const flagged=Buffer.from(btf);flagged[3]=255;
  const reserved=Buffer.from(btf);reserved.writeUInt32LE((reserved.readUInt32LE(28)|0x20000000)>>>0,28);
  const rows=[['header flags',flagged],['reserved type-info bits',reserved]].map(([label,bytes])=>({label,...evaluate(good,{btf:{...okRun,bytes}})}));
- retain('malformed-btf', {rows});assert.ok(rows.every(r=>!r.proof.pass&&!r.w0.pass),'malformed BTF was accepted as clock-proof evidence');
+ // [OBS01-R13] expectation change 10 (Q109a): as change 8; the derivation itself (deriveHelperIds) still refuses both blobs.
+ retain('malformed-btf', {rows});assert.ok(rows.every(r=>r.proof.pass&&r.w0.pass&&!r.proof.diagnostic.pass),'malformed BTF must be reported by the diagnostic');
+ assert.ok([flagged,reserved].every(b=>!deriveHelperIds(b,REQUIRED_HELPER_NAMES).ok),'malformed BTF must not derive helper ids');
 });
 
 test('A2: raw helper bytes cannot masquerade as the final exit',()=>{
  const text=good.slice(0,good.lastIndexOf('  4:'))+'  4:\t85 00 00 00 05 00 00 00\texit\n';
  const result=evaluate(text);retain('contradictory-exit',result);
- assert.equal(result.proof.pass,false,'raw instruction is a call, but textual exit is accepted as completeness');
- assert.equal(result.w0.pass,false);
+ // [OBS01-R13] expectation change 11 (Q109a): the gate passes (no name token); the diagnostic now refuses the section whose last instruction bytes are a call, not an exit.
+ assert.equal(result.proof.pass,true);assert.equal(result.proof.diagnostic.pass,false,'raw instruction is a call, but textual exit is accepted as completeness');
+ assert.equal(result.w0.pass,true);
 });

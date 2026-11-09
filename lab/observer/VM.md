@@ -413,3 +413,20 @@ Supersedes steps 2 and 3 of "R10-F3" above. `clockPrimitiveVerdict` (`lab/bin/cl
 4. **Helper ids from the running kernel.** The same pinned image runs `base64 -w0 /sys/kernel/btf/vmlinux` (read-only mount, entrypoint override); `lab/bin/btf-helpers.mjs` is a strict BTF reader (header, contiguous sections,
    string section, every type record, ENUM and ENUM64) that extracts `enum bpf_func_id`. W0 refuses if the BTF is unreadable, the enum is missing or ambiguous, a needed helper name is absent, or two needed names share an id.
    The enum is written to `<W0 out>/w0-bpf-func-id-enum.json`; the BTF itself is identified by its sha256 and size.
+
+## Round 13: threat model for the clock proof, and what W0 gates on (pending ruling Q109a)
+
+**Pending ruling Q109a (orchestrator, recorded here and in `lab/experiments/EXP-OBS01/REPORT.md` Round 13; not yet ruled by Sam).** The compiled dump is produced by the lab-trusted witness image
+(pinned Ubuntu bpftrace 0.20.2) from the lab-pinned `.bt` source. No candidate can write or shape it. The clock proof therefore does not have to survive adversarially constructed dumps.
+It supersedes the Round 12 list above as to what GATES. The W0 clock step (`clockPrimitiveVerdict`, `lab/bin/clock-proof.mjs`) passes only when all of these hold:
+
+1. **Static source check.** Every time read in the pinned `.bt` is `nsecs(monotonic)` and there is at least one. A bare `nsecs`, `nsecs(boot|tai|sw_tai)`, `nsecs_*`, `jiffies`, `elapsed`, `strftime`, `time(`, `ktime*` or `uptime` refuses (`sourceTimeSites`).
+2. **Identity and clean processes.** The image's `sha256sum` of the mounted `.bt` equals the harness's hash of the pinned file (and the analysed text hashes to it); `bpftrace --version` prints exactly `bpftrace v0.20.2`;
+   the version, hash, BTF-read and compile processes each exit 0 with no signal, timeout or spawn error (A1, unchanged).
+3. **Dump recorded in full, strictness-only scan.** The compile output is non-empty, is written whole to `<W0 out>/w0-compiled-program.txt` (hash `dumpFileSha256`; the verdict carries `compiledSha256` of the text it scanned),
+   and contains no forbidden clock helper NAME token anywhere (any stage, comment, stderr, any letter case): `bpf_ktime_get_boot_ns`, `ktime_get_boot`, `bpf_ktime_get_coarse_ns`, `bpf_ktime_get_tai_ns`, `bpf_jiffies64`
+   and `BPF_FUNC_ktime_get_boot_ns`, `BPF_FUNC_ktime_get_coarse_ns`, `BPF_FUNC_ktime_get_tai_ns`, `BPF_FUNC_jiffies64` (`FORBIDDEN_CLOCK_TOKENS`, a case-insensitive substring match).
+
+**DIAGNOSTIC, not gating.** The round 12 structured parser (per-probe sections, allow-list, UNPARSED-CALL, helper ids from the kernel BTF `enum bpf_func_id`, per-site count) still runs and its result is in the verdict as
+`diagnostic: {pass, reasons, adopted}` (and the existing `sections`, `helperCalls`, `forbidden`, `unparsedCalls`, `helperIds`). It never changes `pass`. A later round may make it gating once a real W0 dump is stored as a golden file and reviewed.
+A numeric helper call without a name token (for example `call 125`) therefore does not block W0; the diagnostic reports it. The first W0 run's dump and diagnostic are what the reviewer reads to decide that promotion.

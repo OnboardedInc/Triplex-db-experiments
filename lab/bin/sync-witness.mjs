@@ -9,7 +9,7 @@ import {REPO,ENGINE_DIR,LOCKS,atomicJson,defaultHolder,docker,dockerStats,inspec
 import {harden,pinImage,remove,reserve,vmAvailable,waitFile} from './vm-observer.mjs';
 import {BPFTRACE_VERSION,COMPILE_FLAGS,COMPILE_PLACEHOLDER_ARGS,REQUIRED_HELPER_NAMES,clockPrimitiveVerdict,sha256Hex} from './clock-proof.mjs';
 import {deriveHelperIds as deriveBtfHelperIds,parseBtfEnums} from './btf-helpers.mjs';
-export {BPFTRACE_VERSION,COMPILE_FLAGS,HELPER_ALLOW_LIST,clockPrimitiveVerdict,extractSections,parseCallLine,parseCompiledHelpers,sourceHelperNeeds,sourceProbes,sourceTimeSites} from './clock-proof.mjs';
+export {BPFTRACE_VERSION,COMPILE_FLAGS,FORBIDDEN_CLOCK_TOKENS,HELPER_ALLOW_LIST,clockPrimitiveVerdict,forbiddenClockTokens,extractSections,parseCallLine,parseCompiledHelpers,sourceHelperNeeds,sourceProbes,sourceTimeSites} from './clock-proof.mjs';
 export {deriveBtfHelperIds,parseBtfEnums};
 
 export const PROGRAM=path.join(REPO,'lab/observer/vm_syncwitness.bt');
@@ -171,7 +171,8 @@ export function mapKeysVerdict({configured}){
 }
 
 /** W0 as a whole: every item recorded and every check passing. facts come from windowW0. [EXP-OBS01-R11] The clock step passes on the program proof
- * (clockPrimitiveVerdict) only; the observational transport check is recorded and blocks W0 only when it is INCONSISTENT (a contradiction), never when
+ * (clockPrimitiveVerdict) only, and since R13 (Q109a) that proof gates on the static source check, the pinned hash and version, clean process statuses and the forbidden-token
+ * scan of the dump (the structured parse is `diagnostic`, not gating); the observational transport check is recorded and blocks W0 only when it is INCONSISTENT (a contradiction), never when
  * INCONCLUSIVE, and never substitutes for the proof. */
 export function judgeW0(facts){
  const transport=clockVerdict(facts.clockSamples),checks={clock:clockPrimitiveVerdict(facts.clockProgram),
@@ -356,13 +357,14 @@ async function clockProgramStep(ctx){
  const btfBytes=Buffer.from(btfRun.stdout.replace(/\s+/g,''),'base64');
  const compiled=await bpftraceOnce(ctx,'compile',[...COMPILE_FLAGS,'/program/vm_syncwitness.bt',...COMPILE_PLACEHOLDER_ARGS],{mounts:bind,timeoutMs:120000});
  const after=fs.readFileSync(PROGRAM);
- const dumpPath=path.join(ctx.out,'w0-compiled-program.txt');fs.writeFileSync(dumpPath,'--- stdout ---\n'+compiled.stdout+'\n--- stderr ---\n'+compiled.stderr+'\n');
+ const dumpPath=path.join(ctx.out,'w0-compiled-program.txt'),dumpFile='--- stdout ---\n'+compiled.stdout+'\n--- stderr ---\n'+compiled.stderr+'\n';fs.writeFileSync(dumpPath,dumpFile);
+ const dumpFileSha256=sha256Hex(Buffer.from(dumpFile));   // [EXP-OBS01-R13] Why (Q109a gate 3): the full dump is recorded with its hash; the verdict carries the hash of the exact text it scanned (compiledSha256), this is the hash of the file. Rejected: embedding the dump in the verdict (may exceed 1 MB, rule 9c).
  const status=r=>({exitCode:r.exitCode,signal:r.signal,timedOut:r.timedOut,error:r.error});
  const facts={expectedSourceSha256:sha256Hex(after)===expected?expected:null,mountedSourceSha256:(/^([0-9a-f]{64})\s/.exec(hashed.stdout)??[])[1]??null,sourceText:before.toString('utf8'),versionOutput:version.stdout,
   versionRun:status(version),hashRun:status(hashed),btf:{...status(btfRun),bytes:btfBytes},compiled};
  const derived=deriveBtfHelperIds(btfBytes,REQUIRED_HELPER_NAMES),enumPath=path.join(ctx.out,'w0-bpf-func-id-enum.json');
  fs.writeFileSync(enumPath,JSON.stringify({btfSha256:derived.btfSha256,btfBytes:derived.btfBytes,typeCount:derived.typeCount,enumKind:derived.enumKind,ok:derived.ok,reasons:derived.reasons,ids:derived.ids},null,1)+'\n');
- return {facts,image:ctx.bpftrace,dumpPath,enumPath,exitCodes:{version:version.exitCode,sha:hashed.exitCode,btf:btfRun.exitCode,compile:compiled.exitCode},versionStderr:version.stderr};
+ return {facts,image:ctx.bpftrace,dumpPath,dumpFileSha256,enumPath,exitCodes:{version:version.exitCode,sha:hashed.exitCode,btf:btfRun.exitCode,compile:compiled.exitCode},versionStderr:version.stderr};
 }
 
 /** R49 W0 clock step: the clock probe container streams CK lines through vm_clockcheck.py running in the VM, which stamps its own CLOCK_MONOTONIC on receipt. */
@@ -398,7 +400,7 @@ async function windowW0(ctx){
  const all={facts,listing,tracepointAttach,clock:{status:clock.status,stderr:clock.stderr,unparsed:clock.unparsed},clockProgram:program.facts,attach,
   paranoid:Number.parseInt(facts.perfEventParanoid,10),ext4BtfPresent:facts.ext4BtfPresent,clockSamples:clock.status===0&&!clock.unparsed?clock.samples:null};
  const verdict=judgeW0(all);
- return {window:'W0',facts,listing,tracepointAttach,clock,clockProgram:{image:program.image,dumpPath:program.dumpPath,enumPath:program.enumPath,exitCodes:program.exitCodes,versionStderr:program.versionStderr,verdict:verdict.checks.clock},attach,verdict,pass:verdict.pass,
+ return {window:'W0',facts,listing,tracepointAttach,clock,clockProgram:{image:program.image,dumpPath:program.dumpPath,dumpFileSha256:program.dumpFileSha256,enumPath:program.enumPath,exitCodes:program.exitCodes,versionStderr:program.versionStderr,verdict:verdict.checks.clock},attach,verdict,pass:verdict.pass,
   claim:'kernel and capability facts; attach under default seccomp with only CAP_BPF and CAP_PERFMON; clock primitive proven from the pinned program hash, bpftrace version and compiled helper calls (nsecs(monotonic) only), with an observational transport check against local CLOCK_MONOTONIC/CLOCK_BOOTTIME references recorded as consistent, inconclusive or inconsistent; perf_event_paranoid, peak memory, ext4 built in and map keys recorded; D<ack bracket for 200 FULL commits'};
 }
 async function windowW1(ctx){

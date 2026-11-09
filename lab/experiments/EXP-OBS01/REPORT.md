@@ -1649,3 +1649,101 @@ No `lab/acceptance` path is pinned to any file changed here. Changed or new path
 - `clockProgramStep` (the BTF read container, the status recording, the enum file) and `bpftraceOnce` changes are syntax-checked and covered by a static wiring test only; they never ran against Docker.
 - The BTF reader ran only on blobs constructed byte by byte, never on a real vmlinux BTF (size, kind mix, section layout unverified).
 - The Dockerfile is still not built; B9 and CR-NS `claim.mjs` still not built; `probe_round9.py` and earlier durable evidence not re-run.
+
+## Round 13: the clock proof gates on the static source check, identity and the token scan; the structured parser is DIAGNOSTIC (pending ruling Q109a)
+
+Builder Claude Sonnet 5.5, from `exp/OBS01-observer` at `2741ea3b`. Offline only: no VM, docker, colima, network, pull or install. Heavy runs went through `lab/bin/heavy.mjs --label OBS01-R13`.
+Task: the round 12 review `VERIFY-round12.md` (R12-F1, R12-F2, R12-F3) and the orchestrator decision below.
+
+### The decision (recorded as pending ruling Q109a; Sam has not ruled)
+
+**Threat model.** The compiled dump is produced by the lab-trusted witness image (pinned Ubuntu bpftrace 0.20.2) from the lab-pinned `.bt` source. No candidate can write or shape it, so the proof does not have to survive adversarially constructed dumps.
+The W0 clock step therefore gates on exactly three things (also in `lab/observer/VM.md`, "Round 13"):
+
+1. **Static source check.** Every time read in the pinned `.bt` is `nsecs(monotonic)`; no bare `nsecs`, `elapsed`, `jiffies` or other clock builtin (`sourceTimeSites`; this existed, it is now the gate, and its refusal list was widened, divergence 2).
+2. **Pinned hash and version, clean statuses.** Hash computed by the image equals the harness's hash of the pinned file; version exactly `bpftrace v0.20.2`; compile, `--version`, `sha256sum` and BTF-read each exit 0 with no signal, timeout or spawn error (A1, kept).
+3. **Compiled dump recorded in full with its hash, strictness-only scan.** Any forbidden clock helper NAME token anywhere in the dump refuses: `bpf_ktime_get_boot_ns`, `ktime_get_boot`, `bpf_ktime_get_coarse_ns`, `bpf_ktime_get_tai_ns`, `bpf_jiffies64` and their `BPF_FUNC_` forms
+   (`FORBIDDEN_CLOCK_TOKENS`; case-insensitive substring match over stdout and stderr, every stage). The full dump goes to `<W0 out>/w0-compiled-program.txt` with `dumpFileSha256`; the verdict carries `compiledSha256` and `compiledBytes` of the scanned text.
+
+The round 12 structured parser (sections, allow-list, UNPARSED-CALL, kernel-BTF helper ids, per-site count) is kept and recorded as `diagnostic: {pass, reasons, adopted}`, never gating, until a real W0 dump is stored as a golden file and reviewed; a later round may then make it gating against that golden.
+
+### What changed
+
+| Item | Change |
+| --- | --- |
+| Gate vs diagnostic | `clockPrimitiveVerdict` (`lab/bin/clock-proof.mjs`) returns `pass`/`reasons` from the three gates only, plus `gate` (checks, token list, hits) and `diagnostic`. The old top-level structured fields (`sections`, `helperCalls`, `forbidden`, `unparsedCalls`, `helperIds`, `monotonicCalls`, `referenceNote`) remain. The diagnostic is adopted only when all four processes completed (this also closes the A1 qualification in VERIFY-round12: version/hash failure no longer leaves parsed fields populated). `judgeW0` is unchanged and follows `checks.clock.pass`. |
+| R12-F3 (`lab/bin/btf-helpers.mjs`) | Counts EVERY enum named `bpf_func_id` (empty included) before anything else; an empty enum refuses; any two enumerators sharing an id refuse (all entries, not only required names, so enum order cannot decide an id's identity); header flags (byte 3) must be 0; type-info bits 16-23 and 29-30 must be 0 (`BTF_INFO_MASK` 0x9f00ffff, the kernel's). Message change: `has N non-empty enum` became `has N enum` / `enum bpf_func_id is empty`. |
+| R12-F1, R12-F2 | Addressed by the demotion (they no longer decide W0). Cheap diagnostic improvements: an unparsed call-like line outside a chosen section (any stage, and after a blank line) is reported as UNPARSED-CALL; `isExit` now lets raw instruction bytes decide (a textual `exit` over call bytes is not an exit). Not fixed: an early `exit` followed by end of dump is still not seen as truncation by the diagnostic (it needs section lengths or branch targets). |
+| Harness | `clockProgramStep` also records `dumpFileSha256` (hash of the dump file it writes). `sync-witness.mjs` re-exports `FORBIDDEN_CLOCK_TOKENS` and `forbiddenClockTokens`. |
+
+### Tests
+
+| Suite | Result |
+| --- | --- |
+| `test_vm.py` | 14/14 |
+| `test_syncwitness.py` | 18/18 |
+| `test_round10.py` | 40/40 |
+| `test_round11.py` | 20/20 |
+| `node --test lab/observer/test_engine.mjs` | 25/25 (expectations changed, divergence 3) |
+| `node --test lab/observer/test_round12.mjs` | 24/24: the 18 round 12 tests (structured-parser cases now assert the DIAGNOSTIC via `diagnoses`, and that the gate follows the token scan) plus 6 new: gate (1) with ten clock-builtin source mutations, gate (3) over 9 tokens x 6 placements (stdout stage, mid-line, stderr, upper case, before sections, inside a section header) through proof and `judgeW0`, numeric-only passes the gate, the diagnostic split and dump hash, the R12-F1/F2 fixtures as diagnostics, R12-F3 (alias in either order, duplicate empty enum, header flags, reserved bits 16/23/29/30), harness wiring |
+| reviewer `review_round9.py` | 11/11 (output to a scratch dir) |
+| reviewer `review_round10.py` | 4/4 (scratch dir) |
+| reviewer `review_round11.mjs` | 5/5 (3 expectations changed, divergence 4; output redirected to a scratch dir) |
+| reviewer `review_round12.mjs` | 8/8 (7 expectations changed, divergence 4; output redirected to a scratch dir) |
+
+Mutation spot checks (each failed the new tests, then was reverted byte for byte): the forbidden-token gate switched off (3 failures); the static source clock check switched off (1 failure).
+The retained reviewer evidence under `lab/verify/CX-VOBS7/round11/` and `round12/` was not rewritten: the edited fixtures were run with their output paths redirected, so those directories still hold the round 11 and round 12 review results.
+
+### Divergences from the brief (all of them)
+
+1. **Nonempty garbage passes the gate.** Because the scan is strictness-only, a non-empty dump with no forbidden name token passes gate (3), including an error message that exited 0 (`error: unknown option -d`). The diagnostic reports it (`section not found`). Only an EMPTY dump or a nonzero/killed process refuses.
+   This is the direct consequence of the decision and is the main residual risk if the trusted-image assumption is wrong. A numeric-only call (`call 125`) with no name token likewise passes.
+2. **Widened static source check.** `sourceTimeSites` now also refuses `nsecs_*`, `jiffies*` (not only bare `jiffies`), `ktime*` and `uptime` identifiers (in addition to bare `nsecs`, `nsecs(boot|tai|sw_tai)`, `elapsed`, `strftime`, `time(`). The pinned source passes. Constructs the allow-list derivation does not model
+   (`comm`, `pid`, `str`, `hist`, `count`, `system`, comma attach lists, ...) used to refuse W0; they are now diagnostic only, since they feed only the allow-list. Clock-bearing words among them stay gating through the source check.
+3. **Builder test expectations changed** (`test_round12.mjs`, `test_engine.mjs`), each because a former gate refusal is now a diagnostic: in `test_round12.mjs` every `refuses(...)` on a structured-parser, source-derivation or BTF-content case became `diagnoses(...)`
+   (asserts diagnostic fails and the gate/W0 verdict equals "no forbidden token in the dump"); the two BTF enum messages (`has 0 non-empty enum` became `has 0 enum`, empty enum became `is empty`); `refuses('no sections here...')` became a diagnostic assertion.
+   In `test_engine.mjs` the clock-verdict test: 9 `refuse(...)` call sites became `diagnose(...)` (boot/jiffies/coarse/tai reads by id, name-and-id disagreement, unknown id, fewer calls than sites, section not found), the comment-names-`bpf_ktime_get_tai_ns` case stays a gate refusal with the new message
+   (`names a forbidden clock helper`), and the `judgeW0` test now uses a dump with a name token for the "program reads another clock" refusal and adds a numeric-only case that passes W0 with a failing diagnostic.
+4. **Reviewer fixture expectation changes (listed one by one; no input or test body changed, only the asserted outcome).** Each is marked `[OBS01-R13] expectation change N` in the file.
+   `review_round11.mjs`: (1) controls: `'error: unknown option -d'` and `'unparseable compiler output'` now pass the gate (diagnostic fails); the empty dump still refuses. (2) declared forbidden helper ids: the `call <name>#<id>` form still refuses at the gate (name token), the IR and numeric `call <id>` forms pass the gate and fail the diagnostic.
+   (3) partial dump with numeric `call 125`: gate passes, diagnostic fails.
+   `review_round12.mjs`: (4) outside-unparsed-clock (F1): gate and W0 pass, diagnostic fails. (5) blank-unparsed-clock (F1): same. (6) early-exit control (full dump with numeric `call 125`): gate passes, diagnostic fails. (7) early-exit truncated prefix (F2): gate and W0 pass and the diagnostic also passes (known gap, above).
+   (8) aliased clock id (F3): `deriveHelperIds` still refuses (assertion kept), proof and W0 gate pass, diagnostic fails. (9) duplicate empty enum (F3): same. (10) malformed header flags and reserved type-info bits (F3): same, plus an added assertion that `deriveHelperIds` refuses both. (11) contradictory exit (F2): gate passes, diagnostic now refuses.
+   `replay_round11_for_round12.mjs` (a generated copy of `review_round11.mjs` with its output path changed) was regenerated the same way. Every fixture that contains a forbidden helper name token still refuses at W0 (the `call <name>#<id>` forms in change 2; the token test covers all nine tokens).
+5. **BTF content no longer gates; its read status does.** A malformed or ambiguous BTF blob (R12-F3) now fails the diagnostic only; W0 still refuses if the BTF read process fails. The helper ids are not needed by the gate, since the token scan works on names.
+6. **Real output still unobserved.** `-d all`, the dump format and the real BTF are unchanged unknowns (round 12 divergences 1, 2 and 4 apply to the diagnostic only now). The first W0 run's dump should be stored as the golden file for the promotion decision.
+
+### PASS audit (rule 9a): every site that turns observations into a verdict or receipt
+
+| Site | Content | Freshness | Binding |
+| --- | --- | --- | --- |
+| `clockPrimitiveVerdict` gate (1), static source check | the analysed source text has at least one `nsecs(monotonic)` and no other clock builtin/identifier | the source text is read before and after in this W0 step | the text hashes to the pinned hash the image also computed (gate 2); `facts.sourceText` is checked against `expectedSourceSha256` |
+| gate (2), identity and statuses | image `sha256sum` equals the harness hash; version string exact; four processes exit 0, no signal, no timeout, no error | each container is started in this W0 window; statuses come from that run's `docker start -a` | pinned file hash before and after; image digest by the W0 step as in round 11 |
+| gate (3), forbidden token scan | the observed dump bytes contain none of the nine forbidden tokens; dump non-empty. Weakness: absence of tokens is not proof that the text is a real program dump (divergence 1) | the dump is this attempt's compile output | `compiledSha256` and `compiledBytes` of the scanned text; `dumpFileSha256` of the full file; the dump comes from the pinned source and version of gate 2 by being the same step |
+| `diagnostic` | structured parse of the same text (sections, allow-list, UNPARSED-CALL, kernel-BTF ids, per-site count) | same dump, same BTF read | same hashes plus `btfSha256`; does not change any verdict |
+| `deriveHelperIds` / `parseBtfEnums` | strict structure, one non-empty `bpf_func_id`, no id alias, no reserved bits; feeds the diagnostic | BTF read in the same W0 window | `btfSha256`, `btfBytes` |
+| `judgeW0` | unchanged: proof AND transport not INCONSISTENT AND the earlier items | as above | unchanged |
+| test and reviewer assertions edited in this round | see divergences 3 and 4: only the asserted outcomes that the demotion changes | n/a | each edit is marked in the file and listed above |
+
+### Moved source hashes
+
+No `lab/acceptance` path is pinned to any file changed here (`lab/acceptance/RULINGS-PENDING.md` mentions `sync-witness` in prose only); the contract is unchanged. Changed paths (old at `2741ea3b`):
+
+| Path | Old SHA256 | New SHA256 |
+| --- | --- | --- |
+| `lab/bin/clock-proof.mjs` | `e927fa817485c59426d45d4bc262d51f1f3c522f6d233451964a2dfe45749961` | `00fd0de2206464c8c00b13b59bf9d6a07c57e9d0a3f18fc879712834f8cc1183` |
+| `lab/bin/btf-helpers.mjs` | `4553651921b04d42bd99b1978641d4315fb9b54b5a63f8e8312c4a77f8cad166` | `3ea7ed9cf1dd8a056dbd3be3a3d37e79df9018707eeef20188a1a3ba9af2ba63` |
+| `lab/bin/sync-witness.mjs` | `01d2bca4aaefc80ee112d734dda6d064cccf798bc1429d529aa817041f7995f8` | `4f75e3244f4f6123391abcfd7df29309492a8689bb6c2081c53f1d9a81396a59` |
+| `lab/observer/test_engine.mjs` | `a80f81f88e440ac4c8d6f07c3777ba390f2486235202eabb5e939f6ae02d273b` | `662452af9c8218e70c4b48056ae534fe221a791840f874ca9feded9f03628301` |
+| `lab/observer/test_round12.mjs` | `27717bfdf3107f30cf69103c8d33288511feea4ae3d42f2296c844a391b63fc8` | `4b0ea66e822cc8cb27d99b547def1edad78618c6840dd628cd2874b17815dc16` |
+| `lab/verify/CX-VOBS7/review_round11.mjs` | `b4973a961114c8f3afc8634c871c2caaea26265b0fee4faab6fbd3fc74024e69` | `fccb599b25878c090b3817ffb57940a8eac754e666578b089955548cd0b426fc` |
+| `lab/verify/CX-VOBS7/review_round12.mjs` | `5167c7be9d05f1eff107d3173c4f091c934568f003168e56a0c7e0eef16ca60d` | `b867f5a53f59f5e554bb075390e4c3238c7cffdce39482243281d7680bb75945` |
+| `lab/verify/CX-VOBS7/replay_round11_for_round12.mjs` | `0d23c63fb1f43e2c163ec6b057c98b0b26b0778cdceb78ee004351790cd891ca` | `3d31cf9d93b727eb2cc83bba9bc24d9d2a9a07344545eda6a2e66422f94096c7` |
+
+`lab/observer/VM.md` and this report also changed (not hash-pinned). `lab/observer/run_vm_offline.py` pins `clock-proof.mjs`, `btf-helpers.mjs`, `sync-witness.mjs`, `test_engine.mjs` and `test_round12.mjs` by hash at run time, so its next run records these new hashes.
+
+### What did not run
+
+- No VM, Docker, colima, engine or network command; no image pull, apt, pip or pnpm. W0 to W4 not run; no real bpftrace, real dump or real kernel BTF. `clockProgramStep`'s `dumpFileSha256` is covered by a static wiring test only.
+- `lab/verify/CX-VOBS7/run_round12.py` and the reviewer capture runners were not run (they create fresh evidence directories); the edited reviewer fixtures were run directly with redirected output.
+- Not run: other repository suites, the Dockerfile build, B9 and CR-NS `claim.mjs`, earlier durable evidence.

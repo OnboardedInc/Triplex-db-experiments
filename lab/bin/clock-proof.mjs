@@ -15,6 +15,19 @@
 //  3. The helper ids come from the running kernel's own BTF enum (btf-helpers.mjs), never from this file. FORBIDDEN_CLOCK_HELPERS below is a reference table of the
 //     expected ABI values for tests and the informational note; the verdict never consults it.
 // Rejected: counting recognised monotonic calls across all stages (a lower bound; an unrecognised call format can hide beside them); ids from memory or a header copy.
+//
+// [EXP-OBS01-R13] Why (pending ruling Q109a, orchestrator decision after the round 12 review R12-F1..F3): THREAT MODEL. The dump is produced by the lab-trusted witness
+// image (pinned Ubuntu bpftrace 0.20.2) from the lab-pinned .bt source; no candidate can write or shape it, so the proof does not have to survive adversarially constructed
+// dumps. The W0 clock step therefore GATES on exactly three things:
+//  (1) a static source check: every time read in the pinned .bt is nsecs(monotonic); no bare nsecs, nsecs(boot|tai), elapsed, jiffies, strftime, time() or other clock
+//      builtin (sourceTimeSites);
+//  (2) the pinned .bt hash computed by the image, the exact bpftrace version 0.20.2, and clean exit statuses of all four processes (A1, kept);
+//  (3) the compiled dump recorded in full with its hash, run through a strictness-only scan: any forbidden clock helper NAME token anywhere in it refuses (FORBIDDEN_CLOCK_TOKENS).
+// The structured parser of round 12 (sections, allow-list, UNPARSED-CALL, helper ids from the kernel BTF, the per-site count) is KEPT and recorded as `diagnostic`, not gating,
+// until a real dump from W0 is stored as a golden file and reviewed; a later round may then make it gating against that golden. Known diagnostic gaps (R12-F2): a proper prefix
+// ending at an early `exit` is not detected as truncated, and a numeric helper call without a name token is only visible to the diagnostic.
+// Rejected: keeping the structured parser as the gate (each round of review found another constructed dump it mishandled, and none of them can be produced by a candidate);
+// dropping it (its output is the evidence a reviewer needs to promote it later).
 import {createHash} from 'node:crypto';
 import {deriveHelperIds} from './btf-helpers.mjs';
 
@@ -65,6 +78,19 @@ const RAW_BYTES=/^((?:[0-9a-f]{2}[ \t]+){7}[0-9a-f]{2})(?=[ \t]|$)[ \t]*/i;
 
 export const sha256Hex=data=>createHash('sha256').update(data).digest('hex');
 
+/** Gate (3): clock helper NAME tokens that must not occur anywhere in the compiled dump. Matching is a case-insensitive substring match, deliberately stricter than a word match. */
+export const FORBIDDEN_CLOCK_TOKENS=['bpf_ktime_get_boot_ns','ktime_get_boot','bpf_ktime_get_coarse_ns','bpf_ktime_get_tai_ns','bpf_jiffies64',
+ 'BPF_FUNC_ktime_get_boot_ns','BPF_FUNC_ktime_get_coarse_ns','BPF_FUNC_ktime_get_tai_ns','BPF_FUNC_jiffies64'];
+/** Every occurrence of a forbidden token: [{token,line}] (1-based line), in text order. */
+export function forbiddenClockTokens(text){
+ const hits=[];
+ String(text??'').split(/\r?\n/).forEach((line,k)=>{
+  const lower=line.toLowerCase();
+  for(const token of FORBIDDEN_CLOCK_TOKENS)if(lower.includes(token.toLowerCase()))hits.push({token,line:k+1});
+ });
+ return hits;
+}
+
 /** Source text without comments and the `#!` line. */
 export function stripBtComments(source){
  return String(source).replace(/\/\*[\s\S]*?\*\//g,'').split('\n').filter(l=>!l.trim().startsWith('//')&&!l.trim().startsWith('#')).map(l=>l.replace(/\/\/.*$/,'')).join('\n');
@@ -75,7 +101,7 @@ const stripStrings=code=>code.replace(/"(?:[^"\\]|\\.)*"/g,'""');
 export function sourceTimeSites(source){
  const code=stripStrings(stripBtComments(source));
  const monotonic=(code.match(/\bnsecs\s*\(\s*monotonic\s*\)/g)??[]).length;
- const other=(code.match(/\bnsecs\b(?!\s*\(\s*monotonic\s*\))|\bjiffies\b|\belapsed\b|\bstrftime\b|\btime\s*\(/g)??[]);
+ const other=(code.match(/\bnsecs\b(?!\s*\(\s*monotonic\s*\))|\bnsecs_\w+|\bjiffies\w*|\belapsed\b|\bstrftime\b|\btime\s*\(|\bktime\w*|\buptime\b/g)??[]);
  return {monotonic,other};
 }
 
@@ -189,7 +215,8 @@ export function extractSections(text){
  }
  return {sections,problems};
 }
-function isExit(line){const s=splitInsn(line);return (s.raw!==null&&s.raw[0]===0x95)||/^exit$/i.test(s.rest)||(s.op===0x95&&s.rest==='');}
+// [EXP-OBS01-R13] Why (R12-F2, diagnostic only): raw instruction bytes, when present, decide; a textual `exit` over bytes that are a call is not an exit. Rejected: trusting the mnemonic alone.
+function isExit(line){const s=splitInsn(line);if(s.raw!==null)return s.raw[0]===0x95;return /^exit$/i.test(s.rest)||(s.op===0x95&&s.rest==='');}
 
 const sum=map=>Object.values(map).reduce((a,b)=>a+b,0);
 function runFailure(run,label,{compile=false}={}){
@@ -208,82 +235,90 @@ function runFailure(run,label,{compile=false}={}){
  *  facts: {expectedSourceSha256 (hash of the pinned .bt read by the harness), mountedSourceSha256 (sha256sum run by the same image on the mounted file),
  *          sourceText, versionOutput (stdout of `bpftrace --version`),
  *          versionRun, hashRun, btf, compiled: each {exitCode,signal,timedOut,error}; btf also {bytes} (the raw /sys/kernel/btf/vmlinux), compiled also {stdout,stderr}}
- * Passes only when: every process completed successfully, the source hash binds, the version is exactly 0.20.2, the source has only nsecs(monotonic) time reads and no
- * construct outside the helper derivation, the kernel BTF yields every needed helper id, and the compiled per-probe disassembly is complete and every call in it is an
- * allow-listed helper (bpf_ktime_get_ns being the only clock).
+ * [EXP-OBS01-R13] GATES (`pass`, `reasons`) only on: the source hash binding, the static source check (only nsecs(monotonic) time reads), the exact bpftrace version, the clean
+ * completion of all four processes, a non-empty compiled dump, and the absence of every forbidden clock helper NAME token from that dump. The structured parser's findings
+ * (sections, allow-list, UNPARSED-CALL, kernel-BTF helper ids, per-site count) are in `diagnostic` and never change `pass`. Pending ruling Q109a.
  */
 export function clockPrimitiveVerdict(facts,{version=BPFTRACE_VERSION}={}){
- const bad=[],hex=/^[0-9a-f]{64}$/;
+ const bad=[],diag=[],hex=/^[0-9a-f]{64}$/;
+ // ---- gate (2): the program hash computed by the image, the version, and clean process statuses ----
  if(!hex.test(facts?.expectedSourceSha256??'')||!hex.test(facts?.mountedSourceSha256??''))bad.push('program source hash not recorded');
  else if(facts.expectedSourceSha256!==facts.mountedSourceSha256)bad.push('bpftrace container read a different program than the pinned source (sha256 '+facts.mountedSourceSha256+' vs '+facts.expectedSourceSha256+')');
  if(facts?.sourceText!==undefined&&hex.test(facts?.expectedSourceSha256??'')&&sha256Hex(Buffer.from(String(facts.sourceText)))!==facts.expectedSourceSha256)bad.push('source text analysed is not the pinned source');
  const failures={version:runFailure(facts?.versionRun,'bpftrace --version'),hash:runFailure(facts?.hashRun,'sha256sum of the program'),btf:runFailure(facts?.btf,'kernel BTF read'),compile:runFailure(facts?.compiled,'compile dump',{compile:true})};
  for(const reason of Object.values(failures))if(reason)bad.push(reason);
  if(String(facts?.versionOutput??'').trim()!=='bpftrace v'+version)bad.push('bpftrace version is not exactly v'+version+': '+JSON.stringify(String(facts?.versionOutput??'').trim().slice(0,80)));
+ // ---- gate (1): static source check ----
  const sites=sourceTimeSites(facts?.sourceText??''),probes=sourceProbes(facts?.sourceText??''),needs=sourceHelperNeeds(facts?.sourceText??'');
  if(sites.monotonic<1)bad.push('pinned source has no nsecs(monotonic) read');
  if(sites.other.length)bad.push('pinned source reads a clock other than nsecs(monotonic): '+sites.other.slice(0,5).join(', '));
- if(!probes.length)bad.push('pinned source has no probe blocks');
- if(probes.some(p=>p.includes(',')))bad.push('pinned source has a comma list of attach points (not supported by the section check)');
- if(needs.unmodeled.length)bad.push('pinned source uses a construct outside the allow-list derivation: '+needs.unmodeled.slice(0,5).join(', '));
- const notAllowed=needs.needs.filter(n=>!ALLOWED_HELPER_NAMES.includes(n));
- if(notAllowed.length)bad.push('pinned source needs a helper that is not on the allow-list: '+notAllowed.join(', '));
-
- // helper ids from the running kernel's BTF
- const derived=deriveHelperIds(facts?.btf?.bytes,REQUIRED_HELPER_NAMES);
- if(!failures.btf)for(const reason of derived.reasons)bad.push(reason);
- const ids=derived.ok&&!failures.btf?derived.ids:null,nameById=new Map(ids?Object.entries(ids).map(([n,i])=>[i,n]):[]);
- const ktimeId=ids?.[MONOTONIC_HELPER.name];
-
+ // ---- gate (3): the dump, recorded in full with its hash, scanned for forbidden clock helper name tokens ----
  const compiled=facts?.compiled??{};
  const text=[compiled.stdout,compiled.stderr].filter(s=>typeof s==='string'&&s.length).join('\n');
- const result={sections:[],calls:{},forbidden:[],unparsed:[],monotonicCalls:0,problems:[]};
- // the dump is adopted only from a completed compilation (A1) and only with ids from the kernel (R12 decision 3); otherwise it is a diagnostic
- const adopt=!failures.compile&&ids!==null;
+ const tokens=forbiddenClockTokens(text);
  if(!text.length&&!failures.compile)bad.push('compile dump is empty (the debug flag was not accepted, or the program did not compile)');
- else if(adopt){
+ if(tokens.length)bad.push('compiled dump names a forbidden clock helper: '+[...new Set(tokens.map(t=>t.token))].join(', ')+' (first at dump line '+tokens[0].line+')');
+
+ // ---- DIAGNOSTIC: the round 12 structured parser; never gating ----
+ if(!probes.length)diag.push('pinned source has no probe blocks');
+ if(probes.some(p=>p.includes(',')))diag.push('pinned source has a comma list of attach points (not supported by the section check)');
+ if(needs.unmodeled.length)diag.push('pinned source uses a construct outside the allow-list derivation: '+needs.unmodeled.slice(0,5).join(', '));
+ const notAllowed=needs.needs.filter(n=>!ALLOWED_HELPER_NAMES.includes(n));
+ if(notAllowed.length)diag.push('pinned source needs a helper that is not on the allow-list: '+notAllowed.join(', '));
+ const derived=deriveHelperIds(facts?.btf?.bytes,REQUIRED_HELPER_NAMES);
+ if(!failures.btf)for(const reason of derived.reasons)diag.push(reason);
+ const ids=derived.ok&&!failures.btf?derived.ids:null,nameById=new Map(ids?Object.entries(ids).map(([n,i])=>[i,n]):[]);
+ const result={sections:[],calls:{},forbidden:[],unparsed:[],monotonicCalls:0};
+ // the structured parse is adopted only from a run where all four processes completed (A1) and only with ids from the kernel; otherwise it is not attempted
+ const adopt=Object.values(failures).every(f=>!f)&&ids!==null&&text.length>0;
+ if(adopt){
   const {sections,problems:sectionProblems}=extractSections(text);
-  for(const p of sectionProblems)bad.push(p);
-  if(!sections.length)bad.push('compiled program section not found: no "Disassembly of section" start marker in the dump');
-  else if(sections.length<probes.length)bad.push('compiled program has '+sections.length+' probe sections, the source has '+probes.length+' probes');
+  for(const p of sectionProblems)diag.push(p);
+  if(!sections.length)diag.push('compiled program section not found: no "Disassembly of section" start marker in the dump');
+  else if(sections.length<probes.length)diag.push('compiled program has '+sections.length+' probe sections, the source has '+probes.length+' probes');
   const names=new Set();
   for(const sec of sections){
    const row={name:sec.name,instructions:sec.instructions.length,complete:sec.complete,calls:{}};result.sections.push(row);
-   if(names.has(sec.name))bad.push('probe section '+sec.name+' appears twice');names.add(sec.name);
-   if(!sec.instructions.length)bad.push('probe section '+sec.name+' has no instructions');
-   else if(!sec.complete)bad.push('probe section '+sec.name+' is incomplete: it does not end with an exit instruction (ended by '+sec.endedBy+')');
+   if(names.has(sec.name))diag.push('probe section '+sec.name+' appears twice');names.add(sec.name);
+   if(!sec.instructions.length)diag.push('probe section '+sec.name+' has no instructions');
+   else if(!sec.complete)diag.push('probe section '+sec.name+' is incomplete: it does not end with an exit instruction (ended by '+sec.endedBy+')');
    for(const insn of sec.instructions){
     if(!callLike(insn.text))continue;
     const call=parseCallLine(insn.text);
     if(call===null)continue;
-    if(call.unparsed){result.unparsed.push({section:sec.name,line:insn.line,text:insn.text.trim().slice(0,120),reason:call.unparsed});bad.push('UNPARSED-CALL in section '+sec.name+' line '+insn.line+': '+call.unparsed+': '+insn.text.trim().slice(0,80));continue;}
+    if(call.unparsed){result.unparsed.push({section:sec.name,line:insn.line,text:insn.text.trim().slice(0,120),reason:call.unparsed});diag.push('UNPARSED-CALL in section '+sec.name+' line '+insn.line+': '+call.unparsed+': '+insn.text.trim().slice(0,80));continue;}
     const id=call.id??ids[call.name];
-    if(id===undefined||id===null){bad.push('helper '+call.name+' (section '+sec.name+' line '+insn.line+') has no id in the kernel enum');continue;}
+    if(id===undefined||id===null){diag.push('helper '+call.name+' (section '+sec.name+' line '+insn.line+') has no id in the kernel enum');continue;}
     const name=nameById.get(id);
-    if(name===undefined){bad.push('helper id '+id+' (section '+sec.name+' line '+insn.line+') is not in the kernel bpf_func_id enum');continue;}
-    if(call.name&&call.name!==name)bad.push('helper '+call.name+' is listed with id '+id+', the kernel enum says '+name);
+    if(name===undefined){diag.push('helper id '+id+' (section '+sec.name+' line '+insn.line+') is not in the kernel bpf_func_id enum');continue;}
+    if(call.name&&call.name!==name)diag.push('helper '+call.name+' is listed with id '+id+', the kernel enum says '+name);
     row.calls[name]=(row.calls[name]??0)+1;result.calls[name]=(result.calls[name]??0)+1;
     if(name!==MONOTONIC_HELPER.name&&isClockName(name)){result.forbidden.push(name+'#'+id+' x1 (section '+sec.name+')');}
-    else if(!ALLOWED_HELPER_NAMES.includes(name))bad.push('helper '+name+'#'+id+' (section '+sec.name+' line '+insn.line+') is not on the allow-list');
+    else if(!ALLOWED_HELPER_NAMES.includes(name))diag.push('helper '+name+'#'+id+' (section '+sec.name+' line '+insn.line+') is not on the allow-list');
    }
   }
   result.monotonicCalls=result.calls[MONOTONIC_HELPER.name]??0;
-  // secondary, whole text and every stage: a clock helper other than ktime_get_ns named or called ANYWHERE refuses (never a substitute for the section)
+  // outside the chosen section, any stage: a clock helper by id, and (R12-F1) any call-like line that does not parse
   const clockIds=new Map([...nameById].filter(([,n])=>n!==MONOTONIC_HELPER.name&&isClockName(n))),inSection=new Set(sections.flatMap(sec=>sec.instructions.map(i=>i.line)));
   text.split(/\r?\n/).forEach((line,k)=>{
    if(inSection.has(k+1))return;
-   const call=parseCallLine(line);if(!call||call.unparsed)return;
+   const call=parseCallLine(line);if(!call)return;
+   if(call.unparsed){if(!SECTION_START.test(line))diag.push('UNPARSED-CALL outside a chosen section at dump line '+(k+1)+': '+call.unparsed+': '+line.trim().slice(0,80));return;}
    const id=call.id??ids[call.name];if(clockIds.has(id))result.forbidden.push(clockIds.get(id)+'#'+id+' x1 (outside the chosen section, line '+(k+1)+')');
   });
-  for(const m of text.matchAll(/\bbpf_[a-z0-9_]+\b/g))if(m[0]!==MONOTONIC_HELPER.name&&isClockName(m[0]))bad.push('clock helper named in the compiled output: '+m[0]);
-  const parsedLoose=parseCompiledHelpers(text,ids);for(const p of parsedLoose.problems)bad.push(p);
-  if(result.forbidden.length)bad.push('compiled program reads another clock: '+[...new Set(result.forbidden)].join(', '));
-  // secondary sanity check only (R12 decision 2): completeness comes from the section rules above, never from this count
-  if(sections.length&&result.monotonicCalls<sites.monotonic)bad.push('compiled program has fewer bpf_ktime_get_ns calls ('+result.monotonicCalls+') than the '+sites.monotonic+' nsecs(monotonic) sites in the source');
+  for(const m of text.matchAll(/\bbpf_[a-z0-9_]+\b/g))if(m[0]!==MONOTONIC_HELPER.name&&isClockName(m[0]))diag.push('clock helper named in the compiled output: '+m[0]);
+  const parsedLoose=parseCompiledHelpers(text,ids);for(const p of parsedLoose.problems)diag.push(p);
+  if(result.forbidden.length)diag.push('compiled program reads another clock: '+[...new Set(result.forbidden)].join(', '));
+  // secondary sanity check only: completeness never comes from this count
+  if(sections.length&&result.monotonicCalls<sites.monotonic)diag.push('compiled program has fewer bpf_ktime_get_ns calls ('+result.monotonicCalls+') than the '+sites.monotonic+' nsecs(monotonic) sites in the source');
  }
+ else diag.push('structured parse not attempted: '+(Object.values(failures).some(Boolean)?'a process did not complete':ids===null?'no helper ids from the kernel BTF':'the dump is empty'));
  if(ids!==null){const note=[];for(const [id,name] of REFERENCE_CLOCK_IDS)if(ids[name]!==id)note.push(name+': kernel '+ids[name]+', reference '+id);result.referenceNote=note;}
- const claim='every time read in the compiled program is the bpf_ktime_get_ns helper (CLOCK_MONOTONIC); proven from the program, not by observation';
- return {pass:bad.length===0,reasons:bad,flags:COMPILE_FLAGS,version:String(facts?.versionOutput??'').trim(),sourceSha256:facts?.mountedSourceSha256??null,expectedSourceSha256:facts?.expectedSourceSha256??null,
+ const claim='the pinned source reads time only with nsecs(monotonic) (CLOCK_MONOTONIC) and the compiled dump, from the lab-trusted image, names no other clock helper; the structured parse of the dump is diagnostic until a golden dump is reviewed (Q109a)';
+ return {pass:bad.length===0,reasons:bad,gate:{checks:['source hash binding','static source check: only nsecs(monotonic)','bpftrace version exactly v'+version,'all four processes exit 0 cleanly','non-empty compiled dump','no forbidden clock helper name token in the dump'],
+   forbiddenTokens:FORBIDDEN_CLOCK_TOKENS,forbiddenTokenHits:tokens},
+  diagnostic:{role:'DIAGNOSTIC, not gating (Q109a): becomes gating only against a reviewed golden dump from a real W0',pass:diag.length===0,reasons:diag,adopted:adopt},
+  flags:COMPILE_FLAGS,version:String(facts?.versionOutput??'').trim(),sourceSha256:facts?.mountedSourceSha256??null,expectedSourceSha256:facts?.expectedSourceSha256??null,
   representation:DUMP_STAGE_NOTE,processes:Object.fromEntries(Object.entries(failures).map(([k,v])=>[k,v?{ok:false,reason:v}:{ok:true}])),
   sourceMonotonicSites:sites.monotonic,sourceProbes:probes.length,sourceHelperNeeds:needs.needs,allowList:ALLOWED_HELPER_NAMES,
   helperIds:ids?Object.fromEntries(REQUIRED_HELPER_NAMES.map(n=>[n,ids[n]])):null,btfSha256:derived.btfSha256,btfBytes:derived.btfBytes,btfEnum:derived.enumKind,referenceNote:result.referenceNote??null,

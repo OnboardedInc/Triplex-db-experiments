@@ -6,7 +6,7 @@
 // unknown kinds (it could skip the very enum that matters and still report success).
 import {createHash} from 'node:crypto';
 
-export const BTF_MAGIC=0xeb9f,BTF_VERSION=1,BTF_HEADER_MIN=24;
+export const BTF_MAGIC=0xeb9f,BTF_VERSION=1,BTF_HEADER_MIN=24,BTF_INFO_MASK=0x9f00ffff;
 export const BTF_KIND={INT:1,PTR:2,ARRAY:3,STRUCT:4,UNION:5,ENUM:6,FWD:7,TYPEDEF:8,VOLATILE:9,CONST:10,RESTRICT:11,FUNC:12,FUNC_PROTO:13,VAR:14,DATASEC:15,FLOAT:16,DECL_TAG:17,TYPE_TAG:18,ENUM64:19};
 export const FUNC_ID_ENUM='bpf_func_id',FUNC_PREFIX='BPF_FUNC_';
 
@@ -26,6 +26,7 @@ export function parseBtfEnums(bytes){
  const magic=buf.readUInt16LE(0);
  need(magic===BTF_MAGIC,magic===0x9feb?'BTF magic is byte-swapped (big-endian BTF is not supported)':'BTF magic is 0x'+magic.toString(16)+', expected 0xeb9f');
  need(buf[2]===BTF_VERSION,'BTF version '+buf[2]+', expected '+BTF_VERSION);
+ need(buf[3]===0,'BTF header flags are 0x'+buf[3].toString(16)+', expected 0 (reserved)');   // [EXP-OBS01-R13] Why (R12-F3): reserved flags are not understood, so not accepted. Rejected: ignoring them.
  const hdrLen=buf.readUInt32LE(4),typeOff=buf.readUInt32LE(8),typeLen=buf.readUInt32LE(12),strOff=buf.readUInt32LE(16),strLen=buf.readUInt32LE(20);
  need(hdrLen>=BTF_HEADER_MIN&&hdrLen<=buf.length,'BTF header length '+hdrLen+' is outside 24..'+buf.length);
  const typeStart=hdrLen+typeOff,typeEnd=typeStart+typeLen,strStart=hdrLen+strOff,strEnd=strStart+strLen;
@@ -46,6 +47,7 @@ export function parseBtfEnums(bytes){
   need(pos+12<=typeEnd,'BTF type record at '+pos+' overruns the type section');
   const nameOff=buf.readUInt32LE(pos),info=buf.readUInt32LE(pos+4),sizeOrType=buf.readUInt32LE(pos+8);
   const vlen=info&0xffff,kind=(info>>>24)&0x1f,kindFlag=info>>>31;typeId+=1;pos+=12;
+  need((info&~BTF_INFO_MASK)>>>0===0,'BTF type '+(typeId)+' has reserved type-info bits set (info 0x'+info.toString(16)+')');   // [EXP-OBS01-R13] Why (R12-F3): bits 16-23 and 29-30 are reserved (the kernel's BTF_INFO_MASK).
   need(nameOff<strLen,'BTF type '+typeId+' has name offset '+nameOff+' outside the string section ('+strLen+' bytes)');
   const tail=n=>{need(pos+n<=typeEnd,'BTF type '+typeId+' (kind '+kind+') overruns the type section');const at=pos;pos+=n;return at;};
   switch(kind){
@@ -77,24 +79,31 @@ export function parseBtfEnums(bytes){
 
 /**
  * Derives helper ids from the kernel's `enum bpf_func_id`. `names` are helper function names (`bpf_ktime_get_ns`) that must all be present.
- * Returns {ok,reasons,btfSha256,btfBytes,typeCount,enumKind,ids:{<every helper name in the enum>:id},missing:[...]}. Refuses when the enum is missing, appears more than once,
- * has duplicate enumerator names, a value outside 0..65535 for a needed name, a needed name that is absent, or two needed names with one id.
+ * Returns {ok,reasons,btfSha256,btfBytes,typeCount,enumKind,ids:{<every helper name in the enum>:id},missing:[...]}. Refuses when the enum is missing, appears more than once (empty ones counted), is empty,
+ * has duplicate enumerator names, two enumerators with one id (any entry, not only the needed names), a value outside 0..65535 for a needed name, a needed name that is absent, or two needed names with one id.
  */
 export function deriveHelperIds(bytes,names){
  const out={ok:false,reasons:[],btfSha256:null,btfBytes:0,typeCount:0,enumKind:null,ids:{},missing:[]};
  try{
   const buf=Buffer.isBuffer(bytes)?bytes:Buffer.from(bytes??[]);out.btfSha256=createHash('sha256').update(buf).digest('hex');out.btfBytes=buf.length;
   const parsed=parseBtfEnums(buf);out.typeCount=parsed.typeCount;
-  const found=parsed.enums.filter(e=>e.name===FUNC_ID_ENUM&&e.values.length>0);
-  if(found.length!==1){out.reasons.push('kernel BTF has '+found.length+' non-empty enum '+FUNC_ID_ENUM+' (need exactly one)');return out;}
+  // [EXP-OBS01-R13] Why (R12-F3): count EVERY enum named bpf_func_id (an empty one included) before anything else, and reject any two enumerators that share an id: the
+  // helper-id -> name inversion the diagnostic uses must receive a validated one-to-one mapping, so enum order cannot decide which name an id has.
+  // Rejected: filtering out empty enums first (a second, empty bpf_func_id enum passed); checking collisions only among the required names (an unrelated clock-like name could alias id 5).
+  const found=parsed.enums.filter(e=>e.name===FUNC_ID_ENUM);
+  if(found.length!==1){out.reasons.push('kernel BTF has '+found.length+' enum '+FUNC_ID_ENUM+' (need exactly one)');return out;}
   const [en]=found;out.enumKind=en.kind;
+  if(en.values.length===0){out.reasons.push('kernel BTF enum '+FUNC_ID_ENUM+' is empty');return out;}
+  const namesById=new Map();
   for(const {name,value} of en.values){
    if(!name.startsWith(FUNC_PREFIX)||name==='__BPF_FUNC_MAX_ID')continue;
    const helper='bpf_'+name.slice(FUNC_PREFIX.length);
    if(Object.hasOwn(out.ids,helper)){out.reasons.push('enum '+FUNC_ID_ENUM+' lists '+name+' twice');continue;}
    if(value<0n||value>65535n){out.reasons.push(name+' has value '+value+' outside 0..65535');continue;}
    out.ids[helper]=Number(value);
+   const list=namesById.get(Number(value))??[];list.push(helper);namesById.set(Number(value),list);
   }
+  for(const [id,list] of namesById)if(list.length>1)out.reasons.push('enum '+FUNC_ID_ENUM+' gives id '+id+' more than one name: '+list.join(', '));
   const seen=new Map();
   for(const name of names){
    if(!Object.hasOwn(out.ids,name)){out.missing.push(name);continue;}

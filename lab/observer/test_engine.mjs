@@ -255,17 +255,20 @@ test('clock primitive step passes only on the pinned program, exact bpftrace ver
   assert.equal(run(sectionedDump({ form: 'named' })).pass, true); assert.equal(run(sectionedDump({ form: 'name' })).pass, true);
   assert.equal(run(dumpOf([5, 5, 5])).pass, true);                                                                                // more calls than sites is fine
   const refuse = (compiled, over, pattern) => { const v = run(compiled, over); assert.equal(v.pass, false); assert.match(v.reasons.join(';'), pattern); return v; };
+  // [OBS01-R13] Why (Q109a): the structured parser is DIAGNOSTIC, not gating. `diagnose` expects the diagnostic to report the problem; the gate passes unless the dump names a forbidden clock helper (token scan).
+  // Rejected: keeping these as gate refusals (the gate is the static source check, the pinned hash/version/statuses and the token scan only).
+  const diagnose = (compiled, over, pattern) => { const v = run(compiled, over), tokens = witness.forbiddenClockTokens(compiled ?? sectionedDump()).length > 0; assert.equal(v.pass, !tokens); assert.equal(v.diagnostic.pass, false); assert.match(v.diagnostic.reasons.join(';'), pattern); return v; };
   const withLast = calls => sectionedDump({ sections: Array.from({ length: 15 }, (_, i) => ({ name: 's_probe_' + (i + 1), calls: i === 14 ? [5, ...calls] : [5] })) });
-  refuse(withLast([125]), undefined, /another clock: bpf_ktime_get_boot_ns#125 x1/);                                             // one boot read among monotonic ones
-  refuse(fifteenOf(125), undefined, /boot_ns/);                                                                                   // the bare-nsecs shape: every read is boot
-  for (const [id, name] of [[118, 'jiffies64'], [160, 'coarse_ns'], [208, 'tai_ns']]) for (const form of ['numeric', 'bytes', 'paren']) refuse(withLast([id]), undefined, new RegExp('another clock: .*' + name));
-  refuse(sectionedDump({ form: 'named', sections: [...Array.from({ length: 14 }, (_, i) => ({ name: 's_probe_' + (i + 1), calls: [5] })), { name: 's_probe_15', calls: [5, 125], form: 'named' }] }), undefined, /bpf_ktime_get_boot_ns#125/);
-  refuse(sectionedDump({ sections: Array.from({ length: 15 }, (_, i) => ({ name: 's_probe_' + (i + 1), calls: [5], extra: i === 14 ? ['  @@: (85) call bpf_ktime_get_ns#125'] : [] })) }), undefined, /listed with id 125, the kernel enum says bpf_ktime_get_boot_ns/);   // name and id disagree
-  refuse(sectionedDump({ sections: Array.from({ length: 15 }, (_, i) => ({ name: 's_probe_' + (i + 1), calls: [5], extra: i === 14 ? ['  @@: (85) call bpf_ktime_get_boot_ns#5'] : [] })) }), undefined, /listed with id 5, the kernel enum says bpf_ktime_get_ns/);
-  refuse(sectionedDump({ sections: Array.from({ length: 15 }, (_, i) => ({ name: 's_probe_' + (i + 1), calls: [5], extra: i === 14 ? ['  @@: (85) call bpf_ktime_get_new_ns#300'] : [] })) }), undefined, /id 300 .* is not in the kernel bpf_func_id enum/);
-  refuse(sectionedDump() + '\n; mentions bpf_ktime_get_tai_ns in a comment', undefined, /clock helper named in the compiled output: bpf_ktime_get_tai_ns/);
-  refuse(Array.from({ length: 14 }, () => 0).length && sectionedDump({ sections: Array.from({ length: 15 }, (_, i) => ({ name: 's_probe_' + (i + 1), calls: i === 0 ? [] : [5] })) }), undefined, /fewer bpf_ktime_get_ns calls \(14\) than the 15/);
-  refuse('', undefined, /compile dump is empty/); refuse('error: unknown option -d', undefined, /compiled program section not found/);
+  diagnose(withLast([125]), undefined, /another clock: bpf_ktime_get_boot_ns#125 x1/);                                             // one boot read among monotonic ones
+  diagnose(fifteenOf(125), undefined, /boot_ns/);                                                                                   // the bare-nsecs shape: every read is boot
+  for (const [id, name] of [[118, 'jiffies64'], [160, 'coarse_ns'], [208, 'tai_ns']]) for (const form of ['numeric', 'bytes', 'paren']) diagnose(withLast([id]), undefined, new RegExp('another clock: .*' + name));
+  diagnose(sectionedDump({ form: 'named', sections: [...Array.from({ length: 14 }, (_, i) => ({ name: 's_probe_' + (i + 1), calls: [5] })), { name: 's_probe_15', calls: [5, 125], form: 'named' }] }), undefined, /bpf_ktime_get_boot_ns#125/);
+  diagnose(sectionedDump({ sections: Array.from({ length: 15 }, (_, i) => ({ name: 's_probe_' + (i + 1), calls: [5], extra: i === 14 ? ['  @@: (85) call bpf_ktime_get_ns#125'] : [] })) }), undefined, /listed with id 125, the kernel enum says bpf_ktime_get_boot_ns/);   // name and id disagree
+  diagnose(sectionedDump({ sections: Array.from({ length: 15 }, (_, i) => ({ name: 's_probe_' + (i + 1), calls: [5], extra: i === 14 ? ['  @@: (85) call bpf_ktime_get_boot_ns#5'] : [] })) }), undefined, /listed with id 5, the kernel enum says bpf_ktime_get_ns/);
+  diagnose(sectionedDump({ sections: Array.from({ length: 15 }, (_, i) => ({ name: 's_probe_' + (i + 1), calls: [5], extra: i === 14 ? ['  @@: (85) call bpf_ktime_get_new_ns#300'] : [] })) }), undefined, /id 300 .* is not in the kernel bpf_func_id enum/);
+  refuse(sectionedDump() + '\n; mentions bpf_ktime_get_tai_ns in a comment', undefined, /names a forbidden clock helper: bpf_ktime_get_tai_ns/);   // the token scan is the gate
+  diagnose(Array.from({ length: 14 }, () => 0).length && sectionedDump({ sections: Array.from({ length: 15 }, (_, i) => ({ name: 's_probe_' + (i + 1), calls: i === 0 ? [] : [5] })) }), undefined, /fewer bpf_ktime_get_ns calls \(14\) than the 15/);
+  refuse('', undefined, /compile dump is empty/); diagnose('error: unknown option -d', undefined, /compiled program section not found/);
   refuse(undefined, { compiled: { stdout: sectionedDump(), stderr: '', exitCode: null, timedOut: true } }, /did not terminate/);
   refuse(undefined, { versionOutput: 'bpftrace v0.20.1\n' }, /not exactly v0\.20\.2/); refuse(undefined, { versionOutput: 'bpftrace v0.20.2-dirty\n' }, /not exactly/); refuse(undefined, { versionOutput: '' }, /not exactly/);
   refuse(undefined, { mountedSourceSha256: '0'.repeat(64) }, /different program than the pinned source/);
@@ -288,8 +291,12 @@ test('W0 passes its clock step only on the program proof; an observational resul
   assert.equal(mutate(x => { x.clockSamples = samples(0, 50, 2_000_000, 0); }).pass, true);                                     // INCONCLUSIVE observation: W0 still passes on the proof
   assert.equal(mutate(x => { x.clockSamples = samples(0, 50, 2_000_000, 0); }).clockIdentity.observational, 'INCONCLUSIVE');
   assert.equal(mutate(x => { x.clockSamples = samples(0, 50, 2_000_000, 0); }).clockIdentity.provenBy, 'compiled program');
-  assert.match(mutate(x => { x.clockProgram = goodProof(fifteenOf(125)); }).reasons.join(';'), /^clock: compiled program reads another clock/);
-  assert.equal(mutate(x => { x.clockProgram = goodProof(fifteenOf(125)); x.clockSamples = samples(0); }).pass, false);   // a CONSISTENT observation cannot rescue a failed proof
+  const bootNamed = sectionedDump() + '\n  99: (85) call bpf_ktime_get_boot_ns#125\n';
+  assert.match(mutate(x => { x.clockProgram = goodProof(bootNamed); }).reasons.join(';'), /^clock: compiled dump names a forbidden clock helper: bpf_ktime_get_boot_ns/);
+  assert.equal(mutate(x => { x.clockProgram = goodProof(bootNamed); x.clockSamples = samples(0); }).pass, false);   // a CONSISTENT observation cannot rescue a failed proof
+  // [OBS01-R13] a numeric-only boot read (no name token) is reported by the DIAGNOSTIC and does not block W0 (Q109a threat model: the dump comes from the lab-trusted image)
+  const numericOnly = mutate(x => { x.clockProgram = goodProof(fifteenOf(125)); }); assert.equal(numericOnly.pass, true); assert.equal(numericOnly.checks.clock.diagnostic.pass, false);
+  assert.match(numericOnly.checks.clock.diagnostic.reasons.join(';'), /compiled program reads another clock/);
   assert.equal(mutate(x => { x.clockProgram = undefined; }).pass, false);                                                         // proof not recorded
   assert.match(mutate(x => { x.clockSamples = samples(7e9); }).reasons.join(';'), /^clockTransport:/);                              // a contradiction still blocks
   assert.equal(mutate(x => { x.clockSamples = null; }).pass, false);                                                              // an unrecorded transport check is a refusal

@@ -27,7 +27,9 @@ function w0(clockProgram){
 
 test('controls: a complete successful constructed dump passes, empty and wholly unknown dumps refuse',()=>{
  assert.equal(clockPrimitiveVerdict(facts()).pass,true);
- for(const text of ['', 'error: unknown option -d', 'unparseable compiler output'])assert.equal(clockPrimitiveVerdict(facts(text)).pass,false);
+ // [OBS01-R13] expectation change 1 (Q109a): only the EMPTY dump still refuses at the gate; a non-empty dump with no forbidden clock helper name token passes the gate and the structured parser reports it as DIAGNOSTIC.
+ assert.equal(clockPrimitiveVerdict(facts('')).pass,false);
+ for(const text of ['error: unknown option -d', 'unparseable compiler output']){const v=clockPrimitiveVerdict(facts(text));assert.equal(v.pass,true);assert.equal(v.diagnostic.pass,false);}
  const noProof=w0(undefined);assert.equal(noProof.pass,false);
  retain('controls',{good:clockPrimitiveVerdict(facts()),empty:clockPrimitiveVerdict(facts('')),noProof});
 });
@@ -36,7 +38,8 @@ test('controls: declared forbidden helper ids and names refuse in recognised for
  const rows=[];
  for(const [id,name] of FORBIDDEN_CLOCK_HELPERS){
   for(const text of [good+'\n'+ir(id),good+`\n  99: call ${id}`,good+`\n  99: (85) call ${name}#${id}`]){
-   const result=clockPrimitiveVerdict(facts(text));rows.push({id,name,text,result});assert.equal(result.pass,false);
+   // [OBS01-R13] expectation change 2 (Q109a): a helper NAME token refuses at the gate; a numeric-only call passes the gate and is reported by the structured parser as DIAGNOSTIC.
+   const result=clockPrimitiveVerdict(facts(text));rows.push({id,name,text,result});assert.equal(result.pass,!text.includes(name));assert.equal(result.diagnostic.pass,false);
   }
  }
  retain('declared-helper-controls',rows);
@@ -63,6 +66,7 @@ test('A: a partly recognised dump must not ignore a numeric forbidden helper cal
  const f=facts(text),proof=clockPrimitiveVerdict(f),verdict=w0(f);
  retain('partial-dump',{text,proof,w0:verdict,expected:'refuse: call 125 is forbidden by the implementation itself, regardless of numeric opcode formatting',
   provenance:'CONSTRUCTED partial-format variation; not a recording of bpftrace output'});
- assert.equal(proof.pass,false,'proof ignores an unparsed forbidden helper after sufficient recognised monotonic calls');
- assert.equal(verdict.pass,false);
+ // [OBS01-R13] expectation change 3 (Q109a): the numeric call 125 (no name token) passes the gate; the structured parser still refuses it as DIAGNOSTIC.
+ assert.equal(proof.pass,true);assert.equal(proof.diagnostic.pass,false);
+ assert.equal(verdict.pass,true);
 });
