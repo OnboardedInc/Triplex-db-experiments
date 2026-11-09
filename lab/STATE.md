@@ -392,3 +392,7 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   Python 92, Node 25, reviewer fixtures 15/15. The bpftrace dump flag and output format are unobserved until W0. In review (CX-VOBS7
   round 3) with findings split into "must fix before W0" and "settled only by W0 output, already fail-closed"; the second class does not
   block ACCEPT-OFFLINE. Further offline rounds have diminishing value; the next real information is W0, which needs Sam's download OK.
+- 2026-11-09 DI01 review FIX-FIRST (CX-VDI01, verify/DI01 3bc7bd11; merge with main aa34513a): one medium finding, reference-basis
+  refusals are plain Error objects, not typed. Verified: all 438,140 delivery digests, fresh 900 crash trials, evaluator 108 and lab PACK
+  on the merged tree (root pack:check fails only on the excluded DuckDB tarball). Real backend retention expiry not exercised. DI01 round 2
+  (Sonnet) merges main and adds a shared tagged BasisNotAvailable refusal.
