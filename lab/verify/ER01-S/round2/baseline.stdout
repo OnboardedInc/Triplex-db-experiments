@@ -1,0 +1,35 @@
+test_formats.py: 0
+test_scanners.py: 0
+attempt-01/baseline: REFUSED
+attempt-01/plaintext-start: REFUSED
+attempt-01/plaintext-end: REFUSED
+attempt-01/plaintext-page: REFUSED
+attempt-01/keys-start: REFUSED
+attempt-01/keys-end: REFUSED
+attempt-01/keys-page: REFUSED
+attempt-01/blind-fsst: REFUSED
+attempt-01/unknown-d-undocumented-segment: REFUSED
+attempt-01/unknown-d-undocumented-wal: REFUSED
+attempt-01/unknown-jvm-node-heap-lru: REFUSED
+attempt-01/unknown-freed-vm-filesystem-blocks: REFUSED
+attempt-01/unknown-freed-host-apfs-blocks: REFUSED
+attempt-01/sqlite-overflow-plaintext: REFUSED
+attempt-01/sqlite-overflow-envelope: REFUSED
+attempt-01/plaintext-gzip: REFUSED
+attempt-01/plaintext-record-fragments: REFUSED
+attempt-01/physical-overflow-key: REFUSED
+attempt-01/new-wrapper-d-keys-heap: REFUSED
+attempt-01/new-wrapper-d-keys-toast: REFUSED
+attempt-01/new-wrapper-d-keys-wal: REFUSED
+attempt-01/stale-backup: REFUSED
+coverage-02/envelope-start: REFUSED
+coverage-02/envelope-end: REFUSED
+coverage-02/envelope-page: REFUSED
+coverage-02/new-wrapper-old-wal-UTF-8: REFUSED
+coverage-02/new-wrapper-old-wal-UTF-16le: REFUSED
+coverage-02/envelope-gzip: REFUSED
+coverage-02/keys-gzip: REFUSED
+coverage-02/envelope-fragments: REFUSED
+coverage-02/keys-fragments: REFUSED
+
+{"output": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VER01S/round2/baseline-01", "status": "PASS", "manifestSha256": "e8630a62994337160727c74893e2d1f0f33ff99066af5f4222b42b25b767fd99"}

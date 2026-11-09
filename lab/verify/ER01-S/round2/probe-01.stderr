@@ -1,0 +1,9 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 79060 "CX-VA01-0313-mut", pid 18307 "CX-RT01-post-page-final", pid 3546 "CX-VP2Q-4-R10-matrices", pid 79198 "CX-XRUN-XC-G1"
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-er01s/lab/verify/ER01-S/round2/probe.py", line 356, in <module>
+    main()
+    ~~~~^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-er01s/lab/verify/ER01-S/round2/probe.py", line 233, in main
+    assert captured is not None, 'could not seed a genuine cross-overflow-page needle'
+           ^^^^^^^^^^^^^^^^^^^^
+AssertionError: could not seed a genuine cross-overflow-page needle

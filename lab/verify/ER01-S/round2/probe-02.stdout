@@ -1,0 +1,13 @@
+nominal: PASS
+two-overflow-pages: FAIL
+superseded-committed-wal: FAIL
+superseded-within-commit-wal: PASS UNSAFE
+freelist-page: REFUSED
+toast-pglz: FAIL
+xtdb-buffer-block: REFUSED
+qlever-vocabulary-word: FAIL
+base64-json-log: FAIL
+escaped-base64-json-log: PASS UNSAFE
+escaped-base64-json-sqlite: PASS UNSAFE
+hex-key-separate-envelope: FAIL
+{"output": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VER01S/round2/probe-02", "scenarioCount": 12, "unsafe": ["superseded-within-commit-wal", "escaped-base64-json-log", "escaped-base64-json-sqlite"], "manifestSha256": "e1fd6b6b893e242c4d861e1afdfbb2f1346bd12be18ae77e83ee47b5465ab56b"}
