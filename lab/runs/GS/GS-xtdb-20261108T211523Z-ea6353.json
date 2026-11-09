@@ -1,0 +1,1059 @@
+{
+  "format": "tx2-gate-receipt/1",
+  "gate": "GS",
+  "lane": "xtdb",
+  "slot": "dev",
+  "runId": "GS-xtdb-20261108T211523Z-ea6353",
+  "experiment": "EXP-W01b",
+  "note": "CX-W01B restart-barrier regression fixed; rerun GS04 plus unresolved GS09 GS13 and GS12 baseline; all failures retained; reduced shared-dev profile",
+  "previous": "GS-xtdb-20261108T105742Z-843235",
+  "startedAt": "2026-11-08T21:15:23.661Z",
+  "endedAt": "2026-11-08T21:18:58.871Z",
+  "durationMs": 215210,
+  "scope": "subset:0/20 rung=10k readers=1 reduced-profile",
+  "runKind": "diagnostic",
+  "mutation": null,
+  "contractVersion": "0.3.9",
+  "contract": {
+    "format": "triplex-db-2/acceptance-obligations/3",
+    "version": "0.3.9",
+    "status": "CANDIDATE-1.0.0: retargeted to Sam's re-scope (SCOPE.md, NORTH-STAR.md, TARGETS.md); freezes as 1.0.0 after orchestrator acceptance and adversarial review",
+    "sha256": "420b3aeb4aba4f4196d16360ba77abca24c2f7b0fbf3c6b9fc40084c3b419211"
+  },
+  "obligations": [],
+  "engineName": "xtdb",
+  "git": {
+    "head": "3ccbc9883a638bde46b45dc21197197d56cf6d3d",
+    "headTree": "a19b514c2b800d733ca6ed527be1e654a1d488ed",
+    "branch": "exp/W01-golden-scenarios",
+    "dirty": true,
+    "stashCommit": null,
+    "stashTree": null,
+    "diffScope": [
+      "packages",
+      "qualification",
+      "lab/bin",
+      "lab/config",
+      "vitest.workspace-aliases.ts",
+      "tsconfig.base.json",
+      "tsconfig.node.json",
+      "package.json",
+      "pnpm-workspace.yaml",
+      "pnpm-lock.yaml",
+      "turbo.json"
+    ],
+    "diffSha256": "72b5f8d0946d6639f1913d8f22afe2612c1f1a9b0fd442000363366094dfbea3",
+    "diffBytes": 3029,
+    "modifiedFiles": [
+      {
+        "path": "lab/bin/gate.mjs",
+        "bytes": 55687,
+        "sha256": "4d28fbfeed86c932189f15c142173a06768aba525fb27f436dc209b73621bb5b"
+      }
+    ],
+    "untrackedFiles": [],
+    "otherDirtyPaths": [
+      "lab/scenarios/lib/composition.mjs",
+      "lab/scenarios/lib/runner.mjs",
+      "lab/scenarios/lib/diagnostics.mjs",
+      "lab/scenarios/lib/runner.test.mjs"
+    ],
+    "sourceTreeId": "8f088bdbde511c392ed0304df750653cef497da1e517391e87e1fe07ccf61e1c"
+  },
+  "lockfileSha256": "b2b3e6e8cdfb18df6d235a8724611ee4fe637426c722a5de34326346b3cb6500",
+  "toolchain": {
+    "node": "v22.23.2",
+    "pnpm": "10.11.0",
+    "platform": "darwin-arm64"
+  },
+  "gateScripts": {
+    "lab/bin/gate.mjs": "4d28fbfeed86c932189f15c142173a06768aba525fb27f436dc209b73621bb5b",
+    "lab/bin/lib.mjs": "355519608a64bc5ed5738bbae089482e11b4187b1baf0e1e941e599575127c6f",
+    "lab/bin/receipt.mjs": "ebdcfb60284d6efe378923c0f42eb4eb7ad9a260141ceb46958e86752d0d2d2c",
+    "lab/bin/engine.mjs": "b2bb06172efd2791ec323285998e560ace543a38e022dff489c601d3c879c608",
+    "lab/bin/heavy-lock.mjs": "88dd2071c8d8c1e3212c9a65dc719b79af46fbe6cc2e6ede8fbe0b61112803fa",
+    "lab/config/slots.json": "335b42612449b0b3399b8282e1a2bdaf1ecdd1e573335d051aedcfa3f9e109a8"
+  },
+  "build": {
+    "manifestSha256": "11dfb240b73ea798d74e0f1db08fab4f6a54e04ef078309a74c55593d5443fa4",
+    "manifest": "runs/GS/GS-xtdb-20261108T211523Z-ea6353/build-manifest.json",
+    "packages": {
+      "core": {
+        "files": 412,
+        "bytes": 2619654,
+        "sha256": "9192f2e038f5aa95272017453c92da60be9944fccbed75c7721c328e52c2a22a"
+      },
+      "testkit": {
+        "files": 4,
+        "bytes": 247745,
+        "sha256": "b30558fbe016aa34202d9f260055ea944877ce3176a7604e2522e53a02c7251f"
+      },
+      "xtdb": {
+        "files": 76,
+        "bytes": 387271,
+        "sha256": "773d6a386201bb3ca7c432db7ed9f0e3158d1f7e7986c9453732aae22aa56e21"
+      },
+      "qualification": {
+        "files": 16,
+        "bytes": 212702,
+        "sha256": "19c1dd683a7e04a53b87902c6c2c2a304771a1000db8caff989778035de4da5c"
+      }
+    }
+  },
+  "engine": {
+    "container": "tx2-xtdb-dev",
+    "containerId": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+    "startedAt": "2026-11-07T19:39:01.589983918Z",
+    "imageId": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+    "repoDigests": [
+      "ghcr.io/xtdb/xtdb@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77"
+    ],
+    "configSha256": "034fff1703f2ecebb49b5ddeeaed4ee4e2a197ece368a6bdc93b074355e785ac",
+    "effectiveConfig": {
+      "lane": "xtdb",
+      "slot": "dev",
+      "image": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+      "configYamlSha256": "f6e1248ebb09af8a6959d67d15e0355a0be4c3783d8c3fc97ba97b00c7b3e379",
+      "env": {
+        "JDK_JAVA_OPTIONS": "-Xmx1500m -XX:MaxDirectMemorySize=1g"
+      },
+      "memBytes": 3221225472,
+      "cpus": 2,
+      "publish": "127.0.0.1:5470:5432",
+      "volume": "tx2-xtdb-dev-data:/var/lib/xtdb",
+      "cmd": [
+        "-f",
+        "/etc/xtdb/config.yaml"
+      ],
+      "health": "wget -q -O /dev/null http://127.0.0.1:8080/healthz/alive"
+    },
+    "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5470/xtdb",
+    "port": 5470,
+    "memCapBytes": 3221225472,
+    "nanoCpus": 2000000000,
+    "ownerSha256": "a1ae3fbcd98bb1de559f5ad0d4b18ea159902e58a64c313db391eb771fcec2a6",
+    "holder": "worktree:/Users/sam/projects/triplex-db-2"
+  },
+  "profile": {
+    "name": "default",
+    "env": {}
+  },
+  "queryPath": "xtdb-datalog",
+  "diskBefore": {
+    "totalBytes": 63088406528,
+    "usedBytes": 11676139520,
+    "availableBytes": 48174370816
+  },
+  "containers": {
+    "tx2-qlever-dev": {
+      "samples": 71,
+      "peakMemBytes": 1530082099,
+      "peakCpuPercent": 154.58,
+      "memLimitBytes": 3758096384
+    },
+    "tx2-xtdb-dev": {
+      "samples": 71,
+      "peakMemBytes": 2499670966,
+      "peakCpuPercent": 210.04,
+      "memLimitBytes": 3221225472
+    },
+    "tx2-xtdb-s1": {
+      "samples": 14,
+      "peakMemBytes": 410727219,
+      "peakCpuPercent": 216.03,
+      "memLimitBytes": 3758096384
+    }
+  },
+  "coRunning": [
+    {
+      "name": "tx2-xtdb-s1",
+      "memCapBytes": 3758096384,
+      "nanoCpus": 2000000000,
+      "health": "healthy"
+    },
+    {
+      "name": "tx2-qlever-dev",
+      "memCapBytes": 3758096384,
+      "nanoCpus": 2000000000,
+      "health": "healthy"
+    },
+    {
+      "name": "tx2-xtdb-dev",
+      "memCapBytes": 3221225472,
+      "nanoCpus": 2000000000,
+      "health": "healthy"
+    }
+  ],
+  "volumeBytes": 4704370688,
+  "diskAfter": {
+    "totalBytes": 63088406528,
+    "usedBytes": 11678543872,
+    "availableBytes": 48171966464
+  },
+  "fixtures": {
+    "lab/oracles/replay/__init__.py": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
+    "lab/oracles/replay/__main__.py": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
+    "lab/oracles/replay/cli.py": "1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5",
+    "lab/oracles/replay/constraints.py": "9b9a9fcbdbb787e784a6cefd9b9e9ba525cf5e0ea8a9cdcc0e5278fe1ff19e43",
+    "lab/oracles/replay/entities.py": "2af069de69a53a027f225756a955544c5ecec126d4ba99f66f40586fb5879371",
+    "lab/oracles/replay/errors.py": "5cfdd07ed710557d1db868bfae38e32f7c851dc3007fbcc9b2c0de521185f887",
+    "lab/oracles/replay/exact.py": "d2cdbabe0c7131983e347e4f04d0e63ebd9db9793b5ccccc5732324fb6037544",
+    "lab/oracles/replay/replay.py": "585524ba205b5ce19a42efd7ff2ef5886d0462abcd4fe4d22035c0b55880980d",
+    "lab/oracles/replay/run.py": "9fa40089db5c50fa5f7f245f14c050dee4cd3d0bfefd1e7e171461226e154032",
+    "lab/oracles/replay/scale.py": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
+    "lab/oracles/replay/selfcheck.py": "c1e0ae41cfe9bac7f2ed7f249715b5ae71e98f4d66e4ae152938b6d333c9418c",
+    "lab/oracles/replay/values.py": "67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982",
+    "lab/oracles/replay/views.py": "df8dba0ba607c98ccd204ab9adbf5f6192d1a4fe250b103ed458b5dec70ad26a",
+    "lab/scenarios/01-monday-rush/expected-10k.json": "c1f0ebe1ae20466e2c83652ab3649bb0e4bd820ca6c1b16b3e08a4ba6df640c4",
+    "lab/scenarios/01-monday-rush/run.mjs": "2426ea1d0b498eca49605d3c5e05685e9bca746d22c5e1dba863a88b91146caf",
+    "lab/scenarios/01-monday-rush/scenario.json": "6afc78d30ec1d03f315ecc8621398d1157300522ddda78950642364a68644bf2",
+    "lab/scenarios/02-form-submit/expected-10k.json": "9304e03fbb4206f92915387a8ce974eb82aba227d0f04aa6eff5b7d447e862f7",
+    "lab/scenarios/02-form-submit/expected-smoke.json": "bca0e1bfeb03dedeac40218e9686b2c368b5aef0e1264ecd5afc9e4eb9927385",
+    "lab/scenarios/02-form-submit/run.mjs": "1849864f9ced39cc8ae4a2357f41f50887fa35d2007b0f05da196b4a66e4c2fd",
+    "lab/scenarios/02-form-submit/scenario.json": "ac6f41a1ff26d8eeff4a2f1237c76fb0c312063cf98c8f360a59784ee8fc141e",
+    "lab/scenarios/03-webhook-storm/expected-10k.json": "98f2e13cda97445d4cb6b4e70f945dcad38f8aa6138cc95790baf1d76b9c7b8d",
+    "lab/scenarios/03-webhook-storm/expected-smoke.json": "36bc925d0772c5a2ec0d17c68df9b567b6935b219eea3ab2cbf44f695255b966",
+    "lab/scenarios/03-webhook-storm/run.mjs": "a425536e045a16845fcf84ef29304cc77cf23affb8488beef020888796c6b1df",
+    "lab/scenarios/03-webhook-storm/scenario.json": "be8eafea4cf0b154a5dd4844e061cba9e7ab8c062aab1143cc32caec9ea1d6ec",
+    "lab/scenarios/04-lost-ack-restart/expected-10k.json": "5e5f34d17966a80cb51c64c0e8f7d39640221c9d8de4f8be08c7abc7b30dae47",
+    "lab/scenarios/04-lost-ack-restart/expected-smoke.json": "bae17e46aada0eefce569268ada5b4856d0230423153d3a7d6cba3eb2f737cd1",
+    "lab/scenarios/04-lost-ack-restart/run.mjs": "aab793c48d5bd82ae4a806f94ab66b8b3f12524df80a7f770562b13474695f94",
+    "lab/scenarios/04-lost-ack-restart/scenario.json": "f105c170aebf780e527a427dacfc2634dd1072a51a36439c75cc35bf02f1de41",
+    "lab/scenarios/05-background-check-burst/expected-10k.json": "aa41eec2e7e08bbeca1cc4f5e1acf50852b263970117089d56c68af07fb573b6",
+    "lab/scenarios/05-background-check-burst/run.mjs": "5cfd62d839c7c42c0eff432d4a1274cd5900c1e240232db99a00caff66e6f552",
+    "lab/scenarios/05-background-check-burst/scenario.json": "1b19d6578e4c54f3c19b24909f62fa09517677a0ebeb5ddeb05d1c62e50256ed",
+    "lab/scenarios/06-decision-fanout/expected-10k.json": "6689c34477137e66c07b1c31edcd019b95d08fb610b84221035fd37e2fbc66ca",
+    "lab/scenarios/06-decision-fanout/run.mjs": "5b8442d6cef1fcbade10569a702b236b44034abf3df93fae34037df11355b0a4",
+    "lab/scenarios/06-decision-fanout/scenario.json": "0774477c924d530a0b3d61f95961b6a9188d502b7ddffb768f3e9c4de8c133ff",
+    "lab/scenarios/07-two-reviewers/expected-10k.json": "d569083c171b06fc11be2f4925288bdce5b2016a8b8a44b1f19c47686b0cda7c",
+    "lab/scenarios/07-two-reviewers/expected-smoke.json": "4ef57b85f0db9c57c4e417b1bb110bc8008e6579eb0ffdd0f5d2100548d654a8",
+    "lab/scenarios/07-two-reviewers/run.mjs": "52b17c614fe0dc3d1d308851c1920476c038842172795216a96ea39b70717caa",
+    "lab/scenarios/07-two-reviewers/scenario.json": "407fe79250e54c232a6ac7fdf605f6ff8ebacc50283edd4abbf920d134da935d",
+    "lab/scenarios/08-address-since-october/expected-10k.json": "b713c6a29953638c1d810c1fa73940bf29ec1364459d5afb9258463e3bfef1d4",
+    "lab/scenarios/08-address-since-october/expected-smoke.json": "c29527e3b8c58949b2ef944878802f2be6c52dcf39f7bf0d802dcf4fe9c47473",
+    "lab/scenarios/08-address-since-october/run.mjs": "b26212658d8b1038435977569a046a6e404dbb7c13fe67a67478eb829509f811",
+    "lab/scenarios/08-address-since-october/scenario.json": "cd472031a48b6f8459b8b06e72ef1b09db9d495e8d55ee130fa411d551cb9f6d",
+    "lab/scenarios/09-start-dates-move/expected-10k.json": "3faec96a994e98bae04774f0a560458b82d7ee42835a1ccd4332b2dcff3a837b",
+    "lab/scenarios/09-start-dates-move/run.mjs": "ec25420f28cc52b5c3f7ebb253c457b04fe97d101022640251aa59be04d62244",
+    "lab/scenarios/09-start-dates-move/scenario.json": "2e36ec5626f35a970fdb1d4f28ee00a30d5d561e21e49f35e878df00c8371672",
+    "lab/scenarios/10-release-activation/expected-10k.json": "3deada9100a4bf961acf31254233f734848f6532bd70d58550fe1c84c1773426",
+    "lab/scenarios/10-release-activation/expected-smoke.json": "9aa16a1b498ff1d83b7f35e062def57952c32877cfa5d317422d573d5d568176",
+    "lab/scenarios/10-release-activation/run.mjs": "dacb927bcaf7ac3d8b877d0e91ae24ec56374c2d83bc3f371b7fc0ab8fc1c6ba",
+    "lab/scenarios/10-release-activation/scenario.json": "2292956d99bdd8b5d2398db8d215973ef47154cb63893ff503fc9ec58bc35880",
+    "lab/scenarios/11-plan-impact-preview/expected-10k.json": "d63325ae84063f78ce26dd1fec32a43ab563aa4f84b6f0ab74d7b4ebc1080c9a",
+    "lab/scenarios/11-plan-impact-preview/run.mjs": "1561b18187be5353e0513d04c5fd8a0919d9c7571a080b9ab8ec30c90bc792ce",
+    "lab/scenarios/11-plan-impact-preview/scenario.json": "b9ed5a5400c42db6c3a0673e60ab8072429608235f1f0756790f9cb982e3a3f6",
+    "lab/scenarios/12-audit-march-3/check-patch.mjs": "e24e5ef4cd1a3529feb5877ff8615a27e98149aebe0d8272eab1f4e77e0c0419",
+    "lab/scenarios/12-audit-march-3/expected-10k.json": "6ea84653921fa7bec3a5dced9e790337dccbca8a28a922ccbc12140f604ee733",
+    "lab/scenarios/12-audit-march-3/expected-smoke.json": "00e106334c991d6f7df7c5140eb41eba927a0cb93c7bf8fb09294df56053fb4f",
+    "lab/scenarios/12-audit-march-3/run.mjs": "326ef53734d96117c5d687958a42c8c5022b1a28821278bb5962beb631637692",
+    "lab/scenarios/12-audit-march-3/scenario.json": "00dab20e88b5b662602e92998564fb9827b72a332420fae31625cc5eb1eb190f",
+    "lab/scenarios/13-hris-backfill/expected-10k.json": "c94563cd092f562a109224546af874869a0cdf5cd4d581335f22b391df9564e2",
+    "lab/scenarios/13-hris-backfill/run.mjs": "e2f27970588cfc717b2ded0f45f1ca0ecd597f15af6c8159a134ead3eacb73d1",
+    "lab/scenarios/13-hris-backfill/scenario.json": "079c4d8bde19fe963c7df15f6046bf695ad0581e35524a5f160f1b2e266ba702",
+    "lab/scenarios/14-account-factory/expected-10k.json": "17e9a2407ac2f60c44973c8f2df15ccea5900ca33374af8d82b1290d7ec2526d",
+    "lab/scenarios/14-account-factory/run.mjs": "00c3a37d93851d45dbc18eb1186473dcd77088c104ea56056b87f6e98307ff08",
+    "lab/scenarios/14-account-factory/scenario.json": "eef7b3ffada1785425ab64dcf9cdfea560c7c777404db81b0b065ef34795a58b",
+    "lab/scenarios/15-tenant-mix/expected-10k.json": "640948aaa673a8009fb3e4c8333f31b0d1f29c1d3f3d77a7c8fbd95611d302ac",
+    "lab/scenarios/15-tenant-mix/run.mjs": "2846ec482ec95e532d85d3a6238b169290e252f4d19da2af6677d56a0ce68f48",
+    "lab/scenarios/15-tenant-mix/scenario.json": "d08ac2e2591f604d571298ae1b8da2c3772b90d9310ca184e1a964280422d8bf",
+    "lab/scenarios/16-pii-erasure/expected-10k.json": "82a7dfd66951746991c6eaaee33d06594245f60d8824082f504595f81d80b854",
+    "lab/scenarios/16-pii-erasure/run.mjs": "501c3540d3a45f712a5122f504776cb35e10fc1a4d38b4ac8711ec0d4b531125",
+    "lab/scenarios/16-pii-erasure/scenario.json": "7f34f60dc098694af95d20c7729a0c2b246f0da10ac55e5dd1e2773bb411b2a7",
+    "lab/scenarios/17-agent-proposals/expected-10k.json": "abb5e6f21bd4438176f1ff08b7f60eda1e6cbf9412df907c285b49f0a801d515",
+    "lab/scenarios/17-agent-proposals/run.mjs": "735133b38bdad7cc739ed1ef366dc8a36870f705650c9cf00634b8d7600af6ce",
+    "lab/scenarios/17-agent-proposals/scenario.json": "9e7dffca393733e715a500da0ad58a94f6c3be4101c3cd9f5a22ea4169ed998b",
+    "lab/scenarios/18-recruiter-dashboards/expected-10k.json": "e432c0c1bec50e426d8444aabfa6c9910e66b42ae4338c4a0301d9cba476a15a",
+    "lab/scenarios/18-recruiter-dashboards/run.mjs": "f728430137e3ed51b4cf7c252499ece13459b6228ee90e37cc2fca738c3a1091",
+    "lab/scenarios/18-recruiter-dashboards/scenario.json": "d36fb389b4537b91edc768c87b14e26f52ca059e7dbe37880411dcbdfafb6bce",
+    "lab/scenarios/19-feed-consumer-crash/expected-10k.json": "afa59db2ec535413885d59ff1d65b784334aec2920f8acb312342e4b68c6feb4",
+    "lab/scenarios/19-feed-consumer-crash/expected-smoke.json": "be11636a65fa9ba8087a57106719d9cd0016867e94f5280c743886c530cabe8d",
+    "lab/scenarios/19-feed-consumer-crash/run.mjs": "17c6f25ea5848054c09e1998fad10dd984fa082b2b8e085e9b448176a16f440e",
+    "lab/scenarios/19-feed-consumer-crash/scenario.json": "7c01e7a92adf22bc69dfde04a64f54496f2b6a5d64b1f747587a6369d55b071d",
+    "lab/scenarios/20-midnight-expiry/expected-10k.json": "15b235a9836656aa7ad428980126c4dbb7c7cdc36d7a6407301a753e48174dab",
+    "lab/scenarios/20-midnight-expiry/run.mjs": "e4e96b8530227b1e3918196861b8d2def3d106d5662f7faa0b7519a68a64736e",
+    "lab/scenarios/20-midnight-expiry/scenario.json": "950e6ce0dd4dc25599a6deecca04bf37aeba1fb168e9a3abfe795c02344d94aa",
+    "lab/scenarios/expect.mjs": "ff95b076175c920019ffc7c506f65a6ef9c960c4204d94ff6513aca87592b23c",
+    "lab/scenarios/lib/composition.mjs": "4bd21e907b31b47c5f272d5318b915f9ef8372091a0ce5d14c8025a43fa3d50c",
+    "lab/scenarios/lib/diagnostics.mjs": "1328f792662b17dc9b2bcca3517855123bee777171bb637d0332fcd90c1b7773",
+    "lab/scenarios/lib/domain.mjs": "8235543f8b42e25b6f04995b33b26cf13a8ec977b1da99f61a00453130b4796c",
+    "lab/scenarios/lib/gen.mjs": "566a7c6abeb9f82200e587dd894503507903716e685f0ecacf2ff174724cf3c5",
+    "lab/scenarios/lib/oracle.mjs": "d783fe3a8be4174404101d8c33ffe0b5a6695c633c351966d6578a574ffbc9f6",
+    "lab/scenarios/lib/runner.mjs": "1bc87ee232916cb92d976370df8e589fe32031f73a2a2d1351147425b04cf4e6",
+    "lab/scenarios/lib/runner.test.mjs": "2c42cd90ef8563cb75287b0fbc4e31bf72f718451eaedf13b9da9765980d1743",
+    "lab/scenarios/lib/triplex.mjs": "cc9528893d4ea7d3f79a2e0688eebfbc35ff57d8dbfd78f9508283b037870852",
+    "lab/scenarios/run.mjs": "4beb45a96b55a4b8d9d9a6af62803d866a7a0b2082f1ec3aec48f0bf55387b79",
+    "lab/scenarios/world/expected-10k.json": "efb258eb44546a0ea47f5361981199b0f93c266139157b974e21bcbd6e5e84aa",
+    "lab/scenarios/world/expected-smoke.json": "3765558857ebbdad3bc4822d0a9bb5b3a963d2e8f5d02d102af96e04d9d55b8b",
+    "lab/scenarios/world/world.json": "c58d81c00e0c49a0ab9cd3ca8aac1fd9b5673948d23c772ab6703dd5adae23ac"
+  },
+  "contactedEndpoint": "postgres://xtdb:xtdb@127.0.0.1:5470/xtdb",
+  "counts": {
+    "executed": 0,
+    "expected": 0,
+    "pass": 0,
+    "fail": 0,
+    "skip": 0,
+    "byVerdict": {},
+    "database": {
+      "pass": 0,
+      "fail": 0
+    },
+    "bars": {
+      "pass": 0,
+      "fail": 0
+    },
+    "domain": {}
+  },
+  "gs": {
+    "rung": "10k",
+    "readers": 1,
+    "profile": {
+      "readers": 1,
+      "readersTarget": 256,
+      "slotMode": "resident",
+      "reduced": true
+    },
+    "world": {
+      "scope": "gs-world-10k-s20261107-18ae8349",
+      "loaded": false,
+      "batches": 100,
+      "ms": 0,
+      "facts": 50000,
+      "positionAfter": 1419,
+      "expectedSha256": "84ee956e0581504a3a80081e7cc12ede7ff2fac0ccd31778851be619d1798692"
+    },
+    "scope": "gs-world-10k-s20261107-18ae8349",
+    "composition": "triplex-public",
+    "runTag": "3bc585da",
+    "scenarios": []
+  },
+  "cases": [],
+  "scopes": {
+    "worldScope": "gs-world-10k-s20261107-18ae8349",
+    "fresh": false
+  },
+  "steps": [
+    {
+      "name": "pnpm-version",
+      "command": "pnpm --store-dir /Users/sam/projects/triplex-db-2/.pnpm-store --version",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 1358,
+      "cwd": ".",
+      "stdout": "runs/GS/GS-xtdb-20261108T211523Z-ea6353/pnpm-version.stdout.txt",
+      "stderr": "runs/GS/GS-xtdb-20261108T211523Z-ea6353/pnpm-version.stderr.txt"
+    },
+    {
+      "name": "build",
+      "command": "pnpm --store-dir /Users/sam/projects/triplex-db-2/.pnpm-store --filter @triplex-build/triplex --filter @triplex-build/triplex-testkit --filter @triplex-build/triplex-xtdb --filter @triplex-build/triplex-qualification build",
+      "code": 1,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 194,
+      "cwd": ".",
+      "stdout": "runs/GS/GS-xtdb-20261108T211523Z-ea6353/build.stdout.txt",
+      "stderr": "runs/GS/GS-xtdb-20261108T211523Z-ea6353/build.stderr.txt"
+    },
+    {
+      "name": "gs-scenarios",
+      "command": "node lab/scenarios/run.mjs --lane xtdb --rung 10k --output /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-af5dc0c632c7cd817/runs/GS/GS-xtdb-20261108T211523Z-ea6353/gs-report.json --raw-dir /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-af5dc0c632c7cd817/runs/GS/GS-xtdb-20261108T211523Z-ea6353 --scenarios 4,9,12,13 --readers 1",
+      "code": null,
+      "signal": "SIGTERM",
+      "timedOut": false,
+      "elapsedMs": 208306,
+      "cwd": ".",
+      "stdout": "runs/GS/GS-xtdb-20261108T211523Z-ea6353/gs-scenarios.stdout.txt",
+      "stderr": "runs/GS/GS-xtdb-20261108T211523Z-ea6353/gs-scenarios.stderr.txt"
+    }
+  ],
+  "firstFailures": [
+    {
+      "step": "build",
+      "tail": "[ERROR] Unknown option: 'store-dir'\nDid you mean 'stream'? Use \"--config.unknown=value\" to force an unknown option.\nFor help, run: pnpm help run"
+    }
+  ],
+  "rawDir": "runs/GS/GS-xtdb-20261108T211523Z-ea6353",
+  "reasons": [
+    "build failed (exit 1)",
+    "GS runner status RUNNING: ",
+    "zero executed scenarios",
+    "zero executed cases"
+  ],
+  "verdict": "FAIL",
+  "objects": [
+    {
+      "path": "git diff HEAD --binary",
+      "role": "git-diff-head-binary",
+      "bytes": 3029,
+      "sha256": "72b5f8d0946d6639f1913d8f22afe2612c1f1a9b0fd442000363366094dfbea3"
+    },
+    {
+      "path": "lab/bin/gate.mjs",
+      "role": "modified-input",
+      "bytes": 55687,
+      "sha256": "4d28fbfeed86c932189f15c142173a06768aba525fb27f436dc209b73621bb5b"
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "role": "lockfile",
+      "bytes": 290287,
+      "sha256": "b2b3e6e8cdfb18df6d235a8724611ee4fe637426c722a5de34326346b3cb6500"
+    },
+    {
+      "path": "lab/bin/gate.mjs",
+      "role": "gate-script",
+      "bytes": 55687,
+      "sha256": "4d28fbfeed86c932189f15c142173a06768aba525fb27f436dc209b73621bb5b"
+    },
+    {
+      "path": "lab/bin/lib.mjs",
+      "role": "gate-script",
+      "bytes": 26185,
+      "sha256": "355519608a64bc5ed5738bbae089482e11b4187b1baf0e1e941e599575127c6f"
+    },
+    {
+      "path": "lab/bin/receipt.mjs",
+      "role": "gate-script",
+      "bytes": 5363,
+      "sha256": "ebdcfb60284d6efe378923c0f42eb4eb7ad9a260141ceb46958e86752d0d2d2c"
+    },
+    {
+      "path": "lab/bin/engine.mjs",
+      "role": "gate-script",
+      "bytes": 30796,
+      "sha256": "b2bb06172efd2791ec323285998e560ace543a38e022dff489c601d3c879c608"
+    },
+    {
+      "path": "lab/bin/heavy-lock.mjs",
+      "role": "gate-script",
+      "bytes": 1841,
+      "sha256": "88dd2071c8d8c1e3212c9a65dc719b79af46fbe6cc2e6ede8fbe0b61112803fa"
+    },
+    {
+      "path": "lab/config/slots.json",
+      "role": "gate-script",
+      "bytes": 4619,
+      "sha256": "335b42612449b0b3399b8282e1a2bdaf1ecdd1e573335d051aedcfa3f9e109a8"
+    },
+    {
+      "path": "runs/GS/GS-xtdb-20261108T211523Z-ea6353/build-manifest.json",
+      "role": "build-manifest",
+      "bytes": 100989,
+      "sha256": "11dfb240b73ea798d74e0f1db08fab4f6a54e04ef078309a74c55593d5443fa4"
+    },
+    {
+      "path": "xtdb-dev effective config",
+      "role": "engine-effective-config",
+      "bytes": 565,
+      "sha256": "5c4691cd927710c522b1f20e0d2100a994a0383bf5f0190a8fc7abba9f90fe9c"
+    },
+    {
+      "path": "config.yaml",
+      "role": "engine-config-file",
+      "bytes": 198,
+      "sha256": "f6e1248ebb09af8a6959d67d15e0355a0be4c3783d8c3fc97ba97b00c7b3e379"
+    },
+    {
+      "path": "runs/GS/GS-xtdb-20261108T211523Z-ea6353/build-manifest-after.json",
+      "role": "build-manifest",
+      "bytes": 100989,
+      "sha256": "11dfb240b73ea798d74e0f1db08fab4f6a54e04ef078309a74c55593d5443fa4"
+    },
+    {
+      "path": "runs/GS/GS-xtdb-20261108T211523Z-ea6353/gs-scenarios.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/GS/GS-xtdb-20261108T211523Z-ea6353/gs-scenarios.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 2534,
+      "sha256": "8ebe94482144f512ee0cc662645e68641cc87f12c88689cc9d4a8d056c4ba68e"
+    },
+    {
+      "path": "lab/oracles/replay/__init__.py",
+      "role": "oracle-fixture",
+      "bytes": 246,
+      "sha256": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0"
+    },
+    {
+      "path": "lab/oracles/replay/__main__.py",
+      "role": "oracle-fixture",
+      "bytes": 229,
+      "sha256": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d"
+    },
+    {
+      "path": "lab/oracles/replay/cli.py",
+      "role": "oracle-fixture",
+      "bytes": 2292,
+      "sha256": "1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5"
+    },
+    {
+      "path": "lab/oracles/replay/constraints.py",
+      "role": "oracle-fixture",
+      "bytes": 6305,
+      "sha256": "9b9a9fcbdbb787e784a6cefd9b9e9ba525cf5e0ea8a9cdcc0e5278fe1ff19e43"
+    },
+    {
+      "path": "lab/oracles/replay/entities.py",
+      "role": "oracle-fixture",
+      "bytes": 24808,
+      "sha256": "2af069de69a53a027f225756a955544c5ecec126d4ba99f66f40586fb5879371"
+    },
+    {
+      "path": "lab/oracles/replay/errors.py",
+      "role": "oracle-fixture",
+      "bytes": 7778,
+      "sha256": "5cfdd07ed710557d1db868bfae38e32f7c851dc3007fbcc9b2c0de521185f887"
+    },
+    {
+      "path": "lab/oracles/replay/exact.py",
+      "role": "oracle-fixture",
+      "bytes": 23950,
+      "sha256": "d2cdbabe0c7131983e347e4f04d0e63ebd9db9793b5ccccc5732324fb6037544"
+    },
+    {
+      "path": "lab/oracles/replay/replay.py",
+      "role": "oracle-fixture",
+      "bytes": 44568,
+      "sha256": "585524ba205b5ce19a42efd7ff2ef5886d0462abcd4fe4d22035c0b55880980d"
+    },
+    {
+      "path": "lab/oracles/replay/run.py",
+      "role": "oracle-fixture",
+      "bytes": 32009,
+      "sha256": "9fa40089db5c50fa5f7f245f14c050dee4cd3d0bfefd1e7e171461226e154032"
+    },
+    {
+      "path": "lab/oracles/replay/scale.py",
+      "role": "oracle-fixture",
+      "bytes": 6159,
+      "sha256": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe"
+    },
+    {
+      "path": "lab/oracles/replay/selfcheck.py",
+      "role": "oracle-fixture",
+      "bytes": 18120,
+      "sha256": "c1e0ae41cfe9bac7f2ed7f249715b5ae71e98f4d66e4ae152938b6d333c9418c"
+    },
+    {
+      "path": "lab/oracles/replay/values.py",
+      "role": "oracle-fixture",
+      "bytes": 39569,
+      "sha256": "67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982"
+    },
+    {
+      "path": "lab/oracles/replay/views.py",
+      "role": "oracle-fixture",
+      "bytes": 36148,
+      "sha256": "df8dba0ba607c98ccd204ab9adbf5f6192d1a4fe250b103ed458b5dec70ad26a"
+    },
+    {
+      "path": "lab/scenarios/01-monday-rush/expected-10k.json",
+      "role": "oracle-fixture",
+      "bytes": 16010,
+      "sha256": "c1f0ebe1ae20466e2c83652ab3649bb0e4bd820ca6c1b16b3e08a4ba6df640c4"
+    },
+    {
+      "path": "lab/scenarios/01-monday-rush/run.mjs",
+      "role": "oracle-fixture",
+      "bytes": 1472,
+      "sha256": "2426ea1d0b498eca49605d3c5e05685e9bca746d22c5e1dba863a88b91146caf"
+    },
+    {
+      "path": "lab/scenarios/01-monday-rush/scenario.json",
+      "role": "oracle-fixture",
+      "bytes": 2255,
+      "sha256": "6afc78d30ec1d03f315ecc8621398d1157300522ddda78950642364a68644bf2"
+    },
+    {
+      "path": "lab/scenarios/02-form-submit/expected-10k.json",
+      "role": "oracle-fixture",
+      "bytes": 12303,
+      "sha256": "9304e03fbb4206f92915387a8ce974eb82aba227d0f04aa6eff5b7d447e862f7"
+    },
+    {
+      "path": "lab/scenarios/02-form-submit/expected-smoke.json",
+      "role": "oracle-fixture",
+      "bytes": 7891,
+      "sha256": "bca0e1bfeb03dedeac40218e9686b2c368b5aef0e1264ecd5afc9e4eb9927385"
+    },
+    {
+      "path": "lab/scenarios/02-form-submit/run.mjs",
+      "role": "oracle-fixture",
+      "bytes": 2390,
+      "sha256": "1849864f9ced39cc8ae4a2357f41f50887fa35d2007b0f05da196b4a66e4c2fd"
+    },
+    {
+      "path": "lab/scenarios/02-form-submit/scenario.json",
+      "role": "oracle-fixture",
+      "bytes": 2925,
+      "sha256": "ac6f41a1ff26d8eeff4a2f1237c76fb0c312063cf98c8f360a59784ee8fc141e"
+    },
+    {
+      "path": "lab/scenarios/03-webhook-storm/expected-10k.json",
+      "role": "oracle-fixture",
+      "bytes": 18293,
+      "sha256": "98f2e13cda97445d4cb6b4e70f945dcad38f8aa6138cc95790baf1d76b9c7b8d"
+    },
+    {
+      "path": "lab/scenarios/03-webhook-storm/expected-smoke.json",
+      "role": "oracle-fixture",
+      "bytes": 10979,
+      "sha256": "36bc925d0772c5a2ec0d17c68df9b567b6935b219eea3ab2cbf44f695255b966"
+    },
+    {
+      "path": "lab/scenarios/03-webhook-storm/run.mjs",
+      "role": "oracle-fixture",
+      "bytes": 5314,
+      "sha256": "a425536e045a16845fcf84ef29304cc77cf23affb8488beef020888796c6b1df"
+    },
+    {
+      "path": "lab/scenarios/03-webhook-storm/scenario.json",
+      "role": "oracle-fixture",
+      "bytes": 3184,
+      "sha256": "be8eafea4cf0b154a5dd4844e061cba9e7ab8c062aab1143cc32caec9ea1d6ec"
+    },
+    {
+      "path": "lab/scenarios/04-lost-ack-restart/expected-10k.json",
+      "role": "oracle-fixture",
+      "bytes": 13977,
+      "sha256": "5e5f34d17966a80cb51c64c0e8f7d39640221c9d8de4f8be08c7abc7b30dae47"
+    },
+    {
+      "path": "lab/scenarios/04-lost-ack-restart/expected-smoke.json",
+      "role": "oracle-fixture",
+      "bytes": 8032,
+      "sha256": "bae17e46aada0eefce569268ada5b4856d0230423153d3a7d6cba3eb2f737cd1"
+    },
+    {
+      "path": "lab/scenarios/04-lost-ack-restart/run.mjs",
+      "role": "oracle-fixture",
+      "bytes": 4413,
+      "sha256": "aab793c48d5bd82ae4a806f94ab66b8b3f12524df80a7f770562b13474695f94"
+    },
+    {
+      "path": "lab/scenarios/04-lost-ack-restart/scenario.json",
+      "role": "oracle-fixture",
+      "bytes": 3047,
+      "sha256": "f105c170aebf780e527a427dacfc2634dd1072a51a36439c75cc35bf02f1de41"
+    },
+    {
+      "path": "lab/scenarios/05-background-check-burst/expected-10k.json",
+      "role": "oracle-fixture",
+      "bytes": 17976,
+      "sha256": "aa41eec2e7e08bbeca1cc4f5e1acf50852b263970117089d56c68af07fb573b6"
+    },
+    {
+      "path": "lab/scenarios/05-background-check-burst/run.mjs",
+      "role": "oracle-fixture",
+      "bytes": 1550,
+      "sha256": "5cfd62d839c7c42c0eff432d4a1274cd5900c1e240232db99a00caff66e6f552"
+    },
+    {
+      "path": "lab/scenarios/05-background-check-burst/scenario.json",
+      "role": "oracle-fixture",
+      "bytes": 1721,
+      "sha256": "1b19d6578e4c54f3c19b24909f62fa09517677a0ebeb5ddeb05d1c62e50256ed"
+    },
+    {
+      "path": "lab/scenarios/06-decision-fanout/expected-10k.json",
+      "role": "oracle-fixture",
+      "bytes": 26569,
+      "sha256": "6689c34477137e66c07b1c31edcd019b95d08fb610b84221035fd37e2fbc66ca"
+    },
+    {
+      "path": "lab/scenarios/06-decision-fanout/run.mjs",
+      "role": "oracle-fixture",
+      "bytes": 3288,
+      "sha256": "5b8442d6cef1fcbade10569a702b236b44034abf3df93fae34037df11355b0a4"
+    },
+    {
+      "path": "lab/scenarios/06-decision-fanout/scenario.json",
+      "role": "oracle-fixture",
+      "bytes": 2497,
+      "sha256": "0774477c924d530a0b3d61f95961b6a9188d502b7ddffb768f3e9c4de8c133ff"
+    },
+    {
+      "path": "lab/scenarios/07-two-reviewers/expected-10k.json",
+      "role": "oracle-fixture",
+      "bytes": 14878,
+      "sha256": "d569083c171b06fc11be2f4925288bdce5b2016a8b8a44b1f19c47686b0cda7c"
+    },
+    {
+      "path": "lab/scenarios/07-two-reviewers/expected-smoke.json",
+      "role": "oracle-fixture",
+      "bytes": 7311,
+      "sha256": "4ef57b85f0db9c57c4e417b1bb110bc8008e6579eb0ffdd0f5d2100548d654a8"
+    },
+    {
+      "path": "lab/scenarios/07-two-reviewers/run.mjs",
+      "role": "oracle-fixture",
+      "bytes": 2511,
+      "sha256": "52b17c614fe0dc3d1d308851c1920476c038842172795216a96ea39b70717caa"
+    },
+    {
+      "path": "lab/scenarios/07-two-reviewers/scenario.json",
+      "role": "oracle-fixture",
+      "bytes": 1914,
+      "sha256": "407fe79250e54c232a6ac7fdf605f6ff8ebacc50283edd4abbf920d134da935d"
+    },
+    {
+      "path": "lab/scenarios/08-address-since-october/expected-10k.json",
+      "role": "oracle-fixture",
+      "bytes": 24024,
+      "sha256": "b713c6a29953638c1d810c1fa73940bf29ec1364459d5afb9258463e3bfef1d4"
+    },
+    {
+      "path": "lab/scenarios/08-address-since-october/expected-smoke.json",
+      "role": "oracle-fixture",
+      "bytes": 11410,
+      "sha256": "c29527e3b8c58949b2ef944878802f2be6c52dcf39f7bf0d802dcf4fe9c47473"
+    },
+    {
+      "path": "lab/scenarios/08-address-since-october/run.mjs",
+      "role": "oracle-fixture",
+      "bytes": 4001,
+      "sha256": "b26212658d8b1038435977569a046a6e404dbb7c13fe67a67478eb829509f811"
+    },
+    {
+      "path": "lab/scenarios/08-address-since-october/scenario.json",
+      "role": "oracle-fixture",
+      "bytes": 2336,
+      "sha256": "cd472031a48b6f8459b8b06e72ef1b09db9d495e8d55ee130fa411d551cb9f6d"
+    },
+    {
+      "path": "lab/scenarios/09-start-dates-move/expected-10k.json",
+      "role": "oracle-fixture",
+      "bytes": 30786,
+      "sha256": "3faec96a994e98bae04774f0a560458b82d7ee42835a1ccd4332b2dcff3a837b"
+    },
+    {
+      "path": "lab/scenarios/09-start-dates-move/run.mjs",
+      "role": "oracle-fixture",
+      "bytes": 2026,
+      "sha256": "ec25420f28cc52b5c3f7ebb253c457b04fe97d101022640251aa59be04d62244"
+    },
+    {
+      "path": "lab/scenarios/09-start-dates-move/scenario.json",
+      "role": "oracle-fixture",
+      "bytes": 1922,
+      "sha256": "2e36ec5626f35a970fdb1d4f28ee00a30d5d561e21e49f35e878df00c8371672"
+    },
+    {
+      "path": "lab/scenarios/10-release-activation/expected-10k.json",
+      "role": "oracle-fixture",
+      "bytes": 12923,
+      "sha256": "3deada9100a4bf961acf31254233f734848f6532bd70d58550fe1c84c1773426"
+    },
+    {
+      "path": "lab/scenarios/10-release-activation/expected-smoke.json",
+      "role": "oracle-fixture",
+      "bytes": 6734,
+      "sha256": "9aa16a1b498ff1d83b7f35e062def57952c32877cfa5d317422d573d5d568176"
+    },
+    {
+      "path": "lab/scenarios/10-release-activation/run.mjs",
+      "role": "oracle-fixture",
+      "bytes": 8726,
+      "sha256": "dacb927bcaf7ac3d8b877d0e91ae24ec56374c2d83bc3f371b7fc0ab8fc1c6ba"
+    },
+    {
+      "path": "lab/scenarios/10-release-activation/scenario.json",
+      "role": "oracle-fixture",
+      "bytes": 4234,
+      "sha256": "2292956d99bdd8b5d2398db8d215973ef47154cb63893ff503fc9ec58bc35880"
+    },
+    {
+      "path": "lab/scenarios/11-plan-impact-preview/expected-10k.json",
+      "role": "oracle-fixture",
+      "bytes": 13192,
+      "sha256": "d63325ae84063f78ce26dd1fec32a43ab563aa4f84b6f0ab74d7b4ebc1080c9a"
+    },
+    {
+      "path": "lab/scenarios/11-plan-impact-preview/run.mjs",
+      "role": "oracle-fixture",
+      "bytes": 4306,
+      "sha256": "1561b18187be5353e0513d04c5fd8a0919d9c7571a080b9ab8ec30c90bc792ce"
+    },
+    {
+      "path": "lab/scenarios/11-plan-impact-preview/scenario.json",
+      "role": "oracle-fixture",
+      "bytes": 2655,
+      "sha256": "b9ed5a5400c42db6c3a0673e60ab8072429608235f1f0756790f9cb982e3a3f6"
+    },
+    {
+      "path": "lab/scenarios/12-audit-march-3/check-patch.mjs",
+      "role": "oracle-fixture",
+      "bytes": 3287,
+      "sha256": "e24e5ef4cd1a3529feb5877ff8615a27e98149aebe0d8272eab1f4e77e0c0419"
+    },
+    {
+      "path": "lab/scenarios/12-audit-march-3/expected-10k.json",
+      "role": "oracle-fixture",
+      "bytes": 16095,
+      "sha256": "6ea84653921fa7bec3a5dced9e790337dccbca8a28a922ccbc12140f604ee733"
+    },
+    {
+      "path": "lab/scenarios/12-audit-march-3/expected-smoke.json",
+      "role": "oracle-fixture",
+      "bytes": 7970,
+      "sha256": "00e106334c991d6f7df7c5140eb41eba927a0cb93c7bf8fb09294df56053fb4f"
+    },
+    {
+      "path": "lab/scenarios/12-audit-march-3/run.mjs",
+      "role": "oracle-fixture",
+      "bytes": 4641,
+      "sha256": "326ef53734d96117c5d687958a42c8c5022b1a28821278bb5962beb631637692"
+    },
+    {
+      "path": "lab/scenarios/12-audit-march-3/scenario.json",
+      "role": "oracle-fixture",
+      "bytes": 3617,
+      "sha256": "00dab20e88b5b662602e92998564fb9827b72a332420fae31625cc5eb1eb190f"
+    },
+    {
+      "path": "lab/scenarios/13-hris-backfill/expected-10k.json",
+      "role": "oracle-fixture",
+      "bytes": 21230,
+      "sha256": "c94563cd092f562a109224546af874869a0cdf5cd4d581335f22b391df9564e2"
+    },
+    {
+      "path": "lab/scenarios/13-hris-backfill/run.mjs",
+      "role": "oracle-fixture",
+      "bytes": 2923,
+      "sha256": "e2f27970588cfc717b2ded0f45f1ca0ecd597f15af6c8159a134ead3eacb73d1"
+    },
+    {
+      "path": "lab/scenarios/13-hris-backfill/scenario.json",
+      "role": "oracle-fixture",
+      "bytes": 1806,
+      "sha256": "079c4d8bde19fe963c7df15f6046bf695ad0581e35524a5f160f1b2e266ba702"
+    },
+    {
+      "path": "lab/scenarios/14-account-factory/expected-10k.json",
+      "role": "oracle-fixture",
+      "bytes": 40725,
+      "sha256": "17e9a2407ac2f60c44973c8f2df15ccea5900ca33374af8d82b1290d7ec2526d"
+    },
+    {
+      "path": "lab/scenarios/14-account-factory/run.mjs",
+      "role": "oracle-fixture",
+      "bytes": 2252,
+      "sha256": "00c3a37d93851d45dbc18eb1186473dcd77088c104ea56056b87f6e98307ff08"
+    },
+    {
+      "path": "lab/scenarios/14-account-factory/scenario.json",
+      "role": "oracle-fixture",
+      "bytes": 2201,
+      "sha256": "eef7b3ffada1785425ab64dcf9cdfea560c7c777404db81b0b065ef34795a58b"
+    },
+    {
+      "path": "lab/scenarios/15-tenant-mix/expected-10k.json",
+      "role": "oracle-fixture",
+      "bytes": 27318,
+      "sha256": "640948aaa673a8009fb3e4c8333f31b0d1f29c1d3f3d77a7c8fbd95611d302ac"
+    },
+    {
+      "path": "lab/scenarios/15-tenant-mix/run.mjs",
+      "role": "oracle-fixture",
+      "bytes": 2066,
+      "sha256": "2846ec482ec95e532d85d3a6238b169290e252f4d19da2af6677d56a0ce68f48"
+    },
+    {
+      "path": "lab/scenarios/15-tenant-mix/scenario.json",
+      "role": "oracle-fixture",
+      "bytes": 2511,
+      "sha256": "d08ac2e2591f604d571298ae1b8da2c3772b90d9310ca184e1a964280422d8bf"
+    },
+    {
+      "path": "lab/scenarios/16-pii-erasure/expected-10k.json",
+      "role": "oracle-fixture",
+      "bytes": 64045,
+      "sha256": "82a7dfd66951746991c6eaaee33d06594245f60d8824082f504595f81d80b854"
+    },
+    {
+      "path": "lab/scenarios/16-pii-erasure/run.mjs",
+      "role": "oracle-fixture",
+      "bytes": 3152,
+      "sha256": "501c3540d3a45f712a5122f504776cb35e10fc1a4d38b4ac8711ec0d4b531125"
+    },
+    {
+      "path": "lab/scenarios/16-pii-erasure/scenario.json",
+      "role": "oracle-fixture",
+      "bytes": 2527,
+      "sha256": "7f34f60dc098694af95d20c7729a0c2b246f0da10ac55e5dd1e2773bb411b2a7"
+    },
+    {
+      "path": "lab/scenarios/17-agent-proposals/expected-10k.json",
+      "role": "oracle-fixture",
+      "bytes": 12867,
+      "sha256": "abb5e6f21bd4438176f1ff08b7f60eda1e6cbf9412df907c285b49f0a801d515"
+    },
+    {
+      "path": "lab/scenarios/17-agent-proposals/run.mjs",
+      "role": "oracle-fixture",
+      "bytes": 2198,
+      "sha256": "735133b38bdad7cc739ed1ef366dc8a36870f705650c9cf00634b8d7600af6ce"
+    },
+    {
+      "path": "lab/scenarios/17-agent-proposals/scenario.json",
+      "role": "oracle-fixture",
+      "bytes": 1856,
+      "sha256": "9e7dffca393733e715a500da0ad58a94f6c3be4101c3cd9f5a22ea4169ed998b"
+    },
+    {
+      "path": "lab/scenarios/18-recruiter-dashboards/expected-10k.json",
+      "role": "oracle-fixture",
+      "bytes": 32278,
+      "sha256": "e432c0c1bec50e426d8444aabfa6c9910e66b42ae4338c4a0301d9cba476a15a"
+    },
+    {
+      "path": "lab/scenarios/18-recruiter-dashboards/run.mjs",
+      "role": "oracle-fixture",
+      "bytes": 1696,
+      "sha256": "f728430137e3ed51b4cf7c252499ece13459b6228ee90e37cc2fca738c3a1091"
+    },
+    {
+      "path": "lab/scenarios/18-recruiter-dashboards/scenario.json",
+      "role": "oracle-fixture",
+      "bytes": 1938,
+      "sha256": "d36fb389b4537b91edc768c87b14e26f52ca059e7dbe37880411dcbdfafb6bce"
+    },
+    {
+      "path": "lab/scenarios/19-feed-consumer-crash/expected-10k.json",
+      "role": "oracle-fixture",
+      "bytes": 11971,
+      "sha256": "afa59db2ec535413885d59ff1d65b784334aec2920f8acb312342e4b68c6feb4"
+    },
+    {
+      "path": "lab/scenarios/19-feed-consumer-crash/expected-smoke.json",
+      "role": "oracle-fixture",
+      "bytes": 6726,
+      "sha256": "be11636a65fa9ba8087a57106719d9cd0016867e94f5280c743886c530cabe8d"
+    },
+    {
+      "path": "lab/scenarios/19-feed-consumer-crash/run.mjs",
+      "role": "oracle-fixture",
+      "bytes": 11654,
+      "sha256": "17c6f25ea5848054c09e1998fad10dd984fa082b2b8e085e9b448176a16f440e"
+    },
+    {
+      "path": "lab/scenarios/19-feed-consumer-crash/scenario.json",
+      "role": "oracle-fixture",
+      "bytes": 3963,
+      "sha256": "7c01e7a92adf22bc69dfde04a64f54496f2b6a5d64b1f747587a6369d55b071d"
+    },
+    {
+      "path": "lab/scenarios/20-midnight-expiry/expected-10k.json",
+      "role": "oracle-fixture",
+      "bytes": 40972,
+      "sha256": "15b235a9836656aa7ad428980126c4dbb7c7cdc36d7a6407301a753e48174dab"
+    },
+    {
+      "path": "lab/scenarios/20-midnight-expiry/run.mjs",
+      "role": "oracle-fixture",
+      "bytes": 2801,
+      "sha256": "e4e96b8530227b1e3918196861b8d2def3d106d5662f7faa0b7519a68a64736e"
+    },
+    {
+      "path": "lab/scenarios/20-midnight-expiry/scenario.json",
+      "role": "oracle-fixture",
+      "bytes": 2174,
+      "sha256": "950e6ce0dd4dc25599a6deecca04bf37aeba1fb168e9a3abfe795c02344d94aa"
+    },
+    {
+      "path": "lab/scenarios/expect.mjs",
+      "role": "oracle-fixture",
+      "bytes": 6578,
+      "sha256": "ff95b076175c920019ffc7c506f65a6ef9c960c4204d94ff6513aca87592b23c"
+    },
+    {
+      "path": "lab/scenarios/lib/composition.mjs",
+      "role": "oracle-fixture",
+      "bytes": 7748,
+      "sha256": "4bd21e907b31b47c5f272d5318b915f9ef8372091a0ce5d14c8025a43fa3d50c"
+    },
+    {
+      "path": "lab/scenarios/lib/diagnostics.mjs",
+      "role": "oracle-fixture",
+      "bytes": 2022,
+      "sha256": "1328f792662b17dc9b2bcca3517855123bee777171bb637d0332fcd90c1b7773"
+    },
+    {
+      "path": "lab/scenarios/lib/domain.mjs",
+      "role": "oracle-fixture",
+      "bytes": 2008,
+      "sha256": "8235543f8b42e25b6f04995b33b26cf13a8ec977b1da99f61a00453130b4796c"
+    },
+    {
+      "path": "lab/scenarios/lib/gen.mjs",
+      "role": "oracle-fixture",
+      "bytes": 26234,
+      "sha256": "566a7c6abeb9f82200e587dd894503507903716e685f0ecacf2ff174724cf3c5"
+    },
+    {
+      "path": "lab/scenarios/lib/oracle.mjs",
+      "role": "oracle-fixture",
+      "bytes": 10446,
+      "sha256": "d783fe3a8be4174404101d8c33ffe0b5a6695c633c351966d6578a574ffbc9f6"
+    },
+    {
+      "path": "lab/scenarios/lib/runner.mjs",
+      "role": "oracle-fixture",
+      "bytes": 41192,
+      "sha256": "1bc87ee232916cb92d976370df8e589fe32031f73a2a2d1351147425b04cf4e6"
+    },
+    {
+      "path": "lab/scenarios/lib/runner.test.mjs",
+      "role": "oracle-fixture",
+      "bytes": 3048,
+      "sha256": "2c42cd90ef8563cb75287b0fbc4e31bf72f718451eaedf13b9da9765980d1743"
+    },
+    {
+      "path": "lab/scenarios/lib/triplex.mjs",
+      "role": "oracle-fixture",
+      "bytes": 2096,
+      "sha256": "cc9528893d4ea7d3f79a2e0688eebfbc35ff57d8dbfd78f9508283b037870852"
+    },
+    {
+      "path": "lab/scenarios/run.mjs",
+      "role": "oracle-fixture",
+      "bytes": 5249,
+      "sha256": "4beb45a96b55a4b8d9d9a6af62803d866a7a0b2082f1ec3aec48f0bf55387b79"
+    },
+    {
+      "path": "lab/scenarios/world/expected-10k.json",
+      "role": "oracle-fixture",
+      "bytes": 882080,
+      "sha256": "efb258eb44546a0ea47f5361981199b0f93c266139157b974e21bcbd6e5e84aa"
+    },
+    {
+      "path": "lab/scenarios/world/expected-smoke.json",
+      "role": "oracle-fixture",
+      "bytes": 46075,
+      "sha256": "3765558857ebbdad3bc4822d0a9bb5b3a963d2e8f5d02d102af96e04d9d55b8b"
+    },
+    {
+      "path": "lab/scenarios/world/world.json",
+      "role": "oracle-fixture",
+      "bytes": 694,
+      "sha256": "c58d81c00e0c49a0ab9cd3ca8aac1fd9b5673948d23c772ab6703dd5adae23ac"
+    },
+    {
+      "path": "runs/GS/GS-xtdb-20261108T211523Z-ea6353/gs-report.json",
+      "role": "raw-outcome",
+      "bytes": 903,
+      "sha256": "4890f4d9b357096c657da8b07dfbe76065dcc5ce652e54c493de7b27f0d02ef8"
+    },
+    {
+      "path": "lab/acceptance/obligations.json",
+      "role": "acceptance-contract",
+      "bytes": 812641,
+      "sha256": "420b3aeb4aba4f4196d16360ba77abca24c2f7b0fbf3c6b9fc40084c3b419211"
+    }
+  ]
+}

@@ -27,7 +27,7 @@ export async function loadScenario(dir) {
 }
 // The oracle identity bound into every golden: version, the last commit that touched lab/oracles/replay, the
 // branch it came from, and every source file's sha256, so regenerating against a pinned oracle is mechanical.
-export const ORACLE_SOURCE_BRANCH = 'main (O-REPLAY 0.3.1 accepted by independent verification, merge 4591715)';
+export const ORACLE_SOURCE_BRANCH = 'main (O-REPLAY 0.4.1 pinned at a9c1327 by contract 0.3.8+, V-O04c)';
 const oracleIdentity = () => ({
   id: 'O-REPLAY',
   version: (/ORACLE_VERSION = "([^"]+)"/.exec(fs.readFileSync(path.join(REPO, 'lab/oracles/replay/run.py'), 'utf8')) ?? [])[1] ?? null,

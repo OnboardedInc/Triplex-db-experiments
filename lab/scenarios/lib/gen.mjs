@@ -368,6 +368,9 @@ export const WORLD_BATCH = 100; // subjects per bulk-lane command
 
 /** Canonical value text, identical for O-REPLAY output values and Triplex runtime values. */
 export function canonValue(v) {
+  // O-REPLAY 0.4.1 R-ERA-1: an erased value reads as {_tag: ErasedValue, erasedAt}; erasedAt is a run-time
+  // instant, so the comparison form keeps only the marker.
+  if (v?._tag === 'ErasedValue') return 'erased';
   switch (v.type) {
     case 'number': case 'datetime': return `${v.type}:${String(Number(v.value))}`;
     case 'json': return `json:${JSON.stringify(v.canonical ?? v.value)}`;

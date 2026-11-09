@@ -3,25 +3,74 @@
   "id": 15,
   "slug": "tenant-mix",
   "title": "Tenant mix (with GS.15 cross-tenant attempt and a 10x-slow consumer)",
-  "priorities": ["P1", "P4"],
-  "status": "spec",
+  "priorities": [
+    "P1",
+    "P4"
+  ],
+  "status": "blocked",
   "source": "lab/TARGETS.md section 6 row 15 and section 6.1 (GS.15)",
   "story": "One large tenant (1m entities) and 1,000 small tenants (1k each) under the same live load. Added schedule GS.15: a tenant-A route attempts to read tenant B's storage directly; one tenant's feed consumer is slowed 10x.",
   "checked": "Storage-layer isolation; per-tenant pull and commit bars hold for large and small tenants. GS.15: the access fails at the storage layer; other tenants' feed lag and p99 hold.",
   "seed": 20261115,
-  "yearOne": { "largeTenantEntities": 1000000, "smallTenants": 1000, "smallTenantEntities": 1000 },
+  "yearOne": {
+    "largeTenantEntities": 1000000,
+    "smallTenants": 1000,
+    "smallTenantEntities": 1000
+  },
   "params": {},
   "rungs": {
-    "10k": { "smallTenants": 10, "smallSubjects": 100, "liveMs": 90000, "trace": { "subjects": 30, "factsPerSecond": 15 } }
+    "10k": {
+      "smallTenants": 10,
+      "smallSubjects": 100,
+      "liveMs": 90000,
+      "trace": {
+        "subjects": 30,
+        "factsPerSecond": 15
+      }
+    }
   },
   "rungNote": "At 10k: the large tenant is the 10k world; 10 small tenants of 100 subjects each.",
-  "witnesses": { "positive": "the first subject of each small tenant (Section 1 submitted in its own tenant)", "negative": "the second subject of each small tenant (untouched), plus every cross-tenant read (zero rows)" },
+  "witnesses": {
+    "positive": "the first subject of each small tenant (Section 1 submitted in its own tenant)",
+    "negative": "the second subject of each small tenant (untouched), plus every cross-tenant read (zero rows)"
+  },
   "domain": [],
   "bars": [
-    { "id": "P4.pull.p99.small", "metric": "extra.tenants.small.pull.p99", "op": "<=", "value": 25, "unit": "ms", "source": "TARGETS section 1 P4 (per tenant)" },
-    { "id": "P4.pull.p99.large", "metric": "extra.tenants.large.pull.p99", "op": "<=", "value": 25, "unit": "ms", "source": "TARGETS section 1 P4 (per tenant)" },
-    { "id": "P3.feed.lag.p99.others", "metric": "extra.tenants.othersFeedLagP99", "op": "<=", "value": 250, "unit": "ms", "source": "TARGETS 6.1 GS.15" }
+    {
+      "id": "P4.pull.p99.small",
+      "metric": "extra.tenants.small.pull.p99",
+      "op": "<=",
+      "value": 25,
+      "unit": "ms",
+      "source": "TARGETS section 1 P4 (per tenant)"
+    },
+    {
+      "id": "P4.pull.p99.large",
+      "metric": "extra.tenants.large.pull.p99",
+      "op": "<=",
+      "value": 25,
+      "unit": "ms",
+      "source": "TARGETS section 1 P4 (per tenant)"
+    },
+    {
+      "id": "P3.feed.lag.p99.others",
+      "metric": "extra.tenants.othersFeedLagP99",
+      "op": "<=",
+      "value": 250,
+      "unit": "ms",
+      "source": "TARGETS 6.1 GS.15"
+    }
   ],
-  "faults": ["cross-tenant storage access attempt", "one tenant consumer 10x slow"],
-  "oracle": { "source": "O-REPLAY per tenant; hand derivation for isolation and the slow-consumer bar (expected hand.*)", "gaps": ["O-REPLAY has no tenancy rule", "the multi-tenant runner (one composition per tenant, per-tenant metrics) is not built"] }
+  "faults": [
+    "cross-tenant storage access attempt",
+    "one tenant consumer 10x slow"
+  ],
+  "oracle": {
+    "source": "O-REPLAY per tenant; hand derivation for isolation and the slow-consumer bar (expected hand.*)",
+    "gaps": [
+      "O-REPLAY has no tenancy rule",
+      "the multi-tenant runner (one composition per tenant, per-tenant metrics) is not built"
+    ]
+  },
+  "blockedReason": "NOT_RUN: needs the multi-tenant runner and a storage-level cross-tenant probe; not built"
 }

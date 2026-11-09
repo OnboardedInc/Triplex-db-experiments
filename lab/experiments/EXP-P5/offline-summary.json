@@ -1,0 +1,131 @@
+{
+  "format": "triplex-db-2/p5-builder-summary/1",
+  "sourceCommit": "7bc0601a",
+  "classification": "DIAGNOSTIC",
+  "acceptance": false,
+  "rungs": {
+    "10000": {
+      "attempt": "a5962ff8-1cb9-4ae1-b962-9b4eabdee73b",
+      "receipt": "runs/P5/a0-10k-01/receipt.json",
+      "receiptSha256": "db9b9e00896d326a6489f0f734b06a39dacdeaeda19701086785074a8c557787",
+      "status": "PARTIAL",
+      "fingerprint": {
+        "basisTx": 434768,
+        "facts": 4488231,
+        "worlds": "sha256:7b4c292331396ab379423ed7faa1a095c324dcdb72afb411d0f48f93efa5624d",
+        "R2": "sha256:79fd11ed2fca7f47dba526e0994792db977e8a799b2fe67442e7298bf0803036"
+      },
+      "gateStatuses": {
+        "G0": "PASS",
+        "G1": "PASS",
+        "G2": "PASS",
+        "G3": "PASS",
+        "G5": "PASS",
+        "G7": "PASS",
+        "G9": "PASS",
+        "G4": "PARTIAL",
+        "G6": "NOT-RUN"
+      },
+      "workerCpuSeconds": {
+        "preview": {
+          "read": 3.837812,
+          "decode": 40.268107,
+          "kernel": 2.272809
+        },
+        "activation": {
+          "read": 3.902049,
+          "decode": 41.286981,
+          "kernel": 2.372194
+        }
+      },
+      "counts": {
+        "start": {
+          "position": 434768,
+          "assertions": 4468284,
+          "retired": 1954,
+          "frames": 434768
+        },
+        "end": {
+          "position": 435026,
+          "assertions": 4488385,
+          "retired": 2054,
+          "frames": 435026
+        },
+        "expectedEnd": {
+          "position": 435026,
+          "assertions": 4488385,
+          "retired": 2054,
+          "frames": 435026
+        }
+      },
+      "deliveries": 7831
+    },
+    "1000": {
+      "attempt": "54cda78e-0c19-48c2-a769-53327485bcf2",
+      "receipt": "runs/P5/a0-1k-final/receipt.json",
+      "receiptSha256": "8b3e065e48ce4692bb5ae0fd01001f3fb4b5a2a26d9c01a4b11d66579512c3b0",
+      "status": "PARTIAL",
+      "fingerprint": {
+        "basisTx": 42775,
+        "facts": 444368,
+        "worlds": "sha256:ca15387e66e25ed5e19a4adc602e941f7f06dd8b0f1c6ca7d1a5d2f02f8171ad",
+        "R2": "sha256:9d8aae5098072e22487d8da160037384332ba1f03d42287ee98782a9cae4833c"
+      },
+      "gateStatuses": {
+        "G0": "PASS",
+        "G1": "PASS",
+        "G2": "PASS",
+        "G3": "PASS",
+        "G5": "PASS",
+        "G7": "PASS",
+        "G9": "PASS",
+        "G4": "PARTIAL",
+        "G6": "NOT-RUN"
+      },
+      "workerCpuSeconds": {
+        "preview": {
+          "read": 0.343803,
+          "decode": 3.6783910000000004,
+          "kernel": 0.191958
+        },
+        "activation": {
+          "read": 0.35389,
+          "decode": 3.7931850000000003,
+          "kernel": 0.221132
+        }
+      },
+      "counts": {
+        "start": {
+          "position": 42775,
+          "assertions": 442410,
+          "retired": 214,
+          "frames": 42775
+        },
+        "end": {
+          "position": 42802,
+          "assertions": 444421,
+          "retired": 224,
+          "frames": 42802
+        },
+        "expectedEnd": {
+          "position": 42802,
+          "assertions": 444421,
+          "retired": 224,
+          "frames": 42802
+        }
+      },
+      "deliveries": 807
+    }
+  },
+  "tests": {
+    "path": "runs/P5/checks-final.tap",
+    "sha256": "109cbf7f4fe0c72b61786ad9c3e65450093e07a84b2143f62201f5970081942b",
+    "passed": 19,
+    "failed": 0
+  },
+  "notes": [
+    "Memory owner read CPU excluded from worker read CPU",
+    "G1 is the no-pre-capture-trace slice only",
+    "G4 partial; G6 and G8 not qualified; no A1 executed"
+  ]
+}
