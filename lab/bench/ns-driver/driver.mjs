@@ -7,6 +7,7 @@ import { canonicalAnswer, readEvidence } from "./answer.mjs";
 import { monitorEventLoopDelay } from "node:perf_hooks";
 import { rpc } from "./rpc.mjs";
 import { now } from "./clock.mjs";
+import {ControlInput,hookedPage} from "./fault.mjs";
 import { Events } from "./events.mjs";
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 export function readerLevel(events, startNs, endNs, level = 256, relay) {
@@ -52,8 +53,11 @@ export async function runNS(c) {
     childPermission: process.permission.has("child"),
     workerPermission: process.permission.has("worker"),
   });
-  const call = (role, method, params, observe) =>
-    rpc(c.endpoints[role], c.binding.runId, method, params, c.timeoutMs ?? 10000, observe);
+  const control=new ControlInput();
+  const call = (role, method, params, observe, endpoint) => {
+    if(endpoint)c.endpoints[role]=endpoint;
+    return rpc(c.endpoints[role], c.binding.runId, method, params, c.timeoutMs ?? 10000, observe);
+  };
   events.write("answer-policy", {
     encoding: "answer-canonical/1",
     sampling: {
@@ -154,9 +158,8 @@ export async function runNS(c) {
       pending.push(task);
     }
     await Promise.all(pending);
-    const consumed = await call("consumer", "consumerControl", { action: "step", data: null });
+    const consumed = await hookedPage({call,events,control,relay:controlEvent,timeoutMs:c.timeoutMs??10000});
     events.write("consumer-cross-check", consumed);
-    if (consumed.hook) controlEvent(events, consumed.hook);
     for (const request of c.pulls ?? []) {
       const observed = await captureRead("pull", request);
       events.write("p4", observed);
@@ -185,6 +188,7 @@ export async function runNS(c) {
     };
   } finally {
     stopping = true;
+    control.close();
     await Promise.allSettled(pending);
     await Promise.all(loops);
     meter.disable();

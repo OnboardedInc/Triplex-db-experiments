@@ -8,7 +8,7 @@ export async function openNsRole(role,c){
    return {subject:request.subject,value:rows.get(request.subject)??0,basis:request.basis};}
   return {read:pull,pull,close(){}};
  }
- const db=new DatabaseSync(c.storeFile);db.exec('PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA wal_autocheckpoint=0; CREATE TABLE marker(id INTEGER PRIMARY KEY,lsn INTEGER); INSERT INTO marker VALUES(1,0); CREATE TABLE subjects(subject TEXT PRIMARY KEY,value INTEGER); CREATE TABLE entries(position INTEGER PRIMARY KEY,subject TEXT,value INTEGER);');
+ const db=new DatabaseSync(c.storeFile);db.exec('PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA wal_autocheckpoint=0; CREATE TABLE IF NOT EXISTS marker(id INTEGER PRIMARY KEY,lsn INTEGER); INSERT OR IGNORE INTO marker VALUES(1,0); CREATE TABLE IF NOT EXISTS subjects(subject TEXT PRIMARY KEY,value INTEGER); CREATE TABLE IF NOT EXISTS entries(position INTEGER PRIMARY KEY,subject TEXT,value INTEGER);');
  const marker=()=>Number(db.prepare('SELECT lsn FROM marker').get().lsn);
  if(role==='broker'){
  let next=0;const pending=new Map();
@@ -29,10 +29,22 @@ export async function openNsRole(role,c){
   async feedPage({cursor}){return {entries:db.prepare('SELECT position,subject,value FROM entries WHERE position>? ORDER BY position').all(cursor?.after??0),frontier:marker(),cursor:{after:marker()}}},close(){db.close()}
  };
  }
- return {async consumerControl({action}){
-  if(action==='step'||action==='stop'){
-   const page=await rpc(c.broker,c.runId,'feedPage',{cursor:{after:marker()}});db.exec('BEGIN IMMEDIATE');try{for(const e of page.entries){db.prepare('INSERT INTO entries VALUES(?,?,?)').run(e.position,e.subject,e.value);db.prepare('INSERT OR REPLACE INTO subjects VALUES(?,?)').run(e.subject,e.value)}db.prepare('UPDATE marker SET lsn=?').run(page.frontier);db.exec('COMMIT')}catch(e){db.exec('ROLLBACK');throw e}
+ // [EXP-G03-R6] Why: the same blocking transaction boundaries exist in normal and crash runs; restart opens the same WAL. Rejected: a crash-only hook path or clean replacement database.
+ let stage=null,page=null,pageId=null;
+ const hook=()=>({hook:{event:'at-point',role:'consumer',point:stage,page:pageId,cursor:{after:marker()}}});
+ return {async consumerControl({action,data}){
+  if(action==='step'){
+   if(stage)throw Error('hook requires release');
+   pageId=data?.page??0;page=await rpc(c.broker,c.runId,'feedPage',{cursor:{after:marker()}});
+   db.exec('BEGIN IMMEDIATE');stage='before-effect';return hook();
   }
+  if(action==='release'){
+   if(!stage||data?.page!==pageId||data.point!==stage)throw Error('hook release mismatch');
+   if(stage==='before-effect'){for(const e of page.entries){db.prepare('INSERT INTO entries VALUES(?,?,?)').run(e.position,e.subject,e.value);db.prepare('INSERT OR REPLACE INTO subjects VALUES(?,?)').run(e.subject,e.value)}stage='after-effect';return hook()}
+   if(stage==='after-effect'){db.prepare('UPDATE marker SET lsn=?').run(page.frontier);db.exec('COMMIT');stage='after-checkpoint';return hook()}
+   stage=null;
+  }
+  if(action==='stop'&&stage)throw Error('blocked hook');
   return {frontier:marker(),effects:db.prepare('SELECT position,subject,value FROM entries ORDER BY position').all()};
  },close(){db.close()}};
 }

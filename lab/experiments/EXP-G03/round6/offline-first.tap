@@ -1,0 +1,412 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 70711 "CX-DI01-trace-r11", pid 87807 "CX-P2B-R4-ten-minute-pin", pid 89389 "CX-A01-040-G0-final3-datomic", pid 92967 "CX-P2B-R4-bound-gates"
+[lab] heavy: waiting for one of 4 slots; held by pid 70711 "CX-DI01-trace-r11", pid 87807 "CX-P2B-R4-ten-minute-pin", pid 89389 "CX-A01-040-G0-final3-datomic", pid 92967 "CX-P2B-R4-bound-gates"
+[lab] heavy: waiting for one of 4 slots; held by pid 70711 "CX-DI01-trace-r11", pid 87807 "CX-P2B-R4-ten-minute-pin", pid 94471 "CX-A01-040-G0-final3-qlever", pid 92967 "CX-P2B-R4-bound-gates"
+[lab] heavy: waiting for one of 4 slots; held by pid 70711 "CX-DI01-trace-r11", pid 87807 "CX-P2B-R4-ten-minute-pin", pid 94471 "CX-A01-040-G0-final3-qlever", pid 93449 "CX-QH1-baseline-seed"
+[lab] heavy: waiting for one of 4 slots; held by pid 70711 "CX-DI01-trace-r11", pid 87807 "CX-P2B-R4-ten-minute-pin", pid 94471 "CX-A01-040-G0-final3-qlever", pid 93449 "CX-QH1-baseline-seed"
+[lab] heavy: waiting for one of 4 slots; held by pid 70711 "CX-DI01-trace-r11", pid 87807 "CX-P2B-R4-ten-minute-pin", pid 94471 "CX-A01-040-G0-final3-qlever", pid 93449 "CX-QH1-baseline-seed"
+[lab] heavy: waiting for one of 4 slots; held by pid 70711 "CX-DI01-trace-r11", pid 87807 "CX-P2B-R4-ten-minute-pin", pid 94471 "CX-A01-040-G0-final3-qlever", pid 93449 "CX-QH1-baseline-seed"
+[lab] heavy: waiting for one of 4 slots; held by pid 70711 "CX-DI01-trace-r11", pid 87807 "CX-P2B-R4-ten-minute-pin", pid 94471 "CX-A01-040-G0-final3-qlever", pid 93449 "CX-QH1-baseline-seed"
+[lab] heavy: waiting for one of 4 slots; held by pid 96782 "CX-P2B-R4-bound-gates2", pid 87807 "CX-P2B-R4-ten-minute-pin", pid 94471 "CX-A01-040-G0-final3-qlever", pid 93449 "CX-QH1-baseline-seed"
+[lab] heavy: waiting for one of 4 slots; held by pid 96782 "CX-P2B-R4-bound-gates2", pid 87807 "CX-P2B-R4-ten-minute-pin", pid 94471 "CX-A01-040-G0-final3-qlever", pid 93449 "CX-QH1-baseline-seed"
+[lab] heavy: waiting for one of 4 slots; held by pid 96782 "CX-P2B-R4-bound-gates2", pid 87807 "CX-P2B-R4-ten-minute-pin", pid 94471 "CX-A01-040-G0-final3-qlever", pid 93449 "CX-QH1-baseline-seed"
+[lab] heavy: waiting for one of 4 slots; held by pid 96782 "CX-P2B-R4-bound-gates2", pid 87807 "CX-P2B-R4-ten-minute-pin", pid 99162 "CX-QH1-codec", pid 93449 "CX-QH1-baseline-seed"
+TAP version 13
+# Subtest: contract pins load from explicit commit; missing or mismatched pins fail
+ok 1 - contract pins load from explicit commit; missing or mismatched pins fail
+  ---
+  duration_ms: 13.302208
+  type: 'test'
+  ...
+# Subtest: store receipt supplies placement only, never replacement pins
+ok 2 - store receipt supplies placement only, never replacement pins
+  ---
+  duration_ms: 8.143667
+  type: 'test'
+  ...
+# Subtest: PAIR-0 separates arms, shares each auxiliary core, and refuses impossible layouts
+ok 3 - PAIR-0 separates arms, shares each auxiliary core, and refuses impossible layouts
+  ---
+  duration_ms: 16.794291
+  type: 'test'
+  ...
+# Subtest: gateway uses candidate read-only source, overrides resident entrypoint, and refuses missing pins
+ok 4 - gateway uses candidate read-only source, overrides resident entrypoint, and refuses missing pins
+  ---
+  duration_ms: 0.316
+  type: 'test'
+  ...
+# Subtest: preflight refuses forged omissions, reachable forbidden target, lost positive and DNS success
+ok 5 - preflight refuses forged omissions, reachable forbidden target, lost positive and DNS success
+  ---
+  duration_ms: 0.265917
+  type: 'test'
+  ...
+# Subtest: cgroup proof refuses invalid identities before constructing a reader
+ok 6 - cgroup proof refuses invalid identities before constructing a reader
+  ---
+  duration_ms: 0.084208
+  type: 'test'
+  ...
+# Subtest: signed memory caps stay bounded and change the execution isolation identity
+ok 7 - signed memory caps stay bounded and change the execution isolation identity
+  ---
+  duration_ms: 66.134584
+  type: 'test'
+  ...
+# Subtest: main contract without reviewed box pins cannot borrow the experiment proposal
+ok 8 - main contract without reviewed box pins cannot borrow the experiment proposal
+  ---
+  duration_ms: 4.306125
+  type: 'test'
+  ...
+# Subtest: input allowlist never includes lab, links or missing dependency roots
+ok 9 - input allowlist never includes lab, links or missing dependency roots
+  ---
+  duration_ms: 1.707875
+  type: 'test'
+  ...
+# Subtest: tar carries exact bytes, executable mode and long ustar path without extracting
+ok 10 - tar carries exact bytes, executable mode and long ustar path without extracting
+  ---
+  duration_ms: 12.640833
+  type: 'test'
+  ...
+# Subtest: inspect check refuses changed containment, limits, image, mounts and environment
+ok 11 - inspect check refuses changed containment, limits, image, mounts and environment
+  ---
+  duration_ms: 0.477375
+  type: 'test'
+  ...
+# Subtest: qualification refuses refs and never calls a supplied candidate callback
+ok 12 - qualification refuses refs and never calls a supplied candidate callback
+  ---
+  duration_ms: 0.289625
+  type: 'test'
+  ...
+# Subtest: failed cleanup reservations survive reconciliation
+ok 13 - failed cleanup reservations survive reconciliation
+  ---
+  duration_ms: 0.29625
+  type: 'test'
+  ...
+# Subtest: a separate clone in a shared writable root is still refused
+ok 14 - a separate clone in a shared writable root is still refused
+  ---
+  duration_ms: 0.343416
+  type: 'test'
+  ...
+# Subtest: box reservations survive stale Docker snapshots before the kill proof starts
+ok 15 - box reservations survive stale Docker snapshots before the kill proof starts
+  ---
+  duration_ms: 0.157667
+  type: 'test'
+  ...
+# Subtest: Q100q: distinct inodes with equal boot and zero offsets accepted
+ok 16 - Q100q: distinct inodes with equal boot and zero offsets accepted
+  ---
+  duration_ms: 0.955042
+  type: 'test'
+  ...
+# Subtest: Q100q refuses ""
+ok 17 - Q100q refuses ""
+  ---
+  duration_ms: 0.189667
+  type: 'test'
+  ...
+# Subtest: Q100q refuses "monotonic 0 0"
+ok 18 - Q100q refuses "monotonic 0 0"
+  ---
+  duration_ms: 0.077417
+  type: 'test'
+  ...
+# Subtest: Q100q refuses "monotonic 1 0\\nboottime 0 0"
+ok 19 - Q100q refuses "monotonic 1 0\\nboottime 0 0"
+  ---
+  duration_ms: 0.095291
+  type: 'test'
+  ...
+# Subtest: Q100q refuses "monotonic 0 1\\nboottime 0 0"
+ok 20 - Q100q refuses "monotonic 0 1\\nboottime 0 0"
+  ---
+  duration_ms: 0.132167
+  type: 'test'
+  ...
+# Subtest: Q100q refuses "monotonic 0 0\\nmonotonic 0 0"
+ok 21 - Q100q refuses "monotonic 0 0\\nmonotonic 0 0"
+  ---
+  duration_ms: 0.046
+  type: 'test'
+  ...
+# Subtest: Q100q refuses "monotonic 0 NaN\\nboottime 0 0"
+ok 22 - Q100q refuses "monotonic 0 NaN\\nboottime 0 0"
+  ---
+  duration_ms: 0.098083
+  type: 'test'
+  ...
+# Subtest: Q100q refuses foreign boot
+ok 23 - Q100q refuses foreign boot
+  ---
+  duration_ms: 0.087709
+  type: 'test'
+  ...
+# Subtest: service role mounts have exactly one state writer; readers none
+ok 24 - service role mounts have exactly one state writer; readers none
+  ---
+  duration_ms: 0.40675
+  type: 'test'
+  ...
+# Subtest: service rejects shared input/state or bridge attachment
+ok 25 - service rejects shared input/state or bridge attachment
+  ---
+  duration_ms: 0.31725
+  type: 'test'
+  ...
+# Subtest: driver mounts isolated trace/key/bundle, output only RW
+ok 26 - driver mounts isolated trace/key/bundle, output only RW
+  ---
+  duration_ms: 0.43525
+  type: 'test'
+  ...
+# Subtest: valid per-role layout accepted as precondition
+ok 27 - valid per-role layout accepted as precondition
+  ---
+  duration_ms: 0.160541
+  type: 'test'
+  ...
+# Subtest: candidate foreign mount refused output
+ok 28 - candidate foreign mount refused output
+  ---
+  duration_ms: 0.056334
+  type: 'test'
+  ...
+# Subtest: candidate foreign mount refused secret
+ok 29 - candidate foreign mount refused secret
+  ---
+  duration_ms: 0.340167
+  type: 'test'
+  ...
+# Subtest: candidate foreign mount refused key
+ok 30 - candidate foreign mount refused key
+  ---
+  duration_ms: 0.045708
+  type: 'test'
+  ...
+# Subtest: candidate foreign mount refused bundle
+ok 31 - candidate foreign mount refused bundle
+  ---
+  duration_ms: 0.118417
+  type: 'test'
+  ...
+# Subtest: candidate foreign mount refused consumer
+ok 32 - candidate foreign mount refused consumer
+  ---
+  duration_ms: 0.031542
+  type: 'test'
+  ...
+# Subtest: candidate foreign mount refused obs
+ok 33 - candidate foreign mount refused obs
+  ---
+  duration_ms: 0.026333
+  type: 'test'
+  ...
+# Subtest: observer on arm refused
+ok 34 - observer on arm refused
+  ---
+  duration_ms: 0.03775
+  type: 'test'
+  ...
+# Subtest: fresh bound HR chunks replay
+ok 35 - fresh bound HR chunks replay
+  ---
+  duration_ms: 0.438167
+  type: 'test'
+  ...
+# Subtest: HR refuses bytes
+ok 36 - HR refuses bytes
+  ---
+  duration_ms: 0.088292
+  type: 'test'
+  ...
+# Subtest: HR refuses key
+ok 37 - HR refuses key
+  ---
+  duration_ms: 0.056541
+  type: 'test'
+  ...
+# Subtest: HR refuses binding
+ok 38 - HR refuses binding
+  ---
+  duration_ms: 0.044709
+  type: 'test'
+  ...
+# Subtest: HR refuses seal
+ok 39 - HR refuses seal
+  ---
+  duration_ms: 0.046167
+  type: 'test'
+  ...
+# Subtest: HR refuses missing
+ok 40 - HR refuses missing
+  ---
+  duration_ms: 0.124834
+  type: 'test'
+  ...
+# Subtest: observer bytes and freshness verified
+ok 41 - observer bytes and freshness verified
+  ---
+  duration_ms: 0.164417
+  type: 'test'
+  ...
+# Subtest: guarded driver can stage in private runtime parent beside readonly bundle
+ok 42 - guarded driver can stage in private runtime parent beside readonly bundle
+  ---
+  duration_ms: 113.735958
+  type: 'test'
+  ...
+# Subtest: NS preflight exact coverage succeeds
+ok 43 - NS preflight exact coverage succeeds
+  ---
+  duration_ms: 0.178708
+  type: 'test'
+  ...
+# Subtest: NS preflight omission/binding/positive/denial control d=>d.runId='old'
+ok 44 - NS preflight omission/binding/positive/denial control d=>d.runId='old'
+  ---
+  duration_ms: 0.081666
+  type: 'test'
+  ...
+# Subtest: NS preflight omission/binding/positive/denial control d=>d.role='consumer'
+ok 45 - NS preflight omission/binding/positive/denial control d=>d.role='consumer'
+  ---
+  duration_ms: 0.039625
+  type: 'test'
+  ...
+# Subtest: NS preflight omission/binding/positive/denial control d=>d.denied=[]
+ok 46 - NS preflight omission/binding/positive/denial control d=>d.denied=[]
+  ---
+  duration_ms: 0.033083
+  type: 'test'
+  ...
+# Subtest: NS preflight omission/binding/positive/denial control d=>d.positive=false
+ok 47 - NS preflight omission/binding/positive/denial control d=>d.positive=false
+  ---
+  duration_ms: 0.0325
+  type: 'test'
+  ...
+# Subtest: NS preflight omission/binding/positive/denial control d=>d.publicDns=true
+ok 48 - NS preflight omission/binding/positive/denial control d=>d.publicDns=true
+  ---
+  duration_ms: 0.106209
+  type: 'test'
+  ...
+# Subtest: NS preflight omission/binding/positive/denial control d=>d.blocked=[]
+ok 49 - NS preflight omission/binding/positive/denial control d=>d.blocked=[]
+  ---
+  duration_ms: 0.034791
+  type: 'test'
+  ...
+# Subtest: NS preflight omission/binding/positive/denial control d=>d.blocked[0].reachable=true
+ok 50 - NS preflight omission/binding/positive/denial control d=>d.blocked[0].reachable=true
+  ---
+  duration_ms: 0.037375
+  type: 'test'
+  ...
+# Subtest: seed RPC script sends a bounded newline-delimited request with exact run/population
+ok 51 - seed RPC script sends a bounded newline-delimited request with exact run/population
+  ---
+  duration_ms: 36.68925
+  type: 'test'
+  ...
+# Subtest: open-loop ACK completion permutation retains exact offer/receipt correspondence
+ok 52 - open-loop ACK completion permutation retains exact offer/receipt correspondence
+  ---
+  duration_ms: 0.155917
+  type: 'test'
+  ...
+# Subtest: offer matching refuses duplicate
+ok 53 - offer matching refuses duplicate
+  ---
+  duration_ms: 0.080583
+  type: 'test'
+  ...
+# Subtest: offer matching refuses bytes
+ok 54 - offer matching refuses bytes
+  ---
+  duration_ms: 0.148375
+  type: 'test'
+  ...
+# Subtest: offer matching refuses receipt
+ok 55 - offer matching refuses receipt
+  ---
+  duration_ms: 0.040458
+  type: 'test'
+  ...
+# Subtest: offer matching refuses wrong echoed id
+ok 56 - offer matching refuses wrong echoed id
+  ---
+  duration_ms: 0.042333
+  type: 'test'
+  ...
+# Subtest: offer matching refuses missing
+ok 57 - offer matching refuses missing
+  ---
+  duration_ms: 0.032917
+  type: 'test'
+  ...
+# Subtest: candidate second network is refused
+ok 58 - candidate second network is refused
+  ---
+  duration_ms: 0.049
+  type: 'test'
+  ...
+# Subtest: observer writable source mount is refused
+ok 59 - observer writable source mount is refused
+  ---
+  duration_ms: 0.065958
+  type: 'test'
+  ...
+# Subtest: placement refuses hardening override {"trusted":true}
+ok 60 - placement refuses hardening override {"trusted":true}
+  ---
+  duration_ms: 0.062459
+  type: 'test'
+  ...
+# Subtest: placement refuses hardening override {"image":"python"}
+ok 61 - placement refuses hardening override {"image":"python"}
+  ---
+  duration_ms: 0.031208
+  type: 'test'
+  ...
+# Subtest: placement refuses hardening override {"mounts":[]}
+ok 62 - placement refuses hardening override {"mounts":[]}
+  ---
+  duration_ms: 0.028917
+  type: 'test'
+  ...
+# Subtest: placement refuses hardening override {"extra":["--privileged"]}
+ok 63 - placement refuses hardening override {"extra":["--privileged"]}
+  ---
+  duration_ms: 0.028375
+  type: 'test'
+  ...
+# Subtest: placement refuses hardening override {"memory":0}
+ok 64 - placement refuses hardening override {"memory":0}
+  ---
+  duration_ms: 0.031833
+  type: 'test'
+  ...
+# Subtest: placement refuses hardening override {"cpuset":"0"}
+ok 65 - placement refuses hardening override {"cpuset":"0"}
+  ---
+  duration_ms: 0.026834
+  type: 'test'
+  ...
+1..65
+# tests 65
+# suites 0
+# pass 65
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 221.500875

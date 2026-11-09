@@ -127,6 +127,18 @@ export class BoxExecutor {
       child.on('error',e=>{clearTimeout(timer);reject(e)});child.on('close',()=>{clearTimeout(timer);const status=inspect(name)?.State?.ExitCode;if(failure||status!==0)reject(failure??Error('box process failed '+Buffer.concat(err)));else resolve({status:0,stdout:Buffer.concat(out),stderr:Buffer.concat(err)})});
     });
   }
+  // [EXP-G03-R6] Why: guarded driver control is a bounded private pipe, not a candidate-visible socket. Rejected: synchronous buffered exec (cannot service a blocked hook).
+  execControl(name,argv,onControl,{timeout=120000,max=16*1024*1024}={}) {
+    if(!this.resources.some(([kind,n])=>kind==='container'&&n===name))throw Error('unowned driver');
+    return new Promise((resolve,reject)=>{
+      const child=spawn('docker',dockerArgs(['exec','-i',name,...argv]));let stdout='',stderr='',pending='',size=0,chain=Promise.resolve(),failure;
+      const fail=e=>{failure??=e;child.kill();};const timer=setTimeout(()=>fail(Error('FAULT-CONTROL-TIMEOUT')),timeout);
+      child.stdin.on('error',e=>fail(e));child.on('error',fail);
+      child.stdout.on('data',b=>{size+=b.length;if(size>max)return fail(Error('FAULT-CONTROL-CAP'));stdout+=b;pending+=b;let at;while((at=pending.indexOf('\n'))>=0){const line=pending.slice(0,at);pending=pending.slice(at+1);let row;try{row=JSON.parse(line)}catch{return fail(Error('FAULT-CONTROL-JSON'))}if(row.schema==='ns-control/1')chain=chain.then(async()=>{const reply=await onControl(row);child.stdin.write(JSON.stringify(reply)+'\n')}).catch(fail);}});
+      child.stderr.on('data',b=>{size+=b.length;if(size>max)fail(Error('FAULT-CONTROL-CAP'));else stderr+=b;});
+      child.on('close',async status=>{clearTimeout(timer);await chain;if(failure)return reject(failure);if(pending)return reject(Error('FAULT-CONTROL-TRUNCATED'));resolve({status,stdout:Buffer.from(stdout),stderr:Buffer.from(stderr)})});
+    });
+  }
   remove(name) {
     const id = inspect(name)?.Id;
     const proof = this.engine('remove', ['--name', name, '--proof-image', this.config.imageId]);

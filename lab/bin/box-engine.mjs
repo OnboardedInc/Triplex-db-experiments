@@ -53,6 +53,14 @@ export async function boxCommand(config, action, opts, { policy, authorityGit } 
   if (action === 'connect') { owned(name, holder); owned(opts.network, holder, 'network'); const alias=opts.alias??'engine';if(!safeId(alias))fail('USAGE','invalid network alias');return docker(['network', 'connect', '--alias', alias, opts.network, name]); }
   if (action === 'network') return docker(['network', 'create', '--internal', '--driver', 'bridge', '-o', 'com.docker.network.bridge.inhibit_ipv4=true', ...labels, name]);
   if (action === 'remove-network') { owned(name, holder, 'network'); return docker(['network', 'rm', name]); }
+  // [EXP-G03-R6] Why: freeze the exact pinned target before observer DR; name reuse must fail closed. Rejected: host-side docker pause or a successful command without inspected state.
+  if (action === 'pause') {
+    const before=owned(name,holder);
+    if (!/^[a-f0-9]{64}$/.test(opts['expected-id']??'') || before.Id!==opts['expected-id'] || !before.State.Running) fail('CRASH-TARGET-MISMATCH','pause target differs');
+    docker(['pause',before.Id]);const after=owned(name,holder);
+    if(after.Id!==before.Id||after.State.Paused!==true)fail('ISOLATION-NOT-IN-FORCE','pause not observed');
+    return {id:after.Id,paused:true};
+  }
   if (action === 'remove') {
     const existing = inspect(name);
     let id;
@@ -62,6 +70,7 @@ export async function boxCommand(config, action, opts, { policy, authorityGit } 
       if (!entry) fail('REFUSED', `${name} absent without an owned failed cleanup reservation`);
       id = entry.candidateId;
     });
+    if (opts['expected-id'] && id !== opts['expected-id']) fail('CRASH-TARGET-MISMATCH','kill target differs');
     const image = opts['proof-image'];
     if (image && !/^sha256:[0-9a-f]{64}$/.test(image)) fail('USAGE', 'proof image must be an immutable id');
     if (opts['recover-reservation'] && (!image || typeof opts.note !== 'string' || !opts.note.trim())) fail('REFUSED', 'cleanup recovery needs a proof image and a note');

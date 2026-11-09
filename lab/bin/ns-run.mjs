@@ -1,6 +1,8 @@
 // [EXP-G03-R5] Why: stage each NS role separately and export bytes only after proven removal. Rejected: a monolithic Mac bench, shared writable state or acceptance from self-reported metrics.
 import fs from 'node:fs';import path from 'node:path';import {spawnSync} from 'node:child_process';import {randomBytes,createHmac} from 'node:crypto';
 import {docker,dockerArgs,inspect,sha256} from './lib.mjs';import {canonicalAnswer} from '../bench/ns-driver/answer.mjs';
+import {FaultInjector} from './ns-fault.mjs';
+import {boxedFaultTransport,snapshotScript} from './ns-fault-box.mjs';
 import {sameClock,layoutProblems,checkNsPreflight,VM_DURABILITY} from './ns-policy.mjs';
 export function seedRpcScript(endpoint,runId,population){
 return `const net=require('net');const s=net.connect(${JSON.stringify(endpoint)},()=>s.end(JSON.stringify({schema:'ns-sut/1',runId:${JSON.stringify(runId)},id:'seed',method:'commit',params:{command:{kind:'seed',population:${population}}}})+String.fromCharCode(10)));let b='';s.on('data',x=>b+=x);s.on('end',()=>{const v=JSON.parse(b);if(!v.ok||v.result.seeded!==${population})process.exit(2);console.log(b)});s.on('error',()=>process.exit(2));`;
@@ -37,7 +39,7 @@ export function checkSmoke(events,observer,trace,population,binding){
  return {status:'DIAGNOSTIC',qualification:false,runId:binding.runId,offers:offers.length,observedSource:actual.source.marker,observedConsumer:actual.consumer.marker,durabilityClass:VM_DURABILITY};
 }
 const filesOf=walk=>new Map(walk.modules.map(m=>[m.path,Buffer.from(m.base64,'base64')]));
-export async function runBoxedNS(box,{instance,bundleFiles,observerFiles,sourceCommit,generatorSeed,slotIdentity='in-memory-smoke',observe=true,population=16,trace,readers=4,placement,observerImage,blocked=[],canary,isolations=true}){
+export async function runBoxedNS(box,{instance,bundleFiles,observerFiles,sourceCommit,generatorSeed,slotIdentity='in-memory-smoke',observe=true,population=16,trace,readers=4,placement,observerImage,blocked=[],canary,isolations=true,faults}){
  if(!/^[a-f0-9]{64}$/.test(generatorSeed??'')||!/^[a-f0-9]{40}$/.test(sourceCommit)||!Array.isArray(trace)||!trace.length)throw Error('NS source/trace identity missing');
  const runId=randomBytes(16).toString('hex'),key=randomBytes(32),stages=[],volumes={},roles=[],names=[];
  const stage=(step,detail)=>{const row={step,detail,at:new Date().toISOString()};stages.push(row);fs.appendFileSync(path.join(box.workDir,'ns-'+runId+'-stages.ndjson'),JSON.stringify(row)+'\n',{flag:'a',mode:0o600})};stage(1,{sourceCommit,runId,diagnostic:true});
@@ -58,7 +60,7 @@ export async function runBoxedNS(box,{instance,bundleFiles,observerFiles,sourceC
   // Endpoints are resolved after broker creation; the candidate config contains no trace, schedule or RNG seed.
   if(role!=='broker')config.broker={host:roles[0].ip,port:ports.broker};seed(input,{'config.json':config});
   const service=box.service('ns-'+role+'-'+runId.slice(0,6),{role,instance:instance.volume,inputs:input,state:volumes[role],network,argv:['node','/work/ns-sut.mjs','--role',role,'--config','/in/config.json'],...(placement?{placement:placement[role]}:{})});
-  const ip=inspect(service.name).NetworkSettings.Networks[network].IPAddress;roles.push({...service,ip});names.push(service.name);
+  const ip=inspect(service.name).NetworkSettings.Networks[network].IPAddress;roles.push({...service,ip,spec:{role,instance:instance.volume,inputs:input,state:volumes[role],network,argv:['node','/work/ns-sut.mjs','--role',role,'--config','/in/config.json'],...(placement?{placement:placement[role]}:{})}});names.push(service.name);
  }
  const endpoints=Object.fromEntries(roles.map(r=>[r.role,{host:r.ip,port:ports[r.role]}]));
  const config={offline:true,runtimeParent:'/tmp/nsr',binding,keyFile:'/key/key',output:'/out/events',endpoints,trace,generatorSeed,readers,readRequests:[{subject:'subject-0',basis:'0'}],pulls:[{subject:'subject-0',basis:String(trace.length)}]};seed(volumes.trace,{'config.json':config});
@@ -95,7 +97,24 @@ export async function runBoxedNS(box,{instance,bundleFiles,observerFiles,sourceC
  const fingerprint=JSON.parse(helper('seed-readback',['python3','-c',"import sqlite3,json; c=sqlite3.connect('file:/source/broker.db?mode=ro',uri=True); print(json.dumps(c.execute('SELECT subject,value FROM subjects ORDER BY subject').fetchall()))"],{mounts:[{name:volumes.broker,target:'/source',rw:false}],net:'none',image:observerImage}));
  const expected=Array.from({length:population},(_,i)=>['subject-'+i,0]).sort(([a],[b])=>a<b?-1:1);if(JSON.stringify(fingerprint)!==JSON.stringify(expected))throw Error('SEED-MISMATCH');stage(7,{fingerprint:sha256(Buffer.from(JSON.stringify(fingerprint))),population});
  stage(8,{grade:'DIAGNOSTIC',acceptance:false});stage(9,{warmupMs:0,acceptanceWindow:false,readers});
- const result=box.exec(drv.name,drv.launchArgv,{timeout:90000,max:16*1024*1024,all:true});stage(10,{driverExit:result.status});
+ // [EXP-G03-R6] Why: identical hook traffic exists in all runs; the schedule stays solely in the evaluator closure. Rejected: crash configuration in /in or accepting only a candidate hook label.
+ let consumer=roles.find(r=>r.role==='consumer');
+ const targetOf=r=>({role:r.role,name:r.name,id:inspect(r.name).Id,volume:volumes.consumer,endpoint:{host:r.ip,port:ports.consumer}});
+ const transport=boxedFaultTransport(box,{target:targetOf(consumer),
+  stamp:()=>box.exec(obs,['python3','-c','import time; print(time.monotonic_ns())']).toString().trim(),
+  snapshot:context=>box.exec(obs,['python3','-c',snapshotScript(context,'/consumer/consumer.db')]),
+  restart:async()=>{const service=box.service('ns-consumer-resume-'+randomBytes(4).toString('hex'),consumer.spec);const ip=inspect(service.name).NetworkSettings.Networks[network].IPAddress;
+   names.splice(names.indexOf(consumer.name),1,service.name);consumer={...consumer,...service,ip};const index=roles.findIndex(r=>r.role==='consumer');roles[index]=consumer;
+   helper('resume-ready',['node','-e',`const net=require('net');(async()=>{for(let i=0;i<100;i++){const ok=await new Promise(r=>{const s=net.connect(${JSON.stringify({host:ip,port:ports.consumer})},()=>{s.destroy();r(true)});s.on('error',()=>r(false));s.setTimeout(200,()=>{s.destroy();r(false)})});if(ok)return;await new Promise(r=>setTimeout(r,50))}throw Error('resume not ready')})().catch(()=>process.exit(2))`]);
+   return targetOf(consumer);},
+  recover:async context=>{
+   if(!faults?.recover)throw Error('FAULT-RECOVERY-NORMALIZER-MISSING');
+   return faults.recover({box,observer:obs,consumer,context});
+  }
+ });
+ const injector=new FaultInjector({binding,target:targetOf(consumer),transport,pageBounds:faults?.pageBounds,decide:faults?.decide??(()=>false),retain:async bytes=>box.put(bytes)});
+ const result=await box.execControl(drv.name,drv.launchArgv,row=>injector.handshake(row),{timeout:90000});
+ const faultSummary=injector.finish({requireInjections:faults?.requireInjections??false});stage(10,{driverExit:result.status,faultSummary});
  // Stop the observer via a private evaluator-only control volume, never candidate RPC.
  helper('stop-observer',['node','-e',"require('fs').writeFileSync('/control/stop','stop')"],{mounts:[{name:volumes.control,target:'/control',rw:true}],net:'none'});
  for(let i=0;i<100&&inspect(obs).State.Running;i++)await new Promise(r=>setTimeout(r,20));if(inspect(obs).State.Running||inspect(obs).State.ExitCode!==0)throw Error('observer seal failed');stage(11,{sealed:true});
@@ -109,5 +128,5 @@ export async function runBoxedNS(box,{instance,bundleFiles,observerFiles,sourceC
   for(const [relative,bytes]of files){if(relative.split('/').some(p=>!p||p==='.'||p==='..')||relative.startsWith('/'))throw Error('unsafe walker export path');const destination=path.join(rawDir,kind,relative);fs.mkdirSync(path.dirname(destination),{recursive:true,mode:0o700});fs.writeFileSync(destination,bytes,{flag:'wx',mode:0o600})}
  }
  const events=verifyHr(output,key,binding),observer=verifyObserver(observed,key,runId),semantic=checkSmoke(events,observer,trace,population,binding);stage(13,{rawExportOnly:true,CRNSAdmission:false});
- return {semantic,rawDir,candidateLogs,stateExports:{source:stateExports.source.entries,consumer:stateExports.consumer.entries},keyBase64:key.toString('base64'),binding,stages,events,observer,output:[...output].map(([p,b])=>[p,b.toString()]),observerOutput:[...observed].map(([p,b])=>[p,b.toString()]),driverStdout:result.stdout.toString(),driverStderr:result.stderr.toString(),records:box.records};
+ return {semantic,faultSummary,rawDir,candidateLogs,stateExports:{source:stateExports.source.entries,consumer:stateExports.consumer.entries},keyBase64:key.toString('base64'),binding,stages,events,observer,output:[...output].map(([p,b])=>[p,b.toString()]),observerOutput:[...observed].map(([p,b])=>[p,b.toString()]),driverStdout:result.stdout.toString(),driverStderr:result.stderr.toString(),records:box.records};
 }

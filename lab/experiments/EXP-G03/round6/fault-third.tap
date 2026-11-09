@@ -1,0 +1,208 @@
+TAP version 13
+# Subtest: atomic before-effect: DR snapshot, proven kill, same-volume restart and byte replay
+ok 1 - atomic before-effect: DR snapshot, proven kill, same-volume restart and byte replay
+  ---
+  duration_ms: 3.948583
+  type: 'test'
+  ...
+# Subtest: split before-effect: DR snapshot, proven kill, same-volume restart and byte replay
+ok 2 - split before-effect: DR snapshot, proven kill, same-volume restart and byte replay
+  ---
+  duration_ms: 0.342583
+  type: 'test'
+  ...
+# Subtest: atomic after-effect: DR snapshot, proven kill, same-volume restart and byte replay
+ok 3 - atomic after-effect: DR snapshot, proven kill, same-volume restart and byte replay
+  ---
+  duration_ms: 0.245958
+  type: 'test'
+  ...
+# Subtest: split after-effect: DR snapshot, proven kill, same-volume restart and byte replay
+ok 4 - split after-effect: DR snapshot, proven kill, same-volume restart and byte replay
+  ---
+  duration_ms: 0.789208
+  type: 'test'
+  ...
+# Subtest: atomic after-checkpoint: DR snapshot, proven kill, same-volume restart and byte replay
+ok 5 - atomic after-checkpoint: DR snapshot, proven kill, same-volume restart and byte replay
+  ---
+  duration_ms: 0.7245
+  type: 'test'
+  ...
+# Subtest: split after-checkpoint: DR snapshot, proven kill, same-volume restart and byte replay
+ok 6 - split after-checkpoint: DR snapshot, proven kill, same-volume restart and byte replay
+  ---
+  duration_ms: 0.560625
+  type: 'test'
+  ...
+# Subtest: three distinct witnesses per point, never a declared repetition count
+ok 7 - three distinct witnesses per point, never a declared repetition count
+  ---
+  duration_ms: 3.2815
+  type: 'test'
+  ...
+# Subtest: main run uses all three identical hook reports and receives releases without injection data
+ok 8 - main run uses all three identical hook reports and receives releases without injection data
+  ---
+  duration_ms: 0.322791
+  type: 'test'
+  ...
+# Subtest: ignored hook never exercises fault
+ok 9 - ignored hook never exercises fault
+  ---
+  duration_ms: 0.642792
+  type: 'test'
+  ...
+# Subtest: short repetition inventory refused
+ok 10 - short repetition inventory refused
+  ---
+  duration_ms: 0.497916
+  type: 'test'
+  ...
+# Subtest: no cgroup proof refuses witness and restart cannot follow missing kill proof
+ok 11 - no cgroup proof refuses witness and restart cannot follow missing kill proof
+  ---
+  duration_ms: 0.299541
+  type: 'test'
+  ...
+# Subtest: wrong killed ID refuses witness and restart cannot follow missing kill proof
+ok 12 - wrong killed ID refuses witness and restart cannot follow missing kill proof
+  ---
+  duration_ms: 0.110834
+  type: 'test'
+  ...
+# Subtest: stale proof refuses witness and restart cannot follow missing kill proof
+ok 13 - stale proof refuses witness and restart cannot follow missing kill proof
+  ---
+  duration_ms: 0.08825
+  type: 'test'
+  ...
+# Subtest: no pause proof refuses witness and restart cannot follow missing kill proof
+ok 14 - no pause proof refuses witness and restart cannot follow missing kill proof
+  ---
+  duration_ms: 0.070417
+  type: 'test'
+  ...
+# Subtest: fresh volume refuses witness and restart cannot follow missing kill proof
+ok 15 - fresh volume refuses witness and restart cannot follow missing kill proof
+  ---
+  duration_ms: 0.090667
+  type: 'test'
+  ...
+# Subtest: same container refuses witness and restart cannot follow missing kill proof
+ok 16 - same container refuses witness and restart cannot follow missing kill proof
+  ---
+  duration_ms: 0.078125
+  type: 'test'
+  ...
+# Subtest: broker restart on consumer path refuses witness and restart cannot follow missing kill proof
+ok 17 - broker restart on consumer path refuses witness and restart cannot follow missing kill proof
+  ---
+  duration_ms: 0.231208
+  type: 'test'
+  ...
+# Subtest: old snapshot refuses witness and restart cannot follow missing kill proof
+ok 18 - old snapshot refuses witness and restart cannot follow missing kill proof
+  ---
+  duration_ms: 0.119667
+  type: 'test'
+  ...
+# Subtest: no replay comparison refuses witness and restart cannot follow missing kill proof
+ok 19 - no replay comparison refuses witness and restart cannot follow missing kill proof
+  ---
+  duration_ms: 0.10525
+  type: 'test'
+  ...
+# Subtest: foreign source refused
+ok 20 - foreign source refused
+  ---
+  duration_ms: 0.134042
+  type: 'test'
+  ...
+# Subtest: foreign slot refused
+ok 21 - foreign slot refused
+  ---
+  duration_ms: 0.06425
+  type: 'test'
+  ...
+# Subtest: foreign inputs refused
+ok 22 - foreign inputs refused
+  ---
+  duration_ms: 0.05925
+  type: 'test'
+  ...
+# Subtest: wrong target role refused
+ok 23 - wrong target role refused
+  ---
+  duration_ms: 0.0545
+  type: 'test'
+  ...
+# Subtest: invented point refused
+ok 24 - invented point refused
+  ---
+  duration_ms: 0.058333
+  type: 'test'
+  ...
+# Subtest: no hook refused
+ok 25 - no hook refused
+  ---
+  duration_ms: 0.055541
+  type: 'test'
+  ...
+# Subtest: reused hook nonce refused
+ok 26 - reused hook nonce refused
+  ---
+  duration_ms: 0.076709
+  type: 'test'
+  ...
+# Subtest: consumer target cannot be the broker
+ok 27 - consumer target cannot be the broker
+  ---
+  duration_ms: 0.081792
+  type: 'test'
+  ...
+# Subtest: C2 broker reuses controller with separately pinned point inventory and broker target
+ok 28 - C2 broker reuses controller with separately pinned point inventory and broker target
+  ---
+  duration_ms: 0.208458
+  type: 'test'
+  ...
+# Subtest: driver ignored-hook result refused
+ok 29 - driver ignored-hook result refused
+  ---
+  duration_ms: 0.144708
+  type: 'test'
+  ...
+# Subtest: driver holds consumer at every hook until private release and never forwards restart bit
+ok 30 - driver holds consumer at every hook until private release and never forwards restart bit
+  ---
+  duration_ms: 0.133
+  type: 'test'
+  ...
+# Subtest: one reported hook cannot substitute for all mandatory points
+ok 31 - one reported hook cannot substitute for all mandatory points
+  ---
+  duration_ms: 0.078
+  type: 'test'
+  ...
+# Subtest: private input waits, binds exactly one line, caps and rejects unsolicited release
+ok 32 - private input waits, binds exactly one line, caps and rejects unsolicited release
+  ---
+  duration_ms: 0.715792
+  type: 'test'
+  ...
+# Subtest: private control times out when evaluator does not release
+ok 33 - private control times out when evaluator does not release
+  ---
+  duration_ms: 11.572583
+  type: 'test'
+  ...
+1..33
+# tests 33
+# suites 0
+# pass 33
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 101.987541

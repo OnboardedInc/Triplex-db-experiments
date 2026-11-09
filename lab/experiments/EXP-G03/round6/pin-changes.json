@@ -1,0 +1,84 @@
+{
+  "base": "3afa747c",
+  "main": "1b40aeba83272d4625be714bed1206d5f9086175",
+  "changes": [
+    {
+      "path": "lab/bench/ns-driver/driver.mjs",
+      "oldSha256": "066ead521702a0a19bfe5559728b58aa95f94c47ae2d221750f1bc894090fe75",
+      "newSha256": "b7fda0b06a410976d12261614a989c2f4a7549bd42be3afdc9f1a44c1eec3abe",
+      "contractInputPin": null
+    },
+    {
+      "path": "lab/bench/ns-driver/fault.mjs",
+      "oldSha256": null,
+      "newSha256": "f1951fc1d21bf94fd8fa65b755594464eacffa46459667eea39bab9692e20e72",
+      "contractInputPin": null
+    },
+    {
+      "path": "lab/bench/ns-driver/launch-artifact.mjs",
+      "oldSha256": "8c0df9b11ddbedba4d69b5c9daa288db6373c95f25b6fbe1806fbe1fe68a2e94",
+      "newSha256": "da7681f7bb4db37cd64be198c44cb0f87fa44c1d05c92af0a09477511b39df83",
+      "contractInputPin": null
+    },
+    {
+      "path": "lab/bench/ns-driver/rpc.mjs",
+      "oldSha256": "cc0239a5ad194873f4e2458184cbd06c2b135ad7f094fcda82144eb4563469c2",
+      "newSha256": "e35856d6b19614b5567ad0c2ede0f0a15c0f3429062d4e65e62af559817c9d9e",
+      "contractInputPin": null
+    },
+    {
+      "path": "lab/bench/ns-driver/schema.json",
+      "oldSha256": "e5aaea1f60e2d31766e171aed83e6351f29c27fc494d1ea0e43ca9a420d2fb6f",
+      "newSha256": "8d92b8d64bc0eedca4bcfe164f2eb91fd486c509a59e994db4e9b02cd071547e",
+      "contractInputPin": null
+    },
+    {
+      "path": "lab/bin/box-engine.mjs",
+      "oldSha256": "8cc2385eded4d652b7474ccd27bdd1f6a6eb091bb4f4885b8326c113a01248fc",
+      "newSha256": "dc48fe014f49890b58c27b59bd63735541705b05d6e39d5cffba1b9baec247cd",
+      "contractInputPin": null
+    },
+    {
+      "path": "lab/bin/box.mjs",
+      "oldSha256": "b5913a713d0bbffbbe52164d32c86541a5b902549bfda9c84acce51d8bc53fe3",
+      "newSha256": "96b9d9cc9485ef2fcfd13362a69a5e126a0cbf36bb93cdf978402908d89411c1",
+      "contractInputPin": null
+    },
+    {
+      "path": "lab/bin/ns-fault-box.mjs",
+      "oldSha256": null,
+      "newSha256": "bd1023da6f5193987f3bc5f3eace9c1dccfde6005c2ebf2f510cbad4ea4b461d",
+      "contractInputPin": null
+    },
+    {
+      "path": "lab/bin/ns-fault.mjs",
+      "oldSha256": null,
+      "newSha256": "1a7234aacf84e43cfc6df4a3c0f7a420ef0170624a40dff79f2690b450424afa",
+      "contractInputPin": null
+    },
+    {
+      "path": "lab/bin/ns-run.mjs",
+      "oldSha256": "3a30cbf67465cb14faf6d698840fead0155abbc1c324ddd8134436d1f1a99ce6",
+      "newSha256": "7cc5648f49f9bd0ae9152bb49be83d4621edc997f1951d9dcc22bb3e6b3efee2",
+      "contractInputPin": null
+    },
+    {
+      "path": "lab/experiments/EXP-G03/ns/contract-proposal.json",
+      "oldSha256": "5c4fd196df613e697498bc818297d6f59fb07e2dd988558abe6ae740955e1f03",
+      "newSha256": "f40152cd508d31d7ff30c70a0f3ca03b342c23e4a0561982bd8747118f534251",
+      "contractInputPin": null
+    },
+    {
+      "path": "lab/experiments/EXP-G03/ns/fault.test.mjs",
+      "oldSha256": null,
+      "newSha256": "6ed653ba8fb7823b6a40e47158028d996a94fde6b56bb22e77f39fdefa2d8d5c",
+      "contractInputPin": null
+    },
+    {
+      "path": "lab/experiments/EXP-G03/ns/smoke-provider.mjs",
+      "oldSha256": "a71fb3641a5a665d2090c0b1da75b3dca0e52fa2e11aa17826b6c6b9be68cc5b",
+      "newSha256": "91b8bc7922619c1c40c747c25aa5db5059cf1ea62fdeaa1dc40483a778ed2c34",
+      "contractInputPin": null
+    }
+  ]
+}

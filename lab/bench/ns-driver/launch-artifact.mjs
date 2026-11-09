@@ -158,13 +158,17 @@ export function launchArtifact(bundle, configFile, { timeoutMs = 60000 } = {}) {
     const child = spawn(process.execPath, args, {
       cwd: layout,
       env,
-      stdio: ["ignore", "pipe", "pipe"],
+      stdio: ["pipe", "pipe", "pipe"],
     });
+    // [EXP-G03-R6] Why: private evaluator control must reach the guarded child while hooks block. Rejected: buffering stdout until exit (deadlocks the handshake).
+    if (process.argv[1] && path.resolve(process.argv[1]) === import.meta.filename) process.stdin.pipe(child.stdin);
+    child.stdin.on("error", () => {});
     let stdout = "",
       stderr = "";
     const timer = setTimeout(() => child.kill("SIGTERM"), timeoutMs);
     child.stdout.on("data", (b) => {
       stdout += b;
+      if (process.argv[1] && path.resolve(process.argv[1]) === import.meta.filename) process.stdout.write(b);
       if (stdout.length > 32 * 1024 * 1024) child.kill("SIGTERM");
     });
     child.stderr.on("data", (b) => {
@@ -175,6 +179,8 @@ export function launchArtifact(bundle, configFile, { timeoutMs = 60000 } = {}) {
       reject(e);
     });
     child.on("exit", (code, signal) => {
+      process.stdin.unpipe(child.stdin);
+      if (process.argv[1] && path.resolve(process.argv[1]) === import.meta.filename) { process.stdin.pause(); process.stdin.unref?.(); }
       clearTimeout(timer);
       resolve({
         code,
@@ -190,7 +196,7 @@ export function launchArtifact(bundle, configFile, { timeoutMs = 60000 } = {}) {
 if (process.argv[1] && path.resolve(process.argv[1]) === import.meta.filename)
   launchArtifact(process.argv[2], process.argv[3])
     .then((r) => {
-      process.stdout.write(r.stdout);
+      // stdout was streamed while the child executed.
       process.stderr.write(r.stderr);
       process.exitCode = r.code ?? 1;
     })

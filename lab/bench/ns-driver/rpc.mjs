@@ -5,7 +5,7 @@ import { randomUUID } from "node:crypto";
 export const REQUEST_CAP = 1024 * 1024;
 export const RESPONSE_CAP = 16 * 1024 * 1024;
 export const METHODS = Object.freeze({
-  broker: ["commit", "feedPage"],
+  broker: ["commit", "feedPage", "brokerControl"],
   readers: ["read", "pull"],
   consumer: ["consumerControl"],
 });
@@ -65,10 +65,11 @@ export function validateMessage(v, response = false) {
     pull: ["request"],
     feedPage: ["cursor"],
     consumerControl: ["action", "data"],
+    brokerControl: ["action", "data"],
   };
   if (!exact(v.params, fields[v.method])) throw Error("RPC params");
   if (
-    v.method === "consumerControl" &&
+    ["consumerControl", "brokerControl"].includes(v.method) &&
     !["start", "step", "stop", "status", "hook", "release"].includes(v.params.action)
   )
     throw Error("RPC action");
