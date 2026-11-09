@@ -28,6 +28,7 @@ export class BrokerLogError extends Error {
 export interface LogFrame {
   /** Same-process monotonic clock, sampled by the writer after SQLite commit returns. Not persisted/reconstructed. */
   readonly durableAtNs?: string;
+  readonly stageTiming?: Record<string, unknown>;
   readonly lsn: number;
   readonly epoch: number;
   readonly kind: number;
@@ -362,7 +363,7 @@ export class HostLog {
   async append(
     kind: number,
     payload: Buffer,
-    _options: { readonly sync?: boolean } = {},
+    _options: { readonly sync?: boolean; readonly trace?: boolean } = {},
   ): Promise<LogFrame> {
     if (this.failed) throw this.failed;
     if (this.closed) throw new BrokerLogError("Broker log is closed");
@@ -374,6 +375,7 @@ export class HostLog {
         encoded = encodeFrame({ lsn, epoch, kind, payload, prevCrc: this.prevCrc });
       const frame = normalize(
         await this.writer.request<LogFrame>("append", {
+          trace: _options.trace ?? false,
           lsn,
           epoch,
           kind,

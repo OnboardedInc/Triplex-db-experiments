@@ -99,6 +99,7 @@ export type BrokerEvent =
       /** WATERMARK publication: the frame's source publication instant for feed lag (RULINGS Q67d). */
       readonly watermarkAt: number;
       readonly sourceDurableAtNs?: string;
+      readonly stageTiming?: Record<string, unknown>;
     }
   | {
       readonly type: "published";
@@ -111,6 +112,8 @@ export type BrokerEvent =
       readonly deleted?: number;
       readonly deltaTotal?: number;
       readonly resends: number;
+      readonly startedNs?: string;
+      readonly completedNs?: string;
     }
   | { readonly type: "apply-error"; readonly error: string; readonly at: number }
   | { readonly type: "rebuild-start"; readonly deltaTotal: number; readonly at: number }
@@ -130,6 +133,8 @@ export type BrokerEvent =
   | { readonly type: "fenced"; readonly detail: string; readonly at: number };
 
 export interface HostBrokerOptions {
+  /** EXP-P2B-R2: opt-in diagnostic timings, all on process.hrtime with per-thread CPU. */
+  readonly traceStages?: boolean;
   /** EXP-P2B/Q90c: assign strictly monotone integer-microsecond stamps at the decider. */
   readonly decisionStamp?: boolean;
   /** Stream directory; the brief puts it under runs/broker/EXP-P2Q/ (gitignored), never /tmp. */
@@ -158,6 +163,10 @@ export interface HostBrokerOptions {
 }
 
 interface Pending {
+  readonly submittedNs?: string;
+  dequeuedNs?: string;
+  readonly submittedCpu?: NodeJS.CpuUsage;
+  dequeuedCpu?: NodeJS.CpuUsage;
   readonly txn: BrokerTransaction;
   readonly resolve: (decision: BrokerDecision) => void;
   readonly reject: (error: unknown) => void;
@@ -397,7 +406,17 @@ export class HostBroker {
     if (this.failed) return Promise.reject(this.failed);
     if (this.stopping) return Promise.reject(new BrokerFailed("Broker is closing"));
     return new Promise((resolve, reject) => {
-      this.queue.push({ txn, resolve, reject });
+      this.queue.push({
+        txn,
+        resolve,
+        reject,
+        ...(this.options.traceStages
+          ? {
+              submittedNs: process.hrtime.bigint().toString(),
+              submittedCpu: process.threadCpuUsage(),
+            }
+          : {}),
+      });
       void this.pump();
     });
   }
@@ -420,6 +439,8 @@ export class HostBroker {
   }
 
   private async commitGroup(): Promise<void> {
+    const prepareNs = process.hrtime.bigint();
+    const prepareCpu = this.options.traceStages ? process.threadCpuUsage() : undefined;
     const maxGroup = this.options.maxGroupCommands ?? 64;
     const lsn = this.log.nextLsn;
     const epoch = this.log.epoch;
@@ -438,6 +459,10 @@ export class HostBroker {
     let taken = 0;
     while (taken < this.queue.length && accepted.length < maxGroup) {
       const pending = this.queue[taken]!;
+      if (this.options.traceStages) {
+        pending.dequeuedNs = process.hrtime.bigint().toString();
+        pending.dequeuedCpu = process.threadCpuUsage();
+      }
       const { txn } = pending;
       const width = Math.max(1, txn.placeholders.length);
       if (ordinal + width > ORDINALS) {
@@ -540,9 +565,14 @@ export class HostBroker {
     const members = accepted.map((entry) => entry.member);
     const payload = encodeCommitGroup({ v: 1, stream: this.options.scopeKey, lsn, epoch, members });
     const t0 = performance.now();
+    const appendNs = process.hrtime.bigint();
+    const appendCpu = this.options.traceStages ? process.threadCpuUsage() : undefined;
+    const preparationCpu = prepareCpu ? process.threadCpuUsage(prepareCpu) : undefined;
     let frame: LogFrame;
     try {
-      frame = await this.log.append(FrameKind.COMMIT_GROUP, payload);
+      frame = await this.log.append(FrameKind.COMMIT_GROUP, payload, {
+        trace: this.options.traceStages ?? false,
+      });
     } catch (cause) {
       this.fail(
         new BrokerFailed(
@@ -553,6 +583,9 @@ export class HostBroker {
       for (const entry of conflicts) entry.pending.reject(this.failed);
       return;
     }
+    const appendReturnedNs = process.hrtime.bigint();
+    const appendReturnedCpu = this.options.traceStages ? process.threadCpuUsage() : undefined;
+    const publicationCpu = this.options.traceStages ? process.threadCpuUsage() : undefined;
     const ackAt = performance.now();
     let watermarkAt = ackAt;
     // The fsync returned: the decision is irrevocable. Record it, publish the watermark, expose the frame
@@ -577,6 +610,9 @@ export class HostBroker {
       for (const entry of conflicts) entry.pending.reject(this.failed);
       return;
     }
+    const resolvedNs = process.hrtime.bigint().toString();
+    const resolvedCpu = this.options.traceStages ? process.threadCpuUsage() : undefined;
+    const publishCpu = publicationCpu ? process.threadCpuUsage(publicationCpu) : undefined;
     for (const entry of accepted)
       entry.pending.resolve({
         kind: "committed",
@@ -599,6 +635,30 @@ export class HostBroker {
         appendMs: ackAt - t0,
         at: ackAt,
         watermarkAt,
+        ...(this.options.traceStages
+          ? {
+              stageTiming: {
+                prepareNs: prepareNs.toString(),
+                appendNs: appendNs.toString(),
+                appendReturnedNs: appendReturnedNs.toString(),
+                resolvedNs,
+                appendCpu,
+                appendReturnedCpu,
+                resolvedCpu,
+                preparationCpu,
+                publishCpu,
+                log: frame.stageTiming,
+                commands: accepted.map((entry) => ({
+                  operationId: entry.member.operationId,
+                  positions: entry.member.positions,
+                  submittedNs: entry.pending.submittedNs,
+                  dequeuedNs: entry.pending.dequeuedNs,
+                  submittedCpu: entry.pending.submittedCpu,
+                  dequeuedCpu: entry.pending.dequeuedCpu,
+                })),
+              },
+            }
+          : {}),
         ...(frame.durableAtNs === undefined ? {} : { sourceDurableAtNs: frame.durableAtNs }),
       });
     } catch {
@@ -1149,6 +1209,9 @@ export class HostBroker {
       };
       const members = batch.flatMap((frame) => frame.members);
       const t0 = performance.now();
+      const applyStartedNs = this.options.traceStages
+        ? process.hrtime.bigint().toString()
+        : undefined;
       let resends = 0;
       let response: unknown;
       for (;;) {
@@ -1203,6 +1266,9 @@ export class HostBroker {
         ...(delta.deleted === undefined ? {} : { deleted: delta.deleted }),
         ...(delta.total === undefined ? {} : { deltaTotal: delta.total }),
         resends,
+        ...(applyStartedNs
+          ? { startedNs: applyStartedNs, completedNs: process.hrtime.bigint().toString() }
+          : {}),
       });
       for (let i = this.publishWaiters.length - 1; i >= 0; i--)
         if (this.publishWaiters[i]!.position <= to.position)

@@ -1,0 +1,37 @@
+[
+  {
+    "path": "lab/experiments/EXP-P2B/measure.mjs",
+    "oldSha256": "37b70f583103431f9810dfdf9e0849a8620688cdc3d136acb15a8098499d6181",
+    "newSha256": "4203d56a1f43d77a8ed51b31eb756e1d39e452ac1b4b13785259f9dfb4b8eb4f"
+  },
+  {
+    "path": "lab/experiments/EXP-P2B/round2/case.mjs",
+    "oldSha256": null,
+    "newSha256": "2e5ba329739205d8e1ba7d2b2b82fafd096bdc1cdeb136852cb077d507f4def5"
+  },
+  {
+    "path": "lab/experiments/EXP-P2B/round2/run.mjs",
+    "oldSha256": null,
+    "newSha256": "39d2cfa0057f979d741e8801c5c17e7174a2b6df25be2cd17dab31619028e73c"
+  },
+  {
+    "path": "packages/broker/src/broker.ts",
+    "oldSha256": "b5050d3504ae63a0b9992b10b7db4e990684a24327568cdb2cd90f181a38e8d7",
+    "newSha256": "53a3c01ae2331296d6513da1a6a9af9530487af9cb1658e7982aeaa0b45d878f"
+  },
+  {
+    "path": "packages/broker/src/log.ts",
+    "oldSha256": "f3798e25c4ef3e9456bcd8c2eda92b4339b458281aa9fed379c6e0ef5d634977",
+    "newSha256": "77ee52acab63b8a5b08a793f289e50a8e24bf6f375d9f13be5547a699d65bbab"
+  },
+  {
+    "path": "packages/broker/src/sqlite-worker.ts",
+    "oldSha256": "d4c3ed3d943e831406a4d51c498e062c8fd337d3d43f4b96f307953ff7e1baf9",
+    "newSha256": "be87559e056d1739129753b2f129ed6ef580af6b97b13bd0460b89d15fd6f259"
+  },
+  {
+    "path": "packages/broker/test/stage-timing.test.ts",
+    "oldSha256": null,
+    "newSha256": "0a0c0969b6bd5f7c3e00a4707c8b0a418b20a0df2b495d783df115fa79e6ddaa"
+  }
+]

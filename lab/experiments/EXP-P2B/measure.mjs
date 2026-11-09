@@ -93,6 +93,12 @@ if (
   subjects < 1
 )
   throw Error("Invalid measurement options");
+// [EXP-P2B-R2] Why: the legacy memory driver shares its event loop with every reader.
+// Rejected: silently interpreting reader-starved ACK callbacks as broker or engine latency.
+if (mode === "memory" && readers > 0 && !args.includes("--allow-colocated"))
+  throw Error(
+    "Use round2/case.mjs for isolated offline readers; --allow-colocated explicitly enables the legacy contention diagnostic",
+  );
 const attempt = `CX-P2B-${mode}-${randomUUID()}`,
   scope = `p2b:${attempt}`;
 const outRoot = opt("out", "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-P2B");
