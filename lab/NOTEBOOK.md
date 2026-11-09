@@ -2097,3 +2097,23 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **Fixed and in review:** CRNS round 2 (all 35 findings, 213 tests; Codex and Opus re-reviews), NSR round 2 (canonical answer digest keyed on the full request), DF01 round 2 (long-poll decides on the log). PACK review found two high gaps (silent omission of a failing new package; import-time throws pass); round 2 fixing.
 - **RT01 round 6 (37ae44a9):** the stamp is read from the marker row; 1,112 tests pass; G6 reruns live now.
 - **Disk:** 11 GiB free. Removing seven review worktrees freed little because node_modules are hard links into the shared pnpm store; the growth is evidence (34 GiB, mostly P5B and DI01 databases).
+
+## 2026-11-09 08:40Z: hourly pass (NORTH-STAR reread first): usage 8%; the host store's size is a P4/P5 design problem
+
+- **Learnings since 07:35Z:**
+  - **Two reviewers of the PASS-granting evaluator found 35 false-PASS paths** (Codex 6, Opus 29, R44's own list 0 of the Opus ones). Fixed in CRNS round 2 under one rule: a minimum-evidence floor before any arithmetic. Re-reviews running.
+  - **Measurement evidence must survive to the evaluator:** NSR hashed answers with random RPC ids, so CR-NS could not compare them; fixed with answer-canonical/1 keyed on the full request.
+  - **Gates that enumerate keep missing things:** PACK silently omitted a failing new package. Every gate now lists its inputs from the source of truth (git ls-files, the pnpm workspace) and fails on anything neither covered nor excluded with a reason.
+  - **VM facts:** commit in the VM is p50/p99 1.06/4.43 ms (weaker durability class, Q100r); clocks share a boot id but not a time-namespace inode (Q100q).
+  - **RT01's G6 regression** traced to a doubled history scan; the marker-row stamp fix reruns live now.
+- **P5B's 10k broker.db, measured read-only (sqlite dbstat, 08:38Z):** 10.1 GiB total for 10k subjects:
+
+  | Table | Size | Rows | Note |
+  | --- | ---: | ---: | --- |
+  | live_rows | 4.0 GB | 5,419,097 | row stored as JSON TEXT, about 740 bytes each |
+  | recent_rows | 4.0 GB | 5,419,936 | a second full copy of the same rows |
+  | frames | 1.7 GB | 2,931 | the log's payloads, never purged during the seed |
+  | live_id, recent_id indexes | 0.34 GB each | | |
+
+  Three causes, in order of size: (1) recent_rows holds a full second copy, because with no replica caught up every row counts as recent; (2) rows are JSON text at about 740 bytes, where a compact binary row with interned attribute and entity ids would be several times smaller; (3) log frames are retained for the whole seed. R34's 0.45 GB prediction assumed none of the three. 5.4M stored rows for 10k subjects (about 540 per subject, journal included) also needs checking against W0's population counts. **This sets the next P5 and P4 direction:** a store layout round (dedupe live and recent, a binary row encoding, frame purge after checkpoint) before 100k can fit, measured as bytes per fact.
+- **Research this hour:** the store analysis above, done directly (read-only). All 10 agent slots are busy, so no Opus researcher was started; when P5B returns, its next round gets the store layout work with this table as input.
