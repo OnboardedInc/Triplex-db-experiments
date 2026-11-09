@@ -1,0 +1,41 @@
+{
+  "directVerification": [
+    true,
+    null,
+    null,
+    false
+  ],
+  "judge": {
+    "mode": "off",
+    "pass": false,
+    "problems": [
+      "COPY-FAILED: broker.db-wal is on the recovered volume (0 bytes) but its copy failed or is missing"
+    ],
+    "refusal": "COPY-FAILED"
+  },
+  "receipt": {
+    "copy": {
+      "broker.db": true,
+      "broker.db-wal": true
+    },
+    "format": "w4-collection/1",
+    "receipt": {
+      "files": {
+        "broker.db": {
+          "sha256": "58ac720396aef6875fa9caa2f48736121ca8ce0398db4e76a88714a7d9ad30c4",
+          "size": 16384
+        },
+        "broker.db-wal": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        }
+      },
+      "format": "w4-receipt/1",
+      "listing": [
+        "broker.db",
+        "broker.db-wal"
+      ]
+    },
+    "receiptError": null
+  }
+}

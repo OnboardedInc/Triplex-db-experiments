@@ -1,0 +1,52 @@
+TAP version 13
+# Subtest: nearest-rank p99 is the ceil(0.99 n)-th ordered value; the block resample keeps length and only uses source values
+ok 1 - nearest-rank p99 is the ceil(0.99 n)-th ordered value; the block resample keeps length and only uses source values
+  ---
+  duration_ms: 5.215292
+  type: 'test'
+  ...
+# Subtest: a real 20% overhead, with a tight A/A band, is OVERHEAD-RESOLVED with the lower bound above 1 + band
+ok 2 - a real 20% overhead, with a tight A/A band, is OVERHEAD-RESOLVED with the lower bound above 1 + band
+  ---
+  duration_ms: 1630.660875
+  type: 'test'
+  ...
+# Subtest: no overhead and a tight band: the interval sits below 1 + the 5% target (NO-OVERHEAD-ABOVE-TARGET) or, if it straddles, INCONCLUSIVE; never OVERHEAD-RESOLVED
+ok 3 - no overhead and a tight band: the interval sits below 1 + the 5% target (NO-OVERHEAD-ABOVE-TARGET) or, if it straddles, INCONCLUSIVE; never OVERHEAD-RESOLVED
+  ---
+  duration_ms: 1393.638917
+  type: 'test'
+  ...
+# Subtest: A/A rounds that differ by 12% make the band wider than the 5% target: INCONCLUSIVE whatever the B/A ratio (the band does not resolve)
+ok 4 - A/A rounds that differ by 12% make the band wider than the 5% target: INCONCLUSIVE whatever the B/A ratio (the band does not resolve)
+  ---
+  duration_ms: 994.935917
+  type: 'test'
+  ...
+# Subtest: fewer than three A/A rounds, fewer than 1,000 commits in an arm, or no ABBA round: INCONCLUSIVE with the reason, no interval computed
+ok 5 - fewer than three A/A rounds, fewer than 1,000 commits in an arm, or no ABBA round: INCONCLUSIVE with the reason, no interval computed
+  ---
+  duration_ms: 15.099625
+  type: 'test'
+  ...
+# Subtest: the bootstrap is deterministic for a seed and changes with it
+ok 6 - the bootstrap is deterministic for a seed and changes with it
+  ---
+  duration_ms: 2100.384458
+  type: 'test'
+  ...
+# Subtest: a single slow tail in one B arm moves p99 but the per-round table shows which round it was
+ok 7 - a single slow tail in one B arm moves p99 but the per-round table shows which round it was
+  ---
+  duration_ms: 707.517291
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 6963.768833

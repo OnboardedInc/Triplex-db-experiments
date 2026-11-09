@@ -1,0 +1,20 @@
+{
+  "acked": 20,
+  "ackedLostCount": 0,
+  "lastAcked": 20,
+  "lastSurvived": 20,
+  "marker": 20,
+  "mode": "full",
+  "pass": true,
+  "problems": [],
+  "survived": 20,
+  "syncsCredited": 20,
+  "traceDetached": true,
+  "traceEvents": 40,
+  "unwitnessedAcked": 0,
+  "unwitnessedLostCount": 0,
+  "witnessProblems": [],
+  "witnessed": 20,
+  "witnessedLost": [],
+  "witnessedLostCount": 0
+}

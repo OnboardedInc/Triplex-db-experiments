@@ -1,0 +1,11 @@
+{
+  "actual": {
+    "mode": "full",
+    "pass": false,
+    "problems": [
+      "TRACE-INCOMPLETE: F2 TRACE-INCOMPLETE: lost events: CPU 0 sequence gap inside the received trace (missing [3])"
+    ],
+    "refusal": "TRACE-INCOMPLETE"
+  },
+  "removed": "SW1|W|0|3|120|4242|4112|183607814|183607811|12392|12360"
+}

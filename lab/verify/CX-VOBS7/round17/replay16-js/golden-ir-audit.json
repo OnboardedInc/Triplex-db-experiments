@@ -1,0 +1,254 @@
+{
+  "dumpSha256": "b35312b41cb000e625dfcd15c748a7a4e9db98a0226e26d1f67dd67621a94309",
+  "stdoutSha256": "5823294d42a77d6c500eb89a89c1fffa42816d8c2a35acaec5b5c551672d0b8e",
+  "stderrSha256": "bf5b24d4573e147920c5b72f7ac08c5a83402e3e8d31bd48f8801efc51ce74dc",
+  "callLines": 692,
+  "helpers": {
+    "1": 66,
+    "2": 25,
+    "3": 13,
+    "5": 15,
+    "8": 24,
+    "14": 43,
+    "80": 8,
+    "113": 18,
+    "130": 22
+  },
+  "intrinsics": {
+    "llvm.lifetime.start.p0": 157,
+    "llvm.bpf.pseudo": 126,
+    "llvm.lifetime.end.p0": 170,
+    "llvm.memset.p0.i64": 5
+  },
+  "sections": [
+    {
+      "name": "BEGIN",
+      "probe": "BEGIN",
+      "calls": {
+        "bpf_map_update_elem": 4,
+        "bpf_ktime_get_ns": 1,
+        "bpf_ringbuf_output": 1,
+        "bpf_map_lookup_elem": 1
+      },
+      "ktime": 1
+    },
+    {
+      "name": "kretfunc:vmlinux:ext4_file_write_iter",
+      "probe": "kretfunc:vmlinux:ext4_file_write_iter",
+      "calls": {
+        "bpf_probe_read_kernel": 9,
+        "bpf_map_update_elem": 2,
+        "bpf_get_smp_processor_id": 3,
+        "bpf_map_lookup_elem": 4,
+        "bpf_ktime_get_ns": 1,
+        "bpf_get_current_cgroup_id": 1,
+        "bpf_ringbuf_output": 1
+      },
+      "ktime": 1
+    },
+    {
+      "name": "kfunc:vmlinux:ext4_page_mkwrite",
+      "probe": "kfunc:vmlinux:ext4_page_mkwrite",
+      "calls": {
+        "bpf_probe_read_kernel": 9,
+        "bpf_map_lookup_elem": 4,
+        "bpf_map_update_elem": 2,
+        "bpf_get_smp_processor_id": 3,
+        "bpf_ktime_get_ns": 1,
+        "bpf_get_current_cgroup_id": 1,
+        "bpf_ringbuf_output": 1
+      },
+      "ktime": 1
+    },
+    {
+      "name": "tracepoint:ext4:ext4_sync_file_enter",
+      "probe": "tracepoint:ext4:ext4_sync_file_enter",
+      "calls": {
+        "bpf_map_lookup_elem": 1,
+        "bpf_ktime_get_ns": 1,
+        "bpf_get_current_pid_tgid": 5,
+        "bpf_map_update_elem": 5
+      },
+      "ktime": 1
+    },
+    {
+      "name": "tracepoint:ext4:ext4_sync_file_exit",
+      "probe": "tracepoint:ext4:ext4_sync_file_exit",
+      "calls": {
+        "bpf_get_current_pid_tgid": 13,
+        "bpf_map_lookup_elem": 11,
+        "bpf_map_update_elem": 2,
+        "bpf_get_smp_processor_id": 3,
+        "bpf_ktime_get_ns": 1,
+        "bpf_get_current_cgroup_id": 1,
+        "bpf_ringbuf_output": 1,
+        "bpf_map_delete_elem": 5
+      },
+      "ktime": 1
+    },
+    {
+      "name": "tracepoint:syscalls:sys_enter_syncfs",
+      "probe": "tracepoint:syscalls:sys_enter_syncfs",
+      "calls": {
+        "bpf_ktime_get_ns": 1,
+        "bpf_get_current_pid_tgid": 1,
+        "bpf_map_update_elem": 1
+      },
+      "ktime": 1
+    },
+    {
+      "name": "tracepoint:syscalls:sys_enter_sync",
+      "probe": "tracepoint:syscalls:sys_enter_sync",
+      "calls": {
+        "bpf_ktime_get_ns": 1,
+        "bpf_get_current_pid_tgid": 1,
+        "bpf_map_update_elem": 1
+      },
+      "ktime": 1
+    },
+    {
+      "name": "kfunc:vmlinux:ext4_sync_fs",
+      "probe": "kfunc:vmlinux:ext4_sync_fs",
+      "calls": {
+        "bpf_map_lookup_elem": 2,
+        "bpf_get_current_pid_tgid": 2,
+        "bpf_ktime_get_ns": 1,
+        "bpf_map_update_elem": 1
+      },
+      "ktime": 1
+    },
+    {
+      "name": "kretfunc:vmlinux:ext4_sync_fs",
+      "probe": "kretfunc:vmlinux:ext4_sync_fs",
+      "calls": {
+        "bpf_map_lookup_elem": 2,
+        "bpf_get_current_pid_tgid": 3,
+        "bpf_map_update_elem": 2,
+        "bpf_ktime_get_ns": 1
+      },
+      "ktime": 1
+    },
+    {
+      "name": "tracepoint:syscalls:sys_exit_syncfs",
+      "probe": "tracepoint:syscalls:sys_exit_syncfs",
+      "calls": {
+        "bpf_get_current_pid_tgid": 9,
+        "bpf_map_lookup_elem": 8,
+        "bpf_get_smp_processor_id": 3,
+        "bpf_map_delete_elem": 4,
+        "bpf_map_update_elem": 1,
+        "bpf_ktime_get_ns": 1,
+        "bpf_get_current_cgroup_id": 1,
+        "bpf_ringbuf_output": 1
+      },
+      "ktime": 1
+    },
+    {
+      "name": "tracepoint:syscalls:sys_exit_sync",
+      "probe": "tracepoint:syscalls:sys_exit_sync",
+      "calls": {
+        "bpf_get_current_pid_tgid": 9,
+        "bpf_map_lookup_elem": 8,
+        "bpf_get_smp_processor_id": 3,
+        "bpf_map_delete_elem": 4,
+        "bpf_map_update_elem": 1,
+        "bpf_ktime_get_ns": 1,
+        "bpf_get_current_cgroup_id": 1,
+        "bpf_ringbuf_output": 1
+      },
+      "ktime": 1
+    },
+    {
+      "name": "tracepoint:ext4:ext4_truncate_enter",
+      "probe": "tracepoint:ext4:ext4_truncate_enter",
+      "calls": {
+        "bpf_map_lookup_elem": 4,
+        "bpf_get_smp_processor_id": 3,
+        "bpf_map_update_elem": 1,
+        "bpf_ktime_get_ns": 1,
+        "bpf_get_current_cgroup_id": 1,
+        "bpf_ringbuf_output": 1
+      },
+      "ktime": 1
+    },
+    {
+      "name": "tracepoint:ext4:ext4_punch_hole",
+      "probe": "tracepoint:ext4:ext4_punch_hole",
+      "calls": {
+        "bpf_map_lookup_elem": 4,
+        "bpf_get_smp_processor_id": 3,
+        "bpf_map_update_elem": 1,
+        "bpf_ktime_get_ns": 1,
+        "bpf_get_current_cgroup_id": 1,
+        "bpf_ringbuf_output": 1
+      },
+      "ktime": 1
+    },
+    {
+      "name": "tracepoint:ext4:ext4_zero_range",
+      "probe": "tracepoint:ext4:ext4_zero_range",
+      "calls": {
+        "bpf_map_lookup_elem": 4,
+        "bpf_get_smp_processor_id": 3,
+        "bpf_map_update_elem": 1,
+        "bpf_ktime_get_ns": 1,
+        "bpf_get_current_cgroup_id": 1,
+        "bpf_ringbuf_output": 1
+      },
+      "ktime": 1
+    },
+    {
+      "name": "END",
+      "probe": "END",
+      "calls": {
+        "bpf_ktime_get_ns": 1,
+        "bpf_ringbuf_output": 13,
+        "bpf_map_lookup_elem": 13
+      },
+      "ktime": 1
+    }
+  ],
+  "diagnostic": {
+    "role": "DIAGNOSTIC, not gating (Q109a): becomes gating only against a reviewed golden dump from a real W0",
+    "pass": true,
+    "reasons": [],
+    "adopted": true,
+    "format": "llvm-ir",
+    "ir": {
+      "modules": 1,
+      "functions": 15,
+      "intrinsics": {
+        "llvm.lifetime.start.p0": 157,
+        "llvm.bpf.pseudo": 126,
+        "llvm.lifetime.end.p0": 170,
+        "llvm.memset.p0.i64": 5
+      },
+      "astNsecs": 15
+    }
+  },
+  "redistributed": {
+    "gatePass": true,
+    "diagnostic": {
+      "role": "DIAGNOSTIC, not gating (Q109a): becomes gating only against a reviewed golden dump from a real W0",
+      "pass": false,
+      "reasons": [
+        "probe function BEGIN has 0 bpf_ktime_get_ns calls, the source block has 1 nsecs(monotonic)",
+        "probe function kretfunc:vmlinux:ext4_file_write_iter has 2 bpf_ktime_get_ns calls, the source block has 1 nsecs(monotonic)"
+      ],
+      "adopted": true,
+      "format": "llvm-ir",
+      "ir": {
+        "modules": 1,
+        "functions": 15,
+        "intrinsics": {
+          "llvm.lifetime.start.p0": 157,
+          "llvm.bpf.pseudo": 126,
+          "llvm.lifetime.end.p0": 170,
+          "llvm.memset.p0.i64": 5
+        },
+        "astNsecs": 15
+      }
+    }
+  },
+  "scope": "Q109a diagnostics never change gate pass"
+}

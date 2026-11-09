@@ -1,0 +1,160 @@
+TAP version 13
+# Subtest: control: the constructed complete dump passes the proof and W0
+ok 1 - control: the constructed complete dump passes the proof and W0
+  ---
+  duration_ms: 13.626083
+  type: 'test'
+  ...
+# Subtest: A1: a failed, killed, timed out or unrecorded compile is never adopted, even after printing a complete valid dump (proof and W0)
+ok 2 - A1: a failed, killed, timed out or unrecorded compile is never adopted, even after printing a complete valid dump (proof and W0)
+  ---
+  duration_ms: 18.739
+  type: 'test'
+  ...
+# Subtest: A1: partial output with a failure status refuses, and so does a partial (truncated) dump with status 0
+ok 3 - A1: partial output with a failure status refuses, and so does a partial (truncated) dump with status 0
+  ---
+  duration_ms: 4.083125
+  type: 'test'
+  ...
+# Subtest: A1: the --version, sha256sum and BTF-read statuses are checked, not just recorded (proof and W0)
+ok 4 - A1: the --version, sha256sum and BTF-read statuses are checked, not just recorded (proof and W0)
+  ---
+  duration_ms: 42.448625
+  type: 'test'
+  ...
+# Subtest: A2: the reviewer mixed-format fixture (a numeric parenthesized-opcode call to a forbidden clock) refuses wherever it lands
+ok 5 - A2: the reviewer mixed-format fixture (a numeric parenthesized-opcode call to a forbidden clock) refuses wherever it lands
+  ---
+  duration_ms: 6.163334
+  type: 'test'
+  ...
+# Subtest: A2: a call-like line that does not parse refuses (UNPARSED-CALL), in every odd spelling
+ok 6 - A2: a call-like line that does not parse refuses (UNPARSED-CALL), in every odd spelling
+  ---
+  duration_ms: 31.531042
+  type: 'test'
+  ...
+# Subtest: A2: the unknown-spelling mix cannot be rescued by recognised monotonic calls (raw bytes, mnemonic, opcode disagree)
+ok 7 - A2: the unknown-spelling mix cannot be rescued by recognised monotonic calls (raw bytes, mnemonic, opcode disagree)
+  ---
+  duration_ms: 7.126875
+  type: 'test'
+  ...
+# Subtest: A2: truncated dumps, a missing probe section, empty and duplicate sections refuse
+ok 8 - A2: truncated dumps, a missing probe section, empty and duplicate sections refuse
+  ---
+  duration_ms: 21.193333
+  type: 'test'
+  ...
+# Subtest: A2: calls in other stages never rescue or substitute for the chosen section
+ok 9 - A2: calls in other stages never rescue or substitute for the chosen section
+  ---
+  duration_ms: 10.128416
+  type: 'test'
+  ...
+# Subtest: A2: every helper id must be on the allow-list; ktime variants, jiffies, timers and any other helper refuse
+ok 10 - A2: every helper id must be on the allow-list; ktime variants, jiffies, timers and any other helper refuse
+  ---
+  duration_ms: 61.395209
+  type: 'test'
+  ...
+# Subtest: A2: ktime helpers other than bpf_ktime_get_ns are classed as clocks by the kernel enum itself (a future name the table does not know)
+ok 11 - A2: ktime helpers other than bpf_ktime_get_ns are classed as clocks by the kernel enum itself (a future name the table does not know)
+  ---
+  duration_ms: 4.564375
+  type: 'test'
+  ...
+# Subtest: A2: the secondary per-site count never substitutes for completeness, and a lower count still refuses
+ok 12 - A2: the secondary per-site count never substitutes for completeness, and a lower count still refuses
+  ---
+  duration_ms: 2.8395
+  type: 'test'
+  ...
+# Subtest: the allow-list is exactly the helpers the pinned source needs; a source with an unmodeled construct refuses
+ok 13 - the allow-list is exactly the helpers the pinned source needs; a source with an unmodeled construct refuses
+  ---
+  duration_ms: 19.483791
+  type: 'test'
+  ...
+# Subtest: BTF reader: a constructed blob yields the helper ids (ENUM and ENUM64), ignoring unrelated types and __BPF_FUNC_MAX_ID
+ok 14 - BTF reader: a constructed blob yields the helper ids (ENUM and ENUM64), ignoring unrelated types and __BPF_FUNC_MAX_ID
+  ---
+  duration_ms: 0.901458
+  type: 'test'
+  ...
+# Subtest: BTF reader: the clock proof uses the ids the kernel states, not remembered ones
+ok 15 - BTF reader: the clock proof uses the ids the kernel states, not remembered ones
+  ---
+  duration_ms: 5.76375
+  type: 'test'
+  ...
+# Subtest: BTF reader: W0 refuses when the enum is missing, a needed name is absent, ids collide, or the blob is absent (proof and W0)
+ok 16 - BTF reader: W0 refuses when the enum is missing, a needed name is absent, ids collide, or the blob is absent (proof and W0)
+  ---
+  duration_ms: 10.550916
+  type: 'test'
+  ...
+# Subtest: BTF reader negatives: truncation at every offset, bad magic, version, header and section bounds, strings, kinds and records
+ok 17 - BTF reader negatives: truncation at every offset, bad magic, version, header and section bounds, strings, kinds and records
+  ---
+  duration_ms: 16.445875
+  type: 'test'
+  ...
+# Subtest: harness wiring (static): every process status reaches the verdict and the ids come from a BTF read by the same image
+ok 18 - harness wiring (static): every process status reaches the verdict and the ids come from a BTF read by the same image
+  ---
+  duration_ms: 0.412625
+  type: 'test'
+  ...
+# Subtest: R13 gate (1): the static source check refuses every clock builtin other than nsecs(monotonic), with an otherwise clean dump (proof and W0)
+ok 19 - R13 gate (1): the static source check refuses every clock builtin other than nsecs(monotonic), with an otherwise clean dump (proof and W0)
+  ---
+  duration_ms: 16.236042
+  type: 'test'
+  ...
+# Subtest: R13 gate (3): any forbidden clock helper NAME token anywhere in the dump refuses (stdout, stderr, any stage, comments, BPF_FUNC_ forms, any case); numeric ids alone do not
+ok 20 - R13 gate (3): any forbidden clock helper NAME token anywhere in the dump refuses (stdout, stderr, any stage, comments, BPF_FUNC_ forms, any case); numeric ids alone do not
+  ---
+  duration_ms: 86.390958
+  type: 'test'
+  ...
+# Subtest: R13 gate (2) and the diagnostic split: the diagnostic is recorded, never gating, and the dump is recorded in full with its hash
+ok 21 - R13 gate (2) and the diagnostic split: the diagnostic is recorded, never gating, and the dump is recorded in full with its hash
+  ---
+  duration_ms: 5.204542
+  type: 'test'
+  ...
+# Subtest: R13 R12-F1/F2 fixtures: the structured parser still REPORTS the unparsed call outside a section and the contradictory exit, as DIAGNOSTIC
+ok 22 - R13 R12-F1/F2 fixtures: the structured parser still REPORTS the unparsed call outside a section and the contradictory exit, as DIAGNOSTIC
+  ---
+  duration_ms: 5.257917
+  type: 'test'
+  ...
+# Subtest: R13 R12-F3: BTF validation rejects id aliases across all entries, counts empty duplicate enums, and refuses reserved header flags and type-info bits
+ok 23 - R13 R12-F3: BTF validation rejects id aliases across all entries, counts empty duplicate enums, and refuses reserved header flags and type-info bits
+  ---
+  duration_ms: 2.739708
+  type: 'test'
+  ...
+# Subtest: R13 harness wiring (static): the dump file and its hash are recorded by the W0 step
+ok 24 - R13 harness wiring (static): the dump file and its hash are recorded by the W0 step
+  ---
+  duration_ms: 0.35325
+  type: 'test'
+  ...
+# Subtest: R14 R13-F1: comment delimiters inside string literals cannot hide a time read; unterminated strings and comments refuse (proof and W0)
+ok 25 - R14 R13-F1: comment delimiters inside string literals cannot hide a time read; unterminated strings and comments refuse (proof and W0)
+  ---
+  duration_ms: 34.378209
+  type: 'test'
+  ...
+1..25
+# tests 25
+# suites 0
+# pass 25
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 573.713625

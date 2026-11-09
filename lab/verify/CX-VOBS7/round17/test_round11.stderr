@@ -1,0 +1,25 @@
+test_acks_at_or_after_the_upper_bound_pass (__main__.AckClassification.test_acks_at_or_after_the_upper_bound_pass) ... ok
+test_both_orders_of_a_proven_early_and_an_unproven_ack_keep_both_codes (__main__.AckClassification.test_both_orders_of_a_proven_early_and_an_unproven_ack_keep_both_codes) ... ok
+test_duplicates_and_many_acks_report_each_code_once (__main__.AckClassification.test_duplicates_and_many_acks_report_each_code_once) ... ok
+test_every_permutation_of_early_unproven_and_safe_acks (__main__.AckClassification.test_every_permutation_of_early_unproven_and_safe_acks) ... ok
+test_multi_member_publication_acks_all_land_on_the_publishing_commit (__main__.AckClassification.test_multi_member_publication_acks_all_land_on_the_publishing_commit) ... ok
+test_only_early_acks_give_only_the_violation (__main__.AckClassification.test_only_early_acks_give_only_the_violation) ... ok
+test_only_unproven_acks_give_only_the_uncertainty (__main__.AckClassification.test_only_unproven_acks_give_only_the_uncertainty) ... ok
+test_the_boundaries_of_each_ack (__main__.AckClassification.test_the_boundaries_of_each_ack) ... ok
+test_the_file_sync_point_interval_has_no_uncertainty_for_acks (__main__.AckClassification.test_the_file_sync_point_interval_has_no_uncertainty_for_acks) ... ok
+test_the_publication_bound_is_a_single_value_and_stays_independent_of_the_acks (__main__.AckClassification.test_the_publication_bound_is_a_single_value_and_stays_independent_of_the_acks) ... ok
+test_two_commits_are_classified_independently_and_each_code_counts_per_commit (__main__.AckClassification.test_two_commits_are_classified_independently_and_each_code_counts_per_commit) ... ok
+test_a_missing_timestamp_on_only_one_of_two_tails_refuses (__main__.WalTailTiming.test_a_missing_timestamp_on_only_one_of_two_tails_refuses) ... ok
+test_a_missing_timestamp_refuses (__main__.WalTailTiming.test_a_missing_timestamp_refuses) ... ok
+test_a_timestamp_after_the_observer_end_refuses_as_outside_the_interval (__main__.WalTailTiming.test_a_timestamp_after_the_observer_end_refuses_as_outside_the_interval) ... ok
+test_a_timestamp_before_the_attempt_started_refuses_as_outside_the_interval (__main__.WalTailTiming.test_a_timestamp_before_the_attempt_started_refuses_as_outside_the_interval) ... ok
+test_an_untimed_tail_cannot_hide_a_tail_later_than_detach (__main__.WalTailTiming.test_an_untimed_tail_cannot_hide_a_tail_later_than_detach) ... ok
+test_control_a_correctly_timed_run_is_accepted (__main__.WalTailTiming.test_control_a_correctly_timed_run_is_accepted) ... ok
+test_interval_endpoints_are_inside (__main__.WalTailTiming.test_interval_endpoints_are_inside) ... ok
+test_the_fixture_really_stamps_every_tail (__main__.WalTailTiming.test_the_fixture_really_stamps_every_tail) ... ok
+test_wrong_types_and_values_refuse (__main__.WalTailTiming.test_wrong_types_and_values_refuse) ... ok
+
+----------------------------------------------------------------------
+Ran 20 tests in 0.439s
+
+OK

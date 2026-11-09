@@ -1,0 +1,134 @@
+{
+  "reviewedFunctionSha256": "09f6bc8d3af8bbba61a85d85bd16fa97a79d5ee6a3de6163c97643257e46aded",
+  "actualRecoveredWalBytes": 2542072,
+  "result": {
+    "index": 2,
+    "mode": "off",
+    "rehearsal": true,
+    "crashed": false,
+    "dir": [
+      4112,
+      183607415
+    ],
+    "profileViolations": [],
+    "writerId": "mock-writer",
+    "writerCgroupId": 4242,
+    "acksBeforeCrash": 200,
+    "bootIdBefore": "mock-boot-id",
+    "judge": {
+      "mode": "off",
+      "pass": false,
+      "problems": [
+        "COLLECTION-RECEIPT-INVALID: the recovered volume gave no valid receipt (SyntaxError: Unexpected end of JSON input)"
+      ],
+      "refusal": "COLLECTION-RECEIPT-INVALID"
+    },
+    "pass": false
+  },
+  "refused": null,
+  "calls": [
+    {
+      "argv": [
+        "volume",
+        "create",
+        "--label",
+        "tx2.holder=CX-VOBS7",
+        "--label",
+        "tx2.run=io-test-w4-2",
+        "tx2-sw-io-test-w4-2-data"
+      ],
+      "options": null
+    },
+    {
+      "argv": [
+        "volume",
+        "create",
+        "--label",
+        "tx2.holder=CX-VOBS7",
+        "--label",
+        "tx2.run=io-test-w4-2",
+        "tx2-sw-io-test-w4-2-witness"
+      ],
+      "options": null
+    },
+    {
+      "argv": [],
+      "options": null
+    },
+    {
+      "argv": [],
+      "options": null
+    },
+    {
+      "argv": [
+        "kill",
+        "--signal",
+        "KILL",
+        "tx2-sw-w4x-io-test-w4-2"
+      ],
+      "options": null
+    },
+    {
+      "argv": [
+        "kill",
+        "--signal",
+        "KILL",
+        "tx2-sw-w4w-io-test-w4-2"
+      ],
+      "options": null
+    },
+    {
+      "argv": [],
+      "options": null
+    },
+    {
+      "argv": [
+        "start",
+        "-a",
+        "tx2-sw-w4c-4fb6cc8e8e22"
+      ],
+      "options": null
+    },
+    {
+      "argv": [
+        "cp",
+        "tx2-sw-w4c-4fb6cc8e8e22:/data/store/broker.db",
+        "/var/folders/d5/9yczc0fd0ws2w_wl09gwlk8r0000gn/T/cx-vobs7-r16-io-Tbenp8/out/w4/02-off/broker.db"
+      ],
+      "options": {
+        "allowFail": true
+      }
+    },
+    {
+      "argv": [
+        "cp",
+        "tx2-sw-w4c-4fb6cc8e8e22:/data/store/broker.db-wal",
+        "/var/folders/d5/9yczc0fd0ws2w_wl09gwlk8r0000gn/T/cx-vobs7-r16-io-Tbenp8/out/w4/02-off/broker.db-wal"
+      ],
+      "options": {
+        "allowFail": true
+      }
+    },
+    {
+      "argv": [
+        "volume",
+        "inspect",
+        "tx2-sw-io-test-w4-2-data"
+      ],
+      "options": {
+        "allowFail": true
+      }
+    },
+    {
+      "argv": [
+        "volume",
+        "inspect",
+        "tx2-sw-io-test-w4-2-witness"
+      ],
+      "options": {
+        "allowFail": true
+      }
+    }
+  ],
+  "claim": "offline I/O fault injection; every Docker/VM operation is a stub; only Python SQLite/judge executes locally"
+}

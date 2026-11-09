@@ -1,0 +1,51 @@
+{
+  "failedCollectionAsUsedByHarness": {
+    "mode": "off",
+    "pass": false,
+    "problems": [
+      "WAL-ABSENCE-UNPROVEN: no WAL bytes and no collection receipt showing the WAL absent on the recovered volume"
+    ],
+    "refusal": "WAL-ABSENCE-UNPROVEN"
+  },
+  "falseAggregate": {
+    "counted": 5,
+    "full": 5,
+    "fullAckedLost": 0,
+    "off": 0,
+    "offUnwitnessedLost": 0,
+    "pass": false,
+    "premiseHolds": false,
+    "reasons": [
+      "refused trial(s), counted as no evidence either way: #2 WAL-ABSENCE-UNPROVEN, #4 WAL-ABSENCE-UNPROVEN, #6 WAL-ABSENCE-UNPROVEN, #8 WAL-ABSENCE-UNPROVEN, #10 WAL-ABSENCE-UNPROVEN",
+      "only 5 of 10 crash trials gave evidence",
+      "both a FULL and an OFF writer are required",
+      "trial(s) without a verified store collection record: 1, 3, 5, 7, 9",
+      "no unwitnessed OFF commit was lost: the class premise (Q100r) is reopened"
+    ],
+    "refused": 5,
+    "trials": 10,
+    "witnessedLost": 0
+  },
+  "intactSource": {
+    "acked": 20,
+    "ackedLostCount": 0,
+    "lastAcked": 20,
+    "lastSurvived": 20,
+    "marker": 20,
+    "mode": "off",
+    "pass": true,
+    "problems": [],
+    "survived": 20,
+    "syncsCredited": 0,
+    "traceDetached": false,
+    "traceEvents": 20,
+    "unwitnessedAcked": 20,
+    "unwitnessedLostCount": 0,
+    "witnessProblems": [
+      "SYNC-MISSING: 20 of 20 commits"
+    ],
+    "witnessed": 0,
+    "witnessedLost": [],
+    "witnessedLostCount": 0
+  }
+}

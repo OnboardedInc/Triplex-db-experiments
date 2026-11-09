@@ -1,0 +1,10 @@
+test_R16_F1_an_internal_sequence_gap_must_refuse (test_round16_adversarial.W4Adversarial.test_R16_F1_an_internal_sequence_gap_must_refuse) ... ok
+test_R16_F1_lost_sync_hides_a_witnessed_commit_that_did_not_survive (test_round16_adversarial.W4Adversarial.test_R16_F1_lost_sync_hides_a_witnessed_commit_that_did_not_survive) ... ok
+test_R16_F1_regressed_sequence_time_must_refuse (test_round16_adversarial.W4Adversarial.test_R16_F1_regressed_sequence_time_must_refuse) ... ok
+test_R16_F2_failed_WAL_collection_cannot_be_counted_as_crash_loss (test_round16_adversarial.W4Adversarial.test_R16_F2_failed_WAL_collection_cannot_be_counted_as_crash_loss) ... ok
+test_valid_prefix_control (test_round16_adversarial.W4Adversarial.test_valid_prefix_control) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.050s
+
+OK

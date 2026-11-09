@@ -72,7 +72,10 @@ def main():
         rehearsals.append(v)
     assert rehearsals[0]['witnessed']==5299 and rehearsals[1]['acked']==21167 and rehearsals[1]['witnessed']==0
     agg=w4.aggregate(rehearsals);assert not agg['pass'] and not agg['premiseHolds']
-    recorded=load(E/'w4-rehearsal3/W4.json');assert recorded['aggregate']==agg and not recorded['pass'] and recorded['rehearsal']
+    # [CX-VOBS7-R17] Why: historical rehearsals predate collection receipts; preserve their counts but require the new aggregate to refuse unverified collection. Rejected: manufacturing retrospective receipts or weakening per-trial replay assertions.
+    recorded=load(E/'w4-rehearsal3/W4.json');assert agg=={**recorded['aggregate'],'counted':2,'refused':0,'reasons':[
+        'only 2 of 10 crash trials gave evidence','trial(s) without a verified store collection record: 1, 2',
+        'no unwitnessed OFF commit was lost: the class premise (Q100r) is reopened']} and not recorded['pass'] and recorded['rehearsal']
     save('w4-rehearsal-replay.json',{'trials':rehearsals,'aggregate':agg,'claim':'writer SIGKILL only; guest crash and recovery are untested'})
     copies={'W1.resized.json':'w1-resized/W1.json','ABBA.attempt1.json':'abba-attempt1/ABBA.json','ABBA.attempt2.json':'abba-attempt2/ABBA.json',
         'W4.rehearsal3.json':'w4-rehearsal3/W4.json','vm-facts-w1.txt':'vm-facts-w1.txt'}

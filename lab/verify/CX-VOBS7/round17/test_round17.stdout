@@ -1,0 +1,40 @@
+TAP version 13
+# Subtest: a clean copy with a valid receipt is accepted and carries a verified collection record (control)
+ok 1 - a clean copy with a valid receipt is accepted and carries a verified collection record (control)
+  ---
+  duration_ms: 219.210333
+  type: 'test'
+  ...
+# Subtest: R16-F2: a failed WAL copy refuses with COPY-FAILED, never as 200 lost OFF commits
+ok 2 - R16-F2: a failed WAL copy refuses with COPY-FAILED, never as 200 lost OFF commits
+  ---
+  duration_ms: 215.716458
+  type: 'test'
+  ...
+# Subtest: a short or altered WAL copy refuses with COPY-INCOMPLETE even if the copy command reported success
+ok 3 - a short or altered WAL copy refuses with COPY-INCOMPLETE even if the copy command reported success
+  ---
+  duration_ms: 583.609833
+  type: 'test'
+  ...
+# Subtest: a WAL the volume receipt shows absent is accepted as absent (explicit evidence), flagged, and its commits count as lost
+ok 4 - a WAL the volume receipt shows absent is accepted as absent (explicit evidence), flagged, and its commits count as lost
+  ---
+  duration_ms: 205.050209
+  type: 'test'
+  ...
+# Subtest: no receipt from the volume refuses with COLLECTION-RECEIPT-INVALID even though both files copied
+ok 5 - no receipt from the volume refuses with COLLECTION-RECEIPT-INVALID even though both files copied
+  ---
+  duration_ms: 196.160375
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1529.877375

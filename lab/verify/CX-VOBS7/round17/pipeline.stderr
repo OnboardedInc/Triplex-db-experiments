@@ -1,0 +1,25 @@
+test_R17_F1_final_counter_loss_cannot_complete_an_aggregate_PASS (__main__.Pipeline.test_R17_F1_final_counter_loss_cannot_complete_an_aggregate_PASS) ... FAIL
+test_R17_F2_CLI_accepts_a_present_exactly_receipted_zero_byte_WAL (__main__.Pipeline.test_R17_F2_CLI_accepts_a_present_exactly_receipted_zero_byte_WAL) ... FAIL
+
+======================================================================
+FAIL: test_R17_F1_final_counter_loss_cannot_complete_an_aggregate_PASS (__main__.Pipeline.test_R17_F1_final_counter_loss_cannot_complete_an_aggregate_PASS)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/test_round17_pipeline.py", line 32, in test_R17_F1_final_counter_loss_cannot_complete_an_aggregate_PASS
+    self.assertFalse(aggregate['pass'],'the received end counter proves a missing sync, but ten such trial rows still produce W4 PASS')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: True is not false : the received end counter proves a missing sync, but ten such trial rows still produce W4 PASS
+
+======================================================================
+FAIL: test_R17_F2_CLI_accepts_a_present_exactly_receipted_zero_byte_WAL (__main__.Pipeline.test_R17_F2_CLI_accepts_a_present_exactly_receipted_zero_byte_WAL)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/test_round17_pipeline.py", line 44, in test_R17_F2_CLI_accepts_a_present_exactly_receipted_zero_byte_WAL
+    self.assertEqual(c.returncode,0,'the CLI treats a collected zero-byte WAL as COPY-FAILED despite exact receipt size/hash')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0 : the CLI treats a collected zero-byte WAL as COPY-FAILED despite exact receipt size/hash
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.102s
+
+FAILED (failures=2)

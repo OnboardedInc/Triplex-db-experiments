@@ -1,0 +1,54 @@
+{
+  "argv": [
+    "/opt/homebrew/opt/python@3.14/bin/python3.14",
+    "-B",
+    "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/vm_w4_judge.py",
+    "/var/folders/d5/9yczc0fd0ws2w_wl09gwlk8r0000gn/T/tmp7iwphjcg/cli",
+    "off",
+    "4242"
+  ],
+  "exit": 1,
+  "inputSha256": {
+    "broker.db": "58ac720396aef6875fa9caa2f48736121ca8ce0398db4e76a88714a7d9ad30c4",
+    "broker.db-wal": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "collection.json": "3604f87cacb79ffe2f0ad2b22cc8580e3dc62eab7f97fb0297c91ca1989dc362",
+    "trace.txt": "6df11656bbc0b94f9f40a96dad7cd82aa9e1383025bbfb0d6565267fe4608e82",
+    "witness-stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "writer.txt": "7ee4cdbd55e0a737d0eb7a5c1cdcd4e03dcd8c7307d05e49cb2be0b4d20f22f4"
+  },
+  "receipt": {
+    "copy": {
+      "broker.db": true,
+      "broker.db-wal": true
+    },
+    "format": "w4-collection/1",
+    "receipt": {
+      "files": {
+        "broker.db": {
+          "sha256": "58ac720396aef6875fa9caa2f48736121ca8ce0398db4e76a88714a7d9ad30c4",
+          "size": 16384
+        },
+        "broker.db-wal": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        }
+      },
+      "format": "w4-receipt/1",
+      "listing": [
+        "broker.db",
+        "broker.db-wal"
+      ]
+    },
+    "receiptError": null
+  },
+  "startedNs": 1794251165670256000,
+  "stderr": "",
+  "stdout": {
+    "mode": "off",
+    "pass": false,
+    "problems": [
+      "COPY-FAILED: broker.db-wal is on the recovered volume (0 bytes) but its copy failed or is missing"
+    ],
+    "refusal": "COPY-FAILED"
+  }
+}

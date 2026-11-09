@@ -1,0 +1,41 @@
+test_R16_F1_an_internal_sequence_gap_must_refuse (__main__.Round17Review.test_R16_F1_an_internal_sequence_gap_must_refuse) ... ok
+test_R16_F1_lost_sync_hides_a_witnessed_commit_that_did_not_survive (__main__.Round17Review.test_R16_F1_lost_sync_hides_a_witnessed_commit_that_did_not_survive) ... ok
+test_R16_F1_regressed_sequence_time_must_refuse (__main__.Round17Review.test_R16_F1_regressed_sequence_time_must_refuse) ... ok
+test_R16_F2_failed_WAL_collection_cannot_be_counted_as_crash_loss (__main__.Round17Review.test_R16_F2_failed_WAL_collection_cannot_be_counted_as_crash_loss) ... ok
+test_R17_F1_backwards_detach_timestamp_must_refuse (__main__.Round17Review.test_R17_F1_backwards_detach_timestamp_must_refuse) ... FAIL
+test_R17_F1_completed_end_counters_prove_a_missing_tail_event (__main__.Round17Review.test_R17_F1_completed_end_counters_prove_a_missing_tail_event) ... FAIL
+test_R17_F2_present_zero_byte_WAL_is_distinct_from_a_failed_copy (__main__.Round17Review.test_R17_F2_present_zero_byte_WAL_is_distinct_from_a_failed_copy) ... FAIL
+test_refusals_have_no_counts_and_never_contribute_even_with_stale_counts (__main__.Round17Review.test_refusals_have_no_counts_and_never_contribute_even_with_stale_counts) ... ok
+test_valid_prefix_control (__main__.Round17Review.test_valid_prefix_control) ... ok
+
+======================================================================
+FAIL: test_R17_F1_backwards_detach_timestamp_must_refuse (__main__.Round17Review.test_R17_F1_backwards_detach_timestamp_must_refuse)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/test_round17_review.py", line 30, in test_R17_F1_backwards_detach_timestamp_must_refuse
+    self.assertEqual(actual.get('refusal'),'TRACE-INCOMPLETE');self.assertNotIn('acked',actual)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: None != 'TRACE-INCOMPLETE'
+
+======================================================================
+FAIL: test_R17_F1_completed_end_counters_prove_a_missing_tail_event (__main__.Round17Review.test_R17_F1_completed_end_counters_prove_a_missing_tail_event)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/test_round17_review.py", line 26, in test_R17_F1_completed_end_counters_prove_a_missing_tail_event
+    self.assertEqual(actual.get('refusal'),'TRACE-INCOMPLETE','a received final counter proves a missing event; this is not an unknowable crash suffix')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: None != 'TRACE-INCOMPLETE' : a received final counter proves a missing event; this is not an unknowable crash suffix
+
+======================================================================
+FAIL: test_R17_F2_present_zero_byte_WAL_is_distinct_from_a_failed_copy (__main__.Round17Review.test_R17_F2_present_zero_byte_WAL_is_distinct_from_a_failed_copy)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/test_round17_review.py", line 38, in test_R17_F2_present_zero_byte_WAL_is_distinct_from_a_failed_copy
+    self.assertTrue(actual['pass'],'the receipted zero-byte WAL was copied exactly; it is not missing')
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : the receipted zero-byte WAL was copied exactly; it is not missing
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.095s
+
+FAILED (failures=3)
