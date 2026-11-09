@@ -432,3 +432,7 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   fixes the BTF strictness.
 - 2026-11-09 DI01 round 3 (Sonnet, b256d60c; fix 16216de6): BasisNotAvailable moved to packages/host feed (public), DependencyIndex.prepare
   raises it with observedRow for all five bad-row kinds; DI01 18/18, lab PACK, --verify, evaluator 108. In review (CX-VDI01 round 3).
+- 2026-11-09 OBS01 round 13 (Sonnet, b167510f): Q109a implemented (gate = source check, pinned hash and exact version with clean exits,
+  forbidden-name scan of a non-empty dump; structured parser diagnostic only); R12-F3 BTF strictness fixed. All suites and reviewer
+  fixtures pass with 11 listed expectation changes. Known residual: a numeric-only forbidden call passes the gate until a golden dump
+  exists (follows from Q109a). In review (CX-VOBS7 round 5, scoped to Q109a).
