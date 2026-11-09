@@ -326,3 +326,6 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   runner pin after DF01; G0 does not bind W0's build. Round 2 (Sonnet) is fixes only plus a main merge. **Next contract (0.4.1) queue:**
   P2B (verify/P2B 986e11d1), CR-NS (both reviewers ACCEPT; 40589336), DF01 round 4 (if accepted), HS01 rounds 2-3, RT01 (after G6),
   G03 rounds 5-7, OBS01 rounds 6-9, plus R43-a's qualification pins and the Sam-approved rulings Q106a-g.
+- 2026-11-09 12:15Z disk fell to 4.2 GiB (below the 5 GiB floor) from builder evidence (QH1-R2, HS01 R2, P2B, QH1). lab/bin/compress-evidence.sh
+  (compress settled evidence over 20 MB, hash-verified, originals' hashes kept) restored 12 GiB. **Run it every hourly pass and before
+  every slot window.** Sam has the reclaim guidance (60 GiB minimum for 100k one lane at a time, 150 GiB comfortable).
