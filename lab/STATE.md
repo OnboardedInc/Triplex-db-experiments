@@ -406,3 +406,7 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   and purges nothing. HS01 round 3 (Sonnet): the one-line fix, entity dictionary stored once, integer binds (exact REAL round-trip kept),
   and R47's journal record behind an option OFF by default (Q107-S is Sam's), measured on W0 and ULID ids with the option off and on.
   P5B round 3 keeps building on a9ebe759 and picks up the fix by merge later.
+- 2026-11-09 G03 round 7a review FIX-FIRST (CX-VG03-56, c65f7a82): F1/F2 closed offline (268/268, NS 160/160, evaluator 108,
+  --verify). New: F3 medium, a rejected execControl (bad hook, timeout, truncation, DR contradiction) skips the terminal record and raw
+  export; F4 low, a null first clock domain skips the constant-domain check. Round 7c (Sonnet) fixes both; 7b (R48 witness) still waits
+  for OBS01's accepted witness.
