@@ -430,3 +430,5 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   dump parser against adversarial dumps the candidate cannot produce; the clock step gates on the source check, pinned hash and version,
   and a forbidden-name scan; the structured parser is diagnostic until a real W0 golden exists. Round 13 (Sonnet) implements this and
   fixes the BTF strictness.
+- 2026-11-09 DI01 round 3 (Sonnet, b256d60c; fix 16216de6): BasisNotAvailable moved to packages/host feed (public), DependencyIndex.prepare
+  raises it with observedRow for all five bad-row kinds; DI01 18/18, lab PACK, --verify, evaluator 108. In review (CX-VDI01 round 3).
