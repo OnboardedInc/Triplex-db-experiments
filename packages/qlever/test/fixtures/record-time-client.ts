@@ -1,5 +1,6 @@
 // [EXP-RT01] Why: reuse review fdbcbb7's emitted-SPARQL transport to test actual read paths. Rejected: returning RQ01 reference answers from a fake route.
 import { decodeRow, metaIri, numericOrderKey } from "../../src/rdf.js";
+const lit = (value: string) => ({ type: "literal" as const, value });
 export function makeRecordTimeClient() {
   const records = new Map<string, Map<string, string>>();
   const calls: string[] = [];
