@@ -1,0 +1,17 @@
+{
+  "evidenceRoot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/P4N-R1",
+  "manifest": "lab/experiments/EXP-P4N/R1-SHA256SUMS",
+  "store": "store/ (APFS clone of QH1-R3/store-candidate, HS01 round 1 layout, 10k W0; excluded from the manifest)",
+  "retainedBuilds": {"final": "QH1-R3/arms/final (round 3 build)", "sa": "first cut, per-fetch dictionary scans", "sb": "step a, QH1 round 4 merged", "sbe": "step a + e (measured and replayed)", "sbf": "sbe source after format-only changes (25 unit tests re-run)"},
+  "series": {
+    "baseline-c1/c4": "final vs A/A twin, loaded host, wrong 296 KB probe fixture (diagnostic)",
+    "sa-c1/c4": "first cut vs final, with twins",
+    "sb-c1/c4": "step a vs final, with twins",
+    "lev-c1/c4, lev2-c1": "levers on sb: semi64, stgc, port reuse (sbe), sbe+semi64",
+    "fin-c1/c4": "final series: final vs sbe with twins, 8 and 6 rounds",
+    "replay/": "100,000-pull digests of sbe and the comparison with round 3's row-route reference",
+    "gates-sb, gates-sbe, gates-sbf, gates-final-sbe": "build, vitest, replay, mutants, qlever suite, lint, pin audit logs",
+    "p2/p2guard.json": "P2 guard (5 rounds x 1,050 commits per arm)",
+    "microbench-reader-statement.txt": "reader statement CPU and bytes, final vs sb, 300 owners"
+  }
+}
