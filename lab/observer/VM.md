@@ -127,3 +127,29 @@ Inotify is a wake-up/corroboration source; only fresh read-only queries establis
 visibility. An idle 10 ms fallback and scheduler noise may widen brackets; actual
 periods and query costs remain in the evidence. Unsealed failure chunks may be
 examined diagnostically but cannot become a sealed bundle or semantic PASS.
+
+## Round 7: Q100s decision stamps (supersedes the F20 open question above)
+
+The pinned parser classifies SQL01 `frames.committed_at` as a **decision** stamp.
+Its check window is `[driver send, U + 5 ms]`. Explicit publication CR records
+(`final.cr[].atNs`) retain `[L - 1 ms, U + 5 ms]`, regardless of any supplied
+`kind` label. Lag still uses observer L/U. SQL01's millisecond stamp is mapped to
+its realtime/monotonic uncertainty interval as before; it refuses if that entire
+interval is outside the window. An interval overlapping a boundary cannot locate
+the stamp more precisely than its stored resolution; its exact bounds are emitted
+in `stampChecks`, not promoted to an exact timestamp.
+
+A trusted driver adapter must include a raw `driver-send` event per offer in the
+evaluator-authenticated observer stream, with `source`, `stream`, `operationId`,
+`attemptId`, `atNs` (VM monotonic nanoseconds), `domain` (the driver's boot ID and
+zero offsets), and the same `runId`. It must come from the evaluator's actual
+driver send record, never a candidate response, receipt or candidate stamp. The
+normalizer binds it to the decoded SQL01 member identity. Duplicate/missing,
+stale, wrong-clock or mismatched sends refuse; a grouped commit must satisfy
+every member's window. The round-6 VM collector does not synthesize these events;
+a future G03 integration must supply them through trusted collection. Without
+them normalization refuses. No candidate-selectable stamp classification exists.
+
+The original round-6 unsealed attempt stays failed evidence. Its unmatched partial
+A/B result on a busy host is **not a valid overhead estimate**. No VM measurement
+was repeated for round 7; G03 round 5 owns matched-arm overhead measurement.

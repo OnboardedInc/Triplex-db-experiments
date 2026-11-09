@@ -1,0 +1,18 @@
+{
+  "changes": {
+    "lab/observer/test_vm.py": {
+      "newSha256": "046ec9ebbfcace452565f4e7d5bb9d0cb4f1f87d54f996790a847f5d9952fc4c",
+      "oldSha256": "5191b376fc5bbb805948af7e65b1b770d9a6973e5b8b7257e73efe5d82424933"
+    },
+    "lab/observer/vm_normalizer.py": {
+      "newSha256": "dea777c2aeab0060d7f1d4b13f157a54f1cdbcf6c367fb3fc63c5ea49e5f965b",
+      "oldSha256": "10ae1ce19e104f6083c8d94a9aa6f899e27e8f0db23cb7e4730d83d3fdf97d09"
+    }
+  },
+  "claim": "offline gate PASS only; no VM measurement or NS semantic verdict",
+  "durableRoot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-OBS01/OBS01-round7",
+  "files": 81,
+  "manifestSha256": "bfce46b6ee742dd07effff3ed0d408e4270d343992c9f5cb593f836fb8808ed3",
+  "round6ManifestSha256": "6685cd0f0c05aa460a2ac929653df9d6b565462d96b876a2fabe9dde45c2edb9",
+  "rulingSourceSha256": "b38c68514a181caac13c600cc76ffe4a797da72a1316e1d5da732a12c56f1008"
+}

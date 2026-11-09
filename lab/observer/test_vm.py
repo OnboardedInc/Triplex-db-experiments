@@ -48,6 +48,7 @@ class VmObserver(unittest.TestCase):
         case={'clockMode':'offline-synthetic','startedNs':0,'sources':sources};events=[{'event':'begin','case':case},{'event':'domain','role':'observer','domain':DOMAIN}, {'event':'clock-wall','lowerNs':0,'upperNs':0,'realNs':0}]
         for sid,main,wal,visible,base in [('broker',self.main,Path(str(self.sql)+'-wal').read_bytes(),[0,1],10000000),('consumer',self.fdmain,Path(str(self.fd)+'-wal').read_bytes(),[0,2],10000000+delay*1000000)]:
             events.extend([{'event':'poll','source':sid,'startNs':base,'endNs':base+50000,'visible':[0,0]}, {'event':'poll','source':sid,'startNs':base+500000,'endNs':base+550000,'visible':visible}, {'event':'wal','source':sid,'offset':0,'bytes':n.blob(wal)}, {'event':'final','source':sid,'main':n.blob(main),'wal':n.blob(wal)}])
+        events.append({'event':'driver-send','source':'broker','stream':json.loads(self.db.execute('SELECT payload FROM frames WHERE lsn=1').fetchone()[0])['s'],'operationId':json.loads(self.db.execute('SELECT payload FROM frames WHERE lsn=1').fetchone()[0])['m'][0]['o'],'attemptId':json.loads(self.db.execute('SELECT payload FROM frames WHERE lsn=1').fetchone()[0])['m'][0]['a'],'atNs':5000000,'domain':DOMAIN})
         events.extend([{'event':'clock-wall','lowerNs':500000000,'upperNs':500000000,'realNs':500000000},{'event':'end','atNs':600000000}])
         return [{'runId':self.run,**event} for event in events]
     def frames(self,events):
@@ -105,6 +106,30 @@ class VmObserver(unittest.TestCase):
         for wall in (-100,100):
             self.db.execute('UPDATE frames SET committed_at=?',(wall,));self.db.commit()
             with self.assertRaisesRegex(ValueError,'F20'):n.normalize(self.frames(self.events()))
+    def test_q100s_decision_and_publication_windows(self):
+        self.db.execute('UPDATE frames SET committed_at=7');self.db.commit()
+        events=self.events();result=n.normalize(self.frames(events))
+        check=result['stores']['broker']['stampChecks'][0]
+        self.assertEqual(check['kind'],'decision');self.assertEqual(check['windowLowNs'],5000000)
+        self.assertEqual(result['stores']['broker']['positions'][0]['L'],10000000)
+        for wall in (2,20):
+            self.db.execute('UPDATE frames SET committed_at=?',(wall,));self.db.commit()
+            with self.assertRaisesRegex(ValueError,'F20'):n.normalize(self.frames(self.events()))
+        self.db.execute('UPDATE frames SET committed_at=7');self.db.commit()
+        for at in (7000000,20000000):
+            events=self.events();final=next(e for e in events if e['event']=='final' and e['source']=='broker')
+            final['cr']=[{'position':[0,1],'atNs':at,'kind':'decision'}]
+            with self.assertRaisesRegex(ValueError,'F20'):n.normalize(self.frames(events))
+    def test_q100s_send_binding_required(self):
+        for mutation in ('missing','duplicate','operation','attempt','source','stream','run','clock','time'):
+            events=self.events();offer=next(e for e in events if e['event']=='driver-send')
+            if mutation=='missing':events.remove(offer)
+            elif mutation=='duplicate':events.insert(-1,copy.deepcopy(offer))
+            elif mutation=='clock':offer['domain']={**DOMAIN,'bootId':'99999999-2222-3333-4444-555555555555'}
+            elif mutation=='time':offer['atNs']=-1
+            elif mutation=='run':offer['runId']='earlier-attempt'
+            else:offer[{'operation':'operationId','attempt':'attemptId'}.get(mutation,mutation)]='other'
+            with self.subTest(mutation=mutation),self.assertRaises(ValueError):n.normalize(self.frames(events))
     def test_rewritten_wal_f11_even_when_final_is_valid(self):
         tail=WalTail();raw=Path(str(self.sql)+'-wal').read_bytes();tail.update(raw)
         changed=raw[:-1]+bytes([raw[-1]^1])

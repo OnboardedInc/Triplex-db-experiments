@@ -1033,3 +1033,101 @@ watcher from `34f6bc5d6896ff6577bbdc2f5b476d3545e4f39e9334ced058ddbb89d3e09fc3`
 to `ba49db1b705c07c3e1ca3da20b99f284fbb580b6a4f76c0d17f6be6353dbd7bd`.
 All other exact source pins/preimages are retained in the attempt directories.
 No merge into main or push was performed.
+
+## Round 7 — schema-owned decision stamps (2026-11-09)
+
+**North star:** P3 correctness: independent publication L/U remains the lag origin;
+a pre-COMMIT decision stamp must be checked against the offer's decision window.
+**Result:** offline gates PASS, 11 Python tests plus 9 engine regression tests.
+No VM/engine measurement or lifecycle operation was run. The round-6 failure was
+not replayed into PASS. The unmatched partial +138% on a busy host is **not a valid
+overhead estimate**; G03 round 5 owns matched-arm observer overhead measurement.
+
+Read the current main-checkout Q100s row in `lab/acceptance/RULINGS-PENDING.md`,
+which refines Q100e/R44 F20: decision stamps use driver-send through U+5 ms;
+publication claims retain L−1 ms through U+5 ms. Scope/North-star/protocol reread.
+No main merge was requested or made this round, and no acceptance file was edited.
+The exact Q100s row is retained as `Q100s.txt` with the source-file hash in the index.
+
+### Changes and input binding
+
+`vm_normalizer.py` now pins `sql01.frames.committed_at` to `decision` and
+`observer.cr.atNs` to `publication` in evaluator code. It never reads a candidate
+`kind` to choose the check. SQL01's decoded offer operation ID, attempt ID and
+stream bind to exactly one evaluator-collected `driver-send` raw event for the
+same source and run. That event supplies VM-monotonic `atNs` and its clock domain.
+The parser checks the common boot/zero offsets and the current run interval;
+missing/duplicate/wrong-source/stream/operation/attempt/run/clock/time records
+refuse. A grouped decision must satisfy every member's send time (maximum lower
+bound). Unknown/unbound decision frames refuse rather than inventing a send.
+
+The source stamp's existing millisecond/realtime-correlation uncertainty interval
+is preserved. A stamp refuses when that entire interval is before send or after
+U+5 ms; boundary overlap remains resolution uncertainty, not an exact timestamp.
+`stampChecks` emits the field, schema-owned kind, LSN, stamp bounds and decision
+window. Publication CR points keep the original exact point check; lag positions
+retain their observer-derived L/U unchanged.
+
+The raw driver event format and trusted provenance requirement are documented in
+[VM.md](../../observer/VM.md). This small normalizer round does not implement a
+G03 driver transport adapter: the existing round-6 collector cannot manufacture
+independent send records. A future trusted driver collection path must supply
+them in evaluator-authenticated chunks; absent records refuse normalization.
+Candidate receipts/configuration are not a substitute for a driver send record.
+
+### Regressions and evidence
+
+`heavy.mjs --label CX-OBS01-R7-offline -- python3 -B
+lab/observer/run_vm_offline.py
+/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-OBS01/OBS01-round7/offline01`
+completed with 11 Python tests and 9 engine tests. Sources were copied before the
+run and checked unchanged afterward. New regressions cover:
+
+- Decision at 7 ms, driver send 5 ms, observer L 10 ms: accepted as a decision;
+  reported lag L remains 10 ms.
+- SQL01 decision at 2 ms (entire stored interval before send) or 20 ms (after
+  U+5 ms): REFUSED/F20.
+- Publication CR at 7 ms or 20 ms: REFUSED/F20 even if the record says
+  `kind: decision`; this cannot select a weaker check.
+- Missing/duplicate driver records and each identity/clock/freshness mismatch:
+  REFUSED. Existing clock/WAL/schema/final-state and O-OBS authentication/parser
+  recomputation gates continue to pass with the new driver record fixture.
+
+Durable root:
+`/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-OBS01/OBS01-round7/`.
+[round7/INDEX.json](round7/INDEX.json) and [round7/SHA256SUMS](round7/SHA256SUMS)
+cover 81 retained files, including the complete sealed offline fixture, key,
+pinned parser, raw chunks, O-OBS context and test outputs. Manifest SHA256:
+`bfce46b6ee742dd07effff3ed0d408e4270d343992c9f5cb593f836fb8808ed3`.
+Retention checks the complete offline file set and read-back hashes, source pins,
+and the unchanged round-6 manifest hash
+`6685cd0f0c05aa460a2ac929653df9d6b565462d96b876a2fabe9dde45c2edb9`.
+Raw round-6 outputs, parser, refusal and original measurement remain untouched.
+
+### PASS audit and pin movements
+
+The round-6 audit still applies to unchanged WAL/schema/clock/bracket/collector,
+seal/HMAC, O-OBS replay, lifecycle and offline gate routines. All round-7 changed
+observation-to-acceptance sites are listed here; these yield normalization or
+fixture gates, never semantic NS PASS:
+
+| Site | Content | Freshness | Binding |
+| --- | --- | --- | --- |
+| `STAMP_KINDS/stamp_window/crosscheck` | Literal schema-owned decision/publication classification; correct windows, publication ignores supplied kind | Uses this position's independently measured U/L | Pinned parser field path, unique position bracket; no candidate classification |
+| `decision_send` | Exactly one actual driver-send per decoded offer; all group members required | Send inside this run's bounds, same boot and zero-offset domain | Existing raw-frame run/container/case/SHA checks plus source/stream/operation/attempt equality |
+| `normalize` SQL01 decision check / `stampChecks` | Stored stamp interval versus [send,U+5 ms]; emits actual interval/window, no stamp-derived lag | Existing stable final WAL/readback and fresh poll checks retained | Exact CRC-validated SQL01 LSN/epoch/payload/member plus bound driver event |
+| `test_vm` new gates | Positive decision acceptance, both negative decision edges, publication kind-spoof negative and nine send-identity/freshness negatives | Fresh DBs and random attempt run IDs; final source frozen for gate | Assertions verify actual stamp/lag output; original O-OBS seal/rerun/tamper gate retained |
+| `round7/retain.py` index/receipt | Offline status and every manifest hash/file-set checked, read-back verified | Current source equals actual tested pins, original round-6 manifest unchanged | Explicit durable attempt root and old source from `08781c28`; retention receipt is not semantic acceptance |
+
+No contract/pin update was made. Changed parser/test identities (contract owner
+must re-pin any downstream reference to the former parser):
+
+| Path | Old SHA256 (`08781c28`) | New SHA256 |
+| --- | --- | --- |
+| `lab/observer/vm_normalizer.py` | `10ae1ce19e104f6083c8d94a9aa6f899e27e8f0db23cb7e4730d83d3fdf97d09` | `dea777c2aeab0060d7f1d4b13f157a54f1cdbcf6c367fb3fc63c5ea49e5f965b` |
+| `lab/observer/test_vm.py` | `5191b376fc5bbb805948af7e65b1b770d9a6973e5b8b7257e73efe5d82424933` | `046ec9ebbfcace452565f4e7d5bb9d0cb4f1f87d54f996790a847f5d9952fc4c` |
+
+No VM overhead rerun, live driver integration, NS acceptance, root pnpm suite,
+merge into main or push. Open work is G03's trusted driver-record integration and
+matched-arm smoke; Q100s resolves the former decision/publication classification
+question without retrospectively promoting the failed round-6 attempt.

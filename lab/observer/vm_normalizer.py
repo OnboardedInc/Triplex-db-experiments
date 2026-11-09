@@ -163,10 +163,37 @@ def bracket_for(summary,position):
     if len(matches)!=1:raise ValueError('position missing unique publication bracket')
     return matches[0]
 
+# [EXP-OBS01-R7] Why: Q100s classifies the pinned SQL01 field by source semantics.
+# Rejected: a candidate-supplied kind that could weaken publication checks.
+STAMP_KINDS={'sql01.frames.committed_at':'decision','observer.cr.atNs':'publication'}
+
+def stamp_window(field,bracket,send_ns=None):
+    kind=STAMP_KINDS[field]
+    if kind=='decision':
+        if type(send_ns) is not int or send_ns<0:raise ValueError('F20 decision stamp missing driver send')
+        return send_ns,bracket['U']+5000000
+    return bracket['L']-1000000,bracket['U']+5000000
+
+def decision_send(events,source,row,clocks,lower,upper):
+    members=row.get('decoded',{}).get('members',[])
+    if not members:raise ValueError('F20 decision stamp lacks offer binding')
+    sends=[]
+    for member in members:
+        offers=[event for event in events if event['event']=='driver-send' and
+            (event.get('source'),event.get('stream'),event.get('operationId'),event.get('attemptId'))==
+            (source['id'],row['decoded']['stream'],member['operationId'],member['attemptId'])]
+        if len(offers)!=1:raise ValueError('F20 missing/duplicate driver offer send')
+        offer=offers[0];at=offer['atNs']
+        if type(at) is not int or not lower<=at<=upper:raise ValueError('F20 stale/future driver send')
+        same_domain([clocks[0]['domain'],offer['domain']])
+        sends.append(at)
+    return max(sends)
+
 def crosscheck(summary,stamps):
     for stamp in stamps:
         bracket=bracket_for(summary,stamp['position'])
-        if not bracket['L']-1000000<=stamp['atNs']<=bracket['U']+5000000:raise ValueError('F20 CR-INCONSISTENT')
+        lo,hi=stamp_window('observer.cr.atNs',bracket)
+        if not lo<=stamp['atNs']<=hi:raise ValueError('F20 CR-INCONSISTENT')
 
 def normalize(raw):
     frames=[json.loads(line) for line in raw.splitlines()];events=[];binding=None;last=-1
@@ -229,6 +256,7 @@ def normalize(raw):
             if rows and any(p.get('stream') is not None and p['stream']!=rows[0]['stream'] for p in polls):raise ValueError('consumer stream binding changed')
         if tuple(through)<tuple(polls[-1]['visible']):raise ValueError('final readback behind witnessed publication')
         crosscheck(summary,final.get('cr',[]))
+        stamp_checks=[]
         if source['profile']=='sql01':
             wall=[e for e in events if e['event']=='clock-wall']
             if len(wall)<2:raise ValueError('SQL01 CR wall-clock correlation missing')
@@ -240,7 +268,11 @@ def normalize(raw):
                 if row['lsn']<=polls[0]['visible'][1]:continue
                 interval=bracket_for(summary,[row['epoch'],row['lsn']])
                 low=row['committed_at']*1000000-offset_high;high=(row['committed_at']+1)*1000000-offset_low
-                if high<interval['L']-1000000 or low>interval['U']+5000000:raise ValueError('F20 CR-INCONSISTENT SQL01 committed_at')
+                send=decision_send(events,source,row,clocks,lower,upper)
+                window_low,window_high=stamp_window('sql01.frames.committed_at',interval,send)
+                if high<window_low or low>window_high:raise ValueError('F20 CR-INCONSISTENT SQL01 decision committed_at')
+                stamp_checks.append({'field':'frames.committed_at','kind':STAMP_KINDS['sql01.frames.committed_at'],
+                    'lsn':row['lsn'],'stampLowNs':low,'stampHighNs':high,'windowLowNs':window_low,'windowHighNs':window_high})
         if source['profile']=='sql01':
             positions=[]
             for row in state['frames']:
@@ -257,7 +289,7 @@ def normalize(raw):
                 if frontiers:
                     frontier=frontiers[0];interval=bracket_for(summary,[int(frontier['epoch']),int(frontier['offset'])+1])
                     positions.extend({**row,'L':interval['L'],'U':interval['U'],'frontier':frontier} for row in affected)
-        result['stores'][sid]={'publication':summary,'positions':positions,'state':state,'transactions':transactions,
+        result['stores'][sid]={'stampChecks':stamp_checks,'publication':summary,'positions':positions,'state':state,'transactions':transactions,
             'mainSha256':sha(main),'walSha256':sha(wal)}
     seen={}
     for event in events:
