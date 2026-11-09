@@ -1,0 +1,20 @@
+{
+  "root": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VRT01/round3",
+  "files": 342,
+  "bytes": 4925111,
+  "verdict": "FIX-FIRST",
+  "product": "4b305bc8886d4bcdd73f36be65b53fda3e1846cd",
+  "head": "c801942f4394f2a2a854ef4ae1eb5bdac7b1576b",
+  "adopted": [
+    "packages",
+    "reproductions",
+    "comparisons/attempt2",
+    "actual-property/attempt4",
+    "model-property/attempt2",
+    "journal-clock/attempt3",
+    "property-oracle"
+  ],
+  "closure": "closure/execution.json",
+  "manifestSha256": "33295621bf74c691de79d60befd0c8e1b60c3724a2d905bd2ac9598942d2d193",
+  "rawRetention": "Every prior reviewer attempt retained, including failed transports, failed model driver and incomplete comparison wrapper"
+}
