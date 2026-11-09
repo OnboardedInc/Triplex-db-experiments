@@ -592,7 +592,7 @@ async function gateGS(run, config) {
   const rung = String(run.options.rung ?? '10k');
   const args = ['lab/scenarios/run.mjs', '--lane', run.lane, '--rung', rung, '--output', output, '--raw-dir', run.rawDir,
     '--scenarios', String(run.options.scenario ?? 'all'), '--readers', String(run.options.readers ?? 16)];
-  for (const key of ['sweep-cap', 'sweep-concurrency', 'faults', 'drain-timeout-ms']) if (run.options[key]) args.push(`--${key}`, String(run.options[key]));
+  for (const key of ['sweep-cap', 'sweep-concurrency', 'faults', 'drain-timeout-ms', 'layout-reader']) if (run.options[key]) args.push(`--${key}`, String(run.options[key]));
   args.push('--fresh-world');
   if (extraEnv.QLEVER_BROKER_DIR) args.push('--broker-dir', extraEnv.QLEVER_BROKER_DIR);
   const { result, step, bound } = await engineGate(run, config, { extraEnv, name: 'gs-scenarios', queryPath: `${run.lane}-datalog`, args, timeoutMs: 8 * 3600_000, heavy: true });

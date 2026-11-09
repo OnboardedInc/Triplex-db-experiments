@@ -46,8 +46,19 @@ export function caseManifest() {
   }
   return { format: 'tx2-cases/1', id: 'CS-GS', version: 'W02/1', status: 'AUTHORED-NOT-PINNED', lanes: ['xtdb', 'qlever', 'datomic'],
     source: 'lab/TARGETS.md 6,6.1; Q94b-i; R37 sections 1-4',
-    cases: cases.map(c => ({ ...c, status: 'AUTHORED-NOT-QUALIFIED' })),
-    note: 'Inventory only. Q94a, contract 0.4.0, independent pinning and fresh exclusive-slot executions remain open.' };
+    cases: cases.map(c => ({ ...c, status: 'AUTHORED-OFFLINE-EXECUTABLE',
+      execution: { entry: 'lab/scenarios/v2/case-driver.ts', argv: ['--case', c.id, '--lane', '{lane}', '--output', '{output}'] },
+      fixture: { format: 'W02-offline-fixture/2', source: 'authored W0 fixture; not the population or a load measurement',
+        validAt: 1793793600000, positiveSubject: 'pl:p', negativeSubject: 'pl:n',
+        initialFacts: ['p', 'n'].flatMap(s => {
+          const S = 'pl:' + s, L = s === 'p' ? 'loc:a' : 'loc:b', J = s === 'p' ? 'jur:a' : 'jur:b';
+          return [[S, 'startDate', '2026-11-02'], [S, 'location', L], [S, 'payRateCents', 1650], [S, 'weeklyMinutes', 2400], [S, 'bgcStatus', 'consider'], [L, 'jurisdiction', J], [J, 'stateMinWageCents', 1500]].map(([e, a, v]) => ({ e, a, v }));
+        }),
+        parameters: { wageFloor: 1650, wageSamples: [1649, 1650, 1651], minutesSamples: [2399, 2400, 2401], invalidInt64: '9223372036854775808', slowConsumerEveryTicks: 10, crash: 'after-effect-before-checkpoint' },
+      },
+      expectedObservation: c.kind === 'witness' ? { subject: c.polarity === 'positive' ? 'pl:p' : 'pl:n', polarity: c.polarity, oracle: 'O-REPLAY plus scenario-specific O-DOMAIN or fault schedule', liveQualification: false } : { oracle: 'O-REPLAY plus O-DOMAIN where applicable', liveQualification: false },
+    })),
+    note: 'All 70 members have offline authored fixtures and a case-driver entry. Explicit BLOCKED cases remain in the denominator. Q94a, contract 0.4.0, independent pinning and live engine/fault/expected-load qualification remain open.' };
 }
 export const manifestBytes = () => JSON.stringify(caseManifest(), null, 2) + '\n';
 if (process.argv[1] === new URL(import.meta.url).pathname) {

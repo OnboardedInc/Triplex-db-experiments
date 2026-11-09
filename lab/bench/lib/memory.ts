@@ -18,7 +18,7 @@ import type { CompositionHandle, Outcome, PullResult, Receipt } from "./composit
 interface Fact { id: string; entityId: string; attribute: string; value: any; validFrom: number; validTo?: number; recordedAt: number; position: number; retractedAt?: number; retractedPosition?: number; txId: string }
 const stores = new Map<string, { facts: Map<string, Fact>; byEntity: Map<string, Fact[]>; journal: any[]; claims: Map<string, any>; position: number; idSeq: number; lastInstant: number; shared?: boolean; owned?: Set<string> }>();
 
-export function memoryComposition(lane: "xtdb" | "qlever", scope: string, serviceMs = 0, clock?:()=>number): CompositionHandle {
+export function memoryComposition(lane: "xtdb" | "qlever" | "datomic", scope: string, serviceMs = 0, clock?:()=>number): CompositionHandle {
   const st = stores.get(scope) ?? stores.set(scope, { facts: new Map(), byEntity: new Map(), journal: [], claims: new Map(), position: 0, idSeq: 0, lastInstant: 0 }).get(scope)!;
   const ownEntity=(entity:string)=>{if(st.shared&&!st.owned?.has(entity)){st.byEntity.set(entity,[...(st.byEntity.get(entity)??[])]);(st.owned??=new Set()).add(entity);}};
   const delay = () => (serviceMs ? new Promise((r) => setTimeout(r, serviceMs)) : Promise.resolve());
@@ -27,7 +27,23 @@ export function memoryComposition(lane: "xtdb" | "qlever", scope: string, servic
   const transact = async (operations: readonly any[], meta: any): Promise<Outcome<Receipt>> => {
     await delay();
     if (meta?.commandId && st.claims.has(meta.commandId)) return fail("CommandAlreadyCommittedError", { commandId: meta.commandId, transactionId: st.claims.get(meta.commandId).txId });
+    // [EXP-W02-R2] Why: reject invalid operations before allocating a position or changing any row. Rejected: validating while applying (leaves a partial command after a bad tail operation).
+    for (const op of operations) {
+      if (op.op === "retract") { if (!st.facts.has(op.id)) return fail("InvalidTripleError"); }
+      else if (op.op !== "assert") return fail("InvalidTripleError");
+      else if (op.value?.type === "integer") {
+        try {
+          if (!/^(?:0|-[1-9][0-9]*|[1-9][0-9]*)$/.test(op.value.value)) return fail("InvalidTripleError");
+          const n = BigInt(op.value.value), bits = 63n;
+          if (n < -(1n << bits) || n >= (1n << bits)) return fail("InvalidTripleError");
+        } catch { return fail("InvalidTripleError"); }
+      }
+    }
     for (const p of meta?.preconditions ?? []) {
+      if (p._tag === "EntityState") {
+        const live = (st.byEntity.get(p.entityId) ?? []).filter(f => f.retractedPosition === undefined).map(f => f.id).sort();
+        if (JSON.stringify(live) !== JSON.stringify([...(p.tripleIds ?? [])].sort())) return fail("TransactionConflictError");
+      }
       const f = st.facts.get(p.id);
       if (p._tag === "TripleLive" && (!f || f.retractedAt !== undefined)) return fail("TransactionConflictError", { tripleId: p.id });
     }

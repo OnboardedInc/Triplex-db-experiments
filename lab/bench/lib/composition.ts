@@ -150,7 +150,7 @@ async function publicComposition(lane: Lane, scope: string, variant: "public" | 
     return { triples, entities: seen.size, roundTrips, depth: roundTrips - 1, route: "source", language, waitedMs: 0 };
   };
   const one = { lane, role: `triplex public Triples service on one engine slot${variant === "public-queued" && lane === "xtdb" ? " (XTDB adapter admissionQueue: true)" : ""}` };
-  const language = lane === "xtdb" ? "triplex-entities(xtdb-sql)" : "triplex-entities(sparql)";
+  const language = lane === "xtdb" ? "triplex-entities(xtdb-sql)" : lane === "datomic" ? "triplex-entities(datomic-datalog)" : "triplex-entities(sparql)";
   const sweep = await (await import("./w0-public.ts")).publicSweep(lane, h);
   const handle: CompositionHandle = {
     scopeName: scope,

@@ -19,12 +19,13 @@ export const runtimeApi: any = await import(dist("core", "runtime/index.js"));
 const qualification: any = await import(dist("qualification", "index.js"));
 export { Effect };
 
-export type Lane = "xtdb" | "qlever";
+export type Lane = "xtdb" | "qlever" | "datomic";
 
 export interface TriplesHandle {
   readonly backend: { name: string; url: string; queryPath: string };
   readonly scope: unknown;
   readonly triples: any;
+  readonly storage?: any;
   run<A>(effect: any): Promise<A>;
   runExit(effect: any): Promise<any>;
   close(): Promise<void>;
@@ -41,7 +42,18 @@ export async function openTriples(
   xtdbOptions?: Record<string, unknown>,
 ): Promise<TriplesHandle> {
   process.env["TRIPLEX_QUERY_PATH"] ??= `${lane}-datalog`;
-  const backend = await qualification.loadQualificationBackend(lane);
+  // [EXP-W02-R2] Why: D uses its own public runtime and endpoint even before the shared qualification registry merges. Rejected: routing an unknown lane through the X/Q default.
+  const backend = lane === "datomic" ? await (async () => {
+    const url = process.env["DATOMIC_URL"];
+    if (!url) throw new Error("DATOMIC_URL is required for the Datomic GS lane");
+    const api = await import(dist("datomic", "index.js"));
+    if (typeof api.makeDatomicRuntime !== "function") throw Error("Datomic public runtime unavailable");
+    return { name: lane, url, queryPath: "datomic-datalog", makeRuntime: () => api.makeDatomicRuntime({ url }) };
+  })() : await qualification.loadQualificationBackend(lane);
+  if (lane === "qlever" && process.env["QLEVER_COMMIT_PATH"] === "broker") {
+    const api = await import(dist("qlever", "index.js"));
+    if (typeof api.HostBroker !== "function") throw Error("QLever public package does not include the selected broker path");
+  }
   const scope = runtimeApi.DatabaseScope.test(scopeName);
   let definition = backend.makeRuntime();
   if (xtdbOptions && lane === "xtdb") {
@@ -60,6 +72,7 @@ export async function openTriples(
     backend: { name: backend.name, url: backend.url, queryPath: backend.queryPath },
     scope,
     triples,
+    storage: await managed.runPromise(Effect.service(runtimeApi.StorageAdapter)),
     run: (effect: any) => managed.runPromise(effect),
     runExit: (effect: any) => managed.runPromiseExit(effect),
     close: () => managed.dispose(),

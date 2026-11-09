@@ -82,7 +82,7 @@ export function generateScenario(spec: any, N: number, durationS = 240) {
       case 19: add(S, [[S, "everifySubmitResult", "accepted"]], n, { action: "outbox-crash" }); break;
       case 20: {
         const d = `${S}/doc:gs20`;
-        add(S, [[S, "documents", d], [d, "docType", "passport"], [d, "expiresOn", "2026-11-05"]], n);
+        add(S, [[S, "documents", d], [d, "docType", "ead"], [d, "expiresOn", "2026-11-05"]], n);
         break;
       }
     }

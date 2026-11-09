@@ -57,3 +57,48 @@ The runner uses a random fresh scope **per scenario**, the W0 population valid c
 Maintenance must still be observed inside each window; a 240-second duration alone proves
 no maintenance event. Every current v2 scenario returns FAIL/UNQUALIFIED until the named
 state, domain, product and fault checks are integrated. The raw report retains those gaps.
+
+## Round 2 offline execution
+
+The v2 typecheck includes every `.ts` file, including the live entry and all test
+modules. Build the public runtime dependencies before it; missing XTDB dist was
+the cause of round 1's live-typecheck failure. With the environment owner's pinned
+pnpm installed locally (no shared node_modules symlink):
+
+```sh
+node lab/bin/heavy.mjs --poll-ms 100 --label CX-W02-r2-install -- pnpm --store-dir /Users/sam/projects/triplex-db-2/.pnpm-store install --offline --frozen-lockfile
+node lab/bin/heavy.mjs --poll-ms 100 --label CX-W02-r2-offline -- node lab/experiments/EXP-W02/check-offline.mjs
+```
+
+The second command builds the public runtime dependencies, checks all v2 types,
+runs the old and new regression tests, checks the frozen 20 goldens, executes all
+70 CS-GS members through both D and Q memory/fake paths, and retains raw results.
+It preserves every attempted result, including failures and explicit BLOCKED
+cases. Offline fixture cases are not performance runs and never close GS.
+
+Individual lane and case entry points (without any engine or slot):
+
+```sh
+node lab/bin/heavy.mjs --poll-ms 100 --label CX-W02-r2-D -- node lab/scenarios/run.mjs --offline --lane datomic --output runs/W02-r2/datomic-cases.json
+node lab/bin/heavy.mjs --poll-ms 100 --label CX-W02-r2-Q -- node lab/scenarios/run.mjs --offline --lane qlever --output runs/W02-r2/qlever-cases.json
+node lab/bin/heavy.mjs --poll-ms 100 --label CX-W02-r2-case -- node --experimental-strip-types lab/scenarios/v2/case-driver.ts --lane datomic --case GS-06B-SHARED-REFERENCE --output runs/W02-r2/shared-reference.json
+```
+
+Each Q fixture's counts are explicitly `OFFLINE-FAKE`, bound to its own memory
+source, attempt and source hash, and read before and after the case. They exercise
+selection, binding, receipt plumbing and refusal, not real QLever layout.
+
+The live Q command additionally needs `--layout-reader lab/<reviewed-module>.ts`.
+That module exports `readQleverLayout(binding)` and returns `{binding, counts}`
+with fresh `baseTriples`, `deltaTriples`, `touchedBlockDelta`, `rebuildThreshold`
+and `baseGeneration`. Its file hash is pinned and checked around every call;
+missing/foreign/stale observations refuse. The module must read the measured
+engine and actual query blocks; a fixture, transported receipt or process flag is
+not a live reader. No such live instrumentation was supplied or qualified here.
+The public QLever package must actually contain HostBroker; selecting the env
+flag on an older marker-only package now refuses.
+
+Offline consumer stops are logical client/consumer replacements over retained
+memory state. Replica maintenance actually replays the source feed into a new
+immutable generation and tests fallback/catch-up while writes proceed. Neither
+is an engine process stop, compaction, physical tenant isolation or real erasure.

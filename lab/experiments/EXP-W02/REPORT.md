@@ -108,3 +108,198 @@ live-path builds/typing, complete per-scenario state/domain/fault checks, Q/D
 position/count adapters and Q91 instrumentation, then the separate review and
 exclusive-slot campaigns. Keep GS OPEN until those gates and the pending rulings
 are satisfied.
+
+# Round 2 — offline checks and executable cases (2026-11-09 UTC)
+
+Builder: CX-W02, continuing `b8a720f0`. North star remains the P1-P5 GS correctness
+floor under SCOPE/NORTH-STAR/TARGETS; offline evidence does not measure the expected
+load or close GS. The round 1 historical results and gaps above remain intact;
+this section supersedes their **offline** implementation/typecheck status.
+
+**Result: the requested round 2 offline work is implemented and verified. Live GS
+qualification remains OPEN.** No agents were spawned, no engines or containers
+were started/stopped, no ports were contacted, and no `packages/*` source,
+manifest or lockfile was changed. No main merge or push occurred.
+
+## 1. Live typecheck cause and fix
+
+The imported P5 adapter statically imports XTDB's public built export. Round 1's
+check script built only W0, leaving that module absent; the two implicit-any
+errors were consequences of the unresolved import. The v2 tsconfig now includes
+**all `*.ts`**, including the live entry and every new test. Nothing is excluded.
+
+`build-public.mjs` reads the repository's own build recipes and runs the pinned
+local tsdown/tsc binaries in dependency order: core, testkit, XTDB, qualification,
+W0. It rejects other command forms. This avoids pnpm's build-parser rejection of
+the install-only `--store-dir` argument. The actual offline install used pnpm
+10.11.0, the owned store, `--offline --frozen-lockfile`, and zero downloads; no
+shared node_modules symlink or sibling build is used. Both the explicit live
+entry typecheck and the complete v2 tsconfig now pass.
+
+A bounded `heavy.mjs --poll-ms` option (100 to 30,000 ms; default unchanged at
+1,000 ms) was added after repeated setup starvation between other jobs. It calls
+the same canonical semaphore and does not change capacity. The final receipt
+binds its real parent-owned slot 3, label `CX-W02-r2-outcome-final`.
+
+## 2. Six named claims and independent state checks
+
+`Probe` records authored operations and actual outcomes separately. O-REPLAY
+replays authored inputs, checks every command's committed/rejected outcome and
+independent dense ordinal, checks receipt uniqueness, and supplies expected
+visible worlds. The memory snapshot is compared on entity, attribute, exact
+value, valid interval and assertion position. Engine-specific IDs, wall-clock
+instants and unrelated metadata are not asserted equal. Only then does O-DOMAIN
+compute the expected domain output from that independent world; the kernel runs
+on the observed memory world. This probe refuses a non-memory composition.
+
+Dedicated checks in `claims.ts` and `claims.test.ts` cover:
+
+- **01:** Section 1 submit changes the next tasks on the first read at its returned
+  position; the old position still has the old task.
+- **05:** a clear background result removes the affected subject's background
+  task; the negative subject's tasks stay unchanged.
+- **06:** a jurisdiction wage update follows both references, produces exactly
+  the independent affected set, reruns each once, and stores that set with its
+  checkpoint in one write. Minimum-wage outputs match after the update.
+- **09:** moved start dates change obligations and recompute the future boundary;
+  the `dependencyState.nextTemporalBoundary` fixture is persisted and read back.
+- **17:** an agent proposal cannot resolve Section 2; a later human decision can.
+- **18:** persisted overdue projections match O-DOMAIN, and paging at the old
+  projection position remains stable while decisions and a new projection land.
+
+The scheduler/projection records here are explicit bench-side memory fixtures;
+they do not certify the production `Triples.dependencyState` or maintained-view
+implementation. The six cases exercise their named semantics over the complete
+small authored fixture, not 5,000 or 100,000 subjects at production load.
+
+Negative controls reject a changed observed pay rate, an invalid tail operation
+without a partial commit, and a rejected valid command even when an old-position
+snapshot would still match. The latter closes a vacuity found during the PASS
+audit. Memory validation now checks integer representation/range and retractions
+before mutation or position allocation, and supports EntityState CAS conflicts.
+
+## 3. D and Q lane plumbing
+
+The shared lane type and memory factory accept Datomic. The public D opener
+selects `makeDatomicRuntime` from D's built public export and requires
+`DATOMIC_URL`; it never substitutes X or Q. The D/Q sweep bridge uses the runtime's
+public scoped StorageAdapter with internal `recordedPosition`, validates returned
+positions and source heads, traverses references, and provides source counts by
+feed entity enumeration plus history. Native count/read equivalence and its cost
+still need live qualification; enumeration is not a tuned native aggregate.
+
+`openScenarioLane` validates lane, endpoint, scope, attempt and source binding.
+The real Q factory receives `QLEVER_COMMIT_PATH=broker` plus the owned directory;
+an older public Q package lacking HostBroker refuses. Layout reads must return
+fresh matching bindings and valid built-base/bounded-delta counts. The receipt
+carries base/delta/touched-block counts, threshold, generation and broker path
+before and after the case. The live entry accepts a reviewed `--layout-reader`
+module, pins its source hash around each call, and the GS gate forwards that flag.
+
+Every D and Q offline case goes through that same lane-selection function. Q's
+controlled metadata reader is explicitly **OFFLINE-FAKE**, on its own memory
+endpoint/scope, with separate before/after calls. Tests reject X-for-D substitution,
+foreign/stale layout bindings, delta-only or over-threshold layouts, invalid heads,
+and rows beyond the requested position. These results are not real QLever counts,
+Datomic durability or RQ01 route-equivalence evidence. D's native package/slot and
+Q's broker/generation/instrumentation integrations still gate live runs.
+
+## 4. Offline fault and maintenance execution
+
+The four consumer stop points execute actual interruption/resumption over stored
+publication, receiver and checkpoint state: before effect, after effect before
+checkpoint, after checkpoint, and after enqueue before delivery. Publication and
+receiver bytes come from fresh O-DOMAIN `publish`/`receive` calls. The evaluation
+basis comes from an independently checked memory subject, not a transported W0
+case's unrelated position. Reopening validates the same source, receiver replay
+produces exactly the expected visible effects, and the checkpoint resumes.
+
+Lost ACK execution publishes, drops the client result, replaces the client,
+resolves by commandId, and verifies original transaction/position plus a typed
+duplicate rejection. Source endpoint/scope binding is checked on replacement.
+`FeedReplica` actually rebuilds an immutable generation from the source feed;
+a writer commits during the rebuild, an old pinned read stays identical, a basis
+beyond the replica watermark routes to the source, and a later rebuild catches up.
+These are logical offline models, not engine power loss, compaction, real QLever
+index rebuilding, VM durability, or latency measurements. `fault-probes.json`
+retains the executed schedules and observations.
+
+## 5. CS-GS authoring and witnesses
+
+The manifest now authors **70 executable members**: 20 scenario tags, 40 positive/
+negative witnesses and ten additional required cases. Each member carries an
+explicit W0 input fixture, parameters, expected observation and `case-driver.ts`
+entry/argv. The driver consumes those authored initial facts; unknown IDs or
+missing schedules fail. State, domain, numeric, common-basis, CAS, scope isolation,
+slow-consumer and outbox schedules retain their independent observations.
+
+The fixtures are deliberately small synthetic worlds, not the W0 population or a
+performance campaign. Numeric boundaries include 1649/1650/1651 cents,
+2399/2400/2401 minutes and a typed 2^63 rejection. Preview and activation evaluate
+R2 at the same position/valid time and distinguish R1's obligations. Witnesses
+check actual state/domain changes and unchanged negative subjects at named bases.
+No contract manifest anchor was hand-edited; independent contract pinning remains
+with the orchestrator/reviewer.
+
+Each lane's exact result is **66 OFFLINE-MATCH, 4 BLOCKED, 0 FAIL, total 70**.
+The blocked members are `GS-03-SUPERSEDED-REVISION` (W0-1.2 signal-ack unavailable),
+`GS-16`, `GS-16-WITNESS-POS`, and `GS-16-WITNESS-NEG` (physical erasure/restore or
+crypto-shredding absent). They remain in the denominator and do not count as
+matches. Other offline matches certify only their authored fixture coverage,
+not the entire scenario's product, load and failure obligations.
+
+The new boundary witness exposed the old v2 passport fixture: W0 exempts passports
+from expiry work. The generator and executable GS20 fixture now use an EAD.
+Goldens were explicitly regenerated; the changed generator source hash starts a
+new comparison series. No prior diagnostic artifact was re-anchored.
+
+## Final verification and evidence
+
+Final source-bound attempt:
+`lab/experiments/EXP-W02/evidence/offline-2026-11-09T02-45-07-138Z-8af252/`.
+
+- Public dependency builds, explicit live typecheck and complete v2 typecheck:
+  exit 0.
+- **48/48** lab, harness, claim, lane and fault regression tests; zero skips.
+- **1/1** fresh same-process G0 admission diagnostic.
+- **20/20** byte-identical regenerated offline goldens; **80** sampled oracle
+  evaluations, plus the additional source-bound case-driver evaluations.
+- All **70** members executed separately on each D and Q offline path, with the
+  exact 66/4/0 split above; manifest regeneration byte-identical.
+- Every command exit and content-denominator assertion passed. Tracked input
+  hashes and all five built-package hashes stayed unchanged for the attempt.
+- Syntax checks and `git diff --check` passed. No full root `pnpm check`, native
+  engine integration, live GS, real maintenance/fault injection or independent
+  review ran.
+
+The final directory contains command stdout/stderr, `receipt.json`, complete D/Q
+case results, `domain-probes.json`, `fault-probes.json`, and content-addressed
+O-REPLAY input cases under `replay/`. Unit negative-control traces intentionally
+include observed mismatches which their tests require to be rejected; they are
+not database PASS receipts. A prior successful pre-outcome-hardening attempt
+(`02-38-54-076Z-65db4c`) and the original failed attempt
+(`02-33-16-151Z-e4cfec`) remain unchanged. `FIRST-FAILURES.md` distinguishes raw
+captured failures from focused console notes. `RUNBOOK.md` contains current
+exact offline and conditional live commands.
+
+## Round 2 PASS audit (preamble 9a)
+
+| Decision site | Content | Freshness | Binding and authority |
+| --- | --- | --- | --- |
+| `Probe.commit` / `expectedRows` | Expected O-REPLAY outcomes and independent dense ordinals match actual outcomes/positions; receipt assertion count and unique transaction IDs checked | Replays current authored command list in a fresh oracle call | Current attempt, memory-only source, source/build hash, exact input hash and command index; no native coordinate claim |
+| `Probe.state` / `equal` | Exact canonical observed/expected selected state bytes; mismatches throw and remain in traces | New memory read and oracle result at each requested basis | Subject, position, valid time, endpoint, scope, attempt and source hash; `finish` rechecks source/build identity |
+| `Probe.domain` | Kernel on observed state equals O-DOMAIN on independently replayed expected state | Fresh CLI call for each evaluation | Input/output comparison bound to checked state, named basis and oracle source identity |
+| `reconcileClaim`, `affectedClaim`, `dashboardClaim` | Explicit task/obligation/proposal/boundary/affected/projection comparisons, durable record read-back and exact rerun sets | Current fixture observations; claim indices recorded only after successful comparisons | Actual fixture scope, subject list, source position, valid time and probe attempt; bench-side model only |
+| `portableSweep.page` / `counts` | Validates source head, row positions, position eligibility, complete progressing feed enumeration, history counts and unchanged count head | Reads actual supplied source service on every invocation | Scoped service handle and exact requested position; not independently qualified on an engine |
+| `openScenarioLane` / `requireLayout` | Returned source matches lane/endpoint/scope; layout fields, majority base and bounded delta checked | Invokes the supplied layout reader before/after, rejects old/foreign bindings | Exact attempt/source/scope/endpoint; fake reader labeled OFFLINE-FAKE, never live layout proof |
+| Live layout-module wrapper | Requires reviewed module export and stable file hash around each observation | Calls module again for each observation | Owned lab module path and source hash; native correctness still needs external qualification |
+| `consumerFault` | Publish/receive bytes match fresh oracle operations; stored final receiver/checkpoint state and exactly-once effects checked | Stops and resumes current memory client/consumer over persisted rows | Current source and checked evaluation basis; requested crash point must execute; logical fault model only |
+| `lostAck` / `FeedReplica` | Original receipt resolution, duplicate rejection, real feed replay, pinned read identity, fallback and catch-up checked | Reopens/rebuilds current memory state | Same source endpoint/scope, actual positions/watermark and executed schedule; not engine durability or maintenance proof |
+| `runCase` / `runCases` | Every known case executes its authored schedule and assertions; failures preserved; unsupported cases explicitly BLOCKED | Fresh source scope/attempt per member; source identity verified at finish | Manifest member, fixture, lane and independent oracle cases retained; OFFLINE-MATCH is not GS PASS |
+| Updated `check-offline.mjs` | Checks actual exits, exact test and case denominators, zero failures, expected blocked count, golden/case output content | New attempt/logs and current command execution | Actual parent-owned heavy grant, node version, source inputs and five post-build package hashes, unchanged through the run |
+
+Previously listed round 1 and copied G0 decision sites retain their limitations;
+none is promoted by these offline fixtures. Remaining live admission depends on
+Q94a/contract pinning, native lane builds and routes, real Q91 instrumentation,
+engine-side faults/maintenance, product outbox/dependency/projection/erasure
+integration and the independently reviewed scale-window campaigns. Keep GS OPEN.

@@ -2,7 +2,7 @@
 // Rejected: accepting another process's G0 receipt or running W01's non-W0 stream after a failed admission.
 import fs from 'node:fs';
 import path from 'node:path';
-import { randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { generateScenario, RUNGS, generatorIdentity, operations } from './generate.ts';
 import { admitWorld } from './admission.ts';
@@ -16,6 +16,7 @@ import { expectDomain, requireDomainClaims } from '../lib/domain.mjs';
 import { brokerEnv, GS_LANES } from '../lib/policy.mjs';
 // @ts-ignore -- ESM lab helpers.
 import { REPO } from '../lib/triplex.mjs';
+import { openScenarioLane, type LayoutReader } from './lanes.ts';
 import { specs } from './expect.ts';
 const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
 export async function execute(comp: CompositionHandle, spec: any, gen: ReturnType<typeof generateScenario>, opts: any, seedPosition: number) {
@@ -103,7 +104,12 @@ async function main() {
   const args = process.argv.slice(2), opt = (key: string, fallback?: string) => args.includes(key) ? args[args.indexOf(key) + 1] : fallback;
   const lane = opt('--lane')!, rung = opt('--rung', '10k')!, N = RUNGS[rung], output = path.resolve(opt('--output', '')!);
   if (!GS_LANES.includes(lane) || !N) throw Error('--lane xtdb|qlever|datomic and a known --rung required');
-  if (!output.startsWith(path.join(REPO, 'runs') + path.sep)) throw Error('--output must be under runs/');
+  if (!output.startsWith(path.join(REPO, 'runs') + path.sep) && !(args.includes('--offline') && output.startsWith(path.join(REPO, 'lab/experiments/EXP-W02/evidence') + path.sep))) throw Error('--output must be under owned runs/evidence');
+  if (args.includes('--offline')) {
+    const result = await (await import('./case-driver.ts')).runCases(lane as any, output, opt('--case'));
+    console.log(JSON.stringify({ classification: result.classification, lane, matched: result.matched, blocked: result.blocked, failed: result.failed, total: result.cases.length }));
+    if (result.failed) process.exitCode = 1; return;
+  }
   const ownerFile = process.env.TRIPLEX_LAB_SLOT_OWNER;
   if (!ownerFile) throw Error('GS v2 live runs require a held exclusive slot');
   const owner = JSON.parse(fs.readFileSync(ownerFile, 'utf8'));
@@ -132,7 +138,28 @@ async function main() {
       const scope = `${tag}-s${spec.id}`;
       report.scope = scope;
       // Dynamic import keeps offline generator/oracle tests independent of engine builds.
-      const comp = await (await import('../../bench/lib/composition.ts')).openComposition('public', lane as any, scope);
+      let layoutReader: LayoutReader | undefined;
+      const layoutFile = opt('--layout-reader');
+      if (layoutFile) {
+        const real = fs.realpathSync(path.resolve(layoutFile));
+        if (!real.startsWith(path.join(REPO, 'lab') + path.sep)) throw Error('layout reader must be an owned lab module');
+        const digest = () => createHash('sha256').update(fs.readFileSync(real)).digest('hex');
+        const pinned = digest();
+        const module = await import(new URL('file://' + real).href + '?sha256=' + pinned);
+        if (typeof module.readQleverLayout !== 'function') throw Error('layout module has no readQleverLayout');
+        layoutReader = async binding => {
+          if (digest() !== pinned) throw Error('layout reader source changed');
+          const observed = await module.readQleverLayout(binding);
+          if (digest() !== pinned) throw Error('layout reader source changed during observation');
+          return observed;
+        };
+        report.layoutReader = { file: path.relative(REPO, real), sha256: pinned };
+      }
+      const lanePort = await openScenarioLane({ lane: lane as any, scope, endpoint: owner.endpoint, attempt: tag, sourceSha256: generatorIdentity() }, {
+        root: REPO, brokerDirectory: opt('--broker-dir'), layoutReader,
+      });
+      const comp = lanePort.comp;
+      report.qlever = lanePort.initialLayout;
       try {
         report.endpoint = comp.backend.url;
         if (report.endpoint !== owner.endpoint) throw Error('measuring endpoint differs from slot');
@@ -144,6 +171,7 @@ async function main() {
         const gen = generateScenario(spec, N);
         const result = await execute(comp, spec, gen, { runTag: tag, scope, sourceSha256: generatorIdentity(), readers: report.readers }, seeded.commands);
         report.world.countsEnd = await comp.storeCounts();
+        if (lane === 'qlever') report.qlever = { ...await lanePort.layout(), before: lanePort.initialLayout };
         report.scenarios.push({ ...result, world: report.world }); save();
       } finally { await comp.close(); }
     }
