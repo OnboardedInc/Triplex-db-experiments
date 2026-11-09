@@ -456,3 +456,45 @@ Changed code hashes (old reviewer-preservation commit 89eed1c3 → this implemen
 No changed path is a file pin in the current lab/acceptance JSON artifacts (exact-path search); the contract is unchanged.
 The complete old/new list is retained in evidence/round4/source-hashes.json for the contract builder.
 Focused attempt 5 also passed 166/166 after adding the explicit same-attempt calibration refusal (BASELINE-UNBOUND).
+
+### Round 4 final committed-source verification
+
+Final evaluator/test bytes: **6850cd45479e9a88b5f327e8bf35eac3c3c9212f**. Q75a evaluator integrity reports zero problems before
+and after the run, and no evaluator/test file changed during execution. The original two evaluator suites are unchanged.
+
+```sh
+node lab/bin/heavy.mjs --label CX-CRNS-r4-final1 -- node --test \
+  lab/bin/test/claim.test.mjs lab/bin/test/claim-round2.test.mjs \
+  lab/bin/test/claim-ns.test.mjs lab/bin/test/claim-ns-round2.test.mjs \
+  lab/bin/test/claim-ns-round3.test.mjs lab/bin/test/claim-ns-round4.test.mjs \
+  lab/verify/CRNS/review.test.mjs lab/verify/CRNS/round2/review.test.mjs \
+  lab/verify/CRNS-opus/forgeries.test.mjs lab/verify/CRNS-opus/forgeries-round2.test.mjs \
+  lab/verify/CRNS-opus/forgeries-round3.test.mjs
+```
+
+**Observed exit 0: 274/274 passed, zero failed/cancelled/skipped/todo; 229.392 seconds.** This includes both original evaluator
+suites (108), every earlier CR-NS test (149), all seven required new reviewer tests and ten additional builder regressions.
+F1–F20, exact nearest-rank quantiles, range/duplicate property checks and retained offline P3M arithmetic remain passing.
+The fresh reasons audit ran through the heavy wrapper after waiting for an available slot and passed **53/53 assertions**,
+including every earlier reviewer code check, the four newly refused local-high variants and the explicit W-H3 positive residual.
+
+Evidence is under `evidence/round4/`: `final-attempt1.tap`, `verification.json`, `integrity.json`, `reasons-attempt2.txt`,
+`source-hashes.json` and `pin-impact.json`. The receipt records observed terminal counts, exact command, current committed source
+and test hashes, fresh log/reasons hashes, timestamp and offline scope. The prior five focused attempts and first reasons log
+remain retained. The old current manifest is archived as `SHA256SUMS.round3-at-cb1178d9`; historical manifests are not current
+receipts. SHA256SUMS is refreshed for current report/schema/audit and all retained evidence. Every evidence file is under 1MB
+and the complete evidence directory under 5MB. A literal old-hash search of acceptance artifacts found no moved pinned hashes;
+all changed code paths and old/new hashes are nevertheless listed above and retained in pin-impact.json.
+
+Final receipt PASS audit: the receipt is generated only after the heavy child returned exit 0 and terminal TAP reports all 274
+passing with no failed/cancelled/skipped/todo; all 53 current audit assertions must also be successful. It verifies the tested
+source/test files still equal committed HEAD, hashes the exact new logs and names that implementation commit. Source/slot/inputs
+in fixtures remain synthetic test identities, not production acceptance evidence. The final documentation/checksum commit does
+not change the tested evaluator bytes. This is builder verification, not an independent review or an NS PASS grant.
+
+Result: all local round-4 findings are implemented with required tests and own-code assertions. No lab/acceptance file was edited.
+No Docker, engine, slot, live workload, production decoder/oracle qualification, full package check, merge or push was performed.
+Open contract work is Q103a trace secrecy, Q103b indistinguishable execution and all-priority whole-run timing evidence, Q103c
+independent registry authority, real frozen completion-rate selection, and production schema/oracle/decoder pins. The W-H3
+residual is explicitly still accepted by offline arithmetic and is **not** reported fixed. Separate independent review remains
+required; no human clarification was needed for this builder round.

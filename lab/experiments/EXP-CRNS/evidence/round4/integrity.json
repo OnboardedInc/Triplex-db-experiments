@@ -1,0 +1,15 @@
+{
+  "repo": "/Users/sam/projects/triplex-db-2/.claude/worktrees/crns",
+  "commit": "6850cd45479e9a88b5f327e8bf35eac3c3c9212f",
+  "files": {
+    "lab/bin/claim.mjs": "987c1878f747a66dd002933fd16296c74472cd7bf886c96aebe3339f020cc4ad",
+    "lab/bin/lib.mjs": "d3031840141fb5e13597e69e75511c809d5814610fe9d39b838ab52e0561b13e",
+    "lab/bin/gate.mjs": "f5fa85691c324def748a967e2c7a891784e2a50970a87d9534a1e414b397be2f",
+    "lab/bin/engine.mjs": "78f1a6b9a2a8fba62ff35be34b426e723c39587a2104e69ff4b9b05889589a1f",
+    "lab/bin/heavy-lock.mjs": "88dd2071c8d8c1e3212c9a65dc719b79af46fbe6cc2e6ede8fbe0b61112803fa",
+    "lab/bin/receipt.mjs": "ebdcfb60284d6efe378923c0f42eb4eb7ad9a260141ceb46958e86752d0d2d2c",
+    "lab/acceptance/build_contract.py": "07c98812ec83fe8a7e32dd09418d40522b48b3dc53e2d5f3df6f7007288d98e5"
+  },
+  "marker": "/Users/sam/projects/triplex-db-2/.git/worktrees/crns/triplex-evaluator-poisoned.json",
+  "problems": []
+}

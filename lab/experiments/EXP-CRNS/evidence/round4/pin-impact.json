@@ -1,0 +1,42 @@
+{
+  "lab/bin/claim.mjs": {
+    "oldSha256": "e689373eff850daf511b95423c9b88f545979595b4445abcad7d6a52de178c46",
+    "newSha256": "987c1878f747a66dd002933fd16296c74472cd7bf886c96aebe3339f020cc4ad",
+    "oldHashReferencesInAcceptance": []
+  },
+  "lab/bin/test/claim-ns-round2.test.mjs": {
+    "oldSha256": "cb2029382445cc8fb2430a5e04fe988f1a573da1444afcad49bd3e2fc6e14f29",
+    "newSha256": "5d36db5b4f1aced067d63400cb6db6a8308104bcbab9d2237d6510203933de32",
+    "oldHashReferencesInAcceptance": []
+  },
+  "lab/bin/test/claim-ns.test.mjs": {
+    "oldSha256": "d736a72c543e15deaa81a31963e111a45b7c1514b603849705c61f6126458093",
+    "newSha256": "8e09a3b1b79264f73bd5d12a23ae7b02f6febc0d477d033578b3047c2d824d71",
+    "oldHashReferencesInAcceptance": []
+  },
+  "lab/bin/test/ns-round2-fixture.mjs": {
+    "oldSha256": "52ae2dd791b0abc86873500c486398a0fbddf55625ebd423f66ce6295185eee9",
+    "newSha256": "e5ca2f5a772640a198ac6ea019779300449f188957298aa44335cbef2c2cc292",
+    "oldHashReferencesInAcceptance": []
+  },
+  "lab/verify/CRNS-opus/forgeries-round2.test.mjs": {
+    "oldSha256": "438206ad59eb1e70055d1267fb756bba582511ec59d7dcc3a3009624ec255a82",
+    "newSha256": "d0cb837c94470a6b0d56ed2128b56587c3ba58fe33bd301eca34f833567c5975",
+    "oldHashReferencesInAcceptance": []
+  },
+  "lab/verify/CRNS-opus/forgeries-round3.test.mjs": {
+    "oldSha256": "1d106c5f5eeec0358fcc6d79e7393f7ea090d810aaf304777505122b4df1bf12",
+    "newSha256": "789044d2be3d0ea4909bd48a9d0d96293dc96f2d66ec5b100954619a6fcc07ba",
+    "oldHashReferencesInAcceptance": []
+  },
+  "lab/verify/CRNS-opus/forgeries.test.mjs": {
+    "oldSha256": "dc1520bbd84adf58ec393da7ea8342960e132bd2ee3c52c96798c91860e31e4b",
+    "newSha256": "1afca76ef74921b6de943cf20bbec1d128161a2dbfdcbcb71993dc2d41df60c1",
+    "oldHashReferencesInAcceptance": []
+  },
+  "lab/verify/CRNS/round2/fixtures.mjs": {
+    "oldSha256": "b8571e16bee1be40fcbe94580eb54076594d47198034c8051d0f706425e5c26c",
+    "newSha256": "6aecd0eecb57137bc9dc9e5898db9c7784a67baa56c6a9faa70abfe49e69ff60",
+    "oldHashReferencesInAcceptance": []
+  }
+}
