@@ -329,3 +329,7 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - 2026-11-09 12:15Z disk fell to 4.2 GiB (below the 5 GiB floor) from builder evidence (QH1-R2, HS01 R2, P2B, QH1). lab/bin/compress-evidence.sh
   (compress settled evidence over 20 MB, hash-verified, originals' hashes kept) restored 12 GiB. **Run it every hourly pass and before
   every slot window.** Sam has the reclaim guidance (60 GiB minimum for 100k one lane at a time, 150 GiB comfortable).
+- 2026-11-09 OBS01 round 9 (3403e187, Sonnet): the R48 sync witness built offline (bpftrace program, strict sync-witness/1 parser, D rule,
+  seven refusal codes, eleven planted writers; 32 Python + 13 Node tests; 3,000 fuzz mutations refuse cleanly). The VM probe window
+  W0-W3 did NOT run: the triplex2 VM has no bpftrace, and a digest-pinned bpftrace image (or package) is a download that needs Sam's
+  explicit approval (asked 2026-11-09). In review (CX-VOBS6 round 3, offline).
