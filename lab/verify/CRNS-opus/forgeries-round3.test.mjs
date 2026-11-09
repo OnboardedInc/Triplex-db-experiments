@@ -130,15 +130,17 @@ test('D0 round 3 baseline: P3 and P3+P2 RECOMPUTED with met', () => {
 });
 
 // ---------------------------------------------- High 1 variant: correct but throttled readers still count as load
-for (const priorities of [['P3'], ['P3', 'P2']]) test(`W-H1 ${priorities.join('+')}: 4 loops that each complete one correct read per second, 900 ms per read, count as "readers running"`, { todo: 'accepted: answers are checked, but read latency and per-loop rate are only barred when P1 is requested' }, () => {
+for (const priorities of [['P3'], ['P3', 'P2']]) test(`W-H1 ${priorities.join('+')}: 4 loops that each complete one correct read per second, 900 ms per read, count as "readers running"`, () => {
   const w = world({ priorities }); w.trusted.readerLevel = 4; refresh(w);
+  w.raw.events.reads=w.raw.events.reads.filter(r=>r.readId.endsWith('-0'));
   for (const r of w.raw.events.reads) r.receivedAtNs = t(BigInt(r.sentAtNs) + 900n * MS);
   const r = run(w);
+  assert.ok(codes(r).includes('NS-P1-LATENCY'),JSON.stringify(r));
   recomputedMet(r, 'readers throttled to about 1 read per loop per second');
 });
 
 // ---------------------------------------------- High 2 variant: a planned injection with no witness is ignored
-test('W-H2 a planned crash injection whose witness is absent (e.g. recovery failed) is refused', { todo: 'accepted: witnesses must be planned, but not every planned injection must have a witness' }, () => {
+test('W-H2 a planned crash injection whose witness is absent (e.g. recovery failed) is refused', () => {
   const w = world();
   const trace = structuredClone(w.trusted.frozenTrace);
   trace.attempts[trace.crashAttemptId].injections.push({ injectionId: 'injection-9', faultPointId: 'before-effect', pageFrontier: '11' });
@@ -148,19 +150,20 @@ test('W-H2 a planned crash injection whose witness is absent (e.g. recovery fail
   for (const f of craw.events.faults) f.binding = craw.binding;
   const ct = { ...companion.trusted, frozenTrace: trace, binding: craw.binding };
   w.trusted.crashRun = reseal(craw, ct);
-  assert.equal(recomputeNS(w.trusted.crashRun.bundle, w.trusted.crashRun.trusted).status, 'CRASH-RECOMPUTED', 'precondition: 9 of 10 planned crashes witnessed');
+  assert.ok(codes(recomputeNS(w.trusted.crashRun.bundle,w.trusted.crashRun.trusted)).includes('CRASH-INJECTION-UNWITNESSED'));
   recomputedMet(run(w), 'injection-9 planned, never witnessed');
 });
 
 // ---------------------------------------------- High 3 variant: work done before the offer, revealed at send
-test('W-H3 RESIDUAL: publication revealed exactly at send (L = sentAtNs) with 0.2 ms ACK passes; only trace secrecy prevents pre-application', { todo: 'residual: indistinguishable from a fast engine by brackets; requires the frozen trace to be unreadable by the candidate' }, () => {
+test('W-H3 RESIDUAL: publication revealed exactly at send (L = sentAtNs) with 0.2 ms ACK passes; only trace secrecy prevents pre-application', () => {
   const w = world({ priorities: ['P3', 'P2'] });
   const o = offerOf(w, 'c0'), b = w.raw.events.sourceBrackets[0], sent = BigInt(o.sentAtNs);
   Object.assign(b, { L: t(sent), U: t(sent + MS / 10n) }); o.ackAtNs = t(sent + MS / 5n);
   w.raw.events.crossChecks.find(x => x.role === 'source' && x.position === b.position).atNs = b.L;
   const r = run(w);
   assert.ok(r.measurements.P2.latency['5-10'].p99Ms < 1);
-  recomputedMet(r, 'pre-applied command revealed at send');
+  // [EXP-CRNS-R4] Why: equality at send is indistinguishable from a fast engine; Q103a needs external trace secrecy. Rejected: claiming brackets prove secrecy.
+  assert.equal(r.status,'RECOMPUTED',JSON.stringify(r.reasons)); assert.equal(r.bars.P3.met,true);
 });
 
 // ---------------------------------------------- High 4 variant: validity judged on a prefix the candidate controls
@@ -176,9 +179,9 @@ test('W-H4 control: c0 visible before c1 is offered, c1 committed anyway: INVALI
   const r = run(casWorld(2, 3, 4, 5, 6));
   assert.ok(codes(r).includes('INVALID-COMMAND-PUBLISHED'), JSON.stringify(codes(r)));
 });
-test('W-H4 c0 committed first in source order but its visibility held until 3 ms after c1 is offered: the invalid c1 commit passes', { todo: 'accepted: validity uses the pre-offer visible prefix (U <= scheduled), which the candidate controls; it is not the source prefix before c1\'s position' }, () => {
+test('W-H4 c0 committed first in source order but its visibility held until 3 ms after c1 is offered: the invalid c1 commit passes', () => {
   const w = casWorld(97, 103, 104, 105, 106);
   const r = run(w);
-  assert.ok(!codes(r).includes('INVALID-COMMAND-PUBLISHED'));
+  assert.ok(codes(r).includes('INVALID-COMMAND-PUBLISHED')); assert.ok(codes(r).includes('COMMAND-VALIDITY-PIN-MISMATCH'));
   recomputedMet(r, 'c0 hidden from polls across c1\'s offer time');
 });

@@ -379,3 +379,80 @@ live VM/production workload, production decoder/collector/oracle qualification, 
 The branch is ready for separate independent round 3 review. Contract amendments/pins, the conservative concurrency/timing choices,
 production evidence adapters and A0/calibration authority admission remain with their owners; no human clarification was needed
 for this offline builder round.
+
+## Round 4 — local high findings and Q103a–c residuals (2026-11-09)
+
+North star: P1 reader load is a correctness prerequisite for P2/P3 measurements; complete crash evidence and source-ordered
+validity protect P3. Scope/targets remain lab/SCOPE.md, lab/NORTH-STAR.md and lab/TARGETS.md. The Codex round-3 ACCEPT is the
+user-supplied independent review at verify/CRNS 3183681b, not this builder's verdict. All ten newly supplied Opus review files
+were committed unchanged first at **89eed1c3cbece1c35e79d7395ddcd3453e21efc0**. Their historical TAP/audit outputs retain their
+original meanings; later required test changes are separate.
+
+| Finding | Fix or enforceable part | Required evidence/test |
+| --- | --- | --- |
+| W-H1 slow correct readers count as P2/P3 load | Every counted main/crash read stream needs GREEN and p99 <=100 ms, independently of requested priority. Per-loop/per-second completed-read floors come from the frozen attempt plan, not candidate data; overlapping requests cannot fake a closed loop. Auxiliary P1/P5 load has the same floors. | Both required W-H1 priority variants assert NS-P1-LATENCY; round4 fast-idle, one-idle-loop, absent-floor, overlap, and auxiliary-rate regressions assert their own codes. |
+| W-H2 missing planned crash | Exact equality of unique planned and validated witnessed injection-id sets, retaining all prior witness checks. | Required W-H2 asserts CRASH-INJECTION-UNWITNESSED directly on the companion and refuses the primary's resume bar. |
+| W-H4 candidate-visible validity prefix | A committed command is judged against source transactions strictly before its position. All oracle validity answers must agree with frozen flags. | Both W-H4 cases assert INVALID-COMMAND-PUBLISHED; delayed-visibility variant also asserts COMMAND-VALIDITY-PIN-MISMATCH. |
+| Low: oracle reads judged offer | commandValid receives only immutable pinned command identity/digests; access to E1 error/receipt/ACK fields refuses. Positive P2 uses trace validity rather than !typedError. | Round4 oracle-input test asserts O-REPLAY-INPUT-UNBOUND for each of typedError, receipt and ackAtNs; positive invalid-command rejection still recomputes. |
+| Low: extra command pins | Exact key-set equality with frozen commands and explicit boolean validity/hash schema. | Round4 extra-pin regression asserts TRACE-COMMAND-PIN-MISMATCH. |
+| Low: O29a did not pass calibration | Provide the independent 4-ms calibration and assert BASELINE-INFLATED, in addition to met:false. | Required O29a in current round1 forgeries.test.mjs. |
+| V-O29 reason swallowed | P1 ladder retains calibration refusal reason alongside met:false. | V-O29 asserts BASELINE-INFLATED; round4 direct and full-recompute checks verify the exposed reason. |
+| W-H3 / Q103a trace pre-application | No bracket arithmetic can distinguish L=send from a fast engine. Preserve as a required, explicit positive residual test; no TODO and no false refusal/grant of secrecy. | Required W-H3 checks the sub-ms arithmetic and documents the remaining trace secrecy obligation. |
+| Medium: main versus crash / Q103b | Correctness, reader latency/rate floors, and requested P2 band/latency/queue bars apply to injected companion traffic. | Round4 companion timing regression asserts NS-P2-LATENCY and resume=false. Identical handshake/schedule generation and P1/P4/P5 whole-run equivalence remain contract work. |
+| Medium: calibration authority / Q103c | Frozen candidate identity, measured calibration candidate identity, and A0/registered authority label are required. Reject same candidate, missing authority, or substituted candidate-under-test for every supplied priority record. Standalone P1/P4/P5 helpers also check independent identity. | Round4 calibration regression covers all three priorities and each identity/authority failure with CALIBRATION-CANDIDATE-MISMATCH. Registry admission cannot be established from these offline labels. |
+
+All five former round-3 TODOs are now required tests: four local high-finding variants refuse; W-H3 is explicitly tested as the
+unresolved Q103a boundary above. This does not claim W-H3 has been locally solved. The fixture trace is authored independently
+before observations and pins its own rate (2/s only for compact offline fixtures). Increasing generated read samples required
+expanding positive P1 straddle samples from 30 to 60 independent loops so their existing 10% floor remains met; it does not
+weaken a bar. The independent crash has one final tail sample per loop, retaining active-traffic coverage without overlapping
+closed-loop requests. No expected pin is extracted from the judged payload.
+
+### Pre-commit PASS audit (rule 9a)
+
+The following are every changed point that can turn observations into a positive measurement/bar/status. This is a builder
+verification audit, not an independent acceptance verdict. The earlier audits still cover unchanged P3 digest/range/WAL/oracle,
+P2 receipt/idempotency, P4 resources/history and P5 affected/output paths.
+
+| Point | Content checked | Freshness checked | Binding checked |
+| --- | --- | --- | --- |
+| nsLoadRate and nsOtherPriorities reader bars | Correct answer/basis hashes via nsReadSample; actual completion bins, per-loop counts/non-overlap, exact p99 <=100; absent floors refuse. | Reads must lie in this attempt's window; every bin is checked, including trailing partial bins. | Main/crash floor from the frozen trace hash and exact attempt; auxiliary floor from pinned calibration. Loop ids, event ids and E8/relay consistency remain checked. |
+| nsTraceAttempt / commandValid / validity Map | Equal expected pin sets and hashes/boolean flags; descriptor excludes judged answers; source-prefix oracle answer agrees with frozen validity; invalid committed commands refuse. | Only current authenticated E1/source streams are evaluated; committed prefix ends strictly before this command's position. | HMAC/head and exact source/slot/inputs/attempt/trace binding remain mandatory. Full command preimage and arbitrary callback independence still require qualified trusted oracles. |
+| recomputeNS P3 resume, counts and met | Unique planned id set equals the fully validated witness set; existing bytes/checkpoint/page/range checks run before resume. Any new refusal clears aggregate met and resume. | Every witness is a distinct injection in this attempt and inside actual traffic; latest checkpoint and recovered range bracket it. | Exact frozen injection plan, raw binding, authenticated source/WAL/fault bytes and companion context. No supplied companion verdict is accepted. |
+| nsCalibrationIdentity / nsCalibration / nsP4History | Measured candidate differs from candidate under test; admitted-shape authority label; existing pin/hash/raw measurements and baseline budgets. P1 failure reason preserved. | Separate calibration attempt/window/segment, current measured windows. A prior candidate run is explicitly excluded by identity. | Under-test identity equals the frozen trace identity; calibration source/slot/inputs/attempt are checked against expected binding/hash. Actual registry provenance remains external, not inferred from a label. |
+| nsP1Ladder / nsP5Traffic | Every counted level's latency and per-loop rate, plus existing answer/ratio/recovery/history/sweep checks. | Per-segment full windows and P5 full sweep coverage; fresh event ids. | Calibration pins, exact request keys/bases, matched segments/schedules; main P1 segment matches current reads. |
+| recomputeNS CRASH-RECOMPUTED / P2 companion checks | Existing source preconditions plus requested absolute P2 latency/band/queue bars; reader floors also apply. | Current companion's complete traffic, not the main run's timings. | Exact expected crash attempt/source/slot/inputs/trace, same trusted context, no chained companion. P3 lag remains null and met=false for crash-only results. |
+| Test/audit receipts | Required assertions check concrete refusal codes or explicit positive controls; reasons audit executes the current test source. | New round4 attempt logs retained, not adopted from reviewer or earlier round receipts. | Fresh source/test/audit hashes and exact committed implementation will bind the final suite receipt; synthetic source/slot ids are explicitly test ids. |
+
+Focused attempts 1–3 retained their failures: (1) two positive P1 straddle populations required adjustment after doubling reads;
+(2) P5 absence first produced the new rate code, so its original E8 coverage check was restored ahead of rate arithmetic;
+(3) one newly added P2 positive control needed its missing third band, now provided by the independently frozen invalid-command
+case. Focused attempt 4: **166/166 passed**, zero failed/skipped/todo. Fresh round4 reasons audit executes all 53 reviewer tests
+from the current three source files and passes, including code-specific O29a/V-O29 and the explicit W-H3 residual.
+
+### Contract work (no lab/acceptance edits)
+
+Amend R44/Q103 inputs to pin the real closed-loop completion floor, candidate identity and calibration measured identity/authority;
+qualify the validity callback against independent command preimages and source-prefix semantics. Q103a must enforce unreadable
+trace preimage/seed/schedule using the trusted driver/evaluator filesystem boundary. Q103b must make hook handshakes and offer/id
+shapes indistinguishable, choose injections evaluator-side, and supply comparable complete timing workloads on every run (including
+P1/P4/P5); these normalized separate attempts cannot prove that. Q103c must admit exact independently registered A0/calibration
+builds and records through VERIFIER_REGISTRY; string labels are a structural guard, not provenance. Register/pin production
+source/WAL/fault decoders and all oracle code and new recompute schemas/tests before any NS PASS wiring. No acceptance cell closes.
+
+Final full-suite execution, exact source hashes and receipt will be appended after committing the evaluator bytes for Q75a.
+
+Changed code hashes (old reviewer-preservation commit 89eed1c3 → this implementation):
+
+- `lab/bin/claim.mjs`: `e689373eff850daf511b95423c9b88f545979595b4445abcad7d6a52de178c46` → `987c1878f747a66dd002933fd16296c74472cd7bf886c96aebe3339f020cc4ad`.
+- `lab/bin/test/claim-ns-round2.test.mjs`: `cb2029382445cc8fb2430a5e04fe988f1a573da1444afcad49bd3e2fc6e14f29` → `5d36db5b4f1aced067d63400cb6db6a8308104bcbab9d2237d6510203933de32`.
+- `lab/bin/test/claim-ns.test.mjs`: `d736a72c543e15deaa81a31963e111a45b7c1514b603849705c61f6126458093` → `8e09a3b1b79264f73bd5d12a23ae7b02f6febc0d477d033578b3047c2d824d71`.
+- `lab/bin/test/ns-round2-fixture.mjs`: `52ae2dd791b0abc86873500c486398a0fbddf55625ebd423f66ce6295185eee9` → `e5ca2f5a772640a198ac6ea019779300449f188957298aa44335cbef2c2cc292`.
+- `lab/verify/CRNS-opus/forgeries-round2.test.mjs`: `438206ad59eb1e70055d1267fb756bba582511ec59d7dcc3a3009624ec255a82` → `d0cb837c94470a6b0d56ed2128b56587c3ba58fe33bd301eca34f833567c5975`.
+- `lab/verify/CRNS-opus/forgeries-round3.test.mjs`: `1d106c5f5eeec0358fcc6d79e7393f7ea090d810aaf304777505122b4df1bf12` → `789044d2be3d0ea4909bd48a9d0d96293dc96f2d66ec5b100954619a6fcc07ba`.
+- `lab/verify/CRNS-opus/forgeries.test.mjs`: `dc1520bbd84adf58ec393da7ea8342960e132bd2ee3c52c96798c91860e31e4b` → `1afca76ef74921b6de943cf20bbec1d128161a2dbfdcbcb71993dc2d41df60c1`.
+- `lab/verify/CRNS/round2/fixtures.mjs`: `b8571e16bee1be40fcbe94580eb54076594d47198034c8051d0f706425e5c26c` → `6aecd0eecb57137bc9dc9e5898db9c7784a67baa56c6a9faa70abfe49e69ff60`.
+
+No changed path is a file pin in the current lab/acceptance JSON artifacts (exact-path search); the contract is unchanged.
+The complete old/new list is retained in evidence/round4/source-hashes.json for the contract builder.
+Focused attempt 5 also passed 166/166 after adding the explicit same-attempt calibration refusal (BASELINE-UNBOUND).

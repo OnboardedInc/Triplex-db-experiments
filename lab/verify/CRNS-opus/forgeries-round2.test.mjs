@@ -221,7 +221,7 @@ test('V-O13 depth-10 pulls answered with the depth-1 answer are refused P4-HISTO
 test('V-O29 P1: zero-reader writer p99 slowed to 48 ms lets 60 ms at 256 and 1024 readers pass', () => {
   const w = ladder({ baseWriterMs: 48 });
   for (const x of w) if (x.level !== 0) x.offers[0].ackAtNs = t(BigInt(x.offers[0].scheduledAtNs) + 60n * MS);
-  assert.equal(nsP1Ladder(w, replayRead, [], calibration(4,'P1',{phase:'steady',traceSegment:'seg',offerScheduleSha256:H('sched')})).met, false);
+  const r=nsP1Ladder(w, replayRead, [], calibration(4,'P1',{phase:'steady',traceSegment:'seg',offerScheduleSha256:H('sched')})); assert.equal(r.met,false); assert.equal(r.reason,'BASELINE-INFLATED');
 });
 test('V-O14 P5: baseline writer slowed to 49 ms lets 73 ms during the sweep pass', () => {
   const mk = (id, s0, wms) => seg64({ id, level: 64, phase: 'steady', traceSegment: 'seg', offerScheduleSha256: H('s'), startNs: t(s0), endNs: t(s0 + 1_000_000_000n),

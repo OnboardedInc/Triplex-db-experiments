@@ -216,3 +216,42 @@ Crash checkpoint consistency also requires maximality: no later source position 
 than the declared before-crash checkpoint. The crash lies between observed reader activity on both sides, and writer offers on
 both sides, as well as inside E9. Thus an idle/end-of-traffic interval or a stale but historically valid checkpoint cannot prove
 resume. The extra activity and brackets remain authenticated observations, not a candidate hook assertion.
+
+## Round 4 amendments (proposed; pending contract/registry qualification)
+
+Whenever readers count as load, correct answers alone are insufficient: the whole measured window must be GREEN, read p99
+must be <=100 ms, and the attempt's frozen `minimumCompletionsPerLoopSecond` must be a positive safe integer. Each one-second
+bin needs at least the declared reader level of distinct loops individually meeting that rate; a trailing partial bin uses
+ceil(rate * duration). Requests within each loop cannot overlap. Missing/short floors refuse `READER-RATE-UNBOUND` or
+`READER-RATE-SHORT`; overlapping requests refuse `READER-LOOP-OVERLAP`. The main/crash attempts obtain this field from the
+separately hashed frozen trace; auxiliary P1/P5 segments use their independently pinned calibration payload. Fixture plans
+use 2 completions/loop/second for compact tests; **2 is not an acceptance workload target**. The contract must freeze the real
+closed-loop floor. P1's latency bar applies at every counted level (including P2/P3-only runs and crash traffic), and P5
+baseline/during traffic also satisfies <=100 ms. Requested P2 timing/queue/band checks apply to crash companions as well.
+
+`commandValid(command, prefix)` now receives only a frozen command descriptor `{commandId, commandSha256, changesSha256}`;
+unknown property reads or `in` checks refuse `O-REPLAY-INPUT-UNBOUND`. The oracle resolves the actual command preimage from its
+trusted trace/oracle inputs, never from E1 receipts/errors/timing. For committed commands the prefix contains only source
+transactions strictly before that command's source position. For unpublished commands it remains the pre-offer visible prefix
+used to justify rejection. Every answer must agree with the trace's boolean valid flag (`COMMAND-VALIDITY-PIN-MISMATCH`), and
+an invalid committed command also refuses `INVALID-COMMAND-PUBLISHED`. Expected/actual command-pin key sets must match exactly.
+Trusted callback qualification must exclude closures over candidate observations; this API cannot prove arbitrary callback
+independence. The old test oracle `o => !o.typedError` is removed and explicitly refused by a new regression.
+
+Every injection in the frozen attempt plan requires its own validated witness. Planned ids must be unique, and planned and
+observed sets must be exactly equal; `CRASH-INJECTION-UNWITNESSED` prevents a failed recovery disappearing from the denominator.
+The existing distinct-crash, active-traffic, latest-checkpoint, page/fault-point and complete replay-range checks still apply.
+
+The frozen trace carries `candidateId`. Calibration payloads name their measured `candidateId` and `authority` (`A0` or
+`registered-calibration`); their separately trusted context names `candidateUnderTest`, which must equal the trace identity and
+differ from the calibration identity. Missing/same/substituted identities refuse `CALIBRATION-CANDIDATE-MISMATCH`.
+The hash/binding/raw-segment/budget checks remain mandatory. P1 now returns the calibration refusal reason (including
+`BASELINE-INFLATED`) alongside `met:false`, as P5 already did. These labels are not registry authority: Q103c still requires
+VERIFIER_REGISTRY admission binding exact candidate/control builds and independent records.
+
+Q103a's trace secrecy and Q103b's indistinguishable hook handshake, random injection decisions and common schedule distribution
+remain execution/contract work. A required W-H3 test retains the indistinguishable L=send/0.2-ms-ACK example as a positive
+residual, without a TODO or any claim that offline brackets establish secrecy. Common reader and P2 timing checks now apply
+on crash traffic, but this normalized companion format does not prove identical hooks, WAL-shape distributions or the P1/P4/P5
+whole-run workload on every injected run. The existing CRASH-RECOMPUTED result never grants the null P3 lag bar. No NS PASS
+wiring or acceptance file is changed by these amendments.

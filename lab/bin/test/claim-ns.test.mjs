@@ -180,7 +180,7 @@ test('F3 variations: broken intermediate chain, invalid chunk HMAC and unwitness
 
 test('P2 full raw bands, publication ACK order, progress and idempotency', () => {
   const f = fixture({extraInvalid:true}); f.trusted.priorities = ['P3', 'P2'];
-  f.trusted.ryow = () => true; f.trusted.commandValid = o => !o.typedError; f.trusted.steadyRate = 10;
+  f.trusted.ryow = () => true; f.trusted.steadyRate = 10;
   f.raw.events.offers[1].sizeBand = '11-25'; f.trusted.commands.invalid = {commandSha256:h('invalid'),valid:false};
   f.raw.events.offers.push({ eventId: 'invalid-offer', kind: 'invalid', commandSha256: h('invalid'), commandId: 'invalid', sizeBand: '26-50', scheduledAtNs: '2500000000', sentAtNs: '2500000000', ackAtNs: '2501000000', typedError: { code: 'OUT-OF-RANGE' } });
   attachIndependentCrash(f); assert.equal(run(f).status, 'RECOMPUTED', canonText(run(f)));

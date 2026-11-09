@@ -268,7 +268,7 @@ test('O24 P1: recovery window matched although neither the 1024 window nor the r
 test('O29a P1: writer p99 at 256 readers of 120 ms passes because the zero-reader baseline was slowed to 100 ms', () => {
   const w = ladder({ baseWriterMs: 100 });
   for (const x of w) if (x.level !== 0) x.offers[0].ackAtNs = t(BigInt(x.offers[0].scheduledAtNs) + 120n * MS);
-  assert.equal(nsP1Ladder(w, replayRead, []).met, false);
+  const r=nsP1Ladder(w, replayRead, [], calibration(4,'P1',{phase:'steady',traceSegment:'seg',offerScheduleSha256:H('sched')})); assert.equal(r.met,false); assert.equal(r.reason,'BASELINE-INFLATED');
 });
 
 // ------------------------------------------------------------------ P4 history (O13)

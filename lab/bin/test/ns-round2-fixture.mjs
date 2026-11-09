@@ -6,10 +6,10 @@ import { sha256 as h } from '../lib.mjs';
 export function readsFor(window, level, answer = h('correct')) {
   const start = BigInt(window.startNs), end = BigInt(window.endNs), reads = [];
   const n = Number((end - start + 999999999n) / 1000000000n);
-  for (let second = 0; second < n; second++) for (let loop = 0; loop < Math.max(1, level); loop++) {
-    const at = start + BigInt(second) * 1000000000n + 20000000n + BigInt(loop) * 1000n;
+  for (let second = 0; second < n; second++) for (let loop = 0; loop < Math.max(1, level); loop++) for(let sample=0;sample<2;sample++) {
+    const at = start + BigInt(second) * 1000000000n + 20000000n + BigInt(sample)*400000000n + BigInt(loop) * 1000n;
     if (at + 100000n >= end) continue;
-    reads.push({ readId: `${window.id ?? 'main'}-${second}-${loop}`, loop, subject: `s${loop}`, shape: 'pull', requestedBasis: '1', echoedBasis: '1', sentAtNs: String(at), receivedAtNs: String(at + 100000n), answerSha256: answer, hot: true });
+    reads.push({ readId: `${window.id ?? 'main'}-${second}-${loop}-${sample}`, loop, subject: `s${loop}`, shape: 'pull', requestedBasis: '1', echoedBasis: '1', sentAtNs: String(at), receivedAtNs: String(at + 100000n), answerSha256: answer, hot: true });
   }
   return reads;
 }
@@ -60,16 +60,16 @@ export function frozenFixtureTrace(profile='builder', options={}) {
     crashOffers.push({eventId:`crash-offer-${i}`,commandId,commandSha256:commands[commandId].commandSha256,scheduledAtNs:String(1005000000+i*80000000)});
     if(i<9) { const point=['before-effect','after-effect','after-checkpoint'][Math.floor(i/3)];injections.push({injectionId:`injection-${i}`,faultPointId:point,pageFrontier:String(point==='after-checkpoint'?i+1:i+2)}); }
   }
-  return freeze({profile,primaryAttemptId:attemptId,crashAttemptId:crashId,stream:profile==='builder'?'s':'feed',epoch:profile==='builder'?'0':'1',consumerId:profile==='builder'?'c':'k1',commands,attempts:{
-    [attemptId]:{offers,window:{startNs:'1000000000',endNs:profile==='builder'?'3000000000':'2000000000',drainEndNs:options.drainEndNs??(profile==='builder'?'4000000000':'3000000000'),bursts:profile==='builder'?[{startNs:'2000000000',endNs:'2500000000'}]:[]}},
-    [crashId]:{offers:crashOffers,window:{startNs:'1000000000',endNs:'2000000000',drainEndNs:'3000000000',bursts:[]},injections}
+  return freeze({profile,candidateId:'fixture-candidate',primaryAttemptId:attemptId,crashAttemptId:crashId,stream:profile==='builder'?'s':'feed',epoch:profile==='builder'?'0':'1',consumerId:profile==='builder'?'c':'k1',commands,attempts:{
+    [attemptId]:{offers,minimumCompletionsPerLoopSecond:2,window:{startNs:'1000000000',endNs:profile==='builder'?'3000000000':'2000000000',drainEndNs:options.drainEndNs??(profile==='builder'?'4000000000':'3000000000'),bursts:profile==='builder'?[{startNs:'2000000000',endNs:'2500000000'}]:[]}},
+    [crashId]:{offers:crashOffers,minimumCompletionsPerLoopSecond:2,window:{startNs:'1000000000',endNs:'2000000000',drainEndNs:'3000000000',bursts:[]},injections}
   }});
 }
 export function calibration(writerMs=1,kind='P1',overrides={}) {
   const binding={attemptId:'prior-calibration',sourceSha256:h('source'),slot:'offline',inputsSha256:h('inputs')};
   const {sweepOfferOffsetsNs=['0'],...segmentOverrides}=overrides;
   const segment={id:'calibration',level:0,phase:'steady',traceSegment:'segment-1',offerScheduleSha256:h('same schedule'),startNs:'0',endNs:'1000000000',reads:[],offers:[{eventId:'cal-offer',scheduledAtNs:'0',ackAtNs:String(writerMs*1000000)}],...segmentOverrides};
-  const payload={binding,kind,grade:'GREEN',segments:[segment],sweepOfferOffsetsNs};return {format:'ns-calibration/1',payload,pinSha256:h(canonText(payload)),expectedBinding:binding,samplingPeriodNs:'1000000000'};
+  const payload={minimumCompletionsPerLoopSecond:2,candidateId:'fixture-A0',authority:'A0',binding,kind,grade:'GREEN',segments:[segment],sweepOfferOffsetsNs};return {candidateUnderTest:'fixture-candidate',format:'ns-calibration/1',payload,pinSha256:h(canonText(payload)),expectedBinding:binding,samplingPeriodNs:'1000000000'};
 }
 export function attachIndependentCrash(f) {
   const tr=f.trusted, trace=tr.frozenTrace, plan=trace.attempts[tr.binding.crashAttemptId], epoch=trace.epoch;
@@ -92,7 +92,7 @@ export function attachIndependentCrash(f) {
     return {format:'fault-witness/1',binding,...inj,events,eventsSha256:h(canonText(events)),snapshotHex:Buffer.from(canonText(snapshot)).toString('hex'),beforeTransaction:i,recoveryTransaction:i+1,checkpointOffset:String(i+1),recoveryOffset:String(i+2),replay:structuredClone(transactions[i+1].deliveries)};
   });
   const reads=readsFor(plan.window,tr.readerLevel);
-  for(const r of [...reads]) {const at=BigInt(plan.window.endNs)-1000000n+BigInt(r.loop)*100n;reads.push({...r,readId:r.readId+'-tail',sentAtNs:String(at),receivedAtNs:String(at+100000n)});}
+  for(const r of reads.filter(r=>r.readId.endsWith('-0'))) {const at=BigInt(plan.window.endNs)-1000000n+BigInt(r.loop)*100n;reads.push({...r,readId:r.readId+'-tail',sentAtNs:String(at),receivedAtNs:String(at+100000n)});}
   const ct=Object.fromEntries(Object.entries(tr).filter(([k])=>k!=='crashRun').map(([k,v])=>[k,typeof v==='function'?v:structuredClone(v)]));ct.binding=binding;
   const raw={format:'ns-events/1',binding,driver:tr.driver,events:{clockDomain:tr.clockDomain,clockDomains:tr.roles.map(role=>({role,domain:tr.clockDomain})),lagStart:'observer-bracket',window:plan.window,source,sourceBrackets,consumerBrackets,consumer,offers,reads,readers:readerRows(reads,plan.window),faults,noise:{grade:'GREEN'},crossChecks:sourceBrackets.flatMap((b,i)=>[{role:'source',position:b.position,atNs:b.L},{role:'consumer',position:b.position,atNs:consumerBrackets[i].U}])}};
   tr.crashRun=reseal(raw,ct);return f;
@@ -111,7 +111,7 @@ export function completeFixture(f, frozen) {
   tr.normalizeSource ??= normalizeSource;tr.normalizeWal ??= normalizeWal;tr.normalizeFault ??= normalizeFault;
   tr.initialFrontier ??= '0';tr.maxBracketWidthNs ??= '10000000';tr.consumerId ??= trace.consumerId;
   tr.epochs ??= Object.fromEntries(Array.from({length:10},(_,i)=>[canonText(String(i+1)),trace.epoch]));
-  tr.commands ??= structuredClone(trace.commands);tr.commandValid ??= o=>tr.commands[o.commandId]?.valid===true;tr.ryow ??= ()=>true;tr.replayRead ??= ()=>h('correct');tr.steadyRate ??=100;
+  tr.commands ??= structuredClone(trace.commands);tr.commandValid ??= command=>trace.commands[command.commandId]?.valid===true;tr.ryow ??= ()=>true;tr.replayRead ??= ()=>h('correct');tr.steadyRate ??=100;
   e.offers.forEach((o,i)=>{o.eventId??=`offer-${i}`;o.kind??='normal';o.commandSha256??=trace.commands[o.commandId]?.commandSha256??h('unknown');});
   tr.minimumSamples ??= {lag:Object.fromEntries(Object.entries(trace.attempts).map(([id,p])=>[id,new Set(p.offers.filter(o=>trace.commands[o.commandId]?.valid).map(o=>o.commandId)).size])),bands:{'5-10':1,'11-25':1,'26-50':1}};
   tr.p4LargestBucketP99Ms ??=50;tr.calibrationP4 ??=historyCalibration();tr.calibrationP1 ??=calibration();tr.calibrationP5 ??=calibration(1,'P5');
@@ -138,6 +138,6 @@ export function brokerFixture(f) {f.trusted.sourceStorage='broker-frame/2';f.tru
 
 export function historyCalibration() {
  const binding={attemptId:'prior-history-calibration',sourceSha256:h('source'),slot:'offline',inputsSha256:h('inputs')};
- const payload={binding,kind:'P4',grade:'GREEN',historyPulls:Array.from({length:1000},(_,i)=>({subject:`s${i}`,sentAtNs:'0',receivedAtNs:'1000000'})),resources:{ioReadStartBytes:'0',ioReadEndBytes:'100000'}};
- return {format:'ns-calibration/1',payload,pinSha256:h(canonText(payload)),expectedBinding:binding};
+ const payload={candidateId:'fixture-A0',authority:'A0',binding,kind:'P4',grade:'GREEN',historyPulls:Array.from({length:1000},(_,i)=>({subject:`s${i}`,sentAtNs:'0',receivedAtNs:'1000000'})),resources:{ioReadStartBytes:'0',ioReadEndBytes:'100000'}};
+ return {candidateUnderTest:'fixture-candidate',format:'ns-calibration/1',payload,pinSha256:h(canonText(payload)),expectedBinding:binding};
 }

@@ -1725,6 +1725,27 @@ function nsReaderEvidence(reads, declared, window, level) {
   }
   return qualifying / seconds;
 }
+// [EXP-CRNS-R4] Why: loop presence alone allows fast but mostly idle readers. Rejected: a candidate-chosen throughput floor.
+function nsLoadRate(reads, window, level, floor) {
+  nsAssert(Number.isSafeInteger(floor) && floor>0, 'READER-RATE-UNBOUND');
+  const start=nsTime(window.startNs),end=nsTime(window.endNs),bins=new Map(),byLoop=new Map();
+  for(const r of reads) {if(!byLoop.has(r.loop)) byLoop.set(r.loop,[]);byLoop.get(r.loop).push(r);}
+  for(const loop of byLoop.values()) {
+    loop.sort((a,b)=>nsTime(a.sentAtNs)<nsTime(b.sentAtNs)?-1:1);
+    for(let i=1;i<loop.length;i++) nsAssert(nsTime(loop[i].sentAtNs)>=nsTime(loop[i-1].receivedAtNs),'READER-LOOP-OVERLAP');
+  }
+  for(const r of reads) {
+    const at=nsTime(r.receivedAtNs); if(at<start||at>=end) continue;
+    const second=(at-start)/1000000000n, key=String(second);
+    if(!bins.has(key)) bins.set(key,new Map());
+    const loops=bins.get(key); loops.set(r.loop,(loops.get(r.loop)??0)+1);
+  }
+  for(let at=start;at<end;at+=1000000000n) {
+    const width=end-at<1000000000n?end-at:1000000000n;
+    const needed=Number((BigInt(floor)*width+999999999n)/1000000000n);
+    nsAssert([...(bins.get(String((at-start)/1000000000n))??new Map()).values()].filter(n=>n>=needed).length>=level,'READER-RATE-SHORT');
+  }
+}
 function nsReadSample(reads, window, replayRead, entries) {
   nsAssert(Array.isArray(reads) && reads.length > 0 && typeof replayRead === 'function', 'READS-NOT-ESTIMABLE');
   nsUniqueEvents(reads, 'readId');
@@ -1749,12 +1770,18 @@ function nsSameCompanionContext(primary, companion) {
 }
 function nsTraceAttempt(trusted, binding) {
   nsAssert(isObj(trusted.frozenTrace) && sha256(canonText(trusted.frozenTrace)) === binding.traceSha256, 'TRACE-NOT-FROZEN');
-  for(const [id,expected] of Object.entries(trusted.frozenTrace.commands??{})) nsAssert(trusted.commands?.[id]?.commandSha256===expected.commandSha256 && trusted.commands?.[id]?.changesSha256===expected.changesSha256 && trusted.commands?.[id]?.valid===expected.valid, 'TRACE-COMMAND-PIN-MISMATCH');
+  nsAssert(same(Object.keys(trusted.commands??{}).sort(),Object.keys(trusted.frozenTrace.commands??{}).sort()), 'TRACE-COMMAND-PIN-MISMATCH');
+  for(const [id,expected] of Object.entries(trusted.frozenTrace.commands??{})) nsAssert(typeof expected.valid==='boolean' && nsHash(expected.commandSha256) && trusted.commands?.[id]?.commandSha256===expected.commandSha256 && trusted.commands?.[id]?.changesSha256===expected.changesSha256 && trusted.commands?.[id]?.valid===expected.valid, 'TRACE-COMMAND-PIN-MISMATCH');
   const plan=trusted.frozenTrace.attempts?.[binding.attemptId];
   nsAssert(plan && Array.isArray(plan.offers) && plan.offers.length>0, 'TRACE-NOT-FROZEN');
   return plan;
 }
+// [EXP-CRNS-R4] Why: a prior run of this candidate is not an independent budget. Rejected: a self-pinned GREEN label (Q103c).
+function nsCalibrationIdentity(record) {
+  nsAssert(nsText(record?.candidateUnderTest) && nsText(record?.payload?.candidateId) && record.candidateUnderTest!==record.payload.candidateId && ['A0','registered-calibration'].includes(record.payload.authority), 'CALIBRATION-CANDIDATE-MISMATCH');
+}
 function nsCalibration(record, observed, kind) {
+  nsCalibrationIdentity(record);
   nsAssert(record?.format==='ns-calibration/1' && nsHash(record.pinSha256) && sha256(canonText(record.payload))===record.pinSha256 && same(record.payload.binding,record.expectedBinding) && ['attemptId','sourceSha256','slot','inputsSha256'].every(k=>nsText(record.expectedBinding?.[k])), 'BASELINE-UNBOUND');
   const raw=record.payload.segments?.find(s=>nsMatchedSegment(s,observed));
   nsAssert(raw && record.payload.kind===kind && record.payload.grade==='GREEN', 'BASELINE-UNBOUND');
@@ -1793,6 +1820,12 @@ export function recomputeNS(bundle, trusted) {
     nsAssert(e.lagStart === 'observer-bracket', 'LAG-START-CR');
     nsAssert(same(e.clockDomain, trusted.clockDomain) && Array.isArray(trusted.roles) && trusted.roles.length > 0 && Array.isArray(e.clockDomains) && e.clockDomains.length === trusted.roles.length && new Set(e.clockDomains.map(d => d.role)).size === trusted.roles.length && trusted.roles.every(role => e.clockDomains.some(d => d.role === role && same(d.domain, trusted.clockDomain))), 'CLOCK-DOMAIN-MISMATCH');
     const trace = nsTraceAttempt(trusted,raw.binding);
+    nsAssert(nsText(trusted.frozenTrace.candidateId), 'CANDIDATE-IDENTITY-UNBOUND');
+    for (const record of [trusted.calibrationP1,trusted.calibrationP4,trusted.calibrationP5].filter(Boolean)) {
+      nsCalibrationIdentity(record);
+      nsAssert(record.candidateUnderTest===trusted.frozenTrace.candidateId, 'CALIBRATION-CANDIDATE-MISMATCH');
+      nsAssert(record.payload.binding?.attemptId!==raw.binding.attemptId && record.payload.binding?.attemptId!==raw.binding.crashAttemptId, 'BASELINE-UNBOUND');
+    }
     const w = e.window, start = nsTime(w.startNs), end = nsTime(w.endNs), drain = nsTime(w.drainEndNs);
     nsAssert(end > start && drain >= end, 'EVENT-SCHEMA', 'window bounds');
     if (!same(trace.window,w)) refuse('TRACE-WINDOW-MISMATCH');
@@ -1957,6 +1990,8 @@ export function recomputeNS(bundle, trusted) {
       }
       witnessHashes.add(f.eventsSha256);
     }
+    // [EXP-CRNS-R4] Why: a missing recovery cannot disappear from the denominator. Rejected: counting only witnessed crashes.
+    nsAssert(Array.isArray(trace.injections??[]) && new Set((trace.injections??[]).map(x=>x.injectionId)).size===(trace.injections??[]).length && same([...injectionIds].sort(),(trace.injections??[]).map(x=>x.injectionId).sort()), 'CRASH-INJECTION-UNWITNESSED');
     if (e.faults.length) for (const point of ['before-effect', 'after-effect', 'after-checkpoint']) if (e.faults.filter(f => f.faultPointId === point).length < 3) refuse('CX-FAULT-REPS-SHORT', point);
     const timing = e.noise?.grade === 'GREEN' && trusted.gradeWindow?.(e.noise, w) === 'GREEN';
     nsAssert(isObj(trusted.minimumSamples), 'SAMPLE-FLOOR-UNBOUND');
@@ -2001,12 +2036,12 @@ export function nsControlRecord({ kind, candidateRung, a0Rung, a0Fits, binding, 
 }
 
 function nsOtherPriorities(e, trusted, result, refuse, positions, brackets, timing) {
-  const requested = new Set(e.faults.length ? [] : trusted.priorities);
+  const requested = new Set(e.faults.length ? trusted.priorities.filter(p=>p==='P2') : trusted.priorities);
   const commandPositions = new Map();
   for (const p of positions.values()) for (const id of p.tx.commandIds) commandPositions.set(id, p);
   const offers = e.offers, bands = new Map(), receipts = new Map();
   let unaccounted = 0, ackUndecided = 0, maxWaitNs = 0n;
-  const queue = [];
+  const queue = [], validity = new Map();
   try { nsUniqueEvents(offers, 'eventId'); } catch (error) { refuse(error.code, error.message); }
   nsAssert(offers.length > 0 && typeof trusted.commandValid === 'function' && typeof trusted.ryow === 'function', 'O-REPLAY-NOT-RUN');
   for (const o of offers) {
@@ -2017,8 +2052,17 @@ function nsOtherPriorities(e, trusted, result, refuse, positions, brackets, timi
     if (!frozen || o.commandSha256 !== frozen.commandSha256) refuse('SOURCE-CONTENT-MISMATCH', o.commandId);
     const p = commandPositions.get(o.commandId);
     const prefix = e.source.entries.filter(entry => (entry.transactions ?? []).some(tx => tx.positions.every(pos => { const b = brackets.get(canonText(pos)); return b && nsTime(b.U) <= scheduled; })));
-    const valid = trusted.commandValid(o, prefix);
+    // [EXP-CRNS-R4] Why: committed validity is a property of source order, not poll visibility or candidate errors.
+    // Rejected: passing E1 to the oracle (typedError could determine the answer being judged).
+    const command = new Proxy(Object.freeze({commandId:o.commandId,commandSha256:frozen?.commandSha256,changesSha256:frozen?.changesSha256}), {
+      get(target,key) { nsAssert(Object.hasOwn(target,key), 'O-REPLAY-INPUT-UNBOUND',String(key)); return target[key]; },
+      has(target,key) { nsAssert(Object.hasOwn(target,key), 'O-REPLAY-INPUT-UNBOUND',String(key)); return true; }
+    });
+    const beforePosition = p ? e.source.entries.map(en=>({...en,transactions:(en.transactions??[]).filter(tx=>tx.positions.every(pos=>nsComparePosition(pos,p.p)<0))})).filter(en=>en.kind!=='commit'||en.transactions.length) : prefix;
+    const valid = trusted.commandValid(command, beforePosition);
     nsAssert(typeof valid === 'boolean', 'O-REPLAY-REFUSED');
+    validity.set(o.commandId,valid);
+    if (valid!==frozen?.valid) refuse('COMMAND-VALIDITY-PIN-MISMATCH',o.commandId);
     if (!valid && p) refuse('INVALID-COMMAND-PUBLISHED',o.commandId);
     const firstAttempt=offers.filter(x=>x.commandId===o.commandId).reduce((a,x)=>nsTime(x.sentAtNs)<nsTime(a.sentAtNs)?x:a,o);
     const publication=p && brackets.get(canonText(p.p));
@@ -2070,7 +2114,7 @@ function nsOtherPriorities(e, trusted, result, refuse, positions, brackets, timi
     if (unaccounted) refuse('NS-P2-UNACCOUNTED');
     nsAssert(Number.isFinite(trusted.steadyRate) && trusted.steadyRate > 0, 'TRACE-NOT-FROZEN');
     if (maxSteadyQueue > 2 * trusted.steadyRate) refuse('NS-P2-QUEUE');
-    for (const burst of e.window.bursts) for (const o of offers) if (nsTime(o.scheduledAtNs) < nsTime(burst.endNs) && trusted.commandValid(o, e.source.entries)) {
+    for (const burst of e.window.bursts) for (const o of offers) if (nsTime(o.scheduledAtNs) < nsTime(burst.endNs) && validity.get(o.commandId)) {
       const p = commandPositions.get(o.commandId);
       const b = p && brackets.get(canonText(p.p));
       if (!b || nsTime(b.U) > nsTime(burst.endNs) + 60000000000n) refuse('NS-P2-BURST-DRAIN');
@@ -2087,10 +2131,12 @@ function nsOtherPriorities(e, trusted, result, refuse, positions, brackets, timi
     nsAssert(typeof trusted.replayRead === 'function', 'O-REPLAY-NOT-RUN');
     const metrics = nsReadSample(e.reads, e.window, trusted.replayRead, e.source.entries);
     if (metrics.violations) refuse('NS-P1-VIOLATIONS-MAX');
+    if (!timing || metrics.latency.p99Ms===null || metrics.latency.p99Ms>100) refuse('NS-P1-LATENCY');
+    try { nsLoadRate(e.reads,e.window,trusted.readerLevel,trusted.frozenTrace.attempts[trusted.binding.attemptId].minimumCompletionsPerLoopSecond); }
+    catch(error) { refuse(error.code??'READER-RATE-SHORT',error.message); }
     result.measurements.P1 = metrics;
     if (requested.has('P1')) {
       nsAssert(Array.isArray(e.maintenance) && e.maintenance.some(m => nsTime(m.atNs) >= nsTime(e.window.startNs) && nsTime(m.atNs) < nsTime(e.window.endNs)), 'MAINTENANCE-MISSING');
-      if (timing && metrics.latency.p99Ms > 100) refuse('NS-P1-LATENCY');
       // Baseline and ladder data must be separate source-bound raw runs, not inline ratios.
       nsAssert(e.ladder.some(x => x.id === e.mainSegmentId && x.level === trusted.readerLevel && same(x.reads, e.reads) && x.startNs === e.window.startNs && x.endNs === e.window.endNs), 'P1-MAIN-SEGMENT-MISMATCH');
       nsAssert(e.reads.filter(r => r.hot === true && e.offers.some(o => o.subject === r.subject && o.receipt && nsTime(o.sentAtNs) <= nsTime(r.sentAtNs) && nsTime(r.sentAtNs)-nsTime(o.sentAtNs) <= 60000000000n)).length >= e.reads.length * .5, 'P1-HOT-SET-SHORT');
@@ -2184,8 +2230,10 @@ export function nsP1Ladder(windows, replayRead, prefix, calibration) {
   nsUniqueEvents(windows, 'id', 'EVENT-SCHEMA');
   for (const w of windows) {
     nsAssert([0, 1, 4, 16, 64, 256, 1024].includes(w.level), 'EVENT-SCHEMA');
-    const m = nsSegment(w); let correct = 0, violations = 0;
+    const m = nsSegment(w);
+    let correct = 0, violations = 0;
     nsAssert(m.reads.length > 0 && nsReaderEvidence(w.reads, w.readers, w, w.level) >= .99, 'READER-LEVEL-MISMATCH');
+    if(w.level>0) nsLoadRate(w.reads,w,w.level,calibration?.payload?.minimumCompletionsPerLoopSecond);
     for (const read of m.reads) {
       const key = nsReadKey(read);
       if (!expected.has(key)) expected.set(key, replayRead(read, nsPrefix(prefix, read.requestedBasis)));
@@ -2194,15 +2242,15 @@ export function nsP1Ladder(windows, replayRead, prefix, calibration) {
     }
     results.push({ level: w.level, phase: w.phase, traceSegment: w.traceSegment, goodput: correct * 1e9 / Number(m.width), violations, writerP99Ms: m.writerP99Ms, maxWriterWaitMs: m.maxWriterWaitMs, readP99Ms: m.readP99Ms });
   }
-  let met = true;
+  let met = true, reason;
   for (const level of [0, 1, 4, 16, 64, 256, 1024]) nsAssert(windows.some(w => w.level === level), 'P1-LADDER-NOT-VERIFIED', `missing reader level ${level}`);
   for (let i = 0; i < windows.length; i++) {
     const w = windows[i], r = results[i];
     const baseIndex = windows.findIndex(x => x.level === 0 && nsMatchedSegment(x, w));
     nsAssert(baseIndex >= 0, 'MATCHED-SEGMENT-MISSING');
     const base = results[baseIndex];
-    try { nsCalibration(calibration,windows[baseIndex],'P1'); } catch { met=false; }
-    if (base.writerP99Ms > 50 || r.violations || r.maxWriterWaitMs === null || r.maxWriterWaitMs > 2000 || r.writerP99Ms === null || !Number.isFinite(r.writerP99Ms) || !Number.isFinite(base.writerP99Ms)) met = false;
+    try { nsCalibration(calibration,windows[baseIndex],'P1'); } catch(error) { met=false; reason??=error.code; }
+    if ((w.level>0 && (r.readP99Ms===null || r.readP99Ms>100)) || base.writerP99Ms > 50 || r.violations || r.maxWriterWaitMs === null || r.maxWriterWaitMs > 2000 || r.writerP99Ms === null || !Number.isFinite(r.writerP99Ms) || !Number.isFinite(base.writerP99Ms)) met = false;
     if (w.level === 256 || w.level === 1024) {
       const lowerIndex = windows.findIndex(x => x.level === (w.level === 256 ? 64 : 256) && nsMatchedSegment(x, w));
       nsAssert(lowerIndex >= 0, 'MATCHED-SEGMENT-MISSING');
@@ -2216,7 +2264,7 @@ export function nsP1Ladder(windows, replayRead, prefix, calibration) {
       if (recovery.readP99Ms === null || recovery.readP99Ms > 100 || recovery.writerP99Ms > base.writerP99Ms * 1.25) met = false;
     }
   }
-  return { met, windows: results, evaluatedShare: 1 };
+  return { met, ...(reason?{reason}:{}), windows: results, evaluatedShare: 1 };
 }
 
 /** Matched 1,000-subject depth sample; compare both latency and read bytes, retaining per-depth denominators. */
@@ -2241,6 +2289,7 @@ export function nsP4History(pulls, replayRead, prefix, resources, calibration) {
     depths[depth] = { count: rows.size, p99Ns: nsNearestRank([...rows.values()].map(p => nsTime(p.receivedAtNs) - nsTime(p.sentAtNs)), 99), bytesRead: nsTime(phase.ioReadEndBytes) - nsTime(phase.ioReadStartBytes) };
   }
   const baseline = nsStats([...byDepth.get(1).values()].map(p => nsTime(p.receivedAtNs) - nsTime(p.sentAtNs)));
+  nsCalibrationIdentity(calibration);
   nsAssert(calibration?.format==='ns-calibration/1' && sha256(canonText(calibration.payload))===calibration.pinSha256 && same(calibration.payload.binding,calibration.expectedBinding) && calibration.payload.kind==='P4' && calibration.payload.grade==='GREEN' && calibration.payload.historyPulls?.length===1000, 'BASELINE-UNBOUND');
   nsAssert(same(calibration.payload.historyPulls.map(p=>p.subject).sort(),subjects), 'BASELINE-UNBOUND');
   const prior=nsStats(calibration.payload.historyPulls.map(p=>nsTime(p.receivedAtNs)-nsTime(p.sentAtNs)));
@@ -2258,7 +2307,9 @@ export function nsP5Traffic(segments, sweep, replayRead, prefix, calibration) {
     nsCalibration(calibration,segments.baseline,'P5');
     const baseline = nsSegment(segments.baseline), during = nsSegment(segments.sweep);
     for (const s of [segments.baseline, segments.sweep]) {
+      nsAssert(nsSegment(s).readP99Ms!==null && nsSegment(s).readP99Ms<=100,'NS-P1-LATENCY');
       nsAssert(nsReaderEvidence(s.reads, s.readers, s, 64) === 1, 'READER-LEVEL-MISMATCH');
+      nsLoadRate(s.reads,s,64,calibration?.payload?.minimumCompletionsPerLoopSecond);
       nsAssert(nsReadSample(s.reads, s, replayRead, prefix).violations === 0, 'NS-P1-VIOLATIONS-MAX');
     }
     const expectedOffers=calibration.payload.sweepOfferOffsetsNs;
