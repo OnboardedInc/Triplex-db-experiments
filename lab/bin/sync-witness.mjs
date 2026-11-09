@@ -564,11 +564,20 @@ async function w4Trial(ctx,{index,mode,rehearsal}){
    spawnSync('docker',['context','use','default'],{encoding:'utf8'});
   }
   for(const child of children)try{child.kill('SIGKILL');}catch{}
-  // [EXP-OBS01-R16] Why: the store files are copied out with `docker cp` from a created (never started) container that mounts the volume read-only. The first version printed them from a helper: an OFF writer's WAL
+  // [EXP-OBS01-R16] Why: the store files are copied out with `docker cp` from a created container that mounts the volume read-only. The first version printed them from a helper: an OFF writer's WAL
   // reaches 100 MB and overflowed the 64 MB output buffer, and with every capability dropped a root process could not read the writer's 0600 files anyway. Rejected: raising the buffer.
+  // [EXP-OBS01-R17] Why (R16-F2): `allowFail` made a failed copy look like a file the crash had removed, and a missing WAL turned every OFF commit into a "loss". The collector now PRINTS a receipt from the recovered
+  // volume itself (listing, size and sha256 of each store file, read as the writer's uid), and the copy status of each file is recorded next to it in collection.json; vm_w4_judge.py accepts the copies only if every listed
+  // file was copied with exactly the receipted size and sha256 and accepts an absent file only if the receipt's listing shows it absent. Any other outcome refuses (COPY-FAILED, COPY-INCOMPLETE, COLLECTION-RECEIPT-INVALID)
+  // and a refused trial is evidence of nothing. The receipt code is inline so the whole collection is in this one function. Rejected: trusting `docker cp`'s exit status; treating a missing local file as an absent one.
+  const receiptCode="import hashlib,json,os\nd='/data/store';names=sorted(os.listdir(d));files={}\nfor n in ('broker.db','broker.db-wal'):\n if n in names:\n  h=hashlib.sha256();size=0\n  with open(os.path.join(d,n),'rb') as f:\n   for chunk in iter(lambda:f.read(1<<20),b''):h.update(chunk);size+=len(chunk)\n  files[n]={'size':size,'sha256':h.hexdigest()}\nprint(json.dumps({'format':'w4-receipt/1','listing':names,'files':files}))";
   const collector='tx2-sw-w4c-'+randomBytes(6).toString('hex');await reserve(config,collector,holder,5);made.push(collector);
-  docker(harden(collector,holder,python,5,['-v',volume+':/data:ro'],['true']));
-  for(const f of ['broker.db','broker.db-wal'])docker(['cp',collector+':/data/store/'+f,path.join(dir,f)],{allowFail:true});
+  docker(harden(collector,holder,python,5,['--user','10001:10001','-v',volume+':/data:ro'],['python3','-B','-c',receiptCode]));
+  let receipt=null,receiptError=null;
+  try{receipt=JSON.parse(docker(['start','-a',collector]));}catch(error){receiptError=String(error).slice(0,300);}
+  const copy={};
+  for(const f of ['broker.db','broker.db-wal'])copy[f]=docker(['cp',collector+':/data/store/'+f,path.join(dir,f)],{allowFail:true})!==null;
+  atomicJson(path.join(dir,'collection.json'),{format:'w4-collection/1',receipt,receiptError,copy});
   const judged=py(path.join(SRC,'vm_w4_judge.py'),dir,mode,String(result.writerCgroupId));
   result.judge=judged.stdout.trim()?JSON.parse(judged.stdout):{pass:false,problems:[judged.stderr.trim().slice(0,300)]};result.pass=judged.status===0;
  }finally{

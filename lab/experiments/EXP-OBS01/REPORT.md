@@ -1961,3 +1961,45 @@ New files: `lab/bin/ir-dump.mjs`, `lab/bin/abba.mjs`, `lab/observer/test_round16
 ### What did not run
 
 The W4 guest crash (and therefore the recovery path); a resolving ABBA; W2 and W3 were not repeated; no NS workload or host power-loss test.
+
+## Round 17: W4 evidence handling (fixes R16-F1 and R16-F2)
+
+Builder Claude Sonnet 5.5, from `exp/OBS01-observer` at `3ee853d6` (round 16 review `VERIFY-round16.md`, FIX-FIRST on two High W4 defects). **Offline only:** no Docker, Colima, VM, container or network command; the guest-crash W4 was not run (the orchestrator schedules that window after the review). W1, the IR reader and the ABBA are untouched.
+
+### R16-F1: partial traces skipped internal loss and order checks (fixed)
+
+`vm_w4_judge.read_trace` fed `WitnessScan` and sorted the events without the sequence, order and attach-bound rules that live in `finish()`. A crash justifies a missing suffix, a missing detach record and no final counters; it does not justify a hole inside what was received. New `prefix_problems` requires, per observed CPU, sequence numbers exactly `1..max`, nondecreasing timestamps in sequence order, no event before the attach record, and no lost-events or error line in the witness's stderr (`witness-stderr.txt` is now a required input, passed by `judge_trial(..., witness_stderr)` and by the CLI). Any violation raises `TRACE-INCOMPLETE`; the trial is **refused and reports no counts**. The reviewer's strongest case (commit 20's sync at CPU sequence 40 missing, a later sync at 41, a store holding only commits 1 to 19) formerly returned `pass: true` with 19 witnessed and no witnessed loss; it now refuses, while the complete trace on the same store still fails with 1 witnessed lost. The suffix cases are kept: a trace cut after a complete prefix, with a partial last line, is still judged.
+
+### R16-F2: a failed WAL copy could manufacture the OFF loss (fixed)
+
+The `docker cp` of the store files used `allowFail` and the judge substituted `b''` for a missing WAL, so a failed copy of an OFF writer's WAL was counted as every acknowledged commit lost and could complete a W4 PASS. Now the collector container prints a **receipt from the recovered volume itself** (listing, size and sha256 of each store file, read as the writer's uid), and the harness writes it with each file's copy status to `collection.json` (`w4-collection/1`). `verify_collection` accepts the copies only if every listed file was copied cleanly with exactly the receipted size and sha256, and accepts an absent file only if the receipt's listing, from the same volume and trial, shows it absent (the seeded main database must always exist). Refusal codes: `COPY-FAILED`, `COPY-INCOMPLETE`, `COLLECTION-RECEIPT-INVALID`, `WAL-ABSENCE-UNPROVEN` (an empty WAL handed to the judge with no receipt). The CLI refuses without `collection.json`. `aggregate` lists refused trials, fails, counts nothing from them (so a copy failure can never supply the required OFF loss), requires every trial to carry `collection: verified`, and reports `counted` and `refused`. A genuinely absent WAL stays acceptable, with `walAbsentConfirmed: true`.
+
+### Tests
+
+- Reviewer fixtures (unchanged, retained outputs restored with `git checkout -- lab/verify`): `test_round16_adversarial.py` **5/5** (the four refusal assertions that failed now pass: sequence gap, time regression, hidden witnessed loss, failed WAL collection), `review_round16_w4_io.mjs` **1/1** (the actual `w4Trial` with a failing copy refuses), `review_round16.mjs` 2/2.
+- New builder tests: `test_w4.py` 16 (8 new: gap, hidden-loss case, regression, before-attach and stderr loss, cut suffix still judged, failed WAL copy, truncated or altered copy, confirmed-absent WAL with its flag, malformed records, refused trials in the aggregate); `test_round17.mjs` 5 runs the actual `w4Trial` (Docker stubbed, real Python judge) with a valid receipt and then a failing copy, a short or altered copy, a confirmed-absent WAL and no receipt: each refuses with the copy's own code (the round 16 reviewer fixture's stub returns no receipt, so it is refused for the missing receipt; these give a valid one).
+- Suites at the final head: Python `test_vm` 14, `test_syncwitness` 18, `test_round10` 40, `test_round11` 20, `test_w4` 16; Node `test_engine` 26, `test_round12` 25, `test_round16` 11, `test_abba` 7, `test_round17` 5; reviewer rounds 11 to 14: 5, 8, 5, 5.
+- The recorded rehearsal traces (38,340 and 131,525 events) pass the new prefix rules and `judge_trial` still reproduces both recorded judgments exactly. The replay script `review_round16.py` passes every assertion up to its last, which compares the recorded round 16 **aggregate** with the new one: it now differs by design (new `counted`/`refused` fields, and the rehearsal trials have no verified collection record because they predate the receipt). The reviewer should re-pin that one assertion; no recorded per-trial judgment changed.
+
+### Divergences and what did not run
+
+1. `judge_trial` accepts non-empty store bytes handed in without a collection record (the pure-judge tests and the reviewer fixture's control need that); such a trial is not `collection: verified`, so `aggregate` fails it, and the CLI used by the harness never takes that path. 2. The receipt code is inline in `w4Trial` so the whole collection step is in the one function the reviewers extract. 3. Not run: the guest-crash W4, the recovery path, any live collection receipt (the receipt container has never executed on the VM; only stubs and the Python judge ran), W1/W2/W3/ABBA (unchanged). **Before a real W4:** a rehearsal should be repeated once to exercise the new collector live (it needs the VM, not a crash).
+
+### Rule 9a audit
+
+| Site | Content | Freshness | Binding |
+| --- | --- | --- | --- |
+| `prefix_problems` / `read_trace` (trace verdicts) | per-CPU sequence exactly `1..max`, order, attach bound, stderr loss and error lines, on the received lines | the trial's own trace and witness stderr, read fresh | writer (dev, inode) and directory from the trace's start record and the writer's R line; writer cgroup id |
+| `verify_collection` (store evidence) | receipted size and sha256 of each copied file, copy status, listing for absence; main database must exist | receipt printed by a container started after the recovery, from the same volume, for this trial | `collection.json` in the trial directory; the judge hashes the bytes it is given |
+| `aggregate` (W4 pass) | counts only unrefused trials with a verified collection; refused trials listed; both modes present; OFF loss; witnessed-lost zero | built from this window's trial judgments | per-trial judgments; no count from a refused trial |
+| W4 window `pass` (unchanged) | aggregate pass and not a rehearsal | this window | aggregate |
+
+### Moved source hashes (old at `3ee853d6`)
+
+| Path | Old SHA256 | New SHA256 |
+| --- | --- | --- |
+| `lab/bin/sync-witness.mjs` | `65d5efc97172618399287fa539bb0b4e25cae64e0460b740a0983d8f348d6bd9` | `cfce58f06c240a51661cd83b6f7d105704aa70360cb05b4a65faec06b2623e42` |
+| `lab/observer/vm_w4_judge.py` | `f0e3b17a91a8f03433a6f7d9a69e4a4546167f5950bf8d2300b2876cf4256e35` | `17cb551833ab985ac4f037c9085157112a24de606ee803d542af2208a066d694` |
+| `lab/observer/test_w4.py` | `3627faa4c0e036198e0953d7d319b9a3c2ef4071441c4ccb5df9836619ac1239` | `5ab586b8f3a95731e8ca6dd70af160f5c7687f9e551b0389d9912689674265b6` |
+
+No `lab/acceptance` path pins any of them. New: `lab/observer/test_round17.mjs` (`9c3560e107fa982b172c75a47149507cce6f35b3a251c39c4e25afe8a5e17de3`).

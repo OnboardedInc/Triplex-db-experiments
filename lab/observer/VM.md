@@ -455,3 +455,12 @@ A numeric helper call without a name token (for example `call 125`) therefore do
 - **W4** (`--windows W4 [--w4-trials 10] [--w4-rehearsal]`): ten guest crashes (`echo b > /proc/sysrq-trigger`), FULL and OFF writers in separate alternating trials, the witness trace and the writer's ACK lines streamed to the host, the store read back with `docker cp` after the guest is back
   (the harness starts the VM with `colima start -p triplex2 --activate=false` if it stayed down; the docker context stays `default`), judged on the host by `vm_w4_judge.py` with the W1 per-commit rule. Pass: every witnessed commit survives and at least one unwitnessed OFF commit is lost.
   **A guest crash kills every container in the VM**, so a real W4 refuses unless nothing else is running (the shared residents must be parked by the orchestrator) and runs a guest `sync` first. `--w4-rehearsal` runs the same pipeline with a writer SIGKILL instead of the crash and never passes.
+
+## Round 17: W4 evidence handling (fixes R16-F1 and R16-F2; offline, no guest crash run)
+
+- **Trace prefix rule (R16-F1).** `vm_w4_judge.read_trace` now applies the prefix form of the `finish()` rules after the grammar scan: every CPU's sequence numbers are exactly `1..max`, timestamps are nondecreasing in sequence order, nothing happened before the attach record,
+  and the witness's own stderr (`witness-stderr.txt`, now required) reports no lost events or errors. A crash may remove the suffix (detach record, final counters, a cut last line); it cannot excuse a hole inside what was received. Any violation refuses the trial with `TRACE-INCOMPLETE`.
+- **Collection receipt (R16-F2).** The W4 collector container (read-only volume, the writer's uid) prints a receipt from the recovered volume itself: the directory listing and the size and sha256 of `broker.db` and `broker.db-wal`. The harness records it with each file's `docker cp` status in `collection.json`
+  (`w4-collection/1`). The judge accepts the copies only if every listed file was copied cleanly with exactly the receipted size and sha256, and accepts an absent file only if the receipt's listing shows it absent (the main database must always exist). Codes: `COPY-FAILED`, `COPY-INCOMPLETE`,
+  `COLLECTION-RECEIPT-INVALID`, `WAL-ABSENCE-UNPROVEN` (empty WAL handed in with no receipt).
+- **Refused trials are no evidence.** A refused trial reports no counts; `aggregate` lists it, fails, never counts its commits as lost or surviving, and also fails any trial without a verified collection record.
