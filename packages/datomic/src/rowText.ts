@@ -1,6 +1,10 @@
-import type { TripleRow } from "@triplex-build/triplex/runtime";
+import {
+  decodeValueColumns,
+  storedValueDomain,
+  ValueDomains,
+  type TripleRow,
+} from "@triplex-build/triplex/runtime";
 import { assertionColumns } from "./rows.js";
-import { decodeRow, encodeRow } from "./protocol.js";
 
 // [EXP-DX1] Why: encode once at write time, preserving UTF-16 lengths and signed zero.
 // Rejected: tagged maps per read (allocation and nine-datom reconstruction cost).
@@ -30,7 +34,22 @@ const bits = (n: number) => {
 export function encodeRowText(row: TripleRow): string {
   if (row.retracted_at !== null || row.retracted_position !== null || row.retract_tx_id !== null)
     throw new TypeError("Row text requires a live row");
-  row = decodeRow(encodeRow(row));
+  // [DX-B2-N3] Why: the warm probe attributes >1 ms to redundant tagged row reconstruction.
+  // Rejected: skipping validation; check scalar types and the stored value domain directly once.
+  for (const [column, value] of Object.entries(row)) {
+    if (value === null) continue;
+    if (numeric.has(column)) {
+      if (typeof value !== "number" || !Number.isFinite(value))
+        throw new TypeError(`Invalid row number ${column}`);
+    } else if (typeof value !== "string") throw new TypeError(`Invalid row string ${column}`);
+  }
+  decodeValueColumns(row, storedValueDomain(ValueDomains.datomic, row.attribute));
+  // Tagged long columns canonicalized signed zero to +0 in the original encoder.
+  row = {
+    ...row,
+    recorded_position: row.recorded_position === 0 ? 0 : row.recorded_position,
+    schema_version: row.schema_version === 0 ? 0 : row.schema_version,
+  };
   for (const c of ["recorded_position", "schema_version"] as const)
     if (!Number.isSafeInteger(row[c])) throw new RangeError(`Unsafe ${c}`);
   const ref = row.value_type === "ref" ? row.value_string! : "";
@@ -45,7 +64,7 @@ export function encodeRowText(row: TripleRow): string {
     JSON.stringify(rowTextColumns.map((c) => (Object.is(row[c], -0) ? "-0" : row[c])))
   );
 }
-export function decodeRowTextArray(values: unknown): TripleRow {
+export function decodeRowTextColumns(values: unknown): TripleRow {
   if (!Array.isArray(values) || values.length !== rowTextColumns.length)
     throw new TypeError("Invalid row text columns");
   const row: Record<string, unknown> = {
@@ -66,7 +85,16 @@ export function decodeRowTextArray(values: unknown): TripleRow {
   });
   for (const c of ["recorded_position", "schema_version"])
     if (!Number.isSafeInteger(row[c])) throw new RangeError(`Unsafe ${c}`);
-  return decodeRow(encodeRow(row as unknown as TripleRow));
+  for (const c of ["id", "entity_id", "attribute", "value_type"])
+    if (typeof row[c] !== "string") throw new TypeError(`Missing ${c}`);
+  for (const c of ["recorded_at", "valid_from"])
+    if (typeof row[c] !== "number") throw new TypeError(`Missing ${c}`);
+  return row as unknown as TripleRow;
+}
+export function decodeRowTextArray(values: unknown): TripleRow {
+  const row = decodeRowTextColumns(values);
+  decodeValueColumns(row, storedValueDomain(ValueDomains.datomic, row.attribute));
+  return row;
 }
 export function decodeRowText(text: string): TripleRow {
   if (text[0] !== "1") throw new TypeError("Unknown row text version");

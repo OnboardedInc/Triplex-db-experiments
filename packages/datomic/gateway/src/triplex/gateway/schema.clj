@@ -14,6 +14,7 @@
    (attr :triplex.scope/irregular :db.type/boolean)
    (attr :triplex.scope/max-recorded-at :db.type/double)
    (attr :triplex.tx/max-recorded-at :db.type/double nil true)
+   (attr :triplex.entity/rev :db.type/long)
    (attr :triplex.entity/row-overflow :db.type/boolean)
    (attr :triplex.scope/bootstrap :db.type/string :db.unique/value)
    (attr :triplex.scope/key :db.type/string :db.unique/identity)

@@ -383,42 +383,28 @@ export const makeDatomicStorageAdapter = (
     getReachTriples: (root, basis) =>
       Effect.gen(function* () {
         if (yield* current) return undefined;
-        const response = yield* read(() =>
-          client.request<{
-            declined?: string;
-            position: number;
-            t: string;
-            rows: unknown[];
-            entities: number;
-            visited: string[];
-          }>("POST", `/v2/db/${db}/reach`, { root, basis }),
-        );
-        if (response.declined !== undefined) {
-          client.reachDiagnostics.declines[response.declined] =
-            (client.reachDiagnostics.declines[response.declined] ?? 0) + 1;
-          return undefined;
-        }
+        const response = yield* read(() => client.reachEntities(db, [root], basis));
+        if (!response) return undefined;
         return yield* Effect.try({
-          try: () => {
-            if (
-              !Number.isSafeInteger(response.position) ||
-              response.position < 0 ||
-              !/^\d+$/.test(response.t) ||
-              (basis.recordedPosition !== undefined && response.position !== basis.recordedPosition)
-            )
-              throw new Error("Fast reach basis mismatch");
-            return reachResponse(root, response);
-          },
+          try: () => reachResponse(root, response.entities, basis),
           catch: () => {
             client.reachDiagnostics.faults++;
             return undefined;
           },
-        }).pipe(
-          Effect.matchEffect({
-            onFailure: () => Effect.succeed(undefined),
-            onSuccess: (effect) => effect,
-          }),
-        );
+        }).pipe(Effect.catch(() => Effect.succeed(undefined)));
+      }),
+    getReachTriplesMany: (roots, basis) =>
+      Effect.gen(function* () {
+        if (yield* current) return undefined;
+        const response = yield* read(() => client.reachEntities(db, roots, basis));
+        if (!response) return undefined;
+        return yield* Effect.try({
+          try: () => roots.map((root) => reachResponse(root, response.entities, basis)),
+          catch: () => {
+            client.reachDiagnostics.faults++;
+            return undefined;
+          },
+        }).pipe(Effect.catch(() => Effect.succeed(undefined)));
       }),
     nextCommitPosition: () =>
       Effect.flatMap(requireTransaction, (state) =>

@@ -29,7 +29,7 @@
   (try
     @(d/transact (connection uri)
        [{:db/id (d/tempid :db.part/user) :triplex.scope/bootstrap "singleton"}
-        {:triplex.scope/key scope :triplex.scope/position 0 :triplex.scope/rows-version 1 :triplex.scope/schema-hash schema/schema-hash}])
+        {:triplex.scope/key scope :triplex.scope/position 0 :triplex.scope/rows-version 2 :triplex.scope/schema-hash schema/schema-hash}])
     (catch Exception e
       (let [current (sync-db uri)]
         (assert-scope current scope)
@@ -50,7 +50,7 @@
     (when (some #{name} (d/get-database-names (db-uri "*"))) (assert-scope (sync-db uri) scope))
     ;; [EXP-DA00] Why: releasing the last mem peer may destroy it before delete. Rejected: release-first (selftest-3 returned false).
     (let [deleted (d/delete-database uri)]
-      (.clear ^java.util.concurrent.ConcurrentHashMap reach/ids)
+      (reach/forget! name)
       (when-let [conn (@connections uri)] (d/release conn) (swap! connections dissoc uri))
         {:db name :deleted deleted})))
 (defn basis [base name]
@@ -62,11 +62,29 @@
        :position (codec/encode-value "long" (:triplex.scope/position entity))
        :recordedAt nil :schemaHash (:triplex.scope/schema-hash entity)})))
 (defn response [status data] {:status status :headers {"Content-Type" "application/json; charset=utf-8"} :body (json/write-str data)})
+;; [DX-B2-N3] Why: include UTF-8 encoding before the elapsed header is captured.
+;; Rejected: timing the StringBuilder alone (response bytes are not ready yet).
+(def ^ThreadLocal request-parse-micros (ThreadLocal.))
+(defn timed [start response]
+  (let [body (:body response)
+        response (if (string? body) (assoc response :body (.getBytes ^String body "UTF-8")) response)]
+    (-> response
+        (assoc-in [:headers "x-tx2-request-parse-micros"] (str (.get request-parse-micros)))
+        (assoc-in [:headers "x-tx2-gateway-micros"] (str (quot (- (System/nanoTime) start) 1000))))))
+(defn request-index! [name conn input]
+  (let [wait-ms (get input "waitMs")]
+    (when-not (and (integer? wait-ms) (<= 1 wait-ms 600000)) (codec/invalid "waitMs must be 1..600000"))
+    (let [t (d/basis-t (d/db conn)) requested (System/currentTimeMillis) job (str (java.util.UUID/randomUUID))]
+      (d/request-index conn)
+      (let [result (deref (d/sync-index conn t) wait-ms ::timeout) completed (not= result ::timeout)]
+        {:job job :database name :requestedT (str t) :requestedAtMs requested :completed completed
+         :completedAtMs (when completed (System/currentTimeMillis))}))))
 (defn request-json [body]
   (when-not body (codec/invalid "Missing JSON body"))
   (let [bytes (.readNBytes ^java.io.InputStream body 4194305)]
     (when (> (alength bytes) 4194304) (codec/invalid "Request too large"))
-    (json/read-str (String. bytes "UTF-8"))))
+    (let [start (System/nanoTime) input (json/read-str (String. bytes "UTF-8"))]
+      (.set request-parse-micros (quot (- (System/nanoTime) start) 1000)) input)))
 (defn handler [{:keys [request-method uri body query-string]}]
   (try
     (cond
@@ -86,29 +104,34 @@
                                   (remove empty? (clojure.string/split (or query-string "") #"&"))))]
         (response 200 (assoc (feed/log-page (connection (db-uri name)) params) :database name)))
       (and (= :post request-method) (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/transact" uri))
-      (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body) db-uri (db-uri name)]
-        (try (response 200 (storage/commit! (connection db-uri) (sync-db db-uri) input))
+      (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body) start (System/nanoTime) db-uri (db-uri name)]
+        (try (timed start (response 200 (storage/commit! name (connection db-uri) (d/db (connection db-uri)) input)))
              (finally (when (get input "release") (storage/release! name (get input "handle"))))))
-      (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/begin" uri))
+      (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/request-index" uri))
       (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body)]
-        (response 200 (storage/begin-command! name (sync-db (db-uri name)) input)))
-      (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/reach" uri))
-      (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body)
+        (response 200 (request-index! name (connection (db-uri name)) input)))
+      (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/begin" uri))
+      (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body) start (System/nanoTime)]
+        (timed start (response 200 (storage/begin-command! name (d/db (connection (db-uri name))) input))))
+      (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(reach|reach-many)" uri))
+      (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body) start (System/nanoTime)
             conn (connection (db-uri name))
-            db (storage/await-position (d/db conn) (get-in input ["basis" "recordedPosition"])
+            initial (d/db conn) p (get-in input ["basis" "recordedPosition"])
+            waited (and (some? p) (> p (storage/head-position name initial)))
+            db (if waited (storage/await-position initial p
                  (get input "basisWaitMs")
                  (fn [remaining] (if-let [t (get input "basisT")]
                                    (deref (d/sync conn (Long/parseLong ^String t)) remaining :triplex.gateway.storage/timeout)
-                                   (d/db conn))))]
-        {:status 200 :headers {"Content-Type" "application/json; charset=utf-8"}
-         :body (reach/response conn db input)})
+                                   (d/db conn)))) initial)]
+        (timed start {:status 200 :headers {"Content-Type" "application/json; charset=utf-8" "x-tx2-waited" (str (boolean waited))}
+         :body (reach/response name db (if (.endsWith ^String uri "reach-many") input (assoc input "roots" [(get input "root")])) )}))
       (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(snapshot|release|transact|read|q|claim|operation/[^/]+)" uri)
       (let [[_ _ _ name action id] (clojure.string/split uri #"/") db-uri (db-uri name)
             input (when (= request-method :post) (request-json body))
             conn (when (and (not= action "release") (or (= action "transact") (not (get input "handle")))) (connection db-uri))
             ;; [EXP-DA01] Why: held queries need no transactor sync and must never substitute a new db between requests (Q89d). Rejected: unconditional per-request sync.
             db (when conn
-                 (storage/await-position (if (#{"snapshot" "transact"} action) (sync-db db-uri) (d/db conn))
+                 (storage/await-position (d/db conn)
                    (if (= action "claim") (get input "position") (get-in input ["basis" "recordedPosition"]))
                    (get input "basisWaitMs")
                    (fn [remaining] (if-let [t (get input "basisT")]
@@ -118,7 +141,7 @@
           (case action
             "snapshot" (storage/begin! name db)
             "release" (storage/release! name (get input "handle"))
-            "transact" (try (storage/commit! conn db input)
+            "transact" (try (storage/commit! name conn db input)
                          (finally (when (get input "release") (storage/release! name (get input "handle")))))
             "read" (storage/read-rows name db input)
             "q" (query/run name db input)
@@ -133,5 +156,10 @@
   (d/create-database (db-uri "tx2-health"))
   ;; [EXP-DX1] Why: synchronize existing databases before accepting HTTP, not from their first read.
   ;; Rejected: per-read initialization barriers.
-  (doseq [name (d/get-database-names (db-uri "*"))] (sync-db (db-uri name)))
+  ;; [DX-B2-N3] Why: a scope may be deleted after catalog enumeration during startup.
+  ;; Rejected: swallowing all startup failures (would hide a storage outage).
+  (doseq [name (d/get-database-names (db-uri "*"))]
+    (try (sync-db (db-uri name))
+         (catch Exception e
+           (when (some #{name} (d/get-database-names (db-uri "*"))) (throw e)))))
   (jetty/run-jetty handler {:port 8080 :host "0.0.0.0" :join? true :min-threads 8 :max-threads 512}))

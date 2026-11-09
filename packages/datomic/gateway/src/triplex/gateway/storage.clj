@@ -1,5 +1,5 @@
 (ns triplex.gateway.storage
-  (:require [datomic.api :as d] [triplex.gateway.codec :as codec])
+  (:require [datomic.api :as d] [triplex.gateway.codec :as codec] [triplex.gateway.reach :as reach])
   (:import [java.util UUID]))
 
 (set! *warn-on-reflection* true)
@@ -11,7 +11,7 @@
   (let [handle (str (UUID/randomUUID)) now (System/currentTimeMillis)]
     (swap! snapshots #(assoc (into {} (filter (fn [[_ v]] (> (:expires v) now)) %)) handle
                             {:name name :db db :expires (+ now ttl-ms)}))
-    {:handle handle :position (codec/encode-value "long" (:triplex.scope/position (d/entity db (d/q '[:find ?s . :where [?s :triplex.scope/key]] db))))}))
+    {:handle handle :position (codec/encode-value "long" (:triplex.scope/position (d/entity db (:scope (reach/config name db)))))}))
 (defn release! [name handle]
   (when (= name (:name (@snapshots handle))) (swap! snapshots dissoc handle))
   {:released true})
@@ -48,8 +48,10 @@
                 (codec/invalid "Unknown value family"))]
     (merge {:db/id (str "f:" (:id row)) :f/id (:id row) :f/subject subject
             :f/attr (str "a:" (:attribute row)) :f/type (keyword kind)
-            :f/valid-from (finite! (:valid_from row)) :f/schema-version (long (:schema_version row))
-            :f/asserted-in "datomic.tx"}
+            :f/valid-from (finite! (:valid_from row))}
+           ;; [DX-B2-N5] Why: schema 1 is the default, and the immutable f/id datom already names its asserting tx.
+           ;; Rejected: duplicate attributes on every fact (measured d/transact median 7.46 ms).
+           (when (not= 1 (:schema_version row)) {:f/schema-version (long (:schema_version row))})
            (when (not= (:recorded_at row) (:recorded-at metadata)) {:f/recorded-at (finite! (:recorded_at row))})
            (when (not= (:recorded_position row) (:position metadata)) {:f/position (safe-position (:recorded_position row))})
            (when (and (nil? (:tx_id row)) (:id metadata)) {:f/null-tx-id true})
@@ -86,10 +88,13 @@
                           [:db/add (str "e:" (:entity_id row)) :triplex.entity/row-overflow true]
                           [:db/add (str "e:" (:entity_id row)) :triplex.entity/row text]))))
           (let [eid (d/entid db [:triplex.entity/id (:entity_id row)]) text (row-datom db eid (row-prefix (:id row)))]
-            (when (and (= 1 (:triplex.scope/rows-version (d/entity db scope)))
+            (when (and (= 2 (:triplex.scope/rows-version (d/entity db scope)))
                        (not (:triplex.entity/row-overflow (d/entity db eid))) (nil? text))
               (codec/invalid "Missing live row datom"))
             (when text (.add out [:db/retract eid :triplex.entity/row text]))))))
+    ;; [DX-B2-N2] Why: retractions change the complete row set too. Rejected: assertion-only revisions (stale cache hits).
+    (doseq [entity (distinct (map :entity_id rows))]
+      (.add out [:db/add (or (d/entid db [:triplex.entity/id entity]) (str "e:" entity)) :triplex.entity/rev position]))
     (when (pos? (.size times))
       (let [first-time (double (.get times 0)) maximum (volatile! (double (or prior first-time)))]
         (doseq [time times]
@@ -100,11 +105,14 @@
         (.add out [:db/add "datomic.tx" :triplex.tx/max-recorded-at @maximum])))
     (when @irregular (.add out [:db/add scope :triplex.scope/irregular true]))
     out))
-(defn tx-data [db input]
+(defn tx-data
+  ([db input]
+   (let [^datomic.Datom scope (first (d/datoms db :aevt :triplex.scope/key))]
+     (tx-data db input (.e scope))))
+  ([db input scope]
   (let [rows (mapv decode-row (get input "rows")) new-ids (set (get input "newIds"))
         fresh (filter #(new-ids (:id %)) rows) old (remove #(new-ids (:id %)) rows)
         source (safe-position (get input "sourceK")) position (safe-position (get input "position"))
-        scope (d/q '[:find ?s . :where [?s :triplex.scope/key]] db)
         claims (get input "claims")
         sample (or (first fresh) (first old))
         ;; [EXP-DA01] Why: claims-only and position-only commits still require complete tx annotations. Rejected: deriving metadata only from assertion rows (loses claim receipts).
@@ -132,17 +140,21 @@
                  (map (fn [claim] {:db/id (str "c:" (get claim "commandId"))
                                   :triplex.claim/command-id (get claim "commandId")
                                   :triplex.claim/tx "datomic.tx"
-                                  :triplex.claim/tx-id (get claim "txId")}) claims))))))
-(defn commit! [conn db input]
+                                  :triplex.claim/tx-id (get claim "txId")}) claims)))))))
+(defn commit! [name conn db input]
   (when (d/entid db [:triplex.tx/operation-id (get input "operationId")])
     (throw (ex-info "Operation already committed" {:status 409 :code "OperationDuplicate"})))
-  (let [scope (d/q '[:find ?s . :where [?s :triplex.scope/key]] db)]
+  (let [scope (:scope (reach/config name db))]
     (when-not (= (:triplex.scope/position (d/entity db scope)) (get input "sourceK"))
       (throw (ex-info "Source cut changed" {:status 409 :code "CasConflict"}))))
   (try
-    (let [report (deref (d/transact conn (tx-data db input)) 5000 ::timeout)]
+    (let [data (tx-data db input (:scope (reach/config name db)))
+          start (System/nanoTime)
+          report (deref (d/transact conn data) 5000 ::timeout)
+          transact-micros (quot (- (System/nanoTime) start) 1000)]
       (when (= report ::timeout) (throw (ex-info "Commit outcome unknown" {:status 503 :code "OutcomeUnknown"})))
       {:t (codec/encode-value "long" (d/basis-t (:db-after report)))
+       :transactMicros transact-micros
        :operationId (get input "operationId")
        :position (codec/encode-value "long" (get input "position")) :datoms (count (:tx-data report))})
     (catch Exception e
@@ -159,8 +171,15 @@
     (if-let [p (:triplex.tx/position entity)]
       {:status "committed" :position (codec/encode-value "long" p) :t (codec/encode-value "long" (d/tx->t (:db/id entity)))}
       {:status "absent"}) {:status "absent"}))
-(defn head-position [db]
-  (:triplex.scope/position (d/entity db (d/q '[:find ?s . :where [?s :triplex.scope/key]] db))))
+(defn head-position
+  ([db]
+   (let [^datomic.Datom scope (first (d/datoms db :aevt :triplex.scope/key))
+         ^datomic.Datom position (first (d/datoms db :eavt (.e scope) :triplex.scope/position))]
+     (.v position)))
+  ([name db]
+   (let [cfg (reach/config name db)
+         ^datomic.Datom position (first (d/datoms db :eavt (:scope cfg) (:position cfg)))]
+     (.v position))))
 (defn unavailable! [message]
   (throw (ex-info message {:status 409 :code "BasisNotAvailable"})))
 ;; [EXP-DA01] Why: future cuts must wait for publication, never silently answer from the head (Q89c/d). Rejected: treating P >= head as latest.
@@ -198,7 +217,11 @@
     ;; [EXP-DA01] Why: a held value cannot advance even if another writer commits; refuse future requests against that exact pin. Rejected: replacing a held db with a newer one mid-query.
     (at-position (await-position db p (get input "basisWaitMs") (fn [_] db)) p)))
 (defn raw-row [db eid]
-  (let [f (d/entity db eid) tx (:f/asserted-in f) rtx (:f/retracted-in f) kind (name (:f/type f))]
+  (let [f (d/entity db eid)
+        tx (or (:f/asserted-in f)
+               (let [^datomic.Datom identity (first (d/datoms db :eavt eid :f/id))]
+                 (when identity (d/entity db (.tx identity)))))
+        rtx (:f/retracted-in f) kind (name (:f/type f))]
     {:id (:f/id f) :entity_id (:triplex.entity/id (:f/subject f)) :attribute (:triplex.attr/key (:f/attr f))
      :value_type kind
      :value_string (case kind "integer" (str (:f.v/long f)) "ref" (:triplex.entity/id (:f.v/ref f))
@@ -209,7 +232,7 @@
      :value_json (case kind "json" (:f.v/json f) "blob" (:f.v/blob-meta f) nil)
      :recorded_at (or (:f/recorded-at f) (:triplex.tx/recorded-at tx)) :recorded_position (or (:f/position f) (:triplex.tx/position tx))
      :tx_id (when-not (:f/null-tx-id f) (or (:f/tx-id f) (not-empty (:triplex.tx/id tx)))) :valid_from (:f/valid-from f) :valid_to (:f/valid-to f)
-     :created_by (:f/created-by f) :entity_type (:f/entity-type f) :schema_version (:f/schema-version f)
+     :created_by (:f/created-by f) :entity_type (:f/entity-type f) :schema_version (or (:f/schema-version f) 1)
      :retracted_at (:f/retracted-at f) :retracted_position (:f/retracted-position f) :retract_tx_id (:f/retract-tx-id f)}))
 (defn row [db eid]
   (let [r (raw-row db eid) signs (:f/negative-zero (d/entity db eid))]

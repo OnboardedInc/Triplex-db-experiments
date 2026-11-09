@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+import { decodeEntity, type CachedEntity, type ReachWire } from "./reach.js";
 import { validateFeedEntry, type FeedTransaction } from "@triplex-build/triplex/feed";
 import type { ResolvedTemporalBasis } from "@triplex-build/triplex";
 import type { TripleRow } from "@triplex-build/triplex/runtime";
@@ -49,10 +51,36 @@ export interface DatomicLogPage {
 }
 
 // [EXP-DA00] Why: 256 readers plus writers must not queue on the HTTP agent (R16). Rejected: default pool limits.
+export interface DatomicRequestSample {
+  readonly path: string;
+  readonly started: number;
+  readonly finished: number;
+  readonly responseBytes: number;
+  readonly requestBytes: number;
+  readonly serializeMicros: number;
+  readonly parseMicros: number;
+  readonly gatewayMicros: number;
+  readonly transactMicros: number;
+  readonly waited: boolean;
+  readonly datoms?: number;
+  readonly position?: number;
+}
 export class DatomicClient {
+  // [DX-B2-N3] Why: opt-in transport observations measure real calls without a second HTTP request.
+  // Rejected: inferring gateway CPU or transact time from client wall latency.
+  onRequest?: (sample: DatomicRequestSample) => void;
   readonly agent: http.Agent;
+  readonly commitDiagnostics = { beginDecodeMicros: 0, transactEncodeMicros: 0 };
   private lastCommit: { db: string; position: number; t: string } | undefined;
-  readonly reachDiagnostics = { faults: 0, declines: {} as Record<string, number> };
+  reachSession = randomUUID();
+  readonly reachCache = new Map<string, Map<string, CachedEntity>>();
+  forceFullReach = false;
+  readonly reachDiagnostics = {
+    refMisses: 0,
+    resets: 0,
+    faults: 0,
+    declines: {} as Record<string, number>,
+  };
   private readonly endpoint: URL;
   constructor(
     endpoint: string,
@@ -80,6 +108,7 @@ export class DatomicClient {
     body?: unknown,
     timeoutMs = this.timeoutMs,
   ): Promise<T> {
+    const started = performance.now();
     // [EXP-DX1] Why: a known commit t lets lagging peers wait locally; no transactor round trip.
     // Rejected: d/sync without t and the old ten-millisecond poll.
     if (body && typeof body === "object" && this.lastCommit) {
@@ -90,7 +119,9 @@ export class DatomicClient {
       )
         body = { ...body, basisT: this.lastCommit.t };
     }
+    const serializeStart = performance.now();
     const bytes = body === undefined ? undefined : Buffer.from(stringifyExact(body));
+    const serializeMicros = (performance.now() - serializeStart) * 1000;
     return new Promise<T>((resolve, reject) => {
       const req = http.request(
         new URL(path, this.endpoint),
@@ -131,7 +162,25 @@ export class DatomicClient {
                     String(data["message"] ?? "Gateway request failed"),
                   ),
                 );
-              else resolve(data as T);
+              else {
+                this.onRequest?.({
+                  path,
+                  started,
+                  finished: performance.now(),
+                  responseBytes: size,
+                  requestBytes: bytes?.length ?? 0,
+                  serializeMicros,
+                  parseMicros: Number(res.headers["x-tx2-request-parse-micros"] ?? NaN),
+                  gatewayMicros: Number(res.headers["x-tx2-gateway-micros"] ?? NaN),
+                  transactMicros: Number(data["transactMicros"] ?? NaN),
+                  waited: res.headers["x-tx2-waited"] === "true",
+                  ...(typeof data["datoms"] === "number" ? { datoms: data["datoms"] } : {}),
+                  ...(data["position"] && typeof data["position"] === "object"
+                    ? { position: Number((data["position"] as TaggedValue).v) }
+                    : {}),
+                });
+                resolve(data as T);
+              }
             } catch (error) {
               reject(new DatomicTransportError("Invalid gateway JSON", { cause: error }));
             }
@@ -148,6 +197,97 @@ export class DatomicClient {
       );
       req.end(bytes);
     });
+  }
+  // [DX-B2-N2] Why: bind caches to database and revisions, and repair concurrent inline/reference races once.
+  // Rejected: accepting a missing reference as an empty entity.
+  async reachEntities(db: string, roots: readonly string[], basis: ResolvedTemporalBasis) {
+    if ([...this.reachCache.values()].reduce((n, cache) => n + cache.size, 0) > 500000) {
+      this.reachSession = randomUUID();
+      this.reachCache.clear();
+    }
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const response = await this.request<ReachWire>(
+        "POST",
+        `/v2/db/${db}/${roots.length === 1 ? "reach" : "reach-many"}`,
+        {
+          ...(roots.length === 1 ? { root: roots[0] } : { roots }),
+          basis,
+          session: this.reachSession,
+          ...(this.forceFullReach || attempt === 1 ? { full: true } : {}),
+        },
+      );
+      if (response.declined !== undefined) {
+        this.reachDiagnostics.declines[response.declined] =
+          (this.reachDiagnostics.declines[response.declined] ?? 0) + 1;
+        return undefined;
+      }
+      try {
+        if (
+          !Number.isSafeInteger(response.position) ||
+          response.position < 0 ||
+          !/^\d+$/.test(response.t) ||
+          (basis.recordedPosition !== undefined && basis.recordedPosition !== response.position) ||
+          typeof response.reset !== "boolean" ||
+          !Array.isArray(response.entities) ||
+          !Array.isArray(response.closures) ||
+          response.closures.length !== roots.length
+        )
+          throw new TypeError("Reach response basis/shape mismatch");
+        let cache = this.reachCache.get(db);
+        if (!cache) {
+          cache = new Map();
+          this.reachCache.set(db, cache);
+        }
+        if (response.reset) {
+          cache.clear();
+          this.reachDiagnostics.resets++;
+        }
+        const entities = new Map<string, CachedEntity>();
+        let missed = false;
+        for (const entity of response.entities) {
+          if (
+            !Array.isArray(entity) ||
+            (entity.length !== 2 && entity.length !== 3) ||
+            typeof entity[0] !== "string" ||
+            !Number.isSafeInteger(entity[1]) ||
+            entity[1] < 0 ||
+            entities.has(entity[0])
+          )
+            throw new TypeError("Invalid reach entity");
+          const [id, rev] = entity as [string, number];
+          let decoded: CachedEntity | undefined;
+          if (entity.length === 3) {
+            if (!Array.isArray(entity[2])) throw new TypeError("Invalid inline entity");
+            decoded = decodeEntity(id, rev, entity[2]);
+            cache.set(id, decoded);
+          } else decoded = cache.get(id);
+          if (!decoded || decoded.rev !== rev) missed = true;
+          else entities.set(id, decoded);
+        }
+        if (missed) {
+          if (attempt === 0) {
+            this.reachDiagnostics.refMisses++;
+            continue;
+          }
+          throw new TypeError("Full reach response has unresolved references");
+        }
+        response.closures.forEach(([root, ids], i) => {
+          if (
+            root !== roots[i] ||
+            !Array.isArray(ids) ||
+            !ids.includes(root) ||
+            new Set(ids).size !== ids.length ||
+            ids.some((id) => typeof id !== "string" || !entities.has(id))
+          )
+            throw new TypeError("Reach closure binding mismatch");
+        });
+        return { entities, closures: response.closures };
+      } catch {
+        this.reachDiagnostics.faults++;
+        return undefined;
+      }
+    }
+    return undefined;
   }
   health(): Promise<DatomicHealth> {
     return this.request("GET", "/health");
@@ -185,6 +325,7 @@ export class DatomicClient {
       ...(hint.commandId === undefined ? {} : { commandId: hint.commandId }),
       ids: hint.tripleIds ?? [],
     });
+    const decodeStart = performance.now();
     const p = validateTagged(response.position);
     const position = Number(p.v);
     if (
@@ -211,6 +352,7 @@ export class DatomicClient {
       if (!rows.has(row.id)) throw new TypeError("Unexpected prefetched row");
       rows.set(row.id, row);
     }
+    this.commitDiagnostics.beginDecodeMicros = (performance.now() - decodeStart) * 1000;
     return {
       handle: response.handle,
       position,
@@ -242,24 +384,34 @@ export class DatomicClient {
       release?: boolean;
     },
   ): Promise<unknown> {
+    const encodeStart = performance.now();
+    const body = {
+      ...input,
+      rows: input.rows.map(encodeRow),
+      rowTexts: Object.fromEntries(
+        input.rows
+          .filter((r) => input.newIds.includes(r.id) && r.retracted_at === null)
+          .map((r) => [r.id, encodeRowText(r)]),
+      ),
+    };
+    this.commitDiagnostics.transactEncodeMicros = (performance.now() - encodeStart) * 1000;
     const response = await this.request<{ t?: TaggedValue; position?: TaggedValue }>(
       "POST",
       `/v1/db/${db}/transact`,
-      {
-        ...input,
-        rows: input.rows.map(encodeRow),
-        rowTexts: Object.fromEntries(
-          input.rows
-            .filter((r) => input.newIds.includes(r.id) && r.retracted_at === null)
-            .map((r) => [r.id, encodeRowText(r)]),
-        ),
-      },
+      body,
     );
     if (response.t && response.position) {
       const p = validateTagged(response.position);
       const position = Number(p.v);
       const t = validateTagged(response.t);
-      if (p.t !== "long" || !Number.isSafeInteger(position) || position < 0 || t.t !== "long" || BigInt(t.v) < 0n || position !== input.position)
+      if (
+        p.t !== "long" ||
+        !Number.isSafeInteger(position) ||
+        position < 0 ||
+        t.t !== "long" ||
+        BigInt(t.v) < 0n ||
+        position !== input.position
+      )
         throw new TypeError("Commit basis mismatch");
       this.lastCommit = { db, position, t: String(t.v) };
     }

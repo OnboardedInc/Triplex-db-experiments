@@ -60,9 +60,13 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("two-call commits", 
       expect(submit.release).toBe(true);
       spy.mockRestore();
       const db = (await client.create(scope)).db;
-      await expect(client.rows(db, { handle: submit.handle })).rejects.toMatchObject({ code: "SnapshotExpired" });
+      await expect(client.rows(db, { handle: submit.handle })).rejects.toMatchObject({
+        code: "SnapshotExpired",
+      });
       await expect(runtime.runPromise(triples.transact(ops, meta))).rejects.toMatchObject({
-        _tag: "CommandAlreadyCommittedError", commandId: meta.commandId, transactionId: result.txId,
+        _tag: "CommandAlreadyCommittedError",
+        commandId: meta.commandId,
+        transactionId: result.txId,
       });
       await expect(
         runtime.runPromise(triples.transact(ops, { ...meta, commandId: "stale" })),
@@ -110,11 +114,90 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("two-call commits", 
           claims: [],
         }),
       ).rejects.toThrow();
-      await expect(client.rows(db, { handle: begin.handle })).rejects.toMatchObject({ code: "SnapshotExpired" });
+      await expect(client.rows(db, { handle: begin.handle })).rejects.toMatchObject({
+        code: "SnapshotExpired",
+      });
     } finally {
       await runtime.dispose();
       await client.delete(scope);
       client.close();
     }
   }, 30000);
+});
+
+// [DX-B2-N3] Why: indexing completion must be a fresh identified API result, and timings must cover actual gateway calls.
+// Rejected: inferring a maintenance event from unbound log words.
+describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("gateway timing and indexing", () => {
+  it("binds a new indexing job and timing samples to this database and attempt", async () => {
+    const client = new DatomicClient(
+      process.env["DATOMIC_GATEWAY_URL"] ?? "http://127.0.0.1:8490",
+      35000,
+    );
+    const scope = DatabaseScope.test(`dx2-index-${randomUUID()}`),
+      a = makeDatomicStorageAdapter(client, scope);
+    try {
+      await Effect.runPromise(a.initialize());
+      const db = (await client.create(scope)).db,
+        samples: import("../src/DatomicClient.js").DatomicRequestSample[] = [];
+      client.onRequest = (s) => samples.push(s);
+      await Effect.runPromise(
+        a.withTransaction(
+          Effect.gen(function* () {
+            const p = yield* a.nextCommitPosition();
+            yield* a.insert(
+              {
+                entityId: "indexed",
+                attribute: ":test/index",
+                value: { type: "string", value: "fresh-index-marker" },
+                validFrom: 0,
+              },
+              "_tx/00000000000000000000000001",
+              100,
+              "indexed-row",
+              p,
+            );
+          }),
+          { hint: { tripleIds: [] } },
+        ),
+      );
+      expect(
+        samples.filter((s) => s.path.endsWith("/begin") || s.path.endsWith("/transact")),
+      ).toHaveLength(2);
+      for (const sample of samples) expect(sample.gatewayMicros).toBeGreaterThanOrEqual(0);
+      expect(samples.find((s) => s.path.endsWith("/transact"))!.transactMicros).toBeGreaterThan(0);
+      const basis = await client.basis(db),
+        started = performance.now();
+      const event = await client.request<{
+        job: string;
+        database: string;
+        requestedT: string;
+        requestedAtMs: number;
+        completed: boolean;
+        completedAtMs: number | null;
+      }>("POST", `/v2/db/${db}/request-index`, { waitMs: 30000 });
+      expect(event.database).toBe(db);
+      expect(event.job).toMatch(/^[0-9a-f-]{36}$/);
+      expect(BigInt(event.requestedT)).toBeGreaterThanOrEqual(BigInt(basis.t.v));
+      expect(Number.isSafeInteger(event.requestedAtMs)).toBe(true);
+      expect(event.completed).toBe(true);
+      expect(event.completedAtMs!).toBeGreaterThanOrEqual(event.requestedAtMs);
+      expect(event.completedAtMs! - event.requestedAtMs).toBeLessThanOrEqual(
+        performance.now() - started + 5,
+      );
+      expect(
+        (await client.rows(db, { entityIds: ["indexed"], basis: { validAt: 0 } })).map(
+          (r) => r.value_string,
+        ),
+      ).toEqual(["fresh-index-marker"]);
+      await expect(
+        client.request("POST", `/v2/db/${db}/request-index`, { waitMs: 0 }),
+      ).rejects.toThrow();
+      await expect(
+        client.request("POST", `/v2/db/${db}/request-index`, { waitMs: 600001 }),
+      ).rejects.toThrow();
+    } finally {
+      await client.delete(scope);
+      client.close();
+    }
+  }, 60000);
 });

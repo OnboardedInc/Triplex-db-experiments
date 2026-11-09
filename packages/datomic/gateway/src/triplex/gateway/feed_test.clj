@@ -22,6 +22,15 @@
                  d/db (constantly {}) d/basis-t (constantly 105) d/log identity
                  d/tx-range (fn [_# start# end#] (filter #(<= start# (:t %) (dec end#)) pages))]
      ~@body))
+ ;; [DX-B2-N5] Why: identity datoms replace asserted-in, while old log transactions still carry both.
+;; Rejected: assuming a current-only feed (loses legacy replay or double counts assertions).
+(deftest identity-assertion-witness
+  (fake-peer
+    (reset! excised false)
+    (let [legacy (first pages) expected (feed/project {} legacy)
+          identity {:e 1 :a :f/id :added true}]
+      (is (= expected (feed/project {} (assoc legacy :data [identity]))))
+      (is (= expected (feed/project {} (update legacy :data conj identity)))))))
 (deftest recorded-projection
   (fake-peer
     (reset! excised false)

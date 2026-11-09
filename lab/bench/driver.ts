@@ -45,7 +45,9 @@ import { OpenLoopScheduler, type JobResult } from "./lib/scheduler.ts";
 import { receiptOfRecord, seedRung, type RecordedCommand } from "./lib/seed.ts";
 import { TRACE_DEFAULTS, generateTrace, traceDigest, traceStats, type TraceEvent, type TraceParams } from "./lib/trace.ts";
 import { BUCKETS, HOP_SHARE, RUNGS, SEED_VALID_FROM, accountsFor, accountOfSubject, hopOf, ids, populationCounts, subjectInCell, worldFactsOf, type Bucket } from "./lib/world.ts";
-import { REPO } from "./lib/triplex.ts";
+import { REPO, runtimeApi } from "./lib/triplex.ts";
+import { pathToFileURL } from "node:url";
+const datomicMaintenanceJobs: any[] = [];
 import { chooseHistorySample, chooseSamples } from "./lib/samples.ts";
 import { seedFromManifest } from "./lib/bulk.ts";
 import { startHiccupMeter, type RoundPlan } from "./lib/noise.ts";
@@ -567,6 +569,10 @@ async function run() {
   // ---------------------------------------------------------------- phases
   const plan = nsPlan(profile, config.zeroReaders).map((p) => (config.levelS && p.seconds ? { ...p, seconds: Math.min(p.seconds, config.levelS) } : p));
   const phases: any[] = [];
+  // [DX-B2-N3] Why: identify a completed indexing job inside each P1 level, not unbound log words.
+  // Rejected: issuing maintenance after readers stop.
+  const indexClient = lane === "datomic" ? new (await import(pathToFileURL(path.join(REPO,"packages/datomic/dist/index.js")).href)).DatomicClient(process.env["DATOMIC_URL"] ?? "http://127.0.0.1:8493", 601000) : null;
+  const indexDb = indexClient ? (await indexClient.create(runtimeApi.DatabaseScope.test(scopeName))).db : null;
   await sleep(Math.max(0, traceStart - now()));
   scheduler.start();
   probeScheduler?.start();
@@ -603,11 +609,25 @@ async function run() {
     const entry: any = { idx, name: spec.name, readers: config.maxReaders === null ? spec.readers : Math.min(spec.readers, config.maxReaders), mode: spec.mode ?? "mixed", measured: spec.measured, start, traceStartS: (start - traceStart) / 1000 };
     phases.push(entry);
     setReaders(idx, spec.readers, spec.mode ?? "mixed");
+    const indexJob = indexClient && /^L[0-9]+$/.test(spec.name) && spec.seconds ? (async () => {
+      const delay = Math.min(config.settleS * 1000, Math.max(0, spec.seconds! * 1000 - 1000));
+      await sleep(delay);
+      const waitMs = Math.max(1, Math.min(600000, Math.floor(spec.seconds! * 1000 - delay - 100)));
+      try {
+        const event = await indexClient.request("POST", `/v2/db/${indexDb}/request-index`, {waitMs});
+        if (event.database !== indexDb || typeof event.job !== "string" || !/^[0-9a-f-]{36}$/.test(event.job) ||
+            !/^[0-9]+$/.test(event.requestedT) || typeof event.completed !== "boolean" ||
+            !Number.isSafeInteger(event.requestedAtMs) || (event.completed && (!Number.isSafeInteger(event.completedAtMs) || event.completedAtMs < event.requestedAtMs)))
+          throw Error("Invalid Datomic maintenance event binding");
+        datomicMaintenanceJobs.push({...event, phase:spec.name, t:event.completedAtMs});
+      } catch (error) { datomicMaintenanceJobs.push({phase:spec.name, completed:false, error:String(error)}); }
+    })() : null;
     log(`phase ${spec.name}: ${entry.readers} readers at trace ${entry.traceStartS.toFixed(0)}s; writer pending ${scheduler.pending}`);
     if (spec.growHistoryTo) entry.history = await growHistory(spec.growHistoryTo, config.levelS ? Math.min(spec.maxS ?? 1800, 10 * config.levelS) : spec.maxS ?? 1800);
     else if (spec.sweep) entry.sweep = await runSweep(idx, config.levelS ? Math.min(spec.maxS ?? 1800, 10 * config.levelS) : spec.maxS ?? 1800);
     else if (spec.seconds) await sleep(spec.seconds * 1000);
     entry.end = now();
+    await indexJob;
     entry.traceEndS = (entry.end - traceStart) / 1000;
     entry.overlapsBurst = overlapsBurst(entry.traceStartS, entry.traceEndS, params);
     report.phases = phases;
@@ -682,6 +702,7 @@ async function run() {
   samplersOn = false;
   clearInterval(eluTimer);
   const maintenance = await maintenanceEvents(traceStart);
+  indexClient?.close();
   await writer.close().catch(() => {});
   await aux.close().catch(() => {});
   await growthComp.close().catch(() => {});
@@ -915,7 +936,7 @@ async function ryow(comp: CompositionHandle, subject: number, receipt: Receipt) 
 async function maintenanceEvents(traceStart: number) {
   // [DX-H1] Why: indexing needs an explicit source-bound job hook; log words alone do not prove completion.
   // Rejected: treating arbitrary "index" log lines as a P1 maintenance witness.
-  if (lane === "datomic") return { source: null, events: [], note: "not observed: Datomic indexing job hook is unavailable", trigger: "not observed" };
+  if (lane === "datomic") return { source: "write gateway /v2/db/{db}/request-index", events: datomicMaintenanceJobs, trigger: "one request-index/sync-index job per P1 level; incomplete jobs never count" };
   if (!container) return { source: null, events: [] as { t: number; line: string }[], note: "no TX2_ENGINE_CONTAINER: maintenance evidence not collected" };
   const since = new Date(traceStart - 1000).toISOString();
   const text = (await docker(["logs", "--timestamps", "--since", since, container], 60_000)) ?? "";
@@ -1012,7 +1033,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
     const mainEluMean = mean(mainElu.filter((e) => e.t >= w.from && e.t < w.to).map((e) => e.elu));
     const eng = engineSamples.filter((e) => e.t >= w.from && e.t < w.to);
     const maxWorkerElu = workerEluMean.length ? Math.max(...workerEluMean) : null;
-    const maint = (ctx.maintenance.events ?? []).filter((e: any) => e.t >= w.from && e.t < w.to).length;
+    const maint = (ctx.maintenance.events ?? []).filter((e: any) => e.t >= w.from && e.t < w.to && (lane !== "datomic" || (e.completed === true && e.requestedAtMs >= w.from && e.completedAtMs < w.to))).length;
     const marks = watermarkSamples.filter((s) => s.t >= w.from && s.t < w.to).map((s) => s.marks["source"] ?? 0);
     return {
       phase: phase.name, readers: phase.readers, mode: phase.mode, windowS: Math.round(secs * 10) / 10, overlapsBurst: phase.overlapsBurst,
@@ -1064,7 +1085,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
       bar("1.1 P1.1 hot-set share of reads (min over ladder levels)", ladder.length ? Math.min(...ladder.map((s) => s.hotShare ?? 0)) : null, ">= 0.5", ladder.length ? ladder.every((s) => (s.hotShare ?? 0) >= 0.5) : null),
       bar("1.1 P1.2 split reads straddling a frozen-trace command, all correct", ladder.reduce((s, x) => s + x.split.straddledATraceCommand, 0), "> 0 and all correct", ladder.length ? ladder.some((s) => s.split.straddledATraceCommand > 0) && ladder.every((s) => s.split.straddledATraceCommand === s.split.straddledCorrect) : null, "step 1 before the trace command's ACK, step 2 after; the driver adds no writes (RULINGS Q31b)"),
       bar("4.1.5 fallback share per window (reported)", ladder.map((s) => s.routing.fallbackShare), "reported", null, "one-engine composition: every read is served by the source of truth's own surface"),
-      bar("1.1 P1.3 a maintenance event in every P1 window", ladder.map((s) => s.maintenanceEvents), "every window >= 1", ladder.length ? ladder.every((s) => s.maintenanceEvents >= 1) : null, lane === "datomic" ? "not observed: Datomic indexing-job hook is unavailable" : "observed in engine logs only; the driver cannot force compaction or a rebuild yet (seam)"),
+      bar("1.1 P1.3 a maintenance event in every P1 window", ladder.map((s) => s.maintenanceEvents), "every window >= 1", ladder.length ? ladder.every((s) => s.maintenanceEvents >= 1) : null, lane === "datomic" ? "completed request-index job with request/completion timestamps inside the measured window" : "observed in engine logs only; the driver cannot force compaction or a rebuild yet (seam)"),
     ],
   };
 
