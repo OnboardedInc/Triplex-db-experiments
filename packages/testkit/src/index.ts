@@ -1744,8 +1744,8 @@ export const triplesConformanceCases: readonly ConformanceCase[] = [
       const txTriples = yield* t.match({ entityId: eid(result.txId) });
       const attributes = new Set(txTriples.map((tr) => tr.attribute as string));
       yield* check(
-        attributes.has(":_tx/instant"),
-        "transact should write a :_tx/instant provenance datom",
+        !attributes.has(":_tx/instant"),
+        "transact must not write its own record instant as a fact value",
       );
       yield* check(
         attributes.has(":_tx/actor"),
@@ -1826,7 +1826,7 @@ export const triplesConformanceCases: readonly ConformanceCase[] = [
       yield* check(
         assertion?.value?.type === "string" &&
           assertion.value.value === "claimed" &&
-          assertion.validFrom === committed.instant &&
+          assertion.validFrom === committed.stagedAt &&
           assertion.assertionTxId === committed.txId,
         "an assertion journal entry must retain its typed value, validity, and asserting transaction",
       );
@@ -2621,8 +2621,8 @@ export const triplesConformanceCases: readonly ConformanceCase[] = [
         },
       ]);
       const journalFacts = yield* t.match({ entityId: eid(committed.txId) });
-      const instant = journalFacts.find((triple) => triple.attribute === ":_tx/instant");
-      yield* check(instant !== undefined, "a committed transaction should have a journal instant");
+      const instant = journalFacts.find((triple) => triple.attribute === ":_tx/position");
+      yield* check(instant !== undefined, "a committed transaction should have a journal position");
 
       const retractFailure = yield* t.retract(instant!.id).pipe(Effect.flip);
       yield* check(
@@ -2885,3 +2885,5 @@ export function runtimeConformance(
       : runtime.layer({ ...baseOptions, capabilities });
   return makeTriplesConformanceSuite().pipe(Effect.provide(layer));
 }
+
+export * from "./record-time-conformance.js";
