@@ -37,3 +37,13 @@ Not decided (no recommendation was made): whether P1 needs a p99.9 or max read b
    the machine.
 3. **Smaller or sequential runs are fine** when disk or memory requires it.
 4. **Sam asks how much disk to reclaim** so larger datasets can be tested; the answer goes in chat and STATE.
+
+## 2026-11-09, later: bpftrace image download
+
+Sam, verbatim, answering "May I download the pinned Ubuntu bpftrace image (about 90 MB) into the triplex2 VM?":
+
+> Yes, download it
+
+Scope of the approval: one local image built inside the triplex2 VM from ubuntu:24.04 (arm64 digest
+19cad59657037cffa0ac9a48107019b768900ff1071140965827513ac866bd5e) plus the R49-pinned Ubuntu archive packages (bpftrace
+0.20.2-1ubuntu4.3, LLVM 18 1:18.1.3-1ubuntu1, libbpfcc 0.29.1+ds-1ubuntu7 and their dependencies), about 90 MB. Nothing on the Mac host.
