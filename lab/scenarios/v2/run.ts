@@ -1,5 +1,6 @@
 // [EXP-W02] Why: one process seeds, fingerprints and measures the exact same composition and endpoint.
 // Rejected: accepting another process's G0 receipt or running W01's non-W0 stream after a failed admission.
+import { checkedRead } from './read.ts';
 import fs from 'node:fs';
 import path from 'node:path';
 import { createHash, randomBytes } from 'node:crypto';
@@ -29,7 +30,7 @@ export async function execute(comp: CompositionHandle, spec: any, gen: ReturnTyp
     while (!stop) {
       const P = head, validAt = V_W0 + Math.floor(performance.now() - start), subject = W0.placementId(k % gen.N), t = performance.now();
       try {
-        const page = await comp.sweepPage([subject], { position: P, validAt });
+        const page = await checkedRead(comp, [subject], { position: P, validAt }, reads);
         reads.push({ subject, basis: { recordedPosition: P, validAt }, ms: performance.now() - t, facts: page.rows.length });
       } catch (error) { readerError = String(error); errors.push({ reader: k, P, error: String(error) }); break; }
       await sleep(0);
@@ -52,7 +53,7 @@ export async function execute(comp: CompositionHandle, spec: any, gen: ReturnTyp
             if (!original) throw Error('resend before original command');
             ops = original;
           } else {
-            const page = await comp.sweepPage([event.subject], { position: head, validAt: V_W0 + Math.floor(event.atMs) });
+            const page = await checkedRead(comp, [event.subject], { position: head, validAt: V_W0 + Math.floor(event.atMs) }, reads);
             ops = operations(event);
             const replaced = new Set(event.rows.filter(([, a]) => !many.has(a)).map(([e, a]) => e + '\0' + a));
             ops.unshift(...page.rows.filter(r => replaced.has(r.entityId + '\0' + r.attribute)).map(r => ({ op: 'retract', id: r.id })));
@@ -80,7 +81,7 @@ export async function execute(comp: CompositionHandle, spec: any, gen: ReturnTyp
   const validAt = V_W0 + gen.durationS * 1000;
   for (const subject of [gen.witnesses.positive[0], gen.witnesses.negative[0]]) {
     try {
-      const page = await comp.sweepPage([subject], { position: head, validAt });
+      const page = await checkedRead(comp, [subject], { position: head, validAt }, reads);
       const input = { world: worldOf(subject, page.rows), basis: { tx: head, validTime: new Date(validAt).toISOString().replace('.000Z', '.000000Z') },
         activations: [{ from: W0.POPULATION_VALID_TIME, release: W0.R1.hash, tx: 1 }] };
       const observedBytes = W0.runOpBytes('reconcile', Buffer.from(canonical(input)));

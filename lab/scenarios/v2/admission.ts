@@ -1,5 +1,6 @@
 // [EXP-W02] Why: only an in-process read through the measured composition grants world admission.
 // Rejected: owner files, last-command lookups, old G0 receipts and caller-provided observed digests.
+import { checkedRead } from './read.ts';
 import fs from 'node:fs';
 import { createHash } from 'node:crypto';
 import { bounded, requireW0Fingerprint } from '../../bench/lib/g0.ts';
@@ -27,11 +28,12 @@ export async function admitWorld(comp: CompositionHandle, input: {
   };
   return bounded(async signal => {
     const before = await counts();
-    const observed = await readW0Fingerprint(comp, input.N, { position: input.position, validAt: input.validAt }, signal);
+    const reads: any[] = [];
+    const observed = await readW0Fingerprint({ ...comp, sweepPage: (subjects, basis) => checkedRead(comp, subjects, basis, reads) }, input.N, { position: input.position, validAt: input.validAt }, signal);
     requireW0Fingerprint(observed, input.oracle, input.N);
     const after = await counts();
     sources();
     return { status: 'MATCHING', endpoint: input.endpoint, scope: input.scope,
-      fingerprint: observed, countsBefore: before, countsAfter: after };
+      reads, fingerprint: observed, countsBefore: before, countsAfter: after };
   });
 }

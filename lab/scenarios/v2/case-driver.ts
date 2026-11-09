@@ -1,13 +1,14 @@
 // [EXP-W02-R2] Why: every CS-GS member resolves to authored inputs and executable observations.
 // Rejected: an inventory entry whose witness selector is never run or whose missing capability counts as PASS.
+import { checkedRead } from './read.ts';
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { memoryComposition } from '../../bench/lib/memory.ts';
 import { W0, canonical, V_W0 } from '../../bench/lib/w0-world.ts';
 import { Probe, rows, baseFacts, decision } from './probe.ts';
-import { reconcileClaim, affectedClaim, dashboardClaim } from './claims.ts';
+import { requireSpecClaims, reconcileClaim, affectedClaim, dashboardClaim } from './claims.ts';
 import { consumerFault, lostAck, FeedReplica } from './faults.ts';
 import { openScenarioLane } from './lanes.ts';
 import { probeSourceIdentity } from './probe.ts';
@@ -53,7 +54,7 @@ export async function runCase(id: string, lane: Lane, dir: string) {
       assert.equal(await p.comp.currentPosition(), P); await p.state('pl:p');
     } else if (id === 'GS-15-STORAGE-ACCESS') {
       const other = memoryComposition(lane, scope + '-other');
-      assert.equal((await other.sweepPage(['pl:p'], { position: 0, validAt: V_W0 })).rows.length, 0);
+      assert.equal((await checkedRead(other, ['pl:p'], { position: 0, validAt: V_W0 }, p.reads)).rows.length, 0);
       p.equal(id, other.scopeName === p.comp.scopeName, false);
       details.limit = 'separate memory stores; physical engine tenant isolation remains live-only';
     } else if (id === 'GS-15-SLOW-TENANT') {
@@ -66,20 +67,25 @@ export async function runCase(id: string, lane: Lane, dir: string) {
       }
       assert.equal(slowKnown, 2); details.limit = 'logical 10x schedule; no latency bar asserted';
     } else if (scenario === 16) {
+      await p.set('gs:erasure', 'capability', 'unavailable'); await p.state('pl:p');
       status = 'BLOCKED'; reason = 'memory/source API has no physical erasure, rebuild/restore or crypto-shredding capability';
     } else {
       switch (scenario) {
         case 1: case 2:
           await p.commit(rows([{ e: 'pl:p', a: 'section1AttestedAt', v: W0.POPULATION_VALID_TIME }, { e: 'pl:p', a: 'ssn', v: '123456789' }]));
-          await reconcileClaim(p, 1, 'pl:p'); break;
+          await reconcileClaim(p, scenario, 'pl:p'); break;
         case 3: await p.set('pl:p', 'everifyStatus', 'authorized'); details.supersession = 'BLOCKED-W0-1.2'; break;
         case 4:
           details.lostAck = await lostAck(p, reopen, rows([{ e: 'pl:p', a: 'everifySubmitResult', v: 'accepted' }]));
           if (id === 'GS-04B-INDEX-PARTITION') {
-            const replica = new FeedReplica(p.comp); await replica.rebuild();
+            const replica = new FeedReplica(p.comp, p.reads); await replica.rebuild();
             await p.set('pl:p', 'weeklyMinutes', 3000);
-            const P = await p.comp.currentPosition(); await replica.read('pl:p', P);
+            const old = replica.watermark, P = await p.comp.currentPosition();
+            await p.route('pl:p', P, () => replica.read('pl:p', P));
+            await p.route('pl:p', old, () => replica.read('pl:p', old));
             assert(replica.events.some(e => e.kind === 'fallback')); await replica.rebuild(); assert.equal(replica.watermark, P);
+            await p.route('pl:p', P, () => replica.read('pl:p', P));
+            await p.route('pl:p', old, () => replica.read('pl:p', old));
             details.maintenance = replica.events;
           }
           break;
@@ -89,7 +95,7 @@ export async function runCase(id: string, lane: Lane, dir: string) {
           assert.deepEqual((await affectedClaim(p, ['pl:p', 'pl:n'], [['jur:a', 'stateMinWageCents']])).affected, ['pl:p']);
           await reconcileClaim(p, 6, 'pl:p'); break;
         case 7: {
-          const page = await p.comp.sweepPage(['pl:p'], { position: await p.comp.currentPosition(), validAt: V_W0 });
+          const page = await p.read(['pl:p'], { position: await p.comp.currentPosition(), validAt: V_W0 });
           const meta = { preconditions: [{ _tag: 'EntityState', entityId: 'pl:p', tripleIds: page.rows.filter(r => r.entityId === 'pl:p').map(r => r.id) }] };
           const a = await p.commit(decision('pl:p', 'review1', 'person'), 'review1', meta);
           const b = await p.commit(decision('pl:p', 'review2', 'person'), 'review2', meta);
@@ -100,6 +106,9 @@ export async function runCase(id: string, lane: Lane, dir: string) {
         case 10: case 11: {
           const P = await p.comp.currentPosition();
           const preview = await p.domain('pl:p', 'R2', P);
+          await p.set('pl:p', 'payRateCents', 1000);
+          assert.notEqual(semantic((await p.state('pl:p')).observed), semantic((await p.state('pl:p', P)).observed));
+          details.orderedSubjectsSha256 = createHash('sha256').update(canonical(['pl:p'])).digest('hex');
           await p.set('gs:release', 'activation', canonical({ recordedPosition: P, release: 'R2' }));
           const sweep = await p.domain('pl:p', 'R2', P);
           assert.notDeepEqual((await p.domain('pl:p', 'R1', P)).obligations, preview.obligations);
@@ -124,9 +133,10 @@ export async function runCase(id: string, lane: Lane, dir: string) {
       if (entry.kind === 'witness' && entry.polarity === 'negative') assert.equal(semantic(afterN.observed), semantic(beforeN.observed));
       if (entry.kind === 'witness' && entry.polarity === 'positive' && ![10, 11, 19].includes(scenario)) assert.notEqual(semantic(afterP.observed), semantic(beforeP.observed));
     }
+    if (status === 'OFFLINE-MATCH') requireSpecClaims(p, scenario, manifest.cases.find((c: any) => c.scenario === scenario && c.kind === 'scenario')?.domainClaims ?? []);
     p.finish();
   } catch (error) { status = 'FAIL'; reason = String((error as Error).stack ?? error); }
-  return { id, lane, scope, attempt: p.attempt, sourceSha256: p.sourceSha256, classification: 'OFFLINE-DIAGNOSTIC', status, reason, details, outcomes: p.outcomes, domainClaims: p.claims, checks: p.checks, oracleCases: p.oracleCases,
+  return { id, lane, scope, attempt: p.attempt, sourceSha256: p.sourceSha256, classification: 'OFFLINE-DIAGNOSTIC', status, reason, details, outcomes: p.outcomes, domainClaims: p.claims, reads: p.reads, checks: p.checks, oracleCases: p.oracleCases,
     qlever: lane === 'qlever' ? { kind: 'OFFLINE-FAKE', before: lanePort.initialLayout, after: await lanePort.layout() } : null,
     coverage: 'authored fixture state/domain/fault only; not expected-load GS acceptance' };
 }

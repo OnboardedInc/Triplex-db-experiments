@@ -1,5 +1,6 @@
 // [EXP-W02-R2] Why: offline schedules change durable memory-store state across client/consumer restarts.
 // Rejected: checking a list of fault names without interrupting and resuming the affected path.
+import { checkedRead } from './read.ts';
 import { W0, canonical, V_W0, visibleRows, type WorldRow } from '../../bench/lib/w0-world.ts';
 import type { CompositionHandle } from '../../bench/lib/composition.ts';
 import { Probe, rows, baseFacts } from './probe.ts';
@@ -24,7 +25,7 @@ export async function consumerFault(probe: Probe, crash: typeof CRASH_POINTS[num
   const events: any[] = [];
   const read = async (entity: string, attribute: string) => {
     const P = await active.currentPosition();
-    const p = await active.sweepPage([entity], { position: P, validAt: V_W0 });
+    const p = await probe.read([entity], { position: P, validAt: V_W0 });
     const row = p.rows.find(r => r.attribute === attribute);
     if (!row) throw Error('missing persisted fault state');
     return JSON.parse(row.value.value);
@@ -67,7 +68,8 @@ export class FeedReplica {
   private rows: WorldRow[] = [];
   readonly events: any[] = [];
   readonly source: CompositionHandle;
-  constructor(source: CompositionHandle) { this.source = source; }
+  readonly observations: any[];
+  constructor(source: CompositionHandle, observations: any[] = []) { this.source = source; this.observations = observations; }
   async rebuild(between?: () => Promise<void>) {
     const head = await this.source.currentPosition(), rows = new Map<string, WorldRow>();
     let after = 0;
@@ -89,8 +91,10 @@ export class FeedReplica {
   async read(subject: string, P: number, validAt = V_W0) {
     if (P > this.watermark) {
       this.events.push({ kind: 'fallback', requested: P, watermark: this.watermark, waitedMs: 0 });
-      return (await this.source.sweepPage([subject], { position: P, validAt })).rows;
+      return (await checkedRead(this.source, [subject], { position: P, validAt }, this.observations)).rows;
     }
+    this.observations.push({ endpoint: this.source.backend.url, scope: this.source.scopeName, kind: 'replica-read', requestedBasis: { position: P, validAt }, reportedBasis: { position: P, validAt }, watermark: this.watermark });
+    this.events.push({ kind: 'replica-read', requestedBasis: { position: P, validAt }, reportedBasis: { position: P, validAt }, watermark: this.watermark });
     const visible = visibleRows(this.rows, { position: P, validAt }), selected: WorldRow[] = [], seen = new Set([subject]);
     for (const e of seen) for (const r of visible.filter(r => r.entityId === e)) {
       selected.push(r); if (r.value.type === 'ref') seen.add(r.value.value);

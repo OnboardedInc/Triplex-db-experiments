@@ -303,3 +303,153 @@ none is promoted by these offline fixtures. Remaining live admission depends on
 Q94a/contract pinning, native lane builds and routes, real Q91 instrumentation,
 engine-side faults/maintenance, product outbox/dependency/projection/erasure
 integration and the independently reviewed scale-window campaigns. Keep GS OPEN.
+
+# Round 3 — QA F1–F4 containment
+
+Task: review `verify/W02` at `02e50d0`, fix the coverage/basis/fallback/setup
+classes, copy its 33 mutation controls, and retain an honest offline result.
+Read the review's complete VERIFY.md and original review.ts. The original program
+is copied byte-for-byte at `controls/qa-original.ts`; `controls/round3.ts` preserves
+its 33 substitutions and adds rejecting assertions for the formerly surviving
+controls. Imports, evidence paths, baseline expectations and assertions changed;
+no source observation is supplied to the independent expectation oracle.
+
+## Changes
+
+- **F1:** `requireSpecClaims` runs in `runCase` before an OFFLINE-MATCH can return,
+  for scenario tags, witness members and scenario-associated extra schedules.
+  The manifest reads the scenario spec afresh; every domain text must match an
+  explicitly mapped text/index. Coverage requires the selected scenario's fresh
+  claim record and executed successful check indices, including specific
+  affected/rerun, boundary or projection checks where applicable. Unmapped text
+  and missing executed evidence throw. GS.02 now records its own claim rather
+  than borrowing scenario 1. Spec files are included in probe source identity.
+  Integration tests mutate the spec text and remove executed evidence through
+  the real driver. Neither can retain a match.
+- **F2:** read answers now expose `reportedBasis` separately from source head.
+  `checkedRead` records both requested and reported position/valid-time bases,
+  endpoint and scope before rejecting absent/different metadata. V2 state,
+  replacement/precondition, fault-state, fallback, live traffic and G0 reads use
+  this boundary. Replica generation reads retain their selected filter basis.
+  O-REPLAY still receives the caller's requested position and valid time. A test
+  also spoofs matching metadata over latest-state contents and must fail the
+  independent old-basis content comparison. The common-basis fixture now writes
+  a reachable subject's pay rate after capture, verifies old/latest state differ,
+  and records the ordered subject-list hash before comparing preview and sweep.
+- **F3:** the required index-partition case now compares the returned fallback
+  rows, caught-up replica rows, and old pinned rows before and after rebuild
+  against fresh O-REPLAY at each requested basis. It uses the same canonical row
+  comparator as the source route. A fallback event or watermark alone cannot
+  satisfy the member. No packages/testkit source change or private package import
+  was needed.
+- **F4:** the Q factory unit test creates its own temporary fixture root and
+  `runs/` directory before calling brokerEnv, and cleans up only that owned
+  fixture. It cannot depend on another test file or an earlier run creating the
+  worktree's runs directory. The path-containment check itself is preserved.
+
+The stricter coverage check exposes missing implementations rather than adding
+fictional claim records. On both memory/fake lane baselines, GS.03,08,10,11,12,
+14,19,20 and their witnesses, plus GS-10-11-COMMON-BASIS and GS-19B-OUTBOX-CRASH,
+now FAIL for missing executed domain claims (26 members). Forty other members
+match; the original four capability gaps remain BLOCKED. This is the requested
+fail-closed behavior, not completion of those domain/product schedules. In
+particular this round does not implement supersession, release rollback/races,
+historical explanation, tenant activation, boundary scheduling or physical erasure.
+Existing direct state/kernel checks are retained as narrower diagnostics.
+
+For GS.16, a durable fixture capability record and a checked subject read precede
+explicit erasure refusal. The reviewer's wrong-current substitution now executes
+and fails that integrity read. This expands the 33-control rejection denominator
+without claiming that an unavailable erasure operation was exercised.
+
+## Attempts and retained failures
+
+Raw output remains outside git under the durable CX-W02 evidence root. Attempts
+are create-only and preserve failures:
+
+1. `round3-2026-11-09T03-08-42-775Z-423b09`: types/52 units/G0/goldens/manifest
+   passed. The mutation child stopped after 29 rejected controls because the
+   strengthened GS.10 fixture wrongly assumed the pay-rate change changed its
+   `obligations` array. The old/latest discriminator now compares independent
+   subject state instead. The assertion stopped before the wrong-basis injection;
+   this attempt is not a 33-control success.
+2. `round3-2026-11-09T03-10-44-232Z-308f01`: types, units and mutation import
+   failed because a constructor parameter property is unsupported by the pinned
+   strip-only TypeScript runtime. Replaced it with an explicit field assignment;
+   no file was excluded from typechecking. G0/goldens/manifest still passed.
+
+3. **Final:** `round3-2026-11-09T03-11-42-527Z-f863ca`, with mutation child
+   `2026-11-09T03-11-55-094Z-d3f630`. All controller commands exited zero and
+   passed their output-content assertions; source and five public-package build
+   identities remained unchanged throughout. Actual parent-owned heavy grant:
+   slot 2, label `CX-W02-R3-final2`. No engine slot/resident was acquired.
+
+| Final check | Result |
+| --- | --- |
+| Full v2 types, live entry and tests included | exit 0 |
+| Lab/W01b/W02 units including five new coverage/basis regressions | 53 pass, 0 fail, 0 skip |
+| Same-process G0 test | 1 pass |
+| Frozen generation | 20 byte-identical scenarios, 80 witness evaluations |
+| CS-GS regeneration | byte-identical; contract untouched |
+| D and Q baseline each | 70 members: 40 match, 26 missing-claim FAIL, 4 BLOCKED |
+| Copied mutation campaign | 33/33 injected, 33/33 FAIL before missing-claim coverage |
+| Added unknown spec claim / emptied fallback | both real scenarios FAIL |
+| Background trace | all 20 match frozen trace mapper and contain burst events |
+| Source/build identities | unchanged through final controller |
+
+The final mutation assertions also reject a failure caused merely by the new
+missing-claim gate. This prevents the 26 red baseline members from making a
+corruption look detected when it was not. GS.10/11 wrong-basis substitutions now
+hit an actual historical read and fail basis comparison. The extra spoofed-basis
+unit test separately verifies content comparison at the requested position.
+
+Evidence: [round3/INDEX.md](evidence/round3/INDEX.md) and
+[round3/SHA256SUMS](evidence/round3/SHA256SUMS) index all 1,930 retained raw files
+(21,529,925 bytes), including both failed controllers and their child outputs.
+The manifest contains exact absolute durable paths and can be checked with
+`shasum -a 256 -c SHA256SUMS`. No new bulky raw output is committed. Historical
+round 1/2 tracked evidence is left unchanged. The original reviewer program copy
+has SHA256 `8f4ce1fa95374ce45e53c56c1c9be835af5bbecdb5da4b8032ebf4484b332fb7`.
+
+## Round 3 PASS / verdict / receipt audit (9a)
+
+These are the changed or new decision sites. Earlier G0, oracle, lane-layout,
+commit/outcome, fault and generation decision sites retain the round 2 audit and
+their offline-only limits; none receives additional qualification here.
+
+| Decision site | Content check | Freshness check | Binding check |
+| --- | --- | --- | --- |
+| Memory/public sweep `reportedBasis` producers | Expose the selector actually passed to the route, separately from current head; existing availability/row-position checks remain | Produced by each read invocation | Exact position/valid time and scoped route handle; an adapter report is not independent native-engine acknowledgement |
+| `checkedRead` | Exact canonical requested/reported basis equality; absent metadata fails | Invokes route now and records its answer before checking | Endpoint, scope, subjects, requested and reported bases; nested under current attempt/source-bound case/live/G0 receipt |
+| `Probe.read`, `state`, `compareRows`, `route` | Actual source/fallback/replica row bytes match fresh independent authored-command replay at requested cut; no latest-head substitution in oracle queries | Fresh read and O-REPLAY invocation for the current authored command prefix | Subject, requested P/V, exact replay input hash, probe attempt, endpoint/scope and source/build hash; `finish` rechecks identity before a match |
+| `requireSpecClaims` | Exact spec-text mapping; selected scenario/index claim plus executed successful check indices and required check kinds; unknown/missing fails | Claim/check attempt and source hash must match this probe; claims produced only after current observations | Current manifest/spec, scenario and index; expected check names restrict unrelated generic kernel/publication checks; full source hash now includes spec bytes |
+| GS.02 `reconcileClaim` record | Same independently checked next-task bytes as GS.01, with selected scenario identity | Current domain evaluation and check indices | Scenario 2, its spec index, attempt and observed basis; no scenario-1 alias |
+| Common-basis schedule | Selected old/latest subject worlds must differ, preview/sweep bytes at old requested cut equal; R1/R2 distinction retained | Actual intervening write and new reads | Captured receipt position, valid clock, ordered subject-list hash and same source; does not satisfy unexecuted publication/race/rollback claims |
+| Index-partition schedule / `FeedReplica` read recording | Returned fallback and rebuilt/current/old rows independently compared; watermark/event is supplemental, not acceptance | New fallback read and new feed generation in current fixture | Shared source, requested position/valid time, generation watermark and current probe; pure memory model |
+| `runCase` final OFFLINE-MATCH branch | Executes all required spec claims before returning a match; throws become retained FAIL; explicit unavailable capabilities remain BLOCKED | Random scope and probe attempt per invocation; `finish` before match | Current manifest entry and scenario, authored fixtures, actual selected memory lane; all 70 retained |
+| `coverage.test.ts` assertions | Real-driver unknown/missing claims fail for the specific reason; wrong/absent basis and spoofed latest contents reject | Fresh fixtures and temporary substitutions restored after each test | Selected case/subject and exact old basis; no engine acceptance |
+| `controls/round3.ts` baseline assertions | Exact 70/40/26/4, exact failing and blocked ID sets, every baseline failure is missing executed coverage | Newly executed D/Q cases | Actual source before/after hashes and source-bound per-case traces; expected red diagnostics remain red |
+| `controls/round3.ts` corruption assertions | All 33 have nonzero injection, FAIL, and no missing-coverage failure as substitute; extra claim/fallback controls fail | New case per substitution, fresh oracle expectations unchanged | Mutation mode, selected case, actual memory source/probe, raw observation traces; GS.16 limited to fixture integrity |
+| `check-round3.mjs` controller receipt | Actual exits and specific test/golden/manifest/mutation output content checked; raw stdout/stderr digests retained | Create-only attempt, timestamps and actual child execution | Exactly one parent-owned heavy grant, exact argv, full source/build identity before/after; regression success never turns red GS members green |
+| `evidence/round3/SHA256SUMS` inventory | SHA256 over every retained raw file | Computed after attempts finalized | Absolute durable paths and short index; integrity only, not semantic authority |
+
+## Contract, verification limits and remaining work
+
+`lab/acceptance/` is unchanged. Searched its JSON and pin inventories for every
+changed path and old SHA256: **no changed file has a pinned content hash**, so
+there are no pinned old/new hash deltas. Its only reference to a changed path is
+the unpinned CS-GS execution entry `lab/scenarios/v2/case-driver.ts`; the manifest
+still regenerates byte-identically and has not been re-authored or re-pinned.
+No packages source/manifests, dependency lock, authority ref, merge or push changed.
+
+No live engine, expected-load GS, native basis acknowledgement, Q layout count,
+maintenance, physical erasure, real tenant isolation, product outbox/rollback or
+scale-window campaign was run or qualified. Public route reports are adapter
+metadata; native-engine correctness still requires the independent live campaign.
+The legacy `requireDomainClaims` index helper remains a diagnostic helper, not the
+v2 offline coverage authority; generic kernel/publication comparisons still do
+not supply v2 scenario-specific claim records. The live scaffold still explicitly
+returns FAIL/UNQUALIFIED. No full root pnpm check or independent round 3 review
+ran here. Reviewer reruns remain required. GS stays OPEN, including the 26 newly
+exposed missing-claim members and the four original capability gaps. RUNBOOK.md
+contains the current exact regression command and conditional live commands.

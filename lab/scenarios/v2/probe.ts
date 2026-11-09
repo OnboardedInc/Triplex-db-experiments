@@ -1,5 +1,6 @@
 // [EXP-W02-R2] Why: independently replay authored inputs before comparing any memory-store bytes.
 // Rejected: feeding the observed snapshot to both kernels (would let the same wrong state agree).
+import { checkedRead } from './read.ts';
 import fs from 'node:fs';
 import path from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
@@ -18,6 +19,7 @@ export function probeSourceIdentity() {
     else if (e.isFile() && /\.(ts|mjs|js|json|py|md)$/.test(f)) files.push(f);
   } };
   for (const dir of ['lab/scenarios/v2', 'lab/oracles/replay', 'lab/oracles/domain', 'lab/world/W0', 'packages/w0/dist']) walk(dir);
+  for (const d of fs.readdirSync(new URL('lab/scenarios', root))) { const f = 'lab/scenarios/' + d + '/scenario.json'; if (fs.existsSync(new URL(f, root))) files.push(f); }
   files.push('lab/scenarios/run.mjs', 'lab/scenarios/lib/policy.mjs', 'lab/scenarios/lib/triplex.mjs', 'lab/bench/lib/composition.ts', 'lab/acceptance/cases/CS-GS.json', 'lab/acceptance/obligations.json', 'lab/scenarios/lib/domain.mjs', 'lab/scenarios/lib/oracle.mjs', 'lab/bench/lib/memory.ts', 'lab/bench/lib/w0-world.ts', 'lab/bench/lib/w0-public.ts', 'lab/bench/lib/triplex.ts');
   return createHash('sha256').update(JSON.stringify(files.sort().map(f => [f, createHash('sha256').update(fs.readFileSync(new URL(f, root))).digest('hex')]))).digest('hex');
 }
@@ -30,6 +32,7 @@ export class Probe {
   readonly refs = new Map<string, string>();
   readonly entities = new Set<string>();
   readonly checks: any[] = [];
+  readonly reads: any[] = [];
   readonly claims: any[] = [];
   readonly oracleCases: any[] = [];
   comp: CompositionHandle;
@@ -55,7 +58,7 @@ export class Probe {
   }
   async set(entity: string, attribute: string, value: unknown, validFrom = V_W0) {
     const P = await this.comp.currentPosition();
-    const page = await this.comp.sweepPage([entity], { position: P, validAt: V_W0 });
+    const page = await this.read([entity], { position: P, validAt: V_W0 });
     return this.commit([
       ...page.rows.filter(r => r.entityId === entity && r.attribute === attribute).map(r => ({ op: 'retract', id: r.id })),
       { op: 'assert', entityId: entity, attribute, value: triplexValue(attribute, value), validFrom },
@@ -94,10 +97,20 @@ export class Probe {
   async state(subject: string, P = -1, V = V_W0) {
     if (P < 0) P = await this.comp.currentPosition();
     const expected = await this.expectedRows(subject, P, V);
-    const observed = (await this.comp.sweepPage([subject], { position: P, validAt: V })).rows;
-    const bytes = (rows: readonly WorldRow[]) => canonical(rows.map(r => [r.entityId, r.attribute, r.value, r.validFrom, r.validTo ?? null, r.position]).sort((a, b) => canonical(a).localeCompare(canonical(b))));
-    this.equal('state:' + subject, bytes(observed), bytes(expected), { P, V });
+    const observed = (await this.read([subject], { position: P, validAt: V })).rows;
+    this.compareRows('state:' + subject, observed, expected, { P, V });
     return { expected: worldOf(subject, expected), observed: worldOf(subject, observed), P, V };
+  }
+  read(subjects: readonly string[], basis: { position: number; validAt: number }) {
+    return checkedRead(this.comp, subjects, basis, this.reads);
+  }
+  compareRows(id: string, observed: readonly WorldRow[], expected: readonly WorldRow[], binding: unknown) {
+    const bytes = (rows: readonly WorldRow[]) => canonical(rows.map(r => [r.entityId, r.attribute, r.value, r.validFrom, r.validTo ?? null, r.position]).sort((a, b) => canonical(a).localeCompare(canonical(b))));
+    this.equal(id, bytes(observed), bytes(expected), binding);
+  }
+  async route(subject: string, P: number, read: () => Promise<readonly WorldRow[]>, V = V_W0) {
+    const expected = await this.expectedRows(subject, P, V);
+    this.compareRows('route:' + subject, await read(), expected, { P, V });
   }
   equal(id: string, observed: unknown, expected: unknown, binding: unknown = {}) {
     const ok = observed === expected;

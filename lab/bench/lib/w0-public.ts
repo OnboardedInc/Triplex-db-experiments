@@ -68,7 +68,7 @@ export async function publicSweep(lane: Lane, handle: TriplesHandle) {
             }
           frontier = next;
         }
-        return { rows, position: observed, epoch: String(handle.scope), roundTrips };
+        return { rows, reportedBasis: { ...b }, position: observed, epoch: String(handle.scope), roundTrips };
       } catch (e: any) {
         if (e?._tag === "BasisNotAvailable" || String(e).includes("explicit available P"))
           throw new BasisNotAvailable("future or unavailable P");
@@ -129,7 +129,7 @@ export function portableSweep(handle: TriplesHandle) {
           if (value.type === "ref" && !seen.has(value.value)) { seen.add(value.value); frontier.push(value.value); }
         }
       }
-      return { rows, position: head, epoch: String(handle.scope), roundTrips };
+      return { rows, reportedBasis: { ...basis }, position: head, epoch: String(handle.scope), roundTrips };
     },
     counts: async () => {
       const position = Number(await handle.run(storage.currentCommitPosition()));

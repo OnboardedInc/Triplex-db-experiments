@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { randomUUID } from 'node:crypto';
@@ -18,14 +19,18 @@ test('D lane selection opens D, records receipts and reopens the same source', a
   assert.deepEqual(calls, ['datomic']);
   await assert.rejects(openScenarioLane(b, { root, open: async (_lane, scope) => memoryComposition('xtdb', scope) }), /differs/);
 });
-test('Q broker factory receives explicit selection and fresh base/delta observations are bound in receipt', async () => {
+test('Q broker factory receives explicit selection and fresh base/delta observations are bound in receipt', async t => {
+  const fixture = fs.mkdtempSync(root + '.w02-lane-test-');
+  t.after(() => fs.rmSync(fixture, { recursive: true, force: true }));
+  const fixtureRoot = fixture + '/';
+  fs.mkdirSync(fixtureRoot + 'runs', { recursive: true });
   const b = binding('qlever'); let measured = 0;
-  const port = await openScenarioLane(b, { root, brokerDirectory: root + 'runs/W02-r2/broker',
+  const port = await openScenarioLane(b, { root: fixtureRoot, brokerDirectory: fixtureRoot + 'runs/W02-r2/broker',
     open: async (lane, scope, env) => { assert.equal(env.QLEVER_COMMIT_PATH, 'broker'); assert(env.QLEVER_BROKER_DIR.endsWith('/broker')); return memoryComposition(lane, scope); },
     layoutReader: async current => { measured++; return { binding: { ...current }, counts: { baseTriples: 10000000, deltaTriples: measured, touchedBlockDelta: 1, rebuildThreshold: 1000, baseGeneration: 'built-g1' } }; } });
   assert.equal(port.initialLayout!.deltaTriples, 1);
   assert.equal((await port.layout())!.deltaTriples, 2);
-  assert.equal(port.initialLayout!.brokerDirectory, root + 'runs/W02-r2/broker');
+  assert.equal(port.initialLayout!.brokerDirectory, fixtureRoot + 'runs/W02-r2/broker');
   for (const counts of [{ baseTriples: 1, deltaTriples: 1, touchedBlockDelta: 1, rebuildThreshold: 2 }, { baseTriples: 10, deltaTriples: 3, touchedBlockDelta: 1, rebuildThreshold: 2 }])
     assert.throws(() => requireLayout({ binding: b, counts: { ...counts, baseGeneration: 'g' } }, b), /Q91a/);
   assert.throws(() => requireLayout({ binding: { ...b, attempt: 'old' }, counts: port.initialLayout! }, b), /stale/);

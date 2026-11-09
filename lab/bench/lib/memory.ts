@@ -120,7 +120,7 @@ export function memoryComposition(lane: "xtdb" | "qlever" | "datomic", scope: st
           }
         frontier = next;
       }
-      return { rows, position: head, epoch: `memory:${scope}`, roundTrips };
+      return { rows, reportedBasis: { ...basis }, position: head, epoch: `memory:${scope}`, roundTrips };
     },
     storeCounts: async () => ({
       position: st.position,
