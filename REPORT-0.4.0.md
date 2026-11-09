@@ -4,7 +4,7 @@ North star: the P1/P2 correctness floor and P3 measurement contract, with a sour
 
 ## Result and scope
 
-Contract 0.4.0 compiles **exactly Q98a–i, Q101a and Q104a** from the original pending file, preserved at `lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/pending-authority.md`. The corresponding machine consumers appear in obligations.json and load-contract.json, and the literal rulings appear in RULINGS.md and ACCEPTANCE.md. All other pending rows are byte-preserved, including Q78e, Q86g, Q89, Q90, Q92, Q94a, Q95, Q98j, Q99, Q100, Q102, Q103 and Q105. Q104a's reference to Q100k does not compile Q100k. Qualification pins remain deferred to 0.4.1; BUILD_SPEC and executing admission blockers remain unresolved.
+Contract 0.4.0 is built and all requested gates passed on committed source `739089ade52102bbaf020102674286e5e771b2b5`. It compiles **exactly Q98a–i, Q101a and Q104a** from the original pending file, preserved at `lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/pending-authority.md`. The corresponding machine consumers appear in obligations.json and load-contract.json, and the literal rulings appear in RULINGS.md and ACCEPTANCE.md. All other pending rows are byte-preserved, including Q78e, Q86g, Q89, Q90, Q92, Q94a, Q95, Q98j, Q99, Q100, Q102, Q103 and Q105. Q104a's reference to Q100k does not compile Q100k. Qualification pins remain deferred to 0.4.1; BUILD_SPEC and executing admission blockers remain unresolved.
 
 All requested candidate and ACCEPT-review revisions are ancestors. The M01 and CHECKJS review branches contained source-copy reviews rather than the final candidate ancestry, so explicit follow-up merges include their final candidate commits too. No RT01, CRNS, HS01, P2B, DI01 or G03 branch was merged. No engine was started, stopped or rebuilt by this builder.
 
@@ -48,7 +48,7 @@ Durable command output root: `/Users/sam/Claude/Projects/triplex-db-2/evidence/C
 
 - Contract tests: 13/13 at the current source. They check original literal authority, pending-row preservation, unchanged bars/workload, generated consumers, every pin/hunk, image chain, all exact accepted ancestors, original evaluator assertions and continued qualification holds.
 - Contract mutations: 34/34 rejected, including one per new ruling, every source re-pin, the Datomic image, missing consumers and policy changes. The harness checks that canonical generated outputs remain byte-identical afterward.
-- Required evaluator 108/108, lab pack gate, all three offline G0 gates and final post-integration static checks: **pending execution in this report revision**.
+- Required evaluator, lab pack, all three offline G0 gates and post-integration checks: **completed**, as listed in the final verification table below.
 - First contract-test failures are retained as tests-attempt1/2/3.log: they exposed missing candidate ancestry and the final helper pin. tests-attempt4.log and tests-current.log record corrected checks.
 - merge-check-attempt1.tap: 57/58, failed on stale receipt-reader inventory; no failed result is adopted.
 - checkjs-attempt1.log: failed before dependency builds and exposed the unlisted FD01 crash helper. This attempt is retained, not counted as a PASS.
@@ -59,7 +59,7 @@ Durable command output root: `/Users/sam/Claude/Projects/triplex-db-2/evidence/C
 2. **Contract tests and mutation harness:** assertions compare actual current bytes with immutable base Git bytes, literal source authority and generated projections. Every mutation uses a freshly written isolated generator copy and must produce a nonzero `CONTRACT INVALID` result; the known-good baseline is checked separately. Canonical outputs are hashed before and after. No synthetic receipt is promoted to live evidence.
 3. **Merged G1 input boundary and M01 full-report reader:** `readLatencyRun` checks actual input bytes, registered schema and homogeneous mode before consumers use results; G1's preexisting engineGate provides current run/slot/build binding. M01's existing process/round/source checks remain, and PAIR remains opt-in. No live verdict is claimed here.
 4. **Receipt inventory audit:** source hashes and parser imports/calls are checked on this tree; synthetic historical probes are explicitly classified and do not become production evidence. It proves the documented source boundary, not arbitrary dataflow.
-5. **Required evaluator, pack and G0 result adoption:** results will be adopted only from newly named attempts on the committed source, with expected counts and raw result/receipt content, source identity and gate/grant bindings checked. They will be appended below after execution; no historical PASS substitutes for them.
+5. **Required evaluator, pack and G0 result adoption:** results are adopted only from newly named attempts on the committed source, with expected counts and raw result/receipt content, source identity and gate/grant bindings checked. Their completed checks appear below; no historical PASS substitutes for them.
 
 ## Limits and handoff
 
@@ -88,3 +88,41 @@ The final G0 attempts run with the permissions needed for the host boot-identity
 The second QLever G0 attempt, `G0-qlever-20261109T110446Z-a34da8`, retained **1,511 pass, 2 fail, 79 expected skips**. Both failures were the timeout classification assertions in `client-parity.test.ts`: main's integrated client deliberately wraps abort/timeout causes in `QleverRequestError`, while the accepted parity test's helper recognized only raw DOM exceptions. The product client and its default stay unchanged. The test classifier now recognizes `QleverRequestError.kind`, and each timeout scenario explicitly requires that public error class and `kind: "timeout"` in both transport modes. The full parity file passes **26/26** (`parity-fix.log`). This strengthens the public-contract assertion; no assertion is removed and the required 108 evaluator tests are untouched. No pinned source or measured workload changes.
 
 For a uniform final source binding, the required evaluator, packaging and three G0 gates are rerun after committing this test/inventory-only correction. Earlier receipts stay attached to their actual commits.
+
+
+## Final verification — complete
+
+Tested implementation/source revision: `739089ade52102bbaf020102674286e5e771b2b5`, branch `contract/0.4.0`. The final report commit adds only report/index/receipt evidence; it does not change implementation or tests.
+
+| Required or integration check | Final result | Retained evidence |
+| --- | --- | --- |
+| Separate generator `--verify` | All six generated outputs byte-identical | `contract-final3/verify.log` |
+| Contract tests | 13/13; 280 bound input files unchanged before/after the gate sequence | `contract-final3/tests.log`, `binding.json`, `result.json` |
+| Ruling/re-pin mutations | 34/34 rejected; generated outputs unchanged | `contract-final3/mutations.log` |
+| Mandatory evaluator on committed tree | 108/108, zero failures/skips/cancellations/todo | `evaluator-attempt3.tap` |
+| Parser/reader/CHECKJS integration regressions | 60/60, zero failures/skips; bound input bytes unchanged | `merge-check-attempt4.tap`, `focused-final-result.json` |
+| CHECKJS | 440 checked roots, no diagnostics or suppressed binding errors; also rerun by each G0 | final G0 `lab-checkjs.stdout.txt` |
+| Lab EXP-PACK gate | 12 scoped packages, 25 entry-point imports, strict installed declarations, runtime and CLI smoke passed | `pack-final/triplex-pack-5tkCq5/receipt.json` and command records |
+| xtdb G0 offline | 1289/1289; zero failures/unexpected skips; 140 expected skips | `G0-xtdb-20261109T111244Z-4d9d92` |
+| datomic G0 offline | 1344/1344; zero failures/unexpected skips; 66 expected skips | `G0-datomic-20261109T111619Z-f95000` |
+| qlever G0 offline | 1513/1513; zero failures/unexpected skips; 79 expected skips | `G0-qlever-20261109T111950Z-63de7f` |
+
+Contract transitive SHA256: `d3c716caecbf13c992147d86529b877ec77f616e841506355493a546845fbbb8`.
+
+### Final content, freshness and binding audit
+
+`final-artifact-audit.json` was produced only after re-reading the final evaluator/focused TAP counts, the final package receipt and every tarball/input hash, all three gate receipts, every retained gate object and every heavy-parent grant snapshot. Each gate's contract-file hash matches the actual 0.4.0 obligations file; its source HEAD and source-tree identity match the final source revision; its start follows the final pack gate; every command exited zero; all skips match the expected list. The contract collector records the actual heavy owner, Python runtime, command times, raw log hashes and 280 unchanged inputs. Engine slots are null because these are offline gates.
+
+The first artifact-audit assertion conservatively rejected the broad `git.dirty` flag for Datomic/QLever. Readback proved that those flags name **only the exact earlier untracked output receipts**. All source diff bytes are empty, modified/untracked source arrays are empty, and all three `sourceTreeId` values are equal. The corrected audit permits only those already-validated earlier receipt paths, while preserving the original dirty flags in the receipts. Its first failure is retained as `final-artifact-audit-attempt1.json`; no gate result was rewritten.
+
+This is the additional PASS-adoption location for rule 9a: the artifact auditor checks **content** (counts, all hashes, expected skips and zero step failures), **freshness** (unique attempt paths and source-bound command/run timestamps), and **binding** (exact source commit/tree, contract bytes, package inputs and actual heavy-parent owner proofs). It asserts no live-engine or acceptance qualification. The manifest producer then independently re-reads every indexed artifact's bytes and size.
+
+### Durable retention and final handoff
+
+`evidence-0.4.0/EVIDENCE.md` and `SHA256SUMS` index **772 files, 19,263,943 bytes**, all re-read and verified. Raw outputs, content-addressed gate objects, package tarballs/consumer artifacts, collector preimages and first failures are retained under:
+
+`/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-040/`
+
+Bulky raw evidence stays outside Git; only the small receipts, authority/diff reviews, source proofs, manifest, index and this report are committed. Dependency installations and package-manager caches are retained outside Git and excluded from the evidence manifest; lockfiles, source/command hashes and tarball hashes are included. No raw evidence was deleted.
+
+All requested candidate and ACCEPT-review commits are ancestors, including the explicit final M01 and CHECKJS candidates. No push, publication or main merge occurred. Independent review of this contract remains outstanding. No live engine gate, P3 qualification, production observer/driver qualification, VM durability claim, acceptance calibration or performance promotion was attempted. Q98j still waits for Sam, and every requested deferred ruling remains pending for its later contract round, including qualification work in 0.4.1.
