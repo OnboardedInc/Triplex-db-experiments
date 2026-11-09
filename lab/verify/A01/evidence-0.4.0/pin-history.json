@@ -1,0 +1,359 @@
+[
+  {
+    "commit": "95c30ea9992c94a68c60a625e2afaeb6ae60870d",
+    "parent": "d4227396cd6d7be32c2e7282969abb8b7b52fc62",
+    "movedPins": []
+  },
+  {
+    "commit": "f3ed62112028440389710a86fbf5c82c2f91afda",
+    "parent": "95c30ea9992c94a68c60a625e2afaeb6ae60870d",
+    "movedPins": [
+      {
+        "path": "lab/acceptance/build_contract.py",
+        "trail": [
+          "inputs",
+          "lab/acceptance/build_contract.py"
+        ],
+        "oldSha256": "259b0c2985985fbdf2c79d1ad6379c2adb6d919d45611b63bf7002502d2499e6",
+        "newSha256": "0f1a4225b5efa22c08ff1afee061ae8309b28faf64df88d06359e72c150bf3b9",
+        "sameCommitRepin": true
+      },
+      {
+        "path": "lab/acceptance/build_contract.py",
+        "trail": [
+          "oracleRunners",
+          "O-CONTRACT",
+          "sha256",
+          "lab/acceptance/build_contract.py"
+        ],
+        "oldSha256": "259b0c2985985fbdf2c79d1ad6379c2adb6d919d45611b63bf7002502d2499e6",
+        "newSha256": "0f1a4225b5efa22c08ff1afee061ae8309b28faf64df88d06359e72c150bf3b9",
+        "sameCommitRepin": true
+      },
+      {
+        "path": "lab/acceptance/oracle-contract.json",
+        "trail": [
+          "oracleRunners",
+          "O-CONTRACT",
+          "sha256",
+          "lab/acceptance/oracle-contract.json"
+        ],
+        "oldSha256": "82b3b4e0e774553a38ab4750abb6fc61b2d89431aeb3002f7692d3124fa80fb9",
+        "newSha256": "6fae9baacf3c36902fed3704526d50ec3788b05d1eddf6287b3989fc5438b266",
+        "sameCommitRepin": false
+      }
+    ]
+  },
+  {
+    "commit": "52f8c0d2b0f7d7cc3e4efb5fd255a133ce73a14e",
+    "parent": "f3ed62112028440389710a86fbf5c82c2f91afda",
+    "movedPins": [
+      {
+        "path": "lab/acceptance/build_contract.py",
+        "trail": [
+          "inputs",
+          "lab/acceptance/build_contract.py"
+        ],
+        "oldSha256": "0f1a4225b5efa22c08ff1afee061ae8309b28faf64df88d06359e72c150bf3b9",
+        "newSha256": "00249bec6afeba143f97ab0f7e97f8611bc91c92079b22f33d3198b5920c268a",
+        "sameCommitRepin": true
+      },
+      {
+        "path": "lab/acceptance/build_contract.py",
+        "trail": [
+          "oracleRunners",
+          "O-CONTRACT",
+          "sha256",
+          "lab/acceptance/build_contract.py"
+        ],
+        "oldSha256": "0f1a4225b5efa22c08ff1afee061ae8309b28faf64df88d06359e72c150bf3b9",
+        "newSha256": "00249bec6afeba143f97ab0f7e97f8611bc91c92079b22f33d3198b5920c268a",
+        "sameCommitRepin": true
+      },
+      {
+        "path": "packages/qlever/experiments/native-entry.ts",
+        "trail": [
+          "caseSets",
+          "CS-ENTRY",
+          "pinnedSourceFiles",
+          1,
+          "sha256"
+        ],
+        "oldSha256": "c82ce6cfabfcf61ab9f5d76791146d167741420a3be07b92559026f987634b0f",
+        "newSha256": "0f78b5bfcf5d2198015bd6a0e9111a4c7d98fb6fd9022de468d047d90a8bca8d",
+        "sameCommitRepin": true
+      },
+      {
+        "path": "packages/qlever/experiments/native-entry.ts",
+        "trail": [
+          "caseSourcesPinned",
+          "CS-ENTRY",
+          1,
+          "sha256"
+        ],
+        "oldSha256": "c82ce6cfabfcf61ab9f5d76791146d167741420a3be07b92559026f987634b0f",
+        "newSha256": "0f78b5bfcf5d2198015bd6a0e9111a4c7d98fb6fd9022de468d047d90a8bca8d",
+        "sameCommitRepin": true
+      }
+    ]
+  },
+  {
+    "commit": "c033c62816ed57b4a482784b2a1aae73d886a534",
+    "parent": "52f8c0d2b0f7d7cc3e4efb5fd255a133ce73a14e",
+    "movedPins": [
+      {
+        "path": "lab/acceptance/build_contract.py",
+        "trail": [
+          "inputs",
+          "lab/acceptance/build_contract.py"
+        ],
+        "oldSha256": "00249bec6afeba143f97ab0f7e97f8611bc91c92079b22f33d3198b5920c268a",
+        "newSha256": "f479c544dd3d9179dbbf676acc1d53b4597f95f68820b1e1b46fac92bf0c9576",
+        "sameCommitRepin": true
+      },
+      {
+        "path": "lab/acceptance/build_contract.py",
+        "trail": [
+          "oracleRunners",
+          "O-CONTRACT",
+          "sha256",
+          "lab/acceptance/build_contract.py"
+        ],
+        "oldSha256": "00249bec6afeba143f97ab0f7e97f8611bc91c92079b22f33d3198b5920c268a",
+        "newSha256": "f479c544dd3d9179dbbf676acc1d53b4597f95f68820b1e1b46fac92bf0c9576",
+        "sameCommitRepin": true
+      }
+    ]
+  },
+  {
+    "commit": "65940efa8cf570b73fb491ab78621735d0b497ff",
+    "parent": "c033c62816ed57b4a482784b2a1aae73d886a534",
+    "movedPins": [
+      {
+        "path": "lab/acceptance/build_contract.py",
+        "trail": [
+          "inputs",
+          "lab/acceptance/build_contract.py"
+        ],
+        "oldSha256": "f479c544dd3d9179dbbf676acc1d53b4597f95f68820b1e1b46fac92bf0c9576",
+        "newSha256": "bb11460c581257ff664163146552490ea6369d2ef262b544dad27a27538a2776",
+        "sameCommitRepin": true
+      },
+      {
+        "path": "lab/acceptance/build_contract.py",
+        "trail": [
+          "oracleRunners",
+          "O-CONTRACT",
+          "sha256",
+          "lab/acceptance/build_contract.py"
+        ],
+        "oldSha256": "f479c544dd3d9179dbbf676acc1d53b4597f95f68820b1e1b46fac92bf0c9576",
+        "newSha256": "bb11460c581257ff664163146552490ea6369d2ef262b544dad27a27538a2776",
+        "sameCommitRepin": true
+      },
+      {
+        "path": "qualification/capacity/historical-assertion-metadata-v1/oracle.mjs",
+        "trail": [
+          "oracleFilesPinned",
+          "O-HAM",
+          0,
+          "sha256"
+        ],
+        "oldSha256": "bc93f24c88365add1d215747cd95705a3c2a2b4fd1c6cdd7e347a014fb23b290",
+        "newSha256": "bbd656760719b67a3435419121b0b7df909a99ea9c1aba22d85ea1363cb6b08f",
+        "sameCommitRepin": true
+      },
+      {
+        "path": "qualification/capacity/historical-assertion-metadata-v2/oracle.mjs",
+        "trail": [
+          "oracleFilesPinned",
+          "O-HAM",
+          1,
+          "sha256"
+        ],
+        "oldSha256": "f661e8138d5194bbcbbe56eec9ec35f8766bc9938540192e7b0d92d04685721b",
+        "newSha256": "5ce6612714b2b7742c46e0599617d472b4bf18a352806e5d44a44577878c9649",
+        "sameCommitRepin": true
+      },
+      {
+        "path": "qualification/capacity/configured-entities-v1/oracle.mjs",
+        "trail": [
+          "oracleFilesPinned",
+          "O-CFG8",
+          0,
+          "sha256"
+        ],
+        "oldSha256": "5e4f92bf74fde4504c309d2888cc234013ceb2fbfc8bca7c06fff51cea054cd3",
+        "newSha256": "92c0378b8120aaa25fb7a16d8659aa1790141eba62aed8f7e7356213efe92e94",
+        "sameCommitRepin": true
+      },
+      {
+        "path": "qualification/capacity/configured-entities-v1/oracle.mjs",
+        "trail": [
+          "caseSets",
+          "CS-CFG8",
+          "pinnedSourceFiles",
+          1,
+          "sha256"
+        ],
+        "oldSha256": "5e4f92bf74fde4504c309d2888cc234013ceb2fbfc8bca7c06fff51cea054cd3",
+        "newSha256": "92c0378b8120aaa25fb7a16d8659aa1790141eba62aed8f7e7356213efe92e94",
+        "sameCommitRepin": true
+      },
+      {
+        "path": "qualification/capacity/configured-entities-v1/oracle.mjs",
+        "trail": [
+          "caseSourcesPinned",
+          "CS-CFG8",
+          1,
+          "sha256"
+        ],
+        "oldSha256": "5e4f92bf74fde4504c309d2888cc234013ceb2fbfc8bca7c06fff51cea054cd3",
+        "newSha256": "92c0378b8120aaa25fb7a16d8659aa1790141eba62aed8f7e7356213efe92e94",
+        "sameCommitRepin": true
+      }
+    ]
+  },
+  {
+    "commit": "3b34d5c3ca0a8e110d9130a95074a027d697c52f",
+    "parent": "65940efa8cf570b73fb491ab78621735d0b497ff",
+    "movedPins": []
+  },
+  {
+    "commit": "00589f842b99fe78fa9d2aff865d6b6202e8c2a6",
+    "parent": "3b34d5c3ca0a8e110d9130a95074a027d697c52f",
+    "movedPins": [
+      {
+        "path": "lab/acceptance/pins/O-REPLAY-0.4.9-SHA256SUMS",
+        "trail": [
+          "inputs",
+          "lab/acceptance/pins/O-REPLAY-0.4.9-SHA256SUMS"
+        ],
+        "oldSha256": "357d747af267eee5863033288143d5f18952e21a43d2038b68258384a3aab322",
+        "newSha256": "0e252326e6c7a13076b9cae2234de4eeeb707a52b6c54d6787042c68c68753e6",
+        "sameCommitRepin": true
+      },
+      {
+        "path": "lab/acceptance/RULINGS.md",
+        "trail": [
+          "inputs",
+          "lab/acceptance/RULINGS.md"
+        ],
+        "oldSha256": "35e26650b2467850234e0679aaea50335e1e662df3e25c8347462e2b4174d698",
+        "newSha256": "077ee96f74d4da8e6fc956d8a93357bf9485f70db3970c15be089215d0dc8d0f",
+        "sameCommitRepin": true
+      },
+      {
+        "path": "lab/acceptance/RULINGS-PENDING.md",
+        "trail": [
+          "inputs",
+          "lab/acceptance/RULINGS-PENDING.md"
+        ],
+        "oldSha256": "cff6d49d7fb2329852610e85553a6b25cb808c3adacd49fe8a138fc17ce85ede",
+        "newSha256": "fce16f288ccce3032f5e30c7a7e41d1b985f89000a155200980a51720208b7eb",
+        "sameCommitRepin": true
+      },
+      {
+        "path": "lab/acceptance/pins/O-OBS-23e2273-SHA256SUMS",
+        "trail": [
+          "inputs",
+          "lab/acceptance/pins/O-OBS-23e2273-SHA256SUMS"
+        ],
+        "oldSha256": "486a4209d38fcc70a9ccb64d7c7ed9e0dfe25eef405ca21b097fee67d2697300",
+        "newSha256": "a05f2f5471c57e2f91b1828f10b992241d9d5f4053d286041658dea7ed674c26",
+        "sameCommitRepin": true
+      },
+      {
+        "path": "lab/acceptance/build_contract.py",
+        "trail": [
+          "inputs",
+          "lab/acceptance/build_contract.py"
+        ],
+        "oldSha256": "bb11460c581257ff664163146552490ea6369d2ef262b544dad27a27538a2776",
+        "newSha256": "653cec719e6f7f8964b00aca1f8ba1b40325e7b645153743059b0df3674a87db",
+        "sameCommitRepin": true
+      },
+      {
+        "path": "lab/acceptance/build_contract.py",
+        "trail": [
+          "oracleRunners",
+          "O-CONTRACT",
+          "sha256",
+          "lab/acceptance/build_contract.py"
+        ],
+        "oldSha256": "bb11460c581257ff664163146552490ea6369d2ef262b544dad27a27538a2776",
+        "newSha256": "653cec719e6f7f8964b00aca1f8ba1b40325e7b645153743059b0df3674a87db",
+        "sameCommitRepin": true
+      },
+      {
+        "path": "lab/acceptance/RULINGS-PENDING.md",
+        "trail": [
+          "pendingRulings",
+          "sha256"
+        ],
+        "oldSha256": "cff6d49d7fb2329852610e85553a6b25cb808c3adacd49fe8a138fc17ce85ede",
+        "newSha256": "fce16f288ccce3032f5e30c7a7e41d1b985f89000a155200980a51720208b7eb",
+        "sameCommitRepin": true
+      },
+      {
+        "path": "lab/oracles/replay/selfcheck_fixtures/freeze-ham-reference.mjs",
+        "trail": [
+          "oraclePins",
+          "O-REPLAY",
+          "sha256",
+          "lab/oracles/replay/selfcheck_fixtures/freeze-ham-reference.mjs"
+        ],
+        "oldSha256": "c533122597c940d69c8a101a1a175ba5e9d6ab62f1efdb2d5526c9f65a86a206",
+        "newSha256": "752aaa5c706c514ec265ed6865458fd6bd78795486764e200c088c3f52f53f28",
+        "sameCommitRepin": true
+      },
+      {
+        "path": "lab/oracles/replay/selfcheck_fixtures/freeze-ham-reference.mjs",
+        "trail": [
+          "oraclePins",
+          "O-OBS",
+          "sha256",
+          "lab/oracles/replay/selfcheck_fixtures/freeze-ham-reference.mjs"
+        ],
+        "oldSha256": "c533122597c940d69c8a101a1a175ba5e9d6ab62f1efdb2d5526c9f65a86a206",
+        "newSha256": "752aaa5c706c514ec265ed6865458fd6bd78795486764e200c088c3f52f53f28",
+        "sameCommitRepin": true
+      },
+      {
+        "path": "lab/acceptance/budgets.json",
+        "trail": [
+          "budgetsRef",
+          "sha256"
+        ],
+        "oldSha256": "a8de4809bf8ff42a3ad06f5a1dab961c4e6dae74df12fc464edf0d50027abd2a",
+        "newSha256": "5ac9f83af125c50fbf04a62669c2b18e7ac4eaba023b560bfe1fb57e833503d3",
+        "sameCommitRepin": true
+      },
+      {
+        "path": "lab/acceptance/load-contract.json",
+        "trail": [
+          "loadContractRef",
+          "sha256"
+        ],
+        "oldSha256": "377ef278e6452c30607612de1c5a7920a9d396e8ffbe07d58a66311b8d0e5a34",
+        "newSha256": "f08456081846fd44f71d5a7e50e0df0f678db674fd28e175af7d2b40062ab8db",
+        "sameCommitRepin": true
+      }
+    ]
+  },
+  {
+    "commit": "372ff80d0e085199679ab0695b3e73e0a6f62c03",
+    "parent": "00589f842b99fe78fa9d2aff865d6b6202e8c2a6",
+    "movedPins": []
+  },
+  {
+    "commit": "739089ade52102bbaf020102674286e5e771b2b5",
+    "parent": "372ff80d0e085199679ab0695b3e73e0a6f62c03",
+    "movedPins": []
+  },
+  {
+    "commit": "4fa6192cf3b90ecc0f6f75ca018914d9590dd1eb",
+    "parent": "739089ade52102bbaf020102674286e5e771b2b5",
+    "movedPins": []
+  }
+]

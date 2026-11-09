@@ -1,0 +1,148 @@
+{
+  "reviewedHead": "4fa6192cf3b90ecc0f6f75ca018914d9590dd1eb",
+  "checkedAt": "2026-11-09T12:06:25.899389+00:00",
+  "verdict": "FIX-FIRST",
+  "scope": "contract and offline review; no engine or performance qualification",
+  "unrepinnedProjection": [
+    {
+      "commit": "f3ed62112028440389710a86fbf5c82c2f91afda",
+      "path": "lab/acceptance/oracle-contract.json",
+      "trail": [
+        "oracleRunners",
+        "O-CONTRACT",
+        "sha256",
+        "lab/acceptance/oracle-contract.json"
+      ],
+      "oldSha256": "82b3b4e0e774553a38ab4750abb6fc61b2d89431aeb3002f7692d3124fa80fb9",
+      "newSha256": "6fae9baacf3c36902fed3704526d50ec3788b05d1eddf6287b3989fc5438b266",
+      "sameCommitRepin": false
+    }
+  ],
+  "evaluator": {
+    "head": "4fa6192cf3b90ecc0f6f75ca018914d9590dd1eb",
+    "counts": {
+      "tests": 108,
+      "pass": 108,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    "logSha256": "9d9c0d0849295e8e00a8c1c9eb1443f682ee4a32669ff8afb790175113bb7352"
+  },
+  "merged-evaluator": {
+    "head": "40e24c0f613479d73a2f988a233dd82813d0542c",
+    "counts": {
+      "tests": 108,
+      "pass": 108,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    "logSha256": "e8ac0193c0b21babd13b0c3c90e5d0c8337f96addda8f8134e2313d04e7d69a6"
+  },
+  "pack": {
+    "receipt": "pack/triplex-pack-QKd0jS/receipt.json",
+    "sha256": "5ebd2a8c4929999b6e073d3ae59be4899b8eef07fab64eb97594c9775520d7a0",
+    "packages": 12,
+    "imports": 25
+  },
+  "gates": [
+    {
+      "runId": "G0-xtdb-20261109T114103Z-69a341",
+      "verdict": "FAIL",
+      "counts": {
+        "executed": 1289,
+        "pass": 1289,
+        "fail": 0,
+        "skip": 140,
+        "expectedSkip": 140,
+        "unexpectedSkip": 0
+      },
+      "sha256": "34ca8e40d710cbb080a86a19aaa2d4480b184355638298a73aa61d1de7ae06d1",
+      "heavyGrants": 9
+    },
+    {
+      "runId": "G0-xtdb-20261109T114700Z-529bc7",
+      "verdict": "PASS",
+      "counts": {
+        "executed": 1289,
+        "pass": 1289,
+        "fail": 0,
+        "skip": 140,
+        "expectedSkip": 140,
+        "unexpectedSkip": 0
+      },
+      "sha256": "7cfabc2be8b1a53586669d1bd25a6986b3c35648505f59e1cd01604dfea7e74c",
+      "heavyGrants": 9
+    },
+    {
+      "runId": "G0-datomic-20261109T115206Z-9e0a0c",
+      "verdict": "PASS",
+      "counts": {
+        "executed": 1344,
+        "pass": 1344,
+        "fail": 0,
+        "skip": 66,
+        "expectedSkip": 66,
+        "unexpectedSkip": 0
+      },
+      "sha256": "434f1d5efcdfc3688e690c0c5692f77ce9cddc633fb98b2468097a4a9044bf35",
+      "heavyGrants": 9
+    },
+    {
+      "runId": "G0-qlever-20261109T115628Z-679e55",
+      "verdict": "PASS",
+      "counts": {
+        "executed": 1513,
+        "pass": 1513,
+        "fail": 0,
+        "skip": 79,
+        "expectedSkip": 79,
+        "unexpectedSkip": 0
+      },
+      "sha256": "3466e439b493e1806b252eb7e80dac04b07878eac7420211549a8662a7f2e304",
+      "heavyGrants": 9
+    }
+  ],
+  "explicitW0Build": {
+    "retainedFiles": 52,
+    "stableAcrossAllReruns": true
+  },
+  "merge": {
+    "startedAt": "2026-11-09T12:02:13.063558+00:00",
+    "endedAt": "2026-11-09T12:02:16.099012+00:00",
+    "reviewedHead": "4fa6192cf3b90ecc0f6f75ca018914d9590dd1eb",
+    "main": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+    "mergedHead": "40e24c0f613479d73a2f988a233dd82813d0542c",
+    "conflicts": [
+      "lab/acceptance/ACCEPTANCE.md",
+      "lab/acceptance/obligations.json"
+    ],
+    "generatedOutputsRefreshed": true,
+    "reviewedImplementationUnchanged": true,
+    "mainPendingRowsPreserved": 100,
+    "contractMetadataChanges": [
+      {
+        "path": "lab/acceptance/ACCEPTANCE.md",
+        "oldSha256": "d85c3733a80c4d8641ac1ee8433efa6379bfc2e38b8638eb199c5588ec453ea9",
+        "newSha256": "d8c7e68174b6be46d7caedea03d45445c2769dae7a20a32002a642b46ae96945"
+      },
+      {
+        "path": "lab/acceptance/RULINGS-PENDING.md",
+        "oldSha256": "fce16f288ccce3032f5e30c7a7e41d1b985f89000a155200980a51720208b7eb",
+        "newSha256": "35a487c484e1d16b1478e124e24c9a41a347f99b43da5323eb11144e2a2dc61e"
+      },
+      {
+        "path": "lab/acceptance/obligations.json",
+        "oldSha256": "da52b44b621336afc115856484d5fcf6b6e0a58ff345f4c0d2d5b9776115c821",
+        "newSha256": "1d270d69aea640702fb5c7af1b5542fc4923d1428c4009320a47b34e78132355"
+      }
+    ]
+  },
+  "mergedVerify": {
+    "exitCode": 0,
+    "logSha256": "812880d3be0c7dda8ee70f57d7962f0c607040ace4a224354595c8a0d43b373f"
+  }
+}

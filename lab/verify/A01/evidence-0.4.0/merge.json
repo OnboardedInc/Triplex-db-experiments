@@ -1,0 +1,31 @@
+{
+  "startedAt": "2026-11-09T12:02:13.063558+00:00",
+  "endedAt": "2026-11-09T12:02:16.099012+00:00",
+  "reviewedHead": "4fa6192cf3b90ecc0f6f75ca018914d9590dd1eb",
+  "main": "8c96ea90e6d51dd727bcaf41d23d8f83e4da8e87",
+  "mergedHead": "40e24c0f613479d73a2f988a233dd82813d0542c",
+  "conflicts": [
+    "lab/acceptance/ACCEPTANCE.md",
+    "lab/acceptance/obligations.json"
+  ],
+  "generatedOutputsRefreshed": true,
+  "reviewedImplementationUnchanged": true,
+  "mainPendingRowsPreserved": 100,
+  "contractMetadataChanges": [
+    {
+      "path": "lab/acceptance/ACCEPTANCE.md",
+      "oldSha256": "d85c3733a80c4d8641ac1ee8433efa6379bfc2e38b8638eb199c5588ec453ea9",
+      "newSha256": "d8c7e68174b6be46d7caedea03d45445c2769dae7a20a32002a642b46ae96945"
+    },
+    {
+      "path": "lab/acceptance/RULINGS-PENDING.md",
+      "oldSha256": "fce16f288ccce3032f5e30c7a7e41d1b985f89000a155200980a51720208b7eb",
+      "newSha256": "35a487c484e1d16b1478e124e24c9a41a347f99b43da5323eb11144e2a2dc61e"
+    },
+    {
+      "path": "lab/acceptance/obligations.json",
+      "oldSha256": "da52b44b621336afc115856484d5fcf6b6e0a58ff345f4c0d2d5b9776115c821",
+      "newSha256": "1d270d69aea640702fb5c7af1b5542fc4923d1428c4009320a47b34e78132355"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "files": 429,
+  "bytes": 35307069,
+  "manifestSha256": "278cbd9b78e785453cd60aae69ef7bfd49997245dea71a954424cce96100e80f",
+  "allEntriesReread": true,
+  "initialMismatch": [
+    {
+      "path": "artifact-audit-attempt1.log",
+      "listedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "actualSha256": "313abfb0189be8fa2687cf798e1317b79d67f799d377e54b0626d6186b2b3c85"
+    }
+  ],
+  "dependencyCachesExcluded": true
+}

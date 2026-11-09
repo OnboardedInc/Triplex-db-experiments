@@ -1,0 +1,105 @@
+{
+  "head": "4fa6192cf3b90ecc0f6f75ca018914d9590dd1eb",
+  "compiledExactly": [
+    "Q101a",
+    "Q104a",
+    "Q98a",
+    "Q98b",
+    "Q98c",
+    "Q98d",
+    "Q98e",
+    "Q98f",
+    "Q98g",
+    "Q98h",
+    "Q98i"
+  ],
+  "pendingPreserved": 77,
+  "referenceFilesScanned": 266,
+  "changedReferences": [
+    {
+      "path": "lab/acceptance/RULINGS-PENDING.md",
+      "oldSha256": "cff6d49d7fb2329852610e85553a6b25cb808c3adacd49fe8a138fc17ce85ede",
+      "newSha256": "fce16f288ccce3032f5e30c7a7e41d1b985f89000a155200980a51720208b7eb"
+    },
+    {
+      "path": "lab/acceptance/RULINGS.md",
+      "oldSha256": "35e26650b2467850234e0679aaea50335e1e662df3e25c8347462e2b4174d698",
+      "newSha256": "077ee96f74d4da8e6fc956d8a93357bf9485f70db3970c15be089215d0dc8d0f"
+    },
+    {
+      "path": "lab/acceptance/budgets.json",
+      "oldSha256": "a8de4809bf8ff42a3ad06f5a1dab961c4e6dae74df12fc464edf0d50027abd2a",
+      "newSha256": "5ac9f83af125c50fbf04a62669c2b18e7ac4eaba023b560bfe1fb57e833503d3"
+    },
+    {
+      "path": "lab/acceptance/build_contract.py",
+      "oldSha256": "259b0c2985985fbdf2c79d1ad6379c2adb6d919d45611b63bf7002502d2499e6",
+      "newSha256": "653cec719e6f7f8964b00aca1f8ba1b40325e7b645153743059b0df3674a87db"
+    },
+    {
+      "path": "lab/acceptance/load-contract.json",
+      "oldSha256": "377ef278e6452c30607612de1c5a7920a9d396e8ffbe07d58a66311b8d0e5a34",
+      "newSha256": "f08456081846fd44f71d5a7e50e0df0f678db674fd28e175af7d2b40062ab8db"
+    },
+    {
+      "path": "lab/acceptance/obligations.json",
+      "oldSha256": "3f1260ea37f5de6da8c735389cb535cd70fd3333664189240bf37d62def1a0ce",
+      "newSha256": "da52b44b621336afc115856484d5fcf6b6e0a58ff345f4c0d2d5b9776115c821"
+    },
+    {
+      "path": "lab/acceptance/oracle-contract.json",
+      "oldSha256": "82b3b4e0e774553a38ab4750abb6fc61b2d89431aeb3002f7692d3124fa80fb9",
+      "newSha256": "6fae9baacf3c36902fed3704526d50ec3788b05d1eddf6287b3989fc5438b266"
+    },
+    {
+      "path": "lab/acceptance/pins/O-OBS-23e2273-SHA256SUMS",
+      "oldSha256": "486a4209d38fcc70a9ccb64d7c7ed9e0dfe25eef405ca21b097fee67d2697300",
+      "newSha256": "a05f2f5471c57e2f91b1828f10b992241d9d5f4053d286041658dea7ed674c26"
+    },
+    {
+      "path": "lab/acceptance/pins/O-REPLAY-0.4.9-SHA256SUMS",
+      "oldSha256": "357d747af267eee5863033288143d5f18952e21a43d2038b68258384a3aab322",
+      "newSha256": "0e252326e6c7a13076b9cae2234de4eeeb707a52b6c54d6787042c68c68753e6"
+    },
+    {
+      "path": "lab/bin/test/claim-round2.test.mjs",
+      "oldSha256": "6aef70bd2448a6b37dc040d19d9ee219a4e4e5fdf78c8094e1bb66ec45104be9",
+      "newSha256": "4a5c65d1d26fd71996f8a0f6e8b765608d628abb74e69fbd7a4bf2348a22edc7"
+    },
+    {
+      "path": "lab/bin/test/claim.test.mjs",
+      "oldSha256": "62de70ed333c40f8662da5749179f985f9f8b961a6c10459a0dadfad5bceb476",
+      "newSha256": "b8352b989fcf5857cb8f4a4a3d3766ed1f61f46ba6b0760f8568060f3b8f819f"
+    },
+    {
+      "path": "lab/config/slots.json",
+      "oldSha256": "3cd5463b6fda8af3653057e74ae287a34f1ad1478fa173e98f5ceaefc8e5c225",
+      "newSha256": "56e3b2ed1578d11e18b35b9108b20bcdfa828752b24600beb9a04f13b2b7b60e"
+    },
+    {
+      "path": "lab/oracles/replay/selfcheck_fixtures/freeze-ham-reference.mjs",
+      "oldSha256": "c533122597c940d69c8a101a1a175ba5e9d6ab62f1efdb2d5526c9f65a86a206",
+      "newSha256": "752aaa5c706c514ec265ed6865458fd6bd78795486764e200c088c3f52f53f28"
+    },
+    {
+      "path": "packages/qlever/experiments/native-entry.ts",
+      "oldSha256": "c82ce6cfabfcf61ab9f5d76791146d167741420a3be07b92559026f987634b0f",
+      "newSha256": "0f78b5bfcf5d2198015bd6a0e9111a4c7d98fb6fd9022de468d047d90a8bca8d"
+    },
+    {
+      "path": "qualification/capacity/configured-entities-v1/oracle.mjs",
+      "oldSha256": "5e4f92bf74fde4504c309d2888cc234013ceb2fbfc8bca7c06fff51cea054cd3",
+      "newSha256": "92c0378b8120aaa25fb7a16d8659aa1790141eba62aed8f7e7356213efe92e94"
+    },
+    {
+      "path": "qualification/capacity/historical-assertion-metadata-v1/oracle.mjs",
+      "oldSha256": "bc93f24c88365add1d215747cd95705a3c2a2b4fd1c6cdd7e347a014fb23b290",
+      "newSha256": "bbd656760719b67a3435419121b0b7df909a99ea9c1aba22d85ea1363cb6b08f"
+    },
+    {
+      "path": "qualification/capacity/historical-assertion-metadata-v2/oracle.mjs",
+      "oldSha256": "f661e8138d5194bbcbbe56eec9ec35f8766bc9938540192e7b0d92d04685721b",
+      "newSha256": "5ce6612714b2b7742c46e0599617d472b4bf18a352806e5d44a44577878c9649"
+    }
+  ]
+}
