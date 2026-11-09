@@ -114,6 +114,7 @@ export function memoryComposition(lane: "xtdb" | "qlever", scope: string, servic
     }),
     publishOutbox: (records) =>
       import("./w0-outbox.ts").then((m) => m.publishRecords(handle, records)),
+    scopeName: scope,
     name: "memory",
     assignments: { source: one, current: one, history: one, analytics: one, replicationEdges: [] },
     watermarks: async () => ({ source: st.position }),

@@ -17,6 +17,7 @@ import path from 'node:path';
 import { BT, GEN_VERSION, WORLD_BATCH, canonRow, digestRows, rngFor, sha256, subjectEntities, worldOps, worldSid } from './gen.mjs';
 import { runOracle, subjectOfEntity } from './oracle.mjs';
 import { diagnostics } from './diagnostics.mjs';
+import { requireDomainClaims } from './domain.mjs';
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 export const EMPTY_DIGEST = digestRows([]);
@@ -559,6 +560,7 @@ export function judgeBars(spec, m) {
 }
 
 function finish(ctx, checks, extra) {
+  requireDomainClaims(ctx);
   const m = ctx.ex.attempts.length ? metrics(ctx) : null;
   const bars = m ? judgeBars(ctx.spec, m) : [];
   const failedChecks = checks.filter(c => !c.ok);

@@ -71,6 +71,7 @@ export interface Assignments {
 }
 
 export interface CompositionHandle {
+  readonly scopeName?: string;
   sweepPage(
     subjects: readonly string[],
     basis: import("./w0-world.ts").PositionBasis,
@@ -152,6 +153,7 @@ async function publicComposition(lane: Lane, scope: string, variant: "public" | 
   const language = lane === "xtdb" ? "triplex-entities(xtdb-sql)" : "triplex-entities(sparql)";
   const sweep = await (await import("./w0-public.ts")).publicSweep(lane, h);
   const handle: CompositionHandle = {
+    scopeName: scope,
     sweepPage: sweep.page,
     storeCounts: sweep.counts,
     publishOutbox: (records) =>

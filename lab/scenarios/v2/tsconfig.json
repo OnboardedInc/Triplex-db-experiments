@@ -1,0 +1,4 @@
+{
+  "extends": "../../bench/tsconfig.json",
+  "include": ["generate.ts", "expect.ts", "offline.test.ts"]
+}
