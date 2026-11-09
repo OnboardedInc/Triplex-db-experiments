@@ -4,6 +4,7 @@ import fs from "node:fs";
 import assert from "node:assert/strict";
 import { randomUUID, createHash } from "node:crypto";
 import { Session } from "node:inspector";
+import { execFileSync } from "node:child_process";
 import { Effect, Layer, ManagedRuntime } from "effect";
 import { Triples } from "../../../../packages/core/dist/index.js";
 import {
@@ -65,6 +66,49 @@ const runtime = ManagedRuntime.make(
     queries: Layer.succeed(QueryExecutor, makeDatomicQueryExecutor(client, scope)),
   }).layer({ scope, capabilities: Capabilities.none }),
 );
+// [DX-B2-N3] Why: retain the actual preimages before execution and refuse moving sources.
+// Rejected: hashing only a few entrypoints after a run and treating that as a full source snapshot.
+const sourcePaths = [
+  "pnpm-lock.yaml",
+  "packages/core/dist/store/TriplesLive.js",
+  ...fs
+    .readdirSync("packages/datomic/src")
+    .filter((n) => n.endsWith(".ts") || n.endsWith(".json"))
+    .map((n) => "packages/datomic/src/" + n),
+  ...fs
+    .readdirSync("packages/datomic/dist")
+    .filter((n) => n.endsWith(".js"))
+    .map((n) => "packages/datomic/dist/" + n),
+  ...fs
+    .readdirSync("packages/datomic/gateway/src/triplex/gateway")
+    .filter((n) => n.endsWith(".clj"))
+    .map((n) => "packages/datomic/gateway/src/triplex/gateway/" + n),
+];
+const digest = (p) => createHash("sha256").update(fs.readFileSync(p)).digest("hex");
+const hashes = Object.fromEntries(sourcePaths.map((p) => [p, digest(p)]));
+for (const p of sourcePaths) {
+  const target = `${dir}/source/${p}`;
+  fs.mkdirSync(target.slice(0, target.lastIndexOf("/")), { recursive: true });
+  fs.copyFileSync(p, target);
+}
+const containers = JSON.parse(
+  execFileSync(
+    "docker",
+    [
+      "--host",
+      "unix:///Users/sam/.colima/triplex2/docker.sock",
+      "inspect",
+      ...["pg", "tx", "gw-w", "gw-r"].map((r) => "tx2-dxb2-n4c-" + r),
+    ],
+    { encoding: "utf8", timeout: 30000 },
+  ),
+).map((c) => ({
+  id: c.Id,
+  name: c.Name,
+  image: c.Image,
+  cpuset: c.HostConfig.CpusetCpus,
+  memory: c.HostConfig.Memory,
+}));
 const observations = [],
   all = [];
 let samples = [];
@@ -199,12 +243,8 @@ try {
       },
     ]),
   );
-  const paths = [
-    "packages/datomic/src/DatomicClient.ts",
-    "packages/datomic/dist/DatomicClient.js",
-    "packages/datomic/gateway/src/triplex/gateway/storage.clj",
-    "packages/datomic/gateway/src/triplex/gateway/main.clj",
-  ];
+  for (const p of sourcePaths)
+    assert.equal(digest(p), hashes[p], `Source moved during probe: ${p}`);
   const result = {
     diagnostic: true,
     scope,
@@ -214,9 +254,8 @@ try {
     fixture:
       "200 subjects with stamp/address only; real buildTraceCommand shapes and public Triples.transact; attribution probe, not N4 qualification",
     stats,
-    hashes: Object.fromEntries(
-      paths.map((p) => [p, createHash("sha256").update(fs.readFileSync(p)).digest("hex")]),
-    ),
+    hashes,
+    containers,
   };
   fs.writeFileSync(`${dir}/raw.json`, JSON.stringify({ all, observations }));
   fs.writeFileSync(`${dir}/result.json`, JSON.stringify(result, null, 2));

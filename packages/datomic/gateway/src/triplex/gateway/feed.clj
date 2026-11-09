@@ -22,14 +22,16 @@
   (let [cut (d/as-of db t) tx (d/entity cut (d/t->tx t)) p (:triplex.tx/position tx)]
     (if (nil? p)
       {:t (str t) :kind "skipped" :reason "non-triplex"}
-      (let [assert-attr (d/entid cut :f/asserted-in) retract-attr (d/entid cut :f/retracted-in) erase-attr (d/entid cut :f/erased-in)
+      (let [assert-attr (d/entid cut :f/asserted-in) id-attr (d/entid cut :f/id) retract-attr (d/entid cut :f/retracted-in) erase-attr (d/entid cut :f/erased-in)
             changes (->> data
                          (keep (fn [datom]
                                  (when (:added datom)
                                    (cond (= (:a datom) erase-attr) (throw (ex-info "Erasure sequence annotation requires ER01-D" {:status 409 :code "FeedErasureUnsupported"}))
-                                         (= (:a datom) assert-attr) (fact-change cut tx (:e datom) "assert")
+                                         ;; [DX-B2-N5] Why: new facts use the identity datom as the assertion witness; legacy rows may carry both.
+                                         ;; Rejected: continuing to watch only the omitted asserted-in attribute (loses new feed assertions).
+                                         (or (= (:a datom) assert-attr) (= (:a datom) id-attr)) (fact-change cut tx (:e datom) "assert")
                                          (= (:a datom) retract-attr) (fact-change cut tx (:e datom) "retract")))))
-                         (sort-by (juxt #(bigint (:position %)) :assertionId :op)) vec)
+                         distinct (sort-by (juxt #(bigint (:position %)) :assertionId :op)) vec)
             positions (->> (conj (mapv :position changes) (str p)) distinct (sort-by bigint) vec)
             txids (->> (concat [(:triplex.tx/id tx)]
                                (map (fn [c] (let [f (d/entity cut [:f/id (:assertionId c)])]
