@@ -103,6 +103,8 @@ export const ValueDomains = Object.freeze({
   memory: domain("memory/kv", long),
   foundationdb: domain("foundationdb/kv", long),
   xtdb: domain("xtdb", long),
+  // [CX-A01-0314-R2] Why: name Datomic's existing signed-64-bit admission explicitly. Rejected: relying on the removed memory-domain fallback.
+  datomic: domain("datomic", long),
   qlever: domain(
     "qlever",
     Object.freeze({ min: "-576460752303423488", max: "576460752303423487" }),

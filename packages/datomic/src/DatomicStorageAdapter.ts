@@ -8,6 +8,7 @@ import {
   type TripleRow,
   type TripleInput,
   type QueryPattern,
+  ValueDomains,
   WriteError,
   ReadError,
   MigrationError,
@@ -307,6 +308,7 @@ export const makeDatomicStorageAdapter = (
     });
 
   const adapter: StorageAdapterService = {
+    valueDomain: ValueDomains.datomic,
     supportedValueTypes: [
       "string",
       "number",

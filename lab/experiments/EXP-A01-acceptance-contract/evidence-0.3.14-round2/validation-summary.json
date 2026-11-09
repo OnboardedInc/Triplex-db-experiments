@@ -1,0 +1,87 @@
+{
+  "testedSource": "e96bfc3bb91f10d53d052a82fc0ed36a7cd3e614",
+  "mainIncluded": "833ea552be2abaa97c74a6864d392fea9351047b",
+  "sourceHashesStable": true,
+  "contractTests": 23,
+  "evaluatorPass": 108,
+  "mutationCatalog": 607,
+  "mutationsCaught": 519,
+  "retiredAnchors": 88,
+  "g0": [
+    {
+      "lane": "xtdb",
+      "runId": "G0-xtdb-20261109T065103Z-3715a0",
+      "counts": {
+        "executed": 1223,
+        "pass": 1223,
+        "fail": 0,
+        "skip": 140,
+        "expectedSkip": 140,
+        "unexpectedSkip": 0
+      },
+      "sourceTreeId": "3b649c68daae3b05c26754962ca974ed95de3d9c28e4adf78d10a0811e0ef698",
+      "objects": 41,
+      "builtFiles": 586,
+      "durableRoot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/round2/g0/G0-xtdb-20261109T065103Z-3715a0",
+      "capturedAtEpoch": 1794207199.0494301,
+      "startedAt": 1794207063.032
+    },
+    {
+      "lane": "datomic",
+      "runId": "G0-datomic-20261109T065358Z-1d6936",
+      "counts": {
+        "executed": 1258,
+        "pass": 1258,
+        "fail": 0,
+        "skip": 66,
+        "expectedSkip": 66,
+        "unexpectedSkip": 0
+      },
+      "sourceTreeId": "3b649c68daae3b05c26754962ca974ed95de3d9c28e4adf78d10a0811e0ef698",
+      "objects": 48,
+      "builtFiles": 548,
+      "durableRoot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/round2/g0/G0-datomic-20261109T065358Z-1d6936",
+      "capturedAtEpoch": 1794207368.6515589,
+      "startedAt": 1794207238.418
+    },
+    {
+      "lane": "qlever",
+      "runId": "G0-qlever-20261109T070302Z-464c58",
+      "counts": {
+        "executed": 1415,
+        "pass": 1415,
+        "fail": 0,
+        "skip": 79,
+        "expectedSkip": 79,
+        "unexpectedSkip": 0
+      },
+      "sourceTreeId": "3b649c68daae3b05c26754962ca974ed95de3d9c28e4adf78d10a0811e0ef698",
+      "objects": 41,
+      "builtFiles": 628,
+      "durableRoot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/round2/g0/G0-qlever-20261109T070302Z-464c58",
+      "capturedAtEpoch": 1794207941.730592,
+      "startedAt": 1794207782.831
+    }
+  ],
+  "runs": [
+    {
+      "label": "r2b-verify-final",
+      "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/r2b-verify-final-90bd610f-038f-4212-8181-22f21dde43e0/receipt.json",
+      "sha256": "7ee008c1c0230caff6db55f67b64d20645aa586ae8e2fa9374298320b42457b0"
+    },
+    {
+      "label": "r2b-contract-tests-final",
+      "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/r2b-contract-tests-final-780bee2b-0e23-48aa-836e-ed15dc717dd6/receipt.json",
+      "sha256": "24476aa2668d504b970898efddebf7951fd2dbf8be1c9564ef66a2a326c85217"
+    },
+    {
+      "label": "r2b-evaluator-final",
+      "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/r2b-evaluator-final-d4e8cd84-354a-46f6-aa3c-f8e6b018a0ed/receipt.json",
+      "sha256": "daf7191366ba70b9c44624379b811d810362e692707e45018ad795138cdf4eef"
+    }
+  ],
+  "focusedBrokerTests": 19,
+  "runtimeTypeFixture": "tsc exit zero with missing-domain expected error consumed",
+  "movedActivePins": [],
+  "noIndependentPromotion": true
+}

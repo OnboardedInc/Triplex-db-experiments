@@ -1970,3 +1970,53 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **5d1ee8f9:** 140 tests pass; a 10-second in-memory diagnostic with 256 readers checked 194,153 reads with no content, receipt, feed-order, resume or clock errors. Read p99 9.80 ms; feed lag p99 35.23 ms.
 - **But** offer-to-ACK for 5-10 facts was p50 45.94 / p99 82.45 ms (9 commits), against p50 <= 10 / p99 <= 50 ms. P2Q measured p50 5.9 ms offline on lane Q.
 - **Hypothesis:** 256 readers sharing the broker's event loop. Round 2 splits latency by stage on one clock, varies reader count and placement, and raises the sample to 200 commits per band before any live XTDB run.
+
+## 2026-11-09: RT01 round A accepted offline
+
+- **verify/RT01 7222e7e9:** F7 fixed through Temporal.journalBasis(P), an explicit all-valid-time mode bound to a position and used by every journal, command and feed read, including KV. Five fresh cases with 40 clock samples match O-REPLAY 0.5.0; 55 explicit-valid-time cuts still filter correctly; public inputs cannot set the internal all-valid-time flag.
+- **Pack gate:** fails on the out-of-scope DuckDB package's declarations, not on RT01. Pack qualification for lab packages needs its own gate.
+- **Next:** live G2 and G6 on a slot; contract 0.4.0 after 0.3.14.
+
+## 2026-11-09: FD01 accepted offline; P3M and DI01 started; contract 0.3.14 FIX-FIRST
+
+- **FD01 ACCEPT-OFFLINE (verify/FD01 c20526eb):** 14 host tests, 11 bench tests, 900 crash observations; forged origins, reboot identity, worker threads, ACK substitution and wrong-position records are all refused. FD01 moves lab/bench/driver.ts and lab/bin/gate.mjs, so it merges through a contract (0.4.0, with Q98a-i; Q98j waits for Sam). Open: native publication-event integration, live P3.
+- **Started from R41:** EXP-P3M (CX-P3M, brief lab/experiments/EXP-P3M/BRIEF.md) on FD01; EXP-DI01 design check by an Opus planner before its builder.
+- **Contract 0.3.14 review (verify/A01-0314 7c8f1f99) FIX-FIRST:** every gate passed, but two broker regressions came from the merge: GS12F's optional valueDomain field was left out by INT-Q's broker adapter, so it silently used the fallback domain (integer range error mistyped; valid depth-128 JSON refused). **Lesson:** an optional field on a shared adapter interface turns a missing implementation into silent fallback behavior that no gate sees; required fields make the compiler find the gap. Round 2 makes it required.
+
+## 2026-11-09 06:28Z: hourly pass (NORTH-STAR reread first): usage 7%; the scorecard is still all OPEN; two researchers
+
+- **Learnings since 05:27Z:**
+  - **Accepted:** P2X2 (merged; native lane X P2 closed), INT-Q (50 process stops, zero acknowledged commits lost), K01's G0 count fix (confirmed live at 61,384), RT01 round A (F7 fixed), FD01 (atomicity and an origin-bound lag clock).
+  - **Live runs keep finding one engine assumption each.** K01 hit three in a row: the union integer type, journal rows in the count, and lazily created tables. Round 13 switches to a diagnostic smoke run that records every failure.
+  - **Merges create silent fallbacks.** Contract 0.3.14's gates all passed, but INT-Q's broker adapter left out GS12F's optional valueDomain field, so two typed refusals changed. A required field would have failed to compile.
+  - **A label is not a proof:** FD01's equal clock labels hid different clock origins (402 ms read as 122 ms); QNODELAY's per-event mode did not bind a run's mode. Both fixes bind the property to its source.
+  - **P2 is the priority with no passing number anywhere.** Native XTDB is closed (fresh p50 33 ms); P2B's broker in memory gave p50 46 ms with 256 readers, with no engine involved, which points at placement or the Node event loop.
+  - **The disk guard stopped P5 A1** below 5 GiB; housekeeping restored 9.8 GiB.
+- **Scorecard:** every P1-P5 cell is still OPEN. Each accepted result is offline or diagnostic; promotion waits on contract 0.4.0, G03's executing gate and live windows. That ordering needs a written critical path.
+- **Dispatched (Opus 5.5 high):** R42, P2 commit latency for a Node broker under 256 readers (placement, event-loop contention, SQLite fsync durability and cost on macOS and Linux); R43, the critical path from today's accepted work to the first PASS cell on the scorecard.
+
+## 2026-11-09: K01 smoke run reaches D/L and D'; VM trim returns 33 GiB
+
+- **K01 round 13 (9b764517):** the diagnostic smoke run walked every G0 step and recorded two failures, both missing imports, fixed offline; source restarts matched D/L and a fresh seed matched D'. One smoke run found what would have been two more full live runs. Clone qualification and publication are still unverified.
+- **Disk:** host free space was falling again (7.2 GiB) because the VM's disk image kept the blocks of every removed volume. fstrim inside the triplex2 VM returned 32.9 GiB; host free is 40 GiB. **Lesson:** removing a volume frees space inside the VM, not on the host; trim after slot runs.
+
+## 2026-11-09: P2B round 2: moving readers to a worker brings commit p50 to 7.32 ms; RT01 live window starts
+
+- **P2B 5c8f30fa (7,200 commits, n=200 per band, 142 tests):** reader event-loop contention confirmed. 10-fact offer-to-ACK with 256 readers went from p50/p99 226.38/712.45 ms (readers in the broker's thread) to 7.32/55.42 ms (readers in a worker); a first isolated run gave 6.68/21.90 ms. Queue wait fell from 65 ms to 0.008 ms median. Readers now default to a worker.
+- **The remaining tail:** the p99 sample spent 39.11 ms in scheduling delay; the slowest sample spent 39.17 ms in SQLite's COMMIT with full fsync. The host runs many agents, so part of the tail is host noise. P2B round 3 waits for R42 (placement, fsync durability and cost).
+- **First P2 median under the bar on any lane at 256 readers,** diagnostic only (in memory, no live XTDB).
+- **RT01 round 5 (554bf7d2):** N1 fixed; PIN-CHANGES-0.4.0.md written. RT01 now has xtdb-s1 for live G2 (diagnosing the earlier timeouts first) and G6 with a calibrated A/A window. K01's full live run follows after its offline review.
+
+## 2026-11-09: R42: the P2 floor on this Mac is F_FULLFSYNC (about 4 ms); the tail is main-thread work
+
+- **P2Q's 5.9 ms was feed lag, not commit latency;** its offer-to-ACK was p50 7.1 / p99 32.8 ms with zero readers (n=28). SQLite costs about 1 ms per commit over P2Q's segment log, not 40 ms.
+- **Durability floor:** SQLite WAL with synchronous=FULL and fullfsync=ON measured p50 3.4-4.0 / p99 7.4-8.3 ms on this Mac; without F_FULLFSYNC it is 0.1 ms but not durable to the drive. SQL01 is durable as written (bundled SQLite 3.53.1), but requireFullFsync defaults to false, so a volume without F_FULLFSYNC would silently fall back. No power-loss test exists.
+- **Tail causes on the broker's main thread:** the harness feed consumer's fsyncSync per page, synchronous Atomics.wait RPCs for pin, purge and feed, and overlay reads served on the main thread once the single reader worker saturates.
+- **Round 3 (CX-P2B):** feed consumer off-thread, reads served inside reader workers with a shared watermark, a 4-8 worker pool, asynchronous RPCs, requireFullFsync on by default with a typed refusal. R42 expects p50 about 7 ms and p99 10-25 ms on a quiet host.
+- **Lesson:** compare like with like. Two numbers both called "latency" measured different intervals (feed lag versus offer-to-ACK) and made the SQLite store look 40 ms slower than it is.
+
+## 2026-11-09: K01 round 13 accepted offline; why 437 tests missed a missing import
+
+- **verify/K01 88bce4f0:** ACCEPT-OFFLINE, 511 tests, five retained smoke captures reproduce D and D'. The smoke ledger is diagnostic only and grants nothing.
+- **Why the import was missed:** the tests imported engine.mjs to test its exported helpers but never ran the private golden, fresh and loadGolden branches; importing a module or syntax-checking it does not resolve names inside function bodies that never run, and tsc did not semantically check that JavaScript file. Now an allowJs/checkJs test fails on unbound names, with a negative control.
+- **Lesson:** our own JavaScript tools need the same type checking as the product. Queued: checkJs over every lab/bin and lab/bench file.

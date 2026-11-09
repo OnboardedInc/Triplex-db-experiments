@@ -208,3 +208,21 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - 2026-11-09 disk: free space fell to 4.8 GiB. Archived and removed 5 finished worktrees (p2x2, verify-p2x2, contract-0312, sql01,
   verify-int-q; INDEX.txt in worktree-archive/), now 9.9 GiB free. Nine agent-* worktrees (about 22 GiB) are locked by this session's
   agent tool and stay. runs/engines/datomic-build is 5.4 GiB and stays until EXP-DA04 no longer needs image rebuilds.
+- 2026-11-09 RT01 round A ACCEPT-OFFLINE (verify/RT01 7222e7e9; builder 472c2c24): F7 fixed, F1-F6 pass, explicit validAt filtering
+  intact (55 cuts), reader audit by stored data over 800 files. Open: N1 (low) journal-clock.test.ts:40 passes a nested basis that is
+  ignored; live G2/G6 (scale window, after the K01 smoke run); re-pins in contract 0.4.0 with O-REPLAY 0.5.0, Q89 (except Q89g, waiting
+  for Sam), Q90, Q92, Q95 (except S1-S4, waiting for Sam) and G03's pins. 0.4.0 starts after 0.3.14 is accepted and merged.
+- Repo-wide pack gate blocked by DuckDB TS4023 declaration errors (packages/duckdb effect-storage.ts:112, TypeDomains.ts:17), so
+  check-packages.mjs rejects the DuckDB tarball. DuckDB belongs to another team (SCOPE 4.3): do not edit it. Queued small task: give the
+  lab its own pack gate over lab-owned packages, which reports DuckDB's status separately as out of scope rather than hiding it.
+- 2026-11-09 disk rule: the triplex2 VM's disk image does not shrink when volumes are removed. `colima ssh -p triplex2 -- sudo fstrim -av`
+  returned 32.9 GiB (image 59 GiB to 26 GiB; host free 7.2 GiB to 40 GiB). Run it after any slot run that removes volumes, and whenever
+  host free space is below 15 GiB, then `docker context use colima` (memory: triplex2-docker-context). It is safe with containers running.
+- 2026-11-09 K01 round 13 (9b764517): typed catalog checks for tables the seed does not write; a diagnostic smoke run found two missing
+  imports (fixed offline); source restarts matched D/L, a fresh seed matched D'. CX-VK01 reviews; then the full live run. P5 A1 waits for
+  K01's native G0 handoff, then reruns (disk is no longer the constraint).
+- 2026-11-09 K01 round 13 ACCEPT-OFFLINE (verify/K01 88bce4f0; 511 tests; five smoke captures reproduce D/D'). Next in the scale window
+  after CX-RT01 releases xtdb-s1: the full K01 live run (LIVE runbook at 9b764517 plus the reviewer's tests), then P5 A1.
+- Queued small task (from K01 r13): lab/bin/*.mjs are not semantically type-checked, so an unbound name (sha256File) inside an unexecuted
+  branch passed 437 tests. Enable TypeScript checkJs over every lab/bin and lab/bench JavaScript file, triage the diagnostics, and fail
+  the lab check on unbound names.
