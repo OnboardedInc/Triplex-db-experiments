@@ -22,7 +22,11 @@ import { DatomicClient, DatomicHttpError } from "./DatomicClient.js";
 import { matchesPattern, packValue, visibleAt } from "./rows.js";
 import { stagedInput } from "./protocol.js";
 import { databaseName } from "./scopeName.js";
-import { CurrentTransactions, type TransactionState } from "./TransactionContext.js";
+import {
+  CurrentTransactions,
+  DatomicOptimisticRestart,
+  type TransactionState,
+} from "./TransactionContext.js";
 
 export class DatomicSerializationConflict extends WriteError {
   readonly reason = "serialization-conflict" as const;
@@ -35,12 +39,37 @@ export const makeDatomicStorageAdapter = (
     readonly maxRetries?: number;
     readonly resolutionTimeoutMs?: number;
     readonly admissionQueue?: boolean;
+    readonly optimisticCommits?: boolean;
   } = {},
 ): StorageAdapterService => {
   const key = Symbol(scopeKey);
   const db = databaseName(scopeKey);
   const maxRetries = options.maxRetries ?? 12;
   const resolutionTimeoutMs = options.resolutionTimeoutMs ?? 30_000;
+  let lastSeenPosition = 0;
+  const cache = new Map<string, TripleRow>();
+  const remember = (row: TripleRow) => {
+    cache.delete(row.id);
+    cache.set(row.id, {
+      ...row,
+      retracted_at: null,
+      retracted_position: null,
+      retract_tx_id: null,
+    });
+    if (cache.size > 100000) cache.delete(cache.keys().next().value!);
+  };
+  const observe = (name: string, row: TripleRow) => {
+    if (name === db) remember(row);
+  };
+  client.rowObservers.add(observe);
+  const cached = (id: string) => {
+    const row = cache.get(id);
+    if (row) {
+      cache.delete(id);
+      cache.set(id, row);
+    }
+    return row;
+  };
   const finalPositions = new Map<string, number>();
   const admission = Semaphore.makeUnsafe(1);
   const current = Effect.map(CurrentTransactions, (transactions) => transactions.get(key));
@@ -54,6 +83,7 @@ export const makeDatomicStorageAdapter = (
       const result = await client.basis(db);
       const position = Number(result.position.v);
       if (!Number.isSafeInteger(position) || position < 0) throw new RangeError("Unsafe position");
+      lastSeenPosition = Math.max(lastSeenPosition, position);
       return position;
     });
   const requireTransaction = Effect.flatMap(current, (state) =>
@@ -71,6 +101,18 @@ export const makeDatomicStorageAdapter = (
   ): Effect.Effect<readonly TripleRow[], ReadError> =>
     Effect.gen(function* () {
       const state = yield* current;
+      if (
+        state?.optimistic &&
+        (history ||
+          basis !== undefined ||
+          id === undefined ||
+          (!state.rows.has(id) && !state.prefetch?.rows.has(id)))
+      ) {
+        state.restart.needed = true;
+        return yield* Effect.fail(
+          new DatomicOptimisticRestart({ message: "Optimistic cache cannot answer this read" }),
+        );
+      }
       if (state) {
         if (history || (id === undefined && entityIds === undefined && !pattern.entityId))
           state.scopeWide = true;
@@ -101,20 +143,53 @@ export const makeDatomicStorageAdapter = (
           ...(state === undefined
             ? {}
             : {
-                handle: state.handle,
+                ...(state.optimistic ? {} : { handle: state.handle }),
                 ...(state.rows.size || state.position !== state.sourceK
                   ? { staged: stagedInput(state) }
                   : {}),
               }),
         }),
       );
-      if (state) for (const row of rows) state.entities.add(row.entity_id);
+      for (const row of rows) {
+        if (state) state.entities.add(row.entity_id);
+        if (!state?.newIds.has(row.id)) remember(row);
+      }
+      if (state && id !== undefined && rows.length === 0) state.scopeWide = true;
       return rows
         .filter((row) => matchesPattern(row, pattern))
         .sort(
           (left, right) => left.recorded_at - right.recorded_at || left.id.localeCompare(right.id),
         );
     });
+
+  // [DX-B3-M3] Why: only an ACK bound to this operation or its resolved receipt can publish cached positions.
+  // Rejected: caching provisional rows before the transactor has acknowledged them.
+  const settle = (state: TransactionState, position: number) => {
+    const provisional = state.position,
+      lower = state.sourceK,
+      delta = position - provisional;
+    const shift = (p: number) => (p > lower && p <= provisional ? p + delta : p);
+    lastSeenPosition = Math.max(lastSeenPosition, position);
+    for (const claim of state.claims.values()) finalPositions.set(claim.txId, position);
+    for (const [id, row] of state.rows) {
+      const next = {
+        ...row,
+        recorded_position: state.newIds.has(id)
+          ? shift(row.recorded_position)
+          : row.recorded_position,
+        retracted_position: row.retracted_position === null ? null : shift(row.retracted_position),
+      };
+      if (state.newIds.has(id) && row.attribute === ":_tx/position")
+        next.value_number = next.recorded_position;
+      state.rows.set(id, next);
+      if (state.newIds.has(id)) {
+        if (row.tx_id) finalPositions.set(row.tx_id, next.recorded_position);
+        remember(next);
+      }
+    }
+    state.position = position;
+    while (finalPositions.size > 100000) finalPositions.delete(finalPositions.keys().next().value!);
+  };
 
   const persist = (
     state: TransactionState,
@@ -145,7 +220,7 @@ export const makeDatomicStorageAdapter = (
           state.submitted = true;
           const ack = await bounded(
             client.transact(db, {
-              sourceK: state.sourceK,
+              sourceK: state.optimistic ? null : state.sourceK,
               position: state.position,
               span: state.position - state.sourceK,
               entities: [...state.entities],
@@ -156,7 +231,7 @@ export const makeDatomicStorageAdapter = (
               rows: [...state.rows.values()],
               newIds: [...state.newIds],
               claims: [...state.claims.values()],
-              handle: state.handle,
+              ...(state.optimistic ? {} : { handle: state.handle }),
               release: true,
             }),
           );
@@ -182,14 +257,7 @@ export const makeDatomicStorageAdapter = (
               t.t === "long" &&
               BigInt(t.v) >= 0n
             ) {
-              for (const claim of state.claims.values())
-                finalPositions.set(claim.txId, Number(p.v));
-              for (const row of state.rows.values())
-                if (state.newIds.has(row.id) && row.tx_id)
-                  finalPositions.set(
-                    row.tx_id,
-                    Number(p.v) - state.position + row.recorded_position,
-                  );
+              settle(state, Number(p.v));
               return;
             }
           }
@@ -200,11 +268,13 @@ export const makeDatomicStorageAdapter = (
             error.status < 500 &&
             error.code !== "OperationDuplicate"
           ) {
-            if (["CasConflict", "CommandConflict"].includes(error.code))
+            if (["CasConflict", "CommandConflict"].includes(error.code)) {
+              client.commitDiagnostics.conflicts++;
               throw new DatomicSerializationConflict({
                 message: "Datomic source changed while staging the transaction",
                 cause: error,
               });
+            }
             throw new WriteError({ message: "Datomic transaction was rejected", cause: error });
           }
           submitError = error;
@@ -216,10 +286,7 @@ export const makeDatomicStorageAdapter = (
               const p = Number(validateTagged(receipt.position).v);
               if (!Number.isSafeInteger(p) || p < state.position - state.sourceK)
                 throw new Error("Invalid operation receipt position");
-              for (const claim of state.claims.values()) finalPositions.set(claim.txId, p);
-              for (const row of state.rows.values())
-                if (state.newIds.has(row.id) && row.tx_id)
-                  finalPositions.set(row.tx_id, p - state.position + row.recorded_position);
+              settle(state, p);
               return;
             }
           } catch (error) {
@@ -251,7 +318,7 @@ export const makeDatomicStorageAdapter = (
   ): Effect.Effect<A, E | WriteError> =>
     Effect.suspend(() => {
       const operationId = randomUUID();
-      const attempt = (retry: number): Effect.Effect<A, E | WriteError> =>
+      const attempt = (retry: number, forceSnapshot = false): Effect.Effect<A, E | WriteError> =>
         Effect.gen(function* () {
           const transactions = yield* CurrentTransactions;
           const parent = transactions.get(key);
@@ -268,6 +335,8 @@ export const makeDatomicStorageAdapter = (
               sourceK: parent.sourceK,
               handle: parent.handle,
               ...(parent.prefetch === undefined ? {} : { prefetch: parent.prefetch }),
+              optimistic: parent.optimistic === true,
+              restart: parent.restart,
               entities: new Set(parent.entities),
               live: new Set(parent.live),
               scopeWide: parent.scopeWide,
@@ -278,7 +347,15 @@ export const makeDatomicStorageAdapter = (
             };
             const context = new Map(transactions);
             context.set(key, child);
-            const result = yield* Effect.provideService(effect, CurrentTransactions, context);
+            const result = yield* Effect.provideService(effect, CurrentTransactions, context).pipe(
+              Effect.ensuring(
+                Effect.sync(() => {
+                  for (const entity of child.entities) parent.entities.add(entity);
+                  for (const id of child.live) parent.live.add(id);
+                  parent.scopeWide ||= child.scopeWide;
+                }),
+              ),
+            );
             // A failed child never mutates the parent. A successful child cannot
             // overwrite a sibling's intervening writes or allocated positions.
             const unchanged = <K, V>(left: ReadonlyMap<K, V>, right: ReadonlyMap<K, V>) =>
@@ -306,14 +383,32 @@ export const makeDatomicStorageAdapter = (
             parent.newIds = child.newIds;
             return result;
           }
+          const hint = transactionOptions?.hint;
+          const optimistic =
+            options.optimisticCommits !== false &&
+            !forceSnapshot &&
+            transactionOptions?.replaySafe === true &&
+            hint !== undefined &&
+            (hint.tripleIds ?? []).every((id) => cache.has(id));
+          if (optimistic) client.commitDiagnostics.optimisticAttempts++;
           const snapshot = yield* read<{
             handle: string;
             position: number;
             prefetch?: NonNullable<TransactionState["prefetch"]>;
           }>(() =>
-            transactionOptions?.hint === undefined
-              ? client.begin(db)
-              : client.beginCommand(db, transactionOptions.hint),
+            optimistic
+              ? Promise.resolve({
+                  handle: "",
+                  position: lastSeenPosition,
+                  prefetch: {
+                    ...(hint?.commandId === undefined ? {} : { commandId: hint.commandId }),
+                    claim: null,
+                    rows: new Map((hint?.tripleIds ?? []).map((id) => [id, cached(id)!])),
+                  },
+                })
+              : transactionOptions?.hint === undefined
+                ? client.begin(db)
+                : client.beginCommand(db, transactionOptions.hint),
           ).pipe(
             Effect.mapError(
               (cause) => new WriteError({ message: "Cannot acquire Datomic source cut", cause }),
@@ -323,6 +418,8 @@ export const makeDatomicStorageAdapter = (
           const state: TransactionState = {
             client,
             scopeKey,
+            optimistic,
+            restart: { needed: false },
             sourceK,
             handle: snapshot.handle,
             ...("prefetch" in snapshot ? { prefetch: snapshot.prefetch } : {}),
@@ -331,7 +428,7 @@ export const makeDatomicStorageAdapter = (
             claims: new Map(),
             newIds: new Set(),
             entities: new Set(),
-            live: new Set(),
+            live: new Set(optimistic ? hint?.tripleIds : []),
             scopeWide: false,
           };
           for (const row of state.prefetch?.rows.values() ?? [])
@@ -340,6 +437,10 @@ export const makeDatomicStorageAdapter = (
           context.set(key, state);
           return yield* Effect.gen(function* () {
             const result = yield* Effect.provideService(effect, CurrentTransactions, context);
+            if (state.restart.needed)
+              return yield* Effect.fail(
+                new WriteError({ message: "Unsupported optimistic read requires a snapshot" }),
+              );
             if (
               state.rows.size === 0 &&
               state.claims.size === 0 &&
@@ -357,15 +458,29 @@ export const makeDatomicStorageAdapter = (
                 retry < maxRetries
                   ? Effect.andThen(
                       Effect.sleep(`${Math.min(50, retry * 2)} millis`),
-                      attempt(retry + 1),
+                      Effect.suspend(() => {
+                        client.commitDiagnostics.replays++;
+                        for (const id of hint?.tripleIds ?? []) cache.delete(id);
+                        return attempt(retry + 1, true);
+                      }),
                     )
                   : Effect.fail(error),
               ),
             );
           }).pipe(
+            Effect.catch((error) =>
+              state.restart.needed && optimistic
+                ? Effect.suspend(() => {
+                    client.commitDiagnostics.optimisticFallbacks++;
+                    return attempt(retry, true);
+                  })
+                : Effect.fail(error),
+            ),
             Effect.ensuring(
               Effect.promise(() =>
-                state.submitted ? Promise.resolve() : client.release(db, snapshot.handle),
+                state.submitted || optimistic
+                  ? Promise.resolve()
+                  : client.release(db, snapshot.handle),
               ).pipe(Effect.ignore),
             ),
           );
@@ -488,6 +603,10 @@ export const makeDatomicStorageAdapter = (
         const state = yield* requireTransaction;
         const pending = state.claims.get(commandId);
         if (pending !== undefined) return pending.txId;
+        if (state.optimistic && state.prefetch?.commandId !== commandId) {
+          state.restart.needed = true;
+          return yield* Effect.fail(new WriteError({ message: "Optimistic claim was not hinted" }));
+        }
         const existing = yield* read(() =>
           state.prefetch?.commandId === commandId
             ? Promise.resolve(state.prefetch.claim)
@@ -591,7 +710,12 @@ export const makeDatomicStorageAdapter = (
           }),
       }),
     // The runtime's scoped layer owns the shared client.
-    close: () => Effect.void,
+    close: () =>
+      Effect.sync(() => {
+        client.rowObservers.delete(observe);
+        cache.clear();
+        finalPositions.clear();
+      }),
   };
   return adapter;
 };

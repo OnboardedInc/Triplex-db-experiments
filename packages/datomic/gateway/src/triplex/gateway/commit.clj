@@ -6,7 +6,7 @@
 (def code
   '(letfn [(value [e a] (:v (first (d/datoms db :eavt e a))))
            (conflict [] (throw (ex-info "TRIPLEX_CONFLICT" {})))]
-     (let [{:keys [scope source provisional span live entities scope-wide ops times irregular]} payload
+     (let [{:keys [scope source provisional span live entities scope-wide ops times irregular position-irregular]} payload
            h (value scope :triplex.scope/position) final (+ h span) delta (- final provisional)
            lower (- provisional span)
            shifted (fn [p] (if (< lower p (inc provisional)) (+ p delta) p))
@@ -59,7 +59,8 @@
                         [[:db/add scope :triplex.scope/position final]]
                         (when maximum [[:db/add scope :triplex.scope/max-recorded-at maximum]
                                        [:db/add "datomic.tx" :triplex.tx/max-recorded-at maximum]])
-                        (when irregular [[:db/add scope :triplex.scope/irregular true]]))))))))
+                        (when irregular [[:db/add scope :triplex.scope/irregular true]])
+                        (when position-irregular [[:db/add scope :triplex.scope/position-regular false]]))))))))
 (def source-hash (schema/sha256 (pr-str code)))
 (defn install! [conn scope]
   (let [db (d/db conn) e (d/entid db [:triplex.scope/key scope])]

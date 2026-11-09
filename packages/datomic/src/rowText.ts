@@ -56,6 +56,13 @@ export function encodeRowText(row: TripleRow, version: "1" | "2" = "2"): string 
   };
   for (const c of ["recorded_position", "schema_version"] as const)
     if (!Number.isSafeInteger(row[c])) throw new RangeError(`Unsafe ${c}`);
+  if (row.recorded_position < 0) throw new RangeError("Negative recorded position");
+  if (
+    version === "2" &&
+    row.attribute === ":_tx/position" &&
+    (row.value_type !== "number" || row.value_number !== row.recorded_position)
+  )
+    throw new TypeError("Journal position value must equal its recorded position");
   const ref = row.value_type === "ref" ? row.value_string! : "";
   return (
     version +

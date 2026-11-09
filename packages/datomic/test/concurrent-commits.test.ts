@@ -29,7 +29,10 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")(
       const handles = [];
       for (let i = 0; i < count; i++) {
         const client = new DatomicClient(url, 30000);
-        const adapter = makeDatomicStorageAdapter(client, scope, { maxRetries: 2 });
+        const adapter = makeDatomicStorageAdapter(client, scope, {
+          maxRetries: 2,
+          optimisticCommits: false,
+        });
         const pin: { position?: number } = {};
         const view = {
           ...adapter,

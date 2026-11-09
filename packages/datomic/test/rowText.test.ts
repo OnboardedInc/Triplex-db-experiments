@@ -177,3 +177,10 @@ it("keeps a sixteen-digit version 1 id distinct from the version 2 position", ()
   const row = { ...base(), id: "0000000000000123" };
   expect(decodeRowText(encodeRowText(row, "1"))).toEqual(row);
 });
+
+it("rejects inconsistent journal position values before encoding", () => {
+  expect(() =>
+    encodeRowText({ ...base(), attribute: ":_tx/position", value_number: 123 }),
+  ).toThrow();
+  expect(() => encodeRowText({ ...base(), recorded_position: -1 })).toThrow();
+});

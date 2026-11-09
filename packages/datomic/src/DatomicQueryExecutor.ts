@@ -16,7 +16,7 @@ import type { DatalogQuery } from "@triplex-build/triplex/datalog";
 import { isVariable } from "@triplex-build/triplex/datalog";
 import { DatomicClient } from "./DatomicClient.js";
 import { validateTagged, type TaggedValue } from "./codec.js";
-import { CurrentTransactions } from "./TransactionContext.js";
+import { CurrentTransactions, DatomicOptimisticRestart } from "./TransactionContext.js";
 import { compileDatomic } from "./compiler.js";
 import { stagedInput } from "./protocol.js";
 import { finish, page } from "./kernel.js";
@@ -45,6 +45,12 @@ export function makeDatomicQueryExecutor(
             : new ReadError({ message: "Invalid Datomic query", cause }),
       });
       const state = yield* source;
+      if (state?.optimistic) {
+        state.restart.needed = true;
+        return yield* Effect.fail(
+          new DatomicOptimisticRestart({ message: "Datalog requires a pinned snapshot" }),
+        );
+      }
       if (state) state.scopeWide = true;
       const requested = basis ?? { validAt: Date.now() };
       const started = Date.now();

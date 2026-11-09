@@ -15,7 +15,7 @@ import { makeDatomicQueryExecutor } from "../src/DatomicQueryExecutor.js";
 
 // [EXP-DX1] Why: count the complete public command, including TripleLive and journal writes.
 // Rejected: timing/counting only a direct adapter transaction with no precondition or command id.
-describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("two-call commits", () => {
+describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("optimistic commits", () => {
   it("prefetches once, preserves duplicates/stale conditions/lost ACK, releases failed handles", async () => {
     const scope = DatabaseScope.test(`dx1-commit-${randomUUID()}`);
     const client = new DatomicClient(
@@ -54,15 +54,13 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("two-call commits", 
       };
       const spy = vi.spyOn(client, "request");
       const result = await runtime.runPromise(triples.transact(ops, meta));
-      expect(spy).toHaveBeenCalledTimes(2);
-      expect(spy.mock.calls.map((c) => c[1].split("/").at(-1))).toEqual(["begin", "transact"]);
-      const submit = spy.mock.calls[1]![2] as { handle: string; release: boolean };
+      expect(spy).toHaveBeenCalledTimes(1);
+      expect(spy.mock.calls.map((c) => c[1].split("/").at(-1))).toEqual(["transact"]);
+      const submit = spy.mock.calls[0]![2] as { handle?: string; release: boolean };
       expect(submit.release).toBe(true);
       spy.mockRestore();
       const db = (await client.create(scope)).db;
-      await expect(client.rows(db, { handle: submit.handle })).rejects.toMatchObject({
-        code: "SnapshotExpired",
-      });
+      expect(submit.handle).toBeUndefined();
       await expect(runtime.runPromise(triples.transact(ops, meta))).rejects.toMatchObject({
         _tag: "CommandAlreadyCommittedError",
         commandId: meta.commandId,
@@ -201,3 +199,102 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("gateway timing and 
     }
   }, 60000);
 });
+
+// [DX-B3-M3] Why: a warm immutable row cache must never turn another client's retirement into a successful CAS.
+// Rejected: a same-client stale test alone (it could know locally that the row was retired).
+describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")(
+  "optimistic conflict and fallback",
+  () => {
+    it("rejects a remotely moved stamp after optimistic replay and restarts entity-state reads before submission", async () => {
+      const scope = DatabaseScope.test(`dxb3-remote-${randomUUID()}`);
+      const clients = [0, 1].map(
+        () =>
+          new DatomicClient(process.env["DATOMIC_GATEWAY_URL"] ?? "http://127.0.0.1:8499", 10000),
+      );
+      const runtimes = clients.map((client) =>
+        ManagedRuntime.make(
+          Runtime.define({
+            name: "DX-B3",
+            storage: Layer.succeed(StorageAdapter, makeDatomicStorageAdapter(client, scope)),
+            queries: Layer.succeed(QueryExecutor, makeDatomicQueryExecutor(client, scope)),
+          }).layer({ scope, capabilities: Capabilities.none }),
+        ),
+      );
+      try {
+        const [a, b] = await Promise.all(runtimes.map((r) => r.runPromise(Triples)));
+        const seed = await runtimes[0]!.runPromise(
+          a!.transact([
+            {
+              op: "assert",
+              entityId: EntityId.make("root"),
+              attribute: Attribute.make(":dx/stamp"),
+              value: { type: "integer", value: "0" },
+            },
+          ]),
+        );
+        const ops = [
+          { op: "retract" as const, id: seed.triples[0]!.id },
+          {
+            op: "assert" as const,
+            entityId: EntityId.make("root"),
+            attribute: Attribute.make(":dx/stamp"),
+            value: { type: "integer" as const, value: "1" },
+          },
+        ];
+        await runtimes[1]!.runPromise(
+          b!.transact(ops, {
+            commandId: "remote-winner",
+            preconditions: [{ _tag: "TripleLive", id: seed.triples[0]!.id }],
+          }),
+        );
+        const spy = vi.spyOn(clients[0]!, "request");
+        await expect(
+          runtimes[0]!.runPromise(
+            a!.transact(ops, {
+              commandId: "remote-loser",
+              preconditions: [{ _tag: "TripleLive", id: seed.triples[0]!.id }],
+            }),
+          ),
+        ).rejects.toMatchObject({ _tag: "TransactionConflictError" });
+        expect(spy.mock.calls.map((c) => c[1].split("/").at(-1))).toEqual([
+          "transact",
+          "begin",
+          "release",
+        ]);
+        expect(clients[0]!.commitDiagnostics.conflicts).toBe(1);
+        expect(clients[0]!.commitDiagnostics.replays).toBe(1);
+        spy.mockClear();
+        const written = await runtimes[0]!.runPromise(
+          a!.transact(
+            [
+              {
+                op: "assert",
+                entityId: EntityId.make("empty"),
+                attribute: Attribute.make(":dx/value"),
+                value: { type: "string", value: "fresh" },
+              },
+            ],
+            {
+              commandId: "entity-state",
+              preconditions: [
+                { _tag: "EntityState", entityId: EntityId.make("empty"), tripleIds: [] },
+              ],
+            },
+          ),
+        );
+        expect(written.position).toBeGreaterThan(seed.position);
+        expect(spy.mock.calls.map((c) => c[1].split("/").at(-1))).toEqual([
+          "begin",
+          "read",
+          "transact",
+        ]);
+        expect(clients[0]!.commitDiagnostics.optimisticFallbacks).toBe(1);
+        spy.mockRestore();
+      } finally {
+        for (const r of runtimes) await r.dispose();
+        await clients[0]!.delete(scope);
+        for (const c of clients) c.close();
+      }
+    }, 30000);
+  },
+);

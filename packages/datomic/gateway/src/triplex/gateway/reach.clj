@@ -28,7 +28,8 @@
                    :id (d/entid db :triplex.entity/id)
                    :position (d/entid db :triplex.scope/position)
                    :version (d/entid db :triplex.scope/rows-version)
-                   :irregular (d/entid db :triplex.scope/irregular)}]
+                   :irregular (d/entid db :triplex.scope/irregular)
+                   :position-regular (d/entid db :triplex.scope/position-regular)}]
         (or (.putIfAbsent configs name value) value))))
 (defn entity-id [db name ^String id]
   (let [^ConcurrentHashMap cache (or (.get ids name)
@@ -37,16 +38,20 @@
         (when-let [eid (d/entid db [:triplex.entity/id id])]
           (.putIfAbsent cache id eid) eid))))
 (defn select-db [name db basis]
-  (let [cfg (config name db) header (long-array 3)
+  (let [cfg (config name db) header (long-array 4)
         it (.iterator ^Iterable (d/datoms db :eavt (:scope cfg)))
         p (get basis "recordedPosition") r (get basis "recordedAt")]
     (while (.hasNext it)
       (let [^datomic.Datom datom (.next it) a (.a datom)]
         (cond (= a (:position cfg)) (aset header 0 (long (.v datom)))
               (= a (:version cfg)) (aset header 1 (long (.v datom)))
-              (= a (:irregular cfg)) (when (.v datom) (aset header 2 1)))))
+              (= a (:irregular cfg)) (when (.v datom) (aset header 2 1))
+              (= a (:position-regular cfg)) (when (.v datom) (aset header 3 1)))))
     (when-not (= 2 (aget header 1)) (decline! "rows-version"))
-    (when (= 1 (aget header 2)) (decline! "irregular"))
+    ;; [DX-B3-M3] Why: parallel commits can reorder timestamps while positions remain an exact prefix.
+    ;; Rejected: declining position-only/current pulls after a timestamp regression (needless history scans).
+    ;; Older scopes without the explicit position proof retain the conservative fallback.
+    (when (and (= 1 (aget header 2)) (or (some? r) (zero? (aget header 3)))) (decline! "irregular"))
     (let [head (aget header 0)
           pt (when (and (some? p) (not= p head))
                (if-let [tx (d/entid db [:triplex.tx/position p])]

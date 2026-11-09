@@ -70,7 +70,14 @@ export class DatomicClient {
   // Rejected: inferring gateway CPU or transact time from client wall latency.
   onRequest?: (sample: DatomicRequestSample) => void;
   readonly agent: http.Agent;
-  readonly commitDiagnostics = { beginDecodeMicros: 0, transactEncodeMicros: 0 };
+  readonly commitDiagnostics = {
+    beginDecodeMicros: 0,
+    transactEncodeMicros: 0,
+    optimisticAttempts: 0,
+    optimisticFallbacks: 0,
+    conflicts: 0,
+    replays: 0,
+  };
   private lastCommit: { db: string; position: number; t: string } | undefined;
   reachSession = randomUUID();
   readonly reachCache = new Map<string, Map<string, CachedEntity>>();
@@ -99,7 +106,9 @@ export class DatomicClient {
       throw new TypeError("Expected HTTP gateway URL without credentials");
     this.agent = new http.Agent({ keepAlive: true, maxSockets: 512, maxTotalSockets: 512 });
   }
+  readonly rowObservers = new Set<(db: string, row: TripleRow) => void>();
   close(): void {
+    this.rowObservers.clear();
     this.agent.destroy();
   }
   async request<T>(
@@ -258,7 +267,9 @@ export class DatomicClient {
           let decoded: CachedEntity | undefined;
           if (entity.length === 3) {
             if (!Array.isArray(entity[2])) throw new TypeError("Invalid inline entity");
-            decoded = decodeEntity(id, rev, entity[2]);
+            decoded = decodeEntity(id, rev, entity[2], (row) => {
+              for (const observe of this.rowObservers) observe(db, row);
+            });
             cache.set(id, decoded);
           } else decoded = cache.get(id);
           if (!decoded || decoded.rev !== rev) missed = true;
@@ -368,7 +379,10 @@ export class DatomicClient {
   }
   async rows(db: string, input: Record<string, unknown>): Promise<readonly TripleRow[]> {
     const response = await this.request<{ rows: WireRow[] }>("POST", `/v1/db/${db}/read`, input);
-    return response.rows.map(decodeRow);
+    const rows = response.rows.map(decodeRow);
+    if (!input["staged"])
+      for (const row of rows) for (const observe of this.rowObservers) observe(db, row);
+    return rows;
   }
   async transact(
     db: string,

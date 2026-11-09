@@ -11,6 +11,7 @@
 (def schema
   [(assoc (attr :triplex.entity/row :db.type/string) :db/cardinality :db.cardinality/many)
    (attr :triplex.scope/rows-version :db.type/long)
+   (attr :triplex.scope/position-regular :db.type/boolean)
    (attr :triplex.scope/irregular :db.type/boolean)
    (attr :triplex.scope/max-recorded-at :db.type/double)
    (attr :triplex.tx/max-recorded-at :db.type/double nil true)

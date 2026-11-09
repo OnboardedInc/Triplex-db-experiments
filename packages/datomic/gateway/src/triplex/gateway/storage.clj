@@ -126,7 +126,7 @@
      [[:triplex/commit {:scope scope :source source :provisional position :span span
                        :scope-wide (get input "scopeWide" true) :entities (get input "entities" [])
                        :live (vec (distinct (concat (get input "live" []) (map :id old))))
-                       :ops ops :times times :irregular irregular}]])))
+                       :ops ops :times times :irregular irregular :position-irregular irregular}]])))
 (defn commit! [name conn db input]
   (when (d/entid db [:triplex.tx/operation-id (get input "operationId")])
     (throw (ex-info "Operation already committed" {:status 409 :code "OperationDuplicate"})))
