@@ -1,0 +1,26 @@
+{
+  "base": "731e10e4",
+  "acceptanceFilesEdited": false,
+  "paths": [
+    {
+      "path": "lab/scenarios/v2/claims.ts",
+      "oldSha256": "a27a192be53b46873c9e1da970010ae3c6d8eee88c016efe782373b2860bcbca",
+      "newSha256": "050474e7d1316468831216bb1efcbc73a72e979fdbfeb870741d0f9c4ce067a1"
+    },
+    {
+      "path": "packages/host/src/feed/ConsumerStore.ts",
+      "oldSha256": "5622f27010ec76b32276567bd0078b8a9476f67731042de30dd1d5dbfdc26b12",
+      "newSha256": "e1f5e23c23e6970e63c697905acdeb3dd1ad1d4b8d790da43320a794fdd30f46"
+    },
+    {
+      "path": "packages/host/src/feed/index.ts",
+      "oldSha256": "8eee255a2349a63f026c470aea66c385a69a196eb0031d434756d8085176a224",
+      "newSha256": "ccd26e7c3841cb630a646d7db4a9829b40dd0de89ae6a9620dc004f55ea14c60"
+    },
+    {
+      "path": "packages/testkit/src/feed/index.ts",
+      "oldSha256": "fb05fe8cdead6a161d1540e826dc64efbe8a8c380012f2be317dc0831bab69e9",
+      "newSha256": "5ba6d668e9db21cee853a090f187dd5bcf3c5cd9609356b16bcae9ffe1639368"
+    }
+  ]
+}

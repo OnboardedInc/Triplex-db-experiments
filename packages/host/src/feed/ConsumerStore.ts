@@ -12,7 +12,7 @@ import {
 // [EXP-FD01] Why: Q98b moves durability off the source's serial writer; Q84a supplies host durability.
 // Rejected: JSONL effects plus a separate checkpoint (the X3 after-effect crash duplicates effects).
 export class SqliteConsumerStore implements ConsumerStore {
-  private readonly db: DatabaseSync;
+  protected readonly db: DatabaseSync;
   private readonly lock: DatabaseSync;
   constructor(file: string) {
     if (!file || file === ":memory:") throw new Error("ConsumerStore requires a durable host file");
@@ -33,6 +33,13 @@ export class SqliteConsumerStore implements ConsumerStore {
       this.db.exec(`PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA fullfsync=ON;
         PRAGMA checkpoint_fullfsync=ON; PRAGMA wal_autocheckpoint=0;
         PRAGMA journal_size_limit=16777216; PRAGMA locking_mode=NORMAL; PRAGMA busy_timeout=5000;
+        CREATE TABLE IF NOT EXISTS di_config(consumer TEXT PRIMARY KEY, config TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS di_ref(consumer TEXT NOT NULL, entity TEXT NOT NULL, attribute TEXT NOT NULL, value TEXT NOT NULL, PRIMARY KEY(consumer,entity,attribute,value));
+        CREATE INDEX IF NOT EXISTS di_reverse ON di_ref(consumer,attribute,value);
+        CREATE INDEX IF NOT EXISTS di_reverse_cover ON di_ref(consumer,attribute,value,entity);
+        CREATE TABLE IF NOT EXISTS di_release(consumer TEXT PRIMARY KEY, release TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS di_boundary(consumer TEXT NOT NULL, subject TEXT NOT NULL, at REAL NOT NULL, kind TEXT NOT NULL, basisPosition TEXT NOT NULL, PRIMARY KEY(consumer,subject,at,kind));
+        CREATE TABLE IF NOT EXISTS di_basis(consumer TEXT NOT NULL, subject TEXT NOT NULL, position TEXT NOT NULL, PRIMARY KEY(consumer,subject));
         CREATE TABLE IF NOT EXISTS checkpoints(consumer TEXT PRIMARY KEY, source TEXT NOT NULL, token TEXT NOT NULL);
         CREATE TABLE IF NOT EXISTS effects(consumer TEXT NOT NULL, epoch TEXT NOT NULL, position TEXT NOT NULL, subject TEXT NOT NULL, PRIMARY KEY(consumer,epoch,position,subject));
         CREATE TABLE IF NOT EXISTS affected(consumer TEXT NOT NULL, epoch TEXT NOT NULL, position TEXT NOT NULL, subject TEXT NOT NULL, PRIMARY KEY(consumer,epoch,position,subject));
@@ -66,7 +73,7 @@ export class SqliteConsumerStore implements ConsumerStore {
     consumer: string,
     expected: FeedCursor | null,
     page: FeedPage,
-    affected: readonly AffectedSubject[],
+    affected: readonly AffectedSubject[] | ConsumerDeriver,
     crash?: (point: FeedCrashPoint) => void,
   ): void {
     if (!consumer || !page.cursor.source) throw new Error("Missing consumer/source binding");
@@ -82,9 +89,12 @@ export class SqliteConsumerStore implements ConsumerStore {
     const digests = page.entries.map((e) =>
       createHash("sha256").update(feedBytes(e)).digest("hex"),
     );
-    for (const a of affected)
-      if (!a.subject || !positions.has(JSON.stringify([a.epoch, a.position])))
-        throw new Error("Affected subject outside page");
+    const validate = (rows: readonly AffectedSubject[]) => {
+      for (const a of rows)
+        if (!a.subject || !positions.has(JSON.stringify([a.epoch, a.position])))
+          throw new Error("Affected subject outside page");
+    };
+    if (typeof affected !== "function") validate(affected);
     this.db.exec("BEGIN IMMEDIATE");
     let committed = false;
     try {
@@ -130,6 +140,7 @@ export class SqliteConsumerStore implements ConsumerStore {
       )
         throw new Error("Checkpoint would regress or move without a new resolution");
       crash?.("before-effect");
+      const fresh: FeedPage["entries"][number][] = [];
       for (let i = 0; i < page.entries.length; i++) {
         const e = page.entries[i]!;
         const prior = this.db
@@ -138,11 +149,16 @@ export class SqliteConsumerStore implements ConsumerStore {
           )
           .get(consumer, e.stream, e.epoch, e.offset);
         if (prior && prior["digest"] !== digests[i]) throw new Error("Feed resume bytes changed");
+        if (!prior) fresh.push(e);
         this.db
           .prepare("INSERT OR IGNORE INTO deliveries VALUES(?,?,?,?,?)")
           .run(consumer, e.stream, e.epoch, e.offset, digests[i]!);
       }
-      for (const a of affected) {
+      // [EXP-DI01] Why: derive only undelivered bytes while holding the checkpoint lock. Rejected: replaying against post-state (changes before-state fanout).
+      const rows =
+        typeof affected === "function" ? affected(this.db, { ...page, entries: fresh }) : affected;
+      validate(rows);
+      for (const a of rows) {
         for (const table of ["effects", "affected"])
           this.db
             .prepare(`INSERT OR IGNORE INTO ${table} VALUES(?,?,?,?)`)
@@ -166,6 +182,15 @@ export class SqliteConsumerStore implements ConsumerStore {
     } finally {
       if (!committed) this.db.exec("ROLLBACK");
     }
+  }
+  applyDerived(
+    consumer: string,
+    expected: FeedCursor | null,
+    page: FeedPage,
+    derive: ConsumerDeriver,
+    crash?: (point: FeedCrashPoint) => void,
+  ): void {
+    this.apply(consumer, expected, page, derive, crash);
   }
   effects(consumer: string): readonly AffectedSubject[] {
     return this.db
@@ -191,6 +216,18 @@ export class SqliteConsumerStore implements ConsumerStore {
         subject: String(r["subject"]),
       }));
   }
+  dependencySnapshot(consumer: string): Record<string, readonly Record<string, unknown>[]> {
+    return Object.fromEntries(
+      ["di_ref", "di_release", "di_boundary", "di_basis", "di_config"].map((table) => [
+        table,
+        this.db
+          .prepare(
+            `SELECT * FROM ${table} WHERE consumer=? ORDER BY ${table === "di_release" || table === "di_config" ? "consumer" : table === "di_ref" ? "entity,attribute,value" : table === "di_basis" ? "subject" : "subject,at,kind"}`,
+          )
+          .all(consumer),
+      ]),
+    );
+  }
   pragmas(): Record<string, unknown> {
     return Object.fromEntries(
       [
@@ -209,3 +246,6 @@ export class SqliteConsumerStore implements ConsumerStore {
     this.lock.close();
   }
 }
+
+// [EXP-DI01] Why: synchronous derivation shares the durable checkpoint transaction. Rejected: deriving outside the write lock (stale index races).
+export type ConsumerDeriver = (db: DatabaseSync, page: FeedPage) => readonly AffectedSubject[];

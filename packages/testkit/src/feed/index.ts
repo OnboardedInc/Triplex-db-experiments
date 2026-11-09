@@ -108,6 +108,7 @@ export function requireGapMutationCaught(
   if (!caught) throw new Error("M-FEED-GAP survived");
 }
 export interface ConsumerSnapshot {
+  readonly dependencies?: Readonly<Record<string, readonly Record<string, unknown>[]>>;
   readonly effects: readonly AffectedSubject[];
   readonly affected: readonly AffectedSubject[];
   readonly checkpoint: FeedCursor | null;
@@ -116,6 +117,7 @@ const snapshotBytes = (s: ConsumerSnapshot) =>
   JSON.stringify({
     effects: s.effects.map((a) => JSON.stringify([a.epoch, a.position, a.subject])).sort(),
     affected: s.affected.map((a) => JSON.stringify([a.epoch, a.position, a.subject])).sort(),
+    dependencies: s.dependencies ?? {},
     checkpoint: s.checkpoint === null ? null : [s.checkpoint.source, s.checkpoint.token],
   });
 export type FeedCrashScenario = FeedCrashPoint | "before-commit" | "after-commit";

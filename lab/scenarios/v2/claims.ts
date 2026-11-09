@@ -28,14 +28,15 @@ export async function reconcileClaim(probe: Probe, scenario: number, subject: st
   const claim = { scenario, index: scenario === 6 ? 1 : 0, id: CLAIMS[scenario].at(-1), status: 'OFFLINE-MATCH', evidence: probe.checks.flatMap((c, i) => (c.id.startsWith('domain:') || c.id.startsWith('GS-')) ? [i] : []), attempt: probe.attempt, basis: output.basis };
   probe.claims.push(claim); return { output, claims: [claim] };
 }
-export async function affectedClaim(probe: Probe, subjects: readonly string[], writes: readonly (readonly [string, string])[]) {
+export async function affectedClaim(probe: Probe, subjects: readonly string[], writes: readonly (readonly [string, string])[], consumer?: { affectedAt: (position: number) => Promise<readonly string[]> }) {
   const P = await probe.comp.currentPosition();
   const states = await Promise.all(subjects.map(s => probe.state(s, P)));
   const basis = { tx: P, validTime: instant(V_W0) };
   const expectedInput = { basis, release: 'R1', worlds: states.map(s => s.expected), writes };
   const observedInput = { ...expectedInput, worlds: states.map(s => s.observed) };
   const oracle = runDomain('affected', canonical(expectedInput));
-  const observed = W0.runOpBytes('affected', Buffer.from(canonical(observedInput)));
+  // [EXP-DI01] Why: GS06 can exercise the durable feed consumer at this claim boundary. Rejected: reporting a kernel world-pull as index integration.
+  const observed = consumer ? canonical({ affected: await consumer.affectedAt(P) }) : W0.runOpBytes('affected', Buffer.from(canonical(observedInput)));
   probe.equal('GS-06:affected-subjects', observed, oracle.outputBytes, { P, writes, oracle: oracle.identity });
   const affected: string[] = JSON.parse(observed).affected;
   const rerun: string[] = [];
