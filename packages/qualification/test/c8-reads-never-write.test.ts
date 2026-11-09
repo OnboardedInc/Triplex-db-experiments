@@ -79,34 +79,40 @@ const facts = (t: Effect.Success<typeof Triples>) =>
   ]);
 
 /** The Datalog read paths G1 exercises with rules, plus maintained-query reads (XTDB). */
-const datalogReads = Effect.gen(function* () {
+// [INT-XCJ] Why: identify a timed-out logical read without changing its query or assertions.
+// Rejected: timing only the whole suite (cannot distinguish recursive reads from runtime startup).
+type Observe = <A, E, R>(id: string, operation: Effect.Effect<A, E, R>) => Effect.Effect<A, E, R>;
+const unchanged: Observe = (_id, operation) => operation;
+const makeDatalogReads = (observe: Observe = unchanged) => Effect.gen(function* () {
   const t = yield* Triples;
-  const closure = yield* t.query({
+  const closure = yield* observe("datalog/ancestor-closure", t.query({
     find: ["?ancestor"],
     where: [["c8-ancestor", "c8:a", "?ancestor"]],
     rules: ancestorRules,
-  });
+  }));
   expect(closure.results.map((row) => row["?ancestor"]).sort()).toEqual(["c8:b", "c8:c", "c8:d"]);
-  const shared = yield* t.query({
+  const shared = yield* observe("datalog/shared-ancestor", t.query({
     find: ["?ancestor"],
     where: [
       ["c8-ancestor", "c8:a", "?ancestor"],
       ["c8-ancestor", "c8:b", "?ancestor"],
     ],
     rules: ancestorRules,
-  });
+  }));
   expect(shared.results.map((row) => row["?ancestor"]).sort()).toEqual(["c8:c", "c8:d"]);
-  const self = yield* t.query({
+  const self = yield* observe("datalog/repeated-variable-self", t.query({
     find: ["?node"],
     where: [["c8-self", "?node", "?node"]],
     rules: [{ name: "c8-self", body: [["?node", ":c8/same", "?node"]] }],
-  });
+  }));
   expect(self.results.map((row) => row["?node"])).toEqual(["c8:self"]);
   const inner = { find: ["?ancestor"], where: [["c8-ancestor", "c8:a", "?ancestor"]], rules: ancestorRules } as const;
-  const first = yield* t.queryPage({ inner, limit: 2, includeCount: true });
-  const last = yield* t.queryPage({ inner, limit: 2, includeCount: true, cursor: first.nextCursor! });
+  const first = yield* observe("datalog/ancestor-page-first", t.queryPage({ inner, limit: 2, includeCount: true }));
+  const last = yield* observe("datalog/ancestor-page-last", t.queryPage({ inner, limit: 2, includeCount: true, cursor: first.nextCursor! }));
   expect([first.totalCount, last.totalCount, last.results.length]).toEqual([3, 3, 1]);
 });
+
+const datalogReads = makeDatalogReads();
 
 const percentile = (values: number[], p: number) => {
   const sorted = [...values].sort((a, b) => a - b);
@@ -114,7 +120,7 @@ const percentile = (values: number[], p: number) => {
 };
 
 /** A writer committing one small fact batch every 50 ms for `ms`, latencies in ms. */
-const writer = (ms: number, label: string) =>
+const writer = (ms: number, label: string, observe: Observe = unchanged) =>
   Effect.gen(function* () {
     const t = yield* Triples;
     const latencies: number[] = [];
@@ -124,13 +130,13 @@ const writer = (ms: number, label: string) =>
     while (Date.now() < until && failure === undefined) {
       const started = performance.now();
       const exit = yield* Effect.exit(
-        t.assertBatch(
+        observe(`writer/${label}/${index}`, t.assertBatch(
           Array.from({ length: 10 }, (_, k) => ({
             entityId: EntityId.make(`c8:writer:${label}:${index}`),
             attribute: ":c8/load",
             value: string(`v${k}`),
           })),
-        ),
+        )),
       );
       latencies.push(performance.now() - started);
       // A failed or unresolved commit is P1 evidence (a writer blocked), not a C8 result; the
@@ -293,6 +299,32 @@ describe.skipIf(process.env["XTDB_INTEGRATION"] !== "1")("C8 on XTDB: reads neve
 
 describe.skipIf(process.env["QLEVER_INTEGRATION"] !== "1")("C8 on QLever: reads never write (engine boundary)", () => {
   it("counts zero updates across rule queries, native closures and a load run", async () => {
+    // [INT-XCJ] Why: retain per-invocation phase/query timing, including failures and concurrent readers.
+    // Rejected: changing readers/windows/timeouts to make a shared-resident timeout disappear.
+    let invocation = 0;
+    const timed = async <A>(phase: string, queryId: string, run: () => Promise<A>): Promise<A> => {
+      const id = ++invocation;
+      const started = performance.now();
+      const log = (event: string, error?: unknown) => console.log(JSON.stringify({
+        c8Timing: "qlever", phase, queryId, invocation: id, event,
+        at: new Date().toISOString(), elapsedMs: performance.now() - started,
+        ...(error === undefined ? {} : { error: String(error) }),
+      }));
+      log("start");
+      try { const result = await run(); log("pass"); return result; }
+      catch (error) { log("fail", error); throw error; }
+    };
+    const observe = (phase: string): Observe => (queryId, operation) => Effect.gen(function* () {
+      const id = ++invocation;
+      const started = performance.now();
+      console.log(JSON.stringify({ c8Timing: "qlever", phase, queryId, invocation: id, event: "start", at: new Date().toISOString(), elapsedMs: 0 }));
+      return yield* Effect.onExit(operation, (exit) => Effect.sync(() => {
+        console.log(JSON.stringify({ c8Timing: "qlever", phase, queryId, invocation: id,
+          event: exit._tag === "Success" ? "pass" : "fail", at: new Date().toISOString(), elapsedMs: performance.now() - started,
+          ...(exit._tag === "Failure" ? { error: String(exit.cause) } : {}),
+        }));
+      }));
+    });
     const scope = DatabaseScope.test(`c8-qlever-${randomUUID()}`);
     const counter = await startQleverWriteCounter(qleverUrl);
     const direct = makeQleverRuntime({ url: qleverUrl }).layer({ scope, capabilities: Capabilities.none });
@@ -300,9 +332,9 @@ describe.skipIf(process.env["QLEVER_INTEGRATION"] !== "1")("C8 on QLever: reads 
     const readClient = makeQleverClient(counter.url);
     const native = makeQleverNativeQueries(readClient, scope);
     const dep = { key: ":c8/dep", type: TypeExpr.ref("C8Node") };
-    const nativeReads = Effect.gen(function* () {
+    const nativeReads = (phase: string) => Effect.gen(function* () {
       for (const relationStrategy of ["single-read", "rounds"] as const) {
-      const result = yield* native.selectWithRelations(
+      const result = yield* observe(phase)(`native/closure/${relationStrategy}`, native.selectWithRelations(
         {
           name: "c8/closure",
           parameters: TypeExpr.struct({ from: TypeExpr.required(TypeExpr.text) }),
@@ -319,7 +351,7 @@ describe.skipIf(process.env["QLEVER_INTEGRATION"] !== "1")("C8 on QLever: reads 
         (ctx, input: any) =>
           `SELECT DISTINCT ?target WHERE { ${ctx.relation("dep", "?source", "?target")} FILTER(?source = ${ctx.literal(input.from)}) }`,
         { relationStrategy },
-      );
+      ));
       expect((result.rows as any[]).map((row) => row.target).sort()).toEqual(["c8:W", "c8:Y", "c8:Z"]);
       const rounds = (result.trace.steps ?? []).filter((step) => step.phase === "frontier-round");
       expect(rounds).toHaveLength(relationStrategy === "rounds" ? 3 : 0);
@@ -328,31 +360,31 @@ describe.skipIf(process.env["QLEVER_INTEGRATION"] !== "1")("C8 on QLever: reads 
       return [];
     });
     try {
-      await Effect.runPromise(Effect.gen(function* () { yield* facts(yield* Triples); }).pipe(Effect.provide(direct), Effect.scoped));
-      const result = await Effect.runPromise(
+      await timed("setup", "fixture-and-direct-runtime", () => Effect.runPromise(Effect.gen(function* () { yield* facts(yield* Triples); }).pipe(Effect.provide(direct), Effect.scoped)));
+      const result = await timed("initial-reads", "proxied-runtime-and-read-window", () => Effect.runPromise(
         Effect.gen(function* () {
           counter.reset();
-          yield* datalogReads;
-          const roundMs = yield* nativeReads;
+          yield* makeDatalogReads(observe("initial-reads"));
+          const roundMs = yield* nativeReads("initial-reads");
           return { reads: counter.counts(), roundMs };
         }).pipe(Effect.provide(proxied), Effect.scoped),
-      );
+      ));
       expectNoWrites(counter);
 
-      const baseline = await Effect.runPromise(writer(LOAD_MS, "alone").pipe(Effect.provide(direct), Effect.scoped));
+      const baseline = await timed("writer-baseline", "direct-runtime-and-writer", () => Effect.runPromise(writer(LOAD_MS, "alone", observe("writer-baseline")).pipe(Effect.provide(direct), Effect.scoped)));
       let readsDone = 0;
       const stop = Date.now() + LOAD_MS;
       const reader = Effect.gen(function* () {
         while (Date.now() < stop) {
-          yield* datalogReads;
-          yield* nativeReads;
+          yield* makeDatalogReads(observe("loaded-readers"));
+          yield* nativeReads("loaded-readers");
           readsDone++;
         }
       });
-      const [loaded] = await Effect.runPromise(
+      const [loaded] = await timed("loaded-window", "runtimes-readers-and-writer", () => Effect.runPromise(
         Effect.all(
           [
-            writer(LOAD_MS, "loaded").pipe(Effect.provide(direct), Effect.scoped),
+            writer(LOAD_MS, "loaded", observe("loaded-writer")).pipe(Effect.provide(direct), Effect.scoped),
             // The read runtime's startup migration (layer build) is not a read call: count from
             // inside the built layer, as for the first read window.
             Effect.gen(function* () {
@@ -362,7 +394,7 @@ describe.skipIf(process.env["QLEVER_INTEGRATION"] !== "1")("C8 on QLever: reads 
           ],
           { concurrency: "unbounded" },
         ),
-      );
+      ));
       const counts = expectNoWrites(counter);
       expect(readsDone).toBeGreaterThan(0);
       console.log(
@@ -379,14 +411,14 @@ describe.skipIf(process.env["QLEVER_INTEGRATION"] !== "1")("C8 on QLever: reads 
       // [INT-XCJ] Why: isolate shared-resident positive controls. Rejected: fixed graph (cross-run cleanup races).
       const controlGraph = `urn:triplex:c8-write-counter-control:${randomUUID()}`;
       counter.reset();
-      await readClient.update(
+      await timed("positive-control", "insert-unique-control-graph", () => readClient.update(
         `INSERT DATA { GRAPH <${controlGraph}> { <urn:c8:s> <urn:c8:p> "1" } }`,
-      );
+      ));
       expect(counter.counts().commits).toBe(1);
       const cleanup = makeQleverClient(qleverUrl);
-      await cleanup.update(
+      await timed("cleanup", "delete-unique-control-graph", () => cleanup.update(
         `DELETE DATA { GRAPH <${controlGraph}> { <urn:c8:s> <urn:c8:p> "1" } }`,
-      );
+      ));
       await cleanup.close();
     } finally {
       await readClient.close();
