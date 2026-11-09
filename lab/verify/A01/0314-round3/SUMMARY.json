@@ -1,0 +1,566 @@
+{
+  "verdict": "ACCEPT",
+  "testedHead": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+  "reviewedTip": "d117cdb349b100fe4451bfcfb422cb95b2db3d58",
+  "includedMain": "bb36862daf55b4f46a3cbf763f757c6341de4575",
+  "frozenMainMerged": true,
+  "latestMainObservedAtSeal": "ae761289dc9b8c9106122a8986f87bc9391fcfea",
+  "latestMainMerged": false,
+  "checkedAtEpoch": 1794213660.616868,
+  "closedFindings": [
+    "F1",
+    "F2",
+    "F3",
+    "B1 at frozen main"
+  ],
+  "timeout": "The unchanged 5 s test times out on its historical GS12F runtime and the reviewed branch. Main lacks the original file/domain module and the transplanted workload fails on unsupported integers; literal same-file main timeout comparison is unavailable. The separate 30 s diagnostics do not replace the original FAIL, 38/39.",
+  "executions": {
+    "verify": {
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/verify-f664ba4d-a1ed-417e-a593-fdab050c0c82",
+      "executionSha256": "a0b2b7c0a519903472350f083a860942bc0bacea95a67043503a84a0c1c3e02d",
+      "logSha256": "af0d96655a67658342148b0c39aba152386fafa4735569d5bb12e27f1642b406",
+      "exitCode": 0,
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "observedMain": "bb36862daf55b4f46a3cbf763f757c6341de4575",
+      "startedAtEpoch": 1794212241.4685912,
+      "endedAtEpoch": 1794212523.397473
+    },
+    "contract-tests": {
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/contract-tests-072652ec-f393-4236-94b8-613de41f5fc5",
+      "executionSha256": "5ca82d7b29e789bc4339c72232830bf3fa76e02e6d2e89bcaf8b7bceadd2b4e2",
+      "logSha256": "aa291e3fc702b1a387093ae1fb784cfd844d46eee43a20d25c3f49bd2f4fb538",
+      "exitCode": 0,
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "observedMain": "bb36862daf55b4f46a3cbf763f757c6341de4575",
+      "startedAtEpoch": 1794212336.6505349,
+      "endedAtEpoch": 1794212524.629256
+    },
+    "mutations": {
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/mutations-063f4cc1-6c3b-4a3f-bb7a-c4f926952641",
+      "executionSha256": "8f082fa8772646611a1431c4b365dea94b737adf7e60b9dbfa3854f19c5fad73",
+      "logSha256": "1234eeae84d160601feda2269f47913cfaee794bcaf4dffadff354eca225a2d1",
+      "exitCode": 0,
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "observedMain": "bb36862daf55b4f46a3cbf763f757c6341de4575",
+      "startedAtEpoch": 1794212580.985214,
+      "endedAtEpoch": 1794212937.069459
+    },
+    "evaluator": {
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/evaluator-1a3d0258-fbfe-4266-860c-837393955276",
+      "executionSha256": "1635658f609f4448ed30ca1f13ece53a60de3cfdcd984f0f6adeb5dcb89ff9f2",
+      "logSha256": "011e9787efbca1c468a8a8af0e9d8e9ad9562594e7cc37c93c84c2937dac020c",
+      "exitCode": 0,
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "observedMain": "bb36862daf55b4f46a3cbf763f757c6341de4575",
+      "startedAtEpoch": 1794212336.6502311,
+      "endedAtEpoch": 1794212609.6301508,
+      "qualifiesMergedMainQ87": true
+    },
+    "g0-xtdb": {
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/g0-xtdb-f48c1b00-d9fa-45ea-be8f-aa2885fd6a19",
+      "executionSha256": "0bba01daa16acd86f731a780a557ea271ba161a431e70124ad97c2bf6bf44fd7",
+      "logSha256": "31258ec1522cbe49bcc352e4c54fd5987279d4f3592784c381f9a925e83636c2",
+      "exitCode": 0,
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "observedMain": "bb36862daf55b4f46a3cbf763f757c6341de4575",
+      "startedAtEpoch": 1794212580.985211,
+      "endedAtEpoch": 1794213029.549312,
+      "g0": {
+        "runId": "G0-xtdb-20261109T082321Z-f33e39",
+        "counts": {
+          "executed": 1223,
+          "pass": 1223,
+          "fail": 0,
+          "skip": 140,
+          "expectedSkip": 140,
+          "unexpectedSkip": 0
+        }
+      }
+    },
+    "g0-datomic": {
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/g0-datomic-a39c8363-88a4-4149-a6dd-478029f0c427",
+      "executionSha256": "4508ca105b5a8e45b62a8ed60573a526e0b2ba7964e37d77db7d61484395a2fe",
+      "logSha256": "3709b90217ddea624c37ba4890a374c350192a00e00cd168e7dfd1d70bdf476f",
+      "exitCode": 0,
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "observedMain": "886ad41cbc7f02bac16c50315f830097a63ecd75",
+      "startedAtEpoch": 1794213078.867826,
+      "endedAtEpoch": 1794213337.613274,
+      "g0": {
+        "runId": "G0-datomic-20261109T083413Z-adabe2",
+        "counts": {
+          "executed": 1277,
+          "pass": 1277,
+          "fail": 0,
+          "skip": 66,
+          "expectedSkip": 66,
+          "unexpectedSkip": 0
+        }
+      }
+    },
+    "g0-qlever": {
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/g0-qlever-72aa11b7-ac28-4f97-b1fa-c87bc97a3723",
+      "executionSha256": "e34e85f038ed4110ad5b447fa99023afbf9b1fae03ca333f1761361ec54afea6",
+      "logSha256": "e72d2219c9b5f57a7a01c507e93062dae42376ebf2b28a006187bc9c88735efd",
+      "exitCode": 0,
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "observedMain": "ae761289dc9b8c9106122a8986f87bc9391fcfea",
+      "startedAtEpoch": 1794213476.467838,
+      "endedAtEpoch": 1794213617.099678,
+      "g0": {
+        "runId": "G0-qlever-20261109T083756Z-58c466",
+        "counts": {
+          "executed": 1415,
+          "pass": 1415,
+          "fail": 0,
+          "skip": 79,
+          "expectedSkip": 79,
+          "unexpectedSkip": 0
+        }
+      }
+    },
+    "f1-f2": {
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/f1-f2-39018993-ca16-4e10-a0b3-b7b68c924eb9",
+      "executionSha256": "c8586b45c33e92ddfea14dfc49c0af2aef747e1c1265a2e8cef3a02455693037",
+      "logSha256": "6e544b02f87cefa1424e3ae50c3e5b531d7a4fc6924d1c0b0db2d616ecfa940c",
+      "exitCode": 0,
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "observedMain": "bb36862daf55b4f46a3cbf763f757c6341de4575",
+      "startedAtEpoch": 1794212336.650249,
+      "endedAtEpoch": 1794212527.917553
+    },
+    "domain-omission": {
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/domain-omission-d5629457-9218-4cde-af47-f1174c7634c5",
+      "executionSha256": "fdaf6982b1b6c885a5e40e3cf2b67cb5a87193f062be15a9fc886b0622bede9e",
+      "logSha256": "ee6dd568f510dbff9f4841321821483089d1de16838684b68f7f29fe1307aadd",
+      "exitCode": 0,
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "observedMain": "bb36862daf55b4f46a3cbf763f757c6341de4575",
+      "startedAtEpoch": 1794212580.985226,
+      "endedAtEpoch": 1794212598.59006
+    },
+    "inventory": {
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/inventory-77db7cf6-24d4-41bd-925c-995b23ae4457",
+      "executionSha256": "aa09dc49b00f32b5acbc99bdbddeaa605c0b557c3bfb192c5409bd0dce9828be",
+      "logSha256": "e70c9bbe669869cd98d0f8123d597d9f7cec9ad97652d3e1b6eaf7136017e868",
+      "exitCode": 0,
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "observedMain": "bb36862daf55b4f46a3cbf763f757c6341de4575",
+      "startedAtEpoch": 1794212698.657954,
+      "endedAtEpoch": 1794212938.531873,
+      "facts": {
+        "trackedTypeScriptFiles": 1052,
+        "domainDeclarations": 19,
+        "adapterProviders": 65
+      }
+    },
+    "pins": {
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/pins-66211aa7-9385-4f30-94d9-fa1a1d009619",
+      "executionSha256": "2bec27118dc908c0663db58ae4baa76482763cad5583badb51c54cb1f5694f1e",
+      "logSha256": "043d55cf2af4381c22a1fade8f48d275157410a46813e7b5f23563c8d126ae65",
+      "exitCode": 0,
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "observedMain": "bb36862daf55b4f46a3cbf763f757c6341de4575",
+      "startedAtEpoch": 1794212241.468589,
+      "endedAtEpoch": 1794212394.4856331,
+      "movedContractInputs": [
+        {
+          "path": "lab/acceptance/RULINGS-PENDING.md",
+          "before": "a68a15db304eebadd1a05d34b363fc957d95e805d68a627326fd59edb8a3a237",
+          "after": "9ff9fc9a0041d271205e2a019d57e53c23cfba9b392e60d68e1a256df6f71f3c",
+          "expected": [
+            "9ff9fc9a0041d271205e2a019d57e53c23cfba9b392e60d68e1a256df6f71f3c"
+          ],
+          "origins": [
+            "lab/acceptance/obligations.json/inputs/lab/acceptance/RULINGS-PENDING.md",
+            "lab/acceptance/obligations.json/pendingRulings"
+          ]
+        },
+        {
+          "path": "lab/acceptance/build_contract.py",
+          "before": "6f533cc044d3620dafdd4e96b57a7fd5b71bd8179abb7ca93daeaf1af7c87639",
+          "after": "259b0c2985985fbdf2c79d1ad6379c2adb6d919d45611b63bf7002502d2499e6",
+          "expected": [
+            "259b0c2985985fbdf2c79d1ad6379c2adb6d919d45611b63bf7002502d2499e6"
+          ],
+          "origins": [
+            "lab/acceptance/obligations.json/inputs/lab/acceptance/build_contract.py",
+            "lab/acceptance/obligations.json/oracleRunners/O-CONTRACT/sha256/lab/acceptance/build_contract.py"
+          ]
+        }
+      ],
+      "pendingRequired": [
+        "Q100-S1",
+        "Q100a",
+        "Q100b",
+        "Q100c",
+        "Q100d",
+        "Q100e",
+        "Q100f",
+        "Q100g",
+        "Q100h",
+        "Q100i",
+        "Q100j",
+        "Q100k",
+        "Q100l",
+        "Q100m",
+        "Q100n",
+        "Q100o",
+        "Q100p",
+        "Q101a",
+        "Q99-S1",
+        "Q99a",
+        "Q99b",
+        "Q99c",
+        "Q99d",
+        "Q99e"
+      ],
+      "contractHash": "b679f42872ebc6625a43b2ebe8a2769a72f0782fde1aa85c4a9a7d21aa3b5254"
+    },
+    "integration-types-final": {
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/integration-types-final-844c3f67-d513-47d2-afa3-3ea9b7fb4471",
+      "executionSha256": "4f3f0f837945f1aafbcd8c05ae28afa2610eb27a624b4f9c18e6a0d7b01c193f",
+      "logSha256": "399af86defdfb31369800fc6978449194604ef041dfb0fec7300df2f8c1bf428",
+      "exitCode": 0,
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "observedMain": "886ad41cbc7f02bac16c50315f830097a63ecd75",
+      "startedAtEpoch": 1794212959.258116,
+      "endedAtEpoch": 1794213031.57679
+    },
+    "integration-value-domains": {
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/integration-value-domains-7e6f7a1b-e7c1-4f0b-9cb3-85c407b42481",
+      "executionSha256": "e819eaa685ca429b0e075ceafd81a9faf1ebf5b638ce8906676279017bff6f70",
+      "logSha256": "2974eb1f1b7051f56039f1bf7dcdc27195cbe516b6e822f3dde4d906ba998818",
+      "exitCode": 1,
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "observedMain": "bb36862daf55b4f46a3cbf763f757c6341de4575",
+      "startedAtEpoch": 1794212580.9861388,
+      "endedAtEpoch": 1794212954.528139
+    },
+    "integration-datomic-only": {
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/integration-datomic-only-fd5c451a-3109-45ca-8f42-a0f2eeff78ae",
+      "executionSha256": "12f2331ead33c43959d81af473182ed7c6b9752f486ee39b4d975273ec2553c5",
+      "logSha256": "26952fc3cb416c29613499a3747594614e1f2015f85638a083f9f3f22d9b9878",
+      "exitCode": 0,
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "observedMain": "886ad41cbc7f02bac16c50315f830097a63ecd75",
+      "startedAtEpoch": 1794212959.25889,
+      "endedAtEpoch": 1794213033.252919
+    },
+    "timeout-main-3": {
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/timeout-main-3-efaf4653-9ff9-4405-9deb-609779d969fd",
+      "executionSha256": "66d8de9f0538e8f93790b2c924b6a01a7cae33758791ca5d5ed176ac6db75def",
+      "logSha256": "daf3657c92862b702a39adb496972cb2a3e57e9585a5a75eb6786638afda6a60",
+      "exitCode": 1,
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "observedMain": "886ad41cbc7f02bac16c50315f830097a63ecd75",
+      "startedAtEpoch": 1794212958.077355,
+      "endedAtEpoch": 1794213047.862741,
+      "baselineCommit": "bb36862daf55b4f46a3cbf763f757c6341de4575"
+    },
+    "timeout-historical-3": {
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/timeout-historical-3-4079ddb8-ae90-4f1e-a4f1-a4503831b259",
+      "executionSha256": "34821ce08d31bf9adc3aada03e94aa4c113ae79344626a60a8775e226b5b9460",
+      "logSha256": "e1a40144200b460787720590242cc725c27ca1472bca0744de816aab71cca918",
+      "exitCode": 1,
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "observedMain": "886ad41cbc7f02bac16c50315f830097a63ecd75",
+      "startedAtEpoch": 1794212958.076819,
+      "endedAtEpoch": 1794213041.258959,
+      "baselineCommit": "f8d1c3da0a871f4c9c724ebae09e380dbb9222a8"
+    },
+    "timeout-branch-2": {
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/timeout-branch-2-4ab27d0e-ae0d-4cb9-b560-47c93ae238cd",
+      "executionSha256": "c2e9dc55eb05352b5f9f3dc794990f47e42cc04e7ee9b8df330619649ff83c4e",
+      "logSha256": "5de59c0bddc59d91cbd616b5d2f388643e6124f3a543ae166648a9e7b6752855",
+      "exitCode": 1,
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "observedMain": "bb36862daf55b4f46a3cbf763f757c6341de4575",
+      "startedAtEpoch": 1794212560.278631,
+      "endedAtEpoch": 1794212616.295307,
+      "baselineCommit": "c4eedaa5ccad4655a66db9b807de77e20d0c028e"
+    },
+    "completion-historical-30s": {
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/completion-historical-30s-eb5ac95b-3203-4d64-913e-fa36443f0ca6",
+      "executionSha256": "8e11e576c6ce5a9c6eea65953c668eb54fbf5ef0e817c67004569f053ddbfa0a",
+      "logSha256": "e0946b4b47fe7d64d25414b04cacd3eac37eaae4ba390a60a88dbfc39e80a000",
+      "exitCode": 0,
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "observedMain": "ae761289dc9b8c9106122a8986f87bc9391fcfea",
+      "startedAtEpoch": 1794213188.535755,
+      "endedAtEpoch": 1794213276.154677,
+      "meaning": "Completion diagnostic with explicit 30 s CLI limit; does not replace the failed unchanged 5 s test.",
+      "baselineCommit": "f8d1c3da0a871f4c9c724ebae09e380dbb9222a8"
+    },
+    "completion-branch-30s": {
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/completion-branch-30s-b35b66e4-2e64-4142-8132-e299f76ae025",
+      "executionSha256": "1ddc9af358130f09b85215c456ba38e3783871d454d2ced76142f39aee2456c8",
+      "logSha256": "d89d4ad8b0a7f0f3818c6d01a6eb5f06c88e811045e5188389998068a6ef4b83",
+      "exitCode": 0,
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "observedMain": "ae761289dc9b8c9106122a8986f87bc9391fcfea",
+      "startedAtEpoch": 1794213188.535748,
+      "endedAtEpoch": 1794213286.0321898,
+      "meaning": "Completion diagnostic with explicit 30 s CLI limit; does not replace the failed unchanged 5 s test.",
+      "baselineCommit": "c4eedaa5ccad4655a66db9b807de77e20d0c028e"
+    }
+  },
+  "allAttempts": [
+    {
+      "label": "completion-branch-30s",
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/completion-branch-30s-b35b66e4-2e64-4142-8132-e299f76ae025",
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "exitCode": 0,
+      "executionSha256": "1ddc9af358130f09b85215c456ba38e3783871d454d2ced76142f39aee2456c8",
+      "logSha256": "d89d4ad8b0a7f0f3818c6d01a6eb5f06c88e811045e5188389998068a6ef4b83",
+      "requiredGate": true
+    },
+    {
+      "label": "completion-historical-30s",
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/completion-historical-30s-eb5ac95b-3203-4d64-913e-fa36443f0ca6",
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "exitCode": 0,
+      "executionSha256": "8e11e576c6ce5a9c6eea65953c668eb54fbf5ef0e817c67004569f053ddbfa0a",
+      "logSha256": "e0946b4b47fe7d64d25414b04cacd3eac37eaae4ba390a60a88dbfc39e80a000",
+      "requiredGate": true
+    },
+    {
+      "label": "contract-tests",
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/contract-tests-072652ec-f393-4236-94b8-613de41f5fc5",
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "exitCode": 0,
+      "executionSha256": "5ca82d7b29e789bc4339c72232830bf3fa76e02e6d2e89bcaf8b7bceadd2b4e2",
+      "logSha256": "aa291e3fc702b1a387093ae1fb784cfd844d46eee43a20d25c3f49bd2f4fb538",
+      "requiredGate": true
+    },
+    {
+      "label": "domain-omission",
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/domain-omission-d5629457-9218-4cde-af47-f1174c7634c5",
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "exitCode": 0,
+      "executionSha256": "fdaf6982b1b6c885a5e40e3cf2b67cb5a87193f062be15a9fc886b0622bede9e",
+      "logSha256": "ee6dd568f510dbff9f4841321821483089d1de16838684b68f7f29fe1307aadd",
+      "requiredGate": true
+    },
+    {
+      "label": "evaluator",
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/evaluator-1a3d0258-fbfe-4266-860c-837393955276",
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "exitCode": 0,
+      "executionSha256": "1635658f609f4448ed30ca1f13ece53a60de3cfdcd984f0f6adeb5dcb89ff9f2",
+      "logSha256": "011e9787efbca1c468a8a8af0e9d8e9ad9562594e7cc37c93c84c2937dac020c",
+      "requiredGate": true
+    },
+    {
+      "label": "f1-f2",
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/f1-f2-39018993-ca16-4e10-a0b3-b7b68c924eb9",
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "exitCode": 0,
+      "executionSha256": "c8586b45c33e92ddfea14dfc49c0af2aef747e1c1265a2e8cef3a02455693037",
+      "logSha256": "6e544b02f87cefa1424e3ae50c3e5b531d7a4fc6924d1c0b0db2d616ecfa940c",
+      "requiredGate": true
+    },
+    {
+      "label": "g0-datomic",
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/g0-datomic-a39c8363-88a4-4149-a6dd-478029f0c427",
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "exitCode": 0,
+      "executionSha256": "4508ca105b5a8e45b62a8ed60573a526e0b2ba7964e37d77db7d61484395a2fe",
+      "logSha256": "3709b90217ddea624c37ba4890a374c350192a00e00cd168e7dfd1d70bdf476f",
+      "requiredGate": true
+    },
+    {
+      "label": "g0-qlever",
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/g0-qlever-72aa11b7-ac28-4f97-b1fa-c87bc97a3723",
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "exitCode": 0,
+      "executionSha256": "e34e85f038ed4110ad5b447fa99023afbf9b1fae03ca333f1761361ec54afea6",
+      "logSha256": "e72d2219c9b5f57a7a01c507e93062dae42376ebf2b28a006187bc9c88735efd",
+      "requiredGate": true
+    },
+    {
+      "label": "g0-xtdb",
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/g0-xtdb-f48c1b00-d9fa-45ea-be8f-aa2885fd6a19",
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "exitCode": 0,
+      "executionSha256": "0bba01daa16acd86f731a780a557ea271ba161a431e70124ad97c2bf6bf44fd7",
+      "logSha256": "31258ec1522cbe49bcc352e4c54fd5987279d4f3592784c381f9a925e83636c2",
+      "requiredGate": true
+    },
+    {
+      "label": "integration-build",
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/integration-build-cabbb688-2211-4028-8c5f-8c13fe4dbcb7",
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "exitCode": 0,
+      "executionSha256": "b466f8c1c30ac24a383d6a86609272ea78214fc88db5327a30137dc85e1d820b",
+      "logSha256": "98b436c04b1389056431f3b32c46cc3e903395bec2ca7b0063736182bc2ab393",
+      "requiredGate": false
+    },
+    {
+      "label": "integration-datomic-only",
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/integration-datomic-only-fd5c451a-3109-45ca-8f42-a0f2eeff78ae",
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "exitCode": 0,
+      "executionSha256": "12f2331ead33c43959d81af473182ed7c6b9752f486ee39b4d975273ec2553c5",
+      "logSha256": "26952fc3cb416c29613499a3747594614e1f2015f85638a083f9f3f22d9b9878",
+      "requiredGate": true
+    },
+    {
+      "label": "integration-link",
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/integration-link-271ea027-29b2-4335-ac24-26f0c9cf7cf5",
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "exitCode": 0,
+      "executionSha256": "54bf2874b5d39c5d6343f8936f9002a6592ca654616841718fa19444e6f710e8",
+      "logSha256": "27cf850dbd7843b07d87a16cba5481a297757fab5ff9183eb215d6279dea9e68",
+      "requiredGate": false
+    },
+    {
+      "label": "integration-types",
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/integration-types-274914c4-c764-4506-b3be-caae3fd7d3ea",
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "exitCode": 2,
+      "executionSha256": "9b9bfb28a0551e50fb8ad6c64467e04d6a7aec82391899d39c0706d4b5c65370",
+      "logSha256": "a934fab2714f198cae18fe8cbd07903e9dd84b69486374fd07b0034f4f267c74",
+      "requiredGate": false
+    },
+    {
+      "label": "integration-types-final",
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/integration-types-final-844c3f67-d513-47d2-afa3-3ea9b7fb4471",
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "exitCode": 0,
+      "executionSha256": "4f3f0f837945f1aafbcd8c05ae28afa2610eb27a624b4f9c18e6a0d7b01c193f",
+      "logSha256": "399af86defdfb31369800fc6978449194604ef041dfb0fec7300df2f8c1bf428",
+      "requiredGate": true
+    },
+    {
+      "label": "integration-value-domains",
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/integration-value-domains-7e6f7a1b-e7c1-4f0b-9cb3-85c407b42481",
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "exitCode": 1,
+      "executionSha256": "e819eaa685ca429b0e075ceafd81a9faf1ebf5b638ce8906676279017bff6f70",
+      "logSha256": "2974eb1f1b7051f56039f1bf7dcdc27195cbe516b6e822f3dde4d906ba998818",
+      "requiredGate": true
+    },
+    {
+      "label": "inventory",
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/inventory-77db7cf6-24d4-41bd-925c-995b23ae4457",
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "exitCode": 0,
+      "executionSha256": "aa09dc49b00f32b5acbc99bdbddeaa605c0b557c3bfb192c5409bd0dce9828be",
+      "logSha256": "e70c9bbe669869cd98d0f8123d597d9f7cec9ad97652d3e1b6eaf7136017e868",
+      "requiredGate": true
+    },
+    {
+      "label": "mutations",
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/mutations-063f4cc1-6c3b-4a3f-bb7a-c4f926952641",
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "exitCode": 0,
+      "executionSha256": "8f082fa8772646611a1431c4b365dea94b737adf7e60b9dbfa3854f19c5fad73",
+      "logSha256": "1234eeae84d160601feda2269f47913cfaee794bcaf4dffadff354eca225a2d1",
+      "requiredGate": true
+    },
+    {
+      "label": "pins",
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/pins-66211aa7-9385-4f30-94d9-fa1a1d009619",
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "exitCode": 0,
+      "executionSha256": "2bec27118dc908c0663db58ae4baa76482763cad5583badb51c54cb1f5694f1e",
+      "logSha256": "043d55cf2af4381c22a1fade8f48d275157410a46813e7b5f23563c8d126ae65",
+      "requiredGate": true
+    },
+    {
+      "label": "prepare-timeout",
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/prepare-timeout-7279ef86-9208-460a-9687-02d61433c40b",
+      "head": "108a87141fac375c7916cf4dbfdcf05854c955b4",
+      "exitCode": 0,
+      "executionSha256": "2a0aef7ddc4926e42f04aa69207b5d05e6d283a7f26670390f8cc20f007daa62",
+      "logSha256": "638c93664ee5bfe1e35c71c38a8ad94799a85676cd3e30020c35663248c1c7e0",
+      "requiredGate": false
+    },
+    {
+      "label": "snapshot-configs",
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/snapshot-configs-5fd15b38-5ca6-4a4f-9569-9d5a59127d55",
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "exitCode": 0,
+      "executionSha256": "c603bdb21f3fd175818bfbb4bc3dac9116bad4bee35b3e8fe00b4708f8a24339",
+      "logSha256": "0d26f4df8296ec86d2df8ac36fe2641a155d52f3a5404805457bd2600692fd07",
+      "requiredGate": false
+    },
+    {
+      "label": "snapshot-dependencies",
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/snapshot-dependencies-5546c685-805e-407f-8ce7-51d36ce9e41e",
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "exitCode": 0,
+      "executionSha256": "1146a0e26e9cb3ccb44fa127631e407dac48b44ec655df5c79c29b9fe1e54e79",
+      "logSha256": "8d8edc20c673be8478b18325dfd4ccdc0bb45d518b66abbd2b2be3d6ca7e9293",
+      "requiredGate": false
+    },
+    {
+      "label": "timeout-branch-2",
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/timeout-branch-2-4ab27d0e-ae0d-4cb9-b560-47c93ae238cd",
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "exitCode": 1,
+      "executionSha256": "c2e9dc55eb05352b5f9f3dc794990f47e42cc04e7ee9b8df330619649ff83c4e",
+      "logSha256": "5de59c0bddc59d91cbd616b5d2f388643e6124f3a543ae166648a9e7b6752855",
+      "requiredGate": true
+    },
+    {
+      "label": "timeout-historical-2",
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/timeout-historical-2-7f01d469-4f36-4d10-96eb-1fb525331a37",
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "exitCode": 1,
+      "executionSha256": "6a1e396d04dc6cd6a6b56221bea4f977e070218aa2d52808b873bff4754c8d90",
+      "logSha256": "7782e32d7c063a2e3fba4f73dd0f773b72ff50807beadebf96579bb56eca071d",
+      "requiredGate": false
+    },
+    {
+      "label": "timeout-historical-3",
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/timeout-historical-3-4079ddb8-ae90-4f1e-a4f1-a4503831b259",
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "exitCode": 1,
+      "executionSha256": "34821ce08d31bf9adc3aada03e94aa4c113ae79344626a60a8775e226b5b9460",
+      "logSha256": "e1a40144200b460787720590242cc725c27ca1472bca0744de816aab71cca918",
+      "requiredGate": true
+    },
+    {
+      "label": "timeout-main-1",
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/timeout-main-1-9b70b13a-30ad-4043-8ba2-5206f03b8ec5",
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "exitCode": 1,
+      "executionSha256": "9d02083588645d57df13fda205d5974d926c5672ab9e53a49fb9db63b48f4cc4",
+      "logSha256": "f9eb8fa2160d8ef7826a40996eaa0dd866fe69f3cf9b7eb0b3c49058bd08eca8",
+      "requiredGate": false
+    },
+    {
+      "label": "timeout-main-2",
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/timeout-main-2-f80dd794-70e2-4c0e-9442-0351e230e057",
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "exitCode": 1,
+      "executionSha256": "aaaf7a6e7e36eef0858e3840ab07a16b57944424c68db21f5f5668b2153df056",
+      "logSha256": "7420993e25531de61fa8050814f28528cc6bae2482e4b49a9a6eefa8ec964479",
+      "requiredGate": false
+    },
+    {
+      "label": "timeout-main-3",
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/timeout-main-3-efaf4653-9ff9-4405-9deb-609779d969fd",
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "exitCode": 1,
+      "executionSha256": "66d8de9f0538e8f93790b2c924b6a01a7cae33758791ca5d5ed176ac6db75def",
+      "logSha256": "daf3657c92862b702a39adb496972cb2a3e57e9585a5a75eb6786638afda6a60",
+      "requiredGate": true
+    },
+    {
+      "label": "verify",
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/round3/verify-f664ba4d-a1ed-417e-a593-fdab050c0c82",
+      "head": "c4eedaa5ccad4655a66db9b807de77e20d0c028e",
+      "exitCode": 0,
+      "executionSha256": "a0b2b7c0a519903472350f083a860942bc0bacea95a67043503a84a0c1c3e02d",
+      "logSha256": "af0d96655a67658342148b0c39aba152386fafa4735569d5bb12e27f1642b406",
+      "requiredGate": true
+    }
+  ],
+  "sealerSha256": "a470465255b733731c1b1966eed3bdc972a656ed22da0bb55ba06b1bf7b4576f",
+  "durableFiles": 2046,
+  "durableBytes": 121507649,
+  "durableManifestSha256": "49ce667f2e3d43d7db9e608d1a7db35bddcf3a31619864455e6616078bf99556"
+}
