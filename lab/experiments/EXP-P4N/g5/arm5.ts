@@ -1,6 +1,6 @@
 // [EXP-P4N-R2] Round 2 arm process: round 1's arm4.ts plus (1) the shared probe module, (2) document modes for (c'): +docp (documents
 // prefilled in-process before the window, so the window is the hit path), +docc (current.db deleted first, so the window is the read-through
-// fill path), (3) +w (a commit on a hot owner every 20th pull and 50% of reads on a 200-owner hot set, the TARGETS 2.1 shape, commits counted
+// fill path), (3) +w (a commit on a hot owner every 10th pull and 50% of reads on a 200-owner hot set, the TARGETS 2.1 shape, commits counted
 // in the CPU window), (4) +sweep (every root once, the P5 activation-sweep shape). Per-segment document counters and current.db bytes.
 // [EXP-P4N] Why: round 3's per-arm process, rebuilt with (1) a thread-CPU reference probe in place of the wall-clock calibration loop
 // (round 3's loop did not track per-pull CPU, BRIEF 4.1), (2) 100-pull batches kept raw so a bootstrap can resample them,
@@ -328,10 +328,28 @@ try {
       });
   }
   const rand = lcg(1000 + SEED);
-  const lw = lcg(555 + SEED);
+  // [EXP-P4N-R2] Why: the first writer-on series drew hot reads and commit targets from one 32-bit LCG whose high-bit pairs correlate, so in some
+  // rounds commits never landed on an owner the reads touched (stale lookups 0 of 1,250 commits in some runs, 428 in others). mulberry32 gives
+  // independent-looking picks; hot reads and commit targets come from the same hot set by design. Rejected: the LCG (kept only for the round 1
+  // compatible uniform draws).
+  const mulberry = (a0: number) => {
+    let a = a0 >>> 0;
+    return () => {
+      a = (a + 0x6d2b79f5) >>> 0;
+      let t = a;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  };
+  const lwf = mulberry(555 + SEED);
   // Hot set of 200 owners (writer-on) and the fixed sweep order (every root once).
-  const shuffle = lcg(777);
-  const hot = [...roots].sort(() => ((shuffle() >>> 16) % 3) - 1).slice(0, 200);
+  const hk = mulberry(777);
+  const hot = roots
+    .map((r) => [hk(), r] as const)
+    .sort((a, b) => a[0] - b[0])
+    .slice(0, 200)
+    .map((x) => x[1]);
   const sh2 = lcg(31337);
   const sweepOrder = [...roots]
     .map((r) => [sh2(), r] as const)
@@ -342,7 +360,7 @@ try {
     commitCount = 0;
   const draw = (): string => {
     if (sweepOn) return sweepOrder[sweepIdx++ % sweepOrder.length]!;
-    if (writerOn && (lw() >>> 16) % 2 === 0) return hot[(lw() >>> 16) % hot.length]!;
+    if (writerOn && lwf() < 0.5) return hot[Math.floor(lwf() * hot.length)]!;
     return roots[rand() % roots.length]!;
   };
   for (let s = 0; s < SEGMENTS; s++) {
@@ -367,8 +385,8 @@ try {
         Array.from({ length: CLIENTS }, async () => {
           while (issued < size) {
             issued++;
-            if (writerOn && ++pullCount % 20 === 0) {
-              await arm.commit(hot[(lw() >>> 16) % hot.length]!, ++commitCount);
+            if (writerOn && ++pullCount % 10 === 0) {
+              await arm.commit(hot[Math.floor(lwf() * hot.length)]!, ++commitCount);
               commits++;
             }
             const r = draw();

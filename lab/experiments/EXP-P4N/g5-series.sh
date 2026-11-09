@@ -1,6 +1,6 @@
 #!/bin/sh
 # [EXP-P4N-R2] Why: the remaining measurement series, each its own heavy token one after another (the pool is shared): S2 = reads-only at c=4,
-# S3 = writer-on (a commit every 20th pull, half the reads on a 200-owner hot set) on its own store clone, S4 = the P5 activation sweep (every root once)
+# S3 = writer-on (a commit every 10th pull (TARGETS 2.1, 10 reads per write), half the reads on a 200-owner hot set) on its own store clone, S4 = the P5 activation sweep (every root once)
 # with documents prefilled against the row path. usage: g5-series.sh
 R=/Users/sam/Claude/Projects/triplex-db-2/evidence/P4N-R2
 cd /Users/sam/projects/triplex-db-2/.claude/worktrees/qh1
