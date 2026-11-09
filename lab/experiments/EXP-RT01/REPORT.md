@@ -2,7 +2,7 @@
 
 North star: P1 immutable reads at a named recordedAt, and P2 receipts that name the exact decided commit. Goals and targets come from `lab/SCOPE.md`, `lab/NORTH-STAR.md` and `lab/TARGETS.md`. Implementation follows R33 round A and Q89a-i/Q90a-g.
 
-**Latest (live round 3): slot free, but preflight stopped before acquisition: 9.45 GiB free versus the committed >10 GiB history requirement. No G2/G6 run or performance qualification. Requested trim completed and saved Docker context is colima. The prior live2 G6 failure remains open. See the final section and `live3/RESULT.json`.**
+**Latest (live round 3, renewed dispatch): capacity recovered; marker-CAS live G2 passes. G6 stops at the first failure: fresh compact five-fact p99 +39.32% versus its frozen 0.237% A/A band. Three preceding fresh points pass; no 10k point runs. Owned resources removed, trim/context restoration verified. No whole-G6 no-regression qualification. See the final section and `live3-run/RESULT.json`.**
 
 **Initial round-A result: implemented; not qualified for promotion.** The builder's offline checks and selected live probes are evidence of specific behaviors, not independent acceptance. Full live conformance did not complete, G6 has no established no-regression result, and the frozen contract intentionally remains unchanged with a stale testkit pin. A separate adversarial review is still required.
 
@@ -515,3 +515,80 @@ Evidence: [live3/INDEX.md](live3/INDEX.md), [live3/RESULT.json](live3/RESULT.jso
 | Evidence manifest / report | SHA256 readback of every retained file; report preserves refusal and checker failure, makes no live PASS or latency claim. | Separate live3 artifact root, byte-identical committed receipt copies; existing raw gate evidence not rewritten. |
 
 **Open:** enough host capacity for the unchanged forecast, then an authorized window for changed-source live G2 and complete G6 (A/A rule before B, fresh/10k ABAB, native row/statement counts). The marker CAS remains offline-qualified only. No independent review, merge or push in this round.
+
+## Live round 3 — renewed dispatch, G2 PASS / G6 FAIL (2026-11-09)
+
+North star: P1 exact pinned reads and P2 small-commit latency, under `lab/SCOPE.md`, `lab/NORTH-STAR.md` and `lab/TARGETS.md`. A repeated orchestrator dispatch authorized a fresh availability check after the preceding disk refusal. The new inside-grant admission recorded **19,671,977,984 bytes (18.32 GiB)** free, exceeding the unchanged >10 GiB forecast. No exclusive/G03 reservation remained. This is a new admitted attempt, not a retry of a failed benchmark. The earlier disk refusal and its maintenance/checker failure remain immutable in `live3/`.
+
+The exact committed runbook/controller ran once through `heavy.mjs --label CX-RT01-r6-live`. Admission2 acquired fresh xtdb-s1 as CX-RT01; six package build phases and G2 completed; G6 ran its fresh A/A calibration and four fresh ABAB points, then stopped at its first regression. **No retry, rule widening or 10k preload occurred.** Admission began 09:22:45.034 UTC; G2 ran 09:23:05.175–09:25:05.711; G6 ran 09:25:05.711–09:27:53.353; ownership cleanup finished 09:27:56.336.
+
+### Source, build and engine identity
+
+Execution HEAD **2e67454d3680a5e25c69626d1304c3fc185628b9** contains only the preceding report/evidence additions beyond product **37ae44a9a1fa4a8ef153c5118ee9aed03be86a8b**. All packages and lockfile are byte-identical to that marker-CAS commit. G2 captures exact source before/after and every built artifact hash; G6 validates those hashes before loading B and after the run. The baseline remains **59e07afb7a25dfb22bca60f8d769b74651aa835a**, with the retained independently built baseline XTDB/core artifacts rehashed against `live2/baseline/identity.json`. Baseline XTDB resolves baseline core. Full build maps and identity hashes are in the raw execution receipts and derived `live3-run/RESULT.json`.
+
+The same exclusive engine served A/A and every A/B point: container **4e2824681a1a21aef01e42e4a6ee19c277b5dd500a458379f3cea5c9b877b614**, XTDB 2.2.0 image **sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77**, config **13f5a70b36655b51fdf6daca77cc8bc215c4ef8bc044569867500fb286458927**, 3.5 GiB / 2 CPUs, port 5471. Start/end inspections have the identical container ID, image and ownership labels. Baseline and B use distinct scopes on this engine; the host remains shared.
+
+### G2 final marker-CAS source
+
+All six build phases passed. **197 case assertions, 42 live route repetitions (21 per encoding), two T1–T12 schedules including 200 independent/50 contended commits each, and three byte-equal deterministic fixtures completed successfully.** Both encodings passed all 44 shared conformance cases, journal/receipt/readback and named-cut route checks. Routes include the public entity/batch/page/query/journal paths, storage and executor paths, intervals, maintained queries, dependency state and authored SQL/XTQL facts/recordedFacts. The closure rechecks actual before/after route bytes, allowing only the designed current-head position echo in entity-page snapshots and includeBasis responses. It does not adopt `grantsAcceptance:true` alone.
+
+The earlier isolated timeout-diagnosis case completed. There were 1,745 expected `XTDB rejected transaction: triplex-cas-conflict` submit rejections during replay-enabled contention; no query error, case failure or diagnostic failure occurred. G6 uses maxRetries=0. No extra product tests or unrelated engine suite was run this round.
+
+### G6 frozen A/A rule and observed latency
+
+For each encoding and fact count, two pre-RT01 controls ran alternating 75-commit blocks, **150 samples per control**. Before any B sample, the controller wrote `AA-RULE-BEFORE-B.json` at **09:26:22.437 UTC**, SHA256 **75288c9b2c9369cb24f2460190256608945a6aa297b217cc81c7ea466ec794a8**. For each metric independently, the maximum allowed B/A ratio is `max(Aleft/Aright, Aright/Aleft)`. Equality passes; the first exceeded metric or correctness/transport error stops every later point. This rule was not adjusted after observing B.
+
+| Encoding / facts | A/A left p50 / p99 ms | A/A right p50 / p99 ms | Allowed increase p50 / p99 |
+| --- | ---: | ---: | ---: |
+| A0 / 10 | 64.349 / 163.870 | 59.548 / 147.386 | 8.062% / 11.184% |
+| A0 / 5 | 36.843 / 60.434 | 34.089 / 81.405 | 8.079% / 34.702% |
+| Compact / 10 | 55.931 / 167.783 | 66.045 / 147.712 | 18.083% / 13.588% |
+| Compact / 5 | 75.746 / 194.454 | 69.108 / 193.994 | 9.605% / 0.237% |
+
+Each fresh point used the identical declared 5/10 string-fact public input, deterministic clock/id seed, distinct scopes and ABAB 75-commit blocks: **150 A and 150 B samples**, nearest-rank p50/p99. Receipt position/fact/stamp checks and final physical fact readbacks passed.
+
+| Fresh point | A p50 / p99 ms | B p50 / p99 ms | B/A change p50 / p99 | Result |
+| --- | ---: | ---: | ---: | --- |
+| A0 / 10 | 89.134 / 227.993 | 87.729 / 240.906 | −1.576% / +5.664% | Within rule |
+| A0 / 5 | 51.445 / 185.170 | 43.105 / 98.335 | −16.212% / −46.895% | Within rule |
+| Compact / 10 | 52.815 / 133.908 | 53.017 / 142.798 | +0.382% / +6.639% | Within rule |
+| Compact / 5 | 51.133 / 108.944 | 54.374 / 151.778 | +6.338% / **+39.317%** | **FAIL p99**, allowed +0.237% |
+
+This is a failed G6 receipt under its declared rule, even though both fresh ten-fact points passed. The narrow compact-five p99 band and changing shared-host latency do not authorize widening it or discarding the point. No 10k-history point was reached, so no history-scale latency or growth claim is made.
+
+### Statements, history and native rows beside latency
+
+Every A0 commit submitted **6 engine statements**; every compact commit submitted **5**, in both builds. All measured commits used one submit. A used 2 client queries and **13 Execute/ReadyForQuery cycles for A0, 12 for compact**. B matched those counts for 149/150 samples per point; its first fresh-scope commit used 4 queries and 17/16 cycles respectively for empty-cut catalog initialization. These are actual PG-wire message/ready counts, not TCP packet counts. The failed compact-five point therefore had no extra steady-state statement or round-trip count. No replay hid a measured failure.
+
+Scope-history counts were checked at 0, 75 and 150 committed positions. Ten-fact A assertion rows were **0→1,725→3,450**, B **0→1,650→3,300**; five-fact A **0→975→1,950**, B **0→900→1,800**. This difference reflects RT01's journal representation; the public application input is identical. Every nonempty scope had one current `tx_meta` marker and the exact distinct recorded-position count. The receipts and raw observations bind every count to its source scope.
+
+Native EXPLAIN/EXPLAIN ANALYZE probes ran **outside timed commits, after each point**, on SELECT forms of the exact old RT01 wide-stamp ASSERT and new emitted marker ASSERT. Direct ASSERT execution counters were not captured. These native `scan_rows_read` values count physical input rows across pages in the shared tx_meta table; they are not the one matching marker row or the offline N+1 projection model.
+
+| Point (statements/commit) | Old wide guard, two scans, both scopes | New guard, A scope (keyed + position) | New guard, B scope (keyed + position) | B marker / wide-stamp client p50 ms |
+| --- | ---: | ---: | ---: | ---: |
+| A0 / 10 (6) | 2,211 + 2,211 | 577 + 2,211 | 456 + 2,211 | 9.666 / 9.780 |
+| A0 / 5 (6) | 2,511 + 2,511 | 606 + 2,511 | 869 + 2,511 | 4.127 / 4.449 |
+| Compact / 10 (5) | 2,811 + 2,811 | 727 + 2,811 | 609 + 2,811 | 5.287 / 5.407 |
+| Compact / 5 (5) | 3,111 + 3,111 | 756 + 3,111 | 1,019 + 3,111 | 7.787 / 8.125 |
+
+Every native scan outputs one matching row. The keyed stamp branch uses one page versus four for each wide aggregate in these observations, with zero persisted files used. The unchanged position aggregate still reads broadly; keyed stamp lookup is **not proven constant physical-row I/O**. The old-wide SELECT is the pre-optimization RT01 predicate, not the pre-RT01 A baseline's actual ASSERT plan; baseline has no stamp branch. These probes show a narrower stamp branch on this engine, but do not assign a causal fraction of the compact-five p99 difference. Per-commit native ASSERT rows and 10k behavior remain unverified. Raw plans, pushdowns, times, per-sample wire counts and statement dictionary are retained for review.
+
+### Cleanup, retention and pins
+
+The controller's finally block inspected the same engine, captured logs, ran `engine.mjs down --holder CX-RT01 --remove-volume`, and verified the **exact owned** container and volume absent via Docker's specific missing-resource messages. The owner file, reservation and retained-volume entry are absent. Private triplex2 fstrim and `docker context use colima` exited zero; a separate saved-context read confirms colima under the persistent private DOCKER_HOST override. No resident or another holder's state was altered.
+
+[Live evidence index](live3-run/INDEX.md), [derived receipt](live3-run/RESULT.json), [closure verification](live3-run/VERIFICATION.json) and [manifest](live3-run/DURABLE-SHA256SUMS) bind raw files under `/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-RT01/round6/{admission2,live-attempt1,g2-attempt1,g6-attempt1}` plus the new owner/engine/cleanup files and `/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-RT01/live3-run/`. All **83 original round6 evidence files** were rehashed unchanged; their historical manifest/inventory/RESULT were not regenerated. The new manifest covers the combined immutable and added files. Raw output remains outside Git. The executed seal preimage is preserved; a separate post-seal checker verifies helper and native-plan parameter bindings without rerunning any gate. No product or frozen-workload edit, new pinned hash movement, acceptance change or oracle edit occurred. The earlier testkit pin handoff remains applicable.
+
+### PASS / verdict / receipt audit before commit
+
+| Site | Content | Freshness and exact binding |
+| --- | --- | --- |
+| Admission2 / run-live ownership | Actual free disk above forecast, free slot/pool, exact missing-resource inspections, successful fresh acquisition; only newly acquired CX-RT01 owner is cleaned. | New directories; command times, holder/s1/endpoint, engine ID start/end and private Docker endpoint. Previous disk refusal not reused. |
+| Product CAS / receipt path (unchanged) | Exact prior marker position/stamp inside scoped CAS, allocator and receipt readback unchanged; live conformance includes journal/readback/atomicity. | Fresh engine/scope and source cut per commit; current product identical to 37ae44a9. No earlier engine's receipt adopted. |
+| G2 observe/case/route/schedule/determinism verdicts; final grantsAcceptance | Exact authored expectations executed; closure checks complete 197/42/2/3 denominators, no case failure, actual route bytes and identical deterministic fixtures. Expected contention conflicts remain recorded. | Fresh scopes, current source/build before/after maps, actual engine owner; final source hashes read back. Exit zero and a boolean alone do not qualify G2. |
+| G6 sample/receipt/readback/count checks | Receipt positions, exact string facts/instants and stored fact bytes, scope row counts; actual statements and PG-wire counts. | Same declared inputs/clock, separate named scopes, matching position sequence; original baseline artifacts and exact B build, source/runner hashes verified. |
+| A/A rule / point verdicts | Recompute nearest-rank metrics from 150 samples/arm, exact tolerance formula and failed p99 comparison; first three points pass and fourth fails. No 10k result. | Rule file/hash timestamp precedes every B sample; actual ABAB order, scope and source/build/engine identity; one failure, no retries or widened band. |
+| Native scan diagnostics | Actual engine scan counters and SQL predicate preimages, two scan operators per plan; parameter checks bind exact source scope, position 150 and observed marker stamp. Labels SELECT-probe scope and excludes per-commit/causal assertions. | Plans taken after the corresponding point on the same owned engine, outside timings; 16 exact old/new scope/cut parameter bindings checked. |
+| Cleanup / seal / post-seal verification / manifest | Specific absent-resource messages, owner/pool absence, output hashes, trim/context command content and saved context; full byte readback and original 83-file preservation. Failed G6 stays FAIL. | Closed controller streams, same owned engine ID, unique closure root, exact executed checker preimages, separate final status/pool/context observations. No current file substituted for an older executed helper. |
+
+**Open:** independent review of this live receipt and the compact-five tail failure; no 10k-history or whole-G6 no-regression qualification. No fix or benchmark retry is attempted in this window. No merge or push.

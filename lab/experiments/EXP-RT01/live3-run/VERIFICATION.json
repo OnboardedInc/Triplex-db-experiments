@@ -1,0 +1,12 @@
+{
+  "at": "2026-11-09T09:34:35.801Z",
+  "result": "EVIDENCE_VERIFIED_NOT_G6_PASS",
+  "nativePlanBindings": 16,
+  "g6RunnerHashes": {
+    "g6.mjs": "060a30a384413b75ecb5c37c080d76f51f68f227bc24096971b14f56d18d7302",
+    "../live2/wire.mjs": "fa090fb43110754d7bef05af5bcb84c47c65798592eb074e47d80e24f7eb09e6"
+  },
+  "executedSealSha256": "12aa87e63538df36e43d018b7004276c781854a302b9560d5d69cb46eea6121a",
+  "initialManifestSha256": "015124972a3ae4e8d6c6c11669d74bc067a5748955d1c27cc3afd8346e3850b7",
+  "unchangedGateResult": "G6_FAIL_FRESH_COMPACT_5_P99"
+}
