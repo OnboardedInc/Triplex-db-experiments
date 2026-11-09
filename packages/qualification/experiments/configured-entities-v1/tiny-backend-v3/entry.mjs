@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated dynamic parameters; unannotated destructured parameters. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** One private experiment entry identity; no source import or SDK access. */
 import assert from 'node:assert/strict';
 export function assertEntryBinding({descriptor,sourceGeneration,command,inputs,actualModule,actualArgv}) {

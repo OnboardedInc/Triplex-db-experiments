@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated dynamic parameters. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** Add pinned isolated observation to an unchanged public34/13 entry contract. */
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";

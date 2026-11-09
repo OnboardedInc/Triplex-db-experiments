@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] dynamic collections, runtime Buffer-to-JSON coercion, or validated values without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** Bind all canonical heavy-attempt intervals, including activity between samples. */
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";

@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] dynamic collections, runtime Buffer-to-JSON coercion, or validated values without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
 // [EXP-P2X2] Why: fixed scheduled offers measure queueing; candidate owns per-subject admission.
 // Rejected: waiting for one commit before offering the next (coordinated omission).
 import fs from "node:fs";

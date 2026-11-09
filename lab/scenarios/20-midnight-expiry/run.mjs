@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] mutable records inferred from their initial values; unannotated dynamic parameters. Binding errors remain checked by lab/bin/checkjs.mjs.
 // Scenario 20: midnight expiry wave (TARGETS 6 row 20). Spec and golden only.
 // Each expiring subject holds a List A document whose validity ends at 2026-11-08T00:00Z (a valid-time
 // boundary). Reads at one millisecond before and at midnight must differ exactly by those documents.

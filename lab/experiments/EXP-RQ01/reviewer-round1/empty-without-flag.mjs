@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] generated/optional runtime modules unavailable in standalone source checking. Binding errors remain checked by lab/bin/checkjs.mjs.
 // [CX-VRQ01] Why: distinguish an empty response alone from the HE-6 flag-specific regression.
 // Rejected: only testing eligible:false (could leave silent empty success untested).
 import assert from 'node:assert/strict';

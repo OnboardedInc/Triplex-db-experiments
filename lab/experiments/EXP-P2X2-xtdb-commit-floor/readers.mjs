@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] runtime-populated records, option bags, or branch-specific union members. Binding errors remain checked by lab/bin/checkjs.mjs.
 // [EXP-P2X2] Why: reuse X05's worker-thread, four-query 40-entity pinned pull and cap 16.
 // Rejected: readers on the writer event loop (confounds client delay and server contention).
 // The R16-shaped read domain is immutable: this is contention load, not full writer-linked P1 acceptance.

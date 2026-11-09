@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck -- [EXP-CHECKJS-R2] dynamic collections, runtime Buffer-to-JSON coercion, or validated values without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
 // [EXP-W02] Why: W0 v2 is the live entry; W01 stays inspectable as an explicit diagnostic.
 // Rejected: silently falling back to the retired vocabulary when v2 or a lane adapter refuses.
 import { spawn } from 'node:child_process';

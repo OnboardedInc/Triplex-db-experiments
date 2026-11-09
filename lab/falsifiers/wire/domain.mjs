@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated dynamic parameters. Binding errors remain checked by lab/bin/checkjs.mjs.
 // EXP-F02 value domain: every Triplex value kind with its edge values.
 // Kinds follow the projection spec compiler's physical kinds (ProjectionSpec.ts `Kind`), plus
 // enum (projects as text) and blob (ledger only). Each case is { id, value, note }.

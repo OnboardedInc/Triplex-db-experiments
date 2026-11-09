@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] dynamic collections, runtime Buffer-to-JSON coercion, or validated values without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
 // [EXP-E01] Why: retain exact reference-call agreement as a reviewable receipt. Rejected: inferring agreement from exit zero.
 import fs from 'node:fs';
 import os from 'node:os';

@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] runtime-populated records, option bags, or branch-specific union members. Binding errors remain checked by lab/bin/checkjs.mjs.
 // [EXP-P2X2] Why: missing observations must not become zero latency or native margin.
 // Rejected: defaulting missing values to zero (would incorrectly select D2).
 export function summary(values) {

@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] generated/optional runtime modules unavailable in standalone source checking. Binding errors remain checked by lab/bin/checkjs.mjs.
 // EXP-J01 probe 4: does an XTDB 2.2 SQL string literal (single quotes doubled, nothing else escaped)
 // compare equal to the same text bound as a parameter? For each tricky value: insert it as a parameter,
 // then (a) an ASSERT NOT EXISTS with the literal must be rejected (the row is found), and (b) the same

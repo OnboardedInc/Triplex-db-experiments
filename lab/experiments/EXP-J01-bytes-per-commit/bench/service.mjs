@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] runtime-populated records, option bags, or branch-specific union members; option bags inferred from defaults omit optional fields. Binding errors remain checked by lab/bin/checkjs.mjs.
 // EXP-J01 commit service time, A0 against compact, interleaved in one window on one shared resident.
 // One writer per arm, closed loop, 10-fact commands with a commandId, each arm on its own fresh scope.
 // Blocks alternate the arm that goes first (A0 C, C A0, ...) so host-load drift falls on both arms.

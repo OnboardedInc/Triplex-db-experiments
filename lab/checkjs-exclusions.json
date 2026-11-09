@@ -1,0 +1,318 @@
+{
+  "format": "triplex-checkjs-exclusions/1",
+  "description": "Exact tracked paths only; each exclusion requires a nonempty reason. node_modules and dist path components are automatically omitted as generated dependencies/output. No other directory is implicitly omitted.",
+  "exclusions": [
+    {
+      "path": "lab/experiments/EXP-D01b-w0-kernel/receipts/mutation-112/mutate.mjs",
+      "reason": "Immutable historical source capture retained beside a receipt. No current entry point reads this captured file; consumer generators create fresh attempt source instead."
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/consumer-2/smoke.mjs",
+      "reason": "Immutable historical source capture retained beside a receipt. No current entry point reads this captured file; consumer generators create fresh attempt source instead."
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/consumer-3/smoke-image6.mjs",
+      "reason": "Immutable historical source capture retained beside a receipt. No current entry point reads this captured file; consumer generators create fresh attempt source instead."
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/consumer-3/smoke-image7.mjs",
+      "reason": "Immutable historical source capture retained beside a receipt. No current entry point reads this captured file; consumer generators create fresh attempt source instead."
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/consumer-3/smoke.mjs",
+      "reason": "Immutable historical source capture retained beside a receipt. No current entry point reads this captured file; consumer generators create fresh attempt source instead."
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/consumer/smoke.mjs",
+      "reason": "Immutable historical source capture retained beside a receipt. No current entry point reads this captured file; consumer generators create fresh attempt source instead."
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/measure-image4.mjs",
+      "reason": "Immutable historical source capture retained beside a receipt. No current entry point reads this captured file; consumer generators create fresh attempt source instead."
+    },
+    {
+      "path": "lab/experiments/EXP-DA01/round3/packed-exports/smoke.mjs",
+      "reason": "Generated DA01 round3 packed-consumer capture, retained with its historical package output. Current pack checking enters scripts/check-packages.mjs; do not annotate captured evidence."
+    },
+    {
+      "path": "vendor/duckdb-temporal/research/roadmap/iteration-01/probes/language-semantics.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/research/roadmap/iteration-01/test-prep/browser-contract/run-contract.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/research/roadmap/iteration-03/checkpoints/catalog-authority-20261031-0735/api-review/source-hash-checker.js",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/benchmark-aggregate.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/benchmark-compat-write.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/benchmark-control.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/benchmark-count.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/benchmark-entity.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/benchmark-identity-count.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/benchmark-join.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/benchmark-reference.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/benchmark-scale.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/benchmark-scan.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/benchmark-schema-views.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/benchmark-schema.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/benchmark-store-query.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/benchmark-transport.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/benchmark-write.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/clone-benchmark-fixture.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/crash-fixture.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/crash-native-command.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/evaluator-profile-fixture.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/mixed-scale-fixture.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/native-duckdb-port.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/owned-duckdb-port.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/profile-public-read-phases.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/profile-read-plan.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/public-backend.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/query-result-boundary.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/scale-fixture.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/shared-fixture.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/test-all-cut-store.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/test-all-cut-unique.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/test-current-unique.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/test-evaluator-profile.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/test-identity-count.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/test-json-blob-upgrade.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/test-owned-query.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/test-owner-activation.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/test-owner-probe.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/test-owner-usage.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/test-presence-upgrade.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/test-read-provenance.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/test-scale-fixture.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/test-single-owner-native.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/test-streaming-source.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/test-uniqueness-upgrade.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/transaction-owner.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/adapter/verify-expanded-upgrade.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/evidence/coverage-command-profile-first-failure-20261106-raw/executed-source-patch-profile-sql.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/evidence/coverage-command-profile-first-failure-20261106-raw/executed-source-profile-reference-coverage-command.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/evidence/coverage-command-profile-pair-20261106-raw/executed-source-patch-profile-sql.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/evidence/coverage-command-profile-pair-20261106-raw/executed-source-profile-reference-coverage-command.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/evidence/native-reference-identity-growth-pair-first-20261106-raw/pair/baseline/growth.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/evidence/native-reference-identity-growth-pair-first-20261106-raw/pair/candidate/growth.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/evidence/presence-profile-first-success-20261106-raw/executed-driver-1706.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/evidence/sdk-query-admission-v2-20261105/baseline-light-128.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/workloads/access_cases.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/workloads/containment_cases.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/workloads/dependency_cases.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/workloads/engine_cases.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/workloads/funnel_cases.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/workloads/interval_join_cases.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/workloads/recall_cases.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/workloads/run_three_engines.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/workloads/support_cases.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/workloads/test_engine_cases.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/workloads/training_cases.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/workloads/uptime_cases.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    },
+    {
+      "path": "vendor/duckdb-temporal/runtime/workloads/webhook_cases.mjs",
+      "reason": "Archived imported DuckDB homebase snapshot, retained for provenance. Current package adapters are under packages/duckdb; lab entry points use compiled native artifacts, not this vendor JavaScript."
+    }
+  ]
+}

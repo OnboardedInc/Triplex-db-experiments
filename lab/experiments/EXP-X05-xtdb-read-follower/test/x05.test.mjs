@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] runtime-populated records, option bags, or branch-specific union members. Binding errors remain checked by lab/bin/checkjs.mjs.
 // EXP-X05 driver unit tests. Run: node --test lab/experiments/EXP-X05-xtdb-read-follower/test/x05.test.mjs
 import assert from 'node:assert/strict';
 import { test } from 'node:test';

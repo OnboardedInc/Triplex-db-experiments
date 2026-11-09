@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated dynamic parameters. Binding errors remain checked by lab/bin/checkjs.mjs.
 // EXP-J01: where two arms of a journal-equivalence raw file differ, surface by surface.
 // Usage: node equivalence-diff.mjs <raw.json> [surface]
 import fs from 'node:fs';

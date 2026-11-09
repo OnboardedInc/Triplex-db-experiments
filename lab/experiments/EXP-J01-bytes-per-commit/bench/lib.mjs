@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] runtime-populated records, option bags, or branch-specific union members. Binding errors remain checked by lab/bin/checkjs.mjs.
 // EXP-J01 harness library: Triplex runtimes per lane and journal encoding over measuring clients,
 // source-log record sizing (XTDB) and delta accounting (QLever), statistics and receipts.
 // Imports the built dist (the bytes a gate hashes), never package sources.

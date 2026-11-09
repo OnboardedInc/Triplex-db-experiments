@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] option bags inferred from defaults omit optional fields. Binding errors remain checked by lab/bin/checkjs.mjs.
 // Scenario 3: webhook storm after an outage, with GS.03's late older vendor revision (TARGETS 6 row 3, 6.1).
 //
 // Each storm subject receives vendor revisions 0..4 of its E-Verify status in a seeded, out-of-order arrival

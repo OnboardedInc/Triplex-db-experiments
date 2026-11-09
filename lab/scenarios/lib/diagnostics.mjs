@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated local values; unannotated dynamic parameters; unannotated destructured parameters; initially empty collections. Binding errors remain checked by lab/bin/checkjs.mjs.
 // [EXP-W01b] Why: a failed comparison is not proof of an engine defect. Rejected: relabeling
 // timeouts as PASS or blaming every WriteError on overload without a timeout in its evidence.
 export function failureKind(value) {

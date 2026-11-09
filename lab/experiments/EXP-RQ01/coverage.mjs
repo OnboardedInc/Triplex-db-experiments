@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] generated/optional runtime modules unavailable in standalone source checking. Binding errors remain checked by lab/bin/checkjs.mjs.
 // [EXP-RQ01] Why: bind measured R31 denominators and actual nonzero reads to the gate receipt.
 // Rejected: storing only seed labels (the original labels missed semantic operation families).
 import fs from "node:fs";

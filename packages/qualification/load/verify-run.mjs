@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated dynamic parameters. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** Independent post-run use of the controller's retained-byte/cut oracle verifier. */
 import assert from "node:assert/strict";
 import { writeFile } from "node:fs/promises";

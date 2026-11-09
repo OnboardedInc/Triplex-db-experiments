@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] runtime-populated records, option bags, or branch-specific union members. Binding errors remain checked by lab/bin/checkjs.mjs.
 // Source-only bridge to the existing canonical controller API. No service is
 // started here. Input comes through stdin, never token-bearing shell argv.
 import { openContext, readState, loadJobManifest } from '../../qualification/devloop/state.mjs';

@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] runtime-populated records, option bags, or branch-specific union members; dynamic collections, runtime Buffer-to-JSON coercion, or validated values without static narrowing; runtime callback/availability guards not inferred. Binding errors remain checked by lab/bin/checkjs.mjs.
 import { createHash } from "node:crypto";
 import {
   MAX_STATEMENT_PARAMETERS,

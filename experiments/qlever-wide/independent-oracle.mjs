@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated dynamic parameters. Binding errors remain checked by lab/bin/checkjs.mjs.
 // Answer checking only. No facts, mutations or candidate compiler are produced here.
 import assert from "node:assert/strict";
 import { readFileSync, writeFileSync } from "node:fs";

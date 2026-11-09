@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck -- [EXP-CHECKJS-R2] runtime-populated records, option bags, or branch-specific union members. Binding errors remain checked by lab/bin/checkjs.mjs.
 // Shared read-only resource admission for both owned competing backends.
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, statfsSync, writeFileSync } from "node:fs";
