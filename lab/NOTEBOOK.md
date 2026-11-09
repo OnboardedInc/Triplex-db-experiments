@@ -2083,3 +2083,9 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **6f8170f1:** catalog bootstrap fixed; 1,106 product tests and live G2 pass. G6's A/A window was frozen first at 5.56%; the first fresh ten-fact A0 point measured p50 +29.25%, so the run stopped there.
 - **Likely cause:** the stamp guard adds a MAX(stamp) column to the existing ASSERT, doubling the history rows visited per guard. Avoiding an extra round trip did not avoid extra engine work. Round 6 reads the prior stamp from the marker row in the same CAS (O(1)).
 - **Lesson:** the preregistered A/A band did its job: without it, a 29% regression on the A0 control would have looked like host noise. G6 before merge (Q96b) is worth its slot hour.
+
+## 2026-11-09: the Opus forgery review found 29 more false-PASS paths in CR-NS, none in R44's F1-F20
+
+- **Opus review (lab/verify/CRNS-opus/ on the CRNS branch):** 29 forgeries accepted (10 high, 11 medium, 8 low); 21 reproduced as tests. The highs include: source content never compared with the offered command (a consistently lying source passes), a P3-only run skipping accounting and ACK-before-publication, no recompute ever checking resume, duplicate commits of one command, typed errors counted as latency for commands that later commit, duplicates hidden behind free-text epoch or consumer labels, offset order never checked against position order, and the P1 memo keyed without hops.
+- **Two reviewers, little overlap:** the Codex reviewer found 6, the Opus reviewer 29, and R44's own list of 20 covered none of the Opus findings. Writing the forgery list before reading the design (the Opus reviewer did) found the most.
+- **Lesson:** for the component that grants PASS, use both reviewers, and have one enumerate attacks from the code before reading the design's list. CX-CRNS round 2 fixes all 35 under one rule: a minimum-evidence floor before any arithmetic.
