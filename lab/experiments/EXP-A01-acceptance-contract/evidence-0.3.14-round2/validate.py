@@ -6,30 +6,37 @@ sha=lambda b:hashlib.sha256(b).hexdigest()
 s=json.loads((E/'source-and-hashes.json').read_text());head=s['testedSource']
 subprocess.run(['git','merge-base','--is-ancestor',head,'HEAD'],cwd=R,check=True)
 assert all(sha((R/p).read_bytes())==h for p,h in s['hashes'].items())
+subprocess.run(['git','merge-base','--is-ancestor',s['main'],head],cwd=R,check=True)
+assert not subprocess.check_output(['git','diff','bed67f1f','--','lab/acceptance'],cwd=R)
+audit=json.loads((E/'pin-audit.json').read_text());assert audit['activePaths']==247 and not audit['movedPins'] and audit['acceptanceByteIdentical']
+assert all(sha((R/r['path']).read_bytes())==r['sha256'] for r in audit['changedExistingSourceFiles'])
 for ref in s['parents']:subprocess.run(['git','merge-base','--is-ancestor',ref,head],cwd=R,check=True)
 runs=[]
-for label,content in [('r2-verify-final','second regeneration byte-identical'),('r2-contract-tests-final','Ran 23 tests'),('r2-evaluator-final','# pass 108')]:
+for label,content in [('r2b-verify-final','second regeneration byte-identical'),('r2b-contract-tests-final','Ran 23 tests'),('r2b-evaluator-final','# pass 108')]:
     ds=[p for p in D.glob(label+'-*') if (p/'receipt.json').exists()];assert len(ds)==1,(label,ds)
     p=ds[0];x=json.loads((p/'receipt.json').read_text());log=(p/'command.log').read_bytes();text=log.decode()
     assert x['head']==head and x['result']=={'code':0,'signal':None} and x['sourceStillMatches']
+    assert datetime.datetime.fromisoformat(x['start']).timestamp()>=s['snapshotAtEpoch'] and x['end']>=x['start']
     assert sha(log)==x['logSha256'] and content in text
     assert all(sha((R/f).read_bytes())==h for f,h in x['inputs'].items())
-    if label=='r2-contract-tests-final':assert '\nOK\n' in text
-    if label=='r2-evaluator-final':
+    if label=='r2b-contract-tests-final':assert '\nOK\n' in text
+    if label=='r2b-evaluator-final':
         for k,v in [('tests',108),('pass',108),('fail',0),('skipped',0),('cancelled',0),('todo',0)]:assert re.search(r'^# '+k+' '+str(v)+'$',text,re.M)
     runs.append({'label':label,'receipt':str(p/'receipt.json'),'sha256':sha((p/'receipt.json').read_bytes())})
-mds=list(D.glob('r2-mutations-final-*'));assert len(mds)==1
+mds=list(D.glob('r2b-mutations-final-*'));assert len(mds)==1
 mx=json.loads((mds[0]/'receipt.json').read_text());assert mx['head']==head and mx['sourceStillMatches'] and mx['result']=={'code':0,'signal':None}
+assert datetime.datetime.fromisoformat(mx['start']).timestamp()>=s['snapshotAtEpoch'] and mx['end']>=mx['start']
 m=(mds[0]/'command.log').read_text();assert sha(m.encode())==mx['logSha256'] and 'missed: []' in m
 mm=re.search(r'total (\d+) run (\d+) caught (\d+) missed: \[\] retired \(anchor gone\): (\d+)',m);assert mm and mm[2]==mm[3]
 assert 'SOURCE sha256='+s['hashes']['lab/acceptance/build_contract.py'] in m
 assert all(('CAUGHT '+r+' '+k) in m for r in ['Q96a','Q96b','Q96c','Q96d','Q97a','Q97b','Q97c'] for k in ['literal weakened','consumer missing','compiled row absent'])
 assert all(('CAUGHT 0314 '+k) in m for k in ['repin missing','repin stale','case pin stale','review binding absent'])
-for label, marker in [('r2-focused-final','19 passed'),('r2-types-final',None)]:
+for label, marker in [('r2b-focused-final','19 passed'),('r2b-types-final',None)]:
     ps=[p for p in D.glob(label+'-*') if (p/'receipt.json').exists()];assert len(ps)==1
     x=json.loads((ps[0]/'receipt.json').read_text());b=(ps[0]/'command.log').read_bytes()
     assert x['head']==head and x['sourceStillMatches'] and x['result']=={'code':0,'signal':None} and sha(b)==x['logSha256']
     assert all(sha((R/f).read_bytes())==h for f,h in x['inputs'].items())
+    assert datetime.datetime.fromisoformat(x['start']).timestamp()>=s['snapshotAtEpoch'] and x['end']>=x['start']
     if marker:assert marker in b.decode()
 gates=[]
 for lane in ['xtdb','datomic','qlever']:
@@ -59,6 +66,6 @@ for lane in ['xtdb','datomic','qlever']:
     gates.append({'lane':lane,'runId':x['runId'],'counts':x['counts'],'sourceTreeId':x['git']['sourceTreeId'],'objects':len(x['objects']),'builtFiles':n,'durableRoot':str(root),'capturedAtEpoch':c['capturedAtEpoch'],'startedAt':started})
 assert all(a['capturedAtEpoch']<b['startedAt'] for a,b in zip(gates,gates[1:]))
 assert len({g['sourceTreeId'] for g in gates})==1
-summary={'testedSource':head,'mainIncluded':s['main'],'sourceHashesStable':True,'contractTests':23,'evaluatorPass':108,'mutationCatalog':int(mm[1]),'mutationsCaught':int(mm[3]),'retiredAnchors':int(mm[4]),'g0':gates,'runs':runs,'noIndependentPromotion':True}
+summary={'testedSource':head,'mainIncluded':s['main'],'sourceHashesStable':True,'contractTests':23,'evaluatorPass':108,'mutationCatalog':int(mm[1]),'mutationsCaught':int(mm[3]),'retiredAnchors':int(mm[4]),'g0':gates,'runs':runs,'focusedBrokerTests':19,'runtimeTypeFixture':'tsc exit zero with missing-domain expected error consumed','movedActivePins':[],'noIndependentPromotion':True}
 (E/'validation-summary.json').write_text(json.dumps(summary,indent=2)+'\n')
 print('Validated exact result content, source stability, fresh attempt/source/slot/input bindings and retained build/raw/object bytes')

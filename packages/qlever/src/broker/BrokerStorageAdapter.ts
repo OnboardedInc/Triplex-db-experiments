@@ -718,6 +718,8 @@ export const makeQleverBrokerStorageAdapter = (
     | "routes"
     | "resolveQueryBasis"
     | "sourceView"
+    // [CX-A01-0314-R2] Why: the read-only view precedes full adapter assembly. Rejected: making valueDomain optional on the complete adapter.
+    | "valueDomain"
     | "supportedValueTypes"
     | "snapshotReadPolicy"
     | "validateConstraints"
