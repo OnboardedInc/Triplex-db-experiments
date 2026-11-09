@@ -2028,3 +2028,8 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **Acted:** Q99a-e recorded as pending orchestrator rulings (contract 0.4.1 for qualification pins; absolute bars in GREEN windows where A0 cannot hold the rung; H1 reads count for the composition's repository surfaces; queue reordered; acceptance only after screening shows margin). Scorecard P2 is GAP for the XTDB-source columns (Q96d). Dispatched R44 (NS-run execution design, Opus) and CX-M01R (PAIR-0 rebase onto main). K01 live, P5 A1, W02 live and DA04 move below the critical windows.
 - **Ask Sam:** Q99-S1 (the NS rung) with Q94a, and Q60's host half (pausing his default colima VM for 1-3 hour acceptance windows).
 - **Lesson:** a loop that optimizes experiments one at a time can run for days without moving a scorecard cell. The critical path to the first PASS should be written early and checked each hourly pass.
+
+## 2026-11-09: RT01 live window: fresh XTDB init reads tx_meta before creating it
+
+- **d7f8def2:** G2 completed no cases and G6 did not run; the earlier timeout's cause is still unknown. Slot released, volumes removed, VM trimmed.
+- **Same class as K01 round 12:** a declared table that a fresh XTDB 2 engine has not created yet. **Lesson:** "XTDB creates tables on first insert" is a lab-wide fact, not a K01 detail; every path that reads a table it may not have written must check the catalog. RT01 live round 2 reuses K01's typed catalog check, then runs a diagnostic smoke pass before G2 and G6.
