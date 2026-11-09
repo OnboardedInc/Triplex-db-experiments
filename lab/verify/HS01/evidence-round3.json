@@ -1,0 +1,347 @@
+{
+  "format": "CX-VHS01-offline-review-round3/1",
+  "root": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VHS01/round3",
+  "reviewedHead": "719f5b0e",
+  "product": "afafa7aa0954eedbabad359248a3dee9a9ae5c34",
+  "files": 2321,
+  "bytes": 2441145853,
+  "manifestSha256": "c8da27dfbfe74350c8d85568d57fa1baafb6448fcb573ccde87bf9ebb7ff9e7d",
+  "allRegularFilesReadBack": true,
+  "pinnedPaths": 247,
+  "movedPins": [],
+  "attempts": [
+    {
+      "path": "audit-8122ec56-ac22-4d87-8e91-66b876cc02a0",
+      "head": "c0bd9d7a90ae4ea41af7e15924390da4a6083104",
+      "command": ["node", "lab/verify/HS01/round3/audit.mjs"],
+      "start": "2026-11-09T18:07:27.455Z",
+      "end": "2026-11-09T18:07:27.756Z",
+      "result": {
+        "code": 1,
+        "signal": null
+      },
+      "sourceUnchanged": true,
+      "receiptSha256": "344efc7743461e2cf18c7c9703d667d14df3d3a6fee9e99e8f144b6c1aeae317"
+    },
+    {
+      "path": "audit-complete-0208f525-434a-43e7-ad65-258f251d905f",
+      "head": "c0bd9d7a90ae4ea41af7e15924390da4a6083104",
+      "command": [
+        "node",
+        "lab/verify/HS01/round3/audit.mjs",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VHS01/round3/audit-corrected-3ff21ed9-c7eb-40c5-881a-526df835d92f",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VHS01/round3/stock-rebuild-5cdb3511-a737-4a73-b1e5-55a3f71f8ca8/order-2"
+      ],
+      "start": "2026-11-09T18:30:01.321Z",
+      "end": "2026-11-09T18:31:25.934Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceUnchanged": true,
+      "receiptSha256": "f3d86602d2bd5291d6256809905e7ea6716d7880e1c8e679f4a6fffd93c1892a"
+    },
+    {
+      "path": "audit-corrected-3ff21ed9-c7eb-40c5-881a-526df835d92f",
+      "head": "c0bd9d7a90ae4ea41af7e15924390da4a6083104",
+      "command": ["node", "lab/verify/HS01/round3/audit.mjs"],
+      "start": "2026-11-09T18:09:30.113Z",
+      "end": "2026-11-09T18:11:27.903Z",
+      "result": {
+        "code": 1,
+        "signal": null
+      },
+      "sourceUnchanged": true,
+      "receiptSha256": "c409e4cf7e043017ac3d13e8e5be57627bbf311a9a015c4dc407d57397bb8516"
+    },
+    {
+      "path": "audit-final-06617e12-da41-4835-859a-3f19dcfd526a",
+      "head": "c0bd9d7a90ae4ea41af7e15924390da4a6083104",
+      "command": [
+        "node",
+        "lab/verify/HS01/round3/audit.mjs",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VHS01/round3/audit-corrected-3ff21ed9-c7eb-40c5-881a-526df835d92f"
+      ],
+      "start": "2026-11-09T18:15:15.133Z",
+      "end": "2026-11-09T18:16:57.354Z",
+      "result": {
+        "code": 1,
+        "signal": null
+      },
+      "sourceUnchanged": true,
+      "receiptSha256": "b26ebd63962efed4970d8443a1827654def782765744cd718b0ed43f4e77cb48"
+    },
+    {
+      "path": "build-19351cd5-b13f-4b22-ae24-145d79343aca",
+      "head": "c0bd9d7a90ae4ea41af7e15924390da4a6083104",
+      "command": ["node", "lab/experiments/EXP-HS01/build.mjs"],
+      "start": "2026-11-09T18:07:01.891Z",
+      "end": "2026-11-09T18:07:27.070Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceUnchanged": true,
+      "receiptSha256": "b09d2d7d4104a8a4125daba9dffefa925e1b3559856210954427b8086445a727"
+    },
+    {
+      "path": "build-drift-f68c9254-741f-4c04-8747-9a7e0c017d54",
+      "head": "c0bd9d7a90ae4ea41af7e15924390da4a6083104",
+      "command": ["node", "lab/verify/HS01/round3/build-drift.mjs"],
+      "start": "2026-11-09T18:19:43.878Z",
+      "end": "2026-11-09T18:19:44.264Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceUnchanged": true,
+      "receiptSha256": "bd5b1d3eb59d7f49bb97fef4c8a6f1627bea9f83b79017ee3d01d2dfcb4e06ae"
+    },
+    {
+      "path": "build-drift2-a130c37f-a1b5-4ab9-bd41-242327e1c610",
+      "head": "c0bd9d7a90ae4ea41af7e15924390da4a6083104",
+      "command": ["node", "lab/verify/HS01/round3/build-drift.mjs"],
+      "start": "2026-11-09T18:20:29.615Z",
+      "end": "2026-11-09T18:20:30.675Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceUnchanged": true,
+      "receiptSha256": "d60be83d06dc4705f634fea2c5010b2cefd6250a618e7e530709b7ce91fabbf0"
+    },
+    {
+      "path": "build-drift3-4cb68f04-695d-4873-aafc-cf9dc6a48ee6",
+      "head": "c0bd9d7a90ae4ea41af7e15924390da4a6083104",
+      "command": ["node", "lab/verify/HS01/round3/build-drift.mjs"],
+      "start": "2026-11-09T18:22:17.598Z",
+      "end": "2026-11-09T18:22:18.987Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceUnchanged": true,
+      "receiptSha256": "21abf4ec32e92a0541ea3ce49ed8d6490f01823a7c7169eb41781d21e27ef7b9"
+    },
+    {
+      "path": "build-drift4-0f37ab83-b68e-431a-a06f-b21708d39c80",
+      "head": "c0bd9d7a90ae4ea41af7e15924390da4a6083104",
+      "command": [
+        "node",
+        "lab/verify/HS01/round3/build-drift.mjs",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VHS01/round3/rebuild-core-fb8cc1a6-823b-4adc-945b-99ae5c960cac"
+      ],
+      "start": "2026-11-09T18:24:10.260Z",
+      "end": "2026-11-09T18:24:13.341Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceUnchanged": true,
+      "receiptSha256": "a041573458742b104fdde13ae99324be3dd59fbb2a4473def347321a44d866d7"
+    },
+    {
+      "path": "build-drift5-06ade3c1-6383-47cd-a0fd-355f34d99a08",
+      "head": "c0bd9d7a90ae4ea41af7e15924390da4a6083104",
+      "command": ["node", "lab/verify/HS01/round3/build-drift.mjs"],
+      "start": "2026-11-09T18:25:11.685Z",
+      "end": "2026-11-09T18:26:39.550Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceUnchanged": true,
+      "receiptSha256": "1946a52ef4a5df9798c0da9ac160cc9f8c36237d4a276bca9dbce87f190e0a4a"
+    },
+    {
+      "path": "evaluator-1c8c1a75-2ccd-44a8-8c4a-e444efee53c6",
+      "head": "c0bd9d7a90ae4ea41af7e15924390da4a6083104",
+      "command": [
+        "node",
+        "--test",
+        "lab/bin/test/claim.test.mjs",
+        "lab/bin/test/claim-round2.test.mjs"
+      ],
+      "start": "2026-11-09T18:09:10.185Z",
+      "end": "2026-11-09T18:13:27.935Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceUnchanged": true,
+      "receiptSha256": "b653ea6de15f68f2272ee2966001c84a868f40f0fbb59d066153e986e68d5ae0"
+    },
+    {
+      "path": "independent-63f584ff-12e7-4bd3-b360-eed19c0a8505",
+      "head": "c0bd9d7a90ae4ea41af7e15924390da4a6083104",
+      "command": [
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/HS01/round3/vitest.config.ts"
+      ],
+      "start": "2026-11-09T18:05:32.546Z",
+      "end": "2026-11-09T18:05:58.389Z",
+      "result": {
+        "code": 1,
+        "signal": null
+      },
+      "sourceUnchanged": true,
+      "receiptSha256": "f4bb59eede1fe63594f4a48ceef150659d10ddacdd5d48687346e9efd174b619"
+    },
+    {
+      "path": "independent-corrected-1fb2e0f0-ed39-4b04-b753-9276aca97b5d",
+      "head": "c0bd9d7a90ae4ea41af7e15924390da4a6083104",
+      "command": [
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/HS01/round3/vitest.config.ts"
+      ],
+      "start": "2026-11-09T18:08:56.073Z",
+      "end": "2026-11-09T18:09:29.553Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceUnchanged": true,
+      "receiptSha256": "8d51102148cb2903606885fe57e4c9653cc3f1ba486438c2f3714a41e0ac0d2e"
+    },
+    {
+      "path": "independent-final-fa11fb5b-b117-4159-a723-79225ea9a171",
+      "head": "c0bd9d7a90ae4ea41af7e15924390da4a6083104",
+      "command": [
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/HS01/round3/vitest.config.ts"
+      ],
+      "start": "2026-11-09T18:07:00.078Z",
+      "end": "2026-11-09T18:07:27.058Z",
+      "result": {
+        "code": 1,
+        "signal": null
+      },
+      "sourceUnchanged": true,
+      "receiptSha256": "d25088366bfeaa46ee31575eaed5623d4630bbae6f539a50f27b4d6e5631c86b"
+    },
+    {
+      "path": "kill80-99feea6e-a345-43f3-99a9-698e46ce6680",
+      "head": "c0bd9d7a90ae4ea41af7e15924390da4a6083104",
+      "command": ["node", "lab/verify/HS01/kill.mjs"],
+      "start": "2026-11-09T18:09:03.794Z",
+      "end": "2026-11-09T18:11:17.974Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceUnchanged": true,
+      "receiptSha256": "cbcf130f1caf61e8c1e37c0323c5d0d6fbfa52411867eaeec7f6f97097caa7a8"
+    },
+    {
+      "path": "pack-witness-e285c414-4740-4f60-a5c7-24f4efafdd3e",
+      "head": "c0bd9d7a90ae4ea41af7e15924390da4a6083104",
+      "command": [
+        "python3",
+        "-c",
+        "import tarfile,hashlib,pathlib,os,json; root=pathlib.Path(\"/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-HS01\"); out=pathlib.Path(os.environ[\"VHS01_OUT\"]); rows=[]\nfor p in root.glob(\"*-pack/*/tarballs/triplex-build-triplex-0.2.0.tgz\"):\n with tarfile.open(p) as t:\n  b=t.extractfile(\"package/dist/runtime/index.js\").read(); h=hashlib.sha256(b).hexdigest(); rows.append({\"tar\":str(p),\"sha256\":h})\n  if h==\"5fb7784a60c25e491950b1947ccb198e91c04e524b33e58cb34c67e430ff9660\": (out/\"index.js.seed-build\").write_bytes(b)\nprint(json.dumps(rows)); (out/\"archives.json\").write_text(json.dumps(rows,indent=2))"
+      ],
+      "start": "2026-11-09T18:21:14.797Z",
+      "end": "2026-11-09T18:21:15.151Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceUnchanged": true,
+      "receiptSha256": "5d33884853bcb7acb71c07c74b84f20efb47c9f33228867faa88b0c645daa5c5"
+    },
+    {
+      "path": "public-a36cae93-dd1f-48c7-9ac9-d8124deb3749",
+      "head": "c0bd9d7a90ae4ea41af7e15924390da4a6083104",
+      "command": ["node", "lab/verify/HS01/round3/public.mjs"],
+      "start": "2026-11-09T18:09:07.915Z",
+      "end": "2026-11-09T18:09:09.652Z",
+      "result": {
+        "code": 1,
+        "signal": null
+      },
+      "sourceUnchanged": true,
+      "receiptSha256": "79360eae26cc4b7de447e96e6e6647af4c9adda53c686c0d1e3801d1421d845d"
+    },
+    {
+      "path": "public-final-0a892d96-9e57-4645-8b91-c7b1115c86d7",
+      "head": "c0bd9d7a90ae4ea41af7e15924390da4a6083104",
+      "command": ["node", "lab/verify/HS01/round3/public.mjs"],
+      "start": "2026-11-09T18:15:16.239Z",
+      "end": "2026-11-09T18:15:18.912Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceUnchanged": true,
+      "receiptSha256": "757b06207751074ad8d1dbea8ba3c8e59879d476d1f3cb610b738cd0fa3c497b"
+    },
+    {
+      "path": "rebuild-core-fb8cc1a6-823b-4adc-945b-99ae5c960cac",
+      "head": "c0bd9d7a90ae4ea41af7e15924390da4a6083104",
+      "command": ["node", "lab/verify/HS01/round3/rebuild-core.mjs"],
+      "start": "2026-11-09T18:23:29.322Z",
+      "end": "2026-11-09T18:23:30.695Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceUnchanged": true,
+      "receiptSha256": "6251b9d66733033d6b5ead21616cb778fa5a49c971338c80f26955fbfb7eff2a"
+    },
+    {
+      "path": "regressions-c7811d09-5654-436e-9c92-422d775ec3ac",
+      "head": "c0bd9d7a90ae4ea41af7e15924390da4a6083104",
+      "command": [
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/HS01/round2/vitest.config.ts"
+      ],
+      "start": "2026-11-09T18:11:28.296Z",
+      "end": "2026-11-09T18:11:43.155Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceUnchanged": true,
+      "receiptSha256": "2a2f9afc5a6df5ebf27ca462e9bc1228d7fbaef552e4103c3303c83e5f64a638"
+    },
+    {
+      "path": "stock-rebuild-5cdb3511-a737-4a73-b1e5-55a3f71f8ca8",
+      "head": "c0bd9d7a90ae4ea41af7e15924390da4a6083104",
+      "command": ["node", "lab/verify/HS01/round3/rebuild-core.mjs"],
+      "start": "2026-11-09T18:28:13.523Z",
+      "end": "2026-11-09T18:28:18.450Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceUnchanged": true,
+      "receiptSha256": "3722812dc4422f7ff055542fa2b375a3273e60389bbd5c1813dd83f162caced5"
+    },
+    {
+      "path": "suite-1d26e72d-c31a-4bb2-9b4d-3ad692736fd3",
+      "head": "c0bd9d7a90ae4ea41af7e15924390da4a6083104",
+      "command": [
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/HS01/vitest.config.ts"
+      ],
+      "start": "2026-11-09T18:11:18.783Z",
+      "end": "2026-11-09T18:14:35.306Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceUnchanged": true,
+      "receiptSha256": "640ba6c58bb7d472be837907c8b4fd089085cde6770127444d944bee5b7c008a"
+    }
+  ]
+}
