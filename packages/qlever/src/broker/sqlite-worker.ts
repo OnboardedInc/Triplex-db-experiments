@@ -289,11 +289,11 @@ const wholePull = a => {
    if(o===undefined||owners.has(o))continue;
    if(roots){
     owners.add(o);ownerNames.push(on);
-    const rows=ownerRows({o,b});statements+=4;
+    const rows=ownerRows({o,b});statements+=5;
     next.push(...collect(rows,ownerRefs.all({o,b})));
    }else{
     const e=entId(entity);if(e===undefined)continue;
-    const rows=entityRows({o,b,e});statements+=4;
+    const rows=entityRows({o,b,e});statements+=5;
     next.push(...collect(rows,entityRefs.all({o,b,e})));
    }
   }
