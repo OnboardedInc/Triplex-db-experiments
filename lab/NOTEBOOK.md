@@ -1812,3 +1812,13 @@ Where each priority stands, from evidence so far (research probes and baselines;
     which path (compact cur graph, broker host store, different encoding) can reach the bar.
 - **Priorities by evidence today:** P1 has its floor designed (RT01, Q89, Q90) and building; P2 and P4 have no lane meeting a bar yet; P3
   has SQL01's feed checks; P5 has round A offline. R39 and R40 target the two weakest.
+
+## 2026-11-09 03:44Z: R39: no lane X commit has reached P2's 10 ms; the XTDB indexer is the floor; the broker is the shortest path
+- **P2X (per-subject CAS, never reviewed, 460 commits behind main):** 0 cross-subject conflicts with 16 writers (A0: 222 conflicts, 3,376
+  CAS rejections), 6 to 8x lower service time than A0 at about 20k history; best single-writer p50 42.6 ms, 31.3 ms of it the commit.
+- **Floor:** best 10-fact commit p50 16.4 ms with no readers; 77 to 290 ms service with 4 to 256 readers on the writer node. The serial
+  indexer is 59 to 90% of commit time in X05's engine metrics; fsync 1 to 2 ms; read-your-own-write adds nothing on the writer node.
+  85% of trace commands arrive in 55/s bursts, so one decider needs about 7 ms service or less.
+- **Rulings Q96a-c:** per-subject serial and cross-subject parallel composition, A0 single-flight only as a control; per-subject arms need a
+  decider-side stamp (RT01's client stamp is monotone only because A0 serializes); the broker (P2B) is the shortest path, and EXP-P2X2 runs
+  once on an exclusive slot, with its decision rule written in advance, to settle whether the native path is closed.
