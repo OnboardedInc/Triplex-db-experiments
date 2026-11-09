@@ -256,6 +256,8 @@ async function activationArm(name: string, W: number) {
     const wallMs = performance.now() - started;
     const endCounts = await comp.storeCounts();
     const eluMain = performance.eventLoopUtilization(elu0).utilization;
+    // [EXP-P5N] Why: G-P1 data. The in-worker readers keep a read transaction open almost continuously, so the checkpointer's RESTART may find no gap; record its events and outcome counts with the WAL maximum.
+    const checkpoint: any = await (h.broker as any).checkpointStatus?.();
     const writerSplit: any = await h.broker.appendStats(false);
     const hostSplit = Object.fromEntries(Object.entries(h.hstats).map(([k, v]) => [k, (v as number) - (hs0 as any)[k]]));
     clearInterval(walTimer);
@@ -389,6 +391,7 @@ async function activationArm(name: string, W: number) {
       cpuScope: m[0]?.cpuScope,
       storeCpuS: sum((x) => x.store.cpuMicros) / 1e6,
       walMaxBytes: walMax,
+      checkpoint: checkpoint && { counts: checkpoint.counts, events: checkpoint.events.map((e: any) => ({ at: e.at - Date.now() + (performance.now() - started), mode: e.mode, outcome: e.outcome, ms: e.ms })) },
       rssGrowthBytes: rssGrowth,
       correctness: { coverage: coverage.size, g2Sampled: sample.length, g5Pages: pubLog.length, deliveries, gWorld, gJnl, fpBefore, fpAfter },
       counts: { start: arm.startCounts, end: endCounts },
