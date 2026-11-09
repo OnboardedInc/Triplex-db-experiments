@@ -1,0 +1,60 @@
+{
+  "base": "36dacc2e158919a9fbede9d9d2c93d0e492aad3d",
+  "testedHead": "5b16e04d90ece6353690106e64ae77fe016d01df",
+  "paths": [
+    {
+      "path": ".changeset/p2q-exact-journal-snapshot.md",
+      "oldSha256": "5d414e56d7afb6ffeb5f3c741e66a057ec5a1dfcb2db9978d37f0ea0f8adbc43",
+      "newSha256": "c368c65b7cc38abf2274a638d2ea890043eebeb59863eb569d03b7ff99aa48f2",
+      "pinnedAcceptanceReference": false
+    },
+    {
+      "path": "packages/core/src/runtime/index.ts",
+      "oldSha256": "cff6cc61c6fc39156d7ffef2b8b359aa24339f9e74244e27357192dcf8280b10",
+      "newSha256": "43e7da589442d594e128ec75b964e1b59d3683b84623daaef74522b927291a21",
+      "pinnedAcceptanceReference": false
+    },
+    {
+      "path": "packages/core/src/storage/ReadSurface.ts",
+      "oldSha256": null,
+      "newSha256": "72c901c078f497e2f522c1d95f6c54e15eb33b237f87cc0ab9163ed37a3c7443",
+      "pinnedAcceptanceReference": false
+    },
+    {
+      "path": "packages/core/src/storage/StorageAdapter.ts",
+      "oldSha256": "36c9ca889cc75ab87a58a92deb3ab67f227f6c16b8eabfe73149e03058dbb683",
+      "newSha256": "f782894a7cbd77a4e6ee29e8de7fab8944c4d24889f8ea314b13e5d53f39b256",
+      "pinnedAcceptanceReference": false
+    },
+    {
+      "path": "packages/core/src/store/TriplesLive.ts",
+      "oldSha256": "ba69c3932f824c3d6268c7260de4e704a9cd26c9302cda7fbf1502c1c8785235",
+      "newSha256": "a273e025184be8e09590c413c336b743272892e8140c0884e737e162952d4434",
+      "pinnedAcceptanceReference": false
+    },
+    {
+      "path": "packages/qlever/src/QleverQueryExecutor.ts",
+      "oldSha256": "25b1156383e96cd80a38c488b28c878c3e7782c58099c1db9f07174916179466",
+      "newSha256": "dcee80f98c217e1fdb4d164e6125555811e5957a4e475287e305403f48d49460",
+      "pinnedAcceptanceReference": false
+    },
+    {
+      "path": "packages/qlever/src/broker/BrokerStorageAdapter.ts",
+      "oldSha256": "01b8e46fb2cdbff5fff98321bbfb85ff354095f067f21983d075ab5b57c9e7e9",
+      "newSha256": "f6a20932745e05d4c9a93eae136fef874088d1727171239e96427e92c8aeb9c2",
+      "pinnedAcceptanceReference": false
+    },
+    {
+      "path": "packages/qlever/src/broker/snapshot.ts",
+      "oldSha256": "ccd1210603e875b11b5970fec2832a810f779af189a4c0106f5c1751eef7abd3",
+      "newSha256": "3fd19e1346cf5cfb44a718d630f9bbb4683ef0bbe30a619372c762db72699b5e",
+      "pinnedAcceptanceReference": false
+    },
+    {
+      "path": "packages/qlever/src/native/NativeQueries.ts",
+      "oldSha256": "fbcd5b2082a619a956778da30ef147080cdf30c5c44702627901bd11a2d9d602",
+      "newSha256": "f33a0a0eab0294ec57ebb484eb13b9d21de6f6ba6c85db2062295f7c63804860",
+      "pinnedAcceptanceReference": false
+    }
+  ]
+}
