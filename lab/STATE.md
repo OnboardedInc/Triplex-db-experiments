@@ -448,3 +448,6 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   until Q107-S, RT01 XTDB G6 during busy hours. Next after G03 7c: G03 round 8 in two worktrees (grant plus measure_single; H1 reader
   provider plus CR-NS ingestion), which also checks whether VM images meet NSR's Node 24 target and FD01's SQLite >= 3.51.3 floor (a second
   download for Sam if not). Disk: archiving settled evidence toward 25 GiB free.
+- 2026-11-09 OBS01 round 13 review FIX-FIRST (CX-VOBS7, 6785096a): Q109a accepted as the review contract; all 11 expectation changes
+  verified; one medium finding R13-F1, the source check's comment stripping ignores string literals and can hide a time read. Round 14
+  (same Sonnet builder) lexes strings and comments or refuses comment delimiters inside strings.
