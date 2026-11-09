@@ -2169,3 +2169,10 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **DF01 live attempt 001 (1b110023), DIAGNOSTIC-FAIL:** the fixture supplied a null schema version and the first write failed before feed conformance ran. No retries; Datomic parked with its volume. Attempt 002 fixes the fixture and adds an offline check of the fixture against the peer's schema-version rule. **Lesson:** offline fakes must apply the same input checks as the real peer, or the first live write finds what the fake let through.
 - **CX-VNSR round 4 stopped on the Codex content filter** (escape-style wording about links and descriptors). Its partial files were committed as WIP (1c3185f8) and the review relaunched as CX-VNSR-5 with neutral QA wording (file inventory, link resolution, environment paths), per PROTOCOL 6.
 - **CRNS:** Codex ACCEPT round 3 (3183681b); round 4 fixes the Opus reviewer's three remaining highs.
+
+## 2026-11-09: lane D's feed passes live on Datomic dev; the Opus reviewer accepts CR-NS arithmetic
+
+- **DF01 live attempt 002 (dcc8322d), DIAGNOSTIC-PASS** on tx2-datomic-dev: feed conformance, resume across an excision batch, a peer restart with resume from the log alone, skipped non-Triplex transactions and the long-poll checks passed against the real peer and tx-report-queue; 117 regression tests and G1 88/88. Dev storage only (Q88a); the deadline boundaries used a controlled clock. This is lane D's first live P3 result.
+- **CR-NS:** the Opus reviewer ACCEPTS the evaluator for offline P2 and P3 arithmetic (round 4: 53 of 53 earlier forgeries refused with the right code; the validity fix held). Remaining before NS PASS: readers that park reads (ruling Q103d: activity in every 100 ms bin, no read over 1 s), the crash target pinned to the consumer, and race pairs (ruling Q103e). CRNS round 5 closes them.
+- **RT01 round 7 (2332e98b):** G6 now grades with Q104a (PAIR-0, three A/A rounds); the live rerun has the slot now, with the window grade recorded per point.
+- **NSR round 5 (709a18f1):** exact output grant and a minimal recorded environment; in review.
