@@ -1,0 +1,20 @@
+{
+  "regression": {
+    "waiters": 16,
+    "windowMs": 1001,
+    "markerProbes": 41,
+    "probesPerWaiterPerSecond": 3,
+    "outcomes": [
+      "ReadError:basis-not-reached"
+    ]
+  },
+  "lag": {
+    "waiters": 16,
+    "windowMs": 1003,
+    "markerProbes": 11,
+    "probesPerWaiterPerSecond": 1,
+    "outcomes": [
+      "ReadError:basis-not-reached"
+    ]
+  }
+}

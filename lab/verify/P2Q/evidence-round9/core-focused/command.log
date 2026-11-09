@@ -1,0 +1,16 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (packages/core/vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/packages/core
+
+ ✓ test/kv/layers/KvTriples.store.test.ts (16 tests) 40ms
+ ✓ test/kv/layers/KvTriples.query.test.ts (10 tests) 38ms
+ ✓ test/runtime/read-basis.test.ts (2 tests) 18ms
+
+ Test Files  3 passed (3)
+      Tests  28 passed (28)
+   Start at  20:52:28
+   Duration  1.03s (import 54%, transform 33%, tests 12%, worker 1%)
+
+JSON report written to /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q/evidence-round9/core-focused/vitest.json

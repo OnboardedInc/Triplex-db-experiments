@@ -1,0 +1,136 @@
+{
+  "started": 1794189424167,
+  "finished": 1794189424178,
+  "heavySlot": {
+    "file": "/Users/sam/projects/triplex-db-2/lab/locks/heavy/2/owner.json",
+    "owner": {
+      "pid": 74208,
+      "label": "CX-VP2Q-4-R9-log-readback",
+      "at": "2026-11-09T01:57:04.130Z"
+    },
+    "sha256": "15f23dfca929ddb1acbc01ed7facef4491e791facebf2c5cbee1e3cd53d3eb98"
+  },
+  "sourceScriptSha256": "a006dc97cb9d3d5ec38b59df495e312d972062217b86b57d94077fc883d40e56",
+  "results": [
+    {
+      "kind": "standard",
+      "gate": "new-live-journal-retry",
+      "producerAttempt": "2f8e7842-8b6a-4380-8c78-9b550484f86b",
+      "receiptSha256": "c5ec5d3b2e4553e01ec99b30cc7bf6c239f31ab45dd21a3ec170eb1de460f15f",
+      "caseSha256": "a024af44d0265da817000b89fb6f2e9e778dc0d2e1149eb35e77324caf4e377a",
+      "source": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q/state-round9/2f8e7842-8b6a-4380-8c78-9b550484f86b/round8-journal-live-e09ea6ec-efb1-4f76-bb99-88077c18d5e9/segment-000001.log",
+      "sourceSha256": "ac556222f8842218b638819177c5256c5e2f89355598209663a14912d45ea36b",
+      "initial": {
+        "lsn": 2,
+        "row": {
+          "id": "01M6Z03VT741A2PEN9JD5Y2BX6",
+          "entity_id": "_tx/01M6Z03VT6J8PWKFESGWRW80ET",
+          "attribute": ":_tx/position",
+          "value_type": "number",
+          "value_string": null,
+          "value_number": 2048,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "recorded_at": 1794189160262,
+          "recorded_position": 2048,
+          "valid_from": 1794189160262,
+          "valid_to": null,
+          "created_by": null,
+          "retracted_at": null,
+          "retracted_position": null,
+          "retract_tx_id": null,
+          "entity_type": "_Transaction",
+          "schema_version": 1,
+          "tx_id": "_tx/01M6Z03VT6J8PWKFESGWRW80ET"
+        }
+      },
+      "retired": {
+        "lsn": 5,
+        "row": {
+          "id": "01M6Z03VT741A2PEN9JD5Y2BX6",
+          "entity_id": "_tx/01M6Z03VT6J8PWKFESGWRW80ET",
+          "attribute": ":_tx/position",
+          "value_type": "number",
+          "value_string": null,
+          "value_number": 2048,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "recorded_at": 1794189160262,
+          "recorded_position": 2048,
+          "valid_from": 1794189160262,
+          "valid_to": null,
+          "created_by": null,
+          "retracted_at": 1794189229743,
+          "retracted_position": 5120,
+          "retract_tx_id": "internal-fixture-retirement",
+          "entity_type": "_Transaction",
+          "schema_version": 1,
+          "tx_id": "_tx/01M6Z03VT6J8PWKFESGWRW80ET"
+        }
+      },
+      "fullPagesIdentical": 4
+    },
+    {
+      "kind": "fresh",
+      "gate": "new-live",
+      "producerAttempt": "500c2fb3-3924-447d-8220-0ac806e784ba",
+      "receiptSha256": "e94fa3958af9effbf4151cf8dc6e03c25493dc52f0d4a618a315128fc38d9217",
+      "caseSha256": "7ef8f41583d8c3e5baf1bbb8713a642853bb7da515814ed3a725568cf8cc0064",
+      "source": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q/state-round9/500c2fb3-3924-447d-8220-0ac806e784ba/round8-journal-live-2f409e79-053a-4c2b-8a8b-d86a13a9bc2b/segment-000001.log",
+      "sourceSha256": "bff31133f53bc785fd40a580cbfb6c5ebecab5836cd86eda4ece325251a076f2",
+      "initial": {
+        "lsn": 2,
+        "row": {
+          "id": "01M6YZV6HFD8RFHDSW2S1AYBWH",
+          "entity_id": "_tx/01M6YZV6HFD8RFHDSW2S1AYBWF",
+          "attribute": ":_tx/position",
+          "value_type": "number",
+          "value_string": null,
+          "value_number": 2048,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "recorded_at": 1794188876335,
+          "recorded_position": 2048,
+          "valid_from": 1794188876335,
+          "valid_to": null,
+          "created_by": null,
+          "retracted_at": null,
+          "retracted_position": null,
+          "retract_tx_id": null,
+          "entity_type": "_Transaction",
+          "schema_version": 1,
+          "tx_id": "_tx/01M6YZV6HFD8RFHDSW2S1AYBWF"
+        }
+      },
+      "retired": {
+        "lsn": 5,
+        "row": {
+          "id": "01M6YZV6HFD8RFHDSW2S1AYBWH",
+          "entity_id": "_tx/01M6YZV6HFD8RFHDSW2S1AYBWF",
+          "attribute": ":_tx/position",
+          "value_type": "number",
+          "value_string": null,
+          "value_number": 2048,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "recorded_at": 1794188876335,
+          "recorded_position": 2048,
+          "valid_from": 1794188876335,
+          "valid_to": null,
+          "created_by": null,
+          "retracted_at": 1794188965230,
+          "retracted_position": 5120,
+          "retract_tx_id": "internal-fixture-retirement",
+          "entity_type": "_Transaction",
+          "schema_version": 1,
+          "tx_id": "_tx/01M6YZV6HFD8RFHDSW2S1AYBWF"
+        }
+      },
+      "fullPagesIdentical": 4
+    }
+  ]
+}

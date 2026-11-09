@@ -1,0 +1,13 @@
+{
+  "started": 1794189543097,
+  "finished": 1794189543217,
+  "root": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f",
+  "target": "36dacc2e158919a9fbede9d9d2c93d0e492aad3d",
+  "fixtures": [],
+  "jobs": [],
+  "productDrift": "",
+  "freeBytes": 5250998272,
+  "engineLifecycle": "none",
+  "processCleanup": "none",
+  "heavySlotClaim": "none (read-only observation)"
+}

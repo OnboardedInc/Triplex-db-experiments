@@ -1,0 +1,32 @@
+{
+  "mutations": [
+    {
+      "kind": "baseline",
+      "root": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q/scratch-round9/baseline",
+      "testMatchesOriginal": true,
+      "contractSha256": "f8c0d35c1308c96796843ef15da8047ae9acfb0d08064f4f5cb60fe7d8e8b62a",
+      "implementationSha256": "ba69c3932f824c3d6268c7260de4e704a9cd26c9302cda7fbf1502c1c8785235"
+    },
+    {
+      "kind": "direct",
+      "root": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q/scratch-round9/direct",
+      "testMatchesOriginal": true,
+      "contractSha256": "286c572bd24d9347205906f3ee4df8de85f63e78121844bf56a97ce165ccd109",
+      "implementationSha256": "92ba1b2ef1589d9aafa2c3c42c0815605b4d613f7122bcfb62386a4c53772828"
+    },
+    {
+      "kind": "inherited",
+      "root": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q/scratch-round9/inherited",
+      "testMatchesOriginal": true,
+      "contractSha256": "8cb3d05862e869aebcfb79417aa091ccdbe2214b34213e17e00e295eccdc0cea",
+      "implementationSha256": "92ba1b2ef1589d9aafa2c3c42c0815605b4d613f7122bcfb62386a4c53772828"
+    },
+    {
+      "kind": "merged",
+      "root": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q/scratch-round9/merged",
+      "testMatchesOriginal": true,
+      "contractSha256": "7e7eaa6fd3fca5d0df84b075b10a60fedab38d6ca44b235bb0ab9e179d19fe22",
+      "implementationSha256": "92ba1b2ef1589d9aafa2c3c42c0815605b4d613f7122bcfb62386a4c53772828"
+    }
+  ]
+}

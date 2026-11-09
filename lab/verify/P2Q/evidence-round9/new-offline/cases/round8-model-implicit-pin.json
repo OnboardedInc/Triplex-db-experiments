@@ -1,0 +1,16 @@
+[
+  {
+    "route": "getById",
+    "pin": 2048,
+    "before": "{\"id\":\"01M6YZEEZXACF6C9E58F9VQ8BD\",\"entity_id\":\"s:page\",\"attribute\":\":v/f0\",\"value_type\":\"string\",\"value_string\":\"first-0\",\"value_number\":null,\"value_boolean\":null,\"value_datetime\":null,\"value_json\":null,\"recorded_at\":1794188459005,\"recorded_position\":2048,\"valid_from\":1794188459005,\"valid_to\":null,\"created_by\":null,\"retracted_at\":null,\"retracted_position\":null,\"retract_tx_id\":null,\"entity_type\":\"Round8\",\"schema_version\":1,\"tx_id\":\"_tx/01M6YZEEZWX64XF2R77Z84HCWB\"}",
+    "after": "{\"id\":\"01M6YZEEZXACF6C9E58F9VQ8BD\",\"entity_id\":\"s:page\",\"attribute\":\":v/f0\",\"value_type\":\"string\",\"value_string\":\"first-0\",\"value_number\":null,\"value_boolean\":null,\"value_datetime\":null,\"value_json\":null,\"recorded_at\":1794188459005,\"recorded_position\":2048,\"valid_from\":1794188459005,\"valid_to\":null,\"created_by\":null,\"retracted_at\":null,\"retracted_position\":null,\"retract_tx_id\":null,\"entity_type\":\"Round8\",\"schema_version\":1,\"tx_id\":\"_tx/01M6YZEEZWX64XF2R77Z84HCWB\"}",
+    "equal": true
+  },
+  {
+    "route": "get",
+    "pin": 2048,
+    "before": "{\"id\":\"01M6YZEEZXACF6C9E58F9VQ8BD\",\"entityId\":\"s:page\",\"attribute\":\":v/f0\",\"value\":{\"type\":\"string\",\"value\":\"first-0\"},\"recordedAt\":1794188459005,\"validFrom\":1794188459005,\"validTo\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"createdBy\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"retractedAt\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"entityType\":{\"_id\":\"Option\",\"_tag\":\"Some\",\"value\":\"Round8\"},\"schemaVersion\":{\"_id\":\"Option\",\"_tag\":\"Some\",\"value\":1},\"txId\":{\"_id\":\"Option\",\"_tag\":\"Some\",\"value\":\"_tx/01M6YZEEZWX64XF2R77Z84HCWB\"},\"retractTxId\":{\"_id\":\"Option\",\"_tag\":\"None\"}}",
+    "after": "{\"id\":\"01M6YZEEZXACF6C9E58F9VQ8BD\",\"entityId\":\"s:page\",\"attribute\":\":v/f0\",\"value\":{\"type\":\"string\",\"value\":\"first-0\"},\"recordedAt\":1794188459005,\"validFrom\":1794188459005,\"validTo\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"createdBy\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"retractedAt\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"entityType\":{\"_id\":\"Option\",\"_tag\":\"Some\",\"value\":\"Round8\"},\"schemaVersion\":{\"_id\":\"Option\",\"_tag\":\"Some\",\"value\":1},\"txId\":{\"_id\":\"Option\",\"_tag\":\"Some\",\"value\":\"_tx/01M6YZEEZWX64XF2R77Z84HCWB\"},\"retractTxId\":{\"_id\":\"Option\",\"_tag\":\"None\"}}",
+    "equal": true
+  }
+]

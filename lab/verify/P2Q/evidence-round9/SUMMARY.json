@@ -1,0 +1,1269 @@
+{
+  "verdict": "FIX-FIRST",
+  "reason": "enumeration misses inherited and declaration-merged public reads",
+  "receipts": [
+    {
+      "name": "earlier-offline",
+      "head": "7673d767107c4870b92cade172dd25eede5fd3fa",
+      "target": "36dacc2e158919a9fbede9d9d2c93d0e492aad3d",
+      "attempt": "0225f25f-4417-4fcd-91c7-75363ad01a3b",
+      "counts": {
+        "passed": 802,
+        "failed": 0,
+        "total": 816
+      },
+      "heavySlot": {
+        "file": "/Users/sam/projects/triplex-db-2/lab/locks/heavy/4/owner.json",
+        "owner": {
+          "pid": 94976,
+          "label": "CX-VP2Q-4-R9-earlier-offline",
+          "at": "2026-11-09T01:40:48.890Z"
+        },
+        "sha256": "0144c837afea4a1c455736874407f0decd0ecad2e950fb1c8f444edb6f145f8b"
+      },
+      "accepted": true
+    },
+    {
+      "name": "new-offline",
+      "head": "7673d767107c4870b92cade172dd25eede5fd3fa",
+      "target": "36dacc2e158919a9fbede9d9d2c93d0e492aad3d",
+      "attempt": "f89f7552-d416-4c35-9fc3-e0657fc490c9",
+      "counts": {
+        "passed": 12,
+        "failed": 0,
+        "total": 18
+      },
+      "heavySlot": {
+        "file": "/Users/sam/projects/triplex-db-2/lab/locks/heavy/2/owner.json",
+        "owner": {
+          "pid": 96072,
+          "label": "CX-VP2Q-4-R9-new-offline",
+          "at": "2026-11-09T01:40:56.046Z"
+        },
+        "sha256": "a7d6d2dde590247b1ba9766a0f94520f4b059fe2907fce7404302c1fd11bc75b"
+      },
+      "accepted": true
+    },
+    {
+      "name": "foundation",
+      "head": "7673d767107c4870b92cade172dd25eede5fd3fa",
+      "target": "36dacc2e158919a9fbede9d9d2c93d0e492aad3d",
+      "attempt": "f1056834-6385-43b1-a893-90611c9b7477",
+      "counts": {
+        "passed": 46,
+        "failed": 0,
+        "total": 46
+      },
+      "heavySlot": {
+        "file": "/Users/sam/projects/triplex-db-2/lab/locks/heavy/2/owner.json",
+        "owner": {
+          "pid": 12919,
+          "label": "CX-VP2Q-4-R9-foundation",
+          "at": "2026-11-09T01:43:05.359Z"
+        },
+        "sha256": "655d742c84c9eea79dc9d51278b3b456f3579474b47c1081a3dd23218d25c790"
+      },
+      "accepted": true
+    },
+    {
+      "name": "package",
+      "head": "7673d767107c4870b92cade172dd25eede5fd3fa",
+      "target": "36dacc2e158919a9fbede9d9d2c93d0e492aad3d",
+      "attempt": "944c53cd-a277-4532-b7bb-5d6f394231bd",
+      "counts": {
+        "passed": 224,
+        "failed": 0,
+        "total": 250
+      },
+      "heavySlot": {
+        "file": "/Users/sam/projects/triplex-db-2/lab/locks/heavy/2/owner.json",
+        "owner": {
+          "pid": 16586,
+          "label": "CX-VP2Q-4-R9-package",
+          "at": "2026-11-09T01:45:14.062Z"
+        },
+        "sha256": "ddc5bd2e17863d85e693726e6f0b453abad9034b6594fa49d637acf524200927"
+      },
+      "accepted": true
+    },
+    {
+      "name": "core-focused",
+      "head": "7673d767107c4870b92cade172dd25eede5fd3fa",
+      "target": "36dacc2e158919a9fbede9d9d2c93d0e492aad3d",
+      "attempt": "ff8ae4f1-c9a8-4945-b6b6-5d2b53a94d55",
+      "counts": {
+        "passed": 28,
+        "failed": 0,
+        "total": 28
+      },
+      "heavySlot": {
+        "file": "/Users/sam/projects/triplex-db-2/lab/locks/heavy/2/owner.json",
+        "owner": {
+          "pid": 36579,
+          "label": "CX-VP2Q-4-R9-core-focused",
+          "at": "2026-11-09T01:52:28.193Z"
+        },
+        "sha256": "b74db0f295ffd54514215a116411abc7373d216fbdf43cfd89caf5bf903aa9e2"
+      },
+      "accepted": true
+    },
+    {
+      "name": "qlever-source-typecheck",
+      "head": "7673d767107c4870b92cade172dd25eede5fd3fa",
+      "target": "36dacc2e158919a9fbede9d9d2c93d0e492aad3d",
+      "attempt": "0a12ef20-0221-4f9a-9d24-0e853fea9613",
+      "heavySlot": {
+        "file": "/Users/sam/projects/triplex-db-2/lab/locks/heavy/2/owner.json",
+        "owner": {
+          "pid": 2086,
+          "label": "CX-VP2Q-4-R9-qlever-source-typecheck",
+          "at": "2026-11-09T01:55:44.467Z"
+        },
+        "sha256": "82fb3ea3cbe6d199b42bda7e2c9362890a3619ac4ae47c161008202c10a9a48d"
+      },
+      "accepted": true
+    },
+    {
+      "name": "core-typecheck",
+      "head": "7673d767107c4870b92cade172dd25eede5fd3fa",
+      "target": "36dacc2e158919a9fbede9d9d2c93d0e492aad3d",
+      "attempt": "e53de518-1d6c-47f4-ae79-47f56b5ad5b6",
+      "heavySlot": {
+        "file": "/Users/sam/projects/triplex-db-2/lab/locks/heavy/1/owner.json",
+        "owner": {
+          "pid": 36582,
+          "label": "CX-VP2Q-4-R9-core-typecheck",
+          "at": "2026-11-09T01:51:40.095Z"
+        },
+        "sha256": "22e659e13a8bbea7419238c551092968f10f7a957c44f080d3858cb49feb9478"
+      },
+      "accepted": true
+    },
+    {
+      "name": "new-live-journal-retry",
+      "head": "7673d767107c4870b92cade172dd25eede5fd3fa",
+      "target": "36dacc2e158919a9fbede9d9d2c93d0e492aad3d",
+      "attempt": "2f8e7842-8b6a-4380-8c78-9b550484f86b",
+      "counts": {
+        "passed": 1,
+        "failed": 0,
+        "total": 4
+      },
+      "heavySlot": {
+        "file": "/Users/sam/projects/triplex-db-2/lab/locks/heavy/3/owner.json",
+        "owner": {
+          "pid": 96367,
+          "label": "CX-VP2Q-4-R9-new-live-journal-retry",
+          "at": "2026-11-09T01:52:34.238Z"
+        },
+        "sha256": "46bf08ac9ee70950b6cbc9f1a5227057322237a592f9908c56d9b1dc23d46fa3"
+      },
+      "accepted": true
+    },
+    {
+      "name": "earlier-live",
+      "head": "7673d767107c4870b92cade172dd25eede5fd3fa",
+      "target": "36dacc2e158919a9fbede9d9d2c93d0e492aad3d",
+      "attempt": "66e1a0ee-c9bb-489a-be03-eea374db1918",
+      "counts": {
+        "passed": 54,
+        "failed": 0,
+        "total": 54
+      },
+      "heavySlot": {
+        "file": "/Users/sam/projects/triplex-db-2/lab/locks/heavy/3/owner.json",
+        "owner": {
+          "pid": 17453,
+          "label": "CX-VP2Q-4-R9-earlier-live",
+          "at": "2026-11-09T01:43:49.064Z"
+        },
+        "sha256": "1a54323ac1d6fce98ef9c3aa1b92ff0a92b87c376b64154ab9e9b8effc442d3c"
+      },
+      "accepted": true
+    },
+    {
+      "name": "guard-mutated-retry",
+      "head": "7673d767107c4870b92cade172dd25eede5fd3fa",
+      "target": "36dacc2e158919a9fbede9d9d2c93d0e492aad3d",
+      "attempt": "e0d573de-1b99-4017-af7f-4246305a1b29",
+      "counts": {
+        "passed": 121,
+        "failed": 1,
+        "total": 122
+      },
+      "heavySlot": {
+        "file": "/Users/sam/projects/triplex-db-2/lab/locks/heavy/2/owner.json",
+        "owner": {
+          "pid": 94464,
+          "label": "CX-VP2Q-4-R9-guard-mutated-retry",
+          "at": "2026-11-09T01:52:20.755Z"
+        },
+        "sha256": "bc39bd869f5dbe6f0951d65a3d8625606f7c43d850b041fdbf70a81f94d17fd4"
+      },
+      "accepted": true
+    },
+    {
+      "name": "enum-baseline-retry",
+      "head": "7673d767107c4870b92cade172dd25eede5fd3fa",
+      "target": "36dacc2e158919a9fbede9d9d2c93d0e492aad3d",
+      "attempt": "7e7ff8da-fb14-4d61-9354-50c8cd8687c7",
+      "counts": {
+        "passed": 2,
+        "failed": 0,
+        "total": 5
+      },
+      "heavySlot": {
+        "file": "/Users/sam/projects/triplex-db-2/lab/locks/heavy/2/owner.json",
+        "owner": {
+          "pid": 12195,
+          "label": "CX-VP2Q-4-R9-enum-baseline-retry",
+          "at": "2026-11-09T01:52:11.538Z"
+        },
+        "sha256": "fabe97e052c25064e12f798f3b7418ab1119a69b1fa08b064f7e414176b344cc"
+      },
+      "accepted": true
+    },
+    {
+      "name": "enum-direct-confirm",
+      "head": "7673d767107c4870b92cade172dd25eede5fd3fa",
+      "target": "36dacc2e158919a9fbede9d9d2c93d0e492aad3d",
+      "attempt": "c08df155-662e-47af-8977-092515756067",
+      "counts": {
+        "passed": 2,
+        "failed": 1,
+        "total": 6
+      },
+      "heavySlot": {
+        "file": "/Users/sam/projects/triplex-db-2/lab/locks/heavy/3/owner.json",
+        "owner": {
+          "pid": 2084,
+          "label": "CX-VP2Q-4-R9-enum-direct-confirm",
+          "at": "2026-11-09T01:57:46.698Z"
+        },
+        "sha256": "54456230ff9955d362157f538c1f74dfed9b3ab949f033adef362a220e7940eb"
+      },
+      "accepted": true
+    },
+    {
+      "name": "enum-inherited-retry",
+      "head": "7673d767107c4870b92cade172dd25eede5fd3fa",
+      "target": "36dacc2e158919a9fbede9d9d2c93d0e492aad3d",
+      "attempt": "b64ee13e-908b-450d-8a85-1ea6dd464d34",
+      "counts": {
+        "passed": 3,
+        "failed": 0,
+        "total": 6
+      },
+      "heavySlot": {
+        "file": "/Users/sam/projects/triplex-db-2/lab/locks/heavy/2/owner.json",
+        "owner": {
+          "pid": 12226,
+          "label": "CX-VP2Q-4-R9-enum-inherited-retry",
+          "at": "2026-11-09T01:52:25.590Z"
+        },
+        "sha256": "b2af141da87e4a2d3e9949a15dfd2405fc3c3904b03fbc811a1c9d3608feb46a"
+      },
+      "accepted": true
+    },
+    {
+      "name": "enum-merged-retry",
+      "head": "7673d767107c4870b92cade172dd25eede5fd3fa",
+      "target": "36dacc2e158919a9fbede9d9d2c93d0e492aad3d",
+      "attempt": "8429b885-bb1c-4108-8fd5-1d7f3cd99a60",
+      "counts": {
+        "passed": 3,
+        "failed": 0,
+        "total": 6
+      },
+      "heavySlot": {
+        "file": "/Users/sam/projects/triplex-db-2/lab/locks/heavy/2/owner.json",
+        "owner": {
+          "pid": 12236,
+          "label": "CX-VP2Q-4-R9-enum-merged-retry",
+          "at": "2026-11-09T01:52:29.602Z"
+        },
+        "sha256": "33af52279fd6fead74d616d53d70726e050a5a7cbe5ce019f49821766b61694b"
+      },
+      "accepted": true
+    },
+    {
+      "name": "new-live",
+      "head": "7673d767107c4870b92cade172dd25eede5fd3fa",
+      "target": "36dacc2e158919a9fbede9d9d2c93d0e492aad3d",
+      "attempt": "500c2fb3-3924-447d-8220-0ac806e784ba",
+      "counts": {
+        "passed": 6,
+        "failed": 1,
+        "total": 14
+      },
+      "heavySlot": {
+        "file": "/Users/sam/projects/triplex-db-2/lab/locks/heavy/4/owner.json",
+        "owner": {
+          "pid": 9564,
+          "label": "CX-VP2Q-4-R9-new-live",
+          "at": "2026-11-09T01:41:03.720Z"
+        },
+        "sha256": "0b6d49f66606491e6d926d43190597f39dddcfdfd6b7fc901f244d0aa4f94f16"
+      },
+      "accepted": false
+    },
+    {
+      "name": "qlever-typecheck",
+      "head": "7673d767107c4870b92cade172dd25eede5fd3fa",
+      "target": "36dacc2e158919a9fbede9d9d2c93d0e492aad3d",
+      "attempt": "f9484316-ae39-4f2a-aa62-bde0f42eb1c4",
+      "heavySlot": {
+        "file": "/Users/sam/projects/triplex-db-2/lab/locks/heavy/2/owner.json",
+        "owner": {
+          "pid": 36587,
+          "label": "CX-VP2Q-4-R9-qlever-typecheck",
+          "at": "2026-11-09T01:52:32.204Z"
+        },
+        "sha256": "46a6acf4d69a67b85b02b77d887c06658f7eb1fd5d4ad2140eba280d36255a73"
+      },
+      "accepted": false
+    },
+    {
+      "name": "guard-mutated",
+      "head": "7673d767107c4870b92cade172dd25eede5fd3fa",
+      "target": "36dacc2e158919a9fbede9d9d2c93d0e492aad3d",
+      "attempt": "ba14959b-55a1-43f4-9912-a8c45064443a",
+      "counts": {
+        "passed": 121,
+        "failed": 1,
+        "total": 122
+      },
+      "heavySlot": {
+        "file": "/Users/sam/projects/triplex-db-2/lab/locks/heavy/1/owner.json",
+        "owner": {
+          "pid": 36586,
+          "label": "CX-VP2Q-4-R9-guard-mutated",
+          "at": "2026-11-09T01:49:22.822Z"
+        },
+        "sha256": "390ba34d39326c75962109d31b3a902b998fceed27f6218da4681552c1dac144"
+      },
+      "accepted": false
+    },
+    {
+      "name": "enum-baseline",
+      "head": "7673d767107c4870b92cade172dd25eede5fd3fa",
+      "target": "36dacc2e158919a9fbede9d9d2c93d0e492aad3d",
+      "attempt": "fa269b8b-8aca-4eb5-a818-141ff4ac0e40",
+      "counts": {
+        "passed": 0,
+        "failed": 0,
+        "total": 0
+      },
+      "heavySlot": {
+        "file": "/Users/sam/projects/triplex-db-2/lab/locks/heavy/1/owner.json",
+        "owner": {
+          "pid": 25303,
+          "label": "CX-VP2Q-4-R9-enum-baseline",
+          "at": "2026-11-09T01:51:35.026Z"
+        },
+        "sha256": "a7c76b9dc7c2c46b53535bcb635cde4985ed3dd27ea0b019ef07466ec6bf49c4"
+      },
+      "accepted": false
+    },
+    {
+      "name": "enum-direct",
+      "head": "7673d767107c4870b92cade172dd25eede5fd3fa",
+      "target": "36dacc2e158919a9fbede9d9d2c93d0e492aad3d",
+      "attempt": "d30b86ee-95d0-4022-b281-038792996bcd",
+      "counts": {
+        "passed": 0,
+        "failed": 0,
+        "total": 0
+      },
+      "heavySlot": {
+        "file": "/Users/sam/projects/triplex-db-2/lab/locks/heavy/1/owner.json",
+        "owner": {
+          "pid": 25313,
+          "label": "CX-VP2Q-4-R9-enum-direct",
+          "at": "2026-11-09T01:49:23.747Z"
+        },
+        "sha256": "82ade75d9897e39394ebf58182b93142cd7950e92d8e179d5724ca9414862b0c"
+      },
+      "accepted": false
+    },
+    {
+      "name": "enum-inherited",
+      "head": "7673d767107c4870b92cade172dd25eede5fd3fa",
+      "target": "36dacc2e158919a9fbede9d9d2c93d0e492aad3d",
+      "attempt": "9044de87-adff-40f5-aa1d-4a97101664e8",
+      "counts": {
+        "passed": 0,
+        "failed": 0,
+        "total": 0
+      },
+      "heavySlot": {
+        "file": "/Users/sam/projects/triplex-db-2/lab/locks/heavy/2/owner.json",
+        "owner": {
+          "pid": 25314,
+          "label": "CX-VP2Q-4-R9-enum-inherited",
+          "at": "2026-11-09T01:52:24.184Z"
+        },
+        "sha256": "39ffdc378ceef03dc6745f6aefb8ea3978e1e53fe20ddb4aa2fa39dc6b569917"
+      },
+      "accepted": false
+    },
+    {
+      "name": "enum-merged",
+      "head": "7673d767107c4870b92cade172dd25eede5fd3fa",
+      "target": "36dacc2e158919a9fbede9d9d2c93d0e492aad3d",
+      "attempt": "c978a8ee-9491-41fb-8083-7b0cc2267087",
+      "counts": {
+        "passed": 0,
+        "failed": 0,
+        "total": 0
+      },
+      "heavySlot": {
+        "file": "/Users/sam/projects/triplex-db-2/lab/locks/heavy/2/owner.json",
+        "owner": {
+          "pid": 25324,
+          "label": "CX-VP2Q-4-R9-enum-merged",
+          "at": "2026-11-09T01:52:34.220Z"
+        },
+        "sha256": "cc24ed9e5875f55d5a3f82b3f6408d3aad92b3e20750ddf1e609a727b5a78ac4"
+      },
+      "accepted": false
+    },
+    {
+      "name": "enum-direct-retry",
+      "head": "7673d767107c4870b92cade172dd25eede5fd3fa",
+      "target": "36dacc2e158919a9fbede9d9d2c93d0e492aad3d",
+      "attempt": "bdf9dcf7-b41f-4dff-b936-377c447f1306",
+      "counts": {
+        "passed": 2,
+        "failed": 1,
+        "total": 6
+      },
+      "heavySlot": {
+        "file": "/Users/sam/projects/triplex-db-2/lab/locks/heavy/2/owner.json",
+        "owner": {
+          "pid": 12216,
+          "label": "CX-VP2Q-4-R9-enum-direct-retry",
+          "at": "2026-11-09T01:52:21.573Z"
+        },
+        "sha256": "ef2cbdb8572c4a36caf3f4ce8d01ac4f83e2cdfade9dd4cd771e079b23d7bfdb"
+      },
+      "accepted": false
+    }
+  ],
+  "witnesses": [
+    {
+      "kind": "direct",
+      "purpose": "counterexample, not product acceptance",
+      "names": [
+        "round9Read",
+        "assert",
+        "assertBatch",
+        "retract",
+        "retractByPattern",
+        "transact",
+        "get",
+        "entity",
+        "entities",
+        "entityPage",
+        "match",
+        "history",
+        "transaction",
+        "transactionByCommand",
+        "transactions",
+        "transactionsForEntity",
+        "currentPosition",
+        "dependencyState",
+        "queryAll",
+        "query",
+        "queryPage",
+        "explain",
+        "explainPage"
+      ],
+      "requested": 6144,
+      "observed": 2048,
+      "value": [],
+      "gateCalls": 0,
+      "maskCalls": 0,
+      "enumerationRejected": true
+    },
+    {
+      "kind": "inherited",
+      "purpose": "counterexample, not product acceptance",
+      "names": [
+        "assert",
+        "assertBatch",
+        "retract",
+        "retractByPattern",
+        "transact",
+        "get",
+        "entity",
+        "entities",
+        "entityPage",
+        "match",
+        "history",
+        "transaction",
+        "transactionByCommand",
+        "transactions",
+        "transactionsForEntity",
+        "currentPosition",
+        "dependencyState",
+        "queryAll",
+        "query",
+        "queryPage",
+        "explain",
+        "explainPage",
+        "round9Read"
+      ],
+      "requested": 6144,
+      "observed": 2048,
+      "value": [],
+      "gateCalls": 0,
+      "maskCalls": 0,
+      "enumerationRejected": false
+    },
+    {
+      "kind": "merged",
+      "purpose": "counterexample, not product acceptance",
+      "names": [
+        "assert",
+        "assertBatch",
+        "retract",
+        "retractByPattern",
+        "transact",
+        "get",
+        "entity",
+        "entities",
+        "entityPage",
+        "match",
+        "history",
+        "transaction",
+        "transactionByCommand",
+        "transactions",
+        "transactionsForEntity",
+        "currentPosition",
+        "dependencyState",
+        "queryAll",
+        "query",
+        "queryPage",
+        "explain",
+        "explainPage",
+        "round9Read"
+      ],
+      "requested": 6144,
+      "observed": 2048,
+      "value": [],
+      "gateCalls": 0,
+      "maskCalls": 0,
+      "enumerationRejected": false
+    }
+  ],
+  "comparisons": [
+    {
+      "gate": "new-offline",
+      "filename": "round8-overlay-immutable.json",
+      "route": "getByEntity",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-offline",
+      "filename": "round8-overlay-immutable.json",
+      "route": "getByEntity",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-offline",
+      "filename": "round8-overlay-immutable.json",
+      "route": "getByEntities",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-offline",
+      "filename": "round8-overlay-immutable.json",
+      "route": "getByEntities",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-offline",
+      "filename": "round8-overlay-immutable.json",
+      "route": "query",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-offline",
+      "filename": "round8-overlay-immutable.json",
+      "route": "query",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-offline",
+      "filename": "round8-overlay-immutable.json",
+      "route": "entity",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-offline",
+      "filename": "round8-overlay-immutable.json",
+      "route": "entity",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-offline",
+      "filename": "round8-overlay-immutable.json",
+      "route": "entities",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-offline",
+      "filename": "round8-overlay-immutable.json",
+      "route": "entities",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-offline",
+      "filename": "round8-overlay-immutable.json",
+      "route": "match",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-offline",
+      "filename": "round8-overlay-immutable.json",
+      "route": "match",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-offline",
+      "filename": "round8-log-immutable.json",
+      "route": "getByEntity",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-offline",
+      "filename": "round8-log-immutable.json",
+      "route": "getByEntity",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-offline",
+      "filename": "round8-log-immutable.json",
+      "route": "getByEntities",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-offline",
+      "filename": "round8-log-immutable.json",
+      "route": "getByEntities",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-offline",
+      "filename": "round8-log-immutable.json",
+      "route": "query",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-offline",
+      "filename": "round8-log-immutable.json",
+      "route": "query",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-offline",
+      "filename": "round8-log-immutable.json",
+      "route": "entity",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-offline",
+      "filename": "round8-log-immutable.json",
+      "route": "entity",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-offline",
+      "filename": "round8-log-immutable.json",
+      "route": "entities",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-offline",
+      "filename": "round8-log-immutable.json",
+      "route": "entities",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-offline",
+      "filename": "round8-log-immutable.json",
+      "route": "match",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-offline",
+      "filename": "round8-log-immutable.json",
+      "route": "match",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-offline",
+      "filename": "round8-replica-immutable.json",
+      "route": "getByEntity",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-offline",
+      "filename": "round8-replica-immutable.json",
+      "route": "getByEntity",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-offline",
+      "filename": "round8-replica-immutable.json",
+      "route": "getByEntities",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-offline",
+      "filename": "round8-replica-immutable.json",
+      "route": "getByEntities",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-offline",
+      "filename": "round8-replica-immutable.json",
+      "route": "query",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-offline",
+      "filename": "round8-replica-immutable.json",
+      "route": "query",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-offline",
+      "filename": "round8-replica-immutable.json",
+      "route": "entity",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-offline",
+      "filename": "round8-replica-immutable.json",
+      "route": "entity",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-offline",
+      "filename": "round8-replica-immutable.json",
+      "route": "entities",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-offline",
+      "filename": "round8-replica-immutable.json",
+      "route": "entities",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-offline",
+      "filename": "round8-replica-immutable.json",
+      "route": "match",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-offline",
+      "filename": "round8-replica-immutable.json",
+      "route": "match",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-offline",
+      "filename": "round8-model-implicit-pin.json",
+      "route": "getById",
+      "identical": true
+    },
+    {
+      "gate": "new-offline",
+      "filename": "round8-model-implicit-pin.json",
+      "route": "get",
+      "identical": true
+    },
+    {
+      "gate": "new-offline",
+      "filename": "round8-model-entity-page.json",
+      "route": "entityPage",
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-standard-immutable.json",
+      "route": "getByEntity",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-standard-immutable.json",
+      "route": "getByEntity",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-standard-immutable.json",
+      "route": "getByEntities",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-standard-immutable.json",
+      "route": "getByEntities",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-standard-immutable.json",
+      "route": "query",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-standard-immutable.json",
+      "route": "query",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-standard-immutable.json",
+      "route": "entity",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-standard-immutable.json",
+      "route": "entity",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-standard-immutable.json",
+      "route": "entities",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-standard-immutable.json",
+      "route": "entities",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-standard-immutable.json",
+      "route": "match",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-standard-immutable.json",
+      "route": "match",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-standard-immutable.json",
+      "route": "execute",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-standard-immutable.json",
+      "route": "execute",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-standard-immutable.json",
+      "route": "executePage",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-standard-immutable.json",
+      "route": "executePage",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-standard-immutable.json",
+      "route": "queryAll",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-standard-immutable.json",
+      "route": "pagedQuery",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-standard-immutable.json",
+      "route": "pagedQuery",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-standard-immutable.json",
+      "route": "queryPage",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-standard-immutable.json",
+      "route": "queryPage",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-standard-immutable.json",
+      "route": "select",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-standard-immutable.json",
+      "route": "select",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-standard-immutable.json",
+      "route": "selectWithRelations",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-standard-immutable.json",
+      "route": "selectWithRelations",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-standard-immutable.json",
+      "route": "dependencyState",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-standard-immutable.json",
+      "route": "dependencyState",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-fresh-immutable.json",
+      "route": "getByEntity",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-fresh-immutable.json",
+      "route": "getByEntity",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-fresh-immutable.json",
+      "route": "getByEntities",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-fresh-immutable.json",
+      "route": "getByEntities",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-fresh-immutable.json",
+      "route": "query",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-fresh-immutable.json",
+      "route": "query",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-fresh-immutable.json",
+      "route": "entity",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-fresh-immutable.json",
+      "route": "entity",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-fresh-immutable.json",
+      "route": "entities",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-fresh-immutable.json",
+      "route": "entities",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-fresh-immutable.json",
+      "route": "match",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-fresh-immutable.json",
+      "route": "match",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-fresh-immutable.json",
+      "route": "execute",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-fresh-immutable.json",
+      "route": "execute",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-fresh-immutable.json",
+      "route": "executePage",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-fresh-immutable.json",
+      "route": "executePage",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-fresh-immutable.json",
+      "route": "queryAll",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-fresh-immutable.json",
+      "route": "pagedQuery",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-fresh-immutable.json",
+      "route": "pagedQuery",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-fresh-immutable.json",
+      "route": "queryPage",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-fresh-immutable.json",
+      "route": "queryPage",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-fresh-immutable.json",
+      "route": "select",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-fresh-immutable.json",
+      "route": "select",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-fresh-immutable.json",
+      "route": "selectWithRelations",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-fresh-immutable.json",
+      "route": "selectWithRelations",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-fresh-immutable.json",
+      "route": "dependencyState",
+      "transaction": false,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-fresh-immutable.json",
+      "route": "dependencyState",
+      "transaction": true,
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-live-implicit-pin.json",
+      "route": "getById",
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-live-implicit-pin.json",
+      "route": "get",
+      "identical": true
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-live-entity-page.json",
+      "route": "entityPage",
+      "identical": true
+    },
+    {
+      "gate": "new-live-journal-retry",
+      "filename": "round8-standard-journal-immutable.json",
+      "identicalJournalPages": 4
+    },
+    {
+      "gate": "new-live",
+      "filename": "round8-fresh-journal-immutable.json",
+      "identicalJournalPages": 4
+    }
+  ],
+  "future": [
+    {
+      "gate": "new-offline",
+      "kind": "offline",
+      "cases": 6
+    },
+    {
+      "gate": "new-live",
+      "kind": "standard",
+      "cases": 10
+    },
+    {
+      "gate": "new-live",
+      "kind": "fresh",
+      "cases": 10
+    }
+  ],
+  "fullByteComparisons": 104,
+  "qualifiedReceipts": 14,
+  "rejectedFirstAttemptsRetained": [
+    "new-live",
+    "qlever-typecheck",
+    "guard-mutated",
+    "enum-baseline",
+    "enum-direct",
+    "enum-inherited",
+    "enum-merged",
+    "enum-direct-retry"
+  ],
+  "mutationControlsAreProductPasses": false,
+  "q91": "qlever-dev timing is diagnostic only; no latency acceptance"
+}

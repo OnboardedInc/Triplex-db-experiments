@@ -1,0 +1,688 @@
+{
+  "decisions": 118,
+  "transport": 83,
+  "nonTransport": 35,
+  "modules": [
+    {
+      "name": "undici@7.29.0",
+      "file": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/node_modules/.pnpm/undici@7.29.0/node_modules/undici/lib/core/errors.js",
+      "sha256": "c69b7a060b711e4cd97f3ff05eb18cf4ec7a08ce5d618c54a567baf6f1a47481",
+      "docsSha256": "2ce5a5d33c4960b94f441e62bc313fd30c8427afcf87c5fcd057c78d35eec9ea",
+      "rows": [
+        {
+          "className": "UndiciError",
+          "code": "UND_ERR",
+          "expectedTransport": false,
+          "observed": false
+        },
+        {
+          "className": "ConnectTimeoutError",
+          "code": "UND_ERR_CONNECT_TIMEOUT",
+          "expectedTransport": true,
+          "observed": true
+        },
+        {
+          "className": "HeadersTimeoutError",
+          "code": "UND_ERR_HEADERS_TIMEOUT",
+          "expectedTransport": true,
+          "observed": true
+        },
+        {
+          "className": "HeadersOverflowError",
+          "code": "UND_ERR_HEADERS_OVERFLOW",
+          "expectedTransport": false,
+          "observed": false
+        },
+        {
+          "className": "BodyTimeoutError",
+          "code": "UND_ERR_BODY_TIMEOUT",
+          "expectedTransport": true,
+          "observed": true
+        },
+        {
+          "className": "InvalidArgumentError",
+          "code": "UND_ERR_INVALID_ARG",
+          "expectedTransport": false,
+          "observed": false
+        },
+        {
+          "className": "InvalidReturnValueError",
+          "code": "UND_ERR_INVALID_RETURN_VALUE",
+          "expectedTransport": false,
+          "observed": false
+        },
+        {
+          "className": "AbortError",
+          "code": "UND_ERR_ABORT",
+          "expectedTransport": true,
+          "observed": true
+        },
+        {
+          "className": "RequestAbortedError",
+          "code": "UND_ERR_ABORTED",
+          "expectedTransport": true,
+          "observed": true
+        },
+        {
+          "className": "InformationalError",
+          "code": "UND_ERR_INFO",
+          "expectedTransport": false,
+          "observed": false
+        },
+        {
+          "className": "RequestContentLengthMismatchError",
+          "code": "UND_ERR_REQ_CONTENT_LENGTH_MISMATCH",
+          "expectedTransport": false,
+          "observed": false
+        },
+        {
+          "className": "ResponseContentLengthMismatchError",
+          "code": "UND_ERR_RES_CONTENT_LENGTH_MISMATCH",
+          "expectedTransport": true,
+          "observed": true
+        },
+        {
+          "className": "ClientDestroyedError",
+          "code": "UND_ERR_DESTROYED",
+          "expectedTransport": true,
+          "observed": true
+        },
+        {
+          "className": "ClientClosedError",
+          "code": "UND_ERR_CLOSED",
+          "expectedTransport": true,
+          "observed": true
+        },
+        {
+          "className": "SocketError",
+          "code": "UND_ERR_SOCKET",
+          "expectedTransport": true,
+          "observed": true
+        },
+        {
+          "className": "NotSupportedError",
+          "code": "UND_ERR_NOT_SUPPORTED",
+          "expectedTransport": false,
+          "observed": false
+        },
+        {
+          "className": "BalancedPoolMissingUpstreamError",
+          "code": "UND_ERR_BPL_MISSING_UPSTREAM",
+          "expectedTransport": false,
+          "observed": false
+        },
+        {
+          "className": "ResponseExceededMaxSizeError",
+          "code": "UND_ERR_RES_EXCEEDED_MAX_SIZE",
+          "expectedTransport": false,
+          "observed": false
+        },
+        {
+          "className": "RequestRetryError",
+          "code": "UND_ERR_REQ_RETRY",
+          "expectedTransport": false,
+          "observed": false
+        },
+        {
+          "className": "ResponseError",
+          "code": "UND_ERR_RESPONSE",
+          "expectedTransport": false,
+          "observed": false
+        },
+        {
+          "className": "SecureProxyConnectionError",
+          "code": "UND_ERR_PRX_TLS",
+          "expectedTransport": true,
+          "observed": true
+        },
+        {
+          "className": "MaxOriginsReachedError",
+          "code": "UND_ERR_MAX_ORIGINS_REACHED",
+          "expectedTransport": false,
+          "observed": false
+        },
+        {
+          "className": "MessageSizeExceededError",
+          "code": "UND_ERR_WS_MESSAGE_SIZE_EXCEEDED",
+          "expectedTransport": false,
+          "observed": false
+        }
+      ],
+      "docCodes": [
+        "UND_ERR",
+        "UND_ERR_ABORTED",
+        "UND_ERR_BODY_TIMEOUT",
+        "UND_ERR_CLOSED",
+        "UND_ERR_CONNECT_TIMEOUT",
+        "UND_ERR_DESTROYED",
+        "UND_ERR_HEADERS_OVERFLOW",
+        "UND_ERR_HEADERS_TIMEOUT",
+        "UND_ERR_INFO",
+        "UND_ERR_INVALID_ARG",
+        "UND_ERR_INVALID_RETURN_VALUE",
+        "UND_ERR_NOT_SUPPORTED",
+        "UND_ERR_PRX_TLS",
+        "UND_ERR_REQ_CONTENT_LENGTH_MISMATCH",
+        "UND_ERR_RES_CONTENT_LENGTH_MISMATCH",
+        "UND_ERR_RES_EXCEEDED_MAX_SIZE",
+        "UND_ERR_SOCKET",
+        "UND_ERR_WS_MESSAGE_SIZE_EXCEEDED"
+      ]
+    },
+    {
+      "name": "undici@7.29.1",
+      "file": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/node_modules/.pnpm/undici@7.29.1/node_modules/undici/lib/core/errors.js",
+      "sha256": "c69b7a060b711e4cd97f3ff05eb18cf4ec7a08ce5d618c54a567baf6f1a47481",
+      "docsSha256": "2ce5a5d33c4960b94f441e62bc313fd30c8427afcf87c5fcd057c78d35eec9ea",
+      "rows": [
+        {
+          "className": "UndiciError",
+          "code": "UND_ERR",
+          "expectedTransport": false,
+          "observed": false
+        },
+        {
+          "className": "ConnectTimeoutError",
+          "code": "UND_ERR_CONNECT_TIMEOUT",
+          "expectedTransport": true,
+          "observed": true
+        },
+        {
+          "className": "HeadersTimeoutError",
+          "code": "UND_ERR_HEADERS_TIMEOUT",
+          "expectedTransport": true,
+          "observed": true
+        },
+        {
+          "className": "HeadersOverflowError",
+          "code": "UND_ERR_HEADERS_OVERFLOW",
+          "expectedTransport": false,
+          "observed": false
+        },
+        {
+          "className": "BodyTimeoutError",
+          "code": "UND_ERR_BODY_TIMEOUT",
+          "expectedTransport": true,
+          "observed": true
+        },
+        {
+          "className": "InvalidArgumentError",
+          "code": "UND_ERR_INVALID_ARG",
+          "expectedTransport": false,
+          "observed": false
+        },
+        {
+          "className": "InvalidReturnValueError",
+          "code": "UND_ERR_INVALID_RETURN_VALUE",
+          "expectedTransport": false,
+          "observed": false
+        },
+        {
+          "className": "AbortError",
+          "code": "UND_ERR_ABORT",
+          "expectedTransport": true,
+          "observed": true
+        },
+        {
+          "className": "RequestAbortedError",
+          "code": "UND_ERR_ABORTED",
+          "expectedTransport": true,
+          "observed": true
+        },
+        {
+          "className": "InformationalError",
+          "code": "UND_ERR_INFO",
+          "expectedTransport": false,
+          "observed": false
+        },
+        {
+          "className": "RequestContentLengthMismatchError",
+          "code": "UND_ERR_REQ_CONTENT_LENGTH_MISMATCH",
+          "expectedTransport": false,
+          "observed": false
+        },
+        {
+          "className": "ResponseContentLengthMismatchError",
+          "code": "UND_ERR_RES_CONTENT_LENGTH_MISMATCH",
+          "expectedTransport": true,
+          "observed": true
+        },
+        {
+          "className": "ClientDestroyedError",
+          "code": "UND_ERR_DESTROYED",
+          "expectedTransport": true,
+          "observed": true
+        },
+        {
+          "className": "ClientClosedError",
+          "code": "UND_ERR_CLOSED",
+          "expectedTransport": true,
+          "observed": true
+        },
+        {
+          "className": "SocketError",
+          "code": "UND_ERR_SOCKET",
+          "expectedTransport": true,
+          "observed": true
+        },
+        {
+          "className": "NotSupportedError",
+          "code": "UND_ERR_NOT_SUPPORTED",
+          "expectedTransport": false,
+          "observed": false
+        },
+        {
+          "className": "BalancedPoolMissingUpstreamError",
+          "code": "UND_ERR_BPL_MISSING_UPSTREAM",
+          "expectedTransport": false,
+          "observed": false
+        },
+        {
+          "className": "ResponseExceededMaxSizeError",
+          "code": "UND_ERR_RES_EXCEEDED_MAX_SIZE",
+          "expectedTransport": false,
+          "observed": false
+        },
+        {
+          "className": "RequestRetryError",
+          "code": "UND_ERR_REQ_RETRY",
+          "expectedTransport": false,
+          "observed": false
+        },
+        {
+          "className": "ResponseError",
+          "code": "UND_ERR_RESPONSE",
+          "expectedTransport": false,
+          "observed": false
+        },
+        {
+          "className": "SecureProxyConnectionError",
+          "code": "UND_ERR_PRX_TLS",
+          "expectedTransport": true,
+          "observed": true
+        },
+        {
+          "className": "MaxOriginsReachedError",
+          "code": "UND_ERR_MAX_ORIGINS_REACHED",
+          "expectedTransport": false,
+          "observed": false
+        },
+        {
+          "className": "MessageSizeExceededError",
+          "code": "UND_ERR_WS_MESSAGE_SIZE_EXCEEDED",
+          "expectedTransport": false,
+          "observed": false
+        }
+      ],
+      "docCodes": [
+        "UND_ERR",
+        "UND_ERR_ABORTED",
+        "UND_ERR_BODY_TIMEOUT",
+        "UND_ERR_CLOSED",
+        "UND_ERR_CONNECT_TIMEOUT",
+        "UND_ERR_DESTROYED",
+        "UND_ERR_HEADERS_OVERFLOW",
+        "UND_ERR_HEADERS_TIMEOUT",
+        "UND_ERR_INFO",
+        "UND_ERR_INVALID_ARG",
+        "UND_ERR_INVALID_RETURN_VALUE",
+        "UND_ERR_NOT_SUPPORTED",
+        "UND_ERR_PRX_TLS",
+        "UND_ERR_REQ_CONTENT_LENGTH_MISMATCH",
+        "UND_ERR_RES_CONTENT_LENGTH_MISMATCH",
+        "UND_ERR_RES_EXCEEDED_MAX_SIZE",
+        "UND_ERR_SOCKET",
+        "UND_ERR_WS_MESSAGE_SIZE_EXCEEDED"
+      ]
+    },
+    {
+      "name": "undici@8.11.2",
+      "file": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/node_modules/.pnpm/undici@8.11.2/node_modules/undici/lib/core/errors.js",
+      "sha256": "47c1e438402a802f5132da4a2084e1294ad3fd1496f8f7b47117292165c17fd9",
+      "docsSha256": "0421b5c6ddbf89f14130966ed7f146320de7d4daf3e6df57d0fc45d601ed7fd3",
+      "rows": [
+        {
+          "className": "UndiciError",
+          "code": "UND_ERR",
+          "expectedTransport": false,
+          "observed": false
+        },
+        {
+          "className": "ConnectTimeoutError",
+          "code": "UND_ERR_CONNECT_TIMEOUT",
+          "expectedTransport": true,
+          "observed": true
+        },
+        {
+          "className": "HeadersTimeoutError",
+          "code": "UND_ERR_HEADERS_TIMEOUT",
+          "expectedTransport": true,
+          "observed": true
+        },
+        {
+          "className": "HeadersOverflowError",
+          "code": "UND_ERR_HEADERS_OVERFLOW",
+          "expectedTransport": false,
+          "observed": false
+        },
+        {
+          "className": "BodyTimeoutError",
+          "code": "UND_ERR_BODY_TIMEOUT",
+          "expectedTransport": true,
+          "observed": true
+        },
+        {
+          "className": "InvalidArgumentError",
+          "code": "UND_ERR_INVALID_ARG",
+          "expectedTransport": false,
+          "observed": false
+        },
+        {
+          "className": "InvalidReturnValueError",
+          "code": "UND_ERR_INVALID_RETURN_VALUE",
+          "expectedTransport": false,
+          "observed": false
+        },
+        {
+          "className": "AbortError",
+          "code": "UND_ERR_ABORT",
+          "expectedTransport": true,
+          "observed": true
+        },
+        {
+          "className": "RequestAbortedError",
+          "code": "UND_ERR_ABORTED",
+          "expectedTransport": true,
+          "observed": true
+        },
+        {
+          "className": "InformationalError",
+          "code": "UND_ERR_INFO",
+          "expectedTransport": false,
+          "observed": false
+        },
+        {
+          "className": "RequestContentLengthMismatchError",
+          "code": "UND_ERR_REQ_CONTENT_LENGTH_MISMATCH",
+          "expectedTransport": false,
+          "observed": false
+        },
+        {
+          "className": "ResponseContentLengthMismatchError",
+          "code": "UND_ERR_RES_CONTENT_LENGTH_MISMATCH",
+          "expectedTransport": true,
+          "observed": true
+        },
+        {
+          "className": "ClientDestroyedError",
+          "code": "UND_ERR_DESTROYED",
+          "expectedTransport": true,
+          "observed": true
+        },
+        {
+          "className": "ClientClosedError",
+          "code": "UND_ERR_CLOSED",
+          "expectedTransport": true,
+          "observed": true
+        },
+        {
+          "className": "SocketError",
+          "code": "UND_ERR_SOCKET",
+          "expectedTransport": true,
+          "observed": true
+        },
+        {
+          "className": "NotSupportedError",
+          "code": "UND_ERR_NOT_SUPPORTED",
+          "expectedTransport": false,
+          "observed": false
+        },
+        {
+          "className": "BalancedPoolMissingUpstreamError",
+          "code": "UND_ERR_BPL_MISSING_UPSTREAM",
+          "expectedTransport": false,
+          "observed": false
+        },
+        {
+          "className": "ResponseExceededMaxSizeError",
+          "code": "UND_ERR_RES_EXCEEDED_MAX_SIZE",
+          "expectedTransport": false,
+          "observed": false
+        },
+        {
+          "className": "RequestRetryError",
+          "code": "UND_ERR_REQ_RETRY",
+          "expectedTransport": false,
+          "observed": false
+        },
+        {
+          "className": "ResponseError",
+          "code": "UND_ERR_RESPONSE",
+          "expectedTransport": false,
+          "observed": false
+        },
+        {
+          "className": "SecureProxyConnectionError",
+          "code": "UND_ERR_PRX_TLS",
+          "expectedTransport": true,
+          "observed": true
+        },
+        {
+          "className": "ProxyConnectionError",
+          "code": "UND_ERR_PRX_CONN",
+          "expectedTransport": true,
+          "observed": true
+        },
+        {
+          "className": "MaxOriginsReachedError",
+          "code": "UND_ERR_MAX_ORIGINS_REACHED",
+          "expectedTransport": false,
+          "observed": false
+        },
+        {
+          "className": "MessageSizeExceededError",
+          "code": "UND_ERR_WS_MESSAGE_SIZE_EXCEEDED",
+          "expectedTransport": false,
+          "observed": false
+        }
+      ],
+      "docCodes": [
+        "UND_ERR",
+        "UND_ERR_ABORT",
+        "UND_ERR_ABORTED",
+        "UND_ERR_BODY_TIMEOUT",
+        "UND_ERR_BPL_MISSING_UPSTREAM",
+        "UND_ERR_CLOSED",
+        "UND_ERR_CONNECT_TIMEOUT",
+        "UND_ERR_DESTROYED",
+        "UND_ERR_HEADERS_OVERFLOW",
+        "UND_ERR_HEADERS_TIMEOUT",
+        "UND_ERR_INFO",
+        "UND_ERR_INVALID_ARG",
+        "UND_ERR_INVALID_RETURN_VALUE",
+        "UND_ERR_MAX_ORIGINS_REACHED",
+        "UND_ERR_NOT_SUPPORTED",
+        "UND_ERR_PRX_CONN",
+        "UND_ERR_PRX_TLS",
+        "UND_ERR_REQ_CONTENT_LENGTH_MISMATCH",
+        "UND_ERR_REQ_RETRY",
+        "UND_ERR_RESPONSE",
+        "UND_ERR_RES_CONTENT_LENGTH_MISMATCH",
+        "UND_ERR_RES_EXCEEDED_MAX_SIZE",
+        "UND_ERR_SOCKET",
+        "UND_ERR_SOCKS5",
+        "UND_ERR_WS_MESSAGE_SIZE_EXCEEDED"
+      ]
+    }
+  ],
+  "bundled": {
+    "name": "Node v22.23.2 / undici 6.28.0",
+    "sha256": "f434760a2e87dbcd596d02a936535c927e403b1945b8e4ba4c406cb4ffd3a658",
+    "rows": [
+      {
+        "className": "UndiciError",
+        "code": "UND_ERR",
+        "expectedTransport": false,
+        "observed": false
+      },
+      {
+        "className": "ConnectTimeoutError",
+        "code": "UND_ERR_CONNECT_TIMEOUT",
+        "expectedTransport": true,
+        "observed": true
+      },
+      {
+        "className": "HeadersTimeoutError",
+        "code": "UND_ERR_HEADERS_TIMEOUT",
+        "expectedTransport": true,
+        "observed": true
+      },
+      {
+        "className": "HeadersOverflowError",
+        "code": "UND_ERR_HEADERS_OVERFLOW",
+        "expectedTransport": false,
+        "observed": false
+      },
+      {
+        "className": "BodyTimeoutError",
+        "code": "UND_ERR_BODY_TIMEOUT",
+        "expectedTransport": true,
+        "observed": true
+      },
+      {
+        "className": "ResponseStatusCodeError",
+        "code": "UND_ERR_RESPONSE_STATUS_CODE",
+        "expectedTransport": false,
+        "observed": false
+      },
+      {
+        "className": "InvalidArgumentError",
+        "code": "UND_ERR_INVALID_ARG",
+        "expectedTransport": false,
+        "observed": false
+      },
+      {
+        "className": "InvalidReturnValueError",
+        "code": "UND_ERR_INVALID_RETURN_VALUE",
+        "expectedTransport": false,
+        "observed": false
+      },
+      {
+        "className": "AbortError",
+        "code": "UND_ERR_ABORT",
+        "expectedTransport": true,
+        "observed": true
+      },
+      {
+        "className": "RequestAbortedError",
+        "code": "UND_ERR_ABORTED",
+        "expectedTransport": true,
+        "observed": true
+      },
+      {
+        "className": "InformationalError",
+        "code": "UND_ERR_INFO",
+        "expectedTransport": false,
+        "observed": false
+      },
+      {
+        "className": "RequestContentLengthMismatchError",
+        "code": "UND_ERR_REQ_CONTENT_LENGTH_MISMATCH",
+        "expectedTransport": false,
+        "observed": false
+      },
+      {
+        "className": "ResponseContentLengthMismatchError",
+        "code": "UND_ERR_RES_CONTENT_LENGTH_MISMATCH",
+        "expectedTransport": true,
+        "observed": true
+      },
+      {
+        "className": "ClientDestroyedError",
+        "code": "UND_ERR_DESTROYED",
+        "expectedTransport": true,
+        "observed": true
+      },
+      {
+        "className": "ClientClosedError",
+        "code": "UND_ERR_CLOSED",
+        "expectedTransport": true,
+        "observed": true
+      },
+      {
+        "className": "SocketError",
+        "code": "UND_ERR_SOCKET",
+        "expectedTransport": true,
+        "observed": true
+      },
+      {
+        "className": "NotSupportedError",
+        "code": "UND_ERR_NOT_SUPPORTED",
+        "expectedTransport": false,
+        "observed": false
+      },
+      {
+        "className": "BalancedPoolMissingUpstreamError",
+        "code": "UND_ERR_BPL_MISSING_UPSTREAM",
+        "expectedTransport": false,
+        "observed": false
+      },
+      {
+        "className": "ResponseExceededMaxSizeError",
+        "code": "UND_ERR_RES_EXCEEDED_MAX_SIZE",
+        "expectedTransport": false,
+        "observed": false
+      },
+      {
+        "className": "RequestRetryError",
+        "code": "UND_ERR_REQ_RETRY",
+        "expectedTransport": false,
+        "observed": false
+      },
+      {
+        "className": "ResponseError",
+        "code": "UND_ERR_RESPONSE",
+        "expectedTransport": false,
+        "observed": false
+      },
+      {
+        "className": "SecureProxyConnectionError",
+        "code": "UND_ERR_PRX_TLS",
+        "expectedTransport": true,
+        "observed": true
+      },
+      {
+        "className": "MessageSizeExceededError",
+        "code": "UND_ERR_WS_MESSAGE_SIZE_EXCEEDED",
+        "expectedTransport": false,
+        "observed": false
+      }
+    ],
+    "literalCodes": [
+      "UND_ERR",
+      "UND_ERR_ABORT",
+      "UND_ERR_ABORTED",
+      "UND_ERR_BODY_TIMEOUT",
+      "UND_ERR_BPL_MISSING_UPSTREAM",
+      "UND_ERR_CLOSED",
+      "UND_ERR_CONNECT_TIMEOUT",
+      "UND_ERR_DESTROYED",
+      "UND_ERR_HEADERS_OVERFLOW",
+      "UND_ERR_HEADERS_TIMEOUT",
+      "UND_ERR_HTTP_PARSER",
+      "UND_ERR_INFO",
+      "UND_ERR_INVALID_ARG",
+      "UND_ERR_INVALID_RETURN_VALUE",
+      "UND_ERR_NOT_SUPPORTED",
+      "UND_ERR_PRX_TLS",
+      "UND_ERR_REQ_CONTENT_LENGTH_MISMATCH",
+      "UND_ERR_REQ_RETRY",
+      "UND_ERR_RESPONSE",
+      "UND_ERR_RESPONSE_STATUS_CODE",
+      "UND_ERR_RES_CONTENT_LENGTH_MISMATCH",
+      "UND_ERR_RES_EXCEEDED_MAX_SIZE",
+      "UND_ERR_SOCKET",
+      "UND_ERR_WS_MESSAGE_SIZE_EXCEEDED"
+    ]
+  }
+}

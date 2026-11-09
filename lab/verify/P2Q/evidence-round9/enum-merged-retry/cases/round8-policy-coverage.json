@@ -1,0 +1,818 @@
+[
+  {
+    "name": "StorageAdapterService.getById",
+    "checkedRequired": 2048,
+    "expectedRequired": 2048,
+    "transaction": false,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "StorageAdapterService.getById",
+    "checkedRequired": 2048,
+    "expectedRequired": 2048,
+    "transaction": true,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "StorageAdapterService.getByEntity",
+    "checkedRequired": 6144,
+    "expectedRequired": 6144,
+    "transaction": false,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "StorageAdapterService.getByEntity",
+    "checkedRequired": 6144,
+    "expectedRequired": 6144,
+    "transaction": true,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "StorageAdapterService.getByEntities",
+    "checkedRequired": 6144,
+    "expectedRequired": 6144,
+    "transaction": false,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "StorageAdapterService.getByEntities",
+    "checkedRequired": 6144,
+    "expectedRequired": 6144,
+    "transaction": true,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "StorageAdapterService.query",
+    "checkedRequired": 6144,
+    "expectedRequired": 6144,
+    "transaction": false,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "StorageAdapterService.query",
+    "checkedRequired": 6144,
+    "expectedRequired": 6144,
+    "transaction": true,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "StorageAdapterService.history",
+    "checkedRequired": 2048,
+    "expectedRequired": 2048,
+    "transaction": false,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "StorageAdapterService.history",
+    "checkedRequired": 2048,
+    "expectedRequired": 2048,
+    "transaction": true,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "StorageAdapterService.dependencyState",
+    "checkedRequired": 6144,
+    "expectedRequired": 6144,
+    "transaction": false,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "StorageAdapterService.dependencyState",
+    "checkedRequired": 6144,
+    "expectedRequired": 6144,
+    "transaction": true,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "TriplesService.get",
+    "checkedRequired": 2048,
+    "expectedRequired": 2048,
+    "transaction": false,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "TriplesService.get",
+    "checkedRequired": 2048,
+    "expectedRequired": 2048,
+    "transaction": true,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "TriplesService.entity",
+    "checkedRequired": 2048,
+    "expectedRequired": 2048,
+    "transaction": false,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "TriplesService.entity",
+    "checkedRequired": 2048,
+    "expectedRequired": 2048,
+    "transaction": true,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "TriplesService.entities",
+    "checkedRequired": 2048,
+    "expectedRequired": 2048,
+    "transaction": false,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "TriplesService.entities",
+    "checkedRequired": 2048,
+    "expectedRequired": 2048,
+    "transaction": true,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "TriplesService.entityPage",
+    "checkedRequired": 2048,
+    "expectedRequired": 2048,
+    "transaction": false,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "TriplesService.entityPage",
+    "checkedRequired": 2048,
+    "expectedRequired": 2048,
+    "transaction": true,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "TriplesService.match",
+    "checkedRequired": 2048,
+    "expectedRequired": 2048,
+    "transaction": false,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "TriplesService.match",
+    "checkedRequired": 2048,
+    "expectedRequired": 2048,
+    "transaction": true,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "TriplesService.history",
+    "checkedRequired": 2048,
+    "expectedRequired": 2048,
+    "transaction": false,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "TriplesService.history",
+    "checkedRequired": 2048,
+    "expectedRequired": 2048,
+    "transaction": true,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "TriplesService.transaction",
+    "checkedRequired": 2048,
+    "expectedRequired": 2048,
+    "transaction": false,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "TriplesService.transaction",
+    "checkedRequired": 2048,
+    "expectedRequired": 2048,
+    "transaction": true,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "TriplesService.transactionByCommand",
+    "checkedRequired": 2048,
+    "expectedRequired": 2048,
+    "transaction": false,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "TriplesService.transactionByCommand",
+    "checkedRequired": 2048,
+    "expectedRequired": 2048,
+    "transaction": true,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "TriplesService.transactions",
+    "checkedRequired": 2048,
+    "expectedRequired": 2048,
+    "transaction": false,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "TriplesService.transactions",
+    "checkedRequired": 2048,
+    "expectedRequired": 2048,
+    "transaction": true,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "TriplesService.transactionsForEntity",
+    "checkedRequired": 6144,
+    "expectedRequired": 6144,
+    "transaction": false,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "TriplesService.transactionsForEntity",
+    "checkedRequired": 6144,
+    "expectedRequired": 6144,
+    "transaction": true,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "TriplesService.dependencyState",
+    "checkedRequired": 2048,
+    "expectedRequired": 2048,
+    "transaction": false,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "TriplesService.dependencyState",
+    "checkedRequired": 2048,
+    "expectedRequired": 2048,
+    "transaction": true,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "TriplesService.queryAll",
+    "checkedRequired": 2048,
+    "expectedRequired": 2048,
+    "transaction": false,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "TriplesService.queryAll",
+    "checkedRequired": 2048,
+    "expectedRequired": 2048,
+    "transaction": true,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "TriplesService.query",
+    "checkedRequired": 2048,
+    "expectedRequired": 2048,
+    "transaction": false,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "TriplesService.query",
+    "checkedRequired": 2048,
+    "expectedRequired": 2048,
+    "transaction": true,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "TriplesService.queryPage",
+    "checkedRequired": 2048,
+    "expectedRequired": 2048,
+    "transaction": false,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "TriplesService.queryPage",
+    "checkedRequired": 2048,
+    "expectedRequired": 2048,
+    "transaction": true,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "QueryExecutorService.execute",
+    "checkedRequired": 6144,
+    "expectedRequired": 6144,
+    "transaction": false,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "QueryExecutorService.execute",
+    "checkedRequired": 6144,
+    "expectedRequired": 6144,
+    "transaction": true,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "QueryExecutorService.executePage",
+    "checkedRequired": 6144,
+    "expectedRequired": 6144,
+    "transaction": false,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "QueryExecutorService.executePage",
+    "checkedRequired": 6144,
+    "expectedRequired": 6144,
+    "transaction": true,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "native.select",
+    "checkedRequired": 6144,
+    "expectedRequired": 6144,
+    "transaction": false,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "native.select",
+    "checkedRequired": 6144,
+    "expectedRequired": 6144,
+    "transaction": true,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "native.selectWithRelations",
+    "checkedRequired": 6144,
+    "expectedRequired": 6144,
+    "transaction": false,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  },
+  {
+    "name": "native.selectWithRelations",
+    "checkedRequired": 6144,
+    "expectedRequired": 6144,
+    "transaction": true,
+    "checkCalls": 1,
+    "error": {
+      "message": "Basis 6144 is not available on policy sentinel for repository reads (observed 2048 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "policy sentinel",
+      "surface": "repository",
+      "waitedMs": 40
+    }
+  }
+]

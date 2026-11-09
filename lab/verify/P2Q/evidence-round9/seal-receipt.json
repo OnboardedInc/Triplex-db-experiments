@@ -1,0 +1,35 @@
+{
+  "started": 1794191228741,
+  "finished": 1794191229536,
+  "head": "7673d767107c4870b92cade172dd25eede5fd3fa",
+  "heavySlot": {
+    "file": "/Users/sam/projects/triplex-db-2/lab/locks/heavy/2/owner.json",
+    "owner": {
+      "pid": 62075,
+      "label": "CX-VP2Q-4-R9-seal-final",
+      "at": "2026-11-09T02:27:08.705Z"
+    },
+    "sha256": "fcae3661dc97a84344b0af7d6e5588ad189d09098fa5eac44ec6796486eaa2d0"
+  },
+  "sources": [
+    {
+      "file": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q/scripts/round9-finalize.mjs",
+      "sha256": "9643443d4b0810a16c6dd77367c27e14ad25418f6bfadbb62c1c6f90c03e556e"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q/scripts/round9-seal.mjs",
+      "sha256": "f12c5dde86c9cfa8c66f63991bde01fd7bc11742e0ad0d2f7060a86e8dd78ded"
+    }
+  ],
+  "childStatus": 0,
+  "summarySha256": "c2108bd4522c5841bbd68d30c089e1c63e013edd6f3bbd417fa82cbfe7a06585",
+  "logSha256": "00132a522c867c668066bf7380c80f1bbc3bbc72056522492d813524beb9ed2e",
+  "observed": {
+    "verdict": "FIX-FIRST",
+    "receipts": 22,
+    "qualified": 14,
+    "byteComparisons": 104,
+    "evidenceFiles": 1018
+  },
+  "acceptedForPurpose": "fresh source/slot-bound verification of FIX-FIRST enumeration finding"
+}

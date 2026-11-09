@@ -1,0 +1,1402 @@
+[
+  {
+    "route": "getByEntity",
+    "transaction": false,
+    "subject": "s:present",
+    "elapsed": 41.07849999999962,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the broker's resolved prefix for repository reads (observed 4095 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the broker's resolved prefix",
+      "surface": "repository",
+      "waitedMs": 40.648582999998325
+    }
+  },
+  {
+    "route": "getByEntity",
+    "transaction": false,
+    "subject": "s:present",
+    "recordedAt": 1794188887433,
+    "elapsed": 40.11016700000255,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the broker's resolved prefix for repository reads (observed 4095 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the broker's resolved prefix",
+      "surface": "repository",
+      "waitedMs": 40.01808300000266
+    }
+  },
+  {
+    "route": "getByEntity",
+    "transaction": false,
+    "subject": "s:absent",
+    "elapsed": 41.21245900000213,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the broker's resolved prefix for repository reads (observed 4095 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the broker's resolved prefix",
+      "surface": "repository",
+      "waitedMs": 41.10554200000115
+    }
+  },
+  {
+    "route": "getByEntity",
+    "transaction": false,
+    "subject": "s:absent",
+    "recordedAt": 1794188887515,
+    "elapsed": 40.688459000000876,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the broker's resolved prefix for repository reads (observed 4095 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the broker's resolved prefix",
+      "surface": "repository",
+      "waitedMs": 40.56562499999927
+    }
+  },
+  {
+    "route": "getByEntity",
+    "transaction": true,
+    "subject": "s:present",
+    "elapsed": 41.39258300000074,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the transaction snapshot for repository reads (observed 3072 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 3072,
+      "replica": "the transaction snapshot",
+      "surface": "repository",
+      "waitedMs": 41.1705409999995
+    }
+  },
+  {
+    "route": "getByEntity",
+    "transaction": true,
+    "subject": "s:present",
+    "recordedAt": 1794188887598,
+    "elapsed": 40.84270900000047,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the transaction snapshot for repository reads (observed 3072 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 3072,
+      "replica": "the transaction snapshot",
+      "surface": "repository",
+      "waitedMs": 40.72520900000018
+    }
+  },
+  {
+    "route": "getByEntity",
+    "transaction": true,
+    "subject": "s:absent",
+    "elapsed": 41.39429200000086,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the transaction snapshot for repository reads (observed 3072 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 3072,
+      "replica": "the transaction snapshot",
+      "surface": "repository",
+      "waitedMs": 41.27770800000144
+    }
+  },
+  {
+    "route": "getByEntity",
+    "transaction": true,
+    "subject": "s:absent",
+    "recordedAt": 1794188887681,
+    "elapsed": 41.30962499999805,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the transaction snapshot for repository reads (observed 3072 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 3072,
+      "replica": "the transaction snapshot",
+      "surface": "repository",
+      "waitedMs": 41.18433300000106
+    }
+  },
+  {
+    "route": "getByEntities",
+    "transaction": false,
+    "subject": "s:present",
+    "elapsed": 41.223792000000685,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the broker's resolved prefix for repository reads (observed 4095 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the broker's resolved prefix",
+      "surface": "repository",
+      "waitedMs": 41.119040999998106
+    }
+  },
+  {
+    "route": "getByEntities",
+    "transaction": false,
+    "subject": "s:present",
+    "recordedAt": 1794188887764,
+    "elapsed": 41.02170800000022,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the broker's resolved prefix for repository reads (observed 4095 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the broker's resolved prefix",
+      "surface": "repository",
+      "waitedMs": 40.91133300000001
+    }
+  },
+  {
+    "route": "getByEntities",
+    "transaction": false,
+    "subject": "s:absent",
+    "elapsed": 41.16570899999715,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the broker's resolved prefix for repository reads (observed 4095 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the broker's resolved prefix",
+      "surface": "repository",
+      "waitedMs": 41.06337500000154
+    }
+  },
+  {
+    "route": "getByEntities",
+    "transaction": false,
+    "subject": "s:absent",
+    "recordedAt": 1794188887847,
+    "elapsed": 40.94016600000032,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the broker's resolved prefix for repository reads (observed 4095 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the broker's resolved prefix",
+      "surface": "repository",
+      "waitedMs": 40.844084000000294
+    }
+  },
+  {
+    "route": "getByEntities",
+    "transaction": true,
+    "subject": "s:present",
+    "elapsed": 41.76537500000268,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the transaction snapshot for repository reads (observed 3072 after 42 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 3072,
+      "replica": "the transaction snapshot",
+      "surface": "repository",
+      "waitedMs": 41.625167000001966
+    }
+  },
+  {
+    "route": "getByEntities",
+    "transaction": true,
+    "subject": "s:present",
+    "recordedAt": 1794188887930,
+    "elapsed": 41.287458000002516,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the transaction snapshot for repository reads (observed 3072 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 3072,
+      "replica": "the transaction snapshot",
+      "surface": "repository",
+      "waitedMs": 41.153542000000016
+    }
+  },
+  {
+    "route": "getByEntities",
+    "transaction": true,
+    "subject": "s:absent",
+    "elapsed": 41.375082999998995,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the transaction snapshot for repository reads (observed 3072 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 3072,
+      "replica": "the transaction snapshot",
+      "surface": "repository",
+      "waitedMs": 41.24016699999993
+    }
+  },
+  {
+    "route": "getByEntities",
+    "transaction": true,
+    "subject": "s:absent",
+    "recordedAt": 1794188888014,
+    "elapsed": 41.616792000000714,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the transaction snapshot for repository reads (observed 3072 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 3072,
+      "replica": "the transaction snapshot",
+      "surface": "repository",
+      "waitedMs": 41.47320799999943
+    }
+  },
+  {
+    "route": "query",
+    "transaction": false,
+    "subject": "s:present",
+    "elapsed": 40.70895799999926,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the broker's resolved prefix for repository reads (observed 4095 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the broker's resolved prefix",
+      "surface": "repository",
+      "waitedMs": 40.59270900000047
+    }
+  },
+  {
+    "route": "query",
+    "transaction": false,
+    "subject": "s:present",
+    "recordedAt": 1794188888097,
+    "elapsed": 40.19091599999956,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the broker's resolved prefix for repository reads (observed 4095 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the broker's resolved prefix",
+      "surface": "repository",
+      "waitedMs": 40.09462500000154
+    }
+  },
+  {
+    "route": "query",
+    "transaction": false,
+    "subject": "s:absent",
+    "elapsed": 40.77354099999866,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the broker's resolved prefix for repository reads (observed 4095 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the broker's resolved prefix",
+      "surface": "repository",
+      "waitedMs": 40.66787500000282
+    }
+  },
+  {
+    "route": "query",
+    "transaction": false,
+    "subject": "s:absent",
+    "recordedAt": 1794188888179,
+    "elapsed": 41.19479200000205,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the broker's resolved prefix for repository reads (observed 4095 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the broker's resolved prefix",
+      "surface": "repository",
+      "waitedMs": 41.09037499999977
+    }
+  },
+  {
+    "route": "query",
+    "transaction": true,
+    "subject": "s:present",
+    "elapsed": 41.25104199999987,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the transaction snapshot for repository reads (observed 3072 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 3072,
+      "replica": "the transaction snapshot",
+      "surface": "repository",
+      "waitedMs": 41.10929100000067
+    }
+  },
+  {
+    "route": "query",
+    "transaction": true,
+    "subject": "s:present",
+    "recordedAt": 1794188888262,
+    "elapsed": 40.26045900000099,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the transaction snapshot for repository reads (observed 3072 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 3072,
+      "replica": "the transaction snapshot",
+      "surface": "repository",
+      "waitedMs": 40.13470800000141
+    }
+  },
+  {
+    "route": "query",
+    "transaction": true,
+    "subject": "s:absent",
+    "elapsed": 41.33833299999969,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the transaction snapshot for repository reads (observed 3072 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 3072,
+      "replica": "the transaction snapshot",
+      "surface": "repository",
+      "waitedMs": 41.19250000000102
+    }
+  },
+  {
+    "route": "query",
+    "transaction": true,
+    "subject": "s:absent",
+    "recordedAt": 1794188888344,
+    "elapsed": 41.06837499999892,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the transaction snapshot for repository reads (observed 3072 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 3072,
+      "replica": "the transaction snapshot",
+      "surface": "repository",
+      "waitedMs": 40.91583299999911
+    }
+  },
+  {
+    "route": "emptyEntities",
+    "transaction": false,
+    "subject": "s:present",
+    "elapsed": 40.54766700000255,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the broker's resolved prefix for repository reads (observed 4095 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the broker's resolved prefix",
+      "surface": "repository",
+      "waitedMs": 40.43758399999933
+    }
+  },
+  {
+    "route": "emptyEntities",
+    "transaction": false,
+    "subject": "s:present",
+    "recordedAt": 1794188888427,
+    "elapsed": 40.204750000000786,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the broker's resolved prefix for repository reads (observed 4095 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the broker's resolved prefix",
+      "surface": "repository",
+      "waitedMs": 40.10004200000185
+    }
+  },
+  {
+    "route": "emptyEntities",
+    "transaction": false,
+    "subject": "s:absent",
+    "elapsed": 41.08874999999898,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the broker's resolved prefix for repository reads (observed 4095 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the broker's resolved prefix",
+      "surface": "repository",
+      "waitedMs": 40.967124999999214
+    }
+  },
+  {
+    "route": "emptyEntities",
+    "transaction": false,
+    "subject": "s:absent",
+    "recordedAt": 1794188888509,
+    "elapsed": 40.41525000000183,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the broker's resolved prefix for repository reads (observed 4095 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the broker's resolved prefix",
+      "surface": "repository",
+      "waitedMs": 40.31016699999964
+    }
+  },
+  {
+    "route": "emptyEntities",
+    "transaction": true,
+    "subject": "s:present",
+    "elapsed": 41.334750000001804,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the transaction snapshot for repository reads (observed 3072 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 3072,
+      "replica": "the transaction snapshot",
+      "surface": "repository",
+      "waitedMs": 41.184250000002066
+    }
+  },
+  {
+    "route": "emptyEntities",
+    "transaction": true,
+    "subject": "s:present",
+    "recordedAt": 1794188888591,
+    "elapsed": 41.33258399999977,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the transaction snapshot for repository reads (observed 3072 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 3072,
+      "replica": "the transaction snapshot",
+      "surface": "repository",
+      "waitedMs": 41.190958999999566
+    }
+  },
+  {
+    "route": "emptyEntities",
+    "transaction": true,
+    "subject": "s:absent",
+    "elapsed": 40.567666999999346,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the transaction snapshot for repository reads (observed 3072 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 3072,
+      "replica": "the transaction snapshot",
+      "surface": "repository",
+      "waitedMs": 40.41762500000186
+    }
+  },
+  {
+    "route": "emptyEntities",
+    "transaction": true,
+    "subject": "s:absent",
+    "recordedAt": 1794188888675,
+    "elapsed": 41.36558399999922,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the transaction snapshot for repository reads (observed 3072 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 3072,
+      "replica": "the transaction snapshot",
+      "surface": "repository",
+      "waitedMs": 41.1830829999999
+    }
+  },
+  {
+    "route": "dependencyState",
+    "transaction": false,
+    "subject": "s:present",
+    "elapsed": 41.22154199999932,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the broker's resolved prefix for dependency-state reads (observed 4095 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the broker's resolved prefix",
+      "surface": "dependency-state",
+      "waitedMs": 41.09858299999905
+    }
+  },
+  {
+    "route": "dependencyState",
+    "transaction": false,
+    "subject": "s:present",
+    "recordedAt": 1794188888758,
+    "elapsed": 41.209875000000466,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the broker's resolved prefix for dependency-state reads (observed 4095 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the broker's resolved prefix",
+      "surface": "dependency-state",
+      "waitedMs": 41.101792000001296
+    }
+  },
+  {
+    "route": "dependencyState",
+    "transaction": false,
+    "subject": "s:absent",
+    "elapsed": 40.69666700000016,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the broker's resolved prefix for dependency-state reads (observed 4095 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the broker's resolved prefix",
+      "surface": "dependency-state",
+      "waitedMs": 40.598541999999725
+    }
+  },
+  {
+    "route": "dependencyState",
+    "transaction": false,
+    "subject": "s:absent",
+    "recordedAt": 1794188888841,
+    "elapsed": 40.84441599999991,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the broker's resolved prefix for dependency-state reads (observed 4095 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the broker's resolved prefix",
+      "surface": "dependency-state",
+      "waitedMs": 40.75312499999927
+    }
+  },
+  {
+    "route": "dependencyState",
+    "transaction": true,
+    "subject": "s:present",
+    "elapsed": 40.811249999998836,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the transaction snapshot for dependency-state reads (observed 3072 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 3072,
+      "replica": "the transaction snapshot",
+      "surface": "dependency-state",
+      "waitedMs": 40.677082999998674
+    }
+  },
+  {
+    "route": "dependencyState",
+    "transaction": true,
+    "subject": "s:present",
+    "recordedAt": 1794188888923,
+    "elapsed": 40.195958000000246,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the transaction snapshot for dependency-state reads (observed 3072 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 3072,
+      "replica": "the transaction snapshot",
+      "surface": "dependency-state",
+      "waitedMs": 40.05670800000007
+    }
+  },
+  {
+    "route": "dependencyState",
+    "transaction": true,
+    "subject": "s:absent",
+    "elapsed": 41.31120800000281,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the transaction snapshot for dependency-state reads (observed 3072 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 3072,
+      "replica": "the transaction snapshot",
+      "surface": "dependency-state",
+      "waitedMs": 41.16645799999969
+    }
+  },
+  {
+    "route": "dependencyState",
+    "transaction": true,
+    "subject": "s:absent",
+    "recordedAt": 1794188889005,
+    "elapsed": 40.611000000000786,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the transaction snapshot for dependency-state reads (observed 3072 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 3072,
+      "replica": "the transaction snapshot",
+      "surface": "dependency-state",
+      "waitedMs": 40.471582999998645
+    }
+  },
+  {
+    "route": "emptyDependencies",
+    "transaction": false,
+    "subject": "s:present",
+    "elapsed": 40.5893329999999,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the broker's resolved prefix for dependency-state reads (observed 4095 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the broker's resolved prefix",
+      "surface": "dependency-state",
+      "waitedMs": 40.492999999998574
+    }
+  },
+  {
+    "route": "emptyDependencies",
+    "transaction": false,
+    "subject": "s:present",
+    "recordedAt": 1794188889088,
+    "elapsed": 40.748749999998836,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the broker's resolved prefix for dependency-state reads (observed 4095 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the broker's resolved prefix",
+      "surface": "dependency-state",
+      "waitedMs": 40.64037499999904
+    }
+  },
+  {
+    "route": "emptyDependencies",
+    "transaction": false,
+    "subject": "s:absent",
+    "elapsed": 40.68758399999933,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the broker's resolved prefix for dependency-state reads (observed 4095 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the broker's resolved prefix",
+      "surface": "dependency-state",
+      "waitedMs": 40.57654100000218
+    }
+  },
+  {
+    "route": "emptyDependencies",
+    "transaction": false,
+    "subject": "s:absent",
+    "recordedAt": 1794188889170,
+    "elapsed": 41.21479199999885,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the broker's resolved prefix for dependency-state reads (observed 4095 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the broker's resolved prefix",
+      "surface": "dependency-state",
+      "waitedMs": 41.10491700000057
+    }
+  },
+  {
+    "route": "emptyDependencies",
+    "transaction": true,
+    "subject": "s:present",
+    "elapsed": 40.88891700000022,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the transaction snapshot for dependency-state reads (observed 3072 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 3072,
+      "replica": "the transaction snapshot",
+      "surface": "dependency-state",
+      "waitedMs": 40.74266700000226
+    }
+  },
+  {
+    "route": "emptyDependencies",
+    "transaction": true,
+    "subject": "s:present",
+    "recordedAt": 1794188889253,
+    "elapsed": 40.67829200000051,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the transaction snapshot for dependency-state reads (observed 3072 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 3072,
+      "replica": "the transaction snapshot",
+      "surface": "dependency-state",
+      "waitedMs": 40.54308299999684
+    }
+  },
+  {
+    "route": "emptyDependencies",
+    "transaction": true,
+    "subject": "s:absent",
+    "elapsed": 40.16083300000173,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the transaction snapshot for dependency-state reads (observed 3072 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 3072,
+      "replica": "the transaction snapshot",
+      "surface": "dependency-state",
+      "waitedMs": 40.031167000001005
+    }
+  },
+  {
+    "route": "emptyDependencies",
+    "transaction": true,
+    "subject": "s:absent",
+    "recordedAt": 1794188889335,
+    "elapsed": 41.729583999996976,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the transaction snapshot for dependency-state reads (observed 3072 after 42 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 3072,
+      "replica": "the transaction snapshot",
+      "surface": "dependency-state",
+      "waitedMs": 41.595375000000786
+    }
+  },
+  {
+    "route": "execute",
+    "transaction": false,
+    "subject": "s:present",
+    "elapsed": 40.877292000001034,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the broker's resolved prefix for datalog reads (observed 4095 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the broker's resolved prefix",
+      "surface": "datalog",
+      "waitedMs": 40.31262499999866
+    }
+  },
+  {
+    "route": "execute",
+    "transaction": false,
+    "subject": "s:present",
+    "recordedAt": 1794188889418,
+    "elapsed": 40.77516699999978,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the broker's resolved prefix for datalog reads (observed 4095 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the broker's resolved prefix",
+      "surface": "datalog",
+      "waitedMs": 40.19554099999732
+    }
+  },
+  {
+    "route": "execute",
+    "transaction": false,
+    "subject": "s:absent",
+    "elapsed": 40.77687499999956,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the broker's resolved prefix for datalog reads (observed 4095 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the broker's resolved prefix",
+      "surface": "datalog",
+      "waitedMs": 40.472874999999476
+    }
+  },
+  {
+    "route": "execute",
+    "transaction": false,
+    "subject": "s:absent",
+    "recordedAt": 1794188889500,
+    "elapsed": 41.207040999997844,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the broker's resolved prefix for datalog reads (observed 4095 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the broker's resolved prefix",
+      "surface": "datalog",
+      "waitedMs": 40.916291000001365
+    }
+  },
+  {
+    "route": "execute",
+    "transaction": true,
+    "subject": "s:present",
+    "elapsed": 40.93608300000051,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the transaction snapshot for datalog reads (observed 3072 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 3072,
+      "replica": "the transaction snapshot",
+      "surface": "datalog",
+      "waitedMs": 40.58250000000044
+    }
+  },
+  {
+    "route": "execute",
+    "transaction": true,
+    "subject": "s:present",
+    "recordedAt": 1794188889584,
+    "elapsed": 40.97429199999897,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the transaction snapshot for datalog reads (observed 3072 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 3072,
+      "replica": "the transaction snapshot",
+      "surface": "datalog",
+      "waitedMs": 40.70112499999959
+    }
+  },
+  {
+    "route": "execute",
+    "transaction": true,
+    "subject": "s:absent",
+    "elapsed": 41.75591700000223,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the transaction snapshot for datalog reads (observed 3072 after 42 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 3072,
+      "replica": "the transaction snapshot",
+      "surface": "datalog",
+      "waitedMs": 41.505042000000685
+    }
+  },
+  {
+    "route": "execute",
+    "transaction": true,
+    "subject": "s:absent",
+    "recordedAt": 1794188889667,
+    "elapsed": 41.70637500000157,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the transaction snapshot for datalog reads (observed 3072 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 3072,
+      "replica": "the transaction snapshot",
+      "surface": "datalog",
+      "waitedMs": 41.41925000000265
+    }
+  },
+  {
+    "route": "executePage",
+    "transaction": false,
+    "subject": "s:present",
+    "elapsed": 41.38199999999779,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the broker's resolved prefix for datalog reads (observed 4095 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the broker's resolved prefix",
+      "surface": "datalog",
+      "waitedMs": 41.10599999999977
+    }
+  },
+  {
+    "route": "executePage",
+    "transaction": false,
+    "subject": "s:present",
+    "recordedAt": 1794188889751,
+    "elapsed": 40.724583999999595,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the broker's resolved prefix for datalog reads (observed 4095 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the broker's resolved prefix",
+      "surface": "datalog",
+      "waitedMs": 40.43879100000049
+    }
+  },
+  {
+    "route": "executePage",
+    "transaction": false,
+    "subject": "s:absent",
+    "elapsed": 41.222584000002826,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the broker's resolved prefix for datalog reads (observed 4095 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the broker's resolved prefix",
+      "surface": "datalog",
+      "waitedMs": 40.962375000002794
+    }
+  },
+  {
+    "route": "executePage",
+    "transaction": false,
+    "subject": "s:absent",
+    "recordedAt": 1794188889835,
+    "elapsed": 41.133458000000246,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the broker's resolved prefix for datalog reads (observed 4095 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the broker's resolved prefix",
+      "surface": "datalog",
+      "waitedMs": 40.886208000003535
+    }
+  },
+  {
+    "route": "executePage",
+    "transaction": true,
+    "subject": "s:present",
+    "elapsed": 41.50945800000045,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the transaction snapshot for datalog reads (observed 3072 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 3072,
+      "replica": "the transaction snapshot",
+      "surface": "datalog",
+      "waitedMs": 41.19070799999827
+    }
+  },
+  {
+    "route": "executePage",
+    "transaction": true,
+    "subject": "s:present",
+    "recordedAt": 1794188889918,
+    "elapsed": 41.08708299999853,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the transaction snapshot for datalog reads (observed 3072 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 3072,
+      "replica": "the transaction snapshot",
+      "surface": "datalog",
+      "waitedMs": 40.41270900000018
+    }
+  },
+  {
+    "route": "executePage",
+    "transaction": true,
+    "subject": "s:absent",
+    "elapsed": 41.793375000001106,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the transaction snapshot for datalog reads (observed 3072 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 3072,
+      "replica": "the transaction snapshot",
+      "surface": "datalog",
+      "waitedMs": 41.480625000000146
+    }
+  },
+  {
+    "route": "executePage",
+    "transaction": true,
+    "subject": "s:absent",
+    "recordedAt": 1794188890002,
+    "elapsed": 41.473792000000685,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the transaction snapshot for datalog reads (observed 3072 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 3072,
+      "replica": "the transaction snapshot",
+      "surface": "datalog",
+      "waitedMs": 41.17250000000058
+    }
+  },
+  {
+    "route": "select",
+    "transaction": false,
+    "subject": "s:present",
+    "elapsed": 75.5979159999988,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the QLever replica for native reads (observed 4095 after 75 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the QLever replica",
+      "surface": "native",
+      "waitedMs": 74.73945800000001
+    }
+  },
+  {
+    "route": "select",
+    "transaction": false,
+    "subject": "s:present",
+    "recordedAt": 1794188890086,
+    "elapsed": 74.03650000000198,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the QLever replica for native reads (observed 4095 after 74 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the QLever replica",
+      "surface": "native",
+      "waitedMs": 73.79862499999945
+    }
+  },
+  {
+    "route": "select",
+    "transaction": false,
+    "subject": "s:absent",
+    "elapsed": 43.96258300000045,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the QLever replica for native reads (observed 4095 after 44 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the QLever replica",
+      "surface": "native",
+      "waitedMs": 43.76316600000064
+    }
+  },
+  {
+    "route": "select",
+    "transaction": false,
+    "subject": "s:absent",
+    "recordedAt": 1794188890237,
+    "elapsed": 73.21808299999975,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the QLever replica for native reads (observed 4095 after 73 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the QLever replica",
+      "surface": "native",
+      "waitedMs": 73.01454199999716
+    }
+  },
+  {
+    "route": "select",
+    "transaction": true,
+    "subject": "s:present",
+    "elapsed": 78.45933300000252,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the QLever replica for native reads (observed 4095 after 78 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the QLever replica",
+      "surface": "native",
+      "waitedMs": 78.0534579999985
+    }
+  },
+  {
+    "route": "select",
+    "transaction": true,
+    "subject": "s:present",
+    "recordedAt": 1794188890355,
+    "elapsed": 77.72137500000099,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the QLever replica for native reads (observed 4095 after 77 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the QLever replica",
+      "surface": "native",
+      "waitedMs": 77.39908300000025
+    }
+  },
+  {
+    "route": "select",
+    "transaction": true,
+    "subject": "s:absent",
+    "elapsed": 75.82520900000236,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the QLever replica for native reads (observed 4095 after 76 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the QLever replica",
+      "surface": "native",
+      "waitedMs": 75.54966699999932
+    }
+  },
+  {
+    "route": "select",
+    "transaction": true,
+    "subject": "s:absent",
+    "recordedAt": 1794188890512,
+    "elapsed": 75.56966599999942,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the QLever replica for native reads (observed 4095 after 75 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the QLever replica",
+      "surface": "native",
+      "waitedMs": 75.32308400000329
+    }
+  },
+  {
+    "route": "selectWithRelations",
+    "transaction": false,
+    "subject": "s:present",
+    "elapsed": 75.27399999999761,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the QLever replica for native reads (observed 4095 after 75 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the QLever replica",
+      "surface": "native",
+      "waitedMs": 75.07154100000116
+    }
+  },
+  {
+    "route": "selectWithRelations",
+    "transaction": false,
+    "subject": "s:present",
+    "recordedAt": 1794188890665,
+    "elapsed": 45.43575000000055,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the QLever replica for native reads (observed 4095 after 45 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the QLever replica",
+      "surface": "native",
+      "waitedMs": 45.17920800000138
+    }
+  },
+  {
+    "route": "selectWithRelations",
+    "transaction": false,
+    "subject": "s:absent",
+    "elapsed": 75.24079100000017,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the QLever replica for native reads (observed 4095 after 75 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the QLever replica",
+      "surface": "native",
+      "waitedMs": 75.05199999999968
+    }
+  },
+  {
+    "route": "selectWithRelations",
+    "transaction": false,
+    "subject": "s:absent",
+    "recordedAt": 1794188890786,
+    "elapsed": 74.38866599999892,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the QLever replica for native reads (observed 4095 after 74 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the QLever replica",
+      "surface": "native",
+      "waitedMs": 74.18345800000316
+    }
+  },
+  {
+    "route": "selectWithRelations",
+    "transaction": true,
+    "subject": "s:present",
+    "elapsed": 78.81849999999758,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the QLever replica for native reads (observed 4095 after 79 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the QLever replica",
+      "surface": "native",
+      "waitedMs": 78.57316599999831
+    }
+  },
+  {
+    "route": "selectWithRelations",
+    "transaction": true,
+    "subject": "s:present",
+    "recordedAt": 1794188890938,
+    "elapsed": 49.553374999999505,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the QLever replica for native reads (observed 4095 after 49 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the QLever replica",
+      "surface": "native",
+      "waitedMs": 49.31616700000086
+    }
+  },
+  {
+    "route": "selectWithRelations",
+    "transaction": true,
+    "subject": "s:absent",
+    "elapsed": 56.79820800000016,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the QLever replica for native reads (observed 4095 after 57 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the QLever replica",
+      "surface": "native",
+      "waitedMs": 56.53383400000166
+    }
+  },
+  {
+    "route": "selectWithRelations",
+    "transaction": true,
+    "subject": "s:absent",
+    "recordedAt": 1794188891070,
+    "elapsed": 81.33287500000006,
+    "ok": false,
+    "error": {
+      "message": "Basis 7168 is not available on the QLever replica for native reads (observed 4095 after 81 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 7168,
+      "observed": 4095,
+      "replica": "the QLever replica",
+      "surface": "native",
+      "waitedMs": 81.03625000000102
+    }
+  }
+]

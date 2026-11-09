@@ -1,0 +1,47 @@
+{
+  "kind": "standard",
+  "surface": "native",
+  "timing": "connect",
+  "required": 2048,
+  "observed": 4095,
+  "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"v-p2q-round4:3ebbfb88-9af5-4fe6-a426-315898d1045d\",0]",
+  "upstream": "http://127.0.0.1:7070",
+  "events": [
+    "marker"
+  ],
+  "answers": 0,
+  "forwarded": 1,
+  "ok": false,
+  "error": {
+    "name": "ReadError",
+    "tag": "ReadError",
+    "reason": "replica-unreachable",
+    "required": 2048,
+    "observed": 4095,
+    "replica": "the QLever replica",
+    "surface": "native",
+    "code": null,
+    "message": "QLever replica the QLever replica is unreachable for native reads: TypeError: fetch failed",
+    "cause": {
+      "name": "TypeError",
+      "reason": null,
+      "required": null,
+      "observed": null,
+      "replica": null,
+      "surface": null,
+      "code": null,
+      "message": "fetch failed",
+      "cause": {
+        "name": "Error",
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "surface": null,
+        "code": "ECONNREFUSED",
+        "message": "connect ECONNREFUSED 127.0.0.1:58424",
+        "cause": null
+      }
+    }
+  }
+}

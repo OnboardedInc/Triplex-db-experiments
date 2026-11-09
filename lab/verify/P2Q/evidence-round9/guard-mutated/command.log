@@ -1,0 +1,154 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../../../vitest.workspace-aliases" without a file extension (lab/verify/P2Q/scripts/round7-guard.config.ts:5:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/packages/qlever
+
+ ❯ test/transport-code-inventory.test.ts (122 tests | 1 failed) 13ms
+   × reviews every installed Undici error-module code and the actual fetch runtime inventory 3ms
+   ✓ detects a dependency transport-code addition rather than silently defaulting it to non-transport 1ms
+   ✓ covers pinned Node net/DNS documentation and all pinned libuv DNS errno constants 3ms
+   ✓ one exact-code decision table (119)
+     ✓ has unique codes, source citations and explicit reasons 1ms
+     ✓ ECONNREFUSED: true at root and nested 0ms
+     ✓ ECONNRESET: true at root and nested 0ms
+     ✓ ECONNABORTED: true at root and nested 0ms
+     ✓ EPIPE: true at root and nested 0ms
+     ✓ ENOTCONN: true at root and nested 0ms
+     ✓ ETIMEDOUT: true at root and nested 0ms
+     ✓ EHOSTUNREACH: true at root and nested 0ms
+     ✓ EHOSTDOWN: true at root and nested 0ms
+     ✓ ENETUNREACH: true at root and nested 0ms
+     ✓ ENETDOWN: true at root and nested 0ms
+     ✓ ENETRESET: true at root and nested 0ms
+     ✓ EADDRNOTAVAIL: true at root and nested 0ms
+     ✓ EADDRINUSE: true at root and nested 0ms
+     ✓ EAFNOSUPPORT: true at root and nested 0ms
+     ✓ EPROTONOSUPPORT: true at root and nested 0ms
+     ✓ ESOCKTNOSUPPORT: true at root and nested 0ms
+     ✓ ENONET: true at root and nested 0ms
+     ✓ ESHUTDOWN: true at root and nested 0ms
+     ✓ EACCES: true at root and nested 0ms
+     ✓ EPERM: true at root and nested 0ms
+     ✓ EMFILE: true at root and nested 0ms
+     ✓ ENFILE: true at root and nested 0ms
+     ✓ ENOBUFS: true at root and nested 0ms
+     ✓ ENOMEM: true at root and nested 0ms
+     ✓ EAGAIN: true at root and nested 0ms
+     ✓ EINTR: true at root and nested 0ms
+     ✓ EIO: true at root and nested 0ms
+     ✓ ECANCELED: true at root and nested 0ms
+     ✓ EOF: true at root and nested 0ms
+     ✓ EAI_ADDRFAMILY: true at root and nested 0ms
+     ✓ EAI_AGAIN: true at root and nested 0ms
+     ✓ EAI_BADFLAGS: true at root and nested 0ms
+     ✓ EAI_BADHINTS: true at root and nested 0ms
+     ✓ EAI_CANCELED: true at root and nested 0ms
+     ✓ EAI_FAIL: true at root and nested 0ms
+     ✓ EAI_FAMILY: true at root and nested 0ms
+     ✓ EAI_MEMORY: true at root and nested 0ms
+     ✓ EAI_NODATA: true at root and nested 0ms
+     ✓ EAI_NONAME: true at root and nested 0ms
+     ✓ EAI_OVERFLOW: true at root and nested 0ms
+     ✓ EAI_PROTOCOL: true at root and nested 0ms
+     ✓ EAI_SERVICE: true at root and nested 0ms
+     ✓ EAI_SOCKTYPE: true at root and nested 0ms
+     ✓ ENODATA: true at root and nested 0ms
+     ✓ EFORMERR: true at root and nested 0ms
+     ✓ ESERVFAIL: true at root and nested 0ms
+     ✓ ENOTFOUND: true at root and nested 0ms
+     ✓ ENOTIMP: true at root and nested 0ms
+     ✓ EREFUSED: true at root and nested 0ms
+     ✓ EBADQUERY: true at root and nested 0ms
+     ✓ EBADNAME: true at root and nested 0ms
+     ✓ EBADFAMILY: true at root and nested 0ms
+     ✓ EBADRESP: true at root and nested 0ms
+     ✓ ETIMEOUT: true at root and nested 0ms
+     ✓ EFILE: true at root and nested 0ms
+     ✓ EDESTRUCTION: true at root and nested 0ms
+     ✓ EBADSTR: true at root and nested 0ms
+     ✓ EBADFLAGS: true at root and nested 0ms
+     ✓ ENONAME: true at root and nested 0ms
+     ✓ EBADHINTS: true at root and nested 0ms
+     ✓ ENOTINITIALIZED: true at root and nested 0ms
+     ✓ ELOADIPHLPAPI: true at root and nested 0ms
+     ✓ EADDRGETNETWORKPARAMS: true at root and nested 0ms
+     ✓ ECANCELLED: true at root and nested 0ms
+     ✓ ABORT_ERR: true at root and nested 0ms
+     ✓ ERR_SOCKET_CLOSED: true at root and nested 0ms
+     ✓ ERR_SOCKET_CLOSED_BEFORE_CONNECTION: true at root and nested 0ms
+     ✓ ERR_SOCKET_CONNECTION_TIMEOUT: true at root and nested 0ms
+     ✓ ERR_STREAM_DESTROYED: true at root and nested 0ms
+     ✓ ERR_STREAM_PREMATURE_CLOSE: true at root and nested 0ms
+     ✓ ERR_HTTP_REQUEST_TIMEOUT: true at root and nested 0ms
+     ✓ EBADF: false at root and nested 0ms
+     ✓ EINVAL: false at root and nested 0ms
+     ✓ ENOTSOCK: false at root and nested 0ms
+     ✓ EISCONN: false at root and nested 0ms
+     ✓ EALREADY: false at root and nested 0ms
+     ✓ ENOPROTOOPT: false at root and nested 0ms
+     ✓ EPROTOTYPE: false at root and nested 0ms
+     ✓ ERR_INVALID_ARG_TYPE: false at root and nested 0ms
+     ✓ ERR_INVALID_CALLBACK: false at root and nested 0ms
+     ✓ ERR_INVALID_HANDLE_TYPE: false at root and nested 0ms
+     ✓ ERR_INVALID_ADDRESS: false at root and nested 0ms
+     ✓ ERR_INVALID_ADDRESS_FAMILY: false at root and nested 0ms
+     ✓ ERR_INVALID_IP_ADDRESS: false at root and nested 0ms
+     ✓ ERR_SOCKET_BAD_PORT: false at root and nested 0ms
+     ✓ ERR_SOCKET_BAD_TYPE: false at root and nested 0ms
+     ✓ ERR_SERVER_ALREADY_LISTEN: false at root and nested 0ms
+     ✓ ERR_HTTP_INVALID_CHAR: false at root and nested 0ms
+     ✓ ERR_HTTP_INVALID_HEADER_VALUE: false at root and nested 0ms
+     ✓ ERR_HTTP_CONTENT_LENGTH_MISMATCH: false at root and nested 0ms
+     ✓ ERR_STREAM_WRITE_AFTER_END: false at root and nested 0ms
+     ✓ UND_ERR_CONNECT_TIMEOUT: true at root and nested 0ms
+     ✓ UND_ERR_HEADERS_TIMEOUT: true at root and nested 0ms
+     ✓ UND_ERR_BODY_TIMEOUT: true at root and nested 0ms
+     ✓ UND_ERR_ABORT: true at root and nested 0ms
+     ✓ UND_ERR_ABORTED: true at root and nested 0ms
+     ✓ UND_ERR_DESTROYED: true at root and nested 0ms
+     ✓ UND_ERR_CLOSED: true at root and nested 0ms
+     ✓ UND_ERR_SOCKET: true at root and nested 0ms
+     ✓ UND_ERR_PRX_TLS: true at root and nested 0ms
+     ✓ UND_ERR_PRX_CONN: true at root and nested 0ms
+     ✓ UND_ERR_SOCKS5: true at root and nested 0ms
+     ✓ UND_ERR_RES_CONTENT_LENGTH_MISMATCH: true at root and nested 0ms
+     ✓ UND_ERR: false at root and nested 0ms
+     ✓ UND_ERR_BPL_MISSING_UPSTREAM: false at root and nested 0ms
+     ✓ UND_ERR_HEADERS_OVERFLOW: false at root and nested 0ms
+     ✓ UND_ERR_HTTP_PARSER: false at root and nested 0ms
+     ✓ UND_ERR_INFO: false at root and nested 0ms
+     ✓ UND_ERR_INVALID_ARG: false at root and nested 0ms
+     ✓ UND_ERR_INVALID_RETURN_VALUE: false at root and nested 0ms
+     ✓ UND_ERR_MAX_ORIGINS_REACHED: false at root and nested 0ms
+     ✓ UND_ERR_NOT_SUPPORTED: false at root and nested 0ms
+     ✓ UND_ERR_REQ_CONTENT_LENGTH_MISMATCH: false at root and nested 0ms
+     ✓ UND_ERR_REQ_RETRY: false at root and nested 0ms
+     ✓ UND_ERR_RESPONSE: false at root and nested 0ms
+     ✓ UND_ERR_RESPONSE_STATUS_CODE: false at root and nested 0ms
+     ✓ UND_ERR_RES_EXCEEDED_MAX_SIZE: false at root and nested 0ms
+     ✓ UND_ERR_WS_MESSAGE_SIZE_EXCEEDED: false at root and nested 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/transport-code-inventory.test.ts > reviews every installed Undici error-module code and the actual fetch runtime inventory
+Error: ENOENT: no such file or directory, open '/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q/evidence-round9/guard-mutated/cases/guard-mutation-readback.json'
+ ❯ Object.<anonymous> ../../lab/verify/P2Q/scripts/round7-guard-mutation.ts:12:8
+     10|   const value = (original as any)(file, options);
+     11|   if (String(file).endsWith("undici@7.29.0/node_modules/undici/lib/cor…
+     12|     fs.writeFileSync(receipt, JSON.stringify({ addedCode, module: Stri…
+       |        ^
+     13|     const extra = `\nclass QaAddedTransportError extends Error { const…
+     14|     return typeof value === "string" ? value + extra : Buffer.concat([…
+ ❯ test/transport-code-inventory.test.ts:25:18
+ ❯ test/transport-code-inventory.test.ts:23:6
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 121 passed (122)
+   Start at  20:49:23
+   Duration  455ms (import 60%, transform 29%, setup 5%, tests 4%, worker 2%)
+
+JSON report written to /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q/evidence-round9/guard-mutated/vitest.json

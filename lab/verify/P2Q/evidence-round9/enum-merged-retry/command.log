@@ -1,0 +1,16 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../../vitest.workspace-aliases" without a file extension (lab/verify/P2Q/scratch-round9-retry/merged/lab/verify/P2Q/vitest.config.ts:5:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q/scratch-round9-retry/merged/lab/verify/P2Q
+
+ ✓ tests/round8-policy.test.ts (5 tests | 3 skipped) 115ms
+ ✓ tests/round9-added-read.test.ts (1 test) 309ms
+   ✓ round9 independent scratch control proves the added public read bypasses both policies 308ms
+
+ Test Files  2 passed (2)
+      Tests  3 passed | 3 skipped (6)
+   Start at  20:52:29
+   Duration  2.15s (import 44%, transform 35%, tests 21%)
+
+JSON report written to /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q/evidence-round9/enum-merged-retry/vitest.json

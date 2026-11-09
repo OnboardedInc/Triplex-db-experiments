@@ -1,0 +1,51 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (packages/qlever/vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/packages/qlever
+
+ ✓ test/transport-code-inventory.test.ts (122 tests) 12ms
+ ✓ test/broker-fixes.test.ts (23 tests) 10488ms
+   ✓ C1 Datalog inside a transaction (2)
+     ✓ waits for the replica's real marker to reach sourceK, then fails typed; no query reaches a stale replica 340ms
+   ✓ C2 the cached replica marker is never trusted for an answer (2)
+     ✓ after an unnoticed regression, Datalog and dependencyState wait on the real marker and refuse below B 632ms
+   ✓ C3 one writer per stream (4)
+     ✓ the kernel flock refuses another process while the holder lives and frees on SIGKILL 342ms
+     ✓ Q72a: SIGKILL of the flock helper fail-stops the holder and lets no second writer in 515ms
+     ✓ Q72a: Ctrl-C to the holder's process group while it drains: no second writer until it closes 1823ms
+   ✓ Q72e one in-flight marker probe per replica (V-P2Q N5) (2)
+     ✓ 16 gate waiters during an unrepaired regression share probes 1228ms
+   ✓ M1 header damage and a WATERMARK above the valid end (2)
+     ✓ every flipped header bit refuses to start instead of truncating ACKed frames 434ms
+   ✓ M2 a basis beyond the resolved prefix (1)
+     ✓ waits within the deadline and fails typed, or answers once a frame covers it 350ms
+   ✓ M3 an unreachable replica (3)
+     ✓ native SPARQL in broker mode: a token above the replica waits then BasisNotAvailable; down is ReplicaUnavailable 2002ms
+   ✓ M3 outage answers against an independent replay of the log (1)
+     ✓ 300 random reads during outages equal the oracle (commits and retractions continue) 1184ms
+ ✓ test/broker.test.ts (12 tests) 938ms
+ ✓ test/broker-request-errors.test.ts (20 tests) 431ms
+ ✓ test/broker-answer-errors.test.ts (10 tests) 15ms
+ ✓ test/negation.test.ts (11 tests) 17ms
+ ✓ test/native.test.ts (5 tests) 14ms
+ ✓ test/temporal-profile.test.ts (1 test) 8ms
+ ✓ test/native-relations.test.ts (2 tests) 4ms
+ ✓ test/aggregate-answers.test.ts (4 tests) 4ms
+ ✓ test/broker-transport-errors.test.ts (12 tests) 3ms
+ ✓ test/unicode.test.ts (2 tests | 1 skipped) 3ms
+ ✓ test/storage.test.ts (8 tests | 7 skipped) 2ms
+ ↓ test/broker-qlever.test.ts (5 tests | 5 skipped)
+ ↓ test/intervals.test.ts (4 tests | 4 skipped)
+ ↓ test/outcomes.test.ts (1 test | 1 skipped)
+ ↓ test/query.test.ts (8 tests | 8 skipped)
+
+ Test Files  13 passed | 4 skipped (17)
+      Tests  224 passed | 26 skipped (250)
+   Start at  20:45:14
+   Duration  16.07s (tests 80%, import 18%, transform 1%)
+
+    Isolate  17 workers spawned · ~64ms startup each (spawn + environment, per file)
+             at least ~1.02s faster with isolate: false — reuses workers across files instead of one per file
+
+JSON report written to /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q/evidence-round9/package/vitest.json

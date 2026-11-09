@@ -1,0 +1,32 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../../vitest.workspace-aliases" without a file extension (lab/verify/P2Q/scratch-round9/merged/lab/verify/P2Q/vitest.config.ts:5:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q/scratch-round9/merged/lab/verify/P2Q
+
+ ❯ tests/round8-policy.test.ts (0 test)
+ ❯ tests/round9-added-read.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/round8-policy.test.ts [ tests/round8-policy.test.ts ]
+ FAIL  tests/round9-added-read.test.ts [ tests/round9-added-read.test.ts ]
+Error: Cannot find package 'ulidx' imported from /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q/scratch-round9/merged/packages/core/src/utils/id.ts
+ ❯ ../../../packages/core/src/utils/id.ts:8:1
+      6|  */
+      7|
+      8| import { monotonicFactory } from "ulidx";
+       | ^
+      9| import { TransactionId, TripleId } from "../Branded.js";
+     10|
+ ❯ ../../../packages/core/src/store/RuntimeServices.ts:3:1
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  no tests
+   Start at  20:52:34
+   Duration  1.04s (worker 97%, environment 3%)
+
+JSON report written to /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q/evidence-round9/enum-merged/vitest.json

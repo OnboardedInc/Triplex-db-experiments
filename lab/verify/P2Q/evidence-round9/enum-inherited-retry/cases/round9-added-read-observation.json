@@ -1,0 +1,33 @@
+{
+  "purpose": "counterexample, not product acceptance",
+  "names": [
+    "assert",
+    "assertBatch",
+    "retract",
+    "retractByPattern",
+    "transact",
+    "get",
+    "entity",
+    "entities",
+    "entityPage",
+    "match",
+    "history",
+    "transaction",
+    "transactionByCommand",
+    "transactions",
+    "transactionsForEntity",
+    "currentPosition",
+    "dependencyState",
+    "queryAll",
+    "query",
+    "queryPage",
+    "explain",
+    "explainPage",
+    "round9Read"
+  ],
+  "requested": 6144,
+  "observed": 2048,
+  "value": [],
+  "gateCalls": 0,
+  "maskCalls": 0
+}

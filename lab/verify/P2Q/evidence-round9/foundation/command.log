@@ -1,0 +1,54 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../../vitest.workspace-aliases" without a file extension (lab/verify/P2Q/vitest.config.ts:5:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q
+
+ ✓ tests/check3-routing.test.ts (12 tests) 72267ms
+   ✓ surfaces that read the replica without the overlay (Q55c, Q58d, Q62a) (3)
+     ✓ C1 Datalog inside a transaction never reaches a replica below sourceK: it waits, then fails typed 394ms
+     ✓ C2 after an unnoticed regression, the Datalog gate and dependencyState never use a replica below B 410ms
+   ✓ seeded adversarial fuzz of repository pulls and the Datalog gate against the log oracle (1)
+     ✓ 60 seeds: holds, delays, in-flight publication, eviction, regressions, outages, crashes, future bases 70297ms
+ ✓ tests/check1-durability.test.ts (7 tests) 16588ms
+   ✓ torn tails at every byte offset of the last frame (1)
+     ✓ unACKed last frame: every cut classified and truncated with a backup; ACKed last frame: every cut refused 10503ms
+   ✓ bit flips (1)
+     ✓ every bit of a middle frame, of the segment header and a flip in the ACKed last frame are refused 1506ms
+   ✓ crash windows around the fsync (4)
+     ✓ random kills under concurrent load: every ACKed command survives the restart (20 rounds) 4092ms
+ ✓ tests/check3-outage-scale.test.ts (1 test) 15747ms
+   ✓ outage fallback cost against log size (1)
+     ✓ pulls during an outage at 2000, 10000, 30000 commands 15745ms
+ ✓ tests/check1-lock-process.test.ts (6 tests) 8615ms
+   ✓ kernel flock across processes (6)
+     ✓ N8 variation: the package's source fixture starts and persists frames through tsx 340ms
+     ✓ round3: group SIGTERM during drain and helper SIGHUP preserve exclusion 2321ms
+     ✓ SIGKILL of the holder: the perl child exits and the stream can be reopened 679ms
+     ✓ a holder that exits without close(): the perl child does not outlive it 501ms
+     ✓ the perl helper dies while the holder lives: does the holder notice, and does a second process get in? 1594ms
+     ✓ Ctrl-C to the process group of a holder that drains on SIGINT: the lock goes before the writes stop 3178ms
+ ✓ tests/check4-feed.test.ts (2 tests) 4463ms
+   ✓ consumer crash injection (TARGETS 1.1 P3 items 5 and 6) (1)
+     ✓ 100 crashes per variant: keyed has no visible duplicates; the unkeyed split control shows them 4353ms
+ ✓ tests/round3.test.ts (7 tests) 2511ms
+   ✓ round3 probe, native and error variations (6)
+     ✓ N7: separately constructed env native facade waits the default 2s for an unattained basis 2005ms
+ ✓ tests/check3-probe-load.test.ts (1 test) 2309ms
+   ✓ Datalog gate probe load while waiting (1)
+     ✓ 16 waiters for 1 s: during an unrepaired regression and during ordinary publication lag 2308ms
+ ✓ tests/check2-ack.test.ts (3 tests) 723ms
+   ✓ ACK ordering trace (1)
+     ✓ every ACK follows its frame's fsync return and the watermark update; groups stay at or under 64; no timer 550ms
+ ✓ tests/round7-audit.test.ts (2 tests) 687ms
+   ✓ round7 fresh pinned Node source documents match the cited evidence and catalog 640ms
+ ✓ tests/check5-q31c.test.ts (3 tests) 395ms
+ ✓ tests/check6-a0-guard.test.ts (1 test) 4ms
+ ✓ tests/q55c-native.test.ts (1 test) 2ms
+
+ Test Files  12 passed (12)
+      Tests  46 passed (46)
+   Start at  20:43:05
+   Duration  128.10s (tests 98%, import 2%)
+
+JSON report written to /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q/evidence-round9/foundation/vitest.json

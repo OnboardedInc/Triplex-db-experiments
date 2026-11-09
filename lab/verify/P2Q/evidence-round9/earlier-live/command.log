@@ -1,0 +1,46 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../../vitest.workspace-aliases" without a file extension (lab/verify/P2Q/vitest.config.ts:5:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q
+
+ ✓ tests/live/live.test.ts (8 tests) 230423ms
+   ✓ live: surfaces that read the replica directly (3)
+     ✓ C1 Datalog inside a transaction waits for the replica to reach sourceK, then fails typed; answers after publication 22197ms
+     ✓ C2 after an unnoticed regression, Datalog and dependencyState never answer below B (typed, or exact after replay) 30690ms
+     ✓ C2 residual gap: a zero-downtime regression replayed past B during the executor's requests 22144ms
+   ✓ live: the public factory with QLEVER_COMMIT_PATH=broker (1)
+     ✓ C3 two runtimes for one scope in one process: the second is refused every time; ACKed frames survive 5828ms
+   ✓ live: triples per 10-fact command (brief check 8) (1)
+     ✓ A0 and candidate, five 10-fact commands each, from QLever's delta counts 40516ms
+   ✓ round3 live nonzero rewinds (3)
+     ✓ N2 native-before-answer 36734ms
+     ✓ N2 native-after-answer 33991ms
+     ✓ N2 dependency-in-request 38320ms
+ ✓ tests/round7-basis.test.ts (4 tests) 135705ms
+   ✓ round7 offline all entry points refuse future cuts, including absent entities and empty inputs 3431ms
+   ✓ round7 repository preserves earlier and pinned cuts across staged insertion/retraction and a newer global head 411ms
+   ✓ round7 live exact basis (2)
+     ✓ standard all routes and historical Datalog with pending writes 69375ms
+     ✓ fresh all routes and historical Datalog with pending writes 62486ms
+ ✓ tests/round4.test.ts (42 tests) 151573ms
+   ✓ round4 live answer boundary on qlever-dev (12)
+     ✓ standard native connect 12471ms
+     ✓ standard native headers 12855ms
+     ✓ standard native body 15886ms
+     ✓ standard datalog connect 9132ms
+     ✓ standard datalog headers 14069ms
+     ✓ standard datalog body 13586ms
+     ✓ fresh native connect 9325ms
+     ✓ fresh native headers 9974ms
+     ✓ fresh native body 10838ms
+     ✓ fresh datalog connect 11010ms
+     ✓ fresh datalog headers 14566ms
+     ✓ fresh datalog body 17284ms
+
+ Test Files  3 passed (3)
+      Tests  54 passed (54)
+   Start at  20:43:49
+   Duration  518.86s (tests 100%)
+
+JSON report written to /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q/evidence-round9/earlier-live/vitest.json

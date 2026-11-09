@@ -1,0 +1,7 @@
+{
+  "expected": false,
+  "observed": false,
+  "elapsedMs": 0.0011660000000119908,
+  "name": "TypeError",
+  "message": "terminated"
+}

@@ -1,0 +1,41 @@
+{
+  "extends": "../../../../packages/qlever/tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "../../../..",
+    "paths": {
+      "@triplex-build/triplex": [
+        "../../../../packages/core/src/index.ts"
+      ],
+      "@triplex-build/triplex/datalog": [
+        "../../../../packages/core/src/datalog/index.ts"
+      ],
+      "@triplex-build/triplex/subscriptions": [
+        "../../../../packages/core/src/subscriptions/index.ts"
+      ],
+      "@triplex-build/triplex/config": [
+        "../../../../packages/core/src/config/index.ts"
+      ],
+      "@triplex-build/triplex/content": [
+        "../../../../packages/core/src/content/index.ts"
+      ],
+      "@triplex-build/triplex/derivation": [
+        "../../../../packages/core/src/derivation/index.ts"
+      ],
+      "@triplex-build/triplex/operational": [
+        "../../../../packages/core/src/operational/index.ts"
+      ],
+      "@triplex-build/triplex/entity": [
+        "../../../../packages/core/src/entity/index.ts"
+      ],
+      "@triplex-build/triplex/runtime": [
+        "../../../../packages/core/src/runtime/index.ts"
+      ],
+      "@triplex-build/triplex/internal": [
+        "../../../../packages/core/src/internal.ts"
+      ]
+    }
+  },
+  "include": [
+    "../../../../packages/qlever/src/**/*.ts"
+  ]
+}

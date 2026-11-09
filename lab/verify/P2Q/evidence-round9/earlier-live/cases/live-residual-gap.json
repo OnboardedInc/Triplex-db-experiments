@@ -1,0 +1,9 @@
+{
+  "basis": 2048,
+  "rewinds": 1,
+  "outcome": {
+    "error": "ReadError:basis-not-reached",
+    "message": "Basis 2048 is not available on the QLever replica (reset during the read: incarnation 1.4422f7c4-3c18-4072-9416-c804515d67b7 became 1.8bd18971-f513-4c2a-afa0-692ad2f1ab99) for datalog reads (observed "
+  },
+  "regressionsDetected": 1
+}

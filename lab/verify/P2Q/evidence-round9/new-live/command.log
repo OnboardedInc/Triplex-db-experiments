@@ -1,0 +1,59 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../../vitest.workspace-aliases" without a file extension (lab/verify/P2Q/vitest.config.ts:5:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q
+
+ ✓ tests/round8-basis.test.ts (8 tests | 4 skipped) 331042ms
+   ✓ round8 live independent public entry points and named snapshots (4)
+     ✓ standard future public cursors and journal snapshot 11994ms
+     ✓ fresh future public cursors and journal snapshot 10169ms
+     ✓ standard immutable payloads on both query surfaces and repository 118276ms
+     ✓ fresh immutable payloads on both query surfaces and repository 190601ms
+ ✓ tests/round8-pin-page-corrected.test.ts (2 tests | 1 skipped) 26860ms
+   ✓ round8 live public entity page and implicit get pin preserve full bytes 26859ms
+ ❯ tests/round8-history.test.ts (4 tests | 1 failed | 2 skipped) 195736ms
+   ↓ round8 journal query receives the exact snapshot and preserves the refusal instance
+   ↓ round8 journal responses at the same snapshot exclude later indexed transactions
+   ❯ round8 live journal snapshot payload (2)
+     × standard journal at an old cut has identical full bytes after later commits 45371ms
+     ✓ fresh journal at an old cut has identical full bytes after later commits 150363ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/round8-history.test.ts > round8 live journal snapshot payload > standard journal at an old cut has identical full bytes after later commits
+ReadError: QLever replica the QLever replica is unreachable for datalog reads: Error: QLever request timeout
+ ❯ Object.query ../../../packages/qlever/src/QleverQueryExecutor.ts:257:29
+    255|                   } catch (cause) {
+    256|                     if (!(cause instanceof ReadError) && isUnreachable…
+    257|                       throw new ReplicaUnavailable({
+       |                             ^
+    258|                         required: snapshot.basis,
+    259|                         observed: snapshot.marker.position,
+ ❯ try ../../../packages/qlever/src/QleverQueryExecutor.ts:393:23
+
+Caused by: Error: QLever request timeout
+ ❯ request ../../../packages/qlever/src/QleverClient.ts:128:15
+ ❯ Object.query ../../../packages/qlever/src/QleverClient.ts:141:23
+ ❯ Object.query ../../../packages/qlever/src/QleverQueryExecutor.ts:254:28
+ ❯ try ../../../packages/qlever/src/QleverQueryExecutor.ts:393:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { kind: 'timeout' }
+Caused by: TimeoutError: The operation was aborted due to timeout
+ ❯ request ../../../packages/qlever/src/QleverClient.ts:96:24
+ ❯ Object.query ../../../packages/qlever/src/QleverClient.ts:141:23
+ ❯ Object.query ../../../packages/qlever/src/QleverQueryExecutor.ts:254:28
+ ❯ try ../../../packages/qlever/src/QleverQueryExecutor.ts:393:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 23, INDEX_SIZE_ERR: 1, DOMSTRING_SIZE_ERR: 2, HIERARCHY_REQUEST_ERR: 3, WRONG_DOCUMENT_ERR: 4, INVALID_CHARACTER_ERR: 5, NO_DATA_ALLOWED_ERR: 6, NO_MODIFICATION_ALLOWED_ERR: 7, NOT_FOUND_ERR: 8, NOT_SUPPORTED_ERR: 9, INUSE_ATTRIBUTE_ERR: 10, INVALID_STATE_ERR: 11, SYNTAX_ERR: 12, INVALID_MODIFICATION_ERR: 13, NAMESPACE_ERR: 14, INVALID_ACCESS_ERR: 15, VALIDATION_ERR: 16, TYPE_MISMATCH_ERR: 17, SECURITY_ERR: 18, NETWORK_ERR: 19, ABORT_ERR: 20, URL_MISMATCH_ERR: 21, QUOTA_EXCEEDED_ERR: 22, TIMEOUT_ERR: 23, INVALID_NODE_TYPE_ERR: 24, DATA_CLONE_ERR: 25 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 6 passed | 7 skipped (14)
+   Start at  20:41:04
+   Duration  554.88s (tests 100%)
+
+JSON report written to /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q/evidence-round9/new-live/vitest.json

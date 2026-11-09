@@ -1,0 +1,36 @@
+{
+  "code": "ENETRESET",
+  "transport": true,
+  "depth": 1,
+  "kind": "standard",
+  "surface": "datalog",
+  "endpoint": "http://127.0.0.1:54288",
+  "injected": 1,
+  "injection": "one synthetic code after connection establishment with the response held open; no OS network outage induced",
+  "chain": [
+    {
+      "name": "ReadError",
+      "code": null,
+      "message": "QLever replica the QLever replica is unreachable for datalog reads: TypeError: fetch failed",
+      "reason": "replica-unreachable"
+    },
+    {
+      "name": "TypeError",
+      "code": null,
+      "message": "fetch failed",
+      "reason": null
+    },
+    {
+      "name": "TypeError",
+      "code": null,
+      "message": "opaque",
+      "reason": null
+    },
+    {
+      "name": "Error",
+      "code": "ENETRESET",
+      "message": "opaque",
+      "reason": null
+    }
+  ]
+}

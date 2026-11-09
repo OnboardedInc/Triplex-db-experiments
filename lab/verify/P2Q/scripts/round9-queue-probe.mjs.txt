@@ -1,0 +1,34 @@
+// [CX-VP2Q-4-R9] Why: change a starved waiter's polling phase only after freezing it and proving it owns no slot or child.
+// Rejected: stopping an active test/readback or borrowing another job's slot (would lose work or violate admission).
+import fs from "node:fs";
+import path from "node:path";
+import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
+const root = process.cwd(), out = path.join(root, "lab/verify/P2Q/evidence-round9/seal-queue-reschedule.json");
+assert(!fs.existsSync(out));
+const list = () => execFileSync("ps", ["-axo", "pid=,ppid=,command="], { encoding: "utf8" }).split("\n").flatMap(line => {
+  const parsed = /^\s*(\d+)\s+(\d+)\s+(.+)$/.exec(line);
+  return parsed ? [{ pid: Number(parsed[1]), ppid: Number(parsed[2]), command: parsed[3] }] : [];
+});
+const candidates = list().filter(row => /^(?:\S*\/)?node lab\/bin\/heavy\.mjs --label CX-VP2Q-4-R9-seal-final -- node lab\/verify\/P2Q\/scripts\/round9-finalize\.mjs$/.test(row.command));
+assert.equal(candidates.length, 1);
+const target = candidates[0], cwd = execFileSync("lsof", ["-a", "-p", String(target.pid), "-d", "cwd", "-Fn"], { encoding: "utf8" });
+assert(cwd.split("\n").includes(`n${root}`) || cwd.split("\n").includes(`n${fs.realpathSync(root)}`));
+const record = { started: Date.now(), target, cwd, action: "none", heavySlotClaim: "none", childCount: null, owners: [] };
+let frozen = false;
+try {
+  process.kill(target.pid, "SIGSTOP"); frozen = true;
+  await new Promise(resolve => setTimeout(resolve, 20));
+  assert.match(execFileSync("ps", ["-o", "stat=", "-p", String(target.pid)], { encoding: "utf8" }), /T/);
+  const locks = path.join(process.env.TX2_LOCKS_DIR ?? "/Users/sam/projects/triplex-db-2/lab/locks", "heavy");
+  record.owners = fs.readdirSync(locks).map(index => JSON.parse(fs.readFileSync(path.join(locks, index, "owner.json"), "utf8")));
+  record.childCount = list().filter(row => row.ppid === target.pid).length;
+  const queued = record.owners.length === 4 && record.owners.every(owner => owner.pid !== target.pid)
+    && record.childCount === 0 && !fs.existsSync(path.join(root, "lab/verify/P2Q/evidence-round9/seal-first-observation"));
+  if (queued) { process.kill(target.pid, "SIGKILL"); frozen = false; record.action = "terminated only the proven unstarted waiter for requeue"; }
+  else { process.kill(target.pid, "SIGCONT"); frozen = false; record.action = "resumed unchanged; queue-only condition not proven"; }
+} finally {
+  if (frozen) process.kill(target.pid, "SIGCONT");
+  record.finished = Date.now(); fs.writeFileSync(out, JSON.stringify(record, null, 2) + "\n", { flag: "wx" });
+}
+console.log(JSON.stringify({ action: record.action, pid: target.pid, childCount: record.childCount }));
