@@ -181,7 +181,10 @@ const append = a => {
     const tR=performance.now();
     const retired=r.retracted_position!=null,journal=isJournalRow(r),t=retired?'history':journal?'journal':'facts';
     // [EXP-HS01] Why: preserve one latest version per id, including journal retirements. Rejected: a second recent_rows copy.
-    for(const other of ['facts','history','journal'])q('DELETE FROM '+other+' WHERE id=?').run(s.id);
+    // [EXP-P5N] Why: an assertion row (no retraction) carries an id minted by this transaction, so no stored copy can exist; the three DELETE-by-id probes
+    // were 3 of 4 statements per data row. A retirement keeps them (it moves a stored row to history). A colliding id now fails the unique id index (fail-stop)
+    // instead of silently replacing the older row. Rejected: a fresh-id flag in the frame payload (changes the frame format and replay).
+    if(retired)for(const other of ['facts','history','journal'])q('DELETE FROM '+other+' WHERE id=?').run(s.id);
     const keys=['e',...(retired?['rpos']:[]),'id','a','pos','t','v','vf','vto','c','y','sv','x'];
     q('INSERT INTO '+t+'('+keys.join(',')+') VALUES('+keys.map(()=>'?').join(',')+')').run(...keys.map(k=>s[k]));
     if(journal){journalRows++;journalMs+=performance.now()-tR;}else{factRows++;factMs+=performance.now()-tR;}
