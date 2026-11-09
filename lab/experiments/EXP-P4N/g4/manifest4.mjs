@@ -8,7 +8,7 @@ import path from "node:path";
 import { createHash } from "node:crypto";
 const [root, out] = process.argv.slice(2);
 const skip = (rel) =>
-  /^(store-|scratch|arms\/[^/]+\/packages)/.test(rel) || rel.includes("node_modules/");
+  /^(store\/|store-|scratch|p2\/[0-9a-f-]{36}\/|arms\/[^/]+\/packages)/.test(rel) || rel.includes("node_modules/");
 const lines = [];
 for (const f of fs.readdirSync(root, { recursive: true }).map(String).sort()) {
   const p = path.join(root, f);

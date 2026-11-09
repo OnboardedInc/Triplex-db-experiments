@@ -93,7 +93,9 @@ it("the ordered fast path returns the row route's order, including ties, descend
     ],
   ];
   for (const tuples of cases)
-    expect(h1Entity(tuples, basis, dict).map((t) => t.id)).toEqual(reference(tuples).map((t) => t.id));
+    expect(h1Entity(tuples, basis, dict).map((t) => t.id)).toEqual(
+      reference(tuples).map((t) => t.id),
+    );
   // random shuffles over a mixed alphabet
   let seed = 7;
   const next = () => (seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0);
@@ -106,7 +108,9 @@ it("the ordered fast path returns the row route's order, including ties, descend
       for (let j = 0; j < len; j++) id += alphabet[next() % alphabet.length];
       return tuple(id + i, false, next() % 3);
     });
-    expect(h1Entity(tuples, basis, dict).map((t) => t.id)).toEqual(reference(tuples).map((t) => t.id));
+    expect(h1Entity(tuples, basis, dict).map((t) => t.id)).toEqual(
+      reference(tuples).map((t) => t.id),
+    );
   }
 });
 
@@ -118,11 +122,30 @@ it("integer and REAL-text numeric fields decode to the same numbers", () => {
   expect(a.validFrom).toBe(7);
   expect(h1Decode(tuple("A", false, 5, { 7: 6 }), basis, dict)).toBeUndefined();
   // long form: valid-to at index 9 (expired at 10), entity type id 10, schema version 11
-  expect(h1Decode(tuple("A", false, 5, { 7: 2, 9: 10, 10: null, 11: 1, 12: null }), basis, dict)).toBeUndefined();
-  const long = h1Decode(tuple("A", false, 5, { 7: 2, 9: 11, 10: 1, 11: 3, 12: null }), basis, dict)!;
-  expect([Option.getOrNull(long.entityType), Option.getOrNull(long.schemaVersion), Option.getOrNull(long.validTo)]).toEqual(["creator", 3, 11]);
+  expect(
+    h1Decode(tuple("A", false, 5, { 7: 2, 9: 10, 10: null, 11: 1, 12: null }), basis, dict),
+  ).toBeUndefined();
+  const long = h1Decode(
+    tuple("A", false, 5, { 7: 2, 9: 11, 10: 1, 11: 3, 12: null }),
+    basis,
+    dict,
+  )!;
+  expect([
+    Option.getOrNull(long.entityType),
+    Option.getOrNull(long.schemaVersion),
+    Option.getOrNull(long.validTo),
+  ]).toEqual(["creator", 3, 11]);
   const short = h1Decode(tuple("A", false, 5, { 7: 2 }), basis, dict)!;
-  expect([Option.getOrNull(short.createdBy), Option.getOrNull(short.schemaVersion), Option.getOrNull(short.validTo), Option.isNone(short.entityType)]).toEqual(["creator", 1, null, true]);
-  const real = h1Decode(tuple("A", false, "1000.0000000000001", { 7: 0 }), { validAt: 2000 }, dict)!;
+  expect([
+    Option.getOrNull(short.createdBy),
+    Option.getOrNull(short.schemaVersion),
+    Option.getOrNull(short.validTo),
+    Option.isNone(short.entityType),
+  ]).toEqual(["creator", 1, null, true]);
+  const real = h1Decode(
+    tuple("A", false, "1000.0000000000001", { 7: 0 }),
+    { validAt: 2000 },
+    dict,
+  )!;
   expect(real.recordedAt).toBe(1000.0000000000001);
 });

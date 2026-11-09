@@ -15,7 +15,11 @@ import { Effect, Layer, ManagedRuntime } from "effect";
 const [armName, out, countArg = "100000", concArg = "8"] = process.argv.slice(2);
 if (!armName || !out) throw Error("usage: replay.ts <arm> <out.txt> [count] [concurrency]");
 const E = "/Users/sam/Claude/Projects/triplex-db-2/evidence";
-const root = path.join(E, ["final", "s4b"].includes(armName) ? "QH1-R3/arms" : "P4N-R1/arms", armName);
+const root = path.join(
+  E,
+  ["final", "s4b"].includes(armName) ? "QH1-R3/arms" : "P4N-R1/arms",
+  armName,
+);
 // [EXP-P4N] Why: own APFS clone of round 3's candidate store; the retained store is never opened read-write. The reference digests are
 // round 3's replay of today's row route (HS01 build on the HS01 store, evidence/QH1-R3/replay/ref-baseline.txt), same request stream.
 const store = process.env.P4N_STORE ?? path.join(E, "P4N-R1/store");
@@ -50,12 +54,9 @@ const client: any = {
   cancel: async () => {},
   close: async () => {},
 };
-const adapter = q.makeQleverBrokerStorageAdapter(
-  client,
-  "qh1-r3",
-  broker,
-  { currentRoute: "h1" as const },
-);
+const adapter = q.makeQleverBrokerStorageAdapter(client, "qh1-r3", broker, {
+  currentRoute: "h1" as const,
+});
 const runtime = ManagedRuntime.make(
   rt.Runtime.define({
     name: "qh1-r3",

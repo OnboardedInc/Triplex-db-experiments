@@ -166,15 +166,46 @@ const arm: Arm = await brokerArm(true, false);
 // thread CPU cannot be read from here without a request that perturbs the probe.
 const probeSql = (() => {
   const sn = (x: string) =>
-    "CASE WHEN typeof(" + x + ")='integer' AND " + x + " BETWEEN -9007199254740991 AND 9007199254740991 THEN " + x + " ELSE printf('%!.17g'," + x + ") END";
+    "CASE WHEN typeof(" +
+    x +
+    ")='integer' AND " +
+    x +
+    " BETWEEN -9007199254740991 AND 9007199254740991 THEN " +
+    x +
+    " ELSE printf('%!.17g'," +
+    x +
+    ") END";
   const row =
-    "json_array(typeof(f.id)='blob',CASE WHEN typeof(f.id)='blob' THEN hex(f.id) ELSE f.id END,e.name,a.name,f.t,CASE WHEN f.t IN (1,3) THEN " + sn("f.v") + " WHEN f.t=5 THEN ref.name WHEN f.t=7 THEN NULL ELSE f.v END," + sn("tx.at") + ",f.pos," + sn("(tx.at+f.vf)") + ",CASE WHEN f.vto IS NULL THEN NULL ELSE " + sn("f.vto") + " END,c.s,y.s," + sn("coalesce(f.sv,1)") + ",te.name,json(CASE WHEN f.x IS NOT NULL THEN CAST(f.x AS TEXT) ELSE NULL END))";
+    "json_array(typeof(f.id)='blob',CASE WHEN typeof(f.id)='blob' THEN hex(f.id) ELSE f.id END,e.name,a.name,f.t,CASE WHEN f.t IN (1,3) THEN " +
+    sn("f.v") +
+    " WHEN f.t=5 THEN ref.name WHEN f.t=7 THEN NULL ELSE f.v END," +
+    sn("tx.at") +
+    ",f.pos," +
+    sn("(tx.at+f.vf)") +
+    ",CASE WHEN f.vto IS NULL THEN NULL ELSE " +
+    sn("f.vto") +
+    " END,c.s,y.s," +
+    sn("coalesce(f.sv,1)") +
+    ",te.name,json(CASE WHEN f.x IS NOT NULL THEN CAST(f.x AS TEXT) ELSE NULL END))";
   const cols = "o,e,id,a,pos,t,v,vf,vto,c,y,sv,x";
   const union = ["facts", "journal", "history"]
-    .map((t) => "SELECT " + cols + " FROM " + t + " WHERE o=@o" + (t === "history" ? " AND rpos>@b" : "") + " AND pos<=@b")
+    .map(
+      (t) =>
+        "SELECT " +
+        cols +
+        " FROM " +
+        t +
+        " WHERE o=@o" +
+        (t === "history" ? " AND rpos>@b" : "") +
+        " AND pos<=@b",
+    )
     .join(" UNION ALL ");
   return (
-    "SELECT json_group_array(" + row + ") FROM (" + union + ")" +
+    "SELECT json_group_array(" +
+    row +
+    ") FROM (" +
+    union +
+    ")" +
     " f JOIN ents e ON e.eid=f.e JOIN attrs a ON a.aid=f.a JOIN txs tx ON tx.pos=f.pos JOIN ents te ON te.eid=tx.tx LEFT JOIN strs c ON c.sid=f.c LEFT JOIN strs y ON y.sid=f.y LEFT JOIN ents ref ON f.t=5 AND ref.eid=f.v"
   );
 })();
@@ -184,7 +215,9 @@ const probeBasis = probeDb.prepare("SELECT position FROM marker WHERE id=1").plu
 const probeStmt = probeDb.prepare(probeSql).pluck();
 // The fixed fixture is the first owner from index 100 of the sorted root list whose statement text is 75,000 to 90,000 bytes (the brief's
 // "fixed 80 KB text"); the choice is deterministic for a given store.
-let probeOwner: unknown, probeRoot = "", probeText = "";
+let probeOwner: unknown,
+  probeRoot = "",
+  probeText = "";
 for (let i = 100; i < roots.length; i++) {
   const o = probeDb.prepare("SELECT eid FROM ents WHERE name=?").pluck().get(roots[i]!);
   probeDb.exec("BEGIN");
@@ -220,7 +253,13 @@ const probe = () => {
       parseUs += c - b;
     }
   }
-  return { sqlUs: sqlUs / N, parseUs: parseUs / N, totalUs: (sqlUs + parseUs) / N, bytes: probeText.length, sink };
+  return {
+    sqlUs: sqlUs / N,
+    parseUs: parseUs / N,
+    totalUs: (sqlUs + parseUs) / N,
+    bytes: probeText.length,
+    sink,
+  };
 };
 // Heavy-slot occupancy: other holders' tokens under the main checkout (this arm's own heavy.mjs token is one of them).
 const heavySlots = () => {
@@ -231,7 +270,8 @@ const heavySlots = () => {
       .filter((n) => /^\d+$/.test(n))
       .map((n) => {
         try {
-          return JSON.parse(fs.readFileSync(path.join(dir, n, "owner.json"), "utf8")).label as string;
+          return JSON.parse(fs.readFileSync(path.join(dir, n, "owner.json"), "utf8"))
+            .label as string;
         } catch {
           return "?";
         }
@@ -376,7 +416,13 @@ try {
     };
     segments.push(seg);
     console.log(
-      JSON.stringify({ ...seg, batches: undefined, buckets: undefined, probeBefore: probeBefore.totalUs, probeAfter: probeAfter.totalUs }),
+      JSON.stringify({
+        ...seg,
+        batches: undefined,
+        buckets: undefined,
+        probeBefore: probeBefore.totalUs,
+        probeAfter: probeAfter.totalUs,
+      }),
     );
   }
   fs.writeFileSync(

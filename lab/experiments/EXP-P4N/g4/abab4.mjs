@@ -6,7 +6,8 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { spawnSync } from "node:child_process";
-const [outdir, rounds, armsCsv, segments = "5", pulls = "1000", warm = "300", clients = "1"] = process.argv.slice(2);
+const [outdir, rounds, armsCsv, segments = "5", pulls = "1000", warm = "300", clients = "1"] =
+  process.argv.slice(2);
 if (!outdir || !rounds || !armsCsv)
   throw Error("usage: abab4.mjs outdir rounds arms segments pulls warm [clients]");
 const arms = armsCsv.split(",");
@@ -17,12 +18,21 @@ const free = () => {
   return s.bavail * s.bsize;
 };
 if (free() < 5 * 1024 ** 3) throw Error("host free space below 5 GiB: no heavy run");
-const flags = { semi32: "--max-semi-space-size=32", semi64: "--max-semi-space-size=64", semi128: "--max-semi-space-size=128", stgc: "--single-threaded-gc" };
+const flags = {
+  semi32: "--max-semi-space-size=32",
+  semi64: "--max-semi-space-size=64",
+  semi128: "--max-semi-space-size=128",
+  stgc: "--single-threaded-gc",
+};
 const flagsOf = (arm) =>
-  arm.split("@")[0].split("+").slice(1).map((l) => {
-    if (!flags[l]) throw Error("unknown lever " + l);
-    return flags[l];
-  });
+  arm
+    .split("@")[0]
+    .split("+")
+    .slice(1)
+    .map((l) => {
+      if (!flags[l]) throw Error("unknown lever " + l);
+      return flags[l];
+    });
 const log = [];
 for (let r = 0; r < Number(rounds); r++) {
   const order = r % 2 ? [...arms].reverse() : arms;
@@ -32,11 +42,29 @@ for (let r = 0; r < Number(rounds); r++) {
       load = os.loadavg();
     const res = spawnSync(
       path.join(wt, "node_modules/.bin/tsx"),
-      [...flagsOf(arm), path.join(wt, "lab/experiments/EXP-P4N/g4/arm4.ts"), arm, out, segments, pulls, warm, String(1 + r), clients],
+      [
+        ...flagsOf(arm),
+        path.join(wt, "lab/experiments/EXP-P4N/g4/arm4.ts"),
+        arm,
+        out,
+        segments,
+        pulls,
+        warm,
+        String(1 + r),
+        clients,
+      ],
       { cwd: wt, encoding: "utf8", maxBuffer: 1 << 28 },
     );
     fs.writeFileSync(out.replace(/\.json$/, ".log"), (res.stdout ?? "") + (res.stderr ?? ""));
-    log.push({ round: r, arm, code: res.status, startedMs: t0, seconds: (Date.now() - t0) / 1000, loadBefore: load, freeBytes: free() });
+    log.push({
+      round: r,
+      arm,
+      code: res.status,
+      startedMs: t0,
+      seconds: (Date.now() - t0) / 1000,
+      loadBefore: load,
+      freeBytes: free(),
+    });
     console.log(JSON.stringify(log.at(-1)));
     if (res.status !== 0) {
       fs.writeFileSync(path.join(outdir, "schedule.json"), JSON.stringify(log, null, 2));

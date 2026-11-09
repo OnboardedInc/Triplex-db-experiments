@@ -67,7 +67,11 @@ export const wholePullTuples = (
     const rows = JSON.parse(part.rows) as H1Tuple[];
     if (tuples === undefined) tuples = rows;
     else for (const t of rows) tuples.push(t);
-    for (const [pos, at, name] of JSON.parse(part.txs) as [number, number | string, string | null][]) {
+    for (const [pos, at, name] of JSON.parse(part.txs) as [
+      number,
+      number | string,
+      string | null,
+    ][]) {
       dict.txAt.set(pos, num(at));
       dict.txId.set(pos, name ? Option.some(name) : Option.none());
     }
@@ -242,7 +246,11 @@ export const h1Decode = (
               ? JSON.parse(t[5])
               : t[5];
   const attribute = dict.attr.get(t[3])!;
-  const value = decodedPrimitiveValue(type, payload, storedValueDomain(ValueDomains.qlever, attribute));
+  const value = decodedPrimitiveValue(
+    type,
+    payload,
+    storedValueDomain(ValueDomains.qlever, attribute),
+  );
   const creator = t[8];
   return {
     id: t[0] ? idFromHex(t[1]) : t[1],
@@ -255,7 +263,8 @@ export const h1Decode = (
     createdBy: creator === null ? Option.none() : (dict.strOpt.get(creator) ?? Option.none()),
     retractedAt: Option.none(),
     entityType: long && t[10] !== null ? (dict.strOpt.get(t[10]) ?? Option.none()) : Option.none(),
-    schemaVersion: long && num(t[11]) !== 1 ? (num(t[11]) ? Option.some(num(t[11])) : Option.none()) : someOne,
+    schemaVersion:
+      long && num(t[11]) !== 1 ? (num(t[11]) ? Option.some(num(t[11])) : Option.none()) : someOne,
     txId: dict.txId.get(pos)!,
     retractTxId: Option.none(),
   } as Triple;

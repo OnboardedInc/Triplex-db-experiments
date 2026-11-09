@@ -1,0 +1,30 @@
+{
+  "contractUnchanged": true,
+  "base": "365fe188",
+  "changed": [
+    {
+      "path": "packages/qlever/src/broker/BrokerStorageAdapter.ts",
+      "oldSha256": "69a23658e7eff91426fca9ab6464a231d909485296d48c25804208c7750f7b35",
+      "newSha256": "9141a7b514baf223113514d986f946f697aa36036645157324f61729914ac710",
+      "referencedBy": []
+    },
+    {
+      "path": "packages/qlever/src/broker/h1.ts",
+      "oldSha256": "6cd2374846f6ae50be716c366875ba69289eb9dc7f2c42fdc6ba77b83e767353",
+      "newSha256": "f53ec0c0d47bc40586989a63773f01d40149b9fc9e27fc8a06164a0ee43c7d2b",
+      "referencedBy": []
+    },
+    {
+      "path": "packages/qlever/src/broker/log.ts",
+      "oldSha256": "d9dc9d924fc5d410906506f9616d3b59e456d343de473294adc2978f0f15a502",
+      "newSha256": "36d8fa642d1e169478db9a19b8a77a0ddd9db6f31226e145df2dea7c6050775a",
+      "referencedBy": []
+    },
+    {
+      "path": "packages/qlever/src/broker/sqlite-worker.ts",
+      "oldSha256": "4a577f924f10bd8ceb34ef60a90bf38a6a64bb8bf299335c8dbbc9020174018f",
+      "newSha256": "b9b0e6b036695922b1205e69111ed99de8b0be1a26cf9649648aed9a902277c0",
+      "referencedBy": []
+    }
+  ]
+}

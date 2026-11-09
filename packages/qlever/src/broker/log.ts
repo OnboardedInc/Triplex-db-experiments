@@ -145,7 +145,9 @@ type Pending = {
 };
 class Connection {
   private dead: string | undefined;
-  private shared: { readonly port: MessagePort; readonly pending: Map<number, Pending>; next: number } | undefined;
+  private shared:
+    | { readonly port: MessagePort; readonly pending: Map<number, Pending>; next: number }
+    | undefined;
   constructor(readonly worker: Worker) {
     worker.on("error", (error) => {
       this.dead = String(error);
@@ -598,10 +600,9 @@ export class HostLog {
   }
   async wholePull(basis: number, roots: readonly string[], bytes = false) {
     if (this.closed) throw new BrokerLogError("Broker log is closed");
-    return this.pool[this.readerIndex++ % this.pool.length]!.requestOnPort<import("./h1.js").WholePull>(
-      "wholePull",
-      { basis, roots, bytes },
-    );
+    return this.pool[this.readerIndex++ % this.pool.length]!.requestOnPort<
+      import("./h1.js").WholePull
+    >("wholePull", { basis, roots, bytes });
   }
   async pull(basis: H1Basis, selection: Selection): Promise<PinnedPull> {
     // [CX-INT-Q] Why: Q89b requires refusal before position retirement drops rows needed at T.

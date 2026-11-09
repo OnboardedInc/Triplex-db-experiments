@@ -271,7 +271,8 @@ export const makeQleverBrokerStorageAdapter = (
   // key, so entries merge by id. Rejected: decoding extra rows against their own dictionary (rows from both fetches share one decode).
   const mergeDict = (into: H1Dict, from: H1Dict) => {
     for (const k of ["txAt", "txId", "attr", "str", "strOpt"] as const)
-      for (const [id, v] of from[k] as Map<number, unknown>) (into[k] as Map<number, unknown>).set(id, v);
+      for (const [id, v] of from[k] as Map<number, unknown>)
+        (into[k] as Map<number, unknown>).set(id, v);
   };
   const unresolved = (all: Prefetch, id: string) =>
     !all.rows.has(id) && !all.known.has(id) && !all.owners.has(id.split("/")[0]!);
@@ -835,7 +836,7 @@ export const makeQleverBrokerStorageAdapter = (
                   if (missing.length) {
                     const extra = await loadPrefetch(b, missing);
                     mergeDict(all.dict, extra.dict);
-                  for (const [id, rows] of extra.rows) all.rows.set(id, rows);
+                    for (const [id, rows] of extra.rows) all.rows.set(id, rows);
                     for (const id of extra.known) all.known.add(id);
                     for (const id of extra.owners) all.owners.add(id);
                   }
