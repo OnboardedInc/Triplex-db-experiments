@@ -1,0 +1,51 @@
+{
+  "old": "f45d479a313f2679db892ea8e773f0c6c0a27d76",
+  "reviewed": "99d9641d4d6f385ab3b3fade7e9e78680a8850b4",
+  "fix": "07078eb9d5a8bed1fe82e77325f7ed12471e7679",
+  "sources": [
+    {
+      "path": "lab/bench/lib/paired.ts",
+      "oldSha256": "2c68e427574173c5caaefcaed8322e761b718b2a32d79cf22297440167e8c70e",
+      "reviewedSha256": "fb90bee1fd3e4ddc06827a458a5ead56af455b6f840a26f705a88092f713b78c"
+    },
+    {
+      "path": "lab/bench/lib/pair-analysis.ts",
+      "oldSha256": "e54174c3a4c4090af81c82c1afc597312a7ae64b7a80b0fb125c9951da30b76d",
+      "reviewedSha256": "f42fb50cfa41f086a5182902a7912b9ea5f0f0afd961ef74ec7bd0a21ed03784"
+    },
+    {
+      "path": "lab/bench/lib/noise.ts",
+      "oldSha256": "88308c7478fa63398a653098c4afaba3b69f307880ad32b3e4d5923e3ea87f3e",
+      "reviewedSha256": "5391f874926b46c8af366ee8ab929f2ce8e86c4cdc06075b696a3aecec195fb1"
+    },
+    {
+      "path": "lab/bench/lib/single-analysis.ts",
+      "oldSha256": null,
+      "reviewedSha256": "b001cb169c173ae0fbfe2926329d687e63f1f2ce14c37bb94386a6db0b8c8d9e"
+    },
+    {
+      "path": "lab/bench/duet.ts",
+      "oldSha256": "61675cf875567e33fe42757709505275f98707a81858bb379e80f932682d939f",
+      "reviewedSha256": "9654f49d077499225c5772ad1013436a5d0d5998294fe632c02a37935bebae7d"
+    },
+    {
+      "path": "lab/bench/test/single.test.ts",
+      "oldSha256": null,
+      "reviewedSha256": "faf270c5440a626b37a77b38764b6d2db66d23eb2c30ab11c4ab4a567d43e372"
+    },
+    {
+      "path": "lab/experiments/EXP-M01-paired-measurement/RUNBOOK-rebase.md",
+      "oldSha256": "de50f2218fba9f2d092a1f0e77bedfeafdeaefcf3b9ebdf148af19572faf8a60",
+      "reviewedSha256": "315fb5fdf14d7189ab7cf47ba9b414afa08cbcf0de9e3a66c87d9ec768049bb8"
+    }
+  ],
+  "unchangedBetweenRevisions": [
+    "packages",
+    "pnpm-lock.yaml",
+    "lab/config/noise.json",
+    "lab/config/slots.json",
+    "lab/acceptance"
+  ],
+  "priorChallengeSha256": "776631157120cb03fee31650f5f7d2325964a504b0bb95951628c209335def0b",
+  "reportSha256": "7758760349743edfede90e8f817658ebfa4dfa8c7311914457e0b91fbc0080a5"
+}
