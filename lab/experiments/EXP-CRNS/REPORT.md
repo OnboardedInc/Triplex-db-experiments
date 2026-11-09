@@ -583,3 +583,47 @@ Changed code hashes (old reviewer-preservation 1f0e86df → round5 evaluator byt
 
 The literal old-hash scan covers this branch and read-only main acceptance artifacts; neither is edited. New test/audit files
 have no prior hash and will be hashed in the final committed-source receipt.
+
+### Round 5 final committed-source verification
+
+Tested evaluator/test/audit bytes: **de9e8cb00ccf71445c1479028ff690bfadebeeae**. Q75a integrity reports zero problems before and after
+the run, and all tested source/test/audit files still match that committed HEAD. Both original evaluator suites remain unchanged.
+
+```sh
+node lab/bin/heavy.mjs --label CX-CRNS-r5-final1 -- node --test \
+  lab/bin/test/claim.test.mjs lab/bin/test/claim-round2.test.mjs \
+  lab/bin/test/claim-ns.test.mjs lab/bin/test/claim-ns-round2.test.mjs \
+  lab/bin/test/claim-ns-round3.test.mjs lab/bin/test/claim-ns-round4.test.mjs \
+  lab/bin/test/claim-ns-round5.test.mjs lab/verify/CRNS/review.test.mjs \
+  lab/verify/CRNS/round2/review.test.mjs lab/verify/CRNS-opus/forgeries.test.mjs \
+  lab/verify/CRNS-opus/forgeries-round2.test.mjs lab/verify/CRNS-opus/forgeries-round3.test.mjs \
+  lab/verify/CRNS-opus/forgeries-round4.test.mjs
+```
+
+**Observed exit 0: 292/292 passed, zero failed/cancelled/skipped/todo; 223.372 seconds.** This preserves all previous 274 tests,
+including the two original evaluator suites (108), and adds all six current reviewer cases (three former TODOs are required)
+and twelve builder cases. F1–F20, retained offline P3M arithmetic, exact nearest-rank quantiles, range consistency and duplicate
+counting properties still pass. The fresh reasons audit ran all four current reviewer files through the heavy wrapper and
+passed **59/59 assertions**; its source-file hashes and code-specific results are retained. Historical audit4 wrappers remain
+unchanged, not reused as current evidence. W-H3 remains the explicit required positive residual, not a claim of trace secrecy.
+
+Evidence: `evidence/round5/final-attempt1.tap`, `verification.json`, `integrity.json`, `reasons-attempt1.txt` and
+`source-hashes.json`. The earlier failed fixture-transition log and both focused passing logs remain retained. The prior current
+manifest is archived as `SHA256SUMS.round4-at-e96a85cb`; named older manifests remain historical. The current SHA256SUMS includes
+the report, schema, audit code and all retained evidence. Every evidence file is below 1MB and the evidence directory below
+5MB, so no bulky output was added to git. Syntax, whitespace, source/hash readback, unchanged acceptance artifacts and original
+evaluator tests, and current checksums are checked. No literal old-hash references were found in this branch's or main's
+acceptance artifacts; all changed old/new code hashes are nevertheless listed above for the contract builder.
+
+Final receipt PASS audit: `verification.json` is emitted after observing heavy child exit 0 and terminal TAP content proving all
+292 assertions passed with no failed/cancelled/skipped/todo. It additionally requires all 59 fresh reasons assertions to pass,
+checks source/test/audit files against the committed HEAD, verifies their hashes against the pre-commit hash index, and records
+exact command, implementation/review commits, current time and fresh log/reasons digests. Synthetic source/slot/inputs/attempt
+identities remain test inputs; the receipt expressly excludes an NS acceptance or independent-review grant. The final
+report/checksum commit changes no tested evaluator bytes.
+
+Result: the three remaining offline findings are closed under Q103d/e, with every earlier test and both evaluator suites passing.
+No lab/acceptance file was edited; no NS acceptance cell was closed. No Docker/engine lifecycle, live workload, production
+collector/decoder/oracle/registry qualification, full package check, merge or push was performed. Contract 0.4.0/0.4.1 must still
+pin/admit the listed schemas, runner/input/oracle/decoder/registry bytes and enforce Q103a–c execution boundaries before NS PASS.
+There are no unresolved local offline implementation questions; production evidence qualification remains unverified by this run.
