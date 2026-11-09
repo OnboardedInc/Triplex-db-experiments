@@ -13,3 +13,5 @@ export * from "./StorageAdapter.js";
 export * from "./reader-service.js";
 
 export * from "./full-fsync.js";
+
+export * from "./resource-errors.js";

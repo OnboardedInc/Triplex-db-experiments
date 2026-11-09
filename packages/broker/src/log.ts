@@ -1,3 +1,4 @@
+import { WalCapacityExceeded } from "./resource-errors.js";
 import { FullFsyncUnavailable, fullFsyncProbeSource } from "./full-fsync.js";
 /** SQLite log of record. [EXP-SQL01] Why: R25/Q84 atomic frames, indexes and H1 with independent readers.
  * Rejected: a segment plus replayed maps (outage pulls grow with the entire command history).
@@ -126,9 +127,11 @@ class Connection {
       }
       const data = packet.message as { result: T; error?: string };
       if (data.error)
-        throw data.error.includes("FULL_FSYNC_UNAVAILABLE")
-          ? new FullFsyncUnavailable(data.error)
-          : new BrokerLogError(data.error);
+        throw data.error.includes("WAL_CAPACITY_EXCEEDED")
+          ? new WalCapacityExceeded(data.error)
+          : data.error.includes("FULL_FSYNC_UNAVAILABLE")
+            ? new FullFsyncUnavailable(data.error)
+            : new BrokerLogError(data.error);
       return data.result;
     } finally {
       port1.close();
@@ -159,11 +162,13 @@ class Connection {
         cleanup();
         if (data.error)
           reject(
-            data.error.includes("FULL_FSYNC_UNAVAILABLE")
-              ? new FullFsyncUnavailable(data.error)
-              : data.error.includes("H1_RECORD_TIME_UNSUPPORTED")
-                ? new H1BasisUnsupported()
-                : new BrokerLogError(data.error),
+            data.error.includes("WAL_CAPACITY_EXCEEDED")
+              ? new WalCapacityExceeded(data.error)
+              : data.error.includes("FULL_FSYNC_UNAVAILABLE")
+                ? new FullFsyncUnavailable(data.error)
+                : data.error.includes("H1_RECORD_TIME_UNSUPPORTED")
+                  ? new H1BasisUnsupported()
+                  : new BrokerLogError(data.error),
           );
         else resolve(data.result);
       });
@@ -183,6 +188,7 @@ const connect = (
   role: string,
   gateBuffer: SharedArrayBuffer,
   requireFullFsync = true,
+  maxWalBytes = 128 * 1024 ** 2,
 ) =>
   new Connection(
     new Worker(sqliteWorker, {
@@ -195,7 +201,16 @@ const connect = (
           !arg.startsWith("--input-type=") &&
           args[i - 1] !== "--input-type",
       ),
-      workerData: { file, role, seed, driver, gateBuffer, requireFullFsync, fullFsyncProbeSource },
+      workerData: {
+        file,
+        role,
+        seed,
+        driver,
+        gateBuffer,
+        requireFullFsync,
+        fullFsyncProbeSource,
+        maxWalBytes,
+      },
     }),
   );
 const streams = new Map<string, HostLog>();
@@ -237,6 +252,7 @@ export class HostLog {
       readonly minFreeBytes?: number;
       readonly requireFullFsync?: boolean;
       readonly takeover?: boolean;
+      readonly maxWalBytes?: number;
     } = {},
   ): Promise<OpenedLog> {
     fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
@@ -256,7 +272,13 @@ export class HostLog {
       throw new BrokerLogError("Broker log volume below free-space floor");
     const file = path.join(dir, "broker.db"),
       gate = new SharedArrayBuffer(12),
-      writer = connect(file, "writer", gate, options.requireFullFsync !== false);
+      writer = connect(
+        file,
+        "writer",
+        gate,
+        options.requireFullFsync !== false,
+        options.maxWalBytes,
+      );
     const connections = [writer];
     try {
       const init = await writer.request<{
@@ -402,6 +424,7 @@ export class HostLog {
       this.prevCrc = frame.crc;
       return frame;
     } catch (error) {
+      if (error instanceof WalCapacityExceeded) throw error;
       this.failed = new BrokerLogError(`Broker write failed; outcome unknown: ${String(error)}`);
       throw this.failed;
     } finally {

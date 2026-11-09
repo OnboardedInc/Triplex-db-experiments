@@ -55,6 +55,7 @@ export interface BrokerReadEvent {
 }
 export interface BrokerAdapterOptions {
   readonly maxRetries?: number;
+  readonly duplicateWaitMs?: number;
   /**
    * Deadline for any read that must wait for its basis: the replica for Datalog, dependencyState and native
    * reads, the resolved prefix for repository pulls beyond it (default 2 s, RULINGS Q58a). `publicationWaitMs`
@@ -831,12 +832,15 @@ export const makeBrokerStorageAdapter = (
             const pending = state.claims.get(id);
             if (pending) return pending.txId;
             // Lost-ACK resolution from the broker's own record (C2), not from a broker replica claim triple.
-            const claimed = await broker.claimAsync(id);
+            const claimed = await broker.claimAsync(id, options.duplicateWaitMs ?? 2000);
             if (claimed) return claimed.txId;
             state.claims.set(id, { txId, timestamp });
             return null;
           },
-          catch: (cause) => new WriteError({ message: "Broker claim lookup failed", cause }),
+          catch: (cause) =>
+            cause instanceof WriteError
+              ? cause
+              : new WriteError({ message: "Broker claim lookup failed", cause }),
         }),
       ),
     insert,

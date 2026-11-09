@@ -67,6 +67,7 @@ try {
  const version=db.prepare('SELECT sqlite_version() v').get().v.split('.').map(Number);
  if(version[0]<3 || (version[0]===3 && (version[1]<51 || (version[1]===51 && version[2]<3)))) throw Error('SQLite >= 3.51.3 required');
  db.pragma('fullfsync=ON'); db.pragma('checkpoint_fullfsync=ON');
+ if(role==='writer')db.pragma('cache_spill=OFF');
  if(role!=='reader') {
   durablePragmas(db); db.pragma('journal_mode=WAL');
   calibrationMs=calibrate();
@@ -114,7 +115,7 @@ const frames = (from,upto,maxBytes,maxFrames=Number.MAX_SAFE_INTEGER) => {
 };
 const walLarge = () => fs.existsSync(file+'-wal') && fs.statSync(file+'-wal').size>64*1024*1024;
 const checkpoint = restart => {
- const start=performance.now(), mode=restart?'RESTART':'PASSIVE';
+ const start=performance.now(), mode=restart?'TRUNCATE':'PASSIVE';
  try {
   if(restart) {
    Atomics.store(gate,0,1);
@@ -128,15 +129,27 @@ const checkpoint = restart => {
   if(passive.busy || passive.log!==passive.checkpointed) {
    recordCheckpoint(mode,'incomplete',start,passive);return checkpointStatus();
   }
-  const result=restart?db.pragma('wal_checkpoint(RESTART)')[0]:passive;
+  const result=restart?db.pragma('wal_checkpoint(TRUNCATE)')[0]:passive;
   recordCheckpoint(mode,result.busy?'busy':'complete',start,result);
  }catch(e){recordCheckpoint(mode,'error',start,{error:String(e)});}
  finally{if(restart){Atomics.store(gate,0,0);Atomics.notify(gate,0);}}
  return checkpointStatus();
 };
+// [EXP-P2B-R4] Why: with cache spill disabled, a transaction writes at most one WAL frame per database page.
+// Rejected: journal_size_limit alone (it does not cap a WAL retained by a reader).
+const walBudget = () => {
+ const cap=workerData.maxWalBytes??128*1024*1024;
+ if(!Number.isSafeInteger(cap)||cap<1024*1024)throw Error('WAL_CAPACITY_EXCEEDED: invalid WAL budget');
+ const bytes=fs.existsSync(file+'-wal')?fs.statSync(file+'-wal').size:0;
+ const page=db.pragma('page_size',{simple:true}), count=db.pragma('page_count',{simple:true});
+ const limit=Math.min(2147483646,Math.floor((cap-bytes-32)/(page+24)));
+ if(limit<count || limit<1){Atomics.store(gate,2,1);throw Error('WAL_CAPACITY_EXCEEDED: reserve cannot fit database dirty-page upper bound');}
+ const actual=db.pragma('max_page_count='+limit,{simple:true});
+ if(actual>limit)throw Error('WAL_CAPACITY_EXCEEDED: database exceeds reserved pages');
+};
 const append = a => {
  const startedNs=a.trace?process.hrtime.bigint():0n, cpu=a.trace?process.threadCpuUsage():undefined;
- let bodyEndNs,bodyCpu;
+ let bodyEndNs,bodyCpu,bodyFinished=false;
  try {
  // [EXP-SQL01] Why: acquire the writer lock before the marker read; maintenance may concurrently RESTART.
  // Rejected: deferred read-to-write upgrade (SQLITE_BUSY can bypass busy_timeout and fail-stop commits).
@@ -160,7 +173,7 @@ const append = a => {
    }
   }
   q('UPDATE marker SET lsn=?,epoch=?,position=?,crc=?,size=? WHERE id=1').run(a.lsn,a.epoch,position,a.crc,m.size+a.length);
-  bodyEndNs=a.trace?process.hrtime.bigint():0n;bodyCpu=a.trace?process.threadCpuUsage(cpu):undefined;
+  bodyFinished=true;bodyEndNs=a.trace?process.hrtime.bigint():0n;bodyCpu=a.trace?process.threadCpuUsage(cpu):undefined;
   return {lsn:a.lsn,epoch:a.epoch,kind:a.kind,offset:m.size,end:m.size+a.length,crc:a.crc,payload:Buffer.from(a.payload)};
  }).immediate();
  // [EXP-P2B] Why: feed timing must use the writer's actual durability return, before a delayed host callback.
@@ -172,7 +185,11 @@ const append = a => {
  // [EXP-SQL01] Why: ACK only signals maintenance; it never waits for readers or runs a checkpoint.
  // Rejected: synchronous gateCheckpoint after commit (the pinned-reader regression adds 100 ms).
  if(a.lsn%25===0 && walLarge())Atomics.store(gate,2,1);return result;
- }catch(e){fatal='Write failed; fail-stop: '+String(e);throw e;}
+ }catch(e){
+  if(!bodyFinished && e.code==='SQLITE_FULL' && !db.inTransaction && marker().lsn===a.lsn-1)throw Error('WAL_CAPACITY_EXCEEDED: page reservation rolled back before COMMIT');
+  fatal='Write failed; fail-stop: '+String(e);throw e;
+ }
+
 };
 const rows = (table,selection,extra='',args=[]) => {
  const where=[], vals=[];
@@ -198,6 +215,7 @@ const handle = (op,a) => {
   if(role!=='checkpointer')throw Error('Maintenance requires checkpointer connection');
   return op==='checkpoint'?checkpoint(true):checkpointStatus();
  }
+ if(role==='writer' && ['append','pin','unpin','purge'].includes(op))walBudget();
  if(op==='init')return {marker:marker(),calibrationMs,fullFsyncProof};
  if(op==='append')return append(a);
  if(op==='ack'){
