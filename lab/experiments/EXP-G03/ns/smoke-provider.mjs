@@ -10,17 +10,25 @@ export async function openNsRole(role,c){
  }
  const db=new DatabaseSync(c.storeFile);db.exec('PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA wal_autocheckpoint=0; CREATE TABLE marker(id INTEGER PRIMARY KEY,lsn INTEGER); INSERT INTO marker VALUES(1,0); CREATE TABLE subjects(subject TEXT PRIMARY KEY,value INTEGER); CREATE TABLE entries(position INTEGER PRIMARY KEY,subject TEXT,value INTEGER);');
  const marker=()=>Number(db.prepare('SELECT lsn FROM marker').get().lsn);
- if(role==='broker')return {
-  async commit({command}){
+ if(role==='broker'){
+ let next=0;const pending=new Map();
+ const write=(command)=>{
    const t=process.hrtime.bigint();db.exec('BEGIN IMMEDIATE');
    try{
     if(command.kind==='seed'){const insert=db.prepare('INSERT INTO subjects VALUES(?,0)');for(let i=0;i<command.population;i++)insert.run('subject-'+i);db.exec('COMMIT');return {seeded:command.population}}
     const n=marker()+1;db.prepare('INSERT INTO entries VALUES(?,?,?)').run(n,command.subject,command.value);db.prepare('UPDATE subjects SET value=? WHERE subject=?').run(command.value,command.subject);db.prepare('UPDATE marker SET lsn=?').run(n);db.exec('COMMIT');
     return {commandId:command.id,status:'committed',receipt:{position:String(n),epoch:'0',txId:'tx-'+n},commitNs:String(process.hrtime.bigint()-t)};
    }catch(e){db.exec('ROLLBACK');throw e}
+  };
+  return {async commit({command}){
+   if(command.kind==='seed')return write(command);
+   // [EXP-G03-R5] Why: the smoke defines explicit source order while TCP arrivals may reorder. Rejected: inferring source order from connection completion or weakening the final prefix assertion.
+   if(!Number.isSafeInteger(command.sequence)||command.sequence<next||command.sequence>next+1024||pending.has(command.sequence))throw Error('invalid/duplicate diagnostic sequence');
+   return new Promise((resolve,reject)=>{pending.set(command.sequence,{command,resolve,reject});while(pending.has(next)){const row=pending.get(next);pending.delete(next);try{const result=write(row.command);next++;row.resolve(result)}catch(e){row.reject(e);break}}});
   },
   async feedPage({cursor}){return {entries:db.prepare('SELECT position,subject,value FROM entries WHERE position>? ORDER BY position').all(cursor?.after??0),frontier:marker(),cursor:{after:marker()}}},close(){db.close()}
  };
+ }
  return {async consumerControl({action}){
   if(action==='step'||action==='stop'){
    const page=await rpc(c.broker,c.runId,'feedPage',{cursor:{after:marker()}});db.exec('BEGIN IMMEDIATE');try{for(const e of page.entries){db.prepare('INSERT INTO entries VALUES(?,?,?)').run(e.position,e.subject,e.value);db.prepare('INSERT OR REPLACE INTO subjects VALUES(?,?)').run(e.subject,e.value)}db.prepare('UPDATE marker SET lsn=?').run(page.frontier);db.exec('COMMIT')}catch(e){db.exec('ROLLBACK');throw e}

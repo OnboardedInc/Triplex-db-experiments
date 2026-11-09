@@ -22,7 +22,7 @@ try{
  box.exec(other,['node','-e',"const s=require('net').connect({host:'127.0.0.1',port:9345});let b='';s.on('data',x=>b+=x);s.on('end',()=>{if(b!=='other-arm')process.exit(2)});s.on('error',()=>process.exit(2));"]);
  const blocked=[{host:otherIp,port:9345},{host:'192.168.5.2',port:canary.address().port},{host:'192.168.5.1',port:canary.address().port},{host:'1.1.1.1',port:443}];
  for(const name of ['tx2-xtdb-dev','tx2-qlever-dev']){const c=inspect(name);if(c)for(const n of Object.values(c.NetworkSettings.Networks))if(n.IPAddress)blocked.push({host:n.IPAddress,port:name.includes('xtdb')?5432:7019})}
- const seed=randomBytes(32),trace=Array.from({length:1000},(_,i)=>({atMs:i*5,command:{id:'offer-'+i,subject:'subject-'+(i%16),value:createHmac('sha256',seed).update(String(i)).digest().readUInt32BE(0)}}));
+ const seed=randomBytes(32),trace=Array.from({length:1000},(_,i)=>({atMs:i*5,command:{id:'offer-'+i,sequence:i,subject:'subject-'+(i%16),value:createHmac('sha256',seed).update(String(i)).digest().readUInt32BE(0)}}));
  const rounds=o.rounds==='1'?[true]:[false,true,true,false];
  for(let i=0;i<rounds.length;i++){
   const prefix=path.join(out,'round-'+i);const result=await runBoxedNS(box,{instance,bundleFiles,observerFiles:new Map([['observer.py',{mode:'100644',bytes:fs.readFileSync(path.join(import.meta.dirname,'observer.py'))}]]),sourceCommit:source,generatorSeed:seed.toString('hex'),observe:rounds[i],trace,population:16,readers:4,placement,observerImage,blocked,canary:canary.address().port});
