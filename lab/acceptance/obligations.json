@@ -19,7 +19,7 @@
     "lab/TARGETS.md": "cb30ffeb776a7deb0c885be2968872bcebd7dc05cca1b2cfb5913b809a804d95",
     "lab/research/SAM-pasted-numbers-2026-11-07.md": "f35a223edd83994a0ac2ebcb94f9ec7e7ea8f1a279ef23bbb69390b8c03d89f8",
     "lab/acceptance/RULINGS.md": "077ee96f74d4da8e6fc956d8a93357bf9485f70db3970c15be089215d0dc8d0f",
-    "lab/acceptance/RULINGS-PENDING.md": "fce16f288ccce3032f5e30c7a7e41d1b985f89000a155200980a51720208b7eb",
+    "lab/acceptance/RULINGS-PENDING.md": "35a487c484e1d16b1478e124e24c9a41a347f99b43da5323eb11144e2a2dc61e",
     "lab/verify/O02/v-o03/pin_scope.json": "f8897d518cb380ff64de25b02ae82f4846af313e5f2c41bbf147509fe6025a32",
     "lab/verify/O02/v-o03/hashes.8cc2c26.json": "4b221aa280eb6f2aeb1f5252d29dcef99aefc629e0388ac7468c6f1f1353b962",
     "lab/verify/D01/W0-1.1.1-ada2e90-SHA256SUMS": "bad527e280e1769a18fd2d65016e4d6bbfb4969c872dd73069cfb83637bfba4d",
@@ -5117,7 +5117,7 @@
   },
   "pendingRulings": {
     "file": "lab/acceptance/RULINGS-PENDING.md",
-    "sha256": "fce16f288ccce3032f5e30c7a7e41d1b985f89000a155200980a51720208b7eb",
+    "sha256": "35a487c484e1d16b1478e124e24c9a41a347f99b43da5323eb11144e2a2dc61e",
     "ids": [
       "Q51b",
       "Q73a",
@@ -5200,7 +5200,23 @@
       "Q103d",
       "Q103e",
       "Q105a",
-      "Q105b"
+      "Q105b",
+      "Q100s",
+      "Q106a",
+      "Q106b",
+      "Q106c",
+      "Q106d",
+      "Q106e",
+      "Q106f",
+      "Q106g",
+      "Q107a",
+      "Q107b",
+      "Q107c",
+      "Q107",
+      "Q108a",
+      "Q108b",
+      "Q108c",
+      "Q108d"
     ],
     "authority": "none",
     "rule": "RULINGS-PENDING.md may hold ruling rows; they carry no authority, are never compiled into this contract and never count as compiled RULINGS.md entries; the generator records the file's hash under inputs and lists the pending ids, and their presence never invalidates generation or --verify (RULINGS Q47d)"
@@ -31579,5 +31595,5 @@
       ]
     }
   ],
-  "transitiveContractSha256": "d3c716caecbf13c992147d86529b877ec77f616e841506355493a546845fbbb8"
+  "transitiveContractSha256": "4502a5a3e938ec6d50f96357de0ca4325afc4ad5700b8535b126e28db0732c32"
 }

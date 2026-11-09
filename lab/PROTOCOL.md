@@ -1,4 +1,4 @@
-# triplex-db-2 operating protocol (v1, 2026-11-08)
+# triplex-db-2 operating protocol (v2, 2026-11-09)
 
 This file says who does what in the loop and how agents are launched. It replaces `lab/PLAN.md` section 6.2 and the agent row of
 section 7. Goals and targets stay in `lab/SCOPE.md`, `lab/NORTH-STAR.md` and `lab/TARGETS.md`.
@@ -11,18 +11,34 @@ Sam, 2026-11-08, verbatim:
 > loop running in this fashion by updating w/e you are using as your protocol.md and dev loop tools and then spin up the extra
 > Datomic lane and then continue all in parallel. If you hit 65% usage, gracefully pause work without wasting in-flight work.
 
+## 0. Change of 2026-11-09 (Sam, verbatim in lab/research/SAM-decisions-2026-11-09.md)
+
+> Use more of the Claude usage now instead of a lot of Codex. Switch to using Sonnet on high to write stuff instead of the Codex stuff.
+> That's the switch to make. ... You can use my whole Mac and close down anything heavy that's running here that's not needed. Don't
+> turn off Claude or Codex, though.
+
+1. **Builders are Sonnet 5.5 at high** through the Agent tool. Codex builder sessions already running finish their current task; no new
+   Codex builder launches. Reviewers stay Codex `gpt-6.1-sol` at high (`agent.mjs --role reviewer`); planners and researchers stay Opus
+   5.5 at high. Nothing above high. At most 10 agents at once across all roles.
+2. **A Sonnet builder works only inside the worktree its brief names,** commits on that worktree's branch, never edits lab/acceptance
+   (preamble 9b), keeps bulky evidence out of git (9c), and ends with a report path and a short summary. Docker work goes only through
+   `lab/bin/engine.mjs` on the triplex2 socket.
+3. **The whole Mac is available for quiet windows** (ruling Q106b): the orchestrator may stop Sam's default colima VM and other heavy host
+   jobs that are not needed, never Claude or Codex processes, and announces each window in STATE.
+4. **Disk:** runs may be made smaller or sequential when space requires it.
+
 ## 1. Roles
 
 | Role | Model and effort | What it does | How it is launched |
 | --- | --- | --- | --- |
 | Orchestrator | this session | selects work by the north star, writes rulings, merges, keeps STATE and the notebook | n/a |
 | Planner and thinker | Opus 5.5, high | experiment designs, briefs, research on the web and in pinned source, synthesis | Agent tool: `model: "opus"`, `effort: "high"` |
-| Code builder | Codex `gpt-6.1-sol`, medium | implements one experiment or fix round in its own worktree, runs gates, writes receipts | `node lab/bin/agent.mjs launch --role builder ...` |
+| Code builder | **Claude Sonnet 5.5, high** (since 2026-11-09; was Codex `gpt-6.1-sol` medium) | implements one experiment or fix round in its own worktree, runs gates, writes receipts | Agent tool: `model: "sonnet"`, `effort: "high"`, `run_in_background: true`; the orchestrator creates the worktree first (`git worktree add`) and the brief names it; the brief starts with `lab/agents/CODEX-PREAMBLE.md` (the lab rules apply to every builder) |
 | Adversarial reviewer | Codex `gpt-6.1-sol`, high | verifies a branch by trying to break it (the old V-* verifiers), reviews plans and contract versions | `node lab/bin/agent.mjs launch --role reviewer ...` |
 
 **Effort cap.** Nothing runs above high, for Opus or for Codex. `lab/bin/agent.mjs` is the only way Codex is launched: it passes the
 model, the effort and the sandbox explicitly (the user config defaults to effort `max`) and refuses any other role. Every Agent tool
-call passes `effort: "high"`. No Sonnet, no Fable, no forks.
+call passes `effort: "high"`. Sonnet only as builder; no Fable, no forks.
 
 **One experiment, three hands.** A planner writes the brief (or the orchestrator does, for small rounds), a builder implements it, a
 reviewer that did not write it verifies it, and the orchestrator merges. A builder never verifies its own work.
