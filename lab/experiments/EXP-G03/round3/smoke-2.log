@@ -1,0 +1,4 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 39926 "CX-P2Q-R6-suites", pid 24500 "CX-INT-XCJ-X02-evaluator", pid 33700 "CX-VSQL01-r2b-live", pid 33682 "CX-VSQL01-r2b-review"
+[lab] heavy: waiting for one of 4 slots; held by pid 39926 "CX-P2Q-R6-suites", pid 24500 "CX-INT-XCJ-X02-evaluator", pid 33700 "CX-VSQL01-r2b-live", pid 33693 "CX-VSQL01-r2b-kill50"
+[lab] heavy: waiting for one of 4 slots; held by pid 39926 "CX-P2Q-R6-suites", pid 24500 "CX-INT-XCJ-X02-evaluator", pid 33700 "CX-VSQL01-r2b-live", pid 33693 "CX-VSQL01-r2b-kill50"
+[lab] heavy: waiting for one of 4 slots; held by pid 39926 "CX-P2Q-R6-suites", pid 24500 "CX-INT-XCJ-X02-evaluator", pid 54104 "CX-OBS01-R2-x06", pid 48240 "DA01-r2-G1-final"

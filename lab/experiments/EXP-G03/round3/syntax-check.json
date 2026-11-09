@@ -1,0 +1,18 @@
+{
+  "passed": 13,
+  "files": [
+    "lab/bin/box.mjs",
+    "lab/bin/box-policy.mjs",
+    "lab/bin/box-engine.mjs",
+    "lab/bin/lib.mjs",
+    "lab/bin/claim.mjs",
+    "lab/bin/test/box.test.mjs",
+    "lab/bin/test/box-policy.test.mjs",
+    "lab/bin/test/claim.test.mjs",
+    "lab/bin/test/claim-round2.test.mjs",
+    "lab/bin/test/contained-fixtures.mjs",
+    "lab/experiments/EXP-G03/round3/path-probe.mjs",
+    "lab/experiments/EXP-G03/round3/smoke.mjs",
+    "lab/experiments/EXP-G03/round3/replay-evidence.mjs"
+  ]
+}

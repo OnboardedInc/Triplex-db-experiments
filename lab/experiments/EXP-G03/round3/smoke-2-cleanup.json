@@ -1,0 +1,31 @@
+{
+  "manifest": {
+    "id": "r3-smoke-01f02d5b",
+    "holder": "CX-G03-r3-smoke-01f02d5b",
+    "store": "tx2-g03-r3-smoke-01f02d5b-store",
+    "evaluator": "/Users/sam/.tx2-evaluator/fixtures-g03-r3-smoke-01f02d5b"
+  },
+  "before": {
+    "containers": "{\"Command\":\"\\\"docker-entrypoint.s…\\\"\",\"CreatedAt\":\"2026-11-08 18:36:11 -0500 EST\",\"HealthStatus\":\"none\",\"ID\":\"fb5d3edfb450\",\"Image\":\"302cbcd48d5b\",\"Labels\":\"tx2.box-build-inputs-sha256=60fc3d78913757014366477ba46259ee71e61d89039676a45986160f4cb02334,tx2.holder=CX-G03-r3-smoke-01f02d5b,tx2.managed-by=lab/bin/engine.mjs,tx2.run=9c5165887ac1ac5e\",\"LocalVolumes\":\"1\",\"Mounts\":\"tx2-g03-9c5165…\",\"Names\":\"tx2-g03-9c5165887ac1ac5e-walk-0a2684\",\"Networks\":\"none\",\"Platform\":{\"architecture\":\"arm64\",\"os\":\"linux\"},\"Ports\":\"\",\"RunningFor\":\"59 seconds ago\",\"Size\":\"4.1kB (virtual 290MB)\",\"State\":\"exited\",\"Status\":\"Exited (0) 59 seconds ago\"}",
+    "volumes": "{\"Availability\":\"N/A\",\"Driver\":\"local\",\"Group\":\"N/A\",\"Labels\":\"tx2.holder=CX-G03-r3-smoke-01f02d5b,tx2.managed-by=lab/bin/engine.mjs,tx2.run=9c5165887ac1ac5e\",\"Links\":\"N/A\",\"Mountpoint\":\"/var/lib/docker/volumes/tx2-g03-9c5165887ac1ac5e-in-7d451b/_data\",\"Name\":\"tx2-g03-9c5165887ac1ac5e-in-7d451b\",\"Scope\":\"local\",\"Size\":\"N/A\",\"Status\":\"N/A\"}\n{\"Availability\":\"N/A\",\"Driver\":\"local\",\"Group\":\"N/A\",\"Labels\":\"tx2.holder=CX-G03-r3-smoke-01f02d5b,tx2.managed-by=lab/bin/engine.mjs,tx2.run=9c5165887ac1ac5e\",\"Links\":\"N/A\",\"Mountpoint\":\"/var/lib/docker/volumes/tx2-g03-9c5165887ac1ac5e-in-cdb891/_data\",\"Name\":\"tx2-g03-9c5165887ac1ac5e-in-cdb891\",\"Scope\":\"local\",\"Size\":\"N/A\",\"Status\":\"N/A\"}\n{\"Availability\":\"N/A\",\"Driver\":\"local\",\"Group\":\"N/A\",\"Labels\":\"tx2.holder=CX-G03-r3-smoke-01f02d5b,tx2.managed-by=lab/bin/engine.mjs,tx2.run=9c5165887ac1ac5e\",\"Links\":\"N/A\",\"Mountpoint\":\"/var/lib/docker/volumes/tx2-g03-9c5165887ac1ac5e-inst-d82f82/_data\",\"Name\":\"tx2-g03-9c5165887ac1ac5e-inst-d82f82\",\"Scope\":\"local\",\"Size\":\"N/A\",\"Status\":\"N/A\"}\n{\"Availability\":\"N/A\",\"Driver\":\"local\",\"Group\":\"N/A\",\"Labels\":\"tx2.holder=CX-G03-r3-smoke-01f02d5b,tx2.managed-by=lab/bin/engine.mjs,tx2.run=r3-smoke-01f02d5b\",\"Links\":\"N/A\",\"Mountpoint\":\"/var/lib/docker/volumes/tx2-g03-r3-smoke-01f02d5b-store/_data\",\"Name\":\"tx2-g03-r3-smoke-01f02d5b-store\",\"Scope\":\"local\",\"Size\":\"N/A\",\"Status\":\"N/A\"}",
+    "networks": ""
+  },
+  "actions": [
+    {
+      "removed": "tx2-g03-9c5165887ac1ac5e-walk-0a2684",
+      "id": "fb5d3edfb450a63a5ea3da03c50938cf9b69af79019aca113bead8830daaac17",
+      "cgroupGone": true
+    },
+    "tx2-g03-9c5165887ac1ac5e-in-7d451b",
+    "tx2-g03-9c5165887ac1ac5e-in-cdb891",
+    "tx2-g03-9c5165887ac1ac5e-inst-d82f82",
+    "tx2-g03-r3-smoke-01f02d5b-store"
+  ],
+  "after": {
+    "containers": "",
+    "volumes": "",
+    "networks": ""
+  },
+  "protectedCloneRemoved": true,
+  "sourceFixtureRemoved": true
+}

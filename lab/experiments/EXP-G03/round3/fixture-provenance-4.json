@@ -1,0 +1,134 @@
+[
+  {
+    "kind": "claim",
+    "evaluator": "fixtures-g03-r3-claim-93f991d1",
+    "evaluatorCommit": "0d160ceef426f0481683ac2a7083974b8ec46e09",
+    "authority": "aad06d7993d8b172f9a5d5cc72ce665e8feccdc5",
+    "sourceCommit": "7fa1594b02d184cbe2ce4c72ff05f578fa240689",
+    "holder": "CX-G03-r3-claim-93f991d1",
+    "store": "tx2-g03-r3-claim-93f991d1-store",
+    "bundleSha256": "f49ab47ca623cdc99c02a8f52dd6fcae81c93f5e2e0a8941f097dbeb12011356",
+    "sourceMatchesWorktree": true,
+    "projectHead": "3d86014b1c35ca9ecb2986afa0b7a96c869a134c",
+    "files": [
+      {
+        "path": "lab/bin/claim.mjs",
+        "sha256": "7574cef666e22c5f1fd41b2a2a22492d30baf388f7706f7aeb4ba72c75b515cd"
+      },
+      {
+        "path": "lab/bin/box.mjs",
+        "sha256": "8edd824361864b8636b13081a23a21f82e6f0b7f7b2b1e16873ae1e2e7c1c8dd"
+      },
+      {
+        "path": "lab/bin/box-policy.mjs",
+        "sha256": "986125c8c29e5c8c3de237e16bbfc1ae7b319771f37b75270a2edb3e4d19cf83"
+      },
+      {
+        "path": "lab/experiments/EXP-G03/round2/window.mjs",
+        "sha256": "85000e6620c3e8df1dd044164ff6d407524f0c4cb3fe26b7f5780f81017a5df3"
+      },
+      {
+        "path": "lab/bin/box-engine.mjs",
+        "sha256": "abf8c37529dc88992ff6e4589ca765855e9a43bc1774c255dcf41a3cd55a00e1"
+      },
+      {
+        "path": "lab/config/box/Dockerfile",
+        "sha256": "ed78a8e03b2fc8dfaa9fb9b8ee42c886b4e2c7be8cf7c96cc6f7cacad50b0f2e"
+      },
+      {
+        "path": "lab/config/slots.json",
+        "sha256": "d8a2f18de7afe55090b514da6e01f3c1c33de6dfe35ee5c1a55c91e49289e8d1"
+      },
+      {
+        "path": "lab/bin/lib.mjs",
+        "sha256": "6d52aeb3a9fc229af8c988a43377d99c5123be26f5c414eefd60d1c65f67d290"
+      },
+      {
+        "path": "lab/bin/gate.mjs",
+        "sha256": "b9650caece88b5a1ef56a4ba97d6c20313936f8eba3100de000ec9cdaac8076e"
+      },
+      {
+        "path": "lab/bin/engine.mjs",
+        "sha256": "24e0c8f8816f77af4afd1cf874d33bbf620f286b1329003d241644ae49a31eb6"
+      },
+      {
+        "path": "lab/bin/heavy-lock.mjs",
+        "sha256": "88dd2071c8d8c1e3212c9a65dc719b79af46fbe6cc2e6ede8fbe0b61112803fa"
+      },
+      {
+        "path": "lab/bin/receipt.mjs",
+        "sha256": "ebdcfb60284d6efe378923c0f42eb4eb7ad9a260141ceb46958e86752d0d2d2c"
+      },
+      {
+        "path": "lab/acceptance/build_contract.py",
+        "sha256": "049d7b25dc5fb38e7a53c32adbd83bd1bd2119661f826d3a80495c0dd6faab29"
+      }
+    ]
+  },
+  {
+    "kind": "integrity",
+    "evaluator": "fixtures-g03-r3-integrity-171d3cfb",
+    "evaluatorCommit": "891c4817d34f1cf04e5cfbb46d27f7d5eb07c396",
+    "authority": "cdbca95f88c09b05024f658a371800f73dc754d4",
+    "sourceCommit": "fd88aea17efc7670d969f2e4f23366845c3a0363",
+    "holder": "CX-G03-r3-integrity-171d3cfb",
+    "store": "tx2-g03-r3-integrity-171d3cfb-store",
+    "bundleSha256": "dd70c39bc447eb2cf9965b1ae5ad2feb9cf059eb26cf90f6b0c3c084ac6f45a8",
+    "sourceMatchesWorktree": true,
+    "projectHead": "3d86014b1c35ca9ecb2986afa0b7a96c869a134c",
+    "files": [
+      {
+        "path": "lab/bin/claim.mjs",
+        "sha256": "7574cef666e22c5f1fd41b2a2a22492d30baf388f7706f7aeb4ba72c75b515cd"
+      },
+      {
+        "path": "lab/bin/box.mjs",
+        "sha256": "8edd824361864b8636b13081a23a21f82e6f0b7f7b2b1e16873ae1e2e7c1c8dd"
+      },
+      {
+        "path": "lab/bin/box-policy.mjs",
+        "sha256": "986125c8c29e5c8c3de237e16bbfc1ae7b319771f37b75270a2edb3e4d19cf83"
+      },
+      {
+        "path": "lab/experiments/EXP-G03/round2/window.mjs",
+        "sha256": "85000e6620c3e8df1dd044164ff6d407524f0c4cb3fe26b7f5780f81017a5df3"
+      },
+      {
+        "path": "lab/bin/box-engine.mjs",
+        "sha256": "abf8c37529dc88992ff6e4589ca765855e9a43bc1774c255dcf41a3cd55a00e1"
+      },
+      {
+        "path": "lab/config/box/Dockerfile",
+        "sha256": "ed78a8e03b2fc8dfaa9fb9b8ee42c886b4e2c7be8cf7c96cc6f7cacad50b0f2e"
+      },
+      {
+        "path": "lab/config/slots.json",
+        "sha256": "d8a2f18de7afe55090b514da6e01f3c1c33de6dfe35ee5c1a55c91e49289e8d1"
+      },
+      {
+        "path": "lab/bin/lib.mjs",
+        "sha256": "6d52aeb3a9fc229af8c988a43377d99c5123be26f5c414eefd60d1c65f67d290"
+      },
+      {
+        "path": "lab/bin/gate.mjs",
+        "sha256": "b9650caece88b5a1ef56a4ba97d6c20313936f8eba3100de000ec9cdaac8076e"
+      },
+      {
+        "path": "lab/bin/engine.mjs",
+        "sha256": "24e0c8f8816f77af4afd1cf874d33bbf620f286b1329003d241644ae49a31eb6"
+      },
+      {
+        "path": "lab/bin/heavy-lock.mjs",
+        "sha256": "88dd2071c8d8c1e3212c9a65dc719b79af46fbe6cc2e6ede8fbe0b61112803fa"
+      },
+      {
+        "path": "lab/bin/receipt.mjs",
+        "sha256": "ebdcfb60284d6efe378923c0f42eb4eb7ad9a260141ceb46958e86752d0d2d2c"
+      },
+      {
+        "path": "lab/acceptance/build_contract.py",
+        "sha256": "049d7b25dc5fb38e7a53c32adbd83bd1bd2119661f826d3a80495c0dd6faab29"
+      }
+    ]
+  }
+]

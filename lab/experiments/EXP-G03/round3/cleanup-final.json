@@ -1,0 +1,72 @@
+{
+  "sourceHead": "3d86014b1c35ca9ecb2986afa0b7a96c869a134c",
+  "inventories": [
+    {
+      "holder": "CX-G03-r3-claim-2bea5f2f",
+      "containers": "",
+      "volumes": "",
+      "networks": ""
+    },
+    {
+      "holder": "CX-G03-r3-claim-8a4f7fe1",
+      "containers": "",
+      "volumes": "",
+      "networks": ""
+    },
+    {
+      "holder": "CX-G03-r3-claim-93f991d1",
+      "containers": "",
+      "volumes": "",
+      "networks": ""
+    },
+    {
+      "holder": "CX-G03-r3-integrity-09b17453",
+      "containers": "",
+      "volumes": "",
+      "networks": ""
+    },
+    {
+      "holder": "CX-G03-r3-integrity-171d3cfb",
+      "containers": "",
+      "volumes": "",
+      "networks": ""
+    },
+    {
+      "holder": "CX-G03-r3-integrity-d0e5c449",
+      "containers": "",
+      "volumes": "",
+      "networks": ""
+    },
+    {
+      "holder": "CX-G03-r3-integrity-e4e9f19e",
+      "containers": "",
+      "volumes": "",
+      "networks": ""
+    },
+    {
+      "holder": "CX-G03-r3-path",
+      "containers": "",
+      "volumes": "",
+      "networks": ""
+    },
+    {
+      "holder": "CX-G03-r3-smoke-01f02d5b",
+      "containers": "",
+      "volumes": "",
+      "networks": ""
+    },
+    {
+      "holder": "CX-G03-r3-smoke-f00ce1bf",
+      "containers": "",
+      "volumes": "",
+      "networks": ""
+    }
+  ],
+  "retainedRound2": {
+    "containers": "",
+    "volumes": "{\"Availability\":\"N/A\",\"Driver\":\"local\",\"Group\":\"N/A\",\"Labels\":\"tx2.holder=CX-G03,tx2.managed-by=lab/bin/engine.mjs,tx2.run=r2store\",\"Links\":\"N/A\",\"Mountpoint\":\"/var/lib/docker/volumes/tx2-g03-r2store-store-b2b3e6e8cdfb/_data\",\"Name\":\"tx2-g03-r2store-store-b2b3e6e8cdfb\",\"Scope\":\"local\",\"Size\":\"N/A\",\"Status\":\"N/A\"}",
+    "networks": ""
+  },
+  "reservations": [],
+  "remainingClones": []
+}

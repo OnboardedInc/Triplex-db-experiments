@@ -1,0 +1,569 @@
+{
+  "diagnosticSummaryOnly": true,
+  "runs": [
+    {
+      "request": "request-0.json.result",
+      "claimId": "RUN-CANDIDATE",
+      "commit": "7fa1594b02d184cbe2ce4c72ff05f578fa240689",
+      "authority": "aad06d7993d8b172f9a5d5cc72ce665e8feccdc5",
+      "evaluatorCommit": "0d160ceef426f0481683ac2a7083974b8ec46e09",
+      "core": {
+        "verdict": "DIAGNOSTIC",
+        "reasons": [
+          {
+            "code": "A0-REBUILD-MISMATCH",
+            "detail": "rebuilding A0 (7fa1594b02d184cbe2ce4c72ff05f578fa240689) gave 1bab8f46bb8b57ebd4b325bda800a605a76b2007805425ee82c129d0c576bfa3, the registry says 0000000000000000000000000000000000000000000000000000000000000000 (RULINGS Q55a)"
+          }
+        ]
+      },
+      "verdict": "DIAGNOSTIC",
+      "caseCount": 26,
+      "reasons": [
+        {
+          "code": "GATE-NOT-RUN",
+          "detail": "no pinned case has yet completed through the isolated OBL executor and cleanup proofs (Q55a, Q86)"
+        },
+        {
+          "code": "RUN-NOT-ON-GATE",
+          "detail": "the system under test runs in an offline container with network none; no registered engine configuration is applied"
+        },
+        {
+          "code": "A0-REBUILD-MISMATCH",
+          "detail": "rebuilding A0 (7fa1594b02d184cbe2ce4c72ff05f578fa240689) gave 1bab8f46bb8b57ebd4b325bda800a605a76b2007805425ee82c129d0c576bfa3, the registry says 0000000000000000000000000000000000000000000000000000000000000000 (RULINGS Q55a)"
+        },
+        {
+          "code": "VERIFIER-UNREGISTERED",
+          "detail": "no VERIFIER_REGISTRY entry accepts G10.scope.shared-collision at 7fa1594b02d184cbe2ce4c72ff05f578fa240689 (RULINGS Q55a)"
+        }
+      ],
+      "resourcesRemaining": []
+    },
+    {
+      "request": "request-1.json.result",
+      "claimId": "RUN-CANDIDATE",
+      "commit": "03a27c12251eeb5f92fc2b60cca64d2a88218c34",
+      "authority": "044c62ff9f342f2f60bf25cb66bb5d88726947f7",
+      "evaluatorCommit": "0d160ceef426f0481683ac2a7083974b8ec46e09",
+      "core": {
+        "verdict": "QUALIFIED",
+        "reasons": []
+      },
+      "verdict": "DIAGNOSTIC",
+      "caseCount": 64,
+      "reasons": [
+        {
+          "code": "GATE-NOT-RUN",
+          "detail": "no pinned case has yet completed through the isolated OBL executor and cleanup proofs (Q55a, Q86)"
+        },
+        {
+          "code": "RUN-NOT-ON-GATE",
+          "detail": "the system under test runs in an offline container with network none; no registered engine configuration is applied"
+        }
+      ],
+      "resourcesRemaining": []
+    },
+    {
+      "request": "request-10.json.result",
+      "claimId": "RUN-PROMOTION",
+      "commit": "03a27c12251eeb5f92fc2b60cca64d2a88218c34",
+      "authority": "044c62ff9f342f2f60bf25cb66bb5d88726947f7",
+      "evaluatorCommit": "0d160ceef426f0481683ac2a7083974b8ec46e09",
+      "core": {
+        "verdict": "DIAGNOSTIC",
+        "reasons": [
+          {
+            "code": "PROMOTION-UNSUPPORTED",
+            "detail": "claim kind \"promotion\" is not qualified: promotion prerequisites (GATE-BROKER-HARDENING and the others) are not enforced mechanically yet (RULINGS Q67j, Q75i)"
+          }
+        ]
+      },
+      "verdict": "DIAGNOSTIC",
+      "caseCount": 0,
+      "reasons": [
+        {
+          "code": "GATE-NOT-RUN",
+          "detail": "no pinned case has yet completed through the isolated OBL executor and cleanup proofs (Q55a, Q86)"
+        },
+        {
+          "code": "RUN-NOT-ON-GATE",
+          "detail": "the system under test runs in an offline container with network none; no registered engine configuration is applied"
+        },
+        {
+          "code": "PROMOTION-UNSUPPORTED",
+          "detail": "promotion prerequisites (GATE-BROKER-HARDENING and the others a promotion needs) are not enforced mechanically yet, so promotion qualification is rejected (RULINGS Q62b, Q67j)"
+        },
+        {
+          "code": "PROMOTION-UNSUPPORTED",
+          "detail": "claim kind \"promotion\" is not qualified: promotion prerequisites (GATE-BROKER-HARDENING and the others) are not enforced mechanically yet (RULINGS Q67j, Q75i)"
+        }
+      ],
+      "resourcesRemaining": []
+    },
+    {
+      "request": "request-11.json.result",
+      "claimId": "RUN-UNREGISTERED-SLOT",
+      "commit": "03a27c12251eeb5f92fc2b60cca64d2a88218c34",
+      "authority": "044c62ff9f342f2f60bf25cb66bb5d88726947f7",
+      "evaluatorCommit": "0d160ceef426f0481683ac2a7083974b8ec46e09",
+      "core": {
+        "verdict": "DIAGNOSTIC",
+        "reasons": [
+          {
+            "code": "SLOT-UNREGISTERED",
+            "detail": "an assignment's slot is not a registered slot (dev, s1, s2, s3) (RULINGS Q55a)"
+          }
+        ]
+      },
+      "verdict": "DIAGNOSTIC",
+      "caseCount": 0,
+      "reasons": [
+        {
+          "code": "GATE-NOT-RUN",
+          "detail": "no pinned case has yet completed through the isolated OBL executor and cleanup proofs (Q55a, Q86)"
+        },
+        {
+          "code": "RUN-NOT-ON-GATE",
+          "detail": "the system under test runs in an offline container with network none; no registered engine configuration is applied"
+        },
+        {
+          "code": "SLOT-UNREGISTERED",
+          "detail": "an assignment's slot is not a registered slot (dev, s1, s2, s3) (RULINGS Q55a)"
+        }
+      ],
+      "resourcesRemaining": []
+    },
+    {
+      "request": "request-12.json.result",
+      "claimId": "RUN-SUPPLIED-FINGERPRINT",
+      "commit": "03a27c12251eeb5f92fc2b60cca64d2a88218c34",
+      "authority": "044c62ff9f342f2f60bf25cb66bb5d88726947f7",
+      "evaluatorCommit": "0d160ceef426f0481683ac2a7083974b8ec46e09",
+      "core": {
+        "verdict": "DIAGNOSTIC",
+        "reasons": [
+          {
+            "code": "PREREQ-FAILED",
+            "detail": "the evaluator's W0.coverage-floors run did not pass (RULINGS Q34d, Q38b, Q55a); W0.coverage-floors W0-COV-BALLAST-BUCKETS: oracle O-DOMAIN gave no answer (exit 2, code X-NOT-MODELED)"
+          }
+        ]
+      },
+      "verdict": "DIAGNOSTIC",
+      "caseCount": 26,
+      "reasons": [
+        {
+          "code": "GATE-NOT-RUN",
+          "detail": "no pinned case has yet completed through the isolated OBL executor and cleanup proofs (Q55a, Q86)"
+        },
+        {
+          "code": "RUN-NOT-ON-GATE",
+          "detail": "the system under test runs in an offline container with network none; no registered engine configuration is applied"
+        },
+        {
+          "code": "ORACLE-NO-RUNNER",
+          "detail": "the contract's oracleRunners give no argv for O-HAND (RULINGS Q61c)"
+        },
+        {
+          "code": "ORACLE-NO-RUNNER",
+          "detail": "the contract's oracleRunners give no argv for O-OBS (RULINGS Q61c)"
+        },
+        {
+          "code": "ORACLE-NO-RUNNER",
+          "detail": "the contract's oracleRunners give no argv for O-ERR (RULINGS Q61c)"
+        },
+        {
+          "code": "CASE-REFUSED",
+          "detail": "oracle O-DOMAIN on input 7aa4f78a8fdd5f3fcbf23ce806432b39c63bcbc4139b1bb153aa30bd75ba98b2: exit 2 X-NOT-MODELED: /opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/Resources/Python.app/Contents/MacOS/Python: can't open file '/Users/sam/.tx2-evaluator/fixtures-g03-r3-claim-93f991d1/ (RULINGS Q45b, Q47a, Q61c)"
+        },
+        {
+          "code": "PREREQ-FAILED",
+          "detail": "the evaluator's W0.coverage-floors run did not pass (RULINGS Q34d, Q38b, Q55a); W0.coverage-floors W0-COV-BALLAST-BUCKETS: oracle O-DOMAIN gave no answer (exit 2, code X-NOT-MODELED)"
+        },
+        {
+          "code": "W0-UNPINNED",
+          "detail": "a W0 file hash, the W0 pin's VERIFIER_REGISTRY acceptance, the delta check or the O-DOMAIN fingerprint is missing; the fingerprint comes only from a reviewed contract version (GATE-W0, RULINGS Q55a, Q55e)"
+        },
+        {
+          "code": "ORACLE-RUNNER-UNPINNED",
+          "detail": "oracle O-ERR has no sha256 for every runner file in the contract, so a claim depending on it is DIAGNOSTIC (RULINGS Q59e, Q75c)"
+        }
+      ],
+      "resourcesRemaining": []
+    },
+    {
+      "request": "request-13.json.result",
+      "claimId": "RUN-ATTRS",
+      "commit": "6394b2dd40fce643fb6453f6a266a0eaa56d92d5",
+      "authority": "044c62ff9f342f2f60bf25cb66bb5d88726947f7",
+      "evaluatorCommit": "0d160ceef426f0481683ac2a7083974b8ec46e09",
+      "core": {
+        "verdict": "DIAGNOSTIC",
+        "reasons": [
+          {
+            "code": "VERIFIER-UNREGISTERED",
+            "detail": "no VERIFIER_REGISTRY entry accepts G10.scope.shared-collision at 6394b2dd40fce643fb6453f6a266a0eaa56d92d5 (RULINGS Q55a)"
+          }
+        ]
+      },
+      "verdict": "DIAGNOSTIC",
+      "caseCount": 38,
+      "reasons": [
+        {
+          "code": "GATE-NOT-RUN",
+          "detail": "no pinned case has yet completed through the isolated OBL executor and cleanup proofs (Q55a, Q86)"
+        },
+        {
+          "code": "RUN-NOT-ON-GATE",
+          "detail": "the system under test runs in an offline container with network none; no registered engine configuration is applied"
+        },
+        {
+          "code": "VERIFIER-UNREGISTERED",
+          "detail": "no VERIFIER_REGISTRY entry accepts G10.scope.shared-collision at 6394b2dd40fce643fb6453f6a266a0eaa56d92d5 (RULINGS Q55a)"
+        }
+      ],
+      "resourcesRemaining": []
+    },
+    {
+      "request": "request-17.json.result",
+      "commit": "b89a6241455b44293ad12d58e3643919750959f2",
+      "authority": "b3af03260de8f49b93ce64428b25a1e4a3dc6a6c",
+      "evaluatorCommit": "0d160ceef426f0481683ac2a7083974b8ec46e09",
+      "core": {
+        "verdict": "DIAGNOSTIC",
+        "reasons": [
+          {
+            "code": "BUILD-SPEC-NULL",
+            "detail": "the contract's buildSpec (argv, outputs, run) is not specified, so no run qualifies (RULINGS Q55a step 1, Q61f)"
+          }
+        ]
+      },
+      "verdict": "DIAGNOSTIC",
+      "caseCount": 0,
+      "reasons": [
+        {
+          "code": "GATE-NOT-RUN",
+          "detail": "no pinned case has yet completed through the isolated OBL executor and cleanup proofs (Q55a, Q86)"
+        },
+        {
+          "code": "RUN-NOT-ON-GATE",
+          "detail": "the system under test runs in an offline container with network none; no registered engine configuration is applied"
+        },
+        {
+          "code": "ORACLE-FILES",
+          "detail": "O-REPLAY at b89a6241455b44293ad12d58e3643919750959f2: lab/oracles/replay/RULES.md hashes to null, pinned 949ad8751e515bfb21a0bb811364146a21b330c7051f01ff1ff8dd801abbb67c (VA6)"
+        },
+        {
+          "code": "ORACLE-FILES",
+          "detail": "O-REPLAY at b89a6241455b44293ad12d58e3643919750959f2: lab/oracles/replay/SCHEMA.md hashes to null, pinned 7c00d078346ad519ad633df960d42c73c3378faa3de189fb091ec7c6b546fcae (VA6)"
+        },
+        {
+          "code": "ORACLE-FILES",
+          "detail": "O-REPLAY at b89a6241455b44293ad12d58e3643919750959f2: lab/oracles/replay/__init__.py hashes to null, pinned 1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0 (VA6)"
+        },
+        {
+          "code": "BUILD-SPEC-NULL",
+          "detail": "the contract's buildSpec (argv, outputs, run) is not specified, so no run qualifies (RULINGS Q55a step 1, Q61f)"
+        },
+        {
+          "code": "A0-REGISTRY-NULL",
+          "detail": "A0_REGISTRY has no entry for source engine xtdb; every comparison is a diagnostic until A0 is frozen (RULINGS Q46b, Q47b)"
+        },
+        {
+          "code": "VERIFIER-UNREGISTERED",
+          "detail": "no VERIFIER_REGISTRY entry accepts G10.scope.shared-collision at b89a6241455b44293ad12d58e3643919750959f2 (RULINGS Q55a)"
+        },
+        {
+          "code": "ORACLE-RUNNER-UNPINNED",
+          "detail": "oracle O-CONTRACT has no sha256 for every runner file in the contract (its runner files lab/acceptance/build_contract.py, lab/acceptance/obligations.json are run from b3af03260de8f49b93ce64428b25a1e4a3dc6a6c unhashed), so a claim depending on it is DIAGNOSTIC (RULINGS Q59e, Q75c)"
+        },
+        {
+          "code": "ORACLE-FILES",
+          "detail": "27 more ORACLE-FILES reasons like the above"
+        }
+      ],
+      "resourcesRemaining": []
+    },
+    {
+      "request": "request-2.json.result",
+      "claimId": "RUN-WRONG-CANDIDATE",
+      "commit": "bbaf6ceef9c377bad21434efac35c2adc807026a",
+      "authority": "044c62ff9f342f2f60bf25cb66bb5d88726947f7",
+      "evaluatorCommit": "0d160ceef426f0481683ac2a7083974b8ec46e09",
+      "core": {
+        "verdict": "DIAGNOSTIC",
+        "reasons": [
+          {
+            "code": "PREREQ-FAILED",
+            "detail": "the evaluator's G7.position.coordinates run did not pass (RULINGS Q34d, Q38b, Q55a); G7.position.coordinates FX-ABORT-GAP mode current: CMP-EXACT-VALUE rejects the observation"
+          }
+        ]
+      },
+      "verdict": "DIAGNOSTIC",
+      "caseCount": 1,
+      "reasons": [
+        {
+          "code": "GATE-NOT-RUN",
+          "detail": "no pinned case has yet completed through the isolated OBL executor and cleanup proofs (Q55a, Q86)"
+        },
+        {
+          "code": "RUN-NOT-ON-GATE",
+          "detail": "the system under test runs in an offline container with network none; no registered engine configuration is applied"
+        },
+        {
+          "code": "CASE-FAIL",
+          "detail": "instance 0 (bbaf6ceef9c377bad21434efac35c2adc807026a) G7.position.coordinates FX-ABORT-GAP mode current: CMP-EXACT-VALUE FAIL (RULINGS Q55a, Q67i)"
+        },
+        {
+          "code": "PREREQ-FAILED",
+          "detail": "the evaluator's G7.position.coordinates run did not pass (RULINGS Q34d, Q38b, Q55a); G7.position.coordinates FX-ABORT-GAP mode current: CMP-EXACT-VALUE rejects the observation"
+        }
+      ],
+      "resourcesRemaining": []
+    },
+    {
+      "request": "request-3.json.result",
+      "claimId": "RUN-FORGED-RECORDS",
+      "commit": "bbaf6ceef9c377bad21434efac35c2adc807026a",
+      "authority": "044c62ff9f342f2f60bf25cb66bb5d88726947f7",
+      "evaluatorCommit": "0d160ceef426f0481683ac2a7083974b8ec46e09",
+      "core": {
+        "verdict": "DIAGNOSTIC",
+        "reasons": [
+          {
+            "code": "PREREQ-FAILED",
+            "detail": "the evaluator's G7.position.coordinates run did not pass (RULINGS Q34d, Q38b, Q55a); G7.position.coordinates FX-ABORT-GAP mode current: CMP-EXACT-VALUE rejects the observation"
+          }
+        ]
+      },
+      "verdict": "DIAGNOSTIC",
+      "caseCount": 1,
+      "reasons": [
+        {
+          "code": "GATE-NOT-RUN",
+          "detail": "no pinned case has yet completed through the isolated OBL executor and cleanup proofs (Q55a, Q86)"
+        },
+        {
+          "code": "RUN-NOT-ON-GATE",
+          "detail": "the system under test runs in an offline container with network none; no registered engine configuration is applied"
+        },
+        {
+          "code": "CASE-FAIL",
+          "detail": "instance 0 (bbaf6ceef9c377bad21434efac35c2adc807026a) G7.position.coordinates FX-ABORT-GAP mode current: CMP-EXACT-VALUE FAIL (RULINGS Q55a, Q67i)"
+        },
+        {
+          "code": "PREREQ-FAILED",
+          "detail": "the evaluator's G7.position.coordinates run did not pass (RULINGS Q34d, Q38b, Q55a); G7.position.coordinates FX-ABORT-GAP mode current: CMP-EXACT-VALUE rejects the observation"
+        }
+      ],
+      "resourcesRemaining": []
+    },
+    {
+      "request": "request-4.json.result",
+      "claimId": "RUN-REFUSED-CASE",
+      "commit": "03a27c12251eeb5f92fc2b60cca64d2a88218c34",
+      "authority": "044c62ff9f342f2f60bf25cb66bb5d88726947f7",
+      "evaluatorCommit": "0d160ceef426f0481683ac2a7083974b8ec46e09",
+      "core": {
+        "verdict": "DIAGNOSTIC",
+        "reasons": [
+          {
+            "code": "MEASUREMENT-RUN-FAILED",
+            "detail": "the evaluator's G7.migration.schema-evolution run did not pass (RULINGS Q55a); G7.migration.schema-evolution MIG-DECIMAL-5-2-TO-6-3: oracle O-REPLAY gave no answer (exit 2, code X-NOT-MODELED)"
+          }
+        ]
+      },
+      "verdict": "DIAGNOSTIC",
+      "caseCount": 29,
+      "reasons": [
+        {
+          "code": "GATE-NOT-RUN",
+          "detail": "no pinned case has yet completed through the isolated OBL executor and cleanup proofs (Q55a, Q86)"
+        },
+        {
+          "code": "RUN-NOT-ON-GATE",
+          "detail": "the system under test runs in an offline container with network none; no registered engine configuration is applied"
+        },
+        {
+          "code": "CASE-REFUSED",
+          "detail": "oracle O-REPLAY on input 73b894ee7f521bc8969e638ffc5edc66902f522828129c9788782fdeea10ab3b: exit 2 X-NOT-MODELED: o-replay: malformed case: X-NOT-MODELED: redeclares a decimal (5,2) to (6,3) (RULINGS Q45b, Q47a, Q61c)"
+        },
+        {
+          "code": "MEASUREMENT-RUN-FAILED",
+          "detail": "the evaluator's G7.migration.schema-evolution run did not pass (RULINGS Q55a); G7.migration.schema-evolution MIG-DECIMAL-5-2-TO-6-3: oracle O-REPLAY gave no answer (exit 2, code X-NOT-MODELED)"
+        },
+        {
+          "code": "ORACLE-REFUSES",
+          "detail": "G7.migration.schema-evolution selects cases oracle O-REPLAY refuses, directly or through a broader set (scale-evolution; RULINGS Q45b, Q47c)"
+        }
+      ],
+      "resourcesRemaining": []
+    },
+    {
+      "request": "request-5.json.result",
+      "claimId": "RUN-UNREGISTERED-VERIFICATION",
+      "commit": "7fa1594b02d184cbe2ce4c72ff05f578fa240689",
+      "authority": "044c62ff9f342f2f60bf25cb66bb5d88726947f7",
+      "evaluatorCommit": "0d160ceef426f0481683ac2a7083974b8ec46e09",
+      "core": {
+        "verdict": "DIAGNOSTIC",
+        "reasons": [
+          {
+            "code": "VERIFIER-UNREGISTERED",
+            "detail": "no VERIFIER_REGISTRY entry accepts G10.scope.shared-collision at 7fa1594b02d184cbe2ce4c72ff05f578fa240689 (RULINGS Q55a)"
+          }
+        ]
+      },
+      "verdict": "DIAGNOSTIC",
+      "caseCount": 38,
+      "reasons": [
+        {
+          "code": "GATE-NOT-RUN",
+          "detail": "no pinned case has yet completed through the isolated OBL executor and cleanup proofs (Q55a, Q86)"
+        },
+        {
+          "code": "RUN-NOT-ON-GATE",
+          "detail": "the system under test runs in an offline container with network none; no registered engine configuration is applied"
+        },
+        {
+          "code": "VERIFIER-UNREGISTERED",
+          "detail": "no VERIFIER_REGISTRY entry accepts G10.scope.shared-collision at 7fa1594b02d184cbe2ce4c72ff05f578fa240689 (RULINGS Q55a)"
+        }
+      ],
+      "resourcesRemaining": []
+    },
+    {
+      "request": "request-6.json.result",
+      "claimId": "RUN-A0-REBUILD-MISMATCH",
+      "commit": "03a27c12251eeb5f92fc2b60cca64d2a88218c34",
+      "authority": "3a9a4cf84d0e2045915d814aac55ebb002b6deac",
+      "evaluatorCommit": "0d160ceef426f0481683ac2a7083974b8ec46e09",
+      "core": {
+        "verdict": "DIAGNOSTIC",
+        "reasons": [
+          {
+            "code": "A0-REBUILD-MISMATCH",
+            "detail": "rebuilding A0 (7fa1594b02d184cbe2ce4c72ff05f578fa240689) gave 1bab8f46bb8b57ebd4b325bda800a605a76b2007805425ee82c129d0c576bfa3, the registry says eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee (RULINGS Q55a)"
+          }
+        ]
+      },
+      "verdict": "DIAGNOSTIC",
+      "caseCount": 26,
+      "reasons": [
+        {
+          "code": "GATE-NOT-RUN",
+          "detail": "no pinned case has yet completed through the isolated OBL executor and cleanup proofs (Q55a, Q86)"
+        },
+        {
+          "code": "RUN-NOT-ON-GATE",
+          "detail": "the system under test runs in an offline container with network none; no registered engine configuration is applied"
+        },
+        {
+          "code": "A0-REBUILD-MISMATCH",
+          "detail": "rebuilding A0 (7fa1594b02d184cbe2ce4c72ff05f578fa240689) gave 1bab8f46bb8b57ebd4b325bda800a605a76b2007805425ee82c129d0c576bfa3, the registry says eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee (RULINGS Q55a)"
+        }
+      ],
+      "resourcesRemaining": []
+    },
+    {
+      "request": "request-7.json.result",
+      "claimId": "RUN-NS-NO-PAIRED",
+      "commit": "03a27c12251eeb5f92fc2b60cca64d2a88218c34",
+      "authority": "044c62ff9f342f2f60bf25cb66bb5d88726947f7",
+      "evaluatorCommit": "0d160ceef426f0481683ac2a7083974b8ec46e09",
+      "core": {
+        "verdict": "DIAGNOSTIC",
+        "reasons": [
+          {
+            "code": "CONTROL-UNMATCHED",
+            "detail": "NS.P2: no paired-rounds measurement of the candidate against A0 under PAIR_0 on the evaluator's workload, each arm on its own composition's source slot (RULINGS Q47b, Q60, Q61g, Q67f, Q67g)"
+          }
+        ]
+      },
+      "verdict": "DIAGNOSTIC",
+      "caseCount": 44,
+      "reasons": [
+        {
+          "code": "GATE-NOT-RUN",
+          "detail": "no pinned case has yet completed through the isolated OBL executor and cleanup proofs (Q55a, Q86)"
+        },
+        {
+          "code": "RUN-NOT-ON-GATE",
+          "detail": "the system under test runs in an offline container with network none; no registered engine configuration is applied"
+        },
+        {
+          "code": "ORACLE-NO-RUNNER",
+          "detail": "the contract's oracleRunners give no argv for O-OBS (RULINGS Q61c)"
+        },
+        {
+          "code": "PAIRED-NOT-RUN",
+          "detail": "the PAIR_0 paired-rounds measurement of the candidate against A0 (two registered slots with disjoint, equal cpusets, the NS gate) has no runner in this evaluator yet (RULINGS Q60, Q61g, Q67f, Q67g)"
+        },
+        {
+          "code": "CONTROL-UNMATCHED",
+          "detail": "NS.P2: no paired-rounds measurement of the candidate against A0 under PAIR_0 on the evaluator's workload, each arm on its own composition's source slot (RULINGS Q47b, Q60, Q61g, Q67f, Q67g)"
+        }
+      ],
+      "resourcesRemaining": []
+    },
+    {
+      "request": "request-8.json.result",
+      "claimId": "RUN-ALIAS-DIST",
+      "commit": "a3b6a18a55cb9876952c8fb876fd90120e909062",
+      "authority": "044c62ff9f342f2f60bf25cb66bb5d88726947f7",
+      "evaluatorCommit": "0d160ceef426f0481683ac2a7083974b8ec46e09",
+      "core": {
+        "verdict": "DIAGNOSTIC",
+        "reasons": [
+          {
+            "code": "MEASUREMENT-RUN-FAILED",
+            "detail": "the evaluator's G10.scope.shared-collision run did not pass (RULINGS Q55a); G10.scope.shared-collision C7-DOMAIN-ONLY-CURRENT mode current: CMP-EXACT-VALUE rejects the observation"
+          }
+        ]
+      },
+      "verdict": "DIAGNOSTIC",
+      "caseCount": 27,
+      "reasons": [
+        {
+          "code": "GATE-NOT-RUN",
+          "detail": "no pinned case has yet completed through the isolated OBL executor and cleanup proofs (Q55a, Q86)"
+        },
+        {
+          "code": "RUN-NOT-ON-GATE",
+          "detail": "the system under test runs in an offline container with network none; no registered engine configuration is applied"
+        },
+        {
+          "code": "CASE-FAIL",
+          "detail": "instance 0 (a3b6a18a55cb9876952c8fb876fd90120e909062) G10.scope.shared-collision C7-DOMAIN-ONLY-CURRENT mode current: CMP-EXACT-VALUE FAIL (RULINGS Q55a, Q67i)"
+        },
+        {
+          "code": "MEASUREMENT-RUN-FAILED",
+          "detail": "the evaluator's G10.scope.shared-collision run did not pass (RULINGS Q55a); G10.scope.shared-collision C7-DOMAIN-ONLY-CURRENT mode current: CMP-EXACT-VALUE rejects the observation"
+        }
+      ],
+      "resourcesRemaining": []
+    },
+    {
+      "request": "request-9.json.result",
+      "claimId": "RUN-BACKGROUND-HELPER",
+      "commit": "195accfac1623b61609062f879f0e14ea9754df0",
+      "authority": "044c62ff9f342f2f60bf25cb66bb5d88726947f7",
+      "evaluatorCommit": "0d160ceef426f0481683ac2a7083974b8ec46e09",
+      "core": {
+        "verdict": "QUALIFIED",
+        "reasons": []
+      },
+      "verdict": "DIAGNOSTIC",
+      "caseCount": 64,
+      "reasons": [
+        {
+          "code": "GATE-NOT-RUN",
+          "detail": "no pinned case has yet completed through the isolated OBL executor and cleanup proofs (Q55a, Q86)"
+        },
+        {
+          "code": "RUN-NOT-ON-GATE",
+          "detail": "the system under test runs in an offline container with network none; no registered engine configuration is applied"
+        }
+      ],
+      "resourcesRemaining": []
+    }
+  ]
+}

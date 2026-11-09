@@ -1,0 +1,18 @@
+[
+  {
+    "evaluator": "fixtures-g03-r3-integrity-e4e9f19e",
+    "evaluatorCommit": "8647cf1622ae15a80b02a10ced53130bda67eeae",
+    "authority": "53d9c75689e237227ecbaa70960954f6c30e9a7c",
+    "sourceCommit": "6ce4ba4a7e1dfd542eae8940476e30721ffa6f0f",
+    "holder": "CX-G03-r3-integrity-e4e9f19e",
+    "store": "tx2-g03-r3-integrity-e4e9f19e-store"
+  },
+  {
+    "evaluator": "fixtures-g03-r3-claim-8a4f7fe1",
+    "evaluatorCommit": "3a5d497f7c0c16d5a662e01cbcf21ea0b02ccbf9",
+    "authority": "363f2d8e1f79ffab0dd62971232b40f4f361bd37",
+    "sourceCommit": "eeb76cc3595ad9c7fb12e9683de6890e5c24d0c4",
+    "holder": "CX-G03-r3-claim-8a4f7fe1",
+    "store": "tx2-g03-r3-claim-8a4f7fe1-store"
+  }
+]

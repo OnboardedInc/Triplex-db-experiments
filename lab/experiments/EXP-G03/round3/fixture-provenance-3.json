@@ -1,0 +1,132 @@
+[
+  {
+    "kind": "claim",
+    "evaluator": "fixtures-g03-r3-claim-2bea5f2f",
+    "evaluatorCommit": "898b34cb14570ab1b15b15a6dfa8d48a3d437983",
+    "authority": "660eb6db69b5b91504a6459e3733e88a4f362ba2",
+    "sourceCommit": "47ceaa3072545ed6167ba702876d20f3c2618fba",
+    "holder": "CX-G03-r3-claim-2bea5f2f",
+    "store": "tx2-g03-r3-claim-2bea5f2f-store",
+    "bundleSha256": "7ee9d1fe700876082c481783d9b726e8c94102a2ccfc7462564bc64c266b4ddf",
+    "sourceMatchesWorktree": true,
+    "files": [
+      {
+        "path": "lab/bin/claim.mjs",
+        "sha256": "7574cef666e22c5f1fd41b2a2a22492d30baf388f7706f7aeb4ba72c75b515cd"
+      },
+      {
+        "path": "lab/bin/box.mjs",
+        "sha256": "6bad781f318281bf0bcd7156611b560791667a5c429bb8c59909e679b6264f90"
+      },
+      {
+        "path": "lab/bin/box-policy.mjs",
+        "sha256": "986125c8c29e5c8c3de237e16bbfc1ae7b319771f37b75270a2edb3e4d19cf83"
+      },
+      {
+        "path": "lab/experiments/EXP-G03/round2/window.mjs",
+        "sha256": "85000e6620c3e8df1dd044164ff6d407524f0c4cb3fe26b7f5780f81017a5df3"
+      },
+      {
+        "path": "lab/bin/box-engine.mjs",
+        "sha256": "edbe79664de8bebdd2d536ad76674720c84b2e81894ac5066340509eab4e541a"
+      },
+      {
+        "path": "lab/config/box/Dockerfile",
+        "sha256": "ed78a8e03b2fc8dfaa9fb9b8ee42c886b4e2c7be8cf7c96cc6f7cacad50b0f2e"
+      },
+      {
+        "path": "lab/config/slots.json",
+        "sha256": "d8a2f18de7afe55090b514da6e01f3c1c33de6dfe35ee5c1a55c91e49289e8d1"
+      },
+      {
+        "path": "lab/bin/lib.mjs",
+        "sha256": "c89f2a34e84d652db511a6bc410522b82dd077b95d688164267e9620b1257b6f"
+      },
+      {
+        "path": "lab/bin/gate.mjs",
+        "sha256": "b9650caece88b5a1ef56a4ba97d6c20313936f8eba3100de000ec9cdaac8076e"
+      },
+      {
+        "path": "lab/bin/engine.mjs",
+        "sha256": "24e0c8f8816f77af4afd1cf874d33bbf620f286b1329003d241644ae49a31eb6"
+      },
+      {
+        "path": "lab/bin/heavy-lock.mjs",
+        "sha256": "88dd2071c8d8c1e3212c9a65dc719b79af46fbe6cc2e6ede8fbe0b61112803fa"
+      },
+      {
+        "path": "lab/bin/receipt.mjs",
+        "sha256": "ebdcfb60284d6efe378923c0f42eb4eb7ad9a260141ceb46958e86752d0d2d2c"
+      },
+      {
+        "path": "lab/acceptance/build_contract.py",
+        "sha256": "049d7b25dc5fb38e7a53c32adbd83bd1bd2119661f826d3a80495c0dd6faab29"
+      }
+    ]
+  },
+  {
+    "kind": "integrity",
+    "evaluator": "fixtures-g03-r3-integrity-d0e5c449",
+    "evaluatorCommit": "bf4e8bfc12e95654100f62b747fb036753c051e6",
+    "authority": "09b8361d13c3cf70a94b7ce7bdc649c5ad55b541",
+    "sourceCommit": "0c171c4b524ed7f4c1ed3401a3842297fa5b0820",
+    "holder": "CX-G03-r3-integrity-d0e5c449",
+    "store": "tx2-g03-r3-integrity-d0e5c449-store",
+    "bundleSha256": "eced4ea33e9a3b9269ce4ae7e5116224fd4c92dace0c9fb547685350e4b312f4",
+    "sourceMatchesWorktree": true,
+    "files": [
+      {
+        "path": "lab/bin/claim.mjs",
+        "sha256": "7574cef666e22c5f1fd41b2a2a22492d30baf388f7706f7aeb4ba72c75b515cd"
+      },
+      {
+        "path": "lab/bin/box.mjs",
+        "sha256": "6bad781f318281bf0bcd7156611b560791667a5c429bb8c59909e679b6264f90"
+      },
+      {
+        "path": "lab/bin/box-policy.mjs",
+        "sha256": "986125c8c29e5c8c3de237e16bbfc1ae7b319771f37b75270a2edb3e4d19cf83"
+      },
+      {
+        "path": "lab/experiments/EXP-G03/round2/window.mjs",
+        "sha256": "85000e6620c3e8df1dd044164ff6d407524f0c4cb3fe26b7f5780f81017a5df3"
+      },
+      {
+        "path": "lab/bin/box-engine.mjs",
+        "sha256": "edbe79664de8bebdd2d536ad76674720c84b2e81894ac5066340509eab4e541a"
+      },
+      {
+        "path": "lab/config/box/Dockerfile",
+        "sha256": "ed78a8e03b2fc8dfaa9fb9b8ee42c886b4e2c7be8cf7c96cc6f7cacad50b0f2e"
+      },
+      {
+        "path": "lab/config/slots.json",
+        "sha256": "d8a2f18de7afe55090b514da6e01f3c1c33de6dfe35ee5c1a55c91e49289e8d1"
+      },
+      {
+        "path": "lab/bin/lib.mjs",
+        "sha256": "c89f2a34e84d652db511a6bc410522b82dd077b95d688164267e9620b1257b6f"
+      },
+      {
+        "path": "lab/bin/gate.mjs",
+        "sha256": "b9650caece88b5a1ef56a4ba97d6c20313936f8eba3100de000ec9cdaac8076e"
+      },
+      {
+        "path": "lab/bin/engine.mjs",
+        "sha256": "24e0c8f8816f77af4afd1cf874d33bbf620f286b1329003d241644ae49a31eb6"
+      },
+      {
+        "path": "lab/bin/heavy-lock.mjs",
+        "sha256": "88dd2071c8d8c1e3212c9a65dc719b79af46fbe6cc2e6ede8fbe0b61112803fa"
+      },
+      {
+        "path": "lab/bin/receipt.mjs",
+        "sha256": "ebdcfb60284d6efe378923c0f42eb4eb7ad9a260141ceb46958e86752d0d2d2c"
+      },
+      {
+        "path": "lab/acceptance/build_contract.py",
+        "sha256": "049d7b25dc5fb38e7a53c32adbd83bd1bd2119661f826d3a80495c0dd6faab29"
+      }
+    ]
+  }
+]

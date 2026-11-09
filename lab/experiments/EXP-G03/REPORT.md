@@ -195,3 +195,152 @@ into evidence; only the prepared Docker volume holds the dependency store.
 The next orchestrator action is the frozen diagnostic command sequence after opening a window. Before any semantic qualification,
 migrate the 33 legacy fixture failures, integrate/pin the real OBL runner and fault/paired measurement paths, integrate R27 observer/TO,
 and review DA01's transactor-only/gateway image and source. No H1/H2 VM changes were made; Q86g residuals from round 1 remain.
+
+---
+
+# Round 3 — migrate the evaluator fixtures to containment
+
+**Builder:** CX-G03. **Base:** `c78d7aacc4873adfc468cd0b9cefac873f2bae61`. This round changes the fixture model, not the
+qualification floor. All candidate executions are synthetic, network-none containers; no exclusive slot is requested.
+
+## Fixture model and groups
+
+The common fixture foundation (`lab/bin/test/contained-fixtures.mjs`) creates a separate Git-anchored evaluator under
+`/Users/sam/.tx2-evaluator/fixtures-g03-r3-*`, outside the known agent-writable roots. It copies the actual evaluator files,
+commits their actual bytes, passes that full evaluator commit and a full authority commit, and runs the evaluator **from that
+clone**. Candidate sources are separate commits. The fixture authority pins the real box image, an engine-managed empty Linux
+store, the exact lockfile blob, allowlist and small 64 MiB build/case/walker limits. The limits remain pool-admitted, inspect-checked
+and execution-identity-bound. Production defaults remain unchanged. No candidate callback, forged Docker success, protected-root
+exception, ref-based authority, live database or exclusive slot is used.
+
+Offline execution is now an explicit option: it executes the authority argv through the same BoxExecutor using network none,
+records actual Linux toolchain and executions, and **always** retains DIAGNOSTIC, GATE-NOT-RUN and RUN-NOT-ON-GATE. A semantic
+`run.core.verdict === QUALIFIED` is only a positive fixture control, never qualification. Legacy supplied callbacks remain ignored.
+The CLI's old Mac-side localSut path is removed. Final-use input, oracle and evidence guards are exposed without changing their
+production callers so external-controller faults can test the exact guard after proving the candidate cannot reach those files.
+
+All original named tests remain; no skip, todo, filtering, removed test or relaxed comparator is used. The 33 failing tests from
+`round2/claim-suites.tap` are covered as follows:
+
+| Group | Old failures | Preserved intent and contained expression |
+| --- | ---: | --- |
+| Build, A0 rebuild/alias/mismatch, manifest cases, comparator, answer rule, wrong answer | 7 | Actual tiny container builds; A0 identity frozen from the real warm build; all pinned cases/modes; raw retained comparator objects; explicit v2 identity and Linux toolchain assertions |
+| Oracle refusal, missing PAIR-0, forged records, export-ignore, promotion, registry, W0/fingerprint | 7 | Full-id authority and source variants; actual candidate/oracle execution where applicable; original typed refusal assertions; no acceptance of claimant records |
+| Control edit, oracle/evidence edit, detached helper | 3 | Real separate control volume and read-only candidate volume; inaccessible oracle/evidence Mac paths and symlink attempt; exact re-hash/end guards for external corruption; positively observed detached helper followed by cgroup/container absence |
+| Gate/slot, offline verdict, CLI | 3 | Actual offline boxes replace plan-only success; invalid slot refuses before build; outside-clone call and supplied gate callback cannot provide evidence; CLI runs real cases but exits 2 DIAGNOSTIC |
+| Integrity F1, F2, Q75c, F3/F10, F4/T6, F7, F8 | 7 | Persistent evaluator edit and real restore; Git replace-ref attack ignored; unpinned compiled oracle stays diagnostic; source and build-created outside links rejected; fresh tmpfs namespaces with planted-file positive control; external evidence deletion plus candidate denial; promotion before candidate execution |
+| Integrity unreadable evidence, mode/link identity, PATH binary, same-instance edit, final input delete/rewrite | 6 | Real permission fault at the production end guard; real walker modes/link and target-byte identity changes; actual image Node compared with recorded toolchain while a hostile Mac PATH wrapper remains unused; read-only instance/input mutation attempts plus exact final-use guard against external faults |
+
+The three previously passing integrity tests (early returns, Q75g and Q75h) retain their assertions too. Q86 replacements are
+explained in comments at the tests: paths that used to differ by Mac directory now differ by container tmpfs namespace; candidate
+access to Mac oracle, evidence, evaluator, Git and control files is prevented before any re-hash would have to detect it.
+
+## Validation and first failures
+
+Foundation commit: `852aa59d` (separate from both test-file groups). `round3/box-policy.tap`: **13/13 PASS**.
+The first smoke (`round3/smoke-1.log`, `smoke-result.json`) reached a passing semantic core, then shared-pool admission refused
+256 MiB during the A0 position run after another lane's reservations increased. It is retained as an interrupted diagnostic,
+not called a passing smoke. The tiny fixture limits were reduced to authority-pinned 64 MiB; admission and hardening stay enabled.
+
+A duplicate smoke was queued behind the four heavy-job tokens, then cancelled to avoid competing with the full suite. It had
+just started, so `round3/smoke-2.log` is an interruption, not a result. Its exact holder-labelled container/volumes were removed
+through engine.mjs; `round3/smoke-2-cleanup.json` records cgroup proof, empty inventory and removal of its temporary evaluator and
+source roots. The first cleanup command used the fixture id rather than the BoxExecutor's random run prefix and was refused;
+the corrected command used each resource's actual prefix. Read-only oracle directory modes required restoring write permission
+within that exact interrupted fixture root before deletion. No shared or unknown resource was removed.
+
+`round3/claim-suites-1.tap` retains the first full command: **15 integrity tests PASS, one integrity failure, and a claim-file
+module-load failure** (reported as 17 TAP tests rather than its eventual 108 named tests). The PATH probe read the whole Linux
+Node binary into its 64 MiB process; it returned empty output. The claim file imported the trusted `walkTree` before that
+function was exported. Corrected the missing export and changed the PATH probe to stream the binary hash, adding an explicit
+zero-exit assertion before parsing JSON. `round3/path-probe.{mjs,json,log}` reproduces exit 137 for the original whole-buffer
+probe and exit 0 with the real image Node path/hash/version for the streaming replacement at the same cap. OOM attribution is
+not separately proven by an OOM inspect; only the actual exit codes and output are retained. Both containers were removed with
+successful cgroup proofs. `round3/box-policy-2.tap`: **13/13 PASS** after the export correction.
+
+`round3/integrity-positive.json` retains the first honest contained result and all 303 content-addressed objects (base64), not
+just references into a deleted temporary clone. `node lab/experiments/EXP-G03/round3/replay-evidence.mjs` verifies every object
+hash, re-judges **all 64 case-result/2 records PASS**, checks the exact two offline blockers, zero remaining resources and
+**66 successful kill proofs** (`round3/replay-evidence.json`). This is fixture evidence, not production acceptance.
+`round3/fixture-provenance-1.json` records its actual full evaluator commit/tree and initial authority/source/store identities.
+
+The second full command (`round3/claim-suites-2.tap`) ran all **108** tests with **107 PASS / 1 FAIL**, no skips. All 16 integrity
+controls passed, as did the actual offline CLI and detached-helper kill proof. The remaining oracle/evidence tamper test forgot
+to chmod the evidence object writable before its **external controller** corruption (writeStore correctly makes objects 0444).
+Restored that original step, added a positive read-only denial assertion, and restore the original bytes **and mode** in finally.
+No evaluator behavior or assertion was weakened. The second attempt is retained, not overwritten.
+
+`round3/evaluator-claim.bundle` retains the real evaluator clone used by that command, full commit
+`3a5d497f7c0c16d5a662e01cbcf21ea0b02ccbf9`. `round3/source-proof.json` verifies all 13 evaluator source files match this worktree;
+`round3/bundle-verify.log` verifies complete Git history. The chmod correction is in the test file, outside those evaluator bytes.
+`round3/claim-runs-summary.json` is a diagnostic checkpoint of actual completed variants; request 0 is the deliberate warm build
+with a placeholder A0 identity, not a positive result. `round3/fixture-provenance-2.json` records the second attempt's two clones.
+
+The third attempt (`round3/claim-suites-3.tap`, parallel fixture files) exposed an actual reservation race and was stopped;
+`round3/third-abort.json` records the owned processes stopped. A Docker-list snapshot can precede a new container's creation,
+then its short-lived creator exits before reconcile consumes that snapshot. The old exists-or-creator-pid check drops the live
+box's reservation. Removal correctly refused **ISOLATION-NOT-IN-FORCE** instead of running an uncovered kill reader. This is not
+an admission-capacity failure, and the proof was not bypassed.
+
+Separate fix commit **`c5b6e8e1`**: BoxExecutor passes its actual Mac controller PID; the creator accepts it only when it equals
+its real parent PID. Box reservations carry `cleanupRequired` from birth until explicit removal/proof, even if a Docker snapshot
+omits them and the creator is dead. Ordinary engine reservations keep their existing reconciliation behavior. A new regression
+covers the before-proof stale-snapshot interval in addition to the earlier failed-proof retention check. **34/34 pool + box unit
+checks PASS** (`round3/pool-units.tap`); **14/14 box checks PASS** after the recovery ownership guards (`box-policy-4.tap`).
+
+For the pre-fix orphan only, `engine.mjs box remove --recover-reservation --note ... --proof-image <immutable-id>` can reconstruct
+an owned existing container's missing reservation from its inspected memory cap under ordinary pool admission, then remove it
+with the normal kernel proof. It rejects a conflicting holder, missing note/proof image and absent/uncapped container. It does
+not adopt old execution or make an interrupted claim qualify. `round3/third-cleanup.json` records both third-attempt holders at
+**empty container/volume/network inventories**, successful kill proofs, and removed exact evaluator/source roots. No ledger was
+hand-edited and no other holder was stopped. The third attempt's two evaluator bundles and provenance remain historical; source
+comparisons in earlier artifacts apply at capture time, before this lifecycle fix.
+
+The integrity group is separately committed as **`3836e9d0`**, the claim group as **`3d86014b`**. The final full retry starts at
+`3d86014b` with no pending evaluator/test changes. It again runs both complete files with two independent protected clones and
+ordinary shared-pool admission; no exclusive slot or resident lifecycle operation is used.
+
+## Final round-3 result
+
+**PASS: 108/108 evaluator tests, zero failures/cancellations/skips/todos**, on committed source **`3d86014b`**. The full successful
+receipt is `round3/claim-suites-4.tap` (exit 0; 1,866,765.624459 ms). Exact command:
+
+```sh
+node lab/bin/heavy.mjs --label CX-G03-r3-claim-suites4 -- \
+  node --test --test-concurrency=2 lab/bin/test/claim.test.mjs lab/bin/test/claim-round2.test.mjs
+```
+
+The gate executes genuine synthetic container cases from two independent protected evaluator clones. Final evaluator commits:
+
+- Claim group: `0d160ceef426f0481683ac2a7083974b8ec46e09` (`round3/evaluator-claim-4.bundle`).
+- Integrity group: `891c4817d34f1cf04e5cfbb46d27f7d5eb07c396` (`round3/evaluator-integrity-4.bundle`).
+
+`round3/fixture-provenance-4.json` verifies all 13 evaluator files against the committed worktree and records explicit initial
+source/authority/store/holder pins. Both bundles verify with complete Git history (`bundle-*-4-verify.log`).
+`round3/claim-runs-summary-4.json` retains diagnostic summaries of 15 completed setup/claim variants before cleanup; it is not a
+qualification receipt. The CLI's own 64-case honest run passed its semantic core, retained exactly GATE-NOT-RUN/RUN-NOT-ON-GATE,
+exited 2, and reported no remaining resources. Every offline outer verdict remains DIAGNOSTIC. **No P1–P5 production claim was
+qualified.** The original 108 named tests remain enabled, including all 33 previously failing controls.
+
+Other checks: **34/34 pool/box unit checks PASS**, including the new pre-proof reservation regression; **14/14 box policy checks
+PASS** after recovery guards. `round3/contract-verify.log` records successful `build_contract.py --verify`, including second
+regeneration byte-identical. Changed/new JavaScript syntax checks and `git diff --check` pass. `round3/evidence-manifest.json`
+records final evidence hashes and the committed source/test hashes.
+
+`round3/cleanup-final.json`: **all 10 round-3 holders have empty container/volume/network inventories**, no CX-G03 candidate
+reservations remain, and no `fixtures-g03-r3-*` protected clones remain. Normal source-fixture teardown also ran. The sole
+CX-G03 volume left is the explicitly retained **round-2** production store `tx2-g03-r2store-store-b2b3e6e8cdfb`; it was not
+modified or removed. No image was built or removed this round. Earlier interrupted/failed receipts and their exact cleanup
+receipts are retained; none was relabelled as a successful run.
+
+### Limits and open work
+
+- This is the requested **offline fixture migration**, plus the real reservation-race fix it exposed. No exclusive slot was
+  requested, no registered-slot qualification or engine benchmark ran, no resident was parked/stopped/recreated, and no Colima
+  VM mount/network setting was changed. Neither forbidden port was contacted.
+- No main merge or push was performed. Main/contract integration awaits the orchestrator's instruction; Q87 must be rerun on
+  that merged source/contract. The separate foundation, integrity, lifecycle-fix and claim-test commits make those conflicts
+  reviewable. Current passing evidence applies to this branch's contract, not an unperformed future integration.
+- Production semantic argv/manifests/A0 acceptance, PAIR-0 statistical execution, registered-slot relay/preflight integration,
+  R27 observer integration and Q86g VM hardening remain the earlier report's open work. No full repository pnpm check, production package build/pack
+  check or public package change was performed in this round. Independent review is still required; no promotion is requested.
