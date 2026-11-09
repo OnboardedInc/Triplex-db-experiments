@@ -85,7 +85,9 @@ export async function canonicalQueryProperties(
         outer = `outer${seed}`;
       const rules = [
         { name: base, body: [[s, ":matrix", t]] },
+        { name: inner, body: [[s, ":matrix", t]] },
         { name: inner, body: [[base, s, t]] },
+        { name: outer, body: [[s, ":matrix", t]] },
         { name: outer, body: [[inner, s, t]] },
       ];
       if (seed % 2) rules.reverse();

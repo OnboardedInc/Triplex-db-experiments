@@ -666,3 +666,11 @@ Written before committing the changed observation/verdict producers:
    actual retained database readbacks, and final path/length/SHA index. Only
    declaration files may differ after subsequent gate builds, with both hashes
    recorded and rebuilt bytes retained; no runtime drift is accepted.
+
+The first live suite is retained as `round5/live-first.*`: 117/118 passed, with the
+new generated rule fixture rejected by core semantic validation because `inner`
+and `outer` lacked required non-recursive base definitions. This is a fixture
+error, not a parser acceptance result. The corrected generated rule chains give
+each named rule its required base plus the nested rule definition. Native
+canonical surfaces reached before that failure matched their routes and IDs;
+only a full subsequent successful run qualifies the property fixture.
