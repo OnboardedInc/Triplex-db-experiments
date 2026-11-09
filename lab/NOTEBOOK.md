@@ -1800,3 +1800,15 @@ Where each priority stands, from evidence so far (research probes and baselines;
   FoundationDB size limit) after 199 round trips and 759 typed rejections passed; P2Q round 9 built reads from one wrapped table and is
   in review round 10.
 - **Scale window:** X02 and C8 G1/G2 and J01 compact-on G1 on xtdb-s1 (CX-INT-XCJ).
+
+## 2026-11-09 03:33Z: hourly pass: usage 5%; two researchers on the open P2 and P4 performance questions
+- **Learnings since the last pass:** a QLever rebuild cut scoped reads from about 2.2 s to 55 ms (QG1); the golden scenario harness now
+  catches all 33 planted faults and lists 26 missing domain checks per lane (W02); the erasure scanners refuse when they cannot read a byte
+  range instead of passing (ER01-S r2); one disk cleanup removed worktrees that two follow-ups still needed (fresh launches now).
+- **Research launched (Opus high):**
+  - **R39, lane X P2:** A0 sends every commit through one writer, so measured commit bars are queueing. What did P2X build, what is
+    XTDB's real commit floor for 10 facts with 256 readers, and the next brief.
+  - **R40, lane Q P4:** a QLever pull costs about 270 ms p99 on a built base with zero delta, against a 25 ms bar. Where the time goes and
+    which path (compact cur graph, broker host store, different encoding) can reach the bar.
+- **Priorities by evidence today:** P1 has its floor designed (RT01, Q89, Q90) and building; P2 and P4 have no lane meeting a bar yet; P3
+  has SQL01's feed checks; P5 has round A offline. R39 and R40 target the two weakest.
