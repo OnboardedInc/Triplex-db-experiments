@@ -2182,3 +2182,64 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **RT01 live round 4 (54e59314):** G2 passed again; G6 stopped before any sample because M01's noise recorder spawns `top`, which is setuid and the Codex sandbox refuses it. Timing unjudged, not failed. Round 5 moves the recorder to non-setuid counters (os.loadavg, vm_stat, sysctl) at its source in M01, then reruns G6 under Q104a. **Lesson:** a measurement tool must be exercised offline in the same sandbox it will run in; M01's report had noted the permission need and the runbook did not carry it.
 - **Disk:** compressed the large databases in INT-Q, VINTQ and DI01's superseded attempts (final-r2 to r8, two lag dirs), each verified by hash, originals' hashes kept; host free went from 11 to 19 GiB.
 - **CRNS round 5 (676b0a45):** Q103d, Q103e and the pinned crash target implemented; 292 tests and 59 reviewer assertions pass; the Opus reviewer does a final scoped check. After that CR-NS joins the contract 0.4.0 queue.
+
+## 2026-11-09 10:50Z: hourly pass (NORTH-STAR reread first): usage 10%; contract 0.4.0 started; lane D live
+
+- **Learnings since 09:42Z:**
+  - **Lane D's feed passed live on Datomic dev** (DF01 attempt 002, DIAGNOSTIC-PASS) after a fixture fix; offline fakes must apply the peer's input checks.
+  - **The PASS-granting evaluator converged:** the Opus reviewer accepts CR-NS for offline P2 and P3 arithmetic after four rounds; round 5 closes the last items (parked reads, crash target, race pairs); final scoped check running.
+  - **R46:** H1 can reach P4's 1,100 pulls per core with compact rows clustered by owner, one worker op per pull and SQLite-built answers (1,140-1,720 per CPU second). SQLite's JSON functions lose double precision unless formatted with %!.17g (Q105b): Sam's "no silent precision loss" applies to every serialized path.
+  - **Isolation by filesystem worked:** NSR accepted once the driver's layout held only its artifact under Node's permission model.
+  - **Statistics:** a one-pair A/A band failed RT01's compact p99 spuriously; Q104a requires repeated A/A rounds and tail-sized samples. RT01's marker-row fix removed the real A0 regression.
+  - **Sandbox:** a measurement tool that spawns a setuid binary (`top`) fails inside Codex; tools must be exercised in the sandbox they run in.
+  - **Disk:** compressing analyzed evidence keeps the slot runs going (now 19 GiB free).
+- **Action:** contract 0.4.0 started (CX-A01-040) with NSR+P3M+FD01, DF01, QNODELAY, M01, CHECKJS; compiles Q98a-i, Q101a, Q104a. RT01 with Q89/Q90 joins in a later round once its G6 completes; CRNS, HS01, P2B, DI01 and G03 follow as they are accepted.
+- **Long runners:** DI01 has made about ten "final" attempts over 228 minutes; P2B is on its last step after 223 minutes. Both are still writing. If DI01's report shows the attempts were churn, its next brief caps final attempts.
+- **Research this hour:** none new; R45 and R46 just landed and their builders (HS01, then QH1) are the follow-up.
+
+## 2026-11-09: RT01 G6 stopped on disk again; live windows need the heavy writers quiet
+
+- **7ee171ea:** recorder fixed (non-setuid counters), G2 passes, G6 stopped on its own disk forecast after 500 control commits. Three G6 attempts in a row stopped before judging (sandbox denial, then disk twice), each correctly. **Lesson:** a live window competes with every agent writing evidence on the same disk; schedule live windows when the heavy writers (here P2B and DI01) are idle, not only when the slot is free.
+
+## 2026-11-09: P2B round 3: R42's design delivered; P2's p99 still unmet on a shared Mac
+
+- **ba10ebb9:** 81 cells, 243,000 commits, 24.1M concurrent read checks, 153 tests. Eight reader workers with their own read-only connections; feed consumer off the broker thread; asynchronous RPCs; full fsync by default. Root-thread CPU 54.61 s to 18.67 s; durable-to-host p99 57.04 to 13.33 ms; main-thread read RPCs zero.
+- **P2 at 256 readers, ten facts:** p50/p99 13.80/92.88, 11.34/100.52, 8.92/81.62 ms across three repeats (bars 10/50). The tail is scheduling and host contention on a Mac running about nine agents; maintenance changes moved scheduling p99 from 34.87 to 14.90 ms.
+- **Decision:** stop tuning P2 on the shared Mac. R44 puts P2 acceptance in the VM, single-arm, in a GREEN window, with a different durability class (Q100r: VM commit 1.06/4.43 ms idle). P2B's next measurement runs through G03's NS runner. CX-VP2B reviews rounds 1-3 for correctness now (pinned reads in workers, watermark, durability default, pin/purge ordering, lost-ACK, WAL growth).
+- **Lesson:** a latency bar measured on a host that is also running the lab's agents mostly measures the agents. Absolute bars need the quiet window (Q60/Q100-S1, still waiting for Sam).
+
+## 2026-11-09: HS01 cuts the host store 11x (5,656 to 509 B per fact); correctness unchanged
+
+- **2f7b42d6 (frozen product 13ce4978):** schema v2 (entity-clustered facts, history, journal with derived references, dictionaries,
+  frame retention with a CRC anchor). G6: 50,000 v1/v2 reads, zero mismatches. G7: 100,000 rows exact, 15.5% verbatim fallback on a
+  deliberately pathological sample. Recovery, pack and evaluator gates pass. 10k seed: 2.275 GB, 509 B per asserted fact (G9 target 300;
+  not promoted).
+- **Where the bytes are (10k dbstat):** journal 213.77 B/fact (R45 132), frames tail 140.10 (1,024 frames retained at 10k), facts 107.37,
+  entity dictionary 28.09. IDs stayed TEXT because the core generator makes base-36 ids, not canonical ULIDs, so R45's 16-byte ids did not
+  apply.
+- **Next:** review (CX-VHS01, from the diff and R45's design). Then a round 2 aimed at the three largest terms: frame retention by bytes
+  rather than count, a compact id encoding for base-36 ids, and R45's round 2 journal record (one record per transaction, 150-195 B/fact
+  predicted). At 509 B, 100k is about 23 GB, which still does not fit this disk next to everything else.
+- **Lesson:** a size prediction built on a prototype with substituted ids measured something the real generator does not produce. Prototype
+  with the real id generator.
+
+## 2026-11-09: Sam's decisions; protocol v2 (Sonnet builders); observer accepted fail-closed
+
+- **Sam approved every pending recommendation** (Q106a-g; verbatim in lab/research/SAM-decisions-2026-11-09.md): NS/GS rung, quiet windows on his whole Mac (default colima VM now stopped), broker-backed lane X, erasure S1-S4, an opaque position token, tiered lane D tenancy, VM hardening H1/H2, the pre-commit hook (installed). He switched builders to Sonnet 5.5 at high (protocol v2) to use more Claude and less Codex.
+- **Disk guidance given:** about 60 GiB free for 100k on one lane at a time, about 150 GiB for several lanes plus evidence.
+- **OBS01 accepted offline,** with live P3 evidence refused until writer sync is independently witnessed; that witness is the next design item on the critical path.
+- **HS01 review:** one finding (a frame over 16 MiB stalls finite retention); round 2 is the first Sonnet builder.
+
+## 2026-11-09: R48: writer durability is witnessed in the kernel; OBS01 round 9 (Sonnet) builds it
+
+- **Design (R48, rulings Q108a-d pending):** a trusted sync-witness container with only CAP_BPF and CAP_PERFMON traces ext4 file and filesystem syncs, writes, mmap writes and truncations in the store directory, with the calling cgroup and CLOCK_MONOTONIC time; it never opens candidate files. A commit's durable instant D is the first successful sync from the writer's own cgroup after its WAL frames were written. P2 requires ACK >= D, the source requires U >= D, and consumer lag ends at max(U_c, D_c). Estimated cost 5-60 us per commit.
+- **Rejected:** trusting SQLite settings (per connection, overridable), and process kills as sync tests (the VM page cache survives a container kill; kill-after-ACK is a recovery test, Q108c). Enforcing durability for the candidate is not allowed (Q108d).
+- **Lesson:** "the writer says it synced" and "the setting says FULL" are both candidate claims. The only trustworthy durability evidence comes from below the candidate, here the guest kernel.
+- **R47 (journal format)** committed with rulings Q107a-c; Q107-S asked of Sam. DF01 round 4 (Sonnet) fixes the lane D feed emitting journal facts.
+
+## 2026-11-09: QH1 round 1: 302 pulls per CPU second against R46's 1,140-1,720 prediction
+
+- **65ffe2f2:** owner prefetch and whole-pull in the reader worker, a decoder fast path, H1 routing; 100,000 pulls with zero O-REPLAY mismatches; RQ01 route checks pass. Single-client 302.3 and four-client 323.5 pulls/CPU-second (baseline 172.5; bar 1,100). P2 p99 ratio 1.20x against 1.10x allowed. R46's decomposition gate was not completed.
+- **The gap:** R46 measured 4-6x in isolation; the real stack gave 1.75x. QH1 round 2 (Sonnet) decomposes per-pull CPU on the real stack, ABAB against R46's microbench path, before any further design change.
+- **DF01 round 4 (Sonnet, 302a7a63)** fixed the lane D feed emitting journal facts (real Datomic peer test; G0 1,279); in review.
+- **Lesson:** a microbench prediction holds only for the code path it measured; the gate that decomposes the real path has to come first, as R46 itself said.

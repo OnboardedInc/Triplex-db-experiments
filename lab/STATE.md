@@ -277,3 +277,52 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - 2026-11-09 NSR ACCEPT-OFFLINE (verify/NSR-r4 bd0555df; driver isolation by filesystem layout and Node's permission model; exact output
   grant; minimal recorded environment). G03 round 5 (the NS runner, R44 B2) started on G03 + NSR 709a18f1. R43 chain now: G03 rounds 5-7,
   then the G03 slot run, M01 A/A, OBS01 round 6, P3 screening, A0 under PAIR-0, contract 0.4.1, calibration, acceptance.
+- 2026-11-09 CR-NS ACCEPTED for offline P2 and P3 arithmetic by both reviewers (Codex verify/CRNS 3183681b at round 3; Opus round 5 at
+  exp/CRNS-recompute 40589336, which includes the reviewer's files). Joins contract 0.4.0's next round. NS PASS still waits on qualified
+  decoders, oracles and the calibration registry (0.4.1). Contract note for 0.4.1's CS-NS manifest: the per-loop reader floor must be the
+  intended closed-loop load, not the fixture's 2 per second. **Question for Sam (low priority):** P1's read bar is p99 <= 100 ms, which
+  allows reads to bunch within 100 ms; if he wants read service spread below that, it needs a p99.9 or max read bar.
+- 2026-11-09 RT01 live round 5 (7ee171ea): M01's shared noise recorder now uses non-setuid counters (21 tests; merge note
+  live5/M01-MERGE.md; OS memory pressure is unavailable in the sandbox and is recorded as such). G2 passed again. G6 stopped on its disk
+  forecast after 500 A/A control commits, because other agents' evidence grew during the run; no B samples, no judgment. **Next RT01 G6
+  window opens when CX-P2B and CX-DI01 have finished** (the two heaviest evidence writers), with host disk above the runbook's forecast.
+- 2026-11-09 G03 round 5 (14e62764): boxed P-TINY NS smoke DIAGNOSTIC; the 1k registered run was refused by pool admission (no resident
+  parked). Round 6 (offline) merges main to restore lab/acceptance and builds the fault injector. **Slot windows, in order:** (1) RT01 G6,
+  when CX-P2B and CX-DI01 are idle; (2) G03's 1k registered run with qlever-dev parked per Q100n (authorized by the orchestrator for that
+  window; restore it after) and the observer's matched-arm overhead measurement; (3) M01 A/A calibration; then P3 screening.
+- 2026-11-09 11:37Z (Sam approved, Q106b): Sam's default colima VM (Onboarded stack, 4 CPU / 6 GiB) is STOPPED for lab quiet windows.
+  Its docker context `colima` is removed by colima on stop; the global context is `default`, never colima-triplex2. Restart with
+  `colima start` when Sam asks. Heavy processes left running are all lab work (QH1, DI01 oracles and trace, a verifier); Claude, Codex
+  and the unidentified ~/.hermes node runtime (it is running QH1's tsx) are never stopped.
+- Protocol v2 (e6c8a812): new builders are Sonnet 5.5 high via the Agent tool; Codex reviewers high; Opus planners high. Sam's decisions
+  of 2026-11-09 recorded as Q106a-g (lab/research/SAM-decisions-2026-11-09.md).
+- 2026-11-09 disk guidance for Sam (asked how much to reclaim): free 11 GiB of 460 GiB. Needs for larger datasets: the broker store at the
+  measured 509 B/fact is about 23 GB at 100k (W0 447 facts/subject) plus its seed intent log (about 24 GB at 100k per R45, compressible);
+  an XTDB 100k volume 8-20 GB (R34); the triplex2 VM disk is capped at 60 GiB and would need raising for 100k residents; evidence grows
+  about 10-20 GB per busy day before compression; the 5 GiB guard and a 10 GiB working margin. **Minimum to test 100k one lane at a time:
+  about 60 GiB free. Comfortable for 100k on several lanes plus evidence: about 150 GiB free.** Known large items outside the lab's control:
+  ~/.codex 23 GB (Codex session history), Sam's stopped default colima disk 15 GB, ~/Library 62 GB.
+- HS01 review (verify/HS01 656f8a67) FIX-FIRST on one finding (a frame over 16 MiB stalls finite retention); 51,000 read comparisons,
+  4,240 codec round trips, four recovery schedules and a fresh 1k seed passed. HS01 round 2 is the first Sonnet high builder: the retention
+  fix, byte-budget frame retention, compact base-36 ids.
+- Option to raise next (no action yet): with the default VM stopped, the Mac has 12 CPUs / 36 GiB; the triplex2 VM is 6 CPU / 12 GiB.
+  Raising it (for example 10 CPU / 24 GiB, disk 120 GiB) would fit a 256-reader duet (Q100l) and 100k residents, but it restarts the VM
+  and changes the pool sizes that slots.json pins, so it needs a contract step and a quiet moment.
+- 2026-11-09 OBS01 rounds 6-8 ACCEPT-OFFLINE (verify/OBS01-r7 cd6ac047): inode-bound watcher, refused file replacement and inverted decision
+  windows, decision versus publication stamps per Q100s. F2 (a writer with sync disabled) is closed fail-closed: the observer REFUSES live
+  durable/P3 evidence until the writer's synchronization is independently witnessed. **Open on the critical path:** a design for that
+  witness (for example the trusted broker wrapper or container setting the pragmas and attesting them, or syscall-level fsync evidence in
+  the VM). It joins G03 round 7's integration brief; an Opus design check goes first when a slot frees.
+- 2026-11-09 R47 (journal format): one journal record per transaction inside the broker is 7.6 B/fact against 213.7 for HS01's journal
+  rows; with compact ids the broker store is predicted at about 281 B/fact (1.25 GB) at 10k and 154 B/fact (6.9 GB) at 100k, passing
+  G9's 300 B by about 6%. No P3 feed reads journal content. Rulings Q107a (journal record), Q107b (lossless 16/17-byte ids), Q107c (lane D
+  feed excludes journal facts) pending. **HS01 round 3** (after the running round 2) builds Q107a and must derive both the current and
+  RT01's v2 change formats. **DF01 round 4** (Sonnet, running) fixes the lane D feed emitting journal facts; contract 0.4.0's next round
+  picks it up. **Q107-S waits for Sam:** stop storing :_tx/change and :_tx/changed-entity as queryable triples on every lane (R47 option A).
+- 2026-11-09 P2B ACCEPT-OFFLINE (verify/P2B 986e11d1; exp/P2B-xtdb-behind-broker e9f0014b): duplicates gated on publication, bounded reader
+  snapshots (WAL bounded with typed refusal and recovery). Joins contract 0.4.0's next round together with HS01 (after its round 2/3) and
+  CRNS. P2 latency is measured next in the VM through G03's NS runner with the R48 sync witness (Q108b: ACK >= D).
+- 2026-11-09 contract 0.4.0 review FIX-FIRST (verify/A01-040 4d487ce5; evaluator 108/108 on head and on the Q87 merge): stale O-CONTRACT
+  runner pin after DF01; G0 does not bind W0's build. Round 2 (Sonnet) is fixes only plus a main merge. **Next contract (0.4.1) queue:**
+  P2B (verify/P2B 986e11d1), CR-NS (both reviewers ACCEPT; 40589336), DF01 round 4 (if accepted), HS01 rounds 2-3, RT01 (after G6),
+  G03 rounds 5-7, OBS01 rounds 6-9, plus R43-a's qualification pins and the Sam-approved rulings Q106a-g.

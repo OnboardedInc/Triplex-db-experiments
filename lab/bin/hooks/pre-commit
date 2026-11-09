@@ -1,0 +1,12 @@
+#!/bin/sh
+# triplex-db-2 pre-commit hook (Sam approved 2026-11-09, ruling Q106 decisions): when a commit touches lab/acceptance, the contract
+# generator must regenerate byte-identically, so a broken RULINGS-PENDING row cannot be committed unnoticed (see the Q93 incident).
+if git diff --cached --name-only | grep -q '^lab/acceptance/'; then
+  root=$(git rev-parse --show-toplevel)
+  if ! python3 "$root/lab/acceptance/build_contract.py" --verify >/tmp/triplex-precommit-verify.log 2>&1; then
+    echo "pre-commit: lab/acceptance/build_contract.py --verify failed; see /tmp/triplex-precommit-verify.log" >&2
+    tail -5 /tmp/triplex-precommit-verify.log >&2
+    exit 1
+  fi
+fi
+exit 0
