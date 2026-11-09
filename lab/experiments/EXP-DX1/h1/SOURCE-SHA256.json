@@ -1,0 +1,97 @@
+{
+  "base": "f1074dd78d60ccd1c5de4cfd01e4c15c751a4a9a",
+  "files": [
+    {
+      "path": "lab/bench/README.md",
+      "oldSha256": "a655bca7bcea2b0d89dd7d6dd6a95a2111e62b5776ec08e41745d0d0b6c9b206",
+      "newSha256": "54523df23ec7731b5729927fcc98c84e18a95bf0fd0a66d67794934fdbdba45d"
+    },
+    {
+      "path": "lab/bench/driver.ts",
+      "oldSha256": "c62cc99e874f5ba24495e44e4e36dee2d5117ddc4a514ebb4264ee97498a96e1",
+      "newSha256": "3da9bf3a1994179a079c41fbcfa5518260481d67f746285bc6ece3c0d506bc41"
+    },
+    {
+      "path": "lab/bench/lib/composition.ts",
+      "oldSha256": "40562b8e7a2b2563744fb984c278d3cec8c4ffb3dfc3a71a879f13ef91ad38cb",
+      "newSha256": "4275b693334c3ca031ef41d46accf5685d7839ebe1f010cf4fad256a45dfe35f"
+    },
+    {
+      "path": "lab/bench/lib/datomic-publication.ts",
+      "oldSha256": null,
+      "newSha256": "df9ecd30cc010a1a4174f7a7e9e7a7a7784df5a3d5b8fb592550e36e5a156152"
+    },
+    {
+      "path": "lab/bench/lib/feed.ts",
+      "oldSha256": "d6e859c29efed478b24d69b154b1dc631b5b52054d6d4719187bbdc112a3c433",
+      "newSha256": "ffa65e86f922d01bc3f1683fc7654743af1083ff56e47d8d704edba7bc8bef1e"
+    },
+    {
+      "path": "lab/bench/lib/http-counts.ts",
+      "oldSha256": null,
+      "newSha256": "f54f2710da3ba6279cb542ed382c80035730d06c9f167f24d0005e72dabe3e7d"
+    },
+    {
+      "path": "lab/bench/lib/triplex.ts",
+      "oldSha256": "564e8f869b6b0a802557e95fea075680e7aed001dd4c3372ef7746e6332757fb",
+      "newSha256": "b5b1788b9f469250badf16d2d040956d4ce7196ad413b65ccec696a97ab70249"
+    },
+    {
+      "path": "lab/bench/reader-worker.ts",
+      "oldSha256": "97b3b5439f47301ea9fd758a6edfb7923e1811fafabfcd38c499e0c9f7df057d",
+      "newSha256": "e09128ae68fd2935ab66792f97695277b11105f8dc7fc77d548103225fb743bc"
+    },
+    {
+      "path": "lab/bench/test/datomic-publication.test.ts",
+      "oldSha256": null,
+      "newSha256": "e612d040d870cfb8c70bc7edb83ebfc8406dff70828c07a00cec8a4d68ac15e6"
+    },
+    {
+      "path": "lab/bench/test/http-counts.test.ts",
+      "oldSha256": null,
+      "newSha256": "456c38eae416202224e63cf63ac87697dd6779d71a6cf8aff5d19b06a3f7f459"
+    },
+    {
+      "path": "lab/bench/test/reach.test.ts",
+      "oldSha256": null,
+      "newSha256": "2549ce68fa425d8fe012c80d2374dd98eeb4790245470cd4e2f6c0d59439a664"
+    },
+    {
+      "path": "lab/bin/gate.mjs",
+      "oldSha256": "1d3368558035b424e014f296371964e0301d4d2cb52a659559aa7fcaf954032a",
+      "newSha256": "ceb0dfb2893363e242c4398e85310e500f0f880d196a5fac50e51d446f3c0f38"
+    },
+    {
+      "path": "lab/experiments/EXP-DX1/h1/run.mjs",
+      "oldSha256": null,
+      "newSha256": "15d740480cc6679235ceda7deacd0e54857d6050450ff044bc90196eb60a40db"
+    },
+    {
+      "path": "lab/experiments/EXP-DX1/h1/run.sh",
+      "oldSha256": null,
+      "newSha256": "4c1edf70e818fe73ae7f2fe8c317b31a66367aafa3cd1dff8c1364845a437777"
+    },
+    {
+      "path": "lab/experiments/EXP-DX1/h1/summarize.mjs",
+      "oldSha256": null,
+      "newSha256": "608300cd1fe2851b108042cfcd878688902390219c4948847d6255069c0e5f5b"
+    },
+    {
+      "path": "lab/experiments/EXP-DX1/stack/down.sh",
+      "oldSha256": null,
+      "newSha256": "7e2b63f671bd1a827672b19e6c08edf62097ec9bfaa5798013d271d785a25e4b"
+    },
+    {
+      "path": "lab/experiments/EXP-DX1/stack/up.sh",
+      "oldSha256": null,
+      "newSha256": "a5932796ce92fc1f01aa714596ababcdbb50b73e88fe60a8e10a2d838cca52f0"
+    },
+    {
+      "path": "packages/datomic/gateway/src/triplex/gateway/main.clj",
+      "oldSha256": "5d070016255c2a38afce92f1dd55deb0b8da51925db46fbf73e2e630d699f4c3",
+      "newSha256": "75b054c18564a1aaa80dc9f06db7ecda50c83f856d4085b9e5525f7c2809888e"
+    }
+  ],
+  "referenceHeadBeforeReport": "705e08a766c607207d0c667ea3467d8c55416306",
+  "hashesFromWorkingTree": true
+}

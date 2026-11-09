@@ -83,8 +83,11 @@ try {
           args,
           endpoints: { DATOMIC_URL: env.DATOMIC_URL, DATOMIC_READ_URLS: env.DATOMIC_READ_URLS },
           head: execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
-          engine: { containers: process.env.TX2_ENGINE_CONTAINER ?? null, cpus: process.env.TX2_ENGINE_CPUS ?? null },
-        startedAt: new Date().toISOString(),
+          engine: {
+            containers: process.env.TX2_ENGINE_CONTAINER ?? null,
+            cpus: process.env.TX2_ENGINE_CPUS ?? null,
+          },
+          startedAt: new Date().toISOString(),
         },
         null,
         2,
