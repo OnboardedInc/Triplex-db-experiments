@@ -1658,3 +1658,10 @@ Where each priority stands, from evidence so far (research probes and baselines;
   disks; engine-fed arms are 1k baselines (Q92d). That states an engine limit plainly; it rules out no engine.
 - **Order:** lane X native starts now from main (CX-P5A, offline A0 at 1k and 10k; the 1k slot run joins the scale window); lane Q after
   P2Q and SQL01 merge; lane D after DA01 and DA04.
+
+## 2026-11-09 00:50Z: the 30-of-40 defect appeared again, on lane D
+- **V-DA01 FIX-FIRST:** an indirect selection of :f/live (Datomic's current-only attribute) bypassed the historical-basis guard and
+  returned 30 rows where the earlier snapshot holds 40, the same shape as SQL01's F1 on lane Q. Two lanes, two teams of agents, same defect:
+  a current-only store reached by a historical basis. R31 predicted it (D-D2). Conformance passed 88/88 and the full suite, so G1 does
+  not catch this class. **Learning:** route choice belongs in one place per lane, and RQ01 must become the gate for every lane's
+  read routes (Q89f) as soon as it merges; DA01 round 4 adds an RQ01-style all-shapes-all-paths test meanwhile.
