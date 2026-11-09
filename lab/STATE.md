@@ -286,3 +286,7 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   live5/M01-MERGE.md; OS memory pressure is unavailable in the sandbox and is recorded as such). G2 passed again. G6 stopped on its disk
   forecast after 500 A/A control commits, because other agents' evidence grew during the run; no B samples, no judgment. **Next RT01 G6
   window opens when CX-P2B and CX-DI01 have finished** (the two heaviest evidence writers), with host disk above the runbook's forecast.
+- 2026-11-09 G03 round 5 (14e62764): boxed P-TINY NS smoke DIAGNOSTIC; the 1k registered run was refused by pool admission (no resident
+  parked). Round 6 (offline) merges main to restore lab/acceptance and builds the fault injector. **Slot windows, in order:** (1) RT01 G6,
+  when CX-P2B and CX-DI01 are idle; (2) G03's 1k registered run with qlever-dev parked per Q100n (authorized by the orchestrator for that
+  window; restore it after) and the observer's matched-arm overhead measurement; (3) M01 A/A calibration; then P3 screening.
