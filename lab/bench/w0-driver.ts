@@ -1,3 +1,5 @@
+import { startW0Live, matchW0Live } from "./lib/w0-live.ts";
+import { measurementLease } from "./lib/w0-lease.ts";
 import { latencyReceipt, requireQleverConnectionMode } from "../receipts/latency.mjs";
 import fs from "node:fs";
 import path from "node:path";
@@ -40,7 +42,10 @@ export async function runW0Driver(argv: string[]) {
   const startedAt = new Date().toISOString();
   const report: any = latencyReceipt({
     format: "triplex-db-2/p5-screening/1",
-    qleverConnectionMode: lane === "qlever" ? requireQleverConnectionMode(process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive") : null,
+    qleverConnectionMode:
+      lane === "qlever"
+        ? requireQleverConnectionMode(process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive")
+        : null,
     attempt,
     scope,
     startedAt,
@@ -68,6 +73,19 @@ export async function runW0Driver(argv: string[]) {
     "lab/bench/lib/composition.ts",
     "lab/bench/lib/memory.ts",
     "lab/bench/lib/w0-public.ts",
+    "lab/bench/lib/w0-datomic-reader.ts",
+    "lab/bench/lib/w0-live.ts",
+    "lab/bench/lib/w0-live-worker.ts",
+    "lab/bench/lib/w0-lease.ts",
+    "lab/bench/lib/http-counts.ts",
+    ...(lane === "datomic"
+      ? [
+          "packages/datomic/dist/index.js",
+          "packages/datomic/dist/DatomicStorageAdapter.js",
+          "packages/datomic/dist/DatomicClient.js",
+          "packages/datomic/dist/reach.js",
+        ]
+      : []),
     "lab/bench/lib/w0-outbox.ts",
     "lab/bench/lib/w0-gates.ts",
     "lab/bench/lib/w0-oracle.py",
@@ -80,6 +98,8 @@ export async function runW0Driver(argv: string[]) {
   save();
   process.env["TX2_P5_CLOCK_START"] = String(V_W0);
   report.pins = await loadW0Pins();
+  const lease = await measurementLease();
+  let traffic: Awaited<ReturnType<typeof startW0Live>> | undefined;
   const comp = await openComposition(composition, lane, scope),
     oracle = new DomainOracle();
   const subjects = subjectList(N),
@@ -87,8 +107,9 @@ export async function runW0Driver(argv: string[]) {
   let expectedState: any = emptyWireState();
   try {
     console.error(`[P5] ${attempt} seeding ${N}`);
-    report.seed = await seedW0(comp, N, path.join(dir, "seed.ndjson"));
+    report.seed = await seedW0(comp, N, path.join(dir, "seed.ndjson"), lease.checkpoint);
     save();
+    await lease.checkpoint(true);
     requireCounts(await comp.storeCounts(), report.seed.counts);
     console.error("[P5] independent population fingerprint");
     await execute(
@@ -141,6 +162,7 @@ export async function runW0Driver(argv: string[]) {
     report.seed.fingerprint = fingerprint;
     report.gates.G0 = { status: "PASS", subjects: count, fingerprint };
     save();
+    await lease.checkpoint(true);
     if (argv.includes("--g0-only")) {
       report.status = "G0-PASS";
       report.limitations.push("Activation and screening rounds not requested");
@@ -228,6 +250,7 @@ export async function runW0Driver(argv: string[]) {
     const coverage = new Set<string>(),
       published = new Map<string, any>();
     const activationPage = async (records: readonly any[], page: number) => {
+      const verifyStart = performance.now();
       const original = JSON.parse(fs.readFileSync(path.join(dir, `preview-${page}.json`), "utf8"));
       for (let i = 0; i < records.length; i++) {
         const r = records[i]!;
@@ -248,7 +271,11 @@ export async function runW0Driver(argv: string[]) {
           evaluations: evaluations.map(wireRecord),
         }),
       );
-      const actual = await comp.publishOutbox(evaluations);
+      const verificationBeforeMs = performance.now() - verifyStart;
+      const publishStart = performance.now();
+      const actual: any = await comp.publishOutbox(evaluations);
+      const publicationWallMs = performance.now() - publishStart;
+      const verifyAfter = performance.now();
       equalBytes(
         "G5 deliveries",
         canonical(deliveriesWire(actual.deliveries)),
@@ -260,8 +287,39 @@ export async function runW0Driver(argv: string[]) {
         if (published.has(key)) throw new Error("duplicate visible delivery");
         published.set(key, d);
       }
+      return {
+        verificationMs: verificationBeforeMs + performance.now() - verifyAfter,
+        publicationWallMs,
+        ...(actual.timing ?? {}),
+      };
     };
+    if (argv.includes("--live")) {
+      const options = {
+        comp,
+        composition,
+        lane,
+        scope,
+        N,
+        dir,
+        seed: opt("traffic-seed", "DX-H2-frozen-v1")!,
+        offsetS: Number(opt("traffic-offset-s", "0")),
+      };
+      console.error("[P5] no-sweep live traffic (64 readers)");
+      traffic = await startW0Live({ ...options, id: attempt + ":baseline" });
+      await new Promise((r) => setTimeout(r, Number(opt("baseline-s", "60")) * 1000));
+      report.live = {
+        baseline: await traffic.stop(),
+        note: "Sequential windows on one evolving store, same frozen generator and offset; command IDs namespaced by arm. Diagnostic ratios; no clone/A-A or statistical acceptance.",
+      };
+      traffic = undefined;
+      save();
+      await lease.checkpoint(true);
+      console.error("[P5] sweep live traffic (64 readers)");
+      traffic = await startW0Live({ ...options, id: attempt + ":sweep" });
+    }
     console.error("[P5] activation and publication");
+    let publicationChain = Promise.resolve();
+    let publicationError: unknown;
     const cursor = path.join(dir, "activation-cursor.json");
     report.sweep = await runW0Sweep({
       comp,
@@ -274,8 +332,30 @@ export async function runW0Driver(argv: string[]) {
       cursor,
       workers,
       activations,
-      onPage: activationPage,
+      onPage: (records, page) => {
+        const queued = performance.now();
+        const task = publicationChain.then(async () => {
+          if (publicationError) throw publicationError;
+          traffic?.check();
+          const publishQueueMs = performance.now() - queued;
+          return { publishQueueMs, ...(await activationPage(records, page)) };
+        });
+        // [DX-H2] Why: the independent publish fold follows ACK order across workers.
+        // Rejected: racing callbacks over one expected outbox state.
+        publicationChain = task.then(
+          () => {},
+          (e) => {
+            publicationError = e;
+          },
+        );
+        return task;
+      },
     });
+    if (traffic) {
+      report.live.sweep = await traffic.stop();
+      traffic = undefined;
+      report.live.matched = matchW0Live(report.live.baseline, report.live.sweep);
+    }
     if (coverage.size !== N || !report.sweep.complete) throw new Error("G4 incomplete coverage");
     report.gates.G1 = {
       status: "PASS",
@@ -300,6 +380,7 @@ export async function runW0Driver(argv: string[]) {
       oracle: "O-DOMAIN publish; per-frame state folded from independent expected state",
     };
     report.gates.G7 = { status: "PASS", pages: report.sweep.metrics.length, basis };
+    await lease.checkpoint(true);
     const end = await comp.storeCounts();
     // G9 counts read directly from the store and independently folded from actual committed journal changes.
     let position = 0,
@@ -354,7 +435,12 @@ export async function runW0Driver(argv: string[]) {
     };
     report.limitations.push(
       "No pre-capture mapped trace/O-REPLAY gate yet",
-      "No 64-reader live traffic or latency ratios",
+      ...(report.live
+        ? [
+            "Sequential traffic arms share evolving state; no matched clones or A/A calibration",
+            "Live readers use current-position uniform subjects; not the full TARGETS section 2.2 read-basis/hot mix or a full live-read semantic oracle",
+          ]
+        : ["No 64-reader live traffic or latency ratios"]),
       "Controller unit-tested but not wired to live measurements",
       "No engine maintenance G8",
       "No ten abrupt controller-process resume cycles",
@@ -369,6 +455,15 @@ export async function runW0Driver(argv: string[]) {
     process.exitCode = 1;
     throw error;
   } finally {
+    if (traffic) {
+      try {
+        report.interruptedTraffic = await traffic.stop();
+      } catch (e) {
+        report.trafficError = String(e);
+      }
+    }
+    lease.release();
+    report.measurementHolds = lease.holds;
     oracle.close();
     await comp.close();
     report.finishedAt = new Date().toISOString();

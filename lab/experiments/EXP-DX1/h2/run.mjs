@@ -5,40 +5,21 @@ const composition = "reach";
 if (!["public", "reach", "both"].includes(composition))
   throw Error("usage: run.sh public|reach|both [driver flags]");
 const evidence = "/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H2";
-const lock = "/Users/sam/Claude/Projects/triplex-db-2/locks/measure";
-fs.mkdirSync(path.dirname(lock), { recursive: true });
-while (true) {
-  try {
-    fs.mkdirSync(lock);
-    break;
-  } catch (e) {
-    if (e.code !== "EEXIST") throw e;
-  }
-  process.stderr.write("[DX-H2] waiting for measurement lock\n");
-  await new Promise((r) => setTimeout(r, 5000));
-}
 let child;
 let timedOut = false;
-let held = true;
-const release = () => {
-  if (held) {
-    held = false;
-    fs.rmdirSync(lock);
-  }
-};
-process.on("exit", release);
+
 for (const signal of ["SIGINT", "SIGTERM"])
   process.on(signal, () => {
     timedOut = true;
     child?.kill(signal);
   });
-// [DX-H2] Why: public/reach can share one bounded lease, avoiding starvation between two short attempts.
-// Rejected: a separate 15-minute timer per child while holding the same lock.
+// [DX-H2] Why: the driver rotates bounded leases between seed ACKs; cap the whole command at the task time box.
+// Rejected: one unbounded measurement lease across seeding.
 const timer = setTimeout(() => {
   timedOut = true;
   child?.kill("SIGTERM");
   setTimeout(() => child?.kill("SIGKILL"), 3000).unref();
-}, 870_000);
+}, 10800_000);
 try {
   for (const selected of composition === "both" ? ["public", "reach"] : [composition]) {
     const id = selected + "-" + Date.now();
@@ -55,18 +36,6 @@ try {
       selected,
       "--world",
       "w0",
-      "--rung",
-      "1000",
-      "--level-s",
-      "20",
-      "--max-readers",
-      "16",
-      "--sweep-max",
-      "400",
-      "--history-sample",
-      "50",
-      "--reader-threads",
-      "2",
       "--output",
       path.join(link, "receipt.json"),
       ...process.argv.slice(2),
@@ -106,5 +75,4 @@ try {
   }
 } finally {
   clearTimeout(timer);
-  release();
 }

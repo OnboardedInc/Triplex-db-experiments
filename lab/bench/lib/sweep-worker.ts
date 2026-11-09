@@ -1,3 +1,4 @@
+import { measureHttp } from "./http-counts.ts";
 import { parentPort, workerData } from "node:worker_threads";
 import { performance } from "node:perf_hooks";
 import { canonical, reachableRows, worldOf } from "./w0-world.ts";
@@ -22,14 +23,19 @@ port.on("message", async (msg) => {
     const cpu = () => (process as any).threadCpuUsage?.() ?? process.cpuUsage();
     const diff = (a: any, b: any) => (b.user - a.user + b.system - a.system) / 1e6;
     let c = cpu();
-    const page = comp
-      ? await comp.sweepPage(msg.subjects, msg.basis)
+    const readStart = performance.now();
+    const measured = comp ? await measureHttp(() => comp.sweepPage(msg.subjects, msg.basis)) : null;
+    const page = measured
+      ? measured.value
       : await new Promise<any>((resolve) => {
           pending.set(msg.id, resolve);
           port.postMessage({ type: "read", id: msg.id, subjects: msg.subjects, basis: msg.basis });
         });
     if (page.error) throw new Error(page.error);
+    const readWallMs = performance.now() - readStart;
     const readCpu = diff(c, cpu());
+    let decodeWallMs = 0,
+      evaluateWallMs = 0;
     let decodeCpu = 0,
       kernelCpu = 0;
     const result: any[] = [];
@@ -41,11 +47,15 @@ port.on("message", async (msg) => {
     }
     for (const subject of msg.subjects) {
       c = cpu();
+      let wall = performance.now();
       const world = worldOf(subject, reachableRows([subject], page.rows, byEntity));
       decodeCpu += diff(c, cpu());
+      decodeWallMs += performance.now() - wall;
       c = cpu();
+      wall = performance.now();
       const r = await evaluateW0(world, msg.release, msg.basis, pins, msg.activations);
       kernelCpu += diff(c, cpu());
+      evaluateWallMs += performance.now() - wall;
       if ("error" in r) throw new Error(subject + ": " + r.error);
       result.push({ subject, world, output: r.output, record: r.record });
     }
@@ -57,6 +67,12 @@ port.on("message", async (msg) => {
         bytes: bytes.buffer,
         position: page.position,
         epoch: page.epoch,
+        timing: {
+          readWallMs,
+          readRequests: measured?.requests ?? page.timing?.readRequests ?? null,
+          decodeWallMs,
+          evaluateWallMs,
+        },
         cpu: { read: readCpu, decode: decodeCpu, kernel: kernelCpu },
         cpuScope: (process as any).threadCpuUsage ? "thread" : "process-overlapping",
         elu: performance.eventLoopUtilization(start),

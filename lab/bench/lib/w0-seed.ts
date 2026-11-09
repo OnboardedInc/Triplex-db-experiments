@@ -90,8 +90,14 @@ export function* seedCommands(N: number): Generator<W0Command> {
     if (position - first !== pl.commands) throw new Error("reference command count mismatch: " + S);
   }
 }
-export async function seedW0(comp: CompositionHandle, N: number, logFile: string) {
+export async function seedW0(
+  comp: CompositionHandle,
+  N: number,
+  logFile: string,
+  checkpoint?: () => Promise<void>,
+) {
   if ((await comp.currentPosition()) !== 0) throw new Error("W0 seed requires fresh scope");
+  const seedStarted = performance.now();
   const Rseed = W0.rung(N);
   const fd = fs.openSync(logFile, "wx"),
     latest = new Map<string, string>();
@@ -133,6 +139,7 @@ export async function seedW0(comp: CompositionHandle, N: number, logFile: string
       const line = canonical({ commandId, operations, receipt: result.value }) + "\n";
       fs.writeSync(fd, line);
       commandsHash.update(line);
+      await checkpoint?.();
     }
   } finally {
     fs.closeSync(fd);
@@ -153,6 +160,8 @@ export async function seedW0(comp: CompositionHandle, N: number, logFile: string
     logSha256: commandsHash.digest("hex"),
     counts: await comp.storeCounts(),
     releaseHashes: [W0.R1.hash, W0.R2.hash, W0.R3.hash],
+    wallMs: performance.now() - seedStarted,
+    commandsPerS: position / ((performance.now() - seedStarted) / 1000),
     mapper: sha256(fs.readFileSync(new URL("./w0-seed.ts", import.meta.url))),
   };
 }
