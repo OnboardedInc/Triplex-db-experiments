@@ -285,3 +285,122 @@ and copied terminal gate receipts/raw artifacts under `round2/gates/`. Canonical
 `lab/runs/G1/`; original raw runs, contexts, images and object preimages are retained. No failed attempt was deleted or adopted as a PASS.
 
 Open: independent DA00/DA01 review and the skip-policy review; later storage/provisioning/tenancy and performance acceptance listed above.
+
+
+## Round 3 — coherent read pins and indexed basis/subject lookup (Q89)
+
+North star: P1's exact named cuts, with P4/P5 access-path correctness. This round addresses R31 D-D1, D-D3, D-D4 and the
+`getByEntities` part of D-D5, plus Q89b/c/d and the Q89f route gate. Authority: the main checkout's Q89 rulings and R31 sections
+2, 3 and 5.2–5.5; their hashes and the Q89 text are in `round3/authority.json`. Final executable source:
+`6f70eb46dea8ecae3d3448a2d1ceaa05e3844de0`. Independent review remains required.
+
+### Read behavior
+
+- Every Datalog execution acquires one held immutable Peer database and releases it on success or failure. Every rule round,
+  the final native query and optional projection pull carries that handle and one resolved position. A query inside a staged
+  transaction borrows the parent's handle and freezes its staged input once; it does not release the parent's handle.
+  Held requests bypass `d/sync` and never replace the held value with a newer database.
+- Future positions are checked against the available head of the exact database being read. Unheld reads poll publication;
+  held reads preserve their pin and refuse rather than advance. The default wait is 500 ms, bounded by the gateway's 1–2000 ms
+  `basisWaitMs` range and a monotonic deadline. The gateway returns HTTP 409/code `BasisNotAvailable`; the SDK maps it to
+  exported `DatomicBasisNotAvailable`, a `ReadError` subtype with that matchable code and reason. The SPI error tag stays compatible.
+  Empty batches and dependency reads also validate their basis, so neither can silently accept a future position.
+- Position selection uses the first `d/index-range` entry at or above P on `:triplex.tx/position`, preserving sparse interior
+  ordinals in a multi-position physical transaction. P=0 uses the initial scope-key datom; P=head uses the held/current db.
+  The old per-basis full-scan map/cache and its invalidation calls are removed.
+- Batch reads resolve each distinct subject by its unique identity and enumerate `:f/subject` via VAET. Missing subjects and
+  empty selections remain empty after basis validation; unrelated facts are not enumerated.
+- Default reads retain full subject history and can answer T/TP. A qualification-only gateway `route: "live"` allows the
+  position-retired `:f/live` primitive to be forced. Its eligibility refuses every record-time basis, history enumeration and
+  interior logical positions that are not physical transaction ends. Native EDN selecting `:f/live` has the same T/interior
+  guard. The TypeScript runtime does not select this path by default; this is correctness qualification, not P4 promotion.
+- Returned row retirement metadata is masked when that retirement is unknown at the requested P/T. This makes complete row
+  versions agree across ordinary, held, staged and historical routes and with O-REPLAY's as-of snapshot, including interior cuts.
+
+### Regressions and shared route gate
+
+Deterministic live schedules commit after the first `/q` response. The optional-pull schedule retracts both type T and status a,
+then asserts status b: the result remains the old T/a cut, never the impossible T/b mix. The rule schedule replaces a→b with b→c
+between rounds: the pinned query keeps a→b and never fabricates a→c. The tests check common handles/bases and release after both
+success and injected query failure; the existing staged-query test also proves the parent handle remains usable.
+
+Future-cut tests cover pulls, populated/empty batches, dependency state, Datalog and held transaction reads, assert the SDK error
+type and nonzero wait, and verify catch-up can succeed. The JVM schedule waits for the reader's first refresh before committing
+its requested position. JVM instrumentation rejects any full `:triplex.tx/position` or `:f/id` scan while the seek/batch tests run,
+checks native range-seek arguments, and verifies a selected subject with 97 unrelated facts present. It also tests the live-index
+refusal, including native EDN. The 40-assert/10-retract case returns all 40 at T/TP through the full-history route; forced live
+pulls and native queries refuse those bases with the typed availability error.
+
+`packages/testkit` now exports a shared seeded history generator and `makeRouteEquivalenceCases`. The bounded DA01 profile has
+six subjects, 40 logical positions in 39 physical commit groups, group retirement, replacements, cardinality-many support,
+assert-then-pattern-retract, validity bounds, a position-only command, tied stamps and an interior ordinal. Eleven P/T/TP/V bases
+are read through source/as-of, held, staged and guarded live routes, repeated after 11 history advances. The runner checks independent
+oracle equality, cross-route/repeat equality, declared refusals, coverage, route provenance, basis echoes and fail-open flags.
+Adversarial runner tests reject incorrect rows (including a signed-zero change), false route/basis echoes, fail-open flags,
+undeclared refusals, missing coverage and repeat drift.
+
+The independent O-REPLAY CLI evaluates the driver-recorded commands/receipts before and after the advances. Each fixture retains
+both complete case/expected files, actual row/refusal observations and route traces: 88 observations, 82 answers and 6 declared
+refusals; head advances from 40 to 51 and pinned answers stay equal. This is a bounded profile, not every proposed R31 operation,
+basis cross-product, route or large profile. Datalog's between-request schedules are additional focused regressions.
+
+Datomic G1 now requires this fixture as an extra step after the unchanged 44-case current/reopen/full-suite run. It requires its
+one live test to execute and pass, stores the six evidence files and fixture/oracle preimages, checks the built packages stayed
+unchanged and rechecks the resident identity. Its main conformance denominator remains 88. This strengthened G1 policy and exactly
+five added G0 live-test skips (16 Datomic live skips total) need independent gate-policy review. Existing X/Q skip entries and
+44-case conformance names are unchanged. The testkit export has a Changeset; the only lockfile change is the workspace testkit
+dev-dependency link. Frozen offline installation completed with pnpm 10.11.0 and the owned store; no external version pin changed.
+
+### Deployment and acceptance
+
+Both gateway images were built locally in fresh verified contexts and pinned by immutable ID. The final image is
+`sha256:9619fb07157511efa7c22e8e86041cb9179ffd473c28bb761344ca57bcc59a30`; gateway source hash
+`92c14a52764a4933376e8efbf4b7164a4d8f0318fe7996d6ac3ac8242e62386f`; source inputs
+`92984ee3875d609aace2c1fd368a61eaaa979c06e99b4b6afe45d6f5b79f9604`; build inputs
+`2e8f170abdbea1e926bf313d41ae77edceadd90a39f49929824f29b789b37634`.
+
+The pool first refused an extra 1.5 GiB selftest JVM alongside the resident. Each authorized restart window therefore ran
+`engine.mjs down`, the pool-admitted selftest, then `up`, with the same EXP-DA01 holder and the volume retained. Two successful
+windows are recorded command-by-command. The final JVM result is 7 tests/157 assertions, zero failures/errors. Both DA00 proof
+databases still read `t=1001`, position 0 and their original schema hash. No `--fresh` or volume deletion was used.
+
+| Check | Evidence | Result |
+| --- | --- | --- |
+| Offline codec/kernel/shared-runner | `round3/offline-1.log` | 102/102 |
+| Final live package/shared-runner tests | `round3/live-final.log` | 118/118; 18/18 databases deleted |
+| JVM final image | `round3/selftest-window-2.log` | 157/157 assertions |
+| Lab helper/control tests | `round3/lab-tests.log` | 23/23 |
+| Datomic + testkit typechecks | `round3/*typecheck*.log` and committed-source check | PASS |
+| G0 | `G0-datomic-20261109T001802Z-f61e8a` | 1095/1095; 62 expected skips; zero unexpected |
+| G1 | `G1-datomic-20261109T001828Z-85abad` | 88/88 + complete suite + route gate PASS |
+| G1 `--previous` | `G1-datomic-20261109T002002Z-e3adf2` | 88/88 + complete suite + route gate PASS; previous `85abad` |
+
+Both G1 attempts delete 89/89 conformance databases and their additional route-fixture database. All three terminal receipts bind
+`6f70eb46` with no modified/untracked executed-source files. Raw runs and first failures are retained; final packet collection
+checks source, image, cleanup, oracle artifacts and the linked rerun before producing `round3/SUMMARY.json` and `round3/FILES.json`.
+
+The first live diagnostic retained a missing newly added workspace dependency link and an overbroad test trace that counted the
+injected writer's reads; both test setup defects were fixed. The first O-REPLAY diagnostic correctly rejected a driver that used
+plain retract on a not-yet-committed symbolic assertion. The driver now uses the supported staged `retract-pattern` form; the failed
+case and FAIL oracle output remain. No oracle expectation was changed. The first intermediate JVM/image result (156 assertions)
+also remains; the final image adds the native EDN guard and its assertion. No failed diagnostic is adopted as final acceptance.
+
+The required root `pnpm pack:check` was rerun and failed on the already-unbuilt unrelated CLI tarball missing `dist/index.js`;
+`round3/pack-check.log`, receipt and all produced tarballs are retained. A targeted paired core/testkit tarball export/type smoke
+passed both types and runtime checks using existing pinned dependency links (`round3/packed-exports/receipt.json`); it is not a
+fresh dependency installation or registry consumer qualification.
+
+Open: independent adversarial and gate-policy review; Q89a/R33 decision-time record stamps and watermark, Q89g public position
+API, exhaustive/large R31 profiles, D-D6's remaining initial sync cost, attribute/dependency-state scan cost, production storage,
+authentication/tenant certification, erasure, full cancellation/resource and P1–P5 performance qualification. No new record-time
+watermark or public TemporalBasis contract was introduced. No performance bar, promotion, main merge, push, publication, subagent
+launch, unrelated engine lifecycle or forbidden checkout/port access is claimed or was performed.
+
+
+Final packet: [summary](round3/SUMMARY.json), [checksums](round3/FILES.json), [resident status](round3/engine-status-final.txt),
+[resident image](round3/resident-image.json), [final image build receipt](round3/build-2-receipt.json),
+[packed testkit export receipt](round3/packed-exports/receipt.json), and terminal receipt/raw directories under `round3/gates/`.
+The resident is READY on the exact pinned image, holder EXP-DA01, with its volume retained. Final collection observed
+12,981,252,096 bytes host free. Both oracle runs and complete row/refusal journals for each G1 route fixture are retained.
+The checksum index excludes dependency/cache directories and its own generation logs; all other retained packet files are indexed.
+Canonical `lab/runs/` receipts, original raw runs and engine build contexts remain in place. Nothing was merged or pushed.
