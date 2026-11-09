@@ -224,20 +224,31 @@ const h1RowWith=T=>{
 };
 const h1Joins=' f JOIN ents e ON e.eid=f.e LEFT JOIN ents ref ON f.t=5 AND ref.eid=f.v';
 const h1Rows=(sel,T)=>q('SELECT json_group_array('+h1RowWith(T)+') FROM ('+h1Union(sel)+')'+h1Joins).pluck();
-// One statement per fetch for the dictionaries the rows' ids refer to: transactions (position, instant, name), attributes, strings (creators, entity types).
-const h1Head=(sel,T)=>{
- const u='(SELECT a,pos,c,y FROM ('+h1Union(sel)+'))';
- return q('SELECT (SELECT json_group_array(json_array(t.pos,'+sn('t.at')+','+T('te.name')+')) FROM txs t JOIN ents te ON te.eid=t.tx WHERE t.pos IN (SELECT pos FROM '+u+')),'+
- '(SELECT json_group_array(json_array(d.aid,'+T('d.name')+')) FROM attrs d WHERE d.aid IN (SELECT a FROM '+u+')),'+
- '(SELECT json_group_array(json_array(d.sid,'+T('d.s')+')) FROM strs d WHERE d.sid IN (SELECT c FROM '+u+' UNION SELECT y FROM '+u+'))').raw();
-};
+// Dictionaries the rows' ids refer to. Transactions (position, instant, name) come from one statement per fetch. Attributes and strings are
+// whole-table text while the table is small (max id <= 256; ids are append-only and immutable, so (max id) names the content and the text is
+// cached per writer epoch and schema key); a larger table sends only the entries the fetch uses. Measured standalone on W0 (32 attributes, 2
+// strings): used-entry statements 49 and 77 us, cached whole tables 5 us. Rejected: a used-entry UNION of creators and types (151 us, two scans).
+const dictCache=new Map();
 const h1Fetch=sel=>{
- const fast=h1Rows(sel,x=>x),safe=h1Rows(sel,safeText),fastHead=h1Head(sel,x=>x),safeHead=h1Head(sel,safeText);
- return args=>{
-  let rows,head;
-  try{rows=fast.get(args);head=fastHead.get(args);}catch(e){if(!String(e).includes('JSON cannot hold BLOB'))throw e;rows=safe.get(args);head=safeHead.get(args);}
-  return {rows,txs:head[0],attrs:head[1],strs:head[2]};
+ const u='(SELECT a,pos,c,y FROM ('+h1Union(sel)+'))';
+ const mk=T=>({
+  rows:h1Rows(sel,T),
+  txs:q('SELECT json_group_array(json_array(t.pos,'+sn('t.at')+','+T('te.name')+')) FROM txs t JOIN ents te ON te.eid=t.tx WHERE t.pos IN (SELECT pos FROM '+u+')').pluck(),
+  usedAttrs:q('SELECT json_group_array(json_array(d.aid,'+T('d.name')+')) FROM attrs d WHERE d.aid IN (SELECT a FROM '+u+')').pluck(),
+  usedStrs:q('SELECT json_group_array(json_array(d.sid,'+T('d.s')+')) FROM strs d WHERE d.sid IN (SELECT c FROM '+u+') OR d.sid IN (SELECT y FROM '+u+')').pluck(),
+  wholeAttrs:q('SELECT json_group_array(json_array(aid,'+T('name')+')) FROM attrs').pluck(),
+  wholeStrs:q('SELECT json_group_array(json_array(sid,'+T('s')+')) FROM strs').pluck(),
+ });
+ const fast=mk(x=>x),safe=mk(safeText);
+ const dict=(t,which,args,safe_)=>{
+  const mx=q('SELECT coalesce(max('+dictId(t)+'),0) FROM '+t).pluck().get(),m=safe_?safe:fast;
+  if(mx>256)return (t==='attrs'?m.usedAttrs:m.usedStrs).get(args);
+  const key=t+':'+mx+':'+safe_;let text=dictCache.get(key);
+  if(text===undefined){text=(t==='attrs'?m.wholeAttrs:m.wholeStrs).get();if(dictCache.size>64)dictCache.clear();dictCache.set(key,text);}
+  return text;
  };
+ const run=(m,safe_,args)=>({rows:m.rows.get(args),txs:m.txs.get(args),attrs:dict('attrs',0,args,safe_),strs:dict('strs',0,args,safe_)});
+ return args=>{try{return run(fast,false,args);}catch(e){if(!String(e).includes('JSON cannot hold BLOB'))throw e;return run(safe,true,args);}};
 };
 // All refs are followed as a superset, even expired refs: valid-time filtering stays in the adapter. Refs from verbatim rows (x) are found by JS.
 const h1Refs=(sel,skip)=>q('SELECT DISTINCT f.v,f.x FROM ('+h1Union(sel)+') f WHERE (f.t=5 AND f.x IS NULL'+skip+') OR f.x IS NOT NULL').raw();
@@ -248,7 +259,7 @@ const entIds=new Map(),entNames=new Map();
 // reuse ids for other names. Every whole pull therefore compares (writer epoch, SQLite schema_version) with the key its caches were filled
 // under and drops all of them (including HS01's id-to-name map) when it differs. Rejected: caches that outlive a key change.
 let cacheKey='';
-const syncCaches=m=>{const key=m.epoch+':'+q('PRAGMA schema_version').pluck().get();if(key!==cacheKey){cacheKey=key;entIds.clear();entNames.clear();names.clear();}};
+const syncCaches=m=>{const key=m.epoch+':'+q('PRAGMA schema_version').pluck().get();if(key!==cacheKey){cacheKey=key;entIds.clear();entNames.clear();names.clear();dictCache.clear();}};
 const entId=s=>{let x=entIds.get(s);if(x===undefined){x=q('SELECT eid FROM ents WHERE name=?').pluck().get(textKey(s));if(x===undefined)return undefined;if(entIds.size>=200000)entIds.clear();entIds.set(s,x);}return x;};
 const entName=id=>{let x=entNames.get(id);if(x===undefined){x=name('ents',id);if(entNames.size>=200000)entNames.clear();entNames.set(id,x);}return x;};
 const wholePull = a => {
@@ -278,11 +289,11 @@ const wholePull = a => {
    if(o===undefined||owners.has(o))continue;
    if(roots){
     owners.add(o);ownerNames.push(on);
-    const rows=ownerRows({o,b});statements+=3;
+    const rows=ownerRows({o,b});statements+=4;
     next.push(...collect(rows,ownerRefs.all({o,b})));
    }else{
     const e=entId(entity);if(e===undefined)continue;
-    const rows=entityRows({o,b,e});statements+=3;
+    const rows=entityRows({o,b,e});statements+=4;
     next.push(...collect(rows,entityRefs.all({o,b,e})));
    }
   }
