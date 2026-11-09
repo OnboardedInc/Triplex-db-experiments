@@ -394,7 +394,11 @@ async function activationArm(name: string, W: number) {
     };
   } finally {
     oracle.close();
-    await comp.close();
+    // [EXP-P5N] Why: a close failure must not replace the error that ended the arm (the first direct-route run lost its real error to "SQLite close timed out"). Rejected: letting close throw from finally.
+    await comp.close().catch((e: any) => {
+      report.closeError = String(e?.stack ?? e);
+      console.error("close failed: " + report.closeError);
+    });
   }
 }
 

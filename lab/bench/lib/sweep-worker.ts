@@ -69,6 +69,15 @@ port.on("message", async (msg) => {
     pending.delete(msg.id);
     return;
   }
+  if (msg.type === "close") {
+    // [EXP-P5N] Why: close the nested SQLite reader on its own thread before the sweep thread is terminated, so no reader is cut off mid-request.
+    try {
+      await reader?.close();
+    } finally {
+      port.postMessage({ type: "closed" });
+    }
+    return;
+  }
   if (msg.type !== "page") return;
   try {
     const start = performance.eventLoopUtilization();

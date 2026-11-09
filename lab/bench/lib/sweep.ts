@@ -286,6 +286,18 @@ export async function runW0Sweep(o: SweepOptions) {
   } finally {
     cancelled = true;
     signal();
+    // [EXP-P5N] Why: ask each worker to close its own SQLite reader first (bounded wait), then terminate.
+    await Promise.all(
+      threads.map(
+        (w) =>
+          new Promise<void>((resolve) => {
+            const timer = setTimeout(resolve, 5000);
+            w.on("message", (m) => m?.type === "closed" && (clearTimeout(timer), resolve()));
+            w.once("exit", () => (clearTimeout(timer), resolve()));
+            w.postMessage({ type: "close" });
+          }),
+      ),
+    );
     await Promise.all(threads.map((w) => w.terminate()));
     await pin?.release();
   }
