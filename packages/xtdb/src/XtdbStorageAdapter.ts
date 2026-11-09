@@ -111,6 +111,7 @@ export const compactGuards = (
   operationId: string,
   commandIds: readonly string[],
   newIds: readonly string[],
+  sourceStamp?: number,
 ): XtdbStatement[] => [
   {
     sql:
@@ -118,8 +119,16 @@ export const compactGuards = (
       (commandIds.length > 0
         ? " AND NOT EXISTS (SELECT 1 FROM tx_claims FOR ALL VALID_TIME WHERE scope_key = $1 AND command_id = ANY($3))"
         : "") +
+      (sourceStamp === undefined
+        ? ""
+        : ` AND (SELECT COALESCE(MAX(stamp), 0) FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1) = $${commandIds.length > 0 ? 4 : 3}`) +
       ", 'triplex-cas-conflict'",
-    params: [scopeKey, sourceK, ...(commandIds.length > 0 ? [compactTextArray(commandIds)] : [])],
+    params: [
+      scopeKey,
+      sourceK,
+      ...(commandIds.length > 0 ? [compactTextArray(commandIds)] : []),
+      ...(sourceStamp === undefined ? [] : [sourceStamp]),
+    ],
     parameterSyntax: "postgresql",
   },
   {
@@ -273,11 +282,13 @@ export const makeXtdbStorageAdapter = (
             operationId,
             [...state.claims.values()].map((claim) => claim.commandId),
             [...state.newIds],
+            state.sourceStamp,
           )
         : [
             {
-              sql: "ASSERT (SELECT COALESCE(MAX(position), 0) FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = ?) = ?, 'triplex-cas-conflict'",
-              params: [scopeKey, state.sourceK],
+              // [EXP-RT01] Why: guard the complete source cut in the existing statement. Rejected: a second ASSERT (adds a PG-wire round trip per commit).
+              sql: "ASSERT (SELECT COALESCE(MAX(position), 0) FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = ?) = ? AND (SELECT COALESCE(MAX(stamp), 0) FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = ?) = ?, 'triplex-cas-conflict'",
+              params: [scopeKey, state.sourceK, scopeKey, state.sourceStamp],
             },
             {
               sql: "ASSERT NOT EXISTS (SELECT 1 FROM tx_attempts FOR ALL VALID_TIME WHERE scope_key = ? AND operation_id = ?), 'triplex-operation-duplicate'",
@@ -297,11 +308,6 @@ export const makeXtdbStorageAdapter = (
           params: [scopeKey, ...state.newIds],
         });
     }
-    // [EXP-RT01] Why: a seal can change only the watermark. Rejected: position-only CAS (would admit a stale stamp after a seal).
-    statements.push({
-      sql: "ASSERT (SELECT COALESCE(MAX(stamp), 0) FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = ?) = ?, 'triplex-cas-conflict'",
-      params: [scopeKey, state.sourceStamp],
-    });
     const rows = [...state.rows.values()];
     for (let i = 0; i < rows.length; i += 200) {
       statements.push(

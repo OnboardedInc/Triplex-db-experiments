@@ -1,3 +1,4 @@
+import { xtqlStatement } from "../src/native/Sources.js";
 import { appendFileSync } from "node:fs";
 import { triplesConformanceCases } from "@triplex-build/triplex-testkit";
 import { randomUUID } from "node:crypto";
@@ -60,8 +61,13 @@ describe.skipIf(process.env["XTDB_INTEGRATION"] !== "1")("EXP-RT01 XTDB A0", () 
           [scope, 100000.001],
         );
         const xtql = await real.query(
-          "(-> (from :tx_assertions {:for-valid-time :all-time :bind [scope_key recorded_at]}) (where (= scope_key triplex_param_1) (<= recorded_at triplex_param_2)) (return recorded_at))",
+          xtqlStatement(
+            "(-> (from :tx_assertions {:for-valid-time :all-time :bind [scope_key recorded_at]}) (where (= scope_key triplex_param_1) (<= recorded_at triplex_param_2)) (return recorded_at))",
+            2,
+          ),
           [scope, 100000.001],
+          undefined,
+          { parameterSyntax: "postgresql" },
         );
         expect(sql.map((row) => Number(row["recorded_at"])).sort()).toEqual(
           xtql.map((row) => Number(row["recorded_at"])).sort(),

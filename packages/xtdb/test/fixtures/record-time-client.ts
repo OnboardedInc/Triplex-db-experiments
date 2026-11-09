@@ -42,7 +42,8 @@ export const makeRecordTimeClient = (): XtdbClient => {
       const entityList = /entity_id IN \(([^)]+)\)/.exec(sql);
       if (entityList) {
         const count = entityList[1]!.split(",").length;
-        const ids = params.slice(index, index + count); index += count;
+        const ids = params.slice(index, index + count);
+        index += count;
         rows = rows.filter((row) => ids.includes(row["entity_id"]));
       }
       for (const column of [
@@ -92,12 +93,16 @@ export const makeRecordTimeClient = (): XtdbClient => {
     },
     submit: async (statements: readonly XtdbStatement[]) => {
       // [EXP-RT01] Why: evaluate emitted guards before applying any row. Rejected: accepting adapter output unconditionally (conceals D-C1's CAS retry).
-      for (const { sql, params = [] } of statements) {
+      for (const { sql, params = [], parameterSyntax } of statements) {
         if (sql.startsWith("ASSERT") && sql.includes("MAX(position)")) {
           if (Number(values("tx_meta", params[0])[0]?.["position"] ?? 0) !== params[1]) fail();
         }
         if (sql.startsWith("ASSERT") && sql.includes("MAX(stamp)")) {
-          if (Number(values("tx_meta", params[0])[0]?.["stamp"] ?? 0) !== params[1]) fail();
+          if (
+            Number(values("tx_meta", params[0])[0]?.["stamp"] ?? 0) !==
+            (parameterSyntax === "postgresql" ? params.at(-1) : params[3])
+          )
+            fail();
         }
       }
       for (const { sql, params = [] } of statements) {

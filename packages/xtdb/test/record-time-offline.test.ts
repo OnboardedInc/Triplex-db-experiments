@@ -50,3 +50,14 @@ it("fresh offline A0 receipts are byte-identical across runs and encodings", asy
   expect(runs[1]).toEqual(runs[0]);
   expect(runs[2]).toEqual(runs[0]);
 });
+
+it("the decided stamp shares the existing A0/compact CAS statement", async () => {
+  const { compactGuards } = await import("../src/XtdbStorageAdapter.js");
+  for (const ids of [[], ["command"]]) {
+    const guards = compactGuards("scope", 7, "op", ids, ["row"], 1000001);
+    expect(guards).toHaveLength(2);
+    expect(guards[0]!.sql).toContain("MAX(position)");
+    expect(guards[0]!.sql).toContain("MAX(stamp)");
+    expect(guards[0]!.params!.at(-1)).toBe(1000001);
+  }
+});
