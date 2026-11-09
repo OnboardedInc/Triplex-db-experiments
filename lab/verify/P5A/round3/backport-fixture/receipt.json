@@ -1,0 +1,16 @@
+{
+  "classification": "SOURCE-APPLICATION-ONLY",
+  "acceptance": false,
+  "target": "b9d1be7952bb4b1f5890588e693ebe764ec33360",
+  "patch": "f52b1ee41df1fd5d0be6fd536c72da9bcdab1fd2",
+  "paths": [
+    "lab/bench/lib/g0.ts"
+  ],
+  "checkExit": 0,
+  "applyExit": 0,
+  "patchSha256": "a08382c8ce17f8dc31fddc9e69e65c7523d0f29bd6c56af7c86964c4c700fa5a",
+  "beforeSha256": "d2995b912bbe0460b3eb1c53a728f2242046676de73f43a401f26d6b4ad6f195",
+  "afterSha256": "57d6cd896f8227b30080c76a4c7941db38226c9b666aa2078921e65fea1464e6",
+  "P5G0UnchangedFrom7e34c387": true,
+  "E1MarkerRetained": "tx2-e1/2"
+}

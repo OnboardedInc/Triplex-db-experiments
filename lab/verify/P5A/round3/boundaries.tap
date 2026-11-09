@@ -1,0 +1,354 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 83462 "CX-QNODELAY-R2-package-final", pid 60023 "CX-P2X2-aged-and-trace-smoke", pid 59016 "CX-OBS01-ER01S-R4-final05", pid 55115 "CX-VA01-0313-R2-evaluator-linked"
+{"gate":"reviewer-disk-preflight","availableBytes":12556496896,"minimumBytes":5368709120}
+TAP version 13
+# Subtest: known matching content grants in memory and mocked native paths
+ok 1 - known matching content grants in memory and mocked native paths
+  ---
+  duration_ms: 49.164
+  type: 'test'
+  ...
+# Subtest: no stale grant at open-external / deadline
+ok 2 - no stale grant at open-external / deadline
+  ---
+  duration_ms: 1506.580166
+  type: 'test'
+  ...
+# Subtest: no stale grant at open-external / abort
+ok 3 - no stale grant at open-external / abort
+  ---
+  duration_ms: 6.476459
+  type: 'test'
+  ...
+# Subtest: no stale grant at import-memory / deadline
+ok 4 - no stale grant at import-memory / deadline
+  ---
+  duration_ms: 1508.568333
+  type: 'test'
+  ...
+# Subtest: no stale grant at import-memory / abort
+ok 5 - no stale grant at import-memory / abort
+  ---
+  duration_ms: 7.094417
+  type: 'test'
+  ...
+# Subtest: no stale grant at import-composition / deadline
+ok 6 - no stale grant at import-composition / deadline
+  ---
+  duration_ms: 1510.025084
+  type: 'test'
+  ...
+# Subtest: no stale grant at import-composition / abort
+ok 7 - no stale grant at import-composition / abort
+  ---
+  duration_ms: 7.564542
+  type: 'test'
+  ...
+# Subtest: no stale grant at open-public / deadline
+ok 8 - no stale grant at open-public / deadline
+  ---
+  duration_ms: 1509.833792
+  type: 'test'
+  ...
+# Subtest: no stale grant at open-public / abort
+ok 9 - no stale grant at open-public / abort
+  ---
+  duration_ms: 7.432959
+  type: 'test'
+  ...
+# Subtest: no stale grant at import-native / deadline
+ok 10 - no stale grant at import-native / deadline
+  ---
+  duration_ms: 1508.547292
+  type: 'test'
+  ...
+# Subtest: no stale grant at import-native / abort
+ok 11 - no stale grant at import-native / abort
+  ---
+  duration_ms: 6.976042
+  type: 'test'
+  ...
+# Subtest: no stale grant at open-native / deadline
+ok 12 - no stale grant at open-native / deadline
+  ---
+  duration_ms: 1508.937167
+  type: 'test'
+  ...
+# Subtest: no stale grant at open-native / abort
+ok 13 - no stale grant at open-native / abort
+  ---
+  duration_ms: 6.29775
+  type: 'test'
+  ...
+# Subtest: no stale grant at store-start / deadline
+ok 14 - no stale grant at store-start / deadline
+  ---
+  duration_ms: 1509.36775
+  type: 'test'
+  ...
+# Subtest: no stale grant at store-start / abort
+ok 15 - no stale grant at store-start / abort
+  ---
+  duration_ms: 6.965584
+  type: 'test'
+  ...
+# Subtest: no stale grant at store-end / deadline
+ok 16 - no stale grant at store-end / deadline
+  ---
+  duration_ms: 1508.364166
+  type: 'test'
+  ...
+# Subtest: no stale grant at store-end / abort
+ok 17 - no stale grant at store-end / abort
+  ---
+  duration_ms: 21.259709
+  type: 'test'
+  ...
+# Subtest: no stale grant at scope-start / deadline
+ok 18 - no stale grant at scope-start / deadline
+  ---
+  duration_ms: 1508.443208
+  type: 'test'
+  ...
+# Subtest: no stale grant at scope-start / abort
+ok 19 - no stale grant at scope-start / abort
+  ---
+  duration_ms: 7.340167
+  type: 'test'
+  ...
+# Subtest: no stale grant at scope-end / deadline
+ok 20 - no stale grant at scope-end / deadline
+  ---
+  duration_ms: 1508.250375
+  type: 'test'
+  ...
+# Subtest: no stale grant at scope-end / abort
+ok 21 - no stale grant at scope-end / abort
+  ---
+  duration_ms: 11.852166
+  type: 'test'
+  ...
+# Subtest: no stale grant at count-before:tx_assertions / deadline
+ok 22 - no stale grant at count-before:tx_assertions / deadline
+  ---
+  duration_ms: 1507.457459
+  type: 'test'
+  ...
+# Subtest: no stale grant at count-before:tx_assertions / abort
+ok 23 - no stale grant at count-before:tx_assertions / abort
+  ---
+  duration_ms: 7.562959
+  type: 'test'
+  ...
+# Subtest: no stale grant at count-after:tx_assertions / deadline
+ok 24 - no stale grant at count-after:tx_assertions / deadline
+  ---
+  duration_ms: 1508.088917
+  type: 'test'
+  ...
+# Subtest: no stale grant at count-after:tx_assertions / abort
+ok 25 - no stale grant at count-after:tx_assertions / abort
+  ---
+  duration_ms: 9.853
+  type: 'test'
+  ...
+# Subtest: no stale grant at scan-open:tx_assertions / deadline
+ok 26 - no stale grant at scan-open:tx_assertions / deadline
+  ---
+  duration_ms: 1507.896625
+  type: 'test'
+  ...
+# Subtest: no stale grant at scan-open:tx_assertions / abort
+ok 27 - no stale grant at scan-open:tx_assertions / abort
+  ---
+  duration_ms: 7.5475
+  type: 'test'
+  ...
+# Subtest: no stale grant at scan-row:tx_assertions / deadline
+ok 28 - no stale grant at scan-row:tx_assertions / deadline
+  ---
+  duration_ms: 1508.189416
+  type: 'test'
+  ...
+# Subtest: no stale grant at scan-row:tx_assertions / abort
+ok 29 - no stale grant at scan-row:tx_assertions / abort
+  ---
+  duration_ms: 7.5485
+  type: 'test'
+  ...
+# Subtest: no stale grant at scan-done:tx_assertions / deadline
+ok 30 - no stale grant at scan-done:tx_assertions / deadline
+  ---
+  duration_ms: 1508.180375
+  type: 'test'
+  ...
+# Subtest: no stale grant at scan-done:tx_assertions / abort
+ok 31 - no stale grant at scan-done:tx_assertions / abort
+  ---
+  duration_ms: 11.218625
+  type: 'test'
+  ...
+# Subtest: no stale grant at count-before:tx_constraint_generations / deadline
+ok 32 - no stale grant at count-before:tx_constraint_generations / deadline
+  ---
+  duration_ms: 1507.528083
+  type: 'test'
+  ...
+# Subtest: no stale grant at count-before:tx_constraint_generations / abort
+ok 33 - no stale grant at count-before:tx_constraint_generations / abort
+  ---
+  duration_ms: 11.483
+  type: 'test'
+  ...
+# Subtest: no stale grant at count-after:tx_constraint_generations / deadline
+ok 34 - no stale grant at count-after:tx_constraint_generations / deadline
+  ---
+  duration_ms: 1507.394208
+  type: 'test'
+  ...
+# Subtest: no stale grant at count-after:tx_constraint_generations / abort
+ok 35 - no stale grant at count-after:tx_constraint_generations / abort
+  ---
+  duration_ms: 11.098541
+  type: 'test'
+  ...
+# Subtest: no stale grant at scan-open:tx_constraint_generations / deadline
+ok 36 - no stale grant at scan-open:tx_constraint_generations / deadline
+  ---
+  duration_ms: 1508.056875
+  type: 'test'
+  ...
+# Subtest: no stale grant at scan-open:tx_constraint_generations / abort
+ok 37 - no stale grant at scan-open:tx_constraint_generations / abort
+  ---
+  duration_ms: 11.742791
+  type: 'test'
+  ...
+# Subtest: no stale grant at scan-done:tx_constraint_generations / deadline
+ok 38 - no stale grant at scan-done:tx_constraint_generations / deadline
+  ---
+  duration_ms: 1507.715
+  type: 'test'
+  ...
+# Subtest: no stale grant at scan-done:tx_constraint_generations / abort
+ok 39 - no stale grant at scan-done:tx_constraint_generations / abort
+  ---
+  duration_ms: 11.497542
+  type: 'test'
+  ...
+# Subtest: no stale grant at import-pins / deadline
+ok 40 - no stale grant at import-pins / deadline
+  ---
+  duration_ms: 1523.20725
+  type: 'test'
+  ...
+# Subtest: no stale grant at import-pins / abort
+ok 41 - no stale grant at import-pins / abort
+  ---
+  duration_ms: 18.093625
+  type: 'test'
+  ...
+# Subtest: no stale grant at pins-file-read / deadline
+ok 42 - no stale grant at pins-file-read / deadline
+  ---
+  duration_ms: 1538.942458
+  type: 'test'
+  ...
+# Subtest: no stale grant at pins-file-read / abort
+ok 43 - no stale grant at pins-file-read / abort
+  ---
+  duration_ms: 17.235834
+  type: 'test'
+  ...
+# Subtest: no stale grant at w0-page / deadline
+ok 44 - no stale grant at w0-page / deadline
+  ---
+  duration_ms: 1509.32025
+  type: 'test'
+  ...
+# Subtest: no stale grant at w0-page / abort
+ok 45 - no stale grant at w0-page / abort
+  ---
+  duration_ms: 19.771625
+  type: 'test'
+  ...
+# Subtest: no stale grant at w0-yield / deadline
+ok 46 - no stale grant at w0-yield / deadline
+  ---
+  duration_ms: 1508.759875
+  type: 'test'
+  ...
+# Subtest: no stale grant at w0-yield / abort
+ok 47 - no stale grant at w0-yield / abort
+  ---
+  duration_ms: 19.364875
+  type: 'test'
+  ...
+# Subtest: no stale grant at observer / deadline
+ok 48 - no stale grant at observer / deadline
+  ---
+  duration_ms: 1538.513791
+  type: 'test'
+  ...
+# Subtest: no stale grant at observer / abort
+ok 49 - no stale grant at observer / abort
+  ---
+  duration_ms: 19.281291
+  type: 'test'
+  ...
+# Subtest: no stale grant at close-outer / deadline
+ok 50 - no stale grant at close-outer / deadline
+  ---
+  duration_ms: 1507.191792
+  type: 'test'
+  ...
+# Subtest: no stale grant at close-outer / abort
+ok 51 - no stale grant at close-outer / abort
+  ---
+  duration_ms: 23.366334
+  type: 'test'
+  ...
+# Subtest: no stale grant at close-native / deadline
+ok 52 - no stale grant at close-native / deadline
+  ---
+  duration_ms: 1508.94925
+  type: 'test'
+  ...
+# Subtest: no stale grant at close-native / abort
+ok 53 - no stale grant at close-native / abort
+  ---
+  duration_ms: 20.238042
+  type: 'test'
+  ...
+# Subtest: native scope mapping refuses cancellation at scope-start
+ok 54 - native scope mapping refuses cancellation at scope-start
+  ---
+  duration_ms: 7.651708
+  type: 'test'
+  ...
+# Subtest: native scope mapping refuses cancellation at scope-end
+ok 55 - native scope mapping refuses cancellation at scope-end
+  ---
+  duration_ms: 11.76825
+  type: 'test'
+  ...
+# Subtest: both resources close when close-error-outer
+ok 56 - both resources close when close-error-outer
+  ---
+  duration_ms: 19.119292
+  type: 'test'
+  ...
+# Subtest: both resources close when close-error-native
+ok 57 - both resources close when close-error-native
+  ---
+  duration_ms: 16.763875
+  type: 'test'
+  ...
+1..57
+# tests 57
+# suites 0
+# pass 57
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 40229.291292

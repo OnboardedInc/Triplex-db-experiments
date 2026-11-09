@@ -1,0 +1,23 @@
+{"gate":"reviewer-disk-preflight","availableBytes":12972023808,"minimumBytes":5368709120}
+TAP version 13
+# Subtest: late-open close await waits then completes without reopening admission
+ok 1 - late-open close await waits then completes without reopening admission
+  ---
+  duration_ms: 2.284
+  type: 'test'
+  ...
+# Subtest: late-open close await rejects without reopening admission
+ok 2 - late-open close await rejects without reopening admission
+  ---
+  duration_ms: 0.948875
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 556.896584

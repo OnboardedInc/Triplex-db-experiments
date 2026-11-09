@@ -1,0 +1,19 @@
+{
+  "acceptance": false,
+  "classification": "OFFLINE-LIFECYCLE-FIXTURE",
+  "testSha256": "80c0ad6f7e7ab7722cab71bca375d0bfcbc9c769d4b280b903a823b643185170",
+  "cases": [
+    {
+      "rejects": false,
+      "refusal": "Error: aborted",
+      "started": 1,
+      "finished": 1
+    },
+    {
+      "rejects": true,
+      "refusal": "Error: aborted",
+      "started": 1,
+      "finished": 1
+    }
+  ]
+}
