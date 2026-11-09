@@ -1,0 +1,754 @@
+{
+  "head": "c6c19623d90c658c15400fb46dc056f3735ed57b",
+  "clean": true,
+  "files": [
+    {
+      "path": "core/src/main/kotlin/xtdb/pgwire/PgType.kt",
+      "sha256": "d4b4d7e56d4556f026d56e7c8b97a985ab3451186b151a5f5dec19bda5ebc66d",
+      "matchesCommit": true,
+      "excerpts": [
+        {
+          "line": 185,
+          "text": ""
+        },
+        {
+          "line": 186,
+          "text": "    data object Int8 : PgType("
+        },
+        {
+          "line": 187,
+          "text": "        typname = \"int8\","
+        },
+        {
+          "line": 188,
+          "text": "        xtType = I64,"
+        },
+        {
+          "line": 189,
+          "text": "        oid = 20,"
+        },
+        {
+          "line": 190,
+          "text": "        typlen = 8,"
+        },
+        {
+          "line": 191,
+          "text": "        typcategory = NUMERIC,"
+        },
+        {
+          "line": 192,
+          "text": "        typsend = \"int8send\","
+        },
+        {
+          "line": 193,
+          "text": "        typreceive = \"int8recv\","
+        },
+        {
+          "line": 194,
+          "text": "        typarray = 1016,"
+        },
+        {
+          "line": 195,
+          "text": "    ) {"
+        },
+        {
+          "line": 196,
+          "text": "        override fun readBinary(data: ByteArray): Long = ByteBuffer.wrap(data).long"
+        },
+        {
+          "line": 197,
+          "text": ""
+        },
+        {
+          "line": 198,
+          "text": "        override fun readText(data: ByteArray): Long = readUtf8(data).toLong()"
+        },
+        {
+          "line": 199,
+          "text": ""
+        },
+        {
+          "line": 200,
+          "text": "        override fun writeBinary(env: PgSessionEnv, rdr: VectorReader, idx: Int): ByteArray ="
+        },
+        {
+          "line": 201,
+          "text": "            ByteBuffer.allocate(typlen).putLong(rdr.getLong(idx)).array()"
+        },
+        {
+          "line": 202,
+          "text": ""
+        },
+        {
+          "line": 203,
+          "text": "        override fun writeText(env: PgSessionEnv, rdr: VectorReader, idx: Int): ByteArray = utf8(rdr.getLong(idx))"
+        },
+        {
+          "line": 204,
+          "text": "    }"
+        },
+        {
+          "line": 205,
+          "text": ""
+        },
+        {
+          "line": 206,
+          "text": "    data object Int4 : PgType("
+        },
+        {
+          "line": 207,
+          "text": "        typname = \"int4\","
+        },
+        {
+          "line": 208,
+          "text": "        xtType = I32,"
+        },
+        {
+          "line": 209,
+          "text": "        oid = 23,"
+        },
+        {
+          "line": 210,
+          "text": "        typlen = 4,"
+        },
+        {
+          "line": 211,
+          "text": "        typcategory = NUMERIC,"
+        },
+        {
+          "line": 212,
+          "text": "        typsend = \"int4send\","
+        },
+        {
+          "line": 213,
+          "text": "        typreceive = \"int4recv\","
+        },
+        {
+          "line": 214,
+          "text": "        typarray = 1007,"
+        },
+        {
+          "line": 215,
+          "text": "    ) {"
+        },
+        {
+          "line": 216,
+          "text": "        override fun readBinary(data: ByteArray): Int = ByteBuffer.wrap(data).int"
+        },
+        {
+          "line": 217,
+          "text": ""
+        },
+        {
+          "line": 218,
+          "text": "        override fun readText(data: ByteArray): Int = readUtf8(data).toInt()"
+        },
+        {
+          "line": 219,
+          "text": ""
+        },
+        {
+          "line": 220,
+          "text": "        override fun writeBinary(env: PgSessionEnv, rdr: VectorReader, idx: Int): ByteArray ="
+        },
+        {
+          "line": 221,
+          "text": "            ByteBuffer.allocate(typlen).putInt(rdr.getInt(idx)).array()"
+        },
+        {
+          "line": 222,
+          "text": ""
+        },
+        {
+          "line": 223,
+          "text": "        override fun writeText(env: PgSessionEnv, rdr: VectorReader, idx: Int): ByteArray = utf8(rdr.getInt(idx))"
+        },
+        {
+          "line": 224,
+          "text": "    }"
+        },
+        {
+          "line": 245,
+          "text": "    data object Float4 : PgType("
+        },
+        {
+          "line": 246,
+          "text": "        typname = \"float4\","
+        },
+        {
+          "line": 247,
+          "text": "        xtType = F32,"
+        },
+        {
+          "line": 248,
+          "text": "        oid = 700,"
+        },
+        {
+          "line": 249,
+          "text": "        typlen = 4,"
+        },
+        {
+          "line": 250,
+          "text": "        typcategory = NUMERIC,"
+        },
+        {
+          "line": 251,
+          "text": "        typsend = \"float4send\","
+        },
+        {
+          "line": 252,
+          "text": "        typreceive = \"float4recv\","
+        },
+        {
+          "line": 253,
+          "text": "    ) {"
+        },
+        {
+          "line": 254,
+          "text": "        override fun readBinary(data: ByteArray): Float = ByteBuffer.wrap(data).float"
+        },
+        {
+          "line": 255,
+          "text": ""
+        },
+        {
+          "line": 256,
+          "text": "        override fun readText(data: ByteArray): Float = readUtf8(data).toFloat()"
+        },
+        {
+          "line": 257,
+          "text": ""
+        },
+        {
+          "line": 258,
+          "text": "        override fun writeBinary(env: PgSessionEnv, rdr: VectorReader, idx: Int): ByteArray ="
+        },
+        {
+          "line": 259,
+          "text": "            ByteBuffer.allocate(typlen).putFloat(rdr.getFloat(idx)).array()"
+        },
+        {
+          "line": 260,
+          "text": ""
+        },
+        {
+          "line": 261,
+          "text": "        override fun writeText(env: PgSessionEnv, rdr: VectorReader, idx: Int): ByteArray = utf8(rdr.getFloat(idx))"
+        },
+        {
+          "line": 262,
+          "text": "    }"
+        },
+        {
+          "line": 263,
+          "text": ""
+        },
+        {
+          "line": 264,
+          "text": "    data object Float8 : PgType("
+        },
+        {
+          "line": 265,
+          "text": "        typname = \"float8\","
+        },
+        {
+          "line": 266,
+          "text": "        xtType = F64,"
+        },
+        {
+          "line": 267,
+          "text": "        oid = 701,"
+        },
+        {
+          "line": 268,
+          "text": "        typlen = 8,"
+        },
+        {
+          "line": 269,
+          "text": "        typcategory = NUMERIC,"
+        },
+        {
+          "line": 270,
+          "text": "        typsend = \"float8send\","
+        },
+        {
+          "line": 271,
+          "text": "        typreceive = \"float8recv\","
+        },
+        {
+          "line": 272,
+          "text": "    ) {"
+        },
+        {
+          "line": 273,
+          "text": "        override fun readBinary(data: ByteArray): Double = ByteBuffer.wrap(data).double"
+        },
+        {
+          "line": 274,
+          "text": ""
+        },
+        {
+          "line": 275,
+          "text": "        override fun readText(data: ByteArray): Double = readUtf8(data).toDouble()"
+        },
+        {
+          "line": 276,
+          "text": ""
+        },
+        {
+          "line": 277,
+          "text": "        override fun writeBinary(env: PgSessionEnv, rdr: VectorReader, idx: Int): ByteArray ="
+        },
+        {
+          "line": 278,
+          "text": "            ByteBuffer.allocate(typlen).putDouble(rdr.getDouble(idx)).array()"
+        },
+        {
+          "line": 279,
+          "text": ""
+        },
+        {
+          "line": 280,
+          "text": "        override fun writeText(env: PgSessionEnv, rdr: VectorReader, idx: Int): ByteArray = utf8(rdr.getDouble(idx))"
+        },
+        {
+          "line": 281,
+          "text": "    }"
+        },
+        {
+          "line": 282,
+          "text": ""
+        },
+        {
+          "line": 1008,
+          "text": ""
+        },
+        {
+          "line": 1009,
+          "text": "        private val INTS = setOf(Int2, Int4, Int8)"
+        },
+        {
+          "line": 1010,
+          "text": "        private val FLOATS = setOf(Float4, Float8)"
+        },
+        {
+          "line": 1011,
+          "text": "        private val INT_ARRAYS = setOf(Int4s, Int8s)"
+        },
+        {
+          "line": 1012,
+          "text": ""
+        },
+        {
+          "line": 1013,
+          "text": "        private fun unifyPgTypes(pgTypes: Set<PgType>): PgType = when {"
+        },
+        {
+          "line": 1014,
+          "text": "            pgTypes.isEmpty() -> Null"
+        },
+        {
+          "line": 1015,
+          "text": "            pgTypes.size == 1 -> pgTypes.first()"
+        },
+        {
+          "line": 1016,
+          "text": "            pgTypes.all { it in INTS } -> Int8"
+        },
+        {
+          "line": 1017,
+          "text": "            pgTypes.all { it in FLOATS } -> Float8"
+        },
+        {
+          "line": 1018,
+          "text": "            pgTypes.all { it in INT_ARRAYS } -> Int8s"
+        },
+        {
+          "line": 1019,
+          "text": "            else -> Default"
+        },
+        {
+          "line": 1020,
+          "text": "        }"
+        },
+        {
+          "line": 1021,
+          "text": ""
+        },
+        {
+          "line": 1022,
+          "text": "        @JvmStatic"
+        },
+        {
+          "line": 1023,
+          "text": "        fun fromVectorType(type: VectorType): PgType {"
+        },
+        {
+          "line": 1024,
+          "text": "            val pgTypes = type.legs.mapTo(mutableSetOf()) { fromXtType(it) }.minus(Null)"
+        },
+        {
+          "line": 1025,
+          "text": "            return unifyPgTypes(pgTypes)"
+        },
+        {
+          "line": 1026,
+          "text": "        }"
+        },
+        {
+          "line": 1027,
+          "text": "    }"
+        }
+      ]
+    },
+    {
+      "path": "core/src/main/kotlin/xtdb/arrow/FloatVector.kt",
+      "sha256": "19f1d36135bb0ea8c4bd31086c086b0a8bb87c4028e343537939d305f81f69fa",
+      "matchesCommit": true,
+      "excerpts": [
+        {
+          "line": 15,
+          "text": ""
+        },
+        {
+          "line": 16,
+          "text": "    override val byteWidth = Float.SIZE_BYTES"
+        },
+        {
+          "line": 17,
+          "text": "    override val arrowType: ArrowType = F32_TYPE"
+        },
+        {
+          "line": 18,
+          "text": ""
+        },
+        {
+          "line": 19,
+          "text": "    constructor(al: BufferAllocator, name: String, nullable: Boolean)"
+        },
+        {
+          "line": 20,
+          "text": "            : this(al, name, 0, if (nullable) BitBuffer(al) else null, ExtensibleBuffer(al))"
+        },
+        {
+          "line": 21,
+          "text": ""
+        },
+        {
+          "line": 22,
+          "text": "    override fun getFloat(idx: Int) = getFloat0(idx)"
+        },
+        {
+          "line": 23,
+          "text": ""
+        },
+        {
+          "line": 24,
+          "text": "    override fun writeFloat(v: Float) {"
+        },
+        {
+          "line": 25,
+          "text": "        writeNotNull()"
+        },
+        {
+          "line": 26,
+          "text": "        dataBuffer.writeFloat(v)"
+        },
+        {
+          "line": 27,
+          "text": "    }"
+        },
+        {
+          "line": 28,
+          "text": ""
+        },
+        {
+          "line": 29,
+          "text": "    override fun getAsFloat(idx: Int) = getFloat(idx)"
+        },
+        {
+          "line": 30,
+          "text": "    override fun getAsDouble(idx: Int) = getFloat(idx).toDouble()"
+        },
+        {
+          "line": 31,
+          "text": ""
+        },
+        {
+          "line": 32,
+          "text": "    fun increment(idx: Int, v: Float) {"
+        },
+        {
+          "line": 33,
+          "text": "        ensureCapacity(idx + 1)"
+        },
+        {
+          "line": 34,
+          "text": "        setFloat(idx, if (isNull(idx)) v else getFloat(idx) + v)"
+        },
+        {
+          "line": 35,
+          "text": "    }"
+        },
+        {
+          "line": 36,
+          "text": ""
+        },
+        {
+          "line": 37,
+          "text": "    override fun getDouble(idx: Int) = getFloat(idx).toDouble()"
+        },
+        {
+          "line": 38,
+          "text": ""
+        }
+      ]
+    },
+    {
+      "path": "core/src/main/kotlin/xtdb/arrow/IntVector.kt",
+      "sha256": "cb8c09cb361587034c04dcb3f77cd3a1515138d1a90fafcdbaf7d2fe8bde0ebf",
+      "matchesCommit": true,
+      "excerpts": [
+        {
+          "line": 20,
+          "text": "    companion object {"
+        },
+        {
+          "line": 21,
+          "text": "        private fun openValidityBuffer(al: BufferAllocator, valueCount: Int) ="
+        },
+        {
+          "line": 22,
+          "text": "            BitBuffer(al, valueCount)"
+        },
+        {
+          "line": 23,
+          "text": ""
+        },
+        {
+          "line": 24,
+          "text": "        private fun openDataBuffer(al: BufferAllocator, valueCount: Int) ="
+        },
+        {
+          "line": 25,
+          "text": "            ExtensibleBuffer(al, valueCount.toLong() * Int.SIZE_BYTES)"
+        },
+        {
+          "line": 26,
+          "text": ""
+        },
+        {
+          "line": 27,
+          "text": "        @JvmStatic"
+        },
+        {
+          "line": 28,
+          "text": "        @JvmOverloads"
+        },
+        {
+          "line": 29,
+          "text": "        fun open(al: BufferAllocator, name: String, nullable: Boolean, valueCount: Int = 0): IntVector ="
+        },
+        {
+          "line": 30,
+          "text": "            openDataBuffer(al, valueCount).closeOnCatch { dataBuffer ->"
+        },
+        {
+          "line": 31,
+          "text": "                val validityBuffer = if (nullable) openValidityBuffer(al, valueCount) else null"
+        },
+        {
+          "line": 32,
+          "text": "                validityBuffer.closeOnCatch {"
+        },
+        {
+          "line": 33,
+          "text": "                    IntVector(al, name, valueCount, validityBuffer, dataBuffer)"
+        },
+        {
+          "line": 34,
+          "text": "                }"
+        },
+        {
+          "line": 35,
+          "text": "            }"
+        },
+        {
+          "line": 36,
+          "text": "    }"
+        },
+        {
+          "line": 37,
+          "text": ""
+        },
+        {
+          "line": 38,
+          "text": "    override fun getInt(idx: Int) = getInt0(idx)"
+        },
+        {
+          "line": 39,
+          "text": "    override fun writeInt(v: Int) = writeInt0(v)"
+        },
+        {
+          "line": 40,
+          "text": "    override fun getLong(idx: Int) = getInt(idx).toLong()"
+        },
+        {
+          "line": 41,
+          "text": ""
+        }
+      ]
+    },
+    {
+      "path": "core/src/main/kotlin/xtdb/arrow/DenseUnionVector.kt",
+      "sha256": "a5a690d232cd9ca17ebd56d1797758ea191cf3fe0a821cf72237e8596f0aa079",
+      "matchesCommit": true,
+      "excerpts": [
+        {
+          "line": 210,
+          "text": "    override fun isNull(idx: Int) = leg(idx)?.isNull(getOffset(idx)) ?: true"
+        },
+        {
+          "line": 211,
+          "text": ""
+        },
+        {
+          "line": 212,
+          "text": "    override fun getBoolean(idx: Int): Boolean = leg(idx)!!.getBoolean(getOffset(idx))"
+        },
+        {
+          "line": 213,
+          "text": "    override fun getByte(idx: Int): Byte = leg(idx)!!.getByte(getOffset(idx))"
+        },
+        {
+          "line": 214,
+          "text": "    override fun getShort(idx: Int): Short = leg(idx)!!.getShort(getOffset(idx))"
+        },
+        {
+          "line": 215,
+          "text": "    override fun getInt(idx: Int): Int = leg(idx)!!.getInt(getOffset(idx))"
+        },
+        {
+          "line": 216,
+          "text": "    override fun getLong(idx: Int): Long = leg(idx)!!.getLong(getOffset(idx))"
+        },
+        {
+          "line": 217,
+          "text": "    override fun getFloat(idx: Int): Float = leg(idx)!!.getFloat(getOffset(idx))"
+        },
+        {
+          "line": 218,
+          "text": "    override fun getDouble(idx: Int): Double = leg(idx)!!.getDouble(getOffset(idx))"
+        },
+        {
+          "line": 219,
+          "text": "    override fun getBytes(idx: Int): ByteBuffer = leg(idx)!!.getBytes(getOffset(idx))"
+        },
+        {
+          "line": 220,
+          "text": ""
+        }
+      ]
+    },
+    {
+      "path": "core/src/main/clojure/xtdb/pgwire.clj",
+      "sha256": "b5189f1fa27e644d609b549ce7b323b92dccf3eda43a8c79a05adf7c83d9f853",
+      "matchesCommit": true,
+      "excerpts": [
+        {
+          "line": 950,
+          "text": "                  (.bind statement args-rel)"
+        },
+        {
+          "line": 951,
+          "text": "                  (if (and checked? (not (.isTxReadWrite node-conn)))"
+        },
+        {
+          "line": 952,
+          "text": "                    (.openQuery statement)"
+        },
+        {
+          "line": 953,
+          "text": "                    (.openUncheckedQuery statement)))))"
+        },
+        {
+          "line": 954,
+          "text": ""
+        },
+        {
+          "line": 955,
+          "text": "            (->pg-cols [prepared-pg-cols ^ResultCursor cursor]"
+        },
+        {
+          "line": 956,
+          "text": "              (let [result-types (.getResultTypes cursor)"
+        },
+        {
+          "line": 957,
+          "text": "                    resolved-pg-cols (mapv (fn [[col-name vec-type]] (type->pg-col col-name vec-type)) result-types)]"
+        },
+        {
+          "line": 958,
+          "text": "                (when-not (and (= (count prepared-pg-cols) (count resolved-pg-cols))"
+        },
+        {
+          "line": 959,
+          "text": "                               (->> (map vector prepared-pg-cols result-types resolved-pg-cols)"
+        },
+        {
+          "line": 960,
+          "text": "                                    (every? (fn [[{^PgType prepared-pg-type :pg-type} [_ ^VectorType vec-type] {resolved-pg-type :pg-type}]]"
+        },
+        {
+          "line": 961,
+          "text": "                                              (or (identical? prepared-pg-type PgType/PG_DEFAULT)"
+        },
+        {
+          "line": 962,
+          "text": "                                                  (identical? resolved-pg-type PgType/PG_NULL)"
+        },
+        {
+          "line": 963,
+          "text": "                                                  (identical? prepared-pg-type resolved-pg-type)"
+        },
+        {
+          "line": 964,
+          "text": "                                                  ;; an empty list has no element type, so fits any array description"
+        },
+        {
+          "line": 965,
+          "text": "                                                  (and (identical? TypCategory/ARRAY (.getTypcategory prepared-pg-type))"
+        },
+        {
+          "line": 966,
+          "text": "                                                       (instance? ArrowType$List (.getArrowType vec-type))"
+        },
+        {
+          "line": 967,
+          "text": "                                                       (instance? ArrowType$Null (.getArrowType (types/unnest-type vec-type)))))))))"
+        },
+        {
+          "line": 968,
+          "text": "                  (throw (err/conflict :prepared-query-out-of-date \"cached plan must not change result type\""
+        },
+        {
+          "line": 969,
+          "text": "                                       #_ ; FIXME: these break because of PgType not being serializable"
+        },
+        {
+          "line": 970,
+          "text": "                                       {:prepared-cols prepared-pg-cols"
+        },
+        {
+          "line": 971,
+          "text": "                                        :resolved-cols resolved-pg-cols})))"
+        },
+        {
+          "line": 972,
+          "text": "                (with-result-formats prepared-pg-cols result-format)))"
+        }
+      ]
+    }
+  ],
+  "claimStatus": "Source-derived transport model, not live native execution."
+}

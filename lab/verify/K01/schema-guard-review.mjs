@@ -6,11 +6,11 @@ import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { fields } from '../../bench/lib/g0.ts';
 const root = path.resolve(import.meta.dirname, '../../..');
-const out = path.join(import.meta.dirname, 'evidence/review-round7/schema-guard');
+const out = process.env.TX2_K01_GUARD_OUT ?? path.join(import.meta.dirname, 'evidence/review-round7/schema-guard');
 fs.mkdirSync(out, { recursive: true });
 assert.ok(!fs.existsSync(path.join(out, 'run.json')), 'preserve previous guard attempts');
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
-const files = ['lab/bench/lib/g0.ts', 'lab/bench/lib/g0-schema.ts', 'lab/bench/test/g0-schema.test.ts', ...fs.readdirSync(path.join(root, 'packages/xtdb/src'), { recursive: true }).filter(f => f.endsWith('.ts')).map(f => 'packages/xtdb/src/' + f)];
+const files = ['lab/bench/lib/g0.ts', 'lab/bench/lib/g0-schema.ts', 'lab/bench/lib/g0-values.ts', 'lab/bench/lib/g0-normalize.ts', 'lab/bench/test/g0-schema.test.ts', ...fs.readdirSync(path.join(root, 'packages/xtdb/src'), { recursive: true }).filter(f => f.endsWith('.ts')).map(f => 'packages/xtdb/src/' + f)];
 const original = Object.fromEntries(files.map(f => [f, fs.readFileSync(path.join(root, f), 'utf8')]));
 const runs = [];
 for (const variant of ['assertion-column', 'side-column', 'side-table']) for (const stale of [false, true]) {

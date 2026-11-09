@@ -1,0 +1,293 @@
+{
+  "builder": "245a49664d6e6def36877bdee1b0ec2e0e0cc919",
+  "merge": "d0ca9e6fb4c4f2b08cef417ef4d1aed745065177",
+  "currentMatchesExecuted": true,
+  "implementationMatchesBuilder": true,
+  "allLogHashesMatch": true,
+  "allRawHashesMatch": true,
+  "acceptanceUnchanged": true,
+  "gateFreeBytes": 6482948096,
+  "outcomes": [
+    {
+      "label": "tests",
+      "status": 0,
+      "counts": {
+        "tests": 203,
+        "pass": 203,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "signal": null,
+      "error": null
+    },
+    {
+      "label": "reviewer",
+      "status": 0,
+      "counts": {
+        "tests": 30,
+        "pass": 30,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "signal": null,
+      "error": null
+    },
+    {
+      "label": "columns",
+      "status": 0,
+      "counts": {
+        "tests": 98,
+        "pass": 98,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "signal": null,
+      "error": null
+    },
+    {
+      "label": "representation",
+      "status": 1,
+      "counts": {
+        "tests": 57,
+        "pass": 53,
+        "fail": 4,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "signal": null,
+      "error": null
+    },
+    {
+      "label": "schema-guard",
+      "status": 0,
+      "counts": null,
+      "signal": null,
+      "error": null
+    },
+    {
+      "label": "types",
+      "status": 0,
+      "counts": null,
+      "signal": null,
+      "error": null
+    },
+    {
+      "label": "syntax-0",
+      "status": 0,
+      "counts": null,
+      "signal": null,
+      "error": null
+    },
+    {
+      "label": "syntax-1",
+      "status": 0,
+      "counts": null,
+      "signal": null,
+      "error": null
+    },
+    {
+      "label": "syntax-2",
+      "status": 0,
+      "counts": null,
+      "signal": null,
+      "error": null
+    },
+    {
+      "label": "syntax-3",
+      "status": 0,
+      "counts": null,
+      "signal": null,
+      "error": null
+    },
+    {
+      "label": "syntax-4",
+      "status": 0,
+      "counts": null,
+      "signal": null,
+      "error": null
+    },
+    {
+      "label": "syntax-5",
+      "status": 0,
+      "counts": null,
+      "signal": null,
+      "error": null
+    },
+    {
+      "label": "syntax-6",
+      "status": 0,
+      "counts": null,
+      "signal": null,
+      "error": null
+    },
+    {
+      "label": "syntax-7",
+      "status": 0,
+      "counts": null,
+      "signal": null,
+      "error": null
+    },
+    {
+      "label": "syntax-8",
+      "status": 0,
+      "counts": null,
+      "signal": null,
+      "error": null
+    }
+  ],
+  "findingCases": [
+    {
+      "kind": "upstream-column-widening",
+      "variant": "integer-width",
+      "sourceWidths": [
+        64,
+        64
+      ],
+      "cloneWidths": [
+        32,
+        64
+      ],
+      "values": [
+        1,
+        2
+      ],
+      "column": "position",
+      "pin": {
+        "scope": "independent-e1",
+        "position": 2,
+        "world": "N01",
+        "counts": {
+          "tx_assertions": 10,
+          "tx_claims": 2,
+          "tx_attempts": 2,
+          "tx_meta": 1
+        },
+        "format": "tx2-g0/1",
+        "D": "43ebb0fff24890fdea9589212a123311b83ff678a457fe1bda0d91485e3a20a8"
+      },
+      "result": {
+        "gate": "G0",
+        "status": "PASS",
+        "D": "43ebb0fff24890fdea9589212a123311b83ff678a457fe1bda0d91485e3a20a8",
+        "endpoint": "offline-wire-a",
+        "checkedAt": "2026-11-09T03:06:10.312Z"
+      },
+      "sourceInferenceOnly": true,
+      "explanation": "The model applies pinned PgType.unifyPgTypes and numeric vector widening, then executes actual wireRows and G0. No native engine request ran."
+    },
+    {
+      "kind": "upstream-column-widening",
+      "variant": "float-width",
+      "sourceWidths": [
+        64,
+        64
+      ],
+      "cloneWidths": [
+        32,
+        64
+      ],
+      "values": [
+        1.5,
+        2.5
+      ],
+      "column": "binding_0",
+      "pin": {
+        "scope": "independent-e1",
+        "position": 2,
+        "world": "N01",
+        "counts": {
+          "tx_assertions": 10,
+          "tx_claims": 2,
+          "tx_attempts": 2,
+          "tx_meta": 1
+        },
+        "format": "tx2-g0/1",
+        "D": "f21713c3cbe800c4910986c32e9da51c6ddb47b935d07ba29751ed43f35e71c5"
+      },
+      "result": {
+        "gate": "G0",
+        "status": "PASS",
+        "D": "f21713c3cbe800c4910986c32e9da51c6ddb47b935d07ba29751ed43f35e71c5",
+        "endpoint": "offline-wire-a",
+        "checkedAt": "2026-11-09T03:06:10.316Z"
+      },
+      "sourceInferenceOnly": true,
+      "explanation": "The model applies pinned PgType.unifyPgTypes and numeric vector widening, then executes actual wireRows and G0. No native engine request ran."
+    },
+    {
+      "kind": "inconsistent-generated-instant",
+      "mode": "decoded",
+      "pa": {
+        "scope": "independent-e1",
+        "position": 2,
+        "world": "N01",
+        "counts": {
+          "tx_assertions": 10,
+          "tx_claims": 2,
+          "tx_attempts": 2,
+          "tx_meta": 1
+        },
+        "format": "tx2-g0/1",
+        "D": "f5fcc2f07bda870a7880bd443946007f5f8d1e22548a4f285dad5c0bdb4636a5",
+        "Dprime": "d1b62d050f41dcdc1e66ea7c1c7cabdcf7d2ab59a8db92915e0329ab57263b05"
+      },
+      "pb": {
+        "scope": "independent-e1",
+        "position": 2,
+        "world": "N01",
+        "counts": {
+          "tx_assertions": 10,
+          "tx_claims": 2,
+          "tx_attempts": 2,
+          "tx_meta": 1
+        },
+        "format": "tx2-g0/1",
+        "D": "e6757a946f79718c7983a259f60f3c58447f36cbc1694e2b8acb5b40896552ee",
+        "Dprime": "d1b62d050f41dcdc1e66ea7c1c7cabdcf7d2ab59a8db92915e0329ab57263b05"
+      },
+      "recordedAt": 10000,
+      "instant": 42
+    },
+    {
+      "kind": "inconsistent-generated-instant",
+      "mode": "wire",
+      "pa": {
+        "scope": "independent-e1",
+        "position": 2,
+        "world": "N01",
+        "counts": {
+          "tx_assertions": 10,
+          "tx_claims": 2,
+          "tx_attempts": 2,
+          "tx_meta": 1
+        },
+        "format": "tx2-g0/1",
+        "D": "43ebb0fff24890fdea9589212a123311b83ff678a457fe1bda0d91485e3a20a8",
+        "Dprime": "faa5780fcc3b425b76eac7e058c7e776400cb46b21ff6d4f41292b80075bc054"
+      },
+      "pb": {
+        "scope": "independent-e1",
+        "position": 2,
+        "world": "N01",
+        "counts": {
+          "tx_assertions": 10,
+          "tx_claims": 2,
+          "tx_attempts": 2,
+          "tx_meta": 1
+        },
+        "format": "tx2-g0/1",
+        "D": "e63ac4d20313d26e103998e13e9ed731e78e6bb1e66dd83b83583e6cb0710366",
+        "Dprime": "faa5780fcc3b425b76eac7e058c7e776400cb46b21ff6d4f41292b80075bc054"
+      },
+      "recordedAt": 10000,
+      "instant": 42
+    }
+  ]
+}

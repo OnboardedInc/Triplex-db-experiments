@@ -1,0 +1,1 @@
+Raw reviewer output is retained at `/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VK01/round8/attempt-1`. Verify it with `shasum -a 256 -c lab/verify/K01/evidence/review-round8/SHA256SUMS-RAW`. These are offline fixtures, not live engine receipts.

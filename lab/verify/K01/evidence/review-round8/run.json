@@ -1,0 +1,260 @@
+{
+  "at": "2026-11-09T03:06:07.040Z",
+  "head": "d0ca9e6fb4c4f2b08cef417ef4d1aed745065177",
+  "node": "v22.23.2",
+  "freeBytes": 6482948096,
+  "raw": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VK01/round8/attempt-1",
+  "sources": {
+    "lab/verify/K01/run-review-round8.mjs": "f5181452dc99af1989f12e8ee482df2042f428ede8bc6ba402e08dfafdc3a97d",
+    "lab/verify/K01/representation-review.test.mjs": "15d8d3ec029ab7ab7cfe5ebc65113486c48482fe6685538eb78986652d0c3cc4",
+    "lab/verify/K01/columns-review.test.mjs": "882b9fa49f0b5b2a31c3ef634b05858253f493be12383ddf480570da96dfce38",
+    "lab/verify/K01/g0-review.test.mjs": "4d38df4611e259bc8f0dd7df4de58633f8c9e0944816cd4a4a6782d5daa66fdc",
+    "lab/verify/K01/schema-guard-review.mjs": "d7c6c5543cf13234e594b3d11b919d57d6b36bd7374a026a118cacc7a183c19a",
+    "lab/bench/driver.ts": "7f8cdd821903856c0c0be99a2e7da957931332999396bec1b7ba21863daac9b9",
+    "lab/bench/xtdb-seed.ts": "ecd495ac64309b2898e9a421fd1b50269212bf76de796e367c90d8edb9c9540c",
+    "lab/bench/clone-check.ts": "dcab0fecc0d466386e37a196141c7b79e3d312146c67242ba3092964c1995df5",
+    "lab/bench/lib/bulk.ts": "30fb15038aa0c945e631db948308a230034d85f90f188556c5a5f59b1e4cb920",
+    "lab/bin/engine.mjs": "1447cbd2db4a51af353d96e234d17e39c4c0510f6ca7995f569e38780fd697cf",
+    "lab/bin/lib.mjs": "08da34d2f927a64099f2c42c2dbb3ab83e2862b879465e2f4e692c4327efd406",
+    "lab/bin/test/lab.test.mjs": "ec15951a758117fd9fa79ee9a0435ff70088d96cb5e1b69576419cdb9bc88c26",
+    "lab/bench/test/bench.test.ts": "56d102078a5f96b4f93c68ec58410f71b90ad2d4af8dcd33124bbf9d1b6a3424",
+    "lab/bench/test/g0.test.ts": "c2b512d014a544b5becb53ce0431df3d3dc4a129c96f4d4df2d5da83e94c68e1",
+    "lab/bench/test/g0-schema.test.ts": "e6a215c786cbe0b2b71fa4b62bb9890044a3a073d73c85692e4a676b61af35bf",
+    "lab/bench/test/g0-values.test.ts": "0b87079fe684f95caaaf8cd7392a65862f416ec38dee97be86543021aeb2d2b6",
+    "lab/bench/test/g0-e1.test.ts": "9355bcdaaa0a23c6a07681435dd3938c7f60b0ceb77c5482b64d080f287b0c81",
+    "pnpm-lock.yaml": "b2b3e6e8cdfb18df6d235a8724611ee4fe637426c722a5de34326346b3cb6500",
+    "node_modules/typescript/lib/typescript.js": "630f808ac32d968a49a392c42cc06fd72abd939aaa7edfe3302810c067934653",
+    "lab/bench/lib/g0.ts": "7286d1976c19c71cdbd694fd835eb8d42111ae060fd6d636196a8c8195bdd7be",
+    "lab/bench/lib/g0-schema.ts": "72499249d961a60e604bd1913e3ec8ecb6b41b07576be925725f51e6b1e2b40e",
+    "lab/bench/lib/g0-values.ts": "9cb5a8c63497588f05de78b621ab9307ec55655d6182b1a4ed2a0e8393f35b22",
+    "lab/bench/lib/g0-wire.ts": "9d281c1cd1c35fb2ea46895f2be27af50eab919ffc194270d18563c3529fc110",
+    "lab/bench/lib/g0-normalize.ts": "f5da7b79b9f22ddea23cfc756d50662116089ae5af8b2f3b23f6388602927376",
+    "lab/bench/lib/g0-xtdb.ts": "21560713bea2d4b9eb74a4b75e29f0a022249b3d6a21ef0e865cb60eb35aca67",
+    "packages/xtdb/src/ConstraintValidation.ts": "b298dfe7841684ea3fda905b283e16f33853a0884af04f13b9913b89d82e9d29",
+    "packages/xtdb/src/MaintainedQueries.ts": "a0ec651af8aa68d1c6e63b64109af48996d4c7576930909a50f90306869d8dbd",
+    "packages/xtdb/src/Operations.ts": "2fa4dc6fc4c50a42cc088d497f70e49029e2f535399ae84d9c94239125147b66",
+    "packages/xtdb/src/TemporalQueries.ts": "df7163a21d18b5d704fdbd8a6dcd065498eb18edd249e0fcad7e4a92dae555a9",
+    "packages/xtdb/src/TransactionContext.ts": "f4696c6539db3088e940c305ab484fc514fe32a7d09ea6b6f3397cd9878a43ad",
+    "packages/xtdb/src/XtdbClient.ts": "fa5c31c44c45e9e129d65464ee2f012146911f5b11d433d1ce7d73aadee6c67c",
+    "packages/xtdb/src/XtdbQueryExecutor.ts": "71fc5d949a8a9f51449cfeb97afb9cd10b6e869647962a2c6ad006a4ccf69c0c",
+    "packages/xtdb/src/XtdbStorageAdapter.ts": "204b856f7c3792c04b46a61ebe19b51fa0db053c1594d6f5aaa1149f14179560",
+    "packages/xtdb/src/codecs.ts": "f36b8de4af66fddd30b3a055ebf4473ad29c0634d9fd1ea0e45c7fb4e522e8f3",
+    "packages/xtdb/src/index.ts": "5bdb382d4bd424e92ab6098ba0bed9954cae9a256ffe1fde2378c67bf8233de3",
+    "packages/xtdb/src/native/NativeQueries.ts": "f07285b60d00a661551873ab2ffe3995b88b91caedda7e776784185026ff3b01",
+    "packages/xtdb/src/native/Reachability.ts": "3929e03f7ba1b8e20a47d8fa94b71c68f64f0ad021beaf866deb210fa3fba932",
+    "packages/xtdb/src/native/ReadOnlySql.ts": "dacd259603497bffcae0000e57ed5b7d63103f1ad0da42419d21d46a52333529",
+    "packages/xtdb/src/native/Sources.ts": "a32138e18c1a5a963f37f830beb36ceb87f328ed4c6af96bf1498dd0c2c00e31",
+    "packages/xtdb/src/query/compiler.ts": "fd1d8fceb939e0623115ef8072300f9e046f6dabee30d573c3b0c1da56823123",
+    "packages/xtdb/src/query/domains.ts": "e51fc80fb211c265725d7def7cf0ab19bf84b51fc8843e1f807385dc413a92af",
+    "packages/xtdb/src/query/grouping.ts": "2abd261779d9cd648d53b20485eccaee644f2fe4b5cf86d899d86c552bff4586",
+    "packages/xtdb/src/query/overlay.ts": "118b8f8651d69516b64b50cf77c86e43de916a8e7042cdcfe2e3aa1379423491",
+    "packages/xtdb/src/query/recursion.ts": "6c24b1157f9c05124ebef268d1d99234364fa3aabb5514c67e40422767296b89",
+    "packages/core/src/store/RuntimeServices.ts": "9c00c258174ed2ea528899c5becc0ec32704eb4185821c638179f02a94054af3",
+    "packages/core/src/store/TriplesLive.ts": "1fc030c442179a937f544b865983b45b577c124aa3b338528823f93dc828a36c",
+    "packages/core/src/store/transactionMetadata.ts": "f47e28bb7e5683a1348b8689471fc84de3ebcb8986ed1f6d65198399179055fa",
+    "packages/core/src/store/systemNamespace.ts": "909bcc5e8d92c4545b90d2a9dd65c3484412be880a2586519d4e7876bf693d6b",
+    "packages/xtdb/node_modules/postgres/src/connection.js": "ee3a218d9aa6a6f2887c1a19da50009335fe84c11a5431d5cab72d6bc528632f",
+    "packages/xtdb/node_modules/postgres/src/query.js": "67c45a5151032aa46b587abc15381fe4efd97c696e5c1b53082b8161309c4ee2",
+    "packages/xtdb/node_modules/postgres/package.json": "944d492614959389a5739ef2893bc1830fb773ff042159d9b331d43b2f6792e9",
+    "/Users/sam/projects/triplex-db-2/references/xtdb/core/src/main/kotlin/xtdb/pgwire/PgType.kt": "d4b4d7e56d4556f026d56e7c8b97a985ab3451186b151a5f5dec19bda5ebc66d",
+    "/Users/sam/projects/triplex-db-2/references/xtdb/core/src/main/kotlin/xtdb/pgwire/PgTypes.kt": "2ec23ee0c739ad330682f7b4d5cbb8da1c955a081186f0302652f3f54f5b09b7",
+    "/Users/sam/projects/triplex-db-2/references/xtdb/core/src/main/kotlin/xtdb/arrow/FloatVector.kt": "19f1d36135bb0ea8c4bd31086c086b0a8bb87c4028e343537939d305f81f69fa",
+    "/Users/sam/projects/triplex-db-2/references/xtdb/core/src/main/kotlin/xtdb/arrow/IntVector.kt": "cb8c09cb361587034c04dcb3f77cd3a1515138d1a90fafcdbaf7d2fe8bde0ebf",
+    "/Users/sam/projects/triplex-db-2/references/xtdb/core/src/main/kotlin/xtdb/arrow/DenseUnionVector.kt": "a5a690d232cd9ca17ebd56d1797758ea191cf3fe0a821cf72237e8596f0aa079"
+  },
+  "runs": [
+    {
+      "label": "tests",
+      "args": [
+        "--test",
+        "lab/bin/test/lab.test.mjs",
+        "lab/bench/test/bench.test.ts",
+        "lab/bench/test/g0.test.ts",
+        "lab/bench/test/g0-schema.test.ts",
+        "lab/bench/test/g0-values.test.ts",
+        "lab/bench/test/g0-e1.test.ts"
+      ],
+      "status": 0,
+      "signal": null,
+      "sha256": "a1e2936942db2a560556adf90c1fbf5b0454aa90ce67eedde8d5dc6d449a0ced",
+      "counts": {
+        "tests": 203,
+        "pass": 203,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "summaryOkay": true
+    },
+    {
+      "label": "reviewer",
+      "args": [
+        "--test",
+        "lab/verify/K01/g0-review.test.mjs"
+      ],
+      "status": 0,
+      "signal": null,
+      "sha256": "47b31f630f5d2ae968442ad40026275258633a08a40da77cd78f4878ab62bafb",
+      "counts": {
+        "tests": 30,
+        "pass": 30,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "summaryOkay": true
+    },
+    {
+      "label": "columns",
+      "args": [
+        "--test",
+        "lab/verify/K01/columns-review.test.mjs"
+      ],
+      "status": 0,
+      "signal": null,
+      "sha256": "5c14184171764f3d95e4b1be27b978f3eba9d0c4c57929419a0ea37b06ac4ed3",
+      "counts": {
+        "tests": 98,
+        "pass": 98,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "summaryOkay": true
+    },
+    {
+      "label": "representation",
+      "args": [
+        "--test",
+        "lab/verify/K01/representation-review.test.mjs"
+      ],
+      "status": 1,
+      "signal": null,
+      "sha256": "317cf58083d17b48ee2e9575d1e2317b86c781e9ab16e0f4e35ab814764828d9",
+      "counts": {
+        "tests": 57,
+        "pass": 53,
+        "fail": 4,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "summaryOkay": false
+    },
+    {
+      "label": "schema-guard",
+      "args": [
+        "lab/verify/K01/schema-guard-review.mjs"
+      ],
+      "status": 0,
+      "signal": null,
+      "sha256": "24a09ef98cd4a81e0d1144a3771b2a5406040c2b59404259f81c13215b7439c9"
+    },
+    {
+      "label": "types",
+      "args": [
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "-p",
+        "lab/bench/tsconfig.json"
+      ],
+      "status": 0,
+      "signal": null,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "syntax-0",
+      "args": [
+        "--check",
+        "lab/bin/engine.mjs"
+      ],
+      "status": 0,
+      "signal": null,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "syntax-1",
+      "args": [
+        "--check",
+        "lab/bin/lib.mjs"
+      ],
+      "status": 0,
+      "signal": null,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "syntax-2",
+      "args": [
+        "--check",
+        "lab/bench/clone-check.ts"
+      ],
+      "status": 0,
+      "signal": null,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "syntax-3",
+      "args": [
+        "--check",
+        "lab/bench/lib/g0.ts"
+      ],
+      "status": 0,
+      "signal": null,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "syntax-4",
+      "args": [
+        "--check",
+        "lab/bench/lib/g0-schema.ts"
+      ],
+      "status": 0,
+      "signal": null,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "syntax-5",
+      "args": [
+        "--check",
+        "lab/bench/lib/g0-values.ts"
+      ],
+      "status": 0,
+      "signal": null,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "syntax-6",
+      "args": [
+        "--check",
+        "lab/bench/lib/g0-wire.ts"
+      ],
+      "status": 0,
+      "signal": null,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "syntax-7",
+      "args": [
+        "--check",
+        "lab/bench/lib/g0-normalize.ts"
+      ],
+      "status": 0,
+      "signal": null,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "syntax-8",
+      "args": [
+        "--check",
+        "lab/bench/lib/g0-xtdb.ts"
+      ],
+      "status": 0,
+      "signal": null,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "inputsUnchanged": true
+}

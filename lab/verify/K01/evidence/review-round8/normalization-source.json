@@ -1,0 +1,621 @@
+[
+  {
+    "path": "packages/core/src/store/RuntimeServices.ts",
+    "sha256": "9c00c258174ed2ea528899c5becc0ec32704eb4185821c638179f02a94054af3",
+    "matchesBuilder": true,
+    "excerpts": [
+      {
+        "line": 13,
+        "text": "export const RuntimeClockLive = Layer.succeed(RuntimeClock, {"
+      },
+      {
+        "line": 14,
+        "text": "  now: Effect.sync(() => Date.now()),"
+      },
+      {
+        "line": 15,
+        "text": "} satisfies RuntimeClockService);"
+      },
+      {
+        "line": 16,
+        "text": ""
+      },
+      {
+        "line": 31,
+        "text": "  nextTripleId: Effect.sync(() => generateId()),"
+      },
+      {
+        "line": 32,
+        "text": "  nextTxId: Effect.sync(() => generateTransactionId()),"
+      },
+      {
+        "line": 33,
+        "text": "} satisfies IdGeneratorService);"
+      },
+      {
+        "line": 34,
+        "text": ""
+      },
+      {
+        "line": 35,
+        "text": "export interface DeterministicRuntimeOptions {"
+      },
+      {
+        "line": 36,
+        "text": "  readonly now: number;"
+      }
+    ]
+  },
+  {
+    "path": "packages/core/src/store/TriplesLive.ts",
+    "sha256": "1fc030c442179a937f544b865983b45b577c124aa3b338528823f93dc828a36c",
+    "matchesBuilder": true,
+    "excerpts": [
+      {
+        "line": 306,
+        "text": "                );"
+      },
+      {
+        "line": 307,
+        "text": "              }"
+      },
+      {
+        "line": 308,
+        "text": "              const txId = yield* nextTxId;"
+      },
+      {
+        "line": 309,
+        "text": "              const timestamp = yield* now;"
+      },
+      {
+        "line": 310,
+        "text": "              if (meta?.commandId !== undefined) {"
+      },
+      {
+        "line": 513,
+        "text": "              if (!isJournalSuppressed(meta)) {"
+      },
+      {
+        "line": 514,
+        "text": "                for (const input of metadataInputs(txId, position, timestamp, meta, changes)) {"
+      },
+      {
+        "line": 515,
+        "text": "                  yield* adapter.insert(input, txId, timestamp, yield* nextTripleId, position);"
+      },
+      {
+        "line": 516,
+        "text": "                }"
+      },
+      {
+        "line": 517,
+        "text": "              }"
+      },
+      {
+        "line": 518,
+        "text": ""
+      },
+      {
+        "line": 519,
+        "text": "              return { txId, position, instant: timestamp, triples, retracted: retractedCount };"
+      }
+    ]
+  },
+  {
+    "path": "packages/core/src/store/transactionMetadata.ts",
+    "sha256": "f47e28bb7e5683a1348b8689471fc84de3ebcb8986ed1f6d65198399179055fa",
+    "matchesBuilder": true,
+    "excerpts": [
+      {
+        "line": 9,
+        "text": "export const transactionChangeFromTriple = ("
+      },
+      {
+        "line": 10,
+        "text": "  op: \"assert\" | \"retract\","
+      },
+      {
+        "line": 11,
+        "text": "  triple: Triple,"
+      },
+      {
+        "line": 12,
+        "text": "  transactionId: TransactionId,"
+      },
+      {
+        "line": 13,
+        "text": "  transactionInstant: number,"
+      },
+      {
+        "line": 14,
+        "text": "): TransactionChange => ({"
+      },
+      {
+        "line": 15,
+        "text": "  op,"
+      },
+      {
+        "line": 16,
+        "text": "  tripleId: triple.id,"
+      },
+      {
+        "line": 17,
+        "text": "  entityId: triple.entityId,"
+      },
+      {
+        "line": 18,
+        "text": "  attribute: triple.attribute,"
+      },
+      {
+        "line": 19,
+        "text": "  ...(Option.isSome(triple.entityType) ? { entityType: triple.entityType.value } : {}),"
+      },
+      {
+        "line": 20,
+        "text": "  value: triple.value,"
+      },
+      {
+        "line": 21,
+        "text": "  validFrom: triple.validFrom,"
+      },
+      {
+        "line": 22,
+        "text": "  ...(Option.isSome(triple.validTo) ? { validTo: triple.validTo.value } : {}),"
+      },
+      {
+        "line": 23,
+        "text": "  recordedAt: triple.recordedAt,"
+      },
+      {
+        "line": 24,
+        "text": "  ...(op === \"retract\" ? { retractedAt: transactionInstant } : {}),"
+      },
+      {
+        "line": 25,
+        "text": "  ...(Option.isSome(triple.txId) ? { assertionTxId: triple.txId.value } : {}),"
+      },
+      {
+        "line": 26,
+        "text": "  ...(op === \"retract\" ? { retractionTxId: transactionId } : {}),"
+      },
+      {
+        "line": 29,
+        "text": "export const metadataInputs = ("
+      },
+      {
+        "line": 30,
+        "text": "  txId: TransactionId,"
+      },
+      {
+        "line": 31,
+        "text": "  position: number,"
+      },
+      {
+        "line": 32,
+        "text": "  instant: number,"
+      },
+      {
+        "line": 33,
+        "text": "  meta: TransactionMeta | undefined,"
+      },
+      {
+        "line": 34,
+        "text": "  changes: readonly TransactionChange[],"
+      },
+      {
+        "line": 35,
+        "text": "): readonly TripleInput[] => {"
+      },
+      {
+        "line": 36,
+        "text": "  const input = (attribute: string, value: TripleInput[\"value\"]): TripleInput => ({"
+      },
+      {
+        "line": 37,
+        "text": "    entityId: txId,"
+      },
+      {
+        "line": 38,
+        "text": "    attribute,"
+      },
+      {
+        "line": 39,
+        "text": "    value,"
+      },
+      {
+        "line": 40,
+        "text": "    entityType: \"_Transaction\","
+      },
+      {
+        "line": 41,
+        "text": "  });"
+      },
+      {
+        "line": 42,
+        "text": "  return ["
+      },
+      {
+        "line": 43,
+        "text": "    input(TxAttributes.POSITION, { type: \"number\", value: position }),"
+      },
+      {
+        "line": 44,
+        "text": "    input(TxAttributes.INSTANT, { type: \"datetime\", value: instant }),"
+      },
+      {
+        "line": 45,
+        "text": "    ...(meta?.actor ? [input(TxAttributes.ACTOR, text(meta.actor))] : []),"
+      },
+      {
+        "line": 46,
+        "text": "    ...(meta?.commandId ? [input(TxAttributes.COMMAND_ID, text(meta.commandId))] : []),"
+      },
+      {
+        "line": 47,
+        "text": "    ...(meta?.correlationId ? [input(TxAttributes.CORRELATION_ID, text(meta.correlationId))] : []),"
+      },
+      {
+        "line": 48,
+        "text": "    ...(meta?.causationId ? [input(TxAttributes.CAUSATION_ID, text(meta.causationId))] : []),"
+      },
+      {
+        "line": 49,
+        "text": "    ...(meta?.configSnapshot"
+      },
+      {
+        "line": 50,
+        "text": "      ? [input(TxAttributes.CONFIG_SNAPSHOT, text(meta.configSnapshot))]"
+      },
+      {
+        "line": 51,
+        "text": "      : []),"
+      },
+      {
+        "line": 52,
+        "text": "    ...[...new Set(changes.map((change) => change.entityId))].map((entityId) =>"
+      },
+      {
+        "line": 53,
+        "text": "      input(TxAttributes.CHANGED_ENTITY, { type: \"ref\", value: entityId }),"
+      },
+      {
+        "line": 54,
+        "text": "    ),"
+      },
+      {
+        "line": 55,
+        "text": "    ...changes.map((change) => input(TxAttributes.CHANGE, { type: \"json\", value: change })),"
+      }
+    ]
+  },
+  {
+    "path": "packages/core/src/store/systemNamespace.ts",
+    "sha256": "909bcc5e8d92c4545b90d2a9dd65c3484412be880a2586519d4e7876bf693d6b",
+    "matchesBuilder": true,
+    "excerpts": [
+      {
+        "line": 50,
+        "text": "export const isReservedEntityId = (entityId: string): boolean => entityId.startsWith(\"_triplex/\");"
+      },
+      {
+        "line": 51,
+        "text": ""
+      },
+      {
+        "line": 52,
+        "text": "export const isReservedAttribute = (attribute: string): boolean =>"
+      },
+      {
+        "line": 53,
+        "text": "  attribute.startsWith(\":triplex/\") || attribute.startsWith(\":_tx/\");"
+      },
+      {
+        "line": 54,
+        "text": ""
+      },
+      {
+        "line": 55,
+        "text": "export const isReservedEntityType = (entityType: string | undefined): boolean =>"
+      },
+      {
+        "line": 56,
+        "text": "  entityType === \"_Transaction\" || entityType?.startsWith(\"triplex.\") === true;"
+      },
+      {
+        "line": 57,
+        "text": ""
+      },
+      {
+        "line": 58,
+        "text": "interface ReservedWriteTarget {"
+      },
+      {
+        "line": 59,
+        "text": "  readonly entityId: string;"
+      },
+      {
+        "line": 60,
+        "text": "  readonly attribute: string;"
+      },
+      {
+        "line": 61,
+        "text": "  readonly entityType?: string | undefined;"
+      },
+      {
+        "line": 62,
+        "text": "}"
+      },
+      {
+        "line": 63,
+        "text": ""
+      },
+      {
+        "line": 64,
+        "text": "export const reservedWriteReason = (input: ReservedWriteTarget): string | undefined => {"
+      },
+      {
+        "line": 65,
+        "text": "  if (isReservedEntityId(input.entityId)) return `entity ${input.entityId}`;"
+      },
+      {
+        "line": 66,
+        "text": "  if (isReservedAttribute(input.attribute)) return `attribute ${input.attribute}`;"
+      },
+      {
+        "line": 67,
+        "text": "  if (isReservedEntityType(input.entityType)) return `entity type ${input.entityType}`;"
+      },
+      {
+        "line": 80,
+        "text": "export const reservedAssertError = (operations: readonly TransactOp[]): WriteError | undefined => {"
+      },
+      {
+        "line": 81,
+        "text": "  for (const operation of operations) {"
+      },
+      {
+        "line": 82,
+        "text": "    if (operation.op !== \"assert\") continue;"
+      },
+      {
+        "line": 83,
+        "text": "    const error = reservedWriteError(operation);"
+      },
+      {
+        "line": 84,
+        "text": "    if (error) return error;"
+      },
+      {
+        "line": 85,
+        "text": "  }"
+      },
+      {
+        "line": 86,
+        "text": "  return undefined;"
+      },
+      {
+        "line": 87,
+        "text": "};"
+      }
+    ]
+  },
+  {
+    "path": "packages/xtdb/src/XtdbStorageAdapter.ts",
+    "sha256": "204b856f7c3792c04b46a61ebe19b51fa0db053c1594d6f5aaa1149f14179560",
+    "matchesBuilder": true,
+    "excerpts": [
+      {
+        "line": 217,
+        "text": "        insertStatement("
+      },
+      {
+        "line": 218,
+        "text": "          \"tx_assertions\","
+      },
+      {
+        "line": 219,
+        "text": "          [\"_id\", \"scope_key\", ...assertionColumns, \"value_identity\"],"
+      },
+      {
+        "line": 220,
+        "text": "          rows"
+      },
+      {
+        "line": 221,
+        "text": "            .slice(i, i + 200)"
+      },
+      {
+        "line": 222,
+        "text": "            .map((row) => ["
+      },
+      {
+        "line": 223,
+        "text": "              JSON.stringify([scopeKey, row.id]),"
+      },
+      {
+        "line": 224,
+        "text": "              scopeKey,"
+      },
+      {
+        "line": 225,
+        "text": "              ...assertionColumns.map((column) => row[column]),"
+      },
+      {
+        "line": 226,
+        "text": "              canonicalJson(assertionValue(row)),"
+      },
+      {
+        "line": 227,
+        "text": "            ]),"
+      },
+      {
+        "line": 228,
+        "text": "        ),"
+      },
+      {
+        "line": 229,
+        "text": "      );"
+      },
+      {
+        "line": 244,
+        "text": "        ),"
+      },
+      {
+        "line": 245,
+        "text": "      );"
+      },
+      {
+        "line": 246,
+        "text": "    statements.push("
+      },
+      {
+        "line": 247,
+        "text": "      insertStatement("
+      },
+      {
+        "line": 248,
+        "text": "        \"tx_meta\","
+      },
+      {
+        "line": 249,
+        "text": "        [\"_id\", \"scope_key\", \"position\"],"
+      },
+      {
+        "line": 250,
+        "text": "        [[scopeKey, scopeKey, state.position]],"
+      },
+      {
+        "line": 251,
+        "text": "      ),"
+      },
+      {
+        "line": 252,
+        "text": "    );"
+      },
+      {
+        "line": 253,
+        "text": "    statements.push("
+      },
+      {
+        "line": 254,
+        "text": "      insertStatement("
+      },
+      {
+        "line": 255,
+        "text": "        \"tx_attempts\","
+      },
+      {
+        "line": 256,
+        "text": "        [\"_id\", \"scope_key\", \"operation_id\", \"attempt_id\", \"position\"],"
+      },
+      {
+        "line": 257,
+        "text": "        ["
+      },
+      {
+        "line": 258,
+        "text": "          ["
+      },
+      {
+        "line": 259,
+        "text": "            JSON.stringify([scopeKey, operationId]),"
+      },
+      {
+        "line": 260,
+        "text": "            scopeKey,"
+      },
+      {
+        "line": 261,
+        "text": "            operationId,"
+      },
+      {
+        "line": 262,
+        "text": "            attemptId,"
+      },
+      {
+        "line": 263,
+        "text": "            state.position,"
+      },
+      {
+        "line": 264,
+        "text": "          ],"
+      },
+      {
+        "line": 265,
+        "text": "        ],"
+      },
+      {
+        "line": 266,
+        "text": "      ),"
+      },
+      {
+        "line": 432,
+        "text": "      return yield* Effect.try({"
+      },
+      {
+        "line": 433,
+        "text": "        try: () => {"
+      },
+      {
+        "line": 434,
+        "text": "          const row: TripleRow = {"
+      },
+      {
+        "line": 435,
+        "text": "            id,"
+      },
+      {
+        "line": 436,
+        "text": "            entity_id: input.entityId,"
+      },
+      {
+        "line": 437,
+        "text": "            attribute: input.attribute,"
+      },
+      {
+        "line": 438,
+        "text": "            ...packValue(input.value),"
+      },
+      {
+        "line": 439,
+        "text": "            recorded_at: timestamp,"
+      },
+      {
+        "line": 440,
+        "text": "            recorded_position: position,"
+      },
+      {
+        "line": 441,
+        "text": "            valid_from: input.validFrom ?? timestamp,"
+      },
+      {
+        "line": 442,
+        "text": "            valid_to: input.validTo ?? null,"
+      },
+      {
+        "line": 443,
+        "text": "            created_by: input.createdBy ?? null,"
+      },
+      {
+        "line": 444,
+        "text": "            retracted_at: null,"
+      },
+      {
+        "line": 445,
+        "text": "            retracted_position: null,"
+      },
+      {
+        "line": 446,
+        "text": "            retract_tx_id: null,"
+      },
+      {
+        "line": 447,
+        "text": "            entity_type: input.entityType ?? null,"
+      },
+      {
+        "line": 448,
+        "text": "            schema_version: 1,"
+      }
+    ]
+  }
+]
