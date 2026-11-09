@@ -32,3 +32,15 @@ loops alone never qualifies L256. Short offline fixtures deliberately have no qu
 
 `runNS` refuses live qualification; this change does not set up containers, slots, an observer, fault injection,
 or contract pins. The G03 runner must supply those separately. Mac runs are DIAGNOSTIC.
+
+Round 2 read evidence uses `answer-canonical/1` (specified in `schema.json`): the semantic answer digest
+is independent of RPC IDs and formatting. Every read keeps that digest, its separate raw-wire digest,
+and the canonical key for the complete driver-sent request, including configured shape/hops, route,
+basis and any additional fields. `answer-policy` declares first-plus-every-16 sampling per loop by
+default; all non-loop pulls retain bytes. No loop is excluded from sampling.
+
+The import gate admits a restricted set of Node builtins needed for data IO, hashing, clocks and TCP.
+Module, worker, VM and process-based runtime loaders are refused, including aliases. The sole child-process
+capability is the literal macOS boot-ID sysctl in `clock.mjs`; other commands or aliasing are refused.
+Runtime file reads supply config/key/clock data, never executable imports. This is a conservative closure
+check for evaluator-authored code, not a general JavaScript security sandbox.

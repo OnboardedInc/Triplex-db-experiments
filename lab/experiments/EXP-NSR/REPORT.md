@@ -132,3 +132,90 @@ Open integration: native lane `openNsRole` providers (this change supplies the R
 Linux tmpfs/device startup tests, SQL01 constructor-level guarding when its absent source is integrated, G03 hardened
 VM placement/observer wiring and CR-NS qualification. The P5 path here drives pinned pulls only; evaluation/outbox
 publication is not an accepted P5 result. These limits are not hidden by the passing offline gates.
+
+## Round 2 — review F1, F2, F3
+
+Review: `verify/NSR` at `4c8b02fc`, reviewing `05c26355`. North star: oracle-checkable P1 answers and trustworthy
+P1–P5 evidence boundaries. Scope/targets remain `lab/SCOPE.md`, `lab/NORTH-STAR.md`, `lab/TARGETS.md`.
+
+**F1 fixed.** New evaluator-owned `answer.mjs` defines `answer-canonical/1`; its complete specification is in the
+ns-sut/1 schema. It recursively emits sorted object keys, preserves array order, and hashes UTF-8 canonical JSON
+of the parsed application answer, excluding the RPC envelope. `answerSha256` is now this canonical digest;
+`rawWireSha256` independently retains the hash of the original received RPC line. Every read retains the complete
+snapshot of the driver-sent request and its canonical `requestKey`: subject, configured shape including hops,
+basis, route and all additional fields are preserved, with no projection onto only subject/basis. `rpcMethod`
+records the actual method. RYOW, P4 and sweep pulls use the same recording path.
+
+Sampling is explicit in the HMAC-protected `answer-policy` event: `answer-sampling/1` retains the first answer and
+every 16th zero-based sequence in **each loop**, with a validated configurable interval; all non-loop pulls retain
+answers. Sampled rows include parsed answer, canonical bytes and raw response bytes. Every row, including
+unsampled loop-1 rows, retains both digests and the full request. Sampling is independent of candidate content.
+
+**F2 fixed.** The import gate now rejects module/worker/VM/process loader capabilities at their import boundary,
+so renamed createRequire and worker imports cannot disappear from the graph. It rejects global require aliases,
+import-equals, dynamic imports, indexed function invocation, reflective constructor access and unapproved process
+APIs. Node builtins are restricted to the driver's actual data/clock/hash/TCP needs; crypto/util/perf exports are
+restricted too. The sole child-process exception is the exact literal boot-ID sysctl invocation in clock.mjs,
+with its fixed argv and encoding-only options. File reads are data inputs, not executable runtime imports. This
+remains a conservative gate for evaluator-authored code, not a general JavaScript security sandbox.
+
+**F3 fixed.** Linux admission resolves an existing database filename with realpath and classifies **that target**,
+including file-level filesystem mounts. A durable-directory symlink into modeled tmpfs now fails typed. Durable
+symlinks are also conservatively refused. Existing WAL/SHM/journal/lock paths are resolved and refused if linked
+or on a mismatched filesystem; dangling links fail typed. A new database still uses its resolved parent until
+SQLite creates it. This is path-level preflight on the private volume, not a claim of race-free inode reservation
+against a concurrent path replacer, nor proof of host power-loss durability.
+
+The review's `probes.mjs` was copied to `lab/verify/NSR/probes.mjs` and its controls adapted to require refusal and
+independent canonical recomputation. Exact original probes and durability test are retained under `round2/`.
+The new negative answer is deliberately placed in an **unsampled loop-1 read**. An independent canonical encoder
+and fixture oracle recompute from normal retained HR evidence and reject it; the driver itself still reports
+DIAGNOSTIC and does not claim to perform B5's semantic qualification.
+
+### Round 2 gates
+
+All commands used heavy.mjs, Node 24 and the owned pnpm store; no engine slot or Docker operation.
+Durable evidence: `/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-NSR/round2/`.
+
+| Check                                                       | Fresh builder result                                                                                                                                  | Evidence                                                            |
+| ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Changed host package build and declaration/type generation  | Passed                                                                                                                                                | `final-1.log`                                                       |
+| Clock and modeled Linux target/refusal tests                | 4 passed, 0 failed                                                                                                                                    | `final-1.log`; `nsr-target.test.ts`                                 |
+| Copied review probes                                        | Both original loader cases refused; 11 direct/loading controls refused; copied nine-file bundle loads                                                 | `final-1.log`, `final-probes/`                                      |
+| F1 controls                                                 | Equal semantic answers compare equal across RPC IDs; raw-wire hashes remain distinct; changed unsampled loop-1 answer fails independent recomputation | `final-probes/` retained HR events, policy and independent captures |
+| NSR/P3M parity, caps, canonical encoding and planted delays | 12 passed, 0 failed                                                                                                                                   | `final-1.log`, `final-nsr/`, `final-p3m/`                           |
+| Formatting and lint                                         | Passed for changed implementation/test files                                                                                                          | Builder invocation                                                  |
+
+The earlier `offline-1.log` passed 12 tests plus probes; `host-1.log` passed the initial three source controls.
+The final run adds the database-file/sidecar control and rebuilds the changed public host dist before parity.
+`source-hashes.json` retains the final source hashes, final host dist hashes, review provenance and a byte check
+against every file in the successful probe's copied bundle. The round 1 1220-test full G0 remains historical;
+a full G0 and package consumer/release check were **not rerun** in round 2. The review established that the earlier
+missing CLI entry was build setup, rather than an NSR regression.
+
+### Round 2 PASS / verdict / receipt audit
+
+1. **Canonical read observations** (`answer.mjs`, `driver.mjs`): capture only validated parsed answer bytes and a
+   pre-send snapshot of the complete request; raw bytes are separately hashed. New RPC IDs and per-loop sequence
+   numbers establish fresh observations, bound by the existing run/source/input/slot HMAC chunks. A digest is an
+   observation, not a semantic PASS; oracle recomputation still supplies the independent expected content.
+2. **Sampling policy**: policy is written before loops, with a validated interval; each sampled flag follows its
+   actual loop sequence and is checked by the independent probe. No candidate-selected or loop-0-only coverage.
+3. **Import gate**: positive closure manifests contain actual current file hashes; runtime loader capabilities
+   fail closed before fixture execution. The copied bundle is loaded fresh. The negative controls check no marker
+   was produced. Source/bundle hashes bind the exact closure, without claiming an all-purpose code sandbox.
+4. **Durability preflight**: actual resolved target/sidecar paths determine classification, with typed refusal of
+   modeled volatile files. Fresh real symlinks/files and explicit Linux mocks exercise the check. The result binds
+   targetPath and the existing filesystem/device observations; no actual Linux startup or TOCTOU proof is inferred.
+5. **Copied review probe assertions**: independent expected canonical fixture content is compared with every
+   retained read digest and full request, using fresh UUID attempts and raw TCP data. The nonzero-loop mutation
+   is rejected by recomputation, not accepted as a receipt. Source closure and supplied offline-no-slot binding
+   remain explicit; the fixture's input hash is a label, not a production input attestation.
+6. **Round 2 evidence manifest**: hashes are computed from retained bytes and read back after the completed final
+   attempt; paths/source-hashes bind each file and the tested source. Preservation does not promote DIAGNOSTIC
+   or prior historical checks into qualification.
+
+Changed contract-pinned paths: **none**, enumerated in `round2/pin-changes.json`. No lab/acceptance bytes changed.
+Actual Linux tmpfs/device startup, race-free new-file reservation, hardened VM wiring and native providers remain
+unverified. P3M still has no newer head than d523f632 at the final check. These checks are builder evidence for the
+three review fixes, awaiting independent review, with no NS qualification/promotion claim.
