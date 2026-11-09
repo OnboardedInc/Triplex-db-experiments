@@ -36,3 +36,7 @@ wire types refuse (including text NaN, which cannot expose payload bits, and JSO
 All generator inputs include the value/wire/normalization modules. Regenerate old pins. Dprime refuses source state without
 an available commit-order anchor and ambiguous assertion ties; it never substitutes for full D or weakens other fields.
 No live P5, raw-wire, E1 or engine cancellation qualification is claimed by these offline tests.
+
+Round 10 keeps the shared G0 signatures unchanged. The production XTDB reader now pairs each raw column OID and exact scalar bytes with `information_schema.columns.xt_type`, read before and after every page. That native Arrow declaration must be monomorphic (nullable is allowed) and agree with the wire type. Its native width is hashed too, including i8 versus i16 sharing OID 21. Mixed unions refuse because XTDB widens their rows before pgwire; a column OID alone cannot prove row fidelity. A changed/missing catalog, unsupported type or timeout refuses. Existing pins must be regenerated.
+
+Dprime version `tx2-e1/2` checks journal instants against the assigning transaction clock, then uses dense chronological ranks of distinct clocks. Equal instants share ranks; ties and order remain observable across independent seeds. IDs retain commit-order ranks. Full D continues to include original native types/bytes. These are offline/source-derived guarantees pending the live commands in LIVE-round10.md.

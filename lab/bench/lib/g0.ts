@@ -172,7 +172,7 @@ export async function readE1G0(
     );
     return {
       ...second,
-      Dprime: hash(["tx2-e1/1", normalization, expected, normalized, second.w0 ?? null]),
+      Dprime: hash(["tx2-e1/2", normalization, expected, normalized, second.w0 ?? null]),
     };
   }, ms);
 }

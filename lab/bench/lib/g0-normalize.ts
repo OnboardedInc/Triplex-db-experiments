@@ -13,7 +13,7 @@ export const normalization = {
   "tx_assertions.tx_id": "packages/core/src/store/TriplesLive.ts#transact",
   // [EXP-K01-R9] Why: XtdbStorageAdapter.ts retract assigns the current engine transaction id. Rejected: normalizing arbitrary strings containing a transaction id.
   "tx_assertions.retract_tx_id": "packages/xtdb/src/XtdbStorageAdapter.ts#retract",
-  // [EXP-K01-R9] Why: RuntimeServices.ts RuntimeClockLive.now supplies TriplesLive.ts transaction timestamp, persisted by insert. Rejected: timestamp sorting instead of commit position.
+  // [EXP-K01-R9] Why: RuntimeServices.ts RuntimeClockLive.now supplies TriplesLive.ts transaction timestamp, persisted by insert. Rejected: assigning every transaction a distinct time rank (erases equal instants).
   "tx_assertions.recorded_at": "packages/core/src/store/RuntimeServices.ts#RuntimeClockLive",
   // [EXP-K01-R9] Why: XtdbStorageAdapter.ts retract persists the transaction clock and retracted_position. Rejected: normalizing valid-time business dates.
   "tx_assertions.retracted_at": "packages/xtdb/src/XtdbStorageAdapter.ts#retract",
@@ -81,9 +81,27 @@ export function e1Normalizer() {
   const clocks = new Map<number, number>();
   const clock = (rank: number, v: unknown) => {
     const n = scalar(v);
-    if (!Number.isSafeInteger(n) || (clocks.has(rank) && !Object.is(clocks.get(rank), n)))
+    if (
+      !Number.isSafeInteger(n) ||
+      Object.is(n, -0) ||
+      (clocks.has(rank) && !Object.is(clocks.get(rank), n))
+    )
       throw Error("Dprime inconsistent system clock");
     clocks.set(rank, Number(n));
+  };
+  // [EXP-K01-R10] Why: dense ranks of distinct verified clocks preserve both equality and chronological order. Rejected: transaction-position ranks (hide ties, inversions and inconsistent journal instants).
+  const instantRanks = new Map<number, number>();
+  const instantRank = (position: number) => {
+    const stamp = clocks.get(position);
+    if (stamp === undefined || !instantRanks.has(stamp))
+      throw Error("Dprime unverified transaction instant");
+    return instantRanks.get(stamp)!;
+  };
+  const verifiedInstant = (r: Record<string, unknown>) => {
+    const actual = scalar(r.value_datetime);
+    if (!Object.is(actual, clocks.get(at(r))))
+      throw Error("Dprime inconsistent transaction instant");
+    return instantRank(at(r));
   };
   const transactionNames = new Map<number, string>();
   const transactions = new Map<string, number>(),
@@ -124,7 +142,7 @@ export function e1Normalizer() {
       throw Error("Dprime missing instant identity value");
     return (
       text.slice(0, property.initializer.getStart(source)) +
-      JSON.stringify(["commit-rank", at(r)]) +
+      JSON.stringify(["instant-rank", verifiedInstant(r)]) +
       text.slice(property.initializer.end)
     );
   };
@@ -164,8 +182,10 @@ export function e1Normalizer() {
           : key.endsWith("TxId")
             ? lookup(transactions, JSON.parse(raw))
             : key === "recordedAt"
-              ? lookup(transactions, body.assertionTxId ?? scalar(r.tx_id))
-              : lookup(transactions, body.retractionTxId ?? scalar(r.retract_tx_id)),
+              ? instantRank(Number(lookup(transactions, body.assertionTxId ?? scalar(r.tx_id))))
+              : instantRank(
+                  Number(lookup(transactions, body.retractionTxId ?? scalar(r.retract_tx_id))),
+                ),
     );
   };
   return {
@@ -201,6 +221,9 @@ export function e1Normalizer() {
       pending.push({ id, position, signature: digest(row) });
     },
     finish() {
+      [...new Set(clocks.values())]
+        .sort((a, b) => a - b)
+        .forEach((v, i) => instantRanks.set(v, i + 1));
       pending.sort((a, b) => a.position - b.position || a.signature.localeCompare(b.signature));
       pending.forEach((r, i) => {
         if (
@@ -233,7 +256,10 @@ export function e1Normalizer() {
           continue;
         }
         if (table === "tx_claims") {
-          out[key] = ["commit-rank", at(r, "position"), key];
+          out[key] =
+            key === "recorded_at"
+              ? ["instant-rank", instantRank(at(r, "position"))]
+              : ["commit-rank", at(r, "position"), key];
           continue;
         }
         if (key === "id" || key === "_id") {
@@ -246,16 +272,16 @@ export function e1Normalizer() {
         }
         if (key === "recorded_at" || key === "retracted_at") {
           out[key] = [
-            "commit-rank",
-            at(r, key === "recorded_at" ? "recorded_position" : "retracted_position"),
+            "instant-rank",
+            instantRank(at(r, key === "recorded_at" ? "recorded_position" : "retracted_position")),
           ];
           continue;
         }
         if (!isMeta(r)) continue;
         if (key === "entity_id") out[key] = ["transaction-rank", lookup(transactions, r.entity_id)];
-        else if (key === "valid_from") out[key] = ["commit-rank", at(r)];
+        else if (key === "valid_from") out[key] = ["instant-rank", instantRank(at(r))];
         else if (key === "value_datetime" && scalar(r.attribute) === ":_tx/instant")
-          out[key] = ["commit-rank", at(r)];
+          out[key] = ["instant-rank", verifiedInstant(r)];
         else if (key === "value_json" && scalar(r.attribute) === ":_tx/change")
           out[key] = metaJson(r, r[key], false);
         else if (key === "value_identity" && scalar(r.attribute) === ":_tx/change")

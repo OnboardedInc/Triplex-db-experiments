@@ -63,7 +63,15 @@ test("wire transport refuses representations whose exact bits are unavailable", 
 test("real raw-row decoder preserves OID/bytes and refuses partial protocol frames", async () => {
   const { wireRows } = await import("../lib/g0-wire.ts");
   const frame = (oid: number, text: string) =>
-    Object.assign([[Buffer.from(text)]], { columns: [{ name: "v", type: oid }] });
+    Object.assign([[Buffer.from(text)]], {
+      columns: [
+        {
+          name: "v",
+          type: oid,
+          nativeType: ({ 20: ":i64", 700: ":f32", 701: ":f64" } as Record<number, string>)[oid],
+        },
+      ],
+    });
   assert.notEqual(hash(wireRows(frame(20, "1"))), hash(wireRows(frame(701, "1"))));
   assert.notEqual(hash(wireRows(frame(701, "-0"))), hash(wireRows(frame(701, "0"))));
   assert.notEqual(hash(wireRows(frame(700, "1"))), hash(wireRows(frame(701, "1"))));
