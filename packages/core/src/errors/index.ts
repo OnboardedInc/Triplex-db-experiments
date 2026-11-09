@@ -101,13 +101,14 @@ export class ConstraintViolationError extends Data.TaggedError("ConstraintViolat
 }> {}
 
 // Read operation errors
-const NormalReadError = class ReadError extends Data.TaggedError("ReadError")<{
+class NormalReadError extends Data.TaggedError("ReadError")<{
   readonly message: string;
   readonly cause?: unknown;
-}> {};
+}> {}
 // [EXP-RT01] Why: preserve normal catchTag narrowing and add a separately discriminated basis failure. Rejected: a union-valued tag on the existing class (narrows ReadError handlers to never).
-export const ReadError = NormalReadError;
-export type ReadError = InstanceType<typeof NormalReadError> | BasisNotAvailable;
+Object.defineProperty(NormalReadError, "name", { value: "ReadError" });
+export const ReadError: typeof NormalReadError = NormalReadError;
+export type ReadError = NormalReadError | BasisNotAvailable;
 
 export class EntityNotFoundError extends Data.TaggedError("EntityNotFoundError")<{
   readonly entityId: EntityId;
