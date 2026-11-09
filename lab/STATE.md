@@ -370,3 +370,8 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   injector, and refuses before replay. Suite 268/268, NS 160/160, evaluator 108/108, --verify passes. Driver bundle hash moved (re-pin in
   0.4.1). In review (CX-VG03-56). Round 7b (R48 witness integration) waits for OBS01 round 10 to be accepted, so it builds on the fixed
   witness.
+- 2026-11-09 OBS01 round 10 (Sonnet, 1f7d412b): F1-F5 fixed offline (PUBLICATION-SPLIT, coverage-checked detach, W1 full code set, one
+  shared WitnessScan for W3, syncfs interval with DURABILITY-UNPROVEN), all timestamps nsecs(monotonic), W0 clock/perf_event_paranoid/
+  memory/ext4/map-key checks coded, Dockerfile written unbuilt (libbsd0 version needs a build arg). Python 72, Node 21, reviewer fixtures
+  11/11. Nothing ran in the VM; no real bpftrace has parsed the .bt files. In review (CX-VOBS7 round 2), including whether a 100 ms clock
+  tolerance can catch a boot-time clock on a fresh VM.
