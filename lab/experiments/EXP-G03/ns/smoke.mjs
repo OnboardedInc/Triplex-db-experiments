@@ -35,7 +35,7 @@ try{
  const periods=attempts.map(r=>{const a=[...r.observer.seal.periodNs].sort((a,b)=>a-b);return {p50Ns:a[Math.ceil(a.length*.5)-1],p99Ns:a[Math.ceil(a.length*.99)-1]}});
  const summary={status:'DIAGNOSTIC',qualification:false,source,driverManifest:manifest,layout:'P-TINY diagnostic caps, not proposed acceptance nsLayout',writerOfferAckP99Ns:latencies,observerOverhead:overhead,observerPeriods:periods,smoke:overhead!==null&&overhead<=.05?'OBSERVED':'NOT-ESTABLISHED',events};
  fs.writeFileSync(path.join(out,'summary.json'),JSON.stringify(summary,null,2));if(summary.smoke!=='OBSERVED')process.exitCode=2;
-}catch(e){events.push({error:String(e)});process.exitCode=2}
+}catch(e){events.push({error:String(e)});if(box){const logs=Object.fromEntries(box.resources.filter(([kind])=>kind==='container').map(([,n])=>{const r=spawnSync('docker',['-H','unix:///Users/sam/.colima/triplex2/docker.sock','logs',n],{encoding:'utf8',maxBuffer:2097152});return [n,{stdout:r.stdout,stderr:r.stderr,status:r.status}]}));fs.writeFileSync(path.join(out,'failure-container-logs.json'),JSON.stringify(logs,null,2))}process.exitCode=2}
 finally{
  try{box?.close();if(entered)engine('remove-volume',['--name',store])}catch(e){cleanupError=String(e);process.exitCode=2}
  canary.close();

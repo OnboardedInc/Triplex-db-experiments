@@ -32,8 +32,9 @@ const filesOf=walk=>new Map(walk.modules.map(m=>[m.path,Buffer.from(m.base64,'ba
 export async function runBoxedNS(box,{instance,bundleFiles,observerFiles,sourceCommit,observe=true,population=16,trace,readers=4,placement,observerImage,blocked=[],canary,isolations=true}){
  if(!/^[a-f0-9]{40}$/.test(sourceCommit)||!Array.isArray(trace)||!trace.length)throw Error('NS source/trace identity missing');
  const runId=randomBytes(16).toString('hex'),key=randomBytes(32),stages=[],volumes={},roles=[],names=[];
- const stage=(step,detail)=>stages.push({step,detail,at:new Date().toISOString()});stage(1,{sourceCommit,runId,diagnostic:true});
- const alloc=(key,suffix=key)=>volumes[key]=box.volume('ns-'+runId.slice(0,6)+'-'+suffix);
+ const stage=(step,detail)=>{const row={step,detail,at:new Date().toISOString()};stages.push(row);fs.appendFileSync(path.join(box.workDir,'ns-'+runId+'-stages.ndjson'),JSON.stringify(row)+'\n',{flag:'a',mode:0o600})};stage(1,{sourceCommit,runId,diagnostic:true});
+ // [EXP-G03-R5] Why: Docker copies /work ownership to a fresh named volume before mounting it at /state or /out. Rejected: root-owned empty mountpoints that deny uid 10001.
+ const alloc=(key,suffix=key)=>{const volume=box.volume('ns-'+runId.slice(0,6)+'-'+suffix);box.seed(volume,new Map());return volumes[key]=volume};
  const seed=(volume,files)=>box.seed(volume,new Map(Object.entries(files).map(([n,b])=>[n,{mode:'100644',bytes:Buffer.isBuffer(b)?b:Buffer.from(JSON.stringify(b))}])));
  const network=box.prefix+'ns-'+runId.slice(0,6);box.engine('network',['--name',network]);box.resources.push(['network',network]);volumes.network=network;
  for(const k of ['broker','consumer','output','observer','trace','key','bundle','observerCode','control'])alloc(k);
