@@ -1,0 +1,13 @@
+{
+  "candidate": "6b8d2182d78e567cf8e385622c9a259e8892687a",
+  "main": "e90c15846a7fb0b93f7d4debdef3dcb76a4f24d4",
+  "reviewerHead": "f12b9a480102435484771f9b47ff42d60842b4c6",
+  "started": 1794195151.400693,
+  "freeBytes": 16729362432,
+  "raw": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0311/contract-0.3.13-attempt1",
+  "mergeExit": 1,
+  "mergeHead": "6b8d2182d78e567cf8e385622c9a259e8892687a",
+  "conflicts": [
+    "lab/bin/gate.mjs"
+  ]
+}

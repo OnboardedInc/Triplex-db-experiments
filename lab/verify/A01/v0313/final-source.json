@@ -1,0 +1,18 @@
+{
+  "candidate": "6b8d2182d78e567cf8e385622c9a259e8892687a",
+  "testedMain": "e90c15846a7fb0b93f7d4debdef3dcb76a4f24d4",
+  "mainAfterReview": "9a7996e2a242690edbc86417283d8c7348950adb",
+  "trackedCandidateDiff": "empty",
+  "candidateUntrackedPaths": [
+    "lab/runs/G0/G0-datomic-20261109T034040Z-c8a898.json",
+    "lab/runs/G0/G0-xtdb-20261109T033913Z-a682c4.json",
+    "lab/runs/G0/G0-xtdb-20261109T034417Z-08ce3a.json"
+  ],
+  "mergeConflicts": [
+    "lab/bin/gate.mjs"
+  ],
+  "allCommandsFinished": true,
+  "sealedAt": 1794196068.880161,
+  "freeBytesBeforeCleanup": 14617178112,
+  "scratchRemovedAfterChecks": true
+}

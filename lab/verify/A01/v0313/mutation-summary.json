@@ -1,0 +1,71 @@
+{
+  "candidate": "6b8d2182d78e567cf8e385622c9a259e8892687a",
+  "catalog": 582,
+  "executed": 494,
+  "caughtAtIntendedGuard": 494,
+  "crashes": 0,
+  "coverage": {
+    "Q91a": [
+      "Q91a literal weakened",
+      "Q91a consumer dropped"
+    ],
+    "Q91b": [
+      "Q91b literal weakened",
+      "Q91b consumer dropped"
+    ],
+    "Q91c": [
+      "Q91c literal weakened",
+      "Q91c consumer dropped"
+    ],
+    "Q91d": [
+      "Q91d literal weakened",
+      "Q91d consumer dropped"
+    ],
+    "Q93a": [
+      "Q93a literal weakened",
+      "Q93a consumer dropped"
+    ],
+    "Q93b": [
+      "Q93b literal weakened",
+      "Q93b consumer dropped"
+    ],
+    "Q94b": [
+      "Q94b literal weakened",
+      "Q94b consumer dropped"
+    ],
+    "Q94c": [
+      "Q94c literal weakened",
+      "Q94c consumer dropped"
+    ],
+    "Q94d": [
+      "Q94d literal weakened",
+      "Q94d consumer dropped"
+    ],
+    "Q94e": [
+      "Q94e literal weakened",
+      "Q94e consumer dropped"
+    ],
+    "Q94f": [
+      "Q94f literal weakened",
+      "Q94f consumer dropped"
+    ],
+    "Q94g": [
+      "Q94g literal weakened",
+      "Q94g consumer dropped"
+    ],
+    "Q94h": [
+      "Q94h literal weakened",
+      "Q94h consumer dropped"
+    ],
+    "Q94i": [
+      "Q94i literal weakened",
+      "Q94i consumer dropped"
+    ],
+    "Q93c": [
+      "Q93c literal weakened",
+      "Q93c consumer dropped"
+    ]
+  },
+  "priorExpectedGuardFile": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-a01-0311/lab/verify/A01/v0312r2/mutation-reason-audit.json",
+  "priorExpectedGuardSha256": "afc3211f92f731791ce1b122c7f84f912d7baa7cac1b418bc58d098363a49a5f"
+}
