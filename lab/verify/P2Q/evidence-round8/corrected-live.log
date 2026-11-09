@@ -1,0 +1,246 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../../vitest.workspace-aliases" without a file extension (lab/verify/P2Q/vitest.config.ts:5:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q
+
+ ❯ tests/round8-corrected.test.ts (8 tests | 4 failed | 4 skipped) 249699ms
+   ❯ round8 live independent public entry points and named snapshots (4)
+     × standard future public cursors and journal snapshot 75973ms
+     × fresh future public cursors and journal snapshot 73177ms
+     × standard immutable payloads on both query surfaces and repository 60945ms
+     × fresh immutable payloads on both query surfaces and repository 39602ms
+ ❯ tests/round8-pin-page-corrected.test.ts (2 tests | 1 failed | 1 skipped) 13529ms
+   × round8 live public entity page and implicit get pin preserve full bytes 13528ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/round8-corrected.test.ts > round8 live independent public entry points and named snapshots > standard future public cursors and journal snapshot
+AssertionError: transactionsForEntity transaction=false: expected ReadError: Failed to query entity transac… { _tag: '…' } to match object { _tag: 'ReadError', …(2) }
+
+- Expected
++ Received
+
+- {
++ ReadError {
+    "_tag": "ReadError",
+-   "reason": "basis-not-reached",
+-   "required": 6144,
+  }
+
+ ❯ publicFuture tests/round8-corrected.test.ts:51:70
+     49|     writeJson(`round8-${kind}-public-future.json`, results);
+     50|     expect.soft(result.ok, `${route} transaction=${transaction}`).toBe…
+     51|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+       |                                                                      ^
+     52|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+     53|     expect.soft(elapsedMs, `${route} waits transaction=${transaction}`…
+ ❯ tests/round8-corrected.test.ts:125:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  tests/round8-corrected.test.ts > round8 live independent public entry points and named snapshots > standard future public cursors and journal snapshot
+AssertionError: transactionsForEntity transaction=true: expected ReadError: Failed to query entity transac… { _tag: '…' } to match object { _tag: 'ReadError', …(2) }
+
+- Expected
++ Received
+
+- {
++ ReadError {
+    "_tag": "ReadError",
+-   "reason": "basis-not-reached",
+-   "required": 6144,
+  }
+
+ ❯ publicFuture tests/round8-corrected.test.ts:51:70
+     49|     writeJson(`round8-${kind}-public-future.json`, results);
+     50|     expect.soft(result.ok, `${route} transaction=${transaction}`).toBe…
+     51|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+       |                                                                      ^
+     52|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+     53|     expect.soft(elapsedMs, `${route} waits transaction=${transaction}`…
+ ❯ tests/round8-corrected.test.ts:125:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  tests/round8-corrected.test.ts > round8 live independent public entry points and named snapshots > fresh future public cursors and journal snapshot
+AssertionError: transactionsForEntity transaction=false: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ publicFuture tests/round8-corrected.test.ts:50:67
+     48|     results.push({ route, transaction, pin, future, elapsedMs, ...resu…
+     49|     writeJson(`round8-${kind}-public-future.json`, results);
+     50|     expect.soft(result.ok, `${route} transaction=${transaction}`).toBe…
+       |                                                                   ^
+     51|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+     52|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+ ❯ tests/round8-corrected.test.ts:125:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  tests/round8-corrected.test.ts > round8 live independent public entry points and named snapshots > fresh future public cursors and journal snapshot
+AssertionError: transactionsForEntity transaction=false: expected undefined to match object { _tag: 'ReadError', …(2) }
+
+- Expected:
+{
+  "_tag": "ReadError",
+  "reason": "basis-not-reached",
+  "required": 6144,
+}
+
++ Received:
+undefined
+
+ ❯ publicFuture tests/round8-corrected.test.ts:51:70
+     49|     writeJson(`round8-${kind}-public-future.json`, results);
+     50|     expect.soft(result.ok, `${route} transaction=${transaction}`).toBe…
+     51|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+       |                                                                      ^
+     52|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+     53|     expect.soft(elapsedMs, `${route} waits transaction=${transaction}`…
+ ❯ tests/round8-corrected.test.ts:125:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  tests/round8-corrected.test.ts > round8 live independent public entry points and named snapshots > fresh future public cursors and journal snapshot
+AssertionError: transactionsForEntity transaction=true: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ publicFuture tests/round8-corrected.test.ts:50:67
+     48|     results.push({ route, transaction, pin, future, elapsedMs, ...resu…
+     49|     writeJson(`round8-${kind}-public-future.json`, results);
+     50|     expect.soft(result.ok, `${route} transaction=${transaction}`).toBe…
+       |                                                                   ^
+     51|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+     52|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+ ❯ tests/round8-corrected.test.ts:125:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  tests/round8-corrected.test.ts > round8 live independent public entry points and named snapshots > fresh future public cursors and journal snapshot
+AssertionError: transactionsForEntity transaction=true: expected undefined to match object { _tag: 'ReadError', …(2) }
+
+- Expected:
+{
+  "_tag": "ReadError",
+  "reason": "basis-not-reached",
+  "required": 6144,
+}
+
++ Received:
+undefined
+
+ ❯ publicFuture tests/round8-corrected.test.ts:51:70
+     49|     writeJson(`round8-${kind}-public-future.json`, results);
+     50|     expect.soft(result.ok, `${route} transaction=${transaction}`).toBe…
+     51|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+       |                                                                      ^
+     52|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+     53|     expect.soft(elapsedMs, `${route} waits transaction=${transaction}`…
+ ❯ tests/round8-corrected.test.ts:125:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  tests/round8-corrected.test.ts > round8 live independent public entry points and named snapshots > standard immutable payloads on both query surfaces and repository
+ FAIL  tests/round8-corrected.test.ts > round8 live independent public entry points and named snapshots > fresh immutable payloads on both query surfaces and repository
+ReadError: QLever native SELECT failed: TypeError: Native relations require distinct names
+ ❯ catch ../../../packages/qlever/src/native/NativeQueries.ts:271:15
+    269|           cause instanceof BasisNotAvailable || cause instanceof Repli…
+    270|             ? cause
+    271|             : new ReadError({ message: `QLever native SELECT failed: $…
+       |               ^
+    272|       });
+    273|       const preparedRows = yield* Effect.try(() =>
+ ❯ ../../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1113:42
+ ❯ ~effect/Utils/internal ../../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/Utils.ts:198:14
+ ❯ PrimitiveImpl.~effect/Effect/args ../../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1113:23
+ ❯ PrimitiveImpl.~effect/Effect/evaluate ../../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:980:22
+ ❯ FiberImpl.runLoop ../../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:653:41
+ ❯ FiberImpl.evaluate ../../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:594:23
+ ❯ FiberImpl.evaluate ../../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:588:27
+ ❯ ../../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1158:17
+
+Caused by: TypeError: Native relations require distinct names
+ ❯ materializeQleverNativeRelations ../../../packages/qlever/src/native/BasisRelations.ts:107:11
+ ❯ try ../../../packages/qlever/src/native/NativeQueries.ts:214:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  tests/round8-pin-page-corrected.test.ts > round8 live public entity page and implicit get pin preserve full bytes
+AssertionError: live getById pinned payload: expected '{"id":"01M6YVJB3RDG3C3V50SP1JSNQ0","e…' to be '{"id":"01M6YVJB3RDG3C3V50SP1JSNQ0","e…' // Object.is equality
+
+Expected: "{"id":"01M6YVJB3RDG3C3V50SP1JSNQ0","entity_id":"s:page","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794184391800,"recorded_position":2048,"valid_from":1794184391800,"valid_to":null,"created_by":null,"retracted_at":null,"retracted_position":null,"retract_tx_id":null,"entity_type":"Round8","schema_version":1,"tx_id":"_tx/01M6YVJB3QKT9R7JC1XPN8KM85"}"
+Received: "{"id":"01M6YVJB3RDG3C3V50SP1JSNQ0","entity_id":"s:page","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794184391800,"recorded_position":2048,"valid_from":1794184391800,"valid_to":null,"created_by":null,"retracted_at":1794184395775,"retracted_position":3072,"retract_tx_id":"_tx/01M6YVJEZZB0CFS8QCB1M394ST","entity_type":"Round8","schema_version":1,"tx_id":"_tx/01M6YVJB3QKT9R7JC1XPN8KM85"}"
+
+ ❯ tests/round8-pin-page-corrected.test.ts:39:65
+     37|           pinRecords.push({ route, pin: first.position, before: prior,…
+     38|           writeJson(`round8-${kind}-implicit-pin.json`, pinRecords);
+     39|           expect.soft(after, `${kind} ${route} pinned payload`).toBe(p…
+       |                                                                 ^
+     40|         }
+     41|         expect(yield* rt.adapter.currentCommitPosition()).toBe(first.p…
+ ❯ IteratorImpl.~effect/Effect/successCont ../../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1421:28
+ ❯ FiberImpl.succeedWith ../../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:710:30
+ ❯ ContImpl.mapCont [as ~effect/Effect/successCont] ../../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1521:16
+ ❯ ExitPrimitive.~effect/Effect/evaluate ../../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/core.ts:565:30
+ ❯ FiberImpl.runLoop ../../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:653:41
+ ❯ FiberImpl.evaluate ../../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:594:23
+ ❯ FiberImpl.evaluate ../../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:588:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+ FAIL  tests/round8-pin-page-corrected.test.ts > round8 live public entity page and implicit get pin preserve full bytes
+AssertionError: live get pinned payload: expected '{"id":"01M6YVJB3RDG3C3V50SP1JSNQ0","e…' to be '{"id":"01M6YVJB3RDG3C3V50SP1JSNQ0","e…' // Object.is equality
+
+Expected: "{"id":"01M6YVJB3RDG3C3V50SP1JSNQ0","entityId":"s:page","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794184391800,"validFrom":1794184391800,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"None"},"entityType":{"_id":"Option","_tag":"Some","value":"Round8"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YVJB3QKT9R7JC1XPN8KM85"},"retractTxId":{"_id":"Option","_tag":"None"}}"
+Received: "{"id":"01M6YVJB3RDG3C3V50SP1JSNQ0","entityId":"s:page","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794184391800,"validFrom":1794184391800,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"Some","value":1794184395775},"entityType":{"_id":"Option","_tag":"Some","value":"Round8"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YVJB3QKT9R7JC1XPN8KM85"},"retractTxId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YVJEZZB0CFS8QCB1M394ST"}}"
+
+ ❯ tests/round8-pin-page-corrected.test.ts:39:65
+     37|           pinRecords.push({ route, pin: first.position, before: prior,…
+     38|           writeJson(`round8-${kind}-implicit-pin.json`, pinRecords);
+     39|           expect.soft(after, `${kind} ${route} pinned payload`).toBe(p…
+       |                                                                 ^
+     40|         }
+     41|         expect(yield* rt.adapter.currentCommitPosition()).toBe(first.p…
+ ❯ IteratorImpl.~effect/Effect/successCont ../../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1421:28
+ ❯ ExitPrimitive.~effect/Effect/evaluate ../../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/core.ts:565:30
+ ❯ FiberImpl.runLoop ../../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:653:41
+ ❯ FiberImpl.evaluate ../../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:594:23
+ ❯ FiberImpl.evaluate ../../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:588:27
+ ❯ ../../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1158:17
+ ❯ ../../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1120:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+
+ FAIL  tests/round8-pin-page-corrected.test.ts > round8 live public entity page and implicit get pin preserve full bytes
+AssertionError: live public entityPage payload: expected '{"entities":[[{"id":"01M6YVJB3RDG3C3V…' to be '{"entities":[[{"id":"01M6YVJB3RDG3C3V…' // Object.is equality
+
+Expected: "{"entities":[[{"id":"01M6YVJB3RDG3C3V50SP1JSNQ0","entityId":"s:page","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794184391800,"validFrom":1794184391800,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"None"},"entityType":{"_id":"Option","_tag":"Some","value":"Round8"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YVJB3QKT9R7JC1XPN8KM85"},"retractTxId":{"_id":"Option","_tag":"None"}}]],"snapshot":{"recordedAt":1794184394381,"recordedPosition":2048,"validAt":1794184394381}}"
+Received: "{"entities":[[{"id":"01M6YVJB3RDG3C3V50SP1JSNQ0","entityId":"s:page","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794184391800,"validFrom":1794184391800,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"Some","value":1794184395775},"entityType":{"_id":"Option","_tag":"Some","value":"Round8"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YVJB3QKT9R7JC1XPN8KM85"},"retractTxId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YVJEZZB0CFS8QCB1M394ST"}}]],"snapshot":{"recordedAt":1794184394381,"recordedPosition":2048,"validAt":1794184394381}}"
+
+ ❯ tests/round8-pin-page-corrected.test.ts:46:63
+     44|       const after = JSON.stringify(await rt.run(rt.triples.entityPage(…
+     45|       writeJson(`round8-${kind}-entity-page.json`, { before, after, eq…
+     46|       expect.soft(after, `${kind} public entityPage payload`).toBe(bef…
+       |                                                               ^
+     47|     } finally {
+     48|       await rt.dispose(); await rt.broker.close();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/11]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  5 failed | 5 skipped (10)
+   Start at  19:28:58
+   Duration  264.06s (tests 100%)
+

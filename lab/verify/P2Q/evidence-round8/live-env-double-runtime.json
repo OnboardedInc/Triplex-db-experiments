@@ -1,0 +1,17 @@
+{
+  "bOpen": [
+    "refused: Error: Broker log /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q/state-round8/env-69467644-4a5c-4",
+    "refused: Error: Broker log /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q/state-round8/env-69467644-4a5c-4",
+    "refused: Error: Broker log /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q/state-round8/env-69467644-4a5c-4",
+    "refused: Error: Broker log /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q/state-round8/env-69467644-4a5c-4",
+    "refused: Error: Broker log /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q/state-round8/env-69467644-4a5c-4",
+    "refused: Error: Broker log /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q/state-round8/env-69467644-4a5c-4"
+  ],
+  "streams": 1,
+  "recovery": "clean-end",
+  "survived": {
+    "a1": true,
+    "a2": true
+  },
+  "brokenFiles": []
+}

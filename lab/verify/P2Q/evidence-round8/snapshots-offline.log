@@ -1,0 +1,866 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../../vitest.workspace-aliases" without a file extension (lab/verify/P2Q/vitest.config.ts:5:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q
+
+ ❯ tests/round8.test.ts (8 tests | 4 failed | 4 skipped) 389ms
+   × round8 offline public cursors refuse future basis inside and outside transactions 78ms
+   × round8 offline overlay full historical bytes exclude later retirement metadata 96ms
+   × round8 offline log full historical bytes exclude later retirement metadata 98ms
+   × round8 offline replica full historical bytes exclude later retirement metadata 117ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/round8.test.ts > round8 offline public cursors refuse future basis inside and outside transactions
+AssertionError: entityPage transaction=false: expected PaginationCursorError: Entity page cursor… { …(2) } to match object { _tag: 'ReadError', …(2) }
+
+- Expected
++ Received
+
+- {
+-   "_tag": "ReadError",
+-   "reason": "basis-not-reached",
+-   "required": 6144,
++ PaginationCursorError {
++   "_tag": "PaginationCursorError",
++   "reason": "scope_mismatch",
+  }
+
+ ❯ publicFuture tests/round8.test.ts:49:70
+     47|     writeJson(`round8-${kind}-public-future.json`, results);
+     48|     expect.soft(result.ok, `${route} transaction=${transaction}`).toBe…
+     49|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+       |                                                                      ^
+     50|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+     51|     expect.soft(elapsedMs, `${route} waits transaction=${transaction}`…
+ ❯ tests/round8.test.ts:103:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline public cursors refuse future basis inside and outside transactions
+AssertionError: entityPage waits transaction=false: expected 0.6531249999999886 to be greater than or equal to 39
+ ❯ publicFuture tests/round8.test.ts:51:73
+     49|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+     50|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+     51|     expect.soft(elapsedMs, `${route} waits transaction=${transaction}`…
+       |                                                                         ^
+     52|   }
+     53| }
+ ❯ tests/round8.test.ts:103:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline public cursors refuse future basis inside and outside transactions
+AssertionError: entityPage transaction=true: expected PaginationCursorError: Entity page cursor… { …(2) } to match object { _tag: 'ReadError', …(2) }
+
+- Expected
++ Received
+
+- {
+-   "_tag": "ReadError",
+-   "reason": "basis-not-reached",
+-   "required": 6144,
++ PaginationCursorError {
++   "_tag": "PaginationCursorError",
++   "reason": "scope_mismatch",
+  }
+
+ ❯ publicFuture tests/round8.test.ts:49:70
+     47|     writeJson(`round8-${kind}-public-future.json`, results);
+     48|     expect.soft(result.ok, `${route} transaction=${transaction}`).toBe…
+     49|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+       |                                                                      ^
+     50|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+     51|     expect.soft(elapsedMs, `${route} waits transaction=${transaction}`…
+ ❯ tests/round8.test.ts:103:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline public cursors refuse future basis inside and outside transactions
+AssertionError: entityPage waits transaction=true: expected 0.21004200000004403 to be greater than or equal to 39
+ ❯ publicFuture tests/round8.test.ts:51:73
+     49|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+     50|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+     51|     expect.soft(elapsedMs, `${route} waits transaction=${transaction}`…
+       |                                                                         ^
+     52|   }
+     53| }
+ ❯ tests/round8.test.ts:103:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline public cursors refuse future basis inside and outside transactions
+AssertionError: query transaction=false: expected PaginationCursorError: Pagination cursor … { …(2) } to match object { _tag: 'ReadError', …(2) }
+
+- Expected
++ Received
+
+- {
+-   "_tag": "ReadError",
+-   "reason": "basis-not-reached",
+-   "required": 6144,
++ PaginationCursorError {
++   "_tag": "PaginationCursorError",
++   "reason": "scope_mismatch",
+  }
+
+ ❯ publicFuture tests/round8.test.ts:49:70
+     47|     writeJson(`round8-${kind}-public-future.json`, results);
+     48|     expect.soft(result.ok, `${route} transaction=${transaction}`).toBe…
+     49|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+       |                                                                      ^
+     50|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+     51|     expect.soft(elapsedMs, `${route} waits transaction=${transaction}`…
+ ❯ tests/round8.test.ts:103:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline public cursors refuse future basis inside and outside transactions
+AssertionError: query waits transaction=false: expected 3.326249999999959 to be greater than or equal to 39
+ ❯ publicFuture tests/round8.test.ts:51:73
+     49|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+     50|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+     51|     expect.soft(elapsedMs, `${route} waits transaction=${transaction}`…
+       |                                                                         ^
+     52|   }
+     53| }
+ ❯ tests/round8.test.ts:103:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline public cursors refuse future basis inside and outside transactions
+AssertionError: query transaction=true: expected PaginationCursorError: Pagination cursor … { …(2) } to match object { _tag: 'ReadError', …(2) }
+
+- Expected
++ Received
+
+- {
+-   "_tag": "ReadError",
+-   "reason": "basis-not-reached",
+-   "required": 6144,
++ PaginationCursorError {
++   "_tag": "PaginationCursorError",
++   "reason": "scope_mismatch",
+  }
+
+ ❯ publicFuture tests/round8.test.ts:49:70
+     47|     writeJson(`round8-${kind}-public-future.json`, results);
+     48|     expect.soft(result.ok, `${route} transaction=${transaction}`).toBe…
+     49|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+       |                                                                      ^
+     50|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+     51|     expect.soft(elapsedMs, `${route} waits transaction=${transaction}`…
+ ❯ tests/round8.test.ts:103:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline public cursors refuse future basis inside and outside transactions
+AssertionError: query waits transaction=true: expected 0.5793339999999603 to be greater than or equal to 39
+ ❯ publicFuture tests/round8.test.ts:51:73
+     49|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+     50|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+     51|     expect.soft(elapsedMs, `${route} waits transaction=${transaction}`…
+       |                                                                         ^
+     52|   }
+     53| }
+ ❯ tests/round8.test.ts:103:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline public cursors refuse future basis inside and outside transactions
+AssertionError: queryPage transaction=false: expected PaginationCursorError: Pagination cursor … { …(2) } to match object { _tag: 'ReadError', …(2) }
+
+- Expected
++ Received
+
+- {
+-   "_tag": "ReadError",
+-   "reason": "basis-not-reached",
+-   "required": 6144,
++ PaginationCursorError {
++   "_tag": "PaginationCursorError",
++   "reason": "scope_mismatch",
+  }
+
+ ❯ publicFuture tests/round8.test.ts:49:70
+     47|     writeJson(`round8-${kind}-public-future.json`, results);
+     48|     expect.soft(result.ok, `${route} transaction=${transaction}`).toBe…
+     49|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+       |                                                                      ^
+     50|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+     51|     expect.soft(elapsedMs, `${route} waits transaction=${transaction}`…
+ ❯ tests/round8.test.ts:103:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline public cursors refuse future basis inside and outside transactions
+AssertionError: queryPage waits transaction=false: expected 0.469333000000006 to be greater than or equal to 39
+ ❯ publicFuture tests/round8.test.ts:51:73
+     49|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+     50|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+     51|     expect.soft(elapsedMs, `${route} waits transaction=${transaction}`…
+       |                                                                         ^
+     52|   }
+     53| }
+ ❯ tests/round8.test.ts:103:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline public cursors refuse future basis inside and outside transactions
+AssertionError: queryPage transaction=true: expected PaginationCursorError: Pagination cursor … { …(2) } to match object { _tag: 'ReadError', …(2) }
+
+- Expected
++ Received
+
+- {
+-   "_tag": "ReadError",
+-   "reason": "basis-not-reached",
+-   "required": 6144,
++ PaginationCursorError {
++   "_tag": "PaginationCursorError",
++   "reason": "scope_mismatch",
+  }
+
+ ❯ publicFuture tests/round8.test.ts:49:70
+     47|     writeJson(`round8-${kind}-public-future.json`, results);
+     48|     expect.soft(result.ok, `${route} transaction=${transaction}`).toBe…
+     49|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+       |                                                                      ^
+     50|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+     51|     expect.soft(elapsedMs, `${route} waits transaction=${transaction}`…
+ ❯ tests/round8.test.ts:103:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline public cursors refuse future basis inside and outside transactions
+AssertionError: queryPage waits transaction=true: expected 0.41312499999997954 to be greater than or equal to 39
+ ❯ publicFuture tests/round8.test.ts:51:73
+     49|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+     50|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+     51|     expect.soft(elapsedMs, `${route} waits transaction=${transaction}`…
+       |                                                                         ^
+     52|   }
+     53| }
+ ❯ tests/round8.test.ts:103:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline overlay full historical bytes exclude later retirement metadata
+AssertionError: overlay getByEntity transaction=false immutable snapshot: expected '[{"id":"01M6YV4WW120GZ7QC6W75XA370","…' to be '[{"id":"01M6YV4WW120GZ7QC6W75XA370","…' // Object.is equality
+
+Expected: "[{"id":"01M6YV4WW120GZ7QC6W75XA370","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794183951233,"recorded_position":2048,"valid_from":1794183951233,"valid_to":null,"created_by":null,"retracted_at":null,"retracted_position":null,"retract_tx_id":null,"entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YV4WW120GZ7QC6W75XA36Z"}]"
+Received: "[{"id":"01M6YV4WW120GZ7QC6W75XA370","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794183951233,"recorded_position":2048,"valid_from":1794183951233,"valid_to":null,"created_by":null,"retracted_at":1794183951245,"retracted_position":3072,"retract_tx_id":"_tx/01M6YV4WWD75H6DNFEFBSNEY4D","entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YV4WW120GZ7QC6W75XA36Z"}]"
+
+ ❯ immutable tests/round8.test.ts:94:90
+     92|     records.push({ route, transaction, basis, before: before[route], a…
+     93|     writeJson(`round8-${kind}-immutable.json`, records);
+     94|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+     95|   }
+     96| }
+ ❯ tests/round8.test.ts:112:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline overlay full historical bytes exclude later retirement metadata
+AssertionError: overlay getByEntity transaction=true immutable snapshot: expected '[{"id":"01M6YV4WW120GZ7QC6W75XA370","…' to be '[{"id":"01M6YV4WW120GZ7QC6W75XA370","…' // Object.is equality
+
+Expected: "[{"id":"01M6YV4WW120GZ7QC6W75XA370","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794183951233,"recorded_position":2048,"valid_from":1794183951233,"valid_to":null,"created_by":null,"retracted_at":null,"retracted_position":null,"retract_tx_id":null,"entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YV4WW120GZ7QC6W75XA36Z"}]"
+Received: "[{"id":"01M6YV4WW120GZ7QC6W75XA370","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794183951233,"recorded_position":2048,"valid_from":1794183951233,"valid_to":null,"created_by":null,"retracted_at":1794183951245,"retracted_position":3072,"retract_tx_id":"_tx/01M6YV4WWD75H6DNFEFBSNEY4D","entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YV4WW120GZ7QC6W75XA36Z"}]"
+
+ ❯ immutable tests/round8.test.ts:94:90
+     92|     records.push({ route, transaction, basis, before: before[route], a…
+     93|     writeJson(`round8-${kind}-immutable.json`, records);
+     94|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+     95|   }
+     96| }
+ ❯ tests/round8.test.ts:112:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline overlay full historical bytes exclude later retirement metadata
+AssertionError: overlay getByEntities transaction=false immutable snapshot: expected '[["s:immutable",[{"id":"01M6YV4WW120G…' to be '[["s:immutable",[{"id":"01M6YV4WW120G…' // Object.is equality
+
+Expected: "[["s:immutable",[{"id":"01M6YV4WW120GZ7QC6W75XA370","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794183951233,"recorded_position":2048,"valid_from":1794183951233,"valid_to":null,"created_by":null,"retracted_at":null,"retracted_position":null,"retract_tx_id":null,"entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YV4WW120GZ7QC6W75XA36Z"}]]]"
+Received: "[["s:immutable",[{"id":"01M6YV4WW120GZ7QC6W75XA370","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794183951233,"recorded_position":2048,"valid_from":1794183951233,"valid_to":null,"created_by":null,"retracted_at":1794183951245,"retracted_position":3072,"retract_tx_id":"_tx/01M6YV4WWD75H6DNFEFBSNEY4D","entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YV4WW120GZ7QC6W75XA36Z"}]]]"
+
+ ❯ immutable tests/round8.test.ts:94:90
+     92|     records.push({ route, transaction, basis, before: before[route], a…
+     93|     writeJson(`round8-${kind}-immutable.json`, records);
+     94|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+     95|   }
+     96| }
+ ❯ tests/round8.test.ts:112:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline overlay full historical bytes exclude later retirement metadata
+AssertionError: overlay getByEntities transaction=true immutable snapshot: expected '[["s:immutable",[{"id":"01M6YV4WW120G…' to be '[["s:immutable",[{"id":"01M6YV4WW120G…' // Object.is equality
+
+Expected: "[["s:immutable",[{"id":"01M6YV4WW120GZ7QC6W75XA370","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794183951233,"recorded_position":2048,"valid_from":1794183951233,"valid_to":null,"created_by":null,"retracted_at":null,"retracted_position":null,"retract_tx_id":null,"entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YV4WW120GZ7QC6W75XA36Z"}]]]"
+Received: "[["s:immutable",[{"id":"01M6YV4WW120GZ7QC6W75XA370","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794183951233,"recorded_position":2048,"valid_from":1794183951233,"valid_to":null,"created_by":null,"retracted_at":1794183951245,"retracted_position":3072,"retract_tx_id":"_tx/01M6YV4WWD75H6DNFEFBSNEY4D","entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YV4WW120GZ7QC6W75XA36Z"}]]]"
+
+ ❯ immutable tests/round8.test.ts:94:90
+     92|     records.push({ route, transaction, basis, before: before[route], a…
+     93|     writeJson(`round8-${kind}-immutable.json`, records);
+     94|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+     95|   }
+     96| }
+ ❯ tests/round8.test.ts:112:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline overlay full historical bytes exclude later retirement metadata
+AssertionError: overlay query transaction=false immutable snapshot: expected '[{"id":"01M6YV4WW120GZ7QC6W75XA370","…' to be '[{"id":"01M6YV4WW120GZ7QC6W75XA370","…' // Object.is equality
+
+Expected: "[{"id":"01M6YV4WW120GZ7QC6W75XA370","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794183951233,"recorded_position":2048,"valid_from":1794183951233,"valid_to":null,"created_by":null,"retracted_at":null,"retracted_position":null,"retract_tx_id":null,"entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YV4WW120GZ7QC6W75XA36Z"}]"
+Received: "[{"id":"01M6YV4WW120GZ7QC6W75XA370","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794183951233,"recorded_position":2048,"valid_from":1794183951233,"valid_to":null,"created_by":null,"retracted_at":1794183951245,"retracted_position":3072,"retract_tx_id":"_tx/01M6YV4WWD75H6DNFEFBSNEY4D","entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YV4WW120GZ7QC6W75XA36Z"}]"
+
+ ❯ immutable tests/round8.test.ts:94:90
+     92|     records.push({ route, transaction, basis, before: before[route], a…
+     93|     writeJson(`round8-${kind}-immutable.json`, records);
+     94|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+     95|   }
+     96| }
+ ❯ tests/round8.test.ts:112:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline overlay full historical bytes exclude later retirement metadata
+AssertionError: overlay query transaction=true immutable snapshot: expected '[{"id":"01M6YV4WW120GZ7QC6W75XA370","…' to be '[{"id":"01M6YV4WW120GZ7QC6W75XA370","…' // Object.is equality
+
+Expected: "[{"id":"01M6YV4WW120GZ7QC6W75XA370","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794183951233,"recorded_position":2048,"valid_from":1794183951233,"valid_to":null,"created_by":null,"retracted_at":null,"retracted_position":null,"retract_tx_id":null,"entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YV4WW120GZ7QC6W75XA36Z"}]"
+Received: "[{"id":"01M6YV4WW120GZ7QC6W75XA370","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794183951233,"recorded_position":2048,"valid_from":1794183951233,"valid_to":null,"created_by":null,"retracted_at":1794183951245,"retracted_position":3072,"retract_tx_id":"_tx/01M6YV4WWD75H6DNFEFBSNEY4D","entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YV4WW120GZ7QC6W75XA36Z"}]"
+
+ ❯ immutable tests/round8.test.ts:94:90
+     92|     records.push({ route, transaction, basis, before: before[route], a…
+     93|     writeJson(`round8-${kind}-immutable.json`, records);
+     94|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+     95|   }
+     96| }
+ ❯ tests/round8.test.ts:112:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline overlay full historical bytes exclude later retirement metadata
+AssertionError: overlay entity transaction=false immutable snapshot: expected '[{"id":"01M6YV4WW120GZ7QC6W75XA370","…' to be '[{"id":"01M6YV4WW120GZ7QC6W75XA370","…' // Object.is equality
+
+Expected: "[{"id":"01M6YV4WW120GZ7QC6W75XA370","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794183951233,"validFrom":1794183951233,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"None"},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4WW120GZ7QC6W75XA36Z"},"retractTxId":{"_id":"Option","_tag":"None"}}]"
+Received: "[{"id":"01M6YV4WW120GZ7QC6W75XA370","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794183951233,"validFrom":1794183951233,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"Some","value":1794183951245},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4WW120GZ7QC6W75XA36Z"},"retractTxId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4WWD75H6DNFEFBSNEY4D"}}]"
+
+ ❯ immutable tests/round8.test.ts:94:90
+     92|     records.push({ route, transaction, basis, before: before[route], a…
+     93|     writeJson(`round8-${kind}-immutable.json`, records);
+     94|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+     95|   }
+     96| }
+ ❯ tests/round8.test.ts:112:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline overlay full historical bytes exclude later retirement metadata
+AssertionError: overlay entity transaction=true immutable snapshot: expected '[{"id":"01M6YV4WW120GZ7QC6W75XA370","…' to be '[{"id":"01M6YV4WW120GZ7QC6W75XA370","…' // Object.is equality
+
+Expected: "[{"id":"01M6YV4WW120GZ7QC6W75XA370","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794183951233,"validFrom":1794183951233,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"None"},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4WW120GZ7QC6W75XA36Z"},"retractTxId":{"_id":"Option","_tag":"None"}}]"
+Received: "[{"id":"01M6YV4WW120GZ7QC6W75XA370","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794183951233,"validFrom":1794183951233,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"Some","value":1794183951245},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4WW120GZ7QC6W75XA36Z"},"retractTxId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4WWD75H6DNFEFBSNEY4D"}}]"
+
+ ❯ immutable tests/round8.test.ts:94:90
+     92|     records.push({ route, transaction, basis, before: before[route], a…
+     93|     writeJson(`round8-${kind}-immutable.json`, records);
+     94|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+     95|   }
+     96| }
+ ❯ tests/round8.test.ts:112:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline overlay full historical bytes exclude later retirement metadata
+AssertionError: overlay entities transaction=false immutable snapshot: expected '[[{"id":"01M6YV4WW120GZ7QC6W75XA370",…' to be '[[{"id":"01M6YV4WW120GZ7QC6W75XA370",…' // Object.is equality
+
+Expected: "[[{"id":"01M6YV4WW120GZ7QC6W75XA370","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794183951233,"validFrom":1794183951233,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"None"},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4WW120GZ7QC6W75XA36Z"},"retractTxId":{"_id":"Option","_tag":"None"}}]]"
+Received: "[[{"id":"01M6YV4WW120GZ7QC6W75XA370","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794183951233,"validFrom":1794183951233,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"Some","value":1794183951245},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4WW120GZ7QC6W75XA36Z"},"retractTxId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4WWD75H6DNFEFBSNEY4D"}}]]"
+
+ ❯ immutable tests/round8.test.ts:94:90
+     92|     records.push({ route, transaction, basis, before: before[route], a…
+     93|     writeJson(`round8-${kind}-immutable.json`, records);
+     94|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+     95|   }
+     96| }
+ ❯ tests/round8.test.ts:112:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline overlay full historical bytes exclude later retirement metadata
+AssertionError: overlay entities transaction=true immutable snapshot: expected '[[{"id":"01M6YV4WW120GZ7QC6W75XA370",…' to be '[[{"id":"01M6YV4WW120GZ7QC6W75XA370",…' // Object.is equality
+
+Expected: "[[{"id":"01M6YV4WW120GZ7QC6W75XA370","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794183951233,"validFrom":1794183951233,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"None"},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4WW120GZ7QC6W75XA36Z"},"retractTxId":{"_id":"Option","_tag":"None"}}]]"
+Received: "[[{"id":"01M6YV4WW120GZ7QC6W75XA370","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794183951233,"validFrom":1794183951233,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"Some","value":1794183951245},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4WW120GZ7QC6W75XA36Z"},"retractTxId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4WWD75H6DNFEFBSNEY4D"}}]]"
+
+ ❯ immutable tests/round8.test.ts:94:90
+     92|     records.push({ route, transaction, basis, before: before[route], a…
+     93|     writeJson(`round8-${kind}-immutable.json`, records);
+     94|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+     95|   }
+     96| }
+ ❯ tests/round8.test.ts:112:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline overlay full historical bytes exclude later retirement metadata
+AssertionError: overlay match transaction=false immutable snapshot: expected '[{"id":"01M6YV4WW120GZ7QC6W75XA370","…' to be '[{"id":"01M6YV4WW120GZ7QC6W75XA370","…' // Object.is equality
+
+Expected: "[{"id":"01M6YV4WW120GZ7QC6W75XA370","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794183951233,"validFrom":1794183951233,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"None"},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4WW120GZ7QC6W75XA36Z"},"retractTxId":{"_id":"Option","_tag":"None"}}]"
+Received: "[{"id":"01M6YV4WW120GZ7QC6W75XA370","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794183951233,"validFrom":1794183951233,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"Some","value":1794183951245},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4WW120GZ7QC6W75XA36Z"},"retractTxId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4WWD75H6DNFEFBSNEY4D"}}]"
+
+ ❯ immutable tests/round8.test.ts:94:90
+     92|     records.push({ route, transaction, basis, before: before[route], a…
+     93|     writeJson(`round8-${kind}-immutable.json`, records);
+     94|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+     95|   }
+     96| }
+ ❯ tests/round8.test.ts:112:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline overlay full historical bytes exclude later retirement metadata
+AssertionError: overlay match transaction=true immutable snapshot: expected '[{"id":"01M6YV4WW120GZ7QC6W75XA370","…' to be '[{"id":"01M6YV4WW120GZ7QC6W75XA370","…' // Object.is equality
+
+Expected: "[{"id":"01M6YV4WW120GZ7QC6W75XA370","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794183951233,"validFrom":1794183951233,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"None"},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4WW120GZ7QC6W75XA36Z"},"retractTxId":{"_id":"Option","_tag":"None"}}]"
+Received: "[{"id":"01M6YV4WW120GZ7QC6W75XA370","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794183951233,"validFrom":1794183951233,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"Some","value":1794183951245},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4WW120GZ7QC6W75XA36Z"},"retractTxId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4WWD75H6DNFEFBSNEY4D"}}]"
+
+ ❯ immutable tests/round8.test.ts:94:90
+     92|     records.push({ route, transaction, basis, before: before[route], a…
+     93|     writeJson(`round8-${kind}-immutable.json`, records);
+     94|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+     95|   }
+     96| }
+ ❯ tests/round8.test.ts:112:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline log full historical bytes exclude later retirement metadata
+AssertionError: log getByEntity transaction=false immutable snapshot: expected '[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","…' to be '[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","…' // Object.is equality
+
+Expected: "[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794183951331,"recorded_position":2048,"valid_from":1794183951331,"valid_to":null,"created_by":null,"retracted_at":null,"retracted_position":null,"retract_tx_id":null,"entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YV4WZ2XPQHC47VE6791Y44"}]"
+Received: "[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794183951331,"recorded_position":2048,"valid_from":1794183951331,"valid_to":null,"created_by":null,"retracted_at":1794183951343,"retracted_position":3072,"retract_tx_id":"_tx/01M6YV4WZF067HB211N88ZEV4N","entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YV4WZ2XPQHC47VE6791Y44"}]"
+
+ ❯ immutable tests/round8.test.ts:94:90
+     92|     records.push({ route, transaction, basis, before: before[route], a…
+     93|     writeJson(`round8-${kind}-immutable.json`, records);
+     94|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+     95|   }
+     96| }
+ ❯ tests/round8.test.ts:112:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline log full historical bytes exclude later retirement metadata
+AssertionError: log getByEntity transaction=true immutable snapshot: expected '[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","…' to be '[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","…' // Object.is equality
+
+Expected: "[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794183951331,"recorded_position":2048,"valid_from":1794183951331,"valid_to":null,"created_by":null,"retracted_at":null,"retracted_position":null,"retract_tx_id":null,"entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YV4WZ2XPQHC47VE6791Y44"}]"
+Received: "[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794183951331,"recorded_position":2048,"valid_from":1794183951331,"valid_to":null,"created_by":null,"retracted_at":1794183951343,"retracted_position":3072,"retract_tx_id":"_tx/01M6YV4WZF067HB211N88ZEV4N","entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YV4WZ2XPQHC47VE6791Y44"}]"
+
+ ❯ immutable tests/round8.test.ts:94:90
+     92|     records.push({ route, transaction, basis, before: before[route], a…
+     93|     writeJson(`round8-${kind}-immutable.json`, records);
+     94|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+     95|   }
+     96| }
+ ❯ tests/round8.test.ts:112:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline log full historical bytes exclude later retirement metadata
+AssertionError: log getByEntities transaction=false immutable snapshot: expected '[["s:immutable",[{"id":"01M6YV4WZ36K3…' to be '[["s:immutable",[{"id":"01M6YV4WZ36K3…' // Object.is equality
+
+Expected: "[["s:immutable",[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794183951331,"recorded_position":2048,"valid_from":1794183951331,"valid_to":null,"created_by":null,"retracted_at":null,"retracted_position":null,"retract_tx_id":null,"entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YV4WZ2XPQHC47VE6791Y44"}]]]"
+Received: "[["s:immutable",[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794183951331,"recorded_position":2048,"valid_from":1794183951331,"valid_to":null,"created_by":null,"retracted_at":1794183951343,"retracted_position":3072,"retract_tx_id":"_tx/01M6YV4WZF067HB211N88ZEV4N","entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YV4WZ2XPQHC47VE6791Y44"}]]]"
+
+ ❯ immutable tests/round8.test.ts:94:90
+     92|     records.push({ route, transaction, basis, before: before[route], a…
+     93|     writeJson(`round8-${kind}-immutable.json`, records);
+     94|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+     95|   }
+     96| }
+ ❯ tests/round8.test.ts:112:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline log full historical bytes exclude later retirement metadata
+AssertionError: log getByEntities transaction=true immutable snapshot: expected '[["s:immutable",[{"id":"01M6YV4WZ36K3…' to be '[["s:immutable",[{"id":"01M6YV4WZ36K3…' // Object.is equality
+
+Expected: "[["s:immutable",[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794183951331,"recorded_position":2048,"valid_from":1794183951331,"valid_to":null,"created_by":null,"retracted_at":null,"retracted_position":null,"retract_tx_id":null,"entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YV4WZ2XPQHC47VE6791Y44"}]]]"
+Received: "[["s:immutable",[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794183951331,"recorded_position":2048,"valid_from":1794183951331,"valid_to":null,"created_by":null,"retracted_at":1794183951343,"retracted_position":3072,"retract_tx_id":"_tx/01M6YV4WZF067HB211N88ZEV4N","entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YV4WZ2XPQHC47VE6791Y44"}]]]"
+
+ ❯ immutable tests/round8.test.ts:94:90
+     92|     records.push({ route, transaction, basis, before: before[route], a…
+     93|     writeJson(`round8-${kind}-immutable.json`, records);
+     94|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+     95|   }
+     96| }
+ ❯ tests/round8.test.ts:112:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline log full historical bytes exclude later retirement metadata
+AssertionError: log query transaction=false immutable snapshot: expected '[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","…' to be '[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","…' // Object.is equality
+
+Expected: "[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794183951331,"recorded_position":2048,"valid_from":1794183951331,"valid_to":null,"created_by":null,"retracted_at":null,"retracted_position":null,"retract_tx_id":null,"entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YV4WZ2XPQHC47VE6791Y44"}]"
+Received: "[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794183951331,"recorded_position":2048,"valid_from":1794183951331,"valid_to":null,"created_by":null,"retracted_at":1794183951343,"retracted_position":3072,"retract_tx_id":"_tx/01M6YV4WZF067HB211N88ZEV4N","entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YV4WZ2XPQHC47VE6791Y44"}]"
+
+ ❯ immutable tests/round8.test.ts:94:90
+     92|     records.push({ route, transaction, basis, before: before[route], a…
+     93|     writeJson(`round8-${kind}-immutable.json`, records);
+     94|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+     95|   }
+     96| }
+ ❯ tests/round8.test.ts:112:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline log full historical bytes exclude later retirement metadata
+AssertionError: log query transaction=true immutable snapshot: expected '[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","…' to be '[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","…' // Object.is equality
+
+Expected: "[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794183951331,"recorded_position":2048,"valid_from":1794183951331,"valid_to":null,"created_by":null,"retracted_at":null,"retracted_position":null,"retract_tx_id":null,"entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YV4WZ2XPQHC47VE6791Y44"}]"
+Received: "[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794183951331,"recorded_position":2048,"valid_from":1794183951331,"valid_to":null,"created_by":null,"retracted_at":1794183951343,"retracted_position":3072,"retract_tx_id":"_tx/01M6YV4WZF067HB211N88ZEV4N","entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YV4WZ2XPQHC47VE6791Y44"}]"
+
+ ❯ immutable tests/round8.test.ts:94:90
+     92|     records.push({ route, transaction, basis, before: before[route], a…
+     93|     writeJson(`round8-${kind}-immutable.json`, records);
+     94|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+     95|   }
+     96| }
+ ❯ tests/round8.test.ts:112:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline log full historical bytes exclude later retirement metadata
+AssertionError: log entity transaction=false immutable snapshot: expected '[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","…' to be '[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","…' // Object.is equality
+
+Expected: "[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794183951331,"validFrom":1794183951331,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"None"},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4WZ2XPQHC47VE6791Y44"},"retractTxId":{"_id":"Option","_tag":"None"}}]"
+Received: "[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794183951331,"validFrom":1794183951331,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"Some","value":1794183951343},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4WZ2XPQHC47VE6791Y44"},"retractTxId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4WZF067HB211N88ZEV4N"}}]"
+
+ ❯ immutable tests/round8.test.ts:94:90
+     92|     records.push({ route, transaction, basis, before: before[route], a…
+     93|     writeJson(`round8-${kind}-immutable.json`, records);
+     94|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+     95|   }
+     96| }
+ ❯ tests/round8.test.ts:112:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline log full historical bytes exclude later retirement metadata
+AssertionError: log entity transaction=true immutable snapshot: expected '[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","…' to be '[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","…' // Object.is equality
+
+Expected: "[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794183951331,"validFrom":1794183951331,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"None"},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4WZ2XPQHC47VE6791Y44"},"retractTxId":{"_id":"Option","_tag":"None"}}]"
+Received: "[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794183951331,"validFrom":1794183951331,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"Some","value":1794183951343},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4WZ2XPQHC47VE6791Y44"},"retractTxId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4WZF067HB211N88ZEV4N"}}]"
+
+ ❯ immutable tests/round8.test.ts:94:90
+     92|     records.push({ route, transaction, basis, before: before[route], a…
+     93|     writeJson(`round8-${kind}-immutable.json`, records);
+     94|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+     95|   }
+     96| }
+ ❯ tests/round8.test.ts:112:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline log full historical bytes exclude later retirement metadata
+AssertionError: log entities transaction=false immutable snapshot: expected '[[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y",…' to be '[[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y",…' // Object.is equality
+
+Expected: "[[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794183951331,"validFrom":1794183951331,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"None"},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4WZ2XPQHC47VE6791Y44"},"retractTxId":{"_id":"Option","_tag":"None"}}]]"
+Received: "[[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794183951331,"validFrom":1794183951331,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"Some","value":1794183951343},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4WZ2XPQHC47VE6791Y44"},"retractTxId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4WZF067HB211N88ZEV4N"}}]]"
+
+ ❯ immutable tests/round8.test.ts:94:90
+     92|     records.push({ route, transaction, basis, before: before[route], a…
+     93|     writeJson(`round8-${kind}-immutable.json`, records);
+     94|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+     95|   }
+     96| }
+ ❯ tests/round8.test.ts:112:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline log full historical bytes exclude later retirement metadata
+AssertionError: log entities transaction=true immutable snapshot: expected '[[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y",…' to be '[[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y",…' // Object.is equality
+
+Expected: "[[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794183951331,"validFrom":1794183951331,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"None"},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4WZ2XPQHC47VE6791Y44"},"retractTxId":{"_id":"Option","_tag":"None"}}]]"
+Received: "[[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794183951331,"validFrom":1794183951331,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"Some","value":1794183951343},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4WZ2XPQHC47VE6791Y44"},"retractTxId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4WZF067HB211N88ZEV4N"}}]]"
+
+ ❯ immutable tests/round8.test.ts:94:90
+     92|     records.push({ route, transaction, basis, before: before[route], a…
+     93|     writeJson(`round8-${kind}-immutable.json`, records);
+     94|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+     95|   }
+     96| }
+ ❯ tests/round8.test.ts:112:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline log full historical bytes exclude later retirement metadata
+AssertionError: log match transaction=false immutable snapshot: expected '[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","…' to be '[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","…' // Object.is equality
+
+Expected: "[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794183951331,"validFrom":1794183951331,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"None"},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4WZ2XPQHC47VE6791Y44"},"retractTxId":{"_id":"Option","_tag":"None"}}]"
+Received: "[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794183951331,"validFrom":1794183951331,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"Some","value":1794183951343},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4WZ2XPQHC47VE6791Y44"},"retractTxId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4WZF067HB211N88ZEV4N"}}]"
+
+ ❯ immutable tests/round8.test.ts:94:90
+     92|     records.push({ route, transaction, basis, before: before[route], a…
+     93|     writeJson(`round8-${kind}-immutable.json`, records);
+     94|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+     95|   }
+     96| }
+ ❯ tests/round8.test.ts:112:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline log full historical bytes exclude later retirement metadata
+AssertionError: log match transaction=true immutable snapshot: expected '[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","…' to be '[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","…' // Object.is equality
+
+Expected: "[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794183951331,"validFrom":1794183951331,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"None"},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4WZ2XPQHC47VE6791Y44"},"retractTxId":{"_id":"Option","_tag":"None"}}]"
+Received: "[{"id":"01M6YV4WZ36K35MGSNC70E2D1Y","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794183951331,"validFrom":1794183951331,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"Some","value":1794183951343},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4WZ2XPQHC47VE6791Y44"},"retractTxId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4WZF067HB211N88ZEV4N"}}]"
+
+ ❯ immutable tests/round8.test.ts:94:90
+     92|     records.push({ route, transaction, basis, before: before[route], a…
+     93|     writeJson(`round8-${kind}-immutable.json`, records);
+     94|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+     95|   }
+     96| }
+ ❯ tests/round8.test.ts:112:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline replica full historical bytes exclude later retirement metadata
+AssertionError: replica getByEntity transaction=false immutable snapshot: expected '[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","…' to be '[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","…' // Object.is equality
+
+Expected: "[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794183951443,"recorded_position":2048,"valid_from":1794183951443,"valid_to":null,"created_by":null,"retracted_at":null,"retracted_position":null,"retract_tx_id":null,"entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YV4X2KDX2S9EVTAYSS8NR2"}]"
+Received: "[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794183951443,"recorded_position":2048,"valid_from":1794183951443,"valid_to":null,"created_by":null,"retracted_at":1794183951458,"retracted_position":3072,"retract_tx_id":"_tx/01M6YV4X31YYY5N3CGK0DPHPAW","entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YV4X2KDX2S9EVTAYSS8NR2"}]"
+
+ ❯ immutable tests/round8.test.ts:94:90
+     92|     records.push({ route, transaction, basis, before: before[route], a…
+     93|     writeJson(`round8-${kind}-immutable.json`, records);
+     94|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+     95|   }
+     96| }
+ ❯ tests/round8.test.ts:112:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline replica full historical bytes exclude later retirement metadata
+AssertionError: replica getByEntity transaction=true immutable snapshot: expected '[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","…' to be '[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","…' // Object.is equality
+
+Expected: "[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794183951443,"recorded_position":2048,"valid_from":1794183951443,"valid_to":null,"created_by":null,"retracted_at":null,"retracted_position":null,"retract_tx_id":null,"entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YV4X2KDX2S9EVTAYSS8NR2"}]"
+Received: "[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794183951443,"recorded_position":2048,"valid_from":1794183951443,"valid_to":null,"created_by":null,"retracted_at":1794183951458,"retracted_position":3072,"retract_tx_id":"_tx/01M6YV4X31YYY5N3CGK0DPHPAW","entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YV4X2KDX2S9EVTAYSS8NR2"}]"
+
+ ❯ immutable tests/round8.test.ts:94:90
+     92|     records.push({ route, transaction, basis, before: before[route], a…
+     93|     writeJson(`round8-${kind}-immutable.json`, records);
+     94|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+     95|   }
+     96| }
+ ❯ tests/round8.test.ts:112:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline replica full historical bytes exclude later retirement metadata
+AssertionError: replica getByEntities transaction=false immutable snapshot: expected '[["s:immutable",[{"id":"01M6YV4X2KDX2…' to be '[["s:immutable",[{"id":"01M6YV4X2KDX2…' // Object.is equality
+
+Expected: "[["s:immutable",[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794183951443,"recorded_position":2048,"valid_from":1794183951443,"valid_to":null,"created_by":null,"retracted_at":null,"retracted_position":null,"retract_tx_id":null,"entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YV4X2KDX2S9EVTAYSS8NR2"}]]]"
+Received: "[["s:immutable",[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794183951443,"recorded_position":2048,"valid_from":1794183951443,"valid_to":null,"created_by":null,"retracted_at":1794183951458,"retracted_position":3072,"retract_tx_id":"_tx/01M6YV4X31YYY5N3CGK0DPHPAW","entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YV4X2KDX2S9EVTAYSS8NR2"}]]]"
+
+ ❯ immutable tests/round8.test.ts:94:90
+     92|     records.push({ route, transaction, basis, before: before[route], a…
+     93|     writeJson(`round8-${kind}-immutable.json`, records);
+     94|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+     95|   }
+     96| }
+ ❯ tests/round8.test.ts:112:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline replica full historical bytes exclude later retirement metadata
+AssertionError: replica getByEntities transaction=true immutable snapshot: expected '[["s:immutable",[{"id":"01M6YV4X2KDX2…' to be '[["s:immutable",[{"id":"01M6YV4X2KDX2…' // Object.is equality
+
+Expected: "[["s:immutable",[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794183951443,"recorded_position":2048,"valid_from":1794183951443,"valid_to":null,"created_by":null,"retracted_at":null,"retracted_position":null,"retract_tx_id":null,"entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YV4X2KDX2S9EVTAYSS8NR2"}]]]"
+Received: "[["s:immutable",[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794183951443,"recorded_position":2048,"valid_from":1794183951443,"valid_to":null,"created_by":null,"retracted_at":1794183951458,"retracted_position":3072,"retract_tx_id":"_tx/01M6YV4X31YYY5N3CGK0DPHPAW","entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YV4X2KDX2S9EVTAYSS8NR2"}]]]"
+
+ ❯ immutable tests/round8.test.ts:94:90
+     92|     records.push({ route, transaction, basis, before: before[route], a…
+     93|     writeJson(`round8-${kind}-immutable.json`, records);
+     94|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+     95|   }
+     96| }
+ ❯ tests/round8.test.ts:112:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline replica full historical bytes exclude later retirement metadata
+AssertionError: replica query transaction=false immutable snapshot: expected '[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","…' to be '[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","…' // Object.is equality
+
+Expected: "[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794183951443,"recorded_position":2048,"valid_from":1794183951443,"valid_to":null,"created_by":null,"retracted_at":null,"retracted_position":null,"retract_tx_id":null,"entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YV4X2KDX2S9EVTAYSS8NR2"}]"
+Received: "[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794183951443,"recorded_position":2048,"valid_from":1794183951443,"valid_to":null,"created_by":null,"retracted_at":1794183951458,"retracted_position":3072,"retract_tx_id":"_tx/01M6YV4X31YYY5N3CGK0DPHPAW","entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YV4X2KDX2S9EVTAYSS8NR2"}]"
+
+ ❯ immutable tests/round8.test.ts:94:90
+     92|     records.push({ route, transaction, basis, before: before[route], a…
+     93|     writeJson(`round8-${kind}-immutable.json`, records);
+     94|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+     95|   }
+     96| }
+ ❯ tests/round8.test.ts:112:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline replica full historical bytes exclude later retirement metadata
+AssertionError: replica query transaction=true immutable snapshot: expected '[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","…' to be '[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","…' // Object.is equality
+
+Expected: "[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794183951443,"recorded_position":2048,"valid_from":1794183951443,"valid_to":null,"created_by":null,"retracted_at":null,"retracted_position":null,"retract_tx_id":null,"entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YV4X2KDX2S9EVTAYSS8NR2"}]"
+Received: "[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794183951443,"recorded_position":2048,"valid_from":1794183951443,"valid_to":null,"created_by":null,"retracted_at":1794183951458,"retracted_position":3072,"retract_tx_id":"_tx/01M6YV4X31YYY5N3CGK0DPHPAW","entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YV4X2KDX2S9EVTAYSS8NR2"}]"
+
+ ❯ immutable tests/round8.test.ts:94:90
+     92|     records.push({ route, transaction, basis, before: before[route], a…
+     93|     writeJson(`round8-${kind}-immutable.json`, records);
+     94|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+     95|   }
+     96| }
+ ❯ tests/round8.test.ts:112:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[42/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline replica full historical bytes exclude later retirement metadata
+AssertionError: replica entity transaction=false immutable snapshot: expected '[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","…' to be '[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","…' // Object.is equality
+
+Expected: "[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794183951443,"validFrom":1794183951443,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"None"},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4X2KDX2S9EVTAYSS8NR2"},"retractTxId":{"_id":"Option","_tag":"None"}}]"
+Received: "[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794183951443,"validFrom":1794183951443,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"Some","value":1794183951458},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4X2KDX2S9EVTAYSS8NR2"},"retractTxId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4X31YYY5N3CGK0DPHPAW"}}]"
+
+ ❯ immutable tests/round8.test.ts:94:90
+     92|     records.push({ route, transaction, basis, before: before[route], a…
+     93|     writeJson(`round8-${kind}-immutable.json`, records);
+     94|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+     95|   }
+     96| }
+ ❯ tests/round8.test.ts:112:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[43/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline replica full historical bytes exclude later retirement metadata
+AssertionError: replica entity transaction=true immutable snapshot: expected '[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","…' to be '[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","…' // Object.is equality
+
+Expected: "[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794183951443,"validFrom":1794183951443,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"None"},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4X2KDX2S9EVTAYSS8NR2"},"retractTxId":{"_id":"Option","_tag":"None"}}]"
+Received: "[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794183951443,"validFrom":1794183951443,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"Some","value":1794183951458},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4X2KDX2S9EVTAYSS8NR2"},"retractTxId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4X31YYY5N3CGK0DPHPAW"}}]"
+
+ ❯ immutable tests/round8.test.ts:94:90
+     92|     records.push({ route, transaction, basis, before: before[route], a…
+     93|     writeJson(`round8-${kind}-immutable.json`, records);
+     94|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+     95|   }
+     96| }
+ ❯ tests/round8.test.ts:112:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[44/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline replica full historical bytes exclude later retirement metadata
+AssertionError: replica entities transaction=false immutable snapshot: expected '[[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3",…' to be '[[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3",…' // Object.is equality
+
+Expected: "[[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794183951443,"validFrom":1794183951443,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"None"},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4X2KDX2S9EVTAYSS8NR2"},"retractTxId":{"_id":"Option","_tag":"None"}}]]"
+Received: "[[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794183951443,"validFrom":1794183951443,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"Some","value":1794183951458},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4X2KDX2S9EVTAYSS8NR2"},"retractTxId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4X31YYY5N3CGK0DPHPAW"}}]]"
+
+ ❯ immutable tests/round8.test.ts:94:90
+     92|     records.push({ route, transaction, basis, before: before[route], a…
+     93|     writeJson(`round8-${kind}-immutable.json`, records);
+     94|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+     95|   }
+     96| }
+ ❯ tests/round8.test.ts:112:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[45/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline replica full historical bytes exclude later retirement metadata
+AssertionError: replica entities transaction=true immutable snapshot: expected '[[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3",…' to be '[[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3",…' // Object.is equality
+
+Expected: "[[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794183951443,"validFrom":1794183951443,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"None"},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4X2KDX2S9EVTAYSS8NR2"},"retractTxId":{"_id":"Option","_tag":"None"}}]]"
+Received: "[[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794183951443,"validFrom":1794183951443,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"Some","value":1794183951458},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4X2KDX2S9EVTAYSS8NR2"},"retractTxId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4X31YYY5N3CGK0DPHPAW"}}]]"
+
+ ❯ immutable tests/round8.test.ts:94:90
+     92|     records.push({ route, transaction, basis, before: before[route], a…
+     93|     writeJson(`round8-${kind}-immutable.json`, records);
+     94|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+     95|   }
+     96| }
+ ❯ tests/round8.test.ts:112:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[46/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline replica full historical bytes exclude later retirement metadata
+AssertionError: replica match transaction=false immutable snapshot: expected '[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","…' to be '[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","…' // Object.is equality
+
+Expected: "[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794183951443,"validFrom":1794183951443,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"None"},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4X2KDX2S9EVTAYSS8NR2"},"retractTxId":{"_id":"Option","_tag":"None"}}]"
+Received: "[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794183951443,"validFrom":1794183951443,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"Some","value":1794183951458},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4X2KDX2S9EVTAYSS8NR2"},"retractTxId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4X31YYY5N3CGK0DPHPAW"}}]"
+
+ ❯ immutable tests/round8.test.ts:94:90
+     92|     records.push({ route, transaction, basis, before: before[route], a…
+     93|     writeJson(`round8-${kind}-immutable.json`, records);
+     94|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+     95|   }
+     96| }
+ ❯ tests/round8.test.ts:112:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[47/48]⎯
+
+ FAIL  tests/round8.test.ts > round8 offline replica full historical bytes exclude later retirement metadata
+AssertionError: replica match transaction=true immutable snapshot: expected '[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","…' to be '[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","…' // Object.is equality
+
+Expected: "[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794183951443,"validFrom":1794183951443,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"None"},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4X2KDX2S9EVTAYSS8NR2"},"retractTxId":{"_id":"Option","_tag":"None"}}]"
+Received: "[{"id":"01M6YV4X2KDX2S9EVTAYSS8NR3","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794183951443,"validFrom":1794183951443,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"Some","value":1794183951458},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4X2KDX2S9EVTAYSS8NR2"},"retractTxId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YV4X31YYY5N3CGK0DPHPAW"}}]"
+
+ ❯ immutable tests/round8.test.ts:94:90
+     92|     records.push({ route, transaction, basis, before: before[route], a…
+     93|     writeJson(`round8-${kind}-immutable.json`, records);
+     94|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+     95|   }
+     96| }
+ ❯ tests/round8.test.ts:112:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[48/48]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 4 skipped (8)
+   Start at  19:25:50
+   Duration  821ms (tests 53%, import 33%, transform 14%)
+

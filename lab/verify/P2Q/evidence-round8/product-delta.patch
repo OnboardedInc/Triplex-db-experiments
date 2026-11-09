@@ -1,0 +1,216 @@
+diff --git a/packages/qlever/src/QleverQueryExecutor.ts b/packages/qlever/src/QleverQueryExecutor.ts
+index c5466d57..cf712505 100644
+--- a/packages/qlever/src/QleverQueryExecutor.ts
++++ b/packages/qlever/src/QleverQueryExecutor.ts
+@@ -38,7 +38,7 @@ export interface QleverQueryOptions {
+    * the answer if the replica was reset in between (RULINGS Q67c, Q72b).
+    */
+   readonly resolveBasis?: ((requested: number | undefined) => Promise<ReplicaSnapshot>) & {
+-    readonly inTransaction: (sourceK: number) => Promise<ReplicaSnapshot>;
++    readonly inTransaction: (sourceK: number, requested?: number) => Promise<ReplicaSnapshot>;
+     readonly after: (snapshot: ReplicaSnapshot) => Promise<void>;
+   };
+   readonly sourcePlan?: QleverSourcePlan;
+@@ -218,6 +218,7 @@ export const makeQleverQueryExecutor = (
+             );
+           if (
+             sourceView &&
++            !(options.resolveBasis && basis?.recordedPosition !== undefined) &&
+             (basis?.recordedAt !== undefined ||
+               (basis?.recordedPosition !== undefined &&
+                 basis.recordedPosition !== sourceView.sourcePosition))
+@@ -233,9 +234,13 @@ export const makeQleverQueryExecutor = (
+           const gate = options.resolveBasis;
+           const snapshot = gate
+             ? sourceView
+-              ? await gate.inTransaction(sourceView.sourcePosition)
++              ? await gate.inTransaction(sourceView.sourcePosition, basis?.recordedPosition)
+               : await gate(basis?.recordedPosition)
+             : undefined;
++          // [EXP-P2Q] Why: an explicit committed cut excludes staged assertions and retractions.
++          // Rejected: inlining the pending view (its visibility rules intentionally include own writes).
++          const compileSourceView =
++            gate && basis?.recordedPosition !== undefined ? undefined : sourceView;
+           // [EXP-P2Q] Why: every answer/materialization SELECT needs the broker outage reason.
+           // Rejected: classifying the whole run (compiler/validation errors are not transport failures).
+           const replicaClient: QleverClient = snapshot
+@@ -293,7 +298,7 @@ export const makeQleverQueryExecutor = (
+                 onCompilation: (duration: number) => {
+                   compilationTimeMs += duration;
+                 },
+-                ...(sourceView ? { sourceView } : {}),
++                ...(compileSourceView ? { sourceView: compileSourceView } : {}),
+               })
+             : undefined;
+           const compileOptions = {
+@@ -304,7 +309,7 @@ export const makeQleverQueryExecutor = (
+             ...(options.retirementPlan ? { retirementPlan: options.retirementPlan } : {}),
+             ...(options.scalarOrderPlan ? { scalarOrderPlan: options.scalarOrderPlan } : {}),
+             maxResultRows,
+-            ...(sourceView ? { sourceView } : {}),
++            ...(compileSourceView ? { sourceView: compileSourceView } : {}),
+             ...(cursorValues ? { cursorValues } : {}),
+             ...(runId ? { runId } : {}),
+           };
+diff --git a/packages/qlever/src/broker/BrokerStorageAdapter.ts b/packages/qlever/src/broker/BrokerStorageAdapter.ts
+index 601b9254..42c0f69b 100644
+--- a/packages/qlever/src/broker/BrokerStorageAdapter.ts
++++ b/packages/qlever/src/broker/BrokerStorageAdapter.ts
+@@ -46,7 +46,7 @@ import {
+ import { BrokerFailed, type HostBroker, type ReplicaSnapshot } from "./broker.js";
+ import { markerFields } from "./sparql.js";
+ import { lastPositionOf } from "./position.js";
+-import { BasisNotAvailable, ReplicaUnavailable, isUnreachable } from "./errors.js";
++import { BasisNotAvailable, ReplicaUnavailable, isUnreachable, type BasisSurface } from "./errors.js";
+ 
+ export type BrokerReadRoute = "replica" | "overlay" | "log";
+ export interface BrokerReadEvent {
+@@ -74,13 +74,14 @@ export interface BrokerAdapterOptions {
+  * executor answers in several requests, so the gate brackets them with a replica snapshot. Called as a function
+  * outside a transaction (requested basis, or the broker head) it waits until the resolved prefix covers the
+  * basis and the replica's real marker reaches it, and returns the snapshot (`basis` is the position to query
+- * at). `inTransaction` does the same for sourceK. `after(snapshot)`, once the last answer request has returned,
++ * at). `inTransaction` honors a requested cut at or below sourceK, or uses sourceK when omitted.
++ * `after(snapshot)`, once the last answer request has returned,
+  * probes again and refuses the answer if the replica was reset in between (another incarnation, a fence by the
+  * broker, or a marker below the basis), even when the marker is back at or above the basis by then.
+  * Datalog never merges the overlay (RULINGS Q58d): it waits or fails typed.
+  */
+ export type BasisGate = ((requested: number | undefined) => Promise<ReplicaSnapshot>) & {
+-  readonly inTransaction: (sourceK: number) => Promise<ReplicaSnapshot>;
++  readonly inTransaction: (sourceK: number, requested?: number) => Promise<ReplicaSnapshot>;
+   readonly after: (snapshot: ReplicaSnapshot) => Promise<void>;
+ };
+ 
+@@ -202,6 +203,33 @@ export const makeQleverBrokerStorageAdapter = (
+       : Effect.succeed(state),
+   );
+ 
++  // [EXP-P2Q] Why: Q89c forbids substituting the immutable transaction pin for a requested future cut.
++  // Rejected: waiting on the moving broker head (a pinned transaction cannot adopt a newer snapshot).
++  const readBasis = async (
++    sourceK: number | undefined,
++    requested: number | undefined,
++    surface: BasisSurface,
++  ) => {
++    const b = requested ?? sourceK ?? broker.head();
++    if (sourceK !== undefined && b > sourceK) {
++      const started = performance.now();
++      while (performance.now() - started < basisWaitMs)
++        await new Promise<void>((resolve) =>
++          setTimeout(resolve, basisWaitMs - (performance.now() - started)),
++        );
++      throw new BasisNotAvailable({
++        required: b,
++        observed: sourceK,
++        replica: "the transaction snapshot",
++        surface,
++        waitedMs: performance.now() - started,
++      });
++    }
++    if (sourceK === undefined && b > lastPositionOf(broker.durable().lsn))
++      await broker.awaitResolved(b, basisWaitMs, surface);
++    return b;
++  };
++
+   const queryRows = (
+     pattern: QueryPattern,
+     basis?: ResolvedTemporalBasis,
+@@ -211,10 +239,14 @@ export const makeQleverBrokerStorageAdapter = (
+   ): Effect.Effect<readonly TripleRow[], ReadError> =>
+     Effect.gen(function* () {
+       const state = yield* current;
+-      const b =
+-        state === undefined
+-          ? (basis?.recordedPosition ?? broker.head())
+-          : Math.min(state.sourceK, basis?.recordedPosition ?? state.sourceK);
++      const b = yield* Effect.tryPromise({
++        try: () => readBasis(state?.sourceK, basis?.recordedPosition, "repository"),
++        catch: (cause) =>
++          cause instanceof ReadError
++            ? cause
++            : new ReadError({ message: "QLever read failed", cause }),
++      });
++      if (entities?.length === 0) return [];
+       if (state) {
+         // CAS read set (module comment item 5).
+         if (pattern.entityId !== undefined && !isPatternVariable(pattern.entityId)) state.reads.entities.add(pattern.entityId);
+@@ -237,13 +269,6 @@ export const makeQleverBrokerStorageAdapter = (
+                 ? order(value)
+                 : String(value),
+             );
+-      // V-P2Q M2: a basis beyond the resolved prefix would be answered now and differently later. Wait within the
+-      // deadline for a durable frame to cover it, then fail typed. In a transaction b <= sourceK <= head.
+-      if (state === undefined && b > lastPositionOf(broker.durable().lsn))
+-        yield* Effect.tryPromise({
+-          try: () => broker.awaitResolved(b, basisWaitMs, "repository"),
+-          catch: (cause) => (cause instanceof ReadError ? cause : new ReadError({ message: "QLever read failed", cause })),
+-        });
+       const selection = { ...(entities ? { entities } : {}), ...(id !== undefined ? { id } : {}) };
+       const scoped =
+         pattern.entityId !== undefined && !isPatternVariable(pattern.entityId)
+@@ -470,12 +495,10 @@ export const makeQleverBrokerStorageAdapter = (
+    * the deadline and ask again, then typed failure.
+    */
+   const dependencyState: StorageAdapterService["dependencyState"] = (attributes, basis) =>
+-    attributes.length === 0
+-      ? Effect.succeed({ sourcePosition: 0 })
+-      : Effect.tryPromise({ catch: typed("dependency-state"), try: async (signal) => {
++    Effect.flatMap(current, (state) => Effect.tryPromise({ catch: typed("dependency-state"), try: async (signal) => {
+           const started = performance.now();
+-          const b = basis.recordedPosition ?? broker.head();
+-          if (b > lastPositionOf(broker.durable().lsn)) await broker.awaitResolved(b, basisWaitMs, "dependency-state");
++          const b = await readBasis(state?.sourceK, basis.recordedPosition, "dependency-state");
++          if (attributes.length === 0) return { sourcePosition: 0 };
+           const wanted = new Set(attributes);
+           const noBoundary = "ffffffffffffffff";
+           const time = basis.recordedAt;
+@@ -489,7 +512,7 @@ export const makeQleverBrokerStorageAdapter = (
+           const cached = broker.replicaPosition();
+           if (cached < b) {
+             const touched = broker.overlay(cached, {}, (row) => wanted.has(row.attribute));
+-            if (touched === undefined || touched.length > 0) await broker.awaitReplica(b, basisWaitMs, "dependency-state");
++            if (touched === undefined || touched.length > 0) await broker.awaitReplica(b, Math.max(0, basisWaitMs - (performance.now() - started)), "dependency-state");
+           }
+           for (;;) {
+             const rows = await client.query(sparql, { signal });
+@@ -514,16 +537,17 @@ export const makeQleverBrokerStorageAdapter = (
+               throw new BasisNotAvailable({ required: b, observed, replica: "the QLever replica", surface: "dependency-state", waitedMs: performance.now() - started });
+             await broker.awaitReplica(b, remaining, "dependency-state");
+           }
+-        } });
++        } }));
+ 
+   const resolveQueryBasis: BasisGate = Object.assign(
+     async (requested: number | undefined) => {
+-      const b = requested ?? broker.head();
+-      if (b > lastPositionOf(broker.durable().lsn)) await broker.awaitResolved(b, basisWaitMs, "datalog");
+-      return broker.openSnapshot(b, basisWaitMs, "datalog");
++      const started = performance.now();
++      const b = await readBasis(undefined, requested, "datalog");
++      return broker.openSnapshot(b, Math.max(0, basisWaitMs - (performance.now() - started)), "datalog");
+     },
+     {
+-      inTransaction: (sourceK: number) => broker.openSnapshot(sourceK, basisWaitMs, "datalog"),
++      inTransaction: async (sourceK: number, requested?: number) =>
++        broker.openSnapshot(await readBasis(sourceK, requested, "datalog"), basisWaitMs, "datalog"),
+       after: (snapshot: ReplicaSnapshot) => broker.verifySnapshot(snapshot),
+     },
+   );
+@@ -595,12 +619,10 @@ export const makeQleverBrokerStorageAdapter = (
+     getById: (id) => Effect.map(queryRows({}, undefined, false, id), (rows) => rows[0] ?? null),
+     getByEntity: (entityId, basis) => queryRows({ entityId }, basis),
+     getByEntities: (ids, basis) =>
+-      ids.length
+-        ? Effect.map(
+-            queryRows({}, basis, false, undefined, [...new Set(ids)]),
+-            (rows) => new Map([...new Set(ids)].map((id) => [id, rows.filter((row) => row.entity_id === id)])),
+-          )
+-        : Effect.succeed(new Map()),
++      Effect.map(
++        queryRows({}, basis, false, undefined, [...new Set(ids)]),
++        (rows) => new Map([...new Set(ids)].map((id) => [id, rows.filter((row) => row.entity_id === id)])),
++      ),
+     query: (pattern, basis) => queryRows(pattern, basis),
+     history: (entityId) => queryRows({ entityId }, undefined, true),
+     dependencyState,

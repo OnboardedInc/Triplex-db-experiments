@@ -1,0 +1,38 @@
+[
+  {
+    "commands": 2000,
+    "segmentBytes": 2993878,
+    "overlayPullMs": 1,
+    "outagePullMs": 25,
+    "eightConcurrentOutagePullsMs": 190,
+    "loneCommitMs": 3,
+    "commitDuringOutagePullMs": 32,
+    "rssDeltaMB": 6,
+    "exact": true,
+    "route": "log"
+  },
+  {
+    "commands": 10000,
+    "segmentBytes": 15032800,
+    "overlayPullMs": 0,
+    "outagePullMs": 117,
+    "eightConcurrentOutagePullsMs": 1006,
+    "loneCommitMs": 2,
+    "commitDuringOutagePullMs": 142,
+    "rssDeltaMB": 29,
+    "exact": true,
+    "route": "log"
+  },
+  {
+    "commands": 30000,
+    "segmentBytes": 45188832,
+    "overlayPullMs": 0,
+    "outagePullMs": 387,
+    "eightConcurrentOutagePullsMs": 3134,
+    "loneCommitMs": 2,
+    "commitDuringOutagePullMs": 387,
+    "rssDeltaMB": 41,
+    "exact": true,
+    "route": "log"
+  }
+]

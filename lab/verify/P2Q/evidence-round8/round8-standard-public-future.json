@@ -1,0 +1,146 @@
+[
+  {
+    "route": "entityPage",
+    "transaction": false,
+    "pin": 2048,
+    "future": 6144,
+    "elapsedMs": 0.736417000000074,
+    "ok": false,
+    "error": {
+      "reason": "scope_mismatch",
+      "message": "Entity page cursor belongs to a different database scope",
+      "_tag": "PaginationCursorError"
+    }
+  },
+  {
+    "route": "entityPage",
+    "transaction": true,
+    "pin": 2048,
+    "future": 6144,
+    "elapsedMs": 0.2483749999992142,
+    "ok": false,
+    "error": {
+      "reason": "scope_mismatch",
+      "message": "Entity page cursor belongs to a different database scope",
+      "_tag": "PaginationCursorError"
+    }
+  },
+  {
+    "route": "query",
+    "transaction": false,
+    "pin": 2048,
+    "future": 6144,
+    "elapsedMs": 3.847334000000046,
+    "ok": false,
+    "error": {
+      "reason": "scope_mismatch",
+      "message": "Pagination cursor belongs to a different database scope",
+      "_tag": "PaginationCursorError"
+    }
+  },
+  {
+    "route": "query",
+    "transaction": true,
+    "pin": 2048,
+    "future": 6144,
+    "elapsedMs": 0.540499999999156,
+    "ok": false,
+    "error": {
+      "reason": "scope_mismatch",
+      "message": "Pagination cursor belongs to a different database scope",
+      "_tag": "PaginationCursorError"
+    }
+  },
+  {
+    "route": "queryPage",
+    "transaction": false,
+    "pin": 2048,
+    "future": 6144,
+    "elapsedMs": 0.44504199999937555,
+    "ok": false,
+    "error": {
+      "reason": "scope_mismatch",
+      "message": "Pagination cursor belongs to a different database scope",
+      "_tag": "PaginationCursorError"
+    }
+  },
+  {
+    "route": "queryPage",
+    "transaction": true,
+    "pin": 2048,
+    "future": 6144,
+    "elapsedMs": 0.3867499999996653,
+    "ok": false,
+    "error": {
+      "reason": "scope_mismatch",
+      "message": "Pagination cursor belongs to a different database scope",
+      "_tag": "PaginationCursorError"
+    }
+  },
+  {
+    "route": "transactionsForEntity",
+    "transaction": false,
+    "pin": 2048,
+    "future": 6144,
+    "elapsedMs": 27730.4775,
+    "ok": true,
+    "value": {
+      "transactions": [
+        {
+          "txId": "_tx/01M6YV5ZF5YKQ7RHMMDS1P0TZG",
+          "position": 2048,
+          "instant": 1794183986662,
+          "changes": [
+            {
+              "op": "assert",
+              "tripleId": "01M6YV5ZF6VKCK6SHNC0EZ46J6",
+              "entityId": "s:immutable",
+              "attribute": ":v/f0",
+              "value": {
+                "type": "string",
+                "value": "first-0"
+              },
+              "validFrom": 1794183986662,
+              "recordedAt": 1794183986662,
+              "assertionTxId": "_tx/01M6YV5ZF5YKQ7RHMMDS1P0TZG"
+            }
+          ]
+        }
+      ],
+      "snapshotPosition": 6144
+    }
+  },
+  {
+    "route": "transactionsForEntity",
+    "transaction": true,
+    "pin": 2048,
+    "future": 6144,
+    "elapsedMs": 31216.800583999997,
+    "ok": true,
+    "value": {
+      "transactions": [
+        {
+          "txId": "_tx/01M6YV5ZF5YKQ7RHMMDS1P0TZG",
+          "position": 2048,
+          "instant": 1794183986662,
+          "changes": [
+            {
+              "op": "assert",
+              "tripleId": "01M6YV5ZF6VKCK6SHNC0EZ46J6",
+              "entityId": "s:immutable",
+              "attribute": ":v/f0",
+              "value": {
+                "type": "string",
+                "value": "first-0"
+              },
+              "validFrom": 1794183986662,
+              "recordedAt": 1794183986662,
+              "assertionTxId": "_tx/01M6YV5ZF5YKQ7RHMMDS1P0TZG"
+            }
+          ]
+        }
+      ],
+      "snapshotPosition": 6144
+    }
+  }
+]

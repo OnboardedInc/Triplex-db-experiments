@@ -1,0 +1,200 @@
+[
+  {
+    "route": "entityPage",
+    "transaction": false,
+    "pin": 2048,
+    "future": 6144,
+    "elapsedMs": 40.879416999996465,
+    "ok": false,
+    "error": {
+      "message": "Basis 6144 is not available on the broker's resolved prefix for repository reads (observed 3071 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 3071,
+      "replica": "the broker's resolved prefix",
+      "surface": "repository",
+      "waitedMs": 40.58270800000173
+    }
+  },
+  {
+    "route": "entityPage",
+    "transaction": true,
+    "pin": 2048,
+    "future": 6144,
+    "elapsedMs": 41.44475000000239,
+    "ok": false,
+    "error": {
+      "message": "Basis 6144 is not available on the transaction snapshot for repository reads (observed 2048 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "the transaction snapshot",
+      "surface": "repository",
+      "waitedMs": 41.06233300000167
+    }
+  },
+  {
+    "route": "query",
+    "transaction": false,
+    "pin": 2048,
+    "future": 6144,
+    "elapsedMs": 42.99037500000122,
+    "ok": false,
+    "error": {
+      "message": "Basis 6144 is not available on the broker's resolved prefix for datalog reads (observed 3071 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 3071,
+      "replica": "the broker's resolved prefix",
+      "surface": "datalog",
+      "waitedMs": 41.4632500000007
+    }
+  },
+  {
+    "route": "query",
+    "transaction": true,
+    "pin": 2048,
+    "future": 6144,
+    "elapsedMs": 42.11841699999786,
+    "ok": false,
+    "error": {
+      "message": "Basis 6144 is not available on the transaction snapshot for datalog reads (observed 2048 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "the transaction snapshot",
+      "surface": "datalog",
+      "waitedMs": 41.15020899999945
+    }
+  },
+  {
+    "route": "queryPage",
+    "transaction": false,
+    "pin": 2048,
+    "future": 6144,
+    "elapsedMs": 41.40954200000124,
+    "ok": false,
+    "error": {
+      "message": "Basis 6144 is not available on the broker's resolved prefix for datalog reads (observed 3071 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 3071,
+      "replica": "the broker's resolved prefix",
+      "surface": "datalog",
+      "waitedMs": 40.55745800000295
+    }
+  },
+  {
+    "route": "queryPage",
+    "transaction": true,
+    "pin": 2048,
+    "future": 6144,
+    "elapsedMs": 41.35454200000095,
+    "ok": false,
+    "error": {
+      "message": "Basis 6144 is not available on the transaction snapshot for datalog reads (observed 2048 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "the transaction snapshot",
+      "surface": "datalog",
+      "waitedMs": 40.645917000001646
+    }
+  },
+  {
+    "route": "transactionsForEntity",
+    "transaction": false,
+    "pin": 2048,
+    "future": 6144,
+    "elapsedMs": 18114.639249999993,
+    "ok": true,
+    "value": {
+      "transactions": [
+        {
+          "txId": "_tx/01M6YVNKTSRTSWVCVD4ZWV89RV",
+          "position": 2048,
+          "instant": 1794184499033,
+          "changes": [
+            {
+              "op": "assert",
+              "tripleId": "01M6YVNKTSRTSWVCVD4ZWV89RW",
+              "entityId": "s:immutable",
+              "attribute": ":v/f0",
+              "value": {
+                "type": "string",
+                "value": "first-0"
+              },
+              "validFrom": 1794184499033,
+              "recordedAt": 1794184499033,
+              "assertionTxId": "_tx/01M6YVNKTSRTSWVCVD4ZWV89RV"
+            }
+          ]
+        }
+      ],
+      "snapshotPosition": 6144
+    }
+  },
+  {
+    "route": "transactionsForEntity",
+    "transaction": true,
+    "pin": 2048,
+    "future": 6144,
+    "elapsedMs": 13856.417124999993,
+    "ok": true,
+    "value": {
+      "transactions": [
+        {
+          "txId": "_tx/01M6YVNKTSRTSWVCVD4ZWV89RV",
+          "position": 2048,
+          "instant": 1794184499033,
+          "changes": [
+            {
+              "op": "assert",
+              "tripleId": "01M6YVNKTSRTSWVCVD4ZWV89RW",
+              "entityId": "s:immutable",
+              "attribute": ":v/f0",
+              "value": {
+                "type": "string",
+                "value": "first-0"
+              },
+              "validFrom": 1794184499033,
+              "recordedAt": 1794184499033,
+              "assertionTxId": "_tx/01M6YVNKTSRTSWVCVD4ZWV89RV"
+            }
+          ]
+        }
+      ],
+      "snapshotPosition": 6144
+    }
+  },
+  {
+    "route": "transactionsForAbsentEntity",
+    "transaction": false,
+    "pin": 2048,
+    "future": 6144,
+    "elapsedMs": 4032.249041999996,
+    "ok": true,
+    "value": {
+      "transactions": [],
+      "snapshotPosition": 6144
+    }
+  },
+  {
+    "route": "transactionsForAbsentEntity",
+    "transaction": true,
+    "pin": 2048,
+    "future": 6144,
+    "elapsedMs": 43.40495799999917,
+    "ok": true,
+    "value": {
+      "transactions": [],
+      "snapshotPosition": 6144
+    }
+  }
+]

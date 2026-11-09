@@ -1,0 +1,7 @@
+{
+  "expected": false,
+  "observed": false,
+  "elapsedMs": 0.002292000000011285,
+  "name": "ReadError",
+  "message": "Basis 4096 is not available on test for native reads (observed 2048 after 1 ms)"
+}

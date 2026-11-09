@@ -1,0 +1,12 @@
+{
+  "perlGoneMs": -1,
+  "secondProcess": "refused",
+  "ackedA": 82,
+  "ackedB": 0,
+  "recovery": {
+    "outcome": "opened:clean-end",
+    "lost": 0,
+    "lostSample": [],
+    "broken": []
+  }
+}

@@ -1,0 +1,15 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../../vitest.workspace-aliases" without a file extension (lab/verify/P2Q/vitest.config.ts:5:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q
+
+
+ Test Files  8 passed (8)
+      Tests  802 passed | 14 skipped (816)
+   Start at  19:22:29
+   Duration  9.08s (tests 75%, import 23%, transform 3%)
+
+    Isolate  8 workers spawned · ~70ms startup each (spawn + environment, per file)
+             at least ~488ms faster with isolate: false — reuses workers across files instead of one per file
+

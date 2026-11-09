@@ -1,0 +1,110 @@
+[
+  {
+    "route": "entityPage",
+    "transaction": false,
+    "pin": 2048,
+    "future": 6144,
+    "elapsedMs": 41.19500000000005,
+    "ok": false,
+    "error": {
+      "message": "Basis 6144 is not available on the broker's resolved prefix for repository reads (observed 3071 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 3071,
+      "replica": "the broker's resolved prefix",
+      "surface": "repository",
+      "waitedMs": 40.14345800000001
+    }
+  },
+  {
+    "route": "entityPage",
+    "transaction": true,
+    "pin": 2048,
+    "future": 6144,
+    "elapsedMs": 41.61233400000003,
+    "ok": false,
+    "error": {
+      "message": "Basis 6144 is not available on the transaction snapshot for repository reads (observed 2048 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "the transaction snapshot",
+      "surface": "repository",
+      "waitedMs": 41.13687500000003
+    }
+  },
+  {
+    "route": "query",
+    "transaction": false,
+    "pin": 2048,
+    "future": 6144,
+    "elapsedMs": 45.78670900000009,
+    "ok": false,
+    "error": {
+      "message": "Basis 6144 is not available on the broker's resolved prefix for datalog reads (observed 3071 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 3071,
+      "replica": "the broker's resolved prefix",
+      "surface": "datalog",
+      "waitedMs": 41.158250000000066
+    }
+  },
+  {
+    "route": "query",
+    "transaction": true,
+    "pin": 2048,
+    "future": 6144,
+    "elapsedMs": 42.60887500000001,
+    "ok": false,
+    "error": {
+      "message": "Basis 6144 is not available on the transaction snapshot for datalog reads (observed 2048 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "the transaction snapshot",
+      "surface": "datalog",
+      "waitedMs": 41.247041999999965
+    }
+  },
+  {
+    "route": "queryPage",
+    "transaction": false,
+    "pin": 2048,
+    "future": 6144,
+    "elapsedMs": 41.063458999999966,
+    "ok": false,
+    "error": {
+      "message": "Basis 6144 is not available on the broker's resolved prefix for datalog reads (observed 3071 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 3071,
+      "replica": "the broker's resolved prefix",
+      "surface": "datalog",
+      "waitedMs": 40.01912500000003
+    }
+  },
+  {
+    "route": "queryPage",
+    "transaction": true,
+    "pin": 2048,
+    "future": 6144,
+    "elapsedMs": 42.09533299999998,
+    "ok": false,
+    "error": {
+      "message": "Basis 6144 is not available on the transaction snapshot for datalog reads (observed 2048 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "the transaction snapshot",
+      "surface": "datalog",
+      "waitedMs": 41.15766599999995
+    }
+  }
+]

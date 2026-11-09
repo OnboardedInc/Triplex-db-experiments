@@ -1,0 +1,38 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../../../vitest.workspace-aliases" without a file extension (lab/verify/P2Q/scripts/round7-guard.config.ts:5:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/packages/qlever
+
+ ❯ test/transport-code-inventory.test.ts (122 tests | 1 failed) 22ms
+   × reviews every installed Undici error-module code and the actual fetch runtime inventory 13ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/transport-code-inventory.test.ts > reviews every installed Undici error-module code and the actual fetch runtime inventory
+AssertionError: Unreviewed Undici code(s) in undici@7.29.0; audit transport vs parser/resource/validation: expected [ 'UND_ERR_QA_ADDED_TRANSPORT' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "UND_ERR_QA_ADDED_TRANSPORT",
++ ]
+
+ ❯ test/transport-code-inventory.test.ts:45:7
+     43|       missing(source),
+     44|       `Unreviewed Undici code(s) in ${name}; audit transport vs parser…
+     45|     ).toEqual([]);
+       |       ^
+     46|   }
+     47| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 121 passed (122)
+   Start at  19:26:13
+   Duration  362ms (import 70%, transform 18%, tests 8%, setup 3%, worker 1%)
+

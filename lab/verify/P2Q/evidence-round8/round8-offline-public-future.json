@@ -1,0 +1,80 @@
+[
+  {
+    "route": "entityPage",
+    "transaction": false,
+    "pin": 2048,
+    "future": 6144,
+    "elapsedMs": 0.6531249999999886,
+    "ok": false,
+    "error": {
+      "reason": "scope_mismatch",
+      "message": "Entity page cursor belongs to a different database scope",
+      "_tag": "PaginationCursorError"
+    }
+  },
+  {
+    "route": "entityPage",
+    "transaction": true,
+    "pin": 2048,
+    "future": 6144,
+    "elapsedMs": 0.21004200000004403,
+    "ok": false,
+    "error": {
+      "reason": "scope_mismatch",
+      "message": "Entity page cursor belongs to a different database scope",
+      "_tag": "PaginationCursorError"
+    }
+  },
+  {
+    "route": "query",
+    "transaction": false,
+    "pin": 2048,
+    "future": 6144,
+    "elapsedMs": 3.326249999999959,
+    "ok": false,
+    "error": {
+      "reason": "scope_mismatch",
+      "message": "Pagination cursor belongs to a different database scope",
+      "_tag": "PaginationCursorError"
+    }
+  },
+  {
+    "route": "query",
+    "transaction": true,
+    "pin": 2048,
+    "future": 6144,
+    "elapsedMs": 0.5793339999999603,
+    "ok": false,
+    "error": {
+      "reason": "scope_mismatch",
+      "message": "Pagination cursor belongs to a different database scope",
+      "_tag": "PaginationCursorError"
+    }
+  },
+  {
+    "route": "queryPage",
+    "transaction": false,
+    "pin": 2048,
+    "future": 6144,
+    "elapsedMs": 0.469333000000006,
+    "ok": false,
+    "error": {
+      "reason": "scope_mismatch",
+      "message": "Pagination cursor belongs to a different database scope",
+      "_tag": "PaginationCursorError"
+    }
+  },
+  {
+    "route": "queryPage",
+    "transaction": true,
+    "pin": 2048,
+    "future": 6144,
+    "elapsedMs": 0.41312499999997954,
+    "ok": false,
+    "error": {
+      "reason": "scope_mismatch",
+      "message": "Pagination cursor belongs to a different database scope",
+      "_tag": "PaginationCursorError"
+    }
+  }
+]

@@ -1,0 +1,456 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../../vitest.workspace-aliases" without a file extension (lab/verify/P2Q/vitest.config.ts:5:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q
+
+ ❯ tests/round8.test.ts (8 tests | 4 failed | 4 skipped) 257684ms
+   ❯ round8 live independent public entry points and named snapshots (4)
+     × standard future public cursors and journal snapshot 72401ms
+     × fresh future public cursors and journal snapshot 48688ms
+     × standard immutable payloads on both query surfaces and repository 49295ms
+     × fresh immutable payloads on both query surfaces and repository 87299ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/round8.test.ts > round8 live independent public entry points and named snapshots > standard future public cursors and journal snapshot
+ FAIL  tests/round8.test.ts > round8 live independent public entry points and named snapshots > fresh future public cursors and journal snapshot
+AssertionError: entityPage transaction=false: expected PaginationCursorError: Entity page cursor… { …(2) } to match object { _tag: 'ReadError', …(2) }
+
+- Expected
++ Received
+
+- {
+-   "_tag": "ReadError",
+-   "reason": "basis-not-reached",
+-   "required": 6144,
++ PaginationCursorError {
++   "_tag": "PaginationCursorError",
++   "reason": "scope_mismatch",
+  }
+
+ ❯ publicFuture tests/round8.test.ts:49:70
+     47|     writeJson(`round8-${kind}-public-future.json`, results);
+     48|     expect.soft(result.ok, `${route} transaction=${transaction}`).toBe…
+     49|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+       |                                                                      ^
+     50|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+     51|     expect.soft(elapsedMs, `${route} waits transaction=${transaction}`…
+ ❯ tests/round8.test.ts:123:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/34]⎯
+
+ FAIL  tests/round8.test.ts > round8 live independent public entry points and named snapshots > standard future public cursors and journal snapshot
+AssertionError: entityPage waits transaction=false: expected 0.736417000000074 to be greater than or equal to 39
+ ❯ publicFuture tests/round8.test.ts:51:73
+     49|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+     50|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+     51|     expect.soft(elapsedMs, `${route} waits transaction=${transaction}`…
+       |                                                                         ^
+     52|   }
+     53| }
+ ❯ tests/round8.test.ts:123:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/34]⎯
+
+ FAIL  tests/round8.test.ts > round8 live independent public entry points and named snapshots > standard future public cursors and journal snapshot
+ FAIL  tests/round8.test.ts > round8 live independent public entry points and named snapshots > fresh future public cursors and journal snapshot
+AssertionError: entityPage transaction=true: expected PaginationCursorError: Entity page cursor… { …(2) } to match object { _tag: 'ReadError', …(2) }
+
+- Expected
++ Received
+
+- {
+-   "_tag": "ReadError",
+-   "reason": "basis-not-reached",
+-   "required": 6144,
++ PaginationCursorError {
++   "_tag": "PaginationCursorError",
++   "reason": "scope_mismatch",
+  }
+
+ ❯ publicFuture tests/round8.test.ts:49:70
+     47|     writeJson(`round8-${kind}-public-future.json`, results);
+     48|     expect.soft(result.ok, `${route} transaction=${transaction}`).toBe…
+     49|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+       |                                                                      ^
+     50|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+     51|     expect.soft(elapsedMs, `${route} waits transaction=${transaction}`…
+ ❯ tests/round8.test.ts:123:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/34]⎯
+
+ FAIL  tests/round8.test.ts > round8 live independent public entry points and named snapshots > standard future public cursors and journal snapshot
+AssertionError: entityPage waits transaction=true: expected 0.2483749999992142 to be greater than or equal to 39
+ ❯ publicFuture tests/round8.test.ts:51:73
+     49|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+     50|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+     51|     expect.soft(elapsedMs, `${route} waits transaction=${transaction}`…
+       |                                                                         ^
+     52|   }
+     53| }
+ ❯ tests/round8.test.ts:123:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/34]⎯
+
+ FAIL  tests/round8.test.ts > round8 live independent public entry points and named snapshots > standard future public cursors and journal snapshot
+ FAIL  tests/round8.test.ts > round8 live independent public entry points and named snapshots > fresh future public cursors and journal snapshot
+AssertionError: query transaction=false: expected PaginationCursorError: Pagination cursor … { …(2) } to match object { _tag: 'ReadError', …(2) }
+
+- Expected
++ Received
+
+- {
+-   "_tag": "ReadError",
+-   "reason": "basis-not-reached",
+-   "required": 6144,
++ PaginationCursorError {
++   "_tag": "PaginationCursorError",
++   "reason": "scope_mismatch",
+  }
+
+ ❯ publicFuture tests/round8.test.ts:49:70
+     47|     writeJson(`round8-${kind}-public-future.json`, results);
+     48|     expect.soft(result.ok, `${route} transaction=${transaction}`).toBe…
+     49|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+       |                                                                      ^
+     50|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+     51|     expect.soft(elapsedMs, `${route} waits transaction=${transaction}`…
+ ❯ tests/round8.test.ts:123:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/34]⎯
+
+ FAIL  tests/round8.test.ts > round8 live independent public entry points and named snapshots > standard future public cursors and journal snapshot
+AssertionError: query waits transaction=false: expected 3.847334000000046 to be greater than or equal to 39
+ ❯ publicFuture tests/round8.test.ts:51:73
+     49|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+     50|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+     51|     expect.soft(elapsedMs, `${route} waits transaction=${transaction}`…
+       |                                                                         ^
+     52|   }
+     53| }
+ ❯ tests/round8.test.ts:123:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/34]⎯
+
+ FAIL  tests/round8.test.ts > round8 live independent public entry points and named snapshots > standard future public cursors and journal snapshot
+ FAIL  tests/round8.test.ts > round8 live independent public entry points and named snapshots > fresh future public cursors and journal snapshot
+AssertionError: query transaction=true: expected PaginationCursorError: Pagination cursor … { …(2) } to match object { _tag: 'ReadError', …(2) }
+
+- Expected
++ Received
+
+- {
+-   "_tag": "ReadError",
+-   "reason": "basis-not-reached",
+-   "required": 6144,
++ PaginationCursorError {
++   "_tag": "PaginationCursorError",
++   "reason": "scope_mismatch",
+  }
+
+ ❯ publicFuture tests/round8.test.ts:49:70
+     47|     writeJson(`round8-${kind}-public-future.json`, results);
+     48|     expect.soft(result.ok, `${route} transaction=${transaction}`).toBe…
+     49|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+       |                                                                      ^
+     50|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+     51|     expect.soft(elapsedMs, `${route} waits transaction=${transaction}`…
+ ❯ tests/round8.test.ts:123:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/34]⎯
+
+ FAIL  tests/round8.test.ts > round8 live independent public entry points and named snapshots > standard future public cursors and journal snapshot
+AssertionError: query waits transaction=true: expected 0.540499999999156 to be greater than or equal to 39
+ ❯ publicFuture tests/round8.test.ts:51:73
+     49|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+     50|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+     51|     expect.soft(elapsedMs, `${route} waits transaction=${transaction}`…
+       |                                                                         ^
+     52|   }
+     53| }
+ ❯ tests/round8.test.ts:123:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/34]⎯
+
+ FAIL  tests/round8.test.ts > round8 live independent public entry points and named snapshots > standard future public cursors and journal snapshot
+ FAIL  tests/round8.test.ts > round8 live independent public entry points and named snapshots > fresh future public cursors and journal snapshot
+AssertionError: queryPage transaction=false: expected PaginationCursorError: Pagination cursor … { …(2) } to match object { _tag: 'ReadError', …(2) }
+
+- Expected
++ Received
+
+- {
+-   "_tag": "ReadError",
+-   "reason": "basis-not-reached",
+-   "required": 6144,
++ PaginationCursorError {
++   "_tag": "PaginationCursorError",
++   "reason": "scope_mismatch",
+  }
+
+ ❯ publicFuture tests/round8.test.ts:49:70
+     47|     writeJson(`round8-${kind}-public-future.json`, results);
+     48|     expect.soft(result.ok, `${route} transaction=${transaction}`).toBe…
+     49|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+       |                                                                      ^
+     50|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+     51|     expect.soft(elapsedMs, `${route} waits transaction=${transaction}`…
+ ❯ tests/round8.test.ts:123:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/34]⎯
+
+ FAIL  tests/round8.test.ts > round8 live independent public entry points and named snapshots > standard future public cursors and journal snapshot
+AssertionError: queryPage waits transaction=false: expected 0.44504199999937555 to be greater than or equal to 39
+ ❯ publicFuture tests/round8.test.ts:51:73
+     49|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+     50|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+     51|     expect.soft(elapsedMs, `${route} waits transaction=${transaction}`…
+       |                                                                         ^
+     52|   }
+     53| }
+ ❯ tests/round8.test.ts:123:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/34]⎯
+
+ FAIL  tests/round8.test.ts > round8 live independent public entry points and named snapshots > standard future public cursors and journal snapshot
+ FAIL  tests/round8.test.ts > round8 live independent public entry points and named snapshots > fresh future public cursors and journal snapshot
+AssertionError: queryPage transaction=true: expected PaginationCursorError: Pagination cursor … { …(2) } to match object { _tag: 'ReadError', …(2) }
+
+- Expected
++ Received
+
+- {
+-   "_tag": "ReadError",
+-   "reason": "basis-not-reached",
+-   "required": 6144,
++ PaginationCursorError {
++   "_tag": "PaginationCursorError",
++   "reason": "scope_mismatch",
+  }
+
+ ❯ publicFuture tests/round8.test.ts:49:70
+     47|     writeJson(`round8-${kind}-public-future.json`, results);
+     48|     expect.soft(result.ok, `${route} transaction=${transaction}`).toBe…
+     49|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+       |                                                                      ^
+     50|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+     51|     expect.soft(elapsedMs, `${route} waits transaction=${transaction}`…
+ ❯ tests/round8.test.ts:123:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/34]⎯
+
+ FAIL  tests/round8.test.ts > round8 live independent public entry points and named snapshots > standard future public cursors and journal snapshot
+AssertionError: queryPage waits transaction=true: expected 0.3867499999996653 to be greater than or equal to 39
+ ❯ publicFuture tests/round8.test.ts:51:73
+     49|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+     50|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+     51|     expect.soft(elapsedMs, `${route} waits transaction=${transaction}`…
+       |                                                                         ^
+     52|   }
+     53| }
+ ❯ tests/round8.test.ts:123:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/34]⎯
+
+ FAIL  tests/round8.test.ts > round8 live independent public entry points and named snapshots > standard future public cursors and journal snapshot
+ FAIL  tests/round8.test.ts > round8 live independent public entry points and named snapshots > fresh future public cursors and journal snapshot
+AssertionError: transactionsForEntity transaction=false: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ publicFuture tests/round8.test.ts:48:67
+     46|     results.push({ route, transaction, pin, future, elapsedMs, ...resu…
+     47|     writeJson(`round8-${kind}-public-future.json`, results);
+     48|     expect.soft(result.ok, `${route} transaction=${transaction}`).toBe…
+       |                                                                   ^
+     49|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+     50|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+ ❯ tests/round8.test.ts:123:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/34]⎯
+
+ FAIL  tests/round8.test.ts > round8 live independent public entry points and named snapshots > standard future public cursors and journal snapshot
+ FAIL  tests/round8.test.ts > round8 live independent public entry points and named snapshots > fresh future public cursors and journal snapshot
+AssertionError: transactionsForEntity transaction=false: expected undefined to match object { _tag: 'ReadError', …(2) }
+
+- Expected:
+{
+  "_tag": "ReadError",
+  "reason": "basis-not-reached",
+  "required": 6144,
+}
+
++ Received:
+undefined
+
+ ❯ publicFuture tests/round8.test.ts:49:70
+     47|     writeJson(`round8-${kind}-public-future.json`, results);
+     48|     expect.soft(result.ok, `${route} transaction=${transaction}`).toBe…
+     49|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+       |                                                                      ^
+     50|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+     51|     expect.soft(elapsedMs, `${route} waits transaction=${transaction}`…
+ ❯ tests/round8.test.ts:123:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/34]⎯
+
+ FAIL  tests/round8.test.ts > round8 live independent public entry points and named snapshots > standard future public cursors and journal snapshot
+ FAIL  tests/round8.test.ts > round8 live independent public entry points and named snapshots > fresh future public cursors and journal snapshot
+AssertionError: transactionsForEntity transaction=true: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ publicFuture tests/round8.test.ts:48:67
+     46|     results.push({ route, transaction, pin, future, elapsedMs, ...resu…
+     47|     writeJson(`round8-${kind}-public-future.json`, results);
+     48|     expect.soft(result.ok, `${route} transaction=${transaction}`).toBe…
+       |                                                                   ^
+     49|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+     50|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+ ❯ tests/round8.test.ts:123:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/34]⎯
+
+ FAIL  tests/round8.test.ts > round8 live independent public entry points and named snapshots > standard future public cursors and journal snapshot
+ FAIL  tests/round8.test.ts > round8 live independent public entry points and named snapshots > fresh future public cursors and journal snapshot
+AssertionError: transactionsForEntity transaction=true: expected undefined to match object { _tag: 'ReadError', …(2) }
+
+- Expected:
+{
+  "_tag": "ReadError",
+  "reason": "basis-not-reached",
+  "required": 6144,
+}
+
++ Received:
+undefined
+
+ ❯ publicFuture tests/round8.test.ts:49:70
+     47|     writeJson(`round8-${kind}-public-future.json`, results);
+     48|     expect.soft(result.ok, `${route} transaction=${transaction}`).toBe…
+     49|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+       |                                                                      ^
+     50|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+     51|     expect.soft(elapsedMs, `${route} waits transaction=${transaction}`…
+ ❯ tests/round8.test.ts:123:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/34]⎯
+
+ FAIL  tests/round8.test.ts > round8 live independent public entry points and named snapshots > fresh future public cursors and journal snapshot
+AssertionError: entityPage waits transaction=false: expected 0.23512500000651926 to be greater than or equal to 39
+ ❯ publicFuture tests/round8.test.ts:51:73
+     49|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+     50|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+     51|     expect.soft(elapsedMs, `${route} waits transaction=${transaction}`…
+       |                                                                         ^
+     52|   }
+     53| }
+ ❯ tests/round8.test.ts:123:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/34]⎯
+
+ FAIL  tests/round8.test.ts > round8 live independent public entry points and named snapshots > fresh future public cursors and journal snapshot
+AssertionError: entityPage waits transaction=true: expected 0.21654199999466073 to be greater than or equal to 39
+ ❯ publicFuture tests/round8.test.ts:51:73
+     49|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+     50|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+     51|     expect.soft(elapsedMs, `${route} waits transaction=${transaction}`…
+       |                                                                         ^
+     52|   }
+     53| }
+ ❯ tests/round8.test.ts:123:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/34]⎯
+
+ FAIL  tests/round8.test.ts > round8 live independent public entry points and named snapshots > fresh future public cursors and journal snapshot
+AssertionError: query waits transaction=false: expected 0.7206250000017462 to be greater than or equal to 39
+ ❯ publicFuture tests/round8.test.ts:51:73
+     49|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+     50|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+     51|     expect.soft(elapsedMs, `${route} waits transaction=${transaction}`…
+       |                                                                         ^
+     52|   }
+     53| }
+ ❯ tests/round8.test.ts:123:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/34]⎯
+
+ FAIL  tests/round8.test.ts > round8 live independent public entry points and named snapshots > fresh future public cursors and journal snapshot
+AssertionError: query waits transaction=true: expected 0.47491699999955017 to be greater than or equal to 39
+ ❯ publicFuture tests/round8.test.ts:51:73
+     49|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+     50|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+     51|     expect.soft(elapsedMs, `${route} waits transaction=${transaction}`…
+       |                                                                         ^
+     52|   }
+     53| }
+ ❯ tests/round8.test.ts:123:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/34]⎯
+
+ FAIL  tests/round8.test.ts > round8 live independent public entry points and named snapshots > fresh future public cursors and journal snapshot
+AssertionError: queryPage waits transaction=false: expected 0.43229099999007303 to be greater than or equal to 39
+ ❯ publicFuture tests/round8.test.ts:51:73
+     49|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+     50|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+     51|     expect.soft(elapsedMs, `${route} waits transaction=${transaction}`…
+       |                                                                         ^
+     52|   }
+     53| }
+ ❯ tests/round8.test.ts:123:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/34]⎯
+
+ FAIL  tests/round8.test.ts > round8 live independent public entry points and named snapshots > fresh future public cursors and journal snapshot
+AssertionError: queryPage waits transaction=true: expected 0.29308299999684095 to be greater than or equal to 39
+ ❯ publicFuture tests/round8.test.ts:51:73
+     49|     expect.soft(result.error, `${route} transaction=${transaction}`).t…
+     50|       _tag: "ReadError", reason: "basis-not-reached", required: future…
+     51|     expect.soft(elapsedMs, `${route} waits transaction=${transaction}`…
+       |                                                                         ^
+     52|   }
+     53| }
+ ❯ tests/round8.test.ts:123:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/34]⎯
+
+ FAIL  tests/round8.test.ts > round8 live independent public entry points and named snapshots > standard immutable payloads on both query surfaces and repository
+ FAIL  tests/round8.test.ts > round8 live independent public entry points and named snapshots > fresh immutable payloads on both query surfaces and repository
+ReadError: QLever native SELECT failed: TypeError: Native relations require distinct names
+ ❯ catch ../../../packages/qlever/src/native/NativeQueries.ts:271:15
+    269|           cause instanceof BasisNotAvailable || cause instanceof Repli…
+    270|             ? cause
+    271|             : new ReadError({ message: `QLever native SELECT failed: $…
+       |               ^
+    272|       });
+    273|       const preparedRows = yield* Effect.try(() =>
+ ❯ ../../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1113:42
+ ❯ ~effect/Utils/internal ../../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/Utils.ts:198:14
+ ❯ PrimitiveImpl.~effect/Effect/args ../../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1113:23
+ ❯ PrimitiveImpl.~effect/Effect/evaluate ../../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:980:22
+ ❯ FiberImpl.runLoop ../../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:653:41
+ ❯ FiberImpl.evaluate ../../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:594:23
+ ❯ FiberImpl.evaluate ../../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:588:27
+ ❯ ../../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1158:17
+
+Caused by: TypeError: Native relations require distinct names
+ ❯ materializeQleverNativeRelations ../../../packages/qlever/src/native/BasisRelations.ts:107:11
+ ❯ try ../../../packages/qlever/src/native/NativeQueries.ts:214:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/34]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 4 skipped (8)
+   Start at  19:26:21
+   Duration  258.05s (tests 100%)
+

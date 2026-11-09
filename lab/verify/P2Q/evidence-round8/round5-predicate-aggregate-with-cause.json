@@ -1,0 +1,7 @@
+{
+  "expected": true,
+  "observed": true,
+  "elapsedMs": 0.006540999999970154,
+  "name": "AggregateError",
+  "message": "all candidates failed"
+}

@@ -1,0 +1,262 @@
+{
+  "records": [
+    {
+      "url": "https://raw.githubusercontent.com/nodejs/node/v22.23.2/doc/api/net.md",
+      "file": "net.md",
+      "bytes": 61869,
+      "sha256": "f6c212d15d96da71a7ce192589efd80e6e89d6bcd3937b34e96d1bbb0f974270",
+      "retainedSha256": "f6c212d15d96da71a7ce192589efd80e6e89d6bcd3937b34e96d1bbb0f974270",
+      "matchesRetained": true
+    },
+    {
+      "url": "https://raw.githubusercontent.com/nodejs/node/v22.23.2/doc/api/dns.md",
+      "file": "dns.md",
+      "bytes": 60755,
+      "sha256": "d31b66570f5c1dae19a14f6beffeccf835100f91bea533db490f70a85ab240ce",
+      "retainedSha256": "d31b66570f5c1dae19a14f6beffeccf835100f91bea533db490f70a85ab240ce",
+      "matchesRetained": true
+    },
+    {
+      "url": "https://raw.githubusercontent.com/nodejs/node/v22.23.2/doc/api/errors.md",
+      "file": "errors.md",
+      "bytes": 115680,
+      "sha256": "e2b21b592d00c2d7082792ff5f5029128d71c2ceac25df9ec1dcc383b76367df",
+      "retainedSha256": "e2b21b592d00c2d7082792ff5f5029128d71c2ceac25df9ec1dcc383b76367df",
+      "matchesRetained": true
+    },
+    {
+      "url": "https://raw.githubusercontent.com/nodejs/node/v22.23.2/deps/uv/include/uv.h",
+      "file": "node-uv-h.txt",
+      "bytes": 72810,
+      "sha256": "fddec8c096616675b4578d85222663c8624dce3ee67f5be1c33ba83eb02a827c",
+      "retainedSha256": "fddec8c096616675b4578d85222663c8624dce3ee67f5be1c33ba83eb02a827c",
+      "matchesRetained": true
+    },
+    {
+      "url": "https://raw.githubusercontent.com/nodejs/node/v22.23.2/deps/uv/docs/src/errors.rst",
+      "file": "libuv-errors.txt",
+      "bytes": 6557,
+      "sha256": "e937e4e485c793bfb1f59c6bcc6e95937f8cf86bd7b8c835b632c94c70dae810",
+      "retainedSha256": "e937e4e485c793bfb1f59c6bcc6e95937f8cf86bd7b8c835b632c94c70dae810",
+      "matchesRetained": true
+    }
+  ],
+  "dnsRows": [
+    {
+      "name": "NODATA",
+      "code": "ENODATA",
+      "transport": true
+    },
+    {
+      "name": "FORMERR",
+      "code": "EFORMERR",
+      "transport": true
+    },
+    {
+      "name": "SERVFAIL",
+      "code": "ESERVFAIL",
+      "transport": true
+    },
+    {
+      "name": "NOTFOUND",
+      "code": "ENOTFOUND",
+      "transport": true
+    },
+    {
+      "name": "NOTIMP",
+      "code": "ENOTIMP",
+      "transport": true
+    },
+    {
+      "name": "REFUSED",
+      "code": "EREFUSED",
+      "transport": true
+    },
+    {
+      "name": "BADQUERY",
+      "code": "EBADQUERY",
+      "transport": true
+    },
+    {
+      "name": "BADNAME",
+      "code": "EBADNAME",
+      "transport": true
+    },
+    {
+      "name": "BADFAMILY",
+      "code": "EBADFAMILY",
+      "transport": true
+    },
+    {
+      "name": "BADRESP",
+      "code": "EBADRESP",
+      "transport": true
+    },
+    {
+      "name": "CONNREFUSED",
+      "code": "ECONNREFUSED",
+      "transport": true
+    },
+    {
+      "name": "TIMEOUT",
+      "code": "ETIMEOUT",
+      "transport": true
+    },
+    {
+      "name": "EOF",
+      "code": "EOF",
+      "transport": true
+    },
+    {
+      "name": "FILE",
+      "code": "EFILE",
+      "transport": true
+    },
+    {
+      "name": "NOMEM",
+      "code": "ENOMEM",
+      "transport": true
+    },
+    {
+      "name": "DESTRUCTION",
+      "code": "EDESTRUCTION",
+      "transport": true
+    },
+    {
+      "name": "BADSTR",
+      "code": "EBADSTR",
+      "transport": true
+    },
+    {
+      "name": "BADFLAGS",
+      "code": "EBADFLAGS",
+      "transport": true
+    },
+    {
+      "name": "NONAME",
+      "code": "ENONAME",
+      "transport": true
+    },
+    {
+      "name": "BADHINTS",
+      "code": "EBADHINTS",
+      "transport": true
+    },
+    {
+      "name": "NOTINITIALIZED",
+      "code": "ENOTINITIALIZED",
+      "transport": true
+    },
+    {
+      "name": "LOADIPHLPAPI",
+      "code": "ELOADIPHLPAPI",
+      "transport": true
+    },
+    {
+      "name": "ADDRGETNETWORKPARAMS",
+      "code": "EADDRGETNETWORKPARAMS",
+      "transport": true
+    },
+    {
+      "name": "CANCELLED",
+      "code": "ECANCELLED",
+      "transport": true
+    }
+  ],
+  "uvDns": [
+    {
+      "code": "EAI_ADDRFAMILY",
+      "transport": true
+    },
+    {
+      "code": "EAI_AGAIN",
+      "transport": true
+    },
+    {
+      "code": "EAI_BADFLAGS",
+      "transport": true
+    },
+    {
+      "code": "EAI_BADHINTS",
+      "transport": true
+    },
+    {
+      "code": "EAI_CANCELED",
+      "transport": true
+    },
+    {
+      "code": "EAI_FAIL",
+      "transport": true
+    },
+    {
+      "code": "EAI_FAMILY",
+      "transport": true
+    },
+    {
+      "code": "EAI_MEMORY",
+      "transport": true
+    },
+    {
+      "code": "EAI_NODATA",
+      "transport": true
+    },
+    {
+      "code": "EAI_NONAME",
+      "transport": true
+    },
+    {
+      "code": "EAI_OVERFLOW",
+      "transport": true
+    },
+    {
+      "code": "EAI_PROTOCOL",
+      "transport": true
+    },
+    {
+      "code": "EAI_SERVICE",
+      "transport": true
+    },
+    {
+      "code": "EAI_SOCKTYPE",
+      "transport": true
+    }
+  ],
+  "docCodes": [
+    {
+      "code": "EADDRINUSE",
+      "decision": true
+    },
+    {
+      "code": "ECANCELLED",
+      "decision": true
+    },
+    {
+      "code": "ENOTFOUND",
+      "decision": true
+    },
+    {
+      "code": "EOF",
+      "decision": true
+    },
+    {
+      "code": "ERR_INVALID_ARG_TYPE",
+      "decision": false
+    },
+    {
+      "code": "ERR_INVALID_CALLBACK",
+      "decision": false
+    },
+    {
+      "code": "ERR_INVALID_HANDLE_TYPE",
+      "decision": false
+    },
+    {
+      "code": "ERR_SERVER_ALREADY_LISTEN",
+      "decision": false
+    },
+    {
+      "code": "ERR_SOCKET_CLOSED",
+      "decision": true
+    }
+  ]
+}

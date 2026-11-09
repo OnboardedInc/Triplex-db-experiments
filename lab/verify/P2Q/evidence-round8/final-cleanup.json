@@ -1,0 +1,10 @@
+{
+  "at": "2026-11-09T00:42:33.504Z",
+  "fixtureProcesses": [],
+  "productDrift": "",
+  "freeBytes": 12262887424,
+  "engineLifecycle": "none",
+  "processCleanup": "none",
+  "retainedState": "lab/verify/P2Q/state-round8/",
+  "retainedEarlierAttempts": true
+}

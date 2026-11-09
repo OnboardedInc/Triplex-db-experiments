@@ -1,0 +1,158 @@
+[
+  {
+    "route": "entityPage",
+    "transaction": false,
+    "pin": 2048,
+    "future": 6144,
+    "elapsedMs": 41.86800000000039,
+    "ok": false,
+    "error": {
+      "message": "Basis 6144 is not available on the broker's resolved prefix for repository reads (observed 3071 after 40 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 3071,
+      "replica": "the broker's resolved prefix",
+      "surface": "repository",
+      "waitedMs": 40.26691700000083
+    }
+  },
+  {
+    "route": "entityPage",
+    "transaction": true,
+    "pin": 2048,
+    "future": 6144,
+    "elapsedMs": 41.14812500000153,
+    "ok": false,
+    "error": {
+      "message": "Basis 6144 is not available on the transaction snapshot for repository reads (observed 2048 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "the transaction snapshot",
+      "surface": "repository",
+      "waitedMs": 40.69866700000057
+    }
+  },
+  {
+    "route": "query",
+    "transaction": false,
+    "pin": 2048,
+    "future": 6144,
+    "elapsedMs": 45.999916999999186,
+    "ok": false,
+    "error": {
+      "message": "Basis 6144 is not available on the broker's resolved prefix for datalog reads (observed 3071 after 42 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 3071,
+      "replica": "the broker's resolved prefix",
+      "surface": "datalog",
+      "waitedMs": 41.51520900000105
+    }
+  },
+  {
+    "route": "query",
+    "transaction": true,
+    "pin": 2048,
+    "future": 6144,
+    "elapsedMs": 42.40345800000068,
+    "ok": false,
+    "error": {
+      "message": "Basis 6144 is not available on the transaction snapshot for datalog reads (observed 2048 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "the transaction snapshot",
+      "surface": "datalog",
+      "waitedMs": 41.12633300000016
+    }
+  },
+  {
+    "route": "queryPage",
+    "transaction": false,
+    "pin": 2048,
+    "future": 6144,
+    "elapsedMs": 42.09883300000001,
+    "ok": false,
+    "error": {
+      "message": "Basis 6144 is not available on the broker's resolved prefix for datalog reads (observed 3071 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 3071,
+      "replica": "the broker's resolved prefix",
+      "surface": "datalog",
+      "waitedMs": 41.11866700000064
+    }
+  },
+  {
+    "route": "queryPage",
+    "transaction": true,
+    "pin": 2048,
+    "future": 6144,
+    "elapsedMs": 41.723165999999765,
+    "ok": false,
+    "error": {
+      "message": "Basis 6144 is not available on the transaction snapshot for datalog reads (observed 2048 after 41 ms)",
+      "_tag": "ReadError",
+      "reason": "basis-not-reached",
+      "required": 6144,
+      "observed": 2048,
+      "replica": "the transaction snapshot",
+      "surface": "datalog",
+      "waitedMs": 40.82579199999964
+    }
+  },
+  {
+    "route": "transactionsForEntity",
+    "transaction": false,
+    "pin": 2048,
+    "future": 6144,
+    "elapsedMs": 30004.422416,
+    "ok": false,
+    "error": {
+      "message": "Failed to query entity transaction index: ReadError: QLever replica the QLever replica is unreachable for datalog reads: Error: QLever request timeout",
+      "cause": {
+        "message": "QLever replica the QLever replica is unreachable for datalog reads: Error: QLever request timeout",
+        "cause": {
+          "kind": "timeout"
+        },
+        "_tag": "ReadError",
+        "reason": "replica-unreachable",
+        "replica": "the QLever replica",
+        "surface": "datalog",
+        "required": 2048,
+        "observed": 3071
+      },
+      "_tag": "ReadError"
+    }
+  },
+  {
+    "route": "transactionsForEntity",
+    "transaction": true,
+    "pin": 2048,
+    "future": 6144,
+    "elapsedMs": 30003.555291999997,
+    "ok": false,
+    "error": {
+      "message": "Failed to query entity transaction index: ReadError: QLever replica the QLever replica is unreachable for datalog reads: Error: QLever request timeout",
+      "cause": {
+        "message": "QLever replica the QLever replica is unreachable for datalog reads: Error: QLever request timeout",
+        "cause": {
+          "kind": "timeout"
+        },
+        "_tag": "ReadError",
+        "reason": "replica-unreachable",
+        "replica": "the QLever replica",
+        "surface": "datalog",
+        "required": 2048,
+        "observed": 3071
+      },
+      "_tag": "ReadError"
+    }
+  }
+]

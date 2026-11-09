@@ -1,0 +1,11 @@
+{
+  "reviewerHead": "8f599682fbb90a067c4b253de44ebaea4e0bce98",
+  "target": "d14992e16c6a1eed7b3b01a8d9476c9358920597",
+  "code": "25c54ff27fbc6d50cac7a363eeea564044083037",
+  "fixture": "542873d7b96c5702f1dda2824497f10a28048e20",
+  "changedProductFiles": [
+    "packages/qlever/src/QleverQueryExecutor.ts",
+    "packages/qlever/src/broker/BrokerStorageAdapter.ts"
+  ],
+  "productDrift": ""
+}

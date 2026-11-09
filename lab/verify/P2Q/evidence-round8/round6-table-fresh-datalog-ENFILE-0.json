@@ -1,0 +1,31 @@
+{
+  "code": "ENFILE",
+  "transport": true,
+  "depth": 0,
+  "kind": "fresh",
+  "surface": "datalog",
+  "endpoint": "http://127.0.0.1:52939",
+  "injected": 1,
+  "uv": [
+    -23,
+    [
+      "ENFILE",
+      "file table overflow"
+    ]
+  ],
+  "injection": "one synthetic code after connection establishment with the response held open; no OS network outage induced",
+  "chain": [
+    {
+      "name": "ReadError",
+      "code": null,
+      "message": "QLever replica the QLever replica is unreachable for datalog reads: Error: opaque",
+      "reason": "replica-unreachable"
+    },
+    {
+      "name": "Error",
+      "code": "ENFILE",
+      "message": "opaque",
+      "reason": null
+    }
+  ]
+}

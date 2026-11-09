@@ -1,0 +1,427 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../../vitest.workspace-aliases" without a file extension (lab/verify/P2Q/vitest.config.ts:5:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q
+
+ ❯ tests/round8-basis.test.ts (8 tests | 2 failed | 6 skipped) 190104ms
+   ❯ round8 live independent public entry points and named snapshots (4)
+     × standard immutable payloads on both query surfaces and repository 96170ms
+     × fresh immutable payloads on both query surfaces and repository 93934ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/round8-basis.test.ts > round8 live independent public entry points and named snapshots > standard immutable payloads on both query surfaces and repository
+AssertionError: standard getByEntity transaction=false immutable snapshot: expected '[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","…' to be '[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","…' // Object.is equality
+
+Expected: "[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794184739262,"recorded_position":2048,"valid_from":1794184739262,"valid_to":null,"created_by":null,"retracted_at":null,"retracted_position":null,"retract_tx_id":null,"entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YVWYDXT5KWJD5EDX6J8JAD"}]"
+Received: "[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794184739262,"recorded_position":2048,"valid_from":1794184739262,"valid_to":null,"created_by":null,"retracted_at":1794184770632,"retracted_position":3072,"retract_tx_id":"_tx/01M6YVXX27XGP3TNHP4AVXK9AH","entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YVWYDXT5KWJD5EDX6J8JAD"}]"
+
+ ❯ immutable tests/round8-basis.test.ts:122:90
+    120|     records.push({ route, transaction, basis, before: before[route], a…
+    121|     writeJson(`round8-${kind}-immutable.json`, records);
+    122|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+    123|   }
+    124| }
+ ❯ tests/round8-basis.test.ts:157:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/24]⎯
+
+ FAIL  tests/round8-basis.test.ts > round8 live independent public entry points and named snapshots > standard immutable payloads on both query surfaces and repository
+AssertionError: standard getByEntity transaction=true immutable snapshot: expected '[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","…' to be '[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","…' // Object.is equality
+
+Expected: "[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794184739262,"recorded_position":2048,"valid_from":1794184739262,"valid_to":null,"created_by":null,"retracted_at":null,"retracted_position":null,"retract_tx_id":null,"entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YVWYDXT5KWJD5EDX6J8JAD"}]"
+Received: "[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794184739262,"recorded_position":2048,"valid_from":1794184739262,"valid_to":null,"created_by":null,"retracted_at":1794184770632,"retracted_position":3072,"retract_tx_id":"_tx/01M6YVXX27XGP3TNHP4AVXK9AH","entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YVWYDXT5KWJD5EDX6J8JAD"}]"
+
+ ❯ immutable tests/round8-basis.test.ts:122:90
+    120|     records.push({ route, transaction, basis, before: before[route], a…
+    121|     writeJson(`round8-${kind}-immutable.json`, records);
+    122|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+    123|   }
+    124| }
+ ❯ tests/round8-basis.test.ts:157:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/24]⎯
+
+ FAIL  tests/round8-basis.test.ts > round8 live independent public entry points and named snapshots > standard immutable payloads on both query surfaces and repository
+AssertionError: standard getByEntities transaction=false immutable snapshot: expected '[["s:immutable",[{"id":"01M6YVWYDYZCV…' to be '[["s:immutable",[{"id":"01M6YVWYDYZCV…' // Object.is equality
+
+Expected: "[["s:immutable",[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794184739262,"recorded_position":2048,"valid_from":1794184739262,"valid_to":null,"created_by":null,"retracted_at":null,"retracted_position":null,"retract_tx_id":null,"entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YVWYDXT5KWJD5EDX6J8JAD"}]]]"
+Received: "[["s:immutable",[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794184739262,"recorded_position":2048,"valid_from":1794184739262,"valid_to":null,"created_by":null,"retracted_at":1794184770632,"retracted_position":3072,"retract_tx_id":"_tx/01M6YVXX27XGP3TNHP4AVXK9AH","entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YVWYDXT5KWJD5EDX6J8JAD"}]]]"
+
+ ❯ immutable tests/round8-basis.test.ts:122:90
+    120|     records.push({ route, transaction, basis, before: before[route], a…
+    121|     writeJson(`round8-${kind}-immutable.json`, records);
+    122|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+    123|   }
+    124| }
+ ❯ tests/round8-basis.test.ts:157:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/24]⎯
+
+ FAIL  tests/round8-basis.test.ts > round8 live independent public entry points and named snapshots > standard immutable payloads on both query surfaces and repository
+AssertionError: standard getByEntities transaction=true immutable snapshot: expected '[["s:immutable",[{"id":"01M6YVWYDYZCV…' to be '[["s:immutable",[{"id":"01M6YVWYDYZCV…' // Object.is equality
+
+Expected: "[["s:immutable",[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794184739262,"recorded_position":2048,"valid_from":1794184739262,"valid_to":null,"created_by":null,"retracted_at":null,"retracted_position":null,"retract_tx_id":null,"entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YVWYDXT5KWJD5EDX6J8JAD"}]]]"
+Received: "[["s:immutable",[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794184739262,"recorded_position":2048,"valid_from":1794184739262,"valid_to":null,"created_by":null,"retracted_at":1794184770632,"retracted_position":3072,"retract_tx_id":"_tx/01M6YVXX27XGP3TNHP4AVXK9AH","entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YVWYDXT5KWJD5EDX6J8JAD"}]]]"
+
+ ❯ immutable tests/round8-basis.test.ts:122:90
+    120|     records.push({ route, transaction, basis, before: before[route], a…
+    121|     writeJson(`round8-${kind}-immutable.json`, records);
+    122|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+    123|   }
+    124| }
+ ❯ tests/round8-basis.test.ts:157:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/24]⎯
+
+ FAIL  tests/round8-basis.test.ts > round8 live independent public entry points and named snapshots > standard immutable payloads on both query surfaces and repository
+AssertionError: standard query transaction=false immutable snapshot: expected '[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","…' to be '[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","…' // Object.is equality
+
+Expected: "[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794184739262,"recorded_position":2048,"valid_from":1794184739262,"valid_to":null,"created_by":null,"retracted_at":null,"retracted_position":null,"retract_tx_id":null,"entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YVWYDXT5KWJD5EDX6J8JAD"}]"
+Received: "[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794184739262,"recorded_position":2048,"valid_from":1794184739262,"valid_to":null,"created_by":null,"retracted_at":1794184770632,"retracted_position":3072,"retract_tx_id":"_tx/01M6YVXX27XGP3TNHP4AVXK9AH","entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YVWYDXT5KWJD5EDX6J8JAD"}]"
+
+ ❯ immutable tests/round8-basis.test.ts:122:90
+    120|     records.push({ route, transaction, basis, before: before[route], a…
+    121|     writeJson(`round8-${kind}-immutable.json`, records);
+    122|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+    123|   }
+    124| }
+ ❯ tests/round8-basis.test.ts:157:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/24]⎯
+
+ FAIL  tests/round8-basis.test.ts > round8 live independent public entry points and named snapshots > standard immutable payloads on both query surfaces and repository
+AssertionError: standard query transaction=true immutable snapshot: expected '[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","…' to be '[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","…' // Object.is equality
+
+Expected: "[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794184739262,"recorded_position":2048,"valid_from":1794184739262,"valid_to":null,"created_by":null,"retracted_at":null,"retracted_position":null,"retract_tx_id":null,"entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YVWYDXT5KWJD5EDX6J8JAD"}]"
+Received: "[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794184739262,"recorded_position":2048,"valid_from":1794184739262,"valid_to":null,"created_by":null,"retracted_at":1794184770632,"retracted_position":3072,"retract_tx_id":"_tx/01M6YVXX27XGP3TNHP4AVXK9AH","entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YVWYDXT5KWJD5EDX6J8JAD"}]"
+
+ ❯ immutable tests/round8-basis.test.ts:122:90
+    120|     records.push({ route, transaction, basis, before: before[route], a…
+    121|     writeJson(`round8-${kind}-immutable.json`, records);
+    122|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+    123|   }
+    124| }
+ ❯ tests/round8-basis.test.ts:157:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/24]⎯
+
+ FAIL  tests/round8-basis.test.ts > round8 live independent public entry points and named snapshots > standard immutable payloads on both query surfaces and repository
+AssertionError: standard entity transaction=false immutable snapshot: expected '[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","…' to be '[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","…' // Object.is equality
+
+Expected: "[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794184739262,"validFrom":1794184739262,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"None"},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YVWYDXT5KWJD5EDX6J8JAD"},"retractTxId":{"_id":"Option","_tag":"None"}}]"
+Received: "[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794184739262,"validFrom":1794184739262,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"Some","value":1794184770632},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YVWYDXT5KWJD5EDX6J8JAD"},"retractTxId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YVXX27XGP3TNHP4AVXK9AH"}}]"
+
+ ❯ immutable tests/round8-basis.test.ts:122:90
+    120|     records.push({ route, transaction, basis, before: before[route], a…
+    121|     writeJson(`round8-${kind}-immutable.json`, records);
+    122|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+    123|   }
+    124| }
+ ❯ tests/round8-basis.test.ts:157:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/24]⎯
+
+ FAIL  tests/round8-basis.test.ts > round8 live independent public entry points and named snapshots > standard immutable payloads on both query surfaces and repository
+AssertionError: standard entity transaction=true immutable snapshot: expected '[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","…' to be '[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","…' // Object.is equality
+
+Expected: "[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794184739262,"validFrom":1794184739262,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"None"},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YVWYDXT5KWJD5EDX6J8JAD"},"retractTxId":{"_id":"Option","_tag":"None"}}]"
+Received: "[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794184739262,"validFrom":1794184739262,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"Some","value":1794184770632},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YVWYDXT5KWJD5EDX6J8JAD"},"retractTxId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YVXX27XGP3TNHP4AVXK9AH"}}]"
+
+ ❯ immutable tests/round8-basis.test.ts:122:90
+    120|     records.push({ route, transaction, basis, before: before[route], a…
+    121|     writeJson(`round8-${kind}-immutable.json`, records);
+    122|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+    123|   }
+    124| }
+ ❯ tests/round8-basis.test.ts:157:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/24]⎯
+
+ FAIL  tests/round8-basis.test.ts > round8 live independent public entry points and named snapshots > standard immutable payloads on both query surfaces and repository
+AssertionError: standard entities transaction=false immutable snapshot: expected '[[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9",…' to be '[[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9",…' // Object.is equality
+
+Expected: "[[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794184739262,"validFrom":1794184739262,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"None"},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YVWYDXT5KWJD5EDX6J8JAD"},"retractTxId":{"_id":"Option","_tag":"None"}}]]"
+Received: "[[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794184739262,"validFrom":1794184739262,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"Some","value":1794184770632},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YVWYDXT5KWJD5EDX6J8JAD"},"retractTxId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YVXX27XGP3TNHP4AVXK9AH"}}]]"
+
+ ❯ immutable tests/round8-basis.test.ts:122:90
+    120|     records.push({ route, transaction, basis, before: before[route], a…
+    121|     writeJson(`round8-${kind}-immutable.json`, records);
+    122|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+    123|   }
+    124| }
+ ❯ tests/round8-basis.test.ts:157:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/24]⎯
+
+ FAIL  tests/round8-basis.test.ts > round8 live independent public entry points and named snapshots > standard immutable payloads on both query surfaces and repository
+AssertionError: standard entities transaction=true immutable snapshot: expected '[[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9",…' to be '[[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9",…' // Object.is equality
+
+Expected: "[[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794184739262,"validFrom":1794184739262,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"None"},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YVWYDXT5KWJD5EDX6J8JAD"},"retractTxId":{"_id":"Option","_tag":"None"}}]]"
+Received: "[[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794184739262,"validFrom":1794184739262,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"Some","value":1794184770632},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YVWYDXT5KWJD5EDX6J8JAD"},"retractTxId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YVXX27XGP3TNHP4AVXK9AH"}}]]"
+
+ ❯ immutable tests/round8-basis.test.ts:122:90
+    120|     records.push({ route, transaction, basis, before: before[route], a…
+    121|     writeJson(`round8-${kind}-immutable.json`, records);
+    122|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+    123|   }
+    124| }
+ ❯ tests/round8-basis.test.ts:157:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/24]⎯
+
+ FAIL  tests/round8-basis.test.ts > round8 live independent public entry points and named snapshots > standard immutable payloads on both query surfaces and repository
+AssertionError: standard match transaction=false immutable snapshot: expected '[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","…' to be '[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","…' // Object.is equality
+
+Expected: "[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794184739262,"validFrom":1794184739262,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"None"},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YVWYDXT5KWJD5EDX6J8JAD"},"retractTxId":{"_id":"Option","_tag":"None"}}]"
+Received: "[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794184739262,"validFrom":1794184739262,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"Some","value":1794184770632},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YVWYDXT5KWJD5EDX6J8JAD"},"retractTxId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YVXX27XGP3TNHP4AVXK9AH"}}]"
+
+ ❯ immutable tests/round8-basis.test.ts:122:90
+    120|     records.push({ route, transaction, basis, before: before[route], a…
+    121|     writeJson(`round8-${kind}-immutable.json`, records);
+    122|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+    123|   }
+    124| }
+ ❯ tests/round8-basis.test.ts:157:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/24]⎯
+
+ FAIL  tests/round8-basis.test.ts > round8 live independent public entry points and named snapshots > standard immutable payloads on both query surfaces and repository
+AssertionError: standard match transaction=true immutable snapshot: expected '[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","…' to be '[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","…' // Object.is equality
+
+Expected: "[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794184739262,"validFrom":1794184739262,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"None"},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YVWYDXT5KWJD5EDX6J8JAD"},"retractTxId":{"_id":"Option","_tag":"None"}}]"
+Received: "[{"id":"01M6YVWYDYZCVB9V7N1C7X9ZT9","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794184739262,"validFrom":1794184739262,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"Some","value":1794184770632},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YVWYDXT5KWJD5EDX6J8JAD"},"retractTxId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YVXX27XGP3TNHP4AVXK9AH"}}]"
+
+ ❯ immutable tests/round8-basis.test.ts:122:90
+    120|     records.push({ route, transaction, basis, before: before[route], a…
+    121|     writeJson(`round8-${kind}-immutable.json`, records);
+    122|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+    123|   }
+    124| }
+ ❯ tests/round8-basis.test.ts:157:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/24]⎯
+
+ FAIL  tests/round8-basis.test.ts > round8 live independent public entry points and named snapshots > fresh immutable payloads on both query surfaces and repository
+AssertionError: fresh getByEntity transaction=false immutable snapshot: expected '[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","…' to be '[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","…' // Object.is equality
+
+Expected: "[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794184835070,"recorded_position":2048,"valid_from":1794184835070,"valid_to":null,"created_by":null,"retracted_at":null,"retracted_position":null,"retract_tx_id":null,"entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YVZVZYV7EVKMEFT8Z8545T"}]"
+Received: "[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794184835070,"recorded_position":2048,"valid_from":1794184835070,"valid_to":null,"created_by":null,"retracted_at":1794184867273,"retracted_position":3072,"retract_tx_id":"_tx/01M6YW0VE9VYT8GGSQ6SXCG5PY","entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YVZVZYV7EVKMEFT8Z8545T"}]"
+
+ ❯ immutable tests/round8-basis.test.ts:122:90
+    120|     records.push({ route, transaction, basis, before: before[route], a…
+    121|     writeJson(`round8-${kind}-immutable.json`, records);
+    122|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+    123|   }
+    124| }
+ ❯ tests/round8-basis.test.ts:157:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/24]⎯
+
+ FAIL  tests/round8-basis.test.ts > round8 live independent public entry points and named snapshots > fresh immutable payloads on both query surfaces and repository
+AssertionError: fresh getByEntity transaction=true immutable snapshot: expected '[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","…' to be '[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","…' // Object.is equality
+
+Expected: "[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794184835070,"recorded_position":2048,"valid_from":1794184835070,"valid_to":null,"created_by":null,"retracted_at":null,"retracted_position":null,"retract_tx_id":null,"entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YVZVZYV7EVKMEFT8Z8545T"}]"
+Received: "[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794184835070,"recorded_position":2048,"valid_from":1794184835070,"valid_to":null,"created_by":null,"retracted_at":1794184867273,"retracted_position":3072,"retract_tx_id":"_tx/01M6YW0VE9VYT8GGSQ6SXCG5PY","entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YVZVZYV7EVKMEFT8Z8545T"}]"
+
+ ❯ immutable tests/round8-basis.test.ts:122:90
+    120|     records.push({ route, transaction, basis, before: before[route], a…
+    121|     writeJson(`round8-${kind}-immutable.json`, records);
+    122|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+    123|   }
+    124| }
+ ❯ tests/round8-basis.test.ts:157:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/24]⎯
+
+ FAIL  tests/round8-basis.test.ts > round8 live independent public entry points and named snapshots > fresh immutable payloads on both query surfaces and repository
+AssertionError: fresh getByEntities transaction=false immutable snapshot: expected '[["s:immutable",[{"id":"01M6YVZVZYV7E…' to be '[["s:immutable",[{"id":"01M6YVZVZYV7E…' // Object.is equality
+
+Expected: "[["s:immutable",[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794184835070,"recorded_position":2048,"valid_from":1794184835070,"valid_to":null,"created_by":null,"retracted_at":null,"retracted_position":null,"retract_tx_id":null,"entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YVZVZYV7EVKMEFT8Z8545T"}]]]"
+Received: "[["s:immutable",[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794184835070,"recorded_position":2048,"valid_from":1794184835070,"valid_to":null,"created_by":null,"retracted_at":1794184867273,"retracted_position":3072,"retract_tx_id":"_tx/01M6YW0VE9VYT8GGSQ6SXCG5PY","entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YVZVZYV7EVKMEFT8Z8545T"}]]]"
+
+ ❯ immutable tests/round8-basis.test.ts:122:90
+    120|     records.push({ route, transaction, basis, before: before[route], a…
+    121|     writeJson(`round8-${kind}-immutable.json`, records);
+    122|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+    123|   }
+    124| }
+ ❯ tests/round8-basis.test.ts:157:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/24]⎯
+
+ FAIL  tests/round8-basis.test.ts > round8 live independent public entry points and named snapshots > fresh immutable payloads on both query surfaces and repository
+AssertionError: fresh getByEntities transaction=true immutable snapshot: expected '[["s:immutable",[{"id":"01M6YVZVZYV7E…' to be '[["s:immutable",[{"id":"01M6YVZVZYV7E…' // Object.is equality
+
+Expected: "[["s:immutable",[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794184835070,"recorded_position":2048,"valid_from":1794184835070,"valid_to":null,"created_by":null,"retracted_at":null,"retracted_position":null,"retract_tx_id":null,"entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YVZVZYV7EVKMEFT8Z8545T"}]]]"
+Received: "[["s:immutable",[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794184835070,"recorded_position":2048,"valid_from":1794184835070,"valid_to":null,"created_by":null,"retracted_at":1794184867273,"retracted_position":3072,"retract_tx_id":"_tx/01M6YW0VE9VYT8GGSQ6SXCG5PY","entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YVZVZYV7EVKMEFT8Z8545T"}]]]"
+
+ ❯ immutable tests/round8-basis.test.ts:122:90
+    120|     records.push({ route, transaction, basis, before: before[route], a…
+    121|     writeJson(`round8-${kind}-immutable.json`, records);
+    122|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+    123|   }
+    124| }
+ ❯ tests/round8-basis.test.ts:157:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/24]⎯
+
+ FAIL  tests/round8-basis.test.ts > round8 live independent public entry points and named snapshots > fresh immutable payloads on both query surfaces and repository
+AssertionError: fresh query transaction=false immutable snapshot: expected '[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","…' to be '[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","…' // Object.is equality
+
+Expected: "[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794184835070,"recorded_position":2048,"valid_from":1794184835070,"valid_to":null,"created_by":null,"retracted_at":null,"retracted_position":null,"retract_tx_id":null,"entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YVZVZYV7EVKMEFT8Z8545T"}]"
+Received: "[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794184835070,"recorded_position":2048,"valid_from":1794184835070,"valid_to":null,"created_by":null,"retracted_at":1794184867273,"retracted_position":3072,"retract_tx_id":"_tx/01M6YW0VE9VYT8GGSQ6SXCG5PY","entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YVZVZYV7EVKMEFT8Z8545T"}]"
+
+ ❯ immutable tests/round8-basis.test.ts:122:90
+    120|     records.push({ route, transaction, basis, before: before[route], a…
+    121|     writeJson(`round8-${kind}-immutable.json`, records);
+    122|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+    123|   }
+    124| }
+ ❯ tests/round8-basis.test.ts:157:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/24]⎯
+
+ FAIL  tests/round8-basis.test.ts > round8 live independent public entry points and named snapshots > fresh immutable payloads on both query surfaces and repository
+AssertionError: fresh query transaction=true immutable snapshot: expected '[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","…' to be '[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","…' // Object.is equality
+
+Expected: "[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794184835070,"recorded_position":2048,"valid_from":1794184835070,"valid_to":null,"created_by":null,"retracted_at":null,"retracted_position":null,"retract_tx_id":null,"entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YVZVZYV7EVKMEFT8Z8545T"}]"
+Received: "[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","entity_id":"s:immutable","attribute":":v/f0","value_type":"string","value_string":"first-0","value_number":null,"value_boolean":null,"value_datetime":null,"value_json":null,"recorded_at":1794184835070,"recorded_position":2048,"valid_from":1794184835070,"valid_to":null,"created_by":null,"retracted_at":1794184867273,"retracted_position":3072,"retract_tx_id":"_tx/01M6YW0VE9VYT8GGSQ6SXCG5PY","entity_type":null,"schema_version":1,"tx_id":"_tx/01M6YVZVZYV7EVKMEFT8Z8545T"}]"
+
+ ❯ immutable tests/round8-basis.test.ts:122:90
+    120|     records.push({ route, transaction, basis, before: before[route], a…
+    121|     writeJson(`round8-${kind}-immutable.json`, records);
+    122|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+    123|   }
+    124| }
+ ❯ tests/round8-basis.test.ts:157:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/24]⎯
+
+ FAIL  tests/round8-basis.test.ts > round8 live independent public entry points and named snapshots > fresh immutable payloads on both query surfaces and repository
+AssertionError: fresh entity transaction=false immutable snapshot: expected '[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","…' to be '[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","…' // Object.is equality
+
+Expected: "[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794184835070,"validFrom":1794184835070,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"None"},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YVZVZYV7EVKMEFT8Z8545T"},"retractTxId":{"_id":"Option","_tag":"None"}}]"
+Received: "[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794184835070,"validFrom":1794184835070,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"Some","value":1794184867273},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YVZVZYV7EVKMEFT8Z8545T"},"retractTxId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YW0VE9VYT8GGSQ6SXCG5PY"}}]"
+
+ ❯ immutable tests/round8-basis.test.ts:122:90
+    120|     records.push({ route, transaction, basis, before: before[route], a…
+    121|     writeJson(`round8-${kind}-immutable.json`, records);
+    122|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+    123|   }
+    124| }
+ ❯ tests/round8-basis.test.ts:157:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/24]⎯
+
+ FAIL  tests/round8-basis.test.ts > round8 live independent public entry points and named snapshots > fresh immutable payloads on both query surfaces and repository
+AssertionError: fresh entity transaction=true immutable snapshot: expected '[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","…' to be '[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","…' // Object.is equality
+
+Expected: "[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794184835070,"validFrom":1794184835070,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"None"},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YVZVZYV7EVKMEFT8Z8545T"},"retractTxId":{"_id":"Option","_tag":"None"}}]"
+Received: "[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794184835070,"validFrom":1794184835070,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"Some","value":1794184867273},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YVZVZYV7EVKMEFT8Z8545T"},"retractTxId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YW0VE9VYT8GGSQ6SXCG5PY"}}]"
+
+ ❯ immutable tests/round8-basis.test.ts:122:90
+    120|     records.push({ route, transaction, basis, before: before[route], a…
+    121|     writeJson(`round8-${kind}-immutable.json`, records);
+    122|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+    123|   }
+    124| }
+ ❯ tests/round8-basis.test.ts:157:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/24]⎯
+
+ FAIL  tests/round8-basis.test.ts > round8 live independent public entry points and named snapshots > fresh immutable payloads on both query surfaces and repository
+AssertionError: fresh entities transaction=false immutable snapshot: expected '[[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V",…' to be '[[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V",…' // Object.is equality
+
+Expected: "[[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794184835070,"validFrom":1794184835070,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"None"},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YVZVZYV7EVKMEFT8Z8545T"},"retractTxId":{"_id":"Option","_tag":"None"}}]]"
+Received: "[[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794184835070,"validFrom":1794184835070,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"Some","value":1794184867273},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YVZVZYV7EVKMEFT8Z8545T"},"retractTxId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YW0VE9VYT8GGSQ6SXCG5PY"}}]]"
+
+ ❯ immutable tests/round8-basis.test.ts:122:90
+    120|     records.push({ route, transaction, basis, before: before[route], a…
+    121|     writeJson(`round8-${kind}-immutable.json`, records);
+    122|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+    123|   }
+    124| }
+ ❯ tests/round8-basis.test.ts:157:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/24]⎯
+
+ FAIL  tests/round8-basis.test.ts > round8 live independent public entry points and named snapshots > fresh immutable payloads on both query surfaces and repository
+AssertionError: fresh entities transaction=true immutable snapshot: expected '[[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V",…' to be '[[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V",…' // Object.is equality
+
+Expected: "[[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794184835070,"validFrom":1794184835070,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"None"},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YVZVZYV7EVKMEFT8Z8545T"},"retractTxId":{"_id":"Option","_tag":"None"}}]]"
+Received: "[[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794184835070,"validFrom":1794184835070,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"Some","value":1794184867273},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YVZVZYV7EVKMEFT8Z8545T"},"retractTxId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YW0VE9VYT8GGSQ6SXCG5PY"}}]]"
+
+ ❯ immutable tests/round8-basis.test.ts:122:90
+    120|     records.push({ route, transaction, basis, before: before[route], a…
+    121|     writeJson(`round8-${kind}-immutable.json`, records);
+    122|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+    123|   }
+    124| }
+ ❯ tests/round8-basis.test.ts:157:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/24]⎯
+
+ FAIL  tests/round8-basis.test.ts > round8 live independent public entry points and named snapshots > fresh immutable payloads on both query surfaces and repository
+AssertionError: fresh match transaction=false immutable snapshot: expected '[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","…' to be '[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","…' // Object.is equality
+
+Expected: "[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794184835070,"validFrom":1794184835070,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"None"},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YVZVZYV7EVKMEFT8Z8545T"},"retractTxId":{"_id":"Option","_tag":"None"}}]"
+Received: "[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794184835070,"validFrom":1794184835070,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"Some","value":1794184867273},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YVZVZYV7EVKMEFT8Z8545T"},"retractTxId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YW0VE9VYT8GGSQ6SXCG5PY"}}]"
+
+ ❯ immutable tests/round8-basis.test.ts:122:90
+    120|     records.push({ route, transaction, basis, before: before[route], a…
+    121|     writeJson(`round8-${kind}-immutable.json`, records);
+    122|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+    123|   }
+    124| }
+ ❯ tests/round8-basis.test.ts:157:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/24]⎯
+
+ FAIL  tests/round8-basis.test.ts > round8 live independent public entry points and named snapshots > fresh immutable payloads on both query surfaces and repository
+AssertionError: fresh match transaction=true immutable snapshot: expected '[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","…' to be '[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","…' // Object.is equality
+
+Expected: "[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794184835070,"validFrom":1794184835070,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"None"},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YVZVZYV7EVKMEFT8Z8545T"},"retractTxId":{"_id":"Option","_tag":"None"}}]"
+Received: "[{"id":"01M6YVZVZYV7EVKMEFT8Z8545V","entityId":"s:immutable","attribute":":v/f0","value":{"type":"string","value":"first-0"},"recordedAt":1794184835070,"validFrom":1794184835070,"validTo":{"_id":"Option","_tag":"None"},"createdBy":{"_id":"Option","_tag":"None"},"retractedAt":{"_id":"Option","_tag":"Some","value":1794184867273},"entityType":{"_id":"Option","_tag":"None"},"schemaVersion":{"_id":"Option","_tag":"Some","value":1},"txId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YVZVZYV7EVKMEFT8Z8545T"},"retractTxId":{"_id":"Option","_tag":"Some","value":"_tx/01M6YW0VE9VYT8GGSQ6SXCG5PY"}}]"
+
+ ❯ immutable tests/round8-basis.test.ts:122:90
+    120|     records.push({ route, transaction, basis, before: before[route], a…
+    121|     writeJson(`round8-${kind}-immutable.json`, records);
+    122|     expect.soft(after, `${kind} ${route} transaction=${transaction} im…
+       |                                                                                          ^
+    123|   }
+    124| }
+ ❯ tests/round8-basis.test.ts:157:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/24]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 skipped (8)
+   Start at  19:38:55
+   Duration  190.49s (tests 100%)
+
