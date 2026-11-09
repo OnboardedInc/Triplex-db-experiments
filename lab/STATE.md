@@ -157,3 +157,5 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   subject). Queued for SQL01's next round: Q89b on H1's pull predicate (sqlite-worker.ts:158). Running: CX-RQ01 (harness), R33 (design).
 - SQL01 ACCEPT default-off (verify/SQL01 73fbe45); merges after P2Q in one integration round. Contract 0.3.12 (f5e7a41) in review; its
   round 2 re-pins the INT-XCJ workload files. P2Q round 7 fix (Q89c) running.
+- Queued: EXP-RT01 round A (core, testkit, harness, both A0s) from main after RQ01 merges (Q90g). Running: CX-O06 (O-REPLAY 0.5.0).
+- Pending Sam: Q86g (VM H1/H2), Q78e tenant isolation (lane D), Q89g public commit pin (A/B/C; R33 recommends C).
