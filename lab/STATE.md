@@ -245,3 +245,6 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   store screening B0-B2 per R34 6, diagnostic; P5 A1 on native XTDB is demoted per R43.
 - 2026-11-09 EXP-CRNS built (2f299bfa; 145 tests incl. F1-F20 and both evaluator suites); CX-VCRNS reviewing. Queued for the next free
   agent slot: the Opus review of CRNS's forgery list against R44 4.4, given the code and not R44's conclusions (R44 8.2 row R1).
+- 2026-11-09 CHECKJS round 2 (f72cd5ad): coverage inverted (371 checked roots, 78 justified exclusions, 116 generated outputs); one suite
+  test fails only because a comment-annotated pinned oracle helper needs re-pinning in the next contract. Queued: CX-VCHECKJS round 2
+  when a slot frees (off the critical path). Running now in its slot: the Opus forgery review of CRNS (lab/verify/CRNS-opus/).
