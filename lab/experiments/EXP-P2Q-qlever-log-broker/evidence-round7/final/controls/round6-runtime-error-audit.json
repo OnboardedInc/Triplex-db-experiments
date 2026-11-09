@@ -1,0 +1,73 @@
+{
+  "node": "v22.23.2",
+  "socketErrorListener": "function socketErrorListener(err) {\n  const socket = this;\n  const req = socket._httpMessage;\n  debug('SOCKET ERROR:', err.message, err.stack);\n\n  if (req) {\n    // For Safety. Some additional errors might fire later on\n    // and we need to make sure we don't double-fire the error event.\n    req.socket._hadError = true;\n    emitErrorEvent(req, err);\n  }\n\n  const parser = socket.parser;\n  if (parser) {\n    parser.finish();\n    freeParser(parser, req, socket);\n  }\n\n  // Ensure that no further data will come out of the socket\n  socket.removeListener('data', socketOnData);\n  socket.removeListener('end', socketOnEnd);\n  socket.destroy();\n}\n\n",
+  "runtimeUndiciCodes": [
+    "UND_ERR_ABORT",
+    "UND_ERR_ABORTED",
+    "UND_ERR_BODY_TIMEOUT",
+    "UND_ERR_BPL_MISSING_UPSTREAM",
+    "UND_ERR_CLOSED",
+    "UND_ERR_CONNECT_TIMEOUT",
+    "UND_ERR_DESTROYED",
+    "UND_ERR_HEADERS_OVERFLOW",
+    "UND_ERR_HEADERS_TIMEOUT",
+    "UND_ERR_HTTP_PARSER",
+    "UND_ERR_INFO",
+    "UND_ERR_INVALID_ARG",
+    "UND_ERR_INVALID_RETURN_VALUE",
+    "UND_ERR_NOT_SUPPORTED",
+    "UND_ERR_PRX_TLS",
+    "UND_ERR_REQ_CONTENT_LENGTH_MISMATCH",
+    "UND_ERR_REQ_RETRY",
+    "UND_ERR_RESPONSE",
+    "UND_ERR_RESPONSE_STATUS_CODE",
+    "UND_ERR_RES_CONTENT_LENGTH_MISMATCH",
+    "UND_ERR_RES_EXCEEDED_MAX_SIZE",
+    "UND_ERR_SOCKET",
+    "UND_ERR_WS_MESSAGE_SIZE_EXCEEDED"
+  ],
+  "systemNetworkErrors": [
+    [
+      -61,
+      [
+        "ECONNREFUSED",
+        "connection refused"
+      ]
+    ],
+    [
+      -54,
+      [
+        "ECONNRESET",
+        "connection reset by peer"
+      ]
+    ],
+    [
+      -65,
+      [
+        "EHOSTUNREACH",
+        "host is unreachable"
+      ]
+    ],
+    [
+      -50,
+      [
+        "ENETDOWN",
+        "network is down"
+      ]
+    ],
+    [
+      -51,
+      [
+        "ENETUNREACH",
+        "network is unreachable"
+      ]
+    ],
+    [
+      -64,
+      [
+        "EHOSTDOWN",
+        "host is down"
+      ]
+    ]
+  ]
+}
