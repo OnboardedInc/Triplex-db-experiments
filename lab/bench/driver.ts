@@ -500,7 +500,7 @@ async function run() {
   // [EXP-M01] Paired rounds measure the writer and the read probe; the P3 consumer and its crash injection stay in NS.
   const lvl = (config.levelS ?? PROFILES[profile].levelS) * 1000;
   const crashPlan: { at: number; point: CrashPoint }[] = (["before-effect", "after-effect", "after-checkpoint"] as CrashPoint[]).map((point, k) => ({ point, at: traceStart + (k + 1.5) * lvl }));
-  // [EXP-FD01-R2] Why: no source publication observer is integrated here yet. Missing instants now refuse P3 samples.
+  // [DX-H1] Why: Datomic observes the native transact-result boundary before the driver ACK; other lanes still lack observers.
   // Rejected: manufacturing a publication time from ackOf.instant or ACK arrival (Q98c/d; QA F2).
   const publicationClock = lane === "datomic" && !pairPlan ? openHostFeedClock() : null;
   const publicationSource = JSON.stringify({ route: "A0-control", dir: rawDir, epoch: `${scopeName}#0` });

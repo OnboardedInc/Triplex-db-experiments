@@ -15,6 +15,9 @@ export function installDatomicPublication(api: any) {
     if (observer) {
       const position = Number(result?.position?.v);
       if (
+        result?.position?.t !== "long" ||
+        typeof result?.position?.v !== "string" ||
+        !/^(0|[1-9][0-9]*)$/.test(result.position.v) ||
         !Number.isSafeInteger(position) ||
         position < 1 ||
         position !== input.position ||
