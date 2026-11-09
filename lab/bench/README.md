@@ -230,5 +230,6 @@ These are client requests, not a server access-log proof that a response was ser
 `reach` enables XTDB admissionQueue; Datomic enables it only if the built public runtime declaration exposes it.
 
 Datomic P1 maintenance reports **not observed** until an indexing-job hook exists.
-P3 source-publication timing and P5 evaluation/publication remain explicit seams in this legacy driver.
+Datomic P3 timing uses the native client transact-result boundary and a bound host-clock sidecar.
+Other lanes still lack that observer; P5 evaluation/publication remain explicit seams in this legacy driver.
 Development runs are diagnostic, including a `DONE` run; they cannot close acceptance obligations.

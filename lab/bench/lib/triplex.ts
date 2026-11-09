@@ -36,8 +36,8 @@ export interface TriplesHandle {
 
 /**
  * One runtime opening on a named scope; `run` executes an Effect from the service.
- * `xtdbOptions` (XTDB only) builds the runtime from the public `makeXtdbRuntime` export with explicit
- * adapter options (for example `admissionQueue: true`) instead of the qualification default.
+ * `xtdbOptions` builds XTDB with explicit adapter options (for example `admissionQueue: true`).
+ * Datomic receives those options only when its built public runtime declaration exposes admissionQueue.
  */
 export async function openTriples(
   lane: Lane,

@@ -7,7 +7,7 @@ import { latencyReceipt, requireQleverConnectionMode } from "../receipts/latency
  * Measures P1 to P5 on the frozen writer trace against one composition and writes one report JSON.
  * Normally run by `node lab/bin/gate.mjs NS --lane L --rung R`, which binds the report into a receipt.
  *
- *   node lab/bench/driver.ts --lane xtdb|qlever --rung 10k|100k|1m|10m --output runs/NS/<id>/ns-report.json
+ *   node lab/bench/driver.ts --lane xtdb|qlever|datomic --rung 10k|100k|1m|10m --output runs/NS/<id>/ns-report.json
  *     [--profile smoke|screening|acceptance] [--zero-readers [--match-duration-s S]] [--baseline-writes FILE]
  *     [--composition public] [--seed ns-v2] [--reader-threads 4] [--seed-budget-s 3600] [--seed-batch-facts 400]
  *     [--writer-max-inflight 32] [--sweep-concurrency 16] [--oracle-root DIR]
@@ -18,7 +18,7 @@ import { latencyReceipt, requireQleverConnectionMode } from "../receipts/latency
  *     per-round histograms (commit, commitAll with censored values, open-loop read probe), per-second goodput and max
  *     latency, ELU and a hiccup meter per round. R22 sections 2.4, 6.2, 7.
  *
- * Engine endpoint: XTDB_URL / QLEVER_URL. TX2_ENGINE_CONTAINER names the container whose CPU and logs
+ * Engine endpoint: XTDB_URL / QLEVER_URL / DATOMIC_URL; reader peers: DATOMIC_READ_URLS. TX2_ENGINE_CONTAINER names the container whose CPU and logs
  * are sampled (docker over the lab socket only); TX2_ENGINE_CPUS is the slot's CPU quota.
  * lab/bench/README.md documents the trace, the composition interface, metric names and report fields.
  */
