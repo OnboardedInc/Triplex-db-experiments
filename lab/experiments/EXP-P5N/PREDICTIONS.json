@@ -1,0 +1,27 @@
+{
+  "format": "EXP-P5N-predictions/1",
+  "source": "lab/experiments/EXP-P5N/BRIEF.md section 4.1 (planner Opus 5.5), copied verbatim; committed before any P5N measurement",
+  "writtenAt": "2026-11-09 before any round 1 measurement run",
+  "northStar": "P5: 100k subjects activated in <= 100 s on the host store, :_tx/change and :_tx/changed-entity kept as ordinary triples (Q107-S option C)",
+  "classification": "DIAGNOSTIC",
+  "predictions": [
+    { "step": 1, "measure": "commit split per page at W1: COMMIT plus fsync (ms)", "low": 5, "center": 8, "high": 12 },
+    { "step": 1, "measure": "journal row work per page (ms)", "low": 4, "center": 6, "high": 9 },
+    { "step": 1, "measure": "harness readback plus map append per commit (ms)", "low": 3, "center": 5, "high": 7 },
+    { "step": 1, "measure": "unattributed main-thread time at W1, 10k (s)", "atLeast": 10 },
+    { "step": 2, "measure": "10k wall after D1, D2, D4, D7, D8, W1 (s)", "low": 35, "center": 45, "high": 55 },
+    { "step": 2, "measure": "10k wall after D1, D2, D4, D7, D8, W4 (s)", "low": 12, "center": 15, "high": 18 },
+    { "step": 2, "measure": "decode CPU per subject (ms)", "atMost": 0.6 },
+    { "step": 2, "measure": "outbox read time at W4, summed (s)", "atMost": 0.5 },
+    { "step": 2, "measure": "commit per page at W1 (ms)", "low": 15, "center": 20, "high": 26 },
+    { "step": 3, "measure": "10k wall after D3, D5, D6, W4 (s)", "low": 6, "center": 7.5, "high": 9 },
+    { "step": 3, "measure": "10k wall after D3, D5, D6, W6 (s)", "low": 4.5, "center": 5.5, "high": 7, "note": "the task for round 1 measures W=1,2,4,8; W6 is not run" },
+    { "step": 3, "measure": "sweep-core CPU per subject (ms)", "low": 1.8, "center": 2.1, "high": 2.5 },
+    { "step": 4, "measure": "100k projection from the 1k and 10k fit, +20% growth, W4 (s)", "low": 55, "center": 65, "high": 80 },
+    { "step": 4, "measure": "100k projection from the 1k and 10k fit, +20% growth, W3 (s)", "low": 70, "center": 85, "high": 100 },
+    { "step": 5, "measure": "activation commit hold p99 at 10k (ms)", "atMost": 30, "note": "step 5 (P1/P2/P3 screen) is not in round 1" },
+    { "step": 5, "measure": "commit p99 ratio, read p99 ratio (host, valid window)", "commit": [1.1, 1.6], "readAtMost": 1.3, "note": "step 5 is not in round 1; the R25 sweep ratio is reported under the A/A rule" },
+    { "step": 5, "measure": "feed lag p99 during activation (ms)", "atMost": 250, "note": "step 5 is not in round 1" },
+    { "step": "all", "measure": "journal rows per first-activation page", "exactly": 196, "decomposition": "4 metadata + 64 :_tx/changed-entity + 128 :_tx/change; re-activation adds 128 change rows" }
+  ]
+}
