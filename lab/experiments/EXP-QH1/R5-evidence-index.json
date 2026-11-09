@@ -1,0 +1,10 @@
+{
+  "round": 5,
+  "branch": "exp/QH1-h1-pulls",
+  "base": "febcd098",
+  "productCommit": "7c5253dc",
+  "evidenceRoot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/QH1-R5",
+  "gates": { "dir": "gates-final", "index": "gates-final/index.txt", "head": "gates-final/head.txt", "datomicRerun": "gates-final/datomic-suite2.log (after building testkit dist)" },
+  "preFix": { "log": "gates/prefix-lab.log", "patch": "gates/fix.patch" },
+  "notRun": ["100,000-pull replay (broker path unchanged since round 4)", "ABAB", "live engines"]
+}

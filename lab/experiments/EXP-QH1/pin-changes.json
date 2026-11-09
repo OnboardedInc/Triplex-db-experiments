@@ -73,6 +73,18 @@
       "referencedBy": []
     },
     {
+      "path": "packages/datomic/src/DatomicStorageAdapter.ts",
+      "oldSha256": "fdbfad6718640d34faaad7d24e384c7521c363f917572b2ec273eaf0bb3064a2",
+      "newSha256": "a6225eec140aec9868124005c7df22ac856e1207bf15c9a63bc447fbdb080e2c",
+      "referencedBy": []
+    },
+    {
+      "path": "packages/qlever/src/QleverStorageAdapter.ts",
+      "oldSha256": "99cee6e3036e640f56742f44b5e04c0efc1ee5da090e5a1b1c2d461d58029525",
+      "newSha256": "10b2788a1d02560ee67e44ba699f92f9806915380e297d762a22209ef6ddc2b4",
+      "referencedBy": []
+    },
+    {
       "path": "packages/qlever/src/broker/BrokerStorageAdapter.ts",
       "oldSha256": "cc8450d00a171de6ca5528fc039f8d6452d98217cdbf521016aea83b579e871c",
       "newSha256": "69a23658e7eff91426fca9ab6464a231d909485296d48c25804208c7750f7b35",
@@ -107,6 +119,15 @@
       "oldSha256": "90c6a7b6bc09c7537865a80ec1b7b6f24f31cff6cc776f2408b92e1d1cc1ecc5",
       "newSha256": "8055780d176fb4cbc4888f46bd80303cb93ab543145d96f5e492560b4a90f5f3",
       "referencedBy": []
+    },
+    {
+      "path": "packages/xtdb/src/XtdbStorageAdapter.ts",
+      "oldSha256": "9eeed8e4e096b9245350780ccbfc99cff562a82d9097d6633a9d77b6b0dc5377",
+      "newSha256": "6ea85e9b771d16eee7f74a41f985568ff08851b9757b60f6f950010779d6a1f7",
+      "referencedBy": [
+        "lab/acceptance/build_contract.py",
+        "lab/acceptance/obligations.json"
+      ]
     }
   ]
 }
