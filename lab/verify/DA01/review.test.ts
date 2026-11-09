@@ -17,9 +17,9 @@ import { validateTagged, stringifyExact } from '../../../packages/datomic/src/co
 // [CX-VDA01] Why: retain independent inputs, observed content, attempt identity and cleanup, bound to the live gateway. Rejected: deriving a verdict from the builder's PASS text.
 const url = 'http://127.0.0.1:8470';
 const attempt = `CX-VDA01-${randomUUID()}`;
-const out = path.join(import.meta.dirname, 'attempts', attempt);
+const out = path.join(process.env.DA01_REVIEW_OUTPUT ?? import.meta.dirname, 'attempts', attempt);
 const ownerPath = '/Users/sam/projects/triplex-db-2/lab/locks/datomic-dev/owner.json';
-const expectedHealth = JSON.parse(fs.readFileSync('lab/experiments/EXP-DA01/round3/SUMMARY.json', 'utf8')).health;
+const expectedHealth = JSON.parse(fs.readFileSync(process.env.DA01_AUTHORITY_SUMMARY ?? 'lab/experiments/EXP-DA01/round3/SUMMARY.json', 'utf8')).health;
 let owner: string;
 let sourceBefore: ReturnType<typeof source>;
 const hash = (bytes: string | Buffer) => createHash('sha256').update(bytes).digest('hex');

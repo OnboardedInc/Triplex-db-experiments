@@ -1,0 +1,143 @@
+{
+  "at": "2026-11-09T01:29:00.567Z",
+  "reviewer": "CX-VDA01-R2",
+  "candidate": "da76bad693f8c21ddcf9e5181cbe83fcb19efcbe",
+  "reviewMerge": "aea78ce0ef6c821757d04312a3077e76188e5569",
+  "verdict": "FIX-FIRST",
+  "finding": {
+    "id": "R2-F1",
+    "severity": "High",
+    "location": "packages/datomic/gateway/src/triplex/gateway/query.clj:28",
+    "mechanism": "First-section route/input proof differs from later repeated sections executed by Datomic",
+    "reproduction": "CX-VDA01-native-ce257165-9e69-4ac7-bded-b77d21a503d8.json"
+  },
+  "originalF1": {
+    "closed": true,
+    "reproduction": "CX-VDA01-native-cbcefe53-dceb-4768-b498-93fbd40b6855.json"
+  },
+  "tests": {
+    "baseline": {
+      "pass": 124,
+      "fail": 0,
+      "skipped": 0
+    },
+    "final": {
+      "pass": 127,
+      "fail": 1,
+      "skipped": 0,
+      "failed": [
+        "R2 native query grammar rejects every unsupported historical live selection"
+      ]
+    }
+  },
+  "independentMatrix": {
+    "attempt": "matrix-0030aaca-c22e-47c9-9ff3-a6690cc8d584",
+    "kind": "matrix-coverage",
+    "cuts": 24,
+    "basePaths": 15,
+    "publicPaths": 7,
+    "publicCuts": 14,
+    "phases": 2,
+    "expectedObservations": 916,
+    "observations": 916,
+    "answers": 768,
+    "refusals": 148
+  },
+  "conformance": {
+    "file": "CX-VDA01-conformance-b7b428b9-f9e8-4af1-a1eb-8b4c7120f88c.json",
+    "current": 44,
+    "secondOpening": 44,
+    "completeSuite": true,
+    "cleaned": 89
+  },
+  "context": {
+    "at": "2026-11-09T01:23:45.322Z",
+    "expectedBuildInputs": "4dc24af96e40e89226731edf1f116f540543742f2ef7080f4db10b50e8a46d7a",
+    "scratch": "lab/verify/DA01/round2/context-scratch-ThY9QG",
+    "checks": [
+      {
+        "context": "lab/verify/DA01/round2/context-scratch-ThY9QG/fresh-0",
+        "files": 811,
+        "manifestSha256": "58ef2f33c0f8d0167776e3b6c1c87606aa61249c1122f2a8e7a3a9fb64150e52",
+        "reusedRefused": true,
+        "extraFileRefused": true,
+        "symlinkRefused": true,
+        "emptyDirectoryRefused": true,
+        "changedBytesRefused": true
+      },
+      {
+        "context": "lab/verify/DA01/round2/context-scratch-ThY9QG/fresh-1",
+        "files": 811,
+        "manifestSha256": "58ef2f33c0f8d0167776e3b6c1c87606aa61249c1122f2a8e7a3a9fb64150e52",
+        "reusedRefused": true,
+        "extraFileRefused": true,
+        "symlinkRefused": true,
+        "emptyDirectoryRefused": true,
+        "changedBytesRefused": true
+      }
+    ],
+    "imageRebuilt": false,
+    "reproducibleStaging": true,
+    "scratchRemoved": true
+  },
+  "health": {
+    "datomicVersion": "1.0.7745",
+    "gatewaySourceHash": "4174f6ab33800f45aacc3f39e30620c4d8faedda445f4fd4905f1769efb950ab"
+  },
+  "owner": {
+    "format": "tx2-slot-owner/1",
+    "lane": "datomic",
+    "slot": "dev",
+    "mode": "resident",
+    "container": "tx2-datomic-dev",
+    "volume": "tx2-datomic-dev-data",
+    "endpoint": "http://127.0.0.1:8470",
+    "port": 8470,
+    "holder": "EXP-DA01",
+    "experiment": "EXP-DA01",
+    "pid": 2608,
+    "worktree": "/Users/sam/projects/triplex-db-2/.claude/worktrees/da01",
+    "createdAt": "2026-11-09T00:59:02.615Z"
+  },
+  "preservation": [
+    {
+      "db": "s-5a377987b021d5401900564fbae6a1ee",
+      "status": 200,
+      "body": {
+        "t": {
+          "t": "long",
+          "v": "1001"
+        },
+        "position": {
+          "t": "long",
+          "v": "0"
+        },
+        "recordedAt": null,
+        "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+      }
+    },
+    {
+      "db": "s-f43d78e756286da105c6aa52db4e63e5",
+      "status": 200,
+      "body": {
+        "t": {
+          "t": "long",
+          "v": "1001"
+        },
+        "position": {
+          "t": "long",
+          "v": "0"
+        },
+        "recordedAt": null,
+        "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+      }
+    }
+  ],
+  "limits": [
+    "Dev-storage durability/P2 receipts DIAGNOSTIC under Q88a",
+    "Future record-time refusal remains Q89a/Q90 work; tested current history behavior, not watermark acceptance",
+    "Physical position cuts can use :f/live over as-of, as allowed by Q89e; record-time/interior cuts must refuse",
+    "Public TemporalBasis has no explicit position field; position matrix uses SPI, public pages capture and preserve positions",
+    "No Docker lifecycle, image rebuild, production, scale or root-wide checks"
+  ]
+}

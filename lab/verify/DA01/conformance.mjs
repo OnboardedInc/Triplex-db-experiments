@@ -11,12 +11,12 @@ import { makeDatomicRuntime, DatomicClient } from '../../../packages/datomic/dis
 // [CX-VDA01] Why: independently run the unchanged public-export suite with immediate owned-scope cleanup and exact manifests. Rejected: adopting the builder's G1 receipt as fresh execution.
 const hash = x => createHash('sha256').update(x).digest('hex');
 const id = `CX-VDA01-conformance-${randomUUID()}`;
-const out = path.join(import.meta.dirname, id + '.json');
+const out = path.join(process.env.DA01_REVIEW_OUTPUT ?? import.meta.dirname, id + '.json');
 const ownerPath = '/Users/sam/projects/triplex-db-2/lab/locks/datomic-dev/owner.json';
 const owner = fs.readFileSync(ownerPath, 'utf8');
 const client = new DatomicClient('http://127.0.0.1:8470', 35000);
 const health = await client.health();
-assert.deepEqual(health, JSON.parse(fs.readFileSync('lab/experiments/EXP-DA01/round3/SUMMARY.json', 'utf8')).health);
+assert.deepEqual(health, JSON.parse(fs.readFileSync(process.env.DA01_AUTHORITY_SUMMARY ?? 'lab/experiments/EXP-DA01/round3/SUMMARY.json', 'utf8')).health);
 const walk = root => fs.readdirSync(root, { withFileTypes: true }).flatMap(d => d.isDirectory() ? walk(path.join(root, d.name)) : [path.join(root, d.name)]);
 const manifest = () => Object.fromEntries(['core', 'testkit', 'datomic'].flatMap(p => walk(`packages/${p}/dist`)).sort().map(p => [p, hash(fs.readFileSync(p))]));
 const before = manifest();

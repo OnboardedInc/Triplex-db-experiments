@@ -1,0 +1,30 @@
+{
+  "at": "2026-11-09T01:23:45.322Z",
+  "expectedBuildInputs": "4dc24af96e40e89226731edf1f116f540543742f2ef7080f4db10b50e8a46d7a",
+  "scratch": "lab/verify/DA01/round2/context-scratch-ThY9QG",
+  "checks": [
+    {
+      "context": "lab/verify/DA01/round2/context-scratch-ThY9QG/fresh-0",
+      "files": 811,
+      "manifestSha256": "58ef2f33c0f8d0167776e3b6c1c87606aa61249c1122f2a8e7a3a9fb64150e52",
+      "reusedRefused": true,
+      "extraFileRefused": true,
+      "symlinkRefused": true,
+      "emptyDirectoryRefused": true,
+      "changedBytesRefused": true
+    },
+    {
+      "context": "lab/verify/DA01/round2/context-scratch-ThY9QG/fresh-1",
+      "files": 811,
+      "manifestSha256": "58ef2f33c0f8d0167776e3b6c1c87606aa61249c1122f2a8e7a3a9fb64150e52",
+      "reusedRefused": true,
+      "extraFileRefused": true,
+      "symlinkRefused": true,
+      "emptyDirectoryRefused": true,
+      "changedBytesRefused": true
+    }
+  ],
+  "imageRebuilt": false,
+  "reproducibleStaging": true,
+  "scratchRemoved": true
+}

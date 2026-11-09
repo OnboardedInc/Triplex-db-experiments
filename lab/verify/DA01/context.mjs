@@ -5,10 +5,10 @@ import { createHash } from 'node:crypto';
 import { stageDatomicContext, verifiedTree, verifyDatomicContext } from '../../bin/datomic-context.mjs';
 
 // [CX-VDA01] Why: reproduce actual final build inputs twice and check dirty-context rejection without touching engine lifecycle. Rejected: image rebuilds through a privileged side channel.
-const out = import.meta.dirname;
+const out = process.env.DA01_REVIEW_OUTPUT ?? import.meta.dirname;
 const scratch = fs.mkdtempSync(path.join(out, 'context-scratch-'));
 const hash = x => createHash('sha256').update(x).digest('hex');
-const build = JSON.parse(fs.readFileSync('lab/experiments/EXP-DA01/round3/build-2-receipt.json', 'utf8'));
+const build = JSON.parse(fs.readFileSync(process.env.DA01_BUILD_RECEIPT ?? 'lab/experiments/EXP-DA01/round3/build-2-receipt.json', 'utf8'));
 const dist = '/Users/sam/Claude/Projects/triplex-db-2/downloads/datomic-pro-1.0.7745/extracted/datomic-pro-1.0.7745';
 const results = { at: new Date().toISOString(), expectedBuildInputs: build.buildInputsSha256, scratch, checks: [], imageRebuilt: false };
 try {

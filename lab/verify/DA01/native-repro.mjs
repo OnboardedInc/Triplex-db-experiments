@@ -9,14 +9,14 @@ import { DatomicClient, makeDatomicStorageAdapter } from '../../../packages/dato
 
 // [CX-VDA01] Why: retain both sides of the guard and complete before/after bytes for every indirect attribute form. Rejected: reporting a syntax-only suspicion.
 const attempt = `CX-VDA01-native-${randomUUID()}`;
-const file = path.join(import.meta.dirname, attempt + '.json');
+const file = path.join(process.env.DA01_REVIEW_OUTPUT ?? import.meta.dirname, attempt + '.json');
 const url = 'http://127.0.0.1:8470';
 const client = new DatomicClient(url, 35000);
 const scope = DatabaseScope.test(attempt);
 const ownerPath = '/Users/sam/projects/triplex-db-2/lab/locks/datomic-dev/owner.json';
 const ownerBytes = fs.readFileSync(ownerPath, 'utf8');
 const health = await client.health();
-assert.deepEqual(health, JSON.parse(fs.readFileSync('lab/experiments/EXP-DA01/round3/SUMMARY.json', 'utf8')).health);
+assert.deepEqual(health, JSON.parse(fs.readFileSync(process.env.DA01_AUTHORITY_SUMMARY ?? 'lab/experiments/EXP-DA01/round3/SUMMARY.json', 'utf8')).health);
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const inputs = () => Object.fromEntries(execFileSync('git', ['ls-files', 'packages/datomic', 'packages/core', 'packages/testkit', 'pnpm-lock.yaml'], { encoding: 'utf8' }).trim().split('\n').map(file => [file, hash(fs.readFileSync(file))]));
 const sourceBefore = inputs();
@@ -30,6 +30,12 @@ const forms = {
   ground: '[:find ?id :in $ $rules :where [(ground :f/live) ?a] [?f ?a _] [?f :f/id ?id] [(triplex.gateway.query/visible $ ?f 30.0 10.0 POSITION)]]',
   ident: '[:find ?id :in $ $rules :where [?a :db/ident :f/live] [?f ?a _] [?f :f/id ?id] [(triplex.gateway.query/visible $ ?f 30.0 10.0 POSITION)]]',
 };
+// [CX-VDA01-R2] Why: compare the first-section classifier with Datomic's repeated-section normalization using the same 40/30 control. Rejected: claiming original F1 closure proves all EDN representations (parser disagreement remains possible).
+if (process.env.DA01_DUPLICATE_QUERY === '1') {
+  report.queryVariant = 'duplicate-sections';
+  forms.ground = '[:find ?id :in $ $rules :where [?f :f/id ?id] :where [?f :f/live _] [?f :f/id ?id] [(triplex.gateway.query/visible $ ?f 30.0 10.0 POSITION)]]';
+  forms.ident = '[:find ?id :in $ $rules :where [$rules ?f :f/live _] [$rules ?f :f/id ?id] [(triplex.gateway.query/visible $rules ?f 30.0 10.0 POSITION)] :in $rules $]';
+}
 async function query(label, edn, basis) {
   edn = edn.replace('POSITION', basis.recordedPosition === undefined ? 'nil' : `${basis.recordedPosition}`);
   const body = { edn, relations: [], basis };

@@ -1,0 +1,50 @@
+{
+  "verdict": "FIX-FIRST",
+  "originalF1": {
+    "closed": true,
+    "reproduction": "CX-VDA01-native-cbcefe53-dceb-4768-b498-93fbd40b6855.json"
+  },
+  "finding": {
+    "id": "R2-F1",
+    "severity": "High",
+    "location": "packages/datomic/gateway/src/triplex/gateway/query.clj:28",
+    "mechanism": "First-section route/input proof differs from later repeated sections executed by Datomic",
+    "reproduction": "CX-VDA01-native-ce257165-9e69-4ac7-bded-b77d21a503d8.json"
+  },
+  "tests": {
+    "baseline": {
+      "pass": 124,
+      "fail": 0,
+      "skipped": 0
+    },
+    "final": {
+      "pass": 127,
+      "fail": 1,
+      "skipped": 0,
+      "failed": [
+        "R2 native query grammar rejects every unsupported historical live selection"
+      ]
+    }
+  },
+  "matrix": {
+    "attempt": "matrix-0030aaca-c22e-47c9-9ff3-a6690cc8d584",
+    "kind": "matrix-coverage",
+    "cuts": 24,
+    "basePaths": 15,
+    "publicPaths": 7,
+    "publicCuts": 14,
+    "phases": 2,
+    "expectedObservations": 916,
+    "observations": 916,
+    "answers": 768,
+    "refusals": 148
+  },
+  "conformance": {
+    "file": "CX-VDA01-conformance-b7b428b9-f9e8-4af1-a1eb-8b4c7120f88c.json",
+    "current": 44,
+    "secondOpening": 44,
+    "completeSuite": true,
+    "cleaned": 89
+  },
+  "files": 90
+}

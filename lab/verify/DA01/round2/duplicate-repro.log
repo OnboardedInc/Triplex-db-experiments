@@ -1,0 +1,53 @@
+{
+  "file": "lab/verify/DA01/round2/CX-VDA01-native-ce257165-9e69-4ac7-bded-b77d21a503d8.json",
+  "findingReproduced": true,
+  "outcomes": [
+    {
+      "label": "before-ground-T",
+      "status": 200,
+      "count": 40
+    },
+    {
+      "label": "after-literal-T",
+      "status": 409,
+      "code": "BasisNotAvailable"
+    },
+    {
+      "label": "after-ground-T",
+      "status": 200,
+      "count": 30
+    },
+    {
+      "label": "after-ident-T",
+      "status": 200,
+      "count": 30
+    },
+    {
+      "label": "after-source-T",
+      "count": 40
+    },
+    {
+      "label": "after-literal-TP",
+      "status": 409,
+      "code": "BasisNotAvailable"
+    },
+    {
+      "label": "after-ground-TP",
+      "status": 200,
+      "count": 30
+    },
+    {
+      "label": "after-ident-TP",
+      "status": 200,
+      "count": 30
+    },
+    {
+      "label": "after-source-TP",
+      "count": 40
+    }
+  ],
+  "cleanup": {
+    "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1uYXRpdmUtY2UyNTcxNjUtOWU2OS00YWM3LWJkZWQtYjc3ZDIxYTUwM2Q4IiwwXQ",
+    "deleted": true
+  }
+}
