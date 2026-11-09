@@ -57,7 +57,8 @@ it("the decided stamp shares the existing A0/compact CAS statement", async () =>
     const guards = compactGuards("scope", 7, "op", ids, ["row"], 1000001);
     expect(guards).toHaveLength(2);
     expect(guards[0]!.sql).toContain("MAX(position)");
-    expect(guards[0]!.sql).toContain("MAX(stamp)");
+    expect(guards[0]!.sql).not.toContain("MAX(stamp)");
+    expect(guards[0]!.sql).toContain("WHERE _id = $1 AND scope_key = $1 AND position = $2");
     expect(guards[0]!.params!.at(-1)).toBe(1000001);
   }
 });

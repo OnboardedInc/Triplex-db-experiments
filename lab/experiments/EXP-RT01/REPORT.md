@@ -2,7 +2,7 @@
 
 North star: P1 immutable reads at a named recordedAt, and P2 receipts that name the exact decided commit. Goals and targets come from `lab/SCOPE.md`, `lab/NORTH-STAR.md` and `lab/TARGETS.md`. Implementation follows R33 round A and Q89a-i/Q90a-g.
 
-**Latest (live round 2): G2 complete; G6 fails the first fresh ten-fact A0 point (+29.25% p50 versus a 5.56% predeclared A/A band). Slot/volume cleanup is verified; later performance points are unrun. See the final section and `live2/RESULT.json`.**
+**Latest (round 6): keyed marker-stamp CAS implemented; 1,112 product tests and 510/80 matrices pass offline. Live admission stopped for CX-G03-V VM probes; no new live/performance qualification. The prior live2 G6 failure remains open. See the final section and `round6/RESULT.json`.**
 
 **Initial round-A result: implemented; not qualified for promotion.** The builder's offline checks and selected live probes are evidence of specific behaviors, not independent acceptance. Full live conformance did not complete, G6 has no established no-regression result, and the frozen contract intentionally remains unchanged with a stale testkit pin. A separate adversarial review is still required.
 
@@ -409,3 +409,88 @@ Refreshed pin inventory against immutable main **`bdfe24a1d39d71bb47a667e063ff35
 | Cleanup checker | Exact owned missing-container/volume messages, pool/owner absence, actual trim/context outputs and zero statuses. | Same recorded CX-RT01 resource names/engine, observations after G6; private daemon and explicit triplex2 profile. No unrelated resource absence inferred from arbitrary exit-one. |
 
 **Open:** G6 regression investigation and an independently authorized follow-up; 10k/remaining live performance points and scan cost; independent live review; 0.4.0 re-pinning/integration and pack/root qualification. Historical wrapper-timeout attribution remains uncertain, although the complete case now passes with a trace. No merge, push, round-B work, root/pack rerun, evaluator/oracle re-certification or contract verification was performed this round.
+
+## Round 6 — keyed marker stamp CAS; offline complete; G03 VM window stopped live admission (2026-11-09)
+
+**Result: marker lookup implemented, 25/25 product phases / 1,112 product tests and the 510/80 matrices pass. No round-6 live gate or performance result.** At the actual admission check, CX-G03-V had active VM-probe reservations, so this round stops with [round6/RUNBOOK.md](round6/RUNBOOK.md), as dispatched. The previous live2 G6 failure remains unresolved by live evidence. North star: preserve P1's exact cuts and P2's atomic receipts while removing avoidable stamp-guard work; scope and targets remain `lab/SCOPE.md`, `lab/NORTH-STAR.md`, `lab/TARGETS.md`.
+
+### Evidence and cause candidate
+
+Re-read and SHA-verified the retained live2 G2 statement trace, G6 statement dictionary and failed ten-fact A0 point. Both emitted guards contain separate `MAX(position)` and `MAX(stamp)` scalar subqueries over scoped tx_meta. The retained A0 point has six submitted statements and 13 observed Execute/Q / ReadyForQuery cycles per warm commit on both builds (the first fresh B has 17 cycles). Thus the extra aggregate did not require another warm PG-wire round trip. The prior service result remains A p50 70.0338 ms versus B 90.5187 ms, +29.25%, against the frozen 5.5624% band.
+
+**This establishes the extra-aggregate cause candidate, not a causal attribution of all +29.25%.** Retained live2 counts show one current metadata row per scope, not N visible tx_meta rows, and live2 captured neither native plans nor native scan counters. Its N/2N model explicitly excluded XTDB planning/historical visibility. It would be incorrect to relabel those modeled visits as measured XTDB historical-row I/O. Native plans, scan counters and a source-bound A/A/ABAB run are still needed to confirm physical history work and the performance effect.
+
+The new offline analyzer captures the actual newly emitted SQL for both encodings, binds old SQL to the retained wire dictionary after PostgreSQL placeholder normalization, and executes SELECT forms of the exact predicates in SQLite with a declared N-row model and uniquely keyed current marker. SQLite EXPLAIN QUERY PLAN changes the stamp branch from a table aggregate to `SEARCH ... USING INDEX ... (_id=?)`. Projection callbacks count actual evaluated model values:
+
+| Modeled scope rows N | Before position + stamp visits | After position + keyed-stamp visits |
+| ---: | ---: | ---: |
+| 0 | 0 | 0 |
+| 1 | 2 | 2 |
+| 100 | 200 | 101 |
+| 10,000 | 20,000 | 10,001 |
+
+Both encodings have the same counts. This is **constant matching-row stamp lookup**, with the existing position aggregate retained; total modeled work is N+1, not an O(1) whole CAS. SQLite/index/projection counts are not native XTDB execution counters. The model deliberately represents scope history as N modeled rows, unlike live2's one current marker. Its full predicates, parameters, plans, expected answers, input hashes and exact limits are retained in `round6/plan2/plan.json` in durable storage.
+
+The first analyzer attempt failed because it compared emitted `?` placeholders with normalized `$n` wire SQL. Its original source and failure are retained under `extras1/`; the corrected analyzer normalizes with the actual XtdbClient helper, then checks exact SQL equality. Only that analyzer was rerun. Product source and all executed matrix/proof inputs were unchanged; their successful execution was not repeated or replaced.
+
+### Guard change and exact semantics
+
+One `priorMarkerStamp` expression is shared by A0 and compact:
+
+```sql
+COALESCE((SELECT stamp FROM tx_meta FOR ALL VALID_TIME
+          WHERE _id = $1 AND scope_key = $1 AND position = $2), 0)
+```
+
+The scope marker is written under `_id = scopeKey` with both position and stamp in the same transaction as the attempt/receipt marker. Its key, scope and prior position must all agree. The existing scoped `MAX(position) = sourceK` CAS remains, and the same ASSERT compares this marker stamp with `sourceStamp`. An absent marker coalesces to zero only for the empty cut; every valid nonempty source has a positive stamp and therefore fails on absence. The legacy-stamp initialization refusal remains intact. No new statement or round trip is introduced.
+
+The allocator and retry path are unchanged: `nextStamp(sourceStamp, stagedAt)` computes `max(previousStamp + 1, stagedClockUs)`; on a replay-safe CAS conflict, the complete callback reacquires a fresh `(position, stamp)` and recomputes. A0's first guard now uses PostgreSQL placeholder reuse, reducing its parameter vector from four entries to three; compact reuses its existing `$1`/`$2` and optional stamp parameter. This is an additional measured-work change worth retaining in the 0.4.0 handoff, not a changed fact workload or offer schedule. No row encoder, journal bytes, clock policy, basis gate, error mapper or public API changed.
+
+Six new relational-interpreter tests execute the full emitted mutations, both encodings:
+
+- A stamp-only change after source acquisition causes exactly one typed `XtdbSerializationConflict`; with replay disabled, no new assertion/journal/attempt rows commit and position stays 1.
+- With replay enabled, exactly one rejection is followed by fresh-cut recomputation: position 2, stagedAt 1000 and decided instant **1000.011**, from injected prior stamp 1000010 microseconds. Receipt facts and decoded journal carry that exact instant; a read at the original receipt's T still equals the original fact bytes.
+- Moving the marker to a different key while leaving the scoped aggregate values unchanged refuses atomically. A scope aggregate cannot substitute for the exact marker identity.
+
+The light SQL model fixture now evaluates the keyed stamp condition as well as the old aggregate variant. The stronger new tests use the independent SQLite SQL interpreter, not that model. The existing compact guard shape test now expects the keyed predicate rather than MAX(stamp).
+
+### Final offline gates
+
+`run-products.mjs` executed all 25 phases successfully: core (including runtime/entity type projects), testkit, XTDB, QLever, SQL declarations, SQLite, PostgreSQL exports only, and Cloudflare. **1,112 product tests passed, 116 engine integrations skipped offline.** XTDB is now 95 passed / 91 skipped, including the six new tests. The testkit uses the already justified explicit 120-second budget from live2; no product timeout changed. Final package/lock source maps and runner hashes are stable. The earlier focused XTDB suite also passed 95/95; the final full product run adds the explicit typed-CAS assertion to its non-replay test.
+
+Copied/adapted reviewer regressions retain all previous expected answers: **510/510 read-route matrix rows, 80/80 pending-route matrix rows, four publication proofs, and the backward/ahead staged-clock journal reproduction on A0 and compact**. Their transports now answer the typed catalog probe, and the journal reproduction uses the current shared SQL interpreter; no expectation or refusal boundary was weakened. The successful matrix/controller package and executed-helper hashes still match current bytes. The only later changed analyzer was not consumed by those reproductions.
+
+F1–F7 remain covered: typed native and journal refusals; journal own-instant omission including same-command retracts; empty-batch watermark refusal; future journal positions; final-decision waits; and clock-independent journal pages. The core/testkit property suite still includes named-T byte equality across the RQ01 routes and its staged-stamp negative control. Catalog bootstrap/legacy refusal regressions from live2 remain in the full product run. Targeted lint: zero errors, one existing constant-condition retry-loop warning. No root/pack, PostgreSQL service integration, oracle/evaluator recertification or independent review was run.
+
+### Admission stop and precise live limit
+
+Inside the heavy grant, the actual status/pool/disk capture at **08:09:39.002 UTC** showed 13,253,419,008 host bytes free and these reservations, both holder **CX-G03-V**, PID 23490, state `starting`, cleanupRequired true:
+
+- `tx2-g03-f6d8ea5cba52162f-V3-writer`, reserved 08:09:22.540 UTC, 128 MiB / 1 CPU.
+- `tx2-g03-f6d8ea5cba52162f-V3-observer`, reserved 08:09:22.886 UTC, 128 MiB / 1 CPU.
+
+**The xtdb-s1 engine row itself was free.** These are VM-probe helper reservations with no slot field, not an observed 3.5 GiB XTDB exclusive. The dispatch specifically says to stop for G03's VM probes; I treated that active VM window as occupied. The executed admission controller conservatively labeled any nonresident reservation `exclusive reservation occupied`; the original exact label, pool/status bytes and controller preimage remain retained. The future controller now names the condition accurately and specifically recognizes G03 VM helpers in addition to true engine exclusives, rather than unnecessarily blocking unrelated shared helpers.
+
+`decision.json` has `up:null` and no resource inspections/lifecycle action. **No RT01 engine, volume, live G2, native plan probe, A/A calibration, B point or 10k preload was started in round 6.** No slot was held while waiting for G03, and no G03 resource was altered. Release/remove/fstrim/context commands were not run this round because nothing was acquired; running VM maintenance during G03's probes would violate the stopped-window instruction. Live2's earlier verified cleanup remains historical.
+
+The committed runbook provides one future heavy-granted controller that rechecks the window, uses a new immutable admission attempt, builds/runs changed-source G2, then repeats G6 A/A first, fresh then 10k ABAB points, 150 samples per arm, with the pre-B rule retained. It revalidates the exact retained pre-RT01 baseline artifacts and isolates baseline core. Outside timings it captures old/new native SELECT-predicate plans and EXPLAIN ANALYZE scan counters plus keyed-marker costs. Pinned XTDB grammar supports EXPLAIN on query expressions, not direct ASSERT, so the SELECT wrapper is explicit. The future controller cleans up only ownership created during its own attempt, including a partially successful admission, then trims/restores context. **These new live/controller/native-plan branches are prepared and syntax-checked, not executed or qualified.** A first gate/regression failure still stops later measurements; this task did not authorize an immediate retry of the occupied window.
+
+### Pins, workload and retention
+
+A cheap old-authority check detected drift, so the full read-only pin inventory was refreshed against main **`bb36862daf55b4f46a3cbf763f757c6341de4575`**, contract **0.3.13**: 302 direct / 602 expanded references, 243 unique paths. The sole RT01-moved pinned file remains `packages/testkit/src/index.ts`: main **`cb89a55ced5426b8fa0af3523fbbeb73870e61e3622ebb42e8a78c3e67da8d28`** → branch **`995bc1ace5ebb9654a74e238b8860cb7e8f012a979c7c4cf86d03388efd935c7`**. Round 6 does not change that file, and none of its changed product paths is newly pinned. The source/admission/benchmark helper additions are not frozen workload edits. [PIN-CHANGES-0.4.0.md](PIN-CHANGES-0.4.0.md) remains the earlier per-hunk pin handoff; the new CAS hunk's measured-work effect is described above. No acceptance file, pin, contract generation/version or oracle was changed.
+
+Raw source-bound gate outputs, failed analyzer, final plans/model, G03 admission and full current-main pin inventory are durable at `/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-RT01/round6/`. [round6/INDEX.md](round6/INDEX.md), [round6/RESULT.json](round6/RESULT.json) and [round6/DURABLE-SHA256SUMS](round6/DURABLE-SHA256SUMS) bind them; raw data stays outside Git. The old live2 raw evidence remains immutable and separately hash-checked by the analyzer.
+
+### PASS / verdict / receipt audit before commit
+
+| Site | Content | Freshness and exact binding |
+| --- | --- | --- |
+| Shared marker predicate / scoped CAS / unchanged allocation-replay path | Exact key, scope, prior position and stamp inside the same scoped position CAS; nextStamp and successful receipt encoding unchanged. Refusal and replay tests check atomic data, typed conflict and exact recomputed instant, not SQL text alone. | Current attempt's source cut and scoped marker; replay reacquires both coordinates. Source-bound tests execute both emitted encodings and independent SQL interpretation; no cached stamp accepted. |
+| Six new CAS tests; existing product F1–F7/property cases | Exact no-write refusal, marker-key negative case, one replay, full journal/receipt/readback and original named-T facts; existing authored expectations retained. | Fresh isolated SQL databases/services, each test's receipts and clock; actual current package/lock sources before/after the successful 25-phase run. No offline test is a live engine claim. |
+| Product runner / successful copied matrices, clock and publication proofs | Actual exits, 1,112-test denominator, all 510/80 `matches` fields, complete clock page bytes, four timed typed-refusal/release proofs. | Unique durable attempt directories, source/build/executed-helper hashes and actual commands; original failed analyzer preserved separately, unused analyzer change not falsely adopted as a matrix input change. |
+| Guard-plan analyzer / run-plan | SHA-verified original live trace/dictionary/point; exact normalized emitted SQL; actual keyed EXPLAIN plans, expected booleans and callback counts for 8 declared model cases; 6/5 emitted statement counts. | Current captured adapter output, fresh model database per N/encoding, bound prior live2 files and current helper/package hashes. Clearly labels model projection visits and excludes native/causal latency claims. |
+| Admission stop / original controller preimage | Actual status, exact pool reservation identities, disk bytes, stop reason and `up:null`; preserves G03 state. This is a stopped admission, never a live PASS. | New `admission1`, current inside-grant observations and command times, same private Docker context requirement. Executed preimage retained; later argument/label/policy refinements explicitly unexecuted. |
+| Pin inventory and final closure/retention | Full immutable-main pin expansion, exact changed hashes and empty protected-source delta; rechecks all adopted log/data hashes, assertions and current used source bytes. | Immutable main/fork IDs; fresh package/model/matrix attempts; evidence read back after controller output streams close. No contract repair or live qualification inferred. |
+| Prepared G2/G6/native-plan/controller/cleanup branches — **unexecuted** | Authored gate assertions, pre-B noise rule, exact receipt/row counts, actual wire parser, source/build/engine binding, ownership-aware finally cleanup are defined. | No successful output or acceptance is claimed. The runbook requires a new authorized free window and unique output paths; prior live2 results do not qualify the new marker guard. |
+
+**Open:** independent review, native guard/pushdown/scan confirmation, changed-source live G2 and complete G6 fresh/10k measurements after G03's window, actual no-regression result, final 0.4.0 pin integration and pack/root qualification. No merge or push. The task's allowed occupied-window stop is reached; do not resume live work from this report without a new authorized window.

@@ -100,10 +100,18 @@ export const makeRecordTimeClient = (): XtdbClient => {
         if (sql.startsWith("ASSERT") && sql.includes("MAX(position)")) {
           if (Number(values("tx_meta", params[0])[0]?.["position"] ?? 0) !== params[1]) fail();
         }
-        if (sql.startsWith("ASSERT") && sql.includes("MAX(stamp)")) {
+        if (
+          sql.startsWith("ASSERT") &&
+          (sql.includes("MAX(stamp)") || sql.includes("SELECT stamp"))
+        ) {
           if (
-            Number(values("tx_meta", params[0])[0]?.["stamp"] ?? 0) !==
-            (parameterSyntax === "postgresql" ? params.at(-1) : params[3])
+            Number(
+              values("tx_meta", params[0]).find(
+                (row) =>
+                  !sql.includes("SELECT stamp") ||
+                  (row["_id"] === params[0] && row["position"] === params[1]),
+              )?.["stamp"] ?? 0,
+            ) !== (parameterSyntax === "postgresql" ? params.at(-1) : params[3])
           )
             fail();
         }

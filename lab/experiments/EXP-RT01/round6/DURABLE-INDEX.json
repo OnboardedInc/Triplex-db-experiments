@@ -1,0 +1,13 @@
+{
+  "root": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-RT01/round6",
+  "files": 83,
+  "bytes": 1772154,
+  "inventory": "ARTIFACTS.json",
+  "inventorySha256": "8b7ba054b01edf9a0a7a998dfc76f7cae247656a9d6e486af37bf04374653e0f",
+  "manifestSha256": "9d08af91fddafeaf4d043bd9098a66c9cdd7c76e8a7b50ec459db09bca555bca",
+  "retentionRunnerSha256": "fa4d4d9e36e361dee96bbed86077a601d8b8772532bb030d21ab5db9168d1737",
+  "semanticReceipt": "RESULT.json",
+  "offline": "1112_PRODUCT_510_READ_80_PENDING_PASS",
+  "live": "NOT_RUN_G03_VM_WINDOW",
+  "independentReview": false
+}

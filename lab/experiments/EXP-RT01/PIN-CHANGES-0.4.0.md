@@ -47,3 +47,11 @@ For completeness, the inventory also finds these eight paths with different/miss
 | `lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13/testkit-index.diff` | `ff037fd9eb720d2e167d8a6e8452c52d97a73e91f554f43719cce613fddf3d3f` | absent |
 
 No `lab/acceptance/` edit, contract generation, re-pin, oracle change, main merge or push was performed. The manifest inventory and hunk review are a source handoff, not a workload-performance or live-engine PASS.
+
+## Round 6 addendum — marker CAS, 2026-11-09
+
+The full pin inventory was refreshed against main `bb36862daf55b4f46a3cbf763f757c6341de4575` (contract 0.3.13): 302 direct / 602 expanded references, 243 paths. The sole RT01-moved pinned path and hashes in the table above remain unchanged. Round 6 changes no pinned path; preserve the pending 0.3.14 export integration already described above. Current immutable-main inventory and diffs are in durable `CX-RT01/round6/pins1/`.
+
+The unpinned `packages/xtdb/src/XtdbStorageAdapter.ts` moves from live2 SHA256 `21c06369578fed274e64439c6c3ab10cfe66ffe44a5e519f1ee14640811c3735` to `9d5d81fcca365bc3195572aac6cc0233579e504a33c76f0017945bbe28dbc81f`. Per hunk: the new shared predicate reads the stamp by exact `_id`, scope and prior position; compact substitutes it for MAX(stamp); A0 substitutes the same predicate and reuses PostgreSQL parameters (four parameter entries become three). **Measured work changes**: the stamp branch becomes a key lookup, with no extra statement/round trip; A0 also sends one fewer parameter. The existing position aggregate, allocator/retry semantics, actual input facts, complete journal/receipt writes, workload recipes and offered schedules are unchanged. This is a candidate performance improvement, not a no-regression result.
+
+The model/shape test and transport fixture adapt to that predicate; six independent SQL-interpreter CAS regressions add stale-stamp rejection, recomputation and key binding. They change correctness-test work, not offered performance inputs. Round-6 live admission stopped for G03 VM probes, so native plan/scan cost and fresh/10k G6 on this guard remain unqualified. See REPORT round 6 and its runbook; no contract generation or acceptance/oracle edit was performed.

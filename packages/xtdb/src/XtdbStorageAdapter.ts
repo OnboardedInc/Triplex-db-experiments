@@ -77,6 +77,10 @@ const cutConditions = (
   return conditions;
 };
 
+// [EXP-RT01] Why: tx_meta's unique scope marker persists the prior position and stamp together. Rejected: MAX(stamp) over scope history (a second aggregate despite unchanged wire round trips).
+const priorMarkerStamp =
+  "COALESCE((SELECT stamp FROM tx_meta FOR ALL VALID_TIME WHERE _id = $1 AND scope_key = $1 AND position = $2), 0)";
+
 /**
  * How a commit is written (EXP-J01). `a0` is the unchanged default. `compact` writes the same rows
  * and the same logical journal; only the commit guards change (see `compactGuards`).
@@ -122,7 +126,7 @@ export const compactGuards = (
         : "") +
       (sourceStamp === undefined
         ? ""
-        : ` AND (SELECT COALESCE(MAX(stamp), 0) FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1) = $${commandIds.length > 0 ? 4 : 3}`) +
+        : ` AND ${priorMarkerStamp} = $${commandIds.length > 0 ? 4 : 3}`) +
       ", 'triplex-cas-conflict'",
     params: [
       scopeKey,
@@ -293,9 +297,10 @@ export const makeXtdbStorageAdapter = (
           )
         : [
             {
-              // [EXP-RT01] Why: guard the complete source cut in the existing statement. Rejected: a second ASSERT (adds a PG-wire round trip per commit).
-              sql: "ASSERT (SELECT COALESCE(MAX(position), 0) FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = ?) = ? AND (SELECT COALESCE(MAX(stamp), 0) FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = ?) = ?, 'triplex-cas-conflict'",
-              params: [scopeKey, state.sourceK, scopeKey, state.sourceStamp],
+              // [EXP-RT01] Why: bind both prior coordinates inside one scoped CAS and reuse parameter identities. Rejected: a separate stamp ASSERT or unbound marker position (extra round trip or a mixed source cut).
+              sql: `ASSERT (SELECT COALESCE(MAX(position), 0) FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1) = $2 AND ${priorMarkerStamp} = $3, 'triplex-cas-conflict'`,
+              params: [scopeKey, state.sourceK, state.sourceStamp],
+              parameterSyntax: "postgresql",
             },
             {
               sql: "ASSERT NOT EXISTS (SELECT 1 FROM tx_attempts FOR ALL VALID_TIME WHERE scope_key = ? AND operation_id = ?), 'triplex-operation-duplicate'",

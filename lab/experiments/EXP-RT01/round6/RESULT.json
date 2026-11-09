@@ -1,0 +1,104 @@
+{
+  "schema": "rt01-round6/1",
+  "parentHead": "6f8170f19d5d015d580d76fb2447fa34e8b693dd",
+  "node": "v22.23.2",
+  "sealedAt": "2026-11-09T08:22:16.358Z",
+  "offline": {
+    "productPhases": 25,
+    "productTests": 1112,
+    "skippedIntegrations": 116,
+    "readMatrix": 510,
+    "pendingMatrix": 80,
+    "publicationProofs": 4,
+    "journalClockEncodings": 2,
+    "guardPlanModelCases": 8
+  },
+  "cause": {
+    "extraAggregate": "CONFIRMED_FROM_CAPTURED_SQL",
+    "modelStampVisits": "N -> min(N,1)",
+    "nativeHistoricalRows": "NOT_VERIFIED",
+    "completeLatencyAttribution": "NOT_PROVEN"
+  },
+  "live": {
+    "status": "NOT_RUN_G03_VM_WINDOW",
+    "checkedAt": "2026-11-09T08:09:39.002Z",
+    "holders": [
+      {
+        "container": "tx2-g03-f6d8ea5cba52162f-V3-writer",
+        "holder": "CX-G03-V",
+        "pid": 23490,
+        "state": "starting"
+      },
+      {
+        "container": "tx2-g03-f6d8ea5cba52162f-V3-observer",
+        "holder": "CX-G03-V",
+        "pid": 23490,
+        "state": "starting"
+      }
+    ],
+    "s1EngineExclusiveObserved": false,
+    "resourcesAcquired": false,
+    "cleanupCommandsRun": false,
+    "newG2Qualified": false,
+    "newG6Qualified": false
+  },
+  "productChanges": [
+    {
+      "path": "packages/xtdb/src/XtdbStorageAdapter.ts",
+      "oldSha256": "21c06369578fed274e64439c6c3ab10cfe66ffe44a5e519f1ee14640811c3735",
+      "newSha256": "9d5d81fcca365bc3195572aac6cc0233579e504a33c76f0017945bbe28dbc81f",
+      "pinned": false
+    },
+    {
+      "path": "packages/xtdb/test/fixtures/record-time-client.ts",
+      "oldSha256": "a51e2ccfd33add5d550f81ce13cfd34fbfc27d4706379e7bda396fb937a0ba0d",
+      "newSha256": "fc3517980093bf3922fdbdaf5a7ee90187ec7dbce933427511e47cb755f2f32f",
+      "pinned": false
+    },
+    {
+      "path": "packages/xtdb/test/record-time-offline.test.ts",
+      "oldSha256": "616cecff5c469237b6749c8ec45720755be8d7f907ba9ae4f3c4395344c246a0",
+      "newSha256": "4bfcaee1ad88f302430fccccb23e24363123ed4625e3dec27d6ec500ffc320d6",
+      "pinned": false
+    },
+    {
+      "path": "packages/xtdb/test/marker-stamp.test.ts",
+      "oldSha256": null,
+      "newSha256": "9f74dd590bc5e6c8f66566b39b0a982f495349c6e629c49aee359b27eba5845b",
+      "pinned": false
+    }
+  ],
+  "changedPins": [
+    {
+      "path": "packages/testkit/src/index.ts",
+      "mainSha256": "cb89a55ced5426b8fa0af3523fbbeb73870e61e3622ebb42e8a78c3e67da8d28",
+      "branchSha256": "995bc1ace5ebb9654a74e238b8860cb7e8f012a979c7c4cf86d03388efd935c7",
+      "forkSha256": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988",
+      "classification": "RT01-change",
+      "pins": [
+        {
+          "path": "packages/testkit/src/index.ts",
+          "sha256": "cb89a55ced5426b8fa0af3523fbbeb73870e61e3622ebb42e8a78c3e67da8d28",
+          "location": "/pinChanges0313/testkit"
+        },
+        {
+          "path": "packages/testkit/src/index.ts",
+          "sha256": "cb89a55ced5426b8fa0af3523fbbeb73870e61e3622ebb42e8a78c3e67da8d28",
+          "location": "/oracleFilesPinned/O-TESTKIT/0"
+        },
+        {
+          "path": "packages/testkit/src/index.ts",
+          "sha256": "cb89a55ced5426b8fa0af3523fbbeb73870e61e3622ebb42e8a78c3e67da8d28",
+          "location": "/caseSets/CS-U44/pinnedSourceFiles/0"
+        },
+        {
+          "path": "packages/testkit/src/index.ts",
+          "sha256": "cb89a55ced5426b8fa0af3523fbbeb73870e61e3622ebb42e8a78c3e67da8d28",
+          "location": "/caseSourcesPinned/CS-U44/0"
+        }
+      ]
+    }
+  ],
+  "independentReview": false,
+  "sealSha256": "3c6f7ba0ec4518cea6985920182b388ebadc8fdb2b38a91c4818d0ea61137c6f"
+}
