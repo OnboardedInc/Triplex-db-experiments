@@ -47,7 +47,7 @@ function fixture() {
       yield* tables[t]!;
     },
     async count(t) {
-      return expected.counts[t];
+      return tables[t]!.length;
     },
     async scopes() {
       return [{ scope_key: "seed", position: 2 }];
@@ -55,11 +55,11 @@ function fixture() {
   };
   return { reader, tables };
 }
-test("same content in another physical order and IDs grants only on fresh read", async () => {
+test("same content in another physical order grants only on fresh read", async () => {
   const f = fixture(),
     pin = await readG0(f.reader, expected);
   f.tables.tx_assertions!.reverse();
-  f.tables.tx_assertions![0]!.random_id = "ignored";
+
   const pass = await admitG0(f.reader, pin, expected);
   assert.equal(pass.status, "PASS");
   assert.equal(pass.endpoint, "measured-endpoint");
@@ -220,4 +220,26 @@ test("wiring: the source pins D before any freeze and unprepared XTDB runs refus
   assert.ok(/await pinXtdb\(comp.backend.url,\s*manifest\)/.test(seed));
   assert.ok(!seed.includes("finish-block"));
   assert.ok(driver.includes("XTDB requires a pre-freeze seed manifest"));
+});
+
+// [EXP-K01-R8] Why: mutation controls must range over the schema, not repeat the old shortlist. Rejected: a single value_identity regression that leaves the next schema column uncovered.
+for (const [table, columns] of Object.entries(fields))
+  for (const column of columns)
+    test(`full schema refuses changed ${table}.${column}`, async () => {
+      const f = fixture();
+      if (!f.tables[table]!.length)
+        f.tables[table]!.push(Object.fromEntries(columns.map((c) => [c, null])));
+      const pin = await readG0(f.reader, expected);
+      f.tables[table]![0]![column] = "changed";
+      await assert.rejects(admitG0(f.reader, pin, expected));
+    });
+test("G0 covers dynamic stored columns not present in CREATE TABLE", async () => {
+  const f = fixture();
+  f.tables.tx_query_members!.push({
+    ...Object.fromEntries(fields.tx_query_members.map((c) => [c, null])),
+    binding_0: "original",
+  });
+  const pin = await readG0(f.reader, expected);
+  f.tables.tx_query_members![0]!.binding_0 = "changed";
+  await assert.rejects(admitG0(f.reader, pin, expected));
 });
