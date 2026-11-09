@@ -128,7 +128,7 @@ const walBytes = (dst: string) => {
   }
 };
 const summarize = (xs: number[]) =>
-  xs.length ? { count: xs.length, p50: percentile(xs, 0.5), p99: percentile(xs, 0.99), max: Math.max(...xs) } : { count: 0 };
+  xs.length ? { count: xs.length, p50: percentile(xs, 0.5), p99: percentile(xs, 0.99), max: xs.reduce((a, b) => (b > a ? b : a), 0) } : { count: 0 };
 
 // ---------------------------------------------------------------- activation arms (B1 wall, per-stage cost, correctness sample)
 async function activationArm(name: string, W: number) {
