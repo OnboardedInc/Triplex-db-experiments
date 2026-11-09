@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import net from "node:net";
 import { pathToFileURL } from "node:url";
-import { createRequire } from "node:module";
+import { assertDurableFlush } from "@triplex-build/triplex-host/feed";
 import {
   METHODS,
   REQUEST_CAP,
@@ -15,8 +15,6 @@ import {
 export async function serveNS(role, config) {
   if (!METHODS[role] || !config.runId) throw Error("Invalid NS role/config");
   if (role === "broker") {
-    const req = createRequire(new URL("../../host/package.json", import.meta.url));
-    const { assertDurableFlush } = req("@triplex-build/triplex-host/feed");
     if (!config.storeFile) throw Error("Broker durable store path required");
     assertDurableFlush(config.storeFile);
   }

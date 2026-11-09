@@ -50,7 +50,7 @@ export async function boxCommand(config, action, opts, { policy, authorityGit } 
   if (action === 'volume') return docker(['volume', 'create', ...labels, name]);
   if (action === 'retain-volume') { owned(name,holder,'volume'); if (!opts.note) fail('USAGE','retention requires --note'); await withPool(async ledger => { ledger.retainedVolumes=(ledger.retainedVolumes??[]).filter(r=>r.volume!==name); ledger.retainedVolumes.push({volume:name,holder,note:opts.note,at:now(),bytes:null}); }); return {retained:name,note:opts.note}; }
   if (action === 'remove-volume') { owned(name, holder, 'volume'); const result=docker(['volume', 'rm', name]); await withPool(async ledger => { ledger.retainedVolumes=(ledger.retainedVolumes??[]).filter(r=>r.volume!==name); }); return result; }
-  if (action === 'connect') { owned(name, holder); owned(opts.network, holder, 'network'); return docker(['network', 'connect', '--alias', 'engine', opts.network, name]); }
+  if (action === 'connect') { owned(name, holder); owned(opts.network, holder, 'network'); const alias=opts.alias??'engine';if(!safeId(alias))fail('USAGE','invalid network alias');return docker(['network', 'connect', '--alias', alias, opts.network, name]); }
   if (action === 'network') return docker(['network', 'create', '--internal', '--driver', 'bridge', '-o', 'com.docker.network.bridge.inhibit_ipv4=true', ...labels, name]);
   if (action === 'remove-network') { owned(name, holder, 'network'); return docker(['network', 'rm', name]); }
   if (action === 'remove') {

@@ -2,8 +2,9 @@
 // Rejected: sandbox-exec fallback (same-user reads, setsid survivors, no cgroup caps).
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
+import {servicePlan,driverPlan,clockFacts,CLOCK_SCRIPT} from './ns-policy.mjs';
 import { gatewayPlan, preflightScript, checkPreflight } from './box-policy.mjs';
 import { docker, dockerArgs, inspect, REPO, sha256 } from './lib.mjs';
 
@@ -119,6 +120,13 @@ export class BoxExecutor {
     if (r.error || r.signal || status !== 0) return { status: r.error || r.signal ? -1 : status ?? -1, stdout: r.stdout ?? Buffer.alloc(0), stderr: Buffer.from(String(r.error ?? r.stderr ?? r.signal)) };
     return { status: 0, stdout: r.stdout, stderr: r.stderr };
   }
+  startAsync(name,{timeout=30000,max=1048576}={}) {
+    return new Promise((resolve,reject)=>{const child=spawn('docker',dockerArgs(['start','-a',name]));let out=[],err=[],size=0,failure;
+      const timer=setTimeout(()=>{failure=Error('box start timeout');child.kill()},timeout);
+      for(const [stream,list]of [[child.stdout,out],[child.stderr,err]])stream.on('data',b=>{size+=b.length;if(size>max){failure=Error('box output cap');child.kill()}else list.push(b)});
+      child.on('error',e=>{clearTimeout(timer);reject(e)});child.on('close',()=>{clearTimeout(timer);const status=inspect(name)?.State?.ExitCode;if(failure||status!==0)reject(failure??Error('box process failed '+Buffer.concat(err)));else resolve({status:0,stdout:Buffer.concat(out),stderr:Buffer.concat(err)})});
+    });
+  }
   remove(name) {
     const id = inspect(name)?.Id;
     const proof = this.engine('remove', ['--name', name, '--proof-image', this.config.imageId]);
@@ -148,6 +156,17 @@ export class BoxExecutor {
     if (result.status !== 0) throw Error('toolchain probe failed ' + result.stderr);
     this.toolchain = JSON.parse(result.stdout);
     if (this.toolchain.node.version !== 'v22.23.2' || this.toolchain.pnpm.version !== '10.11.0') throw Error('unexpected image toolchain'); this.storeListingSha256 = digest;
+  }
+  service(suffix, spec) {
+    const plan=servicePlan(spec),name=this.create(suffix,plan);docker(['start',name]);
+    return {name,role:spec.role,plan};
+  }
+  driver(suffix, spec) {const plan=driverPlan(spec),name=this.create(suffix,{...plan,argv:['sleep','infinity']});docker(['start',name]);return {name,role:'driver',plan,launchArgv:plan.argv};}
+  clock(name) {const raw=JSON.parse(docker(['exec',name,'node','-e',CLOCK_SCRIPT]));return clockFacts(raw.bootId,raw.offsetText,raw.timeNs);}
+  exec(name,argv,{timeout=30000,max=1048576,all=false}={}) {
+    if(!this.resources.some(([kind,n])=>kind==='container'&&n===name))throw Error('exec container is not owned by this box');
+    const r=spawnSync('docker',dockerArgs(['exec',name,...argv]),{timeout,maxBuffer:max});
+    if(r.error||r.status!==0)throw Error('NS exec failed '+String(r.error??r.stderr));return all?{status:r.status,stdout:r.stdout,stderr:r.stderr}:r.stdout;
   }
   auxiliaryPlacement(slot) {
     if (!this.placement) return {};

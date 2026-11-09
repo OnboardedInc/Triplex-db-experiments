@@ -1,0 +1,18 @@
+{
+  "status": "PROPOSAL ONLY; no lab/acceptance change and no qualification grant",
+  "targetVersion": "contract owner decides; 0.4.x",
+  "run.ns": {
+    "broker": ["node", "/work/ns-sut.mjs", "--role", "broker", "--config", "/in/config.json"],
+    "readers": ["node", "/work/ns-sut.mjs", "--role", "readers", "--config", "/in/config.json"],
+    "consumer": ["node", "/work/ns-sut.mjs", "--role", "consumer", "--config", "/in/config.json"]
+  },
+  "DRIVER_PIN": {"imageId": "REVIEW REQUIRED", "bundleSha256": "build receipt executable bytes", "supportSha256": "build receipt mandatory launcher/audit/guard bytes", "generatorSha256": "must equal writerTrace.generator.frozen.sha256"},
+  "nsLayout": {"singleArm": true, "engine": {"cpuset": "0,1", "memoryBytes": 3758096384}, "broker": {"cpuset": "2", "memoryBytes": 1073741824}, "readers": {"cpuset": "4", "memoryBytes": 805306368}, "consumer": {"cpuset": "3", "memoryBytes": 536870912}, "driver": {"cpuset": "5", "memoryBytes": 1073741824}, "observer": {"cpuset": "5", "memoryBytes": 268435456}, "relay": {"cpuset": "5", "memoryBytes": 67108864}},
+  "ns-sut/1": {"schemaPath": "lab/bench/ns-driver/schema.json", "requestCapBytes": 1048576, "responseCapBytes": 16777216, "roleConfigs": "no frozen trace preimage, RNG seed or future schedule; offers arrive only through trusted driver RPC"},
+  "feed-entry/1": {"schemaPath": "lab/bench/ns-driver/feed.mjs", "pin": "contract owner must select canonical FD01 encoding and source/consumer normalizers; smoke entries are not that authority"},
+  "clockDomain": "Q100q: equal boot id plus zero monotonic and boottime offsets; time namespace inode diagnostic only; ping p99 from each run retained",
+  "durabilityClass": "guest-durable, host-fsync, drive cache not flushed",
+  "observerPeriod": "actual per-poll start/end samples retained; no nominal 250 us claim",
+  "Q103a": "driver-only frozen trace/config, generator seed and private run key; candidate config volume has only role-specific public connection/store parameters",
+  "missingForQualification": ["contract-held driver/image/schema/normalizer pins", "production lane provider and O-DOMAIN seed fingerprint", "GREEN lease and acceptance duration", "CR-NS and independent O-OBS replay", "round-6 fault witness", "round-7 single admission grant"]
+}

@@ -50,7 +50,11 @@ export function launchArtifact(bundle, configFile, { timeoutMs = 60000 } = {}) {
   if (fs.realpathSync(output) !== output) throw Error("Driver output symlink refused");
   if (fs.readdirSync(output).length) throw Error("Driver output not fresh");
   // [EXP-NSR-R4] Why: candidate text must be unreadable even to vm or a replacement hook. Rejected: an in-process module policy as the isolation boundary.
-  const layout = path.join(path.dirname(bundle), "runtime-" + randomUUID());
+  // [EXP-G03-R5] Why: bundle mounts stay read-only; staging belongs to the trusted container's private tmpfs. Rejected: a writable driver bundle shared with later runs.
+  const runtimeParent = config.runtimeParent ?? path.dirname(bundle);
+  if (runtimeParent.includes("*") || [bundle, output, configFile].some(p => runtimeParent === p || runtimeParent.startsWith(p + path.sep))) throw Error("NSR runtime parent overlaps input/output");
+  fs.mkdirSync(runtimeParent, {recursive:true});
+  const layout = path.join(runtimeParent, "runtime-" + randomUUID());
   fs.mkdirSync(layout);
   for (const name of [
     "driver.mjs",
@@ -105,6 +109,7 @@ export function launchArtifact(bundle, configFile, { timeoutMs = 60000 } = {}) {
       bootId: fs.readFileSync("/proc/sys/kernel/random/boot_id", "utf8").trim(),
       timeNs: String(fs.statSync("/proc/self/ns/time", { bigint: true }).ino),
       primitive: "CLOCK_MONOTONIC",
+      offsetText: fs.readFileSync("/proc/self/timens_offsets", "utf8"),
     });
   const permissions = [
     {
