@@ -1861,3 +1861,9 @@ Where each priority stands, from evidence so far (research probes and baselines;
   converging, not cycling. The cost is wall time on one priority at a time.
 - **Scale window:** one exclusive slot at a time is the bottleneck (P2X2 on it now; queue: K01 live, P5 A1, G03, RT01 live, W02 live GS).
 - **Research:** R41 (Opus high) audits P3, the ordered resumable feed, across all three lanes, since it has had the least dedicated work.
+
+## 2026-11-09 04:36Z: lane D's Datomic adapter is on main (contract 0.3.13)
+- Merged 6fa5080: contract 0.3.13 with EXP-DA00 and EXP-DA01, the lane D image re-pinned, Q91a-d, Q93a-c and Q94b-i compiled (Q83d and Q83e
+  retired). Q87 gate 108/108 on main after the commit. All three lanes now have their adapters on main. Lane D acceptance evidence stays
+  DIAGNOSTIC until EXP-DA04 moves it to Postgres (Q88a); DA04 starts when the scale window ends and the resident is unparked.
+- A few DA01 round-3 raw oracle files of about 35k lines each came in under the 1 MB limit of 9c; small, left as is.
