@@ -387,3 +387,12 @@ test("NSR round3: artifact enforcement rejects runtime candidate loaders", async
   const controls = await runArtifactControls(path.join(dir, "runtime-controls-" + randomUUID()));
   assert.equal(controls.length, 10);
 });
+
+// [EXP-NSR-R4] Why: the review's vm and replacement hooks must encounter unreadable candidate bytes. Rejected: a matching loader name as evidence of containment.
+test("NSR round4: filesystem denies candidate text despite vm and replaced hooks", async () => {
+  const { runFilesystemControls } = await import("../../verify/NSR/round4/filesystem-controls.mjs");
+  assert.equal(
+    (await runFilesystemControls(path.join(dir, "filesystem-" + randomUUID()))).length,
+    9,
+  );
+});

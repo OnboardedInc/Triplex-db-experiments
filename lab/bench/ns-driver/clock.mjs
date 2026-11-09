@@ -4,6 +4,9 @@ import os from "node:os";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 export function clockDomain() {
+  // [EXP-NSR-R4] Why: the trusted launcher captures the inherited kernel namespace before filesystem restriction. Rejected: granting the driver access to proc outside its layout.
+  if (os.platform() === "linux" && process.env.NSR_LINUX_CLOCK)
+    return JSON.parse(process.env.NSR_LINUX_CLOCK);
   if (os.platform() === "linux")
     return {
       bootId: fs.readFileSync("/proc/sys/kernel/random/boot_id", "utf8").trim(),

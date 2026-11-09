@@ -1,7 +1,7 @@
 // [EXP-NSR-R3] Why: every executable driver gets the same narrow file grants and mandatory runtime hook. Rejected: exporting a bundle that callers routinely run unrestricted.
 import fs from "node:fs";
 import path from "node:path";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { execFileSync, spawn } from "node:child_process";
 import os from "node:os";
 import { pathToFileURL } from "node:url";
@@ -16,7 +16,7 @@ export function launchArtifact(bundle, configFile, { timeoutMs = 60000 } = {}) {
   if (
     Object.keys(m.support ?? {})
       .sort()
-      .join(",") !== "launch-artifact.mjs,runtime-guard.mjs"
+      .join(",") !== "launch-artifact.mjs,layout-audit.mjs,runtime-guard.mjs"
   )
     throw Error("Missing mandatory artifact guard support");
   const metaBytes = fs.readFileSync(path.join(bundle, "metafile.json"));
@@ -44,29 +44,68 @@ export function launchArtifact(bundle, configFile, { timeoutMs = 60000 } = {}) {
   const output = path.resolve(config.output);
   fs.mkdirSync(output, { recursive: true });
   if (fs.realpathSync(output) !== output) throw Error("Driver output symlink refused");
-  const readable = [
-    manifestFile,
-    path.join(bundle, m.entry),
-    path.join(bundle, "runtime-guard.mjs"),
-    configFile,
-    fs.realpathSync(config.keyFile),
+  if (fs.readdirSync(output).length) throw Error("Driver output not fresh");
+  // [EXP-NSR-R4] Why: candidate text must be unreadable even to vm or a replacement hook. Rejected: an in-process module policy as the isolation boundary.
+  const layout = path.join(path.dirname(bundle), "runtime-" + randomUUID());
+  fs.mkdirSync(layout);
+  for (const name of [
+    "driver.mjs",
+    "runtime-guard.mjs",
+    "layout-audit.mjs",
+    "manifest.json",
+    "metafile.json",
+  ])
+    fs.copyFileSync(path.join(bundle, name), path.join(layout, name), fs.constants.COPYFILE_EXCL);
+  const staged = { ...config, output };
+  const keyPath = fs.realpathSync(config.keyFile);
+  // [EXP-NSR-R4] Why: only the fixed-size evaluator run key is declared input data. Rejected: copying arbitrary candidate source supplied through a config path.
+  if (
+    !keyPath.split(path.sep).some((p) => p === "packages" || p === "node_modules") &&
+    fs.statSync(keyPath).size === 32
+  ) {
+    fs.copyFileSync(keyPath, path.join(layout, "run-key"));
+    staged.keyFile = path.join(layout, "run-key");
+  }
+  fs.writeFileSync(path.join(layout, "config.json"), JSON.stringify(staged));
+  const files = Object.fromEntries(
+    fs
+      .readdirSync(layout)
+      .sort()
+      .map((name) => [name, sha(fs.readFileSync(path.join(layout, name)))]),
+  );
+  const inventory = JSON.stringify({
+    schema: "ns-driver-layout/1",
+    bundleSha256: m.bundleSha256,
+    files,
+    forbiddenPaths: [configFile, keyPath, path.join(bundle, m.entry), output],
+  });
+  fs.writeFileSync(path.join(layout, "inventory.json"), inventory, { flag: "wx" });
+  const inventorySha256 = sha(inventory);
+  const receipt = {
+    schema: "ns-driver-layout-receipt/1",
+    nodeVersion: process.version,
+    isolation:
+      "Node filesystem permissions; closed layout; write-only output; module hook secondary",
+    layout,
     output,
-    output + "/*",
-  ];
-  // [EXP-NSR-R3] Why: Node 24 file grants lexically overlapping a directory grant can shadow it (UUID.key versus UUID/). Rejected: broadening the grant to their shared parent.
-  for (const input of readable.slice(0, -2))
-    if (input.startsWith(output) || output.startsWith(input))
-      throw Error("Overlapping input/output permission paths refused");
-  if (os.platform() === "linux")
-    readable.push("/proc/sys/kernel/random/boot_id", "/proc/self/ns/time");
+    inventorySha256,
+    files: { ...files, "inventory.json": inventorySha256 },
+    sourceConfigSha256: sha(fs.readFileSync(configFile)),
+    bundleSha256: m.bundleSha256,
+  };
+  fs.writeFileSync(layout + ".receipt.json", JSON.stringify(receipt, null, 2) + "\n", {
+    flag: "wx",
+  });
   const args = [
     "--permission",
-    ...readable.map((p) => "--allow-fs-read=" + p),
+    "--allow-fs-read=" + layout,
     "--allow-fs-write=" + output + "/*",
     "--import",
-    pathToFileURL(path.join(bundle, "runtime-guard.mjs")).href,
-    path.join(bundle, m.entry),
-    configFile,
+    pathToFileURL(path.join(layout, "layout-audit.mjs")).href,
+    "--import",
+    pathToFileURL(path.join(layout, "runtime-guard.mjs")).href,
+    path.join(layout, m.entry),
+    path.join(layout, "config.json"),
   ];
   const boot =
     os.platform() === "darwin"
@@ -76,7 +115,23 @@ export function launchArtifact(bundle, configFile, { timeoutMs = 60000 } = {}) {
       : "";
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, args, {
-      env: { PATH: process.env.PATH, NSR_BUNDLE_MANIFEST: manifestFile, NSR_DARWIN_BOOT_ID: boot },
+      cwd: layout,
+      env: {
+        PATH: process.env.PATH,
+        NSR_BUNDLE_MANIFEST: path.join(layout, "manifest.json"),
+        NSR_LAYOUT_SHA256: inventorySha256,
+        NSR_LAYOUT_ROOT: layout,
+        NSR_FRESH_OUTPUT: output,
+        NSR_LINUX_CLOCK:
+          os.platform() === "linux"
+            ? JSON.stringify({
+                bootId: fs.readFileSync("/proc/sys/kernel/random/boot_id", "utf8").trim(),
+                timeNs: String(fs.statSync("/proc/self/ns/time", { bigint: true }).ino),
+                primitive: "CLOCK_MONOTONIC",
+              })
+            : "",
+        NSR_DARWIN_BOOT_ID: boot,
+      },
       stdio: ["ignore", "pipe", "pipe"],
     });
     let stdout = "",
@@ -95,7 +150,14 @@ export function launchArtifact(bundle, configFile, { timeoutMs = 60000 } = {}) {
     });
     child.on("exit", (code, signal) => {
       clearTimeout(timer);
-      resolve({ code, signal, stdout, stderr, bundleSha256: m.bundleSha256 });
+      resolve({
+        code,
+        signal,
+        stdout,
+        stderr,
+        bundleSha256: m.bundleSha256,
+        layoutReceipt: receipt,
+      });
     });
   });
 }

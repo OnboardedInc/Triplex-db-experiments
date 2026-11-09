@@ -338,3 +338,93 @@ permission/clock startup and mount calibration, hardened VM wiring and native pr
 Changed contract-pinned paths: **none** (`round3/pin-changes.json`). `lab/acceptance/` is unchanged; no frozen
 DRIVER_PIN is invented. Downstream runner integration must use manifest v2's generated launcher rather than
 invoke the source or copied entry directly. Independent review of these fixes remains required.
+
+## Round 4 — filesystem boundary (CX-NSR)
+
+Responds to independent review `verify/NSR f6a9571c`,
+`lab/verify/NSR/VERIFY-round3.md` in the reviewer worktree. That review closes F3's stable-layout startup
+checks and shows why round 3's module guard cannot establish F2: vm can evaluate readable text and code in
+one process can replace its own module hook. The previous round's hook-based containment claim is superseded
+by this round's filesystem boundary. F1 and F3 code are unchanged.
+
+### Implementation and G03 handoff
+
+The generated launcher now stages a fresh flat runtime directory from the verified closed artifact, plus
+explicit evaluator config and a fixed-size run key. It never copies the repository, packages, node_modules,
+or arbitrary config-referenced files. A candidate/dependency key path or non-32-byte input remains external
+and unreadable. The layout contains the closed entry, secondary module guard, startup audit, manifests,
+config, optional run key and inventory. Each file has a SHA256 in an external layout receipt, including the
+inventory itself. The child receives the inventory digest as an external anchor. See
+[`round4/LAYOUT.md`](round4/LAYOUT.md) for the exact layout, launch flags and G03 volume handoff.
+
+The child runs Node 24 with only the layout readable. A separate fresh output directory is write-only.
+Startup enumerates and hashes the actual files, refuses extra files/directories, candidate/dependency paths,
+symlinks, modified/missing bytes, an altered inventory, and extra read grants. It actually attempts reads of
+the original config/key/artifact and output paths and requires permission denials. Thus future output cannot
+become readable candidate code. The trusted launcher checks output freshness before granting write access;
+HR files retain exclusive creation. Linux clock identity is captured by the trusted parent in the namespace
+inherited by the child, avoiding additional /proc read grants. Mac remains DIAGNOSTIC.
+
+The in-process module hook remains, explicitly labeled **secondary**, with no claim that it can stop
+arbitrary evaluation of readable data or prevent replacement by code already in the process. Config and key
+are trusted evaluator data, not candidate authority to add grants. The offline layout does not itself build
+or prove an actual G03 image: integration must place it in the separate trusted driver box built from the
+evaluator commit, with the pinned Node base and no candidate or repository mounts.
+
+### Fresh checks and retained attempts
+
+Evidence root: `/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-NSR/round4/`.
+Exact reviewer exploit source is retained as `round4/reviewer-artifacts.original.mjs`; executable adaptations
+are `lab/verify/NSR/round4/filesystem-controls.mjs`, called by the normal NSR test suite. The three vm/replaced
+hook cases must report **ERR_ACCESS_DENIED / FileSystemRead naming the actual candidate file**, and no marker,
+regardless of the secondary hook. Six additional controls reject an extra file, candidate directory, symlink,
+changed data, altered inventory and an extra external read grant. An intact layout executes normally; receipt
+hashes are independently read back.
+
+Final result and evidence inventory are recorded in `round4/EVIDENCE.md`. Attempt 1 retains the sandbox
+`sysctl` failures (5 passing, 10 failing tests). Attempt 2 ran outside that sandbox restriction: existing NSR,
+RPC, canonical answer, split/monolith parity and P3M checks passed, as did the filesystem controls, but the
+suite retained a stale expected control count (8 versus 3). It remains a failed attempt. Attempt 3 was
+cancelled while waiting (no test output directory) after repeated admission misses; only this task's own
+waiter was stopped. Attempt 4 uses the helper's supported `--poll-ms 100`, the unchanged four-slot cap, fresh
+directories and the corrected count, including the extra-read-grant control.
+
+No full G0 or package-consumer run is repeated; prior G0 remains historical. No Docker, engine slot, actual
+Linux run, VM/container build, native provider qualification, deployment, merge or push. F3's previously
+reported later-WAL/open race limitation is unchanged. Separate review of this round is still required.
+
+### Round 4 PASS / verdict / receipt audit
+
+1. **Bundler graph / artifact build (`compileDriver`, `checkImports`, `buildDriver`):** unchanged graph checks
+   use resolved input realpaths, exact source/output bytes and actual esbuild metadata from this invocation.
+   Fresh exclusive build outputs bind code, metadata, support bytes and compiler version. Added audit support
+   is hash-bound like the guard/launcher. This establishes artifact eligibility, not NS semantic acceptance.
+2. **Layout construction (`launchArtifact`):** reads and verifies manifest, metadata, artifact and support
+   bytes before copying only declared files into a newly created UUID directory. Actual copied config/key
+   and code bytes determine the inventory. The external receipt binds the full file list, inventory digest,
+   source config digest, executable digest, output path and Node version. It records construction only, not
+   successful execution. The config carries the evaluator's run/source/input/slot tuple; no real slot is
+   invented for these offline runs. Output must actually be empty and resolve to the intended directory.
+3. **Runtime layout audit (`layout-audit.mjs`):** in a fresh permission-restricted child, checks actual native
+   permission state and the single exact read grant; verifies the external inventory anchor and enumerates
+   actual files with content hashes. Candidate paths, symlinks, missing/extra/changed files fail. External
+   paths must produce actual permission denials. Its observation binds the inventory and artifact digests
+   to that execution; this is filesystem eligibility, not a semantic PASS or power-loss durability claim.
+4. **Secondary hook / driver / HR (`runtime-guard.mjs`, `runNS`, `Events`):** the guard still checks actual
+   manifest/entry/guard bytes and graph resolution in the fresh process, but is replaceable and is not the
+   boundary. Existing driver runtime and HMAC observations bind the executable, measured request/answer
+   bytes, full request keys, sequence and exact run/source/input/slot tuple. Output freshness is established
+   by the trusted launcher before the write-only child starts, and chunks remain exclusively created.
+   Canonical-answer behavior and DIAGNOSTIC labels are preserved; no NS acceptance is emitted.
+5. **Regression assertions (`filesystem-controls.mjs`, NSR/P3M tests, prior artifact controls):** fresh real
+   candidate bytes and marker paths are created per attempt. The three review exploits require the exact
+   permission failure on that candidate and absence of execution; secondary-hook failures alone do not
+   pass those controls. Tamper controls alter the actual layout/grants and require the specific refusal.
+   Baseline execution and actual receipt hashes are checked independently. Existing parity compares exact
+   accounting/feed contents, and planted-delay tests check expected measured values and negative controls.
+6. **Retention / report:** final source and support hashes are compared with executed layouts/artifacts;
+   retained files are SHA256-indexed and read back. Failed attempts stay failed, old evidence stays
+   historical, and checksums assert preservation only. Results are scoped to this Mac offline attempt.
+
+Changed contract-pinned paths: **none** (`round4/pin-changes.json`). `lab/acceptance/` is unchanged. No contract
+version, frozen DRIVER_PIN, or production runtime receipt is claimed.
