@@ -1,0 +1,30 @@
+{
+  "authoritySha256": {
+    "lab/acceptance/load-contract.json": "c54af6122604a7cbe49c4de41ba658f9076cea8701f90cc4e3583f1cad009428",
+    "lab/acceptance/RULINGS-PENDING.md": "ced5c9496bcd596cce85973f91ec8f32426adc4f0d049e2ecac288a3a224ab37"
+  },
+  "dependencySha256": {
+    "pnpm-lock.yaml": "b2b3e6e8cdfb18df6d235a8724611ee4fe637426c722a5de34326346b3cb6500",
+    "node_modules/typescript/lib/typescript.js": "630f808ac32d968a49a392c42cc06fd72abd939aaa7edfe3302810c067934653",
+    "packages/xtdb/node_modules/postgres/src/connection.js": "ee3a218d9aa6a6f2887c1a19da50009335fe84c11a5431d5cab72d6bc528632f",
+    "packages/xtdb/node_modules/postgres/src/query.js": "67c45a5151032aa46b587abc15381fe4efd97c696e5c1b53082b8161309c4ee2"
+  },
+  "syntax": [
+    {
+      "path": "lab/bin/engine.mjs",
+      "exit": 0
+    },
+    {
+      "path": "lab/bin/lib.mjs",
+      "exit": 0
+    },
+    {
+      "path": "lab/verify/K01/run-round9.mjs",
+      "exit": 0
+    },
+    {
+      "path": "lab/verify/K01/columns-review.test.mjs",
+      "exit": 0
+    }
+  ]
+}

@@ -6,7 +6,7 @@ import vm from 'node:vm';
 import { test, after } from 'node:test';
 import { admitG0, readG0, fields } from '../../bench/lib/g0.ts';
 const root = path.resolve(import.meta.dirname, '../../..');
-const out = path.join(import.meta.dirname, 'evidence/round8/reviewer');
+const out = process.env.TX2_K01_REVIEW_OUT ?? path.join(import.meta.dirname, 'evidence/round8/reviewer');
 const scratch = path.join(import.meta.dirname, 'tmp/g0-review-round8');
 fs.mkdirSync(scratch, { recursive: true });
 const observations = [];

@@ -1,9 +1,11 @@
+import { openWire } from "./g0-wire.ts";
 // [EXP-K01-R8] Why: read complete stored rows on the measured endpoint with deadlines. Rejected: omitting validation, receipt or side-table columns from the content gate.
 import { pathToFileURL } from "node:url";
 import path from "node:path";
 import {
   admitG0,
   readG0,
+  readE1G0,
   fields,
   bounded,
   hash,
@@ -44,6 +46,7 @@ export async function openG0(endpoint: string) {
     pathToFileURL(path.join(root, "packages/core/dist/runtime/index.js")).href
   );
   const client = makeXtdbClient(endpoint, { maxConnections: 1 });
+  const wire = await openWire(endpoint);
   const query = (sql: string, params: unknown[] = [], signal?: AbortSignal): Promise<any[]> =>
     bounded((s) =>
       client.query(sql, params, undefined, {
@@ -75,10 +78,12 @@ export async function openG0(endpoint: string) {
       const cols = fields[table];
       const pageSize = 4096;
       for (let offset = 0; ; offset += pageSize) {
-        const rows = await query(
-          `SELECT * FROM ${table} FOR ALL VALID_TIME WHERE scope_key = ? ORDER BY ${cols.join(", ")} LIMIT ${pageSize} OFFSET ${offset}`,
-          [scopeKey(scope)],
-          signal,
+        const rows = await bounded((s) =>
+          wire.scan(
+            `SELECT * FROM ${table} FOR ALL VALID_TIME WHERE scope_key = ? ORDER BY ${cols.join(", ")} LIMIT ${pageSize} OFFSET ${offset}`,
+            [scopeKey(scope)],
+            AbortSignal.any([signal, s]),
+          ),
         );
         // [EXP-K01-R8] Why: XTDB sparse SELECT * omits never-stored NULL columns; fill only declared NULLs and retain every returned column. Rejected: a fixed projection that drops dynamic bindings.
         for (const row of rows) yield { ...Object.fromEntries(cols.map((c) => [c, null])), ...row };
@@ -86,12 +91,20 @@ export async function openG0(endpoint: string) {
       }
     },
   };
-  return { reader, query, scopeKey, close: () => bounded(() => client.close(), 30_000) };
+  return {
+    reader,
+    query,
+    scopeKey,
+    close: () =>
+      bounded(async () => {
+        await Promise.all([client.close(), wire.close()]);
+      }, 30_000),
+  };
 }
 export async function pinXtdb(endpoint: string, m: any) {
   const h = await openG0(endpoint);
   try {
-    return await readG0(logicalReader(h.reader, h.scopeKey, m.scope), expectedN01(m));
+    return await readE1G0(logicalReader(h.reader, h.scopeKey, m.scope), expectedN01(m));
   } finally {
     await h.close();
   }

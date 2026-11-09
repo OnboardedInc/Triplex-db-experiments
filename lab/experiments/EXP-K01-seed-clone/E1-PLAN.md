@@ -12,10 +12,12 @@ For the clone arm, `engine.mjs clone --golden-record FILE` emits TRIPLEX_LAB_GOL
 Pass its manifest to driver.ts. The driver checks the key/health/quiescence refusals, then independently runs G0 on its
 writer endpoint before workers/warm-up. For the fresh arm, seed the same inputs into a fresh admitted exclusive slot,
 then `engine.mjs fresh --manifest FILE`; use its TRIPLEX_LAB_FRESH_STATE and TRIPLEX_LAB_REFERENCE_GOLDEN pointing at the
-comparison golden. This performs the same two cuts/jobs waits and restart. Fresh D must equal golden D; live_tables is
+comparison golden. This performs the same two cuts/jobs waits and restart. Fresh Dprime must equal golden Dprime (Q93c); each arm independently passes full D against its own source pin; live_tables is
 read only after restart. Unset the clone-arm environment before the fresh arm and vice versa.
 
 Use the existing PAIR-0 A/A schedule and p50 <=1.10 / p99 <=1.15 margins. Same recipe/image/version requires fresh E1
 before clone receipts count. First new commit position and end counts are refusal-only. Record maintenance in the window
 under Q74e. All acquisition has deadlines. No runner deletes goldens; clean only each current owned slot through engine.mjs.
 No engine/slot/volume action is authorized or performed by this offline implementation round.
+
+Round 9: source pinning now computes the separate Q93c Dprime. D never accepts a changed clone, including generated metadata. E1 compares Dprime only; missing or unrankable normalization refuses. Raw scalar transport retains pgwire types/bytes; unsupported NaN payload/structured transport refuses until qualified. No live E1 is claimed.

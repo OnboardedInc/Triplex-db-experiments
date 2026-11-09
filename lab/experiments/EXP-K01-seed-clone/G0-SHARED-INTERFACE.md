@@ -25,7 +25,14 @@ manifest/generator as before; auxiliary counts may be supplied in expected.count
 counted complete contents. SQL SELECT * retains dynamic columns beyond the declarations. The schema parser and reader are
 part of the seed-generator pin; old pins/goldens must be regenerated. This module requires the pinned TypeScript parser.
 
-Stored IDs, receipt metadata and recorded timestamps are covered too: the round-8 request allows exclusion only when no
-read/constraint/validation path reads a column. The old random-ID spelling exemption no longer applies. Consequently D
-is now specific to one seed lineage. Comparing independently reseeded arms by raw D equality requires a separate approved
-normalization policy or deterministic seed metadata; no such qualification or policy change is claimed by this offline fix.
+Round 9 supersedes the previous normalization blocker under Q93c. The existing readG0/admitG0/requireW0Fingerprint
+signatures remain unchanged. Pin optionally includes Dprime; consumers using full D do not need it. New readE1G0 performs
+two complete source reads, requires identical raw D, and returns Dprime with documented engine assignments ranked by commit.
+The seeder uses it; measuring clone admission still runs only full D. E1 compares fresh Dprime with golden Dprime.
+
+The value codec uses typed frames and exact binary64 bits, bigint text, UTF-16 code units and typed binary bytes. The XTDB
+reader retains pgwire OIDs and scalar bytes through Postgres.js raw rows, rather than decoded JS values. Unknown or lossy
+wire types refuse (including text NaN, which cannot expose payload bits, and JSON transport of native structured values).
+All generator inputs include the value/wire/normalization modules. Regenerate old pins. Dprime refuses source state without
+an available commit-order anchor and ambiguous assertion ties; it never substitutes for full D or weakens other fields.
+No live P5, raw-wire, E1 or engine cancellation qualification is claimed by these offline tests.
