@@ -1,0 +1,27 @@
+{
+  "format": "crns-verification/1",
+  "checkedAt": "2026-11-09T07:32:08.675221+00:00",
+  "implementationCommit": "d1baf2295bc274c62eafe7dd75b6a4d42d5fa140",
+  "evaluatorPath": "lab/bin/claim.mjs",
+  "evaluatorSha256": "6806dcd852657e15d8b83c9138c42bc25d48afd46f3f51f884ebb04f787d9a30",
+  "command": [
+    "node",
+    "lab/bin/heavy.mjs",
+    "--label",
+    "CX-CRNS-final-retry",
+    "--",
+    "node",
+    "--test",
+    "lab/bin/test/claim.test.mjs",
+    "lab/bin/test/claim-round2.test.mjs",
+    "lab/bin/test/claim-ns.test.mjs"
+  ],
+  "exitCode": 0,
+  "tests": 145,
+  "passed": 145,
+  "failed": 0,
+  "skipped": 0,
+  "log": "evidence/final-attempt2.tap",
+  "logSha256": "b320637d969939bda2c99018a11bd5ccebc45dc05fc065be6fdc789297dc3f91",
+  "scope": "offline builder verification; no NS acceptance PASS"
+}

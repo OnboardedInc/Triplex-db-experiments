@@ -57,4 +57,23 @@ Changed-file SHA256 evidence is in `evidence/source-hashes.json`. Acceptance fil
 - `evidence/ns-attempt1.tap` through `ns-attempt5.tap`: incremental offline fixture executions (28 through 37 tests, all passed at their respective revisions). Final source-bound results will be appended after committing evaluator bytes.
 - `evidence/evaluator-attempt1.tap`: 108 tests, 76 passed / 32 failed because the evaluator's uncommitted claim.mjs did not match HEAD (Q75a); this first failure is retained. Corrective action: commit implementation, run the supported restore-evaluator command, rerun both full suites against committed bytes.
 
-Final check results pending in this implementation checkpoint.
+The service-capacity interruption ended the tool session for `final-attempt1.tap` after the 37 new tests, without a whole-suite terminal summary or retained exit code. It is incomplete, not a whole-suite PASS. `final-attempt2.tap` reruns the same three suites on the exact committed implementation, after `evaluatorIntegrity()` confirmed no problems. No evaluator code changed between these attempts.
+
+Implementation checkpoint: `d1baf2295bc274c62eafe7dd75b6a4d42d5fa140`. The final documentation/evidence commit leaves those evaluator bytes unchanged. The normalized event and trust boundary is documented in `SCHEMA.md`.
+
+Changed evaluator path (not found as a content-hash pin in the current obligations/load-contract):
+
+| Path | Old SHA256 | New SHA256 |
+| --- | --- | --- |
+| `lab/bin/claim.mjs` | `0577b9ca68bda21f57df574bdeff501a0869dd06af4ad63300ce33eb1402229c` | `6806dcd852657e15d8b83c9138c42bc25d48afd46f3f51f884ebb04f787d9a30` |
+
+No currently pinned file was moved by this change. The contract builder must add the new recompute/encoding/adapter pins before acceptance use. Existing contract/reference behavior remains unchanged.
+
+Final verification on the committed evaluator completed:
+
+- `node lab/bin/heavy.mjs --label CX-CRNS-final-retry -- node --test lab/bin/test/claim.test.mjs lab/bin/test/claim-round2.test.mjs lab/bin/test/claim-ns.test.mjs`: **exit 0, 145/145 tests passed, zero failed/skipped/cancelled**, 179.689 seconds. This includes both original evaluator suites in full plus 37 CR-NS tests. Terminal TAP: `evidence/final-attempt2.tap`.
+- All F1–F20 fixtures refused with their expected code; the positive fixture invokes the actual O-DOMAIN child at each committed position. Historical P3M pooled/steady/burst numbers compare exactly with the retained bench receipt.
+- `node --check` passed for evaluator and new test module. `git diff --check` passed. `evidence/source-hashes.json` was read back and matches the evaluator file. `git diff -- lab/acceptance` is empty.
+- Every evidence file is below 1 MB and the whole evidence directory below 5 MB; no bulky raw evidence was added to git. `SHA256SUMS` covers the retained evidence, schema and report; `evidence/verification.json` binds the successful command, exit status, test counts and committed evaluator hash.
+
+Result: B5 offline implementation and requested offline gates completed. No NS acceptance cell is closed. Pending-contract integration and independent review remain as described above; the branch is ready for the separately dispatched reviewer.
