@@ -36,8 +36,10 @@ const series = {
   longestPageMs: pts.map((p) => p.b1.activation?.W4?.pageTransactionMs?.max),
 };
 const result = { N, basis: "1k and 10k receipts", series, forecast: {} };
+// A page's longest transaction is a per-page maximum, not a total: it is reported as observed, never fitted.
+// The 1k intent was written raw and the 10k intent gzipped, so only the 10k per-unit figure is meaningful for the intent.
 for (const [k, v] of Object.entries(series))
-  if (v.every(Number.isFinite)) result.forecast[k] = fit(v[0], v[1]);
+  if (v.every(Number.isFinite) && k !== "longestPageMs") result.forecast[k] = fit(v[0], v[1]);
 // Stage split at 10k (W4): where the wall goes, so a 100k forecast says what to fix.
 const w4 = pts[1].b1.activation?.W4;
 if (w4)
