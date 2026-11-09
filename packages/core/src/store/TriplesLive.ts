@@ -19,6 +19,7 @@ import {
   type QueryOptions,
   type PagedQueryOptions,
 } from "./Triples.js";
+import { gateRecordedAt, stampOf, type RecordCut } from "../storage/RecordStamp.js";
 import { StorageAdapter } from "../storage/StorageAdapter.js";
 import { QueryExecutor } from "../storage/QueryExecutor.js";
 import type {
@@ -46,6 +47,7 @@ import {
   TransactionConflictError,
   ConstraintViolationError,
   PaginationCursorError,
+  BasisNotAvailable,
 } from "../errors/index.js";
 import { unsafe } from "../Branded.js";
 import * as Constraint from "../Constraint.js";
@@ -147,6 +149,39 @@ export const TriplesLive = Layer.effect(
     const now = runtime.now;
     const nextTripleId = runtime.nextTripleId;
     const nextTxId = runtime.nextTxId;
+
+    const cutFor = (recordedAt?: number): Effect.Effect<RecordCut | undefined, ReadError> => {
+      if (!adapter.currentCut) return Effect.succeed(undefined);
+      if (recordedAt === undefined || !Number.isFinite(recordedAt) || recordedAt < 0)
+        return adapter.currentCut();
+      // [EXP-RT01] Why: first-page and echoed-position reads must pin P after T becomes available. Rejected: pinning the pre-wait head (excludes the publication that releases T).
+      return Effect.tryPromise({
+        try: async (signal) => {
+          const readCut = () => Effect.runPromise(adapter.currentCut!(), { signal });
+          return gateRecordedAt({
+            recordedAt,
+            readCut,
+            awaitCut: async (required, ms) => {
+              const until = performance.now() + ms;
+              let cut = await readCut();
+              while (stampOf(cut.recordedAt) < required && performance.now() < until) {
+                await Effect.runPromise(Effect.sleep(Math.min(10, until - performance.now())), {
+                  signal,
+                });
+                cut = await readCut();
+              }
+              return cut;
+            },
+            deadlineMs: 2000,
+            surface: "triples-basis",
+          });
+        },
+        catch: (cause) =>
+          cause instanceof BasisNotAvailable || cause instanceof ReadError
+            ? cause
+            : new ReadError({ message: "Failed to resolve read cut", cause }),
+      });
+    };
 
     // Initialize storage (creates tables, indexes, etc.)
     yield* adapter.initialize();
@@ -606,7 +641,9 @@ export const TriplesLive = Layer.effect(
     const entityPage: TriplesService["entityPage"] = (request) =>
       Effect.gen(function* () {
         const currentTime = yield* now;
-        const cut = adapter.currentCut ? yield* adapter.currentCut() : undefined;
+        const cut = yield* cutFor(
+          request.cursor === undefined ? request.basis?.recordedAt : undefined,
+        );
         const recordedPosition = cut?.position ?? (yield* adapter.currentCommitPosition());
         const prepared = yield* Effect.try({
           try: () =>
@@ -711,9 +748,18 @@ export const TriplesLive = Layer.effect(
     const queryAll = (q: DatalogQuery, options?: QueryOptions) =>
       Effect.gen(function* () {
         const includeBasis = options?.includeBasis === true;
+        const resolved = resolveTemporalBasis(options?.basis, yield* now);
+        const cut = includeBasis ? yield* cutFor(resolved.recordedAt) : undefined;
         const basis = {
-          ...resolveTemporalBasis(options?.basis, yield* now),
-          ...(includeBasis ? { recordedPosition: yield* adapter.currentCommitPosition() } : {}),
+          ...resolved,
+          ...(includeBasis
+            ? {
+                recordedPosition:
+                  resolved.recordedPosition ??
+                  cut?.position ??
+                  (yield* adapter.currentCommitPosition()),
+              }
+            : {}),
         };
         const result = yield* executor.execute(q, options?.debug ?? false, basis);
         return includeBasis
@@ -728,7 +774,9 @@ export const TriplesLive = Layer.effect(
       Effect.gen(function* () {
         const query = yield* validateWrappedQuery(q);
         const currentTime = yield* now;
-        const cut = adapter.currentCut ? yield* adapter.currentCut() : undefined;
+        const cut = yield* cutFor(
+          query.cursor === undefined ? options?.basis?.recordedAt : undefined,
+        );
         const recordedPosition = cut?.position ?? (yield* adapter.currentCommitPosition());
         const prepared = yield* Effect.try({
           try: () =>

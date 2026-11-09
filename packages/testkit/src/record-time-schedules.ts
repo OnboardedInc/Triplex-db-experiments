@@ -163,12 +163,24 @@ export const makeA0RecordTimeSuite = (
       const pending = yield* Effect.forkChild(
         t.entity(EntityId.make("rt:release"), { recordedAt: target, validAt: r.stagedAt }),
       );
+      const pendingPage = yield* Effect.forkChild(
+        t.entityPage({
+          entityType: "RecordTime",
+          limit: 200,
+          basis: { recordedAt: target, validAt: r.stagedAt },
+        }),
+      );
       yield* Effect.sleep("50 millis");
       clock.set(r.stagedAt);
       const next = yield* write("rt:release");
       const rows = yield* Fiber.join(pending);
+      const page = yield* Fiber.join(pendingPage);
       yield* require(next.instant === target &&
         rows.length === 1, "publication did not release exact cut");
+      yield* require(page.snapshot.recordedPosition === next.position &&
+        page.entities.some((rows) =>
+          rows.some((row) => row.entityId === "rt:release"),
+        ), "future first page pinned the pre-publication head");
     }),
     // [EXP-RT01] Why: A0 has no deferred placeholders. Rejected: claiming the broker/P2X leak gate on a serialized arm.
     placeholderLeak: Effect.gen(function* () {
