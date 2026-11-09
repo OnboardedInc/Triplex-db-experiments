@@ -20,6 +20,7 @@ export class DurableFlushRefused extends Error {
 }
 // [EXP-NSR] Why: FULL is ineffective on volatile or unverified Linux storage. Rejected: trusting fullfsync=ON (a Linux no-op).
 export function assertDurableFlush(file: string) {
+  if (!file || file === ":memory:") throw new DurableFlushRefused("durable file required");
   if (platform() !== "linux") return { platform: platform(), class: "host-fullfsync-unqualified" };
   const parent = realpathSync(dirname(file));
   const type = Number(statfsSync(parent).type);

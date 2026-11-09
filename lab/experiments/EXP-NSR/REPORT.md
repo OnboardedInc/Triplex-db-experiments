@@ -44,13 +44,21 @@ calibration are not verified. No engine slot, Docker lifecycle, deployment, acce
 
 ## Gates and evidence
 
-In progress. Durable evidence root:
+Builder checks in progress; completed results below. Durable evidence root:
 `/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-NSR/`.
 
 First attempts remain: `offline-1.log` records sandbox refusal of `sysctl kern.bootsessionuuid` (eight failed checks,
 three passed); `clock-flush-1.log` records two invalid ESM spy attempts. New attempts use distinct directories/logs.
 The mocks were corrected to module-factory mocks; clock-dependent offline commands are rerun with boot-identity access.
-G0 first attempt was started in the sandbox and is retained as historical attempt evidence, not acceptance.
+`offline-2.log`: 11/11 checks passed, including seeded split/monolith equality, actual candidate role processes,
+256 distinct completed fixture loops, P3M delay/negative fixtures, and raw feed contents. `clock-flush-2.log`: 2/2
+mocked Linux identity/refusal checks passed. These are builder observations, not independently verified promotion.
+
+G0 first attempt `G0-qlever-20261109T072300Z-84a267` completed FAIL: 1203 passed, 12 failed, 71 expected skips.
+The initial pnpm shim duplicated the store option on the gate's build argv (pnpm reported `filepath.startsWith is
+not a function`); its missing QLever/qualification builds and sandbox boot-identity failures remain in the receipt.
+The initial module-spy failures are retained in that attempt. The shim is corrected to add the owned store only when
+it is absent. A fresh source-bound G0 follows this fix. The first receipt is retained unchanged.
 
 ## PASS / verdict / receipt audit (rule 9a)
 
@@ -77,5 +85,5 @@ G0 first attempt was started in the sandbox and is retained as historical attemp
 
 ## Contract / pins
 
-No lab/acceptance file is edited. Final changed-pin inventory and gate outcomes will be added after the runs finish.
+No lab/acceptance file is edited. `pin-changes.json` lists changed paths found in contract pin dictionaries; currently empty. Final gate outcomes follow below.
 P3M final-head check currently still resolves to d523f632; no newer P3M commit was available at the last check.

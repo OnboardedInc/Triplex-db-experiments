@@ -5,7 +5,7 @@ import os from "node:os";
 import net from "node:net";
 import { spawn } from "node:child_process";
 import { once } from "node:events";
-import { createHmac, randomBytes, randomUUID } from "node:crypto";
+import { createHash, createHmac, randomBytes, randomUUID } from "node:crypto";
 import { test } from "node:test";
 import {
   rpc,
@@ -88,6 +88,17 @@ test("NSR: RPC malformed, depth, UTF8, request/response byte caps and binding fa
     params: { command: {} },
   };
   validateMessage(request);
+  // [EXP-NSR] Why: a deterministic mutation corpus covers type/key combinations beyond named examples. Rejected: relying only on a valid round trip.
+  let rng = 0x5eed;
+  const wrongValues = [null, [], 42, true, "", { extra: 1 }];
+  for (let i = 0; i < 2048; i++) {
+    rng = (Math.imul(rng, 1664525) + 1013904223) >>> 0;
+    const mutant = structuredClone(request);
+    const key = ["schema", "runId", "id", "method", "params"][rng % 5];
+    mutant[key] = wrongValues[(rng >>> 8) % wrongValues.length];
+    assert.throws(() => validateMessage(mutant));
+  }
+
   for (const bad of [
     null,
     {},
@@ -253,7 +264,7 @@ test("NSR: split candidate processes match P3M source trace, lost-ACK accounting
       binding: {
         runId,
         sourceSha256: checkImports(path.resolve("lab/bench/ns-driver/driver.mjs")).bundleSha256,
-        inputsSha256: "c".repeat(64),
+        inputsSha256: createHash("sha256").update(JSON.stringify({ seed, trace })).digest("hex"),
         slot: "offline-no-slot",
       },
       endpoints: {

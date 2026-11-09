@@ -92,7 +92,10 @@ export async function runNS(c) {
     const start = process.hrtime.bigint();
     async function executeOffer(offer, scheduled) {
       const sentAtNs = now();
-      const response = await call("broker", "commit", { command: offer.command });
+      let responseBytes;
+      const response = await call("broker", "commit", { command: offer.command }, (raw) => {
+        responseBytes = raw;
+      });
       accounting.push(response);
       events.write("offer", {
         command: offer.command,
@@ -100,6 +103,7 @@ export async function runNS(c) {
         sentAtNs,
         ackAtNs: now(),
         response,
+        responseBytes: responseBytes.toString("utf8"),
       });
       if (response.receipt) {
         const request = { subject: offer.command.subject, basis: response.receipt.position };
