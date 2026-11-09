@@ -1,19 +1,20 @@
-import { parseLatencyReceipt } from "../../receipts/parse.ts";
+import { readLatencyRun } from "../../receipts/parse.ts";
 import { qleverLatencyReceipt, requireQleverConnectionMode } from "../../receipts/latency.mjs";
 
 // [EXP-QNODELAY] Why: direct-fetch and P4 child modes can differ. Rejected:
 // reconstructing absent historical metadata from today's environment or pooling
 // incompatible modes into a screening comparison.
-export function summarizeGridCell(arm, cell, p4) {
-  cell = parseLatencyReceipt(cell, { lane: "qlever", source: "grid cell" });
-  if (p4) p4 = parseLatencyReceipt(p4, { lane: "qlever", source: "P4 child" });
+export function summarizeGridCell(arm, cellFile, p4File, entry) {
+  const cellRun = readLatencyRun(cellFile, { lane: "qlever", expectedWriter: "qg1-cell/1", entry }).unwrap();
+  const p4Run = p4File ? readLatencyRun(p4File, { lane: "qlever", expectedWriter: "qg1-p4/1", expectedMode: cellRun.transportMode }).unwrap() : null;
+  const cell = cellRun.data, p4 = p4Run?.data ?? null;
   const qleverConnectionMode = requireQleverConnectionMode(cell.qleverConnectionMode);
   const p4Mode = p4 ? requireQleverConnectionMode(p4.qleverConnectionMode) : null;
   if (cell.p4?.status === 0 && !p4) throw new TypeError("successful P4 child receipt missing");
-  if (p4 && requireQleverConnectionMode(cell.p4?.qleverConnectionMode) !== p4Mode)
+  if (p4 && requireQleverConnectionMode(cell.p4?.connectionMode) !== p4Mode)
     throw new TypeError("P4 child mode differs from its grid invocation");
   return qleverLatencyReceipt({
-    qleverConnectionMode,
+    writer: "qg1-cell-summary/1", qleverConnectionMode,
     p4QleverConnectionMode: p4Mode,
     arm,
     label: cell.label,
@@ -30,8 +31,8 @@ export function summarizeGridCell(arm, cell, p4) {
       : null,
     queries: Object.fromEntries(
       Object.entries(cell.results).map(([key, value]) => {
-        const coldMode = parseLatencyReceipt(value[0], { lane: "qlever", source: "cold sample" }).qleverConnectionMode;
-        const warmMode = parseLatencyReceipt(value[1], { lane: "qlever", source: "warm sample" }).qleverConnectionMode;
+        const coldMode = value[0].qleverConnectionMode;
+        const warmMode = value[1].qleverConnectionMode;
         if (coldMode !== warmMode || coldMode !== qleverConnectionMode)
           throw new TypeError("cold/warm query mode differs from its grid cell");
         return [

@@ -1,4 +1,3 @@
-import { parseLatencyReceipt } from "./parse.ts";
 // @ts-check
 // [EXP-QNODELAY] Why: timing writers must provide actual transport metadata before
 // serialization, including JS harnesses. Rejected: optional fields or inferring
@@ -19,14 +18,36 @@ export function requireQleverConnectionMode(mode) {
 /** @template {QleverLatencyReceipt} T @param {T} receipt @returns {T} */
 export function qleverLatencyReceipt(receipt) {
   requireQleverConnectionMode(receipt.qleverConnectionMode);
-  return receipt;
+  return Object.assign(
+    {
+      receiptVersion: "qlever-latency/1",
+      latencyWriter:
+        Reflect.get(receipt, "latencyWriter") ??
+        (typeof Reflect.get(receipt, "writer") === "string"
+          ? Reflect.get(receipt, "writer")
+          : Reflect.get(receipt, "format")),
+      units: "ms",
+    },
+    receipt,
+  );
 }
 
 /** @template {LatencyReceipt} T @param {T} receipt @returns {T} */
 export function latencyReceipt(receipt) {
   if (receipt.qleverConnectionMode !== null)
     requireQleverConnectionMode(receipt.qleverConnectionMode);
-  return receipt;
+  return Object.assign(
+    {
+      receiptVersion: "qlever-latency/1",
+      latencyWriter:
+        Reflect.get(receipt, "latencyWriter") ??
+        (typeof Reflect.get(receipt, "writer") === "string"
+          ? Reflect.get(receipt, "writer")
+          : Reflect.get(receipt, "format")),
+      units: "ms",
+    },
+    receipt,
+  );
 }
 
 // [EXP-QNODELAY] Why: current producers may resolve their selected factory mode;
@@ -40,5 +61,7 @@ export function connectionModeForBackend(backend) {
 }
 /** @param {{ lane?: string, backend?: string, queryPath?: string, qleverConnectionMode?: unknown }} receipt @returns {QleverConnectionMode | null} */
 export function recordedConnectionMode(receipt) {
-  return parseLatencyReceipt(receipt).qleverConnectionMode;
+  return receipt.qleverConnectionMode === null
+    ? null
+    : requireQleverConnectionMode(receipt.qleverConnectionMode);
 }

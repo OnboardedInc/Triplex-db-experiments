@@ -61,7 +61,7 @@ const times = observations.map((x) => x.ms).sort((a, b) => a - b);
 fs.writeFileSync(
   output,
   JSON.stringify(
-    qleverLatencyReceipt({
+    qleverLatencyReceipt({ writer: "qg1-p4/1",
       qleverConnectionMode: requireQleverConnectionMode(process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive"),
       subjects: manifest.subjects,
       basis: { recordedPosition: manifest.result.lastPosition, validAt: SEED_VALID_FROM },

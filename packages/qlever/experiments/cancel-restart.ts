@@ -135,7 +135,7 @@ const receiptPreserved =
     (fact) => fact.value.type === "number" && fact.value.value === 1.0000000000000002,
   );
 const allOrNone = [0, 160001].includes(afterPublication) && afterRestart === afterPublication;
-const artifact = qleverLatencyReceipt({
+const artifact = qleverLatencyReceipt({ writer: "triplex-qlever-cancel-restart/1",
   qleverConnectionMode: qleverConnectionModeOf(),
   run,
   version: "QLever0.6.0/6c5861a",

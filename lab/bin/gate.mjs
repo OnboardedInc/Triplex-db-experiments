@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { parseLatencyReceipt } from "../receipts/parse.ts";
+import { readLatencyRun } from "../receipts/parse.ts";
 import { latencyReceipt, requireQleverConnectionMode } from "../receipts/latency.mjs";
 // lab/bin/gate.mjs <G0|G1|G2|G4|GS> --lane xtdb|qlever [--slot dev] [--exp EXP-NNN] [--note TEXT]
 //   [--previous RUN-ID] [--holder NAME] [--cases N (G1 subset)] [--workloads 01,02 (G2 subset)]
@@ -399,9 +399,9 @@ async function gateG1(run, config) {
   const { result, step, bound } = await engineGate(run, config, { name: 'lab-conformance', queryPath: `${run.lane}-datalog`, args, timeoutMs: 45 * 60_000 });
   if (!bound) return result;
   result.fixtures = fileHashes(run, ['packages/testkit/src/index.ts', 'packages/qualification/workloads/lab-conformance.ts'], 'oracle-fixture');
-  const report = readJson(output, null);
+  const timingRun = readLatencyRun(output, { lane: run.lane, expectedMode: run.lane === "qlever" ? requireQleverConnectionMode(process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive") : null }).unwrap();
+  const report = timingRun.data;
   if (!report) { run.reason('no G1 report written'); run.failure({ step: step.name, tail: step.tail }); return result; }
-  parseLatencyReceipt(report, { lane: run.lane, source: output });
   run.store(output, 'raw-outcome');
   result.contactedEndpoint = report.endpoint;
   if (report.endpoint !== bound.info.endpoint) run.reason(`G1 contacted ${report.endpoint}, slot is ${bound.info.endpoint}`);
@@ -438,9 +438,9 @@ async function gateG2(run, config) {
   const caseFiles = fs.readdirSync(path.join(REPO, 'qualification/workloads')).filter(f => f.endsWith('_cases.mjs')).map(f => `qualification/workloads/${f}`);
   result.fixtures = fileHashes(run, [PACKET, ...caseFiles.sort(), 'packages/qualification/workloads/runner.ts'], 'oracle-fixture');
   result.packet = packetIdentity();
-  const report = readJson(output, null);
+  const timingRun = readLatencyRun(output, { lane: run.lane, expectedMode: run.lane === "qlever" ? requireQleverConnectionMode(process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive") : null }).unwrap();
+  const report = timingRun.data;
   if (!report) { run.reason('no G2 report written'); run.failure({ step: step.name, tail: step.tail }); return result; }
-  parseLatencyReceipt(report, { lane: run.lane, source: output });
   run.store(output, 'raw-outcome');
   if (fs.existsSync(results)) run.store(results, 'raw-outcome');
   if (report.packetSha256 !== result.packet.sha256) run.reason('runner packet sha256 differs from the hashed packet');
@@ -517,9 +517,8 @@ async function gateNS(run, config) {
   let baseline = null;
   if (run.options.baseline) {
     const receiptFile = path.join(REPO, 'lab/runs/NS', `${run.options.baseline}.json`);
-    const base = readJson(receiptFile, null);
+    const base = readLatencyRun(receiptFile, { lane: run.lane, expectedMode: run.lane === "qlever" ? requireQleverConnectionMode(process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive") : null }).unwrap().data;
     if (!base) fail('USAGE', `--baseline ${run.options.baseline}: no receipt at ${path.relative(REPO, receiptFile)}`);
-    parseLatencyReceipt(base, { lane: run.lane, source: receiptFile });
     const writesFile = path.join(REPO, base.rawDir, 'ns-writes.jsonl');
     if (!fs.existsSync(writesFile)) fail('USAGE', `--baseline ${run.options.baseline}: raw writes ${path.relative(REPO, writesFile)} are gone`);
     baseline = { runId: base.runId, verdict: base.verdict, zeroReaders: base.ns?.config?.zeroReaders ?? null, traceDigest: base.ns?.trace?.digest ?? null, writes: run.store(writesFile, 'ns-baseline-writes') };
@@ -535,9 +534,9 @@ async function gateNS(run, config) {
   if (!bound) return result;
   result.fixtures = fileHashes(run, nsBenchFiles(), 'bench-source');
   result.oracle = { id: 'O-REPLAY', ref: oracleRef, commit: oracleCommit, tarSha256: sha256(tar) };
-  const report = readJson(output, null);
+  const timingRun = readLatencyRun(output, { lane: run.lane, expectedMode: run.lane === "qlever" ? requireQleverConnectionMode(process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive") : null }).unwrap();
+  const report = timingRun.data;
   if (!report) { run.reason('no NS report written'); run.failure({ step: step.name, tail: step.tail }); return result; }
-  parseLatencyReceipt(report, { lane: run.lane, source: output });
   run.store(output, 'raw-outcome');
   for (const extra of ['ns-writes.jsonl', 'ns-log.txt', 'feed-checkpoints.jsonl', 'feed-effects.jsonl', 'oracle-case.json', 'oracle-expected.json'])
     if (fs.existsSync(run.raw(extra))) run.store(run.raw(extra), 'raw-outcome');
@@ -615,10 +614,10 @@ async function gateGS(run, config) {
   fixtureFiles.push('lab/acceptance/cases/CS-GS.json');
   for (const f of fs.readdirSync(path.join(REPO, 'lab/bench/lib')).filter(f => /\.(ts|py)$/.test(f))) fixtureFiles.push(`lab/bench/lib/${f}`);
   result.fixtures = fileHashes(run, fixtureFiles.sort(), 'oracle-fixture');
-  const report = readJson(output, null);
+  const timingRun = readLatencyRun(output, { lane: run.lane, expectedMode: run.lane === "qlever" ? requireQleverConnectionMode(process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive") : null }).unwrap();
+  const report = timingRun.data;
   if (!report) { run.reason('no GS report written'); run.failure({ step: step.name, tail: step.tail }); return result; }
-  parseLatencyReceipt(report, { lane: run.lane, source: output });
-  for (const reason of gsRefusals(report, readJson(path.join(REPO, 'lab/acceptance/obligations.json'), {}).version)) run.reason(reason);
+  for (const reason of gsRefusals(output, readJson(path.join(REPO, 'lab/acceptance/obligations.json'), {}).version)) run.reason(reason);
   run.store(output, 'raw-outcome');
   for (const f of fs.readdirSync(run.rawDir).filter(f => f.endsWith('-checkpoint.json'))) run.store(path.join(run.rawDir, f), 'raw-outcome');
   result.contactedEndpoint = report.endpoint ?? null;
@@ -664,9 +663,9 @@ async function gateG4(run, config) {
   if (!bound) return result;
   result.fixtures = fileHashes(run, [entryFile, 'packages/qlever/experiments/lab-endpoint.ts', 'qualification/native-controls/qlever-collation-tiny-v1/oracle.json',
     'qualification/native-controls/qlever-collation-tiny-v1/fixture.nt', 'packages/qlever/experiments/native-query-shapes.ts', 'lab/research/R5-probe/probe1.py', 'lab/research/R5-probe/probe3.py'], 'oracle-fixture');
-  const report = readJson(output, null);
+  const timingRun = readLatencyRun(output, { lane: run.lane, expectedMode: run.lane === "qlever" ? requireQleverConnectionMode(process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive") : null }).unwrap();
+  const report = timingRun.data;
   if (!report) { run.reason('no G4 report written'); run.failure({ step: step.name, tail: step.tail }); return result; }
-  parseLatencyReceipt(report, { lane: run.lane, source: output });
   run.store(output, 'raw-outcome');
   result.contactedEndpoint = report.endpoint;
   if (report.endpoint !== bound.info.endpoint) run.reason(`G4 contacted ${report.endpoint}, slot is ${bound.info.endpoint}`);

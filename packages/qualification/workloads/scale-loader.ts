@@ -1,4 +1,4 @@
-import { parseLatencyReceipt } from "../../../lab/receipts/parse.ts";
+import { readLatencyRun } from "../../../lab/receipts/parse.ts";
 import {
   latencyReceipt,
   connectionModeForBackend,
@@ -60,7 +60,7 @@ let observedBytesPerFact = phaseModel
   : Math.max(4096, calibration.observedOwnedDiskGrowthBytesPerDomainFact);
 const totalFacts = entities * width;
 const resumeFile = option("--resume", "");
-const prior = resumeFile ? parseLatencyReceipt(readFileSync(path.resolve(resumeFile)), { source: resumeFile }) : null;
+const prior = resumeFile ? readLatencyRun(path.resolve(resumeFile)).unwrap().data : null;
 if (prior) {
   assert.equal(prior.factsPerEntity, width);
   assert.ok(prior.acknowledgedEntities < entities);

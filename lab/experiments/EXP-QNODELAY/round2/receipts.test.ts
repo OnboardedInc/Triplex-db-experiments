@@ -1,6 +1,7 @@
 import { expect, it } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
+import os from "node:os";
 import { createHash } from "node:crypto";
 import { latencyReceipt, qleverLatencyReceipt } from "../../../receipts/latency.mjs";
 import { summarizeGridCell } from "../../EXP-QG1-qlever-generations/summary-cell.mjs";
@@ -10,7 +11,16 @@ it("requires actual mode at the JS serialization boundary too", () => {
   for (const fn of [latencyReceipt, qleverLatencyReceipt]) {
     for (const mode of [undefined, "", "unknown", "mixed"])
       expect(() => fn({ qleverConnectionMode: mode } as any)).toThrow(TypeError);
-    expect(fn({ qleverConnectionMode: "keep-alive", ms: 1 })).toEqual({
+    expect(
+      fn({
+        receiptVersion: "qlever-latency/1",
+        writer: "qg1-sample/1",
+        latencyWriter: "qg1-sample/1",
+        units: "ms",
+        qleverConnectionMode: "keep-alive",
+        ms: 1,
+      }),
+    ).toMatchObject({
       qleverConnectionMode: "keep-alive",
       ms: 1,
     });
@@ -19,47 +29,84 @@ it("requires actual mode at the JS serialization boundary too", () => {
   expect(latencyReceipt({ qleverConnectionMode: null, lane: "xtdb" }).lane).toBe("xtdb");
 });
 
-const fixture = () => ({
-  cell: {
-    qleverConnectionMode: "keep-alive",
-    label: "N0",
-    before: { baseTriples: 1, deltaTriples: { total: 3, inserted: 2, deleted: 1 }, rss: 100 },
-    c8: { status: 0 },
-    p4: { status: 0, qleverConnectionMode: "per-request" },
-    results: {
-      base: [
-        { qleverConnectionMode: "keep-alive", ms: 2, rows: 1 },
-        { qleverConnectionMode: "keep-alive", ms: 1, rows: 1 },
-      ],
+const fixture = () => {
+  const data = {
+    cell: {
+      receiptVersion: "qlever-latency/1",
+      writer: "qg1-cell/1",
+      latencyWriter: "qg1-cell/1",
+      units: "ms",
+      qleverConnectionMode: "keep-alive",
+      label: "N0",
+      before: { baseTriples: 1, deltaTriples: { total: 3, inserted: 2, deleted: 1 }, rss: 100 },
+      c8: { status: 0 },
+      p4: { status: 0, connectionMode: "keep-alive" },
+      results: {
+        base: [
+          {
+            receiptVersion: "qlever-latency/1",
+            writer: "qg1-sample/1",
+            latencyWriter: "qg1-sample/1",
+            units: "ms",
+            qleverConnectionMode: "keep-alive",
+            ms: 2,
+            rows: 1,
+          },
+          {
+            receiptVersion: "qlever-latency/1",
+            writer: "qg1-sample/1",
+            latencyWriter: "qg1-sample/1",
+            units: "ms",
+            qleverConnectionMode: "keep-alive",
+            ms: 1,
+            rows: 1,
+          },
+        ],
+      },
     },
-  },
-  p4: {
-    qleverConnectionMode: "per-request",
-    sample: [{ contentEqual: true }],
-    summary: { p50: 1, p99: 2 },
-  },
-});
-it("QG1 summary retains distinct direct-fetch and P4 child modes", () => {
-  const { cell, p4 } = fixture(),
-    result = summarizeGridCell("M", cell, p4);
+    p4: {
+      receiptVersion: "qlever-latency/1",
+      writer: "qg1-p4/1",
+      latencyWriter: "qg1-p4/1",
+      units: "ms",
+      qleverConnectionMode: "keep-alive",
+      sample: [{ ms: 1, contentEqual: true }],
+      summary: { p50: 1, p99: 2 },
+    },
+  };
+  return {
+    ...data,
+    paths: () => {
+      const dir = fs.mkdtempSync(path.join(os.tmpdir(), "qg1-r5-"));
+      const c = path.join(dir, "cell.json"),
+        p = path.join(dir, "p4.json");
+      fs.writeFileSync(c, JSON.stringify(data.cell));
+      fs.writeFileSync(p, JSON.stringify(data.p4));
+      return [c, p] as const;
+    },
+  };
+};
+it("QG1 summary retains the homogeneous direct-fetch and P4 mode", () => {
+  const f = fixture(),
+    result = summarizeGridCell("M", ...f.paths());
   expect(result.qleverConnectionMode).toBe("keep-alive");
   expect(result.queries.base.qleverConnectionMode).toBe("keep-alive");
-  expect(result.p4QleverConnectionMode).toBe("per-request");
+  expect(result.p4QleverConnectionMode).toBe("keep-alive");
   expect(result.p4Summary).toEqual({ p50: 1, p99: 2 });
 });
 it.each(["cell", "p4", "invocation", "cold", "warm", "missing-child", "mismatch"])(
   "QG1 summary refuses missing/mismatched mode: %s",
   (field) => {
-    const { cell, p4 }: any = fixture();
+    const f = fixture();
+    const { cell, p4 }: any = f;
     if (field === "cell" || field === "p4")
       delete (field === "cell" ? cell : p4).qleverConnectionMode;
-    if (field === "invocation") delete cell.p4.qleverConnectionMode;
+    if (field === "invocation") delete cell.p4.connectionMode;
     if (field === "cold" || field === "warm")
       delete cell.results.base[field === "cold" ? 0 : 1].qleverConnectionMode;
     if (field === "mismatch") cell.results.base[1].qleverConnectionMode = "per-request";
-    expect(() => summarizeGridCell("M", cell, field === "missing-child" ? null : p4)).toThrow(
-      TypeError,
-    );
+    const [cPath, pPath] = f.paths();
+    expect(() => summarizeGridCell("M", cPath, field === "missing-child" ? null : pPath)).toThrow();
   },
 );
 

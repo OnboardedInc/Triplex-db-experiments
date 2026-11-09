@@ -1,9 +1,7 @@
-import { parseLatencyReceipt } from "../../../lab/receipts/parse.ts";
+import { readLatencyRun } from "../../../lab/receipts/parse.ts";
 /** Independent post-run use of the controller's retained-byte/cut oracle verifier. */
 import assert from "node:assert/strict";
 import { writeFile } from "node:fs/promises";
-import { createReadStream } from "node:fs";
-import { createInterface } from "node:readline";
 import path from "node:path";
 import { openContext } from "../../../qualification/devloop/state.mjs";
 import { loadRun } from "../../../qualification/devloop/compare.mjs";
@@ -19,21 +17,8 @@ assert(
 );
 const run = await loadRun(await openContext(root), option("--run"));
 let resultByteChecks = 0;
-for await (const line of createInterface({
-  input: createReadStream(
-    path.join(
-      root,
-      ".devloop/jobs",
-      run.jobId,
-      "attempts",
-      run.attemptId,
-      run.manifest.evidence.events,
-    ),
-  ),
-  crlfDelay: Infinity,
-})) {
-  if (!line.trim()) continue;
-  const event = parseLatencyReceipt(line, { lane: run.manifest.queryPath, source: run.manifest.evidence.events });
+const timingRun = readLatencyRun(path.join(root, ".devloop/jobs", run.jobId, "attempts", run.attemptId, run.manifest.evidence.events), { lane: run.manifest.queryPath, encoding: "ndjson", expectedWriter: "triplex-public-load-event/1" }).unwrap();
+for (const event of timingRun.records) {
   if (event.type !== "read" || event.ok !== true) continue;
   assert.equal(typeof event.resultJson, "string");
   assert.equal(
@@ -44,6 +29,8 @@ for await (const line of createInterface({
   resultByteChecks++;
 }
 const result = {
+  qleverConnectionMode: timingRun.transportMode,
+  receiptVersion: timingRun.receiptVersion, latencyWriter: "triplex-public-load-observation/1", units: timingRun.units,
   format: "triplex-public-load-observation/1",
   at: new Date().toISOString(),
   status: "RETAINED_BYTES_AND_RETURNED_CUT_ORACLE_VERIFIED",
