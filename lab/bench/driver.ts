@@ -687,6 +687,11 @@ async function run() {
   if (pairPlan) pairedAnalysis({ rounds: pairRounds!, probeScheduler: probeScheduler!, probeEvents: probeEvents.length });
   else analyse({ phases, traceStart, replay, maintenance, historyList, pendingAtEnd: scheduler.pending });
   report.oracle = config.zeroReaders ? { status: "NOT-RUN", reason: "zero-reader baseline run" } : pairPlan && pairPlan.readers === 0 ? { status: "NOT-RUN", reason: "paired rounds without readers: O-REPLAY samples come from reader threads" } : runOracle(finalPosition, lastAcked);
+  // [DX-H1] Why: API round trips and observed HTTP requests differ when reach falls back inside the adapter.
+  // Rejected: discarding the reader's roundTrips field during analysis (cannot compare compositions).
+  const pullCalls = records.filter(r => r[R.error] === null).map(r => r[R.roundTrips]);
+  report.pullRoundTrips = { pulls: pullCalls.length, mean: mean(pullCalls),
+    distribution: countBy(pullCalls.map(String)), unit: "public Triples service calls; see httpRequests for actual HTTP" };
   report.httpRequests = { main: httpCounts(), workers: workerHttpCounts };
   report.engineSamples = engineSamples;
   report.status = "DONE";
