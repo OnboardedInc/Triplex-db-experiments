@@ -1,0 +1,25 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 46342 "CX-A01-0313-R2-evaluator", pid 46416 "CX-A01-0313-R2-mutations", pid 44817 "CX-VP5A-r2-suites", pid 45116 "CX-OBS01-ER01S-R3-final01"
+{"gate":"reviewer-disk-preflight","availableBytes":13612425216,"minimumBytes":5368709120}
+TAP version 13
+# [D01c] pass 1: N=50 L=1 K=4 basis.tx=2242 (0.0s)
+# Subtest: P5/current G0/exact K01 agree on unchanged content and all planted mutations
+ok 1 - P5/current G0/exact K01 agree on unchanged content and all planted mutations
+  ---
+  duration_ms: 50554.052084
+  type: 'test'
+  ...
+# Subtest: observe total deadline and external abort during outer count reads
+ok 2 - observe total deadline and external abort during outer count reads
+  ---
+  duration_ms: 14431.763833
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 73915.756625

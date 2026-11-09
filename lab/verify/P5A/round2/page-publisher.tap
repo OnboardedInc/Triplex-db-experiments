@@ -1,0 +1,24 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 86263 "CX-VP5A-r2-multipage", pid 91263 "CX-A01-0313-R2-G0-xtdb", pid 91336 "G0-xtdb-20261109T035923Z-2980c9 vitest-testkit", pid 92144 "CX-P2X2-bare-smoke"
+{"gate":"reviewer-disk-preflight","availableBytes":13406502912,"minimumBytes":5368709120}
+TAP version 13
+# Subtest: two workers/two pages match independent expected output and end counts
+ok 1 - two workers/two pages match independent expected output and end counts
+  ---
+  duration_ms: 38960.407709
+  type: 'test'
+  ...
+# Subtest: two workers/two pages refuse wrong second publication
+ok 2 - two workers/two pages refuse wrong second publication
+  ---
+  duration_ms: 45127.636833
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 85099.05675
