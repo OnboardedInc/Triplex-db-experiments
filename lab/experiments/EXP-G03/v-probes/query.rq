@@ -1,0 +1,1 @@
+SELECT (COUNT(*) AS ?n) WHERE { ?s <urn:g03:probe:value> ?v . FILTER(?v >= 0) }

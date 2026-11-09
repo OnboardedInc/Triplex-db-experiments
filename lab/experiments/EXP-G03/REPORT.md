@@ -423,3 +423,7 @@ Final cleanup (`round4/attempt3/cleanup-final.json`) confirms both final fixture
 The Q93a grant inventory and rule 9a audit are in `round4/grant-audit.md`; the single-grant redesign remains a proposal. No exclusive slot, resident lifecycle change, VM mount/network change, registered-slot execution, live preflight/PAIR-0/gateway validation, package integration/performance qualification, merge into main or push was performed. Open work: obtain a stable host-disk verification window, resolve the CLI diagnostic gap if it repeats, regenerate the contract through its owner, and later run the registered-slot plan against explicit reviewed authority/evaluator commit IDs.
 
 Final evidence manifest: `round4/evidence-manifest.json` binds 20 source files and 106 evidence files (including this report), excluding itself. The recorded evaluator commits and Git bundles preserve the exact protected code and positive source/authority preimages.
+
+## Pre-round-5: V1–V7 probe preparation
+
+See [V-PROBES.md](V-PROBES.md) for implementation, offline checks, diagnostic grant audit, exact command sequence and pin impact. 49 Node probe checks, 3 Python checks and all 35 existing pool/box checks pass. VM execution and numeric observations are recorded separately after the window attempt; no offline fixture supplies a VM fact. V7 remains an explicit synthetic lower bound, and the complete R44 cap layout cannot fit the permitted one-park window.

@@ -105,6 +105,24 @@ export async function boxCommand(config, action, opts, { policy, authorityGit } 
     if (!Array.isArray(args) || args.some(x => typeof x !== 'string') || !Number.isSafeInteger(memory) || memory < 16777216) fail('USAGE', 'invalid box request');
     return reserveBox(config, name, opts, () => docker(['create', '--name', name, ...labels, '--memory', String(memory), '--memory-swap', String(memory), ...args]), { memory, disk });
   }
+  if (action === 'prepare-v-probes') {
+    // [EXP-G03] Why: trusted probe tooling has a separate image and pool admission. Rejected: Python in tx2-box (breaks the candidate/oracle boundary).
+    const base = opts.base;
+    if (!/^node:[^@]+@sha256:[0-9a-f]{64}$/.test(base ?? '')) fail('USAGE', 'probe base must be digest-pinned Node');
+    const context = path.join(REPO, 'lab/experiments/EXP-G03/v-probes');
+    const inputs = () => sha256(Buffer.concat([Buffer.from(base), ...['Dockerfile','sync-hook.c','probe.py','relay.mjs'].flatMap(p => [Buffer.from(p), fs.readFileSync(path.join(context,p))])]));
+    const digest = inputs();
+    return reserveBox(config, name, opts, async () => {
+      process.env.BUILDX_CONFIG = path.join(REPO, 'runs/g03-probe-buildx');
+      process.env.DOCKER_HOST = 'unix:///Users/sam/.colima/triplex2/docker.sock';
+      fs.mkdirSync(process.env.BUILDX_CONFIG, {recursive:true});
+      const tag = `tx2-v-probes:${digest.slice(0,12)}`;
+      docker(['build', '--label', `tx2.box-build-inputs-sha256=${digest}`, '--build-arg', `BASE=${base}`, '-t', tag, context]);
+      const image = JSON.parse(docker(['image','inspect',tag]))[0];
+      if (inputs() !== digest || image.Config.Labels?.['tx2.box-build-inputs-sha256'] !== digest) fail('ISOLATION-NOT-IN-FORCE', 'probe build inputs changed');
+      return {format:'tx2-v-probe-image/1',imageId:image.Id,buildInputsSha256:digest,base,at:now()};
+    }, {memory:1073741824,disk:1073741824});
+  }
   if (action === 'prepare') {
     // [EXP-G03] Why: only authority lock bytes enter the networked fetch; never run candidate scripts here.
     // Rejected: fetching during a claim (makes network and dependency mutation part of candidate execution).
