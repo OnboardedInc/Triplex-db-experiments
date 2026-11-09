@@ -480,3 +480,6 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   and record-time fallback at same-timestamp commits). Step 4b unguarded names found safe; REAL precision ok; P2 reading supported but
   not a non-regression proof (settling it needs tens of thousands of commits per arm with live readers). QH1 round 4 (Sonnet, worktree
   qh1-fix) pins one record position per pull; P4N round 1 merges the fix when it lands.
+- 2026-11-09 G03 round 7c complete (Sonnet, 67844167; code 87c86a10, rule 10 fix 733daf5c): full 285/285, NS 177/177 (also after the
+  exclusive.mjs fix), evaluator 108 with no tamper refusal, --verify. Pins moved: box.mjs (protected closure), ns-run.mjs, smoke.mjs,
+  exclusive.mjs; re-pin in 0.4.1 with the 7a driver bundle. In review (CX-VG03-56 round 3).
