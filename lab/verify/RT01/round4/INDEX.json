@@ -1,0 +1,23 @@
+{
+  "root": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VRT01/round4",
+  "files": 432,
+  "bytes": 13051283,
+  "verdict": "ACCEPT-OFFLINE",
+  "product": "472c2c2439922b52e33206510b6cecb0812206ed",
+  "reviewedMerge": "8ba84f30b0b359174505270136150665f2b943af",
+  "adopted": [
+    "packages",
+    "reproductions",
+    "journal",
+    "cloudflare-retest",
+    "data-audit",
+    "comparisons",
+    "journal-oracle",
+    "integrity"
+  ],
+  "packageException": "Initial Cloudflare native binding failure retained; separate final ten-test retest passes",
+  "packQualified": false,
+  "packGate": "pack/",
+  "packPreparationFailure": "pack-attempt5/",
+  "manifestSha256": "3794144e40dc44c5de4a20272b972fde2c1f7f425536fd5a0767e1236b73e34e"
+}
