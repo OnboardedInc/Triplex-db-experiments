@@ -100,6 +100,13 @@ export interface CompositionHandle {
   }>;
   g0Reader?(logicalScope?: string): import("./g0.ts").Reader;
   commandLog?(): readonly any[];
+  commandStream?(): AsyncIterable<any>;
+  validateMappedReceipt?(receipt: any, operations: readonly any[], meta: any): void;
+  positionBinding?(position?: number): {
+    mapHash: string;
+    seedMapHash: string | null;
+    references: number;
+  };
   storeCounts(signal?: AbortSignal): Promise<Record<string, number>>;
 
   readonly name: string;

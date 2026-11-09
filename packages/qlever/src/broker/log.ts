@@ -432,6 +432,19 @@ export class HostLog {
       selection,
     });
   }
+  // [EXP-P5B-R2] Why: grouped seed receipts must verify actual complete rows, including retired versions, with one fresh read unit. Rejected: treating ACKs as byte readback.
+  readback(ids: readonly string[]) {
+    return this.pool[0]!.request<TripleRow[]>("readback", ids);
+  }
+  readbackClaims(ids: readonly string[]) {
+    return this.pool[0]!.request<{ command: string; txId: string; position: number }[]>(
+      "readbackClaims",
+      ids,
+    );
+  }
+  counts() {
+    return this.pool[0]!.request<Record<string, number>>("counts");
+  }
   async claimAsync(id: string) {
     if (this.closed) throw new BrokerLogError("Broker log is closed");
     return this.pool[this.readerIndex++ % this.pool.length]!.request<

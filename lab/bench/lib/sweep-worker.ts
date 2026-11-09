@@ -4,7 +4,7 @@ import { canonical, reachableRows, worldOf } from "./w0-world.ts";
 import { evaluateW0, loadW0Pins } from "./evaluate.ts";
 import { openComposition } from "./composition.ts";
 const comp =
-  workerData.composition === "memory"
+  workerData.rpcReads || workerData.composition === "memory"
     ? null
     : await openComposition(workerData.composition, workerData.lane, workerData.scope);
 const port = parentPort!;
@@ -58,6 +58,7 @@ port.on("message", async (msg) => {
         position: page.position,
         epoch: page.epoch,
         cpu: { read: readCpu, decode: decodeCpu, kernel: kernelCpu },
+        store: page.store,
         cpuScope: (process as any).threadCpuUsage ? "thread" : "process-overlapping",
         elu: performance.eventLoopUtilization(start),
       },

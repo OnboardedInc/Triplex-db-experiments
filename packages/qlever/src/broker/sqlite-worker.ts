@@ -125,7 +125,8 @@ const append = a => {
   for(const member of a.members) {
    const last=member.positions[member.positions.length-1];position=Math.max(position,last);
    q('INSERT INTO operations VALUES(?,?)').run(member.operationId,JSON.stringify({lsn:a.lsn,epoch:a.epoch,positions:member.positions}));
-   for(const c of member.claims)q('INSERT INTO claims VALUES(?,?,?)').run(c.commandId,c.txId,last);
+   // [EXP-P5B-R2] Why: each nested command claim must resolve its own receipt position. Rejected: binding every claim to the group's final ordinal.
+   for(const c of member.claims){const own=member.rows.find(r=>r.tx_id===c.txId);q('INSERT INTO claims VALUES(?,?,?)').run(c.commandId,c.txId,own?.recorded_position??last);}
    for(const s of member.subjects)q('INSERT INTO heads VALUES(?,?) ON CONFLICT(subject) DO UPDATE SET pos=excluded.pos').run(s,last);
    for(const r of member.rows) {
     const json=JSON.stringify(r);
@@ -177,6 +178,14 @@ const handle = (op,a) => {
   fs.writeFileSync(ackPath+'.tmp',b);fs.renameSync(ackPath+'.tmp',ackPath);return;
  }
  if(op==='marker')return marker();
+ if(op==='counts')return {...marker(),assertions:q('SELECT count(*) n FROM recent_rows').get().n,retired:q("SELECT count(*) n FROM recent_rows WHERE json_extract(row,'$.retracted_position') IS NOT NULL").get().n,frames:q('SELECT count(*) n FROM frames WHERE kind=1').get().n,claims:q('SELECT count(*) n FROM claims').get().n,domainAssertions:q("SELECT count(*) n FROM recent_rows WHERE NOT (COALESCE(json_extract(row,'$.entity_type'),'')='_Transaction' AND entity=json_extract(row,'$.tx_id'))").get().n};
+ if(op==='readbackClaims') {
+  const out=[];for(let i=0;i<a.length;i+=500){const ids=a.slice(i,i+500);out.push(...q('SELECT command,txId,position FROM claims WHERE command IN ('+ids.map(()=>'?').join(',')+')').all(...ids));}return out;
+ }
+ if(op==='readback') {
+  const out=[];for(let i=0;i<a.length;i+=500){const ids=a.slice(i,i+500);out.push(...q('SELECT row FROM recent_rows WHERE id IN ('+ids.map(()=>'?').join(',')+')').all(...ids).map(x=>JSON.parse(x.row)));}return out;
+ }
+
  if(op==='frames')return frames(a.from,a.upto,a.maxBytes);
  if(op==='after'){
   // [EXP-SQL01] Why: epoch-only prefixes must not consume the commit batch budget.

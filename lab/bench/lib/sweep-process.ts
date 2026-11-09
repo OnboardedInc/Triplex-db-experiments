@@ -17,7 +17,10 @@ process.on("message", async (m: any) => {
     return;
   }
   if (m.type !== "start") return;
-  const comp: any = { sweepPage: (...args: any[]) => rpc("sweepPage", args) };
+  const comp: any = {
+    sweepPage: (...args: any[]) => rpc("sweepPage", args),
+    ...(m.options.positionBinding ? { positionBinding: () => m.options.positionBinding } : {}),
+  };
   try {
     const result = await runW0Sweep({
       ...m.options,

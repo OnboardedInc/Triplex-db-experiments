@@ -691,6 +691,15 @@ export class HostBroker {
     return this.log.claimAsync(id);
   }
   // [EXP-P5B] Why: expose dedicated worker selection and the valid cut through the owner. Rejected: a bench opening a second writer or reaching into private log state.
+  readback(ids: readonly string[]) {
+    return this.log.readback(ids);
+  }
+  readbackClaims(ids: readonly string[]) {
+    return this.log.readbackClaims(ids);
+  }
+  storeCounts() {
+    return this.log.counts();
+  }
   sweepPage(
     basis: import("./log.js").H1Basis,
     entities: readonly string[],

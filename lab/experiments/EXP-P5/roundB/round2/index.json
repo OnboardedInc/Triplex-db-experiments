@@ -1,0 +1,140 @@
+{
+  "format": "EXP-P5B-round2-evidence/1",
+  "at": "2026-11-09T08:35:47.018664+00:00",
+  "classification": "DIAGNOSTIC",
+  "acceptance": false,
+  "status": "RESOURCE-ABORT-BEFORE-10K-G0",
+  "durableRoot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-P5B/round2",
+  "fileCount": 607,
+  "retainedLogicalBytes": 12109551364,
+  "manifestSha256": "f644487cd87b993345a6db101eba14930fc4521370dbd86ba7bad6c6b925884d",
+  "authority": {
+    "Q101aCommit": "945476b2",
+    "row": "Q101a-945476b2.txt"
+  },
+  "finalChecks": {
+    "path": "checks-02",
+    "sourceStable": true,
+    "stages": [
+      {
+        "name": "build",
+        "command": "pnpm",
+        "args": [
+          "--config.store-dir=/Users/sam/projects/triplex-db-2/.pnpm-store",
+          "--filter",
+          "@triplex-build/triplex-qlever",
+          "build"
+        ],
+        "exit": 0,
+        "signal": null,
+        "startedAt": "2026-11-09T08:14:23.316Z",
+        "finishedAt": "2026-11-09T08:14:27.152Z",
+        "wallMs": 3836.3349169999997,
+        "logSha256": "41c8967c98ccdbe177b7292cb7941d473833bcc4c14568cf05ec195b74e48e14"
+      },
+      {
+        "name": "bench-types",
+        "command": "pnpm",
+        "args": [
+          "--config.store-dir=/Users/sam/projects/triplex-db-2/.pnpm-store",
+          "exec",
+          "tsc",
+          "-p",
+          "lab/bench/tsconfig.json",
+          "--noEmit"
+        ],
+        "exit": 0,
+        "signal": null,
+        "startedAt": "2026-11-09T08:14:27.156Z",
+        "finishedAt": "2026-11-09T08:14:29.861Z",
+        "wallMs": 2705.802667000001,
+        "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "qlever-types",
+        "command": "pnpm",
+        "args": [
+          "--config.store-dir=/Users/sam/projects/triplex-db-2/.pnpm-store",
+          "--filter",
+          "@triplex-build/triplex-qlever",
+          "exec",
+          "tsc",
+          "--noEmit"
+        ],
+        "exit": 0,
+        "signal": null,
+        "startedAt": "2026-11-09T08:14:29.862Z",
+        "finishedAt": "2026-11-09T08:14:32.783Z",
+        "wallMs": 2921.2228750000004,
+        "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "maps-and-harness",
+        "command": "/Users/sam/.hermes/node/bin/node",
+        "args": [
+          "--experimental-strip-types",
+          "--test",
+          "lab/bench/test/position-map.test.ts",
+          "lab/bench/test/host-map.test.ts",
+          "lab/bench/test/p5.test.ts",
+          "lab/bench/test/p5-round2.test.ts",
+          "lab/bench/test/p5-freshness.test.ts",
+          "lab/bench/test/p5-deadline.test.ts"
+        ],
+        "exit": 0,
+        "signal": null,
+        "startedAt": "2026-11-09T08:14:32.784Z",
+        "finishedAt": "2026-11-09T08:15:31.237Z",
+        "wallMs": 58453.559916,
+        "logSha256": "d54a89ce8e323f5d0d490aa639340fac9806b4fede675839a184dd81f6320201"
+      },
+      {
+        "name": "sqlite-broker",
+        "command": "pnpm",
+        "args": [
+          "--config.store-dir=/Users/sam/projects/triplex-db-2/.pnpm-store",
+          "--filter",
+          "@triplex-build/triplex-qlever",
+          "exec",
+          "vitest",
+          "run",
+          "test/broker.test.ts",
+          "test/sqlite-broker.test.ts",
+          "test/p5-host-store.test.ts",
+          "--maxWorkers=1",
+          "--no-file-parallelism"
+        ],
+        "exit": 0,
+        "signal": null,
+        "startedAt": "2026-11-09T08:15:31.240Z",
+        "finishedAt": "2026-11-09T08:15:50.992Z",
+        "wallMs": 19751.974707999994,
+        "logSha256": "8c3681735deecaf4e372936dd55e4025bf00f3589bc504296cf9b96b3c6fba5a"
+      }
+    ]
+  },
+  "mappedPreflight": {
+    "path": "mapped-preflight-01",
+    "status": "PREFLIGHT-MAPPED-ONLY",
+    "logicalPosition": 1,
+    "nativePosition": 2048
+  },
+  "smallSmoke": {
+    "path": "g0-smoke-50-01",
+    "N": 50,
+    "status": "R34-FINGERPRINT-MATCH",
+    "genericFullContentAdmission": false
+  },
+  "requested10k": {
+    "path": "b0-10k-01",
+    "requestedReferences": 434768,
+    "loggedReferences": 187520,
+    "G0": "NOT-RUN",
+    "rawDriverReceipt": "preserved RUNNING, unqualified",
+    "outerTerminal": "resource-abort-terminal.json",
+    "prefix": "unsealed; no admission"
+  },
+  "B1": "NOT-RUN; seed prerequisite incomplete; matrix not implemented",
+  "B2": "NOT-ADMITTED",
+  "explicitChangedContractPins": []
+}

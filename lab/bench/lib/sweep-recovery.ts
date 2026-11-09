@@ -42,6 +42,9 @@ export async function recoverSweep(o: {
   const processes: any[] = [];
   const options = {
     lane: "xtdb",
+    ...(o.comp.positionBinding
+      ? { positionBinding: o.comp.positionBinding(o.basis.position) }
+      : {}),
     scope: o.scope,
     subjects: o.subjects,
     basis: o.basis,

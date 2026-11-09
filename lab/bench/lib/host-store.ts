@@ -1,0 +1,543 @@
+/** [EXP-P5B-R2] Why: keep W0 reference positions inside the harness, native positions inside the product store.
+ * Rejected: teaching each oracle about broker packing or bypassing Triples with handwritten seed rows.
+ */
+import fs from "node:fs";
+import path from "node:path";
+import { createHash } from "node:crypto";
+import { createInterface } from "node:readline";
+import { Effect, Layer, ManagedRuntime } from "effect";
+import * as core from "../../../packages/core/dist/index.js";
+import * as rt from "../../../packages/core/dist/runtime/index.js";
+import * as q from "../../../packages/qlever/dist/index.js";
+import { PositionMap } from "./position-map.ts";
+import { canonical, many, W0, V_W0, requirePosition, type WorldRow } from "./w0-world.ts";
+import { seedCommands, seedOperations, type W0Command } from "./w0-seed.ts";
+import type { CompositionHandle } from "./composition.ts";
+import { publishRecords } from "./w0-outbox.ts";
+export function decodeHostRow(r: any): WorldRow {
+  const key: any = {
+    string: "value_string",
+    ref: "value_string",
+    integer: "value_string",
+    boolean: "value_boolean",
+    json: "value_json",
+    datetime: "value_datetime",
+    number: "value_number",
+  };
+  let value = r[key[r.value_type]];
+  if (r.value_type === "boolean") value = !!value;
+  if (r.value_type === "json") value = JSON.parse(value);
+  if (!key[r.value_type]) throw Error("unsupported host row value");
+  return {
+    id: r.id,
+    entityId: r.entity_id,
+    attribute: r.attribute,
+    value: { type: r.value_type, value },
+    position: r.recorded_position,
+    validFrom: r.valid_from,
+    ...(r.valid_to === null ? {} : { validTo: r.valid_to }),
+  };
+}
+export function commandWitness(operations: readonly any[], r: any, native: number, meta: any = {}) {
+  let i = 0;
+  const rows = operations.map((op) => {
+    if (op.op === "retract")
+      return { op: "retract", id: op.id, position: native, instant: r.instant, txId: r.txId };
+    if (op.op !== "assert") throw Error("unsupported mapped command");
+    const v = op.value,
+      t = r.triples[i++];
+    const row: any = {
+      id: t.id,
+      entity_id: op.entityId,
+      attribute: op.attribute,
+      value_type: v.type,
+      value_string: null,
+      value_number: null,
+      value_boolean: null,
+      value_datetime: null,
+      value_json: null,
+      recorded_at: r.instant,
+      recorded_position: native,
+      valid_from: op.validFrom ?? r.instant,
+      valid_to: op.validTo ?? null,
+      created_by: op.createdBy ?? meta.actor ?? null,
+      retracted_at: null,
+      retracted_position: null,
+      retract_tx_id: null,
+      entity_type: op.entityType ?? null,
+      schema_version: 1,
+      tx_id: r.txId,
+    };
+    const column: any = {
+      integer: "value_string",
+      string: "value_string",
+      ref: "value_string",
+      number: "value_number",
+      datetime: "value_datetime",
+      boolean: "value_boolean",
+      json: "value_json",
+    };
+    if (!column[v.type]) throw Error("unsupported host value kind");
+    row[column[v.type]] =
+      v.type === "boolean"
+        ? Number(v.value)
+        : v.type === "json"
+          ? JSON.stringify(v.value)
+          : v.value;
+    return { op: "assert", row };
+  });
+  return { rows, claim: { command: meta.commandId, txId: r.txId, position: native } };
+}
+export async function openMappedHost(dir: string, scope: string) {
+  const broker = await q.HostBroker.open({ dir, scopeKey: scope, minFreeBytes: 5 * 1024 ** 3 });
+  const detached: any = {
+    query: async () => [],
+    update: async () => {
+      throw Error("replica detached");
+    },
+    command: async () => {
+      throw Error("replica detached");
+    },
+    cancel: async () => {},
+    close: async () => {},
+  };
+  const adapter = q.makeQleverStorageAdapter(detached, scope, { broker }) as any;
+  const layer = rt.Runtime.define({
+    name: "p5-host",
+    storage: Layer.succeed(rt.StorageAdapter, adapter),
+    queries: Layer.succeed(
+      rt.QueryExecutor,
+      q.makeQleverQueryExecutor(detached, scope, { sourceView: adapter.sourceView }),
+    ),
+  }).layer({
+    scope: rt.DatabaseScope.test(scope),
+    capabilities: rt.Capabilities.none,
+    deterministic: { startTime: V_W0 - 10000000, seed: scope },
+  });
+  const managed = ManagedRuntime.make(layer),
+    T: any = await managed.runPromise(Effect.service(core.Triples));
+  const map = new PositionMap(),
+    commands: any[] = [];
+  let seedN = 0;
+  let seeded = false,
+    seedFile: string | undefined,
+    seedStat: string | undefined;
+  const assertBound = () => {
+    if (seedFile) {
+      const s = fs.statSync(seedFile, { bigint: true });
+      if (
+        canonical([String(s.ino), String(s.size), String(s.mtimeNs), String(s.ctimeNs)]) !==
+        seedStat
+      )
+        throw Error("bound seed position map changed after freeze");
+    }
+  };
+  const receipt = (r: any) => ({
+    ...r,
+    nativePosition: r.position,
+    position: map.reference(r.position),
+    positionBinding: map.binding,
+  });
+  async function verifyGroup(
+    items: readonly { operations: any[]; meta: any; receipt: any; reference: number }[],
+  ) {
+    const ids = items.flatMap((x) => [
+      ...x.receipt.triples.map((t: any) => t.id),
+      ...x.operations.filter((o) => o.op === "retract").map((o) => o.id),
+    ]);
+    const rows = await broker.readback([...new Set(ids)]),
+      byId = new Map(rows.map((r) => [r.id, r]));
+    const claims = await broker.readbackClaims(items.map((x) => x.meta.commandId));
+    const byClaim = new Map(claims.map((c) => [c.command, c]));
+    const bound = [];
+    for (const item of items) {
+      const r = item.receipt,
+        native = r.position,
+        submitted = commandWitness(item.operations, r, native, item.meta);
+      let i = 0;
+      const observed = item.operations.map((op) => {
+        if (op.op === "assert") {
+          const t = r.triples[i++],
+            raw = byId.get(t.id);
+          if (!raw) throw Error("seed assertion absent on readback");
+          if (raw.retracted_position !== null && raw.retracted_position <= native)
+            throw Error("seed assertion already retired at receipt");
+          const row =
+            raw.retracted_position !== null
+              ? { ...raw, retracted_at: null, retracted_position: null, retract_tx_id: null }
+              : raw;
+          return { op: "assert", row };
+        }
+        const row = byId.get(op.id);
+        if (!row) throw Error("seed retraction absent on readback");
+        return {
+          op: "retract",
+          id: row.id,
+          position: row.retracted_position,
+          instant: row.retracted_at,
+          txId: row.retract_tx_id,
+        };
+      });
+      const binding = map.append(item.reference, native, submitted, {
+        rows: observed,
+        claim: byClaim.get(item.meta.commandId),
+      });
+      bound.push({ ...item, receipt: { ...receipt(r), positionBinding: binding } });
+    }
+    return bound;
+  }
+  const counts = async () => {
+    assertBound();
+    const actual = await broker.storeCounts();
+    return {
+      position: map.reference(actual.position!),
+      assertions: actual.domainAssertions!,
+      retired: actual.retired!,
+      frames: actual.claims!,
+    };
+  };
+  const one = { lane: "qlever" as const, role: "Q101a mapped broker H1, detached replica" };
+  let sweepIndex = 0;
+  let writeTail: Promise<unknown> = Promise.resolve();
+  const comp: CompositionHandle = {
+    name: "host-mapped",
+    scopeName: scope,
+    backend: { name: "qlever-host", url: `sqlite://${dir}`, queryPath: "H1" },
+    assignments: { source: one, current: one, history: one, analytics: one, replicationEdges: [] },
+    currentPosition: async () => {
+      assertBound();
+      return map.size;
+    },
+    watermarks: async () => ({ source: map.size }),
+    coordinate: (position) => {
+      const n = map.native(position);
+      return {
+        stream: scope,
+        epoch: broker.epoch,
+        offset: Math.floor(n / 1024),
+        ordinal: n % 1024,
+      };
+    },
+    transact: (operations, meta) => {
+      const run = writeTail.then(async () => {
+        assertBound();
+        try {
+          if (typeof meta.commandId !== "string" || !meta.commandId.length)
+            throw Error("mapped host commands require commandId");
+          const r: any = await managed.runPromise(T.transact(operations, meta));
+          const bound = (
+            await verifyGroup([
+              { operations: [...operations], meta, receipt: r, reference: map.size + 1 },
+            ])
+          )[0]!;
+          const c = { operations, meta, receipt: bound.receipt };
+          commands.push(c);
+          return { ok: true, value: bound.receipt };
+        } catch (error: any) {
+          return { ok: false, tag: error._tag ?? error.name ?? "WriteError", error };
+        }
+      });
+      writeTail = run.then(
+        () => undefined,
+        () => undefined,
+      );
+      return run as any;
+    },
+    transactionByCommand: async (id) => {
+      await writeTail;
+      assertBound();
+      try {
+        const r: any = await managed.runPromise(T.transactionByCommand(id));
+        return {
+          ok: true,
+          value: r
+            ? {
+                ...r,
+                position: map.reference(r.position),
+                nativePosition: r.position,
+                positionBinding: comp.positionBinding!(map.reference(r.position)),
+              }
+            : null,
+        };
+      } catch (error: any) {
+        return { ok: false, tag: error._tag ?? "ReadError", error };
+      }
+    },
+    sweepPage: async (subjects, basis) => {
+      assertBound();
+      requirePosition(basis, map.size);
+      const nativeBasis = map.native(basis.position),
+        page = await broker.sweepPage(nativeBasis, subjects, {
+          worker: sweepIndex++ % 4,
+          validAt: basis.validAt,
+        });
+      const rows = page.rows.map((r) => ({
+        ...decodeHostRow(r),
+        ...(r.attribute === ":_tx/position" && r.value_type === "number"
+          ? { value: { type: "number", value: map.reference(r.value_number!) } }
+          : {}),
+        position: map.reference(r.recorded_position),
+      }));
+      return {
+        rows,
+        roundTrips: page.roundTrips,
+        basis: basis.position,
+        nativeSnapshot: page.snapshot,
+        position: map.referenceCut(Math.min(page.snapshot.position, map.native(map.size))),
+        epoch: String(page.snapshot.epoch),
+        reportedBasis: { ...basis },
+        positionBinding: comp.positionBinding!(basis.position),
+        nativeBasis,
+        store: {
+          snapshot: page.snapshot,
+          positionEncoding: "native",
+          nativeBasis,
+          transactionMs: page.transactionMs,
+          cpuMicros: page.cpuMicros,
+          cpuScope: page.cpuScope,
+        },
+      };
+    },
+    pinBasis: async (position, owner) => {
+      assertBound();
+      const p = broker.pinBasis(map.native(position), owner, {
+        ttlMs: 300000,
+        maxLagPositions: Number.MAX_SAFE_INTEGER,
+      });
+      const timer = setInterval(() => {
+        try {
+          p.renew();
+        } catch {}
+      }, 60000);
+      return {
+        position,
+        nativePosition: map.native(position),
+        positionBinding: comp.positionBinding!(position),
+        release: async () => {
+          clearInterval(timer);
+          p.release();
+        },
+      };
+    },
+    pull: async (entity, basis) => {
+      if (basis.recordedAt !== Number.MAX_SAFE_INTEGER)
+        throw Error("host mapped pull requires explicit P; T unsupported");
+      const p = await comp.sweepPage([entity], { position: map.size, validAt: basis.validAt });
+      return {
+        triples: p.rows,
+        entities: new Set(p.rows.map((r) => r.entityId)).size,
+        roundTrips: p.roundTrips,
+        depth: p.roundTrips - 1,
+        route: "H1",
+        language: "sqlite",
+        waitedMs: 0,
+      };
+    },
+    sweepPull: async (entity, basis) => comp.pull(entity, basis),
+    publishOutbox: (records) => publishRecords(comp, records),
+    feedPage: async (after, limit) => {
+      assertBound();
+      const nativeAfter = map.native(after);
+      const page: any = await managed.runPromise(T.transactions({ after: nativeAfter, limit }));
+      return {
+        ...page,
+        transactions: page.transactions.map((r: any) => ({
+          ...r,
+          position: map.reference(r.position),
+          nativePosition: r.position,
+          positionBinding: comp.positionBinding!(map.reference(r.position)),
+        })),
+        ...(page.next === undefined ? {} : { next: map.reference(page.next) }),
+        positionBinding: map.binding,
+      };
+    },
+    storeCounts: counts,
+    commandLog: () => {
+      if (seeded) throw Error("use commandStream for a mapped population");
+      return commands;
+    },
+    validateMappedReceipt: (r, operations, meta) => {
+      assertBound();
+      if (
+        map.native(r.position) !== r.nativePosition ||
+        r.positionBinding?.mapHash !== map.prefixHash(r.position) ||
+        r.positionBinding?.references !== r.position
+      )
+        throw Error("mapped receipt binding mismatch");
+      map.verifyContent(r.position, commandWitness(operations, r, r.nativePosition, meta));
+    },
+    positionBinding: (position = map.size) => {
+      assertBound();
+      return {
+        mapHash: map.prefixHash(position),
+        seedMapHash: map.binding.seedMapHash,
+        references: position,
+      };
+    },
+    commandStream: async function* () {
+      assertBound();
+      if (!seedFile) throw Error("mapped seed not frozen");
+      let expected = 1;
+      for await (const line of createInterface({
+        input: fs.createReadStream(path.join(path.dirname(seedFile), "seed.ndjson")),
+        crlfDelay: Infinity,
+      })) {
+        const c = JSON.parse(line),
+          r = c.receipt;
+        if (
+          c.reference !== expected++ ||
+          r.position !== c.reference ||
+          map.native(r.position) !== r.nativePosition ||
+          r.positionBinding.mapHash !== map.prefixHash(r.position)
+        )
+          throw Error("mapped replay intent binding mismatch");
+        map.verifyContent(r.position, commandWitness(c.operations, r, r.nativePosition, c.meta));
+        yield c;
+      }
+      if (expected - 1 !== W0.populationBasis(W0.rung(seedN)).tx)
+        throw Error("mapped replay seed gap");
+      for (const c of commands) yield c;
+      assertBound();
+    },
+    close: async () => {
+      try {
+        await managed.dispose();
+      } finally {
+        await broker.close();
+      }
+    },
+  };
+  async function seed(N: number, output: string, groupSize = 64) {
+    if (map.size || broker.head()) throw Error("mapped seed requires fresh store");
+    seedN = N;
+    const R = W0.rung(N),
+      latest = new Map<string, string>(),
+      pending: W0Command[] = [];
+    const log = fs.openSync(path.join(output, "seed.ndjson"), "wx");
+    let groups = 0,
+      assertions = 0,
+      retractions = 0;
+    const start = performance.now(),
+      logHash = createHash("sha256");
+    async function flush() {
+      if (!pending.length) return;
+      const free = fs.statfsSync(output);
+      if (free.bavail * free.bsize < 5 * 1024 ** 3)
+        throw Error("RESOURCE-ABORT host disk below 5 GiB");
+      const batch = pending.splice(0);
+      const results: any = await managed.runPromise(
+        adapter.withTransaction(
+          Effect.gen(function* () {
+            const out = [];
+            for (const c of batch) {
+              const operations = seedOperations(c, latest, R),
+                meta = { commandId: `p5:seed:${c.position}`, actor: "p5-seed" };
+              const r: any = yield* T.transact(operations, meta);
+              for (const t of r.triples)
+                if (!many.has(t.attribute)) latest.set(t.entityId + "\0" + t.attribute, t.id);
+              out.push({ reference: c.position, operations, meta, receipt: r });
+            }
+            return out;
+          }),
+        ),
+      );
+      const checked = await verifyGroup(results);
+      for (const c of checked) {
+        assertions += c.operations.filter((o) => o.op === "assert").length;
+        retractions += c.operations.filter((o) => o.op === "retract").length;
+        const line = canonical(c) + "\n";
+        fs.writeSync(log, line);
+        logHash.update(line);
+      }
+      groups++;
+      if (groups % 100 === 0) {
+        const progress = {
+          groups,
+          references: map.size,
+          nativePosition: broker.head(),
+          wallS: (performance.now() - start) / 1000,
+          freeBytes: free.bavail * free.bsize,
+          positionBinding: map.binding,
+        };
+        fs.writeFileSync(path.join(output, "progress.json"), JSON.stringify(progress, null, 2));
+        console.log(JSON.stringify(progress));
+      }
+    }
+    try {
+      for (const c of seedCommands(N)) {
+        pending.push(c);
+        if (pending.length === groupSize) await flush();
+      }
+      await flush();
+    } finally {
+      fs.closeSync(log);
+    }
+    if (map.size !== W0.populationBasis(R).tx) throw Error("seed reference coverage incomplete");
+    map.sealSeed();
+    seedFile = path.join(output, "position-map.json");
+    map.save(seedFile);
+    const stat = fs.statSync(seedFile, { bigint: true });
+    seedStat = canonical([
+      String(stat.ino),
+      String(stat.size),
+      String(stat.mtimeNs),
+      String(stat.ctimeNs),
+    ]);
+    PositionMap.load(seedFile, map.sha256);
+    seeded = true;
+    const result = {
+      N,
+      basis: W0.populationBasis(R),
+      nativeBasis: map.native(map.size),
+      groups,
+      assertions,
+      retractions,
+      wallS: (performance.now() - start) / 1000,
+      positionBinding: map.binding,
+      counts: await counts(),
+      mapFile: seedFile,
+      logSha256: logHash.digest("hex"),
+      witnessEncoding: "q101a-full-row-and-claim/1",
+      grouping:
+        "product StorageAdapter.withTransaction with up to 64 nested Triples.transact calls",
+    };
+    fs.writeFileSync(
+      path.join(output, "seed-manifest.json"),
+      JSON.stringify(result, null, 2) + "\n",
+      { flag: "wx" },
+    );
+    return result;
+  }
+  return {
+    comp,
+    broker,
+    map,
+    seed,
+    get seeded() {
+      return seeded;
+    },
+    // [EXP-P5B-R2] Why: history retirement lifetimes use exact native-to-reference translation too. Rejected: translating snapshot assertion positions only.
+    historyAt: async (entity: string, position: number) => {
+      assertBound();
+      const nativeCut = map.native(position);
+      const all: any = await managed.runPromise(adapter.history(entity));
+      const rows = all
+        .filter((r: any) => r.recorded_position <= nativeCut)
+        .map((r: any) =>
+          r.retracted_position !== null && r.retracted_position > nativeCut
+            ? { ...r, retracted_position: null, retracted_at: null, retract_tx_id: null }
+            : r,
+        );
+      return rows.map((r: any) => ({
+        ...r,
+        ...(r.attribute === ":_tx/position" && r.value_type === "number"
+          ? { value_number: map.reference(r.value_number) }
+          : {}),
+        recorded_position: map.reference(r.recorded_position),
+        retracted_position:
+          r.retracted_position === null ? null : map.reference(r.retracted_position),
+        positionBinding: comp.positionBinding!(position),
+      }));
+    },
+  };
+}

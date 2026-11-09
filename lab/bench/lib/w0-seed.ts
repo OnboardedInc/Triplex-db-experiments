@@ -101,25 +101,7 @@ export async function seedW0(comp: CompositionHandle, N: number, logFile: string
   const commandsHash = (await import("node:crypto")).createHash("sha256");
   try {
     for (const c of seedCommands(N)) {
-      const operations: any[] = [];
-      for (const [e, a, v] of c.rows) {
-        const key = e + "\0" + a;
-        // [EXP-P5] Why: replacement is atomic with the new assertion; the scheduled raise closes valid time instead of retracting today's value. Rejected: globally retracting for a future raise (breaks G0).
-        if (!many.has(a) && c.validFrom <= V_W0 && latest.has(key))
-          operations.push({ op: "retract", id: latest.get(key) });
-        operations.push({
-          op: "assert",
-          entityId: e,
-          attribute: a,
-          value: triplexValue(a, v),
-          validFrom: c.validFrom,
-          ...(a === "payRateCents" &&
-          c.validFrom <= V_W0 &&
-          W0.plan(Rseed, Number(e.slice(4))).raise
-            ? { validTo: Date.parse("2026-11-16T00:00:00Z") }
-            : {}),
-        });
-      }
+      const operations = seedOperations(c, latest, Rseed);
       const commandId = `p5:seed:${c.position}`;
       const result = await comp.transact(operations, { commandId, actor: "p5-seed" });
       if (!result.ok) throw new Error(`seed ${c.position}: ${result.tag}`);
@@ -155,4 +137,31 @@ export async function seedW0(comp: CompositionHandle, N: number, logFile: string
     releaseHashes: [W0.R1.hash, W0.R2.hash, W0.R3.hash],
     mapper: sha256(fs.readFileSync(new URL("./w0-seed.ts", import.meta.url))),
   };
+}
+
+// [EXP-P5B-R2] Why: grouped host seeding must use the identical command mapping as round A. Rejected: a second handwritten row encoder.
+export function seedOperations(
+  c: W0Command,
+  latest: Map<string, string>,
+  Rseed: ReturnType<typeof W0.rung>,
+) {
+  const operations: any[] = [];
+  for (const [e, a, v] of c.rows) {
+    const key = e + "\0" + a;
+    // [EXP-P5] Why: replacement is atomic with the new assertion; the scheduled raise closes valid time instead of retracting today's value. Rejected: globally retracting for a future raise (breaks G0).
+    if (!many.has(a) && c.validFrom <= V_W0 && latest.has(key))
+      operations.push({ op: "retract", id: latest.get(key) });
+    operations.push({
+      op: "assert",
+      entityId: e,
+      attribute: a,
+      value: triplexValue(a, v),
+      validFrom: c.validFrom,
+      ...(a === "payRateCents" && c.validFrom <= V_W0 && W0.plan(Rseed, Number(e.slice(4))).raise
+        ? { validTo: Date.parse("2026-11-16T00:00:00Z") }
+        : {}),
+    });
+  }
+
+  return operations;
 }

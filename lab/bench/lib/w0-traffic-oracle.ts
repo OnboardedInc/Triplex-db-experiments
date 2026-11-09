@@ -21,11 +21,24 @@ export class TrafficOracle {
   replayPin: any;
   async init() {
     this.replayPin = await loadReplayPin();
-    if (!this.comp.commandLog) throw Error("G1 independent command-intent log required");
+    if (!this.comp.commandLog && !this.comp.commandStream)
+      throw Error("G1 independent command-intent log required");
     this.ledger = new CountLedger(await this.comp.storeCounts());
-    const commands = this.comp.commandLog();
-    for (let i = 0; i < commands.length; i += 64)
-      await this.replay.call("append", commands.slice(i, i + 64));
+    if (this.comp.commandStream) {
+      let batch: any[] = [];
+      for await (const command of this.comp.commandStream()) {
+        batch.push(command);
+        if (batch.length === 64) {
+          await this.replay.call("append", batch);
+          batch = [];
+        }
+      }
+      if (batch.length) await this.replay.call("append", batch);
+    } else {
+      const commands = this.comp.commandLog!();
+      for (let i = 0; i < commands.length; i += 64)
+        await this.replay.call("append", commands.slice(i, i + 64));
+    }
     equalBytes(
       "G9 replay start",
       canonical(this.ledger.start),
@@ -33,6 +46,7 @@ export class TrafficOracle {
     );
   }
   async append(operations: readonly any[], meta: any, receipt: any) {
+    this.comp.validateMappedReceipt?.(receipt, operations, meta);
     this.ledger.add(operations, receipt);
     fs.appendFileSync(this.log, JSON.stringify({ operations, meta, receipt }) + "\n");
     await this.replay.call("append", [{ operations, meta, receipt }]);

@@ -71,6 +71,7 @@ export interface SweepOptions {
   controller?: Controller;
   beforePublish?: () => Promise<void>;
   signal?: AbortSignal;
+  readThroughOwner?: boolean;
 }
 export async function runW0Sweep(o: SweepOptions) {
   if (
@@ -89,6 +90,9 @@ export async function runW0Sweep(o: SweepOptions) {
     activations: o.activations ?? null,
     pageSize: 64,
     scope: o.scope,
+    ...(o.comp.positionBinding
+      ? { positionBinding: o.comp.positionBinding(o.basis.position) }
+      : {}),
   };
   let published: number[] = [];
   if (fs.existsSync(o.cursor)) {
@@ -118,7 +122,12 @@ export async function runW0Sweep(o: SweepOptions) {
     await Promise.all(
       Array.from({ length: o.workers }, async (_, workerIndex) => {
         const worker = new Worker(new URL("./sweep-worker.ts", import.meta.url), {
-          workerData: { composition: o.composition, lane: o.lane, scope: o.scope },
+          workerData: {
+            composition: o.composition,
+            lane: o.lane,
+            scope: o.scope,
+            rpcReads: o.readThroughOwner,
+          },
         });
         threads.push(worker);
         let resolve: ((v: any) => void) | undefined, reject: ((e: any) => void) | undefined;
@@ -198,6 +207,7 @@ export async function runW0Sweep(o: SweepOptions) {
           await o.afterCheckpoint?.(pageIndex);
           metrics.push({
             page: pageIndex,
+            store: page.store,
             cpu: page.cpu,
             cpuScope: page.cpuScope,
             elu: page.elu,
