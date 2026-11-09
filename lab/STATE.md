@@ -536,3 +536,10 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   mutants, REAL and at+vfOffset bit-exact, P2 guard p99 ratio 1.004 [0.987, 1.034] with a resolvable A/A band (first sound P2 guard
   result). Per the stop rule (c') is next (estimated hit floor 590-650 us, clears 1,100, probably not 1,320); if built, ask Sam whether
   its derived-cache bytes count toward G9.
+- 2026-11-09 HS01 round 3 (Sonnet, 719f5b0e; code afafa7aa): G9 W0 PASS at 203.76 B/fact (0.910 GB) with the journal option OFF (Q107-S
+  option C); ULID-shaped 294.90 B/fact (under 300, diagnostic). Purge fix (R2-1), entity names stored once (dictionary 28.09 to 19.34
+  B/fact), integral numbers as INTEGER (exact round-trip incl. beyond 2^53). Journal option ON (informational only): 115.37 W0 / 145.75
+  ULID, row-for-row identical answers. Gates: G6, G7, G8 (80 stops, 0 lost), HS01 26/26, evaluator 108, pack, G0 QLever 1,415 / XTDB 1,223,
+  SQL01 11/11, P2Q 873, route 93. Round 2 layout refused with a typed error. The builder restarted the qlever-dev resident after the
+  crash through engine.mjs. Needs review (CX-VHS01) in the CLI session.
+- 2026-11-09 All in-flight agents from the desktop session have reported. No agents running. Next work is listed in lab/HANDOFF-2026-11-09.md.
