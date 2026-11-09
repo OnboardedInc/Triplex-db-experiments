@@ -1,0 +1,100 @@
+TAP version 13
+# Subtest: CX-VCRNS-R3-C01: complete 100-second P5 positive control recomputes
+ok 1 - CX-VCRNS-R3-C01: complete 100-second P5 positive control recomputes
+  ---
+  duration_ms: 485.77375
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R3-N01: exact floor refuses
+ok 2 - CX-VCRNS-R3-N01: exact floor refuses
+  ---
+  duration_ms: 29.886166
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R3-first-and-last-only: exact floor refuses
+ok 3 - CX-VCRNS-R3-first-and-last-only: exact floor refuses
+  ---
+  duration_ms: 27.819791
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R3-one-interior-gap: exact floor refuses
+ok 4 - CX-VCRNS-R3-one-interior-gap: exact floor refuses
+  ---
+  duration_ms: 34.258667
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R3-no-reads: exact floor refuses
+ok 5 - CX-VCRNS-R3-no-reads: exact floor refuses
+  ---
+  duration_ms: 23.164708
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R3-missing-writer: exact floor refuses
+ok 6 - CX-VCRNS-R3-missing-writer: exact floor refuses
+  ---
+  duration_ms: 40.873167
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R3-candidate-sampling-rate: exact floor refuses
+ok 7 - CX-VCRNS-R3-candidate-sampling-rate: exact floor refuses
+  ---
+  duration_ms: 24.507625
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R3-candidate-calibration: exact floor refuses
+ok 8 - CX-VCRNS-R3-candidate-calibration: exact floor refuses
+  ---
+  duration_ms: 22.990042
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R3-N01-integration: original full evaluator regression now refuses specifically
+ok 9 - CX-VCRNS-R3-N01-integration: original full evaluator regression now refuses specifically
+  ---
+  duration_ms: 933.312875
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R3-rate-context: missing or non-one-second evaluator rate refuses
+ok 10 - CX-VCRNS-R3-rate-context: missing or non-one-second evaluator rate refuses
+  ---
+  duration_ms: 13.421
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R3-candidate-start: supplied sweep and traffic bounds cannot override authority
+ok 11 - CX-VCRNS-R3-candidate-start: supplied sweep and traffic bounds cannot override authority
+  ---
+  duration_ms: 809.698084
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R3-candidate-end: supplied sweep and traffic bounds cannot override authority
+ok 12 - CX-VCRNS-R3-candidate-end: supplied sweep and traffic bounds cannot override authority
+  ---
+  duration_ms: 712.396875
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R3-unverified-bounds: absent authority cannot judge a candidate sweep interval
+ok 13 - CX-VCRNS-R3-unverified-bounds: absent authority cannot judge a candidate sweep interval
+  ---
+  duration_ms: 277.23
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R3-candidate-output: extra candidate timing fields do not alter the verified window
+ok 14 - CX-VCRNS-R3-candidate-output: extra candidate timing fields do not alter the verified window
+  ---
+  duration_ms: 473.1925
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R3-Poisson: empty writer periods follow the trusted plan, not a new minimum rate
+ok 15 - CX-VCRNS-R3-Poisson: empty writer periods follow the trusted plan, not a new minimum rate
+  ---
+  duration_ms: 42.098
+  type: 'test'
+  ...
+1..15
+# tests 15
+# suites 0
+# pass 15
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4043.694125

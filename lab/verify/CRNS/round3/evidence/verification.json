@@ -1,0 +1,88 @@
+{
+  "format": "CX-VCRNS-round3-review/1",
+  "recordedAt": "2026-11-09T09:35:33.336Z",
+  "reviewStartFromLogBirthtime": "2026-11-09T09:24:28.818Z",
+  "verdict": "ACCEPT",
+  "scope": "Scoped offline N01 and window/gap/rate re-review only; no NS admission PASS or production adapter qualification.",
+  "targetCommit": "cb1178d9d9ed1e45aedf25f3a546fa4a678d53d8",
+  "reviewBaseCommit": "b8b0eb88cd381da4342801e94f1715c4ac796033",
+  "evaluatorSha256": "e689373eff850daf511b95423c9b88f545979595b4445abcad7d6a52de178c46",
+  "evaluatorIntegrity": {
+    "repo": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-crns",
+    "commit": "b8b0eb88cd381da4342801e94f1715c4ac796033",
+    "files": {
+      "lab/bin/claim.mjs": "e689373eff850daf511b95423c9b88f545979595b4445abcad7d6a52de178c46",
+      "lab/bin/lib.mjs": "d3031840141fb5e13597e69e75511c809d5814610fe9d39b838ab52e0561b13e",
+      "lab/bin/gate.mjs": "f5fa85691c324def748a967e2c7a891784e2a50970a87d9534a1e414b397be2f",
+      "lab/bin/engine.mjs": "78f1a6b9a2a8fba62ff35be34b426e723c39587a2104e69ff4b9b05889589a1f",
+      "lab/bin/heavy-lock.mjs": "88dd2071c8d8c1e3212c9a65dc719b79af46fbe6cc2e6ede8fbe0b61112803fa",
+      "lab/bin/receipt.mjs": "ebdcfb60284d6efe378923c0f42eb4eb7ad9a260141ceb46958e86752d0d2d2c",
+      "lab/acceptance/build_contract.py": "07c98812ec83fe8a7e32dd09418d40522b48b3dc53e2d5f3df6f7007288d98e5"
+    },
+    "marker": "/Users/sam/projects/triplex-db-2/.git/worktrees/verify-crns/triplex-evaluator-poisoned.json",
+    "problems": []
+  },
+  "original": {
+    "command": [
+      "node",
+      "lab/bin/heavy.mjs",
+      "--label",
+      "CX-VCRNS-round3-original",
+      "--",
+      "node",
+      "--test",
+      "lab/bin/test/claim.test.mjs",
+      "lab/bin/test/claim-round2.test.mjs",
+      "lab/bin/test/claim-ns.test.mjs",
+      "lab/bin/test/claim-ns-round2.test.mjs",
+      "lab/bin/test/claim-ns-round3.test.mjs",
+      "lab/verify/CRNS/review.test.mjs",
+      "lab/verify/CRNS/round2/review.test.mjs",
+      "lab/verify/CRNS-opus/forgeries.test.mjs",
+      "lab/verify/CRNS-opus/forgeries-round2.test.mjs"
+    ],
+    "exitCode": 0,
+    "tests": 257,
+    "pass": 257,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "reviewer": {
+    "command": [
+      "node",
+      "--test",
+      "lab/verify/CRNS/round3/review.test.mjs"
+    ],
+    "exitCode": 0,
+    "tests": 15,
+    "pass": 15,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "unchanged": {
+    "originalEvaluatorCode": true,
+    "originalSuites": true,
+    "targetTestsAndFixtures": true,
+    "acceptanceFiles": 43,
+    "implementationFiles": true
+  },
+  "files": {
+    "evidence/observations.json": "4fbd5684f9245284ff6c234d7f7129c39ce91b1e063a05f63836d15c061b903e",
+    "evidence/observe.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "evidence/observe.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/original-suites-attempt1.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "evidence/original-suites-attempt1.tap": "169f39b89745374069e9c8dce10eb886f602ba1748c6405709d420a15d7af2a8",
+    "evidence/reviewer-attempt1.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "evidence/reviewer-attempt1.tap": "13b46751eb7877cfb1a2ae7b522e8e9270aef95f6495223903bea2f44525ddd8",
+    "probes.mjs": "d396c4e2db577faa854faa52c73a4e318812a1d8b2c12c23b60ff08b33aaa17d",
+    "review.test.mjs": "efdd1259674b73c71e611454665caf1937511078d3d18abeea317f5cd4f4ac02",
+    "observe.mjs": "5998eb2dc55cb6f14f70d67872f52103a346c8107b0b8ba9745039587a95e6a3",
+    "record-verification.mjs": "a5ce5dcd5b0e2581303f3bb077c1482b8a6669ec76851d2861f57efbbb9da432"
+  },
+  "pinnedFilesChangedByReviewer": [],
+  "residual": "Production callback must independently establish trusted driver start and observer durable end; synthetic test callback checks exact fixed bounds."
+}
