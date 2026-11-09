@@ -2003,3 +2003,53 @@ The `docker cp` of the store files used `allowFail` and the judge substituted `b
 | `lab/observer/test_w4.py` | `3627faa4c0e036198e0953d7d319b9a3c2ef4071441c4ccb5df9836619ac1239` | `5ab586b8f3a95731e8ca6dd70af160f5c7687f9e551b0389d9912689674265b6` |
 
 No `lab/acceptance` path pins any of them. New: `lab/observer/test_round17.mjs` (`9c3560e107fa982b172c75a47149507cce6f35b3a251c39c4e25afe8a5e17de3`).
+
+## Round 18: END counters reconciled, present-empty WAL accepted, live collector rehearsal (fixes R17-F1, R17-F2)
+
+Builder Claude Sonnet 5.5, from `exp/OBS01-observer` at `bdcc0c65` (round 17 review `VERIFY-round17.md`, FIX-FIRST). The offline work touched no Docker or VM; one live **rehearsal** (writer SIGKILL, **no guest crash**) then exercised the new collector container. W1, the IR reader and the ABBA are untouched.
+
+### R17-F1 (High): received END records were ignored (fixed)
+
+`prefix_problems` now reconciles a detach record and the final counters when they arrived: the detach timestamp must not precede any received event (nor the attach), every CPU with received records must have a final count equal to the number of records received, a count for a CPU with no records must be zero, and a CPU with records but no count line refuses (a half-received END is not an END). Any mismatch raises `TRACE-INCOMPLETE` before any count is produced. With no detach record only the observed prefix counts (the sequence, order, attach and stderr rules of round 17 are unchanged), so a normal crash suffix is still judged. The reviewer's reproduction (commit 20's sync at CPU sequence 40 removed, then `SW1|Z|400` and `@n[0]: 40`, store with commits 1 to 19, valid receipt) formerly gave `pass: true` and, paired with five valid OFF rows, an aggregate PASS; it now refuses `TRACE-INCOMPLETE` ("final count 40 != 39 records received"), and the ten-row aggregate fails. A backwards detach timestamp (`SW1|Z|1` after events through 305) refuses.
+
+### R17-F2 (Medium): a receipted zero-byte WAL was treated as missing (fixed)
+
+`judge_trial` passed `wal_bytes or None` to `verify_collection`, turning a present empty file into "no local file". It now passes the bytes as they are: `b''` is a present empty file, `None` is no local file. A receipt row with size 0 and the empty-file sha256 `e3b0c442...b855` and copy status true is accepted with `walAbsentConfirmed: false`; `None` against a listed WAL is `COPY-FAILED`, `b'x'` against a zero-size row is `COPY-INCOMPLETE`; absence still needs the receipt's listing to show it absent. The production CLI (which reads a missing file as `None`) follows the same rule.
+
+### Tests
+
+- Reviewer fixtures, unchanged (their retained outputs restored with `git checkout -- lab/verify`): `test_round17_review.py` **9/9** (including `test_R17_F1_completed_end_counters_prove_a_missing_tail_event`, `test_R17_F1_backwards_detach_timestamp_must_refuse`, `test_R17_F2_present_zero_byte_WAL_is_distinct_from_a_failed_copy`), `test_round17_pipeline.py` **2/2**, the round 16 set `test_round16_adversarial.py` 5/5, `review_round16_w4_io.mjs` 1/1, `review_round16.mjs` 2/2, and `review_round16.py` replay passes with the reviewer's re-pinned aggregate assertion.
+- Builder: `test_w4.py` **20** (4 new: END reconciliation incl. missing count, extra CPU, zero count and half-received END; detach before events; a prefix without END; the zero-byte WAL with `b''`/`None`/`b'x'`; one earlier assertion updated to `COPY-INCOMPLETE` for an empty file where the volume has bytes); `test_vm` 14, `test_syncwitness` 18, `test_round10` 40, `test_round11` 20; Node `test_engine` 26, `test_round12` 25, `test_round16` 11, `test_abba` 7, `test_round17` 5; reviewer rounds 11 to 14: 5, 8, 5, 5.
+- The recorded round 16 rehearsal traces carry no END, so they still replay identically.
+
+### Live W4 rehearsal (no crash): `r18/w4-rehearsal-r18`, evidence `/Users/sam/Claude/Projects/triplex-db-2/evidence/OBS01-W/r18/` (23 files with `SHA256SUMS`), small copies in `lab/experiments/EXP-OBS01/round18/`
+
+Run on the 8 CPU / 20 GiB VM after a G03 case container had cleared the preflight, through `heavy.mjs --label OBS01-W`, Docker only via the triplex2 socket; the global context stayed `default`. The writer was SIGKILLed (rehearsal, Q108c: never a durability result); no resident or other container was stopped or touched (`tx2-qlever-dev` stayed up, `tx2-xtdb-dev` stayed exited; no `tx2-sw-*` container or volume left behind).
+
+| Trial | Collector receipt (from the volume) | Copies | Judge |
+| --- | --- | --- | --- |
+| 1 FULL | listing `broker.db`, `broker.db-shm`, `broker.db-wal`; sizes 16,384 and 25,247,392 B | both copied, sizes and sha256 equal | `collection: verified`; 1,982 ACKs, **1,982 witnessed**, 1,983 present, 0 witnessed lost |
+| 2 OFF | same listing; sizes 16,384 and 40,034,072 B | both copied, sizes and sha256 equal | `collection: verified`; 3,143 ACKs, 0 witnessed, all present (no crash, so no loss), `walAbsentConfirmed: false` |
+
+This is the first live execution of the receipt-printing collector (`docker start -a` on a created container, read-only volume, writer uid) and of `docker cp` verification against it. The aggregate is correctly false (rehearsal, two trials, no OFF loss). It does not exercise the guest crash, the recovery path (`colima start --activate=false`), END records from a live trace, or a zero-byte WAL.
+
+### Rule 9a audit
+
+| Site | Content | Freshness | Binding |
+| --- | --- | --- | --- |
+| `prefix_problems` END branch | detach bound; per-CPU final count equals records received; zero count for empty CPUs; counts present for every CPU with records | the trial's own received trace | the same trace's start record and the writer's R line |
+| `verify_collection` (b'' vs None) | receipted size and sha256 of each copied file, copy status; listing for absence | receipt printed by a container started after the run, from the same volume (live: `collection.json` of each trial) | trial directory; the judge hashes the bytes it is given |
+| W4 aggregate and window `pass` (unchanged) | counts only unrefused trials with a verified collection | this window | per-trial judgments; the live window is a rehearsal and is false by construction |
+
+### Moved source hashes (old at `b918a394`)
+
+| Path | Old SHA256 | New SHA256 |
+| --- | --- | --- |
+| `lab/observer/vm_w4_judge.py` | `17cb551833ab985ac4f037c9085157112a24de606ee803d542af2208a066d694` | `127602055a91637dce2b971e643b144e452fc412d79949cb4bf6fcc7c6954b1c` |
+| `lab/observer/test_w4.py` | `5ab586b8f3a95731e8ca6dd70af160f5c7687f9e551b0389d9912689674265b6` | `a37f0d53b71c7f2ea42b1637b7d7a490e46b98d798125a4fee5f06087bb9e3ec` |
+
+No `lab/acceptance` path pins either. `sync-witness.mjs` is unchanged this round.
+
+### What did not run
+
+The guest-crash W4, the recovery restart, a live END-bearing trace, W1/W2/W3/ABBA.

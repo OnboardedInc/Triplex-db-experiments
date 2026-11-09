@@ -464,3 +464,8 @@ A numeric helper call without a name token (for example `call 125`) therefore do
   (`w4-collection/1`). The judge accepts the copies only if every listed file was copied cleanly with exactly the receipted size and sha256, and accepts an absent file only if the receipt's listing shows it absent (the main database must always exist). Codes: `COPY-FAILED`, `COPY-INCOMPLETE`,
   `COLLECTION-RECEIPT-INVALID`, `WAL-ABSENCE-UNPROVEN` (empty WAL handed in with no receipt).
 - **Refused trials are no evidence.** A refused trial reports no counts; `aggregate` lists it, fails, never counts its commits as lost or surviving, and also fails any trial without a verified collection record.
+
+## Round 18: END reconciliation and present-empty WAL (fixes R17-F1, R17-F2)
+
+`vm_w4_judge.prefix_problems` reconciles a detach record and final counters when they DID arrive: the detach timestamp may not precede any received event, every CPU with records needs a final count equal to its received records, and a count for a CPU with no records must be zero (a half-received END is refused); without a detach record only the observed prefix counts.
+`judge_trial` keeps `b''` (a present empty file) and `None` (no local file) distinct when it verifies the collection receipt; a receipt row with size 0 and the empty-file hash is a present, empty WAL, not a missing one. A live W4 rehearsal (writer SIGKILL, no crash) with the collector receipt ran on the VM: `lab/experiments/EXP-OBS01/round18/`.

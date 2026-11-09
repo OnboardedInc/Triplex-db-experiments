@@ -1,0 +1,13 @@
+{
+  "status": "FAIL",
+  "windows": [
+    {
+      "window": "W4",
+      "pass": false
+    }
+  ],
+  "python": "sha256:e48f59cdba69a3cbd9ed2cf0f348d90d45a8d350d98134cf1070bc106ee9ed90",
+  "bpftrace": "sha256:06f6223590f518a903c90d7dec383a2ee9fa669f80000013b5a004d2a2efbf25",
+  "nonce": "daf3982b",
+  "claim": "probe windows only; no NS acceptance and no host power-loss durability"
+}

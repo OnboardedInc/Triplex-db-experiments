@@ -1,0 +1,26 @@
+{
+  "format": "w4-collection/1",
+  "receipt": {
+    "format": "w4-receipt/1",
+    "listing": [
+      "broker.db",
+      "broker.db-shm",
+      "broker.db-wal"
+    ],
+    "files": {
+      "broker.db": {
+        "size": 16384,
+        "sha256": "e084fee2577295a49bf62c9eaa1e6b4136d8dca7db3d31d1aad9e829c15c549c"
+      },
+      "broker.db-wal": {
+        "size": 40034072,
+        "sha256": "82f3b0d585fe7dd0c0637896091d8735cb9854e07014c28f666db6dbbc15a622"
+      }
+    }
+  },
+  "receiptError": null,
+  "copy": {
+    "broker.db": true,
+    "broker.db-wal": true
+  }
+}

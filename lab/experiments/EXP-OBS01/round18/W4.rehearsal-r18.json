@@ -1,0 +1,82 @@
+{
+  "window": "W4",
+  "rehearsal": true,
+  "trials": [
+    {
+      "index": 1,
+      "mode": "full",
+      "crashed": false,
+      "judge": {
+        "acked": 1982,
+        "ackedLostCount": 0,
+        "collection": "verified",
+        "lastAcked": 1982,
+        "lastSurvived": 1983,
+        "marker": 1983,
+        "mode": "full",
+        "pass": true,
+        "problems": [],
+        "survived": 1983,
+        "syncsCredited": 1992,
+        "traceDetached": false,
+        "traceEvents": 14380,
+        "unwitnessedAcked": 0,
+        "unwitnessedLostCount": 0,
+        "walAbsentConfirmed": false,
+        "witnessProblems": [],
+        "witnessed": 1982,
+        "witnessedLost": [],
+        "witnessedLostCount": 0
+      },
+      "pass": true
+    },
+    {
+      "index": 2,
+      "mode": "off",
+      "crashed": false,
+      "judge": {
+        "acked": 3143,
+        "ackedLostCount": 0,
+        "collection": "verified",
+        "lastAcked": 3143,
+        "lastSurvived": 3144,
+        "marker": 3144,
+        "mode": "off",
+        "pass": true,
+        "problems": [],
+        "survived": 3144,
+        "syncsCredited": 8,
+        "traceDetached": false,
+        "traceEvents": 19616,
+        "unwitnessedAcked": 3143,
+        "unwitnessedLostCount": 0,
+        "walAbsentConfirmed": false,
+        "witnessProblems": [
+          "SYNC-MISSING: 3143 of 3143 commits"
+        ],
+        "witnessed": 0,
+        "witnessedLost": [],
+        "witnessedLostCount": 0
+      },
+      "pass": true
+    }
+  ],
+  "aggregate": {
+    "counted": 2,
+    "full": 1,
+    "fullAckedLost": 0,
+    "off": 1,
+    "offUnwitnessedLost": 0,
+    "pass": false,
+    "premiseHolds": false,
+    "reasons": [
+      "only 2 of 10 crash trials gave evidence",
+      "no unwitnessed OFF commit was lost: the class premise (Q100r) is reopened"
+    ],
+    "refused": 0,
+    "trials": 2,
+    "witnessedLost": 0
+  },
+  "pass": false,
+  "claim": "REHEARSAL of the W4 pipeline (writer SIGKILL, no guest crash): not a W4 result"
+}

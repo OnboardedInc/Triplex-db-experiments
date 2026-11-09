@@ -1,0 +1,38 @@
+{
+  "index": 1,
+  "mode": "full",
+  "rehearsal": true,
+  "crashed": false,
+  "dir": [
+    265289745,
+    3175913
+  ],
+  "profileViolations": [],
+  "writerId": "2733acf16c90cbcb061b45ffa458d388b937c44eedb9bdd7d9e6946d4dd86f72",
+  "writerCgroupId": 1439475,
+  "acksBeforeCrash": 1851,
+  "bootIdBefore": "b7f89e25-afdd-4e77-aa7b-25dab9353649",
+  "judge": {
+    "acked": 1982,
+    "ackedLostCount": 0,
+    "collection": "verified",
+    "lastAcked": 1982,
+    "lastSurvived": 1983,
+    "marker": 1983,
+    "mode": "full",
+    "pass": true,
+    "problems": [],
+    "survived": 1983,
+    "syncsCredited": 1992,
+    "traceDetached": false,
+    "traceEvents": 14380,
+    "unwitnessedAcked": 0,
+    "unwitnessedLostCount": 0,
+    "walAbsentConfirmed": false,
+    "witnessProblems": [],
+    "witnessed": 1982,
+    "witnessedLost": [],
+    "witnessedLostCount": 0
+  },
+  "pass": true
+}

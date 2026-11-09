@@ -1,0 +1,40 @@
+{
+  "index": 2,
+  "mode": "off",
+  "rehearsal": true,
+  "crashed": false,
+  "dir": [
+    265289745,
+    3175952
+  ],
+  "profileViolations": [],
+  "writerId": "d3529fc4bd3e5beaf0bb3cb4dc11a65bc9c3d024608c3a9ba2c5c749fec9d735",
+  "writerCgroupId": 1441149,
+  "acksBeforeCrash": 2693,
+  "bootIdBefore": "b7f89e25-afdd-4e77-aa7b-25dab9353649",
+  "judge": {
+    "acked": 3143,
+    "ackedLostCount": 0,
+    "collection": "verified",
+    "lastAcked": 3143,
+    "lastSurvived": 3144,
+    "marker": 3144,
+    "mode": "off",
+    "pass": true,
+    "problems": [],
+    "survived": 3144,
+    "syncsCredited": 8,
+    "traceDetached": false,
+    "traceEvents": 19616,
+    "unwitnessedAcked": 3143,
+    "unwitnessedLostCount": 0,
+    "walAbsentConfirmed": false,
+    "witnessProblems": [
+      "SYNC-MISSING: 3143 of 3143 commits"
+    ],
+    "witnessed": 0,
+    "witnessedLost": [],
+    "witnessedLostCount": 0
+  },
+  "pass": true
+}

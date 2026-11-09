@@ -1,0 +1,5 @@
+start 2026-11-09T19:12:03Z status {"available":true,"freeBytes":92449710080,"busy":[],"exclusiveHeld":[]}
+[lab] waiting for pool lock (held by pid 76925)
+[lab] waiting for pool lock (held by pid 78318)
+{"out":"/Users/sam/Claude/Projects/triplex-db-2/evidence/OBS01-W/r18/w4-rehearsal-r18","status":"FAIL"}
+end 2026-11-09T19:12:30Z
