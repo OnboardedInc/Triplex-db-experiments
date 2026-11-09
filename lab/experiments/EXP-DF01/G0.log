@@ -1,0 +1,6 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 48236 "CX-NSR-G0-3", pid 20247 "CX-DI01-final-r5", pid 24117 "CX-P5B-final-evidence-03", pid 22789 "CX-VCRNS-original"
+[lab] G0-datomic-20261109T073729Z-b9d89b: raw output runs/G0/G0-datomic-20261109T073729Z-b9d89b
+FAIL G0 datomic scope=full executed=1279 pass=1275 fail=4 skip=66
+  reason: node-test-ns-bench exited 1
+  reason: 4 failed tests
+receipt: lab/runs/G0/G0-datomic-20261109T073729Z-b9d89b.json

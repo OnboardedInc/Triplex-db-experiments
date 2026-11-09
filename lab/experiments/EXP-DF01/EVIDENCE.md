@@ -10,6 +10,13 @@ It holds vendor JRE API metadata, the SHA256-verified archive and extracted JRE.
 `DURABLE-SHA256SUMS` is rooted at that directory. The Datomic distribution remains in its existing downloads directory;
 this experiment did not duplicate, modify or delete it.
 
-G0's source/build/raw-byte object store is the standard gitignored worktree `runs/` store. The final receipt is copied here;
-bulky raw outputs, when present, are copied to the durable evidence root with a checksum manifest before reporting.
+G0's source/build/raw-byte object store is the standard gitignored worktree `runs/` store. The canonical terminal receipts are committed under `lab/runs/G0/`;
+raw outputs are copied to the durable evidence root with a checksum manifest before reporting.
 No file over 1 MB or raw-output directory over 5 MB is intentionally committed.
+
+Final full G0: `G0-datomic-20261109T074723Z-fe429c` (1,279/1,279, 66 expected skips).
+First failures: `G0-datomic-20261109T073729Z-b9d89b`, `G0-datomic-20261109T074216Z-bab2d9`.
+Interrupted setup: `G0-datomic-20261109T074129Z-83a091` (no terminal receipt, unqualified).
+The durable `gates/` tree contains raw outputs and copies of terminal receipts; `objects/` contains their verified preimages.
+`xtdb-dist/` records the optional package build required by the qualification import. `pack/` preserves the failed root pack check.
+`FILES-SHA256SUMS` covers the small local experiment artifacts; the checksum manifest excludes itself and its generation log.

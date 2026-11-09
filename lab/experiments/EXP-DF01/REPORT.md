@@ -1,7 +1,9 @@
 # EXP-DF01 — Datomic native feed (CX-DF01)
 
 North star: P3, ordered resumable identity delivery, under `lab/SCOPE.md`, `lab/NORTH-STAR.md` and `lab/TARGETS.md`.
-Branch `exp/DF01-datomic-feed`, base `731e10e4` (FD01). Builder observations only; independent review and promotion remain separate.
+**Result: feed offline gates and G0 PASS; root pack check FAIL (unbuilt CLI); real-peer gates NOT RUN.** Final G0: 1,279 executed/pass, zero failures, 66 expected skips and zero unexpected skips.
+Branch `exp/DF01-datomic-feed`, base `731e10e4` (FD01), implementation `1a7e09bd485d494b1b36095e567707e71140d3ba`.
+Builder observations only; independent review and promotion remain separate.
 
 ## Implementation
 
@@ -27,7 +29,7 @@ lets offline tests compile the actual gateway and vendor API, instead of replaci
 
 ## Gates and evidence
 
-Final gateway offline gate: **7 tests / 32 assertions, zero failures/errors** (`clojure7.log`), with actual vendor JAR, launcher, JVM and source SHA256 inputs. G0 is pending. Earlier attempts remain alongside their logs; they are not promoted.
+Final gateway offline gate: **7 tests / 32 assertions, zero failures/errors** (`clojure7.log`), with actual vendor JAR, launcher, JVM and source SHA256 inputs. G0 passed on the unchanged implementation in the final attempt below. Earlier attempts remain alongside their logs; they are not promoted.
 
 The fixed `tx-range` fixture is **synthetic recorded data**, authored in `feed_test.clj`, not a capture from a running peer.
 The gateway itself projects it into `recorded-page.json`; TypeScript compares that page with separately authored expected identities
@@ -44,6 +46,20 @@ using FD01's unchanged `auditFeed`, `auditResume` and `requireGapMutationCaught`
 - `clojure7.log`: corrected path resolution; final source/helper and dependency bytes bound, 7 tests / 32 assertions passed; output hash equals the original recorded page.
 - `focused1.log`: 2 TypeScript files / 4 tests passed; unchanged FD01 audits catch gaps, duplicates, payload changes and the gap mutation.
   SQLite close/reopen and replay produce the same checkpoint/effects/affected set.
+
+| G0 attempt | Result | Evidence / reason |
+| --- | --- | --- |
+| `G0-datomic-20261109T073729Z-b9d89b` | FAIL: 1,275/1,279 pass; 4 fail | Three host-clock tests could not read `kern.bootsessionuuid` in the sandbox; one qualification test imported unbuilt optional XTDB dist. The new Datomic tests passed. |
+| `G0-datomic-20261109T074129Z-83a091` | UNQUALIFIED, interrupted during setup | The rerun began while sequencing the XTDB build, and its own wrapper was stopped. Build output and partial typecheck files are retained; no terminal receipt or semantic result is adopted. |
+| `G0-datomic-20261109T074216Z-bab2d9` | FAIL: 1,278/1,279 pass; 1 fail | Host reads permitted and optional XTDB prebuilt. Existing testkit `round3: retired stores cannot omit policies/cuts or silently decline purge execution` exceeded its unchanged 5,000 ms timeout. |
+| `G0-datomic-20261109T074723Z-fe429c` | **PASS: 1,279/1,279; 66 expected skips; 0 unexpected** | Same source and timeout after the affected file passed 12/12 in isolation (`timeout-repro.log`). Complete fresh G0, with `previous` bound to the prior failure. |
+
+Canonical receipts are in `lab/runs/G0/`; raw copies, including the interrupted attempt, are retained in the durable evidence root.
+`G0.log`, `G0-r2.log`, `G0-r3.log`, `G0-r4.log`, `xtdb-build.log` and `timeout-repro.log` retain the sequence.
+No gate, timeout, skip policy, testkit source or acceptance file was changed to obtain the final result.
+`pnpm pack:check` was run through its script (`pack.log`) and **FAILED** because the unrelated, unbuilt CLI tarball lacks
+`package/dist/index.js`; its artifacts remain under the durable `pack/` directory. This checker does not include Datomic.
+No clean packed-consumer result is claimed. Typecheck, targeted lint and formatting passed; G0 rebuilt and typechecked the lane packages.
 
 All expensive commands used `lab/bin/heavy.mjs`; dependency installation used the pinned pnpm 10.11.0, frozen lockfile,
 `--offline --store-dir /Users/sam/projects/triplex-db-2/.pnpm-store`. No dependency versions or lockfile entries changed.
@@ -63,6 +79,7 @@ Every location introduced or used here that can turn observations into a success
 | `datomic/test/feed.test.ts`, HTTP test | Actual URL/query, response JSON identity, invalid coordinates and foreign database refusal | New ephemeral HTTP server/client per test | Exact requested database/fromT/limit/wait; gateway-produced recorded fixture; no remote engine |
 | Existing G0 `gate.mjs` / `vitestOutcome` / TAP and oracle checks | Unchanged gate checks complete executed results, failure counts, reviewed skips and oracle content | New run ID, builds and test executions; first failures retained | Existing source/build/input hashes and parent heavy grant; no live slot claimed for G0 |
 | Authored `feed_live.clj` `ensure!` and exit (NOT EXECUTED) | Independent initial identity tuple, identity equality after excision, no surviving value in history, skipped excision, whole replay equality and actual scratch deletion | Unique scratch scope, refuse old evidence; resume is a separate JVM | Saved scope/database/fromT/page and gateway source hash; external runbook requires actual container/image/config receipts |
+| Evidence retention/checksum command | Copies are checked against original SHA256 and canonical receipt object hashes | Terminal run directories are copied only after exit; interrupted attempt stays unqualified | Separate run-ID directories, exact object hashes and durable file manifest; no semantic PASS is generated |
 | This report's observations | Counts come from retained raw logs, with limitations stated | Names each distinct attempt; final G0 referenced separately | Branch/base and SHA256 index; builder result only, not independent promotion |
 
 The feed route and adapters themselves emit data or typed refusals, not semantic PASS receipts. No acceptance-contract verdict code
@@ -85,5 +102,5 @@ legacy record times retain explicit pending status; RT01 decided-stamp qualifica
 transaction pages; it does not synthesize empty intermediate logical commits absent from DA01's annotations.
 
 No P3 latency/256-reader result, O-DOMAIN fanout, real storage/Postgres qualification, production tenant/auth provisioning, G1 live run,
-root pack consumer, independent verification or acceptance promotion is claimed. No merge, push, package publication, main-checkout
+successful root pack consumer, independent verification or acceptance promotion is claimed. No merge, push, package publication, main-checkout
 edit, shared engine change, unrelated cleanup, original-ZIP modification or subagent launch occurred.
