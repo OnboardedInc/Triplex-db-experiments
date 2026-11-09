@@ -1,4 +1,4 @@
-import { constructReadDispatch, exactReadService } from "@triplex-build/triplex/runtime";
+import { createReadConstructor, exactReadService } from "@triplex-build/triplex/runtime";
 import { Effect } from "effect";
 import {
   assertDatalogQuery,
@@ -28,6 +28,9 @@ import { materializeQleverRules } from "./recursion.js";
 import { prepareAggregateAnswers } from "./AggregateAnswers.js";
 import { BasisNotAvailable, ReplicaUnavailable, isUnreachable } from "./broker/errors.js";
 import type { ReplicaSnapshot } from "./broker/broker.js";
+
+const readConstructor = createReadConstructor();
+export const isQleverExecutorRead = readConstructor.isRead;
 
 export interface QleverQueryOptions {
   readonly sourceView?: Effect.Effect<QleverSourceView | undefined>;
@@ -497,7 +500,7 @@ export const makeQleverQueryExecutor = (
       },
       catch: fail,
     });
-  const reads = constructReadDispatch(
+  const reads = readConstructor.dispatch(
     {
       execute: (...args: Parameters<QueryExecutorService["execute"]>) => args,
       executePage: (...args: Parameters<QueryExecutorService["executePage"]>) => args,

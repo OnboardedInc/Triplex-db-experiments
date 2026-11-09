@@ -9,11 +9,14 @@ import { expect, it } from "vitest";
 import {
   DatabaseScope,
   constructSnapshotReads,
-  isConstructedRead,
+  isTriplesRead,
 } from "@triplex-build/triplex/runtime";
-import { makeQleverNativeQueries } from "../../../../packages/qlever/src/native/NativeQueries.js";
+import { makeQleverNativeQueries, isQleverNativeRead } from "../../../../packages/qlever/src/native/NativeQueries.js";
 import { graphIri } from "../../../../packages/qlever/src/rdf.js";
 import { ModelReplica, openRt, freshDir, ops, attempt, at, REPO, writeJson } from "./harness.js";
+
+import { isQleverBrokerRead } from "../../../../packages/qlever/src/broker/BrokerStorageAdapter.js";
+import { isQleverExecutorRead } from "../../../../packages/qlever/src/QleverQueryExecutor.js";
 
 const exemptions = {
   triples: [
@@ -41,18 +44,15 @@ const exemptions = {
   executor: ["explain", "explainPage"],
   native: [],
 };
-const inspect = (object: object, exempt: readonly string[]) => {
-  const seen = new Set<PropertyKey>(),
-    reads: string[] = [];
+const inspect = (object: object, exempt: readonly string[], isRead: (value: unknown) => boolean) => {
+  const reads: string[] = [];
   for (let current: object | null = object; current; current = Object.getPrototypeOf(current))
     for (const key of Reflect.ownKeys(current)) {
-      if (seen.has(key)) continue;
-      seen.add(key);
       const descriptor = Object.getOwnPropertyDescriptor(current, key)!;
       if (descriptor.get || descriptor.set)
         throw new Error(`unconstructed accessor: ${String(key)}`);
       if (typeof descriptor.value === "function" && !exempt.includes(String(key))) {
-        if (!isConstructedRead(descriptor.value))
+        if (!isRead(descriptor.value))
           throw new Error(`unconstructed read: ${String(key)}`);
         reads.push(String(key));
       }
@@ -73,10 +73,11 @@ it("round9 actual public surfaces have only table-wrapped reads throughout own p
   try {
     await rt.run(rt.triples.transact(ops("s:round9", 1, "first")));
     const native = makeQleverNativeQueries(replica, scope, { awaitBasisMs: 40 });
+    const validators = { triples: isTriplesRead, adapter: isQleverBrokerRead, executor: isQleverExecutorRead, native: isQleverNativeRead };
     const surfaces = { triples: rt.triples, adapter: rt.adapter, executor: rt.executor, native };
     const observations: any[] = [];
     for (const [name, object] of Object.entries(surfaces)) {
-      const reads = inspect(object, exemptions[name as keyof typeof exemptions]);
+      const reads = inspect(object, exemptions[name as keyof typeof exemptions], validators[name as keyof typeof validators]);
       expect(reads.length).toBeGreaterThan(0);
       expect(Object.isFrozen(object)).toBe(true);
       expect(Object.getPrototypeOf(object)).toBeNull();
@@ -88,7 +89,7 @@ it("round9 actual public surfaces have only table-wrapped reads throughout own p
           kind === "own"
             ? Object.assign(Object.create(null), object, { round9Read })
             : Object.assign(Object.create({ round9Read }), object);
-        expect(() => inspect(probe, exemptions[name as keyof typeof exemptions])).toThrow(
+        expect(() => inspect(probe, exemptions[name as keyof typeof exemptions], validators[name as keyof typeof validators])).toThrow(
           "unconstructed read: round9Read",
         );
         observations.push({

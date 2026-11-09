@@ -1,5 +1,5 @@
 import {
-  constructSnapshotReads,
+  createReadConstructor,
   exactReadService,
   type SnapshotReadPolicy,
 } from "@triplex-build/triplex/runtime";
@@ -52,6 +52,9 @@ import { BrokerFailed, type HostBroker, type ReplicaSnapshot } from "./broker.js
 import { markerFields } from "./sparql.js";
 import { awaitSnapshotBasis, snapshotRows, maskSnapshotResult } from "./snapshot.js";
 import { ReplicaUnavailable, isUnreachable, type BasisSurface } from "./errors.js";
+
+const readConstructor = createReadConstructor();
+export const isQleverBrokerRead = readConstructor.isRead;
 
 export type BrokerReadRoute = "replica" | "overlay" | "log";
 export interface BrokerReadEvent {
@@ -641,7 +644,7 @@ export const makeQleverBrokerStorageAdapter = (
   };
   const implicit = () => undefined;
   const explicit = (_first: unknown, basis?: ResolvedTemporalBasis) => basis;
-  const reads = constructSnapshotReads({
+  const reads = readConstructor.snapshot({
     getById: { run: (id: string) => Effect.map(queryRows({}, undefined, false, id), (rows) => rows[0] ?? null), basis: implicit, rawHistory: false },
     getByEntity: { run: (entityId: string, basis?: ResolvedTemporalBasis) => queryRows({ entityId }, basis), basis: explicit, rawHistory: false },
     getByEntities: {
