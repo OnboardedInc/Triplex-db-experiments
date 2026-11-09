@@ -1,0 +1,1783 @@
+TAP version 13
+# Subtest: contract pins load from explicit commit; missing or mismatched pins fail
+ok 1 - contract pins load from explicit commit; missing or mismatched pins fail
+  ---
+  duration_ms: 20.903834
+  type: 'test'
+  ...
+# Subtest: store receipt supplies placement only, never replacement pins
+ok 2 - store receipt supplies placement only, never replacement pins
+  ---
+  duration_ms: 13.4385
+  type: 'test'
+  ...
+# Subtest: PAIR-0 separates arms, shares each auxiliary core, and refuses impossible layouts
+ok 3 - PAIR-0 separates arms, shares each auxiliary core, and refuses impossible layouts
+  ---
+  duration_ms: 31.081791
+  type: 'test'
+  ...
+# Subtest: gateway uses candidate read-only source, overrides resident entrypoint, and refuses missing pins
+ok 4 - gateway uses candidate read-only source, overrides resident entrypoint, and refuses missing pins
+  ---
+  duration_ms: 0.537292
+  type: 'test'
+  ...
+# Subtest: preflight refuses forged omissions, reachable forbidden target, lost positive and DNS success
+ok 5 - preflight refuses forged omissions, reachable forbidden target, lost positive and DNS success
+  ---
+  duration_ms: 0.645291
+  type: 'test'
+  ...
+# Subtest: cgroup proof refuses invalid identities before constructing a reader
+ok 6 - cgroup proof refuses invalid identities before constructing a reader
+  ---
+  duration_ms: 0.215417
+  type: 'test'
+  ...
+# Subtest: signed memory caps stay bounded and change the execution isolation identity
+ok 7 - signed memory caps stay bounded and change the execution isolation identity
+  ---
+  duration_ms: 101.922667
+  type: 'test'
+  ...
+# Subtest: main contract without reviewed box pins cannot borrow the experiment proposal
+ok 8 - main contract without reviewed box pins cannot borrow the experiment proposal
+  ---
+  duration_ms: 6.444333
+  type: 'test'
+  ...
+# Subtest: input allowlist never includes lab, links or missing dependency roots
+ok 9 - input allowlist never includes lab, links or missing dependency roots
+  ---
+  duration_ms: 3.714791
+  type: 'test'
+  ...
+# Subtest: tar carries exact bytes, executable mode and long ustar path without extracting
+ok 10 - tar carries exact bytes, executable mode and long ustar path without extracting
+  ---
+  duration_ms: 22.148875
+  type: 'test'
+  ...
+# Subtest: inspect check refuses changed containment, limits, image, mounts and environment
+ok 11 - inspect check refuses changed containment, limits, image, mounts and environment
+  ---
+  duration_ms: 0.754166
+  type: 'test'
+  ...
+# Subtest: qualification refuses refs and never calls a supplied candidate callback
+ok 12 - qualification refuses refs and never calls a supplied candidate callback
+  ---
+  duration_ms: 0.66825
+  type: 'test'
+  ...
+# Subtest: failed cleanup reservations survive reconciliation
+ok 13 - failed cleanup reservations survive reconciliation
+  ---
+  duration_ms: 2.124375
+  type: 'test'
+  ...
+# Subtest: a separate clone in a shared writable root is still refused
+ok 14 - a separate clone in a shared writable root is still refused
+  ---
+  duration_ms: 0.837458
+  type: 'test'
+  ...
+# Subtest: box reservations survive stale Docker snapshots before the kill proof starts
+ok 15 - box reservations survive stale Docker snapshots before the kill proof starts
+  ---
+  duration_ms: 0.494042
+  type: 'test'
+  ...
+# Subtest: V-E01 F1/T3: a persistently rewritten evaluator refuses the next run against its Git blobs
+ok 16 - V-E01 F1/T3: a persistently rewritten evaluator refuses the next run against its Git blobs
+  ---
+  duration_ms: 610.03375
+  type: 'test'
+  ...
+# Subtest: V-E01 F2/T5c: replace refs cannot substitute the oracle or qualify a wrong candidate
+ok 17 - V-E01 F2/T5c: replace refs cannot substitute the oracle or qualify a wrong candidate
+  ---
+  duration_ms: 14727.900333
+  type: 'test'
+  ...
+# Subtest: V-E01 F2/Q75c: an unpinned COMPILED runner leaves an otherwise honest run diagnostic
+ok 18 - V-E01 F2/Q75c: an unpinned COMPILED runner leaves an otherwise honest run diagnostic
+  ---
+  duration_ms: 137304.857041
+  type: 'test'
+  ...
+# Subtest: V-E01 F3/F10: outside file and directory links are refused, never followed
+ok 19 - V-E01 F3/F10: outside file and directory links are refused, never followed
+  ---
+  duration_ms: 16377.059834
+  type: 'test'
+  ...
+# Subtest: V-E01 F4/T6: each build and execution gets a fresh HOME and TMPDIR
+ok 20 - V-E01 F4/T6: each build and execution gets a fresh HOME and TMPDIR
+  ---
+  duration_ms: 6881.324792
+  type: 'test'
+  ...
+# Subtest: V-E01 F7/T7: deleting a retained evidence object fails closed
+ok 21 - V-E01 F7/T7: deleting a retained evidence object fails closed
+  ---
+  duration_ms: 3396.253708
+  type: 'test'
+  ...
+# Subtest: V-E01 F8: admitCore refuses promotion before executing candidate code
+ok 22 - V-E01 F8: admitCore refuses promotion before executing candidate code
+  ---
+  duration_ms: 4894.157458
+  type: 'test'
+  ...
+# Subtest: V-E01 F9: every early return and caught exception carries GATE-NOT-RUN
+ok 23 - V-E01 F9: every early return and caught exception carries GATE-NOT-RUN
+  ---
+  duration_ms: 904.474584
+  type: 'test'
+  ...
+# Subtest: V-E01 F5/Q75g: O-REPLAY-shaped row comparisons stay UNCOMPARABLE on contract 0.3.10
+ok 24 - V-E01 F5/Q75g: O-REPLAY-shaped row comparisons stay UNCOMPARABLE on contract 0.3.10
+  ---
+  duration_ms: 0.625125
+  type: 'test'
+  ...
+# Subtest: V-E01 F6/Q75h: cause is optional but must be structured when present
+ok 25 - V-E01 F6/Q75h: cause is optional but must be structured when present
+  ---
+  duration_ms: 0.543
+  type: 'test'
+  ...
+# Subtest: V-E01 F9: unreadable evidence becomes a diagnostic instead of an uncaught EACCES
+ok 26 - V-E01 F9: unreadable evidence becomes a diagnostic instead of an uncaught EACCES
+  ---
+  duration_ms: 3.589875
+  type: 'test'
+  ...
+# Subtest: V-E01 F3: modes and internal symlink target bytes are identity-bound
+ok 27 - V-E01 F3: modes and internal symlink target bytes are identity-bound
+  ---
+  duration_ms: 11497.947416
+  type: 'test'
+  ...
+# Subtest: V-E01 F3: recorded PATH node is the binary a child actually runs
+ok 28 - V-E01 F3: recorded PATH node is the binary a child actually runs
+  ---
+  duration_ms: 6134.096792
+  type: 'test'
+  ...
+# Subtest: Q75b: edits within one build instance fail closed without an instance switch
+ok 29 - Q75b: edits within one build instance fail closed without an instance switch
+  ---
+  duration_ms: 4324.834042
+  type: 'test'
+  ...
+# Subtest: V-E01 F11/Q81a: input delete after final use refuses the run
+ok 30 - V-E01 F11/Q81a: input delete after final use refuses the run
+  ---
+  duration_ms: 4029.71175
+  type: 'test'
+  ...
+# Subtest: V-E01 F11/Q81a: input rewrite after final use refuses the run
+ok 31 - V-E01 F11/Q81a: input rewrite after final use refuses the run
+  ---
+  duration_ms: 3801.089791
+  type: 'test'
+  ...
+# Subtest: admitCore makes the contract's executor calls and reaches its verdict on every admit_claim call of its own self-check
+ok 32 - admitCore makes the contract's executor calls and reaches its verdict on every admit_claim call of its own self-check
+  ---
+  duration_ms: 299.456416
+  type: 'test'
+  ...
+# Subtest: documents: the contract's admit_claim (no executor) and claim.mjs admit both answer DIAGNOSTIC for every document fixture
+ok 33 - documents: the contract's admit_claim (no executor) and claim.mjs admit both answer DIAGNOSTIC for every document fixture
+  ---
+  duration_ms: 0.45275
+  type: 'test'
+  ...
+# Subtest: admit: POSITIVE-NS-SCREENING documents are QUALIFIED; the verdict is DIAGNOSTIC
+ok 34 - admit: POSITIVE-NS-SCREENING documents are QUALIFIED; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.18425
+  type: 'test'
+  ...
+# Subtest: admit: POSITIVE-GS-DOMAIN documents are QUALIFIED; the verdict is DIAGNOSTIC
+ok 35 - admit: POSITIVE-GS-DOMAIN documents are QUALIFIED; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.171917
+  type: 'test'
+  ...
+# Subtest: admit: POSITIVE-PROMOTION documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 36 - admit: POSITIVE-PROMOTION documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.117167
+  type: 'test'
+  ...
+# Subtest: admit: GEN-PREREQS-ONLY documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 37 - admit: GEN-PREREQS-ONLY documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.069625
+  type: 'test'
+  ...
+# Subtest: admit: GEN-NULL-OREPLAY-PIN documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 38 - admit: GEN-NULL-OREPLAY-PIN documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.092958
+  type: 'test'
+  ...
+# Subtest: admit: GEN-SUPPLIED-NAMES documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 39 - admit: GEN-SUPPLIED-NAMES documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.141
+  type: 'test'
+  ...
+# Subtest: admit: GEN-OTHER-TREE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 40 - admit: GEN-OTHER-TREE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.556042
+  type: 'test'
+  ...
+# Subtest: admit: GEN-MISSING-FALSIFIERS documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 41 - admit: GEN-MISSING-FALSIFIERS documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.418125
+  type: 'test'
+  ...
+# Subtest: admit: GEN-COMPOSITION-UNBOUND documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 42 - admit: GEN-COMPOSITION-UNBOUND documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.121542
+  type: 'test'
+  ...
+# Subtest: admit: GEN-W0-NULL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 43 - admit: GEN-W0-NULL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.041875
+  type: 'test'
+  ...
+# Subtest: admit: GEN-NO-W0-RECEIPT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 44 - admit: GEN-NO-W0-RECEIPT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.028333
+  type: 'test'
+  ...
+# Subtest: admit: GEN-EXCLUDED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 45 - admit: GEN-EXCLUDED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.030875
+  type: 'test'
+  ...
+# Subtest: admit: GEN-REFUSED-SET documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 46 - admit: GEN-REFUSED-SET documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.025917
+  type: 'test'
+  ...
+# Subtest: admit: GEN-STALE-DEFINITION documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 47 - admit: GEN-STALE-DEFINITION documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.039375
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R4-FABRICATED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 48 - admit: CODEX-R4-FABRICATED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.034291
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-STALE-BINARY documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 49 - admit: Q42A-STALE-BINARY documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.022917
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-EARLIER-COMMIT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 50 - admit: Q42A-EARLIER-COMMIT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.020917
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-BEFORE-CLOSURE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 51 - admit: Q42A-BEFORE-CLOSURE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.025541
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-OBJECT-CORRUPT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 52 - admit: Q42A-OBJECT-CORRUPT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.020833
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-OBJECT-OF-OTHER-CASE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 53 - admit: Q42A-OBJECT-OF-OTHER-CASE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.036167
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-MODES-SHORT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 54 - admit: Q42A-MODES-SHORT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.050042
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-FAULT-REPS-SHORT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 55 - admit: Q42A-FAULT-REPS-SHORT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.135542
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-UNKNOWN-ID documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 56 - admit: Q42A-UNKNOWN-ID documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.027875
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-NO-CONTROL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 57 - admit: Q42A-NO-CONTROL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.027167
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-CONTROL-OTHER-SEED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 58 - admit: Q42A-CONTROL-OTHER-SEED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.040666
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-CONTROL-OTHER-WINDOW documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 59 - admit: Q42A-CONTROL-OTHER-WINDOW documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.021833
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-CORRECTNESS-FAIL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 60 - admit: Q42A-CORRECTNESS-FAIL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.026042
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-NO-VERIFIER documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 61 - admit: Q42A-NO-VERIFIER documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.020709
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R6-MODULES-NOT-RETAINED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 62 - admit: CODEX-R6-MODULES-NOT-RETAINED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.141916
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R6-BINARY-NOT-RETAINED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 63 - admit: CODEX-R6-BINARY-NOT-RETAINED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.144666
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R6-NOT-A-VERIFIER-RECORD documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 64 - admit: CODEX-R6-NOT-A-VERIFIER-RECORD documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.07275
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R6-REFUSAL-LABELLED-PASS documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 65 - admit: CODEX-R6-REFUSAL-LABELLED-PASS documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.147791
+  type: 'test'
+  ...
+# Subtest: admit: Q47A-WRONG-LABELLED-PASS documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 66 - admit: Q47A-WRONG-LABELLED-PASS documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.110375
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R6-CONTROL-NO-WORKLOAD documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 67 - admit: CODEX-R6-CONTROL-NO-WORKLOAD documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.194083
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R6-CANDIDATE-SELECTED-CONTROL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 68 - admit: CODEX-R6-CANDIDATE-SELECTED-CONTROL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.118291
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R6-NO-A0-REGISTRY documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 69 - admit: CODEX-R6-NO-A0-REGISTRY documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.059833
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R6-MIGRATION-INDIRECT-REFUSAL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 70 - admit: CODEX-R6-MIGRATION-INDIRECT-REFUSAL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.029291
+  type: 'test'
+  ...
+# Subtest: admit: Q47C-MANIFESTS-UNPINNED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 71 - admit: Q47C-MANIFESTS-UNPINNED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.042667
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R7-INVENTED-CASES documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 72 - admit: CODEX-R7-INVENTED-CASES documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.0585
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R7-CANDIDATE-AS-A0 documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 73 - admit: CODEX-R7-CANDIDATE-AS-A0 documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.213875
+  type: 'test'
+  ...
+# Subtest: admit: RT-SWAP-ROLES documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 74 - admit: RT-SWAP-ROLES documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.272625
+  type: 'test'
+  ...
+# Subtest: admit: RT-RELABEL-PROFILE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 75 - admit: RT-RELABEL-PROFILE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.1295
+  type: 'test'
+  ...
+# Subtest: admit: RT-SCREENING-PREREQ documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 76 - admit: RT-SCREENING-PREREQ documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.031958
+  type: 'test'
+  ...
+# Subtest: admit: RT-RUNKIND-SWAP documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 77 - admit: RT-RUNKIND-SWAP documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.034333
+  type: 'test'
+  ...
+# Subtest: admit: RT-CONTROL-OTHER-PROFILE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 78 - admit: RT-CONTROL-OTHER-PROFILE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.394625
+  type: 'test'
+  ...
+# Subtest: admit: RT-SLOT-ARRAY documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 79 - admit: RT-SLOT-ARRAY documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.026125
+  type: 'test'
+  ...
+# Subtest: admit: RT-VERIFIER-IS-AUTHOR documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 80 - admit: RT-VERIFIER-IS-AUTHOR documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.035333
+  type: 'test'
+  ...
+# Subtest: admit: RT-DROP-FAIL-ATTEMPT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 81 - admit: RT-DROP-FAIL-ATTEMPT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.028209
+  type: 'test'
+  ...
+# Subtest: admit: RT-COUNTS-EDITED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 82 - admit: RT-COUNTS-EDITED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.025833
+  type: 'test'
+  ...
+# Subtest: admit: RT-CONTRACT-RELABEL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 83 - admit: RT-CONTRACT-RELABEL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.025542
+  type: 'test'
+  ...
+# Subtest: admit: RT-FAULTREPS-RELABEL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 84 - admit: RT-FAULTREPS-RELABEL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.109875
+  type: 'test'
+  ...
+# Subtest: admit: RT-DEP-UPPERCASE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 85 - admit: RT-DEP-UPPERCASE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.066
+  type: 'test'
+  ...
+# Subtest: admit: RT-DEP-UNLISTED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 86 - admit: RT-DEP-UNLISTED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.022292
+  type: 'test'
+  ...
+# Subtest: admit: RT-DEP-OTHER-WORKSPACE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 87 - admit: RT-DEP-OTHER-WORKSPACE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.020834
+  type: 'test'
+  ...
+# Subtest: admit: RT-NARROW-ROOTS documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 88 - admit: RT-NARROW-ROOTS documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.038292
+  type: 'test'
+  ...
+# Subtest: admit: LAB-BRANCH-PINS-OWN-ORACLE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 89 - admit: LAB-BRANCH-PINS-OWN-ORACLE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.191875
+  type: 'test'
+  ...
+# Subtest: admit: LAB-ORACLE-FILE-DRIFT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 90 - admit: LAB-ORACLE-FILE-DRIFT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.107458
+  type: 'test'
+  ...
+# Subtest: admit: LAB-IMAGE-NOT-PINNED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 91 - admit: LAB-IMAGE-NOT-PINNED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.035291
+  type: 'test'
+  ...
+# Subtest: admit: LAB-FORBIDDEN-ENDPOINT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 92 - admit: LAB-FORBIDDEN-ENDPOINT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.052166
+  type: 'test'
+  ...
+# Subtest: admit: LAB-ADMISSION-BLOCKED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 93 - admit: LAB-ADMISSION-BLOCKED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.045416
+  type: 'test'
+  ...
+# Subtest: admit: LAB-CONTROL-NO-PREREQ documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 94 - admit: LAB-CONTROL-NO-PREREQ documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.026917
+  type: 'test'
+  ...
+# Subtest: admit: DOC-NO-SOURCE-VARIANT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 95 - admit: DOC-NO-SOURCE-VARIANT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.037375
+  type: 'test'
+  ...
+# Subtest: admit: DOC-UNREGISTERED-VERIFICATION documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 96 - admit: DOC-UNREGISTERED-VERIFICATION documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.083458
+  type: 'test'
+  ...
+# Subtest: every DIAGNOSTIC fixture names its cause; ids are distinct; Codex rounds 4, 6 and 7 are present
+ok 97 - every DIAGNOSTIC fixture names its cause; ids are distinct; Codex rounds 4, 6 and 7 are present
+  ---
+  duration_ms: 0.229125
+  type: 'test'
+  ...
+# Subtest: CLI admit: always exit 2 with DOCUMENT-ONLY, the document verdict shown, --json, usage exits 1
+ok 98 - CLI admit: always exit 2 with DOCUMENT-ONLY, the document verdict shown, --json, usage exits 1
+  ---
+  duration_ms: 4184.974375
+  type: 'test'
+  ...
+# Subtest: uncommitted pins in the working tree have no effect: the contract is read from the claimed commit and the authority ref
+ok 99 - uncommitted pins in the working tree have no effect: the contract is read from the claimed commit and the authority ref
+  ---
+  duration_ms: 326.12425
+  type: 'test'
+  ...
+# Subtest: malformed inputs are DIAGNOSTIC, never an exception (red-team pass 1 finding 5)
+ok 100 - malformed inputs are DIAGNOSTIC, never an exception (red-team pass 1 finding 5)
+  ---
+  duration_ms: 13698.074084
+  type: 'test'
+  ...
+# Subtest: comparators judge canonical answers; unknown comparators and non-canonical answers never pass
+ok 101 - comparators judge canonical answers; unknown comparators and non-canonical answers never pass
+  ---
+  duration_ms: 0.526208
+  type: 'test'
+  ...
+# Subtest: gitSource parses cat-file --batch and ls-tree for binary blobs, spaces, tabs, missing paths, directories and pathspec magic
+ok 102 - gitSource parses cat-file --batch and ls-tree for binary blobs, spaces, tabs, missing paths, directories and pathspec magic
+  ---
+  duration_ms: 407.393416
+  type: 'test'
+  ...
+# Subtest: qualify build: the evaluator builds the claimed tree and rebuilds A0, which reproduces the registry's binarySha256
+ok 103 - qualify build: the evaluator builds the claimed tree and rebuilds A0, which reproduces the registry's binarySha256
+  ---
+  duration_ms: 2.667417
+  type: 'test'
+  ...
+# Subtest: qualify Q67b (Codex round 8 finding 2): a candidate with A0's dist bytes and another source runner runs its own instance
+ok 104 - qualify Q67b (Codex round 8 finding 2): a candidate with A0's dist bytes and another source runner runs its own instance
+  ---
+  duration_ms: 0.123625
+  type: 'test'
+  ...
+# Subtest: qualify build: CX-R7-RELABELLED-CONTROL as a run, an A0 entry recording another binary than its tree rebuilds to
+ok 105 - qualify build: CX-R7-RELABELLED-CONTROL as a run, an A0 entry recording another binary than its tree rebuilds to
+  ---
+  duration_ms: 0.035583
+  type: 'test'
+  ...
+# Subtest: qualify resolve, execute and record: every case of the pinned manifests in every mode, each as a case-result/2
+ok 106 - qualify resolve, execute and record: every case of the pinned manifests in every mode, each as a case-result/2
+  ---
+  duration_ms: 16.683417
+  type: 'test'
+  ...
+# Subtest: qualify Q67i (Codex round 8 finding 10): case-result/2 is re-judged with its declared comparator on the retained raw objects
+ok 107 - qualify Q67i (Codex round 8 finding 10): case-result/2 is re-judged with its declared comparator on the retained raw objects
+  ---
+  duration_ms: 0.512833
+  type: 'test'
+  ...
+# Subtest: qualify expect: the oracle answer follows oracleAnswerRule (O-REPLAY answerMembers of one canonical JSON document)
+ok 108 - qualify expect: the oracle answer follows oracleAnswerRule (O-REPLAY answerMembers of one canonical JSON document)
+  ---
+  duration_ms: 0.158583
+  type: 'test'
+  ...
+# Subtest: qualify compare: a candidate whose answer differs from the pinned oracle's fails at its first case
+ok 109 - qualify compare: a candidate whose answer differs from the pinned oracle's fails at its first case
+  ---
+  duration_ms: 0.074333
+  type: 'test'
+  ...
+# Subtest: qualify: an oracle refusal (exit 2, X-NOT-MODELED) fails closed, and the static refusal also blocks (Q45b, Q47c)
+ok 110 - qualify: an oracle refusal (exit 2, X-NOT-MODELED) fails closed, and the static refusal also blocks (Q45b, Q47c)
+  ---
+  duration_ms: 0.048042
+  type: 'test'
+  ...
+# Subtest: qualify control: a CR-NS claim needs a PAIR_0 paired-rounds measurement, which no runner here produces
+ok 111 - qualify control: a CR-NS claim needs a PAIR_0 paired-rounds measurement, which no runner here produces
+  ---
+  duration_ms: 0.031125
+  type: 'test'
+  ...
+# Subtest: qualify: Codex round 7 forged records, selections, case lists and fingerprints in the claim are ignored
+ok 112 - qualify: Codex round 7 forged records, selections, case lists and fingerprints in the claim are ignored
+  ---
+  duration_ms: 1366.344
+  type: 'test'
+  ...
+# Subtest: qualify builds exact blobs despite git archive export-ignore attributes
+ok 113 - qualify builds exact blobs despite git archive export-ignore attributes
+  ---
+  duration_ms: 196127.937166
+  type: 'test'
+  ...
+# Subtest: qualify re-hashes a build before running it after another: a candidate that edits the A0 build is caught
+ok 114 - qualify re-hashes a build before running it after another: a candidate that edits the A0 build is caught
+  ---
+  duration_ms: 9619.069083
+  type: 'test'
+  ...
+# Subtest: qualify Q67e (Codex round 8 finding 6): an edited oracle copy is never run again, and edited evidence is reported
+ok 115 - qualify Q67e (Codex round 8 finding 6): an edited oracle copy is never run again, and edited evidence is reported
+  ---
+  duration_ms: 5329.880666
+  type: 'test'
+  ...
+# Subtest: qualify Q67e (Codex round 8 finding 6): a build helper left running is killed with the build's process group
+ok 116 - qualify Q67e (Codex round 8 finding 6): a build helper left running is killed with the build's process group
+  ---
+  duration_ms: 1733.613166
+  type: 'test'
+  ...
+# Subtest: qualify Q67j (Codex round 8 finding 11): a log-source promotion is rejected with a typed reason
+ok 117 - qualify Q67j (Codex round 8 finding 11): a log-source promotion is rejected with a typed reason
+  ---
+  duration_ms: 0.3985
+  type: 'test'
+  ...
+# Subtest: qualify verify: only the authority contract's VERIFIER_REGISTRY counts; supplied verifier records count for nothing
+ok 118 - qualify verify: only the authority contract's VERIFIER_REGISTRY counts; supplied verifier records count for nothing
+  ---
+  duration_ms: 9952.460917
+  type: 'test'
+  ...
+# Subtest: qualify Q55e: a claim cannot supply the W0 pin or the O-DOMAIN fingerprint
+ok 119 - qualify Q55e: a claim cannot supply the W0 pin or the O-DOMAIN fingerprint
+  ---
+  duration_ms: 0.090958
+  type: 'test'
+  ...
+# Subtest: qualify execute: the plan goes through gate.mjs --dry-run, which checks the registered slot
+ok 120 - qualify execute: the plan goes through gate.mjs --dry-run, which checks the registered slot
+  ---
+  duration_ms: 281.469167
+  type: 'test'
+  ...
+# Subtest: qualify: no path to QUALIFIED without a gate run; an offline run that passes everything reports offlineVerdict only
+ok 121 - qualify: no path to QUALIFIED without a gate run; an offline run that passes everything reports offlineVerdict only
+  ---
+  duration_ms: 0.396084
+  type: 'test'
+  ...
+# Subtest: CLI qualify: --offline-sut runs offline and exits 2 with the offline verdict; usage errors exit 1
+ok 122 - CLI qualify: --offline-sut runs offline and exits 2 with the offline verdict; usage errors exit 1
+  ---
+  duration_ms: 415558.57825
+  type: 'test'
+  ...
+# Subtest: RULINGS Q64a: the proposed real build spec (lab/config/build.json) is a complete build-spec/1
+ok 123 - RULINGS Q64a: the proposed real build spec (lab/config/build.json) is a complete build-spec/1
+  ---
+  duration_ms: 0.903125
+  type: 'test'
+  ...
+# Subtest: pool admits the two dev engines when only they run
+ok 124 - pool admits the two dev engines when only they run
+  ---
+  duration_ms: 1.775208
+  type: 'test'
+  ...
+# Subtest: pool counts external research probes and refuses with their names
+ok 125 - pool counts external research probes and refuses with their names
+  ---
+  duration_ms: 1.526958
+  type: 'test'
+  ...
+# Subtest: an uncapped external container counts as the whole VM (fail closed)
+ok 126 - an uncapped external container counts as the whole VM (fail closed)
+  ---
+  duration_ms: 0.342125
+  type: 'test'
+  ...
+# Subtest: a reserved container counts once even while it also runs
+ok 127 - a reserved container counts once even while it also runs
+  ---
+  duration_ms: 0.160167
+  type: 'test'
+  ...
+# Subtest: disk forecast refuses past the 50 GiB used limit
+ok 128 - disk forecast refuses past the 50 GiB used limit
+  ---
+  duration_ms: 0.194292
+  type: 'test'
+  ...
+# Subtest: slotInfo rejects forbidden and probe ports and names containers and volumes
+ok 129 - slotInfo rejects forbidden and probe ports and names containers and volumes
+  ---
+  duration_ms: 1.177875
+  type: 'test'
+  ...
+# Subtest: withDirLock serializes and breaks a lock whose owner pid is dead
+ok 130 - withDirLock serializes and breaks a lock whose owner pid is dead
+  ---
+  duration_ms: 228.159209
+  type: 'test'
+  ...
+# [lab] waiting for pool lock (held by pid undefined)
+# [lab] waiting for pool lock (held by pid undefined)
+# [lab] heavy: waiting for one of 2 slots; held by pid 30383 "a", pid 30383 "b"
+# Subtest: withPool read-modify-writes the ledger atomically across processes
+ok 131 - withPool read-modify-writes the ledger atomically across processes
+  ---
+  duration_ms: 591.1525
+  type: 'test'
+  ...
+# Subtest: reconcile drops only reservations with no container and a dead reserving pid
+ok 132 - reconcile drops only reservations with no container and a dead reserving pid
+  ---
+  duration_ms: 0.543042
+  type: 'test'
+  ...
+# Subtest: heavy semaphore admits at most TX2_HEAVY_SLOTS holders
+ok 133 - heavy semaphore admits at most TX2_HEAVY_SLOTS holders
+  ---
+  duration_ms: 122.484125
+  type: 'test'
+  ...
+# Subtest: object store is content addressed and refuses dependency caches and secret-like names
+ok 134 - object store is content addressed and refuses dependency caches and secret-like names
+  ---
+  duration_ms: 1.926375
+  type: 'test'
+  ...
+# Subtest: language classification: pure XTQL, pure SQL, hybrid, strict substeps
+ok 135 - language classification: pure XTQL, pure SQL, hybrid, strict substeps
+  ---
+  duration_ms: 0.298916
+  type: 'test'
+  ...
+# Subtest: verdict fails closed on missing identity, zero executions, skips; subsets never PASS
+ok 136 - verdict fails closed on missing identity, zero executions, skips; subsets never PASS
+  ---
+  duration_ms: 0.195333
+  type: 'test'
+  ...
+# Subtest: caseLanguages lists every substep language in order
+ok 137 - caseLanguages lists every substep language in order
+  ---
+  duration_ms: 0.215125
+  type: 'test'
+  ...
+# Subtest: contract claims: full G2 on xtdb claims PKT.full142 for both XTDB lanes; subsets claim nothing
+ok 138 - contract claims: full G2 on xtdb claims PKT.full142 for both XTDB lanes; subsets claim nothing
+  ---
+  duration_ms: 0.442709
+  type: 'test'
+  ...
+# Subtest: second-writer guard refuses a second container on a slot volume unless its config is read-only
+ok 139 - second-writer guard refuses a second container on a slot volume unless its config is read-only
+  ---
+  duration_ms: 0.393041
+  type: 'test'
+  ...
+# Subtest: second-writer guard fails closed on every config that does not say exactly readOnlyDatabases: true
+ok 140 - second-writer guard fails closed on every config that does not say exactly readOnlyDatabases: true
+  ---
+  duration_ms: 0.17175
+  type: 'test'
+  ...
+# Subtest: follower config must be read-only and read the writer's own log and storage paths
+ok 141 - follower config must be read-only and read the writer's own log and storage paths
+  ---
+  duration_ms: 0.246666
+  type: 'test'
+  ...
+# Subtest: follower: own container and port, the slot volume mounted read-only, the read-only config bytes, slot lock shared
+ok 142 - follower: own container and port, the slot volume mounted read-only, the read-only config bytes, slot lock shared
+  ---
+  duration_ms: 3.584209
+  type: 'test'
+  ...
+# Subtest: cpusets parse against the VM and unpinned containers overlap everything
+ok 143 - cpusets parse against the VM and unpinned containers overlap everything
+  ---
+  duration_ms: 0.15575
+  type: 'test'
+  ...
+# Subtest: Datomic addition leaves every existing slot effective-config hash unchanged
+ok 144 - Datomic addition leaves every existing slot effective-config hash unchanged
+  ---
+  duration_ms: 1.764625
+  type: 'test'
+  ...
+# Subtest: Datomic resident is parkable, pins separate JVM CPUs, and cannot coexist with an exclusive slot
+ok 145 - Datomic resident is parkable, pins separate JVM CPUs, and cannot coexist with an exclusive slot
+  ---
+  duration_ms: 13.315958
+  type: 'test'
+  ...
+# Subtest: atomic before-effect: DR snapshot, proven kill, same-volume restart and byte replay
+ok 146 - atomic before-effect: DR snapshot, proven kill, same-volume restart and byte replay
+  ---
+  duration_ms: 3.875291
+  type: 'test'
+  ...
+# Subtest: split before-effect: DR snapshot, proven kill, same-volume restart and byte replay
+ok 147 - split before-effect: DR snapshot, proven kill, same-volume restart and byte replay
+  ---
+  duration_ms: 0.467208
+  type: 'test'
+  ...
+# Subtest: atomic after-effect: DR snapshot, proven kill, same-volume restart and byte replay
+ok 148 - atomic after-effect: DR snapshot, proven kill, same-volume restart and byte replay
+  ---
+  duration_ms: 0.413084
+  type: 'test'
+  ...
+# Subtest: split after-effect: DR snapshot, proven kill, same-volume restart and byte replay
+ok 149 - split after-effect: DR snapshot, proven kill, same-volume restart and byte replay
+  ---
+  duration_ms: 0.960209
+  type: 'test'
+  ...
+# Subtest: atomic after-checkpoint: DR snapshot, proven kill, same-volume restart and byte replay
+ok 150 - atomic after-checkpoint: DR snapshot, proven kill, same-volume restart and byte replay
+  ---
+  duration_ms: 0.657666
+  type: 'test'
+  ...
+# Subtest: split after-checkpoint: DR snapshot, proven kill, same-volume restart and byte replay
+ok 151 - split after-checkpoint: DR snapshot, proven kill, same-volume restart and byte replay
+  ---
+  duration_ms: 0.82375
+  type: 'test'
+  ...
+# Subtest: three distinct witnesses per point in one attempt, never a declared repetition count
+ok 152 - three distinct witnesses per point in one attempt, never a declared repetition count
+  ---
+  duration_ms: 3.045292
+  type: 'test'
+  ...
+# Subtest: main run uses all three identical hook reports and receives releases without injection data
+ok 153 - main run uses all three identical hook reports and receives releases without injection data
+  ---
+  duration_ms: 0.235625
+  type: 'test'
+  ...
+# Subtest: ignored hook never exercises fault
+ok 154 - ignored hook never exercises fault
+  ---
+  duration_ms: 0.500292
+  type: 'test'
+  ...
+# Subtest: short repetition inventory refused
+ok 155 - short repetition inventory refused
+  ---
+  duration_ms: 0.867625
+  type: 'test'
+  ...
+# Subtest: no cgroup proof refuses witness and restart cannot follow missing kill proof
+ok 156 - no cgroup proof refuses witness and restart cannot follow missing kill proof
+  ---
+  duration_ms: 0.418667
+  type: 'test'
+  ...
+# Subtest: wrong killed ID refuses witness and restart cannot follow missing kill proof
+ok 157 - wrong killed ID refuses witness and restart cannot follow missing kill proof
+  ---
+  duration_ms: 0.194291
+  type: 'test'
+  ...
+# Subtest: stale proof refuses witness and restart cannot follow missing kill proof
+ok 158 - stale proof refuses witness and restart cannot follow missing kill proof
+  ---
+  duration_ms: 0.126084
+  type: 'test'
+  ...
+# Subtest: no pause proof refuses witness and restart cannot follow missing kill proof
+ok 159 - no pause proof refuses witness and restart cannot follow missing kill proof
+  ---
+  duration_ms: 0.088416
+  type: 'test'
+  ...
+# Subtest: fresh volume refuses witness and restart cannot follow missing kill proof
+ok 160 - fresh volume refuses witness and restart cannot follow missing kill proof
+  ---
+  duration_ms: 0.136584
+  type: 'test'
+  ...
+# Subtest: same container refuses witness and restart cannot follow missing kill proof
+ok 161 - same container refuses witness and restart cannot follow missing kill proof
+  ---
+  duration_ms: 0.10575
+  type: 'test'
+  ...
+# Subtest: broker restart on consumer path refuses witness and restart cannot follow missing kill proof
+ok 162 - broker restart on consumer path refuses witness and restart cannot follow missing kill proof
+  ---
+  duration_ms: 0.106584
+  type: 'test'
+  ...
+# Subtest: old snapshot refuses witness and restart cannot follow missing kill proof
+ok 163 - old snapshot refuses witness and restart cannot follow missing kill proof
+  ---
+  duration_ms: 0.119459
+  type: 'test'
+  ...
+# Subtest: no replay comparison refuses witness and restart cannot follow missing kill proof
+ok 164 - no replay comparison refuses witness and restart cannot follow missing kill proof
+  ---
+  duration_ms: 0.344334
+  type: 'test'
+  ...
+# Subtest: foreign source refused
+ok 165 - foreign source refused
+  ---
+  duration_ms: 0.47225
+  type: 'test'
+  ...
+# Subtest: foreign slot refused
+ok 166 - foreign slot refused
+  ---
+  duration_ms: 0.228792
+  type: 'test'
+  ...
+# Subtest: foreign inputs refused
+ok 167 - foreign inputs refused
+  ---
+  duration_ms: 0.210792
+  type: 'test'
+  ...
+# Subtest: wrong target role refused
+ok 168 - wrong target role refused
+  ---
+  duration_ms: 0.194291
+  type: 'test'
+  ...
+# Subtest: invented point refused
+ok 169 - invented point refused
+  ---
+  duration_ms: 0.193958
+  type: 'test'
+  ...
+# Subtest: no hook refused
+ok 170 - no hook refused
+  ---
+  duration_ms: 0.195958
+  type: 'test'
+  ...
+# Subtest: reused hook nonce refused
+ok 171 - reused hook nonce refused
+  ---
+  duration_ms: 0.215083
+  type: 'test'
+  ...
+# Subtest: consumer target cannot be the broker
+ok 172 - consumer target cannot be the broker
+  ---
+  duration_ms: 0.071916
+  type: 'test'
+  ...
+# Subtest: C2 broker reuses controller with separately pinned point inventory and broker target
+ok 173 - C2 broker reuses controller with separately pinned point inventory and broker target
+  ---
+  duration_ms: 0.232208
+  type: 'test'
+  ...
+# Subtest: driver ignored-hook result refused
+ok 174 - driver ignored-hook result refused
+  ---
+  duration_ms: 0.18625
+  type: 'test'
+  ...
+# Subtest: driver holds consumer at every hook until private release and never forwards restart bit
+ok 175 - driver holds consumer at every hook until private release and never forwards restart bit
+  ---
+  duration_ms: 0.264458
+  type: 'test'
+  ...
+# Subtest: one reported hook cannot substitute for all mandatory points
+ok 176 - one reported hook cannot substitute for all mandatory points
+  ---
+  duration_ms: 0.197417
+  type: 'test'
+  ...
+# Subtest: private input waits, binds exactly one line, caps and rejects unsolicited release
+ok 177 - private input waits, binds exactly one line, caps and rejects unsolicited release
+  ---
+  duration_ms: 0.975208
+  type: 'test'
+  ...
+# Subtest: private control times out when evaluator does not release
+ok 178 - private control times out when evaluator does not release
+  ---
+  duration_ms: 9.205125
+  type: 'test'
+  ...
+# Subtest: snapshot refuses previous attempt
+ok 179 - snapshot refuses previous attempt
+  ---
+  duration_ms: 0.336625
+  type: 'test'
+  ...
+# Subtest: snapshot refuses other source
+ok 180 - snapshot refuses other source
+  ---
+  duration_ms: 0.267708
+  type: 'test'
+  ...
+# Subtest: snapshot refuses other volume
+ok 181 - snapshot refuses other volume
+  ---
+  duration_ms: 0.119917
+  type: 'test'
+  ...
+# Subtest: snapshot refuses other phase
+ok 182 - snapshot refuses other phase
+  ---
+  duration_ms: 0.485
+  type: 'test'
+  ...
+# Subtest: snapshot refuses other target
+ok 183 - snapshot refuses other target
+  ---
+  duration_ms: 0.125667
+  type: 'test'
+  ...
+# Subtest: snapshot refuses row count
+ok 184 - snapshot refuses row count
+  ---
+  duration_ms: 0.106583
+  type: 'test'
+  ...
+# Subtest: snapshot refuses WAL bytes
+ok 185 - snapshot refuses WAL bytes
+  ---
+  duration_ms: 0.093958
+  type: 'test'
+  ...
+# Subtest: snapshot refuses WAL hash
+ok 186 - snapshot refuses WAL hash
+  ---
+  duration_ms: 0.233542
+  type: 'test'
+  ...
+# Subtest: snapshot refuses checkpoint contradiction
+ok 187 - snapshot refuses checkpoint contradiction
+  ---
+  duration_ms: 0.113541
+  type: 'test'
+  ...
+# Subtest: minimum three repetitions cannot be lowered at finish
+ok 188 - minimum three repetitions cannot be lowered at finish
+  ---
+  duration_ms: 0.073791
+  type: 'test'
+  ...
+# Subtest: driver restarts through same complete hook path on evaluator-provided endpoint
+ok 189 - driver restarts through same complete hook path on evaluator-provided endpoint
+  ---
+  duration_ms: 0.229041
+  type: 'test'
+  ...
+# Subtest: trusted observer snapshot encodes real SQLite fixture before-effect
+ok 190 - trusted observer snapshot encodes real SQLite fixture before-effect
+  ---
+  duration_ms: 53.516208
+  type: 'test'
+  ...
+# Subtest: trusted observer snapshot encodes real SQLite fixture after-effect
+ok 191 - trusted observer snapshot encodes real SQLite fixture after-effect
+  ---
+  duration_ms: 47.66075
+  type: 'test'
+  ...
+# Subtest: trusted observer snapshot encodes real SQLite fixture after-checkpoint
+ok 192 - trusted observer snapshot encodes real SQLite fixture after-checkpoint
+  ---
+  duration_ms: 38.349417
+  type: 'test'
+  ...
+# Subtest: missing or duplicate manifest case pins cannot pause or inject
+ok 193 - missing or duplicate manifest case pins cannot pause or inject
+  ---
+  duration_ms: 0.34175
+  type: 'test'
+  ...
+# Subtest: Q100q: distinct inodes with equal boot and zero offsets accepted
+ok 194 - Q100q: distinct inodes with equal boot and zero offsets accepted
+  ---
+  duration_ms: 1.120167
+  type: 'test'
+  ...
+# Subtest: Q100q refuses ""
+ok 195 - Q100q refuses ""
+  ---
+  duration_ms: 0.121834
+  type: 'test'
+  ...
+# Subtest: Q100q refuses "monotonic 0 0"
+ok 196 - Q100q refuses "monotonic 0 0"
+  ---
+  duration_ms: 0.928916
+  type: 'test'
+  ...
+# Subtest: Q100q refuses "monotonic 1 0\\nboottime 0 0"
+ok 197 - Q100q refuses "monotonic 1 0\\nboottime 0 0"
+  ---
+  duration_ms: 0.163417
+  type: 'test'
+  ...
+# Subtest: Q100q refuses "monotonic 0 1\\nboottime 0 0"
+ok 198 - Q100q refuses "monotonic 0 1\\nboottime 0 0"
+  ---
+  duration_ms: 0.252958
+  type: 'test'
+  ...
+# Subtest: Q100q refuses "monotonic 0 0\\nmonotonic 0 0"
+ok 199 - Q100q refuses "monotonic 0 0\\nmonotonic 0 0"
+  ---
+  duration_ms: 0.102666
+  type: 'test'
+  ...
+# Subtest: Q100q refuses "monotonic 0 NaN\\nboottime 0 0"
+ok 200 - Q100q refuses "monotonic 0 NaN\\nboottime 0 0"
+  ---
+  duration_ms: 0.194542
+  type: 'test'
+  ...
+# Subtest: Q100q refuses foreign boot
+ok 201 - Q100q refuses foreign boot
+  ---
+  duration_ms: 0.168209
+  type: 'test'
+  ...
+# Subtest: service role mounts have exactly one state writer; readers none
+ok 202 - service role mounts have exactly one state writer; readers none
+  ---
+  duration_ms: 1.013625
+  type: 'test'
+  ...
+# Subtest: service rejects shared input/state or bridge attachment
+ok 203 - service rejects shared input/state or bridge attachment
+  ---
+  duration_ms: 0.468166
+  type: 'test'
+  ...
+# Subtest: driver mounts isolated trace/key/bundle, output only RW
+ok 204 - driver mounts isolated trace/key/bundle, output only RW
+  ---
+  duration_ms: 1.199708
+  type: 'test'
+  ...
+# Subtest: valid per-role layout accepted as precondition
+ok 205 - valid per-role layout accepted as precondition
+  ---
+  duration_ms: 0.179916
+  type: 'test'
+  ...
+# Subtest: candidate foreign mount refused output
+ok 206 - candidate foreign mount refused output
+  ---
+  duration_ms: 0.056625
+  type: 'test'
+  ...
+# Subtest: candidate foreign mount refused secret
+ok 207 - candidate foreign mount refused secret
+  ---
+  duration_ms: 0.047958
+  type: 'test'
+  ...
+# Subtest: candidate foreign mount refused key
+ok 208 - candidate foreign mount refused key
+  ---
+  duration_ms: 0.031333
+  type: 'test'
+  ...
+# Subtest: candidate foreign mount refused bundle
+ok 209 - candidate foreign mount refused bundle
+  ---
+  duration_ms: 0.108417
+  type: 'test'
+  ...
+# Subtest: candidate foreign mount refused consumer
+ok 210 - candidate foreign mount refused consumer
+  ---
+  duration_ms: 0.033166
+  type: 'test'
+  ...
+# Subtest: candidate foreign mount refused obs
+ok 211 - candidate foreign mount refused obs
+  ---
+  duration_ms: 0.027542
+  type: 'test'
+  ...
+# Subtest: observer on arm refused
+ok 212 - observer on arm refused
+  ---
+  duration_ms: 0.038833
+  type: 'test'
+  ...
+# Subtest: fresh bound HR chunks replay
+ok 213 - fresh bound HR chunks replay
+  ---
+  duration_ms: 0.431667
+  type: 'test'
+  ...
+# Subtest: HR refuses bytes
+ok 214 - HR refuses bytes
+  ---
+  duration_ms: 0.084292
+  type: 'test'
+  ...
+# Subtest: HR refuses key
+ok 215 - HR refuses key
+  ---
+  duration_ms: 0.056
+  type: 'test'
+  ...
+# Subtest: HR refuses binding
+ok 216 - HR refuses binding
+  ---
+  duration_ms: 0.046125
+  type: 'test'
+  ...
+# Subtest: HR refuses seal
+ok 217 - HR refuses seal
+  ---
+  duration_ms: 0.083
+  type: 'test'
+  ...
+# Subtest: HR refuses missing
+ok 218 - HR refuses missing
+  ---
+  duration_ms: 0.081959
+  type: 'test'
+  ...
+# Subtest: observer bytes and freshness verified
+ok 219 - observer bytes and freshness verified
+  ---
+  duration_ms: 0.454584
+  type: 'test'
+  ...
+# Subtest: guarded driver can stage in private runtime parent beside readonly bundle
+ok 220 - guarded driver can stage in private runtime parent beside readonly bundle
+  ---
+  duration_ms: 196.520542
+  type: 'test'
+  ...
+# Subtest: NS preflight exact coverage succeeds
+ok 221 - NS preflight exact coverage succeeds
+  ---
+  duration_ms: 0.129917
+  type: 'test'
+  ...
+# Subtest: NS preflight omission/binding/positive/denial control d=>d.runId='old'
+ok 222 - NS preflight omission/binding/positive/denial control d=>d.runId='old'
+  ---
+  duration_ms: 0.124875
+  type: 'test'
+  ...
+# Subtest: NS preflight omission/binding/positive/denial control d=>d.role='consumer'
+ok 223 - NS preflight omission/binding/positive/denial control d=>d.role='consumer'
+  ---
+  duration_ms: 0.037
+  type: 'test'
+  ...
+# Subtest: NS preflight omission/binding/positive/denial control d=>d.denied=[]
+ok 224 - NS preflight omission/binding/positive/denial control d=>d.denied=[]
+  ---
+  duration_ms: 0.032791
+  type: 'test'
+  ...
+# Subtest: NS preflight omission/binding/positive/denial control d=>d.positive=false
+ok 225 - NS preflight omission/binding/positive/denial control d=>d.positive=false
+  ---
+  duration_ms: 0.030125
+  type: 'test'
+  ...
+# Subtest: NS preflight omission/binding/positive/denial control d=>d.publicDns=true
+ok 226 - NS preflight omission/binding/positive/denial control d=>d.publicDns=true
+  ---
+  duration_ms: 0.08675
+  type: 'test'
+  ...
+# Subtest: NS preflight omission/binding/positive/denial control d=>d.blocked=[]
+ok 227 - NS preflight omission/binding/positive/denial control d=>d.blocked=[]
+  ---
+  duration_ms: 0.033625
+  type: 'test'
+  ...
+# Subtest: NS preflight omission/binding/positive/denial control d=>d.blocked[0].reachable=true
+ok 228 - NS preflight omission/binding/positive/denial control d=>d.blocked[0].reachable=true
+  ---
+  duration_ms: 0.031333
+  type: 'test'
+  ...
+# Subtest: seed RPC script sends a bounded newline-delimited request with exact run/population
+ok 229 - seed RPC script sends a bounded newline-delimited request with exact run/population
+  ---
+  duration_ms: 74.199458
+  type: 'test'
+  ...
+# Subtest: open-loop ACK completion permutation retains exact offer/receipt correspondence
+ok 230 - open-loop ACK completion permutation retains exact offer/receipt correspondence
+  ---
+  duration_ms: 0.135916
+  type: 'test'
+  ...
+# Subtest: offer matching refuses duplicate
+ok 231 - offer matching refuses duplicate
+  ---
+  duration_ms: 0.226125
+  type: 'test'
+  ...
+# Subtest: offer matching refuses bytes
+ok 232 - offer matching refuses bytes
+  ---
+  duration_ms: 0.0835
+  type: 'test'
+  ...
+# Subtest: offer matching refuses receipt
+ok 233 - offer matching refuses receipt
+  ---
+  duration_ms: 0.049083
+  type: 'test'
+  ...
+# Subtest: offer matching refuses wrong echoed id
+ok 234 - offer matching refuses wrong echoed id
+  ---
+  duration_ms: 0.043708
+  type: 'test'
+  ...
+# Subtest: offer matching refuses missing
+ok 235 - offer matching refuses missing
+  ---
+  duration_ms: 0.036167
+  type: 'test'
+  ...
+# Subtest: candidate second network is refused
+ok 236 - candidate second network is refused
+  ---
+  duration_ms: 0.048583
+  type: 'test'
+  ...
+# Subtest: observer writable source mount is refused
+ok 237 - observer writable source mount is refused
+  ---
+  duration_ms: 0.052125
+  type: 'test'
+  ...
+# Subtest: placement refuses hardening override {"trusted":true}
+ok 238 - placement refuses hardening override {"trusted":true}
+  ---
+  duration_ms: 0.052083
+  type: 'test'
+  ...
+# Subtest: placement refuses hardening override {"image":"python"}
+ok 239 - placement refuses hardening override {"image":"python"}
+  ---
+  duration_ms: 0.027666
+  type: 'test'
+  ...
+# Subtest: placement refuses hardening override {"mounts":[]}
+ok 240 - placement refuses hardening override {"mounts":[]}
+  ---
+  duration_ms: 0.024291
+  type: 'test'
+  ...
+# Subtest: placement refuses hardening override {"extra":["--privileged"]}
+ok 241 - placement refuses hardening override {"extra":["--privileged"]}
+  ---
+  duration_ms: 0.027084
+  type: 'test'
+  ...
+# Subtest: placement refuses hardening override {"memory":0}
+ok 242 - placement refuses hardening override {"memory":0}
+  ---
+  duration_ms: 0.039584
+  type: 'test'
+  ...
+# Subtest: placement refuses hardening override {"cpuset":"0"}
+ok 243 - placement refuses hardening override {"cpuset":"0"}
+  ---
+  duration_ms: 0.027166
+  type: 'test'
+  ...
+# Subtest: authentic observer record verifies and the returned seal comes from the chain
+ok 244 - authentic observer record verifies and the returned seal comes from the chain
+  ---
+  duration_ms: 3.225959
+  type: 'test'
+  ...
+# Subtest: F1: seal-only edit refused: final consumer effects
+ok 245 - F1: seal-only edit refused: final consumer effects
+  ---
+  duration_ms: 0.490083
+  type: 'test'
+  ...
+# Subtest: F1: seal-only edit refused: final consumer marker
+ok 246 - F1: seal-only edit refused: final consumer marker
+  ---
+  duration_ms: 0.313
+  type: 'test'
+  ...
+# Subtest: F1: seal-only edit refused: final source subjects
+ok 247 - F1: seal-only edit refused: final source subjects
+  ---
+  duration_ms: 0.167208
+  type: 'test'
+  ...
+# Subtest: F1: seal-only edit refused: final source entries
+ok 248 - F1: seal-only edit refused: final source entries
+  ---
+  duration_ms: 0.168666
+  type: 'test'
+  ...
+# Subtest: F1: seal-only edit refused: periodNs value
+ok 249 - F1: seal-only edit refused: periodNs value
+  ---
+  duration_ms: 1.321584
+  type: 'test'
+  ...
+# Subtest: F1: seal-only edit refused: periodNs dropped
+ok 250 - F1: seal-only edit refused: periodNs dropped
+  ---
+  duration_ms: 0.279875
+  type: 'test'
+  ...
+# Subtest: F1: seal-only edit refused: domain boot id
+ok 251 - F1: seal-only edit refused: domain boot id
+  ---
+  duration_ms: 0.129083
+  type: 'test'
+  ...
+# Subtest: F1: seal-only edit refused: head
+ok 252 - F1: seal-only edit refused: head
+  ---
+  duration_ms: 1.107417
+  type: 'test'
+  ...
+# Subtest: F1: seal-only edit refused: chunk count
+ok 253 - F1: seal-only edit refused: chunk count
+  ---
+  duration_ms: 0.98125
+  type: 'test'
+  ...
+# Subtest: F1: seal-only edit refused: run id
+ok 254 - F1: seal-only edit refused: run id
+  ---
+  duration_ms: 0.34825
+  type: 'test'
+  ...
+# Subtest: F1: seal-only edit refused: extra field
+ok 255 - F1: seal-only edit refused: extra field
+  ---
+  duration_ms: 0.117916
+  type: 'test'
+  ...
+# Subtest: F1: seal-only edit refused: removed final
+ok 256 - F1: seal-only edit refused: removed final
+  ---
+  duration_ms: 0.090417
+  type: 'test'
+  ...
+# Subtest: F1: reviewer case, fabricated final consumer and periodNs=[1] on a one-chunk poll stream, refused
+ok 257 - F1: reviewer case, fabricated final consumer and periodNs=[1] on a one-chunk poll stream, refused
+  ---
+  duration_ms: 0.1095
+  type: 'test'
+  ...
+# Subtest: F1: editing the final record inside polls.ndjson without the key is refused
+ok 258 - F1: editing the final record inside polls.ndjson without the key is refused
+  ---
+  duration_ms: 0.119291
+  type: 'test'
+  ...
+# Subtest: F1: re-signing with another key is refused
+ok 259 - F1: re-signing with another key is refused
+  ---
+  duration_ms: 0.096458
+  type: 'test'
+  ...
+# Subtest: F1: dropping the final record (truncation) is refused even with a matching head
+ok 260 - F1: dropping the final record (truncation) is refused even with a matching head
+  ---
+  duration_ms: 0.1565
+  type: 'test'
+  ...
+# Subtest: F1: poll rows after the final record are refused
+ok 261 - F1: poll rows after the final record are refused
+  ---
+  duration_ms: 0.100667
+  type: 'test'
+  ...
+# Subtest: F1: a second final record or periodNs outside the final record is refused
+ok 262 - F1: a second final record or periodNs outside the final record is refused
+  ---
+  duration_ms: 0.091042
+  type: 'test'
+  ...
+# Subtest: F1: wrong run and key refused
+ok 263 - F1: wrong run and key refused
+  ---
+  duration_ms: 0.088291
+  type: 'test'
+  ...
+# Subtest: F1: domain changing between chunks is refused
+ok 264 - F1: domain changing between chunks is refused
+  ---
+  duration_ms: 0.090583
+  type: 'test'
+  ...
+# Subtest: F1: the real observer.py emits a final record that verifyObserver accepts, and any edit afterwards is refused
+ok 265 - F1: the real observer.py emits a final record that verifyObserver accepts, and any edit afterwards is refused
+  ---
+  duration_ms: 517.763625
+  type: 'test'
+  ...
+# Subtest: F2: checkSmoke refuses a missing, foreign, nonzero, signalled or hook-failed terminal before reading events
+ok 266 - F2: checkSmoke refuses a missing, foreign, nonzero, signalled or hook-failed terminal before reading events
+  ---
+  duration_ms: 0.307666
+  type: 'test'
+  ...
+# Subtest: F2: the terminal records the coordinator exec status, not any event content
+ok 267 - F2: the terminal records the coordinator exec status, not any event content
+  ---
+  duration_ms: 0.048916
+  type: 'test'
+  ...
+# Subtest: F2: the reviewer reproduction of the real driver source (hook failure after three handshakes) now records the error and refuses replay
+ok 268 - F2: the reviewer reproduction of the real driver source (hook failure after three handshakes) now records the error and refuses replay
+  ---
+  duration_ms: 95.026333
+  type: 'test'
+  ...
+# Subtest: F3: rejected control session (reject-hook) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+ok 269 - F3: rejected control session (reject-hook) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+  ---
+  duration_ms: 142.198459
+  type: 'test'
+  ...
+# Subtest: F3: rejected control session (control-timeout) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+ok 270 - F3: rejected control session (control-timeout) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+  ---
+  duration_ms: 163.469459
+  type: 'test'
+  ...
+# Subtest: F3: rejected control session (control-truncated) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+ok 271 - F3: rejected control session (control-truncated) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+  ---
+  duration_ms: 99.889292
+  type: 'test'
+  ...
+# Subtest: F3: rejected control session (control-json) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+ok 272 - F3: rejected control session (control-json) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+  ---
+  duration_ms: 93.89075
+  type: 'test'
+  ...
+# Subtest: F3: rejected control session (control-cap) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+ok 273 - F3: rejected control session (control-cap) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+  ---
+  duration_ms: 89.418625
+  type: 'test'
+  ...
+# Subtest: F3: rejected control session (control-null) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+ok 274 - F3: rejected control session (control-null) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+  ---
+  duration_ms: 84.823833
+  type: 'test'
+  ...
+# Subtest: F3: rejected control session (control-array) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+ok 275 - F3: rejected control session (control-array) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+  ---
+  duration_ms: 93.415125
+  type: 'test'
+  ...
+# Subtest: F3: rejected control session (control-scalar) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+ok 276 - F3: rejected control session (control-scalar) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+  ---
+  duration_ms: 86.236208
+  type: 'test'
+  ...
+# Subtest: F3 baseline preserved: resolved exec result (nonzero) still exports six digested files before refusing
+ok 277 - F3 baseline preserved: resolved exec result (nonzero) still exports six digested files before refusing
+  ---
+  duration_ms: 81.66575
+  type: 'test'
+  ...
+# Subtest: F3 baseline preserved: resolved exec result (null-exit) still exports six digested files before refusing
+ok 278 - F3 baseline preserved: resolved exec result (null-exit) still exports six digested files before refusing
+  ---
+  duration_ms: 77.101125
+  type: 'test'
+  ...
+# Subtest: F3 baseline preserved: resolved exec result (finish-failure) still exports six digested files before refusing
+ok 279 - F3 baseline preserved: resolved exec result (finish-failure) still exports six digested files before refusing
+  ---
+  duration_ms: 82.216834
+  type: 'test'
+  ...
+# Subtest: F7: raw control bytes (control-nonutf8) are exported and digested exactly as received
+ok 280 - F7: raw control bytes (control-nonutf8) are exported and digested exactly as received
+  ---
+  duration_ms: 81.926083
+  type: 'test'
+  ...
+# Subtest: F7: raw control bytes (control-split-utf8-garbage) are exported and digested exactly as received
+ok 281 - F7: raw control bytes (control-split-utf8-garbage) are exported and digested exactly as received
+  ---
+  duration_ms: 85.810584
+  type: 'test'
+  ...
+# Subtest: F7: raw control bytes (control-split-utf8-truncated) are exported and digested exactly as received
+ok 282 - F7: raw control bytes (control-split-utf8-truncated) are exported and digested exactly as received
+  ---
+  duration_ms: 88.883125
+  type: 'test'
+  ...
+# Subtest: F7: raw control bytes (control-split-utf8-valid-then-null) are exported and digested exactly as received
+ok 283 - F7: raw control bytes (control-split-utf8-valid-then-null) are exported and digested exactly as received
+  ---
+  duration_ms: 91.369208
+  type: 'test'
+  ...
+# Subtest: F5: a one-shot stage-10 append failure (stage10-control) keeps volume ownership after close(), keeps the original cause and records the gap
+ok 284 - F5: a one-shot stage-10 append failure (stage10-control) keeps volume ownership after close(), keeps the original cause and records the gap
+  ---
+  duration_ms: 82.395958
+  type: 'test'
+  ...
+# Subtest: F5: a one-shot stage-10 append failure (stage10-nonzero) keeps volume ownership after close(), keeps the original cause and records the gap
+ok 285 - F5: a one-shot stage-10 append failure (stage10-nonzero) keeps volume ownership after close(), keeps the original cause and records the gap
+  ---
+  duration_ms: 79.465458
+  type: 'test'
+  ...
+# Subtest: F5: a one-shot stage-10 append failure (stage10-clean) keeps volume ownership after close(), keeps the original cause and records the gap
+ok 286 - F5: a one-shot stage-10 append failure (stage10-clean) keeps volume ownership after close(), keeps the original cause and records the gap
+  ---
+  duration_ms: 80.54
+  type: 'test'
+  ...
+# Subtest: F3: when stop or export cannot be proven (retain-walk-failure), the run volumes stay owned and the gap is recorded
+ok 287 - F3: when stop or export cannot be proven (retain-walk-failure), the run volumes stay owned and the gap is recorded
+  ---
+  duration_ms: 97.874792
+  type: 'test'
+  ...
+# Subtest: F3: when stop or export cannot be proven (retain-remove-failure), the run volumes stay owned and the gap is recorded
+ok 288 - F3: when stop or export cannot be proven (retain-remove-failure), the run volumes stay owned and the gap is recorded
+  ---
+  duration_ms: 90.949916
+  type: 'test'
+  ...
+# Subtest: F3: a failed terminal is never clean: requireCleanTerminal refuses controlFailure whatever else it says
+ok 289 - F3: a failed terminal is never clean: requireCleanTerminal refuses controlFailure whatever else it says
+  ---
+  duration_ms: 0.395625
+  type: 'test'
+  ...
+# Subtest: F4 control: constant valid domain is accepted and returned
+ok 290 - F4 control: constant valid domain is accepted and returned
+  ---
+  duration_ms: 0.893334
+  type: 'test'
+  ...
+# Subtest: F4: null first domain followed by a valid domain is refused (the reviewer reproduction)
+ok 291 - F4: null first domain followed by a valid domain is refused (the reviewer reproduction)
+  ---
+  duration_ms: 0.220208
+  type: 'test'
+  ...
+# Subtest: F4: null in every record is refused, including with a null seal domain
+ok 292 - F4: null in every record is refused, including with a null seal domain
+  ---
+  duration_ms: 0.096625
+  type: 'test'
+  ...
+# Subtest: F4: null only in the middle or final record is refused
+ok 293 - F4: null only in the middle or final record is refused
+  ---
+  duration_ms: 0.19975
+  type: 'test'
+  ...
+# Subtest: F4: change between two non-null domains is still refused
+ok 294 - F4: change between two non-null domains is still refused
+  ---
+  duration_ms: 0.449875
+  type: 'test'
+  ...
+# Subtest: F4: a constant but malformed domain is refused (not the boot/zero-offset clock object)
+ok 295 - F4: a constant but malformed domain is refused (not the boot/zero-offset clock object)
+  ---
+  duration_ms: 0.985833
+  type: 'test'
+  ...
+1..295
+# tests 295
+# suites 0
+# pass 295
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1883157.65475

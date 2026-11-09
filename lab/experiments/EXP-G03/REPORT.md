@@ -682,3 +682,73 @@ Source: `lab/verify/G03/VERIFY-round7a.md` (FIX-FIRST, reviewed `ef1a9216`/`9c4b
 - Separate reviewer acceptance of this round is outstanding.
 
 Evidence index: `round7c/INDEX.json`; checksums: `round7c/SHA256SUMS`; durable copy at `/Users/sam/Claude/Projects/triplex-db-2/evidence/G03-R7/round7c/` (all files under 1 MB).
+
+## Round 7d: reviewer's F5 (medium), F6 and F7 (low)
+
+Source: `lab/verify/G03/VERIFY-round7c.md` (FIX-FIRST, reviewed report head `67844167`, implementation `87c86a10`). Offline only: no live boxed or VM run, no engine slot, no Docker lifecycle command by the builder; the Docker context stayed `default`. Code commit `78307fcf`. No QUALIFIED or PASS grant is added; everything stays DIAGNOSTIC.
+
+### F5: the retention guard starts before the terminal and includes stage 10
+
+- `runBoxedNS` now defines `forensicVolumes` and the guarded `try` before `trustedTerminal` is built and before `stage(10)` is appended. A failure in either is tagged `persistenceError` and goes through the same catch as a stop, teardown or export failure.
+- The catch detaches the run's nine per-run volumes from `box.resources` (so the caller's `close()` cannot delete them), lists them in `box.retained`, and writes `ns-<run>-retained.json` with two new fields, `persistenceGap` (the append error) and `originalCause` (`DRIVER-CONTROL-FAILURE <cause>`, `DRIVER-EXIT-NONZERO status=N` or `DRIVER-HOOK-FAILURE <cause>`, else null).
+- The thrown error keeps the original cause first: `DRIVER-CONTROL-FAILURE <cause>; TERMINAL-PERSISTENCE-GAP <append error>`, with the append error as `cause`. A clean run whose stage-10 append fails throws the append error unchanged. The error carries `retained`, `terminal`, `runId`, `candidateLogs`.
+- Nothing is exported in this case (the stage log is incomplete, so the attempt is not trusted); the volumes are the evidence and stay in the VM.
+
+### F6: control envelopes are validated before property access
+
+`execControl` checks the parsed top-level value: JSON `null`, arrays and scalars call `fail(Error('FAULT-CONTROL-ENVELOPE'))` with the partial bytes, so the coordinator's rejection path (terminal, export, retention) runs instead of a TypeError in the stream callback. Objects with another `schema` are still ignored, because the driver prints its final result object on stdout (`driver.mjs` line 221).
+
+### F7: raw bytes
+
+`execControl` keeps the received chunks as Buffers. Lines are framed on the 0x0a byte (so a multibyte character split between chunks is safe) and decoded strictly: a UTF-8 round trip must reproduce the line bytes, else `FAULT-CONTROL-JSON`. `partial.stdout`, `partial.stderr`, `partial.pending` and a resolved exec's stdout/stderr are the concatenated raw chunks, so the terminal digests, byte counts and the exported `control/stdout` and `control/stderr` are of exactly what was received. No `TextDecoder` is used, so the vm test contexts (including the reviewer's) need no new global or import.
+
+### Regressions (`ns/round7c.test.mjs` 27 tests, was 17; `ns/round7c-harness.mjs`)
+
+- F6: `control-null`, `control-array`, `control-scalar` join the rejected-control table: `DRIVER-CONTROL-FAILURE FAULT-CONTROL-ENVELOPE`, failed coordinator terminal, 8 digested exports, exact partial bytes, volumes deleted only after export.
+- F7: `ff 0a` (invalid UTF-8), `c3 | a9 0a` (split multibyte, not JSON), `7b 22 61 22 3a 22 e2 82 | ac` (split, truncated) and a valid object line with a multibyte character split across chunks followed by `null`. Each asserts the exported bytes equal the supplied bytes (hex), the terminal byte count and sha256, and `capture['control/stdout']`.
+- F5: one-shot EIO on only the stage-10 append (`stage10-control` rejected hook, `stage10-nonzero`, `stage10-clean`): all nine named volumes survive `close()`, no close-time removal of them, `box.retained` and gap list them, gap has `persistenceGap` and `originalCause`, no `raw-*` directory, no walk, stage 10 absent and stage 14 last.
+- Liveness: against the `67844167` `box.mjs` and `ns-run.mjs`, the 10 new tests fail and the 17 existing pass. Old `box.mjs` alone: 7 fail; old `ns-run.mjs` alone: 3 fail.
+
+### Divergences from the review's proposal
+
+- Stage-10 failure refuses and retains rather than continuing to export: the stage log would be incomplete. The reviewer asked for detach and gap, which this does.
+- A failure while writing the gap or stage 14 no longer replaces the thrown error; it is recorded as `gapWriteError` on it. The volumes are already detached before that write. This changes the round 7c behavior the reviewer's matrix recorded for "gap-write failure" (the refusal was the gap-write error; it is now the original error).
+- "Where possible" is implemented for control, nonzero-exit and hook failures; a clean-terminal run has no original cause to keep.
+- An unparsable line is still `FAULT-CONTROL-JSON`; the new `FAULT-CONTROL-ENVELOPE` covers parsed non-object values only. A parsed object with a foreign schema is ignored, not refused.
+- `partial.pending` is the raw tail, as before but now unmodified bytes.
+
+### Gates (committed tree `78307fcf`; the report commit changes only REPORT.md and `round7d/`)
+
+- NS components: **187/187** (177 plus 10), exit 0, `round7d/ns-suites.tap`.
+- `python3 lab/acceptance/build_contract.py --verify` as its own step: exit 0, second regeneration byte-identical, `round7d/contract-verify.txt`.
+- Evaluator fixtures run separately: **108/108**, exit 0, no EVALUATOR-TAMPERED output, `round7d/evaluator.tap`.
+- Full suite: **295/295** (285 plus 10; 108 evaluator fixtures plus 187 NS components), zero fail/cancel/skip/todo, exit 0, no EVALUATOR-TAMPERED output, 1,883 s, `round7d/committed-suites.tap`.
+- All ran sequentially through `heavy.mjs --label G03-R7D`. `df -h /` showed 93 GiB free before the first. `lab/acceptance` has no diff.
+
+### PASS / receipt audit (rule 9a)
+
+- `trustedTerminal` / `requireCleanTerminal`: unchanged. The terminal is now built inside the guard; content = exec status, finish result, control cause; freshness = this run's exec result; binding = run ID. If it cannot be built or logged, no terminal is presented as an export; the gap record carries it (or null).
+- Capture digests and partial-stream digests: content = sha256 of the exact received bytes (no decoding), freshness = taken at export this attempt, binding = path under `raw-<run>/`. They are not re-derived from decoded text.
+- Retention record (`ns-retained/1`): makes no PASS claim; `qualification:false`, `export:'NOT-PROVEN-SAFE'`; binding = run ID, binding object, volume names built from the run ID.
+- `execControl` envelope check: refuses, never accepts; the only positive path (a `ns-control/1` object) is unchanged and still goes through `injector.handshake`.
+- Tests: refusal assertions come first; digests and bytes are recomputed from files on disk or compared to the supplied hex, not read back from the code under test; Box, transport and fs fault are trusted models, disclosed in the harness header.
+- `checkSmoke`, `verifyHr`, `verifyObserver`: unchanged.
+
+### Pins moved (rule 9b; `lab/acceptance` untouched, contract unchanged; none is a contract input pin)
+
+| Path | Old sha256 (67844167) | New sha256 |
+| --- | --- | --- |
+| lab/bin/box.mjs (PROTECTED EVALUATOR CLOSURE, in claim.mjs EVALUATOR_FILES) | 589028dca91ca8c90865994dd483df4694999360f9485520c9c963296b1dc906 | a90715c708b6329bc8c07d12531aac4d88b0ce275fa1352bb46a3483e34fe481 |
+| lab/bin/ns-run.mjs | aa99c4fae29d72f2558e47fb14e6abcf12748caf7f21fd45a9fbe4e87fcffd82 | bb9105e18a321438d7b8c2594f9de975862d082acf225f1ea22fae7f3ca5720d |
+
+Against the original `9c4b68aa` base, `box.mjs` was `96b9d9cc9485ef2fcfd13362a69a5e126a0cbf36bb93cdf978402908d89411c1` and `ns-run.mjs` `93f2267c8e9682bfc9f922be332b288f1be5be94a17bdbf8400c72f17f897ef4`. `smoke.mjs`, `exclusive.mjs`, `observer.py` and `lab/bench/ns-driver/**` are unchanged, so the driver bundle hash is unchanged. Contract 0.4.1 must re-pin `box.mjs` (new value above) with the pending round 7a bundle.
+
+### What did not run / not verified
+
+- No live boxed or VM run, no pause/kill/restart, no CR-NS ingestion, no recovery normalizer, no P1-P5 qualification, no exclusive slot.
+- The stage-10 EIO, the stream bytes and the Box are trusted models; real Docker volume retention after a host I/O fault was not observed. The reviewer's `stage-review.mjs` reproductions were not rerun (they live in the verify worktree); the equivalent cases are covered by the new harness modes.
+- Evaluator and full fixtures use their existing private-daemon synthetic containers through engine.mjs (the gates asked for them); no other container work.
+- The evaluator tap run used `TX2_FIXTURE_TRACE` under `/tmp`; those traces are not committed.
+- Separate reviewer acceptance of this round is outstanding.
+
+Evidence index: `round7d/SHA256SUMS`.
