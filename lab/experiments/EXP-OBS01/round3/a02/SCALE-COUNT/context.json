@@ -1,0 +1,72 @@
+{
+  "runId": "obs01-r3-a02-scale-count",
+  "receiptId": "obs01-r3-a02-scale-count",
+  "keyId": "obs01-r3-a02-scale-count-key",
+  "engine": "xtdb",
+  "bundleSha256": "9c857e37b41f07c56b84ad035537bc860b3eefc5cb21e861a09e5de05fe1c021",
+  "bridgeSha256": "986c880af67de7d3dfb5844b1d5968725cfb1b58dd430df8b8de0c3d887548c9",
+  "clockMaxUncertaintyMs": 4.905386500060558,
+  "streams": [
+    {
+      "cadenceMs": 100,
+      "endpoint": "resident:d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "kind": "EI-query/xtdb/X4",
+      "method": "capture",
+      "normalizer": {
+        "id": "obs01-resident-protocol",
+        "sha256": "bf022b3f76345939f464e4324cf65b51d4a10a2b711905c6dda3e338cdd3ae8f",
+        "version": "3"
+      },
+      "normalizerFile": "X4-native.normalize.py",
+      "reader": "resident",
+      "sourceId": "X4",
+      "streamId": "X4-native",
+      "normalizerPath": "/Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-r3-a02-scale-count/code/X4-native.normalize.py",
+      "chunks": [
+        {
+          "header": "streams/X4-native/chunks/00000000.hdr.json",
+          "headerSha256": "de8e9bede91b304bbd6b390a592bb25dc146ec872b0b2262fa9b41e25fe17c5f",
+          "raw": "streams/X4-native/chunks/00000000-624c828f393ef5ff4eb5a599d9e2cda650de4f836e1730471c63db617807f198.bin"
+        },
+        {
+          "header": "streams/X4-native/chunks/00000001.hdr.json",
+          "headerSha256": "44688bd071120cae7d0012261696309c49d13e1ee591093b8840d2c7704932f9",
+          "raw": "streams/X4-native/chunks/00000001-4668e94132d5dcc5763fe71213630e06fdaffc40e533f4dc0c9147866a7d6e5d.bin"
+        },
+        {
+          "header": "streams/X4-native/chunks/00000002.hdr.json",
+          "headerSha256": "c252f01f69777f27a9d7121591386422aea386f8bbe0962702a6b3d6a88738e3",
+          "raw": "streams/X4-native/chunks/00000002-c8522a1accbc4467073a5deb4e95b539c5c9a8d060fe0237085c6968f3edf0c3.bin"
+        },
+        {
+          "header": "streams/X4-native/chunks/00000003.hdr.json",
+          "headerSha256": "8563b7ced92a583cdd9cafb601d0cdc2fbb9f0fd2fdfc0395cc8b8a1be56d91c",
+          "raw": "streams/X4-native/chunks/00000003-fbf63124084bf62ae7f971a30adc1adde1f9723eafd365775cb819d6107d2791.bin"
+        }
+      ]
+    }
+  ],
+  "witnessHeads": [
+    {
+      "runId": "obs01-r3-a02-scale-count",
+      "streamId": "X4-native",
+      "seq": 3,
+      "headSha256": "8563b7ced92a583cdd9cafb601d0cdc2fbb9f0fd2fdfc0395cc8b8a1be56d91c",
+      "tMono": 121624028.980181
+    }
+  ],
+  "format": "obs-context/1",
+  "protocol": "OBS-SCALE-COUNT",
+  "obligation": "S.population.year-one",
+  "case": "obs01-r3-a02-scale-count",
+  "witnessKind": "SCALE-COUNT",
+  "thresholdIds": [],
+  "contractSha256": "fe730f89a779c44201f02b8987e0079aa0f713c3fbca35761c321546c682e4fb",
+  "bindings": {
+    "population": {
+      "generator": "configured-entities-v1",
+      "n": 8,
+      "width": 1
+    }
+  }
+}

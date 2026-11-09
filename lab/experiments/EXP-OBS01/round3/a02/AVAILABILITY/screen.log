@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/check_round3.py", line 23, in <module>
+    if field in e and e[field]!=value:raise ValueError('independent source disagreement: '+field)
+                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: independent source disagreement: probes

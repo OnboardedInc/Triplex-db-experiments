@@ -314,3 +314,187 @@ window ambiguity, and challenge the declared ownership/coverage limits. Outstand
 are complete independent CANCEL/ACK/publication bindings, WORK units, application-wide resource ownership,
 encoding-aware/freed-block erasure coverage, and NS-load clock/cost behavior. Datomic waits for the separate
 lane owner as instructed. No merge or push was performed.
+
+## Round 3 — 2026-11-09, continuation of 5aa62d5
+
+### Result and boundary
+
+Added strict source-derived parsing paths for the nine previously unconditional refusals and a resident-only
+collection/screening path. **Complete positive protocol coverage is still not established.** Every one of the
+fourteen protocols now has a fresh real resident bundle submitted to the pinned oracle with an actually delegated
+context; the selected cohort returns **3 PASS, 11 FAIL, 0 REFUSED**. Its 28 delegation/protocol-negative contexts
+return REFUSED. Missing fields remain missing, with explicit source-gap diagnostics. A protocol-name registry or
+partial derivation is not a claim that an unchanged resident supplies a complete positive witness.
+
+No exclusive slot was acquired, no engine volume was created/deleted, and no resident was stopped, recreated,
+reconfigured, rebuilt or deliberately memory-failed. All resident collection uses `tx2-xtdb-dev`; the user allowed
+either shared resident, so no QLever or Datomic run was needed. Lane D remains untouched pending EXP-DA04.
+Tiny diagnostic tables use only the `obs01r3_*` namespace. Those fixture records remain; no unrelated table was changed.
+
+### Exact oracle/contract/context binding
+
+The screening implementation is `23e2273fc6b15b92821b318acd387f5484155d8a`, extracted with `git show` into
+ignored `runs/OBS01/r3-oracle/observe.py`. The retained contract is **0.3.12 from f5e7a413e17948738472d3465bcfdda3b72b2e41**,
+not this worktree's inherited 0.3.10. `round3/contract.json` contains the exact bytes and `round3/pins.json` their
+SHA256 and canonical-context identity. The moving review branch later reached 72a1a164; its byte differences are
+inputs, runner/verifier provenance and transitive digest. This run does not silently relabel its original contract snapshot.
+
+Each family selects a relevant obligation whose **actual `oracles` contains O-OBS**, includes every threshold required
+by that obligation, and names its registered protocol. WORK selects `G8.reuse.positive-witness`, exactly
+`T-REUSE-AVOIDED`, witness kind `reuse`; MAINTENANCE separately pins `NS-P3-LAG-P99-MS`. No `needsNewOracle` or
+registry-wide declaration substitutes for delegation. The real-bundle negative contexts change only the obligation
+or requested protocol; their CLI exits are 2/REFUSED with CONTEXT-CONTRADICTION. The selected FAIL results occur
+after the guard, not because a convenient unrelated obligation was used.
+
+`screen_cli_round3.mjs` retains actual pinned CLI stdout/stderr and process exits, separately from the collection/helper
+exit. Exit zero from `check_round3.py` means the diagnostic receipt was written, not semantic acceptance. The original
+`cli-results.json` and later `cli-results-final.json` are separate attempts; old failures are retained.
+
+### Implemented derivations and observed limits
+
+`protocol_extra.py`, compiled inline with the existing exact source decoders, accepts native pgwire byte transcripts,
+OTLP/log/proc/file samples and evaluator-frozen case selectors. It never accepts an arbitrary completed protocol object.
+The field paths are:
+
+- **CANCEL:** backend-PID targeted CancelRequest, native SQLSTATE 57014 caller outcome, and same-connection successful
+  reuse from actual request/reply packets; native active-query snapshots are retained when supplied. Independent native
+  drain, acknowledgement and complete active-window coverage still lack a complete resident derivation. It does not
+  turn a closed socket, attempted cancel or absent span into a successful cancellation.
+- **AVAILABILITY:** real caller read/write probe outcomes plus process-start/OOM-counter lifecycle observations.
+  A stable process and unchanged OOM counter do not manufacture a failure instant. No resident OOM/restart was injected.
+- **SCALE-COUNT:** all eighteen analytic columns are decoded as exact native integers/nulls, then compared by the
+  unmodified oracle with O-REPLAY's independently computed result. The small native fixture retains active/retired
+  domain, presence and type versions plus command/release marker rows. Its eight-entity width-1 count PASS is a
+  **counts-only native representation diagnostic**, not full ORM/generator conformance or year-one population acceptance.
+- **WORK:** exact scan-row totals and all explicitly supplied native write/triple/byte profiler units, with distinct
+  candidate/comparison operations. Missing units are never filled with zero merely because SQL is SELECT. Native
+  resident EXPLAIN ANALYZE supplies rows only; the other three units remain absent.
+- **MAINTENANCE:** matched native start/end events and publication/checkpoint differences from native lag rows.
+  Unchanged resident telemetry does not provide that complete event-plus-durable-consumer interval here.
+- **WATERMARK:** flattened typed C1 eligibility/prefix/snapshot columns and actual observed read-start, engine-request,
+  response and read-end intervals. Metadata and answer must be the **same native observation**, not two requests with
+  equal SQL. A reviewed composition readback/query profile is still required; generic native reads do not establish routing.
+- **ACK-ORDER:** native commit response, independently collected publication readback and nested source-bound WATERMARK
+  references. A publication readback after ACK cannot prove earlier publication; its actual later time is retained.
+  A second independent non-HR publication/route witness is still required and unavailable on this resident profile.
+- **FAULT-TRANSITIONS:** actual observer-client process exit and post-exit marker readback, with transaction/marker
+  identity matching before any durable transition object can be emitted. This is an observer-client crash, not a shared
+  engine crash. The pgwire commit reply does not bind a native transaction position here, so the marker's business value
+  is not mislabeled as that position and no durable transition is invented.
+- **ERASURE-SCAN:** per-location raw-byte positive controls, surviving literal and UTF-16LE/UTF-32LE hits, and an actual
+  publication readback when provided. `literal-byte-scan/1` cannot establish derived-channel absence. No publication time
+  is copied from the case; no canary hit is invented. Full inventory, FSST, freed blocks and physical coverage remain deferred.
+
+These conditional source mappings do **not** finish the missing collector/source integrations above. In particular,
+CANCEL's complete two-kind engine-field witness and composition-specific ACK/WATERMARK witnesses remain open implementation
+work. Changing resident configuration or supplying adapter assertions as observer facts was not used to conceal those gaps.
+
+### Resident tooling and clocks
+
+`engine.mjs observer-resident` launches only its own short-lived, digest-pinned Python observer after pool admission.
+The observer shares the resident network/PID namespaces, has its own 128 MiB cap and CPU 5, RO engine/cgroup/code/key mounts,
+read-only root and only DAC_READ_SEARCH. The resident receives no key/output mount. Existing unpinned residents can contend
+for CPU; new observers refuse pinned CPU conflicts and reserve their CPU under the pool lock. No physical isolation claim follows.
+Cases reject unowned table names, oversized fixture populations, unsafe stream IDs and reused evaluator keys. New engine
+admissions respect the resident-observer reservation too. The observer has a 60-second process bound; cleanup retains a
+reservation if its own container cannot be proven gone. Final heads are written/fsynced by host engine tooling only.
+
+No new resident ports or tracing configuration are needed. Instead, the diagnostic harness clock reference is a **real separate
+VM interpreter exchange**, bracketed with VM monotonic send/receive times including interpreter startup. Actual uncertainty is
+retained in each envelope/context; the first selected cohort measured approximately 5.10–9.89 ms, not fabricated zero-RTT.
+**This does not meet the <=1 ms observation precision floor and does not qualify NS clock behavior.** The ordinary exclusive
+observer's 2 ms RTT gate is unchanged. These resident PASS results are screening diagnostics only, never P1–P5 promotion.
+
+### Selected real-bundle ledger
+
+Selected evidence lives in `round3/a03/<PROTOCOL>/`, except ERASURE-SCAN and ACK-ORDER (`a04`) and the corrected bounded
+CANCEL attempt (`a07`). Each has frozen `case.json`, evaluator `context.json`, `evidence.json`, `derivation.json`, and CLI
+receipts. Original bundle roots remain at `/Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-r3-<attempt>-<protocol>/`.
+
+| Protocol | Obligation | Actual screening result / reason |
+| --- | --- | --- |
+| CANCEL | G6.cancel.observed-drain | FAIL: native cancellation outcome/caller settlement missing; drain/ACK/coverage not established |
+| PREABORT | G6.cancel.preaborted-no-work | FAIL: complete engine statement log absent; observer-only traffic cannot prove global absence |
+| CONNECTIONS | G6.ownership.bounded-connections | PASS: declared diagnostic native socket pool returns to baseline within the pinned bound; not SDK pool qualification |
+| SCRATCH | G6.cleanup.scratch-zero | PASS: independent before/after count of the private scratch relation agrees; no unresolved outcome |
+| NO-MUTATION | G3.recursion.read-only-frontier | FAIL: completed gauge alone lacks a second independent complete resident write inventory |
+| RESOURCE | S.capacity.admitted | FAIL: conservative cgroup peak exceeds the declared 3 GiB forecast by 131,072 bytes; not proof that process RSS exceeded its cap |
+| AVAILABILITY | G6.resource.memory-failure-contained | FAIL: native caller probes exist, but no engine failure instant is source-recomputed; no resident memory fault was injected |
+| SCALE-COUNT | S.population.year-one | PASS: eight-entity native fixture analytic counts equal independent O-REPLAY; not actual year-one scale |
+| WORK | G8.reuse.positive-witness | FAIL: rowsWritten (also triplesTouched and bytesWritten) absent from native profiler |
+| MAINTENANCE | G8.maintenance.bounded-boundaries | FAIL: native start/end and complete durable-consumer lag interval absent |
+| ERASURE-SCAN | G9.erasure.protected-copies | FAIL: no erasure inventory/publication/control witness; physical coverage intentionally deferred |
+| WATERMARK | G8.composition.watermark-routing | FAIL: serving-index/atomic eligibility/route witness absent |
+| ACK-ORDER | G7.composition.ack-and-routed-ryow | FAIL: source-publication time, nested route and independent corroboration absent |
+| FAULT-TRANSITIONS | G7.commit.protocol-transitions | FAIL: no position-bound durable transition; actual client crash and native marker readback retained |
+
+One bundle/case does not establish repetitions, full application ownership, all contexts or obligation acceptance.
+The broad declared socket maximum and engine-only resource envelope are explicit diagnostic case inputs, not discovered SDK limits.
+
+### Failures retained and validation
+
+- a02 AVAILABILITY initially exposed a screening-helper source-disagreement exception (an unavailable lifecycle stream
+  had returned an empty probe list). The original stderr remains. The helper now lets O-OBS judge disagreements, and the
+  lifecycle mapper emits only lifecycle fields; a03 correctly fails missing engine failure provenance instead.
+- The first before/after inspection comparison treated Docker's nondeterministic Mounts array order as a change. The
+  original `cleanup.json` is preserved. Sorting mounts by Destination shows identical resident ID, configuration, mount
+  set and start time; the correction receipt states precisely what changed in the comparison.
+- a03 CANCEL used duplicate output column names, producing native 08P01 rather than cancellation. The query aliases were
+  corrected. a06 observed a real native 57014 cancellation but its observer exited without a seal; its precise process-exit
+  cause was not captured and is **unverified**. It stays unqualified. Tooling now retains final container state and separate
+  stdout/stderr before removal. The bounded a07 query has LIMIT 256, returns before cancellation, and reuses successfully;
+  that is retained as a FAIL, not relabeled as successful cancellation.
+- Review found `clear-cache` incorrectly classified as QLever read-only/session traffic. R27 lists it as mutating; it now
+  counts as a write, with a binary HTTP regression test. No QLever resident was changed to test this parser fix.
+
+`round3/gate-final.log`: **14 existing + 8 round-2 + 9 round-3 Python tests, and 9 Node tests pass** under heavy admission,
+using the pinned consumer extracted from 23e2273. Tests cover binary reply parsing, exact counters above 2^53, missing-unit
+refusal, surviving encoded canaries, untrusted field objects, source-cell mismatches, same-SQL/different-snapshot rejection,
+missing OOM failure provenance, and mutating admin classification. `controller-final-tests.log` repeats the focused controller/
+clock tests after admission changes. The final standalone source normalizer SHA256 is
+`49b06589161d0c1f7d66e96a13778f943b58983a6bc60a176037242ba77e6d37`.
+The a05 count smoke rechecks source compilation/authentication against a current controller. Actual collector/parser/controller
+preimages remain per attempt; no later Git commit is retroactively assigned as a pre-run anchor.
+
+No package contracts changed; pnpm/package builds, full NS tests, physical erasure and live lane D were not run. No independent
+reviewer recollection or acceptance is claimed. All heavy probes/gates used heavy.mjs with host free space above 5 GiB.
+
+### Deferred commands and open work
+
+`round3/SCALE-WINDOW.md` contains exact available collector, clock, frozen-driver, A/A-arm, scanner-probe and pinned-oracle
+invocations. It names the required external frozen driver/trace/fixture-reset artifacts rather than inventing runner flags.
+`run_frozen_driver.mjs` validates those pins and the private daemon before executing a supplied argv. The document explicitly
+states that no complete physical-erasure qualification command exists until the missing decoder/inventory implementation exists.
+Those commands were not executed in this round. Remaining implementation questions are independent two-kind CANCEL engine facts,
+composition-native publication/route bindings, all work units, durable maintenance lag and complete physical copy controls.
+
+The new controller rejection test initially expected exit 1, but lab tooling correctly returns **3 for REFUSED**.
+That first assertion failure is retained in `controller-negative.log`. `controller-negative-r2/result.json`
+records the corrected live negative: an unowned relation is rejected, no observer is created, its reservation
+is released, and the resident's ID/start time is unchanged. `controller-final-tests-r2.log` passes the nine
+focused Node checks after the final cleanup changes.
+
+### Final cleanup and retention
+
+`round3/cleanup-final.json` records **36 attempt directories**: 33 sealed collection attempts, the unsealed a06
+cancellation attempt, and two precollection controller refusals. All named observer containers are absent;
+there are zero CX-OBS01-R3 reservations or containers. Every before/after resident identity/configuration/mount
+set/start-time comparison is unchanged. No exclusive slot or new volume was used. The separate fault-client
+SIGKILL targeted only the observer's disposable Popen child, never the engine or another agent's process.
+`round3/summary.json` and `cli-results-final.json` retain the selected 14-case denominator separately from retries,
+42 actual CLI results and 28 guard-negative refusals.
+
+Final review also added a physical-prefix boundary check: truncated, nonzero-offset or size-mismatched file
+reads cannot become full-file positive controls. The separate final parser regression run passes ten round-3
+tests (`parser-final-regression.log`); this focused check ran after the full gate and archival snapshot.
+
+All attempt bytes, private run keys, exact per-attempt parsers/controllers, case/inspection receipts and own
+host witness lines were copied to `/Users/sam/Claude/Projects/triplex-db-2/evidence/OBS01/round3-host/`.
+The archive compared **2,797 source/copied files**, all matched, with 2,798 manifest entries. Its
+`SHA256SUMS.json` SHA256 is **be3e3773341e48bb84d4ad6f403be11afb3905f59d368a6aad83472c36225a42**.
+`round3/archive.log` retains the copy verification. Keys remain private, outside bundles and Git.
+Final report/documentation and the post-snapshot physical-prefix regression are committed here; the archive's
+per-attempt copies continue to represent the actual collection bytes rather than a retroactive final-source anchor.
+Original retained runs remain available for direct CLI replay. When restoring only the archive, relocate only the
+trusted context's external normalizer paths, preserving exact parser bytes, raw chunks, HMACs and witness heads.
+No merge or push was performed.

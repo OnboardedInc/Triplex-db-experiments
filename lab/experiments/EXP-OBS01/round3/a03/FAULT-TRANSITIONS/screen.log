@@ -1,0 +1,1 @@
+{"missingSources": {"X4-native": {"derivedFields": ["tCrash", "variant"], "missing": ["native transaction position is absent from commit/marker readback"]}}, "protocol": "OBS-FAULT-TRANSITIONS", "qualification": "screening-only", "reasons": ["missing required field: transition"], "sourceStrength": null, "thresholds": {}, "verdict": "FAIL"}

@@ -1,0 +1,1 @@
+{"missingSources": {"H6-files": {"derivedFields": ["tErasurePublished"], "missing": ["complete protected-copy inventory is deferred to the scale window"]}}, "protocol": "OBS-ERASURE-SCAN", "qualification": "screening-only", "reasons": ["missing required field: inventoryEntry"], "sourceStrength": null, "thresholds": {}, "verdict": "FAIL"}

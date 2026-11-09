@@ -1,0 +1,1 @@
+{"missingSources": {"X4-native": {"derivedFields": ["analyticCount", "countQueryCaseResult", "population"], "missing": []}}, "protocol": "OBS-SCALE-COUNT", "qualification": "screening-only", "reasons": [], "sourceStrength": "direct", "thresholds": {}, "verdict": "PASS"}

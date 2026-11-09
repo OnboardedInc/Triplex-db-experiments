@@ -1,0 +1,74 @@
+{
+  "runId": "obs01-r3-a02-resource",
+  "receiptId": "obs01-r3-a02-resource",
+  "keyId": "obs01-r3-a02-resource-key",
+  "engine": "xtdb",
+  "bundleSha256": "05412445e9b961870ebbb01246a700551b64b152cdfe01a8a79d99b1e8e00ef3",
+  "bridgeSha256": "4f22ba9a5c1131527a28129fa15cd1faa95bbac46cc180cb71db44cc514313c0",
+  "clockMaxUncertaintyMs": 4.954033002257347,
+  "streams": [
+    {
+      "cadenceMs": 100,
+      "endpoint": "resident:d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "kind": "HO/any/H1",
+      "method": "capture",
+      "normalizer": {
+        "id": "obs01-resident-protocol",
+        "sha256": "02bf81ce55a4c2245fe3cc9b2227e042a0e75a411e682de0dc2fb735f47218c4",
+        "version": "3"
+      },
+      "normalizerFile": "H1-resource.normalize.py",
+      "reader": "resident",
+      "sourceId": "H1",
+      "streamId": "H1-resource",
+      "normalizerPath": "/Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-r3-a02-resource/code/H1-resource.normalize.py",
+      "chunks": [
+        {
+          "header": "streams/H1-resource/chunks/00000000.hdr.json",
+          "headerSha256": "c5d45e4819034c5fad5f0ba551b6ed0eb29abe74d9c342904b6cc5a558e09ec9",
+          "raw": "streams/H1-resource/chunks/00000000-ab86b8f137df50b495566c3432212ae655d484cba63814f892861f73b4a49b0b.bin"
+        },
+        {
+          "header": "streams/H1-resource/chunks/00000001.hdr.json",
+          "headerSha256": "8685f1ba48d47d439bd147454e8c4d60b45273dd7a24a2df1227186eb35b5303",
+          "raw": "streams/H1-resource/chunks/00000001-187a52e22d0de5ce1187d2dfdc47355f660341d057de2d2f1ce156131f5d7d8c.bin"
+        },
+        {
+          "header": "streams/H1-resource/chunks/00000002.hdr.json",
+          "headerSha256": "34f624671fb7dba26199afa5a10e10f25e4e0dc0e2281584388ab719714c973f",
+          "raw": "streams/H1-resource/chunks/00000002-3147287eebe057ecf044806265720b2e9614c3666a2475e219aa8a4f0bf44878.bin"
+        }
+      ]
+    }
+  ],
+  "witnessHeads": [
+    {
+      "runId": "obs01-r3-a02-resource",
+      "streamId": "H1-resource",
+      "seq": 2,
+      "headSha256": "34f624671fb7dba26199afa5a10e10f25e4e0dc0e2281584388ab719714c973f",
+      "tMono": 121621149.261614
+    }
+  ],
+  "format": "obs-context/1",
+  "protocol": "OBS-RESOURCE",
+  "obligation": "S.capacity.admitted",
+  "case": "obs01-r3-a02-resource",
+  "witnessKind": "RESOURCE",
+  "thresholdIds": [],
+  "contractSha256": "fe730f89a779c44201f02b8987e0079aa0f713c3fbca35761c321546c682e4fb",
+  "bindings": {
+    "obligation": "S.capacity.admitted",
+    "envelope": {
+      "disk": 20000000000,
+      "memory": 3221225472,
+      "owners": [
+        "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c"
+      ]
+    },
+    "forecast": {
+      "disk": 20000000000,
+      "memory": 3221225472
+    }
+  }
+}

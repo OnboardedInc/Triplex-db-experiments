@@ -8,7 +8,8 @@ import sys
 import time
 
 class Pg:
-    def __init__(self, port=5471):
+    def __init__(self, port=5471, wire_callback=None):
+        self.wire_callback=wire_callback
         self.sent=bytearray();self.received=bytearray()
         self.sock = socket.create_connection(('127.0.0.1', port), timeout=10)
         params = b'user\x00xtdb\x00database\x00xtdb\x00\x00'
@@ -21,13 +22,16 @@ class Pg:
             if typ == b'E': raise ValueError(data.decode(errors='replace'))
             if typ == b'Z': break
     def send(self,data):
-        self.sent+=data;self.sock.sendall(data)
+        self.sent+=data
+        if self.wire_callback:self.wire_callback('client',data)
+        self.sock.sendall(data)
     def read(self, size):
         data = b''
         while len(data) < size:
             chunk = self.sock.recv(size-len(data))
             if not chunk: raise ValueError('pgwire closed')
             data += chunk; self.received+=chunk
+            if self.wire_callback:self.wire_callback('engine',chunk)
         return data
     def message(self):
         typ = self.read(1); size = struct.unpack('!I', self.read(4))[0]

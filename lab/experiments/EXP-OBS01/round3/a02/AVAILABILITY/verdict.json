@@ -1,0 +1,10 @@
+{
+  "protocol": "OBS-AVAILABILITY",
+  "verdict": "FAIL",
+  "reasons": [
+    "source disagreement: probes"
+  ],
+  "thresholds": {},
+  "sourceStrength": null,
+  "qualification": "screening-only"
+}

@@ -1,0 +1,11 @@
+{
+  "H1-resource": {
+    "missing": [],
+    "derivedFields": [
+      "envelope",
+      "forecast",
+      "obligation",
+      "peaks"
+    ]
+  }
+}

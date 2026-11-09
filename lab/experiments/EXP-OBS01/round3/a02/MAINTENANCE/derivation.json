@@ -1,0 +1,12 @@
+{
+  "X1-metrics": {
+    "missing": [
+      "native maintenance start/end log absent",
+      "durable consumer publication/checkpoint lag source absent"
+    ],
+    "derivedFields": [
+      "kind",
+      "threshold"
+    ]
+  }
+}

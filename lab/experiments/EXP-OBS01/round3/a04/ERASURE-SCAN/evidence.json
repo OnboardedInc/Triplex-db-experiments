@@ -1,0 +1,10 @@
+{
+  "source": {
+    "kind": "HO/any/H6",
+    "streamRefs": [
+      "H6-files"
+    ],
+    "records": {}
+  },
+  "tErasurePublished": null
+}

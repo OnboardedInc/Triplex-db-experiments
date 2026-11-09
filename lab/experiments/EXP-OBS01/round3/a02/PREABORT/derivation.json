@@ -1,0 +1,8 @@
+{
+  "T1-wire": {
+    "missing": [
+      "resident traffic is not forced through the observer; cannot assert complete statement-log coverage"
+    ],
+    "derivedFields": []
+  }
+}

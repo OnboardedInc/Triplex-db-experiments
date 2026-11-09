@@ -1,0 +1,72 @@
+{
+  "runId": "obs01-r3-a02-watermark",
+  "receiptId": "obs01-r3-a02-watermark",
+  "keyId": "obs01-r3-a02-watermark-key",
+  "engine": "xtdb",
+  "bundleSha256": "c11e197de84ac5320b9fe9725236fcdcf98324f9dc2ecfe35ee2c1d8e48c2dbe",
+  "bridgeSha256": "11b8ac0d7835c012c779f41d4c92a91a272187bbdb1384c5227a1e8a70cd9ec9",
+  "clockMaxUncertaintyMs": 5.132158994674683,
+  "streams": [
+    {
+      "cadenceMs": 100,
+      "endpoint": "resident:d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "kind": "TO/xtdb/T1",
+      "method": "capture",
+      "normalizer": {
+        "id": "obs01-resident-protocol",
+        "sha256": "ecd37480d9b5f134bf46d777b1dcb2e740168039a9006cd3e15d7d3784b3c305",
+        "version": "3"
+      },
+      "normalizerFile": "T1-wire.normalize.py",
+      "reader": "resident",
+      "sourceId": "T1",
+      "streamId": "T1-wire",
+      "normalizerPath": "/Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-r3-a02-watermark/code/T1-wire.normalize.py",
+      "chunks": [
+        {
+          "header": "streams/T1-wire/chunks/00000000.hdr.json",
+          "headerSha256": "72b33e3c2341fc3dfbb2639cc384dfd539a62484ae0105cb86a1a3af7719f755",
+          "raw": "streams/T1-wire/chunks/00000000-b91c943dcb25e779d1793233ff7d4da8fa01cfd7aff8cb7ea4b08425bddfb033.bin"
+        },
+        {
+          "header": "streams/T1-wire/chunks/00000001.hdr.json",
+          "headerSha256": "fa1d70140130cac1ebd798c7383f25ab181624e0af4bc660130d189250e87256",
+          "raw": "streams/T1-wire/chunks/00000001-ff71001450721ddcf29e59f3122f2ac32c73c58e93e7b7fcfb200395e63ca88b.bin"
+        },
+        {
+          "header": "streams/T1-wire/chunks/00000002.hdr.json",
+          "headerSha256": "468bb9f1ae7b02a01beaafc4035c6abf5f33210caf2868be87d3ee71d3e8f506",
+          "raw": "streams/T1-wire/chunks/00000002-ef305e23af59982ad8aaeee5f7f1d82a3a17d60f7617f78e8817b81fb72504f4.bin"
+        },
+        {
+          "header": "streams/T1-wire/chunks/00000003.hdr.json",
+          "headerSha256": "9066cbed2f2048c0f968bfea81498ccca21503ab26e27fdc41eea0d0a57f2cf5",
+          "raw": "streams/T1-wire/chunks/00000003-860691c34fa4e79fc8bffb2c6e9e43a784355ea5cfb2002a98193c80dc06cedc.bin"
+        }
+      ]
+    }
+  ],
+  "witnessHeads": [
+    {
+      "runId": "obs01-r3-a02-watermark",
+      "streamId": "T1-wire",
+      "seq": 3,
+      "headSha256": "9066cbed2f2048c0f968bfea81498ccca21503ab26e27fdc41eea0d0a57f2cf5",
+      "tMono": 121629029.552036
+    }
+  ],
+  "format": "obs-context/1",
+  "protocol": "OBS-WATERMARK",
+  "obligation": "G8.composition.watermark-routing",
+  "case": "obs01-r3-a02-watermark",
+  "witnessKind": "WATERMARK",
+  "thresholdIds": [
+    "T-WATERMARK-WAIT-MS"
+  ],
+  "contractSha256": "fe730f89a779c44201f02b8987e0079aa0f713c3fbca35761c321546c682e4fb",
+  "bindings": {
+    "readId": "obs01-r3-a02-watermark-read",
+    "tReadStart": null,
+    "basisPosition": null
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "H4-sockets": {
+    "missing": [],
+    "derivedFields": [
+      "baseline",
+      "engineConnectionSamples",
+      "poolDeclarations",
+      "tClose"
+    ]
+  }
+}

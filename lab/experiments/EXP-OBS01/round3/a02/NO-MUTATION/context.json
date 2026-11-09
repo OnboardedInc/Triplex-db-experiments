@@ -1,0 +1,106 @@
+{
+  "runId": "obs01-r3-a02-no-mutation",
+  "receiptId": "obs01-r3-a02-no-mutation",
+  "keyId": "obs01-r3-a02-no-mutation-key",
+  "engine": "xtdb",
+  "bundleSha256": "e344f0eb8a7cdca15b0e7e556684d3b7e16463fd064bc24f03d9e8c8989412a4",
+  "bridgeSha256": "6ac74b79651e9b79087cd2ee043e8d5895074674a87a44e2e885c0d85bae1da2",
+  "clockMaxUncertaintyMs": 5.421493999660015,
+  "streams": [
+    {
+      "cadenceMs": 100,
+      "endpoint": "resident:d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "kind": "EI-metric/xtdb/X1.node.tx.latestCompletedTxId",
+      "method": "capture",
+      "normalizer": {
+        "id": "obs01-resident-protocol",
+        "sha256": "42dc0113cfb235ab2012ad6ef3d3e80ffaab69a5138a6c41ac4d8ae43acb7446",
+        "version": "3"
+      },
+      "normalizerFile": "X1-metrics.normalize.py",
+      "reader": "resident",
+      "sourceId": "X1.node.tx.latestCompletedTxId",
+      "streamId": "X1-metrics",
+      "normalizerPath": "/Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-r3-a02-no-mutation/code/X1-metrics.normalize.py",
+      "chunks": [
+        {
+          "header": "streams/X1-metrics/chunks/00000000.hdr.json",
+          "headerSha256": "9eb70a17c0738b56d639baf06e291b5bb56c814573d212eefe4a8e23a5505e50",
+          "raw": "streams/X1-metrics/chunks/00000000-174bfc2d974884871b085d14791a74e10ea8c064e77f39e20b15584d47d2dce5.bin"
+        },
+        {
+          "header": "streams/X1-metrics/chunks/00000001.hdr.json",
+          "headerSha256": "6698cdd76c4e5d9d00465729bb61c26bba0af975c2b31364b89a7c27698a9034",
+          "raw": "streams/X1-metrics/chunks/00000001-7a3277aca31f0e374615e3913d89f30856027e720bbba30d56edf0a5b9200ed4.bin"
+        },
+        {
+          "header": "streams/X1-metrics/chunks/00000002.hdr.json",
+          "headerSha256": "6379900378e10f5d338f10edce0a33f864341fd3b13f4d13d2d5d1856a2de66d",
+          "raw": "streams/X1-metrics/chunks/00000002-fa87f05634817b09f1a918120843fa274a6513757ebdfdda5654e7232708b47e.bin"
+        },
+        {
+          "header": "streams/X1-metrics/chunks/00000003.hdr.json",
+          "headerSha256": "a6903375832b8781b5ea1d38f802b80e67d99489dab77f30b0d8209e6469070a",
+          "raw": "streams/X1-metrics/chunks/00000003-cea82a8889c1d48fefdb154299708d1c9c0a2ef27c59d206c1d02c34868fba8e.bin"
+        }
+      ]
+    },
+    {
+      "cadenceMs": 100,
+      "endpoint": "resident:d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "kind": "TO/xtdb/T1",
+      "method": "capture",
+      "normalizer": {
+        "id": "obs01-resident-protocol",
+        "sha256": "908cb8bf0ff7b95fb1c467b5b7b5c548f69798e26b9b628ae6ec8928e3a8cc71",
+        "version": "3"
+      },
+      "normalizerFile": "T1-wire.normalize.py",
+      "reader": "resident",
+      "sourceId": "T1",
+      "streamId": "T1-wire",
+      "normalizerPath": "/Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-r3-a02-no-mutation/code/T1-wire.normalize.py",
+      "chunks": [
+        {
+          "header": "streams/T1-wire/chunks/00000000.hdr.json",
+          "headerSha256": "fd10743997c722691b8ef34a83b461aad01b171625ca416c4fc4eba99a784a36",
+          "raw": "streams/T1-wire/chunks/00000000-5fef03d8e548041f5b2ff1fc3fae4c16e0b60ab3d46c9a3f442e2b370ac2addd.bin"
+        },
+        {
+          "header": "streams/T1-wire/chunks/00000001.hdr.json",
+          "headerSha256": "aa3c1b60d3835e65a61f6b3afa9f97f2f11f4712f0aea477db47db69ac96235b",
+          "raw": "streams/T1-wire/chunks/00000001-035c2b75125e9ae5cd5c0350fa1052b6e8eab3853af914900a66d95c7b33a9b9.bin"
+        },
+        {
+          "header": "streams/T1-wire/chunks/00000002.hdr.json",
+          "headerSha256": "103b5daa686b3309beac619f043cf366b679a4f1f32f30b410e548948afcadf6",
+          "raw": "streams/T1-wire/chunks/00000002-1fce98434ebfeb3aea977dc0c918f0b0ac67fc96f4ba5ebbf5ae878e1881f3f8.bin"
+        }
+      ]
+    }
+  ],
+  "witnessHeads": [
+    {
+      "runId": "obs01-r3-a02-no-mutation",
+      "streamId": "X1-metrics",
+      "seq": 3,
+      "headSha256": "a6903375832b8781b5ea1d38f802b80e67d99489dab77f30b0d8209e6469070a",
+      "tMono": 121619557.818284
+    },
+    {
+      "runId": "obs01-r3-a02-no-mutation",
+      "streamId": "T1-wire",
+      "seq": 2,
+      "headSha256": "103b5daa686b3309beac619f043cf366b679a4f1f32f30b410e548948afcadf6",
+      "tMono": 121619559.872715
+    }
+  ],
+  "format": "obs-context/1",
+  "protocol": "OBS-NO-MUTATION",
+  "obligation": "G3.recursion.read-only-frontier",
+  "case": "obs01-r3-a02-no-mutation",
+  "witnessKind": "NO-MUTATION",
+  "thresholdIds": [],
+  "contractSha256": "fe730f89a779c44201f02b8987e0079aa0f713c3fbca35761c321546c682e4fb",
+  "bindings": {}
+}

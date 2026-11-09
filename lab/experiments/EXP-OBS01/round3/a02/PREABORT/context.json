@@ -1,0 +1,69 @@
+{
+  "runId": "obs01-r3-a02-preabort",
+  "receiptId": "obs01-r3-a02-preabort",
+  "keyId": "obs01-r3-a02-preabort-key",
+  "engine": "xtdb",
+  "bundleSha256": "868d09534d2b388154af31034b72dd9bbcd1fbef90327fece02dad9c179e9ee3",
+  "bridgeSha256": "1b5587f953e2b5e7247216a8dfdaa00ae596f3648af5c5b4dfed538fe815735a",
+  "clockMaxUncertaintyMs": 7.574779495596886,
+  "streams": [
+    {
+      "cadenceMs": 100,
+      "endpoint": "resident:d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "kind": "TO/xtdb/T1",
+      "method": "capture",
+      "normalizer": {
+        "id": "obs01-resident-protocol",
+        "sha256": "987185c49a46e411ba1097d2b24785f2d296c2ddf6f6ad7c9e0214d4e37afdd0",
+        "version": "3"
+      },
+      "normalizerFile": "T1-wire.normalize.py",
+      "reader": "resident",
+      "sourceId": "T1",
+      "streamId": "T1-wire",
+      "normalizerPath": "/Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-r3-a02-preabort/code/T1-wire.normalize.py",
+      "chunks": [
+        {
+          "header": "streams/T1-wire/chunks/00000000.hdr.json",
+          "headerSha256": "5a3beba232a5333253b9ad61b46c665665d34c118911854b24e84f75a7f81513",
+          "raw": "streams/T1-wire/chunks/00000000-ec1e7fc43ab35407a8ae7792507af6344b8245285a6f0c846698b02976110e0b.bin"
+        },
+        {
+          "header": "streams/T1-wire/chunks/00000001.hdr.json",
+          "headerSha256": "bbe954c6995c418120aa243632d6142fb5b73cf81fb509b4ad13f2db6b6ab651",
+          "raw": "streams/T1-wire/chunks/00000001-5567e225d0844e7003bb0ee91a99f78828230a89e72495f3b8223a58788e2537.bin"
+        },
+        {
+          "header": "streams/T1-wire/chunks/00000002.hdr.json",
+          "headerSha256": "8ec564d16d1dc280f0717b1ca6e396eb624f79aae58a3c3e294589dcb1e97cf3",
+          "raw": "streams/T1-wire/chunks/00000002-d68e5c53be59c71cd89408850ff742fb5ab5cae7153e50df8ac4d53e2d7ded8e.bin"
+        }
+      ]
+    }
+  ],
+  "witnessHeads": [
+    {
+      "runId": "obs01-r3-a02-preabort",
+      "streamId": "T1-wire",
+      "seq": 2,
+      "headSha256": "8ec564d16d1dc280f0717b1ca6e396eb624f79aae58a3c3e294589dcb1e97cf3",
+      "tMono": 121615877.891582
+    }
+  ],
+  "format": "obs-context/1",
+  "protocol": "OBS-PREABORT",
+  "obligation": "G6.cancel.preaborted-no-work",
+  "case": "obs01-r3-a02-preabort",
+  "witnessKind": "PREABORT",
+  "thresholdIds": [],
+  "contractSha256": "fe730f89a779c44201f02b8987e0079aa0f713c3fbca35761c321546c682e4fb",
+  "bindings": {
+    "coverage": {
+      "from": 121615840.361792,
+      "to": 121615841.361792,
+      "maxGapMs": 0,
+      "segments": []
+    },
+    "requestId": "cancel-r3"
+  }
+}

@@ -1,0 +1,2 @@
+[lab] waiting for pool lock (held by pid 42989)
+[lab] REFUSED: resident probes require an owned relation and tiny width-1 population

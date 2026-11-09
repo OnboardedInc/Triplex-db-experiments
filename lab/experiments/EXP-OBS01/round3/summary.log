@@ -1,0 +1,1 @@
+{"qualification": "screening-only; incomplete positive protocol coverage", "selectedCounts": {"PASS": 3, "FAIL": 11, "REFUSED": 0}, "guardNegatives": 28, "guardRefusals": 28, "noExclusiveSlots": true, "noVolumesCreated": true}

@@ -1,0 +1,10 @@
+{
+  "X4-native": {
+    "missing": [],
+    "derivedFields": [
+      "analyticCount",
+      "countQueryCaseResult",
+      "population"
+    ]
+  }
+}

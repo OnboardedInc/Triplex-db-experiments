@@ -1,0 +1,76 @@
+{
+  "runId": "obs01-r3-a03-scratch",
+  "receiptId": "obs01-r3-a03-scratch",
+  "keyId": "obs01-r3-a03-scratch-key",
+  "engine": "xtdb",
+  "bundleSha256": "164205d68c5a2688b85661dc2289dbe05b971b5e1d99c3f24ecf670033ae4b02",
+  "bridgeSha256": "023617d619cab622e6ddd4d6de2ba63b4194668da90783c153b43cf0227cebba",
+  "clockMaxUncertaintyMs": 5.791621498763561,
+  "streams": [
+    {
+      "cadenceMs": 100,
+      "endpoint": "resident:d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "kind": "EI-query/xtdb/X4",
+      "method": "capture",
+      "normalizer": {
+        "id": "obs01-resident-protocol",
+        "sha256": "76cfdfa85edabc4baee427dce7d320a62f09f3a38638e4172715ea039ed9a336",
+        "version": "3"
+      },
+      "normalizerFile": "X4-native.normalize.py",
+      "reader": "resident",
+      "sourceId": "X4",
+      "streamId": "X4-native",
+      "normalizerPath": "/Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-r3-a03-scratch/code/X4-native.normalize.py",
+      "chunks": [
+        {
+          "header": "streams/X4-native/chunks/00000000.hdr.json",
+          "headerSha256": "948e217c1a3f4290af45757a80f261c68b6c88d1542ebe629ddf5ad6e0d5cfc4",
+          "raw": "streams/X4-native/chunks/00000000-b7cf475a4ed1fdcee4f3844a3b6475b11a8d7fb000acbeae04b21a293629b074.bin"
+        },
+        {
+          "header": "streams/X4-native/chunks/00000001.hdr.json",
+          "headerSha256": "af699d8e798f503b24952b9e566888cc1e382538565dd9935659fc9e7f9da2f5",
+          "raw": "streams/X4-native/chunks/00000001-97c299ce7bfb925ba76351479d5a0e3e4929d4d17b356b13bd2d2ca055e69c06.bin"
+        },
+        {
+          "header": "streams/X4-native/chunks/00000002.hdr.json",
+          "headerSha256": "1e1b3a9b408803e7095551f1a6b819a8d46c8dbfd7161f177f35b642458d12cf",
+          "raw": "streams/X4-native/chunks/00000002-ab5e2383c056d4dd09f173b229c03369c2befda61a8cea20fb685c90ade8a755.bin"
+        },
+        {
+          "header": "streams/X4-native/chunks/00000003.hdr.json",
+          "headerSha256": "c5da7ae53a899247c5e3b58b3f8f4d4a9769db1f61e6aeabb3697c5f4faeb51a",
+          "raw": "streams/X4-native/chunks/00000003-b550be123bf614afe973f8e0736b611445bd4b6871076d554d5a814519e42a2b.bin"
+        },
+        {
+          "header": "streams/X4-native/chunks/00000004.hdr.json",
+          "headerSha256": "4b3fd4fea98edbb3b2b47ad53c56582c3adc6179d4ab95e6a58c5c0cf58bc160",
+          "raw": "streams/X4-native/chunks/00000004-208f2a944dd4423ead0f036cd0c6b308a82fa507910b1ef7fc43c48c7cddef20.bin"
+        }
+      ]
+    }
+  ],
+  "witnessHeads": [
+    {
+      "runId": "obs01-r3-a03-scratch",
+      "streamId": "X4-native",
+      "seq": 4,
+      "headSha256": "4b3fd4fea98edbb3b2b47ad53c56582c3adc6179d4ab95e6a58c5c0cf58bc160",
+      "tMono": 121784716.095938
+    }
+  ],
+  "format": "obs-context/1",
+  "protocol": "OBS-WORK",
+  "obligation": "G6.cleanup.scratch-zero",
+  "case": "obs01-r3-a03-scratch",
+  "witnessKind": "SCRATCH",
+  "thresholdIds": [
+    "T-FAULT-REPS"
+  ],
+  "contractSha256": "fe730f89a779c44201f02b8987e0079aa0f713c3fbca35761c321546c682e4fb",
+  "bindings": {
+    "unknownOutcomes": [],
+    "relation": "obs01r3_a03_scratch"
+  }
+}

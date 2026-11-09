@@ -1,0 +1,10 @@
+{
+  "protocol": "OBS-RESOURCE",
+  "verdict": "FAIL",
+  "reasons": [
+    "observed total exceeds forecast"
+  ],
+  "thresholds": {},
+  "sourceStrength": "indirect",
+  "qualification": "screening-only"
+}

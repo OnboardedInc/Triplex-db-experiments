@@ -1,0 +1,11 @@
+{
+  "X4-native": {
+    "missing": [
+      "native transaction position is absent from commit/marker readback"
+    ],
+    "derivedFields": [
+      "tCrash",
+      "variant"
+    ]
+  }
+}

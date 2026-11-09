@@ -1,0 +1,9 @@
+{
+  "resident": true,
+  "sources": [],
+  "relation": "unowned_relation",
+  "population": {
+    "n": 8,
+    "width": 1
+  }
+}

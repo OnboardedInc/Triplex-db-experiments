@@ -1,0 +1,18 @@
+{
+  "X8-profile": {
+    "missing": [
+      "work-candidate lacks rowsWritten",
+      "work-candidate lacks triplesTouched",
+      "work-candidate lacks bytesWritten",
+      "work-comparison lacks rowsWritten",
+      "work-comparison lacks triplesTouched",
+      "work-comparison lacks bytesWritten"
+    ],
+    "derivedFields": [
+      "comparison",
+      "engineWorkUnits",
+      "operation",
+      "threshold"
+    ]
+  }
+}

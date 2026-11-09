@@ -2,7 +2,7 @@
 
 North star: an independent evidence floor for P1–P5; goals and targets remain in
 [`SCOPE.md`](../SCOPE.md), [`NORTH-STAR.md`](../NORTH-STAR.md), [`TARGETS.md`](../TARGETS.md).
-Source design: R27 sections 2–7, 9–10; Q82a–e. Consumer pinned to O-OBS round 2 `463703d`.
+Source design: R27 sections 2–7, 9–10; Q82a–e. Current screening consumer: O-OBS `23e2273`; earlier round-2 receipts remain pinned to `463703d`.
 
 This is collection and authenticated source decoding. It does **not** issue an O-OBS semantic PASS.
 The evaluator supplies its own case context and frozen protocol specifications. The default
@@ -94,7 +94,7 @@ Observer raw bytes, logs, code snapshots and normalized views belong in erasure-
 node lab/bin/heavy.mjs --label CX-OBS01-gate -- node lab/observer/gate.mjs
 ```
 
-The gate extracts the consumer directly with `git show 463703d:...` into this worktree's ignored `runs/OBS01/oracle`,
+The gate extracts the consumer directly with `git show 23e2273:...` into this worktree's ignored `runs/OBS01/oracle`,
 then checks real collector output through its `authenticate()` and exercises corruption, omission, parser/key,
 clock, repeat-run and resource-budget boundaries. Synthetic fixtures are transport tests, not vendor probes.
 No package contracts changed, so package builds and `pnpm check` are outside this gate's scope.
@@ -150,3 +150,37 @@ alone do not establish span correlation.
 requires the holder's retained, quiescent volume. A pool-admitted utility reads it through a read-only mount, creates a TAR
 and per-file SHA256 inventory, reads the archive back, compares a second source scan, then optionally removes that owned
 volume through the ordinary engine teardown path. First-failure source/evidence remains in the archive.
+
+## Round 3 resident screening
+
+`engine.mjs observer-resident --lane xtdb --slot dev --holder NAME --run-id ID --key-file FILE
+--spec CASE --image DIGEST` admits a short-lived observer without taking an exclusive slot, changing a
+resident, or adding published ports. It shares the resident PID/network namespaces, uses its own capped
+CPU/memory, mounts engine data read-only, and removes only its own container. Tiny native fixtures are
+restricted to `obs01r3_*` relations and 1–64 width-1 entities. It does not discover or mutate other tenants.
+Its clock is a real separate-interpreter round trip in the VM, including process startup. The measured
+uncertainty is retained; this coarse diagnostic reference does not meet the <=1 ms qualification floor.
+
+`protocol_extra.py` replaces the nine unconditional parser refusals with source-derived field paths:
+exact analytic result columns; native EXPLAIN work counters; native cancellation/reuse packets; process/OOM
+and caller probes; maintenance events/checkpoint lag; flattened C1 eligibility readbacks with actual route
+intervals; publication/ACK/readback fields; post-client-crash native markers; and per-location byte/encoding
+controls. Paths emit only observed fields. Missing fields remain absent; a parsed field object is never
+accepted as a substitute for source bytes. Equal SQL on two requests cannot borrow a single-request fence.
+
+**This does not provide complete live witnesses for all fourteen protocols.** Native resident telemetry
+lacks several required fields and independent corroboration. In particular, CANCEL still needs native drain,
+transport ACK and coverage; ACK/WATERMARK need composition-specific independent publication/eligibility
+sources; WORK needs all four counters; MAINTENANCE needs durable consumer lag; erasure needs full physical
+inventory and decoders. Read the round-3 ledger rather than inferring support from a protocol-name registry.
+The UTF-8/UTF-16LE/UTF-32LE decoder profile covers only those named encodings, not FSST or freed blocks.
+
+`run_round3.mjs ATTEMPT [COMMA-SEPARATED-PROTOCOLS]` collects fresh resident bundles. `check_round3.py`
+selects a genuinely O-OBS-delegated obligation, includes its required thresholds, and retains exact context,
+records and missing-source diagnostics. `screen_cli_round3.mjs` retains the pinned CLI's actual exit statuses
+and two context-guard negatives for each selected real bundle. The round-3 consumer is `23e2273` and the
+contract is the retained 0.3.12 snapshot from `f5e7a41`; neither is silently replaced by a moving branch tip.
+
+Deferred scale-window invocations and their prerequisites are in
+[`SCALE-WINDOW.md`](../experiments/EXP-OBS01/round3/SCALE-WINDOW.md). No frozen NS driver/reset manifest or
+complete physical scanner is supplied by this change, and no exclusive or Datomic run occurs in round 3.

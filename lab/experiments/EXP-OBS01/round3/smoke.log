@@ -1,0 +1,1 @@
+{"protocol":"SCALE-COUNT","screenExit":0,"summary":"{\"missingSources\": {\"X4-native\": {\"derivedFields\": [\"analyticCount\", \"countQueryCaseResult\", \"population\"], \"missing\": []}}, \"protocol\": \"OBS-SCALE-COUNT\", \"qualification\": \"screening-only\", \"reasons\": [], \"sourceStrength\": \"direct\", \"thresholds\": {}, \"verdict\": \"PASS\"}"}

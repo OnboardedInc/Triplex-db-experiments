@@ -34,6 +34,8 @@ def protocol_normalize(data,spec,source_id):
         return combined
     parsed=normalize(data);protocol=spec['protocol'].removeprefix('OBS-');root=source_id.split('.')[0]
     if protocol not in PROTOCOLS:raise ValueError('unknown protocol')
+    if protocol in EXTRA_PROTOCOLS:
+        return derive_extra(parsed,spec,root)[0]
     lo,hi=protocol_window(parsed,spec)
     if protocol=='NO-MUTATION':
         if root in ('X1','Q1'):
@@ -75,7 +77,7 @@ def protocol_normalize(data,spec,source_id):
         for control in controls:
             if sum(lo<=t<=hi and tag==control for t,tag in tags)!=1:raise ValueError('missing or duplicated preabort control')
         return {'requestId':target,'engineStatementLog':[{'t':t,'tag':tag} for t,tag in tags if lo<=t<=hi and tag==target],
-            'coverage':{'from':lo,'to':hi,'maxGapMs':0,'segments':[{'from':lo,'to':hi}]}}
+            'coverage':{'from':lo,'to':hi,'maxGapMs':0,'segments':[{'from':parsed['samples'][0]['tStartMono'],'to':parsed['samples'][-1]['tEndMono']}]}}
     if protocol=='CONNECTIONS' and root=='H4':
         pools=spec['pools'];rows=[]
         for sample in parsed['samples']:
@@ -100,15 +102,4 @@ def protocol_normalize(data,spec,source_id):
         peaks=[{'owner':s['resource']['owner'],'rss':s['resource']['memory']['memory.peak'],'disk':s['resource']['disk'],'t':s['tEndMono']} for s in samples]
         if any(s['resource']['memory']['memory.peak']>s['resource']['memory']['memory.max'] for s in samples):raise ValueError('invalid cgroup cap')
         return {'forecast':spec['forecast'],'peaks':peaks,'envelope':spec['envelope'],'obligation':spec['obligation']}
-    if protocol=='WORK' and root=='X7':
-        # A scan span proves rows read. It does not prove zero writes/bytes; missing units refuse.
-        spans=[span for sample in parsed['samples'] for span in sample.get('spans',[])]
-        counters=[span['attributes'] for span in spans if 'scan_rows_read' in span['attributes']]
-        if not counters:raise ValueError('scan spans absent')
-        raise ValueError('X7 supplies scan rows, not every OBS-WORK write/byte unit; additional source required')
-    if protocol=='CANCEL':
-        raise ValueError('drain facts available, but caller/reuse/transport-ack fields need independent driver binding; no inferred ACK')
-    if protocol in {'ACK-ORDER','WATERMARK','FAULT-TRANSITIONS'}:
-        raise ValueError('durable publication/route/transition mapping requires the composition-specific observer source; timings are never copied from SUT receipts')
-    if protocol=='ERASURE-SCAN':raise ValueError('complete per-location controls, derived-channel decoders and freed-block inventory required')
     raise ValueError('protocol lacks complete facts in this source: '+protocol+'/'+source_id)

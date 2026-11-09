@@ -178,7 +178,7 @@ def http_messages(data):
 
 def http_wire_records(events):
     result=[];websockets=[];connections=collect_wire(events)
-    readonly={'stats','cache-stats','get-settings','get-index-id','dump-active-queries','clear-cache'}
+    readonly={'stats','cache-stats','get-settings','get-index-id','dump-active-queries'}
     for cid,c in connections.items():
         raw,at=wire_bytes(c['client']);replies,sat=wire_bytes(c['engine'])
         requests,frames=http_messages(raw);responses,_=http_messages(replies)

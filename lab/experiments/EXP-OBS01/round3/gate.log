@@ -1,0 +1,114 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 25540 "CX-A01-0312-R2-evaluator", pid 49577 "CX-C8-R4-default-control", pid 37317 "CX-G03-r3-claim-suites2", pid 25539 "CX-A01-0312-R2-mutations"
+[lab] heavy: waiting for one of 4 slots; held by pid 25540 "CX-A01-0312-R2-evaluator", pid 49577 "CX-C8-R4-default-control", pid 37317 "CX-G03-r3-claim-suites2", pid 25539 "CX-A01-0312-R2-mutations"
+[lab] heavy: waiting for one of 4 slots; held by pid 25540 "CX-A01-0312-R2-evaluator", pid 49577 "CX-C8-R4-default-control", pid 37317 "CX-G03-r3-claim-suites2", pid 25539 "CX-A01-0312-R2-mutations"
+[lab] heavy: waiting for one of 4 slots; held by pid 25540 "CX-A01-0312-R2-evaluator", pid 49577 "CX-C8-R4-default-control", pid 37317 "CX-G03-r3-claim-suites2", pid 25539 "CX-A01-0312-R2-mutations"
+[lab] heavy: waiting for one of 4 slots; held by pid 25540 "CX-A01-0312-R2-evaluator", pid 24517 "CX-OBS01-R3-files", pid 37317 "CX-G03-r3-claim-suites2", pid 25539 "CX-A01-0312-R2-mutations"
+test_budget_exhaustion_not_silently_sealed (__main__.CollectorTests.test_budget_exhaustion_not_silently_sealed) ... ok
+test_chunk_omission_rejected (__main__.CollectorTests.test_chunk_omission_rejected) ... ok
+test_corrupted_raw_rejected (__main__.CollectorTests.test_corrupted_raw_rejected) ... ok
+test_high_uncertainty_rejected (__main__.CollectorTests.test_high_uncertainty_rejected) ... ok
+test_http_chunked_bytes_decode (__main__.CollectorTests.test_http_chunked_bytes_decode) ... ok
+test_http_source_keeps_actual_wire_response (__main__.CollectorTests.test_http_source_keeps_actual_wire_response) ... ok
+test_log_rotation_does_not_claim_continuous_coverage (__main__.CollectorTests.test_log_rotation_does_not_claim_continuous_coverage) ... ok
+test_missing_final_witness_rejected (__main__.CollectorTests.test_missing_final_witness_rejected) ... ok
+test_parser_replacement_rejected (__main__.CollectorTests.test_parser_replacement_rejected) ... ok
+test_real_writer_verifies_in_pinned_oracle (__main__.CollectorTests.test_real_writer_verifies_in_pinned_oracle) ... ok
+test_rerun_preserves_existing_bundle (__main__.CollectorTests.test_rerun_preserves_existing_bundle) ... ok
+test_unsealed_refused (__main__.CollectorTests.test_unsealed_refused) ... ok
+test_vendor_metrics_preserve_tags_and_exact_values (__main__.CollectorTests.test_vendor_metrics_preserve_tags_and_exact_values) ... ok
+test_wrong_key_rejected (__main__.CollectorTests.test_wrong_key_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 1.547s
+
+OK
+test_client_address_and_truncated_backend (__main__.Round2.test_client_address_and_truncated_backend) ... ok
+test_encrypted_pgwire_refuses (__main__.Round2.test_encrypted_pgwire_refuses) ... ok
+test_http_chunked_and_incomplete_frames (__main__.Round2.test_http_chunked_and_incomplete_frames) ... ok
+test_no_mutation_real_counter_delta (__main__.Round2.test_no_mutation_real_counter_delta) ... ok
+test_otlp_fixed64_and_attributes (__main__.Round2.test_otlp_fixed64_and_attributes) ... ok
+test_preabort_requires_exact_inventory (__main__.Round2.test_preabort_requires_exact_inventory) ... ok
+test_sql_comments_in_literals_do_not_hide_writes (__main__.Round2.test_sql_comments_in_literals_do_not_hide_writes) ... ok
+test_tail_gap_refuses (__main__.Round2.test_tail_gap_refuses) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.021s
+
+OK
+test_erasure_does_not_copy_case_publication_or_zero_blind_scan (__main__.Round3.test_erasure_does_not_copy_case_publication_or_zero_blind_scan) ... ok
+test_erasure_retains_surviving_literal_and_derived_hits (__main__.Round3.test_erasure_retains_surviving_literal_and_derived_hits) ... ok
+test_matching_sql_does_not_prove_same_snapshot (__main__.Round3.test_matching_sql_does_not_prove_same_snapshot) ... ok
+test_protocol_objects_are_not_source_bytes (__main__.Round3.test_protocol_objects_are_not_source_bytes) ... ok
+test_source_cell_mismatch_refuses (__main__.Round3.test_source_cell_mismatch_refuses) ... ok
+test_unavailable_resident_lifecycle_does_not_invent_failure (__main__.Round3.test_unavailable_resident_lifecycle_does_not_invent_failure) ... ok
+test_work_complete_native_units (__main__.Round3.test_work_complete_native_units) ... ok
+test_work_missing_units_not_zero_filled (__main__.Round3.test_work_missing_units_not_zero_filled) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.093s
+
+OK
+TAP version 13
+# Subtest: persistent clock maps zero-offset host clock and reflects server delay
+ok 1 - persistent clock maps zero-offset host clock and reflects server delay
+  ---
+  duration_ms: 22.918416
+  type: 'test'
+  ...
+# Subtest: requires disjoint CPU pinning
+ok 2 - requires disjoint CPU pinning
+  ---
+  duration_ms: 0.955625
+  type: 'test'
+  ...
+# Subtest: requires evaluator key, immutable image and safe identities
+ok 3 - requires evaluator key, immutable image and safe identities
+  ---
+  duration_ms: 0.715416
+  type: 'test'
+  ...
+# Subtest: output budget is bounded before admission
+ok 4 - output budget is bounded before admission
+  ---
+  duration_ms: 1.591084
+  type: 'test'
+  ...
+# Subtest: XTDB completed transaction source and host sources are collected
+ok 5 - XTDB completed transaction source and host sources are collected
+  ---
+  duration_ms: 0.803917
+  type: 'test'
+  ...
+# Subtest: Datomic plans independent thread and callback samples
+ok 6 - Datomic plans independent thread and callback samples
+  ---
+  duration_ms: 1.977292
+  type: 'test'
+  ...
+# Subtest: protected clock ports are refused
+ok 7 - protected clock ports are refused
+  ---
+  duration_ms: 0.296417
+  type: 'test'
+  ...
+# Subtest: QLever profile is opt-in and resident script remains unchanged
+ok 8 - QLever profile is opt-in and resident script remains unchanged
+  ---
+  duration_ms: 1.249458
+  type: 'test'
+  ...
+# Subtest: follower effective config keeps its own JVM settings without observer logging
+ok 9 - follower effective config keeps its own JVM settings without observer logging
+  ---
+  duration_ms: 0.492708
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 88.199875

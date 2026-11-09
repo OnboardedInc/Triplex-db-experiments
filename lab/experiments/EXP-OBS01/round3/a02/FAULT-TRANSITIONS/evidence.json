@@ -1,0 +1,14 @@
+{
+  "tCrash": 121631564.04098,
+  "variant": "engine-source",
+  "source": {
+    "kind": "EI-query/xtdb/X4",
+    "streamRefs": [
+      "X4-native"
+    ],
+    "records": {
+      "tCrash": 121631564.04098,
+      "variant": "engine-source"
+    }
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "envelope": {
+    "disk": 20000000000,
+    "memory": 3221225472,
+    "owners": [
+      "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c"
+    ]
+  },
+  "forecast": {
+    "disk": 20000000000,
+    "memory": 3221225472
+  },
+  "obligation": "S.capacity.admitted",
+  "peaks": [
+    {
+      "disk": 4897054720,
+      "owner": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "rss": 3221356544,
+      "t": 121788040.837525
+    }
+  ],
+  "source": {
+    "kind": "HO/any/H1",
+    "streamRefs": [
+      "H1-resource"
+    ],
+    "records": {
+      "envelope": {
+        "disk": 20000000000,
+        "memory": 3221225472,
+        "owners": [
+          "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c"
+        ]
+      },
+      "forecast": {
+        "disk": 20000000000,
+        "memory": 3221225472
+      },
+      "obligation": "S.capacity.admitted",
+      "peaks": [
+        {
+          "disk": 4897054720,
+          "owner": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+          "rss": 3221356544,
+          "t": 121788040.837525
+        }
+      ]
+    }
+  }
+}

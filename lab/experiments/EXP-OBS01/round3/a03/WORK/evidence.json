@@ -1,0 +1,32 @@
+{
+  "comparison": {
+    "engineWorkUnits": {
+      "rowsScanned": 1
+    },
+    "operation": "native-full-scan"
+  },
+  "engineWorkUnits": {
+    "rowsScanned": 1
+  },
+  "operation": "native-projection",
+  "threshold": "T-REUSE-AVOIDED",
+  "source": {
+    "kind": "EI-query/xtdb/X8",
+    "streamRefs": [
+      "X8-profile"
+    ],
+    "records": {
+      "comparison": {
+        "engineWorkUnits": {
+          "rowsScanned": 1
+        },
+        "operation": "native-full-scan"
+      },
+      "engineWorkUnits": {
+        "rowsScanned": 1
+      },
+      "operation": "native-projection",
+      "threshold": "T-REUSE-AVOIDED"
+    }
+  }
+}

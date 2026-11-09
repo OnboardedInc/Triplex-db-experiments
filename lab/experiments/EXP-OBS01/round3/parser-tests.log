@@ -1,0 +1,13 @@
+test_erasure_does_not_copy_case_publication_or_zero_blind_scan (__main__.Round3.test_erasure_does_not_copy_case_publication_or_zero_blind_scan) ... ok
+test_erasure_retains_surviving_literal_and_derived_hits (__main__.Round3.test_erasure_retains_surviving_literal_and_derived_hits) ... ok
+test_matching_sql_does_not_prove_same_snapshot (__main__.Round3.test_matching_sql_does_not_prove_same_snapshot) ... ok
+test_protocol_objects_are_not_source_bytes (__main__.Round3.test_protocol_objects_are_not_source_bytes) ... ok
+test_source_cell_mismatch_refuses (__main__.Round3.test_source_cell_mismatch_refuses) ... ok
+test_unavailable_resident_lifecycle_does_not_invent_failure (__main__.Round3.test_unavailable_resident_lifecycle_does_not_invent_failure) ... ok
+test_work_complete_native_units (__main__.Round3.test_work_complete_native_units) ... ok
+test_work_missing_units_not_zero_filled (__main__.Round3.test_work_missing_units_not_zero_filled) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.117s
+
+OK

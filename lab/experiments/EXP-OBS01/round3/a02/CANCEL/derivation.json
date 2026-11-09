@@ -1,0 +1,18 @@
+{
+  "T1-wire": {
+    "missing": [
+      "native cancellation outcome absent",
+      "independent drain and transport acknowledgement required"
+    ],
+    "derivedFields": [
+      "connectionId",
+      "expectedError",
+      "requestId",
+      "reuseConnectionId",
+      "reuseQueryId",
+      "reuseResult",
+      "tCancelRequested",
+      "tReuseOk"
+    ]
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "countAfter": 1,
+  "countBefore": 1,
+  "relation": "obs01r3_a02_scratch",
+  "resolutionReceipts": [],
+  "unknownOutcomes": [],
+  "source": {
+    "kind": "EI-query/xtdb/X4",
+    "streamRefs": [
+      "X4-native"
+    ],
+    "records": {
+      "countAfter": 1,
+      "countBefore": 1,
+      "relation": "obs01r3_a02_scratch",
+      "resolutionReceipts": [],
+      "unknownOutcomes": []
+    }
+  }
+}

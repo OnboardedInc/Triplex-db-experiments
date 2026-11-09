@@ -1,0 +1,20 @@
+{
+  "source": {
+    "kind": "DR/any/H6",
+    "streamRefs": [
+      "H6-files"
+    ],
+    "records": {}
+  },
+  "corroboration": [
+    {
+      "kind": "HR/any/HR",
+      "streamRefs": [
+        "HR-probes"
+      ],
+      "records": {}
+    }
+  ],
+  "commitPosition": null,
+  "sourceOfTruth": "xtdb-dev"
+}

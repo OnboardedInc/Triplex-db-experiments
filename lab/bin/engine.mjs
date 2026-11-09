@@ -18,6 +18,7 @@
 // the small read-only config file is bind-mounted.
 // Rejected: docker compose per slot (project labels and a second config source of truth);
 // a daemon (no process to babysit with at most 10 agents).
+import { residentObserver } from './resident-observer.mjs';
 import { archiveVolume } from './archive-volume.mjs';
 import { observerUp, observerDown, observerWatch, observerWitness, observerImage, observerBridge, observerRetain, observerCommand } from './observer.mjs';
 import { spawnSync } from 'node:child_process';
@@ -255,7 +256,7 @@ async function up(config, info, opts) {
       const disk = vmDisk(config);
       const request = { container: info.container, memBytes: info.memBytes, diskForecastBytes: info.diskForecastBytes };
       // [EXP-OBS01] Why: an admitted observer owns its CPU for this slot run. Rejected: quotas as pinning.
-      for (const r of ledger.reservations) if (r.role === 'observer' && (!info.cpusetCpus || cpusetOverlap(r.cpusetCpus, info.cpusetCpus, config.vm.cpus).length))
+      for (const r of ledger.reservations) if (['observer','resident-observer'].includes(r.role) && (!info.cpusetCpus || cpusetOverlap(r.cpusetCpus, info.cpusetCpus, config.vm.cpus).length))
         fail('REFUSED', `engine CPU overlaps observer ${r.container}`);
       const verdict = admission({ config, reservations: ledger.reservations, running: all, request, diskUsedBytes: disk.usedBytes });
       ledger.external = verdict.external;
@@ -475,9 +476,10 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
   if (command === 'status') return status(config);
   if (command === 'observer-image') return observerImage(options);
   if (command === 'observer-retain') return observerRetain(options);
-  if (!['up', 'down', 'logs', 'observer-up', 'observer-down', 'observer-watch', 'observer-witness', 'observer-bridge', 'observer-command', 'archive-volume'].includes(command)) fail('USAGE', 'usage: engine.mjs up|down|status|logs --lane xtdb|qlever --slot dev|s1|s2|s3 [--fresh] [--follower] [--cpuset-cpus LIST]');
+  if (!['up', 'down', 'logs', 'observer-up', 'observer-down', 'observer-watch', 'observer-witness', 'observer-bridge', 'observer-command', 'archive-volume', 'observer-resident'].includes(command)) fail('USAGE', 'usage: engine.mjs up|down|status|logs --lane xtdb|qlever --slot dev|s1|s2|s3 [--fresh] [--follower] [--cpuset-cpus LIST]');
   if (!options.lane || !options.slot) fail('USAGE', '--lane and --slot are required');
   const info = slotInfo(config, options.lane, options.slot);
+  if (command === 'observer-resident') return residentObserver(config,info,options);
   if (command === 'archive-volume') {
     if (info.mode !== 'exclusive' || readOwner(info)) fail('REFUSED', 'archive only an unheld exclusive slot');
     acquireSlot(info, defaultHolder(options), 'EXP-OBS01-archive');

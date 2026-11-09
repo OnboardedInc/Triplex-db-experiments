@@ -1,0 +1,16 @@
+{
+  "source": {
+    "kind": "TO/xtdb/T1",
+    "streamRefs": [
+      "T1-wire"
+    ],
+    "records": {}
+  },
+  "coverage": {
+    "from": 121615840.361792,
+    "to": 121615841.361792,
+    "maxGapMs": 0,
+    "segments": []
+  },
+  "requestId": "cancel-r3"
+}

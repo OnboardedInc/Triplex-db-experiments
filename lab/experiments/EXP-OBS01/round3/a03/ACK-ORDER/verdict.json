@@ -1,0 +1,10 @@
+{
+  "protocol": "OBS-ACK-ORDER",
+  "verdict": "FAIL",
+  "reasons": [
+    "missing required field: tSourcePublished"
+  ],
+  "thresholds": {},
+  "sourceStrength": null,
+  "qualification": "screening-only"
+}

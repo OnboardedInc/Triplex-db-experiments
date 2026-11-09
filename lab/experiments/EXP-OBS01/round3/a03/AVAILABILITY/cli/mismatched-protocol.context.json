@@ -1,0 +1,120 @@
+{
+  "runId": "obs01-r3-a03-availability",
+  "receiptId": "obs01-r3-a03-availability",
+  "keyId": "obs01-r3-a03-availability-key",
+  "engine": "xtdb",
+  "bundleSha256": "b1fdaed54e6bf10cf50e31ad8a5b1d1ac0cc14366a26a2550ecc2cfd6e938d59",
+  "bridgeSha256": "606dd2968d089557c3c413d54de710b817e3c9aa0db28c5e01cfab217018c2a3",
+  "clockMaxUncertaintyMs": 5.098241999745369,
+  "streams": [
+    {
+      "cadenceMs": 100,
+      "endpoint": "resident:d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "kind": "HR/any/HR",
+      "method": "capture",
+      "normalizer": {
+        "id": "obs01-resident-protocol",
+        "sha256": "d568cb69aad62d4cec299489978693bccee594462d9f8a7d71b7e127905b8005",
+        "version": "3"
+      },
+      "normalizerFile": "HR-probes.normalize.py",
+      "reader": "resident",
+      "sourceId": "HR",
+      "streamId": "HR-probes",
+      "normalizerPath": "/Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-r3-a03-availability/code/HR-probes.normalize.py",
+      "chunks": [
+        {
+          "header": "streams/HR-probes/chunks/00000000.hdr.json",
+          "headerSha256": "d87393188f367be04de5d22913806a18a8c43246a97cf309615615a68aed845d",
+          "raw": "streams/HR-probes/chunks/00000000-4fc5cbcd9959991d0f66fe7ec70efcffd46c6352ff22c2cd740aca07df3ff210.bin"
+        },
+        {
+          "header": "streams/HR-probes/chunks/00000001.hdr.json",
+          "headerSha256": "85b42d8e578b1e2db0ab6070b1cb134c6ae28552d8c19bad6638ad67a8bf122b",
+          "raw": "streams/HR-probes/chunks/00000001-485483b77cdfce2efc7d0e4842597a63333f8f8bdc52c87e3ac3bcb372e1894f.bin"
+        },
+        {
+          "header": "streams/HR-probes/chunks/00000002.hdr.json",
+          "headerSha256": "7cfb721f23f15b1fe479b7f6fbb673c76ba7dd04e22b7645c628a2aab4c1b648",
+          "raw": "streams/HR-probes/chunks/00000002-f981f46f921df44ab7c7a575a42ee6ce64576ca9ccee4a15e01701bcc9be39cf.bin"
+        },
+        {
+          "header": "streams/HR-probes/chunks/00000003.hdr.json",
+          "headerSha256": "1b06504b93cdb6c5c918560798a9247b056f23d08db35d5992921b8b604e2e82",
+          "raw": "streams/HR-probes/chunks/00000003-744619ef8de3538b73d30e88c82f40a425680119485e75e33b84d0e8085269e1.bin"
+        },
+        {
+          "header": "streams/HR-probes/chunks/00000004.hdr.json",
+          "headerSha256": "7a58c1634af598a1a6dc3769837312d849cd57ab6e272a8cc791828c0b5b6f48",
+          "raw": "streams/HR-probes/chunks/00000004-7de94439719a94ba314333129650389fdc9b80f4e62898d4f7c21dec439bd0c4.bin"
+        }
+      ]
+    },
+    {
+      "cadenceMs": 100,
+      "endpoint": "resident:d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "kind": "HO/any/H8",
+      "method": "capture",
+      "normalizer": {
+        "id": "obs01-resident-protocol",
+        "sha256": "7794d6ff755ccfae737b60bef9e545074e36f276e38d48d795eace3c8ea30218",
+        "version": "3"
+      },
+      "normalizerFile": "H8-process.normalize.py",
+      "reader": "resident",
+      "sourceId": "H8",
+      "streamId": "H8-process",
+      "normalizerPath": "/Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-r3-a03-availability/code/H8-process.normalize.py",
+      "chunks": [
+        {
+          "header": "streams/H8-process/chunks/00000000.hdr.json",
+          "headerSha256": "28d52ccb98a82f553342ab24e0021ee2fe40f7d1ce04062ffa2e906b4f480b9a",
+          "raw": "streams/H8-process/chunks/00000000-674f215819a6654ea08c923ed948956f1cadce3ed8f6126b676f264aaef59a3d.bin"
+        },
+        {
+          "header": "streams/H8-process/chunks/00000001.hdr.json",
+          "headerSha256": "083ce060788aa8a80d1be6cdc186f19d1595ac49b364bee94ece3d6e9e8131b6",
+          "raw": "streams/H8-process/chunks/00000001-2be337426c9d34c71209f89d96b77d9431b3c34dd8434c0348bc68fdd645c4ab.bin"
+        },
+        {
+          "header": "streams/H8-process/chunks/00000002.hdr.json",
+          "headerSha256": "1058eeb5e1e784359511a38e86e437e5a7d4948a2700a3b8241fda3af4c87110",
+          "raw": "streams/H8-process/chunks/00000002-e5e34301f7014daaa3ff2b882dd5446b8475ae02078256ad9edd9fd175052af8.bin"
+        },
+        {
+          "header": "streams/H8-process/chunks/00000003.hdr.json",
+          "headerSha256": "28f7f37b0adc23f3f2d1e4a7cfb6a0980ca73a0e5fc3a7d092a5349ba9b2a5b7",
+          "raw": "streams/H8-process/chunks/00000003-4da7f6b73e90d61aad455282fc3fd759ed69bb2cfbb5e39644af6fac90e330e3.bin"
+        }
+      ]
+    }
+  ],
+  "witnessHeads": [
+    {
+      "runId": "obs01-r3-a03-availability",
+      "streamId": "HR-probes",
+      "seq": 4,
+      "headSha256": "7a58c1634af598a1a6dc3769837312d849cd57ab6e272a8cc791828c0b5b6f48",
+      "tMono": 121789545.762696
+    },
+    {
+      "runId": "obs01-r3-a03-availability",
+      "streamId": "H8-process",
+      "seq": 3,
+      "headSha256": "28f7f37b0adc23f3f2d1e4a7cfb6a0980ca73a0e5fc3a7d092a5349ba9b2a5b7",
+      "tMono": 121789548.070212
+    }
+  ],
+  "format": "obs-context/1",
+  "protocol": "OBS-WORK",
+  "obligation": "G6.resource.memory-failure-contained",
+  "case": "obs01-r3-a03-availability",
+  "witnessKind": "AVAILABILITY",
+  "thresholdIds": [
+    "T-AVAIL-WINDOW-MS"
+  ],
+  "contractSha256": "fe730f89a779c44201f02b8987e0079aa0f713c3fbca35761c321546c682e4fb",
+  "bindings": {
+    "tFailure": 121789305.918282
+  }
+}

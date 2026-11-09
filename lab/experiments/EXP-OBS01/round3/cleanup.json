@@ -1,0 +1,226 @@
+{
+  "at": "2026-11-09T00:29:13.788Z",
+  "runs": [
+    {
+      "runId": "obs01-r3-a01-scale-count",
+      "residentUnchanged": false,
+      "residentId": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "sealed": true,
+      "observerAbsent": true
+    },
+    {
+      "runId": "obs01-r3-a02-ack-order",
+      "residentUnchanged": true,
+      "residentId": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "sealed": true,
+      "observerAbsent": true
+    },
+    {
+      "runId": "obs01-r3-a02-availability",
+      "residentUnchanged": true,
+      "residentId": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "sealed": true,
+      "observerAbsent": true
+    },
+    {
+      "runId": "obs01-r3-a02-cancel",
+      "residentUnchanged": true,
+      "residentId": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "sealed": true,
+      "observerAbsent": true
+    },
+    {
+      "runId": "obs01-r3-a02-connections",
+      "residentUnchanged": false,
+      "residentId": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "sealed": true,
+      "observerAbsent": true
+    },
+    {
+      "runId": "obs01-r3-a02-erasure-scan",
+      "residentUnchanged": true,
+      "residentId": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "sealed": true,
+      "observerAbsent": true
+    },
+    {
+      "runId": "obs01-r3-a02-fault-transitions",
+      "residentUnchanged": false,
+      "residentId": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "sealed": true,
+      "observerAbsent": true
+    },
+    {
+      "runId": "obs01-r3-a02-maintenance",
+      "residentUnchanged": false,
+      "residentId": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "sealed": true,
+      "observerAbsent": true
+    },
+    {
+      "runId": "obs01-r3-a02-no-mutation",
+      "residentUnchanged": true,
+      "residentId": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "sealed": true,
+      "observerAbsent": true
+    },
+    {
+      "runId": "obs01-r3-a02-preabort",
+      "residentUnchanged": true,
+      "residentId": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "sealed": true,
+      "observerAbsent": true
+    },
+    {
+      "runId": "obs01-r3-a02-resource",
+      "residentUnchanged": false,
+      "residentId": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "sealed": true,
+      "observerAbsent": true
+    },
+    {
+      "runId": "obs01-r3-a02-scale-count",
+      "residentUnchanged": false,
+      "residentId": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "sealed": true,
+      "observerAbsent": true
+    },
+    {
+      "runId": "obs01-r3-a02-scratch",
+      "residentUnchanged": false,
+      "residentId": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "sealed": true,
+      "observerAbsent": true
+    },
+    {
+      "runId": "obs01-r3-a02-watermark",
+      "residentUnchanged": false,
+      "residentId": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "sealed": true,
+      "observerAbsent": true
+    },
+    {
+      "runId": "obs01-r3-a02-work",
+      "residentUnchanged": false,
+      "residentId": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "sealed": true,
+      "observerAbsent": true
+    },
+    {
+      "runId": "obs01-r3-a03-ack-order",
+      "residentUnchanged": true,
+      "residentId": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "sealed": true,
+      "observerAbsent": true
+    },
+    {
+      "runId": "obs01-r3-a03-availability",
+      "residentUnchanged": true,
+      "residentId": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "sealed": true,
+      "observerAbsent": true
+    },
+    {
+      "runId": "obs01-r3-a03-cancel",
+      "residentUnchanged": true,
+      "residentId": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "sealed": true,
+      "observerAbsent": true
+    },
+    {
+      "runId": "obs01-r3-a03-connections",
+      "residentUnchanged": false,
+      "residentId": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "sealed": true,
+      "observerAbsent": true
+    },
+    {
+      "runId": "obs01-r3-a03-erasure-scan",
+      "residentUnchanged": true,
+      "residentId": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "sealed": true,
+      "observerAbsent": true
+    },
+    {
+      "runId": "obs01-r3-a03-fault-transitions",
+      "residentUnchanged": true,
+      "residentId": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "sealed": true,
+      "observerAbsent": true
+    },
+    {
+      "runId": "obs01-r3-a03-maintenance",
+      "residentUnchanged": true,
+      "residentId": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "sealed": true,
+      "observerAbsent": true
+    },
+    {
+      "runId": "obs01-r3-a03-no-mutation",
+      "residentUnchanged": true,
+      "residentId": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "sealed": true,
+      "observerAbsent": true
+    },
+    {
+      "runId": "obs01-r3-a03-preabort",
+      "residentUnchanged": false,
+      "residentId": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "sealed": true,
+      "observerAbsent": true
+    },
+    {
+      "runId": "obs01-r3-a03-resource",
+      "residentUnchanged": true,
+      "residentId": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "sealed": true,
+      "observerAbsent": true
+    },
+    {
+      "runId": "obs01-r3-a03-scale-count",
+      "residentUnchanged": true,
+      "residentId": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "sealed": true,
+      "observerAbsent": true
+    },
+    {
+      "runId": "obs01-r3-a03-scratch",
+      "residentUnchanged": true,
+      "residentId": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "sealed": true,
+      "observerAbsent": true
+    },
+    {
+      "runId": "obs01-r3-a03-watermark",
+      "residentUnchanged": true,
+      "residentId": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "sealed": true,
+      "observerAbsent": true
+    },
+    {
+      "runId": "obs01-r3-a03-work",
+      "residentUnchanged": true,
+      "residentId": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "sealed": true,
+      "observerAbsent": true
+    },
+    {
+      "runId": "obs01-r3-a04-ack-order",
+      "residentUnchanged": true,
+      "residentId": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "sealed": true,
+      "observerAbsent": true
+    },
+    {
+      "runId": "obs01-r3-a04-erasure-scan",
+      "residentUnchanged": true,
+      "residentId": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "sealed": true,
+      "observerAbsent": true
+    }
+  ],
+  "ownReservations": [],
+  "ownContainers": [],
+  "exclusiveSlotsTaken": 0,
+  "volumesCreated": 0
+}

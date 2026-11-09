@@ -1,0 +1,10 @@
+{
+  "protocol": "OBS-FAULT-TRANSITIONS",
+  "verdict": "FAIL",
+  "reasons": [
+    "missing required field: transition"
+  ],
+  "thresholds": {},
+  "sourceStrength": null,
+  "qualification": "screening-only"
+}

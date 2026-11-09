@@ -1,0 +1,10 @@
+{
+  "protocol": "OBS-RESOURCE",
+  "verdict": "REFUSED",
+  "reasons": [
+    "CONTEXT-CONTRADICTION: obligation does not select O-OBS with the matching registered protocol"
+  ],
+  "thresholds": {},
+  "sourceStrength": null,
+  "qualification": "screening-only"
+}

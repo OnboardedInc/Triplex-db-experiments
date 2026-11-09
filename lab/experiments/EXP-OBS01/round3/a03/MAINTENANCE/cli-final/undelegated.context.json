@@ -1,0 +1,72 @@
+{
+  "runId": "obs01-r3-a03-maintenance",
+  "receiptId": "obs01-r3-a03-maintenance",
+  "keyId": "obs01-r3-a03-maintenance-key",
+  "engine": "xtdb",
+  "bundleSha256": "22580a42e6e6ac7fbeb06c9c1b43ba4f38e8f3f14de7db1ccc5f66c9ee4aa762",
+  "bridgeSha256": "9d7f8064d95019c9d2ab1854b25c74e49096b8924e51e8aadb34abe1d6ec2fbb",
+  "clockMaxUncertaintyMs": 6.58720999956131,
+  "streams": [
+    {
+      "cadenceMs": 100,
+      "endpoint": "resident:d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "kind": "EI-metric/xtdb/X1.node.tx.latestCompletedTxId",
+      "method": "capture",
+      "normalizer": {
+        "id": "obs01-resident-protocol",
+        "sha256": "5c2b5e99bf0159560309b8f3e615f18427c3b8465a7edf66e41a0bcdeccc968e",
+        "version": "3"
+      },
+      "normalizerFile": "X1-metrics.normalize.py",
+      "reader": "resident",
+      "sourceId": "X1.node.tx.latestCompletedTxId",
+      "streamId": "X1-metrics",
+      "normalizerPath": "/Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-r3-a03-maintenance/code/X1-metrics.normalize.py",
+      "chunks": [
+        {
+          "header": "streams/X1-metrics/chunks/00000000.hdr.json",
+          "headerSha256": "a90ceb66963e92c5819938375b7ffb5e8bf75a9b738e62981cd3c627fa7df62d",
+          "raw": "streams/X1-metrics/chunks/00000000-c3a0951133f8ba289df293aa9945c3c903b9daf01edca26fc5656f8ebe9b46f3.bin"
+        },
+        {
+          "header": "streams/X1-metrics/chunks/00000001.hdr.json",
+          "headerSha256": "829fea34a8a96c6cd11b741890f8bcd472824dc95bd9250de33a99c0acf85bd1",
+          "raw": "streams/X1-metrics/chunks/00000001-e804f23c6355ddca0cfedb2c9200f801c02e98dfabe7c7cb7945bde0989f0bc6.bin"
+        },
+        {
+          "header": "streams/X1-metrics/chunks/00000002.hdr.json",
+          "headerSha256": "94f1a349498c53a977d6d88e289fd3a758eadb302d4658093090536f7626d309",
+          "raw": "streams/X1-metrics/chunks/00000002-5759629487c9a23c2325fe75ecf8e3b16547531b1ef945ce10661e28069dcd28.bin"
+        },
+        {
+          "header": "streams/X1-metrics/chunks/00000003.hdr.json",
+          "headerSha256": "ec2b24b79dd7b6c03c9a3e312e1137cfb7f7da13f919650959d8a0f77084915d",
+          "raw": "streams/X1-metrics/chunks/00000003-2881bfc28dbbbea3fbe0a8f984a449f3149e325293016a3f8d32d1467f3e04f5.bin"
+        }
+      ]
+    }
+  ],
+  "witnessHeads": [
+    {
+      "runId": "obs01-r3-a03-maintenance",
+      "streamId": "X1-metrics",
+      "seq": 3,
+      "headSha256": "ec2b24b79dd7b6c03c9a3e312e1137cfb7f7da13f919650959d8a0f77084915d",
+      "tMono": 121794900.764789
+    }
+  ],
+  "format": "obs-context/1",
+  "protocol": "OBS-MAINTENANCE",
+  "obligation": "G1.found.unchanged44",
+  "case": "obs01-r3-a03-maintenance",
+  "witnessKind": "MAINTENANCE",
+  "thresholdIds": [
+    "T-FAULT-REPS",
+    "NS-P3-LAG-P99-MS"
+  ],
+  "contractSha256": "fe730f89a779c44201f02b8987e0079aa0f713c3fbca35761c321546c682e4fb",
+  "bindings": {
+    "kind": "compaction"
+  },
+  "selectedThreshold": "NS-P3-LAG-P99-MS"
+}

@@ -1,0 +1,100 @@
+{
+  "analyticCount": {
+    "activeDomainFacts": 8,
+    "activeFixtureFacts": 24,
+    "activePresenceFacts": 8,
+    "activeTypeVersionFacts": 8,
+    "allFixtureAssertionVersions": 28,
+    "configFacts": null,
+    "configuredEntitiesDuringPresenceOff": 7,
+    "configuredEntitiesLatest": 8,
+    "correctionEntities": 1,
+    "distinctDomainSubjects": 8,
+    "domainAssertionVersions": 9,
+    "domainCommands": 4,
+    "fixtureRetirements": 4,
+    "presenceAssertionVersions": 10,
+    "presenceCycleEntities": 1,
+    "receiptJournalClaimMetadata": null,
+    "schemaReleaseCalls": 2,
+    "typeVersionAssertionVersions": 9
+  },
+  "countQueryCaseResult": {
+    "activeDomainFacts": 8,
+    "activeFixtureFacts": 24,
+    "activePresenceFacts": 8,
+    "activeTypeVersionFacts": 8,
+    "allFixtureAssertionVersions": 28,
+    "configFacts": null,
+    "configuredEntitiesDuringPresenceOff": 7,
+    "configuredEntitiesLatest": 8,
+    "correctionEntities": 1,
+    "distinctDomainSubjects": 8,
+    "domainAssertionVersions": 9,
+    "domainCommands": 4,
+    "fixtureRetirements": 4,
+    "presenceAssertionVersions": 10,
+    "presenceCycleEntities": 1,
+    "receiptJournalClaimMetadata": null,
+    "schemaReleaseCalls": 2,
+    "typeVersionAssertionVersions": 9
+  },
+  "population": {
+    "generator": "configured-entities-v1",
+    "n": 8,
+    "width": 1
+  },
+  "source": {
+    "kind": "EI-query/xtdb/X4",
+    "streamRefs": [
+      "X4-native"
+    ],
+    "records": {
+      "analyticCount": {
+        "activeDomainFacts": 8,
+        "activeFixtureFacts": 24,
+        "activePresenceFacts": 8,
+        "activeTypeVersionFacts": 8,
+        "allFixtureAssertionVersions": 28,
+        "configFacts": null,
+        "configuredEntitiesDuringPresenceOff": 7,
+        "configuredEntitiesLatest": 8,
+        "correctionEntities": 1,
+        "distinctDomainSubjects": 8,
+        "domainAssertionVersions": 9,
+        "domainCommands": 4,
+        "fixtureRetirements": 4,
+        "presenceAssertionVersions": 10,
+        "presenceCycleEntities": 1,
+        "receiptJournalClaimMetadata": null,
+        "schemaReleaseCalls": 2,
+        "typeVersionAssertionVersions": 9
+      },
+      "countQueryCaseResult": {
+        "activeDomainFacts": 8,
+        "activeFixtureFacts": 24,
+        "activePresenceFacts": 8,
+        "activeTypeVersionFacts": 8,
+        "allFixtureAssertionVersions": 28,
+        "configFacts": null,
+        "configuredEntitiesDuringPresenceOff": 7,
+        "configuredEntitiesLatest": 8,
+        "correctionEntities": 1,
+        "distinctDomainSubjects": 8,
+        "domainAssertionVersions": 9,
+        "domainCommands": 4,
+        "fixtureRetirements": 4,
+        "presenceAssertionVersions": 10,
+        "presenceCycleEntities": 1,
+        "receiptJournalClaimMetadata": null,
+        "schemaReleaseCalls": 2,
+        "typeVersionAssertionVersions": 9
+      },
+      "population": {
+        "generator": "configured-entities-v1",
+        "n": 8,
+        "width": 1
+      }
+    }
+  }
+}

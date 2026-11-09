@@ -1,0 +1,22 @@
+test_client_address_and_truncated_backend (__main__.Round2.test_client_address_and_truncated_backend) ... ok
+test_encrypted_pgwire_refuses (__main__.Round2.test_encrypted_pgwire_refuses) ... ok
+test_http_chunked_and_incomplete_frames (__main__.Round2.test_http_chunked_and_incomplete_frames) ... ok
+test_no_mutation_real_counter_delta (__main__.Round2.test_no_mutation_real_counter_delta) ... FAIL
+test_otlp_fixed64_and_attributes (__main__.Round2.test_otlp_fixed64_and_attributes) ... ok
+test_preabort_requires_exact_inventory (__main__.Round2.test_preabort_requires_exact_inventory) ... ok
+test_sql_comments_in_literals_do_not_hide_writes (__main__.Round2.test_sql_comments_in_literals_do_not_hide_writes) ... ok
+test_tail_gap_refuses (__main__.Round2.test_tail_gap_refuses) ... ok
+
+======================================================================
+FAIL: test_no_mutation_real_counter_delta (__main__.Round2.test_no_mutation_real_counter_delta)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/test_round2.py", line 52, in test_no_mutation_real_counter_delta
+    with self.assertRaises(ValueError):namespace['protocol_normalize'](data,{'protocol':'OBS-ACK-ORDER','window':spec['window']},'X1')
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.018s
+
+FAILED (failures=1)

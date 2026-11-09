@@ -1,0 +1,47 @@
+{
+  "probes": [
+    {
+      "kind": "write",
+      "outcome": "success",
+      "t": 121789427.089539
+    },
+    {
+      "kind": "read",
+      "outcome": "success",
+      "t": 121789539.103277
+    }
+  ],
+  "events": [],
+  "source": {
+    "kind": "HR/any/HR",
+    "streamRefs": [
+      "HR-probes"
+    ],
+    "records": {
+      "probes": [
+        {
+          "kind": "write",
+          "outcome": "success",
+          "t": 121789427.089539
+        },
+        {
+          "kind": "read",
+          "outcome": "success",
+          "t": 121789539.103277
+        }
+      ]
+    }
+  },
+  "corroboration": [
+    {
+      "kind": "HO/any/H8",
+      "streamRefs": [
+        "H8-process"
+      ],
+      "records": {
+        "events": []
+      }
+    }
+  ],
+  "tFailure": 121789305.918282
+}

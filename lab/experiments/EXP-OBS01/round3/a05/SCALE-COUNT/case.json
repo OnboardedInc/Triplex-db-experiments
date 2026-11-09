@@ -1,0 +1,56 @@
+{
+  "resident": true,
+  "protocol": "OBS-SCALE-COUNT",
+  "runId": "obs01-r3-a05-scale-count",
+  "obligation": "S.population.year-one",
+  "sources": [
+    [
+      "X4-native",
+      "EI-query/xtdb/X4"
+    ]
+  ],
+  "relation": "obs01r3_a05_scale_count",
+  "population": {
+    "generator": "configured-entities-v1",
+    "n": 8,
+    "width": 1
+  },
+  "requestId": "cancel-r3",
+  "reuseQueryId": "reuse-r3",
+  "expectedError": "E-CANCELLED",
+  "pools": [
+    {
+      "label": "resident-pgwire",
+      "port": 5432,
+      "max": 100000
+    }
+  ],
+  "forecast": {
+    "memory": 3221225472,
+    "disk": 20000000000
+  },
+  "envelope": {
+    "memory": 3221225472,
+    "disk": 20000000000,
+    "owners": [
+      "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c"
+    ]
+  },
+  "operation": "native-projection",
+  "comparisonOperation": "native-full-scan",
+  "threshold": "NS-P3-LAG-P99-MS",
+  "kind": "compaction",
+  "variant": "engine-source",
+  "operationId": "obs01-r3-a05-scale-count",
+  "sourceOfTruth": "xtdb-dev",
+  "readId": "obs01-r3-a05-scale-count-read",
+  "servingIndex": "xtdb-current",
+  "scope": "obs01-r3-a05-scale-count",
+  "mappingGeneration": 1,
+  "queriedAttributes": [
+    "n"
+  ],
+  "tErasurePublished": null,
+  "scanInventory": [],
+  "missingSource": "Resident profile has no enabled trace/log or composition-specific publication, route, fault or physical-erasure witness. No resident restart/rebuild is authorized."
+}

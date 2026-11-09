@@ -1,0 +1,1 @@
+{"protocol":"OBS-CONNECTIONS","qualification":"screening-only","reasons":[],"sourceStrength":"indirect","thresholds":{"T-CONN-RELEASE-MS":{"bound":"max","kind":"observe","source":"derived","unit":"ms after close for the engine-side connection count to return to baseline","value":5000}},"verdict":"PASS"}

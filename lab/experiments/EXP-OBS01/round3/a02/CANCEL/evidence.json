@@ -1,0 +1,36 @@
+{
+  "connectionId": "ab3be860f9e8468d87d783aee910a3c5",
+  "expectedError": "E-CANCELLED",
+  "requestId": "cancel-r3",
+  "reuseConnectionId": "ab3be860f9e8468d87d783aee910a3c5",
+  "reuseQueryId": "reuse-r3",
+  "reuseResult": {
+    "connectionId": "ab3be860f9e8468d87d783aee910a3c5",
+    "outcome": "success",
+    "queryId": "reuse-r3",
+    "t": 121614586.680489
+  },
+  "tCancelRequested": 121614583.053757,
+  "tReuseOk": 121614586.680489,
+  "source": {
+    "kind": "TO/xtdb/T1",
+    "streamRefs": [
+      "T1-wire"
+    ],
+    "records": {
+      "connectionId": "ab3be860f9e8468d87d783aee910a3c5",
+      "expectedError": "E-CANCELLED",
+      "requestId": "cancel-r3",
+      "reuseConnectionId": "ab3be860f9e8468d87d783aee910a3c5",
+      "reuseQueryId": "reuse-r3",
+      "reuseResult": {
+        "connectionId": "ab3be860f9e8468d87d783aee910a3c5",
+        "outcome": "success",
+        "queryId": "reuse-r3",
+        "t": 121614586.680489
+      },
+      "tCancelRequested": 121614583.053757,
+      "tReuseOk": 121614586.680489
+    }
+  }
+}

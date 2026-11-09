@@ -1,0 +1,225 @@
+{
+  "at": "2026-11-09T00:39:14.401Z",
+  "runs": [
+    {
+      "runId": "obs01-r3-a01-scale-count",
+      "residentUnchanged": true,
+      "observerAbsent": true,
+      "sealed": true
+    },
+    {
+      "runId": "obs01-r3-a02-ack-order",
+      "residentUnchanged": true,
+      "observerAbsent": true,
+      "sealed": true
+    },
+    {
+      "runId": "obs01-r3-a02-availability",
+      "residentUnchanged": true,
+      "observerAbsent": true,
+      "sealed": true
+    },
+    {
+      "runId": "obs01-r3-a02-cancel",
+      "residentUnchanged": true,
+      "observerAbsent": true,
+      "sealed": true
+    },
+    {
+      "runId": "obs01-r3-a02-connections",
+      "residentUnchanged": true,
+      "observerAbsent": true,
+      "sealed": true
+    },
+    {
+      "runId": "obs01-r3-a02-erasure-scan",
+      "residentUnchanged": true,
+      "observerAbsent": true,
+      "sealed": true
+    },
+    {
+      "runId": "obs01-r3-a02-fault-transitions",
+      "residentUnchanged": true,
+      "observerAbsent": true,
+      "sealed": true
+    },
+    {
+      "runId": "obs01-r3-a02-maintenance",
+      "residentUnchanged": true,
+      "observerAbsent": true,
+      "sealed": true
+    },
+    {
+      "runId": "obs01-r3-a02-no-mutation",
+      "residentUnchanged": true,
+      "observerAbsent": true,
+      "sealed": true
+    },
+    {
+      "runId": "obs01-r3-a02-preabort",
+      "residentUnchanged": true,
+      "observerAbsent": true,
+      "sealed": true
+    },
+    {
+      "runId": "obs01-r3-a02-resource",
+      "residentUnchanged": true,
+      "observerAbsent": true,
+      "sealed": true
+    },
+    {
+      "runId": "obs01-r3-a02-scale-count",
+      "residentUnchanged": true,
+      "observerAbsent": true,
+      "sealed": true
+    },
+    {
+      "runId": "obs01-r3-a02-scratch",
+      "residentUnchanged": true,
+      "observerAbsent": true,
+      "sealed": true
+    },
+    {
+      "runId": "obs01-r3-a02-watermark",
+      "residentUnchanged": true,
+      "observerAbsent": true,
+      "sealed": true
+    },
+    {
+      "runId": "obs01-r3-a02-work",
+      "residentUnchanged": true,
+      "observerAbsent": true,
+      "sealed": true
+    },
+    {
+      "runId": "obs01-r3-a03-ack-order",
+      "residentUnchanged": true,
+      "observerAbsent": true,
+      "sealed": true
+    },
+    {
+      "runId": "obs01-r3-a03-availability",
+      "residentUnchanged": true,
+      "observerAbsent": true,
+      "sealed": true
+    },
+    {
+      "runId": "obs01-r3-a03-cancel",
+      "residentUnchanged": true,
+      "observerAbsent": true,
+      "sealed": true
+    },
+    {
+      "runId": "obs01-r3-a03-connections",
+      "residentUnchanged": true,
+      "observerAbsent": true,
+      "sealed": true
+    },
+    {
+      "runId": "obs01-r3-a03-erasure-scan",
+      "residentUnchanged": true,
+      "observerAbsent": true,
+      "sealed": true
+    },
+    {
+      "runId": "obs01-r3-a03-fault-transitions",
+      "residentUnchanged": true,
+      "observerAbsent": true,
+      "sealed": true
+    },
+    {
+      "runId": "obs01-r3-a03-maintenance",
+      "residentUnchanged": true,
+      "observerAbsent": true,
+      "sealed": true
+    },
+    {
+      "runId": "obs01-r3-a03-no-mutation",
+      "residentUnchanged": true,
+      "observerAbsent": true,
+      "sealed": true
+    },
+    {
+      "runId": "obs01-r3-a03-preabort",
+      "residentUnchanged": true,
+      "observerAbsent": true,
+      "sealed": true
+    },
+    {
+      "runId": "obs01-r3-a03-resource",
+      "residentUnchanged": true,
+      "observerAbsent": true,
+      "sealed": true
+    },
+    {
+      "runId": "obs01-r3-a03-scale-count",
+      "residentUnchanged": true,
+      "observerAbsent": true,
+      "sealed": true
+    },
+    {
+      "runId": "obs01-r3-a03-scratch",
+      "residentUnchanged": true,
+      "observerAbsent": true,
+      "sealed": true
+    },
+    {
+      "runId": "obs01-r3-a03-watermark",
+      "residentUnchanged": true,
+      "observerAbsent": true,
+      "sealed": true
+    },
+    {
+      "runId": "obs01-r3-a03-work",
+      "residentUnchanged": true,
+      "observerAbsent": true,
+      "sealed": true
+    },
+    {
+      "runId": "obs01-r3-a04-ack-order",
+      "residentUnchanged": true,
+      "observerAbsent": true,
+      "sealed": true
+    },
+    {
+      "runId": "obs01-r3-a04-erasure-scan",
+      "residentUnchanged": true,
+      "observerAbsent": true,
+      "sealed": true
+    },
+    {
+      "runId": "obs01-r3-a05-scale-count",
+      "residentUnchanged": true,
+      "observerAbsent": true,
+      "sealed": true
+    },
+    {
+      "runId": "obs01-r3-a06-cancel",
+      "residentUnchanged": true,
+      "observerAbsent": true,
+      "sealed": false
+    },
+    {
+      "runId": "obs01-r3-a07-cancel",
+      "residentUnchanged": true,
+      "observerAbsent": true,
+      "sealed": true
+    },
+    {
+      "runId": "obs01-r3-invalid-spec",
+      "residentUnchanged": null,
+      "observerAbsent": true,
+      "sealed": false
+    },
+    {
+      "runId": "obs01-r3-invalid-spec-r2",
+      "residentUnchanged": null,
+      "observerAbsent": true,
+      "sealed": false
+    }
+  ],
+  "ownReservations": [],
+  "ownContainers": [],
+  "exclusiveSlotsTaken": 0,
+  "volumesCreated": 0
+}

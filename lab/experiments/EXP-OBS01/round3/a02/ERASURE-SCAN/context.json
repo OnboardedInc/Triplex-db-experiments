@@ -1,0 +1,64 @@
+{
+  "runId": "obs01-r3-a02-erasure-scan",
+  "receiptId": "obs01-r3-a02-erasure-scan",
+  "keyId": "obs01-r3-a02-erasure-scan-key",
+  "engine": "xtdb",
+  "bundleSha256": "c0c83c5cabb9ad2a99a0802321df68b0365216dd403b80ba6a86babd3045a86d",
+  "bridgeSha256": "7692cf6860c6f07bc89327729f71c13771ff13b534638ca7dc12a7b72116b9a4",
+  "clockMaxUncertaintyMs": 5.697308503091335,
+  "streams": [
+    {
+      "cadenceMs": 100,
+      "endpoint": "resident:d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "kind": "HO/any/H6",
+      "method": "capture",
+      "normalizer": {
+        "id": "obs01-resident-protocol",
+        "sha256": "5cc898cc1f24a728a79ba17a300ea8c90fa7c75976381ec257657208a3700efd",
+        "version": "3"
+      },
+      "normalizerFile": "H6-files.normalize.py",
+      "reader": "resident",
+      "sourceId": "H6",
+      "streamId": "H6-files",
+      "normalizerPath": "/Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-r3-a02-erasure-scan/code/H6-files.normalize.py",
+      "chunks": [
+        {
+          "header": "streams/H6-files/chunks/00000000.hdr.json",
+          "headerSha256": "c7fefcb2d1876b2a704725d4a949842737f6ca30846533ce58207bcc29516922",
+          "raw": "streams/H6-files/chunks/00000000-bfc51bc0dd94ef6844206529b4ff473b506656da4ff085dd15605ba3fb5fbf99.bin"
+        },
+        {
+          "header": "streams/H6-files/chunks/00000001.hdr.json",
+          "headerSha256": "84101921c3ce3b8fc67b393b4c83394ca5879b137c6c5179f53f1f5ad9146952",
+          "raw": "streams/H6-files/chunks/00000001-e41e613efe30769a86b486f0d0f7a9f3ef1761f1e2e6fa0e0c9505b7fba6bbef.bin"
+        },
+        {
+          "header": "streams/H6-files/chunks/00000002.hdr.json",
+          "headerSha256": "cc6ec6230a4368dff5bb00bc35426b75181fa2fc88dee5f4700192c28d1b53e8",
+          "raw": "streams/H6-files/chunks/00000002-289cf98c9d9bde4fb1b7f89b56d0ce1b6eeaed0211f0a7f7b190791fafbd3998.bin"
+        }
+      ]
+    }
+  ],
+  "witnessHeads": [
+    {
+      "runId": "obs01-r3-a02-erasure-scan",
+      "streamId": "H6-files",
+      "seq": 2,
+      "headSha256": "cc6ec6230a4368dff5bb00bc35426b75181fa2fc88dee5f4700192c28d1b53e8",
+      "tMono": 121627922.389707
+    }
+  ],
+  "format": "obs-context/1",
+  "protocol": "OBS-ERASURE-SCAN",
+  "obligation": "G9.erasure.protected-copies",
+  "case": "obs01-r3-a02-erasure-scan",
+  "witnessKind": "ERASURE-SCAN",
+  "thresholdIds": [],
+  "contractSha256": "fe730f89a779c44201f02b8987e0079aa0f713c3fbca35761c321546c682e4fb",
+  "bindings": {
+    "tErasurePublished": null
+  },
+  "scanInventory": []
+}

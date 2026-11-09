@@ -1,0 +1,1 @@
+{"missingSources": {"H8-process": {"derivedFields": ["events", "probes"], "missing": ["no observed failure"]}, "HR-probes": {"derivedFields": ["probes"], "missing": []}}, "protocol": "OBS-AVAILABILITY", "qualification": "screening-only", "reasons": ["source disagreement: probes"], "sourceStrength": null, "thresholds": {}, "verdict": "FAIL"}

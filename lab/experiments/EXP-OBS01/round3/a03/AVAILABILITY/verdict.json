@@ -1,0 +1,10 @@
+{
+  "protocol": "OBS-AVAILABILITY",
+  "verdict": "FAIL",
+  "reasons": [
+    "required fields not recomputed from raw bytes"
+  ],
+  "thresholds": {},
+  "sourceStrength": null,
+  "qualification": "screening-only"
+}

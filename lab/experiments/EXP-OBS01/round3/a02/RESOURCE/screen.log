@@ -1,0 +1,1 @@
+{"missingSources": {"H1-resource": {"derivedFields": ["envelope", "forecast", "obligation", "peaks"], "missing": []}}, "protocol": "OBS-RESOURCE", "qualification": "screening-only", "reasons": ["observed total exceeds forecast"], "sourceStrength": "indirect", "thresholds": {}, "verdict": "FAIL"}

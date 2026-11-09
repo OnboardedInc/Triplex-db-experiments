@@ -1,0 +1,2 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 20629 "CX-VP2Q-4-R8-corrected-live", pid 59984 "CX-VP2Q-4-R8-live", pid 66106 "CX-RQ01-round2-a2", pid 30950 "CX-VP2Q-4-R8-new-live"
+{"protocol":"SCALE-COUNT","screenExit":0,"summary":"{\"missingSources\": {\"X4-native\": {\"derivedFields\": [\"analyticCount\", \"countQueryCaseResult\", \"population\"], \"missing\": []}}, \"protocol\": \"OBS-SCALE-COUNT\", \"qualification\": \"screening-only\", \"reasons\": [], \"sourceStrength\": \"direct\", \"thresholds\": {}, \"verdict\": \"PASS\"}"}
