@@ -1776,3 +1776,16 @@ Where each priority stands, from evidence so far (research probes and baselines;
   removed in the same orchestrator step.
 - **Also:** P5 round A review FIX-FIRST (G0 history coverage, traffic oracle checks, end counts, burst windows); the reviewer picked K01's
   g0.ts as the one admission module, with P5's W0 reader under it, so P5 round 3 adopts it. GS12F round 3 (one bounds table) is in review.
+
+## 2026-11-09 03:12Z: EXP-QG1: a rebuild makes QLever reads up to 40x faster; delta cost grows with delta size and key layout
+- **Phase 0 (copy of qlever-dev's data on qlever-s1):** rebuild-index took 5.3 s and kept all eight sampled answers byte-identical. The C8
+  base SELECT went from 2,215 ms to 55 ms and the edge SELECT from 2,152 ms to 51 ms; point lookups from 175 to 305 ms down to 44 to 49 ms.
+  Upstream bug #3172 did not trigger. The shared resident was only inventoried and copied.
+- **Phase 1 (10M-triple built base, delta grown 0 to 1.6M changes):** cold joins grew 13 to 182 ms for monotonic keys (about 99 ms per
+  million changes) and 13 to 59 ms for spread keys (about 23 ms per million); rebuilds took 9 to 11 s and brought costs back to baseline.
+  16/16 C8 controls and 320/320 P4 content samples matched. The builder qualified no threshold (non-monotonic small samples, no exact block
+  counters, no frozen trace); the cost growth is clear, the exact rule is not yet.
+- **Separate concern for P4 on lane Q:** the 20-pull sample p99 is about 263 to 300 ms even with zero delta, against P4's 25 ms bar. That is
+  the A0 encoding's pull cost, not the delta, and needs its own look (R17's compact current-graph projection is the candidate).
+- **What it means:** the QLever lane is viable only with a rebuild loop; a rebuild costs seconds, so generations from the log (phase 2) are
+  the plan. Phase 2 waits for the broker (P2Q) to merge. Review CX-VQG1 is checking phases 0 and 1.
