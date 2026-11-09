@@ -428,7 +428,7 @@ export const TriplesLive = Layer.effect(
                   triples.push(...batch);
                   changes.push(
                     ...batch.map((triple) =>
-                      transactionChangeFromTriple("assert", triple, txId, timestamp),
+                      transactionChangeFromTriple("assert", triple, txId, timestamp, true),
                     ),
                   );
                   pendingAsserts = [];
@@ -468,6 +468,7 @@ export const TriplesLive = Layer.effect(
                             rowToTriple(current),
                             txId,
                             timestamp,
+                            true,
                           ),
                         );
                       }
@@ -491,7 +492,13 @@ export const TriplesLive = Layer.effect(
                       if (yield* adapter.retract(row.id, timestamp, txId, position)) {
                         retractedCount++;
                         changes.push(
-                          transactionChangeFromTriple("retract", rowToTriple(row), txId, timestamp),
+                          transactionChangeFromTriple(
+                            "retract",
+                            rowToTriple(row),
+                            txId,
+                            timestamp,
+                            true,
+                          ),
                         );
                       }
                     }
@@ -512,7 +519,7 @@ export const TriplesLive = Layer.effect(
                 triples.push(...batch);
                 changes.push(
                   ...batch.map((triple) =>
-                    transactionChangeFromTriple("assert", triple, txId, timestamp),
+                    transactionChangeFromTriple("assert", triple, txId, timestamp, true),
                   ),
                 );
               }
@@ -606,7 +613,7 @@ export const TriplesLive = Layer.effect(
             prepareEntityPage({
               request,
               now: currentTime,
-              headRecordedAt: cut?.recordedAt,
+              ...(cut ? { headRecordedAt: cut.recordedAt } : {}),
               recordedPosition,
               scope: runtime.scope,
             }),
@@ -729,7 +736,7 @@ export const TriplesLive = Layer.effect(
               query,
               ...(options?.basis === undefined ? {} : { basis: options.basis }),
               now: currentTime,
-              headRecordedAt: cut?.recordedAt,
+              ...(cut ? { headRecordedAt: cut.recordedAt } : {}),
               recordedPosition,
               scope: runtime.scope,
             }),

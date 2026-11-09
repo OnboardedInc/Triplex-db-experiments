@@ -29,7 +29,7 @@ const fixture = (rows: Record<string, unknown>[] = [{ count: "922337203685477580
       options?: XtdbQueryOptions,
     ) => {
       calls.push({ sql, params, ...(options ? { options } : {}) });
-      return (sql.includes("tx_meta") ? [{ position: "9" }] : rows) as unknown as T[];
+      return (sql.includes("tx_meta") ? [{ position: "9", stamp: "100250" }] : rows) as unknown as T[];
     },
     submit: async () => {
       throw new Error("Native reads must not submit application mutations");
@@ -222,7 +222,7 @@ describe("XTDB native read provider", () => {
     );
     expect(result.rows).toEqual([{ message: "literal?" }]);
     expect(calls[0]!.sql).toBe(
-      "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1",
+      "SELECT position, stamp FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1",
     );
     expect(result.trace.steps?.map((step) => step.language)).toEqual(["xtdb-sql", "xtdb-sql"]);
     expect(calls[1]!.sql).toContain("$native$literal?$native$");

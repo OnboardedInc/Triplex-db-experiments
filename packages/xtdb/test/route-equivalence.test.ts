@@ -1,3 +1,4 @@
+import { stampOf } from "@triplex-build/triplex";
 import { Effect } from "effect";
 import { expect, it } from "vitest";
 import {
@@ -6,6 +7,8 @@ import {
   generateRouteHistory,
   replayRouteAnswer,
   routeHead,
+  routeFuture,
+  routeWatermark,
   RouteRefusal,
   runRouteEquivalence,
   type RouteFixture,
@@ -27,6 +30,7 @@ const fixture = (guardFuture = true): RouteFixture => {
       sql: string,
       params: readonly unknown[] = [],
     ) => {
+      if (sql.includes("FROM tx_meta")) return [{ position: routeHead(history), stamp: stampOf(routeWatermark(history)) }] as unknown as T[];
       if (!sql.includes("FROM tx_assertions FOR ALL VALID_TIME"))
         throw new Error(`Unexpected SQL ${sql}`);
       taken = "X1-adapter";
@@ -66,7 +70,7 @@ const fixture = (guardFuture = true): RouteFixture => {
     },
     close: async () => {},
   };
-  const adapter = makeXtdbStorageAdapter(client, "route-equivalence");
+  const adapter = makeXtdbStorageAdapter(client, "route-equivalence", { basisWaitMs: 0 });
   return {
     lane: "xtdb-actual-adapter-offline-client",
     reset: (next) => {
@@ -99,17 +103,17 @@ const fixture = (guardFuture = true): RouteFixture => {
     routes: [
       {
         id: "X1-adapter",
-        contract: "raw-lifetime",
+        contract: "snapshot",
         retention: { kind: "complete", plan: () => [] },
         refusals: ["BasisNotAvailable"],
-        eligible: (request, current) => (request.basis.recordedPosition ?? 0) <= routeHead(current),
+        eligible: (request, current) => !routeFuture(request, current),
         force: () => {
           taken = "";
         },
         read: async (request: RouteRequest) => {
           // The offline guard is explicit: A0 itself does not yet reject future positions (R31 D-X1).
           // It is tested unguarded below; this guard is not evidence that Q89c is implemented in XTDB.
-          if (guardFuture && (request.basis.recordedPosition ?? 0) > routeHead(history))
+          if (guardFuture && routeFuture(request, history))
             throw new RouteRefusal("BasisNotAvailable", "Offline driver refuses future cut");
           const basis = { ...request.basis, validAt: request.basis.validAt ?? history.now };
           const answer = await Effect.runPromise(
@@ -118,7 +122,7 @@ const fixture = (guardFuture = true): RouteFixture => {
               basis,
             ),
           );
-          return { rows: answer, taken, basis: request.basis };
+          return { rows: answer, taken, basis: { ...request.basis, ...(request.basis.recordedAt === undefined ? {} : { recordedPosition: request.basis.recordedPosition ?? routeHead(history) }) } };
         },
       },
     ],
@@ -143,7 +147,7 @@ it("documents that the offline reference refuses a future cut", () => {
   ).toThrow(RouteRefusal);
 });
 
-it("known-failing Q89c / R31 D-X1: unguarded A0 answers a future position", async () => {
+it("Q89c / R31 D-X1: A0 itself refuses a future position", async () => {
   const history = generateRouteHistory(89, 16);
   const result = await runRouteEquivalence({
     fixture: fixture(false),
@@ -151,5 +155,5 @@ it("known-failing Q89c / R31 D-X1: unguarded A0 answers a future position", asyn
     scope: { shapes: ["P"] },
     requests: [{ basis: { validAt: 2000, recordedPosition: 999999 } }],
   });
-  expect(new Set(result.violations.map((v) => v.rule))).toEqual(new Set(["HE-1", "HE-3"]));
+  expect(result.violations).toEqual([]);
 });

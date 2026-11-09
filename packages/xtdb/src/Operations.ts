@@ -1,3 +1,4 @@
+import { instantOf } from "@triplex-build/triplex";
 import { Effect } from "effect";
 import { ReadError } from "@triplex-build/triplex/runtime";
 import type { XtdbClient } from "./XtdbClient.js";
@@ -8,6 +9,7 @@ export type OperationResolution =
       readonly operationId: string;
       readonly attemptId: string;
       readonly position: number;
+      readonly instant: number;
     }
   | { readonly status: "unresolved"; readonly operationId: string };
 
@@ -29,8 +31,9 @@ export const resolveXtdbOperation = (
         operation_id: unknown;
         attempt_id: unknown;
         position: unknown;
+        stamp: unknown;
       }>(
-        "SELECT operation_id, attempt_id, position FROM tx_attempts FOR ALL VALID_TIME WHERE scope_key = ? AND operation_id = ?",
+        "SELECT operation_id, attempt_id, position, stamp FROM tx_attempts FOR ALL VALID_TIME WHERE scope_key = ? AND operation_id = ?",
         [scopeKey, operationId],
         undefined,
         { signal, timeoutMs: 30_000 },
@@ -38,9 +41,21 @@ export const resolveXtdbOperation = (
       if (!rows.length) return { status: "unresolved", operationId };
       const row = rows[0]!;
       const position = Number(row.position);
-      if (!Number.isSafeInteger(position) || position < 0 || typeof row.attempt_id !== "string")
+      if (
+        rows.length !== 1 ||
+        row.operation_id !== operationId ||
+        !Number.isSafeInteger(position) ||
+        position < 1 ||
+        typeof row.attempt_id !== "string"
+      )
         throw new Error("Invalid durable operation receipt");
-      return { status: "committed", operationId, attemptId: row.attempt_id, position };
+      return {
+        status: "committed",
+        operationId,
+        attemptId: row.attempt_id,
+        position,
+        instant: instantOf(Number(row.stamp)),
+      };
     },
     catch: (cause) => new ReadError({ message: "Cannot resolve XTDB operation outcome", cause }),
   });

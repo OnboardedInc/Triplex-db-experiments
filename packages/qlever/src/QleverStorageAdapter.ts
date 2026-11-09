@@ -1,3 +1,5 @@
+import { readQleverCut, resolveQleverBasis } from "./RecordCut.js";
+import { nextStamp, instantOf, stampOf } from "@triplex-build/triplex";
 import { randomUUID } from "node:crypto";
 import { Context, Effect, Exit, Semaphore } from "effect";
 import { isPatternVariable, type ResolvedTemporalBasis } from "@triplex-build/triplex";
@@ -25,10 +27,13 @@ import {
   type QleverCommitEncoding,
   numericOrderKey as order,
   numericFromOrderKey,
+  integerOrderKey,
 } from "./rdf.js";
 
 interface State {
   readonly sourceK: number;
+  readonly sourceStamp: number;
+  stamp?: number;
   position: number;
   rows: Map<string, TripleRow>;
   claims: Map<string, { txId: string; timestamp: number }>;
@@ -94,18 +99,13 @@ export const makeQleverStorageAdapter = (
   const read = <A>(thunk: (signal: AbortSignal) => Promise<A>) =>
     Effect.tryPromise({
       try: thunk,
-      catch: (cause) => new ReadError({ message: "QLever read failed", cause }),
+      catch: (cause) =>
+        cause instanceof ReadError
+          ? cause
+          : new ReadError({ message: "QLever read failed", cause }),
     });
-  const position = () =>
-    read(async (signal) => {
-      const rows = await client.query(
-        `SELECT ?position WHERE { GRAPH ${graph} { ${metaIri} ${f("position")} ?position } }`,
-        { signal },
-      );
-      const value = Number(rows[0]?.["position"]?.value ?? 0);
-      if (!Number.isSafeInteger(value) || value < 0) throw new TypeError("Unsafe source position");
-      return value;
-    });
+  const currentCut = () => read((signal) => readQleverCut(client, scopeKey, signal));
+  const position = () => Effect.map(currentCut(), (cut) => cut.position);
   const required = Effect.flatMap(current, (state) =>
     state === undefined
       ? Effect.fail(new WriteError({ message: "QLever mutation requires withTransaction" }))
@@ -120,6 +120,8 @@ export const makeQleverStorageAdapter = (
   ): Effect.Effect<readonly TripleRow[], ReadError> =>
     Effect.gen(function* () {
       const state = yield* current;
+      if (!state && basis)
+        basis = yield* read((signal) => resolveQleverBasis(client, scopeKey, basis!, signal));
       const k =
         state === undefined
           ? basis?.recordedPosition
@@ -186,9 +188,17 @@ export const makeQleverStorageAdapter = (
           )
             byId.set(rowId, row);
         }
-      return [...byId.values()].sort(
-        (a, b) => a.recorded_at - b.recorded_at || a.id.localeCompare(b.id),
-      );
+      return [...byId.values()]
+        .map((row) =>
+          !history &&
+          row.retracted_at !== null &&
+          ((basis?.recordedAt !== undefined && row.retracted_at > basis.recordedAt) ||
+            (basis?.recordedPosition !== undefined &&
+              row.retracted_position! > basis.recordedPosition))
+            ? { ...row, retracted_at: null, retracted_position: null, retract_tx_id: null }
+            : row,
+        )
+        .sort((a, b) => a.recorded_at - b.recorded_at || a.id.localeCompare(b.id));
     });
   const persist = (
     state: State,
@@ -204,6 +214,7 @@ export const makeQleverStorageAdapter = (
         values.push(
           [metaIri, f("position"), lit(String(state.position))],
           [metaIri, f("position_native"), String(state.position)],
+          [metaIri, f("stamp"), lit(integerOrderKey(String(state.stamp ?? state.sourceStamp)))],
         );
         for (const [id, claim] of state.claims)
           for (const [column, value] of Object.entries({
@@ -211,16 +222,21 @@ export const makeQleverStorageAdapter = (
             tx_id: claim.txId,
             recorded_at: String(claim.timestamp),
             position: String(state.position),
+            stamp: String(state.stamp ?? state.sourceStamp),
           }))
             values.push([claimIri(id), f(column), lit(value)]);
         for (const [column, value] of Object.entries({
           operation_id: operationId,
           attempt_id: attemptId,
           position: String(state.position),
+          stamp: String(state.stamp ?? state.sourceStamp),
         }))
           values.push([operationIri(operationId), f(column), lit(value)]);
         const guards = [
-          `OPTIONAL { GRAPH ${graph} { ${metaIri} ${f("position")} ?sourcePosition } } FILTER(COALESCE(?sourcePosition,"0") = ${lit(String(state.sourceK))})`,
+          // [EXP-RT01] Why: exact constants guard the whole cut without a marker join. Rejected: OPTIONAL/coalesce marker joins (live attempt2 hit Cartesian Product Join timeouts).
+          state.sourceK === 0 && state.sourceStamp === 0
+            ? `FILTER NOT EXISTS { GRAPH ${graph} { ${metaIri} ${f("position")} ?sourcePosition } } FILTER NOT EXISTS { GRAPH ${graph} { ${metaIri} ${f("stamp")} ?sourceStamp } }`
+            : `GRAPH ${graph} { ${metaIri} ${f("position")} ${lit(String(state.sourceK))} ; ${f("stamp")} ${lit(integerOrderKey(String(state.sourceStamp)))} }`,
           `FILTER NOT EXISTS { GRAPH ${graph} { ${operationIri(operationId)} ${f("operation_id")} ?operation } }`,
         ];
         for (const id of state.claims.keys())
@@ -246,10 +262,16 @@ export const makeQleverStorageAdapter = (
         do {
           try {
             const receipt = await client.query(
-              `SELECT ?attempt WHERE { GRAPH ${graph} { ${operationIri(operationId)} ${f("attempt_id")} ?attempt } }`,
+              `SELECT ?attempt ?position ?stamp WHERE { GRAPH ${graph} { ${operationIri(operationId)} ${f("attempt_id")} ?attempt ; ${f("position")} ?position ; ${f("stamp")} ?stamp } }`,
               { timeoutMs: Math.max(1, until - Date.now()) },
             );
-            if (receipt.length) return;
+            if (
+              receipt.length === 1 &&
+              receipt[0]?.["attempt"]?.value === attemptId &&
+              Number(receipt[0]?.["position"]?.value) === state.position &&
+              Number(receipt[0]?.["stamp"]?.value) === (state.stamp ?? state.sourceStamp)
+            )
+              return;
             if (acknowledged) {
               const cut = await client.query(
                 `SELECT ?position WHERE { GRAPH ${graph} { ${metaIri} ${f("position")} ?position } }`,
@@ -301,6 +323,8 @@ export const makeQleverStorageAdapter = (
             };
             const child: State = {
               sourceK: parent.sourceK,
+              sourceStamp: parent.sourceStamp,
+              ...(parent.stamp === undefined ? {} : { stamp: parent.stamp }),
               ...saved,
               rows: new Map(saved.rows),
               claims: new Map(saved.claims),
@@ -324,19 +348,22 @@ export const makeQleverStorageAdapter = (
                     "Concurrent nested QLever callbacks changed the savepoint; callback was not replayed",
                 }),
               );
+            if (child.stamp !== undefined) parent.stamp = child.stamp;
             parent.position = child.position;
             parent.rows = child.rows;
             parent.claims = child.claims;
             parent.newIds = child.newIds;
             return result;
           }
-          const sourceK = yield* position().pipe(
+          const sourceCut = yield* currentCut().pipe(
             Effect.mapError(
               (cause) => new WriteError({ message: "Cannot acquire QLever source cut", cause }),
             ),
           );
+          const sourceK = sourceCut.position;
           const state: State = {
             sourceK,
+            sourceStamp: stampOf(sourceCut.recordedAt),
             position: sourceK,
             rows: new Map(),
             claims: new Map(),
@@ -369,10 +396,18 @@ export const makeQleverStorageAdapter = (
           : Semaphore.withPermits(admission, 1)(attempt(0)),
       );
     });
+  const ensureStamp = (state: State, timestamp: number): void => {
+    // [EXP-RT01] Why: low-level callers share the stamp invariant too. Rejected: silently accepting a mismatched row stamp (receipt and watermark would disagree).
+    const stamp = stampOf(timestamp);
+    if (stamp <= state.sourceStamp || (state.stamp !== undefined && state.stamp !== stamp))
+      throw new TypeError("Row record instant differs from the transaction's decided stamp");
+    state.stamp = stamp;
+  };
   const insert: StorageAdapterService["insert"] = (input, txId, timestamp, id, position) =>
     Effect.flatMap(required, (state) =>
       Effect.try({
         try: () => {
+          ensureStamp(state, timestamp);
           if (state.rows.has(id)) throw new Error("Duplicate assertion identity");
           const row: TripleRow = {
             id,
@@ -419,6 +454,18 @@ export const makeQleverStorageAdapter = (
         : undefined,
     ),
     withTransaction,
+    recordTime: "decided",
+    currentCut,
+    commitStamp: (stagedAt) =>
+      Effect.flatMap(required, (state) =>
+        Effect.try({
+          try: () => {
+            state.stamp ??= nextStamp(state.sourceStamp, stagedAt);
+            return { instant: instantOf(state.stamp), decided: true };
+          },
+          catch: (cause) => new WriteError({ message: "Cannot assign record stamp", cause }),
+        }),
+      ),
     nextCommitPosition: () =>
       Effect.flatMap(required, (state) =>
         Effect.try({
@@ -451,6 +498,10 @@ export const makeQleverStorageAdapter = (
           ),
         );
         if (rows.length) return rows[0]!["tx"]!.value;
+        yield* Effect.try({
+          try: () => ensureStamp(state, timestamp),
+          catch: (cause) => new WriteError({ message: "Invalid claim stamp", cause }),
+        });
         state.claims.set(id, { txId, timestamp });
         return null;
       }),
@@ -464,6 +515,10 @@ export const makeQleverStorageAdapter = (
     retract: (id, timestamp, txId, position) =>
       Effect.gen(function* () {
         const state = yield* required;
+        yield* Effect.try({
+          try: () => ensureStamp(state, timestamp),
+          catch: (cause) => new WriteError({ message: "Invalid retraction stamp", cause }),
+        });
         const row = (yield* queryRows({}, undefined, false, id).pipe(
           Effect.mapError(
             (cause) => new WriteError({ message: "Cannot read retraction target", cause }),
@@ -492,38 +547,44 @@ export const makeQleverStorageAdapter = (
         : Effect.succeed(new Map()),
     query: (pattern, basis) => queryRows(pattern, basis),
     history: (entityId) => queryRows({ entityId }, undefined, true),
-    dependencyState: (attributes, basis) =>
-      attributes.length === 0
-        ? Effect.succeed({ sourcePosition: 0 })
-        : read(async (signal) => {
-            const noBoundary = "ffffffffffffffff";
-            const sourceCut = basis.recordedPosition ?? Number.MAX_SAFE_INTEGER,
-              time = basis.recordedAt;
-            const filter = `FILTER(?recorded <= ${lit(order(sourceCut))}${time === undefined ? "" : ` && ?recordedTime <= ${lit(order(time))}`})`;
-            const visibleRetraction = `BOUND(?retracted) && ?retracted <= ${lit(order(sourceCut))}${time === undefined ? "" : ` && ?retractedTime <= ${lit(order(time))}`}`;
-            const rows = await client.query(
-              `SELECT (MAX(?source) AS ?sourcePosition) (MIN(?next) AS ?nextBoundary) WHERE { GRAPH ${graph} { VALUES ?attribute { ${[...new Set(attributes)].map(lit).join(" ")} } ?s ${f("attribute")} ?attribute ; ${f("recorded_position_order")} ?recorded ; ${f("recorded_position_native")} ?position ; ${f("recorded_at_order")} ?recordedTime ; ${f("valid_from_order")} ?validFrom . OPTIONAL { ?s ${f("retracted_position_order")} ?retracted ; ${f("retracted_position_native")} ?retractedPosition ; ${f("retracted_at_order")} ?retractedTime } OPTIONAL { ?s ${f("valid_to_order")} ?validTo } ${filter} BIND(IF(${visibleRetraction},?retractedPosition,?position) AS ?source) BIND(IF(${visibleRetraction},${lit(noBoundary)},IF(?validFrom > ${lit(order(basis.validAt))},?validFrom,IF(BOUND(?validTo) && ?validTo > ${lit(order(basis.validAt))},?validTo,${lit(noBoundary)}))) AS ?next) } }`,
-              { signal },
-            );
-            return {
-              sourcePosition: Number(rows[0]?.["sourcePosition"]?.value ?? 0),
-              ...(rows[0]?.["nextBoundary"] && rows[0]["nextBoundary"].value !== noBoundary
-                ? { nextTemporalBoundary: numericFromOrderKey(rows[0]["nextBoundary"].value) }
-                : {}),
-            };
-          }),
+    dependencyState: (attributes, requested) =>
+      Effect.flatMap(
+        read((signal) => resolveQleverBasis(client, scopeKey, requested, signal)),
+        (basis) =>
+          attributes.length === 0
+            ? Effect.succeed({ sourcePosition: 0 })
+            : read(async (signal) => {
+                const noBoundary = "ffffffffffffffff";
+                const sourceCut = basis.recordedPosition ?? Number.MAX_SAFE_INTEGER,
+                  time = basis.recordedAt;
+                const filter = `FILTER(?recorded <= ${lit(order(sourceCut))}${time === undefined ? "" : ` && ?recordedTime <= ${lit(order(time))}`})`;
+                const visibleRetraction = `BOUND(?retracted) && ?retracted <= ${lit(order(sourceCut))}${time === undefined ? "" : ` && ?retractedTime <= ${lit(order(time))}`}`;
+                const rows = await client.query(
+                  `SELECT (MAX(?source) AS ?sourcePosition) (MIN(?next) AS ?nextBoundary) WHERE { GRAPH ${graph} { VALUES ?attribute { ${[...new Set(attributes)].map(lit).join(" ")} } ?s ${f("attribute")} ?attribute ; ${f("recorded_position_order")} ?recorded ; ${f("recorded_position_native")} ?position ; ${f("recorded_at_order")} ?recordedTime ; ${f("valid_from_order")} ?validFrom . OPTIONAL { ?s ${f("retracted_position_order")} ?retracted ; ${f("retracted_position_native")} ?retractedPosition ; ${f("retracted_at_order")} ?retractedTime } OPTIONAL { ?s ${f("valid_to_order")} ?validTo } ${filter} BIND(IF(${visibleRetraction},?retractedPosition,?position) AS ?source) BIND(IF(${visibleRetraction},${lit(noBoundary)},IF(?validFrom > ${lit(order(basis.validAt))},?validFrom,IF(BOUND(?validTo) && ?validTo > ${lit(order(basis.validAt))},?validTo,${lit(noBoundary)}))) AS ?next) } }`,
+                  { signal },
+                );
+                return {
+                  sourcePosition: Number(rows[0]?.["sourcePosition"]?.value ?? 0),
+                  ...(rows[0]?.["nextBoundary"] && rows[0]["nextBoundary"].value !== noBoundary
+                    ? { nextTemporalBoundary: numericFromOrderKey(rows[0]["nextBoundary"].value) }
+                    : {}),
+                };
+              }),
+      ),
     initialize: () =>
       Effect.tryPromise({
         try: async () => {
-          await client.query("SELECT ?s WHERE { ?s ?p ?o } LIMIT 1");
+          await readQleverCut(client, scopeKey);
         },
         catch: (cause) =>
-          new MigrationError({
-            version: 1,
-            name: "qlever-native",
-            message: "Cannot access QLever RDF server",
-            cause,
-          }),
+          cause instanceof MigrationError
+            ? cause
+            : new MigrationError({
+                version: 1,
+                name: "qlever-native",
+                message: "Cannot access QLever RDF server",
+                cause,
+              }),
       }),
     close: () => Effect.void,
   };

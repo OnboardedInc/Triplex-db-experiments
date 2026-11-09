@@ -15,7 +15,6 @@ import type { SnapshotWriterShape } from "./SnapshotService.js";
 import type { Triple, EntityId } from "../Triple.js";
 import { generateTransactionId, SystemPrefixes } from "../utils/id.js";
 import { WriteError } from "../errors/index.js";
-import { unsafe } from "../Branded.js";
 
 const resolveRetractionMeta = (
   store: TriplesService,

@@ -11,6 +11,8 @@ export interface TransactionState {
   readonly client: XtdbClient;
   readonly scopeKey: string;
   readonly sourceK: number;
+  readonly sourceStamp: number;
+  stamp?: number;
   position: number;
   rows: Map<string, TripleRow>;
   claims: Map<string, XtdbClaim>;

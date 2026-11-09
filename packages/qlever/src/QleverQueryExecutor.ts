@@ -1,3 +1,4 @@
+import { resolveQleverBasis } from "./RecordCut.js";
 import { Effect } from "effect";
 import { readOnlyQleverClient } from "./ReadOnlyClient.js";
 import {
@@ -20,7 +21,6 @@ import {
   type QleverSourceView,
   type QleverNegationPlan,
 } from "./compiler.js";
-import { fieldIri, graphIri, metaIri } from "./rdf.js";
 import type { QleverClient } from "./QleverClient.js";
 import type { QleverDomainPlan } from "./FamilyDomains.js";
 import type { QleverSourcePlan } from "./ScalarSource.js";
@@ -48,7 +48,7 @@ export interface QleverQueryOptions {
   readonly scalarOrderPlan?: "live";
 }
 const fail = (cause: unknown) =>
-  cause instanceof DatalogValidationError || cause instanceof UnboundVariableError
+  cause instanceof ReadError || cause instanceof DatalogValidationError || cause instanceof UnboundVariableError
     ? cause
     : new ReadError({ message: `QLever Datalog execution failed: ${String(cause)}`, cause });
 const safeCount = (value: string | undefined): number => {
@@ -210,22 +210,9 @@ const queryExecutor = (
               message:
                 "QLever historical Datalog inside a pending transaction is not yet qualified",
             });
-          const position =
-            sourceView?.sourcePosition ??
-            basis?.recordedPosition ??
-            safeCount(
-              (
-                await client.query(
-                  `SELECT ?position WHERE { GRAPH ${graphIri(scopeKey)} { ${metaIri} ${fieldIri("position")} ?position } }`,
-                  { signal, timeoutMs: nativeTimeoutMs, maxResponseBytes },
-                )
-              )[0]?.["position"]?.value,
-            );
-          const resolved: QleverBasis = {
-            validAt: basis?.validAt ?? Date.now(),
-            recordedPosition: position,
-            ...(basis?.recordedAt === undefined ? {} : { recordedAt: basis.recordedAt }),
-          };
+          const resolved: QleverBasis = sourceView
+            ? { validAt: basis?.validAt ?? Date.now(), recordedPosition: sourceView.sourcePosition }
+            : await resolveQleverBasis(client, scopeKey, basis ?? { validAt: Date.now() }, signal);
           // [EXP-C8] Rules are evaluated with SPARQL reads only (recursion.ts); no update.
           const ruleRelations = logical.rules?.length
             ? await evaluateQleverRules(client, logical, scopeKey, {

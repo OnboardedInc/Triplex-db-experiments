@@ -63,7 +63,7 @@ describe("KvTriples (merged service)", () => {
       }),
     );
 
-    expect(attrs).toContain(":_tx/instant");
+    expect(attrs).not.toContain(":_tx/instant");
     expect(attrs).toContain(":_tx/position");
     expect(attrs).toContain(":_tx/actor");
   });

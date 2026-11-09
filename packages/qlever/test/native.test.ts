@@ -1,3 +1,4 @@
+import { integerOrderKey } from "../src/rdf.js";
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 import { Attribute, TypeExpr } from "@triplex-build/triplex/config";
@@ -16,7 +17,7 @@ const clientFor = (rows: SparqlBinding[]) => {
   const client: QleverClient = {
     query: async (query) => {
       queries.push(query);
-      return queries.length === 1 ? [{ position: literal("7") }] : rows;
+      return queries.length === 1 ? [{ position: literal("7"), stamp: literal(integerOrderKey("1000000")) }] : rows;
     },
     update: async () => {
       throw new Error("Native query facade must not mutate");

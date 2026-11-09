@@ -73,7 +73,7 @@ export const decideRouteCommit = (
   };
 };
 export const routeWatermark = (history: RouteHistory): number =>
-  history.commits.at(-1)?.instant ?? 0;
+  Math.max(0, ...history.commits.map((commit) => commit.instant));
 export const routeFuture = (request: RouteRequest, history: RouteHistory): boolean =>
   (request.basis.recordedPosition ?? 0) > routeHead(history) ||
   (request.basis.recordedAt ?? 0) > routeWatermark(history);
@@ -156,6 +156,7 @@ export interface RouteExecutionPlan {
 export interface RouteFixture {
   readonly lane: string;
   readonly routes: readonly RouteDriver[];
+  readonly decide?: (input: RouteCommitInput, previous?: RouteCommit) => RouteCommit;
   readonly reset: (history: RouteHistory) => void | Promise<void>;
   readonly append: (commit: RouteCommit) => void | Promise<void>;
   readonly event: (
@@ -729,6 +730,19 @@ export const runRouteEquivalence = async (
     return value;
   };
   const ordered = [...history.commits, extension];
+  for (const commit of ordered) {
+    try {
+      stampOf(commit.instant);
+    } catch {
+      violations.push({
+        rule: "HE-8",
+        detail: "Decided instant is not an exact microsecond stamp",
+        route: "decider",
+        request: { basis: {} },
+        phase: "decision",
+      });
+    }
+  }
   for (let i = 1; i < ordered.length; i++) {
     const a = ordered[i - 1]!,
       b = ordered[i]!;
@@ -770,6 +784,8 @@ export const runRouteEquivalence = async (
           const canonical = canonicalRouteRows(answer.rows);
           if (canonical !== expected.get(route.contract))
             fail("HE-1", "Answer differs from offline replay");
+          if (request.basis.recordedAt !== undefined && answer.basis === undefined)
+            fail("HE-7", "T-shaped answer omitted its pinned basis");
           if (
             answer.basis !== undefined &&
             canonicalRouteValue(answer.basis) !==

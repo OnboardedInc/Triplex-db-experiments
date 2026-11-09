@@ -1,3 +1,4 @@
+import { instantOf } from "@triplex-build/triplex";
 import { Effect } from "effect";
 import { ReadError } from "@triplex-build/triplex/runtime";
 import type { QleverClient } from "./QleverClient.js";
@@ -9,6 +10,7 @@ export type QleverOperationResolution =
       readonly operationId: string;
       readonly attemptId: string;
       readonly position: number;
+      readonly instant: number;
     }
   | { readonly status: "unresolved"; readonly operationId: string };
 
@@ -23,15 +25,27 @@ export const resolveQleverOperation = (
       if (!operationId || operationId.length > 1024)
         throw new TypeError("Invalid operation identity");
       const rows = await client.query(
-        `SELECT ?attempt ?position WHERE { GRAPH ${graphIri(scopeKey)} { ${operationIri(operationId)} ${fieldIri("attempt_id")} ?attempt ; ${fieldIri("position")} ?position } }`,
+        `SELECT ?operation ?attempt ?position ?stamp WHERE { GRAPH ${graphIri(scopeKey)} { ${operationIri(operationId)} ${fieldIri("operation_id")} ?operation ; ${fieldIri("attempt_id")} ?attempt ; ${fieldIri("position")} ?position ; ${fieldIri("stamp")} ?stamp } }`,
         { signal, timeoutMs: 30_000 },
       );
       if (!rows.length) return { status: "unresolved", operationId };
       const position = Number(rows[0]!["position"]?.value);
       const attemptId = rows[0]!["attempt"]?.value;
-      if (!Number.isSafeInteger(position) || position < 0 || !attemptId)
+      if (
+        rows.length !== 1 ||
+        rows[0]!["operation"]?.value !== operationId ||
+        !Number.isSafeInteger(position) ||
+        position < 1 ||
+        !attemptId
+      )
         throw new TypeError("Invalid QLever operation marker");
-      return { status: "committed", operationId, attemptId, position };
+      return {
+        status: "committed",
+        operationId,
+        attemptId,
+        position,
+        instant: instantOf(Number(rows[0]!["stamp"]?.value)),
+      };
     },
     catch: (cause) => new ReadError({ message: "Cannot resolve QLever operation outcome", cause }),
   });

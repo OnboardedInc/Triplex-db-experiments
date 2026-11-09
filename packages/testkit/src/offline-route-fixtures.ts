@@ -1,6 +1,7 @@
 import type { TripleRow } from "@triplex-build/triplex/runtime";
 import {
   foldRouteHistory,
+  decideRouteCommit,
   routeFuture,
   snapshotRouteRows,
   routeHead,
@@ -20,6 +21,7 @@ export const makeOfflineRouteFixture = (
   lane: "xtdb" | "qlever",
   options: {
     readonly preFixH1?: boolean;
+    readonly decider?: "decided" | "staged-stamps";
   } = {},
 ): RouteFixture => {
   let history: RouteHistory = { seed: 0, now: 0, commits: [] };
@@ -57,6 +59,7 @@ export const makeOfflineRouteFixture = (
   };
   return {
     lane: `${lane}-offline-model`,
+    decide: (input, previous) => decideRouteCommit(input, previous, options.decider),
     reset: (next) => {
       history = next;
       source = foldRouteHistory(next);

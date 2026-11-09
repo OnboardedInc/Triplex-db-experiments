@@ -61,7 +61,7 @@ describe("XTDB compiler", () => {
   });
   it("returns a recoverable typed refusal from the public executor", async () => {
     const client = {
-      query: async () => [{ value_type: "integer" }],
+      query: async (sql: string) => sql.includes("tx_meta") ? [{ position: 1, stamp: 1000 }] : [{ value_type: "integer" }],
       submit: async () => {
         throw new Error("unexpected submit");
       },

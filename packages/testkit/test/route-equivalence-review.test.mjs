@@ -8,6 +8,7 @@ import {
   generateRouteHistory,
   generateRouteBases,
   routeHead,
+  routeFuture,
   routeRow,
   routeShape,
   RouteRefusal,
@@ -90,24 +91,24 @@ const modelFixture = (mode = "", contract = "snapshot") => {
       id,
       contract,
       retention: { kind: "complete", plan: () => [] },
-      eligible: (r, h) => (r.basis.recordedPosition ?? 0) <= routeHead(h),
+      eligible: (r, h) => !routeFuture(r, h),
       refusals: ["BasisNotAvailable"],
       force: () => {},
       read: async (request) => {
         const activeMode = id === "injected" ? mode : "";
         if (activeMode === "empty-without-flag")
-          return { rows: [], taken: id, basis: request.basis };
+          return { rows: [], taken: id, basis: { ...request.basis, ...(request.basis.recordedAt === undefined ? {} : { recordedPosition: request.basis.recordedPosition ?? routeHead(history) }) } };
         if (activeMode === "empty-ineligible")
-          return { rows: [], eligible: false, taken: id, basis: request.basis };
+          return { rows: [], eligible: false, taken: id, basis: { ...request.basis, ...(request.basis.recordedAt === undefined ? {} : { recordedPosition: request.basis.recordedPosition ?? routeHead(history) }) } };
         if (
-          (request.basis.recordedPosition ?? 0) > routeHead(history) &&
+          routeFuture(request, history) &&
           activeMode !== "future-old-data"
         )
           throw new RouteRefusal("BasisNotAvailable", "Future position");
         return {
           rows: modelRows(history, request, activeMode, contract),
           taken: id,
-          basis: request.basis,
+          basis: { ...request.basis, ...(request.basis.recordedAt === undefined ? {} : { recordedPosition: request.basis.recordedPosition ?? routeHead(history) }) },
         };
       },
     })),
@@ -124,7 +125,7 @@ const retractHistory = base([
 ]);
 const tieHistory = base([
   { position: 1024, instant: 1000, writes: [row("tie:A")] },
-  { position: 2048, instant: 1000, writes: [row("tie:B")] },
+  { position: 2048, instant: 1000.001, writes: [row("tie:B")] },
 ]);
 const correctionHistory = base([
   { position: 1024, instant: 1000, writes: [row("old")] },
@@ -144,7 +145,7 @@ const faultCases = [
   [
     "drop-same-ms-tie",
     tieHistory,
-    { basis: { validAt: 2000, recordedAt: 1000 } },
+    { basis: { validAt: 2000, recordedAt: 1000.001 } },
     ["HE-1", "HE-2"],
   ],
   [
@@ -385,7 +386,7 @@ it("Q89a / D-C1 stays known-failing after Q89i metadata repair", async () => {
     fixture: makeOfflineRouteFixture("qlever"),
     ...options,
   });
-  assert(result.violations.length > 0 && result.violations.every((v) => v.rule === "HE-5"));
+  assert(result.violations.length > 0 && result.violations.every((v) => ["HE-5", "HE-8"].includes(v.rule)));
   await assert.rejects(() =>
     makeRouteEquivalenceCases({ fixture: makeOfflineRouteFixture("qlever"), ...options })[0].run(),
   );

@@ -11,7 +11,9 @@ export const transactionChangeFromTriple = (
   triple: Triple,
   transactionId: TransactionId,
   transactionInstant: number,
+  journalV2 = false,
 ): TransactionChange => ({
+  ...(journalV2 ? { v: 2 } : {}),
   op,
   tripleId: triple.id,
   entityId: triple.entityId,
@@ -20,8 +22,8 @@ export const transactionChangeFromTriple = (
   value: triple.value,
   validFrom: triple.validFrom,
   ...(Option.isSome(triple.validTo) ? { validTo: triple.validTo.value } : {}),
-  recordedAt: triple.recordedAt,
-  ...(op === "retract" ? { retractedAt: transactionInstant } : {}),
+  ...(!journalV2 || op === "retract" ? { recordedAt: triple.recordedAt } : {}),
+  ...(!journalV2 && op === "retract" ? { retractedAt: transactionInstant } : {}),
   ...(Option.isSome(triple.txId) ? { assertionTxId: triple.txId.value } : {}),
   ...(op === "retract" ? { retractionTxId: transactionId } : {}),
 });
@@ -53,11 +55,27 @@ export const metadataInputs = (
       input(TxAttributes.CHANGED_ENTITY, { type: "ref", value: entityId }),
     ),
     ...changes.map((change) => {
+      if ("v" in change && change.v === 2)
+        return input(TxAttributes.CHANGE, { type: "json", value: change });
       // [EXP-RT01] Why: deferred stamps cannot live in fact values. Rejected: JSON rewriting at decision (backend-specific number spelling).
-      const { recordedAt, retractedAt: _retractedAt, ...rest } = change;
       return input(TxAttributes.CHANGE, {
         type: "json",
-        value: { v: 2, ...rest, ...(change.op === "retract" ? { recordedAt } : {}) },
+        value: {
+          v: 2,
+          op: change.op,
+          tripleId: change.tripleId,
+          entityId: change.entityId,
+          attribute: change.attribute,
+          ...(change.entityType === undefined ? {} : { entityType: change.entityType }),
+          ...(change.value === undefined ? {} : { value: change.value }),
+          ...(change.validFrom === undefined ? {} : { validFrom: change.validFrom }),
+          ...(change.validTo === undefined ? {} : { validTo: change.validTo }),
+          ...(change.assertionTxId === undefined ? {} : { assertionTxId: change.assertionTxId }),
+          ...(change.retractionTxId === undefined ? {} : { retractionTxId: change.retractionTxId }),
+          ...(change.op === "retract" && change.recordedAt !== undefined
+            ? { recordedAt: change.recordedAt }
+            : {}),
+        },
       });
     }),
   ];
@@ -93,8 +111,9 @@ const decodeChange = (value: unknown, instant: number): TransactionChange | unde
     return undefined;
   }
   try {
+    const { v: _version, ...fields } = candidate;
     return {
-      ...(candidate as unknown as TransactionChange),
+      ...(fields as unknown as TransactionChange),
       ...(candidate["v"] === 2
         ? {
             recordedAt:

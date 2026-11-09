@@ -1,3 +1,4 @@
+import { readXtdbCut, resolveXtdbBasis } from "../RecordCut.js";
 import { Effect } from "effect";
 import { readOnlyXtdbClient } from "../ReadOnlyClient.js";
 import {
@@ -73,15 +74,22 @@ const nativeQueries = (client: XtdbClient, scope: DatabaseScope) => {
           signal.throwIfAborted();
           const steps: NativeQueryStep[] = [];
           const sourceStarted = performance.now();
-          // [EXP-X02] Why: the cut is read in the answer's language (Sources.ts sourceCutQuery).
-          // [EXP-C8] Reachability reads are read-only frontier rounds in the call's own language
-          // (Reachability.ts), so they no longer force an SQL working-relation shell.
           const cut = sourceCutQuery(language);
-          const current = await client.query<{ position: unknown }>(
-            cut.query,
-            [scope],
-            undefined,
-            { signal, parameterSyntax: "postgresql" },
+          const resolved = await resolveXtdbBasis(
+            client,
+            scope,
+            {
+              validAt: options.basis?.validAt ?? Date.now(),
+              ...(options.basis?.recordedAt === undefined
+                ? {}
+                : { recordedAt: options.basis.recordedAt }),
+              ...(options.basis?.recordedPosition === undefined
+                ? {}
+                : { recordedPosition: options.basis.recordedPosition }),
+            },
+            signal,
+            2000,
+            () => readXtdbCut(client, scope, signal, language),
           );
           steps.push({
             phase: "source-cut",
@@ -93,7 +101,7 @@ const nativeQueries = (client: XtdbClient, scope: DatabaseScope) => {
           const basis = resolveNativeReadBasis({
             scope,
             options,
-            currentPosition: Number(current[0]?.position ?? 0),
+            currentPosition: resolved.recordedPosition,
             now: Date.now(),
           });
           // [EXP-C8] Why: the basis above is resolved once and every frontier round reads it,

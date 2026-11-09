@@ -1,3 +1,4 @@
+import { resolveXtdbBasis } from "./RecordCut.js";
 import { Effect, Layer } from "effect";
 import { readOnlyXtdbClient, readPathBase } from "./ReadOnlyClient.js";
 import {
@@ -23,7 +24,9 @@ import { CurrentTransactions } from "./TransactionContext.js";
 import { clientWithOverlay } from "./query/overlay.js";
 
 const failure = (cause: unknown) =>
-  cause instanceof DatalogValidationError || cause instanceof UnboundVariableError
+  cause instanceof ReadError ||
+  cause instanceof DatalogValidationError ||
+  cause instanceof UnboundVariableError
     ? cause
     : new ReadError({ message: `XTDB Datalog execution failed: ${String(cause)}`, cause });
 
@@ -172,15 +175,7 @@ const queryExecutor = (
                 resolved.recordedPosition ?? state.position,
               ),
             };
-          if (resolved.recordedPosition === undefined) {
-            const rows = await client.query<{ position: unknown }>(
-              "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = ?",
-              [scopeKey],
-              undefined,
-              { signal },
-            );
-            resolved = { ...resolved, recordedPosition: numeric(rows[0]?.position) ?? 0 };
-          }
+          if (!state) resolved = await resolveXtdbBasis(client, scopeKey, resolved, signal);
           const started = performance.now();
           // [EXP-C8] Rules are evaluated with reads only (recursion.ts); nothing is written.
           const ruleRelations = recursive
@@ -192,7 +187,11 @@ const queryExecutor = (
             scopeKey,
             logical,
             resolved,
-            { signal, ...(ruleRelations ? { ruleRelations } : {}), onNonIntegerProjection: variable => nonIntegerProjectionVariables.push(variable) },
+            {
+              signal,
+              ...(ruleRelations ? { ruleRelations } : {}),
+              onNonIntegerProjection: (variable) => nonIntegerProjectionVariables.push(variable),
+            },
           );
           const compiled = compileXtdb(input, scopeKey, {
             nonIntegerProjectionVariables,

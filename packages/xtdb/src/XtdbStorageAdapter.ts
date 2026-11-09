@@ -1,3 +1,5 @@
+import { readXtdbCut, resolveXtdbBasis } from "./RecordCut.js";
+import { nextStamp, instantOf, stampOf } from "@triplex-build/triplex";
 import { randomUUID } from "node:crypto";
 import { Effect, Exit, Semaphore } from "effect";
 import { isPatternVariable, type ResolvedTemporalBasis } from "@triplex-build/triplex";
@@ -137,6 +139,7 @@ export const makeXtdbStorageAdapter = (
   scopeKey: string,
   options: {
     readonly maxRetries?: number;
+    readonly basisWaitMs?: number;
     readonly resolutionTimeoutMs?: number;
     readonly admissionQueue?: boolean;
     readonly constraintStrategy?: "portable" | "inline" | "projection";
@@ -155,21 +158,11 @@ export const makeXtdbStorageAdapter = (
   const read = <A>(thunk: (signal: AbortSignal) => Promise<A>): Effect.Effect<A, ReadError> =>
     Effect.tryPromise({
       try: thunk,
-      catch: (cause) => new ReadError({ message: "XTDB read failed", cause }),
+      catch: (cause) =>
+        cause instanceof ReadError ? cause : new ReadError({ message: "XTDB read failed", cause }),
     });
-  const committedPosition = () =>
-    read(async (signal) => {
-      const rows = await client.query(
-        "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = ?",
-        [scopeKey],
-        undefined,
-        { signal, timeoutMs: 30_000 },
-      );
-      const position = Number(rows[0]?.["position"] ?? 0);
-      if (!Number.isSafeInteger(position) || position < 0)
-        throw new TypeError("Unsafe commit position");
-      return position;
-    });
+  const currentCut = () => read((signal) => readXtdbCut(client, scopeKey, signal));
+  const committedPosition = () => Effect.map(currentCut(), (cut) => cut.position);
   const requireTransaction = Effect.flatMap(current, (state) =>
     state === undefined
       ? Effect.fail(new WriteError({ message: "XTDB mutation requires withTransaction" }))
@@ -185,6 +178,10 @@ export const makeXtdbStorageAdapter = (
   ): Effect.Effect<readonly TripleRow[], ReadError> =>
     Effect.gen(function* () {
       const state = yield* current;
+      if (!state && basis)
+        basis = yield* read((signal) =>
+          resolveXtdbBasis(client, scopeKey, basis!, signal, options.basisWaitMs ?? 2000),
+        );
       const position =
         state === undefined
           ? basis?.recordedPosition
@@ -248,9 +245,19 @@ export const makeXtdbStorageAdapter = (
             byId.set(rowId, row);
         }
       }
-      return [...byId.values()].sort(
-        (left, right) => left.recorded_at - right.recorded_at || left.id.localeCompare(right.id),
-      );
+      return [...byId.values()]
+        .map((row) =>
+          !history &&
+          row.retracted_at !== null &&
+          ((basis?.recordedAt !== undefined && row.retracted_at > basis.recordedAt) ||
+            (basis?.recordedPosition !== undefined &&
+              row.retracted_position! > basis.recordedPosition))
+            ? { ...row, retracted_at: null, retracted_position: null, retract_tx_id: null }
+            : row,
+        )
+        .sort(
+          (left, right) => left.recorded_at - right.recorded_at || left.id.localeCompare(right.id),
+        );
     });
 
   const persist = (
@@ -290,6 +297,11 @@ export const makeXtdbStorageAdapter = (
           params: [scopeKey, ...state.newIds],
         });
     }
+    // [EXP-RT01] Why: a seal can change only the watermark. Rejected: position-only CAS (would admit a stale stamp after a seal).
+    statements.push({
+      sql: "ASSERT (SELECT COALESCE(MAX(stamp), 0) FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = ?) = ?, 'triplex-cas-conflict'",
+      params: [scopeKey, state.sourceStamp],
+    });
     const rows = [...state.rows.values()];
     for (let i = 0; i < rows.length; i += 200) {
       statements.push(
@@ -325,14 +337,14 @@ export const makeXtdbStorageAdapter = (
     statements.push(
       insertStatement(
         "tx_meta",
-        ["_id", "scope_key", "position"],
-        [[scopeKey, scopeKey, state.position]],
+        ["_id", "scope_key", "position", "stamp"],
+        [[scopeKey, scopeKey, state.position, state.stamp ?? state.sourceStamp]],
       ),
     );
     statements.push(
       insertStatement(
         "tx_attempts",
-        ["_id", "scope_key", "operation_id", "attempt_id", "position"],
+        ["_id", "scope_key", "operation_id", "attempt_id", "position", "stamp"],
         [
           [
             JSON.stringify([scopeKey, operationId]),
@@ -340,6 +352,7 @@ export const makeXtdbStorageAdapter = (
             operationId,
             attemptId,
             state.position,
+            state.stamp ?? state.sourceStamp,
           ],
         ],
       ),
@@ -382,13 +395,20 @@ export const makeXtdbStorageAdapter = (
           try {
             const receipt = await bounded(
               client.query(
-                "SELECT operation_id FROM tx_attempts FOR ALL VALID_TIME WHERE scope_key = ? AND operation_id = ?",
+                "SELECT operation_id, attempt_id, position, stamp FROM tx_attempts FOR ALL VALID_TIME WHERE scope_key = ? AND operation_id = ?",
                 [scopeKey, operationId],
                 undefined,
                 { timeoutMs: Math.max(1, until - Date.now()) },
               ),
             );
-            if (receipt.length > 0) return;
+            if (
+              receipt.length === 1 &&
+              receipt[0]?.["operation_id"] === operationId &&
+              receipt[0]?.["attempt_id"] === attemptId &&
+              Number(receipt[0]?.["position"]) === state.position &&
+              Number(receipt[0]?.["stamp"]) === (state.stamp ?? state.sourceStamp)
+            )
+              return;
           } catch (error) {
             submitError = error;
           }
@@ -430,6 +450,8 @@ export const makeXtdbStorageAdapter = (
               client,
               scopeKey,
               sourceK: parent.sourceK,
+              sourceStamp: parent.sourceStamp,
+              ...(parent.stamp === undefined ? {} : { stamp: parent.stamp }),
               ...baseline,
               rows: new Map(baseline.rows),
               claims: new Map(baseline.claims),
@@ -456,21 +478,24 @@ export const makeXtdbStorageAdapter = (
                 }),
               );
             }
+            if (child.stamp !== undefined) parent.stamp = child.stamp;
             parent.position = child.position;
             parent.rows = child.rows;
             parent.claims = child.claims;
             parent.newIds = child.newIds;
             return result;
           }
-          const sourceK = yield* committedPosition().pipe(
+          const sourceCut = yield* currentCut().pipe(
             Effect.mapError(
               (cause) => new WriteError({ message: "Cannot acquire XTDB source cut", cause }),
             ),
           );
+          const sourceK = sourceCut.position;
           const state: TransactionState = {
             client,
             scopeKey,
             sourceK,
+            sourceStamp: stampOf(sourceCut.recordedAt),
             position: sourceK,
             rows: new Map(),
             claims: new Map(),
@@ -505,11 +530,19 @@ export const makeXtdbStorageAdapter = (
       );
     });
 
+  const ensureStamp = (state: TransactionState, timestamp: number): void => {
+    // [EXP-RT01] Why: low-level callers share the stamp invariant too. Rejected: silently accepting a mismatched row stamp (receipt and watermark would disagree).
+    const stamp = stampOf(timestamp);
+    if (stamp <= state.sourceStamp || (state.stamp !== undefined && state.stamp !== stamp))
+      throw new TypeError("Row record instant differs from the transaction's decided stamp");
+    state.stamp = stamp;
+  };
   const insert: StorageAdapterService["insert"] = (input, txId, timestamp, id, position) =>
     Effect.gen(function* () {
       const state = yield* requireTransaction;
       return yield* Effect.try({
         try: () => {
+          ensureStamp(state, timestamp);
           const row: TripleRow = {
             id,
             entity_id: input.entityId,
@@ -562,6 +595,18 @@ export const makeXtdbStorageAdapter = (
             }),
           ),
     withTransaction,
+    recordTime: "decided",
+    currentCut,
+    commitStamp: (stagedAt) =>
+      Effect.flatMap(requireTransaction, (state) =>
+        Effect.try({
+          try: () => {
+            state.stamp ??= nextStamp(state.sourceStamp, stagedAt);
+            return { instant: instantOf(state.stamp), decided: true };
+          },
+          catch: (cause) => new WriteError({ message: "Cannot assign record stamp", cause }),
+        }),
+      ),
     nextCommitPosition: () =>
       Effect.flatMap(requireTransaction, (state) =>
         Effect.try({
@@ -595,6 +640,10 @@ export const makeXtdbStorageAdapter = (
           ),
         );
         if (existing[0]?.["tx_id"] !== undefined) return String(existing[0]["tx_id"]);
+        yield* Effect.try({
+          try: () => ensureStamp(state, timestamp),
+          catch: (cause) => new WriteError({ message: "Invalid claim stamp", cause }),
+        });
         state.claims.set(commandId, { commandId, txId, timestamp });
         return null;
       }),
@@ -608,6 +657,10 @@ export const makeXtdbStorageAdapter = (
     retract: (id, timestamp, txId, position) =>
       Effect.gen(function* () {
         const state = yield* requireTransaction;
+        yield* Effect.try({
+          try: () => ensureStamp(state, timestamp),
+          catch: (cause) => new WriteError({ message: "Invalid retraction stamp", cause }),
+        });
         const row = (yield* queryRows({}, undefined, false, id).pipe(
           Effect.mapError(
             (cause) => new WriteError({ message: "Cannot read retraction target", cause }),
@@ -639,78 +692,87 @@ export const makeXtdbStorageAdapter = (
           ),
     query: (pattern, basis) => queryRows(pattern, basis),
     history: (entityId) => queryRows({ entityId }, undefined, true),
-    dependencyState: (attributes, basis) => {
-      if (attributes.length === 0) return Effect.succeed({ sourcePosition: 0 });
-      const unique = [...new Set(attributes)];
-      const sourceParams: unknown[] = [];
-      const notAsserted: string[] = [];
-      const retracted: string[] = ["retracted_position IS NOT NULL"];
-      if (basis.recordedPosition !== undefined) {
-        notAsserted.push("recorded_position > ?");
-        sourceParams.push(basis.recordedPosition);
-      }
-      if (basis.recordedAt !== undefined) {
-        notAsserted.push("recorded_at > ?");
-        sourceParams.push(basis.recordedAt);
-      }
-      if (basis.recordedPosition !== undefined) {
-        retracted.push("retracted_position <= ?");
-        sourceParams.push(basis.recordedPosition);
-      }
-      if (basis.recordedAt !== undefined) {
-        retracted.push("retracted_at <= ?");
-        sourceParams.push(basis.recordedAt);
-      }
-      const expression = `CASE ${notAsserted.length ? `WHEN ${notAsserted.join(" OR ")} THEN 0 ` : ""}WHEN ${retracted.join(" AND ")} THEN retracted_position ELSE recorded_position END`;
-      sourceParams.push(scopeKey, ...unique);
-      const boundaryParams: unknown[] = [basis.validAt, basis.validAt, scopeKey, ...unique];
-      const visibility = cutConditions(
-        basis.recordedPosition,
-        basis.recordedAt,
-        boundaryParams,
-        false,
-      );
-      return Effect.map(
-        Effect.all([
-          read((signal) =>
-            client.query(
-              `SELECT MAX(${expression}) AS source_position FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = ? AND attribute IN (${unique.map(() => "?").join(",")})`,
-              sourceParams,
-              undefined,
-              { signal, timeoutMs: 30_000 },
-            ),
-          ),
-          read((signal) =>
-            client.query(
-              `SELECT MIN(CASE WHEN valid_from > ? THEN valid_from WHEN valid_to > ? THEN valid_to END) AS next_temporal_boundary FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = ? AND attribute IN (${unique.map(() => "?").join(",")}) AND ${visibility.join(" AND ")}`,
-              boundaryParams,
-              undefined,
-              { signal, timeoutMs: 30_000 },
-            ),
-          ),
-        ]),
-        ([source, boundary]) => {
-          const edge = boundary[0]?.["next_temporal_boundary"];
-          return {
-            sourcePosition: Number(source[0]?.["source_position"] ?? 0),
-            ...(edge === null || edge === undefined ? {} : { nextTemporalBoundary: Number(edge) }),
-          };
+    dependencyState: (attributes, requested) =>
+      Effect.flatMap(
+        read((signal) =>
+          resolveXtdbBasis(client, scopeKey, requested, signal, options.basisWaitMs ?? 2000),
+        ),
+        (basis) => {
+          if (attributes.length === 0) return Effect.succeed({ sourcePosition: 0 });
+          const unique = [...new Set(attributes)];
+          const sourceParams: unknown[] = [];
+          const notAsserted: string[] = [];
+          const retracted: string[] = ["retracted_position IS NOT NULL"];
+          if (basis.recordedPosition !== undefined) {
+            notAsserted.push("recorded_position > ?");
+            sourceParams.push(basis.recordedPosition);
+          }
+          if (basis.recordedAt !== undefined) {
+            notAsserted.push("recorded_at > ?");
+            sourceParams.push(basis.recordedAt);
+          }
+          if (basis.recordedPosition !== undefined) {
+            retracted.push("retracted_position <= ?");
+            sourceParams.push(basis.recordedPosition);
+          }
+          if (basis.recordedAt !== undefined) {
+            retracted.push("retracted_at <= ?");
+            sourceParams.push(basis.recordedAt);
+          }
+          const expression = `CASE ${notAsserted.length ? `WHEN ${notAsserted.join(" OR ")} THEN 0 ` : ""}WHEN ${retracted.join(" AND ")} THEN retracted_position ELSE recorded_position END`;
+          sourceParams.push(scopeKey, ...unique);
+          const boundaryParams: unknown[] = [basis.validAt, basis.validAt, scopeKey, ...unique];
+          const visibility = cutConditions(
+            basis.recordedPosition,
+            basis.recordedAt,
+            boundaryParams,
+            false,
+          );
+          return Effect.map(
+            Effect.all([
+              read((signal) =>
+                client.query(
+                  `SELECT MAX(${expression}) AS source_position FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = ? AND attribute IN (${unique.map(() => "?").join(",")})`,
+                  sourceParams,
+                  undefined,
+                  { signal, timeoutMs: 30_000 },
+                ),
+              ),
+              read((signal) =>
+                client.query(
+                  `SELECT MIN(CASE WHEN valid_from > ? THEN valid_from WHEN valid_to > ? THEN valid_to END) AS next_temporal_boundary FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = ? AND attribute IN (${unique.map(() => "?").join(",")}) AND ${visibility.join(" AND ")}`,
+                  boundaryParams,
+                  undefined,
+                  { signal, timeoutMs: 30_000 },
+                ),
+              ),
+            ]),
+            ([source, boundary]) => {
+              const edge = boundary[0]?.["next_temporal_boundary"];
+              return {
+                sourcePosition: Number(source[0]?.["source_position"] ?? 0),
+                ...(edge === null || edge === undefined
+                  ? {}
+                  : { nextTemporalBoundary: Number(edge) }),
+              };
+            },
+          );
         },
-      );
-    },
+      ),
     initialize: () =>
       Effect.tryPromise({
         try: async () => {
+          await readXtdbCut(client, scopeKey);
           await client.submit([
             {
               sql: `CREATE TABLE tx_assertions (_id, scope_key, ${assertionColumns.join(", ")}, value_identity)`,
             },
-            { sql: "CREATE TABLE tx_meta (_id, scope_key, position)" },
+            { sql: "CREATE TABLE tx_meta (_id, scope_key, position, stamp)" },
             {
               sql: "CREATE TABLE tx_claims (_id, scope_key, command_id, tx_id, recorded_at, position)",
             },
             {
-              sql: "CREATE TABLE tx_attempts (_id, scope_key, operation_id, attempt_id, position)",
+              sql: "CREATE TABLE tx_attempts (_id, scope_key, operation_id, attempt_id, position, stamp)",
             },
             {
               sql: "CREATE TABLE tx_constraint_graphs (_id, scope_key, run_id, phase, id, entity_id, attribute, entity_type, valid_from, valid_to, value_type, value_string, value_number, value_boolean, value_datetime, value_json, value_identity)",
@@ -719,12 +781,14 @@ export const makeXtdbStorageAdapter = (
           ]);
         },
         catch: (cause) =>
-          new MigrationError({
-            version: 1,
-            name: "xtdb-baseline",
-            message: "Cannot initialize XTDB tables",
-            cause,
-          }),
+          cause instanceof MigrationError
+            ? cause
+            : new MigrationError({
+                version: 1,
+                name: "xtdb-baseline",
+                message: "Cannot initialize XTDB tables",
+                cause,
+              }),
       }),
     // The runtime's scoped layer owns the shared client.
     close: () => Effect.void,

@@ -2887,3 +2887,7 @@ export function runtimeConformance(
 }
 
 export * from "./record-time-conformance.js";
+
+export * from "./record-time-schedules.js";
+
+export * from "./record-time-determinism.js";

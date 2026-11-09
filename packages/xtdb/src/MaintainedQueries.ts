@@ -1,3 +1,4 @@
+import { resolveXtdbBasis } from "./RecordCut.js";
 import { createHash } from "node:crypto";
 import { readOnlyXtdbClient } from "./ReadOnlyClient.js";
 import { Effect } from "effect";
@@ -90,6 +91,18 @@ const maintainedQueries = (client: XtdbClient, scopeKey: string) => {
       basis: { validAt: options.validAt },
       ruleRelations: placeholderRuleRelations(query),
     });
+    await resolveXtdbBasis(
+      client,
+      scopeKey,
+      {
+        validAt: options.validAt,
+        ...(options.recordedAt === undefined ? {} : { recordedAt: options.recordedAt }),
+        ...(options.recordedPosition === undefined
+          ? {}
+          : { recordedPosition: options.recordedPosition }),
+      },
+      signal,
+    );
     const positions = await client.query<{ position: unknown }>(
       "SELECT MAX(position) AS position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = ?",
       [scopeKey],
@@ -170,11 +183,23 @@ const maintainedQueries = (client: XtdbClient, scopeKey: string) => {
     };
     // Column metadata for a retained generation; placeholder relations are never executed.
     const placeholder = query.rules?.length ? placeholderRuleRelations(query) : undefined;
-    return { maxRows, deadline, sourcePosition, generation, compileWith, evaluate, order, placeholder };
+    return {
+      maxRows,
+      deadline,
+      sourcePosition,
+      generation,
+      compileWith,
+      evaluate,
+      order,
+      placeholder,
+    };
   };
 
   /** Read-only lookup of a published generation's header. */
-  const header = async (generation: string, deadline: { signal: AbortSignal; timeoutMs: number }) => {
+  const header = async (
+    generation: string,
+    deadline: { signal: AbortSignal; timeoutMs: number },
+  ) => {
     // XTDB 2.2.0 errors on an unknown table, and creating it would be a write: ask the catalog.
     const tables = await client.query<{ table_name: unknown }>(
       "SELECT table_name FROM information_schema.tables WHERE table_name IN ('tx_query_generations', 'tx_query_members')",
@@ -227,7 +252,9 @@ const maintainedQueries = (client: XtdbClient, scopeKey: string) => {
     };
   };
   const failure = (cause: unknown) =>
-    cause instanceof ReadError ? cause : new ReadError({ message: "XTDB maintained query failed", cause });
+    cause instanceof ReadError
+      ? cause
+      : new ReadError({ message: "XTDB maintained query failed", cause });
 
   return {
     /** Read-only (contract C8): a published generation, or the same answer evaluated directly. */
@@ -291,7 +318,8 @@ const maintainedQueries = (client: XtdbClient, scopeKey: string) => {
             });
           const columns = resultColumns(compiled);
           const projected = columns.map(identifier);
-          if (!projected.length) throw new Error("Maintained query requires at least one projection");
+          if (!projected.length)
+            throw new Error("Maintained query requires at least one projection");
           const values = [...compiled.params];
           const p = (value: unknown) => {
             values.push(value);

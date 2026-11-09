@@ -136,11 +136,14 @@ export const sourceCutQuery = (
     ? {
         language,
         query: xtqlStatement(
-          "(-> (from :tx_meta {:for-valid-time :all-time :bind [scope_key position]}) (where (= scope_key triplex_param_1)) (return {:position position}))",
+          "(-> (from :tx_meta {:for-valid-time :all-time  :bind [scope_key position stamp]}) (where (= scope_key triplex_param_1)) (return {:position position :stamp stamp}))",
           1,
         ),
       }
-    : { language, query: "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1" };
+    : {
+        language,
+        query: "SELECT position, stamp FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1",
+      };
 
 /**
  * A complete XTQL statement with its row bound applied inside XTQL.

@@ -1,3 +1,4 @@
+import { resolveQleverBasis } from "../RecordCut.js";
 import { Effect } from "effect";
 import { readOnlyQleverClient } from "../ReadOnlyClient.js";
 import type { TypeExpr } from "@triplex-build/triplex/config";
@@ -123,9 +124,22 @@ const nativeQueries = (
           signal.throwIfAborted();
           const request = { signal, timeoutMs, maxResponseBytes };
           const steps: NativeQueryStep[] = [];
-          const sourceQuery = `SELECT ?position WHERE { GRAPH ${graphIri(scope)} { ${metaIri} ${fieldIri("position")} ?position } }`;
+          const sourceQuery = `SELECT ?position ?stamp WHERE { GRAPH ${graphIri(scope)} { ${metaIri} ${fieldIri("position")} ?position . OPTIONAL { ${metaIri} ${fieldIri("stamp")} ?stamp } } }`;
           const sourceStarted = performance.now();
-          const positions = await client.query(sourceQuery, request);
+          const resolved = await resolveQleverBasis(
+            client,
+            scope,
+            {
+              validAt: options.basis?.validAt ?? Date.now(),
+              ...(options.basis?.recordedAt === undefined
+                ? {}
+                : { recordedAt: options.basis.recordedAt }),
+              ...(options.basis?.recordedPosition === undefined
+                ? {}
+                : { recordedPosition: options.basis.recordedPosition }),
+            },
+            signal,
+          );
           steps.push({
             phase: "source-cut",
             language: "sparql-1.1",
@@ -133,13 +147,10 @@ const nativeQueries = (
             parameters: [],
             elapsedMs: performance.now() - sourceStarted,
           });
-          const text = positions[0]?.["position"]?.value ?? "0";
-          if (positions.length > 1 || !/^(0|[1-9][0-9]*)$/.test(text))
-            throw new TypeError("Invalid native source-position metadata");
           const basis = resolveNativeReadBasis({
             scope,
             options,
-            currentPosition: Number(text),
+            currentPosition: resolved.recordedPosition,
             now: Date.now(),
           });
           // [EXP-C8] Read-only: frontier rounds at this one basis, closure inlined as VALUES.

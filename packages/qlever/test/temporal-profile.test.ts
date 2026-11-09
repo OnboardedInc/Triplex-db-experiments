@@ -1,3 +1,4 @@
+import { integerOrderKey } from "../src/rdf.js";
 import { Effect } from "effect";
 import { expect, it } from "vitest";
 import type { QleverClient } from "../src/QleverClient.js";
@@ -9,7 +10,7 @@ it("preserves the declared source, negation and retirement profile in interval p
   const client: QleverClient = {
     query: async (query) => {
       queries.push(query);
-      if (query.startsWith("SELECT ?position")) return [{ position: literal("1") }];
+      if (query.startsWith("SELECT ?position")) return [{ position: literal("1"), stamp: literal(integerOrderKey("1000000")) }];
       if (query.includes("AS ?v0_type"))
         return [{ v0_type: literal("boolean"), v0_value: literal("1"), v0_order: literal("1") }];
       return [];

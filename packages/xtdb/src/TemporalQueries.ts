@@ -1,3 +1,4 @@
+import { resolveXtdbBasis } from "./RecordCut.js";
 import { Effect } from "effect";
 import { readOnlyXtdbClient } from "./ReadOnlyClient.js";
 import type { DatalogQuery } from "@triplex-build/triplex/datalog";
@@ -77,6 +78,18 @@ const temporalQueries = (client: XtdbClient, scopeKey: string) => ({
         const maxSpans = options.maxSpans ?? 1000;
         if (!Number.isSafeInteger(maxSpans) || maxSpans < 1 || maxSpans > 100_000)
           throw new RangeError("maxSpans must be between 1 and 100000");
+        await resolveXtdbBasis(
+          client,
+          scopeKey,
+          {
+            validAt: options.from,
+            ...(options.recordedAt === undefined ? {} : { recordedAt: options.recordedAt }),
+            ...(options.recordedPosition === undefined
+              ? {}
+              : { recordedPosition: options.recordedPosition }),
+          },
+          signal,
+        );
         const cuts = await client.query<{ position: unknown }>(
           "SELECT MAX(position) AS position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = ?",
           [scopeKey],
@@ -160,7 +173,7 @@ const temporalQueries = (client: XtdbClient, scopeKey: string) => ({
         const nonIntegerProjectionVariables: string[] = [];
         const integerVariables = await resolveIntegerVariables(client, scopeKey, query, basis, {
           signal,
-          onNonIntegerProjection: variable => nonIntegerProjectionVariables.push(variable),
+          onNonIntegerProjection: (variable) => nonIntegerProjectionVariables.push(variable),
           wrapDomainQuery: (sql, values) => {
             const domainParams = [...spanParams];
             const inner = rebase(sql, values, (value) => {
@@ -220,7 +233,7 @@ const temporalQueries = (client: XtdbClient, scopeKey: string) => ({
         }));
       },
       catch: (cause) =>
-        cause instanceof DatalogValidationError || cause instanceof ReadError
+        cause instanceof ReadError || cause instanceof DatalogValidationError || cause instanceof ReadError
           ? cause
           : new ReadError({ message: "XTDB interval query failed", cause }),
     }),

@@ -1,3 +1,4 @@
+import { resolveQleverBasis } from "./RecordCut.js";
 import { Effect } from "effect";
 import { readOnlyQleverClient } from "./ReadOnlyClient.js";
 import { isPatternClause, type Clause, type DatalogQuery } from "@triplex-build/triplex/datalog";
@@ -105,6 +106,18 @@ const temporalQueries = (
           throw new RangeError("Invalid interval deadline");
         const signal = AbortSignal.any([effectSignal, AbortSignal.timeout(timeoutMs)]),
           graph = graphIri(scopeKey);
+        await resolveQleverBasis(
+          client,
+          scopeKey,
+          {
+            validAt: options.from,
+            ...(options.recordedAt === undefined ? {} : { recordedAt: options.recordedAt }),
+            ...(options.recordedPosition === undefined
+              ? {}
+              : { recordedPosition: options.recordedPosition }),
+          },
+          signal,
+        );
         const cuts = await client.query(
           `SELECT ?position WHERE { GRAPH ${graph} { ${metaIri} ${f("position")} ?position } }`,
           { signal },
