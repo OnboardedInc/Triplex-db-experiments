@@ -93,6 +93,52 @@
           (is (= 7.25 (:triplex.tx/recorded-at tx)))))
       (is (thrown? Exception (query/check-query! '[:find ?x :where [(clojure.core/slurp "/etc/passwd") ?x]])))
       (finally (storage/release! name handle) (gateway/delete-scope! base scope)))))
+;; [EXP-DA01] Why: instrument actual Peer index calls so a correct row answer cannot hide a scope/commit scan (D-D4/D-D5). Rejected: asserting generated query text without exercising the engine.
+(deftest indexed-read-routes
+  (let [base "datomic:mem://" scope "[\"triplex-scope-v1\",\"test\",\"test\",\"r3-index-routes\",0]"
+        name (:db (gateway/create-scope! base scope)) uri (str base name) conn (gateway/connection uri)
+        make-row (fn [i] {:id (str "f" i) :entity_id (if (< i 3) "selected" "unrelated") :attribute ":v"
+                          :value_type "number" :value_number (double i) :recorded_at 10.0 :recorded_position 1
+                          :valid_from 0.0 :schema_version 1 :tx_id "tx1"})
+        rows (mapv make-row (range 100))]
+    (try
+      (storage/commit! conn (gateway/sync-db uri) {"sourceK" 0 "position" 2 "operationId" "first" "rows" (mapv storage/wire-row rows) "newIds" (mapv :id rows) "claims" []})
+      (storage/commit! conn (gateway/sync-db uri) {"sourceK" 2 "position" 3 "operationId" "empty" "rows" [] "newIds" [] "claims" []})
+      (let [db (gateway/sync-db uri) datoms d/datoms index-range d/index-range seeks (atom []) subject-seeks (atom [])]
+        (with-redefs [d/datoms (fn [db index & components]
+                                (when (some #{:f/id :triplex.tx/position} components) (throw (Exception. "Forbidden scope or position scan")))
+                                (when (= index :vaet) (swap! subject-seeks conj components))
+                                (apply datoms db index components))
+                      d/index-range (fn [db attr start end] (swap! seeks conj [attr start end]) (index-range db attr start end))]
+          (doseq [p [1 2 0]] (is (some? (storage/at-position db p))))
+          (is (= [[:triplex.tx/position 1 nil] [:triplex.tx/position 2 nil]] @seeks))
+          (let [result (storage/read-rows name db {"entityIds" ["selected" "missing" "selected"] "basis" {"validAt" 30.0 "recordedPosition" 1}})]
+            (is (= 3 (count (:rows result))))
+            (is (= "as-of" (:route result)))
+            (is (= 1 (count @subject-seeks))))
+          (is (empty? (:rows (storage/read-rows name db {"entityIds" [] "basis" {"validAt" 30.0}})))))
+        (doseq [p [0 1 2 3]]
+          (is (<= (d/basis-t (storage/at-position db p)) (d/basis-t db))))
+        (doseq [basis [{"validAt" 30.0 "recordedAt" 10.0} {"validAt" 30.0 "recordedAt" 10.0 "recordedPosition" 3} {"validAt" 30.0 "recordedPosition" 1}]]
+          (try (storage/read-rows name db {"route" "live" "entityIds" ["selected"] "basis" basis})
+               (is false "Position-retired route should refuse")
+               (catch clojure.lang.ExceptionInfo e (is (= "BasisNotAvailable" (:code (ex-data e)))))))
+        (try (query/run name db {"edn" "[:find ?f :in $ $rules :where [?f :f/live _]]" "relations" [] "basis" {"validAt" 30.0 "recordedAt" 10.0} "timeoutMs" 1000})
+             (is false "Native live index must refuse record time")
+             (catch clojure.lang.ExceptionInfo e (is (= "BasisNotAvailable" (:code (ex-data e))))))
+        (let [calls (atom 0) deadline (System/nanoTime)]
+          (try (storage/await-position db 4 40 (fn [_] (swap! calls inc) db)) (is false "Future should refuse")
+               (catch clojure.lang.ExceptionInfo e (is (= "BasisNotAvailable" (:code (ex-data e))))))
+          (is (pos? @calls))
+          (is (>= (- (System/nanoTime) deadline) 35000000)))
+        (let [waiting (promise) release (promise)
+              reader (future (storage/await-position db 4 2000 (fn [_] (deliver waiting true) (deref release 1500 nil) (gateway/sync-db uri))))]
+          (is (deref waiting 1000 false))
+          (storage/commit! conn (gateway/sync-db uri) {"sourceK" 3 "position" 4 "operationId" "caught-up" "rows" [] "newIds" [] "claims" []})
+          (deliver release true)
+          (is (= 4 (storage/head-position (deref reader 2000 nil))))))
+      (finally (is (:deleted (gateway/delete-scope! base scope)))))))
+
 (defn -main [& _]
   (let [{:keys [fail error] :as result} (run-tests 'triplex.gateway.selftest)]
     (println (json/write-str result))

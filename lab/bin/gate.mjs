@@ -400,7 +400,7 @@ async function gateG1(run, config) {
   if (run.options.cases) args.push('--cases', String(run.options.cases));
   const { result, step, bound } = await engineGate(run, config, { name: 'lab-conformance', queryPath: `${run.lane}-datalog`, args, timeoutMs: 45 * 60_000 });
   if (!bound) return result;
-  result.fixtures = fileHashes(run, ['packages/testkit/src/index.ts', 'packages/qualification/workloads/lab-conformance.ts'], 'oracle-fixture');
+  result.fixtures = fileHashes(run, ['packages/testkit/src/index.ts', 'packages/qualification/workloads/lab-conformance.ts', ...(run.lane === 'datomic' ? ['packages/testkit/src/routeEquivalence.ts', 'packages/testkit/src/routeHistory.ts', 'packages/datomic/test/route-equivalence.test.ts', ...fs.readdirSync(path.join(REPO, 'lab/oracles/replay')).filter(name => name.endsWith('.py')).map(name => `lab/oracles/replay/${name}`)] : [])], 'oracle-fixture');
   const report = readJson(output, null);
   if (!report) { run.reason('no G1 report written'); run.failure({ step: step.name, tail: step.tail }); return result; }
   run.store(output, 'raw-outcome');
@@ -417,6 +417,26 @@ async function gateG1(run, config) {
     }
     run.storeBytes(Buffer.from(JSON.stringify(cleanup, null, 2) + '\n'), 'test-database-cleanup', 'datomic G1 cleanup');
     fs.writeFileSync(run.raw('datomic-cleanup.json'), JSON.stringify(cleanup, null, 2) + '\n');
+  }
+
+  // [EXP-DA01] Why: Q89f requires oracle-backed route equivalence whenever lane D read routes change. Rejected: calling G1's unchanged 44 cases sufficient coverage for physical-route pins.
+  if (run.lane === 'datomic') {
+    const routeOutput = run.raw('route-equivalence.json');
+    const routes = await run.step('route-equivalence', process.execPath,
+      ['node_modules/vitest/vitest.mjs', 'run', 'packages/datomic/test/route-equivalence.test.ts', '--disableConsoleIntercept', '--silent=false', '--reporter=json', '--outputFile', routeOutput],
+      { heavy: true, timeoutMs: 180000, env: cleanEnv({ DATOMIC_INTEGRATION: '1', DATOMIC_GATEWAY_URL: bound.info.endpoint, DATOMIC_ROUTE_EVIDENCE_DIR: run.raw('route-oracle'), TRIPLEX_LAB_SLOT_OWNER: bound.info.ownerFile }) });
+    const qualified = readJson(routeOutput, null);
+    if (routes.code !== 0 || !qualified?.success || qualified.numPassedTests !== 1 || qualified.numFailedTests !== 0 || qualified.numPendingTests !== 0)
+      run.reason('Datomic route-equivalence gate failed or did not execute its one live fixture');
+    if (qualified) run.store(routeOutput, 'route-equivalence-result');
+    const evidence = fileHashes(run, treeFiles(run.raw('route-oracle')).map(f => f.path), 'route-equivalence-oracle');
+    if (Object.keys(evidence).length !== 6) run.reason('Route-equivalence fixture did not retain both oracle runs and route observations');
+    const afterRoutes = hashDist(run, 'route-build-manifest-after.json');
+    for (const [pkg, value] of Object.entries(afterRoutes.packages))
+      if (value.sha256 !== result.build.packages[pkg]?.sha256) run.reason(`${pkg} dist changed during route-equivalence gate`);
+    result.routeEquivalence = { report: run.rel(routeOutput), passed: qualified?.numPassedTests ?? 0, evidence };
+    const still = inspect(bound.info.container);
+    if (still?.Id !== bound.engine.containerId || still?.State.StartedAt !== bound.engine.startedAt) run.reason('Datomic resident changed during route-equivalence gate');
   }
 
   result.contactedEndpoint = report.endpoint;

@@ -386,6 +386,10 @@ importers:
       effect:
         specifier: 'catalog:'
         version: 4.0.3
+    devDependencies:
+      '@triplex-build/triplex-testkit':
+        specifier: workspace:^
+        version: link:../testkit
 
   packages/core:
     dependencies:

@@ -1,3 +1,4 @@
+import type { ResolvedTemporalBasis } from "@triplex-build/triplex";
 import type { TripleRow } from "@triplex-build/triplex/runtime";
 import { encodeRow, decodeRow, type WireRow } from "./protocol.js";
 import http from "node:http";
@@ -133,11 +134,14 @@ export class DatomicClient {
   delete(scope: string): Promise<{ db: string; deleted: boolean }> {
     return this.request("POST", "/v1/db/delete", { scope });
   }
-  async begin(db: string): Promise<{ handle: string; position: number }> {
+  async begin(
+    db: string,
+    basis?: ResolvedTemporalBasis,
+  ): Promise<{ handle: string; position: number }> {
     const response = await this.request<{ handle: string; position: TaggedValue }>(
       "POST",
       `/v1/db/${db}/snapshot`,
-      {},
+      basis === undefined ? {} : { basis },
     );
     const position = Number(validateTagged(response.position).v);
     if (!Number.isSafeInteger(position) || position < 0) throw new RangeError("Unsafe position");

@@ -2,7 +2,7 @@
   "format": "tx2-g0-expected-skips/1",
   "note": "Reviewed list of tests G0 may skip, by package. Every entry is a live test gated by XTDB_INTEGRATION / QLEVER_INTEGRATION / TRIPLEX_INTEGRATION (run by G1/G2 and later gates against an engine) or the opt-in DuckDB loader case (TRIPLEX_DUCKDB=1; DuckDB is outside both lanes). G0 fails on any skip not listed here. Generated 2026-11-07 (EXP-000) from vitest JSON with live flags unset; a change to this file is a gate change and needs a verifier review recorded in the commit (PLAN 5.4).",
   "counts": {
-    "datomic": 11,
+    "datomic": 16,
     "core": 0,
     "testkit": 0,
     "xtdb": 84,
@@ -11,6 +11,11 @@
   },
   "skips": {
     "datomic": [
+      "packages/datomic/test/read-pins.test.ts :: Datomic read pins pins optional pulls across a commit between query requests",
+      "packages/datomic/test/read-pins.test.ts :: Datomic read pins pins rule rounds and the final query across an edge replacement",
+      "packages/datomic/test/read-pins.test.ts :: Datomic read pins waits then refuses future positions on pulls, batches, dependencies, queries and held reads",
+      "packages/datomic/test/read-pins.test.ts :: Datomic read pins keeps T and TP on full history while guarded position retirement refuses them",
+      "packages/datomic/test/route-equivalence.test.ts :: Datomic route equivalence matches O-REPLAY across seeded source, held, staged and guarded live routes",
       "packages/datomic/test/adapter.test.ts :: Datomic storage transaction boundary accepts exactly public constructor scopes with reversible database names",
       "packages/datomic/test/adapter.test.ts :: Datomic storage transaction boundary reads speculative inserts and retractions without publishing them",
       "packages/datomic/test/adapter.test.ts :: Datomic storage transaction boundary rolls back nested failures while preserving the parent",

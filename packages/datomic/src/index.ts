@@ -55,3 +55,5 @@ export {
   DatomicSerializationConflict,
 } from "./DatomicStorageAdapter.js";
 export { makeDatomicQueryExecutor } from "./DatomicQueryExecutor.js";
+
+export { DatomicBasisNotAvailable } from "./readErrors.js";

@@ -116,21 +116,44 @@
     (if-let [p (:triplex.tx/position entity)]
       {:status "committed" :position (codec/encode-value "long" p) :t (codec/encode-value "long" (d/tx->t (:db/id entity)))}
       {:status "absent"}) {:status "absent"}))
-(def positions (atom {}))
-(defn forget! [scope] (swap! positions dissoc scope))
-;; [EXP-DA01] Why: rebuild each opened database's durable P-to-t map from AVET, and cache it at its peer basis. Rejected: wall-clock as-of (nonmonotonic recorded times).
+(defn head-position [db]
+  (:triplex.scope/position (d/entity db (d/q '[:find ?s . :where [?s :triplex.scope/key]] db))))
+(defn unavailable! [message]
+  (throw (ex-info message {:status 409 :code "BasisNotAvailable"})))
+;; [EXP-DA01] Why: future cuts must wait for publication, never silently answer from the head (Q89c/d). Rejected: treating P >= head as latest.
+(defn await-position [db p wait-ms refresh]
+  (if (nil? p) db
+    (let [p (safe-position p) wait-ms (or wait-ms 500)
+          _ (when-not (and (integer? wait-ms) (<= 1 wait-ms 2000)) (codec/invalid "Basis wait must be 1..2000 ms"))
+          deadline (+ (System/nanoTime) (* wait-ms 1000000))]
+      (loop [current db]
+        (if (<= p (head-position current)) current
+          (let [remaining (quot (- deadline (System/nanoTime)) 1000000)]
+            (when (<= remaining 0) (unavailable! "Requested position is beyond the available snapshot"))
+            (Thread/sleep (long (min 10 remaining)))
+            (let [remaining (max 1 (quot (- deadline (System/nanoTime)) 1000000)) next (refresh remaining)]
+              (when (= next ::timeout) (unavailable! "Requested position did not become available before the deadline"))
+              (recur next))))))))
+;; [EXP-DA01] Why: sparse logical positions map to the first containing physical transaction in logarithmic index work (Q89d). Rejected: rebuilding an O(commits) host map at each basis.
 (defn at-position [db p]
   (if (nil? p) db
-      (let [p (safe-position p) scope (d/q '[:find ?s . :where [_ :triplex.scope/key ?s]] db)
-            basis (d/basis-t db) cached (@positions scope)
-            mapping (if (= basis (:basis cached)) (:mapping cached)
-                      (let [initial (:tx (first (d/datoms db :avet :triplex.scope/key scope)))
-                            result (into (sorted-map 0 (d/tx->t initial))
-                                         (map (fn [datom] [(:v datom) (d/tx->t (:e datom))])
-                                              (d/datoms db :avet :triplex.tx/position)))]
-                        (swap! positions assoc scope {:basis basis :mapping result}) result))]
-        (if (>= p (key (last mapping))) db
-            (d/as-of db (val (first (subseq mapping >= p))))))))
+    (let [p (safe-position p) head (head-position db)]
+      (when (> p head) (unavailable! "Requested position is beyond the available snapshot"))
+      (if (= p head) db
+        (let [tx (if (zero? p)
+                   (:tx (first (d/datoms db :avet :triplex.scope/key
+                             (d/q '[:find ?s . :where [_ :triplex.scope/key ?s]] db))))
+                   (:e (first (d/index-range db :triplex.tx/position p nil))))]
+          (when-not tx (unavailable! "No physical transaction covers the requested position"))
+          (d/as-of db (d/tx->t tx)))))))
+(defn read-db [name current input]
+  (let [db (if-let [handle (get input "handle")]
+             (let [held (held-db name handle)]
+               (if-let [staged (get input "staged")] (:db-after (d/with held (tx-data held staged))) held))
+             current)
+        p (get-in input ["basis" "recordedPosition"])]
+    ;; [EXP-DA01] Why: a held value cannot advance even if another writer commits; refuse future requests against that exact pin. Rejected: replacing a held db with a newer one mid-query.
+    (at-position (await-position db p (get input "basisWaitMs") (fn [_] db)) p)))
 (defn raw-row [db eid]
   (let [f (d/entity db eid) tx (:f/asserted-in f) rtx (:f/retracted-in f) kind (name (:f/type f))]
     {:id (:f/id f) :entity_id (:triplex.entity/id (:f/subject f)) :attribute (:triplex.attr/key (:f/attr f))
@@ -155,19 +178,46 @@
              (and (not (and (:retracted_at row) (or (nil? p) (<= (:retracted_position row) p))
                             (or (nil? r) (<= (:retracted_at row) r))))
                   (or (nil? v) (and (<= (:valid_from row) v) (or (nil? (:valid_to row)) (> (:valid_to row) v)))))))))
+(defn assert-subject-route! [db basis attribute]
+  ;; [EXP-DA01] Why: position retirement loses T-shaped rows and interior logical cuts of a multi-position transaction (Q89b). Rejected: filtering after :f/live has already omitted eligible facts.
+  (when-not (#{:f/subject :f/live} attribute) (codec/invalid "Unknown subject route"))
+  (when (= attribute :f/live)
+    (when (some? (get basis "recordedAt"))
+      (unavailable! "Position-retired subject route cannot answer a record-time basis"))
+    (when-let [p (get basis "recordedPosition")]
+      (when (and (pos? p) (nil? (d/entid db [:triplex.tx/position p])))
+        (unavailable! "Position-retired subject route cannot answer an interior logical cut")))))
+(defn subject-facts [db entity-id basis attribute]
+  (assert-subject-route! db basis attribute)
+  (if-let [subject (d/entid db [:triplex.entity/id entity-id])]
+    (map :e (d/datoms db :vaet subject attribute)) []))
+(defn mask-retirement [r basis]
+  ;; [EXP-DA01] Why: native row metadata must describe the requested cut on every route (R31 HE-1). Rejected: exposing future retirement fields from a held or record-time source read.
+  (if (and (:retracted_at r)
+           (or (and (some? (get basis "recordedPosition")) (> (:retracted_position r) (get basis "recordedPosition")))
+               (and (some? (get basis "recordedAt")) (> (:retracted_at r) (get basis "recordedAt")))))
+    (assoc r :retracted_at nil :retracted_position nil :retract_tx_id nil) r))
 (defn read-rows [name current input]
   (let [basis (get input "basis") history (get input "history")
-        db (if-let [handle (get input "handle")]
-             (let [held (held-db name handle)] (if-let [staged (get input "staged")] (:db-after (d/with held (tx-data held staged))) held))
-             (at-position current (get basis "recordedPosition")))
+        db (read-db name current input)
+        route (get input "route" "history")
+        _ (when-not (#{"history" "live"} route) (codec/invalid "Unknown read route"))
+        attribute (if (= route "live") :f/live :f/subject)
+        _ (assert-subject-route! db basis attribute)
+        _ (when (and (= route "live") history) (unavailable! "Position-retired route cannot enumerate history"))
         pattern (into {} (remove (fn [[_ v]] (and (string? v) (.startsWith ^String v "?"))) (get input "pattern"))) id (get input "id") entities (get input "entityIds")
+        subject-ids #(subject-facts db % basis attribute)
         ids (cond id (if-let [eid (d/entid db [:f/id id])] [eid] [])
-                  (get pattern "entityId") (if-let [subject (d/entid db [:triplex.entity/id (get pattern "entityId")])]
-                                              (map :e (d/datoms db :vaet subject :f/subject)) [])
-                  :else (map :e (d/datoms db :avet :f/id)))
+                  (some? entities) (mapcat subject-ids (distinct entities))
+                  (get pattern "entityId") (subject-ids (get pattern "entityId"))
+                  :else (map :e (d/datoms db :avet (if (= route "live") :f/live :f/id))))
         rows (map #(row db %) ids)]
-    {:rows (mapv wire-row
+    {:route (cond (= route "live") "live" (get input "staged") "staged" (get input "handle") "held"
+                  (and (some? (get basis "recordedPosition")) (< (get basis "recordedPosition") (head-position current))) "as-of" :else "source")
+     :basis basis :subjectAttribute (str attribute)
+     :rows (mapv #(wire-row (mask-retirement % basis))
                  (filter (fn [r] (and (visible? r basis history)
+                                     (or (not= route "live") (nil? (:retracted_at r)))
                                      (or (nil? entities) (some #{(:entity_id r)} entities))
                                      (every? (fn [[k field]] (or (nil? (get pattern k)) (.startsWith ^String (str (get pattern k)) "?")
                                                                (= (get pattern k) (get r field))))

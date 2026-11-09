@@ -34,7 +34,6 @@
     (when-not (= schema/schema-hash (:triplex.scope/schema-hash (d/entity (sync-db uri) [:triplex.scope/key scope])))
       @(d/transact conn schema/schema)
       @(d/transact conn [{:triplex.scope/key scope :triplex.scope/schema-hash schema/schema-hash}]))
-    (storage/forget! scope)
     {:db name :created created :schemaHash schema/schema-hash}))
 (defn delete-scope! [base scope]
   (let [name (scope-name scope) uri (str base name)]
@@ -42,8 +41,7 @@
     ;; [EXP-DA00] Why: releasing the last mem peer may destroy it before delete. Rejected: release-first (selftest-3 returned false).
     (let [deleted (d/delete-database uri)]
       (when-let [conn (@connections uri)] (d/release conn) (swap! connections dissoc uri))
-      (storage/forget! scope)
-      {:db name :deleted deleted})))
+        {:db name :deleted deleted})))
 (defn basis [base name]
   (when-not (re-matches #"(s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)" name) (codec/invalid "Invalid database name"))
   (let [db (sync-db (str base name)) scope (stored-scope db)]
@@ -72,8 +70,14 @@
       (response 200 (basis base-uri (nth (clojure.string/split uri #"/") 3)))
       (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(snapshot|release|transact|read|q|claim|operation/[^/]+)" uri)
       (let [[_ _ _ name action id] (clojure.string/split uri #"/") db-uri (str base-uri name)
-            conn (connection db-uri) db (sync-db db-uri)
-            input (when (= request-method :post) (request-json body))]
+            input (when (= request-method :post) (request-json body))
+            conn (when-not (or (get input "handle") (= action "release")) (connection db-uri))
+            ;; [EXP-DA01] Why: held queries need no transactor sync and must never substitute a new db between requests (Q89d). Rejected: unconditional per-request sync.
+            db (when conn
+                 (storage/await-position (sync-db db-uri)
+                   (if (= action "claim") (get input "position") (get-in input ["basis" "recordedPosition"]))
+                   (get input "basisWaitMs")
+                   (fn [remaining] (deref (d/sync conn) remaining :triplex.gateway.storage/timeout))))]
         (response 200
           (case action
             "snapshot" (storage/begin! name db)

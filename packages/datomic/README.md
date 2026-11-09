@@ -47,3 +47,19 @@ The single codec definition is `src/codec-spec.json`: both runtimes load its
 grammars and ranges. Shared accepted and rejected vectors in the gateway include
 Java BigDecimal scale and exponent limits. Decimal text preserves coefficient
 and scale; JVM output can normalize spelling (for example `-0.00` to `0.00`).
+
+One Datalog execution holds one immutable database for all rule rounds, its final
+query and optional pulls, and releases it on success or failure. Staged callbacks
+reuse their held database and freeze their overlay for that execution. Named
+positions above the available head wait up to 500 ms by default, then fail with
+`DatomicBasisNotAvailable` (`ReadError`, code `BasisNotAvailable`). Gateway requests
+may choose a bounded 1–2000 ms `basisWaitMs`; held snapshots never advance to satisfy
+a future cut. Position lookups seek the AVET index, including sparse interior cuts,
+and batch pulls enumerate each requested subject once.
+
+The default read route retains full subject history and supports record-time cuts.
+The gateway's qualification-only `route: "live"` pull uses the position-retired
+`:f/live` index: it refuses record-time bases, history reads and interior logical
+positions that are not physical transaction ends. Native EDN selecting that index
+has the same basis guard. No TypeScript runtime option selects it by default.
+G1 on Datomic also runs the seeded O-REPLAY route-equivalence fixture.

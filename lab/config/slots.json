@@ -38,8 +38,8 @@
     },
     "datomic": {
       "image": "tx2-datomic:1.0.7745-da00",
-      "imageId": "sha256:1af4d8bcf83ca61459ea9f3beec576d50565da91fbde935ea977e8e217190312",
-      "buildInputsSha256": "1b536858f5f4b1a0a27539fe27a0312318f2c040192272ef941ffc18a2b80ccd",
+      "imageId": "sha256:9619fb07157511efa7c22e8e86041cb9179ffd473c28bb761344ca57bcc59a30",
+      "buildInputsSha256": "2e8f170abdbea1e926bf313d41ae77edceadd90a39f49929824f29b789b37634",
       "configSource": [
         "lab/config/datomic/transactor.properties",
         "lab/config/datomic/entrypoint.sh"
@@ -50,7 +50,7 @@
       "integrationEnv": {
         "DATOMIC_INTEGRATION": "1"
       },
-      "sourceInputsSha256": "19e7db07386b9f5a19d41b44f59759034c8d2978c5fb27ba0a83e9b07c0d1356"
+      "sourceInputsSha256": "92984ee3875d609aace2c1fd368a61eaaa979c06e99b4b6afe45d6f5b79f9604"
     }
   },
   "slots": {

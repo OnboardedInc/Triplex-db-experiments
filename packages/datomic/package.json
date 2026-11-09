@@ -30,5 +30,8 @@
   },
   "engines": {
     "node": ">=22"
+  },
+  "devDependencies": {
+    "@triplex-build/triplex-testkit": "workspace:^"
   }
 }

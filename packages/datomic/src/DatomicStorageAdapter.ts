@@ -1,4 +1,5 @@
 // [EXP-DA01] Why: adapt XTDB staged SPI and savepoint/replay discipline to one Datomic transaction. Rejected: per-row commits (break atomicity).
+import { readFailure } from "./readErrors.js";
 import { randomUUID } from "node:crypto";
 import { Effect, Exit, Semaphore } from "effect";
 import { type ResolvedTemporalBasis } from "@triplex-build/triplex";
@@ -40,7 +41,7 @@ export const makeDatomicStorageAdapter = (
   const read = <A>(thunk: (signal: AbortSignal) => Promise<A>): Effect.Effect<A, ReadError> =>
     Effect.tryPromise({
       try: thunk,
-      catch: (cause) => new ReadError({ message: "Datomic read failed", cause }),
+      catch: (cause) => readFailure(cause, "Datomic read failed"),
     });
   const committedPosition = () =>
     read(async () => {
@@ -373,23 +374,20 @@ export const makeDatomicStorageAdapter = (
     getById: (id) => Effect.map(queryRows({}, undefined, false, id), (rows) => rows[0] ?? null),
     getByEntity: (entityId, basis) => queryRows({ entityId }, basis),
     getByEntities: (entityIds, basis) =>
-      entityIds.length === 0
-        ? Effect.succeed(new Map())
-        : Effect.map(
-            queryRows({}, basis, false, undefined, [...new Set(entityIds)]),
-            (rows) =>
-              new Map(
-                [...new Set(entityIds)].map(
-                  (entityId) =>
-                    [entityId, rows.filter((row) => row.entity_id === entityId)] as const,
-                ),
-              ),
+      Effect.map(
+        queryRows({}, basis, false, undefined, [...new Set(entityIds)]),
+        (rows) =>
+          new Map(
+            [...new Set(entityIds)].map(
+              (entityId) => [entityId, rows.filter((row) => row.entity_id === entityId)] as const,
+            ),
           ),
+      ),
     query: (pattern, basis) => queryRows(pattern, basis),
     history: (entityId) => queryRows({ entityId }, undefined, true),
     dependencyState: (attributes, basis) =>
       Effect.gen(function* () {
-        const rows = (yield* queryRows({}, undefined, true)).filter((row) =>
+        const rows = (yield* queryRows({}, basis, true)).filter((row) =>
           attributes.includes(row.attribute),
         );
         let sourcePosition = 0;

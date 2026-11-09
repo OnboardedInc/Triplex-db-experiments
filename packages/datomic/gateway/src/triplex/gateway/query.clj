@@ -31,10 +31,10 @@
   (let [query (edn/read-string {:readers {} :default (fn [& _] (codec/invalid "Tagged EDN is not allowed"))} (get input "edn"))
         _ (check-query! query) timeout (long (get input "timeoutMs" 5000))
         _ (when-not (<= 1 timeout 30000) (codec/invalid "Query timeout out of bounds"))
-        db (if-let [handle (get input "handle")]
-             (let [held (storage/held-db name handle) staged (get input "staged")]
-               (if staged (:db-after (d/with held (storage/tx-data held staged))) held))
-             (storage/at-position current (get-in input ["basis" "recordedPosition"])))
+        db (storage/read-db name current input)
+        ;; [EXP-DA01] Why: trusted native EDN can also select the retired-by-position index; its basis eligibility must match pulls (Q89b). Rejected: guarding only the pull route.
+        _ (when (some #(and (vector? %) (= :f/live (second %))) (tree-seq coll? seq query))
+            (storage/assert-subject-route! db (get input "basis") :f/live))
         result (d/query {:query query :args [db (get input "relations" [])] :timeout timeout})]
     (when (> (count result) 100000) (codec/invalid "Query row budget exceeded"))
     {:rows (mapv #(mapv encode %) result)}))
