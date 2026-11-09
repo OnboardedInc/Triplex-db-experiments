@@ -93,12 +93,36 @@ indexer share the JVM. Passing P1 on native XTDB needs reads on a second node, w
 image is on the machine, so that needs Sam's approval to download. Lane X is therefore parked behind that decision; lane D carries
 the goal.
 
+### DX-B2 (speed; `exp/DX-B2-speed` 92a18d88, merged; report `lab/experiments/EXP-DX1/b2/REPORT.md`)
+
+Warm, Postgres storage, Postgres CPU 0, transactor CPUs 0-1, write gateway CPU 2, read gateway CPUs 3-4, 2,000 subjects.
+
+| Measure | Result | Bar |
+| --- | --- | --- |
+| Pull, one client, with references | p50 1.87 ms, p99 6.50 ms; 3.6 KB per pull (82.8 KB without references); client CPU 0.71 ms | p50 5, p99 25 |
+| Pull throughput, 32 readers | 6,798 pulls/s, **3,461 per read-gateway CPU-second**, p50 3.5 / p99 26 ms | 1,100 |
+| Pull at a past record time / past position | p50 1.0 ms, p99 5.8 ms, 0 declines | p50 5, p99 25 |
+| Commit, serial | **p50 9.77 ms, p99 30.7 ms**, 2 HTTP calls, median 249 datoms; `d/transact` itself 4.2 ms | p50 10, p99 50 |
+| Commit, open loop 55/s through the admission queue | p50 25 ms, **p99 178 ms** (miss) | p50 10, p99 50 |
+| Same with 32 readers running | p99 353 ms, 1.99x (miss) | 1.25x |
+| Read your own write through the read gateway | 2,000 of 2,000 visible; pull p50 4.9 ms, p99 50 ms on grown hot worlds | 5 / 25 |
+
+Tests: 144 pass (1 known pre-existing failure), 29,800 answer comparisons at 6,600 bases, 5 mutants each fail.
+Cause of the burst miss: every commit in a scope is serial end to end (client-allocated position plus a scope-wide compare-and-set), so
+a 10 ms service time at 55/s queues. DX-B3 moves position assignment into a transaction function, checks conflicts per entity and
+commits optimistically in one call.
+
+Known growth issue: a hot subject's placement entity gains one ref row per command, so its row set is re-sent whole after each change.
+If the NS run shows it matters: send entity deltas from Datomic history (`d/since`) between the revision the client holds and the
+current one.
+
 ## Agents running now
 
 | Id | Task | Branch / worktree | Prompt |
 | --- | --- | --- | --- |
-| DX-B2 | Gateway loop at engine cost; entity revisions, references and a client cache; `reach-many`; no `d/sync` on writes; index-job hook; warm numbers on Postgres with split gateways | `exp/DX-B2-speed`, `.claude/worktrees/dx-b2` | `.../prompts/DX-B2.md` |
-| DX-H2 | P5 measurable on lane D: W0 activation with evaluation, publication, oracle gates, live traffic, time breakdown | `exp/DX-H2-p5-harness`, `.claude/worktrees/dx-h2` | `.../prompts/DX-H2.md` |
+| DX-B3 | Positions assigned in a transaction function, per-entity conflict checks, one-call optimistic commit, no admission queue | `exp/DX-B3-concurrent-commits`, `.claude/worktrees/dx-b3` | `.../prompts/DX-B3.md` |
+| DX-H2 | P5 measurable on lane D | `exp/DX-H2-p5-harness`, `.claude/worktrees/dx-h2` | `.../prompts/DX-H2.md` |
 
-After B2 and H2: merge both; if H2 needs rows with recorded position from the reach path, add it; first full NS run on lane D at the
-10k rung in a quiet VM (stop every other agent first); then P5 at 100k.
+Orchestrator run in progress: first full NS smoke on lane D at the 10k rung, composition `reach`, stack `tx2-dxo1-a` (Postgres CPU 0,
+transactor 0-1, write gateway 1, read gateway 2-4, `TX2_ENGINE_CPUS=5`), run from `.claude/worktrees/dx-b2`, output
+`~/Claude/Projects/triplex-db-2/evidence/DX-O1/ns1/`.
