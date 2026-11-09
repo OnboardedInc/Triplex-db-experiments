@@ -526,3 +526,9 @@ export function applyRules(noise: RoundNoise, rules: readonly NoiseRule[], ctx: 
   }
   return { excluded, amber, notApplied, values };
 }
+
+/** Applied hard failures survive exclusions; soft exclusions do not become hard failures. */
+export function hardRuleFailures(roundId: string, result: RuleResult, rules: readonly NoiseRule[]) {
+  const ruleIds = result.excluded.filter(id => rules.some(rule => rule.id === id && rule.class.startsWith("hard")));
+  return ruleIds.length ? [{ roundId, ruleIds }] : [];
+}

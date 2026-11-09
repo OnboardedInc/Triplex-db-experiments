@@ -244,7 +244,7 @@ async function run(argv: string[]) {
   if (report.status !== "ERROR") {
     // A fixed-size A/A run is one analysis at 95%; an A/B run's final analysis is its last registered look (Pocock 98.2%).
     const level = mode === "ab" ? cfg.rounds.lookLevel : cfg.rounds.level;
-    const input = { ...analysisInput(stoppedAfter === null ? plan : { ...plan, rounds: plan.rounds.slice(0, stoppedAfter) }, driverReports, host, vm, calibs, arms, regime, claim, mode, composition, calibRef), level, placement: placement ?? null };
+    const input = { gradingVersion: 2 as const, ...analysisInput(stoppedAfter === null ? plan : { ...plan, rounds: plan.rounds.slice(0, stoppedAfter) }, driverReports, host, vm, calibs, arms, regime, claim, mode, composition, calibRef), level, placement: placement ?? null };
     const result = analysePair({ ...input, config: cfg });
     report.trace = { digest: driverReports["A"].trace.digest, seed, generatorSha256: driverReports["A"].generator.traceSha256, params: driverReports["A"].trace.params, digestB: driverReports["B"].trace.digest };
     report.roundsRun = input.rounds.length;
@@ -305,7 +305,7 @@ function analysisInput(plan: RoundPlan, reports: Record<string, any>, host: Host
   };
   const acc = (row: any) => ({ offered: row.offered, commands: { committed: row.commands.committed, censored: row.commands.censored, pendingAtEnd: row.commands.pendingAtEnd, byOutcome: row.commands.byOutcome }, probes: { ok: row.probes.ok, errors: row.probes.errors, expired: row.probes.expired, pendingAtEnd: row.probes.pendingAtEnd } });
   const accounting = Object.fromEntries(rounds.map((r) => [r.id, { A: acc(rowsA.get(r.id)), B: acc(rowsB.get(r.id)) }]));
-  const out = { mode, rounds: rounds.map((r) => ({ id: r.id, kind: r.kind, preflight: r.preflight, fromS: r.fromS, toS: r.toS })), histograms, noise, regime, claim, accounting, calibration, noiseFull };
+  const out = { gradingVersion: 2 as const, mode, rounds: rounds.map((r) => ({ id: r.id, kind: r.kind, preflight: r.preflight, fromS: r.fromS, toS: r.toS })), histograms, noise, regime, claim, accounting, calibration, noiseFull };
   return out as Omit<PairInput, "config"> & { noiseFull: RoundNoise[] };
 }
 
@@ -321,7 +321,7 @@ export const EVIDENCE_KEYS = ["analysis", "rounds", "histograms", "signals", "ca
 export function evidenceOf(input: any, result: any, noiseConfigText: string) {
   const item = (value: unknown) => { const json = typeof value === "string" ? value : JSON.stringify(value); return { sha256: sha256(json), json }; };
   return {
-    analysis: item({ mode: input.mode, regime: input.regime, claim: input.claim, level: input.level }),
+    analysis: item({ ...(input.gradingVersion === 2 ? { gradingVersion: 2 } : {}), mode: input.mode, regime: input.regime, claim: input.claim, level: input.level }),
     rounds: item(input.rounds),
     histograms: item(input.histograms),
     signals: item({ rounds: input.noise, exclusions: result.noise.exclusions, rules: result.noise.rules }),

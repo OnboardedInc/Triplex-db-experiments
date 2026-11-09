@@ -38,6 +38,7 @@ stands; each bar has its own pass/miss in `ns.bars`; a missed bar is a fitness r
 | `lib/paired.ts` | Paired statistics: pooled-quantile ratios with a round bootstrap, censoring, s_d, slot bias, sign flip, decisions, planner, window grade. |
 | `lib/noise.ts` | Round plan, host sampler, VM agent (one `colima ssh`), calibration spin, hiccup meter, round summaries, rules (`lab/config/noise.json`). |
 | `lib/rounds.ts` | Per-round histograms: commit, commitAll and commitCensored over every offered command, read probe, per-second goodput and max. |
+| `lib/single-analysis.ts` | Q100k sequential same-arm timing-grade helper for G03; retains all hard-rule history; no runner or acceptance admission. |
 | `lib/pair-analysis.ts` | The one function that turns rounds and noise into a PAIR receipt's `stats` and `noise`. |
 
 ## Paired rounds (PAIR-0, EXP-M01; R22, RULINGS Q60)
@@ -191,3 +192,5 @@ EXP-P3M adds `p3-driver.mjs`, an isolated-consumer NS P3 entry point using FD01 
 feed adapters and source-enumerated prefixes. See [the provider and receipt contract](../experiments/EXP-P3M/README.md).
 Its offline fixture runs 256 closed loops; it does not enable a real lane provider.
 The original driver remains the A0 journal control.
+
+Paired R22 GREEN can survive hard-rule exclusions; it never substitutes for Q100k single-arm timing GREEN. See the runbook for Q100l single-arm NS capacity and the unresolved three-median preflight sample count. New duet evidence uses gradingVersion 2 to retain hard-rule history; historical evidence retains its original recomputation shape.

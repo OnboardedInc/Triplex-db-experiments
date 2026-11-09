@@ -361,12 +361,16 @@ export function planRounds({ sd, ratio, minRounds = 8, maxRounds = 24, power = 0
 }
 
 export type Grade = "GREEN" | "AMBER" | "RED" | "INVALID" | "UNGRADED";
+export interface HardRuleFailure { readonly roundId: string; readonly ruleIds: readonly string[] }
 export interface GradeInput {
+  readonly contract?: "paired-r22" | "single-q100k";
+  /** All attempted rounds, including excluded ones; absent history cannot admit single-arm timing. */
+  readonly hardRuleHistory?: readonly HardRuleFailure[];
   /** s_d of per-round log p50 ratios over the A/A rounds the grade is based on. */
   readonly sdP50: number | null;
   readonly sdRounds: number;
   /** Where s_d came from ("aa" rounds, or "all" rounds of an A/B run, which also holds effect variance). */
-  readonly sdSource: "aa" | "all" | "preflight";
+  readonly sdSource: "aa" | "all" | "preflight" | "sequential-aa" | "sequential-preflight";
   readonly rounds: number;
   readonly excluded: number;
   readonly amberRounds: number;
@@ -382,17 +386,23 @@ export interface GradeInput {
  * RED: s_d above the limit at which `target` (1.25) resolves within maxRounds (24): 0.39. AMBER: above the
  * default-rounds (12) limit, 0.28, or any usable round carried a soft (amber) signal, or the VM is not partitioned
  * (R22 section 3: a neighbour shares an arm's vCPUs, so the "neighbor CPU" rule, hard only after partition, could
- * not be applied). GREEN otherwise. Absolute bars are judged only in GREEN windows; paired decisions in GREEN or
+ * not be applied). GREEN otherwise for paired R22; Q100k single-arm timing also requires unbroken hard-rule history and sequential same-arm ratios. Paired decisions in GREEN or
  * AMBER. A pre-flight s_d is multiplied by the safety factor 1.5 (3 rounds catch only gross noise).
  */
 export function windowGrade(g: GradeInput): { grade: Grade; reasons: string[]; limits: { defaultRounds: number; maxRounds: number }; sdUsed: number | null } {
   const target = g.target ?? 1.25, def = g.defaultRounds ?? 12, max = g.maxRounds ?? 24;
   const limits = { defaultRounds: sdLimit({ ratio: target, rounds: def }), maxRounds: sdLimit({ ratio: target, rounds: max }) };
   const reasons: string[] = [];
+  // [EXP-M01R2] Why: an excluded hard failure can leave a paired R22 window GREEN, but Q100k never admits that window for single-arm timing. Rejected: inferring hard-rule compliance from the exclusion count.
+  if (g.contract === "single-q100k") {
+    if (!g.hardRuleHistory) return { grade: "UNGRADED", reasons: ["single-arm hard-rule history missing"], limits, sdUsed: null };
+    if (g.hardRuleHistory.length) return { grade: "RED", reasons: g.hardRuleHistory.map(x => `${x.roundId}: hard rules broken: ${x.ruleIds.join(", ")}`), limits, sdUsed: null };
+    if (g.sdSource !== "sequential-aa" && g.sdSource !== "sequential-preflight") return { grade: "UNGRADED", reasons: ["single-arm timing needs sequential equal-burst-phase A/A ratios"], limits, sdUsed: null };
+  }
   const share = g.rounds ? g.excluded / g.rounds : 1;
   if (!g.rounds || share > (g.maxExcludedShare ?? 1 / 3)) return { grade: "INVALID", reasons: [`${g.excluded} of ${g.rounds} rounds excluded (more than a third)`], limits, sdUsed: null };
   if (g.sdP50 === null || !Number.isFinite(g.sdP50) || g.sdRounds < 3) return { grade: "UNGRADED", reasons: [`s_d needs at least 3 usable rounds with identified p50 (${g.sdRounds})`], limits, sdUsed: null };
-  const sdUsed = g.sdSource === "preflight" ? g.sdP50 * (g.preflightSafety ?? 1.5) : g.sdP50;
+  const sdUsed = (g.sdSource === "preflight" || g.sdSource === "sequential-preflight") ? g.sdP50 * (g.preflightSafety ?? 1.5) : g.sdP50;
   if (sdUsed > limits.maxRounds) return { grade: "RED", reasons: [`s_d ${sdUsed.toFixed(3)} > ${limits.maxRounds.toFixed(3)}: ${target}x cannot be resolved within ${max} rounds`], limits, sdUsed };
   if (sdUsed > limits.defaultRounds) reasons.push(`s_d ${sdUsed.toFixed(3)} > ${limits.defaultRounds.toFixed(3)}: ${target}x needs up to ${max} rounds instead of ${def}`);
   if (g.amberRounds > 0) reasons.push(`${g.amberRounds} usable rounds carried a soft (amber) noise signal`);
