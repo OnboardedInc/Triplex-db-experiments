@@ -1,0 +1,4 @@
+{
+  "type": "OracleInputError",
+  "message": "record instant outside [0, 2^43)"
+}

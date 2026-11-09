@@ -1,0 +1,3 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 87753 "CX-VA01-0312R2-mut", pid 87754 "CX-VA01-0312R2-eval", pid 7473 "CX-G03-r3-claim-suites4", pid 40667 "CX-VA01-0312R2-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87753 "CX-VA01-0312R2-mut", pid 87754 "CX-VA01-0312R2-eval", pid 7473 "CX-G03-r3-claim-suites4", pid 64569 "CX-VDA01-live-route"
+seal PASS: source and log bytes unchanged; 22 exact reviewer cases bound; runner manifest refreshed

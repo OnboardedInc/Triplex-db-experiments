@@ -593,7 +593,8 @@ class Run:
             previous = reference = 0
             groups = {}
             for index, _, command in sorted(rows, key=lambda row: row[1]):
-                rec = self.receipts[index]
+                # [EXP-O06] Why: resolved lost-ACK receipts are committed inputs. Rejected: raw outcome (loses stagedAt).
+                rec = self._receipt(index)
                 if rec.get("instant") is None:
                     continue
                 instant = V.Num.parse(rec["instant"])
@@ -613,8 +614,10 @@ class Run:
                     if stamp <= previous:
                         problems.append({"rule": "R-RCP-9", "command": index,
                                          "problem": "distinct transactions are not strictly increasing"})
-                    staged = self._staged(command, rec)
-                    expected = ST.next_stamp(reference, staged)
+                    expected = None
+                    if self.clock_driven:
+                        staged = self._staged(command, rec)
+                        expected = ST.next_stamp(reference, staged)
                     groups[unit] = (stamp, expected)
                     previous, reference = stamp, expected
                 if self.clock_driven and stamp != expected:

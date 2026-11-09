@@ -123,3 +123,55 @@ class RecordTimeTests(unittest.TestCase):
         c = copy.deepcopy(BASE)
         c['queries'] = [{'id':'q','kind':'match','cut':{'validAt':500},'pattern':{'attribute':':_tx/instant'}}]
         self.assertEqual(result(evaluate(c),'q')['error'],'X-NOT-MODELED')
+
+
+class ReviewRound2Tests(unittest.TestCase):
+    def reproduction(self, name):
+        return json.loads((ROOT / 'round2/reviewer/reproductions' / (name + '.case.json')).read_text())
+
+    def test_cross_ordinal_raw_json_omits_physical_own_instant(self):
+        c = self.reproduction('cross-ordinal-journal-own-instant')
+        report = evaluate(c)
+        self.assertEqual(report['verdict'], 'PASS')
+        facts = result(report, 'j')['facts']
+        for fact in facts:
+            if fact['attribute'] == ':_tx/change':
+                payload = fact['value']['value']
+                self.assertNotIn('recordedAt', payload)
+                self.assertNotIn('retractedAt', payload)
+                canonical = json.loads(fact['value']['canonical'])
+                self.assertNotIn('recordedAt', canonical)
+                self.assertNotIn('retractedAt', canonical)
+        hydrated = report['state'][0]['transactions'][1]['changes'][0]
+        self.assertEqual((hydrated['recordedAt'], hydrated['retractedAt']), (500,500))
+        # The older distinct-transaction case must retain its historical recordedAt.
+        older = evaluate(self.reproduction('staged-valid-time-and-journal'))
+        changes = [f['value']['value'] for f in result(older,'j')['facts'] if f['attribute']==':_tx/change']
+        self.assertEqual(changes[0]['recordedAt'],500)
+        self.assertNotIn('retractedAt',changes[0])
+
+    def test_resolved_lost_ack_receipt_only_staging(self):
+        committed = self.reproduction('resolved-receipt-false')
+        resolved = self.reproduction('resolved-receipt-true')
+        for driven in (False, True):
+            committed['adapter']['clockDriven'] = resolved['adapter']['clockDriven'] = driven
+            a,b = evaluate(committed),evaluate(resolved)
+            self.assertEqual((a['verdict'],b['verdict']),('PASS','PASS'))
+            self.assertEqual(a['state'],b['state'])
+            self.assertEqual(a['receiptConsistency'],b['receiptConsistency'])
+        resolved['receipts'][1]['replays']=[{'instant':501}]
+        self.assertEqual(evaluate(resolved)['verdict'],'FAIL')
+
+    def test_far_future_query_is_typed_and_storage_bound_is_strict(self):
+        c = self.reproduction('large-future-refusal')
+        for t in (2 ** 43, 2 ** 44, 1e100, float.fromhex('0x1.fffffffffffffp+1023')):
+            c['queries'][0]['cut']['recordedAt'] = t
+            report=evaluate(c)
+            self.assertEqual(report['verdict'],'PASS')
+            error=report['queries'][0]['error']
+            self.assertEqual((error['error'],error['axis']),('E-BASIS-NOT-AVAILABLE','recordedAt'))
+        c['queries']=[]
+        c['receipts'][1]['instant']=2 ** 43
+        report=evaluate(c)
+        self.assertEqual(report['verdict'],'FAIL')
+        self.assertIn('R-RCP-9',[v['rule'] for v in report['receiptConsistency']['violations']])

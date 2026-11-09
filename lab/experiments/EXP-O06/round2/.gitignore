@@ -1,0 +1,3 @@
+# Full generated golden cases/outputs retained locally and indexed by inventory.json.
+evidence-*/**/cases/
+evidence-*/**/runs/

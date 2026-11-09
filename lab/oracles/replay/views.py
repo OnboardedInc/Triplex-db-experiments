@@ -85,7 +85,9 @@ def resolve_cut(run, raw, *, need_valid=True):
         published = [r for r in state.records if start is None or r.position <= start]
         watermark = max((ST.stamp_of(r.instant) for r in published), default=0)
         pending = any(r.instant.frac <= R and start is not None and r.position > start for r in state.records)
-        if pending or ST.stamp_cut(numbers["recordedAt"]) > watermark:
+        # [EXP-O06] Why: finite future queries require typed refusal. Rejected: stamp conversion beyond its storage domain.
+        future = numbers["recordedAt"].float >= 2 ** 43
+        if pending or future or ST.stamp_cut(numbers["recordedAt"]) > watermark:
             raise X.TypedError("E-BASIS-NOT-AVAILABLE", "record cut was not published at read start",
                                axis="recordedAt", rule="R-CUT-6")
         if raw.get("position", "latest") == "latest" and start is not None:
