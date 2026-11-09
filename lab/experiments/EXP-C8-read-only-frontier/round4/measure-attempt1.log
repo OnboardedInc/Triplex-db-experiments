@@ -1,0 +1,28 @@
+failed to load config from /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/lab/experiments/EXP-C8-read-only-frontier/round4/vitest.config.ts
+
+⎯⎯⎯⎯⎯⎯⎯ Startup Error ⎯⎯⎯⎯⎯⎯⎯⎯
+Error: Build failed with 1 error:
+
+[31m[UNRESOLVED_IMPORT] [0mCould not resolve '../../../../../vitest.workspace-aliases.ts' in lab/experiments/EXP-C8-read-only-frontier/round4/vitest.config.ts
+   [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m lab/experiments/EXP-C8-read-only-frontier/round4/vitest.config.ts:2:34 [38;5;246m][0m
+   [38;5;246m│[0m
+ [38;5;246m2 │[0m [38;5;249mi[0m[38;5;249mm[0m[38;5;249mp[0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249mt[0m[38;5;249m [0m[38;5;249m{[0m[38;5;249m [0m[38;5;249mw[0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249mk[0m[38;5;249ms[0m[38;5;249mp[0m[38;5;249ma[0m[38;5;249mc[0m[38;5;249me[0m[38;5;249mA[0m[38;5;249ml[0m[38;5;249mi[0m[38;5;249ma[0m[38;5;249ms[0m[38;5;249me[0m[38;5;249ms[0m[38;5;249m [0m[38;5;249m}[0m[38;5;249m [0m[38;5;249mf[0m[38;5;249mr[0m[38;5;249mo[0m[38;5;249mm[0m[38;5;249m [0m'../../../../../vitest.workspace-aliases.ts'[38;5;249m;[0m
+ [38;5;240m  │[0m                                  ──────────────────────┬─────────────────────  
+ [38;5;240m  │[0m                                                        ╰─────────────────────── Module not found.
+[38;5;246m───╯[0m
+
+    at aggregateBindingErrorsIntoJsError (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/node_modules/.pnpm/rolldown@1.2.7/node_modules/rolldown/dist/shared/error-BP8lJHle.mjs:48:18)
+    at unwrapBindingResult (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/node_modules/.pnpm/rolldown@1.2.7/node_modules/rolldown/dist/shared/error-BP8lJHle.mjs:18:128)
+    at #build (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/node_modules/.pnpm/rolldown@1.2.7/node_modules/rolldown/dist/shared/rolldown-DfXO5K1m.mjs:133:34)
+    at async bundleConfigFile (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:37116:17)
+    at async bundleAndLoadConfigFile (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:37014:18)
+    at async loadConfigFromFile (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:36975:42)
+    at async resolveConfig (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:36581:22)
+    at async resolveConfig (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/index.B8VfM7Mf.js:9241:25)
+    at async createVitest (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/cli-api.Bx28WXzL.js:13377:17)
+    at async prepareVitest (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/cli-api.Bx28WXzL.js:13772:14) {
+  errors: [Getter/Setter]
+}
+
+
+

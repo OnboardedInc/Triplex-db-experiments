@@ -1,0 +1,91 @@
+{
+  "paired": [
+    {
+      "label": "baseline-original",
+      "ms": 6964.456917
+    },
+    {
+      "label": "integration-original",
+      "ms": 4978.483
+    },
+    {
+      "label": "baseline-dataset",
+      "ms": 3194.9144579999993
+    },
+    {
+      "label": "integration-dataset",
+      "ms": 3185.522667000001
+    },
+    {
+      "label": "baseline-unscoped",
+      "ms": 7462.547290999999
+    },
+    {
+      "label": "integration-unscoped",
+      "ms": 9459.122916999997
+    }
+  ],
+  "controlRequests": 123,
+  "errors": [
+    {
+      "id": 63,
+      "kind": "write",
+      "ms": 30002.496416999995,
+      "error": "TimeoutError: The operation was aborted due to timeout"
+    },
+    {
+      "id": 92,
+      "kind": "other",
+      "ms": 1.4419999999954598,
+      "error": "TimeoutError: The operation was aborted due to timeout"
+    },
+    {
+      "id": 116,
+      "kind": "self-source",
+      "ms": 9625.105750000002,
+      "error": "AbortError: This operation was aborted"
+    },
+    {
+      "id": 117,
+      "kind": "self-source",
+      "ms": 9623.845000000001,
+      "error": "AbortError: This operation was aborted"
+    },
+    {
+      "id": 118,
+      "kind": "self-source",
+      "ms": 9621.135416000005,
+      "error": "AbortError: This operation was aborted"
+    },
+    {
+      "id": 119,
+      "kind": "self-source",
+      "ms": 9618.875541000001,
+      "error": "AbortError: This operation was aborted"
+    },
+    {
+      "id": 120,
+      "kind": "shared-ancestor-main",
+      "ms": 4599.719542000006,
+      "error": "AbortError: This operation was aborted"
+    },
+    {
+      "id": 121,
+      "kind": "parent-source",
+      "ms": 4087.7871670000022,
+      "error": "AbortError: This operation was aborted"
+    },
+    {
+      "id": 122,
+      "kind": "shared-ancestor-main",
+      "ms": 2354.6859579999873,
+      "error": "TimeoutError: The operation was aborted due to timeout"
+    },
+    {
+      "id": 123,
+      "kind": "rule-main",
+      "ms": 2318.0304999999935,
+      "error": "AbortError: This operation was aborted"
+    }
+  ]
+}

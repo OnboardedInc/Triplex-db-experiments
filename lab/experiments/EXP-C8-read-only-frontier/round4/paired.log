@@ -1,0 +1,11 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 25537 "CX-A01-0312-R2-ancillary", pid 52642 "CX-INT-XCJ-final-evaluator", pid 37317 "CX-G03-r3-claim-suites2", pid 25539 "CX-A01-0312-R2-mutations"
+[lab] heavy: waiting for one of 4 slots; held by pid 25537 "CX-A01-0312-R2-ancillary", pid 52642 "CX-INT-XCJ-final-evaluator", pid 37317 "CX-G03-r3-claim-suites2", pid 25539 "CX-A01-0312-R2-mutations"
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  19:21:47
+   Duration  36.09s (tests 99%, import 1%)
+

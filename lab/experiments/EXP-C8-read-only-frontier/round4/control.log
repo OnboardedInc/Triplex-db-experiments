@@ -1,0 +1,46 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 25537 "CX-A01-0312-R2-ancillary", pid 52642 "CX-INT-XCJ-final-evaluator", pid 37317 "CX-G03-r3-claim-suites2", pid 25539 "CX-A01-0312-R2-mutations"
+[lab] heavy: waiting for one of 4 slots; held by pid 25537 "CX-A01-0312-R2-ancillary", pid 29394 "CX-C8-R4-paired", pid 37317 "CX-G03-r3-claim-suites2", pid 25539 "CX-A01-0312-R2-mutations"
+[lab] heavy: waiting for one of 4 slots; held by pid 25540 "CX-A01-0312-R2-evaluator", pid 51699 "CX-VP2Q-4-R8-offline", pid 37317 "CX-G03-r3-claim-suites2", pid 25539 "CX-A01-0312-R2-mutations"
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16
+
+ ❯ packages/qualification/test/c8-reads-never-write.test.ts (2 tests | 1 failed | 1 skipped) 125485ms
+   ❯ C8 on QLever: reads never write (engine boundary) (1)
+     × counts zero updates across rule queries, native closures and a load run 125484ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  packages/qualification/test/c8-reads-never-write.test.ts > C8 on QLever: reads never write (engine boundary) > counts zero updates across rule queries, native closures and a load run
+ReadError: QLever Datalog execution failed: TimeoutError: The operation was aborted due to timeout
+ ❯ fail packages/qlever/src/QleverQueryExecutor.ts:53:7
+     51|   cause instanceof DatalogValidationError || cause instanceof UnboundV…
+     52|     ? cause
+     53|     : new ReadError({ message: `QLever Datalog execution failed: ${Str…
+       |       ^
+     54| const safeCount = (value: string | undefined): number => {
+     55|   const result = Number(value ?? 0);
+ ❯ node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1113:42
+ ❯ ~effect/Utils/internal node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/Utils.ts:198:14
+ ❯ PrimitiveImpl.~effect/Effect/args node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1113:23
+ ❯ PrimitiveImpl.~effect/Effect/evaluate node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:980:22
+ ❯ FiberImpl.runLoop node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:653:41
+ ❯ FiberImpl.evaluate node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:594:23
+ ❯ FiberImpl.evaluate node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:588:27
+ ❯ node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1158:17
+
+Caused by: TimeoutError: The operation was aborted due to timeout
+ ❯ globalThis.fetch lab/experiments/EXP-C8-read-only-frontier/round4/control-trace.ts:15:21
+ ❯ request packages/qlever/src/QleverClient.ts:85:24
+ ❯ Object.query packages/qlever/src/QleverClient.ts:121:23
+ ❯ try packages/qlever/src/QleverQueryExecutor.ts:337:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 23, INDEX_SIZE_ERR: 1, DOMSTRING_SIZE_ERR: 2, HIERARCHY_REQUEST_ERR: 3, WRONG_DOCUMENT_ERR: 4, INVALID_CHARACTER_ERR: 5, NO_DATA_ALLOWED_ERR: 6, NO_MODIFICATION_ALLOWED_ERR: 7, NOT_FOUND_ERR: 8, NOT_SUPPORTED_ERR: 9, INUSE_ATTRIBUTE_ERR: 10, INVALID_STATE_ERR: 11, SYNTAX_ERR: 12, INVALID_MODIFICATION_ERR: 13, NAMESPACE_ERR: 14, INVALID_ACCESS_ERR: 15, VALIDATION_ERR: 16, TYPE_MISMATCH_ERR: 17, SECURITY_ERR: 18, NETWORK_ERR: 19, ABORT_ERR: 20, URL_MISMATCH_ERR: 21, QUOTA_EXCEEDED_ERR: 22, TIMEOUT_ERR: 23, INVALID_NODE_TYPE_ERR: 24, DATA_CLONE_ERR: 25 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 skipped (2)
+   Start at  19:22:42
+   Duration  126.57s (tests 99%, transform 1%)
+

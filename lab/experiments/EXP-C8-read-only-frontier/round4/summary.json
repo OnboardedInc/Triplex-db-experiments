@@ -1,0 +1,3120 @@
+{
+  "paired": [
+    {
+      "label": "baseline-original",
+      "ms": 6964.456917,
+      "result": {
+        "results": [
+          {
+            "?ancestor": "c8:b"
+          },
+          {
+            "?ancestor": "c8:c"
+          },
+          {
+            "?ancestor": "c8:d"
+          }
+        ]
+      },
+      "requests": [
+        {
+          "event": "end",
+          "id": "baseline-original-1",
+          "ms": 3771.721166,
+          "rows": 5
+        },
+        {
+          "event": "end",
+          "id": "baseline-original-2",
+          "ms": 3172.395042,
+          "rows": 5
+        },
+        {
+          "event": "end",
+          "id": "baseline-original-3",
+          "ms": 10.85674999999992,
+          "rows": 3
+        }
+      ]
+    },
+    {
+      "label": "integration-original",
+      "ms": 4978.483,
+      "result": {
+        "results": [
+          {
+            "?ancestor": "c8:b"
+          },
+          {
+            "?ancestor": "c8:c"
+          },
+          {
+            "?ancestor": "c8:d"
+          }
+        ]
+      },
+      "requests": [
+        {
+          "event": "end",
+          "id": "integration-original-1",
+          "ms": 3148.649125,
+          "rows": 5
+        },
+        {
+          "event": "end",
+          "id": "integration-original-2",
+          "ms": 1815.6020000000008,
+          "rows": 5
+        },
+        {
+          "event": "end",
+          "id": "integration-original-3",
+          "ms": 9.42725000000064,
+          "rows": 3
+        }
+      ]
+    },
+    {
+      "label": "baseline-dataset",
+      "ms": 3194.9144579999993,
+      "result": {
+        "results": [
+          {
+            "?ancestor": "c8:b"
+          },
+          {
+            "?ancestor": "c8:c"
+          },
+          {
+            "?ancestor": "c8:d"
+          }
+        ]
+      },
+      "requests": [
+        {
+          "event": "end",
+          "id": "baseline-dataset-1",
+          "ms": 49.20183300000099,
+          "rows": 5
+        },
+        {
+          "event": "end",
+          "id": "baseline-dataset-2",
+          "ms": 3133.428083999999,
+          "rows": 5
+        },
+        {
+          "event": "end",
+          "id": "baseline-dataset-3",
+          "ms": 9.159333000001425,
+          "rows": 3
+        }
+      ]
+    },
+    {
+      "label": "integration-dataset",
+      "ms": 3185.522667000001,
+      "result": {
+        "results": [
+          {
+            "?ancestor": "c8:b"
+          },
+          {
+            "?ancestor": "c8:c"
+          },
+          {
+            "?ancestor": "c8:d"
+          }
+        ]
+      },
+      "requests": [
+        {
+          "event": "end",
+          "id": "integration-dataset-1",
+          "ms": 53.76179200000115,
+          "rows": 5
+        },
+        {
+          "event": "end",
+          "id": "integration-dataset-2",
+          "ms": 3120.4675419999985,
+          "rows": 5
+        },
+        {
+          "event": "end",
+          "id": "integration-dataset-3",
+          "ms": 8.75512499999968,
+          "rows": 3
+        }
+      ]
+    },
+    {
+      "label": "baseline-unscoped",
+      "ms": 7462.547290999999,
+      "result": {
+        "results": [
+          {
+            "?ancestor": "c8:b"
+          },
+          {
+            "?ancestor": "c8:c"
+          },
+          {
+            "?ancestor": "c8:d"
+          }
+        ]
+      },
+      "requests": [
+        {
+          "event": "end",
+          "id": "baseline-unscoped-1",
+          "ms": 3781.2077500000014,
+          "rows": 5
+        },
+        {
+          "event": "end",
+          "id": "baseline-unscoped-2",
+          "ms": 3670.0674580000014,
+          "rows": 5
+        },
+        {
+          "event": "end",
+          "id": "baseline-unscoped-3",
+          "ms": 8.623665999999503,
+          "rows": 3
+        }
+      ]
+    },
+    {
+      "label": "integration-unscoped",
+      "ms": 9459.122916999997,
+      "result": {
+        "results": [
+          {
+            "?ancestor": "c8:b"
+          },
+          {
+            "?ancestor": "c8:c"
+          },
+          {
+            "?ancestor": "c8:d"
+          }
+        ]
+      },
+      "requests": [
+        {
+          "event": "end",
+          "id": "integration-unscoped-1",
+          "ms": 5576.013708000002,
+          "rows": 5
+        },
+        {
+          "event": "end",
+          "id": "integration-unscoped-2",
+          "ms": 3866.3074159999996,
+          "rows": 5
+        },
+        {
+          "event": "end",
+          "id": "integration-unscoped-3",
+          "ms": 12.721959000002244,
+          "rows": 3
+        }
+      ]
+    }
+  ],
+  "profiles": [
+    {
+      "variant": "original",
+      "status": "OK",
+      "results": 5,
+      "time": {
+        "computeResult": "4352ms",
+        "total": "4353ms"
+      },
+      "nodes": [
+        {
+          "description": "LIMIT 100001",
+          "rows": 5,
+          "totalMs": 4349,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "executed-implicitly-during-query-export": true
+          }
+        },
+        {
+          "description": "Distinct",
+          "rows": 5,
+          "totalMs": 4349,
+          "operationMs": 1,
+          "cache": "computed",
+          "details": {
+            "local-vocab-size": 2,
+            "not-written-to-cache-because-child-of-limit": false
+          }
+        },
+        {
+          "description": "Sort (internal order) on ?v0_value ?v1_value",
+          "rows": 5,
+          "totalMs": 4348,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "is-external": "false",
+            "local-vocab-size": 2
+          }
+        },
+        {
+          "description": "Filter (?v0_type = \"string\" && ?v1_type = \"string\")",
+          "rows": 5,
+          "totalMs": 4348,
+          "operationMs": 1,
+          "cache": "computed",
+          "details": {
+            "local-vocab-size": 2
+          }
+        },
+        {
+          "description": "Strip Columns",
+          "rows": 5,
+          "totalMs": 4347,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "local-vocab-size": 2
+          }
+        },
+        {
+          "description": "Distinct",
+          "rows": 5,
+          "totalMs": 4347,
+          "operationMs": 1,
+          "cache": "computed",
+          "details": {
+            "local-vocab-size": 2
+          }
+        },
+        {
+          "description": "Sort (internal order) on ?v0_type ?v0_value ?v0_order ?v1_type ?v1_value ?v1_order",
+          "rows": 5,
+          "totalMs": 4346,
+          "operationMs": 2,
+          "cache": "computed",
+          "details": {
+            "is-external": "false",
+            "local-vocab-size": 2
+          }
+        },
+        {
+          "description": "BIND (?a0_value_order AS ?v1_order)",
+          "rows": 5,
+          "totalMs": 4343,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "non-empty-local-vocabs": "1 / 1, Ø = 2, max = 2"
+          }
+        },
+        {
+          "description": "BIND (?a0_value_lexical AS ?v1_value)",
+          "rows": 5,
+          "totalMs": 4343,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "non-empty-local-vocabs": "1 / 1, Ø = 2, max = 2"
+          }
+        },
+        {
+          "description": "BIND (?a0_value_family AS ?v1_type)",
+          "rows": 5,
+          "totalMs": 4343,
+          "operationMs": 1,
+          "cache": "computed",
+          "details": {
+            "non-empty-local-vocabs": "1 / 1, Ø = 2, max = 2"
+          }
+        },
+        {
+          "description": "BIND (?a0_entity_id AS ?v0_order)",
+          "rows": 5,
+          "totalMs": 4342,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "non-empty-local-vocabs": "1 / 1, Ø = 2, max = 2"
+          }
+        },
+        {
+          "description": "BIND (?a0_entity_id AS ?v0_value)",
+          "rows": 5,
+          "totalMs": 4342,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "non-empty-local-vocabs": "1 / 1, Ø = 2, max = 2"
+          }
+        },
+        {
+          "description": "BIND (\"string\" AS ?v0_type)",
+          "rows": 5,
+          "totalMs": 4342,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "non-empty-local-vocabs": "1 / 1, Ø = 2, max = 2"
+          }
+        },
+        {
+          "description": "Filter ((\"string\" = \"string\" && \":c8/parent\" = \":c8/parent\"))",
+          "rows": 5,
+          "totalMs": 4342,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "non-empty-local-vocabs": "1 / 1, Ø = 1, max = 1"
+          }
+        },
+        {
+          "description": "Strip Columns",
+          "rows": 5,
+          "totalMs": 4342,
+          "operationMs": 1,
+          "cache": "computed",
+          "details": {
+            "non-empty-local-vocabs": "1 / 1, Ø = 1, max = 1"
+          }
+        },
+        {
+          "description": "BIND (IF(?a0_value_type IN (\"number\",\"datetime\",\"integer\"),COALESCE(?a0_value_number_order,?a0_value_datetime_order,?a0_value_integer_order),IF(?a0_value_type IN (\"number\",\"datetime\") && ?a0_payload=\"-0\",\"0\",?a0_payload)) AS ?a0_value_order)",
+          "rows": 5,
+          "totalMs": 4341,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "non-empty-local-vocabs": "1 / 1, Ø = 1, max = 1"
+          }
+        },
+        {
+          "description": "BIND (IF(?a0_value_type IN (\"number\",\"datetime\") && ?a0_payload=\"-0\",\"0\",?a0_payload) AS ?a0_value_lexical)",
+          "rows": 5,
+          "totalMs": 4341,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "non-empty-local-vocabs": "1 / 1, Ø = 1, max = 1"
+          }
+        },
+        {
+          "description": "BIND (IF(?a0_value_type IN (\"number\",\"datetime\"),\"number\",IF(?a0_value_type=\"integer\",\"integer\",IF(?a0_value_type=\"boolean\",\"boolean\",\"string\"))) AS ?a0_value_family)",
+          "rows": 5,
+          "totalMs": 4341,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "non-empty-local-vocabs": "1 / 1, Ø = 1, max = 1"
+          }
+        },
+        {
+          "description": "OptionalJoin on ?a0 ",
+          "rows": 5,
+          "totalMs": 4341,
+          "operationMs": 548,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "OptionalJoin on ?a0 ",
+          "rows": 5,
+          "totalMs": 3793,
+          "operationMs": 518,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "OptionalJoin on ?a0 ",
+          "rows": 5,
+          "totalMs": 3274,
+          "operationMs": 500,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "Filter (?a0_valid_from_order <= \"c27a1bdaebdf8000\" && (!BOUND(?a0_valid_to_order) || ?a0_valid_to_order > \"c27a1bdaebdf8000\") && ?a0_recorded_position_order <= \"c010000000000000\" && (!BOUND(?a0_retracted_position_order) || ((?a0_retracted_position_order > \"c010000000000000\"))))",
+          "rows": 5,
+          "totalMs": 2774,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "OptionalJoin on ?a0 ",
+          "rows": 5,
+          "totalMs": 2774,
+          "operationMs": 541,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "OptionalJoin on ?a0 ",
+          "rows": 5,
+          "totalMs": 2233,
+          "operationMs": 503,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "Join on ?a0",
+          "rows": 5,
+          "totalMs": 1730,
+          "operationMs": 1,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "Join on ?a0",
+          "rows": 5,
+          "totalMs": 1503,
+          "operationMs": 1,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "Join on ?a0",
+          "rows": 5,
+          "totalMs": 1258,
+          "operationMs": 1,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "Filter ((?a0_value_type IN (\"string\",\"ref\",\"integer\",\"blob\") && ?a0_payload_property=<urn:triplex:field:value_string>) || (?a0_value_type=\"number\" && ?a0_payload_property=<urn:triplex:field:value_number>) || (?a0_value_type=\"datetime\" && ?a0_payload_property=<urn:triplex:field:value_datetime>) || (?a0_value_type=\"boolean\" && ?a0_payload_property=<urn:triplex:field:value_boolean>) || (?a0_value_type=\"json\" && ?a0_payload_property=<urn:triplex:field:value_json>))",
+          "rows": 5,
+          "totalMs": 1038,
+          "operationMs": 1,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "Join on ?a0",
+          "rows": 130,
+          "totalMs": 1037,
+          "operationMs": 1,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "Join on ?a0",
+          "rows": 130,
+          "totalMs": 813,
+          "operationMs": 1,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "IndexScan SPO ?a0 ?a0_payload_property ?a0_payload",
+          "rows": 2858,
+          "totalMs": 232,
+          "operationMs": 232,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "IndexScan POS ?a0 <urn:triplex:field:attribute> \":c8/parent\"",
+          "rows": 5,
+          "totalMs": 580,
+          "operationMs": 580,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "IndexScan PSO ?a0 <urn:triplex:field:value_type> ?a0_value_type",
+          "rows": 106,
+          "totalMs": 223,
+          "operationMs": 223,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "IndexScan PSO ?a0 <urn:triplex:field:valid_from_order> ?a0_valid_from_order",
+          "rows": 106,
+          "totalMs": 219,
+          "operationMs": 219,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "IndexScan PSO ?a0 <urn:triplex:field:recorded_position_order> ?a0_recorded_position_order",
+          "rows": 106,
+          "totalMs": 244,
+          "operationMs": 244,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "IndexScan PSO ?a0 <urn:triplex:field:entity_id> ?a0_entity_id",
+          "rows": 106,
+          "totalMs": 226,
+          "operationMs": 226,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "IndexScan PSO ?a0 <urn:triplex:field:valid_to_order> ?a0_valid_to_order",
+          "rows": 0,
+          "totalMs": 0,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "IndexScan PSO ?a0 <urn:triplex:field:retracted_position_order> ?a0_retracted_position_order",
+          "rows": 0,
+          "totalMs": 0,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "num-blocks-all": 1,
+            "num-blocks-read": 0,
+            "num-elements-read": 0
+          }
+        },
+        {
+          "description": "IndexScan PSO ?a0 <urn:triplex:field:value_number_order> ?a0_value_number_order",
+          "rows": 4,
+          "totalMs": 0,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "num-blocks-all": 1,
+            "num-blocks-postprocessed": 1,
+            "num-blocks-read": 1,
+            "num-blocks-with-update": 1,
+            "num-elements-read": 2858
+          }
+        },
+        {
+          "description": "IndexScan PSO ?a0 <urn:triplex:field:value_datetime_order> ?a0_value_datetime_order",
+          "rows": 4,
+          "totalMs": 0,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "num-blocks-all": 1,
+            "num-blocks-postprocessed": 1,
+            "num-blocks-read": 1,
+            "num-blocks-with-update": 1,
+            "num-elements-read": 2858
+          }
+        },
+        {
+          "description": "IndexScan PSO ?a0 <urn:triplex:field:value_integer_order> ?a0_value_integer_order",
+          "rows": 0,
+          "totalMs": 0,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "num-blocks-all": 1,
+            "num-blocks-read": 0,
+            "num-elements-read": 0
+          }
+        }
+      ]
+    },
+    {
+      "variant": "dataset",
+      "status": "OK",
+      "results": 5,
+      "time": {
+        "computeResult": "4242ms",
+        "total": "4242ms"
+      },
+      "nodes": [
+        {
+          "description": "LIMIT 100001",
+          "rows": 5,
+          "totalMs": 4239,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "executed-implicitly-during-query-export": true
+          }
+        },
+        {
+          "description": "Distinct",
+          "rows": 5,
+          "totalMs": 4239,
+          "operationMs": 1,
+          "cache": "computed",
+          "details": {
+            "local-vocab-size": 2,
+            "not-written-to-cache-because-child-of-limit": false
+          }
+        },
+        {
+          "description": "Sort (internal order) on ?v0_value ?v1_value",
+          "rows": 5,
+          "totalMs": 4238,
+          "operationMs": 1,
+          "cache": "computed",
+          "details": {
+            "is-external": "false",
+            "local-vocab-size": 2
+          }
+        },
+        {
+          "description": "Filter (?v0_type = \"string\" && ?v1_type = \"string\")",
+          "rows": 5,
+          "totalMs": 4237,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "local-vocab-size": 2
+          }
+        },
+        {
+          "description": "Strip Columns",
+          "rows": 5,
+          "totalMs": 4237,
+          "operationMs": 1,
+          "cache": "computed",
+          "details": {
+            "local-vocab-size": 2
+          }
+        },
+        {
+          "description": "Distinct",
+          "rows": 5,
+          "totalMs": 4236,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "local-vocab-size": 2
+          }
+        },
+        {
+          "description": "Sort (internal order) on ?v0_type ?v0_value ?v0_order ?v1_type ?v1_value ?v1_order",
+          "rows": 5,
+          "totalMs": 4236,
+          "operationMs": 2,
+          "cache": "computed",
+          "details": {
+            "is-external": "false",
+            "local-vocab-size": 2
+          }
+        },
+        {
+          "description": "BIND (?a0_value_order AS ?v1_order)",
+          "rows": 5,
+          "totalMs": 4233,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "non-empty-local-vocabs": "1 / 1, Ø = 2, max = 2"
+          }
+        },
+        {
+          "description": "BIND (?a0_value_lexical AS ?v1_value)",
+          "rows": 5,
+          "totalMs": 4233,
+          "operationMs": 1,
+          "cache": "computed",
+          "details": {
+            "non-empty-local-vocabs": "1 / 1, Ø = 2, max = 2"
+          }
+        },
+        {
+          "description": "BIND (?a0_value_family AS ?v1_type)",
+          "rows": 5,
+          "totalMs": 4232,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "non-empty-local-vocabs": "1 / 1, Ø = 2, max = 2"
+          }
+        },
+        {
+          "description": "BIND (?a0_entity_id AS ?v0_order)",
+          "rows": 5,
+          "totalMs": 4232,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "non-empty-local-vocabs": "1 / 1, Ø = 2, max = 2"
+          }
+        },
+        {
+          "description": "BIND (?a0_entity_id AS ?v0_value)",
+          "rows": 5,
+          "totalMs": 4232,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "non-empty-local-vocabs": "1 / 1, Ø = 2, max = 2"
+          }
+        },
+        {
+          "description": "BIND (\"string\" AS ?v0_type)",
+          "rows": 5,
+          "totalMs": 4232,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "non-empty-local-vocabs": "1 / 1, Ø = 2, max = 2"
+          }
+        },
+        {
+          "description": "Filter ((\"string\" = \"string\" && \":c8/parent\" = \":c8/parent\"))",
+          "rows": 5,
+          "totalMs": 4232,
+          "operationMs": 1,
+          "cache": "computed",
+          "details": {
+            "non-empty-local-vocabs": "1 / 1, Ø = 1, max = 1"
+          }
+        },
+        {
+          "description": "Strip Columns",
+          "rows": 5,
+          "totalMs": 4231,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "non-empty-local-vocabs": "1 / 1, Ø = 1, max = 1"
+          }
+        },
+        {
+          "description": "BIND (IF(?a0_value_type IN (\"number\",\"datetime\",\"integer\"),COALESCE(?a0_value_number_order,?a0_value_datetime_order,?a0_value_integer_order),IF(?a0_value_type IN (\"number\",\"datetime\") && ?a0_payload=\"-0\",\"0\",?a0_payload)) AS ?a0_value_order)",
+          "rows": 5,
+          "totalMs": 4231,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "non-empty-local-vocabs": "1 / 1, Ø = 1, max = 1"
+          }
+        },
+        {
+          "description": "BIND (IF(?a0_value_type IN (\"number\",\"datetime\") && ?a0_payload=\"-0\",\"0\",?a0_payload) AS ?a0_value_lexical)",
+          "rows": 5,
+          "totalMs": 4231,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "non-empty-local-vocabs": "1 / 1, Ø = 1, max = 1"
+          }
+        },
+        {
+          "description": "BIND (IF(?a0_value_type IN (\"number\",\"datetime\"),\"number\",IF(?a0_value_type=\"integer\",\"integer\",IF(?a0_value_type=\"boolean\",\"boolean\",\"string\"))) AS ?a0_value_family)",
+          "rows": 5,
+          "totalMs": 4231,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "non-empty-local-vocabs": "1 / 1, Ø = 1, max = 1"
+          }
+        },
+        {
+          "description": "OptionalJoin on ?a0 ",
+          "rows": 5,
+          "totalMs": 4231,
+          "operationMs": 624,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "OptionalJoin on ?a0 ",
+          "rows": 5,
+          "totalMs": 3606,
+          "operationMs": 599,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "OptionalJoin on ?a0 ",
+          "rows": 5,
+          "totalMs": 3007,
+          "operationMs": 526,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "Filter (?a0_valid_from_order <= \"c27a1bdaebdf8000\" && (!BOUND(?a0_valid_to_order) || ?a0_valid_to_order > \"c27a1bdaebdf8000\") && ?a0_recorded_position_order <= \"c010000000000000\" && (!BOUND(?a0_retracted_position_order) || ((?a0_retracted_position_order > \"c010000000000000\"))))",
+          "rows": 5,
+          "totalMs": 2481,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "OptionalJoin on ?a0 ",
+          "rows": 5,
+          "totalMs": 2481,
+          "operationMs": 554,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "OptionalJoin on ?a0 ",
+          "rows": 5,
+          "totalMs": 1926,
+          "operationMs": 539,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "Join on ?a0",
+          "rows": 5,
+          "totalMs": 1387,
+          "operationMs": 1,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "Join on ?a0",
+          "rows": 5,
+          "totalMs": 1165,
+          "operationMs": 1,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "Filter ((?a0_value_type IN (\"string\",\"ref\",\"integer\",\"blob\") && ?a0_payload_property=<urn:triplex:field:value_string>) || (?a0_value_type=\"number\" && ?a0_payload_property=<urn:triplex:field:value_number>) || (?a0_value_type=\"datetime\" && ?a0_payload_property=<urn:triplex:field:value_datetime>) || (?a0_value_type=\"boolean\" && ?a0_payload_property=<urn:triplex:field:value_boolean>) || (?a0_value_type=\"json\" && ?a0_payload_property=<urn:triplex:field:value_json>))",
+          "rows": 5,
+          "totalMs": 942,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "Join on ?a0",
+          "rows": 130,
+          "totalMs": 942,
+          "operationMs": 1,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "Join on ?a0",
+          "rows": 130,
+          "totalMs": 716,
+          "operationMs": 1,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "Join on ?a0",
+          "rows": 2844,
+          "totalMs": 368,
+          "operationMs": 1,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "IndexScan SPO ?a0 ?a0_payload_property ?a0_payload",
+          "rows": 2858,
+          "totalMs": 159,
+          "operationMs": 159,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "IndexScan PSO ?a0 <urn:triplex:field:recorded_position_order> ?a0_recorded_position_order",
+          "rows": 106,
+          "totalMs": 208,
+          "operationMs": 208,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "IndexScan POS ?a0 <urn:triplex:field:attribute> \":c8/parent\"",
+          "rows": 5,
+          "totalMs": 347,
+          "operationMs": 347,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "IndexScan PSO ?a0 <urn:triplex:field:value_type> ?a0_value_type",
+          "rows": 106,
+          "totalMs": 225,
+          "operationMs": 225,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "IndexScan PSO ?a0 <urn:triplex:field:entity_id> ?a0_entity_id",
+          "rows": 106,
+          "totalMs": 222,
+          "operationMs": 222,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "IndexScan PSO ?a0 <urn:triplex:field:valid_from_order> ?a0_valid_from_order",
+          "rows": 106,
+          "totalMs": 221,
+          "operationMs": 221,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "IndexScan PSO ?a0 <urn:triplex:field:valid_to_order> ?a0_valid_to_order",
+          "rows": 0,
+          "totalMs": 0,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "IndexScan PSO ?a0 <urn:triplex:field:retracted_position_order> ?a0_retracted_position_order",
+          "rows": 0,
+          "totalMs": 0,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "num-blocks-all": 1,
+            "num-blocks-read": 0,
+            "num-elements-read": 0
+          }
+        },
+        {
+          "description": "IndexScan PSO ?a0 <urn:triplex:field:value_number_order> ?a0_value_number_order",
+          "rows": 4,
+          "totalMs": 0,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "num-blocks-all": 1,
+            "num-blocks-postprocessed": 1,
+            "num-blocks-read": 1,
+            "num-blocks-with-update": 1,
+            "num-elements-read": 2858
+          }
+        },
+        {
+          "description": "IndexScan PSO ?a0 <urn:triplex:field:value_datetime_order> ?a0_value_datetime_order",
+          "rows": 4,
+          "totalMs": 0,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "num-blocks-all": 1,
+            "num-blocks-postprocessed": 1,
+            "num-blocks-read": 1,
+            "num-blocks-with-update": 1,
+            "num-elements-read": 2858
+          }
+        },
+        {
+          "description": "IndexScan PSO ?a0 <urn:triplex:field:value_integer_order> ?a0_value_integer_order",
+          "rows": 0,
+          "totalMs": 0,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "num-blocks-all": 1,
+            "num-blocks-read": 0,
+            "num-elements-read": 0
+          }
+        }
+      ]
+    },
+    {
+      "variant": "unscoped",
+      "status": "OK",
+      "results": 5,
+      "time": {
+        "computeResult": "5809ms",
+        "total": "5810ms"
+      },
+      "nodes": [
+        {
+          "description": "LIMIT 100001",
+          "rows": 5,
+          "totalMs": 5806,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "executed-implicitly-during-query-export": true
+          }
+        },
+        {
+          "description": "Distinct",
+          "rows": 5,
+          "totalMs": 5806,
+          "operationMs": 2,
+          "cache": "computed",
+          "details": {
+            "local-vocab-size": 2,
+            "not-written-to-cache-because-child-of-limit": false
+          }
+        },
+        {
+          "description": "Sort (internal order) on ?v0_value ?v1_value",
+          "rows": 5,
+          "totalMs": 5804,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "is-external": "false",
+            "local-vocab-size": 2
+          }
+        },
+        {
+          "description": "Filter (?v0_type = \"string\" && ?v1_type = \"string\")",
+          "rows": 5,
+          "totalMs": 5804,
+          "operationMs": 1,
+          "cache": "computed",
+          "details": {
+            "local-vocab-size": 2
+          }
+        },
+        {
+          "description": "Strip Columns",
+          "rows": 5,
+          "totalMs": 5803,
+          "operationMs": 1,
+          "cache": "computed",
+          "details": {
+            "local-vocab-size": 2
+          }
+        },
+        {
+          "description": "Distinct",
+          "rows": 5,
+          "totalMs": 5802,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "local-vocab-size": 2
+          }
+        },
+        {
+          "description": "Sort (internal order) on ?v0_type ?v0_value ?v0_order ?v1_type ?v1_value ?v1_order",
+          "rows": 65,
+          "totalMs": 5802,
+          "operationMs": 3,
+          "cache": "computed",
+          "details": {
+            "is-external": "false",
+            "local-vocab-size": 2
+          }
+        },
+        {
+          "description": "BIND (?a0_value_order AS ?v1_order)",
+          "rows": 65,
+          "totalMs": 5798,
+          "operationMs": 1,
+          "cache": "computed",
+          "details": {
+            "non-empty-local-vocabs": "1 / 1, Ø = 2, max = 2"
+          }
+        },
+        {
+          "description": "BIND (?a0_value_lexical AS ?v1_value)",
+          "rows": 65,
+          "totalMs": 5797,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "non-empty-local-vocabs": "1 / 1, Ø = 2, max = 2"
+          }
+        },
+        {
+          "description": "BIND (?a0_value_family AS ?v1_type)",
+          "rows": 65,
+          "totalMs": 5797,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "non-empty-local-vocabs": "1 / 1, Ø = 2, max = 2"
+          }
+        },
+        {
+          "description": "BIND (?a0_entity_id AS ?v0_order)",
+          "rows": 65,
+          "totalMs": 5797,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "non-empty-local-vocabs": "1 / 1, Ø = 2, max = 2"
+          }
+        },
+        {
+          "description": "BIND (?a0_entity_id AS ?v0_value)",
+          "rows": 65,
+          "totalMs": 5797,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "non-empty-local-vocabs": "1 / 1, Ø = 2, max = 2"
+          }
+        },
+        {
+          "description": "BIND (\"string\" AS ?v0_type)",
+          "rows": 65,
+          "totalMs": 5797,
+          "operationMs": 1,
+          "cache": "computed",
+          "details": {
+            "non-empty-local-vocabs": "1 / 1, Ø = 2, max = 2"
+          }
+        },
+        {
+          "description": "Filter ((\"string\" = \"string\" && \":c8/parent\" = \":c8/parent\"))",
+          "rows": 65,
+          "totalMs": 5796,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "non-empty-local-vocabs": "1 / 1, Ø = 1, max = 1"
+          }
+        },
+        {
+          "description": "Strip Columns",
+          "rows": 65,
+          "totalMs": 5796,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "non-empty-local-vocabs": "1 / 1, Ø = 1, max = 1"
+          }
+        },
+        {
+          "description": "BIND (IF(?a0_value_type IN (\"number\",\"datetime\",\"integer\"),COALESCE(?a0_value_number_order,?a0_value_datetime_order,?a0_value_integer_order),IF(?a0_value_type IN (\"number\",\"datetime\") && ?a0_payload=\"-0\",\"0\",?a0_payload)) AS ?a0_value_order)",
+          "rows": 65,
+          "totalMs": 5796,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "non-empty-local-vocabs": "1 / 1, Ø = 1, max = 1"
+          }
+        },
+        {
+          "description": "BIND (IF(?a0_value_type IN (\"number\",\"datetime\") && ?a0_payload=\"-0\",\"0\",?a0_payload) AS ?a0_value_lexical)",
+          "rows": 65,
+          "totalMs": 5796,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "non-empty-local-vocabs": "1 / 1, Ø = 1, max = 1"
+          }
+        },
+        {
+          "description": "BIND (IF(?a0_value_type IN (\"number\",\"datetime\"),\"number\",IF(?a0_value_type=\"integer\",\"integer\",IF(?a0_value_type=\"boolean\",\"boolean\",\"string\"))) AS ?a0_value_family)",
+          "rows": 65,
+          "totalMs": 5796,
+          "operationMs": 1,
+          "cache": "computed",
+          "details": {
+            "non-empty-local-vocabs": "1 / 1, Ø = 1, max = 1"
+          }
+        },
+        {
+          "description": "OptionalJoin on ?a0 ",
+          "rows": 65,
+          "totalMs": 5794,
+          "operationMs": 665,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "OptionalJoin on ?a0 ",
+          "rows": 65,
+          "totalMs": 5129,
+          "operationMs": 714,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "OptionalJoin on ?a0 ",
+          "rows": 65,
+          "totalMs": 4414,
+          "operationMs": 890,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "Filter (?a0_valid_from_order <= \"c27a1bdaebdf8000\" && (!BOUND(?a0_valid_to_order) || ?a0_valid_to_order > \"c27a1bdaebdf8000\") && ?a0_recorded_position_order <= \"c010000000000000\" && (!BOUND(?a0_retracted_position_order) || ((?a0_retracted_position_order > \"c010000000000000\"))))",
+          "rows": 65,
+          "totalMs": 3524,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "OptionalJoin on ?a0 ",
+          "rows": 70,
+          "totalMs": 3524,
+          "operationMs": 659,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "OptionalJoin on ?a0 ",
+          "rows": 70,
+          "totalMs": 2864,
+          "operationMs": 639,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "Filter ((?a0_value_type IN (\"string\",\"ref\",\"integer\",\"blob\") && ?a0_payload_property=<urn:triplex:field:value_string>) || (?a0_value_type=\"number\" && ?a0_payload_property=<urn:triplex:field:value_number>) || (?a0_value_type=\"datetime\" && ?a0_payload_property=<urn:triplex:field:value_datetime>) || (?a0_value_type=\"boolean\" && ?a0_payload_property=<urn:triplex:field:value_boolean>) || (?a0_value_type=\"json\" && ?a0_payload_property=<urn:triplex:field:value_json>))",
+          "rows": 70,
+          "totalMs": 2225,
+          "operationMs": 1,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "Join on ?a0",
+          "rows": 1820,
+          "totalMs": 2224,
+          "operationMs": 6,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "Join on ?a0",
+          "rows": 1820,
+          "totalMs": 1888,
+          "operationMs": 7,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "Join on ?a0",
+          "rows": 1820,
+          "totalMs": 1558,
+          "operationMs": 1,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "Join on ?a0",
+          "rows": 1748878,
+          "totalMs": 978,
+          "operationMs": 90,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "Join on ?a0",
+          "rows": 1748878,
+          "totalMs": 589,
+          "operationMs": 87,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "IndexScan SPO ?a0 ?a0_payload_property ?a0_payload",
+          "rows": 1792331,
+          "totalMs": 203,
+          "operationMs": 203,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "IndexScan PSO ?a0 <urn:triplex:field:recorded_position_order> ?a0_recorded_position_order",
+          "rows": 66367,
+          "totalMs": 299,
+          "operationMs": 299,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "IndexScan PSO ?a0 <urn:triplex:field:valid_from_order> ?a0_valid_from_order",
+          "rows": 66367,
+          "totalMs": 299,
+          "operationMs": 299,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "IndexScan POS ?a0 <urn:triplex:field:attribute> \":c8/parent\"",
+          "rows": 70,
+          "totalMs": 579,
+          "operationMs": 579,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "IndexScan PSO ?a0 <urn:triplex:field:entity_id> ?a0_entity_id",
+          "rows": 66371,
+          "totalMs": 323,
+          "operationMs": 323,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "IndexScan PSO ?a0 <urn:triplex:field:value_type> ?a0_value_type",
+          "rows": 66367,
+          "totalMs": 330,
+          "operationMs": 330,
+          "cache": "computed",
+          "details": null
+        },
+        {
+          "description": "IndexScan PSO ?a0 <urn:triplex:field:valid_to_order> ?a0_valid_to_order",
+          "rows": 217,
+          "totalMs": 0,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "num-blocks-all": 1,
+            "num-blocks-postprocessed": 1,
+            "num-blocks-read": 1,
+            "num-blocks-with-update": 1,
+            "num-elements-read": 1792309
+          }
+        },
+        {
+          "description": "IndexScan PSO ?a0 <urn:triplex:field:retracted_position_order> ?a0_retracted_position_order",
+          "rows": 234,
+          "totalMs": 0,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "num-blocks-all": 1,
+            "num-blocks-postprocessed": 1,
+            "num-blocks-read": 1,
+            "num-blocks-with-update": 1,
+            "num-elements-read": 1792309
+          }
+        },
+        {
+          "description": "IndexScan PSO ?a0 <urn:triplex:field:value_number_order> ?a0_value_number_order",
+          "rows": 8332,
+          "totalMs": 0,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "num-blocks-all": 1,
+            "num-blocks-postprocessed": 1,
+            "num-blocks-read": 1,
+            "num-blocks-with-update": 1,
+            "num-elements-read": 1792309
+          }
+        },
+        {
+          "description": "IndexScan PSO ?a0 <urn:triplex:field:value_datetime_order> ?a0_value_datetime_order",
+          "rows": 4334,
+          "totalMs": 0,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "num-blocks-all": 1,
+            "num-blocks-postprocessed": 1,
+            "num-blocks-read": 1,
+            "num-blocks-with-update": 1,
+            "num-elements-read": 1792309
+          }
+        },
+        {
+          "description": "IndexScan PSO ?a0 <urn:triplex:field:value_integer_order> ?a0_value_integer_order",
+          "rows": 76,
+          "totalMs": 0,
+          "operationMs": 0,
+          "cache": "computed",
+          "details": {
+            "num-blocks-all": 1,
+            "num-blocks-postprocessed": 1,
+            "num-blocks-read": 1,
+            "num-blocks-with-update": 1,
+            "num-elements-read": 1792309
+          }
+        }
+      ]
+    }
+  ],
+  "control": {
+    "requests": [
+      {
+        "event": "start",
+        "id": 1,
+        "at": "2026-11-09T00:22:43.670Z",
+        "url": "http://127.0.0.1:7070/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "other",
+        "outcome": "headers",
+        "ms": 416.511583,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 2,
+        "at": "2026-11-09T00:22:44.089Z",
+        "url": "http://127.0.0.1:7070/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "basis",
+        "outcome": "headers",
+        "ms": 278.38587499999994,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 3,
+        "at": "2026-11-09T00:22:44.423Z",
+        "url": "http://127.0.0.1:7070/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-update",
+        "kind": "write",
+        "outcome": "headers",
+        "ms": 4407.680792,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 4,
+        "at": "2026-11-09T00:22:48.833Z",
+        "url": "http://127.0.0.1:7070/?timeout=25590ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "other",
+        "outcome": "headers",
+        "ms": 401.07187499999964,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 5,
+        "at": "2026-11-09T00:22:49.236Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "other",
+        "outcome": "headers",
+        "ms": 504.3805000000002,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 6,
+        "at": "2026-11-09T00:22:49.745Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "basis",
+        "outcome": "headers",
+        "ms": 362.2389999999996,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 7,
+        "at": "2026-11-09T00:22:50.154Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "headers",
+        "ms": 6153.918708,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 8,
+        "at": "2026-11-09T00:22:56.350Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "headers",
+        "ms": 4027.6253749999996,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 9,
+        "at": "2026-11-09T00:23:00.420Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "rule-main",
+        "outcome": "headers",
+        "ms": 16.617707999997947,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 10,
+        "at": "2026-11-09T00:23:00.479Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "basis",
+        "outcome": "headers",
+        "ms": 4.8266660000008414,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 11,
+        "at": "2026-11-09T00:23:00.532Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "headers",
+        "ms": 3973.8385830000007,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 12,
+        "at": "2026-11-09T00:23:04.548Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "headers",
+        "ms": 1923.8526670000028,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 13,
+        "at": "2026-11-09T00:23:06.514Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "shared-ancestor-main",
+        "outcome": "headers",
+        "ms": 19.290874999998778,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 14,
+        "at": "2026-11-09T00:23:06.578Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "basis",
+        "outcome": "headers",
+        "ms": 5.517540999997436,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 15,
+        "at": "2026-11-09T00:23:06.625Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "self-source",
+        "outcome": "headers",
+        "ms": 4812.664375,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 16,
+        "at": "2026-11-09T00:23:11.480Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "rule-main",
+        "outcome": "headers",
+        "ms": 6.7054170000010345,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 17,
+        "at": "2026-11-09T00:23:11.529Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "basis",
+        "outcome": "headers",
+        "ms": 5.01854099999764,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 18,
+        "at": "2026-11-09T00:23:11.582Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "headers",
+        "ms": 4265.429541999998,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 19,
+        "at": "2026-11-09T00:23:15.890Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "headers",
+        "ms": 4191.354832999998,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 20,
+        "at": "2026-11-09T00:23:20.124Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "rule-main",
+        "outcome": "headers",
+        "ms": 8.905666999999085,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 21,
+        "at": "2026-11-09T00:23:20.174Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "rule-main",
+        "outcome": "headers",
+        "ms": 9.57862500000192,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 22,
+        "at": "2026-11-09T00:23:20.226Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "basis",
+        "outcome": "headers",
+        "ms": 3.749792000002344,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 23,
+        "at": "2026-11-09T00:23:20.273Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "headers",
+        "ms": 4334.1858340000035,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 24,
+        "at": "2026-11-09T00:23:24.648Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "headers",
+        "ms": 4031.1255420000016,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 25,
+        "at": "2026-11-09T00:23:28.720Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "rule-main",
+        "outcome": "headers",
+        "ms": 12.736792000003334,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 26,
+        "at": "2026-11-09T00:23:28.773Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "rule-main",
+        "outcome": "headers",
+        "ms": 8.625082999998995,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 27,
+        "at": "2026-11-09T00:23:28.826Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "basis",
+        "outcome": "headers",
+        "ms": 5.448666999996931,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 28,
+        "at": "2026-11-09T00:23:28.881Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "native",
+        "outcome": "headers",
+        "ms": 3006.1512500000026,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 29,
+        "at": "2026-11-09T00:23:31.929Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "other",
+        "outcome": "headers",
+        "ms": 5.880250000001979,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 30,
+        "at": "2026-11-09T00:23:31.978Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "basis",
+        "outcome": "headers",
+        "ms": 3.9556249999950523,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 31,
+        "at": "2026-11-09T00:23:32.024Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "native",
+        "outcome": "headers",
+        "ms": 1184.4241660000043,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 32,
+        "at": "2026-11-09T00:23:33.249Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "native",
+        "outcome": "headers",
+        "ms": 1222.360249999998,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 33,
+        "at": "2026-11-09T00:23:34.516Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "native",
+        "outcome": "headers",
+        "ms": 1187.9189169999954,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 34,
+        "at": "2026-11-09T00:23:35.747Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "other",
+        "outcome": "headers",
+        "ms": 5.485000000000582,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 35,
+        "at": "2026-11-09T00:23:35.796Z",
+        "url": "http://127.0.0.1:7070/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "other",
+        "outcome": "headers",
+        "ms": 402.831124999997,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 36,
+        "at": "2026-11-09T00:23:36.200Z",
+        "url": "http://127.0.0.1:7070/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "basis",
+        "outcome": "headers",
+        "ms": 3.7492910000000848,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 37,
+        "at": "2026-11-09T00:23:36.247Z",
+        "url": "http://127.0.0.1:7070/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-update",
+        "kind": "write",
+        "outcome": "headers",
+        "ms": 2942.0234580000033,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 38,
+        "at": "2026-11-09T00:23:39.190Z",
+        "url": "http://127.0.0.1:7070/?timeout=27057ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "other",
+        "outcome": "headers",
+        "ms": 276.61525000000256,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 39,
+        "at": "2026-11-09T00:23:39.520Z",
+        "url": "http://127.0.0.1:7070/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "basis",
+        "outcome": "headers",
+        "ms": 294.2501669999983,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 40,
+        "at": "2026-11-09T00:23:39.817Z",
+        "url": "http://127.0.0.1:7070/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-update",
+        "kind": "write",
+        "outcome": "headers",
+        "ms": 2649.8571250000023,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 41,
+        "at": "2026-11-09T00:23:42.467Z",
+        "url": "http://127.0.0.1:7070/?timeout=27349ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "other",
+        "outcome": "headers",
+        "ms": 261.2268330000006,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 42,
+        "at": "2026-11-09T00:23:42.821Z",
+        "url": "http://127.0.0.1:7070/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "basis",
+        "outcome": "headers",
+        "ms": 258.1131250000035,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 43,
+        "at": "2026-11-09T00:23:43.082Z",
+        "url": "http://127.0.0.1:7070/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-update",
+        "kind": "write",
+        "outcome": "headers",
+        "ms": 2403.584499999997,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 44,
+        "at": "2026-11-09T00:23:45.486Z",
+        "url": "http://127.0.0.1:7070/?timeout=27595ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "other",
+        "outcome": "headers",
+        "ms": 263.2765419999996,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 45,
+        "at": "2026-11-09T00:23:45.841Z",
+        "url": "http://127.0.0.1:7070/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "other",
+        "outcome": "headers",
+        "ms": 396.92550000000483,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 46,
+        "at": "2026-11-09T00:23:45.842Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "other",
+        "outcome": "headers",
+        "ms": 396.8921249999985,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 47,
+        "at": "2026-11-09T00:23:46.239Z",
+        "url": "http://127.0.0.1:7070/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "basis",
+        "outcome": "headers",
+        "ms": 466.04604099999415,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 48,
+        "at": "2026-11-09T00:23:46.240Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "basis",
+        "outcome": "headers",
+        "ms": 446.8235829999976,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 49,
+        "at": "2026-11-09T00:23:46.241Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "basis",
+        "outcome": "headers",
+        "ms": 460.90000000000146,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 50,
+        "at": "2026-11-09T00:23:46.241Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "basis",
+        "outcome": "headers",
+        "ms": 452.76629200000025,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 51,
+        "at": "2026-11-09T00:23:46.242Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "basis",
+        "outcome": "headers",
+        "ms": 445.752542000002,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 52,
+        "at": "2026-11-09T00:23:46.243Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "basis",
+        "outcome": "headers",
+        "ms": 444.72554200000013,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 53,
+        "at": "2026-11-09T00:23:46.243Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "basis",
+        "outcome": "headers",
+        "ms": 477.739708000001,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 54,
+        "at": "2026-11-09T00:23:46.244Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "basis",
+        "outcome": "headers",
+        "ms": 447.0854590000017,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 55,
+        "at": "2026-11-09T00:23:46.244Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "basis",
+        "outcome": "headers",
+        "ms": 447.1939580000035,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 56,
+        "at": "2026-11-09T00:23:46.690Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "headers",
+        "ms": 8198.100417000001,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 57,
+        "at": "2026-11-09T00:23:46.694Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "headers",
+        "ms": 8098.8661250000005,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 58,
+        "at": "2026-11-09T00:23:46.695Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "headers",
+        "ms": 14788.186792000008,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 59,
+        "at": "2026-11-09T00:23:46.698Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "headers",
+        "ms": 8199.11075,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 60,
+        "at": "2026-11-09T00:23:46.701Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "headers",
+        "ms": 8094.6262080000015,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 61,
+        "at": "2026-11-09T00:23:46.704Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "headers",
+        "ms": 14893.201208000006,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 62,
+        "at": "2026-11-09T00:23:46.729Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "headers",
+        "ms": 14995.432957999998,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 63,
+        "at": "2026-11-09T00:23:46.748Z",
+        "url": "http://127.0.0.1:7070/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-update",
+        "kind": "write",
+        "outcome": "error",
+        "ms": 30002.496416999995,
+        "error": "TimeoutError: The operation was aborted due to timeout"
+      },
+      {
+        "event": "start",
+        "id": 64,
+        "at": "2026-11-09T00:23:54.798Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "headers",
+        "ms": 7728.224249999999,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 65,
+        "at": "2026-11-09T00:23:54.832Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "headers",
+        "ms": 13253.486208999995,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 66,
+        "at": "2026-11-09T00:23:54.836Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "headers",
+        "ms": 13368.530958999996,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 67,
+        "at": "2026-11-09T00:23:54.930Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "headers",
+        "ms": 13764.836416999999,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 68,
+        "at": "2026-11-09T00:23:55.693Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "headers",
+        "ms": 13227.284542000009,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 69,
+        "at": "2026-11-09T00:24:01.524Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "headers",
+        "ms": 12687.707083999994,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 70,
+        "at": "2026-11-09T00:24:02.306Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "headers",
+        "ms": 12611.681958000001,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 71,
+        "at": "2026-11-09T00:24:02.306Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "headers",
+        "ms": 12079.427416999999,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 72,
+        "at": "2026-11-09T00:24:02.586Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "headers",
+        "ms": 13330.844624999998,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 73,
+        "at": "2026-11-09T00:24:08.204Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "rule-main",
+        "outcome": "headers",
+        "ms": 1578.5392079999874,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 74,
+        "at": "2026-11-09T00:24:08.249Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "rule-main",
+        "outcome": "headers",
+        "ms": 1534.0188339999877,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 75,
+        "at": "2026-11-09T00:24:08.919Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "rule-main",
+        "outcome": "headers",
+        "ms": 865.1663750000007,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 76,
+        "at": "2026-11-09T00:24:08.960Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "rule-main",
+        "outcome": "headers",
+        "ms": 825.3886250000069,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 77,
+        "at": "2026-11-09T00:24:09.824Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "basis",
+        "outcome": "headers",
+        "ms": 4393.2519579999935,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 78,
+        "at": "2026-11-09T00:24:09.826Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "basis",
+        "outcome": "headers",
+        "ms": 4391.031416999991,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 79,
+        "at": "2026-11-09T00:24:14.213Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "basis",
+        "outcome": "headers",
+        "ms": 181.6196670000063,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 80,
+        "at": "2026-11-09T00:24:14.215Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "basis",
+        "outcome": "headers",
+        "ms": 182.40320899999642,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 81,
+        "at": "2026-11-09T00:24:14.254Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "rule-main",
+        "outcome": "headers",
+        "ms": 141.55775000000722,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 82,
+        "at": "2026-11-09T00:24:14.256Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "headers",
+        "ms": 6861.595583000002,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 83,
+        "at": "2026-11-09T00:24:14.388Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "headers",
+        "ms": 7504.791542000006,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 84,
+        "at": "2026-11-09T00:24:14.427Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "rule-main",
+        "outcome": "headers",
+        "ms": 583.1894590000011,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 85,
+        "at": "2026-11-09T00:24:14.435Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "headers",
+        "ms": 4668.893916999994,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 86,
+        "at": "2026-11-09T00:24:14.436Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "basis",
+        "outcome": "headers",
+        "ms": 574.7130000000034,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 87,
+        "at": "2026-11-09T00:24:14.440Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "headers",
+        "ms": 7660.467959000001,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 88,
+        "at": "2026-11-09T00:24:14.959Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "rule-main",
+        "outcome": "headers",
+        "ms": 57.66058300000441,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 89,
+        "at": "2026-11-09T00:24:15.052Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "basis",
+        "outcome": "headers",
+        "ms": 4054.1530839999905,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 90,
+        "at": "2026-11-09T00:24:15.053Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "headers",
+        "ms": 12735.544832999993,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 91,
+        "at": "2026-11-09T00:24:15.058Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "basis",
+        "outcome": "headers",
+        "ms": 4047.7658340000053,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 92,
+        "at": "2026-11-09T00:24:16.751Z",
+        "url": "http://127.0.0.1:7070/?timeout=1ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "other",
+        "outcome": "error",
+        "ms": 1.4419999999954598,
+        "error": "TimeoutError: The operation was aborted due to timeout"
+      },
+      {
+        "event": "start",
+        "id": 93,
+        "at": "2026-11-09T00:24:19.099Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "rule-main",
+        "outcome": "headers",
+        "ms": 2794.4742499999993,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 94,
+        "at": "2026-11-09T00:24:19.139Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "headers",
+        "ms": 10589.057417000004,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 95,
+        "at": "2026-11-09T00:24:19.140Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "headers",
+        "ms": 10588.964042000007,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 96,
+        "at": "2026-11-09T00:24:19.141Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "headers",
+        "ms": 11077.413082999992,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 97,
+        "at": "2026-11-09T00:24:21.156Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "headers",
+        "ms": 16572.123708,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 98,
+        "at": "2026-11-09T00:24:21.936Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "basis",
+        "outcome": "headers",
+        "ms": 8573.101332999999,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 99,
+        "at": "2026-11-09T00:24:21.937Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "headers",
+        "ms": 16562.763000000006,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 100,
+        "at": "2026-11-09T00:24:22.195Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "headers",
+        "ms": 16208.178209000005,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 101,
+        "at": "2026-11-09T00:24:27.830Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "headers",
+        "ms": 10669.046875,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 102,
+        "at": "2026-11-09T00:24:29.783Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "headers",
+        "ms": 14719.801208999997,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 103,
+        "at": "2026-11-09T00:24:29.784Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "headers",
+        "ms": 15305.525292000006,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 104,
+        "at": "2026-11-09T00:24:30.259Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "shared-ancestor-main",
+        "outcome": "headers",
+        "ms": 7545.012042000002,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 105,
+        "at": "2026-11-09T00:24:30.550Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "headers",
+        "ms": 14464.378624999998,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 106,
+        "at": "2026-11-09T00:24:37.777Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "shared-ancestor-main",
+        "outcome": "headers",
+        "ms": 1618.299291000003,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 107,
+        "at": "2026-11-09T00:24:38.402Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "basis",
+        "outcome": "headers",
+        "ms": 994.4762080000073,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 108,
+        "at": "2026-11-09T00:24:38.442Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "shared-ancestor-main",
+        "outcome": "headers",
+        "ms": 956.6873749999941,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 109,
+        "at": "2026-11-09T00:24:38.540Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "shared-ancestor-main",
+        "outcome": "headers",
+        "ms": 878.2096250000031,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 110,
+        "at": "2026-11-09T00:24:38.541Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "shared-ancestor-main",
+        "outcome": "headers",
+        "ms": 877.3262079999986,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 111,
+        "at": "2026-11-09T00:24:39.436Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "basis",
+        "outcome": "headers",
+        "ms": 41.913082999992184,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 112,
+        "at": "2026-11-09T00:24:39.437Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "self-source",
+        "outcome": "headers",
+        "ms": 7347.114957999991,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 113,
+        "at": "2026-11-09T00:24:39.439Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "basis",
+        "outcome": "headers",
+        "ms": 42.30254099999729,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 114,
+        "at": "2026-11-09T00:24:39.459Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "basis",
+        "outcome": "headers",
+        "ms": 23.158083999995142,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 115,
+        "at": "2026-11-09T00:24:39.459Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "basis",
+        "outcome": "headers",
+        "ms": 21.67083299999649,
+        "status": 200
+      },
+      {
+        "event": "start",
+        "id": 116,
+        "at": "2026-11-09T00:24:39.519Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "self-source",
+        "outcome": "error",
+        "ms": 9625.105750000002,
+        "error": "AbortError: This operation was aborted"
+      },
+      {
+        "event": "start",
+        "id": 117,
+        "at": "2026-11-09T00:24:39.520Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "self-source",
+        "outcome": "error",
+        "ms": 9623.845000000001,
+        "error": "AbortError: This operation was aborted"
+      },
+      {
+        "event": "start",
+        "id": 118,
+        "at": "2026-11-09T00:24:39.523Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "self-source",
+        "outcome": "error",
+        "ms": 9621.135416000005,
+        "error": "AbortError: This operation was aborted"
+      },
+      {
+        "event": "start",
+        "id": 119,
+        "at": "2026-11-09T00:24:39.525Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "self-source",
+        "outcome": "error",
+        "ms": 9618.875541000001,
+        "error": "AbortError: This operation was aborted"
+      },
+      {
+        "event": "start",
+        "id": 120,
+        "at": "2026-11-09T00:24:44.544Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "shared-ancestor-main",
+        "outcome": "error",
+        "ms": 4599.719542000006,
+        "error": "AbortError: This operation was aborted"
+      },
+      {
+        "event": "start",
+        "id": 121,
+        "at": "2026-11-09T00:24:45.056Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "error",
+        "ms": 4087.7871670000022,
+        "error": "AbortError: This operation was aborted"
+      },
+      {
+        "event": "start",
+        "id": 122,
+        "at": "2026-11-09T00:24:46.785Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "shared-ancestor-main",
+        "outcome": "error",
+        "ms": 2354.6859579999873,
+        "error": "TimeoutError: The operation was aborted due to timeout"
+      },
+      {
+        "event": "start",
+        "id": 123,
+        "at": "2026-11-09T00:24:46.826Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "rule-main",
+        "outcome": "error",
+        "ms": 2318.0304999999935,
+        "error": "AbortError: This operation was aborted"
+      }
+    ],
+    "errors": [
+      {
+        "event": "start",
+        "id": 63,
+        "at": "2026-11-09T00:23:46.748Z",
+        "url": "http://127.0.0.1:7070/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-update",
+        "kind": "write",
+        "outcome": "error",
+        "ms": 30002.496416999995,
+        "error": "TimeoutError: The operation was aborted due to timeout"
+      },
+      {
+        "event": "start",
+        "id": 92,
+        "at": "2026-11-09T00:24:16.751Z",
+        "url": "http://127.0.0.1:7070/?timeout=1ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "other",
+        "outcome": "error",
+        "ms": 1.4419999999954598,
+        "error": "TimeoutError: The operation was aborted due to timeout"
+      },
+      {
+        "event": "start",
+        "id": 116,
+        "at": "2026-11-09T00:24:39.519Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "self-source",
+        "outcome": "error",
+        "ms": 9625.105750000002,
+        "error": "AbortError: This operation was aborted"
+      },
+      {
+        "event": "start",
+        "id": 117,
+        "at": "2026-11-09T00:24:39.520Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "self-source",
+        "outcome": "error",
+        "ms": 9623.845000000001,
+        "error": "AbortError: This operation was aborted"
+      },
+      {
+        "event": "start",
+        "id": 118,
+        "at": "2026-11-09T00:24:39.523Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "self-source",
+        "outcome": "error",
+        "ms": 9621.135416000005,
+        "error": "AbortError: This operation was aborted"
+      },
+      {
+        "event": "start",
+        "id": 119,
+        "at": "2026-11-09T00:24:39.525Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "self-source",
+        "outcome": "error",
+        "ms": 9618.875541000001,
+        "error": "AbortError: This operation was aborted"
+      },
+      {
+        "event": "start",
+        "id": 120,
+        "at": "2026-11-09T00:24:44.544Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "shared-ancestor-main",
+        "outcome": "error",
+        "ms": 4599.719542000006,
+        "error": "AbortError: This operation was aborted"
+      },
+      {
+        "event": "start",
+        "id": 121,
+        "at": "2026-11-09T00:24:45.056Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "parent-source",
+        "outcome": "error",
+        "ms": 4087.7871670000022,
+        "error": "AbortError: This operation was aborted"
+      },
+      {
+        "event": "start",
+        "id": 122,
+        "at": "2026-11-09T00:24:46.785Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "shared-ancestor-main",
+        "outcome": "error",
+        "ms": 2354.6859579999873,
+        "error": "TimeoutError: The operation was aborted due to timeout"
+      },
+      {
+        "event": "start",
+        "id": 123,
+        "at": "2026-11-09T00:24:46.826Z",
+        "url": "http://127.0.0.1:54061/?timeout=30000ms",
+        "method": "POST",
+        "contentType": "application/sparql-query",
+        "kind": "rule-main",
+        "outcome": "error",
+        "ms": 2318.0304999999935,
+        "error": "AbortError: This operation was aborted"
+      }
+    ]
+  },
+  "hostRounds": {
+    "input": [
+      [
+        "c8:a",
+        "c8:b"
+      ],
+      [
+        "c8:b",
+        "c8:c"
+      ],
+      [
+        "c8:c",
+        "c8:d"
+      ],
+      [
+        "c8:text-source",
+        "c8:text-target"
+      ],
+      [
+        "c8:unrelated",
+        "c8:other"
+      ]
+    ],
+    "pairs": [
+      [
+        "c8:a",
+        "c8:b"
+      ],
+      [
+        "c8:a",
+        "c8:c"
+      ],
+      [
+        "c8:a",
+        "c8:d"
+      ],
+      [
+        "c8:b",
+        "c8:c"
+      ],
+      [
+        "c8:b",
+        "c8:d"
+      ],
+      [
+        "c8:c",
+        "c8:d"
+      ],
+      [
+        "c8:text-source",
+        "c8:text-target"
+      ],
+      [
+        "c8:unrelated",
+        "c8:other"
+      ]
+    ],
+    "rounds": [
+      {
+        "round": 1,
+        "frontier": 5,
+        "calls": 1,
+        "rows": 2,
+        "newNodes": 2,
+        "elapsedMs": 0.05779200000000628
+      },
+      {
+        "round": 2,
+        "frontier": 0,
+        "calls": 0,
+        "rows": 0,
+        "newNodes": 1,
+        "elapsedMs": 0.00549999999999784
+      },
+      {
+        "round": 3,
+        "frontier": 0,
+        "calls": 0,
+        "rows": 0,
+        "newNodes": 0,
+        "elapsedMs": 0.0027910000000019863
+      }
+    ],
+    "ms": 0.5394999999999897,
+    "engineRequestsDuringRounds": 0
+  }
+}

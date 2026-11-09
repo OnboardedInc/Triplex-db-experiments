@@ -1,0 +1,4 @@
+SELECT DISTINCT ("string" AS ?v0_type) (?a0_arg2 AS ?v0_value) (?a0_arg2 AS ?v0_order) WHERE {
+{ VALUES (?a0_arg1 ?a0_arg2) {  } FILTER(("string" = "string" && ?a0_arg1 = "c8:a")) }
+
+} LIMIT 100001

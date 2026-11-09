@@ -1,0 +1,1 @@
+SELECT ?position WHERE { GRAPH <urn:triplex:scope:WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJjOC1xbGV2ZXItMDFkOWMyY2UtNGIzNy00NjI5LTkxNDEtMTc5MjQ3Y2IzYTZhIiwwXQ> { <urn:triplex:meta> <urn:triplex:field:position> ?position } }

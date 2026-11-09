@@ -1,0 +1,17 @@
+SELECT DISTINCT ?v0_value ?v1_value WHERE { { SELECT DISTINCT ("string" AS ?v0_type) (?a0_entity_id AS ?v0_value) (?a0_entity_id AS ?v0_order) (?a0_value_family AS ?v1_type) (?a0_value_lexical AS ?v1_value) (?a0_value_order AS ?v1_order) WHERE {
+{ { SELECT ?a0_entity_id (IF(?a0_value_type IN ("number","datetime"),"number",IF(?a0_value_type="integer","integer",IF(?a0_value_type="boolean","boolean","string"))) AS ?a0_value_family) (IF(?a0_value_type IN ("number","datetime") && ?a0_payload="-0","0",?a0_payload) AS ?a0_value_lexical) (IF(?a0_value_type IN ("number","datetime","integer"),COALESCE(?a0_value_number_order,?a0_value_datetime_order,?a0_value_integer_order),IF(?a0_value_type IN ("number","datetime") && ?a0_payload="-0","0",?a0_payload)) AS ?a0_value_order) WHERE { GRAPH <urn:triplex:scope:WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJjOC1xbGV2ZXItNDU2ZGM2YWItZTc0YS00NWRhLTllYWUtMjg4ZjAyMWMxMjlmIiwwXQ> { ?a0 <urn:triplex:field:entity_id> ?a0_entity_id .
+?a0 <urn:triplex:field:attribute> ":c8/parent" .
+?a0 <urn:triplex:field:value_type> ?a0_value_type ; ?a0_payload_property ?a0_payload .
+FILTER((?a0_value_type IN ("string","ref","integer","blob") && ?a0_payload_property=<urn:triplex:field:value_string>) || (?a0_value_type="number" && ?a0_payload_property=<urn:triplex:field:value_number>) || (?a0_value_type="datetime" && ?a0_payload_property=<urn:triplex:field:value_datetime>) || (?a0_value_type="boolean" && ?a0_payload_property=<urn:triplex:field:value_boolean>) || (?a0_value_type="json" && ?a0_payload_property=<urn:triplex:field:value_json>))
+?a0 <urn:triplex:field:valid_from_order> ?a0_valid_from_order ; <urn:triplex:field:recorded_position_order> ?a0_recorded_position_order .
+?a0 <urn:triplex:field:recorded_at_order> ?a0_recorded_at_order .
+OPTIONAL { ?a0 <urn:triplex:field:valid_to_order> ?a0_valid_to_order . }
+OPTIONAL { ?a0 <urn:triplex:field:retracted_position_order> ?a0_retracted_position_order . }
+OPTIONAL { ?a0 <urn:triplex:field:retracted_at_order> ?a0_retracted_at_order . }
+OPTIONAL { ?a0 <urn:triplex:field:value_number_order> ?a0_value_number_order . }
+OPTIONAL { ?a0 <urn:triplex:field:value_datetime_order> ?a0_value_datetime_order . }
+OPTIONAL { ?a0 <urn:triplex:field:value_integer_order> ?a0_value_integer_order . }
+FILTER(?a0_valid_from_order <= "c27a1bdb08b43000" && (!BOUND(?a0_valid_to_order) || ?a0_valid_to_order > "c27a1bdb08b43000") && ?a0_recorded_position_order <= "c010000000000000" && (!BOUND(?a0_retracted_position_order) || ((?a0_retracted_position_order > "c010000000000000" || ?a0_retracted_at_order > "c27a1bdb08b43000"))) && ?a0_recorded_at_order <= "c27a1bdb08b43000") } } }
+FILTER(("string" = "string" && ":c8/parent" = ":c8/parent")) }
+
+} }  FILTER(?v0_type = "string" && ?v1_type = "string") } LIMIT 1000001

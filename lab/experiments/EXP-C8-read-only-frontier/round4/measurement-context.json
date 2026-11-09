@@ -1,0 +1,46 @@
+{
+  "graph": "urn:triplex:scope:WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJjOC1xbGV2ZXItMDFkOWMyY2UtNGIzNy00NjI5LTkxNDEtMTc5MjQ3Y2IzYTZhIiwwXQ",
+  "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"c8-qlever-01d9c2ce-4b37-4629-9141-179247cb3a6a\",0]",
+  "query": {
+    "find": [
+      "?ancestor"
+    ],
+    "where": [
+      [
+        "c8-ancestor",
+        "c8:a",
+        "?ancestor"
+      ]
+    ],
+    "rules": [
+      {
+        "name": "c8-ancestor",
+        "body": [
+          [
+            "?child",
+            ":c8/parent",
+            "?parent"
+          ]
+        ]
+      },
+      {
+        "name": "c8-ancestor",
+        "body": [
+          [
+            "?child",
+            ":c8/parent",
+            "?parent"
+          ],
+          [
+            "c8-ancestor",
+            "?parent",
+            "?ancestor"
+          ]
+        ]
+      }
+    ]
+  },
+  "baseline": "514c3b6",
+  "integration": "ec1a815",
+  "at": "2026-11-09T00:19:02.382Z"
+}

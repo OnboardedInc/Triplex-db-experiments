@@ -1,0 +1,74 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 57843 "CX-VP2Q-4-R8-foundation", pid 59984 "CX-VP2Q-4-R8-live", pid 37317 "CX-G03-r3-claim-suites2", pid 65369 "CX-O06-gates"
+profile-paired 0 {
+  variant: 'original',
+  ms: 4380.474667,
+  status: 200,
+  keys: [
+    'query',
+    'selected',
+    'status',
+    'warnings',
+    'res',
+    'resultSizeExported',
+    'resultSizeTotal',
+    'resultsize',
+    'runtimeInformation',
+    'time'
+  ]
+}
+{
+  variant: 'dataset',
+  ms: 4247.845834000001,
+  status: 200,
+  keys: [
+    'query',
+    'selected',
+    'status',
+    'warnings',
+    'res',
+    'resultSizeExported',
+    'resultSizeTotal',
+    'resultsize',
+    'runtimeInformation',
+    'time'
+  ]
+}
+{
+  variant: 'unscoped',
+  ms: 5833.705916999999,
+  status: 200,
+  keys: [
+    'query',
+    'selected',
+    'status',
+    'warnings',
+    'res',
+    'resultSizeExported',
+    'resultSizeTotal',
+    'resultsize',
+    'runtimeInformation',
+    'time'
+  ]
+}
+
+host-rounds 0 
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  19:26:06
+   Duration  107ms (transform 55%, import 23%, tests 15%, worker 7%)
+
+
+audit 0 {
+  snapshots: 489,
+  pairedIdentical: 9,
+  sourceDifferences: [
+    'packages/qlever/src/QleverStorageAdapter.ts',
+    'packages/qlever/src/index.ts',
+    'packages/qlever/src/rdf.ts'
+  ],
+  controlUnchanged: true
+}
+

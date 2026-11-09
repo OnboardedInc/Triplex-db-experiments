@@ -1,0 +1,86 @@
+{
+  "input": [
+    [
+      "c8:a",
+      "c8:b"
+    ],
+    [
+      "c8:b",
+      "c8:c"
+    ],
+    [
+      "c8:c",
+      "c8:d"
+    ],
+    [
+      "c8:text-source",
+      "c8:text-target"
+    ],
+    [
+      "c8:unrelated",
+      "c8:other"
+    ]
+  ],
+  "pairs": [
+    [
+      "c8:a",
+      "c8:b"
+    ],
+    [
+      "c8:a",
+      "c8:c"
+    ],
+    [
+      "c8:a",
+      "c8:d"
+    ],
+    [
+      "c8:b",
+      "c8:c"
+    ],
+    [
+      "c8:b",
+      "c8:d"
+    ],
+    [
+      "c8:c",
+      "c8:d"
+    ],
+    [
+      "c8:text-source",
+      "c8:text-target"
+    ],
+    [
+      "c8:unrelated",
+      "c8:other"
+    ]
+  ],
+  "rounds": [
+    {
+      "round": 1,
+      "frontier": 5,
+      "calls": 1,
+      "rows": 2,
+      "newNodes": 2,
+      "elapsedMs": 0.05779200000000628
+    },
+    {
+      "round": 2,
+      "frontier": 0,
+      "calls": 0,
+      "rows": 0,
+      "newNodes": 1,
+      "elapsedMs": 0.00549999999999784
+    },
+    {
+      "round": 3,
+      "frontier": 0,
+      "calls": 0,
+      "rows": 0,
+      "newNodes": 0,
+      "elapsedMs": 0.0027910000000019863
+    }
+  ],
+  "ms": 0.5394999999999897,
+  "engineRequestsDuringRounds": 0
+}

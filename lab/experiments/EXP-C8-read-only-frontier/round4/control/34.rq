@@ -1,0 +1,1 @@
+SELECT DISTINCT ?target WHERE { VALUES (?source ?target) { ("c8:X" "c8:W") ("c8:X" "c8:Y") ("c8:X" "c8:Z") } FILTER(?source = "c8:X") }

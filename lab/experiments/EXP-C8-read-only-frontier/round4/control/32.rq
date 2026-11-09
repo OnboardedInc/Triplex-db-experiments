@@ -1,0 +1,14 @@
+SELECT DISTINCT ?source ?target WHERE { VALUES ?source { "c8:W" "c8:Y" } { SELECT DISTINCT ?source ?target WHERE { GRAPH <urn:triplex:scope:WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJjOC1xbGV2ZXItNDU2ZGM2YWItZTc0YS00NWRhLTllYWUtMjg4ZjAyMWMxMjlmIiwwXQ> {
+?__triplex_native_0_assertion <urn:triplex:field:entity_id> ?source ; <urn:triplex:field:attribute> ":c8/dep" ; <urn:triplex:field:value_type> "ref" ; <urn:triplex:field:value_string> ?target .
+
+
+
+?__triplex_native_0_assertion <urn:triplex:field:recorded_position_order> ?__triplex_native_0_recorded .
+?__triplex_native_0_assertion <urn:triplex:field:valid_from_order> ?__triplex_native_0_from . OPTIONAL { ?__triplex_native_0_assertion <urn:triplex:field:valid_to_order> ?__triplex_native_0_to }
+OPTIONAL { ?__triplex_native_0_assertion <urn:triplex:field:retracted_position_order> ?__triplex_native_0_retracted }
+
+FILTER(?__triplex_native_0_recorded <= "bff0000000000000")
+FILTER(?__triplex_native_0_from <= "c27a1bdb053b8000" && (!BOUND(?__triplex_native_0_to) || ?__triplex_native_0_to > "c27a1bdb053b8000"))
+FILTER(!BOUND(?__triplex_native_0_retracted) || ?__triplex_native_0_retracted > "bff0000000000000")
+
+} } } } LIMIT 1000001

@@ -1,0 +1,1 @@
+SELECT ?position WHERE { { <urn:triplex:meta> <urn:triplex:field:position> ?position } }

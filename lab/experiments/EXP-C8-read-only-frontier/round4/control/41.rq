@@ -1,0 +1,1 @@
+SELECT ?attempt WHERE { GRAPH <urn:triplex:scope:WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJjOC1xbGV2ZXItNDU2ZGM2YWItZTc0YS00NWRhLTllYWUtMjg4ZjAyMWMxMjlmIiwwXQ> { <urn:triplex:operation:MDc5MGMzZDMtZWNlZS00NWE1LThmODctNmU0ZGFmMzZiYWMy> <urn:triplex:field:attempt_id> ?attempt } }

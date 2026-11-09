@@ -1,0 +1,10 @@
+{
+  snapshots: 489,
+  pairedIdentical: 9,
+  sourceDifferences: [
+    'packages/qlever/src/QleverStorageAdapter.ts',
+    'packages/qlever/src/index.ts',
+    'packages/qlever/src/rdf.ts'
+  ],
+  controlUnchanged: true
+}

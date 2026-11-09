@@ -1,0 +1,1462 @@
+{
+  "query": "SELECT DISTINCT ?v0_value ?v1_value WHERE { { SELECT DISTINCT (\"string\" AS ?v0_type) (?a0_entity_id AS ?v0_value) (?a0_entity_id AS ?v0_order) (?a0_value_family AS ?v1_type) (?a0_value_lexical AS ?v1_value) (?a0_value_order AS ?v1_order) WHERE {\n{ { SELECT ?a0_entity_id (IF(?a0_value_type IN (\"number\",\"datetime\"),\"number\",IF(?a0_value_type=\"integer\",\"integer\",IF(?a0_value_type=\"boolean\",\"boolean\",\"string\"))) AS ?a0_value_family) (IF(?a0_value_type IN (\"number\",\"datetime\") && ?a0_payload=\"-0\",\"0\",?a0_payload) AS ?a0_value_lexical) (IF(?a0_value_type IN (\"number\",\"datetime\",\"integer\"),COALESCE(?a0_value_number_order,?a0_value_datetime_order,?a0_value_integer_order),IF(?a0_value_type IN (\"number\",\"datetime\") && ?a0_payload=\"-0\",\"0\",?a0_payload)) AS ?a0_value_order) WHERE { GRAPH <urn:triplex:scope:WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJjOC1xbGV2ZXItMDFkOWMyY2UtNGIzNy00NjI5LTkxNDEtMTc5MjQ3Y2IzYTZhIiwwXQ> { ?a0 <urn:triplex:field:entity_id> ?a0_entity_id .\n?a0 <urn:triplex:field:attribute> \":c8/parent\" .\n?a0 <urn:triplex:field:value_type> ?a0_value_type ; ?a0_payload_property ?a0_payload .\nFILTER((?a0_value_type IN (\"string\",\"ref\",\"integer\",\"blob\") && ?a0_payload_property=<urn:triplex:field:value_string>) || (?a0_value_type=\"number\" && ?a0_payload_property=<urn:triplex:field:value_number>) || (?a0_value_type=\"datetime\" && ?a0_payload_property=<urn:triplex:field:value_datetime>) || (?a0_value_type=\"boolean\" && ?a0_payload_property=<urn:triplex:field:value_boolean>) || (?a0_value_type=\"json\" && ?a0_payload_property=<urn:triplex:field:value_json>))\n?a0 <urn:triplex:field:valid_from_order> ?a0_valid_from_order ; <urn:triplex:field:recorded_position_order> ?a0_recorded_position_order .\nOPTIONAL { ?a0 <urn:triplex:field:valid_to_order> ?a0_valid_to_order . }\nOPTIONAL { ?a0 <urn:triplex:field:retracted_position_order> ?a0_retracted_position_order . }\nOPTIONAL { ?a0 <urn:triplex:field:value_number_order> ?a0_value_number_order . }\nOPTIONAL { ?a0 <urn:triplex:field:value_datetime_order> ?a0_value_datetime_order . }\nOPTIONAL { ?a0 <urn:triplex:field:value_integer_order> ?a0_value_integer_order . }\nFILTER(?a0_valid_from_order <= \"c27a1bdaebdf8000\" && (!BOUND(?a0_valid_to_order) || ?a0_valid_to_order > \"c27a1bdaebdf8000\") && ?a0_recorded_position_order <= \"c010000000000000\" && (!BOUND(?a0_retracted_position_order) || ((?a0_retracted_position_order > \"c010000000000000\")))) } } }\nFILTER((\"string\" = \"string\" && \":c8/parent\" = \":c8/parent\")) }\n\n} }  FILTER(?v0_type = \"string\" && ?v1_type = \"string\") } LIMIT 100001",
+  "selected": [
+    "?v0_value",
+    "?v1_value"
+  ],
+  "status": "OK",
+  "warnings": [],
+  "res": [
+    [
+      "\"c8:a\"",
+      "\"c8:b\""
+    ],
+    [
+      "\"c8:b\"",
+      "\"c8:c\""
+    ],
+    [
+      "\"c8:c\"",
+      "\"c8:d\""
+    ],
+    [
+      "\"c8:text-source\"",
+      "\"c8:text-target\""
+    ],
+    [
+      "\"c8:unrelated\"",
+      "\"c8:other\""
+    ]
+  ],
+  "resultSizeExported": 5,
+  "resultSizeTotal": 5,
+  "resultsize": 5,
+  "runtimeInformation": {
+    "meta": {
+      "time_query_planning": 3
+    },
+    "query_execution_tree": {
+      "cache_status": "computed",
+      "children": [
+        {
+          "cache_status": "computed",
+          "children": [
+            {
+              "cache_status": "computed",
+              "children": [
+                {
+                  "cache_status": "computed",
+                  "children": [
+                    {
+                      "cache_status": "computed",
+                      "children": [
+                        {
+                          "cache_status": "computed",
+                          "children": [
+                            {
+                              "cache_status": "computed",
+                              "children": [
+                                {
+                                  "cache_status": "computed",
+                                  "children": [
+                                    {
+                                      "cache_status": "computed",
+                                      "children": [
+                                        {
+                                          "cache_status": "computed",
+                                          "children": [
+                                            {
+                                              "cache_status": "computed",
+                                              "children": [
+                                                {
+                                                  "cache_status": "computed",
+                                                  "children": [
+                                                    {
+                                                      "cache_status": "computed",
+                                                      "children": [
+                                                        {
+                                                          "cache_status": "computed",
+                                                          "children": [
+                                                            {
+                                                              "cache_status": "computed",
+                                                              "children": [
+                                                                {
+                                                                  "cache_status": "computed",
+                                                                  "children": [
+                                                                    {
+                                                                      "cache_status": "computed",
+                                                                      "children": [
+                                                                        {
+                                                                          "cache_status": "computed",
+                                                                          "children": [
+                                                                            {
+                                                                              "cache_status": "computed",
+                                                                              "children": [
+                                                                                {
+                                                                                  "cache_status": "computed",
+                                                                                  "children": [
+                                                                                    {
+                                                                                      "cache_status": "computed",
+                                                                                      "children": [
+                                                                                        {
+                                                                                          "cache_status": "computed",
+                                                                                          "children": [
+                                                                                            {
+                                                                                              "cache_status": "computed",
+                                                                                              "children": [
+                                                                                                {
+                                                                                                  "cache_status": "computed",
+                                                                                                  "children": [
+                                                                                                    {
+                                                                                                      "cache_status": "computed",
+                                                                                                      "children": [
+                                                                                                        {
+                                                                                                          "cache_status": "computed",
+                                                                                                          "children": [
+                                                                                                            {
+                                                                                                              "cache_status": "computed",
+                                                                                                              "children": [
+                                                                                                                {
+                                                                                                                  "cache_status": "computed",
+                                                                                                                  "children": [
+                                                                                                                    {
+                                                                                                                      "cache_status": "computed",
+                                                                                                                      "children": [
+                                                                                                                        {
+                                                                                                                          "cache_status": "computed",
+                                                                                                                          "children": [
+                                                                                                                            {
+                                                                                                                              "cache_status": "computed",
+                                                                                                                              "children": [],
+                                                                                                                              "column_names": [
+                                                                                                                                "?a0",
+                                                                                                                                "?a0_payload_property",
+                                                                                                                                "?a0_payload"
+                                                                                                                              ],
+                                                                                                                              "description": "IndexScan SPO ?a0 ?a0_payload_property ?a0_payload",
+                                                                                                                              "details": null,
+                                                                                                                              "estimated_column_multiplicities": [
+                                                                                                                                1,
+                                                                                                                                1,
+                                                                                                                                1
+                                                                                                                              ],
+                                                                                                                              "estimated_operation_cost": 1,
+                                                                                                                              "estimated_size": 1,
+                                                                                                                              "estimated_total_cost": 1,
+                                                                                                                              "operation_time": 232,
+                                                                                                                              "original_operation_time": 0,
+                                                                                                                              "original_total_time": 0,
+                                                                                                                              "result_cols": 3,
+                                                                                                                              "result_rows": 2858,
+                                                                                                                              "status": "fully materialized completed",
+                                                                                                                              "total_time": 232
+                                                                                                                            },
+                                                                                                                            {
+                                                                                                                              "cache_status": "computed",
+                                                                                                                              "children": [],
+                                                                                                                              "column_names": [
+                                                                                                                                "?a0"
+                                                                                                                              ],
+                                                                                                                              "description": "IndexScan POS ?a0 <urn:triplex:field:attribute> \":c8/parent\"",
+                                                                                                                              "details": null,
+                                                                                                                              "estimated_column_multiplicities": [
+                                                                                                                                1
+                                                                                                                              ],
+                                                                                                                              "estimated_operation_cost": 182697,
+                                                                                                                              "estimated_size": 182697,
+                                                                                                                              "estimated_total_cost": 182697,
+                                                                                                                              "operation_time": 580,
+                                                                                                                              "original_operation_time": 0,
+                                                                                                                              "original_total_time": 0,
+                                                                                                                              "result_cols": 1,
+                                                                                                                              "result_rows": 5,
+                                                                                                                              "status": "fully materialized completed",
+                                                                                                                              "total_time": 580
+                                                                                                                            }
+                                                                                                                          ],
+                                                                                                                          "column_names": [
+                                                                                                                            "?a0",
+                                                                                                                            "?a0_payload_property",
+                                                                                                                            "?a0_payload"
+                                                                                                                          ],
+                                                                                                                          "description": "Join on ?a0",
+                                                                                                                          "details": null,
+                                                                                                                          "estimated_column_multiplicities": [
+                                                                                                                            1,
+                                                                                                                            1,
+                                                                                                                            1
+                                                                                                                          ],
+                                                                                                                          "estimated_operation_cost": 182699,
+                                                                                                                          "estimated_size": 1,
+                                                                                                                          "estimated_total_cost": 365397,
+                                                                                                                          "operation_time": 1,
+                                                                                                                          "original_operation_time": 0,
+                                                                                                                          "original_total_time": 0,
+                                                                                                                          "result_cols": 3,
+                                                                                                                          "result_rows": 130,
+                                                                                                                          "status": "fully materialized completed",
+                                                                                                                          "total_time": 813
+                                                                                                                        },
+                                                                                                                        {
+                                                                                                                          "cache_status": "computed",
+                                                                                                                          "children": [],
+                                                                                                                          "column_names": [
+                                                                                                                            "?a0",
+                                                                                                                            "?a0_value_type"
+                                                                                                                          ],
+                                                                                                                          "description": "IndexScan PSO ?a0 <urn:triplex:field:value_type> ?a0_value_type",
+                                                                                                                          "details": null,
+                                                                                                                          "estimated_column_multiplicities": [
+                                                                                                                            1,
+                                                                                                                            1
+                                                                                                                          ],
+                                                                                                                          "estimated_operation_cost": 182697,
+                                                                                                                          "estimated_size": 182697,
+                                                                                                                          "estimated_total_cost": 182697,
+                                                                                                                          "operation_time": 223,
+                                                                                                                          "original_operation_time": 0,
+                                                                                                                          "original_total_time": 0,
+                                                                                                                          "result_cols": 2,
+                                                                                                                          "result_rows": 106,
+                                                                                                                          "status": "fully materialized completed",
+                                                                                                                          "total_time": 223
+                                                                                                                        }
+                                                                                                                      ],
+                                                                                                                      "column_names": [
+                                                                                                                        "?a0",
+                                                                                                                        "?a0_payload_property",
+                                                                                                                        "?a0_payload",
+                                                                                                                        "?a0_value_type"
+                                                                                                                      ],
+                                                                                                                      "description": "Join on ?a0",
+                                                                                                                      "details": null,
+                                                                                                                      "estimated_column_multiplicities": [
+                                                                                                                        1,
+                                                                                                                        1,
+                                                                                                                        1,
+                                                                                                                        1.4285714626312256
+                                                                                                                      ],
+                                                                                                                      "estimated_operation_cost": 182699,
+                                                                                                                      "estimated_size": 1,
+                                                                                                                      "estimated_total_cost": 730793,
+                                                                                                                      "operation_time": 1,
+                                                                                                                      "original_operation_time": 0,
+                                                                                                                      "original_total_time": 0,
+                                                                                                                      "result_cols": 4,
+                                                                                                                      "result_rows": 130,
+                                                                                                                      "status": "fully materialized completed",
+                                                                                                                      "total_time": 1037
+                                                                                                                    }
+                                                                                                                  ],
+                                                                                                                  "column_names": [
+                                                                                                                    "?a0",
+                                                                                                                    "?a0_payload_property",
+                                                                                                                    "?a0_payload",
+                                                                                                                    "?a0_value_type"
+                                                                                                                  ],
+                                                                                                                  "description": "Filter ((?a0_value_type IN (\"string\",\"ref\",\"integer\",\"blob\") && ?a0_payload_property=<urn:triplex:field:value_string>) || (?a0_value_type=\"number\" && ?a0_payload_property=<urn:triplex:field:value_number>) || (?a0_value_type=\"datetime\" && ?a0_payload_property=<urn:triplex:field:value_datetime>) || (?a0_value_type=\"boolean\" && ?a0_payload_property=<urn:triplex:field:value_boolean>) || (?a0_value_type=\"json\" && ?a0_payload_property=<urn:triplex:field:value_json>))",
+                                                                                                                  "details": null,
+                                                                                                                  "estimated_column_multiplicities": [
+                                                                                                                    1,
+                                                                                                                    1,
+                                                                                                                    1,
+                                                                                                                    1.4285714626312256
+                                                                                                                  ],
+                                                                                                                  "estimated_operation_cost": 1,
+                                                                                                                  "estimated_size": 1,
+                                                                                                                  "estimated_total_cost": 730794,
+                                                                                                                  "operation_time": 1,
+                                                                                                                  "original_operation_time": 0,
+                                                                                                                  "original_total_time": 0,
+                                                                                                                  "result_cols": 4,
+                                                                                                                  "result_rows": 5,
+                                                                                                                  "status": "fully materialized completed",
+                                                                                                                  "total_time": 1038
+                                                                                                                },
+                                                                                                                {
+                                                                                                                  "cache_status": "computed",
+                                                                                                                  "children": [],
+                                                                                                                  "column_names": [
+                                                                                                                    "?a0",
+                                                                                                                    "?a0_valid_from_order"
+                                                                                                                  ],
+                                                                                                                  "description": "IndexScan PSO ?a0 <urn:triplex:field:valid_from_order> ?a0_valid_from_order",
+                                                                                                                  "details": null,
+                                                                                                                  "estimated_column_multiplicities": [
+                                                                                                                    1,
+                                                                                                                    1
+                                                                                                                  ],
+                                                                                                                  "estimated_operation_cost": 182697,
+                                                                                                                  "estimated_size": 182697,
+                                                                                                                  "estimated_total_cost": 182697,
+                                                                                                                  "operation_time": 219,
+                                                                                                                  "original_operation_time": 0,
+                                                                                                                  "original_total_time": 0,
+                                                                                                                  "result_cols": 2,
+                                                                                                                  "result_rows": 106,
+                                                                                                                  "status": "fully materialized completed",
+                                                                                                                  "total_time": 219
+                                                                                                                }
+                                                                                                              ],
+                                                                                                              "column_names": [
+                                                                                                                "?a0",
+                                                                                                                "?a0_payload_property",
+                                                                                                                "?a0_payload",
+                                                                                                                "?a0_value_type",
+                                                                                                                "?a0_valid_from_order"
+                                                                                                              ],
+                                                                                                              "description": "Join on ?a0",
+                                                                                                              "details": null,
+                                                                                                              "estimated_column_multiplicities": [
+                                                                                                                1,
+                                                                                                                1,
+                                                                                                                1,
+                                                                                                                1,
+                                                                                                                1.4285714626312256
+                                                                                                              ],
+                                                                                                              "estimated_operation_cost": 182699,
+                                                                                                              "estimated_size": 1,
+                                                                                                              "estimated_total_cost": 1096190,
+                                                                                                              "operation_time": 1,
+                                                                                                              "original_operation_time": 0,
+                                                                                                              "original_total_time": 0,
+                                                                                                              "result_cols": 5,
+                                                                                                              "result_rows": 5,
+                                                                                                              "status": "fully materialized completed",
+                                                                                                              "total_time": 1258
+                                                                                                            },
+                                                                                                            {
+                                                                                                              "cache_status": "computed",
+                                                                                                              "children": [],
+                                                                                                              "column_names": [
+                                                                                                                "?a0",
+                                                                                                                "?a0_recorded_position_order"
+                                                                                                              ],
+                                                                                                              "description": "IndexScan PSO ?a0 <urn:triplex:field:recorded_position_order> ?a0_recorded_position_order",
+                                                                                                              "details": null,
+                                                                                                              "estimated_column_multiplicities": [
+                                                                                                                1,
+                                                                                                                1
+                                                                                                              ],
+                                                                                                              "estimated_operation_cost": 182697,
+                                                                                                              "estimated_size": 182697,
+                                                                                                              "estimated_total_cost": 182697,
+                                                                                                              "operation_time": 244,
+                                                                                                              "original_operation_time": 0,
+                                                                                                              "original_total_time": 0,
+                                                                                                              "result_cols": 2,
+                                                                                                              "result_rows": 106,
+                                                                                                              "status": "fully materialized completed",
+                                                                                                              "total_time": 244
+                                                                                                            }
+                                                                                                          ],
+                                                                                                          "column_names": [
+                                                                                                            "?a0",
+                                                                                                            "?a0_payload_property",
+                                                                                                            "?a0_payload",
+                                                                                                            "?a0_value_type",
+                                                                                                            "?a0_valid_from_order",
+                                                                                                            "?a0_recorded_position_order"
+                                                                                                          ],
+                                                                                                          "description": "Join on ?a0",
+                                                                                                          "details": null,
+                                                                                                          "estimated_column_multiplicities": [
+                                                                                                            1,
+                                                                                                            1,
+                                                                                                            1,
+                                                                                                            1,
+                                                                                                            1,
+                                                                                                            1.4285714626312256
+                                                                                                          ],
+                                                                                                          "estimated_operation_cost": 182699,
+                                                                                                          "estimated_size": 1,
+                                                                                                          "estimated_total_cost": 1461586,
+                                                                                                          "operation_time": 1,
+                                                                                                          "original_operation_time": 0,
+                                                                                                          "original_total_time": 0,
+                                                                                                          "result_cols": 6,
+                                                                                                          "result_rows": 5,
+                                                                                                          "status": "fully materialized completed",
+                                                                                                          "total_time": 1503
+                                                                                                        },
+                                                                                                        {
+                                                                                                          "cache_status": "computed",
+                                                                                                          "children": [],
+                                                                                                          "column_names": [
+                                                                                                            "?a0",
+                                                                                                            "?a0_entity_id"
+                                                                                                          ],
+                                                                                                          "description": "IndexScan PSO ?a0 <urn:triplex:field:entity_id> ?a0_entity_id",
+                                                                                                          "details": null,
+                                                                                                          "estimated_column_multiplicities": [
+                                                                                                            1,
+                                                                                                            1
+                                                                                                          ],
+                                                                                                          "estimated_operation_cost": 182697,
+                                                                                                          "estimated_size": 182697,
+                                                                                                          "estimated_total_cost": 182697,
+                                                                                                          "operation_time": 226,
+                                                                                                          "original_operation_time": 0,
+                                                                                                          "original_total_time": 0,
+                                                                                                          "result_cols": 2,
+                                                                                                          "result_rows": 106,
+                                                                                                          "status": "fully materialized completed",
+                                                                                                          "total_time": 226
+                                                                                                        }
+                                                                                                      ],
+                                                                                                      "column_names": [
+                                                                                                        "?a0",
+                                                                                                        "?a0_payload_property",
+                                                                                                        "?a0_payload",
+                                                                                                        "?a0_value_type",
+                                                                                                        "?a0_valid_from_order",
+                                                                                                        "?a0_recorded_position_order",
+                                                                                                        "?a0_entity_id"
+                                                                                                      ],
+                                                                                                      "description": "Join on ?a0",
+                                                                                                      "details": null,
+                                                                                                      "estimated_column_multiplicities": [
+                                                                                                        1,
+                                                                                                        1,
+                                                                                                        1,
+                                                                                                        1,
+                                                                                                        1,
+                                                                                                        1,
+                                                                                                        1.4285714626312256
+                                                                                                      ],
+                                                                                                      "estimated_operation_cost": 182699,
+                                                                                                      "estimated_size": 1,
+                                                                                                      "estimated_total_cost": 1826982,
+                                                                                                      "operation_time": 1,
+                                                                                                      "original_operation_time": 0,
+                                                                                                      "original_total_time": 0,
+                                                                                                      "result_cols": 7,
+                                                                                                      "result_rows": 5,
+                                                                                                      "status": "fully materialized completed",
+                                                                                                      "total_time": 1730
+                                                                                                    },
+                                                                                                    {
+                                                                                                      "cache_status": "computed",
+                                                                                                      "children": [],
+                                                                                                      "column_names": [
+                                                                                                        "?a0",
+                                                                                                        "?a0_valid_to_order"
+                                                                                                      ],
+                                                                                                      "description": "IndexScan PSO ?a0 <urn:triplex:field:valid_to_order> ?a0_valid_to_order",
+                                                                                                      "details": null,
+                                                                                                      "estimated_column_multiplicities": [
+                                                                                                        1,
+                                                                                                        1
+                                                                                                      ],
+                                                                                                      "estimated_operation_cost": 182697,
+                                                                                                      "estimated_size": 182697,
+                                                                                                      "estimated_total_cost": 182697,
+                                                                                                      "operation_time": 0,
+                                                                                                      "original_operation_time": 0,
+                                                                                                      "original_total_time": 0,
+                                                                                                      "result_cols": 2,
+                                                                                                      "result_rows": 0,
+                                                                                                      "status": "lazily materialized completed",
+                                                                                                      "total_time": 0
+                                                                                                    }
+                                                                                                  ],
+                                                                                                  "column_names": [
+                                                                                                    "?a0",
+                                                                                                    "?a0_payload_property",
+                                                                                                    "?a0_payload",
+                                                                                                    "?a0_value_type",
+                                                                                                    "?a0_valid_from_order",
+                                                                                                    "?a0_recorded_position_order",
+                                                                                                    "?a0_entity_id",
+                                                                                                    "?a0_valid_to_order (U)"
+                                                                                                  ],
+                                                                                                  "description": "OptionalJoin on ?a0 ",
+                                                                                                  "details": null,
+                                                                                                  "estimated_column_multiplicities": [
+                                                                                                    1,
+                                                                                                    1,
+                                                                                                    1,
+                                                                                                    1,
+                                                                                                    1,
+                                                                                                    1,
+                                                                                                    1.4285714626312256,
+                                                                                                    1
+                                                                                                  ],
+                                                                                                  "estimated_operation_cost": 730800,
+                                                                                                  "estimated_size": 2,
+                                                                                                  "estimated_total_cost": 2740479,
+                                                                                                  "operation_time": 503,
+                                                                                                  "original_operation_time": 503,
+                                                                                                  "original_total_time": 2233,
+                                                                                                  "result_cols": 8,
+                                                                                                  "result_rows": 5,
+                                                                                                  "status": "lazily materialized completed",
+                                                                                                  "total_time": 2233
+                                                                                                },
+                                                                                                {
+                                                                                                  "cache_status": "computed",
+                                                                                                  "children": [],
+                                                                                                  "column_names": [
+                                                                                                    "?a0",
+                                                                                                    "?a0_retracted_position_order"
+                                                                                                  ],
+                                                                                                  "description": "IndexScan PSO ?a0 <urn:triplex:field:retracted_position_order> ?a0_retracted_position_order",
+                                                                                                  "details": {
+                                                                                                    "num-blocks-all": 1,
+                                                                                                    "num-blocks-read": 0,
+                                                                                                    "num-elements-read": 0
+                                                                                                  },
+                                                                                                  "estimated_column_multiplicities": [
+                                                                                                    1,
+                                                                                                    1
+                                                                                                  ],
+                                                                                                  "estimated_operation_cost": 182697,
+                                                                                                  "estimated_size": 182697,
+                                                                                                  "estimated_total_cost": 182697,
+                                                                                                  "operation_time": 0,
+                                                                                                  "original_operation_time": 0,
+                                                                                                  "original_total_time": 0,
+                                                                                                  "result_cols": 2,
+                                                                                                  "result_rows": 0,
+                                                                                                  "status": "lazily materialized completed",
+                                                                                                  "total_time": 0
+                                                                                                }
+                                                                                              ],
+                                                                                              "column_names": [
+                                                                                                "?a0",
+                                                                                                "?a0_payload_property",
+                                                                                                "?a0_payload",
+                                                                                                "?a0_value_type",
+                                                                                                "?a0_valid_from_order",
+                                                                                                "?a0_recorded_position_order",
+                                                                                                "?a0_entity_id",
+                                                                                                "?a0_valid_to_order (U)",
+                                                                                                "?a0_retracted_position_order (U)"
+                                                                                              ],
+                                                                                              "description": "OptionalJoin on ?a0 ",
+                                                                                              "details": null,
+                                                                                              "estimated_column_multiplicities": [
+                                                                                                1,
+                                                                                                1,
+                                                                                                1,
+                                                                                                1,
+                                                                                                1,
+                                                                                                1,
+                                                                                                1.4285714626312256,
+                                                                                                1,
+                                                                                                1
+                                                                                              ],
+                                                                                              "estimated_operation_cost": 730808,
+                                                                                              "estimated_size": 3,
+                                                                                              "estimated_total_cost": 3653984,
+                                                                                              "operation_time": 541,
+                                                                                              "original_operation_time": 541,
+                                                                                              "original_total_time": 2774,
+                                                                                              "result_cols": 9,
+                                                                                              "result_rows": 5,
+                                                                                              "status": "lazily materialized completed",
+                                                                                              "total_time": 2774
+                                                                                            }
+                                                                                          ],
+                                                                                          "column_names": [
+                                                                                            "?a0",
+                                                                                            "?a0_payload_property",
+                                                                                            "?a0_payload",
+                                                                                            "?a0_value_type",
+                                                                                            "?a0_valid_from_order",
+                                                                                            "?a0_recorded_position_order",
+                                                                                            "?a0_entity_id",
+                                                                                            "?a0_valid_to_order (U)",
+                                                                                            "?a0_retracted_position_order (U)"
+                                                                                          ],
+                                                                                          "description": "Filter (?a0_valid_from_order <= \"c27a1bdaebdf8000\" && (!BOUND(?a0_valid_to_order) || ?a0_valid_to_order > \"c27a1bdaebdf8000\") && ?a0_recorded_position_order <= \"c010000000000000\" && (!BOUND(?a0_retracted_position_order) || ((?a0_retracted_position_order > \"c010000000000000\"))))",
+                                                                                          "details": null,
+                                                                                          "estimated_column_multiplicities": [
+                                                                                            1,
+                                                                                            1,
+                                                                                            1,
+                                                                                            1,
+                                                                                            1,
+                                                                                            1,
+                                                                                            1.4285714626312256,
+                                                                                            1,
+                                                                                            1
+                                                                                          ],
+                                                                                          "estimated_operation_cost": 3,
+                                                                                          "estimated_size": 3,
+                                                                                          "estimated_total_cost": 3653987,
+                                                                                          "operation_time": 0,
+                                                                                          "original_operation_time": 0,
+                                                                                          "original_total_time": 2774,
+                                                                                          "result_cols": 9,
+                                                                                          "result_rows": 5,
+                                                                                          "status": "lazily materialized completed",
+                                                                                          "total_time": 2774
+                                                                                        },
+                                                                                        {
+                                                                                          "cache_status": "computed",
+                                                                                          "children": [],
+                                                                                          "column_names": [
+                                                                                            "?a0",
+                                                                                            "?a0_value_number_order"
+                                                                                          ],
+                                                                                          "description": "IndexScan PSO ?a0 <urn:triplex:field:value_number_order> ?a0_value_number_order",
+                                                                                          "details": {
+                                                                                            "num-blocks-all": 1,
+                                                                                            "num-blocks-postprocessed": 1,
+                                                                                            "num-blocks-read": 1,
+                                                                                            "num-blocks-with-update": 1,
+                                                                                            "num-elements-read": 2858
+                                                                                          },
+                                                                                          "estimated_column_multiplicities": [
+                                                                                            1,
+                                                                                            1
+                                                                                          ],
+                                                                                          "estimated_operation_cost": 182697,
+                                                                                          "estimated_size": 182697,
+                                                                                          "estimated_total_cost": 182697,
+                                                                                          "operation_time": 0,
+                                                                                          "original_operation_time": 0,
+                                                                                          "original_total_time": 0,
+                                                                                          "result_cols": 2,
+                                                                                          "result_rows": 4,
+                                                                                          "status": "lazily materialized completed",
+                                                                                          "total_time": 0
+                                                                                        }
+                                                                                      ],
+                                                                                      "column_names": [
+                                                                                        "?a0",
+                                                                                        "?a0_payload_property",
+                                                                                        "?a0_payload",
+                                                                                        "?a0_value_type",
+                                                                                        "?a0_valid_from_order",
+                                                                                        "?a0_recorded_position_order",
+                                                                                        "?a0_entity_id",
+                                                                                        "?a0_valid_to_order (U)",
+                                                                                        "?a0_retracted_position_order (U)",
+                                                                                        "?a0_value_number_order (U)"
+                                                                                      ],
+                                                                                      "description": "OptionalJoin on ?a0 ",
+                                                                                      "details": null,
+                                                                                      "estimated_column_multiplicities": [
+                                                                                        1,
+                                                                                        1,
+                                                                                        1,
+                                                                                        1,
+                                                                                        1,
+                                                                                        1,
+                                                                                        1.4285714626312256,
+                                                                                        1,
+                                                                                        1,
+                                                                                        1
+                                                                                      ],
+                                                                                      "estimated_operation_cost": 730816,
+                                                                                      "estimated_size": 4,
+                                                                                      "estimated_total_cost": 4567500,
+                                                                                      "operation_time": 500,
+                                                                                      "original_operation_time": 500,
+                                                                                      "original_total_time": 3274,
+                                                                                      "result_cols": 10,
+                                                                                      "result_rows": 5,
+                                                                                      "status": "lazily materialized completed",
+                                                                                      "total_time": 3274
+                                                                                    },
+                                                                                    {
+                                                                                      "cache_status": "computed",
+                                                                                      "children": [],
+                                                                                      "column_names": [
+                                                                                        "?a0",
+                                                                                        "?a0_value_datetime_order"
+                                                                                      ],
+                                                                                      "description": "IndexScan PSO ?a0 <urn:triplex:field:value_datetime_order> ?a0_value_datetime_order",
+                                                                                      "details": {
+                                                                                        "num-blocks-all": 1,
+                                                                                        "num-blocks-postprocessed": 1,
+                                                                                        "num-blocks-read": 1,
+                                                                                        "num-blocks-with-update": 1,
+                                                                                        "num-elements-read": 2858
+                                                                                      },
+                                                                                      "estimated_column_multiplicities": [
+                                                                                        1,
+                                                                                        1
+                                                                                      ],
+                                                                                      "estimated_operation_cost": 182697,
+                                                                                      "estimated_size": 182697,
+                                                                                      "estimated_total_cost": 182697,
+                                                                                      "operation_time": 0,
+                                                                                      "original_operation_time": 0,
+                                                                                      "original_total_time": 0,
+                                                                                      "result_cols": 2,
+                                                                                      "result_rows": 4,
+                                                                                      "status": "lazily materialized completed",
+                                                                                      "total_time": 0
+                                                                                    }
+                                                                                  ],
+                                                                                  "column_names": [
+                                                                                    "?a0",
+                                                                                    "?a0_payload_property",
+                                                                                    "?a0_payload",
+                                                                                    "?a0_value_type",
+                                                                                    "?a0_valid_from_order",
+                                                                                    "?a0_recorded_position_order",
+                                                                                    "?a0_entity_id",
+                                                                                    "?a0_valid_to_order (U)",
+                                                                                    "?a0_retracted_position_order (U)",
+                                                                                    "?a0_value_number_order (U)",
+                                                                                    "?a0_value_datetime_order (U)"
+                                                                                  ],
+                                                                                  "description": "OptionalJoin on ?a0 ",
+                                                                                  "details": null,
+                                                                                  "estimated_column_multiplicities": [
+                                                                                    1,
+                                                                                    1,
+                                                                                    1,
+                                                                                    1,
+                                                                                    1,
+                                                                                    1,
+                                                                                    1.4285714626312256,
+                                                                                    1,
+                                                                                    1,
+                                                                                    1,
+                                                                                    1
+                                                                                  ],
+                                                                                  "estimated_operation_cost": 730824,
+                                                                                  "estimated_size": 5,
+                                                                                  "estimated_total_cost": 5481021,
+                                                                                  "operation_time": 518,
+                                                                                  "original_operation_time": 518,
+                                                                                  "original_total_time": 3793,
+                                                                                  "result_cols": 11,
+                                                                                  "result_rows": 5,
+                                                                                  "status": "lazily materialized completed",
+                                                                                  "total_time": 3793
+                                                                                },
+                                                                                {
+                                                                                  "cache_status": "computed",
+                                                                                  "children": [],
+                                                                                  "column_names": [
+                                                                                    "?a0",
+                                                                                    "?a0_value_integer_order"
+                                                                                  ],
+                                                                                  "description": "IndexScan PSO ?a0 <urn:triplex:field:value_integer_order> ?a0_value_integer_order",
+                                                                                  "details": {
+                                                                                    "num-blocks-all": 1,
+                                                                                    "num-blocks-read": 0,
+                                                                                    "num-elements-read": 0
+                                                                                  },
+                                                                                  "estimated_column_multiplicities": [
+                                                                                    1,
+                                                                                    1
+                                                                                  ],
+                                                                                  "estimated_operation_cost": 182697,
+                                                                                  "estimated_size": 182697,
+                                                                                  "estimated_total_cost": 182697,
+                                                                                  "operation_time": 0,
+                                                                                  "original_operation_time": 0,
+                                                                                  "original_total_time": 0,
+                                                                                  "result_cols": 2,
+                                                                                  "result_rows": 0,
+                                                                                  "status": "lazily materialized completed",
+                                                                                  "total_time": 0
+                                                                                }
+                                                                              ],
+                                                                              "column_names": [
+                                                                                "?a0",
+                                                                                "?a0_payload_property",
+                                                                                "?a0_payload",
+                                                                                "?a0_value_type",
+                                                                                "?a0_valid_from_order",
+                                                                                "?a0_recorded_position_order",
+                                                                                "?a0_entity_id",
+                                                                                "?a0_valid_to_order (U)",
+                                                                                "?a0_retracted_position_order (U)",
+                                                                                "?a0_value_number_order (U)",
+                                                                                "?a0_value_datetime_order (U)",
+                                                                                "?a0_value_integer_order (U)"
+                                                                              ],
+                                                                              "description": "OptionalJoin on ?a0 ",
+                                                                              "details": null,
+                                                                              "estimated_column_multiplicities": [
+                                                                                1,
+                                                                                1,
+                                                                                1,
+                                                                                1,
+                                                                                1,
+                                                                                1,
+                                                                                1.4285714626312256,
+                                                                                1,
+                                                                                1,
+                                                                                1,
+                                                                                1,
+                                                                                1
+                                                                              ],
+                                                                              "estimated_operation_cost": 730832,
+                                                                              "estimated_size": 6,
+                                                                              "estimated_total_cost": 6394550,
+                                                                              "operation_time": 548,
+                                                                              "original_operation_time": 548,
+                                                                              "original_total_time": 4341,
+                                                                              "result_cols": 12,
+                                                                              "result_rows": 5,
+                                                                              "status": "lazily materialized completed",
+                                                                              "total_time": 4341
+                                                                            }
+                                                                          ],
+                                                                          "column_names": [
+                                                                            "?a0",
+                                                                            "?a0_payload_property",
+                                                                            "?a0_payload",
+                                                                            "?a0_value_type",
+                                                                            "?a0_valid_from_order",
+                                                                            "?a0_recorded_position_order",
+                                                                            "?a0_entity_id",
+                                                                            "?a0_valid_to_order (U)",
+                                                                            "?a0_retracted_position_order (U)",
+                                                                            "?a0_value_number_order (U)",
+                                                                            "?a0_value_datetime_order (U)",
+                                                                            "?a0_value_integer_order (U)",
+                                                                            "?a0_value_family"
+                                                                          ],
+                                                                          "description": "BIND (IF(?a0_value_type IN (\"number\",\"datetime\"),\"number\",IF(?a0_value_type=\"integer\",\"integer\",IF(?a0_value_type=\"boolean\",\"boolean\",\"string\"))) AS ?a0_value_family)",
+                                                                          "details": {
+                                                                            "non-empty-local-vocabs": "1 / 1, Ø = 1, max = 1"
+                                                                          },
+                                                                          "estimated_column_multiplicities": [
+                                                                            1,
+                                                                            1,
+                                                                            1,
+                                                                            1,
+                                                                            1,
+                                                                            1,
+                                                                            1.4285714626312256,
+                                                                            1,
+                                                                            1,
+                                                                            1,
+                                                                            1,
+                                                                            1,
+                                                                            1
+                                                                          ],
+                                                                          "estimated_operation_cost": 6,
+                                                                          "estimated_size": 6,
+                                                                          "estimated_total_cost": 6394556,
+                                                                          "operation_time": 0,
+                                                                          "original_operation_time": 0,
+                                                                          "original_total_time": 4341,
+                                                                          "result_cols": 13,
+                                                                          "result_rows": 5,
+                                                                          "status": "lazily materialized completed",
+                                                                          "total_time": 4341
+                                                                        }
+                                                                      ],
+                                                                      "column_names": [
+                                                                        "?a0",
+                                                                        "?a0_payload_property",
+                                                                        "?a0_payload",
+                                                                        "?a0_value_type",
+                                                                        "?a0_valid_from_order",
+                                                                        "?a0_recorded_position_order",
+                                                                        "?a0_entity_id",
+                                                                        "?a0_valid_to_order (U)",
+                                                                        "?a0_retracted_position_order (U)",
+                                                                        "?a0_value_number_order (U)",
+                                                                        "?a0_value_datetime_order (U)",
+                                                                        "?a0_value_integer_order (U)",
+                                                                        "?a0_value_family",
+                                                                        "?a0_value_lexical"
+                                                                      ],
+                                                                      "description": "BIND (IF(?a0_value_type IN (\"number\",\"datetime\") && ?a0_payload=\"-0\",\"0\",?a0_payload) AS ?a0_value_lexical)",
+                                                                      "details": {
+                                                                        "non-empty-local-vocabs": "1 / 1, Ø = 1, max = 1"
+                                                                      },
+                                                                      "estimated_column_multiplicities": [
+                                                                        1,
+                                                                        1,
+                                                                        1,
+                                                                        1,
+                                                                        1,
+                                                                        1,
+                                                                        1.4285714626312256,
+                                                                        1,
+                                                                        1,
+                                                                        1,
+                                                                        1,
+                                                                        1,
+                                                                        1,
+                                                                        1
+                                                                      ],
+                                                                      "estimated_operation_cost": 6,
+                                                                      "estimated_size": 6,
+                                                                      "estimated_total_cost": 6394562,
+                                                                      "operation_time": 0,
+                                                                      "original_operation_time": 0,
+                                                                      "original_total_time": 4341,
+                                                                      "result_cols": 14,
+                                                                      "result_rows": 5,
+                                                                      "status": "lazily materialized completed",
+                                                                      "total_time": 4341
+                                                                    }
+                                                                  ],
+                                                                  "column_names": [
+                                                                    "?a0",
+                                                                    "?a0_payload_property",
+                                                                    "?a0_payload",
+                                                                    "?a0_value_type",
+                                                                    "?a0_valid_from_order",
+                                                                    "?a0_recorded_position_order",
+                                                                    "?a0_entity_id",
+                                                                    "?a0_valid_to_order (U)",
+                                                                    "?a0_retracted_position_order (U)",
+                                                                    "?a0_value_number_order (U)",
+                                                                    "?a0_value_datetime_order (U)",
+                                                                    "?a0_value_integer_order (U)",
+                                                                    "?a0_value_family",
+                                                                    "?a0_value_lexical",
+                                                                    "?a0_value_order (U)"
+                                                                  ],
+                                                                  "description": "BIND (IF(?a0_value_type IN (\"number\",\"datetime\",\"integer\"),COALESCE(?a0_value_number_order,?a0_value_datetime_order,?a0_value_integer_order),IF(?a0_value_type IN (\"number\",\"datetime\") && ?a0_payload=\"-0\",\"0\",?a0_payload)) AS ?a0_value_order)",
+                                                                  "details": {
+                                                                    "non-empty-local-vocabs": "1 / 1, Ø = 1, max = 1"
+                                                                  },
+                                                                  "estimated_column_multiplicities": [
+                                                                    1,
+                                                                    1,
+                                                                    1,
+                                                                    1,
+                                                                    1,
+                                                                    1,
+                                                                    1.4285714626312256,
+                                                                    1,
+                                                                    1,
+                                                                    1,
+                                                                    1,
+                                                                    1,
+                                                                    1,
+                                                                    1,
+                                                                    1
+                                                                  ],
+                                                                  "estimated_operation_cost": 6,
+                                                                  "estimated_size": 6,
+                                                                  "estimated_total_cost": 6394568,
+                                                                  "operation_time": 0,
+                                                                  "original_operation_time": 0,
+                                                                  "original_total_time": 4341,
+                                                                  "result_cols": 15,
+                                                                  "result_rows": 5,
+                                                                  "status": "lazily materialized completed",
+                                                                  "total_time": 4341
+                                                                }
+                                                              ],
+                                                              "column_names": [
+                                                                "?a0_entity_id",
+                                                                "?a0_value_family",
+                                                                "?a0_value_lexical",
+                                                                "?a0_value_order (U)"
+                                                              ],
+                                                              "description": "Strip Columns",
+                                                              "details": {
+                                                                "non-empty-local-vocabs": "1 / 1, Ø = 1, max = 1"
+                                                              },
+                                                              "estimated_column_multiplicities": [
+                                                                1.4285714626312256,
+                                                                1,
+                                                                1,
+                                                                1
+                                                              ],
+                                                              "estimated_operation_cost": 0,
+                                                              "estimated_size": 6,
+                                                              "estimated_total_cost": 6394568,
+                                                              "operation_time": 1,
+                                                              "original_operation_time": 1,
+                                                              "original_total_time": 4342,
+                                                              "result_cols": 4,
+                                                              "result_rows": 5,
+                                                              "status": "lazily materialized completed",
+                                                              "total_time": 4342
+                                                            }
+                                                          ],
+                                                          "column_names": [
+                                                            "?a0_entity_id",
+                                                            "?a0_value_family",
+                                                            "?a0_value_lexical",
+                                                            "?a0_value_order (U)"
+                                                          ],
+                                                          "description": "Filter ((\"string\" = \"string\" && \":c8/parent\" = \":c8/parent\"))",
+                                                          "details": {
+                                                            "non-empty-local-vocabs": "1 / 1, Ø = 1, max = 1"
+                                                          },
+                                                          "estimated_column_multiplicities": [
+                                                            1.4285714626312256,
+                                                            1,
+                                                            1,
+                                                            1
+                                                          ],
+                                                          "estimated_operation_cost": 6,
+                                                          "estimated_size": 6,
+                                                          "estimated_total_cost": 6394574,
+                                                          "operation_time": 0,
+                                                          "original_operation_time": 0,
+                                                          "original_total_time": 4342,
+                                                          "result_cols": 4,
+                                                          "result_rows": 5,
+                                                          "status": "lazily materialized completed",
+                                                          "total_time": 4342
+                                                        }
+                                                      ],
+                                                      "column_names": [
+                                                        "?a0_entity_id",
+                                                        "?a0_value_family",
+                                                        "?a0_value_lexical",
+                                                        "?a0_value_order (U)",
+                                                        "?v0_type"
+                                                      ],
+                                                      "description": "BIND (\"string\" AS ?v0_type)",
+                                                      "details": {
+                                                        "non-empty-local-vocabs": "1 / 1, Ø = 2, max = 2"
+                                                      },
+                                                      "estimated_column_multiplicities": [
+                                                        1.4285714626312256,
+                                                        1,
+                                                        1,
+                                                        1,
+                                                        1
+                                                      ],
+                                                      "estimated_operation_cost": 6,
+                                                      "estimated_size": 6,
+                                                      "estimated_total_cost": 6394580,
+                                                      "operation_time": 0,
+                                                      "original_operation_time": 0,
+                                                      "original_total_time": 4342,
+                                                      "result_cols": 5,
+                                                      "result_rows": 5,
+                                                      "status": "lazily materialized completed",
+                                                      "total_time": 4342
+                                                    }
+                                                  ],
+                                                  "column_names": [
+                                                    "?a0_entity_id",
+                                                    "?a0_value_family",
+                                                    "?a0_value_lexical",
+                                                    "?a0_value_order (U)",
+                                                    "?v0_type",
+                                                    "?v0_value"
+                                                  ],
+                                                  "description": "BIND (?a0_entity_id AS ?v0_value)",
+                                                  "details": {
+                                                    "non-empty-local-vocabs": "1 / 1, Ø = 2, max = 2"
+                                                  },
+                                                  "estimated_column_multiplicities": [
+                                                    1.4285714626312256,
+                                                    1,
+                                                    1,
+                                                    1,
+                                                    1,
+                                                    1
+                                                  ],
+                                                  "estimated_operation_cost": 6,
+                                                  "estimated_size": 6,
+                                                  "estimated_total_cost": 6394586,
+                                                  "operation_time": 0,
+                                                  "original_operation_time": 0,
+                                                  "original_total_time": 4342,
+                                                  "result_cols": 6,
+                                                  "result_rows": 5,
+                                                  "status": "lazily materialized completed",
+                                                  "total_time": 4342
+                                                }
+                                              ],
+                                              "column_names": [
+                                                "?a0_entity_id",
+                                                "?a0_value_family",
+                                                "?a0_value_lexical",
+                                                "?a0_value_order (U)",
+                                                "?v0_type",
+                                                "?v0_value",
+                                                "?v0_order"
+                                              ],
+                                              "description": "BIND (?a0_entity_id AS ?v0_order)",
+                                              "details": {
+                                                "non-empty-local-vocabs": "1 / 1, Ø = 2, max = 2"
+                                              },
+                                              "estimated_column_multiplicities": [
+                                                1.4285714626312256,
+                                                1,
+                                                1,
+                                                1,
+                                                1,
+                                                1,
+                                                1
+                                              ],
+                                              "estimated_operation_cost": 6,
+                                              "estimated_size": 6,
+                                              "estimated_total_cost": 6394592,
+                                              "operation_time": 0,
+                                              "original_operation_time": 0,
+                                              "original_total_time": 4342,
+                                              "result_cols": 7,
+                                              "result_rows": 5,
+                                              "status": "lazily materialized completed",
+                                              "total_time": 4342
+                                            }
+                                          ],
+                                          "column_names": [
+                                            "?a0_entity_id",
+                                            "?a0_value_family",
+                                            "?a0_value_lexical",
+                                            "?a0_value_order (U)",
+                                            "?v0_type",
+                                            "?v0_value",
+                                            "?v0_order",
+                                            "?v1_type"
+                                          ],
+                                          "description": "BIND (?a0_value_family AS ?v1_type)",
+                                          "details": {
+                                            "non-empty-local-vocabs": "1 / 1, Ø = 2, max = 2"
+                                          },
+                                          "estimated_column_multiplicities": [
+                                            1.4285714626312256,
+                                            1,
+                                            1,
+                                            1,
+                                            1,
+                                            1,
+                                            1,
+                                            1
+                                          ],
+                                          "estimated_operation_cost": 6,
+                                          "estimated_size": 6,
+                                          "estimated_total_cost": 6394598,
+                                          "operation_time": 1,
+                                          "original_operation_time": 1,
+                                          "original_total_time": 4343,
+                                          "result_cols": 8,
+                                          "result_rows": 5,
+                                          "status": "lazily materialized completed",
+                                          "total_time": 4343
+                                        }
+                                      ],
+                                      "column_names": [
+                                        "?a0_entity_id",
+                                        "?a0_value_family",
+                                        "?a0_value_lexical",
+                                        "?a0_value_order (U)",
+                                        "?v0_type",
+                                        "?v0_value",
+                                        "?v0_order",
+                                        "?v1_type",
+                                        "?v1_value"
+                                      ],
+                                      "description": "BIND (?a0_value_lexical AS ?v1_value)",
+                                      "details": {
+                                        "non-empty-local-vocabs": "1 / 1, Ø = 2, max = 2"
+                                      },
+                                      "estimated_column_multiplicities": [
+                                        1.4285714626312256,
+                                        1,
+                                        1,
+                                        1,
+                                        1,
+                                        1,
+                                        1,
+                                        1,
+                                        1
+                                      ],
+                                      "estimated_operation_cost": 6,
+                                      "estimated_size": 6,
+                                      "estimated_total_cost": 6394604,
+                                      "operation_time": 0,
+                                      "original_operation_time": 0,
+                                      "original_total_time": 4343,
+                                      "result_cols": 9,
+                                      "result_rows": 5,
+                                      "status": "lazily materialized completed",
+                                      "total_time": 4343
+                                    }
+                                  ],
+                                  "column_names": [
+                                    "?a0_entity_id",
+                                    "?a0_value_family",
+                                    "?a0_value_lexical",
+                                    "?a0_value_order (U)",
+                                    "?v0_type",
+                                    "?v0_value",
+                                    "?v0_order",
+                                    "?v1_type",
+                                    "?v1_value",
+                                    "?v1_order (U)"
+                                  ],
+                                  "description": "BIND (?a0_value_order AS ?v1_order)",
+                                  "details": {
+                                    "non-empty-local-vocabs": "1 / 1, Ø = 2, max = 2"
+                                  },
+                                  "estimated_column_multiplicities": [
+                                    1.4285714626312256,
+                                    1,
+                                    1,
+                                    1,
+                                    1,
+                                    1,
+                                    1,
+                                    1,
+                                    1,
+                                    1
+                                  ],
+                                  "estimated_operation_cost": 6,
+                                  "estimated_size": 6,
+                                  "estimated_total_cost": 6394610,
+                                  "operation_time": 0,
+                                  "original_operation_time": 0,
+                                  "original_total_time": 4343,
+                                  "result_cols": 10,
+                                  "result_rows": 5,
+                                  "status": "lazily materialized completed",
+                                  "total_time": 4343
+                                }
+                              ],
+                              "column_names": [
+                                "?a0_entity_id",
+                                "?a0_value_family",
+                                "?a0_value_lexical",
+                                "?a0_value_order (U)",
+                                "?v0_type",
+                                "?v0_value",
+                                "?v0_order",
+                                "?v1_type",
+                                "?v1_value",
+                                "?v1_order (U)"
+                              ],
+                              "description": "Sort (internal order) on ?v0_type ?v0_value ?v0_order ?v1_type ?v1_value ?v1_order",
+                              "details": {
+                                "is-external": "false",
+                                "local-vocab-size": 2
+                              },
+                              "estimated_column_multiplicities": [
+                                1.4285714626312256,
+                                1,
+                                1,
+                                1,
+                                1,
+                                1,
+                                1,
+                                1,
+                                1,
+                                1
+                              ],
+                              "estimated_operation_cost": 12,
+                              "estimated_size": 6,
+                              "estimated_total_cost": 6394622,
+                              "operation_time": 2,
+                              "original_operation_time": 0,
+                              "original_total_time": 0,
+                              "result_cols": 10,
+                              "result_rows": 5,
+                              "status": "fully materialized completed",
+                              "total_time": 4346
+                            }
+                          ],
+                          "column_names": [
+                            "?a0_entity_id",
+                            "?a0_value_family",
+                            "?a0_value_lexical",
+                            "?a0_value_order (U)",
+                            "?v0_type",
+                            "?v0_value",
+                            "?v0_order",
+                            "?v1_type",
+                            "?v1_value",
+                            "?v1_order (U)"
+                          ],
+                          "description": "Distinct",
+                          "details": {
+                            "local-vocab-size": 2
+                          },
+                          "estimated_column_multiplicities": [
+                            1.4285714626312256,
+                            1,
+                            1,
+                            1,
+                            1,
+                            1,
+                            1,
+                            1,
+                            1,
+                            1
+                          ],
+                          "estimated_operation_cost": 6,
+                          "estimated_size": 6,
+                          "estimated_total_cost": 6394628,
+                          "operation_time": 1,
+                          "original_operation_time": 0,
+                          "original_total_time": 0,
+                          "result_cols": 10,
+                          "result_rows": 5,
+                          "status": "fully materialized completed",
+                          "total_time": 4347
+                        }
+                      ],
+                      "column_names": [
+                        "?v0_order",
+                        "?v0_type",
+                        "?v0_value",
+                        "?v1_order (U)",
+                        "?v1_type",
+                        "?v1_value"
+                      ],
+                      "description": "Strip Columns",
+                      "details": {
+                        "local-vocab-size": 2
+                      },
+                      "estimated_column_multiplicities": [
+                        1,
+                        1,
+                        1,
+                        1,
+                        1,
+                        1
+                      ],
+                      "estimated_operation_cost": 0,
+                      "estimated_size": 6,
+                      "estimated_total_cost": 6394628,
+                      "operation_time": 0,
+                      "original_operation_time": 0,
+                      "original_total_time": 0,
+                      "result_cols": 6,
+                      "result_rows": 5,
+                      "status": "fully materialized completed",
+                      "total_time": 4347
+                    }
+                  ],
+                  "column_names": [
+                    "?v0_order",
+                    "?v0_type",
+                    "?v0_value",
+                    "?v1_order (U)",
+                    "?v1_type",
+                    "?v1_value"
+                  ],
+                  "description": "Filter (?v0_type = \"string\" && ?v1_type = \"string\")",
+                  "details": {
+                    "local-vocab-size": 2
+                  },
+                  "estimated_column_multiplicities": [
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1
+                  ],
+                  "estimated_operation_cost": 6,
+                  "estimated_size": 6,
+                  "estimated_total_cost": 6394634,
+                  "operation_time": 1,
+                  "original_operation_time": 0,
+                  "original_total_time": 0,
+                  "result_cols": 6,
+                  "result_rows": 5,
+                  "status": "fully materialized completed",
+                  "total_time": 4348
+                }
+              ],
+              "column_names": [
+                "?v0_order",
+                "?v0_type",
+                "?v0_value",
+                "?v1_order (U)",
+                "?v1_type",
+                "?v1_value"
+              ],
+              "description": "Sort (internal order) on ?v0_value ?v1_value",
+              "details": {
+                "is-external": "false",
+                "local-vocab-size": 2
+              },
+              "estimated_column_multiplicities": [
+                1,
+                1,
+                1,
+                1,
+                1,
+                1
+              ],
+              "estimated_operation_cost": 12,
+              "estimated_size": 6,
+              "estimated_total_cost": 6394646,
+              "operation_time": 0,
+              "original_operation_time": 0,
+              "original_total_time": 0,
+              "result_cols": 6,
+              "result_rows": 5,
+              "status": "fully materialized completed",
+              "total_time": 4348
+            }
+          ],
+          "column_names": [
+            "?v0_order",
+            "?v0_type",
+            "?v0_value",
+            "?v1_order (U)",
+            "?v1_type",
+            "?v1_value"
+          ],
+          "description": "Distinct",
+          "details": {
+            "local-vocab-size": 2,
+            "not-written-to-cache-because-child-of-limit": false
+          },
+          "estimated_column_multiplicities": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "estimated_operation_cost": 6,
+          "estimated_size": 6,
+          "estimated_total_cost": 6394652,
+          "operation_time": 1,
+          "original_operation_time": 0,
+          "original_total_time": 0,
+          "result_cols": 6,
+          "result_rows": 5,
+          "status": "fully materialized completed",
+          "total_time": 4349
+        }
+      ],
+      "column_names": [
+        "?v0_order",
+        "?v0_type",
+        "?v0_value",
+        "?v1_order (U)",
+        "?v1_type",
+        "?v1_value"
+      ],
+      "description": "LIMIT 100001",
+      "details": {
+        "executed-implicitly-during-query-export": true
+      },
+      "estimated_column_multiplicities": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "estimated_operation_cost": 0,
+      "estimated_size": 6,
+      "estimated_total_cost": 6394652,
+      "operation_time": 0,
+      "original_operation_time": 0,
+      "original_total_time": 0,
+      "result_cols": 6,
+      "result_rows": 5,
+      "status": "fully materialized completed",
+      "total_time": 4349
+    }
+  },
+  "time": {
+    "computeResult": "4352ms",
+    "total": "4353ms"
+  }
+}

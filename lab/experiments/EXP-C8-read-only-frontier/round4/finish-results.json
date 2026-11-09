@@ -1,0 +1,42 @@
+[
+  {
+    "name": "profile-paired",
+    "command": [
+      "/Users/sam/.hermes/node/bin/node",
+      "lab/experiments/EXP-C8-read-only-frontier/round4/profile-paired.mjs"
+    ],
+    "cwd": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16",
+    "started": "2026-11-09T00:25:51.929Z",
+    "finished": "2026-11-09T00:26:06.432Z",
+    "status": 0,
+    "signal": null
+  },
+  {
+    "name": "host-rounds",
+    "command": [
+      "/Users/sam/.hermes/node/bin/node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "--config",
+      "lab/experiments/EXP-C8-read-only-frontier/round4/vitest.config.ts",
+      "lab/experiments/EXP-C8-read-only-frontier/round4/host-rounds.test.ts"
+    ],
+    "cwd": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16",
+    "started": "2026-11-09T00:26:06.435Z",
+    "finished": "2026-11-09T00:26:06.856Z",
+    "status": 0,
+    "signal": null
+  },
+  {
+    "name": "audit",
+    "command": [
+      "/Users/sam/.hermes/node/bin/node",
+      "lab/experiments/EXP-C8-read-only-frontier/round4/audit.mjs"
+    ],
+    "cwd": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16",
+    "started": "2026-11-09T00:26:06.856Z",
+    "finished": "2026-11-09T00:26:12.491Z",
+    "status": 0,
+    "signal": null
+  }
+]

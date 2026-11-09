@@ -1,0 +1,51 @@
+{
+  variant: 'original',
+  ms: 5836.7690840000005,
+  status: 200,
+  keys: [
+    'query',
+    'selected',
+    'status',
+    'warnings',
+    'res',
+    'resultSizeExported',
+    'resultSizeTotal',
+    'resultsize',
+    'runtimeInformation',
+    'time'
+  ]
+}
+{
+  variant: 'dataset',
+  ms: 3699.6538330000003,
+  status: 200,
+  keys: [
+    'query',
+    'selected',
+    'status',
+    'warnings',
+    'res',
+    'resultSizeExported',
+    'resultSizeTotal',
+    'resultsize',
+    'runtimeInformation',
+    'time'
+  ]
+}
+{
+  variant: 'unscoped',
+  ms: 3070.622874999999,
+  status: 200,
+  keys: [
+    'query',
+    'selected',
+    'status',
+    'warnings',
+    'res',
+    'resultSizeExported',
+    'resultSizeTotal',
+    'resultsize',
+    'runtimeInformation',
+    'time'
+  ]
+}
