@@ -37,10 +37,17 @@ try{
  const periods=attempts.map(r=>{const a=[...r.observer.seal.periodNs].sort((a,b)=>a-b);return {p50Ns:a[Math.ceil(a.length*.5)-1],p99Ns:a[Math.ceil(a.length*.99)-1]}});
  const summary={status:'DIAGNOSTIC',qualification:false,source,driverManifest:manifest,layout:'P-TINY diagnostic caps, not proposed acceptance nsLayout',writerOfferAckP99Ns:latencies,observerOverhead:overhead,observerPeriods:periods,smoke:overhead!==null&&overhead<=.05?'OBSERVED':'NOT-ESTABLISHED',events};
  fs.writeFileSync(path.join(out,'summary.json'),JSON.stringify(summary,null,2));if(summary.smoke!=='OBSERVED')process.exitCode=2;
-}catch(e){events.push({error:String(e)});if(box){const logs=Object.fromEntries(box.resources.filter(([kind])=>kind==='container').map(([,n])=>{const r=spawnSync('docker',['-H','unix:///Users/sam/.colima/triplex2/docker.sock','logs',n],{encoding:'utf8',maxBuffer:2097152});return [n,{stdout:r.stdout,stderr:r.stderr,status:r.status}]}));fs.writeFileSync(path.join(out,'failure-container-logs.json'),JSON.stringify(logs,null,2))}process.exitCode=2}
+}catch(e){
+ // [EXP-G03-R7c] Why: a refused or failed round names where its raw export is, or which per-run volumes runBoxedNS kept because export was not proven; those volumes are not in box.resources, so close() below cannot delete them. Rejected: logging only String(e) (F3: the run's volumes were then deleted with no raw export or ownership record).
+ events.push({error:String(e),runId:e?.runId,rawDir:e?.rawDir??null,terminal:e?.terminal??null,retained:e?.retained??null});
+ if(box){const logs=Object.fromEntries(box.resources.filter(([kind])=>kind==='container').map(([,n])=>{const r=spawnSync('docker',['-H','unix:///Users/sam/.colima/triplex2/docker.sock','logs',n],{encoding:'utf8',maxBuffer:2097152});return [n,{stdout:r.stdout,stderr:r.stderr,status:r.status}]}));
+  // Logs captured by runBoxedNS before it removed the candidate containers.
+  for(const [n,v]of Object.entries(e?.candidateLogs??{}))logs[n]??={stdout:String(v),stderr:'',status:null};
+  fs.writeFileSync(path.join(out,'failure-container-logs.json'),JSON.stringify(logs,null,2))}
+ process.exitCode=2}
 finally{
  try{box?.close();if(entered)engine('remove-volume',['--name',store])}catch(e){cleanupError=String(e);process.exitCode=2}
  canary.close();
  if(entered){for(const [cmd,args,name]of [['colima',['ssh','-p','triplex2','--','sudo','fstrim','-av'],'trim']]){const r=spawnSync(cmd,args,{encoding:'utf8',timeout:180000});fs.writeFileSync(path.join(out,name+'.json'),JSON.stringify({status:r.status,stdout:r.stdout,stderr:r.stderr}));if(r.status!==0)process.exitCode=2}}
- fs.writeFileSync(path.join(out,'terminal.json'),JSON.stringify({source,events,cleanupError,remaining:box?.resources,status:'DIAGNOSTIC',qualification:false},null,2));console.log(JSON.stringify({events,cleanupError,remaining:box?.resources}));
+ fs.writeFileSync(path.join(out,'terminal.json'),JSON.stringify({source,events,cleanupError,remaining:box?.resources,retainedVolumes:box?.retained??[],status:'DIAGNOSTIC',qualification:false},null,2));console.log(JSON.stringify({events,cleanupError,remaining:box?.resources,retainedVolumes:box?.retained??[]}));
 }
