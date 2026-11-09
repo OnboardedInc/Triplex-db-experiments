@@ -1,0 +1,177 @@
+{
+  "r": {
+    "txId": "_tx/00GRTCFP000000000000000001",
+    "position": 1,
+    "instant": 1000,
+    "stagedAt": 1000,
+    "triples": [
+      {
+        "id": "00V9ABAN000000000000000001",
+        "entityId": "single",
+        "attribute": ":value",
+        "value": {
+          "type": "string",
+          "value": "one"
+        },
+        "recordedAt": 1000,
+        "validFrom": 1000,
+        "validTo": {
+          "_id": "Option",
+          "_tag": "None"
+        },
+        "createdBy": {
+          "_id": "Option",
+          "_tag": "None"
+        },
+        "retractedAt": {
+          "_id": "Option",
+          "_tag": "None"
+        },
+        "entityType": {
+          "_id": "Option",
+          "_tag": "None"
+        },
+        "schemaVersion": {
+          "_id": "Option",
+          "_tag": "Some",
+          "value": 1
+        },
+        "txId": {
+          "_id": "Option",
+          "_tag": "Some",
+          "value": "_tx/00GRTCFP000000000000000001"
+        },
+        "retractTxId": {
+          "_id": "Option",
+          "_tag": "None"
+        }
+      }
+    ],
+    "retracted": 1
+  },
+  "rows": [
+    {
+      "id": "00V9ABAN000000000000000002",
+      "entity_id": "_tx/00GRTCFP000000000000000001",
+      "attribute": ":_tx/position",
+      "value_type": "number",
+      "value_string": null,
+      "value_number": 1,
+      "value_boolean": null,
+      "value_datetime": null,
+      "value_json": null,
+      "recorded_at": 1000,
+      "recorded_position": 1,
+      "valid_from": 1000,
+      "valid_to": null,
+      "created_by": null,
+      "retracted_at": null,
+      "retracted_position": null,
+      "retract_tx_id": null,
+      "entity_type": "_Transaction",
+      "schema_version": 1,
+      "tx_id": "_tx/00GRTCFP000000000000000001"
+    },
+    {
+      "id": "00V9ABAN000000000000000003",
+      "entity_id": "_tx/00GRTCFP000000000000000001",
+      "attribute": ":_tx/changed-entity",
+      "value_type": "ref",
+      "value_string": "single",
+      "value_number": null,
+      "value_boolean": null,
+      "value_datetime": null,
+      "value_json": null,
+      "recorded_at": 1000,
+      "recorded_position": 1,
+      "valid_from": 1000,
+      "valid_to": null,
+      "created_by": null,
+      "retracted_at": null,
+      "retracted_position": null,
+      "retract_tx_id": null,
+      "entity_type": "_Transaction",
+      "schema_version": 1,
+      "tx_id": "_tx/00GRTCFP000000000000000001"
+    },
+    {
+      "id": "00V9ABAN000000000000000004",
+      "entity_id": "_tx/00GRTCFP000000000000000001",
+      "attribute": ":_tx/change",
+      "value_type": "json",
+      "value_string": null,
+      "value_number": null,
+      "value_boolean": null,
+      "value_datetime": null,
+      "value_json": "{\"op\":\"assert\",\"tripleId\":\"00V9ABAN000000000000000001\",\"entityId\":\"single\",\"attribute\":\":value\",\"value\":{\"type\":\"string\",\"value\":\"one\"},\"validFrom\":1000,\"assertionTxId\":\"_tx/00GRTCFP000000000000000001\",\"v\":2}",
+      "recorded_at": 1000,
+      "recorded_position": 1,
+      "valid_from": 1000,
+      "valid_to": null,
+      "created_by": null,
+      "retracted_at": null,
+      "retracted_position": null,
+      "retract_tx_id": null,
+      "entity_type": "_Transaction",
+      "schema_version": 1,
+      "tx_id": "_tx/00GRTCFP000000000000000001"
+    },
+    {
+      "id": "00V9ABAN000000000000000005",
+      "entity_id": "_tx/00GRTCFP000000000000000001",
+      "attribute": ":_tx/change",
+      "value_type": "json",
+      "value_string": null,
+      "value_number": null,
+      "value_boolean": null,
+      "value_datetime": null,
+      "value_json": "{\"op\":\"retract\",\"tripleId\":\"00V9ABAN000000000000000001\",\"entityId\":\"single\",\"attribute\":\":value\",\"value\":{\"type\":\"string\",\"value\":\"one\"},\"validFrom\":1000,\"assertionTxId\":\"_tx/00GRTCFP000000000000000001\",\"retractionTxId\":\"_tx/00GRTCFP000000000000000001\",\"v\":2}",
+      "recorded_at": 1000,
+      "recorded_position": 1,
+      "valid_from": 1000,
+      "valid_to": null,
+      "created_by": null,
+      "retracted_at": null,
+      "retracted_position": null,
+      "retract_tx_id": null,
+      "entity_type": "_Transaction",
+      "schema_version": 1,
+      "tx_id": "_tx/00GRTCFP000000000000000001"
+    }
+  ],
+  "hydrated": {
+    "txId": "_tx/00GRTCFP000000000000000001",
+    "position": 1,
+    "instant": 1000,
+    "changes": [
+      {
+        "op": "assert",
+        "tripleId": "00V9ABAN000000000000000001",
+        "entityId": "single",
+        "attribute": ":value",
+        "value": {
+          "type": "string",
+          "value": "one"
+        },
+        "validFrom": 1000,
+        "assertionTxId": "_tx/00GRTCFP000000000000000001",
+        "recordedAt": 1000
+      },
+      {
+        "op": "retract",
+        "tripleId": "00V9ABAN000000000000000001",
+        "entityId": "single",
+        "attribute": ":value",
+        "value": {
+          "type": "string",
+          "value": "one"
+        },
+        "validFrom": 1000,
+        "assertionTxId": "_tx/00GRTCFP000000000000000001",
+        "retractionTxId": "_tx/00GRTCFP000000000000000001",
+        "recordedAt": 1000,
+        "retractedAt": 1000
+      }
+    ]
+  }
+}

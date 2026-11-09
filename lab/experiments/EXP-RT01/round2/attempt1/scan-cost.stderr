@@ -1,0 +1,23 @@
+/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/xtdb/src/XtdbStorageAdapter.ts:794
+            : new MigrationError({
+              ^
+
+xtdb-baseline: Cannot initialize XTDB tables
+    at catch (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/xtdb/src/XtdbStorageAdapter.ts:794:15)
+    at <anonymous> (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1113:42)
+    at ~effect/Utils/internal (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/Utils.ts:198:14)
+    at PrimitiveImpl.~effect/Effect/args (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1113:23)
+    at PrimitiveImpl.~effect/Effect/evaluate (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:980:22)
+    at FiberImpl.runLoop (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:653:41)
+    at FiberImpl.evaluate (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:594:23)
+    at AsyncResource.runInAsyncScope (node:async_hooks:214:14)
+    at FiberImpl.evaluate (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:588:27)
+    at <anonymous> (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1158:17) {
+  version: 1,
+  _tag: 'MigrationError',
+  [cause]: TypeError: Cannot read properties of undefined (reading 'sql')
+      at Object.submit (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/lab/experiments/EXP-RT01/round2/scan-cost.ts:20:85)
+      at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/xtdb/src/XtdbStorageAdapter.ts:774:24)
+}
+
+Node.js v22.23.2

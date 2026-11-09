@@ -1,0 +1,116 @@
+{
+  "format": "triplex-db-2/o-replay-case/1",
+  "caseId": "CX-VRT01/qlever-compact",
+  "defaultScope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VRT01\",0]",
+  "adapter": {
+    "recordTime": "decided",
+    "clockDriven": true,
+    "schemaVersion": 1
+  },
+  "commands": [
+    {
+      "clock": 1000,
+      "operations": [
+        {
+          "op": "assert",
+          "ref": "one",
+          "entityId": "subject:one",
+          "attribute": ":value",
+          "value": {
+            "type": "string",
+            "value": "first"
+          },
+          "entityType": "Subject"
+        }
+      ]
+    },
+    {
+      "clock": 1000,
+      "operations": [
+        {
+          "op": "assert",
+          "ref": "two",
+          "entityId": "subject:two",
+          "attribute": ":value",
+          "value": {
+            "type": "string",
+            "value": "first"
+          },
+          "entityType": "Subject"
+        }
+      ]
+    },
+    {
+      "clock": 900,
+      "operations": [
+        {
+          "op": "retract",
+          "target": "one"
+        }
+      ]
+    }
+  ],
+  "receipts": [
+    {
+      "command": 0,
+      "outcome": "committed",
+      "txId": "_tx/00GRTCFP000000000000000001",
+      "position": 1,
+      "instant": 1000,
+      "stagedAt": 1000,
+      "assertionIds": [
+        "00V9ABAN000000000000000001"
+      ]
+    },
+    {
+      "command": 1,
+      "outcome": "committed",
+      "txId": "_tx/00GRTCFP000000000000000002",
+      "position": 2,
+      "instant": 1000.001,
+      "stagedAt": 1000,
+      "assertionIds": [
+        "00V9ABAN000000000000000005"
+      ]
+    },
+    {
+      "command": 2,
+      "outcome": "committed",
+      "txId": "_tx/00GRTCFP000000000000000003",
+      "position": 3,
+      "instant": 1000.002,
+      "stagedAt": 900,
+      "assertionIds": [
+        null
+      ]
+    }
+  ],
+  "queries": [
+    {
+      "id": "journal",
+      "kind": "journalFacts"
+    },
+    {
+      "id": "transactions",
+      "kind": "transactions"
+    },
+    {
+      "id": "valid-default",
+      "kind": "entityTriples",
+      "entityId": "subject:two",
+      "cut": {
+        "validAt": 1000,
+        "recordedAt": 1000.001
+      }
+    },
+    {
+      "id": "future",
+      "kind": "entityTriples",
+      "entityId": "subject:two",
+      "cut": {
+        "validAt": 1000,
+        "recordedAt": 1001.002
+      }
+    }
+  ]
+}

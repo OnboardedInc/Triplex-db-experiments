@@ -12,3 +12,13 @@ Full audit and results are appended to ../REPORT.md. First local typecheck found
 - Copied reviewer reproductions and round2 runner: fresh actual adapter/core requests; original and adapted runner hashes, input/output hashes, exact source before/after, unique run ID and offline context. Execution completion alone is not acceptance; assertions compare output contents and reject every nonmatching route or raw journal.
 - Scope-scan measurement: actual emitted A0/compact guard selects baseline position-only versus position-plus-stamp scans over explicitly sized synthetic history; both maxima must match known expected values before a sample is retained. It records operation counts and durations, never a performance PASS or a prediction of engine planning.
 - Source-bound package gates: same run-gates.mjs content/freshness/binding audit as round A. No old receipt is reused as fresh round2 source evidence. Independent/live gates remain pending.
+
+## Attempts and source boundary
+
+- `attempt1/`: copied QA probes executed, then scan capture incorrectly required a CAS guard on schema initialization. Retained failed controller receipt. This was a measurement-fixture error, not a product observation.
+- `attempt2/`: all four phases exit 0; semantic assertions check four completed A0/compact lane schedules, 32 top-level route refusals, and raw/hydrated own-instant journal content. Its source/build before/after equality is true. The directory was moved intact from the runner's original `evidence/` destination to preserve it before the final scan-only run.
+- `scan-final/`: separate scan-only attempt adds an explicit frozen baseline hash check and binds that baseline file in its before/after manifest. No product source changes after `2ade6e75`.
+- `../evidence/round2-initial/`: first package gates, one unused-import typecheck failure; no behavior test failures.
+- `../evidence/round2-final/`: all 14 phases exit 0; final product source/hash equality. Fresh package build/type/unit results, not live engine gates.
+
+The final scan controller also requires all eight matrix points, six pairs per point, finite measurements, the expected row-visit counts and stable source/build/baseline bytes. Existing attempt directories cannot be overwritten by a completed rerun. Checksum manifests and the main report provide the retained-byte index. Raw output remains below the 1 MB/file and 5 MB/directory Git limits; local ignored dependency caches are not evidence.

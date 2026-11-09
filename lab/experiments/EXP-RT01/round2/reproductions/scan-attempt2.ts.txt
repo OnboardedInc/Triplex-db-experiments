@@ -1,0 +1,126 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import { performance } from "node:perf_hooks";
+import { Effect } from "effect";
+import { EntityId, Triples, string } from "../../../../packages/core/dist/index.js";
+import { makeA0RecordTimeSuite } from "../../../../packages/testkit/dist/index.js";
+import {
+  makeXtdbStorageAdapter,
+  compactGuards,
+} from "../../../../packages/xtdb/src/XtdbStorageAdapter.js";
+import { makeRecordTimeClient } from "../../../../packages/xtdb/test/fixtures/record-time-client.js";
+
+// [EXP-RT01] Why: the added MAX(stamp) is a second history-sensitive scope scan even in one ASSERT. Rejected: treating unchanged statement count or an O(1) transport as a scan-cost measurement.
+const captured: Record<string, string> = {};
+for (const commitEncoding of ["a0", "compact"] as const) {
+  const transport = makeRecordTimeClient();
+  const client = {
+    ...transport,
+    submit: async (...args: Parameters<typeof transport.submit>) => {
+      const guard = args[0].find((s) => s.sql.includes("MAX(position)"));
+      if (guard) captured[commitEncoding] = guard.sql;
+      return transport.submit(...args);
+    },
+  };
+  const adapter = makeXtdbStorageAdapter(client, "scope", { commitEncoding });
+  const suite = makeA0RecordTimeSuite(adapter, {} as never, "scope", { loseNextAck: () => {} });
+  await Effect.runPromise(
+    Effect.gen(function* () {
+      const t = yield* Triples;
+      const result = yield* t.transact(
+        Array.from({ length: 10 }, (_, i) => ({
+          op: "assert" as const,
+          entityId: EntityId.make("subject"),
+          attribute: `:value/${i}`,
+          value: string("v"),
+        })),
+      );
+      assert.equal(result.position, 1);
+      assert.equal(result.triples.length, 10);
+    }).pipe(Effect.provide(suite.layer)),
+  );
+}
+const baselineSource = fs.readFileSync(
+  "lab/experiments/EXP-RT01/evidence/main-XtdbStorageAdapter.txt",
+  "utf8",
+);
+const baselineA0 = [...baselineSource.matchAll(/"(ASSERT [^"\n]*MAX\(position\)[^"\n]*)"/g)]
+  .map((m) => m[1]!)
+  .find((s) => s.includes("scope_key = ?"))!;
+assert.ok(baselineA0);
+const baseline = { a0: baselineA0, compact: compactGuards("scope", 1, "op", [], [])[0]!.sql };
+const median = (samples: number[]) =>
+  samples.sort((a, b) => a - b)[Math.floor(samples.length / 2)]!;
+const measurements = [];
+for (const encoding of ["a0", "compact"] as const) {
+  const columns = (sql: string) => [...sql.matchAll(/MAX\((position|stamp)\)/g)].map((m) => m[1]!);
+  assert.deepEqual(columns(baseline[encoding]), ["position"]);
+  assert.deepEqual(columns(captured[encoding]!), ["position", "stamp"]);
+  for (const size of [0, 100, 10000, 100000]) {
+    const rows = Array.from({ length: size }, (_, i) => ({
+      scope: "scope",
+      position: i + 1,
+      stamp: 1000000 + i,
+    }));
+    const scan = (column: string) => {
+      let maximum = 0;
+      for (const row of rows)
+        if (row.scope === "scope")
+          maximum = Math.max(maximum, column === "position" ? row.position : row.stamp);
+      return maximum;
+    };
+    const iterations = Math.max(10, Math.min(1000, Math.floor(1000000 / Math.max(1, size))));
+    const run = (cols: string[]) => {
+      const start = performance.now();
+      for (let i = 0; i < iterations; i++)
+        for (const column of cols) {
+          assert.equal(
+            scan(column),
+            size === 0 ? 0 : column === "position" ? size : 1000000 + size - 1,
+          );
+        }
+      return (performance.now() - start) / iterations;
+    };
+    run(columns(captured[encoding]!));
+    run(columns(baseline[encoding]));
+    const pairs = [];
+    for (let pair = 0; pair < 6; pair++) {
+      let before: number, after: number;
+      if (pair % 2) {
+        after = run(columns(captured[encoding]!));
+        before = run(columns(baseline[encoding]));
+      } else {
+        before = run(columns(baseline[encoding]));
+        after = run(columns(captured[encoding]!));
+      }
+      pairs.push({ pair, baselineMs: before, rt01Ms: after });
+    }
+    measurements.push({
+      encoding,
+      storedScopeVersions: size,
+      expectedCut: { position: size, stamp: size === 0 ? 0 : 1000000 + size - 1 },
+      iterationsPerArm: iterations,
+      pairs,
+      baselineRowVisitsPerGuard: size,
+      rt01RowVisitsPerGuard: 2 * size,
+      baselineMedianMs: median(pairs.map((p) => p.baselineMs)),
+      rt01MedianMs: median(pairs.map((p) => p.rt01Ms)),
+    });
+  }
+}
+console.log(
+  JSON.stringify(
+    {
+      kind: "offline-emitted-a0-scope-scan-model",
+      engineIO: false,
+      baselineCommit: "59e07afb7a25dfb22bca60f8d769b74651aa835a",
+      capturedGuards: captured,
+      baselineGuards: baseline,
+      limitation:
+        "JS sequential scans, not XTDB planning or historical-version visibility; no latency qualification. QLever has exact marker CAS and no added MAX scope scan.",
+      measurements,
+    },
+    null,
+    2,
+  ),
+);

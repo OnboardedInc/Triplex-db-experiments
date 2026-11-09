@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import { createHash } from "node:crypto";
 import { performance } from "node:perf_hooks";
 import { Effect } from "effect";
 import { EntityId, Triples, string } from "../../../../packages/core/dist/index.js";
@@ -17,7 +18,8 @@ for (const commitEncoding of ["a0", "compact"] as const) {
   const client = {
     ...transport,
     submit: async (...args: Parameters<typeof transport.submit>) => {
-      captured[commitEncoding] = args[0].find((s) => s.sql.includes("MAX(position)"))!.sql;
+      const guard = args[0].find((s) => s.sql.includes("MAX(position)"));
+      if (guard) captured[commitEncoding] = guard.sql;
       return transport.submit(...args);
     },
   };
@@ -42,6 +44,11 @@ for (const commitEncoding of ["a0", "compact"] as const) {
 const baselineSource = fs.readFileSync(
   "lab/experiments/EXP-RT01/evidence/main-XtdbStorageAdapter.txt",
   "utf8",
+);
+const baselineSourceSha256 = createHash("sha256").update(baselineSource).digest("hex");
+assert.equal(
+  baselineSourceSha256,
+  "5a9b4d63a8754e974c4a270610880f3c5199a525354255ff6bf0b9c9a2d6a58e",
 );
 const baselineA0 = [...baselineSource.matchAll(/"(ASSERT [^"\n]*MAX\(position\)[^"\n]*)"/g)]
   .map((m) => m[1]!)
@@ -113,6 +120,7 @@ console.log(
       kind: "offline-emitted-a0-scope-scan-model",
       engineIO: false,
       baselineCommit: "59e07afb7a25dfb22bca60f8d769b74651aa835a",
+      baselineSourceSha256,
       capturedGuards: captured,
       baselineGuards: baseline,
       limitation:

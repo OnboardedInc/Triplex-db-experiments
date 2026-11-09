@@ -1,0 +1,12 @@
+{
+  "observedAt": "2026-11-09T04:15:48.206Z",
+  "head": "2ade6e755cc2877e36569da6f8f44ece22229cf0",
+  "productHead": "2ade6e755cc2877e36569da6f8f44ece22229cf0",
+  "packageSourceAndLogsMatch": true,
+  "reproductionPackageAndBuildBytesMatch": true,
+  "scanSourceUnchanged": true,
+  "rawBytes": 4438908,
+  "maxRawFileBytes": 761224,
+  "acceptanceAndOracleDelta": "",
+  "liveG2G6Qualified": false
+}
