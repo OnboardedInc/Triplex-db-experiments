@@ -1,0 +1,203 @@
+{
+  "heldCheckpoint": {
+    "counts": {
+      "incomplete": 2
+    },
+    "events": [
+      {
+        "at": 1794181691438,
+        "mode": "RESTART",
+        "outcome": "incomplete",
+        "ms": 3.010041000000001,
+        "busy": 0,
+        "log": 22047,
+        "checkpointed": 25
+      },
+      {
+        "at": 1794181691470,
+        "mode": "RESTART",
+        "outcome": "incomplete",
+        "ms": 0.029500000000098225,
+        "busy": 0,
+        "log": 23886,
+        "checkpointed": 25
+      }
+    ]
+  },
+  "releasedCheckpoint": {
+    "counts": {
+      "incomplete": 2,
+      "complete": 1
+    },
+    "events": [
+      {
+        "at": 1794181691438,
+        "mode": "RESTART",
+        "outcome": "incomplete",
+        "ms": 3.010041000000001,
+        "busy": 0,
+        "log": 22047,
+        "checkpointed": 25
+      },
+      {
+        "at": 1794181691470,
+        "mode": "RESTART",
+        "outcome": "incomplete",
+        "ms": 0.029500000000098225,
+        "busy": 0,
+        "log": 23886,
+        "checkpointed": 25
+      },
+      {
+        "at": 1794181691571,
+        "mode": "RESTART",
+        "outcome": "complete",
+        "ms": 99.07441700000004,
+        "busy": 0,
+        "log": 23886,
+        "checkpointed": 23886
+      }
+    ]
+  },
+  "dir": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-sql01/lab/verify/SQL01/data/barrier-b357ce0e-ac62-4815-b30f-abba07490d1c",
+  "basis": 2048,
+  "head": 29696,
+  "heldRows": 40,
+  "latestRows": 40,
+  "commits": [
+    {
+      "lsn": 4,
+      "ms": 24.636124999999993,
+      "wal": 4029392
+    },
+    {
+      "lsn": 5,
+      "ms": 20.35729200000003,
+      "wal": 7790952
+    },
+    {
+      "lsn": 6,
+      "ms": 21.638958000000002,
+      "wal": 11556632
+    },
+    {
+      "lsn": 7,
+      "ms": 19.335916999999995,
+      "wal": 15318192
+    },
+    {
+      "lsn": 8,
+      "ms": 20.920124999999985,
+      "wal": 19096232
+    },
+    {
+      "lsn": 9,
+      "ms": 19.36987499999998,
+      "wal": 22861912
+    },
+    {
+      "lsn": 10,
+      "ms": 20.287000000000035,
+      "wal": 26635832
+    },
+    {
+      "lsn": 11,
+      "ms": 19.792082999999934,
+      "wal": 30409752
+    },
+    {
+      "lsn": 12,
+      "ms": 20.080084000000056,
+      "wal": 34171312
+    },
+    {
+      "lsn": 13,
+      "ms": 19.904499999999985,
+      "wal": 37945232
+    },
+    {
+      "lsn": 14,
+      "ms": 22.25720899999999,
+      "wal": 41719152
+    },
+    {
+      "lsn": 15,
+      "ms": 19.90112499999998,
+      "wal": 45501312
+    },
+    {
+      "lsn": 16,
+      "ms": 20.38220799999999,
+      "wal": 49279352
+    },
+    {
+      "lsn": 17,
+      "ms": 18.980166000000054,
+      "wal": 53053272
+    },
+    {
+      "lsn": 18,
+      "ms": 19.915500000000065,
+      "wal": 56843672
+    },
+    {
+      "lsn": 19,
+      "ms": 20.775499999999965,
+      "wal": 60605232
+    },
+    {
+      "lsn": 20,
+      "ms": 19.38141699999983,
+      "wal": 64391512
+    },
+    {
+      "lsn": 21,
+      "ms": 20.133000000000038,
+      "wal": 68181912
+    },
+    {
+      "lsn": 22,
+      "ms": 19.720832999999857,
+      "wal": 71959952
+    },
+    {
+      "lsn": 23,
+      "ms": 20.435083000000077,
+      "wal": 75721512
+    },
+    {
+      "lsn": 24,
+      "ms": 20.555499999999938,
+      "wal": 79507792
+    },
+    {
+      "lsn": 25,
+      "ms": 19.95287499999995,
+      "wal": 83289952
+    },
+    {
+      "lsn": 26,
+      "ms": 20.23170899999991,
+      "wal": 87063872
+    },
+    {
+      "lsn": 27,
+      "ms": 20.77904199999989,
+      "wal": 90833672
+    },
+    {
+      "lsn": 28,
+      "ms": 21.99891600000001,
+      "wal": 94611712
+    },
+    {
+      "lsn": 29,
+      "ms": 21.170374999999922,
+      "wal": 98410352
+    }
+  ],
+  "originalWorkerSha256": "f0f6e14edab554996dfebf25762c4b431a6166e7803f4d08da8631d4347769ea",
+  "instrumentedWorkerSha256": "d4e77ab7ffac4ba627192ec07725e74ef3d17f71b192566351f00a2226ecf872",
+  "instrumentation": "marker();result=handle(op,args);",
+  "gate": "separate readonly connection; native SQLite checkpoint locks, not pool gate count"
+}

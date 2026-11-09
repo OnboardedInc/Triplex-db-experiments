@@ -1,0 +1,3 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 72798 "CX-A01-0312-mutations-merged", pid 72799 "CX-A01-0312-evaluator-merged", pid 37317 "CX-G03-r3-claim-suites2", pid 46869 "CX-VP2Q-4-r7-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 72798 "CX-A01-0312-mutations-merged", pid 72799 "CX-A01-0312-evaluator-merged", pid 37317 "CX-G03-r3-claim-suites2", pid 46869 "CX-VP2Q-4-r7-live"
+{"builderManifestChecked":290,"pairs":38808,"observations":77616,"acknowledged":161,"positions":191,"rawFiles":136,"errors":[{"builderFile":"lab/verify/SQL01/node_modules/.vite/vitest/da39a3ee5e6b4b0d3255bfef95601890afd80709/results.json"}]}

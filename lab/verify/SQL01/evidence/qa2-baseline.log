@@ -1,0 +1,89 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 22481 "CX-A01-0312-mutations", pid 85258 "CX-A01-0312-evaluator-retry", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 22481 "CX-A01-0312-mutations", pid 85258 "CX-A01-0312-evaluator-retry", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 22481 "CX-A01-0312-mutations", pid 85258 "CX-A01-0312-evaluator-retry", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 22481 "CX-A01-0312-mutations", pid 85258 "CX-A01-0312-evaluator-retry", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 2596 "G0-xtdb-20261108T234100Z-b718fc typecheck", pid 44082 "CX-OBS01-R2-x07", pid 91250 "CX-INT-XCJ-C8-G0"
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-sql01/lab/verify/SQL01
+
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19726) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [Worker]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+
+ Test Files  2 passed (2)
+      Tests  9 passed (9)
+   Start at  18:47:39
+   Duration  46.94s (tests 99%, import 1%)
+

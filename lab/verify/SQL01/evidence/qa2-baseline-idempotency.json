@@ -1,0 +1,279 @@
+{
+  "dir": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-sql01/lab/verify/SQL01/data/idempotency-5d665438-b812-4957-8ead-bb5ffa6575e2",
+  "answers": [
+    {
+      "kind": "committed",
+      "lsn": 2,
+      "epoch": 1,
+      "positions": {},
+      "ackAt": 15719.884833,
+      "replayed": false
+    },
+    {
+      "kind": "committed",
+      "lsn": 2,
+      "epoch": 1,
+      "positions": {},
+      "ackAt": 15720.364208,
+      "replayed": true
+    },
+    {
+      "kind": "committed",
+      "lsn": 2,
+      "epoch": 1,
+      "positions": {},
+      "ackAt": 15720.42625,
+      "replayed": true
+    },
+    {
+      "kind": "committed",
+      "lsn": 2,
+      "epoch": 1,
+      "positions": {},
+      "ackAt": 15720.455583,
+      "replayed": true
+    },
+    {
+      "kind": "committed",
+      "lsn": 2,
+      "epoch": 1,
+      "positions": {},
+      "ackAt": 15720.482791,
+      "replayed": true
+    },
+    {
+      "kind": "committed",
+      "lsn": 2,
+      "epoch": 1,
+      "positions": {},
+      "ackAt": 15720.513166,
+      "replayed": true
+    },
+    {
+      "kind": "committed",
+      "lsn": 2,
+      "epoch": 1,
+      "positions": {},
+      "ackAt": 15720.625833,
+      "replayed": true
+    },
+    {
+      "kind": "committed",
+      "lsn": 2,
+      "epoch": 1,
+      "positions": {},
+      "ackAt": 15720.654125,
+      "replayed": true
+    },
+    {
+      "kind": "committed",
+      "lsn": 2,
+      "epoch": 1,
+      "positions": {},
+      "ackAt": 15720.684041,
+      "replayed": true
+    },
+    {
+      "kind": "committed",
+      "lsn": 2,
+      "epoch": 1,
+      "positions": {},
+      "ackAt": 15720.7105,
+      "replayed": true
+    },
+    {
+      "kind": "committed",
+      "lsn": 2,
+      "epoch": 1,
+      "positions": {},
+      "ackAt": 15720.738208,
+      "replayed": true
+    },
+    {
+      "kind": "committed",
+      "lsn": 2,
+      "epoch": 1,
+      "positions": {},
+      "ackAt": 15720.766791,
+      "replayed": true
+    },
+    {
+      "kind": "committed",
+      "lsn": 2,
+      "epoch": 1,
+      "positions": {},
+      "ackAt": 15720.791,
+      "replayed": true
+    },
+    {
+      "kind": "committed",
+      "lsn": 2,
+      "epoch": 1,
+      "positions": {},
+      "ackAt": 15720.819791,
+      "replayed": true
+    },
+    {
+      "kind": "committed",
+      "lsn": 2,
+      "epoch": 1,
+      "positions": {},
+      "ackAt": 15720.845291,
+      "replayed": true
+    },
+    {
+      "kind": "committed",
+      "lsn": 2,
+      "epoch": 1,
+      "positions": {},
+      "ackAt": 15720.873041,
+      "replayed": true
+    },
+    {
+      "kind": "committed",
+      "lsn": 2,
+      "epoch": 1,
+      "positions": {},
+      "ackAt": 15720.898166,
+      "replayed": true
+    },
+    {
+      "kind": "committed",
+      "lsn": 2,
+      "epoch": 1,
+      "positions": {},
+      "ackAt": 15720.921458,
+      "replayed": true
+    },
+    {
+      "kind": "committed",
+      "lsn": 2,
+      "epoch": 1,
+      "positions": {},
+      "ackAt": 15720.945166,
+      "replayed": true
+    },
+    {
+      "kind": "committed",
+      "lsn": 2,
+      "epoch": 1,
+      "positions": {},
+      "ackAt": 15720.967916,
+      "replayed": true
+    },
+    {
+      "kind": "committed",
+      "lsn": 2,
+      "epoch": 1,
+      "positions": {},
+      "ackAt": 15720.992458,
+      "replayed": true
+    },
+    {
+      "kind": "committed",
+      "lsn": 2,
+      "epoch": 1,
+      "positions": {},
+      "ackAt": 15721.0155,
+      "replayed": true
+    },
+    {
+      "kind": "committed",
+      "lsn": 2,
+      "epoch": 1,
+      "positions": {},
+      "ackAt": 15721.041458,
+      "replayed": true
+    },
+    {
+      "kind": "committed",
+      "lsn": 2,
+      "epoch": 1,
+      "positions": {},
+      "ackAt": 15721.064791,
+      "replayed": true
+    },
+    {
+      "kind": "committed",
+      "lsn": 2,
+      "epoch": 1,
+      "positions": {},
+      "ackAt": 15721.091125,
+      "replayed": true
+    },
+    {
+      "kind": "committed",
+      "lsn": 2,
+      "epoch": 1,
+      "positions": {},
+      "ackAt": 15721.114125,
+      "replayed": true
+    },
+    {
+      "kind": "committed",
+      "lsn": 2,
+      "epoch": 1,
+      "positions": {},
+      "ackAt": 15721.137083,
+      "replayed": true
+    },
+    {
+      "kind": "committed",
+      "lsn": 2,
+      "epoch": 1,
+      "positions": {},
+      "ackAt": 15721.168291,
+      "replayed": true
+    },
+    {
+      "kind": "committed",
+      "lsn": 2,
+      "epoch": 1,
+      "positions": {},
+      "ackAt": 15721.200833,
+      "replayed": true
+    },
+    {
+      "kind": "committed",
+      "lsn": 2,
+      "epoch": 1,
+      "positions": {},
+      "ackAt": 15721.228791,
+      "replayed": true
+    },
+    {
+      "kind": "committed",
+      "lsn": 2,
+      "epoch": 1,
+      "positions": {},
+      "ackAt": 15721.250791,
+      "replayed": true
+    },
+    {
+      "kind": "committed",
+      "lsn": 2,
+      "epoch": 1,
+      "positions": {},
+      "ackAt": 15721.27375,
+      "replayed": true
+    }
+  ],
+  "original": {
+    "lsn": 2,
+    "epoch": 1,
+    "positions": [
+      2048
+    ]
+  },
+  "head": 2048,
+  "retry": {
+    "kind": "committed",
+    "lsn": 2,
+    "epoch": 1,
+    "positions": {},
+    "ackAt": 16096.842625,
+    "replayed": true
+  },
+  "rows": 10,
+  "commitFrames": 1
+}

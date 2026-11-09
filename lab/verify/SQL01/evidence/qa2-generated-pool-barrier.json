@@ -1,0 +1,148 @@
+{
+  "dir": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-sql01/lab/verify/SQL01/data/qa2-pool-barrier-08d187e5-2d80-426d-8924-839f71c516bf",
+  "basis": 2048,
+  "head": 11264,
+  "commits": [
+    {
+      "op": "seed",
+      "ms": 4.114207999999962,
+      "decision": "committed",
+      "readerReleased": 0,
+      "maintenanceReleased": 0
+    },
+    {
+      "op": "both-barriers-held",
+      "ms": 9.409791999999925,
+      "decision": "committed",
+      "readerReleased": 0,
+      "maintenanceReleased": 0
+    },
+    {
+      "op": "reader-still-held-0",
+      "ms": 6.314875000000029,
+      "decision": "committed",
+      "readerReleased": 0,
+      "maintenanceReleased": 1
+    },
+    {
+      "op": "reader-still-held-1",
+      "ms": 5.467666000000008,
+      "decision": "committed",
+      "readerReleased": 0,
+      "maintenanceReleased": 1
+    },
+    {
+      "op": "reader-still-held-2",
+      "ms": 3.121208999999908,
+      "decision": "committed",
+      "readerReleased": 0,
+      "maintenanceReleased": 1
+    },
+    {
+      "op": "reader-still-held-3",
+      "ms": 4.963124999999991,
+      "decision": "committed",
+      "readerReleased": 0,
+      "maintenanceReleased": 1
+    },
+    {
+      "op": "reader-still-held-4",
+      "ms": 4.438083000000006,
+      "decision": "committed",
+      "readerReleased": 0,
+      "maintenanceReleased": 1
+    },
+    {
+      "op": "reader-still-held-5",
+      "ms": 3.4474579999998696,
+      "decision": "committed",
+      "readerReleased": 0,
+      "maintenanceReleased": 1
+    },
+    {
+      "op": "reader-still-held-6",
+      "ms": 4.446749999999838,
+      "decision": "committed",
+      "readerReleased": 0,
+      "maintenanceReleased": 1
+    },
+    {
+      "op": "reader-still-held-7",
+      "ms": 5.0219999999999345,
+      "decision": "committed",
+      "readerReleased": 0,
+      "maintenanceReleased": 1
+    }
+  ],
+  "skipped": {
+    "counts": {
+      "readers-busy": 1
+    },
+    "events": [
+      {
+        "at": 1794181803404,
+        "mode": "RESTART",
+        "outcome": "readers-busy",
+        "ms": 31.367042000000083
+      }
+    ]
+  },
+  "completed": {
+    "counts": {
+      "readers-busy": 1,
+      "complete": 1
+    },
+    "events": [
+      {
+        "at": 1794181803404,
+        "mode": "RESTART",
+        "outcome": "readers-busy",
+        "ms": 31.367042000000083
+      },
+      {
+        "at": 1794181803452,
+        "mode": "RESTART",
+        "outcome": "complete",
+        "ms": 7.605375000000095,
+        "busy": 0,
+        "log": 188,
+        "checkpointed": 188
+      }
+    ]
+  },
+  "pinnedRows": 10,
+  "latestRows": 100,
+  "instrumentation": "reader after initial marker; maintenance immediately after closing the actual shared gate",
+  "workers": [
+    {
+      "role": "writer",
+      "originalSha256": "f0f6e14edab554996dfebf25762c4b431a6166e7803f4d08da8631d4347769ea",
+      "instrumentedSha256": "f0f6e14edab554996dfebf25762c4b431a6166e7803f4d08da8631d4347769ea"
+    },
+    {
+      "role": "checkpointer",
+      "originalSha256": "f0f6e14edab554996dfebf25762c4b431a6166e7803f4d08da8631d4347769ea",
+      "instrumentedSha256": "64875b98c9affca61f2e53372fbc17b2c416461176cfe280b66153d8a38555e2"
+    },
+    {
+      "role": "reader",
+      "originalSha256": "f0f6e14edab554996dfebf25762c4b431a6166e7803f4d08da8631d4347769ea",
+      "instrumentedSha256": "aaddc8b040ce7d30f1c816c0352e9a303dd11c548de692a14d470e7667c93aa7"
+    },
+    {
+      "role": "reader",
+      "originalSha256": "f0f6e14edab554996dfebf25762c4b431a6166e7803f4d08da8631d4347769ea",
+      "instrumentedSha256": "aaddc8b040ce7d30f1c816c0352e9a303dd11c548de692a14d470e7667c93aa7"
+    },
+    {
+      "role": "reader",
+      "originalSha256": "f0f6e14edab554996dfebf25762c4b431a6166e7803f4d08da8631d4347769ea",
+      "instrumentedSha256": "aaddc8b040ce7d30f1c816c0352e9a303dd11c548de692a14d470e7667c93aa7"
+    },
+    {
+      "role": "reader",
+      "originalSha256": "f0f6e14edab554996dfebf25762c4b431a6166e7803f4d08da8631d4347769ea",
+      "instrumentedSha256": "aaddc8b040ce7d30f1c816c0352e9a303dd11c548de692a14d470e7667c93aa7"
+    }
+  ]
+}
