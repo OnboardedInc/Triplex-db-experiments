@@ -101,10 +101,12 @@ export class ConstraintViolationError extends Data.TaggedError("ConstraintViolat
 }> {}
 
 // Read operation errors
-export class ReadError extends Data.TaggedError("ReadError")<{
+export class ReadError extends Data.Error<{
   readonly message: string;
   readonly cause?: unknown;
-}> {}
+}> {
+  readonly _tag: "ReadError" | "BasisNotAvailable" = "ReadError";
+}
 
 export class EntityNotFoundError extends Data.TaggedError("EntityNotFoundError")<{
   readonly entityId: EntityId;
@@ -235,3 +237,30 @@ export type TripleStoreError =
   | DatalogErrorUnion
   | ValidationError
   | MigrationError;
+
+/** A named cut has not become available on this read surface. */
+export class BasisNotAvailable extends ReadError {
+  override readonly _tag = "BasisNotAvailable" as const;
+  readonly axis: "recordedPosition" | "recordedAt";
+  readonly required: number;
+  readonly observed: number;
+  readonly waitedMs: number;
+  readonly surface: string;
+  readonly reason = "record-time-not-reached";
+  constructor(input: {
+    axis: "recordedPosition" | "recordedAt";
+    required: number;
+    observed: number;
+    waitedMs: number;
+    surface: string;
+    message: string;
+  }) {
+    super(input);
+    Object.assign(this, input);
+    this.axis = input.axis;
+    this.required = input.required;
+    this.observed = input.observed;
+    this.waitedMs = input.waitedMs;
+    this.surface = input.surface;
+  }
+}
