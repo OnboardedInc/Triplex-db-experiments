@@ -1915,3 +1915,9 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **Pattern:** guards that enumerate producers keep missing producers (P2Q's read surface, QNODELAY's timing writers, the scanners'
   encodings). The fixes that held enforce the property at the one place everything passes through (a wrapper, a parser, a closure).
 - **Dispatched:** EXP-P2B (XTDB behind the broker, designed in Q58b and R23 6) from int/P2Q-SQL01; no new research needed this hour.
+
+## 2026-11-09: K01 live rerun stopped at G0; slot handed to P5 A1
+
+- **K01 live round 11 (f3584a6):** numeric wire probes passed; the first failure was "G0 count mismatch: tx_assertions" during source pinning. No retries; slot released, volumes removed.
+- **Next for K01:** CX-K01-R2 resumed offline (round 12) to decide whether the expected count, the seed's writes, or XTDB's read visibility at the pin basis is wrong, with a fixture from the captured bytes.
+- **Slot:** xtdb-s1 goes to P5 A1 at 1k (CX-P5A, A1-RUNBOOK.md). If its G0 refuses with the same symptom, it records it and stops.
