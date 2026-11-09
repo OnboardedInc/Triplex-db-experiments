@@ -67,4 +67,36 @@ Audited all **five oracle registry entries**, plus both world entries. O-OBS was
 
 Added a separately frozen instruction-preimage map for all seven entries and validation against it. A report substituted with its own correct digest now rejects at Q59c, rather than passing the existing existence/hash checks. Seven new mutations cover that substitution once per registry entry, and two additional contract tests check the exact recovered source and every audited instruction preimage. The targeted F1 regression rejects at the intended Q59c guard. Main `a27b100b` was merged into this branch before the fix gates; its delta is notebook/state only. No new ruling, runner, pin scope or evaluator assertion changed.
 
-Full round-2 gates are in progress. Final source-bound results will be appended below. Receipts are separate under `evidence-0.3.12-round2/`; round-1 files are preserved.
+Final tested source: **`72a1a164e1bbc7844b74c5157d4f1f67b374e3fc`**, with current-at-dispatch main **`a27b100b8d331c0ccc31ded7f507e7dd06cd1045`** as its merged parent. The receipt commit adds only this report and round-2 evidence. Independent delta acceptance is still required; F1's original instruction preimage is now present and pinned.
+
+### Round-2 registry audit
+
+| Oracle entry | Instruction preimage | Audit result |
+| --- | --- | --- |
+| V-O04i | `lab/verify/O02/V-O04i/BRIEF.md` | PASS — exact launcher original matched |
+| V-O03 | `lab/verify/O02/BRIEF.md` | PASS — documented pre-Q59c original V-O02 brief exception |
+| V-O04c | `lab/verify/O02/BRIEF.md` | PASS — documented pre-Q59c original V-O02 brief exception |
+| V-D01c-O-DOMAIN | `lab/verify/D01c/BRIEF.md` | PASS — saved instruction document; byte-identical at the verifier commit |
+| V-O05-round4 | `lab/acceptance/pins/O-OBS-V-O05-round4-BRIEF.md` | PASS — exact launcher original matched |
+
+The two world entries also reference instruction documents rather than reviews and pass the same preimage/hash checks. Complete per-entry results, immutable recovery-copy comparisons, live original-prompt comparisons and matched launch/exit ledger evidence are in [brief-audit.json](evidence-0.3.12-round2/brief-audit.json). Other oracle registry entries are byte-for-byte unchanged. The recovery proof and last message remain separate from the instruction bytes, and the original review record remains byte-for-byte unchanged.
+
+### Round-2 final gates
+
+| Gate | Result | Receipt |
+| --- | --- | --- |
+| Generator --verify | All six outputs byte-identical | [verify.txt](evidence-0.3.12-round2/verify.txt) |
+| Contract mutations | **439/439 caught**, zero misses; catalog 520, 81 retired anchors; all seven new controls reject at their own Q59c guard | [negtest.txt](evidence-0.3.12-round2/negtest.txt) |
+| Required evaluator suite | **108/108 PASS**, no failures/skips/cancellations/todo | [evaluator.tap](evidence-0.3.12-round2/evaluator.tap) |
+| Contract tests | **12/12 PASS**; adds exact original-dispatch and registry-wide preimage checks | [contract-tests.stderr.txt](evidence-0.3.12-round2/contract-tests.stderr.txt) |
+| Screening and prior regressions | 3/3 screening, 35/35 prior reviewer, 5/5 real-payload PASS | [ancillary-summary.json](evidence-0.3.12-round2/ancillary-summary.json) |
+| Pending authority | Q47d PASS; both forbidden mutants detected, outputs restored | [q47d.txt](evidence-0.3.12-round2/q47d.txt) |
+| O-OBS suites | 96/96 fixtures, CLI and rounds 2–4 PASS, selfcheck 14/14 mutation controls PASS | [ancillary-summary.json](evidence-0.3.12-round2/ancillary-summary.json), [selfcheck.stdout.txt](evidence-0.3.12-round2/selfcheck.stdout.txt) |
+
+All long suites used lab/bin/heavy.mjs. Ancillary source hashes match before/after, and every final source hash matches the dispatch snapshot. Source receipt free space: 13,182,750,720 bytes, above 5 GiB. The targeted exact F1 report-with-matching-digest reproduction is rejected at Q59c: [F1-targeted.txt](evidence-0.3.12-round2/F1-targeted.txt). The initial reviewer FIX-FIRST report is preserved at [reviewer-F1.md](evidence-0.3.12-round2/reviewer-F1.md); no round-1 failure or receipt was overwritten. All first round-2 gate attempts passed.
+
+Current transitive contract hash: **`11986ad73d09946ce13271958d6b968deb240614a40d24100f430d015ae6c1a3`**. Generator SHA-256: `c7f9e62e716416722b26c14f786e94d0bd3beda62472f04a0874813777429eb3`. [source-and-hashes.json](evidence-0.3.12-round2/source-and-hashes.json) and [validation-summary.json](evidence-0.3.12-round2/validation-summary.json) bind the final source, merged main, registry, exact instruction/review objects and results. The separate round-2 evidence directory has a SHA256SUMS manifest.
+
+Oracle pin objects, fixed O-OBS/O-REPLAY/O-DOMAIN runner objects, every compiled ruling and pending authority are unchanged from round 1. Counts stay **157 / 40 pin-level closable / 117 blocked**, with all 153 lane D obligations image-blocked. Both evaluator test files are byte-for-byte unchanged from the reviewed candidate; no assertion was weakened. Q78e/Q86g and the other pending rulings remain pending, G03 pins remain deferred, and O-OBS stays screening-only.
+
+No engine/container lifecycle, production evidence collection or qualification, package install, benchmark, root pnpm check, push or merge into actual main was performed. This fixes the demonstrated Q59c instruction-preimage defect; the independent reviewer still decides delta acceptance. The round-1 missing-brief limitation above is resolved by the authenticated original dispatch, not waived.
